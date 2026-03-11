@@ -1,5 +1,8 @@
 # Classical Turkish Music Optical Music Recognition (OMR)
 
+For now, since I do not have necessary about knowledge about deep learning and image processing, this repo is mostly empty. I will add the logic while I am learning the concepts for this project. This project is like my learning path.
+
+
 ## Context & Problem Statement
 Existing Western Optical Music Recognition (OMR) solutions (like PlayScore and similar applications) generally fail on Turkish sheet music. They do not recognize the distinct microtonal accidentals intrinsic to the genre, such as *koma*, *bakiye*, and *küçük mücennep*. Furthermore, they lack the capacity to accurately synthesize playback mapped to the 53-TET (Arel-Ezgi-Uzdilek) tuning system, leaving a massive gap for musicians and students of Classical Turkish Music.
 

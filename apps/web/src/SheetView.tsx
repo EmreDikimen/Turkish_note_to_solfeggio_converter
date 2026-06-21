@@ -1,81 +1,165 @@
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Accidental, Dot, Formatter, Renderer, Stave, StaveNote } from "vexflow";
 import {
   accidentalGlyph,
   accidentalLabel,
+  eventBeats,
   groupMeasures,
   parseNoteName,
   type Measure,
+  type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
 
 // --- layout constants -------------------------------------------------------
-const STAFF_SPACE = 12; // distance between two staff lines
-const GLYPH_SIZE = 4 * STAFF_SPACE; // Bravura glyphs are designed on a 4-space em
-const LEFT_MARGIN = 56; // room for the clef
-const CONTENT_WIDTH = 980;
-const ROW_HEIGHT = 200;
-const BOTTOM_LINE_D = 30; // diatonic value of E4 = treble-clef bottom line
-const BOTTOM_LINE_Y = 150; // y of that line within a row
-const TOP_LINE_D = 38; // F5 = top line
+const LEFT = 10;
+const CONTENT_WIDTH = 1000; // staff content area (rows wrap within this)
+const ROW_HEIGHT = 130; // vertical pitch of each staff system
+const STAVE_TOP_PAD = 40; // headroom above each stave for high notes / beams
+const CLEF_W = 50; // extra width the leading clef costs on the first stave of a row
+const SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
+const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
 
-// SMuFL code points used directly here (clef). Accidentals come from notation.accidentalGlyph.
-const G_CLEF = 0xe050;
-const char = (cp: number) => String.fromCodePoint(cp);
+// VexFlow duration codes paired with their value as a fraction of a whole note.
+const DUR: ReadonlyArray<readonly [string, number]> = [
+  ["w", 1],
+  ["h", 1 / 2],
+  ["q", 1 / 4],
+  ["8", 1 / 8],
+  ["16", 1 / 16],
+  ["32", 1 / 32],
+  ["64", 1 / 64],
+];
 
-// Diatonic value -> y within a row (higher pitch = smaller y).
-const yOfD = (d: number) => BOTTOM_LINE_Y - (d - BOTTOM_LINE_D) * (STAFF_SPACE / 2);
-
-// Ledger-line diatonic positions needed for a note outside the staff.
-function ledgerDs(d: number): number[] {
-  const out: number[] = [];
-  for (let L = TOP_LINE_D + 2; L <= d; L += 2) out.push(L); // above staff
-  for (let L = BOTTOM_LINE_D - 2; L >= d; L -= 2) out.push(L); // below staff
-  return out;
+/**
+ * Map a note-value (fraction of a whole note) to a VexFlow duration code + dot count.
+ * SymbTr durations are exact base/dotted values (verified: the sample uses only 1/4, 1/8,
+ * 1/16, 1/32 and the dotted 3/16, 3/32). We match the base value, then test for a single or
+ * double augmentation dot (×1.5 / ×1.75). Anything unexpected (e.g. a tuplet fraction) falls
+ * back to the nearest base value so the sheet still draws — playback uses durationMs anyway.
+ */
+function vexDuration(beats: number): { duration: string; dots: number } {
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-4;
+  for (const [code, val] of DUR) {
+    if (near(beats, val)) return { duration: code, dots: 0 };
+    if (near(beats, val * 1.5)) return { duration: code, dots: 1 };
+    if (near(beats, val * 1.75)) return { duration: code, dots: 2 };
+  }
+  let best = DUR[2]!; // default to a quarter
+  for (const d of DUR) if (Math.abs(d[1] - beats) < Math.abs(best[1] - beats)) best = d;
+  return { duration: best[0], dots: 0 };
 }
 
-interface Placed {
+/** Build the VexFlow StaveNotes for one measure (parallel `evs` keeps the source event). */
+function buildStaveNotes(measure: Measure): { notes: StaveNote[]; evs: NoteEvent[] } {
+  const notes: StaveNote[] = [];
+  const evs: NoteEvent[] = [];
+  for (const ev of measure.events) {
+    const { duration, dots } = vexDuration(eventBeats(ev));
+    const parsed = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
+
+    // Rests (and any unparseable note) render as a rest on the middle line.
+    if (!parsed) {
+      const r = new StaveNote({ keys: ["b/4"], duration: `${duration}r` });
+      for (let i = 0; i < dots; i++) Dot.buildAndAttach([r], { all: true });
+      notes.push(r);
+      evs.push(ev);
+      continue;
+    }
+
+    // Staff position comes from letter+octave only (Turkish accidentals don't shift the
+    // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
+    const n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
+    if (parsed.alterCommas !== 0) {
+      const g = accidentalGlyph(parsed.alterCommas);
+      // Pass the SMuFL glyph CHARACTER as the accidental type: VexFlow renders unknown codes
+      // verbatim in the (Bravura) music font, so every Turkish koma/bakiye/mücennep glyph
+      // works and VexFlow still reserves horizontal space for it.
+      if (g) n.addModifier(new Accidental(String.fromCodePoint(g.codepoint)), 0);
+    }
+    for (let i = 0; i < dots; i++) Dot.buildAndAttach([n], { all: true });
+    notes.push(n);
+    evs.push(ev);
+  }
+  return { notes, evs };
+}
+
+/** After drawing, attach an SVG <title> to each note so hovering shows pitch/freq/duration. */
+function attachTitles(notes: StaveNote[], evs: NoteEvent[]) {
+  notes.forEach((n, i) => {
+    const ev = evs[i]!;
+    let el: SVGElement | undefined;
+    try {
+      el = n.getSVGElement() as SVGElement | undefined;
+    } catch {
+      el = undefined;
+    }
+    if (!el) return;
+    const p = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent =
+      ev.kind === "rest" || !p
+        ? `rest · ${ev.durationMs} ms`
+        : `${ev.noteName} · ${(ev.freqHz ?? 0).toFixed(1)} Hz · ${ev.durationMs} ms` +
+          (p.alterCommas !== 0 ? ` · ${accidentalLabel(p.alterCommas)}` : "");
+    el.appendChild(title);
+  });
+}
+
+interface MeasureBox {
+  index: number;
   measure: Measure;
-  row: number;
   x: number;
+  y: number;
   width: number;
 }
 
+/** Where a single timed event sits on screen, so the playhead can follow playback. */
+interface NotePos {
+  startMs: number;
+  endMs: number;
+  /** Left x of the note within the SVG (same coordinate space as the overlay). */
+  x: number;
+  /** Top y of the playhead bar for this note's row (just above the top staff line). */
+  top: number;
+  /** Height of the playhead bar (staff height plus a small margin each side). */
+  height: number;
+}
+
 /**
- * Sheet-music (notation) view. Renders the score as wrapped 5-line staves with real Turkish
- * accidental glyphs from the Bravura font. In edit mode, each measure is clickable to open the
- * per-measure editor. Staff layout is custom; accidental/clef glyphs come from Bravura.
+ * Sheet-music (notation) view, engraved with VexFlow: real stems, flags, beams, dots and
+ * duration-correct noteheads/rests. Turkish (AEU) microtonal accidentals are rendered from
+ * the Bravura font via the project's verified SMuFL glyph map. In edit mode, an HTML overlay
+ * makes each measure clickable to open the per-measure editor.
  */
 export function SheetView({
   doc,
   editMode,
+  playing,
+  getPositionMs,
   onMeasureClick,
+  onSeekToMeasure,
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
+  /** True while there's an active (playing or paused) position — drives the playhead. */
+  playing: boolean;
+  /** Current playback position in ms (from the audio backend), or null when stopped. */
+  getPositionMs: () => number | null;
+  /** Edit mode: open the editor for a measure. */
   onMeasureClick: (m: Measure) => void;
+  /** Non-edit mode: seek/play from the clicked measure. */
+  onSeekToMeasure: (m: Measure) => void;
 }) {
-  const [hoverMeasure, setHoverMeasure] = useState<number | null>(null);
-
-  // Pack measures into rows (greedy wrap). measureWidth grows with note count.
-  const { placed, rowCount, rowEndX } = useMemo(() => {
-    const measures = groupMeasures(doc);
-    const placed: Placed[] = [];
-    const rowEndX: number[] = [];
-    let row = 0;
-    let x = LEFT_MARGIN;
-    for (const m of measures) {
-      const width = Math.max(90, Math.min(360, m.events.length * 24 + 20));
-      if (x + width > LEFT_MARGIN + CONTENT_WIDTH && x > LEFT_MARGIN) {
-        rowEndX[row] = x;
-        row += 1;
-        x = LEFT_MARGIN;
-      }
-      placed.push({ measure: m, row, x, width });
-      x += width;
-      rowEndX[row] = x;
-    }
-    return { placed, rowCount: row + 1, rowEndX };
-  }, [doc]);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  // On-screen position of every timed event, in playback order. A ref (not state) because the
+  // playhead animation reads it every frame and must not trigger re-renders.
+  const positionsRef = useRef<NotePos[]>([]);
+  const [boxes, setBoxes] = useState<MeasureBox[]>([]);
+  const [svgHeight, setSvgHeight] = useState(ROW_HEIGHT + 20);
+  const [hover, setHover] = useState<number | null>(null);
 
   // Distinct accidentals used, for the legend.
   const usedAccidentals = useMemo(() => {
@@ -88,131 +172,207 @@ export function SheetView({
     return [...set].sort((a, b) => a - b);
   }, [doc]);
 
-  const totalHeight = rowCount * ROW_HEIGHT + 16;
-  const svgWidth = LEFT_MARGIN + CONTENT_WIDTH + 24;
+  // Draw the score with VexFlow whenever the document changes. (Edit mode only toggles the
+  // HTML overlay below, so it deliberately isn't a dependency — no need to re-engrave.)
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    host.innerHTML = ""; // clear any previous render (also handles React 18 double-invoke)
+
+    // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef.
+    const measures = groupMeasures(doc);
+    type Cell = { m: Measure; width: number; firstInRow: boolean };
+    const rows: Cell[][] = [];
+    let cur: Cell[] = [];
+    let used = 0;
+    for (const m of measures) {
+      const base = Math.max(130, Math.min(420, m.events.length * 28 + 24));
+      const isFirst = cur.length === 0;
+      const width = base + (isFirst ? CLEF_W : 0);
+      if (!isFirst && used + width > CONTENT_WIDTH) {
+        rows.push(cur);
+        cur = [{ m, width: base + CLEF_W, firstInRow: true }];
+        used = base + CLEF_W;
+      } else {
+        cur.push({ m, width, firstInRow: isFirst });
+        used += width;
+      }
+    }
+    if (cur.length) rows.push(cur);
+
+    const height = rows.length * ROW_HEIGHT + 20;
+    const renderer = new Renderer(host, Renderer.Backends.SVG);
+    renderer.resize(SVG_WIDTH, height);
+    const ctx = renderer.getContext();
+
+    const collected: MeasureBox[] = [];
+    const positions: NotePos[] = [];
+    let tMs = 0; // running playback clock, matches buildTimeline's accumulation order
+    rows.forEach((cells, r) => {
+      const y = STAVE_TOP_PAD + r * ROW_HEIGHT;
+      let x = LEFT;
+      for (const cell of cells) {
+        const stave = new Stave(x, y, cell.width);
+        if (cell.firstInRow) stave.addClef("treble");
+        stave.setContext(ctx).draw();
+        // Playhead extent for this row, from the actual staff-line positions (the Stave's y
+        // param is its bounding-box top, which sits well above the first staff line).
+        const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
+        const barHeight = stave.getYForLine(4) - stave.getYForLine(0) + 2 * CURSOR_MARGIN;
+        try {
+          const { notes, evs } = buildStaveNotes(cell.m);
+          if (notes.length > 0) {
+            Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: true, alignRests: true });
+            attachTitles(notes, evs);
+            // Record each event's drawn x + row so the playhead can follow it. getAbsoluteX is
+            // only valid after FormatAndDraw has positioned the notes.
+            notes.forEach((n, i) => {
+              const ev = evs[i]!;
+              positions.push({ startMs: tMs, endMs: tMs + ev.durationMs, x: n.getAbsoluteX(), top: barTop, height: barHeight });
+              tMs += ev.durationMs;
+            });
+          }
+        } catch (e) {
+          console.warn(`sheet: failed to render measure ${cell.m.index}`, e);
+        }
+        collected.push({ index: cell.m.index, measure: cell.m, x, y, width: cell.width });
+        x += cell.width;
+      }
+    });
+
+    setSvgHeight(height);
+    setBoxes(collected);
+    positionsRef.current = positions;
+
+    return () => {
+      host.innerHTML = "";
+    };
+  }, [doc]);
+
+  // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
+  // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style
+  // directly (via ref) rather than React state so 60fps updates don't re-render the component.
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+    if (!playing) {
+      cursor.style.display = "none";
+      return;
+    }
+    let raf = 0;
+    const tick = () => {
+      const pos = getPositionMs();
+      const ps = positionsRef.current;
+      if (pos != null && pos >= 0 && ps.length > 0) {
+        // First event whose end is still ahead of the clock is the one sounding now.
+        const active = ps.find((p) => pos < p.endMs) ?? ps[ps.length - 1]!;
+        cursor.style.display = "block";
+        cursor.style.height = `${active.height}px`;
+        cursor.style.transform = `translate(${active.x - 2}px, ${active.top}px)`;
+      } else {
+        cursor.style.display = "none";
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [playing, getPositionMs]);
+
+  // Map a mouse event to the measure under it, by hit-testing against the recorded boxes. Used
+  // for non-edit "click to play from here" (and its hover highlight). Coordinates are relative
+  // to the positioned container, matching the SVG's own coordinate space.
+  function measureAt(e: React.MouseEvent): MeasureBox | null {
+    const cont = containerRef.current;
+    if (!cont) return null;
+    const rect = cont.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    return (
+      boxes.find(
+        (b) => px >= b.x && px <= b.x + b.width && py >= b.y - 30 && py <= b.y - 30 + (ROW_HEIGHT - 16),
+      ) ?? null
+    );
+  }
 
   return (
     <div style={{ border: "1px solid #ddd", borderRadius: 6, overflowX: "auto", background: "#fff" }}>
-      <svg width={svgWidth} height={totalHeight} style={{ display: "block" }}>
-        {Array.from({ length: rowCount }, (_, r) => {
-          const top = r * ROW_HEIGHT + 8;
-          const endX = rowEndX[r] ?? LEFT_MARGIN;
-          return (
-            <g key={r} transform={`translate(0, ${top})`}>
-              {/* staff lines */}
-              {[30, 32, 34, 36, 38].map((d) => (
-                <line key={d} x1={LEFT_MARGIN} y1={yOfD(d)} x2={endX} y2={yOfD(d)} stroke="#333" strokeWidth={1} />
-              ))}
-              {/* clef */}
-              <text x={10} y={yOfD(32)} fontFamily="Bravura" fontSize={GLYPH_SIZE} fill="#222">
-                {char(G_CLEF)}
-              </text>
-              {placed
-                .filter((p) => p.row === r)
-                .map((p) => (
-                  <Measure
-                    key={p.measure.index}
-                    p={p}
-                    editMode={editMode}
-                    hovered={hoverMeasure === p.measure.index}
-                    onEnter={() => setHoverMeasure(p.measure.index)}
-                    onLeave={() => setHoverMeasure(null)}
-                    onClick={() => editMode && onMeasureClick(p.measure)}
-                  />
-                ))}
-            </g>
-          );
-        })}
-      </svg>
+      <div
+        ref={containerRef}
+        style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
+        onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
+        onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}
+        onMouseLeave={editMode ? undefined : () => setHover(null)}
+      >
+        <div ref={hostRef} />
+        {/* Non-edit hover highlight: shows which measure a click will play from. */}
+        {!editMode &&
+          hover != null &&
+          (() => {
+            const b = boxes.find((bx) => bx.index === hover);
+            if (!b) return null;
+            return (
+              <div
+                style={{
+                  position: "absolute",
+                  left: b.x,
+                  top: b.y - 30,
+                  width: b.width,
+                  height: ROW_HEIGHT - 16,
+                  pointerEvents: "none",
+                  boxSizing: "border-box",
+                  borderRadius: 4,
+                  background: "rgba(20,184,166,0.07)",
+                  border: "1px solid rgba(20,184,166,0.5)",
+                }}
+              />
+            );
+          })()}
+        {/* Playhead: a teal bar that tracks the currently-playing note (positioned via transform). */}
+        <div
+          ref={cursorRef}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 2.5,
+            height: 0, // set per-row during playback (see the rAF loop)
+            background: "#14b8a6",
+            borderRadius: 2,
+            boxShadow: "0 0 3px rgba(20,184,166,0.7)",
+            pointerEvents: "none",
+            display: "none",
+            willChange: "transform",
+          }}
+        />
+        {editMode && (
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+            {boxes.map((b) => (
+              <div
+                key={b.index}
+                onMouseEnter={() => setHover(b.index)}
+                onMouseLeave={() => setHover(null)}
+                onClick={() => onMeasureClick(b.measure)}
+                style={{
+                  position: "absolute",
+                  left: b.x,
+                  top: b.y - 30,
+                  width: b.width,
+                  height: ROW_HEIGHT - 16,
+                  pointerEvents: "auto",
+                  cursor: "pointer",
+                  boxSizing: "border-box",
+                  borderRadius: 4,
+                  background: hover === b.index ? "rgba(59,130,246,0.08)" : "transparent",
+                  border: hover === b.index ? "1px solid #3b82f6" : "1px solid transparent",
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <Legend used={usedAccidentals} />
     </div>
-  );
-}
-
-function Measure({
-  p,
-  editMode,
-  hovered,
-  onEnter,
-  onLeave,
-  onClick,
-}: {
-  p: Placed;
-  editMode: boolean;
-  hovered: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-  onClick: () => void;
-}) {
-  const { measure, x, width } = p;
-  const count = measure.events.length || 1;
-  const slot = (width - 20) / count;
-  const staffTop = yOfD(38) - 4;
-  const staffBottom = yOfD(30) + 4;
-
-  return (
-    <g>
-      {/* clickable / hover region (edit mode) */}
-      {editMode && (
-        <rect
-          x={x}
-          y={4}
-          width={width}
-          height={ROW_HEIGHT - 24}
-          fill={hovered ? "rgba(59,130,246,0.08)" : "transparent"}
-          stroke={hovered ? "#3b82f6" : "transparent"}
-          style={{ cursor: "pointer" }}
-          onMouseEnter={onEnter}
-          onMouseLeave={onLeave}
-          onClick={onClick}
-        />
-      )}
-
-      {measure.events.map((ev, i) => {
-        const cx = x + 14 + i * slot + slot / 2;
-        if (ev.kind === "rest") {
-          return (
-            <g key={ev.index} pointerEvents="none">
-              <rect x={cx - 4} y={yOfD(34) - 3} width={8} height={6} fill="#999" />
-              <title>rest · {ev.durationMs} ms</title>
-            </g>
-          );
-        }
-        const parsed = parseNoteName(ev.noteName);
-        if (!parsed) return null;
-        const ny = yOfD(parsed.diatonic);
-        const acc = parsed.alterCommas !== 0 ? accidentalGlyph(parsed.alterCommas) : null;
-        return (
-          <g key={ev.index} pointerEvents="none">
-            {ledgerDs(parsed.diatonic).map((L) => (
-              <line key={L} x1={cx - 9} y1={yOfD(L)} x2={cx + 9} y2={yOfD(L)} stroke="#333" strokeWidth={1} />
-            ))}
-            {acc && (
-              <text
-                x={cx - 13}
-                y={ny}
-                fontFamily="Bravura"
-                fontSize={GLYPH_SIZE}
-                fill="#222"
-                textAnchor="middle"
-                dominantBaseline="central"
-              >
-                {char(acc.codepoint)}
-              </text>
-            )}
-            <ellipse cx={cx} cy={ny} rx={5.5} ry={4.2} fill="#1f2937" />
-            <title>
-              {ev.noteName} · {(ev.freqHz ?? 0).toFixed(1)} Hz · {ev.durationMs} ms
-              {parsed.alterCommas !== 0 ? ` · ${accidentalLabel(parsed.alterCommas)}` : ""}
-            </title>
-          </g>
-        );
-      })}
-
-      {/* barline at measure end */}
-      <line x1={x + width} y1={staffTop} x2={x + width} y2={staffBottom} stroke="#333" strokeWidth={1} />
-    </g>
   );
 }
 
@@ -225,7 +385,7 @@ function Legend({ used }: { used: number[] }) {
         const g = accidentalGlyph(commas);
         return (
           <span key={commas} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {g && <span style={{ fontFamily: "Bravura", fontSize: 22, lineHeight: 1 }}>{char(g.codepoint)}</span>}
+            {g && <span style={{ fontFamily: "Bravura", fontSize: 22, lineHeight: 1 }}>{String.fromCodePoint(g.codepoint)}</span>}
             {accidentalLabel(commas)} ({commas > 0 ? `+${commas}` : commas} koma)
           </span>
         );

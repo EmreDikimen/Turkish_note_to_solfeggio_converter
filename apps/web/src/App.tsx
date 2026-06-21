@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   buildTimeline,
   centsAboveRef,
@@ -45,8 +45,8 @@ export function App() {
   // edit) so dragging a note doesn't make the whole view jump/rescale under the cursor.
   const [pitchRange, setPitchRange] = useState<PitchRange | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const playToken = useRef(0);
+  // Transport state: "stopped" → Play; "playing" → Pause; "paused" → Resume. Stop resets it.
+  const [playState, setPlayState] = useState<"stopped" | "playing" | "paused">("stopped");
   // Which view is shown, whether the sheet is in edit mode, and which measure's modal is open.
   const [viewMode, setViewMode] = useState<ViewMode>("roll");
   const [editMode, setEditMode] = useState(false);
@@ -70,6 +70,16 @@ export function App() {
   }, []);
 
   const timeline = useMemo(() => (doc ? buildTimeline(doc) : null), [doc]);
+
+  // Stable accessor for the live playback position (ms), read each frame by the sheet's
+  // playhead. Stable identity (the backend is a module constant) keeps the rAF effect steady.
+  const getPositionMs = useCallback(() => backend.getPositionMs(), []);
+
+  // When the piece finishes on its own, reset the transport to "stopped" so the UI shows Play.
+  useEffect(() => {
+    backend.setOnEnded(() => setPlayState("stopped"));
+    return () => backend.setOnEnded(null);
+  }, []);
 
   // Apply one note edit from the piano-roll. This is the heart of "correct OMR mistakes".
   // What/why: edits must flow back into `doc` so that BOTH the view and playback reflect
@@ -121,23 +131,34 @@ export function App() {
     });
   }
 
-  // Start playback. Grabs a fresh token first; when play() resolves (piece ended) we only
-  // flip `playing` back to false if THIS play is still the current one — if the user hit
-  // Stop or loaded another piece meanwhile, the token won't match and we leave the UI alone.
-  async function onPlay() {
+  // The single Play/Pause/Resume control. From stopped it starts from the top; while playing
+  // it pauses (keeping position); while paused it resumes. Audio end is handled by setOnEnded.
+  function onPlayPause() {
     if (!timeline) return;
-    const token = ++playToken.current;
-    setPlaying(true);
-    await backend.play(timeline);
-    if (playToken.current === token) setPlaying(false);
+    if (playState === "playing") {
+      backend.pause();
+      setPlayState("paused");
+    } else if (playState === "paused") {
+      backend.resume();
+      setPlayState("playing");
+    } else {
+      void backend.play(timeline, 0);
+      setPlayState("playing");
+    }
   }
 
-  // Stop playback. Bumping the token invalidates any in-flight onPlay (see above), then we
-  // silence the backend and reset the button state immediately.
+  // Stop playback and reset to the top: silence the backend and show Play again.
   function onStop() {
-    playToken.current++;
     backend.stop();
-    setPlaying(false);
+    setPlayState("stopped");
+  }
+
+  // Seek: start playback from a given position (ms). Used by clicking a measure (non-edit
+  // mode) to "play from here". The click is the user gesture the AudioContext needs.
+  function onSeekMs(ms: number) {
+    if (!timeline) return;
+    void backend.play(timeline, ms);
+    setPlayState("playing");
   }
 
   // Load a note-model JSON the user picked from disk. Reads the file as text, parses it,
@@ -167,8 +188,10 @@ export function App() {
       </p>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
-        <button onClick={onPlay} disabled={!timeline || playing}>▶ Play</button>
-        <button onClick={onStop} disabled={!playing}>■ Stop</button>
+        <button onClick={onPlayPause} disabled={!timeline}>
+          {playState === "playing" ? "⏸ Pause" : playState === "paused" ? "▶ Resume" : "▶ Play"}
+        </button>
+        <button onClick={onStop} disabled={playState === "stopped"}>■ Stop</button>
         <span style={{ marginLeft: 12, display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
           <ModeButton active={viewMode === "roll"} onClick={() => setViewMode("roll")}>Piano-roll</ModeButton>
           <ModeButton active={viewMode === "sheet"} onClick={() => setViewMode("sheet")}>Sheet</ModeButton>
@@ -208,12 +231,19 @@ export function App() {
             </>
           ) : (
             <>
-              <SheetView doc={doc} editMode={editMode} onMeasureClick={setEditing} />
+              <SheetView
+                doc={doc}
+                editMode={editMode}
+                playing={playState !== "stopped"}
+                getPositionMs={getPositionMs}
+                onMeasureClick={setEditing}
+                onSeekToMeasure={(m) => onSeekMs(m.startMs)}
+              />
               <p style={{ color: "#888", fontSize: 12 }}>
                 Western staff with Turkish (AEU) accidental glyphs from the Bravura font.
                 {editMode
                   ? " Edit is on — click a measure to edit its notes."
-                  : " Click ✎ Edit, then click a measure to edit its notes."}
+                  : " Click a measure to play from there. Click ✎ Edit to edit notes instead."}
               </p>
             </>
           )}

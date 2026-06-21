@@ -57,7 +57,12 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
 - **Phase 0 — DONE:** symbolic → microtonal audio, no machine learning. A SymbTr parser, the
   53-TET tuning module, and a simple synthesizer turn any SymbTr score into correct
   microtonal audio. Verified across all 2,200 SymbTr pieces.
-- **Phase 1 — next:** web editor + Web Audio playback.
+- **Phase 1 — DONE:** shared TypeScript `core` + React web harness. Loads note-model JSON;
+  piano-roll and **VexFlow-engraved sheet** views (real stems/beams/flags/dots + Turkish
+  microtonal accidentals); Web Audio playback at exact 53-TET; **Play / Pause / Resume / Stop**
+  with a live **playhead** cursor on the sheet and **click-a-measure-to-seek**; drag-to-edit
+  (piano-roll) and a per-measure note editor (sheet). See ROADMAP §7 for details.
+- **Phase 2 — next:** synthetic training data (render SymbTr → images for OMR).
 
 ## Directory Structure
 

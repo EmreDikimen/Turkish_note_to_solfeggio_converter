@@ -241,13 +241,27 @@ produce a real, demoable app with zero machine learning.
   interface). Type-checks clean.
 - ✅ `apps/web` (React + Vite): loads note-model JSON, **piano-roll** view (pitch = 53-TET
   comma, hover for note details), Web Audio `AudioBackend` playback at 53-TET. Builds + serves.
+- ✅ **Transport + playhead** (added 2026-06-22): Play / **Pause / Resume** (via
+  `AudioContext.suspend/resume` — no rescheduling) + Stop. A teal **playhead** bar tracks the
+  currently-sounding note on the sheet, driven by `requestAnimationFrame` reading the audio
+  clock (`WebAudioBackend.getPositionMs()` = `currentTime − originTime`), so it's
+  sample-accurate and freezes correctly while paused. **Click-to-seek**: in the sheet's
+  non-edit mode, clicking a measure plays from there (`play(timeline, fromMs)` re-schedules
+  from an offset). End-of-piece is detected by polling the audio clock (pause-aware), not a
+  wall-clock timer. The `AudioBackend.play` signature is now `play(timeline, fromMs?)`.
 - ✅ **Drag-to-edit** (the core editing feature): drag a note vertically to change pitch
   (snaps to nearest comma, frequency + playback update live); drag its right edge to change
   duration (following notes reflow). Edits flow up to App → rebuild doc → re-render + replay.
   Inverse pitch-mapping math verified (zero round-trip error).
 - ✅ **Sheet-music view + measure editor** (instructive mode): Piano-roll | Sheet toggle. The
-  custom SVG staff renders real **Turkish AEU accidentals via the Bravura font** (SMuFL
-  glyphs; code points verified against `glyphnames.json`). Top-right **Edit** button → click a
+  staff is engraved with **VexFlow 5** (real stems, flags, beams, dots, duration-correct
+  noteheads/rests), with real **Turkish AEU accidentals via the Bravura font**. Trick: VexFlow's
+  built-in accidental table lacks most Turkish glyphs, but `Accidental` renders an unknown code
+  verbatim in the music font — so we pass the **raw SMuFL codepoint char** (from the verified
+  `accidentalGlyph` map in `notation.ts`) and VexFlow still reserves layout space. Durations come
+  from `durationBeats` via a fraction→VexFlow-code+dots mapper. Measure interaction: in edit mode
+  an HTML overlay makes measures clickable (open editor); in non-edit mode a click seeks/plays
+  from that measure (see Transport above). Top-right **Edit** button → click a
   measure → modal. Modal **Basic** tab: pick base note + how many commas sharp/flat (custom
   dropdown showing the Bravura **symbol + Turkish name**), duration, add/delete; **Advanced**
   tab adds absolute koma + frequency editing. **Save disabled + warning** unless the measure's
@@ -265,4 +279,7 @@ Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 
 Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosmetic and deferred.
 
-_Last updated: 2026-06-20._
+Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
+bundle — fine for a throwaway harness).
+
+_Last updated: 2026-06-22._

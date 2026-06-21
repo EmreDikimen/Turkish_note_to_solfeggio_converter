@@ -12,6 +12,9 @@ import type { AudioBackend, Timeline } from "@turkish-omr/core";
 // less harsh than a pure sine.
 const HARMONIC_GAINS = [1.0, 0.45, 0.25, 0.12, 0.06];
 
+/** Transport state, mirrored by the UI to pick the right play/pause/stop affordances. */
+export type PlaybackState = "stopped" | "playing" | "paused";
+
 /**
  * Build a custom oscillator waveform with harmonics (the browser's version of the Python
  * synth's harmonic mixing).
@@ -37,32 +40,47 @@ function buildPeriodicWave(ctx: AudioContext): PeriodicWave {
 export class WebAudioBackend implements AudioBackend {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private stopTimer: ReturnType<typeof setTimeout> | null = null;
+  private timeline: Timeline | null = null;
+  /** AudioContext time (seconds) at which timeline position 0 sounds. */
+  private originTime = 0;
+  /** Polls the audio clock to detect the natural end of the piece (pause-aware). */
+  private endCheck: ReturnType<typeof setInterval> | null = null;
+  private onEndedCb: (() => void) | null = null;
+  private state: PlaybackState = "stopped";
+
+  getState(): PlaybackState {
+    return this.state;
+  }
+
+  /** Register a callback fired once when the piece reaches its end on its own. */
+  setOnEnded(cb: (() => void) | null): void {
+    this.onEndedCb = cb;
+  }
 
   /**
-   * Play a whole timeline through the browser speakers. This is the web's implementation
-   * of the core `AudioBackend.play` contract.
+   * Current playback position in milliseconds, or null when stopped. Derived from the
+   * AudioContext clock (the same clock the notes are scheduled against), so a visual playhead
+   * stays sample-accurately in sync with what's heard. While paused the clock is frozen, so
+   * the position holds steady. Negative during the brief lead-in.
+   */
+  getPositionMs(): number | null {
+    if (!this.ctx) return null;
+    return (this.ctx.currentTime - this.originTime) * 1000;
+  }
+
+  /**
+   * Play a timeline through the browser speakers, optionally starting partway in (`fromMs`).
+   * This is the web's implementation of the core `AudioBackend.play` contract.
    *
    * What/why: the core decided *what* plays and *when* (the Timeline); this turns that into
-   * actual sound using Web Audio. On mobile a different class implements the same method
-   * with native audio — the core never changes.
-   * How it works:
-   *   * Make an `AudioContext` (the browser's audio engine) and a master gain (overall
-   *     volume). Browsers block audio until a user gesture, so we `resume()` it (the Play
-   *     button click is that gesture).
-   *   * Web Audio is *scheduled ahead of time*: instead of a loop that waits, we tell the
-   *     engine "play this note at time T" for every note up front, and the hardware runs it
-   *     precisely. `t0` is a small lead-in so the first note isn't cut off.
-   *   * For each non-rest note we create an oscillator (set to our harmonic wave and the
-   *     note's frequency) and a per-note gain used as an envelope: ramp 0→1 (attack), hold,
-   *     then 1→0 (release) — same anti-click idea as the Python `_envelope`.
-   *   * Return a Promise that resolves when the piece finishes, so the UI can flip the Play
-   *     button back. (We call `stop()` first so a second Play cancels any current playback.)
-   * Important: each note gets its OWN oscillator — in Web Audio oscillators are one-shot
-   * (start once, stop once), not reused.
+   * actual sound using Web Audio. `fromMs` lets the UI seek (click a measure to play from
+   * there) by simply re-scheduling from that offset.
+   * How it works: make a fresh `AudioContext` + master gain, `resume()` it (the click is the
+   * required user gesture), then schedule every note ahead of time relative to `fromMs`.
    */
-  async play(timeline: Timeline): Promise<void> {
+  async play(timeline: Timeline, fromMs = 0): Promise<void> {
     this.stop();
+    this.timeline = timeline;
     const ctx = new AudioContext();
     this.ctx = ctx;
     await ctx.resume();
@@ -72,24 +90,45 @@ export class WebAudioBackend implements AudioBackend {
     master.connect(ctx.destination);
     this.master = master;
 
+    this.scheduleFrom(Math.max(0, fromMs));
+    this.state = "playing";
+  }
+
+  /**
+   * Schedule every sounding note relative to a start offset. Notes that already ended before
+   * `fromMs` are skipped; one straddling the offset is started mid-note at full gain (no
+   * attack) so seeking into a held note doesn't re-articulate it. Each note gets its OWN
+   * oscillator — Web Audio oscillators are one-shot (start once, stop once).
+   */
+  private scheduleFrom(fromMs: number): void {
+    const ctx = this.ctx!;
+    const master = this.master!;
+    const timeline = this.timeline!;
     const wave = buildPeriodicWave(ctx);
     const t0 = ctx.currentTime + 0.05; // small lead-in
+    this.originTime = t0 - fromMs / 1000; // so getPositionMs() reads ~fromMs right away
     const attack = 0.01;
     const release = 0.03;
 
     for (const n of timeline.notes) {
       if (n.isRest || !Number.isFinite(n.freqHz)) continue;
-      const start = t0 + n.startMs / 1000;
-      const dur = n.durationMs / 1000;
+      const noteEnd = n.startMs + n.durationMs;
+      if (noteEnd <= fromMs) continue; // already over by the time we start
+
+      const playStartMs = Math.max(n.startMs, fromMs);
+      const start = t0 + (playStartMs - fromMs) / 1000;
+      const dur = (noteEnd - playStartMs) / 1000;
+      const midNote = playStartMs > n.startMs; // seeked into the middle of this note
 
       const osc = ctx.createOscillator();
       osc.setPeriodicWave(wave);
       osc.frequency.value = n.freqHz;
 
       const env = ctx.createGain();
-      env.gain.setValueAtTime(0, start);
-      env.gain.linearRampToValueAtTime(1, start + Math.min(attack, dur / 2));
-      env.gain.setValueAtTime(1, Math.max(start + attack, start + dur - release));
+      const a = midNote ? 0 : Math.min(attack, dur / 2);
+      env.gain.setValueAtTime(midNote ? 1 : 0, start);
+      if (!midNote) env.gain.linearRampToValueAtTime(1, start + a);
+      env.gain.setValueAtTime(1, Math.max(start + a, start + dur - release));
       env.gain.linearRampToValueAtTime(0, start + dur);
 
       osc.connect(env).connect(master);
@@ -97,12 +136,30 @@ export class WebAudioBackend implements AudioBackend {
       osc.stop(start + dur + 0.02);
     }
 
-    return new Promise<void>((resolve) => {
-      this.stopTimer = setTimeout(() => {
+    // Detect the natural end by watching the audio clock. Using the clock (not a wall-clock
+    // timer) makes this automatically pause-aware: currentTime freezes while suspended.
+    this.endCheck = setInterval(() => {
+      const pos = this.getPositionMs();
+      if (pos != null && pos >= timeline.totalMs) {
+        const cb = this.onEndedCb;
         this.stop();
-        resolve();
-      }, timeline.totalMs + 200);
-    });
+        cb?.();
+      }
+    }, 100);
+  }
+
+  /** Pause playback, keeping the position so it can be resumed. */
+  pause(): void {
+    if (this.state !== "playing" || !this.ctx) return;
+    void this.ctx.suspend();
+    this.state = "paused";
+  }
+
+  /** Resume from where pause() left off. */
+  resume(): void {
+    if (this.state !== "paused" || !this.ctx) return;
+    void this.ctx.resume();
+    this.state = "playing";
   }
 
   /**
@@ -111,20 +168,20 @@ export class WebAudioBackend implements AudioBackend {
    * What/why: the user hits Stop, or starts a new piece, or leaves — we must silence any
    * scheduled notes and free the audio engine (leaking AudioContexts will eventually make
    * the browser refuse to create more).
-   * How it works: cancel the "playback finished" timer (so its callback doesn't fire late),
-   * then `close()` the AudioContext, which kills every oscillator scheduled on it at once.
-   * Null out the references so a later `play()` starts cleanly. Safe to call anytime, even
-   * if nothing is playing.
+   * How it works: cancel the end-check, then `close()` the AudioContext, which kills every
+   * oscillator scheduled on it at once. Null out the references so a later `play()` starts
+   * cleanly. Safe to call anytime, even if nothing is playing.
    */
   stop(): void {
-    if (this.stopTimer) {
-      clearTimeout(this.stopTimer);
-      this.stopTimer = null;
+    if (this.endCheck) {
+      clearInterval(this.endCheck);
+      this.endCheck = null;
     }
     if (this.ctx) {
       void this.ctx.close();
       this.ctx = null;
       this.master = null;
     }
+    this.state = "stopped";
   }
 }

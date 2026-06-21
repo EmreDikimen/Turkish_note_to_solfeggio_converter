@@ -1,0 +1,170 @@
+/**
+ * Notation helpers: turn a SymbTr note name into staff position + the correct Turkish
+ * (AEU) accidental glyph.
+ *
+ * Background: SymbTr note names encode the microtonal accidental as a `#N`/`bN` suffix,
+ * where N is the **exact alteration in commas** (verified against Koma53). The base is
+ * either Turkish solfege (Do, Re, Mi, Fa, Sol, La, Si) or a Western letter (C..B). The
+ * accidental glyphs are standardized in SMuFL and shipped in the Bravura font:
+ *   - AEU named accidentals (U+E440–E447): koma(±1), bakiye(±4), küçük/büyük mücennep(±5/±8)
+ *   - comma-indexed folk accidentals (U+E450–E45F): used for the in-between ±2/±3
+ * The two sets are complementary, so every alteration the data uses (1–5 commas) has a glyph.
+ */
+
+/** Turkish solfege → Western letter (for staff positioning). */
+const SOLFEGE_TO_LETTER: Record<string, string> = {
+  Do: "C",
+  Re: "D",
+  Mi: "E",
+  Fa: "F",
+  Sol: "G",
+  La: "A",
+  Si: "B",
+};
+
+/** Diatonic step index within an octave, C=0 .. B=6 (used for vertical staff position). */
+const LETTER_STEP: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+/** Western letter → Turkish solfege (for writing note names back out). */
+const LETTER_TO_SOLFEGE: Record<string, string> = {
+  C: "Do", D: "Re", E: "Mi", F: "Fa", G: "Sol", A: "La", B: "Si",
+};
+
+/** Comma value of each natural pitch-class within an octave (C=0). Sums to 53 at the next C. */
+const PC_COMMA: Record<string, number> = { C: 0, D: 9, E: 18, F: 22, G: 31, A: 40, B: 49 };
+const LETTERS = ["C", "D", "E", "F", "G", "A", "B"];
+
+export interface ParsedNote {
+  /** Western letter C..B. */
+  letter: string;
+  /** Octave number from the name (SymbTr's scientific-ish numbering). */
+  octave: number;
+  /** Signed comma alteration: +N for `#N`, -N for `bN`, 0 if none. */
+  alterCommas: number;
+  /**
+   * Diatonic position as a single increasing integer (letter step + 7*octave). Two notes
+   * one staff line apart differ by 1; an octave differs by 7. Convenient for y-layout.
+   */
+  diatonic: number;
+}
+
+const NAME_RE = /^(Do|Re|Mi|Fa|Sol|La|Si|[A-G])(-?\d+)([#b]\d+)?$/;
+
+/**
+ * Parse a note name like "Do5", "Sol5#1", "La4b4", or "C5#3" into staff/accidental info.
+ *
+ * What/why: the sheet view needs (a) where to draw the notehead — from letter+octave — and
+ * (b) which accidental — from the suffix. Centralizing the parsing here keeps the renderer
+ * and the edit modal consistent.
+ * Returns null for rests ("Es") or anything unparseable, so callers can skip them.
+ */
+export function parseNoteName(name: string): ParsedNote | null {
+  const m = NAME_RE.exec(name.trim());
+  if (!m) return null;
+  const [, base, octaveStr, accStr] = m;
+  const letter = SOLFEGE_TO_LETTER[base!] ?? base!;
+  if (!(letter in LETTER_STEP)) return null;
+  const octave = parseInt(octaveStr!, 10);
+  let alterCommas = 0;
+  if (accStr) {
+    const n = parseInt(accStr.slice(1), 10);
+    alterCommas = accStr[0] === "#" ? n : -n;
+  }
+  return { letter, octave, alterCommas, diatonic: LETTER_STEP[letter]! + 7 * octave };
+}
+
+/** Absolute Holdrian comma of a natural pitch (no accidental), e.g. naturalKoma("C",5)=318. */
+export function naturalKoma(letter: string, octave: number): number {
+  return 53 * (octave + 1) + (PC_COMMA[letter] ?? 0);
+}
+
+/** Absolute comma of a spelled note = its natural pitch plus the comma alteration. */
+export function komaOf(letter: string, octave: number, alterCommas: number): number {
+  return naturalKoma(letter, octave) + alterCommas;
+}
+
+/**
+ * Build a note name from an explicit spelling (letter + octave + comma alteration).
+ * Unlike `komaToName`, this preserves exactly the spelling the user chose (so picking
+ * "Fa5" + "+5 commas" yields "Fa5#5", never the enharmonic "Sol5b4").
+ * @param style "solfege" → Do/Re/Mi…; "western" → C/D/E…
+ */
+export function spellNote(letter: string, octave: number, alterCommas: number, style: "solfege" | "western" = "solfege"): string {
+  const base = style === "western" ? letter : LETTER_TO_SOLFEGE[letter] ?? letter;
+  const suffix = alterCommas > 0 ? `#${alterCommas}` : alterCommas < 0 ? `b${-alterCommas}` : "";
+  return `${base}${octave}${suffix}`;
+}
+
+/**
+ * Inverse of parseNoteName: spell an absolute comma value (Koma53) as a note name.
+ *
+ * What/why: when the user edits a note's pitch in the modal, its `koma53` changes, so its
+ * written name (which encodes the accidental) must be regenerated, or the staff would still
+ * draw the old notehead/accidental. We pick the spelling with the **smallest comma
+ * alteration** (the most natural enharmonic), which reproduces SymbTr's own spellings
+ * (e.g. 321→"Do5#3", 301→"La4b4").
+ *
+ * @param style "solfege" → Do/Re/Mi… (matches `noteName`); "western" → C/D/E… (matches `noteAE`).
+ */
+export function komaToName(koma: number, style: "solfege" | "western" = "solfege"): string {
+  const block = Math.floor(koma / 53);
+  let best: { letter: string; octave: number; alter: number } | null = null;
+  for (let o = block - 2; o <= block + 1; o++) {
+    for (const letter of LETTERS) {
+      const natural = 53 * (o + 1) + PC_COMMA[letter]!;
+      const alter = koma - natural;
+      if (Math.abs(alter) > 8) continue;
+      if (!best || Math.abs(alter) < Math.abs(best.alter)) best = { letter, octave: o, alter };
+    }
+  }
+  if (!best) return ""; // out of representable range
+  const base = style === "western" ? best.letter : LETTER_TO_SOLFEGE[best.letter]!;
+  const suffix = best.alter > 0 ? `#${best.alter}` : best.alter < 0 ? `b${-best.alter}` : "";
+  return `${base}${best.octave}${suffix}`;
+}
+
+export interface AccidentalGlyph {
+  /** SMuFL glyph name (matches Bravura's glyphnames.json). */
+  name: string;
+  /** Unicode code point to render in the Bravura font. */
+  codepoint: number;
+}
+
+// Verified SMuFL code points. Keyed by signed comma alteration.
+const GLYPHS: Record<number, AccidentalGlyph> = {
+  1: { name: "accidentalKomaSharp", codepoint: 0xe444 },
+  2: { name: "accidental2CommaSharp", codepoint: 0xe451 },
+  3: { name: "accidental3CommaSharp", codepoint: 0xe452 },
+  4: { name: "accidentalBakiyeSharp", codepoint: 0xe445 },
+  5: { name: "accidentalKucukMucennebSharp", codepoint: 0xe446 },
+  8: { name: "accidentalBuyukMucennebSharp", codepoint: 0xe447 },
+  [-1]: { name: "accidentalKomaFlat", codepoint: 0xe443 },
+  [-2]: { name: "accidental2CommaFlat", codepoint: 0xe455 },
+  [-3]: { name: "accidental3CommaFlat", codepoint: 0xe456 },
+  [-4]: { name: "accidentalBakiyeFlat", codepoint: 0xe442 },
+  [-5]: { name: "accidentalKucukMucennebFlat", codepoint: 0xe441 },
+  [-8]: { name: "accidentalBuyukMucennebFlat", codepoint: 0xe440 },
+};
+
+/**
+ * Map a comma alteration to its SMuFL accidental glyph. Returns null for 0 (natural) and
+ * for alterations with no dedicated glyph (rare values like ±6/±7) — callers fall back to a
+ * text label from `accidentalLabel`.
+ */
+export function accidentalGlyph(alterCommas: number): AccidentalGlyph | null {
+  return GLYPHS[alterCommas] ?? null;
+}
+
+const NAMED: Record<number, string> = { 1: "koma", 4: "bakiye", 5: "küçük mücennep", 8: "büyük mücennep" };
+
+/**
+ * Human-readable Turkish name of an accidental, for the edit modal and the legend.
+ * Examples: +1 → "koma diyezi", -4 → "bakiye bemolü", +2 → "2 koma diyezi".
+ */
+export function accidentalLabel(alterCommas: number): string {
+  if (alterCommas === 0) return "natural";
+  const dir = alterCommas > 0 ? "diyezi" : "bemolü"; // sharp / flat
+  const mag = Math.abs(alterCommas);
+  const base = NAMED[mag] ?? `${mag} koma`;
+  return `${base} ${dir}`;
+}

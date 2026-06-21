@@ -1,0 +1,11 @@
+/* Bravura — the SMuFL reference music font (SIL OFL). Provides Western notation glyphs
+   AND the Turkish AEU/folk microtonal accidentals used by the sheet view. */
+@font-face {
+  font-family: "Bravura";
+  src: url("/fonts/Bravura.woff2") format("woff2");
+  font-display: block;
+}
+
+body {
+  margin: 0;
+}

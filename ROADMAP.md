@@ -241,8 +241,24 @@ produce a real, demoable app with zero machine learning.
   interface). Type-checks clean.
 - ✅ `apps/web` (React + Vite): loads note-model JSON, **piano-roll** view (pitch = 53-TET
   comma, hover for note details), Web Audio `AudioBackend` playback at 53-TET. Builds + serves.
-- ⏳ Remaining: **drag-to-edit** note time & pitch (the core editing feature); optional VexFlow
-  notation view; later, feed OMR output into this harness.
+- ✅ **Drag-to-edit** (the core editing feature): drag a note vertically to change pitch
+  (snaps to nearest comma, frequency + playback update live); drag its right edge to change
+  duration (following notes reflow). Edits flow up to App → rebuild doc → re-render + replay.
+  Inverse pitch-mapping math verified (zero round-trip error).
+- ✅ **Sheet-music view + measure editor** (instructive mode): Piano-roll | Sheet toggle. The
+  custom SVG staff renders real **Turkish AEU accidentals via the Bravura font** (SMuFL
+  glyphs; code points verified against `glyphnames.json`). Top-right **Edit** button → click a
+  measure → modal. Modal **Basic** tab: pick base note + how many commas sharp/flat (custom
+  dropdown showing the Bravura **symbol + Turkish name**), duration, add/delete; **Advanced**
+  tab adds absolute koma + frequency editing. **Save disabled + warning** unless the measure's
+  total duration is preserved. Pitch stored as explicit spelling (letter+octave+alter), so
+  names never enharmonically flip — verified: all 266 sample notes round-trip name & koma
+  exactly. New core (`notation.ts`, `measures.ts`, `tempo.ts`) is mobile-reusable; tempo
+  derived in TS so no Python/schema change.
+- ⏳ Optional later: feed OMR output into this harness (Phase 4).
+
+**Phase 1 is complete** (piano-roll editor + sheet/notation editor). Next major milestone is the
+ML track (Phase 2: synthetic training data), unless we polish the harness further first.
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).

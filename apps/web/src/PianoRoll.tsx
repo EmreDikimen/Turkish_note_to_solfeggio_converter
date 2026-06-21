@@ -1,9 +1,20 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { buildTimeline, type NoteModelDocument } from "@turkish-omr/core";
+import type { NoteEdit } from "./App";
 
 const HEIGHT = 360;
 const PAD = 24;
 const PX_PER_SECOND = 90;
+const NOTE_H = 8; // drawn bar thickness
+const GRAB_Y = 9; // how close (px) vertically you must be to grab a note
+const EDGE_PX = 6; // width of the right-edge "resize" zone
+const MIN_DURATION_MS = 40;
+
+/** Stable vertical range for the roll (set once per loaded score by App). */
+export interface PitchRange {
+  minKoma: number;
+  maxKoma: number;
+}
 
 interface Hover {
   x: number;
@@ -11,48 +22,88 @@ interface Hover {
   label: string;
 }
 
+// A drag in progress. `mode` decides what the motion changes; `startMs` is the dragged
+// note's fixed start time (depends only on earlier notes, so it's safe to cache here).
+type Drag = { index: number; mode: "pitch" | "duration"; startMs: number } | null;
+
 /**
- * Minimal piano-roll view: x = time, y = pitch (53-TET comma). Each note is a blue bar;
- * rests are simply gaps. This will become the editing surface (drag a bar to change its
- * time/pitch) in the next increment.
+ * Piano-roll view + editor: x = time, y = pitch (53-TET comma). Each note is a bar; rests
+ * are gaps. Drag a bar up/down to change pitch; drag its right edge to change duration.
  *
- * What/why: a piano-roll is the most natural way to *edit* time and pitch (the user's goal:
- * fix OMR mistakes), and far simpler than rendering true microtonal notation. We draw it on
- * an HTML `<canvas>` because we may have hundreds of notes — drawing each as a DOM element
- * would be slow; one canvas redraw is cheap.
+ * What/why: a piano-roll is the natural surface for correcting OMR mistakes (the user's
+ * goal). We draw on a `<canvas>` (fast for many notes) and do our own hit-testing, because
+ * canvas has no clickable note objects. Edits don't mutate here — we call `onEditNote` and
+ * let App rebuild the document (single source of truth), which re-renders us.
  * How it's organized:
- *   * `xOf`/`yOf` map musical values → pixel coordinates (the heart of any roll).
- *   * a `useLayoutEffect` does the actual drawing whenever the score changes.
- *   * `onMove` does hit-testing for the hover tooltip.
+ *   * `xOf`/`yOf` (+ inverse `yToKoma`) map between musical values and pixels.
+ *   * `noteRects` precomputes each note's on-screen rectangle (used by draw AND hit-test).
+ *   * pointer handlers implement hover, cursor feedback, and dragging.
  */
-export function PianoRoll({ doc }: { doc: NoteModelDocument }) {
+export function PianoRoll({
+  doc,
+  pitchRange,
+  onEditNote,
+}: {
+  doc: NoteModelDocument;
+  pitchRange: PitchRange;
+  onEditNote: (index: number, patch: NoteEdit) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hover, setHover] = useState<Hover | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const drag = useRef<Drag>(null);
 
   const timeline = buildTimeline(doc);
   const notes = doc.events.filter((e) => e.kind === "note");
-  const komas = notes.map((n) => n.koma53);
-  const minKoma = Math.min(...komas) - 1;
-  const maxKoma = Math.max(...komas) + 1;
+  const { minKoma, maxKoma } = pitchRange;
   const width = Math.max(800, Math.ceil((timeline.totalMs / 1000) * PX_PER_SECOND) + PAD * 2);
 
-  // Map a time in milliseconds to a horizontal pixel position: later notes sit further
-  // right. PX_PER_SECOND sets the zoom; PAD leaves a margin for the pitch labels.
+  // Map a time (ms) to a horizontal pixel position; later notes sit further right.
   const xOf = (ms: number) => PAD + (ms / 1000) * PX_PER_SECOND;
-  // Map a pitch (comma) to a vertical pixel position. Note the `1 - ...`: canvas y grows
-  // DOWNWARD, but higher pitches should appear HIGHER, so we flip. We scale the piece's own
-  // [minKoma, maxKoma] range to fill the height, so any register looks reasonable.
+  // Map a pitch (comma) to a vertical pixel; flipped because canvas y grows downward.
   const yOf = (koma: number) =>
     PAD + (1 - (koma - minKoma) / (maxKoma - minKoma)) * (HEIGHT - PAD * 2);
+  // Inverse of yOf: a pixel y back to a (fractional) comma. Used while dragging pitch.
+  const yToKoma = (y: number) =>
+    minKoma + (1 - (y - PAD) / (HEIGHT - PAD * 2)) * (maxKoma - minKoma);
 
-  // Draw the whole roll. Runs after render and whenever `doc`/`width` change.
-  // What/why: canvas drawing is an imperative side-effect (it pokes pixels), which doesn't
-  // belong in the JSX return; useLayoutEffect is the React hook for "do this against the
-  // real DOM node right after it's on screen." We redraw from scratch each time — simplest
-  // and plenty fast for this many notes.
-  // How it works: (1) size the canvas for the screen's pixel density (`dpr`) so it's crisp
-  // on retina displays; (2) paint the background; (3) draw a faint gridline + name label for
-  // each distinct pitch used; (4) draw every note as a blue bar at xOf(start)/yOf(pitch).
+  // Precompute each note's rectangle once. Recomputed every render (cheap), so it always
+  // reflects the latest edited doc. Shared by drawing and hit-testing so they never disagree.
+  const noteRects = useMemo(
+    () =>
+      timeline.notes
+        .filter((sn) => !sn.isRest)
+        .map((sn) => {
+          const ev = notes.find((n) => n.index === sn.index)!;
+          return {
+            sn,
+            ev,
+            x: xOf(sn.startMs),
+            w: Math.max(2, (sn.durationMs / 1000) * PX_PER_SECOND - 1),
+            yCenter: yOf(ev.koma53),
+          };
+        }),
+    [doc, minKoma, maxKoma],
+  );
+
+  // Hit-test: which note (if any) is under the cursor, and is the cursor on its right edge?
+  function hitTest(mx: number, my: number) {
+    let best: (typeof noteRects)[number] | null = null;
+    let bestDy = GRAB_Y;
+    for (const r of noteRects) {
+      if (mx < r.x || mx > r.x + r.w + EDGE_PX) continue;
+      const dy = Math.abs(my - r.yCenter);
+      if (dy < bestDy) {
+        bestDy = dy;
+        best = r;
+      }
+    }
+    if (!best) return null;
+    const nearRightEdge = best.w >= 10 && Math.abs(mx - (best.x + best.w)) <= EDGE_PX;
+    return { rect: best, nearRightEdge };
+  }
+
+  // Draw the roll. Redraws whenever the doc, size, range, or the active (dragged) note change.
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -67,7 +118,7 @@ export function PianoRoll({ doc }: { doc: NoteModelDocument }) {
     ctx.fillStyle = "#fafafa";
     ctx.fillRect(0, 0, width, HEIGHT);
 
-    // horizontal gridlines per comma that an actual note uses
+    // faint gridline + name label for each distinct pitch currently used
     ctx.strokeStyle = "#eee";
     ctx.fillStyle = "#bbb";
     ctx.font = "10px system-ui";
@@ -83,60 +134,78 @@ export function PianoRoll({ doc }: { doc: NoteModelDocument }) {
       ctx.fillText(n.noteName, 2, y + 3);
     }
 
-    // note blocks
-    for (const sn of timeline.notes) {
-      if (sn.isRest) continue;
-      const ev = notes.find((n) => n.index === sn.index)!;
-      const x = xOf(sn.startMs);
-      const w = Math.max(2, (sn.durationMs / 1000) * PX_PER_SECOND - 1);
-      const y = yOf(ev.koma53) - 4;
-      ctx.fillStyle = "#3b82f6";
-      ctx.fillRect(x, y, w, 8);
+    // note bars (the one being dragged is highlighted)
+    for (const r of noteRects) {
+      ctx.fillStyle = r.ev.index === activeIndex ? "#f59e0b" : "#3b82f6";
+      ctx.fillRect(r.x, r.yCenter - NOTE_H / 2, r.w, NOTE_H);
     }
-  }, [doc, width]);
+  }, [doc, width, minKoma, maxKoma, activeIndex]);
 
-  // Find which note (if any) the mouse is over, to show a tooltip ("hit-testing").
-  // What/why: the canvas is just pixels — it has no clickable note objects like the DOM
-  // would — so when the mouse moves we manually check the cursor against each note's
-  // rectangle and pick the closest one vertically within the bar's time span. This same
-  // hit-testing is what dragging-to-edit will build on next.
-  // How it works: convert the mouse position to canvas coordinates, then loop notes; for any
-  // whose x-span contains the cursor, keep the one whose y is nearest (within a threshold).
-  function onMove(e: React.MouseEvent<HTMLCanvasElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    let best: Hover | null = null;
-    let bestDist = 14;
-    for (const sn of timeline.notes) {
-      if (sn.isRest) continue;
-      const ev = notes.find((n) => n.index === sn.index)!;
-      const x = xOf(sn.startMs);
-      const w = Math.max(2, (sn.durationMs / 1000) * PX_PER_SECOND - 1);
-      const y = yOf(ev.koma53);
-      if (mx >= x && mx <= x + w) {
-        const d = Math.abs(my - y);
-        if (d < bestDist) {
-          bestDist = d;
-          best = {
-            x: mx,
-            y: my,
-            label: `${ev.noteName} (${ev.noteAE}) · ${sn.freqHz.toFixed(1)} Hz · ${ev.durationMs} ms${ev.lyric ? ` · "${ev.lyric}"` : ""}`,
-          };
-        }
+  // Pointer down: decide whether we're starting a pitch-drag or a duration-resize.
+  function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const { mx, my } = toLocal(e);
+    const hit = hitTest(mx, my);
+    if (!hit) return;
+    e.currentTarget.setPointerCapture(e.pointerId); // keep receiving moves even off-canvas
+    drag.current = {
+      index: hit.rect.ev.index,
+      mode: hit.nearRightEdge ? "duration" : "pitch",
+      startMs: hit.rect.sn.startMs,
+    };
+    setActiveIndex(hit.rect.ev.index);
+  }
+
+  // Pointer move: if dragging, translate motion into an edit; otherwise update hover+cursor.
+  function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const { mx, my } = toLocal(e);
+    const d = drag.current;
+    if (d) {
+      if (d.mode === "pitch") {
+        const koma = Math.max(minKoma, Math.min(maxKoma, Math.round(yToKoma(my))));
+        onEditNote(d.index, { koma53: koma });
+        setHover({ x: mx, y: my, label: `comma ${koma}` });
+      } else {
+        const durationMs = Math.max(MIN_DURATION_MS, Math.round(((mx - xOf(d.startMs)) * 1000) / PX_PER_SECOND));
+        onEditNote(d.index, { durationMs });
+        setHover({ x: mx, y: my, label: `${durationMs} ms` });
       }
+      return;
     }
-    setHover(best);
+    // not dragging: hover tooltip + cursor affordance
+    const hit = hitTest(mx, my);
+    e.currentTarget.style.cursor = hit ? (hit.nearRightEdge ? "ew-resize" : "grab") : "default";
+    if (hit) {
+      const { ev, sn } = hit.rect;
+      setHover({
+        x: mx,
+        y: my,
+        label: `${ev.noteName} (${ev.noteAE}) · ${sn.freqHz.toFixed(1)} Hz · ${ev.durationMs} ms${ev.lyric ? ` · "${ev.lyric}"` : ""}`,
+      });
+    } else {
+      setHover(null);
+    }
+  }
+
+  function endDrag() {
+    drag.current = null;
+    setActiveIndex(null);
   }
 
   return (
     <div style={{ position: "relative", overflowX: "auto", border: "1px solid #ddd", borderRadius: 6 }}>
-      <canvas ref={canvasRef} onMouseMove={onMove} onMouseLeave={() => setHover(null)} />
+      <canvas
+        ref={canvasRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onMouseLeave={() => !drag.current && setHover(null)}
+      />
       {hover && (
         <div
           style={{
             position: "absolute",
-            left: Math.min(hover.x + 12, 1),
+            left: hover.x + 12,
             top: hover.y + 12,
             background: "#111",
             color: "#fff",
@@ -152,4 +221,10 @@ export function PianoRoll({ doc }: { doc: NoteModelDocument }) {
       )}
     </div>
   );
+}
+
+// Convert a pointer event to canvas-local pixel coordinates.
+function toLocal(e: React.PointerEvent<HTMLCanvasElement>) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  return { mx: e.clientX - rect.left, my: e.clientY - rect.top };
 }

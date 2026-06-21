@@ -67,13 +67,14 @@ Current (Phase 0 — Python reference implementation):
 ├── data/
 │   ├── raw/            # input scores (e.g. SymbTr .txt)
 │   └── processed/      # generated audio / processed data
-├── src/
-│   ├── symbtr/         # SymbTr .txt parser → Score/Event model
+├── src/                # Python (reference impl + training side)
+│   ├── symbtr/         # SymbTr .txt parser → Score/Event model + JSON export
 │   ├── audio/          # 53-TET tuning + synthesis (reference impl; ported to TS core)
 │   └── vision/         # (later) OpenCV preprocessing & OMR training
-├── scripts/            # runnable entry points
-├── notebooks/          # prototyping & EDA
-├── docs/               # research notes
+├── scripts/            # runnable Python entry points
+├── packages/core/      # shared TypeScript: note model, tuning, synth scheduling
+├── apps/web/           # React test harness (piano-roll + Web Audio)
+├── docs/               # research notes & CODE_TOUR.md
 ├── ROADMAP.md          # detailed build plan (source of truth)
 ├── README.md           # this overview
 └── requirements.txt    # Python dependencies

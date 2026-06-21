@@ -66,12 +66,30 @@ class Event:
 
     @property
     def kind(self) -> EventKind:
+        """Classify this row as a NOTE, a REST, or META.
+
+        What/why: every downstream stage (synth, JSON export, the editor) needs to
+        know whether a row makes sound. Rather than scatter that decision everywhere,
+        we compute it once here from the raw columns.
+        How it works: SymbTr marks sounding rows with ``Kod == 9``; among those, a
+        ``Koma53`` of -1 means a rest (silence) and anything else is a pitched note.
+        Every other code (51 = usul change, 8/10/11/12 = ornament markers, ...) is META.
+        Important: this is a *derived* property, not stored data — change the rule here
+        and the whole pipeline follows.
+        """
         if self.code == NOTE_CODE:
             return EventKind.REST if self.koma_53 == REST_KOMA else EventKind.NOTE
         return EventKind.META
 
     @property
     def duration_s(self) -> float:
+        """Duration in seconds.
+
+        What/why: the synthesizer thinks in seconds, but SymbTr stores milliseconds
+        in the ``Ms`` column. This converts on demand so callers never juggle units.
+        Important: we use the pre-computed ``Ms`` value (not Pay/Payda + tempo), which
+        is why Phase 0 needs no usul/tempo math.
+        """
         return self.ms / 1000.0
 
 
@@ -89,15 +107,34 @@ class Score:
 
     @property
     def notes(self) -> list[Event]:
+        """Just the pitched notes, in order (rests and meta filtered out).
+
+        What/why: convenient for anything that only cares about pitches — e.g. the
+        ``--info`` printout, or computing the pitch range of a piece. It does NOT
+        include rests, so don't use it for playback timing (use ``sounding_events``).
+        """
         return [e for e in self.events if e.kind is EventKind.NOTE]
 
     @property
     def sounding_events(self) -> list[Event]:
-        """Notes and rests in order -- everything the synthesizer needs."""
+        """Notes AND rests in order — everything the synthesizer needs.
+
+        What/why: playback must keep rests, because a rest occupies time (silence) and
+        shifts every following note later. Dropping rests would make the piece play too
+        fast and out of sync with the lyrics. Meta rows are excluded — they make no sound.
+        """
         return [e for e in self.events if e.kind in (EventKind.NOTE, EventKind.REST)]
 
 
 def _to_int(value: str, default: int = 0) -> int:
+    """Parse a column string to int, tolerantly (helper; leading ``_`` = private).
+
+    Why: real-world data files are messy — a numeric cell might be blank, have stray
+    spaces, or be written as "4.0" instead of "4". A bare ``int(value)`` would crash on
+    all of those and kill the whole parse. We want the parser to survive one bad cell.
+    How it works: strip spaces, try a plain int; if that fails, try via float (handles
+    "4.0"); if that also fails, fall back to ``default`` instead of raising.
+    """
     value = value.strip()
     try:
         return int(value)
@@ -109,6 +146,10 @@ def _to_int(value: str, default: int = 0) -> int:
 
 
 def _to_float(value: str, default: float = 0.0) -> float:
+    """Parse a column string to float, tolerantly. Same rationale as ``_to_int``.
+
+    Used for the ``Offset`` column (e.g. "0.250000"); falls back to ``default`` on junk.
+    """
     value = value.strip()
     try:
         return float(value)
@@ -135,7 +176,22 @@ def _parse_metadata_from_name(stem: str) -> dict[str, str]:
 
 
 def parse_file(path: str | Path) -> Score:
-    """Parse a SymbTr ``.txt`` file into a :class:`Score`."""
+    """Parse a SymbTr ``.txt`` file into a :class:`Score`. **This is the entry point.**
+
+    What it does: reads the file, validates it's really a SymbTr table, pulls metadata
+    from the filename, and turns every data row into an :class:`Event`.
+    Why it exists: it's the single front door to the dataset — every other module starts
+    from the `Score` this returns, so they never touch raw text or tab-splitting.
+    How it works, step by step:
+      1. Read all lines (UTF-8, because makam/lyric text is Turkish).
+      2. Validate the header against ``EXPECTED_COLUMNS`` — fail loudly if the format
+         changed, instead of silently mis-reading columns.
+      3. Derive makam/form/usul/title/composer from the filename.
+      4. For each remaining line: skip blanks, split on tabs, pad short rows (a missing
+         trailing lyric leaves fewer columns), and build one ``Event`` per row.
+    Important: the per-cell parsing uses the tolerant ``_to_int``/``_to_float`` helpers,
+    so a single malformed cell degrades to a default rather than crashing the whole parse.
+    """
     path = Path(path)
     lines = path.read_text(encoding="utf-8").splitlines()
     if not lines:

@@ -232,16 +232,21 @@ produce a real, demoable app with zero machine learning.
 - `scripts/symbtr_to_audio.py` — CLI: `python scripts/symbtr_to_audio.py <file.txt> -o out.wav --info`.
 - Sample input in `data/raw/`, sample output in `data/processed/`.
 
-Note: Phase-0 Python (`src/`) is the **reference implementation** — its tuning + synth logic
-gets ported to the TS core. It will move under `ml/` when the repo is restructured in Phase 1.
+**Phase 1: IN PROGRESS (2026-06-20).** Shared TS core + web harness, playback working.
+- ✅ Python `SymbTr → note-model JSON` exporter — `src/symbtr/export_json.py` +
+  `scripts/symbtr_to_json.py` (schemaVersion 1; notes/rests/meta tagged; carries tuning params).
+- ✅ npm-workspaces monorepo: root `package.json` (workspaces `packages/*`, `apps/*`).
+- ✅ `packages/core` (TypeScript): `types.ts` (note model), `tuning.ts` (`koma53ToFreq`,
+  verified parity with Python to 4e-5 Hz), `scheduling.ts` (`buildTimeline` + `AudioBackend`
+  interface). Type-checks clean.
+- ✅ `apps/web` (React + Vite): loads note-model JSON, **piano-roll** view (pitch = 53-TET
+  comma, hover for note details), Web Audio `AudioBackend` playback at 53-TET. Builds + serves.
+- ⏳ Remaining: **drag-to-edit** note time & pitch (the core editing feature); optional VexFlow
+  notation view; later, feed OMR output into this harness.
 
-**Next action: Phase 1** (in order):
-1. Python `SymbTr → note-model JSON` exporter (mirror `Event`: koma_53, ms/duration, note name,
-   lyric, kind) — the bridge that feeds the TS side.
-2. Set up the repo: `ml/`, `packages/core/` (TS), `apps/web/` (React). Pick a monorepo tool
-   (pnpm/npm workspaces).
-3. Port note model + `koma53_to_freq` + synth scheduling into `packages/core`; define the
-   `AudioBackend` interface.
-4. `apps/web`: VexFlow rendering + drag-to-edit + Web Audio `AudioBackend` at 53-TET.
+Run the harness: `npm install` then `npm run dev:web` (export a sample first:
+`python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
+
+Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosmetic and deferred.
 
 _Last updated: 2026-06-20._

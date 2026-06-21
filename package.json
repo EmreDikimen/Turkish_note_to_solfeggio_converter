@@ -1,0 +1,15 @@
+{
+  "name": "turkish-omr",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Classical Turkish Music OMR — shared TS core + web test harness (mobile is the product)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run -ws --if-present typecheck",
+    "build": "npm run -ws --if-present build",
+    "dev:web": "npm run -w @turkish-omr/web dev"
+  }
+}

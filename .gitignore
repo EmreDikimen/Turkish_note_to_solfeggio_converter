@@ -55,6 +55,15 @@ data/processed/*
 *.weights
 *.h5
 
+# Node / JS workspace
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
+# SymbTr-derived sample (don't redistribute dataset content)
+apps/web/public/sample.json
+
 # IDEs
 .idea/
 .vscode/

@@ -1,8 +1,8 @@
 # Roadmap — Classical Turkish Music OMR App
 
 > This document is the source of truth for **what to build and why**. It was written
-> after a planning discussion to correct misconceptions in the original `README.md`
-> (which was AI-generated and contains an inaccurate pipeline). Where this file and
+> after a planning discussion to correct misconceptions in an early AI-generated draft of
+> `README.md` (the README has since been corrected to match). Where this file and
 > `README.md` disagree, **this file wins**.
 
 ---
@@ -39,29 +39,8 @@ microtonal accidentals* → produce an **editable** note model → play it back 
   mechanics (data loaders, loss wiring, sanity checks), not architecture theory.
 - New concept to reinforce when relevant: **CTC loss** (alignment-free sequence labeling).
 
----
 
-## 2. Critical corrections to the original README
-
-These three reframes simplify the project enormously. Internalize them before coding.
-
-1. **SymbTr-2.0.0 is a *symbolic* dataset, not images.** It holds machine-readable
-   scores (`.txt`, MusicXML, MIDI, `.mu2`, PDF) for ~2,200 makam pieces, with
-   53-TET/AEU pitches already encoded. It has **no `(image, label)` pairs**, so you
-   **cannot train OMR directly on it**. Instead, use it to *generate* synthetic
-   labeled images and as the ground-truth pitch table.
-
-2. **The README's "DSP pitch-shifting" stage is unnecessary.** Once OMR yields a
-   symbol, look up its exact 53-TET frequency from a table and synthesize directly
-   ("play frequency F for duration D"). No audio pitch-scaling subsystem needed.
-
-3. **Turkish classical music is monophonic** (single melodic line). This skips the
-   hard, unsolved part of OMR (polyphony). A single-staff end-to-end recognizer is
-   tractable.
-
----
-
-## 3. Target architecture
+## 2. Target architecture
 
 ```
 Photo
@@ -129,7 +108,7 @@ Score { makam, usul, notes[] }
 
 ---
 
-## 4. Phased plan
+## 3. Phased plan
 
 **Build order is deliberately NOT the README's order.** ML comes last. Phases 0–1
 produce a real, demoable app with zero machine learning.
@@ -183,7 +162,8 @@ produce a real, demoable app with zero machine learning.
 
 ### Phase 4 — End-to-end integration
 - Wire: preprocess → staff isolation → CRNN → decode → note model → existing editor.
-- OMR runs **server-side**; browser sends image, gets back the note model.
+- OMR runs **on-device** via `onnxruntime-web` in the harness (no production backend, per §1) —
+  the browser loads the exported ONNX model and produces the note model locally.
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
 
 ### Phase 5 — Mobile app (THE PRODUCT)
@@ -196,7 +176,7 @@ produce a real, demoable app with zero machine learning.
 
 ---
 
-## 5. Tech stack reference
+## 4. Tech stack reference
 
 | Layer | Tool |
 |---|---|
@@ -210,7 +190,7 @@ produce a real, demoable app with zero machine learning.
 
 ---
 
-## 6. Key risks / watch-items
+## 5. Key risks / watch-items
 - **Synthetic→real domain gap** — the #1 risk. Mitigate with aggressive, realistic
   augmentation and a real-photo fine-tuning set. Do not skip the real photos.
 - **Microtonal glyph coverage** in the rendering font — verify koma/bakiye/küçük
@@ -221,7 +201,7 @@ produce a real, demoable app with zero machine learning.
 
 ---
 
-## 7. Status / next action
+## 6. Status / next action
 
 **Phase 0: DONE (2026-06-20).** Symbolic → microtonal audio pipeline works with no ML.
 - SymbTr dataset lives at `~/Downloads/SymbTr-2.0.0/` (txt, MusicXML, midi, mu2; 2200 pieces).
@@ -232,7 +212,7 @@ produce a real, demoable app with zero machine learning.
 - `scripts/symbtr_to_audio.py` — CLI: `python scripts/symbtr_to_audio.py <file.txt> -o out.wav --info`.
 - Sample input in `data/raw/`, sample output in `data/processed/`.
 
-**Phase 1: IN PROGRESS (2026-06-20).** Shared TS core + web harness, playback working.
+**Phase 1: DONE (2026-06-22).** Shared TS core + web harness; load → view → edit → playback all working.
 - ✅ Python `SymbTr → note-model JSON` exporter — `src/symbtr/export_json.py` +
   `scripts/symbtr_to_json.py` (schemaVersion 1; notes/rests/meta tagged; carries tuning params).
 - ✅ npm-workspaces monorepo: root `package.json` (workspaces `packages/*`, `apps/*`).
@@ -269,6 +249,14 @@ produce a real, demoable app with zero machine learning.
   names never enharmonically flip — verified: all 266 sample notes round-trip name & koma
   exactly. New core (`notation.ts`, `measures.ts`, `tempo.ts`) is mobile-reusable; tempo
   derived in TS so no Python/schema change.
+- ✅ **Key-signature mode** (added 2026-06-22): a sheet-view toggle (the **♯♭ Key sig** button)
+  that draws the score's prevailing accidentals once after the clef on every row (makam-style
+  signature) and suppresses inline accidentals on notes that match — deviating notes still show
+  one (a natural sign when the note is natural under an altered signature). Signature is derived
+  in core (`deriveKeySignature` in `notation.ts` = most-frequent accidental per pitch letter).
+  Drawn by reserving width via `Stave.setNoteStartX` and appending Bravura SVG glyphs (VexFlow's
+  native `KeySignature` only supports standard Western keys). This is the button-only slice of the
+  README's deferred "settings modal" idea; the full modal (view/theme/this toggle) is still TODO.
 - ⏳ Optional later: feed OMR output into this harness (Phase 4).
 
 **Phase 1 is complete** (piano-roll editor + sheet/notation editor). Next major milestone is the

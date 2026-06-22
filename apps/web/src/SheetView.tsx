@@ -3,6 +3,7 @@ import { Accidental, Dot, Formatter, Renderer, Stave, StaveNote } from "vexflow"
 import {
   accidentalGlyph,
   accidentalLabel,
+  deriveKeySignature,
   eventBeats,
   groupMeasures,
   parseNoteName,
@@ -19,6 +20,10 @@ const STAVE_TOP_PAD = 40; // headroom above each stave for high notes / beams
 const CLEF_W = 50; // extra width the leading clef costs on the first stave of a row
 const SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
 const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
+const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
+// Staff line each signature accidental sits on (VexFlow treble: F5=line0, B4=line2, E4=line4),
+// choosing an octave that keeps every letter on the staff.
+const SIG_LINE: Record<string, number> = { C: 1.5, D: 1, E: 0.5, F: 0, G: 3, A: 2.5, B: 2 };
 
 // VexFlow duration codes paired with their value as a fraction of a whole note.
 const DUR: ReadonlyArray<readonly [string, number]> = [
@@ -50,8 +55,17 @@ function vexDuration(beats: number): { duration: string; dots: number } {
   return { duration: best[0], dots: 0 };
 }
 
-/** Build the VexFlow StaveNotes for one measure (parallel `evs` keeps the source event). */
-function buildStaveNotes(measure: Measure): { notes: StaveNote[]; evs: NoteEvent[] } {
+/**
+ * Build the VexFlow StaveNotes for one measure (parallel `evs` keeps the source event).
+ *
+ * When `signature` is non-null (key-signature mode), an inline accidental is drawn only for
+ * notes that deviate from the signature: a note matching its letter's signature gets none, and
+ * a natural note under an altered signature gets an explicit natural sign.
+ */
+function buildStaveNotes(
+  measure: Measure,
+  signature: Map<string, number> | null,
+): { notes: StaveNote[]; evs: NoteEvent[] } {
   const notes: StaveNote[] = [];
   const evs: NoteEvent[] = [];
   for (const ev of measure.events) {
@@ -70,18 +84,31 @@ function buildStaveNotes(measure: Measure): { notes: StaveNote[]; evs: NoteEvent
     // Staff position comes from letter+octave only (Turkish accidentals don't shift the
     // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
     const n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
-    if (parsed.alterCommas !== 0) {
-      const g = accidentalGlyph(parsed.alterCommas);
-      // Pass the SMuFL glyph CHARACTER as the accidental type: VexFlow renders unknown codes
-      // verbatim in the (Bravura) music font, so every Turkish koma/bakiye/mücennep glyph
-      // works and VexFlow still reserves horizontal space for it.
-      if (g) n.addModifier(new Accidental(String.fromCodePoint(g.codepoint)), 0);
+    const sigAlter = signature ? signature.get(parsed.letter) ?? 0 : null;
+    if (sigAlter === null) {
+      // No signature: show every alteration inline (default behavior).
+      if (parsed.alterCommas !== 0) addAccidental(n, parsed.alterCommas);
+    } else if (parsed.alterCommas !== sigAlter) {
+      // Key-signature mode: only mark deviations. A natural under an altered signature needs
+      // an explicit natural sign; otherwise draw the glyph for the note's alteration.
+      if (parsed.alterCommas === 0) n.addModifier(new Accidental("n"), 0);
+      else addAccidental(n, parsed.alterCommas);
     }
     for (let i = 0; i < dots; i++) Dot.buildAndAttach([n], { all: true });
     notes.push(n);
     evs.push(ev);
   }
   return { notes, evs };
+}
+
+/**
+ * Attach a Turkish accidental to a note. Pass the SMuFL glyph CHARACTER as the accidental type:
+ * VexFlow renders unknown codes verbatim in the (Bravura) music font, so every koma/bakiye/
+ * mücennep glyph works and VexFlow still reserves horizontal space for it.
+ */
+function addAccidental(n: StaveNote, alterCommas: number) {
+  const g = accidentalGlyph(alterCommas);
+  if (g) n.addModifier(new Accidental(String.fromCodePoint(g.codepoint)), 0);
 }
 
 /** After drawing, attach an SVG <title> to each note so hovering shows pitch/freq/duration. */
@@ -103,6 +130,33 @@ function attachTitles(notes: StaveNote[], evs: NoteEvent[]) {
         : `${ev.noteName} · ${(ev.freqHz ?? 0).toFixed(1)} Hz · ${ev.durationMs} ms` +
           (p.alterCommas !== 0 ? ` · ${accidentalLabel(p.alterCommas)}` : "");
     el.appendChild(title);
+  });
+}
+
+/**
+ * Draw the score's key signature into the gap reserved after the clef on one stave. Glyphs are
+ * appended as Bravura <text> nodes (the same approach the per-note titles use) at the staff line
+ * for each letter. `startX` is where the signature begins (just after the clef).
+ */
+function drawSignature(
+  svg: SVGSVGElement,
+  stave: Stave,
+  signature: { letter: string; alterCommas: number }[],
+  startX: number,
+) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  signature.forEach((entry, i) => {
+    const g = accidentalGlyph(entry.alterCommas);
+    if (!g) return;
+    const text = document.createElementNS(SVG_NS, "text");
+    text.setAttribute("x", String(startX + i * SIG_GLYPH_ADVANCE));
+    text.setAttribute("y", String(stave.getYForLine(SIG_LINE[entry.letter] ?? 2)));
+    text.setAttribute("font-family", "Bravura");
+    text.setAttribute("font-size", "36"); // Bravura glyphs are designed on a 4-space (≈40px) em
+    text.setAttribute("dominant-baseline", "alphabetic");
+    text.setAttribute("fill", "#222");
+    text.textContent = String.fromCodePoint(g.codepoint);
+    svg.appendChild(text);
   });
 }
 
@@ -135,6 +189,7 @@ interface NotePos {
 export function SheetView({
   doc,
   editMode,
+  keySignatureMode,
   playing,
   getPositionMs,
   onMeasureClick,
@@ -142,6 +197,8 @@ export function SheetView({
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
+  /** When true, draw the score's accidentals once per row and suppress matching inline ones. */
+  keySignatureMode: boolean;
   /** True while there's an active (playing or paused) position — drives the playhead. */
   playing: boolean;
   /** Current playback position in ms (from the audio backend), or null when stopped. */
@@ -172,12 +229,21 @@ export function SheetView({
     return [...set].sort((a, b) => a - b);
   }, [doc]);
 
+  // The score's derived key signature (prevailing accidental per letter), and a lookup map.
+  const signature = useMemo(() => deriveKeySignature(doc), [doc]);
+  const signatureMap = useMemo(() => new Map(signature.map((s) => [s.letter, s.alterCommas])), [signature]);
+
   // Draw the score with VexFlow whenever the document changes. (Edit mode only toggles the
   // HTML overlay below, so it deliberately isn't a dependency — no need to re-engrave.)
   useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     host.innerHTML = ""; // clear any previous render (also handles React 18 double-invoke)
+
+    // Width the key signature needs after the clef on each row's first stave (0 when off).
+    const sigWidth = keySignatureMode && signature.length ? signature.length * SIG_GLYPH_ADVANCE + 10 : 0;
+    // The clef + (optional) signature both repeat on the first stave of every row.
+    const leadWidth = CLEF_W + sigWidth;
 
     // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef.
     const measures = groupMeasures(doc);
@@ -188,11 +254,11 @@ export function SheetView({
     for (const m of measures) {
       const base = Math.max(130, Math.min(420, m.events.length * 28 + 24));
       const isFirst = cur.length === 0;
-      const width = base + (isFirst ? CLEF_W : 0);
+      const width = base + (isFirst ? leadWidth : 0);
       if (!isFirst && used + width > CONTENT_WIDTH) {
         rows.push(cur);
-        cur = [{ m, width: base + CLEF_W, firstInRow: true }];
-        used = base + CLEF_W;
+        cur = [{ m, width: base + leadWidth, firstInRow: true }];
+        used = base + leadWidth;
       } else {
         cur.push({ m, width, firstInRow: isFirst });
         used += width;
@@ -204,6 +270,7 @@ export function SheetView({
     const renderer = new Renderer(host, Renderer.Backends.SVG);
     renderer.resize(SVG_WIDTH, height);
     const ctx = renderer.getContext();
+    const svg = host.querySelector("svg") as SVGSVGElement | null;
 
     const collected: MeasureBox[] = [];
     const positions: NotePos[] = [];
@@ -214,13 +281,20 @@ export function SheetView({
       for (const cell of cells) {
         const stave = new Stave(x, y, cell.width);
         if (cell.firstInRow) stave.addClef("treble");
+        // Reserve room after the clef for the key signature, and remember where to draw it.
+        let sigStartX = 0;
+        const drawSig = keySignatureMode && cell.firstInRow && signature.length > 0;
+        if (drawSig) {
+          sigStartX = stave.getNoteStartX();
+          stave.setNoteStartX(sigStartX + sigWidth);
+        }
         stave.setContext(ctx).draw();
         // Playhead extent for this row, from the actual staff-line positions (the Stave's y
         // param is its bounding-box top, which sits well above the first staff line).
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
         const barHeight = stave.getYForLine(4) - stave.getYForLine(0) + 2 * CURSOR_MARGIN;
         try {
-          const { notes, evs } = buildStaveNotes(cell.m);
+          const { notes, evs } = buildStaveNotes(cell.m, keySignatureMode ? signatureMap : null);
           if (notes.length > 0) {
             Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: true, alignRests: true });
             attachTitles(notes, evs);
@@ -232,6 +306,7 @@ export function SheetView({
               tMs += ev.durationMs;
             });
           }
+          if (drawSig && svg) drawSignature(svg, stave, signature, sigStartX + 2);
         } catch (e) {
           console.warn(`sheet: failed to render measure ${cell.m.index}`, e);
         }
@@ -247,7 +322,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc]);
+  }, [doc, keySignatureMode, signature, signatureMap]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

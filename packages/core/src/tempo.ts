@@ -32,3 +32,17 @@ export function beatsToMs(num: number, den: number, doc: NoteModelDocument): num
   if (den === 0) return 0;
   return Math.round((num / den) * estimateWholeNoteMs(doc));
 }
+
+/**
+ * Estimate the piece's natural tempo as a quarter-note BPM. A quarter note is 1/4 of a whole
+ * note, so BPM = 60000 / (wholeNoteMs / 4) = 240000 / wholeNoteMs. Used as the default for the
+ * playback-speed control and as the metronome's beat grid (one beat = one quarter note).
+ */
+export function estimateBpm(doc: NoteModelDocument): number {
+  return Math.round(240000 / estimateWholeNoteMs(doc));
+}
+
+/** Beat spacing (one quarter note) in milliseconds at the piece's natural tempo. */
+export function beatMsOf(doc: NoteModelDocument): number {
+  return estimateWholeNoteMs(doc) / 4;
+}

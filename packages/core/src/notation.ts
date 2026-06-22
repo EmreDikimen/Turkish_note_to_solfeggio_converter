@@ -11,6 +11,8 @@
  * The two sets are complementary, so every alteration the data uses (1–5 commas) has a glyph.
  */
 
+import type { NoteModelDocument } from "./types";
+
 /** Turkish solfege → Western letter (for staff positioning). */
 const SOLFEGE_TO_LETTER: Record<string, string> = {
   Do: "C",
@@ -167,4 +169,49 @@ export function accidentalLabel(alterCommas: number): string {
   const mag = Math.abs(alterCommas);
   const base = NAMED[mag] ?? `${mag} koma`;
   return `${base} ${dir}`;
+}
+
+export interface KeySignatureEntry {
+  /** Western letter C..B the accidental applies to (all octaves). */
+  letter: string;
+  /** Signed comma alteration carried by that letter throughout the score. */
+  alterCommas: number;
+}
+
+/**
+ * Derive a "key signature" for a score: the prevailing accidental of each pitch letter, so the
+ * sheet view can draw it once at the start of a staff (like a makam signature) instead of on
+ * every note.
+ *
+ * What/why: Turkish scores, like Western ones, hoist the recurring accidentals into a signature
+ * and only mark notes that deviate. We approximate the signature from the data itself: for each
+ * letter (C..B), take the accidental it carries **most often**, keeping it only if it's non-zero
+ * (a natural is the absence of a signature entry). Returned in C..B order for stable drawing.
+ */
+export function deriveKeySignature(doc: NoteModelDocument): KeySignatureEntry[] {
+  // letter -> (alterCommas -> count)
+  const counts: Record<string, Map<number, number>> = {};
+  for (const ev of doc.events) {
+    if (ev.kind !== "note") continue;
+    const p = parseNoteName(ev.noteName);
+    if (!p) continue;
+    const byAlter = (counts[p.letter] ??= new Map());
+    byAlter.set(p.alterCommas, (byAlter.get(p.alterCommas) ?? 0) + 1);
+  }
+
+  const entries: KeySignatureEntry[] = [];
+  for (const letter of LETTERS) {
+    const byAlter = counts[letter];
+    if (!byAlter) continue;
+    let bestAlter = 0;
+    let bestCount = -1;
+    for (const [alter, count] of byAlter) {
+      if (count > bestCount) {
+        bestCount = count;
+        bestAlter = alter;
+      }
+    }
+    if (bestAlter !== 0) entries.push({ letter, alterCommas: bestAlter });
+  }
+  return entries;
 }

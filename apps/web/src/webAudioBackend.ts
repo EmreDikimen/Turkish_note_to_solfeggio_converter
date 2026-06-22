@@ -15,6 +15,16 @@ const HARMONIC_GAINS = [1.0, 0.45, 0.25, 0.12, 0.06];
 /** Transport state, mirrored by the UI to pick the right play/pause/stop affordances. */
 export type PlaybackState = "stopped" | "playing" | "paused";
 
+/** Per-playback options: tempo scaling and an optional metronome click track. */
+export interface PlayOptions {
+  /** Playback speed multiplier (1 = the score's natural tempo; 2 = twice as fast). */
+  speed?: number;
+  /** Add an audible click on each beat. */
+  metronome?: boolean;
+  /** Beat spacing in MUSICAL ms (i.e. at the natural tempo); clicks land on this grid. */
+  beatMs?: number;
+}
+
 /**
  * Build a custom oscillator waveform with harmonics (the browser's version of the Python
  * synth's harmonic mixing).
@@ -41,8 +51,11 @@ export class WebAudioBackend implements AudioBackend {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private timeline: Timeline | null = null;
-  /** AudioContext time (seconds) at which timeline position 0 sounds. */
-  private originTime = 0;
+  /** AudioContext time (seconds) when playback started, and the musical ms it began at. */
+  private startCtxTime = 0;
+  private startMs = 0;
+  /** Playback speed multiplier — maps musical ms to real time (real = musical / speed). */
+  private speed = 1;
   /** Polls the audio clock to detect the natural end of the piece (pause-aware). */
   private endCheck: ReturnType<typeof setInterval> | null = null;
   private onEndedCb: (() => void) | null = null;
@@ -58,14 +71,14 @@ export class WebAudioBackend implements AudioBackend {
   }
 
   /**
-   * Current playback position in milliseconds, or null when stopped. Derived from the
-   * AudioContext clock (the same clock the notes are scheduled against), so a visual playhead
-   * stays sample-accurately in sync with what's heard. While paused the clock is frozen, so
-   * the position holds steady. Negative during the brief lead-in.
+   * Current playback position in **musical** milliseconds (at natural tempo), or null when
+   * stopped. Derived from the AudioContext clock — the same clock the notes are scheduled
+   * against — scaled back up by `speed`, so it's tempo-independent and matches the sheet's
+   * note timeline. While paused the clock is frozen, so the position holds steady.
    */
   getPositionMs(): number | null {
     if (!this.ctx) return null;
-    return (this.ctx.currentTime - this.originTime) * 1000;
+    return this.startMs + (this.ctx.currentTime - this.startCtxTime) * 1000 * this.speed;
   }
 
   /**
@@ -77,10 +90,12 @@ export class WebAudioBackend implements AudioBackend {
    * there) by simply re-scheduling from that offset.
    * How it works: make a fresh `AudioContext` + master gain, `resume()` it (the click is the
    * required user gesture), then schedule every note ahead of time relative to `fromMs`.
+   * `opts.speed` scales playback tempo; `opts.metronome` adds a click track.
    */
-  async play(timeline: Timeline, fromMs = 0): Promise<void> {
+  async play(timeline: Timeline, fromMs = 0, opts: PlayOptions = {}): Promise<void> {
     this.stop();
     this.timeline = timeline;
+    this.speed = opts.speed && opts.speed > 0 ? opts.speed : 1;
     const ctx = new AudioContext();
     this.ctx = ctx;
     await ctx.resume();
@@ -90,7 +105,7 @@ export class WebAudioBackend implements AudioBackend {
     master.connect(ctx.destination);
     this.master = master;
 
-    this.scheduleFrom(Math.max(0, fromMs));
+    this.scheduleFrom(Math.max(0, fromMs), opts);
     this.state = "playing";
   }
 
@@ -99,14 +114,20 @@ export class WebAudioBackend implements AudioBackend {
    * `fromMs` are skipped; one straddling the offset is started mid-note at full gain (no
    * attack) so seeking into a held note doesn't re-articulate it. Each note gets its OWN
    * oscillator — Web Audio oscillators are one-shot (start once, stop once).
+   *
+   * All input times are MUSICAL ms; `toReal(musicalMs)` maps them to AudioContext seconds via
+   * the speed factor, so tempo scaling is applied uniformly to notes and the metronome.
    */
-  private scheduleFrom(fromMs: number): void {
+  private scheduleFrom(fromMs: number, opts: PlayOptions): void {
     const ctx = this.ctx!;
     const master = this.master!;
     const timeline = this.timeline!;
     const wave = buildPeriodicWave(ctx);
     const t0 = ctx.currentTime + 0.05; // small lead-in
-    this.originTime = t0 - fromMs / 1000; // so getPositionMs() reads ~fromMs right away
+    this.startCtxTime = t0;
+    this.startMs = fromMs;
+    const speed = this.speed;
+    const toReal = (musicalMs: number) => t0 + (musicalMs - fromMs) / 1000 / speed;
     const attack = 0.01;
     const release = 0.03;
 
@@ -116,8 +137,8 @@ export class WebAudioBackend implements AudioBackend {
       if (noteEnd <= fromMs) continue; // already over by the time we start
 
       const playStartMs = Math.max(n.startMs, fromMs);
-      const start = t0 + (playStartMs - fromMs) / 1000;
-      const dur = (noteEnd - playStartMs) / 1000;
+      const start = toReal(playStartMs);
+      const dur = (noteEnd - playStartMs) / 1000 / speed; // real seconds, tempo-scaled
       const midNote = playStartMs > n.startMs; // seeked into the middle of this note
 
       const osc = ctx.createOscillator();
@@ -136,6 +157,17 @@ export class WebAudioBackend implements AudioBackend {
       osc.stop(start + dur + 0.02);
     }
 
+    // Metronome: a click on every beat of the musical grid, from the first beat at/after the
+    // start offset to the end of the piece. Scheduling on the musical grid keeps the clicks
+    // aligned to the beat regardless of where playback starts.
+    if (opts.metronome && opts.beatMs && opts.beatMs > 0) {
+      const beat = opts.beatMs;
+      const first = Math.ceil((fromMs - 1e-6) / beat) * beat;
+      for (let b = first; b <= timeline.totalMs + 1e-6; b += beat) {
+        this.scheduleClick(ctx, master, toReal(b));
+      }
+    }
+
     // Detect the natural end by watching the audio clock. Using the clock (not a wall-clock
     // timer) makes this automatically pause-aware: currentTime freezes while suspended.
     this.endCheck = setInterval(() => {
@@ -146,6 +178,19 @@ export class WebAudioBackend implements AudioBackend {
         cb?.();
       }
     }, 100);
+  }
+
+  /** Schedule one short metronome tick (a fast-decaying 1 kHz blip) at AudioContext time `when`. */
+  private scheduleClick(ctx: AudioContext, master: GainNode, when: number): void {
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 1000;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(0.5, when + 0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    osc.connect(g).connect(master);
+    osc.start(when);
+    osc.stop(when + 0.06);
   }
 
   /** Pause playback, keeping the position so it can be resumed. */

@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  beatMsOf,
   buildTimeline,
   centsAboveRef,
+  estimateBpm,
   freqFromTuning,
   groupMeasures,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
-import { WebAudioBackend } from "./webAudioBackend";
+import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
@@ -21,6 +23,13 @@ export type NoteEdit = Partial<Pick<NoteEvent, "koma53" | "durationMs">>;
 // One shared audio backend for the whole app. Created once at module load (not per render)
 // so Play/Stop always talk to the same instance.
 const backend = new WebAudioBackend();
+
+// Example scores bundled in apps/web/public/ (exported from SymbTr via scripts/symbtr_to_json.py).
+// The first entry auto-loads on startup; the rest are selectable from the Sample dropdown.
+const SAMPLES: { label: string; file: string }[] = [
+  { label: "aldanma dünya — acem · düyek (zekai dede)", file: "/sample.json" },
+  { label: "safalar getirdiniz — kürdilihicazkâr · aksak (avni anıl)", file: "/safalar-getirdiniz.json" },
+];
 
 /**
  * The whole web harness UI, as one React component.
@@ -50,7 +59,14 @@ export function App() {
   // Which view is shown, whether the sheet is in edit mode, and which measure's modal is open.
   const [viewMode, setViewMode] = useState<ViewMode>("roll");
   const [editMode, setEditMode] = useState(false);
+  // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
+  const [keySig, setKeySig] = useState(false);
   const [editing, setEditing] = useState<Measure | null>(null);
+  // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
+  const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
+  // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
+  const [bpm, setBpm] = useState(120);
+  const [metronome, setMetronome] = useState(false);
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
@@ -58,18 +74,45 @@ export function App() {
     const komas = d.events.filter((e) => e.kind === "note").map((e) => e.koma53);
     const pad = 3;
     setPitchRange({ minKoma: Math.min(...komas) - pad, maxKoma: Math.max(...komas) + pad });
+    setBpm(estimateBpm(d)); // start each piece at its own natural tempo
     setDoc(d);
   }
 
-  // Try to load a bundled sample on first render (optional convenience).
+  // Fetch one of the bundled sample scores by URL and install it (stops any playback first).
+  function loadSample(file: string) {
+    onStop();
+    fetch(file)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`could not load ${file}`))))
+      .then((d: NoteModelDocument) => {
+        loadDoc(d);
+        setSampleFile(file);
+        setError(null);
+      })
+      .catch((err) => setError(String(err)));
+  }
+
+  // Load the first bundled sample on first render (optional convenience).
   useEffect(() => {
-    fetch("/sample.json")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("no sample.json"))))
-      .then((d: NoteModelDocument) => loadDoc(d))
-      .catch(() => void 0);
+    loadSample(SAMPLES[0]!.file);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const timeline = useMemo(() => (doc ? buildTimeline(doc) : null), [doc]);
+
+  // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
+  const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
+  const beatMs = useMemo(() => (doc ? beatMsOf(doc) : 0), [doc]);
+
+  // Translate the current tempo/metronome UI state into backend PlayOptions. Speed is the
+  // chosen BPM over the natural BPM; the metronome beat grid stays in musical (natural) ms.
+  const playOptions = useCallback(
+    (targetBpm: number, metro: boolean): PlayOptions => ({
+      speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1,
+      metronome: metro,
+      beatMs,
+    }),
+    [naturalBpm, beatMs],
+  );
 
   // Stable accessor for the live playback position (ms), read each frame by the sheet's
   // playhead. Stable identity (the backend is a module constant) keeps the rAF effect steady.
@@ -142,7 +185,7 @@ export function App() {
       backend.resume();
       setPlayState("playing");
     } else {
-      void backend.play(timeline, 0);
+      void backend.play(timeline, 0, playOptions(bpm, metronome));
       setPlayState("playing");
     }
   }
@@ -157,8 +200,22 @@ export function App() {
   // mode) to "play from here". The click is the user gesture the AudioContext needs.
   function onSeekMs(ms: number) {
     if (!timeline) return;
-    void backend.play(timeline, ms);
+    void backend.play(timeline, ms, playOptions(bpm, metronome));
     setPlayState("playing");
+  }
+
+  // Apply a tempo/metronome change. If something is playing or paused, re-schedule from the
+  // current position so the change is heard immediately (position is musical ms, so it's
+  // tempo-independent); otherwise it just takes effect on the next Play.
+  function applyPlayback(nextBpm: number, nextMetro: boolean) {
+    setBpm(nextBpm);
+    setMetronome(nextMetro);
+    if (!timeline || playState === "stopped") return;
+    const pos = Math.max(0, backend.getPositionMs() ?? 0);
+    const wasPaused = playState === "paused";
+    void backend.play(timeline, pos, playOptions(nextBpm, nextMetro)).then(() => {
+      if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
+    });
   }
 
   // Load a note-model JSON the user picked from disk. Reads the file as text, parses it,
@@ -174,6 +231,7 @@ export function App() {
         if (parsed.schemaVersion !== 1) throw new Error(`unsupported schemaVersion ${parsed.schemaVersion}`);
         onStop();
         loadDoc(parsed);
+        setSampleFile(""); // a user-picked file isn't one of the bundled samples
         setError(null);
       })
       .catch((err) => setError(String(err)));
@@ -192,21 +250,72 @@ export function App() {
           {playState === "playing" ? "⏸ Pause" : playState === "paused" ? "▶ Resume" : "▶ Play"}
         </button>
         <button onClick={onStop} disabled={playState === "stopped"}>■ Stop</button>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }} title={naturalBpm ? `natural tempo ≈ ${naturalBpm} BPM` : undefined}>
+          <span role="img" aria-label="tempo">🎚️</span>
+          <input
+            type="number"
+            min={20}
+            max={400}
+            value={bpm}
+            onChange={(e) => {
+              const v = Math.round(Number(e.target.value));
+              if (Number.isFinite(v) && v >= 20 && v <= 400) applyPlayback(v, metronome);
+            }}
+            disabled={!timeline}
+            style={{ width: 56 }}
+          />
+          BPM
+          {naturalBpm > 0 && bpm !== naturalBpm && (
+            <button
+              onClick={() => applyPlayback(naturalBpm, metronome)}
+              title={`reset to natural tempo (${naturalBpm} BPM)`}
+              style={{ fontSize: 11, padding: "0 4px" }}
+            >
+              ⟲
+            </button>
+          )}
+        </label>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <input type="checkbox" checked={metronome} onChange={(e) => applyPlayback(bpm, e.target.checked)} disabled={!timeline} />
+          Metronome
+        </label>
         <span style={{ marginLeft: 12, display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
           <ModeButton active={viewMode === "roll"} onClick={() => setViewMode("roll")}>Piano-roll</ModeButton>
           <ModeButton active={viewMode === "sheet"} onClick={() => setViewMode("sheet")}>Sheet</ModeButton>
         </span>
         <label style={{ marginLeft: 12 }}>
+          Sample:{" "}
+          <select value={sampleFile} onChange={(e) => e.target.value && loadSample(e.target.value)}>
+            <option value="" disabled>
+              (loaded file)
+            </option>
+            {SAMPLES.map((s) => (
+              <option key={s.file} value={s.file}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           Load JSON:{" "}
           <input type="file" accept="application/json,.json" onChange={onFile} />
         </label>
         {viewMode === "sheet" && (
-          <button
-            onClick={() => setEditMode((v) => !v)}
-            style={{ marginLeft: "auto", fontWeight: 600, background: editMode ? "#3b82f6" : undefined, color: editMode ? "#fff" : undefined }}
-          >
-            {editMode ? "✓ Editing" : "✎ Edit"}
-          </button>
+          <>
+            <button
+              onClick={() => setKeySig((v) => !v)}
+              title="Show the score's accidentals once per row (key signature) instead of on every note"
+              style={{ marginLeft: "auto", fontWeight: 600, background: keySig ? "#3b82f6" : undefined, color: keySig ? "#fff" : undefined }}
+            >
+              {keySig ? "✓ Key sig" : "♯♭ Key sig"}
+            </button>
+            <button
+              onClick={() => setEditMode((v) => !v)}
+              style={{ fontWeight: 600, background: editMode ? "#3b82f6" : undefined, color: editMode ? "#fff" : undefined }}
+            >
+              {editMode ? "✓ Editing" : "✎ Edit"}
+            </button>
+          </>
         )}
       </div>
 
@@ -234,6 +343,7 @@ export function App() {
               <SheetView
                 doc={doc}
                 editMode={editMode}
+                keySignatureMode={keySig}
                 playing={playState !== "stopped"}
                 getPositionMs={getPositionMs}
                 onMeasureClick={setEditing}
@@ -244,6 +354,8 @@ export function App() {
                 {editMode
                   ? " Edit is on — click a measure to edit its notes."
                   : " Click a measure to play from there. Click ✎ Edit to edit notes instead."}
+                {" "}
+                <strong>♯♭ Key sig</strong> hoists the score's accidentals to the start of each row.
               </p>
             </>
           )}

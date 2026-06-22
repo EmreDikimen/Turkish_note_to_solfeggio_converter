@@ -41,15 +41,6 @@ Photo
   → audio
 ```
 
-Three facts that shape this design (and correct an earlier draft of this README):
-
-1. **SymbTr-2.0.0 is a *symbolic* dataset, not images.** It cannot be used to train OMR
-   directly; instead it is used to *generate* synthetic labeled training images and as the
-   ground-truth 53-TET pitch table.
-2. **No DSP pitch-shifting is needed.** Once a symbol is known, its exact frequency comes
-   from a lookup table and is synthesized directly.
-3. **The music is monophonic** (single melodic line), which makes an end-to-end recognizer
-   tractable.
 
 See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and rationale.
 
@@ -61,12 +52,12 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   piano-roll and **VexFlow-engraved sheet** views (real stems/beams/flags/dots + Turkish
   microtonal accidentals); Web Audio playback at exact 53-TET; **Play / Pause / Resume / Stop**
   with a live **playhead** cursor on the sheet and **click-a-measure-to-seek**; drag-to-edit
-  (piano-roll) and a per-measure note editor (sheet). See ROADMAP §7 for details.
+  (piano-roll) and a per-measure note editor (sheet). See ROADMAP §6 (Status) for details.
 - **Phase 2 — next:** synthetic training data (render SymbTr → images for OMR).
 
 ## Directory Structure
 
-Current (Phase 0 — Python reference implementation):
+Current (monorepo as of Phase 1 — Python reference/data side + TypeScript core + web harness):
 ```text
 .
 ├── data/
@@ -85,15 +76,17 @@ Current (Phase 0 — Python reference implementation):
 └── requirements.txt    # Python dependencies
 ```
 
-Target (introduced in Phase 1):
+Target (aspirational — not yet renamed; `src/`+`scripts/` still hold the Python side):
 ```text
 ml/             # Python: training, synthetic data, SymbTr→JSON export (today's src/ + scripts/)
 packages/core/  # shared TypeScript: note model, tuning, synth scheduling, OMR decode
 apps/web/       # React test harness (VexFlow + Web Audio adapter)
-apps/mobile/    # React Native product (native audio + onnxruntime-react-native)
+apps/mobile/    # React Native product (native audio + onnxruntime-react-native)  ← Phase 5
 ```
 
 ## Getting Started
+
+### Python reference / data side (Phase 0)
 
 ```bash
 python3 -m venv venv
@@ -110,8 +103,34 @@ python3 scripts/symbtr_to_audio.py data/raw/<score>.txt -o data/processed/out.wa
 The `--info` flag prints a score summary and the first notes with their computed 53-TET
 frequencies.
 
+### Web harness (Phase 1) — view / edit / play a score
+
+The harness reads a **note-model JSON** produced by the Python exporter. Export one into the
+web app's public dir, then start the dev server:
+
+```bash
+# 1. export a sample score the web app will auto-load on start
+python3 scripts/symbtr_to_json.py data/raw/<score>.txt -o apps/web/public/sample.json
+# 2. install JS deps (npm workspaces) and run the Vite dev server
+npm install
+npm run dev:web
+```
+
+Then open the printed `localhost` URL. You can also load any exported JSON from the **Load JSON**
+button. Toggle **Piano-roll / Sheet**; in Sheet view use **Play / Pause / Resume / Stop**, click
+a measure to play from there, **♯♭ Key sig** to hoist accidentals to the row start, and **✎ Edit**
+to correct notes. The shared logic lives in `packages/core`; the React UI in `apps/web` is a
+throwaway dev tool (the real UI is rebuilt for mobile in Phase 5).
+
 ## Data
 SymbTr-2.0.0 (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores in txt, MusicXML,
 MIDI, and mu2. Not redistributed here; download separately and point the scripts at the
 `.txt` files. The `Koma53` column encodes each pitch as an absolute Holdrian comma value,
 which maps directly to a 53-TET frequency.
+
+
+## Not essential for now but can be added after
+- We need to add a settings modal. We can select if we want to use note sheet or piano roll, dark mode or light mode, showing the accidentals for every note or using a single sign at the score and only show accidentals if the accidental of that specific note is not match with the accidentals of the score
+  - _Done (button, not modal): the score-signature toggle is the **♯♭ Key sig** button in the sheet view. The rest of the settings modal is still TODO._
+
+- The notesheet part have two scrolling. We can remove the inner scrolling.

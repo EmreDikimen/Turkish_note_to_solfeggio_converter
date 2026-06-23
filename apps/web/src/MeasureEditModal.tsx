@@ -109,11 +109,14 @@ export function MeasureEditModal({
   }
 
   function save() {
+    // Every event in this measure keeps the measure's bar number, so the edited (and any new)
+    // notes stay grouped in this bar even though their `offset` is now stale/unset.
+    const bar = measure.events.find((e) => e.bar != null)?.bar;
     const events: NoteEvent[] = rows.map((r) => {
       const durationMs = beatsToMs(r.num, r.den, doc);
       const durationBeats = { num: r.num, den: r.den };
       if (r.kind === "rest") {
-        return { index: r.origIndex ?? -1, kind: "rest", koma53: -1, noteName: "Es", noteAE: "Es", durationMs, durationBeats, freqHz: null, lyric: r.lyric, offset: 0 };
+        return { index: r.origIndex ?? -1, kind: "rest", koma53: -1, noteName: "Es", noteAE: "Es", durationMs, durationBeats, freqHz: null, lyric: r.lyric, offset: 0, bar };
       }
       const koma = komaOf(r.letter, r.octave, r.alter);
       return {
@@ -122,7 +125,7 @@ export function MeasureEditModal({
         noteAE: spellNote(r.letter, r.octave, r.alter, "western"),
         durationMs, durationBeats,
         freqHz: Math.round(freqFromTuning(koma, doc.tuning) * 1e4) / 1e4,
-        lyric: r.lyric, offset: 0,
+        lyric: r.lyric, offset: 0, bar,
       };
     });
     onSave(events);

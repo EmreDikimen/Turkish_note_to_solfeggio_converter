@@ -1,15 +1,21 @@
 /**
  * Measure grouping — split a score into bars for the sheet view and the per-measure editor.
  *
- * How measures are found: SymbTr durations are fractions of a whole note (`durationBeats`).
- * A measure boundary falls where the running sum of those fractions reaches an integer
- * (verified: the sample has 32 measures of ~1.0 whole-note each). We accumulate beats
- * ourselves rather than trust the stored `offset`, so grouping stays correct after edits.
+ * How measures are found: SymbTr's `offset` column is the engraver's own barline encoding —
+ * an integer `offset` marks one printed barline (one usul cycle), so a 9/8 aksak bar ends at
+ * offset 1.0, 2.0, … just like an 8/8 düyek bar does. We assign each event a stable `bar`
+ * number from that (`assignBars`) once at load and group by it, so grouping is correct for
+ * EVERY usul (not just whole-note ones) and survives edits (which zero out `offset`).
+ *
+ * The legacy "accumulate durations to the next whole note" rule only matched real barlines
+ * when a bar happened to be exactly one whole note (düyek), which is why aksak broke. It is
+ * kept solely as a fallback for data whose `offset` is missing or unusable.
  */
 
 import type { NoteEvent, NoteModelDocument } from "./types";
 
-const EPS = 1e-6;
+/** Tolerance for treating an `offset` as landing on an integer barline. */
+const BAR_EPS = 1e-4;
 
 export interface Measure {
   /** 1-based measure number. */
@@ -33,48 +39,97 @@ export function measureBeats(events: NoteEvent[]): number {
 }
 
 /**
- * Group a document's sounding events (notes + rests) into measures by integer beat-boundary.
- * Meta events are skipped. A trailing partial group (no closing integer boundary) is still
- * returned as a final measure so nothing is lost.
+ * Is a document's `offset` column usable as a barline source? It must be present (max > 0)
+ * and non-decreasing across the sounding events. Freshly-parsed SymbTr JSON satisfies this;
+ * edited data (new notes get `offset` 0) does not — but by then bars are already assigned, so
+ * `groupMeasures` uses the stored `bar` and never re-derives from the stale offsets.
+ */
+export function hasUsableOffsets(doc: NoteModelDocument): boolean {
+  let prev = -Infinity;
+  let max = 0;
+  let count = 0;
+  for (const ev of doc.events) {
+    if (ev.kind === "meta") continue;
+    count++;
+    if (ev.offset < prev - BAR_EPS) return false; // not monotonic
+    prev = ev.offset;
+    if (ev.offset > max) max = ev.offset;
+  }
+  return count > 0 && max > BAR_EPS;
+}
+
+/**
+ * Assign every event a stable 1-based `bar` number and return a new document.
+ *
+ * Primary source is SymbTr's `offset` (integer offset = one printed barline): an event that
+ * ends at `offset` belongs to bar `floor(offset - ε) + 1`, so an event landing exactly on the
+ * barline counts as the last event of the bar it fills. This automatically accounts for the
+ * time meta/ornament rows occupy (they advance `offset` too), which the duration-sum fallback
+ * cannot see. When `offset` is unusable, falls back to integer whole-note accumulation — the
+ * legacy behavior, correct for whole-note usuls. Meta events inherit the current bar.
+ *
+ * Call this once when a document loads; thereafter the `bar` travels with each event through
+ * edits, so measure grouping never has to re-read the (now stale) offsets.
+ */
+export function assignBars(doc: NoteModelDocument): NoteModelDocument {
+  const useOffset = hasUsableOffsets(doc);
+  const events: NoteEvent[] = [];
+  let cumBeats = 0; // for the fallback path only
+  let lastBar = 1;
+  for (const ev of doc.events) {
+    if (ev.kind === "meta") {
+      events.push({ ...ev, bar: lastBar });
+      continue;
+    }
+    let bar: number;
+    if (useOffset) {
+      bar = Math.max(1, Math.floor(ev.offset - BAR_EPS) + 1);
+    } else {
+      bar = Math.floor(cumBeats + BAR_EPS) + 1;
+      cumBeats += eventBeats(ev);
+    }
+    lastBar = bar;
+    events.push({ ...ev, bar });
+  }
+  return { ...doc, events };
+}
+
+/**
+ * Group a document's sounding events (notes + rests) into measures. Meta events are skipped.
+ * Grouping is by each event's stable `bar` number (see `assignBars`); if the document hasn't
+ * had bars assigned yet, they're derived on the fly. Measures are renumbered sequentially, so
+ * `Measure.index` is contiguous 1..N even if a bar number is skipped in the source.
  */
 export function groupMeasures(doc: NoteModelDocument): Measure[] {
+  const haveBars = doc.events.some((e) => e.kind !== "meta" && e.bar != null);
+  const events = (haveBars ? doc : assignBars(doc)).events;
+
   const measures: Measure[] = [];
   let current: NoteEvent[] = [];
-  let beatsInMeasure = 0;
-  let cumulativeBeats = 0;
+  let curBar: number | null = null;
   let startMs = 0;
   let runningMs = 0;
 
-  for (const ev of doc.events) {
-    if (ev.kind === "meta") continue;
-    current.push(ev);
-    const b = eventBeats(ev);
-    beatsInMeasure += b;
-    cumulativeBeats += b;
-    runningMs += ev.durationMs;
-
-    // Boundary: cumulative duration landed on a whole number of whole-notes.
-    if (Math.abs(cumulativeBeats - Math.round(cumulativeBeats)) < EPS) {
-      measures.push({
-        index: measures.length + 1,
-        events: current,
-        lengthBeats: Math.round(beatsInMeasure * 1e6) / 1e6,
-        startMs,
-      });
-      current = [];
-      beatsInMeasure = 0;
-      startMs = runningMs;
-    }
-  }
-
-  if (current.length > 0) {
+  const flush = () => {
+    if (current.length === 0) return;
     measures.push({
       index: measures.length + 1,
       events: current,
-      lengthBeats: Math.round(beatsInMeasure * 1e6) / 1e6,
+      lengthBeats: Math.round(measureBeats(current) * 1e6) / 1e6,
       startMs,
     });
+    current = [];
+    startMs = runningMs;
+  };
+
+  for (const ev of events) {
+    if (ev.kind === "meta") continue;
+    if (curBar !== null && ev.bar !== curBar) flush();
+    curBar = ev.bar ?? curBar;
+    current.push(ev);
+    runningMs += ev.durationMs;
   }
+  flush();
   return measures;
 }
 

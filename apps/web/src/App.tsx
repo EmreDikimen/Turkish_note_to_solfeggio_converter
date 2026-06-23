@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  assignBars,
   beatMsOf,
   buildTimeline,
   centsAboveRef,
@@ -70,7 +71,10 @@ export function App() {
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
-  function loadDoc(d: NoteModelDocument) {
+  function loadDoc(raw: NoteModelDocument) {
+    // Assign each event a stable bar number from SymbTr's offset column up front, so measure
+    // grouping is correct for every usul and survives edits (which would otherwise lose it).
+    const d = assignBars(raw);
     const komas = d.events.filter((e) => e.kind === "note").map((e) => e.koma53);
     const pad = 3;
     setPitchRange({ minKoma: Math.min(...komas) - pad, maxKoma: Math.max(...komas) + pad });

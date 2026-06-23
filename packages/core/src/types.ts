@@ -44,6 +44,12 @@ export interface NoteEvent {
   lyric: string;
   /** End time of the event in beats. */
   offset: number;
+  /**
+   * 1-based bar number this event belongs to. Derived once from SymbTr's `offset`
+   * (integer offset = one printed barline) by `assignBars`, then carried through edits
+   * so measure grouping stays stable. Absent on freshly-parsed JSON until assigned.
+   */
+  bar?: number;
   /** Raw SymbTr `Kod` — present only on meta events (e.g. 51 = usul change). */
   code?: number;
 }

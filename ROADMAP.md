@@ -247,8 +247,12 @@ produce a real, demoable app with zero machine learning.
   tab adds absolute koma + frequency editing. **Save disabled + warning** unless the measure's
   total duration is preserved. Pitch stored as explicit spelling (letter+octave+alter), so
   names never enharmonically flip — verified: all 266 sample notes round-trip name & koma
-  exactly. New core (`notation.ts`, `measures.ts`, `tempo.ts`) is mobile-reusable; tempo
-  derived in TS so no Python/schema change.
+  exactly. Measures come from SymbTr's `offset` column: an integer `offset` is one printed
+  barline (one usul cycle), so `assignBars` tags each event with a stable 1-based `bar` and
+  `groupMeasures` groups by it — correct for any usul, whole-note (düyek 8/8) or not
+  (aksak 9/8, curcuna 5/4). The `bar` is assigned at load and carried through edits, with a
+  whole-note fallback for data lacking a usable `offset`. New core (`notation.ts`,
+  `measures.ts`, `tempo.ts`) is mobile-reusable; tempo derived in TS so no Python/schema change.
 - ✅ **Key-signature mode** (added 2026-06-22): a sheet-view toggle (the **♯♭ Key sig** button)
   that draws the score's prevailing accidentals once after the clef on every row (makam-style
   signature) and suppresses inline accidentals on notes that match — deviating notes still show

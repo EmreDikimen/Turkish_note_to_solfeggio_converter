@@ -140,3 +140,62 @@ export function groupMeasures(doc: NoteModelDocument): Measure[] {
 export function isMeasureValid(events: NoteEvent[], lengthBeats: number, eps = 1e-4): boolean {
   return Math.abs(measureBeats(events) - lengthBeats) < eps;
 }
+
+export interface TimeSignature {
+  /** Beats per bar (the top number). */
+  num: number;
+  /** Beat unit as a power-of-two note value (the bottom number; 8 = eighth-note beats). */
+  den: number;
+}
+
+/**
+ * Conventional meter for common usuls where a purely length-derived signature would be wrong
+ * or ugly (e.g. sofyan reads 4/4, not 8/8; ağır aksak reads 9/4, not 18/8). Keyed by SymbTr's
+ * normalized usul name. Anything not listed falls back to deriving the meter from the data.
+ */
+const USUL_SIGNATURES: Record<string, [number, number]> = {
+  sofyan: [4, 4],
+  nimsofyan: [2, 4],
+  duyek: [8, 8],
+  aksak: [9, 8],
+  curcuna: [10, 8],
+  aksaksemai: [10, 8],
+  yuruksemai: [6, 8],
+  agiraksak: [9, 4],
+};
+
+/**
+ * Derive the meter (time signature) to print at the start of the staff.
+ *
+ * Primary source is the usul name (a known usul has a fixed conventional meter). For anything
+ * else, fall back to the data: take the most common bar length (in whole-notes, from
+ * `groupMeasures`) and express it as num/den over a power-of-two beat unit, preferring eighth
+ * beats — so a 1.125-whole-note aksak bar reads 9/8 and a 1.25 curcuna bar reads 10/8.
+ * Returns null when there are no measures to measure.
+ */
+export function deriveTimeSignature(doc: NoteModelDocument): TimeSignature | null {
+  const key = (doc.usul || "").trim().toLowerCase();
+  const known = USUL_SIGNATURES[key];
+  if (known) return { num: known[0], den: known[1] };
+
+  const measures = groupMeasures(doc);
+  if (measures.length === 0) return null;
+  const counts = new Map<number, number>();
+  for (const m of measures) counts.set(m.lengthBeats, (counts.get(m.lengthBeats) ?? 0) + 1);
+  let lenWhole = 0;
+  let best = -1;
+  for (const [len, c] of counts) {
+    if (c > best) {
+      best = c;
+      lenWhole = len;
+    }
+  }
+  if (!(lenWhole > 0)) return null;
+
+  // Express the bar length (in whole-notes) as num/den; prefer eighth-note beats.
+  for (const den of [8, 4, 16, 2, 32]) {
+    const num = lenWhole * den;
+    if (Math.abs(num - Math.round(num)) < 1e-4) return { num: Math.round(num), den };
+  }
+  return null;
+}

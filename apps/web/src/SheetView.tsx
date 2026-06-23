@@ -4,6 +4,7 @@ import {
   accidentalGlyph,
   accidentalLabel,
   deriveKeySignature,
+  deriveTimeSignature,
   eventBeats,
   groupMeasures,
   parseNoteName,
@@ -160,6 +161,37 @@ function drawSignature(
   });
 }
 
+// SMuFL time-signature digits live at U+E080 (0) … U+E089 (9) in the music font.
+const timeSigGlyphs = (n: number): string =>
+  [...String(n)].map((d) => String.fromCodePoint(0xe080 + Number(d))).join("");
+
+/**
+ * Draw the meter (e.g. 9/8) as stacked Bravura digits centered on `centerX`: numerator in the
+ * upper half of the staff, denominator in the lower half. Drawn ourselves (not via VexFlow's
+ * `addTimeSignature`, which always sits right after the clef) so it can follow the key signature.
+ */
+function drawTimeSignature(svg: SVGSVGElement, stave: Stave, centerX: number, ts: { num: number; den: number }) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const space = stave.getYForLine(1) - stave.getYForLine(0); // px per staff space
+  // Center the stack on the middle line, nudged up slightly: Bravura's digit baseline renders a
+  // touch low, so this small lift makes the meter read vertically centered on the staff.
+  const mid = stave.getYForLine(2) - space * 0.35;
+  const digit = (value: number, y: number) => {
+    const text = document.createElementNS(SVG_NS, "text");
+    text.setAttribute("x", String(centerX));
+    text.setAttribute("y", String(y));
+    text.setAttribute("font-family", "Bravura");
+    text.setAttribute("font-size", "39"); // ~4-space em; each digit spans ~2 staff spaces
+    text.setAttribute("text-anchor", "middle"); // auto-centers multi-digit numbers (e.g. "10")
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("fill", "#222");
+    text.textContent = timeSigGlyphs(value);
+    svg.appendChild(text);
+  };
+  digit(ts.num, mid - space); // numerator one space above the middle line
+  digit(ts.den, mid + space); // denominator one space below the middle line
+}
+
 interface MeasureBox {
   index: number;
   measure: Measure;
@@ -233,6 +265,9 @@ export function SheetView({
   const signature = useMemo(() => deriveKeySignature(doc), [doc]);
   const signatureMap = useMemo(() => new Map(signature.map((s) => [s.letter, s.alterCommas])), [signature]);
 
+  // The usul meter (e.g. 9/8 for aksak), printed once at the start of the first staff.
+  const timeSig = useMemo(() => deriveTimeSignature(doc), [doc]);
+
   // Draw the score with VexFlow whenever the document changes. (Edit mode only toggles the
   // HTML overlay below, so it deliberately isn't a dependency — no need to re-engrave.)
   useLayoutEffect(() => {
@@ -244,17 +279,25 @@ export function SheetView({
     const sigWidth = keySignatureMode && signature.length ? signature.length * SIG_GLYPH_ADVANCE + 10 : 0;
     // The clef + (optional) signature both repeat on the first stave of every row.
     const leadWidth = CLEF_W + sigWidth;
+    // Extra room the meter (e.g. 9/8) needs — only on the very first stave of the piece.
+    // Scales with the widest of numerator/denominator so multi-digit meters (10/8) still fit.
+    const timeSigWidth = timeSig
+      ? Math.max(String(timeSig.num).length, String(timeSig.den).length) * 16 + 10
+      : 0;
 
-    // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef.
+    // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef;
+    // the very first measure additionally pays for the one-time time signature.
     const measures = groupMeasures(doc);
     type Cell = { m: Measure; width: number; firstInRow: boolean };
     const rows: Cell[][] = [];
     let cur: Cell[] = [];
     let used = 0;
+    let firstMeasure = true;
     for (const m of measures) {
+      const extra = firstMeasure ? timeSigWidth : 0;
       const base = Math.max(130, Math.min(420, m.events.length * 28 + 24));
       const isFirst = cur.length === 0;
-      const width = base + (isFirst ? leadWidth : 0);
+      const width = base + (isFirst ? leadWidth : 0) + extra;
       if (!isFirst && used + width > CONTENT_WIDTH) {
         rows.push(cur);
         cur = [{ m, width: base + leadWidth, firstInRow: true }];
@@ -263,6 +306,7 @@ export function SheetView({
         cur.push({ m, width, firstInRow: isFirst });
         used += width;
       }
+      firstMeasure = false;
     }
     if (cur.length) rows.push(cur);
 
@@ -281,13 +325,17 @@ export function SheetView({
       for (const cell of cells) {
         const stave = new Stave(x, y, cell.width);
         if (cell.firstInRow) stave.addClef("treble");
-        // Reserve room after the clef for the key signature, and remember where to draw it.
-        let sigStartX = 0;
+        // Lay out the leading symbols left→right: clef, then the makam key signature, then the
+        // meter (clef → flats → 9/8, matching engraved Turkish scores). We draw the key sig and
+        // meter as Bravura glyphs ourselves (VexFlow's native versions don't fit either case),
+        // so we just reserve horizontal space here and remember each one's start x.
+        const clefEnd = stave.getNoteStartX();
         const drawSig = keySignatureMode && cell.firstInRow && signature.length > 0;
-        if (drawSig) {
-          sigStartX = stave.getNoteStartX();
-          stave.setNoteStartX(sigStartX + sigWidth);
-        }
+        const drawTime = r === 0 && cell.firstInRow && timeSig != null;
+        const sigStartX = clefEnd;
+        const timeStartX = clefEnd + (drawSig ? sigWidth : 0);
+        const reserved = (drawSig ? sigWidth : 0) + (drawTime ? timeSigWidth : 0);
+        if (reserved > 0) stave.setNoteStartX(clefEnd + reserved);
         stave.setContext(ctx).draw();
         // Playhead extent for this row, from the actual staff-line positions (the Stave's y
         // param is its bounding-box top, which sits well above the first staff line).
@@ -307,6 +355,7 @@ export function SheetView({
             });
           }
           if (drawSig && svg) drawSignature(svg, stave, signature, sigStartX + 2);
+          if (drawTime && svg && timeSig) drawTimeSignature(svg, stave, timeStartX + timeSigWidth / 2, timeSig);
         } catch (e) {
           console.warn(`sheet: failed to render measure ${cell.m.index}`, e);
         }
@@ -322,7 +371,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, keySignatureMode, signature, signatureMap]);
+  }, [doc, keySignatureMode, signature, signatureMap, timeSig]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

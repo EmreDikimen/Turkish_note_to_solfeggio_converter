@@ -2,11 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   assignBars,
   beatMsOf,
+  buildMetronomeTrack,
   buildTimeline,
   centsAboveRef,
+  deriveTimeSignature,
   estimateBpm,
+  findUsul,
   freqFromTuning,
   groupMeasures,
+  USULS,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
@@ -68,6 +72,8 @@ export function App() {
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
   const [metronome, setMetronome] = useState(false);
+  // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
+  const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
@@ -79,6 +85,12 @@ export function App() {
     const pad = 3;
     setPitchRange({ minKoma: Math.min(...komas) - pad, maxKoma: Math.max(...komas) + pad });
     setBpm(estimateBpm(d)); // start each piece at its own natural tempo
+    // Default the metronome's usul to the piece's own usul; if it isn't a known one, pick the
+    // usul whose meter matches the derived time signature, else fall back to the first.
+    const ts = deriveTimeSignature(d);
+    const matched =
+      findUsul(d.usul) ?? USULS.find((u) => ts != null && u.num === ts.num && u.den === ts.den) ?? USULS[0]!;
+    setUsulName(matched.name);
     setDoc(d);
   }
 
@@ -107,15 +119,16 @@ export function App() {
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
   const beatMs = useMemo(() => (doc ? beatMsOf(doc) : 0), [doc]);
 
-  // Translate the current tempo/metronome UI state into backend PlayOptions. Speed is the
-  // chosen BPM over the natural BPM; the metronome beat grid stays in musical (natural) ms.
-  const playOptions = useCallback(
-    (targetBpm: number, metro: boolean): PlayOptions => ({
-      speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1,
-      metronome: metro,
-      beatMs,
-    }),
-    [naturalBpm, beatMs],
+  // Translate the current tempo/metronome/usul UI state into backend PlayOptions. Speed is the
+  // chosen BPM over the natural BPM; the metronome clicks are the selected usul's beat pattern
+  // (built in core, in musical ms), so they stay aligned to the bars at any tempo.
+  const buildPlayOptions = useCallback(
+    (targetBpm: number, metro: boolean, uName: string): PlayOptions => {
+      const u = findUsul(uName);
+      const clicks = metro && doc && u ? buildMetronomeTrack(doc, u, beatMs * 4) : undefined;
+      return { speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1, clicks };
+    },
+    [doc, naturalBpm, beatMs],
   );
 
   // Stable accessor for the live playback position (ms), read each frame by the sheet's
@@ -189,7 +202,7 @@ export function App() {
       backend.resume();
       setPlayState("playing");
     } else {
-      void backend.play(timeline, 0, playOptions(bpm, metronome));
+      void backend.play(timeline, 0, buildPlayOptions(bpm, metronome, usulName));
       setPlayState("playing");
     }
   }
@@ -204,20 +217,21 @@ export function App() {
   // mode) to "play from here". The click is the user gesture the AudioContext needs.
   function onSeekMs(ms: number) {
     if (!timeline) return;
-    void backend.play(timeline, ms, playOptions(bpm, metronome));
+    void backend.play(timeline, ms, buildPlayOptions(bpm, metronome, usulName));
     setPlayState("playing");
   }
 
-  // Apply a tempo/metronome change. If something is playing or paused, re-schedule from the
-  // current position so the change is heard immediately (position is musical ms, so it's
+  // Apply a tempo / metronome / usul change. If something is playing or paused, re-schedule from
+  // the current position so the change is heard immediately (position is musical ms, so it's
   // tempo-independent); otherwise it just takes effect on the next Play.
-  function applyPlayback(nextBpm: number, nextMetro: boolean) {
+  function applyPlayback(nextBpm: number, nextMetro: boolean, nextUsul: string) {
     setBpm(nextBpm);
     setMetronome(nextMetro);
+    setUsulName(nextUsul);
     if (!timeline || playState === "stopped") return;
     const pos = Math.max(0, backend.getPositionMs() ?? 0);
     const wasPaused = playState === "paused";
-    void backend.play(timeline, pos, playOptions(nextBpm, nextMetro)).then(() => {
+    void backend.play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul)).then(() => {
       if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
     });
   }
@@ -249,7 +263,7 @@ export function App() {
         piano-roll, and plays it back at 53-TET frequencies via Web Audio.
       </p>
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", margin: "16px 0" }}>
         <button onClick={onPlayPause} disabled={!timeline}>
           {playState === "playing" ? "⏸ Pause" : playState === "paused" ? "▶ Resume" : "▶ Play"}
         </button>
@@ -263,7 +277,7 @@ export function App() {
             value={bpm}
             onChange={(e) => {
               const v = Math.round(Number(e.target.value));
-              if (Number.isFinite(v) && v >= 20 && v <= 400) applyPlayback(v, metronome);
+              if (Number.isFinite(v) && v >= 20 && v <= 400) applyPlayback(v, metronome, usulName);
             }}
             disabled={!timeline}
             style={{ width: 56 }}
@@ -271,7 +285,7 @@ export function App() {
           BPM
           {naturalBpm > 0 && bpm !== naturalBpm && (
             <button
-              onClick={() => applyPlayback(naturalBpm, metronome)}
+              onClick={() => applyPlayback(naturalBpm, metronome, usulName)}
               title={`reset to natural tempo (${naturalBpm} BPM)`}
               style={{ fontSize: 11, padding: "0 4px" }}
             >
@@ -280,8 +294,22 @@ export function App() {
           )}
         </label>
         <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-          <input type="checkbox" checked={metronome} onChange={(e) => applyPlayback(bpm, e.target.checked)} disabled={!timeline} />
+          <input type="checkbox" checked={metronome} onChange={(e) => applyPlayback(bpm, e.target.checked, usulName)} disabled={!timeline} />
           Metronome
+        </label>
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }} title="Usul — sets the metronome's beat pattern (editable; OMR can misread it)">
+          <span>Usul:</span>
+          <select
+            value={usulName}
+            onChange={(e) => applyPlayback(bpm, metronome, e.target.value)}
+            disabled={!timeline}
+          >
+            {USULS.map((u) => (
+              <option key={u.name} value={u.name}>
+                {u.label} ({u.num}/{u.den})
+              </option>
+            ))}
+          </select>
         </label>
         <span style={{ marginLeft: 12, display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
           <ModeButton active={viewMode === "roll"} onClick={() => setViewMode("roll")}>Piano-roll</ModeButton>

@@ -262,6 +262,12 @@ produce a real, demoable app with zero machine learning.
   native `KeySignature` only supports standard Western keys). This is the button-only slice of the
   README's deferred "settings modal" idea; the full modal (view/theme/this toggle) is still TODO.
 - ⏳ Optional later: feed OMR output into this harness (Phase 4).
+- ⏳ Later: **usul-based rhythm playback.** Replace the generic metronome with the piece's usul
+  played as a real rhythmic cycle on a traditional percussion sound (darbuka), aligned to the
+  measures, so non-integer usuls (aksak 9/8, curcuna 10/8, …) sound correct. The usul is
+  auto-detected by OMR and stays user-editable (OMR can misread it). Recommended as a
+  harness/synthesis enhancement after Phase 1, with the automatic usul detection tied to the
+  OMR model (Phase 3–4).
 
 **Phase 1 is complete** (piano-roll editor + sheet/notation editor). Next major milestone is the
 ML track (Phase 2: synthetic training data), unless we polish the harness further first.

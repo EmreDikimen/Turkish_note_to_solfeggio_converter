@@ -134,3 +134,10 @@ which maps directly to a 53-TET frequency.
   - _Done (button, not modal): the score-signature toggle is the **♯♭ Key sig** button in the sheet view. The rest of the settings modal is still TODO._
 
 - The notesheet part have two scrolling. We can remove the inner scrolling.
+
+- **Usul-based rhythm (replace the metronome).** Play each piece's usul as a real rhythmic
+  cycle on a traditional percussion sound (e.g. darbuka), locked to the measures, instead of a
+  plain metronome click — so non-integer usuls like aksak (9/8) sound correct. The usul should
+  be auto-detected by the OMR model and stay user-editable (OMR can misread it). Recommended:
+  build the rhythm playback + editable usul selector as a harness/synthesis enhancement after
+  Phase 1; wire the automatic usul detection in with the OMR model (Phase 3–4).

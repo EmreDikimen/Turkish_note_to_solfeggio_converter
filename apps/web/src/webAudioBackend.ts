@@ -19,10 +19,12 @@ export type PlaybackState = "stopped" | "playing" | "paused";
 export interface PlayOptions {
   /** Playback speed multiplier (1 = the score's natural tempo; 2 = twice as fast). */
   speed?: number;
-  /** Add an audible click on each beat. */
-  metronome?: boolean;
-  /** Beat spacing in MUSICAL ms (i.e. at the natural tempo); clicks land on this grid. */
-  beatMs?: number;
+  /**
+   * Metronome clicks to play, in MUSICAL ms (at the natural tempo). Built by the core from the
+   * selected usul (`buildMetronomeTrack`) so clicks land on the usul's beats; `accent` marks a
+   * measure downbeat. Omit/empty for no metronome.
+   */
+  clicks?: { ms: number; accent: boolean }[];
 }
 
 /**
@@ -157,14 +159,13 @@ export class WebAudioBackend implements AudioBackend {
       osc.stop(start + dur + 0.02);
     }
 
-    // Metronome: a click on every beat of the musical grid, from the first beat at/after the
-    // start offset to the end of the piece. Scheduling on the musical grid keeps the clicks
-    // aligned to the beat regardless of where playback starts.
-    if (opts.metronome && opts.beatMs && opts.beatMs > 0) {
-      const beat = opts.beatMs;
-      const first = Math.ceil((fromMs - 1e-6) / beat) * beat;
-      for (let b = first; b <= timeline.totalMs + 1e-6; b += beat) {
-        this.scheduleClick(ctx, master, toReal(b));
+    // Metronome: play the usul's click track (built by the core, in musical ms). Clicks before
+    // the start offset are skipped; the rest are scheduled in real time via toReal, and a
+    // downbeat (`accent`) gets a louder, higher click.
+    if (opts.clicks) {
+      for (const c of opts.clicks) {
+        if (c.ms < fromMs - 1e-6) continue;
+        this.scheduleClick(ctx, master, toReal(c.ms), c.accent);
       }
     }
 
@@ -180,13 +181,16 @@ export class WebAudioBackend implements AudioBackend {
     }, 100);
   }
 
-  /** Schedule one short metronome tick (a fast-decaying 1 kHz blip) at AudioContext time `when`. */
-  private scheduleClick(ctx: AudioContext, master: GainNode, when: number): void {
+  /**
+   * Schedule one short metronome tick (a fast-decaying blip) at AudioContext time `when`.
+   * Accented (downbeat) ticks are higher and louder so the start of each measure stands out.
+   */
+  private scheduleClick(ctx: AudioContext, master: GainNode, when: number, accent = false): void {
     const osc = ctx.createOscillator();
-    osc.frequency.value = 1000;
+    osc.frequency.value = accent ? 1600 : 1000;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, when);
-    g.gain.exponentialRampToValueAtTime(0.5, when + 0.001);
+    g.gain.exponentialRampToValueAtTime(accent ? 0.6 : 0.4, when + 0.001);
     g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
     osc.connect(g).connect(master);
     osc.start(when);

@@ -585,7 +585,7 @@
     },
     {
       "index": 39,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -594,14 +594,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 3.777778,
-      "code": 1
+      "offset": 3.777778
     },
     {
       "index": 40,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -610,14 +609,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 3.888889,
-      "code": 1
+      "offset": 3.888889
     },
     {
       "index": 41,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -626,10 +624,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 4.0,
-      "code": 1
+      "offset": 4.0
     },
     {
       "index": 42,
@@ -1248,7 +1245,7 @@
     },
     {
       "index": 83,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -1257,10 +1254,9 @@
         "num": 6,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 8.666667,
-      "code": 7
+      "offset": 8.666667
     },
     {
       "index": 84,
@@ -1699,7 +1695,7 @@
     },
     {
       "index": 113,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -1708,14 +1704,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": ".",
-      "offset": 13.38889,
-      "code": 1
+      "offset": 13.38889
     },
     {
       "index": 114,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -1724,14 +1719,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 13.44444,
-      "code": 1
+      "offset": 13.44444
     },
     {
       "index": 115,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -1740,14 +1734,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 13.5,
-      "code": 1
+      "offset": 13.5
     },
     {
       "index": 116,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -1756,14 +1749,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 13.55556,
-      "code": 1
+      "offset": 13.55556
     },
     {
       "index": 117,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -1772,14 +1764,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 13.61111,
-      "code": 1
+      "offset": 13.61111
     },
     {
       "index": 118,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -1788,14 +1779,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 13.66667,
-      "code": 1
+      "offset": 13.66667
     },
     {
       "index": 119,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -1804,10 +1794,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 14.0,
-      "code": 1
+      "offset": 14.0
     },
     {
       "index": 120,
@@ -2381,7 +2370,7 @@
     },
     {
       "index": 158,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -2390,14 +2379,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 17.77778,
-      "code": 1
+      "offset": 17.77778
     },
     {
       "index": 159,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -2406,14 +2394,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 17.88889,
-      "code": 1
+      "offset": 17.88889
     },
     {
       "index": 160,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -2422,10 +2409,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 18.0,
-      "code": 1
+      "offset": 18.0
     },
     {
       "index": 161,
@@ -3044,7 +3030,7 @@
     },
     {
       "index": 202,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -3053,10 +3039,9 @@
         "num": 6,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 22.66667,
-      "code": 7
+      "offset": 22.66667
     },
     {
       "index": 203,
@@ -3495,7 +3480,7 @@
     },
     {
       "index": 232,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -3504,14 +3489,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": ".",
-      "offset": 27.38889,
-      "code": 1
+      "offset": 27.38889
     },
     {
       "index": 233,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -3520,14 +3504,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 27.44444,
-      "code": 1
+      "offset": 27.44444
     },
     {
       "index": 234,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -3536,14 +3519,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 27.5,
-      "code": 1
+      "offset": 27.5
     },
     {
       "index": 235,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -3552,14 +3534,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 27.55556,
-      "code": 1
+      "offset": 27.55556
     },
     {
       "index": 236,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -3568,14 +3549,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 27.61111,
-      "code": 1
+      "offset": 27.61111
     },
     {
       "index": 237,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -3584,14 +3564,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 27.66667,
-      "code": 1
+      "offset": 27.66667
     },
     {
       "index": 238,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -3600,10 +3579,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 28.0,
-      "code": 1
+      "offset": 28.0
     },
     {
       "index": 239,
@@ -3968,7 +3946,7 @@
     },
     {
       "index": 263,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -3977,14 +3955,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "SAZ",
-      "offset": 31.61111,
-      "code": 1
+      "offset": 31.61111
     },
     {
       "index": 264,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -3993,14 +3970,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 31.66667,
-      "code": 1
+      "offset": 31.66667
     },
     {
       "index": 265,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -4009,14 +3985,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 31.72222,
-      "code": 1
+      "offset": 31.72222
     },
     {
       "index": 266,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -4025,14 +4000,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 31.77778,
-      "code": 1
+      "offset": 31.77778
     },
     {
       "index": 267,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -4041,14 +4015,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 31.83333,
-      "code": 1
+      "offset": 31.83333
     },
     {
       "index": 268,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -4057,14 +4030,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": ".",
-      "offset": 31.88889,
-      "code": 1
+      "offset": 31.88889
     },
     {
       "index": 269,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 296,
       "noteName": "Sol4",
       "noteAE": "G4",
@@ -4073,10 +4045,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 391.1419,
       "lyric": ".",
-      "offset": 32.0,
-      "code": 1
+      "offset": 32.0
     },
     {
       "index": 270,
@@ -4441,7 +4412,7 @@
     },
     {
       "index": 294,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -4450,14 +4421,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": "SAZ",
-      "offset": 35.77778,
-      "code": 1
+      "offset": 35.77778
     },
     {
       "index": 295,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -4466,14 +4436,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 35.88889,
-      "code": 1
+      "offset": 35.88889
     },
     {
       "index": 296,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -4482,14 +4451,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 36.0,
-      "code": 1
+      "offset": 36.0
     },
     {
       "index": 297,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -4498,10 +4466,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 36.11111,
-      "code": 1
+      "offset": 36.11111
     },
     {
       "index": 298,
@@ -4550,7 +4517,7 @@
     },
     {
       "index": 301,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 345,
       "noteName": "Sol5b4",
       "noteAE": "G5b4",
@@ -4559,10 +4526,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 742.4122,
       "lyric": "nak",
-      "offset": 36.77778,
-      "code": 10
+      "offset": 36.77778
     },
     {
       "index": 302,
@@ -4897,7 +4863,7 @@
     },
     {
       "index": 324,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -4906,14 +4872,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": "SAZ",
-      "offset": 39.77778,
-      "code": 1
+      "offset": 39.77778
     },
     {
       "index": 325,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -4922,14 +4887,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 39.88889,
-      "code": 1
+      "offset": 39.88889
     },
     {
       "index": 326,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -4938,14 +4902,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 40.0,
-      "code": 1
+      "offset": 40.0
     },
     {
       "index": 327,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -4954,10 +4917,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 40.11111,
-      "code": 1
+      "offset": 40.11111
     },
     {
       "index": 328,
@@ -5006,7 +4968,7 @@
     },
     {
       "index": 331,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 345,
       "noteName": "Sol5b4",
       "noteAE": "G5b4",
@@ -5015,10 +4977,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 742.4122,
       "lyric": "nak",
-      "offset": 40.77778,
-      "code": 10
+      "offset": 40.77778
     },
     {
       "index": 332,
@@ -5353,7 +5314,7 @@
     },
     {
       "index": 354,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -5362,14 +5323,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": "SAZ",
-      "offset": 43.72222,
-      "code": 1
+      "offset": 43.72222
     },
     {
       "index": 355,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -5378,14 +5338,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 43.77778,
-      "code": 1
+      "offset": 43.77778
     },
     {
       "index": 356,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -5394,14 +5353,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 43.83333,
-      "code": 1
+      "offset": 43.83333
     },
     {
       "index": 357,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -5410,14 +5368,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 43.88889,
-      "code": 1
+      "offset": 43.88889
     },
     {
       "index": 358,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -5426,10 +5383,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 44.0,
-      "code": 1
+      "offset": 44.0
     },
     {
       "index": 359,
@@ -5508,7 +5464,7 @@
     },
     {
       "index": 364,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -5517,10 +5473,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "eğ",
-      "offset": 45.22222,
-      "code": 10
+      "offset": 45.22222
     },
     {
       "index": 365,
@@ -5855,7 +5810,7 @@
     },
     {
       "index": 387,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -5864,14 +5819,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": "SAZ",
-      "offset": 48.38889,
-      "code": 1
+      "offset": 48.38889
     },
     {
       "index": 388,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -5880,14 +5834,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 48.44444,
-      "code": 1
+      "offset": 48.44444
     },
     {
       "index": 389,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -5896,14 +5849,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 48.5,
-      "code": 1
+      "offset": 48.5
     },
     {
       "index": 390,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -5912,14 +5864,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 48.55556,
-      "code": 1
+      "offset": 48.55556
     },
     {
       "index": 391,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -5928,14 +5879,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 48.61111,
-      "code": 1
+      "offset": 48.61111
     },
     {
       "index": 392,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -5944,14 +5894,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 48.66667,
-      "code": 1
+      "offset": 48.66667
     },
     {
       "index": 393,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -5960,10 +5909,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 49.0,
-      "code": 1
+      "offset": 49.0
     },
     {
       "index": 394,
@@ -6042,7 +5990,7 @@
     },
     {
       "index": 399,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -6051,10 +5999,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "eğ",
-      "offset": 50.22222,
-      "code": 10
+      "offset": 50.22222
     },
     {
       "index": 400,
@@ -6389,7 +6336,7 @@
     },
     {
       "index": 422,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -6398,14 +6345,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": "SAZ",
-      "offset": 53.38889,
-      "code": 1
+      "offset": 53.38889
     },
     {
       "index": 423,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -6414,14 +6360,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 53.44444,
-      "code": 1
+      "offset": 53.44444
     },
     {
       "index": 424,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -6430,14 +6375,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 53.5,
-      "code": 1
+      "offset": 53.5
     },
     {
       "index": 425,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -6446,14 +6390,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 53.55556,
-      "code": 1
+      "offset": 53.55556
     },
     {
       "index": 426,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -6462,14 +6405,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 53.61111,
-      "code": 1
+      "offset": 53.61111
     },
     {
       "index": 427,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -6478,14 +6420,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 53.66667,
-      "code": 1
+      "offset": 53.66667
     },
     {
       "index": 428,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -6494,10 +6435,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 54.0,
-      "code": 1
+      "offset": 54.0
     },
     {
       "index": 429,
@@ -7071,7 +7011,7 @@
     },
     {
       "index": 467,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -7080,14 +7020,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 57.77778,
-      "code": 1
+      "offset": 57.77778
     },
     {
       "index": 468,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -7096,14 +7035,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 57.88889,
-      "code": 1
+      "offset": 57.88889
     },
     {
       "index": 469,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -7112,10 +7050,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 58.0,
-      "code": 1
+      "offset": 58.0
     },
     {
       "index": 470,
@@ -7734,7 +7671,7 @@
     },
     {
       "index": 511,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -7743,10 +7680,9 @@
         "num": 6,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 62.66667,
-      "code": 7
+      "offset": 62.66667
     },
     {
       "index": 512,
@@ -8185,7 +8121,7 @@
     },
     {
       "index": 541,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -8194,14 +8130,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": ".",
-      "offset": 67.38889,
-      "code": 1
+      "offset": 67.38889
     },
     {
       "index": 542,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -8210,14 +8145,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 67.44444,
-      "code": 1
+      "offset": 67.44444
     },
     {
       "index": 543,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -8226,14 +8160,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 67.5,
-      "code": 1
+      "offset": 67.5
     },
     {
       "index": 544,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -8242,14 +8175,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 67.55556,
-      "code": 1
+      "offset": 67.55556
     },
     {
       "index": 545,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -8258,14 +8190,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 67.61111,
-      "code": 1
+      "offset": 67.61111
     },
     {
       "index": 546,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -8274,14 +8205,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 67.66666,
-      "code": 1
+      "offset": 67.66666
     },
     {
       "index": 547,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -8290,10 +8220,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 68.0,
-      "code": 1
+      "offset": 68.0
     },
     {
       "index": 548,
@@ -8867,7 +8796,7 @@
     },
     {
       "index": 586,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -8876,14 +8805,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 71.77778,
-      "code": 1
+      "offset": 71.77778
     },
     {
       "index": 587,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -8892,14 +8820,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 71.88889,
-      "code": 1
+      "offset": 71.88889
     },
     {
       "index": 588,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -8908,10 +8835,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 72.0,
-      "code": 1
+      "offset": 72.0
     },
     {
       "index": 589,
@@ -9530,7 +9456,7 @@
     },
     {
       "index": 630,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -9539,10 +9465,9 @@
         "num": 6,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 76.66666,
-      "code": 7
+      "offset": 76.66666
     },
     {
       "index": 631,
@@ -9981,7 +9906,7 @@
     },
     {
       "index": 660,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -9990,14 +9915,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": ".",
-      "offset": 81.38889,
-      "code": 1
+      "offset": 81.38889
     },
     {
       "index": 661,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -10006,14 +9930,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 81.44444,
-      "code": 1
+      "offset": 81.44444
     },
     {
       "index": 662,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -10022,14 +9945,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 81.5,
-      "code": 1
+      "offset": 81.5
     },
     {
       "index": 663,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -10038,14 +9960,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 81.55556,
-      "code": 1
+      "offset": 81.55556
     },
     {
       "index": 664,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -10054,14 +9975,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 81.61111,
-      "code": 1
+      "offset": 81.61111
     },
     {
       "index": 665,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -10070,14 +9990,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 81.66666,
-      "code": 1
+      "offset": 81.66666
     },
     {
       "index": 666,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -10086,10 +10005,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 82.0,
-      "code": 1
+      "offset": 82.0
     },
     {
       "index": 667,
@@ -10273,7 +10191,7 @@
     },
     {
       "index": 679,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -10282,14 +10200,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "SAZ",
-      "offset": 83.94444,
-      "code": 1
+      "offset": 83.94444
     },
     {
       "index": 680,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -10298,14 +10215,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 84.0,
-      "code": 1
+      "offset": 84.0
     },
     {
       "index": 681,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 353,
       "noteName": "La5b5",
       "noteAE": "A5b5",
@@ -10314,10 +10230,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 824.2968,
       "lyric": ".",
-      "offset": 84.11111,
-      "code": 1
+      "offset": 84.11111
     },
     {
       "index": 682,
@@ -10516,7 +10431,7 @@
     },
     {
       "index": 695,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -10525,14 +10440,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "SAZ",
-      "offset": 85.61111,
-      "code": 1
+      "offset": 85.61111
     },
     {
       "index": 696,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -10541,14 +10455,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 85.66666,
-      "code": 1
+      "offset": 85.66666
     },
     {
       "index": 697,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -10557,14 +10470,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 85.72222,
-      "code": 1
+      "offset": 85.72222
     },
     {
       "index": 698,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -10573,14 +10485,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 85.77778,
-      "code": 1
+      "offset": 85.77778
     },
     {
       "index": 699,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -10589,14 +10500,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 85.83334,
-      "code": 1
+      "offset": 85.83334
     },
     {
       "index": 700,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -10605,14 +10515,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": ".",
-      "offset": 85.88889,
-      "code": 1
+      "offset": 85.88889
     },
     {
       "index": 701,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 296,
       "noteName": "Sol4",
       "noteAE": "G4",
@@ -10621,10 +10530,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 391.1419,
       "lyric": ".",
-      "offset": 86.0,
-      "code": 1
+      "offset": 86.0
     },
     {
       "index": 702,
@@ -10808,7 +10716,7 @@
     },
     {
       "index": 714,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -10817,14 +10725,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "SAZ",
-      "offset": 87.94444,
-      "code": 1
+      "offset": 87.94444
     },
     {
       "index": 715,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -10833,14 +10740,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 88.0,
-      "code": 1
+      "offset": 88.0
     },
     {
       "index": 716,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 353,
       "noteName": "La5b5",
       "noteAE": "A5b5",
@@ -10849,10 +10755,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 824.2968,
       "lyric": ".",
-      "offset": 88.11111,
-      "code": 1
+      "offset": 88.11111
     },
     {
       "index": 717,
@@ -11051,7 +10956,7 @@
     },
     {
       "index": 730,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -11060,14 +10965,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": "SAZ",
-      "offset": 89.77778,
-      "code": 1
+      "offset": 89.77778
     },
     {
       "index": 731,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -11076,14 +10980,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 89.88889,
-      "code": 1
+      "offset": 89.88889
     },
     {
       "index": 732,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -11092,14 +10995,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 90.0,
-      "code": 1
+      "offset": 90.0
     },
     {
       "index": 733,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -11108,10 +11010,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 90.22222,
-      "code": 1
+      "offset": 90.22222
     },
     {
       "index": 734,
@@ -11460,7 +11361,7 @@
     },
     {
       "index": 757,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -11469,14 +11370,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": "SAZ",
-      "offset": 93.77778,
-      "code": 1
+      "offset": 93.77778
     },
     {
       "index": 758,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -11485,14 +11385,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 93.88889,
-      "code": 1
+      "offset": 93.88889
     },
     {
       "index": 759,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 336,
       "noteName": "Mi5",
       "noteAE": "E5",
@@ -11501,14 +11400,13 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 659.974,
       "lyric": ".",
-      "offset": 94.0,
-      "code": 1
+      "offset": 94.0
     },
     {
       "index": 760,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -11517,10 +11415,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 94.22222,
-      "code": 1
+      "offset": 94.22222
     },
     {
       "index": 761,
@@ -11959,7 +11856,7 @@
     },
     {
       "index": 790,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -11968,10 +11865,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "eğ",
-      "offset": 99.22222,
-      "code": 10
+      "offset": 99.22222
     },
     {
       "index": 791,
@@ -12306,7 +12202,7 @@
     },
     {
       "index": 813,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 300,
       "noteName": "La4b5",
       "noteAE": "A4b5",
@@ -12315,14 +12211,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 412.1484,
       "lyric": "SAZ",
-      "offset": 102.3889,
-      "code": 1
+      "offset": 102.3889
     },
     {
       "index": 814,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 309,
       "noteName": "Si4b5",
       "noteAE": "B4b5",
@@ -12331,14 +12226,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 463.6304,
       "lyric": ".",
-      "offset": 102.4444,
-      "code": 1
+      "offset": 102.4444
     },
     {
       "index": 815,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 318,
       "noteName": "Do5",
       "noteAE": "C5",
@@ -12347,14 +12241,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 521.5431,
       "lyric": ".",
-      "offset": 102.5,
-      "code": 1
+      "offset": 102.5
     },
     {
       "index": 816,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 327,
       "noteName": "Re5",
       "noteAE": "D5",
@@ -12363,14 +12256,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 586.6898,
       "lyric": ".",
-      "offset": 102.5556,
-      "code": 1
+      "offset": 102.5556
     },
     {
       "index": 817,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 331,
       "noteName": "Mi5b5",
       "noteAE": "E5b5",
@@ -12379,14 +12271,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 618.1982,
       "lyric": ".",
-      "offset": 102.6111,
-      "code": 1
+      "offset": 102.6111
     },
     {
       "index": 818,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -12395,14 +12286,13 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": ".",
-      "offset": 102.6667,
-      "code": 1
+      "offset": 102.6667
     },
     {
       "index": 819,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 349,
       "noteName": "Sol5",
       "noteAE": "G5",
@@ -12411,10 +12301,9 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": null,
+      "freqHz": 782.2839,
       "lyric": ".",
-      "offset": 103.0,
-      "code": 1
+      "offset": 103.0
     },
     {
       "index": 820,
@@ -12493,7 +12382,7 @@
     },
     {
       "index": 825,
-      "kind": "meta",
+      "kind": "note",
       "koma53": 340,
       "noteName": "Fa5",
       "noteAE": "F5",
@@ -12502,10 +12391,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": null,
+      "freqHz": 695.4182,
       "lyric": "eğ",
-      "offset": 104.2222,
-      "code": 10
+      "offset": 104.2222
     },
     {
       "index": 826,

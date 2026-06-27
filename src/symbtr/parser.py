@@ -7,8 +7,10 @@ is one event. The columns are::
 
 Meaning of the columns we care about for Phase 0:
 
-* ``Kod``    -- event code. 9 = a note or a rest. 51 = usul (meter) change.
-               Other codes (8, 10, 11, 12, ...) are ornament/meta rows.
+* ``Kod``    -- event code. SymbTr uses MANY codes for real notes (1, 7, 9, 10, 11, 12, ...),
+               so it is NOT a reliable note/meta flag. 51 = usul (meter) change. What actually
+               distinguishes a sounding event is its *duration* (``Ms`` > 0); ``Ms == 0`` rows
+               are grace/çarpma notes and control codes (see ``Event.kind``).
 * ``Nota53`` -- note name in 53-TET Turkish solfege (e.g. ``Do5``). ``Es`` = rest.
 * ``Koma53`` -- the pitch as an *absolute Holdrian comma* value (octave = 53 commas).
                This maps directly to a frequency (see ``audio.tuning``).
@@ -42,8 +44,8 @@ EXPECTED_COLUMNS = [
     "Pay", "Payda", "Ms", "LNS", "Bas", "Soz1", "Offset",
 ]
 
-NOTE_CODE = 9
 REST_KOMA = -1
+USUL_CHANGE_CODE = 51  # Kod 51 = usul (meter) change; carries the new meter in Pay/Payda.
 
 
 @dataclass
@@ -71,15 +73,21 @@ class Event:
         What/why: every downstream stage (synth, JSON export, the editor) needs to
         know whether a row makes sound. Rather than scatter that decision everywhere,
         we compute it once here from the raw columns.
-        How it works: SymbTr marks sounding rows with ``Kod == 9``; among those, a
-        ``Koma53`` of -1 means a rest (silence) and anything else is a pitched note.
-        Every other code (51 = usul change, 8/10/11/12 = ornament markers, ...) is META.
+        How it works: **duration is what makes a row a sounding event, not its ``Kod``.**
+        SymbTr uses many Kod values for real notes (1, 7, 9, 10, 11, 12, …), so keying on
+        ``Kod == 9`` alone silently drops a big chunk of the melody and wrecks the timing.
+        Instead: a usul-change row (``Kod 51``) is META; a row with no duration (``Ms == 0`` —
+        grace/çarpma notes and other control codes like 53/54/55) is non-timed, so META; every
+        remaining row occupies time and is a sounding event — a ``Koma53`` of -1 marks a rest
+        (silence), anything else is a pitched note.
         Important: this is a *derived* property, not stored data — change the rule here
         and the whole pipeline follows.
         """
-        if self.code == NOTE_CODE:
-            return EventKind.REST if self.koma_53 == REST_KOMA else EventKind.NOTE
-        return EventKind.META
+        if self.code == USUL_CHANGE_CODE:
+            return EventKind.META
+        if self.ms <= 0:
+            return EventKind.META
+        return EventKind.REST if self.koma_53 == REST_KOMA else EventKind.NOTE
 
     @property
     def duration_s(self) -> float:

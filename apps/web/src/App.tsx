@@ -34,6 +34,7 @@ const backend = new WebAudioBackend();
 const SAMPLES: { label: string; file: string }[] = [
   { label: "aldanma dünya — acem · düyek (zekai dede)", file: "/sample.json" },
   { label: "safalar getirdiniz — kürdilihicazkâr · aksak (avni anıl)", file: "/safalar-getirdiniz.json" },
+  { label: "gamzedeyim deva — uşşak · sofyan (tatyos efendi)", file: "/gamzedeyim-deva.json" },
 ];
 
 /**

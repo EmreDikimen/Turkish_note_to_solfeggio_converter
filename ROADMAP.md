@@ -137,14 +137,32 @@ produce a real, demoable app with zero machine learning.
 - **Milestone:** working "JSON score → edit → playback" harness over the shared core.
 
 ### Phase 2 — Synthetic training data
-- Render SymbTr scores to images with **Verovio** (or LilyPond / MuseScore CLI).
-  Requires a font/SMuFL set with Turkish microtonal glyphs (koma, bakiye, küçük mücennep).
+- **Render SymbTr scores to images with VexFlow**, reusing the harness's proven engraving
+  (VexFlow 5 + Bravura), which already renders the Turkish microtonal accidentals correctly
+  (koma, bakiye, küçük mücennep) via raw SMuFL codepoints. Render staff-by-staff and rasterize
+  each staff to PNG — either a Node script using `node-canvas`, or a headless browser
+  (Playwright/Puppeteer) if embedding the Bravura font that way is simpler.
+- **Render from the note model**, so the symbol-token label sequence is emitted from the same
+  data that draws the image — labels stay perfectly aligned with no re-parse. The data
+  generator is **TypeScript** (reuses `packages/core` notation + the SheetView engraving
+  logic); OpenCV augmentation stays in **Python**. Phase-2 data-gen is therefore split:
+  *TS renders → Python augments*.
+- **Pitch augmentation — chromatic transpose (before rendering).** Add a core
+  `transpose(doc, commas)` in `packages/core` that shifts every note by N commas and re-spells
+  it via `notation.ts` (so names stay sensible, not weird enharmonics), then render several
+  transpositions of each piece. This multiplies the data cheaply and teaches the model
+  pitch/position invariance (same symbols at different staff heights and accidental contexts).
+  Note the named **ahenk**s (Bolahenk, Mansur, Kız, …) are just fixed transposition offsets, so
+  a `name → comma-offset` table can drive both these augmentation labels and, later, the
+  product's user-facing ahenk selector (Phase 5): the transpose is **chromatic under the hood**;
+  the ahenk name is only a presentation label. This core function is mobile-reusable.
 - **OpenCV augmentations** to bridge synthetic→real: rotation, perspective warp, blur,
   paper texture, ink bleed, lighting gradients, JPEG noise, slight staff curvature.
 - Emit labels as **symbol-token sequences per staff strip** (for CRNN). (If falling back
   to YOLO, emit bounding boxes instead.)
 - **Milestone:** thousands of labeled staff-strip images.
-- ⚠️ **This phase's augmentation quality decides project success** more than architecture.
+- ⚠️ **This phase's augmentation quality decides project success** more than architecture
+  (how realistically you augment toward real photos matters most).
 
 ### Phase 3 — Train the OMR model (CRNN + CTC)
 - Architecture: CNN feature extractor → collapse height to a width-indexed sequence →
@@ -171,6 +189,9 @@ produce a real, demoable app with zero machine learning.
 - **React Native** app that **reuses `packages/core` verbatim**; build only: the mobile UI,
   a native `AudioBackend` adapter, an `onnxruntime-react-native` `OmrRuntime` adapter, and
   camera/file access. The web harness's core ports over; its React UI does not.
+- **Ahenk (transposition) selector** — a user-facing control that picks a named ahenk (Bolahenk,
+  Mansur, Kız, …) for playback/display, built on the core `transpose()` from Phase 2 via the
+  `name → comma-offset` table (chromatic transpose under the hood, ahenk name on top).
 - On-device synthesis + offline ONNX inference (export PyTorch → ONNX; TFLite only if needed).
 - **Milestone:** shipped offline mobile app — photograph → recognize → edit → hear.
 
@@ -181,7 +202,7 @@ produce a real, demoable app with zero machine learning.
 | Layer | Tool |
 |---|---|
 | ML training / data gen (Python, offline) | PyTorch, OpenCV; custom SymbTr parser; SymbTr→JSON export |
-| Synthetic rendering | Verovio (preferred) / LilyPond / MuseScore CLI |
+| Synthetic rendering | **VexFlow** (reuse the harness engraving; render staves → PNG via node-canvas / headless browser) |
 | Shared core | **TypeScript** (`packages/core`): note model, tuning, synth scheduling, OMR decode |
 | Web harness | React + VexFlow/OSMD (render) + Web Audio (`AudioBackend` adapter) |
 | Mobile product | React Native + native audio adapter + onnxruntime-react-native |
@@ -193,8 +214,9 @@ produce a real, demoable app with zero machine learning.
 ## 5. Key risks / watch-items
 - **Synthetic→real domain gap** — the #1 risk. Mitigate with aggressive, realistic
   augmentation and a real-photo fine-tuning set. Do not skip the real photos.
-- **Microtonal glyph coverage** in the rendering font — verify koma/bakiye/küçük
-  mücennep render correctly before mass-generating data.
+- **Microtonal glyph coverage** in the rendering font — koma/bakiye/küçük mücennep are
+  already verified to render correctly in VexFlow + Bravura (Phase 1), which is why Phase 2
+  reuses that engraving for synthetic data. Re-verify if the render font/path ever changes.
 - **Staff isolation robustness** on phone photos (curvature, lighting) — a weak link
   upstream of an otherwise-good model.
 - Resist building Phase 5 (mobile/edge) early; it's the slowest path and gates nothing.
@@ -206,7 +228,8 @@ produce a real, demoable app with zero machine learning.
 **Phase 0: DONE (2026-06-20).** Symbolic → microtonal audio pipeline works with no ML.
 - SymbTr dataset lives at `~/Downloads/SymbTr-2.0.0/` (txt, MusicXML, midi, mu2; 2200 pieces).
 - `src/symbtr/parser.py` — parses SymbTr `.txt` → `Score`/`Event` model. Verified on all 2200 files.
-- `src/audio/tuning.py` — `koma53_to_freq()`; 53-TET, anchored A4=440 at comma 305. Validated
+- `src/audio/tuning.py` — `koma53_to_freq()`; 53-TET, concert anchor 440 Hz at comma 327 (written
+  pitch sounds a fourth below — Turkish transposing convention). Validated
   against 12-TET (E5 → 659.97 Hz).
 - `src/audio/synth.py` — additive synth + WAV writer (numpy + stdlib `wave`, no heavy deps).
 - `scripts/symbtr_to_audio.py` — CLI: `python scripts/symbtr_to_audio.py <file.txt> -o out.wav --info`.
@@ -261,16 +284,23 @@ produce a real, demoable app with zero machine learning.
   Drawn by reserving width via `Stave.setNoteStartX` and appending Bravura SVG glyphs (VexFlow's
   native `KeySignature` only supports standard Western keys). This is the button-only slice of the
   README's deferred "settings modal" idea; the full modal (view/theme/this toggle) is still TODO.
+- ✅ **Tempo control + usul-aware metronome** (added 2026-06-27): a **BPM** input that defaults
+  to each piece's natural tempo (`estimateBpm`) and re-times playback live (`speed = chosenBpm /
+  naturalBpm`); a **metronome** toggle; and a **usul selector**. New core `usul.ts` carries each
+  usul's meter + beat **grouping** (e.g. aksak 9/8 = 2+2+2+3 eighths) and `buildMetronomeTrack`
+  walks the bars (`groupMeasures`) to place clicks on the felt beats with the downbeat accented —
+  so non-integer usuls click correctly, aligned to the bars, at any tempo. The selector defaults
+  to the piece's own usul (else the usul whose meter matches the derived time signature). Pure
+  data + scheduling math, mobile-reusable. (This is the click-track slice of the usul-rhythm idea;
+  a real darbuka pattern + OMR-driven usul detection is still later — see below.)
 - ⏳ Optional later: feed OMR output into this harness (Phase 4).
-- ⏳ Later: **usul-based rhythm playback.** Replace the generic metronome with the piece's usul
-  played as a real rhythmic cycle on a traditional percussion sound (darbuka), aligned to the
-  measures, so non-integer usuls (aksak 9/8, curcuna 10/8, …) sound correct. The usul is
-  auto-detected by OMR and stays user-editable (OMR can misread it). Recommended as a
-  harness/synthesis enhancement after Phase 1, with the automatic usul detection tied to the
-  OMR model (Phase 3–4).
+- ⏳ Later: **usul-based rhythm playback (full).** Upgrade the usul-aware metronome above into the
+  piece's usul played as a real rhythmic cycle on a traditional percussion sound (darbuka), so
+  non-integer usuls sound idiomatic, not just clicked. The usul is auto-detected by OMR and stays
+  user-editable (OMR can misread it); wire the automatic detection in with the OMR model (Phase 3–4).
 
-**Phase 1 is complete** (piano-roll editor + sheet/notation editor). Next major milestone is the
-ML track (Phase 2: synthetic training data), unless we polish the harness further first.
+**Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome). Next
+major milestone is the ML track (Phase 2: synthetic training data).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
@@ -280,4 +310,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — fine for a throwaway harness).
 
-_Last updated: 2026-06-22._
+_Last updated: 2026-06-27._

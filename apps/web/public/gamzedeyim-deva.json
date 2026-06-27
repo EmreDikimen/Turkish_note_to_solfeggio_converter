@@ -8,8 +8,8 @@
   "composer": "tatyos efendi",
   "tuning": {
     "system": "53tet",
-    "refFreqHz": 440.0,
-    "refKoma": 305,
+    "refFreqHz": 440,
+    "refKoma": 327,
     "commasPerOctave": 53
   },
   "events": [
@@ -24,7 +24,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "ARANAĞME",
       "offset": 0.25
     },
@@ -39,7 +39,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 0.375
     },
@@ -54,7 +54,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 0.5
     },
@@ -69,7 +69,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 0.625
     },
@@ -84,7 +84,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 0.75
     },
@@ -99,7 +99,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 0.875
     },
@@ -114,9 +114,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
-      "offset": 1.0
+      "offset": 1
     },
     {
       "index": 8,
@@ -129,7 +129,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 1.125
     },
@@ -144,7 +144,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 1.25
     },
@@ -159,7 +159,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 1.375
     },
@@ -174,7 +174,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 1.5
     },
@@ -189,7 +189,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 880.0,
+      "freqHz": 659.974,
       "lyric": ".",
       "offset": 1.5625
     },
@@ -204,7 +204,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 1.625
     },
@@ -219,7 +219,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 1.6875
     },
@@ -234,7 +234,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 1.75
     },
@@ -249,9 +249,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 2.0
+      "offset": 2
     },
     {
       "index": 17,
@@ -279,7 +279,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 2.3125
     },
@@ -294,7 +294,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 2.375
     },
@@ -309,7 +309,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 2.5
     },
@@ -324,7 +324,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 2.625
     },
@@ -339,7 +339,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 2.75
     },
@@ -354,7 +354,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 2.875
     },
@@ -369,7 +369,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 2.9375
     },
@@ -384,9 +384,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 3.0
+      "offset": 3
     },
     {
       "index": 26,
@@ -399,7 +399,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 3.125
     },
@@ -414,7 +414,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": ".",
       "offset": 3.1875
     },
@@ -429,7 +429,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 3.25
     },
@@ -444,7 +444,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 3.3125
     },
@@ -459,7 +459,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 3.375
     },
@@ -474,7 +474,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 3.5
     },
@@ -489,7 +489,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 3.5625
     },
@@ -504,7 +504,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 3.625
     },
@@ -519,7 +519,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 3.6875
     },
@@ -534,7 +534,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 3.75
     },
@@ -549,9 +549,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 4.0
+      "offset": 4
     },
     {
       "index": 37,
@@ -564,7 +564,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 4.125
     },
@@ -595,7 +595,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 4.1875
     },
@@ -610,7 +610,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 4.25
     },
@@ -625,7 +625,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 4.5
     },
@@ -640,7 +640,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 4.625
     },
@@ -671,7 +671,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 4.6875
     },
@@ -686,7 +686,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 4.75
     },
@@ -701,9 +701,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 5.0
+      "offset": 5
     },
     {
       "index": 47,
@@ -716,7 +716,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 5.125
     },
@@ -731,7 +731,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 5.1875
     },
@@ -746,7 +746,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 5.25
     },
@@ -761,7 +761,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": ".",
       "offset": 5.3125
     },
@@ -776,7 +776,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 5.375
     },
@@ -791,7 +791,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 5.5
     },
@@ -806,7 +806,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 5.5625
     },
@@ -821,7 +821,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 5.625
     },
@@ -836,7 +836,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 5.6875
     },
@@ -851,7 +851,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 5.75
     },
@@ -866,9 +866,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 6.0
+      "offset": 6
     },
     {
       "index": 58,
@@ -881,7 +881,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 6.125
     },
@@ -912,7 +912,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 6.1875
     },
@@ -927,7 +927,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 6.25
     },
@@ -942,7 +942,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 6.5
     },
@@ -957,7 +957,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 6.625
     },
@@ -988,7 +988,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 6.6875
     },
@@ -1003,7 +1003,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 6.75
     },
@@ -1018,9 +1018,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 7.0
+      "offset": 7
     },
     {
       "index": 68,
@@ -1033,7 +1033,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 7.125
     },
@@ -1048,7 +1048,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 7.1875
     },
@@ -1063,7 +1063,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 7.25
     },
@@ -1078,7 +1078,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": ".",
       "offset": 7.3125
     },
@@ -1093,7 +1093,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 7.375
     },
@@ -1108,7 +1108,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 7.5
     },
@@ -1123,7 +1123,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 7.5625
     },
@@ -1138,7 +1138,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 7.625
     },
@@ -1153,7 +1153,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 7.6875
     },
@@ -1168,7 +1168,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 7.75
     },
@@ -1183,9 +1183,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 8.0
+      "offset": 8
     },
     {
       "index": 79,
@@ -1198,7 +1198,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Hey",
       "offset": 8.125
     },
@@ -1213,9 +1213,9 @@
         "num": 7,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
-      "offset": 9.0
+      "offset": 9
     },
     {
       "index": 81,
@@ -1228,7 +1228,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
       "offset": 9.125
     },
@@ -1243,7 +1243,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 9.1875
     },
@@ -1258,7 +1258,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 9.25
     },
@@ -1273,7 +1273,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 9.375
     },
@@ -1304,7 +1304,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 9.4375
     },
@@ -1319,7 +1319,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 9.5
     },
@@ -1334,7 +1334,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 9.625
     },
@@ -1349,7 +1349,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 9.6875
     },
@@ -1364,7 +1364,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 9.75
     },
@@ -1379,7 +1379,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 9.875
     },
@@ -1410,7 +1410,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 9.9375
     },
@@ -1425,9 +1425,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 10.0
+      "offset": 10
     },
     {
       "index": 95,
@@ -1440,7 +1440,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
       "offset": 10.1875
     },
@@ -1455,7 +1455,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 10.25
     },
@@ -1470,7 +1470,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 10.4375
     },
@@ -1485,7 +1485,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 10.5
     },
@@ -1500,7 +1500,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 10.625
     },
@@ -1515,7 +1515,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 10.6875
     },
@@ -1530,7 +1530,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "",
       "offset": 10.75
     },
@@ -1545,7 +1545,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
       "offset": 10.875
     },
@@ -1576,7 +1576,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 10.9375
     },
@@ -1591,9 +1591,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 11.0
+      "offset": 11
     },
     {
       "index": 106,
@@ -1606,7 +1606,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "hey",
       "offset": 11.125
     },
@@ -1621,7 +1621,7 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 11.5
     },
@@ -1636,7 +1636,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "SAZ",
       "offset": 11.5625
     },
@@ -1651,7 +1651,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 11.625
     },
@@ -1666,7 +1666,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 11.6875
     },
@@ -1681,7 +1681,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": ".",
       "offset": 11.75
     },
@@ -1696,9 +1696,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 12.0
+      "offset": 12
     },
     {
       "index": 113,
@@ -1711,7 +1711,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 12.125
     },
@@ -1726,7 +1726,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 723.2451,
+      "freqHz": 542.4125,
       "lyric": ".",
       "offset": 12.1875
     },
@@ -1741,7 +1741,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 12.25
     },
@@ -1756,7 +1756,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 880.0,
+      "freqHz": 659.974,
       "lyric": ".",
       "offset": 12.375
     },
@@ -1771,7 +1771,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 12.4375
     },
@@ -1786,7 +1786,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 12.5
     },
@@ -1801,7 +1801,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 12.625
     },
@@ -1816,7 +1816,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 12.75
     },
@@ -1831,7 +1831,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 12.875
     },
@@ -1846,9 +1846,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
-      "offset": 13.0
+      "offset": 13
     },
     {
       "index": 123,
@@ -1861,7 +1861,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 13.125
     },
@@ -1876,7 +1876,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 13.25
     },
@@ -1891,7 +1891,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 13.375
     },
@@ -1906,7 +1906,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 13.5
     },
@@ -1921,7 +1921,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 13.5625
     },
@@ -1936,7 +1936,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 13.625
     },
@@ -1951,7 +1951,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 13.6875
     },
@@ -1966,7 +1966,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 13.75
     },
@@ -1981,7 +1981,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 13.875
     },
@@ -2012,7 +2012,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 13.9375
     },
@@ -2027,9 +2027,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 14.0
+      "offset": 14
     },
     {
       "index": 135,
@@ -2042,7 +2042,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 14.25
     },
@@ -2057,7 +2057,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Gam",
       "offset": 14.375
     },
@@ -2072,7 +2072,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ze",
       "offset": 14.5
     },
@@ -2087,7 +2087,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "de",
       "offset": 14.625
     },
@@ -2118,7 +2118,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 14.6875
     },
@@ -2133,7 +2133,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 14.75
     },
@@ -2148,9 +2148,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "yim",
-      "offset": 15.0
+      "offset": 15
     },
     {
       "index": 143,
@@ -2163,7 +2163,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "de",
       "offset": 15.125
     },
@@ -2178,7 +2178,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "vâ",
       "offset": 15.1875
     },
@@ -2193,7 +2193,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": "",
       "offset": 15.25
     },
@@ -2208,7 +2208,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 15.375
     },
@@ -2223,7 +2223,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 15.5
     },
@@ -2238,7 +2238,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 15.6875
     },
@@ -2253,7 +2253,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 15.75
     },
@@ -2268,9 +2268,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
-      "offset": 16.0
+      "offset": 16
     },
     {
       "index": 151,
@@ -2283,7 +2283,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 16.08333
     },
@@ -2298,7 +2298,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 16.16667
     },
@@ -2313,7 +2313,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 16.25
     },
@@ -2328,7 +2328,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Ga",
       "offset": 16.375
     },
@@ -2343,7 +2343,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ri",
       "offset": 16.5
     },
@@ -2358,7 +2358,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bim",
       "offset": 16.625
     },
@@ -2373,7 +2373,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 16.6875
     },
@@ -2388,7 +2388,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 16.75
     },
@@ -2403,7 +2403,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "bir",
       "offset": 16.875
     },
@@ -2418,9 +2418,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
-      "offset": 17.0
+      "offset": 17
     },
     {
       "index": 161,
@@ -2433,7 +2433,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "yu",
       "offset": 17.125
     },
@@ -2448,7 +2448,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "va",
       "offset": 17.375
     },
@@ -2463,7 +2463,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 17.5
     },
@@ -2478,7 +2478,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "bul",
       "offset": 17.6875
     },
@@ -2493,7 +2493,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 17.75
     },
@@ -2508,9 +2508,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
-      "offset": 18.0
+      "offset": 18
     },
     {
       "index": 167,
@@ -2523,7 +2523,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 18.25
     },
@@ -2538,7 +2538,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Gam",
       "offset": 18.375
     },
@@ -2553,7 +2553,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ze",
       "offset": 18.5
     },
@@ -2568,7 +2568,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "de",
       "offset": 18.625
     },
@@ -2599,7 +2599,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 18.6875
     },
@@ -2614,7 +2614,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 18.75
     },
@@ -2629,9 +2629,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "yim",
-      "offset": 19.0
+      "offset": 19
     },
     {
       "index": 175,
@@ -2644,7 +2644,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "de",
       "offset": 19.125
     },
@@ -2659,7 +2659,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "vâ",
       "offset": 19.1875
     },
@@ -2674,7 +2674,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": "",
       "offset": 19.25
     },
@@ -2689,7 +2689,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 19.375
     },
@@ -2704,7 +2704,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 19.5
     },
@@ -2719,7 +2719,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 19.6875
     },
@@ -2734,7 +2734,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 19.75
     },
@@ -2749,9 +2749,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
-      "offset": 20.0
+      "offset": 20
     },
     {
       "index": 183,
@@ -2764,7 +2764,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 20.08333
     },
@@ -2779,7 +2779,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 20.16667
     },
@@ -2794,7 +2794,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 20.25
     },
@@ -2809,7 +2809,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Ga",
       "offset": 20.375
     },
@@ -2824,7 +2824,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ri",
       "offset": 20.5
     },
@@ -2839,7 +2839,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bim",
       "offset": 20.625
     },
@@ -2854,7 +2854,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 20.6875
     },
@@ -2869,7 +2869,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 20.75
     },
@@ -2884,7 +2884,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "bir",
       "offset": 20.875
     },
@@ -2899,9 +2899,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
-      "offset": 21.0
+      "offset": 21
     },
     {
       "index": 193,
@@ -2914,7 +2914,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "yu",
       "offset": 21.125
     },
@@ -2929,7 +2929,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "va",
       "offset": 21.375
     },
@@ -2944,7 +2944,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 21.5
     },
@@ -2959,7 +2959,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "bul",
       "offset": 21.6875
     },
@@ -2974,7 +2974,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 21.75
     },
@@ -2989,7 +2989,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
       "offset": 21.9375
     },
@@ -3004,9 +3004,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "SAZ",
-      "offset": 22.0
+      "offset": 22
     },
     {
       "index": 200,
@@ -3019,7 +3019,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 22.0625
     },
@@ -3034,7 +3034,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 22.125
     },
@@ -3049,7 +3049,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 22.1875
     },
@@ -3064,7 +3064,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": ".",
       "offset": 22.25
     },
@@ -3079,7 +3079,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 361.6226,
+      "freqHz": 271.2062,
       "lyric": "Ka",
       "offset": 22.375
     },
@@ -3094,7 +3094,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "de",
       "offset": 22.5
     },
@@ -3109,7 +3109,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "rim",
       "offset": 22.75
     },
@@ -3124,9 +3124,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "dir",
-      "offset": 23.0
+      "offset": 23
     },
     {
       "index": 208,
@@ -3139,7 +3139,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "hep",
       "offset": 23.125
     },
@@ -3154,7 +3154,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "çek",
       "offset": 23.375
     },
@@ -3169,7 +3169,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "",
       "offset": 23.5
     },
@@ -3184,7 +3184,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ti",
       "offset": 23.625
     },
@@ -3215,7 +3215,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 23.6875
     },
@@ -3230,7 +3230,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 23.75
     },
@@ -3245,9 +3245,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ren",
-      "offset": 24.0
+      "offset": 24
     },
     {
       "index": 216,
@@ -3260,7 +3260,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "",
       "offset": 24.25
     },
@@ -3275,7 +3275,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "İn",
       "offset": 24.375
     },
@@ -3306,7 +3306,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "le",
       "offset": 24.4375
     },
@@ -3321,7 +3321,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 24.5
     },
@@ -3336,7 +3336,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "rim",
       "offset": 24.625
     },
@@ -3351,7 +3351,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 24.75
     },
@@ -3366,7 +3366,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "hiç",
       "offset": 24.875
     },
@@ -3381,7 +3381,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 24.91667
     },
@@ -3396,7 +3396,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 24.95833
     },
@@ -3411,9 +3411,9 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
-      "offset": 25.0
+      "offset": 25
     },
     {
       "index": 227,
@@ -3426,7 +3426,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "re",
       "offset": 25.125
     },
@@ -3441,7 +3441,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hâ",
       "offset": 25.375
     },
@@ -3456,7 +3456,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 25.5
     },
@@ -3471,7 +3471,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 25.5625
     },
@@ -3486,7 +3486,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 25.625
     },
@@ -3501,7 +3501,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 25.6875
     },
@@ -3516,7 +3516,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 25.75
     },
@@ -3531,7 +3531,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
       "offset": 25.9375
     },
@@ -3546,9 +3546,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 26.0
+      "offset": 26
     },
     {
       "index": 236,
@@ -3561,7 +3561,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 26.0625
     },
@@ -3576,7 +3576,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 26.125
     },
@@ -3591,7 +3591,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 26.1875
     },
@@ -3606,7 +3606,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": ".",
       "offset": 26.25
     },
@@ -3621,7 +3621,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 361.6226,
+      "freqHz": 271.2062,
       "lyric": "Ka",
       "offset": 26.375
     },
@@ -3636,7 +3636,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "de",
       "offset": 26.5
     },
@@ -3651,7 +3651,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "rim",
       "offset": 26.75
     },
@@ -3666,9 +3666,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "dir",
-      "offset": 27.0
+      "offset": 27
     },
     {
       "index": 244,
@@ -3681,7 +3681,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "hep",
       "offset": 27.125
     },
@@ -3696,7 +3696,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "çek",
       "offset": 27.375
     },
@@ -3711,7 +3711,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "",
       "offset": 27.5
     },
@@ -3726,7 +3726,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ti",
       "offset": 27.625
     },
@@ -3757,7 +3757,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 27.6875
     },
@@ -3772,7 +3772,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 27.75
     },
@@ -3787,9 +3787,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ren",
-      "offset": 28.0
+      "offset": 28
     },
     {
       "index": 252,
@@ -3802,7 +3802,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "",
       "offset": 28.25
     },
@@ -3817,7 +3817,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "İn",
       "offset": 28.375
     },
@@ -3848,7 +3848,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "le",
       "offset": 28.4375
     },
@@ -3863,7 +3863,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 28.5
     },
@@ -3878,7 +3878,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "rim",
       "offset": 28.625
     },
@@ -3893,7 +3893,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 28.75
     },
@@ -3908,7 +3908,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "hiç",
       "offset": 28.875
     },
@@ -3923,7 +3923,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 28.91667
     },
@@ -3938,7 +3938,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 28.95833
     },
@@ -3953,9 +3953,9 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
-      "offset": 29.0
+      "offset": 29
     },
     {
       "index": 263,
@@ -3968,7 +3968,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "re",
       "offset": 29.125
     },
@@ -3983,7 +3983,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hâ",
       "offset": 29.375
     },
@@ -3998,7 +3998,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 29.5
     },
@@ -4013,7 +4013,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 29.5625
     },
@@ -4028,7 +4028,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 29.625
     },
@@ -4043,7 +4043,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 29.6875
     },
@@ -4058,7 +4058,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 29.75
     },
@@ -4073,7 +4073,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
       "offset": 29.9375
     },
@@ -4088,9 +4088,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 30.0
+      "offset": 30
     },
     {
       "index": 272,
@@ -4103,7 +4103,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "ARANAĞME",
       "offset": 30.25
     },
@@ -4118,7 +4118,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 30.375
     },
@@ -4133,7 +4133,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 30.5
     },
@@ -4148,7 +4148,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 30.625
     },
@@ -4163,7 +4163,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 30.75
     },
@@ -4178,7 +4178,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 30.875
     },
@@ -4193,9 +4193,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
-      "offset": 31.0
+      "offset": 31
     },
     {
       "index": 279,
@@ -4208,7 +4208,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 31.125
     },
@@ -4223,7 +4223,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 31.25
     },
@@ -4238,7 +4238,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 31.375
     },
@@ -4253,7 +4253,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 31.5
     },
@@ -4268,7 +4268,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 880.0,
+      "freqHz": 659.974,
       "lyric": ".",
       "offset": 31.5625
     },
@@ -4283,7 +4283,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 31.625
     },
@@ -4298,7 +4298,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 31.6875
     },
@@ -4313,7 +4313,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 31.75
     },
@@ -4328,9 +4328,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 32.0
+      "offset": 32
     },
     {
       "index": 288,
@@ -4358,7 +4358,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 32.3125
     },
@@ -4373,7 +4373,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 32.375
     },
@@ -4388,7 +4388,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 32.5
     },
@@ -4403,7 +4403,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 32.625
     },
@@ -4418,7 +4418,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 32.75
     },
@@ -4433,7 +4433,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 32.875
     },
@@ -4448,7 +4448,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 32.9375
     },
@@ -4463,9 +4463,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 33.0
+      "offset": 33
     },
     {
       "index": 297,
@@ -4478,7 +4478,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 33.125
     },
@@ -4493,7 +4493,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": ".",
       "offset": 33.1875
     },
@@ -4508,7 +4508,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 33.25
     },
@@ -4523,7 +4523,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 33.3125
     },
@@ -4538,7 +4538,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 33.375
     },
@@ -4553,7 +4553,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 33.5
     },
@@ -4568,7 +4568,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 33.5625
     },
@@ -4583,7 +4583,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 33.625
     },
@@ -4598,7 +4598,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 33.6875
     },
@@ -4613,7 +4613,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 33.75
     },
@@ -4628,9 +4628,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 34.0
+      "offset": 34
     },
     {
       "index": 308,
@@ -4643,7 +4643,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 34.125
     },
@@ -4674,7 +4674,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 34.1875
     },
@@ -4689,7 +4689,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 34.25
     },
@@ -4704,7 +4704,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 34.5
     },
@@ -4719,7 +4719,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 34.625
     },
@@ -4750,7 +4750,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 34.6875
     },
@@ -4765,7 +4765,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 34.75
     },
@@ -4780,9 +4780,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 35.0
+      "offset": 35
     },
     {
       "index": 318,
@@ -4795,7 +4795,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 35.125
     },
@@ -4810,7 +4810,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 35.1875
     },
@@ -4825,7 +4825,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 35.25
     },
@@ -4840,7 +4840,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": ".",
       "offset": 35.3125
     },
@@ -4855,7 +4855,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 35.375
     },
@@ -4870,7 +4870,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 35.5
     },
@@ -4885,7 +4885,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 35.5625
     },
@@ -4900,7 +4900,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 35.625
     },
@@ -4915,7 +4915,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 35.6875
     },
@@ -4930,7 +4930,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 35.75
     },
@@ -4945,9 +4945,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 36.0
+      "offset": 36
     },
     {
       "index": 329,
@@ -4960,7 +4960,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 36.125
     },
@@ -4991,7 +4991,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 36.1875
     },
@@ -5006,7 +5006,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 36.25
     },
@@ -5021,7 +5021,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 36.5
     },
@@ -5036,7 +5036,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 36.625
     },
@@ -5067,7 +5067,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 36.6875
     },
@@ -5082,7 +5082,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 36.75
     },
@@ -5097,9 +5097,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 37.0
+      "offset": 37
     },
     {
       "index": 339,
@@ -5112,7 +5112,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 37.125
     },
@@ -5127,7 +5127,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 37.1875
     },
@@ -5142,7 +5142,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 37.25
     },
@@ -5157,7 +5157,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": ".",
       "offset": 37.3125
     },
@@ -5172,7 +5172,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 37.375
     },
@@ -5187,7 +5187,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 37.5
     },
@@ -5202,7 +5202,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 37.5625
     },
@@ -5217,7 +5217,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 37.625
     },
@@ -5232,7 +5232,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 37.6875
     },
@@ -5247,7 +5247,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 37.75
     },
@@ -5262,9 +5262,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
-      "offset": 38.0
+      "offset": 38
     },
     {
       "index": 350,
@@ -5277,7 +5277,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Hey",
       "offset": 38.125
     },
@@ -5292,9 +5292,9 @@
         "num": 7,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
-      "offset": 39.0
+      "offset": 39
     },
     {
       "index": 352,
@@ -5307,7 +5307,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
       "offset": 39.125
     },
@@ -5322,7 +5322,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 39.1875
     },
@@ -5337,7 +5337,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 39.25
     },
@@ -5352,7 +5352,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 39.375
     },
@@ -5383,7 +5383,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 39.4375
     },
@@ -5398,7 +5398,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 39.5
     },
@@ -5413,7 +5413,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 39.625
     },
@@ -5428,7 +5428,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 39.6875
     },
@@ -5443,7 +5443,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 39.75
     },
@@ -5458,7 +5458,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 39.875
     },
@@ -5489,7 +5489,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 39.9375
     },
@@ -5504,9 +5504,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 40.0
+      "offset": 40
     },
     {
       "index": 366,
@@ -5519,7 +5519,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
       "offset": 40.1875
     },
@@ -5534,7 +5534,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 40.25
     },
@@ -5549,7 +5549,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 40.4375
     },
@@ -5564,7 +5564,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 40.5
     },
@@ -5579,7 +5579,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 40.625
     },
@@ -5594,7 +5594,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 40.6875
     },
@@ -5609,7 +5609,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "",
       "offset": 40.75
     },
@@ -5624,7 +5624,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hey",
       "offset": 40.875
     },
@@ -5655,7 +5655,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 40.9375
     },
@@ -5670,9 +5670,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 41.0
+      "offset": 41
     },
     {
       "index": 377,
@@ -5685,7 +5685,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "hey",
       "offset": 41.125
     },
@@ -5700,7 +5700,7 @@
         "num": 3,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 41.5
     },
@@ -5715,7 +5715,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "SAZ",
       "offset": 41.5625
     },
@@ -5730,7 +5730,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 41.625
     },
@@ -5745,7 +5745,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 41.6875
     },
@@ -5760,7 +5760,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": ".",
       "offset": 41.75
     },
@@ -5775,9 +5775,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 42.0
+      "offset": 42
     },
     {
       "index": 384,
@@ -5790,7 +5790,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 42.125
     },
@@ -5805,7 +5805,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 723.2451,
+      "freqHz": 542.4125,
       "lyric": ".",
       "offset": 42.1875
     },
@@ -5820,7 +5820,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 42.25
     },
@@ -5835,7 +5835,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 880.0,
+      "freqHz": 659.974,
       "lyric": ".",
       "offset": 42.375
     },
@@ -5850,7 +5850,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 42.4375
     },
@@ -5865,7 +5865,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 42.5
     },
@@ -5880,7 +5880,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 42.625
     },
@@ -5895,7 +5895,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 42.75
     },
@@ -5910,7 +5910,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 42.875
     },
@@ -5925,9 +5925,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
-      "offset": 43.0
+      "offset": 43
     },
     {
       "index": 394,
@@ -5940,7 +5940,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 43.125
     },
@@ -5955,7 +5955,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": ".",
       "offset": 43.25
     },
@@ -5970,7 +5970,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": ".",
       "offset": 43.375
     },
@@ -5985,7 +5985,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 43.5
     },
@@ -6000,7 +6000,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 43.5625
     },
@@ -6015,7 +6015,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 43.625
     },
@@ -6030,7 +6030,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 43.6875
     },
@@ -6045,7 +6045,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 43.75
     },
@@ -6060,7 +6060,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 43.875
     },
@@ -6091,7 +6091,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": ".",
       "offset": 43.9375
     },
@@ -6106,9 +6106,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
-      "offset": 44.0
+      "offset": 44
     },
     {
       "index": 406,
@@ -6121,7 +6121,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 44.25
     },
@@ -6136,7 +6136,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Gam",
       "offset": 44.375
     },
@@ -6151,7 +6151,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ze",
       "offset": 44.5
     },
@@ -6166,7 +6166,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "de",
       "offset": 44.625
     },
@@ -6197,7 +6197,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 44.6875
     },
@@ -6212,7 +6212,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 44.75
     },
@@ -6227,9 +6227,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "yim",
-      "offset": 45.0
+      "offset": 45
     },
     {
       "index": 414,
@@ -6242,7 +6242,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "de",
       "offset": 45.125
     },
@@ -6257,7 +6257,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "vâ",
       "offset": 45.1875
     },
@@ -6272,7 +6272,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": "",
       "offset": 45.25
     },
@@ -6287,7 +6287,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 45.375
     },
@@ -6302,7 +6302,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 45.5
     },
@@ -6317,7 +6317,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 45.6875
     },
@@ -6332,7 +6332,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 45.75
     },
@@ -6347,9 +6347,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
-      "offset": 46.0
+      "offset": 46
     },
     {
       "index": 422,
@@ -6362,7 +6362,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 46.08333
     },
@@ -6377,7 +6377,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 46.16667
     },
@@ -6392,7 +6392,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 46.25
     },
@@ -6407,7 +6407,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Ga",
       "offset": 46.375
     },
@@ -6422,7 +6422,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ri",
       "offset": 46.5
     },
@@ -6437,7 +6437,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bim",
       "offset": 46.625
     },
@@ -6452,7 +6452,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 46.6875
     },
@@ -6467,7 +6467,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 46.75
     },
@@ -6482,7 +6482,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "bir",
       "offset": 46.875
     },
@@ -6497,9 +6497,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
-      "offset": 47.0
+      "offset": 47
     },
     {
       "index": 432,
@@ -6512,7 +6512,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "yu",
       "offset": 47.125
     },
@@ -6527,7 +6527,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "va",
       "offset": 47.375
     },
@@ -6542,7 +6542,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 47.5
     },
@@ -6557,7 +6557,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "bul",
       "offset": 47.6875
     },
@@ -6572,7 +6572,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 47.75
     },
@@ -6587,9 +6587,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
-      "offset": 48.0
+      "offset": 48
     },
     {
       "index": 438,
@@ -6602,7 +6602,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": ".",
       "offset": 48.25
     },
@@ -6617,7 +6617,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Gam",
       "offset": 48.375
     },
@@ -6632,7 +6632,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ze",
       "offset": 48.5
     },
@@ -6647,7 +6647,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "de",
       "offset": 48.625
     },
@@ -6678,7 +6678,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 48.6875
     },
@@ -6693,7 +6693,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 48.75
     },
@@ -6708,9 +6708,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "yim",
-      "offset": 49.0
+      "offset": 49
     },
     {
       "index": 446,
@@ -6723,7 +6723,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "de",
       "offset": 49.125
     },
@@ -6738,7 +6738,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "vâ",
       "offset": 49.1875
     },
@@ -6753,7 +6753,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 782.2839,
+      "freqHz": 586.6898,
       "lyric": "",
       "offset": 49.25
     },
@@ -6768,7 +6768,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 49.375
     },
@@ -6783,7 +6783,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 49.5
     },
@@ -6798,7 +6798,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 49.6875
     },
@@ -6813,7 +6813,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 49.75
     },
@@ -6828,9 +6828,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
-      "offset": 50.0
+      "offset": 50
     },
     {
       "index": 454,
@@ -6843,7 +6843,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 50.08333
     },
@@ -6858,7 +6858,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 50.16667
     },
@@ -6873,7 +6873,7 @@
         "num": 1,
         "den": 12
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
       "offset": 50.25
     },
@@ -6888,7 +6888,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "Ga",
       "offset": 50.375
     },
@@ -6903,7 +6903,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ri",
       "offset": 50.5
     },
@@ -6918,7 +6918,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bim",
       "offset": 50.625
     },
@@ -6933,7 +6933,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 50.6875
     },
@@ -6948,7 +6948,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 50.75
     },
@@ -6963,7 +6963,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "bir",
       "offset": 50.875
     },
@@ -6978,9 +6978,9 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
-      "offset": 51.0
+      "offset": 51
     },
     {
       "index": 464,
@@ -6993,7 +6993,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "yu",
       "offset": 51.125
     },
@@ -7008,7 +7008,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "va",
       "offset": 51.375
     },
@@ -7023,7 +7023,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 51.5
     },
@@ -7038,7 +7038,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "bul",
       "offset": 51.6875
     },
@@ -7053,7 +7053,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 51.75
     },
@@ -7068,7 +7068,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
       "offset": 51.9375
     },
@@ -7083,9 +7083,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "SAZ",
-      "offset": 52.0
+      "offset": 52
     },
     {
       "index": 471,
@@ -7098,7 +7098,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 52.0625
     },
@@ -7113,7 +7113,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 52.125
     },
@@ -7128,7 +7128,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 52.1875
     },
@@ -7143,7 +7143,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": ".",
       "offset": 52.25
     },
@@ -7158,7 +7158,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 361.6226,
+      "freqHz": 271.2062,
       "lyric": "Ka",
       "offset": 52.375
     },
@@ -7173,7 +7173,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "de",
       "offset": 52.5
     },
@@ -7188,7 +7188,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "rim",
       "offset": 52.75
     },
@@ -7203,9 +7203,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "dir",
-      "offset": 53.0
+      "offset": 53
     },
     {
       "index": 479,
@@ -7218,7 +7218,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "hep",
       "offset": 53.125
     },
@@ -7233,7 +7233,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "çek",
       "offset": 53.375
     },
@@ -7248,7 +7248,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "",
       "offset": 53.5
     },
@@ -7263,7 +7263,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ti",
       "offset": 53.625
     },
@@ -7294,7 +7294,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 53.6875
     },
@@ -7309,7 +7309,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 53.75
     },
@@ -7324,9 +7324,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ren",
-      "offset": 54.0
+      "offset": 54
     },
     {
       "index": 487,
@@ -7339,7 +7339,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "",
       "offset": 54.25
     },
@@ -7354,7 +7354,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "İn",
       "offset": 54.375
     },
@@ -7385,7 +7385,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "le",
       "offset": 54.4375
     },
@@ -7400,7 +7400,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 54.5
     },
@@ -7415,7 +7415,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "rim",
       "offset": 54.625
     },
@@ -7430,7 +7430,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 54.75
     },
@@ -7445,7 +7445,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "hiç",
       "offset": 54.875
     },
@@ -7460,7 +7460,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 54.91667
     },
@@ -7475,7 +7475,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 54.95833
     },
@@ -7490,9 +7490,9 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
-      "offset": 55.0
+      "offset": 55
     },
     {
       "index": 498,
@@ -7505,7 +7505,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "re",
       "offset": 55.125
     },
@@ -7520,7 +7520,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "hâ",
       "offset": 55.375
     },
@@ -7535,7 +7535,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "",
       "offset": 55.5
     },
@@ -7550,7 +7550,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "bul",
       "offset": 55.5625
     },
@@ -7565,7 +7565,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 55.625
     },
@@ -7580,7 +7580,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 55.6875
     },
@@ -7595,7 +7595,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 55.75
     },
@@ -7610,7 +7610,7 @@
         "num": 3,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "mam",
       "offset": 55.9375
     },
@@ -7625,9 +7625,9 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
-      "offset": 56.0
+      "offset": 56
     },
     {
       "index": 507,
@@ -7640,7 +7640,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": ".",
       "offset": 56.0625
     },
@@ -7655,7 +7655,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": ".",
       "offset": 56.125
     },
@@ -7670,7 +7670,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": ".",
       "offset": 56.1875
     },
@@ -7685,7 +7685,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": ".",
       "offset": 56.25
     },
@@ -7700,7 +7700,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 361.6226,
+      "freqHz": 271.2062,
       "lyric": "Ka",
       "offset": 56.375
     },
@@ -7715,7 +7715,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "de",
       "offset": 56.5
     },
@@ -7730,7 +7730,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "rim",
       "offset": 56.75
     },
@@ -7745,9 +7745,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "dir",
-      "offset": 57.0
+      "offset": 57
     },
     {
       "index": 515,
@@ -7760,7 +7760,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "hep",
       "offset": 57.125
     },
@@ -7775,7 +7775,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "çek",
       "offset": 57.375
     },
@@ -7790,7 +7790,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 391.1419,
+      "freqHz": 293.3449,
       "lyric": "",
       "offset": 57.5
     },
@@ -7805,7 +7805,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ti",
       "offset": 57.625
     },
@@ -7836,7 +7836,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 57.6875
     },
@@ -7851,7 +7851,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 57.75
     },
@@ -7866,9 +7866,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "ren",
-      "offset": 58.0
+      "offset": 58
     },
     {
       "index": 523,
@@ -7881,7 +7881,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "",
       "offset": 58.25
     },
@@ -7896,7 +7896,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "İn",
       "offset": 58.375
     },
@@ -7927,7 +7927,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 695.4182,
+      "freqHz": 521.5431,
       "lyric": "le",
       "offset": 58.4375
     },
@@ -7942,7 +7942,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "",
       "offset": 58.5
     },
@@ -7957,7 +7957,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 659.974,
+      "freqHz": 494.961,
       "lyric": "rim",
       "offset": 58.625
     },
@@ -7972,7 +7972,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "",
       "offset": 58.75
     },
@@ -7987,7 +7987,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "hiç",
       "offset": 58.875
     },
@@ -8002,7 +8002,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 58.91667
     },
@@ -8017,7 +8017,7 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 58.95833
     },
@@ -8032,9 +8032,9 @@
         "num": 1,
         "den": 24
       },
-      "freqHz": 488.5299,
+      "freqHz": 366.383,
       "lyric": "",
-      "offset": 59.0
+      "offset": 59
     },
     {
       "index": 534,
@@ -8047,7 +8047,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "kat",
       "offset": 59.125
     },
@@ -8062,7 +8062,7 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 586.6898,
+      "freqHz": 440,
       "lyric": "yet",
       "offset": 59.375
     },
@@ -8077,7 +8077,7 @@
         "num": 1,
         "den": 8
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "KARAR",
       "offset": 59.5
     },
@@ -8092,7 +8092,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 521.5431,
+      "freqHz": 391.1419,
       "lyric": "mi",
       "offset": 59.5625
     },
@@ -8107,7 +8107,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 59.625
     },
@@ -8122,7 +8122,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 482.1824,
+      "freqHz": 361.6226,
       "lyric": "",
       "offset": 59.6875
     },
@@ -8137,7 +8137,7 @@
         "num": 1,
         "den": 16
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "",
       "offset": 59.75
     },
@@ -8152,9 +8152,9 @@
         "num": 1,
         "den": 4
       },
-      "freqHz": 440.0,
+      "freqHz": 329.987,
       "lyric": "yor",
-      "offset": 60.0
+      "offset": 60
     }
   ]
 }

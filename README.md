@@ -51,9 +51,13 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
 - **Phase 1 — DONE:** shared TypeScript `core` + React web harness. Loads note-model JSON;
   piano-roll and **VexFlow-engraved sheet** views (real stems/beams/flags/dots + Turkish
   microtonal accidentals); Web Audio playback at exact 53-TET; **Play / Pause / Resume / Stop**
-  with a live **playhead** cursor on the sheet and **click-a-measure-to-seek**; drag-to-edit
-  (piano-roll) and a per-measure note editor (sheet). See ROADMAP §6 (Status) for details.
-- **Phase 2 — next:** synthetic training data (render SymbTr → images for OMR).
+  with a live **playhead** cursor on the sheet and **click-a-measure-to-seek**; **tempo (BPM)
+  control + a usul-aware metronome** (clicks the chosen usul's beat groupings, correct for
+  non-integer usuls like aksak 9/8); drag-to-edit (piano-roll) and a per-measure note editor
+  (sheet). See ROADMAP §6 (Status) for details.
+- **Phase 2 — next:** synthetic training data — render SymbTr scores to staff images with
+  **VexFlow** (reusing the harness engraving), augment with **chromatic transpose** (pitch
+  augmentation) + OpenCV (image augmentation), emit per-staff token labels.
 
 ## Directory Structure
 
@@ -118,9 +122,10 @@ npm run dev:web
 
 Then open the printed `localhost` URL. You can also load any exported JSON from the **Load JSON**
 button. Toggle **Piano-roll / Sheet**; in Sheet view use **Play / Pause / Resume / Stop**, click
-a measure to play from there, **♯♭ Key sig** to hoist accidentals to the row start, and **✎ Edit**
-to correct notes. The shared logic lives in `packages/core`; the React UI in `apps/web` is a
-throwaway dev tool (the real UI is rebuilt for mobile in Phase 5).
+a measure to play from there, set the **BPM** and toggle the **usul metronome**, use **♯♭ Key sig**
+to hoist accidentals to the row start, and **✎ Edit** to correct notes. The shared logic lives in
+`packages/core`; the React UI in `apps/web` is a throwaway dev tool (the real UI is rebuilt for
+mobile in Phase 5).
 
 ## Data
 SymbTr-2.0.0 (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores in txt, MusicXML,
@@ -131,13 +136,18 @@ which maps directly to a 53-TET frequency.
 
 ## Not essential for now but can be added after
 - We need to add a settings modal. We can select if we want to use note sheet or piano roll, dark mode or light mode, showing the accidentals for every note or using a single sign at the score and only show accidentals if the accidental of that specific note is not match with the accidentals of the score
-  - _Done (button, not modal): the score-signature toggle is the **♯♭ Key sig** button in the sheet view. The rest of the settings modal is still TODO._
+  - _Done (selector, not modal): the sheet view's **Accidentals** selector offers three modes — on every note, makam key signature at the row start (only deviations marked), and standard per-measure notation (an accidental carries to the rest of its measure). The rest of the settings modal is still TODO._
 
 - The notesheet part have two scrolling. We can remove the inner scrolling.
 
-- **Usul-based rhythm (replace the metronome).** Play each piece's usul as a real rhythmic
-  cycle on a traditional percussion sound (e.g. darbuka), locked to the measures, instead of a
-  plain metronome click — so non-integer usuls like aksak (9/8) sound correct. The usul should
-  be auto-detected by the OMR model and stay user-editable (OMR can misread it). Recommended:
-  build the rhythm playback + editable usul selector as a harness/synthesis enhancement after
-  Phase 1; wire the automatic usul detection in with the OMR model (Phase 3–4).
+- **Transpose / ahenk.** A core `transpose(doc, commas)` (chromatic, re-spelling notes) is built
+  in **Phase 2** as pitch augmentation for the synthetic data. The user-facing version is an
+  **ahenk** selector (Bolahenk, Mansur, Kız, …) — each ahenk is a fixed comma offset, so it's the
+  same chromatic transpose with an ahenk-name label on top; shipped as a mobile feature in Phase 5.
+
+- **Usul-based rhythm.** _Partly done:_ a **usul-aware metronome** now clicks each piece's usul
+  on the correct beat groupings (downbeat accented), locked to the measures, so non-integer usuls
+  like aksak (9/8) stay aligned — with a tempo (BPM) control and a usul selector. _Still TODO:_
+  upgrade those clicks into a real rhythmic cycle on a traditional percussion sound (e.g. darbuka)
+  so the usul sounds idiomatic, and auto-detect the usul from the OMR model while keeping it
+  user-editable (OMR can misread it) — wire the detection in at Phase 3–4.

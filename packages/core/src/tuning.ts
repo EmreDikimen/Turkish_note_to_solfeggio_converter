@@ -3,13 +3,21 @@
  *
  * SymbTr's Koma53 is an absolute Holdrian comma value (octave = 53 commas), so
  *   frequency = refFreqHz * 2 ** ((koma - refKoma) / commasPerOctave)
- * Anchored at A4 = 440 Hz (comma 305).
+ *
+ * Concert anchor: comma 327 sounds at 440 Hz. Turkish notation is TRANSPOSING — a written
+ * pitch sounds a perfect fourth (22 commas) BELOW its piano-literal letter — so written A4
+ * (comma 305) sounds at 330 Hz (concert E4), not 440. Baking that fourth into the anchor makes
+ * default playback match real Turkish concert pitch. (refFreq/refKoma only set absolute height;
+ * the microtonal intervals come purely from comma differences, so this never distorts the makam.)
  */
 
 import type { TuningParams } from "./types";
 
 export const COMMAS_PER_OCTAVE = 53;
-export const DEFAULT_REF_KOMA = 305;
+// Concert anchor: comma 327 (written D5) = 440 Hz, i.e. written pitch sounds a perfect fourth
+// (22 commas) below concert — Turkish notation's transposing convention. (Theory anchor A4=440
+// would be comma 305; the +22 is the written→concert fourth.)
+export const DEFAULT_REF_KOMA = 327;
 export const DEFAULT_REF_FREQ = 440.0;
 
 export const DEFAULT_TUNING: TuningParams = {

@@ -57,18 +57,36 @@ function vexDuration(beats: number): { duration: string; dots: number } {
 }
 
 /**
+ * How accidentals are displayed on the staff:
+ * - `"every"`   — draw every note's accidental inline (no suppression).
+ * - `"keysig"`  — draw the makam key signature once per row and inline-mark only notes that
+ *                 deviate from it (every deviating occurrence, no measure memory).
+ * - `"measure"` — standard engraving: key signature at the row start PLUS the measure-scoped
+ *                 carry rule — an accidental prints on the first note (per staff position) that
+ *                 breaks the alteration in effect, then carries to later same-position notes in
+ *                 the measure; a cancel (natural, or the signature's glyph) prints on return.
+ *                 This matches how real note sheets are engraved.
+ */
+export type AccidentalMode = "every" | "keysig" | "measure";
+
+/**
  * Build the VexFlow StaveNotes for one measure (parallel `evs` keeps the source event).
- *
- * When `signature` is non-null (key-signature mode), an inline accidental is drawn only for
- * notes that deviate from the signature: a note matching its letter's signature gets none, and
- * a natural note under an altered signature gets an explicit natural sign.
+ * `signatureMap` is the makam key signature (alteration per letter); it's consulted in the
+ * `"keysig"` and `"measure"` modes and ignored in `"every"`.
  */
 function buildStaveNotes(
   measure: Measure,
-  signature: Map<string, number> | null,
+  mode: AccidentalMode,
+  signatureMap: Map<string, number>,
 ): { notes: StaveNote[]; evs: NoteEvent[] } {
   const notes: StaveNote[] = [];
   const evs: NoteEvent[] = [];
+  // "measure" mode only: the alteration currently in effect for each staff position
+  // (letter+octave) within THIS measure. Seeded lazily from the key signature; set by a printed
+  // accidental and carried until it changes. It's local to one measure, so it naturally resets
+  // at every barline — exactly the standard convention.
+  const active = new Map<string, number>();
+
   for (const ev of measure.events) {
     const { duration, dots } = vexDuration(eventBeats(ev));
     const parsed = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
@@ -85,15 +103,31 @@ function buildStaveNotes(
     // Staff position comes from letter+octave only (Turkish accidentals don't shift the
     // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
     const n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
-    const sigAlter = signature ? signature.get(parsed.letter) ?? 0 : null;
-    if (sigAlter === null) {
-      // No signature: show every alteration inline (default behavior).
-      if (parsed.alterCommas !== 0) addAccidental(n, parsed.alterCommas);
-    } else if (parsed.alterCommas !== sigAlter) {
-      // Key-signature mode: only mark deviations. A natural under an altered signature needs
-      // an explicit natural sign; otherwise draw the glyph for the note's alteration.
-      if (parsed.alterCommas === 0) n.addModifier(new Accidental("n"), 0);
-      else addAccidental(n, parsed.alterCommas);
+    const alter = parsed.alterCommas;
+
+    if (mode === "every") {
+      // Show every alteration inline.
+      if (alter !== 0) addAccidental(n, alter);
+    } else if (mode === "keysig") {
+      // Mark only notes that deviate from the signature (each occurrence). A natural under an
+      // altered signature needs an explicit natural sign; otherwise draw the note's glyph.
+      const sigAlter = signatureMap.get(parsed.letter) ?? 0;
+      if (alter !== sigAlter) {
+        if (alter === 0) n.addModifier(new Accidental("n"), 0);
+        else addAccidental(n, alter);
+      }
+    } else {
+      // Standard measure-scoped carry. The alteration in effect for this position starts at the
+      // key signature and updates whenever an accidental is printed. Print one only when the
+      // note breaks the effect; then remember it for the rest of the measure.
+      const posKey = `${parsed.letter}${parsed.octave}`;
+      const sigAlter = signatureMap.get(parsed.letter) ?? 0;
+      const effective = active.has(posKey) ? active.get(posKey)! : sigAlter;
+      if (alter !== effective) {
+        if (alter === 0) n.addModifier(new Accidental("n"), 0); // cancel back to natural
+        else addAccidental(n, alter);
+        active.set(posKey, alter);
+      }
     }
     for (let i = 0; i < dots; i++) Dot.buildAndAttach([n], { all: true });
     notes.push(n);
@@ -221,7 +255,7 @@ interface NotePos {
 export function SheetView({
   doc,
   editMode,
-  keySignatureMode,
+  accidentalMode,
   playing,
   getPositionMs,
   onMeasureClick,
@@ -229,8 +263,9 @@ export function SheetView({
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
-  /** When true, draw the score's accidentals once per row and suppress matching inline ones. */
-  keySignatureMode: boolean;
+  /** How accidentals are displayed (see {@link AccidentalMode}). The key signature is drawn at
+   *  each row start in `"keysig"` and `"measure"` modes. */
+  accidentalMode: AccidentalMode;
   /** True while there's an active (playing or paused) position — drives the playhead. */
   playing: boolean;
   /** Current playback position in ms (from the audio backend), or null when stopped. */
@@ -275,8 +310,10 @@ export function SheetView({
     if (!host) return;
     host.innerHTML = ""; // clear any previous render (also handles React 18 double-invoke)
 
+    // The key signature is drawn whenever accidentals aren't shown on every note.
+    const showSignature = accidentalMode !== "every";
     // Width the key signature needs after the clef on each row's first stave (0 when off).
-    const sigWidth = keySignatureMode && signature.length ? signature.length * SIG_GLYPH_ADVANCE + 10 : 0;
+    const sigWidth = showSignature && signature.length ? signature.length * SIG_GLYPH_ADVANCE + 10 : 0;
     // The clef + (optional) signature both repeat on the first stave of every row.
     const leadWidth = CLEF_W + sigWidth;
     // Extra room the meter (e.g. 9/8) needs — only on the very first stave of the piece.
@@ -330,7 +367,7 @@ export function SheetView({
         // meter as Bravura glyphs ourselves (VexFlow's native versions don't fit either case),
         // so we just reserve horizontal space here and remember each one's start x.
         const clefEnd = stave.getNoteStartX();
-        const drawSig = keySignatureMode && cell.firstInRow && signature.length > 0;
+        const drawSig = showSignature && cell.firstInRow && signature.length > 0;
         const drawTime = r === 0 && cell.firstInRow && timeSig != null;
         const sigStartX = clefEnd;
         const timeStartX = clefEnd + (drawSig ? sigWidth : 0);
@@ -342,7 +379,7 @@ export function SheetView({
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
         const barHeight = stave.getYForLine(4) - stave.getYForLine(0) + 2 * CURSOR_MARGIN;
         try {
-          const { notes, evs } = buildStaveNotes(cell.m, keySignatureMode ? signatureMap : null);
+          const { notes, evs } = buildStaveNotes(cell.m, accidentalMode, signatureMap);
           if (notes.length > 0) {
             Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: true, alignRests: true });
             attachTitles(notes, evs);
@@ -371,7 +408,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, keySignatureMode, signature, signatureMap, timeSig]);
+  }, [doc, accidentalMode, signature, signatureMap, timeSig]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

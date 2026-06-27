@@ -10,6 +10,7 @@ import {
   findUsul,
   freqFromTuning,
   groupMeasures,
+  transpose as transposeDoc,
   USULS,
   type Measure,
   type NoteEvent,
@@ -17,7 +18,7 @@ import {
 } from "@turkish-omr/core";
 import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
-import { SheetView } from "./SheetView";
+import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 
 type ViewMode = "roll" | "sheet";
@@ -66,7 +67,7 @@ export function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("roll");
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
-  const [keySig, setKeySig] = useState(false);
+  const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>("every");
   const [editing, setEditing] = useState<Measure | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
@@ -75,6 +76,22 @@ export function App() {
   const [metronome, setMetronome] = useState(false);
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
+  // Currently-applied chromatic transposition, in commas (0 = original). A test control for the
+  // core `transpose`; later this becomes the ahenk selector (each ahenk is a fixed comma offset).
+  const [transpose, setTranspose] = useState(0);
+  // When true, the transpose shifts only the SOUND and leaves the notation as written — the
+  // transposing-instrument case (kız/mansur ney read the same sheet but sound transposed). When
+  // false, the staff is rewritten too. Either way the stored score (`doc`) is never mutated.
+  const [keepSheet, setKeepSheet] = useState(false);
+  // Test offsets for the transpose dropdown [commas, label]: small comma steps exercise the
+  // accidental re-spelling; the larger AEU intervals (whole tone 9, fourth 22, fifth 31, octave
+  // 53) check octave/range + naming. (53-TET: 53 commas = one octave.)
+  const TRANSPOSE_OPTIONS: ReadonlyArray<readonly [number, string]> = [
+    [-53, "−Octave (−53)"], [-31, "−Fifth (−31)"], [-22, "−Fourth (−22)"], [-9, "−Whole tone (−9)"],
+    [-5, "−5 koma"], [-4, "−Bakiye (−4)"], [-1, "−1 koma"], [0, "Original"], [1, "+1 koma"],
+    [4, "+Bakiye (+4)"], [5, "+5 koma"], [9, "+Whole tone (+9)"], [22, "+Fourth (+22)"],
+    [31, "+Fifth (+31)"], [53, "+Octave (+53)"],
+  ];
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
@@ -92,6 +109,7 @@ export function App() {
     const matched =
       findUsul(d.usul) ?? USULS.find((u) => ts != null && u.num === ts.num && u.den === ts.den) ?? USULS[0]!;
     setUsulName(matched.name);
+    setTranspose(0); // a freshly loaded score starts untransposed
     setDoc(d);
   }
 
@@ -114,7 +132,24 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const timeline = useMemo(() => (doc ? buildTimeline(doc) : null), [doc]);
+  // What the views draw: the stored score, optionally rewritten by the transpose — unless we're
+  // keeping the sheet as-is (transposing-instrument case). Never mutates `doc`.
+  const displayDoc = useMemo(
+    () => (doc && !keepSheet && transpose !== 0 ? transposeDoc(doc, transpose) : doc),
+    [doc, transpose, keepSheet],
+  );
+
+  // The playable timeline. The SOUND shifts by `transpose` in BOTH modes: when the staff is
+  // rewritten, displayDoc already carries the shifted komas; when keeping the sheet, we instead
+  // nudge the tuning anchor so only the frequencies move. Both yield identical sounding pitches.
+  const timeline = useMemo(() => {
+    if (!doc) return null;
+    if (keepSheet && transpose !== 0) {
+      const tuned = { ...doc, tuning: { ...doc.tuning, refKoma: doc.tuning.refKoma - transpose } };
+      return buildTimeline(tuned);
+    }
+    return displayDoc ? buildTimeline(displayDoc) : null;
+  }, [doc, displayDoc, keepSheet, transpose]);
 
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
@@ -150,11 +185,16 @@ export function App() {
   // the old scheduled audio no longer matches what's on screen.
   function updateEvent(index: number, patch: NoteEdit) {
     onStop();
+    // Edits arrive in the DISPLAYED pitch space. When the staff is rewritten by the transpose,
+    // map the dragged pitch back to the stored (base) score before applying.
+    const shift = !keepSheet && transpose !== 0 ? transpose : 0;
+    const adj: NoteEdit =
+      shift && patch.koma53 !== undefined ? { ...patch, koma53: patch.koma53 - shift } : patch;
     setDoc((prev) => {
       if (!prev) return prev;
       const events = prev.events.map((ev) => {
         if (ev.index !== index) return ev;
-        const next: NoteEvent = { ...ev, ...patch };
+        const next: NoteEvent = { ...ev, ...adj };
         if (patch.koma53 !== undefined && next.kind === "note") {
           next.freqHz = Math.round(freqFromTuning(next.koma53, prev.tuning) * 1e4) / 1e4;
         }
@@ -164,6 +204,19 @@ export function App() {
     });
   }
 
+  // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`keepSheet` are applied
+  // when deriving `displayDoc` (what's drawn) and the playback timeline. We recompute the
+  // piano-roll range from the displayed notes and stop playback so the new pitch takes effect.
+  function applyTranspose(target: number, keep: boolean) {
+    if (!doc) return;
+    onStop();
+    const shown = keep || target === 0 ? doc : transposeDoc(doc, target);
+    const komas = shown.events.filter((e) => e.kind === "note").map((e) => e.koma53);
+    if (komas.length) setPitchRange({ minKoma: Math.min(...komas) - 3, maxKoma: Math.max(...komas) + 3 });
+    setTranspose(target);
+    setKeepSheet(keep);
+  }
+
   // Replace a whole measure's events with the edited set from the modal. We splice the new
   // events in place of the measure's old ones (located by identity from groupMeasures), then
   // renumber every event's `index` sequentially so indices stay unique (new notes had -1).
@@ -171,6 +224,12 @@ export function App() {
   function onSaveMeasure(measureIndex: number, newEvents: NoteEvent[]) {
     onStop();
     setEditing(null);
+    // The modal edits the DISPLAYED notes; when the staff is rewritten by the transpose, map the
+    // new events back to the stored (base) score before splicing.
+    const baseEvents =
+      !keepSheet && transpose !== 0 && doc
+        ? transposeDoc({ ...doc, events: newEvents }, -transpose).events
+        : newEvents;
     setDoc((prev) => {
       if (!prev) return prev;
       const target = groupMeasures(prev).find((m) => m.index === measureIndex);
@@ -182,7 +241,7 @@ export function App() {
       let inserted = false;
       for (const e of prev.events) {
         if (oldIds.has(e.index)) {
-          if (!inserted) { merged.push(...newEvents); inserted = true; }
+          if (!inserted) { merged.push(...baseEvents); inserted = true; }
         } else {
           merged.push(e);
         }
@@ -333,15 +392,47 @@ export function App() {
           Load JSON:{" "}
           <input type="file" accept="application/json,.json" onChange={onFile} />
         </label>
+        <label
+          style={{ marginLeft: 12, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
+          title="Transpose: shifts pitch by the chosen number of commas"
+        >
+          <span>Transpose:</span>
+          <select
+            value={transpose}
+            onChange={(e) => applyTranspose(Number(e.target.value), keepSheet)}
+            style={{ fontWeight: 600 }}
+          >
+            {TRANSPOSE_OPTIONS.map(([commas, label]) => (
+              <option key={commas} value={commas}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
+          title="Transpose the SOUND only and keep the notation as written — for transposing instruments (kız/mansur ney)"
+        >
+          <input type="checkbox" checked={keepSheet} onChange={(e) => applyTranspose(transpose, e.target.checked)} />
+          <span>Keep sheet (sound only)</span>
+        </label>
         {viewMode === "sheet" && (
           <>
-            <button
-              onClick={() => setKeySig((v) => !v)}
-              title="Show the score's accidentals once per row (key signature) instead of on every note"
-              style={{ marginLeft: "auto", fontWeight: 600, background: keySig ? "#3b82f6" : undefined, color: keySig ? "#fff" : undefined }}
+            <label
+              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
+              title="How accidentals are displayed on the staff"
             >
-              {keySig ? "✓ Key sig" : "♯♭ Key sig"}
-            </button>
+              <span>Accidentals:</span>
+              <select
+                value={accidentalMode}
+                onChange={(e) => setAccidentalMode(e.target.value as AccidentalMode)}
+                style={{ fontWeight: 600 }}
+              >
+                <option value="every">On every note</option>
+                <option value="keysig">Key signature (row start)</option>
+                <option value="measure">Standard (per measure)</option>
+              </select>
+            </label>
             <button
               onClick={() => setEditMode((v) => !v)}
               style={{ fontWeight: 600, background: editMode ? "#3b82f6" : undefined, color: editMode ? "#fff" : undefined }}
@@ -364,7 +455,7 @@ export function App() {
           </div>
           {viewMode === "roll" ? (
             <>
-              {pitchRange && <PianoRoll doc={doc} pitchRange={pitchRange} onEditNote={updateEvent} />}
+              {pitchRange && <PianoRoll doc={displayDoc ?? doc} pitchRange={pitchRange} onEditNote={updateEvent} />}
               <p style={{ color: "#888", fontSize: 12 }}>
                 Pitch axis is 53-TET commas (microtonal). Hover for details. <strong>Drag a note
                 up/down</strong> to change its pitch; <strong>drag its right edge</strong> to change
@@ -374,9 +465,9 @@ export function App() {
           ) : (
             <>
               <SheetView
-                doc={doc}
+                doc={displayDoc ?? doc}
                 editMode={editMode}
-                keySignatureMode={keySig}
+                accidentalMode={accidentalMode}
                 playing={playState !== "stopped"}
                 getPositionMs={getPositionMs}
                 onMeasureClick={setEditing}
@@ -388,7 +479,12 @@ export function App() {
                   ? " Edit is on — click a measure to edit its notes."
                   : " Click a measure to play from there. Click ✎ Edit to edit notes instead."}
                 {" "}
-                <strong>♯♭ Key sig</strong> hoists the score's accidentals to the start of each row.
+                The <strong>Accidentals</strong> selector switches between showing one on every
+                note, the makam key signature at each row start (deviations marked), and standard
+                per-measure notation (an accidental carries to the rest of its measure).{" "}
+                <strong>Transpose</strong> shifts pitch; tick <strong>Keep sheet (sound only)</strong>
+                {" "}to move only the sound and leave the notation as written — for transposing
+                instruments like kız/mansur ney.
               </p>
             </>
           )}

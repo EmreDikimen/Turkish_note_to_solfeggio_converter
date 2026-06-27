@@ -12,11 +12,11 @@ Schema (``schemaVersion`` 1)::
       "name": "acem--ilahi--...",
       "makam": "acem", "form": "ilahi", "usul": "duyek",
       "title": "...", "composer": "...",
-      "tuning": {"system": "53tet", "refFreqHz": 440.0, "refKoma": 305, "commasPerOctave": 53},
+      "tuning": {"system": "53tet", "refFreqHz": 440.0, "refKoma": 327, "commasPerOctave": 53},
       "events": [
         {"index": 1, "kind": "note", "koma53": 318, "noteName": "Do5", "noteAE": "C5",
          "durationMs": 714, "durationBeats": {"num": 1, "den": 4},
-         "freqHz": 521.54, "lyric": "Al", "offset": 0.25},
+         "freqHz": 391.14, "lyric": "Al", "offset": 0.25},
         {"index": 34, "kind": "rest", "koma53": -1, ... "freqHz": null, ...},
         {"index": 99, "kind": "meta", "code": 51, ...}
       ]

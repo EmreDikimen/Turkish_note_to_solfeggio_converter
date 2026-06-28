@@ -6,3 +6,4 @@ export * from "./measures";
 export * from "./tempo";
 export * from "./usul";
 export * from "./transpose";
+export * from "./metadata";

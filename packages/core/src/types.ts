@@ -40,8 +40,11 @@ export interface NoteEvent {
   durationBeats: DurationBeats;
   /** Convenience/validation frequency for notes; null for rests/meta. Core recomputes. */
   freqHz: number | null;
-  /** Lyric syllable, if any. */
+  /** Lyric syllable, if any ("." = melisma/continuation hold). */
   lyric: string;
+  /** True when this syllable ends a word (set from SymbTr's trailing-space marker). Absent =
+   *  word-internal or unknown; the sheet hyphenates a word's syllables but not across words. */
+  lyricWordEnd?: boolean;
   /** End time of the event in beats. */
   offset: number;
   /**

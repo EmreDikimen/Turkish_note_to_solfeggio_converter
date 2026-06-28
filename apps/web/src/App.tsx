@@ -68,6 +68,10 @@ export function App() {
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>("every");
+  // Sheet: draw lyric syllables under the notes (vocal scores). Off → instrumental-style sheet.
+  const [showLyrics, setShowLyrics] = useState(true);
+  // Draw a hyphen between a word's syllables ("Gam-ze-de"). Most sheets omit these → default off.
+  const [lyricHyphens, setLyricHyphens] = useState(false);
   const [editing, setEditing] = useState<Measure | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
@@ -433,6 +437,25 @@ export function App() {
                 <option value="measure">Standard (per measure)</option>
               </select>
             </label>
+            <label
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
+              title="Draw lyric syllables under the notes (vocal scores)"
+            >
+              <input type="checkbox" checked={showLyrics} onChange={(e) => setShowLyrics(e.target.checked)} />
+              <span>Lyrics</span>
+            </label>
+            <label
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, opacity: showLyrics ? 1 : 0.5 }}
+              title="Draw a hyphen between a word's syllables (Gam-ze-de). Most sheets omit these."
+            >
+              <input
+                type="checkbox"
+                checked={lyricHyphens}
+                disabled={!showLyrics}
+                onChange={(e) => setLyricHyphens(e.target.checked)}
+              />
+              <span>Hyphens</span>
+            </label>
             <button
               onClick={() => setEditMode((v) => !v)}
               style={{ fontWeight: 600, background: editMode ? "#3b82f6" : undefined, color: editMode ? "#fff" : undefined }}
@@ -468,6 +491,8 @@ export function App() {
                 doc={displayDoc ?? doc}
                 editMode={editMode}
                 accidentalMode={accidentalMode}
+                showLyrics={showLyrics}
+                lyricHyphens={lyricHyphens}
                 playing={playState !== "stopped"}
                 getPositionMs={getPositionMs}
                 onMeasureClick={setEditing}

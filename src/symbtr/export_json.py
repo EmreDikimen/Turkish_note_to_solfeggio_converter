@@ -84,6 +84,8 @@ def score_to_dict(
             "lyric": ev.lyric,
             "offset": ev.offset,
         }
+        if ev.lyric_word_end:
+            entry["lyricWordEnd"] = True  # syllable ends a word (drives hyphenation in the sheet)
         if kind is EventKind.META:
             entry["code"] = ev.code  # keep the raw Kod for meta rows (e.g. 51 = usul change)
         events.append(entry)

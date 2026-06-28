@@ -182,6 +182,15 @@ produce a real, demoable app with zero machine learning.
 - Wire: preprocess → staff isolation → CRNN → decode → note model → existing editor.
 - OMR runs **on-device** via `onnxruntime-web` in the harness (no production backend, per §1) —
   the browser loads the exported ONNX model and produces the note model locally.
+- **Makam-aware pitch decoding (required).** The written accidental on the page does NOT map 1:1
+  to the sounding 53-TET pitch — the mapping is **makam-dependent**. Example: in Uşşak
+  (gamzedeyim), Si is *written* with a koma flat but is *performed/encoded* as a 2-koma flat
+  (`Si4b2`, koma 312) — see the SymbTr data. So the pipeline must **extract the makam** (from the
+  printed makam name and/or the signature + note distribution) and feed it to the decode step,
+  which resolves each written symbol to the correct koma using a per-makam intonation table
+  (built from SymbTr). The makam stays user-editable in the editor (OMR can misread it). This also
+  constrains **Phase 2 rendering**: render the makam's *conventional written form*, not a naive
+  koma→accidental, so the synthetic images match real scores and the makam→pitch table is learnable.
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
 
 ### Phase 5 — Mobile app (THE PRODUCT)

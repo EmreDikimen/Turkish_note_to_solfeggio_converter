@@ -63,8 +63,12 @@ class Event:
     ms: int             # Ms    (nominal duration in milliseconds)
     lns: int            # LNS
     bas: int            # Bas
-    lyric: str          # Soz1
+    lyric: str          # Soz1 (syllable, stripped; "." = melisma/continuation hold)
     offset: float       # Offset (end time in beats)
+    # True when this syllable ends a word. SymbTr marks a word-final syllable with a TRAILING
+    # SPACE in Soz1 (e.g. "yim " vs the word-internal "Gam"); we capture it before stripping so
+    # the sheet view can draw hyphens between a word's syllables but not across word boundaries.
+    lyric_word_end: bool = False
 
     @property
     def kind(self) -> EventKind:
@@ -238,6 +242,10 @@ def parse_file(path: str | Path) -> Score:
                 bas=_to_int(cols[10]),
                 lyric=cols[11].strip(),
                 offset=_to_float(cols[12]),
+                # Word-final iff a real syllable carried a trailing space in the raw column.
+                lyric_word_end=bool(cols[11].strip())
+                and cols[11].strip() != "."
+                and cols[11] != cols[11].rstrip(),
             )
         )
 

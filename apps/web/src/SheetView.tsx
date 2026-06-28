@@ -5,9 +5,11 @@ import {
   accidentalLabel,
   deriveKeySignature,
   deriveTimeSignature,
+  estimateBpm,
   eventBeats,
   groupMeasures,
   parseNoteName,
+  scoreHeader,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
@@ -22,6 +24,7 @@ const CLEF_W = 50; // extra width the leading clef costs on the first stave of a
 const SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
 const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
 const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
+const LYRIC_DY = 30; // baseline of the lyric line below the bottom staff line
 // Staff line each signature accidental sits on (VexFlow treble: F5=line0, B4=line2, E4=line4),
 // choosing an octave that keeps every letter on the staff.
 const SIG_LINE: Record<string, number> = { C: 1.5, D: 1, E: 0.5, F: 0, G: 3, A: 2.5, B: 2 };
@@ -195,6 +198,104 @@ function drawSignature(
   });
 }
 
+/**
+ * Draw one lyric syllable centered under a note, below the staff (like the original engraved
+ * sheets). SymbTr stores the syllable per note; "." marks a melisma/continuation (no new text)
+ * and is skipped by the caller. Drawn as a plain SVG <text> in a serif face.
+ */
+function drawLyric(svg: SVGSVGElement, x: number, y: number, text: string): SVGTextElement {
+  const t = document.createElementNS("http://www.w3.org/2000/svg", "text") as SVGTextElement;
+  t.setAttribute("x", String(x));
+  t.setAttribute("y", String(y));
+  t.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
+  t.setAttribute("font-size", "13");
+  t.setAttribute("text-anchor", "middle"); // center the syllable under the notehead
+  t.setAttribute("fill", "#222");
+  t.textContent = text;
+  svg.appendChild(t);
+  return t;
+}
+
+/**
+ * Melisma extension line: an underscore-style rule drawn just BELOW the lyric baseline (so it
+ * never cuts through the text), between caller-supplied endpoints. Used to carry a held syllable
+ * across the notes it's sung over — including spanning multiple rows.
+ */
+function drawMelismaLine(svg: SVGSVGElement, startX: number, endX: number, baseY: number) {
+  if (endX - startX < 8) return; // too short to read as an extension
+  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  line.setAttribute("x1", String(startX));
+  line.setAttribute("x2", String(endX));
+  line.setAttribute("y1", String(baseY + 2)); // below the baseline → reads as an underscore
+  line.setAttribute("y2", String(baseY + 2));
+  line.setAttribute("stroke", "#222");
+  line.setAttribute("stroke-width", "1.3");
+  svg.appendChild(line);
+}
+
+/** One note's lyric slot: its x, the row's baseline, and what it carries. */
+interface LyricItem {
+  x: number;
+  baseY: number;
+  row: number;
+  text: string;
+  hold: boolean; // melisma/continuation note (no new syllable)
+  wordEnd: boolean; // this syllable ends a word
+}
+
+/**
+ * Render the lyric line under the staff like an engraved score: syllables centered under their
+ * notes, a HYPHEN in the gap between a word's syllables (but not across word boundaries), and a
+ * MELISMA underscore carrying a held syllable across the notes it's sung over — continuing across
+ * row breaks. Text widths are measured so connectors sit in the gaps and never cut through text.
+ */
+function drawLyrics(svg: SVGSVGElement, items: LyricItem[], hyphens: boolean) {
+  // Per-row first/last note x and baseline, so a melisma can span whole rows and start at the
+  // first note (clear of the clef/key signature), not at the page margin.
+  const rowMinX = new Map<number, number>();
+  const rowMaxX = new Map<number, number>();
+  const rowBaseY = new Map<number, number>();
+  for (const it of items) {
+    rowMinX.set(it.row, Math.min(rowMinX.get(it.row) ?? Infinity, it.x));
+    rowMaxX.set(it.row, Math.max(rowMaxX.get(it.row) ?? 0, it.x));
+    rowBaseY.set(it.row, it.baseY);
+  }
+
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i]!;
+    if (it.hold) continue; // held notes carry no syllable; a preceding melisma underscore spans them
+    const el = drawLyric(svg, it.x, it.baseY, it.text);
+    const halfW = (el.getComputedTextLength?.() || it.text.length * 7) / 2;
+    const rightEdge = it.x + halfW;
+
+    // Run of held notes after this syllable (across rows), up to the next real syllable.
+    let j = i + 1;
+    while (j < items.length && items[j]!.hold) j++;
+    const next = j < items.length ? items[j]! : null;
+
+    if (j > i + 1) {
+      // Melisma: an underscore per row segment, from the syllable to the last held note. On the
+      // final row it stops just before the next syllable (if any) so the line leads into it.
+      const last = items[j - 1]!;
+      for (let row = it.row; row <= last.row; row++) {
+        // First row starts just after the syllable; later rows start at that row's first note.
+        const startX = row === it.row ? rightEdge + 4 : (rowMinX.get(row) ?? LEFT) - 4;
+        // Stop at the last held note of the row — on the final row this leaves the gap before the
+        // next syllable, so the underscore never runs into it.
+        const endX = row === last.row ? last.x : rowMaxX.get(row) ?? startX;
+        drawMelismaLine(svg, startX, endX, rowBaseY.get(row) ?? it.baseY);
+      }
+    } else if (hyphens && next && !it.wordEnd) {
+      // Same word continues on the very next note → hyphen (only when enabled).
+      if (next.row === it.row) {
+        drawLyric(svg, (rightEdge + next.x) / 2, it.baseY, "-"); // in the gap between syllables
+      } else {
+        drawLyric(svg, rightEdge + 7, it.baseY, "-"); // word breaks across rows → trailing hyphen
+      }
+    }
+  }
+}
+
 // SMuFL time-signature digits live at U+E080 (0) … U+E089 (9) in the music font.
 const timeSigGlyphs = (n: number): string =>
   [...String(n)].map((d) => String.fromCodePoint(0xe080 + Number(d))).join("");
@@ -256,6 +357,8 @@ export function SheetView({
   doc,
   editMode,
   accidentalMode,
+  showLyrics,
+  lyricHyphens,
   playing,
   getPositionMs,
   onMeasureClick,
@@ -266,6 +369,10 @@ export function SheetView({
   /** How accidentals are displayed (see {@link AccidentalMode}). The key signature is drawn at
    *  each row start in `"keysig"` and `"measure"` modes. */
   accidentalMode: AccidentalMode;
+  /** Draw lyric syllables under the notes (skipping the "." melisma placeholders). */
+  showLyrics: boolean;
+  /** Draw a hyphen between a word's syllables (e.g. "Gam-ze-de"). Most sheets omit these. */
+  lyricHyphens: boolean;
   /** True while there's an active (playing or paused) position — drives the playhead. */
   playing: boolean;
   /** Current playback position in ms (from the audio backend), or null when stopped. */
@@ -302,6 +409,11 @@ export function SheetView({
 
   // The usul meter (e.g. 9/8 for aksak), printed once at the start of the first staff.
   const timeSig = useMemo(() => deriveTimeSignature(doc), [doc]);
+
+  // Printed-header metadata extracted from the score (makam, form, usul, composer) + its notated
+  // tempo (we estimate it; SymbTr stores none). Rendered as an engraved-style header above the staff.
+  const header = useMemo(() => scoreHeader(doc), [doc]);
+  const headerBpm = useMemo(() => estimateBpm(doc), [doc]);
 
   // Draw the score with VexFlow whenever the document changes. (Edit mode only toggles the
   // HTML overlay below, so it deliberately isn't a dependency — no need to re-engrave.)
@@ -347,6 +459,17 @@ export function SheetView({
     }
     if (cur.length) rows.push(cur);
 
+    // Justify each row to a uniform width, like engraved music: stretch its measures so every row
+    // ends at the same right margin instead of a ragged edge. Scaling is proportional, so the
+    // first measure (which carries the clef/sig) stays a touch wider — as in real scores. The
+    // LAST row is left natural: short final systems are normal, and justifying a near-empty last
+    // line would blow its spacing apart. Uniform rows matter for Phase-2 synthetic data realism.
+    rows.forEach((cells, r) => {
+      if (r === rows.length - 1) return; // final system stays ragged, as in real engraving
+      const sum = cells.reduce((s, c) => s + c.width, 0);
+      if (sum > 0) for (const c of cells) c.width *= CONTENT_WIDTH / sum;
+    });
+
     const height = rows.length * ROW_HEIGHT + 20;
     const renderer = new Renderer(host, Renderer.Backends.SVG);
     renderer.resize(SVG_WIDTH, height);
@@ -355,6 +478,7 @@ export function SheetView({
 
     const collected: MeasureBox[] = [];
     const positions: NotePos[] = [];
+    const lyricItems: LyricItem[] = []; // collected across all staves, drawn in one pass below
     let tMs = 0; // running playback clock, matches buildTimeline's accumulation order
     rows.forEach((cells, r) => {
       const y = STAVE_TOP_PAD + r * ROW_HEIGHT;
@@ -385,10 +509,18 @@ export function SheetView({
             attachTitles(notes, evs);
             // Record each event's drawn x + row so the playhead can follow it. getAbsoluteX is
             // only valid after FormatAndDraw has positioned the notes.
+            const lyricY = stave.getYForLine(4) + LYRIC_DY;
             notes.forEach((n, i) => {
               const ev = evs[i]!;
               positions.push({ startMs: tMs, endMs: tMs + ev.durationMs, x: n.getAbsoluteX(), top: barTop, height: barHeight });
               tMs += ev.durationMs;
+              // Collect each note's lyric slot; the connectors (hyphens / melisma lines) need the
+              // neighbours, so the actual drawing happens in one pass after the whole score is laid out.
+              if (showLyrics) {
+                const syl = ev.lyric?.trim() ?? "";
+                const hold = syl === "" || syl === ".";
+                lyricItems.push({ x: n.getAbsoluteX(), baseY: lyricY, row: r, text: hold ? "" : syl, hold, wordEnd: !!ev.lyricWordEnd });
+              }
             });
           }
           if (drawSig && svg) drawSignature(svg, stave, signature, sigStartX + 2);
@@ -401,6 +533,8 @@ export function SheetView({
       }
     });
 
+    if (showLyrics && svg) drawLyrics(svg, lyricItems, lyricHyphens);
+
     setSvgHeight(height);
     setBoxes(collected);
     positionsRef.current = positions;
@@ -408,7 +542,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, signature, signatureMap, timeSig]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style
@@ -457,6 +591,24 @@ export function SheetView({
 
   return (
     <div style={{ border: "1px solid #ddd", borderRadius: 6, overflowX: "auto", background: "#fff" }}>
+      {/* Engraved-style header: the makam/form/usul/composer/tempo extracted from the score. */}
+      <div
+        style={{
+          display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 16px 4px",
+          fontFamily: "Georgia, 'Times New Roman', serif", color: "#1a1a1a",
+        }}
+      >
+        <div style={{ flex: "1 1 0", fontSize: 13, fontStyle: "italic", whiteSpace: "nowrap" }}>
+          {header.usul} &nbsp;♩ = {headerBpm}
+        </div>
+        <div style={{ flex: "2 1 0", textAlign: "center", lineHeight: 1.3 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{header.makamForm}</div>
+          {header.title && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.title}</div>}
+        </div>
+        <div style={{ flex: "1 1 0", fontSize: 13, textAlign: "right", whiteSpace: "nowrap" }}>
+          {header.composer && <>Beste: {header.composer}</>}
+        </div>
+      </div>
       <div
         ref={containerRef}
         style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}

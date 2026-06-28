@@ -2,13 +2,16 @@
  * Notation helpers: turn a SymbTr note name into staff position + the correct Turkish
  * (AEU) accidental glyph.
  *
- * Background: SymbTr note names encode the microtonal accidental as a `#N`/`bN` suffix,
- * where N is the **exact alteration in commas** (verified against Koma53). The base is
- * either Turkish solfege (Do, Re, Mi, Fa, Sol, La, Si) or a Western letter (C..B). The
- * accidental glyphs are standardized in SMuFL and shipped in the Bravura font:
- *   - AEU named accidentals (U+E440–E447): koma(±1), bakiye(±4), küçük/büyük mücennep(±5/±8)
- *   - comma-indexed folk accidentals (U+E450–E45F): used for the in-between ±2/±3
- * The two sets are complementary, so every alteration the data uses (1–5 commas) has a glyph.
+ * Background: SymbTr note names encode the microtonal alteration as a `#N`/`bN` suffix, where N
+ * is the exact alteration in commas (verified against Koma53). Classical / Turkish ART music
+ * notates every microtonal pitch with ONLY the four standard Arel-Ezgi-Uzdilek accidentals
+ * (SMuFL U+E440–E447): koma (±1), bakiye (±4), küçük mücennep (±5), büyük mücennep (±8).
+ * The numbered ±2/±3 "folk" signs are NOT used in art music, so the engraved STAFF snaps any
+ * non-AEU alteration to the nearest AEU sign (`toAeuAlter`) — the exact koma (sounding pitch) is
+ * kept; the written sign just follows the makam convention (a 2-comma flat is drawn as a koma flat
+ * / segah bemolü, which the decoder later resolves back per makam). The EDITOR, by contrast, shows
+ * and edits the exact alteration/koma the user wants, so `accidentalGlyph`/`accidentalLabel` are
+ * raw (no snapping) and only the sheet-drawing call sites apply `toAeuAlter`.
  */
 
 import type { NoteModelDocument } from "./types";
@@ -132,7 +135,10 @@ export interface AccidentalGlyph {
   codepoint: number;
 }
 
-// Verified SMuFL code points. Keyed by signed comma alteration.
+// Every renderable accidental, keyed by signed comma alteration: the four AEU pairs (U+E440–E447)
+// used on the engraved staff, PLUS the numbered ±2/±3 "folk" glyphs (U+E451/E452/E455/E456). The
+// folk glyphs exist so the EDITOR can show a note's exact alteration; the sheet itself never draws
+// them — sheet callers snap to AEU via `toAeuAlter` first.
 const GLYPHS: Record<number, AccidentalGlyph> = {
   1: { name: "accidentalKomaSharp", codepoint: 0xe444 },
   2: { name: "accidental2CommaSharp", codepoint: 0xe451 },
@@ -148,10 +154,28 @@ const GLYPHS: Record<number, AccidentalGlyph> = {
   [-8]: { name: "accidentalBuyukMucennebFlat", codepoint: 0xe440 },
 };
 
+// AEU accidental magnitudes in Holdrian commas: koma=1, bakiye=4, küçük=5, büyük mücennep=8.
+const AEU_MAGNITUDES = [1, 4, 5, 8];
+
 /**
- * Map a comma alteration to its SMuFL accidental glyph. Returns null for 0 (natural) and
- * for alterations with no dedicated glyph (rare values like ±6/±7) — callers fall back to a
- * text label from `accidentalLabel`.
+ * Snap a comma alteration to the nearest AEU accidental (sign preserved; 0 stays natural).
+ * Art music writes every microtonal pitch with one of the four standard signs, never a numbered
+ * ±2/±3, so e.g. a 2-comma flat → koma flat (segah bemolü), a 3-comma sharp → bakiye diyezi. The
+ * exact koma (sounding pitch) is kept; this only governs the WRITTEN sign. Use it at SHEET-drawing
+ * call sites — NOT in the editor, which must show/keep the exact alteration the user chose.
+ */
+export function toAeuAlter(commas: number): number {
+  if (commas === 0) return 0;
+  const mag = Math.abs(commas);
+  let best = AEU_MAGNITUDES[0]!;
+  for (const m of AEU_MAGNITUDES) if (Math.abs(m - mag) < Math.abs(best - mag)) best = m;
+  return commas < 0 ? -best : best;
+}
+
+/**
+ * Map a comma alteration to its glyph EXACTLY (no snapping), so the editor can show the true
+ * alteration (incl. a numbered ±2/±3). Returns null for 0 (natural) and any value without a glyph.
+ * For the engraved staff, pass an AEU-snapped value (`toAeuAlter`) — see `buildStaveNotes`.
  */
 export function accidentalGlyph(alterCommas: number): AccidentalGlyph | null {
   return GLYPHS[alterCommas] ?? null;
@@ -196,7 +220,8 @@ export function deriveKeySignature(doc: NoteModelDocument): KeySignatureEntry[] 
     const p = parseNoteName(ev.noteName);
     if (!p) continue;
     const byAlter = (counts[p.letter] ??= new Map());
-    byAlter.set(p.alterCommas, (byAlter.get(p.alterCommas) ?? 0) + 1);
+    const a = toAeuAlter(p.alterCommas); // signature uses standard AEU signs only
+    byAlter.set(a, (byAlter.get(a) ?? 0) + 1);
   }
 
   const entries: KeySignatureEntry[] = [];

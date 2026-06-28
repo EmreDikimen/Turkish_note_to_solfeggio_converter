@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { accidentalGlyph, accidentalLabel } from "@turkish-omr/core";
 
-// Accidentals offered, low pitch → high pitch. Bravura natural sign for 0.
+// Accidentals offered in the EDITOR, low pitch → high pitch — the full range incl. the numbered
+// ±2/±3, so the user can see and set the exact comma they want. (The engraved staff snaps these to
+// the standard AEU signs; the editor does not.) Natural = 0.
 const VALUES = [-8, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 8];
 const NATURAL_CP = 0xe261;
 const char = (cp: number) => String.fromCodePoint(cp);

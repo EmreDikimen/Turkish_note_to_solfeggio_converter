@@ -10,6 +10,7 @@ import {
   groupMeasures,
   parseNoteName,
   scoreHeader,
+  toAeuAlter,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
@@ -106,7 +107,9 @@ function buildStaveNotes(
     // Staff position comes from letter+octave only (Turkish accidentals don't shift the
     // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
     const n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
-    const alter = parsed.alterCommas;
+    // Snap to the nearest standard AEU sign (art-music notation has no numbered ±2/±3); the staff
+    // position and the note's koma/pitch are unchanged — only the drawn accidental.
+    const alter = toAeuAlter(parsed.alterCommas);
 
     if (mode === "every") {
       // Show every alteration inline.
@@ -398,7 +401,9 @@ export function SheetView({
     for (const ev of doc.events) {
       if (ev.kind !== "note") continue;
       const p = parseNoteName(ev.noteName);
-      if (p && p.alterCommas !== 0) set.add(p.alterCommas);
+      if (!p) continue;
+      const a = toAeuAlter(p.alterCommas); // legend lists the AEU signs actually drawn
+      if (a !== 0) set.add(a);
     }
     return [...set].sort((a, b) => a - b);
   }, [doc]);

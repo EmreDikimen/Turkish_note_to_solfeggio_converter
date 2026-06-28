@@ -53,8 +53,11 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   microtonal accidentals); Web Audio playback at exact 53-TET; **Play / Pause / Resume / Stop**
   with a live **playhead** cursor on the sheet and **click-a-measure-to-seek**; **tempo (BPM)
   control + a usul-aware metronome** (clicks the chosen usul's beat groupings, correct for
-  non-integer usuls like aksak 9/8); drag-to-edit (piano-roll) and a per-measure note editor
-  (sheet). See ROADMAP §6 (Status) for details.
+  non-integer usuls like aksak 9/8); **transpose / ahenk** (incl. a sound-only mode for transposing
+  instruments); drag-to-edit (piano-roll) and a per-measure note editor (sheet). The sheet is
+  engraved like a real Classical-Turkish-Music score — **standard AEU accidentals only** (the
+  editor still exposes exact komas), justified rows, **lyrics**, and a **makam/usul/composer
+  header**. See ROADMAP §6 (Status) for details.
 - **Phase 2 — next:** synthetic training data — render SymbTr scores to staff images with
   **VexFlow** (reusing the harness engraving), augment with **chromatic transpose** (pitch
   augmentation) + OpenCV (image augmentation), emit per-staff token labels.
@@ -122,10 +125,10 @@ npm run dev:web
 
 Then open the printed `localhost` URL. You can also load any exported JSON from the **Load JSON**
 button. Toggle **Piano-roll / Sheet**; in Sheet view use **Play / Pause / Resume / Stop**, click
-a measure to play from there, set the **BPM** and toggle the **usul metronome**, use **♯♭ Key sig**
-to hoist accidentals to the row start, and **✎ Edit** to correct notes. The shared logic lives in
-`packages/core`; the React UI in `apps/web` is a throwaway dev tool (the real UI is rebuilt for
-mobile in Phase 5).
+a measure to play from there, set the **BPM** and toggle the **usul metronome**, **Transpose**
+(with **Keep sheet (sound only)** for ney ahenks), pick an **Accidentals** display mode, toggle
+**Lyrics**, and **✎ Edit** to correct notes. The shared logic lives in `packages/core`; the React
+UI in `apps/web` is a throwaway dev tool (the real UI is rebuilt for mobile in Phase 5).
 
 ## Data
 SymbTr-2.0.0 (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores in txt, MusicXML,

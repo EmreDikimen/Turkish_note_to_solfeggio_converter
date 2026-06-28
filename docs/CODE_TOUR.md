@@ -19,7 +19,7 @@ SymbTr .txt ──(Python)──► Score/Event ──► note-model JSON ──
   (`types.ts`). They describe the same shape on two sides of the wire.
 - **TypeScript side** = the actual app logic, split deliberately:
   - `packages/core` — **portable logic, no platform APIs** (note model, tuning, scheduling,
-    notation, measures, tempo, usul). Reused *unchanged* by the future mobile app.
+    notation, measures, tempo, usul, transpose, metadata). Reused *unchanged* by the future mobile app.
   - `apps/web` — a **throwaway React harness**: it renders the core's output (piano-roll +
     VexFlow sheet) and supplies the *platform adapter* (`webAudioBackend.ts` implements the
     core's `AudioBackend` interface). The mobile app will swap this layer, keep the core.
@@ -55,19 +55,21 @@ the web app imports everything from `@turkish-omr/core`.
 | 8 | [scheduling.ts](../packages/core/src/scheduling.ts) · `buildTimeline`, `AudioBackend` | Events → flat timeline of timed notes; and the audio *contract* (interface). |
 | 9 | [tempo.ts](../packages/core/src/tempo.ts) · `estimateWholeNoteMs`, `beatsToMs`, `estimateBpm` | SymbTr stores no tempo — estimate one (median ms÷beats) to convert note-values ↔ ms. |
 | 10 | [measures.ts](../packages/core/src/measures.ts) · `assignBars` → `groupMeasures` | Split a score into bars. `assignBars` reads SymbTr's `offset` (integer = a printed barline); `groupMeasures` groups by the resulting `bar`. `isMeasureValid` drives the editor's Save gate. |
-| 11 | [notation.ts](../packages/core/src/notation.ts) · `parseNoteName`, `komaOf`/`spellNote`/`komaToName`, `accidentalGlyph`, `deriveKeySignature` | Note name ⇄ staff position + comma + Turkish (AEU) accidental glyph. The sheet view's brain. |
+| 11 | [notation.ts](../packages/core/src/notation.ts) · `parseNoteName`, `komaOf`/`spellNote`/`komaToName`, `accidentalGlyph`, `toAeuAlter`, `deriveKeySignature` | Note name ⇄ staff position + comma + Turkish (AEU) accidental glyph. The sheet view's brain. `toAeuAlter` snaps any alteration to a standard AEU sign **for the engraved staff only** (the editor keeps the exact koma). |
 | 12 | [usul.ts](../packages/core/src/usul.ts) · `USULS`, `findUsul`, `buildMetronomeTrack` | Usul (rhythmic-cycle) table with beat groupings; builds a metronome click-track aligned to the bars — correct for non-integer usuls (aksak 9/8). |
+| 13 | [transpose.ts](../packages/core/src/transpose.ts) · `transpose` | Chromatic transpose of a score (shift koma + re-spell + recompute freq); pitch-augmentation primitive + the harness's transpose/ahenk control. |
+| 14 | [metadata.ts](../packages/core/src/metadata.ts) · `scoreHeader`, `makamDisplay`/`formDisplay`/`titleCase` | Format the score's ASCII metadata slugs into a printed Turkish header (makam/form/usul/composer). |
 
 ### Part C — Web harness (`apps/web`, throwaway UI + the platform adapter)
 
 | # | File · function | One line |
 |---|---|---|
-| 13 | [webAudioBackend.ts](../apps/web/src/webAudioBackend.ts) · `play(timeline, fromMs?, opts?)`, `pause`/`resume`/`stop`, `getPositionMs`, `buildPeriodicWave` | The browser's *implementation* of `AudioBackend` (web's synth.py): schedules notes, seeks, metronome, exposes the audio clock for the playhead. |
-| 14 | [App.tsx](../apps/web/src/App.tsx) · `App`, `loadDoc`, `updateEvent`, `onSaveMeasure`, `onPlayPause`, `applyPlayback`, `buildPlayOptions` | The glue: owns the loaded score, derives the timeline, wires transport/tempo/metronome(usul)/edit to core + backend. |
-| 15 | [PianoRoll.tsx](../apps/web/src/PianoRoll.tsx) · `xOf`/`yOf`/`yToKoma`, draw effect, pointer handlers | Canvas piano-roll: x=time, y=comma. Drag a note to change pitch; drag its right edge for duration. |
-| 16 | [SheetView.tsx](../apps/web/src/SheetView.tsx) · `SheetView`, `vexDuration`, `buildStaveNotes`, `drawSignature` | VexFlow-engraved staff: real stems/beams/dots + AEU accidentals, a playhead cursor, click-to-seek, and (edit mode) clickable measures. |
-| 17 | [MeasureEditModal.tsx](../apps/web/src/MeasureEditModal.tsx) · `MeasureEditModal`, `save` | Per-measure editor: pick pitch/accidental/duration, add/delete; Save only when the bar's total duration is preserved. |
-| 17 | [AccidentalSelect.tsx](../apps/web/src/AccidentalSelect.tsx) · `AccidentalSelect` | Custom dropdown showing each accidental's real Bravura glyph + Turkish name. |
+| 15 | [webAudioBackend.ts](../apps/web/src/webAudioBackend.ts) · `play(timeline, fromMs?, opts?)`, `pause`/`resume`/`stop`, `getPositionMs`, `buildPeriodicWave` | The browser's *implementation* of `AudioBackend` (web's synth.py): schedules notes, seeks, metronome, exposes the audio clock for the playhead. |
+| 16 | [App.tsx](../apps/web/src/App.tsx) · `App`, `loadDoc`, `updateEvent`, `onSaveMeasure`, `onPlayPause`, `applyPlayback`, `applyTranspose`, `buildPlayOptions` | The glue: owns the loaded score, derives `displayDoc` + the timeline, wires transport/tempo/metronome(usul)/transpose/edit to core + backend. |
+| 17 | [PianoRoll.tsx](../apps/web/src/PianoRoll.tsx) · `xOf`/`yOf`/`yToKoma`, draw effect, pointer handlers | Canvas piano-roll: x=time, y=comma. Drag a note to change pitch; drag its right edge for duration. |
+| 18 | [SheetView.tsx](../apps/web/src/SheetView.tsx) · `SheetView`, `vexDuration`, `buildStaveNotes`, `drawSignature`, `drawLyrics` | VexFlow-engraved staff: real stems/beams/dots + AEU-only accidentals, justified rows, a lyric line (syllables/melisma/hyphens), an engraved header, a playhead cursor, click-to-seek, and (edit mode) clickable measures. |
+| 19 | [MeasureEditModal.tsx](../apps/web/src/MeasureEditModal.tsx) · `MeasureEditModal`, `save` | Per-measure editor: pick pitch/accidental/duration, add/delete; Save only when the bar's total duration is preserved. |
+| 19 | [AccidentalSelect.tsx](../apps/web/src/AccidentalSelect.tsx) · `AccidentalSelect` | Custom dropdown showing each accidental's exact Bravura glyph + Turkish name (full range, incl. ±2/±3, for exact-koma editing). |
 
 [main.tsx](../apps/web/src/main.tsx) just mounts React — you can ignore it.
 

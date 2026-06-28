@@ -293,6 +293,8 @@ produce a real, demoable app with zero machine learning.
   Drawn by reserving width via `Stave.setNoteStartX` and appending Bravura SVG glyphs (VexFlow's
   native `KeySignature` only supports standard Western keys). This is the button-only slice of the
   README's deferred "settings modal" idea; the full modal (view/theme/this toggle) is still TODO.
+  (Now generalized into a three-way **Accidentals** selector: every-note / key-signature /
+  standard per-measure accidental-carry.)
 - ✅ **Tempo control + usul-aware metronome** (added 2026-06-27): a **BPM** input that defaults
   to each piece's natural tempo (`estimateBpm`) and re-times playback live (`speed = chosenBpm /
   naturalBpm`); a **metronome** toggle; and a **usul selector**. New core `usul.ts` carries each
@@ -302,14 +304,31 @@ produce a real, demoable app with zero machine learning.
   to the piece's own usul (else the usul whose meter matches the derived time signature). Pure
   data + scheduling math, mobile-reusable. (This is the click-track slice of the usul-rhythm idea;
   a real darbuka pattern + OMR-driven usul detection is still later — see below.)
+- ✅ **Notation realism for synthetic data** (added 2026-06-28, toward Phase-2 image quality):
+  - **AEU accidentals only on the engraved staff** — `toAeuAlter` (in `notation.ts`) snaps every
+    alteration to the four standard signs (koma/bakiye/küçük·büyük mücennep); no numbered ±2/±3
+    "folk" signs. The koma (pitch/audio) is untouched and the **editor keeps the exact alteration**;
+    the decoder resolves sign → koma per makam later (Phase 4). So the model trains on CTM signs.
+  - **Justified rows** — each system stretched to a uniform width (last line ragged), for realistic
+    note spacing.
+  - **Lyrics under the staff** — syllables, melisma underscores, optional hyphens; the parser now
+    keeps SymbTr's word boundary (`lyric_word_end`/`lyricWordEnd`).
+  - **Engraved header** (`metadata.ts` `scoreHeader`: makam+form, title, usul+tempo, composer) —
+    the block Phase 2 draws into the images so the model learns to read makam/usul/tempo.
+- ✅ **Transpose / ahenk in the harness** (added 2026-06-28): a **Transpose** dropdown over the
+  core `transpose()` (defined for Phase 2), plus a **Keep sheet (sound only)** toggle for
+  transposing instruments (kız/mansur ney — the sound shifts, the notation stays). Decoupled from
+  the stored doc (display + timeline derive it; edits map back to base). Pairs with the concert-pitch
+  anchor (Phase 0).
 - ⏳ Optional later: feed OMR output into this harness (Phase 4).
 - ⏳ Later: **usul-based rhythm playback (full).** Upgrade the usul-aware metronome above into the
   piece's usul played as a real rhythmic cycle on a traditional percussion sound (darbuka), so
   non-integer usuls sound idiomatic, not just clicked. The usul is auto-detected by OMR and stays
   user-editable (OMR can misread it); wire the automatic detection in with the OMR model (Phase 3–4).
 
-**Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome). Next
-major milestone is the ML track (Phase 2: synthetic training data).
+**Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome +
+transpose/ahenk + art-music-faithful engraving with header & lyrics). Next major milestone is the
+ML track (Phase 2: synthetic training data).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
@@ -319,4 +338,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — fine for a throwaway harness).
 
-_Last updated: 2026-06-27._
+_Last updated: 2026-06-28._

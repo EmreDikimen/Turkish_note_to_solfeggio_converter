@@ -328,7 +328,8 @@ produce a real, demoable app with zero machine learning.
 
 **Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome +
 transpose/ahenk + art-music-faithful engraving with header & lyrics). Next major milestone is the
-ML track (Phase 2: synthetic training data).
+ML track (Phase 2: synthetic training data). **→ Start here: [docs/PHASE2.md](docs/PHASE2.md)** —
+the Phase-2 kickoff/hand-off (goal, current state, de-risk ladder, first task).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).

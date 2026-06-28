@@ -7,9 +7,9 @@
  * number from that (`assignBars`) once at load and group by it, so grouping is correct for
  * EVERY usul (not just whole-note ones) and survives edits (which zero out `offset`).
  *
- * The legacy "accumulate durations to the next whole note" rule only matched real barlines
- * when a bar happened to be exactly one whole note (düyek), which is why aksak broke. It is
- * kept solely as a fallback for data whose `offset` is missing or unusable.
+ * A "accumulate durations to the next whole note" rule is used only as a fallback for data
+ * whose `offset` is missing or unusable; it splits bars correctly only for whole-note usuls
+ * (düyek), not for non-integer ones like aksak.
  */
 
 import type { NoteEvent, NoteModelDocument } from "./types";
@@ -65,8 +65,8 @@ export function hasUsableOffsets(doc: NoteModelDocument): boolean {
  * ends at `offset` belongs to bar `floor(offset - ε) + 1`, so an event landing exactly on the
  * barline counts as the last event of the bar it fills. This automatically accounts for the
  * time meta/ornament rows occupy (they advance `offset` too), which the duration-sum fallback
- * cannot see. When `offset` is unusable, falls back to integer whole-note accumulation — the
- * legacy behavior, correct for whole-note usuls. Meta events inherit the current bar.
+ * cannot see. When `offset` is unusable, falls back to integer whole-note accumulation,
+ * correct for whole-note usuls. Meta events inherit the current bar.
  *
  * Call this once when a document loads; thereafter the `bar` travels with each event through
  * edits, so measure grouping never has to re-read the (now stale) offsets.

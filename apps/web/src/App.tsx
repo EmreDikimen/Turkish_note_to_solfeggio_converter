@@ -48,12 +48,9 @@ const SAMPLES: { label: string; file: string }[] = [
  *   * `doc`      — the loaded note-model (null until a file/sample loads).
  *   * `timeline` — derived from `doc` via the core's buildTimeline (recomputed only when
  *                  `doc` changes, thanks to useMemo).
- *   * `playing`  — drives the enabled/disabled state of the buttons.
- *   * `playToken`— a counter used to ignore a finished play() if the user already moved on
- *                  (started another piece / hit Stop). Prevents stale UI updates.
+ *   * `playState`— "stopped" | "playing" | "paused"; drives the transport buttons.
  * React notes for newcomers: `useState` = a value that re-renders the UI when it changes;
- * `useEffect` = run a side-effect (here: fetch the sample once on mount); `useRef` = a
- * mutable box that does NOT trigger re-renders.
+ * `useEffect` = run a side-effect (here: fetch the sample once on mount).
  */
 export function App() {
   const [doc, setDoc] = useState<NoteModelDocument | null>(null);

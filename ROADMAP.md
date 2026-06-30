@@ -17,18 +17,20 @@ microtonal accidentals* → produce an **editable** note model → play it back 
 
 ## 1. Locked-in decisions
 
-> **Release target is MOBILE ONLY.** The web app is an internal **testing/dev harness**
-> for fast iteration on the note model, synthesis, and OMR validation — it is *not* a
-> shipped product. Don't over-invest in web polish; the real UI is built in the mobile phase.
+> **Ship WEB FIRST, then convert to mobile.** The web app is the **first released product**; the
+> mobile app is a later conversion that reuses the same shared TS core. **There is no server** — OMR
+> inference and audio run **in-browser / on-device** (`onnxruntime-web` + Web Audio), because a hosting
+> subscription isn't affordable. Build the web product properly; the mobile phase rebuilds only the
+> UI + native adapters over the same core.
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Shipped product | **Mobile app only** | This is the actual deliverable (offline Edge AI, on-device synthesis). |
-| Dev/testing platform | **Web app** (React) — throwaway | Fastest way to prototype the editor + Web Audio synthesis. Validates logic, not released. |
+| Shipped product | **Web first, then mobile** | Ship the working web app as the first release; then convert to a React Native mobile version reusing the same core. |
+| Runtime / hosting | **In-browser / on-device — NO server** | Can't afford a backend subscription; OMR runs via `onnxruntime-web` (web) / `onnxruntime-react-native` (mobile), synthesis via Web/native audio. |
 | App stack | **React (web) + React Native (mobile) over a shared TypeScript `core`** | App logic written ONCE in the TS core; notation/audio libs (VexFlow, Tone.js) are mature in JS; mobile becomes "UI + adapters over the same core". |
 | Python's role | **Training + data ONLY** (not in the shipped app) | ML training, synthetic-data generation, and SymbTr→JSON export. The app's runtime logic lives in the TS core, so it ports to mobile. |
-| OMR model (v1) | **CRNN + CTC** (end-to-end, single staff) | Proven recipe for *monophonic* OMR; outputs an ordered symbol sequence directly; SymbTr labels are nearly ready-made. |
-| OMR model (fallback) | **YOLOv8 glyph detection** + heuristic decoder | Use only if synthetic→real transfer with CRNN disappoints. |
+| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. Lead candidate `omr_transformer`, gated by an eval. |
+| OMR model (fallbacks) | **CRNN+CTC (PrIMuS-based)**, then **YOLOv8 glyph detection** + heuristic decoder | Lighter CRNN if the transformer is too big/awkward for mobile; YOLO if sequence transfer disappoints. |
 | Where OMR runs | **On-device** via ONNX Runtime (onnxruntime-web for the web harness, onnxruntime-react-native for mobile) | Same exported ONNX model both places; preserves the offline goal; no production backend. |
 | ML framework | **PyTorch** → export **ONNX** | Standard OMR stack; ONNX runs in both JS runtimes. |
 | Training data source | **Synthetic, rendered from SymbTr** + augmentation, then fine-tune on real photos | SymbTr has no images; we generate them. See §3. |
@@ -37,7 +39,9 @@ microtonal accidentals* → produce an **editable** note model → play it back 
 - Strong **deep-learning theory** (CNNs, RNNs from a detailed university course).
 - **No hands-on model-training experience yet** — needs scaffolding for training
   mechanics (data loaders, loss wiring, sanity checks), not architecture theory.
-- New concept to reinforce when relevant: **CTC loss** (alignment-free sequence labeling).
+- New concept to reinforce when relevant: **fine-tuning / transfer-learning mechanics** (load
+  pretrained weights, freeze early layers, extend the output vocab, guard catastrophic forgetting);
+  **CTC loss** (alignment-free sequence labeling) only if the CRNN fallback is used.
 
 
 ## 2. Target architecture
@@ -46,7 +50,7 @@ microtonal accidentals* → produce an **editable** note model → play it back 
 Photo
   → [Preprocess]            OpenCV: perspective correction, binarize, denoise
   → [Staff isolation]       detect staff systems, slice into single-staff strips
-  → [OMR: CRNN+CTC]         image strip → ordered symbol-token sequence
+  → [OMR model]             image strip → ordered symbol sequence (a fine-tuned pretrained OMR model)
   → [Decode]                tokens → notes {pitch_53tet, duration, ...} via lookup
   → [Editable note model]   <-- the core data structure; everything pivots here
   → [Editor UI]             render (VexFlow), drag to fix time & pitch
@@ -59,8 +63,8 @@ mistakes) feeds it, the user corrects it, and synthesis consumes it.
 
 ### Layered architecture (the split that matters — NOT backend/frontend)
 
-The product is offline mobile, so there is **no production backend**. The meaningful
-split is portable-core vs. platform-adapters vs. UI shells:
+The product ships web-first then mobile, and runs fully client-side, so there is **no production
+backend**. The meaningful split is portable-core vs. platform-adapters vs. UI shells:
 
 ```
 ML training (Python)     offline; never shipped. Produces the ONNX model, synthetic
@@ -74,7 +78,7 @@ Shared CORE (TypeScript) note model, 53-TET tuning (koma→Hz), synthesis SCHEDU
 ADAPTERS (per platform)  AudioBackend (Web Audio | native), OmrRuntime (onnxruntime-web
                          | onnxruntime-react-native), camera/file access.
         ▼
-UI SHELLS                Web (React) = testing harness; Mobile (React Native) = product.
+UI SHELLS                Web (React) = first shipped product; Mobile (React Native) = later conversion.
                          "Mobile = UI + adapters over the same core."
 ```
 
@@ -122,7 +126,7 @@ produce a real, demoable app with zero machine learning.
   implementation**; the shippable version of this logic is ported to `packages/core` (TS)
   in Phase 1. Python itself stays training/data-side only.
 
-### Phase 1 — Shared TS core + web harness (no ML) — *testing harness, not shipped*
+### Phase 1 — Shared TS core + web app (no ML) — *foundation of the web product*
 - **0. Bridge:** add a Python `SymbTr → note-model JSON` exporter (mirrors the `Event`
   fields: koma_53, ms/duration, note name, lyric, kind). This is how the TS side gets data.
 - **1. `packages/core` (TypeScript):** port the note model, 53-TET tuning (`koma53_to_freq`),
@@ -132,8 +136,8 @@ produce a real, demoable app with zero machine learning.
   play back via a **Web Audio** `AudioBackend` adapter at exact 53-TET frequencies.
 - Edit interactions: drag notes to change onset/duration and pitch; add/delete notes.
 - Purpose: validate the core, note model, and synthesis quickly; later validate OMR output.
-  Doubles as the **labeling tool** for Phase 3's real-photo set. **Keep the web UI minimal** —
-  the core is permanent; the web UI is throwaway (mobile UI is rebuilt in Phase 5).
+  Doubles as the **labeling tool** for Phase 3's real-photo set. The core is permanent; the web UI is
+  the **first shipped product surface** (the mobile UI is a later conversion in Phase 5).
 - **Milestone:** working "JSON score → edit → playback" harness over the shared core.
 
 ### Phase 2 — Synthetic training data
@@ -158,28 +162,32 @@ produce a real, demoable app with zero machine learning.
   the ahenk name is only a presentation label. This core function is mobile-reusable.
 - **OpenCV augmentations** to bridge synthetic→real: rotation, perspective warp, blur,
   paper texture, ink bleed, lighting gradients, JPEG noise, slight staff curvature.
-- Emit labels as **symbol-token sequences per staff strip** (for CRNN). (If falling back
-  to YOLO, emit bounding boxes instead.)
+- Emit labels **per staff strip in the chosen model's output format** (e.g. the pretrained model's
+  LilyPond token stream, extended with the microtonal accidental tokens). (CRNN fallback: a plain
+  symbol-token sequence; YOLO fallback: bounding boxes.)
 - **Milestone:** thousands of labeled staff-strip images.
 - ⚠️ **This phase's augmentation quality decides project success** more than architecture
   (how realistically you augment toward real photos matters most).
 
-### Phase 3 — Train the OMR model (CRNN + CTC)
-- Architecture: CNN feature extractor → collapse height to a width-indexed sequence →
-  BiLSTM → linear+softmax over vocab (incl. `blank`) → `torch.nn.CTCLoss`.
-- Vocabulary built from SymbTr's actual symbol set; microtonal accidentals are just tokens.
+### Phase 3 — Fine-tune the OMR model
+- **Approach: transfer learning.** Download a pretrained Western OMR model (lead candidate
+  `omr_transformer`; gated by an eval — see `docs/PHASE2.md` §4), **extend its tokenizer/vocab** with
+  the AEU accidental tokens, **freeze the early layers**, and **fine-tune the later layers + output
+  head** on our synthetic data. No model is trained from raw weights — we only teach the new glyphs.
 - Training mechanics to scaffold (developer is new to this):
-  - `(image → tensor)` dataset/dataloader.
-  - **Sanity check first: overfit 10 samples** to confirm model+loss are wired correctly.
-  - AdamW, LR schedule, checkpointing, greedy/beam CTC decode at eval.
-- **Fine-tune on a few hundred REAL photos** (labeled via the Phase-1 editor). This small
+  - `(image → label)` dataset/dataloader in the model's output format.
+  - **Sanity check first: overfit 10 samples** to confirm the data, tokenizer extension, freezing, and
+    decode are wired correctly.
+  - AdamW + modest LR + checkpointing; train with the model's native loss (sequence cross-entropy for
+    a vision-encoder-decoder; CTC for the CRNN fallback).
+  - **Western rehearsal data** mixed in to prevent catastrophic forgetting.
+  - **Headline metric: per-class accuracy on the 8 AEU accidentals** (SER secondary).
+- **Fine-tune again on a few hundred REAL photos** (labeled via the Phase-1 editor). This small
   real set matters more than any hyperparameter.
-- HuggingFace note: you may warm-start the CNN backbone, but the **output head + vocab
-  must be retrained** — no existing model knows the microtonal tokens.
-- **Milestone:** photo of a staff → correct symbol sequence.
+- **Milestone:** photo of a staff → correct symbol sequence (microtonal accidentals included).
 
 ### Phase 4 — End-to-end integration
-- Wire: preprocess → staff isolation → CRNN → decode → note model → existing editor.
+- Wire: preprocess → staff isolation → OMR model → decode → note model → existing editor.
 - OMR runs **on-device** via `onnxruntime-web` in the harness (no production backend, per §1) —
   the browser loads the exported ONNX model and produces the note model locally.
 - **Makam-aware pitch decoding (required).** The written accidental on the page does NOT map 1:1
@@ -193,8 +201,8 @@ produce a real, demoable app with zero machine learning.
   koma→accidental, so the synthetic images match real scores and the makam→pitch table is learnable.
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
 
-### Phase 5 — Mobile app (THE PRODUCT)
-- This is the actual release. Everything before it is groundwork/validation.
+### Phase 5 — Mobile app (the second release, a conversion of the web product)
+- After the web product works, convert it to mobile by reusing the same core.
 - **React Native** app that **reuses `packages/core` verbatim**; build only: the mobile UI,
   a native `AudioBackend` adapter, an `onnxruntime-react-native` `OmrRuntime` adapter, and
   camera/file access. The web harness's core ports over; its React UI does not.
@@ -232,7 +240,27 @@ produce a real, demoable app with zero machine learning.
 
 ---
 
-## 6. Status / next action
+## 6. Non-essential / optional features (deferred)
+
+Nice-to-haves explicitly **off the critical path** — build them only after the core product works.
+(UI-level optional items also live in `README.md` → "Not essential for now but can be added after.")
+
+- **Rule-based import for digital sheets (no AI).** For *born-digital* scores (engraved by
+  MuseScore/Finale/Sibelius/LilyPond and exported as PDF, or downloaded from the internet), the notes
+  can be extracted **deterministically without the OMR model**: parse the PDF's vector content —
+  music-font glyph codepoints (noteheads, clefs, accidentals, rests) + their x/y positions + staff
+  lines — then geometrically decode pitch (notehead position vs. clef/staff) and duration (notehead
+  type + beams/flags/dots) into the note model. More reliable than the camera path for clean PDFs, and
+  reads the **exact** AEU accidental straight from its SMuFL codepoint (e.g. koma U+E444 → exact koma,
+  no guessing — the map already lives in `packages/core/notation.ts`), where image OMR can only
+  approximate. Even simpler when a **MusicXML/MEI/MIDI** is available: skip OMR entirely and parse it
+  (as we already do for SymbTr). A product could expose both input paths — drop in a PDF (vector
+  parse) or snap a photo (the fine-tuned model). The camera/OMR path stays the priority; this is a
+  clean-input convenience for later.
+
+---
+
+## 7. Status / next action
 
 **Phase 0: DONE (2026-06-20).** Symbolic → microtonal audio pipeline works with no ML.
 - SymbTr dataset lives at `~/Downloads/SymbTr-2.0.0/` (txt, MusicXML, midi, mu2; 2200 pieces).
@@ -337,6 +365,6 @@ Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosmetic and deferred.
 
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
-bundle — fine for a throwaway harness).
+bundle — acceptable for the web app).
 
-_Last updated: 2026-06-28._
+_Last updated: 2026-06-29._

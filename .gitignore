@@ -39,9 +39,13 @@ venv.bak/
 # Environment variables
 .env
 .venv
+.venv-ml/
 
 # macOS generated files
 .DS_Store
+
+# Local test photos / scratch sheets (not redistributed)
+test_images/
 
 # Data and models (Ignore large files to prevent them from hitting GitHub limits)
 data/raw/*

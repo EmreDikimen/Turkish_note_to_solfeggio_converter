@@ -17,9 +17,10 @@ view (OMR makes mistakes, so every note's pitch and timing can be corrected by h
 plays the result back at precise 53-TET frequencies, with natively synthesized instruments
 (Ney, clarinet, …).
 
-**The product is a mobile app** that runs offline (Edge AI). A web app is used only as an
-internal **testing/development harness** to iterate quickly on the note model, synthesis,
-and OMR validation — it is not a released product.
+**Ship the web app first, then convert it to mobile.** The web app is the first released product;
+a React Native mobile version comes later, reusing the same shared core. **There is no server** —
+OMR inference and audio run **in-browser / on-device** (`onnxruntime-web` + Web Audio), because a
+hosting subscription isn't affordable. Everything runs locally.
 
 **Architecture:** the app logic (note model, 53-TET tuning, synthesis scheduling, OMR
 decoding) lives once in a shared **TypeScript core**; a **React** web harness and a
@@ -33,7 +34,7 @@ synthetic-data generation, SymbTr→JSON export) and is never shipped in the app
 Photo
   → Preprocess            (OpenCV: perspective, binarize, denoise)
   → Staff isolation       (slice into single-staff strips)
-  → OMR (CRNN + CTC)      (image strip → ordered symbol-token sequence)
+  → OMR model             (image strip → ordered symbol sequence; a fine-tuned pretrained OMR model)
   → Decode                (tokens → notes {pitch_53tet, duration, …})
   → Editable note model   ← the core: OMR feeds it, the user corrects it, synth consumes it
   → Editor UI             (web: render with VexFlow, drag to fix time & pitch)
@@ -58,9 +59,10 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   engraved like a real Classical-Turkish-Music score — **standard AEU accidentals only** (the
   editor still exposes exact komas), justified rows, **lyrics**, and a **makam/usul/composer
   header**. See ROADMAP §6 (Status) for details.
-- **Phase 2 — next:** synthetic training data — render SymbTr scores to staff images with
-  **VexFlow** (reusing the harness engraving), augment with **chromatic transpose** (pitch
-  augmentation) + OpenCV (image augmentation), emit per-staff token labels.
+- **Phase 2 — next:** synthetic training data + OMR by **transfer learning** — render SymbTr scores to
+  staff images with **VexFlow** (reusing the harness engraving), augment with **chromatic transpose**
+  (pitch augmentation) + OpenCV (image augmentation), and **fine-tune a pretrained OMR model** to add
+  the Turkish microtonal accidentals. See [docs/PHASE2.md](docs/PHASE2.md).
 
 ## Directory Structure
 
@@ -128,7 +130,7 @@ button. Toggle **Piano-roll / Sheet**; in Sheet view use **Play / Pause / Resume
 a measure to play from there, set the **BPM** and toggle the **usul metronome**, **Transpose**
 (with **Keep sheet (sound only)** for ney ahenks), pick an **Accidentals** display mode, toggle
 **Lyrics**, and **✎ Edit** to correct notes. The shared logic lives in `packages/core`; the React
-UI in `apps/web` is a throwaway dev tool (the real UI is rebuilt for mobile in Phase 5).
+UI in `apps/web` is the first shipped product surface (later converted to mobile in Phase 5).
 
 ## Data
 SymbTr-2.0.0 (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores in txt, MusicXML,
@@ -154,3 +156,15 @@ which maps directly to a 53-TET frequency.
   upgrade those clicks into a real rhythmic cycle on a traditional percussion sound (e.g. darbuka)
   so the usul sounds idiomatic, and auto-detect the usul from the OMR model while keeping it
   user-editable (OMR can misread it) — wire the detection in at Phase 3–4.
+
+- **Rule-based import for digital sheets (no AI).** For *born-digital* scores (engraved by
+  MuseScore/Finale/Sibelius/LilyPond and exported as a PDF, or downloaded from the internet) we can
+  extract the notes **deterministically, without the OMR model**: parse the PDF's vector content —
+  the music-font glyph codepoints (noteheads, clefs, accidentals, rests) + their x/y positions and
+  the staff lines — then geometrically decode pitch (notehead position vs. clef/staff) and duration
+  (notehead type + beams/flags/dots) into the note model. This is more reliable than the camera path
+  for clean PDFs, and reads the **exact** AEU accidental from its SMuFL codepoint (e.g. koma U+E444 →
+  exact koma, no guessing) using the map already in `packages/core/notation.ts`. Even simpler: if a
+  **MusicXML / MEI / MIDI** is available, skip OMR entirely and parse it (as we already do for SymbTr).
+  A shipped product could offer both input paths — drop in a PDF (vector parse) or snap a photo (the
+  fine-tuned model). The camera/OMR path stays the priority; this is a clean-input convenience.

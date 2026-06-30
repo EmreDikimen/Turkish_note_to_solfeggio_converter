@@ -40,6 +40,10 @@ SymbTr → note-model → (TS) render staff PNG ─► (Python) fine-tune (image
   the low-risk way to reuse it exactly). Render **FROM the note model**, so labels are emitted from the
   same data that draws the image (perfect alignment, no re-parse) — **in the chosen model's output
   format**. The label generator is TypeScript; OpenCV augmentation is Python.
+- **Render SHORT strips (~2–4 measures) at a model-friendly size/aspect** (≈ the model's input frame,
+  e.g. ~583×409 for `omr_transformer`) — not whole wide rows. Long lines overrun the decoder's token
+  cap (notes go missing), and extreme wide-short strips get squashed on resize, blurring beam/flag
+  detail so durations flip (8th↔16th). Both were observed in the Step-1 tests.
 - **Pitch augmentation:** core `transpose(doc, commas)` — render each piece at several transpositions.
 - **Image augmentation (Python/OpenCV):** rotation, perspective warp, blur, paper texture, ink
   bleed, lighting gradients, JPEG noise, slight staff curvature. ⚠️ **This decides success more than
@@ -65,10 +69,13 @@ separate header-reading step (printed name + small classifier/heuristic) and **u
 ## 5. The de-risk ladder (never invest a week before a day proves it works)
 - **Rung 0 — model gate (~½ day):** §4 above. Confirm the downloaded model reads notes and we know how
   to extend it. **Start here.**
-- **Rung 1 — wiring proof (~1–2 days):** render ~50 strips with labels in the model's format, wire the
-  fine-tuning loop (load weights → extend tokenizer → freeze early layers → train), and **overfit 10
-  samples** until the model reproduces them exactly (accidentals included). Catches ~90% of wiring
-  bugs in an hour.
+- **Rung 1 — wiring proof + model GO/NO-GO (~1–2 days):** render ~50 short strips with labels in the
+  model's format, wire the fine-tuning loop (load weights → extend tokenizer → freeze early layers →
+  train), and **overfit 10 samples** until the model reproduces them exactly (accidentals included).
+  This is the **decision point for `omr_transformer`**: a clean overfit → keep it and scale (Rung 2);
+  **can't overfit 10 → pivot to the CRNN/PrIMuS fallback**. The base model's raw accuracy on unseen
+  styles is poor-but-expected (seen in Step-1 tests), so *this* — whether it can learn our notation —
+  is how we judge the model, not the raw eval.
 - **Rung 2 — scale:** thousands of augmented strips; fine-tune with **Western rehearsal data** mixed in
   (prevents catastrophic forgetting) + modest LR; measure the **headline metric: per-class accuracy on
   the 8 AEU accidentals** (SER secondary) on a held-out synthetic split.

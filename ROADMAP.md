@@ -414,8 +414,14 @@ started — **[docs/PHASE2.md](docs/PHASE2.md)** is the kickoff/hand-off doc (go
   crops), mirroring SheetView's own drawing decision; the decoder resolves bare notes from the
   `\sig` block. Round-trip verified on all sample scores (keysig and every-mode labels decode to
   identical notes). ⚠️ Regenerate any previously rendered strips — old ones carry semantic labels.
-- ⏳ Next: **Rung-1 overfit-10** on the Mac (the `omr_transformer` go/no-go), then the **Rung-1.5
-  ONNX/browser gate**; both pass → Colab Pro for the scaled fine-tune (augmentation + full data).
+- ✅ **Rung-1 overfit-10: GO (2026-07-02)** — full fine-tune wiring proven on the Mac (MPS):
+  10/10 strips reproduced exactly, `\sig` blocks and accidentals included
+  (`src/vision/overfit10.py` + `data.py`; result logged in `src/vision/MODEL_EVAL.md`).
+  The gate caught two decode-side wiring bugs (no-EOS labels; generation stopping on "."
+  instead of `</s>`) — fixed and carried forward. `omr_transformer` is confirmed trainable
+  on our notation.
+- ⏳ Next: the **Rung-1.5 ONNX/browser gate** (export → `onnxruntime-web` → decode one strip in
+  a real browser); passes → Colab Pro for the scaled fine-tune (augmentation + full data).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).

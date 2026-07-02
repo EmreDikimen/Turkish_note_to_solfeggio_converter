@@ -28,3 +28,16 @@ Loading processor + model (downloads weights on first run)...
 - See the reading test above: if the LilyPond output tracks the sample staves, Q1 passes.
 - Output format = LilyPond token stream (Q2). Vocab is extendable (Q3).
 - Size ~143M params (Q4) — note for the mobile/ONNX budget.
+
+
+
+
+## Rung 1 — overfit-10 result (2026-07-02)
+- 10/10 strips reproduced exactly after 400 steps (lr=0.0001, full fine-tune, batch=5, device=mps).
+- Final training loss **0.0004** (started at ~4.44 ≈ ln(88), i.e. uniform over the 88-token vocab;
+  ~0.05 by step 100). Note: on 10 samples a near-zero loss only proves memorization + correct
+  wiring — that is all this gate tests; generalization is Rung 2's job.
+- Verdict: **GO** — keep omr_transformer (next: Rung 1.5 ONNX/browser gate).
+- Two wiring bugs caught and fixed by this gate (the reason it exists): (1) the tokenizer adds
+  no EOS, so labels must append `</s>` manually or generation can't stop; (2) the base model's
+  generation_config stops on a literal "." (id 2) instead of `</s>` — re-pointed for our labels.

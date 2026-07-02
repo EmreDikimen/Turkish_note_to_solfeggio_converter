@@ -139,7 +139,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 ## 7. Before scaling Phase 2 (checklist)
 - [x] **Step 1 model gate** — `omr_transformer` evaluated (`src/vision/MODEL_EVAL.md`): passed
       (reads notes, LilyPond output, vocab extendable, ~143M params). Final go/no-go = overfit-10.
-- [ ] Confirm green typecheck (`npx tsc` core + web).
+- [x] Confirm green typecheck (`npx tsc` core + web — clean as of 2026-07-02).
 - [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
       signature scheme** (§4), in `tools/render/lilypond.ts` (2026-07-02). Round-trip verified on
       all sample scores. ⚠️ Regenerate any previously rendered strips — old ones carry semantic labels.
@@ -147,10 +147,11 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
       `src/vision/` has the eval script; the dataset/fine-tune/eval scripts are still TODO.
 
 ## 8. Next action
-1. ~~Switch the label serializer to the faithful + signature scheme~~ — **done (2026-07-02)**;
-   regenerate strips via `tools/render/render.ts` if old ones exist.
-2. Run **Rung 1: the overfit-10 go/no-go** (§5) — wire the fine-tune loop (load weights → extend
-   tokenizer → train, nothing frozen) and overfit 10 strips until reproduced exactly, accidentals
-   included. Runs on the Mac (MPS). Clean overfit → keep `omr_transformer`; can't → CRNN fallback.
+1. ~~Switch the label serializer to the faithful + signature scheme~~ — **done (2026-07-02)**.
+2. ~~Rung 1: the overfit-10 go/no-go~~ — **GO (2026-07-02)**: 10/10 strips reproduced exactly
+   (400 steps, full fine-tune, MPS; `src/vision/overfit10.py`, result in `MODEL_EVAL.md`).
+   The gate caught two real wiring bugs first — the tokenizer appends no EOS (labels must add
+   `</s>` manually), and the base generation_config stops on a literal "." instead of `</s>`.
+   Both fixes live in `src/vision/data.py` / `overfit10.py` and carry forward to Rung 2.
 3. Run **Rung 1.5: the ONNX/browser gate** (§5) — export to ONNX, decode one strip in the browser
-   via `onnxruntime-web`, measure latency. Only after BOTH gates pass, buy Colab Pro and scale.
+   via `onnxruntime-web`, measure latency. Only after this passes too, buy Colab Pro and scale.

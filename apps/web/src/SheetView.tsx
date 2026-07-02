@@ -366,6 +366,8 @@ export function SheetView({
   getPositionMs,
   onMeasureClick,
   onSeekToMeasure,
+  onLayout,
+  highlightRect,
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
@@ -384,6 +386,11 @@ export function SheetView({
   onMeasureClick: (m: Measure) => void;
   /** Non-edit mode: seek/play from the clicked measure. */
   onSeekToMeasure: (m: Measure) => void;
+  /** Fired after each engrave with every measure's on-screen rectangle (1-based `index`, `x`, `y`,
+   *  `width`) and the SVG size. Used by the Step-2c strip exporter to compute crop rectangles. */
+  onLayout?: (layout: { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number }) => void;
+  /** Step-2c: draw a translucent rectangle over a strip's crop region (SVG coordinate space). */
+  highlightRect?: { x: number; y: number; width: number; height: number } | null;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -480,6 +487,7 @@ export function SheetView({
     renderer.resize(SVG_WIDTH, height);
     const ctx = renderer.getContext();
     const svg = host.querySelector("svg") as SVGSVGElement | null;
+    svg?.setAttribute("data-omr", "sheet-svg"); // stable selector for the Playwright strip exporter
 
     const collected: MeasureBox[] = [];
     const positions: NotePos[] = [];
@@ -543,11 +551,17 @@ export function SheetView({
     setSvgHeight(height);
     setBoxes(collected);
     positionsRef.current = positions;
+    onLayout?.({
+      boxes: collected.map((b) => ({ index: b.index, x: b.x, y: b.y, width: b.width })),
+      svgWidth: SVG_WIDTH,
+      svgHeight: height,
+      rowHeight: ROW_HEIGHT,
+    });
 
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style
@@ -622,6 +636,23 @@ export function SheetView({
         onMouseLeave={editMode ? undefined : () => setHover(null)}
       >
         <div ref={hostRef} />
+        {/* Step-2c: the selected strip's crop region (what a training PNG will capture). */}
+        {highlightRect && (
+          <div
+            style={{
+              position: "absolute",
+              left: highlightRect.x,
+              top: highlightRect.y,
+              width: highlightRect.width,
+              height: highlightRect.height,
+              pointerEvents: "none",
+              boxSizing: "border-box",
+              border: "2px solid #f59e0b",
+              background: "rgba(245,158,11,0.12)",
+              borderRadius: 3,
+            }}
+          />
+        )}
         {/* Non-edit hover highlight: shows which measure a click will play from. */}
         {!editMode &&
           hover != null &&

@@ -66,19 +66,47 @@ before committing. **The accidentals are the only new thing we teach it** — th
 model and overfit (many classes, a global property a single strip can't determine). Keep it as a
 separate header-reading step (printed name + small classifier/heuristic) and **user-editable**.
 
+**Label scheme — FAITHFUL + signature extraction (agreed; supersedes the earlier "semantic" scheme,
+which broke mid-row crops).** The label marks only what is *drawn* on each note — an explicit deviation
+accidental, an explicit **`\natural`** (cancel), else **bare**. **Row-start strips** (crop includes the
+clef + signature) also **prefix the read key signature** (`\sig … \sigend`) so the OMR *extracts* it —
+a **makam-independent** source of the row's default accidentals (crucial for photos with no makam). The
+Phase-4 decoder resolves each **bare** note from the OMR-read signature and/or the makam's per-degree
+defaults; explicit accidental/natural override; `makam = none` + no signature → as-written. New tokens:
+the 8 AEU accidentals + **`\natural`** + **`\sig`/`\sigend`** + `|` + `3`. Treble is assumed (universal
+in the repertoire), so clef-less mid-row crops are fine.
+
 ## 5. The de-risk ladder (never invest a week before a day proves it works)
 - **Rung 0 — model gate (~½ day):** §4 above. Confirm the downloaded model reads notes and we know how
   to extend it. **Start here.**
-- **Rung 1 — wiring proof + model GO/NO-GO (~1–2 days):** render ~50 short strips with labels in the
-  model's format, wire the fine-tuning loop (load weights → extend tokenizer → freeze early layers →
-  train), and **overfit 10 samples** until the model reproduces them exactly (accidentals included).
+- **Rung 1 — wiring proof + model GO/NO-GO (~1–2 days, runs on the Mac via MPS):** render ~50 short
+  strips with labels in the model's format, wire the fine-tuning loop (load weights → extend tokenizer
+  → train — **freeze NOTHING for this test**, the whole model is trainable), and **overfit 10 samples**
+  until the model reproduces them exactly (accidentals included).
   This is the **decision point for `omr_transformer`**: a clean overfit → keep it and scale (Rung 2);
   **can't overfit 10 → pivot to the CRNN/PrIMuS fallback**. The base model's raw accuracy on unseen
   styles is poor-but-expected (seen in Step-1 tests), so *this* — whether it can learn our notation —
-  is how we judge the model, not the raw eval.
-- **Rung 2 — scale:** thousands of augmented strips; fine-tune with **Western rehearsal data** mixed in
-  (prevents catastrophic forgetting) + modest LR; measure the **headline metric: per-class accuracy on
-  the 8 AEU accidentals** (SER secondary) on a held-out synthetic split.
+  is how we judge the model, not the raw eval. (The overfitted checkpoint is a **throwaway
+  diagnostic** — it only proves the wiring; Rung 2 re-starts from the original pretrained weights.)
+- **Rung 1.5 — ONNX/browser gate (~1 day, BEFORE paying for GPU time):** the product premise is
+  **in-browser inference**, and an autoregressive encoder-decoder is the *hard* export case
+  (past-key-values, a generation loop that must be re-implemented in JS) — so prove it now, while
+  changing models is still cheap. Export the model to ONNX (`optimum-cli export onnx` → encoder +
+  decoder-with-past graphs), load it with `onnxruntime-web`, hand-roll the greedy decode loop in JS,
+  and decode **one strip in a real browser**; measure latency. Pass → buy Colab Pro and scale (Rung 2).
+  Fail or unusably slow → that's a model-choice fact: the **CRNN+CTC fallback is a single forward
+  pass** and exports trivially. (Model hosting: serve the ~143 MB int8 file from the **HuggingFace Hub
+  CDN** — free; the browser downloads and caches it. No server needed.)
+- **Rung 2 — scale (Colab Pro — the Mac is fine for overfit-10, not for thousands of images through
+  143M params):** thousands of augmented strips, training **from the original pretrained weights**;
+  **full fine-tune at a small LR** (AdamW, ~1e-5–5e-5) — freezing the encoder is a **memory/compute
+  fallback, not the default**: our images (VexFlow engraving, later phone photos) don't look like the
+  base model's training images, so the encoder needs to adapt too. Mix in **Western rehearsal data**
+  (incl. repeat-sign strips — see §6) + measure the **headline metric: per-class accuracy on the 8 AEU
+  accidentals** (SER secondary) on a held-out synthetic split. ⚠️ **Split train/val BY PIECE, not by
+  strip**: every strip and every transposition of a piece goes into the same split. Strips of one
+  piece are near-duplicates (same melody, same engraving); if a piece straddles both splits,
+  validation is contaminated and the metrics look great while proving nothing.
 - **Rung 3 — the moment of truth:** run on real phone photos (worse — the expected synthetic→real
   gap), then **fine-tune on a few hundred real photos** labeled via *this app's editor*. This small
   real set matters more than any hyperparameter.
@@ -91,10 +119,17 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 (3) the **editable note model is the safety net** — OMR needn't be perfect, the user corrects it.
 
 ## 6. Known gaps / decisions to carry forward
-- **SymbTr has no repeats/voltas/D.C./ties/slurs** (flattened out) → can't auto-label them. We **rely
-  on the pretrained model's existing Western knowledge** for repeats, and guard **catastrophic
-  forgetting** (rehearsal with Western data + a small hand-authored Turkish set). Tuplets DO exist
-  (MusicXML); barlines come from SymbTr `offset` (`assignBars`/`groupMeasures`).
+- **SymbTr has no repeats/voltas/D.C./ties/slurs** (flattened out) → can't auto-label them from
+  SymbTr. **Validated 2026-07-02 against the full dataset:** zero of the 2,200 MusicXML files contain
+  `<repeat>`, `<ending>` (volta), segno, coda, or any `<bar-style>`; the mu2 files have no repeat rows
+  either. But real photos **do** show repeat signs, so the model must **recognize** them. **Primary
+  plan: synthesize them ourselves** — VexFlow draws repeat barlines (`Barline.type.REPEAT_BEGIN/END`)
+  and voltas (the `Volta` stave modifier), so the strip renderer can inject repeat signs into a
+  fraction of strips with self-generated labels, exactly like every other symbol. Do NOT count on the
+  base model's Western pretraining surviving fine-tuning (it's a small model and SymbTr strips are
+  repeat-free — whatever it knew would be forgotten). The pipeline then **flattens/expands** repeats
+  on output (the section is shown twice, no repeat sign). Tuplets DO exist (MusicXML); barlines come
+  from SymbTr `offset` (`assignBars`/`groupMeasures`).
 - Render **both lyric and lyric-free** strips, and **randomize header/footer text** so the model
   learns to ignore non-musical text (real photos always have it).
 - Keep audio/`koma53` untouched by rendering changes — it's the decoder's source of truth.
@@ -102,12 +137,20 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   fine-tuning. **Makam stays out of the OMR model.**
 
 ## 7. Before scaling Phase 2 (checklist)
-- [ ] **Step 1 model gate** — evaluate `omr_transformer` (`src/vision/MODEL_EVAL.md`).
+- [x] **Step 1 model gate** — `omr_transformer` evaluated (`src/vision/MODEL_EVAL.md`): passed
+      (reads notes, LilyPond output, vocab extendable, ~143M params). Final go/no-go = overfit-10.
 - [ ] Confirm green typecheck (`npx tsc` core + web).
-- [ ] **Decide the label output format** from the chosen model (LilyPond + microtonal tokens).
-- [ ] Scaffold `tools/render/` (Playwright strip renderer) and `src/vision/` (dataset, fine-tune, eval).
+- [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
+      signature scheme** (§4), in `tools/render/lilypond.ts` (2026-07-02). Round-trip verified on
+      all sample scores. ⚠️ Regenerate any previously rendered strips — old ones carry semantic labels.
+- [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
+      `src/vision/` has the eval script; the dataset/fine-tune/eval scripts are still TODO.
 
-## 8. First action in the new chat
-Run the **Step 1 model gate**: download `omr_transformer`, run it on a Western sample + a rendered
-Turkish staff, and record its output format, tokenizer-extension path, and size in
-`src/vision/MODEL_EVAL.md`. Only once a model passes the gate do we build the renderer + fine-tune loop.
+## 8. Next action
+1. ~~Switch the label serializer to the faithful + signature scheme~~ — **done (2026-07-02)**;
+   regenerate strips via `tools/render/render.ts` if old ones exist.
+2. Run **Rung 1: the overfit-10 go/no-go** (§5) — wire the fine-tune loop (load weights → extend
+   tokenizer → train, nothing frozen) and overfit 10 strips until reproduced exactly, accidentals
+   included. Runs on the Mac (MPS). Clean overfit → keep `omr_transformer`; can't → CRNN fallback.
+3. Run **Rung 1.5: the ONNX/browser gate** (§5) — export to ONNX, decode one strip in the browser
+   via `onnxruntime-web`, measure latency. Only after BOTH gates pass, buy Colab Pro and scale.

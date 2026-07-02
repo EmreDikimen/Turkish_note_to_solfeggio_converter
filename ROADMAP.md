@@ -29,7 +29,7 @@ microtonal accidentals* → produce an **editable** note model → play it back 
 | Runtime / hosting | **In-browser / on-device — NO server** | Can't afford a backend subscription; OMR runs via `onnxruntime-web` (web) / `onnxruntime-react-native` (mobile), synthesis via Web/native audio. |
 | App stack | **React (web) + React Native (mobile) over a shared TypeScript `core`** | App logic written ONCE in the TS core; notation/audio libs (VexFlow, Tone.js) are mature in JS; mobile becomes "UI + adapters over the same core". |
 | Python's role | **Training + data ONLY** (not in the shipped app) | ML training, synthetic-data generation, and SymbTr→JSON export. The app's runtime logic lives in the TS core, so it ports to mobile. |
-| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. Lead candidate `omr_transformer`, gated by an eval. |
+| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. Lead candidate `omr_transformer` — passed the Step-1 eval (`src/vision/MODEL_EVAL.md`); the final go/no-go is the Rung-1 overfit-10. |
 | OMR model (fallbacks) | **CRNN+CTC (PrIMuS-based)**, then **YOLOv8 glyph detection** + heuristic decoder | Lighter CRNN if the transformer is too big/awkward for mobile; YOLO if sequence transfer disappoints. |
 | Where OMR runs | **On-device** via ONNX Runtime (onnxruntime-web for the web harness, onnxruntime-react-native for mobile) | Same exported ONNX model both places; preserves the offline goal; no production backend. |
 | ML framework | **PyTorch** → export **ONNX** | Standard OMR stack; ONNX runs in both JS runtimes. |
@@ -40,7 +40,8 @@ microtonal accidentals* → produce an **editable** note model → play it back 
 - **No hands-on model-training experience yet** — needs scaffolding for training
   mechanics (data loaders, loss wiring, sanity checks), not architecture theory.
 - New concept to reinforce when relevant: **fine-tuning / transfer-learning mechanics** (load
-  pretrained weights, freeze early layers, extend the output vocab, guard catastrophic forgetting);
+  pretrained weights, extend the output vocab, small-LR full fine-tune vs. freezing — freeze only as
+  a memory fallback, guard catastrophic forgetting, split held-out data by piece);
   **CTC loss** (alignment-free sequence labeling) only if the CRNN fallback is used.
 
 
@@ -143,9 +144,11 @@ produce a real, demoable app with zero machine learning.
 ### Phase 2 — Synthetic training data
 - **Render SymbTr scores to images with VexFlow**, reusing the harness's proven engraving
   (VexFlow 5 + Bravura), which already renders the Turkish microtonal accidentals correctly
-  (koma, bakiye, küçük mücennep) via raw SMuFL codepoints. Render staff-by-staff and rasterize
-  each staff to PNG — either a Node script using `node-canvas`, or a headless browser
-  (Playwright/Puppeteer) if embedding the Bravura font that way is simpler.
+  (koma, bakiye, küçük mücennep) via raw SMuFL codepoints. **Decided (see `docs/PHASE2.md` §3 +
+  `tools/render/`):** a headless browser (Playwright) crops **short strips (~2–4 measures,
+  ≤ ~46 tokens)** out of the harness's live full-score render, at a model-friendly size/aspect
+  (≈583×409 for `omr_transformer`) — NOT whole wide rows: long lines overrun the decoder's token
+  cap and wide-short strips blur beam/flag detail when resized (both observed in Step-1 tests).
 - **Render from the note model**, so the symbol-token label sequence is emitted from the same
   data that draws the image — labels stay perfectly aligned with no re-parse. The data
   generator is **TypeScript** (reuses `packages/core` notation + the SheetView engraving
@@ -172,15 +175,24 @@ produce a real, demoable app with zero machine learning.
 ### Phase 3 — Fine-tune the OMR model
 - **Approach: transfer learning.** Download a pretrained Western OMR model (lead candidate
   `omr_transformer`; gated by an eval — see `docs/PHASE2.md` §4), **extend its tokenizer/vocab** with
-  the AEU accidental tokens, **freeze the early layers**, and **fine-tune the later layers + output
-  head** on our synthetic data. No model is trained from raw weights — we only teach the new glyphs.
+  the AEU accidental tokens, and **fine-tune the FULL model at a small LR** (AdamW, ~1e-5–5e-5) on our
+  synthetic data. **Freezing the encoder is a memory/compute fallback, not the default** — our images
+  (VexFlow engraving, later phone photos) don't look like the base model's training images, so the
+  encoder needs to adapt too. No model is trained from raw weights — we only teach the new glyphs.
 - Training mechanics to scaffold (developer is new to this):
   - `(image → label)` dataset/dataloader in the model's output format.
-  - **Sanity check first: overfit 10 samples** to confirm the data, tokenizer extension, freezing, and
-    decode are wired correctly.
-  - AdamW + modest LR + checkpointing; train with the model's native loss (sequence cross-entropy for
-    a vision-encoder-decoder; CTC for the CRNN fallback).
-  - **Western rehearsal data** mixed in to prevent catastrophic forgetting.
+  - **Sanity check first: overfit 10 samples** (nothing frozen, on the Mac/MPS) to confirm the data,
+    tokenizer extension, and decode are wired correctly. The overfitted checkpoint is a **throwaway
+    diagnostic**; the real run restarts from the original pretrained weights.
+  - **ONNX/browser gate before scaling** (`docs/PHASE2.md` §5 Rung 1.5): export to ONNX + decode one
+    strip in `onnxruntime-web` — prove the in-browser premise before paying for GPU time.
+  - Scale training runs on **Colab Pro** (the Mac handles overfit-10, not thousands of images
+    through 143M params). AdamW + small LR + checkpointing; train with the model's native loss
+    (sequence cross-entropy for a vision-encoder-decoder; CTC for the CRNN fallback).
+  - **Western rehearsal data** (incl. synthesized repeat-sign strips) mixed in to prevent
+    catastrophic forgetting.
+  - **Split train/val BY PIECE, not by strip** — all strips + transpositions of a piece stay in one
+    split, else validation contains near-copies of training data and the metrics are meaningless.
   - **Headline metric: per-class accuracy on the 8 AEU accidentals** (SER secondary).
 - **Fine-tune again on a few hundred REAL photos** (labeled via the Phase-1 editor). This small
   real set matters more than any hyperparameter.
@@ -199,6 +211,34 @@ produce a real, demoable app with zero machine learning.
   (built from SymbTr). The makam stays user-editable in the editor (OMR can misread it). This also
   constrains **Phase 2 rendering**: render the makam's *conventional written form*, not a naive
   koma→accidental, so the synthetic images match real scores and the makam→pitch table is learnable.
+  - **Two resolution layers.** (1) *Written skeleton:* OMR reads notes + explicit deviation
+    accidentals + explicit naturals, and — on **row-start** crops — **reads the printed key signature**
+    (`\sig … \sigend`); the decoder applies that signature (or the makam's per-degree defaults) to the
+    **bare** notes to reconstruct the written accidentals. Reading the signature makes this
+    **makam-independent** — key for photos whose header has no readable makam. (2) *Sounding koma:* the
+    makam maps each written accidental to its exact koma (the Uşşak-Si example above). `makam = none` +
+    no signature → notes as written. See `docs/PHASE2.md` §4 for the label scheme + tokens.
+- **Makam selection UX (user-editable, with a `none` option).** The intended app flow:
+  1. extract the **written** notes from the photo (OMR) → build the note model + a first playback;
+  2. **OCR the printed makam name** from the header (fallback: infer from key signature + note
+     distribution);
+  3. look up that makam's intonation table and **adjust the sounding komas** — the *audio* and any
+     pitch readout update; the **written staff stays as drawn**;
+  4. the makam is a **user-editable control** (OCR/inference can be wrong): changing it re-derives the
+     sounding pitches live (the note model is the pivot; makam maps written→sounding).
+  - **`none` = identity:** every note sounds exactly **as written** (the nominal koma of each AEU sign),
+    no makam adjustment. Safe default, robust to OCR errors, trivial to implement (skip the adjust step).
+    Makams like hüzzam / uşşak / hüseyni (whose sounding pitch differs from the written page) are the
+    cases the per-makam tables refine on top of this literal transcription.
+- **Repeats: recognized on input, flattened on output.** Real photos **do** contain repeat signs and
+  the model must **recognize** them. SymbTr is flattened and can't teach this — **validated
+  2026-07-02**: zero of the 2,200 MusicXML files contain `<repeat>`/`<ending>`/segno/coda, and the
+  mu2 files have no repeat rows either. So we **synthesize repeat-sign strips ourselves**: VexFlow
+  draws repeat barlines (`Barline.type.REPEAT_BEGIN/END`) and voltas (the `Volta` stave modifier),
+  and the strip renderer injects them into a fraction of strips with self-generated labels — do NOT
+  rely on the base model's Western pretraining surviving fine-tuning. Our pipeline then
+  **flattens/expands** them when building the note model — the repeated section is shown **twice,
+  without a repeat sign** — which is what the editor and playback want.
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
 
 ### Phase 5 — Mobile app (the second release, a conversion of the web product)
@@ -236,6 +276,10 @@ produce a real, demoable app with zero machine learning.
   reuses that engraving for synthetic data. Re-verify if the render font/path ever changes.
 - **Staff isolation robustness** on phone photos (curvature, lighting) — a weak link
   upstream of an otherwise-good model.
+- **ONNX export / in-browser inference of an autoregressive encoder-decoder** — the product's
+  no-server premise rests on it, and it's the hard export case (past-key-values, JS generation
+  loop). Gated early: `docs/PHASE2.md` §5 Rung 1.5 proves it in a real browser before any paid
+  GPU training. The CRNN+CTC fallback exports trivially (single forward pass).
 - Resist building Phase 5 (mobile/edge) early; it's the slowest path and gates nothing.
 
 ---
@@ -355,9 +399,23 @@ Nice-to-haves explicitly **off the critical path** — build them only after the
   user-editable (OMR can misread it); wire the automatic detection in with the OMR model (Phase 3–4).
 
 **Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome +
-transpose/ahenk + art-music-faithful engraving with header & lyrics). Next major milestone is the
-ML track (Phase 2: synthetic training data). **→ Start here: [docs/PHASE2.md](docs/PHASE2.md)** —
-the Phase-2 kickoff/hand-off (goal, current state, de-risk ladder, first task).
+transpose/ahenk + art-music-faithful engraving with header & lyrics). The ML track (Phase 2) has
+started — **[docs/PHASE2.md](docs/PHASE2.md)** is the kickoff/hand-off doc (goal, de-risk ladder).
+
+**Phase 2: IN PROGRESS (as of 2026-07-02).**
+- ✅ **Step-1 model gate** — `Flova/omr_transformer` evaluated (`src/vision/MODEL_EVAL.md`):
+  reads its own sample staves, output = LilyPond token stream, vocab extendable
+  (`add_tokens` + `resize_token_embeddings` proven), ~143M params (~143 MB int8).
+- ✅ **Label serializer + strip renderer** (`tools/render/`) — `docToStrips` packs short
+  (~2–4 measure, ≤ ~46-token) strips; a Playwright script crops PNG+label pairs out of the
+  harness's live render; in-harness Strip panel + decoder CLI for manual verification.
+- ✅ **Faithful + signature label scheme implemented** (2026-07-02) — labels mark only what is
+  *drawn* (explicit accidental / `\natural` / bare; `\sig … \sigend` prefix on row-start keysig
+  crops), mirroring SheetView's own drawing decision; the decoder resolves bare notes from the
+  `\sig` block. Round-trip verified on all sample scores (keysig and every-mode labels decode to
+  identical notes). ⚠️ Regenerate any previously rendered strips — old ones carry semantic labels.
+- ⏳ Next: **Rung-1 overfit-10** on the Mac (the `omr_transformer` go/no-go), then the **Rung-1.5
+  ONNX/browser gate**; both pass → Colab Pro for the scaled fine-tune (augmentation + full data).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
@@ -367,4 +425,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-06-29._
+_Last updated: 2026-07-02._

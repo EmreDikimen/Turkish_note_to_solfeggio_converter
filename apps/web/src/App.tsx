@@ -20,8 +20,11 @@ import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
+import { buildStrips, type ExportStrip } from "./stripExport";
 
 type ViewMode = "roll" | "sheet";
+// SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
+type SheetLayout = { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number };
 
 // What a single drag can change on a note: its pitch (comma) and/or its duration.
 export type NoteEdit = Partial<Pick<NoteEvent, "koma53" | "durationMs">>;
@@ -84,6 +87,10 @@ export function App() {
   // transposing-instrument case (kız/mansur ney read the same sheet but sound transposed). When
   // false, the staff is rewritten too. Either way the stored score (`doc`) is never mutated.
   const [keepSheet, setKeepSheet] = useState(false);
+  // Step-2c strip export: SheetView reports its measure geometry here; the panel previews one strip.
+  const [layout, setLayout] = useState<SheetLayout | null>(null);
+  const [selectedStripId, setSelectedStripId] = useState<string | null>(null);
+  const onLayout = useCallback((l: SheetLayout) => setLayout(l), []);
   // Test offsets for the transpose dropdown [commas, label]: small comma steps exercise the
   // accidental re-spelling; the larger AEU intervals (whole tone 9, fourth 22, fifth 31, octave
   // 53) check octave/range + naming. (53-TET: 53 commas = one octave.)
@@ -155,6 +162,19 @@ export function App() {
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
   const beatMs = useMemo(() => (doc ? beatMsOf(doc) : 0), [doc]);
+
+  // Step-2c: the training strips for the currently-drawn score + accidental mode, and the selected one.
+  const strips = useMemo<ExportStrip[]>(() => {
+    const drawn = displayDoc ?? doc;
+    return drawn && layout ? buildStrips(drawn, layout.boxes, accidentalMode === "keysig" ? "keysig" : "every") : [];
+  }, [displayDoc, doc, layout, accidentalMode]);
+  const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
+  // Expose the strips + score meta for the Playwright batch exporter (tools/render/render.ts).
+  useEffect(() => {
+    const w = window as unknown as { __omrStrips?: ExportStrip[]; __omrMeta?: { makam: string; name: string } };
+    w.__omrStrips = strips;
+    if (doc) w.__omrMeta = { makam: doc.makam, name: doc.name };
+  }, [strips, doc]);
 
   // Translate the current tempo/metronome/usul UI state into backend PlayOptions. Speed is the
   // chosen BPM over the natural BPM; the metronome clicks are the selected usul's beat pattern
@@ -494,6 +514,15 @@ export function App() {
                 getPositionMs={getPositionMs}
                 onMeasureClick={setEditing}
                 onSeekToMeasure={(m) => onSeekMs(m.startMs)}
+                onLayout={onLayout}
+                highlightRect={selectedStrip?.rect ?? null}
+              />
+              <StripPanel
+                strips={strips}
+                selectedId={selectedStripId}
+                onSelect={setSelectedStripId}
+                mode={accidentalMode === "keysig" ? "keysig" : "every"}
+                onMode={(m) => { setAccidentalMode(m); setSelectedStripId(null); }}
               />
               <p style={{ color: "#888", fontSize: 12 }}>
                 Western staff with Turkish (AEU) accidental glyphs from the Bravura font.
@@ -529,6 +558,74 @@ export function App() {
           onCancel={() => setEditing(null)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Step-2c Strip panel: lists the training strips for the current score + mode, highlights the
+ * selected strip's crop rectangle on the live sheet (via `highlightRect`), and shows its LilyPond
+ * label + decoded notes — the manual image-vs-label check. The actual PNG files are produced by the
+ * Playwright batch exporter (`tools/render/render.ts`), which reads `window.__omrStrips`.
+ */
+function StripPanel({
+  strips,
+  selectedId,
+  onSelect,
+  mode,
+  onMode,
+}: {
+  strips: ExportStrip[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  mode: "every" | "keysig";
+  onMode: (m: "every" | "keysig") => void;
+}) {
+  const sel = strips.find((s) => s.id === selectedId) ?? null;
+  return (
+    <div style={{ marginTop: 12, border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#fafafa" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
+        <strong style={{ fontSize: 14 }}>Strip export (Step 2c)</strong>
+        <span style={{ display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
+          <ModeButton active={mode === "every"} onClick={() => onMode("every")}>every-note</ModeButton>
+          <ModeButton active={mode === "keysig"} onClick={() => onMode("keysig")}>key-signature</ModeButton>
+        </span>
+        <span style={{ color: "#666", fontSize: 13 }}>{strips.length} strips · select one to highlight its crop</span>
+      </div>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, maxHeight: 120, overflowY: "auto", flex: "0 0 320px" }}>
+          {strips.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => onSelect(s.id)}
+              style={{
+                fontSize: 12, padding: "2px 6px",
+                background: s.id === selectedId ? "#fde68a" : "#fff",
+                border: s.id === selectedId ? "1px solid #f59e0b" : "1px solid #ddd",
+                borderRadius: 4, cursor: "pointer",
+              }}
+            >
+              {s.id}
+            </button>
+          ))}
+        </div>
+        <div style={{ flex: 1, fontSize: 13, minWidth: 0 }}>
+          {sel ? (
+            <>
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ color: "#888" }}>label: </span>
+                <code style={{ wordBreak: "break-word" }}>{sel.label}</code>
+              </div>
+              <div>
+                <span style={{ color: "#888" }}>decoded: </span>
+                {sel.decoded}
+              </div>
+            </>
+          ) : (
+            <span style={{ color: "#999" }}>Select a strip to see its label + decoded notes; the orange box on the sheet is its crop region.</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

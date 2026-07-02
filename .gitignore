@@ -52,6 +52,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/synthetic/
 *.pt
 *.pth
 *.onnx

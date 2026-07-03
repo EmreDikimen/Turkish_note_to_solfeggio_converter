@@ -13,7 +13,25 @@
  */
 
 import { accidentalLabel, spellNote } from "@turkish-omr/core";
-import { AEU_TOKEN, NATURAL_TOKEN, SIG_TOKEN, SIG_END_TOKEN } from "./lilypond";
+import {
+  AEU_TOKEN,
+  NATURAL_TOKEN,
+  SIG_TOKEN,
+  SIG_END_TOKEN,
+  REP_START_TOKEN,
+  REP_END_TOKEN,
+  VOLTA1_TOKEN,
+  VOLTA2_TOKEN,
+} from "./lilypond";
+
+/** Repeat-sign tokens → their readable glyph. Structural markers: they never affect how the
+ *  surrounding notes resolve (Phase 4 expands them; here they just round-trip for verification). */
+const REPEAT_GLYPH: Record<string, string> = {
+  [REP_START_TOKEN]: "‖:",
+  [REP_END_TOKEN]: ":‖",
+  [VOLTA1_TOKEN]: "volta1.",
+  [VOLTA2_TOKEN]: "volta2.",
+};
 
 const TOKEN_TO_ALTER: Record<string, number> = Object.fromEntries(
   Object.entries(AEU_TOKEN).map(([commas, tok]) => [tok, Number(commas)]),
@@ -24,7 +42,7 @@ const DUR_NAME: Record<string, string> = {
 };
 
 export interface Decoded {
-  kind: "note" | "rest" | "bar" | "sig";
+  kind: "note" | "rest" | "bar" | "sig" | "repeat";
   /** Project-style name, e.g. "Si4b1" (rests/bars: "rest"/""; sig: readable summary). */
   name: string;
   /** Human accidental label, e.g. "koma bemolü" ("" if natural/rest). */
@@ -83,6 +101,10 @@ export function decodeLabel(label: string): Decoded[] {
       out.push({ kind: "bar", name: "", accidental: "", duration: "" });
       continue;
     }
+    if (tok in REPEAT_GLYPH) {
+      out.push({ kind: "repeat", name: REPEAT_GLYPH[tok]!, accidental: "", duration: "" });
+      continue;
+    }
     if (tok === NATURAL_TOKEN) {
       pendingAlter = 0; // explicit cancel — overrides the signature
       continue;
@@ -116,6 +138,7 @@ export function decodeLabel(label: string): Decoded[] {
 /** One-line readable form of a decoded entry. */
 export function fmt(d: Decoded): string {
   if (d.kind === "bar") return "|";
+  if (d.kind === "repeat") return d.name;
   if (d.kind === "sig") return `sig{${d.name}}`;
   if (d.kind === "rest") return `rest(${d.duration})`;
   return d.accidental ? `${d.name}[${d.accidental},${d.duration}]` : `${d.name}[${d.duration}]`;

@@ -236,7 +236,9 @@ produce a real, demoable app with zero machine learning.
   mu2 files have no repeat rows either. So we **synthesize repeat-sign strips ourselves**: VexFlow
   draws repeat barlines (`Barline.type.REPEAT_BEGIN/END`) and voltas (the `Volta` stave modifier),
   and the strip renderer injects them into a fraction of strips with self-generated labels — do NOT
-  rely on the base model's Western pretraining surviving fine-tuning. Our pipeline then
+  rely on the base model's Western pretraining surviving fine-tuning. (Encoding + placement decided
+  2026-07-02: 4 faithful drawn-symbol tokens, fold-detected + randomly injected placement —
+  `docs/PHASE2.md` §6.) Our pipeline then
   **flattens/expands** them when building the note model — the repeated section is shown **twice,
   without a repeat sign** — which is what the editor and playback want.
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
@@ -420,6 +422,15 @@ started — **[docs/PHASE2.md](docs/PHASE2.md)** is the kickoff/hand-off doc (go
   The gate caught two decode-side wiring bugs (no-EOS labels; generation stopping on "."
   instead of `</s>`) — fixed and carried forward. `omr_transformer` is confirmed trainable
   on our notation.
+- ✅ **Repeat signs (2026-07-02)** — encoding: 4 new faithful drawn-symbol tokens (`\repstart`
+  `\repend` `\volta1` `\volta2`; the base vocab's structural `\repeat `/`volta ` are unusable, and
+  `|` stays); placement: **duplicate-run detection** (`tools/render/repeats.ts` — the flattened
+  repeats, verified vs. the printed gamzedeyim score), random injection for coverage still TODO.
+  **Implemented + verified live**: the harness **Repeats** toggle draws the signs (detection only —
+  layout/playback untouched) and strip labels carry the matching tokens; tokens add as single
+  stable ids (75→92). Also found: 246/256 rendered strips are single-measure (`|` in only 10
+  labels) → Rung 2 must guarantee multi-measure strips. Details in `docs/PHASE2.md` §6. None of
+  this reopens Rung 1 (wiring-only gate).
 - ⏳ Next: the **Rung-1.5 ONNX/browser gate** (export → `onnxruntime-web` → decode one strip in
   a real browser); passes → Colab Pro for the scaled fine-tune (augmentation + full data).
 

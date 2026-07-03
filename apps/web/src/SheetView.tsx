@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Accidental, Dot, Formatter, Renderer, Stave, StaveNote } from "vexflow";
+import { Accidental, Barline, Dot, Formatter, Renderer, Stave, StaveModifierPosition, StaveNote } from "vexflow";
 import {
   accidentalGlyph,
   accidentalLabel,
@@ -15,6 +15,7 @@ import {
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
+import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 
 // --- layout constants -------------------------------------------------------
 const LEFT = 10;
@@ -201,6 +202,38 @@ function drawSignature(
   });
 }
 
+// Volta bracket height above the top staff line: close to the row (clear of most beams) and well
+// inside the strip-crop window (which starts ~46px above the top line).
+const VOLTA_ABOVE = 26;
+
+/**
+ * Draw a volta (1./2. ending) bracket over one measure, as raw SVG — like the key signature and
+ * meter. VexFlow's own `Volta` places the bracket ~7 staff spaces above the top line and its label
+ * ignores the y-shift, so it can't be brought closer to the row.
+ */
+function drawVolta(svg: SVGSVGElement, stave: Stave, label: string) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const y = stave.getYForLine(0) - VOLTA_ABOVE;
+  // Start the bracket where the music starts, not at the stave's left edge — on a row-start
+  // measure the bracket must not reach back over the clef / key signature / begin-repeat sign.
+  const x1 = Math.max(stave.getX() + 1, stave.getNoteStartX() - 6);
+  const x2 = stave.getX() + stave.getWidth() - 2;
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", `M ${x1} ${y + 12} V ${y} H ${x2} V ${y + 12}`); // ⌐¬ down-ticks at both ends
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#222");
+  path.setAttribute("stroke-width", "1.2");
+  svg.appendChild(path);
+  const t = document.createElementNS(SVG_NS, "text");
+  t.setAttribute("x", String(x1 + 6));
+  t.setAttribute("y", String(y + 12));
+  t.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
+  t.setAttribute("font-size", "12");
+  t.setAttribute("fill", "#222");
+  t.textContent = label;
+  svg.appendChild(t);
+}
+
 /**
  * Draw one lyric syllable centered under a note, below the staff (like the original engraved
  * sheets). SymbTr stores the syllable per note; "." marks a melisma/continuation (no new text)
@@ -368,6 +401,7 @@ export function SheetView({
   onSeekToMeasure,
   onLayout,
   highlightRect,
+  repeatSpans,
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
@@ -391,6 +425,9 @@ export function SheetView({
   onLayout?: (layout: { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number }) => void;
   /** Step-2c: draw a translucent rectangle over a strip's crop region (SVG coordinate space). */
   highlightRect?: { x: number; y: number; width: number; height: number } | null;
+  /** Phase-2 preview: repeat barlines + volta brackets to draw (SymbTr has none, so these are
+   *  synthesized — see repeats.ts). Empty/undefined → the default engraving, untouched. */
+  repeatSpans?: RepeatSpan[];
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -509,8 +546,27 @@ export function SheetView({
         const sigStartX = clefEnd;
         const timeStartX = clefEnd + (drawSig ? sigWidth : 0);
         const reserved = (drawSig ? sigWidth : 0) + (drawTime ? timeSigWidth : 0);
-        if (reserved > 0) stave.setNoteStartX(clefEnd + reserved);
+        // Phase-2: fold-detected repeat signs. Barline types are stave modifiers; setting one
+        // invalidates the stave's layout, so they must go BEFORE setNoteStartX — otherwise the
+        // re-format on draw() recomputes the note start and the notes overlap the hand-drawn
+        // signature/meter glyphs. (The volta brackets are hand-drawn SVG — see drawVolta — added
+        // after the stave exists.)
+        const repMarks = repeatMarksAt(cell.m.index, repeatSpans);
+        if (repMarks.repStart) stave.setBegBarType(Barline.type.REPEAT_BEGIN);
+        if (repMarks.repEnd) stave.setEndBarType(Barline.type.REPEAT_END);
+        if (reserved > 0) {
+          // getNoteStartX re-formats first, so this includes any begin-repeat barline's width.
+          stave.setNoteStartX(stave.getNoteStartX() + reserved);
+          // VexFlow places a begin-repeat `‖:` directly after the clef; push it past the reserved
+          // glyph space so the engraved order stays clef → flats → meter → ‖: → notes.
+          if (repMarks.repStart) {
+            const bar = stave.getModifiers(StaveModifierPosition.BEGIN, Barline.CATEGORY)[0];
+            bar?.setX(bar.getX() + reserved);
+          }
+        }
         stave.setContext(ctx).draw();
+        if (svg && repMarks.volta1) drawVolta(svg, stave, "1.");
+        if (svg && repMarks.volta2) drawVolta(svg, stave, "2.");
         // Playhead extent for this row, from the actual staff-line positions (the Stave's y
         // param is its bounding-box top, which sits well above the first staff line).
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
@@ -561,7 +617,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

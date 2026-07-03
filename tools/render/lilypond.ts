@@ -29,8 +29,8 @@
  *    decoder cap (see `docToStrips`).
  *
  * New tokens this format requires beyond the base vocab: the 8 accidental tokens, `\natural`,
- * `\sig`/`\sigend`, `|`, and the digit `3` (the base vocab lacks `3`, so it can't write "32" for
- * 32nd notes — see MODEL_EVAL.md).
+ * `\sig`/`\sigend`, the 4 repeat-sign tokens (`\repstart`/`\repend`/`\volta1`/`\volta2`), `|`, and
+ * the digit `3` (the base vocab lacks `3`, so it can't write "32" for 32nd notes — see MODEL_EVAL.md).
  */
 
 import {
@@ -42,6 +42,7 @@ import {
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
+import { repeatMarksAt, type RepeatSpan } from "./repeats";
 
 /** AEU-snapped alteration (commas) → the LilyPond accidental token. toAeuAlter only yields ±1/4/5/8. */
 export const AEU_TOKEN: Record<number, string> = {
@@ -56,6 +57,13 @@ export const NATURAL_TOKEN = "\\natural";
 /** Delimiters of the key-signature prefix on row-start strips: `\sig <acc> <letter> … \sigend`. */
 export const SIG_TOKEN = "\\sig";
 export const SIG_END_TOKEN = "\\sigend";
+/** Repeat signs, faithful drawn symbols (the base vocab's structural `\repeat `/`volta ` can't
+ *  label a crop showing only one end of a repeat): `‖:` / `:‖` barlines (replacing `|` at their
+ *  boundary) and the 1./2. volta brackets (before the bracketed measure's first note). */
+export const REP_START_TOKEN = "\\repstart";
+export const REP_END_TOKEN = "\\repend";
+export const VOLTA1_TOKEN = "\\volta1";
+export const VOLTA2_TOKEN = "\\volta2";
 
 /** The full set of tokens we must add to the model's tokenizer for this format. */
 export const ADDED_TOKENS: string[] = [
@@ -63,6 +71,10 @@ export const ADDED_TOKENS: string[] = [
   NATURAL_TOKEN,
   SIG_TOKEN,
   SIG_END_TOKEN,
+  REP_START_TOKEN,
+  REP_END_TOKEN,
+  VOLTA1_TOKEN,
+  VOLTA2_TOKEN,
   "|",
   "3",
 ];
@@ -163,14 +175,42 @@ export function serializeMeasure(m: Measure, signature?: SignatureMap): { label:
  * total token estimate. Used by the cropping renderer: a strip is a set of whole measures (so the
  * crop falls on barlines), and this produces the matching faithful label for the render mode
  * implied by `signature` (absent = "every", present = "keysig").
+ *
+ * `repeatSpans` (from `foldRepeats` — the SAME spans SheetView draws) adds the repeat tokens,
+ * faithfully at their drawn positions: `\repstart`/`\repend` replace the `|` at their boundary
+ * (or open/close the strip when the sign sits on the crop edge); `\volta1`/`\volta2` precede the
+ * bracketed measure's first note. A strip overlapping only one end of a repeat gets only that
+ * end's token — label == pixels, exactly like the accidentals.
  */
-export function serializeMeasures(ms: Measure[], signature?: SignatureMap): { label: string; tokens: number } {
-  const each = ms.map((m) => serializeMeasure(m, signature));
-  return {
-    label: each.map((e) => e.label).join(" | "),
-    // +1 token per barline between measures
-    tokens: each.reduce((s, e) => s + e.tokens, 0) + Math.max(0, ms.length - 1),
+export function serializeMeasures(
+  ms: Measure[],
+  signature?: SignatureMap,
+  repeatSpans?: readonly RepeatSpan[],
+): { label: string; tokens: number } {
+  const parts: string[] = [];
+  let tokens = 0;
+  const push = (text: string, cost: number) => {
+    parts.push(text);
+    tokens += cost;
   };
+
+  ms.forEach((m, i) => {
+    const marks = repeatMarksAt(m.index, repeatSpans);
+    const prevEnds = i > 0 && repeatMarksAt(ms[i - 1]!.index, repeatSpans).repEnd;
+    // Boundary at this measure's left edge: repeat barlines replace the plain `|`.
+    if (prevEnds) push(REP_END_TOKEN, 1);
+    if (marks.repStart) push(REP_START_TOKEN, 1);
+    else if (i > 0 && !prevEnds) push("|", 1);
+    // Volta bracket over this measure.
+    if (marks.volta1) push(VOLTA1_TOKEN, 1);
+    if (marks.volta2) push(VOLTA2_TOKEN, 1);
+    const body = serializeMeasure(m, signature);
+    push(body.label, body.tokens);
+  });
+  // The `:‖` on the strip's right edge (the crop ends exactly at that barline).
+  if (ms.length > 0 && repeatMarksAt(ms[ms.length - 1]!.index, repeatSpans).repEnd) push(REP_END_TOKEN, 1);
+
+  return { label: parts.join(" "), tokens };
 }
 
 /** One rendered strip: which measures it spans, its LilyPond label, and the token estimate. */

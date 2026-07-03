@@ -41,7 +41,10 @@ only what is **physically drawn**:
 
 **New tokens to add to the model's tokenizer** (`ADDED_TOKENS` in `lilypond.ts`): the 8 accidental
 tokens, **`\natural`**, **`\sig`** / **`\sigend`**, `|`, and the digit **`3`** — the base vocab lacks
-`3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`).
+`3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`), and the 4 repeat-sign
+tokens `\repstart` `\repend` `\volta1` `\volta2` (faithful drawn symbols; the base vocab's structural
+`\repeat `/`volta ` can't label a crop showing only one end of a repeat). `\repstart`/`\repend`
+replace the `|` at their boundary; `\volta1`/`\volta2` precede the bracketed measure's first note.
 
 ### Real examples (from `apps/web/public/`)
 Uşşak (`gamzedeyim-deva.json`) — note the Uşşak Si as a koma-flat:
@@ -66,8 +69,10 @@ cap. Each strip is rendered with its own clef + makam key signature so it's deco
 - **Repeats:** not in SymbTr (validated: no repeat/volta/segno markers anywhere in the 2,200-piece
   dataset — txt, MusicXML, or mu2), but real photos have them — so a later renderer step **synthesizes
   them**: VexFlow draws repeat barlines (`Barline.type.REPEAT_BEGIN/END`) and voltas (`Volta` stave
-  modifier), injected into a fraction of strips with self-generated labels. The pipeline flattens them
-  on output (shown twice, no sign). See `ROADMAP.md` Phase 4.
+  modifier), placed by **fold detection** (adjacent duplicate measure runs = the flattened repeats;
+  verified vs. the printed gamzedeyim score) plus **random injection** for token coverage, with
+  self-generated labels (the 4 reserved tokens above). The pipeline flattens them on output (shown
+  twice, no sign). The harness's **Repeats** toggle previews the drawing path. See `docs/PHASE2.md` §6.
 - **Makam / exact koma:** the label is the *written* AEU sign only. The Phase-4 makam decoder maps
   (written sign + makam) → exact sounding koma; `makam = none` keeps notes as written.
 
@@ -109,3 +114,10 @@ Output → `data/synthetic/strips/` (gitignored): `<score>_<mode>_<id>.png` + `.
       still carry old semantic labels; delete + re-render before training.
 - [ ] OpenCV/Albumentations augmentation (Python, Step 4).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
+- [x] Repeat-sign tokens emitted (2026-07-02): `detectRepeats` (`repeats.ts`) finds the flattened
+      duplicate runs (detection only — the doc/layout/playback are untouched); the harness Repeats
+      toggle draws the signs and the strip labels carry the matching tokens. Verified live: token
+      placement, note round-trip, single-id tokenization. Still TODO: random injection for coverage.
+- [ ] **Multi-measure strip coverage**: 246/256 current strips are single-measure (the ≤46-token cap
+      on dense measures), so `|` appears in only 10 labels — relax toward the true 60-token cap
+      and/or pair sparse measures before Rung-2 training.

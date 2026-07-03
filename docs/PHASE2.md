@@ -130,6 +130,22 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   repeat-free — whatever it knew would be forgotten). The pipeline then **flattens/expands** repeats
   on output (the section is shown twice, no repeat sign). Tuplets DO exist (MusicXML); barlines come
   from SymbTr `offset` (`assignBars`/`groupMeasures`).
+  - **Encoding decided 2026-07-02: 4 new faithful drawn-symbol tokens** — `\repstart` `\repend`
+    `\volta1` `\volta2`. The base vocab's structural `\repeat `/`volta ` tokens are unusable (a crop
+    usually shows only one end of a repeat; no braces in the vocab anyway — see `MODEL_EVAL.md`).
+    Plain `|` stays in the labels: each read barline re-anchors measure reconstruction, so a duration
+    misread corrupts one measure instead of desyncing the rest (and the editor pivots on measures).
+  - **Placement: duplicate-run detection + random injection.** SymbTr's flattening leaves each
+    repeated passage as an adjacent duplicate measure run, so the sign positions are recoverable
+    (equal runs → repeat signs; equal-but-last-measure → volta 1./2.) — verified against the printed
+    gamzedeyim score. **Implemented 2026-07-02** (`tools/render/repeats.ts` `detectRepeats` +
+    serializer support): detection ONLY — the doc/layout/playback stay untouched; the signs are
+    drawn onto the same engraving and strip labels carry the matching tokens (the still-drawn
+    duplicate pass is invisible to 1–3-measure strips). Random injection is still TODO (Rung 2).
+- **Strip-length coverage gap (2026-07-02):** the ≤46-token cap packs dense CTM measures ONE per
+  strip — 246/256 current strips are single-measure, so `|` appears in only 10 labels. Rung 2 must
+  guarantee multi-measure strips (relax the cap toward the true 60 and/or pair sparse measures) —
+  real crops contain barlines regardless, so the model needs that coverage either way.
 - Render **both lyric and lyric-free** strips, and **randomize header/footer text** so the model
   learns to ignore non-musical text (real photos always have it).
 - Keep audio/`koma53` untouched by rendering changes — it's the decoder's source of truth.
@@ -155,3 +171,5 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
    Both fixes live in `src/vision/data.py` / `overfit10.py` and carry forward to Rung 2.
 3. Run **Rung 1.5: the ONNX/browser gate** (§5) — export to ONNX, decode one strip in the browser
    via `onnxruntime-web`, measure latency. Only after this passes too, buy Colab Pro and scale.
+   The 2026-07-02 findings (repeat tokens, strip coverage) change the **Rung-2 dataset**, not the
+   wiring or the export path — Rung 1 stays GO and Rung 1.5 proceeds unchanged.

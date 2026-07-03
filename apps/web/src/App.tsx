@@ -21,6 +21,7 @@ import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
+import { detectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 
 type ViewMode = "roll" | "sheet";
 // SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
@@ -72,6 +73,11 @@ export function App() {
   const [showLyrics, setShowLyrics] = useState(true);
   // Draw a hyphen between a word's syllables ("Gam-ze-de"). Most sheets omit these → default off.
   const [lyricHyphens, setLyricHyphens] = useState(false);
+  // Phase-2: draw detected repeat barlines + voltas on the sheet. SymbTr flattens repeats (a
+  // repeated passage appears twice in a row), so detectRepeats finds where the signs belong; the
+  // strip labels then carry the matching repeat tokens. Purely visual + labels — the doc, layout,
+  // playback, and playhead are untouched.
+  const [showRepeats, setShowRepeats] = useState(false);
   const [editing, setEditing] = useState<Measure | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
@@ -159,15 +165,26 @@ export function App() {
     return displayDoc ? buildTimeline(displayDoc) : null;
   }, [doc, displayDoc, keepSheet, transpose]);
 
+  // Detected repeat spans for the drawn score (doc unmodified — signs are drawn onto the same
+  // engraving). SheetView draws them and the strip labels get the matching tokens from the SAME
+  // spans, so a strip's pixels and label always agree.
+  const repeatSpans = useMemo<RepeatSpan[] | undefined>(() => {
+    const drawn = displayDoc ?? doc;
+    return showRepeats && drawn ? detectRepeats(drawn) : undefined;
+  }, [showRepeats, displayDoc, doc]);
+
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
   const beatMs = useMemo(() => (doc ? beatMsOf(doc) : 0), [doc]);
 
-  // Step-2c: the training strips for the currently-drawn score + accidental mode, and the selected one.
+  // Step-2c: the training strips for the currently-drawn score + accidental mode, and the selected
+  // one. Uses the SAME doc + repeat spans SheetView draws, so crop geometry and labels match pixels.
   const strips = useMemo<ExportStrip[]>(() => {
     const drawn = displayDoc ?? doc;
-    return drawn && layout ? buildStrips(drawn, layout.boxes, accidentalMode === "keysig" ? "keysig" : "every") : [];
-  }, [displayDoc, doc, layout, accidentalMode]);
+    return drawn && layout
+      ? buildStrips(drawn, layout.boxes, accidentalMode === "keysig" ? "keysig" : "every", repeatSpans)
+      : [];
+  }, [repeatSpans, displayDoc, doc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
   // Expose the strips + score meta for the Playwright batch exporter (tools/render/render.ts).
   useEffect(() => {
@@ -473,6 +490,13 @@ export function App() {
               />
               <span>Hyphens</span>
             </label>
+            <label
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
+              title="Phase-2: draw repeat barlines + volta brackets where a repeated passage is detected (SymbTr writes repeats out twice). Visual + strip-label tokens only — layout, playback and playhead are unchanged."
+            >
+              <input type="checkbox" checked={showRepeats} onChange={(e) => setShowRepeats(e.target.checked)} />
+              <span>Repeats</span>
+            </label>
             <button
               onClick={() => setEditMode((v) => !v)}
               style={{ fontWeight: 600, background: editMode ? "#3b82f6" : undefined, color: editMode ? "#fff" : undefined }}
@@ -516,6 +540,7 @@ export function App() {
                 onSeekToMeasure={(m) => onSeekMs(m.startMs)}
                 onLayout={onLayout}
                 highlightRect={selectedStrip?.rect ?? null}
+                repeatSpans={repeatSpans}
               />
               <StripPanel
                 strips={strips}

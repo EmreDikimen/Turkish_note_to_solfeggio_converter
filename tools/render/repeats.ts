@@ -1,0 +1,107 @@
+/**
+ * Repeat-sign recovery for the flattened SymbTr scores (Phase 2).
+ *
+ * SymbTr has no repeat markers — repeats are FLATTENED, so a repeated passage appears twice in a
+ * row in the data. That makes the original structure recoverable: find adjacent duplicate measure
+ * runs and fold the second pass back into repeat signs, which puts the signs where the original
+ * engraver had them (verified against the printed gamzedeyim score: bars 5–6 = its aranağme
+ * repeat, 15–18 = its printed 1./2. voltas). Folding is the inverse of the Phase-4 decoder step
+ * that expands recognized repeats back out.
+ *
+ * DETECTION ONLY — the document is never modified. The rendered sheet keeps the full flattened
+ * score (so layout, playback, and the playhead stay untouched); the detected spans only say where
+ * to DRAW the signs (SheetView) and where the strip labels get the matching tokens (serializer) —
+ * same spans on both sides, so a strip's pixels and label can't disagree. The duplicate second
+ * pass stays on the page without signs; strips are 1–3 measures, so that's invisible to training.
+ * (Random injection for token coverage is a separate Rung-2 renderer step.)
+ */
+
+import { eventBeats, groupMeasures, type Measure, type NoteModelDocument } from "@turkish-omr/core";
+
+/** One detected repeat span, in 1-based `Measure.index` numbering (the doc is unmodified, so
+ *  these are exactly the indices SheetView draws and the strip exporter sees). */
+export interface RepeatSpan {
+  /** First measure inside the repeat — the `‖:` begin barline draws at its left edge. */
+  start: number;
+  /** Last measure of the first pass — the `:‖` end barline draws at its right edge. */
+  end: number;
+  /** Volta case (the passes differ in their final measure): the bar carrying the "2." bracket —
+   *  the measure right after the `:‖`, as engraved ("2." always starts at the repeat-end barline).
+   *  `end` then carries the "1." bracket. Since the doc keeps the flattened second pass, the notes
+   *  under the bracket are the duplicate head, not the true second ending (which stays unmarked at
+   *  the pass's end) — drawn positions only, same as everything else here. */
+  volta2?: number;
+}
+
+/** Runs shorter than this don't fold: two identical bars in a row are often genuinely played
+ *  twice as written, and engravers rarely fold a single bar. */
+const MIN_RUN = 2;
+const MAX_RUN = 12;
+
+/** Musical fingerprint of a measure: pitch + duration of every event. Lyrics are deliberately
+ *  ignored — verses differ between passes of the same repeated music. */
+function fingerprint(m: Measure): string {
+  return m.events
+    .map((e) => `${e.kind === "note" ? `${e.noteName}@${e.koma53}` : "r"}:${eventBeats(e).toFixed(4)}`)
+    .join("|");
+}
+
+/**
+ * Detect adjacent duplicate measure runs — the flattened form of a repeat — and return the spans
+ * where the signs are drawn: `‖:`/`:‖` around the FIRST pass, voltas when only the final measure
+ * differs. Greedy left-to-right, longest run first. The doc itself is untouched; the duplicate
+ * second pass stays rendered (removing it would re-flow the sheet and desync the playhead).
+ */
+export function detectRepeats(doc: NoteModelDocument): RepeatSpan[] {
+  const measures = groupMeasures(doc);
+  const keys = measures.map(fingerprint);
+  const spans: RepeatSpan[] = [];
+
+  for (let i = 0; i < measures.length; ) {
+    let advanced = false;
+    for (let L = Math.min(MAX_RUN, Math.floor((measures.length - i) / 2)); L >= MIN_RUN && !advanced; L--) {
+      let same = 0;
+      for (let k = 0; k < L; k++) if (keys[i + k] === keys[i + L + k]) same++;
+      if (same === L) {
+        // Exact repeat: signs wrap the first pass.
+        spans.push({ start: measures[i]!.index, end: measures[i + L - 1]!.index });
+        i += 2 * L;
+        advanced = true;
+      } else if (same === L - 1 && keys[i + L - 1] !== keys[i + 2 * L - 1]) {
+        // Same head, different final measure → 1./2. endings: "1." over the first pass's last
+        // measure, "2." on the measure immediately after the `:‖` — real engraving never separates
+        // the "2." bracket from the repeat-end barline. (That measure holds the duplicate head, not
+        // the differing ending, but only the drawn position matters — see RepeatSpan.volta2.)
+        let headMatches = true;
+        for (let k = 0; k < L - 1; k++) if (keys[i + k] !== keys[i + L + k]) headMatches = false;
+        if (headMatches) {
+          spans.push({
+            start: measures[i]!.index,
+            end: measures[i + L - 1]!.index,
+            volta2: measures[i + L]!.index,
+          });
+          i += 2 * L;
+          advanced = true;
+        }
+      }
+    }
+    if (!advanced) i++;
+  }
+  return spans;
+}
+
+/** The spans touching one measure, resolved to what is drawn on it (for draw + label emission). */
+export function repeatMarksAt(index: number, spans: readonly RepeatSpan[] | undefined) {
+  const starts = spans?.some((s) => s.start === index) ?? false;
+  const ending = spans?.find((s) => s.end === index);
+  return {
+    /** `‖:` at this measure's left edge. */
+    repStart: starts,
+    /** `:‖` at this measure's right edge. */
+    repEnd: ending != null,
+    /** "1." bracket over this measure. */
+    volta1: ending?.volta2 != null,
+    /** "2." bracket over this measure. */
+    volta2: spans?.some((s) => s.volta2 === index) ?? false,
+  };
+}

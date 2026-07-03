@@ -41,3 +41,10 @@ Loading processor + model (downloads weights on first run)...
 - Two wiring bugs caught and fixed by this gate (the reason it exists): (1) the tokenizer adds
   no EOS, so labels must append `</s>` manually or generation can't stop; (2) the base model's
   generation_config stops on a literal "." (id 2) instead of `</s>` — re-pointed for our labels.
+
+## Base-vocab note on repeats (2026-07-02)
+- Full vocab dumped (75 ids): it DOES contain structural `\repeat ` (57) and `volta ` (58) tokens,
+  but **no braces, no `\alternative`, and no barline `|`** — so LilyPond's structural repeat form
+  can't be spelled, and it couldn't label a crop showing only one end of a repeat anyway.
+- Decision: add 4 faithful drawn-symbol tokens `\repstart` `\repend` `\volta1` `\volta2` to
+  `ADDED_TOKENS` (same mechanism as the accidentals; `|` is likewise ours, not the base model's).

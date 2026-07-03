@@ -21,6 +21,7 @@ import {
   type SignatureMap,
 } from "../../../tools/render/lilypond";
 import { decodePretty } from "../../../tools/render/decode";
+import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 
 /** One measure's on-screen rectangle, as reported by SheetView's `onLayout`. */
 export interface LayoutBox {
@@ -55,6 +56,9 @@ export function buildStrips(
   doc: NoteModelDocument,
   boxes: LayoutBox[],
   mode: "every" | "keysig",
+  // Fold-detected repeat spans (must be the SAME ones SheetView draws): the labels then carry the
+  // repeat tokens at the drawn positions. Undefined/empty = no repeat signs on the sheet.
+  repeatSpans?: RepeatSpan[],
   { maxMeasures = 3, maxTokens = 46 }: { maxMeasures?: number; maxTokens?: number } = {},
 ): ExportStrip[] {
   const byIndex = new Map(groupMeasures(doc).map((m) => [m.index, m]));
@@ -91,7 +95,10 @@ export function buildStrips(
     let tokens = sigPrefix ? sigPrefix.tokens : 0;
     for (const b of row) {
       const m = byIndex.get(b.index);
-      const t = m ? serializeMeasure(m, sigMap).tokens : 0;
+      // Measure cost = its notes + any repeat tokens drawn on it (begin/end barline, volta).
+      const marks = repeatMarksAt(b.index, repeatSpans);
+      const repCost = (marks.repStart ? 1 : 0) + (marks.repEnd ? 1 : 0) + (marks.volta1 ? 1 : 0) + (marks.volta2 ? 1 : 0);
+      const t = (m ? serializeMeasure(m, sigMap).tokens : 0) + repCost;
       if (chunk.length > 0 && (chunk.length >= maxMeasures || tokens + t + 1 > maxTokens)) {
         chunks.push(chunk);
         chunk = [];
@@ -107,7 +114,7 @@ export function buildStrips(
     for (const [ci, c] of keep.entries()) {
       const ms = c.map((b) => byIndex.get(b.index)).filter((m): m is Measure => !!m);
       if (ms.length === 0) continue;
-      const body = serializeMeasures(ms, sigMap).label;
+      const body = serializeMeasures(ms, sigMap, repeatSpans).label;
       // Row-start crop (first chunk) in keysig mode shows the printed signature → prefix it.
       const label = sigPrefix && ci === 0 ? `${sigPrefix.label} ${body}` : body;
       const first = c[0]!;

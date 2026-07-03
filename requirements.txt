@@ -24,3 +24,6 @@ scipy>=1.11.0
 # Edge Model Exporting (Preparation for Mobile)
 onnx>=1.14.1
 onnxruntime>=1.16.0
+
+# ONNX export (Rung 1.5+; optimum 2.x moved the ONNX exporter to optimum-onnx)
+optimum-onnx>=0.1.0

@@ -48,3 +48,38 @@ Loading processor + model (downloads weights on first run)...
   can't be spelled, and it couldn't label a crop showing only one end of a repeat anyway.
 - Decision: add 4 faithful drawn-symbol tokens `\repstart` `\repend` `\volta1` `\volta2` to
   `ADDED_TOKENS` (same mechanism as the accidentals; `|` is likewise ours, not the base model's).
+
+## Rung 1 — overfit-10 result (2026-07-03)
+- 10/10 strips reproduced exactly after 400 steps (lr=0.0001, full fine-tune, batch=5, device=mps).
+- Verdict: GO — keep omr_transformer (next: Rung 1.5 ONNX/browser gate)
+  (Re-run of the 2026-07-02 gate, unchanged settings — done to SAVE the overfitted checkpoint
+  via the new `--save-dir` as the Rung-1.5 gate model: it reproduces known labels, so the
+  browser decode has an exact expected output. Still a throwaway: Rung 2 restarts from the
+  original pretrained weights.)
+
+## Rung 1.5 — ONNX/browser gate (2026-07-03): PASS
+The product premise — in-browser, no-server inference of an autoregressive encoder-decoder —
+is now proven end-to-end. Chain: `optimum-cli export onnx --task image-to-text-with-past` →
+int8 dynamic quantization → `onnxruntime-web` (wasm EP, threaded) with a hand-rolled greedy
+loop in JS, in a real (headless Chromium) browser.
+
+- **Export:** encoder / decoder / decoder-with-past graphs; optimum's own validation max diff
+  ≤ 4.5e-5 on logits (fp32).
+- **Python parity** (`src/vision/onnx_parity.py`): ONNX greedy decode == PyTorch `generate`
+  == ground-truth label ids, 3/3 strips, **fp32 AND int8**. int8 sizes: encoder 311→91 MB,
+  decoder 276→69 MB, decoder-with-past 242→61 MB (**221 MB total** to ship, vs ~830 MB fp32).
+- **Browser** (`apps/web/omr-gate.html` + `src/omrGate.ts`; assets staged by
+  `src/vision/make_browser_gate.py`): 3/3 strips decode to their exact label ids — via BOTH
+  Python's reference pixel tensors and live canvas preprocessing (the DonutImageProcessor
+  port: rotate 90° CW → shortest-edge 409 → thumbnail-fit 409×583 → center-pad black →
+  [−1, 1] normalize). So the JS preprocessing is exact, not just close.
+- **Latency (M-series Mac, int8, wasm threads):** session load ~2.9 s (local files);
+  per strip ~0.8–1.3 s encoder + ~0.23–0.31 s greedy decode (40–56 tokens) ≈ **~1.5 s/strip**.
+  Usable for the product flow (a photo has a handful of strips, decodable in parallel or
+  with a progress bar). WebGPU EP left unexplored — a later optimization, not a gate item.
+- **Verdict: PASS → buy Colab Pro and scale (Rung 2).** The CRNN+CTC fallback is no longer
+  needed for export reasons.
+- Wiring notes carried forward: transformers 5 saves a `tokenizer_config.json` it can't
+  reload (`TokenizersBackend` class name + list-typed `extra_special_tokens`) — `overfit10.py
+  --save-dir` sanitizes it on save. Vite must not pre-bundle `onnxruntime-web`
+  (`optimizeDeps.exclude`), or its import.meta.url-relative wasm loading breaks.

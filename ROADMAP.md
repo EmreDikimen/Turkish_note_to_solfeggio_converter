@@ -189,8 +189,8 @@ produce a real, demoable app with zero machine learning.
   - Scale training runs on **Colab Pro** (the Mac handles overfit-10, not thousands of images
     through 143M params). AdamW + small LR + checkpointing; train with the model's native loss
     (sequence cross-entropy for a vision-encoder-decoder; CTC for the CRNN fallback).
-  - **Western rehearsal data** (incl. synthesized repeat-sign strips) mixed in to prevent
-    catastrophic forgetting.
+  - **Synthesized repeat-sign strips** mixed in (self-generated — see Phase 4 and
+    `docs/PHASE2.md` §6; no Western rehearsal data — plan updated).
   - **Split train/val BY PIECE, not by strip** — all strips + transpositions of a piece stay in one
     split, else validation contains near-copies of training data and the metrics are meaningless.
   - **Headline metric: per-class accuracy on the 8 AEU accidentals** (SER secondary).
@@ -281,7 +281,8 @@ produce a real, demoable app with zero machine learning.
 - **ONNX export / in-browser inference of an autoregressive encoder-decoder** — the product's
   no-server premise rests on it, and it's the hard export case (past-key-values, JS generation
   loop). Gated early: `docs/PHASE2.md` §5 Rung 1.5 proves it in a real browser before any paid
-  GPU training. The CRNN+CTC fallback exports trivially (single forward pass).
+  GPU training. ✅ **RESOLVED (2026-07-03): the Rung-1.5 gate PASSED** — see §7; this risk is
+  retired, and the CRNN+CTC fallback is no longer needed for export reasons.
 - Resist building Phase 5 (mobile/edge) early; it's the slowest path and gates nothing.
 
 ---
@@ -431,8 +432,18 @@ started — **[docs/PHASE2.md](docs/PHASE2.md)** is the kickoff/hand-off doc (go
   stable ids (75→92). Also found: 246/256 rendered strips are single-measure (`|` in only 10
   labels) → Rung 2 must guarantee multi-measure strips. Details in `docs/PHASE2.md` §6. None of
   this reopens Rung 1 (wiring-only gate).
-- ⏳ Next: the **Rung-1.5 ONNX/browser gate** (export → `onnxruntime-web` → decode one strip in
-  a real browser); passes → Colab Pro for the scaled fine-tune (augmentation + full data).
+- ✅ **Rung-1.5 ONNX/browser gate: PASS (2026-07-03)** — the no-server premise is proven:
+  `optimum-cli` ONNX export (encoder + decoder + decoder-with-past) → **int8** dynamic
+  quantization (**221 MB** total, from ~830 MB fp32) → decoded in a real browser via
+  `onnxruntime-web` (wasm, threaded) with a hand-rolled JS greedy loop **and** a JS port of the
+  Donut preprocessing — 3/3 gate strips reproduce their exact label ids, ~1.5 s/strip on the
+  Mac. Python parity checked first (`src/vision/onnx_parity.py`: ONNX == PyTorch == label, fp32
+  and int8). Gate page: `apps/web/omr-gate.html` (assets staged by
+  `src/vision/make_browser_gate.py`, gitignored). Result logged in `src/vision/MODEL_EVAL.md`.
+- ⏳ Next: **Rung 2 — scaled fine-tune on Colab Pro** from the original pretrained weights;
+  dataset upgrades owed: multi-measure strips (the `|` coverage gap), random repeat-sign
+  injection, transpose + OpenCV augmentation, full accidental coverage, split-by-piece.
+  Then Rung 3: real photos.
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
@@ -442,4 +453,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-02._
+_Last updated: 2026-07-03._

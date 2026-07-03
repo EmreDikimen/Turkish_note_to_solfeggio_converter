@@ -73,3 +73,8 @@ apps/web/public/sample.json
 .idea/
 .vscode/
 *.swp
+
+# Rung-1.5 browser-gate assets (staged by src/vision/make_browser_gate.py; hundreds of MB)
+apps/web/public/models/
+
+data/checkpoints/

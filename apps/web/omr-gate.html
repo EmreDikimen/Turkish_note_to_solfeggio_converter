@@ -1,0 +1,35 @@
+<!doctype html>
+<!--
+  Rung 1.5 — the ONNX/browser gate (docs/PHASE2.md §5).
+
+  Decodes gate strips with onnxruntime-web using a hand-rolled greedy loop (the JS port of
+  src/vision/onnx_parity.py) and compares the token ids against the ground-truth labels.
+  Each strip is decoded twice: from Python's exact preprocessed tensor (isolates "is ORT-in-
+  the-browser correct?") and from canvas-preprocessed pixels (the real product path).
+
+  Assets are staged by `src/vision/make_browser_gate.py` into public/models/ (gitignored);
+  the ORT wasm runtime is copied to public/ort/. Everything is same-origin — no CDN — because
+  the product premise is offline, no-server inference.
+
+  Run: npm run dev:web → open http://localhost:5173/omr-gate.html
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OMR gate — Rung 1.5 (ONNX in the browser)</title>
+    <style>
+      body { font: 14px/1.45 ui-monospace, Menlo, monospace; margin: 2rem; background: #14161a; color: #d7dce2; }
+      h1 { font-size: 1.1rem; }
+      img.strip { max-width: 100%; background: #fff; display: block; margin: 0.4rem 0; }
+      pre { white-space: pre-wrap; word-break: break-word; background: #1c1f25; padding: 1rem; border-radius: 6px; }
+      .ok { color: #6fdb8f; } .bad { color: #ff7b72; } .dim { color: #8a93a2; }
+    </style>
+  </head>
+  <body>
+    <h1>Rung 1.5 — ONNX / browser gate</h1>
+    <div id="strips"></div>
+    <pre id="log">loading…</pre>
+    <script type="module" src="/src/omrGate.ts"></script>
+  </body>
+</html>

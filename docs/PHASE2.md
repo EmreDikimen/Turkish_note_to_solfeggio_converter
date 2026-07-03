@@ -101,9 +101,9 @@ in the repertoire), so clef-less mid-row crops are fine.
   143M params):** thousands of augmented strips, training **from the original pretrained weights**;
   **full fine-tune at a small LR** (AdamW, ~1e-5–5e-5) — freezing the encoder is a **memory/compute
   fallback, not the default**: our images (VexFlow engraving, later phone photos) don't look like the
-  base model's training images, so the encoder needs to adapt too. Mix in **Western rehearsal data**
-  (incl. repeat-sign strips — see §6) + measure the **headline metric: per-class accuracy on the 8 AEU
-  accidentals** (SER secondary) on a held-out synthetic split. ⚠️ **Split train/val BY PIECE, not by
+  base model's training images, so the encoder needs to adapt too. Mix in **synthesized repeat-sign
+  strips** (see §6; no Western rehearsal data — plan updated) + measure the **headline metric:
+  per-class accuracy on the 8 AEU accidentals** (SER secondary) on a held-out synthetic split. ⚠️ **Split train/val BY PIECE, not by
   strip**: every strip and every transposition of a piece goes into the same split. Strips of one
   piece are near-duplicates (same melody, same engraving); if a piece straddles both splits,
   validation is contaminated and the metrics look great while proving nothing.
@@ -149,8 +149,9 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 - Render **both lyric and lyric-free** strips, and **randomize header/footer text** so the model
   learns to ignore non-musical text (real photos always have it).
 - Keep audio/`koma53` untouched by rendering changes — it's the decoder's source of truth.
-- **Headline metric:** per-class AEU-accidental accuracy. **Western rehearsal data** is mixed into
-  fine-tuning. **Makam stays out of the OMR model.**
+- **Headline metric:** per-class AEU-accidental accuracy. **No Western rehearsal data** in
+  fine-tuning (plan updated; repeat-sign coverage comes from our own synthesized strips, §6).
+  **Makam stays out of the OMR model.**
 
 ## 7. Before scaling Phase 2 (checklist)
 - [x] **Step 1 model gate** — `omr_transformer` evaluated (`src/vision/MODEL_EVAL.md`): passed
@@ -169,7 +170,14 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
    The gate caught two real wiring bugs first — the tokenizer appends no EOS (labels must add
    `</s>` manually), and the base generation_config stops on a literal "." instead of `</s>`.
    Both fixes live in `src/vision/data.py` / `overfit10.py` and carry forward to Rung 2.
-3. Run **Rung 1.5: the ONNX/browser gate** (§5) — export to ONNX, decode one strip in the browser
-   via `onnxruntime-web`, measure latency. Only after this passes too, buy Colab Pro and scale.
-   The 2026-07-02 findings (repeat tokens, strip coverage) change the **Rung-2 dataset**, not the
-   wiring or the export path — Rung 1 stays GO and Rung 1.5 proceeds unchanged.
+3. ~~Rung 1.5: the ONNX/browser gate~~ — **PASS (2026-07-03)**: export
+   (`optimum-cli export onnx --task image-to-text-with-past`) → int8 quantization (221 MB total)
+   → 3/3 strips decoded to their exact label ids in a real browser (`onnxruntime-web`, wasm EP,
+   hand-rolled greedy loop + a JS port of the Donut preprocessing), ~1.5 s/strip on an M-series
+   Mac. Pipeline: `src/vision/onnx_parity.py` (Python parity first), `make_browser_gate.py`
+   (stages assets), `apps/web/omr-gate.html`. Details in `MODEL_EVAL.md`.
+4. **Rung 2: buy Colab Pro and scale** — thousands of augmented strips from the original
+   pretrained weights (full fine-tune, small LR). Dataset upgrades owed from the 2026-07-02/03
+   findings: guarantee **multi-measure strips** (the `|` coverage gap), **random repeat-sign
+   injection**, chromatic-transpose + OpenCV augmentation, full 8-accidental coverage,
+   **split by piece**. Headline metric: per-class AEU-accidental accuracy.

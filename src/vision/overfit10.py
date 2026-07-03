@@ -78,6 +78,13 @@ def main() -> int:
     ap.add_argument("--batch-size", type=int, default=5)
     ap.add_argument("--strips-dir", default="data/synthetic/strips")
     ap.add_argument("--device", default=None, help="mps | cpu (default: mps if available)")
+    ap.add_argument(
+        "--save-dir",
+        default=None,
+        help="on GO, save the overfitted model + processor here (for the Rung-1.5 ONNX/browser "
+        "gate ONLY — it reproduces known labels, so the browser test has an exact expected "
+        "output; Rung 2 restarts from the original pretrained weights)",
+    )
     args = ap.parse_args()
 
     import torch
@@ -193,6 +200,26 @@ def main() -> int:
         else "NOT YET — debug the wiring (or pivot to CRNN+CTC if it persists)"
     )
     print(f"\n== RESULT: {n_ok}/{len(chosen)} exact  →  {verdict}")
+
+    if args.save_dir and go:
+        import json
+
+        save_dir = Path(args.save_dir)
+        model.save_pretrained(save_dir)
+        processor.save_pretrained(save_dir)  # carries the extended (92-token) tokenizer
+        # transformers 5 writes a tokenizer_config.json it can't reload (internal class name
+        # "TokenizersBackend"; extra_special_tokens saved as a list where a dict is expected).
+        # Sanitize so AutoProcessor.from_pretrained(save_dir) works.
+        tc_path = save_dir / "tokenizer_config.json"
+        tc = json.loads(tc_path.read_text())
+        tc["tokenizer_class"] = "PreTrainedTokenizerFast"
+        tc.pop("extra_special_tokens", None)
+        tc_path.write_text(json.dumps(tc, indent=2))
+        # remember which strips this checkpoint memorized — they are the browser gate's inputs
+        (save_dir / "GATE_STRIPS.txt").write_text(
+            "\n".join(ds.strips[i].image_path.name for i in chosen) + "\n"
+        )
+        print(f"[saved] gate checkpoint -> {save_dir} (Rung-1.5 only; delete after the gate)")
 
     # ---- 6. record in MODEL_EVAL.md -----------------------------------------------------------
     lines = [

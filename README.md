@@ -63,8 +63,9 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   scores to staff images with **VexFlow** (reusing the harness engraving), augment with **chromatic
   transpose** (pitch augmentation) + OpenCV (image augmentation), and **fine-tune a pretrained OMR
   model** to add the Turkish microtonal accidentals. Done so far: model gate passed
-  (`omr_transformer`), faithful+signature label scheme + strip renderer built, **overfit-10 gate: GO**.
-  Next: the ONNX/browser gate, then scaled training on Colab. See [docs/PHASE2.md](docs/PHASE2.md)
+  (`omr_transformer`), faithful+signature label scheme + strip renderer built, **overfit-10 gate: GO**,
+  **ONNX/browser gate: PASS** (int8 export decoded in-browser via `onnxruntime-web`, exact token
+  match, ~1.5 s/strip). Next: scaled fine-tuning on Colab. See [docs/PHASE2.md](docs/PHASE2.md)
   and ROADMAP §7 for exact status.
 
 ## Directory Structure

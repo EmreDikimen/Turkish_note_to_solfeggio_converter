@@ -20,9 +20,10 @@ SymbTr .txt ──(Python)──► Score/Event ──► note-model JSON ──
 - **TypeScript side** = the actual app logic, split deliberately:
   - `packages/core` — **portable logic, no platform APIs** (note model, tuning, scheduling,
     notation, measures, tempo, usul, transpose, metadata). Reused *unchanged* by the future mobile app.
-  - `apps/web` — a **throwaway React harness**: it renders the core's output (piano-roll +
-    VexFlow sheet) and supplies the *platform adapter* (`webAudioBackend.ts` implements the
-    core's `AudioBackend` interface). The mobile app will swap this layer, keep the core.
+  - `apps/web` — the **React web harness, and the first shipped product surface** (the project
+    ships web-first — see ROADMAP §1): it renders the core's output (piano-roll + VexFlow sheet)
+    and supplies the *platform adapter* (`webAudioBackend.ts` implements the core's
+    `AudioBackend` interface). The later mobile app swaps this UI layer and keeps the core.
 
 **Golden rule for reading:** read the *data shape* before the *functions* (nouns before
 verbs). Once you know what an `Event` / `NoteEvent` is, the transforms make sense.
@@ -60,7 +61,7 @@ the web app imports everything from `@turkish-omr/core`.
 | 13 | [transpose.ts](../packages/core/src/transpose.ts) · `transpose` | Chromatic transpose of a score (shift koma + re-spell + recompute freq); pitch-augmentation primitive + the harness's transpose/ahenk control. |
 | 14 | [metadata.ts](../packages/core/src/metadata.ts) · `scoreHeader`, `makamDisplay`/`formDisplay`/`titleCase` | Format the score's ASCII metadata slugs into a printed Turkish header (makam/form/usul/composer). |
 
-### Part C — Web harness (`apps/web`, throwaway UI + the platform adapter)
+### Part C — Web harness (`apps/web`, the first product surface + the platform adapter)
 
 | # | File · function | One line |
 |---|---|---|
@@ -72,6 +73,15 @@ the web app imports everything from `@turkish-omr/core`.
 | 19 | [AccidentalSelect.tsx](../apps/web/src/AccidentalSelect.tsx) · `AccidentalSelect` | Custom dropdown showing each accidental's exact Bravura glyph + Turkish name (full range, incl. ±2/±3, for exact-koma editing). |
 
 [main.tsx](../apps/web/src/main.tsx) just mounts React — you can ignore it.
+
+### Part D — Phase-2 ML tooling (skim after A–C)
+
+Added after Phase 1; not part of the core→harness spine above.
+
+| File(s) | One line |
+|---|---|
+| [tools/render/](../tools/render/) | Synthetic-data generator: `lilypond.ts` serializes note-model strips to the OMR model's LilyPond label format, `render.ts` (Playwright) crops PNG+label pairs from the live harness render, `repeats.ts` detects flattened repeats, `decode.ts`/`decode-cli.ts` verify labels. **Read [tools/render/README.md](../tools/render/README.md) — it's the full tour of this directory.** |
+| [src/vision/](../src/vision/) | Python fine-tuning side: `eval_omr_transformer.py` (Step-1 model gate), `data.py` (dataset/label wiring), `overfit10.py` (Rung-1 gate), `onnx_parity.py` + `make_browser_gate.py` (Rung-1.5 ONNX/browser gate). Results log: [MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). |
 
 ## The 15-minute path (the spine)
 

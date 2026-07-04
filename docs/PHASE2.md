@@ -2,6 +2,9 @@
 
 > Read `ROADMAP.md` §3 (Phases 2–4) and §5 (risks) for the canonical plan. This doc orients a
 > fresh session: what Phase 2 is, what's already done, what to build first, and how to de-risk it.
+> **Phase numbering:** the rung ladder (§5) spans ROADMAP Phases 2–3 — Rungs 0–1.5 + data gen are
+> Phase 2; Rung 2 (scaled fine-tune) and Rung 3 (real photos) are ROADMAP's Phase 3; Rung 4 is
+> Phase 4. "Phase 2" in commits/this doc's title is the working label for the whole kickoff.
 
 ## 1. The project in one line
 Photograph Classical/Art **Turkish (makam)** sheet music → recognize the notes *including
@@ -31,10 +34,11 @@ SymbTr → note-model → (TS) render staff PNG ─► (Python) fine-tune (image
                           │                              ↑
                           └── label emitted in the MODEL'S output format, same render pass ──┘
 ```
-- **Lead candidate model:** `Flova/omr_transformer` on HuggingFace — a Donut-style vision-encoder-
-  decoder (image → LilyPond), Western-trained, downloadable (Apache-2.0). **Gated:** evaluate it first
-  (§4); fall back to a lighter **CRNN+CTC** (PrIMuS-based) if its output format is awkward to extend or
-  its size hurts the mobile/ONNX goal.
+- **Chosen model (all gates passed):** `Flova/omr_transformer` on HuggingFace — a Donut-style
+  vision-encoder-decoder (image → LilyPond), Western-trained, downloadable (Apache-2.0). It passed
+  the Step-1 eval (§4), the Rung-1 overfit-10 (GO) and the Rung-1.5 ONNX/browser gate (PASS) — the
+  lighter **CRNN+CTC** (PrIMuS-based) fallback now matters only if Rung-2 accuracy disappoints
+  (the size/export concern is retired).
 - **Render with VexFlow headless** (Playwright minimal page), reusing the harness engraving (the
   engraving relies on DOM SVG + `getComputedTextLength` + the Bravura web font, so a real browser is
   the low-risk way to reuse it exactly). Render **FROM the note model**, so labels are emitted from the
@@ -77,9 +81,9 @@ the 8 AEU accidentals + **`\natural`** + **`\sig`/`\sigend`** + `|` + `3`. Trebl
 in the repertoire), so clef-less mid-row crops are fine.
 
 ## 5. The de-risk ladder (never invest a week before a day proves it works)
-- **Rung 0 — model gate (~½ day):** §4 above. Confirm the downloaded model reads notes and we know how
+- **Rung 0 — model gate (~½ day)** ✅ **passed:** §4 above. Confirm the downloaded model reads notes and we know how
   to extend it. **Start here.**
-- **Rung 1 — wiring proof + model GO/NO-GO (~1–2 days, runs on the Mac via MPS):** render ~50 short
+- **Rung 1 — wiring proof + model GO/NO-GO (~1–2 days, runs on the Mac via MPS)** ✅ **GO (2026-07-02):** render ~50 short
   strips with labels in the model's format, wire the fine-tuning loop (load weights → extend tokenizer
   → train — **freeze NOTHING for this test**, the whole model is trainable), and **overfit 10 samples**
   until the model reproduces them exactly (accidentals included).
@@ -88,15 +92,16 @@ in the repertoire), so clef-less mid-row crops are fine.
   styles is poor-but-expected (seen in Step-1 tests), so *this* — whether it can learn our notation —
   is how we judge the model, not the raw eval. (The overfitted checkpoint is a **throwaway
   diagnostic** — it only proves the wiring; Rung 2 re-starts from the original pretrained weights.)
-- **Rung 1.5 — ONNX/browser gate (~1 day, BEFORE paying for GPU time):** the product premise is
+- **Rung 1.5 — ONNX/browser gate (~1 day, BEFORE paying for GPU time)** ✅ **PASS (2026-07-03):** the product premise is
   **in-browser inference**, and an autoregressive encoder-decoder is the *hard* export case
   (past-key-values, a generation loop that must be re-implemented in JS) — so prove it now, while
   changing models is still cheap. Export the model to ONNX (`optimum-cli export onnx` → encoder +
   decoder-with-past graphs), load it with `onnxruntime-web`, hand-roll the greedy decode loop in JS,
   and decode **one strip in a real browser**; measure latency. Pass → buy Colab Pro and scale (Rung 2).
   Fail or unusably slow → that's a model-choice fact: the **CRNN+CTC fallback is a single forward
-  pass** and exports trivially. (Model hosting: serve the ~143 MB int8 file from the **HuggingFace Hub
-  CDN** — free; the browser downloads and caches it. No server needed.)
+  pass** and exports trivially. (Model hosting: serve the int8 ONNX files — **221 MB** total across
+  the encoder / decoder / decoder-with-past graphs, per the actual Rung-1.5 export — from the
+  **HuggingFace Hub CDN** — free; the browser downloads and caches them. No server needed.)
 - **Rung 2 — scale (Colab Pro — the Mac is fine for overfit-10, not for thousands of images through
   143M params):** thousands of augmented strips, training **from the original pretrained weights**;
   **full fine-tune at a small LR** (AdamW, ~1e-5–5e-5) — freezing the encoder is a **memory/compute
@@ -159,25 +164,19 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 - [x] Confirm green typecheck (`npx tsc` core + web — clean as of 2026-07-02).
 - [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
       signature scheme** (§4), in `tools/render/lilypond.ts` (2026-07-02). Round-trip verified on
-      all sample scores. ⚠️ Regenerate any previously rendered strips — old ones carry semantic labels.
+      all sample scores. Strips regenerated with faithful labels (2026-07-02); the on-disk set still
+      predates the repeat-sign tokens and multi-measure fix → re-render as part of Rung 2.
 - [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
       `src/vision/` has the eval script; the dataset/fine-tune/eval scripts are still TODO.
 
 ## 8. Next action
-1. ~~Switch the label serializer to the faithful + signature scheme~~ — **done (2026-07-02)**.
-2. ~~Rung 1: the overfit-10 go/no-go~~ — **GO (2026-07-02)**: 10/10 strips reproduced exactly
-   (400 steps, full fine-tune, MPS; `src/vision/overfit10.py`, result in `MODEL_EVAL.md`).
-   The gate caught two real wiring bugs first — the tokenizer appends no EOS (labels must add
-   `</s>` manually), and the base generation_config stops on a literal "." instead of `</s>`.
-   Both fixes live in `src/vision/data.py` / `overfit10.py` and carry forward to Rung 2.
-3. ~~Rung 1.5: the ONNX/browser gate~~ — **PASS (2026-07-03)**: export
-   (`optimum-cli export onnx --task image-to-text-with-past`) → int8 quantization (221 MB total)
-   → 3/3 strips decoded to their exact label ids in a real browser (`onnxruntime-web`, wasm EP,
-   hand-rolled greedy loop + a JS port of the Donut preprocessing), ~1.5 s/strip on an M-series
-   Mac. Pipeline: `src/vision/onnx_parity.py` (Python parity first), `make_browser_gate.py`
-   (stages assets), `apps/web/omr-gate.html`. Details in `MODEL_EVAL.md`.
-4. **Rung 2: buy Colab Pro and scale** — thousands of augmented strips from the original
-   pretrained weights (full fine-tune, small LR). Dataset upgrades owed from the 2026-07-02/03
-   findings: guarantee **multi-measure strips** (the `|` coverage gap), **random repeat-sign
-   injection**, chromatic-transpose + OpenCV augmentation, full 8-accidental coverage,
-   **split by piece**. Headline metric: per-class AEU-accidental accuracy.
+
+> **Canonical status + next action: `ROADMAP.md` §7** — the single section updated after every
+> work session. Gate results (with full settings, bug notes, and export details) are logged in
+> `src/vision/MODEL_EVAL.md`.
+
+Short form: Rungs 0–1.5 are all **done** (model gate passed; overfit-10 **GO** 2026-07-02 — the
+two decode-wiring fixes live in `src/vision/data.py`/`overfit10.py` and carry forward; ONNX/browser
+gate **PASS** 2026-07-03 — see the ✅ markers in §5). **Next: Rung 2 — buy Colab Pro and scale**,
+per the §5 Rung-2 recipe; the owed dataset upgrades (multi-measure strips, random repeat-sign
+injection, augmentation, split-by-piece, …) are listed in ROADMAP §7's "Next" item.

@@ -29,8 +29,8 @@ microtonal accidentals* → produce an **editable** note model → play it back 
 | Runtime / hosting | **In-browser / on-device — NO server** | Can't afford a backend subscription; OMR runs via `onnxruntime-web` (web) / `onnxruntime-react-native` (mobile), synthesis via Web/native audio. |
 | App stack | **React (web) + React Native (mobile) over a shared TypeScript `core`** | App logic written ONCE in the TS core; notation/audio libs (VexFlow, Tone.js) are mature in JS; mobile becomes "UI + adapters over the same core". |
 | Python's role | **Training + data ONLY** (not in the shipped app) | ML training, synthetic-data generation, and SymbTr→JSON export. The app's runtime logic lives in the TS core, so it ports to mobile. |
-| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. Lead candidate `omr_transformer` — passed the Step-1 eval (`src/vision/MODEL_EVAL.md`); the final go/no-go is the Rung-1 overfit-10. |
-| OMR model (fallbacks) | **CRNN+CTC (PrIMuS-based)**, then **YOLOv8 glyph detection** + heuristic decoder | Lighter CRNN if the transformer is too big/awkward for mobile; YOLO if sequence transfer disappoints. |
+| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. **Confirmed: `omr_transformer`** — passed the Step-1 eval, the Rung-1 overfit-10 (GO, 2026-07-02) and the Rung-1.5 ONNX/browser gate (PASS, 2026-07-03) — see `src/vision/MODEL_EVAL.md`. |
+| OMR model (fallbacks) | **CRNN+CTC (PrIMuS-based)**, then **YOLOv8 glyph detection** + heuristic decoder | Kept only as an **accuracy** fallback if Rung-2 fine-tuning disappoints; the export/size concern is retired (the Rung-1.5 ONNX/browser gate passed — see §5). |
 | Where OMR runs | **On-device** via ONNX Runtime (onnxruntime-web for the web harness, onnxruntime-react-native for mobile) | Same exported ONNX model both places; preserves the offline goal; no production backend. |
 | ML framework | **PyTorch** → export **ONNX** | Standard OMR stack; ONNX runs in both JS runtimes. |
 | Training data source | **Synthetic, rendered from SymbTr** + augmentation, then fine-tune on real photos | SymbTr has no images; we generate them. See §3. |
@@ -141,6 +141,12 @@ produce a real, demoable app with zero machine learning.
   the **first shipped product surface** (the mobile UI is a later conversion in Phase 5).
 - **Milestone:** working "JSON score → edit → playback" harness over the shared core.
 
+> **Phase 2/3 boundary note.** The de-risk **rung ladder** in `docs/PHASE2.md` §5 spans both
+> phases: Rungs 0–1.5 (model gate, overfit-10, ONNX/browser gate) + the data generator belong to
+> **Phase 2**; Rung 2 (scaled fine-tune) and Rung 3 (real photos) are **Phase 3**; Rung 4 is
+> Phase 4. Commits and `docs/PHASE2.md` say "Phase 2" for the whole ladder kickoff — that's the
+> working label, not a redefinition of these phases.
+
 ### Phase 2 — Synthetic training data
 - **Render SymbTr scores to images with VexFlow**, reusing the harness's proven engraving
   (VexFlow 5 + Bravura), which already renders the Turkish microtonal accidentals correctly
@@ -183,9 +189,10 @@ produce a real, demoable app with zero machine learning.
   - `(image → label)` dataset/dataloader in the model's output format.
   - **Sanity check first: overfit 10 samples** (nothing frozen, on the Mac/MPS) to confirm the data,
     tokenizer extension, and decode are wired correctly. The overfitted checkpoint is a **throwaway
-    diagnostic**; the real run restarts from the original pretrained weights.
+    diagnostic**; the real run restarts from the original pretrained weights. ✅ **GO (2026-07-02)** — see §7.
   - **ONNX/browser gate before scaling** (`docs/PHASE2.md` §5 Rung 1.5): export to ONNX + decode one
     strip in `onnxruntime-web` — prove the in-browser premise before paying for GPU time.
+    ✅ **PASS (2026-07-03)** — see §7.
   - Scale training runs on **Colab Pro** (the Mac handles overfit-10, not thousands of images
     through 143M params). AdamW + small LR + checkpointing; train with the model's native loss
     (sequence cross-entropy for a vision-encoder-decoder; CTC for the CRNN fallback).
@@ -309,103 +316,28 @@ Nice-to-haves explicitly **off the critical path** — build them only after the
 
 ## 7. Status / next action
 
-**Phase 0: DONE (2026-06-20).** Symbolic → microtonal audio pipeline works with no ML.
-- SymbTr dataset lives at `~/Downloads/SymbTr-2.0.0/` (txt, MusicXML, midi, mu2; 2200 pieces).
-- `src/symbtr/parser.py` — parses SymbTr `.txt` → `Score`/`Event` model. Verified on all 2200 files.
-- `src/audio/tuning.py` — `koma53_to_freq()`; 53-TET, concert anchor 440 Hz at comma 327 (written
-  pitch sounds a fourth below — Turkish transposing convention). Validated
-  against 12-TET (E5 → 659.97 Hz).
-- `src/audio/synth.py` — additive synth + WAV writer (numpy + stdlib `wave`, no heavy deps).
-- `scripts/symbtr_to_audio.py` — CLI: `python scripts/symbtr_to_audio.py <file.txt> -o out.wav --info`.
-- Sample input in `data/raw/`, sample output in `data/processed/`.
+> **Canonical status lives HERE.** This is the single section updated after every work session;
+> `README.md` → Status and `docs/PHASE2.md` §8 only point to it. The full dated,
+> feature-by-feature history of the completed phases was moved **verbatim** to
+> **[docs/HISTORY.md](docs/HISTORY.md)** — below is the short form.
 
-**Phase 1: DONE (2026-06-22).** Shared TS core + web harness; load → view → edit → playback all working.
-- ✅ Python `SymbTr → note-model JSON` exporter — `src/symbtr/export_json.py` +
-  `scripts/symbtr_to_json.py` (schemaVersion 1; notes/rests/meta tagged; carries tuning params).
-- ✅ npm-workspaces monorepo: root `package.json` (workspaces `packages/*`, `apps/*`).
-- ✅ `packages/core` (TypeScript): `types.ts` (note model), `tuning.ts` (`koma53ToFreq`,
-  verified parity with Python to 4e-5 Hz), `scheduling.ts` (`buildTimeline` + `AudioBackend`
-  interface). Type-checks clean.
-- ✅ `apps/web` (React + Vite): loads note-model JSON, **piano-roll** view (pitch = 53-TET
-  comma, hover for note details), Web Audio `AudioBackend` playback at 53-TET. Builds + serves.
-- ✅ **Transport + playhead** (added 2026-06-22): Play / **Pause / Resume** (via
-  `AudioContext.suspend/resume` — no rescheduling) + Stop. A teal **playhead** bar tracks the
-  currently-sounding note on the sheet, driven by `requestAnimationFrame` reading the audio
-  clock (`WebAudioBackend.getPositionMs()` = `currentTime − originTime`), so it's
-  sample-accurate and freezes correctly while paused. **Click-to-seek**: in the sheet's
-  non-edit mode, clicking a measure plays from there (`play(timeline, fromMs)` re-schedules
-  from an offset). End-of-piece is detected by polling the audio clock (pause-aware), not a
-  wall-clock timer. The `AudioBackend.play` signature is now `play(timeline, fromMs?)`.
-- ✅ **Drag-to-edit** (the core editing feature): drag a note vertically to change pitch
-  (snaps to nearest comma, frequency + playback update live); drag its right edge to change
-  duration (following notes reflow). Edits flow up to App → rebuild doc → re-render + replay.
-  Inverse pitch-mapping math verified (zero round-trip error).
-- ✅ **Sheet-music view + measure editor** (instructive mode): Piano-roll | Sheet toggle. The
-  staff is engraved with **VexFlow 5** (real stems, flags, beams, dots, duration-correct
-  noteheads/rests), with real **Turkish AEU accidentals via the Bravura font**. Trick: VexFlow's
-  built-in accidental table lacks most Turkish glyphs, but `Accidental` renders an unknown code
-  verbatim in the music font — so we pass the **raw SMuFL codepoint char** (from the verified
-  `accidentalGlyph` map in `notation.ts`) and VexFlow still reserves layout space. Durations come
-  from `durationBeats` via a fraction→VexFlow-code+dots mapper. Measure interaction: in edit mode
-  an HTML overlay makes measures clickable (open editor); in non-edit mode a click seeks/plays
-  from that measure (see Transport above). Top-right **Edit** button → click a
-  measure → modal. Modal **Basic** tab: pick base note + how many commas sharp/flat (custom
-  dropdown showing the Bravura **symbol + Turkish name**), duration, add/delete; **Advanced**
-  tab adds absolute koma + frequency editing. **Save disabled + warning** unless the measure's
-  total duration is preserved. Pitch stored as explicit spelling (letter+octave+alter), so
-  names never enharmonically flip — verified: all 266 sample notes round-trip name & koma
-  exactly. Measures come from SymbTr's `offset` column: an integer `offset` is one printed
-  barline (one usul cycle), so `assignBars` tags each event with a stable 1-based `bar` and
-  `groupMeasures` groups by it — correct for any usul, whole-note (düyek 8/8) or not
-  (aksak 9/8, curcuna 5/4). The `bar` is assigned at load and carried through edits, with a
-  whole-note fallback for data lacking a usable `offset`. New core (`notation.ts`,
-  `measures.ts`, `tempo.ts`) is mobile-reusable; tempo derived in TS so no Python/schema change.
-- ✅ **Key-signature mode** (added 2026-06-22): a sheet-view toggle (the **♯♭ Key sig** button)
-  that draws the score's prevailing accidentals once after the clef on every row (makam-style
-  signature) and suppresses inline accidentals on notes that match — deviating notes still show
-  one (a natural sign when the note is natural under an altered signature). Signature is derived
-  in core (`deriveKeySignature` in `notation.ts` = most-frequent accidental per pitch letter).
-  Drawn by reserving width via `Stave.setNoteStartX` and appending Bravura SVG glyphs (VexFlow's
-  native `KeySignature` only supports standard Western keys). This is the button-only slice of the
-  README's deferred "settings modal" idea; the full modal (view/theme/this toggle) is still TODO.
-  (Now generalized into a three-way **Accidentals** selector: every-note / key-signature /
-  standard per-measure accidental-carry.)
-- ✅ **Tempo control + usul-aware metronome** (added 2026-06-27): a **BPM** input that defaults
-  to each piece's natural tempo (`estimateBpm`) and re-times playback live (`speed = chosenBpm /
-  naturalBpm`); a **metronome** toggle; and a **usul selector**. New core `usul.ts` carries each
-  usul's meter + beat **grouping** (e.g. aksak 9/8 = 2+2+2+3 eighths) and `buildMetronomeTrack`
-  walks the bars (`groupMeasures`) to place clicks on the felt beats with the downbeat accented —
-  so non-integer usuls click correctly, aligned to the bars, at any tempo. The selector defaults
-  to the piece's own usul (else the usul whose meter matches the derived time signature). Pure
-  data + scheduling math, mobile-reusable. (This is the click-track slice of the usul-rhythm idea;
-  a real darbuka pattern + OMR-driven usul detection is still later — see below.)
-- ✅ **Notation realism for synthetic data** (added 2026-06-28, toward Phase-2 image quality):
-  - **AEU accidentals only on the engraved staff** — `toAeuAlter` (in `notation.ts`) snaps every
-    alteration to the four standard signs (koma/bakiye/küçük·büyük mücennep); no numbered ±2/±3
-    "folk" signs. The koma (pitch/audio) is untouched and the **editor keeps the exact alteration**;
-    the decoder resolves sign → koma per makam later (Phase 4). So the model trains on CTM signs.
-  - **Justified rows** — each system stretched to a uniform width (last line ragged), for realistic
-    note spacing.
-  - **Lyrics under the staff** — syllables, melisma underscores, optional hyphens; the parser now
-    keeps SymbTr's word boundary (`lyric_word_end`/`lyricWordEnd`).
-  - **Engraved header** (`metadata.ts` `scoreHeader`: makam+form, title, usul+tempo, composer) —
-    the block Phase 2 draws into the images so the model learns to read makam/usul/tempo.
-- ✅ **Transpose / ahenk in the harness** (added 2026-06-28): a **Transpose** dropdown over the
-  core `transpose()` (defined for Phase 2), plus a **Keep sheet (sound only)** toggle for
-  transposing instruments (kız/mansur ney — the sound shifts, the notation stays). Decoupled from
-  the stored doc (display + timeline derive it; edits map back to base). Pairs with the concert-pitch
-  anchor (Phase 0).
-- ⏳ Optional later: feed OMR output into this harness (Phase 4).
-- ⏳ Later: **usul-based rhythm playback (full).** Upgrade the usul-aware metronome above into the
-  piece's usul played as a real rhythmic cycle on a traditional percussion sound (darbuka), so
-  non-integer usuls sound idiomatic, not just clicked. The usul is auto-detected by OMR and stays
-  user-editable (OMR can misread it); wire the automatic detection in with the OMR model (Phase 3–4).
+**Phase 0: DONE (2026-06-20).** Symbolic → microtonal audio with no ML: SymbTr `.txt` parser
+(`src/symbtr/parser.py`, verified on all 2,200 files), 53-TET tuning (`src/audio/tuning.py`,
+concert anchor 440 Hz at comma 327), additive synth (`src/audio/synth.py`), CLI
+`scripts/symbtr_to_audio.py`. Dataset at `~/Downloads/SymbTr-2.0.0/`. Details: `docs/HISTORY.md`.
 
-**Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome +
-transpose/ahenk + art-music-faithful engraving with header & lyrics). The ML track (Phase 2) has
-started — **[docs/PHASE2.md](docs/PHASE2.md)** is the kickoff/hand-off doc (goal, de-risk ladder).
+**Phase 1: DONE (2026-06-22; polish through 2026-06-28).** Shared TS core (`packages/core`:
+types / tuning / scheduling / notation / measures / tempo / usul / transpose / metadata) + React
+web harness (`apps/web`), fed by the Python JSON exporter (`scripts/symbtr_to_json.py`):
+piano-roll + VexFlow-engraved sheet (AEU accidentals via Bravura), transport with playhead +
+click-to-seek, drag-to-edit + per-measure editor, three-way accidental display (incl. makam key
+signature), tempo (BPM) + usul-aware metronome, transpose/ahenk (incl. sound-only), lyrics +
+engraved header + justified rows. Deferred: darbuka usul playback, OMR feed-in (Phase 4).
+Details: `docs/HISTORY.md`; code map: `docs/CODE_TOUR.md`. ML-track kickoff doc:
+**[docs/PHASE2.md](docs/PHASE2.md)**.
 
-**Phase 2: IN PROGRESS (as of 2026-07-02).**
+**Phase 2: IN PROGRESS (as of 2026-07-02).** (Rungs 0–1.5 of the `docs/PHASE2.md` ladder = Phase 2;
+the next item, Rung 2, formally opens **Phase 3** — see the boundary note above §3's Phase 2.)
 - ✅ **Step-1 model gate** — `Flova/omr_transformer` evaluated (`src/vision/MODEL_EVAL.md`):
   reads its own sample staves, output = LilyPond token stream, vocab extendable
   (`add_tokens` + `resize_token_embeddings` proven), ~143M params (~143 MB int8).
@@ -416,7 +348,9 @@ started — **[docs/PHASE2.md](docs/PHASE2.md)** is the kickoff/hand-off doc (go
   *drawn* (explicit accidental / `\natural` / bare; `\sig … \sigend` prefix on row-start keysig
   crops), mirroring SheetView's own drawing decision; the decoder resolves bare notes from the
   `\sig` block. Round-trip verified on all sample scores (keysig and every-mode labels decode to
-  identical notes). ⚠️ Regenerate any previously rendered strips — old ones carry semantic labels.
+  identical notes). Strips regenerated same day with faithful labels (⚠️ the on-disk set still
+  predates the repeat-sign tokens and is 246/256 single-measure — re-render is part of the Rung-2
+  dataset upgrades).
 - ✅ **Rung-1 overfit-10: GO (2026-07-02)** — full fine-tune wiring proven on the Mac (MPS):
   10/10 strips reproduced exactly, `\sig` blocks and accidentals included
   (`src/vision/overfit10.py` + `data.py`; result logged in `src/vision/MODEL_EVAL.md`).
@@ -453,4 +387,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-03._
+_Last updated: 2026-07-04._

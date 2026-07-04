@@ -102,7 +102,7 @@ Output → `data/synthetic/strips/` (gitignored): `<score>_<mode>_<id>.png` + `.
 - `demo.ts` — prints strips from a sample score. Run: `npx --yes tsx tools/render/demo.ts [score.json]`.
 - `render.ts` — Playwright batch renderer (crops the live sheet → PNG + label + manifest + contact sheet).
 
-## Status
+## Status (renderer-internal — project-level status lives in ROADMAP §7)
 - [x] Label format decided + serializer (`lilypond.ts`) built and verified on real scores.
 - [x] **Faithful + signature scheme implemented** (deviation/`\natural`/bare + `\sig … \sigend` on
       row-start keysig strips; `ADDED_TOKENS` extended). Round-trip verified on all sample scores:
@@ -110,8 +110,9 @@ Output → `data/synthetic/strips/` (gitignored): `<score>_<mode>_<id>.png` + `.
 - [x] Verification decoder (`decode.ts`/`decode-cli.ts`) — resolves bare notes from the `\sig` block
       (a mini-prototype of Phase 4's written-skeleton resolution).
 - [x] Strip exporter: in-harness Strip panel + Playwright `render.ts`; every-note **and** keysig strips.
-- [ ] **Regenerate the strips** (`render.ts`) — any previously generated `data/synthetic/strips/`
-      still carry old semantic labels; delete + re-render before training.
+- [ ] **Re-render the strips before Rung-2 training** (`render.ts`) — the current
+      `data/synthetic/strips/` set (2026-07-02) already carries **faithful** labels, but it predates
+      the repeat-sign tokens and the multi-measure coverage fix; delete + re-render once those land.
 - [ ] OpenCV/Albumentations augmentation (Python, Step 4).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
 - [x] Repeat-sign tokens emitted (2026-07-02): `detectRepeats` (`repeats.ts`) finds the flattened

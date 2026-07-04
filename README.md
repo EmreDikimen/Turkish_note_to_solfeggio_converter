@@ -46,27 +46,23 @@ Photo
 See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and rationale.
 
 ## Status
-- **Phase 0 — DONE:** symbolic → microtonal audio, no machine learning. A SymbTr parser, the
-  53-TET tuning module, and a simple synthesizer turn any SymbTr score into correct
-  microtonal audio. Verified across all 2,200 SymbTr pieces.
-- **Phase 1 — DONE:** shared TypeScript `core` + React web harness. Loads note-model JSON;
-  piano-roll and **VexFlow-engraved sheet** views (real stems/beams/flags/dots + Turkish
-  microtonal accidentals); Web Audio playback at exact 53-TET; **Play / Pause / Resume / Stop**
-  with a live **playhead** cursor on the sheet and **click-a-measure-to-seek**; **tempo (BPM)
-  control + a usul-aware metronome** (clicks the chosen usul's beat groupings, correct for
-  non-integer usuls like aksak 9/8); **transpose / ahenk** (incl. a sound-only mode for transposing
-  instruments); drag-to-edit (piano-roll) and a per-measure note editor (sheet). The sheet is
-  engraved like a real Classical-Turkish-Music score — **standard AEU accidentals only** (the
-  editor still exposes exact komas), justified rows, **lyrics**, and a **makam/usul/composer
-  header**. See ROADMAP §6 (Status) for details.
-- **Phase 2 — IN PROGRESS:** synthetic training data + OMR by **transfer learning** — render SymbTr
-  scores to staff images with **VexFlow** (reusing the harness engraving), augment with **chromatic
-  transpose** (pitch augmentation) + OpenCV (image augmentation), and **fine-tune a pretrained OMR
-  model** to add the Turkish microtonal accidentals. Done so far: model gate passed
-  (`omr_transformer`), faithful+signature label scheme + strip renderer built, **overfit-10 gate: GO**,
-  **ONNX/browser gate: PASS** (int8 export decoded in-browser via `onnxruntime-web`, exact token
-  match, ~1.5 s/strip). Next: scaled fine-tuning on Colab. See [docs/PHASE2.md](docs/PHASE2.md)
-  and ROADMAP §7 for exact status.
+
+> **Where we left off + what's next → [ROADMAP.md §7](ROADMAP.md)** — the single always-current
+> status section; everything else points there. **Fresh-session reading order:** this README →
+> ROADMAP §7 → [docs/PHASE2.md](docs/PHASE2.md) (the live ML track). Full dated history of the
+> completed phases: [docs/HISTORY.md](docs/HISTORY.md). Code map: [docs/CODE_TOUR.md](docs/CODE_TOUR.md).
+
+- **Phase 0 — DONE:** symbolic → microtonal audio, no machine learning (SymbTr parser + 53-TET
+  tuning + synth). Verified across all 2,200 SymbTr pieces.
+- **Phase 1 — DONE:** shared TypeScript `core` + React web harness: piano-roll + **VexFlow-engraved
+  sheet** with Turkish AEU accidentals, Web Audio playback at exact 53-TET with transport /
+  playhead / click-to-seek, editing (drag + per-measure editor), tempo + usul-aware metronome,
+  transpose/ahenk, lyrics + makam/usul/composer header.
+- **Phase 2 — IN PROGRESS:** synthetic training data (VexFlow strips rendered from SymbTr) +
+  **fine-tuning a pretrained OMR model** (`omr_transformer`) to add the Turkish microtonal
+  accidentals. All de-risk gates passed: model eval, **overfit-10 GO**, **ONNX/browser gate PASS**
+  (int8 export decoded in-browser via `onnxruntime-web`, ~1.5 s/strip). Next: scaled fine-tuning
+  on Colab (Rung 2) — exact status in ROADMAP §7.
 
 ## Directory Structure
 
@@ -75,15 +71,17 @@ Current (monorepo as of Phase 1 — Python reference/data side + TypeScript core
 .
 ├── data/
 │   ├── raw/            # input scores (e.g. SymbTr .txt)
-│   └── processed/      # generated audio / processed data
+│   ├── processed/      # generated audio / processed data
+│   └── synthetic/      # rendered strip images + labels for training (gitignored)
 ├── src/                # Python (reference impl + training side)
 │   ├── symbtr/         # SymbTr .txt parser → Score/Event model + JSON export
 │   ├── audio/          # 53-TET tuning + synthesis (reference impl; ported to TS core)
-│   └── vision/         # (later) OpenCV preprocessing & OMR training
+│   └── vision/         # OMR model eval, fine-tune wiring (overfit-10), ONNX export gates
 ├── scripts/            # runnable Python entry points
+├── tools/render/       # TS synthetic-data generator (strip labels + Playwright renderer)
 ├── packages/core/      # shared TypeScript: note model, tuning, synth scheduling
 ├── apps/web/           # React test harness (piano-roll + Web Audio)
-├── docs/               # research notes & CODE_TOUR.md
+├── docs/               # CODE_TOUR.md, PHASE2.md (ML-track kickoff), HISTORY.md (completed phases)
 ├── ROADMAP.md          # detailed build plan (source of truth)
 ├── README.md           # this overview
 └── requirements.txt    # Python dependencies
@@ -99,15 +97,17 @@ apps/mobile/    # React Native product (native audio + onnxruntime-react-native)
 
 ## Getting Started
 
-### Python reference / data side (Phase 0)
+### Python reference / data side (Phase 0 + ML training)
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv-ml
+source .venv-ml/bin/activate
 pip install -r requirements.txt
 ```
 
-Phase 0 only needs `numpy` (plus the standard library). Convert a SymbTr score to audio:
+Phase 0 only needs `numpy` (plus the standard library); the rest of `requirements.txt`
+(torch, transformers, optimum-onnx, OpenCV, …) is for the Phase-2 ML track in `src/vision/`.
+Convert a SymbTr score to audio:
 
 ```bash
 python3 scripts/symbtr_to_audio.py data/raw/<score>.txt -o data/processed/out.wav --info
@@ -149,10 +149,11 @@ which maps directly to a 53-TET frequency.
 
 - The notesheet part have two scrolling. We can remove the inner scrolling.
 
-- **Transpose / ahenk.** A core `transpose(doc, commas)` (chromatic, re-spelling notes) is built
-  in **Phase 2** as pitch augmentation for the synthetic data. The user-facing version is an
-  **ahenk** selector (Bolahenk, Mansur, Kız, …) — each ahenk is a fixed comma offset, so it's the
-  same chromatic transpose with an ahenk-name label on top; shipped as a mobile feature in Phase 5.
+- **Transpose / ahenk.** _Partly done:_ the core `transpose(doc, commas)` (chromatic, re-spelling
+  notes) is built, and the harness has a **Transpose** dropdown with a **Keep sheet (sound only)**
+  toggle for transposing instruments (added 2026-06-28). _Still TODO:_ the user-facing **ahenk**
+  selector (Bolahenk, Mansur, Kız, …) — each ahenk is a fixed comma offset, so it's the same
+  chromatic transpose with an ahenk-name label on top; shipped as a mobile feature in Phase 5.
 
 - **Usul-based rhythm.** _Partly done:_ a **usul-aware metronome** now clicks each piece's usul
   on the correct beat groupings (downbeat accented), locked to the measures, so non-integer usuls

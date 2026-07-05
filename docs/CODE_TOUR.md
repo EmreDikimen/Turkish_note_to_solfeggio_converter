@@ -80,8 +80,8 @@ Added after Phase 1; not part of the core→harness spine above.
 
 | File(s) | One line |
 |---|---|
-| [tools/render/](../tools/render/) | Synthetic-data generator: `lilypond.ts` serializes note-model strips to the OMR model's LilyPond label format, `render.ts` (Playwright) crops PNG+label pairs from the live harness render, `repeats.ts` detects flattened repeats, `decode.ts`/`decode-cli.ts` verify labels. **Read [tools/render/README.md](../tools/render/README.md) — it's the full tour of this directory.** |
-| [src/vision/](../src/vision/) | Python fine-tuning side: `eval_omr_transformer.py` (Step-1 model gate), `data.py` (dataset/label wiring), `overfit10.py` (Rung-1 gate), `onnx_parity.py` + `make_browser_gate.py` (Rung-1.5 ONNX/browser gate). Results log: [MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). |
+| [tools/render/](../tools/render/) | Synthetic-data generator: `lilypond.ts` serializes note-model strips to the OMR model's LilyPond label format, `render.ts` (Playwright) crops PNG+label pairs from the live harness render, `repeats.ts` detects + injects repeat signs, `respell.ts` seeds the büyük-enharmonic respell, `decode.ts`/`decode-cli.ts` verify labels. Browser side: `apps/web/src/stripExport.ts` (crop rects + labels from the sheet layout), `textNoise.ts` (seeded distractor text). **Read [tools/render/README.md](../tools/render/README.md) — it's the full tour of this directory.** |
+| [src/vision/](../src/vision/) | Python fine-tuning side: `eval_omr_transformer.py` (Step-1 model gate), `data.py` (dataset/label wiring), `overfit10.py` (Rung-1 gate), `onnx_parity.py` + `make_browser_gate.py` (Rung-1.5 ONNX/browser gate), `audit_coverage.py` (Rung-2 dataset gate; fed by `scripts/select_pieces.py` / `export_scores.py` / `make_split.py`). Results log: [MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). |
 
 ## The 15-minute path (the spine)
 

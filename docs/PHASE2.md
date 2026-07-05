@@ -146,13 +146,23 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
     gamzedeyim score. **Implemented 2026-07-02** (`tools/render/repeats.ts` `detectRepeats` +
     serializer support): detection ONLY — the doc/layout/playback stay untouched; the signs are
     drawn onto the same engraving and strip labels carry the matching tokens (the still-drawn
-    duplicate pass is invisible to 1–3-measure strips). Random injection is still TODO (Rung 2).
-- **Strip-length coverage gap (2026-07-02):** the ≤46-token cap packs dense CTM measures ONE per
-  strip — 246/256 current strips are single-measure, so `|` appears in only 10 labels. Rung 2 must
-  guarantee multi-measure strips (relax the cap toward the true 60 and/or pair sparse measures) —
-  real crops contain barlines regardless, so the model needs that coverage either way.
-- Render **both lyric and lyric-free** strips, and **randomize header/footer text** so the model
-  learns to ignore non-musical text (real photos always have it).
+    duplicate pass is invisible to 1–3-measure strips). ✅ **Random injection DONE (2026-07-05)**:
+    `injectRepeats` (same file) adds 2–4 seeded spans on ~half of renders; 6.4% of v2 strips carry
+    repeat tokens.
+- **Strip-length coverage gap:** ✅ **CLOSED (2026-07-05)** — cap raised 46→56 (`STRIP_BUDGET`,
+  one shared constant) and piece selection targets sparse pieces. Measured on the v2 render:
+  39.9% of every-mode strips span 2–4 measures; `|` in 40.7% of labels. Two hard facts learned:
+  a dense measure costs ~38 REAL tokenizer ids (≈4/note), so dense measures can never pair under
+  the decoder's 60-id budget; and single measures that exceed the budget are now DROPPED at
+  export (an over-budget label can never generate its EOS — a poisoned sample).
+- ✅ Render **both lyric and lyric-free** strips (38.7% lyric in v2), and **randomize header/footer
+  text** so the model learns to ignore non-musical text — drawn INSIDE the SVG crop bands
+  (`apps/web/src/textNoise.ts`); the real engraved header is an HTML element outside the crops.
+- ✅ **Büyük-mücennep coverage via low-rate AEU-enharmonic respell (2026-07-05, user decision):**
+  the whole corpus has ~47 notes at ≥6 commas and smallest-alteration respelling can't exceed ±5,
+  so `tools/render/respell.ts` flips a seeded ~8–15% of koma-sign notes to their exact büyük
+  enharmonic (same pitch, other valid glyph) — enough for the decoder to LEARN the token (~1,150
+  occurrences in v2), deliberately NOT rebalancing toward a sign real photos rarely show.
 - Keep audio/`koma53` untouched by rendering changes — it's the decoder's source of truth.
 - **Headline metric:** per-class AEU-accidental accuracy. **No Western rehearsal data** in
   fine-tuning (plan updated; repeat-sign coverage comes from our own synthesized strips, §6).
@@ -164,10 +174,12 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 - [x] Confirm green typecheck (`npx tsc` core + web — clean as of 2026-07-02).
 - [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
       signature scheme** (§4), in `tools/render/lilypond.ts` (2026-07-02). Round-trip verified on
-      all sample scores. Strips regenerated with faithful labels (2026-07-02); the on-disk set still
-      predates the repeat-sign tokens and multi-measure fix → re-render as part of Rung 2.
+      all sample scores. Re-render DONE (2026-07-05): `data/synthetic/strips_v2/` carries the
+      repeat-sign tokens + multi-measure coverage — audit PASS (ROADMAP §7).
 - [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
-      `src/vision/` has the eval script; the dataset/fine-tune/eval scripts are still TODO.
+      `src/vision/` has the eval script, the dataset wiring (`data.py`), the overfit-10 gate
+      (`overfit10.py`), the ONNX-gate scripts, and the coverage audit (`audit_coverage.py`);
+      the scaled Colab training + eval scripts are the remaining TODO.
 
 ## 8. Next action
 
@@ -177,6 +189,8 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 
 Short form: Rungs 0–1.5 are all **done** (model gate passed; overfit-10 **GO** 2026-07-02 — the
 two decode-wiring fixes live in `src/vision/data.py`/`overfit10.py` and carry forward; ONNX/browser
-gate **PASS** 2026-07-03 — see the ✅ markers in §5). **Next: Rung 2 — buy Colab Pro and scale**,
-per the §5 Rung-2 recipe; the owed dataset upgrades (multi-measure strips, random repeat-sign
-injection, augmentation, split-by-piece, …) are listed in ROADMAP §7's "Next" item.
+gate **PASS** 2026-07-03 — see the ✅ markers in §5), and the **Rung-2 dataset upgrades are DONE**
+(`data/synthetic/strips_v2/`, coverage audit PASS 2026-07-05 — ROADMAP §7). **Next: Rung 2 — buy
+Colab Pro and scale**, per the §5 Rung-2 recipe: the training + eval scripts (per-class AEU
+accidental accuracy as the headline metric) with on-the-fly OpenCV/albumentations augmentation
+in the loader.

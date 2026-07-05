@@ -16,6 +16,7 @@ import {
   type NoteModelDocument,
 } from "@turkish-omr/core";
 import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
+import { buildTextNoise } from "./textNoise";
 
 // --- layout constants -------------------------------------------------------
 const LEFT = 10;
@@ -402,6 +403,7 @@ export function SheetView({
   onLayout,
   highlightRect,
   repeatSpans,
+  textNoise,
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
@@ -428,6 +430,9 @@ export function SheetView({
   /** Phase-2 preview: repeat barlines + volta brackets to draw (SymbTr has none, so these are
    *  synthesized — see repeats.ts). Empty/undefined → the default engraving, untouched. */
   repeatSpans?: RepeatSpan[];
+  /** Rung-2 distractor text drawn INSIDE the SVG (so strip crops capture it) — see textNoise.ts.
+   *  Pixels only; labels never see it. Undefined → no noise (interactive use). */
+  textNoise?: { seed: number } | null;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -604,6 +609,23 @@ export function SheetView({
 
     if (showLyrics && svg) drawLyrics(svg, lyricItems, lyricHyphens);
 
+    // Rung-2 distractor text (render automation only): seeded fake header/footer strings inside
+    // the SVG, positioned per staff row so the strip crops capture them. Labels are unaffected.
+    if (textNoise && svg) {
+      for (const it of buildTextNoise(textNoise.seed, rows.length, showLyrics)) {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        el.setAttribute("x", String(LEFT + it.fx * CONTENT_WIDTH));
+        el.setAttribute("y", String(STAVE_TOP_PAD + it.row * ROW_HEIGHT + it.dy));
+        el.setAttribute("font-size", String(it.size));
+        el.setAttribute("font-family", it.serif ? "Georgia, 'Times New Roman', serif" : "Helvetica, Arial, sans-serif");
+        if (it.italic) el.setAttribute("font-style", "italic");
+        el.setAttribute("text-anchor", it.anchor);
+        el.setAttribute("fill", "#000");
+        el.textContent = it.text;
+        svg.appendChild(el);
+      }
+    }
+
     setSvgHeight(height);
     setBoxes(collected);
     positionsRef.current = positions;
@@ -617,7 +639,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, textNoise]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

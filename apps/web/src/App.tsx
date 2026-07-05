@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   assignBars,
   beatMsOf,
@@ -21,7 +21,8 @@ import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
-import { detectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
+import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
+import { respellAeu } from "../../../tools/render/respell";
 
 type ViewMode = "roll" | "sheet";
 // SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
@@ -41,6 +42,22 @@ const SAMPLES: { label: string; file: string }[] = [
   { label: "safalar getirdiniz — kürdilihicazkâr · aksak (avni anıl)", file: "/safalar-getirdiniz.json" },
   { label: "gamzedeyim deva — uşşak · sofyan (tatyos efendi)", file: "/gamzedeyim-deva.json" },
 ];
+
+// Render-automation parameters: the batch renderer (tools/render/render.ts) drives the harness
+// with one page.goto per job instead of UI clicks, e.g.
+//   /?score=/scores/foo.json&mode=keysig&lyrics=0&transpose=-4&repseed=123&textseed=456
+// Read once at load (each render job is a fresh page); all absent in interactive use.
+const RENDER_PARAMS = new URLSearchParams(window.location.search);
+const URL_SCORE = RENDER_PARAMS.get("score"); // path under apps/web/public/
+const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" | "keysig"
+const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
+const URL_TRANSPOSE = Number(RENDER_PARAMS.get("transpose") ?? 0) || 0; // commas
+const URL_REPSEED = RENDER_PARAMS.has("repseed") ? Number(RENDER_PARAMS.get("repseed")) : null;
+const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
+const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
+// Stable object identity (SheetView's engrave effect depends on it; an inline literal would
+// re-engrave on every render). Constant per page load, like all render params.
+const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
 
 /**
  * The whole web harness UI, as one React component.
@@ -65,12 +82,12 @@ export function App() {
   // Transport state: "stopped" → Play; "playing" → Pause; "paused" → Resume. Stop resets it.
   const [playState, setPlayState] = useState<"stopped" | "playing" | "paused">("stopped");
   // Which view is shown, whether the sheet is in edit mode, and which measure's modal is open.
-  const [viewMode, setViewMode] = useState<ViewMode>("roll");
+  const [viewMode, setViewMode] = useState<ViewMode>(URL_SCORE ? "sheet" : "roll");
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
-  const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>("every");
+  const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
   // Sheet: draw lyric syllables under the notes (vocal scores). Off → instrumental-style sheet.
-  const [showLyrics, setShowLyrics] = useState(true);
+  const [showLyrics, setShowLyrics] = useState(URL_LYRICS != null ? URL_LYRICS === "1" : true);
   // Draw a hyphen between a word's syllables ("Gam-ze-de"). Most sheets omit these → default off.
   const [lyricHyphens, setLyricHyphens] = useState(false);
   // Phase-2: draw detected repeat barlines + voltas on the sheet. SymbTr flattens repeats (a
@@ -96,7 +113,21 @@ export function App() {
   // Step-2c strip export: SheetView reports its measure geometry here; the panel previews one strip.
   const [layout, setLayout] = useState<SheetLayout | null>(null);
   const [selectedStripId, setSelectedStripId] = useState<string | null>(null);
-  const onLayout = useCallback((l: SheetLayout) => setLayout(l), []);
+  // Render automation: which configuration the CURRENT layout was engraved under. SheetView calls
+  // onLayout after every engrave; stamping the tag then (and comparing it to the live tag when
+  // publishing __omrConfig) closes the race where strips are briefly computed from a new doc but
+  // a stale layout — the renderer waits for `applied` instead of sleeping a fixed 300 ms.
+  const renderTag = JSON.stringify({
+    score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
+    repseed: URL_REPSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
+  });
+  const renderTagRef = useRef(renderTag);
+  renderTagRef.current = renderTag;
+  const [layoutTag, setLayoutTag] = useState<string | null>(null);
+  const onLayout = useCallback((l: SheetLayout) => {
+    setLayout(l);
+    setLayoutTag(renderTagRef.current);
+  }, []);
   // Test offsets for the transpose dropdown [commas, label]: small comma steps exercise the
   // accidental re-spelling; the larger AEU intervals (whole tone 9, fourth 22, fifth 31, octave
   // 53) check octave/range + naming. (53-TET: 53 commas = one octave.)
@@ -127,10 +158,10 @@ export function App() {
     setDoc(d);
   }
 
-  // Fetch one of the bundled sample scores by URL and install it (stops any playback first).
+  // Fetch a bundled/exported score by URL and install it (stops any playback first).
   function loadSample(file: string) {
     onStop();
-    fetch(file)
+    return fetch(file)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`could not load ${file}`))))
       .then((d: NoteModelDocument) => {
         loadDoc(d);
@@ -140,18 +171,25 @@ export function App() {
       .catch((err) => setError(String(err)));
   }
 
-  // Load the first bundled sample on first render (optional convenience).
+  // Load the URL-requested score (render automation) or the first bundled sample on first render.
+  // The transpose must be applied AFTER the load — loadDoc resets it to 0.
   useEffect(() => {
-    loadSample(SAMPLES[0]!.file);
+    loadSample(URL_SCORE ?? SAMPLES[0]!.file).then(() => {
+      if (URL_SCORE && URL_TRANSPOSE !== 0) setTranspose(URL_TRANSPOSE);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // What the views draw: the stored score, optionally rewritten by the transpose — unless we're
   // keeping the sheet as-is (transposing-instrument case). Never mutates `doc`.
-  const displayDoc = useMemo(
-    () => (doc && !keepSheet && transpose !== 0 ? transposeDoc(doc, transpose) : doc),
-    [doc, transpose, keepSheet],
-  );
+  const displayDoc = useMemo(() => {
+    let d = doc && !keepSheet && transpose !== 0 ? transposeDoc(doc, transpose) : doc;
+    // Render automation: seeded AEU-enharmonic respell so the rare büyük glyphs appear at all in
+    // training (a decoder can't emit a token it never saw). Deliberately low-rate — common signs
+    // keep their natural distribution; see tools/render/respell.ts for the full rationale.
+    if (d && URL_RESPELLSEED != null) d = respellAeu(d, URL_RESPELLSEED);
+    return d;
+  }, [doc, transpose, keepSheet]);
 
   // The playable timeline. The SOUND shifts by `transpose` in BOTH modes: when the staff is
   // rewritten, displayDoc already carries the shifted komas; when keeping the sheet, we instead
@@ -170,7 +208,11 @@ export function App() {
   // spans, so a strip's pixels and label always agree.
   const repeatSpans = useMemo<RepeatSpan[] | undefined>(() => {
     const drawn = displayDoc ?? doc;
-    return showRepeats && drawn ? detectRepeats(drawn) : undefined;
+    if (!drawn) return undefined;
+    // Render automation: a repseed adds seeded random spans on top of the detected ones (Rung-2
+    // repeat-token coverage — SymbTr itself has no repeats). Interactive: the Repeats toggle.
+    if (URL_REPSEED != null) return injectRepeats(drawn, URL_REPSEED, detectRepeats(drawn));
+    return showRepeats ? detectRepeats(drawn) : undefined;
   }, [showRepeats, displayDoc, doc]);
 
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
@@ -186,12 +228,27 @@ export function App() {
       : [];
   }, [repeatSpans, displayDoc, doc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
-  // Expose the strips + score meta for the Playwright batch exporter (tools/render/render.ts).
+  // Expose the strips + score meta + applied render config for the Playwright batch exporter
+  // (tools/render/render.ts). `applied` is true only once the engraved layout matches the
+  // currently-requested configuration, i.e. the strips' crop rects and labels agree.
   useEffect(() => {
-    const w = window as unknown as { __omrStrips?: ExportStrip[]; __omrMeta?: { makam: string; name: string } };
+    const w = window as unknown as {
+      __omrStrips?: ExportStrip[];
+      __omrMeta?: { makam: string; name: string };
+      __omrConfig?: {
+        score: string; mode: AccidentalMode; lyrics: boolean; transpose: number;
+        repseed: number | null; textseed: number | null; respellseed: number | null;
+        applied: boolean;
+      };
+    };
     w.__omrStrips = strips;
     if (doc) w.__omrMeta = { makam: doc.makam, name: doc.name };
-  }, [strips, doc]);
+    w.__omrConfig = {
+      score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
+      repseed: URL_REPSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
+      applied: layoutTag === renderTag,
+    };
+  }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
 
   // Translate the current tempo/metronome/usul UI state into backend PlayOptions. Speed is the
   // chosen BPM over the natural BPM; the metronome clicks are the selected usul's beat pattern
@@ -541,6 +598,7 @@ export function App() {
                 onLayout={onLayout}
                 highlightRect={selectedStrip?.rect ?? null}
                 repeatSpans={repeatSpans}
+                textNoise={TEXT_NOISE}
               />
               <StripPanel
                 strips={strips}

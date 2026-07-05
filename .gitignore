@@ -68,6 +68,8 @@ dist/
 
 # SymbTr-derived sample (don't redistribute dataset content)
 apps/web/public/sample.json
+# Rung-2 batch-exported scores (SymbTr-derived; regenerate via scripts/export_scores.py)
+apps/web/public/scores/
 
 # IDEs
 .idea/

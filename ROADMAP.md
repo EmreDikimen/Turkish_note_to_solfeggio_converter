@@ -152,7 +152,8 @@ produce a real, demoable app with zero machine learning.
   (VexFlow 5 + Bravura), which already renders the Turkish microtonal accidentals correctly
   (koma, bakiye, küçük mücennep) via raw SMuFL codepoints. **Decided (see `docs/PHASE2.md` §3 +
   `tools/render/`):** a headless browser (Playwright) crops **short strips (~2–4 measures,
-  ≤ ~46 tokens)** out of the harness's live full-score render, at a model-friendly size/aspect
+  ≤ 56 tokens — the shared `STRIP_BUDGET`; raised from the initial ~46 on 2026-07-05)** out of
+  the harness's live full-score render, at a model-friendly size/aspect
   (≈583×409 for `omr_transformer`) — NOT whole wide rows: long lines overrun the decoder's token
   cap and wide-short strips blur beam/flag detail when resized (both observed in Step-1 tests).
 - **Render from the note model**, so the symbol-token label sequence is emitted from the same
@@ -374,9 +375,24 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   Mac. Python parity checked first (`src/vision/onnx_parity.py`: ONNX == PyTorch == label, fp32
   and int8). Gate page: `apps/web/omr-gate.html` (assets staged by
   `src/vision/make_browser_gate.py`, gitignored). Result logged in `src/vision/MODEL_EVAL.md`.
-- ⏳ Next: **Rung 2 — scaled fine-tune on Colab Pro** from the original pretrained weights;
-  dataset upgrades owed: multi-measure strips (the `|` coverage gap), random repeat-sign
-  injection, transpose + OpenCV augmentation, full accidental coverage, split-by-piece.
+- ✅ **Rung-2 dataset upgrades: DONE, AUDIT PASS (2026-07-05)** — `data/synthetic/strips_v2/`:
+  **18,624 strips / 466 MB from 150 pieces** (47 makams; selected from 2,030 usable corpus files
+  by `scripts/select_pieces.py`, greedy max-min over the AEU classes with EXACT projected counts
+  — the TS spelling math ported to Python). Everything seeded + reproducible (any strip's
+  manifest row → harness URL, `docs/MANUAL_CHECKS.md`). Delivered: token cap 46→56 (shared
+  `STRIP_BUDGET`; over-budget single measures DROPPED — untrainable), 39.9% multi-measure /
+  40.7% `|` coverage, random repeat injection (6.4% of strips), transposes (−9…+9 commas),
+  lyric (38.7%) + lyric-free variants, in-SVG header/footer text noise, low-rate büyük
+  enharmonic respell (`tools/render/respell.ts`, user decision), `piece`/`transpose`/`lyrics`
+  manifest fields, **split-by-piece** (125 train / 20 val pieces, committed `data/split.json`),
+  and the pass/fail gate `src/vision/audit_coverage.py` (per-class floors + real-tokenizer
+  ≤59-id check: longest 57, 0 over). Renderer (`tools/render/render.ts`) is URL-param-driven,
+  chunked + resumable (per-piece shards + `.done` markers). OpenCV augmentation deliberately
+  NOT baked in — it goes on-the-fly in the Rung-2 training loader.
+- ⏳ Next: **Rung 2 — scaled fine-tune on Colab Pro** from the original pretrained weights, on
+  `strips_v2`: training script (val loop, checkpoint/resume to Drive, LR schedule) + eval script
+  (per-class AEU accidental accuracy — the headline metric — and SER), on-the-fly OpenCV/
+  albumentations augmentation in the loader; shake the scripts out on free tier before paying.
   Then Rung 3: real photos.
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
@@ -387,4 +403,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-04._
+_Last updated: 2026-07-05._

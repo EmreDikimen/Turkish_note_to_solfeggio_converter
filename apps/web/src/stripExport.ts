@@ -18,6 +18,7 @@ import {
   serializeMeasure,
   serializeMeasures,
   serializeSignature,
+  STRIP_BUDGET,
   type SignatureMap,
 } from "../../../tools/render/lilypond";
 import { decodePretty } from "../../../tools/render/decode";
@@ -59,7 +60,7 @@ export function buildStrips(
   // Fold-detected repeat spans (must be the SAME ones SheetView draws): the labels then carry the
   // repeat tokens at the drawn positions. Undefined/empty = no repeat signs on the sheet.
   repeatSpans?: RepeatSpan[],
-  { maxMeasures = 3, maxTokens = 46 }: { maxMeasures?: number; maxTokens?: number } = {},
+  { maxMeasures = STRIP_BUDGET.maxMeasures, maxTokens = STRIP_BUDGET.maxTokens }: { maxMeasures?: number; maxTokens?: number } = {},
 ): ExportStrip[] {
   const byIndex = new Map(groupMeasures(doc).map((m) => [m.index, m]));
 
@@ -114,9 +115,13 @@ export function buildStrips(
     for (const [ci, c] of keep.entries()) {
       const ms = c.map((b) => byIndex.get(b.index)).filter((m): m is Measure => !!m);
       if (ms.length === 0) continue;
-      const body = serializeMeasures(ms, sigMap, repeatSpans).label;
+      const body = serializeMeasures(ms, sigMap, repeatSpans);
+      // A SINGLE measure denser than the token budget can't be split (crops must fall on
+      // barlines) and can't be trained (its label exceeds the decoder's max_length, so
+      // generation could never reach EOS) — drop it rather than emit a poisoned sample.
+      if (body.tokens + (sigPrefix && ci === 0 ? sigPrefix.tokens : 0) > maxTokens) continue;
       // Row-start crop (first chunk) in keysig mode shows the printed signature → prefix it.
-      const label = sigPrefix && ci === 0 ? `${sigPrefix.label} ${body}` : body;
+      const label = sigPrefix && ci === 0 ? `${sigPrefix.label} ${body.label}` : body.label;
       const first = c[0]!;
       const last = c[c.length - 1]!;
       out.push({

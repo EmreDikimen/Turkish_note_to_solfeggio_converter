@@ -39,7 +39,9 @@ ADDED_TOKENS: list[str] = [
     "|", "3",
 ]
 
-_BACKSLASH_TOKEN = re.compile(r"\\[A-Za-z]+")
+# Digits included: \volta1 / \volta2 are single tokens — a letters-only pattern would extract
+# them as a bogus "\volta" and fail the drift check against ADDED_TOKENS.
+_BACKSLASH_TOKEN = re.compile(r"\\[A-Za-z0-9]+")
 
 
 @dataclass
@@ -50,18 +52,32 @@ class Strip:
     label: str
     mode: str  # "every" | "keysig"
     makam: str
+    # Rung-2 manifest fields (defaulted so pre-Rung-2 manifests keep loading): `piece` is the
+    # split-by-piece key — ALL of a piece's strips/transposes/variants stay in one split.
+    piece: str = ""
+    transpose: int = 0
+    lyrics: bool = False
 
 
 class StripDataset:
     """
     The (image, label) pairs from a strips directory.
 
-    Reads `manifest.jsonl` (one JSON object per strip: image / label / mode / makam / from / to).
+    Reads `manifest.jsonl` (one JSON object per strip: image / label / mode / makam / piece /
+    transpose / lyrics / from / to; the last five are Rung-2 additions with fallbacks).
     `__getitem__` opens the PNG lazily (RGB) so the dataset itself stays tiny — only paths and
     label strings live in memory.
+
+    `pieces` filters to a piece set — how the train/val split is applied (see
+    scripts/make_split.py): pass the split file's `train_pieces` or `val_pieces`.
     """
 
-    def __init__(self, strips_dir: str | Path, mode: str | None = None) -> None:
+    def __init__(
+        self,
+        strips_dir: str | Path,
+        mode: str | None = None,
+        pieces: set[str] | None = None,
+    ) -> None:
         self.dir = Path(strips_dir)
         manifest = self.dir / "manifest.jsonl"
         self.strips: list[Strip] = []
@@ -71,16 +87,23 @@ class StripDataset:
             row = json.loads(line)
             if mode is not None and row["mode"] != mode:
                 continue
+            # Fallback for old manifests: the filename prefix up to the first "_" is the piece.
+            piece = row.get("piece") or row["image"].split("_")[0]
+            if pieces is not None and piece not in pieces:
+                continue
             self.strips.append(
                 Strip(
                     image_path=self.dir / row["image"],
                     label=row["label"],
                     mode=row["mode"],
                     makam=row.get("makam", ""),
+                    piece=piece,
+                    transpose=int(row.get("transpose", 0)),
+                    lyrics=bool(row.get("lyrics", False)),
                 )
             )
         if not self.strips:
-            raise FileNotFoundError(f"no strips found in {self.dir} (mode={mode!r})")
+            raise FileNotFoundError(f"no strips found in {self.dir} (mode={mode!r}, pieces={'set' if pieces else None})")
 
     def __len__(self) -> int:
         return len(self.strips)

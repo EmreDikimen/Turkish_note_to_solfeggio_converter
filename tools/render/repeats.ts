@@ -17,6 +17,7 @@
  */
 
 import { eventBeats, groupMeasures, type Measure, type NoteModelDocument } from "@turkish-omr/core";
+import { mulberry32 } from "./rng";
 
 /** One detected repeat span, in 1-based `Measure.index` numbering (the doc is unmodified, so
  *  these are exactly the indices SheetView draws and the strip exporter sees). */
@@ -88,6 +89,59 @@ export function detectRepeats(doc: NoteModelDocument): RepeatSpan[] {
     if (!advanced) i++;
   }
   return spans;
+}
+
+/**
+ * Rung-2 dataset coverage: SymbTr itself contains zero repeats, and `detectRepeats` fires only on
+ * flattened duplicates — far too rare to teach the repeat tokens. This adds SEEDED RANDOM spans on
+ * top of the detected ones, so a chosen fraction of renders carries repeat signs. The injected
+ * signs are visually correct engraving but musically arbitrary (the "repeated" music isn't really
+ * a repetition) — fine for training, which only maps drawn symbols to tokens; Phase-4 semantics
+ * never consumes these synthetic strips.
+ *
+ * Same `RepeatSpan` shape as detection, so drawing (SheetView), labeling (`serializeMeasures`) and
+ * the faithful one-visible-end-only crop rule all work unchanged. Deterministic per seed: the PRNG
+ * call sequence is fixed (rejected candidates still consume their draws), so the same
+ * `hashStr("{slug}:{transpose}")` seed always yields the same spans.
+ */
+export function injectRepeats(
+  doc: NoteModelDocument,
+  seed: number,
+  detected: readonly RepeatSpan[] = [],
+): RepeatSpan[] {
+  const indices = groupMeasures(doc).map((m) => m.index);
+  const spans: RepeatSpan[] = [...detected];
+  if (indices.length < 3) return spans;
+
+  // Measures already carrying signs, ±1 buffer — an injected `‖:` must never share a barline
+  // (or sit ambiguously adjacent) with an existing `:‖`.
+  const covered = new Set<number>();
+  const cover = (s: RepeatSpan) => {
+    for (let i = s.start - 1; i <= (s.volta2 ?? s.end) + 1; i++) covered.add(i);
+  };
+  detected.forEach(cover);
+
+  const rand = mulberry32(seed);
+  const attempts = 2 + Math.floor(rand() * 3); // 2–4 candidate spans per render
+  for (let n = 0; n < attempts; n++) {
+    const len = 2 + Math.floor(rand() * 3); // 2–4 measures, like real short repeats
+    const lastPos = indices.length - len;
+    if (lastPos < 0) continue;
+    const pos = Math.floor(rand() * (lastPos + 1));
+    // ~30% get 1./2. voltas, when a measure exists after the span to carry the "2." bracket.
+    const withVolta = rand() < 0.3 && pos + len < indices.length;
+    const span: RepeatSpan = withVolta
+      ? { start: indices[pos]!, end: indices[pos + len - 1]!, volta2: indices[pos + len]! }
+      : { start: indices[pos]!, end: indices[pos + len - 1]! };
+    let free = true;
+    for (let i = span.start - 1; i <= (span.volta2 ?? span.end) + 1; i++) {
+      if (covered.has(i)) free = false;
+    }
+    if (!free) continue; // overlap → drop the candidate (draws stay consumed for determinism)
+    spans.push(span);
+    cover(span);
+  }
+  return spans.sort((a, b) => a.start - b.start);
 }
 
 /** The spans touching one measure, resolved to what is drawn on it (for draw + label emission). */

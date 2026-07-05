@@ -61,9 +61,13 @@ d''8 \kucukFlat e''8 e''8 | f''8 f''16 f''16 f''8 f''16 f''16 f''8
 ## Strips
 
 `docToStrips(doc)` packs notes into **short, self-contained strips** (default ≤ 4 measures and
-≤ 46 estimated tokens — a safe margin under the model's ~60-token decoder cap), inserting `|` at
-measure boundaries. Note-level packing means even a single dense 16th-note measure can't overrun the
-cap. Each strip is rendered with its own clef + makam key signature so it's decodable on its own.
+≤ 56 estimated tokens — `STRIP_BUDGET` in `lilypond.ts`, the ONE place the cap lives: the browser
+exporter's `buildStrips` shares it, and `src/vision/audit_coverage.py --tokenizer` is the hard
+backstop, failing any label over 59 real ids under the decoder's 60-id cap), inserting `|` at
+measure boundaries. Note-level packing means even a single dense 16th-note measure can't overrun
+the cap (the browser exporter instead DROPS an over-budget single measure — crops must fall on
+barlines, and an over-cap label can never reach its EOS). Each strip is rendered with its own
+clef + makam key signature so it's decodable on its own.
 
 ## Out of scope for the labels (handled elsewhere)
 - **Repeats:** not in SymbTr (validated: no repeat/volta/segno markers anywhere in the 2,200-piece
@@ -86,21 +90,38 @@ highlights a strip's crop rectangle, and shows its label + decoded notes for a m
 
 ```bash
 npm run dev:web                       # start the harness (note the port, e.g. 5174)
-OMR_URL=http://localhost:5174 npx --yes tsx tools/render/render.ts
+OMR_URL=http://localhost:5174 npx --yes tsx tools/render/render.ts \
+    --pieces data/pieces.json --out data/synthetic/strips_v2 [--from 0 --to 25] [--clean] [--finalize]
 ```
-Output → `data/synthetic/strips/` (gitignored): `<score>_<mode>_<id>.png` + `.txt` per strip,
-`manifest.jsonl`, and an **`index.html` contact sheet** (open it to scroll every PNG next to its label
-+ decoded notes). Both modes are rendered: `every` (every accidental inline, crop anywhere) and
-`keysig` (makam signature at the row start, crop row-start ranges). 2–3× device scale keeps beams crisp.
+Jobs are derived deterministically from `data/pieces.json` (written by `scripts/select_pieces.py`;
+scores exported by `scripts/export_scores.py`): every transpose × both modes, lyrics only at t=0,
+seeded repeat injection on ~half of renders, distractor text + the low-rate büyük respell always on
+(all seeds hashed from `slug:transpose`, so any strip is reproducible — `docs/MANUAL_CHECKS.md`).
+Output → `data/synthetic/strips_v2/` (gitignored): `<slug>_t±N_<mode>_<id>.png` + `.txt` per strip,
+per-piece manifest shards + `.done` markers under `manifests/` (**resumable**: Ctrl-C anytime;
+finished pieces are skipped on re-run, a partial piece is re-rendered), and — after a full pass or
+`--finalize` — a combined `manifest.jsonl` + a 500-strip sampled **`index.html` contact sheet**
+(each PNG next to its label + decoded notes). Both modes are rendered: `every` (every accidental
+inline, crop anywhere) and `keysig` (makam signature at the row start, crop row-start ranges).
+3× device scale keeps beams crisp.
 
 ## Files
-- `lilypond.ts` — the serializer (note model → strips/measures + labels). Pure logic; reuses `@turkish-omr/core`.
+- `lilypond.ts` — the serializer (note model → strips/measures + labels; `STRIP_BUDGET`,
+  `ADDED_TOKENS`). Pure logic; reuses `@turkish-omr/core`.
 - `decode.ts` — pure label → readable note-name decoder (browser-safe; reused by the Strip panel).
 - `decode-cli.ts` — CLI for the decoder. Run:
   `npx --yes tsx tools/render/decode-cli.ts [score.json | "<label string>"]`. Shows the *written* AEU
   note (snapped), so compare against the harness Sheet view, not the raw exact koma.
 - `demo.ts` — prints strips from a sample score. Run: `npx --yes tsx tools/render/demo.ts [score.json]`.
-- `render.ts` — Playwright batch renderer (crops the live sheet → PNG + label + manifest + contact sheet).
+- `render.ts` — Playwright batch renderer (drives the harness by URL; crops the live sheet → PNG +
+  label + per-piece manifest shards + contact sheet; chunked + resumable).
+- `repeats.ts` — `detectRepeats` (fold detection of flattened duplicate runs) + `injectRepeats`
+  (seeded random spans for token coverage) + `repeatMarksAt` (per-measure drawn marks).
+- `respell.ts` — seeded low-rate AEU-enharmonic respell (büyük coverage; only `noteName` changes,
+  so pixels and labels stay consistent by construction).
+- `rng.ts` — seeded PRNG (`mulberry32`) + `hashStr`, shared by every seeded render step.
+(Browser-side counterparts live in `apps/web/src/`: `stripExport.ts` builds crop rects + labels
+from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 
 ## Status (renderer-internal — project-level status lives in ROADMAP §7)
 - [x] Label format decided + serializer (`lilypond.ts`) built and verified on real scores.
@@ -110,15 +131,18 @@ Output → `data/synthetic/strips/` (gitignored): `<score>_<mode>_<id>.png` + `.
 - [x] Verification decoder (`decode.ts`/`decode-cli.ts`) — resolves bare notes from the `\sig` block
       (a mini-prototype of Phase 4's written-skeleton resolution).
 - [x] Strip exporter: in-harness Strip panel + Playwright `render.ts`; every-note **and** keysig strips.
-- [ ] **Re-render the strips before Rung-2 training** (`render.ts`) — the current
-      `data/synthetic/strips/` set (2026-07-02) already carries **faithful** labels, but it predates
-      the repeat-sign tokens and the multi-measure coverage fix; delete + re-render once those land.
-- [ ] OpenCV/Albumentations augmentation (Python, Step 4).
+- [x] **Rung-2 re-render DONE (2026-07-05):** `data/synthetic/strips_v2/` — 18,624 strips from the
+      150 selected pieces (`data/pieces.json`), with repeat-sign tokens, multi-measure coverage,
+      transposes, distractor text, and the büyük respell; coverage audit PASS
+      (`src/vision/audit_coverage.py`). Supersedes the 2026-07-02 `data/synthetic/strips/` set.
+- [ ] OpenCV/Albumentations augmentation — deliberately NOT baked into the rendered files;
+      applied on-the-fly in the Rung-2 training loader (Python).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
 - [x] Repeat-sign tokens emitted (2026-07-02): `detectRepeats` (`repeats.ts`) finds the flattened
       duplicate runs (detection only — the doc/layout/playback are untouched); the harness Repeats
       toggle draws the signs and the strip labels carry the matching tokens. Verified live: token
-      placement, note round-trip, single-id tokenization. Still TODO: random injection for coverage.
-- [ ] **Multi-measure strip coverage**: 246/256 current strips are single-measure (the ≤46-token cap
-      on dense measures), so `|` appears in only 10 labels — relax toward the true 60-token cap
-      and/or pair sparse measures before Rung-2 training.
+      placement, note round-trip, single-id tokenization. **Random injection DONE (2026-07-05):**
+      `injectRepeats` adds 2–4 seeded spans on ~half of renders; 6.4% of v2 strips carry repeat tokens.
+- [x] **Multi-measure strip coverage — CLOSED (2026-07-05):** cap raised 46→56 (`STRIP_BUDGET`) +
+      sparse-piece selection; 39.9% of every-mode v2 strips span 2–4 measures, `|` in 40.7% of
+      labels (dense measures can't pair under the 60-id budget — a model constraint, not a bug).

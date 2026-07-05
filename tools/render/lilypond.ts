@@ -65,6 +65,14 @@ export const REP_END_TOKEN = "\\repend";
 export const VOLTA1_TOKEN = "\\volta1";
 export const VOLTA2_TOKEN = "\\volta2";
 
+/**
+ * Shared strip-packing budget — the ONE place the cap lives (both `docToStrips` and the browser
+ * exporter's `buildStrips` default to it). 56 + EOS = 57 ≤ the decoder's max_length 60, leaving
+ * headroom for the char-count token estimate; `audit_coverage.py --tokenizer` is the hard backstop
+ * (fails on any label > 59 real ids).
+ */
+export const STRIP_BUDGET = { maxMeasures: 4, maxTokens: 56 } as const;
+
 /** The full set of tokens we must add to the model's tokenizer for this format. */
 export const ADDED_TOKENS: string[] = [
   ...Object.values(AEU_TOKEN),
@@ -246,7 +254,7 @@ interface FlatNote {
  */
 export function docToStrips(
   doc: NoteModelDocument,
-  { maxMeasures = 4, maxTokens = 46 }: { maxMeasures?: number; maxTokens?: number } = {},
+  { maxMeasures = STRIP_BUDGET.maxMeasures, maxTokens = STRIP_BUDGET.maxTokens }: { maxMeasures?: number; maxTokens?: number } = {},
 ): Strip[] {
   const flat: FlatNote[] = [];
   for (const m of groupMeasures(doc)) {

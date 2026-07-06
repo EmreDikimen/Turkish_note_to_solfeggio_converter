@@ -389,11 +389,42 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   ≤59-id check: longest 57, 0 over). Renderer (`tools/render/render.ts`) is URL-param-driven,
   chunked + resumable (per-piece shards + `.done` markers). OpenCV augmentation deliberately
   NOT baked in — it goes on-the-fly in the Rung-2 training loader.
-- ⏳ Next: **Rung 2 — scaled fine-tune on Colab Pro** from the original pretrained weights, on
-  `strips_v2`: training script (val loop, checkpoint/resume to Drive, LR schedule) + eval script
-  (per-class AEU accidental accuracy — the headline metric — and SER), on-the-fly OpenCV/
-  albumentations augmentation in the loader; shake the scripts out on free tier before paying.
-  Then Rung 3: real photos.
+- ✅ **Rung-2 training kit: DONE, smoke-tested (2026-07-06)** — `src/vision/augment.py`
+  (on-the-fly input-realism augmentation, **two profiles mixed at `PHOTO_SHARE = 0.35`**:
+  65% "screenshot" — rescale softness/JPEG/light jitter — because **real uploads are mostly
+  web screenshots, not camera photos** (user decision, recorded in `docs/PHASE2.md` §3);
+  35% full camera-photo pipeline — perspective/curvature/ink/paper/soft shadows/lighting/
+  noise; preview grid gate: `augment.py --out ...`), `modeling.py` (the overfit-10-proven
+  model/tokenizer/generation wiring, shared so train and eval can't drift), `train.py`
+  (full fine-tune from original weights, AMP, warmup+cosine, split-by-piece loaders,
+  per-worker RNG reseeding, val loop, best/last checkpoint + resume for Colab), and
+  `eval_omr.py` (headline per-class AEU accidental accuracy + SER + exact-match, id-space
+  Levenshtein alignment; appends to `<ckpt>/eval.jsonl`). Verified on the Mac (MPS):
+  train → resume (optimizer/scheduler state carried) → eval all run; val loss fell
+  monotonically across the smoke checkpoints and the eval table/headline render correctly.
+- ✅ **Navigation-mark tokens (2026-07-06)** — segno 𝄋 / coda ⊕ / "D.C." / "Son": 4 new faithful
+  drawn-symbol tokens (`\segno` `\coda` `\dc` `\fine`), zero in SymbTr (like repeats) but routine
+  on real sheets and required for the Phase-4 da-capo expansion. Seeded injection
+  (`tools/render/navmarks.ts`, `navseed` URL param, 4–6 marks on ~70% of renders — density set
+  by simulating the audit floors before rendering, never stacked on repeat/volta measures),
+  SheetView drawing (Bravura glyphs + italic text, above/below variants),
+  labels at the drawn measure edge, decoder round-trip, audit floors
+  (`audit_coverage.py`: nav share ≥2%, per-token train/val floors). Verified live: labels ==
+  pixels on gamzedeyim across seeds/modes. **Also new: `docs/PIPELINE.md`** — the full
+  page-photo → strips → decode → stitch → note-model inference design (Rung 4) + the Rung-3
+  real-photo collection/labeling plan.
+- ✅ **strips_v2_1 re-render: DONE, AUDIT PASS (2026-07-06)** — 18,627 strips / 470 MB, all 150
+  pieces, zero render errors. Adds the nav-mark tokens (all floors cleared: train 220–392, val
+  25–45 per token; 6.4% nav strips) and the **centered-rest fix** (`alignRests` off — rests were
+  floating near the top line, unlike printed sheets). Real-tokenizer length gate: longest 57 ids,
+  0 over (audit now measures with the training-time vocabulary — `add_tokens(ADDED_TOKENS)` —
+  since the overfit10 checkpoint's tokenizer predates the nav tokens). v2 remains on disk;
+  v2_1 supersedes it for training.
+- ⏳ Next: **Rung 2 — the scaled fine-tune on Colab Pro** on `strips_v2_1` from the original
+  pretrained weights (recipe + Colab commands in `train.py`'s docstring: zip the strips to the
+  VM disk, checkpoints to Drive, `--num-workers 2`; shake out on free tier before paying).
+  Judge with `eval_omr.py` on `<out>/best`. Then Rung 3: real photos (collection/labeling plan:
+  `docs/PIPELINE.md` §3).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
@@ -403,4 +434,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-05._
+_Last updated: 2026-07-06._

@@ -22,6 +22,7 @@ import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
+import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { respellAeu } from "../../../tools/render/respell";
 
 type ViewMode = "roll" | "sheet";
@@ -45,7 +46,7 @@ const SAMPLES: { label: string; file: string }[] = [
 
 // Render-automation parameters: the batch renderer (tools/render/render.ts) drives the harness
 // with one page.goto per job instead of UI clicks, e.g.
-//   /?score=/scores/foo.json&mode=keysig&lyrics=0&transpose=-4&repseed=123&textseed=456
+//   /?score=/scores/foo.json&mode=keysig&lyrics=0&transpose=-4&repseed=123&navseed=789&textseed=456
 // Read once at load (each render job is a fresh page); all absent in interactive use.
 const RENDER_PARAMS = new URLSearchParams(window.location.search);
 const URL_SCORE = RENDER_PARAMS.get("score"); // path under apps/web/public/
@@ -53,6 +54,7 @@ const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" 
 const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
 const URL_TRANSPOSE = Number(RENDER_PARAMS.get("transpose") ?? 0) || 0; // commas
 const URL_REPSEED = RENDER_PARAMS.has("repseed") ? Number(RENDER_PARAMS.get("repseed")) : null;
+const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("navseed")) : null;
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
 const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
 // Stable object identity (SheetView's engrave effect depends on it; an inline literal would
@@ -119,7 +121,7 @@ export function App() {
   // a stale layout — the renderer waits for `applied` instead of sleeping a fixed 300 ms.
   const renderTag = JSON.stringify({
     score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
-    repseed: URL_REPSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
+    repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
   });
   const renderTagRef = useRef(renderTag);
   renderTagRef.current = renderTag;
@@ -215,6 +217,15 @@ export function App() {
     return showRepeats ? detectRepeats(drawn) : undefined;
   }, [showRepeats, displayDoc, doc]);
 
+  // Injected navigation marks (segno/coda/D.C./Son — Rung-2 coverage; SymbTr has none, so there
+  // is nothing to detect). URL-driven only, like the other render-automation seeds. Depends on
+  // the repeat spans: injection keeps nav marks off repeat/volta measures (shared drawing band).
+  const navMarks = useMemo<NavMark[] | undefined>(() => {
+    const drawn = displayDoc ?? doc;
+    if (!drawn || URL_NAVSEED == null) return undefined;
+    return injectNavMarks(drawn, URL_NAVSEED, repeatSpans ?? []);
+  }, [displayDoc, doc, repeatSpans]);
+
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
   const beatMs = useMemo(() => (doc ? beatMsOf(doc) : 0), [doc]);
@@ -224,9 +235,9 @@ export function App() {
   const strips = useMemo<ExportStrip[]>(() => {
     const drawn = displayDoc ?? doc;
     return drawn && layout
-      ? buildStrips(drawn, layout.boxes, accidentalMode === "keysig" ? "keysig" : "every", repeatSpans)
+      ? buildStrips(drawn, layout.boxes, accidentalMode === "keysig" ? "keysig" : "every", repeatSpans, navMarks)
       : [];
-  }, [repeatSpans, displayDoc, doc, layout, accidentalMode]);
+  }, [repeatSpans, navMarks, displayDoc, doc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
   // Expose the strips + score meta + applied render config for the Playwright batch exporter
   // (tools/render/render.ts). `applied` is true only once the engraved layout matches the
@@ -237,7 +248,7 @@ export function App() {
       __omrMeta?: { makam: string; name: string };
       __omrConfig?: {
         score: string; mode: AccidentalMode; lyrics: boolean; transpose: number;
-        repseed: number | null; textseed: number | null; respellseed: number | null;
+        repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null;
         applied: boolean;
       };
     };
@@ -245,7 +256,7 @@ export function App() {
     if (doc) w.__omrMeta = { makam: doc.makam, name: doc.name };
     w.__omrConfig = {
       score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
-      repseed: URL_REPSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
+      repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
       applied: layoutTag === renderTag,
     };
   }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
@@ -598,6 +609,7 @@ export function App() {
                 onLayout={onLayout}
                 highlightRect={selectedStrip?.rect ?? null}
                 repeatSpans={repeatSpans}
+                navMarks={navMarks}
                 textNoise={TEXT_NOISE}
               />
               <StripPanel

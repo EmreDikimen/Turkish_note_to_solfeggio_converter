@@ -83,3 +83,14 @@ loop in JS, in a real (headless Chromium) browser.
   reload (`TokenizersBackend` class name + list-typed `extra_special_tokens`) — `overfit10.py
   --save-dir` sanitizes it on save. Vite must not pre-bundle `onnxruntime-web`
   (`optimizeDeps.exclude`), or its import.meta.url-relative wasm loading breaks.
+
+## Rung 2 — training-kit smoke test (2026-07-06): PASS
+Wiring shakeout of the scaled fine-tune scripts on the Mac (MPS) before paying for Colab —
+`train.py` (fresh run) → `train.py --resume` (optimizer/scheduler state carried across the
+restart) → `eval_omr.py` on the smoke checkpoint all ran end-to-end.
+- Val loss fell monotonically across the smoke checkpoints (tiny subset — proves the loop,
+  not the model; generalization numbers come from the real Colab run).
+- `eval_omr.py` table + headline metric (per-class AEU accidental accuracy) render correctly
+  and append to `<ckpt>/eval.jsonl`.
+- Verdict: **GO** — next entry here should be the real Rung-2 Colab result (judge
+  `<out>/best` with `eval_omr.py`; recipe in `train.py`'s docstring).

@@ -31,7 +31,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from data import ADDED_TOKENS, StripDataset, check_token_drift
 
 AEU = ADDED_TOKENS[:8]
-STRUCT = ["\\natural", "\\sig", "\\repstart", "\\repend", "\\volta1", "\\volta2", "|"]
+STRUCT = ["\\natural", "\\sig", "\\repstart", "\\repend", "\\volta1", "\\volta2",
+          "\\segno", "\\coda", "\\dc", "\\fine", "|"]
+NAV = ["\\segno", "\\coda", "\\dc", "\\fine"]
 MAX_IDS = 59  # incl. EOS; decoder max_length is 60 (one slot for the decoder-start id)
 
 # DoD thresholds (docs/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
@@ -45,6 +47,11 @@ MIN_VAL_BUYUK = 15
 MIN_MULTI_MEASURE_SHARE = 0.35  # of every-mode strips
 MIN_BARLINE_SHARE = 0.40        # of all labels
 MIN_REPEAT_SHARE = 0.05
+# Navigation marks are single measure-edge glyphs (repeat signs are 2–4-measure SPANS), so far
+# fewer strips carry one; the per-token floors below are what actually guards trainability.
+MIN_NAV_SHARE = 0.02
+MIN_TRAIN_PER_NAV = 100
+MIN_VAL_PER_NAV = 10
 
 
 def token_counts(rows: list[dict]) -> Counter:
@@ -84,13 +91,16 @@ def main() -> int:
         failures.append(f"barline share {barline:.1%} < {MIN_BARLINE_SHARE:.0%}")
 
     rep = sum(1 for r in rows if "\\repstart" in r["label"] or "\\repend" in r["label"]) / n
+    nav = sum(1 for r in rows if any(t in r["label"].split() for t in NAV)) / n
     lyr = sum(1 for r in rows if r.get("lyrics")) / n
     modes = Counter(r["mode"] for r in rows)
     transposes = Counter(r.get("transpose", 0) for r in rows)
-    print(f"repeat-token strips: {rep:.1%}   lyric strips: {lyr:.1%}   modes: {dict(modes)}")
+    print(f"repeat-token strips: {rep:.1%}   nav-token strips: {nav:.1%}   lyric strips: {lyr:.1%}   modes: {dict(modes)}")
     print(f"transposes: {dict(sorted(transposes.items()))}")
     if rep < MIN_REPEAT_SHARE:
         failures.append(f"repeat share {rep:.1%} < {MIN_REPEAT_SHARE:.0%}")
+    if nav < MIN_NAV_SHARE:
+        failures.append(f"nav-mark share {nav:.1%} < {MIN_NAV_SHARE:.0%}")
 
     # --- token coverage ----------------------------------------------------
     split = json.loads(Path(args.split).read_text()) if args.split else None
@@ -114,6 +124,11 @@ def main() -> int:
                 failures.append(f"{tok}: train {counts['train'][tok]} < {MIN_TRAIN_PER_CLASS}")
             if counts["val"][tok] < floor_val:
                 failures.append(f"{tok}: val {counts['val'][tok]} < {floor_val}")
+        for tok in NAV:
+            if counts["train"][tok] < MIN_TRAIN_PER_NAV:
+                failures.append(f"{tok}: train {counts['train'][tok]} < {MIN_TRAIN_PER_NAV}")
+            if counts["val"][tok] < MIN_VAL_PER_NAV:
+                failures.append(f"{tok}: val {counts['val'][tok]} < {MIN_VAL_PER_NAV}")
 
     # --- drift + real-tokenizer length gate ---------------------------------
     ds = StripDataset(strips_dir)
@@ -124,6 +139,10 @@ def main() -> int:
         from transformers import AutoProcessor
 
         tok = AutoProcessor.from_pretrained(args.tokenizer).tokenizer
+        # Measure with the TRAINING-TIME vocabulary: modeling.py adds ADDED_TOKENS before every
+        # run, so a checkpoint tokenizer predating a token (e.g. the nav marks vs. overfit10)
+        # would split it into ~5 ids and fail good labels. add_tokens is idempotent.
+        tok.add_tokens(ADDED_TOKENS)
         eos = tok.eos_token_id
         too_long = 0
         longest = 0

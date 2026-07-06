@@ -23,6 +23,7 @@ import {
 } from "../../../tools/render/lilypond";
 import { decodePretty } from "../../../tools/render/decode";
 import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
+import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
 
 /** One measure's on-screen rectangle, as reported by SheetView's `onLayout`. */
 export interface LayoutBox {
@@ -60,6 +61,8 @@ export function buildStrips(
   // Fold-detected repeat spans (must be the SAME ones SheetView draws): the labels then carry the
   // repeat tokens at the drawn positions. Undefined/empty = no repeat signs on the sheet.
   repeatSpans?: RepeatSpan[],
+  // Injected navigation marks (again the SAME ones SheetView draws) — see navmarks.ts.
+  navMarks?: NavMark[],
   { maxMeasures = STRIP_BUDGET.maxMeasures, maxTokens = STRIP_BUDGET.maxTokens }: { maxMeasures?: number; maxTokens?: number } = {},
 ): ExportStrip[] {
   const byIndex = new Map(groupMeasures(doc).map((m) => [m.index, m]));
@@ -96,10 +99,11 @@ export function buildStrips(
     let tokens = sigPrefix ? sigPrefix.tokens : 0;
     for (const b of row) {
       const m = byIndex.get(b.index);
-      // Measure cost = its notes + any repeat tokens drawn on it (begin/end barline, volta).
+      // Measure cost = its notes + any repeat/navigation tokens drawn on it.
       const marks = repeatMarksAt(b.index, repeatSpans);
+      const nav = navMarksAt(b.index, navMarks);
       const repCost = (marks.repStart ? 1 : 0) + (marks.repEnd ? 1 : 0) + (marks.volta1 ? 1 : 0) + (marks.volta2 ? 1 : 0);
-      const t = (m ? serializeMeasure(m, sigMap).tokens : 0) + repCost;
+      const t = (m ? serializeMeasure(m, sigMap).tokens : 0) + repCost + nav.start.length + nav.end.length;
       if (chunk.length > 0 && (chunk.length >= maxMeasures || tokens + t + 1 > maxTokens)) {
         chunks.push(chunk);
         chunk = [];
@@ -115,7 +119,7 @@ export function buildStrips(
     for (const [ci, c] of keep.entries()) {
       const ms = c.map((b) => byIndex.get(b.index)).filter((m): m is Measure => !!m);
       if (ms.length === 0) continue;
-      const body = serializeMeasures(ms, sigMap, repeatSpans);
+      const body = serializeMeasures(ms, sigMap, repeatSpans, navMarks);
       // A SINGLE measure denser than the token budget can't be split (crops must fall on
       // barlines) and can't be trained (its label exceeds the decoder's max_length, so
       // generation could never reach EOS) — drop it rather than emit a poisoned sample.

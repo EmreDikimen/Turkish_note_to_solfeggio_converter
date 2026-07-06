@@ -49,9 +49,16 @@ SymbTr → note-model → (TS) render staff PNG ─► (Python) fine-tune (image
   cap (notes go missing), and extreme wide-short strips get squashed on resize, blurring beam/flag
   detail so durations flip (8th↔16th). Both were observed in the Step-1 tests.
 - **Pitch augmentation:** core `transpose(doc, commas)` — render each piece at several transpositions.
-- **Image augmentation (Python/OpenCV):** rotation, perspective warp, blur, paper texture, ink
-  bleed, lighting gradients, JPEG noise, slight staff curvature. ⚠️ **This decides success more than
-  the model architecture.**
+- **Image augmentation (Python/OpenCV+albumentations, on-the-fly in the training loader):**
+  ⚠️ **This decides success more than the model architecture** — and it must match what users
+  actually upload: **mostly WEB SCREENSHOTS** (scores viewed in a browser/PDF — clean geometry,
+  flat white, only resampling/JPEG damage); camera photos of printed pages are the minority
+  (user, 2026-07-06). So `src/vision/augment.py` mixes two profiles at `PHOTO_SHARE = 0.35`:
+  **screenshot** (65%: down-up rescale softness, JPEG, tiny brightness/contrast, light noise;
+  a slice passes nearly clean) and **photo** (35%: rotation, perspective warp, staff curvature,
+  ink bleed/fade, paper texture, soft shadows, lighting gradients, blur, sensor noise, JPEG).
+  Revisit the ratio at Rung 3 against real usage. Preview grid (the human gate on strength):
+  `python src/vision/augment.py --out data/synthetic/aug_preview.png`.
 
 ## 4. Step 1 — evaluate the candidate model FIRST (the gate)
 Before building any pipeline, download `omr_transformer` and check the things that decide everything
@@ -149,6 +156,19 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
     duplicate pass is invisible to 1–3-measure strips). ✅ **Random injection DONE (2026-07-05)**:
     `injectRepeats` (same file) adds 2–4 seeded spans on ~half of renders; 6.4% of v2 strips carry
     repeat tokens.
+- **Navigation marks (segno 𝄋 / coda ⊕ / "D.C." / "Son") — same story as repeats, closed
+  2026-07-06:** zero in SymbTr, but routine on real sheets (the neyzen.com engravings use the
+  ⊕-jump + D.C. + Son form constantly), and without them the flatten/expand step can't finish a
+  da-capo piece. **4 new faithful drawn-symbol tokens** — `\segno` `\coda` `\dc` `\fine` —
+  injected like repeats (`tools/render/navmarks.ts`: seeded 4–6 marks on ~70% of renders via
+  `navseed` — denser than a real page on purpose; at 2–4-marks/50% the rarer tokens simulated
+  UNDER the audit floors — coda as an end→start ⊕ pair, D.C./Son above OR below the staff,
+  never stacked on repeat/volta measures). Drawn in SheetView (Bravura glyphs + italic text), labeled at the drawn
+  measure edge, decoded in `decode.ts`, audited with per-token floors (`audit_coverage.py`).
+  ✅ **Re-rendered same day: `data/synthetic/strips_v2_1/` (18,627 strips), audit PASS** —
+  injection density was set by SIMULATING the audit floors first (at the initial 2–4 marks on
+  ~50% the rarer tokens came in under floor; shipped at 4–6 on ~70%). Also baked in: the
+  centered-rest engraving fix (`alignRests` off in SheetView). Train on v2_1, not v2.
 - **Strip-length coverage gap:** ✅ **CLOSED (2026-07-05)** — cap raised 46→56 (`STRIP_BUDGET`,
   one shared constant) and piece selection targets sparse pieces. Measured on the v2 render:
   39.9% of every-mode strips span 2–4 measures; `|` in 40.7% of labels. Two hard facts learned:
@@ -178,8 +198,12 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
       repeat-sign tokens + multi-measure coverage — audit PASS (ROADMAP §7).
 - [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
       `src/vision/` has the eval script, the dataset wiring (`data.py`), the overfit-10 gate
-      (`overfit10.py`), the ONNX-gate scripts, and the coverage audit (`audit_coverage.py`);
-      the scaled Colab training + eval scripts are the remaining TODO.
+      (`overfit10.py`), the ONNX-gate scripts, and the coverage audit (`audit_coverage.py`).
+- [x] **Rung-2 training kit (2026-07-06):** `augment.py` (two-profile screenshot/photo
+      augmentation, §3), `modeling.py` (shared model/tokenizer setup — the overfit-10-proven
+      wiring), `train.py` (full fine-tune, AMP, warmup+cosine LR, val loop, checkpoint/resume
+      for Colab), `eval_omr.py` (per-class AEU accuracy + SER via id-space Levenshtein
+      alignment). Smoke-tested on the Mac: train → resume → eval all run end-to-end.
 
 ## 8. Next action
 
@@ -189,8 +213,11 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 
 Short form: Rungs 0–1.5 are all **done** (model gate passed; overfit-10 **GO** 2026-07-02 — the
 two decode-wiring fixes live in `src/vision/data.py`/`overfit10.py` and carry forward; ONNX/browser
-gate **PASS** 2026-07-03 — see the ✅ markers in §5), and the **Rung-2 dataset upgrades are DONE**
-(`data/synthetic/strips_v2/`, coverage audit PASS 2026-07-05 — ROADMAP §7). **Next: Rung 2 — buy
-Colab Pro and scale**, per the §5 Rung-2 recipe: the training + eval scripts (per-class AEU
-accidental accuracy as the headline metric) with on-the-fly OpenCV/albumentations augmentation
-in the loader.
+gate **PASS** 2026-07-03 — see the ✅ markers in §5), the **Rung-2 dataset upgrades are DONE**
+(now **`data/synthetic/strips_v2_1/`**, coverage audit PASS 2026-07-06 — carries the
+navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — ROADMAP §7), and the
+**Rung-2 training kit is DONE + smoke-tested** (2026-07-06: `augment.py` / `modeling.py` /
+`train.py` / `eval_omr.py`, screenshot-dominant augmentation per §3). **Next: Rung 2 — buy
+Colab Pro and run the scaled fine-tune on `strips_v2_1`** (shake out on free tier first; recipe
+in `train.py`'s docstring). The full-page inference pipeline + Rung-3 real-photo plan live in
+`docs/PIPELINE.md`.

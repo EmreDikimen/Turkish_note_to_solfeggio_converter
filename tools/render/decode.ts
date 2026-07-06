@@ -22,15 +22,24 @@ import {
   REP_END_TOKEN,
   VOLTA1_TOKEN,
   VOLTA2_TOKEN,
+  SEGNO_TOKEN,
+  CODA_TOKEN,
+  DC_TOKEN,
+  FINE_TOKEN,
 } from "./lilypond";
 
-/** Repeat-sign tokens → their readable glyph. Structural markers: they never affect how the
- *  surrounding notes resolve (Phase 4 expands them; here they just round-trip for verification). */
+/** Repeat-sign + navigation tokens → their readable glyph. Structural markers: they never affect
+ *  how the surrounding notes resolve (Phase 4 expands them; here they just round-trip for
+ *  verification). */
 const REPEAT_GLYPH: Record<string, string> = {
   [REP_START_TOKEN]: "‖:",
   [REP_END_TOKEN]: ":‖",
   [VOLTA1_TOKEN]: "volta1.",
   [VOLTA2_TOKEN]: "volta2.",
+  [SEGNO_TOKEN]: "𝄋",
+  [CODA_TOKEN]: "⊕",
+  [DC_TOKEN]: "D.C.",
+  [FINE_TOKEN]: "Son",
 };
 
 const TOKEN_TO_ALTER: Record<string, number> = Object.fromEntries(

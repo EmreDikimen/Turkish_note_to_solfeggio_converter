@@ -61,8 +61,10 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
 - **Phase 2 — IN PROGRESS:** synthetic training data (VexFlow strips rendered from SymbTr) +
   **fine-tuning a pretrained OMR model** (`omr_transformer`) to add the Turkish microtonal
   accidentals. All de-risk gates passed: model eval, **overfit-10 GO**, **ONNX/browser gate PASS**
-  (int8 export decoded in-browser via `onnxruntime-web`, ~1.5 s/strip). Next: scaled fine-tuning
-  on Colab (Rung 2) — exact status in ROADMAP §7.
+  (int8 export decoded in-browser via `onnxruntime-web`, ~1.5 s/strip). The Rung-2 dataset
+  (`strips_v2`, coverage audit PASS) and the training kit (`augment.py` / `modeling.py` /
+  `train.py` / `eval_omr.py`, smoke-tested end-to-end on the Mac) are done. Next: run the
+  scaled fine-tune on Colab Pro (Rung 2) — exact status in ROADMAP §7.
 
 ## Directory Structure
 
@@ -76,7 +78,7 @@ Current (monorepo as of Phase 1 — Python reference/data side + TypeScript core
 ├── src/                # Python (reference impl + training side)
 │   ├── symbtr/         # SymbTr .txt parser → Score/Event model + JSON export
 │   ├── audio/          # 53-TET tuning + synthesis (reference impl; ported to TS core)
-│   └── vision/         # OMR model eval, fine-tune wiring (overfit-10), ONNX export gates
+│   └── vision/         # OMR gates (model eval, overfit-10, ONNX) + Rung-2 training kit (augment/train/eval)
 ├── scripts/            # runnable Python entry points
 ├── tools/render/       # TS synthetic-data generator (strip labels + Playwright renderer)
 ├── packages/core/      # shared TypeScript: note model, tuning, synth scheduling

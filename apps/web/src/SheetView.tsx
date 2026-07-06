@@ -16,6 +16,7 @@ import {
   type NoteModelDocument,
 } from "@turkish-omr/core";
 import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
+import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
 import { buildTextNoise } from "./textNoise";
 
 // --- layout constants -------------------------------------------------------
@@ -235,6 +236,50 @@ function drawVolta(svg: SVGSVGElement, stave: Stave, label: string) {
   svg.appendChild(t);
 }
 
+// SMuFL codepoints for the navigation glyphs (Bravura, same raw-glyph path as the key signature).
+const NAV_GLYPH_CODEPOINT = { segno: 0xe047, coda: 0xe048 } as const;
+// Printed text of the navigation text marks ("Son" = the Turkish Fine, as on the real sheets).
+const NAV_TEXT = { dc: "D.C.", fine: "Son" } as const;
+
+/**
+ * Draw one measure's navigation marks (segno 𝄋 / coda ⊕ glyphs, "D.C." / "Son" text) as raw SVG,
+ * like the key signature and voltas. Start-edge marks sit above the measure's first note,
+ * end-edge marks at its right barline; `below` text marks go under the bottom staff line (both
+ * placements appear in real prints). Injection (navmarks.ts) keeps these off repeat/volta
+ * measures, so the above-staff band never stacks two kinds of ink.
+ */
+function drawNavMarks(svg: SVGSVGElement, stave: Stave, marks: { start: NavMark[]; end: NavMark[] }) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  for (const edge of ["start", "end"] as const) {
+    for (const m of marks[edge]) {
+      const t = document.createElementNS(SVG_NS, "text");
+      const atEnd = edge === "end";
+      if (m.type === "segno" || m.type === "coda") {
+        // Glyph baseline a touch above the top line; the glyph body extends upward, staying
+        // inside the strip-crop window (which starts ~46px above the top line — see drawVolta).
+        // End-edge glyphs are right-anchored so they stay inside the measure's crop rect.
+        t.setAttribute("x", String(atEnd ? stave.getX() + stave.getWidth() - 2 : Math.max(stave.getX() + 2, stave.getNoteStartX() - 4)));
+        t.setAttribute("y", String(stave.getYForLine(0) - 12));
+        t.setAttribute("font-family", "Bravura");
+        t.setAttribute("font-size", "22"); // ~2.5 staff spaces tall, like the printed sheets
+        if (atEnd) t.setAttribute("text-anchor", "end");
+        t.textContent = String.fromCodePoint(NAV_GLYPH_CODEPOINT[m.type]);
+      } else {
+        const y = m.below ? stave.getYForLine(4) + 18 : stave.getYForLine(0) - 16;
+        t.setAttribute("x", String(atEnd ? stave.getX() + stave.getWidth() - 2 : stave.getNoteStartX()));
+        t.setAttribute("y", String(y));
+        t.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
+        t.setAttribute("font-size", "13");
+        t.setAttribute("font-style", "italic");
+        if (atEnd) t.setAttribute("text-anchor", "end");
+        t.textContent = NAV_TEXT[m.type];
+      }
+      t.setAttribute("fill", "#222");
+      svg.appendChild(t);
+    }
+  }
+}
+
 /**
  * Draw one lyric syllable centered under a note, below the staff (like the original engraved
  * sheets). SymbTr stores the syllable per note; "." marks a melisma/continuation (no new text)
@@ -403,6 +448,7 @@ export function SheetView({
   onLayout,
   highlightRect,
   repeatSpans,
+  navMarks,
   textNoise,
 }: {
   doc: NoteModelDocument;
@@ -430,6 +476,9 @@ export function SheetView({
   /** Phase-2 preview: repeat barlines + volta brackets to draw (SymbTr has none, so these are
    *  synthesized — see repeats.ts). Empty/undefined → the default engraving, untouched. */
   repeatSpans?: RepeatSpan[];
+  /** Rung-2: navigation marks (segno/coda/D.C./Son) to draw — injected, SymbTr has none
+   *  (see navmarks.ts). Empty/undefined → none drawn. */
+  navMarks?: NavMark[];
   /** Rung-2 distractor text drawn INSIDE the SVG (so strip crops capture it) — see textNoise.ts.
    *  Pixels only; labels never see it. Undefined → no noise (interactive use). */
   textNoise?: { seed: number } | null;
@@ -572,6 +621,7 @@ export function SheetView({
         stave.setContext(ctx).draw();
         if (svg && repMarks.volta1) drawVolta(svg, stave, "1.");
         if (svg && repMarks.volta2) drawVolta(svg, stave, "2.");
+        if (svg && navMarks?.length) drawNavMarks(svg, stave, navMarksAt(cell.m.index, navMarks));
         // Playhead extent for this row, from the actual staff-line positions (the Stave's y
         // param is its bounding-box top, which sits well above the first staff line).
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
@@ -579,7 +629,11 @@ export function SheetView({
         try {
           const { notes, evs } = buildStaveNotes(cell.m, accidentalMode, signatureMap);
           if (notes.length > 0) {
-            Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: true, alignRests: true });
+            // alignRests OFF: it shifts rests vertically toward the surrounding melody (a
+            // multi-voice collision feature), floating them near the top line in this high
+            // repertoire. Real single-voice engraving — and the printed sheets the OMR must
+            // read — keeps rests centered at their standard staff position (b/4).
+            Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: true, alignRests: false });
             attachTitles(notes, evs);
             // Record each event's drawn x + row so the playhead can follow it. getAbsoluteX is
             // only valid after FormatAndDraw has positioned the notes.
@@ -639,7 +693,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, textNoise]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

@@ -1,4 +1,4 @@
-# Rung-2 dataset upgrades — manual checking guide
+# Rung-2 dataset & training upgrades — manual checking guide
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -17,6 +17,7 @@ drives it, and how you can reproduce any render exactly):
 | `lyrics` | `1` draw lyrics, `0` hide | `lyrics=0` |
 | `transpose` | chromatic shift in commas | `transpose=-4` |
 | `repseed` | integer → inject seeded repeat signs | `repseed=42` |
+| `navseed` | integer → inject seeded navigation marks (segno 𝄋 / coda ⊕ / "D.C." / "Son") | `navseed=1` |
 | `textseed` | integer → seeded distractor text | `textseed=7` |
 | `respellseed` | integer → seeded low-rate büyük-enharmonic respell (the batch renderer always sets it) | `respellseed=5` |
 
@@ -70,6 +71,26 @@ Open:
 - **Determinism:** reload the page — the signs must be at the *identical* measures every time.
 - **Wrong looks like:** a label carrying a repeat token whose sign isn't visible inside that
   strip's highlight rectangle, or signs moving between reloads.
+
+## Check 3b — seeded navigation-mark injection (segno / coda / D.C. / Son)
+
+Open:
+
+> http://localhost:5173/?score=/gamzedeyim-deva.json&mode=every&lyrics=0&navseed=42&repseed=99&respellseed=43
+
+- **Look for:** navigation marks drawn like the real neyzen.com sheets — this seed draws a
+  ⊕ **coda pair** (end of m31 → start of m40) and italic **"D.C."** at m12's and m52's right
+  barlines. Other seeds draw segno 𝄋 (e.g. `navseed=1`, m28) and "Son"; each render gets 4–6
+  marks, so no single seed shows every kind (text marks sit above OR below the staff — both
+  placements are injected on purpose).
+- **Faithful tokens:** click a strip showing a mark — its label must carry the matching token
+  (`\segno` `\coda` `\dc` `\fine`) at the drawn edge (start-edge marks before the measure's
+  notes, end-edge marks after). Strips without a visible mark must have no nav token.
+- **No stacking:** nav marks never appear on measures carrying repeat signs or volta brackets
+  (injection excludes them ±1 measure — they share the above-staff band).
+- **Determinism:** reload — identical marks at identical measures every time.
+- **Wrong looks like:** a clipped glyph at a crop edge, a token without its drawn mark (or vice
+  versa), or marks moving between reloads.
 
 ## Check 4 — distractor text (pixels only, never labels)
 
@@ -126,9 +147,31 @@ open data/synthetic/strips_v2/index.html
   low); ≥40% of labels containing `|`; `\repstart`/`\repend` in ≥5% of strips;
   **no label above 59 real tokenizer ids**; no piece in both splits.
 
+## Check 8 — augmentation preview grid (training kit)
+
+```bash
+.venv-ml/bin/python src/vision/augment.py --n 6 --out data/synthetic/aug_preview.png
+open data/synthetic/aug_preview.png
+```
+
+Each row is one strip; the columns are **original | screenshot | photo | photo** (two
+independent photo draws, since that profile varies the most).
+
+- **Look for:** the *screenshot* column staying geometrically clean — flat white, straight
+  staff, only a little rescale softness / JPEG fuzz (some slices come through nearly
+  untouched — that's intended, native screenshots often are clean). The *photo* columns may
+  tilt/curve/shade, but **every beam, flag and accidental must stay legible to your eye** —
+  if you can't tell an 8th from a 16th, the model can't either (the Step-1 tests showed
+  exactly that failure), so the amplitudes are too hot.
+- **Wrong looks like:** screenshot cells with rotation/paper/shadows (profile leak), photo
+  cells where noteheads merge with staff lines or accidentals smear beyond recognition, or
+  two runs with the same `--seed` producing different grids.
+- This is the human gate on augmentation strength — **look at it before spending GPU time**,
+  and re-check after any parameter tweak in `augment.py`.
+
 ---
 
 **Reproducing any strip later:** its manifest row carries `piece`, `transpose`, `mode`, `lyrics`,
-`repseed`, `textseed`, `respellseed` — paste them into the URL parameters above and you are looking
+`repseed`, `navseed`, `textseed`, `respellseed` — paste them into the URL parameters above and you are looking
 at the exact render that produced it (`respellseed` matters: the respell changes which accidental
 glyphs are drawn, so omitting it can show different signs than the strip's PNG).

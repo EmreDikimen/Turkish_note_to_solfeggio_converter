@@ -29,7 +29,8 @@
  *    decoder cap (see `docToStrips`).
  *
  * New tokens this format requires beyond the base vocab: the 8 accidental tokens, `\natural`,
- * `\sig`/`\sigend`, the 4 repeat-sign tokens (`\repstart`/`\repend`/`\volta1`/`\volta2`), `|`, and
+ * `\sig`/`\sigend`, the 4 repeat-sign tokens (`\repstart`/`\repend`/`\volta1`/`\volta2`), the
+ * 4 navigation-mark tokens (`\segno`/`\coda`/`\dc`/`\fine` — see navmarks.ts), `|`, and
  * the digit `3` (the base vocab lacks `3`, so it can't write "32" for 32nd notes — see MODEL_EVAL.md).
  */
 
@@ -43,6 +44,7 @@ import {
   type NoteModelDocument,
 } from "@turkish-omr/core";
 import { repeatMarksAt, type RepeatSpan } from "./repeats";
+import { navMarksAt, type NavMark } from "./navmarks";
 
 /** AEU-snapped alteration (commas) → the LilyPond accidental token. toAeuAlter only yields ±1/4/5/8. */
 export const AEU_TOKEN: Record<number, string> = {
@@ -64,6 +66,21 @@ export const REP_START_TOKEN = "\\repstart";
 export const REP_END_TOKEN = "\\repend";
 export const VOLTA1_TOKEN = "\\volta1";
 export const VOLTA2_TOKEN = "\\volta2";
+/** Navigation marks, faithful drawn symbols like the repeat signs: the segno/coda glyphs (𝄋 ⊕)
+ *  and the "D.C." / "Son" text marks (Son = the Turkish Fine). SymbTr has none, so they are
+ *  injected — see navmarks.ts. One token per drawn mark, emitted at its measure edge. */
+export const SEGNO_TOKEN = "\\segno";
+export const CODA_TOKEN = "\\coda";
+export const DC_TOKEN = "\\dc";
+export const FINE_TOKEN = "\\fine";
+
+/** NavMark type → its label token. */
+export const NAV_TOKEN: Record<NavMark["type"], string> = {
+  segno: SEGNO_TOKEN,
+  coda: CODA_TOKEN,
+  dc: DC_TOKEN,
+  fine: FINE_TOKEN,
+};
 
 /**
  * Shared strip-packing budget — the ONE place the cap lives (both `docToStrips` and the browser
@@ -83,6 +100,10 @@ export const ADDED_TOKENS: string[] = [
   REP_END_TOKEN,
   VOLTA1_TOKEN,
   VOLTA2_TOKEN,
+  SEGNO_TOKEN,
+  CODA_TOKEN,
+  DC_TOKEN,
+  FINE_TOKEN,
   "|",
   "3",
 ];
@@ -189,11 +210,16 @@ export function serializeMeasure(m: Measure, signature?: SignatureMap): { label:
  * (or open/close the strip when the sign sits on the crop edge); `\volta1`/`\volta2` precede the
  * bracketed measure's first note. A strip overlapping only one end of a repeat gets only that
  * end's token — label == pixels, exactly like the accidentals.
+ *
+ * `navMarks` (from `injectNavMarks` — again the SAME marks SheetView draws) adds the navigation
+ * tokens at their drawn edges: start-edge marks (𝄋 / ⊕ over the first note) right before the
+ * measure's notes, end-edge marks (⊕ / "D.C." / "Son" at the right barline) right after them.
  */
 export function serializeMeasures(
   ms: Measure[],
   signature?: SignatureMap,
   repeatSpans?: readonly RepeatSpan[],
+  navMarks?: readonly NavMark[],
 ): { label: string; tokens: number } {
   const parts: string[] = [];
   let tokens = 0;
@@ -204,16 +230,20 @@ export function serializeMeasures(
 
   ms.forEach((m, i) => {
     const marks = repeatMarksAt(m.index, repeatSpans);
+    const nav = navMarksAt(m.index, navMarks);
     const prevEnds = i > 0 && repeatMarksAt(ms[i - 1]!.index, repeatSpans).repEnd;
     // Boundary at this measure's left edge: repeat barlines replace the plain `|`.
     if (prevEnds) push(REP_END_TOKEN, 1);
     if (marks.repStart) push(REP_START_TOKEN, 1);
     else if (i > 0 && !prevEnds) push("|", 1);
-    // Volta bracket over this measure.
+    // Marks over this measure's opening: volta bracket, then start-edge nav marks (𝄋 / ⊕).
     if (marks.volta1) push(VOLTA1_TOKEN, 1);
     if (marks.volta2) push(VOLTA2_TOKEN, 1);
+    for (const nm of nav.start) push(NAV_TOKEN[nm.type], 1);
     const body = serializeMeasure(m, signature);
     push(body.label, body.tokens);
+    // Marks at this measure's right barline (⊕ / "D.C." / "Son").
+    for (const nm of nav.end) push(NAV_TOKEN[nm.type], 1);
   });
   // The `:‖` on the strip's right edge (the crop ends exactly at that barline).
   if (ms.length > 0 && repeatMarksAt(ms[ms.length - 1]!.index, repeatSpans).repEnd) push(REP_END_TOKEN, 1);

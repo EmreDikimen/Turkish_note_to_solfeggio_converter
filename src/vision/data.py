@@ -29,13 +29,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Mirrors ADDED_TOKENS in tools/render/lilypond.ts (8 AEU accidentals + natural + signature
-# delimiters + 4 repeat-sign tokens + barline + the digit `3`, which the base vocab lacks).
+# delimiters + 4 repeat-sign tokens + 4 navigation-mark tokens (segno/coda/D.C./Son — see
+# tools/render/navmarks.ts) + barline + the digit `3`, which the base vocab lacks).
 # Keep in sync by hand; `check_token_drift` catches a mismatch against the actual rendered labels.
 ADDED_TOKENS: list[str] = [
     "\\komaSharp", "\\bakiyeSharp", "\\kucukSharp", "\\buyukSharp",
     "\\komaFlat", "\\bakiyeFlat", "\\kucukFlat", "\\buyukFlat",
     "\\natural", "\\sig", "\\sigend",
     "\\repstart", "\\repend", "\\volta1", "\\volta2",
+    "\\segno", "\\coda", "\\dc", "\\fine",
     "|", "3",
 ]
 

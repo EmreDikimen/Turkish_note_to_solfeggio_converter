@@ -7,6 +7,8 @@
  * scripts/select_pieces.py; scores exported by scripts/export_scores.py):
  *   - lyrics drawn ⟺ transpose 0 and the piece has lyrics (≈ a third of renders);
  *   - repeat signs injected on a seeded ~50% of renders (seed = hash("slug:t"));
+ *   - navigation marks (segno/coda/D.C./Son) injected on an independent seeded ~50%
+ *     (seed = hash("slug:t:nav"));
  *   - distractor text + the low-rate büyük respell always on (seeds hashed the same way).
  * Any strip can be reproduced later by pasting its manifest row's fields into the harness URL —
  * see docs/MANUAL_CHECKS.md.
@@ -55,6 +57,7 @@ interface Job {
   mode: "every" | "keysig";
   lyrics: boolean;
   repseed: number | null;
+  navseed: number | null;
   textseed: number;
   respellseed: number;
 }
@@ -76,6 +79,7 @@ function jobsFor(piece: PieceEntry): Job[] {
   const jobs: Job[] = [];
   for (const t of piece.transposes) {
     const repseed = hashStr(`${piece.slug}:${t}`);
+    const navseed = hashStr(`${piece.slug}:${t}:nav`);
     for (const mode of ["every", "keysig"] as const) {
       jobs.push({
         piece,
@@ -83,6 +87,7 @@ function jobsFor(piece: PieceEntry): Job[] {
         mode,
         lyrics: t === 0 && piece.hasLyrics,
         repseed: mulberry32(repseed)() < 0.5 ? repseed : null, // seeded coin: ~half get repeats
+        navseed: mulberry32(navseed)() < 0.7 ? navseed : null, // seeded coin: ~70% get nav marks (audit floors need the density)
         textseed: hashStr(`${piece.slug}:${t}:text`),
         respellseed: hashStr(`${piece.slug}:${t}:respell`),
       });
@@ -101,6 +106,7 @@ function jobUrl(job: Job): string {
     respellseed: String(job.respellseed),
   });
   if (job.repseed != null) q.set("repseed", String(job.repseed));
+  if (job.navseed != null) q.set("navseed", String(job.navseed));
   return `${URL}/?${q}`;
 }
 
@@ -119,13 +125,13 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
       return (
         c && c.applied && c.score === want.score && c.mode === want.mode &&
         c.lyrics === want.lyrics && c.transpose === want.transpose &&
-        c.repseed === want.repseed && c.textseed === want.textseed &&
-        c.respellseed === want.respellseed
+        c.repseed === want.repseed && c.navseed === want.navseed &&
+        c.textseed === want.textseed && c.respellseed === want.respellseed
       );
     },
     {
       score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose,
-      repseed: job.repseed, textseed: job.textseed, respellseed: job.respellseed,
+      repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
     },
     { timeout: 20000 },
   );
@@ -160,7 +166,7 @@ async function renderPiece(page: Page, piece: PieceEntry, shardPath: string): Pr
       appendFileSync(shardPath, JSON.stringify({
         image: `${name}.png`, label: s.label, mode: job.mode, makam: piece.makam,
         piece: piece.slug, transpose: job.transpose, lyrics: job.lyrics,
-        repseed: job.repseed, textseed: job.textseed, respellseed: job.respellseed,
+        repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
         from: s.fromMeasure, to: s.toMeasure,
       }) + "\n");
       count++;

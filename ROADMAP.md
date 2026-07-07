@@ -426,10 +426,29 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   `scripts/make_colab_zip.sh` (one self-contained 320 MB upload: training kit + split +
   strips_v2_1; layout verified by unzip + StripDataset load). All `--strips-dir` defaults now
   point at v2_1.
-- ⏳ Next: **Rung 2 — run it on Colab** per `docs/COLAB.md`: free-tier shakeout cell, buy Pro,
-  full run (defaults; `--batch-size 16` on L4/A100), judge with `eval_omr.py` on `<out>/best`
-  (headline: per-class AEU accuracy). Then Rung 3: real photos (collection/labeling plan:
-  `docs/PIPELINE.md` §3).
+- ✅ **Rung 2 — PASS (2026-07-07), first try:** scaled fine-tune on Colab Pro (`strips_v2_1`,
+  batch 16, lr 3e-5, 6000 steps ≈ 110 min; best val loss 0.0045 @ step 4000, flat after — no
+  overfit). `eval_omr.py` on the 2,384 val strips (unseen pieces, free-running generation):
+  **headline mean per-class AEU accidental accuracy 99.9% (8/8 classes; büyükFlat 100% at 35
+  gold)**, SER 0.001 (S17 D84 I39 / N95,316), exact-match 96.8%; nav marks ≥96% each, repeat
+  signs 100%. Weakest token: `\sig`/`\sigend` 95.5% recall — largely the known **empty-signature
+  ambiguity** (an every-mode row-start crop of a signature-less piece is pixel-identical to a
+  keysig-mode one, but only the latter's label has `\sig \sigend`; benign downstream — the
+  Phase-4 decoder treats an empty sig block as none). Full log: `src/vision/MODEL_EVAL.md`.
+  Model: Drive `MyDrive/tnc/rung2/best`. **The CRNN+CTC fallback is retired for accuracy
+  reasons too.**
+- ⏳ **Next: ONNX-export the Rung-2 model** (decided 2026-07-07; Rung-3 photo COLLECTION can
+  run in parallel, but the export comes first — it unblocks Rung-4 wiring AND the Rung-3
+  model-assisted labeling loop, and it's ~a day of mechanical work with existing scripts).
+  The checkpoint is LOCAL and load-verified: **`data/checkpoints/rung2-best/`** (gitignored;
+  547 MB model + 1.1 GB `trainer_state.pt` — the latter is only training-resume state, ignore
+  it for export; Drive `MyDrive/tnc/rung2/best` is the backup copy). Rerun the proven Rung-1.5
+  pipeline against it: `optimum-cli` ONNX export (encoder / decoder / decoder-with-past) →
+  int8 dynamic quantization → `src/vision/onnx_parity.py` (ONNX == PyTorch == label, fp32 +
+  int8) → `src/vision/make_browser_gate.py` + `apps/web/omr-gate.html` in a real browser —
+  exact commands/settings in `src/vision/MODEL_EVAL.md` (Rung-1.5 entry, incl. its wiring
+  notes). Gate strips should now decode with REAL Turkish accidentals. After that: Rung 3
+  labeling loop (`docs/PIPELINE.md` §3).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
@@ -439,4 +458,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-06._
+_Last updated: 2026-07-07._

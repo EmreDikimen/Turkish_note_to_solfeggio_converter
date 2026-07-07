@@ -62,9 +62,9 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   **fine-tuning a pretrained OMR model** (`omr_transformer`) to add the Turkish microtonal
   accidentals. All de-risk gates passed: model eval, **overfit-10 GO**, **ONNX/browser gate PASS**
   (int8 export decoded in-browser via `onnxruntime-web`, ~1.5 s/strip). The Rung-2 dataset
-  (`strips_v2`, coverage audit PASS) and the training kit (`augment.py` / `modeling.py` /
-  `train.py` / `eval_omr.py`, smoke-tested end-to-end on the Mac) are done. Next: run the
-  scaled fine-tune on Colab Pro (Rung 2) — exact status in ROADMAP §7.
+  (`strips_v2_1`, coverage audit PASS) and the training kit (`augment.py` / `modeling.py` /
+  `train.py` / `eval_omr.py`, smoke-tested end-to-end on the Mac) are done. The scaled
+  fine-tune (Rung 2) is **running on Colab Pro** as of 2026-07-07 — exact status in ROADMAP §7.
 
 ## Directory Structure
 

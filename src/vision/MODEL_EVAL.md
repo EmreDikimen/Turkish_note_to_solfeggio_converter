@@ -94,3 +94,28 @@ restart) → `eval_omr.py` on the smoke checkpoint all ran end-to-end.
   and append to `<ckpt>/eval.jsonl`.
 - Verdict: **GO** — next entry here should be the real Rung-2 Colab result (judge
   `<out>/best` with `eval_omr.py`; recipe in `train.py`'s docstring).
+
+## Rung 2 — scaled fine-tune on Colab (2026-07-07): PASS
+First real generalization test: full fine-tune from the original pretrained weights on
+`strips_v2_1` (16,243 train strips), judged by free-running generation on the 2,384 val strips
+of the 20 held-out pieces (`eval_omr.py`, id-space alignment).
+- **Run:** Colab Pro GPU, batch 16, lr 3e-5 (warmup 250 + cosine), 6,000 steps ≈ 110 min,
+  ~1.1 s/step. Val loss 0.0701 @500 → **0.0045 @4000 (best)**, flat 0.0045–0.0048 to the end —
+  converged, no overfit creep. Checkpoints on Drive: `MyDrive/tnc/rung2/{best,last}`.
+- **HEADLINE: mean per-class AEU accidental accuracy 99.9% (8/8 classes present).** Every class
+  ≥99.5% recall / ≥99.6% precision incl. büyükFlat (100%/100% at 35 gold — the low-rate respell
+  coverage was enough). Repeat signs 100%; nav marks segno 100/100, coda 97.8/100, dc 100/97.1,
+  fine 100/96.2; barline 99.9/100.
+- **SER 0.001** (S=17 D=84 I=39 over N=95,316 ids); **exact-match 2,308/2,384 = 96.8%**.
+- **Error taxonomy** (from --show-errors + the table): (1) spurious/missing `\sig \sigend` —
+  95.5% recall, dominated by the **empty-signature ambiguity**: an every-mode row-start crop of
+  a piece whose drawn signature is EMPTY is pixel-identical to the keysig-mode crop, but only
+  the keysig label carries `\sig \sigend`; the model can only guess. Benign for the product
+  (Phase-4 decoder: empty sig block == no sig block); if it ever matters, fix in DATA (emit
+  `\sig \sigend` on every-mode row starts too) — do not chase it with training. (2) occasional
+  dropped augmentation-blurred duration dots (`4.`→`4`). (3) rare mid-strip hallucinated note.
+- Cosmetic: `tokenizer.decode()` drops spaces after added tokens in the error printouts
+  (`\bakiyeSharpa'4`) — display only; metrics are computed in id space.
+- **Verdict: PASS — Rung 2 done first try. The CRNN+CTC fallback is retired (export gate
+  passed at Rung 1.5, accuracy gate passed here).** Next: Rung 3 real photos
+  (`docs/PIPELINE.md` §3) + ONNX export of `rung2/best` via the Rung-1.5 pipeline.

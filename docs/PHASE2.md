@@ -109,7 +109,9 @@ in the repertoire), so clef-less mid-row crops are fine.
   pass** and exports trivially. (Model hosting: serve the int8 ONNX files — **221 MB** total across
   the encoder / decoder / decoder-with-past graphs, per the actual Rung-1.5 export — from the
   **HuggingFace Hub CDN** — free; the browser downloads and caches them. No server needed.)
-- **Rung 2 — scale (Colab Pro — the Mac is fine for overfit-10, not for thousands of images through
+- **Rung 2 — scale (Colab Pro)** ✅ **PASS (2026-07-07, first try — headline 99.9% mean per-class
+  AEU accuracy, SER 0.001, exact-match 96.8% on the held-out pieces; full log in
+  `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired):** (the Mac is fine for overfit-10, not for thousands of images through
   143M params):** thousands of augmented strips, training **from the original pretrained weights**;
   **full fine-tune at a small LR** (AdamW, ~1e-5–5e-5) — freezing the encoder is a **memory/compute
   fallback, not the default**: our images (VexFlow engraving, later phone photos) don't look like the
@@ -217,8 +219,10 @@ gate **PASS** 2026-07-03 — see the ✅ markers in §5), the **Rung-2 dataset u
 (now **`data/synthetic/strips_v2_1/`**, coverage audit PASS 2026-07-06 — carries the
 navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — ROADMAP §7), and the
 **Rung-2 training kit is DONE + smoke-tested** (2026-07-06: `augment.py` / `modeling.py` /
-`train.py` / `eval_omr.py`, screenshot-dominant augmentation per §3). **Next: Rung 2 — buy
-Colab Pro and run the scaled fine-tune on `strips_v2_1`** — full first-timer walkthrough in
-**`docs/COLAB.md`** (plan choice: Pro, not Pro+), ready-made notebook
-`notebooks/rung2_colab.ipynb`, upload package via `scripts/make_colab_zip.sh`. The full-page
-inference pipeline + Rung-3 real-photo plan live in `docs/PIPELINE.md`.
+`train.py` / `eval_omr.py`, screenshot-dominant augmentation per §3). **Rung 2: PASS
+(2026-07-07, first Colab Pro run)** — headline **99.9% mean per-class AEU accidental accuracy**
+(8/8 classes), SER 0.001, exact-match 96.8% on the 20 held-out pieces; model at Drive
+`MyDrive/tnc/rung2/best`; full log + error taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN
+fallback is retired. **Next (ROADMAP §7): Rung 3 real photos (`docs/PIPELINE.md` §3) + ONNX
+export of `rung2/best` via the proven Rung-1.5 pipeline.** The full-page inference pipeline +
+Rung-3 real-photo plan live in `docs/PIPELINE.md`.

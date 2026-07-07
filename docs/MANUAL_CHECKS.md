@@ -122,8 +122,8 @@ Open:
 ## Check 6 — smoke render + contact sheet *(after step 6 exists)*
 
 ```bash
-npx tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/strips_v2 --from 0 --to 3
-open data/synthetic/strips_v2/index.html
+npx tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/strips_v2_1 --from 0 --to 3
+open data/synthetic/strips_v2_1/index.html
 ```
 
 - **The single most valuable check in the pipeline:** each card shows a strip PNG, its raw label,
@@ -137,9 +137,10 @@ open data/synthetic/strips_v2/index.html
 ## Check 7 — split + audit *(after step 7 exists)*
 
 ```bash
-.venv-ml/bin/python scripts/make_split.py --strips data/synthetic/strips_v2
-.venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2 \
-    --split data/synthetic/strips_v2/split.json --tokenizer data/checkpoints/overfit10
+# split-by-piece is already committed at data/split.json — only re-run make_split.py if the
+# piece list itself changes
+.venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2_1 \
+    --split data/split.json --tokenizer data/checkpoints/overfit10
 ```
 
 - **Look for:** exit code 0; per-class counts vs the Definition-of-done targets (each AEU class

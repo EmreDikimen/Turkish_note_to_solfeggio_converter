@@ -64,7 +64,9 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   (int8 export decoded in-browser via `onnxruntime-web`, ~1.5 s/strip). The Rung-2 dataset
   (`strips_v2_1`, coverage audit PASS) and the training kit (`augment.py` / `modeling.py` /
   `train.py` / `eval_omr.py`, smoke-tested end-to-end on the Mac) are done. The scaled
-  fine-tune (Rung 2) is **running on Colab Pro** as of 2026-07-07 — exact status in ROADMAP §7.
+  fine-tune (**Rung 2**) **PASSED on Colab Pro (2026-07-07, first try): 99.9% mean per-class
+  AEU accidental accuracy** on held-out pieces. Next: ONNX-export the Rung-2 checkpoint
+  (`data/checkpoints/rung2-best/`) via the proven Rung-1.5 pipeline — exact status in ROADMAP §7.
 
 ## Directory Structure
 

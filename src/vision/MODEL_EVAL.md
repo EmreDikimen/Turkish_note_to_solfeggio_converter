@@ -117,5 +117,7 @@ of the 20 held-out pieces (`eval_omr.py`, id-space alignment).
 - Cosmetic: `tokenizer.decode()` drops spaces after added tokens in the error printouts
   (`\bakiyeSharpa'4`) — display only; metrics are computed in id space.
 - **Verdict: PASS — Rung 2 done first try. The CRNN+CTC fallback is retired (export gate
-  passed at Rung 1.5, accuracy gate passed here).** Next: Rung 3 real photos
-  (`docs/PIPELINE.md` §3) + ONNX export of `rung2/best` via the Rung-1.5 pipeline.
+  passed at Rung 1.5, accuracy gate passed here).** Next (decided same day): ONNX export of
+  the checkpoint (local copy: `data/checkpoints/rung2-best/`; Drive `MyDrive/tnc/rung2/best`
+  is the backup) via the Rung-1.5 pipeline FIRST — it unblocks Rung-4 wiring and the Rung-3
+  labeling loop; Rung-3 photo collection (`docs/PIPELINE.md` §3) can run in parallel.

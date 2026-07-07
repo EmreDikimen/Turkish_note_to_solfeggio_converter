@@ -4,6 +4,11 @@
 > never used Colab. The ready-made notebook is **`notebooks/rung2_colab.ipynb`**; this doc is the
 > context around it: what Colab is, which plan to buy, how not to lose a run, and what "done"
 > looks like.
+>
+> **Outcome: Rung 2 PASSED on the first full run (2026-07-07, batch 16, lr 3e-5, 6000 steps ≈
+> 110 min)** — full result in `src/vision/MODEL_EVAL.md`; checkpoint copied local to
+> `data/checkpoints/rung2-best/`. This guide stays as the recipe for future Colab runs
+> (e.g. the Rung-3 fine-tune on real photos).
 
 ## 1. Colab in three sentences
 
@@ -84,8 +89,8 @@ free tier / Pro; only Pro+ runs survive a closed tab, and we don't need that.
   reuses the proven Rung-1.5 pipeline), `rung2/metrics.jsonl`, `eval.jsonl`.
 - **Good result** → Rung 2 passes → Rung 3: real-photo collection + model-assisted labeling
   (`docs/PIPELINE.md` §3). **Poor accidental accuracy** after honest retries (LR within
-  1e-5–5e-5, more steps, `--photo-share` sanity checks) → that is the planned trigger to evaluate
-  the CRNN+CTC fallback (`ROADMAP.md` §1).
+  1e-5–5e-5, more steps, `--photo-share` sanity checks) → that was the planned trigger to evaluate
+  the CRNN+CTC fallback (`ROADMAP.md` §1). *(Moot: Rung 2 passed first try; the fallback is retired.)*
 - Typical knobs, in the order to try them: more steps (`--max-steps 10000 --resume`), LR 1e-5 or
   5e-5 (fresh run), `--batch-size 16` with A100. Change ONE thing per run; `metrics.jsonl` +
   `eval.jsonl` are the comparison record.

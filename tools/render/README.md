@@ -40,11 +40,14 @@ only what is **physically drawn**:
 > (sig prefix + bare notes) decodes to the identical note sequence as the every-mode label.
 
 **New tokens to add to the model's tokenizer** (`ADDED_TOKENS` in `lilypond.ts`): the 8 accidental
-tokens, **`\natural`**, **`\sig`** / **`\sigend`**, `|`, and the digit **`3`** — the base vocab lacks
-`3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`), and the 4 repeat-sign
+tokens, **`\natural`**, **`\sig`** / **`\sigend`**, `|`, the digit **`3`** — the base vocab lacks
+`3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`) — the 4 repeat-sign
 tokens `\repstart` `\repend` `\volta1` `\volta2` (faithful drawn symbols; the base vocab's structural
-`\repeat `/`volta ` can't label a crop showing only one end of a repeat). `\repstart`/`\repend`
-replace the `|` at their boundary; `\volta1`/`\volta2` precede the bracketed measure's first note.
+`\repeat `/`volta ` can't label a crop showing only one end of a repeat), and the 4 navigation-mark
+tokens `\segno` `\coda` `\dc` `\fine` (segno 𝄋 / coda ⊕ / "D.C." / "Son" — same faithful-drawn-symbol
+story, injected via `navmarks.ts`; see `docs/PHASE2.md` §6). 21 added ids total. `\repstart`/`\repend`
+replace the `|` at their boundary; `\volta1`/`\volta2` precede the bracketed measure's first note;
+nav tokens sit at the drawn measure edge (start-edge marks before the measure's notes, end-edge after).
 
 ### Real examples (from `apps/web/public/`)
 Uşşak (`gamzedeyim-deva.json`) — note the Uşşak Si as a koma-flat:
@@ -91,13 +94,13 @@ highlights a strip's crop rectangle, and shows its label + decoded notes for a m
 ```bash
 npm run dev:web                       # start the harness (note the port, e.g. 5174)
 OMR_URL=http://localhost:5174 npx --yes tsx tools/render/render.ts \
-    --pieces data/pieces.json --out data/synthetic/strips_v2 [--from 0 --to 25] [--clean] [--finalize]
+    --pieces data/pieces.json --out data/synthetic/strips_v2_1 [--from 0 --to 25] [--clean] [--finalize]
 ```
 Jobs are derived deterministically from `data/pieces.json` (written by `scripts/select_pieces.py`;
 scores exported by `scripts/export_scores.py`): every transpose × both modes, lyrics only at t=0,
-seeded repeat injection on ~half of renders, distractor text + the low-rate büyük respell always on
-(all seeds hashed from `slug:transpose`, so any strip is reproducible — `docs/MANUAL_CHECKS.md`).
-Output → `data/synthetic/strips_v2/` (gitignored): `<slug>_t±N_<mode>_<id>.png` + `.txt` per strip,
+seeded repeat injection on ~half of renders, seeded nav-mark injection on ~70%, distractor text +
+the low-rate büyük respell always on (all seeds hashed from `slug:transpose`, so any strip is
+reproducible — `docs/MANUAL_CHECKS.md`). Output → `data/synthetic/strips_v2_1/` (gitignored): `<slug>_t±N_<mode>_<id>.png` + `.txt` per strip,
 per-piece manifest shards + `.done` markers under `manifests/` (**resumable**: Ctrl-C anytime;
 finished pieces are skipped on re-run, a partial piece is re-rendered), and — after a full pass or
 `--finalize` — a combined `manifest.jsonl` + a 500-strip sampled **`index.html` contact sheet**
@@ -117,6 +120,8 @@ inline, crop anywhere) and `keysig` (makam signature at the row start, crop row-
   label + per-piece manifest shards + contact sheet; chunked + resumable).
 - `repeats.ts` — `detectRepeats` (fold detection of flattened duplicate runs) + `injectRepeats`
   (seeded random spans for token coverage) + `repeatMarksAt` (per-measure drawn marks).
+- `navmarks.ts` — seeded navigation-mark injection (segno / coda / D.C. / Son; 4–6 marks on ~70%
+  of renders, never stacked on repeat/volta measures — see `docs/PHASE2.md` §6).
 - `respell.ts` — seeded low-rate AEU-enharmonic respell (büyük coverage; only `noteName` changes,
   so pixels and labels stay consistent by construction).
 - `rng.ts` — seeded PRNG (`mulberry32`) + `hashStr`, shared by every seeded render step.
@@ -135,8 +140,12 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       150 selected pieces (`data/pieces.json`), with repeat-sign tokens, multi-measure coverage,
       transposes, distractor text, and the büyük respell; coverage audit PASS
       (`src/vision/audit_coverage.py`). Supersedes the 2026-07-02 `data/synthetic/strips/` set.
-- [ ] OpenCV/Albumentations augmentation — deliberately NOT baked into the rendered files;
-      applied on-the-fly in the Rung-2 training loader (Python).
+- [x] **strips_v2_1 re-render (2026-07-06):** 18,627 strips — adds the 4 navigation-mark tokens
+      (`navmarks.ts`, all audit floors cleared) and the centered-rest engraving fix (`alignRests`
+      off in SheetView); audit PASS. **Supersedes v2 for training** (v2 stays on disk). This is the
+      set Rung 2 trained on (PASS 2026-07-07 — ROADMAP §7).
+- [x] OpenCV augmentation — deliberately NOT baked into the rendered files; applied on-the-fly in
+      the Rung-2 training loader (`src/vision/augment.py`, screenshot-dominant two-profile mix).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
 - [x] Repeat-sign tokens emitted (2026-07-02): `detectRepeats` (`repeats.ts`) finds the flattened
       duplicate runs (detection only — the doc/layout/playback are untouched); the harness Repeats

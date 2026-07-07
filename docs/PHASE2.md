@@ -36,9 +36,9 @@ SymbTr → note-model → (TS) render staff PNG ─► (Python) fine-tune (image
 ```
 - **Chosen model (all gates passed):** `Flova/omr_transformer` on HuggingFace — a Donut-style
   vision-encoder-decoder (image → LilyPond), Western-trained, downloadable (Apache-2.0). It passed
-  the Step-1 eval (§4), the Rung-1 overfit-10 (GO) and the Rung-1.5 ONNX/browser gate (PASS) — the
-  lighter **CRNN+CTC** (PrIMuS-based) fallback now matters only if Rung-2 accuracy disappoints
-  (the size/export concern is retired).
+  the Step-1 eval (§4), the Rung-1 overfit-10 (GO), the Rung-1.5 ONNX/browser gate (PASS) and the
+  Rung-2 scaled fine-tune (PASS, 99.9% headline — §5). The lighter **CRNN+CTC** (PrIMuS-based)
+  fallback is fully retired (export concern at Rung 1.5, accuracy concern at Rung 2).
 - **Render with VexFlow headless** (Playwright minimal page), reusing the harness engraving (the
   engraving relies on DOM SVG + `getComputedTextLength` + the Bravura web font, so a real browser is
   the low-risk way to reuse it exactly). Render **FROM the note model**, so labels are emitted from the
@@ -111,8 +111,9 @@ in the repertoire), so clef-less mid-row crops are fine.
   **HuggingFace Hub CDN** — free; the browser downloads and caches them. No server needed.)
 - **Rung 2 — scale (Colab Pro)** ✅ **PASS (2026-07-07, first try — headline 99.9% mean per-class
   AEU accuracy, SER 0.001, exact-match 96.8% on the held-out pieces; full log in
-  `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired):** (the Mac is fine for overfit-10, not for thousands of images through
-  143M params):** thousands of augmented strips, training **from the original pretrained weights**;
+  `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired):** (the Mac is fine for overfit-10,
+  not for thousands of images through 143M params) thousands of augmented strips, training
+  **from the original pretrained weights**;
   **full fine-tune at a small LR** (AdamW, ~1e-5–5e-5) — freezing the encoder is a **memory/compute
   fallback, not the default**: our images (VexFlow engraving, later phone photos) don't look like the
   base model's training images, so the encoder needs to adapt too. Mix in **synthesized repeat-sign
@@ -221,8 +222,9 @@ navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — ROADMA
 **Rung-2 training kit is DONE + smoke-tested** (2026-07-06: `augment.py` / `modeling.py` /
 `train.py` / `eval_omr.py`, screenshot-dominant augmentation per §3). **Rung 2: PASS
 (2026-07-07, first Colab Pro run)** — headline **99.9% mean per-class AEU accidental accuracy**
-(8/8 classes), SER 0.001, exact-match 96.8% on the 20 held-out pieces; model at Drive
-`MyDrive/tnc/rung2/best`; full log + error taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN
-fallback is retired. **Next (ROADMAP §7): Rung 3 real photos (`docs/PIPELINE.md` §3) + ONNX
-export of `rung2/best` via the proven Rung-1.5 pipeline.** The full-page inference pipeline +
-Rung-3 real-photo plan live in `docs/PIPELINE.md`.
+(8/8 classes), SER 0.001, exact-match 96.8% on the 20 held-out pieces; checkpoint local at
+`data/checkpoints/rung2-best/` (Drive `MyDrive/tnc/rung2/best` is the backup); full log + error
+taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired. **Next (ROADMAP §7):
+ONNX-export `rung2-best` via the proven Rung-1.5 pipeline** — it unblocks Rung-4 wiring AND the
+Rung-3 model-assisted labeling loop; Rung-3 photo COLLECTION (`docs/PIPELINE.md` §3) can run in
+parallel. The full-page inference pipeline + Rung-3 real-photo plan live in `docs/PIPELINE.md`.

@@ -437,18 +437,19 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   Phase-4 decoder treats an empty sig block as none). Full log: `src/vision/MODEL_EVAL.md`.
   Model: Drive `MyDrive/tnc/rung2/best`. **The CRNN+CTC fallback is retired for accuracy
   reasons too.**
-- ⏳ **Next: ONNX-export the Rung-2 model** (decided 2026-07-07; Rung-3 photo COLLECTION can
-  run in parallel, but the export comes first — it unblocks Rung-4 wiring AND the Rung-3
-  model-assisted labeling loop, and it's ~a day of mechanical work with existing scripts).
-  The checkpoint is LOCAL and load-verified: **`data/checkpoints/rung2-best/`** (gitignored;
-  547 MB model + 1.1 GB `trainer_state.pt` — the latter is only training-resume state, ignore
-  it for export; Drive `MyDrive/tnc/rung2/best` is the backup copy). Rerun the proven Rung-1.5
-  pipeline against it: `optimum-cli` ONNX export (encoder / decoder / decoder-with-past) →
-  int8 dynamic quantization → `src/vision/onnx_parity.py` (ONNX == PyTorch == label, fp32 +
-  int8) → `src/vision/make_browser_gate.py` + `apps/web/omr-gate.html` in a real browser —
-  exact commands/settings in `src/vision/MODEL_EVAL.md` (Rung-1.5 entry, incl. its wiring
-  notes). Gate strips should now decode with REAL Turkish accidentals. After that: Rung 3
-  labeling loop (`docs/PIPELINE.md` §3).
+- ✅ **Rung-2 ONNX export: PASS (2026-07-07, same day)** — the proven Rung-1.5 pipeline rerun
+  on `rung2-best` (→ `data/checkpoints/rung2-best-onnx/`, gitignored): `optimum-cli` export →
+  int8 dynamic quantization — now a **committed script**, `src/vision/quantize_onnx.py`
+  (221 MB total, sizes identical to Rung 1.5) → Python parity (`onnx_parity.py`: ONNX ==
+  PyTorch == label, 5/5 gate strips, fp32 AND int8) → browser gate (`omr-gate.html`, headless
+  Chromium): **10/10 exact** (reference pixels + live canvas preprocessing), ~1.0 s/strip,
+  session load ~3 s. Gate strips now come from HELD-OUT val pieces and carry real Turkish
+  accidentals + repeat/nav tokens (`data/checkpoints/rung2-best/GATE_STRIPS.txt`; pre-picked
+  as exact PyTorch decodes, since a generalizing model isn't the memorizing overfit10). Full
+  log: `src/vision/MODEL_EVAL.md`; see-it-yourself guide: `docs/MANUAL_CHECKS.md` Check 9.
+- ⏳ **Next: Rung 3** — real-photo/screenshot COLLECTION + the model-assisted labeling loop
+  (`docs/PIPELINE.md` §3); the exported int8 graphs also unblock **Rung-4 wiring**
+  (preprocess → staff isolation → decode → note model, `docs/PIPELINE.md`).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
 `python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).

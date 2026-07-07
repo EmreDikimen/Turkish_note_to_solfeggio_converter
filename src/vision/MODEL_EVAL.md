@@ -121,3 +121,32 @@ of the 20 held-out pieces (`eval_omr.py`, id-space alignment).
   the checkpoint (local copy: `data/checkpoints/rung2-best/`; Drive `MyDrive/tnc/rung2/best`
   is the backup) via the Rung-1.5 pipeline FIRST — it unblocks Rung-4 wiring and the Rung-3
   labeling loop; Rung-3 photo collection (`docs/PIPELINE.md` §3) can run in parallel.
+
+## Rung-2 ONNX export (2026-07-07): PASS
+The Rung-1.5 pipeline rerun against the fine-tuned checkpoint (`data/checkpoints/rung2-best`
+→ `data/checkpoints/rung2-best-onnx`, both gitignored) — the browser now decodes REAL Turkish
+accidentals. Two deliberate differences from Rung 1.5: gate strips come from **held-out val
+pieces** (this model generalizes rather than memorizes, so exact-decoding strips were
+pre-picked with PyTorch — first candidate hit in every category, consistent with the 96.8%
+exact-match eval), and the int8 step is now a **committed script** (it was a one-off manual
+command at Rung 1.5). Manual walkthrough: `docs/MANUAL_CHECKS.md` Check 9.
+
+- **Gate strips** (`rung2-best/GATE_STRIPS.txt`, 5): one per category — `\sig` block /
+  `\buyukSharp` / repeat (`\volta1 … \repend`) / nav (`\coda`) / multi-measure `|` — and every
+  strip carries AEU accidentals.
+- **Export:** same `optimum-cli export onnx --task image-to-text-with-past` invocation.
+  Optimum's own validation max logit diff: encoder 1.2e-3, decoder graphs ≤ 7.4e-5 (a bit
+  above Rung 1.5's ≤ 4.5e-5, irrelevant in id space — see parity).
+- **int8:** `src/vision/quantize_onnx.py` (dynamic, QInt8 weights): encoder 311→91 MB,
+  decoder 276→69 MB, decoder-with-past 242→61 MB — **221 MB total, identical to Rung 1.5**.
+- **Python parity** (`onnx_parity.py --checkpoint data/checkpoints/rung2-best --onnx-dir
+  data/checkpoints/rung2-best-onnx --strips-dir data/synthetic/strips_v2_1 --n 5`):
+  ONNX == PyTorch == label ids, **5/5, fp32 AND int8** — quantization does not disturb the
+  fine-tuned decode.
+- **Browser** (`make_browser_gate.py` same flags → `omr-gate.html`, headless Chromium, wasm
+  threads): **10/10 exact** — 5 strips × (Python reference pixels + live canvas
+  preprocessing). Latency: session load ~3.0 s; ~0.85 s encoder + 0.12–0.23 s decode ≈
+  **~1.0 s/strip** (a touch faster than Rung 1.5's ~1.5 s).
+- **Verdict: PASS — the shipped-form model (int8 ONNX in a real browser) reads Turkish
+  notation exactly.** Unblocks Rung-4 wiring and the Rung-3 model-assisted labeling loop
+  (`docs/PIPELINE.md`).

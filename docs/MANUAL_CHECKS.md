@@ -170,6 +170,54 @@ independent photo draws, since that profile varies the most).
 - This is the human gate on augmentation strength — **look at it before spending GPU time**,
   and re-check after any parameter tweak in `augment.py`.
 
+## Check 9 — in-browser OMR gate (the exported model, with your own eyes)
+
+This is how you watch the **shipped form** of the model — int8 ONNX, decoded by
+`onnxruntime-web` in a real browser, no Python anywhere — read Turkish notation. It exercises
+the exact runtime path the product will use (Rung 4).
+
+One-time prep (skip what's already done — after the Rung-2 export these all exist):
+
+```bash
+# 1. export the checkpoint to ONNX (encoder / decoder / decoder-with-past graphs)
+.venv-ml/bin/optimum-cli export onnx --model data/checkpoints/rung2-best \
+    --task image-to-text-with-past data/checkpoints/rung2-best-onnx
+# 2. quantize to int8 (830 MB fp32 → 221 MB)
+.venv-ml/bin/python src/vision/quantize_onnx.py --onnx-dir data/checkpoints/rung2-best-onnx
+# 3. stage the gate assets into apps/web/public/models/ (gitignored)
+.venv-ml/bin/python src/vision/make_browser_gate.py --checkpoint data/checkpoints/rung2-best \
+    --onnx-dir data/checkpoints/rung2-best-onnx --strips-dir data/synthetic/strips_v2_1 --n 5
+```
+
+Then:
+
+```bash
+npm run dev:web
+```
+
+> open **http://localhost:5173/omr-gate.html**
+
+The page loads the three int8 graphs (~3 s), then decodes each gate strip **twice**: once from
+Python's reference pixel tensors (proves ONNX-in-browser), once from live canvas preprocessing
+of the PNG (proves the real product path — the JS DonutImageProcessor port).
+
+- **Look for:** the tab title flipping to **"OMR gate — PASS"**, the log turning green, and
+  every strip showing `✓ reference` **and** `✓ canvas`. Each strip's PNG is rendered on the
+  page — compare it to its printed `label` line: the accidentals (`\komaFlat`, `\bakiyeSharp`,
+  …), barlines, repeat/nav tokens must all correspond to what you see drawn. Typical speed on
+  an M-series Mac: ~0.85 s encoder + ~0.1–0.25 s decode per strip.
+- **Wrong looks like:** a red **FAIL** with a `got:` line under some strip (the decode
+  differs from the label — reference-only failures mean the export/quantization is broken;
+  canvas-only failures mean the JS preprocessing drifted), or an early `ERROR:` line (usually
+  the staged assets are missing/stale — re-run step 3).
+- The same 5 strips must already pass in Python (`onnx_parity.py … --suffix _int8`) — if the
+  browser disagrees with Python, suspect the JS side, not the model.
+- **Swapping in different strips:** the gate reads `data/checkpoints/rung2-best/GATE_STRIPS.txt`
+  (plain strip filenames from the strips dir). Edit it and re-run step 3 — but note the pass
+  criterion is exact-match, so pick strips the PyTorch model decodes exactly (the eval is
+  96.8% exact-match, so most val strips qualify; verify with `eval_omr.py`/`onnx_parity.py`
+  before blaming the export).
+
 ---
 
 **Reproducing any strip later:** its manifest row carries `piece`, `transpose`, `mode`, `lyrics`,

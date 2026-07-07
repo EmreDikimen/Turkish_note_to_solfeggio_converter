@@ -224,7 +224,10 @@ navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — ROADMA
 (2026-07-07, first Colab Pro run)** — headline **99.9% mean per-class AEU accidental accuracy**
 (8/8 classes), SER 0.001, exact-match 96.8% on the 20 held-out pieces; checkpoint local at
 `data/checkpoints/rung2-best/` (Drive `MyDrive/tnc/rung2/best` is the backup); full log + error
-taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired. **Next (ROADMAP §7):
-ONNX-export `rung2-best` via the proven Rung-1.5 pipeline** — it unblocks Rung-4 wiring AND the
-Rung-3 model-assisted labeling loop; Rung-3 photo COLLECTION (`docs/PIPELINE.md` §3) can run in
-parallel. The full-page inference pipeline + Rung-3 real-photo plan live in `docs/PIPELINE.md`.
+taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired. **Rung-2 ONNX export:
+PASS (2026-07-07, same day)** — the Rung-1.5 pipeline rerun on `rung2-best`: export → int8
+(now committed: `src/vision/quantize_onnx.py`; 221 MB) → Python parity 5/5 (fp32 + int8) →
+browser gate 10/10 exact on held-out-piece strips with real Turkish accidentals, ~1.0 s/strip
+(`MODEL_EVAL.md`; watch it yourself: `docs/MANUAL_CHECKS.md` Check 9). **Next (ROADMAP §7):
+Rung 3** — photo/screenshot collection + the model-assisted labeling loop; the full-page
+inference pipeline + Rung-3 real-photo plan live in `docs/PIPELINE.md`.

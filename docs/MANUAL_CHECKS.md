@@ -212,6 +212,14 @@ of the PNG (proves the real product path — the JS DonutImageProcessor port).
   the staged assets are missing/stale — re-run step 3).
 - The same 5 strips must already pass in Python (`onnx_parity.py … --suffix _int8`) — if the
   browser disagrees with Python, suspect the JS side, not the model.
+- **Try your own image — the upload box at the top of the page:** drop (or pick) any strip
+  image and it runs the exact product path — canvas preprocessing → int8 ONNX greedy decode —
+  and prints the **read** token line (no ✓/✗: an upload has no ground-truth label, so *you*
+  compare the tokens against the picture). Keep it to **one staff, ~2–4 measures** — a full
+  page or multi-line photo isn't segmented yet (that's Rung-4 staff isolation), and typically
+  ends in the `⚠ hit the 100-token cap` warning. A screenshot crop of a real (non-VexFlow)
+  score is a fun preview of Rung 3: expect some misreads — that's exactly the synthetic→real
+  gap Rung 3 exists to close.
 - **Swapping in different strips:** the gate reads `data/checkpoints/rung2-best/GATE_STRIPS.txt`
   (plain strip filenames from the strips dir). Edit it and re-run step 3 — but note the pass
   criterion is exact-match, so pick strips the PyTorch model decodes exactly (the eval is

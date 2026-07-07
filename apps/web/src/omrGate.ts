@@ -158,6 +158,23 @@ function decodeTokens(ids: number[], id2token: Record<string, string>): string {
   return ids.map((i) => id2token[String(i)] ?? `<${i}?>`).join(" ");
 }
 
+/**
+ * Human-readable form of a decoded id sequence, for images with no ground-truth label.
+ * The base vocab is BPE with `</w>` word-end markers (`c''8` decodes as `c` `'` `'` `8</w>`),
+ * so raw tokens are unreadable; our added tokens (`\…`, `|`, `3`) are standalone words with
+ * no marker. Mirrors the label strings the serializer emits (tools/render/lilypond.ts).
+ */
+function detokenize(ids: number[], id2token: Record<string, string>): string {
+  let out = "";
+  for (const id of ids) {
+    const t = id2token[String(id)] ?? `<${id}?>`;
+    if (t.startsWith("\\") || t === "|" || t === "3") out += t + " ";
+    else if (t.endsWith("</w>")) out += t.slice(0, -4) + " ";
+    else out += t;
+  }
+  return out.trim();
+}
+
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -169,6 +186,61 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
 function stripEos(ids: number[], eosId: number): number[] {
   return ids.filter((i) => i !== eosId);
+}
+
+/**
+ * "Try your own strip": decode any user-supplied image through the exact product path
+ * (canvas preprocessing → greedy decode). There is no ground-truth label for an upload, so
+ * the result is the raw token stream — the user judges it against the picture. Wired only
+ * after the sessions are ready.
+ */
+function setupUpload(sessions: Sessions, gate: Gate) {
+  const drop = document.getElementById("drop") as HTMLDivElement;
+  const input = document.getElementById("file") as HTMLInputElement;
+  const uploads = document.getElementById("uploads") as HTMLDivElement;
+  const targetH = gate.preprocess.size.height;
+  const targetW = gate.preprocess.size.width;
+
+  async function decodeFile(file: File) {
+    const out = document.createElement("pre");
+    out.textContent = `== ${file.name}\n   decoding…`;
+    try {
+      const url = URL.createObjectURL(file);
+      const img = await loadImage(url);
+      URL.revokeObjectURL(url);
+      img.className = "strip";
+      const div = document.createElement("div");
+      div.append(img, out);
+      uploads.prepend(div);
+
+      const pixels = preprocessCanvas(img, targetW, targetH);
+      const tensor = new ort.Tensor("float32", pixels, [1, 3, targetH, targetW]);
+      const { ids, encoderMs, decodeMs } = await greedyDecode(sessions, tensor, gate.startId, gate.eosId);
+      const content = stripEos(ids, gate.eosId);
+      out.textContent =
+        `== ${file.name}\n` +
+        `   read: ${detokenize(content, gate.id2token)}\n` +
+        `   ${content.length} tokens; encoder ${encoderMs.toFixed(0)} ms, decode ${decodeMs.toFixed(0)} ms` +
+        (ids.length >= MAX_TOKENS
+          ? `\n   ⚠ hit the ${MAX_TOKENS}-token cap without an </s> — likely not a single-staff 2–4-measure strip`
+          : "");
+    } catch (e) {
+      out.textContent = `== ${file.name}\nERROR: ${(e as Error)?.message ?? e}`;
+      out.classList.add("bad");
+      if (!out.isConnected) uploads.prepend(out);
+    }
+  }
+
+  input.addEventListener("change", () => {
+    for (const f of input.files ?? []) void decodeFile(f);
+    input.value = ""; // re-selecting the same file must fire change again
+  });
+  drop.addEventListener("dragover", (e) => e.preventDefault());
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    for (const f of e.dataTransfer?.files ?? []) void decodeFile(f);
+  });
+  document.getElementById("drop-status")!.textContent = "";
 }
 
 async function main() {
@@ -188,6 +260,7 @@ async function main() {
   ]);
   const sessions: Sessions = { encoder, decoder, decoderWithPast };
   print(`sessions ready in ${(performance.now() - tLoad).toFixed(0)} ms\n`);
+  setupUpload(sessions, gate);
 
   let allOk = true;
   for (const strip of gate.strips) {

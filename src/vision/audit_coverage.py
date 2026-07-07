@@ -14,8 +14,8 @@ on violations so it can guard a training run mechanically:
   - runs check_token_drift (an unknown \\token in any label fails the audit).
 
 Usage:
-    .venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2 \
-        [--split data/synthetic/strips_v2/split.json] [--tokenizer data/checkpoints/overfit10]
+    .venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2_1 \
+        [--split data/split.json] [--tokenizer data/checkpoints/overfit10]
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ def token_counts(rows: list[dict]) -> Counter:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--strips", default="data/synthetic/strips_v2")
+    ap.add_argument("--strips", default="data/synthetic/strips_v2_1")
     ap.add_argument("--split", default=None)
     ap.add_argument("--tokenizer", default=None, help="HF checkpoint dir for the real-id length gate")
     args = ap.parse_args()

@@ -1,12 +1,13 @@
 """
-Rung 2 — scaled fine-tune of `Flova/omr_transformer` on strips_v2 (Phase 2 → 3).
+Rung 2 — scaled fine-tune of `Flova/omr_transformer` on strips_v2_1 (Phase 2 → 3).
 
 WHAT: full fine-tune from the ORIGINAL pretrained weights (the overfit-10 checkpoint was a
-throwaway diagnostic) on the 18k-strip `data/synthetic/strips_v2` set, with on-the-fly
-input-realism augmentation (`augment.py` — screenshot-dominant, see its docstring), split BY
-PIECE from `data/split.json` (strips of one piece are near-duplicates; a piece straddling both
-splits contaminates validation), teacher-forced val loss, and checkpoint/resume so a killed
-Colab session costs minutes, not the run.
+throwaway diagnostic) on the 18.6k-strip `data/synthetic/strips_v2_1` set (v2 + nav-mark
+tokens + centered rests), with on-the-fly input-realism augmentation (`augment.py` —
+screenshot-dominant, see its docstring), split BY PIECE from `data/split.json` (strips of one
+piece are near-duplicates; a piece straddling both splits contaminates validation),
+teacher-forced val loss, and checkpoint/resume so a killed Colab session costs minutes, not
+the run.
 
 HOW to judge it: this script only tracks val LOSS (cheap, every --eval-every steps). The
 headline metric — per-class AEU accidental accuracy — needs generation and lives in
@@ -16,11 +17,10 @@ Local smoke test (Mac, MPS — shake the wiring out BEFORE paying for Colab Pro)
     .venv-ml/bin/python src/vision/train.py --out-dir data/checkpoints/rung2-smoke \\
         --limit-train 24 --limit-val 8 --max-steps 6 --eval-every 3 --batch-size 4
 
-Colab (T4/A100; repo cloned, strips_v2 unzipped to the VM disk — NOT read from Drive, mounted
-Drive I/O is too slow for a dataloader; checkpoints DO go to Drive):
-    !pip -q install transformers albumentations opencv-python-headless
-    !python src/vision/train.py --strips-dir /content/strips_v2 \\
-        --out-dir /content/drive/MyDrive/tnc/rung2 --num-workers 2 [--resume]
+Colab: step-by-step guide in docs/COLAB.md, ready-made notebook in
+notebooks/rung2_colab.ipynb, upload package built by scripts/make_colab_zip.sh.
+Data lives on the VM disk (NOT read from mounted Drive — Drive I/O is too slow for a
+dataloader); checkpoints DO go to Drive so a killed session resumes with --resume.
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ def evaluate(model, loader, device, autocast_ctx) -> float:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2")
+    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2_1")
     ap.add_argument("--split", default="data/split.json")
     ap.add_argument("--out-dir", required=True, help="checkpoints + metrics.jsonl (Drive on Colab)")
     ap.add_argument("--model", default=MODEL_ID, help="base weights (Rung 2 default: the ORIGINAL pretrained)")

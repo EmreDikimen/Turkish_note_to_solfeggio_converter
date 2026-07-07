@@ -19,7 +19,7 @@
  * into `manifest.jsonl` and writes a sampled contact sheet (`index.html`).
  *
  * Prereq: the harness dev server running (`npm run dev:web`).
- * Run:    npx tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/strips_v2
+ * Run:    npx tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/strips_v2_1
  *             [--from 0 --to 25]   piece-index chunk: render pieces [from, to)
  *             [--delay 150]        ms pause after each screenshot (gentle on a fanless machine)
  *             [--clean]            wipe the output dir first (default: resume)
@@ -69,7 +69,7 @@ function arg(name: string): string | undefined {
 const has = (name: string) => process.argv.includes(`--${name}`);
 
 const PIECES_PATH = arg("pieces") ?? "data/pieces.json";
-const OUT = arg("out") ?? "data/synthetic/strips_v2";
+const OUT = arg("out") ?? "data/synthetic/strips_v2_1";
 const DELAY = Number(arg("delay") ?? 150);
 const FROM = Number(arg("from") ?? 0);
 const TO = arg("to") != null ? Number(arg("to")) : Infinity;

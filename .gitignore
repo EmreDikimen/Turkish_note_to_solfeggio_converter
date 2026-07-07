@@ -80,3 +80,5 @@ apps/web/public/scores/
 apps/web/public/models/
 
 data/checkpoints/
+# Colab upload package (rebuild with scripts/make_colab_zip.sh)
+data/colab/

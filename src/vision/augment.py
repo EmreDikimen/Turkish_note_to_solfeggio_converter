@@ -214,7 +214,7 @@ class Augmenter:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2")
+    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2_1")
     ap.add_argument("--n", type=int, default=6, help="strips (rows)")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--out", default="data/synthetic/aug_preview.png")

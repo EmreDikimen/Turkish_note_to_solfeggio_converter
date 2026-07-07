@@ -218,6 +218,7 @@ gate **PASS** 2026-07-03 — see the ✅ markers in §5), the **Rung-2 dataset u
 navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — ROADMAP §7), and the
 **Rung-2 training kit is DONE + smoke-tested** (2026-07-06: `augment.py` / `modeling.py` /
 `train.py` / `eval_omr.py`, screenshot-dominant augmentation per §3). **Next: Rung 2 — buy
-Colab Pro and run the scaled fine-tune on `strips_v2_1`** (shake out on free tier first; recipe
-in `train.py`'s docstring). The full-page inference pipeline + Rung-3 real-photo plan live in
-`docs/PIPELINE.md`.
+Colab Pro and run the scaled fine-tune on `strips_v2_1`** — full first-timer walkthrough in
+**`docs/COLAB.md`** (plan choice: Pro, not Pro+), ready-made notebook
+`notebooks/rung2_colab.ipynb`, upload package via `scripts/make_colab_zip.sh`. The full-page
+inference pipeline + Rung-3 real-photo plan live in `docs/PIPELINE.md`.

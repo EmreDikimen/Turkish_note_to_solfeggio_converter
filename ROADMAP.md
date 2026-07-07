@@ -420,10 +420,15 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   0 over (audit now measures with the training-time vocabulary — `add_tokens(ADDED_TOKENS)` —
   since the overfit10 checkpoint's tokenizer predates the nav tokens). v2 remains on disk;
   v2_1 supersedes it for training.
-- ⏳ Next: **Rung 2 — the scaled fine-tune on Colab Pro** on `strips_v2_1` from the original
-  pretrained weights (recipe + Colab commands in `train.py`'s docstring: zip the strips to the
-  VM disk, checkpoints to Drive, `--num-workers 2`; shake out on free tier before paying).
-  Judge with `eval_omr.py` on `<out>/best`. Then Rung 3: real photos (collection/labeling plan:
+- ✅ **Colab kit (2026-07-07):** `docs/COLAB.md` (first-timer guide; plan decision: **Colab Pro,
+  not Pro+** — a full run ≈ 5–10 compute units, Pro's 100 covers the whole campaign),
+  `notebooks/rung2_colab.ipynb` (shakeout → full run → resume → eval, checkpoints to Drive),
+  `scripts/make_colab_zip.sh` (one self-contained 320 MB upload: training kit + split +
+  strips_v2_1; layout verified by unzip + StripDataset load). All `--strips-dir` defaults now
+  point at v2_1.
+- ⏳ Next: **Rung 2 — run it on Colab** per `docs/COLAB.md`: free-tier shakeout cell, buy Pro,
+  full run (defaults; `--batch-size 16` on L4/A100), judge with `eval_omr.py` on `<out>/best`
+  (headline: per-class AEU accuracy). Then Rung 3: real photos (collection/labeling plan:
   `docs/PIPELINE.md` §3).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:

@@ -72,7 +72,7 @@ def align(ref: list[int], hyp: list[int]) -> list[tuple[str, int | None, int | N
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--checkpoint", required=True, help="dir saved by train.py (best/last)")
-    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2_1")
+    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2_2")
     ap.add_argument("--split", default="data/split.json")
     ap.add_argument("--side", default="val", choices=["val", "train"])
     ap.add_argument("--limit", type=int, default=None, help="first N strips (smoke tests)")

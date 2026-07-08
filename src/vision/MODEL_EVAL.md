@@ -150,3 +150,30 @@ command at Rung 1.5). Manual walkthrough: `docs/MANUAL_CHECKS.md` Check 9.
 - **Verdict: PASS — the shipped-form model (int8 ONNX in a real browser) reads Turkish
   notation exactly.** Unblocks Rung-4 wiring and the Rung-3 model-assisted labeling loop
   (`docs/PIPELINE.md`).
+
+## Rung 2.2 — rhythm-sign retrain on Colab (2026-07-08): PASS
+Full fine-tune from the original pretrained weights on **`strips_v2_2`** (the rhythm-sign
+dataset: 4 new tokens `\tup3` `\tupend` `\tie` `\grace`, 96 → 100 ids — ROADMAP §7 /
+`docs/PHASE2.md` §6), judged by free-running generation on the **2,417 val strips** of the same
+20 held-out pieces (`eval_omr.py`).
+- **Run:** Colab GPU, `notebooks/rung2_colab.ipynb` (Rung-2 recipe, from base weights; shakeout
+  first — `vocab: +25 tokens -> 100 ids`, loss fell cleanly). Checkpoints on Drive:
+  `MyDrive/tnc/rung22/{best,last}`.
+- **HEADLINE: mean per-class AEU accidental accuracy 99.9% (8/8 classes present)** — every
+  class ≥99.1% recall / ≥99.6% precision (büyükFlat 100/100 at 34 gold). **SER 0.002**
+  (S=43 D=95 I=26 / N=96,833); **exact-match 2,337/2,417 = 96.7%** — quality holds vs Rung 2
+  (99.9% / 0.001 / 96.8%) while adding the new signs.
+- **New rhythm-sign tokens:** `\tup3`/`\tupend` **100%/100%** recall+precision (9 gold — the
+  structurally-thin val coverage, a smoke signal only, but a clean one); `\tie` **96.4%** recall
+  / 100% precision (195 gold); `\grace` **98.0%** / 99.6% (254 gold). Everything else held:
+  repeats 99.1–100%, nav 97.3–100% recall, `\sig` 95.4% (the known empty-signature ambiguity,
+  same as Rung 2's 95.5%), `|` 99.8%, digit `3` 93.5%.
+- **Error notes:** the exact-match misses cluster on one recurring val phrase at t−9 read with
+  a dropped duration dot (`g'4.`→`g'4` — the known augmentation-blur failure mode); one strip
+  swapped `\kucukFlat`→`\bakiyeFlat` and dropped a `\volta1`. The missing spaces in `got:`
+  printouts (`\bakiyeSharpa'4`) are the known tokenizer-decode display artifact — metrics are
+  id-space.
+- **Verdict: PASS.** Remaining to ship it (the proven Rung-2 export chain, rerun on this
+  checkpoint — exact steps in ROADMAP §7 "Next"): local copy → ONNX export → int8 → parity →
+  new gate strips (must now include triplet/tie/grace) → browser gate → retry the original
+  triplet-misreading real upload.

@@ -30,8 +30,12 @@ from pathlib import Path
 
 # Mirrors ADDED_TOKENS in tools/render/lilypond.ts (8 AEU accidentals + natural + signature
 # delimiters + 4 repeat-sign tokens + 4 navigation-mark tokens (segno/coda/D.C./Son — see
-# tools/render/navmarks.ts) + barline + the digit `3`, which the base vocab lacks).
+# tools/render/navmarks.ts) + barline + the digit `3`, which the base vocab lacks + the 4
+# strips_v2_2 rhythm-sign tokens (triplet bracket / tie / grace — see tools/render/rhythm.ts).
 # Keep in sync by hand; `check_token_drift` catches a mismatch against the actual rendered labels.
+# APPEND new tokens at the END only: several scripts slice ADDED_TOKENS[:8] for the AEU set, and
+# add_tokens assigns ids in list order — appending keeps every earlier token's id stable across
+# checkpoints.
 ADDED_TOKENS: list[str] = [
     "\\komaSharp", "\\bakiyeSharp", "\\kucukSharp", "\\buyukSharp",
     "\\komaFlat", "\\bakiyeFlat", "\\kucukFlat", "\\buyukFlat",
@@ -39,6 +43,7 @@ ADDED_TOKENS: list[str] = [
     "\\repstart", "\\repend", "\\volta1", "\\volta2",
     "\\segno", "\\coda", "\\dc", "\\fine",
     "|", "3",
+    "\\tup3", "\\tupend", "\\tie", "\\grace",
 ]
 
 # Digits included: \volta1 / \volta2 are single tokens — a letters-only pattern would extract

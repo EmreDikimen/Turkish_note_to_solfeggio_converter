@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Accidental, Barline, Dot, Formatter, Renderer, Stave, StaveModifierPosition, StaveNote } from "vexflow";
+import { Accidental, Barline, Beam, Dot, Formatter, GraceNote, GraceNoteGroup, Renderer, Stave, StaveModifierPosition, StaveNote, StaveTie, Tuplet } from "vexflow";
 import {
   accidentalGlyph,
   accidentalLabel,
@@ -17,6 +17,7 @@ import {
 } from "@turkish-omr/core";
 import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
+import { tieSplitBeats, tupletGroupsIn, tupletWrittenBeats } from "../../../tools/render/rhythm";
 import { buildTextNoise } from "./textNoise";
 
 // --- layout constants -------------------------------------------------------
@@ -46,10 +47,11 @@ const DUR: ReadonlyArray<readonly [string, number]> = [
 
 /**
  * Map a note-value (fraction of a whole note) to a VexFlow duration code + dot count.
- * SymbTr durations are exact base/dotted values (verified: the sample uses only 1/4, 1/8,
- * 1/16, 1/32 and the dotted 3/16, 3/32). We match the base value, then test for a single or
- * double augmentation dot (×1.5 / ×1.75). Anything unexpected (e.g. a tuplet fraction) falls
- * back to the nearest base value so the sheet still draws — playback uses durationMs anyway.
+ * We match the base value, then test for a single or double augmentation dot (×1.5 / ×1.75).
+ * Tuplet fractions and undrawable long values never reach this raw: `buildStaveNotes` hands in
+ * the WRITTEN value instead (a tuplet member's ×3/2, a tie split's parts — see rhythm.ts).
+ * Anything still unexpected falls back to the nearest base value so the sheet always draws —
+ * playback uses durationMs anyway.
  */
 function vexDuration(beats: number): { duration: string; dots: number } {
   const near = (a: number, b: number) => Math.abs(a - b) < 1e-4;
@@ -76,44 +78,58 @@ function vexDuration(beats: number): { duration: string; dots: number } {
  */
 export type AccidentalMode = "every" | "keysig" | "measure";
 
+/** One drawn StaveNote's link back to the timeline: its source event, the slice of that event's
+ *  playback time this note covers (a tied pair splits it), and the lyric it carries (only the
+ *  first note of a tied pair keeps the syllable). */
+interface NoteSlot {
+  ev: NoteEvent;
+  durationMs: number;
+  lyric: string;
+}
+
+/** The written duration a grace note draws: a small slashed 8th by convention — SymbTr çarpma
+ *  rows have no duration of their own. Must match GRACE_WRITTEN_BEATS in lilypond.ts. */
+const GRACE_VEX_DURATION = "8";
+
 /**
- * Build the VexFlow StaveNotes for one measure (parallel `evs` keeps the source event).
+ * Build the VexFlow StaveNotes for one measure (parallel `slots` keeps the source events).
  * `signatureMap` is the makam key signature (alteration per letter); it's consulted in the
  * `"keysig"` and `"measure"` modes and ignored in `"every"`.
+ *
+ * Rhythm signs (rhythm.ts — the SAME detection the label serializer uses, so pixels == labels):
+ *  - a triplet group's members draw their ×3/2 WRITTEN value and are returned in `tuplets` for
+ *    the "3" bracket; a tie-split long value draws as consecutive written notes returned in
+ *    `ties` for the arcs (rests split too but are never tied);
+ *  - grace events become GraceNotes attached to the NEXT real note (dangling measure-final
+ *    graces are dropped, matching the serializer).
  */
 function buildStaveNotes(
   measure: Measure,
   mode: AccidentalMode,
   signatureMap: Map<string, number>,
-): { notes: StaveNote[]; evs: NoteEvent[] } {
+): { notes: StaveNote[]; slots: NoteSlot[]; tuplets: StaveNote[][]; ties: [StaveNote, StaveNote][] } {
   const notes: StaveNote[] = [];
-  const evs: NoteEvent[] = [];
+  const slots: NoteSlot[] = [];
+  const ties: [StaveNote, StaveNote][] = [];
+  const groups = tupletGroupsIn(measure.events);
+  const groupNotes: StaveNote[][] = groups.map(() => []);
+  let pendingGraces: GraceNote[] = [];
   // "measure" mode only: the alteration currently in effect for each staff position
   // (letter+octave) within THIS measure. Seeded lazily from the key signature; set by a printed
   // accidental and carried until it changes. It's local to one measure, so it naturally resets
   // at every barline — exactly the standard convention.
   const active = new Map<string, number>();
 
-  for (const ev of measure.events) {
-    const { duration, dots } = vexDuration(eventBeats(ev));
-    const parsed = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
-
-    // Rests (and any unparseable note) render as a rest on the middle line.
-    if (!parsed) {
-      const r = new StaveNote({ keys: ["b/4"], duration: `${duration}r` });
-      for (let i = 0; i < dots; i++) Dot.buildAndAttach([r], { all: true });
-      notes.push(r);
-      evs.push(ev);
-      continue;
-    }
-
-    // Staff position comes from letter+octave only (Turkish accidentals don't shift the
-    // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
-    const n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
+  // The shared per-mode accidental decision. `carry` updates the measure-mode memory — true for
+  // real notes; false for grace notes (their tiny accidental doesn't set the measure's state).
+  const applyAccidental = (
+    n: StaveNote,
+    parsed: { letter: string; octave: number; alterCommas: number },
+    carry: boolean,
+  ) => {
     // Snap to the nearest standard AEU sign (art-music notation has no numbered ±2/±3); the staff
     // position and the note's koma/pitch are unchanged — only the drawn accidental.
     const alter = toAeuAlter(parsed.alterCommas);
-
     if (mode === "every") {
       // Show every alteration inline.
       if (alter !== 0) addAccidental(n, alter);
@@ -135,14 +151,70 @@ function buildStaveNotes(
       if (alter !== effective) {
         if (alter === 0) n.addModifier(new Accidental("n"), 0); // cancel back to natural
         else addAccidental(n, alter);
-        active.set(posKey, alter);
+        if (carry) active.set(posKey, alter);
       }
     }
-    for (let i = 0; i < dots; i++) Dot.buildAndAttach([n], { all: true });
-    notes.push(n);
-    evs.push(ev);
-  }
-  return { notes, evs };
+  };
+
+  measure.events.forEach((ev, i) => {
+    // Grace note: a small slashed 8th collected until its host (the next real note) is built.
+    if (ev.kind === "grace") {
+      const parsed = parseNoteName(ev.noteName);
+      if (!parsed) return;
+      const g = new GraceNote({
+        keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`],
+        duration: GRACE_VEX_DURATION,
+        slash: true,
+      });
+      applyAccidental(g, parsed, false);
+      pendingGraces.push(g);
+      return;
+    }
+
+    const groupIdx = groups.findIndex((g) => i >= g.from && i <= g.to);
+    // Written durations: a tuplet member draws its ×3/2 value; an undrawable long value draws
+    // as its tie-split parts; everything else draws its own value.
+    const split = groupIdx < 0 ? tieSplitBeats(ev) : null;
+    const partBeats = split ?? [groupIdx >= 0 ? tupletWrittenBeats(ev) : eventBeats(ev)];
+    const totalBeats = partBeats.reduce((s, b) => s + b, 0);
+    const parsed = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
+
+    let prev: StaveNote | null = null;
+    partBeats.forEach((beats, pi) => {
+      const { duration, dots } = vexDuration(beats);
+      let n: StaveNote;
+      if (!parsed) {
+        // Rests (and any unparseable note) render as a rest on the middle line.
+        n = new StaveNote({ keys: ["b/4"], duration: `${duration}r` });
+      } else {
+        // Staff position comes from letter+octave only (Turkish accidentals don't shift the
+        // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
+        n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
+        // Only the FIRST written note of a tied pair draws the accidental — engraving never
+        // restrikes it on the tied-to note.
+        if (pi === 0) applyAccidental(n, parsed, true);
+      }
+      for (let d = 0; d < dots; d++) Dot.buildAndAttach([n], { all: true });
+      if (pi === 0 && pendingGraces.length > 0) {
+        const grp = new GraceNoteGroup(pendingGraces, false);
+        if (pendingGraces.length > 1) grp.beamNotes();
+        n.addModifier(grp, 0);
+        pendingGraces = [];
+      }
+      notes.push(n);
+      slots.push({
+        ev,
+        // A tie split spreads the event's playback time across its written parts.
+        durationMs: split ? (ev.durationMs * beats) / totalBeats : ev.durationMs,
+        lyric: pi === 0 ? ev.lyric : "",
+      });
+      if (groupIdx >= 0) groupNotes[groupIdx]!.push(n);
+      if (prev && parsed) ties.push([prev, n]);
+      prev = n;
+    });
+  });
+  // Dangling measure-final graces are dropped (the serializer drops them too — see lilypond.ts).
+  return { notes, slots, tuplets: groupNotes.filter((g) => g.length > 0), ties };
 }
 
 /**
@@ -202,6 +274,68 @@ function drawSignature(
     text.textContent = String.fromCodePoint(g.codepoint);
     svg.appendChild(text);
   });
+}
+
+/**
+ * Which side a tuplet sign goes: the NOTEHEAD side, opposite the stems/beam — the placement the
+ * printed Turkish engravings use (stems up → sign below the noteheads; stems down or stemless →
+ * above). Rests count as stem-up (VexFlow's default).
+ */
+function tupletAbove(group: StaveNote[]): boolean {
+  let up = 0;
+  let down = 0;
+  for (const n of group) {
+    let dir = 1;
+    try {
+      dir = n.getStemDirection();
+    } catch {
+      dir = 1;
+    }
+    if (dir >= 0) up++;
+    else down++;
+  }
+  return down > up;
+}
+
+/**
+ * Draw the CURVED tuplet mark — a slur-like arc with an italic "3" at its apex — as raw SVG,
+ * like the voltas/nav marks. This is the shape most printed Turkish scores use (VexFlow's
+ * `Tuplet` only draws the square bracket, which stays as the minority per-piece style).
+ */
+function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const xs = group.map((n) => n.getAbsoluteX());
+  const x1 = Math.min(...xs) - 2;
+  const x2 = Math.max(...xs) + 12;
+  const ys = group.flatMap((n) => {
+    try {
+      return n.getYs();
+    } catch {
+      return [];
+    }
+  });
+  if (ys.length === 0) return;
+  const yEdge = above ? Math.min(...ys) - 9 : Math.max(...ys) + 9;
+  const bulge = above ? -9 : 9;
+  const midX = (x1 + x2) / 2;
+  const path = document.createElementNS(SVG_NS, "path");
+  // Quadratic arc; its apex sits at yEdge + bulge, where the digit goes.
+  path.setAttribute("d", `M ${x1} ${yEdge} Q ${midX} ${yEdge + bulge * 2} ${x2} ${yEdge}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#222");
+  path.setAttribute("stroke-width", "1.1");
+  svg.appendChild(path);
+  const text = document.createElementNS(SVG_NS, "text");
+  text.setAttribute("x", String(midX));
+  text.setAttribute("y", String(yEdge + bulge + (above ? -2 : 11)));
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
+  text.setAttribute("font-size", "13");
+  text.setAttribute("font-style", "italic");
+  text.setAttribute("font-weight", "bold");
+  text.setAttribute("fill", "#222");
+  text.textContent = "3";
+  svg.appendChild(text);
 }
 
 // Volta bracket height above the top staff line: close to the row (clear of most beams) and well
@@ -537,6 +671,13 @@ export function SheetView({
       ? Math.max(String(timeSig.num).length, String(timeSig.den).length) * 16 + 10
       : 0;
 
+    // Tuplet mark style, chosen ONCE per piece (a real edition engraves them one way): the
+    // curved arc + "3" of most printed Turkish scores (~70% of pieces, by name hash) or
+    // VexFlow's square bracket. The label token is identical either way — the style variety
+    // is free training realism.
+    const tupletCurved =
+      Array.from(doc.name ?? "").reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10 < 7;
+
     // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef;
     // the very first measure additionally pays for the one-time time signature.
     const measures = groupMeasures(doc);
@@ -627,27 +768,82 @@ export function SheetView({
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
         const barHeight = stave.getYForLine(4) - stave.getYForLine(0) + 2 * CURSOR_MARGIN;
         try {
-          const { notes, evs } = buildStaveNotes(cell.m, accidentalMode, signatureMap);
+          const { notes, slots, tuplets, ties } = buildStaveNotes(cell.m, accidentalMode, signatureMap);
           if (notes.length > 0) {
+            // Beaming: a triplet's members must beam TOGETHER (one beam under the "3" bracket,
+            // as engraved) — auto-beam groups by quarter-note beat and would split or absorb
+            // them. So beams are built explicitly: one per tuplet group (over its beamable
+            // notes), auto-generated groups for every stretch between tuplets. Beams must
+            // exist BEFORE FormatAndDraw (they set the stems) and draw after it.
+            const inTuplet = new Set(tuplets.flat());
+            const beams: Beam[] = [];
+            let run: StaveNote[] = [];
+            const flushRun = () => {
+              if (run.length > 0) beams.push(...Beam.generateBeams(run));
+              run = [];
+            };
+            for (const n of notes) {
+              if (inTuplet.has(n)) flushRun();
+              else run.push(n);
+            }
+            flushRun();
+            const beamable = (n: StaveNote) => !n.isRest() && ["8", "16", "32", "64"].includes(n.getDuration());
+            for (const group of tuplets) {
+              let sub: StaveNote[] = [];
+              const flushSub = () => {
+                if (sub.length >= 2) beams.push(new Beam(sub));
+                sub = [];
+              };
+              for (const n of group) {
+                if (beamable(n)) sub.push(n);
+                else flushSub();
+              }
+              flushSub();
+            }
             // alignRests OFF: it shifts rests vertically toward the surrounding melody (a
             // multi-voice collision feature), floating them near the top line in this high
             // repertoire. Real single-voice engraving — and the printed sheets the OMR must
             // read — keeps rests centered at their standard staff position (b/4).
-            Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: true, alignRests: false });
-            attachTitles(notes, evs);
+            Formatter.FormatAndDraw(ctx, stave, notes, { autoBeam: false, alignRests: false });
+            beams.forEach((b) => b.setContext(ctx).draw());
+            attachTitles(notes, slots.map((s) => s.ev));
+            // Rhythm signs draw AFTER FormatAndDraw so the notes have positions: the "3" mark
+            // over/under each triplet group (curved arc or square bracket per the piece style,
+            // on the notehead side — see tupletAbove/drawTupletArc), and the tie arcs of split
+            // long values. The mark always shows "3" (numNotes 3 / notesOccupied 2 = the 3:2
+            // ratio) even for a mixed-value group, matching the `\tup3` label.
+            for (const group of tuplets) {
+              const above = tupletAbove(group);
+              if (tupletCurved && svg) drawTupletArc(svg, group, above);
+              else
+                new Tuplet(group, {
+                  numNotes: 3,
+                  notesOccupied: 2,
+                  bracketed: true,
+                  ratioed: false,
+                  location: above ? 1 : -1,
+                })
+                  .setContext(ctx)
+                  .draw();
+            }
+            for (const [a, b] of ties) {
+              new StaveTie({ firstNote: a, lastNote: b, firstIndexes: [0], lastIndexes: [0] })
+                .setContext(ctx)
+                .draw();
+            }
             // Record each event's drawn x + row so the playhead can follow it. getAbsoluteX is
             // only valid after FormatAndDraw has positioned the notes.
             const lyricY = stave.getYForLine(4) + LYRIC_DY;
             notes.forEach((n, i) => {
-              const ev = evs[i]!;
-              positions.push({ startMs: tMs, endMs: tMs + ev.durationMs, x: n.getAbsoluteX(), top: barTop, height: barHeight });
-              tMs += ev.durationMs;
+              const slot = slots[i]!;
+              positions.push({ startMs: tMs, endMs: tMs + slot.durationMs, x: n.getAbsoluteX(), top: barTop, height: barHeight });
+              tMs += slot.durationMs;
               // Collect each note's lyric slot; the connectors (hyphens / melisma lines) need the
               // neighbours, so the actual drawing happens in one pass after the whole score is laid out.
               if (showLyrics) {
-                const syl = ev.lyric?.trim() ?? "";
+                const syl = slot.lyric?.trim() ?? "";
                 const hold = syl === "" || syl === ".";
-                lyricItems.push({ x: n.getAbsoluteX(), baseY: lyricY, row: r, text: hold ? "" : syl, hold, wordEnd: !!ev.lyricWordEnd });
+                lyricItems.push({ x: n.getAbsoluteX(), baseY: lyricY, row: r, text: hold ? "" : syl, hold, wordEnd: !!slot.ev.lyricWordEnd });
               }
             });
           }

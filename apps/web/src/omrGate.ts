@@ -161,14 +161,16 @@ function decodeTokens(ids: number[], id2token: Record<string, string>): string {
 /**
  * Human-readable form of a decoded id sequence, for images with no ground-truth label.
  * The base vocab is BPE with `</w>` word-end markers (`c''8` decodes as `c` `'` `'` `8</w>`),
- * so raw tokens are unreadable; our added tokens (`\…`, `|`, `3`) are standalone words with
- * no marker. Mirrors the label strings the serializer emits (tools/render/lilypond.ts).
+ * so raw tokens are unreadable; our `\…` and `|` added tokens are standalone words with no
+ * marker. The added token `3` is NOT standalone — it exists only to spell 32nd durations
+ * (`e''32` = … `3` `2</w>`), so it continues the current word like any un-marked subword.
+ * Mirrors the label strings the serializer emits (tools/render/lilypond.ts).
  */
 function detokenize(ids: number[], id2token: Record<string, string>): string {
   let out = "";
   for (const id of ids) {
     const t = id2token[String(id)] ?? `<${id}?>`;
-    if (t.startsWith("\\") || t === "|" || t === "3") out += t + " ";
+    if (t.startsWith("\\") || t === "|") out += t + " ";
     else if (t.endsWith("</w>")) out += t.slice(0, -4) + " ";
     else out += t;
   }

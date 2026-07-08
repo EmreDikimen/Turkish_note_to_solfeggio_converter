@@ -65,8 +65,15 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
   (`strips_v2_1`, coverage audit PASS) and the training kit (`augment.py` / `modeling.py` /
   `train.py` / `eval_omr.py`, smoke-tested end-to-end on the Mac) are done. The scaled
   fine-tune (**Rung 2**) **PASSED on Colab Pro (2026-07-07, first try): 99.9% mean per-class
-  AEU accidental accuracy** on held-out pieces. Next: ONNX-export the Rung-2 checkpoint
-  (`data/checkpoints/rung2-best/`) via the proven Rung-1.5 pipeline — exact status in ROADMAP §7.
+  AEU accidental accuracy** on held-out pieces, and its **ONNX export PASSED the same day**
+  (int8 via the proven Rung-1.5 pipeline, browser gate 10/10 exact, ~1.0 s/strip — try your own
+  image via the upload box on the gate page). The **rhythm-sign upgrade is DONE (2026-07-08)**:
+  triplets + ties + grace notes as 4 new faithful tokens (`\tup3` `\tupend` `\tie` `\grace`),
+  recovered from real SymbTr durations and drawn as printed Turkish scores draw them —
+  `strips_v2_2` (18,777 strips, audit PASS) and the **Rung-2.2 retrain PASSED the same day
+  (headline 99.9%, exact-match 96.7%; new tokens 96–100% recall)**. Next: **re-export the
+  Rung-2.2 checkpoint to int8 ONNX + browser gate** (step-by-step in ROADMAP §7), THEN Rung 3
+  (real-photo collection + the labeling loop) — exact status in ROADMAP §7.
 
 ## Directory Structure
 

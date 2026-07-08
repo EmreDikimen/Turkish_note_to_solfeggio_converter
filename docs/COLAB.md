@@ -47,7 +47,7 @@ Suggested path: do the free-tier shakeout first (§4), buy Pro the same day the 
    sh scripts/make_colab_zip.sh        # → data/colab/tnc_rung2_colab.zip (~320 MB)
    ```
    One zip, mirroring the repo layout: the `src/vision` training kit + `data/split.json` +
-   `strips_v2_1` (manifest + PNGs). Nothing else is needed on the Colab side — no git.
+   `strips_v2_2` (manifest + PNGs). Nothing else is needed on the Colab side — no git.
 2. **Upload it to Drive**: go to [drive.google.com](https://drive.google.com), create a folder
    **`tnc`** in My Drive, drag `tnc_rung2_colab.zip` into it. (~5–15 min on a home connection;
    one-time — later sessions reuse it.)

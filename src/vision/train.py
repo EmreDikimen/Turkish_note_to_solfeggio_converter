@@ -1,8 +1,8 @@
 """
-Rung 2 — scaled fine-tune of `Flova/omr_transformer` on strips_v2_1 (Phase 2 → 3).
+Rung 2 — scaled fine-tune of `Flova/omr_transformer` on strips_v2_2 (Phase 2 → 3).
 
 WHAT: full fine-tune from the ORIGINAL pretrained weights (the overfit-10 checkpoint was a
-throwaway diagnostic) on the 18.6k-strip `data/synthetic/strips_v2_1` set (v2 + nav-mark
+throwaway diagnostic) on the 18.6k-strip `data/synthetic/strips_v2_2` set (v2 + nav-mark
 tokens + centered rests), with on-the-fly input-realism augmentation (`augment.py` —
 screenshot-dominant, see its docstring), split BY PIECE from `data/split.json` (strips of one
 piece are near-duplicates; a piece straddling both splits contaminates validation),
@@ -105,7 +105,7 @@ def evaluate(model, loader, device, autocast_ctx) -> float:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2_1")
+    ap.add_argument("--strips-dir", default="data/synthetic/strips_v2_2")
     ap.add_argument("--split", default="data/split.json")
     ap.add_argument("--out-dir", required=True, help="checkpoints + metrics.jsonl (Drive on Colab)")
     ap.add_argument("--model", default=MODEL_ID, help="base weights (Rung 2 default: the ORIGINAL pretrained)")

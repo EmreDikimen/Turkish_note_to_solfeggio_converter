@@ -39,11 +39,18 @@ export interface RepeatSpan {
 const MIN_RUN = 2;
 const MAX_RUN = 12;
 
-/** Musical fingerprint of a measure: pitch + duration of every event. Lyrics are deliberately
- *  ignored — verses differ between passes of the same repeated music. */
+/** Musical fingerprint of a measure: pitch + duration of every event (grace notes by pitch
+ *  with the "g" tag so passes differing only in an ornament don't fold). Lyrics are
+ *  deliberately ignored — verses differ between passes of the same repeated music. */
 function fingerprint(m: Measure): string {
   return m.events
-    .map((e) => `${e.kind === "note" ? `${e.noteName}@${e.koma53}` : "r"}:${eventBeats(e).toFixed(4)}`)
+    .map((e) => {
+      const head =
+        e.kind === "note" ? `${e.noteName}@${e.koma53}`
+        : e.kind === "grace" ? `g${e.noteName}@${e.koma53}`
+        : "r";
+      return `${head}:${eventBeats(e).toFixed(4)}`;
+    })
     .join("|");
 }
 

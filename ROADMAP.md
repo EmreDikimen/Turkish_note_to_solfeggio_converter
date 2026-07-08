@@ -447,8 +447,63 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   accidentals + repeat/nav tokens (`data/checkpoints/rung2-best/GATE_STRIPS.txt`; pre-picked
   as exact PyTorch decodes, since a generalizing model isn't the memorizing overfit10). Full
   log: `src/vision/MODEL_EVAL.md`; see-it-yourself guide: `docs/MANUAL_CHECKS.md` Check 9.
-- ⏳ **Next: Rung 3** — real-photo/screenshot COLLECTION + the model-assisted labeling loop
-  (`docs/PIPELINE.md` §3); the exported int8 graphs also unblock **Rung-4 wiring**
+- ✅ **Rhythm-sign dataset upgrade (triplets + ties + grace notes): DONE, AUDIT PASS
+  (2026-07-08)** — the pipeline now spells the three signs the first real upload test exposed
+  (triplet 8ths misread as `16. 32`): **4 faithful tokens `\tup3` `\tupend` `\tie` `\grace`**
+  (96 → 100 ids, appended at the END so every earlier token id stays stable), all recovered
+  from REAL durations, no injection (`tools/render/rhythm.ts` — pure per-measure functions
+  shared by SheetView and the serializer, so pixels == labels by construction). Delivered:
+  parser/exporter grace kind (Kod 8 + Ms 0; the few timed Kod-8 rows stay ordinary notes),
+  core `EventKind "grace"` (transpose moves it, playback skips it, a barline grace joins the
+  NEXT bar with its host), triplet groups from reduced exact fractions closing on plain sums
+  (members spell their ×3/2 written value; `3/12`-style reducible fractions correctly excluded),
+  tie pairs `x \tie x` (accidental only on the first note; long RESTS split side-by-side with
+  no tie), `\grace` + small-slashed-8th spelling glued to its host note; tuplet groups / tie
+  pairs / grace+host are **unsplittable packing atoms**; the measure editor hides graces and
+  re-attaches them on save. Drawing: triplets **beam together** (explicit per-group beams),
+  tuplet mark = hand-drawn **curved arc + italic "3"** on the notehead side (~70% of pieces by
+  name hash — the printed-Turkish-score shape; user-verified) or VexFlow's square bracket,
+  `StaveTie` arcs, `GraceNoteGroup` slashed noteheads. **`data/synthetic/strips_v2_2/`:
+  18,777 strips / 474 MB, zero render errors, audit PASS** — longest label 57 ids (cap 59);
+  413 `\tup3` / 704 `\tie` / 1,996 `\grace` strips; floors set to measured reality (val
+  `\tup3` is structurally thin at 9 — only 3 val pieces have triplets, two are dense pieces
+  whose triplet bars exceed the token budget, in v2_1 too — treat its eval recall as a smoke
+  signal; barline-share floor 40→37%, the rhythm tokens raised per-measure cost ~2pp).
+  Non-regression: all 8,575 feature-free measures serialize byte-identical to v2_1. Live
+  check: `docs/MANUAL_CHECKS.md` **Check 3c** (sample `beyati-delisin.json`). Mac train smoke
+  on v2_2 PASS; **Colab kit rebuilt** (`data/colab/tnc_rung2_colab.zip`, 320 MB; the notebook
+  now checkpoints to `MyDrive/tnc/rung22/` so the Rung-2 Drive backup stays intact).
+- ✅ **Rung 2.2 — rhythm-sign retrain: PASS (2026-07-08, first try):** Colab run from base
+  weights on `strips_v2_2` (shakeout clean: `+25 tokens -> 100 ids`). On the 2,417 held-out val
+  strips: **headline 99.9% (8/8), SER 0.002, exact-match 96.7%** — quality holds vs Rung 2
+  while adding the new signs: `\tup3`/`\tupend` 100%/100% (9 gold, smoke signal), `\tie` 96.4%
+  recall, `\grace` 98.0%; repeats/nav/`\sig` unchanged. Full log + error notes:
+  `src/vision/MODEL_EVAL.md` "Rung 2.2". Checkpoint: Drive `MyDrive/tnc/rung22/best`.
+- ⏳ **Next: ship the Rung-2.2 checkpoint (the proven Rung-2 export chain, ~1 h), THEN Rung 3.**
+  Step by step for a fresh session:
+  1. **Local copy:** download Drive `MyDrive/tnc/rung22/best` → `data/checkpoints/rung22-best/`
+     (gitignored, like rung2-best).
+  2. **Gate strips:** write `data/checkpoints/rung22-best/GATE_STRIPS.txt` — ~8–10 val-piece
+     strip filenames from `data/synthetic/strips_v2_2/`, one per category as at Rung 2 (`\sig`
+     block, büyük, repeat/volta, nav, multi-measure `|`) **plus the new categories: a `\tup3`
+     strip, a `\tie` strip, a `\grace` strip**. Pre-pick strips the PyTorch checkpoint decodes
+     EXACTLY (the gate criterion is exact match; at 96.7% exact-match most candidates pass —
+     verify with a quick decode loop or `eval_omr.py --show-errors` output before blaming the
+     export). Rhythm-sign candidates: grep the v2_2 manifest for `\tup3`/`\tie`/`\grace` among
+     val pieces (val `\tup3` strips are all in acemkurdi/muhayyer).
+  3. **Export:** the same `optimum-cli export onnx --task image-to-text-with-past` invocation
+     as Rung 2 (see `docs/MANUAL_CHECKS.md` Check 9) → `data/checkpoints/rung22-best-onnx/`.
+  4. **int8:** `src/vision/quantize_onnx.py` on that dir (expect ~221 MB total again).
+  5. **Parity:** `src/vision/onnx_parity.py --checkpoint data/checkpoints/rung22-best
+     --onnx-dir data/checkpoints/rung22-best-onnx --strips-dir data/synthetic/strips_v2_2`,
+     fp32 AND `--suffix _int8` — must be N/N exact.
+  6. **Browser gate:** `src/vision/make_browser_gate.py` (same flags) → `omr-gate.html`
+     headless Chromium (Check 9) — target N×2/N×2 exact, then **retry the original
+     triplet-misreading real upload** in the gate page's upload box: the triplet passage should
+     now come back wrapped in `\tup3 … \tupend` instead of `16. 32`.
+  7. **Log results** in `MODEL_EVAL.md` (append to the Rung-2.2 section) + update this entry.
+  **THEN Rung 3:** photo/screenshot COLLECTION (`docs/PIPELINE.md` §3) can start any time; the
+  model-assisted labeling loop uses this checkpoint. The int8 graphs unblock **Rung-4 wiring**
   (preprocess → staff isolation → decode → note model, `docs/PIPELINE.md`).
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
@@ -459,4 +514,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-07._
+_Last updated: 2026-07-08._

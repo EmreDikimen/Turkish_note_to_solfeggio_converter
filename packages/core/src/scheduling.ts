@@ -35,7 +35,8 @@ export interface Timeline {
  * How it works: walk the events in order keeping a running `cursorMs` clock. For each
  * sounding event, emit a note starting at the current cursor, then advance the cursor by
  * that event's duration. Rests advance the clock but produce silence (freq = NaN). Meta
- * events are skipped entirely. `totalMs` ends up as the full piece length.
+ * events are skipped entirely, and so are grace notes — they occupy no time and stay
+ * silent until ornament synthesis exists. `totalMs` ends up as the full piece length.
  * Important: this is the bridge from "musical data" to "timed events"; the AudioBackend
  * below only ever sees this timeline, never the raw document.
  */
@@ -43,7 +44,7 @@ export function buildTimeline(doc: NoteModelDocument): Timeline {
   const notes: ScheduledNote[] = [];
   let cursorMs = 0;
   for (const ev of doc.events) {
-    if (ev.kind === "meta") continue;
+    if (ev.kind === "meta" || ev.kind === "grace") continue;
     const isRest = ev.kind === "rest";
     notes.push({
       index: ev.index,

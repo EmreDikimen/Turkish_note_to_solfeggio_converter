@@ -6,7 +6,12 @@
  * product both read this same shape.
  */
 
-export type EventKind = "note" | "rest" | "meta";
+/**
+ * "grace" = çarpma (SymbTr Kod 8 with no duration): pitched like a note but occupies no
+ * time — the sheet draws it as a small slashed note attached to the following real note;
+ * playback skips it (ornament synthesis is a later feature).
+ */
+export type EventKind = "note" | "rest" | "grace" | "meta";
 
 export interface TuningParams {
   /** Tuning system identifier, e.g. "53tet". */

@@ -5,7 +5,7 @@
 # after unzipping — no git clone or repo state needed on the Colab side:
 #   src/vision/*.py                        the training kit (train/eval/data/modeling/augment/audit)
 #   data/split.json                        the committed split-by-piece
-#   data/synthetic/strips_v2_1/            manifest.jsonl + PNGs (the .txt label sidecars and the
+#   data/synthetic/strips_v2_2/            manifest.jsonl + PNGs (the .txt label sidecars and the
 #                                          per-piece manifests/ shards are redundant — excluded)
 #
 # Output: data/colab/tnc_rung2_colab.zip (~470 MB; PNGs don't compress, -1 keeps it fast).
@@ -13,7 +13,7 @@
 set -e
 cd "$(dirname "$0")/.."
 
-STRIPS=data/synthetic/strips_v2_1
+STRIPS=data/synthetic/strips_v2_2
 OUT=data/colab/tnc_rung2_colab.zip
 mkdir -p data/colab
 rm -f "$OUT"

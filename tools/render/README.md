@@ -43,11 +43,16 @@ only what is **physically drawn**:
 tokens, **`\natural`**, **`\sig`** / **`\sigend`**, `|`, the digit **`3`** — the base vocab lacks
 `3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`) — the 4 repeat-sign
 tokens `\repstart` `\repend` `\volta1` `\volta2` (faithful drawn symbols; the base vocab's structural
-`\repeat `/`volta ` can't label a crop showing only one end of a repeat), and the 4 navigation-mark
+`\repeat `/`volta ` can't label a crop showing only one end of a repeat), the 4 navigation-mark
 tokens `\segno` `\coda` `\dc` `\fine` (segno 𝄋 / coda ⊕ / "D.C." / "Son" — same faithful-drawn-symbol
-story, injected via `navmarks.ts`; see `docs/PHASE2.md` §6). 21 added ids total. `\repstart`/`\repend`
-replace the `|` at their boundary; `\volta1`/`\volta2` precede the bracketed measure's first note;
-nav tokens sit at the drawn measure edge (start-edge marks before the measure's notes, end-edge after).
+story, injected via `navmarks.ts`; see `docs/PHASE2.md` §6), and the 4 **rhythm-sign** tokens
+`\tup3` `\tupend` `\tie` `\grace` (strips_v2_2 — REAL data recovered from the exact durations by
+`rhythm.ts`, no injection: `\tup3 … \tupend` wraps a bracketed triplet group whose members spell
+their ×3/2 written value; `\tie` sits between the two written notes of a split long value — rests
+split without a tie; `\grace` prefixes a small slashed grace note's own spelling). 25 added ids
+total. `\repstart`/`\repend` replace the `|` at their boundary; `\volta1`/`\volta2` precede the
+bracketed measure's first note; nav tokens sit at the drawn measure edge (start-edge marks before
+the measure's notes, end-edge after).
 
 ### Real examples (from `apps/web/public/`)
 Uşşak (`gamzedeyim-deva.json`) — note the Uşşak Si as a koma-flat:
@@ -124,6 +129,9 @@ inline, crop anywhere) and `keysig` (makam signature at the row start, crop row-
   of renders, never stacked on repeat/volta measures — see `docs/PHASE2.md` §6).
 - `respell.ts` — seeded low-rate AEU-enharmonic respell (büyük coverage; only `noteName` changes,
   so pixels and labels stay consistent by construction).
+- `rhythm.ts` — triplet-group + tie-split detection from the exact `durationBeats` rationals
+  (strips_v2_2; pure per-measure functions shared by the serializer and SheetView, so pixels ==
+  labels by construction — no seeds, no injection: these signs are real data).
 - `rng.ts` — seeded PRNG (`mulberry32`) + `hashStr`, shared by every seeded render step.
 (Browser-side counterparts live in `apps/web/src/`: `stripExport.ts` builds crop rects + labels
 from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)

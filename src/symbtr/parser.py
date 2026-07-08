@@ -34,6 +34,7 @@ from pathlib import Path
 class EventKind(str, Enum):
     NOTE = "note"
     REST = "rest"
+    GRACE = "grace"  # çarpma (Kod 8, Ms == 0): a drawn small note with no time of its own
     META = "meta"  # usul change, ornament markers, anything not a sounding note/rest
 
 
@@ -46,6 +47,8 @@ EXPECTED_COLUMNS = [
 
 REST_KOMA = -1
 USUL_CHANGE_CODE = 51  # Kod 51 = usul (meter) change; carries the new meter in Pay/Payda.
+GRACE_CODE = 8  # Kod 8 = çarpma (grace note). Only the Ms == 0 rows are true graces; a few
+# Kod-8 rows carry a real duration and are ordinary sounding notes (classified by Ms as usual).
 
 
 @dataclass
@@ -80,16 +83,20 @@ class Event:
         How it works: **duration is what makes a row a sounding event, not its ``Kod``.**
         SymbTr uses many Kod values for real notes (1, 7, 9, 10, 11, 12, …), so keying on
         ``Kod == 9`` alone silently drops a big chunk of the melody and wrecks the timing.
-        Instead: a usul-change row (``Kod 51``) is META; a row with no duration (``Ms == 0`` —
-        grace/çarpma notes and other control codes like 53/54/55) is non-timed, so META; every
-        remaining row occupies time and is a sounding event — a ``Koma53`` of -1 marks a rest
-        (silence), anything else is a pitched note.
+        Instead: a usul-change row (``Kod 51``) is META; a pitched ``Kod 8`` row with no
+        duration is a GRACE (çarpma — drawn as a small note, occupies no time; the rare
+        Kod-8 rows WITH a duration are ordinary notes and fall through to the Ms rule);
+        any other row with no duration (``Ms == 0`` — control codes like 53/54/55) is
+        non-timed, so META; every remaining row occupies time and is a sounding event —
+        a ``Koma53`` of -1 marks a rest (silence), anything else is a pitched note.
         Important: this is a *derived* property, not stored data — change the rule here
         and the whole pipeline follows.
         """
         if self.code == USUL_CHANGE_CODE:
             return EventKind.META
         if self.ms <= 0:
+            if self.code == GRACE_CODE and self.koma_53 != REST_KOMA:
+                return EventKind.GRACE
             return EventKind.META
         return EventKind.REST if self.koma_53 == REST_KOMA else EventKind.NOTE
 

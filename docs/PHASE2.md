@@ -172,6 +172,57 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   injection density was set by SIMULATING the audit floors first (at the initial 2–4 marks on
   ~50% the rarer tokens came in under floor; shipped at 4–6 on ~70%). Also baked in: the
   centered-rest engraving fix (`alignRests` off in SheetView). Train on v2_1, not v2.
+- **Triplets (tuplet brackets) — ✅ CLOSED 2026-07-08, together with the tie + grace bundle
+  below (one strips_v2_2 upgrade; implementation details + audit numbers in ROADMAP §7 —
+  18,777 strips, audit PASS, 413 `\tup3` / 704 `\tie` / 1,996 `\grace` strips; drawn as the
+  curved-arc "3" of printed Turkish scores on ~70% of pieces, VexFlow's square bracket on the
+  rest; Rung-2.2 retrain pending). Two findings vs. the plan text below: fractions must be
+  REDUCED first (`3/12` is a plain 1/4, so 37 — not 58 — of the 150 pieces truly carry
+  triplets), and val `\tup3` is structurally thin (9 occurrences — the dense val pieces' triplet
+  bars exceed the token budget, as in v2_1; smoke-signal metric only). Original gap (found
+  2026-07-07 by the first real-image upload test — triplet 8ths came back as `16. 32`):**
+  SymbTr DOES have them (survey
+  over all 2,200 txt files: **34.8% of pieces** contain tuplet-fraction durations, **1.86% of
+  notes** — 8th/16th triplets, `Pay/Payda` 1/12 and 1/24, dominate; **58 of our 150 selected
+  pieces** have some), but the pipeline currently SNAPS tuplet fractions to the nearest plain
+  duration (`lilyDuration`'s fallback + SheetView's `vexDuration`), so the synthetic sheets draw
+  triplet passages as ordinary 16ths — no bracket, no "3" — and the model, never having seen the
+  bracket, invents plausible-but-wrong rhythms on real scores. The base model can't help: its BPE
+  vocab is **54 char-level ids — no `{`/`}`, no `/` (and originally no digit `3`)** — so
+  LilyPond's structural `\tuplet 3/2 { … }` is UNSPELLABLE. Same situation as the repeat signs →
+  same medicine, faithful drawn-symbol tokens. **Plan: 2 new tokens `\tup3 … \tupend`** wrapping
+  the bracketed group (digit in the name for a future `\tup5`, like `\volta1`/`\volta2`; the
+  written durations inside stay as drawn — three plain 8ths under a 3-bracket); detect groups
+  from note-model durations (runs of 1/12 / 1/24 summing to a plain value — REAL data, no
+  injection needed, unlike repeats/nav marks); draw with VexFlow `Tuplet`; decoder round-trip;
+  audit floors; re-render `strips_v2_2` → Rung-2.2 retrain → re-export (all three steps proven +
+  scripted). This also makes those 58 pieces' sheets rhythmically correct for the first time.
+  **Why before Rung 3:** the labeling loop serializes hand-corrected real photos through THIS
+  serializer — a format that can't express triplets would poison the very labels the loop exists
+  to create.
+  - **Ties / long held notes — ✅ done in the same bundle (user decision 2026-07-07):**
+    SymbTr writes a long value (5/8, 9/8, 5/4, 5/16 … ≈0.3% of notes) as ONE event, but the
+    engraved form is a **tied pair** (e.g. 5/8 = half + tied 8th); today we snap it to a plain
+    value — a real duration error in the audio. LilyPond's `~` is unspellable in the base vocab
+    → **+1 faithful token `\tie`**, emitted between the two written notes of the drawn pair.
+    Rendering splits the long value into tied written notes (SheetView draws the arc via
+    VexFlow); the note model keeps the ONE event untouched (audio/`koma53` stays the source of
+    truth); the Phase-4 decoder merges `x \tie x` back into one event. (Implementation notes:
+    accidental drawn/labeled only on the FIRST written note; long RESTS split side-by-side with
+    no tie, as engraved; no across-the-barline handling needed — `assignBars` gives each event
+    exactly one bar, so the written pair always draws inside its own measure; a value the greedy
+    split can't resolve in ≤3 written notes keeps the legacy snap.)
+  - **Grace notes (çarpma) — ✅ done in the same bundle, recognized like ties (user decision
+    2026-07-07):** SymbTr has them as real data (Kod 8, ~12.8k occurrences — no injection
+    needed) but we currently drop them (Ms=0 → META) and never draw them, so on a real photo
+    the model would read the small notehead as a REAL note and corrupt the measure's rhythm.
+    Fix: **+1 faithful token `\grace`**, prefixing the small note's own spelling (e.g.
+    `\grace \bakiyeSharp f''8` — pitch/accidental/duration reuse the existing vocab): expose
+    grace events through the parser/JSON export (new event kind, zero playback duration for
+    now), engrave the small slashed notehead (VexFlow `GraceNote`), decoder round-trip attaches
+    the grace to its main note in the note model — so ornament PLAYBACK becomes possible later
+    without another retrain. Audit floors like every token.
+    **Total new ids for v2_2: 4** (`\tup3` `\tupend` `\tie` `\grace`, 96 → 100).
 - **Strip-length coverage gap:** ✅ **CLOSED (2026-07-05)** — cap raised 46→56 (`STRIP_BUDGET`,
   one shared constant) and piece selection targets sparse pieces. Measured on the v2 render:
   39.9% of every-mode strips span 2–4 measures; `|` in 40.7% of labels. Two hard facts learned:
@@ -228,6 +279,14 @@ taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired. **Rung-2 O
 PASS (2026-07-07, same day)** — the Rung-1.5 pipeline rerun on `rung2-best`: export → int8
 (now committed: `src/vision/quantize_onnx.py`; 221 MB) → Python parity 5/5 (fp32 + int8) →
 browser gate 10/10 exact on held-out-piece strips with real Turkish accidentals, ~1.0 s/strip
-(`MODEL_EVAL.md`; watch it yourself: `docs/MANUAL_CHECKS.md` Check 9). **Next (ROADMAP §7):
-Rung 3** — photo/screenshot collection + the model-assisted labeling loop; the full-page
-inference pipeline + Rung-3 real-photo plan live in `docs/PIPELINE.md`.
+(`MODEL_EVAL.md`; watch it yourself: `docs/MANUAL_CHECKS.md` Check 9). **The rhythm-sign
+dataset upgrade (§6) is DONE (2026-07-08)** — triplets + ties + grace notes, 4 new tokens
+`\tup3` `\tupend` `\tie` `\grace` (96 → 100 ids), recovered from real durations by
+`tools/render/rhythm.ts`; **`strips_v2_2` rendered (18,777 strips) + audit PASS** (live check:
+`docs/MANUAL_CHECKS.md` Check 3c) — and the **Rung-2.2 retrain PASSED the same day** (Colab,
+from base weights): **headline 99.9% (8/8), SER 0.002, exact-match 96.7%** on the 2,417
+held-out val strips; `\tup3`/`\tupend` 100%, `\tie` 96.4%, `\grace` 98.0% recall
+(`MODEL_EVAL.md` "Rung 2.2"; checkpoint: Drive `MyDrive/tnc/rung22/best`). **Next: ship it —
+the proven ONNX chain on the new checkpoint (step-by-step list in ROADMAP §7 "Next"), THEN
+Rung 3.** Rung-3 photo/screenshot COLLECTION (`docs/PIPELINE.md` §3) can start in parallel;
+the model-assisted labeling loop uses the Rung-2.2 model.

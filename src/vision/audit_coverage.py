@@ -4,8 +4,9 @@ Rung-2 dataset coverage audit — the GATE between "rendered" and "worth trainin
 Reads a strips manifest and reports everything the Definition-of-done cares about; exits non-zero
 on violations so it can guard a training run mechanically:
 
-  - per-class counts of the 8 AEU accidentals (+ \\natural, \\sig, repeat tokens, barline `|`),
-    overall and per split side when --split is given;
+  - per-class counts of the 8 AEU accidentals (+ \\natural, \\sig, repeat/nav tokens, barline
+    `|`, and the v2_2 rhythm signs \\tup3/\\tupend/\\tie/\\grace), overall and per split side
+    when --split is given;
   - measures-per-strip histogram and the multi-measure / barline shares;
   - per-mode / per-transpose / lyric / repeat-render shares;
   - with --tokenizer: encodes EVERY label with the real tokenizer and FAILS if any exceeds
@@ -14,7 +15,7 @@ on violations so it can guard a training run mechanically:
   - runs check_token_drift (an unknown \\token in any label fails the audit).
 
 Usage:
-    .venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2_1 \
+    .venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2_2 \
         [--split data/split.json] [--tokenizer data/checkpoints/overfit10]
 """
 
@@ -32,8 +33,13 @@ from data import ADDED_TOKENS, StripDataset, check_token_drift
 
 AEU = ADDED_TOKENS[:8]
 STRUCT = ["\\natural", "\\sig", "\\repstart", "\\repend", "\\volta1", "\\volta2",
-          "\\segno", "\\coda", "\\dc", "\\fine", "|"]
+          "\\segno", "\\coda", "\\dc", "\\fine", "|",
+          "\\tup3", "\\tupend", "\\tie", "\\grace"]
 NAV = ["\\segno", "\\coda", "\\dc", "\\fine"]
+# strips_v2_2 rhythm signs (tools/render/rhythm.ts) — REAL data recovered from the durations
+# (34 train / 3 val pieces have triplets, 24/3 ties, 86/12 graces of the 150), never injected,
+# so the floors below are regression guards on the renderer, not injection-density tuning.
+RHYTHM = ["\\tup3", "\\tie", "\\grace"]  # \tupend counts == \tup3, no separate floor
 MAX_IDS = 59  # incl. EOS; decoder max_length is 60 (one slot for the decoder-start id)
 
 # DoD thresholds (docs/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
@@ -41,17 +47,26 @@ MAX_IDS = 59  # incl. EOS; decoder max_length is 60 (one slot for the decoder-st
 MIN_TRAIN_PER_CLASS = 200
 MIN_VAL_PER_CLASS = 25
 MIN_VAL_BUYUK = 15
-# Regression floor, not an aspiration: the v2 render measured 39.9% (the structural ceiling —
-# measures pair only within a screen row, and dense measures can't pair under the 60-id budget;
-# the OLD dataset was 4%). A future render below this floor means the packing broke.
+# Regression floor, not an aspiration: the v2 render measured 39.9% multi-measure / 40.7%
+# barline (the structural ceiling — measures pair only within a screen row, and dense measures
+# can't pair under the 60-id budget; the OLD dataset was 4%). The v2_2 rhythm signs raised the
+# per-measure token cost, lowering the ceiling ~2pp (measured 38.1% / 38.6%) — floors follow.
+# A future render below these means the packing broke.
 MIN_MULTI_MEASURE_SHARE = 0.35  # of every-mode strips
-MIN_BARLINE_SHARE = 0.40        # of all labels
+MIN_BARLINE_SHARE = 0.37        # of all labels
 MIN_REPEAT_SHARE = 0.05
 # Navigation marks are single measure-edge glyphs (repeat signs are 2–4-measure SPANS), so far
 # fewer strips carry one; the per-token floors below are what actually guards trainability.
 MIN_NAV_SHARE = 0.02
 MIN_TRAIN_PER_NAV = 100
 MIN_VAL_PER_NAV = 10
+# Rhythm-sign floors, set just under the measured v2_2 render (train \tup3 561 / \tie 544 /
+# \grace 2148; val 9 / 195 / 254) — corpus-driven, not an injection rate. Val \tup3 is
+# STRUCTURALLY thin: only 3 val pieces have triplets and two are dense ağırsemai/aksak pieces
+# whose triplet bars exceed the token budget (they were dropped in v2_1 too) — treat the eval
+# recall on \tup3 as a smoke signal, like \volta2.
+MIN_TRAIN_PER_RHYTHM = 400
+MIN_VAL_PER_RHYTHM = 8
 
 
 def token_counts(rows: list[dict]) -> Counter:
@@ -65,7 +80,7 @@ def token_counts(rows: list[dict]) -> Counter:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--strips", default="data/synthetic/strips_v2_1")
+    ap.add_argument("--strips", default="data/synthetic/strips_v2_2")
     ap.add_argument("--split", default=None)
     ap.add_argument("--tokenizer", default=None, help="HF checkpoint dir for the real-id length gate")
     args = ap.parse_args()
@@ -93,9 +108,13 @@ def main() -> int:
     rep = sum(1 for r in rows if "\\repstart" in r["label"] or "\\repend" in r["label"]) / n
     nav = sum(1 for r in rows if any(t in r["label"].split() for t in NAV)) / n
     lyr = sum(1 for r in rows if r.get("lyrics")) / n
+    tup = sum(1 for r in rows if "\\tup3" in r["label"].split()) / n
+    tie = sum(1 for r in rows if "\\tie" in r["label"].split()) / n
+    grc = sum(1 for r in rows if "\\grace" in r["label"].split()) / n
     modes = Counter(r["mode"] for r in rows)
     transposes = Counter(r.get("transpose", 0) for r in rows)
     print(f"repeat-token strips: {rep:.1%}   nav-token strips: {nav:.1%}   lyric strips: {lyr:.1%}   modes: {dict(modes)}")
+    print(f"rhythm-sign strips — triplet: {tup:.1%}   tie: {tie:.1%}   grace: {grc:.1%}")
     print(f"transposes: {dict(sorted(transposes.items()))}")
     if rep < MIN_REPEAT_SHARE:
         failures.append(f"repeat share {rep:.1%} < {MIN_REPEAT_SHARE:.0%}")
@@ -129,6 +148,11 @@ def main() -> int:
                 failures.append(f"{tok}: train {counts['train'][tok]} < {MIN_TRAIN_PER_NAV}")
             if counts["val"][tok] < MIN_VAL_PER_NAV:
                 failures.append(f"{tok}: val {counts['val'][tok]} < {MIN_VAL_PER_NAV}")
+        for tok in RHYTHM:
+            if counts["train"][tok] < MIN_TRAIN_PER_RHYTHM:
+                failures.append(f"{tok}: train {counts['train'][tok]} < {MIN_TRAIN_PER_RHYTHM}")
+            if counts["val"][tok] < MIN_VAL_PER_RHYTHM:
+                failures.append(f"{tok}: val {counts['val'][tok]} < {MIN_VAL_PER_RHYTHM}")
 
     # --- drift + real-tokenizer length gate ---------------------------------
     ds = StripDataset(strips_dir)

@@ -34,9 +34,10 @@ def main() -> int:
 
     n_note = sum(1 for e in score.events if e.kind is EventKind.NOTE)
     n_rest = sum(1 for e in score.events if e.kind is EventKind.REST)
+    n_grace = sum(1 for e in score.events if e.kind is EventKind.GRACE)
     n_meta = sum(1 for e in score.events if e.kind is EventKind.META)
     print(f"{score.title or score.name}: {len(score.events)} events "
-          f"(notes {n_note}, rests {n_rest}, meta {n_meta}) -> {out}")
+          f"(notes {n_note}, rests {n_rest}, graces {n_grace}, meta {n_meta}) -> {out}")
     return 0
 
 

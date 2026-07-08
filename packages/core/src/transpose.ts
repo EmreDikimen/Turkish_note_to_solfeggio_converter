@@ -1,10 +1,11 @@
 /**
  * Chromatic transposition of a whole score.
  *
- * Shifts every NOTE by `commas` Holdrian commas (53 = one octave) and re-derives its written
- * name + frequency from the shifted comma value. Re-spelling goes through `komaToName` (the same
- * smallest-alteration enharmonic the edit modal uses), so names stay sensible instead of turning
- * into odd enharmonics. Rests and meta events pass through unchanged.
+ * Shifts every pitched event (notes AND grace notes) by `commas` Holdrian commas (53 = one
+ * octave) and re-derives its written name + frequency from the shifted comma value. Re-spelling
+ * goes through `komaToName` (the same smallest-alteration enharmonic the edit modal uses), so
+ * names stay sensible instead of turning into odd enharmonics. Rests and meta events pass
+ * through unchanged.
  *
  * This is "chromatic" by design — a fixed comma shift, not a diatonic/interval-preserving move.
  * The named ahenks (Bolahenk, Mansur, Kız, …) are just fixed comma offsets, so a name→offset
@@ -20,7 +21,7 @@ import { freqFromTuning } from "./tuning";
 export function transpose(doc: NoteModelDocument, commas: number): NoteModelDocument {
   if (commas === 0) return doc;
   const events: NoteEvent[] = doc.events.map((ev) => {
-    if (ev.kind !== "note") return ev;
+    if (ev.kind !== "note" && ev.kind !== "grace") return ev;
     const koma53 = ev.koma53 + commas;
     return {
       ...ev,

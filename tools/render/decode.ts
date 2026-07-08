@@ -26,11 +26,17 @@ import {
   CODA_TOKEN,
   DC_TOKEN,
   FINE_TOKEN,
+  TUP3_TOKEN,
+  TUP_END_TOKEN,
+  TIE_TOKEN,
+  GRACE_TOKEN,
 } from "./lilypond";
 
-/** Repeat-sign + navigation tokens → their readable glyph. Structural markers: they never affect
- *  how the surrounding notes resolve (Phase 4 expands them; here they just round-trip for
- *  verification). */
+/** Repeat-sign, navigation and rhythm-sign tokens → their readable glyph. Structural markers:
+ *  they never affect how the surrounding notes resolve (Phase 4 expands repeats/navigation,
+ *  merges `x \tie x` into one event and attaches `\grace` notes to their host; here they just
+ *  round-trip for verification — `‹3 … ›` shows the bracket, `⁀` the tie arc, `grace»` the
+ *  small note that follows). */
 const REPEAT_GLYPH: Record<string, string> = {
   [REP_START_TOKEN]: "‖:",
   [REP_END_TOKEN]: ":‖",
@@ -40,6 +46,10 @@ const REPEAT_GLYPH: Record<string, string> = {
   [CODA_TOKEN]: "⊕",
   [DC_TOKEN]: "D.C.",
   [FINE_TOKEN]: "Son",
+  [TUP3_TOKEN]: "‹3",
+  [TUP_END_TOKEN]: "›",
+  [TIE_TOKEN]: "⁀",
+  [GRACE_TOKEN]: "grace»",
 };
 
 const TOKEN_TO_ALTER: Record<string, number> = Object.fromEntries(

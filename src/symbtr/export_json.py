@@ -18,12 +18,15 @@ Schema (``schemaVersion`` 1)::
          "durationMs": 714, "durationBeats": {"num": 1, "den": 4},
          "freqHz": 391.14, "lyric": "Al", "offset": 0.25},
         {"index": 34, "kind": "rest", "koma53": -1, ... "freqHz": null, ...},
+        {"index": 40, "kind": "grace", "koma53": 349, "durationMs": 0,
+         "durationBeats": {"num": 0, "den": 1}, ...},
         {"index": 99, "kind": "meta", "code": 51, ...}
       ]
     }
 
-All events (notes, rests, and meta rows) are exported with a ``kind`` tag so consumers
-can filter; the web editor ignores ``meta`` for now.
+All events (notes, rests, grace notes, and meta rows) are exported with a ``kind`` tag so
+consumers can filter; grace rows (çarpma, Kod 8 with no duration) are pitched but occupy no
+time — the sheet draws them small, playback skips them. The web editor ignores ``meta``.
 """
 
 from __future__ import annotations
@@ -68,6 +71,9 @@ def score_to_dict(
     events: list[dict] = []
     for ev in score.events:
         kind = ev.kind
+        # Grace rows carry Pay/Payda 0/0 in SymbTr (no written duration). Normalize the
+        # denominator so consumers never divide by zero; the duration stays zero.
+        num, den = (0, 1) if kind is EventKind.GRACE else (ev.num, ev.den)
         entry: dict = {
             "index": ev.index,
             "kind": kind.value,
@@ -75,10 +81,10 @@ def score_to_dict(
             "noteName": ev.note_53,
             "noteAE": ev.note_ae,
             "durationMs": ev.ms,
-            "durationBeats": {"num": ev.num, "den": ev.den},
+            "durationBeats": {"num": num, "den": den},
             "freqHz": (
                 round(koma53_to_freq(ev.koma_53, ref_freq, ref_koma), 4)
-                if kind is EventKind.NOTE
+                if kind in (EventKind.NOTE, EventKind.GRACE)
                 else None
             ),
             "lyric": ev.lyric,

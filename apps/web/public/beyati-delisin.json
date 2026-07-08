@@ -1,0 +1,6713 @@
+{
+  "schemaVersion": 1,
+  "name": "beyati--sarki--aksak--delisin_deli--selahattin_pinar",
+  "makam": "beyati",
+  "form": "sarki",
+  "usul": "aksak",
+  "title": "delisin deli",
+  "composer": "selahattin pinar",
+  "tuning": {
+    "system": "53tet",
+    "refFreqHz": 440.0,
+    "refKoma": 327,
+    "commasPerOctave": 53
+  },
+  "events": [
+    {
+      "index": 1,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 0.222222
+    },
+    {
+      "index": 2,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "De",
+      "offset": 0.277778
+    },
+    {
+      "index": 3,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 0.333333
+    },
+    {
+      "index": 4,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "li",
+      "offset": 0.388889
+    },
+    {
+      "index": 5,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 0.444444
+    },
+    {
+      "index": 6,
+      "kind": "grace",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 0.444444
+    },
+    {
+      "index": 7,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "sin",
+      "offset": 0.666667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 8,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": "SAZ",
+      "offset": 0.75
+    },
+    {
+      "index": 9,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 0.777778
+    },
+    {
+      "index": 10,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 0.833333
+    },
+    {
+      "index": 11,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 0.888889
+    },
+    {
+      "index": 12,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 0.944444
+    },
+    {
+      "index": 13,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 1.0
+    },
+    {
+      "index": 14,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 1.222222
+    },
+    {
+      "index": 15,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 361.6226,
+      "lyric": "De",
+      "offset": 1.333333
+    },
+    {
+      "index": 16,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "li",
+      "offset": 1.388889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 17,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 1.444444
+    },
+    {
+      "index": 18,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "gön",
+      "offset": 1.5
+    },
+    {
+      "index": 19,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 1.555556
+    },
+    {
+      "index": 20,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 1.611111
+    },
+    {
+      "index": 21,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 1.666667
+    },
+    {
+      "index": 22,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 1.888889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 23,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 1.944444
+    },
+    {
+      "index": 24,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 2.0
+    },
+    {
+      "index": 25,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 2.222222
+    },
+    {
+      "index": 26,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "de",
+      "offset": 2.277778
+    },
+    {
+      "index": 27,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 2.333333
+    },
+    {
+      "index": 28,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "li",
+      "offset": 2.388889
+    },
+    {
+      "index": 29,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 2.444444
+    },
+    {
+      "index": 30,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "sin",
+      "offset": 2.666667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 31,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 440.0,
+      "lyric": "SAZ",
+      "offset": 2.75
+    },
+    {
+      "index": 32,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 391.1419,
+      "lyric": ".",
+      "offset": 2.777778
+    },
+    {
+      "index": 33,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": ".",
+      "offset": 2.833333
+    },
+    {
+      "index": 34,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": ".",
+      "offset": 2.888889
+    },
+    {
+      "index": 35,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 2.944444
+    },
+    {
+      "index": 36,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 3.0
+    },
+    {
+      "index": 37,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 3.222222
+    },
+    {
+      "index": 38,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "de",
+      "offset": 3.277778
+    },
+    {
+      "index": 39,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 3.333333
+    },
+    {
+      "index": 40,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "li",
+      "offset": 3.388889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 41,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 3.444444
+    },
+    {
+      "index": 42,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "gön",
+      "offset": 3.5
+    },
+    {
+      "index": 43,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 3.555556
+    },
+    {
+      "index": 44,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 3.611111
+    },
+    {
+      "index": 45,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 3.666667
+    },
+    {
+      "index": 46,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "lüm",
+      "offset": 3.888889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 47,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 3.944444
+    },
+    {
+      "index": 48,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 4.0
+    },
+    {
+      "index": 49,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 4.222222
+    },
+    {
+      "index": 50,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "Bin",
+      "offset": 4.333333
+    },
+    {
+      "index": 51,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "bir",
+      "offset": 4.444445,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 52,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "be",
+      "offset": 4.555555
+    },
+    {
+      "index": 53,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 4.611111
+    },
+    {
+      "index": 54,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 4.666667
+    },
+    {
+      "index": 55,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 542.4125,
+      "lyric": "re",
+      "offset": 4.75
+    },
+    {
+      "index": 56,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 4.777778
+    },
+    {
+      "index": 57,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 4.833333
+    },
+    {
+      "index": 58,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 4.888889
+    },
+    {
+      "index": 59,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 5.0
+    },
+    {
+      "index": 60,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "li",
+      "offset": 5.055555,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 61,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": "",
+      "offset": 5.111111
+    },
+    {
+      "index": 62,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 5.166667
+    },
+    {
+      "index": 63,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 5.222222
+    },
+    {
+      "index": 64,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "gön",
+      "offset": 5.333333
+    },
+    {
+      "index": 65,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 5.388889
+    },
+    {
+      "index": 66,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 5.444445
+    },
+    {
+      "index": 67,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "lüm",
+      "offset": 5.666667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 68,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 542.4125,
+      "lyric": "SAZ",
+      "offset": 5.75
+    },
+    {
+      "index": 69,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 5.777778
+    },
+    {
+      "index": 70,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": ".",
+      "offset": 5.833333
+    },
+    {
+      "index": 71,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 5.888889
+    },
+    {
+      "index": 72,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": ".",
+      "offset": 5.944445
+    },
+    {
+      "index": 73,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 6.0
+    },
+    {
+      "index": 74,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 6.222222
+    },
+    {
+      "index": 75,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 391.1419,
+      "lyric": "Bin",
+      "offset": 6.333333
+    },
+    {
+      "index": 76,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "bir",
+      "offset": 6.388889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 77,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 6.444445
+    },
+    {
+      "index": 78,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 391.1419,
+      "lyric": "be",
+      "offset": 6.555555
+    },
+    {
+      "index": 79,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 6.611111
+    },
+    {
+      "index": 80,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 6.666667
+    },
+    {
+      "index": 81,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "re",
+      "offset": 6.722222
+    },
+    {
+      "index": 82,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 6.777778
+    },
+    {
+      "index": 83,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 6.833333
+    },
+    {
+      "index": 84,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 6.888889
+    },
+    {
+      "index": 85,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 7.0
+    },
+    {
+      "index": 86,
+      "kind": "note",
+      "koma53": 296,
+      "noteName": "Sol4",
+      "noteAE": "G4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 293.3449,
+      "lyric": "li",
+      "offset": 7.055555,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 87,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 7.111111
+    },
+    {
+      "index": 88,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 7.166667
+    },
+    {
+      "index": 89,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 7.222222
+    },
+    {
+      "index": 90,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 361.6226,
+      "lyric": "gön",
+      "offset": 7.259259
+    },
+    {
+      "index": 91,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 7.296296
+    },
+    {
+      "index": 92,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 7.333333
+    },
+    {
+      "index": 93,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 7.37037
+    },
+    {
+      "index": 94,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 7.407407
+    },
+    {
+      "index": 95,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 7.444445
+    },
+    {
+      "index": 96,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 7.666667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 97,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "SAZ",
+      "offset": 7.777778
+    },
+    {
+      "index": 98,
+      "kind": "grace",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 659.974,
+      "lyric": ".",
+      "offset": 7.777778
+    },
+    {
+      "index": 99,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 7.833333
+    },
+    {
+      "index": 100,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": ".",
+      "offset": 7.888889
+    },
+    {
+      "index": 101,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 7.944445
+    },
+    {
+      "index": 102,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": ".",
+      "offset": 8.0
+    },
+    {
+      "index": 103,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 8.222222
+    },
+    {
+      "index": 104,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 8.277778
+    },
+    {
+      "index": 105,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "Gül",
+      "offset": 8.333333
+    },
+    {
+      "index": 106,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 8.388889
+    },
+    {
+      "index": 107,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "dü",
+      "offset": 8.444445
+    },
+    {
+      "index": 108,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "ğü",
+      "offset": 8.555555
+    },
+    {
+      "index": 109,
+      "kind": "grace",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 8.555555
+    },
+    {
+      "index": 110,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 8.611111
+    },
+    {
+      "index": 111,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 8.666667
+    },
+    {
+      "index": 112,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "nü",
+      "offset": 8.722222,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 113,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 8.777778
+    },
+    {
+      "index": 114,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 8.833333
+    },
+    {
+      "index": 115,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 8.888889
+    },
+    {
+      "index": 116,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 9.0
+    },
+    {
+      "index": 117,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 542.4125,
+      "lyric": "kim",
+      "offset": 9.083333,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 118,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 9.111111
+    },
+    {
+      "index": 119,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 9.166667
+    },
+    {
+      "index": 120,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 9.222222
+    },
+    {
+      "index": 121,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 659.974,
+      "lyric": "gör",
+      "offset": 9.305555
+    },
+    {
+      "index": 122,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 9.333333
+    },
+    {
+      "index": 123,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 9.388889
+    },
+    {
+      "index": 124,
+      "kind": "note",
+      "koma53": 367,
+      "noteName": "Si5",
+      "noteAE": "B5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 742.4122,
+      "lyric": "",
+      "offset": 9.444445
+    },
+    {
+      "index": 125,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "dü",
+      "offset": 9.5,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 126,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 9.555555
+    },
+    {
+      "index": 127,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": "",
+      "offset": 9.611111
+    },
+    {
+      "index": 128,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 9.666667
+    },
+    {
+      "index": 129,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 9.888889
+    },
+    {
+      "index": 130,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 9.944445
+    },
+    {
+      "index": 131,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 10.0
+    },
+    {
+      "index": 132,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 10.22222
+    },
+    {
+      "index": 133,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 10.27778
+    },
+    {
+      "index": 134,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "Gül",
+      "offset": 10.38889
+    },
+    {
+      "index": 135,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "dü",
+      "offset": 10.44444
+    },
+    {
+      "index": 136,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 4,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "ğü",
+      "offset": 10.66667
+    },
+    {
+      "index": 137,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "nü",
+      "offset": 10.77778,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 138,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 535.3648,
+      "lyric": "",
+      "offset": 10.88889
+    },
+    {
+      "index": 139,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 11.0
+    },
+    {
+      "index": 140,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "kim",
+      "offset": 11.11111,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 141,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 11.16667
+    },
+    {
+      "index": 142,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 11.22222
+    },
+    {
+      "index": 143,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": "gör",
+      "offset": 11.30556
+    },
+    {
+      "index": 144,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 535.3648,
+      "lyric": "",
+      "offset": 11.33333
+    },
+    {
+      "index": 145,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 11.38889
+    },
+    {
+      "index": 146,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 11.44444
+    },
+    {
+      "index": 147,
+      "kind": "grace",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 11.44444
+    },
+    {
+      "index": 148,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 494.961,
+      "lyric": "dü",
+      "offset": 11.66667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 149,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 659.974,
+      "lyric": "SAZ",
+      "offset": 11.75
+    },
+    {
+      "index": 150,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 11.77778
+    },
+    {
+      "index": 151,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": ".",
+      "offset": 11.83333
+    },
+    {
+      "index": 152,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": ".",
+      "offset": 11.88889
+    },
+    {
+      "index": 153,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 11.94444
+    },
+    {
+      "index": 154,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": ".",
+      "offset": 12.0
+    },
+    {
+      "index": 155,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 12.22222
+    },
+    {
+      "index": 156,
+      "kind": "grace",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 12.22222
+    },
+    {
+      "index": 157,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "Sev",
+      "offset": 12.33333
+    },
+    {
+      "index": 158,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "din",
+      "offset": 12.44444,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 159,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "se",
+      "offset": 12.55556
+    },
+    {
+      "index": 160,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 12.66667
+    },
+    {
+      "index": 161,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 659.974,
+      "lyric": "ve",
+      "offset": 12.75
+    },
+    {
+      "index": 162,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 12.77778
+    },
+    {
+      "index": 163,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 12.83333
+    },
+    {
+      "index": 164,
+      "kind": "note",
+      "koma53": 362,
+      "noteName": "Si5b5",
+      "noteAE": "B5b5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 695.4182,
+      "lyric": "",
+      "offset": 12.88889
+    },
+    {
+      "index": 165,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 12.94444
+    },
+    {
+      "index": 166,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 13.0
+    },
+    {
+      "index": 167,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 521.5431,
+      "lyric": "li",
+      "offset": 13.08333,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 168,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 13.11111
+    },
+    {
+      "index": 169,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 13.16667
+    },
+    {
+      "index": 170,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 13.22222
+    },
+    {
+      "index": 171,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "gön",
+      "offset": 13.33333
+    },
+    {
+      "index": 172,
+      "kind": "grace",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 13.33333
+    },
+    {
+      "index": 173,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 13.38889
+    },
+    {
+      "index": 174,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 13.44444
+    },
+    {
+      "index": 175,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "lüm",
+      "offset": 13.66667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 176,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 440.0,
+      "lyric": "SAZ",
+      "offset": 13.75
+    },
+    {
+      "index": 177,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 391.1419,
+      "lyric": ".",
+      "offset": 13.77778
+    },
+    {
+      "index": 178,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": ".",
+      "offset": 13.83333
+    },
+    {
+      "index": 179,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 13.88889
+    },
+    {
+      "index": 180,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 13.94444
+    },
+    {
+      "index": 181,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 14.0
+    },
+    {
+      "index": 182,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 14.22222
+    },
+    {
+      "index": 183,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 361.6226,
+      "lyric": "Sev",
+      "offset": 14.33333
+    },
+    {
+      "index": 184,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 391.1419,
+      "lyric": "din",
+      "offset": 14.44444,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 185,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 750,
+      "durationBeats": {
+        "num": 3,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "se",
+      "offset": 14.61111
+    },
+    {
+      "index": 186,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 14.66667
+    },
+    {
+      "index": 187,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "ve",
+      "offset": 14.72222
+    },
+    {
+      "index": 188,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 14.77778
+    },
+    {
+      "index": 189,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 14.83333
+    },
+    {
+      "index": 190,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 14.88889
+    },
+    {
+      "index": 191,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 15.0
+    },
+    {
+      "index": 192,
+      "kind": "note",
+      "koma53": 296,
+      "noteName": "Sol4",
+      "noteAE": "G4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 293.3449,
+      "lyric": "li",
+      "offset": 15.05556,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 193,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 15.11111
+    },
+    {
+      "index": 194,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 15.16667
+    },
+    {
+      "index": 195,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 15.22222
+    },
+    {
+      "index": 196,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 361.6226,
+      "lyric": "gön",
+      "offset": 15.25926
+    },
+    {
+      "index": 197,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 15.2963
+    },
+    {
+      "index": 198,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 15.33333
+    },
+    {
+      "index": 199,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 15.37037
+    },
+    {
+      "index": 200,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 15.40741
+    },
+    {
+      "index": 201,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 167,
+      "durationBeats": {
+        "num": 1,
+        "den": 24
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 15.44444
+    },
+    {
+      "index": 202,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 15.66667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 203,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 329.987,
+      "lyric": "SAZ",
+      "offset": 15.77778
+    },
+    {
+      "index": 204,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 329.987,
+      "lyric": ".",
+      "offset": 15.88889
+    },
+    {
+      "index": 205,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 329.987,
+      "lyric": ".",
+      "offset": 16.0
+    },
+    {
+      "index": 206,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": ".",
+      "offset": 16.22222
+    },
+    {
+      "index": 207,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "De",
+      "offset": 16.27778
+    },
+    {
+      "index": 208,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 16.33333
+    },
+    {
+      "index": 209,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "li",
+      "offset": 16.38889
+    },
+    {
+      "index": 210,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 16.44444
+    },
+    {
+      "index": 211,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "sin",
+      "offset": 16.66667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 212,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 375,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": "SAZ",
+      "offset": 16.75
+    },
+    {
+      "index": 213,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 16.77778
+    },
+    {
+      "index": 214,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 16.83333
+    },
+    {
+      "index": 215,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 16.88889
+    },
+    {
+      "index": 216,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 16.94444
+    },
+    {
+      "index": 217,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 17.0
+    },
+    {
+      "index": 218,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 17.22222
+    },
+    {
+      "index": 219,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 361.6226,
+      "lyric": "de",
+      "offset": 17.33333
+    },
+    {
+      "index": 220,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "li",
+      "offset": 17.38889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 221,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 17.44444
+    },
+    {
+      "index": 222,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "gön",
+      "offset": 17.5
+    },
+    {
+      "index": 223,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 17.55556
+    },
+    {
+      "index": 224,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 17.61111
+    },
+    {
+      "index": 225,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 17.66667
+    },
+    {
+      "index": 226,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 17.88889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 227,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 17.94444
+    },
+    {
+      "index": 228,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 18.0
+    },
+    {
+      "index": 229,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 18.22222
+    },
+    {
+      "index": 230,
+      "kind": "note",
+      "koma53": 296,
+      "noteName": "Sol4",
+      "noteAE": "G4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 293.3449,
+      "lyric": "Bin",
+      "offset": 18.27778
+    },
+    {
+      "index": 231,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 18.33333
+    },
+    {
+      "index": 232,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "bir",
+      "offset": 18.38889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 233,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 18.44444
+    },
+    {
+      "index": 234,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "be",
+      "offset": 18.5
+    },
+    {
+      "index": 235,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 18.55556
+    },
+    {
+      "index": 236,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 18.61111
+    },
+    {
+      "index": 237,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 18.66667
+    },
+    {
+      "index": 238,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "re",
+      "offset": 18.72222
+    },
+    {
+      "index": 239,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 18.77778
+    },
+    {
+      "index": 240,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 18.83333
+    },
+    {
+      "index": 241,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 18.88889
+    },
+    {
+      "index": 242,
+      "kind": "note",
+      "koma53": 296,
+      "noteName": "Sol4",
+      "noteAE": "G4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 293.3449,
+      "lyric": "",
+      "offset": 18.94444
+    },
+    {
+      "index": 243,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 19.0
+    },
+    {
+      "index": 244,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "li",
+      "offset": 19.05556,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 245,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 19.11111
+    },
+    {
+      "index": 246,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 19.16667
+    },
+    {
+      "index": 247,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 19.22222
+    },
+    {
+      "index": 248,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "gön",
+      "offset": 19.44444
+    },
+    {
+      "index": 249,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1000,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 19.66667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 250,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 1500,
+      "durationBeats": {
+        "num": 3,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "SAZ",
+      "offset": 20.0
+    },
+    {
+      "index": 251,
+      "kind": "meta",
+      "koma53": 0,
+      "noteName": "",
+      "noteAE": "",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 10,
+        "den": 8
+      },
+      "freqHz": null,
+      "lyric": "Curcuna",
+      "offset": 20.0,
+      "code": 51
+    },
+    {
+      "index": 252,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 20.2
+    },
+    {
+      "index": 253,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "Gö",
+      "offset": 20.3
+    },
+    {
+      "index": 254,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 586.6898,
+      "lyric": "nül",
+      "offset": 20.5
+    },
+    {
+      "index": 255,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "ler",
+      "offset": 20.6,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 256,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 20.7
+    },
+    {
+      "index": 257,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "kur",
+      "offset": 20.8
+    },
+    {
+      "index": 258,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 535.3648,
+      "lyric": "",
+      "offset": 20.85
+    },
+    {
+      "index": 259,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 20.9
+    },
+    {
+      "index": 260,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 21.0
+    },
+    {
+      "index": 261,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "du",
+      "offset": 21.1,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 262,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 21.2
+    },
+    {
+      "index": 263,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "gön",
+      "offset": 21.3
+    },
+    {
+      "index": 264,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 21.4
+    },
+    {
+      "index": 265,
+      "kind": "grace",
+      "koma53": 365,
+      "noteName": "Si5b2",
+      "noteAE": "B5b1",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 723.2451,
+      "lyric": "",
+      "offset": 21.4
+    },
+    {
+      "index": 266,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 21.45
+    },
+    {
+      "index": 267,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 21.5
+    },
+    {
+      "index": 268,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 586.6898,
+      "lyric": "lüm",
+      "offset": 21.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 269,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "SAZ",
+      "offset": 21.75
+    },
+    {
+      "index": 270,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 21.8
+    },
+    {
+      "index": 271,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 21.85
+    },
+    {
+      "index": 272,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": ".",
+      "offset": 21.9
+    },
+    {
+      "index": 273,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 22.0
+    },
+    {
+      "index": 274,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 22.2
+    },
+    {
+      "index": 275,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "Gö",
+      "offset": 22.3
+    },
+    {
+      "index": 276,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "nül",
+      "offset": 22.4
+    },
+    {
+      "index": 277,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 22.5
+    },
+    {
+      "index": 278,
+      "kind": "note",
+      "koma53": 371,
+      "noteName": "Do6",
+      "noteAE": "C6",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 782.2839,
+      "lyric": "ler",
+      "offset": 22.6,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 279,
+      "kind": "grace",
+      "koma53": 380,
+      "noteName": "Re6",
+      "noteAE": "D6",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 880.0,
+      "lyric": "",
+      "offset": 22.6
+    },
+    {
+      "index": 280,
+      "kind": "note",
+      "koma53": 365,
+      "noteName": "Si5b2",
+      "noteAE": "B5b1",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 723.2451,
+      "lyric": "",
+      "offset": 22.7
+    },
+    {
+      "index": 281,
+      "kind": "note",
+      "koma53": 365,
+      "noteName": "Si5b2",
+      "noteAE": "B5b1",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 723.2451,
+      "lyric": "kur",
+      "offset": 22.9
+    },
+    {
+      "index": 282,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 23.0
+    },
+    {
+      "index": 283,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "du",
+      "offset": 23.1,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 284,
+      "kind": "note",
+      "koma53": 352,
+      "noteName": "Sol5#3",
+      "noteAE": "G5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 610.1659,
+      "lyric": "gön",
+      "offset": 23.2
+    },
+    {
+      "index": 285,
+      "kind": "note",
+      "koma53": 342,
+      "noteName": "Fa5#2",
+      "noteAE": "F5#1",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 535.3648,
+      "lyric": "",
+      "offset": 23.4
+    },
+    {
+      "index": 286,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 23.5
+    },
+    {
+      "index": 287,
+      "kind": "grace",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 23.5
+    },
+    {
+      "index": 288,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 494.961,
+      "lyric": "lüm",
+      "offset": 23.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 289,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 441,
+      "durationBeats": {
+        "num": 3,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 24.0
+    },
+    {
+      "index": 290,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 24.2
+    },
+    {
+      "index": 291,
+      "kind": "note",
+      "koma53": 352,
+      "noteName": "Sol5#3",
+      "noteAE": "G5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 610.1659,
+      "lyric": "Gü",
+      "offset": 24.3
+    },
+    {
+      "index": 292,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 659.974,
+      "lyric": "zel",
+      "offset": 24.5
+    },
+    {
+      "index": 293,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 659.974,
+      "lyric": "ler",
+      "offset": 24.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 294,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "yur",
+      "offset": 24.8
+    },
+    {
+      "index": 295,
+      "kind": "note",
+      "koma53": 352,
+      "noteName": "Sol5#3",
+      "noteAE": "G5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 610.1659,
+      "lyric": "",
+      "offset": 24.9
+    },
+    {
+      "index": 296,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 25.0
+    },
+    {
+      "index": 297,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 221,
+      "durationBeats": {
+        "num": 3,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "du",
+      "offset": 25.15,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 298,
+      "kind": "note",
+      "koma53": 353,
+      "noteName": "Sol5#4",
+      "noteAE": "G5#4",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 618.1982,
+      "lyric": "",
+      "offset": 25.2
+    },
+    {
+      "index": 299,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "gön",
+      "offset": 25.3
+    },
+    {
+      "index": 300,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 25.5
+    },
+    {
+      "index": 301,
+      "kind": "note",
+      "koma53": 353,
+      "noteName": "Sol5#4",
+      "noteAE": "G5#4",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 618.1982,
+      "lyric": "lüm",
+      "offset": 25.55,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 302,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 25.6
+    },
+    {
+      "index": 303,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 25.65
+    },
+    {
+      "index": 304,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 25.7
+    },
+    {
+      "index": 305,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 441,
+      "durationBeats": {
+        "num": 3,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 26.0
+    },
+    {
+      "index": 306,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 26.2
+    },
+    {
+      "index": 307,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "Gü",
+      "offset": 26.3
+    },
+    {
+      "index": 308,
+      "kind": "note",
+      "koma53": 367,
+      "noteName": "Si5",
+      "noteAE": "B5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 742.4122,
+      "lyric": "zel",
+      "offset": 26.4
+    },
+    {
+      "index": 309,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 26.5
+    },
+    {
+      "index": 310,
+      "kind": "note",
+      "koma53": 380,
+      "noteName": "Re6",
+      "noteAE": "D6",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 880.0,
+      "lyric": "ler",
+      "offset": 26.55,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 311,
+      "kind": "note",
+      "koma53": 371,
+      "noteName": "Do6",
+      "noteAE": "C6",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 782.2839,
+      "lyric": "",
+      "offset": 26.6
+    },
+    {
+      "index": 312,
+      "kind": "note",
+      "koma53": 367,
+      "noteName": "Si5",
+      "noteAE": "B5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 742.4122,
+      "lyric": "",
+      "offset": 26.65
+    },
+    {
+      "index": 313,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 26.7
+    },
+    {
+      "index": 314,
+      "kind": "note",
+      "koma53": 352,
+      "noteName": "Sol5#3",
+      "noteAE": "G5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 610.1659,
+      "lyric": "yur",
+      "offset": 26.8
+    },
+    {
+      "index": 315,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 26.9
+    },
+    {
+      "index": 316,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 27.0
+    },
+    {
+      "index": 317,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "du",
+      "offset": 27.1,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 318,
+      "kind": "note",
+      "koma53": 352,
+      "noteName": "Sol5#3",
+      "noteAE": "G5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 610.1659,
+      "lyric": "",
+      "offset": 27.2
+    },
+    {
+      "index": 319,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "gön",
+      "offset": 27.3
+    },
+    {
+      "index": 320,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 27.4
+    },
+    {
+      "index": 321,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 27.5
+    },
+    {
+      "index": 322,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 494.961,
+      "lyric": "lüm",
+      "offset": 27.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 323,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "SAZ",
+      "offset": 27.75
+    },
+    {
+      "index": 324,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": ".",
+      "offset": 27.8
+    },
+    {
+      "index": 325,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": ".",
+      "offset": 27.85
+    },
+    {
+      "index": 326,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 27.9
+    },
+    {
+      "index": 327,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 28.0
+    },
+    {
+      "index": 328,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 28.2
+    },
+    {
+      "index": 329,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "Se",
+      "offset": 28.3
+    },
+    {
+      "index": 330,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 659.974,
+      "lyric": "sin",
+      "offset": 28.5
+    },
+    {
+      "index": 331,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 659.974,
+      "lyric": "de",
+      "offset": 28.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 332,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "bir",
+      "offset": 28.8,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 333,
+      "kind": "grace",
+      "koma53": 362,
+      "noteName": "Si5b5",
+      "noteAE": "B5b5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 695.4182,
+      "lyric": "",
+      "offset": 28.8
+    },
+    {
+      "index": 334,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 28.9
+    },
+    {
+      "index": 335,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 29.0
+    },
+    {
+      "index": 336,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 586.6898,
+      "lyric": "a",
+      "offset": 29.2
+    },
+    {
+      "index": 337,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 29.3
+    },
+    {
+      "index": 338,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "cı",
+      "offset": 29.4,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 339,
+      "kind": "grace",
+      "koma53": 362,
+      "noteName": "Si5b5",
+      "noteAE": "B5b5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 695.4182,
+      "lyric": "",
+      "offset": 29.4
+    },
+    {
+      "index": 340,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 29.5
+    },
+    {
+      "index": 341,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "var",
+      "offset": 29.6,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 342,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 29.7
+    },
+    {
+      "index": 343,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 441,
+      "durationBeats": {
+        "num": 3,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 30.0
+    },
+    {
+      "index": 344,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 30.2
+    },
+    {
+      "index": 345,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 494.961,
+      "lyric": "Se",
+      "offset": 30.3
+    },
+    {
+      "index": 346,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "sin",
+      "offset": 30.4
+    },
+    {
+      "index": 347,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 30.5
+    },
+    {
+      "index": 348,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "de",
+      "offset": 30.6,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 349,
+      "kind": "note",
+      "koma53": 362,
+      "noteName": "Si5b5",
+      "noteAE": "B5b5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 695.4182,
+      "lyric": "",
+      "offset": 30.7
+    },
+    {
+      "index": 350,
+      "kind": "note",
+      "koma53": 371,
+      "noteName": "Do6",
+      "noteAE": "C6",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 782.2839,
+      "lyric": "bir",
+      "offset": 30.8,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 351,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 30.9
+    },
+    {
+      "index": 352,
+      "kind": "grace",
+      "koma53": 362,
+      "noteName": "Si5b5",
+      "noteAE": "B5b5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 695.4182,
+      "lyric": "",
+      "offset": 30.9
+    },
+    {
+      "index": 353,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 31.0
+    },
+    {
+      "index": 354,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "a",
+      "offset": 31.1
+    },
+    {
+      "index": 355,
+      "kind": "note",
+      "koma53": 335,
+      "noteName": "Mi5b1",
+      "noteAE": "E5b1",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 488.5299,
+      "lyric": "",
+      "offset": 31.3
+    },
+    {
+      "index": 356,
+      "kind": "note",
+      "koma53": 334,
+      "noteName": "Mi5b2",
+      "noteAE": "E5b1",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 482.1824,
+      "lyric": "cı",
+      "offset": 31.4,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 357,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 31.5
+    },
+    {
+      "index": 358,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "var",
+      "offset": 31.6,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 359,
+      "kind": "grace",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 31.6
+    },
+    {
+      "index": 360,
+      "kind": "note",
+      "koma53": 332,
+      "noteName": "Mi5b4",
+      "noteAE": "E5b4",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 469.7337,
+      "lyric": "",
+      "offset": 31.65
+    },
+    {
+      "index": 361,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 31.7
+    },
+    {
+      "index": 362,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 31.75
+    },
+    {
+      "index": 363,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 31.8
+    },
+    {
+      "index": 364,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 32.0
+    },
+    {
+      "index": 365,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 32.2
+    },
+    {
+      "index": 366,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "Se",
+      "offset": 32.3
+    },
+    {
+      "index": 367,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 586.6898,
+      "lyric": "ni",
+      "offset": 32.5,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 368,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 586.6898,
+      "lyric": "kim",
+      "offset": 32.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 369,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "vur",
+      "offset": 32.8
+    },
+    {
+      "index": 370,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 32.9
+    },
+    {
+      "index": 371,
+      "kind": "note",
+      "koma53": 335,
+      "noteName": "Mi5b1",
+      "noteAE": "E5b1",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 488.5299,
+      "lyric": "",
+      "offset": 33.0
+    },
+    {
+      "index": 372,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 542.4125,
+      "lyric": "du",
+      "offset": 33.1,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 373,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 33.2
+    },
+    {
+      "index": 374,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "gön",
+      "offset": 33.3
+    },
+    {
+      "index": 375,
+      "kind": "note",
+      "koma53": 362,
+      "noteName": "Si5b5",
+      "noteAE": "B5b5",
+      "durationMs": 221,
+      "durationBeats": {
+        "num": 3,
+        "den": 16
+      },
+      "freqHz": 695.4182,
+      "lyric": "",
+      "offset": 33.45
+    },
+    {
+      "index": 376,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 33.5
+    },
+    {
+      "index": 377,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 659.974,
+      "lyric": "lüm",
+      "offset": 33.55,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 378,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 33.6
+    },
+    {
+      "index": 379,
+      "kind": "note",
+      "koma53": 343,
+      "noteName": "Fa5#3",
+      "noteAE": "F5#4",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 542.4125,
+      "lyric": "",
+      "offset": 33.65
+    },
+    {
+      "index": 380,
+      "kind": "note",
+      "koma53": 334,
+      "noteName": "Mi5b2",
+      "noteAE": "E5b1",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 482.1824,
+      "lyric": "",
+      "offset": 33.7
+    },
+    {
+      "index": 381,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 33.8
+    },
+    {
+      "index": 382,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 659.974,
+      "lyric": "",
+      "offset": 34.0
+    },
+    {
+      "index": 383,
+      "kind": "rest",
+      "koma53": -1,
+      "noteName": "Es",
+      "noteAE": "Es",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": null,
+      "lyric": "",
+      "offset": 34.2
+    },
+    {
+      "index": 384,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "Se",
+      "offset": 34.3
+    },
+    {
+      "index": 385,
+      "kind": "note",
+      "koma53": 358,
+      "noteName": "La5",
+      "noteAE": "A5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 659.974,
+      "lyric": "ni",
+      "offset": 34.4,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 386,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "",
+      "offset": 34.5
+    },
+    {
+      "index": 387,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 586.6898,
+      "lyric": "kim",
+      "offset": 34.6,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 388,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 34.7
+    },
+    {
+      "index": 389,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 494.961,
+      "lyric": "vur",
+      "offset": 34.9
+    },
+    {
+      "index": 390,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 35.0
+    },
+    {
+      "index": 391,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 221,
+      "durationBeats": {
+        "num": 3,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "du",
+      "offset": 35.15,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 392,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 74,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 35.2
+    },
+    {
+      "index": 393,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 35.3
+    },
+    {
+      "index": 394,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 391.1419,
+      "lyric": "gön",
+      "offset": 35.4
+    },
+    {
+      "index": 395,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 147,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 35.5
+    },
+    {
+      "index": 396,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 294,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "lüm",
+      "offset": 35.7,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 397,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 441,
+      "durationBeats": {
+        "num": 3,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "SAZ",
+      "offset": 36.0
+    },
+    {
+      "index": 398,
+      "kind": "meta",
+      "koma53": 0,
+      "noteName": "",
+      "noteAE": "",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 9,
+        "den": 8
+      },
+      "freqHz": null,
+      "lyric": "Aksak",
+      "offset": 36.0,
+      "code": 51
+    },
+    {
+      "index": 399,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": ".",
+      "offset": 36.22222
+    },
+    {
+      "index": 400,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": "De",
+      "offset": 36.27778
+    },
+    {
+      "index": 401,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 36.33333
+    },
+    {
+      "index": 402,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "li",
+      "offset": 36.38889
+    },
+    {
+      "index": 403,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 36.44444
+    },
+    {
+      "index": 404,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": "sin",
+      "offset": 36.66667,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 405,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 188,
+      "durationBeats": {
+        "num": 3,
+        "den": 32
+      },
+      "freqHz": 586.6898,
+      "lyric": "SAZ",
+      "offset": 36.75
+    },
+    {
+      "index": 406,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 62,
+      "durationBeats": {
+        "num": 1,
+        "den": 32
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 36.77778
+    },
+    {
+      "index": 407,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 36.83333
+    },
+    {
+      "index": 408,
+      "kind": "note",
+      "koma53": 349,
+      "noteName": "Sol5",
+      "noteAE": "G5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 586.6898,
+      "lyric": ".",
+      "offset": 36.88889
+    },
+    {
+      "index": 409,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": ".",
+      "offset": 36.94444
+    },
+    {
+      "index": 410,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": ".",
+      "offset": 37.0
+    },
+    {
+      "index": 411,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 440.0,
+      "lyric": ".",
+      "offset": 37.22222
+    },
+    {
+      "index": 412,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 361.6226,
+      "lyric": "de",
+      "offset": 37.33333
+    },
+    {
+      "index": 413,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "li",
+      "offset": 37.38889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 414,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 37.44444
+    },
+    {
+      "index": 415,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "gön",
+      "offset": 37.5
+    },
+    {
+      "index": 416,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 37.55556
+    },
+    {
+      "index": 417,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 37.61111
+    },
+    {
+      "index": 418,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 37.66667
+    },
+    {
+      "index": 419,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 37.88889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 420,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 37.94444
+    },
+    {
+      "index": 421,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 38.0
+    },
+    {
+      "index": 422,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 38.22222
+    },
+    {
+      "index": 423,
+      "kind": "note",
+      "koma53": 296,
+      "noteName": "Sol4",
+      "noteAE": "G4",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 293.3449,
+      "lyric": "Bin",
+      "offset": 38.27778
+    },
+    {
+      "index": 424,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 38.33333
+    },
+    {
+      "index": 425,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "bir",
+      "offset": 38.38889,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 426,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 38.44444
+    },
+    {
+      "index": 427,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "be",
+      "offset": 38.5
+    },
+    {
+      "index": 428,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 38.55556
+    },
+    {
+      "index": 429,
+      "kind": "note",
+      "koma53": 340,
+      "noteName": "Fa5",
+      "noteAE": "F5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 521.5431,
+      "lyric": "",
+      "offset": 38.61111
+    },
+    {
+      "index": 430,
+      "kind": "note",
+      "koma53": 336,
+      "noteName": "Mi5",
+      "noteAE": "E5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 494.961,
+      "lyric": "",
+      "offset": 38.66667
+    },
+    {
+      "index": 431,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 440.0,
+      "lyric": "re",
+      "offset": 38.72222
+    },
+    {
+      "index": 432,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "",
+      "offset": 38.77778
+    },
+    {
+      "index": 433,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 38.83333
+    },
+    {
+      "index": 434,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 38.88889
+    },
+    {
+      "index": 435,
+      "kind": "note",
+      "koma53": 327,
+      "noteName": "Re5",
+      "noteAE": "D5",
+      "durationMs": 250,
+      "durationBeats": {
+        "num": 1,
+        "den": 8
+      },
+      "freqHz": 440.0,
+      "lyric": "",
+      "offset": 39.0
+    },
+    {
+      "index": 436,
+      "kind": "note",
+      "koma53": 318,
+      "noteName": "Do5",
+      "noteAE": "C5",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 391.1419,
+      "lyric": "li",
+      "offset": 39.05556,
+      "lyricWordEnd": true
+    },
+    {
+      "index": 437,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 39.11111
+    },
+    {
+      "index": 438,
+      "kind": "note",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 39.16667
+    },
+    {
+      "index": 439,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 125,
+      "durationBeats": {
+        "num": 1,
+        "den": 16
+      },
+      "freqHz": 329.987,
+      "lyric": "",
+      "offset": 39.22222
+    },
+    {
+      "index": 440,
+      "kind": "grace",
+      "koma53": 312,
+      "noteName": "Si4b2",
+      "noteAE": "B4b1",
+      "durationMs": 0,
+      "durationBeats": {
+        "num": 0,
+        "den": 1
+      },
+      "freqHz": 361.6226,
+      "lyric": "",
+      "offset": 39.22222
+    },
+    {
+      "index": 441,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 500,
+      "durationBeats": {
+        "num": 1,
+        "den": 4
+      },
+      "freqHz": 329.987,
+      "lyric": "gön",
+      "offset": 39.44444
+    },
+    {
+      "index": 442,
+      "kind": "note",
+      "koma53": 305,
+      "noteName": "La4",
+      "noteAE": "A4",
+      "durationMs": 1250,
+      "durationBeats": {
+        "num": 5,
+        "den": 8
+      },
+      "freqHz": 329.987,
+      "lyric": "lüm",
+      "offset": 40.0,
+      "lyricWordEnd": true
+    }
+  ]
+}

@@ -54,21 +54,36 @@ export function MeasureEditModal({
 }) {
   const nextId = useRef(measure.events.length + 1);
   const [advanced, setAdvanced] = useState(false);
+  // Grace notes (çarpma) aren't editable rows — they occupy no time and belong to the note that
+  // follows them. Keep each one aside with its host's original index and re-insert on save, so an
+  // edit round-trip can't corrupt them into zero-length real notes. A grace whose host note gets
+  // deleted is dropped with it.
+  const graces = useMemo(() => {
+    const out: { grace: NoteEvent; hostIndex: number | null }[] = [];
+    measure.events.forEach((ev, i) => {
+      if (ev.kind !== "grace") return;
+      const host = measure.events.slice(i + 1).find((e) => e.kind !== "grace");
+      out.push({ grace: ev, hostIndex: host?.index ?? null });
+    });
+    return out;
+  }, [measure]);
   const [rows, setRows] = useState<DraftRow[]>(() =>
-    measure.events.map((ev, i) => {
-      const p = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
-      return {
-        id: i,
-        kind: ev.kind === "rest" ? "rest" : "note",
-        letter: p?.letter ?? "A",
-        octave: p?.octave ?? 4,
-        alter: p?.alterCommas ?? 0,
-        num: ev.durationBeats.num,
-        den: ev.durationBeats.den || 1,
-        lyric: ev.lyric,
-        origIndex: ev.index,
-      };
-    }),
+    measure.events
+      .filter((ev) => ev.kind !== "grace")
+      .map((ev, i) => {
+        const p = ev.kind === "note" ? parseNoteName(ev.noteName) : null;
+        return {
+          id: i,
+          kind: ev.kind === "rest" ? "rest" : "note",
+          letter: p?.letter ?? "A",
+          octave: p?.octave ?? 4,
+          alter: p?.alterCommas ?? 0,
+          num: ev.durationBeats.num,
+          den: ev.durationBeats.den || 1,
+          lyric: ev.lyric,
+          origIndex: ev.index,
+        };
+      }),
   );
 
   // Octave range for the base-note dropdown, derived from the piece (padded a bit).
@@ -128,7 +143,15 @@ export function MeasureEditModal({
         lyric: r.lyric, offset: 0, bar,
       };
     });
-    onSave(events);
+    // Re-insert the preserved grace notes, each right before its (surviving) host note.
+    const withGraces: NoteEvent[] = [];
+    for (const e of events) {
+      for (const g of graces) {
+        if (g.hostIndex != null && g.hostIndex === e.index) withGraces.push({ ...g.grace, bar });
+      }
+      withGraces.push(e);
+    }
+    onSave(withGraces);
   }
 
   return (
@@ -144,6 +167,7 @@ export function MeasureEditModal({
         <div style={{ color: "#666", fontSize: 13, margin: "4px 0 12px" }}>
           Choose each note's pitch and how many commas sharp/flat. Total duration must equal the
           measure length.{advanced ? " Advanced: edit absolute koma / frequency directly." : ""}
+          {graces.length > 0 ? " Grace notes (çarpma) stay attached to their following note." : ""}
         </div>
 
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 13 }}>

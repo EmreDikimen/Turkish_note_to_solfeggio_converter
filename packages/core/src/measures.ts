@@ -20,7 +20,7 @@ const BAR_EPS = 1e-4;
 export interface Measure {
   /** 1-based measure number. */
   index: number;
-  /** The events in this measure (notes + rests; meta events are dropped). */
+  /** The events in this measure (notes + rests + grace notes; meta events are dropped). */
   events: NoteEvent[];
   /** Total length in whole-note units (e.g. 1.0). The editor must preserve this. */
   lengthBeats: number;
@@ -83,7 +83,12 @@ export function assignBars(doc: NoteModelDocument): NoteModelDocument {
     }
     let bar: number;
     if (useOffset) {
-      bar = Math.max(1, Math.floor(ev.offset - BAR_EPS) + 1);
+      // A grace occupies no time, so its `offset` equals the PREVIOUS event's end. When that
+      // end sits exactly on a barline the grace belongs with its main note in the NEXT bar
+      // (a çarpma precedes the note it ornaments), so round the barline case up, not down.
+      bar = ev.kind === "grace"
+        ? Math.max(1, Math.floor(ev.offset + BAR_EPS) + 1)
+        : Math.max(1, Math.floor(ev.offset - BAR_EPS) + 1);
     } else {
       bar = Math.floor(cumBeats + BAR_EPS) + 1;
       cumBeats += eventBeats(ev);

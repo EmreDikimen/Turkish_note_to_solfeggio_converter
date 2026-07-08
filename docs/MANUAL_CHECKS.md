@@ -92,6 +92,33 @@ Open:
 - **Wrong looks like:** a clipped glyph at a crop edge, a token without its drawn mark (or vice
   versa), or marks moving between reloads.
 
+## Check 3c — rhythm signs: triplets / ties / grace notes (strips_v2_2, NOT injected)
+
+Open (a piece carrying all three — 12 triplet events, 1 tie, 14 graces):
+
+> http://localhost:5173/?score=/beyati-delisin.json&mode=every&lyrics=0
+
+- **Triplets (m8, m16):** three 16ths beamed TOGETHER under one "3" mark — a curved slur-like
+  arc with an italic 3 (most pieces, incl. this one) or VexFlow's square bracket (~30% of
+  pieces, by name hash; the token is identical). The mark sits on the NOTEHEAD side — above
+  when stems point down, below when they point up. The strip's label wraps the group:
+  `\tup3 \komaFlat b'16 c''16 d''16 \tupend`, written durations plain (no `16. 32` snapping).
+- **Tie (m40):** a single SymbTr 5/8 event drawn as half + arc + 8th; the label reads
+  `a'2 \tie a'8` — accidentals (if any) only on the FIRST written note. Long RESTS split into
+  side-by-side rests with no arc and no token.
+- **Graces (m1, m39, …):** a small slashed 8th attached before its host note, label
+  `\grace e''8` (with its own accidental token when drawn, e.g. `\grace \komaFlat b'8`).
+- **Real data, no seeds:** these come from the durations themselves (`tools/render/rhythm.ts`),
+  so they sit at the same measures in EVERY render/seed/transpose of the piece.
+- **Playback unchanged:** the tie plays as ONE held note (the note model still holds the single
+  5/8 event); graces are silent for now (zero duration).
+- **Editor:** ✎ a grace measure — graces are hidden from the row list and re-attached to their
+  following note on save (hint text appears); saving without touching anything must not change
+  the drawing.
+- **Wrong looks like:** a `16. 32`-style rhythm where a triplet should be, a bracket over notes
+  whose label has no `\tup3`, a triplet's three notes beamed apart, a grace drawn full-size, or
+  a tie's second note repeating the accidental.
+
 ## Check 4 — distractor text (pixels only, never labels)
 
 Open:

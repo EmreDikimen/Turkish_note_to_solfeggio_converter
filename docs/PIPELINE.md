@@ -94,20 +94,23 @@ net for every residual OMR error — and (see §3) the labeling tool for Rung 3.
 
 ## 2. What each training-set feature buys at inference
 
-| Training feature (strips_v2 / v2.1) | Inference stage it serves |
+| Training feature (strips_v2 / v2.1 / v2.2) | Inference stage it serves |
 |---|---|
 | 8 AEU accidental tokens + `\natural` | the product's whole point (stage 8) |
 | `\sig … \sigend` on row-start strips | makam-independent signature reading (stages 6, 8) |
 | `\|` kept in labels | measure re-anchoring during stitching (stage 8) |
 | `\repstart` `\repend` `\volta1` `\volta2` | repeat/volta expansion (stage 8) |
 | `\segno` `\coda` `\dc` `\fine` (v2.1) | da-capo/coda navigation expansion (stage 8) |
+| `\tup3 … \tupend`, `\tie`, `\grace` (v2.2) | correct rhythms; stage 8 merges `x \tie x` into one event and attaches graces to their host note |
 | header/footer text noise in crops | model ignores titles, "SAZ", "Aranağme", lyrics… (stage 7) |
 | screenshot-dominant augmentation | robustness to the real upload distribution (stages 1–2) |
 | transposes −9…+9 commas | pitch/position invariance across real keys (stage 7) |
 
-Known NOT covered yet (graceful failures — the editor catches them): **ties/slurs** (SymbTr has
-none; an untrained tie decodes as two notes), **two stacked verse lines** (training lyrics are
-single-verse), grace notes, tuplet variety beyond `3`.
+The rhythm-sign tokens reach inference once the **Rung-2.2 retrain** ships (`strips_v2_2` is
+rendered + audited, 2026-07-08 — `docs/PHASE2.md` §6). Known NOT covered yet (graceful
+failures — the editor catches them): **slurs** (melisma arcs; distinct from ties, still
+unlabeled), **two stacked verse lines** (training lyrics are single-verse), tuplets other
+than 3.
 
 ## 3. Rung 3 — collecting and labeling real photos
 

@@ -791,7 +791,11 @@ export function SheetView({
             for (const group of tuplets) {
               let sub: StaveNote[] = [];
               const flushSub = () => {
-                if (sub.length >= 2) beams.push(new Beam(sub));
+                // autoStem=true: derive the group's stem direction from pitch (like
+                // Beam.generateBeams does for plain runs) instead of VexFlow's default forced-up.
+                // Forced-up made EVERY tuplet render stems-up → beam-above → "3" below; real
+                // engravings (and printed Turkish scores) stem high passages down → "3" above.
+                if (sub.length >= 2) beams.push(new Beam(sub, true));
                 sub = [];
               };
               for (const n of group) {

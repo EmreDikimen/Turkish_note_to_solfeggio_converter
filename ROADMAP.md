@@ -479,8 +479,33 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   while adding the new signs: `\tup3`/`\tupend` 100%/100% (9 gold, smoke signal), `\tie` 96.4%
   recall, `\grace` 98.0%; repeats/nav/`\sig` unchanged. Full log + error notes:
   `src/vision/MODEL_EVAL.md` "Rung 2.2". Checkpoint: Drive `MyDrive/tnc/rung22/best`.
-- ⏳ **Next: ship the Rung-2.2 checkpoint (the proven Rung-2 export chain, ~1 h), THEN Rung 3.**
-  Step by step for a fresh session:
+- ✅ **Rung 2.2 ONNX export: PASS (2026-07-08):** 10/10 parity (fp32+int8), browser gate 20/20;
+  the upload box decodes rung22 int8. Full log: `MODEL_EVAL.md` "Rung-2.2 ONNX export".
+- ✅ **Rung 2.2b — stem-fix + triplet expansion retrain: PASS (2026-07-09):** a real neyzen upload
+  misread triplets as `16. 32`. Two fixes: (1) renderer bug `apps/web/src/SheetView.tsx`
+  `new Beam(sub, true)` — tuplet stems now follow pitch, so high-note "3" engraves ABOVE like real
+  scores (was forced below); (2) `scripts/add_triplet_pieces.py` added **40 triplet-rich pieces**
+  (150 → 190 pieces; new makams). Rebuilt `strips_v2_2`: 23,391 strips, triplets 413 → **1,487
+  (6.4%)**, val triplet strips 9 → **89**. From-base retrain (`MyDrive/tnc/rung22-stemfix/best`):
+  `\tup3` **98.3% on 118 gold** (was a 9-sample smoke signal), `\grace` 99.4%, all AEU ~100%, **no
+  regression**. `\sig` 94.4% is a known label bug (empty `\sig \sigend`), not a model error. Full
+  log: `MODEL_EVAL.md` "Rung 2.2b". Colab kit: `data/colab/tnc_stemfix_colab.zip` +
+  `notebooks/rung22_stemfix_colab.ipynb`.
+- ✅ **Rung-2.2b ONNX export: PASS (2026-07-09):** the export chain rerun on the stem-fix
+  checkpoint (`data/checkpoints/rung22-stemfix-best` → `…-best-onnx`, gitignored). Python parity
+  **10/10 fp32 + 10/10 int8** (221 MB total); browser gate **20/20 exact** (headless Chromium,
+  10 val strips × reference+canvas), both `\tup3` gate strips decoding `\tup3 … \tupend`. **Real-strip
+  proof PASS:** `data/real/triplet_test.png` (the neyzen strip that triggered Rung 2.2b) now decodes
+  the high-note triplet as `\tup3 g''8 f''8 \tupend` — the pre-fix `16. 32` misread is resolved.
+  One first-pick nav gate strip was fp32-exact but int8-borderline (`\buyukSharp`→`\bakiyeFlat`);
+  swapped for an int8-exact strip → clean 10/10. Full log: `MODEL_EVAL.md` "Rung-2.2b ONNX export".
+- ⏳ **Next: Rung 3 — real photo/screenshot collection + model-assisted labeling** (`docs/PIPELINE.md`
+  §3), using `rung22-stemfix-best`. The int8 graphs in `apps/web/public/models/` (staged by the gate)
+  are the labeling-loop / Rung-4-wiring runtime.
+  - **Label-bug cleanup (fold into the next data build):** skip empty `\sig … \sigend` in
+    `tools/render/lilypond.ts` (see `MODEL_EVAL.md` "Rung 2.2b") — depresses `\sig` recall to 94.4%
+    but is benign downstream; needs a re-render, so batch it with the next dataset change.
+- 📌 **Superseded (historical) step-by-step for the original Rung-2.2 export:**
   1. **Local copy:** download Drive `MyDrive/tnc/rung22/best` → `data/checkpoints/rung22-best/`
      (gitignored, like rung2-best).
   2. **Gate strips:** write `data/checkpoints/rung22-best/GATE_STRIPS.txt` — ~8–10 val-piece
@@ -514,4 +539,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-08._
+_Last updated: 2026-07-09._

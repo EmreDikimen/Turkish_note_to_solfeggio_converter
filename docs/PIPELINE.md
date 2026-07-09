@@ -106,8 +106,10 @@ net for every residual OMR error — and (see §3) the labeling tool for Rung 3.
 | screenshot-dominant augmentation | robustness to the real upload distribution (stages 1–2) |
 | transposes −9…+9 commas | pitch/position invariance across real keys (stage 7) |
 
-The rhythm-sign tokens reach inference once the **Rung-2.2 retrain** ships (`strips_v2_2` is
-rendered + audited, 2026-07-08 — `docs/PHASE2.md` §6). Known NOT covered yet (graceful
+The rhythm-sign tokens now reach inference: the **Rung-2.2 retrain shipped** (ONNX export PASS
+2026-07-08), and the **Rung-2.2b stem-fix + triplet-expansion retrain** (ONNX export PASS
+2026-07-09) fixed the real-image triplet misread — `rung22-stemfix-best` is the runtime in
+`apps/web/public/models/` (`src/vision/MODEL_EVAL.md`). Known NOT covered yet (graceful
 failures — the editor catches them): **slurs** (melisma arcs; distinct from ties, still
 unlabeled), **two stacked verse lines** (training lyrics are single-verse), tuplets other
 than 3.

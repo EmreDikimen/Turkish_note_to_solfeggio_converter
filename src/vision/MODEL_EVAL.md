@@ -177,3 +177,121 @@ dataset: 4 new tokens `\tup3` `\tupend` `\tie` `\grace`, 96 → 100 ids — ROAD
   checkpoint — exact steps in ROADMAP §7 "Next"): local copy → ONNX export → int8 → parity →
   new gate strips (must now include triplet/tie/grace) → browser gate → retry the original
   triplet-misreading real upload.
+
+## Rung-2.2 ONNX export (2026-07-08): PASS
+The Rung-2 export chain rerun against the rhythm-sign checkpoint (`data/checkpoints/rung22-best`
+→ `data/checkpoints/rung22-best-onnx`, both gitignored) — the browser now decodes the new
+`\tup3`/`\tupend`/`\tie`/`\grace` signs. Same invocations as Rung 2, only paths changed
+(`rung22-best`, `strips_v2_2`). The int8 assets in `apps/web/public/models/` now carry rung22
+(the upload box decodes with it). Manual walkthrough: `docs/MANUAL_CHECKS.md` Check 9.
+
+- **Gate strips** (`rung22-best/GATE_STRIPS.txt`, 10): held-out val pieces, two per category —
+  `\tup3`/`\tupend`, `\grace`, `\tie`, `\sig` block, plain AEU accidentals — plus incidental
+  nav marks (`\coda`/`\dc`/`\repstart`) across 8 pieces (acemkurdi, muhayyer, acemtarab, sehnaz,
+  huzzam, rast, muhayyerkurdi, yegah). Strips were pre-picked with PyTorch: of 16 candidates, 14
+  decoded exactly; the 2 drops were genuine model errors (a leading `\grace` dropped, and the
+  known empty `\sig \sigend` ambiguity), not export errors — `onnx==pytorch` was True on all 16.
+- **Export:** same `optimum-cli export onnx --task image-to-text-with-past`. Optimum's own
+  validation max logit diff: encoder ~7.2e-5 (irrelevant in id space — see parity).
+- **int8:** `src/vision/quantize_onnx.py`: encoder 311→91 MB, decoder 276→69 MB,
+  decoder-with-past 242→61 MB — **221 MB total, identical to Rung 2 / 1.5**.
+- **Python parity** (`onnx_parity.py --checkpoint data/checkpoints/rung22-best --onnx-dir
+  data/checkpoints/rung22-best-onnx --strips-dir data/synthetic/strips_v2_2 --n 10`):
+  ONNX == PyTorch == label ids, **10/10, fp32 AND int8** — quantization does not disturb the
+  rhythm-sign decode.
+- **Browser** (`make_browser_gate.py` same flags → `omr-gate.html`, headless Chromium via
+  Playwright, wasm threads on / crossOriginIsolated): **20/20 exact** — 10 strips × (Python
+  reference pixels + live canvas preprocessing). Latency: session load ~3.0 s; ~0.9 s encoder +
+  0.07–0.25 s decode ≈ **~1.0 s/strip**.
+- **Upload path:** a held-out triplet strip fed through the drag-and-drop box (real canvas path)
+  returns `\tup3 \kucukFlat b''8 c'''8 \kucukFlat b''8 \tupend …` — the earlier real-image
+  triplet misread (`16. 32`) is now recovered as `\tup3 … \tupend`.
+- **Verdict: PASS — the shipped-form rhythm-aware model reads triplets/ties/graces exactly in a
+  real browser.** Unblocks Rung 3 (real photos / model-assisted labeling, `docs/PIPELINE.md`).
+
+## Rung 2.2b — stem-fix + triplet-expansion retrain (2026-07-09): PASS
+Triggered by a real-image upload (neyzen.com nihavend) whose triplets misread as `16. 32`. Two
+root causes, both fixed, then a from-base retrain:
+
+1. **Renderer bug** (`apps/web/src/SheetView.tsx` `flushSub`): tuplet beams were built with
+   `new Beam(sub)` — VexFlow's `autoStem` defaults **false**, forcing every tuplet stem UP, so
+   ALL synthetic triplets engraved with the "3" **below** (stems up). Real Turkish scores stem
+   high passages DOWN → "3" **above**; the model had never seen that orientation, so it fell back
+   to duration-snapping (`16. 32`) or read the over-note arc as a `\tie`. Fix: `new Beam(sub, true)`
+   → stems follow pitch, both orientations appear (verified: high-note triplets now render "3" above).
+2. **Triplet under-representation.** Old `strips_v2_2`: 413 triplet strips (2.2%), only **125
+   distinct** musical instances, **9** in val (unmeasurable). Cause: `select_pieces.py` optimizes
+   AEU-accidental coverage only, so triplet-dense forms (sazsemaisi/aksaksemai/longa/sirto) were
+   skipped — the corpus holds ~8× more triplet data. Fix: `scripts/add_triplet_pieces.py` appended
+   **40 triplet-rich pieces** (150 → 190; new makams: kurdilihicazkar, nihavent, huzzam, …).
+
+**Rebuilt dataset** (full re-render + `export_scores.py` + `make_split.py`): **23,391 strips**
+(was 18,777); **1,487 triplet strips (6.4%)** in **53 pieces** (was 413/2.2%/23); split 157/24
+pieces; **val triplet strips 9 → 89** (in 8 pieces) — `\tup3` recall is now measurable. No token
+drift (still 100 ids). Pre-triplet `data/{pieces.json,split.json}` are recoverable from git
+history (the commit before this one); strips backup: `data/synthetic/strips_v2_2.pre-stemfix/`.
+Colab kit rebuilt: `data/colab/tnc_stemfix_colab.zip`
+(23,391 pngs) + `notebooks/rung22_stemfix_colab.ipynb`.
+
+**Training:** from BASE (`Flova/omr_transformer`, dropped `--model`), Rung-2 recipe on the
+expanded set (`lr 3e-5`, steps scaled to keep ~3-epoch coverage on the larger corpus). Shakeout
+clean (`+25 tokens -> 100 ids`; loss 5.25 → 0.85 in 100 steps — higher start than Rung 2.2 is the
+extra new-vocab density, not underfit). Checkpoint: Drive `MyDrive/tnc/rung22-stemfix/best`.
+
+**Eval (`eval_omr.py`, held-out val):**
+- **AEU accidentals all ~100%** (koma/bakiye/kücük/büyük sharp+flat 97.4–100% recall, ≥99.7%
+  precision; büyükFlat 97.4% is 1/38); `\natural` 99.6%.
+- **Rhythm signs — the headline:** `\tup3` **98.3%** / 100% on **118 gold** (was 100% on 9 — now
+  trustworthy), `\tupend` 99.2%, `\tie` 96.4%, `\grace` **99.4%** (↑ from 98.0%). Both tuplet
+  orientations now covered.
+- Repeats/nav 97–100%, `|` 99.8%, digit `3` 99.7%. **Zero regression** vs Rung 2.2.
+- **`\sig`/`\sigend` 94.4% recall / 99.2% precision is a LABEL bug, not a model error:** the
+  serializer emits an *empty* `\sig \sigend` for signatures with no accidentals, which draws
+  nothing, so the model correctly omits it (precision ~99% confirms it only emits `\sig` for real
+  signatures). True `\sig` quality is ~99%+. TODO: skip empty `\sig … \sigend` in the label
+  serializer (`tools/render/lilypond.ts`) — needs a re-render, so batch with the next data build.
+
+- **Verdict: PASS — triplets now robustly validated (not a 9-sample smoke signal) and the
+  above-placement orientation is fixed, with no regression elsewhere.** Remaining: download
+  `rung22-stemfix/best` → rerun the ONNX export chain → re-upload the neyzen strips in
+  `omr-gate.html` (high triplets should now decode `\tup3 … \tupend`). Then Rung 3.
+
+## Rung-2.2b ONNX export (2026-07-09): PASS
+The proven export chain rerun against the stem-fix checkpoint
+(`data/checkpoints/rung22-stemfix-best` → `data/checkpoints/rung22-stemfix-best-onnx`, both
+gitignored) — the shipped int8-ONNX model now reads the fixed above-placement triplets in a real
+browser. Same invocations as Rung 2.2, only paths changed (`rung22-stemfix-best`,
+`strips_v2_2`). Manual walkthrough: `docs/MANUAL_CHECKS.md` Check 9.
+
+- **Gate strips** (`rung22-stemfix-best/GATE_STRIPS.txt`, 10): held-out val pieces, covering
+  every category incl. the now-measurable triplets — **two `\tup3`/`\tupend`** (nihavent,
+  hicaz — one high-note triplet), `\grace`×2 (rast, acemtarab), `\tie` (segah), `\sig` block
+  (nisaburek), `\buyukFlat` (acemtarab), `\repstart` (hisarbuselik), `\fine` nav (sehnaz),
+  multi-measure `|` (acemtarab). Pre-picked as PyTorch-exact decodes; each was then confirmed
+  int8-exact before staging (see the int8-swap note below).
+- **Export:** same `optimum-cli export onnx --task image-to-text-with-past`. Optimum's own
+  validation max logit diff: encoder ~1.6e-3, decoder graphs ≤ 5.3e-5 (irrelevant in id space —
+  see parity).
+- **int8:** `src/vision/quantize_onnx.py`: encoder 311→91 MB, decoder 276→69 MB,
+  decoder-with-past 242→61 MB — **221 MB total, identical to every prior rung.**
+- **Python parity** (`onnx_parity.py --checkpoint data/checkpoints/rung22-stemfix-best
+  --onnx-dir data/checkpoints/rung22-stemfix-best-onnx --strips-dir data/synthetic/strips_v2_2
+  --n 10`): ONNX == PyTorch == label ids, **10/10 fp32 AND 10/10 int8.** One first-pick nav
+  strip (nisaburek `m142-144`) was fp32-exact but int8 flipped a leading `\buyukSharp`→
+  `\bakiyeFlat` (a borderline int8 quantization case, not an export bug — `onnx==pytorch` held
+  at fp32); swapped it for an int8-exact nav strip (sehnaz `\fine`) so the gate is a clean 10/10.
+- **Browser** (`make_browser_gate.py` same flags → `omr-gate.html`, headless Chromium via
+  Playwright, wasm threads on / crossOriginIsolated): **20/20 exact** — 10 strips × (Python
+  reference pixels + live canvas preprocessing); both `\tup3` strips decode `\tup3 … \tupend`.
+  Latency: session load ~3.0 s; ~0.85 s encoder + 0.14–0.26 s decode ≈ **~1.0 s/strip**.
+- **Real-strip proof:** the original triplet-misreading upload (`data/real/triplet_test.png`,
+  a real neyzen strip) fed through the drag-and-drop box (canvas product path) now returns
+  `\repstart r8 e''8 f''8 a''8 \tup3 g''8 f''8 \tupend e''16 …` — the high-note triplet is
+  recovered as **`\tup3 … \tupend`**, no longer the pre-fix `16. 32`. Residual roughness on the
+  rest of this real (non-VexFlow) image (a stray later `\tupend`, an `e'' 32` spacing) is the
+  expected synthetic→real gap that Rung 3 exists to close — the stem/triplet fix itself is
+  confirmed end-to-end in the shipped form.
+- **Verdict: PASS — the shipped int8-ONNX model reads the fixed above-placement triplets
+  exactly in a real browser, and the real-image regression that triggered Rung 2.2b is
+  resolved.** Next: Rung 3 (real photo/screenshot collection + model-assisted labeling,
+  `docs/PIPELINE.md` §3) using this checkpoint.

@@ -47,6 +47,9 @@ venv.bak/
 # Local test photos / scratch sheets (not redistributed)
 test_images/
 
+# Real reference scores / neyzen strips (copyrighted; not redistributed)
+data/real/
+
 # Data and models (Ignore large files to prevent them from hitting GitHub limits)
 data/raw/*
 !data/raw/.gitkeep

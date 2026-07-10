@@ -509,13 +509,50 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   validation set). Under gitignored `data/real/` (`pdfs/`, `images/`, `census.json`,
   `manifest.csv`). notaarsivleri.com is an opt-in second source (`--nota`, best-effort). Sample
   page confirmed real notation (keysig + repeats/voltas + lyrics + header noise).
-- ⏳ **Next: Rung 4 wiring — page → strips → decode → stitch** (`docs/PIPELINE.md` §1, §4),
-  starting screenshot/clean-scan first. `src/vision/page_to_strips.py` slices a full page into
-  training-shaped strips (staff + barline detection → scale-normalize → window); strips feed the
-  proven ONNX greedy decode (`onnx_parity.py`) → stitched token stream → note model → editor,
-  which simultaneously unlocks the **Rung-3 model-assisted labeling loop** (`docs/PIPELINE.md`
-  §3.2) over the corpus above, using `rung22-stemfix-best`. The int8 graphs in
-  `apps/web/public/models/` are the browser runtime.
+- ✅ **Rung 4 stages 1–7 — page→strips slicer + end-to-end page decode: WORKING (2026-07-10):**
+  `src/vision/page_to_strips.py` (classical CV, `docs/PIPELINE.md` §1 stages 2–6): staff systems
+  via horizontal-open + row projection; each row scale-normalized to the TRAINING geometry
+  (strip H=336, staff spacing 30 px, top line y≈138 — measured from the gate strips); barlines by
+  **continuity + thinness** (unbroken top→bottom vertical run, no notehead-tall fat blob,
+  staff-line rows excluded) — plain per-column darkness is NOT enough: stems pass it and real
+  barlines fail it; windows of ~3 measures, row-starts keep clef+keysig (the `\sig` carrier);
+  over-wide fallback splits at whitespace gutters; `--debug` overlay draws staves/barlines/
+  windows. Five real-page bugs found & fixed during verification on `data/real/` pages, incl.
+  **volta-bracket lines clustering as a 6th staff line** (row anchored one gap too high → every
+  barline in the row rejected; fix: keep the most evenly-spaced 5-line window).
+  `src/vision/decode_page.py` chains the slicer into the Rung-1.5 ONNX greedy decode (int8 =
+  browser runtime). **First real neyzen page (hicaz şarkı, 7 rows → 21 strips): keysig read on
+  every row-start, `\repstart`/`\volta1`/`\repend`/`\volta2` structure captured, bakiye/koma
+  accidentals decoded, ~353 ms/strip (7.4 s/page).** Known rough edges: spurious/disordered
+  tuplet tokens on some 16th pairs, occasional `\sig` inconsistency — exactly the synthetic→real
+  gap the Rung-3 labeling loop trains away.
+- ✅ **Rung 4 stage 8 — STITCHER + editor feed-in: DONE (2026-07-10):** `tools/render/stitch.ts`
+  (browser-safe TS, like decode.ts) turns a page's decoded strip tokens into a schemaVersion-1
+  note model: joins strips/rows re-inserting the `|` the crop boundary ate (repeat barlines
+  excepted), resolves bare notes from the row's `\sig` block (empty blocks never clear an
+  established signature — the known ambiguity), folds the rhythm signs back (`x \tie x` → one
+  event, `\tup3` members × 2/3, `\grace` → zero-duration grace), then **expands structure**
+  (repeat/volta passes, D.C. al Fine with segno/coda jumps — repeats not retaken) and emits
+  events with bar-unit offsets so the harness's `assignBars` reproduces the decoded barlines.
+  Model noise (stray `\tupend`, dangling `\tie`, glued tokenizer output like `\sig\bakiyeFlata`,
+  split durations `f'' 32`, a hallucinated mid-piece `\dc` — the last two produced by a real
+  nihavend page) is normalized/warned, never fatal. **Verified:** `stitch-test.ts` — 13 structure
+  unit tests +
+  **round-trip 194/194 bundled scores exact** (labels via `docToStrips` → stitch → identical
+  written notes; comparison at the WRITTEN AEU layer, per the two-layer design).
+  **Editor feed-in:** `decode_page.py` now writes `<page>_decode.json` → `stitch-cli.ts -o
+  apps/web/public/decoded.json` → loads in the harness (file picker or `?score=/decoded.json`);
+  new **⬇ Save JSON** button exports the corrected doc — the labeling loop is closed. Live
+  proof on the hicaz test page: 21 strips → 23 written / 28 expanded measures, keysig + volta
+  structure resolved, 225 events render + play (headless-verified: engraving drawn, save
+  round-trips, no console errors); second page (nihavend): 25 strips → 29 written / 37 expanded
+  measures, 288 notes.
+- ⏳ **Next: Rung 3 labeling loop at scale.** Run `decode_page.py` + `stitch-cli.ts` over the
+  798-piece neyzen corpus with `rung22-stemfix-best`, correct in the editor (worst pages first —
+  active learning), Save JSON, serialize corrected docs to strip labels via `docToStrips`; then
+  fine-tune on synthetic + corrected-real (split by piece). The int8 graphs in
+  `apps/web/public/models/` are the browser runtime; the in-browser port of pipeline stages 2–7
+  and stage-9 header OCR (makam table; `none` default) remain open.
   - **Label-bug cleanup (fold into the next data build):** skip empty `\sig … \sigend` in
     `tools/render/lilypond.ts` (see `MODEL_EVAL.md` "Rung 2.2b") — depresses `\sig` recall to 94.4%
     but is benign downstream; needs a re-render, so batch it with the next dataset change.
@@ -553,4 +590,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-10._
+_Last updated: 2026-07-10 (stage-8 stitcher + editor feed-in)._

@@ -253,6 +253,34 @@ of the PNG (proves the real product path — the JS DonutImageProcessor port).
   96.8% exact-match, so most val strips qualify; verify with `eval_omr.py`/`onnx_parity.py`
   before blaming the export).
 
+## Check 10 — page → editor: the stage-8 stitcher (Rung-4 feed-in, the Rung-3 labeling loop)
+
+Goal: see a REAL page travel the whole pipeline — slice → decode → stitch → editable score.
+
+1. Decode a page (slicer + int8 ONNX; writes strips + `<page>_decode.json`):
+   ```
+   .venv-ml/bin/python src/vision/decode_page.py data/real/images/hicaz/ben_bir_garip_kusum_p1.png \
+       --checkpoint data/checkpoints/rung22-stemfix-best \
+       --onnx-dir data/checkpoints/rung22-stemfix-best-onnx --suffix _int8
+   ```
+2. Stitch the tokens into a note model (prints per-bar notes + every recovered decode glitch):
+   ```
+   npx --yes tsx tools/render/stitch-cli.ts \
+       data/real/strips/ben_bir_garip_kusum_p1/ben_bir_garip_kusum_p1_decode.json \
+       -o apps/web/public/decoded.json
+   ```
+   Expect on this page: 21 strips → 23 written measures, **28 after repeat/volta expansion**,
+   `\sig \bakiyeFlat a` resolving the bare `b'`/`a'` notes, and a handful of warnings (stray
+   `\tupend`, tie pitch mismatches) — model noise being tolerated, not fatal.
+3. `npm run dev:web`, open `http://localhost:5173/?score=/decoded.json` — the decoded page is
+   engraved, playable, and **editable** (✎ Edit → click a measure). Compare against the source
+   PNG side by side; fix a wrong note; **⬇ Save JSON** downloads the corrected score. That
+   correct-and-save cycle IS the Rung-3 model-assisted labeling loop (`docs/PIPELINE.md` §3.2).
+4. Stitcher regression suite (structure unit tests + label round-trip on all bundled scores):
+   ```
+   npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
+   ```
+
 ---
 
 **Reproducing any strip later:** its manifest row carries `piece`, `transpose`, `mode`, `lyrics`,

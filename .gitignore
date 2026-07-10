@@ -85,3 +85,5 @@ apps/web/public/models/
 data/checkpoints/
 # Colab upload package (rebuild with scripts/make_colab_zip.sh)
 data/colab/
+# Stitched decode of a real page (stage-8 output; derived from data/real/)
+apps/web/public/decoded.json

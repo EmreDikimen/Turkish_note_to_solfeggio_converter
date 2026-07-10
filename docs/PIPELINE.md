@@ -4,9 +4,17 @@
 > but users upload **whole pages** (like the neyzen.com Uşşak şarkı sheet). This doc explains how
 > the two meet: the page is sliced into the same kind of strips the model was trained on, each
 > strip is decoded independently, and the token streams are stitched back together. It is the
-> design for ROADMAP §2's `Preprocess → Staff isolation` stages and Phase 4 / Rung 4 wiring —
-> the parts of the product that are **not yet built** (everything model-side already exists and
-> passed its gates). Also covered: the Rung-3 real-photo collection plan.
+> design for ROADMAP §2's `Preprocess → Staff isolation` stages and Phase 4 / Rung 4 wiring.
+> **Status (2026-07-10): stages 2–8 + 10 are implemented.** Stages 2–6 in
+> `src/vision/page_to_strips.py` (classical-CV slicer, screenshot/clean-scan path); stage 7
+> chained end-to-end by `src/vision/decode_page.py` (slicer → Rung-1.5 ONNX greedy decode,
+> int8 = browser runtime), which also writes the per-strip token JSON; **stage 8 stitching** in
+> `tools/render/stitch.ts` (browser-safe TS: `\sig` resolution, tie/tuplet/grace fold-back,
+> repeat/volta/da-capo expansion → a schemaVersion-1 note model; CLI `stitch-cli.ts`,
+> round-trip-verified on all 194 bundled scores by `stitch-test.ts`); **stage 10** is the
+> existing harness — the stitched JSON loads via its file picker / `?score=` URL, and the new
+> **⬇ Save JSON** button closes the Rung-3 labeling loop. Still open: the in-browser port of
+> stages 2–7 and stage 9 (header OCR / makam table). Also covered: the Rung-3 collection plan.
 
 ## 0. The one-line answer to "how does a page become strips?"
 
@@ -31,6 +39,19 @@ Upload (PNG/JPEG page)
   9 → [Header metadata]      OCR makam/usul/tempo (separate; NOT the OMR model); user-editable
  10 → [Note model]           → editor → 53-TET playback (existing Phase-1 product)
 ```
+
+Stages 2–6 live in `src/vision/page_to_strips.py` (strips reproduce the training geometry:
+H=336 px, staff spacing 30 px, top line y≈138 — measured from the gate strips; barlines by
+continuity + thinness rather than column darkness; ~3-measure windows, row-starts keep
+clef+keysig, over-wide measures split at whitespace gutters; `--debug` writes an overlay).
+`src/vision/decode_page.py` chains them into stage 7, prints per-strip + per-row token
+streams, and writes `<page>_decode.json`. Stage 8 lives in `tools/render/stitch.ts`
+(+ `stitch-cli.ts` to turn that JSON into an editor-loadable note model; `stitch-test.ts`
+verifies structure expansion and the label round-trip on every bundled score). Stitching also
+re-spaces raw tokenizer output (HF `decode` glues added tokens: `\sig\bakiyeFlata`) and treats
+every malformed construct — stray `\tupend`, dangling `\tie`, empty measures — as a warning,
+never a failure: a mostly-right note model in the editor IS the labeling loop. Stage 9 (header
+OCR) is design only; stage 10 is the existing Phase-1 harness.
 
 **1. Input profile.** Real uploads are mostly **web screenshots** (clean geometry, flat white —
 the reason `augment.py` trains screenshot-dominant at `PHOTO_SHARE = 0.35`). Screenshots skip most
@@ -154,9 +175,13 @@ own photos.
 
 ## 4. Build order (Rung 4, after Rung-2/3 training)
 
-1. Barline + staff detection on **screenshots** (the easy 65%) → strips → decode → stitch:
-   the end-to-end demo on a clean page like the Uşşak example.
-2. The editor feed-in (decoded note model → editor), which simultaneously unlocks the Rung-3
-   labeling loop (§3.2).
+1. ✅ (2026-07-10, offline Python) Barline + staff detection on **screenshots** (the easy 65%)
+   → strips → decode: `page_to_strips.py` + `decode_page.py` on real neyzen pages (first full
+   page: 7 rows → 21 strips, keysig + repeat/volta structure decoded, ~353 ms/strip int8).
+2. ✅ (2026-07-10) Stitching (stage 8, `tools/render/stitch.ts` + CLI) and the editor feed-in:
+   `decode_page.py → stitch-cli.ts → apps/web/public/decoded.json → harness` (file picker or
+   `?score=`), corrected scores exported with the harness's **⬇ Save JSON** — the Rung-3
+   labeling loop (§3.2) is unlocked. Verified on the hicaz test page: 21 strips → 23 written /
+   28 expanded measures, signature + volta structure resolved, renders + plays in the harness.
 3. Photo preprocessing (deskew/perspective/curvature) — only then does the hard 35% matter.
 4. Header OCR + makam table lookup (until then: user picks the makam, `none` default).

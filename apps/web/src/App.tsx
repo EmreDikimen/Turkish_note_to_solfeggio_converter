@@ -402,6 +402,20 @@ export function App() {
     });
   }
 
+  // Download the current (possibly edited) score as note-model JSON. This is the output side of
+  // the Rung-3 model-assisted labeling loop: a stitched page is loaded, corrected in the editor,
+  // saved here — and the corrected file serializes to training labels via the SAME serializer
+  // that made the synthetic set (tools/render/lilypond.ts).
+  function onDownload() {
+    if (!doc) return;
+    const blob = new Blob([JSON.stringify(doc, null, 1)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${doc.name || "score"}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   // Load a note-model JSON the user picked from disk. Reads the file as text, parses it,
   // checks the schema version (so we fail clearly on an incompatible format), stops any
   // current playback, and swaps in the new score. Any error is shown instead of crashing.
@@ -498,6 +512,9 @@ export function App() {
           Load JSON:{" "}
           <input type="file" accept="application/json,.json" onChange={onFile} />
         </label>
+        <button onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
+          ⬇ Save JSON
+        </button>
         <label
           style={{ marginLeft: 12, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
           title="Transpose: shifts pitch by the chosen number of commas"

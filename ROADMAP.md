@@ -499,9 +499,23 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   the high-note triplet as `\tup3 g''8 f''8 \tupend` — the pre-fix `16. 32` misread is resolved.
   One first-pick nav gate strip was fp32-exact but int8-borderline (`\buyukSharp`→`\bakiyeFlat`);
   swapped for an int8-exact strip → clean 10/10. Full log: `MODEL_EVAL.md` "Rung-2.2b ONNX export".
-- ⏳ **Next: Rung 3 — real photo/screenshot collection + model-assisted labeling** (`docs/PIPELINE.md`
-  §3), using `rung22-stemfix-best`. The int8 graphs in `apps/web/public/models/` (staged by the gate)
-  are the labeling-loop / Rung-4-wiring runtime.
+- ✅ **Rung 3 — real corpus COLLECTED (2026-07-10):** `scripts/collect_notalar.py` (census →
+  makam-weighted download → PDF→PNG rasterize) pulled **798 engraved PDFs → 1,259 page PNGs
+  (200 dpi) across all 89 makams** from neyzen.com's freely-published classical archive (robots
+  allows `/makamlar/` + `/nota_arsivi/`; polite + resumable + seeded). Census = **8,442 pieces**;
+  downloads are **proportional to per-makam song count** (hicaz 59, nihavend 51, rast 33, …) with
+  a `--min-per-makam` floor for variety. These are PRINTED/engraved pages — the clean end of the
+  screenshot-dominant upload distribution, and no camera needed (camera photos are a later
+  validation set). Under gitignored `data/real/` (`pdfs/`, `images/`, `census.json`,
+  `manifest.csv`). notaarsivleri.com is an opt-in second source (`--nota`, best-effort). Sample
+  page confirmed real notation (keysig + repeats/voltas + lyrics + header noise).
+- ⏳ **Next: Rung 4 wiring — page → strips → decode → stitch** (`docs/PIPELINE.md` §1, §4),
+  starting screenshot/clean-scan first. `src/vision/page_to_strips.py` slices a full page into
+  training-shaped strips (staff + barline detection → scale-normalize → window); strips feed the
+  proven ONNX greedy decode (`onnx_parity.py`) → stitched token stream → note model → editor,
+  which simultaneously unlocks the **Rung-3 model-assisted labeling loop** (`docs/PIPELINE.md`
+  §3.2) over the corpus above, using `rung22-stemfix-best`. The int8 graphs in
+  `apps/web/public/models/` are the browser runtime.
   - **Label-bug cleanup (fold into the next data build):** skip empty `\sig … \sigend` in
     `tools/render/lilypond.ts` (see `MODEL_EVAL.md` "Rung 2.2b") — depresses `\sig` recall to 94.4%
     but is benign downstream; needs a re-render, so batch it with the next dataset change.
@@ -539,4 +553,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-09._
+_Last updated: 2026-07-10._

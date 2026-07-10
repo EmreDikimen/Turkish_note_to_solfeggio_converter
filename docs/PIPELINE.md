@@ -116,8 +116,17 @@ than 3.
 
 ## 3. Rung 3 — collecting and labeling real photos
 
-**Manual collection, model-assisted labeling.** There is no dataset to download for this — but
-"manual" only applies to *collecting* the images; *labeling* them is mostly the model's job:
+> **Status (2026-07-10): collection AUTOMATED + DONE for the engraved-PDF majority.**
+> `scripts/collect_notalar.py` replaced hand-screenshotting: it crawls neyzen.com's freely-published
+> archive (census of **8,442 pieces**), downloads PDFs **weighted by per-makam song count** (popular
+> makams heavier, floor for variety), and rasterizes them to PNG pages. First pull: **798 PDFs →
+> 1,259 page images across all 89 makams** in `data/real/`. These printed/engraved pages are the
+> clean end of the screenshot-dominant distribution — camera photos remain a later, smaller
+> validation set. `--nota` adds notaarsivleri.com (opt-in, best-effort). What follows (labeling) is
+> unchanged; only the collecting got cheaper.
+
+**Manual collection, model-assisted labeling.** "Manual" applied to *collecting* the images; that is
+now scripted for the archive majority (above). *Labeling* them is mostly the model's job:
 
 1. **Collect a few hundred images matching the upload distribution** (mostly screenshots, some
    phone photos): neyzen.com and similar archives viewed/screenshotted at various zoom levels and

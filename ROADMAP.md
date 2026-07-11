@@ -495,7 +495,7 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   checkpoint (`data/checkpoints/rung22-stemfix-best` → `…-best-onnx`, gitignored). Python parity
   **10/10 fp32 + 10/10 int8** (221 MB total); browser gate **20/20 exact** (headless Chromium,
   10 val strips × reference+canvas), both `\tup3` gate strips decoding `\tup3 … \tupend`. **Real-strip
-  proof PASS:** `data/real/triplet_test.png` (the neyzen strip that triggered Rung 2.2b) now decodes
+  proof PASS:** `data/real/refs/triplet_test.png` (the neyzen strip that triggered Rung 2.2b) now decodes
   the high-note triplet as `\tup3 g''8 f''8 \tupend` — the pre-fix `16. 32` misread is resolved.
   One first-pick nav gate strip was fp32-exact but int8-borderline (`\buyukSharp`→`\bakiyeFlat`);
   swapped for an int8-exact strip → clean 10/10. Full log: `MODEL_EVAL.md` "Rung-2.2b ONNX export".
@@ -547,12 +547,24 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   structure resolved, 225 events render + play (headless-verified: engraving drawn, save
   round-trips, no console errors); second page (nihavend): 25 strips → 29 written / 37 expanded
   measures, 288 notes.
-- ⏳ **Next: Rung 3 labeling loop at scale.** Run `decode_page.py` + `stitch-cli.ts` over the
-  798-piece neyzen corpus with `rung22-stemfix-best`, correct in the editor (worst pages first —
-  active learning), Save JSON, serialize corrected docs to strip labels via `docToStrips`; then
-  fine-tune on synthetic + corrected-real (split by piece). The int8 graphs in
-  `apps/web/public/models/` are the browser runtime; the in-browser port of pipeline stages 2–7
-  and stage-9 header OCR (makam table; `none` default) remain open.
+- ✅ **Rung 3 — SymbTr↔neyzen name match: DONE (2026-07-11):** `scripts/rung3/match_symbtr.py`
+  fuzzy-matches the 798 downloaded pdfs against SymbTr (makam alias table, incipit/composer/form
+  token scoring): **85 auto-accepted pairs** (spot-checked), 28 review-band, exported under
+  `data/real/rung3/matched/<makam>/<stem>/` as `score.json` (ground-truth note model) +
+  `labels.json` (per-measure tokens via the new `tools/render/labels-cli.ts`, every+keysig modes
+  + `\sig` block). Written-vs-sounding verified: `toAeuAlter` snap makes uşşak export
+  `\komaFlat b` like the printed page. **Full plan for the rest of Rung 3: `docs/RUNG3.md`**
+  (agreed order: freeze a ~15-piece real exam set from the matches → strip-label emitter →
+  Round-1 fine-tune on synthetic + matched-real → only then the hand-correction loop on the
+  unmatched ~700). Also: `data/real/` tidied (`refs/`, `rung3/` subtree).
+- ⏳ **Next (per `docs/RUNG3.md`, updated 2026-07-11): ONE combined Round-1 retrain.** Order:
+  (1) notaarsivleri.com SymbTr-first collection (census its ~21k-piece TSM catalog → match
+  against SymbTr on real metadata → download ONLY matches; slicer sample-check with `--debug`,
+  timeboxed with a neyzen-only fallback); (2) freeze the ~15–25-piece real exam set from BOTH
+  sources (`testset.json`); (3) strip-label emitter (slicer windows + SymbTr measures);
+  (4) fine-tune synthetic + all matched-real, eval per-source on the exam set. The
+  hand-correction loop on unmatched pieces starts AFTER that. The in-browser port of pipeline
+  stages 2–7 and stage-9 header OCR (makam table; `none` default) remain open.
   - **Label-bug cleanup (fold into the next data build):** skip empty `\sig … \sigend` in
     `tools/render/lilypond.ts` (see `MODEL_EVAL.md` "Rung 2.2b") — depresses `\sig` recall to 94.4%
     but is benign downstream; needs a re-render, so batch it with the next dataset change.
@@ -590,4 +602,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-10 (stage-8 stitcher + editor feed-in)._
+_Last updated: 2026-07-11 (Rung-3 SymbTr match + labeling plan — docs/RUNG3.md)._

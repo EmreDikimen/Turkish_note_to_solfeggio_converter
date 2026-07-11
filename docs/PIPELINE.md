@@ -137,6 +137,11 @@ than 3.
 
 ## 3. Rung 3 — collecting and labeling real photos
 
+> **The labeling+retraining plan now lives in `docs/RUNG3.md`** (2026-07-11): SymbTr↔neyzen
+> name match (85 free-label pieces, done), frozen real exam set, strip-label emitter, Round-1
+> fine-tune, THEN the hand-correction loop below. This section keeps the original collection
+> notes.
+
 > **Status (2026-07-10): collection AUTOMATED + DONE for the engraved-PDF majority.**
 > `scripts/collect_notalar.py` replaced hand-screenshotting: it crawls neyzen.com's freely-published
 > archive (census of **8,442 pieces**), downloads PDFs **weighted by per-makam song count** (popular

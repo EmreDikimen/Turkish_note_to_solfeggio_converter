@@ -284,7 +284,7 @@ browser. Same invocations as Rung 2.2, only paths changed (`rung22-stemfix-best`
   Playwright, wasm threads on / crossOriginIsolated): **20/20 exact** — 10 strips × (Python
   reference pixels + live canvas preprocessing); both `\tup3` strips decode `\tup3 … \tupend`.
   Latency: session load ~3.0 s; ~0.85 s encoder + 0.14–0.26 s decode ≈ **~1.0 s/strip**.
-- **Real-strip proof:** the original triplet-misreading upload (`data/real/triplet_test.png`,
+- **Real-strip proof:** the original triplet-misreading upload (`data/real/refs/triplet_test.png`,
   a real neyzen strip) fed through the drag-and-drop box (canvas product path) now returns
   `\repstart r8 e''8 f''8 a''8 \tup3 g''8 f''8 \tupend e''16 …` — the high-note triplet is
   recovered as **`\tup3 … \tupend`**, no longer the pre-fix `16. 32`. Residual roughness on the

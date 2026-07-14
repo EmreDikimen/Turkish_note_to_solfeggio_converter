@@ -18,10 +18,15 @@
  *    signature, giving Phase 4 a makam-independent source of the row's default accidentals. The
  *    Phase-4 decoder resolves bare notes from that signature (or the makam's defaults); explicit
  *    accidental / `\natural` override; no signature + `makam = none` → notes as written.
- *  - **Two render modes, one rule.** `"every"` mode draws every alteration inline (no signature), so
+ *  - **Three render modes, one rule.** `"every"` mode draws every alteration inline (no signature), so
  *    the faithful label marks every altered note — pass NO signature to the serializer. `"keysig"`
  *    mode suppresses signature-covered accidentals, so pass the drawn signature and the serializer
- *    marks deviations/cancels only.
+ *    marks deviations/cancels only. `"measure"` (carry) mode is standard engraving — signature PLUS
+ *    the measure-scoped carry rule (an accidental prints on the first note per staff position that
+ *    breaks the alteration in effect, then carries to the barline; a cancel prints on return) —
+ *    pass the signature AND a per-measure `CarryState`. Real printed pages use this convention
+ *    (confirmed on the neyzen corpus, Rung 3), and it mirrors SheetView's `"measure"`
+ *    `AccidentalMode` decision exactly, so label == pixels there too.
  *  - **AEU accidentals = 8 dedicated tokens** (koma/bakiye/küçük/büyük × flat/sharp), each ONE token.
  *  - **Barlines** kept as `|` (one atomic token) to preserve measure structure (matches the drawn
  *    barlines). Clef / time-signature are NOT in the label (treble is universal in the repertoire).
@@ -133,6 +138,15 @@ export const ADDED_TOKENS: string[] = [
  */
 export type SignatureMap = ReadonlyMap<string, number> | null | undefined;
 
+/**
+ * "measure" (carry) mode state: staff position (`letter+octave`, e.g. "B4") → the alteration
+ * currently in effect within the measure. Seeded lazily from the signature; set by each printed
+ * accidental. One instance per measure (carry is measure-scoped — it resets at every barline),
+ * created by `measureAtoms` and threaded through the note serializers. Mirrors the `active` map
+ * in SheetView's `buildStaveNotes`.
+ */
+export type CarryState = Map<string, number>;
+
 // LilyPond duration code (denominator) paired with its value as a fraction of a whole note.
 const DUR: ReadonlyArray<readonly [number, number]> = [
   [1, 1], [2, 1 / 2], [4, 1 / 4], [8, 1 / 8], [16, 1 / 16], [32, 1 / 32], [64, 1 / 64],
@@ -165,7 +179,12 @@ export function lilyOctave(octave: number): string {
  * FAITHFUL rule (must equal SheetView's drawing decision for the same mode):
  *  - no `signature` ("every" mode): an accidental token iff the note is altered (that's what's drawn);
  *  - with `signature` ("keysig" mode): token only when the note DEVIATES from the signature —
- *    `\natural` if it cancels back to natural, the AEU token otherwise; matching notes stay bare.
+ *    `\natural` if it cancels back to natural, the AEU token otherwise; matching notes stay bare;
+ *  - with `carry` ("measure" mode): token only when the note breaks the alteration currently in
+ *    effect for its staff position (carry state first, signature default second) — then the new
+ *    alteration is remembered for the rest of the measure. `carryUpdate = false` prints by the
+ *    same decision without setting the state (grace notes — their tiny accidental doesn't bind
+ *    the measure, matching SheetView).
  *
  * `writtenBeats` overrides the duration actually spelled: tuplet members write their ×3/2 value
  * (a sounding 1/12 spells as an 8th under the bracket) and tie-split parts write each half.
@@ -175,6 +194,9 @@ export function noteToLily(
   ev: NoteEvent,
   signature?: SignatureMap,
   writtenBeats?: number,
+  carry?: CarryState,
+  carryUpdate = true,
+  sigTolerant = false,
 ): { text: string; tokens: number } {
   const dur = lilyDuration(writtenBeats ?? eventBeats(ev));
   const parsed = ev.kind === "note" || ev.kind === "grace" ? parseNoteName(ev.noteName) : null;
@@ -184,7 +206,24 @@ export function noteToLily(
   }
   const alter = toAeuAlter(parsed.alterCommas); // AEU sign actually drawn on the staff
   let acc = "";
-  if (!signature) {
+  if (carry) {
+    const posKey = `${parsed.letter}${parsed.octave}`;
+    const sigAlter = signature?.get(parsed.letter) ?? 0;
+    const effective = carry.has(posKey) ? carry.get(posKey)! : sigAlter;
+    // `sigTolerant` (real printed pages, Rung 3): a note whose alteration RAISES/LOWERS in
+    // the same direction as the alteration in effect is written BARE — the page shows the
+    // degree under its signature sign and the performer supplies the makam intonation
+    // (SymbTr stores the SOUNDING value: eviç is a 5-comma F sharp under a koma-sharp-F
+    // signature, printed bare — the two-layer written/sounding design, ROADMAP §Phase 4).
+    // Explicit signs mark genuine chromatic deviations only (direction change or natural).
+    const covered =
+      alter === effective ||
+      (sigTolerant && effective !== 0 && alter !== 0 && Math.sign(alter) === Math.sign(effective));
+    if (!covered) {
+      acc = alter === 0 ? `${NATURAL_TOKEN} ` : `${AEU_TOKEN[alter]} `;
+      if (carryUpdate) carry.set(posKey, alter);
+    }
+  } else if (!signature) {
     if (alter !== 0) acc = `${AEU_TOKEN[alter]} `;
   } else {
     const sigAlter = signature.get(parsed.letter) ?? 0;
@@ -241,9 +280,16 @@ function tieTailToLily(ev: NoteEvent, writtenBeats: number): LabelAtom {
  *  SymbTr gives çarpma rows no duration of their own (Pay/Payda 0). */
 const GRACE_WRITTEN_BEATS = 1 / 8;
 
-/** `\grace` + the small note's own spelling (accidental per the same faithful rule as notes). */
-function graceToLily(ev: NoteEvent, signature?: SignatureMap): LabelAtom {
-  const inner = noteToLily(ev, signature, GRACE_WRITTEN_BEATS);
+/** `\grace` + the small note's own spelling (accidental per the same faithful rule as notes).
+ *  In carry mode the grace's accidental prints by the shared decision but never sets the
+ *  measure's state (`carryUpdate = false` — matching SheetView's grace handling). */
+function graceToLily(
+  ev: NoteEvent,
+  signature?: SignatureMap,
+  carry?: CarryState,
+  sigTolerant = false,
+): LabelAtom {
+  const inner = noteToLily(ev, signature, GRACE_WRITTEN_BEATS, carry, false, sigTolerant);
   return { text: `${GRACE_TOKEN} ${inner.text}`, tokens: 1 + inner.tokens };
 }
 
@@ -267,11 +313,19 @@ function mergeAtoms(parts: LabelAtom[]): LabelAtom {
  *    into the next bar) is dropped: VexFlow can only draw a grace attached to a host note, so
  *    the label must not carry what the pixels can't show.
  */
-export function measureAtoms(m: Measure, signature?: SignatureMap): LabelAtom[] {
+export function measureAtoms(
+  m: Measure,
+  signature?: SignatureMap,
+  carry = false,
+  sigTolerant = false,
+): LabelAtom[] {
   const evs = m.events;
   const groups = tupletGroupsIn(evs);
   const atoms: LabelAtom[] = [];
   let pendingGraces: LabelAtom[] = [];
+  // "measure" (carry) mode: fresh per-measure state — carry is measure-scoped, so creating it
+  // here IS the barline reset.
+  const state: CarryState | undefined = carry ? new Map() : undefined;
 
   const push = (atom: LabelAtom) => {
     atoms.push(pendingGraces.length > 0 ? mergeAtoms([...pendingGraces, atom]) : atom);
@@ -288,8 +342,8 @@ export function measureAtoms(m: Measure, signature?: SignatureMap): LabelAtom[] 
         const member = evs[j]!;
         parts.push(
           member.kind === "grace"
-            ? graceToLily(member, signature)
-            : noteToLily(member, signature, tupletWrittenBeats(member)),
+            ? graceToLily(member, signature, state, sigTolerant)
+            : noteToLily(member, signature, tupletWrittenBeats(member), state, true, sigTolerant),
         );
       }
       parts.push({ text: TUP_END_TOKEN, tokens: 1 });
@@ -298,12 +352,12 @@ export function measureAtoms(m: Measure, signature?: SignatureMap): LabelAtom[] 
       continue;
     }
     if (ev.kind === "grace") {
-      pendingGraces.push(graceToLily(ev, signature));
+      pendingGraces.push(graceToLily(ev, signature, state, sigTolerant));
       continue;
     }
     const split = tieSplitBeats(ev);
     if (split) {
-      const parts: LabelAtom[] = [noteToLily(ev, signature, split[0]!)];
+      const parts: LabelAtom[] = [noteToLily(ev, signature, split[0]!, state, true, sigTolerant)];
       for (const beats of split.slice(1)) {
         if (ev.kind === "note") parts.push({ text: TIE_TOKEN, tokens: 1 });
         parts.push(tieTailToLily(ev, beats));
@@ -311,15 +365,23 @@ export function measureAtoms(m: Measure, signature?: SignatureMap): LabelAtom[] 
       push(mergeAtoms(parts));
       continue;
     }
-    push(noteToLily(ev, signature));
+    push(noteToLily(ev, signature, undefined, state, true, sigTolerant));
   }
   // Dangling graces (nothing after them in the measure) are dropped — see the doc comment.
   return atoms;
 }
 
-/** Serialize one measure's events to a LilyPond fragment + its token estimate. */
-export function serializeMeasure(m: Measure, signature?: SignatureMap): { label: string; tokens: number } {
-  const merged = mergeAtoms(measureAtoms(m, signature));
+/** Serialize one measure's events to a LilyPond fragment + its token estimate.
+ *  `carry = true` selects "measure" (carry) mode; `sigTolerant = true` additionally writes
+ *  same-direction intonation refinements of the effective alteration BARE (the real
+ *  printed-page convention — see noteToLily). */
+export function serializeMeasure(
+  m: Measure,
+  signature?: SignatureMap,
+  carry = false,
+  sigTolerant = false,
+): { label: string; tokens: number } {
+  const merged = mergeAtoms(measureAtoms(m, signature, carry, sigTolerant));
   return { label: merged.text, tokens: merged.tokens };
 }
 
@@ -344,6 +406,8 @@ export function serializeMeasures(
   signature?: SignatureMap,
   repeatSpans?: readonly RepeatSpan[],
   navMarks?: readonly NavMark[],
+  carry = false,
+  sigTolerant = false,
 ): { label: string; tokens: number } {
   const parts: string[] = [];
   let tokens = 0;
@@ -364,7 +428,7 @@ export function serializeMeasures(
     if (marks.volta1) push(VOLTA1_TOKEN, 1);
     if (marks.volta2) push(VOLTA2_TOKEN, 1);
     for (const nm of nav.start) push(NAV_TOKEN[nm.type], 1);
-    const body = serializeMeasure(m, signature);
+    const body = serializeMeasure(m, signature, carry, sigTolerant);
     push(body.label, body.tokens);
     // Marks at this measure's right barline (⊕ / "D.C." / "Son").
     for (const nm of nav.end) push(NAV_TOKEN[nm.type], 1);

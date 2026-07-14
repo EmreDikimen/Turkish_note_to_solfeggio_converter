@@ -310,7 +310,23 @@ def _split_wide(row: np.ndarray, x0: int, x1: int) -> list[tuple[int, int]]:
     return list(zip(cuts[:-1], cuts[1:]))
 
 
-def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[tuple[int, int]]:
+@dataclass
+class Window:
+    """One strip window: pixel span + the row-local measures it covers.
+
+    `m_from`/`m_to` are 0-based inclusive indices into the row's bar-to-bar measure spans —
+    the geometry the Rung-3 emitter aligns against SymbTr measures. A `split_wide` window is a
+    FRAGMENT of one over-wide measure (`m_from == m_to`, partial content): it can never map to
+    whole SymbTr measures, so the emitter drops it.
+    """
+    x0: int
+    x1: int
+    m_from: int
+    m_to: int
+    split_wide: bool = False
+
+
+def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Window]:
     """Group consecutive measures (bar-to-bar spans) into ~MEASURES_PER_STRIP windows.
 
     The first window of a row keeps the left prefix (clef + key signature -> the \\sig carrier).
@@ -320,7 +336,7 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[tupl
     spans = list(zip(bars[:-1], bars[1:]))     # each = one measure
     if not spans:
         return []
-    windows: list[tuple[int, int]] = []
+    windows: list[Window] = []
     i = 0
     while i < len(spans):
         j = min(i + MEASURES_PER_STRIP, len(spans))
@@ -329,9 +345,10 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[tupl
         x0, x1 = spans[i][0], spans[j - 1][1]
         if x1 - x0 >= MIN_STRIP_W:
             if x1 - x0 > MAX_STRIP_W and row is not None:   # over-wide single measure
-                windows.extend(_split_wide(row, x0, x1))
+                windows.extend(Window(a, b, i, j - 1, split_wide=True)
+                               for a, b in _split_wide(row, x0, x1))
             else:
-                windows.append((x0, x1))
+                windows.append(Window(x0, x1, i, j - 1))
         i = j
     return windows
 
@@ -352,15 +369,24 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
         row, scale, top_y = normalize_row(page, staff)
         bars = detect_barlines(row, staff, scale)
         windows = window_measures(bars, row)
-        for wi, (x0, x1) in enumerate(windows):
-            crop = row[:, x0:x1]
+        row_measures = max(len(bars) - 1, 0)  # total measures the row's barlines delimit
+        for wi, w in enumerate(windows):
+            crop = row[:, w.x0:w.x1]
             name = f"{stem}_s{si:02d}_w{wi:02d}.png"
             cv2.imwrite(str(out_dir / name), crop)
-            manifest.append({
+            entry = {
                 "strip": name, "system": si, "window": wi,
-                "row_x0": int(x0), "row_x1": int(x1), "width": int(x1 - x0),
+                "row_x0": int(w.x0), "row_x1": int(w.x1), "width": int(w.x1 - w.x0),
                 "scale": round(scale, 3), "is_row_start": wi == 0,
-            })
+                # Rung-3 emitter geometry: row-local 0-based measure indices this strip covers.
+                "meas_from": w.m_from, "meas_to": w.m_to,
+                "n_measures": w.m_to - w.m_from + 1,
+                "split_wide": w.split_wide,
+                "row_measures": row_measures,
+            }
+            if wi == 0:
+                entry["row_bars"] = [int(b) for b in bars]  # audit/debug: raw barline x-positions
+            manifest.append(entry)
             n += 1
         if dbg is not None:
             for y in staff.lines:
@@ -368,8 +394,8 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
             for b in bars:            # every detected barline (blue) — check completeness here
                 bx = int(b / scale)
                 cv2.line(dbg, (bx, staff.top - 12), (bx, staff.bottom + 12), (220, 120, 0), 2)
-            for (x0, x1) in windows:  # window boundaries (red boxes) mapped back to page coords
-                px0, px1 = int(x0 / scale), int(x1 / scale)
+            for w in windows:         # window boundaries (red boxes) mapped back to page coords
+                px0, px1 = int(w.x0 / scale), int(w.x1 / scale)
                 cv2.rectangle(dbg, (px0, staff.top - 20), (px1, staff.bottom + 20), (0, 0, 220), 2)
 
     (out_dir / f"{stem}_manifest.json").write_text(json.dumps(manifest, indent=1))

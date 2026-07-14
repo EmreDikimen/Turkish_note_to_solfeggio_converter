@@ -57,13 +57,16 @@ class Strip:
 
     image_path: Path
     label: str
-    mode: str  # "every" | "keysig"
+    mode: str  # "every" | "keysig" | "measure" (carry — real-page strips, Rung 3)
     makam: str
     # Rung-2 manifest fields (defaulted so pre-Rung-2 manifests keep loading): `piece` is the
     # split-by-piece key — ALL of a piece's strips/transposes/variants stay in one split.
     piece: str = ""
     transpose: int = 0
     lyrics: bool = False
+    # Rung-3: where the strip came from ("synthetic" | "neyzen" | ...) — eval_omr reports a
+    # per-source block so a real-page exam can't hide behind synthetic numbers.
+    source: str = "synthetic"
 
 
 class StripDataset:
@@ -107,6 +110,7 @@ class StripDataset:
                     piece=piece,
                     transpose=int(row.get("transpose", 0)),
                     lyrics=bool(row.get("lyrics", False)),
+                    source=row.get("source", "synthetic"),
                 )
             )
         if not self.strips:

@@ -295,3 +295,48 @@ browser. Same invocations as Rung 2.2, only paths changed (`rung22-stemfix-best`
   exactly in a real browser, and the real-image regression that triggered Rung 2.2b is
   resolved.** Next: Rung 3 (real photo/screenshot collection + model-assisted labeling,
   `docs/PIPELINE.md` §3) using this checkpoint.
+
+## Rung 3 — real-page exam BASELINE (2026-07-12): 83.3% AEU (the synthetic→real gap, measured)
+
+- **What:** `rung22-stemfix-best` (unchanged — trained on synthetic only) evaluated on the
+  first REAL exam strips: `data/real/rung3/strips_exam/` — 33 alignment-certain strips from
+  the frozen 20-piece SymbTr-matched exam set (`data/real/rung3/testset.json`, provisional
+  neyzen-only), labels emitted by `scripts/rung3/emit_strip_labels.py` (carry-mode +
+  printed-signature conventions), never trained on.
+- **Result:** headline mean per-class AEU accidental accuracy **83.3%** (4/8 classes present,
+  ALL LOW-N: komaSharp 4/4, bakiyeSharp 2/3, komaFlat 2/3, bakiyeFlat 1/1 gold), SER
+  **0.018**, exact-match **26/33 = 78.8%**. Per-source: neyzen only. Synthetic val for the
+  same checkpoint: 99.9% / 0.002 / 96.7% — the synthetic→real gap is now a NUMBER, and
+  closing it is exactly the Round-1 fine-tune's job (`docs/RUNG3.md` step 4).
+- **Honesty caveats (printed by `eval_omr.py` itself):** matched-piece exam = an upper bound
+  for real-world accuracy; AND these 33 auto-labelable strips are the alignment-certain end
+  of the exam pieces (accidental-disagreeing strips sit in the review queue awaiting human
+  adjudication — the exam grows as `data/real/rung3/strips_exam/emit_review.csv` is worked
+  through). büyük classes: zero on real pages (untransposed) — unmeasurable by design.
+- Baseline eval row appended to `data/checkpoints/rung22-stemfix-best/eval.jsonl`
+  (`caveat: matched-upper-bound`, `per_source`).
+
+## Round-0.5 — rung3-labeler fine-tune (2026-07-15): PASS (tooling checkpoint, NEVER shipped)
+
+Throwaway emitter/decode_page checkpoint (docs/RUNG3.md §1a.5): fine-tuned FROM
+`rung22-stemfix-best` on the 418-strip human-adjudicated real pool ONLY
+(`data/real/rung3/strips_r1`, promote_labels.py 2026-07-14; split 40/8 pieces = 362/56
+strips, exam pieces structurally absent). Colab L4, `--lr 1e-5`, best val loss 0.0608 at
+step 200 (~4.5 epochs — early convergence then overfit, textbook for 362 strips; run
+stopped at 700).
+
+- **Real-val decode, before → after** (56 strips, same split, upper-bound caveat applies):
+  SER **0.086 → 0.021**, exact **39.3% → 69.6%**, AEU headline **70.0% → 91.7%**;
+  `\bakiyeSharp` (n=52, the only high-N class) 75/76.5% → **100/100%**; `\sig`/`\sigend`
+  96.4/85.7% → **100/100%** (signature hallucinations gone — the majority-vote poisoning
+  vector). Both eval rows in the respective checkpoints' `eval.jsonl`.
+- **Known regression:** `\tup3` recall 100→33% (n=3) — real pool is tuplet-poor; benign for
+  the emitter (labels come from SymbTr; a missed decode only raises nd → review, never a
+  wrong label). Persistent (not regressed): `\volta1` under the "2." bracket, `\fine`.
+- **Export:** same `optimum-cli export onnx --task image-to-text-with-past` →
+  `data/checkpoints/rung3-labeler-onnx`, `quantize_onnx.py` int8 (91/69/61 MB). Parity
+  (GATE_STRIPS.txt = 16 strips_r1 train+val strips): fp32 **8/8**, int8 **8/8** exact
+  (onnx==pytorch AND ==label), int8 decode ~2.5× faster.
+- **Scope guard:** this checkpoint only ever feeds `decode_page.py`/the emitter
+  (`--checkpoint data/checkpoints/rung3-labeler --onnx-dir data/checkpoints/rung3-labeler-onnx`).
+  No browser gate, never in `apps/web/public/models/`; Round 1 still trains from BASE.

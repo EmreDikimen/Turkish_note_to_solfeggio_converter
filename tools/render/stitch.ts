@@ -75,6 +75,12 @@ export interface StitchOptions {
   wholeNoteMs?: number;
   /** Expand repeats/voltas/da-capo into the flattened form (default true). */
   expand?: boolean;
+  /** How BARE notes resolve (must match the stream's engraving convention):
+   *  - `"keysig"` (default) — bare = the signature pitch. Synthetic every/keysig-mode labels.
+   *  - `"carry"` — standard engraving: an explicit accidental binds its staff position until the
+   *    next barline; bare takes the carried alteration first, the signature second. Real printed
+   *    pages use this (confirmed on the neyzen corpus) — `stitch-cli` passes it for page decodes. */
+  accidentals?: "keysig" | "carry";
 }
 
 export interface StitchResult {
@@ -197,7 +203,7 @@ export function stripsToRows(strips: readonly DecodedStrip[]): string[] {
 // 2. Token streams → written measures (signature resolution + rhythm-sign fold-back)
 
 /** Parse the per-row token streams into written measures with structure marks. */
-function parseRows(rows: readonly string[], warnings: string[]): MeasureRec[] {
+function parseRows(rows: readonly string[], warnings: string[], carryMode = false): MeasureRec[] {
   const measures: MeasureRec[] = [];
   let cur: MeasureRec = { events: [] };
   let codaCount = 0;
@@ -207,8 +213,12 @@ function parseRows(rows: readonly string[], warnings: string[]): MeasureRec[] {
   // ambiguity (see MODEL_EVAL.md), so it never clears an established signature.
   let sig = new Map<string, number>();
   let sawNonEmptySig = false;
+  // "carry" mode: staff position ("B4") → alteration in effect within the CURRENT measure
+  // (set by explicit accidentals, cleared at every measure boundary — see StitchOptions).
+  const active = new Map<string, number>();
 
   const flushMeasure = () => {
+    active.clear(); // every flush is a measure boundary (barline / repeat barline / row end)
     if (cur.events.length > 0) measures.push(cur);
     else if (cur.repStart || cur.volta1 || cur.volta2 || cur.segno) {
       // Marks decoded onto an empty measure (consecutive barlines = model noise): carry them
@@ -243,6 +253,17 @@ function parseRows(rows: readonly string[], warnings: string[]): MeasureRec[] {
     let sigAlter = 0;
     let rowSig: Map<string, number> | null = null; // block being read
     let i = -1;
+
+    // The shared bare-note/explicit-accidental resolution (see StitchOptions.accidentals).
+    // Grace accidentals print but never bind the measure — mirroring the serializer.
+    const resolveAlter = (letter: string, octave: number): number => {
+      if (pendingAlter !== null) {
+        if (carryMode && !pendingGrace) active.set(`${letter}${octave}`, pendingAlter);
+        return pendingAlter;
+      }
+      if (carryMode && active.has(`${letter}${octave}`)) return active.get(`${letter}${octave}`)!;
+      return sig.get(letter) ?? 0;
+    };
 
     for (const tok of toks) {
       i++;
@@ -418,7 +439,7 @@ function parseRows(rows: readonly string[], warnings: string[]): MeasureRec[] {
           warnings.push(
             `row ${rowIdx}: \\tie pitch mismatch (${last.letter}${last.octave} → ${letter}${octave}) — kept as separate notes`,
           );
-          const alter = pendingAlter ?? sig.get(letter) ?? 0;
+          const alter = resolveAlter(letter, octave);
           cur.events.push({ kind: "note", letter, octave, alter, num, den: denom });
         } else {
           [last.num, last.den] = addFrac(last.num, last.den, num, denom);
@@ -428,7 +449,7 @@ function parseRows(rows: readonly string[], warnings: string[]): MeasureRec[] {
         continue;
       }
 
-      const alter = pendingAlter ?? sig.get(letter) ?? 0;
+      const alter = resolveAlter(letter, octave);
       cur.events.push({
         kind: pendingGrace ? "grace" : "note",
         letter,
@@ -586,7 +607,7 @@ function buildDoc(
 /** Stitch pre-joined per-row token streams (top-to-bottom) into a note model. */
 export function stitchTokenRows(rows: readonly string[], opts: StitchOptions = {}): StitchResult {
   const warnings: string[] = [];
-  const measures = parseRows(rows, warnings);
+  const measures = parseRows(rows, warnings, opts.accidentals === "carry");
   const written = measures.map((_, i) => i);
   const playlist =
     opts.expand === false ? written : expandDaCapo(measures, expandRepeats(measures, warnings), warnings);

@@ -10,6 +10,14 @@
  * `\sig … \sigend` block sets each letter's default alteration; a **bare** note resolves to its
  * letter's signature entry (0 if none); an explicit accidental or `\natural` token overrides it.
  * Labels without a `\sig` block ("every"-mode strips) therefore resolve exactly as written.
+ *
+ * Two resolution modes for bare notes (must match the label's serialization mode):
+ *  - `"keysig"` (default) — bare always means the signature pitch (synthetic every/keysig labels);
+ *  - `"carry"` — standard engraving: an explicit accidental binds its staff position until the
+ *    next barline (`|` / `\repstart` / `\repend` reset), so a bare note takes the carried
+ *    alteration first, the signature second. Real printed pages — and their "measure"-mode
+ *    labels — use this convention. A `\grace` note's accidental never sets the carry state
+ *    (mirroring the serializer).
  */
 
 import { accidentalLabel, spellNote } from "@turkish-omr/core";
@@ -85,13 +93,19 @@ function parseLilyToken(tok: string): { letter: string | null; octave: number; d
   return { letter: letter === "r" ? null : letter, octave, dur: digits, dots };
 }
 
+/** How bare notes resolve — see the module header. */
+export type DecodeAccidentals = "keysig" | "carry";
+
 /** Decode a full LilyPond label string into readable note entries. */
-export function decodeLabel(label: string): Decoded[] {
+export function decodeLabel(label: string, accidentals: DecodeAccidentals = "keysig"): Decoded[] {
   const out: Decoded[] = [];
   const sigMap = new Map<string, number>(); // letter (upper-case) → default alteration, from \sig block
   let inSig = false;
   let sigAlter = 0; // accidental token seen inside the \sig block, waiting for its letter
   let pendingAlter: number | null = null; // explicit token before a note; null = bare (use signature)
+  // "carry" mode only: staff position ("B4") → alteration in effect until the next barline.
+  const active = new Map<string, number>();
+  let graceNext = false; // the next note is a \grace — its accidental must not set the carry state
   for (const tok of label.trim().split(/\s+/).filter(Boolean)) {
     if (tok === SIG_TOKEN) {
       inSig = true;
@@ -117,10 +131,14 @@ export function decodeLabel(label: string): Decoded[] {
       continue;
     }
     if (tok === "|") {
+      active.clear(); // carry is measure-scoped
       out.push({ kind: "bar", name: "", accidental: "", duration: "" });
       continue;
     }
     if (tok in REPEAT_GLYPH) {
+      // Repeat barlines are barlines: they reset the carry state too.
+      if (tok === REP_START_TOKEN || tok === REP_END_TOKEN) active.clear();
+      if (tok === GRACE_TOKEN) graceNext = true;
       out.push({ kind: "repeat", name: REPEAT_GLYPH[tok]!, accidental: "", duration: "" });
       continue;
     }
@@ -137,12 +155,23 @@ export function decodeLabel(label: string): Decoded[] {
     if (letter === null) {
       out.push({ kind: "rest", name: "rest", accidental: "", duration });
       pendingAlter = null;
+      graceNext = false;
       continue;
     }
     const western = LILY_TO_LETTER[letter];
     if (!western) continue; // unknown token, skip
-    // Bare note → the signature's default for its letter; explicit token → that alteration.
-    const alter = pendingAlter !== null ? pendingAlter : (sigMap.get(western) ?? 0);
+    // Bare note → the signature's default for its letter (carry mode: the carried alteration
+    // first); explicit token → that alteration (carry mode: remembered until the barline,
+    // except on grace notes).
+    let alter: number;
+    if (pendingAlter !== null) {
+      alter = pendingAlter;
+      if (accidentals === "carry" && !graceNext) active.set(`${western}${octave}`, alter);
+    } else if (accidentals === "carry" && active.has(`${western}${octave}`)) {
+      alter = active.get(`${western}${octave}`)!;
+    } else {
+      alter = sigMap.get(western) ?? 0;
+    }
     out.push({
       kind: "note",
       name: spellNote(western, octave, alter, "solfege"),
@@ -150,6 +179,7 @@ export function decodeLabel(label: string): Decoded[] {
       duration,
     });
     pendingAlter = null;
+    graceNext = false;
   }
   return out;
 }
@@ -164,6 +194,6 @@ export function fmt(d: Decoded): string {
 }
 
 /** Decode a label and join the readable forms with two spaces (handy for one-line display). */
-export function decodePretty(label: string): string {
-  return decodeLabel(label).map(fmt).join("  ");
+export function decodePretty(label: string, accidentals: DecodeAccidentals = "keysig"): string {
+  return decodeLabel(label, accidentals).map(fmt).join("  ");
 }

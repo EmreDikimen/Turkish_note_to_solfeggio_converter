@@ -34,7 +34,9 @@ from data import ADDED_TOKENS, StripDataset, strip_special
 MAX_TOKENS = 100  # matches overfit10.py's judgement generate(max_length=100)
 
 
-def onnx_greedy_decode(sessions, pixel_values: np.ndarray, start_id: int, eos_id: int):
+def onnx_greedy_decode(
+    sessions, pixel_values: np.ndarray, start_id: int, eos_id: int, return_logprobs: bool = False
+):
     """
     The reference greedy loop (ported to JS in apps/web/src/omrGate.ts):
       1. encoder once: pixel_values → encoder_hidden_states
@@ -44,7 +46,10 @@ def onnx_greedy_decode(sessions, pixel_values: np.ndarray, start_id: int, eos_id
          present.*.decoder.* (only the decoder self-attention cache grows; the encoder entries
          are carried over unchanged)
       4. argmax(logits) each step; stop on </s> or MAX_TOKENS.
-    Returns (generated ids incl. eos, encoder_ms, decode_ms).
+    Returns (generated ids incl. eos, encoder_ms, decode_ms); with `return_logprobs=True`, a
+    4th element — each chosen token's log-probability (softmax over that step's logits). The
+    chosen ids are argmax either way: the flag only ADDS the confidence readout (Rung-3
+    emitter review columns + the Step-5 triage), it can never change the decode.
     """
     encoder, decoder, decoder_wp = sessions
 
@@ -65,11 +70,17 @@ def onnx_greedy_decode(sessions, pixel_values: np.ndarray, start_id: int, eos_id
     }
 
     ids: list[int] = []
+    logprobs: list[float] = []
     wp_out_names = [o.name for o in decoder_wp.get_outputs()]
     logits = by_name["logits"]
     while True:
-        tok = int(np.argmax(logits[0, -1]))
+        row = logits[0, -1]
+        tok = int(np.argmax(row))
         ids.append(tok)
+        if return_logprobs:
+            # logprob(tok) = row[tok] − logsumexp(row); row[tok] is the max (argmax), so this
+            # reduces to −log Σ exp(row − max) — numerically stable by construction.
+            logprobs.append(-float(np.log(np.sum(np.exp(row - row[tok])))))
         if tok == eos_id or len(ids) >= MAX_TOKENS:
             break
         feed = {"input_ids": np.array([[tok]], np.int64), **past}
@@ -80,6 +91,8 @@ def onnx_greedy_decode(sessions, pixel_values: np.ndarray, start_id: int, eos_id
             if n.startswith("present."):
                 past[n.replace("present.", "past_key_values.")] = v
     t2 = time.perf_counter()
+    if return_logprobs:
+        return ids, (t1 - t0) * 1000, (t2 - t1) * 1000, logprobs
     return ids, (t1 - t0) * 1000, (t2 - t1) * 1000
 
 

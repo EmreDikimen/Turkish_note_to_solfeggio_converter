@@ -557,17 +557,67 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   (agreed order: freeze a ~15-piece real exam set from the matches → strip-label emitter →
   Round-1 fine-tune on synthetic + matched-real → only then the hand-correction loop on the
   unmatched ~700). Also: `data/real/` tidied (`refs/`, `rung3/` subtree).
-- ⏳ **Next (per `docs/RUNG3.md`, updated 2026-07-11): ONE combined Round-1 retrain.** Order:
-  (1) notaarsivleri.com SymbTr-first collection (census its ~21k-piece TSM catalog → match
-  against SymbTr on real metadata → download ONLY matches; slicer sample-check with `--debug`,
-  timeboxed with a neyzen-only fallback); (2) freeze the ~15–25-piece real exam set from BOTH
-  sources (`testset.json`); (3) strip-label emitter (slicer windows + SymbTr measures);
-  (4) fine-tune synthetic + all matched-real, eval per-source on the exam set. The
-  hand-correction loop on unmatched pieces starts AFTER that. The in-browser port of pipeline
-  stages 2–7 and stage-9 header OCR (makam table; `none` default) remain open.
-  - **Label-bug cleanup (fold into the next data build):** skip empty `\sig … \sigend` in
-    `tools/render/lilypond.ts` (see `MODEL_EVAL.md` "Rung 2.2b") — depresses `\sig` recall to 94.4%
-    but is benign downstream; needs a re-render, so batch it with the next dataset change.
+- ✅ **Rung 3 — strip-label emitter + frozen exam + FIRST REAL BASELINE (2026-07-12):** the
+  full auto-labeling pipeline is built and calibrated on the 85 matches (emitter-first order,
+  user decision 2026-07-11). Delivered: carry-mode ("measure") label serialization + carry-aware
+  decode (real engraving's accidental-carry convention, confirmed by user; `lilypond.ts` /
+  `decode.ts` / `stitch.ts`, 194/194 carry round-trip), slicer measure geometry persisted
+  (PNGs byte-identical), per-token logprobs in the ONNX decode (parity 10/10 fp32+int8),
+  `labels-cli --ranges` batch mode (empty-`\sig` fix baked in), and
+  `scripts/rung3/emit_strip_labels.py` — D.S./da-capo tail folding (64/85 pieces jump;
+  40/85 have the flattened-tail signature), content-driven monotonic row search (editions
+  reorder sections; a cursor can't follow), printed-signature majority vote + label override
+  (real pages print the makam's CONVENTIONAL sig, not SymbTr's derived one — 33/85
+  overridden), `sigTolerant` written-vs-sounding handling (eviç prints bare under a
+  koma-sharp-F sig), and the triple gate: ≤59-id budget, decodeLabel round-trip, nd
+  disagreement vs the model's decode (accept ≤0.10 AND no accidental-class disagreement —
+  those always get human review). Yield: **84 auto-accepted training strips**
+  (`data/real/rung3/strips_r1/`, StripDataset-ready, high-trust) + **348-strip review queue**
+  + **33 exam strips**. Exam: `testset.json` (committable via .gitignore negation) — 20
+  pieces / 16 makams, all 6 reachable AEU floors met (büyük = 0 on real pages), seeded +
+  deterministic, PROVISIONAL until notaarsivleri lands. `eval_omr.py` now prints per-source
+  blocks + LOW-N/absent honesty markers + the upper-bound caveat. **Baseline: 83.3% AEU /
+  SER 0.018 / 78.8% exact on the real exam (synthetic: 99.9% / 0.002 / 96.7%) — the
+  synthetic→real gap is now a number** (`MODEL_EVAL.md` "Rung 3 — real-page exam BASELINE").
+  Full plan + calibration findings: `docs/RUNG3.md`.
+- ✅ **Review UI + full training-set audit (2026-07-12):** `scripts/rung3/review_ui.py`
+  (stdlib server :8377) — queue tabs, one-keystroke ok|fix|bad verdicts written atomically
+  into the emit CSVs (+ `full_audit.csv` sidecar over ALL 84 accepted strips; manifest never
+  written by the UI), solfège display, label-vs-decode token diff, Bravura token reference.
+  **Full audit result: 65 ok / 19 fix / 0 bad — 22.6% of auto-accepted labels needed
+  correction** (spurious flattened-SymbTr `\repstart` the edition doesn't print; slurs decode
+  as false `\tie`). Corrections sit in `full_audit.csv` until the promote script applies them.
+- ✅ **Rung 3 — 348-row adjudication + promote script: DONE (2026-07-14).** Full r1 review
+  queue hand-adjudicated (341 fix / 4 bad / 3 ok — the conservative gate was right: nearly
+  everything flagged needed fixing). `scripts/rung3/promote_labels.py` applied the verdicts:
+  19 full_audit fixes into `manifest.jsonl`, 334 review rows promoted through the real gates
+  (≤59-id budget with the training tokenizer + labels-cli `--check` round-trip — a new batch
+  mode running the SAME checkLabel gate over raw label text). **Training pool: 84 → 418 real
+  strips** (65 emitter-ok / 19 audit-fixed / 334 promoted; provenance columns on every row).
+  10 rejects in `promote_rejects.csv`: 7 over-budget (60–73 ids, correct but undecodable
+  within max_length 60 — the MEASURES_PER_STRIP=2 re-slice territory) + 3 split-duration
+  typos (`c'' 32`) awaiting hand-fix, then re-run (script is idempotent, keyed on image).
+- ⏳ **Next (per `docs/RUNG3.md`): Round-0.5 labeler → notaarsivleri → freeze + grow the
+  exam → Round 1.**
+  Order: (1) ~~adjudication~~ + (2) ~~promote script~~ DONE (above); (3) **Round-0.5 labeler
+  fine-tune (decided 2026-07-13, `docs/RUNG3.md` §1a.5):** throwaway real-only fine-tune FROM
+  `rung22-stemfix-best` (never shipped; exam pieces excluded from train AND val; export = ONNX
+  int8 + parity only) so the notaarsivleri emit runs on a model that has seen real pages —
+  the 348-row queue + 22.6% audit fix rate priced the synthetic-only alternative; batch-mate:
+  the `MEASURES_PER_STRIP=2` re-slice (recovers ~233 over-budget real strips = labeler
+  training data); (4) notaarsivleri.com SymbTr-first collection (census → match → download
+  only matches; slicer sample-check, timeboxed with neyzen-only fallback; per-makam sig-vote
+  spot checks — the hicaz lesson); (5) re-run + COMMIT the exam set over both sources (the
+  freeze), then **grow the exam** by adjudicating the 443-row exam-review queue
+  (accidental-bearing rows first, target ~20+ gold per reachable class) and RE-TAKE the
+  baseline on the grown exam (the 83.3% number is only valid on the 33-strip exam);
+  (6) Round-1 fine-tune from BASE weights (not the labeler) on synthetic + all matched-real
+  (real oversampled; train.py needs the multi-pool loader), re-take the exam per-source.
+  Prerequisites batched with the Round-1 synthetic re-render: empty-`\sig` fix + carry-mode
+  ("measure") rendering so synthetic pages match real engraving, hicaz-family signature
+  coverage, and slurs drawn as unlabeled distractors (the false-`\tie` fix). Also open: the
+  hand-correction loop on unmatched pieces (AFTER Round 1), in-browser port of pipeline
+  stages 2–7, stage-9 header OCR.
 - 📌 **Superseded (historical) step-by-step for the original Rung-2.2 export:**
   1. **Local copy:** download Drive `MyDrive/tnc/rung22/best` → `data/checkpoints/rung22-best/`
      (gitignored, like rung2-best).
@@ -602,4 +652,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-11 (Rung-3 SymbTr match + labeling plan — docs/RUNG3.md)._
+_Last updated: 2026-07-15 (Round-0.5 labeler TRAINED + exported: real-val SER 0.086→0.021, AEU 70→91.7%, sig reads 100%; int8 parity 8/8 — see MODEL_EVAL.md; next = notaarsivleri SymbTr-first collection, emitter now runs on the labeler)._

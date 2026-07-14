@@ -47,8 +47,13 @@ venv.bak/
 # Local test photos / scratch sheets (not redistributed)
 test_images/
 
-# Real reference scores / neyzen strips (copyrighted; not redistributed)
-data/real/
+# Real reference scores / neyzen strips (copyrighted; not redistributed).
+# The frozen Rung-3 exam list (testset.json — names/counts only, no copyrighted content) IS
+# committed, which needs the negation chain below (git can't re-include inside an ignored DIR).
+data/real/*
+!data/real/rung3/
+data/real/rung3/*
+!data/real/rung3/testset.json
 
 # Data and models (Ignore large files to prevent them from hitting GitHub limits)
 data/raw/*

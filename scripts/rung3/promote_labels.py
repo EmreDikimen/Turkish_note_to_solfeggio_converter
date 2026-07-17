@@ -106,6 +106,10 @@ def main() -> int:
     ap.add_argument("--checkpoint", default="data/checkpoints/rung22-stemfix-best",
                     help="tokenizer source for the id-budget gate (no model loaded)")
     ap.add_argument("--max-ids", type=int, default=59)
+    ap.add_argument("--exam", action="store_true",
+                    help="promote exam-queue rows (exam=1) into the EXAM manifest of --dir "
+                         "(exam growth); without this flag exam rows are skipped and only "
+                         "training rows (exam=0) promote")
     ap.add_argument("--dry-run", action="store_true",
                     help="run every gate and print the report; write no manifest/PNGs/CSVs")
     args = ap.parse_args()
@@ -146,8 +150,11 @@ def main() -> int:
         if v not in ("ok", "fix"):
             counts["review_bad" if v == "bad" else "review_unverdicted"] += 1
             continue
-        if r.get("exam", "0").strip() == "1":
-            counts["review_exam_skipped"] += 1
+        # exam=1 rows belong to the EXAM manifest, exam=0 rows to the TRAINING manifest;
+        # promote only the kind that matches this run's --exam mode (a strip must never
+        # land in the wrong pool — exam strips in training would leak the exam).
+        if (r.get("exam", "0").strip() == "1") != args.exam:
+            counts["review_exam_skipped" if not args.exam else "review_nonexam_skipped"] += 1
             continue
         label = norm_label(r.get("corrected_label", "") if v == "fix" else r.get("label", ""))
         actions.append(("review", r["strip"], label, r))
@@ -160,6 +167,7 @@ def main() -> int:
                         "strip": r["strip"], "reason": reason, "detail": detail})
 
     gated: list[tuple[str, str, str, dict]] = []   # survivors needing the round-trip check
+    bad_fix_images: set[str] = set()               # audit fixes that failed a gate
     for kind, image, label, r in actions:
         if kind == "audit_bad":
             gated.append((kind, image, label, r))
@@ -178,6 +186,8 @@ def main() -> int:
         n = n_ids(label)
         if n > args.max_ids:
             reject(kind, r, "over_budget", f"{n} ids")
+            if kind == "audit_fix":       # correction unusable, old label known-wrong -> out
+                bad_fix_images.add(image)
             continue
         gated.append((kind, image, label, r))
 
@@ -197,7 +207,8 @@ def main() -> int:
                 check_errors[resp["id"]] = resp["errors"]
 
     # ---- apply ------------------------------------------------------------------------------
-    removed_images: set[str] = set()
+    removed_images: set[str] = set(img for img in bad_fix_images if img in by_image)
+    counts["audit_removed_bad_fix"] += len(removed_images)
     link_jobs: list[tuple[Path, Path]] = []
 
     for kind, image, label, r in gated:

@@ -210,7 +210,10 @@ export interface KeySignatureEntry {
  * What/why: Turkish scores, like Western ones, hoist the recurring accidentals into a signature
  * and only mark notes that deviate. We approximate the signature from the data itself: for each
  * letter (C..B), take the accidental it carries **most often**, keeping it only if it's non-zero
- * (a natural is the absence of a signature entry). Returned in C..B order for stable drawing.
+ * (a natural is the absence of a signature entry). Returned in PRINTED signature order —
+ * flats B-E-A-D-G-C-F first, then sharps F-C-G-D-A-E-B — the convention Turkish editions
+ * print (confirmed against the notaarsivleri majority-voted signatures, 2026-07-16); the
+ * emitter's printed-signature override still wins where a page's drawn order differs.
  */
 export function deriveKeySignature(doc: NoteModelDocument): KeySignatureEntry[] {
   // letter -> (alterCommas -> count)
@@ -238,5 +241,14 @@ export function deriveKeySignature(doc: NoteModelDocument): KeySignatureEntry[] 
     }
     if (bestAlter !== 0) entries.push({ letter, alterCommas: bestAlter });
   }
+  const FLATS = ["B", "E", "A", "D", "G", "C", "F"];
+  const SHARPS = ["F", "C", "G", "D", "A", "E", "B"];
+  entries.sort((x, y) => {
+    const xf = x.alterCommas < 0 ? 0 : 1;
+    const yf = y.alterCommas < 0 ? 0 : 1;
+    if (xf !== yf) return xf - yf; // flats before sharps
+    const order = xf === 0 ? FLATS : SHARPS;
+    return order.indexOf(x.letter) - order.indexOf(y.letter);
+  });
   return entries;
 }

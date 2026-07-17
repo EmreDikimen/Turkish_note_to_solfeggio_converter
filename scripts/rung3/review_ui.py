@@ -17,6 +17,14 @@ into them (adding `verdict` / `corrected_label` columns on first write):
                                            must be labeled by hand — edit starts from the
                                            model's decode; fix what the model misread.
 
+Two-source stage queues (2026-07-15; strips_exam ones above are SUPERSEDED by v2):
+  nota-audit    strips_nota/emit_audit.csv     69-strip sample of the 1,262 nota accepts —
+                                               the trust gate on the labeler-based emitter.
+  nota-review   strips_nota/emit_review.csv    2,671-row nota review pool (promotes into
+                                               Round-1 training).
+  examv2-audit  strips_exam_v2/emit_audit.csv  sample of the v2 exam accepts.
+  examv2-review strips_exam_v2/emit_review.csv 287-row growth queue for the re-frozen exam.
+
 Verdicts (written to the CSV, blank = not reviewed yet):
   ok   label matches the printed strip exactly
   fix  label corrected by hand (correction saved in `corrected_label`)
@@ -58,11 +66,25 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # two-source stage (2026-07-15) — the live queues
+    "nota-audit": "data/real/rung3/strips_nota/emit_audit.csv",
+    "nota-full": "data/real/rung3/strips_nota/full_audit.csv",
+    "nota-review": "data/real/rung3/strips_nota/emit_review.csv",
+    "examv2-audit": "data/real/rung3/strips_exam_v2/emit_audit.csv",
+    "examv2-full": "data/real/rung3/strips_exam_v2/full_audit.csv",
+    "examv2-review": "data/real/rung3/strips_exam_v2/emit_review.csv",
+    # neyzen round (2026-07-12..14) — fully adjudicated, kept for reference;
+    # the old strips_exam queues are SUPERSEDED by the v2 exam re-freeze.
     "r1-audit": "data/real/rung3/strips_r1/emit_audit.csv",
     "r1-full": "data/real/rung3/strips_r1/full_audit.csv",
     "r1-review": "data/real/rung3/strips_r1/emit_review.csv",
-    "exam-audit": "data/real/rung3/strips_exam/emit_audit.csv",
-    "exam-review": "data/real/rung3/strips_exam/emit_review.csv",
+}
+
+# full-queue id -> (manifest dir, sampled-audit queue whose verdicts are carried over)
+FULL_AUDITS = {
+    "r1-full": ("data/real/rung3/strips_r1", "r1-audit"),
+    "nota-full": ("data/real/rung3/strips_nota", "nota-audit"),
+    "examv2-full": ("data/real/rung3/strips_exam_v2", "examv2-audit"),
 }
 STRIPS = "data/real/strips"
 VERDICTS = {"", "ok", "fix", "bad"}
@@ -113,36 +135,39 @@ def save_verdict(root: Path, qid: str, strip: str, verdict: str, corrected: str,
 
 
 def build_full_audit(root: Path) -> None:
-    """Sidecar queue over EVERY accepted training strip (manifest.jsonl), so the whole
+    """Sidecar queues over EVERY accepted training strip (manifest.jsonl), so the whole
     training set can be eyeballed, not just the seeded audit sample. Verdicts live in
     full_audit.csv only — the manifest is never touched; the sampled-audit verdicts are
-    carried over so that work isn't repeated. Generated once; delete the CSV to rebuild."""
-    path = root / QUEUES["r1-full"]
-    mani = root / "data/real/rung3/strips_r1/manifest.jsonl"
-    if path.exists() or not mani.exists():
-        return
-    _, audit_rows = load_queue(root, "r1-audit")
-    prior = {r["strip"]: (r["verdict"], r["corrected_label"]) for r in audit_rows}
-    decodes: dict[str, dict] = {}
-    rows = []
-    with open(mani) as f:
-        for line in f:
-            m = json.loads(line)
-            strip, page = Path(m["image"]).name, m["page"]
-            if page not in decodes:
-                dj = root / STRIPS / page / f"{page}_decode.json"
-                decodes[page] = ({s["strip"]: s["tokens"] for s in json.load(open(dj))["strips"]}
-                                 if dj.exists() else {})
-            v, c = prior.get(strip, ("", ""))
-            rows.append({"piece": m["piece"], "page": page, "strip": strip,
-                         "nd": m.get("nd", ""), "min_logprob": m.get("min_logprob", ""),
-                         "verdict": v, "label": m["label"],
-                         "decoded": decodes[page].get(strip, ""), "corrected_label": c})
-    with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["piece", "page", "strip", "nd", "min_logprob",
-                                          "verdict", "label", "decoded", "corrected_label"])
-        w.writeheader()
-        w.writerows(rows)
+    carried over so that work isn't repeated. Generated once per dataset in FULL_AUDITS;
+    delete a CSV to rebuild it (re-carrying the sample verdicts made since)."""
+    for full_qid, (dirpath, audit_qid) in FULL_AUDITS.items():
+        path = root / QUEUES[full_qid]
+        mani = root / dirpath / "manifest.jsonl"
+        if path.exists() or not mani.exists():
+            continue
+        _, audit_rows = load_queue(root, audit_qid)
+        prior = {r["strip"]: (r["verdict"], r["corrected_label"]) for r in audit_rows}
+        decodes: dict[str, dict] = {}
+        rows = []
+        with open(mani) as f:
+            for line in f:
+                m = json.loads(line)
+                strip, page = Path(m["image"]).name, m["page"]
+                if page not in decodes:
+                    dj = root / STRIPS / page / f"{page}_decode.json"
+                    decodes[page] = ({s["strip"]: s["tokens"]
+                                      for s in json.load(open(dj))["strips"]}
+                                     if dj.exists() else {})
+                v, c = prior.get(strip, ("", ""))
+                rows.append({"piece": m["piece"], "page": page, "strip": strip,
+                             "nd": m.get("nd", ""), "min_logprob": m.get("min_logprob", ""),
+                             "verdict": v, "label": m["label"],
+                             "decoded": decodes[page].get(strip, ""), "corrected_label": c})
+        with open(path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["piece", "page", "strip", "nd", "min_logprob",
+                                              "verdict", "label", "decoded", "corrected_label"])
+            w.writeheader()
+            w.writerows(rows)
 
 
 def state(root: Path) -> dict:

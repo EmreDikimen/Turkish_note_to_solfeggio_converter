@@ -597,27 +597,91 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   10 rejects in `promote_rejects.csv`: 7 over-budget (60–73 ids, correct but undecodable
   within max_length 60 — the MEASURES_PER_STRIP=2 re-slice territory) + 3 split-duration
   typos (`c'' 32`) awaiting hand-fix, then re-run (script is idempotent, keyed on image).
-- ⏳ **Next (per `docs/RUNG3.md`): Round-0.5 labeler → notaarsivleri → freeze + grow the
-  exam → Round 1.**
-  Order: (1) ~~adjudication~~ + (2) ~~promote script~~ DONE (above); (3) **Round-0.5 labeler
-  fine-tune (decided 2026-07-13, `docs/RUNG3.md` §1a.5):** throwaway real-only fine-tune FROM
-  `rung22-stemfix-best` (never shipped; exam pieces excluded from train AND val; export = ONNX
-  int8 + parity only) so the notaarsivleri emit runs on a model that has seen real pages —
-  the 348-row queue + 22.6% audit fix rate priced the synthetic-only alternative; batch-mate:
-  the `MEASURES_PER_STRIP=2` re-slice (recovers ~233 over-budget real strips = labeler
-  training data); (4) notaarsivleri.com SymbTr-first collection (census → match → download
-  only matches; slicer sample-check, timeboxed with neyzen-only fallback; per-makam sig-vote
-  spot checks — the hicaz lesson); (5) re-run + COMMIT the exam set over both sources (the
-  freeze), then **grow the exam** by adjudicating the 443-row exam-review queue
-  (accidental-bearing rows first, target ~20+ gold per reachable class) and RE-TAKE the
-  baseline on the grown exam (the 83.3% number is only valid on the 33-strip exam);
-  (6) Round-1 fine-tune from BASE weights (not the labeler) on synthetic + all matched-real
-  (real oversampled; train.py needs the multi-pool loader), re-take the exam per-source.
-  Prerequisites batched with the Round-1 synthetic re-render: empty-`\sig` fix + carry-mode
-  ("measure") rendering so synthetic pages match real engraving, hicaz-family signature
-  coverage, and slurs drawn as unlabeled distractors (the false-`\tie` fix). Also open: the
-  hand-correction loop on unmatched pieces (AFTER Round 1), in-browser port of pipeline
-  stages 2–7, stage-9 header OCR.
+- ✅ **Rung 3 — Round-0.5 labeler TRAINED + EXPORTED (2026-07-15,
+  `MODEL_EVAL.md` "Round-0.5"):** throwaway real-only fine-tune from `rung22-stemfix-best`
+  on the 418-strip promoted pool (exam pieces excluded from train AND val). Real-val
+  **SER 0.086→0.021, AEU 70→91.7%, sig reads 100%**; `data/checkpoints/rung3-labeler`
+  + `-onnx` int8, parity 8/8. Never shipped — it is the emitter's decode model only
+  (`emit_strip_labels.py --checkpoint … --redecode`).
+- ✅ **Rung 3 — TWO-SOURCE STAGE COMPLETE (2026-07-15, `docs/RUNG3.md` §1b + Step 2):**
+  `scripts/rung3/collect_nota.py` census 20,833 TSM pieces → 966 metadata accepts →
+  **964 pieces downloaded**; **1,227 pages GPU-decoded on Colab**
+  (`scripts/rung3/decode_pages_gpu.py` + `make_decode_zip.sh` +
+  `notebooks/rung3_decode_colab.ipynb` — labeler decode offloaded, fanless-Mac rule);
+  fold-search 2^n blow-up fixed (`SPAN_SUBSET_CAP=12` + hill-climb). Emit over 938 pieces
+  (440 ok / 338 low_coverage / 160 missing_pages) → **1,262 accepted nota strips +
+  2,671-row review queue + 69-strip audit sample** (`strips_nota/`); dominant drops
+  row_unaligned 4,467 / split_wide 3,757 / over_budget 2,108 (`MEASURES_PER_STRIP=2`
+  re-slice = the #1 yield lever). **Exam RE-FROZEN v2** (`testset.json`, v1 → `.bak-v1`):
+  **25 pieces / 16 makams (23 nota + 2 neyzen), every reachable class ≥44 gold, no LOW-N**;
+  exam emit 63 strips + 287-row growth queue (`strips_exam_v2/`). Sig clusters flagged, NOT
+  yet adjudicated: **mahur [F+1]×12 + missing-B-1** (the hicaz lesson's per-makam spot check
+  doing its job).
+- ✅ **Rung 3 — nota audit + first promote DONE (2026-07-16).** 69-strip audit sample fully
+  adjudicated (29 ok / 40 fix). Fix decomposition: 8 pure sig-order (now no-ops after the
+  canonicalization below), 1 sig-block, 26 tie/repeat structural (the known SymbTr-vs-edition
+  conventions), **5 pitch-level = 7.2% content-error rate** (vs neyzen's 22.6% — the
+  Round-0.5 labeler earned its keep). 180 review rows verdicted (105 sig_mismatch — the
+  worksheet clusters — 29 nd_review, 23 low_coverage, 8 acc_disagreement, 13 nav).
+  `promote_labels.py --dir strips_nota` APPLIED: **manifest 1,262 → 1,435 strips** (47 audit
+  fixes in place + 173 promoted); 6 rejects = 4 over_budget (61–85 ids, re-slice territory)
+  + 2 correction typos pending re-edit. **Combined real pool: 1,853 strips** (1,435 nota +
+  418 neyzen). Sig-entry order canonicalized EVERYWHERE (serializer + ~404 existing labels,
+  see `docs/RUNG3.md` watch-item). Sharpness analysis: the review queue is systematically
+  the BLURRY tail (accepted median 1672 vs low_coverage/sig_mismatch ~900 Laplacian-var) —
+  except acc_disagreement rows (1703, sharp + accidental-bearing = best value left).
+  Rare-class real gold is thin (komaSharp 26 / kucukSharp 31 tokens) → synthetic
+  oversampling in the Round-1 re-render, not queue-grinding. Photo-domain exam prep:
+  all 25 exam-piece PDFs staged + merged (`data/real/rung3/photo_exam_pdfs/`,
+  00_ALL_25_MERGED.pdf, 38 pp) for print-and-photograph → `data/real/photos_exam/` =
+  a second exam axis at zero labeling cost.
+- ✅ **Rung 3 — sig_mismatch + acc_disagreement adjudicated, EXAM GROWN 10x (2026-07-16/17).**
+  All 231 sig_mismatch + all 216 acc_disagreement nota-review rows verdicted; second promote:
+  **training manifest 1,435 → 1,742** (real pool **2,160** with neyzen). **acc_disagreement
+  lesson (docs/RUNG3.md "Logged for later"): the user's fixes sided with the DECODE 187/214
+  (87%) vs SymbTr 14 — printed editions win accidental disputes; the never-auto-accept rule
+  avoided 187 headline-class poisonings; the labeler's decode is the right edit draft.**
+  Sig-entry order canonicalized (serializer + ~404 labels); 198 sig-less w00 labels validated
+  + kept (crop-cut dominates, 96%). examv2-review DONE (287: 249 promoted / 12 bad / 26
+  over_budget = unwinnable under the 59-id cap): **exam manifest 63 → 312 strips**
+  (`promote_labels.py --exam` flag added; exam/training pools mutually guarded). Exam gold:
+  bakiyeSharp 117, bakiyeFlat 60, kucukFlat 54, natural 48, komaFlat 39, kucukSharp 28,
+  komaSharp 19 — **but \tup3 only 4: the exam measures triplets WEAKLY** (budget depletion;
+  interpret Round-1 tup3 via synthetic val + manual checks). THREE slicer defects logged for
+  the re-slice (docs/RUNG3.md watch-item): w00 crops cutting clef/sig, note stems mistaken
+  for barlines (duration misread; pad cuts a few px, TIGHT), bisected noteheads. Review
+  policies logged: cut note / dangling accidental inside labeled content = bad; outside =
+  ignore fragment. nota-full reordered nd-desc (riskiest first). Promote rejects pending:
+  3 typos (ben_seni_sevdim p1_s03_w01 stray `d`; gonlum_heves p1_s04_w00 backslash-less
+  `bakiyeSharp`; yikildi p1_s01_w00 `g''' 32` split) + 14 over_budget (re-slice recovers).
+- ✅ **Rung 3 — examv2-full DONE (2026-07-17, the LAST exam hand task):** all 63 auto-accepted
+  exam strips verdicted — **31 ok / 32 fix / 0 bad**. Fixes: 22 tie-only (the SymbTr-vs-edition
+  structural conventions), 4 volta/repeat, **4 pitch/duration = ~6% content-error rate**
+  (matches the nota audit's 7.2%), 1 sig-block removal (w00 crop-cut), 1 accidental-class sig
+  fix (zahiri p1_s04_w00 komaSharp→kucukSharp). **mahur (18) + suzidilara (16) sig-suspects:
+  ZERO signature corrections — the voted sigs are confirmed, clusters cleared.** Fixes
+  APPLIED via `promote_labels.py --exam`: 31 of 32; the 32nd (neydin_guzelim p1_s03_w00,
+  60 ids) over budget → row removed as unwinnable (promote_labels fixed to remove
+  gate-failed audit fixes per its docstring). **Final exam manifest: 311 strips** (tie 127,
+  \tup3 still 4; class counts in docs/RUNG3.md).
+- ⏳ **Next: (1) COMMIT
+  `testset.json` + sync = THE FREEZE; (2) re-take baseline (`rung22-stemfix-best`) on the
+  311-strip exam per-class × per-source (× photo arm when the printed-page photos land —
+  PDFs staged in `data/real/rung3/photo_exam_pdfs/`); (3) USER (optional, training quality):
+  nota-full nd>0 tier (567 rows, sorted first in the tab), then nd=0 tier (602, skim/skip);
+  (4) Round-1 fine-tune from BASE weights, PRE-REGISTERED ship criteria, checkpoint selection
+  on val only (exam taken once at the end).** Round-1 prerequisites: multi-pool loader in
+  train.py + the synthetic re-render batch (empty-`\sig` fix, carry-mode rendering,
+  hicaz-family sig coverage, slurs as unlabeled distractors, **aggressive `\tup3`
+  oversampling incl. contiguous-triplet runs**, rare-class komaSharp/kucukSharp oversampling,
+  blur/fade augmentation) + the `MEASURES_PER_STRIP=2` re-slice with the three slicer fixes
+  (recovers the ~5,900 split_wide/over_budget drops + 14 training + 26 exam over-budget
+  corrections; PROMOTE FIRST — re-emit discipline in `docs/RUNG3.md`). Parked: ~2,100
+  blurry nota-review rows (low_coverage/nav/nd_review — unverdicted rows never train; mine
+  per-class only if Round-1 taxonomy gives a reason). Label-noise budget for Round 1: ~7%
+  pitch / ~38% tie-repeat structural in nota auto-accepts — RE-AUDIT a fresh 5% sample after
+  Round 1. Later: decode-repair heuristics (docs/RUNG3.md "Logged for later"),
+  hand-correction loop on unmatched pieces, in-browser stages 2–7, stage-9 header OCR.
 - 📌 **Superseded (historical) step-by-step for the original Rung-2.2 export:**
   1. **Local copy:** download Drive `MyDrive/tnc/rung22/best` → `data/checkpoints/rung22-best/`
      (gitignored, like rung2-best).
@@ -652,4 +716,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-15 (Round-0.5 labeler TRAINED + exported: real-val SER 0.086→0.021, AEU 70→91.7%, sig reads 100%; int8 parity 8/8 — see MODEL_EVAL.md; next = notaarsivleri SymbTr-first collection, emitter now runs on the labeler)._
+_Last updated: 2026-07-17 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively))._

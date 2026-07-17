@@ -52,7 +52,13 @@ class Runtime:
 
 
 def load_runtime(checkpoint: str, onnx_dir: str, suffix: str = "_int8") -> Runtime:
-    """Load the processor + ONNX graphs once (the exact browser runtime)."""
+    """Load the processor + ONNX graphs once (the exact browser runtime).
+
+    OMR_ORT_THREADS=<n> caps onnxruntime's intra-op threadpool (default: all cores).
+    Long batch decodes at full fan-out run the laptop hot; e.g. OMR_ORT_THREADS=2 with
+    `nice -n 19` trades ~3-4x wall time for a cool, background-priority run."""
+    import os
+
     import onnxruntime as ort
     from transformers import AutoConfig, AutoProcessor
 
@@ -61,9 +67,14 @@ def load_runtime(checkpoint: str, onnx_dir: str, suffix: str = "_int8") -> Runti
     cfg = AutoConfig.from_pretrained(checkpoint)
     start_id = getattr(cfg, "decoder_start_token_id", None) or tok.bos_token_id
     eos_id = tok.eos_token_id
+    opts = ort.SessionOptions()
+    n_threads = int(os.environ.get("OMR_ORT_THREADS", "0"))
+    if n_threads > 0:
+        opts.intra_op_num_threads = n_threads
+        opts.inter_op_num_threads = 1
     d = Path(onnx_dir)
     sessions = tuple(
-        ort.InferenceSession(str(d / f"{n}{suffix}.onnx"))
+        ort.InferenceSession(str(d / f"{n}{suffix}.onnx"), opts)
         for n in ("encoder_model", "decoder_model", "decoder_with_past_model")
     )
     return Runtime(sessions, processor, tok, start_id, eos_id, checkpoint, suffix)

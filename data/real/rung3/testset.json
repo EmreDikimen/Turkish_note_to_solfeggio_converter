@@ -1,64 +1,32 @@
 {
  "generatedBy": "scripts/rung3/build_testset.py",
- "status": "provisional-neyzen-only",
- "date": "2026-07-12",
+ "status": "multi-source",
+ "date": "2026-07-15",
  "params": {
-  "n": 20,
+  "n": 25,
   "floor": 15,
   "seed": 33
  },
  "pieces": [
   {
-   "stem": "sarsam_seni_ney",
-   "symbtr_file": "hicazkar--sarki--sofyan--sarsam_seni--sadettin_kaynak.txt",
-   "source": "neyzen",
-   "makam": "hicazkar",
+   "stem": "rast_geldim_merg_zar_icre_o_suh_i_dilkese_nota",
+   "symbtr_file": "rast--kar-i_natik--cenber--rast_geldim--hatibzade_osman_efendi.txt",
+   "source": "nota",
+   "makam": "rast",
    "pages": [
-    "data/real/images/hicazkar/sarsam_seni_ney_p1.png",
-    "data/real/images/hicazkar/sarsam_seni_ney_p2.png"
+    "data/real/images/rast/rast_geldim_merg_zar_icre_o_suh_i_dilkese_nota_p1.png",
+    "data/real/images/rast/rast_geldim_merg_zar_icre_o_suh_i_dilkese_nota_p2.png"
    ],
-   "sig": "\\sig \\bakiyeFlat e \\bakiyeSharp f \\bakiyeFlat a \\komaFlat b \\sigend",
-   "measures": 82,
-   "density": 10.0,
+   "sig": "\\sig \\bakiyeSharp f \\komaFlat b \\sigend",
+   "measures": 209,
+   "density": 14.6,
    "acc": {
-    "\\komaFlat": 7,
-    "\\kucukFlat": 20
-   }
-  },
-  {
-   "stem": "aman_saki_lutfuna",
-   "symbtr_file": "mahur--sarki--musemmen--aman_saki--lemi_atli.txt",
-   "source": "neyzen",
-   "makam": "mahur",
-   "pages": [
-    "data/real/images/mahur/aman_saki_lutfuna_p1.png"
-   ],
-   "sig": "\\sig \\kucukSharp f \\sigend",
-   "measures": 37,
-   "density": 10.9,
-   "acc": {
-    "\\bakiyeSharp": 5,
-    "\\komaFlat": 7,
-    "\\bakiyeFlat": 19,
-    "\\kucukSharp": 2
-   }
-  },
-  {
-   "stem": "ne_gunah_etse_ney",
-   "symbtr_file": "hicaz--sarki--aksak--ne_gunah--alaeddin_yavasca.txt",
-   "source": "neyzen",
-   "makam": "hicaz",
-   "pages": [
-    "data/real/images/hicaz/ne_gunah_etse_ney_p1.png",
-    "data/real/images/hicaz/ne_gunah_etse_ney_p2.png"
-   ],
-   "sig": "\\sig \\bakiyeSharp c \\bakiyeFlat b \\sigend",
-   "measures": 49,
-   "density": 13.1,
-   "acc": {
-    "\\bakiyeSharp": 11,
-    "\\bakiyeFlat": 1,
-    "\\komaSharp": 2
+    "\\bakiyeSharp": 66,
+    "\\bakiyeFlat": 29,
+    "\\kucukSharp": 3,
+    "\\kucukFlat": 15,
+    "\\komaFlat": 15,
+    "\\komaSharp": 4
    }
   },
   {
@@ -81,288 +49,429 @@
    }
   },
   {
-   "stem": "gonul_yarasindan_ney",
-   "symbtr_file": "hicaz--sarki--curcuna--gonul_yarasindan--selahattin_pinar.txt",
-   "source": "neyzen",
-   "makam": "hicaz",
+   "stem": "etmedin_bir_lahza_ihya_hatir_i_viranimi_nota",
+   "symbtr_file": "sehnaz--sarki--devrihindi--etmedin_bir_lahza--dellalzade.txt",
+   "source": "nota",
+   "makam": "sehnaz",
    "pages": [
-    "data/real/images/hicaz/gonul_yarasindan_ney_p1.png"
+    "data/real/images/sehnaz/etmedin_bir_lahza_ihya_hatir_i_viranimi_nota_p1.png",
+    "data/real/images/sehnaz/etmedin_bir_lahza_ihya_hatir_i_viranimi_nota_p2.png"
    ],
-   "sig": "\\sig \\bakiyeSharp c \\bakiyeSharp f \\bakiyeFlat b \\sigend",
-   "measures": 100,
-   "density": 10.1,
+   "sig": "\\sig \\sigend",
+   "measures": 40,
+   "density": 19.9,
    "acc": {
-    "\\komaSharp": 2
+    "\\bakiyeSharp": 36,
+    "\\komaSharp": 14,
+    "\\bakiyeFlat": 9,
+    "\\kucukFlat": 4,
+    "\\komaFlat": 1
    }
   },
   {
-   "stem": "sabah_olsun_ben_ney",
-   "symbtr_file": "mahur--sarki--evsat--sabah_olsun--ibrahim_aga.txt",
-   "source": "neyzen",
+   "stem": "zahiri_hale_bakip_etme_dahil_bir_ferdi_nota",
+   "symbtr_file": "mahur--sarki--curcuna--zahiri_hale--haci_arif_bey.txt",
+   "source": "nota",
    "makam": "mahur",
    "pages": [
-    "data/real/images/mahur/sabah_olsun_ben_ney_p1.png"
+    "data/real/images/mahur/zahiri_hale_bakip_etme_dahil_bir_ferdi_nota_p1.png",
+    "data/real/images/mahur/zahiri_hale_bakip_etme_dahil_bir_ferdi_nota_p2.png"
    ],
-   "sig": "\\sig \\kucukSharp f \\sigend",
-   "measures": 48,
-   "density": 18.9,
+   "sig": "\\sig \\bakiyeSharp f \\sigend",
+   "measures": 53,
+   "density": 8.8,
    "acc": {
+    "\\kucukSharp": 9,
+    "\\komaFlat": 9,
+    "\\bakiyeSharp": 2,
+    "\\bakiyeFlat": 5
+   }
+  },
+  {
+   "stem": "vuslata_nail_de_etse_ger_felek_nota",
+   "symbtr_file": "hisarbuselik--sarki--agiraksak--vuslata_nail--zekai_dede.txt",
+   "source": "nota",
+   "makam": "hisarbuselik",
+   "pages": [
+    "data/real/images/hisarbuselik/vuslata_nail_de_etse_ger_felek_nota_p1.png",
+    "data/real/images/hisarbuselik/vuslata_nail_de_etse_ger_felek_nota_p2.png"
+   ],
+   "sig": "\\sig \\bakiyeSharp g \\sigend",
+   "measures": 20,
+   "density": 26.8,
+   "acc": {
+    "\\bakiyeSharp": 17,
+    "\\kucukFlat": 2,
     "\\komaSharp": 2
    }
   },
   {
-   "stem": "bulbul_asa_ney",
-   "symbtr_file": "evic--sarki--agiraksak--bulbul_asa--dellalzade.txt",
-   "source": "neyzen",
-   "makam": "evc",
+   "stem": "neydin_guzelim_sen_nota",
+   "symbtr_file": "saba--sarki--senginsemai--neydin_guzelim--serif_icli.txt",
+   "source": "nota",
+   "makam": "saba",
    "pages": [
-    "data/real/images/evc/bulbul_asa_ney_p1.png"
+    "data/real/images/saba/neydin_guzelim_sen_nota_p1.png"
    ],
-   "sig": "\\sig \\bakiyeSharp c \\bakiyeSharp f \\komaFlat b \\sigend",
-   "measures": 24,
-   "density": 23.8,
+   "sig": "\\sig \\bakiyeFlat d \\komaFlat b \\sigend",
+   "measures": 40,
+   "density": 15.7,
    "acc": {
-    "\\bakiyeSharp": 13,
+    "\\bakiyeFlat": 2,
+    "\\bakiyeSharp": 2,
     "\\komaSharp": 1
    }
   },
   {
-   "stem": "altin_tasta_gul_kuruttum",
-   "symbtr_file": "acemkurdi--sarki--aksak--altin_tasta--nimet_hanim.txt",
-   "source": "neyzen",
-   "makam": "acem_kurdi",
+   "stem": "sevdim_yine_bir_afet_gibi_yar_nota",
+   "symbtr_file": "huzzam--sarki--aksak--sevdim_yine--tanburi_mustafa_cavus.txt",
+   "source": "nota",
+   "makam": "huzzam",
    "pages": [
-    "data/real/images/acem_kurdi/altin_tasta_gul_kuruttum_p1.png"
+    "data/real/images/huzzam/sevdim_yine_bir_afet_gibi_yar_nota_p1.png"
    ],
-   "sig": "\\sig \\kucukFlat e \\kucukFlat b \\sigend",
-   "measures": 56,
-   "density": 11.3,
+   "sig": "\\sig \\bakiyeFlat e \\bakiyeSharp f \\komaFlat b \\sigend",
+   "measures": 33,
+   "density": 12.1,
    "acc": {
-    "\\komaFlat": 14,
-    "\\kucukFlat": 8
-   }
-  },
-  {
-   "stem": "arzetmedigim_yare_ney",
-   "symbtr_file": "huseyni--sarki--aksak--arzetmedigim--emin_ongan.txt",
-   "source": "neyzen",
-   "makam": "huseyni",
-   "pages": [
-    "data/real/images/huseyni/arzetmedigim_yare_ney_p1.png"
-   ],
-   "sig": "\\sig \\komaFlat b \\sigend",
-   "measures": 49,
-   "density": 12.3,
-   "acc": {
-    "\\bakiyeSharp": 29,
+    "\\bakiyeSharp": 3,
+    "\\kucukFlat": 4,
+    "\\komaFlat": 4,
     "\\komaSharp": 1,
     "\\bakiyeFlat": 2
    }
   },
   {
-   "stem": "bir_gun_beni_dildar_acaba_sad_edecekmi",
-   "symbtr_file": "huzzam--sarki--curcuna--bir_gun--omer_sami_gupgup.txt",
-   "source": "neyzen",
-   "makam": "huzzam",
+   "stem": "gafil_ne_bilir_nesve_i_pur_sevk_i_vegayi_1_nota",
+   "symbtr_file": "mahur--mars--sofyan--gafil_ne--ismail_hakki_bey.txt",
+   "source": "nota",
+   "makam": "mahur",
    "pages": [
-    "data/real/images/huzzam/bir_gun_beni_dildar_acaba_sad_edecekmi_p1.png",
-    "data/real/images/huzzam/bir_gun_beni_dildar_acaba_sad_edecekmi_p2.png",
-    "data/real/images/huzzam/bir_gun_beni_dildar_acaba_sad_edecekmi_p3.png"
+    "data/real/images/mahur/gafil_ne_bilir_nesve_i_pur_sevk_i_vegayi_1_nota_p1.png"
    ],
-   "sig": "\\sig \\bakiyeFlat e \\bakiyeSharp f \\komaFlat b \\sigend",
-   "measures": 42,
-   "density": 9.0,
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 104,
+   "density": 8.9,
    "acc": {
-    "\\bakiyeFlat": 1,
-    "\\bakiyeSharp": 11,
-    "\\komaSharp": 1,
-    "\\komaFlat": 1
-   }
-  },
-  {
-   "stem": "ruhlerin_ey_gonca",
-   "symbtr_file": "yegah--sarki--curcuna--ruhlerin_ey--tanburi_ali_efendi.txt",
-   "source": "neyzen",
-   "makam": "yegah",
-   "pages": [
-    "data/real/images/yegah/ruhlerin_ey_gonca_p1.png"
-   ],
-   "sig": "\\sig \\bakiyeSharp f \\komaFlat b \\sigend",
-   "measures": 39,
-   "density": 8.1,
-   "acc": {
-    "\\bakiyeSharp": 7,
-    "\\komaSharp": 1
-   }
-  },
-  {
-   "stem": "ey_kasi_keman",
-   "symbtr_file": "ferahfeza--sarki--firengifer--ey_kasi--dede_efendi.txt",
-   "source": "neyzen",
-   "makam": "ferahfeza",
-   "pages": [
-    "data/real/images/ferahfeza/ey_kasi_keman_p1.png",
-    "data/real/images/ferahfeza/ey_kasi_keman_p2.png"
-   ],
-   "sig": "\\sig \\komaFlat b \\sigend",
-   "measures": 111,
-   "density": 8.6,
-   "acc": {
-    "\\bakiyeSharp": 13,
-    "\\bakiyeFlat": 13,
-    "\\kucukFlat": 23
-   }
-  },
-  {
-   "stem": "hasret_odu_yakti_cigerim_ey_ruhi_alim",
-   "symbtr_file": "hicaz--sarki--agir_aksaksemai--hasret_odu--tanburi_ali_efendi.txt",
-   "source": "neyzen",
-   "makam": "hicaz",
-   "pages": [
-    "data/real/images/hicaz/hasret_odu_yakti_cigerim_ey_ruhi_alim_p1.png",
-    "data/real/images/hicaz/hasret_odu_yakti_cigerim_ey_ruhi_alim_p2.png"
-   ],
-   "sig": "\\sig \\bakiyeSharp c \\bakiyeSharp f \\bakiyeFlat b \\sigend",
-   "measures": 16,
-   "density": 28.8,
-   "acc": {
-    "\\bakiyeSharp": 7,
-    "\\komaFlat": 5,
-    "\\komaSharp": 1
-   }
-  },
-  {
-   "stem": "bir_pur_cefa_v2",
-   "symbtr_file": "buselik--sarki--aksak--bir_pur_cefa--iii._selim.txt",
-   "source": "neyzen",
-   "makam": "buselik",
-   "pages": [
-    "data/real/images/buselik/bir_pur_cefa_v2_p1.png"
-   ],
-   "sig": "\\sig \\sigend",
-   "measures": 50,
-   "density": 13.3,
-   "acc": {
-    "\\bakiyeSharp": 22,
+    "\\kucukSharp": 5,
+    "\\bakiyeSharp": 14,
+    "\\komaFlat": 4,
     "\\bakiyeFlat": 4
    }
   },
   {
-   "stem": "gel_ey_saki_ney",
-   "symbtr_file": "mustear--sarki--aksak--gel_ey--rahmi_bey.txt",
-   "source": "neyzen",
-   "makam": "mustear",
+   "stem": "sebnem_gibi_sacilsin_hun_i_esk_i_pur_revanim_nota",
+   "symbtr_file": "huseyni--beste--berefsan--sebnem_gibi--zaharya.txt",
+   "source": "nota",
+   "makam": "huseyni",
    "pages": [
-    "data/real/images/mustear/gel_ey_saki_ney_p1.png"
+    "data/real/images/huseyni/sebnem_gibi_sacilsin_hun_i_esk_i_pur_revanim_nota_p1.png"
    ],
-   "sig": "\\sig \\komaFlat e \\bakiyeSharp a \\komaFlat b \\sigend",
-   "measures": 40,
-   "density": 14.0,
+   "sig": "\\sig \\komaFlat b \\sigend",
+   "measures": 192,
+   "density": 7.2,
    "acc": {
-    "\\bakiyeSharp": 17,
-    "\\bakiyeFlat": 1
+    "\\bakiyeSharp": 84,
+    "\\komaSharp": 6,
+    "\\bakiyeFlat": 12
    }
   },
   {
-   "stem": "sedaraban_ss_cemil_bey_tanburi",
-   "symbtr_file": "sedaraban--sazsemaisi--aksaksemai----tanburi_cemil_bey.txt",
-   "source": "neyzen",
-   "makam": "seddiaraban",
-   "pages": [
-    "data/real/images/seddiaraban/sedaraban_ss_cemil_bey_tanburi_p1.png",
-    "data/real/images/seddiaraban/sedaraban_ss_cemil_bey_tanburi_p2.png"
-   ],
-   "sig": "\\sig \\bakiyeFlat e \\bakiyeSharp f \\bakiyeFlat b \\sigend",
-   "measures": 93,
-   "density": 9.4,
-   "acc": {
-    "\\bakiyeSharp": 15,
-    "\\komaFlat": 6,
-    "\\kucukFlat": 4,
-    "\\bakiyeFlat": 1
-   }
-  },
-  {
-   "stem": "gecmesin_gunumuz_ney",
-   "symbtr_file": "kurdilihicazkar--sarki--duyek--gecmesin_gunumuz--alaeddin_yavasca.txt",
-   "source": "neyzen",
+   "stem": "ehl_i_askin_nesvegahi_kuse_i_meyhanedir_nota",
+   "symbtr_file": "kurdilihicazkar--sarki--agiraksak--ehl-i_askin--tatyos_efendi.txt",
+   "source": "nota",
    "makam": "kurdilihicazkar",
    "pages": [
-    "data/real/images/kurdilihicazkar/gecmesin_gunumuz_ney_p1.png",
-    "data/real/images/kurdilihicazkar/gecmesin_gunumuz_ney_p2.png"
+    "data/real/images/kurdilihicazkar/ehl_i_askin_nesvegahi_kuse_i_meyhanedir_nota_p1.png",
+    "data/real/images/kurdilihicazkar/ehl_i_askin_nesvegahi_kuse_i_meyhanedir_nota_p2.png"
    ],
    "sig": "\\sig \\kucukFlat e \\kucukFlat a \\kucukFlat b \\sigend",
-   "measures": 96,
-   "density": 8.3,
+   "measures": 28,
+   "density": 24.8,
    "acc": {
-    "\\komaFlat": 8
-   }
-  },
-  {
-   "stem": "yolun_bulamam_ney",
-   "symbtr_file": "sehnazbuselik--sarki--semai--yolun_bulamam--denizoglu_ali_bey.txt",
-   "source": "neyzen",
-   "makam": "sehnaz_buselik",
-   "pages": [
-    "data/real/images/sehnaz_buselik/yolun_bulamam_ney_p1.png"
-   ],
-   "sig": "\\sig \\bakiyeSharp g \\sigend",
-   "measures": 128,
-   "density": 5.0,
-   "acc": {
+    "\\komaFlat": 17,
+    "\\kucukFlat": 4,
+    "\\bakiyeFlat": 9,
     "\\bakiyeSharp": 4
    }
   },
   {
-   "stem": "acem_asiran_pesrev_gazi_giray_han_tatar_2_hane",
-   "symbtr_file": "acemasiran--pesrev--muhammes----gazi_giray_han.txt",
-   "source": "neyzen",
-   "makam": "acem_asiran",
+   "stem": "her_gordugu_periye_gonul_muptela_olur_nota",
+   "symbtr_file": "buselik--beste--hafif--her_gordugu--itri.txt",
+   "source": "nota",
+   "makam": "buselik",
    "pages": [
-    "data/real/images/acem_asiran/acem_asiran_pesrev_gazi_giray_han_tatar_2_hane_p1.png",
-    "data/real/images/acem_asiran/acem_asiran_pesrev_gazi_giray_han_tatar_2_hane_p2.png"
+    "data/real/images/buselik/her_gordugu_periye_gonul_muptela_olur_nota_p1.png",
+    "data/real/images/buselik/her_gordugu_periye_gonul_muptela_olur_nota_p2.png"
    ],
-   "sig": "\\sig \\kucukFlat b \\sigend",
-   "measures": 32,
-   "density": 10.1,
+   "sig": "\\sig \\komaFlat e \\bakiyeSharp f \\sigend",
+   "measures": 2,
+   "density": 54.0,
    "acc": {
-    "\\bakiyeSharp": 4,
-    "\\komaFlat": 7,
-    "\\bakiyeFlat": 2,
-    "\\kucukFlat": 1
+    "\\kucukSharp": 3,
+    "\\bakiyeSharp": 1,
+    "\\komaFlat": 1
    }
   },
   {
-   "stem": "can_verme_ney",
-   "symbtr_file": "saba--sarki--aksak--can_verme--emin_ongan.txt",
-   "source": "neyzen",
-   "makam": "saba",
+   "stem": "ey_gonca_acil_zevkini_sur_fasl_i_baharinpdf1590138964_nota",
+   "symbtr_file": "suzidil--sarki--senginsemai--ey_gonca--semseddin_ziya_bey.txt",
+   "source": "nota",
+   "makam": "suzidil",
    "pages": [
-    "data/real/images/saba/can_verme_ney_p1.png"
+    "data/real/images/suzidil/ey_gonca_acil_zevkini_sur_fasl_i_baharinpdf1590138964_nota_p1.png"
    ],
-   "sig": "\\sig \\bakiyeFlat d \\komaFlat b \\sigend",
-   "measures": 32,
-   "density": 11.5,
+   "sig": "\\sig \\bakiyeSharp d \\bakiyeSharp g \\sigend",
+   "measures": 24,
+   "density": 19.0,
    "acc": {
-    "\\bakiyeFlat": 7,
-    "\\bakiyeSharp": 3
+    "\\komaSharp": 4
+   }
+  },
+  {
+   "stem": "bulbulun_cilesi_yanmakmis_gule_nota",
+   "symbtr_file": "hicaz--sarki--semai--bulbulun_cilesi--yusuf_nalkesen.txt",
+   "source": "nota",
+   "makam": "hicaz",
+   "pages": [
+    "data/real/images/hicaz/bulbulun_cilesi_yanmakmis_gule_nota_p1.png"
+   ],
+   "sig": "\\sig \\bakiyeSharp c \\bakiyeSharp f \\bakiyeFlat b \\sigend",
+   "measures": 168,
+   "density": 4.3,
+   "acc": {
+    "\\kucukFlat": 8
+   }
+  },
+  {
+   "stem": "ab_u_tab_ile_bu_seb_haneme_canan_geliyorpdf1647173685_nota",
+   "symbtr_file": "suzidilara--yuruksemai--yuruksemai--ab_u_tab--iii_selim.txt",
+   "source": "nota",
+   "makam": "suzidilara",
+   "pages": [
+    "data/real/images/suzidilara/ab_u_tab_ile_bu_seb_haneme_canan_geliyorpdf1647173685_nota_p1.png",
+    "data/real/images/suzidilara/ab_u_tab_ile_bu_seb_haneme_canan_geliyorpdf1647173685_nota_p2.png"
+   ],
+   "sig": "\\sig \\bakiyeSharp f \\bakiyeFlat b \\sigend",
+   "measures": 84,
+   "density": 8.8,
+   "acc": {
+    "\\bakiyeSharp": 22,
+    "\\kucukSharp": 3
+   }
+  },
+  {
+   "stem": "cihani_lal_gun_eden_sirisk_i_erguvanimdir_nota",
+   "symbtr_file": "mahur--agirsemai--aksaksemai--cihani_lal-i--itri.txt",
+   "source": "nota",
+   "makam": "mahur",
+   "pages": [
+    "data/real/images/mahur/cihani_lal_gun_eden_sirisk_i_erguvanimdir_nota_p1.png"
+   ],
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 10,
+   "density": 27.2,
+   "acc": {
+    "\\bakiyeSharp": 1,
+    "\\bakiyeFlat": 1,
+    "\\komaSharp": 1,
+    "\\kucukSharp": 1
+   }
+  },
+  {
+   "stem": "gozlerinden_icti_gonlum_neseyipdf1585903792_nota",
+   "symbtr_file": "segah--sarki--musemmen--gozlerinden_icti--sukru_erozan.txt",
+   "source": "nota",
+   "makam": "segah",
+   "pages": [
+    "data/real/images/segah/gozlerinden_icti_gonlum_neseyipdf1585903792_nota_p1.png"
+   ],
+   "sig": "\\sig \\komaFlat e \\bakiyeSharp f \\komaFlat b \\sigend",
+   "measures": 45,
+   "density": 9.0,
+   "acc": {
+    "\\bakiyeSharp": 12,
+    "\\komaSharp": 4,
+    "\\komaFlat": 1,
+    "\\bakiyeFlat": 1
+   }
+  },
+  {
+   "stem": "var_iken_zatinda_boyle_husn_u_an_olma_nihan_nota",
+   "symbtr_file": "mahur--sarki--agiraksak--var_iken--tanburi_cemil_bey.txt",
+   "source": "nota",
+   "makam": "mahur",
+   "pages": [
+    "data/real/images/mahur/var_iken_zatinda_boyle_husn_u_an_olma_nihan_nota_p1.png"
+   ],
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 28,
+   "density": 22.9,
+   "acc": {
+    "\\kucukSharp": 3,
+    "\\komaFlat": 2,
+    "\\bakiyeFlat": 10,
+    "\\bakiyeSharp": 7
+   }
+  },
+  {
+   "stem": "aman_saki_lutfuna_amadeyim_nota",
+   "symbtr_file": "mahur--sarki--musemmen--aman_saki--lemi_atli.txt",
+   "source": "nota",
+   "makam": "mahur",
+   "pages": [
+    "data/real/images/mahur/aman_saki_lutfuna_amadeyim_nota_p1.png"
+   ],
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 37,
+   "density": 10.9,
+   "acc": {
+    "\\bakiyeSharp": 5,
+    "\\komaFlat": 7,
+    "\\bakiyeFlat": 19,
+    "\\kucukSharp": 2
+   }
+  },
+  {
+   "stem": "sem_i_husnun_ruyine_pervaneyim_nota",
+   "symbtr_file": "huseyni--sarki--agiraksak--semi_husnun--sivelioglu_yorgaki.txt",
+   "source": "nota",
+   "makam": "huseyni",
+   "pages": [
+    "data/real/images/huseyni/sem_i_husnun_ruyine_pervaneyim_nota_p1.png"
+   ],
+   "sig": "\\sig \\bakiyeSharp f \\komaFlat b \\sigend",
+   "measures": 25,
+   "density": 15.2,
+   "acc": {
+    "\\kucukFlat": 1,
+    "\\komaSharp": 1
+   }
+  },
+  {
+   "stem": "suzis_iaskilabenpdf1489915277_nota",
+   "symbtr_file": "nihavent--sarki--agiraksak--suzis-i_askinla--musa_sureyya_bey.txt",
+   "source": "nota",
+   "makam": "nihavend",
+   "pages": [
+    "data/real/images/nihavend/suzis_iaskilabenpdf1489915277_nota_p1.png",
+    "data/real/images/nihavend/suzis_iaskilabenpdf1489915277_nota_p2.png"
+   ],
+   "sig": "\\sig \\kucukFlat e \\bakiyeSharp f \\kucukFlat b \\sigend",
+   "measures": 72,
+   "density": 9.1,
+   "acc": {
+    "\\bakiyeSharp": 5,
+    "\\komaFlat": 4
+   }
+  },
+  {
+   "stem": "yukselen_nagmenle_bak_solan_guller_renk_aldi_nota",
+   "symbtr_file": "acemkurdi--sarki--curcuna--yukselen_nagmenle--muzaffer_ilkar.txt",
+   "source": "nota",
+   "makam": "acemkurdi",
+   "pages": [
+    "data/real/images/acemkurdi/yukselen_nagmenle_bak_solan_guller_renk_aldi_nota_p1.png",
+    "data/real/images/acemkurdi/yukselen_nagmenle_bak_solan_guller_renk_aldi_nota_p2.png"
+   ],
+   "sig": "\\sig \\kucukFlat b \\sigend",
+   "measures": 52,
+   "density": 8.1,
+   "acc": {
+    "\\kucukFlat": 9,
+    "\\bakiyeSharp": 3,
+    "\\bakiyeFlat": 1
+   }
+  },
+  {
+   "stem": "meclis_imeydesakiyapdf1571218833_nota",
+   "symbtr_file": "nikriz--nakis--yuruksemai--meclis-i_meyde--kassamzade.txt",
+   "source": "nota",
+   "makam": "nikriz",
+   "pages": [
+    "data/real/images/nikriz/meclis_imeydesakiyapdf1571218833_nota_p1.png",
+    "data/real/images/nikriz/meclis_imeydesakiyapdf1571218833_nota_p2.png"
+   ],
+   "sig": "\\sig \\bakiyeFlat b \\sigend",
+   "measures": 121,
+   "density": 7.5,
+   "acc": {
+    "\\bakiyeSharp": 51,
+    "\\komaSharp": 6,
+    "\\komaFlat": 14,
+    "\\bakiyeFlat": 16
+   }
+  },
+  {
+   "stem": "aman_saki_lutfuna",
+   "symbtr_file": "mahur--sarki--musemmen--aman_saki--lemi_atli.txt",
+   "source": "neyzen",
+   "makam": "mahur",
+   "pages": [
+    "data/real/images/mahur/aman_saki_lutfuna_p1.png"
+   ],
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 37,
+   "density": 10.9,
+   "acc": {
+    "\\bakiyeSharp": 5,
+    "\\komaFlat": 7,
+    "\\bakiyeFlat": 19,
+    "\\kucukSharp": 2
+   }
+  },
+  {
+   "stem": "gosterip_agyare_lutfun_bizlere_biganesin_nota",
+   "symbtr_file": "mahur--sarki--musemmen--gosterip_agyare--haci_arif_bey.txt",
+   "source": "nota",
+   "makam": "mahur",
+   "pages": [
+    "data/real/images/mahur/gosterip_agyare_lutfun_bizlere_biganesin_nota_p1.png",
+    "data/real/images/mahur/gosterip_agyare_lutfun_bizlere_biganesin_nota_p2.png"
+   ],
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 76,
+   "density": 10.1,
+   "acc": {
+    "\\bakiyeSharp": 11,
+    "\\bakiyeFlat": 4,
+    "\\kucukSharp": 2,
+    "\\komaFlat": 3
+   }
+  },
+  {
+   "stem": "badeler_dondukce_artar_bezm_i_aysin_nes_esi_nota",
+   "symbtr_file": "mahur--sarki--agiraksak--badeler_dondukce--selanikli_ahmet_efendi.txt",
+   "source": "nota",
+   "makam": "mahur",
+   "pages": [
+    "data/real/images/mahur/badeler_dondukce_artar_bezm_i_aysin_nes_esi_nota_p1.png",
+    "data/real/images/mahur/badeler_dondukce_artar_bezm_i_aysin_nes_esi_nota_p2.png"
+   ],
+   "sig": "\\sig \\kucukSharp f \\sigend",
+   "measures": 32,
+   "density": 20.7,
+   "acc": {
+    "\\kucukSharp": 2,
+    "\\komaFlat": 7,
+    "\\bakiyeSharp": 8
    }
   }
  ],
  "per_class_gold": {
-  "\\komaSharp": 11,
-  "\\bakiyeSharp": 163,
-  "\\kucukSharp": 11,
+  "\\komaSharp": 44,
+  "\\bakiyeSharp": 361,
+  "\\kucukSharp": 44,
   "\\buyukSharp": 0,
-  "\\komaFlat": 64,
-  "\\bakiyeFlat": 56,
-  "\\kucukFlat": 56,
+  "\\komaFlat": 105,
+  "\\bakiyeFlat": 148,
+  "\\kucukFlat": 47,
   "\\buyukFlat": 0
  },
  "floors": {
-  "\\komaSharp": 5,
+  "\\komaSharp": 15,
   "\\bakiyeSharp": 15,
-  "\\kucukSharp": 5,
+  "\\kucukSharp": 15,
   "\\komaFlat": 15,
   "\\bakiyeFlat": 15,
   "\\kucukFlat": 15
@@ -379,27 +488,332 @@
   "\\buyukSharp",
   "\\buyukFlat"
  ],
- "low_n_classes": [
-  "\\komaSharp",
-  "\\kucukSharp"
- ],
+ "low_n_classes": [],
  "sources": {
-  "neyzen": 20
+  "nota": 23,
+  "neyzen": 2
  },
  "excluded": {
   "synthetic_overlap": [
+   "canan_okuyor_askin_ilahi_sesidir_bu_nota",
+   "hayatin_cumleye_sur_u_surur_u_sevket_efzadir_nota",
+   "bari_felek_ben_yuzune_soyleyim_nota",
+   "sunbulistan_etmis_etrafi_fesi_nota",
+   "zaman_olur_gonul_susar_nota",
    "saki_cekemem_ney",
+   "saki_cekemem_va_z_i_zarifaneyi_bos_ko_nota",
+   "bir_atesim_yanarim_kulum_yok_dumanim_yok_nota",
+   "cevr_i_hicrin_artirir_feryadimi_nota",
+   "cok_yasa_sen_ayse_nota",
+   "gonlum_yarali_bilmiyorum_yar_bana_n_oldu_nota",
+   "gonlumde_acmadan_solan_bir_gulsun_nota",
+   "hastayim_yasiyorum_gorunmez_hayaliyle_nota",
+   "nasil_gecti_habersiz_o_guzelim_yillarim_nota",
+   "sana_dun_bir_tepeden_baktim_nota",
+   "severim_her_guzeli_senden_eserdir_diyerek_nota",
+   "sezdim_dargin_bakisini_dalarken_gozlerine_nota",
+   "yalan_degil_pek_kolay_olmayacak_nota",
+   "mestim_bu_gece_sen_de_bana_mest_olarak_gelpdf1682503735_nota",
+   "visali_yar_ile_mestol_hayale_dalma_gonulpdf1617217851_nota",
+   "bir_nev_civansin_suh_i_cihansin_nota",
+   "gonlum_heves_i_zulf_i_siyehkare_dusurdum_nota",
+   "dil_rubasin_sevdigim_yoktur_nazirin_bi_riya_nota",
+   "gecti_sevdalarla_omrum_ihtiyar_oldum_bugun_1_nota",
+   "leylak_takivermis_sacinin_tellerine_nota",
+   "nigaha_ruhsat_olmus_n_eyleyim_ol_afitabimdan_nota",
+   "tez_gecse_de_her_sevgide_bin_hatira_vardir_nota",
+   "aksam_donusu_gectim_o_esrarli_bagindan_nota",
+   "askinla_surunsem_yine_askinla_delirsem_2_nota",
+   "beklerim_her_gun_bu_sahillerde_mahzun_boyle_benpdf1682501683_nota",
+   "ey_gul_i_bag_i_eda_nota",
    "indirip_yerlere_benden_kacirip_gozlerin",
+   "indirip_yerlere_benden_kacirip_gozlerini_yavru_guvercin_pdf1647175611_nota",
+   "pisman_olur_da_bir_gun_donersen_bana_geri_nota",
+   "sevdasi_henuz_sinede_gonlum_gibi_sagdi_nota",
+   "sonbaharin_bizi_daldirdigi_ruya_gecicipdf1615109343_nota",
+   "zannetme_ki_giderken_biri_var_aglayacak_nota",
+   "asiyan_i_murg_i_dil_zulf_i_perisanindadir_nota",
+   "gel_ey_nesim_i_saba_hatt_i_yardan_ne_haber_nota",
+   "gelirkenmecliseyarimgucendipdf1485030221_nota",
+   "nihani_ol_but_i_sirin_suhanle_soylesiriz_nota",
+   "yikildi_ask_ile_abad_gordugun_gonlum_nota",
+   "artik_ne_siyah_gozlerinin_golgesi_kaldi_nota",
+   "ay_dalgalanirken_sularin_oynak_izindepdf1647174289_nota",
+   "bunca_cevrinle_gonul_ulkesi_virane_olur_1_nota",
+   "gittin_biraktin_beni_gurbet_ellerde_nota",
+   "muntazir_tesrifine_hazir_kayik_1_nota",
+   "al_yanina_bir_dil_nevaz_nota",
+   "ayrilik_ruzgari_gonlume_doluyor_nota",
+   "bu_son_sarkimda_sen_varsin_nota",
+   "cek_kuregi_guzelim_uzanalim_goksu_ya_nota",
+   "esir_ettin_beni_ey_dil_pesendim_nota",
+   "gel_bir_daha_gul_ruyini_ac_handeni_goster_1_nota",
+   "gonul_adli_bulbulum_var_nota",
+   "gul_mevsimi_seyredelim_bahari_nota",
+   "gulsen_i_ezhar_acti_her_yana_nota",
+   "hala_kanayan_kalbimi_ask_atesi_daglarpdf1606997124_nota",
    "hala_kanayan_kalbimi_ney",
+   "iki_gozum_sensiz_lutf_et_de_soyle_nota",
+   "kalbimdeki_amal_i_perisanimi_dinle_nota",
+   "muptelayim_hayli_demdir_bir_bi_vefaya_nota",
+   "ne_ararsan_sende_mevcut_nota",
+   "sarkimi_senin_icin_yazdigimi_bilseydin_nota",
+   "senle_durmak_derd_nak_eyler_beni_nota",
+   "seyr_et_izar_i_yari_hatt_i_musk_bar_ile_nota",
+   "yine_zevrak_i_derunum_kirilip_kenara_dustu_nota",
+   "gunes_gibi_sahsim_olsa_1_nota",
+   "hengam_i_safadir_yine_sen_nus_i_mey_eyle_nota",
+   "iltimas_etmeye_yare_variniz_nota",
+   "bakisi_cagirir_beni_uzaktanpdf1600938698_nota",
+   "sevgi_deli_gonulden_gonule_bir_akisdirpdf1649069273_nota",
+   "unutulmus_ne_varsa_sevgiden_geri_kalan_1_nota",
+   "dil_seni_sevmeyeni_sevmede_lezzet_mi_olur_nota",
+   "korfez_deki_dalgin_suya_bir_bak_goreceksin_nota",
+   "sarkilar_seni_soyler_dillerde_nagme_adin_1_nota",
+   "zulfun_gorenlerin_hep_bahti_siyah_olurmus_nota",
+   "elmas_senin_yuzun_goren_1_nota",
+   "aski_fisildar_sesin_bulbul_musun_ah_nesinpdf1682501404_nota",
+   "ayrilikyariolmekmispdf1454882354_nota",
+   "bir_soz_dedi_canan_ki_keramet_var_icinde_1_nota",
    "bir_soz_dedi_ney",
+   "gul_yuzun_soldukca_omrumden_siler_her_nes_eyi_nota",
+   "iftirakinla_efendim_bende_takat_kalmadi_nota",
+   "varsin_gonul_askinla_harab_olsun_efendim_nota",
+   "ey_afet_i_can_i_asik_azar_nota",
+   "esti_nesim_i_nev_bahar_nota",
+   "gulsende_yine_ah_u_enin_eyledi_bulbul_nota",
+   "icime_hep_huzun_doluyor_1_nota",
+   "mevsim_i_gul_geldi_yine_nota",
+   "reng_i_ruhsarina_gulgun_dediler_nota",
+   "bir_nigah_et_kahr_ile_sen_bakma_allah_askina_nota",
+   "kirdin_ummidimi_yiktin_su_gonul_lanesini_nota",
+   "ruhunda_olen_nagmede_sevda_sesi_var_mi_nota",
+   "dem_i_visal_o_suha_itabi_n_eylersin_nota",
+   "denizin_dalgasini_bekliyorum_dinliyorum_nota",
+   "didem_yuzune_nazir_nazir_yuzune_didem_nota",
+   "ey_dilber_i_isvebaz_nedir_bu_sendeki_naz_nota",
+   "ey_verd_i_rana_suh_i_melek_ves_nota",
+   "feryad_ki_feryadima_imdad_edecek_yok_1_nota",
    "feryad_ki_ney",
+   "firsat_bulsam_yare_varsam_1_nota",
+   "gel_meclise_ey_gonce_i_gulzar_i_letafet_nota",
    "gonul_durmaz_ney",
+   "gonul_durmaz_su_gibi_caglar_nota",
+   "meclis_ara_mugbecenin_nota",
+   "vardim_ki_yurdundan_ayag_goculmus_1_nota",
+   "kimseyi_dil_teng_i_azar_etme_sultanlik_budur_1_nota",
+   "sen_sarki_soyledigin_zaman_nota",
+   "beni_ey_gonce_fem_bulbul_sifat_nalan_eden_sensin_nota",
+   "hiraman_ol_cemenlerde_gel_nota",
+   "yandikca_oldu_suzan_kalb_i_serer_fesanim_nota",
+   "gunden_gune_efzun_oluyor_kahr_u_azabin_nota",
+   "sonbahar_goncasi_mi_gogsunun_ustundeki_gul_nota",
    "yegah_pesrev_rauf_yekta_bey_neyzen_mehmed"
   ],
-  "manual": [],
+  "manual": [
+   "acemkurdi_p_ismail_hakki_bey",
+   "bir_boyle_guzel_asika_ney",
+   "zaman_icinde_omur_ney",
+   "buselik_ss_behram_aga_nefiri",
+   "ben_havada_ucar",
+   "bu_gece_ben_yine",
+   "bu_gece_ben_yine_bulbulleri_hamus_ettim_nota",
+   "ferahnak_asiran_p_cuneyt_kosal_kanuni",
+   "aksam_erdi_ney",
+   "aksam_erdi_yine_sular_karardi_nota",
+   "asik_oldum_ney",
+   "asik_oldum_yavrucagim_yuzune_nota",
+   "pencere_acildi_ney",
+   "sen_bu_yerden_gideli_ey_saci_zer_nota",
+   "sirma_sacli_yarimin_can_bahsederken_isvesipdf1649069319_nota",
+   "sirma_sacli_yarimin_ney",
+   "yuce_daglar_goge_ney",
+   "sen_bu_yerden",
+   "gonlumu_bir_ney",
+   "gonlumu_bir_tifl_i_dilbaz_nota",
+   "hava_guzel_yine",
+   "hava_guzel_yine_gulsende_gosteris_gunudur_nota",
+   "dok_zulfunu",
+   "dok_zulfunu_meydane_gel_1_nota",
+   "ah_ile_gonul",
+   "havada_bulut_yok_bu_ne_dumandir",
+   "sen_sanki_baharin_gulusun_sen_cicegimsinpdf1600942169_nota",
+   "sen_sanki_baharin_ney",
+   "oh_guzel_kiz_sirin_kiz_bakislari_derin_kiz",
+   "oh_guzel_kiz_sirin_kiz_bakislari_derin_kiz_nota",
+   "cayir_ince",
+   "gun_kavustu_ney",
+   "gun_kavustu_su_karardi_beni_uzme_guzelim_nota",
+   "duydum_ki_unutmussun_gozlerimin_rengini_nota",
+   "duydum_ki_unutmussun_ney",
+   "gokyuzunde_bulut_gonlumde_bulut_nota",
+   "gokyuzunde_yalniz_gezen_yildizlar_1_nota",
+   "gokyuzunde_yalniz_ney",
+   "gonlum_yine_bir",
+   "gonlum_yine_bir_ates_i_hicrana_dolasti_nota",
+   "nerelerde_kaldin_ey_serv_i_nazim_nota",
+   "nerelerde_kaldin_ey_servinazim",
+   "suzup_suzup_de_ey_melek_nota",
+   "suzup_suzupte_ney",
+   "bir_destan_dolasir",
+   "bir_destan_dolasir_bolu_daginin_dumaninda_nota",
+   "bulan_ozunu",
+   "bulan_ozunu_goren_yuzunupdf1600939809_nota",
+   "rast_p_benli_hasan_aga",
+   "sensiz_kalan_gonlumde_ney",
+   "sensizkalangonlumdebilkihayatviranepdf1580642846_nota",
+   "vuslatindan_gayri_el_cektim_yeter_ey_bi_vefa_nota",
+   "vuslatindan_gayri_v2_ney",
+   "yine_bir_gulnihal",
+   "yinebirgulnihalpdf1556044780_nota",
+   "gule_sorma_ney",
+   "gule_sorma_o_bilmez_aski_sevdayi_nes_eyi_nota",
+   "sedaraban_ss_cemil_bey_tanburi",
+   "seddiaraban_saz_semai_cemil_bey_tanburi",
+   "bensiz_ey_gul_gulsen_i_alemde_1_nota",
+   "bensiz_ey_gul_gulseni_ney",
+   "sipihr_p_dilhayat_kalfa",
+   "biz_heybelide_her_gece_mehtaba_cikardikpdf1590138175_nota",
+   "biz_heybelide_ney",
+   "a_benim_mor",
+   "ol_sim_beden_came_degismekten_usanmaz",
+   "siyah_ebrulerin",
+   "yangin_olur"
+  ],
   "pipeline_unusable": [
+   "aldanma_dunya_varina_nota (missing_pages)",
+   "bileydi_dil_gibi_dilber_gam_i_cihan_nicedir_nota (missing_pages)",
+   "ey_benim_guzel_nazli_kusum_nota (missing_pages)",
+   "mahveder_her_nes_eyi_uftadelik_dildadelik_nota (missing_pages)",
+   "oldu_gonul_uftade_nota (missing_pages)",
+   "sim_ten_gonce_dehan_bir_dil_ruba_nota (missing_pages)",
+   "ta_dil_verelden_sunbule_sunbuliler_derler_bize_nota (missing_pages)",
+   "fikriminince_gulupdf1545298544_nota (missing_pages)",
+   "bizi_insan_eden_sensin_nota (missing_pages)",
+   "ah_i_seherim_nale_i_bulbul_gibi_dil_suz_nota (missing_pages)",
+   "sen_hangi_telin_nagmesi_sandin_ki_bu_bagrim_nota (missing_pages)",
+   "bir_sebeple_sen_gucenmissin_bana_nota (missing_pages)",
+   "kalbimde_acilmis_dagilan_bir_kuru_guldun_nota (missing_pages)",
+   "nazirin_yok_senin_ey_mah_yerde_nota (missing_pages)",
+   "bir_nigahm_gonlumu_etti_esir_i_askin_ah_nota (missing_pages)",
+   "baglanip_zulf_i_hezaran_tabina_nota (missing_pages)",
+   "bak_ne_hale_koydu_bu_baht_i_siyah_nota (missing_pages)",
+   "bilmiyorum_bana_n_oldu_nota (missing_pages)",
+   "bir_an_bakisin_bir_gulusun_omre_bedeldir_nota (missing_pages)",
+   "dagda_tavsanlar_uyur_ninni_nota (missing_pages)",
+   "derdimi_arz_etmege_ol_suha_bir_bulmadim_nota (missing_pages)",
+   "derdimi_ummana_doktum_asumana_inledim_2_nota (missing_pages)",
+   "ey_cesm_i_ahu_hicr_ile_tenhalara_saldin_beni_nota (missing_pages)",
+   "hep_saye_i_vaslinda_gonul_sad_olacakken_nota (missing_pages)",
+   "hic_bir_seyde_gozum_yok_sen_yanimda_ol_yeter_nota (missing_pages)",
+   "icimde_bir_dertli_bulbul_oter_yunus_yunus_diye_nota (missing_pages)",
+   "kederden_mi_neden_bilmem_sararmis_reng_i_ruhsarin_nota (missing_pages)",
+   "kis_geldi_firak_acmadadir_sineme_yare_nota (missing_pages)",
+   "matemzedeyim_kulbe_i_ahzanimi_gel_gor_nota (missing_pages)",
+   "ne_gunah_etse_acilmaz_iki_gonlun_arasi_nota (missing_pages)",
+   "omrum_artar_sana_baktikca_perestisle_benim_nota (missing_pages)",
+   "senisevdacicegimtac_iserimpdf1517907292_nota (missing_pages)",
+   "sensizligi_ben_secmedim_ben_secmedim_ayriligi_nota (missing_pages)",
+   "severim_can_u_gonulden_seni_tersa_cicegim_nota (missing_pages)",
+   "soylemez_miydim_sana_ey_gul_izar_nota (missing_pages)",
+   "unutulmus_degilsin_adin_sakli_kalbimde_nota (missing_pages)",
+   "yar_saclari_lule_lule_yar_benziyor_beyaz_gule_nota (missing_pages)",
+   "acil_ey_gonce_i_sad_berg_yarasir_nota (missing_pages)",
+   "aglatip_kustureceksenpdf1662022866_nota (missing_pages)",
+   "ay_mi_dogmus_gun_mu_dogmus_alem_rusen_nota (missing_pages)",
+   "bahar_geldi_gul_acildi_aska_geldi_bulbul_simdi_nota (missing_pages)",
+   "bana_hem_dem_eyleyen_ey_gam_seni_nota (missing_pages)",
+   "ben_sana_gonul_vereli_bak_ne_hal_oldum_nota (missing_pages)",
+   "can_ile_ben_ey_dil_ruba_nota (missing_pages)",
+   "dag_basinda_aglarim_su_basinda_caglarim_nota (missing_pages)",
+   "ey_verd_i_ruy_i_al_sana_nota (missing_pages)",
+   "gonlumu_ducar_eden_bu_hale_hep_nota (missing_pages)",
+   "hic_esin_yok_nev_civansin_nota (missing_pages)",
+   "layik_mi_sana_bu_dil_i_sevda_zede_yansin_nota (missing_pages)",
+   "sarsamsenigonlumceguzelbahtimakansampdf1546461137pdf1662023428_nota (missing_pages)",
+   "seb_ta_seher_su_gibi_caglar_aglarim_nota (missing_pages)",
+   "sen_gibi_bir_simin_bilek_nota (missing_pages)",
+   "senelerce_aski_anmis_mahzun_kalpler_hep_aldanmis_nota (missing_pages)",
+   "son_askimi_canlandiran_en_tatli_emelsin_nota (missing_pages)",
+   "usandirdi_felek_candan_dem_a_dem_infialinden_nota (missing_pages)",
+   "yabandan_geldim_yabandan_nota (missing_pages)",
+   "yollari_gurbete_baglayan_daglar_nota (missing_pages)",
    "vuslata_nail_ney (missing_pages)",
-   "mahur_saz_semai_gazi_giray_han_tatar_no_2 (missing_pages)"
+   "bir_hadise_var_can_ile_canan_arasinda_1_nota (missing_pages)",
+   "du_cesmimden_gitmez_askin_hayali_1_nota (missing_pages)",
+   "zahm_i_sinem_hancer_i_zerkar_bilmez_kim_bilir_nota (missing_pages)",
+   "farig_olmam_mesreb_i_rindaneden_nota (missing_pages)",
+   "a_canim_gel_acma_sirr_i_pinhani_nota (missing_pages)",
+   "duseli_askin_bu_canim_iline_nota (missing_pages)",
+   "guzellerde_ne_bu_halet_nota (missing_pages)",
+   "neseyab_ilutfunolsunbuser_isuridemizpdf1601496991_nota (missing_pages)",
+   "omrumuzun_son_saati_calmadan_gel_ne_olur_nota (missing_pages)",
+   "solgun_durma_isteklen_nota (missing_pages)",
+   "yine_bir_sizi_var_icimde_aksam_oldu_diye_nota (missing_pages)",
+   "kalmadi_sabra_kararim_ey_peri_nota (missing_pages)",
+   "gul_acar_bulbul_oter_yaz_gecer_nota (missing_pages)",
+   "husnune_etvar_i_nazin_san_senin_nota (missing_pages)",
+   "kara_bulutlari_kaldir_aradan_1_nota (missing_pages)",
+   "kemend_i_zulfun_esir_i_zulf_i_yar_oldum_nota (missing_pages)",
+   "yine_ey_yosma_suh_i_serv_bulendim_nota (missing_pages)",
+   "avuclarimda_hala_sicakligin_var_inan_nota (missing_pages)",
+   "endami_guzeldir_gayet_nota (missing_pages)",
+   "ey_benim_bahtiyarim_gonlumun_tahti_yarim_nota (missing_pages)",
+   "kalb_i_sevda_zedeler_ah_ile_daim_inler_nota (missing_pages)",
+   "koparan_sinemi_agyar_elidir_1_nota (missing_pages)",
+   "ben_guzele_guzel_demem_nota (missing_pages)",
+   "cektikce_sineye_etrafdasin_sen_cismi_guzel_nota (missing_pages)",
+   "hos_geldin_elimize_siir_oldun_dilimize_nota (missing_pages)",
+   "mahur_saz_semai_gazi_giray_han_tatar_no_2 (missing_pages)",
+   "nazar_etti_bazi_yaran_1_nota (missing_pages)",
+   "otomobil_ucar_gider_gonlum_gibi_gecer_gider_nota (missing_pages)",
+   "sabah_olsun_ben_su_yerden_gideyim_nota (missing_pages)",
+   "ol_gonce_dehen_bir_gul_i_handan_olacaktir_nota (missing_pages)",
+   "serapa_husn_u_ansin_dil_sitansin_nota (missing_pages)",
+   "kadehinde_zehir_olsa_ben_icerim_bana_getir_nota (missing_pages)",
+   "gel_ey_saki_sarabi_tazelendir_nota (missing_pages)",
+   "acildi_bahcede_guller_1_nota (missing_pages)",
+   "ahteri_duskun_garib_i_asik_i_avareyim_nota (missing_pages)",
+   "anla_artik_anla_beni_unut_butun_gecenleri_nota (missing_pages)",
+   "askim_bahardi_umitler_vardi_1_nota (missing_pages)",
+   "askimin_ilkbahari_ilk_heyecanim_benim_nota (missing_pages)",
+   "ayrilik_bukuverdi_boynumu_nota (missing_pages)",
+   "bakmiyor_cesm_i_siyah_1_nota (missing_pages)",
+   "bekledim_de_gelmedin_sevdigimi_bilmedin_nota (missing_pages)",
+   "benim_gonlum_bir_kelebek_ii_nota (missing_pages)",
+   "bir_gun_o_guzel_sad_edecek_ruhumu_sandim_nota (missing_pages)",
+   "bir_nes_e_umdu_gonul_serapa_keder_oldum_nota (missing_pages)",
+   "bir_tatli_urperti_bir_gizli_ruzgar_nota (missing_pages)",
+   "ellerim_boyle_bos_bos_mu_kalacakti_1_nota (missing_pages)",
+   "eristi_nev_bahar_eyyami_acildi_gul_i_gulsen_nota (missing_pages)",
+   "ne_dert_kalir_ne_huzun_1_nota (missing_pages)",
+   "saclarina_baglanali_ey_peri_nota (missing_pages)",
+   "sarahaten_acaba_soylesem_darilmaz_mi_nota (missing_pages)",
+   "seni_tenhada_bir_bulsam_nota (missing_pages)",
+   "sevdimsenieyisve_bazpdf1594491738_nota (missing_pages)",
+   "suzul_guzel_suzul_de_gel_deli_gonlum_nota (missing_pages)",
+   "yemeni_baglamis_telli_basina_2_nota (missing_pages)",
+   "bilmem_ki_ne_yaptim_sana_ben_nota (missing_pages)",
+   "anlatayim_halimi_dildare_ben_nota (missing_pages)",
+   "bana_nasil_vaz_gec_dersin_nota (missing_pages)",
+   "ben_kuskunum_felege_1_nota (missing_pages)",
+   "hafiz_in_kabri_olan_bahcede_bir_gul_varmis_nota (missing_pages)",
+   "kavli_de_kaddi_gibi_rast_olsa_ol_mehvesin_nota (missing_pages)",
+   "omrumce_hep_adim_adimpdf1642151499_nota (missing_pages)",
+   "ufadenem_ey_bi_vefa_nota (missing_pages)",
+   "ey_bulend_ahter_seh_i_sahib_kerem_nota (missing_pages)",
+   "bu_aksam_ay_isiginda_seninle_bulusalim_nota (missing_pages)",
+   "camlar_altinda_uzatti_dest_i_nazi_bir_peri_1_nota (missing_pages)",
+   "suzdukce_guzel_gozlerini_kalbimi_yaktin_nota (missing_pages)",
+   "allahumme_salli_ala_seyyidina_nota (missing_pages)",
+   "gel_gitme_kalmasin_gozum_yollarda_nota (missing_pages)",
+   "sun_da_icsin_yar_elinden_asikin_peymaneyi_nota (missing_pages)",
+   "yine_hicran_ile_gun_bitti_gunes_batti_gonul_1_nota (missing_pages)",
+   "yolun_bulamam_yuzun_goremem_nota (missing_pages)",
+   "guller_acmis_bulbul_olmus_bi_karar_3_nota (missing_pages)",
+   "ulfetin_gecti_efendim_arasi_nota (missing_pages)",
+   "dil_i_mahzunumu_sad_eyle_bir_gun_nota (missing_pages)",
+   "bu_yaz_gecen_gunlerimiz_hatirindan_cikmasin_nota (missing_pages)"
   ]
  }
 }

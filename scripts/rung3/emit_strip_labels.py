@@ -432,8 +432,51 @@ def assign_rows(piece: PieceGT, rows: list[Row], printed: list[int], adj: list[S
 
 
 # ------------------------------------------------------------------------------ fold decision
+SPAN_SUBSET_CAP = 12  # exhaustive up to 2^12 subsets; beyond, hill-climb (nota corpus has
+                      # pieces with 20+ detected spans — 2^28 subsets hung the 2026-07-15 run)
+
+
+def fold_candidates(spans: list[Span], measure_count: int, p_obs: int, dc_cut: int) -> list[set]:
+    """Fold subsets worth scoring. Small span counts: all of them (the original exhaustive
+    search). Large: hill-climb on the printed-count gap from BOTH extremes (fold-all is the
+    printed-page norm, fold-none the degenerate) — O(n^2) printed_sequence calls, and the
+    count evidence only ranks candidates anyway (the row search is the real arbiter)."""
+    n = len(spans)
+    if n <= SPAN_SUBSET_CAP:
+        return [set(s) for r in range(n + 1) for s in combinations(range(n), r)]
+
+    def gap(sub: set) -> int:
+        printed, _ = printed_sequence(measure_count, spans, sub, dc_cut)
+        return abs(len(printed) - p_obs)
+
+    cands: list[set] = []
+    for start in (set(range(n)), set()):
+        cur = set(start)
+        cands.append(set(cur))
+        for _ in range(n):
+            g = gap(cur)
+            best = None
+            for k in range(n):
+                t = set(cur)
+                t.symmetric_difference_update({k})
+                if gap(t) < g:
+                    g, best = gap(t), t
+            if best is None:
+                break
+            cur = best
+            cands.append(set(cur))
+    seen: set[tuple] = set()
+    out: list[set] = []
+    for s in cands:
+        key = tuple(sorted(s))
+        if key not in seen:
+            seen.add(key)
+            out.append(s)
+    return out
+
+
 def choose_fold(piece: PieceGT, rows: list[Row], al: Aligner, row_nd: float, margin: float):
-    """Try every fold subset x (D.S. tail folded or not); decide by page measure count,
+    """Try candidate fold subsets x (D.S. tail folded or not); decide by page measure count,
     tie-break by decoded \\repstart / nav-token evidence, final tie-break by actually aligning
     the rows and keeping the best outcome."""
     p_obs = sum(r.row_measures for r in rows)
@@ -443,12 +486,11 @@ def choose_fold(piece: PieceGT, rows: list[Row], al: Aligner, row_nd: float, mar
     scored = []
     dc_options = [0] + ([piece.dc_tail[0]] if piece.dc_tail else [])
     for dc_cut in dc_options:
-        for r in range(len(piece.spans) + 1):
-            for subset in combinations(range(len(piece.spans)), r):
-                printed, adj = printed_sequence(piece.measure_count, piece.spans, set(subset), dc_cut)
-                nav_pen = 0 if (dc_cut > 0) == nav_decoded else 1  # jumps print marks; marks mean jumps
-                scored.append(((abs(len(printed) - p_obs), abs(len(subset) - n_repstart), nav_pen),
-                               set(subset), printed, adj, dc_cut))
+        for subset in fold_candidates(piece.spans, piece.measure_count, p_obs, dc_cut):
+            printed, adj = printed_sequence(piece.measure_count, piece.spans, subset, dc_cut)
+            nav_pen = 0 if (dc_cut > 0) == nav_decoded else 1  # jumps print marks; marks mean jumps
+            scored.append(((abs(len(printed) - p_obs), abs(len(subset) - n_repstart), nav_pen),
+                           subset, printed, adj, dc_cut))
     scored.sort(key=lambda t: t[0])
     best_score = scored[0][0]
 

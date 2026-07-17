@@ -94,7 +94,81 @@ train `--lr 1e-5 --max-steps 1200 --warmup-steps 50`, T4 ~30–40 min → post-e
 cover the ONNX-int8-only export + pointing emit_strip_labels.py at the labeler).
 Re-run promote → make_split → make_labeler_zip after any new adjudication (the 3 typo fixes).
 
-### 1b. notaarsivleri.com — SymbTr-first download (TO BUILD, before Round 1)
+### 1b. notaarsivleri.com — SymbTr-first download (✅ FULL RUN DONE 2026-07-15)
+
+> **Full run (2026-07-15), after the calibration probe below:** all **964** matched pieces
+> downloaded (`nota_downloads.json`; 966 accepts minus 2 dead links), **1,227 pages
+> GPU-decoded on Colab** (`scripts/rung3/decode_pages_gpu.py` + `make_decode_zip.sh` +
+> `notebooks/rung3_decode_colab.ipynb` — the labeler decode offloaded per the fanless-Mac
+> rule; page-cached, resumable, results rsynced back into `data/real/strips/`). Fold-search
+> 2^n blow-up on many-repeat pieces fixed (`SPAN_SUBSET_CAP=12` + hill-climb fallback in
+> `emit_strip_labels.py`). **Emit over 938 pieces: 440 ok / 338 low_coverage / 160
+> missing_pages** → **1,262 accepted training strips + 2,671-row review queue**
+> (`strips_nota/`; reasons: nd_review 989, low_coverage 959, sig_mismatch 231,
+> acc_disagreement 216, nav 276) + a **69-strip audit sample** (`emit_audit.csv`). Drops
+> confirm the probe's diagnosis at scale: row_unaligned 4,467 / split_wide 3,757 /
+> over_budget 2,108 — the `MEASURES_PER_STRIP=2` re-slice stays the #1 yield lever.
+> **Flagged sig clusters for per-makam adjudication (the hicaz lesson applied): mahur
+> voted [F+1]×12 pieces + a missing-B-1 cluster** — adjudicate BEFORE promoting review rows.
+> Exam side: see Step 2 (re-frozen v2 + 287-row growth queue, `strips_exam_v2/`).
+>
+> **Audit + first promote (2026-07-16):** the 69-strip sample fully adjudicated — 29 ok /
+> 40 fix, decomposing to 8 sig-order no-ops + 1 sig + 26 tie/repeat structural + **5 pitch =
+> 7.2% content-error rate** (neyzen round was 22.6%: the Round-0.5 labeler paid for itself).
+> 180 review rows verdicted (incl. the 105-row sig_mismatch cluster work);
+> `promote_labels.py` applied: **manifest 1,262 → 1,435** (47 audit fixes + 173 promotions;
+> 6 rejects: 4 over_budget for the re-slice, 2 typos pending). Sharpness analysis
+> (Laplacian-var medians): accepted 1672 vs remaining low_coverage/sig_mismatch ~900 — the
+> queue IS the blurry tail by design; **acc_disagreement rows are the exception (1703,
+> sharp + accidental-bearing = best remaining value)**. Label-noise budget accepted for
+> Round 1: ~7% pitch / ~38% tie-repeat structural; re-audit a fresh 5% sample after Round 1.
+> Remaining queue plan: acc_disagreement (~208) + sig_mismatch (~124) get fixed, the
+> blurry/misassembled rest (low_coverage, nav, bulk nd_review) is deliberately parked —
+> unverdicted rows never train.
+>
+> **Update 2026-07-17:** sig_mismatch + acc_disagreement DONE (see "Logged for later" for
+> the decode-beats-SymbTr finding) → second promote: **training manifest 1,742** (+ 418
+> neyzen = 2,160 real strips). examv2-review DONE → **exam manifest 63 → 312 strips**
+> (`promote_labels.py --exam`; 26 over-budget exam labels correctly excluded as unwinnable;
+> ⚠ \tup3 gold in the exam = 4 → triplet progress must be read off synthetic val + manual
+> checks until a re-sliced exam version). Pending promote rejects: 3 label typos
+> (ben_seni_sevdim p1_s03_w01, gonlum_heves p1_s04_w00, yikildi p1_s01_w00) + 14 training
+> over-budget. **examv2-full DONE (later 2026-07-17, the LAST exam hand task): all 63 rows
+> verdicted — 31 ok / 32 fix / 0 bad.** Fix decomposition: 22 tie-only (the known
+> SymbTr-vs-edition structural conventions), 4 volta/repeat, **4 pitch/duration-level =
+> ~6% content-error rate** (consistent with the nota audit's 7.2%), 1 sig-block removal
+> (w00 crop-cut), 1 accidental-class sig fix (zahiri p1_s04_w00 \komaSharp f →
+> \kucukSharp f). **The mahur (18 rows) and suzidilara (16 rows) sig-suspects produced
+> ZERO signature corrections — the voted sigs are confirmed; the flagged clusters are
+> cleared.** Fixes APPLIED via `promote_labels.py --exam`: 31 of 32 in place; the 32nd
+> (neydin_guzelim p1_s03_w00, correction = 60 ids) went over budget → row REMOVED as
+> unwinnable (promote_labels now removes gate-failed audit fixes, as its docstring always
+> promised — previously only round-trip failures were removed). **Exam manifest 312 → 311
+> strips**; gold (sig-inclusive): bakiyeSharp 117, bakiyeFlat 59, kucukFlat 53, natural 48,
+> komaFlat 38, kucukSharp 29, komaSharp 18, tie 127, \tup3 still 4. Next: freeze commit
+> (`testset.json`) → baseline on the 311-strip exam; then optionally nota-full nd>0 tier
+> (567 rows, sorted to the top of the tab).
+
+Calibration probe (2026-07-15, superseded by the full run above):
+
+> **Status:** `scripts/rung3/collect_nota.py` (census / match / download / export, all
+> resumable). Census: **20,833 TSM pieces** off the paginated catalog (211 requests, title/
+> makam/composer/lyricist/form/usul per row; ISO-8859-9; robots.txt absent — 302 to an error
+> page, checked again today). Metadata match vs SymbTr: **966 accept** / 1,939 review /
+> 656 no_symbtr_makam / 16k reject (same 0.85+margin thresholds; hicaz 96, nihavend 92,
+> rast 74 — 63 makams). 12-piece probe through the LABELER emit (`strips_nota_probe`,
+> report-only): **7/12 ok** (coverage 0.36–0.70, sig majority OK on all 7 — the labeler
+> reads the second engraving style's sigs), 5/12 self-excluded (2 handwritten →
+> missing_pages, faded scan + old heavy print → low_coverage ≤0.2) — **the archive mixes
+> modern volunteer re-engravings (slice perfectly), old TRT prints (noisy barlines), faded
+> scans (slicer misses staves — yield loss only), and HANDWRITTEN copies (out of scope;
+> content alignment rejects them, never poisons labels)**. No slicer surgery needed — the
+> timebox held. Dominant strip drops: over_budget 48 + split_wide 42 of 216 (nota rows are
+> DENSER than neyzen → 3-measure strips blow the 59-id budget): the MEASURES_PER_STRIP=2
+> re-slice is the yield lever here. Extrapolation: ~2–3 accepted strips/piece → ~2k+ strips
+> from 966 pieces before the re-slice.
+
+Original research (2026-07-11), kept for context:
 
 Researched 2026-07-11: ~21,000 TSM pieces, sheets from the **TRT repertoire — the same
 repertoire SymbTr transcribes**, so the overlap should be large; catalogued with
@@ -160,6 +234,13 @@ resumable, census-first) like `collect_notalar.py`; everything stays under gitig
 > class floors met (büyük = 0 on real pages, unmeasurable; komaSharp/kucukSharp LOW-N),
 > deterministic per seed, committable (`.gitignore` negation chain). Re-run over both sources
 > when notaarsivleri lands, THEN commit = the freeze, before Round-1 training.
+> **→ ✅ RE-FROZEN v2 over both sources (2026-07-15):** `testset.json` now **25 pieces /
+> 16 makams (23 nota + 2 neyzen), every reachable class ≥44 gold accidentals, NO LOW-N
+> classes** (bakiyeSharp 361, bakiyeFlat 148, komaFlat 105, kucukFlat 47, komaSharp 44,
+> kucukSharp 44; büyük unreachable as before). v1 backed up as `testset.json.bak-v1`.
+> Exam emit on the v2 pieces: **63 accepted exam strips + 287-row growth queue**
+> (`strips_exam_v2/emit_review.csv` — supersedes the old 443-row `strips_exam` queue).
+> Committing testset.json = the freeze.
 >
 > **First real baseline (`MODEL_EVAL.md` "Rung 3 — real-page exam BASELINE"):** the synthetic
 > Rung-2.2b checkpoint scores **83.3% AEU / SER 0.018 / 78.8% exact** on the exam strips (vs
@@ -177,9 +258,10 @@ After every round, `eval_omr.py` on these pages = the real-world accuracy number
 
 **Grow the exam by adjudication (decided 2026-07-13).** The provisional exam is statistically
 thin: 33 auto-accepted strips, 4/8 AEU classes present, ALL LOW-N (~11 gold accidentals behind
-the 83.3% headline) — too thin to tell whether Round 1 improved or regressed. The 443-row
-`strips_exam/emit_review.csv` queue is the growth pool, and exam strips never enter training,
-so adjudicating them is pure measurement quality. Rules:
+the 83.3% headline) — too thin to tell whether Round 1 improved or regressed. The growth pool is the exam-review
+queue (**now the 287-row `strips_exam_v2/emit_review.csv`** after the v2 re-freeze; the old
+443-row `strips_exam` queue is superseded), and exam strips never enter training, so
+adjudicating them is pure measurement quality. Rules:
 
 - **Timing: AFTER the two-source freeze** (step 1b re-run may change the piece list — don't
   polish strips that may drop out), and **BEFORE Round 1's exam-taking**.
@@ -255,6 +337,29 @@ wired (Rung-4 stage 8): `decode_page.py` → `stitch-cli.ts` → harness → fix
   inherently iterative — the "one big run" decision only removed the unnecessary
   neyzen-only intermediate round.)
 
+## Logged for later — decode-repair heuristics + the acc_disagreement lesson (2026-07-16)
+
+**acc_disagreement adjudication result (all 216 rows done):** in label-vs-decode accidental
+disputes, the user's fix sided with the DECODE 187/214 (87%) vs the label 14 (7%); the
+median fix equals the decode verbatim. Meaning: these are rows where the printed edition
+genuinely differs from SymbTr on accidentals (courtesy naturals, editorial signs,
+intonation choices) — and the page wins. Two standing conclusions: (1) the emitter's rule
+that accidental disputes NEVER auto-accept is validated — auto-accepting would have poisoned
+187 strips in the headline class; keep the rule for every future source. (2) The Round-0.5
+labeler's accidental reading is trustworthy enough to be the *draft* side in these disputes
+— the review UI's decode-based edit draft is the right default for acc_disagreement rows.
+
+**Decode-repair heuristics (user idea, worth building at Round-2 tooling time):** the
+model's residual errors include GRAMMAR violations repairable without seeing the image —
+orphaned `\tupend` (a `\tup3` opener dropped: "two `\tupend`s after six notes = contiguous
+triplets, first opener lost"), dangling `\sigend` without `\sig`, unpaired volta/repeat
+marks. Candidate implementations, in increasing depth: (a) a lint-with-autofix suggestion
+in the review UI's editor (safest — human confirms); (b) a post-decode repair pass in
+`decode_page.py` before nd scoring (recovers review-queue rows whose only defect is a
+dropped opener); (c) longer-term, grammar-constrained decoding in the product (the decoder
+never emits ill-formed bracket structures at all). Never silently rewrite labels with these
+— they propose, a human (or the nd gate) disposes.
+
 ## Folder layout (under gitignored `data/real/`)
 
 ```
@@ -324,8 +429,63 @@ data/real/
   Lesson: unanimous-but-wrong sig reads are
   invisible to the vote — per-makam spot checks of the voted signature are part of every
   future source calibration (notaarsivleri), and hicaz signatures need synthetic coverage
-  in the Round-1 re-render.
+  in the Round-1 re-render. **Applied to the nota run (2026-07-15): two clusters flagged —
+  mahur voted with a spurious extra F entry ([F+1], 12 pieces) and a missing-B-1 cluster
+  (voted sigs lacking the expected 1-comma-flat B). → ✅ ADJUDICATED (2026-07-16/17): the
+  clusters were worked per-strip through the 105-row sig_mismatch review (the worksheet's
+  markdown checkboxes were never ticked — the review rows superseded them), and the
+  examv2-full audit (2026-07-17) confirmed the voted mahur + suzidilara sigs with ZERO
+  signature corrections across their 34 exam rows.**
   Corrections APPLIED to `manifest.jsonl` by `promote_labels.py` (2026-07-14, see above).
 - **Over-budget real strips** (233): a `MEASURES_PER_STRIP=2` re-slice would recover many.
+- **⚠ SLICER w00 CROP BUG (logged 2026-07-16, user finding during review).** Many `_w00`
+  (row-start) strips do NOT show the printed clef+signature: the crop starts too far right
+  (e.g. `aman_cana p1_s00_w00` keeps the 10/8 time sig but cuts the clef;
+  `hatirlar_misin p1_s00_w00` cuts mid-clef with junk from the row above;
+  `canan_bilirim p1_s04_w00` is mid-staff garbage). Others DO include it — the population
+  is mixed, so nothing mechanical can sort them; the user marks sig-cut w00 crops `bad`
+  during review. Consequences: (a) lost sig-bearing training strips; (b) the printed-sig
+  MAJORITY VOTE sees fewer/wronger row-start reads; (c) 191 review + 7 exam labels had
+  their `\sig` blocks bulk-removed where the decode showed none — VALIDATED after the
+  fact and KEPT: 23/24 user-verdicted overlap rows + 8/8 visually sampled affected strips
+  confirm those images truly lack a visible sig (inspect list:
+  `data/real/rung3/sigstrip_inspect.txt`). When the model DOES read a sig, the filter
+  leaves the label alone, so decode-absence held up as a removal criterion here — but
+  only verified-by-inspection after a false alarm from a mis-drawn sample; always sample
+  from the actually-affected rows.
+  **FIX WITH THE `MEASURES_PER_STRIP=2` RE-SLICE: anchor the w00 window at the row's true
+  left edge (clef margin) in `page_to_strips.py` and eyeball ~20 w00 crops before the bulk
+  re-emit.** Related edge defect (user, 2026-07-16): window boundaries sometimes BISECT a
+  notehead — pad window x-edges a few px past the enclosing barlines at re-slice time.
+  Review policy meanwhile: a cut note OUTSIDE the labeled measures = harmless edge
+  fragment, verdict normally; a cut note INSIDE the labeled content = `bad` (the image
+  can't prove the label; exam queues doubly so). Also revisit the triplet depletion then: 28% of matched pieces contain `\tup3`
+  but only 1.3% of accepted strips do — triplet-dense windows die on the 59-id budget
+  (35% of over_budget drops come from the 25% tup3 pieces); the 2-measure window is the
+  same cure.
+  **Second slicer defect (user, 2026-07-17): NOTE STEMS mistaken for barlines** — the
+  detector cuts at a note, so the notehead survives but its stem/flag/beam is severed
+  and the DURATION is misread. Re-slice must (a) discriminate barline vs stem better
+  (a barline spans the full staff height with no notehead/beam attached at either end;
+  a stem terminates at a notehead or beam), and (b) pad each cut a few px — TIGHT, so
+  the margin never pulls in a neighboring note's head. The eyeball-20-crops gate before
+  the bulk re-emit covers both.
+  **Tuplet training gap (user, 2026-07-17, recurring):** the model reads `\tup3` poorly
+  and real data can't fix it (depletion above) — the synthetic re-render must OVERSAMPLE
+  tuplets aggressively (well above corpus rate, incl. contiguous-triplet runs — the
+  two-`\tupend`s-in-a-row shape from the decode-repair note), alongside the
+  rare-accidental and slur-distractor boosts. Derived signatures used to come out
+  in C..B letter order; real editions print flats B-E-A-D-G-C-F then sharps F-C-G-D-A-E-B.
+  `deriveKeySignature` now sorts to the printed convention (packages/core/src/notation.ts),
+  and ALL existing label files were batch-canonicalized 2026-07-16 (user-approved; ~404
+  labels across nota review/manifest/audits, examv2 review, r1 manifest — `.bak-sigorder*`
+  backups beside each file). Caveat: hicaz-family SHARP order is edition-dependent (both
+  `si♭ fa♯ do♯` and `si♭ do♯ fa♯` print) — canonical puts fa♯ first; per-strip review
+  catches the other edition via the decode diff. **Before any re-slice/re-emit: (1) run
+  `promote_labels.py` first — a re-emit writes a FRESH review queue with new strip windows,
+  and un-promoted hand verdicts in the old CSV do NOT carry over; (2) `matched/*/labels.json`
+  still hold the old C..B order until labels-cli is re-run over `matched/` (harmless for
+  alignment — content search strips `\sig` blocks — but re-run it with the re-emit so
+  everything regenerates consistently).**
 - **Folk vs. art music:** TSM sections only; THM's numbered bemol-2/3 signs have no tokens.
 - **Handwritten scores** stay OUT of scope for v1 (product-side message, not a model fix).

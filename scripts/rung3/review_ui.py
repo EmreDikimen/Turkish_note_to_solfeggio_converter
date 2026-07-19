@@ -25,6 +25,12 @@ Two-source stage queues (2026-07-15; strips_exam ones above are SUPERSEDED by v2
   examv2-audit  strips_exam_v2/emit_audit.csv  sample of the v2 exam accepts.
   examv2-review strips_exam_v2/emit_review.csv 287-row growth queue for the re-frozen exam.
 
+Targeted tuplet queues (2026-07-18, docs/RUNG3.md §1c; tup3-only, 1-measure windows):
+  tup-full      strips_tup/full_audit.csv      all 78 accepted tup3 strips (114 groups) —
+                                               sidecar built on first run, manifest untouched.
+  tup-review    strips_tup/emit_review.csv     147 tup3 review rows / 205 groups (the
+                                               promote pool that ~triples real triplet data).
+
 Verdicts (written to the CSV, blank = not reviewed yet):
   ok   label matches the printed strip exactly
   fix  label corrected by hand (correction saved in `corrected_label`)
@@ -66,6 +72,10 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # targeted tuplet run (2026-07-18, docs/RUNG3.md §1c) — tup3-only, k=1 windows
+    "tup-audit": "data/real/rung3/strips_tup/emit_audit.csv",
+    "tup-full": "data/real/rung3/strips_tup/full_audit.csv",
+    "tup-review": "data/real/rung3/strips_tup/emit_review.csv",
     # two-source stage (2026-07-15) — the live queues
     "nota-audit": "data/real/rung3/strips_nota/emit_audit.csv",
     "nota-full": "data/real/rung3/strips_nota/full_audit.csv",
@@ -85,6 +95,7 @@ FULL_AUDITS = {
     "r1-full": ("data/real/rung3/strips_r1", "r1-audit"),
     "nota-full": ("data/real/rung3/strips_nota", "nota-audit"),
     "examv2-full": ("data/real/rung3/strips_exam_v2", "examv2-audit"),
+    "tup-full": ("data/real/rung3/strips_tup", "tup-audit"),
 }
 STRIPS = "data/real/strips"
 VERDICTS = {"", "ok", "fix", "bad"}
@@ -323,6 +334,8 @@ PAGE = r"""<!doctype html>
   <select id="fshow">
     <option value="pending" selected>pending only</option>
     <option value="reviewed">reviewed only</option>
+    <option value="claude">🤖 claude verdicts</option>
+    <option value="rule">🤖 rule drafts</option>
     <option value="all">all strips</option>
   </select>
   <button class="tab" id="b-log">🗂 saved log</button>
@@ -339,7 +352,10 @@ PAGE = r"""<!doctype html>
       <div class="lblhead">corrected label (saving marks the strip <b>fix</b>) — start from:
         <button class="tab" id="base-h">sig from label + notes from model</button>
         <button class="tab" id="base-l">label</button>
-        <button class="tab" id="base-d">model decode</button></div>
+        <button class="tab" id="base-d">model decode</button>
+        <label style="margin-left:10px;font-weight:400;white-space:nowrap">
+          <input type="checkbox" id="striptup"> drop decode \tup3 (slur-hallucination guard)
+        </label></div>
       <textarea id="edit" spellcheck="false"></textarea>
       <div id="lint"></div>
       <div class="btns" style="margin-top:8px">
@@ -482,6 +498,26 @@ function diffHtml(label,decoded){
           <div class="lblhead">model decode ${same?'<span class="agree">— agrees exactly</span>':''}</div>
           <div class="toks">${bot}</div>`;
 }
+// third block: the FINAL version of every verdicted row. A real fix is diffed against the
+// original label (removed tokens = red gaps, new tokens = green); an untouched label
+// (verdict ok, or a fix identical to the label) still shows its full token row so the
+// reviewer sees exactly what was accepted.
+function corrHtml(label,corrected,by,verdict){
+  const who=by?`🤖 ${esc(by)}`:'you';
+  const fin=(corrected&&corrected.trim())?corrected:label;
+  if(tokenize(fin).join(' ')===tokenize(label).join(' '))
+    return `<div class="lblhead" style="color:var(--fix)">final version (${verdict} by ${who}) — label accepted as-is</div>
+            <div class="toks">${tokenize(fin).map(t=>tokHtml(t,'')).join('')}</div>`;
+  const ops=align(tokenize(label),tokenize(fin));
+  let out='';
+  for(const[op,at,bt]of ops){
+    if(op==='=')out+=tokHtml(bt,'');
+    else if(op==='-')out+=`<span class="tok diff" title="removed: ${esc(at)}">·</span>`;
+    else out+=tokHtml(bt,'diff2');
+  }
+  return `<div class="lblhead" style="color:var(--fix)">final version (${verdict} by ${who}) — diff vs label</div>
+          <div class="toks">${out}</div>`;
+}
 function lint(txt){
   const toks=tokenize(txt), bad=[], known=new Set([...CMDS,'|']);
   let sig=0;
@@ -495,7 +531,11 @@ function lint(txt){
   for(const t of toks)
     if(!t.startsWith('\\')&&t!=='|'&&t!=='3'&&!/^r?[a-g]?[',]*\d{0,2}\.{0,2}$/.test(t)&&!/^[a-gr][',]*\d+\.?$/.test(t))
       {msgs.push(`odd token: ${t}`);break}
-  return {warn:msgs, n:toks.length};
+  // real-tokenizer id cost (the ≤59 promote gate): char-level except added tokens —
+  // \commands and | are 1 id, a note is 1 id per character (d''16 = 5); +1 for EOS.
+  const ids=toks.reduce((s,t)=>s+((t.startsWith('\\')||t==='|')?1:t.length),0)+1;
+  if(ids>59)msgs.push(`OVER BUDGET: ${ids} ids > 59 — promote will reject (unwinnable strip: verdict bad)`);
+  return {warn:msgs, n:toks.length, ids};
 }
 
 function rows(){ return S.queues.find(q=>q.id===qid).rows; }
@@ -503,7 +543,10 @@ function visible(){
   const re=$('freason').value, show=$('fshow').value;
   return rows().map((r,i)=>({r,i}))
     .filter(x=>(!re||x.r.reason===re)
-      &&(show==='all'||(show==='pending'?!x.r.verdict:!!x.r.verdict)));
+      &&(show==='all'||(show==='pending'?!x.r.verdict
+        :show==='claude'?x.r.by==='claude'
+        :show==='rule'?(x.r.by||'').startsWith('rule')
+        :!!x.r.verdict)));
 }
 function counts(q){const d=q.rows.filter(r=>r.verdict).length;return[d,q.rows.length];}
 
@@ -541,8 +584,8 @@ function render(){
      ${r.nd?`<span>nd <b>${r.nd}</b></span>`:''}
      ${r.min_logprob?`<span>min&nbsp;logp <b>${r.min_logprob}</b></span>`:''}`;
   $('strip').src='/img/'+encodeURIComponent(r.page)+'/'+encodeURIComponent(r.strip);
-  $('labels').innerHTML=diffHtml(r.corrected_label||r.label,r.decoded)+
-    (r.corrected_label?'<div class="lblhead" style="color:var(--fix)">showing your correction</div>':'');
+  $('labels').innerHTML=diffHtml(r.label,r.decoded)+
+    (r.verdict&&r.verdict!=='bad'?corrHtml(r.label,r.corrected_label,r.by,r.verdict):'');
   editing=false;$('editbox').style.display='none';$('imgwrap').classList.remove('zoom');
   if(logOpen)renderLog();
 }
@@ -582,6 +625,7 @@ async function post(strip,verdict,corrected){
   if(!j.ok){toast('save failed: '+j.error);return false}
   const row=rows().find(r=>r.strip===strip);
   row.verdict=verdict;row.corrected_label=corrected;
+  row.by='';   // human (re-)verdict clears the machine marker, mirroring the server
   return true;
 }
 function toast(m){const t=$('toast');t.textContent=m;t.style.opacity=1;
@@ -599,15 +643,18 @@ async function verdict(v){
   const ok=await post(r.strip,v,v?r.corrected_label:'');
   if(!ok)return;
   toast(v?`${r.strip.split('_').slice(-2).join('_')} → ${v}`:'cleared');
-  // pending-only: the row leaves the list, so idx already points at the next pending strip
-  if(v&&$('fshow').value!=='pending')idx++;
+  // pending / 🤖 filters: the row leaves the list, so idx already points at the next strip
+  if(v&&!['pending','claude','rule'].includes($('fshow').value))idx++;
   render();
 }
 // edit-base builder: the model reads notes well but signatures badly, so the default
 // "hybrid" takes \sig…\sigend from the (corrected) label and everything after from the decode.
 // The model hallucinates triplet brackets from slurs, so decode-derived drafts drop
-// \tup3/\tupend (user adds them back when a real triplet is printed); label drafts keep theirs.
-const stripTups=s=>s.replace(/\\tup(3|end)\s*/g,'');
+// \tup3/\tupend — but OPTIONALLY (checkbox): in the tup-* queues the decode's brackets are
+// usually real, so the guard defaults OFF there and ON everywhere else; toggling it
+// rebuilds the draft. Label drafts always keep their own tup3 tokens.
+const stripTups=s=>$('striptup').checked?s.replace(/\\tup(3|end)\s*/g,''):s;
+let lastBase='hybrid';
 function baseText(r,mode){
   const lab=r.corrected_label||r.label, dec=stripTups(r.decoded||'');
   if(mode==='label')return lab||dec;
@@ -624,18 +671,21 @@ function baseText(r,mode){
 }
 function setBase(mode,preferCorrected){
   const r=cur();if(!r)return;
+  lastBase=mode;
   $('edit').value=solfText(preferCorrected&&r.corrected_label?r.corrected_label:baseText(r,mode));
   $('edit').focus();lintNow();
 }
+let striptupQueue=null; // per-queue default: guard OFF in tup-* queues, ON elsewhere
 function openEdit(){
   const r=cur();if(!r)return;
+  if(striptupQueue!==qid){$('striptup').checked=!qid.startsWith('tup');striptupQueue=qid;}
   editing=true;$('editbox').style.display='block';
   setBase('hybrid',true); // an existing correction wins; the base buttons rebuild from scratch
 }
 function lintNow(){
-  const{warn,n}=lint(letterText($('edit').value));
+  const{warn,n,ids}=lint(letterText($('edit').value));
   $('lint').innerHTML=warn.length?warn.map(w=>`<span class="warn">⚠ ${esc(w)}</span>`).join(' · ')
-    :`<span class="fine">✓ ${n} tokens, looks well-formed (real gates re-run at promote)</span>`;
+    :`<span class="fine">✓ ${n} tokens ≈ ${ids}/59 ids, looks well-formed (real gates re-run at promote)</span>`;
 }
 async function saveEdit(){
   const r=cur();if(!r)return;
@@ -671,6 +721,7 @@ $('b-save').onclick=saveEdit;
 $('base-h').onclick=()=>setBase('hybrid');
 $('base-l').onclick=()=>setBase('label');
 $('base-d').onclick=()=>setBase('decode');
+$('striptup').onchange=()=>setBase(lastBase); // toggling rebuilds the draft from scratch
 $('b-cancel').onclick=()=>{editing=false;$('editbox').style.display='none'};
 $('imgwrap').onclick=()=>$('imgwrap').classList.toggle('zoom');
 $('freason').onchange=()=>{idx=0;render()};$('fshow').onchange=()=>{idx=0;render()};

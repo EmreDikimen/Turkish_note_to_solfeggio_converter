@@ -36,6 +36,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from onnx_parity import MAX_TOKENS, onnx_greedy_decode
+import page_to_strips as page_to_strips_mod
 from page_to_strips import page_to_strips
 
 
@@ -124,6 +125,7 @@ def decode_page(
 
     stem = Path(page).stem
     result = {"page": str(page), "checkpoint": rt.checkpoint, "suffix": rt.suffix,
+              "measures_per_strip": page_to_strips_mod.MEASURES_PER_STRIP,
               "total_ms": round(total_ms, 1), "strips": decoded}
     (strip_dir / f"{stem}_decode.json").write_text(json.dumps(result, indent=1))
     return result

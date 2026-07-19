@@ -42,8 +42,10 @@ Upload (PNG/JPEG page)
 
 Stages 2–6 live in `src/vision/page_to_strips.py` (strips reproduce the training geometry:
 H=336 px, staff spacing 30 px, top line y≈138 — measured from the gate strips; barlines by
-continuity + thinness rather than column darkness; ~3-measure windows, row-starts keep
-clef+keysig, over-wide measures split at whitespace gutters; `--debug` writes an overlay).
+continuity + thinness + clean termination rather than column darkness — see stage 5 below;
+~3-measure windows, row-starts keep clef+keysig, over-wide measures split at whitespace
+gutters; crops pad a few px past the enclosing barlines; `--debug` writes an overlay that
+also color-codes rejected barline candidates by reason).
 `src/vision/decode_page.py` chains them into stage 7, prints per-strip + per-row token
 streams, and writes `<page>_decode.json`. Stage 8 lives in `tools/render/stitch.ts`
 (+ `stitch-cli.ts` to turn that JSON into an editor-loadable note model; `stitch-test.ts`
@@ -79,8 +81,19 @@ this wrong doesn't error — it just quietly halves accuracy.
 
 **5. Barline detection → measure boxes.** Barlines = near-vertical dark runs that span exactly
 the 5 staff lines (tolerances for thickness/repeat-dots). This substitutes for what training had
-for free (SheetView's per-measure layout rectangles). On screenshots this is near-perfect; on
-photos, work row-by-row after deskew.
+for free (SheetView's per-measure layout rectangles). Three gates (hardened 2026-07-19 against
+the real-corpus false positives — full postmortem in `docs/RUNG3.md` § slicer defects):
+(1) CONTINUITY — an unbroken vertical run spanning the staff, touching both outer lines;
+(2) THINNESS — no notehead-fat blob at the stroke inside the staff band; (3) TERMINATION —
+walking the connected ink past the outer lines, a stroke extending beyond BOTH lines is a
+G-clef, and one extending past ONE line into a sustained-wide attachment near the staff is a
+stem ending in a notehead/flag/beam. Thin one-sided overshoot of any length stays a barline
+(volta ticks, long-drawn bars). A leading span with no notehead past the clef zone (repeat bar
+printed right after the signature) is a clef+sig PREFIX, kept in the crop but not counted as a
+measure. Staff x-extent comes from raw ink at the detected line rows, not the opened image
+(scan skew breaks opened lines and used to eat the row's left edge). On screenshots this is
+near-perfect; on photos, work row-by-row after deskew. Regression-score any change with
+`scripts/rung3/score_slicer.py` (old-vs-new measure counts vs SymbTr row alignment, CPU-only).
 
 **6. Windowing.** Group consecutive measures into windows whose *width* (post-normalization)
 falls inside the training strips' width distribution — the inference-side analog of

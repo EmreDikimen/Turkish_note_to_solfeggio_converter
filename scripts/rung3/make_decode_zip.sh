@@ -8,6 +8,9 @@
 #
 # Output: data/colab/tnc_rung3_decode_colab.zip — upload to MyDrive/tnc/, then run
 # notebooks/rung3_decode_colab.ipynb and download the strips zip it leaves on Drive.
+#
+# Optional $1 = an existing pages list (one PNG path per line) to package INSTEAD of
+# regenerating from all of matched/ — used by the targeted tuplet run (docs/RUNG3.md §1c).
 set -e
 cd "$(dirname "$0")/../.."
 
@@ -16,6 +19,10 @@ PAGES=data/colab/decode_pages.txt
 mkdir -p data/colab
 rm -f "$OUT"
 
+if [ -n "$1" ]; then
+  cp "$1" "$PAGES"
+  echo "$(wc -l < "$PAGES" | tr -d ' ') pages listed (from $1)"
+else
 python3 - <<'EOF'
 import json
 from pathlib import Path
@@ -29,6 +36,7 @@ pages = sorted(set(pages))
 Path("data/colab/decode_pages.txt").write_text("\n".join(pages) + "\n")
 print(f"{len(pages)} pages listed")
 EOF
+fi
 
 {
   ls src/vision/*.py

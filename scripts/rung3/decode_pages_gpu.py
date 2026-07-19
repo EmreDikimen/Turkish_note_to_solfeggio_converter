@@ -50,13 +50,19 @@ def main() -> int:
     ap.add_argument("--device", default=None, help="cuda | cpu (default: cuda if available)")
     ap.add_argument("--skip-existing", action="store_true",
                     help="skip pages whose _decode.json already records --cache-checkpoint")
+    ap.add_argument("--measures-per-strip", type=int, default=None,
+                    help="override the slicer window size (default: OMR_MEASURES_PER_STRIP "
+                         "env or 3). The tuplet emit (docs/RUNG3.md §1c) runs at 1.")
     args = ap.parse_args()
 
     import torch
     from PIL import Image
     from transformers import AutoProcessor, VisionEncoderDecoderModel
 
+    import page_to_strips as page_to_strips_mod
     from page_to_strips import page_to_strips
+    if args.measures_per_strip is not None:
+        page_to_strips_mod.MEASURES_PER_STRIP = args.measures_per_strip
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     processor = AutoProcessor.from_pretrained(args.checkpoint)
@@ -79,7 +85,9 @@ def main() -> int:
         dj = strip_dir / f"{stem}_decode.json"
         if args.skip_existing and dj.exists():
             try:
-                if json.loads(dj.read_text()).get("checkpoint") == args.cache_checkpoint:
+                prev = json.loads(dj.read_text())
+                if (prev.get("checkpoint") == args.cache_checkpoint
+                        and prev.get("measures_per_strip", 3) == page_to_strips_mod.MEASURES_PER_STRIP):
                     n_skip += 1
                     continue
             except json.JSONDecodeError:
@@ -134,6 +142,7 @@ def main() -> int:
                     "mean_logprob": round(sum(lp) / len(lp), 4) if lp else None,
                 })
         result = {"page": str(page), "checkpoint": args.cache_checkpoint, "suffix": "_int8",
+                  "measures_per_strip": page_to_strips_mod.MEASURES_PER_STRIP,
                   "total_ms": round((time.time() - t_page) * 1000, 1), "strips": decoded}
         dj.write_text(json.dumps(result, indent=1))
         n_done += 1

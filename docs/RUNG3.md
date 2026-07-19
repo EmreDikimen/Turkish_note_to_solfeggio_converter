@@ -145,9 +145,37 @@ Re-run promote → make_split → make_labeler_zip after any new adjudication (t
 > unwinnable (promote_labels now removes gate-failed audit fixes, as its docstring always
 > promised — previously only round-trip failures were removed). **Exam manifest 312 → 311
 > strips**; gold (sig-inclusive): bakiyeSharp 117, bakiyeFlat 59, kucukFlat 53, natural 48,
-> komaFlat 38, kucukSharp 29, komaSharp 18, tie 127, \tup3 still 4. Next: freeze commit
-> (`testset.json`) → baseline on the 311-strip exam; then optionally nota-full nd>0 tier
-> (567 rows, sorted to the top of the tab).
+> komaFlat 38, kucukSharp 29, komaSharp 18, tie 127, \tup3 still 4. FREEZE COMMITTED
+> (37ee690). **nota-full rule drafts (same day):** after the user hand-verdicted 125
+> nota-full rows (79 fix / 46 ok), `scripts/rung3/rule_fix_notafull.py` learned the
+> adjudication pattern (human sides with the DECODE on ties / duration respells /
+> repeat marks; with the LABEL or a third reading on pitch, sig, tuplet, grace) and
+> DRAFT-verdicted the mechanical tail: **325 rows filled** (by=rule 174 at
+> min_logprob ≥ −0.3 ≈ 84% exact-match vs held-out human fixes, by=rule-lowconf 151 —
+> skim harder; human re-verdict clears the marker). Never auto-adopted: sig / tuplet /
+> grace / pitch disputes (244 abstained rows need eyes; decode hallucinates unclosed
+> `\tup3`, and tie-vs-slur is image judgment — spot-check found a printed second arc
+> the decode missed on benyururum p1_s02_w01). Remaining queue: 812 pending = 568
+> no-diff (skim/skip) + 244 abstained; user reviews the 325 drafts in the UI, then
+> `promote_labels.py --dir strips_nota`. **tup3 image pass (same day, user-requested):**
+> all 53 tup3-bearing rows adjudicated against the PNGs — every label-side `\tup3` is a
+> real printed "3" (13 rows, none lost), every decode-proposed NEW `\tup3` was a
+> hallucination (0/39 real, near-always triggered by a printed slur arc → add
+> "reject/flag unclosed or arc-adjacent `\tup3` inserts" to the decode-repair list).
+> 22 ok + 6 fix written `by=claude` (incl. gelse_o_suh s02_w00 rast sig → `\komaFlat b
+> \bakiyeSharp f`, the user's own s03_w00 precedent); 10 tie-disputed rows deliberately
+> left pending — printed-arc-vs-\tie is user judgment (the user writes `\tie` across
+> different-pitch arcs sometimes and not others; no textual rule works).
+> **tup3 image pass, part 2 — nota-REVIEW queue (same day, user-requested, label-side rows
+> only):** all 38 label-tup3 review rows adjudicated against PNGs → **9 ok + 11 fix
+> (`by=claude`) = 20 new promotable rows carrying ~34 real `\tup3` tokens** (vs 14 rows in
+> the whole accepted manifest — this more than doubles real triplet training data once
+> promoted); 9 bad (5 misaligned/shifted windows incl. a coda-region crop, 2 edition-prints-
+> quarters-not-triplets, 2 label content cut off at window edge — re-slice fodder); 9 left
+> pending on tie-calls/edge-checks. New findings: the "d"-shaped curl glyph = komaFlat
+> (reversed flat) — SymbTr wrote `\natural` where the page prints komaFlat on 3
+> ay_dalgalanirken rows (decode read it right, the acc-lesson again); one row's printed
+> THREE `a'4` vs SymbTr's two (10/8 usul sums confirm the page).
 
 Calibration probe (2026-07-15, superseded by the full run above):
 
@@ -191,6 +219,99 @@ engraver), then small ney-community mirrors (devletkorosu.com, erdincbal.com, ne
 None publishes a restrictive robots.txt (checked 2026-07-11); crawl politely (rate-limited,
 resumable, census-first) like `collect_notalar.py`; everything stays under gitignored
 `data/real/` (training data, never redistributed).
+
+### 1c. Targeted TUPLET collection (2026-07-17 — the tuplet-training-gap response)
+
+The exam froze with 4 `\tup3` gold and the manifest holds ~14 tup3 rows; the user called for
+collecting tuplet repertoire directly. Two new scripts:
+
+- **`scripts/rung3/find_tuplet_pieces.py`** — scans all 2,200 SymbTr txts for tuplet events
+  (same rule as `tools/render/rhythm.ts`: sounding event whose reduced Pay/Payda denominator
+  is divisible by 3) and crosses them with both sources' match state →
+  `data/real/rung3/tuplet_pieces.csv`. **459 tuplet-bearing pieces; 267 already collected**
+  (the 28% figure), 36 nota review-tier candidates uncollected, and — the big find — the
+  neyzen census still held ~7.6k never-downloaded PDFs (the 798-pdf round was makam-weighted,
+  not exhaustive).
+- **`scripts/rung3/collect_tuplets.py`** (match / download / export) — promotes the 36 nota
+  review rows to accept in `nota_matches.csv` (wrong matches cost yield only — emit content
+  alignment rejects them, never poisons labels), and name-scores the undownloaded neyzen
+  census against the FULL SymbTr makam pools, keeping rows whose best match is
+  tuplet-bearing (`tuplet_neyzen_matches.csv`: 252 accepts ≥0.85+margin, 96 review).
+  **Downloaded 2026-07-17: +39 nota + 257 neyzen = 293 new matched pieces (437 pages)**,
+  exported under `matched/` (60 brand-new SymbTr pieces / 860 tuplet groups; 164 pieces
+  now covered in a SECOND engraving style / 1,779 groups; 36 nota candidates / 452 groups).
+
+**The budget analysis that changed the plan (measured with the real tokenizer over all
+matched tuplet pieces):** 39.4% of tup3-bearing SINGLE measures exceed the 59-id budget
+alone (worst: 269 ids); 80.5% of 2-measure and 92.9% of 3-measure tup3 windows are over
+budget. So the planned `MEASURES_PER_STRIP=2` re-slice can NOT recover triplets — dense
+tuplet runs need 1-measure windows at most, and often less. Consequences:
+
+1. **`OMR_MEASURES_PER_STRIP` env knob** added to `page_to_strips.py` (default 3,
+   unchanged); the decode JSON now records `measures_per_strip` and the emitter's cache
+   check keys on it (old caches without the field read as 3).
+2. **Tuplet emit runs at `OMR_MEASURES_PER_STRIP=1`** into `strips_tup/` (labeler
+   checkpoint, `--pieces` = the 293 new stems only — strips_nota/exam untouched, no
+   un-promoted verdicts disturbed). k=1 makes 2,325 tup3 measures (3,384 `\tup3` groups,
+   1,317 measures in the new pieces) budget-eligible. **Decode OFFLOADED TO COLAB**
+   (user request, fanless-Mac rule): 35/437 pages decoded locally, the remaining 402 in
+   `data/colab/decode_pages_tup.txt` → `make_decode_zip.sh` (now takes an optional pages
+   file) rebuilt the 225 MB zip; `decode_pages_gpu.py` gained `--measures-per-strip`
+   (recorded in the JSONs; `--skip-existing` checks it) and the notebook cells carry the
+   flag. After the strips zip returns, re-run the same emit command — it reuses the
+   caches and finishes locally in minutes.
+   **EMIT DONE (2026-07-18, off 383 Colab k=1 caches):** 184/293 pieces ok, 1,310
+   accepted strips. Per the user's call, `strips_tup/` was then TRIMMED TO TUP3 ONLY
+   (non-tuplet volume is already sufficient; `.bak-full` backups beside each file):
+   **manifest = 78 tup3 strips / 114 `\tup3` groups** (pre-existing manifest total was
+   14 rows), **review queue = 147 tup3 rows / 205 groups** (nd_review 69, low_coverage
+   43, acc_disagreement 16, nav 16, sig_mismatch 3), audit sample 6. **Member-count
+   gate checked: all 114 accepted groups are properly closed `\tup3 …3 notes… \tupend`**
+   (0 two-member or unclosed groups; rule: a group with ≠3 note members never
+   auto-accepts — re-check on any future tuplet emit). Remaining levers in yield order:
+   row_unaligned 5,540 (k=1 strips are short → content search weaker; a k=2-with-budget-
+   fallback hybrid could recover), split_wide 1,546 + over_budget 906 (the dense tail =
+   the sub-measure fragment follow-up above). Promote path: adjudicate
+   `strips_tup/emit_review.csv` (+6-row audit), then `promote_labels.py --dir strips_tup`.
+   Review UI: `tup-full` (78) / `tup-review` (147) / `tup-audit` (6) tabs wired 2026-07-18.
+   UI same day: decode-draft `\tup3` strip is a checkbox (default OFF in tup-* queues, ON
+   elsewhere); lint shows real id cost (char-level tokenizer: note ≈ 1 id/char, `d''16`=5,
+   `\cmd`/`|`=1, +EOS) and warns OVER BUDGET >59 — over-budget corrections are unwinnable,
+   verdict `bad`.
+
+**Is this enough tuplet data? (assessed 2026-07-18)**
+
+- **Training: YES for Round 1** — completing the queues yields ~78 accepted + ~90–110
+  promotable review rows ≈ **~180 real tup3 strips / ~280 groups over 120 pieces, two
+  engraving styles**, incl. 28 accepted strips with ≥2 groups (the contiguous-run shape).
+  Combine with loader oversampling of these strips + the planned aggressive synthetic
+  tup3 oversampling. (Reference point: Round-0.5's 33% tup3 recall came from ~14 rows.)
+- **Exam: NOT automatically** — the frozen 311-strip exam still holds 4 tup3 gold, and
+  promoting ALL strips_tup pieces into training would leave nothing to measure with
+  (exam pieces never train). **Solution — tup3 exam extension via holdout:** hold ~10–12
+  tuplet-rich pieces OUT of the promote, spread over sources/makams (candidates from the
+  piece ranking: cok_yasa_ayse_ney, bu_son_sarkimda [mahur], Kurdilihicazkar_sirto,
+  huzun_zaman_zaman + _ney, canan_okuyor [acemasiran], dil_seni_sevmeyeni_ney,
+  ay_dalgalanirken, ben_guzele [mahur], gittin_biraktin_ney, dalinda_solarken [ussak],
+  sana_dun_bir_tepeden_ney). Their adjudicated strips (~30–50 tup3 gold ≥ the ~20/class
+  target) join the exam manifest instead of training (`promote_labels.py --exam` path,
+  extend testset.json piece list = a v2.1 freeze), and the adjudication is the same
+  review work — it does double duty as measurement. **Re-take the baseline including
+  the extension BEFORE Round 1** so tup3 progress is apples-to-apples.
+- **Blind spot that stays open:** the k=1 pool is biased toward measures sparse enough
+  for the 59-id budget; dense contiguous-triplet instrumentals (the 90+-group
+  sazsemaisi/longa pieces) still sit in the over_budget/split_wide drops — training AND
+  exam under-represent that hardest case until the sub-measure fragment follow-up lands.
+  Round-1 tup3 numbers speak for the common case only; say so in MODEL_EVAL.md when
+  reporting.
+3. **Sub-measure fragments = the designed follow-up** for the other 1,512 dense measures
+   (3,102 groups; 88% would fit as TWO fragments ≤112 ids): the slicer's `_split_wide`
+   gutter-cutting already produces clean fragment images — what's missing is fragment
+   LABELS. Design: labels-cli learns atom-level ranges (the `docToStrips` atom machinery
+   already exists TS-side), the emitter proposes the atom split by aligning each
+   fragment's decode against the measure's atom sequence, and the nd gate + review queue
+   dispose — the model proposes, never decides. Until then dense-measure fragments stay
+   dropped (`split_wide`).
 
 ## Steps 2+3 — BUILT + CALIBRATED (2026-07-12); provisional exam frozen, first real baseline taken
 
@@ -380,7 +501,10 @@ data/real/
 
 - **Slicer vs. TRT-style scans** (step 1b): the biggest unknown of the combined Round 1 —
   sample-check with `--debug` overlays before bulk download; timeboxed with a neyzen-only
-  fallback.
+  fallback. **Now measurable, not just eyeball-able (2026-07-19): the slicer hardening above
+  ships with `scripts/rung3/score_slicer.py` — run it after any slicer change / on any new
+  source's decode caches to get old-vs-new row-measure-count accuracy against SymbTr
+  alignment (caveat: its truth is biased toward the CACHED slicer's counts).**
 - **Alignment bugs poison labels silently** (step 3) — the round-trip + eyeball gate is
   mandatory per source before the first train. ✅ The gate already earned its keep: it caught
   the printed-signature convention and the written-vs-sounding bare-degree convention
@@ -470,11 +594,57 @@ data/real/
   a stem terminates at a notehead or beam), and (b) pad each cut a few px — TIGHT, so
   the margin never pulls in a neighboring note's head. The eyeball-20-crops gate before
   the bulk re-emit covers both.
+  **→ ✅ SLICER FIXED (2026-07-19), all of the above in `page_to_strips.py`; strips on
+  disk are UNCHANGED until the next re-slice.** What shipped:
+  - *True root of the w00 bug found*: `staff.x0/x1` came from the horizontally-OPENED
+    image — on a slightly skewed scan a staff line drifts across pixel rows, splitting
+    each row into runs shorter than the w/4 opening kernel, so the opened image loses the
+    line's left/right ends (measured: x0 pushed 70–490 px right; whole measures lost, not
+    just the clef). X-extent now comes from RAW ink at the detected line rows
+    (majority-of-lines vote, longest gap-tolerant run drops scan-border artifacts).
+  - *Barline vs stem/clef* (`detect_barlines`): gate 2 (notehead-fat blob in the staff
+    band, at the cluster CENTER) + new gate 3 = terminal-overshoot walk at the cluster's
+    longest-run column over a ±2.5 sp extended band: a stroke extending >0.5 sp past BOTH
+    outer lines is a clef/border artifact; past ONE line with a sustained-wide attachment
+    (≥0.5 sp wide over ≥0.2 sp of consecutive rows, within 1.5 sp of the line) is a stem
+    ending in a head/flag/beam. Thin one-sided overshoot of ANY length is kept — a hard
+    length cap was tried and rejected real volta-tick barlines; slur/tie crossings and
+    title-text collisions are also survived (the width run + nearness guards).
+  - *End snapping*: a bar detected within 0.7 sp of the staff end SNAPS to the end
+    (never a mid-clef measure 0 or sliver end measure); never-drop-first-window (a
+    too-narrow w00 merges forward or emits, never vanishes).
+  - *Clef+sig PREFIX span*: a leading span with NO notehead beyond the clef zone (repeat
+    bar printed right after the signature) is excluded from measure indexing but kept in
+    the w00 crop — it used to shift every strip's measure span by one (the +1 tail of the
+    dn histogram). Trade-off: a row-start measure holding only RESTS is mis-trimmed the
+    same way → dn recovery/review, never corrupted training labels.
+  - *Cut padding*: crops pad 6 px past enclosing barlines (w00: 15 px left margin);
+    `split_wide` gutter edges get no pad. Manifest schema unchanged (+ audit-only `pad`
+    field; `row_x0/row_x1/width` now describe the padded crop).
+  - *Tooling*: `--debug` overlay now color-codes REJECTED candidates (orange=fat blob,
+    purple=clef-like, yellow=blob-past-line, gray=x-range); NEW
+    `scripts/rung3/score_slicer.py` scores old-vs-new `row_measures` against the
+    emitter's SymbTr row alignment using the existing decode caches (CPU-only, no model)
+    and `--eyeball` writes contact sheets (docs' 3 bad w00 pages + worst regressions +
+    random w00s) to `data/real/rung3/slicer_eyeball/index.html`.
+  - *Measured (30-piece sample, 170 truth rows)*: exact row-measure-count rate 57.1% →
+    68.2%; false-positive tail (+1/+2 dn) 55 → 34 rows; 27 rows improved, 4 "regressed"
+    — 3 of them verified visually as the NEW slicer being right against alignment truth
+    that is biased toward the old counts (assign_rows seeds n from old row_measures ±2),
+    1 is a pathological typewriter page (title text fused to barlines) that goes to
+    review either way. Full-corpus score in `data/real/rung3/score_slicer.csv`.
+  - Caveats for the re-slice: staff-detection RECALL is untouched (e.g. keremkani p1
+    still loses rows whose 5-line group isn't found); truth-bias means the scorer
+    understates the improvement; the eyeball gate remains mandatory before the bulk
+    re-emit.
   **Tuplet training gap (user, 2026-07-17, recurring):** the model reads `\tup3` poorly
   and real data can't fix it (depletion above) — the synthetic re-render must OVERSAMPLE
   tuplets aggressively (well above corpus rate, incl. contiguous-triplet runs — the
   two-`\tupend`s-in-a-row shape from the decode-repair note), alongside the
-  rare-accidental and slur-distractor boosts. Derived signatures used to come out
+  rare-accidental and slur-distractor boosts. **→ REAL-DATA SIDE ADDRESSED same day, §1c:**
+  293 tuplet pieces collected from both sources; the budget analysis there shows the 2-measure
+  re-slice can't recover triplets (80% still over budget) — 1-measure windows + the
+  sub-measure fragment follow-up are the cure. Derived signatures used to come out
   in C..B letter order; real editions print flats B-E-A-D-G-C-F then sharps F-C-G-D-A-E-B.
   `deriveKeySignature` now sorts to the printed convention (packages/core/src/notation.ts),
   and ALL existing label files were batch-canonicalized 2026-07-16 (user-approved; ~404

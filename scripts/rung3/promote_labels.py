@@ -84,9 +84,16 @@ def load_piece_meta(matched: Path) -> dict[str, dict]:
                 makam = json.loads(lp.read_text()).get("makam", "")
         m = {"symbtr": Path(match["symbtr"]["file"]).stem, "makam": makam, "source": source}
         if stem in meta and meta[stem] != m:
-            raise SystemExit(f"ambiguous source stem {stem!r} under {matched} — cannot map piece metadata")
-        meta[stem] = m
-    return meta
+            # two different pieces sharing a download stem (e.g. same song title in two
+            # makams) — neither side is trustworthy by stem alone, so no row with this
+            # stem may promote (it lands in rejects as no_piece_meta)
+            print(f"WARNING: ambiguous source stem {stem!r} — rows with it will be rejected",
+                  file=sys.stderr)
+            meta[stem] = None
+            continue
+        if stem not in meta:
+            meta[stem] = m
+    return {k: v for k, v in meta.items() if v is not None}
 
 
 def read_csv(path: Path) -> list[dict]:

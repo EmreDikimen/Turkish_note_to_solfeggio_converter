@@ -669,16 +669,30 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   60 ids) over budget → row removed as unwinnable (promote_labels fixed to remove
   gate-failed audit fixes per its docstring). **Final exam manifest: 311 strips** (tie 127,
   \tup3 still 4; class counts in docs/RUNG3.md).
-- ⏳ **Next: (1) COMMIT
-  `testset.json` + sync = THE FREEZE; (2) re-take baseline (`rung22-stemfix-best`) on the
-  311-strip exam per-class × per-source (× photo arm when the printed-page photos land —
-  PDFs staged in `data/real/rung3/photo_exam_pdfs/`); (3) USER (optional, training quality):
-  nota-full — 125 hand-verdicted; **325 rule-drafted** (`rule_fix_notafull.py`: decode-side
-  ties/dur-respells/repeat-marks only, by=rule 174 ≈84% exact / by=rule-lowconf 151) —
-  review drafts in the UI, hand-work the 244 abstained sig/tuplet/grace/pitch disputes,
-  568 no-diff skim/skip, then `promote_labels.py --dir strips_nota`;
-  (4) Round-1 fine-tune from BASE weights, PRE-REGISTERED ship criteria, checkpoint selection
-  on val only (exam taken once at the end).** Round-1 prerequisites: multi-pool loader in
+- ✅ **Rung 3 — nota-full quality tier + tup3 exam extension = EXAM v2.1 FROZEN (2026-07-19):**
+  tup3 review queue fully adjudicated by hand (147: 102 fix / 35 ok / 10 bad) + full 78-strip
+  audit (70 ok / 7 fix / 1 bad — 10% auto-accept error, best pool yet). nota-full tier:
+  rule drafts skimmed, +38 model-drafted verdicts (16 mechanical: **meter-sum rule — the label
+  won ALL 15 dur-only disputes, decode durations break the measure meter every time**; 22
+  image-verified sig verdicts: decode won 17 crop-cut cases, label won 5 where the decode
+  hallucinated an extra `\komaFlat b`-type sig entry — superset sig reads are suspect, subset/
+  empty reads are usually crop truth). Promotes applied: **strips_nota 1,742 → 1,758** (420
+  audit fixes in place, 27 promoted, 11 known-bad removed, 24 over-budget → re-slice pool);
+  **tup3 exam/training split**: 10 holdout tuplet pieces (21 stems, all engraving copies;
+  kemani_sebuh sirto treated as one 2-id cluster) moved to the exam — **exam manifest
+  311 → 352 strips, tup3 gold 4 → 55 groups**, training keeps strips_tup 172 strips /
+  208 groups; holdout stems poisoned (exam=1) in the strips_nota queue too.
+  `testset.json` = **v2.1** (45 piece entries). promote_labels now tolerates ambiguous
+  source stems (2 title-collision stems warned + rejected, e.g. `bir_nigah_et_ney` = two
+  different songs; their shared `data/real/strips/` page dir is a latent hazard for the
+  re-slice). Remaining nota-full pending disputes: 126 (pitch/accidental content — post-Round-1
+  re-audit territory).
+- ⏳ **Next: (1) re-take baseline (`rung22-stemfix-best`) on the 352-strip exam v2.1
+  per-class × per-source (× photo arm when the printed-page photos land — PDFs staged in
+  `data/real/rung3/photo_exam_pdfs/`); (2) Round-1 fine-tune, PRE-REGISTERED ship criteria,
+  checkpoint selection on val only (exam taken once at the end); init from BASE weights per
+  the pre-registered plan (user proposed init from rung22-stemfix — decide at launch,
+  carry-mode re-render argues for base).** Round-1 prerequisites: multi-pool loader in
   train.py + the synthetic re-render batch (empty-`\sig` fix, carry-mode rendering,
   hicaz-family sig coverage, slurs as unlabeled distractors, **aggressive `\tup3`
   oversampling incl. contiguous-triplet runs**, rare-class komaSharp/kucukSharp oversampling,
@@ -728,4 +742,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-17 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively). LATER SAME DAY — targeted tuplet collection (docs/RUNG3.md §1c): SymbTr scanned for tuplet pieces (459; 267 already held), **293 NEW tuplet pieces downloaded** (36 nota review-promotes + 257 neyzen from the never-downloaded census tail; 60 brand-new SymbTr pieces + 164 second-style copies), budget analysis shows tup3 needs 1-measure windows (`OMR_MEASURES_PER_STRIP` knob added; 2,325 tup3 measures/3,384 groups fit at k=1; 1,512 dense measures await the sub-measure fragment follow-up); k=1 decode ran on Colab per the fanless-Mac rule. 2026-07-18: EMIT DONE + strips_tup TRIMMED TO TUP3-ONLY (user call): **78 accepted tup3 strips / 114 groups (all groups verified = exactly 3 closed notes) + 147-row tup3 review queue / 205 groups**; review-UI tabs tup-full/tup-review/tup-audit wired. Sufficiency assessment (docs/RUNG3.md §1c): training = YES for Round 1 (~180 rows / ~280 groups after adjudication + synthetic oversampling); exam = NO without action — **hold ~10–12 tuplet pieces OUT of the promote as a tup3 exam extension (~30–50 gold, v2.1 freeze) and re-baseline before Round 1**; dense contiguous-run instrumentals stay a blind spot until sub-measure fragments)._
+_Last updated: 2026-07-19 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively). LATER SAME DAY — targeted tuplet collection (docs/RUNG3.md §1c): SymbTr scanned for tuplet pieces (459; 267 already held), **293 NEW tuplet pieces downloaded** (36 nota review-promotes + 257 neyzen from the never-downloaded census tail; 60 brand-new SymbTr pieces + 164 second-style copies), budget analysis shows tup3 needs 1-measure windows (`OMR_MEASURES_PER_STRIP` knob added; 2,325 tup3 measures/3,384 groups fit at k=1; 1,512 dense measures await the sub-measure fragment follow-up); k=1 decode ran on Colab per the fanless-Mac rule. 2026-07-18: EMIT DONE + strips_tup TRIMMED TO TUP3-ONLY (user call): **78 accepted tup3 strips / 114 groups (all groups verified = exactly 3 closed notes) + 147-row tup3 review queue / 205 groups**; review-UI tabs tup-full/tup-review/tup-audit wired. Sufficiency assessment (docs/RUNG3.md §1c): training = YES for Round 1 (~180 rows / ~280 groups after adjudication + synthetic oversampling); exam = NO without action — **hold ~10–12 tuplet pieces OUT of the promote as a tup3 exam extension (~30–50 gold, v2.1 freeze) and re-baseline before Round 1**; dense contiguous-run instrumentals stay a blind spot until sub-measure fragments)._

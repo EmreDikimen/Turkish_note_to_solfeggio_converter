@@ -1,6 +1,6 @@
 {
  "generatedBy": "scripts/rung3/build_testset.py",
- "status": "multi-source",
+ "status": "multi-source v2.1 (tup3 extension frozen)",
  "date": "2026-07-15",
  "params": {
   "n": 25,
@@ -456,17 +456,265 @@
     "\\komaFlat": 7,
     "\\bakiyeSharp": 8
    }
+  },
+  {
+   "stem": "Kurdilihicazkar_sirto_kemani_sebuh_ney",
+   "symbtr_file": "kurdilihicazkar--sirto--nimsofyan----kemani_sebuh.txt",
+   "source": "neyzen",
+   "makam": "kurdilihicazkar",
+   "pages": [
+    "data/real/images/kurdilihicazkar/Kurdilihicazkar_sirto_kemani_sebuh_ney_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 112
+  },
+  {
+   "stem": "askin_o_sihirli_elini_hisseder_gibiyim",
+   "symbtr_file": "segah--sarki--duyek--askin_o_sihirli--erol_sayan.txt",
+   "source": "neyzen",
+   "makam": "segah",
+   "pages": [
+    "data/real/images/segah/askin_o_sihirli_elini_hisseder_gibiyim_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 48
+  },
+  {
+   "stem": "askin_o_sihirli_elini_hisseder_gibiyim_nota",
+   "symbtr_file": "segah--sarki--duyek--askin_o_sihirli--erol_sayan.txt",
+   "source": "nota",
+   "makam": "segah",
+   "pages": [
+    "data/real/images/segah/askin_o_sihirli_elini_hisseder_gibiyim_nota_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 48
+  },
+  {
+   "stem": "ay_dalgalanirken",
+   "symbtr_file": "kurdilihicazkar--sarki--turkaksagi--ay_dalgalanirken--artaki_candan.txt",
+   "source": "neyzen",
+   "makam": "kurdilihicazkar",
+   "pages": [
+    "data/real/images/kurdilihicazkar/ay_dalgalanirken_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 48
+  },
+  {
+   "stem": "ay_dalgalanirken_sularin_oynak_izindepdf1647174289_nota",
+   "symbtr_file": "kurdilihicazkar--sarki--turkaksagi--ay_dalgalanirken--artaki_candan.txt",
+   "source": "nota",
+   "makam": "kurdilihicazkar",
+   "pages": [
+    "data/real/images/kurdilihicazkar/ay_dalgalanirken_sularin_oynak_izindepdf1647174289_nota_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 48
+  },
+  {
+   "stem": "elbet_gonullerde_ney",
+   "symbtr_file": "nevabuselik--sarki--duyek--elbet_gonullerde--sadettin_kaynak.txt",
+   "source": "neyzen",
+   "makam": "neva_buselik",
+   "pages": [
+    "data/real/images/neva_buselik/elbet_gonullerde_ney_p1.png",
+    "data/real/images/neva_buselik/elbet_gonullerde_ney_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 64
+  },
+  {
+   "stem": "elbet_gonullerde_sabah_olacakpdf1567931546_nota",
+   "symbtr_file": "nevabuselik--sarki--duyek--elbet_gonullerde--sadettin_kaynak.txt",
+   "source": "nota",
+   "makam": "nevabuselik",
+   "pages": [
+    "data/real/images/nevabuselik/elbet_gonullerde_sabah_olacakpdf1567931546_nota_p1.png",
+    "data/real/images/nevabuselik/elbet_gonullerde_sabah_olacakpdf1567931546_nota_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 64
+  },
+  {
+   "stem": "elbet_gonullerde_v2",
+   "symbtr_file": "nevabuselik--sarki--duyek--elbet_gonullerde--sadettin_kaynak.txt",
+   "source": "neyzen",
+   "makam": "neva_buselik",
+   "pages": [
+    "data/real/images/neva_buselik/elbet_gonullerde_v2_p1.png",
+    "data/real/images/neva_buselik/elbet_gonullerde_v2_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 64
+  },
+  {
+   "stem": "etmedin_bir_lahza",
+   "symbtr_file": "sehnaz--sarki--devrihindi--etmedin_bir_lahza--dellalzade.txt",
+   "source": "neyzen",
+   "makam": "sehnaz",
+   "pages": [
+    "data/real/images/sehnaz/etmedin_bir_lahza_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 40
+  },
+  {
+   "stem": "etmedin_bir_lahza_v2",
+   "symbtr_file": "sehnaz--sarki--devrihindi--etmedin_bir_lahza--dellalzade.txt",
+   "source": "neyzen",
+   "makam": "sehnaz",
+   "pages": [
+    "data/real/images/sehnaz/etmedin_bir_lahza_v2_p1.png",
+    "data/real/images/sehnaz/etmedin_bir_lahza_v2_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 40
+  },
+  {
+   "stem": "gittin_biraktin_beni_gurbet_ellerde_nota",
+   "symbtr_file": "kurdilihicazkar--sarki--duyek--gittin_biraktin--emin_ongan.txt",
+   "source": "nota",
+   "makam": "kurdilihicazkar",
+   "pages": [
+    "data/real/images/kurdilihicazkar/gittin_biraktin_beni_gurbet_ellerde_nota_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 64
+  },
+  {
+   "stem": "gittin_biraktin_ney",
+   "symbtr_file": "kurdilihicazkar--sarki--duyek--gittin_biraktin--emin_ongan.txt",
+   "source": "neyzen",
+   "makam": "kurdilihicazkar",
+   "pages": [
+    "data/real/images/kurdilihicazkar/gittin_biraktin_ney_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 64
+  },
+  {
+   "stem": "hicazkar_saz_semai_sebuh_efendi_kemani",
+   "symbtr_file": "hicazkar--sirto--nimsofyan--kemani_sebuh--.txt",
+   "source": "neyzen",
+   "makam": "hicazkar",
+   "pages": [
+    "data/real/images/hicazkar/hicazkar_saz_semai_sebuh_efendi_kemani_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 96
+  },
+  {
+   "stem": "hicazkar_sirto_sebuh_efendi_kemani",
+   "symbtr_file": "hicazkar--sirto--nimsofyan--kemani_sebuh--.txt",
+   "source": "neyzen",
+   "makam": "hicazkar",
+   "pages": [
+    "data/real/images/hicazkar/hicazkar_sirto_sebuh_efendi_kemani_p1.png",
+    "data/real/images/hicazkar/hicazkar_sirto_sebuh_efendi_kemani_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 96
+  },
+  {
+   "stem": "muhayyerkurdi_p_astik_aga",
+   "symbtr_file": "muhayyerkurdi--pesrev--devrikebir----asdik_aga.txt",
+   "source": "neyzen",
+   "makam": "muhayyerkurdi",
+   "pages": [
+    "data/real/images/muhayyerkurdi/muhayyerkurdi_p_astik_aga_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 56
+  },
+  {
+   "stem": "nikriz_zeybek_cemil_bey_tanburi_no_1",
+   "symbtr_file": "nikriz--zeybek--aksak----tanburi_cemil_bey.txt",
+   "source": "neyzen",
+   "makam": "nikriz",
+   "pages": [
+    "data/real/images/nikriz/nikriz_zeybek_cemil_bey_tanburi_no_1_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 37
+  },
+  {
+   "stem": "nikriz_zeybek_cemil_bey_tanburi_no_2",
+   "symbtr_file": "nikriz--zeybek--aksak----tanburi_cemil_bey.txt",
+   "source": "neyzen",
+   "makam": "nikriz",
+   "pages": [
+    "data/real/images/nikriz/nikriz_zeybek_cemil_bey_tanburi_no_2_p1.png",
+    "data/real/images/nikriz/nikriz_zeybek_cemil_bey_tanburi_no_2_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 37
+  },
+  {
+   "stem": "nisaburek_pesrev_fahri_kopuz_udi",
+   "symbtr_file": "nisaburek--pesrev--duyek----fahri_kopuz.txt",
+   "source": "neyzen",
+   "makam": "nisaburek",
+   "pages": [
+    "data/real/images/nisaburek/nisaburek_pesrev_fahri_kopuz_udi_p1.png",
+    "data/real/images/nisaburek/nisaburek_pesrev_fahri_kopuz_udi_p2.png",
+    "data/real/images/nisaburek/nisaburek_pesrev_fahri_kopuz_udi_p3.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 108
+  },
+  {
+   "stem": "suzdukce_guzel_gozlerini_kalbimi_yaktin_nota",
+   "symbtr_file": "saba--sarki--curcuna--suzdukce_guzel--cevdet_cagla.txt",
+   "source": "nota",
+   "makam": "saba",
+   "pages": [
+    "data/real/images/saba/suzdukce_guzel_gozlerini_kalbimi_yaktin_nota_p1.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 63
+  },
+  {
+   "stem": "suzdukce_guzel_ney",
+   "symbtr_file": "saba--sarki--curcuna--suzdukce_guzel--cevdet_cagla.txt",
+   "source": "neyzen",
+   "makam": "saba",
+   "pages": [
+    "data/real/images/saba/suzdukce_guzel_ney_p1.png",
+    "data/real/images/saba/suzdukce_guzel_ney_p2.png"
+   ],
+   "extension": "tup3-v2.1",
+   "sig": "",
+   "measures": 63
   }
  ],
  "per_class_gold": {
-  "\\komaSharp": 44,
-  "\\bakiyeSharp": 361,
-  "\\kucukSharp": 44,
-  "\\buyukSharp": 0,
-  "\\komaFlat": 105,
-  "\\bakiyeFlat": 148,
-  "\\kucukFlat": 47,
-  "\\buyukFlat": 0
+  "bakiyeSharp": 141,
+  "kucukFlat": 70,
+  "bakiyeFlat": 66,
+  "komaFlat": 48,
+  "kucukSharp": 31,
+  "komaSharp": 18,
+  "buyukSharp": 3
  },
  "floors": {
   "\\komaSharp": 15,
@@ -814,6 +1062,33 @@
    "ulfetin_gecti_efendim_arasi_nota (missing_pages)",
    "dil_i_mahzunumu_sad_eyle_bir_gun_nota (missing_pages)",
    "bu_yaz_gecen_gunlerimiz_hatirindan_cikmasin_nota (missing_pages)"
+  ]
+ },
+ "tup3_gold_groups": 55,
+ "date_v2_1": "2026-07-19",
+ "v2_1_extension": {
+  "note": "tup3 exam extension: 10 holdout tuplet pieces (+1 existing piece's tup rows), all engraving copies listed; strips promoted via promote_labels --exam from strips_tup adjudication",
+  "stems_added": [
+   "Kurdilihicazkar_sirto_kemani_sebuh_ney",
+   "askin_o_sihirli_elini_hisseder_gibiyim",
+   "askin_o_sihirli_elini_hisseder_gibiyim_nota",
+   "ay_dalgalanirken",
+   "ay_dalgalanirken_sularin_oynak_izindepdf1647174289_nota",
+   "elbet_gonullerde_ney",
+   "elbet_gonullerde_sabah_olacakpdf1567931546_nota",
+   "elbet_gonullerde_v2",
+   "etmedin_bir_lahza",
+   "etmedin_bir_lahza_v2",
+   "gittin_biraktin_beni_gurbet_ellerde_nota",
+   "gittin_biraktin_ney",
+   "hicazkar_saz_semai_sebuh_efendi_kemani",
+   "hicazkar_sirto_sebuh_efendi_kemani",
+   "muhayyerkurdi_p_astik_aga",
+   "nikriz_zeybek_cemil_bey_tanburi_no_1",
+   "nikriz_zeybek_cemil_bey_tanburi_no_2",
+   "nisaburek_pesrev_fahri_kopuz_udi",
+   "suzdukce_guzel_gozlerini_kalbimi_yaktin_nota",
+   "suzdukce_guzel_ney"
   ]
  }
 }

@@ -26,6 +26,7 @@ dataloader); checkpoints DO go to Drive so a killed session resumes with --resum
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import random
@@ -44,22 +45,27 @@ from modeling import MODEL_ID, load_model_and_processor, save_model
 
 
 class AugmentedStrips:
-    """StripDataset + augmentation: PIL -> numpy -> Augmenter -> PIL (what collate expects)."""
+    """(strip, augment?) items -> (PIL image, label) pairs (what collate expects).
 
-    def __init__(self, ds: StripDataset, augment=None):
-        self.ds = ds
+    The per-item flag is the Round-1 multi-pool rule: synthetic strips get the full input-
+    realism Augmenter, real strips are ALREADY in the input domain and train clean unless
+    --augment-real (double-degrading a blurry nota scan buries its signal)."""
+
+    def __init__(self, items: list, augment=None):
+        self.items = items  # list[(Strip, bool)]
         self.augment = augment
 
     def __len__(self) -> int:
-        return len(self.ds)
+        return len(self.items)
 
     def __getitem__(self, i: int):
         from PIL import Image
 
-        image, label = self.ds[i]
-        if self.augment is not None:
+        strip, aug = self.items[i]
+        image = Image.open(strip.image_path).convert("RGB")
+        if aug and self.augment is not None:
             image = Image.fromarray(self.augment(np.asarray(image)))
-        return image, label
+        return image, strip.label
 
 
 def worker_init(worker_id: int) -> None:
@@ -120,6 +126,18 @@ def main() -> int:
     ap.add_argument("--save-every", type=int, default=500, help="refresh <out-dir>/last")
     ap.add_argument("--log-every", type=int, default=25)
     ap.add_argument("--num-workers", type=int, default=0, help="0 on the Mac (spawn quirks); 2 on Colab")
+    ap.add_argument("--real-dir", action="append", default=[], metavar="DIR[:REPEAT]",
+                    help="real-strip pool (dir with manifest.jsonl, e.g. data/real/rung3/strips_nota); "
+                         "':N' repeats the pool's train strips N times (pool-level oversampling); "
+                         "repeatable. Pools are split by PIECE via a stable hash so the same piece "
+                         "lands on the same side in every pool")
+    ap.add_argument("--real-val-frac", type=float, default=0.10,
+                    help="fraction of each real pool's pieces held out as real-val")
+    ap.add_argument("--oversample-tup", type=int, default=1,
+                    help="extra repeat factor for train strips whose label contains \\tup3 "
+                         "(applies to every pool, synthetic included)")
+    ap.add_argument("--augment-real", action="store_true",
+                    help="run the Augmenter on real strips too (default: real strips train clean)")
     ap.add_argument("--no-augment", action="store_true")
     ap.add_argument("--photo-share", type=float, default=None, help="override augment.PHOTO_SHARE")
     ap.add_argument("--limit-train", type=int, default=None, help="smoke tests only")
@@ -148,12 +166,40 @@ def main() -> int:
     if args.limit_val:
         val_ds.strips = val_ds.strips[: args.limit_val]
 
+    train_items = [(s, True) for s in train_ds.strips]
+    val_items = [(s, False) for s in val_ds.strips]
+    real_val_items: list = []
+    synth_val_pieces = set(split["val_pieces"])
+    for spec in args.real_dir:
+        path, _, rep = spec.partition(":")
+        rep = int(rep) if rep else 1
+        rds = StripDataset(path)
+        check_token_drift(rds)
+        # split by piece with a STABLE hash: the same piece hashes to the same side in every
+        # pool (pieces recur across pools/engravings — a piece must never be train in one
+        # pool and val in another). Synthetic-val pieces are also forced to the val side.
+        def is_val(piece: str) -> bool:
+            if piece in synth_val_pieces:
+                return True
+            h = int(hashlib.md5(piece.encode()).hexdigest(), 16)
+            return (h % 1000) < args.real_val_frac * 1000
+        tr = [s for s in rds.strips if not is_val(s.piece)]
+        va = [s for s in rds.strips if is_val(s.piece)]
+        train_items += [(s, args.augment_real) for s in tr] * rep
+        real_val_items += [(s, False) for s in va]
+        print(f"   real pool {path}: {len(tr)} train x{rep} / {len(va)} val strips")
+    if args.oversample_tup > 1:
+        extra = [it for it in train_items if "\\tup3" in it[0].label]
+        train_items += extra * (args.oversample_tup - 1)
+        print(f"   tup3 oversample x{args.oversample_tup}: +{len(extra) * (args.oversample_tup - 1)} strips")
+
     augment = None
     if not args.no_augment:
         from augment import Augmenter
 
         augment = Augmenter(seed=args.seed, **({"photo_share": args.photo_share} if args.photo_share is not None else {}))
-    print(f"== data: {len(train_ds)} train / {len(val_ds)} val strips; augment={'on' if augment else 'OFF'}; device={device}")
+    print(f"== data: {len(train_items)} train / {len(val_items)} synth-val / {len(real_val_items)} real-val strips; "
+          f"augment={'on' if augment else 'OFF'}; device={device}")
 
     # ---- model (resume = reload our own last checkpoint, weights already extended) ------------
     source = str(out_dir / "last") if args.resume else args.model
@@ -165,14 +211,18 @@ def main() -> int:
 
     collate_fn = partial(collate, processor=processor, tokenizer=tok)
     train_loader = DataLoader(
-        AugmentedStrips(train_ds, augment), batch_size=args.batch_size, shuffle=True,
+        AugmentedStrips(train_items, augment), batch_size=args.batch_size, shuffle=True,
         num_workers=args.num_workers, worker_init_fn=worker_init, collate_fn=collate_fn,
         drop_last=True, persistent_workers=args.num_workers > 0,
     )
     val_loader = DataLoader(
-        AugmentedStrips(val_ds, None), batch_size=args.batch_size, shuffle=False,
+        AugmentedStrips(val_items, None), batch_size=args.batch_size, shuffle=False,
         num_workers=0, collate_fn=collate_fn,
     )
+    real_val_loader = DataLoader(
+        AugmentedStrips(real_val_items, None), batch_size=args.batch_size, shuffle=False,
+        num_workers=0, collate_fn=collate_fn,
+    ) if real_val_items else None
 
     # ---- optimizer / schedule / AMP ----------------------------------------------------------
     optim = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -239,10 +289,22 @@ def main() -> int:
 
         if step % args.eval_every == 0 or step == args.max_steps:
             val_loss = evaluate(model, val_loader, device, autocast_ctx)
-            improved = val_loss < best_val
-            best_val = min(best_val, val_loss)
-            print(f"   step {step:5d}  VAL loss {val_loss:.4f}{'  (new best)' if improved else ''}")
-            log({"step": step, "val_loss": round(val_loss, 5), "best": improved})
+            row = {"step": step, "val_loss": round(val_loss, 5)}
+            select = val_loss
+            if real_val_loader is not None:
+                real_val = evaluate(model, real_val_loader, device, autocast_ctx)
+                row["val_real"] = round(real_val, 5)
+                # checkpoint selection = strip-count-weighted mean of both val pools (still
+                # "val only" — the exam is never consulted)
+                n_s, n_r = len(val_items), len(real_val_items)
+                select = (val_loss * n_s + real_val * n_r) / (n_s + n_r)
+                row["val_mix"] = round(select, 5)
+            improved = select < best_val
+            best_val = min(best_val, select)
+            row["best"] = improved
+            extra = f"  real {row['val_real']:.4f}  mix {row['val_mix']:.4f}" if "val_real" in row else ""
+            print(f"   step {step:5d}  VAL loss {val_loss:.4f}{extra}{'  (new best)' if improved else ''}")
+            log(row)
             if improved:
                 save("best")
 

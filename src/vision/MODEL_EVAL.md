@@ -340,3 +340,23 @@ stopped at 700).
 - **Scope guard:** this checkpoint only ever feeds `decode_page.py`/the emitter
   (`--checkpoint data/checkpoints/rung3-labeler --onnx-dir data/checkpoints/rung3-labeler-onnx`).
   No browser gate, never in `apps/web/public/models/`; Round 1 still trains from BASE.
+
+## Rung 3 — exam v2.1 BASELINE (2026-07-20): 64.1% AEU on the full 352-strip real exam
+
+- **What:** `rung22-stemfix-best` (synthetic-only, unchanged) on the frozen exam v2.1
+  (`data/real/rung3/strips_exam_v2/`, 352 strips: v2's 311 + the tup3 extension — 10 holdout
+  tuplet pieces, tup3 gold 4 → 55 groups / 38 strips). This supersedes both earlier baselines
+  (83.3% on 33 strips, ALL LOW-N; the 311-strip retake never ran) as THE pre-Round-1 reference.
+- **Headline: mean per-class AEU accidental accuracy 64.1% (7/8 present; \buyukFlat absent,
+  \komaSharp 18 / \buyukSharp 3 gold = LOW-N), SER 0.147, exact-match 17.3%** (352 strips,
+  free-running, id-space alignment).
+- **Per-source:** neyzen 74 strips — 72.4% / 0.075 / 39.2%; nota 278 strips — 60.0% / 0.167 /
+  11.5% (nota engravings are the harder, blurrier tail — consistent with the sharpness analysis).
+- **The tup3 number Round 1 must move: recall 92.7%, precision 15.1%** — the synthetic-only
+  model hallucinates `\tup3`/`\tupend` on ordinary 8th/16th figures all over real pages
+  (I=919 dominates the SER). Also weak: `\kucukSharp` recall 22.6% (n=31), `\kucukFlat` 51.4%,
+  `\volta1` 25.0%, `\tie` 66.2/61.1% (slur confusion both directions).
+- **Honesty:** matched-piece exam = an upper bound (emit-alignable pages only); tup3 gold is
+  common-case k=1 material — dense contiguous-run instrumentals stay unmeasured until
+  sub-measure fragments (docs/RUNG3.md §1c); eval row appended to
+  `data/checkpoints/rung22-stemfix-best/eval.jsonl`.

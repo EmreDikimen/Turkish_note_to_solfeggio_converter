@@ -5,8 +5,15 @@ WHAT: run a fine-tuned checkpoint over held-out strips (val pieces of data/split
 greedy-decode each image, align prediction to ground truth in ID space (Levenshtein), and
 report, per tracked token (the 8 AEU accidentals first, then \\natural / \\sig / repeat tokens
 / `|`): recall ("accuracy" = of the gold occurrences, how many the model got in place),
-precision (of the predicted occurrences, how many were right), plus corpus SER
+precision (of the predicted occurrences, how many were right), and F1, plus corpus SER
 ((S+D+I)/ref-len) and the exact-match rate.
+
+Two Step-4.0 metrics report ALONGSIDE the recall headline (docs/RUNG3.md Step 4.0):
+  - mean per-class AEU **F1** — the headline is recall-only and hides accidental
+    hallucination (a spurious koma is a real pitch error); F1 is the honest single number.
+  - **arc-triggered false-\\tup3 rate** — of strips whose gold has \\tie but no \\tup3, the
+    fraction whose decode emits a \\tup3 (a slur/tie arc misread as a triplet, the damaging
+    directional error), reported beside the same rate on neither-token strips.
 
 WHY alignment, not counting: a strip where the model drops one note shifts everything after
 it; naive position-wise comparison would count the whole tail wrong. Levenshtein alignment
@@ -106,12 +113,22 @@ def main() -> int:
     print(f"== eval: {len(ds)} {side} strips, checkpoint {args.checkpoint}, device {device}")
 
     tracked_ids = {tok.convert_tokens_to_ids(t): t for t in TRACKED}
+    tup3_id = tok.convert_tokens_to_ids("\\tup3")
+    tie_id = tok.convert_tokens_to_ids("\\tie")
     gold = Counter()   # per-token gold occurrences
     hit = Counter()    # aligned exact matches
     fp = Counter()     # predicted where gold has something else / nothing
     S = D = I = N = 0
     exact = 0
     shown = 0
+    # Arc-triggered false-\tup3 metric (Step 4.0 pre-registered, docs/RUNG3.md): the damaging
+    # failure is a printed slur/tie arc read as a triplet. Per STRIP (presence, not count):
+    #   arc   = gold has \tie but NO \tup3 → the arc-bearing strips a \tup3 must never fire on
+    #   noarc = gold has neither → the clean baseline firing rate
+    # numerator each = strips whose decode emits ANY \tup3. The split separates "learned what a
+    # triplet looks like" from "stopped firing on arcs specifically".
+    arc_denom = arc_num = 0
+    noarc_denom = noarc_num = 0
     # Per-source parallel counters (Rung 3: a real-page exam reports neyzen/nota/... separately —
     # the style-overfit check once two engraving sources exist).
     by_src: dict[str, dict] = {}
@@ -132,6 +149,13 @@ def main() -> int:
                     got_ids = got_ids[1:]
                 hyp = strip_special(got_ids, tok)
                 ref = strip_special(tok(label, add_special_tokens=True).input_ids, tok)
+                if tup3_id not in ref:  # only strips the gold says have NO triplet
+                    if tie_id in ref:
+                        arc_denom += 1
+                        arc_num += tup3_id in hyp
+                    else:
+                        noarc_denom += 1
+                        noarc_num += tup3_id in hyp
                 st = src_stats(ds.strips[at + k].source)
                 st["n"] += 1
                 N += len(ref)
@@ -176,26 +200,38 @@ def main() -> int:
     # ---- report ------------------------------------------------------------------------------
     LOW_N = 30  # below this many gold occurrences a per-class number is statistically weak
 
-    print(f"\n\n{'token':<14}{'gold':>7}{'recall':>9}{'precision':>11}")
+    print(f"\n\n{'token':<14}{'gold':>7}{'recall':>9}{'precision':>11}{'f1':>8}")
     per_class: dict[str, dict] = {}
     for tid, name in tracked_ids.items():
         g, h, f = gold[tid], hit[tid], fp[tid]
         rec = h / g if g else None
         prec = h / (h + f) if (h + f) else None
-        per_class[name] = {"gold": g, "recall": rec, "precision": prec}
+        f1 = (2 * prec * rec / (prec + rec) if prec and rec else 0.0) if g else None
+        per_class[name] = {"gold": g, "recall": rec, "precision": prec, "f1": f1}
         fmt = lambda v: f"{v:8.1%}" if v is not None else "       —"
         marker = ("  (absent from this eval)" if g == 0
                   else f"  LOW-N ({g} gold)" if name in AEU and g < LOW_N else "")
-        print(f"{name:<14}{g:>7}{fmt(rec)} {fmt(prec)}{marker}")
+        print(f"{name:<14}{g:>7}{fmt(rec)} {fmt(prec)}{fmt(per_class[name]['f1'])}{marker}")
 
     aeu_recalls = [per_class[t]["recall"] for t in AEU if per_class[t]["recall"] is not None]
+    aeu_f1s = [per_class[t]["f1"] for t in AEU if per_class[t]["f1"] is not None]
     headline = sum(aeu_recalls) / len(aeu_recalls) if aeu_recalls else float("nan")
+    # Mean per-class AEU F1 (Step 4.0: reported ALONGSIDE the recall headline, which is
+    # recall-only and hides accidental hallucination — a spurious koma is a real pitch error).
+    headline_f1 = sum(aeu_f1s) / len(aeu_f1s) if aeu_f1s else float("nan")
     ser = (S + D + I) / max(1, N)
     weak = [t for t in AEU if 0 < per_class[t]["gold"] < LOW_N]
-    print(f"\n== HEADLINE  mean per-class AEU accidental accuracy: {headline:.1%}  (over {len(aeu_recalls)}/8 classes present)")
+    print(f"\n== HEADLINE  mean per-class AEU accidental accuracy (recall): {headline:.1%}  (over {len(aeu_recalls)}/8 classes present)")
+    print(f"== MEAN F1   mean per-class AEU F1: {headline_f1:.1%}  (over {len(aeu_f1s)}/8 classes present)")
     if weak:
         print(f"   (classes with gold<{LOW_N} are statistically weak: {', '.join(weak)})")
     print(f"== SER {ser:.3f}  (S={S} D={D} I={I} / N={N})   exact-match {exact}/{len(ds)} = {exact/len(ds):.1%}")
+
+    # Arc-triggered false-\tup3 (Step 4.0 floor: arc rate <= 10%; reported beside the neither rate).
+    arc_rate = arc_num / arc_denom if arc_denom else float("nan")
+    noarc_rate = noarc_num / noarc_denom if noarc_denom else float("nan")
+    print(f"== ARC-\\tup3  gold-has-\\tie-no-\\tup3: {arc_num}/{arc_denom} = {arc_rate:.1%} decode a false \\tup3"
+          f"   |   neither-token: {noarc_num}/{noarc_denom} = {noarc_rate:.1%}")
 
     # Per-source block (Rung 3): once real strips are in the mix, each engraving source gets
     # its own headline — the style-overfit check, and the honest real-page number.
@@ -221,7 +257,10 @@ def main() -> int:
 
     row = {"date": date.today().isoformat(), "checkpoint": str(args.checkpoint), "side": side,
            "strips_dir": str(args.strips_dir),
-           "n": len(ds), "headline_aeu": headline, "ser": ser, "exact": exact / len(ds),
+           "n": len(ds), "headline_aeu": headline, "headline_f1": headline_f1,
+           "ser": ser, "exact": exact / len(ds),
+           "arc_tup3": {"arc_num": arc_num, "arc_denom": arc_denom, "arc_rate": arc_rate,
+                        "noarc_num": noarc_num, "noarc_denom": noarc_denom, "noarc_rate": noarc_rate},
            "per_class": {k: v for k, v in per_class.items()}}
     if per_source:
         row["per_source"] = per_source

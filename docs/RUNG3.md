@@ -466,6 +466,31 @@ number Round 1 must beat. Refinements decided 2026-07-20 (each fixes a plan weak
 5. **nota is the ceiling.** nota = 79% of the real pool, harder domain (baseline 60% vs neyzen
    72%), AND ~7% pitch / ~38% structural label noise. Don't over-oversample the noisy pool;
    re-audit a fresh 5% nota sample after Round 1 (planned).
+6. **Ordering (locked 2026-07-20, after an external plan review): re-slice STARTS FIRST, re-render
+   runs in parallel.** The two were "large and independent, pick either" — but they are not
+   symmetric: the re-slice ends in a human adjudication queue (the slowest resource in the whole
+   project), while the re-render is machine-bound. Open the human tail as early as possible;
+   the re-render, Colab kit, and photo-exam shoot all proceed alongside it.
+7. **Re-slice scope = ADDITIVE ONLY.** New windows only where old ones were dropped
+   (split_wide / over_budget rows; k=1 windows for tuplet pieces). Promoted strips are NEVER
+   re-emitted — verdicts do not carry to shifted windows, so a wholesale re-emit would re-buy
+   weeks of adjudication — and the **exam is NEVER touched**: the "27 exam over-budget
+   recoveries" listed earlier are **DEFERRED to a post-Round-1 exam v3** (adding strips to the
+   frozen exam after the baseline was taken would break the Step-4.0 pre-registration).
+8. **A/B selection = ONE pre-registered number** (see the decision rule below): free-running
+   real-val **mean AEU F1**, on the hand-verified subset of val strips where available;
+   tie-break = the arc-triggered false-`\tup3` rate. "AEU and precision" was too vague to be
+   binding — the likely outcome is A wins recall / B wins precision, and the formula must
+   exist before that result is seen.
+9. **Arc-metric code lands NOW, not at exam time** — see Step 4.0; the baseline cell is filled
+   by re-running the spent rung22-stemfix exam read (zero leakage). Never debug measurement
+   code on one-shot exam day.
+10. **Training window mix stays MIXED.** Old k≈3 promoted strips + new k=2/k=1 recoveries +
+    synthetic 2–4-measure strips. Do NOT re-cut old strips to k=2: the exam and the deployed
+    slicer produce k≈3 windows, so k≈3 must stay in-distribution. (Reporting note: the exam's
+    crops carry OLD-slicer defects — stem-cut barlines, bisected noteheads — that the hardened
+    slicer no longer produces, so the exam slightly over-measures robustness to retired
+    defects; say so in `MODEL_EVAL.md`.)
 
 **Exam discipline (hard rule): exam = baseline + FINAL only; ALL iteration on real-val.** The
 baseline read is spent; every further look at exam errors leaks. Take the Step-2 exam ONCE on
@@ -497,7 +522,7 @@ good run from a mediocre one.
 | Per-class **precision**, same classes | 53.8–92.3% | **≥ 70% each** |
 | `\tup3` **precision** | **15.1%** | **≥ 70%** |
 | `\tup3` recall (may fall — precision is what we are buying) | 92.7% | **≥ 85%** |
-| **Arc-triggered false `\tup3` rate** (defined below) | not separately measured | **≤ 10%** |
+| **Arc-triggered false `\tup3` rate** (defined below) | **77.6%** (66/85) | **≤ 10%** |
 | SER | **0.147** | **≤ 0.06** |
 | Exact-match | **17.3%** | **≥ 45%** |
 | Per-source AEU gap (neyzen − nota) | **12.5 pp** | **≤ 12 pp** (must not widen) |
@@ -547,11 +572,25 @@ strips** (88 have `\tie`, 3 of those also have `\tup3`). **Floor: ≤ 10%.** Rep
 same rate over the **229 strips with neither** `\tie` nor `\tup3` — the split separates "learned
 what a triplet looks like" from "stopped firing on arcs specifically."
 
+**✅ SHIPPED 2026-07-20 (`eval_omr.py`, per item (0b) — code lands before any Round-1 training).**
+The metric (per-strip presence of `\tie`/`\tup3` in gold vs `\tup3` in decode) + mean per-class
+AEU **F1** now print on every eval and persist to `eval.jsonl` (`arc_tup3{}`, `headline_f1`, and a
+per-class `f1`). **Baseline filled by re-running the spent rung22-stemfix exam read** (same frozen
+model + frozen exam v2.1 = zero selection leakage): the measured denominators came out to **exactly
+85 / 229**, confirming the hand-computed pre-registration, and mean F1 to **exactly 57.0%**.
+**Arc-triggered false-`\tup3` baseline = 66/85 = 77.6%** (neither-token rate 82/229 = 35.8%) — the
+model fires a spurious triplet on more than three-quarters of arc-bearing strips; the ≤10% floor is
+what the re-render's slur distractors must buy. Measurement is now debugged, off the one-shot
+exam-day path.
+
 This is what the synthetic re-render's **slur distractors** are for: synthetic never drew slurs,
 so the model has no negative examples for the arc shape. This metric is how we find out whether
 that fix worked, and it is why `--oversample-tup` stays modest — more tup3 positives without arc
-negatives makes precision *worse*. (Small reporting addition needed in `eval_omr.py` at Round-1
-eval time; the metric is computable from the manifest labels + decodes with no new gold.)
+negatives makes precision *worse*. (The reporting addition lands in `eval_omr.py` **before any
+Round-1 training** — not at exam time — and the baseline cell above is filled by re-running the
+spent rung22-stemfix exam read: same frozen model, same frozen exam, zero selection leakage. The
+metric is computable from the manifest labels + decodes with no new gold; building it now means
+the measurement is debugged before the one-shot read it gates.)
 
 #### Blind spots — the criteria must NOT be gamed on these
 
@@ -579,6 +618,10 @@ eval time; the metric is computable from the manifest labels + decodes with no n
 1. **Selection happens on real-val, never on the exam.** The A-vs-B init experiment is decided by
    free-running `eval_omr.py` real-val AEU **and precision** — not teacher-forced val loss, which
    cannot see generation pathologies like the tup3 hallucination.
+   *Refined 2026-07-20, before any training ran: the selection statistic is ONE pre-registered
+   number — **free-running real-val mean AEU F1**, computed on the hand-verified subset of val
+   strips where available (so pool label noise doesn't pick the winner); tie-break = the
+   arc-triggered false-`\tup3` rate. "AEU and precision" alone was too vague to be binding.*
 2. **The exam is taken ONCE**, on that single winner.
 3. **A miss is not re-rolled on the same exam.** If a criterion fails: diagnose on real-val, fix,
    and any further exam read is labelled in `MODEL_EVAL.md` as a **second look, with its leakage
@@ -667,8 +710,11 @@ marks. Candidate implementations, in increasing depth: (a) a lint-with-autofix s
 in the review UI's editor (safest — human confirms); (b) a post-decode repair pass in
 `decode_page.py` before nd scoring (recovers review-queue rows whose only defect is a
 dropped opener); (c) longer-term, grammar-constrained decoding in the product (the decoder
-never emits ill-formed bracket structures at all). Never silently rewrite labels with these
-— they propose, a human (or the nd gate) disposes.
+never emits ill-formed bracket structures at all); (d) **adaptive window re-split on cap-hit**
+(added 2026-07-20, Round-2 tooling): when a window's decode hits the 60-id cap without EOS,
+split the window at a gutter/barline and re-decode each half — converts the §1c budget analysis
+into product-side robustness for dense-triplet pages regardless of how training goes. Never
+silently rewrite labels with these — they propose, a human (or the nd gate) disposes.
 
 ## Folder layout (under gitignored `data/real/`)
 
@@ -701,7 +747,12 @@ data/real/
 - **Empty-`\sig` label bug** (`MODEL_EVAL.md` Rung 2.2b): DONE for real labels (the `--ranges`
   emitter skips empty signatures); the matching synthetic re-render stays a Round-1
   prerequisite — batch it with adopting carry-mode ("measure") rendering for synthetic pages
-  so both conventions converge on real engraving.
+  so both conventions converge on real engraving. **Re-render mode mix (decided 2026-07-20):
+  carry-mode DOMINANT, keep a minority `every`-mode share** — every-mode's glyph-teaching
+  purpose stands, but carry is what real pages and ALL real labels use. Measured fact behind
+  the init decision: strips_v2_2 = 17,133 every + 6,258 keysig + **0 carry** strips, so
+  rung22-stemfix never saw a carry label — that is the format mismatch, and why Round 1
+  trains from BASE.
 - **Review-queue adjudication** — the review UI is BUILT (`scripts/rung3/review_ui.py`,
   stdlib HTTP server on :8377, 2026-07-12): queue tabs (sampled audit / full 84-strip audit /
   r1-review / exam-review), one-keystroke verdicts ok|fix|bad written atomically into the

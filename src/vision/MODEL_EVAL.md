@@ -360,3 +360,15 @@ stopped at 700).
   common-case k=1 material — dense contiguous-run instrumentals stay unmeasured until
   sub-measure fragments (docs/RUNG3.md §1c); eval row appended to
   `data/checkpoints/rung22-stemfix-best/eval.jsonl`.
+- **Arc-metric + mean-F1 addendum (2026-07-20, item (0b) — measurement code shipped BEFORE any
+  Round-1 training, `eval_omr.py`):** two Step-4.0 pre-registered metrics now print on every eval
+  and persist to `eval.jsonl`. Baseline filled by **re-running the spent exam read** (same frozen
+  model + frozen exam = zero selection leakage):
+  - **Mean per-class AEU F1 = 57.0%** (vs the recall-only headline 64.1%) — the honest single
+    number the headline hides. Worst F1s: `\kucukSharp` 35.0% (recall-bound), `\komaSharp` 33.7%
+    and `\komaFlat` 66.7% (precision-bound, i.e. koma hallucination). Per-class `f1` column now in
+    the table.
+  - **Arc-triggered false-`\tup3` rate = 66/85 = 77.6%** (of exam strips whose gold has `\tie` but
+    no `\tup3`, the fraction that decode a spurious `\tup3`); neither-token rate 82/229 = 35.8%.
+    The re-computed denominators (**85 / 229**) match the hand-computed pre-registration exactly.
+    Floor is ≤10% — the arc→triplet misread the re-render's slur distractors must eliminate.

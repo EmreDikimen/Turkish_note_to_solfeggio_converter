@@ -713,28 +713,42 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   only, exam = matched upper bound, ~7%/38% pool label noise) and a binding decision rule:
   selection on real-val only, **exam taken ONCE**, a miss is never re-rolled silently (any second
   read is labelled as leaked), ship only on a clean pass.
-- ⏳ **Next (Round-1 plan refined 2026-07-20, `docs/RUNG3.md` Step 4 — each item fixes a plan
-  weak point): ✅ (0) pre-registered ship criteria — DONE (above); (1) synthetic re-render (empty-`\sig` fix,
-  carry-mode, hicaz-family sigs, slur distractors for the \tie confusion, REALISTIC triplet
-  render + MODEST `\tup3` oversample — precision risk, not recall — + komaSharp/kucukSharp
-  boost, blur/fade); (2) `MEASURES_PER_STRIP=2` re-slice with the hardened slicer (recovers
-  ~5,900 drops + 24 nota / 27 exam over-budget; promotes already done); (3) Colab kit rebuild
-  (bundle real pools + testset guard); (4) INIT = EXPERIMENT: run (A) two-stage from BASE
-  (carry-mode synthetic → real-inclusive fine-tune = the Round-0.5 recipe that got 70→91.7%)
-  vs (B) single-stage joint from base control, PICK ON free-running real-val AEU — NOT
-  teacher-forced loss (tup3 hallucination is a generation pathology loss can't see); init from
-  rung22-stemfix REJECTED (non-carry format mismatch); (5) exam discipline — baseline+FINAL
-  only, all iteration on real-val, take exam ONCE on the winner, report per-source + F1 +
-  blind-spot caveats. Parallel: photo-exam axis (print → phone-photo the staged
-  `photo_exam_pdfs/` → `data/real/photos_exam/`, reuse frozen labels; capture guide in
-  `docs/RUNG3.md` Step 4.5). Watch: headline is RECALL-ONLY (komaSharp/komaFlat precision
-  21/54% at baseline); nota is the ceiling (79% of pool, noisy).** Round-1 prerequisites: multi-pool loader in
-  train.py + the synthetic re-render batch (empty-`\sig` fix, carry-mode rendering,
-  hicaz-family sig coverage, slurs as unlabeled distractors, **aggressive `\tup3`
-  oversampling incl. contiguous-triplet runs**, rare-class komaSharp/kucukSharp oversampling,
-  blur/fade augmentation) + the `MEASURES_PER_STRIP=2` re-slice with the three slicer fixes
-  (recovers the ~5,900 split_wide/over_budget drops + 14 training + 26 exam over-budget
-  corrections; PROMOTE FIRST — re-emit discipline in `docs/RUNG3.md`). **⚠ Tuplet caveat
+- ⏳ **Next (Round-1 plan refined 2026-07-20, `docs/RUNG3.md` Step 4; FINAL ORDERING + selection
+  rule locked the same day after an external plan review — each item fixes a plan weak point):
+  ✅ (0) pre-registered ship criteria — DONE (above); ✅ (0b) **arc-metric code — DONE
+  (2026-07-20)**: the arc-triggered false-`\tup3` reporting + mean-AEU-F1 added to `eval_omr.py`
+  and the baseline filled by re-running the spent rung22-stemfix exam read (same frozen model +
+  exam = zero leakage): denominators came out to **exactly 85/229** and F1 to **57.0%**,
+  confirming the pre-registration; **arc-triggered baseline 66/85 = 77.6%** (floor ≤10%) — never
+  debug measurement code on one-shot exam day; (1) **re-slice STARTS FIRST**
+  (it ends in a human adjudication queue — the critical-path resource — so it opens early):
+  `MEASURES_PER_STRIP=2` (k=1 for tuplet pieces) with the hardened slicer, **ADDITIVE-ONLY** —
+  new windows only where old ones dropped (~5,900 split_wide/over_budget + the nota over-budget
+  rejects); promoted strips are NEVER re-emitted (verdicts don't carry to shifted windows) and
+  the **exam is NEVER touched** (its 27 over-budget recoveries are DEFERRED to a post-Round-1
+  exam v3 — growing the frozen exam would break the Step-4.0 pre-registration); eyeball ~20 w00
+  crops before the bulk re-emit; labeler decode on Colab GPU; new queue = auto-accepts +
+  acc_disagreement review + a ~5% audit sample; (2) synthetic re-render IN PARALLEL
+  (machine-bound): **carry-mode DOMINANT with a minority every-mode share** (glyph-teaching
+  purpose stands; strips_v2_2 had 0 carry strips — the measured reason Round 1 trains from
+  BASE), empty-`\sig` fix, hicaz-family sigs, slur distractors for the arc→`\tup3` confusion,
+  REALISTIC triplet render + MODEST `\tup3` oversample (precision risk, not recall) +
+  komaSharp/kucukSharp boost, blur/fade; audit_coverage gate + Mac train smoke; (3) Colab kit
+  rebuild (real pools incl. re-slice recoveries + testset guard); (4) INIT = EXPERIMENT, both
+  arms from BASE: (A) two-stage (carry-mode synthetic → real-inclusive fine-tune = the
+  Round-0.5 recipe that got 70→91.7%) vs (B) single-stage joint control; **selection = ONE
+  pre-registered number: free-running real-val mean AEU F1 (hand-verified val subset where
+  available; tie-break = arc-triggered false-`\tup3` rate)** — NOT teacher-forced loss (tup3
+  hallucination is a generation pathology loss can't see); init from rung22-stemfix REJECTED
+  (non-carry format mismatch); (5) exam discipline — baseline+FINAL only, all iteration on
+  real-val, take exam ONCE on the winner (photo-exam read once alongside it), report
+  per-source + F1 + blind-spot caveats. Training window mix stays MIXED (old k≈3 promoted +
+  new k=2/k=1 + synthetic 2–4 measures; do NOT re-cut old strips — the exam and deployed
+  slicer produce k≈3, so k≈3 must stay in-distribution). Parallel any time: photo-exam axis
+  (print → phone-photo the staged `photo_exam_pdfs/` → `data/real/photos_exam/`, reuse frozen
+  labels; capture guide in `docs/RUNG3.md` Step 4.5 — exam-piece photos are EXAM-ONLY, never
+  training). Watch: headline is RECALL-ONLY (komaSharp/komaFlat precision 21/54% at baseline);
+  nota is the ceiling (79% of pool, noisy). **⚠ Tuplet caveat
   (measured 2026-07-17, docs/RUNG3.md §1c): the 2-measure re-slice does NOT recover triplets —
   80% of tup3 2-measure windows still blow the 59-id budget, 39% of tup3 SINGLE measures do;
   tuplet content needs `OMR_MEASURES_PER_STRIP=1` (knob added) and, for the dense tail,
@@ -742,8 +756,9 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   blurry nota-review rows (low_coverage/nav/nd_review — unverdicted rows never train; mine
   per-class only if Round-1 taxonomy gives a reason). Label-noise budget for Round 1: ~7%
   pitch / ~38% tie-repeat structural in nota auto-accepts — RE-AUDIT a fresh 5% sample after
-  Round 1. Later: decode-repair heuristics (docs/RUNG3.md "Logged for later"),
-  hand-correction loop on unmatched pieces, in-browser stages 2–7, stage-9 header OCR.
+  Round 1 (pass or fail). Later: decode-repair heuristics + adaptive window re-split on
+  cap-hit (docs/RUNG3.md "Logged for later"), hand-correction loop on unmatched pieces,
+  in-browser stages 2–7, stage-9 header OCR.
 - 📌 **Superseded (historical) step-by-step for the original Rung-2.2 export:**
   1. **Local copy:** download Drive `MyDrive/tnc/rung22/best` → `data/checkpoints/rung22-best/`
      (gitignored, like rung2-best).
@@ -778,4 +793,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-20 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively). LATER SAME DAY — targeted tuplet collection (docs/RUNG3.md §1c): SymbTr scanned for tuplet pieces (459; 267 already held), **293 NEW tuplet pieces downloaded** (36 nota review-promotes + 257 neyzen from the never-downloaded census tail; 60 brand-new SymbTr pieces + 164 second-style copies), budget analysis shows tup3 needs 1-measure windows (`OMR_MEASURES_PER_STRIP` knob added; 2,325 tup3 measures/3,384 groups fit at k=1; 1,512 dense measures await the sub-measure fragment follow-up); k=1 decode ran on Colab per the fanless-Mac rule. 2026-07-18: EMIT DONE + strips_tup TRIMMED TO TUP3-ONLY (user call): **78 accepted tup3 strips / 114 groups (all groups verified = exactly 3 closed notes) + 147-row tup3 review queue / 205 groups**; review-UI tabs tup-full/tup-review/tup-audit wired. Sufficiency assessment (docs/RUNG3.md §1c): training = YES for Round 1 (~180 rows / ~280 groups after adjudication + synthetic oversampling); exam = NO without action — **hold ~10–12 tuplet pieces OUT of the promote as a tup3 exam extension (~30–50 gold, v2.1 freeze) and re-baseline before Round 1**; dense contiguous-run instrumentals stay a blind spot until sub-measure fragments). 2026-07-20 (later): **Step 4.0 pre-registered ship criteria WRITTEN + committed** — the Round-1 bar is fixed before training, every floor stated next to its measured baseline (AEU ≥85% from 64.1%, NEW mean-F1 ≥80% from 57.0%, per-class ≥75% recall AND ≥70% precision on the 5 classes with ≥20 gold, tup3 precision ≥70% from 15.1%, SER ≤0.06, exact ≥45%, source gap ≤12pp, synthetic no-regression ≥99%). **Ties carry no floor** (their ground truth is ~38% structurally noisy — gating on it would measure the labels); the replacement is a targeted **arc-triggered false `\tup3` rate ≤10%** over the 85 tie-but-no-tup3 exam strips, which is how the re-render's slur distractors get judged. Blind spots recorded as non-claims + a binding decision rule (real-val selection, exam ONCE, no silent re-roll). Next = pick prerequisite (1) synthetic re-render or (2) the k=2/k=1 re-slice._
+_Last updated: 2026-07-20 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively). LATER SAME DAY — targeted tuplet collection (docs/RUNG3.md §1c): SymbTr scanned for tuplet pieces (459; 267 already held), **293 NEW tuplet pieces downloaded** (36 nota review-promotes + 257 neyzen from the never-downloaded census tail; 60 brand-new SymbTr pieces + 164 second-style copies), budget analysis shows tup3 needs 1-measure windows (`OMR_MEASURES_PER_STRIP` knob added; 2,325 tup3 measures/3,384 groups fit at k=1; 1,512 dense measures await the sub-measure fragment follow-up); k=1 decode ran on Colab per the fanless-Mac rule. 2026-07-18: EMIT DONE + strips_tup TRIMMED TO TUP3-ONLY (user call): **78 accepted tup3 strips / 114 groups (all groups verified = exactly 3 closed notes) + 147-row tup3 review queue / 205 groups**; review-UI tabs tup-full/tup-review/tup-audit wired. Sufficiency assessment (docs/RUNG3.md §1c): training = YES for Round 1 (~180 rows / ~280 groups after adjudication + synthetic oversampling); exam = NO without action — **hold ~10–12 tuplet pieces OUT of the promote as a tup3 exam extension (~30–50 gold, v2.1 freeze) and re-baseline before Round 1**; dense contiguous-run instrumentals stay a blind spot until sub-measure fragments). 2026-07-20 (later): **Step 4.0 pre-registered ship criteria WRITTEN + committed** — the Round-1 bar is fixed before training, every floor stated next to its measured baseline (AEU ≥85% from 64.1%, NEW mean-F1 ≥80% from 57.0%, per-class ≥75% recall AND ≥70% precision on the 5 classes with ≥20 gold, tup3 precision ≥70% from 15.1%, SER ≤0.06, exact ≥45%, source gap ≤12pp, synthetic no-regression ≥99%). **Ties carry no floor** (their ground truth is ~38% structurally noisy — gating on it would measure the labels); the replacement is a targeted **arc-triggered false `\tup3` rate ≤10%** over the 85 tie-but-no-tup3 exam strips, which is how the re-render's slur distractors get judged. Blind spots recorded as non-claims + a binding decision rule (real-val selection, exam ONCE, no silent re-roll). Next = pick prerequisite (1) synthetic re-render or (2) the k=2/k=1 re-slice. LATEST (same day, after an external plan review): FINAL ordering + selection rule LOCKED — (0b) arc-metric code lands first, baseline cell filled via the spent rung22-stemfix exam read; the re-slice is ADDITIVE-ONLY and STARTS FIRST (human adjudication tail = critical path; promoted strips never re-emitted; EXAM UNTOUCHED — its 27 over-budget recoveries deferred to post-Round-1 exam v3); the re-render runs in parallel (carry-mode dominant + minority every-mode share; strips_v2_2 measured 0 carry strips = the concrete reason Round 1 trains from BASE); A/B selection pre-registered as ONE number = free-running real-val mean AEU F1 on the hand-verified val subset (tie-break: arc-triggered false-\tup3 rate); training window mix stays mixed (k≈3 promoted + k=2/k=1 recoveries + synthetic 2–4); exam-piece phone photos are EXAM-ONLY (photo-exam axis), never training._

@@ -426,18 +426,105 @@ This trusts the model almost nowhere: strip→measure mapping is geometry (barli
 content is SymbTr. Expected yield: ~1,500–2,000 strips from neyzen's 85 alone; notaarsivleri
 multiplies that.
 
-## Step 4 — Round 1: ONE fine-tune on everything matched + the first honest number
+## Step 4 — Round 1: fine-tune on everything matched + the first honest number
 
-Colab, **from base weights** (NOT from the Round-0.5 labeler — that checkpoint is tooling
-only), the proven Rung-2 kit: synthetic `strips_v2_2` + ALL matched real
-strips (both sources, real oversampled; per-source sampling weights in the loader — source
-balance is a loader knob, **never** "delete neyzen files"). **Split by piece across ALL pools**
-(a piece's real and synthetic strips stay in one split; dedupe matched↔synthetic by SymbTr
-file). Then take the Step-2 exam with `eval_omr.py` (headline: per-class AEU accidental
-accuracy) — including the per-source breakdown, which is the style-overfit check. `PHOTO_SHARE`
-likely stands (these pages are clean rasterizations — screenshot-profile territory). Ship
-through the scripted chain (ONNX export → int8 parity → browser gate) before it becomes the
-runtime in `apps/web/public/models/`.
+Colab, the proven Rung-2 kit: synthetic re-render + ALL matched real strips (both sources;
+per-source + real oversampling are loader knobs — **never** "delete neyzen files"). Multi-pool
+loader DONE (`train.py --real-dir DIR[:REPEAT]`, stable piece-hash real-val split consistent
+across pools, `--oversample-tup`, real strips train un-augmented). **Split by piece across ALL
+pools** (a piece's real and synthetic strips stay in one split; dedupe matched↔synthetic by
+SymbTr file). Baseline v2.1 taken 2026-07-20 (64.1% AEU / SER 0.147; `MODEL_EVAL.md`) — the
+number Round 1 must beat. Refinements decided 2026-07-20 (each fixes a plan weak point):
+
+1. **Init = an EXPERIMENT, not a decree (the highest-leverage choice).** The pre-registered
+   text said "from base, single-stage joint." But Round-0.5 (real-only fine-tune from a
+   synthetic-trained checkpoint) moved real-val AEU **70 → 91.7%** — evidence that a dedicated
+   real-specialization phase is worth a lot, which single-stage joint (fixed ~10:1
+   synthetic:real throughout) dilutes. So run BOTH on Colab and pick on real-val:
+   - **(A) two-stage from BASE** — Stage 1: carry-mode synthetic from base → carry-native
+     synthetic checkpoint; Stage 2: real-inclusive fine-tune from Stage 1, fresh low-LR
+     warmup, early-stopped on real-val. This is the Round-0.5 recipe with 5.6× the real data.
+   - **(B) single-stage joint from BASE** — the control.
+   - Init from `rung22-stemfix` is REJECTED: it was trained on NON-carry labels, so it starts
+     with a format mismatch Round 1 would have to unlearn. Two-stage Stage 1 gives a
+     carry-native synthetic checkpoint from base and sidesteps this cleanly.
+2. **Checkpoint selection = free-running real-val AEU, NOT teacher-forced loss.** The tup3
+   hallucination and accidental over-prediction are generation-time pathologies cross-entropy
+   loss barely sees. Run `eval_omr.py` on the real-val pool at the eval checkpoints; select the
+   best on real-val AEU (+ precision, see below). The loader's val-mix loss is a coarse guard
+   only.
+3. **Watch PRECISION, not just the recall headline.** The headline ("mean per-class AEU
+   accuracy") is mean per-class RECALL — precision is excluded, so a hallucinating model scores
+   well while degrading the product (a spurious koma is a real pitch error). Baseline already
+   shows it: komaSharp precision **21%**, komaFlat **54%**. Report mean **F1** alongside;
+   ship criteria carry precision floors.
+4. **`--oversample-tup` is a precision risk, keep it MODEST.** The baseline tup3 problem is
+   precision (15%, recall 93%): the model fires `\tup3` on ordinary beamed/tie'd groups. Raising
+   the tup3-positive prior can worsen precision — the real fix is realistic synthetic triplet
+   rendering (arc + "3", stem-fix already improved this) + the abundant non-triplet negatives we
+   already have. Validate tup3 on real-val **precision**, not recall.
+5. **nota is the ceiling.** nota = 79% of the real pool, harder domain (baseline 60% vs neyzen
+   72%), AND ~7% pitch / ~38% structural label noise. Don't over-oversample the noisy pool;
+   re-audit a fresh 5% nota sample after Round 1 (planned).
+
+**Exam discipline (hard rule): exam = baseline + FINAL only; ALL iteration on real-val.** The
+baseline read is spent; every further look at exam errors leaks. Take the Step-2 exam ONCE on
+the experiment winner, report per-class × per-source (style-overfit check) + F1 + the
+blind-spot caveats (below), against the pre-registered criteria. `PHOTO_SHARE` likely stands
+(clean rasterizations = screenshot-profile). Ship through the scripted chain (ONNX export →
+int8 parity → browser gate) before it becomes the runtime in `apps/web/public/models/`.
+
+### Step 4.0 — PRE-REGISTERED ship criteria (WRITE BEFORE Stage 1 sees anything)
+
+Not yet written — the deliverable that must land before any Round-1 training, so the pass bar
+is fixed before the exam is seen (no post-hoc rationalizing). Must specify: an AEU headline
+floor AND a per-class recall floor AND per-class **precision** floors (esp. koma classes); a
+tup3 **precision** target; SER + exact-match targets; the per-source (neyzen/nota) gap
+tolerance. Plus stated blind spots that criteria must NOT be gamed on: **buyukFlat = 0 real
+gold** (synthetic-validated only), **tup3 = common-case k=1** (dense contiguous runs unmeasured
+until sub-measure fragments), exam = matched-alignable pages = an **upper bound**.
+
+### Step 4.5 — Photo-exam axis (second, product-domain exam; zero labeling cost)
+
+The v2.1 exam is clean PDF renders; the real product input is screenshots / **phone photos**.
+The 25 exam-piece PDFs are staged + merged (`data/real/rung3/photo_exam_pdfs/`,
+`00_ALL_25_MERGED.pdf`, 38 pp) to PRINT → PHOTOGRAPH → `data/real/photos_exam/` — reusing the
+SAME frozen labels (same pieces), so it measures the actual deployment domain for free. Take it
+once at the end alongside the PDF exam. Photo-shoot guidance in the "Photo-exam capture" note
+below.
+
+#### Photo-exam capture — how to shoot (the point is REALISM, not quality)
+
+This exam only earns its keep if the photos look like what a real user snaps — the whole value
+is the domain gap. So do NOT scan, do NOT flatten in software, do NOT shoot a perfect
+overhead. Aim for the messy-but-legible middle of the real upload distribution.
+
+- **Print first, then photograph.** A photo of a screen re-introduces moiré/backlight — a
+  different (also real, but separate) domain. Print `00_ALL_25_MERGED.pdf` on plain white paper,
+  one system-dense page at a time; laser or inkjet both fine.
+- **Phone camera, handheld, auto everything.** The default camera app, HEIC/JPEG straight out —
+  no "document scan" mode (that de-warps and binarizes, which is exactly the preprocessing we
+  want to TEST, not pre-bake). Handheld, not a tripod.
+- **Deliberately vary — one page ≠ one condition.** Across the 38 pages sweep: **angle** (flat
+  down, plus ~15–30° oblique so staff lines converge), **lighting** (window daylight, warm indoor
+  lamp, and one harsh overhead so a shadow/glare band crosses the staff), **distance** (whole page
+  vs. tight on 2–3 systems), and let a couple go **slightly soft/motion-blurred** — real uploads
+  are. A gentle page curl (don't press it flat) is a plus: staff curvature is a known weak link.
+- **Keep it legible to a human.** The label is fixed; if YOU can't read the accidental in the
+  photo, it's noise, not signal — reshoot that one. Blur/skew/shadow yes; illegible no.
+- **Coverage is what matters, not count.** ~1 photo per page (≈38) is plenty; a few pages in two
+  conditions is better than many identical shots. Spread the hard conditions across DIFFERENT
+  pieces so no single makam/style is the only "hard" one.
+- **Filenames must map to the piece.** Name each `<stem>_pNN_photo.jpg` (or keep a shot→page
+  index) so the frozen labels line up — a photo we can't map to its label is unusable. Put them
+  under `data/real/photos_exam/` (gitignored, like the rest of `data/real/`).
+- Optional second axis if quick: a **screenshot** of a couple pages opened in a PDF viewer
+  (the single most common REAL upload per `upload-distribution`) — but the printed-photo set is
+  the priority tonight.
+
+Then `page_to_strips.py` + `decode_page.py` run on these exactly like the PDF pages; the slicer's
+behaviour on real perspective/curvature/shadow is itself a result worth logging (it's the
+upstream weak link, and these photos are its first real stress test).
 
 ## Step 5 — Hand-correction loop for the unmatched pieces (AFTER Round 1)
 

@@ -696,15 +696,24 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
   stable piece-hash real-val split consistent across pools + synth-val pieces forced to val,
   `--oversample-tup N`, real strips train un-augmented unless `--augment-real`, checkpoint
   selection on the strip-weighted synth+real val mix — exam never consulted).
-- ⏳ **Next: Round-1 remaining prereqs → launch: (1) synthetic re-render batch (empty-`\sig`
-  fix, carry-mode, hicaz-family sigs, slur distractors, aggressive `\tup3` + komaSharp/
-  kucukSharp oversampling, blur/fade); (2) `MEASURES_PER_STRIP=2` re-slice with the hardened
-  slicer (recovers ~5,900 drops + 24 nota / 27 exam over-budget rejects; PROMOTE-FIRST
-  discipline held — promotes are done); (3) Colab kit rebuild (zip must now bundle the real
-  pools + testset guard); (4) launch with PRE-REGISTERED ship criteria; init from BASE
-  weights per the pre-registered plan (user proposed init from rung22-stemfix — decide at
-  launch, carry-mode re-render argues for base); photo-exam arm when the printed-page
-  photos land (PDFs staged in `data/real/rung3/photo_exam_pdfs/`).** Round-1 prerequisites: multi-pool loader in
+- ⏳ **Next (Round-1 plan refined 2026-07-20, `docs/RUNG3.md` Step 4 — each item fixes a plan
+  weak point): (0) WRITE the PRE-REGISTERED ship criteria FIRST (Step 4.0 — AEU + per-class
+  recall AND precision floors, tup3 precision target, per-source gap, stated blind spots) so
+  the bar is fixed before the exam is seen; (1) synthetic re-render (empty-`\sig` fix,
+  carry-mode, hicaz-family sigs, slur distractors for the \tie confusion, REALISTIC triplet
+  render + MODEST `\tup3` oversample — precision risk, not recall — + komaSharp/kucukSharp
+  boost, blur/fade); (2) `MEASURES_PER_STRIP=2` re-slice with the hardened slicer (recovers
+  ~5,900 drops + 24 nota / 27 exam over-budget; promotes already done); (3) Colab kit rebuild
+  (bundle real pools + testset guard); (4) INIT = EXPERIMENT: run (A) two-stage from BASE
+  (carry-mode synthetic → real-inclusive fine-tune = the Round-0.5 recipe that got 70→91.7%)
+  vs (B) single-stage joint from base control, PICK ON free-running real-val AEU — NOT
+  teacher-forced loss (tup3 hallucination is a generation pathology loss can't see); init from
+  rung22-stemfix REJECTED (non-carry format mismatch); (5) exam discipline — baseline+FINAL
+  only, all iteration on real-val, take exam ONCE on the winner, report per-source + F1 +
+  blind-spot caveats. Parallel: photo-exam axis (print → phone-photo the staged
+  `photo_exam_pdfs/` → `data/real/photos_exam/`, reuse frozen labels; capture guide in
+  `docs/RUNG3.md` Step 4.5). Watch: headline is RECALL-ONLY (komaSharp/komaFlat precision
+  21/54% at baseline); nota is the ceiling (79% of pool, noisy).** Round-1 prerequisites: multi-pool loader in
   train.py + the synthetic re-render batch (empty-`\sig` fix, carry-mode rendering,
   hicaz-family sig coverage, slurs as unlabeled distractors, **aggressive `\tup3`
   oversampling incl. contiguous-triplet runs**, rare-class komaSharp/kucukSharp oversampling,

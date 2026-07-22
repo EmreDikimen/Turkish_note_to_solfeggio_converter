@@ -24,6 +24,7 @@ import { buildStrips, type ExportStrip } from "./stripExport";
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { respellAeu } from "../../../tools/render/respell";
+import { parseSignatureBody } from "../../../tools/render/lilypond";
 
 type ViewMode = "roll" | "sheet";
 // SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
@@ -50,16 +51,24 @@ const SAMPLES: { label: string; file: string }[] = [
 // Read once at load (each render job is a fresh page); all absent in interactive use.
 const RENDER_PARAMS = new URLSearchParams(window.location.search);
 const URL_SCORE = RENDER_PARAMS.get("score"); // path under apps/web/public/
-const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" | "keysig"
+const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" | "keysig" | "measure"
 const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
+// Conventional PRINTED-signature override body (drawn order, e.g. "\bakiyeFlat b \bakiyeSharp c"),
+// the makam variant render.ts sampled from data/makam_signatures.json. Parsed once; fed to BOTH the
+// draw path (SheetView) and the label path (buildStrips) so synthetic carry pages wear the real
+// printed signature. Absent in interactive use → each derives the signature from the doc.
+const URL_SIG = RENDER_PARAMS.get("sig");
+const SIG_OVERRIDE = URL_SIG ? parseSignatureBody(URL_SIG) : undefined;
 const URL_TRANSPOSE = Number(RENDER_PARAMS.get("transpose") ?? 0) || 0; // commas
 const URL_REPSEED = RENDER_PARAMS.has("repseed") ? Number(RENDER_PARAMS.get("repseed")) : null;
 const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("navseed")) : null;
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
 const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
+const URL_SLURSEED = RENDER_PARAMS.has("slurseed") ? Number(RENDER_PARAMS.get("slurseed")) : null;
 // Stable object identity (SheetView's engrave effect depends on it; an inline literal would
 // re-engrave on every render). Constant per page load, like all render params.
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
+const SLUR_NOISE = URL_SLURSEED != null ? { seed: URL_SLURSEED } : undefined;
 
 /**
  * The whole web harness UI, as one React component.
@@ -121,7 +130,7 @@ export function App() {
   // a stale layout — the renderer waits for `applied` instead of sleeping a fixed 300 ms.
   const renderTag = JSON.stringify({
     score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
-    repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
+    repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
   });
   const renderTagRef = useRef(renderTag);
   renderTagRef.current = renderTag;
@@ -234,8 +243,10 @@ export function App() {
   // one. Uses the SAME doc + repeat spans SheetView draws, so crop geometry and labels match pixels.
   const strips = useMemo<ExportStrip[]>(() => {
     const drawn = displayDoc ?? doc;
+    // Pass the real mode (incl. "measure"/carry) and the same conventional-signature override
+    // SheetView draws with, so carry labels equal the drawn signature (faithful scheme).
     return drawn && layout
-      ? buildStrips(drawn, layout.boxes, accidentalMode === "keysig" ? "keysig" : "every", repeatSpans, navMarks)
+      ? buildStrips(drawn, layout.boxes, accidentalMode, repeatSpans, navMarks, SIG_OVERRIDE)
       : [];
   }, [repeatSpans, navMarks, displayDoc, doc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
@@ -247,16 +258,16 @@ export function App() {
       __omrStrips?: ExportStrip[];
       __omrMeta?: { makam: string; name: string };
       __omrConfig?: {
-        score: string; mode: AccidentalMode; lyrics: boolean; transpose: number;
-        repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null;
+        score: string; mode: AccidentalMode; lyrics: boolean; transpose: number; sig: string | null;
+        repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null; slurseed: number | null;
         applied: boolean;
       };
     };
     w.__omrStrips = strips;
     if (doc) w.__omrMeta = { makam: doc.makam, name: doc.name };
     w.__omrConfig = {
-      score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
-      repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED,
+      score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose, sig: URL_SIG ?? null,
+      repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
       applied: layoutTag === renderTag,
     };
   }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
@@ -617,6 +628,7 @@ export function App() {
                 doc={displayDoc ?? doc}
                 editMode={editMode}
                 accidentalMode={accidentalMode}
+                signatureOverride={SIG_OVERRIDE}
                 showLyrics={showLyrics}
                 lyricHyphens={lyricHyphens}
                 playing={playState !== "stopped"}
@@ -628,6 +640,7 @@ export function App() {
                 repeatSpans={repeatSpans}
                 navMarks={navMarks}
                 textNoise={TEXT_NOISE}
+                slurNoise={SLUR_NOISE}
               />
               <StripPanel
                 strips={strips}

@@ -52,8 +52,19 @@ MIN_VAL_BUYUK = 15
 # can't pair under the 60-id budget; the OLD dataset was 4%). The v2_2 rhythm signs raised the
 # per-measure token cost, lowering the ceiling ~2pp (measured 38.1% / 38.6%) — floors follow.
 # A future render below these means the packing broke.
+#
+# RECALIBRATED 2026-07-21 for the carry-dominant Round-1 regime (`strips_v3`). The barline share is
+# a SHARE, so it moves when the mode mix changes even if packing is untouched — which is exactly
+# what happened. v3 keeps ALL carry chunks (deliberate: it matches how the emitter labels REAL carry
+# strips, where later row chunks are legitimate crops), so the corpus gained many realistic
+# single-measure trailing chunks. The evidence that packing did NOT break:
+#   - absolute multi-measure strips ROSE 45%: v2_2 8,344 -> v3 12,126 (corpus 23,391 -> 38,091);
+#   - v3's 30.9% barline share is well ABOVE the REAL pools' 20.2% — the distribution we must match;
+#   - packing is capped by the 59-id decoder budget and cannot be raised without breaking training.
+# Per this file's own convention (floors sit just under the measured render), the barline floor
+# follows the new regime; the multi-measure floor is unchanged (every-mode measured 37.9%).
 MIN_MULTI_MEASURE_SHARE = 0.35  # of every-mode strips
-MIN_BARLINE_SHARE = 0.37        # of all labels
+MIN_BARLINE_SHARE = 0.28        # of all labels (was 0.37 pre-carry-dominant; see note above)
 MIN_REPEAT_SHARE = 0.05
 # Navigation marks are single measure-edge glyphs (repeat signs are 2–4-measure SPANS), so far
 # fewer strips carry one; the per-token floors below are what actually guards trainability.

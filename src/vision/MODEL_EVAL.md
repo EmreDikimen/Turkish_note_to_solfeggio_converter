@@ -372,3 +372,128 @@ stopped at 700).
     no `\tup3`, the fraction that decode a spurious `\tup3`); neither-token rate 82/229 = 35.8%.
     The re-computed denominators (**85 / 229**) match the hand-computed pre-registration exactly.
     Floor is ≤10% — the arc→triplet misread the re-render's slur distractors must eliminate.
+
+## Round-1 synthetic re-render — corpus `strips_v3` + accidental-distribution measurement (2026-07-21)
+
+Not a model eval — a DATA measurement, recorded here because it sets up Round 1's training mix and
+one open decision. Full design + rationale: `docs/RUNG3.md` Step 4.1.
+
+- **Corpus:** `data/synthetic/strips_v3` — **38,091 strips**, 190 pieces, 49 makams.
+  **73.3% carry** (`measure` mode, 27,933) / 26.7% `every` (10,158). All carry strips wear a
+  per-makam conventional PRINTED signature (`data/makam_signatures.json`, 33 distinct variants
+  sampled). keysig mode retired. Budget gate PASS: longest label **57 ids** (cap 59), no token drift.
+- **What changed vs `strips_v2_2`:** carry-mode dominance at written pitch (t0) with conventional
+  makam signatures; `every` mode now carries the transpose augmentation (t≠0); label-free **slur
+  distractors** (≥3 notes, no "3") to attack the arc→`\tup3` misread (baseline tup3 precision 15%,
+  arc-triggered false-tup3 77.6%). Slurs verified pixels-only: 15 drawn with a seed / 0 without,
+  88/88 labels byte-identical to the pre-slur render.
+
+**Inline-accidental rate (the headline):**
+
+| | inline accidentals / strip |
+|---|---|
+| carry (`measure`) | 0.36 |
+| **REAL pools** | **0.32** ✅ |
+| `every` | 4.22 (13× real) |
+
+**Carry mode structurally matches the real distribution** — the conventional-signature work is
+validated. But `every` is 26.7% of strips and **81% of all inline accidentals**, so the effective
+rate is 1.40/strip = **4.4× real**. Hypothesis (testable, not proven): an inflated
+"emit an accidental" prior that surfaces as hallucination on ambiguous real ink — consistent with
+the baseline komaSharp precision **21%** / komaFlat **54%** (Step-4.0 floor is ≥70%).
+
+**Per-class share vs real, as a function of the `every` sampling share s:**
+
+| s | inline rate | mean abs dev | kucukFlat | kucukSharp | komaSharp |
+|---|---|---|---|---|---|
+| 26.7% (as rendered) | 4.4× | 3.75pp | 4.9% | 1.9% | 5.7% |
+| 15% | 2.9× | **3.32pp** | 7.1% | 2.7% | 6.1% |
+| 10% | 2.3× | 3.36pp | 8.3% | 3.2% | 6.3% |
+| 5% | 1.7× | 3.69pp | 9.8% | 3.8% | 6.6% |
+| 0% | 1.1× | 4.11pp | 11.7% | 4.6% | 7.0% |
+| **REAL** | — | — | **19.3%** | **2.5%** | **2.1%** |
+
+Criteria disagree at the margin (deviation minimised ≈10–15%; inline-rate pushes lower; komaSharp
+worsens as s falls — carry-only komaSharp is 7.0%). s=0 is measurably worse overall than as-rendered.
+
+**Prior plan item "komaSharp/kucukSharp boost" — overturned:** komaSharp is already over-represented
+(5.7% vs 2.1%) and precision-bound → boosting backfires; kucukSharp already matches real. The real
+gap is kucukFlat, whose residual is a **makam-mix** artifact (real pool over-weights
+nihavent/kurdilihicazkar/acemasiran), not a spelling bug. The `bakiyeSharp→kucukFlat` respell is
+**held** — down-weighting `every` lifts kucukFlat for free (4.9% → 7–8%).
+
+**Open decision:** add `--every-share` to `train.py` (stochastic per-epoch sampling; `Strip` already
+carries `mode`) and treat s as an A/B dimension {26.7%, 15%, 5%}, selecting on real-val mean AEU F1.
+Train-time over re-render: free, **tunable** (a re-render bakes in one guess at ~75 min), reversible,
+and it makes the choice measured rather than decreed. Caveat: mixture ratios tune on validation —
+keep to 2–3 values; the one-shot exam stays the clean number.
+
+## Round 1 — init A/B on real-val (2026-07-22): TWO-STAGE (Arm A) WINS, 89.2% vs 78.4% mean AEU F1
+
+First Round-1 training result. Both arms trained from BASE on `strips_v3` (carry-dominant, conventional
+per-makam printed signatures, slur distractors) at the pre-registered `--every-share 0.15`, Colab L4
+(~0.9–1.3 s/step @ batch 16). Judged by the ONE pre-registered selection number: free-running
+**real-val mean per-class AEU F1** on the merged real-val pool (`src/vision/make_realval_pool.py` →
+`data/real/rung3/_realval`, **271 strips** — the same stable-hash split train.py validated on).
+Tie-break (arc-triggered false-`\tup3`) not needed: both arms tied at 1.6%.
+
+- **Arm A — two-stage.** Stage 1: synthetic ONLY from BASE, 6,000 steps, lr 3e-5. Stage 2: from
+  stage-1 `best`, 2,000 steps, lr 1e-5 + 100 warmup, real pools **oversampled `:8`** → real = 33.3%
+  of the pool (16,640 / 49,959). Best = **stage-2 step 1000** (val_mix 0.0171, real 0.0937).
+- **Arm B — single-stage joint (control).** From BASE, 7,000 steps, lr 3e-5, real at its natural
+  **5.9%** share. Best = **step 5000** (val_mix 0.0184, real 0.0979).
+
+| | Arm A (two-stage) | Arm B (single-stage) |
+|---|---|---|
+| **MEAN AEU F1 (SELECTION)** | **89.2%** | 78.4% |
+| AEU headline (recall) | 95.0% | 88.7% |
+| SER | 0.032 | 0.031 |
+| exact-match | 63.1% (171/271) | 62.0% (168/271) |
+| arc-triggered false-`\tup3` | 1.6% (1/64) | 1.6% (1/64) |
+| per-source gap (neyzen vs nota) | **0.6 pp** (94.2 / 94.8) | 2.8 pp (91.4 / 88.6) |
+| `\tup3` recall / precision | 84.1% / **97.4%** | **93.2%** / 91.1% |
+| `\tie` F1 | 63.2% | 65.9% |
+
+**⚠ THE MARGIN IS LOW-N DRIVEN — read the selection honestly.** Per-class F1 (A vs B):
+`\komaSharp` **1 gold** 66.7/25.0 · `\kucukSharp` **21 gold** 97.6/76.5 · `\bakiyeSharp` 129 gold
+92.5/92.4 · `\komaFlat` 62 gold 93.7/93.7 · `\bakiyeFlat` 57 gold 90.9/90.1 · `\kucukFlat` 61 gold
+93.7/92.7. The mean is over 6 classes, so **a single `\komaSharp` gold token contributes 6.9 pp of the
+10.8 pp gap**, and `\kucukSharp` a further 3.5 pp — together 10.4 of 10.8. Restricted to the four
+classes with ≥30 gold, **A 92.7% vs B 92.2% — effectively tied.** The one substantive signal is
+`\kucukSharp` RECALL 95.2% (A) vs 61.9% (B) = 20/21 vs 13/21 found. A also wins on source
+consistency and tup3 precision, so the call stands — but it is not the decisive 10.8 pp it looks like.
+
+**HEADLINE WIN — the tup3-precision catastrophe is fixed.** Against the rung22-stemfix baseline:
+`\tup3` precision **15.1% → 97.4%** (Arm A) and the arc-triggered false-`\tup3` rate
+**77.6% → 1.6%** (both arms; floor ≤10%). This is the slur distractors (`drawSlurArc`, label-free
+arcs with no "3") doing exactly what they were designed for — an arc alone is no longer read as a
+triplet. The conventional-signature work also shows: `\sig` 98.2% / `\sigend` 96.0–98.2% F1.
+
+**Arm A clears every Step-4.0 floor ON REAL-VAL** (AEU 95.0 ≥85, mean-F1 89.2 ≥80, tup3 precision
+97.4 ≥70, SER 0.032 ≤0.06, exact 63.1 ≥45, source gap 0.6 ≤12, arc 1.6 ≤10; every ≥20-gold class
+above the 75% recall / 70% precision bars).
+
+**HONESTY CAVEATS — do not over-read these numbers:**
+1. **Real-val is the SELECTION set, not the exam.** These floors are pre-registered for the frozen
+   exam v2.1; passing them on the set we selected on is indicative only, and optimistic.
+2. **NOT comparable to the 64.1% AEU / 57.0% F1 baseline.** That was exam v2.1 (352 strips); this is
+   real-val (271 strips). Different sets — the exam read is still owed, ONCE, on the winner.
+3. `\komaSharp` (1 gold) and `\kucukSharp` (21 gold) are statistically weak here; `\buyukSharp` /
+   `\buyukFlat` are absent from real-val entirely (untransposed real pages, by design).
+
+**Methodological note (logged as a real fix, not a footnote):** Arm A stage 2 was first written with
+the real pools at their natural 5.9% share — at 2,000 steps that is **each real strip seen <1×**,
+which could never reproduce the Round-0.5 effect the arm exists to test. Caught before running and
+fixed with `:8` oversampling (real → 33.3%, each real strip ~5×). Without it Arm A would have been
+"Arm B with a warm start" and the A/B would have tested nothing.
+
+**Checkpoint-selection note:** `best` is chosen on a strip-weighted val mix dominated by the 4,772
+synthetic val strips (vs 271 real), so it need not be best for real pages. Checked in both arms — it
+was: Arm B best step 5000 = lowest real (0.0979); Arm A best stage-2 step 1000 = lowest real
+(0.0937). Stage 2 then overfit (real 0.0937 → 0.0966 → 0.0968), the expected consequence of
+oversampled real; `best` caught the turn. Evaluating `best/` alone is therefore correct here.
+
+**Also observed:** Arm B's real-val loss plateaued from ~step 2500 (0.1018 → 0.0979 over the next
+2,500 steps), i.e. the last ~4,500 steps bought almost nothing for real pages — relevant to budgeting
+the every-share sweep. And the every-share komaSharp diagnostic pre-registered for that sweep is
+**unmeasurable on real-val (n=1)**; exam v2.1 has 18 komaSharp gold, still low.

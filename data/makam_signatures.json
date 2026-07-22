@@ -1,0 +1,951 @@
+{
+  "acemasiran": {
+    "names": [
+      "acem_asiran",
+      "acemasiran"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 71,
+        "sig": "\\kucukFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "acemkurdi": {
+    "names": [
+      "acem_kurdi",
+      "acemkurdi"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 48,
+        "sig": "\\kucukFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "acemtarab": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "besteisfahan": {
+    "names": [
+      "besteisfahan"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 5,
+        "sig": "\\komaFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "bestenigar": {
+    "names": [
+      "bestenigar"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 2,
+        "sig": "\\komaFlat b \\bakiyeFlat d",
+        "weight": 1.0
+      }
+    ]
+  },
+  "beyati": {
+    "names": [
+      "beyati"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 7,
+        "sig": "\\komaFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "buselik": {
+    "names": [
+      "buselik"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 3,
+        "sig": "\\bakiyeFlat e",
+        "weight": 1.0
+      }
+    ]
+  },
+  "evc": {
+    "names": [
+      "evc"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "evcara": {
+    "names": [
+      "evcara"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 3,
+        "sig": "\\komaFlat b \\bakiyeSharp f \\bakiyeSharp c \\bakiyeSharp a \\bakiyeSharp e",
+        "weight": 1.0
+      }
+    ]
+  },
+  "evic": {
+    "names": [
+      "evic"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 3,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "ferahfeza": {
+    "names": [
+      "ferahfeza"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 16,
+        "sig": "\\kucukFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "ferahnak": {
+    "names": [
+      "ferahnak"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 5,
+        "sig": "\\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "ferahnakasiran": {
+    "names": [
+      "ferahnak_asiran"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "gevest": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hicaz": {
+    "names": [
+      "hicaz"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 69,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 0.58
+      },
+      {
+        "n": 39,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 0.328
+      },
+      {
+        "n": 9,
+        "sig": "\\bakiyeFlat b \\komaSharp f \\bakiyeSharp c \\bakiyeSharp g",
+        "weight": 0.076
+      },
+      {
+        "n": 2,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c \\bakiyeSharp f",
+        "weight": 0.017
+      }
+    ]
+  },
+  "hicazhumayun": {
+    "names": [
+      "hicaz_humayun"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 8,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hicazkar": {
+    "names": [
+      "hicazkar"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 26,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeFlat a \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hicazkarkurdi": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeFlat a \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hicazuzzal": {
+    "alias_of": "uzzal",
+    "names": [
+      "uzzal"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hicazzirgule": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hisar": {
+    "names": [
+      "hisar"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 5,
+        "sig": "\\bakiyeSharp g \\bakiyeSharp d",
+        "weight": 1.0
+      }
+    ]
+  },
+  "hisarbuselik": {
+    "names": [
+      "hisarbuselik"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 4,
+        "sig": "\\komaSharp f \\bakiyeSharp g \\bakiyeSharp d",
+        "weight": 0.571
+      },
+      {
+        "n": 3,
+        "sig": "\\komaSharp f \\bakiyeSharp g \\bakiyeSharp c",
+        "weight": 0.429
+      }
+    ]
+  },
+  "huseyni": {
+    "names": [
+      "huseyni"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 40,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "huzzam": {
+    "names": [
+      "huzzam"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 37,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeSharp f",
+        "weight": 0.902
+      },
+      {
+        "n": 4,
+        "sig": "\\bakiyeFlat e \\bakiyeSharp f",
+        "weight": 0.098
+      }
+    ]
+  },
+  "isfahan": {
+    "names": [
+      "isfahan"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 6,
+        "sig": "\\komaFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "karcigar": {
+    "names": [
+      "karcigar"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 27,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "kurdilihicazkar": {
+    "names": [
+      "kurdilihicazkar"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 42,
+        "sig": "\\kucukFlat b \\kucukFlat e \\kucukFlat a",
+        "weight": 0.894
+      },
+      {
+        "n": 3,
+        "sig": "\\kucukFlat b \\komaFlat e \\kucukFlat a",
+        "weight": 0.064
+      },
+      {
+        "n": 2,
+        "sig": "\\kucukFlat b \\kucukFlat e \\bakiyeFlat a",
+        "weight": 0.043
+      }
+    ]
+  },
+  "mahur": {
+    "names": [
+      "mahur"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 35,
+        "sig": "\\kucukSharp f",
+        "weight": 0.673
+      },
+      {
+        "n": 17,
+        "sig": "\\komaSharp f",
+        "weight": 0.327
+      }
+    ]
+  },
+  "muberka": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "muhayyer": {
+    "names": [
+      "muhayyer"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 31,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 0.939
+      },
+      {
+        "n": 2,
+        "sig": "\\bakiyeSharp f",
+        "weight": 0.061
+      }
+    ]
+  },
+  "muhayyerkurdi": {
+    "names": [
+      "muhayyer_kurdi",
+      "muhayyerkurdi"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 35,
+        "sig": "\\kucukFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "muhayyersunbule": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "neva": {
+    "names": [
+      "neva"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 3,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "nevabuselik": {
+    "names": [
+      "neva_buselik"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "nevakurdi": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\kucukFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "nigar": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "nihavend": {
+    "names": [
+      "nihavend"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 89,
+        "sig": "\\kucukFlat b \\kucukFlat e",
+        "weight": 0.947
+      },
+      {
+        "n": 3,
+        "sig": "\\kucukFlat b \\kucukFlat e \\bakiyeSharp f",
+        "weight": 0.032
+      },
+      {
+        "n": 2,
+        "sig": "\\kucukFlat e",
+        "weight": 0.021
+      }
+    ]
+  },
+  "nihavent": {
+    "alias_of": "nihavend",
+    "names": [
+      "nihavend"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 89,
+        "sig": "\\kucukFlat b \\kucukFlat e",
+        "weight": 0.947
+      },
+      {
+        "n": 3,
+        "sig": "\\kucukFlat b \\kucukFlat e \\bakiyeSharp f",
+        "weight": 0.032
+      },
+      {
+        "n": 2,
+        "sig": "\\kucukFlat e",
+        "weight": 0.021
+      }
+    ]
+  },
+  "nikriz": {
+    "names": [
+      "nikriz"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 29,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 0.935
+      },
+      {
+        "n": 2,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 0.065
+      }
+    ]
+  },
+  "nisabur": {
+    "names": [
+      "nisabur"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 8,
+        "sig": "\\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "nisaburek": {
+    "names": [
+      "nisaburek"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 12,
+        "sig": "\\kucukSharp f \\bakiyeSharp c \\bakiyeSharp g",
+        "weight": 0.375
+      },
+      {
+        "n": 12,
+        "sig": "\\kucukSharp f \\bakiyeSharp c",
+        "weight": 0.375
+      },
+      {
+        "n": 8,
+        "sig": "\\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 0.25
+      }
+    ]
+  },
+  "pesendide": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "rast": {
+    "names": [
+      "rast"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 86,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 0.851
+      },
+      {
+        "n": 13,
+        "sig": "\\bakiyeSharp f",
+        "weight": 0.129
+      },
+      {
+        "n": 2,
+        "sig": "\\komaFlat b",
+        "weight": 0.02
+      }
+    ]
+  },
+  "rengidil": {
+    "names": [
+      "rengidil"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 4,
+        "sig": "\\bakiyeFlat a \\komaFlat b \\bakiyeFlat d",
+        "weight": 1.0
+      }
+    ]
+  },
+  "saba": {
+    "names": [
+      "saba"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 31,
+        "sig": "\\komaFlat b \\bakiyeFlat d",
+        "weight": 1.0
+      }
+    ]
+  },
+  "sedaraban": {
+    "names": [
+      "sedaraban"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\kucukFlat b \\bakiyeFlat e \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "segah": {
+    "names": [
+      "segah"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 39,
+        "sig": "\\komaFlat b \\komaFlat e \\bakiyeSharp f",
+        "weight": 0.929
+      },
+      {
+        "n": 3,
+        "sig": "\\komaFlat e \\bakiyeSharp f",
+        "weight": 0.071
+      }
+    ]
+  },
+  "sehnaz": {
+    "names": [
+      "sehnaz"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 9,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 0.529
+      },
+      {
+        "n": 3,
+        "sig": "\\bakiyeFlat b \\komaSharp f \\bakiyeSharp c \\bakiyeSharp g",
+        "weight": 0.176
+      },
+      {
+        "n": 3,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 0.176
+      },
+      {
+        "n": 2,
+        "sig": "\\komaSharp f \\bakiyeSharp c \\bakiyeSharp g",
+        "weight": 0.118
+      }
+    ]
+  },
+  "sehnazbuselik": {
+    "names": [
+      "sehnaz_buselik"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\bakiyeSharp g",
+        "weight": 1.0
+      }
+    ]
+  },
+  "sevkefza": {
+    "names": [
+      "sevkefza"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 5,
+        "sig": "\\kucukFlat b \\bakiyeFlat d",
+        "weight": 1.0
+      }
+    ]
+  },
+  "sipihr": {
+    "names": [
+      "sipihr"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\komaFlat b \\bakiyeFlat d",
+        "weight": 1.0
+      }
+    ]
+  },
+  "sivenuma": {
+    "names": [
+      "sivenuma"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\kucukFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "sultanisegah": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "sultaniyegah": {
+    "names": [
+      "sultaniyegah"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 13,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp c",
+        "weight": 0.5
+      },
+      {
+        "n": 9,
+        "sig": "\\kucukFlat b \\bakiyeSharp c",
+        "weight": 0.346
+      },
+      {
+        "n": 4,
+        "sig": "\\kucukFlat b",
+        "weight": 0.154
+      }
+    ]
+  },
+  "suzidil": {
+    "names": [
+      "suzidil"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 2,
+        "sig": "\\komaSharp f \\bakiyeSharp d \\bakiyeSharp g",
+        "weight": 1.0
+      }
+    ]
+  },
+  "suzidilara": {
+    "names": [
+      "suzidilara"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 13,
+        "sig": "\\kucukSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "suzinak": {
+    "names": [
+      "suzinak"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 12,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeFlat a \\bakiyeSharp f",
+        "weight": 0.75
+      },
+      {
+        "n": 4,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeSharp f",
+        "weight": 0.25
+      }
+    ]
+  },
+  "suznak": {
+    "names": [
+      "suznak"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\komaFlat b \\bakiyeFlat e \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "tahir": {
+    "names": [
+      "tahir"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "tarzinevin": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "ussak": {
+    "names": [
+      "ussak"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 24,
+        "sig": "\\komaFlat b",
+        "weight": 1.0
+      }
+    ]
+  },
+  "uzzal": {
+    "names": [
+      "uzzal"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\bakiyeFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  },
+  "vecdidil": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "yegah": {
+    "names": [
+      "yegah"
+    ],
+    "source": "real",
+    "variants": [
+      {
+        "n": 1,
+        "sig": "\\komaFlat b \\bakiyeSharp f",
+        "weight": 1.0
+      }
+    ]
+  },
+  "zavil": {
+    "names": [],
+    "source": "theory",
+    "variants": [
+      {
+        "n": 0,
+        "sig": "\\komaFlat b \\bakiyeSharp f \\bakiyeSharp c",
+        "weight": 1.0
+      }
+    ]
+  }
+}

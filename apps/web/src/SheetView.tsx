@@ -19,6 +19,7 @@ import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
 import { tieSplitBeats, tupletGroupsIn, tupletWrittenBeats } from "../../../tools/render/rhythm";
 import { buildTextNoise } from "./textNoise";
+import { mulberry32 } from "../../../tools/render/rng";
 
 // --- layout constants -------------------------------------------------------
 const LEFT = 10;
@@ -338,6 +339,39 @@ function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   svg.appendChild(text);
 }
 
+/**
+ * Draw a plain PHRASE SLUR — a curved arc over a run of noteheads WITHOUT the tuplet "3" — as raw
+ * SVG. Real Turkish editions slur legato groups, but the synthetic corpus drew arcs ONLY on
+ * triplets, so the model learned "any over-note arc ⇒ `\tup3`" (baseline tup3 precision 15%, and
+ * the arc-triggered false-`\tup3` rate the Step-4.0 metric watches). These label-free distractors
+ * teach that an arc ALONE is not a triplet — only arc + "3" is. Pixels only: a slur is never a
+ * label token, and buildStrips serializes from the doc, so the labels stay plain automatically.
+ */
+function drawSlurArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const xs = group.map((n) => n.getAbsoluteX());
+  const x1 = Math.min(...xs) - 1;
+  const x2 = Math.max(...xs) + 10;
+  const ys = group.flatMap((n) => {
+    try {
+      return n.getYs();
+    } catch {
+      return [];
+    }
+  });
+  if (ys.length === 0) return;
+  const yEdge = above ? Math.min(...ys) - 8 : Math.max(...ys) + 8;
+  const bulge = above ? -7 : 7; // shallower than the tuplet arc, and no digit — a phrase slur
+  const midX = (x1 + x2) / 2;
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", `M ${x1} ${yEdge} Q ${midX} ${yEdge + bulge * 2} ${x2} ${yEdge}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#222");
+  path.setAttribute("stroke-width", "1.1");
+  path.setAttribute("data-omr", "slur"); // for tests/inspection only (an attribute, not pixels)
+  svg.appendChild(path);
+}
+
 // Volta bracket height above the top staff line: close to the row (clear of most beams) and well
 // inside the strip-crop window (which starts ~46px above the top line).
 const VOLTA_ABOVE = 26;
@@ -584,12 +618,19 @@ export function SheetView({
   repeatSpans,
   navMarks,
   textNoise,
+  slurNoise,
+  signatureOverride,
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
   /** How accidentals are displayed (see {@link AccidentalMode}). The key signature is drawn at
    *  each row start in `"keysig"` and `"measure"` modes. */
   accidentalMode: AccidentalMode;
+  /** CONVENTIONAL printed-signature override (drawn-order entries). When set, replaces the
+   *  content-derived `deriveKeySignature` for BOTH the drawn glyphs and the mode's accidental
+   *  decisions, so the makam's real PRINTED signature is engraved. Must be the SAME entries the
+   *  strip exporter gets (faithful scheme: pixels == labels). Undefined → derive from the doc. */
+  signatureOverride?: { letter: string; alterCommas: number }[];
   /** Draw lyric syllables under the notes (skipping the "." melisma placeholders). */
   showLyrics: boolean;
   /** Draw a hyphen between a word's syllables (e.g. "Gam-ze-de"). Most sheets omit these. */
@@ -616,6 +657,9 @@ export function SheetView({
   /** Rung-2 distractor text drawn INSIDE the SVG (so strip crops capture it) — see textNoise.ts.
    *  Pixels only; labels never see it. Undefined → no noise (interactive use). */
   textNoise?: { seed: number } | null;
+  /** Round-1 phrase-slur distractors: label-free arcs over non-triplet note runs (see drawSlurArc)
+   *  so the model stops reading every arc as a `\tup3`. Pixels only. Undefined → none. */
+  slurNoise?: { seed: number } | null;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -640,8 +684,10 @@ export function SheetView({
     return [...set].sort((a, b) => a - b);
   }, [doc]);
 
-  // The score's derived key signature (prevailing accidental per letter), and a lookup map.
-  const signature = useMemo(() => deriveKeySignature(doc), [doc]);
+  // The key signature (prevailing accidental per letter), and a lookup map. A caller-supplied
+  // override (the makam's conventional PRINTED signature) wins over the doc-derived one — the render
+  // pipeline passes it so synthetic pages wear the real printed signature (see stripExport.ts).
+  const signature = useMemo(() => signatureOverride ?? deriveKeySignature(doc), [doc, signatureOverride]);
   const signatureMap = useMemo(() => new Map(signature.map((s) => [s.letter, s.alterCommas])), [signature]);
 
   // The usul meter (e.g. 9/8 for aksak), printed once at the start of the first staff.
@@ -658,6 +704,9 @@ export function SheetView({
     const host = hostRef.current;
     if (!host) return;
     host.innerHTML = ""; // clear any previous render (also handles React 18 double-invoke)
+
+    // Seeded RNG for the phrase-slur distractors (drawn per measure below; same seed → same slurs).
+    const slurRng = slurNoise ? mulberry32(slurNoise.seed) : null;
 
     // The key signature is drawn whenever accidentals aren't shown on every note.
     const showSignature = accidentalMode !== "every";
@@ -830,6 +879,28 @@ export function SheetView({
                   .setContext(ctx)
                   .draw();
             }
+            // Phrase-slur distractors: label-free arcs over runs of ≥3 consecutive non-tuplet,
+            // non-rest notes (≥3 so they never resemble a 2-note tie), on a seeded ~35% of runs.
+            // Teaches "arc without a '3' ≠ triplet" — the tup3-precision fix. Within one measure,
+            // so a barline crop never bisects a slur. Never touches the label (pixels only).
+            if (slurRng && svg) {
+              let run: StaveNote[] = [];
+              const trySlur = () => {
+                if (run.length >= 3 && slurRng() < 0.35) {
+                  const maxLen = Math.min(5, run.length);
+                  const len = 3 + Math.floor(slurRng() * (maxLen - 2)); // 3..maxLen
+                  const start = Math.floor(slurRng() * (run.length - len + 1));
+                  const grp = run.slice(start, start + len);
+                  drawSlurArc(svg, grp, tupletAbove(grp));
+                }
+                run = [];
+              };
+              for (const n of notes) {
+                if (inTuplet.has(n) || n.isRest()) trySlur();
+                else run.push(n);
+              }
+              trySlur();
+            }
             for (const [a, b] of ties) {
               new StaveTie({ firstNote: a, lastNote: b, firstIndexes: [0], lastIndexes: [0] })
                 .setContext(ctx)
@@ -893,7 +964,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

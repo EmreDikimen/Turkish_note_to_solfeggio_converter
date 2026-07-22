@@ -255,6 +255,37 @@ export function serializeSignature(
   return { label: parts.join(" "), tokens: parts.length };
 }
 
+/** Inverse of `serializeSignature`: parse a signature body — `\komaFlat b \bakiyeSharp c`, drawn
+ *  order — into key-signature entries. The `\sig`/`\sigend` wrapper is tolerated if present, so
+ *  both a bare body and a full prefix parse. Used to feed a makam's CONVENTIONAL PRINTED signature
+ *  (`data/makam_signatures.json`, built by `scripts/build_makam_signatures.py` from the confirmed
+ *  real-page labels) into BOTH the draw path (SheetView) and the label path (stripExport), so
+ *  synthetic carry-mode strips wear the makam's real printed signature instead of the
+ *  content-derived `deriveKeySignature`. Throws on a malformed body rather than silently drop. */
+const ALTER_OF_TOKEN: Record<string, number> = Object.fromEntries(
+  Object.entries(AEU_TOKEN).map(([commas, tok]) => [tok, Number(commas)]),
+);
+
+export function parseSignatureBody(body: string): { letter: string; alterCommas: number }[] {
+  const toks = body
+    .replace(SIG_TOKEN, " ")
+    .replace(SIG_END_TOKEN, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const entries: { letter: string; alterCommas: number }[] = [];
+  for (let i = 0; i < toks.length; i++) {
+    const tok = toks[i]!;
+    const alter = ALTER_OF_TOKEN[tok];
+    if (alter === undefined) throw new Error(`bad signature token '${tok}' in "${body}"`);
+    const letter = (toks[i + 1] ?? "").toUpperCase();
+    if (!/^[A-G]$/.test(letter)) throw new Error(`'${tok}' not followed by a letter A–G in "${body}"`);
+    entries.push({ letter, alterCommas: alter });
+    i++;
+  }
+  return entries;
+}
+
 /** One unsplittable label unit for strip packing: a plain note/rest, a whole `\tup3 … \tupend`
  *  group, a tied written pair, or a grace glued to its host — splitting any of these across a
  *  strip boundary would orphan half a sign, so packing treats each atom as one piece. */

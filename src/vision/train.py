@@ -133,6 +133,15 @@ def main() -> int:
                          "lands on the same side in every pool")
     ap.add_argument("--real-val-frac", type=float, default=0.10,
                     help="fraction of each real pool's pieces held out as real-val")
+    ap.add_argument("--every-share", type=float, default=0.15,
+                    help="target sampling share of SYNTHETIC 'every'-mode strips (Round-1 "
+                         "pre-registered sweep: 0.267 = as-rendered, 0.15 default, 0.05). "
+                         "Re-weights every-vs-carry WITHIN the synthetic pool via a per-epoch "
+                         "WeightedRandomSampler, holding the synthetic:real ratio fixed. "
+                         "Rationale: 'every' mode carries 4.22 inline accidentals/strip vs real's "
+                         "0.32, so at its as-rendered 26.7% it supplies ~81%% of all inline "
+                         "accidentals (4.4x the real rate) — a suspected driver of the "
+                         "komaSharp/komaFlat hallucination. Negative value = OFF (corpus as-is).")
     ap.add_argument("--oversample-tup", type=int, default=1,
                     help="extra repeat factor for train strips whose label contains \\tup3 "
                          "(applies to every pool, synthetic included)")
@@ -147,7 +156,7 @@ def main() -> int:
     args = ap.parse_args()
 
     import torch
-    from torch.utils.data import DataLoader
+    from torch.utils.data import DataLoader, WeightedRandomSampler
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     torch.manual_seed(args.seed)
@@ -193,6 +202,37 @@ def main() -> int:
         train_items += extra * (args.oversample_tup - 1)
         print(f"   tup3 oversample x{args.oversample_tup}: +{len(extra) * (args.oversample_tup - 1)} strips")
 
+    # ---- every-share re-weighting (Round-1 pre-registered sweep) ------------------------------
+    # 'every'-mode synthetic strips mark EVERY accidental inline (4.22/strip) while carry-mode and
+    # real strips sit at ~0.32-0.36 — the real-page rate. Left as rendered, 'every' is 26.7% of the
+    # synthetic corpus but supplies ~81% of all inline accidentals, inflating the model's
+    # "emit an accidental" prior. This re-weights every-vs-carry WITHIN the synthetic pool to the
+    # target share, holding the synthetic:real mass ratio fixed, via a per-epoch sampler (so no
+    # strip is discarded — only its draw frequency changes).
+    train_sampler = None
+    if args.every_share >= 0:
+        synth_ids = {id(s) for s in train_ds.strips}
+        is_synth = [id(s) in synth_ids for s, _ in train_items]
+        is_every = [sy and s.mode == "every" for (s, _), sy in zip(train_items, is_synth)]
+        n_e = sum(is_every)
+        n_c = sum(1 for sy, ev in zip(is_synth, is_every) if sy and not ev)
+        n_r = len(train_items) - n_e - n_c
+        if n_e == 0 or n_c == 0:
+            print(f"   every-share: SKIPPED (every={n_e}, carry={n_c} — need both)")
+        else:
+            s_target, synth_total = args.every_share, n_e + n_c
+            w_e = s_target * synth_total / n_e
+            w_c = (1.0 - s_target) * synth_total / n_c
+            weights = [
+                (w_e if ev else w_c) if sy else 1.0
+                for sy, ev in zip(is_synth, is_every)
+            ]
+            train_sampler = WeightedRandomSampler(weights, num_samples=len(train_items), replacement=True)
+            drawn = s_target * synth_total / len(train_items)
+            print(f"   every-share -> {s_target:.3f} of synthetic (was {n_e / synth_total:.3f}); "
+                  f"pool: every={n_e} carry={n_c} real={n_r}; "
+                  f"expected per-epoch mix: every {drawn:.1%} of all draws")
+
     augment = None
     if not args.no_augment:
         from augment import Augmenter
@@ -211,7 +251,8 @@ def main() -> int:
 
     collate_fn = partial(collate, processor=processor, tokenizer=tok)
     train_loader = DataLoader(
-        AugmentedStrips(train_items, augment), batch_size=args.batch_size, shuffle=True,
+        AugmentedStrips(train_items, augment), batch_size=args.batch_size,
+        shuffle=(train_sampler is None), sampler=train_sampler,
         num_workers=args.num_workers, worker_init_fn=worker_init, collate_fn=collate_fn,
         drop_last=True, persistent_workers=args.num_workers > 0,
     )

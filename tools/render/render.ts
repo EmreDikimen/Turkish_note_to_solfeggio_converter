@@ -54,12 +54,17 @@ interface PieceEntry {
 interface Job {
   piece: PieceEntry;
   transpose: number;
-  mode: "every" | "keysig";
+  mode: "every" | "measure";
+  /** Unique per job (for the filename): `c0`,`c1`,… carry passes at t0, or `t+0`/`t-9` every jobs. */
+  tag: string;
+  /** Conventional printed-signature body for carry mode (?sig=), or null for every mode. */
+  sig: string | null;
   lyrics: boolean;
   repseed: number | null;
   navseed: number | null;
   textseed: number;
   respellseed: number;
+  slurseed: number;
 }
 
 function arg(name: string): string | undefined {
@@ -74,24 +79,77 @@ const DELAY = Number(arg("delay") ?? 150);
 const FROM = Number(arg("from") ?? 0);
 const TO = arg("to") != null ? Number(arg("to")) : Infinity;
 
-/** The deterministic render jobs for one piece: every transpose × both modes. */
+// Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
+// scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
+// renders wear the makam's real printed signature (not SymbTr's content-derived one): we sample a
+// variant per pass (seeded, weighted by real frequency) and hand its body string to the harness as
+// ?sig=, which feeds BOTH the drawn glyphs and the label (faithful scheme).
+const SIG_TABLE: Record<string, { variants: { sig: string; weight: number }[] }> = JSON.parse(
+  readFileSync(arg("sigs") ?? "data/makam_signatures.json", "utf8"),
+);
+const normMakam = (m: string) => m.toLowerCase().replace(/[^a-z0-9]/g, "");
+/** Seeded weighted pick of a makam's printed-signature variant → its drawn-order body string. */
+function pickSignature(makam: string, seed: number): string | null {
+  const entry = SIG_TABLE[normMakam(makam)];
+  if (!entry?.variants.length) return null;
+  const r = mulberry32(seed)();
+  let acc = 0;
+  for (const v of entry.variants) {
+    acc += v.weight;
+    if (r <= acc) return v.sig;
+  }
+  return entry.variants[entry.variants.length - 1]!.sig;
+}
+// Carry (measure) mode is the DOMINANT, signature-bearing share — rendered at written pitch (t0)
+// only so the conventional signature matches the notation, and bulked to dominance via this many
+// seeded augmentation passes per piece (blur/text/repeat/nav + signature-variant variety).
+const CARRY_PASSES = Number(arg("carry-passes") ?? 4);
+
+/**
+ * The deterministic render jobs for one piece. Carry-dominant matrix (Round-1 re-render):
+ *  - CARRY_PASSES × carry ("measure") renders at written pitch (t0), each a seeded augmentation
+ *    pass wearing a sampled conventional makam signature — the DOMINANT, signature-bearing share
+ *    that mirrors real printed pages;
+ *  - one "every" render per NON-zero transpose — the minority share carrying the pitch augmentation
+ *    (no signature, so transposing is always faithful; t0's written pitch is covered by carry).
+ * keysig mode is retired (real pages use the carry convention).
+ */
 function jobsFor(piece: PieceEntry): Job[] {
   const jobs: Job[] = [];
+  for (let p = 0; p < CARRY_PASSES; p++) {
+    const repseed = hashStr(`${piece.slug}:c${p}`);
+    const navseed = hashStr(`${piece.slug}:c${p}:nav`);
+    jobs.push({
+      piece,
+      transpose: 0,
+      mode: "measure",
+      tag: `c${p}`,
+      sig: pickSignature(piece.makam, hashStr(`${piece.slug}:c${p}:sig`)),
+      lyrics: p === 0 && piece.hasLyrics, // one seeded pass carries lyrics, the rest don't
+      repseed: mulberry32(repseed)() < 0.5 ? repseed : null, // seeded coin: ~half get repeats
+      navseed: mulberry32(navseed)() < 0.7 ? navseed : null, // ~70% get nav marks (audit density)
+      textseed: hashStr(`${piece.slug}:c${p}:text`),
+      respellseed: hashStr(`${piece.slug}:c${p}:respell`),
+      slurseed: hashStr(`${piece.slug}:c${p}:slur`),
+    });
+  }
   for (const t of piece.transposes) {
+    if (t === 0) continue; // t0 is the carry share; every mode is the transpose augmentation
     const repseed = hashStr(`${piece.slug}:${t}`);
     const navseed = hashStr(`${piece.slug}:${t}:nav`);
-    for (const mode of ["every", "keysig"] as const) {
-      jobs.push({
-        piece,
-        transpose: t,
-        mode,
-        lyrics: t === 0 && piece.hasLyrics,
-        repseed: mulberry32(repseed)() < 0.5 ? repseed : null, // seeded coin: ~half get repeats
-        navseed: mulberry32(navseed)() < 0.7 ? navseed : null, // seeded coin: ~70% get nav marks (audit floors need the density)
-        textseed: hashStr(`${piece.slug}:${t}:text`),
-        respellseed: hashStr(`${piece.slug}:${t}:respell`),
-      });
-    }
+    jobs.push({
+      piece,
+      transpose: t,
+      mode: "every",
+      tag: `t${t >= 0 ? "+" : ""}${t}`,
+      sig: null, // every mode draws no signature
+      lyrics: false, // lyrics only on the written-pitch (t0) staff
+      repseed: mulberry32(repseed)() < 0.5 ? repseed : null,
+      navseed: mulberry32(navseed)() < 0.7 ? navseed : null,
+      textseed: hashStr(`${piece.slug}:${t}:text`),
+      respellseed: hashStr(`${piece.slug}:${t}:respell`),
+      slurseed: hashStr(`${piece.slug}:${t}:slur`),
+    });
   }
   return jobs;
 }
@@ -104,7 +162,9 @@ function jobUrl(job: Job): string {
     transpose: String(job.transpose),
     textseed: String(job.textseed),
     respellseed: String(job.respellseed),
+    slurseed: String(job.slurseed),
   });
+  if (job.sig) q.set("sig", job.sig);
   if (job.repseed != null) q.set("repseed", String(job.repseed));
   if (job.navseed != null) q.set("navseed", String(job.navseed));
   return `${URL}/?${q}`;
@@ -124,14 +184,15 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
       // row-start chunk exceeds the token budget) — requiring length > 0 would hang forever.
       return (
         c && c.applied && c.score === want.score && c.mode === want.mode &&
-        c.lyrics === want.lyrics && c.transpose === want.transpose &&
+        c.lyrics === want.lyrics && c.transpose === want.transpose && c.sig === want.sig &&
         c.repseed === want.repseed && c.navseed === want.navseed &&
-        c.textseed === want.textseed && c.respellseed === want.respellseed
+        c.textseed === want.textseed && c.respellseed === want.respellseed && c.slurseed === want.slurseed
       );
     },
     {
-      score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose,
+      score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose, sig: job.sig,
       repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
+      slurseed: job.slurseed,
     },
     { timeout: 20000 },
   );
@@ -153,8 +214,7 @@ async function renderPiece(page: Page, piece: PieceEntry, shardPath: string): Pr
     const box2 = (await svg.boundingBox())!;
 
     for (const s of strips) {
-      const tTag = `t${job.transpose >= 0 ? "+" : ""}${job.transpose}`;
-      const name = `${piece.slug}_${tTag}_${job.mode}_${s.id}`;
+      const name = `${piece.slug}_${job.tag}_${job.mode}_${s.id}`;
       const clip = { x: box2.x + s.rect.x, y: box2.y + s.rect.y, width: s.rect.width, height: s.rect.height };
       try {
         await page.screenshot({ path: `${OUT}/${name}.png`, clip });
@@ -164,10 +224,10 @@ async function renderPiece(page: Page, piece: PieceEntry, shardPath: string): Pr
       }
       writeFileSync(`${OUT}/${name}.txt`, s.label + "\n");
       appendFileSync(shardPath, JSON.stringify({
-        image: `${name}.png`, label: s.label, mode: job.mode, makam: piece.makam,
+        image: `${name}.png`, label: s.label, mode: job.mode, makam: piece.makam, sig: job.sig,
         piece: piece.slug, transpose: job.transpose, lyrics: job.lyrics,
         repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-        from: s.fromMeasure, to: s.toMeasure,
+        slurseed: job.slurseed, from: s.fromMeasure, to: s.toMeasure,
       }) + "\n");
       count++;
       if (DELAY > 0) await page.waitForTimeout(DELAY);

@@ -34,7 +34,7 @@ export interface LayoutBox {
 }
 
 export interface StripMode {
-  mode: "every" | "keysig";
+  mode: "every" | "keysig" | "measure";
 }
 
 /** A strip ready to crop + label. `rect` is in the SVG's coordinate space (= CSS px within the SVG). */
@@ -57,22 +57,29 @@ const STAFF_H = 112;
 export function buildStrips(
   doc: NoteModelDocument,
   boxes: LayoutBox[],
-  mode: "every" | "keysig",
+  mode: "every" | "keysig" | "measure",
   // Fold-detected repeat spans (must be the SAME ones SheetView draws): the labels then carry the
   // repeat tokens at the drawn positions. Undefined/empty = no repeat signs on the sheet.
   repeatSpans?: RepeatSpan[],
   // Injected navigation marks (again the SAME ones SheetView draws) — see navmarks.ts.
   navMarks?: NavMark[],
+  // CONVENTIONAL printed-signature override (drawn-order entries, from data/makam_signatures.json via
+  // parseSignatureBody). When set, replaces the content-derived signature so carry/keysig labels wear
+  // the makam's real PRINTED signature — MUST be the same entries SheetView draws (faithful scheme).
+  sigOverride?: { letter: string; alterCommas: number }[],
   { maxMeasures = STRIP_BUDGET.maxMeasures, maxTokens = STRIP_BUDGET.maxTokens }: { maxMeasures?: number; maxTokens?: number } = {},
 ): ExportStrip[] {
   const byIndex = new Map(groupMeasures(doc).map((m) => [m.index, m]));
 
-  // keysig mode: the signature drawn at each row start — must be derived from the SAME doc
-  // SheetView renders, so the label decisions equal the draw decisions (faithful scheme).
-  const sigEntries = mode === "keysig" ? deriveKeySignature(doc) : [];
+  // keysig + measure (carry) modes draw the signature at each row start; every mode draws none. The
+  // signature must be the SAME entries SheetView renders (its own derive, or the same override passed
+  // to it), so the label decisions equal the draw decisions (faithful scheme).
+  const drawsSig = mode !== "every";
+  const carry = mode === "measure"; // measure = keysig PLUS the measure-scoped accidental carry
+  const sigEntries = drawsSig ? (sigOverride ?? deriveKeySignature(doc)) : [];
   const sigMap: SignatureMap =
-    mode === "keysig" ? new Map(sigEntries.map((e) => [e.letter, e.alterCommas])) : undefined;
-  const sigPrefix = mode === "keysig" ? serializeSignature(sigEntries) : null;
+    drawsSig ? new Map(sigEntries.map((e) => [e.letter, e.alterCommas])) : undefined;
+  const sigPrefix = drawsSig ? serializeSignature(sigEntries) : null;
 
   // Split the (index-ordered) boxes into rows by their y coordinate.
   const ordered = [...boxes].sort((a, b) => a.index - b.index);
@@ -103,7 +110,7 @@ export function buildStrips(
       const marks = repeatMarksAt(b.index, repeatSpans);
       const nav = navMarksAt(b.index, navMarks);
       const repCost = (marks.repStart ? 1 : 0) + (marks.repEnd ? 1 : 0) + (marks.volta1 ? 1 : 0) + (marks.volta2 ? 1 : 0);
-      const t = (m ? serializeMeasure(m, sigMap).tokens : 0) + repCost + nav.start.length + nav.end.length;
+      const t = (m ? serializeMeasure(m, sigMap, carry).tokens : 0) + repCost + nav.start.length + nav.end.length;
       if (chunk.length > 0 && (chunk.length >= maxMeasures || tokens + t + 1 > maxTokens)) {
         chunks.push(chunk);
         chunk = [];
@@ -114,12 +121,15 @@ export function buildStrips(
     }
     if (chunk.length) chunks.push(chunk);
 
-    // keysig strips must include the row start → keep only the first chunk of each row.
+    // keysig strips must include the row start → keep only the first chunk of each row. every AND
+    // measure (carry) keep ALL chunks: measure matches real printed pages (signature once at row
+    // start; mid-row measures rely on the remembered signature, the real reading task) — same as the
+    // emitter's real carry strips, so synthetic and real carry distributions agree.
     const keep = mode === "keysig" ? chunks.slice(0, 1) : chunks;
     for (const [ci, c] of keep.entries()) {
       const ms = c.map((b) => byIndex.get(b.index)).filter((m): m is Measure => !!m);
       if (ms.length === 0) continue;
-      const body = serializeMeasures(ms, sigMap, repeatSpans, navMarks);
+      const body = serializeMeasures(ms, sigMap, repeatSpans, navMarks, carry, carry);
       // A SINGLE measure denser than the token budget can't be split (crops must fall on
       // barlines) and can't be trained (its label exceeds the decoder's max_length, so
       // generation could never reach EOS) — drop it rather than emit a poisoned sample.

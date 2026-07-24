@@ -732,10 +732,132 @@ the next item, Rung 2, formally opens **Phase 3** — see the boundary note abov
     only. **The exam read is still owed, ONCE, on the final winner.**
   - Fix logged: stage 2 first had real at 5.9% = each real strip seen <1x in 2k steps; caught before
     running and corrected with `:8`, else Arm A was merely "Arm B with a warm start".
-  - **Next:** every-share sweep {26.7%, 5%} on the winning (two-stage) recipe → exam ONCE → ship
-    chain. Two open issues: the sweep's pre-registered `\komaSharp`-precision diagnostic is
-    **unmeasurable on real-val (n=1)**, and sweeping `s` means redoing stage 1 (~8k steps ≈ 2.5–3 h
-    per arm) though Arm B's real-val plateaued from ~step 2500.
+  - Also logged: **`\tup3` recall dipped as precision soared** (A 84.1% vs B 93.2% on 44 real-val
+    gold vs baseline 92.7%; as F1, B slightly ahead 92.1 vs ~90.3) — the distractors bought
+    precision partly with recall; both clear the floor. Visible at the exam too (v2.1 holds 55
+    tup3 gold / 38 strips) — watch whether the dip persists there.
+  - **⛔ Every-share sweep CANCELLED (2026-07-22, before any sweep run)** — its pre-registration
+    was first AMENDED the same day (≥30-gold selection metric, per-arm stage 1, komaFlat proxy;
+    kept for the record in `docs/RUNG3.md` Step 4.2), then cancelled on the adversarial decision
+    block in `docs/RUNG3.md` Step 4.2. Grounds (measured, not preferred): (a) **power** — the
+    largest intervention available (the init A/B itself) moved the amended selection metric
+    **0.5 pp** (92.7 vs 92.2), so the subtler sweep arms would land inside noise and the
+    protocol's argmax would record a coin flip as a measured selection before a one-shot exam;
+    (b) **premise collapse** — the hallucination the sweep was built to tune away is already
+    fixed on real-val (komaFlat F1 **93.7 in BOTH arms**, from 53.8% baseline precision) by the
+    re-render itself, making a null 3-way ambiguous and the mechanism question unanswerable
+    here; (c) the amendment carried a **stage-1-length confound** (logged as a protocol bug).
+    Ruling: cancellation is legitimate — it reverts to the pre-registered default **s=0.15**,
+    selects nothing, and leaves Step-4.0 floors / one-shot exam / real-val-only selection
+    untouched. **Pre-registered replacements:** a future-sweep POWER CRITERION (minimum
+    interesting effect must exceed the measured metric movement, currently 0.5 pp); the free
+    **degraded-strip probe** (existing Arm-A checkpoint on blurred/faded real-val strips —
+    does hallucination return under ambiguity?) as the mechanism diagnostic; Round 2
+    **deconfounds the renderer** (transposed-carry / accidental-thinned every) instead of
+    re-sweeping the conflated `s`. The komaSharp exam floor (18 gold, baseline 21%, ≥70%)
+    stays an acknowledged leap of faith the sweep could not have de-risked anyway.
+  - **Next:** exam ONCE on Arm A (s=0.15) → ship chain (ONNX → int8 parity → browser gate),
+    with the photo-exam read alongside.
+- ⛔ **ROUND-1 EXAM TAKEN 2026-07-22 — DOES NOT PASS; NOT SHIPPED** (`docs/RUNG3.md` Step 4.3,
+  numbers in `src/vision/MODEL_EVAL.md`). The one-shot read is spent; taken locally so exam strips
+  never reached the training box. Pre-flight re-confirmed the freeze from gold labels alone (352
+  strips, arc denominators 85/229, per-class gold identical to Step 4.0).
+  - **FAIL on five floors:** mean AEU recall **66.6%** (≥85%), mean AEU F1 **67.0%** (≥80%),
+    `\tup3` recall **72.7%** (≥85%), `\kucukSharp` recall **58.1%** (≥75%), `\komaFlat` precision
+    **66.2%** (≥70%).
+  - **PASS, and substantial:** `\tup3` precision **15.1 → 93.0%**, **arc-triggered false-`\tup3`
+    77.6% → 0.0%** (0/85 — the slur distractors eliminated the pathology outright), SER
+    0.147 → **0.059**, exact 17.3 → **49.1%**, per-source AEU gap 12.5 → **0.3pp** (style overfit
+    gone; nota caught up with neyzen completely).
+  - **The big lesson: real-val was wildly optimistic — 95.0% AEU / 89.2% F1 → 66.6% / 67.0% on the
+    exam, a ~28pp gap**, despite both pools being piece-disjoint. Real-val pieces sit inside
+    editions the model trained on. **Standing rule: real-val ORDERS candidates, it does not PREDICT
+    exam performance.** Retroactively supports the sweep cancellation.
+  - Headline is LOW-N-dragged: `\buyukSharp` (3 gold) 0.0% recall, `\komaSharp` (18 gold) recall
+    REGRESSED 83.3 → 55.6%; on the five ≥20-gold classes means are 82.2% / 84.0% — **diagnostic
+    only, LOW-N stays inside the means per Step 4.0, verdict remains FAIL**.
+  - New Round-2 targets from the error dump: `\komaSharp`↔`\kucukSharp` signature confusion (both
+    directions, same piece) and **`\tup3` → `\grace` substitution** — the model stopped over-firing
+    triplets and now under-reads real ones.
+  - **Synthetic no-regression clause ALSO FAILS: 93.0% vs ≥99%** (1,000-strip subset of strips_v3
+    val; caveat — the 99.9% reference was measured on the OLD strips_v2_2 corpus, so this overstates
+    forgetting). Its error dump names a **root cause worth more than the number**: under a
+    `\sig \kucukFlat b \sigend` signature the model inserts a spurious inline **`\komaFlat` on `b'`**
+    — re-stating, in the wrong koma family, an alteration the signature already carries.
+    **Carry-mode accidental/signature interaction is not solidly learned**, which plausibly explains
+    the exam's `\komaFlat` precision failure (66.2%) and the komaSharp↔kucukSharp confusion — and it
+    **reproduces on synthetic**, so Round 2 can iterate on it fast with perfect labels.
+  - ⚠ **Exam contamination found in post-read verification: 4 SymbTr pieces / 25 strips (7.1%) had
+    their OTHER engraving in the training pools** (same melody, different printed image — the Step-2
+    dedupe rule as written). Root cause: the disjointness guard is **emit-time only**
+    (`emit_strip_labels.py --testset`) and nothing re-validates when the exam GROWS or new material
+    is collected — §1c deliberately collected second-engraving copies, and the tup3 exam extension
+    moved `gittin_biraktin`/`ay_dalgalanirken` into the exam while their nota strips were already
+    training. **Corrected read on 327 clean strips (instrument repair, can only lower the score):
+    AEU 66.63 → 66.26%, F1 66.98 → 66.53%, komaFlat precision 66.2 → 63.8%, SER 0.0591 → 0.0597.
+    Verdict UNCHANGED — deltas are small, so 66.3% is a number that can be stood behind.**
+    `strips_exam_v2_clean/` is the honest reference from here on. Exam v3 owes a **train-time**
+    disjointness assertion (train.py refuses to start on any testset piece), re-validation whenever
+    the exam grows, and dedupe on SymbTr piece id rather than image stem.
+  - **Decision rule applied:** exam NOT re-run; diagnosis moves to real-val; any further exam read
+    is labelled a second look with leakage acknowledged. The 5% nota re-audit runs anyway.
+- ✅ **DECISION (2026-07-23): ship Round 1, labelled "an improvement, not a pass"** (plain summary;
+  full version in `docs/RUNG3.md` Step 4.4). On our honest test (the exam) it fell short of the 85%
+  target and missed 5 targets, but it beats the old live model on everything we track — it fixed a
+  rhythm-rewriting bug (77.6% → 0%), cut overall mistakes (0.147 → 0.060), gets whole strips right far
+  more often (17% → 49%), and reads triplets far more precisely (15% → 93%). Keeping the worse model
+  live would hurt users, so we ship it and record honestly that it improved but did not pass — Round 2
+  continues. **Round 2 starts with two cheap checks that could change our direction: (1) the photo
+  test** (real users take phone photos, but every score so far is from clean PDFs — if photos score
+  much worse, the real problem is messy photos, not the note-marks) **and (2) rebuilding our everyday
+  score** (it said 95% while the exam said 66% — it was lying because it only used easy pages). **Then
+  the training work:** fix the "invented mark" bug, recover the hard pages we had to drop, and refresh
+  the exam. Backup paths if things stall: collect many more pages, pivot to "model drafts + a human
+  quickly fixes," or rethink the model.
+- ✅ **Round-2 run-first diagnostics DONE (2026-07-23)** (`docs/RUNG3.md` Step 4.4a; numbers in
+  `src/vision/MODEL_EVAL.md`). Items 1–4 executed; 5/7/9 kept as commitments; **6 & 8 dropped by
+  the user**.
+  - **Item 1 — the 28pp real-val↔exam gap decomposed by difficulty tier.** easy: real-val 96.8% ≈
+    exam 94.8%; mid: real-val 91.9% vs exam 63.0%; hard (row_unaligned/nd_high): real-val 0 strips,
+    exam 58.3%. **Verdict: composition dominates** (real-val lacks the 41% hard tier), **edition
+    familiarity is small** (clean tiers agree within 2pp → the rebuild need NOT be edition-disjoint),
+    and a **NEW decode-self-agreement inflation** surfaced (real-val mid is ~45% `acc_disagreement`
+    strips whose labels ARE the decode). **This re-opens dropped item 6**: keep its cheap residue —
+    exclude decode-derived labels from the rebuilt real-val metric pool (a filter, no human time).
+  - **Item 4 — degrade probe: hallucination is NOT ambiguity-driven.** Precision + emission rate
+    flat across clean→OOD (komaFlat 92→93.5%, emission 1.25→1.26/strip) → Round 2 should not chase
+    renderer accidental-rate deconfounding; the komaFlat-precision miss is makam/signature-specific
+    (the synthetic-reproducible carry-sig bug).
+  - **Item 2 — train-time exam-disjointness guard shipped** in `train.py` (refuses to start if any
+    `--real-dir` piece shares a SymbTr id with `testset.json`; matched on symbtr_file, never image
+    stem). Verified: flags exactly the 4 known contaminated pieces.
+  - **Item 3 — canonical real-val split shipped** as `data.is_real_val_piece`; `train.py` refactored
+    to it (split byte-identical to Round 1); both Round-2 consumers must reuse it.
+- ✅ **SHIPPED 2026-07-23 (improvement-not-pass)** — `round1-best` int8 is the runtime in
+  `apps/web/public/models/` (`src/vision/MODEL_EVAL.md`). Parity **fp32 10/10 + int8 10/10** (the
+  real gate). Browser gate **19/20** — one rare double-dot token (`a''2..` → `a''2.`) trips an
+  **ORT-web int8 numerics wobble** that is model-independent (both reference + canvas fail
+  identically → not JS preprocessing; Python-ORT int8 is correct → not the graph) and was never
+  tested by the old gate (0/10 double-dot strips). Logged as a Round-2 investigation item, not
+  blocking. Prior rung22 runtime backed up at `data/checkpoints/_public_models_backup_rung22/`
+  (revert = re-stage it).
+- ✅ **Plan-review addenda ADOPTED (2026-07-23, `docs/RUNG3.md` Step 4.4a)** — amendments to the
+  Round-2 entry, all cheap, three of them gating the expensive steps: (1) **decompose the 28pp
+  real-val↔exam gap from the SPENT exam read first** (easy vs hard-tail exam subsets; decides
+  whether the real-val rebuild must be *edition-disjoint* — the record holds two competing
+  explanations, composition vs edition familiarity); (2) **train-time disjointness guard lands
+  NOW**, before any new pool is built (not with exam v3) — the contamination class re-arms every
+  time a pool grows; (3) **hard-tail partition rule** written before the real-val rebuild and the
+  training recovery both draw on the same `row_unaligned`/`nd_high` strips; (4) **degrade probe
+  runs BEFORE the rebuild** (it's defined over the current 271-strip real-val; rebuilding first
+  orphans its L0 control); (5) photo exam reports **slicer yield and aligned-strip accuracy as
+  two numbers** (a collapsed score can't make the redirect decision); (6) hand-verify the rebuilt
+  real-val's hard tail (noisy gold would corrupt selection); (7) exam v3 gets a one-time
+  `round1-best` **bridge read** as its baseline; (8) **pivot trigger RATIFIED (2026-07-23, number
+  delegated to the reviewer): if the Round-2 exam closes less than HALF the remaining gap to the
+  80% F1 floor** (from the v3 bridge baseline, else v2.1-clean 66.5% — today's line < 73.3%),
+  the correction-loop product pivot becomes the PRIMARY path (one-directional; recognition track
+  continues underneath); (9) logged only: consider tie-token loss masking on noisy-pool strips.
 - ✅ **Round-1 synthetic re-render BUILT (2026-07-21) — and the ordering below is SUPERSEDED**
   (`docs/RUNG3.md` **Step 4.1**, measurement in `src/vision/MODEL_EVAL.md`):
   - **ORDERING CHANGE: Round 1 runs FIRST; the additive-only re-slice moves to ROUND 2.** Re-slice
@@ -860,4 +982,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-20 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively). LATER SAME DAY — targeted tuplet collection (docs/RUNG3.md §1c): SymbTr scanned for tuplet pieces (459; 267 already held), **293 NEW tuplet pieces downloaded** (36 nota review-promotes + 257 neyzen from the never-downloaded census tail; 60 brand-new SymbTr pieces + 164 second-style copies), budget analysis shows tup3 needs 1-measure windows (`OMR_MEASURES_PER_STRIP` knob added; 2,325 tup3 measures/3,384 groups fit at k=1; 1,512 dense measures await the sub-measure fragment follow-up); k=1 decode ran on Colab per the fanless-Mac rule. 2026-07-18: EMIT DONE + strips_tup TRIMMED TO TUP3-ONLY (user call): **78 accepted tup3 strips / 114 groups (all groups verified = exactly 3 closed notes) + 147-row tup3 review queue / 205 groups**; review-UI tabs tup-full/tup-review/tup-audit wired. Sufficiency assessment (docs/RUNG3.md §1c): training = YES for Round 1 (~180 rows / ~280 groups after adjudication + synthetic oversampling); exam = NO without action — **hold ~10–12 tuplet pieces OUT of the promote as a tup3 exam extension (~30–50 gold, v2.1 freeze) and re-baseline before Round 1**; dense contiguous-run instrumentals stay a blind spot until sub-measure fragments). 2026-07-20 (later): **Step 4.0 pre-registered ship criteria WRITTEN + committed** — the Round-1 bar is fixed before training, every floor stated next to its measured baseline (AEU ≥85% from 64.1%, NEW mean-F1 ≥80% from 57.0%, per-class ≥75% recall AND ≥70% precision on the 5 classes with ≥20 gold, tup3 precision ≥70% from 15.1%, SER ≤0.06, exact ≥45%, source gap ≤12pp, synthetic no-regression ≥99%). **Ties carry no floor** (their ground truth is ~38% structurally noisy — gating on it would measure the labels); the replacement is a targeted **arc-triggered false `\tup3` rate ≤10%** over the 85 tie-but-no-tup3 exam strips, which is how the re-render's slur distractors get judged. Blind spots recorded as non-claims + a binding decision rule (real-val selection, exam ONCE, no silent re-roll). Next = pick prerequisite (1) synthetic re-render or (2) the k=2/k=1 re-slice. LATEST (same day, after an external plan review): FINAL ordering + selection rule LOCKED — (0b) arc-metric code lands first, baseline cell filled via the spent rung22-stemfix exam read; the re-slice is ADDITIVE-ONLY and STARTS FIRST (human adjudication tail = critical path; promoted strips never re-emitted; EXAM UNTOUCHED — its 27 over-budget recoveries deferred to post-Round-1 exam v3); the re-render runs in parallel (carry-mode dominant + minority every-mode share; strips_v2_2 measured 0 carry strips = the concrete reason Round 1 trains from BASE); A/B selection pre-registered as ONE number = free-running real-val mean AEU F1 on the hand-verified val subset (tie-break: arc-triggered false-\tup3 rate); training window mix stays mixed (k≈3 promoted + k=2/k=1 recoveries + synthetic 2–4); exam-piece phone photos are EXAM-ONLY (photo-exam axis), never training. **2026-07-21 — Round-1 re-render BUILT and the ordering CHANGED: Round 1 runs FIRST, the additive-only re-slice moves to ROUND 2** (the current labeler is neyzen-only while the re-slice target is nota-dominant, so re-slicing now would manufacture false review disputes; the Round-1 model becomes a nota-aware labeler). Built: per-makam conventional PRINTED signatures (`data/makam_signatures.json`, from the adjudication-confirmed real labels, variants UNCAPPED — hicaz 4/şehnaz 4/nisaburek 3, all 49 makams) wired to BOTH drawn glyphs and labels; carry (`measure`) mode replaces keysig and is dominant at t0 while `every` carries the transpose augmentation; label-free **slur distractors** (≥3 notes, no "3") for the arc→`\tup3` misread, verified pixels-only. Corpus **`strips_v3`: 38,091 strips, 73.3% carry, 49 makams, 33 sig variants, budget gate PASS**. Measured: carry matches real (0.36 vs 0.32 inline accidentals/strip) but `every` is 26.7% of strips and **81% of inline accidentals** (4.4× real effective) — a plausible driver of the komaSharp/komaFlat hallucination. **DECIDED (2026-07-21, pre-registered): train-time `--every-share` in `train.py` (WeightedRandomSampler, default 0.15) swept over {26.7%, 15%, 5%} — 3 arms because the inline-rate vs class-mix hypotheses disagree at 5% and the mechanism shapes the Round-2 re-render; SEQUENTIAL budget = init A/B at s=0.15 first, then {26.7%, 5%} on the winner (4 runs, not 6); selection = the ONE locked number (real-val mean AEU F1, tie-break arc-false-\tup3, exam ONCE); confound logged (s also scales transpose exposure — every mode is the sole t≠0 carrier); per-class val precision logged as diagnostic (komaSharp share RISES as s falls — if its precision doesn't move with s, the hallucination isn't distributional).** The old "komaSharp/kucukSharp boost" item is OVERTURNED by data (komaSharp already over-represented + precision-bound); the real gap is kucukFlat and it is a makam-mix artifact, so the respell is HELD. See `docs/RUNG3.md` Step 4.1 + `src/vision/MODEL_EVAL.md`. **2026-07-22 — ROUND-1 INIT A/B DONE: Arm A (two-stage) wins, real-val mean AEU F1 89.2% vs 78.4%.** Headline: **tup3 precision 15.1% -> 97.4% and arc-triggered false-tup3 77.6% -> 1.6%** — the slur distractors worked. Margin caveat: low-N driven (komaSharp n=1 + kucukSharp n=21 account for 10.4 of the 10.8 pp; on >=30-gold classes the arms tie at ~92%). Real-val is the SELECTION set and is NOT the exam — the one-shot exam read is still owed on the final winner. Next = every-share sweep on the two-stage recipe, then exam ONCE, then the ship chain._
+_Last updated: 2026-07-20 (adjudication cycle DONE — the last hand task, examv2-full, finished: 63 rows, 31 ok / 32 fix (22 tie-only, 4 pitch/duration ≈ 6% content-error), mahur/suzidilara sig-suspects cleared with ZERO sig corrections. Earlier today: sig_mismatch + acc_disagreement cleared — **decode beat SymbTr 187:14 on accidental disputes**; training manifest **1,742** (real pool 2,160); exam manifest **63→312** via `promote_labels.py --exam` (tup3 only 4 — exam measures triplets weakly); three slicer defects logged for the re-slice. examv2-full fixes APPLIED via promote --exam → final exam manifest **311 strips** (one over-budget fix removed as unwinnable). Next = COMMIT testset.json = freeze → baseline on 311-strip exam → optional nota-full nd>0 tier → Round 1 (pre-registered criteria; synthetic re-render must oversample tup3 aggressively). LATER SAME DAY — targeted tuplet collection (docs/RUNG3.md §1c): SymbTr scanned for tuplet pieces (459; 267 already held), **293 NEW tuplet pieces downloaded** (36 nota review-promotes + 257 neyzen from the never-downloaded census tail; 60 brand-new SymbTr pieces + 164 second-style copies), budget analysis shows tup3 needs 1-measure windows (`OMR_MEASURES_PER_STRIP` knob added; 2,325 tup3 measures/3,384 groups fit at k=1; 1,512 dense measures await the sub-measure fragment follow-up); k=1 decode ran on Colab per the fanless-Mac rule. 2026-07-18: EMIT DONE + strips_tup TRIMMED TO TUP3-ONLY (user call): **78 accepted tup3 strips / 114 groups (all groups verified = exactly 3 closed notes) + 147-row tup3 review queue / 205 groups**; review-UI tabs tup-full/tup-review/tup-audit wired. Sufficiency assessment (docs/RUNG3.md §1c): training = YES for Round 1 (~180 rows / ~280 groups after adjudication + synthetic oversampling); exam = NO without action — **hold ~10–12 tuplet pieces OUT of the promote as a tup3 exam extension (~30–50 gold, v2.1 freeze) and re-baseline before Round 1**; dense contiguous-run instrumentals stay a blind spot until sub-measure fragments). 2026-07-20 (later): **Step 4.0 pre-registered ship criteria WRITTEN + committed** — the Round-1 bar is fixed before training, every floor stated next to its measured baseline (AEU ≥85% from 64.1%, NEW mean-F1 ≥80% from 57.0%, per-class ≥75% recall AND ≥70% precision on the 5 classes with ≥20 gold, tup3 precision ≥70% from 15.1%, SER ≤0.06, exact ≥45%, source gap ≤12pp, synthetic no-regression ≥99%). **Ties carry no floor** (their ground truth is ~38% structurally noisy — gating on it would measure the labels); the replacement is a targeted **arc-triggered false `\tup3` rate ≤10%** over the 85 tie-but-no-tup3 exam strips, which is how the re-render's slur distractors get judged. Blind spots recorded as non-claims + a binding decision rule (real-val selection, exam ONCE, no silent re-roll). Next = pick prerequisite (1) synthetic re-render or (2) the k=2/k=1 re-slice. LATEST (same day, after an external plan review): FINAL ordering + selection rule LOCKED — (0b) arc-metric code lands first, baseline cell filled via the spent rung22-stemfix exam read; the re-slice is ADDITIVE-ONLY and STARTS FIRST (human adjudication tail = critical path; promoted strips never re-emitted; EXAM UNTOUCHED — its 27 over-budget recoveries deferred to post-Round-1 exam v3); the re-render runs in parallel (carry-mode dominant + minority every-mode share; strips_v2_2 measured 0 carry strips = the concrete reason Round 1 trains from BASE); A/B selection pre-registered as ONE number = free-running real-val mean AEU F1 on the hand-verified val subset (tie-break: arc-triggered false-\tup3 rate); training window mix stays mixed (k≈3 promoted + k=2/k=1 recoveries + synthetic 2–4); exam-piece phone photos are EXAM-ONLY (photo-exam axis), never training. **2026-07-21 — Round-1 re-render BUILT and the ordering CHANGED: Round 1 runs FIRST, the additive-only re-slice moves to ROUND 2** (the current labeler is neyzen-only while the re-slice target is nota-dominant, so re-slicing now would manufacture false review disputes; the Round-1 model becomes a nota-aware labeler). Built: per-makam conventional PRINTED signatures (`data/makam_signatures.json`, from the adjudication-confirmed real labels, variants UNCAPPED — hicaz 4/şehnaz 4/nisaburek 3, all 49 makams) wired to BOTH drawn glyphs and labels; carry (`measure`) mode replaces keysig and is dominant at t0 while `every` carries the transpose augmentation; label-free **slur distractors** (≥3 notes, no "3") for the arc→`\tup3` misread, verified pixels-only. Corpus **`strips_v3`: 38,091 strips, 73.3% carry, 49 makams, 33 sig variants, budget gate PASS**. Measured: carry matches real (0.36 vs 0.32 inline accidentals/strip) but `every` is 26.7% of strips and **81% of inline accidentals** (4.4× real effective) — a plausible driver of the komaSharp/komaFlat hallucination. **DECIDED (2026-07-21, pre-registered): train-time `--every-share` in `train.py` (WeightedRandomSampler, default 0.15) swept over {26.7%, 15%, 5%} — 3 arms because the inline-rate vs class-mix hypotheses disagree at 5% and the mechanism shapes the Round-2 re-render; SEQUENTIAL budget = init A/B at s=0.15 first, then {26.7%, 5%} on the winner (4 runs, not 6); selection = the ONE locked number (real-val mean AEU F1, tie-break arc-false-\tup3, exam ONCE); confound logged (s also scales transpose exposure — every mode is the sole t≠0 carrier); per-class val precision logged as diagnostic (komaSharp share RISES as s falls — if its precision doesn't move with s, the hallucination isn't distributional).** The old "komaSharp/kucukSharp boost" item is OVERTURNED by data (komaSharp already over-represented + precision-bound); the real gap is kucukFlat and it is a makam-mix artifact, so the respell is HELD. See `docs/RUNG3.md` Step 4.1 + `src/vision/MODEL_EVAL.md`. **2026-07-22 — ROUND-1 INIT A/B DONE: Arm A (two-stage) wins, real-val mean AEU F1 89.2% vs 78.4%.** Headline: **tup3 precision 15.1% -> 97.4% and arc-triggered false-tup3 77.6% -> 1.6%** — the slur distractors worked. Margin caveat: low-N driven (komaSharp n=1 + kucukSharp n=21 account for 10.4 of the 10.8 pp; on >=30-gold classes the arms tie at ~92%). Real-val is the SELECTION set and is NOT the exam — the one-shot exam read is still owed on the final winner. Next = every-share sweep on the two-stage recipe, then exam ONCE, then the ship chain. LATER SAME DAY — **sweep pre-registration AMENDED before any sweep run** (`docs/RUNG3.md` Step 4.2 protocol): selection = mean AEU F1 over the four ≥30-gold real-val classes only (one komaSharp token was measured to swing the 6-class mean 6.9 pp; komaSharp/kucukSharp report but don't vote); stage 1 shortened to ~3–4k steps but RE-RUN per arm (s must apply to stage 1); komaFlat precision (62 gold) = the measurable proxy for the un-de-riskable komaSharp exam floor (18 gold, baseline 21%). Also logged: tup3 recall dipped (92.7 → 84.1 on the winner; B 93.2) as precision soared — both clear the floor; the exam (55 tup3 gold after the §1c extension) will show whether it persists. EVEN LATER — **every-share sweep CANCELLED before any run** (adversarial decision block in RUNG3 Step 4.2): the A/B doubled as a power measurement (largest intervention → 0.5 pp on the amended metric) and showed the target pathology already fixed on real-val (komaFlat F1 93.7 both arms from 53.8% baseline) — an argmax over noise before a one-shot exam is worse than no sweep; the amendment also carried a stage-1-length confound (logged). `s` ships at the pre-registered default 0.15. Pre-registered instead: future-sweep power criterion (>0.5 pp), the free degraded-strip hallucination probe on the existing checkpoint, and Round-2 renderer deconfounding (transposed-carry / accidental-thinned every) in place of `s`-tuning. **Next = exam ONCE on Arm A (s=0.15) + photo-exam read → ship chain.**_

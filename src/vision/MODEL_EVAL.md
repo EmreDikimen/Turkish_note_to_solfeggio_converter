@@ -497,3 +497,366 @@ oversampled real; `best` caught the turn. Evaluating `best/` alone is therefore 
 2,500 steps), i.e. the last ~4,500 steps bought almost nothing for real pages — relevant to budgeting
 the every-share sweep. And the every-share komaSharp diagnostic pre-registered for that sweep is
 **unmeasurable on real-val (n=1)**; exam v2.1 has 18 komaSharp gold, still low.
+
+## Round 1 — exam v2.1 FINAL (2026-07-22): ⛔ DOES NOT PASS the Step-4.0 floors
+
+**The one-shot read, spent.** Arm A (two-stage, `--every-share 0.15`) on the frozen 352-strip exam
+v2.1, run locally per the Step-4.0 discipline (exam strips never went to the training box). Command:
+`eval_omr.py --checkpoint data/checkpoints/round1-best --strips-dir data/real/rung3/strips_exam_v2
+--split none --show-errors 20`, defaults for `--batch-size 16` / `--max-length 100`, device mps.
+Row appended to `data/checkpoints/round1-best/eval.jsonl` (exactly one exam row).
+
+**Pre-flight validation of the frozen exam (computed from gold labels alone, no model):** 352 strips,
+arc denominator **85**, neither-token denominator **229**, tup3 **55 groups / 38 strips**, per-class
+gold identical to the Step-4.0 table (bakiyeSharp 141, kucukFlat 70, bakiyeFlat 66, komaFlat 48,
+kucukSharp 31, komaSharp 18, buyukSharp 3, buyukFlat 0), source split 278 nota / 74 neyzen. The exam
+is unchanged since the baseline; the read is valid.
+
+### Verdict against the pre-registered floors
+
+| Criterion | Baseline | **Round 1** | Floor | |
+|---|---|---|---|---|
+| Mean per-class AEU **recall** (headline) | 64.1% | **66.6%** | ≥85% | ⛔ **FAIL −18.4pp** |
+| Mean per-class AEU **F1** | 57.0% | **67.0%** | ≥80% | ⛔ **FAIL −13.0pp** |
+| `\tup3` **precision** | 15.1% | **93.0%** | ≥70% | ✅ PASS |
+| `\tup3` recall | 92.7% | **72.7%** | ≥85% | ⛔ **FAIL −12.3pp** |
+| **Arc-triggered false `\tup3`** | 77.6% | **0.0%** (0/85) | ≤10% | ✅ **PASS** |
+| SER | 0.147 | **0.059** | ≤0.06 | ✅ PASS (by 0.001) |
+| Exact-match | 17.3% | **49.1%** | ≥45% | ✅ PASS |
+| Per-source AEU gap | 12.5pp | **0.3pp** | ≤12pp | ✅ **PASS** |
+| Synthetic val no-regression | 99.9% | not yet run | ≥99% | ⏸ pending |
+
+Per-class, the five AEU classes with ≥20 exam gold:
+
+| Class | gold | recall → floor ≥75% | precision → floor ≥70% |
+|---|---|---|---|
+| `\bakiyeSharp` | 141 | 76.6 → **92.2%** ✅ | 90.8 → **92.2%** ✅ |
+| `\kucukFlat` | 70 | 51.4 → **78.6%** ✅ | 92.3 → **94.8%** ✅ |
+| `\bakiyeFlat` | 66 | 60.6 → **92.4%** ✅ | 83.3 → **95.3%** ✅ |
+| `\komaFlat` | 48 | 87.5 → **89.6%** ✅ | 53.8 → **66.2%** ⛔ **FAIL −3.8pp** |
+| `\kucukSharp` | 31 | 22.6 → **58.1%** ⛔ **FAIL −16.9pp** | 77.8 → **94.7%** ✅ |
+
+**Five floors missed** (headline recall, mean F1, tup3 recall, kucukSharp recall, komaFlat precision).
+Per the Step-4.0 decision rule this is **not a ship**, and the exam is **not re-run**: diagnosis moves
+to real-val, and any further exam read must be labelled a *second look with its leakage acknowledged*.
+
+### What genuinely improved — and it is substantial
+
+- **The arc→triplet catastrophe is eliminated, not merely reduced: 77.6% → 0.0%** (0 of 85
+  arc-bearing strips emit a false `\tup3`; 0 of 229 on the neither-token control). `\tup3` precision
+  **15.1% → 93.0%**. The slur distractors did exactly what they were designed to do.
+- **Style overfit is gone: the per-source AEU gap collapsed 12.5pp → 0.3pp** (neyzen 64.6 / nota
+  64.9). The harder nota domain caught up completely — the carry-dominant re-render with conventional
+  printed signatures is validated.
+- SER **0.147 → 0.059** (−60%), exact-match **17.3% → 49.1%** (+31.8pp), `\sig` F1 94.1% /
+  `\sigend` 92.0%, `\bakiyeFlat` recall 60.6 → 92.4%, `\kucukFlat` 51.4 → 78.6%.
+
+### The finding that matters most: real-val was wildly optimistic
+
+| | real-val (271) | exam v2.1 (352) |
+|---|---|---|
+| mean AEU recall | **95.0%** | **66.6%** |
+| mean AEU F1 | **89.2%** | **67.0%** |
+| exact-match | 63.1% | 49.1% |
+
+**A ~28pp generalization gap on the headline.** The pre-registration warned real-val would be
+optimistic *because it is the selection set*; the magnitude is far beyond what that caveat implied.
+Both pools are piece-disjoint and promoted, so piece-level leakage is not the explanation — the
+likely driver is that real-val pieces sit inside the same publications/editions the model trained on,
+while exam pieces were held out wholesale. **Standing lesson: real-val cannot be used to predict exam
+performance in absolute terms, only to order candidates.** This also retroactively strengthens the
+sweep-cancellation call: a metric this loosely coupled to the exam could not have selected usefully.
+
+### Why the headline is 66.6% — LOW-N drag, reported not excluded
+
+`\buyukSharp` (**3 gold**) scored **0.0% recall**, and `\komaSharp` (**18 gold**) **regressed** on
+recall 83.3 → 55.6% (precision improved 21.1 → 43.5%). Between them they cost ~20pp of the 7-class
+mean. Restricted to the five ≥20-gold classes the means are **82.2% recall / 84.0% F1** — but per the
+Step-4.0 blind-spot rule the LOW-N classes **stay inside the headline and F1 means and are never
+dropped to flatter them**, so *the verdict stands at 66.6% / 67.0% and the run FAILS*. The 5-class
+figure is diagnostic context only, not a re-scoring.
+
+Note a pre-registration inconsistency found during adjudication: Step 4.0's table applies per-class
+floors to classes with **≥20 gold** (so `\komaSharp`, 18 gold, carries none), while the 2026-07-22
+sweep amendment referred to "the exam's ≥70% komaSharp-precision floor". **Step 4.0 is the binding
+text** — komaSharp is scored, reported, and floor-free. Logged rather than silently resolved.
+
+### Failure modes visible in the error dump
+
+1. **Signature accidental-class confusion, both directions** — `\komaSharp f` ↔ `\kucukSharp f`
+   swapped on *the same piece* (zahiri p1_s03_w00 and p1_s04_w00). This is the single biggest driver
+   of the kucukSharp/komaSharp misses: the model reads the sig slot but picks the wrong koma family.
+2. **`\tup3` → `\grace` substitution** (neydin_guzelim p1_s00_w00: gold `\tup3 d''16 c''16 b'16
+   \tupend` decoded as `\grace d''16 …`). A *new* failure mode: having stopped over-firing triplets,
+   the model now re-labels some real ones as grace groups — the mechanism behind recall 92.7 → 72.7%.
+3. **`\tie` misses dominate the deletion count** (65.4% recall / 75.0% precision) — reported, never
+   floored, per the unstable-ground-truth rule.
+4. `\volta1` dropped (81.2% recall), and occasional spurious `\sig` blocks on non-row-start strips.
+
+### Blind spots — restated as non-claims
+
+`\buyukFlat`: **0 real gold**, no real-page claim in either direction. `\komaSharp` 18 / `\buyukSharp`
+3 gold are LOW-N and carry no floor. `\tup3` gold is common-case k=1 material — dense
+contiguous-triplet instrumentals remain **unmeasured** (§1c sub-measure fragments). The exam is a
+**matched-upper-bound** (`caveat: matched-upper-bound`); real-world accuracy is below it. Exam crops
+carry **retired old-slicer defects**, so robustness to those is slightly over-measured. `\sigend`
+movement is partly the empty-`\sig` label fix, not pure model gain. Training-pool label noise (~7%
+pitch / ~38% tie structural) bounds attribution of the residual — the fresh 5% nota re-audit runs
+**regardless of this failure**.
+
+### Synthetic no-regression clause — ⛔ ALSO FAILS (93.0% vs ≥99%), and it names the root cause
+
+`eval_omr.py --strips-dir data/synthetic/strips_v3 --split data/split_v3.json --side val
+--limit 1000` (1,000-strip subset of synthetic val — a subset, stated as such):
+
+**Mean per-class AEU recall 93.0% (floor ≥99%) — FAIL.** Mean F1 90.5%, SER 0.006, exact-match
+88.6%. Per class: `\bakiyeFlat` 100% / `\komaFlat` 99.6% / `\natural` 100% / `\bakiyeSharp` 95.1%,
+then the drag — `\kucukFlat` 90.9% recall at **70.2% precision** (44 gold), `\kucukSharp` 83.3%
+(24), `\buyukFlat` 75.0% (8), `\buyukSharp` 68.4% precision (26).
+
+**Comparability caveat, stated plainly:** the 99.9% reference was `rung22-stemfix` on
+**`strips_v2_2`** (every/keysig modes); this is Round 1 on **`strips_v3`** (carry-dominant,
+conventional printed signatures, slur distractors, 33 signature variants). Different, harder corpus —
+so this is *not* a strict same-set regression measurement, and the gap overstates forgetting. It is
+still a fail against the clause as written.
+
+**The error dump is the payoff — a reproducible signature-interaction bug.** Under a
+`\sig \kucukFlat b \sigend` signature the model repeatedly inserts a spurious **inline `\komaFlat`
+on `b'`** that the gold does not have (three separate strips in the first errors alone:
+`… c''4 b'8 …` → `… c''4 \komaFlat b'8 …`). It is re-stating, inline and in the wrong koma family,
+an alteration the signature already carries.
+
+That is almost certainly the same defect as the exam's **`\komaFlat` precision 66.2%** failure and a
+contributor to the `\komaSharp`↔`\kucukSharp` confusion: **carry-mode accidental/signature
+interaction is not solidly learned.** It reproduces on synthetic, which means Round 2 can attack it
+with a fast, fully-labelled iteration loop instead of scarce real pages — the most actionable result
+of this whole exam cycle.
+
+### ⚠ Exam contamination found during post-read verification (2026-07-22) — 4 pieces / 25 strips
+
+Checking exam↔training piece disjointness *after* the read turned up **4 SymbTr pieces present in
+BOTH the exam manifest and the training pools** — in every case the exam holds one engraving and
+training holds **the other engraving of the same piece**:
+
+| SymbTr piece | exam side | training side |
+|---|---|---|
+| `huzzam--…--sevdim_yine` | `…_nota_p1` | `…_p1` (neyzen), strips_tup |
+| `kurdilihicazkar--…--gittin_biraktin` | `…_ney_p1` | `…_nota_p1`, strips_nota |
+| `kurdilihicazkar--…--ay_dalgalanirken` | `…_p1` | `…_nota_p1`, strips_nota |
+| `saba--…--neydin_guzelim` | `…_nota_p1` | `…_ney_p1`, strips_tup |
+
+**This violates the Step-2 rule as written** ("dedupe by SymbTr file — the exam must measure
+real-image generalization, not memorized melodies"): same melody, same token sequence, different
+printed image, so the model can partly recall rather than read.
+
+**Root cause — the guard is EMIT-time, not TRAIN-time.** `emit_strip_labels.py --testset` excludes
+exam pieces when emitting training labels, and `make_round1_colab_zip.sh` never ships exam strips.
+Neither check re-runs when the *exam* grows or when new material is collected. Both happened after
+the v2 freeze: §1c (2026-07-17) deliberately downloaded **second-engraving copies of pieces already
+held**, and the tup3 exam extension (2026-07-20) moved pieces INTO the exam —
+`gittin_biraktin` and `ay_dalgalanirken` are both on that holdout candidate list — while their other
+engraving already sat in `strips_nota`. Nothing re-validated disjointness afterwards.
+
+**Scale and direction: 4 of 32 pieces, 25 of 352 strips = 7.1%, biasing the exam UPWARD.** The
+Round-1 failure is therefore *not* explained away by it — the true figure is at or below 66.6%.
+
+**Corrected read (instrument repair, NOT a re-roll).** `strips_exam_v2_clean/` = the same manifest
+minus those 4 pieces (327 strips, hardlinked images, frozen exam untouched). The ≥20-gold class set
+is preserved (`\bakiyeSharp` 139, `\kucukFlat` 60, `\bakiyeFlat` 57, `\komaFlat` 41, `\kucukSharp`
+31), so the Step-4.0 per-class floors still apply; arc denominators become 82 / 219. This read can
+only LOWER the score, so it cannot be self-serving — it is a defective instrument being repaired,
+and both numbers are reported.
+
+**Fixes owed for exam v3:** (a) a **train-time** disjointness assertion (train.py refuses to start if
+any real pool piece appears in `testset.json`), not just the emit-time filter; (b) re-validate
+disjointness whenever the exam grows OR new pieces are collected; (c) dedupe on the SymbTr piece id,
+never on the image stem — all four of these slipped through precisely because the stems differ.
+
+#### Corrected read result (327 clean strips) — the verdict is UNCHANGED
+
+Everything moved in the predicted direction (down), confirming the contamination was inflating the
+score — and confirming it was inflating it only slightly.
+
+| Criterion | full (352) | **clean (327)** | Floor | |
+|---|---|---|---|---|
+| Mean AEU recall | 66.63% | **66.26%** | ≥85% | ⛔ FAIL |
+| Mean AEU F1 | 66.98% | **66.53%** | ≥80% | ⛔ FAIL |
+| `\tup3` recall | 72.7% | **74.4%** | ≥85% | ⛔ FAIL |
+| `\kucukSharp` recall | 58.1% | **58.1%** | ≥75% | ⛔ FAIL |
+| `\komaFlat` precision | 66.2% | **63.8%** | ≥70% | ⛔ FAIL |
+| `\tup3` precision | 93.0% | **93.5%** | ≥70% | ✅ PASS |
+| Arc-triggered false `\tup3` | 0.0% | **0.0%** (0/82) | ≤10% | ✅ PASS |
+| SER | 0.05908 | **0.05973** | ≤0.06 | ✅ PASS by 0.00027 |
+| Exact-match | 49.15% | **49.24%** | ≥45% | ✅ PASS |
+| Per-source AEU gap | 0.3pp | **5.3pp** (neyzen 59.5 / nota 64.8) | ≤12pp | ✅ PASS |
+
+Per-class on the clean exam: `\bakiyeSharp` (139) 92.1/92.1 ✅✅ · `\bakiyeFlat` (57) 91.2/96.3 ✅✅ ·
+`\kucukFlat` (60) 76.7/93.9 ✅✅ · `\komaFlat` (41) 90.2/**63.8** ✅/⛔ · `\kucukSharp` (31)
+**58.1**/94.7 ⛔/✅. LOW-N, no floor: `\komaSharp` (18) 55.6/43.5, `\buyukSharp` (3) 0.0/0.0.
+
+**Deltas are small: AEU −0.37pp, F1 −0.45pp, `\komaFlat` precision −2.4pp.** The 7.1% contamination
+mattered less than feared, which means **66.3% is a figure that can be stood behind**. The six failed
+criteria (five exam + the synthetic no-regression clause) are unchanged.
+
+One artefact worth noting: the per-source gap *widened* 0.3 → 5.3pp, because 2 of the 4 removed
+pieces were neyzen and neyzen is the small pool (74 → 64 strips) — the contaminated (easier) strips
+had been flattering neyzen specifically. Still well inside the ≤12pp floor.
+
+**`data/real/rung3/strips_exam_v2_clean/` is the honest reference from here on**; exam v3 should be
+built from it plus the guard fixes above.
+
+### Disposition (2026-07-23): SHIP as an improvement, not a pass
+
+Decided (`docs/RUNG3.md` Step 4.4): Round 1 ships despite the failed floors, because on the clean
+327-strip exam it strictly dominates the deployed `rung22-stemfix` (AEU 64.1 → 66.3%, F1 57.0 →
+66.5%, SER 0.147 → 0.060, exact 17.3 → 49.2%, tup3 precision 15.1 → 93.5%, arc→`\tup3`
+77.6% → 0.0%). This entry will be updated to **"SHIPPED as improvement-not-pass"** once the ship
+chain (ONNX → int8 parity → browser gate) completes; the Round-1 CRITERIA remain FAILED and Round 2
+continues. Round-2 entry begins with two cheap redirect-checks (photo exam + real-val rebuild).
+
+### ✅ SHIPPED 2026-07-23 (improvement-not-pass) — `round1-best` int8 is the runtime
+
+Ship chain complete; `round1-best` int8 ONNX staged into `apps/web/public/models/` (backup of the
+prior rung22 runtime at `data/checkpoints/_public_models_backup_rung22/`, gitignored — revert =
+re-stage it). This did NOT meet the Round-1 criteria (6 floors failed); it ships because it strictly
+improves on the deployed `rung22-stemfix` and the tup3/arc pathology fix is worth getting to users
+now. Round 2 continues.
+
+- **ONNX export:** encoder / decoder / decoder-with-past (optimum float-validation max-diff ~5e-5,
+  benign — id-space parity is the real gate). int8: 829 MB → 221 MB (91 + 69 + 61).
+- **Parity (the real gate): fp32 10/10 PASS, int8 10/10 PASS** — ONNX == PyTorch AND ONNX == label,
+  in id space, over 10 of a fresh 14-strip gate list spread across 14 makams/pieces
+  (`GATE_STRIPS.txt` regenerated: the Colab checkpoint arrived without one; strips chosen as
+  exact-decoding v3 val strips with `\sig` + accidental coverage).
+- **Browser gate (headless Chromium via Playwright, ORT-web wasm int8): 19/20 strips clean — NOT a
+  clean 20/20.** One strip (`hicaz--…--yalan_degil`) drops a single augmentation dot on a
+  double-dotted note: label `a''2..` → decode `a''2.` (the second double-dot `b''2..` stayed
+  correct). Diagnosis: **an ORT-web int8 numerics wobble, model-independent** — both the reference
+  tensor (Python's exact pixels) and the canvas path fail *identically* (rules out JS
+  preprocessing), and Python-ORT int8 decodes the strip correctly (rules out the graph). The prior
+  rung22 gate had **0/10** double-dot strips, so this token pattern was **never gated before**; the
+  newly diversified gate surfaced a pre-existing runtime limitation, not a Round-1 regression. It is
+  a duration error (a dot), visible and editable in the product, never a pitch/accidental error.
+  **→ Round-2 investigation item: ORT-web int8 divergence on double-dot durations** (quantization
+  granularity per-tensor vs per-channel; compare fp32-in-browser). Logged, not blocking this ship.
+
+## Round-2 run-first diagnostics (2026-07-23) — tier decomposition + degrade probe
+
+Free, pre-Round-2 analyses (docs/RUNG3.md Step 4.4a items 1 & 4). No training; the exam read is
+still the spent one — these regroup/degrade already-seen strips, zero new leakage.
+
+### Item 1 — the 28pp real-val↔exam gap, decomposed by difficulty tier
+
+Both pools partitioned by emit provenance: **easy** = clean auto-accept (reason=None, nd≤0.10),
+**mid** = promoted review (acc_disagreement/sig_mismatch/nd_review/low_coverage), **hard** =
+`row_unaligned`/`nd_high` (the tail the accept gate drops). `round1-best` per tier:
+
+| tier | real-val | exam | Δ |
+|---|---|---|---|
+| easy | 96.8% (160) | 94.8% (62) | **2 pp** |
+| mid | 91.9% (111) | 63.0% (145) | **29 pp** |
+| hard | — (0 strips) | 58.3% (145) | n/a |
+| overall | 95.0% | 66.6% | 28 pp |
+
+**Two independent inflation sources, not one:**
+
+1. **Composition dominates the headline gap.** Real-val has **0%** hard-tier; the exam is **41%**
+   hard-tier at 58%. Real-val simply never contains the strips the model is worst on. The planned
+   hard-tail-inclusive rebuild fixes this.
+2. **Edition familiarity is SMALL — the rebuild need NOT be edition-disjoint.** On clean (easy)
+   strips real-val 96.8% ≈ exam 94.8% (2 pp). If trained-edition familiarity were large, clean
+   real-val would beat clean exam by much more. It doesn't. (Resolves the Step-4.3-vs-4.4
+   ambiguity: **composition, not edition**.)
+3. **NEW — a decode-self-agreement inflation in the mid tier.** real-val mid 91.9% vs exam mid
+   63.0% on the *same provenance category* (29 pp). The driver: real-val's mid tier is ~45%
+   `acc_disagreement` strips whose **labels ARE the decode** (that adjudication sided with the
+   decode 187:14). Evaluating the model against decode-derived labels measures self-consistency,
+   not correctness — it scores high by reproducing its own past read. The exam's mid tier is mostly
+   `nd_review` (hand-fixed), so it carries no such bias.
+
+**Consequence for the real-val rebuild (what item 1 exists to gate):** hard-tail-inclusive ✅,
+edition-disjoint ❌ not needed, **but decode-derived labels must be excluded from (or hand-verified
+in) the metric pool** — otherwise the rebuilt real-val re-inflates exactly as its mid tier does now.
+*This directly bears on dropped item 6 (hand-verify the hard tail): the evidence argues for keeping
+at least the "exclude decode-labeled strips from real-val" part of it.*
+
+### Item 4 — degraded-strip probe: hallucination is NOT ambiguity-driven
+
+`round1-best` on real-val at 5 degradation levels (fade + blur, labels unchanged). **Per-class
+precision and accidental emission rate are FLAT** across clean→OOD: komaFlat 92.2→93.5%, bakiyeFlat
+94.2→92.7%, bakiyeSharp 89.8→89.8%, **emission 1.25→1.26 accidentals/strip**; AEU 94.5→94.3%. By the
+probe's pre-registered rule this is the "precision holds → the model abstains, residual is
+legibility, NOT a distributional prior" branch. **So Round 2 should NOT invest in renderer
+accidental-rate deconfounding to fix hallucination** — degradation does not provoke it. Consistent
+with item 1 and the exam: the komaFlat precision miss (63.8% on the exam vs 92%+ on real-val) is
+**makam/signature-specific** (the synthetic-reproducible carry-mode `\komaFlat`-under-`\kucukFlat`-sig
+bug), not a general ambiguity effect. Caveat: real-val is the easy pool and fade+blur ≠ real nota
+print noise, so this is suggestive, not a proof the hallucination can never be provoked.
+
+### Carry-sig bug — characterized (2026-07-24): context-blind accidental hallucination
+
+`round1-best` on 1,500 synthetic val strips (perfect labels, pixels bare by construction, so any
+inserted accidental is a *pure* hallucination). Analysis: `align()` insertions of AEU tokens vs the
+gold, cut by `Strip.mode` and note degree.
+
+**Findings (they overturn the first single-example guess):**
+- **Carry-mode-specific: 61/64 false insertions on `measure` strips (~6%), 3/476 on `every`.**
+- **Concentrated on the makam-active degrees: b/si 37, a/la 14, f 7, e 6.**
+- **Only 4/64 re-state a visible signature pitch** (`\kucukFlat b` sig → inserted `\komaFlat b`, wrong
+  koma family). The dominant 60/64 are accidentals invented on a **bare** notehead with no accidental
+  in the pixels.
+- Wrong-class swaps are rare (`\buyukFlat`→`\bakiyeFlat` ×5).
+
+**Mechanism (measured, not assumed).** Per-degree P(explicit accidental precedes the note) in the
+training labels: **carry** 1–8% (b 3.6%, a 4.2%, f 7.7%) vs **every** 30–71% (a 71%, b 50%, e 51%).
+The corpus genuinely alters si/la/mi/fa often; every-mode spells it, carry-mode implies it (signature
+at row-start + measure carry). A cropped mid-row carry strip has **discarded the signature**, so a
+bare si is ambiguous between koma-flat-from-signature and natural — information that is simply not in
+the strip. The model resolves the ambiguity with the corpus prior on these degrees instead of the
+pixels → over-emits. This is the real-page `\komaFlat` precision miss (exam 63.8%): same degree family,
+worse because real mid-row strips are context-blind AND blurrier.
+
+**Not** distributional (item 4: precision flat under degradation), **not** primarily sig-restatement
+(4/64), **not** a rendering/label error (synthetic pixels are bare by construction).
+
+**Fix decision this creates (Round-2, `docs/RUNG3.md` Step 4.4):** the root cause is *information loss*
+— strip-level carry decoding cannot see the signature that defines the alteration. Options:
+1. **Inject the effective signature into each strip** — either repeat `\sig` per-strip in the carry
+   label (re-render + retrain; must also change the REAL-strip emitter so synthetic/real stay aligned)
+   or propagate the row-start signature as decode context in the stitcher (model-agnostic; labels
+   unchanged). Attacks the root.
+2. **Weaken the prior** — carry hard-negatives (bare-natural si/la) or lower every-share. Palliative;
+   caps the achievable precision because the ambiguity remains; brushes the cancelled every-share
+   sweep, so flag if pursued.
+3. **Decode-repair** — drop inline accidentals that restate an active signature alteration; only the
+   4/64 visible-sig cases, narrow.
+
+The architectural insight worth stating plainly: **a bare notehead whose alteration is defined by an
+off-strip signature is not decidable from the strip alone** — so the durable fix is context injection
+(option 1), not more training against the prior.
+
+#### Carry-bug fix direction (2026-07-24) — it's a learned PRIOR, not context-loss
+
+Correction to the earlier "context injection" framing (the user's point): under the carry
+convention the correct label for a bare notehead is ALWAYS bare — the signature is read once
+(row-start strip) and applied downstream (phase 4). So the model's job is pure transcription
+(bare→bare); no per-strip signature context is needed, and injecting it would be wrong. The bug is
+simply the model **inventing an accidental glyph that is not drawn** — a precision failure, fixable
+in training.
+
+Cause, now pinned by three measurements:
+- **Not glyph-uncertainty** — item 4: precision is flat under blur/fade degradation.
+- **Not data-scarcity** — carry labels are 96.4% bare on `b` (the model sees bare→bare constantly).
+- **A learned prior** on the makam-active degrees, **concentrated on context-blind mid-row strips**
+  (no `\sig` block): mid-row strips trigger the over-emission ~3.3× more per strip than row-start
+  strips. The model appears to have learned "altered music declares its alteration somewhere"; when
+  the row-start signature is off-strip, that expectation leaks out as spurious inline accidentals.
+
+**Fix experiment (pre-registered; Colab retrain, GATED ON the photo-exam redirect check):** test
+prior-reduction levers — (a) reduce every-mode influence (its 50–71% per-degree accidental rate is
+the prior's likely source), (b) oversample mid-row bare strips as hard negatives, (c) a product-side
+cleanup that drops inline accidentals on mid-row strips matching the row signature (the user's
+"phase 4 handles it" insight — model-agnostic, no retrain). **Measure:** carry-mode false-insertion
+rate on b/a/f/e (synthetic, perfect labels) + exam `\komaFlat` precision. Palliative-vs-root note:
+(a)/(b) reduce the prior; (c) cleans the output directly and needs no training — likely the cheapest
+first move.

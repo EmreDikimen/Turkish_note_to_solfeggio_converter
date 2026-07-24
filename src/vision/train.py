@@ -26,7 +26,6 @@ dataloader); checkpoints DO go to Drive so a killed session resumes with --resum
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import random
@@ -40,7 +39,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from data import StripDataset, check_token_drift, collate
+from data import StripDataset, check_token_drift, collate, is_real_val_piece
 from modeling import MODEL_ID, load_model_and_processor, save_model
 
 
@@ -133,6 +132,11 @@ def main() -> int:
                          "lands on the same side in every pool")
     ap.add_argument("--real-val-frac", type=float, default=0.10,
                     help="fraction of each real pool's pieces held out as real-val")
+    ap.add_argument("--testset", default="data/real/rung3/testset.json",
+                    help="frozen exam pieces; training REFUSES to start if any --real-dir pool "
+                         "shares a SymbTr piece with the exam (matched on symbtr_file, never image "
+                         "stem — the Round-1 contamination was the other engraving of an exam piece). "
+                         "Set '' to disable (e.g. pure-synthetic runs).")
     ap.add_argument("--every-share", type=float, default=0.15,
                     help="target sampling share of SYNTHETIC 'every'-mode strips (Round-1 "
                          "pre-registered sweep: 0.267 = as-rendered, 0.15 default, 0.05). "
@@ -179,24 +183,48 @@ def main() -> int:
     val_items = [(s, False) for s in val_ds.strips]
     real_val_items: list = []
     synth_val_pieces = set(split["val_pieces"])
+    real_pool_pieces: set = set()
     for spec in args.real_dir:
         path, _, rep = spec.partition(":")
         rep = int(rep) if rep else 1
         rds = StripDataset(path)
         check_token_drift(rds)
+        real_pool_pieces |= {s.piece for s in rds.strips}
         # split by piece with a STABLE hash: the same piece hashes to the same side in every
-        # pool (pieces recur across pools/engravings — a piece must never be train in one
-        # pool and val in another). Synthetic-val pieces are also forced to the val side.
+        # pool (pieces recur across pools/engravings — a piece must never be train in one pool
+        # and val in another). `is_real_val_piece` (data.py) is THE canonical assignment; the
+        # Round-2 hard-tail recovery + real-val rebuild reuse it so recovered strips land on one
+        # side by construction (docs/RUNG3.md Step 4.4a item 3).
         def is_val(piece: str) -> bool:
-            if piece in synth_val_pieces:
-                return True
-            h = int(hashlib.md5(piece.encode()).hexdigest(), 16)
-            return (h % 1000) < args.real_val_frac * 1000
+            return is_real_val_piece(piece, synth_val_pieces, args.real_val_frac)
         tr = [s for s in rds.strips if not is_val(s.piece)]
         va = [s for s in rds.strips if is_val(s.piece)]
         train_items += [(s, args.augment_real) for s in tr] * rep
         real_val_items += [(s, False) for s in va]
         print(f"   real pool {path}: {len(tr)} train x{rep} / {len(va)} val strips")
+
+    # ---- exam-disjointness guard (Round-1 contamination fix, docs/RUNG3.md Step 4.4a item 2) -----
+    # The exam is honest only if NO training piece is also an exam piece. The Round-1 exam leaked
+    # 4 pieces because their OTHER engraving sat in a real pool (same SymbTr score, different image
+    # stem) and the emit-time filter never re-ran after the pools grew. This is the fail-closed
+    # backstop: match on the SymbTr piece id (== testset symbtr_file minus '.txt' == manifest
+    # `piece`), never the image stem, and REFUSE to start on any overlap.
+    if args.testset and real_pool_pieces:
+        ts = json.loads(Path(args.testset).read_text())
+        exam_pieces = {
+            (p["symbtr_file"][:-4] if p.get("symbtr_file", "").endswith(".txt") else p.get("symbtr_file", ""))
+            for p in ts["pieces"]
+        }
+        leaked = sorted(real_pool_pieces & exam_pieces)
+        if leaked:
+            raise SystemExit(
+                f"EXAM CONTAMINATION — {len(leaked)} training piece(s) are also exam pieces "
+                f"(matched on SymbTr id; a different engraving still leaks the score):\n  "
+                + "\n  ".join(leaked)
+                + "\n  Remove them from the --real-dir pools (or the exam) before training. "
+                  "Pass --testset '' only if you intend to train without the guard."
+            )
+        print(f"   exam-disjointness OK: {len(real_pool_pieces)} real pieces, 0 in the {len(exam_pieces)}-piece exam")
     if args.oversample_tup > 1:
         extra = [it for it in train_items if "\\tup3" in it[0].label]
         train_items += extra * (args.oversample_tup - 1)

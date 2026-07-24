@@ -23,6 +23,7 @@ HOW the pieces map to training concepts:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -124,6 +125,22 @@ class StripDataset:
 
         s = self.strips[i]
         return Image.open(s.image_path).convert("RGB"), s.label
+
+
+def is_real_val_piece(piece: str, synth_val_pieces: set[str], real_val_frac: float = 0.10) -> bool:
+    """THE canonical real-train vs real-val assignment — stable, piece-level, pool-independent.
+
+    A piece hashes to the same side (train/val) in EVERY pool and consumer, so a piece's strips
+    never split across train and val (the leakage shape behind the Round-1 exam contamination,
+    one level down). Round-2's hard-tail recovery AND the real-val rebuild MUST both route strips
+    through this function rather than reimplement the hash (docs/RUNG3.md Step 4.4a item 3) — the
+    whole point is one implementation, so `row_unaligned`/`nd_high` strips wanted by both consumers
+    land on exactly one side by construction. Synthetic-val pieces are forced to the val side.
+    """
+    if piece in synth_val_pieces:
+        return True
+    h = int(hashlib.md5(piece.encode()).hexdigest(), 16)
+    return (h % 1000) < real_val_frac * 1000
 
 
 def check_token_drift(dataset: StripDataset) -> None:

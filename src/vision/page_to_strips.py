@@ -95,12 +95,181 @@ def binarize_ink(gray: np.ndarray) -> np.ndarray:
     return th
 
 
+# -------------------------------------------------------------------------- crop-to-page quad
+# Deskew (a single rotation) straightens a flat page but CANNOT fix a page shot obliquely: keystone
+# perspective makes the staff skew VARY down the page (measured on the photo exam: after deskew,
+# pg17's middle 6 systems detect but the top-2/bottom-1 still miss, and 5 pages stay at 0 strips).
+# Those are planar sheets photographed at an angle (no curl), so ONE homography rectifies every
+# system at once. We find the bright page quad against a darker background and warp it flat. Guarded
+# to a no-op when the page already fills the frame (clean scan / full-bleed screenshot): no quad
+# meaningfully inset from the borders -> return the image untouched.
+PAGE_MIN_AREA_FRAC = 0.25   # the page contour must cover >= this fraction of the frame
+PAGE_FULLFRAME_FRAC = 0.92  # quad this close to the whole frame => nothing to crop (no-op)
+
+def _order_quad(pts: np.ndarray) -> np.ndarray:
+    """Order 4 points as [top-left, top-right, bottom-right, bottom-left]."""
+    pts = pts.reshape(4, 2).astype(np.float32)
+    s = pts.sum(axis=1)
+    d = np.diff(pts, axis=1).ravel()
+    return np.array([pts[np.argmin(s)], pts[np.argmin(d)],
+                     pts[np.argmax(s)], pts[np.argmax(d)]], dtype=np.float32)
+
+
+def detect_page_quad(gray: np.ndarray) -> np.ndarray | None:
+    """Return the page's 4 corners (full-res coords, tl/tr/br/bl) or None. Estimated on a downscaled
+    mask of the bright page region against a darker background."""
+    h, w = gray.shape
+    scale = 800.0 / max(h, w)
+    small = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    blur = cv2.GaussianBlur(small, (5, 5), 0)
+    # page = the bright region; Otsu splits it from a darker desk/background
+    _, mask = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE,
+                            cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15)))
+    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not cnts:
+        return None
+    c = max(cnts, key=cv2.contourArea)
+    if cv2.contourArea(c) < PAGE_MIN_AREA_FRAC * small.shape[0] * small.shape[1]:
+        return None
+    peri = cv2.arcLength(c, True)
+    quad = None
+    for eps in (0.02, 0.03, 0.05, 0.08):
+        approx = cv2.approxPolyDP(c, eps * peri, True)
+        if len(approx) == 4 and cv2.isContourConvex(approx):
+            quad = approx.reshape(4, 2).astype(np.float32)
+            break
+    if quad is None:                       # no clean 4-gon: fall back to the min-area rectangle
+        quad = cv2.boxPoints(cv2.minAreaRect(c)).astype(np.float32)
+    return _order_quad(quad / scale)
+
+
+def crop_to_page(gray: np.ndarray) -> tuple[np.ndarray, bool]:
+    """Perspective-rectify the page to a flat rectangle. No-op (returns applied=False) when no
+    confident inset quad is found — clean scans and full-bleed screenshots pass through untouched."""
+    quad = detect_page_quad(gray)
+    if quad is None:
+        return gray, False
+    h, w = gray.shape
+    if cv2.contourArea(quad) >= PAGE_FULLFRAME_FRAC * h * w:
+        return gray, False                 # page already fills the frame: nothing to crop
+    tl, tr, br, bl = quad
+    out_w = int(round(max(np.linalg.norm(br - bl), np.linalg.norm(tr - tl))))
+    out_h = int(round(max(np.linalg.norm(tr - br), np.linalg.norm(tl - bl))))
+    if out_w < 200 or out_h < 200:
+        return gray, False
+    dst = np.array([[0, 0], [out_w - 1, 0], [out_w - 1, out_h - 1], [0, out_h - 1]],
+                   dtype=np.float32)
+    M = cv2.getPerspectiveTransform(quad, dst)
+    warped = cv2.warpPerspective(gray, M, (out_w, out_h),
+                                 flags=cv2.INTER_LINEAR, borderValue=255)
+    return warped, True
+
+
+# ------------------------------------------------------------------------------------ deskew
+# The staff detector isolates lines with a ~w/4-wide horizontal opening, which needs that much
+# CONTINUOUS horizontal ink on ONE pixel row. A handheld phone photo skewed by ~1.5deg drifts a
+# staff line ~10px vertically across that span (> line thickness), so the opening slices through
+# every line and detection collapses to 0 staves (measured on the photo exam: 72% of pages -> 0
+# strips, recovered to 92% by deskew alone). A clean scan is already axis-aligned, so the deadband
+# below makes this a no-op there. Estimation objective = the angle maximizing the count of
+# qualifying staff-line rows: it's exactly the signal detect_staves() gates on, not a proxy.
+SKEW_MAX_DEG = 7.0      # search range; beyond this it's perspective/curl (rotation can't fix it)
+SKEW_DEADBAND_DEG = 0.3  # don't rotate an essentially-straight page (avoid interpolation blur)
+SKEW_MIN_GAIN = 3        # ... and only rotate if it buys >= this many more staff-line rows
+
+def _qualifying_line_rows(gray: np.ndarray) -> int:
+    """#clustered staff-line rows detect_staves() would see — its len<2 gate is the 0-staff cliff."""
+    ink = binarize_ink(gray)
+    hor_len = max(20, gray.shape[1] // 4)
+    horiz = cv2.morphologyEx(
+        ink, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (hor_len, 1))
+    )
+    row_ink = horiz.sum(axis=1) / 255.0
+    if row_ink.max() < 1:
+        return 0
+    thr = max(row_ink.max() * 0.3, gray.shape[1] * 0.2)
+    return len(_cluster_rows(np.where(row_ink > thr)[0]))
+
+
+def estimate_skew(gray: np.ndarray) -> tuple[float, int, int]:
+    """Return (best_angle_deg, rows_at_best, rows_at_0). Estimated on a downscaled copy (angle is
+    scale-invariant) to keep the ~50-rotation sweep cheap."""
+    # Estimate near full-res: staff lines are ~1px thin, so aggressive downscaling blurs them below
+    # the horizontal-opening threshold and the qualifying-row signal collapses (measured: a 1500->
+    # 1000px shrink turned a clean +0.5deg/8-row estimate into a garbage +7.5deg/2-row one). Only
+    # shrink genuinely large uploads, and keep lines >=~1px by capping at 1600px wide.
+    small = gray
+    if gray.shape[1] > 2400:
+        s = 1600.0 / gray.shape[1]
+        small = cv2.resize(gray, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
+    h, w = small.shape
+    c = (w / 2, h / 2)
+
+    def rows_at(a: float) -> int:
+        if a == 0.0:
+            return _qualifying_line_rows(small)
+        M = cv2.getRotationMatrix2D(c, a, 1.0)
+        rot = cv2.warpAffine(small, M, (w, h), flags=cv2.INTER_LINEAR, borderValue=255)
+        return _qualifying_line_rows(rot)
+
+    rows0 = rows_at(0.0)
+    coarse = [(rows_at(a), a) for a in np.arange(-SKEW_MAX_DEG, SKEW_MAX_DEG + 0.01, 0.5)]
+    best_n, best_a = max(coarse)
+    fine = [(rows_at(a), a) for a in np.arange(best_a - 0.5, best_a + 0.501, 0.1)]
+    best_n, best_a = max(fine + [(best_n, best_a)])
+    return round(float(best_a), 2), best_n, rows0
+
+
+def deskew(gray: np.ndarray, est: tuple[float, int, int] | None = None) -> tuple[np.ndarray, float]:
+    """Auto-deskew a page so its staves are axis-aligned. No-op (returns angle 0.0) when the page
+    is already near-straight or the best rotation doesn't materially help — clean scans pass through
+    untouched. Rotates about the center with a white border (matches the paper, not ink). `est`
+    lets a caller pass a precomputed estimate_skew() result to avoid recomputing the sweep."""
+    ang, best_n, rows0 = est if est is not None else estimate_skew(gray)
+    if abs(ang) < SKEW_DEADBAND_DEG or best_n < rows0 + SKEW_MIN_GAIN:
+        return gray, 0.0
+    h, w = gray.shape
+    M = cv2.getRotationMatrix2D((w / 2, h / 2), ang, 1.0)
+    rot = cv2.warpAffine(gray, M, (w, h), flags=cv2.INTER_LINEAR, borderValue=255)
+    return rot, ang
+
+
+def prep_page(gray: np.ndarray) -> tuple[np.ndarray, bool, float]:
+    """Perspective-rectify then deskew a page for slicing. Returns (page, cropped, skew_angle).
+    The crop is KEPT only if it improves staff-line detectability (qualifying-row count at the best
+    rotation): a sheet shot on a contrasting desk rectifies cleanly, but a sheet on a white-paper
+    stack has a low-contrast edge the quad detector can misread — there the crop is discarded so it
+    never regresses a page deskew alone already handled."""
+    cropped, did_crop = crop_to_page(gray)
+    if did_crop:
+        est_c, est_o = estimate_skew(cropped), estimate_skew(gray)
+        if est_c[1] <= est_o[1]:            # crop didn't help -> fall back to the uncropped page
+            cropped, did_crop, est = gray, False, est_o
+        else:
+            est = est_c
+    else:
+        est = estimate_skew(cropped)
+    page, ang = deskew(cropped, est)
+    return page, did_crop, ang
+
+
 # ---------------------------------------------------------------------------- staff detection
+# Opening kernel = fraction of page width a staff line must span as CONTINUOUS ink to survive. The
+# old w/4 (0.25) was too long: a faint/broken photocopied line (or a page's short last system) has
+# no 0.25*w unbroken run and gets erased entirely — measured as systematically dropping the bottom
+# system of many pages on BOTH photos AND clean renders (clean pg01's true 9 systems detected as 8).
+# 0.11 recovers those real systems with no false staves (validated on clean exam pages: counts only
+# rise to the true value, never past; the _emit_staff 5-line-even-spacing gate rejects text/brackets).
+# NB: the deskew estimator deliberately keeps the long w/4 kernel — there intolerance is a feature
+# (it sharpens the angle peak), whereas here sensitivity is what we want.
+STAFF_HOR_FRAC = 0.11
+
 def detect_staves(ink: np.ndarray) -> list[Staff]:
     """Find 5-line staff systems via a horizontal-opening + row projection, then group lines."""
     h, w = ink.shape
     # keep only long horizontal structures (staff lines), drop noteheads/stems/text
-    hor_len = max(20, w // 4)
+    hor_len = max(20, int(w * STAFF_HOR_FRAC))
     horiz = cv2.morphologyEx(
         ink, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (hor_len, 1))
     )
@@ -557,6 +726,9 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Wind
 # ----------------------------------------------------------------------------------- driver
 def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = False) -> list[dict]:
     page = load_gray(page_path)
+    # perspective-rectify an obliquely-shot page + deskew residual rotation; no-op on clean scans,
+    # and the crop is auto-discarded when it doesn't improve staff detectability (see prep_page)
+    page, cropped, skew_angle = prep_page(page)
     ink = binarize_ink(page)
     staves = detect_staves(ink)
     out_dir = Path(out_dir)
@@ -576,16 +748,20 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
         bar_set = set(bars)
         crops: list[tuple[int, int]] = []     # padded pixel spans, for the debug overlay
         for wi, w in enumerate(windows):
-            # pad past the enclosing barlines so a cut never shaves a stem/flag — TIGHT
-            # (engraved notes sit >= ~0.5 sp from a bar, so PAD_PX can't reach a neighbour's
-            # head). Gutter cuts from _split_wide get NO pad (a pad could re-enter the ink
-            # the gutter avoided). w00 gets extra left margin: the clef's leftmost ink can
-            # start a few px left of the measured staff.x0, and only page margin lies beyond.
+            # pad past the LEFT enclosing barline only, so a cut never shaves a stem/flag.
+            # One-sided on purpose: padding both sides makes the span [bar-PAD, bar+PAD]
+            # land in two strips at once, and a note sitting in it gets decoded twice.
+            # Left-only keeps the overlap to one strip's worth and biases the duplicate
+            # risk onto the previous measure's tail (rare — engraved notes sit >= ~0.5 sp
+            # from a bar). Gutter cuts from _split_wide get NO pad (a pad could re-enter
+            # the ink the gutter avoided). w00 gets extra left margin: the clef's leftmost
+            # ink can start a few px left of the measured staff.x0, and only page margin
+            # lies beyond.
             if wi == 0:
                 pl = int(round(TARGET_SPACING * 0.5))
             else:
                 pl = PAD_PX if w.x0 in bar_set else 0
-            pr = PAD_PX if w.x1 in bar_set else 0
+            pr = 0
             cx0, cx1 = max(0, w.x0 - pl), min(row.shape[1], w.x1 + pr)
             crops.append((cx0, cx1))
             crop = row[:, cx0:cx1]
@@ -627,7 +803,10 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
     (out_dir / f"{stem}_manifest.json").write_text(json.dumps(manifest, indent=1))
     if dbg is not None:
         cv2.imwrite(str(out_dir / f"{stem}_debug.png"), dbg)
-    print(f"{stem}: {len(staves)} staves -> {n} strips  ({out_dir})")
+    pre = ("  [" + ", ".join(
+        ([f"crop"] if cropped else []) + ([f"deskew {skew_angle:+.1f}deg"] if skew_angle else [])
+    ) + "]") if (cropped or skew_angle) else ""
+    print(f"{stem}: {len(staves)} staves -> {n} strips{pre}  ({out_dir})")
     return manifest
 
 

@@ -883,6 +883,16 @@ could not have de-risked it either (real-val cannot see the class).
 
 ### Step 4.3 — Round-1 EXAM TAKEN (2026-07-22): ⛔ does NOT pass — full numbers in `MODEL_EVAL.md`
 
+> **UPDATE 2026-07-25 — gold re-audited, exam re-scored.** A full hand-audit of the 327 clean exam
+> strips (the gold was already ~82% reviewed via `examv2-review`; only **13 new label errors** found —
+> the gold over-sizes sharps, e.g. `\buyukSharp`/`\komaSharp`→`\bakiyeSharp`). After correcting them
+> (`scripts/rung3/apply_exam_fix.py`; backup `manifest.jsonl.bak-precorrect`), the re-score is **AEU
+> recall 66.3→78.5%, F1 66.5→78.0%** — BUT ~11 of the 12pp is a **metric artifact**: `\buyukSharp`
+> (n=3, 0% recall) corrected to n=0 drops out of the per-class mean; token-level barely moved (SER
+> 0.060→0.059, exact 49.2→50.0%). Lessons: the per-class-mean headline is fragile to low-n classes
+> (exam-v3 must floor/weight by n), and the R1 "fail" was **partly** a low-n label artifact, not
+> wholesale bad labels — the `\komaSharp`/`\kucukSharp` weakness is real (F1 ~49/73% on corrected gold).
+
 The one-shot read is **spent**. Arm A on the frozen 352-strip exam v2.1, run locally (exam strips
 never went to the training box, per `make_round1_colab_zip.sh`). Pre-flight from gold labels alone
 re-confirmed the freeze: 352 strips, arc denominators **85 / 229**, tup3 55 groups / 38 strips,
@@ -959,10 +969,26 @@ pass, which is what the Step-4.0 rule was about.)
 > many strips it could even line up, and the accuracy on those.
 
 **Then, once those checks land, the training work** (all still open, and clearer after the checks):
-- **The "invented mark" bug** — the model adds note-marks that aren't printed (worst on 'si'). It
-  reproduces on fake data where we know the right answer, so it's fast to work on and needs no scarce
-  real pages. This is the fastest model fix. *(Plain explanation: `docs/OVERVIEW.md`; details in the
-  "carry-bug" notes of `MODEL_EVAL.md`.)*
+- ⛔ **The "invented mark" bug — DROPPED as a Round-2 priority (user decision, 2026-07-25).** It was
+  listed here as "the fastest model fix": the model adds flat-family marks that aren't printed (worst
+  on 'si'), and it reproduces on synthetic data. Dropped because the evidence moved: on the
+  hand-labelled photo gold and the corrected clean gold the **flat family is now healthy**
+  (`\kucukFlat` F1 92%, `\bakiyeFlat` 89%, `\natural` 89%), and the degrade probe (Step 4.4a item 4)
+  showed the hallucination is not ambiguity-driven, so a renderer fix was never the lever. The whole
+  remaining accidental weakness sits in the **microtonal SHARPS**. Kept only as a logged synthetic
+  defect (`MODEL_EVAL.md` "carry-bug"), not scheduled work.
+- **Sharp-size discrimination = THE Round-2 model lever (new, 2026-07-25).** `\komaSharp` F1 ~50% and
+  `\kucukSharp` recall 48% at **100% precision** — the model UNDER-fires small sharps rather than
+  hallucinating them, i.e. it is failing to *see* the size difference, not failing to be careful.
+  Three independent reads agree (photo gold, corrected clean gold, and the direction of the 13 gold
+  fixes — the human answer key over-sized sharps too). **Two candidate causes needing opposite fixes,
+  so measure before building:** (a) *teaching* — the distinction is present in the strip pixels but
+  under-taught ⇒ contrastive re-render (all four sharp sizes in matched contexts) + glyph-fidelity
+  check against printed engraving convention; (b) *resolution* — the four sharps differ by only a few
+  pixels at the strip scale we feed the model ⇒ no amount of data helps and the input geometry must
+  change. **Cheap gating probe: render the same note with each of the four sharps, crop at the exact
+  model input scale, and measure the pixel delta.** The Round-1-era "boost komaSharp/kucukSharp share"
+  item stays overturned (koma is already over-represented and was precision-bound).
 - **Recover the hard pages we had to drop** — many real strips were dropped earlier because the old
   reading model couldn't line them up. The Round-1 model reads better, so it can recover them into
   training. This is our biggest source of new data. It needs human checking, our slowest step, so
@@ -1058,6 +1084,30 @@ them gate the design of the expensive steps, so they run first.
    assume.
 
 ### Step 4.5 — Photo-exam axis (second, product-domain exam; zero labeling cost)
+
+> **DONE 2026-07-24..25 (results).** 39 photos shot. **The slicer, not the model, was the wall:** raw
+> `page_to_strips.py` yielded 0 strips on 72% of photos — its `w/4` staff-detection kernel can't
+> tolerate ~1.5° handheld skew. Fixed with a guarded photo front-end (all no-ops on clean scans):
+> **auto-deskew + crop-to-quad/perspective de-warp + a narrower `STAFF_HOR_FRAC=0.11` detection kernel**
+> (the old `w/4` had been silently dropping faint/bottom systems on clean renders too). **Yield 28% →
+> 97% of pages / 106 → 690 strips.** Photo AEU ≈ **61% recall / 75% F1** (`scripts/rung3/
+> decode_photos_exam.py` + `score_photos_exam.py`; 690 strips decoded on the M4 in ~6 min — Colab
+> unneeded), first scored by fitting the curated gold onto the photo decode (an estimate). **Then the
+> expert HAND-LABELLED 284 photo strips directly** (review_ui `photo-gold`; stopped there — enough to
+> measure + many photos unreadable even to a human, 4% marked bad) and `score_photo_gold.py` scored
+> the model against those verified labels, strict per-strip: **photo AEU recall 73.7% / F1 75.9%** (272
+> scorable) — the definitive number, HIGHER than the fitting estimate (which under-counted recall).
+> **Photo vs corrected-clean (~77%) gap ≈ 3–4pp → photo domain basically solved by the front-end.** The
+> real weakness is MICROTONAL SHARPS (komaSharp F1 50%, kucukSharp rec 48%/prec 100% — under-fires,
+> reads them as bakiye/koma), a CLEAN-domain reading issue; `|`/`\tie` are fine (90/94% F1, NOT the
+> problem). → next model lever = synthetic re-render weighted toward koma/kucuk/bakiye sharp
+> discrimination, not more photo labels. Aside: ~15% of TSM measures are single-but-dense >59 tokens
+> (same on clean+photo — inherent density, not over-wide slicing; model reads them, 0 truncated).
+
+> **The 284 hand-labelled photo strips stay EXAM-ONLY (settled 2026-07-25).** They are shots of the
+> printed exam pieces, so training on them contaminates the exam (the train-time guard would refuse
+> to start). Frozen as the photo half of exam v3. Camera-photo TRAINING data must be shot fresh from
+> NON-exam pieces.
 
 The v2.1 exam is clean PDF renders; the real product input is screenshots / **phone photos**.
 The 25 exam-piece PDFs are staged + merged (`data/real/rung3/photo_exam_pdfs/`,

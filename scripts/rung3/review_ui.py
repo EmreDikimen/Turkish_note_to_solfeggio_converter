@@ -72,6 +72,14 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # PHOTO-GOLD (2026-07-25) — hand-label the phone-photo strips directly = a per-strip photo test
+    # set. Every photo strip seeded with the model decode; ok=confirm, fix=correct against the photo.
+    # reason=accid flags AEU-relevant strips. Images under data/real/rung3/photos_exam_strips/.
+    "photo-gold": "data/real/rung3/photos_exam_strips/photo_gold.csv",
+    # exam gold-label FIX (2026-07-24) — every frozen CLEAN exam gold strip, for correcting the
+    # komaSharp/kucukSharp gold errors. Superseded for photo scoring by photo-gold above, but still
+    # useful for the clean exam. Images under data/real/strips/<page>/<strip>.
+    "exam-fix": "data/real/rung3/strips_exam_v2_clean/exam_fix.csv",
     # targeted tuplet run (2026-07-18, docs/RUNG3.md §1c) — tup3-only, k=1 windows
     "tup-audit": "data/real/rung3/strips_tup/emit_audit.csv",
     "tup-full": "data/real/rung3/strips_tup/full_audit.csv",
@@ -98,6 +106,11 @@ FULL_AUDITS = {
     "tup-full": ("data/real/rung3/strips_tup", "tup-audit"),
 }
 STRIPS = "data/real/strips"
+# roots the /img/<page>/<strip> handler searches, in order — lets a queue reference strips that
+# live outside the main slice dir (e.g. the phone-photo strips for the photo-gold labeling queue).
+IMG_ROOTS = ["data/real/strips",
+             "data/real/rung3/photos_exam_strips",
+             "data/real/rung3/clean_pages_strips"]
 VERDICTS = {"", "ok", "fix", "bad"}
 
 
@@ -224,11 +237,13 @@ class Handler(BaseHTTPRequestHandler):
             if not re.fullmatch(r"[\w.\-]+/[\w.\-]+\.png", rel):
                 self._json({"error": "bad path"}, 400)
                 return
-            img = (self.root / STRIPS / rel).resolve()
-            if not str(img).startswith(str((self.root / STRIPS).resolve())) or not img.exists():
-                self._json({"error": "not found"}, 404)
-                return
-            self._send(200, img.read_bytes(), "image/png")
+            for base in IMG_ROOTS:
+                root_dir = (self.root / base).resolve()
+                img = (root_dir / rel).resolve()
+                if str(img).startswith(str(root_dir)) and img.exists():
+                    self._send(200, img.read_bytes(), "image/png")
+                    return
+            self._json({"error": "not found"}, 404)
         else:
             self._json({"error": "not found"}, 404)
 
@@ -531,12 +546,21 @@ function lint(txt){
   for(const t of toks)
     if(!t.startsWith('\\')&&t!=='|'&&t!=='3'&&!/^r?[a-g]?[',]*\d{0,2}\.{0,2}$/.test(t)&&!/^[a-gr][',]*\d+\.?$/.test(t))
       {msgs.push(`odd token: ${t}`);break}
-  // real-tokenizer id cost (the ≤59 promote gate): char-level except added tokens —
-  // \commands and | are 1 id, a note is 1 id per character (d''16 = 5); +1 for EOS.
+  // real-tokenizer id cost: char-level except added tokens — \commands and | are 1 id, a note is
+  // 1 id per character (d''16 = 5); +1 for EOS. The 59 is the TRAINING promote gate; a TEST set
+  // (photo-gold) must keep dense measures (the model's hard cases) — there the only hard limit is
+  // the 100-token decode cap (a longer label the model literally can't emit).
   const ids=toks.reduce((s,t)=>s+((t.startsWith('\\')||t==='|')?1:t.length),0)+1;
-  if(ids>59)msgs.push(`OVER BUDGET: ${ids} ids > 59 — promote will reject (unwinnable strip: verdict bad)`);
-  return {warn:msgs, n:toks.length, ids};
+  const testSet = TEST_QUEUES.has(qid);
+  const cap = testSet ? 100 : 59;
+  if(ids>cap)
+    msgs.push(testSet
+      ? `exceeds the 100-token decode cap (${ids}) — the model can't emit this; verdict bad`
+      : `OVER BUDGET: ${ids} ids > 59 — promote will reject (unwinnable strip: verdict bad)`);
+  return {warn:msgs, n:toks.length, ids, cap};
 }
+// queues that are TEST sets (label the truth, keep dense measures) vs TRAINING (≤59 promote gate)
+const TEST_QUEUES=new Set(['photo-gold']);
 
 function rows(){ return S.queues.find(q=>q.id===qid).rows; }
 function visible(){
@@ -683,9 +707,9 @@ function openEdit(){
   setBase('hybrid',true); // an existing correction wins; the base buttons rebuild from scratch
 }
 function lintNow(){
-  const{warn,n,ids}=lint(letterText($('edit').value));
+  const{warn,n,ids,cap}=lint(letterText($('edit').value));
   $('lint').innerHTML=warn.length?warn.map(w=>`<span class="warn">⚠ ${esc(w)}</span>`).join(' · ')
-    :`<span class="fine">✓ ${n} tokens ≈ ${ids}/59 ids, looks well-formed (real gates re-run at promote)</span>`;
+    :`<span class="fine">✓ ${n} tokens ≈ ${ids}/${cap} ids, looks well-formed</span>`;
 }
 async function saveEdit(){
   const r=cur();if(!r)return;

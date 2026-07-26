@@ -14,6 +14,7 @@ wrong — fix by deleting, not by syncing.
 | What is this project, how do I run it, what may I not do? | [../CLAUDE.md](../CLAUDE.md) |
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
+| I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
 
 ## Facts and decisions
 

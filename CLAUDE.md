@@ -10,11 +10,16 @@ about real printed pages and photos.
 > **Current state + the next action → [docs/STATUS.md](docs/STATUS.md). Never answer "what's next"
 > from this file or from ROADMAP.** Plain-English version for the project owner:
 > [docs/OVERVIEW.md](docs/OVERVIEW.md).
+>
+> 📝 **Asked to "sync the docs", "update the docs", or writing anything down after a piece of
+> work? READ [docs/MAINTAINING.md](docs/MAINTAINING.md) FIRST and follow it** — it says which file
+> owns what, and the end-of-session checklist. Do not improvise doc updates.
 
 ## Where things are
 
 | Need | File |
 |---|---|
+| **"Sync the docs" / update docs after work** | **[docs/MAINTAINING.md](docs/MAINTAINING.md) — read before editing any doc** |
 | What ships today, what's next, open risks | [docs/STATUS.md](docs/STATUS.md) |
 | Any headline number (accuracy, corpus size, yield) | [docs/METRICS.md](docs/METRICS.md) |
 | Why something was decided (and what overturned it) | [docs/DECISIONS.md](docs/DECISIONS.md) |
@@ -61,6 +66,12 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 - **Commits:** short lowercase subject, no co-author trailer.
 
 ## Doc conventions (keep them or the docs rot)
+
+The short version is below; the full procedure — what to update after a session, and why each rule
+exists — is [docs/MAINTAINING.md](docs/MAINTAINING.md).
+
+Full guide — what to update after a session, and why each rule exists:
+[docs/MAINTAINING.md](docs/MAINTAINING.md).
 
 1. `docs/STATUS.md` is the **only** file that states current state or next action. Everything else
    links to it — never restate status.

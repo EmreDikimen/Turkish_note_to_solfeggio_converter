@@ -83,3 +83,4 @@ investigation.
 | Dated history of everything | [log/status-log.md](log/status-log.md) |
 | Plans that were abandoned — do not act on them | [log/superseded.md](log/superseded.md) |
 | Plain-English version of this page | [OVERVIEW.md](OVERVIEW.md) |
+| How to update this file (and the others) | [MAINTAINING.md](MAINTAINING.md) |

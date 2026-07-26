@@ -1,4 +1,4 @@
-"""Rung 3 — promote adjudicated labels into the training manifest (docs/RUNG3.md §1a.5 prereq).
+"""Rung 3 — promote adjudicated labels into the training manifest (docs/rung3/labeling.md §1a.5 prereq).
 
 Applies the review UI's human verdicts (scripts/rung3/review_ui.py) to <dir>/manifest.jsonl.
 The verdicts are ground truth — nothing here re-judges the music; the gates below only catch

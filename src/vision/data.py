@@ -133,7 +133,7 @@ def is_real_val_piece(piece: str, synth_val_pieces: set[str], real_val_frac: flo
     A piece hashes to the same side (train/val) in EVERY pool and consumer, so a piece's strips
     never split across train and val (the leakage shape behind the Round-1 exam contamination,
     one level down). Round-2's hard-tail recovery AND the real-val rebuild MUST both route strips
-    through this function rather than reimplement the hash (docs/RUNG3.md Step 4.4a item 3) — the
+    through this function rather than reimplement the hash (docs/rung3/round1.md, addenda item 3) — the
     whole point is one implementation, so `row_unaligned`/`nd_high` strips wanted by both consumers
     land on exactly one side by construction. Synthetic-val pieces are forced to the val side.
     """

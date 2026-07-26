@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Match the downloaded neyzen corpus against SymbTr by name → free ground-truth labels.
 
-Rung 3 step 1 (docs/RUNG3.md §2): for every downloaded real page whose piece also exists in
+Rung 3 step 1 (docs/rung3/labeling.md §1a): for every downloaded real page whose piece also exists in
 SymbTr, we already own a perfect symbolic transcription — no hand labeling needed. This script
 fuzzy-matches the two catalogs by name and, for confident matches, exports the SymbTr piece as
 a note-model JSON + per-measure LilyPond label tokens (via tools/render/labels-cli.ts).

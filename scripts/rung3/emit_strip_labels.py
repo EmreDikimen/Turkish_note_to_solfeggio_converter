@@ -7,7 +7,7 @@ token placement from the SAME TypeScript serializer that makes the synthetic lab
 (tools/render/labels-cli.ts --ranges, "measure"/carry mode = the printed-page convention).
 
 The alignment trusts the model almost nowhere, and everything uncertain is DROPPED or sent to
-human review — a wrong label is worse than no label (docs/RUNG3.md §3):
+human review — a wrong label is worse than no label (docs/rung3/exam.md §3):
 
   1. DECODE   every page once (slicer geometry + int8 ONNX decode + per-token logprobs).
   2. FOLD     SymbTr writes repeats out twice; the page draws them once. Try every fold subset

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Temporary one-keystroke review UI for the Rung-3 verdict queues (docs/RUNG3.md).
+"""Temporary one-keystroke review UI for the Rung-3 verdict queues (docs/rung3/README.md).
 
 Serves a single-page app over the four verdict CSVs and writes verdicts straight back
 into them (adding `verdict` / `corrected_label` columns on first write):
@@ -25,7 +25,7 @@ Two-source stage queues (2026-07-15; strips_exam ones above are SUPERSEDED by v2
   examv2-audit  strips_exam_v2/emit_audit.csv  sample of the v2 exam accepts.
   examv2-review strips_exam_v2/emit_review.csv 287-row growth queue for the re-frozen exam.
 
-Targeted tuplet queues (2026-07-18, docs/RUNG3.md §1c; tup3-only, 1-measure windows):
+Targeted tuplet queues (2026-07-18, docs/rung3/labeling.md §1c; tup3-only, 1-measure windows):
   tup-full      strips_tup/full_audit.csv      all 78 accepted tup3 strips (114 groups) —
                                                sidecar built on first run, manifest untouched.
   tup-review    strips_tup/emit_review.csv     147 tup3 review rows / 205 groups (the
@@ -80,7 +80,7 @@ QUEUES = {
     # komaSharp/kucukSharp gold errors. Superseded for photo scoring by photo-gold above, but still
     # useful for the clean exam. Images under data/real/strips/<page>/<strip>.
     "exam-fix": "data/real/rung3/strips_exam_v2_clean/exam_fix.csv",
-    # targeted tuplet run (2026-07-18, docs/RUNG3.md §1c) — tup3-only, k=1 windows
+    # targeted tuplet run (2026-07-18, docs/rung3/labeling.md §1c) — tup3-only, k=1 windows
     "tup-audit": "data/real/rung3/strips_tup/emit_audit.csv",
     "tup-full": "data/real/rung3/strips_tup/full_audit.csv",
     "tup-review": "data/real/rung3/strips_tup/emit_review.csv",

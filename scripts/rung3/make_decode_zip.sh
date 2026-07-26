@@ -10,7 +10,7 @@
 # notebooks/rung3_decode_colab.ipynb and download the strips zip it leaves on Drive.
 #
 # Optional $1 = an existing pages list (one PNG path per line) to package INSTEAD of
-# regenerating from all of matched/ — used by the targeted tuplet run (docs/RUNG3.md §1c).
+# regenerating from all of matched/ — used by the targeted tuplet run (docs/rung3/labeling.md §1c).
 set -e
 cd "$(dirname "$0")/../.."
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build the Colab upload package for the Round-0.5 LABELER fine-tune (docs/RUNG3.md §1a.5).
+# Build the Colab upload package for the Round-0.5 LABELER fine-tune (docs/rung3/labeling.md §1a.5).
 #
 # Mirrors scripts/make_colab_zip.sh: one zip, repo-layout paths, so the notebook commands
 # (notebooks/rung3_labeler_colab.ipynb) work unchanged after unzipping. Contents:

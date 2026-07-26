@@ -194,7 +194,7 @@ def main() -> int:
         # pool (pieces recur across pools/engravings — a piece must never be train in one pool
         # and val in another). `is_real_val_piece` (data.py) is THE canonical assignment; the
         # Round-2 hard-tail recovery + real-val rebuild reuse it so recovered strips land on one
-        # side by construction (docs/RUNG3.md Step 4.4a item 3).
+        # side by construction (docs/rung3/round1.md, addenda item 3).
         def is_val(piece: str) -> bool:
             return is_real_val_piece(piece, synth_val_pieces, args.real_val_frac)
         tr = [s for s in rds.strips if not is_val(s.piece)]
@@ -203,7 +203,7 @@ def main() -> int:
         real_val_items += [(s, False) for s in va]
         print(f"   real pool {path}: {len(tr)} train x{rep} / {len(va)} val strips")
 
-    # ---- exam-disjointness guard (Round-1 contamination fix, docs/RUNG3.md Step 4.4a item 2) -----
+    # ---- exam-disjointness guard (Round-1 contamination fix, docs/rung3/round1.md, addenda item 2) -----
     # The exam is honest only if NO training piece is also an exam piece. The Round-1 exam leaked
     # 4 pieces because their OTHER engraving sat in a real pool (same SymbTr score, different image
     # stem) and the emit-time filter never re-ran after the pools grew. This is the fail-closed

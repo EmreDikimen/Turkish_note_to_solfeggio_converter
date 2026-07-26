@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""notaarsivleri.com — SymbTr-FIRST collection (Rung 3 step 1b, docs/RUNG3.md §1b).
+"""notaarsivleri.com — SymbTr-FIRST collection (Rung 3 step 1b, docs/rung3/labeling.md §1b).
 
 Inverts the neyzen order: census the TSM CATALOG (real title/makam/composer/form/usul
 columns) → match against SymbTr on METADATA → download ONLY the matched pieces. Every

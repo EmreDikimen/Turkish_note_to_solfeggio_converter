@@ -1,6 +1,6 @@
 r"""
 Degraded-strip probe — the pre-registered replacement for the CANCELLED every-share sweep
-(decision block in `docs/RUNG3.md` Step 4.2).
+(decision block in `docs/log/superseded.md`).
 
 The sweep existed to test one hypothesis: that the synthetic pool's inflated "emit an accidental"
 prior (every-mode strips carry 4.22 inline accidentals vs 0.32 on real pages) is what makes the

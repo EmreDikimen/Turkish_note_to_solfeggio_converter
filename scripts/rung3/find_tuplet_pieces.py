@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rank SymbTr pieces by tuplet content and cross them with the Rung-3 match data.
 
-Why (docs/RUNG3.md "Tuplet training gap"): the exam holds 4 \\tup3 gold tokens and the
+Why (docs/rung3/labeling.md §1c, "Tuplet training gap"): the exam holds 4 \\tup3 gold tokens and the
 training manifest ~14 tup3 rows — the model reads triplets poorly and the corpus can't
 teach it. This script finds the SymbTr pieces that would fix that: for each of the
 ~2,200 SymbTr txt files it counts tuplet events (same rule as tools/render/rhythm.ts —

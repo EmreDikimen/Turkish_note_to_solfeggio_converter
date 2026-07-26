@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Targeted tuplet collection (docs/RUNG3.md "Tuplet training gap", 2026-07-17).
+"""Targeted tuplet collection (docs/rung3/labeling.md §1c, 2026-07-17).
 
 The exam holds 4 \\tup3 gold tokens and the training manifest ~14 tup3 rows; real
 triplet data is depleted. `find_tuplet_pieces.py` ranked all tuplet-bearing SymbTr

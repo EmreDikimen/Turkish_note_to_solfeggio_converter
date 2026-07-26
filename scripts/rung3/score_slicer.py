@@ -35,7 +35,7 @@ from emit_strip_labels import Aligner, choose_fold, load_piece, rows_of  # noqa:
 from page_to_strips import (binarize_ink, detect_barlines, detect_staves,  # noqa: E402
                             load_gray, normalize_row, page_to_strips, window_measures)
 
-# the three w00 crops documented as broken in docs/RUNG3.md §slicer-defects — always eyeballed
+# the three w00 crops documented as broken in docs/rung3/followups.md (slicer defects) — always eyeballed
 DOC_BAD_PAGES = [
     "aman_cana_beni_sad_et_nota_p1",
     "hatirlar_misin_beni_bir_zamanlar_nota_p1",

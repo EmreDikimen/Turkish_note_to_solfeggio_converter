@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU batch page decode for the Rung-3 emitter — the Colab offload (docs/RUNG3.md §1b).
+"""GPU batch page decode for the Rung-3 emitter — the Colab offload (docs/rung3/labeling.md §1b).
 
 Slices every listed page (`page_to_strips`, same classical-CV slicer) and batch-decodes all
 strips with the PyTorch checkpoint on CUDA, writing `<page>_decode.json` in EXACTLY the
@@ -52,7 +52,7 @@ def main() -> int:
                     help="skip pages whose _decode.json already records --cache-checkpoint")
     ap.add_argument("--measures-per-strip", type=int, default=None,
                     help="override the slicer window size (default: OMR_MEASURES_PER_STRIP "
-                         "env or 3). The tuplet emit (docs/RUNG3.md §1c) runs at 1.")
+                         "env or 3). The tuplet emit (docs/rung3/labeling.md §1c) runs at 1.")
     args = ap.parse_args()
 
     import torch

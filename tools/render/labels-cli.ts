@@ -7,7 +7,7 @@
  *    downloaded real page — see `scripts/rung3/match_symbtr.py`), writes `labels.json` next to
  *    it: the piece's per-measure LilyPond label tokens in all three faithful modes, the
  *    full-piece streams, and the detected repeat spans. The Rung-3 emitter aligns a real page's
- *    decoded strips against these (docs/RUNG3.md §3).
+ *    decoded strips against these (docs/rung3/exam.md §3).
  *
  *     - `every`   — every drawn alteration marked inline, no signature (mid-row-crop style).
  *     - `keysig`  — signature-covered accidentals suppressed (every deviating occurrence marked).

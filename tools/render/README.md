@@ -1,5 +1,11 @@
 # Phase 2 — synthetic data renderer (`tools/render/`)
 
+purpose: how the synthetic (image, label) training pairs are generated, and what each corpus version added
+audience: anyone changing the renderer, the label serializer, or a training corpus
+updated: 2026-07-26
+
+> Project state: `docs/STATUS.md`. Measured numbers: `docs/METRICS.md`. This file is renderer-internal.
+
 Generates the **(image, label)** training pairs for fine-tuning the OMR model: the TypeScript side
 renders short Turkish staff strips with the existing VexFlow engraving and emits each strip's label in
 the model's output format, from the **same data that draws the image** (so labels can't drift from
@@ -144,7 +150,7 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
 (Browser-side counterparts live in `apps/web/src/`: `stripExport.ts` builds crop rects + labels
 from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 
-## Status (renderer-internal — project-level status lives in ROADMAP §7)
+## Status (renderer-internal — project state lives in `docs/STATUS.md`, numbers in `docs/METRICS.md`)
 - [x] Label format decided + serializer (`lilypond.ts`) built and verified on real scores.
 - [x] **Faithful + signature scheme implemented** (deviation/`\natural`/bare + `\sig … \sigend` on
       row-start keysig strips; `ADDED_TOKENS` extended). Round-trip verified on all sample scores:
@@ -159,7 +165,7 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 - [x] **strips_v2_1 re-render (2026-07-06):** 18,627 strips — adds the 4 navigation-mark tokens
       (`navmarks.ts`, all audit floors cleared) and the centered-rest engraving fix (`alignRests`
       off in SheetView); audit PASS. **Supersedes v2 for training** (v2 stays on disk). This is the
-      set Rung 2 trained on (PASS 2026-07-07 — ROADMAP §7).
+      set Rung 2 trained on (PASS 2026-07-07 — `docs/METRICS.md`).
 - [x] OpenCV augmentation — deliberately NOT baked into the rendered files; applied on-the-fly in
       the Rung-2 training loader (`src/vision/augment.py`, screenshot-dominant two-profile mix).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
@@ -185,13 +191,12 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       15% → 97% at Round 1). `every` mode stays as the minority transpose carrier (its share is
       train-time tunable via `train.py --every-share`, shipped at 0.15).
 - [x] **Real-print sharp weight — `--thin-sharps` (2026-07-26), OFF by default.** Bravura draws the
-      AEU sharp bar 0.367 S where real print draws 0.300 S and packs küçük's three bars 0.483 S
-      apart vs 0.550 S, leaving a 0.116 S white gap (real: 0.250 S) — ~1–2 px after the encoder
-      shrink, so küçük's three bars fuse into a block that IS a 2-bar koma. That, not resolution and
-      not teaching volume, was the model's microtonal-sharp weakness. `drawThinSharps` (SheetView)
-      redraws all four sharps as SVG at real-print weight — all four, so bar COUNT stays the only
-      difference; flats untouched. Off by default so an A/B against `strips_v3` stays possible.
-      Full diagnosis: ROADMAP §7 / `docs/RUNG3.md` Step 4.4.
+      AEU sharp bars too thick and packs küçük's three bars too close, so after the encoder's shrink
+      they fuse into a block that IS a 2-bar koma — that, not resolution and not teaching volume, was
+      the model's microtonal-sharp weakness. `drawThinSharps` (SheetView) redraws all four sharps as
+      SVG at real-print bar weight — all four, so bar COUNT stays the only difference; flats
+      untouched. Off by default so an A/B against `strips_v3` stays possible.
+      Diagnosis: `docs/rung3/round2.md`; the measured widths: `docs/METRICS.md`.
 - [ ] **Next re-render owes the sharp FREQUENCY balance:** `strips_v3` carries `\komaSharp` inline in
       1,887 strips vs `\kucukSharp` in 206, and **no** strip holds both — the model has never seen the
       pair contrasted in one image. Balance the counts and place koma/küçük/bakiye on neighbouring

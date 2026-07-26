@@ -1,5 +1,9 @@
 # Rung-2 dataset & training upgrades — manual checking guide
 
+purpose: see-it-yourself checks: run each feature and look at the result
+audience: anyone verifying a feature by hand rather than by test
+updated: 2026-07-26
+
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
 

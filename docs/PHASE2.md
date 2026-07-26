@@ -1,10 +1,17 @@
-# Phase 2 — Synthetic data + fine-tune a pretrained OMR model (kickoff & hand-off)
+# Phase 2 — synthetic data + the fine-tune ladder (CLOSED 2026-07-09)
 
-> Read `ROADMAP.md` §3 (Phases 2–4) and §5 (risks) for the canonical plan. This doc orients a
-> fresh session: what Phase 2 is, what's already done, what to build first, and how to de-risk it.
-> **Phase numbering:** the rung ladder (§5) spans ROADMAP Phases 2–3 — Rungs 0–1.5 + data gen are
-> Phase 2; Rung 2 (scaled fine-tune) and Rung 3 (real photos) are ROADMAP's Phase 3; Rung 4 is
-> Phase 4. "Phase 2" in commits/this doc's title is the working label for the whole kickoff.
+purpose: the design record of the synthetic track — what was built, why, and how each rung was de-risked
+audience: anyone who needs the reasoning behind the label scheme, augmentation, or token design
+updated: 2026-07-26 (content closed; live work moved to docs/rung3/)
+
+> **This track is finished.** Rungs 0 → 2.2b all passed; reading synthetic music is a solved
+> problem. Live work is the real-page track: [rung3/README.md](rung3/README.md). Current state:
+> [STATUS.md](STATUS.md). Numbers: [METRICS.md](METRICS.md).
+>
+> Still useful here: the label scheme, the augmentation policy (§3), the token designs (§6), and the
+> de-risk ladder's reasoning (§5). Architecture and phase plan: [../ROADMAP.md](../ROADMAP.md).
+> **Phase numbering:** the rung ladder spans ROADMAP Phases 2–3 — Rungs 0–1.5 + data gen are
+> Phase 2; Rung 2 (scaled fine-tune) and Rung 3 (real pages) are Phase 3; Rung 4 is Phase 4.
 
 ## 1. The project in one line
 Photograph Classical/Art **Turkish (makam)** sheet music → recognize the notes *including
@@ -179,7 +186,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   ~50% the rarer tokens came in under floor; shipped at 4–6 on ~70%). Also baked in: the
   centered-rest engraving fix (`alignRests` off in SheetView). Train on v2_1, not v2.
 - **Triplets (tuplet brackets) — ✅ CLOSED 2026-07-08, together with the tie + grace bundle
-  below (one strips_v2_2 upgrade; implementation details + audit numbers in ROADMAP §7 —
+  below (one strips_v2_2 upgrade; implementation details + audit numbers in `docs/log/status-log.md` —
   18,777 strips, audit PASS, 413 `\tup3` / 704 `\tie` / 1,996 `\grace` strips; drawn as the
   curved-arc "3" of printed Turkish scores on ~70% of pieces, VexFlow's square bracket on the
   rest; Rung-2.2 retrain pending). Two findings vs. the plan text below: fractions must be
@@ -255,7 +262,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 - [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
       signature scheme** (§4), in `tools/render/lilypond.ts` (2026-07-02). Round-trip verified on
       all sample scores. Re-render DONE (2026-07-05): `data/synthetic/strips_v2/` carries the
-      repeat-sign tokens + multi-measure coverage — audit PASS (ROADMAP §7).
+      repeat-sign tokens + multi-measure coverage — audit PASS (`docs/log/status-log.md`).
 - [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
       `src/vision/` has the eval script, the dataset wiring (`data.py`), the overfit-10 gate
       (`overfit10.py`), the ONNX-gate scripts, and the coverage audit (`audit_coverage.py`).
@@ -267,15 +274,15 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 
 ## 8. Next action
 
-> **Canonical status + next action: `ROADMAP.md` §7** — the single section updated after every
-> work session. Gate results (with full settings, bug notes, and export details) are logged in
-> `src/vision/MODEL_EVAL.md`.
+> **Canonical status + next action: [STATUS.md](STATUS.md).** Gate results (full settings, bug
+> notes, export details) are logged in [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md);
+> the headline numbers are collected in [METRICS.md](METRICS.md).
 
 Short form: Rungs 0–1.5 are all **done** (model gate passed; overfit-10 **GO** 2026-07-02 — the
 two decode-wiring fixes live in `src/vision/data.py`/`overfit10.py` and carry forward; ONNX/browser
 gate **PASS** 2026-07-03 — see the ✅ markers in §5), the **Rung-2 dataset upgrades are DONE**
 (now **`data/synthetic/strips_v2_1/`**, coverage audit PASS 2026-07-06 — carries the
-navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — ROADMAP §7), and the
+navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — `docs/log/status-log.md`), and the
 **Rung-2 training kit is DONE + smoke-tested** (2026-07-06: `augment.py` / `modeling.py` /
 `train.py` / `eval_omr.py`, screenshot-dominant augmentation per §3). **Rung 2: PASS
 (2026-07-07, first Colab Pro run)** — headline **99.9% mean per-class AEU accidental accuracy**
@@ -301,4 +308,4 @@ pieces added; `\tup3` 98.3% on 118 gold), and its **ONNX export passed the same 
 (Rung 3 collection + labeling + the frozen exam + the Round-N loop, and Rung 4's page→strips
 pipeline): the live track is **[RUNG3.md](RUNG3.md)** (detail), **[PIPELINE.md](PIPELINE.md)**
 (page→strips→stitch design), and **[OVERVIEW.md](OVERVIEW.md)** (plain-English "where we are").
-**The canonical status + next action stays ROADMAP §7.**
+**The canonical status + next action stays [STATUS.md](STATUS.md).**

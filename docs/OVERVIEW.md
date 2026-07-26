@@ -1,8 +1,15 @@
 # Where we are and what we do next — in plain words
 
+purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
+audience: the project owner (this page is deliberately written in basic English)
+updated: 2026-07-26
+
 > A short, plain-language page about the **current state and the plan going forward**. No music
-> knowledge needed. It does not cover the full history — for that, see the detailed logs
-> (`RUNG3.md`, `MODEL_EVAL.md`). Update this page when the plan changes.
+> knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
+> and [log/status-log.md](log/status-log.md). Update this page when the plan changes.
+>
+> This page **restates numbers on purpose**, so it can be read on its own; if it ever disagrees
+> with [METRICS.md](METRICS.md), METRICS.md is right.
 
 ---
 

@@ -1,5 +1,36 @@
 # Step-1 model evaluation — `Flova/omr_transformer`
 
+purpose: the raw log of every model run, gate and export — settings, error dumps, verdicts
+audience: whoever needs the detail behind a number
+updated: 2026-07-26
+
+> **Append-only.** New runs go at the END, under a `## <run> (<date>): <verdict>` heading.
+> Summary numbers are collected in `docs/METRICS.md`; project state in `docs/STATUS.md`.
+
+## Index
+
+| Run / gate | Date | Verdict |
+|---|---|---|
+| Step-1 model gate (`Flova/omr_transformer`) | 2026-07-01 | PASS |
+| Rung 1 — overfit-10 | 2026-07-02/03 | GO |
+| Rung 1.5 — ONNX/browser gate | 2026-07-03 | PASS |
+| Rung 2 — training-kit smoke | 2026-07-06 | PASS |
+| Rung 2 — scaled fine-tune (Colab) | 2026-07-07 | PASS |
+| Rung 2 — ONNX export | 2026-07-07 | PASS |
+| Rung 2.2 — rhythm-sign retrain + export | 2026-07-08 | PASS |
+| Rung 2.2b — stem-fix retrain + export | 2026-07-09 | PASS |
+| Rung 3 — first real-page exam baseline (33 strips) | 2026-07-12 | superseded, LOW-N |
+| Round 0.5 — labeler fine-tune (never shipped) | 2026-07-15 | PASS |
+| Rung 3 — exam v2.1 baseline (352 strips) | 2026-07-20 | the pre-Round-1 reference |
+| Round 1 — `strips_v3` re-render + distribution measurement | 2026-07-21 | built |
+| Round 1 — init A/B on real-val | 2026-07-22 | Arm A wins |
+| Round 1 — exam v2.1 FINAL | 2026-07-22 | ⛔ does not pass (5 floors) |
+| Round 1 — exam contamination check | 2026-07-22 | verdict unchanged |
+| Round 1 — ship (int8 parity + browser gate) | 2026-07-23 | shipped, 19/20 gate |
+| Round-2 run-first diagnostics (tiers, degrade probe) | 2026-07-23 | done |
+| Carry-sig bug characterization | 2026-07-24 | logged |
+
+
 Loading processor + model (downloads weights on first run)...
 
 ## Size (Q4 — mobile / ONNX viability)
@@ -153,7 +184,7 @@ command at Rung 1.5). Manual walkthrough: `docs/MANUAL_CHECKS.md` Check 9.
 
 ## Rung 2.2 — rhythm-sign retrain on Colab (2026-07-08): PASS
 Full fine-tune from the original pretrained weights on **`strips_v2_2`** (the rhythm-sign
-dataset: 4 new tokens `\tup3` `\tupend` `\tie` `\grace`, 96 → 100 ids — ROADMAP §7 /
+dataset: 4 new tokens `\tup3` `\tupend` `\tie` `\grace`, 96 → 100 ids — `docs/log/status-log.md` /
 `docs/PHASE2.md` §6), judged by free-running generation on the **2,417 val strips** of the same
 20 held-out pieces (`eval_omr.py`).
 - **Run:** Colab GPU, `notebooks/rung2_colab.ipynb` (Rung-2 recipe, from base weights; shakeout
@@ -174,7 +205,7 @@ dataset: 4 new tokens `\tup3` `\tupend` `\tie` `\grace`, 96 → 100 ids — ROAD
   printouts (`\bakiyeSharpa'4`) are the known tokenizer-decode display artifact — metrics are
   id-space.
 - **Verdict: PASS.** Remaining to ship it (the proven Rung-2 export chain, rerun on this
-  checkpoint — exact steps in ROADMAP §7 "Next"): local copy → ONNX export → int8 → parity →
+  checkpoint — exact steps in `docs/MANUAL_CHECKS.md` Check 9): local copy → ONNX export → int8 → parity →
   new gate strips (must now include triplet/tie/grace) → browser gate → retry the original
   triplet-misreading real upload.
 
@@ -307,7 +338,7 @@ browser. Same invocations as Rung 2.2, only paths changed (`rung22-stemfix-best`
   ALL LOW-N: komaSharp 4/4, bakiyeSharp 2/3, komaFlat 2/3, bakiyeFlat 1/1 gold), SER
   **0.018**, exact-match **26/33 = 78.8%**. Per-source: neyzen only. Synthetic val for the
   same checkpoint: 99.9% / 0.002 / 96.7% — the synthetic→real gap is now a NUMBER, and
-  closing it is exactly the Round-1 fine-tune's job (`docs/RUNG3.md` step 4).
+  closing it is exactly the Round-1 fine-tune's job (`docs/rung3/round1.md`).
 - **Honesty caveats (printed by `eval_omr.py` itself):** matched-piece exam = an upper bound
   for real-world accuracy; AND these 33 auto-labelable strips are the alignment-certain end
   of the exam pieces (accidental-disagreeing strips sit in the review queue awaiting human
@@ -318,7 +349,7 @@ browser. Same invocations as Rung 2.2, only paths changed (`rung22-stemfix-best`
 
 ## Round-0.5 — rung3-labeler fine-tune (2026-07-15): PASS (tooling checkpoint, NEVER shipped)
 
-Throwaway emitter/decode_page checkpoint (docs/RUNG3.md §1a.5): fine-tuned FROM
+Throwaway emitter/decode_page checkpoint (docs/rung3/labeling.md §1a.5): fine-tuned FROM
 `rung22-stemfix-best` on the 418-strip human-adjudicated real pool ONLY
 (`data/real/rung3/strips_r1`, promote_labels.py 2026-07-14; split 40/8 pieces = 362/56
 strips, exam pieces structurally absent). Colab L4, `--lr 1e-5`, best val loss 0.0608 at
@@ -358,7 +389,7 @@ stopped at 700).
   `\volta1` 25.0%, `\tie` 66.2/61.1% (slur confusion both directions).
 - **Honesty:** matched-piece exam = an upper bound (emit-alignable pages only); tup3 gold is
   common-case k=1 material — dense contiguous-run instrumentals stay unmeasured until
-  sub-measure fragments (docs/RUNG3.md §1c); eval row appended to
+  sub-measure fragments (docs/rung3/labeling.md §1c); eval row appended to
   `data/checkpoints/rung22-stemfix-best/eval.jsonl`.
 - **Arc-metric + mean-F1 addendum (2026-07-20, item (0b) — measurement code shipped BEFORE any
   Round-1 training, `eval_omr.py`):** two Step-4.0 pre-registered metrics now print on every eval
@@ -376,7 +407,7 @@ stopped at 700).
 ## Round-1 synthetic re-render — corpus `strips_v3` + accidental-distribution measurement (2026-07-21)
 
 Not a model eval — a DATA measurement, recorded here because it sets up Round 1's training mix and
-one open decision. Full design + rationale: `docs/RUNG3.md` Step 4.1.
+one open decision. Full design + rationale: `docs/rung3/rerender.md`.
 
 - **Corpus:** `data/synthetic/strips_v3` — **38,091 strips**, 190 pieces, 49 makams.
   **73.3% carry** (`measure` mode, 27,933) / 26.7% `every` (10,158). All carry strips wear a
@@ -707,7 +738,7 @@ built from it plus the guard fixes above.
 
 ### Disposition (2026-07-23): SHIP as an improvement, not a pass
 
-Decided (`docs/RUNG3.md` Step 4.4): Round 1 ships despite the failed floors, because on the clean
+Decided (`docs/rung3/round1.md`): Round 1 ships despite the failed floors, because on the clean
 327-strip exam it strictly dominates the deployed `rung22-stemfix` (AEU 64.1 → 66.3%, F1 57.0 →
 66.5%, SER 0.147 → 0.060, exact 17.3 → 49.2%, tup3 precision 15.1 → 93.5%, arc→`\tup3`
 77.6% → 0.0%). This entry will be updated to **"SHIPPED as improvement-not-pass"** once the ship
@@ -742,7 +773,7 @@ now. Round 2 continues.
 
 ## Round-2 run-first diagnostics (2026-07-23) — tier decomposition + degrade probe
 
-Free, pre-Round-2 analyses (docs/RUNG3.md Step 4.4a items 1 & 4). No training; the exam read is
+Free, pre-Round-2 analyses (docs/rung3/round1.md, addenda items 1 & 4). No training; the exam read is
 still the spent one — these regroup/degrade already-seen strips, zero new leakage.
 
 ### Item 1 — the 28pp real-val↔exam gap, decomposed by difficulty tier
@@ -819,7 +850,7 @@ worse because real mid-row strips are context-blind AND blurrier.
 **Not** distributional (item 4: precision flat under degradation), **not** primarily sig-restatement
 (4/64), **not** a rendering/label error (synthetic pixels are bare by construction).
 
-**Fix decision this creates (Round-2, `docs/RUNG3.md` Step 4.4):** the root cause is *information loss*
+**Fix decision this creates (Round-2, `docs/rung3/round2.md`):** the root cause is *information loss*
 — strip-level carry decoding cannot see the signature that defines the alteration. Options:
 1. **Inject the effective signature into each strip** — either repeat `\sig` per-strip in the carry
    label (re-render + retrain; must also change the REAL-strip emitter so synthetic/real stay aligned)

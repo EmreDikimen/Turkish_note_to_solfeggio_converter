@@ -1,5 +1,9 @@
 # Rung 2 on Google Colab — first-timer's guide
 
+purpose: how to run training on Colab (the fanless-Mac offload path)
+audience: whoever is launching a training run
+updated: 2026-07-08
+
 > How to run the scaled fine-tune (`src/vision/train.py`) on Colab, written for someone who has
 > never used Colab. The ready-made notebook is **`notebooks/rung2_colab.ipynb`**; this doc is the
 > context around it: what Colab is, which plan to buy, how not to lose a run, and what "done"

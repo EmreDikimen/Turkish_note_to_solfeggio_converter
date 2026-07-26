@@ -1,7 +1,7 @@
 # Classical Turkish Music Optical Music Recognition (OMR)
 
-> **Detailed build plan lives in [ROADMAP.md](ROADMAP.md).** Where this README and the
-> roadmap differ, the roadmap is the source of truth.
+> **Current state and next action: [docs/STATUS.md](docs/STATUS.md).** The long-range plan is
+> [ROADMAP.md](ROADMAP.md); agents should start at [CLAUDE.md](CLAUDE.md).
 
 ## Context & Problem Statement
 Existing Western Optical Music Recognition (OMR) tools (PlayScore and similar) generally
@@ -47,45 +47,26 @@ See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and r
 
 ## Status
 
-> **Where we left off + what's next → [ROADMAP.md §7](ROADMAP.md)** — the single always-current
-> status section; everything else points there. **Fresh-session reading order:** this README →
-> ROADMAP §7 → [docs/PHASE2.md](docs/PHASE2.md) (the ML-track kickoff) → [docs/RUNG3.md](docs/RUNG3.md)
-> (the live real-data track). Plain-English summary of where we are and what's next:
-> [docs/OVERVIEW.md](docs/OVERVIEW.md). Full dated history of the completed phases:
-> [docs/HISTORY.md](docs/HISTORY.md). Code map: [docs/CODE_TOUR.md](docs/CODE_TOUR.md).
+> **Working on this repo? Start at [CLAUDE.md](CLAUDE.md)**, then
+> **[docs/STATUS.md](docs/STATUS.md)** — the single always-current state + next action.
+> Plain-English version: [docs/OVERVIEW.md](docs/OVERVIEW.md). Full doc map:
+> [docs/INDEX.md](docs/INDEX.md).
 
 - **Phase 0 — DONE:** symbolic → microtonal audio, no machine learning (SymbTr parser + 53-TET
-  tuning + synth). Verified across all 2,200 SymbTr pieces.
-- **Phase 1 — DONE:** shared TypeScript `core` + React web harness: piano-roll + **VexFlow-engraved
-  sheet** with Turkish AEU accidentals, Web Audio playback at exact 53-TET with transport /
-  playhead / click-to-seek, editing (drag + per-measure editor), tempo + usul-aware metronome,
-  transpose/ahenk, lyrics + makam/usul/composer header.
-- **Phase 2 — DONE:** synthetic training data (VexFlow strips rendered from SymbTr) +
-  **fine-tuning a pretrained OMR model** (`omr_transformer`) to add the Turkish microtonal
-  accidentals. All de-risk gates passed: model eval, **overfit-10 GO**, **ONNX/browser gate PASS**
-  (int8 export decoded in-browser via `onnxruntime-web`, ~1.5 s/strip). The Rung-2 dataset
-  (`strips_v2_1`, coverage audit PASS) and the training kit (`augment.py` / `modeling.py` /
-  `train.py` / `eval_omr.py`, smoke-tested end-to-end on the Mac) are done. The scaled
-  fine-tune (**Rung 2**) **PASSED on Colab Pro (2026-07-07, first try): 99.9% mean per-class
-  AEU accidental accuracy** on held-out pieces, and its **ONNX export PASSED the same day**
-  (int8 via the proven Rung-1.5 pipeline, browser gate 10/10 exact, ~1.0 s/strip — try your own
-  image via the upload box on the gate page). The **rhythm-sign upgrade is DONE (2026-07-08)**:
-  triplets + ties + grace notes as 4 new faithful tokens (`\tup3` `\tupend` `\tie` `\grace`),
-  recovered from real SymbTr durations and drawn as printed Turkish scores draw them —
-  `strips_v2_2` (18,777 strips, audit PASS) and the **Rung-2.2 retrain PASSED the same day
-  (headline 99.9%, exact-match 96.7%; new tokens 96–100% recall)**, followed by the **Rung-2.2b
-  stem-fix retrain + its int8 ONNX export (2026-07-09)**. Synthetic accuracy is a solved problem;
-  everything after this is about REAL pages.
-- **Phase 3 — IN PROGRESS (real pages):** collect real engraved pages, label them
-  semi-automatically, and hold out an honest exam — the full track is [docs/RUNG3.md](docs/RUNG3.md).
-  Done so far: 1,259 real page PNGs collected across 89 makams; a classical-CV page→strips slicer
-  (`src/vision/page_to_strips.py`, incl. the 2026-07-25 photo front-end that lifted phone-photo
-  yield 28% → 97%); a frozen 352-strip exam; and **Round 1** — the first fine-tune on real pages —
-  which missed its pre-registered floors but strictly beat the old model and **shipped as
-  "an improvement, not a pass" (2026-07-23)**. The remaining weakness was traced to our own
-  renderer (Bravura draws the microtonal sharps too heavy, so küçük's 3 bars fuse into a 2-bar
-  koma) and **fixed at source (2026-07-26, opt-in `--thin-sharps`)**. Exact numbers and the next
-  action: ROADMAP §7; plain-English version: [docs/OVERVIEW.md](docs/OVERVIEW.md).
+  tuning + synth), verified across all 2,200 SymbTr pieces.
+- **Phase 1 — DONE:** shared TypeScript `core` + React web harness — piano-roll, VexFlow-engraved
+  sheet with Turkish AEU accidentals, 53-TET Web Audio playback with transport and editing,
+  usul-aware metronome, transpose/ahenk, lyrics and header.
+- **Phase 2 — DONE:** synthetic training data (VexFlow strips rendered from SymbTr) + fine-tuning a
+  pretrained OMR model (`omr_transformer`) to read the Turkish microtonal accidentals. Every
+  de-risk gate passed, including in-browser int8 inference with no server. Reading *synthetic*
+  music is a solved problem.
+- **Phase 3 — IN PROGRESS:** real printed pages and photos of them — collection, semi-automatic
+  labeling, a frozen honest exam, and the Round-N train/measure loop. Round 1 shipped 2026-07-23 as
+  "an improvement, not a pass". Track: [docs/rung3/](docs/rung3/README.md).
+- **Phases 4–5 — later:** full page → editor integration, then the React Native app.
+
+Numbers for any of the above: [docs/METRICS.md](docs/METRICS.md).
 
 ## Directory Structure
 
@@ -104,10 +85,11 @@ Current (monorepo as of Phase 1 — Python reference/data side + TypeScript core
 ├── tools/render/       # TS synthetic-data generator (strip labels + Playwright renderer)
 ├── packages/core/      # shared TypeScript: note model, tuning, synth scheduling
 ├── apps/web/           # React test harness (piano-roll + Web Audio)
-├── docs/               # OVERVIEW.md (plain-English now+next), CODE_TOUR.md (code map),
-│                       #   RUNG3.md (live real-data track), PIPELINE.md (page→strips→stitch),
-│                       #   PHASE2.md (ML-track kickoff), HISTORY.md (completed phases)
-├── ROADMAP.md          # detailed build plan (source of truth)
+├── docs/               # STATUS.md (state+next), METRICS.md (numbers), DECISIONS.md,
+│                       #   INDEX.md (doc map), OVERVIEW.md (plain English), rung3/ (real-data
+│                       #   track), log/ (history), guides: CODE_TOUR, PIPELINE, MANUAL_CHECKS, COLAB
+├── CLAUDE.md           # entry point for agents: commands, hard rules, doc map
+├── ROADMAP.md          # evergreen plan: architecture, phases, risks (no status)
 ├── README.md           # this overview
 └── requirements.txt    # Python dependencies
 ```

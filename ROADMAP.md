@@ -1,5 +1,12 @@
 # Roadmap — Classical Turkish Music OMR App
 
+purpose: the evergreen plan — architecture, phase breakdown, tech choices, risks (NO status)
+audience: anyone who needs the long-range picture or the reasoning behind the architecture
+updated: 2026-07-26
+
+> Current state and next action: [docs/STATUS.md](docs/STATUS.md). This file deliberately
+> contains no progress reporting — see §7.
+
 > This document is the source of truth for **what to build and why**. It was written
 > after a planning discussion to correct misconceptions in an early AI-generated draft of
 > `README.md` (the README has since been corrected to match). Where this file and

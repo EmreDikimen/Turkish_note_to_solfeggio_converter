@@ -169,7 +169,9 @@ miss and the komaSharp↔kucukSharp confusion. Logged in `MODEL_EVAL.md` as "car
   **meter-sum rule** (the label won all 15 duration-only disputes; decode durations break the
   measure meter every time) and the **sig superset/subset rule** (decode won 17 crop-cut cases, the
   label won 5 where the decode hallucinated an extra sig entry; superset sig reads are suspect,
-  subset/empty reads are usually crop truth).
+  subset/empty reads are usually crop truth). Promotes applied: **strips_nota 1,742 → 1,758**
+  (420 audit fixes in place, 27 promoted, 11 known-bad removed, 24 over-budget → the re-slice
+  pool); 126 nota-full pitch/accidental disputes stayed pending as post-Round-1 re-audit work.
 - **tup3 exam extension:** 10 holdout tuplet pieces (21 stems, all engraving copies) moved to the
   exam → exam manifest 311 → 352 strips, tup3 gold 4 → 55 groups; training keeps 172 tup3 strips.
   `testset.json` = **v2.1** (45 piece entries). Holdout stems poisoned in the nota queue too.
@@ -204,7 +206,8 @@ miss and the komaSharp↔kucukSharp confusion. Logged in `MODEL_EVAL.md` as "car
   no-ops after canonicalization), 1 sig-block, 26 tie/repeat structural, **5 pitch-level = 7.2%
   content error** vs neyzen's 22.6% — the Round-0.5 labeler earned its keep.
 - **All 231 sig_mismatch + all 216 acc_disagreement rows verdicted.** Training manifest
-  1,262 → 1,435 → 1,742 across two promotes; combined real pool 2,160 with neyzen.
+  1,262 → 1,435 → 1,742 across two promotes (combined real pool 1,853 after the first, 2,160 after
+  the second, neyzen included).
 - **The acc_disagreement lesson:** the owner's fixes sided with the decode 187:14 over SymbTr —
   printed editions win accidental disputes, the never-auto-accept rule avoided 187 headline-class
   poisonings, and the labeler's decode is the right *edit draft*.
@@ -302,6 +305,9 @@ export print `\komaFlat b` like the page does.
   noise is normalized and warned, never fatal. Verified: 13 structure unit tests + **194/194 bundled
   scores round-tripping exactly**. The loop closed: `decode_page.py` → `stitch-cli.ts` →
   `apps/web/public/decoded.json` → harness, with a **⬇ Save JSON** button exporting corrections.
+  Live proof: the hicaz page gave 21 strips → 23 written / 28 expanded measures and 225 events that
+  render and play (headless-verified); a second page (nihavend) gave 25 strips → 29 written / 37
+  expanded measures, 288 notes.
 
 ## 2026-07-09 — Rung 2.2b: stem fix + triplet expansion
 
@@ -354,14 +360,17 @@ serialize byte-identical to v2_1. Rung 2.2 retrain and its ONNX export both pass
   injection (4–6 marks on ~70% of renders, density set by simulating the audit floors *before*
   rendering, never stacked on repeat/volta measures), SheetView drawing, labels at the drawn measure
   edge, decoder round-trip, audit floors.
-- **`strips_v2_1` re-rendered** with the nav tokens and the **centered-rest fix** (`alignRests` off —
+- **`strips_v2_1` re-rendered** (18,627 strips / 470 MB, all 150 pieces, zero render errors; nav
+  floors cleared at train 220–392 / val 25–45 per token, 6.4% nav strips) with the nav tokens and
+  the **centered-rest fix** (`alignRests` off —
   rests had been floating near the top line, unlike printed sheets). v2 stays on disk; v2_1
   supersedes it for training.
 - **`docs/PIPELINE.md` written**: the full page-photo → strips → decode → stitch → note-model design.
 
 ## 2026-07-05 — Rung-2 dataset upgrades (`strips_v2`)
 
-18,624 strips / 466 MB from 150 pieces (47 makams), selected by `scripts/select_pieces.py` (greedy
+18,624 strips / 466 MB from 150 pieces (47 makams), selected from 2,030 usable corpus files by
+`scripts/select_pieces.py` (greedy
 max-min over the AEU classes with exact projected counts — the TS spelling math ported to Python).
 Everything seeded and reproducible: any strip's manifest row reconstructs its harness URL. Delivered:
 token cap 46 → 56 (over-budget single measures dropped as untrainable), 39.9% multi-measure /

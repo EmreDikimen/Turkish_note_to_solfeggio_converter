@@ -84,8 +84,8 @@ there is no automatic guard against a sunk-cost "one more round".
   2026-07-21**: komaSharp was already over-represented and precision-bound, not recall-bound. The
   real gap was `kucukFlat`, and that turned out to be a makam-mix artifact, so the planned
   `bakiyeSharp→kucukFlat` enharmonic respell was **held**, not implemented.
-- Note this is *not* the same as the still-open **sharp frequency imbalance** (koma 1,887 strips vs
-  küçük 206, never both in one image), which is a live Round-2 item — see
+- Note this is *not* the same as the still-open **sharp frequency imbalance** (far more koma than
+  küçük inline, never both in one image), which is a live Round-2 item — see
   [../STATUS.md](../STATUS.md).
 
 ## Already-executed step-by-steps (kept only as a template)

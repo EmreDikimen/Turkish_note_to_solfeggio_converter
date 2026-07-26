@@ -15,7 +15,7 @@ mean **AEU F1** is reported beside it since Round 1. Both are *per-class means*,
 
 | Run | Date | Corpus | AEU | SER | Exact | Notes |
 |---|---|---|---|---|---|---|
-| Rung 2 | 2026-07-07 | strips_v2_1, 2,384 val strips | 99.9% (8/8) | 0.001 | 96.8% | first Colab Pro run, first try |
+| Rung 2 | 2026-07-07 | strips_v2_1, 2,384 val strips | 99.9% (8/8) | 0.001 (S17 D84 I39 / N95,316) | 96.8% | first Colab Pro run, first try |
 | Rung 2.2 | 2026-07-08 | strips_v2_2, 2,417 val strips | 99.9% (8/8) | 0.002 | 96.7% | + rhythm tokens: `\tup3` 100%, `\tie` 96.4%, `\grace` 98.0% |
 | Rung 2.2b | 2026-07-09 | strips_v2_2 rebuilt, 23,391 strips | ~100% all AEU | — | — | `\tup3` 98.3% on 118 gold (was a 9-sample smoke signal), `\grace` 99.4% |
 | Round 1 (no-regression check) | 2026-07-22 | 1,000-strip strips_v3 val subset | 93.0% | — | — | ⛔ fails the ≥99% clause; reference 99.9% was measured on the older v2_2, so it overstates forgetting |
@@ -27,7 +27,7 @@ mean **AEU F1** is reported beside it since Round 1. Both are *per-class means*,
 | First real baseline *(superseded, LOW-N)* | 2026-07-12 | 33 strips | 83.3% | — | 0.018 | 78.8% |
 | Exam v2.1 baseline | 2026-07-20 | 352 strips | 64.1% | 57.0% | 0.147 | 17.3% |
 | Round 1, as read | 2026-07-22 | 352 strips | 66.6% | 67.0% | 0.059 | 49.1% |
-| Round 1, contamination-corrected | 2026-07-22 | 327 clean strips | 66.26% | 66.53% | 0.0597 | — |
+| Round 1, contamination-corrected | 2026-07-22 | 327 clean strips | 66.63 → 66.26% | 66.98 → 66.53% | 0.0591 → 0.0597 | — |
 | Round 1, re-scored after gold re-audit | 2026-07-25 | 352 strips, 13 gold fixes | 78.5% | 78.0% | 0.059 | — |
 
 - Exam v2.1 baseline per-source: neyzen 72.4%, nota 60.0%.
@@ -37,6 +37,7 @@ mean **AEU F1** is reported beside it since Round 1. Both are *per-class means*,
   barely moved (SER 0.060 → 0.059).
 - ⚠ **Contamination (found 2026-07-22):** 4 SymbTr pieces / 25 strips (7.1%) had their *other*
   engraving in the training pools. `strips_exam_v2_clean/` (327 strips) is the honest reference.
+  The correction also moved komaFlat precision 66.2 → 63.8%; the verdict was unchanged.
 
 ### Round-1 floors vs what was achieved (pre-registered 2026-07-20)
 
@@ -105,8 +106,8 @@ arc-triggered false-`\tup3` rate replaces them. Arc denominators: 85 tie-but-no-
 | Set | Size | Notes |
 |---|---|---|
 | strips_v2 | 18,624 strips / 150 pieces | 2026-07-05 |
-| strips_v2_1 | 18,627 strips | + nav-mark tokens, centered-rest fix — what Rung 2 trained on |
-| strips_v2_2 | 18,777 → 23,391 after the triplet expansion (190 pieces) | + rhythm tokens |
+| strips_v2_1 | 18,627 strips / 470 MB | + nav-mark tokens, centered-rest fix — what Rung 2 trained on |
+| strips_v2_2 | 18,777 strips / 474 MB → 23,391 after the triplet expansion (190 pieces) | + rhythm tokens |
 | **strips_v3** | **38,091 strips, 73.3% carry, 49 makams, 33 signature variants** | budget gate PASS (57 ids, cap 59) — the Round-1 corpus |
 | Real training pool | 2,160 strips (1,758 nota + 418 neyzen, incl. 172 tup3) | after all promotes |
 | Exam v2.1 (frozen) | **352 strips / 45 piece entries**, tup3 gold 55 groups | `testset.json` |

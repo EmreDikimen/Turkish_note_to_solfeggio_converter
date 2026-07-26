@@ -38,6 +38,7 @@ npm run typecheck                    # all workspaces
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
 npx --yes tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/<set> [--thin-sharps]
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 194/194 round-trip
+.venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
 ```
 
 Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finished work.

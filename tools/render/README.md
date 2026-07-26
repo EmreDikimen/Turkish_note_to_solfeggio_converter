@@ -181,9 +181,9 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       `\tup3` `\tupend` `\tie` `\grace`, recovered from real durations — no injection) and the
       tuplet stem fix; 23,391 strips from 190 pieces after the triplet-piece expansion. The set
       Rung 2.2 / 2.2b trained on.
-- [x] **`strips_v3` — carry-dominant re-render (2026-07-21), the Round-1 training corpus:**
-      **38,091 strips, 73.3% carry (`measure`) mode, 49 makams, 33 signature variants, budget gate
-      PASS.** Three changes, all aimed at the real-page gap: conventional PRINTED per-makam
+- [x] **`strips_v3` — carry-dominant re-render (2026-07-21), the Round-1 training corpus**
+      (size and composition: `docs/METRICS.md`; design rationale: `docs/rung3/rerender.md`).
+      Three changes, all aimed at the real-page gap: conventional PRINTED per-makam
       signatures (`data/makam_signatures.json`, built from adjudication-confirmed real labels) wired
       to both glyphs and labels; carry mode replacing `keysig` as the majority (real pages print a
       signature and carry accidentals within the measure — v2_2 had **zero** carry strips); and
@@ -197,7 +197,7 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       SVG at real-print bar weight — all four, so bar COUNT stays the only difference; flats
       untouched. Off by default so an A/B against `strips_v3` stays possible.
       Diagnosis: `docs/rung3/round2.md`; the measured widths: `docs/METRICS.md`.
-- [ ] **Next re-render owes the sharp FREQUENCY balance:** `strips_v3` carries `\komaSharp` inline in
-      1,887 strips vs `\kucukSharp` in 206, and **no** strip holds both — the model has never seen the
-      pair contrasted in one image. Balance the counts and place koma/küçük/bakiye on neighbouring
-      notes (with `--thin-sharps` on).
+- [ ] **Next re-render owes the sharp FREQUENCY balance:** inline, `strips_v3` carries far more
+      `\komaSharp` than `\kucukSharp` and **no** strip holds both — the model has never seen the pair
+      contrasted in one image (counts: `docs/METRICS.md`). Balance them and place koma/küçük/bakiye
+      on neighbouring notes, with `--thin-sharps` on.

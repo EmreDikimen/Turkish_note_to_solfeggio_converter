@@ -106,4 +106,4 @@ Shared TS core + web harness; load → view → edit → playback all working.
 
 **Phase 1 is complete** (piano-roll editor + sheet/notation editor + tempo/usul metronome +
 transpose/ahenk + art-music-faithful engraving with header & lyrics). The ML track (Phase 2) has
-started — **[PHASE2.md](PHASE2.md)** is the kickoff/hand-off doc (goal, de-risk ladder).
+started — **[PHASE2.md](../PHASE2.md)** is the kickoff/hand-off doc (goal, de-risk ladder).

@@ -281,9 +281,26 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
    ```
 
+## Check 11 — real-print sharp weight (`?thinsharps=1`, the 2026-07-26 fidelity fix)
+
+Goal: see with your own eyes why the model confused küçük sharp with koma sharp — and that the
+redraw fixes it. Bravura draws the sharp bars too thick and packs küçük's three bars too close, so
+after the model's input shrink the three bars fuse into a block that IS a 2-bar koma.
+
+1. `npm run dev:web`, open a score with microtonal sharps twice, side by side:
+   `http://localhost:5173/` (Bravura, the default) and `http://localhost:5173/?thinsharps=1`.
+   Zoom in on a koma / küçük / bakiye sharp: same shapes and positions, thinner bars, and küçük's
+   three bars visibly separated. Flats must look **identical** in both (they were left alone).
+2. Or just look at the measured artifacts: `data/real/rung3/sharp_probe/all4_final.png`
+   (before / after / after the encoder shrink) and `koma_real_vs_bravura_vs_thin.png`
+   (our two drawings against real printed editions).
+3. Rendering a corpus with the fix: add `--thin-sharps` to `tools/render/render.ts`. It is **off by
+   default** so an A/B against `strips_v3` stays possible.
+
 ---
 
-**Reproducing any strip later:** its manifest row carries `piece`, `transpose`, `mode`, `lyrics`,
-`repseed`, `navseed`, `textseed`, `respellseed` — paste them into the URL parameters above and you are looking
+**Reproducing any strip later:** its manifest row carries `piece`, `transpose`, `mode` (`measure`
+= carry, the majority since `strips_v3`), `lyrics`,
+`repseed`, `navseed`, `textseed`, `respellseed`, `slurseed` — paste them into the URL parameters above and you are looking
 at the exact render that produced it (`respellseed` matters: the respell changes which accidental
 glyphs are drawn, so omitting it can show different signs than the strip's PNG).

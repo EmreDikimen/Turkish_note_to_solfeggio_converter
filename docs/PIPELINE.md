@@ -40,7 +40,13 @@ Upload (PNG/JPEG page)
  10 → [Note model]           → editor → 53-TET playback (existing Phase-1 product)
 ```
 
-Stages 2–6 live in `src/vision/page_to_strips.py` (strips reproduce the training geometry:
+Stages 2–6 live in `src/vision/page_to_strips.py` (**the photo front-end of stages 2–3 is BUILT and
+measured — 2026-07-25**: guarded auto-deskew + crop-to-page-quad/perspective de-warp, and a narrower
+`STAFF_HOR_FRAC = 0.11` detection kernel. Before it, a ~1.5° handheld skew broke the old `w/4`
+full-width kernel outright: **72% of phone-photo pages yielded ZERO strips**; after it, yield is
+**97% of pages / 690 strips**, and hand-scored photo accuracy lands within ~3–4 pp of clean renders.
+All three steps are no-ops on clean scans — and the narrower kernel also stopped silently dropping
+faint/bottom systems there. Strips reproduce the training geometry:
 H=336 px, staff spacing 30 px, top line y≈138 — measured from the gate strips; barlines by
 continuity + thinness + clean termination rather than column darkness — see stage 5 below;
 ~3-measure windows, row-starts keep clef+keysig, over-wide measures split at whitespace
@@ -63,7 +69,9 @@ of step 2; camera photos take the full correction path.
 estimate skew/perspective from the staff lines themselves (fit lines to the long horizontal ink
 runs; a homography from their intersections flattens the page), then binarize adaptively
 (lighting gradients). Keep it conservative — the model was trained on augmented-but-intact
-glyphs, not on aggressive binarization artifacts.
+glyphs, not on aggressive binarization artifacts. **Built in Python 2026-07-25** (`crop_to_page` →
+`deskew`, both guarded so clean scans pass through untouched): this was the single highest-yield
+fix of the photo axis — see the note under the stage diagram.
 
 **3. Staff/system detection → row bands.** A horizontal ink-projection profile makes every staff
 stand out as 5 sharp, evenly spaced peaks; group each cluster of 5 into one system (the Uşşak
@@ -71,7 +79,9 @@ example page yields 9). Extend each system into a vertical crop band with the tr
 proportions: headroom above the top line (beams, voltas, segno/coda marks — the strip renderer
 uses ~46px above the top line at engraving scale) and room below for stems + the lyric zone.
 This is the step ROADMAP §5 flags as the weak link for curved/shadowed phone photos — for
-screenshots it is near-trivial.
+screenshots it is near-trivial. **Confirmed the hard way (2026-07-25):** the detection kernel, not
+the model, was what failed on photos; it now runs at `STAFF_HOR_FRAC = 0.11` of page width instead
+of `w/4`, because a skewed staff line never stays on ONE pixel row for a quarter of the page.
 
 **4. Scale normalization — the step that silently decides accuracy.** Training strips are all
 engraved at ONE VexFlow scale, then resized by the model's preprocessor. The model has never seen
@@ -154,6 +164,12 @@ than 3.
 > name match (85 free-label pieces, done), frozen real exam set, strip-label emitter, Round-1
 > fine-tune, THEN the hand-correction loop below. This section keeps the original collection
 > notes.
+>
+> **Camera photos (2026-07-25):** the "later, smaller validation set" below now exists — phone
+> photos of the exam pieces, sliced with the new photo front-end (stage 2) and **hand-labelled at
+> the strip level (284 strips)**. They are **EXAM-ONLY, never training** — they photograph exam
+> pieces, so training on them would leak the exam. Camera photos for *training* must come from
+> different pieces (`docs/RUNG3.md` Step 4.5).
 
 > **Status (2026-07-10): collection AUTOMATED + DONE for the engraved-PDF majority.**
 > `scripts/collect_notalar.py` replaced hand-screenshotting: it crawls neyzen.com's freely-published

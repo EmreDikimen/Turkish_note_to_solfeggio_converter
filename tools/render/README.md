@@ -105,13 +105,15 @@ Jobs are derived deterministically from `data/pieces.json` (written by `scripts/
 scores exported by `scripts/export_scores.py`): every transpose × both modes, lyrics only at t=0,
 seeded repeat injection on ~half of renders, seeded nav-mark injection on ~70%, distractor text +
 the low-rate büyük respell always on (all seeds hashed from `slug:transpose`, so any strip is
-reproducible — `docs/MANUAL_CHECKS.md`). Output → `data/synthetic/strips_v2_1/` (gitignored): `<slug>_t±N_<mode>_<id>.png` + `.txt` per strip,
+reproducible — `docs/MANUAL_CHECKS.md`). Output → the `--out` dir (gitignored; `strips_v3` is the
+current corpus): `<slug>_t±N_<mode>_<id>.png` + `.txt` per strip,
 per-piece manifest shards + `.done` markers under `manifests/` (**resumable**: Ctrl-C anytime;
 finished pieces are skipped on re-run, a partial piece is re-rendered), and — after a full pass or
 `--finalize` — a combined `manifest.jsonl` + a 500-strip sampled **`index.html` contact sheet**
-(each PNG next to its label + decoded notes). Both modes are rendered: `every` (every accidental
-inline, crop anywhere) and `keysig` (makam signature at the row start, crop row-start ranges).
-3× device scale keeps beams crisp.
+(each PNG next to its label + decoded notes). Two modes are rendered: **`measure`/carry** (signature
+at the row start PLUS measure-scoped accidental carry — how real pages print, and 73% of `strips_v3`)
+and `every` (every accidental inline, crop anywhere; the transpose carrier). `keysig` mode still
+exists in SheetView but is no longer rendered into the corpus. 3× device scale keeps beams crisp.
 
 ## Files
 - `lilypond.ts` — the serializer (note model → strips/measures + labels; `STRIP_BUDGET`,
@@ -122,7 +124,13 @@ inline, crop anywhere) and `keysig` (makam signature at the row start, crop row-
   note (snapped), so compare against the harness Sheet view, not the raw exact koma.
 - `demo.ts` — prints strips from a sample score. Run: `npx --yes tsx tools/render/demo.ts [score.json]`.
 - `render.ts` — Playwright batch renderer (drives the harness by URL; crops the live sheet → PNG +
-  label + per-piece manifest shards + contact sheet; chunked + resumable).
+  label + per-piece manifest shards + contact sheet; chunked + resumable). Since `strips_v3`:
+  carry (`measure`) mode is dominant, conventional signatures come from `data/makam_signatures.json`
+  (`--sigs`), seeded slur distractors are on (`slurseed`), and `--thin-sharps` renders the four AEU
+  sharps at real-print bar weight (opt-in — see the Status list).
+- `labels-cli.ts` — the Rung-3 emitter's TS half: serves, for a real page's decoded measure ranges,
+  the carry-mode label of each range (`mode: "measure"` bodies joined by `|`) so a name-matched
+  SymbTr score becomes ground truth for real strips (`scripts/rung3/emit_strip_labels.py`).
 - `repeats.ts` — `detectRepeats` (fold detection of flattened duplicate runs) + `injectRepeats`
   (seeded random spans for token coverage) + `repeatMarksAt` (per-measure drawn marks).
 - `navmarks.ts` — seeded navigation-mark injection (segno / coda / D.C. / Son; 4–6 marks on ~70%
@@ -163,3 +171,28 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 - [x] **Multi-measure strip coverage — CLOSED (2026-07-05):** cap raised 46→56 (`STRIP_BUDGET`) +
       sparse-piece selection; 39.9% of every-mode v2 strips span 2–4 measures, `|` in 40.7% of
       labels (dense measures can't pair under the 60-id budget — a model constraint, not a bug).
+- [x] **strips_v2_2 (2026-07-08, re-rendered 2026-07-09):** adds the 4 rhythm tokens (`rhythm.ts`:
+      `\tup3` `\tupend` `\tie` `\grace`, recovered from real durations — no injection) and the
+      tuplet stem fix; 23,391 strips from 190 pieces after the triplet-piece expansion. The set
+      Rung 2.2 / 2.2b trained on.
+- [x] **`strips_v3` — carry-dominant re-render (2026-07-21), the Round-1 training corpus:**
+      **38,091 strips, 73.3% carry (`measure`) mode, 49 makams, 33 signature variants, budget gate
+      PASS.** Three changes, all aimed at the real-page gap: conventional PRINTED per-makam
+      signatures (`data/makam_signatures.json`, built from adjudication-confirmed real labels) wired
+      to both glyphs and labels; carry mode replacing `keysig` as the majority (real pages print a
+      signature and carry accidentals within the measure — v2_2 had **zero** carry strips); and
+      label-free **slur distractors** so an arc alone stops reading as a triplet (`\tup3` precision
+      15% → 97% at Round 1). `every` mode stays as the minority transpose carrier (its share is
+      train-time tunable via `train.py --every-share`, shipped at 0.15).
+- [x] **Real-print sharp weight — `--thin-sharps` (2026-07-26), OFF by default.** Bravura draws the
+      AEU sharp bar 0.367 S where real print draws 0.300 S and packs küçük's three bars 0.483 S
+      apart vs 0.550 S, leaving a 0.116 S white gap (real: 0.250 S) — ~1–2 px after the encoder
+      shrink, so küçük's three bars fuse into a block that IS a 2-bar koma. That, not resolution and
+      not teaching volume, was the model's microtonal-sharp weakness. `drawThinSharps` (SheetView)
+      redraws all four sharps as SVG at real-print weight — all four, so bar COUNT stays the only
+      difference; flats untouched. Off by default so an A/B against `strips_v3` stays possible.
+      Full diagnosis: ROADMAP §7 / `docs/RUNG3.md` Step 4.4.
+- [ ] **Next re-render owes the sharp FREQUENCY balance:** `strips_v3` carries `\komaSharp` inline in
+      1,887 strips vs `\kucukSharp` in 206, and **no** strip holds both — the model has never seen the
+      pair contrasted in one image. Balance the counts and place koma/küçük/bakiye on neighbouring
+      notes (with `--thin-sharps` on).

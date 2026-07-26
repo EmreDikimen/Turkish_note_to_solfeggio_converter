@@ -124,9 +124,15 @@ in the repertoire), so clef-less mid-row crops are fine.
   validation is contaminated and the metrics look great while proving nothing.
 - **Rung 3 — the moment of truth:** run on real phone photos (worse — the expected synthetic→real
   gap), then **fine-tune on a few hundred real photos** labeled via *this app's editor*. This small
-  real set matters more than any hyperparameter.
+  real set matters more than any hyperparameter. *(Under way since 2026-07-10 and now the live
+  track — it grew into its own doc, `RUNG3.md`: archive collection, SymbTr name-matching for free
+  labels, a frozen exam, and the Round-N loop. Round 1 was taken and shipped 2026-07-23. The
+  prediction held — real pages ARE much harder than synthetic — and the small real set did matter
+  more than any hyperparameter, twice over: the largest tuning intervention moved the selection
+  metric 0.5 pp, while a data/renderer fidelity fix moved a single class by tens of points.)*
 - **Rung 4 (Phase 4):** wire preprocess → staff isolation → model → decode → note model → editor;
-  run on-device via `onnxruntime-web`.
+  run on-device via `onnxruntime-web`. *(Stages 1–8 built 2026-07-10 — slicer, page decode, and the
+  stitcher; design + status in `PIPELINE.md`.)*
 
 **Three reassurances:** (1) we only teach the model the AEU accidental tokens — the easy end of OMR
 (monophonic, small known new vocab, self-generated perfect labels) — on top of a model that already
@@ -286,7 +292,13 @@ dataset upgrade (§6) is DONE (2026-07-08)** — triplets + ties + grace notes, 
 `docs/MANUAL_CHECKS.md` Check 3c) — and the **Rung-2.2 retrain PASSED the same day** (Colab,
 from base weights): **headline 99.9% (8/8), SER 0.002, exact-match 96.7%** on the 2,417
 held-out val strips; `\tup3`/`\tupend` 100%, `\tie` 96.4%, `\grace` 98.0% recall
-(`MODEL_EVAL.md` "Rung 2.2"; checkpoint: Drive `MyDrive/tnc/rung22/best`). **Next: ship it —
-the proven ONNX chain on the new checkpoint (step-by-step list in ROADMAP §7 "Next"), THEN
-Rung 3.** Rung-3 photo/screenshot COLLECTION (`docs/PIPELINE.md` §3) can start in parallel;
-the model-assisted labeling loop uses the Rung-2.2 model.
+(`MODEL_EVAL.md` "Rung 2.2"; checkpoint: Drive `MyDrive/tnc/rung22/best`). **Rung 2.2b —
+stem-fix + triplet expansion — PASSED 2026-07-09** (tuplet stems follow pitch, 40 triplet-rich
+pieces added; `\tup3` 98.3% on 118 gold), and its **ONNX export passed the same day** (parity
+10/10 fp32 + int8, browser gate 20/20).
+
+**This doc stops being the live one there.** Everything after Rung 2.2b is REAL-page work
+(Rung 3 collection + labeling + the frozen exam + the Round-N loop, and Rung 4's page→strips
+pipeline): the live track is **[RUNG3.md](RUNG3.md)** (detail), **[PIPELINE.md](PIPELINE.md)**
+(page→strips→stitch design), and **[OVERVIEW.md](OVERVIEW.md)** (plain-English "where we are").
+**The canonical status + next action stays ROADMAP §7.**

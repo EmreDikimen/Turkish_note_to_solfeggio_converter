@@ -130,5 +130,5 @@ shoot **different** pieces (there are thousands available).
 | **mark (accidental)** | A small symbol on one note that raises or lowers it. ~8 kinds; telling them apart is the hard part. |
 | **bare note** | A note with no mark drawn. It may still be "lowered" by the line's signature — but the model should still write it bare and let reassembly apply the signature. |
 | **slicer** | Step 1: the tool that cuts a page into strips. It first finds the staff lines; on tilted photos it failed, which we fixed with a "clean-up" step. |
-| **exam** | Real pages the model never trains on — our honest score (~66%, ~78% after fixing a few wrong answer-key entries, but see the scoring quirk above). |
+| **exam** | Real pages the model never trains on — our honest score. It read 66% first; after we fixed 13 wrong answers in the answer key it reads ~78%, but most of that jump is the scoring quirk explained above, not the model improving. |
 | **Round 1** | The first cycle of training the model on real pages. Just finished, now live. |

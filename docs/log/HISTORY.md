@@ -1,8 +1,12 @@
 # History — detailed log of completed phases
 
-> Moved verbatim from `ROADMAP.md` §7 (2026-07-04) to keep the status section short. This is the
-> **full dated record** of what was built in each completed phase and how. **Current** status and
-> next action live in `ROADMAP.md` §7 — not here. The code map is `docs/CODE_TOUR.md`.
+purpose: the full dated record of what was built in the completed phases (0 and 1)
+audience: anyone reconstructing how the pre-ML product came to be
+updated: 2026-07-04 (content frozen; moved to docs/log/ on 2026-07-26)
+
+> Extracted verbatim from ROADMAP §7 on 2026-07-04. **Current** state and next action live in
+> [../STATUS.md](../STATUS.md) — not here. Later history: [status-log.md](status-log.md).
+> Code map: [../CODE_TOUR.md](../CODE_TOUR.md).
 
 ## Phase 0: DONE (2026-06-20)
 

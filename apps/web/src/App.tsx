@@ -65,6 +65,9 @@ const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("nav
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
 const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
 const URL_SLURSEED = RENDER_PARAMS.has("slurseed") ? Number(RENDER_PARAMS.get("slurseed")) : null;
+// Round-2: draw the four AEU sharps with real-print bar weight (see SheetView's drawThinSharps).
+// Render-automation only; absent → Bravura's glyphs, as before.
+const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
 // Stable object identity (SheetView's engrave effect depends on it; an inline literal would
 // re-engrave on every render). Constant per page load, like all render params.
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
@@ -641,6 +644,7 @@ export function App() {
                 navMarks={navMarks}
                 textNoise={TEXT_NOISE}
                 slurNoise={SLUR_NOISE}
+                thinSharps={URL_THIN_SHARPS}
               />
               <StripPanel
                 strips={strips}

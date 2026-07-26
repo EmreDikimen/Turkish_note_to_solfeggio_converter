@@ -977,18 +977,46 @@ pass, which is what the Step-4.0 rule was about.)
   showed the hallucination is not ambiguity-driven, so a renderer fix was never the lever. The whole
   remaining accidental weakness sits in the **microtonal SHARPS**. Kept only as a logged synthetic
   defect (`MODEL_EVAL.md` "carry-bug"), not scheduled work.
-- **Sharp-size discrimination = THE Round-2 model lever (new, 2026-07-25).** `\komaSharp` F1 ~50% and
-  `\kucukSharp` recall 48% at **100% precision** — the model UNDER-fires small sharps rather than
-  hallucinating them, i.e. it is failing to *see* the size difference, not failing to be careful.
-  Three independent reads agree (photo gold, corrected clean gold, and the direction of the 13 gold
-  fixes — the human answer key over-sized sharps too). **Two candidate causes needing opposite fixes,
-  so measure before building:** (a) *teaching* — the distinction is present in the strip pixels but
-  under-taught ⇒ contrastive re-render (all four sharp sizes in matched contexts) + glyph-fidelity
-  check against printed engraving convention; (b) *resolution* — the four sharps differ by only a few
-  pixels at the strip scale we feed the model ⇒ no amount of data helps and the input geometry must
-  change. **Cheap gating probe: render the same note with each of the four sharps, crop at the exact
-  model input scale, and measure the pixel delta.** The Round-1-era "boost komaSharp/kucukSharp share"
-  item stays overturned (koma is already over-represented and was precision-bound).
+- **✅ Sharp-size discrimination DIAGNOSED + FIXED AT SOURCE (2026-07-26) — it was a RENDERER
+  FIDELITY bug, not resolution and not teaching volume.** `\komaSharp` F1 ~50% and `\kucukSharp`
+  recall 48% at **100% precision** — the model UNDER-fires the small sharps, so it was failing to
+  *see* the difference, not failing to be careful. Diagnosis, in order:
+  - **Resolution RULED OUT.** `scripts/rung3/sharp_width_test.py` regroups the already-scored strips
+    by the encoder's effective scale (DonutImageProcessor `align_long_axis → thumbnail → pad` into
+    409×583; strips are 336px tall and 579–2472 wide, so the scale runs 1.22 → 0.24). If shrinking
+    were the cause, recall would fall with scale. It does not, on EITHER dataset: clean-exam
+    koma/kucuk are 62/67% at scale 0.45–0.60 vs 50/53% at 0.60+, and photo gold has the same shape.
+    `\bakiyeSharp` sits at 84–94% in **every** bucket — the deficit follows the SYMBOL, not the size.
+    So narrowing strips (the expensive lever) would not have helped. *(Logged, not chased: ~⅔ of the
+    encoder's input window is blank padding, because a 4:1 strip fits a 1.43:1 box.)*
+  - **The error is ONE substitution, one-directional:** gold `\kucukSharp` decoded as `\komaSharp`
+    **11× on the clean exam and 10× on the photo strips** — the single most common error in both, and
+    koma→kucuk essentially never happens. That matches the 100%-precision signature exactly: when
+    unsure, fall back to the class seen 9× more often.
+  - **Root cause = Bravura's glyph weight.** The AEU sharps are ONE systematic design — 1–2 vertical
+    stems crossed by 2–3 slanted bars — so reading them IS counting bars. Measured against two real
+    printed editions at matched staff size (`data/real/rung3/sharp_probe/`): real print draws a
+    **0.300 S** bar, Bravura **0.367 S**, and Bravura also packs küçük's three bars **0.483 S** apart
+    where real print leaves **0.550 S**. Compounded, Bravura leaves küçük a **0.116 S** white gap vs
+    the real **0.250 S** — ~1–2px after the encoder shrink, so the three bars fuse into a block and
+    the glyph *is* a 2-bar koma. koma/bakiye were never at risk (0.58–0.66 S gaps). Real print also
+    draws küçük's top/bottom bars stubby (0.73 S) either side of a full-width middle bar, where
+    Bravura's three are near-equal — which is what kills the staircase a reader recognises.
+  - **FIX SHIPPED (opt-in): `drawThinSharps` in `SheetView.tsx`** redraws all four AEU sharps as SVG
+    at real-print bar weight (0.300 S), keeping each glyph's Bravura proportions so the shapes stay
+    familiar. Applied to all four, not just the broken one, so **bar COUNT stays the only
+    difference** — thinning küçük alone would hand the model a thickness cue real pages lack.
+    küçük's pitch is set to **0.65 S**, deliberately wider than the real 0.550 S (domain-expert call
+    off `sharp_probe/kucuk_pitch_options.png`) to clear the shrink with margin while staying far from
+    koma's 0.94 S. Wired as `?thinsharps=1` (App.tsx) and `--thin-sharps` (render.ts), **off by
+    default so an A/B against `strips_v3` stays possible.** Flats untouched (89–92%, healthy).
+    Verified in-browser: every AEU sharp replaced, 0 left on Bravura. Residual: büyük keeps a 0.21 S
+    gap (its 0.51 S pitch is Bravura's) — n=3 in the exam, revisit only if it shows up.
+  - **Still owed on this lever: the FREQUENCY imbalance.** Inline (on a note, not in a signature),
+    `strips_v3` has `\komaSharp` in 1,887 strips vs `\kucukSharp` in **206** (0.5%), and **zero**
+    strips carry both inline — the model has never seen the pair contrasted in one image. The
+    re-render should balance the counts and put koma/küçük/bakiye on neighbouring notes. The
+    Round-1-era "boost komaSharp share" item stays overturned (koma is the over-represented one).
 - **Recover the hard pages we had to drop** — many real strips were dropped earlier because the old
   reading model couldn't line them up. The Round-1 model reads better, so it can recover them into
   training. This is our biggest source of new data. It needs human checking, our slowest step, so

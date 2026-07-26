@@ -76,17 +76,36 @@ shoot **different** pieces (there are thousands available).
 
 1. **Photo test — DONE** (slicer fixed, honest photo score ~74%, photos basically solved — see above).
 
-2. **Find out WHY the sharps fail — before building anything** (koma vs küçük vs bakiye). This is the
-   **main model weakness** left. The clue: when the model says "küçük sharp" it is right 100% of the
-   time, but it only spots 48% of them. So it is not careless — it is **not seeing** the size
-   difference. Two possible causes, needing opposite fixes:
-   - **Teaching problem** — the difference is visible in the strip, but under-taught → make training
-     examples showing the four sharp sizes side by side.
-   - **Seeing problem** — the four sharps differ by only a few pixels at the size we hand the model →
-     then no amount of training data helps, and we must give the model a bigger picture.
+2. ✅ **The sharps: SOLVED at the source (2026-07-26).** This was the main model weakness. The answer
+   turned out to be **our own drawing**, not the model.
 
-   **Cheap test that decides it:** draw the same note with each of the four sharps, cut them at the
-   exact size the model receives, and measure how many pixels differ. Do this first.
+   **How we found it.** The clue was strange: when the model says "küçük sharp" it is right 100% of
+   the time, but it only spots 48% of them. So it was not careless — it could not *see* them. We
+   tested three things in order:
+   - **Was the picture too small?** No. We checked whether sharps read worse on wide strips (which
+     get shrunk more before the model sees them). They do not — on either the clean exam or the
+     photos. Meanwhile bakiye sharp reads at 84–94% at *every* size. So the problem followed the
+     **symbol**, not the size. (Good news: this saved us from an expensive rebuild.)
+   - **What does the model write instead?** Almost always one thing: it reads a **küçük as a koma** —
+     11 times on the clean exam, 10 times on the photos, and never the other way round.
+   - **Why?** These signs are only told apart by **counting bars**: koma has 2, küçük has 3. We
+     measured our drawing against two real printed pages. Our music font draws the bars **22%
+     thicker** and packs küçük's three bars **14% closer** than real print does. Together that leaves
+     **less than half** the white gap — about 1 pixel by the time the model sees it. The three bars
+     merge into a block, and a block with no visible gap *is* a 2-bar koma.
+
+   **The fix.** We now draw all four sharps ourselves, with the thinner bars measured off real pages,
+   and küçük's bars slightly further apart so the gaps survive shrinking. All four got the same
+   thinner bars on purpose — if only küçük were thinned, the model could cheat by looking at
+   thickness instead of counting, and real pages would then confuse it. Flats were left alone (they
+   score 89–92%). It is **off by default** so the old and new drawings can be compared fairly; turn
+   it on with `?thinsharps=1` in the browser or `--thin-sharps` when rendering.
+
+   Pictures: `data/real/rung3/sharp_probe/all4_final.png` (before / after / after shrinking).
+
+   **One thing still to do on this:** our training pictures contain koma **1,887** times but küçük
+   only **206** times, and **never both in the same picture**. The next render should even that out
+   and put koma, küçük and bakiye on neighbouring notes so the model has to compare them.
 
 3. ⛔ **"Invented mark" habit — DROPPED (2026-07-25).** It was next on the list, but the honest scores
    show the flat-family marks are now healthy (küçük flat 92%, bakiye flat 89%, natural 89%). The

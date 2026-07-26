@@ -339,6 +339,132 @@ function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   svg.appendChild(text);
 }
 
+/** VexFlow's default distance between two staff lines, in SVG units — the unit all the AEU
+ *  accidental geometry below is expressed in, so it stays correct at any render scale. */
+const STAFF_SPACE = 10;
+
+/**
+ * Shared stroke weights for the AEU sharps, in STAFF SPACES — taken from REAL PRINT, not Bravura.
+ *
+ * Measured on `data/real/strips/hala_kanayan_kalbimi_ney_p1/..._s03_w00.png`, a real neyzen page
+ * carrying a küçük mücennep sharp both in its signature and inline, at a staff size matched to
+ * Bravura's (≈30px between staff lines). The two instances agree to the pixel, and a second
+ * edition (`strips_exam_v2_clean/bulbulun_cilesi...`) gives the same 0.300 S bar on a koma.
+ *
+ * **Bravura draws every AEU sharp with a 0.367 S bar; real print draws 0.300 S.** The weight is
+ * applied to all four so that BAR COUNT stays the only thing separating them — thinning just the
+ * one broken glyph would hand the model a thickness cue that real pages do not have.
+ */
+const AEU_SHARP_STROKE = {
+  stem: 0.133,
+  height: 2.7,   // stem length
+  bar: 0.3,      // bar thickness, measured vertically as drawn (Bravura: 0.367)
+  slope: 0.357,  // rise / run — each bar's rise scales with its own length
+};
+
+/**
+ * The four AEU sharps as stem offsets and bar lengths, in STAFF SPACES. The family is one
+ * systematic design: 1 or 2 vertical stems crossed by 2 or 3 slanted bars, and the glyphs are told
+ * apart ONLY by those counts. Lengths follow Bravura so each keeps its familiar shape; the küçük's
+ * are the real-print ones (stubby top/bottom bars either side of a full-width middle bar — the
+ * "staircase" a domain reader recognises).
+ *
+ * Why the three-bar glyphs needed this at all — the white gap left between neighbouring bars:
+ *
+ *                     bar pitch   Bravura gap   new gap
+ *   koma   (2 bars)     0.94 S       0.58 S      0.64 S   (never at risk)
+ *   bakiye (2 bars)     1.03 S       0.66 S      0.73 S   (never at risk)
+ *   küçük  (3 bars)     0.65 S       0.12 S      0.35 S   ← fused into a block
+ *   büyük  (3 bars)     0.51 S       0.14 S      0.21 S   ← fused into a block
+ *
+ * A 0.12 S gap is ~1–2px once the encoder has shrunk the strip, so a küçük's three bars merge and
+ * it decodes as a 2-bar koma. That is the measured failure: gold küçük read as koma, the single
+ * most common error on BOTH the clean exam and the photo strips, and one-directional
+ * (`scripts/rung3/sharp_width_test.py`).
+ *
+ * **The küçük's 0.65 S pitch is deliberately wider than the 0.55 S measured in real print** — a
+ * domain-expert call, chosen off `data/real/rung3/sharp_probe/kucuk_pitch_options.png`: it is the
+ * glyph the model actually fails on, so its bars are opened a little past life-size to survive the
+ * shrink, while staying far from koma's 0.94 S (at which point küçük's outer pair would start to
+ * read as a koma). Note the trade: synthetic küçüks are spaced slightly more openly than printed
+ * ones, so if the model ever starts missing TIGHTLY printed küçüks, move this back toward 0.55
+ * rather than opening it further.
+ */
+const AEU_SHARPS: Record<number, { stems: number[]; pitch: number; lengths: number[] }> = {
+  0xe444: { stems: [0], pitch: 0.94, lengths: [0.9, 0.9] },                  // koma
+  0xe445: { stems: [-0.23, 0.23], pitch: 1.03, lengths: [1.0, 1.0] },        // bakiye
+  0xe446: { stems: [0], pitch: 0.65, lengths: [0.73, 1.4, 0.73] },           // küçük mücennep
+  0xe447: { stems: [-0.23, 0.23], pitch: 0.51, lengths: [1.0, 1.37, 1.0] },  // büyük mücennep
+};
+
+/**
+ * Redraw the AEU sharps at real-print bar weight, replacing Bravura's heavier glyphs.
+ *
+ * Why redraw rather than pick a lighter font: no VexFlow font ships the AEU accidentals at all
+ * (they are rendered as raw Bravura `<text>` — see {@link addAccidental}), and a font glyph cannot
+ * be thinned, so the shapes are drawn here instead. Sharps only — the flat family scores 89–92%,
+ * and changing a healthy class risks a regression for no measured gain.
+ *
+ * Runs after the engrave, over both VexFlow's inline accidentals and our own key-signature glyphs.
+ * Pixels only: labels are serialized from the doc, never from what is drawn.
+ */
+function drawThinSharps(svg: SVGSVGElement, staffSpace: number) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const S = staffSpace;
+  const w = AEU_SHARP_STROKE;
+  for (const text of Array.from(svg.querySelectorAll("text"))) {
+    const cp = text.textContent?.codePointAt(0);
+    const shape = cp === undefined ? undefined : AEU_SHARPS[cp];
+    if (!shape) continue;
+    let box: DOMRect;
+    try {
+      box = text.getBBox();
+    } catch {
+      continue;
+    }
+    if (box.width === 0 || box.height === 0) continue; // unmeasurable (font not loaded) — leave it
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const group = document.createElementNS(SVG_NS, "g");
+    group.setAttribute("fill", "#000");
+    group.setAttribute("data-omr", "aeu-sharp"); // inspection only (an attribute, not pixels)
+
+    for (const dx of shape.stems) {
+      const stem = document.createElementNS(SVG_NS, "rect");
+      stem.setAttribute("x", String(cx + dx * S - (w.stem * S) / 2));
+      stem.setAttribute("y", String(cy - (w.height * S) / 2));
+      stem.setAttribute("width", String(w.stem * S));
+      stem.setAttribute("height", String(w.height * S));
+      group.appendChild(stem);
+    }
+
+    // Parallelogram bars rising left→right, stacked around the glyph centre and centred on it.
+    // The white gap between them is the whole signal.
+    const t = (w.bar * S) / 2;
+    const n = shape.lengths.length;
+    shape.lengths.forEach((lenS, i) => {
+      const len = lenS * S;
+      const half = len / 2;
+      const rise = (len * w.slope) / 2; // shorter bars rise less — same slope, not same rise
+      const y = cy + (i - (n - 1) / 2) * shape.pitch * S;
+      const poly = document.createElementNS(SVG_NS, "polygon");
+      poly.setAttribute(
+        "points",
+        [
+          [cx - half, y + rise + t],
+          [cx + half, y - rise + t],
+          [cx + half, y - rise - t],
+          [cx - half, y + rise - t],
+        ]
+          .map(([px, py]) => `${px},${py}`)
+          .join(" "),
+      );
+      group.appendChild(poly);
+    });
+    text.replaceWith(group);
+  }
+}
+
 /**
  * Draw a plain PHRASE SLUR — a curved arc over a run of noteheads WITHOUT the tuplet "3" — as raw
  * SVG. Real Turkish editions slur legato groups, but the synthetic corpus drew arcs ONLY on
@@ -619,6 +745,7 @@ export function SheetView({
   navMarks,
   textNoise,
   slurNoise,
+  thinSharps,
   signatureOverride,
 }: {
   doc: NoteModelDocument;
@@ -660,6 +787,9 @@ export function SheetView({
   /** Round-1 phrase-slur distractors: label-free arcs over non-triplet note runs (see drawSlurArc)
    *  so the model stops reading every arc as a `\tup3`. Pixels only. Undefined → none. */
   slurNoise?: { seed: number } | null;
+  /** Round-2: redraw the AEU sharps with real-print bar weight so the three bars of a küçük/büyük
+   *  mücennep stay separated after downscaling (see drawThinSharps). Pixels only. → Bravura. */
+  thinSharps?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -951,6 +1081,9 @@ export function SheetView({
       }
     }
 
+    // Last, so it catches BOTH VexFlow's inline accidentals and our own key-signature glyphs.
+    if (thinSharps && svg) drawThinSharps(svg, STAFF_SPACE);
+
     setSvgHeight(height);
     setBoxes(collected);
     positionsRef.current = positions;
@@ -964,7 +1097,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

@@ -24,6 +24,7 @@
  *             [--delay 150]        ms pause after each screenshot (gentle on a fanless machine)
  *             [--clean]            wipe the output dir first (default: resume)
  *             [--finalize]         only rebuild manifest.jsonl + index.html from the shards
+ *             [--thin-sharps]      draw the AEU sharps at real-print bar weight
  */
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -78,6 +79,11 @@ const OUT = arg("out") ?? "data/synthetic/strips_v2_2";
 const DELAY = Number(arg("delay") ?? 150);
 const FROM = Number(arg("from") ?? 0);
 const TO = arg("to") != null ? Number(arg("to")) : Infinity;
+// Round-2: draw the four AEU sharps at real-print bar weight instead of Bravura's heavier one,
+// which closes the white gaps between the THREE bars of a küçük/büyük mücennep so they decode as
+// their 2-bar cousins (see SheetView's drawThinSharps). Opt-in, so an A/B against the current
+// corpus stays possible.
+const THIN_SHARPS = has("thin-sharps");
 
 // Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
 // scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
@@ -167,6 +173,7 @@ function jobUrl(job: Job): string {
   if (job.sig) q.set("sig", job.sig);
   if (job.repseed != null) q.set("repseed", String(job.repseed));
   if (job.navseed != null) q.set("navseed", String(job.navseed));
+  if (THIN_SHARPS) q.set("thinsharps", "1");
   return `${URL}/?${q}`;
 }
 

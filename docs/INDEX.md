@@ -33,6 +33,7 @@ wrong — fix by deleting, not by syncing.
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |
 | Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](rung3/round1.md) |
 | Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
+| Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
 | Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 

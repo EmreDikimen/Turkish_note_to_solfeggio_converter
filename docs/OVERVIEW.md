@@ -74,6 +74,24 @@ Two more things came out of the same count:
 
 **So the next round targets the notes and their lengths, not the microtonal marks.**
 
+### What we already know about those two (the plan: [rung3/round3.md](rung3/round3.md))
+
+- **Note heights are slightly off, not wrong.** When the model misses, it is usually off by only
+  one or two positions up or down — 74% of the time. It is not confused about which note it sees; it
+  is misjudging the height, like reading a thermometer one mark off.
+  Likely reason: in our training pictures the staff lines sit in almost the same place every time,
+  while real cut-out pictures wobble about **twice** as much. We do shake our pictures to teach the
+  model to cope — but only by about 3%, and about 3 pixels up or down. One note position is about
+  **15 pixels**. So we are shaking them roughly **five times less than reality moves**. The fix is a
+  setting, not new pictures.
+- **Note lengths are nearly always "twice too long".** A short note carries a little flag or beam on
+  its stem, and the model is missing it. It also adds or drops the small dot that lengthens a note,
+  about equally often. This is the **same story as the sharp marks**: our music font draws thicker
+  strokes than real printing, and thin details merge when the picture is shrunk. We proved that for
+  the sharp marks and fixed it — **nobody has ever checked the beams, flags or dots**.
+
+Both are checks to run *before* making new pictures, not guesses to act on.
+
 ## Where we are right now
 
 - **Round 2 is finished. It first looked like a step backwards — then we found our score was

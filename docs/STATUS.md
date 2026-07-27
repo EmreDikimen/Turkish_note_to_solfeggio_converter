@@ -57,6 +57,10 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 
 ## Next — in order
 
+**Round 3 is planned in [rung3/round3.md](rung3/round3.md)** — it targets note heights (40% of
+corrections) and note lengths (28%), with four measurements to run before anything is rendered.
+Items 1–3 below are those measurements.
+
 1. **Render the crop shapes the slicer actually produces.** Signature-only crops, short fragments,
    row-start-only windows — currently 0 of 40,826 training strips, while the slicer emits them from
    real pages and the model hallucinates a measure when it meets one. A `stripExport` change, no
@@ -137,6 +141,7 @@ both reference-path only and both fine under Python-ORT int8.
 | The real-page track, step by step | [rung3/README.md](rung3/README.md) |
 | Round 1 in full (criteria → A/B → exam → disposition) | [rung3/round1.md](rung3/round1.md) |
 | Round 2 so far (photos, sharps, what's open) | [rung3/round2.md](rung3/round2.md) |
+| Round 3: what it targets and the checks to run first | [rung3/round3.md](rung3/round3.md) |
 | Dated history of everything | [log/status-log.md](log/status-log.md) |
 | Plans that were abandoned — do not act on them | [log/superseded.md](log/superseded.md) |
 | Plain-English version of this page | [OVERVIEW.md](OVERVIEW.md) |

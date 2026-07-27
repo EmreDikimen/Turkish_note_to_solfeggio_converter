@@ -43,6 +43,29 @@ delete the evidence, and the precedent is now a decision.
 **Revert path:** the Round-1 runtime is at `data/checkpoints/_public_models_backup_round1/`; the
 Round-2 ONNX at `data/checkpoints/round2-stage2-best-onnx/`.
 
+## 2026-07-27 (end of day) — Round 3 planned: note heights and note lengths
+
+Written up in [../rung3/round3.md](../rung3/round3.md). Two diagnostics shaped it, both from the
+Round-2 exam read with no new decoding.
+
+**Note heights (40% of corrections) are off by ONE or TWO positions in 74% of cases** — a
+registration problem, not a reading problem. Measured staff geometry, synthetic vs real: mean line
+spacing 30.6 vs 31.8 px (the slicer's normalisation works), but real strips vary about **twice** as
+much (± 4.9 vs ± 2.7). One note position is ~15 px. Meanwhile `augment.py` shakes each picture by
+only ±3% scale and ~3 px translate — roughly **five times narrower than the real variation**. Fix is
+an augmenter setting, not a re-render. Flagged as a lead, not a fact: the staff detector used was a
+row-darkness heuristic that lyrics and dense beaming can fool, so it needs re-measuring properly.
+
+**Note lengths (28%) are lopsided:** `8→4` ×8 and `16→8` ×6 — the model reads a note as twice as
+long, i.e. loses a flag or beam — plus 15 dot errors both ways. Same shape as the sharp-bar finding:
+our font's strokes are heavier than real print and thin detail merges after the shrink. The
+`sharp_probe` investigation has never been applied to beams, flags or dots.
+
+Round 3 therefore opens with four measurements before anything is rendered (staff registration,
+beam/flag/dot fidelity, crop shapes, strip density), and two things to settle before training: the
+success number written down first, and a deliberate choice about changing one thing versus several
+— Round 2 changed three and its movement still cannot be attributed.
+
 ## 2026-07-27 (later still) — Where the user's corrections actually go: accidentals are 13% of them
 
 No training, no new exam read — just the Round-2 exam's 562 edits classified by what a person would

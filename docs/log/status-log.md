@@ -9,6 +9,41 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-07-27 (later still) — Where the user's corrections actually go: accidentals are 13% of them
+
+No training, no new exam read — just the Round-2 exam's 562 edits classified by what a person would
+have to fix. Numbers in [../METRICS.md](../METRICS.md).
+
+**pitch 40% · duration 28% · rhythm signs 13% · accidentals 13% · structure 5%.** Two rounds went
+into the 13%. The old headline made accidentals look like the whole problem because it *only*
+measured accidentals — the same failure mode as the inline-vs-signature mistake, one level up.
+
+**Errors are concentrated AND pervasive.** 42 of 326 strips carry 63% of edits; 12 strips are >50%
+wrong and carry 21%. But excluding those 12 barely moves the mix (pitch 36%, duration 29%), so
+ordinary strips misread notes and note-values too. 55 of the note-level errors are whole notes
+*inserted or deleted* — the model losing count rather than misreading a glyph.
+
+**The catastrophic strips are a crop-shape gap we created.** The worst is a signature-only crop —
+clef + donanım, no notes — where the model hallucinated a measure: 19 edits against 8 gold tokens.
+`stripExport` builds chunks from whole measures, so that image **cannot occur in training**: 0 of
+40,826 strips, while the exam has 4 of 326 and 28% of its strips are short. Third time in three
+sessions that a "model problem" has turned out to be an upstream shape we never rendered.
+
+**Negative result worth keeping — gold octave errors are real but NOT a lever.** All 5 octave-only
+substitutions are cases where the GOLD leaps ≥4 steps from both neighbours while the model reads the
+stepwise line (owner's hypothesis, and it was right). Consistent with the 187:14 adjudication
+precedent of siding with the decode. But it is ~1% of edits and the pools are clean (0.1–0.2% of
+strips carry an isolated octave spike), so it does not explain the pitch weakness. Theory closed
+with a number rather than left open.
+
+**Consequences for Round 3:** aim at pitch and duration, not accidentals; render the crop shapes the
+slicer produces first (cheap, no training); and measure the corpus's pitch/duration distribution
+against the real pools before designing anything — that method has overturned the plan twice.
+
+The error-localisation UI is **deferred by the owner**. The measurement that would justify it is
+still cheap and still owed, with a pre-registered rule: flagging 10% of tokens must catch ≥60% of
+errors.
+
 ## 2026-07-27 (later) — The goal changed: user effort, not model accuracy
 
 **New goal: ≥90% of pages need ≤5 corrections, and the app shows where they are.** "85% on the

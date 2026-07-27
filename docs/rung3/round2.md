@@ -29,6 +29,25 @@ the print-position split: [../METRICS.md](../METRICS.md).
 Attribution caveat, stated before the run and still binding: this round changed the glyph weight AND
 removed the label noise AND added pieces, so no single one of them owns the movement.
 
+### Post-read analysis (2026-07-27) — what Round 3 should actually target
+
+Re-scoring and an edit-budget breakdown changed both the verdict and the direction. Full numbers in
+[../METRICS.md](../METRICS.md); the short version:
+
+- **Round 2 was never a regression.** Under low-n-robust headlines it is flat-to-better (micro recall
+  83.9 → 84.8%, macro≥30 recall 81.4 → 84.8%). The −4pp was `\komaSharp` (n=14) inside a six-class
+  mean. The not-shipped decision is overturned.
+- **Accidentals are 13% of what a user fixes.** Pitch 40%, duration 28%. Two rounds went into the
+  13%, because the old headline only measured accidentals.
+- **12 strips carry 21% of all edits**, and the worst are a crop-shape gap: signature-only crops
+  occur 0 times in 40,826 training strips but 4 times in 326 exam strips.
+- **Gold octave errors are real but ~1% of edits**, and the training pools are clean — closed as a
+  non-lever rather than left as a suspicion.
+
+So Round 3 is a **pitch-and-duration** round, opening with the crop-shape fix (no training needed)
+and a corpus-vs-real distribution measurement before anything is rendered. The signature-glyph
+fidelity work stays owed but drops below both, being a 13%-of-edits problem.
+
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
 

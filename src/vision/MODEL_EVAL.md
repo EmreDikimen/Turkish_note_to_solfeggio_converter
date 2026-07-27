@@ -981,3 +981,31 @@ answer different questions, and only macro was ever quoted.
 **Not done on purpose:** micro was not promoted to the headline (it was computed after the fact and
 flatters us, and the 85% floor was pre-registered against macro), and the target was not restated.
 The repair is more `\komaSharp` gold in exam v3 — see `docs/DECISIONS.md`.
+
+## Edit-budget analysis of the Round-2 exam (2026-07-27): accidentals are 13% of user corrections
+
+No decode re-run — the 156 mismatching strips in `data/colab/round2-exam-errors.txt` re-aligned with
+the eval's own `align()` and each edit classified by token category.
+
+| what the user fixes | edits | share | excl. 12 catastrophic strips |
+|---|---|---|---|
+| pitch (letter/octave) | 222 | 40% | 36% |
+| duration | 158 | 28% | 29% |
+| rhythm signs | 74 | 13% | 16% |
+| accidentals | 73 | 13% | 13% |
+| structure | 26 | 5% | 5% |
+| signature delimiters | 9 | 2% | 1% |
+
+Concentration: 42/326 strips carry 63% of edits, 11 carry 29%, 12 are >50% wrong and carry 21%.
+Note-substitution mix (96): duration-only 38%, multiple-differ 30%, letter-only 27%, octave-only 5%;
+plus 55 whole notes inserted/deleted (loss of count, not glyph misreading).
+
+**Crop-shape gap:** signature-only strips are 0 of 40,826 in `strips_v4` and 4 of 326 on the exam
+(28% of exam strips have ≤8 label words). Worst strip: gold `\sig \kucukFlat b \kucukFlat e
+\kucukFlat a \sigend`, decode `\sig\bakiyeFlatb \sigend\volta2b'16 c''8 g''8 g''8` — 19 edits on 8
+gold tokens. `stripExport` chunks whole measures, so the shape cannot appear in training.
+
+**Negative result (keep):** all 5 octave-only substitutions are implausible-gold cases — gold leaps
+≥4 scale steps from both neighbours where the model reads stepwise. Almost certainly mislabels, and
+consistent with the 187:14 decode-over-SymbTr adjudication precedent — but ≈1% of edits, and the
+training pools carry isolated octave spikes in only 0.1–0.2% of strips. Not the pitch lever.

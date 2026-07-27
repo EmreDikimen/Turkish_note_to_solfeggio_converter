@@ -61,6 +61,59 @@ One "edit" = one token substitution, deletion or insertion needed to turn the ou
 - The second half of the goal — the app showing *where* the errors are — is unmeasured, because it
   does not exist yet. Finding 5 unknown errors among ~250 notes costs more than fixing them.
 
+### Where the user's corrections actually go (2026-07-27) — accidentals are 13% of them
+
+Every one of the 562 edits in the Round-2 exam read, classified by what the user would have to fix
+(token-level alignment over the 156 mismatching strips in `data/colab/round2-exam-errors.txt`).
+
+| what needs fixing | edits | share | excl. the 12 catastrophic strips |
+|---|---|---|---|
+| **pitch (letter/octave)** | 222 | **40%** | 36% |
+| **duration** | 158 | **28%** | 29% |
+| rhythm signs (tie/triplet/grace) | 74 | 13% | 16% |
+| **accidentals** | 73 | **13%** | 13% |
+| structure (barlines, repeats, nav) | 26 | 5% | 5% |
+| signature delimiters | 9 | 2% | 1% |
+
+- **Two rounds of work went into the 13%.** The old headline made accidentals look like the whole
+  problem because it only measured accidentals.
+- **Errors are concentrated:** 42 of 326 strips (13%) carry 63% of all edits; 11 strips carry 29%;
+  12 strips are >50% wrong and carry 21%. Under the page-based goal, those are what push a page
+  over the 5-correction line.
+- **…but not only concentrated:** excluding the 12 catastrophic strips barely moves the mix, so
+  pitch and duration are pervasively weak on ordinary strips too.
+- Note-level substitution mix (96 subs): duration only 38%, multiple-differ 30%, letter only 27%,
+  **octave only 5%**. Plus **55 whole notes inserted or deleted** — the model losing count, not
+  misreading a glyph.
+
+#### The crop-shape gap (the cause of the catastrophic strips)
+
+| | signature-only strips |
+|---|---|
+| `strips_v4` (training) | **0 of 40,826** |
+| exam v2.1 clean | **4 of 326**; 91 strips (28%) have ≤8 label words |
+
+`stripExport` always builds chunks from whole measures, so a "clef + donanım, no notes" image
+cannot occur in training — but the slicer produces them from real pages. The worst exam strip is
+exactly that: gold `\sig \kucukFlat b \kucukFlat e \kucukFlat a \sigend`, decode a hallucinated
+`\volta2 b'16 c''8 g''8 g''8` — **19 edits against 8 gold tokens.**
+
+#### Gold octave errors — real, but NOT a lever (negative result, keep it)
+
+All 5 octave-only substitutions are cases where the GOLD leaps ≥4 scale steps from both neighbours
+while the model reads the stepwise line (e.g. gold `a''8` between `b'` and `g'`; model `a'8`).
+They are almost certainly mislabels — consistent with the adjudication precedent of siding with the
+decode 187:14. But the scale is small and the pools are clean:
+
+| pool | strips | with an isolated octave spike |
+|---|---|---|
+| strips_nota | 1,747 | 1 (0.1%) |
+| strips_r1 | 421 | 1 (0.2%) |
+| strips_tup | 169 | 0 |
+| strips_v4 | 40,826 | 36 (0.1%) |
+
+≈1% of exam edits. Worth fixing for correctness; **not** an explanation for the pitch weakness.
+
 ### Re-scored under low-n-robust headlines (2026-07-27) — the regression was a metric artifact
 
 Recomputed from the stored `per_class` blocks by `scripts/rung3/rescore_headline.py`; no model was

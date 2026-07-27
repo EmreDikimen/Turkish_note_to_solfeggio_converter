@@ -45,6 +45,35 @@ wipes out most of the time you saved. If the app highlighted the few places it w
 check five spots instead of two hundred and fifty notes. We already compute that "unsure" signal
 internally; we have simply never shown it to you.
 
+## What we learned last (27 July 2026) — we were fixing the wrong 13%
+
+We counted every correction a user would have to make on the exam, and sorted them by *what* needs
+fixing:
+
+| what you would have to fix | share |
+|---|---|
+| **the note itself (which line/space it sits on)** | **40%** |
+| **how long the note is** | **28%** |
+| tie / triplet / grace marks | 13% |
+| **the microtonal marks (koma, küçük, bakiye…)** | **13%** |
+| bar-lines, repeats | 5% |
+
+Two whole rounds of work went into that 13%. Not because it was the biggest problem — but because
+our old score *only measured that*. It could not see the other 87%.
+
+Two more things came out of the same count:
+
+- **A few bad strips do most of the damage.** 12 strips out of 326 cause a fifth of all corrections.
+  The worst one is a narrow crop showing only the clef and the key signature, with no notes at all —
+  and the model invented a whole bar of notes. It turns out our training pictures **never** contain
+  that shape (0 out of 40,826), while the real page-cutter produces them. That is the third time a
+  "model problem" has turned out to be something we never showed it.
+- **You were right about the octave labels.** Every octave disagreement we found is a case where our
+  *answer key* is wrong and the model is right. But there are only a handful, and the training data
+  is clean — so it is worth fixing, and it is not what is holding the model back.
+
+**So the next round targets the notes and their lengths, not the microtonal marks.**
+
 ## Where we are right now
 
 - **Round 2 is finished. It first looked like a step backwards — then we found our score was

@@ -4,7 +4,7 @@ purpose: the current round: what was measured, what was fixed at source, what re
 audience: agents and the owner working the real-page track
 updated: 2026-07-27
 
-## Result — exam read once, 2026-07-27: NOT SHIPPED
+## Result — exam read once, 2026-07-27: SHIPPED as an improvement, not a pass
 
 **Headline regressed, everything else improved.** On the identical 326-strip clean set with the
 same re-audited gold: mean AEU F1 **78.0 → 73.9%**, while SER (0.059 → 0.052), exact-match
@@ -47,6 +47,23 @@ Re-scoring and an edit-budget breakdown changed both the verdict and the directi
 So Round 3 is a **pitch-and-duration** round, opening with the crop-shape fix (no training needed)
 and a corpus-vs-real distribution measurement before anything is rendered. The signature-glyph
 fidelity work stays owed but drops below both, being a 13%-of-edits problem.
+
+### Ship (2026-07-27) — `round2-stage2-best` int8 is the live runtime
+
+The re-scoring reopened the ship decision and the owner took it: same disposition as Round 1, an
+**improvement ship, not a pass** — the macro floor is still failed, and that is written down rather
+than rounded up ([../DECISIONS.md](../DECISIONS.md)).
+
+Chain, all green: ONNX export → int8 (221 MB) → `onnx_parity.py` **14/14 fp32 + 14/14 int8** →
+`make_browser_gate.py` → browser gate **27/28**, with the product (canvas) path a clean 14/14. The
+gate list was rebuilt from `strips_v4` **val** pieces because the Colab checkpoint arrived without
+one. Export details, the gate-strip method and the one failing strip: [../METRICS.md](../METRICS.md)
+and `../../src/vision/MODEL_EVAL.md`.
+
+**Carried forward, not fixed:** the browser miss is an ORT-web wasm int8 numerics wobble (Python-ORT
+int8 reads the same strip exactly). It is now the second instance — Round 1's was a double dot, this
+one drops a `\tup3` — so the open investigation gains a second case. Round 1's double-dot strip
+passes on this model.
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).

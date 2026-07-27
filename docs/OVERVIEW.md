@@ -86,8 +86,17 @@ Two more things came out of the same count:
 - **We fixed the scoring, and Round 2 is actually a small improvement.** Counting every mark
   question-by-question instead of averaging subjects: **83.9% → 84.8%**. Ignoring the marks with too
   few examples to judge: **81.4% → 84.8%**. Both up. Add fewer mistakes per page and more strips read
-  perfectly, and the new model is better — so **whether to ship it is now an open question**, not a
-  no.
+  perfectly, and the new model is better.
+- **So we shipped Round 2 — it is the model in the app now** (2026-07-27). Same wording as Round 1:
+  *an improvement, not a pass* — it still does not clear our 85% bar, and we say so rather than
+  quietly redefining the bar. Shipping means the model was converted to the small, fast form the
+  browser runs (221 MB) and checked at every step: it gives **exactly** the same answers in that
+  form (14 out of 14 test pictures, twice over), and in a real browser it read 27 of 28 correctly.
+  The one miss is not a reading mistake: on that picture the model itself was only **69% sure** a
+  triplet bracket was there (its next guess, 31%, was "no bracket"), and the browser's slightly
+  different arithmetic tips that coin the other way. Every other symbol in the strip is 94–100%
+  certain, and the path the actual app uses reads it correctly. The old model is kept, so we can
+  switch back in minutes.
 - **Important honesty note:** the fairer score looks higher (≈85% instead of 74%), but that does
   **not** mean we hit our 85% goal. The goal was written against the old, stricter score. We did not
   move the goalposts to a number that flatters us — we use the fair score to tell whether a change
@@ -107,7 +116,7 @@ Two more things came out of the same count:
 - We finished **Round 1** — the first time the model trained on **real** printed pages (before, it
   only trained on clean computer-made ones). It scored **about 66%** on the exam (real pages it never
   trains on), below our **85%** target, but clearly better than the old model, so we **shipped it**.
-  It is still the model in the app today.
+  It was the model in the app until Round 2 replaced it on 27 July 2026.
 - **We ran the phone-photo test.** At first the model looked terrible on photos — but the real problem
   was the **slicer** (step 1): on a slightly tilted photo it could not even find the staff lines, so
   it produced *nothing* to read on 7 out of 10 photos. We added a small "clean-up" step (straighten
@@ -214,6 +223,6 @@ shoot **different** pieces (there are thousands available).
 | **bare note** | A note with no mark drawn. It may still be "lowered" by the line's signature — but the model should still write it bare and let reassembly apply the signature. |
 | **slicer** | Step 1: the tool that cuts a page into strips. It first finds the staff lines; on tilted photos it failed, which we fixed with a "clean-up" step. |
 | **exam** | Real pages the model never trains on — our honest score. It read 66% first; after we fixed 13 wrong answers in the answer key it reads ~78%, but most of that jump is the scoring quirk explained above, not the model improving. |
-| **Round 1** | The first cycle of training the model on real pages. Shipped, and still the model in the app. |
-| **Round 2** | The second cycle. Fixed two problems in how we make training pictures, but the exam score went 78% → 74%, so it was **not** shipped. |
+| **Round 1** | The first cycle of training the model on real pages. Shipped 2026-07-23; replaced by Round 2. |
+| **Round 2** | The second cycle. Fixed two problems in how we make training pictures. The old score read 78% → 74%, but that turned out to be a scoring quirk; on the fair scores it is better, so it **shipped** on 2026-07-27 and is the model in the app. |
 | **key signature** | The group of marks printed once at the start of a line, which apply to every matching note on it. This is where almost all the hard marks are — and where the model still gets confused. |

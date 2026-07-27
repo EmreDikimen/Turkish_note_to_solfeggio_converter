@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   ONNX / browser gate — introduced at Rung 1.5 (docs/PHASE2.md §5), carried through every retrain.
-  Current runtime: Round 1 (`round1-best`, int8), shipped 2026-07-23 as improvement-not-pass
+  Current runtime: Round 2 (`round2-stage2-best`, int8), shipped 2026-07-27
   (src/vision/MODEL_EVAL.md). Re-stage assets with `make_browser_gate.py` after any new ship.
 
   Decodes gate strips with onnxruntime-web using a hand-rolled greedy loop (the JS port of
@@ -19,7 +19,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OMR browser gate — Round 1 (round1-best int8)</title>
+    <title>OMR browser gate — Round 2 (round2-stage2-best int8)</title>
     <style>
       body { font: 14px/1.45 ui-monospace, Menlo, monospace; margin: 2rem; background: #14161a; color: #d7dce2; }
       h1 { font-size: 1.1rem; }
@@ -32,7 +32,7 @@
   </head>
   <body>
     <h1>OMR — ONNX / browser gate
-      <span class="dim">· Round 1 model (<code>round1-best</code>, int8) — shipped 2026-07-23</span></h1>
+      <span class="dim">· Round 2 model (<code>round2-stage2-best</code>, int8) — shipped 2026-07-27</span></h1>
     <div id="drop">
       <strong>Try your own strip</strong> — drop an image here or
       <label>choose a file<input id="file" type="file" accept="image/*" hidden /></label>.

@@ -923,7 +923,7 @@ Real-val (271 strips): AEU recall 96.3%, mean F1 90.3%, SER 0.027, exact 66.8%.
 **Real-val could not see this round's work:** `\kucukSharp` recall 95.2% — identical to Round 1
 Arm A's 95.2%, on n=21. It was already saturated on the class the round existed to fix.
 
-## Round 2 — exam v2.1, read ONCE (2026-07-27): ⛔ headline regressed, NOT shipped
+## Round 2 — exam v2.1, read ONCE (2026-07-27): ⛔ headline regressed *(as read — see the re-scoring below, which reopened this and led to the ship)*
 
 `eval_omr.py --checkpoint data/checkpoints/round2-stage2-best --strips-dir
 data/real/rung3/strips_exam_v2_clean --split none` (326 strips, re-audited gold). Full console
@@ -1009,3 +1009,50 @@ gold tokens. `stripExport` chunks whole measures, so the shape cannot appear in 
 ≥4 scale steps from both neighbours where the model reads stepwise. Almost certainly mislabels, and
 consistent with the 187:14 decode-over-SymbTr adjudication precedent — but ≈1% of edits, and the
 training pools carry isolated octave spikes in only 0.1–0.2% of strips. Not the pitch lever.
+
+## ✅ SHIPPED 2026-07-27 — `round2-stage2-best` int8 is the runtime
+
+Ship chain complete; `round2-stage2-best` int8 ONNX staged into `apps/web/public/models/`. The
+previous (Round-1) runtime is backed up at `data/checkpoints/_public_models_backup_round1/`
+(gitignored — revert = re-stage it, or re-run `make_browser_gate.py` on `round1-best-onnx`).
+
+Shipped on the low-n-robust re-scoring, not on the macro headline: micro recall 83.9 → 84.8%,
+macro≥30 recall 81.4 → 84.8%, micro F1 85.0 → 84.8% (flat), SER 0.059 → 0.052, exact 50.0 → 52.1%,
+9 of 11 floors. The pre-registered macro bar (≥85%) is still FAILED at 74.2%, and the −4.1pp macro
+move against Round 1 is `\komaSharp` at n=14 inside a six-class mean. Like Round 1 this is an
+**improvement ship, not a pass** — see `docs/DECISIONS.md`.
+
+- **Gate strips regenerated (14).** The Colab checkpoint arrived without a `GATE_STRIPS.txt`, so one
+  was built from **`strips_v4` VAL pieces** (`data/split_v4.json`, held out from Round-2 training):
+  120 candidates decoded with PyTorch, **108 exact**, then a greedy feature cover → 14 strips over
+  **14 pieces / 11 makams**, covering `\sig`, all six koma/küçük/bakiye sharp+flat families,
+  `\tup3`, `\tie`, `\grace`, `\natural`, nav/repeat tokens and a **double-dot** strip (kept
+  deliberately: that token pattern is what tripped the Round-1 browser gate).
+  ⚠ Comparison in **id space** — a string compare reports 0/120 because the added-token matcher
+  eats the spaces around `\`-tokens (`data.strip_special` docstring); use `strip_special`.
+- **ONNX export:** `optimum-cli export onnx --task image-to-text-with-past`. Optimum's float
+  validation flags encoder max diff **2.5e-3**, decoder graphs ≤ 8.9e-5 — larger than Round 1's
+  ~5e-5 but irrelevant: the gate is id-space parity, and it is exact.
+- **int8:** `quantize_onnx.py`: encoder 311→91 MB, decoder 276→69 MB, decoder-with-past 242→61 MB —
+  **221 MB, identical to every prior rung.**
+- **Python parity** (`onnx_parity.py … --strips-dir data/synthetic/strips_v4 --n 14`): ONNX ==
+  PyTorch == label ids, **14/14 fp32 AND 14/14 int8.** No strip needed swapping (contrast Rung 2.2b,
+  where one int8-borderline strip did).
+- **Browser gate** (`omr-gate.html`, headless Chromium via Playwright, ORT-web wasm int8,
+  crossOriginIsolated): **27/28 — NOT a clean 28/28.** 14 strips × (Python reference pixels + live
+  canvas preprocessing). The **product path (canvas) is 14/14**; the single miss is the *reference*
+  path of `kurdilihicazkar--…--bunca_cevrinle_c1_measure_m27-27`, which drops the opening `\tup3`
+  (56 tokens vs 57) while keeping `\tupend`. **Deterministic across 3 runs.**
+  Diagnosis, now **measured, not inferred**: it is a genuine near-tie that the runtime tips. Feeding
+  the browser's own reference tensor (`public/models/<stem>.pixels.bin`) to Python-ORT int8 with
+  `return_logprobs=True` gives, at the flipped step, `\tup3` **p=0.6893** vs runner-up `e`
+  **p=0.3055** (third `\tie` 0.0027). **That is the only token in the strip below 0.99** — the next
+  lowest is 0.9379. So the model is honestly 69/31 on "triplet bracket here, or does the note start",
+  and the ORT-web wasm int8 kernels move the margin enough to flip it; Python-ORT int8 on the
+  identical tensor keeps `\tup3`, and the canvas tensor of the same image keeps it too. Graph sound,
+  JS preprocessing sound, same class as Round 1's double-dot finding. Not swapped out for a cleaner
+  strip: that would hide a live runtime limitation. → same open item as Round 1's, now with a second
+  instance (`\tup3` as well as `..`) and a confidence number attached.
+  **The Round-1 double-dot failure did NOT reproduce** — `a''2..` / `b''2..` (hicaz `yalan_degil`,
+  the same piece) passes both paths on this model.
+  Latency: session load ~3.0 s; ~0.9–1.0 s encoder + 0.13–0.32 s decode ≈ ~1.1 s/strip.

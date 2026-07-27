@@ -9,6 +9,40 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-07-27 (latest) — Round 2 SHIPPED: `round2-stage2-best` int8 is the live runtime
+
+The re-scoring earlier the same day reopened the "not shipped" call and the owner took the ship. It
+is the **same disposition as Round 1: an improvement, not a pass** — the pre-registered macro floor
+(≥85%) is still failed at 74.2%, and that stays written down rather than rounded up
+([../DECISIONS.md](../DECISIONS.md)). What justified it: micro recall 83.9 → 84.8%, macro≥30 recall
+81.4 → 84.8%, micro F1 flat, SER 0.059 → 0.052, exact 50.0 → 52.1%, 9 of 11 floors.
+
+**Ship chain, all green.** ONNX export → int8 (221 MB, same as every rung) → `onnx_parity.py`
+**14/14 fp32 and 14/14 int8** → `make_browser_gate.py` → browser gate **27/28**. Details in
+[../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+**The gate list had to be rebuilt** — the Colab checkpoint arrived without a `GATE_STRIPS.txt`, same
+as Round 1. Built from `strips_v4` **val** pieces (held out from this model's training): 120
+candidates decoded, 108 exact, greedy feature cover → 14 strips / 14 pieces / 11 makams covering
+`\sig`, all six koma/küçük/bakiye families, `\tup3`, `\tie`, `\grace` and a double dot. *Why the
+method matters:* the first attempt compared decoded **strings** and reported 0/120 exact — the
+tokenizer eats the spaces around `\`-tokens, so comparisons must happen in id space
+(`data.strip_special`). A string compare would have looked like a catastrophically broken model.
+
+**One gate strip still fails, deliberately kept — and this time we measured why.** A
+`kurdilihicazkar` strip drops its opening `\tup3` on the **reference** path only; the canvas path —
+the actual product path — reads all 14 strips exactly, and Python-ORT int8 reads that strip exactly.
+Feeding the browser's own reference tensor back through Python-ORT with per-token confidences shows
+the flipped step is a **genuine near-tie**: `\tup3` p=0.689 vs `e` p=0.306, and it is the **only**
+token in the strip under 0.99 (next lowest 0.938). So the runtime is not corrupting a confident
+prediction — it is tipping a coin the model was already holding. Graph and JS preprocessing both
+exonerated. Second instance of the ORT-web wasm int8 wobble (Round 1's was a dropped double dot,
+which does **not** reproduce on this model). Not swapped out for a cleaner strip: swapping would
+delete the evidence, and the precedent is now a decision.
+
+**Revert path:** the Round-1 runtime is at `data/checkpoints/_public_models_backup_round1/`; the
+Round-2 ONNX at `data/checkpoints/round2-stage2-best-onnx/`.
+
 ## 2026-07-27 (later still) — Where the user's corrections actually go: accidentals are 13% of them
 
 No training, no new exam read — just the Round-2 exam's 562 edits classified by what a person would

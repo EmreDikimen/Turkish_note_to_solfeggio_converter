@@ -69,6 +69,8 @@ in [log/superseded.md](log/superseded.md) — read it before re-proposing anythi
 | 2026-07-25 | **Stop hand-labelling photos at 284 strips** — enough to measure, and many photos are unreadable even to a human. | LOCKED |
 | 2026-07-25 | **Drop the "invented mark" (context-blind hallucination) work** — the flat family now scores 89–92%; the weakness moved entirely to the sharps. | DROPPED, kept as a note |
 | 2026-07-25 | **Exam v3 must floor or weight the per-class mean by n** — one 3-gold class swung the headline ~11pp. | LOCKED, owed |
+| 2026-07-27 | **Ship Round 2 as an improvement, not a pass** — the macro headline still fails (74.2% vs the ≥85% bar) but its −4.1pp move is `\komaSharp` at n=14 inside a six-class mean; on every low-n-robust measure (micro recall, macro≥30) it beats `round1-best`, ties on micro F1, and improves SER and exact-match. Same reasoning as the Round-1 ship: the rule exists to block *worse* models. | LOCKED |
+| 2026-07-27 | **A gate strip is never swapped out to make the browser gate read clean.** The one failing strip stays in `GATE_STRIPS.txt` so the ORT-web int8 wobble keeps being measured. | LOCKED |
 
 ## Working practice
 

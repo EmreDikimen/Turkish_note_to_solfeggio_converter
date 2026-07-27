@@ -2,7 +2,32 @@
 
 purpose: the current round: what was measured, what was fixed at source, what remains
 audience: agents and the owner working the real-page track
-updated: 2026-07-26
+updated: 2026-07-27
+
+## Result — exam read once, 2026-07-27: NOT SHIPPED
+
+**Headline regressed, everything else improved.** On the identical 326-strip clean set with the
+same re-audited gold: mean AEU F1 **78.0 → 73.9%**, while SER (0.059 → 0.052), exact-match
+(50.0 → 52.1%) and 9 of the 11 pre-registered floors moved the right way. Numbers, floors table and
+the print-position split: [../METRICS.md](../METRICS.md).
+
+**The diagnosis was right; the correction was incomplete.**
+
+- Removing the label noise did what it was supposed to: the one-directional küçük→koma fallback is
+  **gone**, and küçük-in-signature recall went **50 → 72%**.
+- Underneath it sits a **symmetric koma↔küçük confusion, entirely inside the key signature** —
+  `\kucukSharp → \komaSharp` 8×, `\komaSharp → \kucukSharp` 7×, all 15 in the `\sig` block, net
+  `\komaSharp` emission 0. That is a discrimination failure, not a bias.
+- It destroys `\komaSharp` (F1 21.4%) because n=14, and a per-class mean over six classes carries
+  that straight into the headline. `\kucukSharp`, with 33 gold, absorbs the same coin flip and still
+  reads 69.7%.
+- **The lead for Round 3:** every fidelity measurement so far — `sharp_probe`, bar weight, the küçük
+  pitch widened to 0.65 S — was taken on INLINE glyphs. Signature glyphs are packed at
+  `SIG_GLYPH_ADVANCE = 13 px` and have never been examined, and that is where 32 of the exam's 33
+  küçük tokens are printed.
+
+Attribution caveat, stated before the run and still binding: this round changed the glyph weight AND
+removed the label noise AND added pieces, so no single one of them owns the movement.
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
@@ -73,11 +98,43 @@ Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIO
     default so an A/B against `strips_v3` stays possible.** Flats untouched (89–92%, healthy).
     Verified in-browser: every AEU sharp replaced, 0 left on Bravura. Residual: büyük keeps a 0.21 S
     gap (its 0.51 S pitch is Bravura's) — n=3 in the exam, revisit only if it shows up.
-  - **Still owed on this lever: the FREQUENCY imbalance.** Inline (on a note, not in a signature),
-    `strips_v3` has `\komaSharp` in 1,887 strips vs `\kucukSharp` in **206** (0.5%), and **zero**
-    strips carry both inline — the model has never seen the pair contrasted in one image. The
-    re-render should balance the counts and put koma/küçük/bakiye on neighbouring notes. The
-    Round-1-era "boost komaSharp share" item stays overturned (koma is the over-represented one).
+  - **⛔ The "FREQUENCY imbalance" follow-up was aimed at the wrong context — corrected 2026-07-26.**
+    It read: inline, `strips_v3` has `\komaSharp` in 1,887 strips vs `\kucukSharp` in 206, zero
+    strips carry both, so balance the counts and put the three sharps on neighbouring notes. All
+    true, and all about a context the exam barely contains. Splitting every gold label by print
+    position (numbers in [../METRICS.md](../METRICS.md)) shows küçük is scored **32:1 inside the
+    row-start key signature**, and the carry serializer's `sigTolerant` rule explains why: a note
+    whose alteration runs the same direction as the signature's is printed **bare**, because SymbTr
+    stores the sounding value (eviç = a 5-comma F♯ printed bare under a koma-sharp-F signature).
+    Confirmed by dry render — two küçük-heavy pieces under non-küçük signature variants produced
+    **zero** inline `\kucukSharp`. In the signature context the corpus is already balanced (küçük
+    1,210 strips vs koma 1,422).
+  - **✅ AND A SECOND CAUSE, found the same day: the carry pages drew accidentals their labels did
+    not mark.** `sigTolerant` lived on the label side only, so `SheetView` marked every deviation
+    from the signature while the serializer wrote the note bare. **18.8% of v3's signature-bearing
+    carry strips** are affected, worst of all `\kucukSharp`: **2,369 drawn-but-unlabelled against 234
+    labelled correctly — 91% of the küçük sharps drawn on a notehead were labelled as nothing.**
+    Training on that teaches exactly the observed behaviour (48% recall at 100% precision). Fixed by
+    giving the drawing the same rule — owner decision, because real editions print bare. Counts in
+    [../METRICS.md](../METRICS.md). `round1-best` trained on the un-fixed corpus, so its sharp
+    numbers carry label noise as well as glyph weight, and nothing measured so far separates them.
+  - **What replaces it:** the corpus gap is **diversity, not count** — signature-position küçük
+    comes from only 3 makams (mahur, nisaburek, süzidilara) in 4 spellings, so the model can learn
+    "this makam ⇒ this donanım" instead of reading the glyph. Round 2 therefore re-renders with
+    `--thin-sharps` (the glyph fix helps both print positions), adds küçük-bearing pieces, and
+    adds küçük-bearing pieces. The Round-1-era "boost komaSharp share" item stays overturned; the
+    enharmonic-respell idea was dropped before use (see [../DECISIONS.md](../DECISIONS.md)).
+    A generated signature-drill set was also **dropped**: across every adjudicated real signature we
+    hold, `\kucukSharp` appears on **f and nowhere else** (104 occurrences), so a drill would have to
+    print accidental/letter pairs no edition prints.
+  - **✅ `strips_v4` BUILT (2026-07-26)** — 40,841 strips / 202 pieces, thin sharps + the pixels-vs-
+    labels fix + 23 küçük-bearing pieces − 5 exam pieces; audit PASS, Mac train smoke PASS; val is
+    `split_v3`'s verbatim so the v3 A/B stays matched. Sizes in [../METRICS.md](../METRICS.md).
+  - **✅ Scorers now split recall by print position** (`score_photo_gold.py`,
+    `score_clean_baseline.py` via `score_photos_exam.tally`): on the photo gold küçük reads **50% in
+    the signature** (22 gold) where `\bakiyeSharp` reads 83% in the same position — the deficit
+    follows the glyph, not the position. Headline unchanged (73.7% / 75.9%), so the split is
+    additive.
 - **Recover the hard pages we had to drop** — many real strips were dropped earlier because the old
   reading model couldn't line them up. The Round-1 model reads better, so it can recover them into
   training. This is our biggest source of new data. It needs human checking, our slowest step, so

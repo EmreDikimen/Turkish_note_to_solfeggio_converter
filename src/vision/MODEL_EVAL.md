@@ -2,7 +2,7 @@
 
 purpose: the raw log of every model run, gate and export — settings, error dumps, verdicts
 audience: whoever needs the detail behind a number
-updated: 2026-07-26
+updated: 2026-07-27
 
 > **Append-only.** New runs go at the END, under a `## <run> (<date>): <verdict>` heading.
 > Summary numbers are collected in `docs/METRICS.md`; project state in `docs/STATUS.md`.
@@ -27,6 +27,8 @@ updated: 2026-07-26
 | Round 1 — exam v2.1 FINAL | 2026-07-22 | ⛔ does not pass (5 floors) |
 | Round 1 — exam contamination check | 2026-07-22 | verdict unchanged |
 | Round 1 — ship (int8 parity + browser gate) | 2026-07-23 | shipped, 19/20 gate |
+| Round 2 — `strips_v4` two-stage fine-tune (Colab) | 2026-07-26 | converged |
+| Round 2 — exam v2.1 FINAL (read once) | 2026-07-27 | ⛔ headline regressed, NOT shipped |
 | Round-2 run-first diagnostics (tiers, degrade probe) | 2026-07-23 | done |
 | Carry-sig bug characterization | 2026-07-24 | logged |
 
@@ -891,3 +893,67 @@ cleanup that drops inline accidentals on mid-row strips matching the row signatu
 rate on b/a/f/e (synthetic, perfect labels) + exam `\komaFlat` precision. Palliative-vs-root note:
 (a)/(b) reduce the prior; (c) cleans the output directly and needs no training — likely the cheapest
 first move.
+
+## Round 2 — `strips_v4` two-stage fine-tune (Colab, 2026-07-26): converged
+
+L4, batch 16, `--every-share 0.15`, `--num-workers 10`. Corpus `strips_v4` / `split_v4.json`
+(36,057 synthetic train / 4,769 synth-val).
+
+- **Stage 1** — synthetic only from BASE, lr 3e-5, 6,000 steps, ~1.25 s/step. Val loss
+  0.1009 → **0.0111**, flat from step 4000 (0.0123 / 0.0119 / 0.0111 / 0.0112 / 0.0112). Converged.
+- **Stage 2** — real specialisation from stage-1 `best`, lr 1e-5, warmup 100, 2,000 steps, real
+  pools at `:9` (1,523 + 395 + 148 train ×9 = 18,594 → **34.0%** of 54,651 items).
+  `exam-disjointness OK: 444 real pieces, 0 in the 33-piece exam`.
+
+| step | synth val | **real val** | mix (what `best` tracks) |
+|---|---|---|---|
+| 500 | 0.0087 | **0.0988** | 0.0136 |
+| 1000 | 0.0074 | **0.0976** | 0.0123 |
+| 1500 | 0.0071 | **0.1021** | 0.0122 |
+| 2000 | 0.0067 | **0.1020** | 0.0118 |
+
+**Real val loss bottomed at step 1000 and rose after**, while the synth-dominated mix kept falling —
+so `best` followed the mix, landed on the final step, and `best` == `last` (their real-val evals are
+byte-identical). This is the Round-1 caveat reproducing exactly: oversampled real overfits fast and
+the checkpoint selector does not see it. Training stage 2 longer was rejected on this evidence;
+shortening it was also rejected, because choosing steps on real-val is tuning on a metric with a
+measured 28pp gap to the exam.
+
+Real-val (271 strips): AEU recall 96.3%, mean F1 90.3%, SER 0.027, exact 66.8%.
+**Real-val could not see this round's work:** `\kucukSharp` recall 95.2% — identical to Round 1
+Arm A's 95.2%, on n=21. It was already saturated on the class the round existed to fix.
+
+## Round 2 — exam v2.1, read ONCE (2026-07-27): ⛔ headline regressed, NOT shipped
+
+`eval_omr.py --checkpoint data/checkpoints/round2-stage2-best --strips-dir
+data/real/rung3/strips_exam_v2_clean --split none` (326 strips, re-audited gold). Full console
+output kept at `data/colab/round2-exam.txt`; all 156 mismatching strips at
+`data/colab/round2-exam-errors.txt`.
+
+Headline **74.2% recall / 73.9% mean F1**, SER 0.052, exact 52.1%. Against `round1-best` on the
+**identical set with identical gold** (its 2026-07-25 read): 78.5% / 78.0%, SER 0.059, exact 50.0%.
+Floors table and the print-position split: `docs/METRICS.md`.
+
+Per-class recall: koma♯ 21.4 · bakiye♯ 91.7 · küçük♯ 69.7 · koma♭ 90.5 · bakiye♭ 87.0 · küçük♭ 85.0.
+
+**Substitution census over the 156 mismatching strips** (parsed with a token alternation — the
+decode prints tokens unspaced, e.g. `\kucukSharpf`, so a naive `\\[A-Za-z]+` undercounts):
+
+| gold → decoded | n | inside `\sig` |
+|---|---|---|
+| `\kucukSharp` → `\komaSharp` | 8 | 8 |
+| `\komaSharp` → `\kucukSharp` | 7 | 7 |
+| `\natural` → `\bakiyeSharp` | 3 | 0 |
+| `\bakiyeSharp` → `\komaSharp` | 2 | 1 |
+
+Net `\komaSharp` emission over those strips: **0**.
+
+**Verdict.** The label-noise fix did what it was predicted to do — the Round-1 one-directional
+küçük→koma fallback is gone and küçük-in-signature went 50 → 72%. Underneath it is a **symmetric
+koma↔küçük confusion confined to the key signature**: a discrimination failure, not a bias. It
+destroys `\komaSharp` (n=14, F1 21.4%) and a six-class mean carries that into the headline.
+
+**Next measurement, before any re-render:** every fidelity number we have (`sharp_probe`, 0.300 S
+bar weight, küçük pitch widened to 0.65 S) was taken on INLINE glyphs. Signature glyphs are packed
+at `SIG_GLYPH_ADVANCE = 13 px`, have never been measured, and hold 32 of the exam's 33 küçük tokens
+— where extra bar width may hurt rather than help.

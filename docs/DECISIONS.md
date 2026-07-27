@@ -2,7 +2,7 @@
 
 purpose: one line per decision so nobody re-opens a settled question or re-runs a cancelled experiment
 audience: agents and the owner, before proposing any change of direction
-updated: 2026-07-26
+updated: 2026-07-27
 
 Status values: **LOCKED** (stands), **OVERTURNED** (replaced by evidence), **DROPPED** (abandoned
 on purpose), **SUPERSEDED** (a later decision covers it). Reasoning for the abandoned ones is kept
@@ -34,6 +34,14 @@ in [log/superseded.md](log/superseded.md) — read it before re-proposing anythi
 | 2026-07-21 | `bakiyeSharp→kucukFlat` enharmonic respell to fix the kucukFlat gap. | **HELD** — the gap is a makam-mix artifact |
 | 2026-07-26 | **All four AEU sharps get the thinner real-print bars**, not just the broken one — otherwise the model learns a thickness cue that real pages don't have and bar *count* stops being the discriminator. Flats untouched (89–92%, healthy). | LOCKED |
 | 2026-07-26 | **`drawThinSharps` ships OFF by default** (`?thinsharps=1` / `--thin-sharps`) so an A/B against `strips_v3` stays possible. | LOCKED |
+| 2026-07-21 | Fix the microtonal sharps by balancing **inline** frequency and putting koma/küçük/bakiye side by side in one strip. | **OVERTURNED 2026-07-26** — küçük is scored 32:1 in the key signature, and the `sigTolerant` printing rule means real pages barely print it on a note. Re-aimed at glyph fidelity + signature-context diversity ([METRICS.md](METRICS.md)) |
+| 2026-07-26 | **Enharmonic respell `\bakiyeFlat` → `\kucukSharp`** to manufacture küçük examples. | **DROPPED before use** — prints a spelling real editions don't use, and küçük precision is already 100%, so it could only fall |
+| 2026-07-26 | **Exam pieces are excluded at SELECTION time**, not only by the train-time guard: `select_pieces.py --exam` refuses them by SymbTr id, because a synthetic render of an exam piece is training on that piece. | LOCKED |
+| 2026-07-26 | **Extend the piece selection instead of re-rolling it** (`--keep`): re-running the greedy coverage pick would change which pieces are held out and invalidate the existing split. | LOCKED |
+| 2026-07-27 | **Round 2 is NOT shipped.** The exam headline regressed (78.0 → 73.9% mean AEU F1 on the identical 326-strip set) even though SER, exact-match and 9 of 11 floors improved. Round 1 shipped as "improvement, not a pass"; that argument does not extend to a model whose headline moved backwards. | LOCKED |
+| 2026-07-27 | **The Round-1 sharp diagnosis is CONFIRMED but INCOMPLETE.** Removing the label noise killed the one-directional küçük→koma fallback exactly as predicted, and küçük-in-signature went 50 → 72%. What it exposed underneath is a SYMMETRIC koma↔küçük confusion (8× vs 7×, all inside the `\sig` block, net emission 0) — a discrimination failure, not a bias. | LOCKED |
+| 2026-07-27 | **Signature-packed glyphs are the next lever, not inline ones.** The whole fidelity investigation (`sharp_probe`, bar weight, küçük pitch → 0.65 S) measured INLINE glyphs; signature glyphs are packed at `SIG_GLYPH_ADVANCE = 13 px` and were never examined, and 32 of the exam's 33 küçük tokens live there. | LOCKED (opens Round 3) |
+| 2026-07-26 | **Carry-mode pixels are fixed to the LABEL, not the other way round**: `SheetView` now draws a same-direction alteration BARE, like `sigTolerant` in the serializer and like real editions (the exam has 1 inline küçük in 352 strips). The alternative — labelling every drawn sign — would keep printing accidentals real pages omit. | LOCKED (owner decision) |
 
 ## Real data, exams and measurement
 

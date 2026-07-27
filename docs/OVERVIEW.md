@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-07-26
+updated: 2026-07-27
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -29,9 +29,27 @@ Reassemble** the strips back into a full score.
 
 ## Where we are right now
 
+- **Round 2 is finished, and we did not ship it.** We fixed two real problems in how we make our
+  training pictures (see below), trained again, and took the exam once. The exam score went **down**:
+  78% → **74%**. Almost everything else got a little better — fewer mistakes overall, more strips read
+  perfectly — but the headline number moved the wrong way, so the old model stays live.
+- **Why the score dropped is worth understanding, because it is not bad news.** The whole drop comes
+  from **one mark**, the koma sharp, and the exam only has **14** of them. Our score is an average
+  over six marks, so one mark doing badly pulls the average down hard. The mark we were actually
+  trying to fix — the küçük sharp — **got better**: from 50% to **72%** where it matters most.
+- **What we learned.** The old mistake was one-way: when unsure, the model always guessed "koma".
+  That guessing habit is now **gone** — which is exactly what our fix was supposed to do. What is left
+  underneath is different: the model now mixes koma and küçük up **in both directions, equally**, and
+  **only inside the key signature** (the marks printed once at the start of each line). It is no
+  longer guessing; it genuinely cannot tell 2 bars from 3 bars there.
+- **The next thing to check.** All our careful measuring of how these marks should look was done on
+  marks printed **on a note**. The marks in the key signature are squeezed together in a fixed space,
+  and we have **never measured those** — even though that is where almost all the hard marks are.
+  We may even have made them worse by widening them. So: measure first, and only then change anything.
 - We finished **Round 1** — the first time the model trained on **real** printed pages (before, it
   only trained on clean computer-made ones). It scored **about 66%** on the exam (real pages it never
   trains on), below our **85%** target, but clearly better than the old model, so we **shipped it**.
+  It is still the model in the app today.
 - **We ran the phone-photo test.** At first the model looked terrible on photos — but the real problem
   was the **slicer** (step 1): on a slightly tilted photo it could not even find the staff lines, so
   it produced *nothing* to read on 7 out of 10 photos. We added a small "clean-up" step (straighten
@@ -138,4 +156,6 @@ shoot **different** pieces (there are thousands available).
 | **bare note** | A note with no mark drawn. It may still be "lowered" by the line's signature — but the model should still write it bare and let reassembly apply the signature. |
 | **slicer** | Step 1: the tool that cuts a page into strips. It first finds the staff lines; on tilted photos it failed, which we fixed with a "clean-up" step. |
 | **exam** | Real pages the model never trains on — our honest score. It read 66% first; after we fixed 13 wrong answers in the answer key it reads ~78%, but most of that jump is the scoring quirk explained above, not the model improving. |
-| **Round 1** | The first cycle of training the model on real pages. Just finished, now live. |
+| **Round 1** | The first cycle of training the model on real pages. Shipped, and still the model in the app. |
+| **Round 2** | The second cycle. Fixed two problems in how we make training pictures, but the exam score went 78% → 74%, so it was **not** shipped. |
+| **key signature** | The group of marks printed once at the start of a line, which apply to every matching note on it. This is where almost all the hard marks are — and where the model still gets confused. |

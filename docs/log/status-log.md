@@ -2,12 +2,143 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-07-26
+updated: 2026-07-27
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+## 2026-07-27 — Round 2 read the exam once: headline down, everything else up, diagnosis half-right
+
+Trained on `strips_v4` with Round 1's recipe held fixed (two-stage, `--real-dir …:9` to hold real at
+34% of batches). Exam read once on the 326-strip clean set. Numbers: [../METRICS.md](../METRICS.md).
+
+**The result is genuinely mixed, and the headline is the part that got worse.** Against `round1-best`
+on the *identical* strips with the *same* re-audited gold: mean AEU F1 **78.0 → 73.9%**, but SER
+0.059 → 0.052, exact 50.0 → 52.1%, and 9 of 11 floors improved (Round 2 clears `\komaFlat`
+precision, which Round 1 missed). **Not shipped** — Round 1's "improvement, not a pass" argument
+does not extend to a model whose headline moved backwards.
+
+**What the fixes actually did.** Küçük-in-signature recall went **50 → 72%**, and küçük overall
+58.1 → 69.7% — the label-noise fix worked in exactly the place it was aimed. Its precision fell
+100 → 76.7%, the trade registered before the run.
+
+**What they exposed.** The Round-1 error was one-directional: gold küçük decoded as koma, reverse
+essentially never — the signature of a fallback bias, which is what 91% of drawn küçüks being
+labelled as nothing would produce. That bias is gone. Underneath it is a **symmetric** confusion:
+`\kucukSharp → \komaSharp` 8×, `\komaSharp → \kucukSharp` 7×, **all 15 inside the `\sig` block**,
+net `\komaSharp` emission **0**. The model is no longer guessing the common class; it genuinely
+cannot tell 2 bars from 3 at signature positions.
+
+*(An earlier reading of this — "we flipped the bias" — was wrong, and the confusion counts
+disconfirmed it. Net komaSharp emission of 0 is not a bias in either direction.)*
+
+`\komaSharp` collapses to F1 21.4% because n=14: seven wrong swaps is half the class. `\kucukSharp`
+takes the same coin flip across 33 gold and still reads 69.7%. A per-class mean over six classes
+then carries koma's collapse straight into the headline — the low-n fragility METRICS has warned
+about since Round 1, now costing 4pp.
+
+**The lead this opens.** Every glyph-fidelity measurement we have — `sharp_probe`, the 0.300 S bar
+weight, küçük's pitch widened to 0.65 S — was taken on **inline** glyphs. Signature glyphs are
+packed at `SIG_GLYPH_ADVANCE = 13 px`, were never examined, and hold **32 of the exam's 33 küçük
+tokens**. Widening küçük's bars may even hurt there, where horizontal room is fixed. That is Round
+3's first measurement, and it should be measured before anything is re-rendered.
+
+Instrumentation added the same day: `eval_omr.py` now reports recall split by print position, which
+is how the signature-only confinement was visible at all.
+
+## 2026-07-26 (later) — The küçük deficit is a SIGNATURE-reading problem, and 5 exam pieces were in the corpus
+
+Two findings while starting the Round-2 re-render, both of which changed what gets rendered.
+
+**1. We had been aiming at the wrong print position.** The Round-1 follow-up said to balance
+*inline* küçük frequency (1,887 koma vs 206 küçük strips) and to put the three sharps on
+neighbouring notes. Splitting every gold label into `\sig … \sigend` tokens vs note tokens shows the
+exam's küçük gold is **1 inline vs 32 in the signature** (photo gold: 3 vs 13), and the scorers
+count both. So the whole class is effectively scored at the row start.
+
+It cannot be otherwise, and the reason was already in our own code: `noteToLily`'s `sigTolerant`
+branch (`tools/render/lilypond.ts`) prints a note **bare** when its alteration runs the same
+direction as the signature's — SymbTr stores the SOUNDING value, so eviç is a 5-comma F♯ printed
+bare under a koma-sharp-F signature, which is what real editions do. Confirmed end-to-end: a dry
+render of two küçük-heavy pieces (mahur, nisaburek) under real non-küçük signature variants produced
+**zero** inline `\kucukSharp` — the mechanism built to force them inline cannot work, by design.
+
+In the context that scores, the corpus was never imbalanced: küçük sits in 1,210 signature strips
+against koma's 1,422. The real gap is **diversity** — signature-position küçük comes from just 3
+makams in 4 spellings, so "mahur ⇒ küçük-f donanım" is learnable without reading the glyph.
+
+*Why this was missed:* the imbalance was counted with the signature block stripped out, and the
+count was never checked against where the gold actually sits. Print position is now a first-class
+split in METRICS, and the scorers owe the same split.
+
+**2. `strips_v3` contained 5 exam pieces.** `hisarbuselik--vuslata_nail`, two `kurdilihicazkar`
+şarkıs, `mahur--cihani_lal-i`, `nikriz--zeybek`. The train-time disjointness guard added after the
+Round-1 contamination only inspects the `--real-dir` pools, so our own synthetic engraving of an
+exam piece walked straight past it. `select_pieces.py` now refuses exam pieces by SymbTr id at
+selection time.
+
+**Shipped with this:** `select_pieces.py --keep/--boost-class/--per-makam-cap/--sig-table/--exam`
+(extend a selection instead of re-rolling it — re-rolling would change the held-out set and
+invalidate the split), `data/pieces_v4.json` = 208 pieces (185 kept − 5 exam + 23 küçük-bearing,
+capped at 6 per makam and restricted to makams with a real printed signature).
+
+**Dropped before use:** the enharmonic respell `\bakiyeFlat` → `\kucukSharp`. It works mechanically
+and is the same trick that manufactures büyük examples, but it prints a spelling real editions
+don't use, and küçük precision is already 100% — it could only fall.
+
+**3. Then the dry render showed a strip drawing a sharp its label didn't mark — and it was in the
+shipped corpus.** `sigTolerant` (print same-direction alterations bare) was implemented on the
+LABEL side only; `SheetView` drew every deviation from the signature. Counted over `strips_v3`:
+**18.8% of signature-bearing carry strips draw at least one accidental the label omits** (5,240 /
+27,933; 8,485 accidentals, 137 pieces), and the worst-hit class is `\kucukSharp` — **2,369 drawn but
+unlabelled against 234 correctly labelled inline, i.e. 91% of the küçük sharps drawn on a notehead
+are labelled as nothing.** The model was trained to see the glyph and emit nothing, which is exactly
+its measured behaviour: 48% recall at 100% precision.
+
+Fixed in `SheetView` by giving the drawing the same rule (owner decision: fix the pixels, because
+real editions print bare — the exam has 1 inline küçük in 352 strips). Verified pixels-only: over a
+re-rendered piece all 20 labels are byte-identical, the previously spurious sharp is gone from the
+image, and genuine deviations still print. `round1-best` trained on the un-fixed corpus, so its
+sharp numbers carry label noise as well as Bravura's bar weight — the two are not separated by any
+measurement taken so far.
+
+**4. Built the check whose absence let all of this ship: `tools/render/verify-labels.ts`.** It
+re-opens every job from the corpus manifest (which stores the full URL parameter set, so the job
+reproduces exactly), reads every accidental glyph out of the live SVG — Bravura glyphs by SMuFL
+codepoint, the redrawn AEU sharps by their unique stem/bar counts — assigns each to the crop rect it
+falls inside, and compares against that strip's label, signature block included. Glyph identity
+comes from the DOM, never from the code under test.
+
+Validated with a POSITIVE CONTROL before being believed: with the `sigTolerant` fix temporarily
+reverted it flagged 15 of 30 strips on three known-bad v3 jobs, every delta exactly `\kucukSharp`
+drawn-but-unlabelled. A gate that has never been shown to fail proves nothing.
+
+Full `strips_v4` pass: **40,826 of 40,841 exact, 0 label drift, no unrecognised glyphs.** The 15
+flagged are crop-boundary bleed — measure boxes don't split exactly between glyphs, so a crop
+occasionally clips its neighbour's accidental; they appear as ± pairs on adjacent strips, and the
+image shows a cut-off notehead before the barline. Geometric, pre-existing, 0.037%. Excluded from
+the manifest rather than trained on (`excluded_boundary_bleed.txt`), so the shipped corpus is 40,826
+strips. `make_round2_colab_zip.sh` refuses to build if any flagged strip is still in the manifest.
+
+**5. The Round-2 shakeout refused to start — and it was right to.** `train.py`'s exam-disjointness
+guard found **4 real-pool pieces that are also exam pieces** (`huzzam--sevdim_yine`, two
+`kurdilihicazkar` şarkıs, `saba--neydin_guzelim`). These are the 2026-07-22 contamination: the guard
+was added then, but nobody removed the strips behind it, so they survived into Round 2 and this is
+the first run that actually tripped over them. 14 strips dropped (11 nota, 3 tup); real pools are now
+2,337 strips / 444 pieces with zero exam overlap. Originals kept as `manifest.jsonl.pre-examclean`.
+
+The lesson is not "the guard works" but that a **guard without a cleanup leaves the bad data in
+place** — it only converts a silent problem into a loud one at the next run, which in this case was
+four months later. The same shape as finding 3: the check that would have caught it did not exist
+where the data was produced.
+
+**Not built: the signature-contrast drill set.** The plan was to generate donanım spellings the 3
+real küçük makams don't cover. Dropped after checking the adjudicated real labels: across every
+printed signature we have, `\kucukSharp` appears on **f and nowhere else** (104 occurrences), so a
+drill would have to print accidental/letter pairs no edition prints — the same objection that killed
+the respell. Signature coverage comes from the 23 added pieces instead.
 
 ## 2026-07-26 — Microtonal sharps: it was our renderer, fixed at source
 

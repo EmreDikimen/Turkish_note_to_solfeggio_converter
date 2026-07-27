@@ -134,6 +134,15 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
   carry (`measure`) mode is dominant, conventional signatures come from `data/makam_signatures.json`
   (`--sigs`), seeded slur distractors are on (`slurseed`), and `--thin-sharps` renders the four AEU
   sharps at real-print bar weight (opt-in — see the Status list).
+- `verify-labels.ts` — the PIXELS-vs-LABELS gate. Re-opens every job from a corpus manifest, reads
+  the accidental glyphs out of the live SVG (SMuFL codepoint; the `--thin-sharps` AEU sharps by
+  their unique stem/bar counts) and checks each crop rect's glyphs against that strip's label,
+  `\sig` block included. Run:
+  `npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]`
+  (`--limit`/`--every` for a quick pass). **A corpus is not trainable until this passes** — the
+  carry decision is duplicated between `SheetView.tsx` and `lilypond.ts`, and when they silently
+  diverged, 18.8% of `strips_v3`'s carry strips drew accidentals their labels omitted. If you change
+  either rule, re-run it, and check the report's mismatch deltas rather than only the pass count.
 - `labels-cli.ts` — the Rung-3 emitter's TS half: serves, for a real page's decoded measure ranges,
   the carry-mode label of each range (`mode: "measure"` bodies joined by `|`) so a name-matched
   SymbTr score becomes ground truth for real strips (`scripts/rung3/emit_strip_labels.py`).

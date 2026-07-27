@@ -1,13 +1,25 @@
-# Rung 2 on Google Colab — first-timer's guide
+# Training on Google Colab — first-timer's guide
 
 purpose: how to run training on Colab (the fanless-Mac offload path)
 audience: whoever is launching a training run
-updated: 2026-07-08
+updated: 2026-07-26
 
 > How to run the scaled fine-tune (`src/vision/train.py`) on Colab, written for someone who has
-> never used Colab. The ready-made notebook is **`notebooks/rung2_colab.ipynb`**; this doc is the
-> context around it: what Colab is, which plan to buy, how not to lose a run, and what "done"
-> looks like.
+> never used Colab. This doc is the context around the notebooks: what Colab is, which plan to buy,
+> how not to lose a run, and what "done" looks like.
+>
+> **One notebook per round — never re-point an old one.** Each carries its round's corpus paths,
+> recipe and caveats in its own cells, so a stale path can't silently train on the wrong data:
+>
+> | Round | Notebook | Zip | Corpus |
+> |---|---|---|---|
+> | Rung 2 | `notebooks/rung2_colab.ipynb` | `tnc_rung2_colab.zip` | `strips_v2_2` |
+> | Round 1 | `notebooks/round1_colab.ipynb` | `tnc_round1_colab.zip` | `strips_v3` + real pools |
+> | **Round 2** | **`notebooks/round2_colab.ipynb`** | `tnc_round2_colab.zip` (`scripts/make_round2_colab_zip.sh`) | `strips_v4` + real pools |
+>
+> Round 2 differs from Round 1 in three places that matter: `--strips-dir data/synthetic/strips_v4`,
+> `--split data/split_v4.json`, and the real-pool oversample **`:9` not `:8`** (synthetic grew, so
+> `:8` would drop real from ~34% to 31.9% of batches). It runs ONE recipe, not an A/B.
 >
 > **Outcome: Rung 2 PASSED on the first full run (2026-07-07, batch 16, lr 3e-5, 6000 steps ≈
 > 110 min)** — full result in `src/vision/MODEL_EVAL.md`; checkpoint copied local to

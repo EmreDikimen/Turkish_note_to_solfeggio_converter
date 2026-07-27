@@ -42,7 +42,8 @@ npm run typecheck                    # all workspaces
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
 npx --yes tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/<set> [--thin-sharps]
-npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 194/194 round-trip
+npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
+npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]
 .venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
 ```
 
@@ -62,7 +63,10 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 - **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COLAB.md`), or locally with
   `nice -19` and `OMR_ORT_THREADS=2`.
 - **Pixels and labels must be produced by the same code path.** The renderer and the label
-  serializer share `rhythm.ts` / `stripExport.ts` on purpose — never hand-write a label.
+  serializer share `rhythm.ts` / `stripExport.ts` on purpose — never hand-write a label. Where a
+  rule IS duplicated (the carry/`sigTolerant` decision lives in both `SheetView.tsx` and
+  `lilypond.ts`), a corpus is not trainable until `tools/render/verify-labels.ts` passes on it:
+  that duplication silently cost Round 1 (docs/METRICS.md).
 - **Commits:** short lowercase subject, no co-author trailer.
 
 ## Doc conventions (keep them or the docs rot)
@@ -87,8 +91,8 @@ Full guide — what to update after a session, and why each rule exists:
 
 ```
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
-data/synthetic/       rendered strips — strips_v3 is current, older sets kept
+data/synthetic/       rendered strips — strips_v4 is current, older sets kept (v3 = the A/B control)
 data/checkpoints/     round1-best (+ -onnx int8, the live runtime), earlier rung2*/rung22* runs
-data/split.json       piece-level train/val split (strips_v3 uses data/split_v3.json)
+data/split.json       piece-level train/val split (strips_v4 uses data/split_v4.json, v3 split_v3)
                       — ALWAYS split by piece, never by strip: strips of one piece are near-duplicates
 ```

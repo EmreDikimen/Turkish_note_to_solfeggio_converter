@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Accidental, Barline, Beam, Dot, Formatter, GraceNote, GraceNoteGroup, Renderer, Stave, StaveModifierPosition, StaveNote, StaveTie, Tuplet } from "vexflow";
+import { Accidental, Barline, Beam, Dot, Formatter, Fraction, GraceNote, GraceNoteGroup, Renderer, Stave, StaveModifierPosition, StaveNote, StaveTie, Tuplet } from "vexflow";
 import {
   accidentalGlyph,
   accidentalLabel,
@@ -30,10 +30,49 @@ const CLEF_W = 50; // extra width the leading clef costs on the first stave of a
 const SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
 const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
 const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
-const LYRIC_DY = 30; // baseline of the lyric line below the bottom staff line
+// Baseline of the lyric line below the bottom staff line. MUST stay inside the strip crop, which
+// ends 106 px below the stave top = 26 px below the bottom staff line (stripExport's PAD_TOP +
+// STAFF_H). At the old value of 30 the baseline fell 4 px BELOW the crop, so training strips
+// caught only the ascender tips of each syllable while real crops carry whole letterforms
+// (measured: 11% of synthetic strips had ink outside the staff band vs 42-52% of real ones).
+const LYRIC_DY = 24;
 // Staff line each signature accidental sits on (VexFlow treble: F5=line0, B4=line2, E4=line4),
 // choosing an octave that keeps every letter on the staff.
 const SIG_LINE: Record<string, number> = { C: 1.5, D: 1, E: 0.5, F: 0, G: 3, A: 2.5, B: 2 };
+
+// --- print realism (render automation only; pixels, never labels) ------------
+//
+// Real printed staff lines are FATTER relative to the staff than ours, and their weight varies
+// between editions and scans. Measured on strips normalised to a 30 px staff space
+// (scripts/rung3/domain_gap.py): thickness/spacing was 0.100 for every synthetic strip (SD 0.02 —
+// literally constant) against 0.128-0.159 across the three real pools. VexFlow strokes staff
+// lines at lineWidth 1 on a 10 px staff space; this range straddles the real mean and gives the
+// per-render variation the corpus had none of.
+const STAFF_LINE_WIDTH = { min: 1.0, max: 1.75 } as const;
+
+// How printed Turkish scores beam eighth/sixteenth runs. VexFlow's default is a fixed
+// quarter-note clock ([2/8]), which can only ever produce groups of 2 eighths — measured over
+// strips_v4 it yields 60% two-note groups and essentially no group of 5+. Real engraving beams by
+// USUL group, so the exam pool shows runs of 3, 4 and 5 under one beam. Neither convention is
+// universal (the nota/sarki pool often does print pairs), so a render picks one on a seeded coin
+// and the corpus carries both — which is what the real pools carry.
+//
+// Values are counts of denominator-notes per beam, in order; generateBeams cycles the list.
+// Meters not listed keep VexFlow's default (we do not invent groupings for meters we have not
+// seen engraved).
+const USUL_BEAM_GROUPS: Record<string, number[]> = {
+  "5/8": [2, 3],          // Türk aksağı
+  "6/8": [3, 3],          // yürük semai
+  "7/8": [3, 2, 2],       // devr-i hindî
+  "8/8": [3, 2, 3],       // düyek
+  "9/8": [2, 2, 2, 3],    // aksak
+  "10/8": [3, 2, 2, 3],   // curcuna
+  "12/8": [3, 3, 3, 3],   // ...
+  "5/4": [2, 3],
+  "7/4": [3, 2, 2],
+  "9/4": [2, 2, 2, 3],
+  "10/16": [3, 2, 2, 3],
+};
 
 // VexFlow duration codes paired with their value as a fraction of a whole note.
 const DUR: ReadonlyArray<readonly [string, number]> = [
@@ -761,6 +800,7 @@ export function SheetView({
   textNoise,
   slurNoise,
   thinSharps,
+  printNoise,
   signatureOverride,
 }: {
   doc: NoteModelDocument;
@@ -805,6 +845,11 @@ export function SheetView({
   /** Round-2: redraw the AEU sharps with real-print bar weight so the three bars of a küçük/büyük
    *  mücennep stay separated after downscaling (see drawThinSharps). Pixels only. → Bravura. */
   thinSharps?: boolean;
+  /** Round-3 print realism: seeded staff-line weight + usul beam grouping, so the corpus varies
+   *  the way real editions do (see STAFF_LINE_WIDTH / USUL_BEAM_GROUPS). Pixels only — the labels
+   *  come from the note model and are identical with and without it. Undefined → VexFlow's
+   *  defaults, i.e. every strip rendered before Round 3. */
+  printNoise?: { seed: number } | null;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -852,6 +897,21 @@ export function SheetView({
 
     // Seeded RNG for the phrase-slur distractors (drawn per measure below; same seed → same slurs).
     const slurRng = slurNoise ? mulberry32(slurNoise.seed) : null;
+
+    // Round-3 print realism, drawn once per render so a whole page is internally consistent (a
+    // real edition has ONE staff weight and ONE beaming convention). Draw order is fixed so a
+    // seed always yields the same page.
+    const printRng = printNoise ? mulberry32(printNoise.seed) : null;
+    const staffLineWidth = printRng
+      ? STAFF_LINE_WIDTH.min + printRng() * (STAFF_LINE_WIDTH.max - STAFF_LINE_WIDTH.min)
+      : null;
+    // Beam by the usul's groups on a seeded coin (half the corpus), else VexFlow's quarter-note
+    // clock. Only meters we have actually seen engraved get a grouping.
+    const usulGroups =
+      printRng && printRng() < 0.5 && timeSig
+        ? USUL_BEAM_GROUPS[`${timeSig.num}/${timeSig.den}`]?.map((n) => new Fraction(n, timeSig.den))
+        : undefined;
+    const beamConfig = usulGroups ? { groups: usulGroups } : {};
 
     // The key signature is drawn whenever accidentals aren't shown on every note.
     const showSignature = accidentalMode !== "every";
@@ -953,7 +1013,14 @@ export function SheetView({
             bar?.setX(bar.getX() + reserved);
           }
         }
-        stave.setContext(ctx).draw();
+        // drawWithStyle (not draw) so the seeded staff-line weight is applied and then restored;
+        // it also reaches the barlines, which thicken with the staff in real print.
+        if (staffLineWidth != null) {
+          stave.setStyle({ lineWidth: staffLineWidth });
+          stave.setContext(ctx).drawWithStyle();
+        } else {
+          stave.setContext(ctx).draw();
+        }
         if (svg && repMarks.volta1) drawVolta(svg, stave, "1.");
         if (svg && repMarks.volta2) drawVolta(svg, stave, "2.");
         if (svg && navMarks?.length) drawNavMarks(svg, stave, navMarksAt(cell.m.index, navMarks));
@@ -973,7 +1040,9 @@ export function SheetView({
             const beams: Beam[] = [];
             let run: StaveNote[] = [];
             const flushRun = () => {
-              if (run.length > 0) beams.push(...Beam.generateBeams(run));
+              // A fresh config object per call: generateBeams writes its default groups into the
+              // object it is handed, so a shared literal would leak one run's fallback into the next.
+              if (run.length > 0) beams.push(...Beam.generateBeams(run, { ...beamConfig }));
               run = [];
             };
             for (const n of notes) {
@@ -1112,7 +1181,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps]);
+  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps, printNoise]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

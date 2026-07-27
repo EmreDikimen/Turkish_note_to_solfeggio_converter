@@ -303,6 +303,7 @@ kucukSharp 28, komaSharp 19 (18 scorable), buyukSharp 3 → 0 after the re-audit
 | exam v2 auto-accepts (all 63) | ~6% pitch/duration | 2026-07-17 |
 | tup3 auto-accepts (78 strips) | 10% | 2026-07-19 |
 | exam gold, full re-audit | 13 new label errors found (gold over-sized sharps) | 2026-07-25 |
+| **nota training pool, review of every disagreeing strip** | **521 of 1,740 strips (30%) carry a human-corrected label**; of the strips where label and decode disagreed at all, **~78% of the labels were wrong** | 2026-07-27 |
 | Tie structure in nota pool | ~38% structurally noisy (why ties carry no floor) | 2026-07-20 |
 | **`strips_v3` carry strips: accidental DRAWN but not labelled** | **18.8% of signature-bearing carry strips** (5,240 / 27,933; 8,485 accidentals over 137 pieces) | 2026-07-26 |
 
@@ -353,6 +354,12 @@ against the label of the crop it falls in — signature block included.
   they occur in ± pairs on adjacent strips. Geometric and pre-existing (v3 has it too). Listed in
   `data/synthetic/strips_v4/excluded_boundary_bleed.txt`; PNGs left on disk, rows removed from the
   manifest, so the shipped corpus is 40,826 strips.
+
+⚠ **The 30% figure is over the REVIEWED population, not a random sample.** Every strip checked so
+far was selected for being suspicious — high decode disagreement, or flagged by the low-confidence
+rule. The 556 still-unverdicted strips all have `nd = 0` and were never flagged, so they are likely
+the cleanest slice; their error rate is unmeasured. The July figure (7.2% pitch-level on a random
+69-strip sample) and this one answer different questions.
 
 Adjudication finding: when the label and the model's decode disagreed on an accidental, the
 owner's fixes sided with the **decode 187 times vs SymbTr 14** — printed editions win accidental

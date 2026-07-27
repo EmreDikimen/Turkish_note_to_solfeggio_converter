@@ -43,6 +43,37 @@ delete the evidence, and the precedent is now a decision.
 **Revert path:** the Round-1 runtime is at `data/checkpoints/_public_models_backup_round1/`; the
 Round-2 ONNX at `data/checkpoints/round2-stage2-best-onnx/`.
 
+## 2026-07-27 (evening) — Real-pool label review: 30% of the nota pool had a wrong label
+
+The owner worked the `nota-full` queue through every strip where the label and the model's decode
+disagreed. Promoted with `promote_labels.py`: **54 corrected labels applied, 7 `bad` strips
+removed**, nota pool 1,747 → 1,740, real pools 2,330 strips / 444 pieces, exam guard still clean.
+
+**Hit rate by disagreement level** (checked strips, "wrong" = corrected or removed):
+
+| nd > 0.06 | 0.03–0.06 | 0–0.03 | nd = 0 |
+|---|---|---|---|
+| 77% (228) | 79% (273) | 80% (112) | 26% (73) |
+
+So ~78% of the labels on disagreeing strips were wrong — an extremely high return on review time,
+and far better than labelling new strips from scratch. Combined with pitch being 40% of the model's
+remaining errors, this is the same shape as the `sigTolerant` finding: noisy labels sitting in
+exactly the class we are trying to improve.
+
+**Two caveats recorded so the number is not over-read.** The 30% is over the REVIEWED population,
+which was selected for being suspicious; the 556 strips still unverdicted are all `nd = 0` and were
+never flagged, so their rate is unmeasured and probably lower. And **Round 2 already trained on the
+earlier 467 corrections** — verified by reading the manifest back out of `tnc_round2_colab.zip`,
+which is byte-identical to today's pre-promotion manifest. Only the 54 new ones are new.
+
+**Consequence for Round 3:** its real pool is cleaner than Round 2's. That is one more difference
+between the rounds on top of the corpus changes, so attribution gets harder again unless it is
+chosen deliberately ([../rung3/round3.md](../rung3/round3.md)).
+
+Also promoted-with-rejects: 24 rows rejected by the mechanical gates — 14 `over_budget` from the
+review queue (the deferred recoveries) and 10 `not_in_manifest` (corrections against strips that are
+not in the training pool; checked, none are the exam pieces removed earlier the same day).
+
 ## 2026-07-27 (end of day) — Round 3 planned: note heights and note lengths
 
 Written up in [../rung3/round3.md](../rung3/round3.md). Two diagnostics shaped it, both from the

@@ -122,6 +122,20 @@ Render the corpus with whatever those four checks say. Train with the recipe hel
 (two-stage, `--every-share 0.15`, real oversampled to ~34% of batches — recompute the `:N` repeat if
 the corpus size changes). Read the exam **once**.
 
+## The real pool changed too (2026-07-27)
+
+The `nota-full` review was worked through every disagreeing strip and promoted: 54 corrected labels,
+7 `bad` strips removed. **521 of 1,740 nota strips now carry a human-corrected label**, and ~78% of
+the labels on disagreeing strips turned out to be wrong ([../METRICS.md](../METRICS.md)).
+
+Round 2 already trained on 467 of those corrections, so only the 54 are new — but the pool Round 3
+trains on is cleaner than Round 2's, which is **one more difference between the two rounds**. Add it
+to the attribution question below rather than forgetting it.
+
+Still unmeasured: the 556 strips with no verdict all have `nd = 0` and were never flagged as
+suspicious, so the error rate in that tail is unknown. A random 50 of them would settle whether the
+pool is worth cleaning further or is ready to enlarge.
+
 ## Two things to settle before training, not after
 
 1. **Write down what counts as success first.** The goal is now **≥90% of pages needing ≤5

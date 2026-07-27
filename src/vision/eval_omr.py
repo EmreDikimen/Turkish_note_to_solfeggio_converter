@@ -118,6 +118,13 @@ def main() -> int:
     gold = Counter()   # per-token gold occurrences
     hit = Counter()    # aligned exact matches
     fp = Counter()     # predicted where gold has something else / nothing
+    # Gold/hits ALSO bucketed by WHERE the token is printed: inside the row-start
+    # `\sig … \sigend` block, or inline on a notehead. They are different reading tasks and the
+    # microtonal sharps live almost entirely in the first — on the clean exam `\kucukSharp` is 32
+    # in-signature against 1 inline (docs/METRICS.md) — so a pooled per-class recall cannot say
+    # which one moved. Only recall splits: a false positive has no gold token, hence no position.
+    pos_gold, pos_hit = Counter(), Counter()
+    sig_ids = {tok.convert_tokens_to_ids(t): t for t in ("\\sig", "\\sigend")}
     S = D = I = N = 0
     exact = 0
     shown = 0
@@ -167,19 +174,26 @@ def main() -> int:
                     print(f"   ✗ {ds.strips[at + k].image_path.name}")
                     print(f"     want: {label}")
                     print(f"     got : {tok.decode(got_ids, skip_special_tokens=True).strip()}")
+                in_sig = False  # ops run in reference order, so the block state tracks as we go
                 for op, r, h in align(ref, hyp):
+                    if op != "ins" and r in sig_ids:
+                        in_sig = sig_ids[r].endswith("sig")  # \sig opens, \sigend closes
+                    bucket = "sig" if in_sig else "inline"
                     if op == "match":
                         if r in tracked_ids:
                             gold[r] += 1
                             hit[r] += 1
                             st["gold"][r] += 1
                             st["hit"][r] += 1
+                            pos_gold[(bucket, r)] += 1
+                            pos_hit[(bucket, r)] += 1
                     elif op == "sub":
                         S += 1
                         st["S"] += 1
                         if r in tracked_ids:
                             gold[r] += 1
                             st["gold"][r] += 1
+                            pos_gold[(bucket, r)] += 1
                         if h in tracked_ids:
                             fp[h] += 1
                             st["fp"][h] += 1
@@ -189,6 +203,7 @@ def main() -> int:
                         if r in tracked_ids:
                             gold[r] += 1
                             st["gold"][r] += 1
+                            pos_gold[(bucket, r)] += 1
                     else:
                         I += 1
                         st["I"] += 1
@@ -226,6 +241,20 @@ def main() -> int:
     if weak:
         print(f"   (classes with gold<{LOW_N} are statistically weak: {', '.join(weak)})")
     print(f"== SER {ser:.3f}  (S={S} D={D} I={I} / N={N})   exact-match {exact}/{len(ds)} = {exact/len(ds):.1%}")
+
+    # Recall by PRINT POSITION — signature block vs notehead. The pooled per-class recall above
+    # mixes two different reading tasks; for the microtonal sharps the gold is nearly all in the
+    # signature, so this table is where a sharp fix shows up or fails to.
+    if any(pos_gold.values()):
+        print(f"\n{'token':<14}{'sig gold':>9}{'sig rec':>9}{'inline gold':>12}{'inline rec':>11}")
+        for t in AEU + ["\\natural"]:
+            tid = tok.convert_tokens_to_ids(t)
+            sg, sh = pos_gold[("sig", tid)], pos_hit[("sig", tid)]
+            ig, ih = pos_gold[("inline", tid)], pos_hit[("inline", tid)]
+            if not (sg or ig):
+                continue
+            f = lambda g, h: f"{h / g:.0%}" if g else "—"
+            print(f"{t:<14}{sg:>9}{f(sg, sh):>9}{ig:>12}{f(ig, ih):>11}")
 
     # Arc-triggered false-\tup3 (Step 4.0 floor: arc rate <= 10%; reported beside the neither rate).
     arc_rate = arc_num / arc_denom if arc_denom else float("nan")

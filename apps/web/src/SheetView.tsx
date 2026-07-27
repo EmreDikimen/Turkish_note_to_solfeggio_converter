@@ -149,7 +149,22 @@ function buildStaveNotes(
       const posKey = `${parsed.letter}${parsed.octave}`;
       const sigAlter = signatureMap.get(parsed.letter) ?? 0;
       const effective = active.has(posKey) ? active.get(posKey)! : sigAlter;
-      if (alter !== effective) {
+      // SAME-DIRECTION notes are drawn BARE — this is `sigTolerant` in noteToLily
+      // (tools/render/lilypond.ts), and it must be applied here too or the page shows a sign the
+      // label doesn't carry. Real editions print the degree under its signature sign and leave the
+      // makam intonation to the performer: eviç is a 5-comma F♯ printed bare under a koma-sharp-F
+      // donanım, because SymbTr stores the SOUNDING value. Explicit signs mark genuine chromatic
+      // deviations only — a direction change, or a cancel to natural.
+      //
+      // Until 2026-07-26 this rule lived only on the label side, so 18.8% of `strips_v3`'s
+      // signature-bearing carry strips drew an accidental their label omitted — 2,369 of them
+      // `\kucukSharp`, against just 234 correctly labelled inline. That taught the model to see
+      // the küçük glyph and emit nothing, which is exactly its measured failure (48% recall at
+      // 100% precision). Numbers in docs/METRICS.md.
+      const covered =
+        alter === effective ||
+        (effective !== 0 && alter !== 0 && Math.sign(alter) === Math.sign(effective));
+      if (!covered) {
         if (alter === 0) n.addModifier(new Accidental("n"), 0); // cancel back to natural
         else addAccidental(n, alter);
         if (carry) active.set(posKey, alter);

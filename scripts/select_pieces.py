@@ -217,12 +217,120 @@ def analyze(path: Path) -> Piece | None:
     return piece if 0 in piece.candidates else None
 
 
+def augment(pieces: list[Piece], kept: dict, exam: set[str], args) -> dict:
+    """Round-2 augment mode: keep an existing selection verbatim and append pieces that carry the
+    boost class, capped per makam. Appended pieces get t0 ONLY — `--boost-class` exists for
+    `\\kucukSharp`, which the repertoire spells at written pitch only (a full-corpus scan found its
+    projected count is non-zero at t=0 and zero at every other transpose), so extra transposes
+    would add strips without adding coverage.
+
+    Exam pieces are dropped from BOTH sides. The hard rule is that exam pieces are never trained
+    on, and a synthetic render of an exam piece is training on it — same notes, our engraving.
+    """
+    kept_entries = {e["slug"]: e for e in kept["pieces"]}
+    leaked = sorted(set(kept_entries) & exam)
+    for slug in leaked:
+        del kept_entries[slug]
+
+    signed = set(json.loads(Path(args.sig_table).read_text())) if args.sig_table else None
+    norm_makam = lambda m: re.sub(r"[^a-z0-9]", "", (m or "").lower())
+    cands = [
+        p for p in pieces
+        if p.stem not in kept_entries and p.stem not in exam
+        and p.candidates[0].acc.get(args.boost_class, 0) > 0
+        and (signed is None or norm_makam(p.makam) in signed)
+    ]
+    cands.sort(key=lambda p: (-p.candidates[0].acc[args.boost_class], p.stem))
+
+    added: list[Piece] = []
+    added_makam: Counter = Counter()
+    for p in cands:
+        if len(added) >= args.add_n:
+            break
+        if added_makam[p.makam] >= args.per_makam_cap:
+            continue
+        added.append(p)
+        added_makam[p.makam] += 1
+
+    entries = dict(kept_entries)
+    for p in added:
+        entries[p.stem] = {
+            "slug": p.stem, "txt": p.path.name, "file": f"/scores/{p.stem}.json",
+            "makam": p.makam, "form": p.form, "usul": p.usul, "hasLyrics": p.has_lyrics,
+            "events": p.n_events, "measures": p.n_measures,
+            "transposes": [0],
+            "accCounts": {"0": dict(p.candidates[0].acc)},
+            "pairableShare": {"0": round(p.candidates[0].pairable, 3)},
+            # Marks the Round-2 additions so the split can put them on the train side and the
+            # coverage audit can report them separately.
+            "addedBy": f"boost:{args.boost_class}",
+        }
+
+    totals: Counter = Counter()
+    for e in entries.values():
+        for acc in e["accCounts"].values():
+            totals.update(acc)
+
+    boost_added = sum(p.candidates[0].acc[args.boost_class] for p in added)
+    print(f"\naugment: kept {len(kept_entries)} pieces, appended {len(added)}"
+          f" (+{boost_added} projected {args.boost_class} at t0)")
+    if leaked:
+        print(f"  ⛔ DROPPED {len(leaked)} kept pieces that are EXAM pieces (never train on these):")
+        for s in leaked:
+            print(f"     {s}")
+    by_makam = Counter(p.makam for p in added)
+    print(f"  appended makams: {dict(by_makam.most_common())}")
+    return {
+        "generatedBy": "scripts/select_pieces.py --keep",
+        "corpus": kept.get("corpus", ""),
+        "projectedTotals": dict(totals),
+        "pieces": sorted(entries.values(), key=lambda e: e["slug"]),
+    }
+
+
+def load_exam_ids(path: str) -> set[str]:
+    """SymbTr piece ids of the frozen exam ('' disables). Matched on `symbtr_file` minus '.txt',
+    never on an image stem — the Round-1 contamination was the OTHER engraving of an exam piece,
+    which shares the SymbTr id but not the file name (src/vision/train.py:210)."""
+    if not path:
+        return set()
+    pieces = json.loads(Path(path).read_text())["pieces"]
+    return {
+        (p["symbtr_file"][:-4] if p.get("symbtr_file", "").endswith(".txt") else p.get("symbtr_file", ""))
+        for p in pieces
+        if p.get("symbtr_file")
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--corpus", default=str(Path.home() / "Downloads/SymbTr-2.0.0/txt"))
     ap.add_argument("--n", type=int, default=150, help="number of pieces to select")
     ap.add_argument("--max-extra-transposes", type=int, default=2)
     ap.add_argument("--out", default="data/pieces.json")
+    # --- augment mode (Round 2): extend an existing selection instead of re-rolling it ----------
+    ap.add_argument("--keep", default=None, metavar="PIECES_JSON",
+                    help="augment mode: retain every piece/transpose of this selection VERBATIM "
+                         "and only append new ones. Re-rolling the greedy selection would change "
+                         "which pieces are held out, breaking the corpus-vs-corpus comparison and "
+                         "invalidating the existing split.")
+    ap.add_argument("--boost-class", default=None, metavar="TOKEN",
+                    help=r"augment mode: rank candidates by their t0 count of this AEU token "
+                         r"(e.g. '\kucukSharp'). Only t0 is added — the class this exists for "
+                         r"occurs at written pitch only, so extra transposes would add bulk, not "
+                         r"coverage.")
+    ap.add_argument("--add-n", type=int, default=0, help="augment mode: how many pieces to append")
+    ap.add_argument("--per-makam-cap", type=int, default=8,
+                    help="augment mode: max pieces appended from any one makam. The corpus's rare "
+                         "classes cluster in a few makams, and an uncapped pull would re-skew the "
+                         "makam mix (docs/METRICS.md traces a kucukFlat residual to exactly that).")
+    ap.add_argument("--exam", default="data/real/rung3/testset.json",
+                    help="frozen exam; its SymbTr pieces are never selectable. '' to disable.")
+    ap.add_argument("--sig-table", default="data/makam_signatures.json",
+                    help="augment mode: only append pieces whose makam has a conventional printed "
+                         "signature here. A makam with no entry renders with the content-derived "
+                         "signature instead, which absorbs the very accidentals we are adding — "
+                         "and the table's theory fallback should not be guessed for rare makams.")
     args = ap.parse_args()
 
     corpus = Path(args.corpus).expanduser()
@@ -236,6 +344,25 @@ def main() -> int:
         if (i + 1) % 400 == 0:
             print(f"  {i + 1}/{len(files)} scanned, {len(pieces)} usable")
     print(f"usable pieces: {len(pieces)}")
+
+    exam = load_exam_ids(args.exam)
+    if exam:
+        print(f"exam pieces excluded from selection: {len(exam)} (matched on symbtr_file)")
+
+    if args.keep:
+        if not args.boost_class:
+            ap.error("--keep requires --boost-class")
+        merged = augment(pieces, json.loads(Path(args.keep).read_text()), exam, args)
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(merged, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"\n{len(merged['pieces'])} pieces -> {out}")
+        print("projected per-class accidental occurrences:")
+        for c in AEU_TOKEN.values():
+            print(f"  {c:<14} {merged['projectedTotals'].get(c, 0):>6}")
+        return 0
+
+    pieces = [p for p in pieces if p.stem not in exam]
 
     classes = list(AEU_TOKEN.values())
     # Selection can only optimize what the repertoire can yield: the whole corpus holds ~47 notes

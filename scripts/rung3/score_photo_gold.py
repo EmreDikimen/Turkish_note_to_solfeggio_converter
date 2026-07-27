@@ -35,23 +35,35 @@ def main() -> None:
     scorable = [r for r in rows if r["verdict"] in ("ok", "fix")]
 
     gold, hit, fp = Counter(), Counter(), Counter()
+    # Recall bucketed by where the accidental is PRINTED — the signature block and the notehead are
+    # different reading tasks, and the microtonal sharps sit almost entirely in the first
+    # (docs/METRICS.md). `\sig` opens the block, `\sigend` closes it; ops run in reference order.
+    pos_gold, pos_hit = Counter(), Counter()
+    sig_ids = {tok.convert_tokens_to_ids(t): t for t in ("\\sig", "\\sigend")}
     S = D = I = exact = 0
     for r in scorable:
         truth = r["corrected_label"] if (r["verdict"] == "fix" and r["corrected_label"].strip()) else r["label"]
         ref = strip_special(tok(truth, add_special_tokens=True).input_ids, tok)
         hyp = strip_special(tok(r["decoded"], add_special_tokens=True).input_ids, tok)
         exact += ref == hyp
+        in_sig = False
         for op, rr, hh in align(ref, hyp):
+            if op != "ins" and rr in sig_ids:
+                in_sig = sig_ids[rr].endswith("sig")
+            bucket = "sig" if in_sig else "inline"
             if op == "match":
                 if rr in tracked_ids:
                     gold[rr] += 1; hit[rr] += 1
+                    pos_gold[(bucket, rr)] += 1; pos_hit[(bucket, rr)] += 1
             elif op == "sub":
                 S += 1
-                if rr in tracked_ids: gold[rr] += 1
+                if rr in tracked_ids:
+                    gold[rr] += 1; pos_gold[(bucket, rr)] += 1
                 if hh in tracked_ids: fp[hh] += 1
             elif op == "del":
                 D += 1
-                if rr in tracked_ids: gold[rr] += 1
+                if rr in tracked_ids:
+                    gold[rr] += 1; pos_gold[(bucket, rr)] += 1
             else:
                 I += 1
                 if hh in tracked_ids: fp[hh] += 1
@@ -77,6 +89,15 @@ def main() -> None:
     print("  " + "-" * 40)
     for t in ("\\natural", "|", "\\tie"):   # shown but NOT in the AEU headline
         line(t)
+    print(f"\n{'token':<14}{'sig gold':>9}{'sig rec':>9}{'inline gold':>12}{'inline rec':>11}")
+    for t in AEU:
+        tid = tok.convert_tokens_to_ids(t)
+        sg, sh = pos_gold[("sig", tid)], pos_hit[("sig", tid)]
+        ig, ih = pos_gold[("inline", tid)], pos_hit[("inline", tid)]
+        if not (sg or ig):
+            continue
+        f = lambda g, h: f"{h / g:.0%}" if g else "-"
+        print(f"{t:<14}{sg:>9}{f(sg, sh):>9}{ig:>12}{f(ig, ih):>11}")
     head = sum(recs) / len(recs) if recs else float("nan")
     hf1 = sum(f1s) / len(f1s) if f1s else float("nan")
     print(f"\n== PHOTO-GOLD AEU (direct, hand-verified): recall {head:.1%} / F1 {hf1:.1%}  "

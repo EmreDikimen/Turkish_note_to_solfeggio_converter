@@ -65,6 +65,10 @@ def main() -> None:
     gold_stems = list(by_page)
 
     gold, hit, fp = Counter(), Counter(), Counter()
+    # Recall split by where the accidental is PRINTED (signature block vs notehead) — see
+    # S.tally's docstring for why the pooled number can't answer that question.
+    pos_gold, pos_hit = Counter(), Counter()
+    sig_ids = {tok.convert_tokens_to_ids(t): t for t in ("\\sig", "\\sigend")}
     matched = 0
     for d in sorted(DECODE_ROOT.glob("*/")):
         dj = d / f"{d.name}_decode.json"
@@ -81,7 +85,7 @@ def main() -> None:
             if not seg:
                 continue
             _, ops = S.fitting_align(seg, ph)
-            S.tally(ops, tracked_ids, gold, hit, fp)
+            S.tally(ops, tracked_ids, gold, hit, fp, pos_gold, pos_hit, sig_ids)
 
     print(f"\nmatched {matched} clean pages to gold")
     print(f"{'token':<14}{'gold':>7}{'recall':>9}{'prec':>9}{'f1':>8}")
@@ -98,6 +102,7 @@ def main() -> None:
         if t in AEU or gg:
             print(f"{t:<14}{gg:>7}{(f'{rec:.0%}' if rec is not None else '-'):>9}"
                   f"{(f'{prec:.0%}' if prec is not None else '-'):>9}{(f'{f1:.0%}' if f1 is not None else '-'):>8}")
+    S.print_position_split(tok, pos_gold, pos_hit, AEU)
     print(f"\n== CLEAN-FITTING AEU recall {sum(recs)/len(recs):.1%} / F1 {sum(f1s)/len(f1s):.1%}"
           f"  (over {len(recs)}/8 classes)")
     print("   compare to PHOTO-FITTING AEU recall 61.1% / F1 75.0% -> gap = photo-domain penalty")

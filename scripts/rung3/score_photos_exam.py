@@ -76,17 +76,50 @@ def map_photo_to_gold(photo_stem: str, gold_stems: list[str]) -> str | None:
     return best[0] if best else None
 
 
-def tally(ops, tracked_ids, gold, hit, fp):
+def tally(ops, tracked_ids, gold, hit, fp, pos_gold=None, pos_hit=None, sig_ids=None):
+    """Accumulate per-token gold/hit/false-positive counts from an alignment.
+
+    `pos_gold`/`pos_hit` (optional) additionally bucket each GOLD token by WHERE it is printed:
+    `"sig"` inside the row-start `\\sig … \\sigend` block, `"inline"` on a notehead. The two are
+    different reading tasks and the microtonal sharps live almost entirely in the first — on the
+    clean exam `\\kucukSharp` is 32 in-signature against 1 inline (docs/METRICS.md) — so a pooled
+    per-class number cannot say which one moved. `sig_ids` maps the `\\sig` / `\\sigend` token ids
+    to their names; ops are in reference order, so the block state is tracked as we go.
+    """
+    in_sig = False
     for op, r, h in ops:
+        if sig_ids and op != "ins" and r in sig_ids:
+            in_sig = sig_ids[r].endswith("sig")  # \sig opens, \sigend closes
+        bucket = "sig" if in_sig else "inline"
         if op == "match" and r in tracked_ids:
             gold[r] += 1; hit[r] += 1
+            if pos_gold is not None:
+                pos_gold[(bucket, r)] += 1; pos_hit[(bucket, r)] += 1
         elif op == "sub":
-            if r in tracked_ids: gold[r] += 1
+            if r in tracked_ids:
+                gold[r] += 1
+                if pos_gold is not None: pos_gold[(bucket, r)] += 1
             if h in tracked_ids: fp[h] += 1
         elif op == "del":
-            if r in tracked_ids: gold[r] += 1
+            if r in tracked_ids:
+                gold[r] += 1
+                if pos_gold is not None: pos_gold[(bucket, r)] += 1
         elif op == "ins":
             if h in tracked_ids: fp[h] += 1
+
+
+def print_position_split(tok, pos_gold, pos_hit, classes):
+    """Per-class recall split by print position. Only recall is meaningful here: a false positive
+    has no gold token, so it carries no position."""
+    print(f"\n{'token':<14}{'sig gold':>9}{'sig rec':>9}{'inline gold':>12}{'inline rec':>11}")
+    for t in classes:
+        tid = tok.convert_tokens_to_ids(t)
+        sg, sh = pos_gold[("sig", tid)], pos_hit[("sig", tid)]
+        ig, ih = pos_gold[("inline", tid)], pos_hit[("inline", tid)]
+        if not (sg or ig):
+            continue
+        f = lambda g, h: f"{h / g:.0%}" if g else "-"
+        print(f"{t:<14}{sg:>9}{f(sg, sh):>9}{ig:>12}{f(ig, ih):>11}")
 
 
 def main() -> None:

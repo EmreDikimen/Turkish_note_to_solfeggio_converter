@@ -68,6 +68,10 @@ class Strip:
     # Rung-3: where the strip came from ("synthetic" | "neyzen" | ...) — eval_omr reports a
     # per-source block so a real-page exam can't hide behind synthetic numbers.
     source: str = "synthetic"
+    # The page this strip was cut from (real-page manifests only). The PRODUCT goal is stated per
+    # page — "a typical page needs <=5 corrections" — because a page is what a user uploads and
+    # proofreads; a per-strip or per-token rate doesn't tell them how much work they face.
+    page: str = ""
 
 
 class StripDataset:
@@ -112,6 +116,7 @@ class StripDataset:
                     transpose=int(row.get("transpose", 0)),
                     lyrics=bool(row.get("lyrics", False)),
                     source=row.get("source", "synthetic"),
+                    page=str(row.get("page", "")),
                 )
             )
         if not self.strips:

@@ -9,6 +9,33 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-07-27 (later) — The goal changed: user effort, not model accuracy
+
+**New goal: ≥90% of pages need ≤5 corrections, and the app shows where they are.** "85% on the
+per-class accidental mean" is demoted to a diagnostic. Reasoning in [../DECISIONS.md](../DECISIONS.md);
+baseline in [../METRICS.md](../METRICS.md); the goal itself lives in [../../ROADMAP.md](../../ROADMAP.md) §0.
+
+Three things pushed it. The old metric does not track usability — Round 2 got *better* for a user
+(fewer edits, more perfect strips) while that metric got worse. We are already at **84.8%** on its
+low-n-robust form, so the remaining headroom is two rare classes. And the untouched lever is bigger
+than the remaining accuracy: a page is ~95% correct already, but the user must proofread all of it
+to find the ~5 wrong marks, which is where the time saving goes.
+
+`eval_omr.py` now reports an `EDITS/PAGE` block so the goal is measured, not aspirational
+(`Strip` carries `page`; one edit = one substitution/deletion/insertion). Round-2 baseline over the
+46 exam pages: **57% of pages ≤5**, median 5, mean 12.2, 52% of strips already perfect.
+
+**The target was restated once, immediately, and the reason is worth keeping.** It was first written
+as "a typical page needs ≤5" — reasoning from the mean (12.2) and assuming that was a ~2.4×
+improvement. The baseline then came back with a **median of 5**: the distribution is heavily
+right-skewed, so the target as first written was satisfied on the day it was set. Restated on the
+*share of pages* (≥90% ≤5), which is where the actual pain is. A goal that is met the moment you
+write it measures nothing.
+
+Non-claims attached to it: the exam is a matched upper bound, so real uploads will be worse; and
+whether error localisation genuinely saves a user time is unmeasured — that needs a person
+correcting real pages with and without the highlights, not a model metric.
+
 ## 2026-07-27 — Round 2 read the exam once: headline down, everything else up, diagnosis half-right
 
 Trained on `strips_v4` with Round 1's recipe held fixed (two-stage, `--real-dir …:9` to hold real at

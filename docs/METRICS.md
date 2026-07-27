@@ -42,6 +42,25 @@ mean **AEU F1** is reported beside it since Round 1. Both are *per-class means*,
 | SER | 0.059 | **0.052** | better |
 | exact match | 50.0% | **52.1%** | better |
 
+### The product goal — corrections a user faces per page (baseline 2026-07-27)
+
+From `eval_omr.py`'s `EDITS/PAGE` block on the 326-strip clean exam (46 pages, 7.1 strips/page).
+One "edit" = one token substitution, deletion or insertion needed to turn the output into gold.
+
+| | Round 2 | target |
+|---|---|---|
+| **pages needing ≤5 corrections** | **57%** | **≥90%** |
+| median edits/page | 5 | — |
+| mean edits/page | 12.2 | — |
+| strips already perfect | 52% | — |
+
+- The distribution is **heavily right-skewed** — median 5 against a mean of 12.2 — so the goal is
+  stated on the *share of pages*, not the median. A median target would have been satisfied on the
+  day it was written.
+- ⚠ The exam is a **matched upper bound** (its pieces exist in SymbTr); real uploads will be worse.
+- The second half of the goal — the app showing *where* the errors are — is unmeasured, because it
+  does not exist yet. Finding 5 unknown errors among ~250 notes costs more than fixing them.
+
 ### Re-scored under low-n-robust headlines (2026-07-27) — the regression was a metric artifact
 
 Recomputed from the stored `per_class` blocks by `scripts/rung3/rescore_headline.py`; no model was

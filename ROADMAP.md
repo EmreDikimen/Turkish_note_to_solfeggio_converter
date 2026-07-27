@@ -20,6 +20,32 @@ Photograph Classical Turkish (makam) sheet music → recognize the notes *includ
 microtonal accidentals* → produce an **editable** note model → play it back at exact
 **53-TET (Arel-Ezgi-Uzdilek)** frequencies. First as a **web app**, eventually offline on mobile.
 
+### What "good enough" means (goal set 2026-07-27)
+
+**≥90% of pages need ≤5 corrections, and the app shows you where they are.**
+
+Stated in user effort, not model accuracy, because that is what someone actually experiences: a
+page is what they upload and proofread. Two halves, and the second is worth more than it looks:
+
+1. **Fewer errors** — **≥90% of pages need ≤5 token edits** to become a correct score.
+   *On the share of pages, not the median: the distribution is heavily skewed, and at the Round-2
+   baseline the median was already 5 while the mean was 12.2. A median target would have been met
+   the day it was written. The pain is in the tail.*
+   Baseline (Round 2, 46 exam pages): **57% of pages ≤5**, median 5, mean 12.2, 52% of strips
+   already perfect.
+2. **Located errors** — the app surfaces where it is unsure, so a user checks a handful of spots
+   rather than proofreading every note. Without this, accuracy alone does not save anyone time:
+   finding 5 unknown errors in 250 notes costs more than fixing them. The confidence signal already
+   exists (`min_logprob`, used by the labeling queue); it has never been surfaced in the product.
+
+This replaces "85% on the per-class accidental mean" as the headline goal. That metric stays as a
+**diagnostic**, not a target: it is a mean over classes, so a class with 14 gold tokens weighs as
+much as one with 145, and it has twice moved several points for reasons unrelated to reading
+ability. `docs/METRICS.md` carries the numbers; `docs/DECISIONS.md` carries the reasoning.
+
+Retained as a fairness bar so rare marks cannot be quietly abandoned: **macro≥30 ≥85%** — the
+per-class mean over classes with enough gold to mean something.
+
 ---
 
 ## 1. Locked-in decisions

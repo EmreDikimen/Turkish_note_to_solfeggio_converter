@@ -27,6 +27,24 @@ Reassemble** the strips back into a full score.
 
 ---
 
+## What we are aiming for (changed 27 July 2026)
+
+**Goal: 9 out of 10 pages should need 5 corrections or fewer — and the app should show you where
+they are.**
+
+We used to aim at a model-accuracy number (85%). We changed it because that number does not tell
+you whether the app is worth using. What you actually care about is: *how much work is left after
+the app has done its part?*
+
+Right now a typical page needs about **5 fixes**, and **57%** of pages are already at 5 or fewer.
+So the work is the harder pages, not the typical one.
+
+The second half matters more than it sounds. Today the app gives you a page that is ~95% correct —
+but it does not tell you *which* 5 marks are wrong, so you have to check all of them yourself. That
+wipes out most of the time you saved. If the app highlighted the few places it was unsure, you would
+check five spots instead of two hundred and fifty notes. We already compute that "unsure" signal
+internally; we have simply never shown it to you.
+
 ## Where we are right now
 
 - **Round 2 is finished. It first looked like a step backwards — then we found our score was

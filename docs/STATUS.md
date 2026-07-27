@@ -9,6 +9,11 @@ updated: 2026-07-27
 **Phase 3 (real pages).** Synthetic reading is solved; every open problem is about real printed
 pages and photos of them.
 
+- **The goal changed on 2026-07-27: ≥90% of pages need ≤5 corrections, and the app shows where they
+  are** ([ROADMAP.md](../ROADMAP.md) §0). Model accuracy is now a diagnostic, not the target.
+  Baseline: **57% of pages ≤5** (median 5, mean 12.2, 52% of strips already perfect). The second
+  half — surfacing *where* the model is unsure — does not exist yet, and is worth more than the
+  remaining accuracy.
 - **Round 2 was read once on 2026-07-27. Its apparent regression was a METRIC ARTIFACT, and the
   ship decision is reopened.** The macro headline fell 78.0 → 73.9% mean AEU F1, but that average
   gives a 14-gold class the same weight as a 145-gold one. Re-scored on the identical strips with
@@ -45,22 +50,27 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 1. **Decide whether to ship Round 2.** The evidence now says it beats `round1-best` on every stable
    measure and ties on micro F1. If yes, the ship chain is unchanged: ONNX export → int8 quantize →
    `onnx_parity.py` (fp32 + int8) → `make_browser_gate.py` → browser gate → `apps/web/public/models/`.
-2. **Measure the SIGNATURE-packed sharp glyphs before rendering anything.** Every fidelity
+2. **Build error localisation — show the user where the model is unsure.** The second half of the
+   goal, and the bigger half: 95% of each page is already correct, but a user has to proofread all
+   of it to find the ~5 wrong marks. The confidence signal already exists (`min_logprob`, used by
+   the labeling queue) and has never been surfaced in the product. Needs a per-token confidence out
+   of the decoder, carried through the stitcher into the editor as a "check this" highlight.
+3. **Measure the SIGNATURE-packed sharp glyphs before rendering anything.** Every fidelity
    measurement we have (`sharp_probe`, the 0.300 S bar weight, küçük's pitch widened to 0.65 S) was
    taken on INLINE glyphs. Signature glyphs are packed at `SIG_GLYPH_ADVANCE = 13 px`, have never
    been examined, and hold **32 of the exam's 33 küçük tokens**. Widening küçük's bars may actively
    hurt where horizontal room is fixed. Measure real printed donanım against ours at matched staff
    size, the same way `sharp_probe` did for inline glyphs — then decide whether to re-render.
-3. **Rebuild real-val to match exam composition.** Today's real-val is missing the hard tier
+4. **Rebuild real-val to match exam composition.** Today's real-val is missing the hard tier
    entirely, which is why it read 95% while the exam read 66%. It does **not** need to be
    edition-disjoint (measured), but it must exclude decode-derived labels from the metric pool, and
    its hard tail must be hand-verified. Reuse `data.is_real_val_piece` — both consumers must share it.
-4. **Exam v3.** Owed: the 27 over-budget strip recoveries deferred from v2.1, re-validation of
+5. **Exam v3.** Owed: the 27 over-budget strip recoveries deferred from v2.1, re-validation of
    disjointness whenever the exam grows, and dedupe on SymbTr piece id rather than image stem. Also
    more `\komaSharp` gold — at n=14 the class cannot carry the weight the headline gives it. The
    train-time disjointness guard is already shipped; give v3 a one-time `round1-best` bridge read as
    its baseline. (The low-n weighting it also owed was done on 2026-07-27.)
-5. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
+6. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.
 
@@ -90,7 +100,10 @@ investigation.
 - **Blind spots, stated as non-claims:** `\buyukFlat` has 0 real gold; `\komaSharp`/`\buyukSharp` are
   low-n on the exam; `\tup3` is measured on the common k=1 case only; the exam is a matched
   upper bound (its pieces exist in SymbTr).
-- **There is no pre-registered pivot trigger.** Switching to a correction-loop strategy is a
+- **The correction-loop strategy is now the plan, not a fallback** (goal change 2026-07-27). What is
+  still unmeasured is whether error localisation actually saves a user time — that needs a person
+  correcting real pages with and without the highlights, not a model metric.
+- **Superseded:** there is no pre-registered pivot trigger. Switching to a correction-loop strategy is a
   situational call after the Round-2 exam, not an automatic rule.
 - **Browser gate is 19/20** on the live model — one double-dot token trips an ORT-web int8 numerics
   wobble (model-independent, not blocking).

@@ -125,6 +125,8 @@ def main() -> int:
     # which one moved. Only recall splits: a false positive has no gold token, hence no position.
     pos_gold, pos_hit = Counter(), Counter()
     sig_ids = {tok.convert_tokens_to_ids(t): t for t in ("\\sig", "\\sigend")}
+    # Per-page user effort (real-page manifests only) — the project's product goal.
+    page_edits, page_strips, page_clean = Counter(), Counter(), Counter()
     S = D = I = N = 0
     exact = 0
     shown = 0
@@ -168,6 +170,14 @@ def main() -> int:
                 N += len(ref)
                 st["N"] += len(ref)
                 exact += hyp == ref
+                # PRODUCT goal accounting: how many token edits would a user have to make on this
+                # page, and how many of its strips are already perfect. Per page because that is
+                # the unit a person uploads and proofreads.
+                pg = ds.strips[at + k].page
+                if pg:
+                    page_edits[pg] += sum(1 for op, _, _ in align(ref, hyp) if op != "match")
+                    page_strips[pg] += 1
+                    page_clean[pg] += hyp == ref
                 st["exact"] += hyp == ref
                 if hyp != ref and shown < args.show_errors:
                     shown += 1
@@ -270,6 +280,23 @@ def main() -> int:
           f"({len(strong)} classes: {', '.join(strong) or '—'})")
     print(f"== SER {ser:.3f}  (S={S} D={D} I={I} / N={N})   exact-match {exact}/{len(ds)} = {exact/len(ds):.1%}")
 
+    # ---- the PRODUCT goal: corrections a user faces per page (2026-07-27) --------------------
+    # Stated per page because a page is what someone uploads and proofreads. The accidental scores
+    # above say whether a change helped; THIS says whether the app is worth using.
+    # Target: **>=90% of pages need <=5 edits** (ROADMAP.md §0). The share, not the median: the
+    # distribution is heavily right-skewed (Round-2 baseline: median 5, mean 12.2), so a median
+    # target was already satisfied when it was written. The tail is the product problem.
+    if page_edits:
+        e = sorted(page_edits.values())
+        med = e[len(e) // 2]
+        mean = sum(e) / len(e)
+        share_le5 = sum(1 for v in e if v <= 5) / len(e)
+        clean_strips = sum(page_clean.values()) / max(1, sum(page_strips.values()))
+        print(f"\n== EDITS/PAGE  median {med}  mean {mean:.1f}  (over {len(e)} pages, "
+              f"{sum(page_strips.values()) / len(e):.1f} strips/page)")
+        print(f"   pages needing <=5 corrections: {share_le5:.0%}   "
+              f"strips already perfect: {clean_strips:.0%}   TARGET: >=90% of pages <=5")
+
     # Recall by PRINT POSITION — signature block vs notehead. The pooled per-class recall above
     # mixes two different reading tasks; for the microtonal sharps the gold is nearly all in the
     # signature, so this table is where a sharp fix shows up or fails to.
@@ -320,6 +347,11 @@ def main() -> int:
            "micro_aeu": {"recall": micro_rec, "precision": micro_prec, "f1": micro_f1,
                          "gold": micro_gold},
            "macro_minn": {"min_n": LOW_N, "classes": strong, "recall": macro_n_rec, "f1": macro_n_f1},
+           "edits_per_page": ({"median": sorted(page_edits.values())[len(page_edits) // 2],
+                               "mean": sum(page_edits.values()) / len(page_edits),
+                               "pages": len(page_edits),
+                               "share_le5": sum(1 for v in page_edits.values() if v <= 5) / len(page_edits)}
+                              if page_edits else None),
            "ser": ser, "exact": exact / len(ds),
            "arc_tup3": {"arc_num": arc_num, "arc_denom": arc_denom, "arc_rate": arc_rate,
                         "noarc_num": noarc_num, "noarc_denom": noarc_denom, "noarc_rate": noarc_rate},

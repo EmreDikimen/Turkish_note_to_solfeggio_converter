@@ -957,3 +957,27 @@ destroys `\komaSharp` (n=14, F1 21.4%) and a six-class mean carries that into th
 bar weight, küçük pitch widened to 0.65 S) was taken on INLINE glyphs. Signature glyphs are packed
 at `SIG_GLYPH_ADVANCE = 13 px`, have never been measured, and hold 32 of the exam's 33 küçük tokens
 — where extra bar width may hurt rather than help.
+
+## Headline re-scoring — MICRO / MACRO≥30 (2026-07-27): Round 2's regression was a metric artifact
+
+`scripts/rung3/rescore_headline.py` recomputes low-n-robust headlines from any stored `per_class`
+block (hits = gold×recall, fp = hits/precision − hits), so every past run is re-scorable with **no
+model re-run and no exam re-read**.
+
+| 326 clean strips | macro R | macro F1 | micro R | micro F1 | macro≥30 R | macro≥30 F1 |
+|---|---|---|---|---|---|---|
+| `round1-best` | 78.5% | 78.0% | 83.9% | **85.0%** | 81.4% | 83.9% |
+| `round2-stage2-best` | 74.2% | 73.9% | **84.8%** | 84.8% | **84.8%** | **84.4%** |
+
+Round 2 is flat-to-better on every low-n-robust measure; the −4pp macro drop is `\komaSharp` (n=14)
+inside a six-class mean. Combined with SER 0.059 → 0.052 and exact 50.0 → 52.1%, the "regression"
+does not survive.
+
+Earlier reads, same treatment (macro → micro): `strips_exam_v2` 352 strips 66.6% → 84.1%;
+`_exam_tier_mid` 63.0% → 84.2%; `_exam_tier_hard` 58.3% → 77.5%. **Macro has been reporting 66–78%
+throughout this project while token-level accidental accuracy sat at 83–85%.** Both are real; they
+answer different questions, and only macro was ever quoted.
+
+**Not done on purpose:** micro was not promoted to the headline (it was computed after the fact and
+flatters us, and the 85% floor was pre-registered against macro), and the target was not restated.
+The repair is more `\komaSharp` gold in exam v3 — see `docs/DECISIONS.md`.

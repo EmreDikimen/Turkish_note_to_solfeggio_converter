@@ -29,14 +29,25 @@ Reassemble** the strips back into a full score.
 
 ## Where we are right now
 
-- **Round 2 is finished, and we did not ship it.** We fixed two real problems in how we make our
-  training pictures (see below), trained again, and took the exam once. The exam score went **down**:
-  78% → **74%**. Almost everything else got a little better — fewer mistakes overall, more strips read
-  perfectly — but the headline number moved the wrong way, so the old model stays live.
-- **Why the score dropped is worth understanding, because it is not bad news.** The whole drop comes
-  from **one mark**, the koma sharp, and the exam only has **14** of them. Our score is an average
-  over six marks, so one mark doing badly pulls the average down hard. The mark we were actually
-  trying to fix — the küçük sharp — **got better**: from 50% to **72%** where it matters most.
+- **Round 2 is finished. It first looked like a step backwards — then we found our score was
+  misleading us.** We fixed two real problems in how we make our training pictures (see below),
+  trained again, and took the exam once. The old score went **down**, 78% → 74%.
+- **The old score was unfair.** It works by measuring 6 kinds of marks separately and averaging the
+  6 numbers. But one of those marks, the koma sharp, appears only **14 times** in the whole exam —
+  so a handful of mistakes on it drags the whole average down. (Last round the opposite happened:
+  a mark with only **3** examples dropped out and the score jumped 11 points for no real reason.)
+- **We fixed the scoring, and Round 2 is actually a small improvement.** Counting every mark
+  question-by-question instead of averaging subjects: **83.9% → 84.8%**. Ignoring the marks with too
+  few examples to judge: **81.4% → 84.8%**. Both up. Add fewer mistakes per page and more strips read
+  perfectly, and the new model is better — so **whether to ship it is now an open question**, not a
+  no.
+- **Important honesty note:** the fairer score looks higher (≈85% instead of 74%), but that does
+  **not** mean we hit our 85% goal. The goal was written against the old, stricter score. We did not
+  move the goalposts to a number that flatters us — we use the fair score to tell whether a change
+  *helped*, and keep the strict score as the bar to clear. The proper fix is to put more koma-sharp
+  examples into the next exam so the strict score becomes trustworthy.
+- **The mark we were trying to fix got better:** the küçük sharp went from 50% to **72%** in the place
+  that matters most.
 - **What we learned.** The old mistake was one-way: when unsure, the model always guessed "koma".
   That guessing habit is now **gone** — which is exactly what our fix was supposed to do. What is left
   underneath is different: the model now mixes koma and küçük up **in both directions, equally**, and

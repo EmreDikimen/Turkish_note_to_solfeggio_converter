@@ -234,12 +234,40 @@ def main() -> int:
     # Mean per-class AEU F1 (Step 4.0: reported ALONGSIDE the recall headline, which is
     # recall-only and hides accidental hallucination — a spurious koma is a real pitch error).
     headline_f1 = sum(aeu_f1s) / len(aeu_f1s) if aeu_f1s else float("nan")
+
+    # ---- low-n-robust companions to the macro headline (added 2026-07-27) ---------------------
+    # The two headlines above are per-class MEANS, so every class counts the same no matter how
+    # few gold tokens it has. That has now distorted two consecutive exam reads in opposite
+    # directions: a 3-gold class dropping out of the mean lifted Round 1 by ~11pp, and a 14-gold
+    # class flipping cost Round 2 ~4pp — neither reflecting a change in reading ability. So report
+    # beside them:
+    #   MICRO  — pool the tokens, not the classes (Σhit/Σgold). One rare class can no longer swing
+    #            it; common classes weigh what they actually cost a reader.
+    #   MACRO≥N — the same per-class mean restricted to classes with enough gold to mean anything.
+    # Neither replaces the macro headline in the historical record: every number logged before this
+    # date is macro, and the pre-registered floors were written against it.
+    micro_gold = sum(gold[tok.convert_tokens_to_ids(t)] for t in AEU)
+    micro_hit = sum(hit[tok.convert_tokens_to_ids(t)] for t in AEU)
+    micro_fp = sum(fp[tok.convert_tokens_to_ids(t)] for t in AEU)
+    micro_rec = micro_hit / micro_gold if micro_gold else float("nan")
+    micro_prec = micro_hit / (micro_hit + micro_fp) if (micro_hit + micro_fp) else float("nan")
+    micro_f1 = (2 * micro_rec * micro_prec / (micro_rec + micro_prec)
+                if micro_rec and micro_prec else float("nan"))
+    strong = [t for t in AEU if per_class[t]["gold"] >= LOW_N]
+    macro_n_rec = (sum(per_class[t]["recall"] for t in strong) / len(strong)) if strong else float("nan")
+    macro_n_f1 = (sum(per_class[t]["f1"] for t in strong) / len(strong)) if strong else float("nan")
     ser = (S + D + I) / max(1, N)
     weak = [t for t in AEU if 0 < per_class[t]["gold"] < LOW_N]
     print(f"\n== HEADLINE  mean per-class AEU accidental accuracy (recall): {headline:.1%}  (over {len(aeu_recalls)}/8 classes present)")
     print(f"== MEAN F1   mean per-class AEU F1: {headline_f1:.1%}  (over {len(aeu_f1s)}/8 classes present)")
     if weak:
         print(f"   (classes with gold<{LOW_N} are statistically weak: {', '.join(weak)})")
+    print(f"== MICRO     token-weighted AEU: recall {micro_rec:.1%} / precision {micro_prec:.1%} / "
+          f"F1 {micro_f1:.1%}  (over {micro_gold} gold tokens)")
+    pct = lambda v: f"{v:.1%}" if v == v else "—"  # NaN-safe: no class clears the bar on tiny sets
+    print(f"== MACRO>={LOW_N}  mean per-class AEU over classes with >={LOW_N} gold: "
+          f"recall {pct(macro_n_rec)} / F1 {pct(macro_n_f1)}  "
+          f"({len(strong)} classes: {', '.join(strong) or '—'})")
     print(f"== SER {ser:.3f}  (S={S} D={D} I={I} / N={N})   exact-match {exact}/{len(ds)} = {exact/len(ds):.1%}")
 
     # Recall by PRINT POSITION — signature block vs notehead. The pooled per-class recall above
@@ -287,6 +315,11 @@ def main() -> int:
     row = {"date": date.today().isoformat(), "checkpoint": str(args.checkpoint), "side": side,
            "strips_dir": str(args.strips_dir),
            "n": len(ds), "headline_aeu": headline, "headline_f1": headline_f1,
+           # Low-n-robust companions (2026-07-27). Older lines lack these; recompute them from
+           # `per_class` with scripts/rung3/rescore_headline.py.
+           "micro_aeu": {"recall": micro_rec, "precision": micro_prec, "f1": micro_f1,
+                         "gold": micro_gold},
+           "macro_minn": {"min_n": LOW_N, "classes": strong, "recall": macro_n_rec, "f1": macro_n_f1},
            "ser": ser, "exact": exact / len(ds),
            "arc_tup3": {"arc_num": arc_num, "arc_denom": arc_denom, "arc_rate": arc_rate,
                         "noarc_num": noarc_num, "noarc_denom": noarc_denom, "noarc_rate": noarc_rate},

@@ -42,6 +42,30 @@ mean **AEU F1** is reported beside it since Round 1. Both are *per-class means*,
 | SER | 0.059 | **0.052** | better |
 | exact match | 50.0% | **52.1%** | better |
 
+### Re-scored under low-n-robust headlines (2026-07-27) — the regression was a metric artifact
+
+Recomputed from the stored `per_class` blocks by `scripts/rung3/rescore_headline.py`; no model was
+re-run, and no exam was re-read. **MICRO** pools tokens instead of classes (Σhit/Σgold), so one rare
+class cannot swing it. **MACRO≥30** is the same per-class mean restricted to classes with ≥30 gold.
+
+| 326 clean strips | Round 1 | Round 2 | Δ |
+|---|---|---|---|
+| macro recall *(the historical headline)* | 78.5% | 74.2% | −4.3pp |
+| macro F1 | 78.0% | 73.9% | −4.1pp |
+| **micro recall** | 83.9% | **84.8%** | **+0.9pp** |
+| **micro F1** | **85.0%** | 84.8% | −0.2pp |
+| **macro≥30 recall** | 81.4% | **84.8%** | **+3.4pp** |
+| **macro≥30 F1** | 83.9% | **84.4%** | +0.5pp |
+
+**Round 2 is not a regression.** On every low-n-robust measure it is flat-to-better, and that is
+before counting SER, exact-match and the 9-of-11 floors. The −4pp came from `\komaSharp` (n=14)
+inside a six-class average.
+
+⚠ **Do not read the ~85% micro figures as hitting the 85% target.** That floor was pre-registered
+against the MACRO mean; micro is a different, structurally higher number here because the
+well-read common classes carry most of the tokens. Retrospectively, macro has been reporting
+66–78% while token-level accidental accuracy sat at 83–85% for both models.
+
 **Token-level accuracy improved; the per-class headline regressed.** Round-2 per-class recall:
 koma♯ 21.4, bakiye♯ 91.7, küçük♯ 69.7, koma♭ 90.5, bakiye♭ 87.0, küçük♭ 85.0 → mean 74.2%.
 `\komaSharp` (F1 **21.4%**, n=14) accounts for the whole drop: a mean over six classes moves ~4pp

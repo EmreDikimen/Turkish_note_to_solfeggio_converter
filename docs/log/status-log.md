@@ -48,6 +48,37 @@ tokens**. Widening küçük's bars may even hurt there, where horizontal room is
 Instrumentation added the same day: `eval_omr.py` now reports recall split by print position, which
 is how the signature-only confinement was visible at all.
 
+**Then the metric itself was fixed — and it overturned the verdict above.** The headline is a mean
+over classes, so a 14-gold class weighs the same as a 145-gold one. `eval_omr.py` now also reports
+**MICRO** (pool tokens, not classes) and **MACRO≥30**, and `scripts/rung3/rescore_headline.py`
+back-fills both for every past run straight from the stored `per_class` blocks — hits and false
+positives are recoverable from gold/recall/precision, so **no model was re-run and no exam re-read**.
+
+On the identical 326 strips:
+
+| | Round 1 | Round 2 |
+|---|---|---|
+| macro recall (historical headline) | 78.5% | 74.2% |
+| micro recall | 83.9% | **84.8%** |
+| micro F1 | 85.0% | 84.8% |
+| macro≥30 recall | 81.4% | **84.8%** |
+| macro≥30 F1 | 83.9% | **84.4%** |
+
+**Round 2 was never a regression** — flat-to-better on every low-n-robust measure, on top of SER,
+exact-match and 9 of 11 floors. The "not shipped" decision is overturned and the ship question
+reopened.
+
+Two things deliberately NOT done. Micro was **not** promoted to the headline: it was computed after
+the fact and happens to flatter us (~85% vs 74%), and swapping the bar to the number that makes the
+result look good is how a benchmark stops meaning anything. Macro stays the pre-registered bar —
+for a music app, a rare mark misread is still a wrong note — with micro/macro≥30 used to judge
+*whether a change helped*. And the 85% target was **not** restated against micro; the real repair is
+more `\komaSharp` gold in exam v3, so the strict metric becomes trustworthy instead of replaced.
+
+Retrospective worth keeping: macro has been reporting 66–78% across this project while token-level
+accidental accuracy sat at 83–85% for both models. Neither number is wrong; they answer different
+questions, and only one of them was ever being quoted.
+
 ## 2026-07-26 (later) — The küçük deficit is a SIGNATURE-reading problem, and 5 exam pieces were in the corpus
 
 Two findings while starting the Round-2 re-render, both of which changed what gets rendered.

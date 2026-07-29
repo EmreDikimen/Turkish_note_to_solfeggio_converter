@@ -82,6 +82,11 @@ WIDE_NEAR_SP = 1.5     # ... and only within this distance of the staff line: a 
                        # stem's head/beam attaches nearer (a longer stem couldn't also span the
                        # staff), while colliding TITLE/LYRIC text sits further out (old prints)
 PAD_PX = 6             # crop padding past enclosing barlines (tight: never reaches a notehead)
+# Give the left pad back off the PREVIOUS strip's right edge, so neighbouring crops never carry
+# the same pixels and a strip stops ending on the barline its label does not mention. Measured
+# 2026-07-29: real crops showed a closing barline 65% of the time against 5% for the synthetic
+# training strips. Switchable (`OMR_EDGE_TRIM=0`) to keep the change A/B-able.
+TRIM_SHARED_EDGE = os.environ.get("OMR_EDGE_TRIM", "1") not in ("0", "false", "False")
 
 
 @dataclass
@@ -677,7 +682,8 @@ def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
 def window_signature() -> dict:
     """The windowing settings a cached decode was produced under — store this beside a decode."""
     return {"measures_per_strip": MEASURES_PER_STRIP,
-            "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET}
+            "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET,
+            "edge_trim": TRIM_SHARED_EDGE}
 
 
 def window_cache_ok(prev: dict) -> bool:
@@ -692,6 +698,8 @@ def window_cache_ok(prev: dict) -> bool:
         return False
     if prev.get("window_mode", "legacy") != WINDOW_MODE:
         return False
+    if prev.get("edge_trim", False) != TRIM_SHARED_EDGE:
+        return False        # the crops moved, so every decode under them is stale
     # the token budget only moves a crop boundary in budget mode
     return WINDOW_MODE != "budget" or float(prev.get("token_budget", -1)) == TOKEN_BUDGET
 
@@ -901,22 +909,29 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
         row_measures = max(w.m_to for w in windows) + 1 if windows else 0
         bar_set = set(bars)
         crops: list[tuple[int, int]] = []     # padded pixel spans, for the debug overlay
+        # LEFT pad: reach past the enclosing barline so a cut never shaves a stem/flag, and so a
+        # real crop opens on a visible barline the way every synthetic training strip does.
+        # Gutter cuts from _split_wide get NO pad (a pad could re-enter the ink the gutter
+        # avoided). w00 gets extra left margin: the clef's leftmost ink can start a few px left
+        # of the measured staff.x0, and only page margin lies beyond.
+        pads = [int(round(TARGET_SPACING * 0.5)) if wi == 0
+                else (PAD_PX if w.x0 in bar_set else 0)
+                for wi, w in enumerate(windows)]
         for wi, w in enumerate(windows):
-            # pad past the LEFT enclosing barline only, so a cut never shaves a stem/flag.
-            # One-sided on purpose: padding both sides makes the span [bar-PAD, bar+PAD]
-            # land in two strips at once, and a note sitting in it gets decoded twice.
-            # Left-only keeps the overlap to one strip's worth and biases the duplicate
-            # risk onto the previous measure's tail (rare — engraved notes sit >= ~0.5 sp
-            # from a bar). Gutter cuts from _split_wide get NO pad (a pad could re-enter
-            # the ink the gutter avoided). w00 gets extra left margin: the clef's leftmost
-            # ink can start a few px left of the measured staff.x0, and only page margin
-            # lies beyond.
-            if wi == 0:
-                pl = int(round(TARGET_SPACING * 0.5))
-            else:
-                pl = PAD_PX if w.x0 in bar_set else 0
-            pr = 0
-            cx0, cx1 = max(0, w.x0 - pl), min(row.shape[1], w.x1 + pr)
+            pl = pads[wi]
+            # RIGHT trim: give back exactly what the NEXT strip takes as its left pad, so the
+            # two never carry the same pixels. Two reasons, the second the load-bearing one:
+            #   * without it the strips overlap by PAD_PX and the shared band is drawn twice;
+            #   * a strip's label never contains an edge barline (0 of 421 real labels start or
+            #     end with `|`), yet real crops ended ON the barline centre and showed one 65% of
+            #     the time, against 5% for the synthetic strips the model trained on. Trimming
+            #     drops the closing barline out of frame and closes that ~60pp domain gap.
+            # Nothing is lost: the trimmed band is still carried by the following strip.
+            trim = pads[wi + 1] if (TRIM_SHARED_EDGE and wi + 1 < len(windows)
+                                    and windows[wi + 1].x0 == w.x1) else 0
+            if w.x1 - trim - (w.x0 - pl) < MIN_STRIP_W:
+                trim = 0                       # never trim a strip below the sliver floor
+            cx0, cx1 = max(0, w.x0 - pl), min(row.shape[1], w.x1 - trim)
             crops.append((cx0, cx1))
             crop = row[:, cx0:cx1]
             name = f"{stem}_s{si:02d}_w{wi:02d}.png"
@@ -924,6 +939,8 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
             entry = {
                 "strip": name, "system": si, "window": wi,
                 "row_x0": int(cx0), "row_x1": int(cx1), "width": int(cx1 - cx0),
+                # [left, right] margin around the measure span; right is NEGATIVE when the
+                # shared-edge trim gave those columns to the following strip
                 "pad": [int(w.x0 - cx0), int(cx1 - w.x1)],
                 "scale": round(scale, 3), "is_row_start": wi == 0,
                 # Rung-3 emitter geometry: row-local 0-based measure indices this strip covers.

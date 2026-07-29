@@ -87,7 +87,7 @@ def main() -> int:
             try:
                 prev = json.loads(dj.read_text())
                 if (prev.get("checkpoint") == args.cache_checkpoint
-                        and prev.get("measures_per_strip", 3) == page_to_strips_mod.MEASURES_PER_STRIP):
+                        and page_to_strips_mod.window_cache_ok(prev)):
                     n_skip += 1
                     continue
             except json.JSONDecodeError:
@@ -142,7 +142,7 @@ def main() -> int:
                     "mean_logprob": round(sum(lp) / len(lp), 4) if lp else None,
                 })
         result = {"page": str(page), "checkpoint": args.cache_checkpoint, "suffix": "_int8",
-                  "measures_per_strip": page_to_strips_mod.MEASURES_PER_STRIP,
+                  **page_to_strips_mod.window_signature(),
                   "total_ms": round((time.time() - t_page) * 1000, 1), "strips": decoded}
         dj.write_text(json.dumps(result, indent=1))
         n_done += 1

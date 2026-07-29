@@ -235,7 +235,7 @@ def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool) -> list[d
     """Per page (in order): the `<page>_decode.json` dict — reused when it already carries the
     slicer geometry and came from the same checkpoint, else re-decoded."""
     from decode_page import decode_page
-    from page_to_strips import MEASURES_PER_STRIP
+    from page_to_strips import window_cache_ok
 
     out = []
     for page in piece.pages:
@@ -249,7 +249,7 @@ def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool) -> list[d
             d = json.loads(dj.read_text())
             strips = d.get("strips", [])
             if (d.get("checkpoint") != rt.checkpoint or d.get("suffix") != rt.suffix
-                    or d.get("measures_per_strip", 3) != MEASURES_PER_STRIP
+                    or not window_cache_ok(d)
                     or not strips or strips[0].get("meas_from") is None
                     or strips[0].get("min_logprob") is None):
                 d = None  # old format / other model / other window size — refresh

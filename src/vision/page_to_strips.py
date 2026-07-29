@@ -45,6 +45,30 @@ MEASURES_PER_STRIP = int(os.environ.get("OMR_MEASURES_PER_STRIP", "3"))
 MAX_STRIP_W = 1450         # cap width (training strips topped out ~1443 px)
 MIN_STRIP_W = 200          # ignore degenerate slivers
 
+# ---- label-budget-aware packing ---------------------------------------------------------------
+# What actually DROPS a strip is the 59-id label budget (audit_coverage.MAX_IDS), and neither
+# constant above measures it. Measured over 31,968 decoded old-pool strips (2026-07-29):
+#   * width alone explains R^2 = 0.54 of a strip's decoded token count; stem count + inked
+#     columns explain 0.77 (residual sd 8.9 ids).
+#   * 8.9% of SINGLE-measure windows blow the budget on their own — no MEASURES_PER_STRIP can
+#     fix those, so lowering it is not the lever the sweep made it look like.
+#   * simultaneously 28.6% of strips spend <= 25 of the 59 ids: the budget is over-run and
+#     under-used at the same time, the signature of packing against the wrong quantity.
+# So "budget" mode packs measures until the ESTIMATED token cost is spent, keeping the measure and
+# width caps as safety rails rather than as the packing rule.
+#
+# ⚠ It ships OFF. Decoded head-to-head on 16 val-side pages with the shipped model (2026-07-29),
+# budget packing is a WASH: healthy-band share 75.8% legacy vs 75.7% (b=55) / 76.2% (b=62), and the
+# validated bad-crop proxy (min_logprob < -1.0) 14.4% vs 14.5% / 14.0%. Its one real effect is
+# +16 usable strips (295 -> 311) at b=55, bought with +1.6pp more near-empty crops — a trade worth
+# taking only if labelling volume is the binding constraint. Default stays legacy so existing
+# decode caches remain valid and the change stays A/B-able, like `drawThinSharps`.
+WINDOW_MODE = os.environ.get("OMR_WINDOW_MODE", "legacy")   # "legacy" | "budget"
+TOKEN_BUDGET = float(os.environ.get("OMR_TOKEN_BUDGET", "50"))
+COST_PER_STEM = 1.889      # a stemmed note costs ~2 ids (pitch + duration), shared beams less
+COST_PER_INK_COL = 0.0288  # residual content: rests, dots, accidentals, ledgers
+COST_ROW_START = -5.25     # a row-start crop carries the \sig block but less music
+
 # ---- barline discrimination (line-space units; rows are geometry-normalized) ------------------
 # A true barline terminates AT (or a few px past) the outer staff lines with nothing attached;
 # a stem ends in a notehead/flag/beam, a G-clef extends far beyond BOTH lines.
@@ -608,6 +632,80 @@ def _has_notehead(row: np.ndarray, xa: int, xb: int) -> bool:
     return False
 
 
+def row_cost_features(row: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Per-column token-cost features for a normalized row: (stem_starts, ink_cols).
+
+    Both are 0/1 column arrays that SUM over a pixel span, so a window's estimated token cost is
+    a prefix-sum difference — the packer evaluates a candidate span in O(1).
+
+    `stem_starts` marks the FIRST column of each vertical-stroke cluster (a note's stem is ~3 sp,
+    so a 2 sp unbroken run finds stems and barlines while ignoring beams and staff lines); one
+    stem counts once however many columns thick it is. `ink_cols` marks columns carrying any
+    non-staff-line ink, which picks up what has no stem: rests, dots, accidentals, whole notes.
+    """
+    ink = binarize_ink(row) > 0
+    h = ink.shape[0]
+    y0 = max(0, int(TOP_LINE_Y - 2.0 * TARGET_SPACING))          # ledger notes above ...
+    y1 = min(h, int(TOP_LINE_Y + STAFF_SPAN + 2.0 * TARGET_SPACING))   # ... and beams below
+    band = ink[y0:y1]
+    if band.size == 0:
+        z = np.zeros(ink.shape[1], dtype=np.int32)
+        return z, z
+    staff_rows = band.sum(axis=1) > band.shape[1] * 0.4          # staff lines ink every column
+    body = band[~staff_rows]
+
+    longest = _longest_vertical_run(band)                        # includes staff rows: a stem
+    stem_cols = longest >= int(2.0 * TARGET_SPACING)             # crosses them unbroken
+    starts = stem_cols & ~np.r_[False, stem_cols[:-1]]           # rising edge = one stem
+
+    ink_cols = (body.sum(axis=0) > 0) if body.size else np.zeros(band.shape[1], dtype=bool)
+    return starts.astype(np.int32), ink_cols.astype(np.int32)
+
+
+def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
+                    x0: int, x1: int, is_row_start: bool) -> float:
+    """Estimated decoded token count for the span [x0, x1), from the prefix sums of
+    `row_cost_features`. Fitted on 2,500 decoded strips; see the constants block."""
+    x0 = max(0, min(x0, len(cum_stems) - 1))
+    x1 = max(x0, min(x1, len(cum_stems) - 1))
+    stems = float(cum_stems[x1] - cum_stems[x0])
+    inked = float(cum_ink[x1] - cum_ink[x0])
+    return (COST_PER_STEM * stems + COST_PER_INK_COL * inked
+            + (COST_ROW_START if is_row_start else 0.0))
+
+
+def window_signature() -> dict:
+    """The windowing settings a cached decode was produced under — store this beside a decode."""
+    return {"measures_per_strip": MEASURES_PER_STRIP,
+            "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET}
+
+
+def window_cache_ok(prev: dict) -> bool:
+    """True if a cached decode's crops match the CURRENT windowing settings.
+
+    Caches used to be keyed on `measures_per_strip` alone, which a packing-rule change would slip
+    straight past — and mixing two slicers inside one comparison is exactly how the earlier n_ids
+    read was confounded (docs/METRICS-DIAGNOSTICS.md). Caches written before the modes existed are
+    legacy by definition.
+    """
+    if prev.get("measures_per_strip", 3) != MEASURES_PER_STRIP:
+        return False
+    if prev.get("window_mode", "legacy") != WINDOW_MODE:
+        return False
+    # the token budget only moves a crop boundary in budget mode
+    return WINDOW_MODE != "budget" or float(prev.get("token_budget", -1)) == TOKEN_BUDGET
+
+
+def _span_cap() -> int:
+    """Width budget for a WINDOW SPAN, leaving room for the crop pad the driver adds on its left.
+
+    The cap has to hold on the emitted PNG, not on the pre-pad span: 29 of 3,168 strips_v2 crops
+    cleared MAX_STRIP_W as spans and broke it once padded (measured 2026-07-29). The reserve is
+    the largest pad the driver applies (the w00 clef margin, 0.5 sp).
+    """
+    return MAX_STRIP_W - int(round(TARGET_SPACING * 0.5))
+
+
 def _split_wide(row: np.ndarray, x0: int, x1: int) -> list[tuple[int, int]]:
     """Split an over-wide span (a genuinely wide measure) at whitespace GUTTERS only.
 
@@ -617,10 +715,14 @@ def _split_wide(row: np.ndarray, x0: int, x1: int) -> list[tuple[int, int]]:
     it) with the full-width staff-line rows excluded. Each cut picks the widest-gutter center
     nearest the ideal k/n position; if a region has no zero-ink gutter at all (unbroken beam
     run), the least-ink column is the last resort.
+
+    A gutter can sit far from the ideal k/n position, so the even split n = ceil(w / cap) is only
+    a STARTING guess: it left 31 of 3,168 strips_v2 crops over the cap (measured 2026-07-29).
+    We raise n until every piece fits, giving up after a few tries rather than cutting through ink.
     """
     import math
-    n = math.ceil((x1 - x0) / MAX_STRIP_W)
-    if n <= 1:
+    cap = _span_cap()
+    if x1 - x0 <= cap:
         return [(x0, x1)]
     sp = TARGET_SPACING
     y0 = max(0, int(TOP_LINE_Y - 2.0 * sp))              # cover ledger notes above ...
@@ -642,19 +744,29 @@ def _split_wide(row: np.ndarray, x0: int, x1: int) -> list[tuple[int, int]]:
     if g0 is not None:
         gutters.append(((g0 + x1 - margin - 1) // 2, x1 - margin - g0))
 
-    cuts = [x0]
-    for k in range(1, n):
-        target = x0 + (x1 - x0) * k // n
-        near = [(abs(c - target) - 2 * w, c) for c, w in gutters
-                if abs(c - target) < (x1 - x0) / (2 * n)]  # stay near the even split
-        if near:
-            cuts.append(min(near)[1])                    # closest, wide gutters preferred
-        else:                                            # no gutter: least-ink column
-            w = int(sp * 3)
-            lo, hi = max(x0 + 5, target - w), min(x1 - 5, target + w)
-            cuts.append(lo + int(np.argmin(ink[lo:hi])) if hi > lo else target)
-    cuts.append(x1)
-    return list(zip(cuts[:-1], cuts[1:]))
+    def cut_into(n: int) -> list[tuple[int, int]]:
+        cuts = [x0]
+        for k in range(1, n):
+            target = x0 + (x1 - x0) * k // n
+            near = [(abs(c - target) - 2 * w, c) for c, w in gutters
+                    if abs(c - target) < (x1 - x0) / (2 * n)]  # stay near the even split
+            if near:
+                cuts.append(min(near)[1])                # closest, wide gutters preferred
+            else:                                        # no gutter: least-ink column
+                w = int(sp * 3)
+                lo, hi = max(x0 + 5, target - w), min(x1 - 5, target + w)
+                cuts.append(lo + int(np.argmin(ink[lo:hi])) if hi > lo else target)
+        cuts = sorted(set(cuts))                         # two targets can pick one gutter
+        cuts.append(x1)
+        return list(zip(cuts[:-1], cuts[1:]))
+
+    n0 = math.ceil((x1 - x0) / cap)
+    pieces = cut_into(n0)
+    for n in range(n0 + 1, n0 + 4):                      # gutter-shifted cuts can still overrun
+        if max(b - a for a, b in pieces) <= cap:
+            break
+        pieces = cut_into(n)
+    return pieces
 
 
 @dataclass
@@ -671,14 +783,25 @@ class Window:
     m_from: int
     m_to: int
     split_wide: bool = False
+    est_tokens: float = 0.0    # estimated decoded length; > 59 means the emitter will drop it
 
 
 def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Window]:
-    """Group consecutive measures (bar-to-bar spans) into ~MEASURES_PER_STRIP windows.
+    """Group consecutive measures (bar-to-bar spans) into windows that fit the LABEL BUDGET.
 
     The first window of a row keeps the left prefix (clef + key signature -> the \\sig carrier).
-    A single measure wider than MAX_STRIP_W (a missed barline) is split at whitespace gutters so
+    A single measure wider than the width cap (a missed barline) is split at whitespace gutters so
     no strip exceeds the width the model was trained on.
+
+    Packing rule (`WINDOW_MODE`):
+      "legacy" (default) — take up to MEASURES_PER_STRIP measures, shrink the window on width.
+      "budget" — add measures while the ESTIMATED token cost stays under TOKEN_BUDGET, with
+        MEASURES_PER_STRIP and the width cap as outer rails. Measured a wash against legacy (see
+        the constants block); available because it trades near-empty crops for usable strips.
+    The cap FIXES apply in both modes — only the packing rule differs.
+
+    Every window records `est_tokens`, so a measure that cannot fit the budget even ALONE (8.9% of
+    single measures) is visible in the manifest instead of silently dying in the emitter.
 
     A leading span holding no notehead past the clef zone (a repeat/barline printed right
     after the clef+signature) is a PREFIX, not a measure: it stays in the first window's
@@ -696,30 +819,61 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Wind
     spans = list(zip(bars[:-1], bars[1:]))     # each = one measure
     if not spans:
         return []
+    cap = _span_cap()
+    # the estimate is recorded in BOTH modes (it is diagnostics, and keeps the two comparable);
+    # only whether it GATES the packing depends on the mode
+    budget_mode = WINDOW_MODE == "budget" and row is not None
+    if row is not None:
+        st, ic = row_cost_features(row)
+        cum_stems, cum_ink = np.r_[0, np.cumsum(st)], np.r_[0, np.cumsum(ic)]
+
+    def cost(x0: int, x1: int, first: bool) -> float:
+        if row is None:
+            return 0.0
+        return estimate_tokens(cum_stems, cum_ink, x0, x1, first)
+
+    # the first window starts at the clef prefix when there is one, so the caps below see the
+    # crop's TRUE extent (re-extending it afterwards is what broke the width cap on 22 strips)
+    def win_x0(i: int) -> int:
+        return lead if (i == 0 and lead is not None) else spans[i][0]
+
     windows: list[Window] = []
     i = 0
     while i < len(spans):
-        j = min(i + MEASURES_PER_STRIP, len(spans))
-        while j > i + 1 and spans[j - 1][1] - spans[i][0] > MAX_STRIP_W:
-            j -= 1
-        x0, x1 = spans[i][0], spans[j - 1][1]
-        if x1 - x0 > MAX_STRIP_W and row is not None:       # over-wide single measure
-            windows.extend(Window(a, b, i, j - 1, split_wide=True)
+        first = i == 0
+        x0 = win_x0(i)
+        j = i + 1                              # always take at least one measure
+        while j < len(spans) and j - i < MEASURES_PER_STRIP:
+            nx1 = spans[j][1]
+            if nx1 - x0 > cap:
+                break                          # width rail
+            if budget_mode and cost(x0, nx1, first) > TOKEN_BUDGET:
+                break                          # label-budget rail (the one that drops strips)
+            j += 1
+        x1 = spans[j - 1][1]
+        if x1 - x0 > cap and row is not None:               # over-wide single measure
+            windows.extend(Window(a, b, i, j - 1, split_wide=True,
+                                  est_tokens=round(cost(a, b, first and a == x0), 1))
                            for a, b in _split_wide(row, x0, x1))
         elif x1 - x0 < MIN_STRIP_W:
             # never silently DROP content: a sliver merges into the previous window when the
-            # result stays within the trained width; else it is emitted on its own (a narrow
-            # w00 with just clef+sig beats a lost one — the old drop caused mid-staff w00s)
-            if (windows and not windows[-1].split_wide
-                    and x1 - windows[-1].x0 <= MAX_STRIP_W):
-                windows[-1].x1, windows[-1].m_to = x1, j - 1
+            # result stays within the trained width AND the measure cap; else it is emitted on
+            # its own (a narrow w00 with just clef+sig beats a lost one — the old drop caused
+            # mid-staff w00s). The measure-cap half was missing and let 13 of 3,168 strips_v2
+            # crops carry 4-5 measures.
+            prev = windows[-1] if windows else None
+            if (prev is not None and not prev.split_wide
+                    and x1 - prev.x0 <= cap
+                    and (j - 1) - prev.m_from + 1 <= MEASURES_PER_STRIP):
+                prev.x1, prev.m_to = x1, j - 1
+                prev.est_tokens = round(cost(prev.x0, x1, prev.m_from == 0), 1)
             else:
-                windows.append(Window(x0, x1, i, j - 1))
+                windows.append(Window(x0, x1, i, j - 1,
+                                      est_tokens=round(cost(x0, x1, first), 1)))
         else:
-            windows.append(Window(x0, x1, i, j - 1))
+            windows.append(Window(x0, x1, i, j - 1,
+                                  est_tokens=round(cost(x0, x1, first), 1)))
         i = j
-    if lead is not None and windows:
-        windows[0].x0 = lead                   # keep the clef+sig prefix in the w00 crop
     return windows
 
 
@@ -777,6 +931,11 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
                 "n_measures": w.m_to - w.m_from + 1,
                 "split_wide": w.split_wide,
                 "row_measures": row_measures,
+                # estimated decoded length (see row_cost_features): the emitter's 59-id gate is
+                # what drops a strip, so flag the ones that cannot fit even alone rather than
+                # letting them die silently downstream
+                "est_tokens": w.est_tokens,
+                "budget_risk": w.est_tokens > 59,
             }
             if wi == 0:
                 entry["row_bars"] = [int(b) for b in bars]  # audit/debug: raw barline x-positions

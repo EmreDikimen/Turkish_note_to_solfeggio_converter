@@ -125,7 +125,7 @@ def decode_page(
 
     stem = Path(page).stem
     result = {"page": str(page), "checkpoint": rt.checkpoint, "suffix": rt.suffix,
-              "measures_per_strip": page_to_strips_mod.MEASURES_PER_STRIP,
+              **page_to_strips_mod.window_signature(),
               "total_ms": round(total_ms, 1), "strips": decoded}
     (strip_dir / f"{stem}_decode.json").write_text(json.dumps(result, indent=1))
     return result

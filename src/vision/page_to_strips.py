@@ -35,6 +35,18 @@ STAFF_SPAN = 120       # top line -> bottom line (= 4 * spacing)
 TOP_LINE_Y = 138       # y of the top staff line inside the 336-tall strip
 HEADROOM_SP = TOP_LINE_Y / TARGET_SPACING          # line-spaces above the top line (~4.6)
 BELOW_SP = (STRIP_H - TOP_LINE_Y - STAFF_SPAN) / TARGET_SPACING  # below bottom line (~2.6)
+# The default split (4.6 sp above, 2.6 below) is generous above and too tight below for real
+# engraving: measured 2026-07-29, this row's own music reaches 2.68 sp below at p90 and 3.01 at
+# p95, so 11.6% of real staff rows had beams cut off, against 1.4% clipped at the top. The frame
+# height and the 30 px spacing are fixed by training and are NOT touched — only where the staff
+# sits inside the frame, which is the axis the model is insensitive to (a +1% vertical shift cost
+# +0.4% edits, against 12-15% for scale). See place_band().
+VPLACE_ADAPTIVE = os.environ.get("OMR_VPLACE", "1") not in ("0", "false", "False")
+VPLACE_MARGIN_SP = 0.25    # breathing room past the measured ink extent
+VPLACE_MIN_HEAD_SP = float(os.environ.get("OMR_VPLACE_MIN_HEAD", "3.30"))
+                           # floor on headroom: how far the staff may be pushed up. The
+                           # "vertical shift is free" evidence was measured at +-1% (~3 px);
+                           # 3.30 sp is a 39 px shift, well outside it, so this is a dose.
 
 # ---- windowing --------------------------------------------------------------------------------
 # OMR_MEASURES_PER_STRIP: tuplet-dense pieces blow the 59-id label budget even at 2 measures
@@ -73,7 +85,8 @@ COST_ROW_START = -5.25     # a row-start crop carries the \sig block but less mu
 # A true barline terminates AT (or a few px past) the outer staff lines with nothing attached;
 # a stem ends in a notehead/flag/beam, a G-clef extends far beyond BOTH lines.
 EXT_SP = 2.5           # analysis band extends this far past the outer staff lines
-                       # (2.5 sp keeps the band inside STRIP_H: 138-75=63, 258+75=333)
+                       # (2.5 sp keeps the band inside STRIP_H across the whole adaptive
+                       # placement range: top line 99..138 -> 99-75=24 and 138+120+75=333)
 OV_TOL_SP = 0.5        # a real barline may overshoot a staff line by up to this much
 WIDE_BEYOND_SP = 0.5   # connected ink this wide past a staff line = notehead/flag/beam ...
 WIDE_RUN_SP = 0.2      # ... but only when wide for this many CONSECUTIVE rows (a notehead is
@@ -384,16 +397,68 @@ def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff]) -> None:
 
 
 # -------------------------------------------------------------------- normalize + barlines
-def normalize_row(gray: np.ndarray, staff: Staff) -> tuple[np.ndarray, float, int]:
+def row_music_extent(lab: np.ndarray, staff: Staff) -> tuple[float, float]:
+    """(above, below) in line-spaces: how far THIS row's music reaches past its outer staff
+    lines, counting only ink CONNECTED to the staff band so a neighbouring system or a page
+    header cannot masquerade as this row's content.
+
+    `lab` is a whole-page connected-component labelling (cv2.connectedComponents on the ink).
+    """
+    sp = staff.spacing
+    reach = int(6 * sp)
+    x0, x1 = staff.x0, staff.x1
+    mine = set(np.unique(lab[staff.top:staff.bottom + 1, x0:x1])) - {0}
+    if not mine:
+        return 0.0, 0.0
+    mine_arr = np.fromiter(mine, dtype=lab.dtype, count=len(mine))
+    below_band = lab[staff.bottom + 1:min(lab.shape[0], staff.bottom + reach), x0:x1]
+    ys = np.where(np.isin(below_band, mine_arr).any(axis=1))[0]
+    below = (ys.max() + 1) / sp if len(ys) else 0.0
+    top_band = lab[max(0, staff.top - reach):staff.top, x0:x1]
+    ys2 = np.where(np.isin(top_band, mine_arr).any(axis=1))[0]
+    above = (top_band.shape[0] - ys2.min()) / sp if len(ys2) else 0.0
+    return float(above), float(below)
+
+
+def place_band(above: float, below: float) -> tuple[float, float]:
+    """Split the frame's non-staff height between headroom and underroom, in line-spaces.
+
+    The frame is fixed by training — 336 px tall, 30 px spacing — so the TOTAL is not ours to
+    change and neither is the scale, the axis the model is genuinely sensitive to. What is free
+    is where the staff sits inside that total: a +1% vertical shift moved the exam by +0.4%
+    edits, against 12–15% for scale (docs/METRICS-DIAGNOSTICS.md). So keep the height, and give
+    the bottom the room it actually needs.
+
+    The default 4.60 above / 2.60 below is generous above and too tight below for real
+    engraving: music reaches 2.68 sp below at p90 and 3.01 at p95, so 11.6% of real staff rows
+    had beams cut off. Measured 2026-07-29.
+    """
+    total = HEADROOM_SP + BELOW_SP                      # 7.2 sp of non-staff height
+    want_b = min(below + VPLACE_MARGIN_SP, total - VPLACE_MIN_HEAD_SP)
+    want_b = max(want_b, BELOW_SP)                      # never tighter than the trained default
+    head = total - want_b
+    if head < above + VPLACE_MARGIN_SP:                 # cannot fit both: keep the staff nearer
+        head = min(HEADROOM_SP, max(VPLACE_MIN_HEAD_SP, above + VPLACE_MARGIN_SP))
+    head = min(HEADROOM_SP, max(VPLACE_MIN_HEAD_SP, head))
+    return head, total - head
+
+
+def normalize_row(gray: np.ndarray, staff: Staff,
+                  lab: np.ndarray | None = None) -> tuple[np.ndarray, float, int]:
     """Crop the band around a staff and rescale so line spacing == TARGET_SPACING.
 
-    Returns (row_img HxW at STRIP_H tall, scale, top_line_y_in_row).
+    Returns (row_img HxW at STRIP_H tall, scale, top_line_y_in_row). With `lab` (a page-level
+    connected-component labelling) the staff is placed adaptively inside the fixed frame so low
+    beams are not cut off; without it the fixed training placement is used.
     """
     sp = staff.spacing
     scale = TARGET_SPACING / sp
+    head_sp, below_sp = HEADROOM_SP, BELOW_SP
+    if lab is not None and VPLACE_ADAPTIVE:
+        head_sp, below_sp = place_band(*row_music_extent(lab, staff))
     # band in page coords that maps to the 336-tall strip with the staff placed like training
-    band_top = int(round(staff.top - HEADROOM_SP * sp))
-    band_bot = int(round(staff.bottom + BELOW_SP * sp))
+    band_top = int(round(staff.top - head_sp * sp))
+    band_bot = int(round(staff.bottom + below_sp * sp))
     band_top_c, band_bot_c = max(0, band_top), min(gray.shape[0], band_bot)
     crop = gray[band_top_c:band_bot_c, :]
     # pad if the band ran off the page edge (keep the staff at the right vertical offset)
@@ -402,7 +467,7 @@ def normalize_row(gray: np.ndarray, staff: Staff) -> tuple[np.ndarray, float, in
         crop = cv2.copyMakeBorder(crop, pad_t, pad_b, 0, 0, cv2.BORDER_CONSTANT, value=255)
     new_w = max(1, int(round(crop.shape[1] * scale)))
     row = cv2.resize(crop, (new_w, STRIP_H), interpolation=cv2.INTER_AREA)
-    top_line_y = TOP_LINE_Y
+    top_line_y = int(round(head_sp * TARGET_SPACING))
     return row, scale, top_line_y
 
 
@@ -525,7 +590,8 @@ def _terminal_overshoot(band_ext: np.ndarray, x: int, ext: int) -> tuple[int, in
 
 
 def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
-                    debug_info: dict | None = None) -> list[int]:
+                    debug_info: dict | None = None,
+                    top_y: int = TOP_LINE_Y) -> list[int]:
     """Find real barlines by CONTINUITY + THINNESS + CLEAN TERMINATION.
 
     Three tests a barline passes and notes/stems/clefs do not:
@@ -549,7 +615,7 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     Returns barline x's (row coordinates). `debug_info`, if given, collects rejected
     candidates under key "rejects" as (x, reason) for the debug overlay.
     """
-    top, bot = TOP_LINE_Y, TOP_LINE_Y + STAFF_SPAN
+    top, bot = top_y, top_y + STAFF_SPAN
     tol = max(3, int(round(TARGET_SPACING * 0.35)))          # ~1/3 line-space slack
     ext = int(round(TARGET_SPACING * EXT_SP))
     band_ext = binarize_ink(row)[top - ext:bot + ext] > 0    # staff ± EXT_SP (gate 3)
@@ -610,7 +676,7 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     return bars
 
 
-def _has_notehead(row: np.ndarray, xa: int, xb: int) -> bool:
+def _has_notehead(row: np.ndarray, xa: int, xb: int, top_y: int = TOP_LINE_Y) -> bool:
     """Any notehead-fat blob in columns [xa, xb)? Same fat semantics as `_is_thin_stroke`:
     a connected horizontal run >= 0.75 sp wide sustained over >= 0.5 sp of consecutive rows.
     Signature accidentals stay under it (a flat's bowl is ~0.55 sp), repeat dots far under."""
@@ -619,8 +685,8 @@ def _has_notehead(row: np.ndarray, xa: int, xb: int) -> bool:
     fat_run = int(round(sp * 0.5))
     if xb - xa < fat_w:
         return False
-    y0 = max(0, int(TOP_LINE_Y - 1.5 * sp))
-    y1 = min(row.shape[0], int(TOP_LINE_Y + STAFF_SPAN + 1.5 * sp))
+    y0 = max(0, int(top_y - 1.5 * sp))
+    y1 = min(row.shape[0], int(top_y + STAFF_SPAN + 1.5 * sp))
     band = binarize_ink(row)[y0:y1, xa:xb] > 0
     staff_rows = band.sum(axis=1) > band.shape[1] * 0.9   # staff lines ink the whole slice
     run = 0
@@ -637,7 +703,8 @@ def _has_notehead(row: np.ndarray, xa: int, xb: int) -> bool:
     return False
 
 
-def row_cost_features(row: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def row_cost_features(row: np.ndarray,
+                      top_y: int = TOP_LINE_Y) -> tuple[np.ndarray, np.ndarray]:
     """Per-column token-cost features for a normalized row: (stem_starts, ink_cols).
 
     Both are 0/1 column arrays that SUM over a pixel span, so a window's estimated token cost is
@@ -650,8 +717,8 @@ def row_cost_features(row: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     ink = binarize_ink(row) > 0
     h = ink.shape[0]
-    y0 = max(0, int(TOP_LINE_Y - 2.0 * TARGET_SPACING))          # ledger notes above ...
-    y1 = min(h, int(TOP_LINE_Y + STAFF_SPAN + 2.0 * TARGET_SPACING))   # ... and beams below
+    y0 = max(0, int(top_y - 2.0 * TARGET_SPACING))               # ledger notes above ...
+    y1 = min(h, int(top_y + STAFF_SPAN + 2.0 * TARGET_SPACING))  # ... and beams below
     band = ink[y0:y1]
     if band.size == 0:
         z = np.zeros(ink.shape[1], dtype=np.int32)
@@ -683,7 +750,7 @@ def window_signature() -> dict:
     """The windowing settings a cached decode was produced under — store this beside a decode."""
     return {"measures_per_strip": MEASURES_PER_STRIP,
             "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET,
-            "edge_trim": TRIM_SHARED_EDGE}
+            "edge_trim": TRIM_SHARED_EDGE, "vplace": VPLACE_ADAPTIVE}
 
 
 def window_cache_ok(prev: dict) -> bool:
@@ -700,6 +767,8 @@ def window_cache_ok(prev: dict) -> bool:
         return False
     if prev.get("edge_trim", False) != TRIM_SHARED_EDGE:
         return False        # the crops moved, so every decode under them is stale
+    if prev.get("vplace", False) != VPLACE_ADAPTIVE:
+        return False        # the staff sits elsewhere in the frame
     # the token budget only moves a crop boundary in budget mode
     return WINDOW_MODE != "budget" or float(prev.get("token_budget", -1)) == TOKEN_BUDGET
 
@@ -714,7 +783,8 @@ def _span_cap() -> int:
     return MAX_STRIP_W - int(round(TARGET_SPACING * 0.5))
 
 
-def _split_wide(row: np.ndarray, x0: int, x1: int) -> list[tuple[int, int]]:
+def _split_wide(row: np.ndarray, x0: int, x1: int,
+                top_y: int = TOP_LINE_Y) -> list[tuple[int, int]]:
     """Split an over-wide span (a genuinely wide measure) at whitespace GUTTERS only.
 
     A cut through ink (a notehead / beam) puts half the symbol in each neighbouring strip and
@@ -733,8 +803,8 @@ def _split_wide(row: np.ndarray, x0: int, x1: int) -> list[tuple[int, int]]:
     if x1 - x0 <= cap:
         return [(x0, x1)]
     sp = TARGET_SPACING
-    y0 = max(0, int(TOP_LINE_Y - 2.0 * sp))              # cover ledger notes above ...
-    y1 = min(row.shape[0], int(TOP_LINE_Y + STAFF_SPAN + 2.0 * sp))  # ... and beams below
+    y0 = max(0, int(top_y - 2.0 * sp))                   # cover ledger notes above ...
+    y1 = min(row.shape[0], int(top_y + STAFF_SPAN + 2.0 * sp))  # ... and beams below
     band = binarize_ink(row)[y0:y1] > 0
     staff_rows = band.sum(axis=1) > band.shape[1] * 0.4  # staff lines ink every column
     ink = band[~staff_rows].sum(axis=0)
@@ -794,7 +864,8 @@ class Window:
     est_tokens: float = 0.0    # estimated decoded length; > 59 means the emitter will drop it
 
 
-def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Window]:
+def window_measures(bars: list[int], row: np.ndarray | None = None,
+                    top_y: int = TOP_LINE_Y) -> list[Window]:
     """Group consecutive measures (bar-to-bar spans) into windows that fit the LABEL BUDGET.
 
     The first window of a row keeps the left prefix (clef + key signature -> the \\sig carrier).
@@ -822,7 +893,8 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Wind
     lead = None
     if (row is not None and len(bars) >= 3
             and bars[1] - bars[0] <= int(10 * TARGET_SPACING)
-            and not _has_notehead(row, bars[0] + int(4 * TARGET_SPACING), bars[1] - 2)):
+            and not _has_notehead(row, bars[0] + int(4 * TARGET_SPACING), bars[1] - 2,
+                                  top_y=top_y)):
         lead, bars = bars[0], bars[1:]         # clef ~3.5 sp: scan for music beyond it
     spans = list(zip(bars[:-1], bars[1:]))     # each = one measure
     if not spans:
@@ -832,7 +904,7 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Wind
     # only whether it GATES the packing depends on the mode
     budget_mode = WINDOW_MODE == "budget" and row is not None
     if row is not None:
-        st, ic = row_cost_features(row)
+        st, ic = row_cost_features(row, top_y=top_y)
         cum_stems, cum_ink = np.r_[0, np.cumsum(st)], np.r_[0, np.cumsum(ic)]
 
     def cost(x0: int, x1: int, first: bool) -> float:
@@ -862,7 +934,7 @@ def window_measures(bars: list[int], row: np.ndarray | None = None) -> list[Wind
         if x1 - x0 > cap and row is not None:               # over-wide single measure
             windows.extend(Window(a, b, i, j - 1, split_wide=True,
                                   est_tokens=round(cost(a, b, first and a == x0), 1))
-                           for a, b in _split_wide(row, x0, x1))
+                           for a, b in _split_wide(row, x0, x1, top_y=top_y))
         elif x1 - x0 < MIN_STRIP_W:
             # never silently DROP content: a sliver merges into the previous window when the
             # result stays within the trained width AND the measure cap; else it is emitted on
@@ -892,6 +964,10 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
     # and the crop is auto-discarded when it doesn't improve staff detectability (see prep_page)
     page, cropped, skew_angle = prep_page(page)
     ink = binarize_ink(page)
+    # one page-level labelling, reused by every row: it is how normalize_row tells THIS row's
+    # music (connected to its staff) from a neighbouring system or page furniture
+    lab = cv2.connectedComponents((ink > 0).astype(np.uint8), connectivity=8)[1] \
+        if VPLACE_ADAPTIVE else None
     staves = detect_staves(ink)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -901,10 +977,10 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
     manifest: list[dict] = []
     n = 0
     for si, staff in enumerate(staves):
-        row, scale, top_y = normalize_row(page, staff)
+        row, scale, top_y = normalize_row(page, staff, lab)
         dbg_info: dict | None = {} if debug else None
-        bars = detect_barlines(row, staff, scale, debug_info=dbg_info)
-        windows = window_measures(bars, row)
+        bars = detect_barlines(row, staff, scale, debug_info=dbg_info, top_y=top_y)
+        windows = window_measures(bars, row, top_y=top_y)
         # total measures the row's windows cover (a trimmed clef+sig prefix span is no measure)
         row_measures = max(w.m_to for w in windows) + 1 if windows else 0
         bar_set = set(bars)

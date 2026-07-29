@@ -758,7 +758,7 @@ def window_cache_ok(prev: dict) -> bool:
 
     Caches used to be keyed on `measures_per_strip` alone, which a packing-rule change would slip
     straight past — and mixing two slicers inside one comparison is exactly how the earlier n_ids
-    read was confounded (docs/METRICS-DIAGNOSTICS.md). Caches written before the modes existed are
+    read was confounded (docs/METRICS-SLICER.md). Caches written before the modes existed are
     legacy by definition.
     """
     if prev.get("measures_per_strip", 3) != MEASURES_PER_STRIP:

@@ -36,6 +36,19 @@ pages. Also fixed: decode caches were keyed on `measures_per_strip` alone, so a 
 have silently reused crops from different code — the same confound that spoiled the earlier n_ids
 read.
 
+**Then the crops stopped overlapping.** The owner spotted that the 6 px left pad has no matching
+right trim, so neighbouring strips share pixels and a note could be read twice. The overlap was
+real — 74.8% of mid-row strips — but the double-count was not: a notehead is 22 px against a 6 px
+band, and on decodes a note repeats across an overlapping boundary **1.3%** of the time against a
+**6.85%** within-strip null. (Two geometric estimates on the way to that, 1.2% and 7.8%, were both
+wrong — one test window was too wide, the other also fires on beams. The decode test settled it.)
+Chasing the edges turned up the reason to make the change anyway: **no label ever names an edge
+barline** (0 of 421 start or end with `|`), yet real crops ended on the barline centre and showed a
+closing one **61%** of the time against **5%** for the synthetic strips the model trained on. The
+trim closes that to 22.5% — the rest is row-final strips, which have no successor to hand the
+margin to. Decoded A/B on 16 pages is a wash, so it is kept for structural consistency rather than
+accuracy, behind `OMR_EDGE_TRIM`.
+
 **Left open:** `data/real/strips_v2` was sliced before these fixes and needs re-slicing before the
 emit. And two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1` each
 exist under two makams), so one page of each pair is silently overwritten — found incidentally,

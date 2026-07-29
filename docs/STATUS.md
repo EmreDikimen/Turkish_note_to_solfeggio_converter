@@ -107,6 +107,12 @@ The four pre-render checks are DONE (see "Now"). What is left:
      3,168) and the width cap violated 82 times by three paths — both fixed and verified to 0, with
      measure coverage invariant across 458 rows. Decode caches now key on the full windowing
      signature. Numbers: [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+   - **DONE 2026-07-29: neighbouring crops no longer overlap.** The 6 px left pad had no matching
+     right trim, so 74.8% of mid-row strips shared pixels with their predecessor (195 → 0 pairs).
+     The double-count worry behind it was measured and is **not** real; the reason it was kept is
+     pixel/label agreement — no label ever names an edge barline, yet real crops showed a closing
+     one 61% of the time against synthetic's 5% (now 22.5%). Decoded A/B is a wash, so it buys
+     consistency, not accuracy. `OMR_EDGE_TRIM=0` disables it.
      ⚠ **`data/real/strips_v2` was sliced before these fixes** — re-slice it before emitting.
      ⚠ Two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1`), so one
      page of each pair is silently overwritten. Unfixed.

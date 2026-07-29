@@ -300,3 +300,48 @@ confound that spoiled the earlier n_ids read. Caches now carry the full windowin
 exist under two makam directories with different content. Strip directories are keyed by stem, so
 one page of each pair is silently overwritten. Not caused by the windowing work; found while
 comparing pools. Unfixed.
+
+### Neighbouring crops no longer overlap (`TRIM_SHARED_EDGE`, 2026-07-29)
+
+Crops carried a `PAD_PX = 6` left margin with no matching right trim, so **74.8% of mid-row strips
+overlapped their predecessor by 6 px** and that band was drawn in both. The right edge now gives
+back exactly what the next strip's left pad takes.
+
+**The double-counting worry it was raised against is NOT real, and was not the reason to change it.**
+A notehead is 22 px and the band is 6 px, so a head cannot fit; measured on decodes, the same note
+ending one strip and starting the next runs **1.3%** at overlapping boundaries (2/155) against a
+**6.85%** within-strip null for adjacent identical notes — the opposite of duplication. ⚠ Partly
+confounded: padded boundaries *are* barlines, and notes repeat less across a barline. ⚠ Two earlier
+geometric estimates of this (1.2%, then 7.8%) were both wrong — the first used a test window wider
+than the band, the second also fires on beams, which run to the end of a measure. The decode test
+is the one to trust.
+
+**What it does fix.** A strip's label never names an edge barline — **0 of 421** real labels start or
+end with `|` — but the pixels did:
+
+| share of strips showing a barline at the edge | left | right |
+|---|---|---|
+| synthetic `strips_v4` (what the model trained on) | 100% | **5%** |
+| real crops, before | 49.6% | **61.0%** |
+| real crops, after the trim | 49.6% | **22.5%** |
+
+The residual 22.5% is structural — the last strip of a row has no successor to give the pad to, so
+it still ends on the system's closing barline. The **left**-edge gap (49.6% vs 100%) runs the other
+way and is not addressable from the slicer: row starts open with a clef, and gutter cuts land
+mid-measure where no barline exists.
+
+**Decoded A/B, 16 val-side pages, shipped model, crops differing only at their edges — a wash:**
+
+| | trim off | trim on |
+|---|---|---|
+| strips / decoded notes | 326 / 2,479 | 326 / 2,482 |
+| over the 59-id budget | 9.5% | 9.2% |
+| near-empty (≤20 ids) | 14.7% | 14.4% |
+| `min_logprob < -1.0` (bad-crop proxy) | 14.4% | **13.8%** |
+| confident (> −0.1) | 31.9% | 30.7% |
+| duplicate note at a boundary | 6/204 | 4/204 |
+
+Overlapping pairs go **195 → 0**, with the same strips, the same measure spans and both caps still
+holding — only the crop edges moved. Kept because it removes a structural pixel/label
+inconsistency at no measured cost, **not** because it bought accuracy. Switchable via
+`OMR_EDGE_TRIM=0`; it is part of the decode-cache signature.

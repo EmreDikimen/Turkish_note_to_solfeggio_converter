@@ -301,6 +301,47 @@ exist under two makam directories with different content. Strip directories are 
 one page of each pair is silently overwritten. Not caused by the windowing work; found while
 comparing pools. Unfixed.
 
+### The strip frame cut low beams off; the staff now floats inside it (2026-07-29)
+
+The 336 px frame puts the staff at y=138, leaving **4.60 line-spaces above and only 2.60 below**.
+Measured on the page before the frame truncates anything, counting only ink connected to the row's
+own staff:
+
+| this row's music reaches | p50 | p90 | p95 | p99 | max | frame allows |
+|---|---|---|---|---|---|---|
+| **below** the staff | 1.76 | 2.68 | 3.01 | 3.80 | 4.07 | **2.60 sp** |
+| above the staff | 2.25 | 3.55 | 4.04 | 4.64 | 5.50 | 4.60 sp |
+
+**11.6% of real staff rows lost music at the bottom**, against 1.4% at the top — real engraving
+hangs beams lower than our renderer does. Border ink alone is a misleading signal here: 48.6% of
+real strips had ink on the bottom border, but splitting it by whether it CONNECTS to the row's
+staff, only **5.0%** was this row's music and **43.5%** was a neighbouring system or page
+furniture. Synthetic: 1.0% / 9.8%.
+
+**`place_band()` redistributes the frame instead of enlarging it.** Height and the 30 px spacing
+are fixed by training and untouched — only the split between headroom and underroom moves, per
+row, to fit that row's measured extent. Result on 20 re-sliced pages:
+
+| | fixed 4.6/2.6 | adaptive |
+|---|---|---|
+| BOTTOM: music cut off | 11.9% | **4.4%** |
+| BOTTOM: foreign ink | 47.0% | 52.3% |
+| TOP: music cut off | 1.3% | 1.0% |
+| TOP: foreign ink | 45.2% | 42.8% |
+
+**⚠ The decode A/B is NEUTRAL, not positive**, and the justification is geometric rather than
+measured. On 16 pages the bad-crop proxy reads 13.8% off / 15.0% at a 3.30 sp floor / 15.6% at a
+4.10 sp floor. There is **no dose-response** — the gentler shift is not better than the larger one
+— so at 326 strips (1–2pp ≈ 4–6 strips) these are noise, not a shift penalty. Kept ON because
+clipped beams are destroyed information a confidence proxy cannot see, and because it moves real
+crops toward the training distribution (synthetic clips 1.0%). ⚠ **It has not been shown to improve
+accuracy** — that needs gold-labelled pages. `OMR_VPLACE=0` disables it;
+`OMR_VPLACE_MIN_HEAD` sets the dose.
+
+⚠ **Correction to how this was justified.** The "vertical placement is free" result (+1% shift →
++0.4% edits) was measured at ~3 px. The adaptive placement shifts up to 39 px, 13x outside that
+range, so it does not license the change — hence the direct A/B above.
+
 ### Neighbouring crops no longer overlap (`TRIM_SHARED_EDGE`, 2026-07-29)
 
 Crops carried a `PAD_PX = 6` left margin with no matching right trim, so **74.8% of mid-row strips

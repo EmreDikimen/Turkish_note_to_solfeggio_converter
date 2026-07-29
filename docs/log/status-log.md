@@ -49,6 +49,19 @@ trim closes that to 22.5% — the rest is row-final strips, which have no succes
 margin to. Decoded A/B on 16 pages is a wash, so it is kept for structural consistency rather than
 accuracy, behind `OMR_EDGE_TRIM`.
 
+**And the frame stopped cutting beams off.** The owner noticed 32nd-note beams sliced by the bottom
+edge of a crop. Measured: the 336 px frame allows 4.60 sp above the staff and only 2.60 below, while
+real music reaches 2.68 sp below at p90 — **11.6% of real staff rows lost content**, against 1.4% at
+the top. Border ink alone would have misled here: 48.6% of real strips have ink on the bottom border,
+but only 5.0% of it is the row's own music; 43.5% is a neighbouring system bleeding in, which more
+margin would make worse. So the fix redistributes the frame rather than enlarging it — height and
+the 30 px spacing stay, only the staff's position inside them moves, per row. Bottom clipping
+11.9% → 4.4%. ⚠ Two honest caveats: the decode A/B is neutral (bad-crop proxy 13.8% → 15.0/15.6% at
+two doses, no dose-response, so noise at 326 strips), and the "vertical shift is free" result that
+first motivated it was measured at ~3 px against the 39 px shift used here — it did not license the
+change, which is why the A/B was run. Kept because a clipped beam is destroyed information that a
+confidence proxy cannot see; **not** claimed as an accuracy win.
+
 **Left open:** `data/real/strips_v2` was sliced before these fixes and needs re-slicing before the
 emit. And two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1` each
 exist under two makams), so one page of each pair is silently overwritten — found incidentally,

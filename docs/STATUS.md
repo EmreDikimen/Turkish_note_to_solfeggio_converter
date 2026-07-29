@@ -113,6 +113,13 @@ The four pre-render checks are DONE (see "Now"). What is left:
      pixel/label agreement — no label ever names an edge barline, yet real crops showed a closing
      one 61% of the time against synthetic's 5% (now 22.5%). Decoded A/B is a wash, so it buys
      consistency, not accuracy. `OMR_EDGE_TRIM=0` disables it.
+   - **DONE 2026-07-29: the staff now floats inside the strip frame.** The frame gave 4.60
+     line-spaces above the staff and only 2.60 below, but real music reaches 3.01 sp below at p95,
+     so **11.6% of real staff rows had beams cut off**. Height and scale are untouched — only the
+     split between headroom and underroom, per row. Bottom clipping **11.9% → 4.4%**. ⚠ The decode
+     A/B is **neutral and underpowered**, with no dose-response, so this is kept on the geometric
+     argument (a clipped beam is destroyed information) and is **not** a measured accuracy win —
+     verifying that needs gold-labelled pages. `OMR_VPLACE=0` disables it.
      ⚠ **`data/real/strips_v2` was sliced before these fixes** — re-slice it before emitting.
      ⚠ Two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1`), so one
      page of each pair is silently overwritten. Unfixed.

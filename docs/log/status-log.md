@@ -65,7 +65,7 @@ confidence proxy cannot see; **not** claimed as an accuracy win.
 **Left open:** `data/real/strips_v2` was sliced before these fixes and needs re-slicing before the
 emit. And two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1` each
 exist under two makams), so one page of each pair is silently overwritten — found incidentally,
-unfixed. Numbers: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+unfixed. Numbers: [../METRICS-SLICER.md](../METRICS-SLICER.md).
 
 ## 2026-07-29 — re-sliced the val-side pages, then found the slicer's windowing is mistuned
 

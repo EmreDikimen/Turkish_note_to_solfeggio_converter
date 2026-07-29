@@ -6,24 +6,53 @@ updated: 2026-07-29
 
 ## Now
 
-**Round 3's four pre-render checks were RUN on 2026-07-28, against the shipped model, with no
-training and no re-render. Three of the four hypotheses are dead, and the biggest win found is one
-that was never on the plan.** Full detail: [rung3/round3.md](rung3/round3.md). Numbers:
-[METRICS.md](METRICS.md).
+**The slicer was overhauled on 2026-07-29 — four measured changes and one measured non-change.**
+The windowing retune the plan asked for turned out to be a dead end; two real bugs and two geometry
+defects were underneath it. Numbers: [METRICS-SLICER.md](METRICS-SLICER.md). Decisions:
+[DECISIONS.md](DECISIONS.md).
 
-- **⛔ The "2% pre-shrink" win DID NOT REPLICATE. Do not act on it.** Shrinking exam strips ~2%
-  before the model reads them removed 12-15.5% of corrections (562 -> 475) and looked like the
-  biggest free lever this project had found. On **real-val it is -1.6%** (247 -> 243). It is
-  exam-specific on current evidence.
-  **How it happened, so it is not repeated:** ~15 variations were run against the frozen exam and
+- **⚠ FIRST ACTION FOR THE NEXT SESSION: re-slice `data/real/strips_v2`.** It was cut on
+  2026-07-29 *before* all four changes, so every crop in it is stale. Re-slice, then re-emit —
+  see "Next" item 1.
+- **The windowing constants STAY** (`MEASURES_PER_STRIP = 3`, `MAX_STRIP_W = 1450`). The sweep
+  pointing at 1 measure/window was scored on usable *yield*, which cannot charge for the near-empty
+  crops that shrinking creates; re-scored with that cost, 1 measure/window takes the healthy band
+  81.6% → 60.4%. A budget-aware packer was built, decoded head-to-head and is a **wash** — it ships
+  OFF (`OMR_WINDOW_MODE=budget`).
+- **Two cap bugs fixed** — the measure cap was unenforced (13 of 3,168 strips) and the width cap was
+  violated 82 times by three separate paths. Both verified to **0**, measure coverage invariant.
+- **Crops no longer overlap** — the 6 px left pad had no matching right trim, so 74.8% of mid-row
+  strips shared pixels with their predecessor (195 → 0 pairs). ⚠ The double-count worry behind it is
+  **not** real; it was kept for pixel/label agreement, and the decode A/B is a wash.
+- **The staff now floats inside the frame** so low beams are not cut off (bottom clipping
+  11.9% → 4.4%). ⚠ Decode A/B is **neutral and underpowered, with no dose-response** — this is a
+  geometric argument, **not** a measured accuracy win. `OMR_VPLACE=0` disables it.
+- **Decode caches now key on the full windowing signature**, so a slicer change can no longer
+  silently reuse crops cut by different code.
+- **Still open, found incidentally:** two source pages collide on one stem
+  (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1` each exist under two makams), so one page of each
+  pair is silently overwritten. Unfixed.
+
+**⛔ Standing warning, unchanged: the "2% pre-shrink" DID NOT REPLICATE. Do not act on it.**
+Shrinking exam strips ~2% before the model reads them removed 12–15.5% of corrections (562 → 475)
+and looked like the biggest free lever this project had found. On **real-val it is −1.6%**
+(247 → 243). It is exam-specific on current evidence.
+
+- **How it happened, so it is not repeated:** ~15 variations were run against the frozen exam and
   the best-scoring one was reported as a finding — selection on the test set — before any holdout
   was tried. The holdout should have come first. Mechanism tests along the way ruled out resampling
   (down-up = 555), blur (562), ink weight (lighten 565, thin 589) and staff-size matching (the
   benefit appears in every size bucket, including strips already at 30.0 px), so there was never a
   mechanism either.
-  **Not fully closed:** real-val is the EASY pool (0.9 edits/strip vs the exam's 1.7) and is missing
+- **Not fully closed:** real-val is the EASY pool (0.9 edits/strip vs the exam's 1.7) and is missing
   the hard tier entirely, so an effect concentrated on hard pages could hide there. That is one more
   reason the real-val rebuild gates everything. Re-test after it, not before.
+
+## Previously (Round 3 pre-render checks, 2026-07-28)
+
+**All four were RUN against the shipped model, with no training and no re-render. Three of the four
+hypotheses are dead.** Full detail: [rung3/round3.md](rung3/round3.md).
+
 - **Dropped, measured, do not re-propose:** rendering the odd crop shapes (the cost is real but the
   model does not hallucinate — 1 of 8; and the shape is the slicer's own trade-off, already halved);
   cutting wide crops narrower (**+31.8% edits** when tried); thinning beams (ours are at the
@@ -93,49 +122,32 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 
 The four pre-render checks are DONE (see "Now"). What is left:
 
-1. **Retune the slicer's windowing, THEN re-emit and rebuild real-val.** Order matters — re-emitting
-   before the retune wastes the run and, worse, produces a queue you would label once and throw away.
-   - **DONE 2026-07-29: the re-slice.** 158 val-side non-exam pages → `data/real/strips_v2`
-     (3,168 strips). A **new root on purpose** — overwriting `data/real/strips` would silently change
-     what every existing manifest points at, including the 130 labelled queue rows.
-   - **DONE 2026-07-29: the retune. The constants stay; two bugs were the real defect.**
-     `MEASURES_PER_STRIP` stays at 3 — the sweep pointing at 1 was scored on usable *yield*, which
-     cannot charge for the near-empty crops that shrinking windows creates, and those carry 20.8%
-     of exam corrections; re-scored with that cost, 1 measure/window takes the healthy band
-     81.6% → 60.4%. A budget-aware packer was built, decoded head-to-head and is a **wash**, so it
-     ships OFF (`OMR_WINDOW_MODE=budget`). What was real: the measure cap was unenforced (13 of
-     3,168) and the width cap violated 82 times by three paths — both fixed and verified to 0, with
-     measure coverage invariant across 458 rows. Decode caches now key on the full windowing
-     signature. Numbers: [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
-   - **DONE 2026-07-29: neighbouring crops no longer overlap.** The 6 px left pad had no matching
-     right trim, so 74.8% of mid-row strips shared pixels with their predecessor (195 → 0 pairs).
-     The double-count worry behind it was measured and is **not** real; the reason it was kept is
-     pixel/label agreement — no label ever names an edge barline, yet real crops showed a closing
-     one 61% of the time against synthetic's 5% (now 22.5%). Decoded A/B is a wash, so it buys
-     consistency, not accuracy. `OMR_EDGE_TRIM=0` disables it.
-   - **DONE 2026-07-29: the staff now floats inside the strip frame.** The frame gave 4.60
-     line-spaces above the staff and only 2.60 below, but real music reaches 3.01 sp below at p95,
-     so **11.6% of real staff rows had beams cut off**. Height and scale are untouched — only the
-     split between headroom and underroom, per row. Bottom clipping **11.9% → 4.4%**. ⚠ The decode
-     A/B is **neutral and underpowered**, with no dose-response, so this is kept on the geometric
-     argument (a clipped beam is destroyed information) and is **not** a measured accuracy win —
-     verifying that needs gold-labelled pages. `OMR_VPLACE=0` disables it.
-     ⚠ **`data/real/strips_v2` was sliced before these fixes** — re-slice it before emitting.
-     ⚠ Two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1`), so one
-     page of each pair is silently overwritten. Unfixed.
-   - **THEN:** re-run `emit_strip_labels.py --strips-root data/real/strips_v2 --redecode` with the
-     current checkpoint (~25–40 min for 158 pages), re-stage the `realval-hard` queue, and label it.
-   - **Already spent, and not recoverable:** the owner labelled all 130 rows of the first queue
-     (**65 ok / 22 fix / 43 bad**). 43 (33%) were unusable crops, leaving 87 against 110 needed — so
-     a re-slice was required regardless. The verdicts do **not** transfer (no crop survives
-     unchanged); what they bought is the confidence calibration and the 33% crop-failure rate.
+1. **Re-slice `strips_v2`, THEN re-emit and rebuild real-val.** The slicer work is finished (see
+   "Now"); what remains is running it. Order matters — emitting from stale crops produces a queue
+   you would label once and throw away.
+   1. **Re-slice the 158 val-side non-exam pages** into `data/real/strips_v2` (~18 min). The pool
+      on disk predates all four 2026-07-29 slicer changes, so none of its crops are current.
+      Keep the separate root: overwriting `data/real/strips` would silently change what every
+      existing manifest points at, including the 130 labelled queue rows.
+   2. **Re-emit:** `emit_strip_labels.py --strips-root data/real/strips_v2 --redecode` with the
+      current checkpoint (~25–40 min for 158 pages). `--redecode` is not optional here — the cache
+      key now includes the windowing, so stale entries are refused rather than reused.
+   3. **Re-stage the `realval-hard` queue and label it.** Size it with margin: the first queue
+      yielded 87 usable rows from 130 (33% were unusable crops) against 110 needed.
+   - **Already spent, not recoverable:** the owner labelled all 130 rows of the first queue
+     (**65 ok / 22 fix / 43 bad**). The verdicts do **not** transfer — no crop survives a re-slice
+     unchanged. What they bought is the confidence calibration and the 33% crop-failure rate.
 
 2. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner
    decision 2026-07-27: these only; ties and accidentals stay out). Verify on a 300-strip pilot with
    `domain_gap.py` before regenerating `data/pieces.json`. Guard: check the accidental counts before
    and after on the same pilot and treat a drop as a stop sign, not a trade.
-3. **Rebuild real-val to match exam composition** (item 7 below) — owner decision: this lands
-   *before* Round 3 trains, so future rounds stop being blind one-shots.
+3. **Rebuild real-val to match exam composition.** Owner decision: this lands *before* Round 3
+   trains, so future rounds stop being blind one-shots. Today's real-val is missing the hard tier
+   entirely, which is why it read 95% while the exam read 66%. It does **not** need to be
+   edition-disjoint (measured), but it must exclude decode-derived labels from the metric pool, and
+   its hard tail must be hand-verified. Reuse `data.is_real_val_piece` — both consumers must share
+   it. Item 1 produces its input, so run them together rather than labelling twice.
 4. **Write down what Round 3 must reach, before training starts** — on the user-effort metric
    (≥90% of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro
    mean. Then render once, train stage 1 once with several cheap stage-2 variants, read the exam
@@ -149,16 +161,12 @@ The four pre-render checks are DONE (see "Now"). What is left:
    glyphs are packed at `SIG_GLYPH_ADVANCE = 13 px`, have never been examined, and hold 32 of the
    exam's 33 küçük tokens — widening küçük's bars may actively hurt where horizontal room is fixed.
    Now a 13%-of-edits problem, so it sits below the pitch/duration work.
-7. **Rebuild real-val to match exam composition.** Today's real-val is missing the hard tier
-   entirely, which is why it read 95% while the exam read 66%. It does **not** need to be
-   edition-disjoint (measured), but it must exclude decode-derived labels from the metric pool, and
-   its hard tail must be hand-verified. Reuse `data.is_real_val_piece` — both consumers must share it.
-8. **Exam v3.** Owed: the 27 over-budget strip recoveries deferred from v2.1, re-validation of
+7. **Exam v3.** Owed: the 27 over-budget strip recoveries deferred from v2.1, re-validation of
    disjointness whenever the exam grows, and dedupe on SymbTr piece id rather than image stem. Also
    more `\komaSharp` gold — at n=14 the class cannot carry the weight the headline gives it. The
    train-time disjointness guard is already shipped; give v3 a one-time `round1-best` bridge read as
    its baseline. (The low-n weighting it also owed was done on 2026-07-27.)
-9. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
+8. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.
 

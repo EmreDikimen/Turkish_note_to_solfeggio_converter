@@ -23,6 +23,7 @@ wrong — fix by deleting, not by syncing.
 | What is the accuracy / yield of X? | [METRICS.md](METRICS.md) |
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
+| How the page-cutter behaves on real pages — retunes, cap bugs, crop geometry | [METRICS-SLICER.md](METRICS-SLICER.md) |
 | Why do we do X this way? What was overturned? | [DECISIONS.md](DECISIONS.md) |
 | Raw log of a training run or export | [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) |
 

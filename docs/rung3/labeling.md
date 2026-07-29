@@ -7,6 +7,51 @@ updated: 2026-07-19
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
 
+## The `realval-hard` queue (2026-07-28) — labelling the practice test's missing hard tier
+
+**Why it exists.** Real-val reads ~96% where the exam reads 74%, and the cause is measured:
+composition. The exam is 18% easy / 41% mid / **41% hard**; real-val is 59 / 41 / **0**. A practice
+test with no hard questions cannot rank candidates, which is why every round so far has been a blind
+one-shot. Rebuilding it is item 1 in [../STATUS.md](../STATUS.md).
+
+**Why it cannot be done by filtering.** "Hard" means the emitter refused the strip for
+`row_unaligned` or `nd_high` — those are **drops, not reviews**, so no label was ever written
+(6,168 in the nota pool alone, 13,975 across all pools). The exam has 145 hard strips only because
+they were recovered and hand-labelled one at a time. There is no pile to draw from.
+
+**The queue.** `scripts/rung3/build_realval_v2.py --queue 130` selects candidates that are on the
+val side (`data.is_real_val_piece`, the same rule `train.py` uses) and never exam pieces, mirrors
+the exam's own 107:38 `row_unaligned`:`nd_high` balance, caps 3 strips per piece so the tier is not
+five bad scans repeated, and seeds each row with the **current** model's decode.
+
+- **130 staged, 110 needed** (the surplus absorbs rows that turn out unusable).
+- Rows are sorted **most-confident-first**, and the ordering is calibrated: on the exam's hard tier
+  the same model's decode is exactly right **80%** of the time at `min_logprob > -0.1` and **4%**
+  below −1.0 ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)). The live review agrees — 84%
+  `ok` in the top bucket. So the early rows are *fast to check*; they are **not skippable**.
+- ⚠ **Read every row.** Even the top bucket is wrong 1 in 5. A wrong label confirmed `ok` becomes
+  gold, and then a Round-3 model that FIXES that error is scored wrong for it — real-val would
+  report a genuine improvement as a regression. That is the only way this queue can do harm, and it
+  requires an unchecked row.
+- Seeding from the decode is deliberate and is only safe **because a person checks it against the
+  picture**. `ok` must mean "I looked and it was right", never "the model sounded sure". Same
+  contract as `photo-gold`.
+
+**`f'' 32` is NOT an error — do not "fix" it.** The model emits the 32nd-note duration with a space
+before it. Measured: `f''32` and `f'' 32` produce **identical token ids** (`[19, 1, 37, 95, 35]`),
+because the tokenizer splits the octave marks from `32` either way — the glued form even *decodes
+back* with the space. `eval_omr.py` scores in id space, so the two are the same thing.
+⚠ **This holds for `32` only.** `f''16` vs `f'' 16` and `f''8` vs `f'' 8` DO differ in id space, so a
+space before those would be a real disagreement. Every spaced occurrence in this queue is a `32`
+(20 of them, all verified lossless). The written convention elsewhere is glued — 0 spaced labels
+across the exam, nota and real-val pools — so `build_realval_v2.py --build` normalises them; the
+reviewer does not need to.
+- ⚠ **An unverdicted row must never enter the metric pool** — that would reintroduce exactly the
+  flattery the rebuild exists to remove.
+
+Run: `.venv-ml/bin/python scripts/rung3/review_ui.py` → queue `realval-hard`. Images resolve from
+`data/real/strips/<page>/<strip>`. Progress and the target mix: `build_realval_v2.py --report`.
+
 ## Step 1 — Free labels from SymbTr matches
 
 ### 1a. neyzen ✅ DONE (2026-07-11)

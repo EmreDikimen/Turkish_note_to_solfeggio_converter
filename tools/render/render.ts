@@ -66,6 +66,8 @@ interface Job {
   textseed: number;
   respellseed: number;
   slurseed: number;
+  /** Round-3 print realism: seeded staff-line weight + usul beam grouping (SheetView). */
+  printseed: number;
 }
 
 function arg(name: string): string | undefined {
@@ -137,6 +139,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       textseed: hashStr(`${piece.slug}:c${p}:text`),
       respellseed: hashStr(`${piece.slug}:c${p}:respell`),
       slurseed: hashStr(`${piece.slug}:c${p}:slur`),
+      printseed: hashStr(`${piece.slug}:c${p}:print`),
     });
   }
   for (const t of piece.transposes) {
@@ -155,6 +158,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       textseed: hashStr(`${piece.slug}:${t}:text`),
       respellseed: hashStr(`${piece.slug}:${t}:respell`),
       slurseed: hashStr(`${piece.slug}:${t}:slur`),
+      printseed: hashStr(`${piece.slug}:${t}:print`),
     });
   }
   return jobs;
@@ -169,6 +173,7 @@ function jobUrl(job: Job): string {
     textseed: String(job.textseed),
     respellseed: String(job.respellseed),
     slurseed: String(job.slurseed),
+    printseed: String(job.printseed),
   });
   if (job.sig) q.set("sig", job.sig);
   if (job.repseed != null) q.set("repseed", String(job.repseed));
@@ -193,13 +198,14 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
         c && c.applied && c.score === want.score && c.mode === want.mode &&
         c.lyrics === want.lyrics && c.transpose === want.transpose && c.sig === want.sig &&
         c.repseed === want.repseed && c.navseed === want.navseed &&
-        c.textseed === want.textseed && c.respellseed === want.respellseed && c.slurseed === want.slurseed
+        c.textseed === want.textseed && c.respellseed === want.respellseed &&
+        c.slurseed === want.slurseed && c.printseed === want.printseed
       );
     },
     {
       score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose, sig: job.sig,
       repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-      slurseed: job.slurseed,
+      slurseed: job.slurseed, printseed: job.printseed,
     },
     { timeout: 20000 },
   );
@@ -234,7 +240,7 @@ async function renderPiece(page: Page, piece: PieceEntry, shardPath: string): Pr
         image: `${name}.png`, label: s.label, mode: job.mode, makam: piece.makam, sig: job.sig,
         piece: piece.slug, transpose: job.transpose, lyrics: job.lyrics,
         repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-        slurseed: job.slurseed, from: s.fromMeasure, to: s.toMeasure,
+        slurseed: job.slurseed, printseed: job.printseed, from: s.fromMeasure, to: s.toMeasure,
       }) + "\n");
       count++;
       if (DELAY > 0) await page.waitForTimeout(DELAY);

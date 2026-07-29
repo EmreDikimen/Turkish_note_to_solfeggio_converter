@@ -72,6 +72,13 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # REALVAL-HARD (2026-07-28) — the missing hard tier of the rebuilt real-val
+    # (scripts/rung3/build_realval_v2.py). These strips were DROPPED by the emitter for
+    # row_unaligned / nd_high, so they carry no trustworthy SymbTr label: each row is seeded with
+    # the CURRENT model's decode and the verdict is against the PICTURE. ok = "I looked and the
+    # decode is right". An unverdicted row must never reach the metric pool. Images resolve under
+    # data/real/strips/<page>/<strip>.
+    "realval-hard": "data/real/rung3/_realval_hard/realval_hard.csv",
     # PHOTO-GOLD (2026-07-25) — hand-label the phone-photo strips directly = a per-strip photo test
     # set. Every photo strip seeded with the model decode; ok=confirm, fix=correct against the photo.
     # reason=accid flags AEU-relevant strips. Images under data/real/rung3/photos_exam_strips/.

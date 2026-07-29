@@ -9,7 +9,139 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
-## 2026-07-27 (latest) — Round 2 SHIPPED: `round2-stage2-best` int8 is the live runtime
+## 2026-07-29 (latest) — re-sliced the val-side pages, then found the slicer's windowing is mistuned
+
+**The re-slice happened** — 158 val-side non-exam pages into `data/real/strips_v2` (3,168 strips),
+a new root so the existing manifests and the 130 labelled queue rows keep pointing at intact crops.
+Decided after the owner labelled the whole first queue and **43 of 130 (33%) turned out to be
+unusable crops**, leaving 87 against the 110 needed — a re-slice was required either way.
+
+**Then the emitter probe on one re-sliced page came back `accepted=3 review=2 dropped=25` of 30**,
+with `over_budget: 11`. That stopped the full run, and the investigation found something worth
+knowing before anyone re-emits.
+
+**The 2026-07-25 slicer fix was right, and its downstream constants were never retuned.** The old
+staff-detection kernel lost the ends of staff lines, pushing `x0` 70–490 px right and cutting off
+clefs and whole measures; `STAFF_HOR_FRAC = 0.11` stopped that, and slivers fell 10.4% → 1.2%. But
+rows now carry more music while `MEASURES_PER_STRIP = 3` and `MAX_STRIP_W = 1450` still assume
+truncated rows. Decoding both crop sets with the **same** model (the earlier comparison was
+confounded — the two decode caches came from different models): crops over the 59-id label budget
+went **20.9% → 31.9%**. The emitter drops those, so content is captured correctly and then thrown
+away. Sweeping `MEASURES_PER_STRIP`: 1 → 107 usable strips, 2 → 90, 3 → 79. Monotonic, current value
+worst. **Not a licence to set it to 1** — that objective counts budget fit only and ignores lost
+context, more stitcher pieces, and a mismatch against a synthetic corpus built at 2–4 measures.
+
+Also found: `MEASURES_PER_STRIP` is not enforced. The sliver-merge checks the width cap but not the
+measure cap, so 13 of 3,168 strips carry 4–5 measures.
+
+**The owner's labelling was the source of most of this.** Their read — "the model did a great job,
+the old slicer did not, and the fixed strips still have some slicing issues" — is confirmed on every
+count: model accuracy tracks the confidence calibration (84% `ok` in the top band against a
+predicted 80%), 33% of old hard crops were unusable, and the moderate-quality band is unchanged by
+the overhaul (~10% under both slicers).
+
+Also settled: **low confidence predicts a BAD CROP**, 89% below `min_logprob = -1.0` (16 of 18).
+This **corrects** an earlier claim in these docs, drawn from the first 7 verdicts, that confidence
+could not detect a bad crop. High confidence still does not guarantee a good one (6% of the top
+bucket were bad), so it is a screen, not a proof.
+
+## 2026-07-28 — Round 3's checks were run BEFORE rendering. Three of four ideas died; the real win was not on the list
+
+**Why this session mattered:** Round 3 was scoped as a full 40,826-strip re-render plus a paid
+training run, aimed at four hypotheses. All four were testable against the already-shipped model for
+the price of a decode, so they were tested first. That was worth doing — **three of the four
+hypotheses are wrong**, and the change that actually pays is one nobody had proposed.
+
+**The tool that made it all possible.** Decoding the whole exam once (326 strips) reproduces the
+known 562-edit total exactly, so per-strip attribution became available for the first time. Every
+number below comes off that one decode plus cheap variations of it.
+
+**What died, and why it is worth having killed:**
+
+- **"The model invents a bar when a crop has no notes."** It does not. Only 1 of the 8 note-free
+  crops that exist in all our labelled pools invented anything (bar: ≥50%). It simply cannot *read*
+  them — essentially every token wrong. The 19-edits-against-8-gold-tokens strip reproduced exactly;
+  the page has a circled ④ in frame, so the trigger looks like unfamiliar page furniture, not
+  emptiness. The *cost* is real and confirmed (≤3-note crops = 5.5% of strips, 20.8% of edits) but
+  the shape is the **slicer's** deliberate trade-off, already halved by the current slicer, so
+  teaching the renderer to imitate it is backwards.
+- **"Cut the wide crops narrower."** Looked like the biggest single lever (>1200 px crops = 28.6% of
+  edits at 2.5× the per-token rate). Splitting them at a zero-ink gutter against identical gold made
+  it **worse, +31.8%**. And 19 of 45 have no internal bar-line, so a measure-aligned split is not
+  even possible. Killed for the cost of one 45-strip run.
+- **"Our beams are too heavy, like our sharps were."** The opposite: ours sit at the engraving
+  standard 0.500 S, real print is 0.567–0.765 S. Thinning them would have moved us *away* from real
+  print — a change that would have shipped into 40,826 strips on an untested analogy.
+
+**The apparent win that wasn't — the most instructive part of the session.** Testing the
+staff-geometry hypothesis showed the model getting *better* under perturbation. Decomposed, the
+whole effect sat on **scale**: a ~2% shrink removed **15.5% of all exam corrections** (562 -> 475),
+reproducible across four scale values with a clean optimum. It looked like the largest free lever
+the project had found, and it was written into six documents as a headline result.
+
+**Then it failed to replicate.** On the real-val holdout the same operation gives 247 -> 243, -1.6%.
+
+**The mistake, stated plainly, because it is the reusable lesson:** ~15 variations were run against
+the frozen exam and the best-scoring one was reported as a finding, before any holdout was tried.
+That is selection on the test set. A holdout run costs two minutes; it should have come first. A new
+process decision now says so ([../DECISIONS.md](../DECISIONS.md)).
+
+No mechanism was ever found either, which in hindsight was the warning sign. Ruled out along the
+way: staff-size matching (the exam benefit appears in *every* size bucket — undersized -33%,
+already-correct -10%, oversized -16% — not just oversized strips), resampling (down-up 555), blur
+(562), ink lighten (565), ink thin (589). Also worth recording: the "identity warp" control used to
+rule out resampling was itself invalid — an exact identity matrix makes warpAffine copy pixels
+rather than filter, so it never tested what it claimed to.
+
+⚠ Not fully closed: real-val is the EASY pool (0.9 edits/strip against the exam's 1.7) and is
+missing the hard tier entirely, so an effect confined to hard pages could hide there. That is one
+more reason the real-val rebuild gates everything, and the re-test belongs after it.
+
+**Three wrong diagnoses about one file.** All three were about `page_to_strips.py`; two became
+patches and both were reverted.
+The first added a forward-merge for leading slivers and was **dead code** — re-slicing 67 pages gave
+byte-identical output. The second assumed `MAX_STRIP_W` was blocking the sliver merge; the slicer's
+own manifests disproved it (0 of 18 narrow crops were `split_wide`). Both diagnoses were inferred
+from reading the file instead of measured against its output. Two detectors inside the probes failed
+the same way and were caught only by looking at contact sheets. **The rule that came out of it:
+measure the estimator before touching the slicer** ([../DECISIONS.md](../DECISIONS.md)).
+
+**Also learned:** synthetic staff spacing has sd **0.000** — every training strip is identical. The
+plan said we shake "five times less than reality"; we shake *not at all* before augmentation. That
+makes the uncommitted `staff_jitter` op better motivated than the doc claimed, but the ladder says
+variance is not what costs edits today, so it stays **insurance, not a fix**.
+
+**Real-val rebuild started, and labelling immediately taught us something.** The gap is
+composition, measured: exam 18/41/41 easy/mid/hard against real-val 59/41/**0**. Hard means the
+emitter *dropped* the strip (`row_unaligned` / `nd_high`), so no label was ever written — there is
+no pile to filter, the strips have to be labelled. 110 are owed; 130 were staged, seeded with the
+current model's decode and ordered by confidence.
+
+The confidence ordering is calibrated, not guessed: on the exam's 145 hand-labelled hard strips the
+same model is exactly right 80% of the time above `min_logprob = -0.1` and 4% below −1.0. The live
+review agrees (84% `ok` in the top bucket). **But confidence cannot see a bad crop** — 3 of the
+owner's 7 `bad` verdicts sit in the highest band, where the model confidently and correctly reads a
+frame that is itself wrong.
+
+**Which surfaced the real problem: everything we label and everything we examine on is old-slicer
+output.** Strips date 2026-07-15..17; the slicer was overhauled 2026-07-25 and nothing was
+re-sliced. Re-slicing 5 queue pages: 0 of 30 crops identical, 2 gone, old 207 px slivers now 1435 px
+full rows. The owner's independent read from labelling says the same thing — the model reads well,
+the bad crops are the old slicer's, and the current slicer's crops are good. The frozen exam carries
+the same stale crops, so exam and real-val stay consistent with each other while both measure a
+pipeline we no longer ship. Decision left open in [../DECISIONS.md](../DECISIONS.md); the
+recommendation is to re-slice before spending the expensive remaining 61 rows.
+
+Also settled, so nobody re-fixes it: **`f'' 32` is not a decode error.** It tokenises identically to
+`f''32`; the tokenizer splits the octave marks from `32` either way. Holds for `32` only — `16` and
+`8` genuinely differ.
+
+New probes, each carrying its pre-registered bar and its result in the docstring:
+`scripts/rung3/empty_crop_probe.py`, `width_split_probe.py`, `beam_weight_probe.py`,
+`staff_geometry_probe.py`. Numbers: [../METRICS.md](../METRICS.md). Detail:
+[../rung3/round3.md](../rung3/round3.md).
+
+## 2026-07-27 — Round 2 SHIPPED: `round2-stage2-best` int8 is the live runtime
 
 The re-scoring earlier the same day reopened the "not shipped" call and the owner took the ship. It
 is the **same disposition as Round 1: an improvement, not a pass** — the pre-registered macro floor

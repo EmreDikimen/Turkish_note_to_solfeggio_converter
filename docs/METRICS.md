@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-07-27
+updated: 2026-07-28
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -202,13 +202,11 @@ Its column is measured on the 326-strip clean set; Round 1's is its original as-
 | per-source gap | ≤12pp | 12.5pp | 0.3pp | ✅ | 0.0pp | ✅ |
 | synthetic no-regression | ≥99% | 99.9% | 93.0% | ⛔ | not measured | — |
 
-Round 2 clears one floor Round 1 missed (`\komaFlat` precision) and misses four. Against Round 1 it
-is **better on every floor except the two headlines**, which the identical-set comparison above
-shows moving the other way — the headline is a per-class mean and `\komaSharp` collapsed.
-
-Ties deliberately carry **no floor** (their ground truth is ~38% structurally noisy); the
-arc-triggered false-`\tup3` rate replaces them. Arc denominators: 85 tie-but-no-tup3 strips,
-229 neither-token strips.
+Round 2 clears one floor Round 1 missed (`\komaFlat` precision), misses four, and is better on every
+floor except the two headlines — a per-class mean that `\komaSharp` collapsed. Ties carry **no
+floor** on purpose (~38% structurally noisy gold); the arc-triggered false-`\tup3` rate replaces
+them, over 85 tie-but-no-tup3 and 229 neither-token strips. Full reasoning:
+[rung3/ship-criteria.md](rung3/ship-criteria.md).
 
 ## Model quality — real-val (selection set, NOT a predictor)
 
@@ -219,10 +217,10 @@ arc-triggered false-`\tup3` rate replaces them. Arc denominators: 85 tie-but-no-
 
 - Margin is **low-n driven**: `\komaSharp` (1 gold) + `\kucukSharp` (21) account for 10.4 of the
   10.8pp. On the four ≥30-gold classes the arms tie (92.7% vs 92.2%).
-- Real signal: `\kucukSharp` recall 95.2% vs 61.9%; source consistency 0.6 vs 2.8pp.
 - **Real-val 95.0% AEU vs exam 66.6% = a 28pp gap.** Tier decomposition: easy 96.8% vs 94.8%,
   mid 91.9% vs 63.0%, hard tier absent from real-val (0 strips) vs 58.3% on the exam.
-  **Composition dominates; edition familiarity is small** (clean tiers agree within 2pp).
+  **Composition dominates; edition familiarity is small** (clean tiers agree within 2pp). This is
+  the measurement the real-val rebuild acts on — see [rung3/labeling.md](rung3/labeling.md).
 
 ## Photo domain (phone photos of exam pieces — EXAM-ONLY)
 
@@ -235,135 +233,18 @@ arc-triggered false-`\tup3` rate replaces them. Arc denominators: 85 tie-but-no-
 | Photo vs clean gap | ≈3–4pp | 2026-07-25 |
 | Unreadable even to a human | ~4% of strips | 2026-07-25 |
 
-## The microtonal-sharp defect (measured against two real printed editions)
+## Diagnostics — why the failures happen
 
-| Quantity | Real print | Bravura (ours, before) | Ours, after `--thin-sharps` |
-|---|---|---|---|
-| Sharp bar thickness | 0.300 S | 0.367 S (+22%) | 0.300 S |
-| küçük bar pitch (spacing) | 0.550 S | 0.483 S (−14%) | 0.65 S (deliberately wider) |
-| küçük white gap | 0.250 S | **0.116 S** (~1–2 px after the encoder shrink) | clears the shrink |
+Moved to [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-07-28 (this file hit the 400-line
+cap). That file owns the microtonal-sharp defect, the crop-shape and beam-weight probes, the decode
+confidence calibration, the old-slicer staleness finding, and the ~2% pre-shrink that failed to
+replicate.
 
-- koma/bakiye were never at risk (0.58–0.66 S gaps).
-- The error was **one-directional**: gold `\kucukSharp` decoded as `\komaSharp` **11× on the clean
-  exam, 10× on photos**; the reverse essentially never. Matches the 100%-precision / 48%-recall
-  signature.
-- Resolution was **ruled out**: recall does not fall with encoder scale (1.22 → 0.24) on either
-  dataset; `\bakiyeSharp` holds 84–94% in every bucket.
-### Where the sharps are PRINTED (measured 2026-07-26 — corrects the framing above)
+## Corpora, pools and label quality
 
-Every gold and corpus label split into tokens inside the row-start `\sig … \sigend` block versus
-tokens on a note. The scorers count both (no stripping), so both feed the AEU headline.
-
-| Set | `\kucukSharp` on a note | `\kucukSharp` in the signature |
-|---|---|---|
-| Clean exam v2.1 (352 strips) | **1** | **30** |
-| Clean exam, contamination-corrected (326) | 1 | 32 |
-| Photo gold (109 hand-corrected labels) | 3 | 13 |
-| `strips_v3` corpus | 234 tokens / 206 strips | 1,210 strips |
-
-- **The class is scored almost entirely in the key signature**, not on noteheads. `\komaSharp` runs
-  the same way on the exam (2 inline / 12 in-signature).
-- Structural reason: the carry serializer's `sigTolerant` rule prints a note bare when its
-  alteration runs the same direction as the signature's (SymbTr stores the SOUNDING value — eviç is
-  a 5-comma F♯ printed bare under a koma-sharp-F signature). Real pages therefore rarely print
-  küçük on a note at all. Verified end-to-end: a dry render of two küçük-heavy pieces under
-  non-küçük signature variants produced **zero** inline `\kucukSharp`.
-- **In the context that scores, `strips_v3` is not imbalanced**: küçük appears in 1,210 signature
-  strips against koma's 1,422 (bakiye 6,512). The 9× "1,887 vs 206" gap below is an inline-only
-  statistic about a context holding ~1 of the exam's 33 küçük tokens.
-- The real corpus gap is **diversity, not count**: signature-position küçük comes from just **3
-  makams** (mahur, nisaburek, süzidilara) and 4 distinct spellings.
-- **Inline counts, for the record:** `strips_v3` carries `\komaSharp` inline in 1,887 strips vs
-  `\kucukSharp` in 206 (0.5%), and zero strips hold both. Kept because it is a true statement about
-  note-position coverage — it is simply not what the exam measures.
-
-## Corpora and pools
-
-| Set | Size | Notes |
-|---|---|---|
-| strips_v2 | 18,624 strips / 150 pieces | 2026-07-05 |
-| strips_v2_1 | 18,627 strips / 470 MB | + nav-mark tokens, centered-rest fix — what Rung 2 trained on |
-| strips_v2_2 | 18,777 strips / 474 MB → 23,391 after the triplet expansion (190 pieces) | + rhythm tokens |
-| strips_v3 | 38,091 strips, 73.3% carry, 49 makams, 33 signature variants | budget gate PASS (57 ids, cap 59) — the Round-1 corpus |
-| **strips_v4** | **40,826 strips / 202 pieces, 75.5% carry** | the Round-2 corpus (2026-07-26): thin sharps, the carry pixels-vs-labels fix, +23 küçük-bearing pieces, −5 exam pieces. Audit PASS. `\kucukSharp` in the signature 1,210 → **1,998** tokens; inline unchanged (206 → 209 strips). Val is `split_v3`'s **verbatim** (24 pieces / 4,772 strips) so v3-vs-v4 stays matched |
-| Real training pool | 2,160 strips (1,758 nota + 418 neyzen, incl. 172 tup3) | after all promotes |
-| Exam v2.1 (frozen) | **352 strips / 45 piece entries**, tup3 gold 55 groups | `testset.json` |
-| Photo exam | 690 strips sliced, 284 hand-labelled | exam-only |
-| Real corpus on disk | 798 PDFs → 1,259 page PNGs (89 makams) + 964 nota pieces / 1,227 pages | |
-
-Exam v2.1 class gold: bakiyeSharp 117, bakiyeFlat 60, kucukFlat 54, natural 48, komaFlat 39,
-kucukSharp 28, komaSharp 19 (18 scorable), buyukSharp 3 → 0 after the re-audit, buyukFlat 0.
-
-## Label quality (measured by hand audits)
-
-| Pool | Content-error rate | Date |
-|---|---|---|
-| neyzen auto-accepts (full audit, 84 strips) | 22.6% needed correction | 2026-07-12 |
-| nota auto-accepts (69-strip sample) | 7.2% pitch-level | 2026-07-16 |
-| exam v2 auto-accepts (all 63) | ~6% pitch/duration | 2026-07-17 |
-| tup3 auto-accepts (78 strips) | 10% | 2026-07-19 |
-| exam gold, full re-audit | 13 new label errors found (gold over-sized sharps) | 2026-07-25 |
-| **nota training pool, review of every disagreeing strip** | **521 of 1,740 strips (30%) carry a human-corrected label**; of the strips where label and decode disagreed at all, **~78% of the labels were wrong** | 2026-07-27 |
-| Tie structure in nota pool | ~38% structurally noisy (why ties carry no floor) | 2026-07-20 |
-| **`strips_v3` carry strips: accidental DRAWN but not labelled** | **18.8% of signature-bearing carry strips** (5,240 / 27,933; 8,485 accidentals over 137 pieces) | 2026-07-26 |
-
-### The carry pixels-vs-labels defect (found 2026-07-26, fixed at source)
-
-`sigTolerant` — print a note bare when its alteration runs the same direction as the signature's —
-was applied on the LABEL side for every carry strip (`stripExport.ts` passes it) but had no
-counterpart in `SheetView`'s drawing decision, which marked every deviation. Same document, same
-signature, two coverage rules.
-
-| class | drawn but unlabelled | correctly labelled inline |
-|---|---|---|
-| `\kucukSharp` | **2,369** | 234 |
-| `\kucukFlat` | 1,749 | 788 |
-| `\komaSharp` | 1,364 | 2,829 |
-| `\komaFlat` | 1,268 | 9,896 |
-| `\bakiyeFlat` | 872 | 12,843 |
-| `\bakiyeSharp` | 863 | 24,015 |
-
-- **91% of the küçük sharps drawn on a notehead in `strips_v3` are labelled as nothing** — the model
-  was shown the glyph and told there was nothing there. That is a direct mechanism for its measured
-  signature: 48% recall at **100%** precision (it under-fires, it never over-fires).
-- ⚠ **Round-1 caveat:** `round1-best` trained on this corpus, so its microtonal-sharp numbers
-  reflect label noise as well as Bravura's bar weight. The two causes are not separated by any
-  measurement taken so far.
-- Fixed in `SheetView` (draw bare, matching real editions and the label) — pixels-only: labels over
-  a re-rendered piece were byte-identical, and genuine deviations (direction change, cancel to
-  natural) still print.
-
-### Pixels-vs-labels verification of `strips_v4` (`tools/render/verify-labels.ts`, 2026-07-26)
-
-Every job re-opened from the manifest, every accidental glyph read out of the live SVG and matched
-against the label of the crop it falls in — signature block included.
-
-| | |
-|---|---|
-| strips checked | **40,841** (1,020 jobs, whole corpus) |
-| exact | **40,826** |
-| flagged | 15 (0.037%) — all **excluded** from the manifest |
-| label drift vs the manifest on disk | **0** |
-| unrecognised glyphs | none |
-
-- **Positive control:** with the `sigTolerant` fix temporarily reverted, the same verifier flagged
-  **15 of 30** strips on three known-bad v3 jobs, every delta exactly `\kucukSharp` drawn-but-
-  unlabelled. The test detects the defect class it exists for.
-- The 15 flagged strips are **crop-boundary bleed**, not a rule disagreement: measure boxes do not
-  split exactly between glyphs, so a crop occasionally clips the neighbouring measure's accidental —
-  they occur in ± pairs on adjacent strips. Geometric and pre-existing (v3 has it too). Listed in
-  `data/synthetic/strips_v4/excluded_boundary_bleed.txt`; PNGs left on disk, rows removed from the
-  manifest, so the shipped corpus is 40,826 strips.
-
-⚠ **The 30% figure is over the REVIEWED population, not a random sample.** Every strip checked so
-far was selected for being suspicious — high decode disagreement, or flagged by the low-confidence
-rule. The 556 still-unverdicted strips all have `nd = 0` and were never flagged, so they are likely
-the cleanest slice; their error rate is unmeasured. The July figure (7.2% pitch-level on a random
-69-strip sample) and this one answer different questions.
-
-Adjudication finding: when the label and the model's decode disagreed on an accidental, the
-owner's fixes sided with the **decode 187 times vs SymbTr 14** — printed editions win accidental
-disputes.
+Moved to [METRICS-CORPUS.md](METRICS-CORPUS.md) on 2026-07-28 (this file hit the 400-line cap).
+That file owns corpus sizes, pool composition, hand-audited label-noise rates, the carry
+pixels-vs-labels defect and the `verify-labels.ts` verification.
 
 ## Runtime / engineering
 

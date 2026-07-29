@@ -2,9 +2,43 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-07-27
+updated: 2026-07-28
 
 ## Now
+
+**Round 3's four pre-render checks were RUN on 2026-07-28, against the shipped model, with no
+training and no re-render. Three of the four hypotheses are dead, and the biggest win found is one
+that was never on the plan.** Full detail: [rung3/round3.md](rung3/round3.md). Numbers:
+[METRICS.md](METRICS.md).
+
+- **⛔ The "2% pre-shrink" win DID NOT REPLICATE. Do not act on it.** Shrinking exam strips ~2%
+  before the model reads them removed 12-15.5% of corrections (562 -> 475) and looked like the
+  biggest free lever this project had found. On **real-val it is -1.6%** (247 -> 243). It is
+  exam-specific on current evidence.
+  **How it happened, so it is not repeated:** ~15 variations were run against the frozen exam and
+  the best-scoring one was reported as a finding — selection on the test set — before any holdout
+  was tried. The holdout should have come first. Mechanism tests along the way ruled out resampling
+  (down-up = 555), blur (562), ink weight (lighten 565, thin 589) and staff-size matching (the
+  benefit appears in every size bucket, including strips already at 30.0 px), so there was never a
+  mechanism either.
+  **Not fully closed:** real-val is the EASY pool (0.9 edits/strip vs the exam's 1.7) and is missing
+  the hard tier entirely, so an effect concentrated on hard pages could hide there. That is one more
+  reason the real-val rebuild gates everything. Re-test after it, not before.
+- **Dropped, measured, do not re-propose:** rendering the odd crop shapes (the cost is real but the
+  model does not hallucinate — 1 of 8; and the shape is the slicer's own trade-off, already halved);
+  cutting wide crops narrower (**+31.8% edits** when tried); thinning beams (ours are at the
+  engraving standard, real print is *heavier*). See [DECISIONS.md](DECISIONS.md).
+- **Still standing from the Round-3 plan:** the content work — the eighth/quarter-note mix and
+  bar-line density in `select_pieces.py` — now with a second, independent argument behind its width
+  half: after the encoder's fixed input box the model sees our beams at 6.5 px and real beams at
+  9–14.6 px, purely because our strips are wider and shrink harder.
+- **`USUL_BEAM_GROUPS` is still unvalidated and quarantined.** The beam check measured *thickness*,
+  not *grouping*, so it cannot clear it. Do not ship it into 40,826 strips.
+- **The `staff_jitter` op in `src/vision/augment.py` is insurance, not a fix** — synthetic spacing
+  has sd 0.000, so we genuinely shake not at all before augmentation, but the dose-response ladder
+  says variance is not what costs edits today.
+
+## Previously (Round 2, still true)
 
 **Phase 3 (real pages).** Synthetic reading is solved; every open problem is about real printed
 pages and photos of them.
@@ -32,11 +66,11 @@ pages and photos of them.
   duration 28%, rhythm signs 13%, **accidentals 13%**, structure 5%. Two rounds went into the 13%,
   because the old headline only measured accidentals. Pitch and duration have never been targeted by
   any synthetic work.
-- **The worst failures are a crop-shape gap we created.** `stripExport` builds chunks from whole
-  measures, so a "clef + donanım, no notes" image cannot occur in training — **0 of 40,826 strips** —
-  but the slicer produces them from real pages (4 of 326 exam strips; 28% are short). On one the
-  model hallucinated a whole measure: 19 edits against 8 gold tokens. 12 such strips carry **21% of
-  all edits**.
+- **Sparse crops are the most expensive shape** — crops with ≤3 notes are 5.5% of exam strips and
+  **20.8% of all corrections**. ⚠ **The "the model hallucinates a bar" reading of this was
+  DISPROVED on 2026-07-28** (1 of 8 note-free crops invented anything, against a ≥50% bar): it
+  cannot *read* them, and the shape is the slicer's own trade-off rather than a rendering gap. The
+  `stripExport` fix that used to sit here is dropped — see "Now" and [DECISIONS.md](DECISIONS.md).
 - **The sharp diagnosis was right and incomplete.** The label-noise fix killed the one-directional
   küçük→koma fallback exactly as predicted, and küçük-in-signature went **50 → 72%**. What it exposed
   underneath is a **symmetric** koma↔küçük confusion — 8× one way, 7× the other, **all 15 inside the
@@ -57,40 +91,55 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 
 ## Next — in order
 
-**Round 3 is planned in [rung3/round3.md](rung3/round3.md)** — it targets note heights (40% of
-corrections) and note lengths (28%), with four measurements to run before anything is rendered.
-Items 1–3 below are those measurements.
+The four pre-render checks are DONE (see "Now"). What is left:
 
-1. **Render the crop shapes the slicer actually produces.** Signature-only crops, short fragments,
-   row-start-only windows — currently 0 of 40,826 training strips, while the slicer emits them from
-   real pages and the model hallucinates a measure when it meets one. A `stripExport` change, no
-   training required, and 21% of all edits sit in the strips it would fix. Cheapest item here.
-2. **Measure the corpus's PITCH and DURATION distribution against the real pools** — octave range,
-   note-value mix, dotted/tied values, measure density — the same way print position was measured
-   for accidentals. That method has overturned the plan twice, and both times the answer was a
-   mismatch we had created. Do this BEFORE designing Round 3. Note that 55 note-level errors are
-   whole notes inserted or deleted (the model losing count), which points at density and crop-width
-   coverage rather than glyph quality.
-3. **Round 3, aimed at pitch and duration** (68% of edits), not accidentals (13%).
-4. **Deferred by the owner (2026-07-27): the error-localisation UI.** The measurement that would
+1. **Retune the slicer's windowing, THEN re-emit and rebuild real-val.** Order matters — re-emitting
+   before the retune wastes the run and, worse, produces a queue you would label once and throw away.
+   - **DONE 2026-07-29: the re-slice.** 158 val-side non-exam pages → `data/real/strips_v2`
+     (3,168 strips). A **new root on purpose** — overwriting `data/real/strips` would silently change
+     what every existing manifest points at, including the 130 labelled queue rows.
+   - **OPEN: retune `MEASURES_PER_STRIP` / `MAX_STRIP_W`.** The 2026-07-25 staff fix stopped
+     truncating rows, so windows now overflow the 59-id label budget 31.9% of the time (was 20.9%),
+     and the emitter drops those. Sweep: 1 measure/window gives 107 usable strips, 2 → 90, 3
+     (current) → 79. ⚠ Not simply "set it to 1" — see the trade-offs in
+     [DECISIONS.md](DECISIONS.md) and [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+     Also fix the unenforced measure cap (13 of 3,168 strips carry 4–5 measures).
+   - **THEN:** re-run `emit_strip_labels.py --strips-root data/real/strips_v2 --redecode` with the
+     current checkpoint (~25–40 min for 158 pages), re-stage the `realval-hard` queue, and label it.
+   - **Already spent, and not recoverable:** the owner labelled all 130 rows of the first queue
+     (**65 ok / 22 fix / 43 bad**). 43 (33%) were unusable crops, leaving 87 against 110 needed — so
+     a re-slice was required regardless. The verdicts do **not** transfer (no crop survives
+     unchanged); what they bought is the confidence calibration and the 33% crop-failure rate.
+
+2. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner
+   decision 2026-07-27: these only; ties and accidentals stay out). Verify on a 300-strip pilot with
+   `domain_gap.py` before regenerating `data/pieces.json`. Guard: check the accidental counts before
+   and after on the same pilot and treat a drop as a stop sign, not a trade.
+3. **Rebuild real-val to match exam composition** (item 7 below) — owner decision: this lands
+   *before* Round 3 trains, so future rounds stop being blind one-shots.
+4. **Write down what Round 3 must reach, before training starts** — on the user-effort metric
+   (≥90% of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro
+   mean. Then render once, train stage 1 once with several cheap stage-2 variants, read the exam
+   once.
+5. **Deferred by the owner (2026-07-27): the error-localisation UI.** The measurement that would
    justify it is cheap and still owed — per-token logprobs already come out of
    `onnx_greedy_decode(return_logprobs=True)` and `decode_page.py` throws all but min/mean away.
    Pre-registered rule if it is ever picked up: flagging 10% of tokens must catch ≥60% of errors.
-5. **Measure the SIGNATURE-packed sharp glyphs.** Every fidelity measurement we have (`sharp_probe`,
+6. **Measure the SIGNATURE-packed sharp glyphs.** Every fidelity measurement we have (`sharp_probe`,
    the 0.300 S bar weight, küçük's pitch widened to 0.65 S) was taken on INLINE glyphs. Signature
    glyphs are packed at `SIG_GLYPH_ADVANCE = 13 px`, have never been examined, and hold 32 of the
    exam's 33 küçük tokens — widening küçük's bars may actively hurt where horizontal room is fixed.
    Now a 13%-of-edits problem, so it sits below the pitch/duration work.
-6. **Rebuild real-val to match exam composition.** Today's real-val is missing the hard tier
+7. **Rebuild real-val to match exam composition.** Today's real-val is missing the hard tier
    entirely, which is why it read 95% while the exam read 66%. It does **not** need to be
    edition-disjoint (measured), but it must exclude decode-derived labels from the metric pool, and
    its hard tail must be hand-verified. Reuse `data.is_real_val_piece` — both consumers must share it.
-7. **Exam v3.** Owed: the 27 over-budget strip recoveries deferred from v2.1, re-validation of
+8. **Exam v3.** Owed: the 27 over-budget strip recoveries deferred from v2.1, re-validation of
    disjointness whenever the exam grows, and dedupe on SymbTr piece id rather than image stem. Also
    more `\komaSharp` gold — at n=14 the class cannot carry the weight the headline gives it. The
    train-time disjointness guard is already shipped; give v3 a one-time `round1-best` bridge read as
    its baseline. (The low-n weighting it also owed was done on 2026-07-27.)
-8. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
+9. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.
 

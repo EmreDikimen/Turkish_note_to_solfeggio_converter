@@ -13,7 +13,19 @@ WHAT it compares (synthetic pool vs each real pool):
              neighbouring system bleeding in) — real crops are full of it
   density    strip width, notes and tokens per strip, share of near-empty crops
   content    note-value mix, dotted rate, octave mix, per-100-note rates of the \\-tokens
-  beams      the beam grouping our renderer WOULD produce, from VexFlow's rule (see beam_groups)
+  beams      TWO measures, and they answer different questions:
+             `beam_groups_by_default_rule_%` replays VexFlow's DEFAULT grouping over the labels.
+               It says what a renderer with no usul knowledge would draw for this content — the
+               shape of the gap — and it is blind on purpose to whether the renderer now does
+               something better. Identical labels always give identical numbers here.
+             `beam_span_px` measures the drawn beams. Use it for synthetic before/after: both
+               sides are our own clean renders, so the detector is reliable. Two things it is NOT:
+               (1) a target to match against the real columns — on scans the same detector loses
+               broken beams and catches fat noteheads, so it under-reports there; compare real
+               beaming by eye. (2) a group-size count — two beam groups that abut (very common,
+               e.g. a 2-group followed by a 4-group) touch and merge into one component, so the
+               measured span runs LONGER than any single group. Read it as a direction, not a
+               number.
 
 IMPORTANT — measure what the model actually sees. The strips on disk are clean; training applies
 `src/vision/augment.py` on top. Blur, ink-bleed and JPEG all thicken strokes and add variance, so
@@ -38,6 +50,7 @@ import statistics as st
 import sys
 from pathlib import Path
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -96,6 +109,26 @@ def staff_geometry(bw: np.ndarray):
     return ys, float(np.mean(gaps)), float(np.mean([len(b) for b in sel]))
 
 
+def beam_spans(bw: np.ndarray, spacing: float) -> list[float]:
+    """Widths, in staff spaces, of the drawn beam groups.
+
+    A beam is the only long thin horizontal bar in a strip. Erode vertically so slurs, ties and
+    volta rules (all a few px thick) vanish, drop the full-width staff-line rows, then keep
+    components that are wide AND at least 3x wider than tall — a notehead in a scan is a blob
+    about 1.3 staff spaces wide and nearly as tall, and a looser filter counts it as a beam.
+    """
+    work = bw.copy()
+    work[bw.mean(axis=1) >= 0.6] = False
+    er = cv2.erode(work.astype(np.uint8), np.ones((7, 1), np.uint8))
+    n, _, stats, _ = cv2.connectedComponentsWithStats(er, 8)
+    out = []
+    for i in range(1, n):
+        x, y, w, h, area = stats[i]
+        if w >= 1.8 * spacing and w > 3.0 * h and w < 0.92 * bw.shape[1]:
+            out.append(w / spacing)
+    return out
+
+
 def pixel_stats(img: np.ndarray, acc: dict) -> None:
     bw = img < 128
     h, w = bw.shape
@@ -118,6 +151,7 @@ def pixel_stats(img: np.ndarray, acc: dict) -> None:
     frac = outside / max(bw.sum(), 1)
     acc["outside_frac"].append(float(frac))
     acc["has_foreign_ink"].append(float(frac > 0.03))
+    acc["_spans"].extend(beam_spans(bw, sp))
 
 
 # -------------------------------------------------------------------------------------------
@@ -215,9 +249,15 @@ def measure_pool(d: Path, n: int, seed: int, augment, name: str) -> dict:
     acc["_beam"] = collections.Counter()
     acc["_notes_total"] = [0]
     acc["_beam_total"] = [0]
+    acc["_spans"] = []
     used = 0
     for r in sample:
-        p = d / r["image"]
+        # Manifests normally hold a bare filename next to the manifest; an absolute path is
+        # allowed so a filtered subset (e.g. "the same pieces, from the previous corpus") can be
+        # compared without copying images.
+        p = Path(r["image"])
+        if not p.is_absolute():
+            p = d / r["image"]
         if not p.exists():
             continue
         img = Image.open(p).convert("RGB")
@@ -274,12 +314,28 @@ def summarise(acc: dict, used: int, name: str, pool_size: int) -> dict:
         },
         "per_100_notes": {k: round(100 * acc["_tok"][k] / tot, 2)
                           for k in ["rest", "acc"] + RATE_TOKENS},
-        "beam_groups_%": {
+        "beam_groups_by_default_rule_%": {
             **{f"size_{k}": round(100 * acc["_beam"][k] / bt, 1) for k in range(1, 6)},
             "size_6+": round(100 * acc["_beam"][6] / bt, 1),
         },
+        "beam_span_px": beam_span_summary(acc["_spans"]),
     }
     return out
+
+
+def beam_span_summary(spans: list[float]) -> dict:
+    if not spans:
+        return {"n": 0, "mean_staff_spaces": None, "median_staff_spaces": None,
+                "p90_staff_spaces": None, "over_4_spaces_%": None, "over_6_spaces_%": None}
+    a = np.array(spans)
+    return {
+        "n": int(a.size),
+        "mean_staff_spaces": round(float(a.mean()), 2),
+        "median_staff_spaces": round(float(np.median(a)), 2),
+        "p90_staff_spaces": round(float(np.percentile(a, 90)), 2),
+        "over_4_spaces_%": round(100 * float(np.mean(a > 4)), 1),
+        "over_6_spaces_%": round(100 * float(np.mean(a > 6)), 1),
+    }
 
 
 # -------------------------------------------------------------------------------------------

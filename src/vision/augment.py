@@ -8,9 +8,10 @@ damage); camera photos of printed pages are the minority. So this module has two
 mixed at `photo_share` (default 0.35 — screenshot-dominant):
 
   - "screenshot": rescale softness (down-up resize), JPEG artifacts, tiny brightness/contrast
-    jitter, a little sensor-ish noise. No geometry, no paper, no lighting — screenshots have
-    none of that. Each op fires with p<1, so a slice comes through nearly clean (native
-    screenshots often ARE clean PNGs).
+    jitter, a little sensor-ish noise. No paper, no lighting — screenshots have none of that.
+    Each op fires with p<1, so a slice comes through nearly clean (native screenshots often ARE
+    clean PNGs). The one geometry it DOES get is the staff jitter below, which models the slicer
+    rather than the camera and therefore applies whatever the capture was.
   - "photo": the full document pipeline — paper tint/texture, uneven lighting, shadows, slight
     rotation/perspective/staff curvature, ink bleed or faded print, camera blur/noise, JPEG.
 
@@ -155,6 +156,13 @@ class Augmenter:
     P_LIGHTING = 0.7
     # screenshot-profile op probabilities
     P_RESCALE = 0.7
+    # BOTH profiles: the staff-placement jitter (see self.staff_jitter). Not a camera effect —
+    # it models the SLICER, which normalises every strip to a nominal staff size and misses by a
+    # few percent whatever the capture method was. Applied to screenshots too, and that is the
+    # point: before Round 3 geometry only ran inside the photo profile (0.35 * 0.85 = 30% of
+    # samples), so the corpus the model saw had a staff-spacing SD of 0.48 px against 0.65-1.12 px
+    # in the real pools, and a p5-p95 vertical-placement spread of 2.3 px against 2.5-20.9 px.
+    P_STAFF_JITTER = 0.8
 
     def __init__(self, seed: int | None = None, photo_share: float = PHOTO_SHARE):
         import albumentations as A
@@ -168,6 +176,23 @@ class Augmenter:
                      translate_percent=(0, 0.01), fill=255, p=1.0),
             A.Perspective(scale=(0.01, 0.04), fill=255, p=0.7),
         ])
+        # Staff-placement jitter, sized from the real pools (scripts/rung3/domain_gap.py):
+        # scale +-4% reproduces their staff-spacing SD of ~0.7 px on a 30 px space, and a +-2%
+        # vertical shift reproduces the p5-p95 placement spread of ~10 px on a 336 px strip.
+        # Kept mild on purpose — the Step-1 tests showed 8th<->16th flips once beams blur, and
+        # shrinking the image is one more way to blur them. Deliberately NOT matched to the exam
+        # pool's outlier spread (20.9 px): that pool is the hardest scans we own, and training on
+        # its tail would cost accuracy on the common clean case.
+        #
+        # NO rotation here. The slicer deskews before it cuts, so real strips arrive near
+        # horizontal — measured, the share of strips too skewed for a staff-line detector to find
+        # five lines is 14-19% across the real pools. An earlier version of this op rotated by
+        # +-1 deg and pushed the synthetic figure to 68%: over a 1100 px strip one degree walks a
+        # staff line 19 px, which is more skew than reality has. The photo profile keeps its own
+        # rotate(-2, 2) — that one is about the camera, and only 35% of samples see it.
+        self.staff_jitter = A.Affine(scale=(0.96, 1.04),
+                                     translate_percent={"x": (-0.005, 0.005), "y": (-0.02, 0.02)},
+                                     fill=255, p=1.0)
         self.camera = A.Compose([
             A.RandomBrightnessContrast(brightness_limit=0.12, contrast_limit=0.15, p=0.7),
             A.OneOf([
@@ -187,6 +212,11 @@ class Augmenter:
         rng = self.rng
         if profile is None:
             profile = "photo" if rng.random() < self.photo_share else "screenshot"
+
+        # Slicer-residual staff jitter, both profiles, before anything else: it stands in for the
+        # crop the strip was cut with, so every later effect sees the staff where it really landed.
+        if rng.random() < self.P_STAFF_JITTER:
+            img = self.staff_jitter(image=img)["image"]
 
         if profile == "screenshot":
             if rng.random() < self.P_RESCALE:

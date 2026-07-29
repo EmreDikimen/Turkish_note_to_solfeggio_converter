@@ -65,6 +65,9 @@ const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("nav
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
 const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
 const URL_SLURSEED = RENDER_PARAMS.has("slurseed") ? Number(RENDER_PARAMS.get("slurseed")) : null;
+// Round-3 print realism: seeded staff-line weight + usul beam grouping (see SheetView's
+// STAFF_LINE_WIDTH / USUL_BEAM_GROUPS). Absent → VexFlow's defaults, i.e. every pre-Round-3 strip.
+const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get("printseed")) : null;
 // Round-2: draw the four AEU sharps with real-print bar weight (see SheetView's drawThinSharps).
 // Render-automation only; absent → Bravura's glyphs, as before.
 const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
@@ -72,6 +75,7 @@ const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
 // re-engrave on every render). Constant per page load, like all render params.
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
 const SLUR_NOISE = URL_SLURSEED != null ? { seed: URL_SLURSEED } : undefined;
+const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
 
 /**
  * The whole web harness UI, as one React component.
@@ -134,6 +138,7 @@ export function App() {
   const renderTag = JSON.stringify({
     score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
     repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
+    printseed: URL_PRINTSEED,
   });
   const renderTagRef = useRef(renderTag);
   renderTagRef.current = renderTag;
@@ -263,6 +268,7 @@ export function App() {
       __omrConfig?: {
         score: string; mode: AccidentalMode; lyrics: boolean; transpose: number; sig: string | null;
         repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null; slurseed: number | null;
+        printseed: number | null;
         applied: boolean;
       };
     };
@@ -271,6 +277,7 @@ export function App() {
     w.__omrConfig = {
       score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose, sig: URL_SIG ?? null,
       repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
+      printseed: URL_PRINTSEED,
       applied: layoutTag === renderTag,
     };
   }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
@@ -645,6 +652,7 @@ export function App() {
                 textNoise={TEXT_NOISE}
                 slurNoise={SLUR_NOISE}
                 thinSharps={URL_THIN_SHARPS}
+                printNoise={PRINT_NOISE}
               />
               <StripPanel
                 strips={strips}

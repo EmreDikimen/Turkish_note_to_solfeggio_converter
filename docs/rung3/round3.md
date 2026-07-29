@@ -2,7 +2,7 @@
 
 purpose: what Round 3 targets, the evidence behind it, and the checks to run BEFORE rendering anything
 audience: agents and the owner working the real-page track
-updated: 2026-07-27
+updated: 2026-07-28
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
@@ -27,9 +27,39 @@ Two whole rounds went into that 13%. Not because it was the biggest problem — 
 **only measured that**. It could not see the other 87%. Full table in
 [../METRICS.md](../METRICS.md).
 
-## Four checks to run BEFORE rendering anything
+## The checks were RUN (2026-07-28). Most of them said no.
 
-None of these needs training. Three of the last three "the model is bad at X" findings turned out to
+All four were run against the shipped `round2-stage2-best`, no training, no re-render. The headline:
+**three of the four ideas below are dead, and the one real win was not on the list.** Details per
+check are kept in place below, each under its own verdict line, because the negative results are the
+point — each one is a change we did not build on a guess.
+
+The harness is trustworthy: decoding all 326 exam strips reproduces the known **562-edit** total
+exactly ([../METRICS.md](../METRICS.md)).
+
+| check | verdict |
+|---|---|
+| 1. staff geometry → note heights | **claim not supported**; the apparent win it uncovered failed to replicate — see §1 |
+| 2. beam/flag weight → note lengths | **disproved.** Ours are at the engraving standard; real print is *heavier* |
+| 3. render the odd crop shapes | **dropped.** The cost is real, the stated mechanism is wrong |
+| 4. how crowded are the strips | **already answered** by `domain_gap.py` before this session |
+
+**⛔ The apparent win did not survive a holdout.** Shrinking real strips ~2% removed **15.5% of exam
+corrections** (562 → 475) across four scale values, with no mechanism ever found — resampling, blur,
+ink weight and staff-size matching were each tested and ruled out. On the **real-val holdout it is
+−1.6%** (247 → 243). It is exam-specific. The cause of the mistake is worth more than the result:
+~15 variations were run against the frozen exam and the best was written up before any holdout was
+tried. ⚠ Not fully closed — real-val is the easy pool and lacks the hard tier, so re-test after the
+rebuild. **Do not act on it.** See [../DECISIONS.md](../DECISIONS.md).
+
+**Three separate diagnoses about `page_to_strips.py` were measured and disproved this session**, and
+two patches written on the first two were reverted (one was dead code, one was contradicted by the
+slicer's own manifests). Lesson recorded in [../DECISIONS.md](../DECISIONS.md): measure before
+touching that file.
+
+## The four checks, as originally written (with what each returned)
+
+None of these needed training. Three of the last three "the model is bad at X" findings turned out to
 be something we never drew properly, so **measure first**.
 
 ### 1. Are the staff lines in the right place? (aimed at the 40%)
@@ -61,12 +91,46 @@ Up to **3% bigger or smaller**, and about **3 px** up or down on a 336 px strip.
 around 15% in line spacing. **We are shaking the pictures roughly five times less than reality
 moves.**
 
-- **To do:** re-measure with a proper staff-line detector (the numbers above come from a
-  row-darkness heuristic that lyrics and dense beaming can fool), then widen the `Affine` scale and
-  translate ranges to match what is measured.
-- **Cost:** a settings change in the augmenter. **No re-render.**
-- **Non-claim:** the ±1-position errors are *consistent with* this, not proven to be caused by it.
-  The proper measurement is what turns it into a fact.
+### ⚠ §1 RESULT (2026-07-28) — the variance story is not supported, and neither is the size story
+
+Measured with `scripts/rung3/staff_geometry_probe.py`: perturb exam strips along the same axis the
+augmenter jitters, decode, and watch the error respond. A brittleness effect climbs with dose. This
+one did the opposite — perturbing made the model **better**, and doubling the perturbation changed
+nothing:
+
+| scale applied to exam strips | exam edits |
+|---|---|
+| identity (no change) | 562 |
+| 0.990 | 486 |
+| **0.980** | **475 (−15.5%)** |
+| 0.975 | 494 |
+| 0.960 | 541 |
+
+The curve is **not monotonic** — it rises at both ends — so "smaller is always better" is ruled out
+and a real optimum near 2% exists. The basin between 1% and 2.5% is flat, so the exact
+optimum is not resolvable at n=326; the evidence is that four independent scale values all land
+12–15.5% better while 4% falls back to −3.7%.
+
+Two things round3.md merged, now separated, because only one of them costs us edits today:
+
+- **Size BIAS is real but is NOT the mechanism.** Per-strip staff spacing: synthetic **30.000 px,
+  sd 0.000**; exam **30.496**, real-val 30.197, nota 30.122 (current slicer 30.353). The slicer
+  intends 30.0 and lands high — but **rescaling each strip individually to exactly 30.000 gives only
+  −6.0%**, less than half the blunt global shrink. If the model wanted the training size, exact
+  matching would have won. It did not. A further hypothesis (that `Staff.spacing`'s median-of-gaps
+  disagrees with the endpoint span setting the crop height) measured **0.998** where 1.016 was
+  needed. **The cause of the −15.5% is unknown.** Numbers in [../METRICS.md](../METRICS.md).
+- **Size VARIANCE (unmeasured payoff).** Synthetic raw spacing has sd **0.000** — every training
+  strip is identical. Real runs sd 0.70–2.10. The original text says we shake "five times less than
+  reality"; the raw truth is we shake *not at all* before augmentation. The `staff_jitter` op in
+  `src/vision/augment.py` addresses this and stays as **insurance, not a fix** — the ladder says
+  variance is not what is costing edits.
+
+- **Non-claim:** measured on the exam only, and the cause is unknown, so nothing ships on it yet.
+  Untested candidates: ink weight (real strips carry heavier ink than synthetic), stroke thinning
+  under INTER_AREA, or the encoder's own preprocessing.
+- **Non-claim:** the vertical-placement half of the original idea did nothing (shift +1% → +0.4%
+  edits). Only scale mattered.
 
 ### 2. Are our beams, flags and dots the right weight? (aimed at the 28%)
 
@@ -89,10 +153,28 @@ than real print, and after the picture is shrunk for the model, thin details mer
 proved that for the sharp bars and fixed it (`drawThinSharps`). **Nobody has ever checked the beams,
 the flags or the dots.**
 
-- **To do:** apply the `sharp_probe` method to beams, flags and augmentation dots — measure ours
-  against real printed editions at matched staff size, as
-  [round2.md](round2.md) describes for the sharp bars.
-- **Cost:** a measurement, then possibly a renderer change.
+### ⛔ §2 RESULT (2026-07-28) — DISPROVED. Our beams are not too heavy; real print is heavier
+
+Measured with `scripts/rung3/beam_weight_probe.py` (the `sharp_probe` method, applied to beam
+thickness in staff spaces). Median thickness: synthetic **0.500 S** — exactly the engraving
+standard — against real **0.567 S** (nota) and **0.765 S** (exam). The v4 and v5 pilots are
+identical, confirming the beam-grouping change does not touch weight.
+
+**The sharp-bar story does not transfer.** For the sharps our glyphs were 22% too thick; for beams
+we are *thinner* than real print, and thinning them further would move us away from reality. The
+residual gap matches the general ink spread already seen in staff-line thickness, so it is not
+beam-specific.
+
+- **Caveat, caught by looking at the contact sheet:** the thick tails are contaminated — synthetic
+  "1.27 S" entries are **double beams** (16th-note pairs) and real "2.00 S" entries are degraded
+  scans where ink bleed fused strokes. Only the median is trustworthy.
+- **This does NOT clear `USUL_BEAM_GROUPS`.** That change alters beam *grouping*; this measured
+  *thickness*. Grouping stays unvalidated and quarantined — do not ship it into 40,826 strips.
+- **Separate finding, carried forward:** after the encoder's fixed-size input box, the model sees
+  synthetic beams at ~6.5 px and real beams at 9–14.6 px. Both pools are normalised to the same
+  staff spacing, but our strips average 1229 px wide against real 904–1018, so ours shrink harder.
+  Every fine detail in a training picture arrives smaller than its real counterpart. An independent
+  argument for the width half of the content work.
 
 ### 3. Draw the crop shapes the page-cutter actually makes
 
@@ -104,9 +186,33 @@ The worst exam strip is exactly that shape: the answer is just the key signature
 invented a whole bar of notes — **19 corrections against 8 correct tokens**. Twelve such strips carry
 **21% of all corrections**.
 
-- **To do:** have `stripExport` also emit signature-only crops, short fragments and row-start-only
-  windows, in the proportions the slicer actually produces.
-- **Cost:** a `stripExport` change. **No training needed to test it** — render a sample and look.
+### ⛔ §3 RESULT (2026-07-28) — cost CONFIRMED, mechanism DISPROVED, change DROPPED
+
+Measured with `scripts/rung3/empty_crop_probe.py`.
+
+**The cost is real.** Decoding the whole exam and bucketing by content: crops with **≤3 notes are
+5.5% of strips but 20.8% of all corrections**, at 0.5–1.06 edits per gold token against a 0.03–0.05
+baseline. round3.md said ~21%; it was right.
+
+**The mechanism is wrong.** Across every labelled pool we own there are exactly **8** note-free
+crops (4 exam, 4 nota — the shape is that rare). Only **1 of 8 invented notes**; the pre-registered
+bar was ≥50%. The model does not hallucinate a bar — it simply cannot read these crops, getting
+essentially every token wrong. The 19-edits-against-8-gold-tokens strip reproduced exactly, and the
+page it comes from has a circled ④ section number in frame, so the trigger looks like unfamiliar
+page furniture rather than emptiness.
+
+**Why the change is dropped rather than re-aimed.** The shape is the *slicer's* deliberate
+trade-off, not a rendering gap — `window_measures` merges slivers but emits a narrow clef+signature
+crop rather than lose content, and the comment there says so. The current slicer has already halved
+the shape (3.4% → 1.4% of crops). Teaching the renderer to imitate a crop we control and are
+already removing is backwards, and it would cost a full re-render.
+
+**A related idea, also measured and also dropped: cutting wide crops narrower.** Wide strips
+(>1200 px) are 13.8% of the exam but 28.6% of corrections at 2.5× the baseline per-token rate. But
+splitting them at a zero-ink gutter — scored against identical gold — made things **worse, +31.8%
+(132 → 174 edits)**, worse on 15 strips and better on 5. And **19 of the 45 have no internal
+bar-line at all**, so a measure-aligned split is impossible. `MAX_STRIP_W` is not a lever.
+(`scripts/rung3/width_split_probe.py`.)
 
 ### 4. How crowded are the strips?
 
@@ -115,6 +221,12 @@ misreading a symbol. That points at density and crop width rather than glyph qua
 
 - **To do:** compare notes-per-strip and tokens-per-strip between the synthetic corpus and the real
   pools, the same way print position was compared for accidentals.
+
+### ✅ §4 RESULT — already answered by `domain_gap.py` before this session
+
+Strip width 1229 px synthetic vs 904 (exam) / 1018 (nota); notes per strip 8.6 vs 7.2–8.2; crops
+with ≤3 notes 0.67% vs 6.0%. No further measurement needed. The width half of this gap is now
+double-motivated — see the encoder-shrink note in §2.
 
 ## Then
 

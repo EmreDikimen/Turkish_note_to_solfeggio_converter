@@ -2,14 +2,46 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-07-27
+updated: 2026-07-29
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
-## 2026-07-29 (latest) — re-sliced the val-side pages, then found the slicer's windowing is mistuned
+## 2026-07-29 (latest) — the windowing retune: constants stay, two cap bugs fixed
+
+**The retune from the entry below was run to a conclusion, and its premise did not survive.** The
+sweep that pointed at `MEASURES_PER_STRIP = 1` had been scored on *usable yield* — does a decode fit
+the 59-id budget — which improves monotonically as windows shrink, because it cannot charge for the
+near-empty crops shrinking creates. Those crops carry 20.8% of exam corrections. Re-scored with that
+cost included, 1 measure/window takes the healthy band **81.6% → 60.4%**. The constant stays at 3.
+
+**Why measure count was the wrong control variable at all:** across 31,968 decoded strips, width
+explains only R² 0.54 of a strip's token count (stems + inked columns explain 0.77), the budget is
+simultaneously over-run (11.5%) and under-used (28.6% spend ≤25 of 59 ids), and **8.9% of single
+measures blow the budget alone** — which no `MEASURES_PER_STRIP` can fix. So a budget-aware packer
+was built, decoded head-to-head against legacy on 16 val-side pages, and came back a **wash**
+(healthy band 75.8% vs 75.7/76.2%; bad-crop proxy 14.4% vs 14.5/14.0%). It buys +16 usable strips
+for +1.6pp more near-empty crops, so it ships OFF behind `OMR_WINDOW_MODE=budget`, like
+`drawThinSharps`.
+
+**What was actually broken** — found by measuring the pool, not by reading the file (the rule that
+cost two reverted patches last session). The measure cap was unenforced (13 of 3,168 strips) and the
+width cap was violated 82 times by **three separate paths**: the `lead` clef prefix re-extending
+window 0 after the check, `_split_wide`'s gutter-shifted cuts overrunning, and the driver's crop pad
+being added post-check. Both fixed, verified 13 → 0 and 82 → 0 on the affected pages, with measure
+coverage invariant across 458 rows — no music gained or lost, at a cost of +7.2% strips on those
+pages. Also fixed: decode caches were keyed on `measures_per_strip` alone, so a packing change would
+have silently reused crops from different code — the same confound that spoiled the earlier n_ids
+read.
+
+**Left open:** `data/real/strips_v2` was sliced before these fixes and needs re-slicing before the
+emit. And two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1` each
+exist under two makams), so one page of each pair is silently overwritten — found incidentally,
+unfixed. Numbers: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+
+## 2026-07-29 — re-sliced the val-side pages, then found the slicer's windowing is mistuned
 
 **The re-slice happened** — 158 val-side non-exam pages into `data/real/strips_v2` (3,168 strips),
 a new root so the existing manifests and the 130 labelled queue rows keep pointing at intact crops.

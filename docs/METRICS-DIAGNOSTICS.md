@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-07-28
+updated: 2026-07-29
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -227,3 +227,76 @@ but it feeds straight into the budget overflow above.
 
 **Unchanged by the overhaul:** the moderate-quality band. Crops at `min_logprob < -0.5` sit at ~10%
 under both slicers — the fix removed the catastrophic crops, not the mediocre ones.
+
+### The windowing retune was RUN (2026-07-29) — the constants are not the lever
+
+The retune above was measured to its conclusion. **Neither `MEASURES_PER_STRIP` nor `MAX_STRIP_W`
+is worth moving**, and the sweep that suggested lowering the first was scored on the wrong quantity.
+Two genuine BUGS were found underneath it and fixed. Source: `src/vision/page_to_strips.py`.
+
+**1. Measure count is a poor proxy for the budget that actually drops strips.** Over the 31,968
+decoded old-pool strips:
+
+| | |
+|---|---|
+| strips over the 59-id budget | **11.5%** |
+| **SINGLE measures over the budget on their own** | **8.9%** (n=19,895) |
+| strips spending ≤ 25 of the 59 ids | **28.6%** |
+| ids predicted by strip WIDTH | R² = **0.54** |
+| ids predicted by stem count + inked columns | R² = **0.77** (residual sd 8.9) |
+
+The budget is over-run and under-used at the same time. And because 8.9% of single measures blow it
+alone, **no `MEASURES_PER_STRIP` value can fix those** — the constant is not the mechanism.
+
+**2. `MEASURES_PER_STRIP = 1` is actively harmful, and the earlier sweep could not see it.** That
+sweep ranked settings by "usable yield" (does the decode fit the budget), which improves
+monotonically as windows shrink — it cannot charge for the near-empty crops that shrinking creates,
+and those carry 20.8% of exam corrections. Re-scored on 16 val-side pages including that cost:
+
+| arm | strips | over budget | near-empty (≤20 ids) | **healthy 21–59** |
+|---|---|---|---|---|
+| legacy, 3 measures (current) | 326 | 10.4% | 8.0% | **81.6%** |
+| **legacy, 1 measure** | 442 | 5.7% | **33.9%** | **60.4%** |
+
+⚠ Estimated ids, not decoded, so the levels are approximate — but the arms share one estimator, so
+the ordering holds. **`MEASURES_PER_STRIP` stays at 3.**
+
+**3. Budget-aware packing was built, decoded head-to-head, and is a WASH.** `WINDOW_MODE=budget`
+packs measures until the estimated token cost is spent instead of counting measures. Decoded on the
+same 16 pages with the shipped `round2-stage2-best` int8:
+
+| | legacy m=3 | budget b=55 m=4 | budget b=62 m=4 |
+|---|---|---|---|
+| strips | 326 | 338 | 328 |
+| over the 59-id budget | 9.5% | 8.0% | 9.1% |
+| near-empty (≤20 ids) | 14.7% | **16.3%** | 14.6% |
+| **healthy 21–59 ids** | **75.8%** | 75.7% | 76.2% |
+| usable strips | 295 | **311** | 298 |
+| `min_logprob < -1.0` (bad-crop proxy, 89% precision) | 14.4% | 14.5% | 14.0% |
+
+Its only real effect is **+16 usable strips** bought with **+1.6pp more near-empty crops**. It
+**ships OFF** (`OMR_WINDOW_MODE=budget` to enable), so existing decode caches stay valid and the
+change stays A/B-able. ⚠ Out of sample the estimator is weaker than its fit: mean signed error
+**+3.3 ids**, sd 10.5, and it missed 16 real overflows against 19 false alarms.
+
+**4. Two real cap bugs, found by measuring the pool rather than reading the file.** Both fixed and
+verified by re-slicing the 62 affected pages (legacy packing, so only the fixes differ):
+
+| bug | before | after | cause |
+|---|---|---|---|
+| strips over `MEASURES_PER_STRIP = 3` | 13 / 3,168 | **0** | the sliver-merge checked the width cap but not the measure cap |
+| crops over `MAX_STRIP_W = 1450` | 82 / 3,168 | **0** | 22 = the `lead` clef prefix re-extended window 0 *after* the check; 31 = `_split_wide` gutter-shifted cuts overran; 29 = the driver's left pad was added after the check |
+
+Checked invariant across 458 rows / 61 pages: **0 rows changed measure count or coverage** — every
+measure is still assigned to exactly one window. Cost: **+7.2% strips on the affected pages**
+(over-wide windows now split instead of silently exceeding the trained width).
+
+**5. Decode caches were keyed on `measures_per_strip` alone**, so a packing-rule change would have
+slipped straight past staleness detection and mixed two slicers inside one comparison — the exact
+confound that spoiled the earlier n_ids read. Caches now carry the full windowing signature
+(`window_signature()` / `window_cache_ok()`).
+
+**6. Two source pages collide on one stem** — `bir_nigah_et_ney_p1` and `nesem_emelim_ney_p1` each
+exist under two makam directories with different content. Strip directories are keyed by stem, so
+one page of each pair is silently overwritten. Not caused by the windowing work; found while
+comparing pools. Unfixed.

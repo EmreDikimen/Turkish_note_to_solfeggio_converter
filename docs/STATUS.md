@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-07-28
+updated: 2026-07-29
 
 ## Now
 
@@ -98,12 +98,18 @@ The four pre-render checks are DONE (see "Now"). What is left:
    - **DONE 2026-07-29: the re-slice.** 158 val-side non-exam pages → `data/real/strips_v2`
      (3,168 strips). A **new root on purpose** — overwriting `data/real/strips` would silently change
      what every existing manifest points at, including the 130 labelled queue rows.
-   - **OPEN: retune `MEASURES_PER_STRIP` / `MAX_STRIP_W`.** The 2026-07-25 staff fix stopped
-     truncating rows, so windows now overflow the 59-id label budget 31.9% of the time (was 20.9%),
-     and the emitter drops those. Sweep: 1 measure/window gives 107 usable strips, 2 → 90, 3
-     (current) → 79. ⚠ Not simply "set it to 1" — see the trade-offs in
-     [DECISIONS.md](DECISIONS.md) and [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
-     Also fix the unenforced measure cap (13 of 3,168 strips carry 4–5 measures).
+   - **DONE 2026-07-29: the retune. The constants stay; two bugs were the real defect.**
+     `MEASURES_PER_STRIP` stays at 3 — the sweep pointing at 1 was scored on usable *yield*, which
+     cannot charge for the near-empty crops that shrinking windows creates, and those carry 20.8%
+     of exam corrections; re-scored with that cost, 1 measure/window takes the healthy band
+     81.6% → 60.4%. A budget-aware packer was built, decoded head-to-head and is a **wash**, so it
+     ships OFF (`OMR_WINDOW_MODE=budget`). What was real: the measure cap was unenforced (13 of
+     3,168) and the width cap violated 82 times by three paths — both fixed and verified to 0, with
+     measure coverage invariant across 458 rows. Decode caches now key on the full windowing
+     signature. Numbers: [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+     ⚠ **`data/real/strips_v2` was sliced before these fixes** — re-slice it before emitting.
+     ⚠ Two source pages collide on one stem (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1`), so one
+     page of each pair is silently overwritten. Unfixed.
    - **THEN:** re-run `emit_strip_labels.py --strips-root data/real/strips_v2 --redecode` with the
      current checkpoint (~25–40 min for 158 pages), re-stage the `realval-hard` queue, and label it.
    - **Already spent, and not recoverable:** the owner labelled all 130 rows of the first queue

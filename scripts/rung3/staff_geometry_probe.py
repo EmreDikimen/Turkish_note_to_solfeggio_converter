@@ -229,15 +229,23 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--ladder", choices=sorted(LADDERS), default="ramp",
                     help="ramp = dose-response; decompose = one axis at a time, warp held constant")
+    # The pre-shrink finding was exam-only and never replicated. The holdout it failed on had NO
+    # hard tier, so an effect confined to hard pages could hide there — the stated reason the
+    # result was left open. `_realval_v2` has one, so point this at it to close the question:
+    #   --strips-dir data/real/rung3/_realval_v2 --ladder fine_scale
+    ap.add_argument("--strips-dir", default=str(EXAM),
+                    help="pool to probe (default: the frozen clean exam)")
     args = ap.parse_args()
     ladder = LADDERS[args.ladder]
+    pool = Path(args.strips_dir)
 
     import torch
     from data import strip_special
     from eval_omr import align
     from modeling import load_model_and_processor
 
-    recs = [json.loads(l) for l in (EXAM / "manifest.jsonl").read_text().splitlines() if l.strip()]
+    recs = [json.loads(l) for l in (pool / "manifest.jsonl").read_text().splitlines() if l.strip()]
+    print(f"pool: {pool}  ({len(recs)} strips)")
     if args.limit:
         recs = recs[: args.limit]
 
@@ -256,7 +264,7 @@ def main() -> int:
         for k, rec in enumerate(recs):
             p = Path(rec["image"])
             if not p.is_absolute():
-                p = EXAM / rec["image"]
+                p = pool / rec["image"]
             if not p.exists():
                 continue
             img = Image.open(p)

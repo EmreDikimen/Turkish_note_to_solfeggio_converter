@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
-"""Materialise the REAL-VAL pool — the single dir `eval_omr.py` reads to produce Round-1's
-pre-registered SELECTION number (free-running real-val mean AEU F1, tie-break arc-triggered
-false-`\\tup3` rate).
+"""Materialise the real-val BASE pool — the easy+mid strips the training pools can supply.
+
+⚠ **THIS IS NO LONGER THE SET TO SELECT ON (2026-07-31).** Its output, `_realval`, contains **no
+hard tier at all** (59% easy / 41% mid / 0% hard against the exam's 18/41/41), which is why it read
+16.3pp above the exam and could not rank candidates. The set to evaluate and select on is
+`data/real/rung3/_realval_v2`, built by `scripts/rung3/build_realval_v2.py --build`, which
+downsamples this base to the exam's mix and adds 110 hand-labelled hard strips
+(docs/METRICS.md, docs/rung3/labeling.md).
+
+This script stays because `--build` reads `_realval` as its input. Run it when the training pools
+change, then re-run `--build`; do not point `eval_omr.py` at its output.
 
 WHY THIS EXISTS: `train.py` splits each real pool by piece with a STABLE md5 hash
 (`is_val`, so a piece lands on the same side in every pool) and holds its real-val items only in
@@ -11,14 +19,15 @@ at selection time means re-deriving a hash split by hand across three pools — 
 measurement improvisation Step 4.0 forbids (cf. landing the arc metric before exam day, not on it).
 
 This merges the val side of every `--real-dir` pool into one directory (manifest + hardlinked
-PNGs), so selection is a single unambiguous command:
+PNGs). Selection then runs against the REBUILT pool:
 
     python src/vision/eval_omr.py --checkpoint <ckpt> \\
-        --strips-dir data/real/rung3/_realval --split none
+        --strips-dir data/real/rung3/_realval_v2 --split none
 
-The `is_val` rule is copied verbatim from train.py and MUST stay in sync: a piece in the synthetic
-val split is forced to val (a piece must never be train in one pool and val in another), otherwise
-it is val iff md5(piece) % 1000 < real_val_frac * 1000.
+The val/train assignment comes from `data.is_real_val_piece` — the one implementation `train.py`,
+`build_realval_v2.py` and this script all share. It used to be copied verbatim here, which is the
+drift that function's docstring exists to prevent: three copies of a hash is three chances for a
+piece to land on opposite sides in different pools.
 
 Run (defaults mirror the Round-1 training command):
     python src/vision/make_realval_pool.py \\
@@ -26,8 +35,11 @@ Run (defaults mirror the Round-1 training command):
         --real-dir data/real/rung3/strips_tup --split data/split_v3.json
 """
 from __future__ import annotations
-import argparse, hashlib, json, os, sys
+import argparse, json, os, sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from data import is_real_val_piece
 
 
 def main() -> int:
@@ -48,11 +60,8 @@ def main() -> int:
 
     synth_val_pieces = set(json.loads(Path(args.split).read_text())["val_pieces"])
 
-    def is_val(piece: str) -> bool:  # VERBATIM from train.py — keep in sync
-        if piece in synth_val_pieces:
-            return True
-        h = int(hashlib.md5(piece.encode()).hexdigest(), 16)
-        return (h % 1000) < args.real_val_frac * 1000
+    def is_val(piece: str) -> bool:
+        return is_real_val_piece(piece, synth_val_pieces, args.real_val_frac)
 
     out = Path(args.out)
     rows: list[dict] = []

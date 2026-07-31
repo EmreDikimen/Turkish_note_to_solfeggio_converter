@@ -72,12 +72,16 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
-    # REALVAL-HARD (2026-07-28) — the missing hard tier of the rebuilt real-val
-    # (scripts/rung3/build_realval_v2.py). These strips were DROPPED by the emitter for
-    # row_unaligned / nd_high, so they carry no trustworthy SymbTr label: each row is seeded with
-    # the CURRENT model's decode and the verdict is against the PICTURE. ok = "I looked and the
-    # decode is right". An unverdicted row must never reach the metric pool. Images resolve under
-    # data/real/strips/<page>/<strip>.
+    # REALVAL-HARD v2 (2026-07-29) — THE LIVE ONE. Rebuilt on the 2026-07-29 re-slice; rows are
+    # ordered WORST-FIRST (least confident at the top), so the corrections come early and the run
+    # can stop on the sampled check in docs/rung3/labeling.md. Strips were DROPPED by the emitter
+    # for row_unaligned / nd_high, so they carry no trustworthy SymbTr label: each row is seeded
+    # with the CURRENT model's decode and the verdict is against the PICTURE. ok = "I looked and
+    # the decode is right". Images resolve under data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
+    "realval-hard-v2": "data/real/rung3/_realval_hard_v2/realval_hard_v2.csv",
+    # v1 (2026-07-28) — SUPERSEDED, kept as the record of the first round's 130 verdicts
+    # (65 ok / 22 fix / 43 bad). Its crops predate the 2026-07-29 slicer, so none of these
+    # verdicts transfer: no crop survives a re-slice unchanged. Do not label here.
     "realval-hard": "data/real/rung3/_realval_hard/realval_hard.csv",
     # PHOTO-GOLD (2026-07-25) — hand-label the phone-photo strips directly = a per-strip photo test
     # set. Every photo strip seeded with the model decode; ok=confirm, fix=correct against the photo.
@@ -113,11 +117,20 @@ FULL_AUDITS = {
     "tup-full": ("data/real/rung3/strips_tup", "tup-audit"),
 }
 STRIPS = "data/real/strips"
-# roots the /img/<page>/<strip> handler searches, in order — lets a queue reference strips that
-# live outside the main slice dir (e.g. the phone-photo strips for the photo-gold labeling queue).
+# roots the /img/<qid>/<page>/<strip> handler searches, in order — lets a queue reference strips
+# that live outside the main slice dir (e.g. the phone-photo strips for the photo-gold queue).
 IMG_ROOTS = ["data/real/strips",
              "data/real/rung3/photos_exam_strips",
              "data/real/rung3/clean_pages_strips"]
+
+# ⚠ Per-queue overrides, and the reason image lookup is keyed by queue at all. Strip filenames are
+# stable across a re-slice but the pixels are not, and the SAME page exists under several strip
+# roots. With one global search order, a queue built from the 2026-07-29 re-slice would silently
+# render the OLD crops from data/real/strips — every row, not just the colliding ones — because
+# that root is searched first. A queue must resolve against the crops it was actually built from.
+QUEUE_IMG_ROOTS = {
+    "realval-hard-v2": ["data/real/strips_v2"],
+}
 VERDICTS = {"", "ok", "fix", "bad"}
 
 
@@ -240,11 +253,11 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._json({"error": "font not found"}, 404)
         elif path.startswith("/img/"):
-            rel = path[len("/img/"):]
-            if not re.fullmatch(r"[\w.\-]+/[\w.\-]+\.png", rel):
+            qid, _, rel = path[len("/img/"):].partition("/")
+            if qid not in QUEUES or not re.fullmatch(r"[\w.\-]+/[\w.\-]+\.png", rel):
                 self._json({"error": "bad path"}, 400)
                 return
-            for base in IMG_ROOTS:
+            for base in QUEUE_IMG_ROOTS.get(qid, IMG_ROOTS):
                 root_dir = (self.root / base).resolve()
                 img = (root_dir / rel).resolve()
                 if str(img).startswith(str(root_dir)) and img.exists():
@@ -614,7 +627,8 @@ function render(){
      <span><b>${esc(r.strip)}</b></span>
      ${r.nd?`<span>nd <b>${r.nd}</b></span>`:''}
      ${r.min_logprob?`<span>min&nbsp;logp <b>${r.min_logprob}</b></span>`:''}`;
-  $('strip').src='/img/'+encodeURIComponent(r.page)+'/'+encodeURIComponent(r.strip);
+  $('strip').src='/img/'+encodeURIComponent(qid)+'/'+encodeURIComponent(r.page)
+                +'/'+encodeURIComponent(r.strip);
   $('labels').innerHTML=diffHtml(r.label,r.decoded)+
     (r.verdict&&r.verdict!=='bad'?corrHtml(r.label,r.corrected_label,r.by,r.verdict):'');
   editing=false;$('editbox').style.display='none';$('imgwrap').classList.remove('zoom');

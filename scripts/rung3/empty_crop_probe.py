@@ -67,7 +67,7 @@ OUT = ROOT / "data/real/rung3/empty_crop_probe"
 POOLS = {
     "exam": ROOT / "data/real/rung3/strips_exam_v2_clean",
     "nota": ROOT / "data/real/rung3/strips_nota",
-    "realval": ROOT / "data/real/rung3/_realval",
+    "realval": ROOT / "data/real/rung3/_realval_v2",
     "r1": ROOT / "data/real/rung3/strips_r1",
 }
 EXAM = ROOT / "data/real/rung3/strips_exam_v2_clean"

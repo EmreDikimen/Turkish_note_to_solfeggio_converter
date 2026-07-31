@@ -19,8 +19,14 @@ they have to be labelled. This script does everything around that:
 
   --report   what the mix is now, what the exam's is, and exactly how many hard strips are owed
   --queue N  pick N hard-tier candidates (val-side pieces, never exam pieces), decode them with the
-             CURRENT model to seed the review, and write a queue `review_ui.py` can drive
+             CURRENT model to seed the review, and write a queue `review_ui.py` can drive —
+             ordered WORST-FIRST (see build_queue)
   --build    assemble the rebuilt pool once the queue has verdicts
+
+⚠ `--strip-root` / `--pools` must point at the CURRENT slicer's crops. They default to the
+2026-07-29 re-slice (`strips_v2` / `strips_v2emit`); a later slicer change moves them again, and
+running against a stale root rebuilds the queue from crops the model will never see in production
+without raising anything.
 
 WHY THE SEED IS RE-DECODED. `data/real/strips/*/**_decode.json` already holds a decode per strip,
 but it came from `rung3-labeler` — the weak early model. Seeding the queue from it would mean more
@@ -43,6 +49,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import random
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -51,16 +59,25 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src" / "vision"))
 
 RUNG3 = ROOT / "data/real/rung3"
-STRIP_ROOT = ROOT / "data/real/strips"
 CKPT = ROOT / "data/checkpoints/round2-stage2-best"
-QUEUE_DIR = RUNG3 / "_realval_hard"
-QUEUE_CSV = QUEUE_DIR / "realval_hard.csv"
+# The queue is VERSIONED, one directory per re-slice. Strip filenames are stable across a re-slice
+# (`<page>_s<NN>_w<NN>.png`) but the PIXELS behind them are not — 59 of the 2026-07-29 candidates
+# reuse a name from the first queue. Writing a new queue into the old directory would leave the
+# reviewer looking at last week's crop while the CSV row describes this week's, which is the exact
+# failure the re-slice exists to prevent. Versioning also keeps the previous round's verdicts as a
+# record instead of overwriting them.
+QUEUE_VERSION = "v2"
 
 HARD_REASONS = ("row_unaligned", "nd_high")
 # The exam's own hard-tier split, so the queue mirrors the difficulty it has to predict.
 EXAM_HARD_MIX = {"row_unaligned": 107, "nd_high": 38}
 
-POOLS = ["strips_nota", "strips_r1", "strips_tup"]
+# Which crops and which emit the queue is drawn from. These are FLAGS, not constants, because a
+# slicer change invalidates every crop on disk and the pool moves with it: the 2026-07-29 overhaul
+# is the second time, and pointing this script at the previous re-slice's output would rebuild the
+# queue from stale pictures without erroring — it would just be quietly wrong.
+DEFAULT_STRIP_ROOT = "data/real/strips_v2"
+DEFAULT_POOLS = ["strips_v2emit"]
 
 
 def read_manifest(p: Path) -> list[dict]:
@@ -89,7 +106,7 @@ def realval_now() -> list[dict]:
     return read_manifest(RUNG3 / "_realval")
 
 
-def report() -> int:
+def report(pools: list[str]) -> int:
     ex, rv = exam_mix(), realval_now()
     have = Counter(tier_of(r) for r in rv)
     decode_derived = [r for r in rv if r.get("verdict") == "ok"]
@@ -116,7 +133,7 @@ def report() -> int:
     print(f"\n>>> {want_hard} HARD strips must be labelled. That is the whole cost of this rebuild.")
 
     avail = Counter()
-    for pool in POOLS:
+    for pool in pools:
         f = RUNG3 / pool / "emit_drops.csv"
         if not f.exists():
             continue
@@ -124,12 +141,19 @@ def report() -> int:
             for r in csv.DictReader(fh):
                 if r["reason"] in HARD_REASONS:
                     avail[r["reason"]] += 1
-    print(f"\ncandidates available in the emit_drops queues: {dict(avail)} "
+    print(f"\ncandidates available in the emit_drops queues {pools}: {dict(avail)} "
           f"(total {sum(avail.values())})")
     return 0
 
 
-def build_queue(n: int) -> int:
+def queue_paths(version: str) -> tuple[Path, Path]:
+    """(directory, csv) for a queue version. `v1` is the original un-suffixed pair, kept so the
+    first round's 130 verdicts stay readable at the path they were written to."""
+    d = RUNG3 / ("_realval_hard" if version == "v1" else f"_realval_hard_{version}")
+    return d, d / ("realval_hard.csv" if version == "v1" else f"realval_hard_{version}.csv")
+
+
+def build_queue(n: int, strip_root: Path, pools: list[str], version: str) -> int:
     import torch
     from PIL import Image
     from data import is_real_val_piece
@@ -141,7 +165,7 @@ def build_queue(n: int) -> int:
 
     # Gather candidates: hard-reason drops on VAL-side, NON-exam pieces.
     cands: list[dict] = []
-    for pool in POOLS:
+    for pool in pools:
         f = RUNG3 / pool / "emit_drops.csv"
         if not f.exists():
             continue
@@ -154,7 +178,7 @@ def build_queue(n: int) -> int:
                     continue                        # exam pieces may never enter real-val
                 if not is_real_val_piece(sym, synth_val):
                     continue                        # must be the val side, same rule as train.py
-                png = STRIP_ROOT / r["page"] / r["strip"]
+                png = strip_root / r["page"] / r["strip"]
                 if png.exists():
                     cands.append({**r, "png": str(png)})
 
@@ -188,11 +212,17 @@ def build_queue(n: int) -> int:
           f"over {len(set(p['symbtr'] for p in picked))} pieces")
 
     # Seed each row with the CURRENT model's decode (see module docstring).
+    queue_dir, queue_csv = queue_paths(version)
+    if queue_csv.exists():
+        raise SystemExit(
+            f"{queue_csv} already exists — refusing to overwrite verdicts. Bump QUEUE_VERSION "
+            f"(or pass --queue-version) rather than writing over a labelled queue.")
+
     model, proc, _ = load_model_and_processor(str(CKPT))
     model.eval()
     model.to("cpu")
     tok = proc.tokenizer
-    QUEUE_DIR.mkdir(parents=True, exist_ok=True)
+    queue_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     for i, c in enumerate(picked):
         img = Image.open(c["png"]).convert("RGB")
@@ -212,9 +242,8 @@ def build_queue(n: int) -> int:
             lps.append(float(lp[tid]))
         min_lp = round(min(lps), 4) if lps else 0.0
         mean_lp = round(sum(lps) / len(lps), 4) if lps else 0.0
-        dst = QUEUE_DIR / c["strip"]
-        if not dst.exists():
-            img.convert("L").save(dst)
+        # Always rewrite: inside a queue version the filename MUST bind to these pixels.
+        img.convert("L").save(queue_dir / c["strip"])
         rows.append({
             "piece": c["symbtr"], "page": c["page"], "strip": c["strip"],
             "reason": c["reason"], "nd": "", "min_logprob": min_lp,
@@ -228,17 +257,158 @@ def build_queue(n: int) -> int:
         if (i + 1) % 25 == 0:
             print(f"  decoded {i+1}/{len(picked)}", flush=True)
 
-    # Most-confident first: the reviewer confirms a run of easy ones quickly and reaches the
-    # genuinely ambiguous strips knowing they are the ones that need care.
-    rows.sort(key=lambda r: -r["min_logprob"])
-    with QUEUE_CSV.open("w", newline="") as f:
+    # LEAST-confident first (reversed 2026-07-29, owner's call — was most-confident first).
+    # The calibration is what decides this: at min_logprob > -0.1 the decode is already exactly
+    # right 80% of the time, below -1.0 only 4%. So the confident head is mostly the reviewer
+    # confirming what is already correct, and nearly every real correction lives in the tail.
+    # Worst-first spends the human on the errors, and lets the run stop once the remaining rows
+    # are demonstrably clean — see the sampled stopping rule in docs/rung3/labeling.md.
+    rows.sort(key=lambda r: r["min_logprob"])
+    with queue_csv.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    print(f"\nqueue -> {QUEUE_CSV}\nstrips -> {QUEUE_DIR}")
-    print("\nNEXT: add a `realval-hard` entry to review_ui.py's QUEUES pointing at that CSV, then")
-    print("verdict every row. Every row needs a human look — an unverdicted hard strip must NOT")
-    print("enter the metric pool, or the rebuild reintroduces the problem it exists to fix.")
+    print(f"\nqueue -> {queue_csv}\nstrips -> {queue_dir}")
+    print("\nNEXT: point review_ui.py's `realval-hard` queue at that CSV and work DOWN from the")
+    print("top — rows are ordered worst-first, so the corrections come early. You may stop before")
+    print("the end, but only on the sampled check in docs/rung3/labeling.md: an unread row that is")
+    print("silently accepted becomes gold, and a wrong one scores a model that FIXES it as a")
+    print("regression. Rows accepted without reading must be written with `by=tail-accept`.")
+    return 0
+
+
+# A written label glues the duration to the note ("f''32"); the model emits it spaced ("f'' 32").
+# Measured: for 32 ONLY the two forms tokenize to identical ids, so normalising is lossless and the
+# reviewer never has to touch it. 16 and 8 DO differ in id space — never widen this.
+SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")
+
+
+def piece_provenance() -> dict[str, tuple[str, str]]:
+    """SymbTr piece stem -> (source, makam), read off the matched/ tree.
+
+    The queue CSV carries only the piece id, but a real-val row needs its source ("nota" /
+    "neyzen") or eval_omr.py files it under "synthetic" in the per-source table.
+    """
+    sys.path.insert(0, str(ROOT / "scripts" / "rung3"))
+    from emit_strip_labels import load_piece
+
+    out: dict[str, tuple[str, str]] = {}
+    for match in (RUNG3 / "matched").rglob("match.json"):
+        p = load_piece(match.parent)
+        if p is not None:
+            out[p.symbtr_stem] = (p.source, p.makam)
+    return out
+
+
+def build(strip_root: Path, version: str, out_name: str, seed: int) -> int:
+    """Assemble the rebuilt real-val: current pool + the labelled hard tier, downsampled to the
+    exam's difficulty mix. Writes a NEW directory — `_realval` is left intact, same reason the
+    queues are versioned."""
+    queue_dir, queue_csv = queue_paths(version)
+    if not queue_csv.exists():
+        raise SystemExit(f"{queue_csv} does not exist — stage a queue first (--queue N)")
+
+    rows = list(csv.DictReader(queue_csv.open()))
+    pending = [r for r in rows if not r["verdict"]]
+    hard_rows = [r for r in rows if r["verdict"] in ("ok", "fix")]
+    n_bad = sum(1 for r in rows if r["verdict"] == "bad")
+    if pending:
+        # Not a warning — the rebuild exists to remove flattery from the metric pool, and an
+        # unverdicted row is model output with no human behind it.
+        raise SystemExit(
+            f"{len(pending)} of {len(rows)} rows have no verdict. Label them, or accept the tail "
+            f"explicitly with by=tail-accept after the sampled check (docs/rung3/labeling.md). "
+            f"An unverdicted row must never enter the metric pool.")
+
+    ex = exam_mix()
+    ex_tot = sum(ex.values())
+    old = realval_now()
+
+    # Decode-derived rows leave the pool: in the EXISTING manifest a verdict of `ok` means
+    # promote_labels kept the model's own decode as the label. (Queue rows are the opposite —
+    # there `ok` means a person checked the picture — which is why the two never share a field.)
+    dropped_decode = [r for r in old if r.get("verdict") == "ok"]
+    keep = [r for r in old if r.get("verdict") != "ok"]
+
+    by_tier: dict[str, list[dict]] = {"easy": [], "mid": [], "hard": []}
+    for r in keep:
+        by_tier[tier_of(r)].append(r)
+
+    # Provenance for the new rows. eval_omr.py buckets its per-source table on `source`, and a row
+    # without one lands in "synthetic" — which silently reported 110 hand-labelled REAL strips as
+    # synthetic on the first build. `makam` travels with it so the pool stays sliceable by makam.
+    prov = piece_provenance()
+
+    new_hard = []
+    for r in hard_rows:
+        label = r["corrected_label"] if r["verdict"] == "fix" else r["label"]
+        src, makam = prov.get(r["piece"], ("", ""))
+        new_hard.append({
+            "image": r["strip"],
+            "label": SPACED_32_RE.sub("32", label.strip()),
+            "mode": "measure",
+            "piece": r["piece"],
+            "makam": makam,
+            "source": src,
+            "page": r["page"],
+            "min_logprob": float(r["min_logprob"]) if r["min_logprob"] else None,
+            # tier_of() reads these two — they are what makes the row count as HARD.
+            "promoted": "review",
+            "reason": r["reason"],
+            # Provenance, deliberately NOT called `verdict`: these are human-checked labels, and
+            # reusing `verdict` would make a later --build read them back as decode-derived.
+            "label_source": "tail-accept" if r["by"] == "tail-accept" else "human-verified",
+        })
+    by_tier["hard"].extend(new_hard)
+
+    # Hold mid fixed (the largest clean tier) and solve the other two against the exam's shares.
+    mid_n = len(by_tier["mid"])
+    total = mid_n / (ex["mid"] / ex_tot)
+    want = {"easy": round(total * ex["easy"] / ex_tot), "mid": mid_n,
+            "hard": round(total * ex["hard"] / ex_tot)}
+
+    rng = random.Random(seed)
+    out_rows: list[dict] = []
+    for tier in ("easy", "mid", "hard"):
+        have = by_tier[tier]
+        if len(have) > want[tier]:
+            # Seeded sample so the pool is reproducible from the manifest + this seed alone.
+            have = rng.sample(have, want[tier])
+        out_rows.extend(have)
+
+    out_dir = RUNG3 / out_name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    n_copied = 0
+    for r in out_rows:
+        src = strip_root / r["page"] / r["image"] if r.get("page") else None
+        dst = out_dir / r["image"]
+        if src and src.exists():
+            dst.write_bytes(src.read_bytes())
+            n_copied += 1
+        elif (RUNG3 / "_realval" / r["image"]).exists():
+            dst.write_bytes((RUNG3 / "_realval" / r["image"]).read_bytes())
+            n_copied += 1
+        else:
+            raise SystemExit(f"{r['image']}: no source crop found under {strip_root} or _realval")
+
+    with (out_dir / "manifest.jsonl").open("w") as f:
+        for r in out_rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+    got = Counter(tier_of(r) for r in out_rows)
+    print(f"queue {queue_csv.name}: {len(hard_rows)} usable ({n_bad} bad, "
+          f"{sum(1 for r in hard_rows if r['by'] == 'tail-accept')} tail-accepted)")
+    print(f"decode-derived rows dropped from the old pool: {len(dropped_decode)}")
+    print(f"\n{'tier':>6} {'exam %':>8} {'was':>6} {'now':>6} {'target':>7}")
+    print("-" * 38)
+    was = Counter(tier_of(r) for r in old)
+    for t in ("easy", "mid", "hard"):
+        print(f"{t:>6} {100*ex[t]/ex_tot:>7.1f}% {was[t]:>6} {got[t]:>6} {want[t]:>7}")
+    print(f"{'total':>6} {'':>8} {len(old):>6} {len(out_rows):>6}")
+    print(f"\n{n_copied} crops + manifest -> {out_dir}")
+    if got["hard"] < want["hard"]:
+        print(f"\n⚠ hard tier is {want['hard'] - got['hard']} SHORT of the exam mix — stage more "
+              f"queue rows and re-run, or the rebuilt pool still under-represents the hard tail.")
     return 0
 
 
@@ -246,12 +416,27 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--queue", type=int, metavar="N")
+    ap.add_argument("--strip-root", default=DEFAULT_STRIP_ROOT,
+                    help="crops the queue images come from — must be the CURRENT slicer's output")
+    ap.add_argument("--pools", default=",".join(DEFAULT_POOLS),
+                    help="comma-separated emit dirs under data/real/rung3/ to draw drops from")
+    ap.add_argument("--queue-version", default=QUEUE_VERSION,
+                    help="one queue dir per re-slice; never write a new queue into an old one")
+    ap.add_argument("--build", action="store_true",
+                    help="assemble the rebuilt pool from the labelled queue")
+    ap.add_argument("--out-name", default="_realval_v2",
+                    help="directory under data/real/rung3/ to write the rebuilt pool into")
+    ap.add_argument("--seed", type=int, default=33,
+                    help="seeds the downsampling, so the pool is reproducible from the manifest")
     args = ap.parse_args()
+    pools = [p for p in args.pools.split(",") if p]
     if args.report:
-        return report()
+        return report(pools)
     if args.queue:
-        return build_queue(args.queue)
-    ap.error("pass --report or --queue N")
+        return build_queue(args.queue, ROOT / args.strip_root, pools, args.queue_version)
+    if args.build:
+        return build(ROOT / args.strip_root, args.queue_version, args.out_name, args.seed)
+    ap.error("pass --report, --queue N or --build")
 
 
 if __name__ == "__main__":

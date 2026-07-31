@@ -28,7 +28,7 @@ through untouched: the gold does not change, only legibility.
 
 Usage:
     # 1. build the degraded copies (fast, pure image ops)
-    .venv-ml/bin/python src/vision/degrade_probe.py --strips-dir data/real/rung3/_realval
+    .venv-ml/bin/python src/vision/degrade_probe.py --strips-dir data/real/rung3/_realval_v2
     # 2. eval each level with the normal evaluator (no new metric code)
     for d in data/real/rung3/_realval_degraded/L*; do
         .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/round1-best \
@@ -161,7 +161,10 @@ def report(checkpoint: Path, out_root: Path) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--strips-dir", default="data/real/rung3/_realval")
+    # _realval_v2, not _realval: a dose-response curve read on a pool with NO hard tier cannot
+    # see an effect concentrated on hard pages, which is exactly why the 2% pre-shrink result
+    # could not be closed out (docs/METRICS.md).
+    ap.add_argument("--strips-dir", default="data/real/rung3/_realval_v2")
     ap.add_argument("--out-root", default="data/real/rung3/_realval_degraded")
     ap.add_argument("--report", action="store_true", help="tabulate instead of building")
     ap.add_argument("--checkpoint", default="data/checkpoints/round1-best",

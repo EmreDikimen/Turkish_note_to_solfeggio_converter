@@ -545,6 +545,11 @@ def main() -> int:
     ap.add_argument("--audit-frac", type=float, default=0.05)
     ap.add_argument("--seed", type=int, default=33)
     ap.add_argument("--pieces", help="comma-separated source stems (debug subset)")
+    ap.add_argument("--val-side", action="store_true",
+                    help="emit ONLY real-val pieces (data.is_real_val_piece) — the real-val "
+                         "rebuild's input; combine with --testset to also drop exam pieces")
+    ap.add_argument("--split", default="data/split_v4.json",
+                    help="synthetic split whose val_pieces are forced to the real-val side")
     ap.add_argument("--redecode", action="store_true", help="ignore existing *_decode.json")
     args = ap.parse_args()
 
@@ -566,6 +571,15 @@ def main() -> int:
 
     only = set(args.pieces.split(",")) if args.pieces else None
 
+    # --val-side routes through data.is_real_val_piece rather than reimplementing the hash: it is
+    # THE train/val assignment train.py and build_realval_v2.py already use, and its whole point
+    # is that a piece lands on the same side in every consumer. A second implementation here is
+    # how strips leak across the split.
+    val_pieces: set[str] | None = None
+    if args.val_side:
+        from data import is_real_val_piece
+        val_pieces = set(json.loads((REPO / args.split).read_text())["val_pieces"])
+
     piece_dirs = sorted(p.parent for p in Path(args.matched).rglob("match.json"))
     pieces: list[PieceGT] = []
     for d in piece_dirs:
@@ -578,8 +592,23 @@ def main() -> int:
             in_exam = p.stem in exam_pieces
             if args.exam != in_exam:
                 continue
+        if val_pieces is not None and not is_real_val_piece(p.symbtr_stem, val_pieces):
+            continue
         pieces.append(p)
     print(f"pieces to process: {len(pieces)}")
+
+    # Strip dirs are keyed by page stem alone (`strips_root/<stem>/`, see get_decodes), while
+    # page images are makam-scoped — so two pages sharing a stem silently overwrite each other
+    # and one of them is never read. That really happened to two neyzen pieces; the naming fix
+    # is neyzen_stems() in collect_tuplets.py, and this refuses to slice past a new one.
+    seen: dict[str, str] = {}
+    for p in pieces:
+        for page in p.pages:
+            if seen.setdefault(Path(page).stem, page) != page:
+                raise SystemExit(
+                    f"page stem collision: {Path(page).stem!r} is produced by both "
+                    f"{seen[Path(page).stem]} and {page} — one would overwrite the other "
+                    f"under {strips_root}/. Qualify one stem (collect_tuplets.neyzen_stems).")
 
     # ---- pass 1: decode + fold + row assignment ------------------------------------------
     piece_results: list[dict] = []

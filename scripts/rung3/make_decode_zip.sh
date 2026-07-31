@@ -10,18 +10,21 @@
 # notebooks/rung3_decode_colab.ipynb and download the strips zip it leaves on Drive.
 #
 # Optional $1 = an existing pages list (one PNG path per line) to package INSTEAD of
-# regenerating from all of matched/ — used by the targeted tuplet run (docs/rung3/labeling.md §1c).
+# regenerating from all of matched/ — used by the targeted tuplet run (docs/rung3/labeling.md §1c)
+# and by the 2026-07-29 re-slice. The list keeps its OWN filename inside the zip: copying it over
+# decode_pages.txt (what this did until 2026-07-30) destroyed the record of the previous run's
+# page set, and the notebook then had no way to say which pages it decoded.
+# Optional $2 = output zip name (default tnc_rung3_decode_colab.zip), so two runs can coexist.
 set -e
 cd "$(dirname "$0")/../.."
 
-OUT=data/colab/tnc_rung3_decode_colab.zip
-PAGES=data/colab/decode_pages.txt
+OUT=data/colab/${2:-tnc_rung3_decode_colab.zip}
+PAGES=${1:-data/colab/decode_pages.txt}
 mkdir -p data/colab
 rm -f "$OUT"
 
 if [ -n "$1" ]; then
-  cp "$1" "$PAGES"
-  echo "$(wc -l < "$PAGES" | tr -d ' ') pages listed (from $1)"
+  echo "$(wc -l < "$PAGES" | tr -d ' ') pages listed (from $PAGES)"
 else
 python3 - <<'EOF'
 import json

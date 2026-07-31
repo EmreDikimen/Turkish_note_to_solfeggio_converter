@@ -92,3 +92,7 @@ data/checkpoints/
 data/colab/
 # Stitched decode of a real page (stage-8 output; derived from data/real/)
 apps/web/public/decoded.json
+
+# Colab round-trip archives downloaded to the repo root (GB-scale; the unpacked
+# result lives under data/real/, which is already ignored)
+/*.zip

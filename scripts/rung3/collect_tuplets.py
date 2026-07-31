@@ -59,6 +59,44 @@ def tuplet_rows() -> list[dict]:
     return list(csv.DictReader(TUPLETS_P.open()))
 
 
+def neyzen_stems() -> dict[str, str]:
+    """url -> the stem its page images are stored under; "" for rows to skip.
+
+    neyzen.com filenames are unique inside one makam directory, NOT globally, but strip
+    directories are flat (`<strips_root>/<page_stem>/`), so two pages sharing a stem
+    silently overwrite each other. Two basenames actually collide (measured 2026-07-29,
+    docs/METRICS-SLICER.md) and they need OPPOSITE fixes:
+
+      bir_nigah_et_ney   hicaz and saba are different songs (different composer and usul)
+                         -> qualify both stems with the makam and keep both pages
+      nesem_emelim_ney   hicaz and uzzal are one upload filed twice — byte-identical PDF,
+                         matched to the same SymbTr piece
+                         -> keep one, drop the other. Qualifying would put two copies of
+                            one page in the pool, and near-duplicate pages landing on
+                            opposite sides of a piece-level split is exactly the leakage
+                            data/split.json exists to prevent.
+
+    Told apart by the match target: same symbtr = duplicate, different symbtr = collision.
+    Computed over the WHOLE csv so every caller agrees no matter how it filters rows.
+    """
+    by_stem: dict[str, list[dict]] = {}
+    for r in csv.DictReader(NEY_MATCHES_P.open()):
+        by_stem.setdefault(Path(urlparse(r["url"]).path).stem, []).append(r)
+
+    out: dict[str, str] = {}
+    for stem, rows in by_stem.items():
+        if len({r["makam"] for r in rows}) < 2:
+            out.update({r["url"]: stem for r in rows})
+        elif len({r["symbtr"] for r in rows}) > 1:
+            out.update({r["url"]: f"{stem}_{r['makam']}" for r in rows})
+        else:
+            # duplicate upload: keep the makam the SymbTr piece itself names, else the first
+            sym_makam = rows[0]["symbtr"].split("--")[0]
+            keep = next((r for r in rows if r["makam"] == sym_makam), rows[0])
+            out.update({r["url"]: (stem if r is keep else "") for r in rows})
+    return out
+
+
 def nota_targets() -> list[dict]:
     """The review-tier nota candidates find_tuplet_pieces.py surfaced."""
     return [r for r in tuplet_rows()
@@ -166,12 +204,17 @@ def do_download(args) -> None:
     session = new_session()
     render, backend = _rasterizer(args.dpi)
     known_urls = {r["url"] for r in csv.DictReader(MANIFEST_P.open())}
+    stems = neyzen_stems()
     n_new = n_skip = n_fail = 0
     for r in ney:
+        stem = stems.get(r["url"], "")
+        if not stem:
+            n_skip += 1
+            continue  # duplicate upload — the same page is kept under another makam
         fname = Path(urlparse(r["url"]).path).name
         dest = REAL / "pdfs" / "neyzen" / r["makam"] / fname
-        img_stem = REAL / "images" / r["makam"] / dest.stem
-        if dest.exists() and list(img_stem.parent.glob(f"{dest.stem}_p*.png")):
+        img_stem = REAL / "images" / r["makam"] / stem
+        if dest.exists() and list(img_stem.parent.glob(f"{stem}_p*.png")):
             n_skip += 1
             continue
         if not dest.exists():
@@ -248,9 +291,12 @@ def do_export(args) -> None:
     # --- neyzen pieces ----------------------------------------------------------
     n_nota = len(exported)
     if NEY_MATCHES_P.exists():
+        stems = neyzen_stems()
         for r in csv.DictReader(NEY_MATCHES_P.open()):
             fname = Path(urlparse(r["url"]).path)
-            stem, makam = fname.stem, r["makam"]
+            stem, makam = stems.get(r["url"], ""), r["makam"]
+            if not stem:
+                continue  # duplicate upload — exported under another makam
             pdf = REAL / "pdfs" / "neyzen" / makam / fname.name
             pages = sorted((REAL / "images" / makam).glob(f"{stem}_p*.png"))
             sym = by_stem.get(r["symbtr"])

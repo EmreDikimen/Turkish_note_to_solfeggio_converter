@@ -42,8 +42,24 @@ Correcting the size at inference (`scripts/rung3/staff_geometry_probe.py`, froze
 - ⛔ **It does not generalise.** The same operation on the **real-val holdout** gives 247 → 243
   edits, **−1.6%**. The exam result came after ~15 variations were tried against the exam and the
   best was reported — selection on the test set. **Do not act on this.**
-- ⚠ Not fully closed: real-val is the easy pool (0.9 edits/strip vs 1.7) and lacks the hard tier, so
-  an effect confined to hard pages could hide there. Re-test after the real-val rebuild.
+- ✅ **CLOSED 2026-07-31 — the last defence is dead, and the sign flips.** The open caveat was that
+  real-val was the easy pool with no hard tier, so an effect confined to hard pages could hide
+  there. Re-run on `_realval_v2` (267 strips, 41% hard, SER 0.079 — *harder* per token than the
+  exam), same frozen `round2-stage2-best`, `staff_geometry_probe.py --strips-dir … --ladder
+  fine_scale`:
+
+  | rung | edits | vs identity warp |
+  |---|---|---|
+  | identity warp | 746 | — |
+  | scale 1% | 766 | **+2.7%** |
+  | scale 1.5% | 766 | **+2.7%** |
+  | scale 2.5% | 785 | **+5.2%** |
+  | scale 4% | 779 | **+4.4%** |
+
+  **Every scale is WORSE**, where the exam had −13.5% to −15.5% at the same values. The effect is
+  not merely absent off the exam — it reverses. Four independent scale values agreeing on the sign
+  is the same standard of evidence the original claim rested on, now pointing the other way. The
+  exam result was selection on the test set and nothing more. **Do not re-propose a pre-shrink.**
 - ⚠ No mechanism was ever found. Ruled out: resampling (down-up 555), blur (562), ink lighten (565),
   ink thin (589), and staff-size matching — the exam benefit appears in **every** size bucket
   (undersized −33%, ~right −10%, oversized −16%), not just oversized strips.

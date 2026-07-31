@@ -2,14 +2,173 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-07-29
+updated: 2026-07-31
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
-## 2026-07-29 (latest) — the windowing retune: constants stay, two cap bugs fixed
+## 2026-07-31 — real-val v2 is built; the practice test is finally harder than the exam
+
+**`_realval_v2`: 267 strips at the exam's own difficulty mix (47 / 110 / 110 = 17.6 / 41.2 / 41.2%),
+against the old pool's 59 / 41 / 0.** The owner read all 165 queue rows by hand — 111 ok / 44 fix /
+10 bad, 155 usable. Numbers: [../METRICS.md](../METRICS.md).
+
+**The worst-first ordering is settled, not just argued.** The worst half of the queue needed a fix
+**46%** of the time, the best half **7%** — a 6.5x concentration. Under the old most-confident-first
+ordering half the labelling effort would have gone to rows that needed nothing. The sampled
+early-stop was available and went unused; the owner read every row anyway.
+
+**The rebuild worked, and here is its measured size.** Both pools read with the same model on the
+same day: SER **0.028 -> 0.079**, which now EXCEEDS the exam's 0.052 — the practice test is harder
+per token than the test it predicts. Mean edits/page 3.5 -> 8.6 while the median stayed at 2, the
+signature of a restored hard *tail* rather than a uniformly harder set. The headline gap to the
+exam closed 16.3pp -> 10.1pp, about 38%.
+
+⚠ **The residual gap is class composition, and no amount of hard-strip labelling fixes it.**
+Real-val v2 still carries 6 of 8 accidental classes and zero `\komaSharp` in-signature gold, while
+the exam headline is substantially a `\komaSharp` n=14 artifact inside a six-class mean. A per-class
+mean cannot be matched by matching difficulty when the classes differ. The lever is more
+`\komaSharp`/`\kucukSharp` gold in exam v3.
+
+**Two things fell out of the read.** By source, nota (scanned TRT-era prints) runs **5x** the SER of
+neyzen (clean vector PDFs), 0.105 vs 0.021, and the hard tier is nota-dominant — so "hard" here
+largely means scan quality and engraving age, not musical density. And the first `--build` did not
+carry `source`/`makam` onto the new rows, so `eval_omr.py` filed 110 hand-labelled REAL strips under
+"synthetic" in its provenance table; fixed with `piece_provenance()`, headline unaffected.
+
+**The 2% pre-shrink is now dead, and real-val v2 killed it on its first outing.** The result had one
+defence left: real-val was the easy pool with no hard tier, so an effect confined to hard pages
+could have hidden there. Re-run on `_realval_v2` — 41% hard, SER 0.079, harder per token than the
+exam — the same frozen model gives **746 edits at the identity warp and MORE at every scale**:
++2.7% at 1%, +2.7% at 1.5%, +5.2% at 2.5%, +4.4% at 4%. On the exam those same rungs were -13.5%
+to -15.5%. The effect does not merely vanish off the exam; it reverses. Four independent scale
+values agreeing on the sign was the evidence the original claim rested on, and it now points the
+other way. Recorded in [../DECISIONS.md](../DECISIONS.md) as DROPPED, measured twice.
+
+**Consumers repointed.** `degrade_probe.py` and `empty_crop_probe.py` default to `_realval_v2`;
+`staff_geometry_probe.py` gained `--strips-dir` (default still the frozen exam).
+`make_realval_pool.py` is documented as producing the *base* `--build` extends, not the selection
+set — pointing an eval at `_realval` silently restores the no-hard-tier pool and fails silently,
+because the number still looks like a real-val number. It also stopped carrying a third verbatim
+copy of the val-split hash and now calls `data.is_real_val_piece`; verified behaviour-preserving,
+0 of 444 pieces change side.
+
+## 2026-07-31 — the full re-slice landed, after a notebook design flaw cost a whole run
+
+**`data/real/strips_v2` is now the complete new-slicer root: 1,781 page dirs / 1,704 decode caches
+/ 35,586 crops**, verified so that every cache passes `window_cache_ok` and records
+`round2-stage2-best` — the emitter reuses all 1,704 rather than discarding them. 67 pages (4.2%)
+found no staves; about half are `_p2` continuation pages that carry lyrics rather than music, and
+the rate matches the 4.6% measured on the val side, so it is the expected tail. The **67 exam page
+images were deliberately excluded** — the exam is frozen and its gold describes crops under
+`data/real/strips/`, so producing a second set mid-round is how a frozen exam ends up scored on
+pictures its gold does not describe. Re-cutting them belongs to exam v3.
+
+**The first full GPU pass was destroyed by the notebook, and the lesson is a general one.** The
+unpack cell does `rmtree('/content/tnc')` before re-extracting the package, and the decode output
+was written *inside* that tree at `/content/tnc/data/real/strips_v2`. Re-running the unpack cell
+after an unrelated error — the documented recovery step — deleted a finished 1,506-page run and
+restored the package over the top, leaving the page list present and the output gone, which read
+as "nothing was ever written". **Expensive output must never live inside a directory whose stated
+job is delete-and-re-extract.** The output now lives at `/content/out/strips_v2`, outside anything
+the notebook can delete, and the unpack cell reports existing work instead of removing it, so
+`--skip-existing` can genuinely resume across sessions.
+
+Three smaller defects fell out of the same session, all the same shape — a path that depended on
+the working directory, which a Colab reconnect silently resets:
+
+- Cells that read the output used relative paths, so after a reconnect they failed with
+  `FileNotFoundError` while the data sat intact one directory away. All cells now use absolute
+  paths.
+- `!cp` from Drive does not stop a notebook when it fails, so a missing or still-syncing zip
+  surfaced three cells later as a broken package. The unpack cell is Python now, checks the file
+  exists and is ~1.2 GB, and asserts the three paths later cells need.
+- `make_decode_zip.sh` copied a custom page list over `decode_pages.txt`, destroying the record of
+  the previous run's page set. Lists keep their own filename now, and the script takes an output
+  zip name so two runs can coexist.
+
+## 2026-07-29 — real-val rebuilt on the new slicer; the labelling queue reversed
+
+**The re-slice ran and the hard-tier queue is staged and being labelled.** The val-side pool is
+**146 pieces / 194 pages**, not the 158 STATUS carried — the ⚠ recount was right to distrust the
+old figure, and it moved by far more than the ±1 the stem fix predicted (37 of the page stems had
+never been sliced into `strips_v2` at all). `emit_strip_labels.py --val-side` now derives that list
+through `data.is_real_val_piece` instead of a hand-made list, so the two consumers of the split
+cannot drift apart. Emit: 98 ok / 39 low_coverage / 9 unusable; 392 accepted, 550 review, 2,581
+dropped, of which **1,007 are the hard reasons** (row_unaligned 743, nd_high 264) — no shortage of
+candidates against the 110 owed. It took ~20 min, not the 45–60 estimated: that estimate came from
+adding STATUS's separate slicing and emitting budgets, which double-counts, because
+`get_decodes` → `decode_page` slices and decodes in one pass.
+
+**The queue is now ordered WORST-FIRST (owner's call), and may be stopped early on a sampled
+check.** Reversing it is what the calibration already implied: the decode is exactly right 80% of
+the time above `min_logprob` −0.1 and 4% below −1.0, so the confident head was mostly the reviewer
+confirming correct rows. Early evidence agrees — **50% of the first 32 rows needed a fix**, against
+~84% `ok` in v1's confident head. The stop is deliberately gated on ~20 rows drawn at random from
+the remainder and judged on whether the errors *cluster by kind*: scattered label noise handicaps
+every candidate model about equally, but one repeated confusion systematically punishes the model
+that fixes it. Rows accepted unread carry `by=tail-accept` so they stay auditable.
+
+**Two silent-staleness traps were found and closed before any labelling happened.** Both are the
+same shape — a strip *filename* survives a re-slice but its pixels do not:
+
+- `build_queue` wrote its PNG copies behind `if not dst.exists()`, and **59** of the new candidates
+  reuse a v1 filename. Queues are now versioned per re-slice (`_realval_hard_v2/`), the PNG is
+  always rewritten, and a queue refuses to overwrite an existing CSV — which also preserves v1's
+  130 verdicts instead of destroying them.
+- Worse: `review_ui` resolved `/img/` through one global root list with `data/real/strips` first,
+  and **129 of the 165** new rows also exist there. The whole queue would have rendered last week's
+  crops against this week's rows, with nothing to notice. Image lookup is now keyed by queue
+  (`QUEUE_IMG_ROOTS`) and verified end-to-end: v2 serves `strips_v2`, v1 still serves the old root,
+  and the two crops differ.
+
+`build_realval_v2.py` also grew the `--build` half its docstring had always promised but never
+implemented, and `--strip-root` / `--pools` are flags now rather than constants — pointing the
+script at a stale root was a silent wrong answer, not an error.
+
+**Still owed:** 1,578 non-exam pages remain on old-slicer crops (page list in
+`data/colab/decode_pages_reslice.txt`). Until that Colab pass runs, Round-3 *training* data is cut
+by a different slicer than the one the app ships — real-val is correct either way, since new crops
+are what production produces.
+
+## 2026-07-29 — the page-stem collision: one collision, one duplicate, opposite fixes
+
+**Closed the "two source pages collide on one stem" item left open by the windowing session — and
+the obvious fix was right for only one of the two.** The proposal was to rename both with a makam
+suffix. Checking the bytes first changed the answer:
+
+- `bir_nigah_et_ney` — hicaz and saba PDFs differ, and they match **different SymbTr pieces**:
+  Şekerci Cemil Bey / ağıraksak against Zeki Arif Ataergin / aksak. Two unrelated songs whose titles
+  slugify the same. A real collision; one page was being destroyed on every slice. → both stems
+  qualified with the makam, both pages kept.
+- `nesem_emelim_ney` — hicaz and uzzal are **byte-identical**, PDF *and* rendered PNG (same sha256),
+  and both rows match the *same* SymbTr piece. neyzen.com serves one upload under two makam
+  directories. The "silent overwrite" here was overwriting a file with itself; nothing was ever
+  lost. → uzzal copy dropped.
+
+**Why renaming the duplicate would have been actively wrong:** it converts a harmless duplicate into
+two real copies of one page in the pool, and near-duplicate pages landing on opposite sides of a
+piece-level split is the exact leakage the by-piece split rule exists to prevent. The distinction is
+free to compute — same match target means duplicate, different match target means collision — so
+`collect_tuplets.neyzen_stems()` now derives stems that way over the whole match CSV, and both the
+download and export paths share it so they cannot disagree.
+
+**Scope was measured, not assumed.** Hashing every page image on disk and re-scanning every row of
+the match CSV each returned **exactly these two** stems, so the class is closed rather than the two
+instances patched. `emit_strip_labels.py` now refuses to slice when two pages resolve to one stem —
+the failure was silent for two weeks, which is the part worth preventing.
+
+**Fallout, recorded because it costs something.** The `bir_nigah_et_ney_p1` crops in `strips/` and
+`strips_v2/` were cut from an unrecoverable one of the two pages — both are 1653×2338, so geometry
+cannot identify the source — and were deleted; the pending re-slice regenerates them. The 5
+realval-hard verdicts on that stem (3 ok / 1 fix / 1 bad) are void, which the queue rebuild already
+covered. `nesem_emelim_ney_p1` crops were **kept**: both sources are byte-identical, so those crops
+are well-defined whichever page produced them. The Colab page lists turned out to have **both**
+colliding pages queued into the same strip dir, confirming the bug was live in that job too; fixed.
+
+## 2026-07-29 — the windowing retune: constants stay, two cap bugs fixed
 
 **The retune from the entry below was run to a conclusion, and its premise did not survive.** The
 sweep that pointed at `MEASURES_PER_STRIP = 1` had been scored on *usable yield* — does a decode fit

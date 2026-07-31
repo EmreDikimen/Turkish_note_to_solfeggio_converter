@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-07-28
+updated: 2026-07-31
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -221,6 +221,51 @@ them, over 85 tie-but-no-tup3 and 229 neither-token strips. Full reasoning:
   mid 91.9% vs 63.0%, hard tier absent from real-val (0 strips) vs 58.3% on the exam.
   **Composition dominates; edition familiarity is small** (clean tiers agree within 2pp). This is
   the measurement the real-val rebuild acts on — see [rung3/labeling.md](rung3/labeling.md).
+
+### Real-val v2 — the rebuilt pool (2026-07-31)
+
+`_realval_v2`: **267 strips at the exam's difficulty mix, 47 easy / 110 mid / 110 hard
+(17.6 / 41.2 / 41.2%)** against the old pool's 59 / 41 / **0**. 110 hard strips hand-labelled from
+the `realval-hard-v2` queue (165 read, 111 ok / 44 fix / 10 bad); every crop from the 2026-07-29
+slicer; no decode-derived label survives.
+
+Both pools read with the SAME model (`round2-stage2-best`) on the same day, so these compare:
+
+| | old `_realval` | **`_realval_v2`** | Round-2 exam |
+|---|---|---|---|
+| mean AEU F1 | 90.5% | **84.3%** | 74.2% |
+| micro F1 | 94.5% | 91.3% | 84.8% |
+| macro≥30 F1 | 94.8% | 91.4% | 84.8% |
+| SER | 0.028 | **0.079** | 0.052 |
+| exact-match | 65.7% | 62.9% | 52.1% |
+| mean edits/page | 3.5 | **8.6** | — |
+| pages ≤5 corrections | 75% | 70% | 57% |
+
+- **The pool really is harder: SER nearly tripled and now EXCEEDS the exam's.** Mean edits/page
+  rose 3.5 → 8.6 while the median stayed at 2 — the signature of a restored hard *tail*, not a
+  uniformly harder set.
+- **Headline gap to the exam: 16.3pp → 10.1pp, ~38% closed.** ⚠ Not comparable to the historical
+  "28pp" above, which was a different metric and model generation; quote this same-model pair when
+  comparing pools.
+- ⚠ **The residual gap is CLASS COMPOSITION, not difficulty.** Real-val v2 still carries 6 of 8
+  accidental classes and **zero `\komaSharp` in-signature gold**, while the exam headline is
+  substantially a `\komaSharp` n=14 artifact inside a six-class mean. Matching the difficulty mix
+  cannot match a per-class mean whose classes differ. The lever for that is more
+  `\komaSharp`/`\kucukSharp` gold (exam v3), not more hard strips.
+- ⚠ **First build mis-filed all 110 new rows as source "synthetic"** in `eval_omr.py`'s per-source
+  table — `build_realval_v2.build()` did not carry `source`/`makam`. Fixed via
+  `piece_provenance()`; the pool reads neyzen 79 / nota 188. Headline numbers were unaffected
+  (same crops, labels and seed) — only the provenance table was wrong.
+- **By source, the two engraving styles are far apart** (2026-07-31, corrected table):
+
+  | source | n | AEU headline | SER | exact |
+  |---|---|---|---|---|
+  | neyzen (clean vector PDFs) | 79 | 96.5% | 0.021 | 77.2% |
+  | nota (scanned TRT-era prints) | 188 | 93.8% | **0.105** | 56.9% |
+
+  **SER is 5× worse on nota**, and the hard tier is nota-dominant — so "hard" in this pool largely
+  means *scan quality and engraving age*, not musical density. Worth keeping in view before
+  attributing a future round's real-val movement to anything else.
 
 ## Photo domain (phone photos of exam pieces — EXAM-ONLY)
 

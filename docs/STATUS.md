@@ -2,18 +2,37 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-07-29
+updated: 2026-07-31
 
 ## Now
 
-**The slicer was overhauled on 2026-07-29 — four measured changes and one measured non-change.**
-The windowing retune the plan asked for turned out to be a dead end; two real bugs and two geometry
-defects were underneath it. Numbers: [METRICS-SLICER.md](METRICS-SLICER.md). Decisions:
-[DECISIONS.md](DECISIONS.md).
+**The re-slice is DONE and REAL-VAL v2 IS BUILT.** `data/real/rung3/_realval_v2` holds **267
+strips at the exam's own difficulty mix — 47 easy / 110 mid / 110 hard (17.6 / 41.2 / 41.2%)**,
+against the old pool's 59 / 41 / **0**. The 110 hard strips are hand-verified, every crop comes
+from the new slicer, and no decode-derived label survives. Everything else below is still true. Numbers: [METRICS-SLICER.md](METRICS-SLICER.md). Decisions:
+[DECISIONS.md](DECISIONS.md). Full account: [log/status-log.md](log/status-log.md).
 
-- **⚠ FIRST ACTION FOR THE NEXT SESSION: re-slice `data/real/strips_v2`.** It was cut on
-  2026-07-29 *before* all four changes, so every crop in it is stale. Re-slice, then re-emit —
-  see "Next" item 1.
+- **The val-side pool is 146 pieces / 194 pages** — the old "158 pages" figure was wrong by more
+  than the stem fix could explain, and 37 page stems had never been sliced at all.
+  `emit_strip_labels.py --val-side` now derives the list through `data.is_real_val_piece`.
+- **The queue ordering was REVERSED (owner, 2026-07-29): worst rows first — and the finished queue
+  proves it.** All 165 rows were read by hand (111 ok / 44 fix / 10 bad, 155 usable): the **worst
+  half needed a fix 46% of the time, the best half 7%** — a 6.5× concentration. Under the old
+  most-confident-first ordering half the effort would have gone to rows that needed nothing. The
+  early-stop protocol was not used and stays available; why the stop is gated on error
+  *clustering* rather than error count is in [rung3/labeling.md](rung3/labeling.md).
+- **The full re-slice is DONE (2026-07-31).** `data/real/strips_v2` now holds **1,781 page dirs /
+  1,704 decode caches / 35,586 crops** — 1,578 re-sliced on Colab plus the 203 val-side pages.
+  Verified: every cache passes `window_cache_ok` and records `round2-stage2-best`, so the emitter
+  reuses all 1,704 rather than discarding them. 67 pages (4.2%) found no staves — covers and
+  near-empty continuation pages, matching the 4.6% seen on the val side.
+  ⚠ **The 67 exam pages were deliberately excluded**
+  (`data/colab/decode_pages_reslice_EXAM_EXCLUDED.txt`): the exam is frozen and its gold describes
+  crops under `data/real/strips/`. Re-cutting them belongs to exam v3.
+- **Two silent-staleness traps were closed before any labelling** — a strip filename survives a
+  re-slice but its pixels do not. Queues are now versioned per re-slice, and image lookup is keyed
+  per queue (`QUEUE_IMG_ROOTS`); without the latter, 129 of the 165 rows would have shown old
+  crops against new rows with nothing to notice.
 - **The windowing constants STAY** (`MEASURES_PER_STRIP = 3`, `MAX_STRIP_W = 1450`). The sweep
   pointing at 1 measure/window was scored on usable *yield*, which cannot charge for the near-empty
   crops that shrinking creates; re-scored with that cost, 1 measure/window takes the healthy band
@@ -29,14 +48,19 @@ defects were underneath it. Numbers: [METRICS-SLICER.md](METRICS-SLICER.md). Dec
   geometric argument, **not** a measured accuracy win. `OMR_VPLACE=0` disables it.
 - **Decode caches now key on the full windowing signature**, so a slicer change can no longer
   silently reuse crops cut by different code.
-- **Still open, found incidentally:** two source pages collide on one stem
-  (`bir_nigah_et_ney_p1`, `nesem_emelim_ney_p1` each exist under two makams), so one page of each
-  pair is silently overwritten. Unfixed.
+- **The page-stem collision is FIXED (2026-07-29)** — and only one of the two was a collision.
+  `bir_nigah_et_ney` really is two different songs under one stem (now qualified with the makam);
+  `nesem_emelim_ney` is one upload filed under two makams, byte-identical, so the duplicate was
+  dropped rather than renamed. A full scan found exactly these two. `emit_strip_labels.py` now
+  refuses to slice when two pages resolve to one stem. Detail:
+  [METRICS-SLICER.md](METRICS-SLICER.md).
 
-**⛔ Standing warning, unchanged: the "2% pre-shrink" DID NOT REPLICATE. Do not act on it.**
-Shrinking exam strips ~2% before the model reads them removed 12–15.5% of corrections (562 → 475)
-and looked like the biggest free lever this project had found. On **real-val it is −1.6%**
-(247 → 243). It is exam-specific on current evidence.
+**✅ The "2% pre-shrink" is CLOSED (2026-07-31): it does not replicate, and off the exam it makes
+things WORSE.** Shrinking exam strips ~2% removed 12–15.5% of corrections (562 → 475) and looked
+like the biggest free lever this project had found. Re-run on the rebuilt `_realval_v2` — which now
+has the hard tier whose absence was the last defence of the result — **every scale is worse:
++2.7% at 1%, +5.2% at 2.5%** ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)). The effect
+reverses off the exam. Do not re-propose it.
 
 - **How it happened, so it is not repeated:** ~15 variations were run against the frozen exam and
   the best-scoring one was reported as a finding — selection on the test set — before any holdout
@@ -44,9 +68,10 @@ and looked like the biggest free lever this project had found. On **real-val it 
   (down-up = 555), blur (562), ink weight (lighten 565, thin 589) and staff-size matching (the
   benefit appears in every size bucket, including strips already at 30.0 px), so there was never a
   mechanism either.
-- **Not fully closed:** real-val is the EASY pool (0.9 edits/strip vs the exam's 1.7) and is missing
-  the hard tier entirely, so an effect concentrated on hard pages could hide there. That is one more
-  reason the real-val rebuild gates everything. Re-test after it, not before.
+- **The rebuilt pool is what closed it.** Real-val v2 carries the hard tier the old pool lacked and
+  is harder than the exam on SER, so "an effect confined to hard pages could hide there" is no
+  longer available as an explanation. That is the first decision `_realval_v2` has actually
+  settled — and it settled it against the result.
 
 ## Previously (Round 3 pre-render checks, 2026-07-28)
 
@@ -122,32 +147,30 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 
 The four pre-render checks are DONE (see "Now"). What is left:
 
-1. **Re-slice `strips_v2`, THEN re-emit and rebuild real-val.** The slicer work is finished (see
-   "Now"); what remains is running it. Order matters — emitting from stale crops produces a queue
-   you would label once and throw away.
-   1. **Re-slice the 158 val-side non-exam pages** into `data/real/strips_v2` (~18 min). The pool
-      on disk predates all four 2026-07-29 slicer changes, so none of its crops are current.
-      Keep the separate root: overwriting `data/real/strips` would silently change what every
-      existing manifest points at, including the 130 labelled queue rows.
-   2. **Re-emit:** `emit_strip_labels.py --strips-root data/real/strips_v2 --redecode` with the
-      current checkpoint (~25–40 min for 158 pages). `--redecode` is not optional here — the cache
-      key now includes the windowing, so stale entries are refused rather than reused.
-   3. **Re-stage the `realval-hard` queue and label it.** Size it with margin: the first queue
-      yielded 87 usable rows from 130 (33% were unusable crops) against 110 needed.
-   - **Already spent, not recoverable:** the owner labelled all 130 rows of the first queue
-     (**65 ok / 22 fix / 43 bad**). The verdicts do **not** transfer — no crop survives a re-slice
-     unchanged. What they bought is the confidence calibration and the 33% crop-failure rate.
+1. **DONE (2026-07-31): every consumer now reads `_realval_v2`.** `degrade_probe.py` and
+   `empty_crop_probe.py` default to it; `staff_geometry_probe.py` gained `--strips-dir` (still
+   defaulting to the frozen exam). `make_realval_pool.py` is **not** the selection set any more —
+   its `_realval` output is the *base* `--build` extends, and its docstring now says so, because
+   pointing an eval at it silently restores the no-hard-tier pool. It also stopped carrying a third
+   verbatim copy of the val-split hash and calls `data.is_real_val_piece` (verified: 0 of 444
+   pieces change side). Round-1/2 notebooks are left alone — one notebook per round, never
+   re-pointed.
+   - **Not recoverable, for the record:** the owner's 130 v1 verdicts (**65 ok / 22 fix / 43 bad**)
+     did not transfer — no crop survives a re-slice unchanged. What they bought is the confidence
+     calibration and the 33% crop-failure rate that sized the 165-row v2 queue.
 
-2. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner
+2. **Decide whether to re-emit the training pools from the new crops.** The re-slice is done (see
+   "Now"); this is the separate decision it unlocks, **not** a formality. Re-emitting rewrites the
+   manifests the promoted verdicts hang off, so it needs its own `--out` and a look at what moved
+   before anything is promoted. Weigh it against the evidence that Round 3's target — pitch (40%)
+   and duration (28%) of user edits — is a *synthetic content mix* problem, not a shortage of real
+   strips: the current pools already hold 2,330 accepted real strips (nota 1,740, r1 421, tup 169).
+
+3. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner
    decision 2026-07-27: these only; ties and accidentals stay out). Verify on a 300-strip pilot with
    `domain_gap.py` before regenerating `data/pieces.json`. Guard: check the accidental counts before
-   and after on the same pilot and treat a drop as a stop sign, not a trade.
-3. **Rebuild real-val to match exam composition.** Owner decision: this lands *before* Round 3
-   trains, so future rounds stop being blind one-shots. Today's real-val is missing the hard tier
-   entirely, which is why it read 95% while the exam read 66%. It does **not** need to be
-   edition-disjoint (measured), but it must exclude decode-derived labels from the metric pool, and
-   its hard tail must be hand-verified. Reuse `data.is_real_val_piece` — both consumers must share
-   it. Item 1 produces its input, so run them together rather than labelling twice.
+   and after on the same pilot and treat a drop as a stop sign, not a trade. Independent of items
+   1–2 — it never touches real-val, so it can run alongside the labelling.
 4. **Write down what Round 3 must reach, before training starts** — on the user-effort metric
    (≥90% of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro
    mean. Then render once, train stage 1 once with several cheap stage-2 variants, read the exam

@@ -2,7 +2,7 @@
 
 purpose: how to run training on Colab (the fanless-Mac offload path)
 audience: whoever is launching a training run
-updated: 2026-07-26
+updated: 2026-07-30
 
 > How to run the scaled fine-tune (`src/vision/train.py`) on Colab, written for someone who has
 > never used Colab. This doc is the context around the notebooks: what Colab is, which plan to buy,
@@ -25,6 +25,31 @@ updated: 2026-07-26
 > 110 min)** — full result in `src/vision/MODEL_EVAL.md`; checkpoint copied local to
 > `data/checkpoints/rung2-best/`. This guide stays as the recipe for future Colab runs
 > (e.g. the Rung-3 fine-tune on real photos).
+>
+> ### GPU decode offload — a different genre, same rules
+>
+> These notebooks train nothing; they run the emitter's expensive half (slice + decode every page)
+> and bring back the `<page>_decode.json` caches so the laptop only does the cheap alignment.
+>
+> | Job | Notebook | Zip | Model | Window | Out |
+> |---|---|---|---|---|---|
+> | tuplet pass (2026-07-18) | `rung3_decode_colab.ipynb` | `tnc_rung3_decode_colab.zip` | `rung3-labeler` | `--measures-per-strip 1` | `data/real/strips` |
+> | **2026-07-29 re-slice** | **`rung3_reslice_colab.ipynb`** | `tnc_reslice_colab.zip` + `tnc_round2_ckpt.zip` | `round2-stage2-best` | default (3) | `data/real/strips_v2` |
+>
+> Build the package with `scripts/rung3/make_decode_zip.sh <pages-list> <zip-name>`; both
+> arguments are optional and the pages list keeps its own filename inside the zip.
+>
+> ⚠ **Two flags decide whether the trip was worth anything.** `--cache-checkpoint` is the string
+> recorded in every JSON, and the laptop emitter refuses a cache whose recorded checkpoint differs
+> from its own `--checkpoint` — get it wrong and the whole batch is discarded on arrival. `--out`
+> must not be an existing strip root, because live manifests point into those. The re-slice
+> notebook asserts both on 5 smoke pages before the full run.
+>
+> **The offload is not always the cheap option.** Measured 2026-07-30 on this M4 at `nice -19`:
+> **5.2 pages/min on CPU**, so the 1,578-page re-slice is ~5 h locally against a 1.2 GB upload,
+> 1.5–3 h of T4, and a ~1 GB download. Overnight on the laptop is a real alternative when the job
+> is inference rather than training; the fanless rule is about sustained heat, and this workload is
+> resumable and page-cached, so it can be stopped at any point.
 
 ## 1. Colab in three sentences
 

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>W1 — browser logprobs vs onnx_parity.py</title>
+    <style>
+      body { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+             background: #14161a; color: #d8dee9; margin: 0; padding: 24px; }
+      h1 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+      p.sub { color: #7d8799; margin: 0 0 20px; max-width: 76ch; }
+      pre { white-space: pre-wrap; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <h1>W1 — browser logprobs vs <code>onnx_parity.py</code></h1>
+    <p class="sub">
+      The confidence signal W8 highlights measures with. Both sides decode the gate's
+      <code>.pixels.bin</code> reference tensors, so the input is bit-identical and only the
+      arithmetic is under test. Generate the reference with
+      <code>.venv-ml/bin/python scripts/logprob_ref.py</code>, then run
+      <code>npm run check:logprobs</code>.
+    </p>
+    <pre id="log">loading…</pre>
+    <script type="module" src="/src/checks/logprobCheck.ts"></script>
+  </body>
+</html>

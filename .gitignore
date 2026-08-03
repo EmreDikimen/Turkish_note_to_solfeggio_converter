@@ -92,6 +92,9 @@ data/checkpoints/
 data/colab/
 # Stitched decode of a real page (stage-8 output; derived from data/real/)
 apps/web/public/decoded.json
+# W0 opencv.js parity fixtures: a corpus page + its raw grayscale, regenerated on demand by
+# scripts/cv_probe_ref.py. Throwaway with the probe itself (plan W6).
+apps/web/public/probe/
 
 # Colab round-trip archives downloaded to the repo root (GB-scale; the unpacked
 # result lives under data/real/, which is already ignored)

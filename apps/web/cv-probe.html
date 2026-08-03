@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>W0 — opencv.js primitive parity probe</title>
+    <style>
+      body { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+             background: #14161a; color: #d8dee9; margin: 0; padding: 24px; }
+      h1 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+      p.sub { color: #7d8799; margin: 0 0 20px; max-width: 70ch; }
+      pre { white-space: pre-wrap; margin: 0; }
+      .pass { color: #6fcf8e; } .fail { color: #ff6b6b; } .warn { color: #e8c07d; }
+    </style>
+  </head>
+  <body>
+    <h1>W0 — opencv.js primitive parity probe</h1>
+    <p class="sub">
+      Proves opencv.js reproduces <code>src/vision/page_to_strips.py</code>'s four primitives before
+      the slicer is ported (plan W0). Reference numbers come from
+      <code>scripts/cv_probe_ref.py</code>; regenerate them with
+      <code>.venv-ml/bin/python scripts/cv_probe_ref.py &lt;page.png&gt;</code>.
+      Throwaway — deleted at W6.
+    </p>
+    <pre id="log">loading opencv.js (13 MB) …</pre>
+    <script type="module" src="/src/probe/cvProbe.ts"></script>
+  </body>
+</html>

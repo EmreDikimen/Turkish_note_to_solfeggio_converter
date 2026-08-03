@@ -4,6 +4,9 @@ purpose: the plan and running state of the W0–W10 ladder that turns the frozen
 audience: agents and the owner working the product side (not the training side)
 updated: 2026-08-02
 
+> **Picking up W4–W6 (the slicer port)? Read [slicer-port.md](slicer-port.md) first** — it carries
+> the function map, the acceptance thresholds and the traps that were found the expensive way.
+>
 > Current state and next action for the WHOLE project are NOT here: see [../STATUS.md](../STATUS.md).
 > Numbers: [../METRICS.md](../METRICS.md) and [../METRICS-SLICER.md](../METRICS-SLICER.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Pipeline design: [../PIPELINE.md](../PIPELINE.md).
@@ -52,11 +55,11 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W1** | Decode module extracted from `omrGate.ts`, logprobs added, gate still 27/28 | ✅ **DONE 2026-08-02** — see below |
 | **W2** | Strips → editor end to end (no slicer); produces the W3 control arm | ✅ **DONE 2026-08-02** — see below |
 | **W3** | Parity harness, the arm-B **ceiling**, and browser-vs-gold quality | ✅ **DONE 2026-08-03** — see below |
-| **W4** | Slicer: staves + row normalization | — |
-| **W5** | Slicer: barlines (the riskiest file) | — |
-| **W6** | Slicer: windowing + driver; full parity vs the ceiling | — |
+| **W4** | Slicer: staves + row normalization | **next** — [slicer-port.md](slicer-port.md) |
+| **W5** | Slicer: barlines (the riskiest file) | [slicer-port.md](slicer-port.md) |
+| **W6** | Slicer: windowing + driver; **paired** parity vs arm B | [slicer-port.md](slicer-port.md) |
 | **W7** | Upload a page in the app | — |
-| **W8** | Confidence highlighting, per strip → per measure | — |
+| **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | — |
 | **W9** | Model delivery (HF + Cache API) and hosting | — |
 | **W10** | Friends release | — |
 

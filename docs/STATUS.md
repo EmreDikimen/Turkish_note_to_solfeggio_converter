@@ -219,10 +219,10 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
 
 1. **W4 — slicer stage 1: staves + row normalization** in TypeScript, against the 1,781 manifests
-   on disk. Staff count must match on ≥99.5% of pages, the 67 zero-staff pages must yield zero, and
-   per-system `scale` must land within 0.002. `pyRound()` (half-to-even) at every rounding site —
-   `30*0.35` and `30*0.75` are exactly 10.5 and 22.5, where `Math.round` silently retunes two
-   barline gates.
+   on disk. **Read [mvp/slicer-port.md](mvp/slicer-port.md) before starting** — function map,
+   per-rung acceptance thresholds, and the traps (chief among them: `pyRound()` half-to-even at
+   every rounding site, because `30*0.35` and `30*0.75` are exactly 10.5 and 22.5, where
+   `Math.round` silently retunes two barline gates).
 2. **W5–W6 — barlines, then windowing + the driver.** W6 compares arm A against arm B **pairwise on
    the same strips**, not against the 86.0% level.
 3. **W7–W10** — page upload in the app, the W8 confidence decision above, model delivery from HF

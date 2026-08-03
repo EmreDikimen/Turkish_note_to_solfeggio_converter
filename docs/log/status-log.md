@@ -2,12 +2,152 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-07-31
+updated: 2026-08-02
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+## 2026-08-02 — W2: the app reads sheet music, and the resampler hypothesis dies
+
+**"Read strips" works end to end in the real app.** Pick a page's `*_sNN_wNN.png` crops → the model
+decodes them in the browser → the stitcher builds a score → the editor loads it, plays it, and
+⬇ Save JSON writes a valid `schemaVersion: 1` document. Proven in the app itself rather than a
+harness (`npm run smoke:app`): 16 crops → 344 notes / 28 measures, sheet renders, playback starts,
+no uncaught errors. **~1.1 s/strip**, so a 20-strip page is 20–30 s — slow but fine behind a
+progress line, and it means W7 needs no Web Worker.
+
+Sessions load **sequentially**, unlike the gate's `Promise.all`: three `InferenceSession.create`
+calls in flight means three sets of weights plus ORT's copies live at once, and on a phone the
+failure mode is memory, not bandwidth.
+
+**A measurement bug worth remembering.** The first arm-B run reported **10%** token agreement while
+two of three pages produced *byte-identical scores* — an impossible pair, and the tell. Cause:
+`decode_page.py` stores raw HF `decode()` output, which glues added tokens (`\sig\komaFlatb`), while
+the browser's `detokenize` emits them spaced. Both streams pass through the stitcher's
+`normalizeTokens` before becoming music, so comparing before it measures serialization, not reading.
+Normalized: **10% → 96.7%** on that sample, **86.0% over 20 pages / 450 strips**.
+
+**The pre-registered rule fired, and was deliberately not followed.** The plan said "if arm B lands
+below ~90%, the resampler gap dominates — spend a day matching PIL's BILINEAR first". 86% is below
+90%. But the rule's causal model is wrong, and the data says so plainly:
+
+- strips Python flagged (`min_logprob < -1.0`, n=32): **21.9%** agreement
+- strips Python was confident about (n=418): **90.9%** agreement
+- crop width, which determines how hard a strip is downscaled and therefore how much a resampler
+  difference could bite: **no trend** — 89.3% in the narrowest decile against 83.9% in the widest,
+  with 75.0% and 92.9% deciles scattered between. Token count equally flat.
+
+Disagreement tracks **model uncertainty**, not resampling severity: near-ties either ORT build can
+tip, the same mechanism as the gate's 27/28 and its measured 69/31 coin-flip. `preprocess.ts` is
+unchanged. This is the third time on this project that a plausible mechanism has failed to survive
+its first measurement, and the second time the pre-registered response would have wasted a day.
+
+**Unplanned benefit: the first real-data evidence that `min_logprob < -1.0` is a meaningful line.**
+W1 had to file a non-claim because the 14 gate strips were all too confident to test the boundary.
+Here 32 strips fall below it and behave completely differently from the other 418. It separates
+exactly the strips where two runtimes disagree — encouraging for W8.
+
+⚠ **Left open, and it gates the release: is the browser WORSE, or only different?** Agreement with
+Python cannot tell those apart. The browser reads slightly *fewer* tokens on disagreeing strips (31
+of 63 are −1 or −2 ids), which is suggestive and no more. The decisive test is browser decodes
+scored against `_realval_v2`'s 267 hand-verified gold strips versus Python on the same strips —
+moved to the front of W3, because it is the only finding so far that could change what ships.
+
+Also measured, and relevant to W8: a blank / black / tiny / wrong-orientation image decodes to 4 ids
+and 0 events **without throwing**, but scores `min_logprob ≈ -0.84` — *above* the −1.0 flag. The
+confidence threshold does not catch an empty crop; the event count does.
+
+## 2026-08-02 — W1: decode module extracted, and a pre-registered criterion that was wrong
+
+`omrGate.ts` 309 → 164 lines; `greedyDecode` / `preprocessCanvas` / `detokenize` and friends now
+live in `apps/web/src/omr/` with real exports. `omr-gate.html` is byte-identical and still reads
+27/28 with the same failing strip and the same token stream. `preprocessCanvas` widened to any
+`CanvasImageSource` (the slicer emits canvases, not `<img>`); `willReadFrequently` was deliberately
+left off its context, since moving rasterization to software could perturb `drawImage` filtering
+and the gate's canvas arm with it.
+
+**The interesting part is the failure.** `argmaxLast` now also returns the chosen token's
+log-probability, and the pre-registered acceptance was "≤1e-3 per token vs `onnx_parity.py`". It
+failed at **8.6e-2**. The diagnosis is worth more than the number: ids agree on 13 of 14 strips, so
+the decode is sound — the gap is the **ORT-web vs ORT-Python int8 numerics difference already
+recorded under STATUS's open risks**, the same effect that tips `bunca_cevrinle`'s 69/31 near-tie
+and drops a `\tup3` there. Feeding both sides bit-identical `.pixels.bin` tensors buys identical
+*input*, not identical *logits*. So ≤1e-3 was never a claim about our arithmetic; it was an
+untested assumption about two runtimes, and it should not have been written as an acceptance bar.
+
+The check was re-aimed at the thing W8 actually depends on — **does the browser land on the same
+side of the validated `min_logprob < -1.0` threshold as Python?** Over 576 token logprobs: 0 tokens
+and 0 strips disagree. The raw runtime gap is now reported rather than gated, because it is a
+property of the two ORT builds and not something this code can fix.
+
+⚠ **Non-claim, recorded so it is not quoted as stronger than it is:** 0 of those 576 tokens came
+within 0.1 of −1.0. All 14 gate strips are confident reads (every min above −0.15), so the fixture
+cannot test the boundary — "0 crossings" is partly a property of the data. Owed at W3, on real-page
+strips where min-logprob actually approaches the threshold.
+
+## 2026-08-02 — the work switches to the product: MVP track opened, W0 passed
+
+**Owner decision: freeze the model, finish the pipeline, release to friends, then train Round 3
+against real feedback.** The argument, recorded because it will be tempting to re-open: Round 3
+targets pitch (40%) and duration (28%) of user edits through a synthetic content-mix change — a
+real lever, but two rounds have already shipped as "improvement, not pass", and a third would change
+nothing a friend would notice. Meanwhile the *product* half of the 2026-07-27 goal (show the user
+where the errors are) had never been built, and feedback is unobtainable without a pipeline. New
+track: [../mvp/README.md](../mvp/README.md), a W0–W10 ladder with per-rung acceptance checks.
+
+**The gap turned out to be one file, not a phase.** Exploration found decode, Donut preprocessing,
+detokenization, stitching, the editor and playback all already browser-safe — `omrGate.ts` simply
+never exported its helpers (and grabs DOM nodes at import time, which is what blocks reuse), and
+`tools/render/stitch.ts` has no node imports and already typechecks under `apps/web`'s strict
+config. The only genuinely missing piece is a TypeScript port of `page_to_strips.py`.
+
+**W0 — opencv.js primitive parity: PASS.** Both sides are OpenCV 5.0.0 (checked, not assumed). The
+probe runs two arms and the split is what makes it informative: fed *Python's own grayscale bytes*,
+opencv.js is exact on all five primitives (Otsu threshold, ink count, the full 2,339-row MORPH_OPEN
+projection, connectedComponents, INTER_AREA column sums). Fed the *browser's own PNG decode*, it
+drifts — and that drift is unavoidable, because `cv2.imread(IMREAD_GRAYSCALE)` converts inside the
+PNG decoder while a browser only ever sees RGBA afterwards.
+
+**The grayscale question was settled by measurement rather than by picking a tolerance**, which is
+worth recording because the first instinct was to write a tolerance. OpenCV's own two paths already
+differ by ±1 on 7.4% of a colour page's pixels, and 18% of corpus pages are truly colour. So the
+test became: re-run the *whole slicer* under that perturbation. All **119 strips across the 6 most
+colour-shifted pages came out bit-identical** — same counts, `row_x0`/`row_x1`, `scale`, `row_bars`,
+pads. Sub-quantization noise does not reach the output. Numbers:
+[../METRICS-SLICER.md](../METRICS-SLICER.md).
+
+**A side effect worth more than the probe: the browser OMR gate is now a command.**
+`window.__gateResult` had been exposed since the gate was written and had never once been used —
+the gate was checked by opening a browser and reading it. `tools/browser/run-page.ts` runs any
+harness page headlessly. The wrinkle: the gate reports a single boolean, and that boolean has read
+`FAIL` ever since the known ORT-web int8 `\tup3` wobble, so it cannot distinguish that from a real
+regression. The runner therefore tallies the page's own ✓/✗ marks and the script pins
+`--expect 27/28`. Baseline captured before any refactor: **27/28, canvas (product) path clean at
+14/14**, sessions ready in 3.0 s, ~0.9 s encoder + ~0.2 s decode per strip.
+
+## 2026-07-31 — the whole re-slice is browsable: the `reslice-all` queue
+
+**One queue over all 33,804 crops / 1,704 pages of `data/real/strips_v2`** (30,049 decoded on
+Colab), so the re-slice can be *looked at* rather than only sampled — before this, 165 hard-tier
+rows were the only crops anyone had seen. `scripts/rung3/build_reslice_queue.py` builds it,
+worst-first, seeding each row with the page cache's decode; the 392 val-side emitted labels are
+used where they exist. Contract and warnings: [../rung3/labeling.md](../rung3/labeling.md).
+
+**Two things were deliberately NOT done, and both are the same mistake in different clothes.**
+Nothing from the older pools (`strips_nota`, `strips_r1`, `strips_tup`) is joined in, because they
+were emitted from crops the old slicer cut: a strip filename survives a re-slice and its pixels do
+not, so their labels would caption the new crop with the old crop's truth. And the queue is not
+proposed as a labelling target — 33,804 hand checks is not a plan, so it ships as a browsing tool
+with nothing consuming it. The 165 already-read `realval-hard-v2` verdicts are carried in, since
+those *are* the same crops from the same slicer.
+
+**`review_ui.py` had to learn lazy queues to hold it.** 33.8k rows is 16 MB of JSON and
+`/api/state` is re-fetched every time the verdict log opens, so queues over `EAGER_MAX` now ship
+counts only and their rows come from `/api/rows` on first open. Verified in a headless browser:
+first paint 2.3 s, tab switches clean, images resolving from `strips_v2` (the same page also exists
+under the old `data/real/strips`, so `QUEUE_IMG_ROOTS` is load-bearing here, not decorative).
 
 ## 2026-07-31 — real-val v2 is built; the practice test is finally harder than the exam
 

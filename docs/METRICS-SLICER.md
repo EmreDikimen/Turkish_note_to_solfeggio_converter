@@ -2,7 +2,7 @@
 
 purpose: the single home for how `page_to_strips.py` behaves on real pages — the retunes, the bugs, and the geometry, including the ideas that measured out to nothing
 audience: agents and the owner, before changing the slicer or re-slicing a pool
-updated: 2026-07-29
+updated: 2026-08-02
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-07-29 when that file crossed
 the 400-line cap. The split is by genre: that file keeps **what the model gets wrong**; this one
@@ -12,6 +12,50 @@ keeps **what the page-cutter does**. Nothing is duplicated.
 2026-07-28 (one was dead code, one was contradicted by the slicer's own manifests), and the
 2026-07-29 windowing retune overturned its own premise once measured. Measure against real output
 first; the probes below are the pattern.
+
+## The slicer is insensitive to ±1 grayscale noise (2026-08-02)
+
+Measured for the browser port ([mvp/README.md](mvp/README.md) W0), and it is the number that makes
+the port possible at all.
+
+`cv2.imread(IMREAD_GRAYSCALE)` converts RGB→gray **inside the PNG decoder**; a browser only ever
+gets RGBA out of the decoder and converts afterwards, so it can never reproduce those bytes exactly.
+The gap is real but small — OpenCV's own two paths (`imread`-gray vs `cvtColor` on `imread`-colour)
+differ by **±1 on 7.44%** of the pixels of a colour page. Sampling 120 corpus pages: 0 are
+single-channel, 98 are RGB-but-neutral (`R==G==B`, where every formula agrees trivially) and
+**22 (18%) are truly colour**, so this is not an edge case.
+
+**Re-running the whole slicer under exactly that perturbation changes nothing.** On the 6 most
+colour-shifted pages in the corpus, all **119 strips are bit-identical**: same strip count, same
+`row_x0`/`row_x1`/`width`/`pad`/`scale`/`is_row_start`, same `row_bars`, same measure indices.
+
+| page | strips | manifest diff |
+|---|---|---|
+| `ey_but_i_nev_eda_olmusum_muptela_nota_p1` | 27 | identical |
+| `husnune_mail_gonlum_ezelden_nota_p1` | 18 | identical |
+| `havada_bulut_yok_bu_ne_dumandir_p1` | 19 | identical |
+| `oh_guzel_kiz_sirin_kiz_bakislari_derin_kiz_p2` | 22 | identical |
+| `siyah_ebrulerin_p1` | 16 | identical |
+| `enginde_yavas_yavas_gunun_minesi_soldu_nota_p2` | 17 | identical |
+
+Downstream drift from the same perturbation, measured through opencv.js on one colour page:
+Otsu threshold **unchanged** (154), connectedComponents **unchanged** (1,522 labels), ink pixel
+count −354 of 408,651 (**0.087%**), MORPH_OPEN row projection max Δ1 of a 1,513 peak, INTER_AREA
+column sums max Δ89 of ~85,680 (**0.10%**). The two quantities that actually drive slicer decisions
+— the Otsu threshold and the CC label count — do not move.
+
+⚠ **This is a claim about sub-quantization noise only.** It says nothing about a browser that
+applies colour management or gamma to a profiled PNG; the probe deliberately decodes with
+`colorSpaceConversion: "none"` and `premultiplyAlpha: "none"`, and the corpus page used carries no
+ICC profile.
+
+## opencv.js reproduces OpenCV-Python exactly (2026-08-02)
+
+Same page, same input bytes, `@techstark/opencv-js` 5.0.0-release.1 vs `cv2` 5.0.0 — versions
+checked, not assumed. Fed Python's own grayscale bytes, all five primitives the slicer rests on are
+**exact**: Otsu threshold 154, ink 408,651 px, the full 2,339-row MORPH_OPEN projection
+(kernel 181×1), connectedComponents 1,522 labels, and the INTER_AREA column sums of a
+1653×400 → 909×336 resize. Run it with `npm run probe:cv`.
 
 ## The labelling pools are OLD-SLICER output (2026-07-28)
 

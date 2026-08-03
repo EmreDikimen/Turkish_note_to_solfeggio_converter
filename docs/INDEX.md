@@ -31,6 +31,7 @@ wrong — fix by deleting, not by syncing.
 
 | Question | File |
 |---|---|
+| The MVP track: in-browser pipeline → release to friends | [mvp/README.md](mvp/README.md) |
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | How real pages get labelled without hand work | [rung3/labeling.md](rung3/labeling.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |

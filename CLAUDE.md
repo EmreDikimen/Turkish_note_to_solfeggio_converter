@@ -4,8 +4,10 @@ Classical Turkish (makam) music **OMR**: photo/screenshot of sheet music → not
 microtonal accidentals* → editable score → playback at exact 53-TET (Arel-Ezgi-Uzdilek) pitches.
 Web app first, mobile later. No server: inference runs in the browser via `onnxruntime-web`.
 
-**Phase 3 (real pages) is the live work.** Synthetic accuracy is solved (99.9%); everything now is
-about real printed pages and photos.
+**The MVP track is the live work (owner, 2026-08-02): the model is FROZEN and the in-browser
+pipeline is being wired for a release to friends.** Do not start Round 3 training — the real-page
+track is paused until feedback comes back. Ladder and state: [docs/mvp/README.md](docs/mvp/README.md).
+Synthetic accuracy is solved (99.9%); the remaining model work is about real printed pages.
 
 > **Current state + the next action → [docs/STATUS.md](docs/STATUS.md). Never answer "what's next"
 > from this file or from ROADMAP.** Plain-English version for the project owner:
@@ -24,6 +26,7 @@ about real printed pages and photos.
 | Any headline number (accuracy, corpus size, yield) | [docs/METRICS.md](docs/METRICS.md) |
 | Why something was decided (and what overturned it) | [docs/DECISIONS.md](docs/DECISIONS.md) |
 | The full doc map | [docs/INDEX.md](docs/INDEX.md) |
+| **MVP track (in-browser pipeline → friends release)** | **[docs/mvp/README.md](docs/mvp/README.md)** |
 | Real-page track (collect → label → exam → rounds) | [docs/rung3/](docs/rung3/) |
 | Code map / reading order | [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |
 | Page → strips → decode → stitch design | [docs/PIPELINE.md](docs/PIPELINE.md) |
@@ -38,6 +41,12 @@ Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces 
 ```bash
 npm run dev:web                      # harness → http://localhost:5173
 npm run typecheck                    # all workspaces
+npm test                             # stitcher unit tests + 194-score label round-trip
+npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
+npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
+npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
+npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
+npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377

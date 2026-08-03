@@ -51,7 +51,7 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W0** | opencv.js primitives match OpenCV-Python | ✅ **DONE 2026-08-02** — see below |
 | **W1** | Decode module extracted from `omrGate.ts`, logprobs added, gate still 27/28 | ✅ **DONE 2026-08-02** — see below |
 | **W2** | Strips → editor end to end (no slicer); produces the W3 control arm | ✅ **DONE 2026-08-02** — see below |
-| **W3** | Parity harness + the arm-B **ceiling** number | mostly done at W2; owes gold scoring + a 40-page sample |
+| **W3** | Parity harness, the arm-B **ceiling**, and browser-vs-gold quality | ✅ **DONE 2026-08-03** — see below |
 | **W4** | Slicer: staves + row normalization | — |
 | **W5** | Slicer: barlines (the riskiest file) | — |
 | **W6** | Slicer: windowing + driver; full parity vs the ceiling | — |
@@ -202,6 +202,69 @@ which is suggestive but not evidence. The decisive test is scoring browser decod
 strips. **Owed at W3**, and it is what says whether a friend gets the quality the project's metrics
 claim.
 
+## W3 — the browser is not worse than Python ✅ DONE (2026-08-03)
+
+**The release-gating question is settled.** Arm-B agreement said the two decoders differ on ~14% of
+strips; agreement cannot say *which one is right*, and if the browser read meaningfully worse then
+friends would get worse results than every number in [../METRICS.md](../METRICS.md) claims.
+
+Both sides were scored against the **same 261 hand-verified `_realval_v2` strips** with the **same
+scorer** (`eval_omr.align`, the project's Levenshtein id-space alignment), on the identical strips:
+
+| metric | Python | Browser | Δ |
+|---|---|---|---|
+| SER (lower better) | 0.0821 | **0.0818** | −0.0003 |
+| exact-match | 60.2% | **60.2%** | 0.0 |
+| AEU macro recall | 94.8% | **94.9%** | +0.1 pp |
+| AEU micro recall | 92.5% | **92.5%** | 0.0 |
+
+Per class the two are within a point everywhere, and the two largest moves cancel
+(`\bakiyeSharp` −0.8 pp, `\komaFlat` +1.5 pp). **Verdict: the ~14% disagreement is two ORT builds
+splitting near-ties, at no cost in quality.** Reproduce with `npm run decode:pool -- --pool
+data/real/rung3/_realval_v2 --out b.json` then
+`.venv-ml/bin/python scripts/score_browser_gold.py --browser b.json`.
+
+⚠ **Scope of the claim:** this is real-val, which orders candidates and does not predict exam
+performance (a 28 pp gap is on record). It is a *paired* comparison on identical strips, so the
+**Δ** is what it establishes — not the absolute level.
+
+### The 40-page ceiling sample was dropped, deliberately
+
+The plan pre-registered widening the arm-B ceiling from 20 pages to 40. Two reasons not to:
+
+1. **Its purpose changed.** The ceiling existed to answer "is a slicer difference real or is it the
+   resampler". Now that gold shows agreement is not a quality proxy, the ceiling is only a
+   reference level for W6, not a quality bar.
+2. **The stated ±1 pp bar is not resolvable at any sample size we would run.** At 86% with n=450 the
+   standard error is ~1.6 pp; 40 pages would only reach ~1.2 pp. **W6 should use a PAIRED test
+   instead** — arm A and arm B decode the *same* strips, so compare per-strip agreement pairwise
+   (a McNemar-style count of strips where exactly one arm matches Python). That is far more
+   sensitive than differencing two independent proportions, and it needs no extra pages.
+
+### Confidence: real signal, but it does NOT meet the pre-registered bar
+
+Measured against gold, `min_logprob` genuinely separates good strips from bad — flagged strips
+average **8.60 token edits against 2.69** for the rest. But as an *error locator* it is weak:
+
+| flag if min < | % strips flagged | % of all edits caught | lift |
+|---|---|---|---|
+| −1.0 | 3.8% | 11.3% | 3.0× |
+| −0.7 | 9.2% | 26.3% | 2.9× |
+| **−0.5** | **22.6%** | **57.1%** | 2.5× |
+| −0.3 | 33.0% | 64.2% | 1.9× |
+
+**The pre-registered rule — flag 10%, catch ≥60% of errors ([../STATUS.md](../STATUS.md)) — is NOT
+met.** The best achievable at a 10% budget is **26.3%**. There is a usable operating point at −0.5
+("check about one strip in five, see over half the errors"), but that is a soft hint, not the
+promise the rule describes.
+
+**This lands before W8 is built rather than during it, which is the point of measuring first.** W8
+now has a real decision to make: ship the −0.5 cut as a hint, invest in per-TOKEN localisation
+(logprobs already exist; the cost is threading token identity through the stitcher), or drop the
+feature. ⚠ Note also that the −1.0 line was validated as a **bad-crop proxy for the labelling
+queue**, a different job from locating a user's errors — and W2 found it does not even fire on a
+blank crop (those score ≈ −0.84).
+
 ## What W0 built that is not throwaway
 
 `tools/browser/run-page.ts` — runs any harness page in headless Chromium and asserts on it.
@@ -229,6 +292,7 @@ The probe itself (`apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts`,
 | `apps/web/logprob-check.html`, `apps/web/src/checks/logprobCheck.ts`, `scripts/logprob_ref.py` | W1 confidence-signal check (permanent — W8 depends on it) |
 | `apps/web/strips-harness.html`, `apps/web/src/checks/stripsHarness.ts` | headless entry to the shipped decode path, driven by Playwright |
 | `tools/vision/parity/arm-b.ts` | the ceiling measurement; grows into the W6 arm-A comparison |
+| `tools/vision/parity/decode-pool.ts` + `scripts/score_browser_gold.py` | browser vs Python **against gold** — the release-gating quality check |
 | `tools/vision/parity/edge-cases.ts` | non-strip images must not throw |
 | `tools/browser/app-smoke.ts` | the real app: strips in → playable score out |
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
@@ -246,3 +310,4 @@ The probe itself (`apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts`,
 | App: strips in → playable score out | `npm run smoke:app` |
 | Non-strip images don't throw | `npm run check:edge` |
 | Arm-B ceiling / (W6) slicer parity | `npm run parity:armb -- --pages 20` |
+| Browser quality vs Python, against gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --out b.json` then `scripts/score_browser_gold.py --browser b.json` |

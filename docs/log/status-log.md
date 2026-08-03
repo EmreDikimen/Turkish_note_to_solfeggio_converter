@@ -9,6 +9,47 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-03 — W3: the browser is not worse than Python; the confidence bar is not met
+
+**The release-gating question is answered.** W2 left open whether the ~14% browser-vs-Python
+disagreement meant the browser reads *worse* or merely *differently* — agreement with another
+decoder cannot tell those apart, and if it were "worse" then friends would get worse results than
+every number in METRICS.md claims.
+
+Both sides scored against the **same 261 hand-verified `_realval_v2` strips**, with the **same
+scorer** (`eval_omr.align`), on identical strips: **SER 0.0821 → 0.0818, exact-match 60.2% both,
+AEU macro recall 94.8% → 94.9%, micro 92.5% both.** Per class everything is within a point and the
+two largest moves cancel (`\bakiyeSharp` −0.8 pp, `\komaFlat` +1.5 pp). The disagreement is two ORT
+builds splitting near-ties at no quality cost. ⚠ It is a *paired* Δ on real-val: it establishes the
+difference, not the absolute level.
+
+**The confidence signal was measured against gold for the first time, and it does not clear its
+bar.** Flagged strips genuinely are worse — **8.60 token edits per strip against 2.69** — so the
+signal is real. But as an error *locator*:
+
+| flag if min < | % strips | % of edits caught | lift |
+|---|---|---|---|
+| −1.0 | 3.8% | 11.3% | 3.0× |
+| −0.7 | 9.2% | 26.3% | 2.9× |
+| −0.5 | 22.6% | 57.1% | 2.5× |
+| −0.3 | 33.0% | 64.2% | 1.9× |
+
+The pre-registered rule — flag 10%, catch ≥60% of errors — is **NOT MET**; the ceiling at a 10%
+budget is 26.3%. Worth stating plainly because the rule has sat in STATUS unexercised since
+2026-07-27, and W8 was going to be built on the assumption it held. It does not. There is a usable
+soft cut at −0.5, and W8 now has a real choice: ship it as a hint, pay for per-TOKEN localisation
+(the logprobs exist; the cost is threading token identity through the stitcher's tie/tuplet/repeat
+folding), or drop the feature. Note also the −1.0 line was validated as a **bad-crop proxy for the
+labelling queue** — a different job from locating a user's errors, and W2 already found it does not
+fire on a blank crop (those score ≈ −0.84).
+
+**The planned 40-page ceiling sample was dropped, with reasons.** Its purpose was to tell a slicer
+difference from a resampler difference; gold has now shown agreement is not a quality proxy at all,
+so the ceiling is only a reference level. And its stated ±1 pp bar is not resolvable — SE is ~1.6 pp
+at n=450 and ~1.2 pp even at 40 pages. **W6 should compare arm A and arm B pairwise on the same
+strips** (a McNemar-style count of strips where exactly one arm matches Python), which is far more
+sensitive and needs no extra pages.
+
 ## 2026-08-02 — W2: the app reads sheet music, and the resampler hypothesis dies
 
 **"Read strips" works end to end in the real app.** Pick a page's `*_sNN_wNN.png` crops → the model

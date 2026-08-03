@@ -38,9 +38,21 @@ model stays `round2-stage2-best` int8 throughout. Track, ladder and running stat
   trend (89.3% narrowest decile vs 83.9% widest). `preprocess.ts` is unchanged.
 - **First real-data evidence that the `-1.0` confidence threshold means something** — it separates
   exactly the strips where the two runtimes disagree. This partly discharges W1's non-claim.
-- **⚠ Open, and it gates the release: is the browser WORSE than Python, or only different?**
-  Agreement cannot distinguish them. Owed at W3: score browser decodes against `_realval_v2`'s 267
-  hand-verified strips and compare with Python on the same strips.
+- **✅ W3 PASSED (2026-08-03): THE BROWSER IS NOT WORSE THAN PYTHON.** Scored against the same 261
+  hand-verified `_realval_v2` strips with the same scorer: **SER 0.0821 → 0.0818, exact-match 60.2%
+  both, AEU macro recall 94.8% → 94.9%**. The ~14% arm-B disagreement is two ORT builds splitting
+  near-ties, at no cost in quality. ⚠ This is a *paired* Δ on real-val — it establishes the
+  difference, not the absolute level (real-val does not predict exam performance; 28 pp gap on
+  record).
+- **⚠ The confidence signal does NOT meet its pre-registered bar.** Against gold, flagged strips do
+  average **8.60 token edits vs 2.69** — the signal is real — but "flag 10% of tokens, catch ≥60% of
+  errors" is **NOT MET**: the best achievable at a 10% budget is **26.3%**. A usable operating point
+  exists at `min_logprob < -0.5` (flag 22.6% of strips, catch 57.1% of edits, 2.5× lift), but as a
+  hint rather than a promise. W8 must now choose: ship the soft cut, invest in per-TOKEN
+  localisation, or drop the feature. Detail: [mvp/README.md](mvp/README.md).
+- **The 40-page ceiling sample was dropped on purpose.** Its ±1 pp bar is not resolvable (SE ~1.6 pp
+  at n=450, ~1.2 pp at 40 pages). W6 should compare arm A and arm B **pairwise on the same strips**
+  instead, which is far more sensitive and needs no extra pages.
 - **W1's pre-registered logprob criterion FAILED and was replaced, on purpose.** Demanding ≤1e-3
   per-token agreement with `onnx_parity.py` assumed two different ORT builds produce identical
   logits from identical input — they do not, and that is the *same* int8 numerics gap already
@@ -206,13 +218,15 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 **The MVP ladder is the live work. Everything under "after the release" is paused, not cancelled.**
 Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
 
-1. **W3 — settle whether the browser reads WORSE than Python, or only differently.** Score browser
-   decodes of `_realval_v2`'s 267 hand-verified strips against gold and compare with Python on the
-   identical strips. This is the one open question that could change what gets released, so it comes
-   before any slicer work. Then widen the arm-B ceiling to the planned 40-page stratified sample.
-2. **W4–W6 — the slicer port** (staves → barlines → windowing), diffed against the 1,704 decode
-   caches and 1,781 manifests already on disk, and held to *within 1 pp of the 86.0% ceiling*.
-3. **W7–W10** — page upload in the app, confidence highlighting, model delivery from HF Hub, release.
+1. **W4 — slicer stage 1: staves + row normalization** in TypeScript, against the 1,781 manifests
+   on disk. Staff count must match on ≥99.5% of pages, the 67 zero-staff pages must yield zero, and
+   per-system `scale` must land within 0.002. `pyRound()` (half-to-even) at every rounding site —
+   `30*0.35` and `30*0.75` are exactly 10.5 and 22.5, where `Math.round` silently retunes two
+   barline gates.
+2. **W5–W6 — barlines, then windowing + the driver.** W6 compares arm A against arm B **pairwise on
+   the same strips**, not against the 86.0% level.
+3. **W7–W10** — page upload in the app, the W8 confidence decision above, model delivery from HF
+   Hub, release.
 
 ### After the release (the real-page track, paused)
 

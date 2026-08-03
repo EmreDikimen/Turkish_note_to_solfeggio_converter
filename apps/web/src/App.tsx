@@ -21,6 +21,9 @@ import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
+import { getModel } from "./omr/session";
+import { decodeStripsToDoc, positionFromName, type StripInput } from "./omr/pipeline";
+import { loadImage } from "./omr/preprocess";
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { respellAeu } from "../../../tools/render/respell";
@@ -116,6 +119,11 @@ export function App() {
   const [editing, setEditing] = useState<Measure | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
+  // In-browser OMR: the model reads strip images and the result loads as a score. `omrStatus` is
+  // the user-visible progress line — a page is ~20 strips at ~1 s each, so silence would read as
+  // a hang. `omrBusy` disables the picker mid-read.
+  const [omrStatus, setOmrStatus] = useState<string>("");
+  const [omrBusy, setOmrBusy] = useState(false);
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
   const [metronome, setMetronome] = useState(false);
@@ -165,7 +173,14 @@ export function App() {
     const d = assignBars(raw);
     const komas = d.events.filter((e) => e.kind === "note").map((e) => e.koma53);
     const pad = 3;
-    setPitchRange({ minKoma: Math.min(...komas) - pad, maxKoma: Math.max(...komas) + pad });
+    // A decoded page can legitimately contain no notes (a blank crop, a failed read). Math.min of
+    // an empty spread is Infinity, which produces a dead PitchRange and an unreadable roll — so
+    // fall back to a middle octave rather than propagating it.
+    setPitchRange(
+      komas.length
+        ? { minKoma: Math.min(...komas) - pad, maxKoma: Math.max(...komas) + pad }
+        : { minKoma: 0, maxKoma: 53 }
+    );
     setBpm(estimateBpm(d)); // start each piece at its own natural tempo
     // Default the metronome's usul to the piece's own usul; if it isn't a known one, pick the
     // usul whose meter matches the derived time signature, else fall back to the first.
@@ -456,6 +471,72 @@ export function App() {
       .catch((err) => setError(String(err)));
   }
 
+  /**
+   * Read strip images with the OMR model and load the result as a score.
+   *
+   * This is the product path end to end, minus the slicer (which arrives at W6): the same
+   * `preprocessCanvas` + `greedyDecode` the browser gate validates, then `stitchStrips`, then the
+   * ordinary `loadDoc`. Pick the `*_sNN_wNN.png` crops of one page and the whole page is read.
+   *
+   * Strips are ordered by their filename's row/crop suffix rather than by pick order, because a
+   * file input's order is the OS's, not the page's — and the stitcher builds the music from
+   * `system`/`window`.
+   */
+  function onStrips(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = [...(e.target.files ?? [])];
+    e.target.value = ""; // re-picking the same folder must fire change again
+    if (!files.length) return;
+
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    setError(null);
+    setOmrBusy(true);
+    setOmrStatus("loading model…");
+
+    void (async () => {
+      const urls: string[] = [];
+      try {
+        const { sessions, meta } = await getModel(setOmrStatus);
+
+        setOmrStatus(`reading ${files.length} strip${files.length > 1 ? "s" : ""}…`);
+        const strips: StripInput[] = [];
+        for (const [i, f] of files.entries()) {
+          const url = URL.createObjectURL(f);
+          urls.push(url);
+          strips.push({ ...positionFromName(f.name, i), image: await loadImage(url), name: f.name });
+        }
+
+        const pageName = files[0]!.name.replace(/_s\d+_w\d+\.\w+$/, "") || "decoded-page";
+        const result = await decodeStripsToDoc(sessions, meta, strips, {
+          name: pageName,
+          onProgress: (done, total) =>
+            setOmrStatus(done < total ? `reading strip ${done + 1} of ${total}…` : "stitching…"),
+        });
+
+        const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
+        if (!result.doc.events.length) throw new Error("the model read nothing from these images");
+
+        onStop();
+        loadDoc(result.doc);
+        setSampleFile("");
+        const perStrip = result.totalMs / strips.length;
+        setOmrStatus(
+          `read ${strips.length} strips → ${notes} notes, ${result.writtenMeasures} measures ` +
+            `in ${(result.totalMs / 1000).toFixed(1)} s (${perStrip.toFixed(0)} ms/strip)` +
+            (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
+        );
+        // Warnings are the stitcher's "this construct was malformed" notes; a mostly-right score in
+        // the editor IS the point, so they inform rather than block.
+        if (result.warnings.length) console.warn("stitch warnings:", result.warnings);
+      } catch (err) {
+        setError(String(err));
+        setOmrStatus("");
+      } finally {
+        urls.forEach(URL.revokeObjectURL);
+        setOmrBusy(false);
+      }
+    })();
+  }
+
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
       <h1 style={{ marginBottom: 4 }}>Turkish OMR — Web Harness</h1>
@@ -532,6 +613,10 @@ export function App() {
         <label>
           Load JSON:{" "}
           <input type="file" accept="application/json,.json" onChange={onFile} />
+        </label>
+        <label title="Pick the *_sNN_wNN.png crops of one page — the OMR model reads them in the browser and loads the result">
+          Read strips:{" "}
+          <input type="file" accept="image/*" multiple onChange={onStrips} disabled={omrBusy} />
         </label>
         <button onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
           ⬇ Save JSON
@@ -614,6 +699,12 @@ export function App() {
       </div>
 
       {error && <p style={{ color: "crimson" }}>Error: {error}</p>}
+      {omrStatus && (
+        <p style={{ color: omrBusy ? "#0a58ca" : "#666", margin: "8px 0" }}>
+          {omrBusy ? "⏳ " : "✓ "}
+          {omrStatus}
+        </p>
+      )}
 
       {doc ? (
         <>

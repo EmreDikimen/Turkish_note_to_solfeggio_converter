@@ -17,7 +17,8 @@
     "check:logprobs": "npx tsx tools/browser/run-page.ts logprob-check.html __logprobCheck --timeout 600000",
     "smoke:app": "npx tsx tools/browser/app-smoke.ts",
     "parity:armb": "npx tsx tools/vision/parity/arm-b.ts",
-    "check:edge": "npx tsx tools/vision/parity/edge-cases.ts"
+    "check:edge": "npx tsx tools/vision/parity/edge-cases.ts",
+    "decode:pool": "npx tsx tools/vision/parity/decode-pool.ts"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

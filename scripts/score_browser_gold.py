@@ -23,7 +23,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src" / "vision"))
 from data import ADDED_TOKENS  # noqa: E402
 from eval_omr import align  # noqa: E402
-from modeling import load_model_and_processor  # noqa: E402
 
 AEU = ADDED_TOKENS[:8]
 POOL = Path("data/real/rung3/_realval_v2")
@@ -84,10 +83,17 @@ def main() -> None:
     gold_rows = [json.loads(l) for l in (pool / "manifest.jsonl").open()]
     browser = json.loads(Path(args.browser).read_text())
 
-    # The tokenizer that made the training labels — the only correct way into id space.
-    _, processor = load_model_and_processor(args.checkpoint, for_training=False)
-    tok = processor.tokenizer
-    id2tok = {i: t for t, i in tok.get_vocab().items()}
+    # The tokenizer that made the training labels — the only correct way into id space. Load it
+    # straight from the checkpoint (which already carries the extended vocab) rather than through
+    # load_model_and_processor, which would pull 143M params in to read a vocab file.
+    from transformers import AutoProcessor
+
+    tok = AutoProcessor.from_pretrained(args.checkpoint).tokenizer
+    vocab = tok.get_vocab()
+    missing = [t for t in ADDED_TOKENS if t not in vocab]
+    if missing:
+        raise SystemExit(f"checkpoint tokenizer is missing project tokens: {missing[:5]}")
+    id2tok = {i: t for t, i in vocab.items()}
 
     def ids(text: str) -> list[int]:
         return tok(text).input_ids
@@ -142,6 +148,68 @@ def main() -> None:
         ph, pg, pr = py["per_class"][c]
         jh, _, jr = js["per_class"].get(c, (0, pg, 0.0))
         print(f"{c:<18}{pg:>6}{pr:>9.1%}{(jr or 0):>9.1%}{((jr or 0) - (pr or 0)):>+9.1%}")
+
+    # ---- does min_logprob < -1.0 actually predict errors? (what W8 highlights on) --------------
+    # W1 could not test this: all 14 gate strips were confident reads. Here there is real gold, so
+    # the threshold can be checked against the thing it claims to predict — user corrections.
+    FLAG = -1.0
+    flagged = [(r, b) for r, b, _ in both if b["minLogprob"] < FLAG]
+    clean = [(r, b) for r, b, _ in both if b["minLogprob"] >= FLAG]
+
+    def bucket(rows):
+        if not rows:
+            return None
+        pairs = [(ids(r["label"]), ids(b["tokens"])) for r, b in rows]
+        s = score(pairs, id2tok)
+        edits = sum(s["S"] + s["D"] + s["I"] for _ in [0])
+        return s, edits
+
+    print(f"\n{'confidence bucket':<26}{'strips':>7}{'exact':>9}{'SER':>9}{'edits/strip':>13}")
+    print("-" * 64)
+    total_edits = 0
+    for label, rows in [(f"flagged (min < {FLAG})", flagged), (f"clean  (min >= {FLAG})", clean)]:
+        got = bucket(rows)
+        if not got:
+            print(f"{label:<26}{0:>7}")
+            continue
+        s, _ = got
+        e = s["S"] + s["D"] + s["I"]
+        total_edits += e
+        print(f"{label:<26}{s['n']:>7}{s['exact']:>9.1%}{s['ser']:>9.3f}{e / max(1, s['n']):>13.2f}")
+
+    # Threshold sweep: the -1.0 line was validated as a BAD-CROP proxy for the labelling queue, not
+    # as an error locator for a user. Those are different jobs, so measure the curve before W8
+    # builds highlighting on any particular cut.
+    per_strip = []
+    for r, b, _ in both:
+        s = score([(ids(r["label"]), ids(b["tokens"]))], id2tok)
+        per_strip.append((b["minLogprob"], s["S"] + s["D"] + s["I"]))
+    all_edits = sum(e for _, e in per_strip) or 1
+    per_strip.sort(key=lambda x: x[0])  # least confident first
+
+    print(f"\n{'flag if min <':>14}{'strips':>9}{'% strips':>10}{'% edits':>10}{'lift':>8}")
+    print("-" * 51)
+    for thr in (-2.0, -1.5, -1.0, -0.7, -0.5, -0.3, -0.2, -0.1):
+        sel = [(m, e) for m, e in per_strip if m < thr]
+        if not sel:
+            continue
+        ss = len(sel) / len(per_strip)
+        se = sum(e for _, e in sel) / all_edits
+        print(f"{thr:>14.1f}{len(sel):>9}{ss:>10.1%}{se:>10.1%}{se / max(1e-9, ss):>8.1f}×")
+
+    # What the pre-registered rule actually asks for: catch >=60% of errors from 10% of the page.
+    k = max(1, round(0.10 * len(per_strip)))
+    caught10 = sum(e for _, e in per_strip[:k]) / all_edits
+    print(
+        f"\nPRE-REGISTERED BAR (ROADMAP §0 / STATUS): flag 10% -> catch >=60% of errors.\n"
+        f"  best possible at 10% of strips by confidence ranking: {caught10:.1%}"
+        f"  -> {'MET' if caught10 >= 0.60 else 'NOT MET'}"
+    )
+    if caught10 < 0.60:
+        print(
+            "  per-strip confidence alone cannot carry W8's highlighting. Options: a looser cut as\n"
+            "  a soft hint (not a promise), per-TOKEN logprobs, or drop the feature. Decide at W8."
+        )
 
     # The verdict, stated in the terms the release decision actually needs.
     dser = js["ser"] - py["ser"]

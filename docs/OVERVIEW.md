@@ -199,6 +199,36 @@ cheap insurance, not a fix.
 
 ## Where we are right now
 
+### The plan changed on 2 August 2026: finish the app first, train later
+
+**We stopped improving the model and started finishing the product.** The model is frozen — the one
+in the app stays exactly as it is — and the work is now to turn it into a link a friend can open.
+The next training round (Round 3) is **paused, not cancelled**; it starts again after friends have
+tried it and told us what is wrong.
+
+Three reasons, in plain terms: Round 3 is a bet we cannot price (it changes what we *draw* for
+practice, and we do not know how much that helps); **a friend would not notice it either way**; and
+half of the goal we set in July — *the app shows you where it is unsure* — had never been built at
+all, which we cannot fix or test without a working pipeline.
+
+**What is already done.** Reading music in the browser works: the app takes the small strips of a
+page, reads them, and gives you a real score you can play, edit and save. The only missing piece is
+the **page-cutter** — the tool that cuts a whole page into those strips. It existed only in Python,
+so it is being rewritten to run in the browser, as a strict copy rather than an improvement, with
+each part checked against the Python original over **every page we have** (1,781 pages):
+
+- Finding the staff lines and sizing each row — **done, matches exactly**.
+- Finding the bar-lines, the hardest part — **done (4 August), matching on 12,121 of 12,123 rows and
+  51,013 of 51,019 bar-lines.** The handful that differ are not mistakes: they come from a 1-shade
+  difference in how a browser reads colours, and the Python code makes the *same* change when we
+  feed it that difference.
+- Cutting the row into strips — **this is what is left.**
+
+⚠ **One thing to know:** cutting a page in the browser currently takes about **36 seconds**, about
+35 of them spent checking whether the page is tilted. A known problem to fix before release.
+
+### Before that — the model work (all still true)
+
 - **Round 2 is finished. It first looked like a step backwards — then we found our score was
   misleading us.** We fixed two real problems in how we make our training pictures (see below),
   trained again, and took the exam once. The old score went **down**, 78% → 74%.
@@ -289,34 +319,30 @@ shoot **different** pieces (there are thousands available).
 
 ## What we do next (in order)
 
+**Everything in the numbered list below is PAUSED until the app is released.** It is kept because
+the reasoning is still good, not because it is the next thing to do. The live list is short:
+
+1. **Finish the page-cutter** — the last part, cutting each row into strips.
+2. **Let you upload a page in the app** (and fix the 36-second delay above).
+3. **Decide about "show me where it is unsure".** We measured it, and it does **not** do what we
+   promised: we wanted "check 1 line in 10, catch 6 mistakes in 10", and the best at that budget is
+   **about 2.6 in 10**. A weaker setting works — check 1 strip in 5, see just over half the
+   mistakes. So the choice is: ship that as a *hint*, do the harder work of pointing at individual
+   notes, or drop it. A real decision, not a formality.
+4. **Serve the model files and release to friends.**
+
+Then the list below restarts, with real feedback to aim it.
+
 1. **Photo test — DONE** (slicer fixed, honest photo score ~74%, photos basically solved — see above).
 
-2. ✅ **The sharps: SOLVED at the source (2026-07-26).** This was the main model weakness. The answer
-   turned out to be **our own drawing**, not the model.
-
-   **How we found it.** The clue was strange: when the model says "küçük sharp" it is right 100% of
-   the time, but it only spots 48% of them. So it was not careless — it could not *see* them. We
-   tested three things in order:
-   - **Was the picture too small?** No. We checked whether sharps read worse on wide strips (which
-     get shrunk more before the model sees them). They do not — on either the clean exam or the
-     photos. Meanwhile bakiye sharp reads at 84–94% at *every* size. So the problem followed the
-     **symbol**, not the size. (Good news: this saved us from an expensive rebuild.)
-   - **What does the model write instead?** Almost always one thing: it reads a **küçük as a koma** —
-     11 times on the clean exam, 10 times on the photos, and never the other way round.
-   - **Why?** These signs are only told apart by **counting bars**: koma has 2, küçük has 3. We
-     measured our drawing against two real printed pages. Our music font draws the bars **22%
-     thicker** and packs küçük's three bars **14% closer** than real print does. Together that leaves
-     **less than half** the white gap — about 1 pixel by the time the model sees it. The three bars
-     merge into a block, and a block with no visible gap *is* a 2-bar koma.
-
-   **The fix.** We now draw all four sharps ourselves, with the thinner bars measured off real pages,
-   and küçük's bars slightly further apart so the gaps survive shrinking. All four got the same
-   thinner bars on purpose — if only küçük were thinned, the model could cheat by looking at
-   thickness instead of counting, and real pages would then confuse it. Flats were left alone (they
-   score 89–92%). It is **off by default** so the old and new drawings can be compared fairly; turn
-   it on with `?thinsharps=1` in the browser or `--thin-sharps` when rendering.
-
-   Pictures: `data/real/rung3/sharp_probe/all4_final.png` (before / after / after shrinking).
+2. ✅ **The sharps: SOLVED at the source (2026-07-26).** This was the main model weakness, and the
+   cause was **our own drawing**, not the model. The model was right 100% of the time when it said
+   "küçük sharp" but only spotted 48% of them — so it could not *see* them. These signs are told
+   apart only by **counting bars** (koma has 2, küçük has 3), and our music font drew the bars 22%
+   thicker and packed küçük's three 14% closer than real print, leaving less than half the white
+   gap. The three bars merged into a block, and a block *is* a 2-bar koma. We now draw all four
+   sharps ourselves with thinner, better-spaced bars. Full story and pictures:
+   [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
 
    **One thing still to do on this:** our training pictures contain koma **1,887** times but küçük
    only **206** times, and **never both in the same picture**. The next render should even that out
@@ -340,14 +366,13 @@ shoot **different** pieces (there are thousands available).
    everything inside them arrives smaller when the model looks at it. Fix the mix and the width
    together, and check on 300 sample pictures before redrawing all 40,826.
 
-6. **Rebuild our everyday score.** Our day-to-day progress number was too optimistic (it used easy
-   pages only — it said 95% while the real exam said 66%). We are rebuilding it to include hard pages,
-   so future decisions rest on an honest number. Agreed: this happens **before** the next training
-   run, not after, so future rounds stop being one blind shot each.
+6. ✅ **Rebuild our everyday score — DONE (31 July 2026).** Our day-to-day progress number was too
+   optimistic (easy pages only: it said 95% while the real exam said 66%). It now includes hard
+   pages, so decisions rest on an honest number.
 
-7. **Fix how the exam is scored.** The headline is an average across mark-types, so a mark-type with
-   only 3 examples can swing it a lot (that just happened: +11 points from one tiny category). The new
-   exam will require a minimum number of examples per mark-type, or weight by how common each is.
+7. **Fix how the exam is scored.** The headline averages across mark-types, so one with only 3
+   examples can swing it a lot (+11 points once, from one tiny category). The next exam will require
+   a minimum number of examples per mark-type, or weight by how common each is.
 
 ### Ideas we tested and closed on 28 July 2026 — do not re-propose these
 

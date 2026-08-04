@@ -14,10 +14,27 @@ errors are) has never been built, and feedback cannot be collected without a pip
 model stays `round2-stage2-best` int8 throughout. Track, ladder and running state:
 [mvp/README.md](mvp/README.md).
 
-- **The gap is smaller than it looked.** Decode, Donut preprocessing, detokenization, stitching, the
-  editor and playback all already work in the browser — the helpers in `apps/web/src/omrGate.ts`
-  were just never exported, and `tools/render/stitch.ts` has no node imports. **The one genuinely
-  missing piece is a TypeScript page→strips slicer**, and only its last stage (windowing) is left.
+- **✅ W6 PASSED (2026-08-04): THE SLICER PORT IS DONE, and the browser cuts the same strips Python
+  does.** Whole corpus, 1,781 pages / 33,805 strips: window fields exact on **33,783/33,783**, strip
+  count per page on **1,697/1,697**, `row_x0`/`row_x1` within 2 px on **99.99%**, width and measure
+  invariants at Python's own **0** violations. **`hasNotehead` is exercised at last — 861
+  clef-prefix trims, identical both sides** — which discharges W5's non-claim.
+  **The decode arm is the verdict that matters and it is PAIRED**: the port's own crops agree with
+  Python on **395/450 strips (87.78%)** against arm B's **387/450 (86.00%)** — **12 vs 4 discordant,
+  McNemar exact p = 0.077, no detectable difference**, and **0 strips unmatched** in either
+  direction. All 16 discordant strips have **identical crop widths**, which is what rules the slicer
+  out as the cause.
+  ⚠ **One bar was restated and both numbers are printed.** "Window fields exact" was written as 100%
+  before the ±1 grayscale residue was understood; windows are computed *from* the bars, and W5's 2
+  residue rows account for **all 6** raw mismatches, so the gate scores rows whose bars agree. Same
+  correction W4 made to its zero-staff bar.
+  ⚠ The 2 strips moving more than 2 px are a **gutter centre** shifting 8 px inside the same
+  whitespace run (identical bars, identical flags) — no ink is divided differently.
+- **The gap is smaller than it looked, and it is now closed.** Decode, Donut preprocessing,
+  detokenization, stitching, the editor and playback all already worked in the browser — the helpers
+  in `apps/web/src/omrGate.ts` were just never exported, and `tools/render/stitch.ts` has no node
+  imports. The one genuinely missing piece was the TypeScript page→strips slicer, and it is
+  finished: `page → staves → rows → barlines → windows → crops` all run in the browser.
 - **✅ W5 PASSED (2026-08-04): the riskiest file is ported — barlines reproduce Python over the
   WHOLE CORPUS.** 1,781 pages / 12,123 rows / **51,019 bars**: bar count exact on **12,121/12,123
   rows (99.98%)**, positions within 1 px on **51,018/51,019 (100.00%)**, exact on **51,013/51,019
@@ -260,20 +277,20 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 **The MVP ladder is the live work. Everything under "after the release" is paused, not cancelled.**
 Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
 
-1. **W6 — windowing + the driver**, the last stage of the slicer. **Read
-   [mvp/slicer-port.md](mvp/slicer-port.md) before starting** — function map, acceptance thresholds
-   and the traps (`_split_wide`'s `sorted(set(cuts))` collapsing two targets onto one gutter, which
-   the escalation loop depends on; Python's `min(near)` comparing *tuples*, so JS needs an explicit
-   two-key comparator; and L818-822 using the loop variable **after** the loop, which Python leaks
-   and JS will not). Score against `scripts/slicer_ref.py`, **not** the manifests, and compare arm A
-   against arm B **pairwise on the same strips** — not against the 86.0% level.
-   ⚠ It also owns **`hasNotehead`**, which W5 ported but nothing yet exercises.
-2. **W7–W10** — page upload in the app, the W8 confidence decision above, model delivery from HF
-   Hub, release. ⚠ W7 inherits the **~36 s/page** slicer latency, ~35 s of it the deskew sweep, on
-   top of the ~1.1 s/strip decode.
-3. **Owed from W4, small:** the deskew *estimator* is validated on 132 pages, not the corpus — the
-   full runs inject Python's angle. W5 turned up no skew-related difference, so this stays worth
-   doing only if W6 does. Closing it costs ~18 h of browser time.
+1. **W7 — upload a page in the app.** Everything behind it now exists: `sliceStage3` returns the
+   strip spans, `cropStrip` cuts them and `decodeStripsToDoc` already turns crops into a playable
+   score. ⚠ **W7 inherits the latency**: **~36 s/page for the slicer, ~35 s of it the deskew
+   sweep**, on top of ~1.1 s/strip decode. The sweep is 41 full-page rotations, each with a
+   page-wide `MORPH_OPEN`, and it is brute force because there is no analytic estimator here —
+   the cheapest fix is an early exit when 0° already yields a full staff set, since the deskew guard
+   then cannot fire. A faster estimator is a **behaviour change and needs its own measurement**; do
+   not fold it into the port.
+2. **W8–W10** — the W8 confidence decision above (soft −0.5 cut / per-token / drop), model delivery
+   from HF Hub, release.
+3. **Owed from W4/W6, small:** the deskew *estimator* is validated on 132 pages, not the corpus —
+   every full run injects Python's angle. Neither W5 nor W6 turned up a skew-related difference, so
+   this is worth doing only if W7's latency work touches the estimator, which it likely will.
+   Closing it costs ~18 h of browser time as things stand.
 
 ### After the release (the real-page track, paused)
 

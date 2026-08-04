@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-07-28
+updated: 2026-08-04
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -211,21 +211,22 @@ practice, and we do not know how much that helps); **a friend would not notice i
 half of the goal we set in July — *the app shows you where it is unsure* — had never been built at
 all, which we cannot fix or test without a working pipeline.
 
-**What is already done.** Reading music in the browser works: the app takes the small strips of a
-page, reads them, and gives you a real score you can play, edit and save. The only missing piece is
-the **page-cutter** — the tool that cuts a whole page into those strips. It existed only in Python,
-so it is being rewritten to run in the browser, as a strict copy rather than an improvement, with
-each part checked against the Python original over **every page we have** (1,781 pages):
+**What is already done — the page-cutter is FINISHED (4 August).** Reading music in the browser
+already worked: the app takes the small strips of a page, reads them, and gives you a real score you
+can play, edit and save. The missing piece was the **page-cutter**, which existed only in Python. It
+has now been rewritten to run in the browser — as a strict copy, not an improvement — and every part
+was checked against the Python original over **every page we have** (1,781 pages): the staff lines
+match exactly, the bar-lines match on 12,121 of 12,123 rows, and the strips match on all 33,783 we
+can compare fairly. The handful that differ are not mistakes: they come from a 1-shade difference in
+how a browser reads colours, and the Python code makes the *same* change when we feed it that
+difference.
 
-- Finding the staff lines and sizing each row — **done, matches exactly**.
-- Finding the bar-lines, the hardest part — **done (4 August), matching on 12,121 of 12,123 rows and
-  51,013 of 51,019 bar-lines.** The handful that differ are not mistakes: they come from a 1-shade
-  difference in how a browser reads colours, and the Python code makes the *same* change when we
-  feed it that difference.
-- Cutting the row into strips — **this is what is left.**
-
-⚠ **One thing to know:** cutting a page in the browser currently takes about **36 seconds**, about
-35 of them spent checking whether the page is tilted. A known problem to fix before release.
+**We also checked the thing that actually matters:** we cut 20 pages with the new browser tool, cut
+the same pages with Python, and read *both* sets of strips. They gave the same reading — the small
+differences left are the model hesitating on hard notes, not the cutter cutting differently, and we
+can show it because every strip the two disagreed on was **exactly the same width** in both.
+⚠ **One thing to know:** cutting a page in the browser takes about **36 seconds**, about 35 of them
+spent checking whether the page is tilted (it tries 41 angles). That is the next piece of work.
 
 ### Before that — the model work (all still true)
 
@@ -322,14 +323,13 @@ shoot **different** pieces (there are thousands available).
 **Everything in the numbered list below is PAUSED until the app is released.** It is kept because
 the reasoning is still good, not because it is the next thing to do. The live list is short:
 
-1. **Finish the page-cutter** — the last part, cutting each row into strips.
-2. **Let you upload a page in the app** (and fix the 36-second delay above).
-3. **Decide about "show me where it is unsure".** We measured it, and it does **not** do what we
+1. **Let you upload a page in the app** (the page-cutter it needs is finished; fix the 36 s delay).
+2. **Decide about "show me where it is unsure".** We measured it, and it does **not** do what we
    promised: we wanted "check 1 line in 10, catch 6 mistakes in 10", and the best at that budget is
    **about 2.6 in 10**. A weaker setting works — check 1 strip in 5, see just over half the
    mistakes. So the choice is: ship that as a *hint*, do the harder work of pointing at individual
    notes, or drop it. A real decision, not a formality.
-4. **Serve the model files and release to friends.**
+3. **Serve the model files and release to friends.**
 
 Then the list below restarts, with real feedback to aim it.
 

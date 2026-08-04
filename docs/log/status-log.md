@@ -9,6 +9,58 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-04 — W6: the slicer port is finished, and the decode arm says the crops are the same
+
+**The last stage is ported and the browser now cuts a page into strips the way Python does.**
+`apps/web/src/omr/slicer/windows.ts` transliterates `_span_cap`, `_split_wide` and
+`window_measures`; `sliceStage3` adds the driver's pad/trim block and returns crop **spans**, with
+`cropStrip` cutting pixels only when a caller wants them. Over the whole corpus — 1,781 pages /
+33,805 strips — window fields are exact on **33,783/33,783**, strip count per page on
+**1,697/1,697**, `row_x0`/`row_x1` within 2 px on **99.99%**, invariants at Python's own **0**.
+Numbers: [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+
+**The verdict that mattered was the decode arm, and it was worth building properly.**
+`tools/vision/parity/arm-a.ts` slices a page with the port, decodes those crops, decodes Python's
+crops for the same page, and compares **pairwise on (system, window)**: **12 A-only against 4 B-only
+discordant pairs on 450 strips, McNemar exact p = 0.077**, arm A 87.78% vs arm B 86.00%, **0 strips
+unmatched**. The pairing is what makes it readable — the level comparison the plan originally asked
+for ("within 1 pp of 86.0%") has a ~1.6 pp standard error at n=450 and could not have resolved
+anything. And the decisive detail fell out of the same data: **all 16 discordant strips have
+identical crop widths**, so the slicer is ruled out as the cause rather than argued about.
+
+**Two judgement calls, both worth remembering:**
+
+- **The Python control runs the REAL driver.** `slicer_ref.py` calls `page_to_strips` into a temp
+  dir rather than re-implementing its ~40-line pad/trim block. The port is transliterated from those
+  same lines, so a second hand-written copy in the reference could encode one misreading **twice**
+  and then agree with itself — the exact failure this control exists to prevent. Cost: a second
+  stage-1 pass, ~4.2 s/page, ~2 h for the corpus. It also validated itself: on the 8-page smoke
+  sample its strip entries matched the manifests 106/106.
+- **A bar was restated, and both numbers are now printed.** The first corpus run read
+  `window fields FAIL 33,799/33,805`. All 6 misses sat on the only two pages whose **bar count**
+  differs — the `_terminal_overshoot` near-ties W5 already diagnosed as ±1 grayscale. Windows are
+  computed *from* the bars, so a 100% window bar silently demands a 100% bar bar, which W5 itself
+  set at 99.0%. The gate now scores rows whose bar list agrees (**33,783/33,783**) and prints the
+  raw number beside it. This is the second time a criterion written before the ±1 residue was
+  understood has failed a port that agrees with Python — W4's zero-staff bar was the first.
+
+**Two paths that had never run are now measured.** `hasNotehead`, ported at W5 with nothing
+exercising it, fires on **861 clef-prefix trims**, identical on both sides — W5's non-claim is
+discharged. `_split_wide` cuts **10,246 strips** across 4,414 groups; its escalation loop (raise n
+until every piece fits) fires **589 times**, while the `sorted(set(cuts))` collapse it is written to
+survive **never happens in this corpus** — kept anyway, because one unbroken beam run would hit it.
+
+**The one difference bigger than 2 px is a gutter, not a cut through ink.**
+`benim_serv_i_hiramanim…_p1` s09 has identical bars, flags and pads, but Python cuts its over-wide
+measure at 931 and the port at 939: the ±1 grayscale changes which columns read as zero-ink, moving
+the chosen gutter **centre** 8 px **inside the same whitespace run**. The two crops differ by 8
+columns of blank.
+
+⚠ **Not done, deliberately:** the W0 cv-probe was scheduled for deletion at this rung and was kept —
+it is the only thing that would catch an opencv.js version bump changing a primitive under the port.
+⚠ **Still owed:** the deskew estimator is validated on 132 pages, not the corpus (every full run
+injects Python's angle), and W7 inherits ~36 s/page of slicer latency, ~35 s of it that sweep.
+
 ## 2026-08-04 — W5: barlines ported; the trap list paid for itself, and a free check earned its keep
 
 **The riskiest file in the slicer reproduces Python over the whole corpus, on the first run.**

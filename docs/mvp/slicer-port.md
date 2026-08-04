@@ -189,12 +189,26 @@ manifest's `row_bars` is the weaker second reference and sits at 96.61% for Pyth
   is genuinely in `detect_barlines` and not inherited
 - ⚠ `hasNotehead` is ported but **not exercised** — its only caller is `window_measures`. W6 covers it
 
-**W6 — windowing, driver, and the parity verdict** (again against local Python, with the manifest
-as the second reference)
-- strip count per page exact on **≥99.5%** of pages
-- `system`, `window`, `is_row_start`, `split_wide` exact; `row_x0`/`row_x1` within **2 px** on ≥99.9%
-- the width/measure invariants hold at the same **0** violations Python currently has
-  (`MAX_STRIP_W`, `MIN_STRIP_W`, `MEASURES_PER_STRIP`)
+**W6 — windowing, driver, and the parity verdict** ✅ **PASSED**; numbers in
+[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md). Whole corpus, 1,781 pages / 33,805 strips:
+- strip count per page exact on **≥99.5%** of pages — got **1,697/1,697 (100%)**
+- `system`, `window`, `is_row_start`, `split_wide` exact — got **33,783/33,783 (100%)**;
+  `row_x0`/`row_x1` within **2 px** on ≥99.9% — got **33,781/33,783 (99.99%)**
+- the width/measure invariants hold at the same **0** violations Python currently has — got **0**
+- free extras: **861 clef-prefix trims** identical, which is the first thing to exercise
+  `hasNotehead` at all, and **10,246 `split_wide` fragments** identical
+- ⚠ **the first three are scored on rows whose BAR LIST agrees**, with the raw number printed
+  beside each. Windows are computed from the bars, so W5's 2 residue rows cannot yield identical
+  windows — and they account for **all 6** raw field mismatches. Restating this was the same
+  correction W4 had to make to its zero-staff bar: a criterion written before the ±1 grayscale
+  residue was understood will fail a port that agrees with Python everywhere the residue does not
+  reach. **When a bar is restated, print both numbers** — that is what keeps it honest
+- ⚠ the corpus run used `--inject-skew` (0.4 s/page), so the estimator is still only validated on
+  the 132-page un-injected run
+
+**The decode arm (also W6)**: `npm run parity:arma -- --pages 20` — arm A **395/450 (87.78%)**
+against arm B **387/450 (86.00%)**, 12 vs 4 discordant, **McNemar exact p = 0.077**, 0 strips
+unmatched. See the note below on why this is paired rather than compared to 86.0%.
 
 ## W6's parity test: paired, not a level comparison
 
@@ -213,13 +227,19 @@ where the two decoders differ is usually a near-tie, not an error. If arm A's cr
 the decisive test is the same one W3 used: score against gold with
 `scripts/score_browser_gold.py`, not against Python's tokens.
 
+**Result (2026-08-04):** 12 A-only against 4 B-only on 450 paired strips, p = 0.077 — no detectable
+difference. The design paid for itself twice over: all 16 discordant strips have **identical crop
+widths**, which is what rules the slicer out as the cause, and the level comparison the plan
+originally asked for would have read "87.78% vs 86.00%" and said nothing at all.
+
 ## Commands
 
 ```bash
 npm run probe:cv                      # opencv.js still matches OpenCV-Python
-.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control arm
-npm run parity:slicer -- --ref ref.json [--inject-skew] [--dump d.json]
-npm run parity:armb -- --pages 20     # the ceiling / (W6) arm comparison
+.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control arm, ~4.2 s/page
+npm run parity:slicer -- --ref ref.json [--inject-skew] [--dump d.json] [--page <stem>]
+npm run parity:armb -- --pages 20     # the ceiling
+npm run parity:arma -- --pages 20     # arm A vs arm B, paired (~80 s/page: real deskew + 2 decodes)
 npm run decode:pool -- --pool <dir> --out b.json   # browser decode of a strip pool
 .venv-ml/bin/python scripts/score_browser_gold.py --browser b.json
 npm run typecheck && npm test && npm run gate:browser

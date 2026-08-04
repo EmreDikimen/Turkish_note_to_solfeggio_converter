@@ -11,6 +11,100 @@ cap. The split is by genre: that file keeps **what the Python page-cutter does**
 How to reproduce any number here — and ⚠ why the control is local Python rather than the manifests
 on disk — is [mvp/slicer-port.md](mvp/slicer-port.md). Rung state: [mvp/README.md](mvp/README.md).
 
+## Windowing and the driver reproduce Python (2026-08-04, MVP W6)
+
+Port vs **local Python** over the **whole corpus — 1,781 pages / 33,805 strips**. The reference
+side is the real `page_to_strips`: `slicer_ref.py` runs it into a temp dir rather than
+re-implementing the driver's pad/trim block, so the control cannot share a misreading with the port.
+
+| check | full corpus | W6 bar |
+|---|---|---|
+| strip count exact per page | **1,697/1,697 pages (100%)** — raw 1,704/1,705 | ≥99.5% |
+| window fields exact (`is_row_start`, `split_wide`, measure span, `row_measures`) | **33,783/33,783 (100%)** — raw 33,799/33,805 | 100% |
+| `row_x0`/`row_x1` within 2 px | **33,781/33,783 (99.99%)** — raw 33,802/33,805 | ≥99.9% |
+| `row_x0`/`row_x1` exact | 33,778/33,805 (99.92%) | not gated |
+| width/measure invariants | **port 0 violations, Python 0** | no worse than Python |
+| clef-prefix trims (`hasNotehead`) | **861 rows, both sides** | not gated |
+| `split_wide` gutter cuts | **10,246 strips, both sides** | not gated |
+
+**`hasNotehead` is no longer a non-claim.** W5 ported it with nothing exercising it; the clef-prefix
+trim is its only observable and it fires on **861 rows**, identically on both sides.
+
+### The bar was restated, and the restatement is the honest part
+
+⚠ The three gated numbers are scored **on rows whose bar list agrees**, with the raw number printed
+beside each. Windows are computed *from* the bars, so the **2 rows in 12,123** where W5 records a
+±1-grayscale bar-count difference cannot produce identical windows: they account for **all 6** of
+the raw field mismatches (3 strips on `birgunbana…_p1`, 3 on `kurdilihicazkar…_p2` — the only two
+pages in the corpus whose bar count differs) and the single raw strip-count difference. Gating W6 on
+them charges this rung for the previous one's known residue, exactly the way W4's "zero-staff pages
+yield zero staves" bar failed a port that agreed with Python. Both numbers are reported so the
+restatement hides nothing.
+
+### The 2 strips that move more than 2 px are a gutter, not a cut through ink
+
+`benim_serv_i_hiramanim…_p1` s09 has **identical bars** (`[336, 1958, 3282]`) and identical
+`split_wide` flags and pads, yet its two fragments differ: Python cuts at **931**, the port at
+**939**. The 336→1958 measure is 1,622 px against the 1,435 cap, so `_split_wide` picks a gutter —
+and the ±1 grayscale changes which columns read as zero-ink, moving the chosen gutter **centre** by
+8 px. Both cut points lie inside the same whitespace run, so no ink is divided differently; the two
+crops differ by 8 columns of blank. That is also why the decode arm below sees no width-linked
+disagreement.
+
+⚠ Same scope note as W4 and W5: the corpus run used `--inject-skew`, so it validates everything
+downstream of the deskew estimator, not the estimator. At **0.4 s/page** with the angle supplied.
+
+**The manifest ceiling for strips is much lower than for staves, as expected**: local Python
+reproduces only **1,514/1,704 (88.85%)** of the manifests' strip entries, the port **1,502/1,704
+(88.15%)**. One staff difference cascades into every strip of that page, which is why a
+manifest-scored W6 would have looked catastrophic while agreeing with Python 100%.
+
+## The decode verdict: the port's own crops are not worse than Python's (2026-08-04, MVP W6)
+
+`npm run parity:arma -- --pages 20` slices 20 pages with the **port**, decodes those crops in the
+browser, decodes **Python's** crops for the same pages, and scores both against Python's decode
+cache — **pairwise on the same (system, window)**.
+
+| arm | agrees with Python |
+|---|---|
+| **A — the ported slicer's crops** | **395/450 strips (87.78%)** |
+| B — Python's crops (the W3 ceiling) | 387/450 (86.00%) |
+
+- **0 strips unmatched in either direction.** The port emitted exactly Python's strip set on all 20
+  pages, so no windowing difference is hiding behind the token comparison.
+- **Discordant pairs: 12 A-only against 4 B-only, McNemar exact p = 0.077.** No detectable
+  difference. The point estimate leans the port's way and that is **not** a claim worth making at
+  this p — the honest reading is "same".
+- **All 16 discordant strips have identical crop widths** (|Δ| = 0 px), and only **3 of 450** strips
+  differ in width at all (≤2 px, all three in the both-agree group). Whatever the two decoders are
+  splitting on, it is not where the slicer cut.
+- **Disagreement sits where the model is unsure**, as at W3: median Python `min_logprob` −0.55
+  (A-only), −0.92 (B-only), −0.90 (neither agrees) against **−0.018** on the 383 strips both arms
+  get right.
+- Arm B landing on exactly its recorded **86.00%** ceiling is a free control on the harness.
+
+⚠ **This is a difference, not a level.** Agreement with Python is not quality (W3); if a future
+change makes arm A look worse, the decisive test is `scripts/score_browser_gold.py` against gold.
+⚠ **Do not compare arm A to the 86.0% number directly** — at n=450 its standard error is ~1.6 pp,
+which is why the plan's original "within 1 pp of the ceiling" bar was replaced by this paired test.
+
+### `_split_wide`: the escalation loop is real, the collapse branch never fired
+
+From Python's own strip entries over the corpus, grouping maximal runs of `split_wide` strips:
+
+| | |
+|---|---|
+| split groups / strips in them | **4,414 / 10,246** (≈30% of all strips are gutter fragments) |
+| groups where the even split held (`pieces == ceil(span/cap)`) | 3,825 |
+| **groups that needed the escalation** (`pieces > n0`) | **589** |
+| groups where cuts COLLAPSED onto one gutter (`pieces < n0`) | **0** |
+| groups whose mean piece still exceeds the cap | 0 |
+
+The escalation the trap list warned about is exercised 589 times and the port reproduces every one.
+The `sorted(set(cuts))` collapse it is written to survive **never happens in this corpus** — ported
+anyway, because it is a correctness property rather than a hot path, and one page with an unbroken
+beam run would hit it.
+
 ## Barlines reproduce too (2026-08-04, MVP W5)
 
 Port vs **local Python** over the same **whole corpus — 1,781 pages / 12,123 rows / 51,019 bars**.

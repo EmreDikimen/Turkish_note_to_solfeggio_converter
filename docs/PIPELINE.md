@@ -2,7 +2,7 @@
 
 purpose: design of the page → strips → decode → stitch → note-model pipeline (Rung 4)
 audience: anyone touching the slicer, page decode or the stitcher
-updated: 2026-07-26
+updated: 2026-08-05
 
 > Numbers quoted here are summaries — the authoritative values are in [METRICS.md](METRICS.md).
 
@@ -19,8 +19,13 @@ updated: 2026-07-26
 > repeat/volta/da-capo expansion → a schemaVersion-1 note model; CLI `stitch-cli.ts`,
 > round-trip-verified on all 194 bundled scores by `stitch-test.ts`); **stage 10** is the
 > existing harness — the stitched JSON loads via its file picker / `?score=` URL, and the new
-> **⬇ Save JSON** button closes the Rung-3 labeling loop. Still open: the in-browser port of
-> stages 2–7 and stage 9 (header OCR / makam table). Also covered: the Rung-3 collection plan.
+> **⬇ Save JSON** button closes the Rung-3 labeling loop.
+> **Update (2026-08-05): stages 2–8 now ALSO run in the browser.** The slicer is ported to
+> TypeScript (`apps/web/src/omr/slicer/`, MVP W4–W6, verified against this Python over the whole
+> corpus) and wired into the app at W7 via `apps/web/src/omr/page.ts`, so an uploaded page becomes a
+> playable score with no Python anywhere. The Python path below is unchanged and remains the
+> reference the port is scored against. Still open: **stage 9** (header OCR / makam table). Also
+> covered: the Rung-3 collection plan.
 
 ## 0. The one-line answer to "how does a page become strips?"
 

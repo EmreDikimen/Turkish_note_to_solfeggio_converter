@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-07-26
+updated: 2026-08-05
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -284,6 +284,34 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    ```
    npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
    ```
+
+## Check 12 — upload a whole page in the app (MVP W7, 2026-08-05)
+
+Goal: the product, as a friend will meet it. **No Python, no pre-cut strips** — one page image in,
+a playable score out. This is Check 10's journey with every stage running in the browser.
+
+1. `npm run dev:web` → `http://localhost:5173`.
+2. Next to **Read page**, pick ONE page image — e.g.
+   `data/real/images/muhayyer/Bulbulum_gel_de_dile_cile_bulbulum_cile_p1.png`, or any screenshot of
+   Turkish notation. (**Read strips** beside it is the older path that wants pre-cut `_sNN_wNN.png`
+   crops; they are different inputs.)
+3. Watch the status line. It should move, not freeze: `loading model…` → `reading the image…` →
+   `checking the page angle… n/41` counting up → `finding the staves` → `reading strip k of N`.
+   **A frozen counter is the bug to report** — the angle check is ~35 s of work and only stays
+   watchable because it yields between rotations.
+4. Expect on that page: **7 staves → 16 strips → 344 notes, 28 measures**, sliced in ~36 s and read
+   in ~19 s. Then switch to **Sheet**, press **▶ Play**, edit a measure (✎ Edit → click one), and
+   **⬇ Save JSON**.
+5. The same thing, headless and asserted, including a strip-count check against Python:
+   ```
+   .venv-ml/bin/python scripts/slicer_ref.py --pages 8 --out ref.json
+   npm run smoke:page -- --ref ref.json
+   ```
+
+⚠ **Two things it is fair to notice.** The whole page takes ~56 s — a straight screenshot still
+pays all 41 rotations to learn it is straight, which is written up as the next piece of work. And
+the model is `round2-stage2-best` int8: expect real mistakes on the notes, since the point of this
+check is the *pipeline*, not the accuracy.
 
 ## Check 11 — real-print sharp weight (`?thinsharps=1`, the 2026-07-26 fidelity fix)
 

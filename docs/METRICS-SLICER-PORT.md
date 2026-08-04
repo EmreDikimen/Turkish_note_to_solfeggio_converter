@@ -2,7 +2,7 @@
 
 purpose: the single home for how the browser slicer port measures against `page_to_strips.py`, rung by rung
 audience: agents working MVP rungs W4-W6, and anyone quoting a port-parity number
-updated: 2026-08-04
+updated: 2026-08-05
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-04 when that file crossed the 400-line
 cap. The split is by genre: that file keeps **what the Python page-cutter does**; this one keeps
@@ -229,8 +229,14 @@ as no-ops on clean input; only the crop is. Skipping the rotation cost whole sys
 (`hengam_i_safadir_yine_sen_nus_i_mey_eyle_nota_p1` went 10 staves → **0**), and **22 of the 23**
 pages failing the first parity run were exactly the 23 deskewed ones.
 
-⚠ **Cost: 36.1 s/page in the browser**, ~35 s of it the 41-rotation sweep (each rotation re-runs a
+⚠ **Cost: 36.1 s/page in the browser** (the parity harness's corpus mean; the end-to-end number a user waits for is in [METRICS.md](METRICS.md)), ~35 s of it the 41-rotation sweep (each rotation re-runs a
 page-wide `MORPH_OPEN`), against ~1.9 s for Python's whole stage 1 — ~19× slower. A W7 latency
 problem: an axis-aligned screenshot pays the full sweep to learn it has no skew. It also puts a
 full-corpus parity run at ~18 h, which is why `--inject-skew` exists (feed Python's angle in and
 check everything downstream); with it the corpus run reads 0.4 s/page.
+
+**W7 made this non-blocking, not cheaper (2026-08-05).** The sweep now yields to the event loop
+between rotations (`estimateSkewAsync`), so the tab stays responsive and shows progress; the work
+done is identical, verified by re-running this harness with the real estimator on 20 pages —
+**deskew angle identical 20/20**. The cost itself is untouched and is the open W7 item in
+[STATUS.md](STATUS.md).

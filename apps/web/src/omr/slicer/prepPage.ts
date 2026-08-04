@@ -67,6 +67,9 @@ export interface SkewEstimate {
   rowsAtZero: number;
 }
 
+/** `qualifyingLineRows` evaluations one estimate costs: 1 at zero + 29 coarse + 11 fine. */
+export const SKEW_SWEEP_STEPS = 41;
+
 /**
  * `estimate_skew` (L237): the angle maximizing the qualifying-staff-line-row count.
  *
@@ -74,8 +77,16 @@ export interface SkewEstimate {
  * downscaling blurs them below the opening threshold and the signal collapses — a 1500 -> 1000 px
  * shrink turned a clean +0.5°/8-row estimate into a garbage +7.5°/2-row one. Only genuinely large
  * uploads are shrunk, capped at 1600 px wide.
+ *
+ * ⚠ It is a **generator**, and that is the one structural liberty taken with this file. Each
+ * `yield` sits immediately after a `rowsAt` call, so the loops still read line for line against the
+ * Python. The reason is W7: the sweep is ~35 s of unbroken main-thread work, which freezes the tab
+ * and paints no progress. `estimateSkew` below drives it to completion synchronously (what the
+ * parity harness measures), `estimateSkewAsync` drives it a step at a time and hands the event loop
+ * back between rotations. ONE search, two drivers — an async copy of this code is exactly the
+ * duplication CLAUDE.md warns about, and the two would drift under a retune.
  */
-export function estimateSkew(gray: Gray): SkewEstimate {
+function* skewSearch(gray: Gray): Generator<number, SkewEstimate, void> {
   let small = gray;
   if (gray.width > 2400) {
     const s = 1600.0 / gray.width;
@@ -89,11 +100,14 @@ export function estimateSkew(gray: Gray): SkewEstimate {
   // and `max` keeps the first strictly-greater item. Both details are reproduced here.
   const better = (n: number, a: number, bn: number, ba: number) => n > bn || (n === bn && a > ba);
 
+  let step = 0;
   const rows0 = rowsAt(0.0);
+  yield ++step;
   let bestN = -1;
   let bestA = -Infinity;
   for (const a of arange(-SKEW_MAX_DEG, SKEW_MAX_DEG + 0.01, 0.5)) {
     const n = rowsAt(a);
+    yield ++step;
     if (better(n, a, bestN, bestA)) {
       bestN = n;
       bestA = a;
@@ -103,6 +117,7 @@ export function estimateSkew(gray: Gray): SkewEstimate {
   let fineA = bestA;
   for (const a of arange(bestA - 0.5, bestA + 0.501, 0.1)) {
     const n = rowsAt(a);
+    yield ++step;
     if (better(n, a, fineN, fineA)) {
       fineN = n;
       fineA = a;
@@ -116,6 +131,45 @@ export function estimateSkew(gray: Gray): SkewEstimate {
   return { angle: pyRound(fineA * 100) / 100, rowsAtBest: fineN, rowsAtZero: rows0 };
 }
 
+/** The sweep, run to completion on this thread — `estimate_skew`'s own signature. */
+export function estimateSkew(gray: Gray): SkewEstimate {
+  const it = skewSearch(gray);
+  let r = it.next();
+  while (!r.done) r = it.next();
+  return r.value;
+}
+
+/**
+ * The same sweep, yielding to the event loop between rotations so the UI paints (W7).
+ *
+ * Identical output by construction — same generator, driven differently. The `setTimeout(0)` per
+ * step costs ~4 ms under the browser's nested-timer clamp, i.e. ~0.2 s on a ~35 s search, and it is
+ * what turns a frozen tab into a progress line.
+ */
+export async function estimateSkewAsync(
+  gray: Gray,
+  onStep?: (done: number, total: number) => void
+): Promise<SkewEstimate> {
+  const it = skewSearch(gray);
+  for (let r = it.next(); ; r = it.next()) {
+    if (r.done) return r.value;
+    onStep?.(r.value, SKEW_SWEEP_STEPS);
+    await new Promise((res) => setTimeout(res, 0));
+  }
+}
+
+/**
+ * `deskew`'s two guards (L267-269), without the rotation: the angle that will actually be applied.
+ *
+ * Split out so a caller that estimates ahead of time (the app, via `estimateSkewAsync`) reaches the
+ * same decision as `deskew` rather than re-deriving it. Zero means "leave the page alone".
+ */
+export function guardedAngle(est: SkewEstimate): number {
+  const { angle, rowsAtBest, rowsAtZero } = est;
+  if (Math.abs(angle) < SKEW_DEADBAND_DEG || rowsAtBest < rowsAtZero + SKEW_MIN_GAIN) return 0.0;
+  return angle;
+}
+
 /**
  * `deskew` (L266): rotate so the staves are axis-aligned, or return the page untouched.
  *
@@ -123,9 +177,8 @@ export function estimateSkew(gray: Gray): SkewEstimate {
  * bit-identical with and without this stage.
  */
 export function deskew(gray: Gray, est: SkewEstimate): { gray: Gray; angle: number } {
-  const { angle, rowsAtBest, rowsAtZero } = est;
-  if (Math.abs(angle) < SKEW_DEADBAND_DEG || rowsAtBest < rowsAtZero + SKEW_MIN_GAIN)
-    return { gray, angle: 0.0 };
+  const angle = guardedAngle(est);
+  if (angle === 0.0) return { gray, angle: 0.0 };
   return { gray: rotate(gray, angle), angle };
 }
 

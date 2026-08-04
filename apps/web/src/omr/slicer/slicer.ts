@@ -51,10 +51,17 @@ export interface Stage1Options {
   /**
    * Skip `estimate_skew`'s 41-rotation sweep and rotate by this angle instead.
    *
-   * Parity-harness only, and it exists for a measurement reason: the sweep is ~35 of the ~37 s a
-   * page costs in the browser, which puts a full-corpus run at ~18 h on this machine. Feeding it
-   * the angle Python already found lets staff detection and row normalization be checked over all
-   * 1,704 pages, with the estimator itself validated separately on a sample. Never set in the app.
+   * Two callers, for two different reasons.
+   *
+   * The parity harness feeds it the angle Python already found: the sweep is ~35 of the ~37 s a
+   * page costs in the browser, which puts a full-corpus run at ~18 h on this machine, so
+   * short-circuiting it lets staff detection and row normalization be checked over all 1,704 pages
+   * with the estimator validated separately on a sample. That one IS a short-circuit.
+   *
+   * The app (`omr/page.ts`, W7) feeds it the angle THIS code found — `estimateSkewAsync` +
+   * `guardedAngle`, the same search and the same two guards, run a step at a time so the tab does
+   * not freeze for 35 s. Nothing is skipped and the result is identical; the estimate simply
+   * happens before the call instead of inside it.
    */
   skewDeg?: number;
   /** Collect `detect_barlines`' rejected candidates (W5 diagnosis; Python's `--debug` branch). */

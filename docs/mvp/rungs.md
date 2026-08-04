@@ -326,3 +326,72 @@ difference, not a level; agreement is not quality.
 only check that would catch an opencv.js version bump changing a primitive under the port, and it
 costs one command.
 
+
+## W7 — upload a page in the app ✅ DONE (2026-08-05)
+
+**The app reads a page.** One image into the "Read page" input and a playable, editable score comes
+out — slice, decode, stitch, render, play, save, all in the browser. That is the whole product path
+with nothing stubbed, and it is the first rung a friend could be handed.
+
+Acceptance is `npm run smoke:page`, which drives the real app with Playwright:
+
+| check | result |
+|---|---|
+| page read end to end | 7 staves → **16 strips → 344 notes, 28 measures** |
+| strip count matches local Python | **16 vs 16** |
+| tab stayed responsive while slicing | slowest reply **2,353 ms** (bar: < 5,000) |
+| progress actually moved | 57 distinct status lines |
+| sheet renders / play enabled / playback started / no page errors | all ✓ |
+| slice / decode | **36.4 s** + **19.1 s** (16 strips ≈ 1.2 s each) |
+
+**A free confirmation nobody asked for:** W2's smoke reads *Python's* crops of this same page and
+gets **344 notes / 28 measures** too. The ported slicer's crops produce the identical score here.
+n=1 — the evidence that carries weight is still W6's paired McNemar — but it is the first time the
+two cutters have been compared through the whole product path rather than at the token level.
+
+### The 35-second freeze was the real work
+
+The port cost ~36 s/page and **all of it ran as one synchronous block**. A tab that cannot answer
+JavaScript for 35 s is not shippable: no progress paints, and the browser offers to kill the page.
+
+The fix is not an optimisation and deliberately changes no arithmetic. `estimate_skew` is now a
+**generator** that yields after each of its 41 rotations, with two drivers over it — `estimateSkew`
+runs it to completion (what the parity harness measures), `estimateSkewAsync` steps it and hands
+the event loop back between rotations. One search, two drivers. An async *copy* of that code was
+the obvious alternative and is exactly the duplication CLAUDE.md warns about: the two would drift
+the first time a gate is retuned.
+
+`deskew`'s two guards were split into `guardedAngle` for the same reason, so the app — which
+estimates first and slices second — reaches the same decision as the one-shot path rather than
+re-deriving it.
+
+**Verified, not assumed:** the parity harness re-run with the REAL estimator (no `--inject-skew`)
+on 20 pages, 4 of which genuinely rotate — **deskew angle identical 20/20**, and W4/W5/W6 all still
+PASS with bars, positions and strip spans exact. The refactor moves nothing.
+
+What remains blocking is one **2.35 s** stretch: ink → connected components → staves → rows →
+barlines → windows, which is a single synchronous call by design. It is under the bar and splitting
+it would mean threading yields through the transliteration, which is not worth it.
+
+### Two bugs the harness found, both in the harness or the wiring
+
+1. **Vite's dep optimizer ate the first upload.** opencv.js reaches `App.tsx` only through the lazy
+   `import("./omr/page")`, so Vite's static scan never sees it; it is discovered at the first upload
+   instead, which triggers a re-optimize and a **full page reload mid-slice** — throwing the upload
+   away and leaving the app waiting on a slice that no longer exists. It presents as a hang at 0%
+   CPU, which is why it was not obviously a bug. `optimizeDeps.include: ["@techstark/opencv-js"]`
+   makes it a startup cost. Dev-server only; a production build has no dep optimizer. The fix was
+   re-verified against a **cold** `.vite` cache, not a warm one.
+2. **The strip-count bar was pointed at the wrong reference.** It first scored against the page
+   dir's `_manifest.json` and would have failed W7 for a W4 reason — local Python reproduces only
+   ~98.6% of those manifests. It now scores against `scripts/slicer_ref.py`, with the manifest count
+   printed beside it as context. Third time this project has had to relearn that agreement with an
+   artifact is not correctness.
+
+### Still owed at W7, and named
+
+⚠ **The latency is not fixed, only made bearable.** A straight screenshot still pays all 41
+rotations to learn it has no skew. Both candidate fixes — an early exit at 0°, or replacing the
+estimator with a standard one (Hough / Radon / FFT of the row projection) — are behaviour changes
+that need their own measurement against the 132-page estimator sample and the 15.3% of pages that
+genuinely rotate. Not folded into this rung.

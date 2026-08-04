@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-04
+updated: 2026-08-05
 
 ## Now
 
@@ -14,119 +14,71 @@ errors are) has never been built, and feedback cannot be collected without a pip
 model stays `round2-stage2-best` int8 throughout. Track, ladder and running state:
 [mvp/README.md](mvp/README.md).
 
-- **✅ W6 PASSED (2026-08-04): THE SLICER PORT IS DONE, and the browser cuts the same strips Python
-  does.** Whole corpus, 1,781 pages / 33,805 strips: window fields exact on **33,783/33,783**, strip
-  count per page on **1,697/1,697**, `row_x0`/`row_x1` within 2 px on **99.99%**, width and measure
-  invariants at Python's own **0** violations. **`hasNotehead` is exercised at last — 861
-  clef-prefix trims, identical both sides** — which discharges W5's non-claim.
-  **The decode arm is the verdict that matters and it is PAIRED**: the port's own crops agree with
-  Python on **395/450 strips (87.78%)** against arm B's **387/450 (86.00%)** — **12 vs 4 discordant,
-  McNemar exact p = 0.077, no detectable difference**, and **0 strips unmatched** in either
-  direction. All 16 discordant strips have **identical crop widths**, which is what rules the slicer
-  out as the cause.
-  ⚠ **One bar was restated and both numbers are printed.** "Window fields exact" was written as 100%
-  before the ±1 grayscale residue was understood; windows are computed *from* the bars, and W5's 2
-  residue rows account for **all 6** raw mismatches, so the gate scores rows whose bars agree. Same
-  correction W4 made to its zero-staff bar.
-  ⚠ The 2 strips moving more than 2 px are a **gutter centre** shifting 8 px inside the same
-  whitespace run (identical bars, identical flags) — no ink is divided differently.
-- **The gap is smaller than it looked, and it is now closed.** Decode, Donut preprocessing,
-  detokenization, stitching, the editor and playback all already worked in the browser — the helpers
-  in `apps/web/src/omrGate.ts` were just never exported, and `tools/render/stitch.ts` has no node
-  imports. The one genuinely missing piece was the TypeScript page→strips slicer, and it is
-  finished: `page → staves → rows → barlines → windows → crops` all run in the browser.
-- **✅ W5 PASSED (2026-08-04): the riskiest file is ported — barlines reproduce Python over the
-  WHOLE CORPUS.** 1,781 pages / 12,123 rows / **51,019 bars**: bar count exact on **12,121/12,123
-  rows (99.98%)**, positions within 1 px on **51,018/51,019 (100.00%)**, exact on **51,013/51,019
-  (99.99%)**. It passed on the first run because the trap list was followed rather than
-  rediscovered — and **Trap 1 was confirmed empirically**: `30*0.35` and `30*0.75` really are exactly
-  10.5 and 22.5, where `Math.round` gives 11/23 against Python's 10/22 and would have retuned gates
-  1 and 2.
-  **All 8 differing rows were reproduced inside Python**, by feeding it its own other grayscale
-  path — it then emits the port's exact bar *and* reject list. The 2 rows whose bar *count* differs
-  are `_terminal_overshoot` near-ties flipping **one in each direction**; a real bug in that walk
-  would flip one way across many rows. The single 2 px case is W4's own `x0` residue multiplied
-  through `int(staff.x0 * scale)` at scale 2.0.
-  A free extra — recording the *rejected* candidates — is stricter than the bar list and found **9
-  more rows that agree on bars while disagreeing on what was thrown out**, one of them a column
-  rejected as `gate2_fat` by Python and `gate3_blob` by the port.
-  ⚠ Two non-claims: the corpus run used `--inject-skew` (so the deskew *estimator* is still only
-  validated on 132 pages), and **`hasNotehead` is ported but exercised by nothing here** — its only
-  caller is `window_measures`, so W6 owns it.
-- **✅ W4 PASSED (2026-08-04): the slicer's staff detection and row normalization are ported and
-  reproduce Python exactly, over the WHOLE CORPUS** — 1,781 pages / 12,123 systems, not a sample.
-  Staff count **1,704/1,704**, manifest-zero pages **77/77**, `scale` **12,122/12,122**; row width
-  and the outer-lines+median-spacing triple both **12,123/12,123**. Everything that differs anywhere
-  is the ±1 grayscale residue — 7 systems off by 1 px, six of them an *interior* staff line — and
-  **none of it reaches a crop**, because `normalize_row` reads only the outer lines and the median
-  spacing. First time that residue has been observed reaching any output.
-  ⚠ Two scope notes: the corpus run used `--inject-skew`, so the estimator's real number is the
-  **132/132** from the un-injected 132-page run; and the "zero-staff pages" bar was **restated
-  against the control** (those pages are identified by an empty manifest, Python now finds a staff
-  on 1 of the 77, and the port finds the same one).
+- **✅ W7 PASSED (2026-08-05): THE APP READS A WHOLE PAGE.** Upload an image, get a playable,
+  editable, saveable score — slice, decode, stitch, render, play, all in the browser, nothing
+  stubbed. `npm run smoke:page` drives the real app: **7 staves → 16 strips → 344 notes / 28
+  measures**, strip count matching local Python **16 vs 16**, sheet rendering and playback starting,
+  no page errors. W2's smoke reads *Python's* crops of that same page and gets the same 344 notes /
+  28 measures — a free n=1 confirmation through the whole product path.
+  **The interesting half was the 35-second freeze.** The slice ran as one synchronous block and a
+  tab that cannot answer JavaScript for 35 s is not shippable. `estimate_skew` is now a **generator
+  with two drivers** — `estimateSkew` runs it to completion (the parity path), `estimateSkewAsync`
+  steps it and yields between rotations (the app) — with `guardedAngle` holding `deskew`'s two
+  guards. **No arithmetic changed, and that was verified, not argued**: the parity harness re-run
+  with the REAL estimator on 20 pages (4 rotating) gives **deskew angle identical 20/20**, W4/W5/W6
+  all still PASS. An async *copy* was rejected as exactly the duplication CLAUDE.md warns about.
+  ⚠ **The latency is bearable, not fixed** — a straight screenshot still pays all 41 rotations, and
+  one **2.35 s** block remains (ink → components → staves → rows → barlines → windows).
+  ⚠ **A hang at 0% CPU was Vite, not the port**: opencv.js sits behind a lazy `import()`, so the dep
+  optimizer discovered it at the first upload and full-reloaded the tab mid-slice, discarding the
+  upload. `optimizeDeps.include` fixes it; re-verified against a **cold** `.vite` cache.
+- **✅ W4–W6 PASSED (2026-08-04): THE SLICER PORT IS DONE and the browser cuts the same strips
+  Python does** — whole corpus, 1,781 pages / 33,805 strips. Bars, windows, strip spans and the
+  width/measure invariants all reproduce local Python; `hasNotehead` is exercised by 861 clef-prefix
+  trims, identical both sides. **The decode arm is the verdict that matters and it is PAIRED**: arm
+  A **395/450 (87.78%)** against arm B's **387/450 (86.00%)**, **12 vs 4 discordant, McNemar exact
+  p = 0.077 — no detectable difference**, and all 16 discordant strips have **identical crop
+  widths**, which is what rules the slicer out as the cause. Rung write-ups:
+  [mvp/rungs.md](mvp/rungs.md). Numbers: [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md).
+  ⚠ Two bars were **restated** mid-rung, once at W4 and once at W6, because they were written before
+  the ±1 grayscale residue was understood — both print the raw number beside the restated one, which
+  is what keeps a restatement honest.
+  ⚠ **Owed:** every full-corpus run used `--inject-skew`, so the deskew *estimator* is validated on
+  132 pages, not the corpus.
 - **`prepPage` could NOT be the planned no-op, and that was worth 22 of 23 failures.** The plan had
   the whole camera path down as inert on clean input. True of the perspective crop (0% of pages),
   false of the deskew: **15.3% of corpus pages (272/1,781) take a real rotation**, and skipping it
-  took one page from 10 staves to 0. `estimate_skew`/`deskew` are now ported in full, guards intact.
-  ⚠ **It costs ~35 s of the ~36 s a page takes in the browser** against ~1.9 s for Python's whole
-  stage 1 — a **W7** problem, since a screenshot pays the full 41-rotation sweep to learn it has no
-  skew. Deliberately not optimised inside the port.
+  took one page from 10 staves to 0.
 - **The `strips_v2` manifests are NOT the acceptance bar — the current Python does not reproduce
-  them either.** Scored against manifests the port read 86.7%, and one page it failed matched local
-  Python line for line (7 staves vs the manifest's 5). Python-vs-manifest is **1,680/1,704
-  (98.59%)**, already below W4's own bar, because 1,578 of 1,781 page dirs were sliced on Colab. `scripts/slicer_ref.py`
-  is now the control and defines the sample; the port reaches the manifest ceiling exactly. Same
-  lesson as W3's arm-B ceiling: **agreement with an artifact is not correctness.**
-- **✅ W0 PASSED (2026-08-02): opencv.js is bit-identical to OpenCV-Python** on all five primitives
-  the slicer rests on, both sides OpenCV 5.0.0. The port is cleared to start.
-- **✅ W1 PASSED (2026-08-02): the decode module is extracted and returns per-token confidence.**
-  `omrGate.ts` 309 → 164 lines, the reusable half now in `apps/web/src/omr/`; `omr-gate.html` is
-  byte-identical and still reads 27/28 with the same failing strip.
-- **✅ W2 PASSED (2026-08-02): THE APP READS SHEET MUSIC.** "Read strips" takes a page's crops,
-  decodes them in the browser, stitches and loads a playable, editable, saveable score — verified in
-  the real app (16 crops → 344 notes / 28 measures, valid `schemaVersion: 1` on save). **~1.1 s/strip**,
-  so a 20-strip page is 20–30 s and W7 needs no Web Worker. Non-strip images decode to 0 events
-  without throwing.
-- **The browser-vs-Python ceiling is 86.0%** of strips over 20 pages (450 strips) — the bar W6 holds
-  the ported slicer to. ⚠ The first measurement said **10%** and was wrong: the two sides serialize
-  tokens differently and must be compared *after* the stitcher's `normalizeTokens`.
+  them either** (1,680/1,704, 98.59%), because 1,578 of 1,781 page dirs were sliced on Colab.
+  `scripts/slicer_ref.py` is the control and defines the sample. Same lesson as W3's arm-B ceiling
+  and W7's first strip-count bar: **agreement with an artifact is not correctness** — three times
+  now.
+- **✅ W0–W3 PASSED (2026-08-02/03).** opencv.js is bit-identical to OpenCV-Python on all five
+  primitives the slicer rests on; the decode module is extracted with per-token confidence
+  (`omrGate.ts` 309 → 164 lines); the app reads strips end to end at **~1.1 s/strip**, so W7 needed
+  no Web Worker; and **THE BROWSER IS NOT WORSE THAN PYTHON** — same 261 hand-verified strips, same
+  scorer, **SER 0.0821 → 0.0818, exact-match 60.2% both, AEU macro recall 94.8% → 94.9%**.
+  ⚠ That is a *paired* Δ on real-val: it establishes the difference, not the absolute level.
+- **The browser-vs-Python ceiling is 86.0%** of strips over 20 pages (450 strips). ⚠ The first
+  measurement said **10%** and was wrong: the two sides serialize tokens differently and must be
+  compared *after* the stitcher's `normalizeTokens`.
 - **The pre-registered "arm B < 90% → fix the resampler first" rule FIRED and was NOT followed,
   because its causal model is wrong.** Disagreement is concentrated in strips the model was already
   unsure about — **21.9% agreement where Python's `min_logprob < -1.0` (n=32) against 90.9% where it
   is confident (n=418)** — while crop width, which decides how hard a strip is resampled, shows no
-  trend (89.3% narrowest decile vs 83.9% widest). `preprocess.ts` is unchanged.
-- **First real-data evidence that the `-1.0` confidence threshold means something** — it separates
-  exactly the strips where the two runtimes disagree. This partly discharges W1's non-claim.
-- **✅ W3 PASSED (2026-08-03): THE BROWSER IS NOT WORSE THAN PYTHON.** Scored against the same 261
-  hand-verified `_realval_v2` strips with the same scorer: **SER 0.0821 → 0.0818, exact-match 60.2%
-  both, AEU macro recall 94.8% → 94.9%**. The ~14% arm-B disagreement is two ORT builds splitting
-  near-ties, at no cost in quality. ⚠ This is a *paired* Δ on real-val — it establishes the
-  difference, not the absolute level (real-val does not predict exam performance; 28 pp gap on
-  record).
-- **⚠ The confidence signal does NOT meet its pre-registered bar.** Against gold, flagged strips do
-  average **8.60 token edits vs 2.69** — the signal is real — but "flag 10% of tokens, catch ≥60% of
-  errors" is **NOT MET**: the best achievable at a 10% budget is **26.3%**. A usable operating point
-  exists at `min_logprob < -0.5` (flag 22.6% of strips, catch 57.1% of edits, 2.5× lift), but as a
-  hint rather than a promise. W8 must now choose: ship the soft cut, invest in per-TOKEN
-  localisation, or drop the feature. Detail: [mvp/README.md](mvp/README.md).
-- **The 40-page ceiling sample was dropped on purpose.** Its ±1 pp bar is not resolvable (SE ~1.6 pp
-  at n=450, ~1.2 pp at 40 pages). W6 should compare arm A and arm B **pairwise on the same strips**
-  instead, which is far more sensitive and needs no extra pages.
-- **W1's pre-registered logprob criterion FAILED and was replaced, on purpose.** Demanding ≤1e-3
-  per-token agreement with `onnx_parity.py` assumed two different ORT builds produce identical
-  logits from identical input — they do not, and that is the *same* int8 numerics gap already
-  documented under open risks. Ids agree on 13 of 14 strips, so the decode is sound. The check now
-  measures what W8 depends on: **0 of 576 tokens land on the opposite side of the validated
-  `min_logprob < -1.0` threshold.** ⚠ Non-claim: 0 tokens came within 0.1 of that boundary, so the
-  gate fixture is too confident to test it — owed on real-page strips at W3.
+  trend. `preprocess.ts` is unchanged. This is also the first real-data evidence that the `-1.0`
+  threshold means something.
+- **⚠ The confidence signal does NOT meet its pre-registered bar, and W8 must decide what to do.**
+  Against gold, flagged strips do average **8.60 token edits vs 2.69** — the signal is real — but
+  "flag 10% of tokens, catch ≥60% of errors" is **NOT MET**: the best achievable at a 10% budget is
+  **26.3%**. A usable operating point exists at `min_logprob < -0.5` (flag 22.6% of strips, catch
+  57.1% of edits, 2.5× lift), but as a hint rather than a promise. Ship the soft cut, invest in
+  per-TOKEN localisation, or drop the feature. Detail: [mvp/rungs.md](mvp/rungs.md).
 - **Grayscale can never be exact from a browser, and it does not matter.** `imread(IMREAD_GRAYSCALE)`
   converts inside the PNG decoder; OpenCV's own two paths already differ by ±1 on 7.4% of a colour
   page. Re-running the slicer under that perturbation leaves 119 strips bit-identical
   ([METRICS-SLICER.md](METRICS-SLICER.md)).
-- **The browser OMR gate is now a command**, pinned at `27/28` — `npm run gate:browser`.
-  `window.__gateResult` had existed unused since the gate was written; a boolean could not tell the
-  known `\tup3` wobble from a real regression, so the runner tallies the page's own ✓/✗ marks.
-  Baseline before any refactor: 27/28 with the canvas (product) path clean at **14/14**.
 
 ## Previously (real-page track — all still true)
 
@@ -277,24 +229,26 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 **The MVP ladder is the live work. Everything under "after the release" is paused, not cancelled.**
 Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
 
-1. **W7 — upload a page in the app.** Everything behind it now exists: `sliceStage3` returns the
-   strip spans, `cropStrip` cuts them and `decodeStripsToDoc` already turns crops into a playable
-   score. ⚠ **W7 inherits the latency**: **~36 s/page for the slicer, ~35 s of it the deskew
-   sweep**, on top of ~1.1 s/strip decode. The sweep is 41 full-page rotations, each with a
-   page-wide `MORPH_OPEN`. It is brute force because it maximises the *exact* signal
-   `detect_staves` uses (the qualifying staff-line-row count), not because the problem needs it —
-   **standard skew estimators exist and were never tried here** (Hough on the ink mask, Radon/FFT of
-   the row projection, gradient orientation). Two directions, cheapest first: an **early exit** when
-   0° already looks straight (the guard needs +3 staff-line rows to fire, so a straight page cannot
-   benefit), or **replacing the estimator**. Either is a **behaviour change needing its own
-   measurement** against the 132-page estimator sample and the 15.3% of pages that genuinely rotate;
-   do not fold it into the port.
-2. **W8–W10** — the W8 confidence decision above (soft −0.5 cut / per-token / drop), model delivery
-   from HF Hub, release.
-3. **Owed from W4/W6, small:** the deskew *estimator* is validated on 132 pages, not the corpus —
+1. **W8 — the confidence decision, then build it.** Decide FIRST, on the evidence above: ship the
+   soft `min_logprob < -0.5` cut as a hint (flag 22.6% of strips, catch 57.1% of edits), invest in
+   per-TOKEN localisation, or drop the feature for the friends release. The pre-registered 10%/60%
+   bar is NOT met and moving it silently is not an option. This is half of the 2026-07-27 goal, so
+   dropping it needs saying out loud.
+2. **W9–W10** — model delivery from HF Hub + Cache API, a COOP/COEP-capable static host, release.
+3. **The page latency, now the app's most visible flaw.** ~56 s for a 7-staff page, **~35 s of it
+   the deskew sweep**: 41 full-page rotations, each with a page-wide `MORPH_OPEN`. It is brute force
+   because it maximises the *exact* signal `detect_staves` uses (the qualifying staff-line-row
+   count), not because the problem needs it — **standard skew estimators exist and were never tried
+   here** (Hough on the ink mask, Radon/FFT of the row projection, gradient orientation). Two
+   directions, cheapest first: an **early exit** when 0° already looks straight (the guard needs +3
+   staff-line rows to fire, so a straight page cannot benefit from the search), or **replacing the
+   estimator**. Either is a **behaviour change needing its own measurement** against the 132-page
+   estimator sample and the 15.3% of pages that genuinely rotate. W7 deliberately did not fold it in.
+   Doing this work closes the item below at the same time.
+4. **Owed from W4/W6, small:** the deskew *estimator* is validated on 132 pages, not the corpus —
    every full run injects Python's angle. Neither W5 nor W6 turned up a skew-related difference, so
-   this is worth doing only if W7's latency work touches the estimator, which it likely will.
-   Closing it costs ~18 h of browser time as things stand.
+   it is worth doing when item 3 touches the estimator, which it will. ~18 h of browser time as
+   things stand — less once the sweep is cheaper.
 
 ### After the release (the real-page track, paused)
 

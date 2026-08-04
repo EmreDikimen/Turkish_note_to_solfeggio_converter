@@ -537,6 +537,78 @@ export function App() {
     })();
   }
 
+  /**
+   * Read a WHOLE PAGE: slice it in the browser, then read every strip it cut (MVP W7).
+   *
+   * This is the product path with nothing left out — the same slicer W6 checked against Python over
+   * the corpus, feeding the same `decodeStripsToDoc` "Read strips" uses. It shares that handler's
+   * shape on purpose; what it adds is the slice, and the honest wait in front of it.
+   *
+   * ⚠ It is SLOW, and knowingly so: the deskew sweep is 41 full-page rotations (~35 s), then ~1.1 s
+   * a strip. The sweep yields between rotations so the tab stays alive and the count keeps moving,
+   * but a straight screenshot still pays the whole search to learn it is straight — the latency
+   * work is written up in docs/STATUS.md and is a behaviour change with its own measurement.
+   *
+   * The slicer is imported lazily so opening the harness does not download opencv.js.
+   */
+  function onPage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // re-picking the same file must fire change again
+    if (!file) return;
+
+    setError(null);
+    setOmrBusy(true);
+    setOmrStatus("loading model…");
+
+    void (async () => {
+      const url = URL.createObjectURL(file);
+      try {
+        const { sessions, meta } = await getModel(setOmrStatus);
+        const { slicePage } = await import("./omr/page");
+
+        const stem = file.name.replace(/\.[^.]+$/, "") || "page";
+        setOmrStatus("slicing the page…");
+        const sliced = await slicePage(url, stem, {
+          onProgress: (phase, done, total) =>
+            setOmrStatus(done != null ? `${phase}… ${done}/${total}` : `${phase}…`),
+        });
+        if (!sliced.strips.length)
+          throw new Error(
+            "no staves found on this page — the MVP reads screenshots and clean scans of Turkish " +
+              "notation, one page at a time"
+          );
+
+        const sliceS = (sliced.totalMs / 1000).toFixed(1);
+        const result = await decodeStripsToDoc(sessions, meta, sliced.strips, {
+          name: stem,
+          onProgress: (done, total) =>
+            setOmrStatus(done < total ? `reading strip ${done + 1} of ${total}…` : "stitching…"),
+        });
+
+        const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
+        if (!result.doc.events.length) throw new Error("the model read nothing from this page");
+
+        onStop();
+        loadDoc(result.doc);
+        setSampleFile("");
+        setOmrStatus(
+          `read a page: ${sliced.nStaves} staves → ${sliced.strips.length} strips → ${notes} notes, ` +
+            `${result.writtenMeasures} measures — sliced in ${sliceS} s` +
+            (sliced.skewDeg ? ` (deskewed ${sliced.skewDeg.toFixed(1)}°)` : "") +
+            `, read in ${(result.totalMs / 1000).toFixed(1)} s` +
+            (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
+        );
+        if (result.warnings.length) console.warn("stitch warnings:", result.warnings);
+      } catch (err) {
+        setError(String(err));
+        setOmrStatus("");
+      } finally {
+        URL.revokeObjectURL(url);
+        setOmrBusy(false);
+      }
+    })();
+  }
+
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
       <h1 style={{ marginBottom: 4 }}>Turkish OMR — Web Harness</h1>
@@ -616,7 +688,11 @@ export function App() {
         </label>
         <label title="Pick the *_sNN_wNN.png crops of one page — the OMR model reads them in the browser and loads the result">
           Read strips:{" "}
-          <input type="file" accept="image/*" multiple onChange={onStrips} disabled={omrBusy} />
+          <input id="strips-input" type="file" accept="image/*" multiple onChange={onStrips} disabled={omrBusy} />
+        </label>
+        <label title="Pick a screenshot or clean scan of ONE page — it is sliced and read in the browser. Slow: ~35 s to check the page angle, then ~1 s per strip.">
+          Read page:{" "}
+          <input id="page-input" type="file" accept="image/*" onChange={onPage} disabled={omrBusy} />
         </label>
         <button onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
           ⬇ Save JSON
@@ -698,9 +774,9 @@ export function App() {
         )}
       </div>
 
-      {error && <p style={{ color: "crimson" }}>Error: {error}</p>}
+      {error && <p id="omr-error" style={{ color: "crimson" }}>Error: {error}</p>}
       {omrStatus && (
-        <p style={{ color: omrBusy ? "#0a58ca" : "#666", margin: "8px 0" }}>
+        <p id="omr-status" style={{ color: omrBusy ? "#0a58ca" : "#666", margin: "8px 0" }}>
           {omrBusy ? "⏳ " : "✓ "}
           {omrStatus}
         </p>

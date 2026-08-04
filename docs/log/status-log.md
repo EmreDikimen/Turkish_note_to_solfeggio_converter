@@ -2,12 +2,46 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-04
+updated: 2026-08-05
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+## 2026-08-05 — W7: the app reads a whole page
+
+**Upload an image, get a playable score.** `apps/web/src/omr/page.ts` joins the ported slicer to the
+decode path — `decodeGray` → guarded skew → `sliceStage3` → crops as canvases → `decodeStripsToDoc`
+— and `App.tsx` gained a "Read page" input beside "Read strips". `npm run smoke:page` drives the
+real app end to end: **7 staves → 16 strips → 344 notes / 28 measures**, strip count matching local
+Python **16 vs 16**, sheet rendering, playback starting, no page errors. Slice **36.4 s**, decode
+**19.1 s**. W2's smoke reads Python's own crops of that page and gets the same 344 notes / 28
+measures, which is a free (n=1) confirmation through the whole product path.
+
+**The interesting half was the 35-second freeze, not the wiring.** The whole slice ran as one
+synchronous block, and a tab that cannot answer JavaScript for 35 s is not shippable. The fix
+changes no arithmetic: `estimate_skew` became a **generator** yielding after each of its 41
+rotations, with `estimateSkew` (run to completion — the parity path) and `estimateSkewAsync` (step
+and yield — the app) as its two drivers, plus `guardedAngle` holding `deskew`'s two guards so the
+app's estimate-then-slice order decides identically. **An async copy was the obvious alternative
+and was rejected**: two copies of a tuned search drift the first time a gate moves, which is the
+duplication CLAUDE.md already names. Verified rather than argued — the parity harness re-run with
+the REAL estimator (no `--inject-skew`) on 20 pages, 4 of them rotating, gives **deskew angle
+identical 20/20** with W4/W5/W6 all still PASS. What still blocks is one **2.35 s** stretch (ink →
+components → staves → rows → barlines → windows), under the 5 s bar and left alone.
+
+**Two traps, both worth the entry.** Vite's dep optimizer discovers opencv.js at the *first upload*
+(it is behind a lazy `import()`, invisible to the static scan), re-optimizes, and full-reloads the
+tab mid-slice — which throws the upload away and presents as a hang at **0% CPU**, not as an error.
+`optimizeDeps.include` makes it a startup cost, and the fix was re-verified against a **cold**
+`.vite` cache. And the smoke's strip-count bar was first written against the page's
+`_manifest.json`, which would have failed W7's wiring for a W4 reason; it scores against
+`slicer_ref.py` now. Third time this project has relearned that agreement with an artifact is not
+correctness.
+
+⚠ **The latency is made bearable, not fixed** — a straight screenshot still pays all 41 rotations.
+Both candidate fixes are behaviour changes owing their own measurement; see STATUS.
 
 ## 2026-08-04 — W6: the slicer port is finished, and the decode arm says the crops are the same
 

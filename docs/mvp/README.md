@@ -2,7 +2,7 @@
 
 purpose: the plan and running state of the W0–W10 ladder that turns the frozen model into a link someone can open
 audience: agents and the owner working the product side (not the training side)
-updated: 2026-08-04
+updated: 2026-08-05
 
 > **Picking up W4–W6 (the slicer port)? Read [slicer-port.md](slicer-port.md) first** — it carries
 > the function map, the acceptance thresholds and the traps that were found the expensive way.
@@ -29,7 +29,7 @@ stitching, the editor and playback all already existed in browser-safe form; the
 free of node imports. The only genuinely missing piece was the page→strips slicer
 (`src/vision/page_to_strips.py`, 1,077 lines of numpy/OpenCV) — **ported and verified over the whole
 corpus at W6 (2026-08-04)**, so the browser now runs page → staves → rows → barlines → windows →
-crops.
+crops — and **wired into the app at W7 (2026-08-05)**, so an uploaded page becomes a playable score.
 
 ## Scope decisions (owner, 2026-08-02)
 
@@ -61,8 +61,8 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W4** | Slicer: staves + row normalization | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W5** | Slicer: barlines (the riskiest file) | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
-| **W7** | Upload a page in the app | **next** |
-| **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | — |
+| **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
+| **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | **next** |
 | **W9** | Model delivery (HF + Cache API) and hosting | — |
 | **W10** | Friends release | — |
 
@@ -107,6 +107,8 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `tools/vision/parity/edge-cases.ts` | non-strip images must not throw |
 | `tools/browser/app-smoke.ts` | the real app: strips in → playable score out |
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
+| `apps/web/src/omr/page.ts` | page image → crops, the seam between the slicer and the decode path (W7) |
+| `tools/browser/page-smoke.ts` | the real app: a page image in → playable score out, plus a responsiveness bar (W7) |
 | `tools/vision/parity/arm-a.ts` | the port's crops decoded and compared to arm B, **paired** (W6) |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
 | `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |
@@ -122,6 +124,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | opencv.js parity | `npm run probe:cv` |
 | Confidence signal transfers | `npm run check:logprobs` |
 | App: strips in → playable score out | `npm run smoke:app` |
+| App: a PAGE in → playable score out | `npm run smoke:page -- --ref ref.json` |
 | Non-strip images don't throw | `npm run check:edge` |
 | Arm-B ceiling | `npm run parity:armb -- --pages 20` |
 | Arm A vs arm B, paired on the same strips | `npm run parity:arma -- --pages 20` |

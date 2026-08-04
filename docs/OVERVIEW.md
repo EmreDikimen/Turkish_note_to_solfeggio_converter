@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-04
+updated: 2026-08-05
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -90,112 +90,13 @@ Two more things came out of the same count:
 
 Both were checks to run *before* making new pictures. Both were run — see the 28 July section.
 
-## What happened on 28 July 2026 — we tested four ideas before spending money. Three were wrong.
+## What happened on 28 July 2026 — we tested four ideas and three were wrong
 
-Round 3 was going to cost a lot: redraw all **40,826** training pictures and pay for a training run,
-all to chase four ideas about what the model gets wrong. Every one of those ideas could be tested
-against the model we already have, for the price of running it — no drawing, no training. So we
-tested them first.
-
-**That was worth doing. Three of the four ideas turned out to be wrong**, and the change that
-actually helps was not on the list at all.
-
-**Something that works, which we still cannot explain.**
-
-If we shrink each real strip by about **2%** before the model reads it, the number of corrections a
-user has to make **drops by 12–15%**. Free — no training, no redrawing. We tested four different
-shrink amounts and they all help by roughly the same amount, while a much bigger shrink (4%) helps
-far less. So the effect is real and there is a sweet spot around 2%.
-
-**But we do not know why, and our best explanation turned out to be wrong.** The obvious answer was
-size: our training pictures have the staff lines exactly 30.0 pixels apart, every single time, while
-real strips come out of our page-cutter at about 30.4. So we thought the model simply wanted the
-familiar size back. We tested that directly — measuring each strip and resizing it to exactly 30.0 —
-and it helped only **6%**, less than half as much as the crude 2% shrink. If the model just wanted
-the familiar size, that test should have won. It did not.
-
-We also checked one specific suspect inside the page-cutter and it came out clean.
-
-So: **a real, free, sizeable improvement that we are not shipping yet, because we do not understand
-it.** Shipping a change we cannot explain is how you get a surprise later. The next job is to find
-out what the shrink is actually doing — our current guesses are about ink weight (real print is
-darker and thicker than our drawings) rather than size.
-
-**What we found while building the practice test (28 July 2026).**
-
-The practice test is being rebuilt so it contains hard pages (see "what we do next"). Building it
-turned up two things worth knowing.
-
-**First: the model is doing well. The old page-cutter was the problem.** Going through the hard
-strips by hand, most of what looked like model mistakes are actually bad *crops* — the cutter took a
-sliver of a line, or cut in the wrong place, and the model then read that sliver correctly. We
-already replaced the cutter, and its new crops look right.
-
-**Second, and awkwardly: everything we test on was cut by the OLD cutter.** The strips were made on
-15–17 July; the cutter was replaced on 25 July and nothing was re-cut. We checked 30 of them: **not
-one** is the same under the new cutter, two no longer exist at all, and crops that used to be 207
-pixels wide are now full 1435-pixel lines. The exam has exactly the same problem.
-
-That does not make our past results wrong — the exam and the practice test were both cut the old
-way, so comparing them to each other is still fair. But it does mean both are measuring a version of
-the app we no longer ship. **Open decision:** re-cut everything before finishing the practice test
-(the recommendation), or finish with the old crops and accept it.
-
-**A small thing, so nobody wastes time on it:** the model writes 32nd notes with a space, like
-`f'' 32` instead of `f''32`. That is not a mistake — the two are literally the same to the scoring
-code. It happens only for 32nd notes.
-
-**What we found when we re-cut the pages (29 July 2026).**
-
-We re-cut 158 pages with the new cutter. Then we tried to generate answer keys for them, and on the
-first page **25 of 30 strips were thrown away** — mostly for being "too long to label".
-
-Here is what is going on, and it is a good problem to have. The old cutter was **chopping the left
-edge off** staff lines — up to 490 pixels, enough to lose the clef or a whole bar. The new cutter
-fixed that, so each line of music now comes through complete. But the rule for how many bars go into
-one strip was chosen back when lines were being chopped short. Now that they are complete, three
-bars is often **more music than our answer-key format can hold**, so the strip gets discarded.
-
-Measured: strips that are too long went from **21% to 32%**. If we put fewer bars in each strip we
-get more usable ones — 1 bar per strip gives 107 usable where 3 bars gives 79.
-
-That is not a decision yet. Smaller strips mean less context for the model, more pieces to glue back
-together, and a mismatch with our training pictures (which use 2–4 bars). So the next job is to pick
-that number properly, **before** we generate answer keys — otherwise we would label a batch and then
-throw it away.
-
-**The three ideas that turned out to be wrong:**
-
-- **"When a strip has no notes in it, the model panics and invents a whole bar."** It does not. Of
-  the 8 such strips that exist in everything we have labelled, only **1** invented anything. The
-  truth is duller and harder: the model simply *cannot read* those strips — it gets nearly every
-  symbol wrong. And those strips are made that way by our own page-cutter on purpose (it would
-  rather keep a thin sliver than lose part of the page), and the newer cutter already makes half as
-  many. So teaching our *drawing* program to imitate them would have been backwards.
-- **"Our strips are too wide, so cut them narrower."** This looked like the biggest win available —
-  wide strips are 14% of the exam but 29% of all the corrections. We tried it: cutting them in half
-  made things **worse, by 32%**. And 19 of the 45 wide strips have no bar-line inside them, so there
-  is nowhere sensible to cut anyway. Idea closed for good.
-- **"Our beams are too heavy."** (Beams are the thick bars joining fast notes.) We once found our
-  sharp signs were 22% too thick and fixing it helped, so we assumed beams had the same problem.
-  The opposite is true: ours are exactly the textbook thickness, and **real printed music is
-  heavier**. Making them thinner would have moved us further from reality — and we would have
-  baked that mistake into all 40,826 pictures.
-
-**Three wrong guesses about one file, and what we changed because of them.** Three times we thought
-we knew what the page-cutter was doing wrong; all three were measured and all three were wrong. Twice
-we had already written the fix — the first fix did literally nothing (we proved it
-by re-cutting 67 pages and getting identical results), and the second was based on a guess the
-cutter's own records disproved. Both were undone. Separately, two of our measuring tools quietly
-gave wrong answers and we only caught them by **looking at the pictures with our own eyes**. The
-rule we wrote down: *measure the thing before changing the file that produces it.*
-
-**One more thing we learned.** Our training pictures are **identical in size, every single one**
-(30.000 pixels, no variation at all). Real ones vary. We had written that we "shake" the training
-pictures about five times less than reality moves; the truth is we do not shake them at all before
-the shaking step. That makes the shaking change we had already written more sensible than we
-thought — but our tests say it is **not** what is costing us corrections today, so it stays as
-cheap insurance, not a fix.
+That test day is written up on its own page, in the same plain words:
+**[OVERVIEW-JULY.md](OVERVIEW-JULY.md)**. Short version: before spending money on training we
+checked four hunches about *why* the model makes mistakes. Three did not survive the check. It is
+kept because the reasoning stops us re-proposing them — the short do-not-repeat list is near the
+bottom of this page.
 
 ## Where we are right now
 
@@ -211,22 +112,39 @@ practice, and we do not know how much that helps); **a friend would not notice i
 half of the goal we set in July — *the app shows you where it is unsure* — had never been built at
 all, which we cannot fix or test without a working pipeline.
 
-**What is already done — the page-cutter is FINISHED (4 August).** Reading music in the browser
-already worked: the app takes the small strips of a page, reads them, and gives you a real score you
-can play, edit and save. The missing piece was the **page-cutter**, which existed only in Python. It
-has now been rewritten to run in the browser — as a strict copy, not an improvement — and every part
-was checked against the Python original over **every page we have** (1,781 pages): the staff lines
-match exactly, the bar-lines match on 12,121 of 12,123 rows, and the strips match on all 33,783 we
-can compare fairly. The handful that differ are not mistakes: they come from a 1-shade difference in
-how a browser reads colours, and the Python code makes the *same* change when we feed it that
-difference.
+**The page-cutter was finished on 4 August.** It existed only in Python; it has now been rewritten
+to run in the browser as a strict copy, not an improvement, and checked against the Python original
+over **every page we have** (1,781 pages) — staff lines, bar-lines and strips all match, except for
+a handful caused by a 1-shade difference in how a browser reads colours, where Python makes the
+*same* change if we feed it that difference. We also cut 20 pages both ways and read both sets of
+strips: same reading, and every strip the two disagreed on was **exactly the same width** in both,
+which is how we know the cutter is not the cause.
+### The app now reads a whole page (5 August)
 
-**We also checked the thing that actually matters:** we cut 20 pages with the new browser tool, cut
-the same pages with Python, and read *both* sets of strips. They gave the same reading — the small
-differences left are the model hesitating on hard notes, not the cutter cutting differently, and we
-can show it because every strip the two disagreed on was **exactly the same width** in both.
-⚠ **One thing to know:** cutting a page in the browser takes about **36 seconds**, about 35 of them
-spent checking whether the page is tilted (it tries 41 angles). That is the next piece of work.
+**You can hand it a picture of a page and get music back.** Before today the app could only read the
+small strips *after* someone else had cut them up. Now you pick one image — a screenshot or a clean
+scan of a page — and the app cuts it, reads it, puts it back together, and shows you a score you can
+play, edit and save. That is the whole thing working end to end for the first time.
+
+On the test page: **7 lines of music → 16 strips → 344 notes**. Both the browser and Python cut it
+into 16 strips, and the same page read the *old* way gives the same 344 notes — so the new cutter
+and the old one agree all the way through.
+
+**The hard part was not the wiring, it was the waiting.** Checking the page for tilt takes ~35
+seconds, and during that time the browser tab was completely frozen: no progress shown, and the
+browser would offer to kill the page. We fixed that by letting the tilt check pause between each of
+its 41 attempts, so the tab keeps breathing and you see a counter move. **Nothing about the result
+changed** — we re-ran the comparison against Python on 20 pages and the tilt answer was identical on
+all 20.
+
+⚠ **Still slow: about 56 seconds for a page** (35 of them the tilt check, ~19 the reading). A page
+that is already straight still pays the full 41 attempts to find that out. Making it faster means
+changing *how* we look for tilt, which could change results, so it needs its own careful check
+rather than being slipped in. That is written down as the next piece of work.
+
+⚠ **One trap worth remembering:** for a while the first upload just hung, with the computer doing
+nothing at all. It was not our code — the development tools were quietly reloading the page in the
+middle of the job and throwing the upload away. One line of configuration fixed it.
 
 ### Before that — the model work (all still true)
 
@@ -323,13 +241,15 @@ shoot **different** pieces (there are thousands available).
 **Everything in the numbered list below is PAUSED until the app is released.** It is kept because
 the reasoning is still good, not because it is the next thing to do. The live list is short:
 
-1. **Let you upload a page in the app** (the page-cutter it needs is finished; fix the 36 s delay).
+1. **Upload a page in the app — DONE 5 August** (see above). The 56-second wait is now item 4.
 2. **Decide about "show me where it is unsure".** We measured it, and it does **not** do what we
    promised: we wanted "check 1 line in 10, catch 6 mistakes in 10", and the best at that budget is
    **about 2.6 in 10**. A weaker setting works — check 1 strip in 5, see just over half the
    mistakes. So the choice is: ship that as a *hint*, do the harder work of pointing at individual
    notes, or drop it. A real decision, not a formality.
 3. **Serve the model files and release to friends.**
+4. **Make the page faster.** Mostly the tilt check. Needs its own measurement, because a
+   cheaper check could give different answers on the ~15 pages in 100 that really are tilted.
 
 Then the list below restarts, with real feedback to aim it.
 

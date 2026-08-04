@@ -55,7 +55,7 @@ async function main() {
   // The bundled sample auto-loads first; wait for the app to settle before swapping it out.
   await page.waitForSelector("text=Turkish OMR", { timeout: 60000 });
 
-  const input = page.locator('input[type="file"][accept="image/*"]');
+  const input = page.locator("#strips-input");
   await input.setInputFiles(pngs);
 
   // Reading is ~1 s/strip plus a one-off model load; the status line ends with "read N strips".

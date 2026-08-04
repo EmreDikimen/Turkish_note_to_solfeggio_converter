@@ -46,6 +46,7 @@ npm run gate:browser                 # in-browser ONNX gate, headless — expect
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
 npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
+npm run smoke:page -- --ref ref.json # real app: a PAGE image in → playable score out (MVP W7)
 npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
 npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED (MVP W6)
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm

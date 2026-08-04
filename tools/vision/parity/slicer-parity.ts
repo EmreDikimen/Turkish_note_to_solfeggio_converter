@@ -19,6 +19,11 @@
  *     staves"; Python now finds one on one of them, so it is held against the control like the rest)
  *   - per-system `scale` within 0.002 on >= 99.5% of systems
  *
+ * W5 acceptance, added on top and reported alongside — a count difference shifts every downstream
+ * window and measure index, so it gets no tolerance:
+ *   - bar COUNT per row exactly equal on >= 99.0% of rows
+ *   - among count-matching rows, per-bar |Δx| <= 1 px on >= 99.9% and == 0 on >= 95%
+ *
  *   .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json
  *   npx tsx tools/vision/parity/slicer-parity.ts --ref ref.json
  */
@@ -36,6 +41,10 @@ const IMAGES = path.join(ROOT, "data/real/images");
 const BAR_STAFF_COUNT = 0.995;
 const BAR_SCALE = 0.995;
 const SCALE_TOL = 0.002;
+/** W5 bars, same source. */
+const BAR_BARCOUNT = 0.99;
+const BAR_BARX_1PX = 0.999;
+const BAR_BARX_EXACT = 0.95;
 
 /** One system as `scripts/slicer_ref.py` records it. */
 interface RefStaff {
@@ -49,6 +58,8 @@ interface RefStaff {
   row_w: number;
   row_h: number;
   row_sum: number;
+  bars: number[];
+  rejects: Array<[number, string]>;
 }
 interface RefPage {
   kind: "eligible" | "zero";
@@ -60,6 +71,7 @@ interface RefPage {
   staves: RefStaff[];
   manifest_n_staves: number;
   manifest_scales: Record<string, number>;
+  manifest_bars?: Record<string, number[]>;
 }
 
 interface HarnessSystem {
@@ -80,6 +92,8 @@ interface HarnessSystem {
   headSp: number;
   belowSp: number;
   rowSum: number;
+  bars: number[];
+  rejects: Array<[number, string]> | null;
 }
 interface HarnessPage {
   width: number;
@@ -131,10 +145,20 @@ interface PageResult {
   rowWOk: number;
   worstScaleDelta: number;
   maxRowSumDriftPpm: number;
+  /** W5 — barlines, per row of this page */
+  barCountOk: number;
+  barsN: number; // bars compared (count-matching rows only)
+  barsExact: number;
+  bars1px: number;
+  worstBarDelta: number;
+  rejectsOk: number; // rows where the REJECTED candidates agree too, reason for reason
   /** vs the manifest on disk (the weaker second reference) */
   manifestStaves: number;
   pyMatchesManifest: boolean;
   gotMatchesManifest: boolean;
+  manifestBarRows: number;
+  pyBarsMatchManifest: number;
+  gotBarsMatchManifest: number;
   ms: number;
   error?: string;
 }
@@ -164,7 +188,7 @@ async function main() {
   }
   const nEl = stems.filter((s) => ref[s]!.kind === "eligible").length;
   console.log(
-    `slicer parity (W4) — ${stems.length} pages from ${path.basename(refFile)} ` +
+    `slicer parity (W4+W5) — ${stems.length} pages from ${path.basename(refFile)} ` +
       `(${nEl} eligible + ${stems.length - nEl} zero-staff)\n`
   );
 
@@ -195,7 +219,7 @@ async function main() {
     let got: HarnessPage;
     try {
       got = (await page.evaluate(
-        ([url, skew]) => (window as any).__slicer.stage1(url, skew ?? undefined),
+        ([url, skew]) => (window as any).__slicer.stage1(url, skew ?? undefined, true),
         [dataUrl, injectSkew ? r.skew_deg : null] as const
       )) as HarnessPage;
     } catch (e) {
@@ -216,9 +240,18 @@ async function main() {
         rowWOk: 0,
         worstScaleDelta: NaN,
         maxRowSumDriftPpm: NaN,
+        barCountOk: 0,
+        barsN: 0,
+        barsExact: 0,
+        bars1px: 0,
+        worstBarDelta: NaN,
+        rejectsOk: 0,
         manifestStaves: r.manifest_n_staves,
         pyMatchesManifest: r.n_staves === r.manifest_n_staves,
         gotMatchesManifest: false,
+        manifestBarRows: 0,
+        pyBarsMatchManifest: 0,
+        gotBarsMatchManifest: 0,
         ms: 0,
         error: String((e as Error).message).slice(0, 200),
       });
@@ -233,10 +266,44 @@ async function main() {
     let rowWOk = 0;
     let worst = 0;
     let drift = 0;
+    let barCountOk = 0;
+    let barsN = 0;
+    let barsExact = 0;
+    let bars1px = 0;
+    let worstBar = 0;
+    let rejectsOk = 0;
+    let manBarRows = 0;
+    let pyBarsMan = 0;
+    let gotBarsMan = 0;
     const n = Math.min(r.staves.length, got.systems.length);
     for (let i = 0; i < n; i++) {
       const a = r.staves[i]!;
       const b = got.systems[i]!;
+      // W5. The count gets no tolerance — one extra or missing bar shifts every window and measure
+      // index downstream of it. Positions are only compared where the counts agree, because a
+      // count mismatch makes a positional pairing meaningless rather than merely wrong.
+      if (a.bars.length === b.bars.length) {
+        barCountOk++;
+        for (let k = 0; k < a.bars.length; k++) {
+          const d = Math.abs(a.bars[k]! - b.bars[k]!);
+          barsN++;
+          if (d === 0) barsExact++;
+          if (d <= 1) bars1px++;
+          if (d > worstBar) worstBar = d;
+        }
+      }
+      // Stricter than the bar list and free: two ports can agree on the surviving bars while
+      // disagreeing about which candidates each gate threw out. A difference here with identical
+      // bars is latent fragility, not a pass.
+      const rj = (l: Array<[number, string]>) => l.map(([x, why]) => `${x}:${why}`).join(",");
+      if (rj(a.rejects ?? []) === rj(b.rejects ?? [])) rejectsOk++;
+
+      const manBars = r.manifest_bars?.[String(a.system)];
+      if (manBars) {
+        manBarRows++;
+        if (eq(manBars, a.bars)) pyBarsMan++;
+        if (eq(manBars, b.bars)) gotBarsMan++;
+      }
       const d = Math.abs(a.scale - b.scale);
       if (d <= SCALE_TOL) scaleOk++;
       if (d > worst) worst = d;
@@ -273,9 +340,18 @@ async function main() {
       rowWOk,
       worstScaleDelta: worst,
       maxRowSumDriftPpm: drift,
+      barCountOk,
+      barsN,
+      barsExact,
+      bars1px,
+      worstBarDelta: worstBar,
+      rejectsOk,
       manifestStaves: r.manifest_n_staves,
       pyMatchesManifest: r.n_staves === r.manifest_n_staves,
       gotMatchesManifest: got.nStaves === r.manifest_n_staves,
+      manifestBarRows: manBarRows,
+      pyBarsMatchManifest: pyBarsMan,
+      gotBarsMatchManifest: gotBarsMan,
       ms: got.ms,
     });
 
@@ -309,7 +385,26 @@ async function main() {
   const staffPass = pct(elOk, el.length) >= BAR_STAFF_COUNT * 100;
   const zeroPass = ze.length === 0 || zeOk === ze.length;
   const scalePass = pct(scaleOk, sysN) >= BAR_SCALE * 100;
-  const pass = staffPass && zeroPass && scalePass && !errors.length;
+
+  // W5 — over ALL rows checked, eligible and zero-staff alike
+  const rowsN = sum(results, (r) => r.systemsChecked);
+  const barCountOk = sum(results, (r) => r.barCountOk);
+  const barsN = sum(results, (r) => r.barsN);
+  const barsExact = sum(results, (r) => r.barsExact);
+  const bars1px = sum(results, (r) => r.bars1px);
+  const worstBar = Math.max(0, ...results.map((r) => r.worstBarDelta).filter(Number.isFinite));
+  const barCountPass = rowsN === 0 || pct(barCountOk, rowsN) >= BAR_BARCOUNT * 100;
+  const barX1Pass = barsN === 0 || pct(bars1px, barsN) >= BAR_BARX_1PX * 100;
+  const barXExactPass = barsN === 0 || pct(barsExact, barsN) >= BAR_BARX_EXACT * 100;
+
+  const pass =
+    staffPass &&
+    zeroPass &&
+    scalePass &&
+    barCountPass &&
+    barX1Pass &&
+    barXExactPass &&
+    !errors.length;
 
   console.log(
     "== W4 acceptance — port vs LOCAL PYTHON" +
@@ -329,6 +424,26 @@ async function main() {
   console.log(
     `  scale within ${SCALE_TOL}             ${mark(scalePass)}  ${scaleOk}/${sysN} systems ` +
       `(${pct(scaleOk, sysN).toFixed(2)}%, bar 99.50%)`
+  );
+
+  console.log("\n== W5 acceptance — barlines, port vs LOCAL PYTHON");
+  console.log(
+    `  bar count exact per row        ${mark(barCountPass)}  ${barCountOk}/${rowsN} rows ` +
+      `(${pct(barCountOk, rowsN).toFixed(2)}%, bar 99.00%)`
+  );
+  console.log(
+    `  bar x within 1 px              ${mark(barX1Pass)}  ${bars1px}/${barsN} bars ` +
+      `(${pct(bars1px, barsN).toFixed(2)}%, bar 99.90%)   [count-matching rows only]`
+  );
+  console.log(
+    `  bar x exact                    ${mark(barXExactPass)}  ${barsExact}/${barsN} bars ` +
+      `(${pct(barsExact, barsN).toFixed(2)}%, bar 95.00%)   worst Δ ${worstBar} px`
+  );
+
+  const rejectsOk = sum(results, (r) => r.rejectsOk);
+  console.log(
+    `  rejected candidates identical  ${rejectsOk}/${rowsN} rows ` +
+      `(${pct(rejectsOk, rowsN).toFixed(2)}%)   <- stricter than the bar list, reported not gated`
   );
 
   console.log("\n-- stronger checks, reported not gated (W4's bars only ask for count + scale)");
@@ -363,6 +478,19 @@ async function main() {
       `<- the ceiling any port could reach against the manifest`
   );
   console.log(`  port         == manifest       ${gotMan}/${el.length} (${pct(gotMan, el.length).toFixed(2)}%)`);
+  const manBarRows = sum(results, (r) => r.manifestBarRows);
+  if (manBarRows) {
+    const pyBarsMan = sum(results, (r) => r.pyBarsMatchManifest);
+    const gotBarsMan = sum(results, (r) => r.gotBarsMatchManifest);
+    console.log(
+      `  local python bars == manifest  ${pyBarsMan}/${manBarRows} rows ` +
+        `(${pct(pyBarsMan, manBarRows).toFixed(2)}%)  <- W5's ceiling against the manifest`
+    );
+    console.log(
+      `  port         bars == manifest  ${gotBarsMan}/${manBarRows} rows ` +
+        `(${pct(gotBarsMan, manBarRows).toFixed(2)}%)`
+    );
+  }
 
   const deskewed = results.filter((r) => r.skewRef !== 0).length;
   console.log(
@@ -378,7 +506,9 @@ async function main() {
       !r.skewOk ||
       r.scaleOk < r.systemsChecked ||
       r.linesOk < r.systemsChecked ||
-      r.geomOk < r.systemsChecked
+      r.geomOk < r.systemsChecked ||
+      r.barCountOk < r.systemsChecked ||
+      r.barsExact < r.barsN
   );
   if (bad.length) {
     console.log(`\n  pages differing from local python (${bad.length}):`);
@@ -388,9 +518,29 @@ async function main() {
           `  skew ${r.skewGot}/${r.skewRef}` +
           `  lines ${r.linesOk}/${r.systemsChecked}  geom ${r.geomOk}/${r.systemsChecked}` +
           `  scale ${r.scaleOk}/${r.systemsChecked}` +
-          (r.worstScaleDelta ? ` (worst Δ ${r.worstScaleDelta.toFixed(4)})` : "") +
+          `  barN ${r.barCountOk}/${r.systemsChecked}  barX ${r.barsExact}/${r.barsN}` +
+          (r.worstBarDelta ? ` (worst Δ ${r.worstBarDelta}px)` : "") +
+          (r.worstScaleDelta ? ` (worst scale Δ ${r.worstScaleDelta.toFixed(4)})` : "") +
           (r.error ? `  ERROR ${r.error}` : "")
       );
+    // W5's own worst-10 list — barline differences, ranked by how much they move, for the
+    // hand-inspection step against the `_debug.png` overlays already on disk.
+    const barBad = results
+      .filter((r) => r.barCountOk < r.systemsChecked || r.barsExact < r.barsN)
+      .sort(
+        (a, b) =>
+          b.systemsChecked - b.barCountOk - (a.systemsChecked - a.barCountOk) ||
+          b.worstBarDelta - a.worstBarDelta
+      );
+    if (barBad.length) {
+      console.log(`\n  worst barline pages (${barBad.length}) — inspect against their _debug.png:`);
+      for (const r of barBad.slice(0, 10))
+        console.log(
+          `    ${r.stem.slice(0, 50).padEnd(50)} rows w/ wrong bar count ` +
+            `${r.systemsChecked - r.barCountOk}/${r.systemsChecked}` +
+            `  bars off ${r.barsN - r.barsExact}/${r.barsN}  worst Δ ${r.worstBarDelta}px`
+        );
+    }
   }
 
   if (dumpFile) {
@@ -403,7 +553,10 @@ async function main() {
     console.log(`wrote ${jsonOut} (${results.length} pages)`);
   }
 
-  console.log(`\n== W4 ${pass ? "PASS" : "FAIL"}`);
+  console.log(
+    `\n== W4 ${staffPass && zeroPass && scalePass && !errors.length ? "PASS" : "FAIL"}` +
+      `   W5 ${barCountPass && barX1Pass && barXExactPass && !errors.length ? "PASS" : "FAIL"}`
+  );
   process.exit(pass ? 0 : 1);
 }
 

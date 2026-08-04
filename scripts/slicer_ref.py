@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from vision.page_to_strips import (  # noqa: E402
     VPLACE_ADAPTIVE,
     binarize_ink,
+    detect_barlines,
     detect_staves,
     load_gray,
     normalize_row,
@@ -96,7 +97,7 @@ def sample(items: list, n: int) -> list:
 
 
 def stage1(image: Path) -> dict:
-    """Everything page_to_strips() does before detect_barlines (L962-980)."""
+    """Everything page_to_strips() does before window_measures (L962-982)."""
     gray = load_gray(image)
     page, cropped, skew = prep_page(gray)
     ink = binarize_ink(page)
@@ -109,9 +110,16 @@ def stage1(image: Path) -> dict:
     out = []
     for si, st in enumerate(staves):
         row, scale, top_y = normalize_row(page, st, lab)
+        # W5's bar: detect_barlines' own output, with the rejected candidates the `_debug.png`
+        # overlay colour-codes. `debug_info` is collected here but costs nothing extra — the gates
+        # run either way, it only decides whether their verdicts are recorded.
+        dbg: dict = {}
+        bars = detect_barlines(row, st, scale, debug_info=dbg, top_y=top_y)
         out.append(
             {
                 "system": si,
+                "bars": [int(b) for b in bars],
+                "rejects": [[int(x), str(r)] for x, r in dbg.get("rejects", [])],
                 "lines": [int(y) for y in st.lines],
                 "x0": int(st.x0),
                 "x1": int(st.x1),
@@ -172,6 +180,13 @@ def main() -> None:
         rec["manifest_scales"] = {
             str(r["system"]): r["scale"] for r in sorted(rows, key=lambda r: r["system"])
         }
+        # `row_bars` rides on each row's w00 entry only. The weaker second reference for W5, same
+        # standing as `manifest_scales`: it is what the re-slice wrote, not what this code does.
+        rec["manifest_bars"] = {
+            str(r["system"]): [int(b) for b in r["row_bars"]]
+            for r in rows
+            if r.get("window") == 0 and "row_bars" in r
+        }
         out[stem] = rec
         if i % 10 == 0 or i == len(todo):
             outp.write_text(json.dumps(out, indent=1))
@@ -187,6 +202,22 @@ def main() -> None:
     )
     deskewed = sum(1 for r in out.values() if r["skew_deg"] != 0.0)
     print(f"pages deskewed: {deskewed}/{len(out)} ({100 * deskewed / max(1, len(out)):.1f}%)")
+
+    # the same ceiling disclosure for W5's bar lists: how far the manifests have drifted from what
+    # this code now produces. Only rows the manifest actually records a `row_bars` for are counted.
+    rows_n = rows_same = 0
+    for r in out.values():
+        for st in r["staves"]:
+            man = r.get("manifest_bars", {}).get(str(st["system"]))
+            if man is None:
+                continue
+            rows_n += 1
+            rows_same += man == st["bars"]
+    if rows_n:
+        print(
+            f"python-vs-MANIFEST bar list: {rows_same}/{rows_n} rows identical "
+            f"({100 * rows_same / rows_n:.2f}%) — the port's ceiling against the manifest, not 100%"
+        )
 
 
 if __name__ == "__main__":

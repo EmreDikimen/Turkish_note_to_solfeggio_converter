@@ -9,7 +9,7 @@
  * server never gets `data/real/` opened to it.
  */
 import { initCv, decodeGray } from "../omr/slicer/cvOps";
-import { sliceStage1 } from "../omr/slicer/slicer";
+import { sliceStage2 } from "../omr/slicer/slicer";
 import { staffBottom, staffSpacing, staffTop } from "../omr/slicer/staves";
 
 export interface HarnessSystem {
@@ -35,6 +35,10 @@ export interface HarnessSystem {
   belowSp: number;
   /** cheap regression signature over the normalized row's pixels */
   rowSum: number;
+  /** detect_barlines (W5) — measure boundaries in row coords, ends included */
+  bars: number[];
+  /** rejected candidates by reason, only when the caller asks for them */
+  rejects: Array<[number, string]> | null;
 }
 
 export interface HarnessPage {
@@ -48,11 +52,18 @@ export interface HarnessPage {
   ms: number;
 }
 
-async function stage1(pageDataUrl: string, skewDeg?: number): Promise<HarnessPage> {
+async function stage1(
+  pageDataUrl: string,
+  skewDeg?: number,
+  wantRejects = false
+): Promise<HarnessPage> {
   const t0 = performance.now();
   const gray = await decodeGray(pageDataUrl);
-  const res = sliceStage1(gray, skewDeg === undefined ? {} : { skewDeg });
-  const systems: HarnessSystem[] = res.rows.map(({ system, staff, normalized }) => {
+  const res = sliceStage2(gray, {
+    ...(skewDeg === undefined ? {} : { skewDeg }),
+    ...(wantRejects ? { rejects: true } : {}),
+  });
+  const systems: HarnessSystem[] = res.rows.map(({ system, staff, normalized, bars, rejects }) => {
     let rowSum = 0;
     const d = normalized.row.data;
     for (let i = 0; i < d.length; i++) rowSum += d[i]!;
@@ -76,6 +87,8 @@ async function stage1(pageDataUrl: string, skewDeg?: number): Promise<HarnessPag
       headSp: normalized.headSp,
       belowSp: normalized.belowSp,
       rowSum,
+      bars,
+      rejects,
     };
   });
   return {

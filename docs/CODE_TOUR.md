@@ -2,7 +2,7 @@
 
 purpose: a learning-oriented map of the codebase and the order to read it in
 audience: anyone new to the code, human or agent
-updated: 2026-07-30
+updated: 2026-08-04
 
 A learning-oriented map of the code. Every function also has a detailed comment at its top
 (what it does, why, how, what's important) — this file is the **reading order** and a

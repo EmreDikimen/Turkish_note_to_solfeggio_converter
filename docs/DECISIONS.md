@@ -2,7 +2,7 @@
 
 purpose: one line per decision so nobody re-opens a settled question or re-runs a cancelled experiment
 audience: agents and the owner, before proposing any change of direction
-updated: 2026-08-03
+updated: 2026-08-04
 
 Status values: **LOCKED** (stands), **OVERTURNED** (replaced by evidence), **DROPPED** (abandoned
 on purpose), **SUPERSEDED** (a later decision covers it). Reasoning for the abandoned ones is kept

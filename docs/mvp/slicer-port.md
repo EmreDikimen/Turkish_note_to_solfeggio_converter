@@ -2,7 +2,7 @@
 
 purpose: everything needed to transliterate `page_to_strips.py` into the browser, including the traps that were found the expensive way
 audience: whoever picks up rung W4, W5 or W6 of the MVP ladder
-updated: 2026-08-03
+updated: 2026-08-04
 
 > Track index and current rung state: [README.md](README.md). Project state: [../STATUS.md](../STATUS.md).
 > What the slicer does and why: [../PIPELINE.md](../PIPELINE.md) §1 and
@@ -171,14 +171,19 @@ Measured over the **whole corpus** (1,781 pages / 12,123 systems), not a sample:
 - ⚠ the corpus run used `--inject-skew`, so the **estimator** is validated on 132 pages (132/132),
   not the corpus
 
-**W5 — barlines**, against `row_bars` (present on every `w00` entry, for the whole row)
+**W5 — barlines**, against **local Python's** bar list — extend `slicer_ref.py` to record it, the
+same way it already records the staves. The manifest's `row_bars` (on every `w00` entry) is the
+weaker second reference, not the bar
 - bar **count** per row exactly equal on **≥99.0%** of rows — a count difference shifts every
   downstream window and measure index, so it gets no tolerance
 - among count-matching rows, per-bar `|Δx| ≤ 1 px` on **≥99.9%** and `== 0` on **≥95%**
   (1 px = 1/30 of a line space and cannot move a crop past a symbol)
 - hand-inspect the worst 10 mismatching pages against their `_debug.png`
+- W4 hands W5 a **bit-identical normalized row** on all 12,123 systems, so any barline difference
+  found is genuinely in `detect_barlines` and not inherited
 
-**W6 — windowing, driver, and the parity verdict**
+**W6 — windowing, driver, and the parity verdict** (again against local Python, with the manifest
+as the second reference)
 - strip count per page exact on **≥99.5%** of pages
 - `system`, `window`, `is_row_start`, `split_wide` exact; `row_x0`/`row_x1` within **2 px** on ≥99.9%
 - the width/measure invariants hold at the same **0** violations Python currently has

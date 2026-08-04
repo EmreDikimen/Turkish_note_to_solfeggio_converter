@@ -54,7 +54,7 @@ import re
 import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -72,6 +72,14 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # RESLICE-ALL (2026-07-31) — EVERY strip the 2026-07-29 re-slice decoded: 33,804 crops over
+    # 1,704 pages, 30,049 of them decoded on Colab. Built by scripts/rung3/build_reslice_queue.py;
+    # rows are ordered WORST-FIRST and seeded with the page cache's decode (`round2-stage2-best`
+    # int8), except the 392 val-side strips that carry a real emitted label. The verdict is against
+    # the PICTURE. The 165 hand-read realval-hard-v2 verdicts are carried in — same crops.
+    # This queue is LAZY-LOADED (see EAGER_MAX): at 16 MB of rows it is not shipped with /api/state.
+    # Images resolve under data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
+    "reslice-all": "data/real/rung3/_reslice_v2/reslice_all.csv",
     # REALVAL-HARD v2 (2026-07-29) — THE LIVE ONE. Rebuilt on the 2026-07-29 re-slice; rows are
     # ordered WORST-FIRST (least confident at the top), so the corrections come early and the run
     # can stop on the sampled check in docs/rung3/labeling.md. Strips were DROPPED by the emitter
@@ -130,7 +138,12 @@ IMG_ROOTS = ["data/real/strips",
 # that root is searched first. A queue must resolve against the crops it was actually built from.
 QUEUE_IMG_ROOTS = {
     "realval-hard-v2": ["data/real/strips_v2"],
+    "reslice-all": ["data/real/strips_v2"],
 }
+# Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
+# on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is
+# re-fetched every time the verdict log is opened.
+EAGER_MAX = 5000
 VERDICTS = {"", "ok", "fix", "bad"}
 
 
@@ -215,10 +228,16 @@ def build_full_audit(root: Path) -> None:
 
 
 def state(root: Path) -> dict:
+    """Queue list with counts. `rows` is present for the small queues and OMITTED for anything
+    over EAGER_MAX, which the client then pulls from /api/rows — `n`/`done` are always there so
+    the tabs and the progress bar read the same either way."""
     out = {"queues": [], "vocab": ADDED_TOKENS, "accidentals": sorted(ACCIDENTALS)}
     for qid in QUEUES:
         _, rows = load_queue(root, qid)
-        out["queues"].append({"id": qid, "rows": rows})
+        q = {"id": qid, "n": len(rows), "done": sum(1 for r in rows if r["verdict"])}
+        if len(rows) <= EAGER_MAX:
+            q["rows"] = rows
+        out["queues"].append(q)
     return out
 
 
@@ -240,11 +259,20 @@ class Handler(BaseHTTPRequestHandler):
         self._send(code, json.dumps(obj).encode(), "application/json")
 
     def do_GET(self):
-        path = unquote(self.path.split("?", 1)[0])
+        raw = self.path.split("?", 1)
+        path = unquote(raw[0])
+        query = raw[1] if len(raw) > 1 else ""
         if path == "/":
             self._send(200, PAGE.encode(), "text/html; charset=utf-8")
         elif path == "/api/state":
             self._json(state(self.root))
+        elif path == "/api/rows":
+            qid = unquote(parse_qs(query).get("queue", [""])[0])
+            if qid not in QUEUES:
+                self._json({"error": "unknown queue"}, 404)
+                return
+            _, rows = load_queue(self.root, qid)
+            self._json({"id": qid, "rows": rows})
         elif path == "/font":
             # Bravura (SMuFL) from the web app — the token reference shows real AEU glyphs
             font = self.root / "apps/web/public/fonts/Bravura.woff2"
@@ -582,7 +610,16 @@ function lint(txt){
 // queues that are TEST sets (label the truth, keep dense measures) vs TRAINING (≤59 promote gate)
 const TEST_QUEUES=new Set(['photo-gold']);
 
-function rows(){ return S.queues.find(q=>q.id===qid).rows; }
+function q(id){ return S.queues.find(x=>x.id===(id||qid)); }
+function rows(){ return q().rows||[]; }
+// Big queues (reslice-all) are not shipped with /api/state — pull them once, on first open.
+async function ensureRows(id){
+  const Q=q(id);
+  if(!Q||Q.rows)return;
+  $('pos').textContent='loading…';
+  const r=await(await fetch('/api/rows?queue='+encodeURIComponent(Q.id))).json();
+  Q.rows=r.rows||[];
+}
 function visible(){
   const re=$('freason').value, show=$('fshow').value;
   return rows().map((r,i)=>({r,i}))
@@ -592,15 +629,21 @@ function visible(){
         :show==='rule'?(x.r.by||'').startsWith('rule')
         :!!x.r.verdict)));
 }
-function counts(q){const d=q.rows.filter(r=>r.verdict).length;return[d,q.rows.length];}
+// counts come from the rows when they are loaded (so a verdict shows up at once) and from the
+// server's n/done when they are not — an unopened lazy queue still shows real progress.
+function counts(Q){
+  if(!Q.rows)return[Q.done||0,Q.n||0];
+  return[Q.rows.filter(r=>r.verdict).length,Q.rows.length];
+}
 
 function renderTabs(){
-  $('tabs').innerHTML=S.queues.map(q=>{
-    const[d,t]=counts(q);
-    return `<button class="tab${q.id===qid?' active':''}" data-q="${q.id}" ${t?'':'disabled'}>
-              ${q.id}<span class="n">${d}/${t}</span></button>`;
+  $('tabs').innerHTML=S.queues.map(Q=>{
+    const[d,t]=counts(Q);
+    return `<button class="tab${Q.id===qid?' active':''}" data-q="${Q.id}" ${t?'':'disabled'}>
+              ${Q.id}<span class="n">${d}/${t}</span></button>`;
   }).join('');
-  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{qid=b.dataset.q;idx=0;render();});
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=async()=>{
+    qid=b.dataset.q;idx=0;await ensureRows(qid);render();});
 }
 function renderFilter(){
   const rs=[...new Set(rows().map(r=>r.reason).filter(Boolean))].sort();
@@ -611,7 +654,7 @@ function renderFilter(){
 function render(){
   renderTabs();renderFilter();
   const vis=visible();
-  const[d,t]=counts(S.queues.find(q=>q.id===qid));
+  const[d,t]=counts(q());
   $('barfill').style.width=t?100*d/t+'%':'0';
   if(!vis.length){$('viewer').style.display='none';$('empty').style.display='block';
     $('pos').textContent=`${d}/${t} done`;return}
@@ -640,7 +683,8 @@ async function toggleLog(){
   logOpen=!logOpen;
   if(logOpen){ // prove it: reload verdicts from the CSVs on disk, not browser memory
     const s=await(await fetch('/api/state')).json();
-    S.queues=s.queues;
+    S.queues=s.queues;          // lazy queues come back without rows, so the active one is
+    await ensureRows(qid);      // re-pulled from disk too rather than kept from memory
   }
   renderLog();render();
 }
@@ -774,10 +818,12 @@ $('b-log').onclick=toggleLog;
 $('b-ref').onclick=()=>{const c=$('refcard');c.style.display=c.style.display==='none'?'block':'none'};
 $('edit').addEventListener('input',lintNow);
 
-fetch('/api/state').then(r=>r.json()).then(s=>{
+fetch('/api/state').then(r=>r.json()).then(async s=>{
   S=s;CMDS=[...s.vocab].filter(t=>t.startsWith('\\')).sort((a,b)=>b.length-a.length);
   ACC=new Set(s.accidentals);
-  qid=s.queues.find(q=>q.rows.length&&q.rows.some(r=>!r.verdict))?.id||s.queues[0].id;
+  const pend=s.queues.find(Q=>{const[d,t]=counts(Q);return t&&d<t;});
+  qid=(pend||s.queues[0]).id;
+  await ensureRows(qid);
   render();
 });
 </script></body></html>

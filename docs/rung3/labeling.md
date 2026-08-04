@@ -2,7 +2,7 @@
 
 purpose: how real pages get ground-truth labels without hand transcription
 audience: agents and the owner working the real-page track
-updated: 2026-07-30
+updated: 2026-07-31
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
@@ -83,6 +83,27 @@ reviewer does not need to.
 Run: `.venv-ml/bin/python scripts/rung3/review_ui.py` → queue **`realval-hard-v2`**. Images resolve
 from `data/real/strips_v2/<page>/<strip>`. Progress and the target mix:
 `build_realval_v2.py --report`.
+
+## The `reslice-all` queue (2026-07-31) — every strip the re-slice decoded, in one place
+
+**What it is.** One queue over **all 33,804 crops / 1,704 pages** in `data/real/strips_v2` (30,049
+decoded on Colab), so any strip in the re-slice can be pulled up instead of only the 165-row
+hard-tier sample. `scripts/rung3/build_reslice_queue.py` builds it **worst-first** (`--order page`
+groups by page instead); re-running merges the verdicts already there and carries the 165 hand-read
+`realval-hard-v2` rows across — same crops, same slicer.
+
+**What a row means.** 392 rows carry a real emitted label from the val-side emit (`strips_v2emit`);
+the other 33,412 are seeded with the page cache's decode, so `ok` means "I looked at the picture
+and the decode is right" — the `photo-gold` contract. `reason` carries the emit's own verdict where
+there is one (`accepted`, `row_unaligned`, `split_wide`, …) and is the filter to narrow with.
+
+⚠ **Nothing but `strips_v2emit` is joined in** — every other pool was emitted from the OLD crops
+under `data/real/strips`, and a filename survives a re-slice while its pixels do not. ⚠ **It is a
+browsing tool, not a labelling target** — 33,804 hand checks is not a plan, nothing consumes it
+yet, and promoting from it needs the same rules as any other queue.
+
+Run: `review_ui.py` → queue **`reslice-all`** (the default tab); its rows load on first open, too
+big (16 MB) to ship with every `/api/state`.
 
 ## Step 1 — Free labels from SymbTr matches
 

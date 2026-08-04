@@ -9,6 +9,67 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-04 — W5: barlines ported; the trap list paid for itself, and a free check earned its keep
+
+**The riskiest file in the slicer reproduces Python over the whole corpus, on the first run.**
+`apps/web/src/omr/slicer/barlines.ts` transliterates `_longest_vertical_run`, `_is_thin_stroke`,
+`_cluster_cols`, `_terminal_overshoot`, `detect_barlines` and `_has_notehead`; `sliceStage2` adds
+them to the driver. Against local Python on **1,781 pages / 12,123 rows / 51,019 bars**: bar count
+exact **12,121/12,123 (99.98%)**, positions within 1 px **51,018/51,019 (100.00%)**, exact
+**51,013/51,019 (99.99%)** — all three W5 bars, on the corpus rather than a sample. Numbers:
+[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+
+**Why it passed first time is the interesting part, and it is not luck.** W4 left
+[../mvp/slicer-port.md](../mvp/slicer-port.md) a named list of hazards in this specific file, and
+they were transliterated as written instead of rediscovered: `_is_thin_stroke`'s staff-row
+`continue` that does **not** reset the run, `_terminal_overshoot`'s four state variables with four
+different reset rules, and the three per-ROW `binarize_ink` calls that must not be hoisted into one
+Otsu. **Trap 1 was checked rather than trusted** — `30 * 0.35` and `30 * 0.75` really are exactly
+10.5 and 22.5 in IEEE doubles, so `Math.round` returns 11 and 23 where Python's half-to-even returns
+10 and 22. That is `tol` (gate 1's slack) and `fat_w` (gate 2's width): a naive port silently
+retunes both gates and every measure boundary under them, and it would still have *looked* fine.
+
+**Every difference was diagnosed rather than tolerated, and none is the port.** All 8 differing rows
+reproduce inside Python under the ±1 grayscale residue: feed it `cvtColor` on the colour read
+instead of `imread(IMREAD_GRAYSCALE)` — the two disagree on 3.8–9.5% of these pages' pixels — and
+Python emits **the port's exact bar list and reject list**. Three shapes:
+
+- **2 rows differ in bar COUNT, one in each direction.** Both are `_terminal_overshoot` near-ties
+  (`birgunbana…_p1` s1, where the port rejects a candidate Python keeps; `kurdilihicazkar…_p2` s2,
+  the reverse). The symmetry is the argument: a real bug in that walk would flip one way across many
+  rows, not 2 rows out of 12,123 in opposite directions.
+- **The one 2 px difference is inherited, not new.** `sayd_eyledi…_nota_p1` s5 is the page W4
+  already recorded as having `x0` off by 1 (157 vs 158). `detect_barlines` snaps the first bar to
+  `int(staff.x0 * scale)` and that row's scale is exactly 2.0, so 1 page px becomes 2 row px. No
+  gate moved.
+- **On all 6 rows where a position moved, the reject lists are identical.** No gate disagreed at all.
+
+**The free extra check earned its keep, which is the transferable lesson.** Recording
+`detect_barlines`' *rejected* candidates costs nothing — the gates run either way, `debug_info` only
+decides whether their verdicts are kept — and it is strictly stronger than the bar list. It found
+**9 further rows that produce identical bars while disagreeing about what was thrown out**: 6 where
+a rejected candidate's x moves by 1, 2 where a candidate is generated on one side only (it fails
+gate 1 rather than being rejected later), and **1 where the same column is rejected for a different
+REASON** — `huseyni_saz_semai_rasid_efendi_neyzen_baba_p1` s7 col 956, `gate2_fat` in Python against
+`gate3_blob` in the port. Rejected either way, so no output check could ever see it, but it means
+two independent gates both sit near their thresholds on that column. Worth having on record before
+W6 changes anything upstream.
+
+**Two non-claims, stated rather than glossed.** The corpus run used `--inject-skew`, so like W4 it
+validates everything downstream of the deskew estimator and not the estimator. And **`hasNotehead`
+is ported but exercised by nothing measured here** — its only caller is `window_measures`, so W6
+owns it.
+
+**The manifests stayed the weaker reference and again sat below the bar.** Current Python reproduces
+only **11,689/12,099 (96.61%)** of the manifests' `row_bars`; the port reaches 96.55%, 8 rows below,
+and those are the same 8 residue rows. Scored against the manifests the port would have read 96.55%
+against a 99% bar and looked like a failure — the same trap W4 fell into and documented.
+
+Also: `scripts/slicer_ref.py` now records bars and rejects beside the staves and prints the
+manifest-bar ceiling; `slicer-parity.ts` gates the three W5 bars, prints the reject-list agreement
+and ranks the worst barline pages. Verification: `npm run typecheck`, `npm test` (217/217 both
+modes) and `npm run gate:browser` (27/28, unchanged) all clean.
+
 ## 2026-08-04 — W4: the slicer's first half is ported, and two planning assumptions died
 
 **The port reproduces Python's stage 1 exactly, over the whole corpus.** `apps/web/src/omr/slicer/`

@@ -11,6 +11,63 @@ cap. The split is by genre: that file keeps **what the Python page-cutter does**
 How to reproduce any number here — and ⚠ why the control is local Python rather than the manifests
 on disk — is [mvp/slicer-port.md](mvp/slicer-port.md). Rung state: [mvp/README.md](mvp/README.md).
 
+## Barlines reproduce too (2026-08-04, MVP W5)
+
+Port vs **local Python** over the same **whole corpus — 1,781 pages / 12,123 rows / 51,019 bars**.
+
+| check | full corpus | W5 bar |
+|---|---|---|
+| bar **count** exact per row | **12,121/12,123 rows (99.98%)** | ≥99.0% |
+| bar x within 1 px | **51,018/51,019 (100.00%)** | ≥99.9% |
+| bar x exact | **51,013/51,019 (99.99%)** | ≥95% |
+| **rejected candidates identical, reason for reason** | **12,112/12,123 rows (99.91%)** | not gated |
+
+**All 8 differing rows are the ±1 grayscale residue, and every one was reproduced inside Python.**
+Feeding Python its own *other* grayscale path (`cvtColor` on `imread` colour instead of
+`imread(IMREAD_GRAYSCALE)` — the two disagree by ±1 on 3.8–9.5% of these pages' pixels) makes Python
+emit **exactly the port's answer**, bar list *and* reject list. The same sensitivity test W0 used to
+settle grayscale in the first place:
+
+- **2 rows differ in bar COUNT, one in each direction** — `birgunbanageleceksinyillardansonrapdf…_p1`
+  s1 (the port rejects candidate 2532 as `gate3_blob`, Python keeps it) and
+  `kurdilihicazkar_saz_semai_haydar_tatliyay_kemani_no2_p2` s2 (Python rejects 1537, the port keeps
+  it). Both are `_terminal_overshoot` near-ties, and Python flips to the port's verdict — including
+  the identical reject list — under the perturbation. **A port bug in that walk would flip one way
+  consistently across many rows; these are 2 rows out of 12,123, symmetric.**
+- **The single 2 px difference is W4's `x0` residue, not a barline problem.**
+  `sayd_eyledi_bu_gonlumu_bir_gozleri_ahu_nota_p1` s5 is the page W4 already recorded as having `x0`
+  off by 1 (157 vs 158). `detect_barlines` snaps the row's first bar to `int(staff.x0 * scale)`, and
+  that row's scale is exactly 2.0 — so 1 page px becomes 2 row px. Nothing in the gates moved.
+- **On all 6 rows where a bar POSITION moved, the reject lists are identical** — no gate disagreed
+  on any of them; these are cluster-centre moves, 4 of the 6 with nothing rejected at all.
+
+### The reject-list check found 9 more rows the bar list cannot see
+
+Recording the rejected candidates was a free extra, and it earns its keep: **9 rows produce
+identical bars while disagreeing about which candidates were thrown out**, on top of the 2 that
+disagree on both. None is a new failure mode, and all three shapes are ±1 effects:
+
+- **6 rows: a rejected candidate's x moves by 1** (e.g. `seddiaraban_saz_semai_cemil_bey_tanburi_p1`
+  s1, `1147` vs `1148`) — same candidate, same reason.
+- **2 rows: a candidate is generated on one side only** (`var_mi_cana_derd_i_askin_caresi_nota_p1`
+  s5 loses `1872`), i.e. it fails gate 1 rather than being rejected later. Bars unaffected.
+- **1 row: the same candidate is rejected for a different REASON** —
+  `huseyni_saz_semai_rasid_efendi_neyzen_baba_p1` s7 col 956, `gate2_fat` in Python against
+  `gate3_blob` in the port. Rejected either way, so the bar list never sees it. ⚠ This is the one
+  worth remembering: a reason swap means two independent gates both sit near their thresholds on
+  that column, and only this check can see it.
+
+⚠ **Same scope note as W4: the corpus run used `--inject-skew`**, so it validates everything
+downstream of the deskew estimator, not the estimator.
+
+⚠ **Non-claim: `hasNotehead` is ported but NOT exercised by W5.** Its only caller is
+`window_measures`, so nothing here measures it. W6 covers it.
+
+**The manifests are the weaker reference here too, and again below the bar.** Current Python
+reproduces only **11,689/12,099 (96.61%)** of the manifests' `row_bars`; the port reaches
+**11,681/12,099 (96.55%)**, 8 rows below — the same 8 residue rows. A port scored against the
+manifests would read 96.55% against a 99% bar and look like a failure.
+
 ## The TypeScript port reproduces stage 1 exactly (2026-08-04, MVP W4)
 
 Port vs **local Python** over the **whole corpus — 1,781 pages / 12,123 systems**. Reference built

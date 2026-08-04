@@ -57,8 +57,8 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W2** | Strips → editor end to end (no slicer); produces the W3 control arm | ✅ **DONE 2026-08-02** — see below |
 | **W3** | Parity harness, the arm-B **ceiling**, and browser-vs-gold quality | ✅ **DONE 2026-08-03** — see below |
 | **W4** | Slicer: staves + row normalization | ✅ **DONE 2026-08-04** — see below |
-| **W5** | Slicer: barlines (the riskiest file) | **next** — [slicer-port.md](slicer-port.md) |
-| **W6** | Slicer: windowing + driver; **paired** parity vs arm B | [slicer-port.md](slicer-port.md) |
+| **W5** | Slicer: barlines (the riskiest file) | ✅ **DONE 2026-08-04** — see below |
+| **W6** | Slicer: windowing + driver; **paired** parity vs arm B | **next** — [slicer-port.md](slicer-port.md) |
 | **W7** | Upload a page in the app | — |
 | **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | — |
 | **W9** | Model delivery (HF + Cache API) and hosting | — |
@@ -305,6 +305,38 @@ below W4's own bar — because 1,578 of the 1,781 page dirs were sliced on Colab
 now builds a local-Python reference that is both the control and the sample definition; the port
 reaches the manifest ceiling exactly, 1,680/1,704 on the same pages as Python. **Same lesson W3 already
 recorded about arm-B agreement: agreement with an artifact is not correctness.**
+
+## W5 — barlines ✅ DONE (2026-08-04)
+
+**The riskiest file in the slicer reproduces Python over the whole corpus** — 1,781 pages / 12,123
+rows / 51,019 bars. Bar **count** exact on **12,121/12,123 rows (99.98%)**, positions within 1 px on
+**51,018/51,019 (100.00%)** and exact on **51,013/51,019 (99.99%)**. Numbers:
+[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+
+**It passed on the first run, and the reason is the trap list.** The three hazards
+[slicer-port.md](slicer-port.md) named the expensive way — `_is_thin_stroke`'s staff-row `continue`
+that does *not* reset the run, `_terminal_overshoot`'s four-variable walk, and the per-ROW
+`binarize_ink` calls that must not be hoisted — were transliterated as written rather than
+rediscovered. **Trap 1 was confirmed empirically rather than trusted:** `30 * 0.35` and `30 * 0.75`
+really are exactly 10.5 and 22.5 in IEEE doubles, so `Math.round` would have returned 11 and 22.5→23
+where Python returns 10 and 22, silently retuning gates 1 and 2. `pyRound` returns Python's values.
+
+**Every difference was diagnosed, not tolerated.** All 8 differing rows are the ±1 grayscale
+residue: feeding Python its own *other* grayscale path makes Python emit the port's exact bar list
+**and reject list**. The 2 rows whose bar count differs are `_terminal_overshoot` near-ties that
+flip **one in each direction** — a genuine port bug in that walk would flip one way across many
+rows. The single 2 px difference is W4's already-recorded `x0` residue multiplied through
+`int(staff.x0 * scale)` at scale 2.0.
+
+**A free extra check earned its keep.** Recording `detect_barlines`' *rejected* candidates costs
+nothing (the gates run either way) and is stricter than the bar list: it found **9 further rows that
+produce identical bars while disagreeing about what was thrown out**, including one column rejected
+as `gate2_fat` by Python and `gate3_blob` by the port. Rejected either way, so the bar list can
+never see it — but it means two independent gates sit near their thresholds on that column.
+
+⚠ **Two non-claims.** The corpus run used `--inject-skew`, so it validates everything downstream of
+the deskew estimator and not the estimator (unchanged from W4). And `hasNotehead` is ported but
+**not exercised by anything W5 measures** — its only caller is `window_measures`, so W6 owns it.
 
 ## What W0 built that is not throwaway
 

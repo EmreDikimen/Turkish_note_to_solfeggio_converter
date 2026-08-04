@@ -17,7 +17,25 @@ model stays `round2-stage2-best` int8 throughout. Track, ladder and running stat
 - **The gap is smaller than it looked.** Decode, Donut preprocessing, detokenization, stitching, the
   editor and playback all already work in the browser — the helpers in `apps/web/src/omrGate.ts`
   were just never exported, and `tools/render/stitch.ts` has no node imports. **The one genuinely
-  missing piece is a TypeScript page→strips slicer**, and its first half now exists.
+  missing piece is a TypeScript page→strips slicer**, and only its last stage (windowing) is left.
+- **✅ W5 PASSED (2026-08-04): the riskiest file is ported — barlines reproduce Python over the
+  WHOLE CORPUS.** 1,781 pages / 12,123 rows / **51,019 bars**: bar count exact on **12,121/12,123
+  rows (99.98%)**, positions within 1 px on **51,018/51,019 (100.00%)**, exact on **51,013/51,019
+  (99.99%)**. It passed on the first run because the trap list was followed rather than
+  rediscovered — and **Trap 1 was confirmed empirically**: `30*0.35` and `30*0.75` really are exactly
+  10.5 and 22.5, where `Math.round` gives 11/23 against Python's 10/22 and would have retuned gates
+  1 and 2.
+  **All 8 differing rows were reproduced inside Python**, by feeding it its own other grayscale
+  path — it then emits the port's exact bar *and* reject list. The 2 rows whose bar *count* differs
+  are `_terminal_overshoot` near-ties flipping **one in each direction**; a real bug in that walk
+  would flip one way across many rows. The single 2 px case is W4's own `x0` residue multiplied
+  through `int(staff.x0 * scale)` at scale 2.0.
+  A free extra — recording the *rejected* candidates — is stricter than the bar list and found **9
+  more rows that agree on bars while disagreeing on what was thrown out**, one of them a column
+  rejected as `gate2_fat` by Python and `gate3_blob` by the port.
+  ⚠ Two non-claims: the corpus run used `--inject-skew` (so the deskew *estimator* is still only
+  validated on 132 pages), and **`hasNotehead` is ported but exercised by nothing here** — its only
+  caller is `window_measures`, so W6 owns it.
 - **✅ W4 PASSED (2026-08-04): the slicer's staff detection and row normalization are ported and
   reproduce Python exactly, over the WHOLE CORPUS** — 1,781 pages / 12,123 systems, not a sample.
   Staff count **1,704/1,704**, manifest-zero pages **77/77**, `scale` **12,122/12,122**; row width
@@ -242,21 +260,20 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 **The MVP ladder is the live work. Everything under "after the release" is paused, not cancelled.**
 Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
 
-1. **W5 — slicer stage 2: barlines**, the riskiest file. **Read
-   [mvp/slicer-port.md](mvp/slicer-port.md) before starting** — function map, acceptance
-   thresholds, and the traps (chief among them: `pyRound()` half-to-even at every rounding site,
-   because `30*0.35` and `30*0.75` are exactly 10.5 and 22.5, where `Math.round` silently retunes
-   two barline gates; and `_terminal_overshoot`'s four-variable inner walk). Score against
-   `scripts/slicer_ref.py`, **not** the manifests. The `_debug.png` overlays already on disk
-   colour-code every rejected candidate by reason — use them before theorising.
-2. **W6 — windowing + the driver.** Compares arm A against arm B **pairwise on the same strips**,
-   not against the 86.0% level.
-3. **W7–W10** — page upload in the app, the W8 confidence decision above, model delivery from HF
+1. **W6 — windowing + the driver**, the last stage of the slicer. **Read
+   [mvp/slicer-port.md](mvp/slicer-port.md) before starting** — function map, acceptance thresholds
+   and the traps (`_split_wide`'s `sorted(set(cuts))` collapsing two targets onto one gutter, which
+   the escalation loop depends on; Python's `min(near)` comparing *tuples*, so JS needs an explicit
+   two-key comparator; and L818-822 using the loop variable **after** the loop, which Python leaks
+   and JS will not). Score against `scripts/slicer_ref.py`, **not** the manifests, and compare arm A
+   against arm B **pairwise on the same strips** — not against the 86.0% level.
+   ⚠ It also owns **`hasNotehead`**, which W5 ported but nothing yet exercises.
+2. **W7–W10** — page upload in the app, the W8 confidence decision above, model delivery from HF
    Hub, release. ⚠ W7 inherits the **~36 s/page** slicer latency, ~35 s of it the deskew sweep, on
    top of the ~1.1 s/strip decode.
-4. **Owed from W4, small:** the deskew *estimator* is validated on 132 pages, not the corpus — the
-   full run injects Python's angle. Closing it costs ~18 h of browser time, so it is only worth
-   doing if W5/W6 turn up a skew-related difference.
+3. **Owed from W4, small:** the deskew *estimator* is validated on 132 pages, not the corpus — the
+   full runs inject Python's angle. W5 turned up no skew-related difference, so this stays worth
+   doing only if W6 does. Closing it costs ~18 h of browser time.
 
 ### After the release (the real-page track, paused)
 

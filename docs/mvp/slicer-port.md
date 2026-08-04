@@ -171,16 +171,23 @@ Measured over the **whole corpus** (1,781 pages / 12,123 systems), not a sample:
 - ⚠ the corpus run used `--inject-skew`, so the **estimator** is validated on 132 pages (132/132),
   not the corpus
 
-**W5 — barlines**, against **local Python's** bar list — extend `slicer_ref.py` to record it, the
-same way it already records the staves. The manifest's `row_bars` (on every `w00` entry) is the
-weaker second reference, not the bar
-- bar **count** per row exactly equal on **≥99.0%** of rows — a count difference shifts every
-  downstream window and measure index, so it gets no tolerance
-- among count-matching rows, per-bar `|Δx| ≤ 1 px` on **≥99.9%** and `== 0` on **≥95%**
-  (1 px = 1/30 of a line space and cannot move a crop past a symbol)
-- hand-inspect the worst 10 mismatching pages against their `_debug.png`
-- W4 hands W5 a **bit-identical normalized row** on all 12,123 systems, so any barline difference
-  found is genuinely in `detect_barlines` and not inherited
+**W5 — barlines** ✅ **PASSED**; numbers in [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+Measured over the **whole corpus** (1,781 pages / 12,123 rows / 51,019 bars), against **local
+Python's** bar list — `slicer_ref.py` now records it (and the reject list) beside the staves. The
+manifest's `row_bars` is the weaker second reference and sits at 96.61% for Python itself
+- bar **count** per row exactly equal on **≥99.0%** of rows — got **12,121/12,123 (99.98%)**. A count
+  difference shifts every downstream window and measure index, so it gets no tolerance
+- among count-matching rows, per-bar `|Δx| ≤ 1 px` on **≥99.9%** — got **51,018/51,019 (100.00%)** —
+  and `== 0` on **≥95%** — got **51,013/51,019 (99.99%)**
+- free extra: **rejected candidates identical, reason for reason, on 12,112/12,123 rows (99.91%)**.
+  Stricter than the bar list and worth keeping — it is the only check that can see two gates both
+  sitting near their thresholds on the same column
+- the hand-inspection step was replaced by something stronger: **every one of the 8 differing rows
+  was reproduced inside Python** by feeding it its own other grayscale path, which returns the
+  port's exact bar *and* reject list. Diagnosis beats eyeballing an overlay
+- W4 handed W5 a **bit-identical normalized row** on all 12,123 systems, so every difference found
+  is genuinely in `detect_barlines` and not inherited
+- ⚠ `hasNotehead` is ported but **not exercised** — its only caller is `window_measures`. W6 covers it
 
 **W6 — windowing, driver, and the parity verdict** (again against local Python, with the manifest
 as the second reference)

@@ -2,13 +2,14 @@
 
 purpose: the plan and running state of the W0–W10 ladder that turns the frozen model into a link someone can open
 audience: agents and the owner working the product side (not the training side)
-updated: 2026-08-02
+updated: 2026-08-04
 
 > **Picking up W4–W6 (the slicer port)? Read [slicer-port.md](slicer-port.md) first** — it carries
 > the function map, the acceptance thresholds and the traps that were found the expensive way.
 >
 > Current state and next action for the WHOLE project are NOT here: see [../STATUS.md](../STATUS.md).
-> Numbers: [../METRICS.md](../METRICS.md) and [../METRICS-SLICER.md](../METRICS-SLICER.md).
+> Numbers: [../METRICS.md](../METRICS.md), [../METRICS-SLICER.md](../METRICS-SLICER.md) and
+> [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Pipeline design: [../PIPELINE.md](../PIPELINE.md).
 
 ## Why this track exists
@@ -33,7 +34,7 @@ in `src/vision/page_to_strips.py` (1,077 lines of numpy/OpenCV) and has no TypeS
 | Decision | Why |
 |---|---|
 | Slicer ported with **opencv.js**, not hand-rolled | Parity over bundle size; 13 MB is noise beside 211 MB of weights. Validated at W0. |
-| **Screenshots and clean scans only** | The photo front-end is a documented no-op on clean input, and real uploads are mostly web screenshots. Cuts the hardest third of the port. |
+| **Screenshots and clean scans only** | Real uploads are mostly web screenshots. Cuts the hardest third of the port. ⚠ The stated reason — "the photo front-end is a no-op on clean input" — held for the perspective crop and **failed for the deskew** (W4): 15.3% of corpus pages take a real rotation, so it is ported. |
 | Weights on **Hugging Face Hub**, app on a COOP/COEP-capable static host | HF is built for large files; Cloudflare Pages caps files at 25 MB, so the 90 MB encoder cannot live there. |
 | **Confidence highlighting is in the MVP** | It is half of the stated goal, and per-strip logprobs are nearly free. |
 
@@ -55,8 +56,8 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W1** | Decode module extracted from `omrGate.ts`, logprobs added, gate still 27/28 | ✅ **DONE 2026-08-02** — see below |
 | **W2** | Strips → editor end to end (no slicer); produces the W3 control arm | ✅ **DONE 2026-08-02** — see below |
 | **W3** | Parity harness, the arm-B **ceiling**, and browser-vs-gold quality | ✅ **DONE 2026-08-03** — see below |
-| **W4** | Slicer: staves + row normalization | **next** — [slicer-port.md](slicer-port.md) |
-| **W5** | Slicer: barlines (the riskiest file) | [slicer-port.md](slicer-port.md) |
+| **W4** | Slicer: staves + row normalization | ✅ **DONE 2026-08-04** — see below |
+| **W5** | Slicer: barlines (the riskiest file) | **next** — [slicer-port.md](slicer-port.md) |
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | [slicer-port.md](slicer-port.md) |
 | **W7** | Upload a page in the app | — |
 | **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | — |
@@ -268,6 +269,43 @@ feature. ⚠ Note also that the −1.0 line was validated as a **bad-crop proxy 
 queue**, a different job from locating a user's errors — and W2 found it does not even fire on a
 blank crop (those score ≈ −0.84).
 
+## W4 — staves + row normalization ✅ DONE (2026-08-04)
+
+**The port reproduces Python's stage 1 exactly, over the whole corpus** — 1,781 pages / 12,123
+systems, not a sample. Staff count **1,704/1,704**, manifest-zero pages **77/77**, `scale`
+**12,122/12,122**; normalized row width and the outer-lines+spacing triple both **12,123/12,123**.
+Numbers: [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+
+**Everything that differs anywhere is the ±1 grayscale residue, and none of it reaches a crop.**
+Seven systems differ by 1 px — six an *interior* staff line's cluster centre, one an `x0` — and
+`normalize_row` reads only the outer lines and the median spacing, which are identical on all
+12,123. This is the first time the residue W0 predicted has been observed reaching any output.
+
+⚠ **Two scope notes on the corpus run.** It used `--inject-skew`, so its deskew-angle column is
+trivially true; the estimator's real number is **132/132** from the un-injected 132-page run. And
+the "zero-staff pages yield zero staves" bar was **restated against the control**: those pages are
+identified by an empty manifest, local Python now finds a staff on 1 of the 77, and the port finds
+the same one — the original wording failed a port that agreed with Python exactly.
+
+### Two things the plan had wrong, both found by measuring
+
+**1. `prepPage` could not be the planned no-op.** [slicer-port.md](slicer-port.md) recorded that the
+whole camera path is inert on clean input. True of the perspective crop (**0%** of pages take one),
+false of the deskew: **15.3% (272/1,781) take a real rotation**. Skipping it took one page from 10
+staves to **0**, and 22 of the 23 pages failing the first parity run were exactly the 23 deskewed
+ones. `estimate_skew`/`deskew` are now ported in full, guards and all, so an axis-aligned
+screenshot still passes through untouched. ⚠ **It costs ~35 s of the ~36 s a page takes in the
+browser** (41 rotations, each with a page-wide `MORPH_OPEN`) against ~1.9 s for Python's whole stage
+1 — a **W7** problem, since a screenshot pays the full sweep to learn it has no skew.
+
+**2. The manifests on disk cannot be the acceptance bar.** Scored against them the port read
+**86.7%**, and one page it failed matched local Python line for line (7 staves against the
+manifest's 5). The current `page_to_strips.py` reproduces only **1,680/1,704 (98.59%)** of those manifests —
+below W4's own bar — because 1,578 of the 1,781 page dirs were sliced on Colab. `scripts/slicer_ref.py`
+now builds a local-Python reference that is both the control and the sample definition; the port
+reaches the manifest ceiling exactly, 1,680/1,704 on the same pages as Python. **Same lesson W3 already
+recorded about arm-B agreement: agreement with an artifact is not correctness.**
+
 ## What W0 built that is not throwaway
 
 `tools/browser/run-page.ts` — runs any harness page in headless Chromium and asserts on it.
@@ -299,7 +337,9 @@ The probe itself (`apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts`,
 | `tools/vision/parity/edge-cases.ts` | non-strip images must not throw |
 | `tools/browser/app-smoke.ts` | the real app: strips in → playable score out |
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
-| `tools/vision/parity/parity-cli.ts` | slicer parity harness (W3–W6) |
+| `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
+| `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |
+| `tools/vision/parity/slicer-parity.ts` | slicer parity harness, `npm run parity:slicer` (W4–W6) |
 
 ## Verification gates
 
@@ -312,5 +352,6 @@ The probe itself (`apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts`,
 | Confidence signal transfers | `npm run check:logprobs` |
 | App: strips in → playable score out | `npm run smoke:app` |
 | Non-strip images don't throw | `npm run check:edge` |
-| Arm-B ceiling / (W6) slicer parity | `npm run parity:armb -- --pages 20` |
+| Arm-B ceiling / (W6) decode arm comparison | `npm run parity:armb -- --pages 20` |
+| Slicer port vs local Python | `scripts/slicer_ref.py --pages 120 --out ref.json` then `npm run parity:slicer -- --ref ref.json` |
 | Browser quality vs Python, against gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --out b.json` then `scripts/score_browser_gold.py --browser b.json` |

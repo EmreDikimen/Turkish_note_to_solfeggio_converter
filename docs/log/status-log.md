@@ -2,12 +2,70 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-02
+updated: 2026-08-04
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+## 2026-08-04 — W4: the slicer's first half is ported, and two planning assumptions died
+
+**The port reproduces Python's stage 1 exactly, over the whole corpus.** `apps/web/src/omr/slicer/`
+now holds `constants.ts` (every constant with its Python line, plus `pyRound`), `cvOps.ts` (the only
+opencv.js importer), `prepPage.ts`, `staves.ts`, `rows.ts` and `slicer.ts`. Against local Python on
+**1,781 pages / 12,123 systems**: staff count 1,704/1,704, manifest-zero pages 77/77, `scale`
+12,122/12,122 — all three W4 bars, on the corpus rather than a sample. Row width and the
+outer-lines+median-spacing triple are both 12,123/12,123.
+
+**Everything that differs anywhere is the ±1 grayscale residue, and none of it reaches a crop.**
+Seven systems differ by 1 px — six an *interior* staff line's cluster centre, one an `x0` — and
+`normalize_row` reads only the outer lines and the median spacing, which are identical on all
+12,123 systems. W0 predicted this residue and its fixture was too clean to show it; this is the
+first time it has been observed reaching any output. Numbers:
+[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+
+Two scope notes recorded rather than glossed. The corpus run used `--inject-skew` (Python's angle
+fed in) to stay affordable, so the **estimator** is validated on 132 pages, 132/132, not the corpus.
+And the "zero-staff pages yield zero staves" bar was **restated against the control**: those pages
+are identified by an empty manifest, local Python now finds a staff on 1 of the 77, and the port
+finds the same one — the original wording failed a port that agreed with Python exactly.
+
+**The interesting part is what the plan had wrong.** Both errors were in the *plan*, both were
+found by measuring, and neither was visible by reading the code:
+
+**1. `prepPage` could not be a no-op.** [../mvp/slicer-port.md](../mvp/slicer-port.md) recorded that
+every step of the camera path is inert on clean input, so the port started with a stub. It is true
+of the perspective crop (0% of pages take one) and false of the deskew: **15.3% of corpus pages
+(272/1,781) take a real rotation**, 17.4% on the first sample where the angles ran 0.3–1.1°. The first parity run read 86.7%, with three pages finding *zero*
+staves where Python found 7–10; joining the failures against Python's own skew angles showed **22
+of the 23 failures were exactly the 23 deskewed pages**. `estimate_skew`/`deskew` are now ported in
+full, both guards intact, so an axis-aligned screenshot is still untouched. The lesson is the one
+this project keeps re-learning: "documented no-op" was a claim about *code paths*, and the corpus
+is what decides whether it holds.
+
+⚠ It costs **~35 s of the ~36 s** a page takes in the browser — 41 rotations, each with a page-wide
+`MORPH_OPEN` — against ~1.9 s for Python's whole stage 1. That is a **W7** problem (a screenshot
+pays the whole sweep to learn it has no skew) and it is deliberately NOT optimised inside the port,
+because a faster estimator is a behaviour change and needs its own measurement. `--inject-skew`
+exists so full-corpus runs of everything downstream stay affordable.
+
+**2. The manifests on disk cannot be the acceptance bar, and using them failed a correct port.**
+W4's stated acceptance was "against the 1,781 manifests". One page the port failed —
+`gozumden_gonlumden_hayali_gitmez_nota_p1`, 7 staves against the manifest's 5 — turned out to match
+local Python **line for line**: every line y, x0, x1, spacing. Measured properly, the current
+`page_to_strips.py` reproduces only **1,680/1,704 (98.59%)** of those manifests, already below W4's
+own 99.5% bar; 1,578 of the 1,781 page dirs were sliced on Colab and the artifact has drifted from the code.
+
+`scripts/slicer_ref.py` now dumps Python's stage 1 and is both the control arm and the *sample
+definition* — `slicer-parity.ts --ref` runs exactly the pages in it, so the two sides cannot drift
+apart on which pages they ran. Manifest agreement is still printed as the weaker second reference,
+and the port reaches that ceiling exactly (1,680/1,704, the same pages as Python). This is the same
+mistake W3 caught one rung earlier in a different costume: **agreement with an artifact is not
+correctness**, whether the artifact is another decoder's tokens or a manifest on disk.
+
+⚠ **Owed, small:** the deskew estimator is validated on 132 pages, not the corpus. Closing that
+costs ~18 h of browser time, so it is only worth doing if W5/W6 turn up a skew-related difference.
 
 ## 2026-08-03 — W3: the browser is not worse than Python; the confidence bar is not met
 

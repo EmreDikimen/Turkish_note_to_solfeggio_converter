@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-02
+updated: 2026-08-04
 
 ## Now
 
@@ -17,7 +17,31 @@ model stays `round2-stage2-best` int8 throughout. Track, ladder and running stat
 - **The gap is smaller than it looked.** Decode, Donut preprocessing, detokenization, stitching, the
   editor and playback all already work in the browser — the helpers in `apps/web/src/omrGate.ts`
   were just never exported, and `tools/render/stitch.ts` has no node imports. **The one genuinely
-  missing piece is a TypeScript page→strips slicer.**
+  missing piece is a TypeScript page→strips slicer**, and its first half now exists.
+- **✅ W4 PASSED (2026-08-04): the slicer's staff detection and row normalization are ported and
+  reproduce Python exactly, over the WHOLE CORPUS** — 1,781 pages / 12,123 systems, not a sample.
+  Staff count **1,704/1,704**, manifest-zero pages **77/77**, `scale` **12,122/12,122**; row width
+  and the outer-lines+median-spacing triple both **12,123/12,123**. Everything that differs anywhere
+  is the ±1 grayscale residue — 7 systems off by 1 px, six of them an *interior* staff line — and
+  **none of it reaches a crop**, because `normalize_row` reads only the outer lines and the median
+  spacing. First time that residue has been observed reaching any output.
+  ⚠ Two scope notes: the corpus run used `--inject-skew`, so the estimator's real number is the
+  **132/132** from the un-injected 132-page run; and the "zero-staff pages" bar was **restated
+  against the control** (those pages are identified by an empty manifest, Python now finds a staff
+  on 1 of the 77, and the port finds the same one).
+- **`prepPage` could NOT be the planned no-op, and that was worth 22 of 23 failures.** The plan had
+  the whole camera path down as inert on clean input. True of the perspective crop (0% of pages),
+  false of the deskew: **15.3% of corpus pages (272/1,781) take a real rotation**, and skipping it
+  took one page from 10 staves to 0. `estimate_skew`/`deskew` are now ported in full, guards intact.
+  ⚠ **It costs ~35 s of the ~36 s a page takes in the browser** against ~1.9 s for Python's whole
+  stage 1 — a **W7** problem, since a screenshot pays the full 41-rotation sweep to learn it has no
+  skew. Deliberately not optimised inside the port.
+- **The `strips_v2` manifests are NOT the acceptance bar — the current Python does not reproduce
+  them either.** Scored against manifests the port read 86.7%, and one page it failed matched local
+  Python line for line (7 staves vs the manifest's 5). Python-vs-manifest is **1,680/1,704
+  (98.59%)**, already below W4's own bar, because 1,578 of 1,781 page dirs were sliced on Colab. `scripts/slicer_ref.py`
+  is now the control and defines the sample; the port reaches the manifest ceiling exactly. Same
+  lesson as W3's arm-B ceiling: **agreement with an artifact is not correctness.**
 - **✅ W0 PASSED (2026-08-02): opencv.js is bit-identical to OpenCV-Python** on all five primitives
   the slicer rests on, both sides OpenCV 5.0.0. The port is cleared to start.
 - **✅ W1 PASSED (2026-08-02): the decode module is extracted and returns per-token confidence.**
@@ -218,15 +242,21 @@ Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided 
 **The MVP ladder is the live work. Everything under "after the release" is paused, not cancelled.**
 Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
 
-1. **W4 — slicer stage 1: staves + row normalization** in TypeScript, against the 1,781 manifests
-   on disk. **Read [mvp/slicer-port.md](mvp/slicer-port.md) before starting** — function map,
-   per-rung acceptance thresholds, and the traps (chief among them: `pyRound()` half-to-even at
-   every rounding site, because `30*0.35` and `30*0.75` are exactly 10.5 and 22.5, where
-   `Math.round` silently retunes two barline gates).
-2. **W5–W6 — barlines, then windowing + the driver.** W6 compares arm A against arm B **pairwise on
-   the same strips**, not against the 86.0% level.
+1. **W5 — slicer stage 2: barlines**, the riskiest file. **Read
+   [mvp/slicer-port.md](mvp/slicer-port.md) before starting** — function map, acceptance
+   thresholds, and the traps (chief among them: `pyRound()` half-to-even at every rounding site,
+   because `30*0.35` and `30*0.75` are exactly 10.5 and 22.5, where `Math.round` silently retunes
+   two barline gates; and `_terminal_overshoot`'s four-variable inner walk). Score against
+   `scripts/slicer_ref.py`, **not** the manifests. The `_debug.png` overlays already on disk
+   colour-code every rejected candidate by reason — use them before theorising.
+2. **W6 — windowing + the driver.** Compares arm A against arm B **pairwise on the same strips**,
+   not against the 86.0% level.
 3. **W7–W10** — page upload in the app, the W8 confidence decision above, model delivery from HF
-   Hub, release.
+   Hub, release. ⚠ W7 inherits the **~36 s/page** slicer latency, ~35 s of it the deskew sweep, on
+   top of the ~1.1 s/strip decode.
+4. **Owed from W4, small:** the deskew *estimator* is validated on 132 pages, not the corpus — the
+   full run injects Python's angle. Closing it costs ~18 h of browser time, so it is only worth
+   doing if W5/W6 turn up a skew-related difference.
 
 ### After the release (the real-page track, paused)
 

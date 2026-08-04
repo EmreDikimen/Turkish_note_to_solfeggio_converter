@@ -18,14 +18,26 @@ decision with their own measurement.
 Screenshots and clean scans only (owner decision, [../DECISIONS.md](../DECISIONS.md)). The chain:
 
 ```
-load_gray → binarize_ink → connectedComponents → detect_staves
+load_gray → prep_page → binarize_ink → connectedComponents → detect_staves
   per staff: normalize_row → detect_barlines → window_measures → pad/trim/crop
 ```
 
-`prepPage.ts` is the **photo-stage seam**: a no-op with `prep_page`'s exact signature returning
-`{gray, cropped: false, skewDeg: 0}`. The camera path (`detect_page_quad`, `crop_to_page`,
-`estimate_skew`, `deskew`) slots in there later and nothing else in the port changes. Every one of
-those is already a documented no-op on clean input.
+⚠ **`prepPage.ts` is NOT a full no-op, and the version of this page that said it was cost a day.**
+The claim was that every step of the camera path is inert on clean input. Measured against the
+corpus at W4, that is true of the perspective crop (**0%** of pages take one) and false of the
+deskew (**15.3%**, 272 of 1,781, take a real rotation). Skipping the rotation took one page from 10
+staves to **0**, and 22 of the 23 pages that failed the first parity run were exactly the 23
+deskewed ones. So:
+
+- **`estimate_skew` + `deskew` are ported in full.** Both guards (0.3° deadband, "must buy ≥3 more
+  staff-line rows") survive, so an axis-aligned screenshot still passes through untouched.
+- **`detect_page_quad` + `crop_to_page` are still the seam.** They slot into `prepPage` later and
+  nothing else in the port changes.
+
+⚠ **The deskew costs ~35 s of the ~36 s a page takes in the browser** — 41 rotations, each with a
+page-wide `MORPH_OPEN`. That is a **W7** problem (a screenshot pays the whole sweep to learn it has
+no skew), not a W4 one, and it is why the parity harness has `--inject-skew`. Do not "fix" it inside
+the port: a faster estimator is a behaviour change and needs its own measurement.
 
 **Not ported** — confirm each in review, they are training bookkeeping with no effect on pixels:
 `window_signature` (L749), `window_cache_ok` (L756), `row_cost_features` (L706),
@@ -41,14 +53,17 @@ mode never influences a decision — verified.
 
 | File | Holds |
 |---|---|
-| `apps/web/src/omr/slicer/cvOps.ts` | **the only file importing opencv.js**: `binarizeInk`, `openHorizontal`, `connectedComponents`, `resizeArea`, `copyMakeBorder` |
+| `apps/web/src/omr/slicer/cvOps.ts` | **the only file importing opencv.js**: `decodeGray`, `binarizeInk`, `openHorizontal`, `connectedComponents`, `resizeArea`/`resizeScale`, `copyMakeBorderTB`, `rotate`, `subRows` |
 | `apps/web/src/omr/slicer/constants.ts` | every constant from `page_to_strips.py` L32–97 + `STAFF_HOR_FRAC` (L308), each with its Python line number, plus `pyRound()` |
-| `apps/web/src/omr/slicer/prepPage.ts` | the photo seam (no-op) |
+| `apps/web/src/omr/slicer/prepPage.ts` | `qualifyingLineRows` L223, `estimateSkew` L237, `deskew` L266, `prepPage` L280 — plus the crop seam |
 | `apps/web/src/omr/slicer/staves.ts` | `detectStaves` L310, `clusterRows` L341, `emitStaff` L355 |
 | `apps/web/src/omr/slicer/rows.ts` | `rowMusicExtent` L400, `placeBand` L423, `normalizeRow` L446 |
 | `apps/web/src/omr/slicer/barlines.ts` | `longestVerticalRun` L474, `isThinStroke` L485, `clusterCols` L521, `terminalOvershoot` L544, `detectBarlines` L592, `hasNotehead` L679 |
 | `apps/web/src/omr/slicer/windows.ts` | `spanCap` L776, `splitWide` L786, `windowMeasures` L867 |
-| `apps/web/src/omr/slicer/slicer.ts` | the driver (L961–1011, minus filesystem and debug) |
+| `apps/web/src/omr/slicer/slicer.ts` | the driver (L961–1011, minus filesystem and debug); `sliceStage1` is the W4 half |
+| `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry the parity tool drives; returns geometry only, never pixels |
+| `scripts/slicer_ref.py` | the Python control arm; also defines the sample |
+| `tools/vision/parity/slicer-parity.ts` | `npm run parity:slicer` |
 
 ## Trap 1 — `Math.round` is not Python's `round`. Verified, twice, in load-bearing places.
 
@@ -106,23 +121,55 @@ Transliterate line by line; do not restructure into something cleaner.
   `connectedComponents` label map plus `row_music_extent`'s label-set membership test. Turning it
   off would re-introduce the measured 11.6% beam clipping.
 
+## The control is LOCAL PYTHON, not the manifests on disk
+
+⚠ **Read this before writing any acceptance check.** The manifests in `data/real/strips_v2` look
+like ground truth and are not: **the current `page_to_strips.py` reproduces only 118 of 120 of
+them**, because 1,578 of the 1,781 page dirs were sliced on Colab and the artifact has drifted from
+the code. That is already below W4's own 99.5% bar, so a port scored against manifests can fail
+while being perfect. It happened: the first W4 run read 86.7%, and one of the pages it failed
+(`gozumden_gonlumden_hayali_gitmez_nota_p1`) matched local Python line for line, 7 staves against
+the manifest's 5.
+
+So the flow is:
+
+```bash
+.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control, ~1.9 s/page
+npx tsx tools/vision/parity/slicer-parity.ts --ref ref.json            # ~36 s/page
+```
+
+`ref.json` also **defines the sample** — the browser side runs exactly the pages in it, so the two
+sides cannot drift apart on which pages they ran. Manifest agreement is still printed, as the
+weaker second reference and as the ceiling any port could reach against it.
+
+`--inject-skew` feeds Python's angle in and skips the 41-rotation sweep (~35 of the 36 s), which is
+what makes a full-corpus run affordable; the estimator itself is then only covered by runs without
+the flag. Same principle as W3: **agreement with an artifact is not correctness.**
+
 ## Acceptance, per rung
 
 The corpus: `data/real/strips_v2` — **1,781 page dirs**, each with a `_manifest.json` and a
 `_debug.png`, and **1,704 with a `_decode.json`**. Accept a page only if its decode header matches
 `checkpoint: round2-stage2-best`, `suffix: _int8`, `measures_per_strip: 3`, `window_mode: legacy`,
-`edge_trim: true`, `vplace: true`. **Exclude `data/real/strips/` entirely** — exam-frozen, cut by
-older code.
+`edge_trim: true`, `vplace: true` — that selects the page set; the *values* come from
+`slicer_ref.py`. The 77 pages with an empty manifest are the zero-staff pages and are scored
+separately. **Exclude `data/real/strips/` entirely** — exam-frozen, cut by older code.
 
 The `_debug.png` overlays are already on disk and colour-code rejected barline candidates by reason
 (`gate2_fat` orange, `gate3_clef` purple, `gate3_blob` yellow, `xrange` grey). That is a free
 debugger for W5 — use it before theorising.
 
-**W4 — staves + row normalization**
-- staff count == `max(system)+1` on **≥99.5%** of eligible pages
-- the 67 zero-staff pages yield zero staves — **100%**
-- per-system `scale` within **0.002** of the manifest on ≥99.5% of systems (the manifest rounds to
-  3 dp, so anything larger is a bug, not noise)
+**W4 — staves + row normalization** ✅ **PASSED**; numbers in [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md)
+Measured over the **whole corpus** (1,781 pages / 12,123 systems), not a sample:
+- staff count exact on **≥99.5%** of eligible pages — got **1,704/1,704**
+- the manifest-zero pages match Python — **77/77**. ⚠ The bar was written as "yield zero staves";
+  Python now finds a staff on 1 of the 77 and the port finds the same one, so it is held against
+  the control like every other check
+- per-system `scale` within **0.002** — got **12,122/12,122**
+- free extras: row width and outer-lines+median-spacing both **12,123/12,123**; the only differences
+  anywhere are 7 systems off by 1 px (six an *interior* line, one an `x0`), none reaching a crop
+- ⚠ the corpus run used `--inject-skew`, so the **estimator** is validated on 132 pages (132/132),
+  not the corpus
 
 **W5 — barlines**, against `row_bars` (present on every `w00` entry, for the whole row)
 - bar **count** per row exactly equal on **≥99.0%** of rows — a count difference shifts every
@@ -158,6 +205,8 @@ the decisive test is the same one W3 used: score against gold with
 
 ```bash
 npm run probe:cv                      # opencv.js still matches OpenCV-Python
+.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control arm
+npm run parity:slicer -- --ref ref.json [--inject-skew] [--dump d.json]
 npm run parity:armb -- --pages 20     # the ceiling / (W6) arm comparison
 npm run decode:pool -- --pool <dir> --out b.json   # browser decode of a strip pool
 .venv-ml/bin/python scripts/score_browser_gold.py --browser b.json

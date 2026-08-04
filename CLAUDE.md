@@ -47,6 +47,8 @@ npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
 npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
 npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
+.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
+npm run parity:slicer -- --ref ref.json                # ported slicer vs local python (MVP W4-W6)
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377

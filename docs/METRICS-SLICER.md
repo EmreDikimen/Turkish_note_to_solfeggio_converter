@@ -2,7 +2,7 @@
 
 purpose: the single home for how `page_to_strips.py` behaves on real pages — the retunes, the bugs, and the geometry, including the ideas that measured out to nothing
 audience: agents and the owner, before changing the slicer or re-slicing a pool
-updated: 2026-08-02
+updated: 2026-08-04
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-07-29 when that file crossed
 the 400-line cap. The split is by genre: that file keeps **what the model gets wrong**; this one
@@ -48,6 +48,12 @@ column sums max Δ89 of ~85,680 (**0.10%**). The two quantities that actually dr
 applies colour management or gamma to a profiled PNG; the probe deliberately decodes with
 `colorSpaceConversion: "none"` and `premultiplyAlpha: "none"`, and the corpus page used carries no
 ICC profile.
+
+## The port: measured in its own file
+
+Whether the TypeScript slicer reproduces the above is a different genre of question and lives in
+[METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) — W4 parity, the manifest-reproducibility problem,
+and the deskew that was not the no-op the plan assumed.
 
 ## opencv.js reproduces OpenCV-Python exactly (2026-08-02)
 

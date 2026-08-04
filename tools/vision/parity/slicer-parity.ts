@@ -9,7 +9,7 @@
  * line for line, 7 staves against the manifest's 5. Same lesson as the arm-B ceiling at W3:
  * agreement with an artifact is not correctness, so measure against the thing you are porting.
  *
- * So `scripts/slicer_ref.py` runs stage 1 in Python and writes the reference, and THAT file also
+ * So `scripts/slicer_ref.py` runs the Python slicer and writes the reference, and THAT file also
  * defines the sample — this tool runs exactly the pages in it, so the two sides cannot drift apart
  * on which pages they ran. Manifest agreement is still reported, as the weaker second reference.
  *
@@ -23,6 +23,18 @@
  * window and measure index, so it gets no tolerance:
  *   - bar COUNT per row exactly equal on >= 99.0% of rows
  *   - among count-matching rows, per-bar |Δx| <= 1 px on >= 99.9% and == 0 on >= 95%
+ *
+ * W6 acceptance, on the emitted strips (the reference side is the REAL driver — `slicer_ref.py`
+ * runs `page_to_strips` itself rather than re-implementing its pad/trim block):
+ *   - strip count per page exact on >= 99.5% of pages
+ *   - `system`, `window`, `is_row_start`, `split_wide` exact; `row_x0`/`row_x1` within 2 px on >= 99.9%
+ *   - the width/measure invariants hold at the same violation count Python currently has
+ *
+ * ⚠ Those three are scored **on rows whose bar list agrees**, and the raw number is printed beside
+ * each. Windows are computed FROM the bars, so the 2 rows in 12,123 where W5 records a ±1-grayscale
+ * bar difference cannot produce identical windows — gating W6 on them charges this rung for the
+ * previous one's known residue, exactly the way W4's "zero-staff pages yield zero staves" bar
+ * failed a port that agreed with Python. Restated 2026-08-04, with both numbers reported.
  *
  *   .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json
  *   npx tsx tools/vision/parity/slicer-parity.ts --ref ref.json
@@ -45,6 +57,31 @@ const SCALE_TOL = 0.002;
 const BAR_BARCOUNT = 0.99;
 const BAR_BARX_1PX = 0.999;
 const BAR_BARX_EXACT = 0.95;
+/** W6 bars, same source. */
+const BAR_STRIPCOUNT = 0.995;
+const BAR_STRIP_FIELDS = 1.0;
+const BAR_STRIP_X_2PX = 0.999;
+const STRIP_X_TOL = 2;
+/** The invariants the crops must satisfy — `page_to_strips.py` L55-58, frozen in constants.ts. */
+const MAX_STRIP_W = 1450;
+const MEASURES_PER_STRIP = 3;
+
+/** One emitted strip, as both `slicer_ref.py` and the harness record it. */
+interface RefStrip {
+  system: number;
+  window: number;
+  row_x0: number;
+  row_x1: number;
+  width: number;
+  pad: [number, number];
+  scale: number;
+  is_row_start: boolean;
+  split_wide: boolean;
+  meas_from: number;
+  meas_to: number;
+  n_measures: number;
+  row_measures: number;
+}
 
 /** One system as `scripts/slicer_ref.py` records it. */
 interface RefStaff {
@@ -69,9 +106,11 @@ interface RefPage {
   skew_deg: number;
   n_staves: number;
   staves: RefStaff[];
+  strips?: RefStrip[];
   manifest_n_staves: number;
   manifest_scales: Record<string, number>;
   manifest_bars?: Record<string, number[]>;
+  manifest_strips?: Partial<RefStrip>[];
 }
 
 interface HarnessSystem {
@@ -95,6 +134,22 @@ interface HarnessSystem {
   bars: number[];
   rejects: Array<[number, string]> | null;
 }
+/** The port's own strip entry — `Strip` in `apps/web/src/omr/slicer/slicer.ts`. */
+interface HarnessStrip {
+  system: number;
+  window: number;
+  rowX0: number;
+  rowX1: number;
+  width: number;
+  pad: [number, number];
+  scale: number;
+  isRowStart: boolean;
+  splitWide: boolean;
+  measFrom: number;
+  measTo: number;
+  nMeasures: number;
+  rowMeasures: number;
+}
 interface HarnessPage {
   width: number;
   height: number;
@@ -102,6 +157,7 @@ interface HarnessPage {
   cropped: boolean;
   skewDeg: number;
   systems: HarnessSystem[];
+  strips: HarnessStrip[];
   ms: number;
 }
 
@@ -152,6 +208,34 @@ interface PageResult {
   bars1px: number;
   worstBarDelta: number;
   rejectsOk: number; // rows where the REJECTED candidates agree too, reason for reason
+  /** W6 — the emitted strips */
+  refStrips: number;
+  gotStrips: number;
+  stripCountOk: boolean;
+  stripsPaired: number; // strips present on both sides, keyed (system, window)
+  stripFieldsOk: number; // is_row_start / split_wide / measure span / row_measures all equal
+  stripX2px: number;
+  stripXExact: number;
+  worstStripDelta: number;
+  /**
+   * The same three, restricted to strips whose ROW's bar list is identical on both sides.
+   *
+   * Windows are computed FROM the bars, so a row where W5 already records a ±1-grayscale bar
+   * difference cannot produce identical windows — failing W6 for it would be charging this rung
+   * for the previous one's known residue. The conditional number is what W6 gates on; the raw one
+   * above is reported beside it.
+   */
+  stripsPairedCond: number;
+  stripFieldsOkCond: number;
+  stripX2pxCond: number;
+  barsAllOk: boolean; // every system on this page has an identical bar list
+  invalidPy: number; // invariant violations, Python's own
+  invalidGot: number;
+  /** how often the two W6-only code paths actually fired, per side */
+  leadTrimPy: number;
+  leadTrimGot: number;
+  splitWidePy: number;
+  splitWideGot: number;
   /** vs the manifest on disk (the weaker second reference) */
   manifestStaves: number;
   pyMatchesManifest: boolean;
@@ -159,9 +243,58 @@ interface PageResult {
   manifestBarRows: number;
   pyBarsMatchManifest: number;
   gotBarsMatchManifest: number;
+  manifestStrips: number;
+  pyStripsMatchManifest: boolean;
+  gotStripsMatchManifest: boolean;
   ms: number;
   error?: string;
 }
+
+/**
+ * The width/measure rails, counted the same way on both sides.
+ *
+ * The bar is "no worse than Python", not "zero": the rails are Python's own, it is the control, and
+ * MIN_STRIP_W is deliberately not absolute — a lone clef+signature window is emitted narrow rather
+ * than dropped (L1021), so Python's own count is the reference. Both cap fixes were verified to 0
+ * on strips_v2 (docs/STATUS.md), so a non-zero count on either side is worth reading.
+ */
+function invariantViolations(strips: { width: number; nMeasures: number }[]) {
+  return strips.filter((s) => s.width > MAX_STRIP_W || s.nMeasures > MEASURES_PER_STRIP).length;
+}
+
+/**
+ * How many of a page's rows had their clef+signature prefix trimmed out of measure indexing.
+ *
+ * This is the ONLY observable of `_has_notehead`, which W5 ported and left unexercised: the trim
+ * fires exactly when the leading span holds no notehead past the clef zone, and it costs the row
+ * one measure. `row_measures` is what the windows cover, so a trimmed row is one short of its
+ * bar-to-bar span count.
+ */
+function leadTrims(bars: number[][], strips: { system: number; rowMeasures: number }[]): number {
+  let n = 0;
+  for (let si = 0; si < bars.length; si++) {
+    const s = strips.find((x) => x.system === si);
+    if (!s || s.rowMeasures === 0) continue;
+    if (bars[si]!.length - 1 - s.rowMeasures === 1) n++;
+  }
+  return n;
+}
+
+const asPort = (s: RefStrip) => ({
+  system: s.system,
+  window: s.window,
+  rowX0: s.row_x0,
+  rowX1: s.row_x1,
+  width: s.width,
+  pad: s.pad,
+  scale: s.scale,
+  isRowStart: s.is_row_start,
+  splitWide: s.split_wide,
+  measFrom: s.meas_from,
+  measTo: s.meas_to,
+  nMeasures: s.n_measures,
+  rowMeasures: s.row_measures,
+});
 
 const eq = (a: number[], b: number[]) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
@@ -188,7 +321,7 @@ async function main() {
   }
   const nEl = stems.filter((s) => ref[s]!.kind === "eligible").length;
   console.log(
-    `slicer parity (W4+W5) — ${stems.length} pages from ${path.basename(refFile)} ` +
+    `slicer parity (W4-W6) — ${stems.length} pages from ${path.basename(refFile)} ` +
       `(${nEl} eligible + ${stems.length - nEl} zero-staff)\n`
   );
 
@@ -246,12 +379,33 @@ async function main() {
         bars1px: 0,
         worstBarDelta: NaN,
         rejectsOk: 0,
+        refStrips: r.strips?.length ?? 0,
+        gotStrips: -1,
+        stripCountOk: false,
+        stripsPaired: 0,
+        stripFieldsOk: 0,
+        stripX2px: 0,
+        stripXExact: 0,
+        worstStripDelta: NaN,
+        stripsPairedCond: 0,
+        stripFieldsOkCond: 0,
+        stripX2pxCond: 0,
+        barsAllOk: false,
+        invalidPy: invariantViolations((r.strips ?? []).map(asPort)),
+        invalidGot: 0,
+        leadTrimPy: 0,
+        leadTrimGot: 0,
+        splitWidePy: 0,
+        splitWideGot: 0,
         manifestStaves: r.manifest_n_staves,
         pyMatchesManifest: r.n_staves === r.manifest_n_staves,
         gotMatchesManifest: false,
         manifestBarRows: 0,
         pyBarsMatchManifest: 0,
         gotBarsMatchManifest: 0,
+        manifestStrips: r.manifest_strips?.length ?? 0,
+        pyStripsMatchManifest: false,
+        gotStripsMatchManifest: false,
         ms: 0,
         error: String((e as Error).message).slice(0, 200),
       });
@@ -272,6 +426,7 @@ async function main() {
     let bars1px = 0;
     let worstBar = 0;
     let rejectsOk = 0;
+    const barsOkBySystem = new Map<number, boolean>();
     let manBarRows = 0;
     let pyBarsMan = 0;
     let gotBarsMan = 0;
@@ -282,6 +437,7 @@ async function main() {
       // W5. The count gets no tolerance — one extra or missing bar shifts every window and measure
       // index downstream of it. Positions are only compared where the counts agree, because a
       // count mismatch makes a positional pairing meaningless rather than merely wrong.
+      barsOkBySystem.set(a.system, eq(a.bars, b.bars));
       if (a.bars.length === b.bars.length) {
         barCountOk++;
         for (let k = 0; k < a.bars.length; k++) {
@@ -323,6 +479,57 @@ async function main() {
         drift = Math.max(drift, (1e6 * Math.abs(a.row_sum - b.rowSum)) / a.row_sum);
     }
 
+    // ---- W6: the emitted strips ------------------------------------------------------------
+    // Paired on (system, window), not by index: a page that differs in one row's strip count would
+    // otherwise shift every later comparison and report a page-wide failure for a single window.
+    const refStrips = r.strips ?? [];
+    const gotByKey = new Map(got.strips.map((s) => [`${s.system}:${s.window}`, s]));
+    let stripsPaired = 0;
+    let stripFieldsOk = 0;
+    let stripX2px = 0;
+    let stripXExact = 0;
+    let worstStrip = 0;
+    let stripsPairedCond = 0;
+    let stripFieldsOkCond = 0;
+    let stripX2pxCond = 0;
+    for (const a of refStrips.map(asPort)) {
+      const b = gotByKey.get(`${a.system}:${a.window}`);
+      if (!b) continue;
+      stripsPaired++;
+      // a row whose bars already differ (W5's ±1 residue) cannot yield identical windows
+      const barsOk = barsOkBySystem.get(a.system) === true;
+      if (barsOk) stripsPairedCond++;
+      const fieldsOk =
+        a.isRowStart === b.isRowStart &&
+        a.splitWide === b.splitWide &&
+        a.measFrom === b.measFrom &&
+        a.measTo === b.measTo &&
+        a.nMeasures === b.nMeasures &&
+        a.rowMeasures === b.rowMeasures;
+      if (fieldsOk) stripFieldsOk++;
+      if (barsOk && fieldsOk) stripFieldsOkCond++;
+      const d = Math.max(Math.abs(a.rowX0 - b.rowX0), Math.abs(a.rowX1 - b.rowX1));
+      if (d <= STRIP_X_TOL) stripX2px++;
+      if (barsOk && d <= STRIP_X_TOL) stripX2pxCond++;
+      if (d === 0) stripXExact++;
+      if (d > worstStrip) worstStrip = d;
+    }
+    const barsAllOk = [...barsOkBySystem.values()].every(Boolean);
+    const manStrips = r.manifest_strips ?? [];
+    const sameAsManifest = (side: ReturnType<typeof asPort>[]) =>
+      manStrips.length > 0 &&
+      manStrips.length === side.length &&
+      manStrips.every((m, i) => {
+        const s = side[i]!;
+        return (
+          m.system === s.system &&
+          m.window === s.window &&
+          m.row_x0 === s.rowX0 &&
+          m.row_x1 === s.rowX1 &&
+          (m.split_wide === undefined || m.split_wide === s.splitWide)
+        );
+      });
+
     results.push({
       stem,
       kind: r.kind,
@@ -346,12 +553,39 @@ async function main() {
       bars1px,
       worstBarDelta: worstBar,
       rejectsOk,
+      refStrips: refStrips.length,
+      gotStrips: got.strips.length,
+      stripCountOk: refStrips.length === got.strips.length,
+      stripsPaired,
+      stripFieldsOk,
+      stripX2px,
+      stripXExact,
+      worstStripDelta: worstStrip,
+      stripsPairedCond,
+      stripFieldsOkCond,
+      stripX2pxCond,
+      barsAllOk,
+      invalidPy: invariantViolations(refStrips.map(asPort)),
+      invalidGot: invariantViolations(got.strips),
+      leadTrimPy: leadTrims(
+        r.staves.map((s) => s.bars),
+        refStrips.map(asPort)
+      ),
+      leadTrimGot: leadTrims(
+        got.systems.map((s) => s.bars),
+        got.strips
+      ),
+      splitWidePy: refStrips.filter((s) => s.split_wide).length,
+      splitWideGot: got.strips.filter((s) => s.splitWide).length,
       manifestStaves: r.manifest_n_staves,
       pyMatchesManifest: r.n_staves === r.manifest_n_staves,
       gotMatchesManifest: got.nStaves === r.manifest_n_staves,
       manifestBarRows: manBarRows,
       pyBarsMatchManifest: pyBarsMan,
       gotBarsMatchManifest: gotBarsMan,
+      manifestStrips: manStrips.length,
+      pyStripsMatchManifest: sameAsManifest(refStrips.map(asPort)),
+      gotStripsMatchManifest: sameAsManifest(got.strips),
       ms: got.ms,
     });
 
@@ -397,6 +631,32 @@ async function main() {
   const barX1Pass = barsN === 0 || pct(bars1px, barsN) >= BAR_BARX_1PX * 100;
   const barXExactPass = barsN === 0 || pct(barsExact, barsN) >= BAR_BARX_EXACT * 100;
 
+  // W6 — the emitted strips. Pages the reference has no `strips` for (a ref.json written before
+  // W6) drop out of the denominator rather than counting as failures.
+  const w6 = results.filter((r) => r.refStrips > 0 || r.gotStrips > 0);
+  const stripCountOk = w6.filter((r) => r.stripCountOk).length;
+  const stripsPaired = sum(w6, (r) => r.stripsPaired);
+  const stripFieldsOk = sum(w6, (r) => r.stripFieldsOk);
+  const stripX2px = sum(w6, (r) => r.stripX2px);
+  const stripXExact = sum(w6, (r) => r.stripXExact);
+  const worstStrip = Math.max(0, ...w6.map((r) => r.worstStripDelta).filter(Number.isFinite));
+  const invalidPy = sum(w6, (r) => r.invalidPy);
+  const invalidGot = sum(w6, (r) => r.invalidGot);
+  // ⚠ The bars-agree condition is what W6 gates on; see the PageResult field for why. Both the
+  // conditional and the raw numbers are printed, so nothing is hidden by the restatement.
+  const w6Cond = w6.filter((r) => r.barsAllOk);
+  const stripCountOkCond = w6Cond.filter((r) => r.stripCountOk).length;
+  const stripsPairedCond = sum(w6, (r) => r.stripsPairedCond);
+  const stripFieldsOkCond = sum(w6, (r) => r.stripFieldsOkCond);
+  const stripX2pxCond = sum(w6, (r) => r.stripX2pxCond);
+  const stripCountPass =
+    w6Cond.length === 0 || pct(stripCountOkCond, w6Cond.length) >= BAR_STRIPCOUNT * 100;
+  const stripFieldPass =
+    stripsPairedCond === 0 || pct(stripFieldsOkCond, stripsPairedCond) >= BAR_STRIP_FIELDS * 100;
+  const stripXPass =
+    stripsPairedCond === 0 || pct(stripX2pxCond, stripsPairedCond) >= BAR_STRIP_X_2PX * 100;
+  const invariantPass = invalidGot <= invalidPy;
+
   const pass =
     staffPass &&
     zeroPass &&
@@ -404,6 +664,10 @@ async function main() {
     barCountPass &&
     barX1Pass &&
     barXExactPass &&
+    stripCountPass &&
+    stripFieldPass &&
+    stripXPass &&
+    invariantPass &&
     !errors.length;
 
   console.log(
@@ -444,6 +708,44 @@ async function main() {
   console.log(
     `  rejected candidates identical  ${rejectsOk}/${rowsN} rows ` +
       `(${pct(rejectsOk, rowsN).toFixed(2)}%)   <- stricter than the bar list, reported not gated`
+  );
+
+  console.log(
+    "\n== W6 acceptance — windowing + driver, port vs LOCAL PYTHON" +
+      "   [scored where the row's BARS agree: windows are computed from them]"
+  );
+  console.log(
+    `  strip count exact per page     ${mark(stripCountPass)}  ${stripCountOkCond}/${w6Cond.length} pages ` +
+      `(${pct(stripCountOkCond, w6Cond.length).toFixed(2)}%, bar 99.50%)` +
+      `   raw ${stripCountOk}/${w6.length}`
+  );
+  console.log(
+    `  window fields exact            ${mark(stripFieldPass)}  ${stripFieldsOkCond}/${stripsPairedCond} strips ` +
+      `(${pct(stripFieldsOkCond, stripsPairedCond).toFixed(2)}%, bar 100%)   raw ${stripFieldsOk}/${stripsPaired}` +
+      `   [is_row_start, split_wide, measure span]`
+  );
+  console.log(
+    `  row_x0/row_x1 within ${STRIP_X_TOL} px       ${mark(stripXPass)}  ${stripX2pxCond}/${stripsPairedCond} strips ` +
+      `(${pct(stripX2pxCond, stripsPairedCond).toFixed(2)}%, bar 99.90%)   raw ${stripX2px}/${stripsPaired}` +
+      `   worst Δ ${worstStrip} px`
+  );
+  console.log(
+    `  row_x0/row_x1 exact            ${stripXExact}/${stripsPaired} strips ` +
+      `(${pct(stripXExact, stripsPaired).toFixed(2)}%)   <- reported, not gated`
+  );
+  console.log(
+    `  width/measure invariants       ${mark(invariantPass)}  port ${invalidGot} violation(s) vs ` +
+      `python ${invalidPy}   [MAX_STRIP_W ${MAX_STRIP_W}, ${MEASURES_PER_STRIP} measures]`
+  );
+  // Both W6-only paths are rare, so say how often they fired rather than leaving a pass to imply
+  // they did. `_has_notehead` in particular was ported at W5 with nothing exercising it.
+  console.log(
+    `  clef-prefix trims (hasNotehead) port ${sum(w6, (r) => r.leadTrimGot)} rows vs ` +
+      `python ${sum(w6, (r) => r.leadTrimPy)}   <- the only observable of _has_notehead`
+  );
+  console.log(
+    `  split_wide gutter cuts         port ${sum(w6, (r) => r.splitWideGot)} strips vs ` +
+      `python ${sum(w6, (r) => r.splitWidePy)}`
   );
 
   console.log("\n-- stronger checks, reported not gated (W4's bars only ask for count + scale)");
@@ -491,6 +793,19 @@ async function main() {
         `(${pct(gotBarsMan, manBarRows).toFixed(2)}%)`
     );
   }
+  const manStripPages = results.filter((r) => r.manifestStrips > 0);
+  if (manStripPages.length) {
+    const pyStripsMan = manStripPages.filter((r) => r.pyStripsMatchManifest).length;
+    const gotStripsMan = manStripPages.filter((r) => r.gotStripsMatchManifest).length;
+    console.log(
+      `  local python strips == manifest ${pyStripsMan}/${manStripPages.length} pages ` +
+        `(${pct(pyStripsMan, manStripPages.length).toFixed(2)}%)  <- W6's ceiling against the manifest`
+    );
+    console.log(
+      `  port          strips == manifest ${gotStripsMan}/${manStripPages.length} pages ` +
+        `(${pct(gotStripsMan, manStripPages.length).toFixed(2)}%)`
+    );
+  }
 
   const deskewed = results.filter((r) => r.skewRef !== 0).length;
   console.log(
@@ -508,7 +823,9 @@ async function main() {
       r.linesOk < r.systemsChecked ||
       r.geomOk < r.systemsChecked ||
       r.barCountOk < r.systemsChecked ||
-      r.barsExact < r.barsN
+      r.barsExact < r.barsN ||
+      ((r.refStrips > 0 || r.gotStrips > 0) &&
+        (!r.stripCountOk || r.stripFieldsOk < r.stripsPaired || r.stripXExact < r.stripsPaired))
   );
   if (bad.length) {
     console.log(`\n  pages differing from local python (${bad.length}):`);
@@ -519,7 +836,10 @@ async function main() {
           `  lines ${r.linesOk}/${r.systemsChecked}  geom ${r.geomOk}/${r.systemsChecked}` +
           `  scale ${r.scaleOk}/${r.systemsChecked}` +
           `  barN ${r.barCountOk}/${r.systemsChecked}  barX ${r.barsExact}/${r.barsN}` +
-          (r.worstBarDelta ? ` (worst Δ ${r.worstBarDelta}px)` : "") +
+          `  strips ${r.gotStrips}/${r.refStrips}` +
+          `  fields ${r.stripFieldsOk}/${r.stripsPaired}  stripX ${r.stripXExact}/${r.stripsPaired}` +
+          (r.worstStripDelta ? ` (worst Δ ${r.worstStripDelta}px)` : "") +
+          (r.worstBarDelta ? ` (worst bar Δ ${r.worstBarDelta}px)` : "") +
           (r.worstScaleDelta ? ` (worst scale Δ ${r.worstScaleDelta.toFixed(4)})` : "") +
           (r.error ? `  ERROR ${r.error}` : "")
       );
@@ -555,7 +875,12 @@ async function main() {
 
   console.log(
     `\n== W4 ${staffPass && zeroPass && scalePass && !errors.length ? "PASS" : "FAIL"}` +
-      `   W5 ${barCountPass && barX1Pass && barXExactPass && !errors.length ? "PASS" : "FAIL"}`
+      `   W5 ${barCountPass && barX1Pass && barXExactPass && !errors.length ? "PASS" : "FAIL"}` +
+      `   W6 ${
+        stripCountPass && stripFieldPass && stripXPass && invariantPass && !errors.length
+          ? "PASS"
+          : "FAIL"
+      }`
   );
   process.exit(pass ? 0 : 1);
 }

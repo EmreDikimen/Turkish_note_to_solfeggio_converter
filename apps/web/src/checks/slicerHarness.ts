@@ -8,8 +8,8 @@
  * Pages arrive as data URLs, matching `stripsHarness.ts`: Node keeps all file I/O and the dev
  * server never gets `data/real/` opened to it.
  */
-import { initCv, decodeGray } from "../omr/slicer/cvOps";
-import { sliceStage2 } from "../omr/slicer/slicer";
+import { grayToCanvas, initCv, decodeGray } from "../omr/slicer/cvOps";
+import { cropStrip, sliceStage3, stripName, type Strip } from "../omr/slicer/slicer";
 import { staffBottom, staffSpacing, staffTop } from "../omr/slicer/staves";
 
 export interface HarnessSystem {
@@ -49,7 +49,18 @@ export interface HarnessPage {
   cropped: boolean;
   skewDeg: number;
   systems: HarnessSystem[];
+  /** window_measures + the driver's pad/trim (W6) — the manifest, in manifest order */
+  strips: Strip[];
   ms: number;
+}
+
+/** One crop's pixels, for the arm-A decode comparison. Kept out of `stage1` on purpose. */
+export interface HarnessCrop {
+  name: string;
+  system: number;
+  window: number;
+  width: number;
+  dataUrl: string;
 }
 
 async function stage1(
@@ -59,7 +70,7 @@ async function stage1(
 ): Promise<HarnessPage> {
   const t0 = performance.now();
   const gray = await decodeGray(pageDataUrl);
-  const res = sliceStage2(gray, {
+  const res = sliceStage3(gray, {
     ...(skewDeg === undefined ? {} : { skewDeg }),
     ...(wantRejects ? { rejects: true } : {}),
   });
@@ -98,13 +109,41 @@ async function stage1(
     cropped: res.cropped,
     skewDeg: res.skewDeg,
     systems,
+    strips: res.strips,
     ms: performance.now() - t0,
   };
 }
 
+/**
+ * The same slice, returning the CROPS — what `tools/vision/parity/arm-a.ts` decodes.
+ *
+ * Separate from `stage1` because pixels are expensive over CDP and the geometry parity run (a
+ * whole corpus of pages) never wants them.
+ */
+async function crops(
+  pageDataUrl: string,
+  stem: string,
+  skewDeg?: number
+): Promise<{ crops: HarnessCrop[]; nStaves: number; ms: number }> {
+  const t0 = performance.now();
+  const gray = await decodeGray(pageDataUrl);
+  const res = sliceStage3(gray, skewDeg === undefined ? {} : { skewDeg });
+  const out: HarnessCrop[] = [];
+  for (const r of res.rows)
+    for (const s of r.strips)
+      out.push({
+        name: stripName(stem, s.system, s.window),
+        system: s.system,
+        window: s.window,
+        width: s.width,
+        dataUrl: grayToCanvas(cropStrip(r.normalized.row, s)).toDataURL("image/png"),
+      });
+  return { crops: out, nStaves: res.staves.length, ms: performance.now() - t0 };
+}
+
 async function main() {
   await initCv();
-  (window as unknown as { __slicer: unknown }).__slicer = { stage1, ready: true };
+  (window as unknown as { __slicer: unknown }).__slicer = { stage1, crops, ready: true };
 }
 
 main().catch((e) => {

@@ -191,6 +191,32 @@ export function rotate(src: Gray, angleDeg: number): Gray {
   return out;
 }
 
+/** `row[:, x0:x1]` — a column range. Rows are not contiguous, so this copies. */
+export function subCols(src: Gray, x0: number, x1: number): Gray {
+  const w = Math.max(0, x1 - x0);
+  const data = new Uint8Array(w * src.height);
+  for (let y = 0; y < src.height; y++)
+    data.set(src.data.subarray(y * src.width + x0, y * src.width + x0 + w), y * w);
+  return { data, width: w, height: src.height };
+}
+
+/** A grayscale image as an RGBA canvas — the seam where slicer pixels meet the decode path. */
+export function grayToCanvas(src: Gray): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = src.width;
+  canvas.height = src.height;
+  const img = new ImageData(src.width, src.height);
+  for (let i = 0, p = 0; i < src.data.length; i++, p += 4) {
+    const v = src.data[i]!;
+    img.data[p] = v;
+    img.data[p + 1] = v;
+    img.data[p + 2] = v;
+    img.data[p + 3] = 255;
+  }
+  canvas.getContext("2d")!.putImageData(img, 0, 0);
+  return canvas;
+}
+
 /** `gray[y0:y1, :]` — a row-range view, copied. */
 export function subRows(src: Gray, y0: number, y1: number): Gray {
   const rows = Math.max(0, y1 - y0);

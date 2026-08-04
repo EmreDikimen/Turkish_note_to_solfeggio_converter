@@ -16,14 +16,22 @@ arm-B ceiling for decoding: agreement with a stale artifact is not correctness.
 The output file also DEFINES the sample: `slicer-parity.ts --ref <file>` runs exactly the pages in
 it, so the two sides can never drift apart on which pages they ran.
 
+Two passes per page, on purpose (~4.2 s each). `stage1()` re-derives the staff/row/barline geometry
+so the reference carries it explicitly; `strips_ref()` then runs the REAL `page_to_strips` into a
+temp dir for W6's strip entries, rather than re-implementing the driver's pad/trim block here — see
+its docstring for why a second hand-written copy would be worse than the extra minute.
+
     .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out /tmp/slicer_ref.json
     .venv-ml/bin/python scripts/slicer_ref.py --stems a_b_p1 c_d_p2 --out /tmp/one.json
 """
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -39,6 +47,7 @@ from vision.page_to_strips import (  # noqa: E402
     detect_staves,
     load_gray,
     normalize_row,
+    page_to_strips,
     prep_page,
 )
 
@@ -96,6 +105,28 @@ def sample(items: list, n: int) -> list:
     return [items[int(i * stride)] for i in range(n)]
 
 
+# The manifest keys W6 compares. `est_tokens`/`budget_risk` are deliberately absent: they are the
+# Rung-3 emitter's bookkeeping and are not ported (docs/mvp/slicer-port.md), and `strip`/`row_bars`
+# are covered elsewhere.
+STRIP_KEYS = ("system", "window", "row_x0", "row_x1", "width", "pad", "scale",
+              "is_row_start", "split_wide", "meas_from", "meas_to", "n_measures", "row_measures")
+
+
+def strips_ref(image: Path) -> list[dict]:
+    """W6's control: the REAL driver's manifest for this page, via `page_to_strips` into a temp dir.
+
+    Not a re-implementation of the driver's ~40-line pad/trim block, on purpose. The TypeScript port
+    is transliterated from those same lines, so a second hand-written copy here could encode the
+    same misreading twice and then agree with itself — the exact failure mode this whole file exists
+    to avoid. Running the shipped function costs a second stage-1 pass (~1.9 s/page) and some
+    throwaway PNGs, and buys a control that IS the code under test.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        with contextlib.redirect_stdout(io.StringIO()):   # one progress line per page, not ours
+            rows = page_to_strips(image, td)
+    return [{k: r[k] for k in STRIP_KEYS} for r in rows]
+
+
 def stage1(image: Path) -> dict:
     """Everything page_to_strips() does before window_measures (L962-982)."""
     gray = load_gray(image)
@@ -141,6 +172,7 @@ def stage1(image: Path) -> dict:
         "skew_deg": float(skew),
         "n_staves": len(staves),
         "staves": out,
+        "strips": strips_ref(image),
     }
 
 
@@ -182,6 +214,12 @@ def main() -> None:
         }
         # `row_bars` rides on each row's w00 entry only. The weaker second reference for W5, same
         # standing as `manifest_scales`: it is what the re-slice wrote, not what this code does.
+        # W6's second reference, same standing as `manifest_scales`: the strip entries the re-slice
+        # wrote. Old manifests can predate a key, so missing ones are skipped rather than defaulted.
+        rec["manifest_strips"] = [
+            {k: r[k] for k in STRIP_KEYS if k in r}
+            for r in sorted(rows, key=lambda r: (r["system"], r["window"]))
+        ]
         rec["manifest_bars"] = {
             str(r["system"]): [int(b) for b in r["row_bars"]]
             for r in rows
@@ -217,6 +255,25 @@ def main() -> None:
         print(
             f"python-vs-MANIFEST bar list: {rows_same}/{rows_n} rows identical "
             f"({100 * rows_same / rows_n:.2f}%) — the port's ceiling against the manifest, not 100%"
+        )
+
+    # ... and for W6's strip entries. This one also cross-checks `strips_ref` itself: it runs the
+    # real driver, so a page whose stage 1 reproduces should reproduce its manifest strips too.
+    pages_n = pages_same = strips_n = strips_same = 0
+    for r in out.values():
+        man = r.get("manifest_strips")
+        if man is None:
+            continue
+        pages_n += 1
+        pages_same += man == r["strips"]
+        for a, b in zip(man, r["strips"]):
+            strips_n += 1
+            strips_same += a == b
+    if pages_n:
+        print(
+            f"python-vs-MANIFEST strips: {pages_same}/{pages_n} pages identical "
+            f"({100 * pages_same / pages_n:.2f}%), {strips_same}/{strips_n} entries "
+            f"({100 * strips_same / max(1, strips_n):.2f}%) — W6's ceiling against the manifest"
         )
 
 

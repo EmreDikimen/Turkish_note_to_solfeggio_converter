@@ -44,7 +44,7 @@ export interface Mask {
  * `EXT_SP` or `VPLACE_MIN_HEAD_SP` is ever changed — the constant's own comment at L88 makes the
  * same argument from the other end.)
  */
-function inkMask(gray: Gray, y0: number, y1: number): Mask {
+export function inkMask(gray: Gray, y0: number, y1: number): Mask {
   const ink = binarizeInk(gray);
   const a = Math.max(0, Math.min(gray.height, y0));
   const b = Math.max(a, Math.min(gray.height, y1));

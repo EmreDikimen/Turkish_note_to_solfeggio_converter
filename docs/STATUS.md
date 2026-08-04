@@ -281,10 +281,14 @@ Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
    strip spans, `cropStrip` cuts them and `decodeStripsToDoc` already turns crops into a playable
    score. ⚠ **W7 inherits the latency**: **~36 s/page for the slicer, ~35 s of it the deskew
    sweep**, on top of ~1.1 s/strip decode. The sweep is 41 full-page rotations, each with a
-   page-wide `MORPH_OPEN`, and it is brute force because there is no analytic estimator here —
-   the cheapest fix is an early exit when 0° already yields a full staff set, since the deskew guard
-   then cannot fire. A faster estimator is a **behaviour change and needs its own measurement**; do
-   not fold it into the port.
+   page-wide `MORPH_OPEN`. It is brute force because it maximises the *exact* signal
+   `detect_staves` uses (the qualifying staff-line-row count), not because the problem needs it —
+   **standard skew estimators exist and were never tried here** (Hough on the ink mask, Radon/FFT of
+   the row projection, gradient orientation). Two directions, cheapest first: an **early exit** when
+   0° already looks straight (the guard needs +3 staff-line rows to fire, so a straight page cannot
+   benefit), or **replacing the estimator**. Either is a **behaviour change needing its own
+   measurement** against the 132-page estimator sample and the 15.3% of pages that genuinely rotate;
+   do not fold it into the port.
 2. **W8–W10** — the W8 confidence decision above (soft −0.5 cut / per-token / drop), model delivery
    from HF Hub, release.
 3. **Owed from W4/W6, small:** the deskew *estimator* is validated on 132 pages, not the corpus —

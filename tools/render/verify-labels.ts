@@ -243,7 +243,20 @@ async function main() {
     ` | label drift vs manifest: ${labelDrift.length}` +
     ` | unknown glyphs: ${[...unknownGlyphs].join(",") || "none"}`);
   console.log(`report -> ${OUT}`);
+  // A run that checked NOTHING is not a pass. `checked - ok > 0` alone is false at 0/0, so the
+  // whole corpus gate — the one CLAUDE.md makes a corpus's trainability depend on — used to exit 0
+  // after verifying zero strips. That is exactly how the Round-1 pixels-vs-labels defect stayed
+  // invisible. Observed 2026-08-05: 1,019 jobs "verified", 0 strips checked, exit 0, because the
+  // dev server was not running.
+  if (checked === 0) {
+    console.error(
+      `\nFAIL — 0 strips checked over ${jobList.length} job(s). This is NOT a pass.\n` +
+        `  Most likely the harness dev server is not running: npm run dev:web`,
+    );
+    process.exit(1);
+  }
   if (checked - ok > 0 || labelDrift.length > 0) process.exit(1);
+  console.log("PASS");
 }
 
 main().catch((e) => {

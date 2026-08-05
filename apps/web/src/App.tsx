@@ -690,10 +690,15 @@ export function App() {
           Read strips:{" "}
           <input id="strips-input" type="file" accept="image/*" multiple onChange={onStrips} disabled={omrBusy} />
         </label>
-        <label title="Pick a screenshot or clean scan of ONE page — it is sliced and read in the browser. Slow: ~35 s to check the page angle, then ~1 s per strip.">
+        <label title="Pick a screenshot or clean scan of ONE page — it is sliced and read in the browser. ~1.6 s to slice, then ~1 s per strip.">
           Read page:{" "}
           <input id="page-input" type="file" accept="image/*" onChange={onPage} disabled={omrBusy} />
         </label>
+        {/* Separate page on purpose (owner, 2026-08-05): a diagnostic view that loads no model and
+            makes no score, so it can never disturb what is loaded here. */}
+        <a href="/slices.html" title="See the strips the slicer cuts from a page — no model, no score">
+          🔍 Slice inspector
+        </a>
         <button onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
           ⬇ Save JSON
         </button>

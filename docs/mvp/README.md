@@ -109,6 +109,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
 | `apps/web/src/omr/page.ts` | page image → crops, the seam between the slicer and the decode path (W7) |
 | `tools/browser/page-smoke.ts` | the real app: a page image in → playable score out, plus a responsiveness bar (W7) |
+| `apps/web/slices.html`, `apps/web/src/slices/slicesView.ts` | slice inspector — see the crops a page is cut into, no model loaded (owner request, W7) |
 | `tools/vision/parity/arm-a.ts` | the port's crops decoded and compared to arm B, **paired** (W6) |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
 | `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |

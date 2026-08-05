@@ -285,6 +285,27 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
    ```
 
+## Check 13 — see how a page was sliced (the slice inspector, 2026-08-05)
+
+Goal: look at the crops themselves. Check 12 asks whether a page reads; this asks **what the model
+was actually handed**, which is the first thing to look at when a page reads badly.
+
+1. `npm run dev:web`, then open `http://localhost:5173/slices.html` (or click **🔍 Slice inspector**
+   in the app).
+2. **Add page(s)** — one or several photos/screenshots. No model is loaded, so a page takes ~1.6 s.
+3. Each upload becomes a thumbnail. **Click a thumbnail to see that page's strips.** Every strip is
+   captioned with the slicer's own decisions: `row 0, crop 1 · 765×336 px · x 924–1689 · pad 0/-6 ·
+   measures 0–0 of 2 · split-wide`.
+4. **✖ delete** drops a strip from the list, **⬇ save** downloads it as a PNG, **remove page** drops
+   a whole page. **actual size** switches between fit-to-width and 1:1 pixels — use 1:1 when judging
+   whether a crop is cut too tight.
+
+What to look for: music cut in half at a crop edge, a crop that is nearly empty, a staff missed
+entirely (the strip count will be low for the number of staves), or a page that reports 0 staves.
+
+⚠ It is **view-only by design** (owner, 2026-08-05): deleting a strip changes nothing outside this
+page — no score is built here, and nothing is written to disk. A reload starts empty.
+
 ## Check 12 — upload a whole page in the app (MVP W7, 2026-08-05)
 
 Goal: the product, as a friend will meet it. **No Python, no pre-cut strips** — one page image in,

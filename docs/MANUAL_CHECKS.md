@@ -300,8 +300,14 @@ was actually handed**, which is the first thing to look at when a page reads bad
    a whole page. **actual size** switches between fit-to-width and 1:1 pixels — use 1:1 when judging
    whether a crop is cut too tight.
 
-What to look for: music cut in half at a crop edge, a crop that is nearly empty, a staff missed
-entirely (the strip count will be low for the number of staves), or a page that reports 0 staves.
+5. **🔎 Read … with the model** decodes the crops and prints each strip's label under it, with note
+   names substituted — `\sig \komaFlat si \sigend la'16 sol'16 la'16 si'16` — the model's raw
+   tokens in grey beneath, and the strip's lowest token confidence on the right. Reading is ~1.2 s a
+   strip, so it is on demand rather than automatic, and only strips without a label are decoded.
+
+What to look for: music cut in half at a crop edge, **beams or ledger notes clipped off the top or
+bottom** (durations become unreadable), a crop that is nearly empty, a staff missed entirely (the
+strip count will be low for the number of staves), or a page that reports 0 staves.
 
 ⚠ It is **view-only by design** (owner, 2026-08-05): deleting a strip changes nothing outside this
 page — no score is built here, and nothing is written to disk. A reload starts empty.

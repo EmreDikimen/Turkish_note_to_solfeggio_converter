@@ -12,12 +12,55 @@
  * score, because this page never makes one.
  */
 import { slicePage, type SlicedPage } from "../omr/page";
+import { decodeStrips, type StripInput } from "../omr/pipeline";
+import { getModel } from "../omr/session";
 import type { Strip } from "../omr/slicer/slicer";
+
+/**
+ * LilyPond note letter → the solfège syllable the rest of the app uses (`packages/core`'s
+ * `spellNote`). Lower-case here because a decoded token is lower-case: `b'16` reads as `si'16`.
+ */
+const LETTER_TO_SOLFEGE: Record<string, string> = {
+  c: "do",
+  d: "re",
+  e: "mi",
+  f: "fa",
+  g: "sol",
+  a: "la",
+  b: "si",
+};
+
+/** A note token: letter, octave marks, an OPTIONAL duration, dots. `\d*` is what lets a bare
+ *  signature letter (`\sig \bakiyeFlat b`) be renamed too — it carries no duration. */
+const NOTE_TOKEN = /^([a-g])([',]*)(\d*)(\.*)$/;
+
+/**
+ * Rewrite one decoded token with its note name, leaving everything else exactly as the model
+ * emitted it: `b'16` → `si'16`, `\komaSharp` → `\komaSharp`, `r4` → `r4`.
+ *
+ * Rests are deliberately NOT renamed. The note model calls a rest "Es", but `r` is unambiguous in
+ * the token stream and inventing a second spelling for it would make the two harder to compare.
+ */
+export function toSolfegeToken(tok: string): string {
+  const m = NOTE_TOKEN.exec(tok);
+  if (!m) return tok;
+  const [, letter, octave, dur, dots] = m;
+  return `${LETTER_TO_SOLFEGE[letter!] ?? letter}${octave}${dur}${dots}`;
+}
+
+/** The whole label, token by token. Whitespace is normalized to single spaces. */
+export function toSolfegeLabel(tokens: string): string {
+  return tokens.trim().split(/\s+/).filter(Boolean).map(toSolfegeToken).join(" ");
+}
 
 interface StripItem {
   name: string;
   canvas: HTMLCanvasElement;
   geom: Strip;
+  /** what the model read, once this page has been decoded — raw tokens as emitted */
+  tokens?: string;
+  /** the least confident token in the strip; the W1 signal, shown because it is free here */
+  minLogprob?: number;
 }
 
 interface PageItem {
@@ -67,6 +110,14 @@ style.textContent = `
   .strip canvas { display: block; }
   .strip.fit canvas { max-width: 100%; height: auto; }
   .strip button { font-size: 12px; cursor: pointer; }
+  .label { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
+           line-height: 1.5; margin-top: 8px; padding: 7px 9px; background: #f6f8fa;
+           border: 1px solid #e2e6ea; border-radius: 6px; word-break: break-word; }
+  .label .cmd { color: #8250df; }
+  .label .note { color: #0a3069; font-weight: 600; }
+  .label .raw { display: block; margin-top: 5px; color: #8a8a8a; font-size: 11.5px; font-weight: 400; }
+  .label .unsure { float: right; color: #b26a00; font-size: 11.5px; }
+  .label.none { color: #888; font-style: italic; font-family: inherit; }
   .empty { color: #888; padding: 30px 0; }
 `;
 document.head.appendChild(style);
@@ -155,6 +206,54 @@ async function addPages(files: File[]) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Reading the strips with the model
+
+let reading = false;
+
+/**
+ * Decode the selected page's strips, on demand.
+ *
+ * Deliberately NOT automatic. Slicing a page is ~1.6 s; reading it is ~1.2 s per strip, so a
+ * 29-strip page is ~35 s and would throw away the reason this view is quick. Only strips that have
+ * no label yet are decoded, so deleting a few and pressing it again costs nothing for the rest.
+ */
+async function readPage(p: PageItem) {
+  const todo = p.strips.filter((s) => s.tokens === undefined);
+  if (!todo.length || reading) return;
+  reading = true;
+  render();
+  try {
+    setStatus("loading model…");
+    const { sessions, meta } = await getModel(setStatus);
+    const inputs: StripInput[] = todo.map((s) => ({
+      system: s.geom.system,
+      window: s.geom.window,
+      image: s.canvas,
+      name: s.name,
+    }));
+    const decoded = await decodeStrips(sessions, meta, inputs, {
+      onProgress: (done, total) =>
+        setStatus(done < total ? `reading strip ${done + 1} of ${total}…` : "done"),
+    });
+    decoded.forEach((d, i) => {
+      const strip = todo[i]!;
+      strip.tokens = d.tokens;
+      strip.minLogprob = d.minLogprob;
+    });
+    const unsure = todo.filter((s) => (s.minLogprob ?? 0) < -1.0).length;
+    setStatus(
+      `read ${todo.length} strip${todo.length > 1 ? "s" : ""} of ${p.fileName}` +
+        (unsure ? ` — ${unsure} the model was unsure about (min logprob < −1.0)` : ""),
+    );
+  } catch (err) {
+    setStatus(String(err), true);
+  } finally {
+    reading = false;
+    render();
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
 // Rendering
 
 actualBox.addEventListener("change", () => {
@@ -226,6 +325,54 @@ function renderThumbs() {
   }
 }
 
+/**
+ * The decoded label under a strip: note names first, the model's raw tokens beneath.
+ *
+ * Both are shown on purpose. The solfège line is the readable one; the raw line is what the model
+ * actually emitted and is what any bug report or comparison has to quote — a renamed token cannot
+ * be pasted into the stitcher or diffed against Python.
+ */
+function labelEl(st: StripItem): HTMLElement {
+  const el = document.createElement("div");
+  if (st.tokens === undefined) {
+    el.className = "label none";
+    el.textContent = "not read yet";
+    return el;
+  }
+  el.className = "label";
+
+  if (st.minLogprob !== undefined) {
+    const conf = document.createElement("span");
+    conf.className = "unsure";
+    // The −1.0 threshold is the one W1/W3 validated as separating the strips the two runtimes
+    // disagree on. It is a hint, not a promise — the pre-registered 10%/60% bar was NOT met.
+    conf.textContent =
+      st.minLogprob < -1.0
+        ? `⚠ unsure (min ${st.minLogprob.toFixed(2)})`
+        : `min ${st.minLogprob.toFixed(2)}`;
+    el.appendChild(conf);
+  }
+
+  const tokens = st.tokens.trim().split(/\s+/).filter(Boolean);
+  if (!tokens.length) {
+    el.appendChild(document.createTextNode("(the model read nothing here)"));
+    return el;
+  }
+  tokens.forEach((tok, i) => {
+    const span = document.createElement("span");
+    span.className = tok.startsWith("\\") ? "cmd" : "note";
+    span.textContent = toSolfegeToken(tok);
+    if (i) el.appendChild(document.createTextNode(" "));
+    el.appendChild(span);
+  });
+
+  const raw = document.createElement("span");
+  raw.className = "raw";
+  raw.textContent = tokens.join(" ");
+  el.appendChild(raw);
+  return el;
+}
+
 function renderDetail() {
   detailEl.innerHTML = "";
   const p = pages.find((x) => x.id === selectedId);
@@ -244,6 +391,16 @@ function renderDetail() {
     `${p.fileName} — ${s.pageWidth}×${s.pageHeight} px · ${s.nStaves} staves · ` +
     `${p.strips.length} strips shown · deskew ${s.skewDeg ? `${s.skewDeg.toFixed(2)}°` : "none"} · ` +
     `sliced in ${(s.totalMs / 1000).toFixed(1)} s (angle check ${(s.skewMs / 1000).toFixed(1)} s)`;
+  const pending = p.strips.filter((x) => x.tokens === undefined).length;
+  const read = document.createElement("button");
+  read.style.marginLeft = "10px";
+  read.disabled = reading || pending === 0;
+  read.textContent = pending
+    ? `🔎 Read ${pending} strip${pending > 1 ? "s" : ""} with the model`
+    : "✓ all strips read";
+  read.title = "Decode these crops — about 1.2 s per strip, and the model loads on first use";
+  read.addEventListener("click", () => void readPage(p));
+  stats.appendChild(read);
   detailEl.appendChild(stats);
 
   for (const st of p.strips) {
@@ -294,6 +451,7 @@ function renderDetail() {
     wrap.className = "wrap";
     wrap.appendChild(st.canvas);
     box.appendChild(wrap);
+    box.appendChild(labelEl(st));
     detailEl.appendChild(box);
   }
 

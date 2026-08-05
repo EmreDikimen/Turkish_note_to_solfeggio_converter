@@ -37,7 +37,7 @@ crops — and **wired into the app at W7 (2026-08-05)**, so an uploaded page bec
 |---|---|
 | Slicer ported with **opencv.js**, not hand-rolled | Parity over bundle size; 13 MB is noise beside 211 MB of weights. Validated at W0. |
 | **Screenshots and clean scans only** | Real uploads are mostly web screenshots. Cuts the hardest third of the port. ⚠ The stated reason — "the photo front-end is a no-op on clean input" — held for the perspective crop and **failed for the deskew** (W4): 15.3% of corpus pages take a real rotation, so it is ported. |
-| Weights on **Hugging Face Hub**, app on a COOP/COEP-capable static host | HF is built for large files; Cloudflare Pages caps files at 25 MB, so the 90 MB encoder cannot live there. |
+| ~~Weights on **Hugging Face Hub**, app on a COOP/COEP-capable static host~~ | **SUPERSEDED 2026-08-05**: decode moves to a server, so the weights never reach the browser and the COOP/COEP requirement (which existed for `onnxruntime-web`'s threads) mostly goes away. Keep it only if the browser path is retained as a fallback — and it is, as the reference the server is checked against. [deploy.md](deploy.md) |
 | **Confidence highlighting is in the MVP** | It is half of the stated goal, and per-strip logprobs are nearly free. |
 
 ## The ladder
@@ -63,7 +63,7 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
 | **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | **next** |
-| **W9** | Model delivery (HF + Cache API) and hosting — plan in [deploy.md](deploy.md) | — |
+| **W9** | **Server-side decode** + hosting — the backend question is SETTLED, plan in [deploy.md](deploy.md) | — |
 | **W10** | Friends release | — |
 
 ## What each rung established

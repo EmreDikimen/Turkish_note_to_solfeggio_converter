@@ -9,6 +9,37 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-05 — the backend decision is TAKEN: decode moves to a server
+
+**Owner: "I am sure about deploy the app in a server to protect computers for now."** That settles
+the question `docs/mvp/deploy.md` reopened the same day, and it reverses two things that were marked
+LOCKED: the 2026-07-02 "No production backend" decision and the `CLAUDE.md` hard rule "No backend,
+ever". Both are now marked OVERTURNED with this as the cause, per the rule that a reversed decision
+keeps its reasoning rather than being deleted.
+
+**The stated reason is thermal, not capability** — a page burns ~19 s of multi-threaded CPU on the
+client, and every user pays that heat on their own machine. Worth recording because it is a
+*product* argument, not a speed one: the app already reads a page in ~25 s.
+
+**What does NOT change, and is easy to get wrong:** audio and the editor stay local; the W4–W6
+slicer port stays client-side, because slicing is the cheap half and it is what keeps the upload to
+~19 small crops instead of a full-resolution photo; and **the in-browser decode path is KEPT**.
+`gate:browser`, `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold quality result
+all rest on it — and it becomes the reference the server must be shown to match, exactly as local
+Python was the reference for the slicer port. Deleting it would silently retire most of the
+validation this track has built.
+
+**One implication that is NOT settled and must not be assumed:** a Python decode service would make
+part of `src/` shippable for the first time, which cuts across "Python is training/data only". The
+hard rule is now split — training stays Python-only-never-ships; the serving half is an open design
+question.
+
+⚠ **Adopted with two figures unmeasured, both of which shape the build rather than the decision:**
+the thermal complaint has not been re-tested since page latency fell ~56 s → ~25 s (so the size of
+the win is unknown, and it is one page of work to find out), and no server has been benchmarked, so
+every cost number in deploy.md is an extrapolation from one M4. The build order in STATUS puts the
+benchmark first for that reason — it also decides Cloud Run vs Hetzner.
+
 ## 2026-08-05 — doc sync: deploy.md was written against a page that no longer exists
 
 **`docs/mvp/deploy.md` (the reopened backend question) was drafted BEFORE the deskew speedup landed

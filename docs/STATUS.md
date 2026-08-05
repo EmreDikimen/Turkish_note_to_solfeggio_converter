@@ -272,13 +272,19 @@ Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
    per-TOKEN localisation, or drop the feature for the friends release. The pre-registered 10%/60%
    bar is NOT met and moving it silently is not an option. This is half of the 2026-07-27 goal, so
    dropping it needs saying out loud.
-2. **W9 — SETTLE THE HOSTING QUESTION BEFORE BUILDING IT.** This stopped being plumbing on
-   2026-08-05: [mvp/deploy.md](mvp/deploy.md) reopens the LOCKED "no production backend" rule and
-   proposes slicing in the browser but decoding on a scale-to-zero CPU server. The decision is
-   **reopened, not taken**. Two things settle it and both are hours, not days: **re-test the thermal
-   complaint** (it was measured against a ~56 s page; a page is ~25 s now, ~19 s of it decode), and
-   **run one page on a real phone** — the whole server argument is an extrapolation from one M4.
-   The client-side prerequisite that doc asked for is already done.
+2. **W9 — BUILD THE SERVER PATH. The hosting question is SETTLED** (owner, 2026-08-05): decode
+   moves to a scale-to-zero CPU server to protect the user's machine; the browser keeps slicing and
+   POSTs the crops. This reverses the LOCKED no-backend rule — [DECISIONS.md](DECISIONS.md) and
+   [mvp/deploy.md](mvp/deploy.md) carry it. The build order that follows from the plan:
+   **(a)** benchmark one batched page on a real cloud core — every cost figure today is an
+   extrapolation from one M4, and it decides Cloud Run vs Hetzner; **(b)** the decode endpoint;
+   **(c)** the client swap behind a flag, keeping the browser path alive; **(d)** the safety
+   checklist BEFORE any public URL (billing cap + alert, rate limit, upload/strip caps).
+   ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
+   `smoke:page` and the W3 browser-vs-gold quality result all rest on it; it is the reference the
+   server must be shown to match, exactly as Python was for the slicer port.
+   ⚠ **Also unmeasured:** the thermal complaint has not been re-tested since a page went ~56 s →
+   ~25 s. That does not reopen the decision; it sizes the win, and it is one page of work.
 3. **W10 — friends release**, plus the safety checklist in [mvp/deploy.md](mvp/deploy.md) if
    anything is exposed publicly (billing cap, rate limit, upload caps). ⚠ **Feedback collection is
    worth building even if the server plan is dropped** — W10's stated purpose is feedback, and an

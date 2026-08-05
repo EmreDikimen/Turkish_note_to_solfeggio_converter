@@ -72,10 +72,16 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   training must come from different pieces.
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
-- **Python is training/data only.** Nothing in `src/` or `scripts/` ships. No backend — but the
-  no-backend rule is **REOPENED as of 2026-08-05** and a server-side decode is proposed for W9:
-  [docs/mvp/deploy.md](docs/mvp/deploy.md). Until the owner settles it, do not build a backend, and
-  do not treat the rule as absolute when planning W9/W10.
+- **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,
+  ever"): the browser slices and POSTs crops, a scale-to-zero CPU server runs the model. Reason:
+  protect the user's machine — a page burns ~19 s of multi-threaded CPU on the client. Plan:
+  [docs/mvp/deploy.md](docs/mvp/deploy.md). **Everything else stays local** — audio, the editor, and
+  the W4–W6 slicer port. **Do not delete the in-browser decode path**: `gate:browser`,
+  `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all rest on it.
+- **Python is still training/data only for TRAINING.** Nothing in `src/vision/train*` or the data
+  scripts ships. ⚠ The serving half is now an open design question — a Python decode service would
+  make part of `src/` shippable for the first time, and that needs its own decision, not an
+  assumption.
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
   stable across checkpoints.
 - **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COLAB.md`), or locally with

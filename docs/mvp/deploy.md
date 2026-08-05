@@ -8,10 +8,16 @@ updated: 2026-08-05
 > [../STATUS.md](../STATUS.md). The ladder this belongs to (W9 hosting, W10 friends release):
 > [README.md](README.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
 >
-> ⚠ **This reopens a LOCKED decision.** "No production backend" (2026-07-02) and the `CLAUDE.md`
-> hard rule "No backend, ever" both predate this. The owner's stated reason for reopening it
-> (2026-08-05) is thermal, not capability: the in-browser decode pegs the CPU long enough to heat
-> the machine. The decision is **reopened, not taken** — see [../DECISIONS.md](../DECISIONS.md).
+> ✅ **DECIDED 2026-08-05: the server is happening.** The owner's reason is thermal, not capability —
+> *"deploy the app in a server to protect computers for now"*. This reverses "No production backend"
+> (2026-07-02) and the `CLAUDE.md` hard rule with it; both are marked OVERTURNED in
+> [../DECISIONS.md](../DECISIONS.md). So this page stops being a proposal and becomes the plan.
+>
+> ⚠ **Two numbers under it are still unmeasured, and they shape the BUILD rather than the decision:**
+> the thermal complaint has not been re-tested since a page went ~56 s → ~25 s (so the size of the
+> win is unknown), and no server has been benchmarked (so every cost figure here is an extrapolation
+> from one M4). Neither reopens the decision; both should be measured before money is committed to a
+> particular host.
 >
 > ⚠ **UPDATED 2026-08-05, later the same day: the client-side prerequisite this doc asked for is
 > DONE, and it changes the numbers below.** The deskew sweep is 126× cheaper at no change in its

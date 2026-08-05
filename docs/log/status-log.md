@@ -9,6 +9,45 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-05 — a slur above the staff was shearing the beams below
+
+**Owner report: an uploaded page came back with a crop whose bottom was cut, so "notes and their
+times could not be read."** Reproduced on corpus pages via the new slice inspector, and the residual
+4.4% bottom clipping turned out to be two unrelated problems.
+
+**85% of it is not a placement bug at all.** Those rows' music genuinely exceeds the frame — short by
+a **median 2.31 sp** against a total non-staff budget of 7.2 sp — and they are mostly degraded scans
+where `row_music_extent` saturates near its own `6*sp` limit because the row's ink is connected to
+lyrics or the next system. No redistribution of a fixed frame can supply 2.3 more line-spaces; only
+a scale change could, and scale is the axis the model is most sensitive to (12–15% edits per 1%).
+
+**The remaining 15% was a real bug with a real fix.** `place_band` let ink ABOVE the staff claim room
+without limit, so a slur reaching 5.0 sp up pushed the staff down and the frame cut the beams below.
+**First answer was wrong and was corrected under challenge.** Bottom-first was measured — bottom
+clips 3.0% → 2.7%, top clips 2.7% → 3.1%, total ink lost +1.9% — and reported as "a trade, not a
+fix". The owner pushed back on whether it had to be a trade, which was the right question: ink AREA
+weighs a slur's apex the same as a beam, and that was already known to be the wrong scale.
+
+**Capping what the top may CLAIM is strictly better than both**, at 3.5 sp — a notehead three ledger
+lines up sits ~3.0 sp above, ~3.5 with its accidental, and beyond that the ink is slur/segno/ornament
+(the renderer injects slurs as deliberately LABEL-FREE distractors). Over 120 pages / 901 rows:
+
+| | ≤3.5 sp above (real notes) | >3.5 sp (decoration) | below (beams) |
+|---|---|---|---|
+| old, uncapped | 0 | 19,670 | 19,932 |
+| bottom-first | **500** | 23,681 | 16,193 |
+| capped (shipped) | **0** | 22,763 | **17,231 (−13.6%)** |
+
+Bottom-first buys beams by destroying real ledger-note ink, which is the harm the rule exists to
+prevent. The cap loses nothing the old rule kept, and by construction only moves rows ALREADY in
+conflict. Verified by eye on the reproducing row: beams complete, lyrics visible, only the slur's
+apex lost. Python and TS moved together, so parity still reads W4/W5/W6 PASS with deskew 20/20, and
+`smoke:page` still reads 16 strips / 344 notes / 28 measures.
+
+⚠ **Still an information argument, not a decode result** — at 2.6% of rows an accuracy A/B is
+underpowered, the same wall adaptive placement hit. `OMR_VPLACE_TOP_CLAIM=99` restores the old rule
+and the slice inspector toggles it, so the claim stays checkable on a real page.
+
 ## 2026-08-05 — the skew sweep is 126× cheaper and returns the same answers
 
 **The page latency written up as a W7 problem is closed, and nothing about the estimator's

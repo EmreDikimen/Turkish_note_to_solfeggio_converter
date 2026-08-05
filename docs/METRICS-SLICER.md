@@ -285,6 +285,42 @@ crops toward the training distribution (synthetic clips 1.0%). ⚠ **It has not 
 accuracy** — that needs gold-labelled pages. `OMR_VPLACE=0` disables it;
 `OMR_VPLACE_MIN_HEAD` sets the dose.
 
+**Why 4.4% still clips, split by cause (2026-08-05).** Reproduced on 60 real pages / 453 rows, and
+the residual is not one problem but two:
+
+| cause | share of clipped rows | fixable by placement? |
+|---|---|---|
+| the row's music genuinely exceeds the frame (`below` > `total - MIN_HEAD` = 3.9 sp) | **17 of 20** | **no** — only a scale change could, and scale costs 12–15% edits per 1% |
+| ink ABOVE outranks it (`place_band` L440 raises `head` to protect the top) | 3 of 20 | yes |
+
+The first group is dominated by degraded scans where the row's ink is connected to lyrics or the
+next system, so `row_music_extent` saturates near its own `6*sp` search limit — those rows are short
+by a **median 2.31 sp**, which no redistribution of 7.2 sp can supply. The second group is the one a
+reader notices: a **slur above the staff** pushes the staff down and shears the beams below, i.e. it
+trades ink that carries no duration for ink that does.
+
+**The conflict rule was FIXED, and it did not have to be a trade (2026-08-05).** The first two
+candidates both were:
+
+| over 120 pages / 901 rows | ink lost ≤3.5 sp above (real notes) | >3.5 sp above (decoration) | ink lost BELOW (beams) |
+|---|---|---|---|
+| top wins (the old rule) | **0** | 19,670 | 19,932 |
+| bottom first | **500** | 23,681 | 16,193 |
+| **top claim capped at 3.5 sp (shipped)** | **0** | 22,763 | **17,231 (−13.6%)** |
+
+Bottom-first was rejected: it saves beams by destroying **500 px of real ledger-note ink**, which is
+the harm the rule exists to prevent. Capping what the top may CLAIM does better than both — it loses
+nothing the old rule kept inside the ledger-note zone, and takes 13.6% off the beam loss. A notehead
+three ledger lines up sits ~3.0 sp above the top line, ~3.5 with its accidental; past that the ink is
+a slur, phrase mark, segno or ornament, and the renderer injects slurs as deliberately LABEL-FREE
+distractors. By construction it moves only rows ALREADY in conflict, i.e. rows already losing
+something, so the downside is confined to crops that were damaged anyway.
+
+`OMR_VPLACE_TOP_CLAIM=99` restores the old uncapped rule exactly, and the slice inspector has it as a
+toggle. ⚠ **Still not a decode measurement**: it is an information argument (which ink the model must
+read), not an accuracy result, and the affected 2.6% of rows make an A/B underpowered — the same
+limit the adaptive placement itself ran into.
+
 ⚠ **Correction to how this was justified.** The "vertical placement is free" result (+1% shift →
 +0.4% edits) was measured at ~3 px. The adaptive placement shifts up to 39 px, 13x outside that
 range, so it does not license the change — hence the direct A/B above.

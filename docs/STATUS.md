@@ -14,6 +14,21 @@ errors are) has never been built, and feedback cannot be collected without a pip
 model stays `round2-stage2-best` int8 throughout. Track, ladder and running state:
 [mvp/README.md](mvp/README.md).
 
+- **✅ A SLUR ABOVE THE STAFF WAS SHEARING THE BEAMS BELOW, AND IT IS FIXED (2026-08-05).** Owner
+  reported a crop whose bottom was cut so "notes and their times could not be read"; reproduced on
+  corpus pages. `place_band` let ink above the staff claim room without limit, so a slur pushed the
+  staff down and the frame cut the beams — the ink that carries duration. Ink above may now claim
+  only **3.5 sp**, the height a real ledger note reaches. Measured over 120 pages / 901 rows: **0 px
+  lost inside the ledger-note zone, exactly as before**, and beam loss **19,932 → 17,231 (−13.6%)**.
+  **It is not a trade** — the two obvious alternatives were: bottom-first destroys 500 px of real
+  ledger-note ink, and the old rule destroys beams.
+  ⚠ **It is an information argument, not a decode result.** At 2.6% of rows affected an accuracy A/B
+  is underpowered, the same limit adaptive placement itself hit. ⚠ The other **85% of clipped rows
+  are not fixable by placement** — their music genuinely exceeds the frame (short by a median 2.31
+  sp), mostly degraded scans where the row's ink connects to lyrics or the next system. Only a scale
+  change could reach those, and scale costs 12–15% edits per 1%.
+  Both sides moved together, so parity still reads **W4/W5/W6 PASS, deskew 20/20**, and the app
+  smoke still reads the same 16 strips / 344 notes / 28 measures.
 - **✅ THE PAGE LATENCY IS FIXED, EXACTLY (2026-08-05): 36.6 → 1.3 s/page, with the estimator's
   answers unchanged.** The skew sweep's cost was one page-wide `morphologyEx` per rotation, 41 times.
   Its kernel is `len`×1, so the opening is purely per-row — and a 1-D opening has a closed form: a

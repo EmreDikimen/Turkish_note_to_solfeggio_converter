@@ -47,6 +47,16 @@ VPLACE_MIN_HEAD_SP = float(os.environ.get("OMR_VPLACE_MIN_HEAD", "3.30"))
                            # floor on headroom: how far the staff may be pushed up. The
                            # "vertical shift is free" evidence was measured at +-1% (~3 px);
                            # 3.30 sp is a 39 px shift, well outside it, so this is a dose.
+# How far ABOVE the top staff line ink may claim room when the frame cannot hold both sides.
+# A notehead three ledger lines up sits ~3.0 sp above, ~3.5 with its accidental; ink beyond that is
+# a slur, phrase mark, segno or ornament, and our own renderer injects slurs as deliberately
+# LABEL-FREE distractors. Uncapped, such decoration pushed the staff down and sheared the BEAMS,
+# which carry the durations. Measured over 120 pages / 901 rows (2026-08-05), against uncapped:
+#   ink lost within 3.5 sp above (real notes):  0  ->  0     (nothing that was kept is now lost)
+#   ink lost below the staff (beams):      19,932 -> 17,231  (-13.6%)
+# It only moves rows that are ALREADY in conflict, i.e. rows already losing something. Set it huge
+# (OMR_VPLACE_TOP_CLAIM=99) to restore the old uncapped rule exactly.
+VPLACE_TOP_CLAIM_SP = float(os.environ.get("OMR_VPLACE_TOP_CLAIM", "3.5"))
 
 # ---- windowing --------------------------------------------------------------------------------
 # OMR_MEASURES_PER_STRIP: tuplet-dense pieces blow the 59-id label budget even at 2 measures
@@ -437,8 +447,9 @@ def place_band(above: float, below: float) -> tuple[float, float]:
     want_b = min(below + VPLACE_MARGIN_SP, total - VPLACE_MIN_HEAD_SP)
     want_b = max(want_b, BELOW_SP)                      # never tighter than the trained default
     head = total - want_b
-    if head < above + VPLACE_MARGIN_SP:                 # cannot fit both: keep the staff nearer
-        head = min(HEADROOM_SP, max(VPLACE_MIN_HEAD_SP, above + VPLACE_MARGIN_SP))
+    claim = min(above, VPLACE_TOP_CLAIM_SP) + VPLACE_MARGIN_SP   # decoration may not claim room
+    if head < claim:                                   # cannot fit both: keep the staff nearer
+        head = min(HEADROOM_SP, max(VPLACE_MIN_HEAD_SP, claim))
     head = min(HEADROOM_SP, max(VPLACE_MIN_HEAD_SP, head))
     return head, total - head
 

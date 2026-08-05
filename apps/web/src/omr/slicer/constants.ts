@@ -23,6 +23,27 @@ export const VPLACE_ADAPTIVE = true; // L44 (OMR_VPLACE unset => "1")
 export const VPLACE_MARGIN_SP = 0.25; // L45 — breathing room past the measured ink extent
 export const VPLACE_MIN_HEAD_SP = 3.3; // L46 (OMR_VPLACE_MIN_HEAD unset => "3.30")
 
+/**
+ * How far ABOVE the top staff line ink may claim room when the frame cannot hold both sides (L440).
+ *
+ * A notehead three ledger lines up sits ~3.0 sp above the top line, ~3.5 with its accidental. Ink
+ * beyond that is a slur, phrase mark, segno or ornament — and our own renderer injects slurs as
+ * deliberately LABEL-FREE distractors, so the model is trained to ignore them. Uncapped, that
+ * decoration pushed the staff down and sheared the BEAMS, which is what carries the durations.
+ *
+ * Measured over 120 real pages / 901 rows (2026-08-05), capped against uncapped:
+ *   ink lost within 3.5 sp above (real notes):  0 → 0        nothing that was kept is now lost
+ *   ink lost below the staff (beams):      19,932 → 17,231   −13.6%
+ * It only moves rows ALREADY in conflict. Set it huge to restore the old uncapped rule exactly —
+ * which is what the slice inspector's toggle does. Numbers: docs/METRICS-SLICER.md.
+ */
+export let VPLACE_TOP_CLAIM_SP = 3.5;
+
+/** Restore the old uncapped rule (diagnostic A/B only — the app never calls this). */
+export function setVplaceTopClaim(sp: number): void {
+  VPLACE_TOP_CLAIM_SP = sp;
+}
+
 // ---- windowing (L55-58) — W6 uses these; listed here so one file owns the constants -----------
 export const MEASURES_PER_STRIP = 3; // L55 (OMR_MEASURES_PER_STRIP unset => "3")
 export const MAX_STRIP_W = 1450; // L57 — cap width (training strips topped out ~1443 px)

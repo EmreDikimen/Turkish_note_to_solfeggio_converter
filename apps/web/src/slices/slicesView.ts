@@ -12,6 +12,7 @@
  * score, because this page never makes one.
  */
 import { slicePage, type SlicedPage } from "../omr/page";
+import { setVplaceTopClaim } from "../omr/slicer/constants";
 import { decodeStrips, type StripInput } from "../omr/pipeline";
 import { getModel } from "../omr/session";
 import type { Strip } from "../omr/slicer/slicer";
@@ -132,6 +133,7 @@ root.innerHTML = `
   <div class="bar">
     <label>Add page(s): <input id="file" type="file" accept="image/*" multiple /></label>
     <label><input id="actual" type="checkbox" /> actual size</label>
+    <label title="Restore the OLD rule, where a slur or ornament above the staff could push the staff down and shear the beams below. Off = the capped rule that ships. Re-slices every page."><input id="bottomfirst" type="checkbox" /> old placement (ornaments outrank beams)</label>
     <button id="clear">Clear all</button>
   </div>
   <div id="status" class="status"></div>
@@ -142,6 +144,7 @@ root.innerHTML = `
 const fileInput = root.querySelector<HTMLInputElement>("#file")!;
 const actualBox = root.querySelector<HTMLInputElement>("#actual")!;
 const clearBtn = root.querySelector<HTMLButtonElement>("#clear")!;
+const bottomFirstBox = root.querySelector<HTMLInputElement>("#bottomfirst")!;
 const statusEl = root.querySelector<HTMLDivElement>("#status")!;
 const thumbsEl = root.querySelector<HTMLDivElement>("#thumbs")!;
 const detailEl = root.querySelector<HTMLDivElement>("#detail")!;
@@ -249,6 +252,46 @@ async function readPage(p: PageItem) {
     setStatus(String(err), true);
   } finally {
     reading = false;
+    render();
+  }
+}
+
+
+/**
+ * Re-slice everything under the other vertical-placement rule (see `VPLACE_BOTTOM_FIRST`).
+ *
+ * Ticking it restores the OLD uncapped rule, where ink above the staff could claim room without
+ * limit and shear the beams below. Kept as an A/B so the shipped rule can be checked on a real page
+ * rather than taken on trust. Labels are dropped because the crops change, so an old label would
+ * describe pixels that no longer exist.
+ */
+bottomFirstBox.addEventListener("change", () => {
+  setVplaceTopClaim(bottomFirstBox.checked ? 99 : 3.5); // 99 sp = effectively uncapped
+  void resliceAll();
+});
+
+async function resliceAll() {
+  if (!pages.length) return;
+  bottomFirstBox.disabled = true;
+  try {
+    for (const [i, p] of pages.entries()) {
+      setStatus(`re-slicing ${i + 1}/${pages.length}: ${p.fileName}…`);
+      const sliced = await slicePage(p.thumbUrl, p.stem);
+      p.sliced = sliced;
+      p.strips = sliced.strips.map((st, k) => ({
+        name: st.name ?? `strip ${k}`,
+        canvas: st.image as HTMLCanvasElement,
+        geom: sliced.geometry[k]!,
+      }));
+    }
+    setStatus(
+      `re-sliced ${pages.length} page(s) — ` +
+        (bottomFirstBox.checked ? "OLD placement: ornaments outrank beams" : "back to the shipped placement"),
+    );
+  } catch (err) {
+    setStatus(String(err), true);
+  } finally {
+    bottomFirstBox.disabled = false;
     render();
   }
 }

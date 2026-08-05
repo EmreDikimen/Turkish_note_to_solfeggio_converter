@@ -309,6 +309,8 @@ What to look for: music cut in half at a crop edge, **beams or ledger notes clip
 bottom** (durations become unreadable), a crop that is nearly empty, a staff missed entirely (the
 strip count will be low for the number of staves), or a page that reports 0 staves.
 
+**old placement (ornaments outrank beams)** re-slices every page under the pre-2026-08-05 rule, where ink above the staff could claim room without limit and shear the beams below. Tick it on a page with a slur or segno above a beamed run and compare the bottom edge.
+
 ⚠ It is **view-only by design** (owner, 2026-08-05): deleting a strip changes nothing outside this
 page — no score is built here, and nothing is written to disk. A reload starts empty.
 

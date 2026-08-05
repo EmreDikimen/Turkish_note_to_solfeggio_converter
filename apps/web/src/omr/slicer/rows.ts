@@ -16,6 +16,7 @@ import {
   TARGET_SPACING,
   VPLACE_ADAPTIVE,
   VPLACE_MARGIN_SP,
+  VPLACE_TOP_CLAIM_SP,
   VPLACE_MIN_HEAD_SP,
   pyRound,
 } from "./constants";
@@ -105,9 +106,12 @@ export function placeBand(above: number, below: number): [number, number] {
   let wantB = Math.min(below + VPLACE_MARGIN_SP, total - VPLACE_MIN_HEAD_SP);
   wantB = Math.max(wantB, BELOW_SP); // never tighter than the trained default
   let head = total - wantB;
-  if (head < above + VPLACE_MARGIN_SP) {
-    // cannot fit both: keep the staff nearer
-    head = Math.min(HEADROOM_SP, Math.max(VPLACE_MIN_HEAD_SP, above + VPLACE_MARGIN_SP));
+  // The conflict: both sides want more than the frame has. Ink above may claim room only up to the
+  // height a real ledger note reaches — past that it is decoration, and letting it push the staff
+  // down is what sheared the beams that carry the durations. See VPLACE_TOP_CLAIM_SP.
+  const claim = Math.min(above, VPLACE_TOP_CLAIM_SP) + VPLACE_MARGIN_SP;
+  if (head < claim) {
+    head = Math.min(HEADROOM_SP, Math.max(VPLACE_MIN_HEAD_SP, claim));
   }
   head = Math.min(HEADROOM_SP, Math.max(VPLACE_MIN_HEAD_SP, head));
   return [head, total - head];

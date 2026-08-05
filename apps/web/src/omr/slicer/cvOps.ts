@@ -97,7 +97,13 @@ export function binarizeInk(gray: Gray): Gray {
   return out;
 }
 
-/** MORPH_OPEN with a `len`×1 rectangle — `detect_staves` L315-317. Keeps long horizontals only. */
+/**
+ * MORPH_OPEN with a `len`×1 rectangle — `detect_staves` L315-317. Keeps long horizontals only.
+ *
+ * ⚠ Still used by `detect_staves`, and it is ALSO the oracle `npm run check:deskew` measures
+ * `openHorizontalRowSums` against. Do not delete it as dead code if that caller ever goes away —
+ * without it the exactness claim below has nothing to be checked against.
+ */
 export function openHorizontal(ink: Gray, len: number): Gray {
   const src = toMat(ink);
   const dst = new (cv().Mat)();
@@ -107,6 +113,46 @@ export function openHorizontal(ink: Gray, len: number): Gray {
   src.delete();
   const out = fromMat(dst);
   dst.delete();
+  return out;
+}
+
+/**
+ * Per-row ink counts of `openHorizontal(ink, len)`, WITHOUT running the morphology.
+ *
+ * The kernel is `len × 1`, so the opening is purely per-row, and a 1-D opening has a closed form:
+ * a pixel survives iff some window of `len` columns that contains it is all-foreground *within the
+ * image*. That collapses to a run-length scan —
+ *
+ *   - a run that touches the left or right edge survives WHOLE, whatever its length. `morphologyEx`
+ *     defaults to `morphologyDefaultBorderValue()`, which erodes as if everything outside the frame
+ *     were foreground, so a window may hang off the edge and only its in-image part must be ink;
+ *   - any other run survives whole iff it is at least `len` long, and vanishes otherwise.
+ *
+ * `qualifyingLineRows` only ever wants the row sums, never the opened image, so this replaces a
+ * page-wide `morphologyEx` plus two full-image Mat copies with one pass over the bytes — and the
+ * skew sweep pays that 41 times per page. It is an EXACT substitution, not an approximation: the
+ * border rule above is the part that is easy to get wrong, which is why `npm run check:deskew`
+ * compares this against the real morphology on every angle of real pages rather than trusting it.
+ */
+export function openHorizontalRowSums(ink: Gray, len: number): Float64Array {
+  const { data, width: w, height: h } = ink;
+  const out = new Float64Array(h);
+  for (let y = 0; y < h; y++) {
+    const off = y * w;
+    let total = 0;
+    let x = 0;
+    while (x < w) {
+      if (data[off + x] === 0) {
+        x++;
+        continue;
+      }
+      const s = x;
+      while (x < w && data[off + x] !== 0) x++;
+      const runLen = x - s;
+      if (s === 0 || x === w || runLen >= len) total += runLen;
+    }
+    out[y] = total;
+  }
   return out;
 }
 

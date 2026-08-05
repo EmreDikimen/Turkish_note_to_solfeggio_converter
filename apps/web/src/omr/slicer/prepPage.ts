@@ -18,7 +18,7 @@
  * Transliterated line by line. Do not restructure — see docs/mvp/slicer-port.md.
  */
 import { pyRound } from "./constants";
-import { binarizeInk, openHorizontal, resizeScale, rotate, type Gray } from "./cvOps";
+import { binarizeInk, openHorizontalRowSums, resizeScale, rotate, type Gray } from "./cvOps";
 import { clusterRows } from "./staves";
 
 // ---- deskew (L219-221) -------------------------------------------------------------------------
@@ -36,18 +36,15 @@ export const SKEW_MIN_GAIN = 3; // ... and only if it buys >= this many more sta
 export function qualifyingLineRows(gray: Gray): number {
   const ink = binarizeInk(gray);
   const horLen = Math.max(20, Math.floor(gray.width / 4));
-  const horiz = openHorizontal(ink, horLen);
+  // The row sums of `openHorizontal(ink, horLen)`, computed in closed form instead of by running
+  // the morphology — an exact substitution that removes the single most expensive call in the
+  // 41-rotation sweep. Why it is exact, and the border rule that makes it non-obvious, are in
+  // `openHorizontalRowSums`; `npm run check:deskew` holds the two to being identical.
+  const rowInk = openHorizontalRowSums(ink, horLen);
   const h = gray.height;
   const w = gray.width;
-  const rowInk = new Float64Array(h);
   let maxRow = 0;
-  for (let y = 0; y < h; y++) {
-    let s = 0;
-    const off = y * w;
-    for (let x = 0; x < w; x++) s += horiz.data[off + x]!;
-    rowInk[y] = s / 255;
-    if (rowInk[y]! > maxRow) maxRow = rowInk[y]!;
-  }
+  for (let y = 0; y < h; y++) if (rowInk[y]! > maxRow) maxRow = rowInk[y]!;
   if (maxRow < 1) return 0;
   const thr = Math.max(maxRow * 0.3, w * 0.2);
   const hits: number[] = [];

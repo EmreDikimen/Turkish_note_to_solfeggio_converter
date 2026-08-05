@@ -2,7 +2,7 @@
   "name": "turkish-omr",
   "private": true,
   "version": "0.0.0",
-  "description": "Classical Turkish Music OMR — shared TS core + web test harness (mobile is the product)",
+  "description": "Classical Turkish Music OMR \u2014 shared TS core + web test harness (mobile is the product)",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -21,7 +21,8 @@
     "parity:arma": "npx tsx tools/vision/parity/arm-a.ts",
     "parity:slicer": "npx tsx tools/vision/parity/slicer-parity.ts",
     "check:edge": "npx tsx tools/vision/parity/edge-cases.ts",
-    "decode:pool": "npx tsx tools/vision/parity/decode-pool.ts"
+    "decode:pool": "npx tsx tools/vision/parity/decode-pool.ts",
+    "check:deskew": "npx tsx tools/vision/parity/deskew-check.ts"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

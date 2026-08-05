@@ -9,6 +9,39 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-05 — the skew sweep is 126× cheaper and returns the same answers
+
+**The page latency written up as a W7 problem is closed, and nothing about the estimator's
+behaviour changed.** The sweep cost ~35 of the ~36 s a page took, and the plan named two ways out —
+an early exit at 0°, or replacing the estimator with a standard one. **Neither was needed**, and
+both would have been behaviour changes owing a fresh measurement.
+
+**What it actually was.** Each of the 41 rotations ran `qualifyingLineRows`, whose expensive step is
+a page-wide `morphologyEx(MORPH_OPEN)` with a `len`×1 kernel — plus two full-image Mat copies to get
+in and out of opencv.js. Because that kernel is one row tall the opening is purely per-row, and a
+1-D opening has a closed form: a pixel survives iff it belongs to a run of at least `len`
+foreground pixels. `qualifyingLineRows` never uses the opened image — only its ROW SUMS — so the
+whole morphology collapses to a run-length scan. **856 ms → 6.8 ms per call, 125.8×.**
+
+**The trap, and why the check sweeps angles.** `morphologyEx` defaults to
+`morphologyDefaultBorderValue()`, i.e. it erodes as if everything outside the frame were foreground.
+So a run touching the left or right edge survives WHOLE however short it is, while an interior run
+must reach `len`. Encode that wrong and the counts differ only on some pages at some angles — a
+happy-path test would miss it. `npm run check:deskew` therefore runs both implementations on the
+SAME rotated image at every angle the coarse pass evaluates, over real corpus pages: **0
+disagreements in 328 evaluations across 8 pages**.
+
+**End-to-end evidence, not just the micro-benchmark.** The parity harness re-run with the REAL
+estimator (no `--inject-skew`): **deskew angle identical 20/20**, bars, windows and strip spans all
+exact, W4/W5/W6 PASS — at **1.3 s/page against 36.6 s** before, which makes the browser slicer
+FASTER than the Python it is a copy of (~1.9 s stage 1). In the app, `npm run smoke:page` reads the
+same page to the same 16 strips / 344 notes / 28 measures, sliced in **1.6 s** instead of 36.4 s;
+the whole upload is **~25 s**, and **decode is now the bottleneck** at ~1.2 s/strip.
+
+**What this buys beyond speed:** the owed corpus-wide validation of the deskew estimator was priced
+at ~18 h of browser time and is now well under an hour, so it stops being a reason to keep injecting
+Python's angle.
+
 ## 2026-08-05 — a decoded \tup3 that cannot close no longer draws the wrong rhythm
 
 **Reported symptom (owner): "the model emits `\repstart`, `\repend`, `\tup3` but they are not

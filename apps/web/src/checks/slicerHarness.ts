@@ -8,7 +8,18 @@
  * Pages arrive as data URLs, matching `stripsHarness.ts`: Node keeps all file I/O and the dev
  * server never gets `data/real/` opened to it.
  */
-import { grayToCanvas, initCv, decodeGray } from "../omr/slicer/cvOps";
+import {
+  binarizeInk,
+  decodeGray,
+  grayToCanvas,
+  initCv,
+  openHorizontal,
+  resizeScale,
+  rotate,
+  type Gray,
+} from "../omr/slicer/cvOps";
+import { qualifyingLineRows } from "../omr/slicer/prepPage";
+import { clusterRows } from "../omr/slicer/staves";
 import { cropStrip, sliceStage3, stripName, type Strip } from "../omr/slicer/slicer";
 import { staffBottom, staffSpacing, staffTop } from "../omr/slicer/staves";
 
@@ -141,9 +152,96 @@ async function crops(
   return { crops: out, nStaves: res.staves.length, ms: performance.now() - t0 };
 }
 
+
+// ---------------------------------------------------------------------------------------------
+// Deskew: is the morphology-free row sum EXACTLY the morphology, and how much time does it save?
+
+export interface DeskewAngle {
+  angle: number;
+  morph: number;
+  fast: number;
+}
+
+export interface DeskewCheck {
+  width: number;
+  height: number;
+  angles: DeskewAngle[];
+  mismatches: DeskewAngle[];
+  /** time for the row-sum stage alone, summed over every angle */
+  msMorph: number;
+  msFast: number;
+  /** end-to-end cost of ONE `qualifyingLineRows` call, averaged over the angles */
+  msPerCallMorph: number;
+  msPerCallFast: number;
+}
+
+/**
+ * `qualifyingLineRows` as it was BEFORE the substitution — the oracle, not the product.
+ *
+ * Deliberately a verbatim copy of the old body: a check that shares code with the thing it checks
+ * proves nothing. It is the only place `openHorizontal` is still called on this path.
+ */
+function qualifyingLineRowsViaMorphology(gray: Gray): number {
+  const ink = binarizeInk(gray);
+  const horLen = Math.max(20, Math.floor(gray.width / 4));
+  const horiz = openHorizontal(ink, horLen);
+  const h = gray.height;
+  const w = gray.width;
+  const rowInk = new Float64Array(h);
+  let maxRow = 0;
+  for (let y = 0; y < h; y++) {
+    let s = 0;
+    const off = y * w;
+    for (let x = 0; x < w; x++) s += horiz.data[off + x]!;
+    rowInk[y] = s / 255;
+    if (rowInk[y]! > maxRow) maxRow = rowInk[y]!;
+  }
+  if (maxRow < 1) return 0;
+  const thr = Math.max(maxRow * 0.3, w * 0.2);
+  const hits: number[] = [];
+  for (let y = 0; y < h; y++) if (rowInk[y]! > thr) hits.push(y);
+  return clusterRows(hits).length;
+}
+
+async function deskewCheck(pageDataUrl: string): Promise<DeskewCheck> {
+  const gray = await decodeGray(pageDataUrl);
+  // the same shrink `skewSearch` applies, so the check runs on the pixels the sweep really sees
+  const small = gray.width > 2400 ? resizeScale(gray, 1600.0 / gray.width, 1600.0 / gray.width) : gray;
+
+  // every angle the coarse pass evaluates, plus a fine-step sample either side of straight
+  const angles = [0.0];
+  for (let a = -7.0; a <= 7.001; a += 0.5) angles.push(Math.round(a * 100) / 100);
+  for (let a = -0.5; a <= 0.501; a += 0.1) angles.push(Math.round(a * 100) / 100);
+
+  const out: DeskewAngle[] = [];
+  let msMorph = 0;
+  let msFast = 0;
+  for (const angle of angles) {
+    const img = angle === 0.0 ? small : rotate(small, angle);
+    const t0 = performance.now();
+    const morph = qualifyingLineRowsViaMorphology(img);
+    const t1 = performance.now();
+    const fast = qualifyingLineRows(img);
+    const t2 = performance.now();
+    msMorph += t1 - t0;
+    msFast += t2 - t1;
+    out.push({ angle, morph, fast });
+  }
+  return {
+    width: gray.width,
+    height: gray.height,
+    angles: out,
+    mismatches: out.filter((a) => a.morph !== a.fast),
+    msMorph,
+    msFast,
+    msPerCallMorph: msMorph / out.length,
+    msPerCallFast: msFast / out.length,
+  };
+}
+
 async function main() {
   await initCv();
-  (window as unknown as { __slicer: unknown }).__slicer = { stage1, crops, ready: true };
+  (window as unknown as { __slicer: unknown }).__slicer = { stage1, crops, deskewCheck, ready: true };
 }
 
 main().catch((e) => {

@@ -14,6 +14,24 @@ errors are) has never been built, and feedback cannot be collected without a pip
 model stays `round2-stage2-best` int8 throughout. Track, ladder and running state:
 [mvp/README.md](mvp/README.md).
 
+- **✅ THE PAGE LATENCY IS FIXED, EXACTLY (2026-08-05): 36.6 → 1.3 s/page, with the estimator's
+  answers unchanged.** The skew sweep's cost was one page-wide `morphologyEx` per rotation, 41 times.
+  Its kernel is `len`×1, so the opening is purely per-row — and a 1-D opening has a closed form: a
+  pixel survives iff it sits in a run of `len` foreground pixels. `qualifyingLineRows` only ever
+  wanted the ROW SUMS, so the morphology (plus two full-image Mat copies) is replaced by one
+  run-length scan. **856 ms → 6.8 ms per call, 125.8×**, ~34.8 s off every sweep.
+  **This is a substitution, not a heuristic, and it was checked as one**: `npm run check:deskew` runs
+  both implementations on the same rotated image at every angle the coarse pass evaluates, over real
+  pages — **0 disagreements in 328 evaluations**. End to end, the parity harness with the REAL
+  estimator still reads **deskew angle identical 20/20** and every W4/W5/W6 bar exact. The browser
+  slicer is now **faster than the Python it copies** (~1.9 s stage 1).
+  In the app a page went **~56 s → ~25 s**, of which the slice is **1.6 s**: decode (19.1 s) is the
+  bottleneck now, so the next latency win is the model, not the slicer.
+  ⚠ The subtle part is the border rule — `morphologyEx` erodes as if outside the frame were
+  foreground, so an edge-touching run survives whole however short it is. Getting that wrong would
+  differ only on some pages at some angles, which is exactly why the check sweeps angles.
+  ⚠ Neither idea the plan proposed (early exit, replacing the estimator) was used, and both stay
+  unnecessary: the estimator still evaluates all 41 angles and returns the same answers.
 - **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
   Owner-reported as "the model's `\repstart`/`\repend`/`\tup3` are not seen in the sheet"; measured
   over the 1,704 decode caches, it was two different things. **Repeats are not lost** — the note
@@ -249,20 +267,13 @@ Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
    bar is NOT met and moving it silently is not an option. This is half of the 2026-07-27 goal, so
    dropping it needs saying out loud.
 2. **W9–W10** — model delivery from HF Hub + Cache API, a COOP/COEP-capable static host, release.
-3. **The page latency, now the app's most visible flaw.** ~56 s for a 7-staff page, **~35 s of it
-   the deskew sweep**: 41 full-page rotations, each with a page-wide `MORPH_OPEN`. It is brute force
-   because it maximises the *exact* signal `detect_staves` uses (the qualifying staff-line-row
-   count), not because the problem needs it — **standard skew estimators exist and were never tried
-   here** (Hough on the ink mask, Radon/FFT of the row projection, gradient orientation). Two
-   directions, cheapest first: an **early exit** when 0° already looks straight (the guard needs +3
-   staff-line rows to fire, so a straight page cannot benefit from the search), or **replacing the
-   estimator**. Either is a **behaviour change needing its own measurement** against the 132-page
-   estimator sample and the 15.3% of pages that genuinely rotate. W7 deliberately did not fold it in.
-   Doing this work closes the item below at the same time.
-4. **Owed from W4/W6, small:** the deskew *estimator* is validated on 132 pages, not the corpus —
-   every full run injects Python's angle. Neither W5 nor W6 turned up a skew-related difference, so
-   it is worth doing when item 3 touches the estimator, which it will. ~18 h of browser time as
-   things stand — less once the sweep is cheaper.
+3. **DONE (2026-08-05) — see "Now".** The sweep was made 126× cheaper without changing a single
+   answer, so neither the early exit nor a replacement estimator is needed. What is left of page
+   latency is the **decode** (~1.2 s/strip), which is a model/runtime question, not a slicer one.
+4. **Owed from W4/W6, and now cheap:** the deskew *estimator* is validated on 132 pages, not the
+   corpus — every full run injects Python's angle. It used to cost ~18 h of browser time; at
+   1.3 s/page a full un-injected corpus run is now well under an hour, so this is worth simply
+   doing.
 
 ### After the release (the real-page track, paused)
 

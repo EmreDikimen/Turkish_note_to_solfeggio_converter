@@ -119,6 +119,8 @@ style.textContent = `
   .label .raw { display: block; margin-top: 5px; color: #8a8a8a; font-size: 11.5px; font-weight: 400; }
   .label .unsure { float: right; color: #b26a00; font-size: 11.5px; }
   .label.none { color: #888; font-style: italic; font-family: inherit; }
+  .vplace { font-size: 11.5px; color: #777; }
+  .vplace.bad { color: #b00; font-weight: 600; }
   .empty { color: #888; padding: 30px 0; }
 `;
 document.head.appendChild(style);
@@ -133,6 +135,7 @@ root.innerHTML = `
   <div class="bar">
     <label>Add page(s): <input id="file" type="file" accept="image/*" multiple /></label>
     <label><input id="actual" type="checkbox" /> actual size</label>
+    <label title="Decode every strip with the model as soon as the page is sliced (~1.2 s a strip). Untick to slice only, which is ~1.6 s a page."><input id="autoread" type="checkbox" checked /> read with the model</label>
     <label title="Restore the OLD rule, where a slur or ornament above the staff could push the staff down and shear the beams below. Off = the capped rule that ships. Re-slices every page."><input id="bottomfirst" type="checkbox" /> old placement (ornaments outrank beams)</label>
     <button id="clear">Clear all</button>
   </div>
@@ -145,6 +148,7 @@ const fileInput = root.querySelector<HTMLInputElement>("#file")!;
 const actualBox = root.querySelector<HTMLInputElement>("#actual")!;
 const clearBtn = root.querySelector<HTMLButtonElement>("#clear")!;
 const bottomFirstBox = root.querySelector<HTMLInputElement>("#bottomfirst")!;
+const autoReadBox = root.querySelector<HTMLInputElement>("#autoread")!;
 const statusEl = root.querySelector<HTMLDivElement>("#status")!;
 const thumbsEl = root.querySelector<HTMLDivElement>("#thumbs")!;
 const detailEl = root.querySelector<HTMLDivElement>("#detail")!;
@@ -190,6 +194,9 @@ async function addPages(files: File[]) {
             `${(sliced.totalMs / 1000).toFixed(1)} s` +
             (sliced.skewDeg ? ` (deskewed ${sliced.skewDeg.toFixed(1)}°)` : ""),
         );
+        // Read it immediately. The button was there from the start and was not found, which is the
+        // right verdict on the design: the labels were asked for, so they should just be present.
+        if (strips.length && autoReadBox.checked) await readPage(page);
         if (!strips.length)
           setStatus(
             `${prefix}${file.name}: no staves found — this reads screenshots and clean scans of ` +
@@ -298,6 +305,12 @@ async function resliceAll() {
 
 // ---------------------------------------------------------------------------------------------
 // Rendering
+
+autoReadBox.addEventListener("change", () => {
+  const p = pages.find((x) => x.id === selectedId);
+  if (autoReadBox.checked && p) void readPage(p);
+  else render();
+});
 
 actualBox.addEventListener("change", () => {
   actualSize = actualBox.checked;
@@ -467,6 +480,24 @@ function renderDetail() {
       (g.splitWide ? " · split-wide" : "") +
       (g.isRowStart ? " · row start" : "");
     head.appendChild(meta);
+
+    // Vertical placement, so a crop that lost its beams says WHY rather than just looking wrong.
+    // `music` is what the row actually reaches; `frame` is what the 7.2 sp budget gave it.
+    const pl = p.sliced.placement.find((x) => x.system === g.system);
+    if (pl) {
+      const vp = document.createElement("span");
+      const bad = pl.clippedBelow || pl.clippedAbove;
+      vp.className = bad ? "vplace bad" : "vplace";
+      vp.title =
+        "The frame holds 7.2 line-spaces of non-staff height. 'music' is how far this row's ink " +
+        "actually reaches; 'frame' is what it was given. music > frame on a side = that side is cut.";
+      vp.textContent =
+        `music ${pl.musicAbove.toFixed(1)}↑/${pl.musicBelow.toFixed(1)}↓ sp, ` +
+        `frame ${pl.headSp.toFixed(2)}↑/${pl.belowSp.toFixed(2)}↓` +
+        (pl.clippedBelow ? ` — ⚠ CUT AT THE BOTTOM by ${(pl.musicBelow - pl.belowSp).toFixed(1)} sp` : "") +
+        (pl.clippedAbove ? ` — ⚠ cut at the top by ${(pl.musicAbove - pl.headSp).toFixed(1)} sp` : "");
+      head.appendChild(vp);
+    }
 
     const spacer = document.createElement("span");
     spacer.style.flex = "1";

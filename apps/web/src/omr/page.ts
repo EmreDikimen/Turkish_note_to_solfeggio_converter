@@ -18,11 +18,25 @@ import { estimateSkewAsync, guardedAngle, SKEW_SWEEP_STEPS } from "./slicer/prep
 import { cropStrip, sliceStage3, stripName, type Strip } from "./slicer/slicer";
 import type { StripInput } from "./pipeline";
 
+/** Per-row vertical placement, so a caller can say WHY a crop lost its beams. */
+export interface RowPlacement {
+  system: number;
+  headSp: number;
+  belowSp: number;
+  musicAbove: number;
+  musicBelow: number;
+  /** the row's music reaches further than the frame gave it — this is what a clipped crop is */
+  clippedBelow: boolean;
+  clippedAbove: boolean;
+}
+
 export interface SlicedPage {
   /** In manifest order (system, then window) — exactly what `decodeStripsToDoc` wants. */
   strips: StripInput[];
   /** The manifest rows behind them, for anything that wants geometry (W8's highlighting). */
   geometry: Strip[];
+  /** one entry per staff row, indexed by `system` */
+  placement: RowPlacement[];
   nStaves: number;
   /** The rotation actually applied, in degrees; 0 when both deskew guards declined. */
   skewDeg: number;
@@ -89,9 +103,20 @@ export async function slicePage(
         name: stripName(stem, s.system, s.window),
       });
 
+  const placement: RowPlacement[] = res.rows.map((r) => ({
+    system: r.system,
+    headSp: r.normalized.headSp,
+    belowSp: r.normalized.belowSp,
+    musicAbove: r.normalized.musicAbove,
+    musicBelow: r.normalized.musicBelow,
+    clippedBelow: r.normalized.musicBelow > r.normalized.belowSp + 1e-9,
+    clippedAbove: r.normalized.musicAbove > r.normalized.headSp + 1e-9,
+  }));
+
   return {
     strips,
     geometry: res.strips,
+    placement,
     nStaves: res.staves.length,
     skewDeg: res.skewDeg,
     pageWidth: gray.width,

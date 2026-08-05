@@ -128,6 +128,10 @@ export interface NormalizedRow {
   padBottom: number;
   headSp: number;
   belowSp: number;
+  /** what `rowMusicExtent` measured, in line-spaces — the INPUT to `placeBand`. Kept so a crop can
+   *  explain itself: music reaching further than the placement allows IS the clipping. */
+  musicAbove: number;
+  musicBelow: number;
 }
 
 /**
@@ -141,9 +145,11 @@ export function normalizeRow(gray: Gray, staff: Staff, lab: Labels | null = null
   const scale = TARGET_SPACING / sp;
   let headSp = HEADROOM_SP;
   let belowSp = BELOW_SP;
+  let musicAbove = 0;
+  let musicBelow = 0;
   if (lab !== null && VPLACE_ADAPTIVE) {
-    const [above, below] = rowMusicExtent(lab, staff);
-    [headSp, belowSp] = placeBand(above, below);
+    [musicAbove, musicBelow] = rowMusicExtent(lab, staff);
+    [headSp, belowSp] = placeBand(musicAbove, musicBelow);
   }
   // band in page coords that maps to the 336-tall strip with the staff placed like training
   const bandTop = pyRound(staffTop(staff) - headSp * sp);
@@ -168,5 +174,7 @@ export function normalizeRow(gray: Gray, staff: Staff, lab: Labels | null = null
     padBottom: padB,
     headSp,
     belowSp,
+    musicAbove,
+    musicBelow,
   };
 }

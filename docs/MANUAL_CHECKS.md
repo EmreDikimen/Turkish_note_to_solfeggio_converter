@@ -300,10 +300,15 @@ was actually handed**, which is the first thing to look at when a page reads bad
    a whole page. **actual size** switches between fit-to-width and 1:1 pixels — use 1:1 when judging
    whether a crop is cut too tight.
 
-5. **🔎 Read … with the model** decodes the crops and prints each strip's label under it, with note
-   names substituted — `\sig \komaFlat si \sigend la'16 sol'16 la'16 si'16` — the model's raw
-   tokens in grey beneath, and the strip's lowest token confidence on the right. Reading is ~1.2 s a
-   strip, so it is on demand rather than automatic, and only strips without a label are decoded.
+5. Strips are **decoded automatically** and each label is printed under its crop, with note names
+   substituted — `\sig \komaFlat si \sigend la'16 sol'16 la'16 si'16` — the model's raw
+   tokens in grey beneath, and the strip's lowest token confidence on the right. Untick *read with
+   the model* to slice only (~1.6 s a page against ~1.2 s a strip).
+6. Every crop prints its **vertical placement** — `music 3.3↑/1.9↓ sp, frame 4.60↑/2.60↓` — turning
+   red with the shortfall when a side is cut. `music` is how far the row's ink actually reaches;
+   `frame` is what the fixed 7.2 line-space budget gave it. That is the first thing to read when a
+   crop looks wrong, and it distinguishes the two causes: a conflict the placement lost, or music
+   that genuinely exceeds the frame (which no placement can fix).
 
 What to look for: music cut in half at a crop edge, **beams or ledger notes clipped off the top or
 bottom** (durations become unreadable), a crop that is nearly empty, a staff missed entirely (the

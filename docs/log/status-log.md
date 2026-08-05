@@ -9,6 +9,33 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-05 — doc sync: deploy.md was written against a page that no longer exists
+
+**`docs/mvp/deploy.md` (the reopened backend question) was drafted BEFORE the deskew speedup landed
+the same day, and three of its load-bearing facts had gone stale.** Corrected rather than deleted,
+because the reasoning is still good and only the numbers moved:
+
+- it said the client "still pays the ~35 s sweep" and that W7 made it non-blocking rather than
+  cheap. True when written; the sweep is now ~1.1 s and the whole slicer 1.6 s/page.
+- it recommended "fix the deskew before building any server", on the ground that prep stays on the
+  client in both architectures. **That recommendation was taken** — and it needed none of the
+  behaviour change it budgeted for, because the fix turned out to be an exact substitution.
+- its priority table ranked the deskew fix above the server on the owner's own complaint. That
+  comparison is spent; the table now shows where the remaining ~25 s sits (**~19 s decode, 1.6 s
+  slice**), which makes decode the entire remaining case for a server.
+
+**The consequence worth flagging: the thermal complaint that opened that doc was measured against a
+~56 s page, and a page is now ~25 s with ~60% less CPU burned.** Whether it still bites is
+unmeasured, so "re-test the thermals" was added as the first Open Question, blocking *whether this
+doc is needed at all*.
+
+**STATUS was rewritten, not appended to.** Its "Next" still listed the finished latency item and
+described W9 as plumbing; W9 is now a decision (settle the hosting question first), W10 carries the
+safety checklist, and the corpus-wide estimator validation is re-priced from ~18 h to under an hour.
+The file crossed its 400-line cap in the process, so the W0–W3 rung bullets and the Round-3
+pre-render section were condensed to summaries — both are owned in full by `mvp/rungs.md` and
+`rung3/round3.md`.
+
 ## 2026-08-05 — a slur above the staff was shearing the beams below
 
 **Owner report: an uploaded page came back with a crop whose bottom was cut, so "notes and their

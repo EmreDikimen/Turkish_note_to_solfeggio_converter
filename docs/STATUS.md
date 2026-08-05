@@ -14,6 +14,11 @@ errors are) has never been built, and feedback cannot be collected without a pip
 model stays `round2-stage2-best` int8 throughout. Track, ladder and running state:
 [mvp/README.md](mvp/README.md).
 
+- **There is a SLICE INSPECTOR now (`/slices.html`), and it is how the two fixes above were
+  found.** Upload a page, click it, see every crop the slicer made, each captioned with the slicer's
+  own decisions, its decoded label with note names substituted (`si'16`), its confidence, and its
+  vertical placement — in red with the shortfall when a side is cut. It loads the model but never
+  builds a score, so it cannot disturb the editor. [MANUAL_CHECKS.md](MANUAL_CHECKS.md) Check 13.
 - **✅ A SLUR ABOVE THE STAFF WAS SHEARING THE BEAMS BELOW, AND IT IS FIXED (2026-08-05).** Owner
   reported a crop whose bottom was cut so "notes and their times could not be read"; reproduced on
   corpus pages. `place_band` let ink above the staff claim room without limit, so a slur pushed the
@@ -101,21 +106,16 @@ model stays `round2-stage2-best` int8 throughout. Track, ladder and running stat
   `scripts/slicer_ref.py` is the control and defines the sample. Same lesson as W3's arm-B ceiling
   and W7's first strip-count bar: **agreement with an artifact is not correctness** — three times
   now.
-- **✅ W0–W3 PASSED (2026-08-02/03).** opencv.js is bit-identical to OpenCV-Python on all five
-  primitives the slicer rests on; the decode module is extracted with per-token confidence
-  (`omrGate.ts` 309 → 164 lines); the app reads strips end to end at **~1.1 s/strip**, so W7 needed
-  no Web Worker; and **THE BROWSER IS NOT WORSE THAN PYTHON** — same 261 hand-verified strips, same
-  scorer, **SER 0.0821 → 0.0818, exact-match 60.2% both, AEU macro recall 94.8% → 94.9%**.
-  ⚠ That is a *paired* Δ on real-val: it establishes the difference, not the absolute level.
-- **The browser-vs-Python ceiling is 86.0%** of strips over 20 pages (450 strips). ⚠ The first
-  measurement said **10%** and was wrong: the two sides serialize tokens differently and must be
-  compared *after* the stitcher's `normalizeTokens`.
-- **The pre-registered "arm B < 90% → fix the resampler first" rule FIRED and was NOT followed,
-  because its causal model is wrong.** Disagreement is concentrated in strips the model was already
-  unsure about — **21.9% agreement where Python's `min_logprob < -1.0` (n=32) against 90.9% where it
-  is confident (n=418)** — while crop width, which decides how hard a strip is resampled, shows no
-  trend. `preprocess.ts` is unchanged. This is also the first real-data evidence that the `-1.0`
-  threshold means something.
+- **✅ W0–W3 PASSED (2026-08-02/03)** — opencv.js bit-identical on all five primitives, the decode
+  module extracted with per-token confidence, strips read end to end at ~1.1 s/strip, and **THE
+  BROWSER IS NOT WORSE THAN PYTHON**: same 261 hand-verified strips, same scorer, **SER 0.0821 →
+  0.0818, exact-match 60.2% both, AEU macro recall 94.8% → 94.9%**. ⚠ A *paired* Δ on real-val — it
+  establishes the difference, not the absolute level. Detail: [mvp/rungs.md](mvp/rungs.md).
+- **The browser-vs-Python ceiling is 86.0%** of strips (450 strips, 20 pages) and the resampler
+  theory behind it is DEAD: disagreement concentrates in strips the model was already unsure about
+  (**21.9% agreement where `min_logprob < -1.0` against 90.9% where it is confident**), while crop
+  width shows no trend. `preprocess.ts` is unchanged. ⚠ The first measurement said 10% and was
+  wrong — the two sides serialize tokens differently and must be compared after `normalizeTokens`.
 - **⚠ The confidence signal does NOT meet its pre-registered bar, and W8 must decide what to do.**
   Against gold, flagged strips do average **8.60 token edits vs 2.69** — the signal is real — but
   "flag 10% of tokens, catch ≥60% of errors" is **NOT MET**: the best achievable at a 10% budget is
@@ -203,22 +203,13 @@ reverses off the exam. Do not re-propose it.
 
 ## Previously (Round 3 pre-render checks, 2026-07-28)
 
-**All four were RUN against the shipped model, with no training and no re-render. Three of the four
-hypotheses are dead.** Full detail: [rung3/round3.md](rung3/round3.md).
-
-- **Dropped, measured, do not re-propose:** rendering the odd crop shapes (the cost is real but the
-  model does not hallucinate — 1 of 8; and the shape is the slicer's own trade-off, already halved);
-  cutting wide crops narrower (**+31.8% edits** when tried); thinning beams (ours are at the
-  engraving standard, real print is *heavier*). See [DECISIONS.md](DECISIONS.md).
-- **Still standing from the Round-3 plan:** the content work — the eighth/quarter-note mix and
-  bar-line density in `select_pieces.py` — now with a second, independent argument behind its width
-  half: after the encoder's fixed input box the model sees our beams at 6.5 px and real beams at
-  9–14.6 px, purely because our strips are wider and shrink harder.
-- **`USUL_BEAM_GROUPS` is still unvalidated and quarantined.** The beam check measured *thickness*,
-  not *grouping*, so it cannot clear it. Do not ship it into 40,826 strips.
-- **The `staff_jitter` op in `src/vision/augment.py` is insurance, not a fix** — synthetic spacing
-  has sd 0.000, so we genuinely shake not at all before augmentation, but the dose-response ladder
-  says variance is not what costs edits today.
+**All four hypotheses were RUN against the shipped model, with no training and no re-render. Three
+died.** Dropped, measured, do not re-propose: rendering the odd crop shapes, cutting wide crops
+narrower (**+31.8% edits**), thinning beams. Still standing: the content work — eighth/quarter-note
+mix and bar-line density in `select_pieces.py`. `USUL_BEAM_GROUPS` remains **unvalidated and
+quarantined** (the beam check measured thickness, not grouping) and `staff_jitter` is insurance, not
+a fix. Full detail: [rung3/round3.md](rung3/round3.md); why each was dropped:
+[DECISIONS.md](DECISIONS.md).
 
 ## Previously (Round 2, still true)
 
@@ -281,10 +272,17 @@ Rung-by-rung goals, acceptance checks and state: [mvp/README.md](mvp/README.md).
    per-TOKEN localisation, or drop the feature for the friends release. The pre-registered 10%/60%
    bar is NOT met and moving it silently is not an option. This is half of the 2026-07-27 goal, so
    dropping it needs saying out loud.
-2. **W9–W10** — model delivery from HF Hub + Cache API, a COOP/COEP-capable static host, release.
-3. **DONE (2026-08-05) — see "Now".** The sweep was made 126× cheaper without changing a single
-   answer, so neither the early exit nor a replacement estimator is needed. What is left of page
-   latency is the **decode** (~1.2 s/strip), which is a model/runtime question, not a slicer one.
+2. **W9 — SETTLE THE HOSTING QUESTION BEFORE BUILDING IT.** This stopped being plumbing on
+   2026-08-05: [mvp/deploy.md](mvp/deploy.md) reopens the LOCKED "no production backend" rule and
+   proposes slicing in the browser but decoding on a scale-to-zero CPU server. The decision is
+   **reopened, not taken**. Two things settle it and both are hours, not days: **re-test the thermal
+   complaint** (it was measured against a ~56 s page; a page is ~25 s now, ~19 s of it decode), and
+   **run one page on a real phone** — the whole server argument is an extrapolation from one M4.
+   The client-side prerequisite that doc asked for is already done.
+3. **W10 — friends release**, plus the safety checklist in [mvp/deploy.md](mvp/deploy.md) if
+   anything is exposed publicly (billing cap, rate limit, upload caps). ⚠ **Feedback collection is
+   worth building even if the server plan is dropped** — W10's stated purpose is feedback, and an
+   all-browser app returns none.
 4. **Owed from W4/W6, and now cheap:** the deskew *estimator* is validated on 132 pages, not the
    corpus — every full run injects Python's angle. It used to cost ~18 h of browser time; at
    1.3 s/page a full un-injected corpus run is now well under an hour, so this is worth simply

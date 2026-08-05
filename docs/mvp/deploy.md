@@ -12,6 +12,14 @@ updated: 2026-08-05
 > hard rule "No backend, ever" both predate this. The owner's stated reason for reopening it
 > (2026-08-05) is thermal, not capability: the in-browser decode pegs the CPU long enough to heat
 > the machine. The decision is **reopened, not taken** — see [../DECISIONS.md](../DECISIONS.md).
+>
+> ⚠ **UPDATED 2026-08-05, later the same day: the client-side prerequisite this doc asked for is
+> DONE, and it changes the numbers below.** The deskew sweep is 126× cheaper at no change in its
+> answers, so a page went **~56 s → ~25 s** and the slicer went 36.6 → 1.3 s/page. The CPU a page
+> burns is now **~21 s, essentially all of it decode**. That makes the server question cleaner (the
+> only thing left to move IS the decode) and the thermal complaint smaller (about 60% less heat per
+> page). **Re-test whether the machine still gets hot before building anything** — the complaint
+> that opened this doc was measured against a page that no longer exists.
 
 ## The recommendation, in one line
 
@@ -27,9 +35,12 @@ Four problems, ordered by how much they will actually hurt. The first is the one
    sites after roughly a week of no use. The weights are ~200 MB (size in [README.md](README.md)),
    so a friend who opens the app every other weekend pays that download *every time*, on cellular.
    There is no clean in-browser fix. This is a harder wall than any speed number.
-2. **Thermals — the owner's actual complaint.** Decode is ~1 s/strip on an M4 and a page is ~19
-   strips (both in [README.md](README.md)), so a page pegs several threads for ~20 s. On this
+2. **Thermals — the owner's actual complaint.** Decode is ~1.2 s/strip on an M4 and a page is ~16–19
+   strips (both in [README.md](README.md)), so a page pegs several threads for ~19 s. On this
    fanless M4 that is a measurable heat event, and every user pays it on their own machine.
+   ⚠ **This is now the WHOLE of it.** Slicing used to add ~36 s of equally hot work and now adds
+   1.6 s, so the per-page heat is already down ~60% without touching the architecture. Whether what
+   remains still justifies a backend is **unmeasured since the change**.
 3. **Phone CPU.** ⚠ **Estimate, not measured** — WASM SIMD on a mid-range Android is roughly 3–6×
    slower than the M4, a recent iPhone roughly 1.5–2×. That puts a page somewhere between 30 s and
    2 minutes. **Nobody has run this on a real phone yet**; see [Open questions](#open-questions).
@@ -46,8 +57,8 @@ the seam below, where it is still the thing that makes the upload small.
 browser                                   server (scale-to-zero, CPU)
 ───────────────────────────────────       ─────────────────────────────
 page image
-  → prepPage (deskew, ~2 s post-W7)
-  → slicer  (W4–W6, opencv.js)
+  → prepPage (deskew — ~1.1 s since 2026-08-05, was ~35 s)
+  → slicer  (W4–W6, opencv.js)  — 1.6 s/page all in
   → ~19 strip crops  ─── POST ──────────→  batched encoder + decoder
                                                     │
   editor ← stitch ← tokens  ←─── JSON ─────────────┘
@@ -63,8 +74,24 @@ Three reasons the seam sits there and not earlier:
 - **The port keeps earning.** W4–W6 were validated over the whole corpus; that work carries over
   unchanged rather than being replaced by a Python call.
 
-⚠ The client still runs `prepPage`. Post-W7 that is ~2 s of opencv work, not the old 35 s sweep —
-negligible heat. If W7's async generator ever regresses, this number is the first thing to re-check.
+✅ **This doc said "fix the deskew before building any server", and that was done on 2026-08-05.**
+The reasoning was that prep stays on the client in *both* architectures, so a client-side win is
+never wasted, and at the time the sweep was the larger share of page latency. It turned out not to
+need the behaviour change this doc budgeted for: the sweep's per-call cost collapsed 126× as an
+**exact** substitution, verified at 0 disagreements over 328 angle evaluations and unchanged
+parity ([rungs.md](rungs.md), [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md)).
+
+**Where that leaves the ~25 s a 7-staff page now takes:**
+
+| Stage | Client cost today | Moving it to a server would |
+|---|---|---|
+| decode (16 strips × ~1.2 s) | **~19 s** | remove nearly all remaining page cost |
+| slicer incl. deskew | **1.6 s** | save nothing worth the upload |
+| model load, first use only | ~3.4 s | disappear (weights never reach the client) |
+
+So the cheap client-side win is spent, and **decode is now the entire case for a server** — which is
+a cleaner argument than the one this doc opened with, not a weaker one. What has NOT been re-checked
+is whether ~19 s of decode alone still produces the heat that motivated it.
 
 ## Hosting options
 
@@ -154,13 +181,15 @@ These are unmeasured, and the first one can still change the whole plan.
 
 | Question | How to settle it | Blocks |
 |---|---|---|
+| **Does the machine still get hot?** The complaint that opened this doc was measured against a ~56 s page; it is ~25 s now, ~19 s of it decode | Convert a few pages and watch the thermals, as before | **Whether this doc is still needed at all** |
 | What does a page actually cost on a real phone? | Load the app on a mid-range Android and an iPhone, time one page, watch for a tab kill | Whether the server is needed at all |
 | What does a batched page cost in vCPU-seconds? | Benchmark the batched decode on one cloud core | Every cost figure on this page |
 | Is a Cloud Run cold start tolerable for a first upload? | Deploy once, measure with min-instances 0 | Cloud Run vs Hetzner |
 | Does the ~19 crops/page upload beat sending the page image? | Compare payload bytes on a few real pages | The seam position |
 
-⚠ **The phone measurement is one afternoon of work and it is the cheapest thing on this list.** The
-entire server argument currently rests on an extrapolation from one M4.
+⚠ **The first two are hours of work and the whole plan rests on them.** The re-test costs one page;
+the server argument otherwise rests on an extrapolation from one M4, against a page latency that has
+since changed by more than half.
 
 ## What this changes in the ladder
 

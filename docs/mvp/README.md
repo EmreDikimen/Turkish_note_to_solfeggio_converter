@@ -114,6 +114,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
 | `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |
 | `tools/vision/parity/slicer-parity.ts` | slicer parity harness, `npm run parity:slicer` (W4–W6) |
+| `tools/vision/parity/deskew-check.ts` | the exactness gate behind the 126× skew-sweep speedup (W7) |
 
 ## Verification gates
 
@@ -130,4 +131,5 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | Arm-B ceiling | `npm run parity:armb -- --pages 20` |
 | Arm A vs arm B, paired on the same strips | `npm run parity:arma -- --pages 20` |
 | Slicer port vs local Python | `scripts/slicer_ref.py --pages 120 --out ref.json` then `npm run parity:slicer -- --ref ref.json` |
+| Skew sweep's fast path is EXACT | `npm run check:deskew -- --pages 8` |
 | Browser quality vs Python, against gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --out b.json` then `scripts/score_browser_gold.py --browser b.json` |

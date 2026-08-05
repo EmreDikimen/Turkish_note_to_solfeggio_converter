@@ -14,6 +14,20 @@ errors are) has never been built, and feedback cannot be collected without a pip
 model stays `round2-stage2-best` int8 throughout. Track, ladder and running state:
 [mvp/README.md](mvp/README.md).
 
+- **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
+  Owner-reported as "the model's `\repstart`/`\repend`/`\tup3` are not seen in the sheet"; measured
+  over the 1,704 decode caches, it was two different things. **Repeats are not lost** — the note
+  model has no field for one, so they are consumed into an UNFOLDED playing order, which is the
+  wanted behaviour (owner, 2026-08-05: no repeat barlines drawn, unfold with correct voltas, cursor
+  forward only); **1,165/1,262 pages unfold (92.3%)** and the other **97 (7.7%)** carry a `\repstart`
+  the model never closed, left alone rather than guessed at. **Triplets were genuinely broken**: an
+  unclosed run yielded no group, so every member was snapped to the nearest plain value — a
+  definitely-wrong rhythm with no mark saying so, **1,287 notes / 22.9% of `\tup3`-bearing pages**,
+  now **0**.
+  ⚠ `tupletGroupsIn` is shared with the label serializer by design, so both moved together: **5
+  measures in 1 of 190 training pieces**, on a future re-render only. ⚠ **`verify-labels.ts` cannot
+  see this** — it inspects accidental glyphs and needs the dev server; the real check was rendering
+  the 3 worst pages through both draw paths with 0 dropped measures.
 - **✅ W7 PASSED (2026-08-05): THE APP READS A WHOLE PAGE.** Upload an image, get a playable,
   editable, saveable score — slice, decode, stitch, render, play, all in the browser, nothing
   stubbed. `npm run smoke:page` drives the real app: **7 staves → 16 strips → 344 notes / 28

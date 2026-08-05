@@ -9,6 +9,42 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-05 — a decoded \tup3 that cannot close no longer draws the wrong rhythm
+
+**Reported symptom (owner): "the model emits `\repstart`, `\repend`, `\tup3` but they are not
+seen in the rendered sheet."** Measured over the 1,704 decode caches on disk rather than guessed at,
+and it split into two different stories.
+
+**Repeats are NOT lost — they are consumed.** `buildDoc` uses the marks to compute a playing order
+and then writes only notes: the note model has no field for a repeat, volta, segno or D.C., so the
+sheet cannot draw one. What it does instead is UNFOLD, which is what the owner wants (confirmed
+2026-08-05: no repeat barlines on the page, unfold with correct voltas, cursor forward only).
+`expandRepeats` was traced by hand and is correct for well-formed tokens —
+`A B [1.C] :‖ [2.D] E` → `A B C A B D E`. **1,165 of the 1,262 pages carrying a repeat mark unfold
+(92.3%)**; the remaining **97 (7.7%)** carry a `\repstart` the model never closed. Left alone on
+purpose: on a page-at-a-time flow the matching `:‖` may be on the next page, and guessing "repeat to
+the end" would duplicate material that is not repeated.
+
+**Triplets were genuinely broken, and are fixed.** `\tup3` survives stitching as a duration whose
+denominator divides by 3, and `tupletGroupsIn` recovers it — but only if a run of such notes sums to
+a plain power-of-two value. A run the model could not close (dropped member, stray `\tupend` — the
+census counts 354 stray, 423 unclosed, 115 nested) yielded NO group, so every member fell through to
+`vexDuration`'s snap-to-nearest: **the page drew a definitely-wrong rhythm with no mark saying so**.
+That is **1,287 notes, and 22.9% of `\tup3`-bearing pages losing at least one**. An unclosed run now
+keeps its bracket over the members it has → **1,287 → 0**. It is not a guess at the true rhythm; it
+is refusing to overwrite what the model read, and it puts a visible "3" where a correction is needed.
+
+**What it cost, stated rather than buried.** `tupletGroupsIn` is shared with the label serializer by
+design (CLAUDE.md: pixels and labels from one code path), so both sides moved together — **5
+measures in 1 of 190 training pieces**, and only on a future re-render; `strips_v4` on disk is
+untouched. Checks: 217/217 round-trip in both modes, all stitcher unit tests, typecheck.
+⚠ **`verify-labels.ts` is the wrong instrument here and reported `checked 0`** — it needs the dev
+server running, and it inspects ACCIDENTAL glyphs only, so it could never have seen a rhythm change.
+The real safety check was rendering the three worst real pages (26/24/21 incomplete groups) through
+BOTH draw paths — the curved arc and VexFlow's bracket — with **0 dropped measures and 0 page
+errors**, which is what rules out a 1-member group throwing inside `SheetView`'s per-measure `catch`
+and silently deleting a whole bar.
+
 ## 2026-08-05 — W7: the app reads a whole page
 
 **Upload an image, get a playable score.** `apps/web/src/omr/page.ts` joins the ported slicer to the

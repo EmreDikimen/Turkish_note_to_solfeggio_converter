@@ -298,6 +298,7 @@ pixels-vs-labels defect and the `verify-labels.ts` verification.
 | Model | `Flova/omr_transformer`, ~143M params |
 | int8 ONNX bundle | 221 MB total (from ~830 MB fp32) |
 | Browser decode | ~1.0–1.5 s/strip (`onnxruntime-web`, wasm threaded), session load ~3 s |
+| **Decoded marks that reach the page** (2026-08-05) | Over the 1,704 decode caches: `\tup3` notes drawn at the wrong length with no bracket **1,287 → 0** (22.9% of `\tup3`-bearing pages affected → 0). Repeats: 1,262 pages carry `\repstart`/`\repend`, **1,165 (92.3%) unfold**, **97 (7.7%) have no effect** — an unmatched `\repstart`, left alone rather than guessed at |
 | **Whole page in the app** (2026-08-05, MVP W7) | **~56 s** on one 7-staff page: slice **36.4 s** (of which ~35 s is the 41-rotation skew sweep) + decode **19.1 s** for 16 strips, on a 7-staff page. Model load ~3.4 s more on a cold session. Longest single main-thread block **2.35 s** — the sweep yields between rotations. The slicer's corpus-mean cost is in [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |
 | Page decode (Mac, int8) | ~353 ms/strip ≈ 7.4 s/page |
 | Round-1 ship gate | parity 10/10 fp32 + 10/10 int8; browser gate **19/20** — one double-dot token (`a''2..`) trips an ORT-web int8 numerics wobble, model-independent, logged not blocking |

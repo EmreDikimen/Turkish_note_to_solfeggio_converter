@@ -92,14 +92,34 @@ export interface TupletGroup {
  * Find the triplet groups in one measure's events. A group is a maximal run of consecutive
  * tuplet-fraction notes/rests that closes as soon as its exact sum is a plain power-of-two
  * value (3 × 1/12 = 1/4 → a group of three). Grace notes inside a run are tolerated as
- * members-by-position (they add no time and are drawn attached to their main note). A run
- * that ends — at a non-member or the measure's end — without summing plain yields NO group:
- * those events keep the legacy nearest-value snap.
+ * members-by-position (they add no time and are drawn attached to their main note).
+ *
+ * A run that ends — at a non-member or the measure's end — WITHOUT summing plain still yields a
+ * group, over the members it does have. It used to yield none, and that was wrong in the one place
+ * it matters: OMR output. A `\tup3` the model reads but cannot close (a dropped member, a stray
+ * `\tupend`) left its notes on a 1/12-type duration with no group, so `vexDuration` snapped each to
+ * the nearest plain value — the page then showed a rhythm that was definitely wrong, with no mark
+ * saying so. Measured over the 1,704 decode caches on disk: **1,287 notes**, and 22.9% of
+ * `\tup3`-bearing pages losing at least one. Drawing the incomplete group is not a guess at the
+ * true rhythm — it is refusing to overwrite what the model actually read, and it puts a visible "3"
+ * where a correction is needed.
+ *
+ * ⚠ This function is shared with the label serializer on purpose (CLAUDE.md: pixels and labels come
+ * from one code path), so the change moves BOTH — a synthetic page that draws the bracket now also
+ * labels it. On the synthetic side that is 10 runs in 219 bundled scores / 13,683 measures, and the
+ * 217-score round-trip is what holds it honest.
  */
 export function tupletGroupsIn(events: readonly NoteEvent[]): TupletGroup[] {
   const groups: TupletGroup[] = [];
   let start = -1;
+  let last = -1; // last real (non-grace) member of the open run
   let sum: Frac = { n: 0, d: 1 };
+  // A run that never sums plain still gets its bracket — see the note below on why discarding it
+  // was worse than keeping it.
+  const closeOpenRun = () => {
+    if (start >= 0 && last >= start) groups.push({ from: start, to: last });
+    start = -1;
+  };
   for (let i = 0; i < events.length; i++) {
     const ev = events[i]!;
     // Grace notes take no time: inside an open run they ride along (drawn attached to their
@@ -110,6 +130,7 @@ export function tupletGroupsIn(events: readonly NoteEvent[]): TupletGroup[] {
         start = i;
         sum = { n: 0, d: 1 };
       }
+      last = i;
       sum = add(sum, fracOf(ev));
       // A group closes the moment its sum lands on a plain value.
       if (sum.n === 1 && (sum.d & (sum.d - 1)) === 0) {
@@ -117,10 +138,10 @@ export function tupletGroupsIn(events: readonly NoteEvent[]): TupletGroup[] {
         start = -1;
       }
     } else if (start >= 0) {
-      // Run broken before summing plain: discard (snap fallback), resume normal scanning.
-      start = -1;
+      closeOpenRun(); // broken by a non-member
     }
   }
+  closeOpenRun(); // still open at the end of the measure
   return groups;
 }
 

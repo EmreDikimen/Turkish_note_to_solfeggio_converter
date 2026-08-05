@@ -2,7 +2,8 @@
 
 Classical Turkish (makam) music **OMR**: photo/screenshot of sheet music → notes *including the
 microtonal accidentals* → editable score → playback at exact 53-TET (Arel-Ezgi-Uzdilek) pitches.
-Web app first, mobile later. No server: inference runs in the browser via `onnxruntime-web`.
+Web app first, mobile later. Inference runs in the browser via `onnxruntime-web` — though whether it
+stays there is [reopened](docs/mvp/deploy.md).
 
 **The MVP track is the live work (owner, 2026-08-02): the model is FROZEN and the in-browser
 pipeline is being wired for a release to friends.** Do not start Round 3 training — the real-page
@@ -70,7 +71,10 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   training must come from different pieces.
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
-- **Python is training/data only.** Nothing in `src/` or `scripts/` ships. No backend, ever.
+- **Python is training/data only.** Nothing in `src/` or `scripts/` ships. No backend — but the
+  no-backend rule is **REOPENED as of 2026-08-05** and a server-side decode is proposed for W9:
+  [docs/mvp/deploy.md](docs/mvp/deploy.md). Until the owner settles it, do not build a backend, and
+  do not treat the rule as absolute when planning W9/W10.
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
   stable across checkpoints.
 - **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COLAB.md`), or locally with

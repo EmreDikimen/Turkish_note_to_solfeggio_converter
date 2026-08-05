@@ -63,7 +63,7 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
 | **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | **next** |
-| **W9** | Model delivery (HF + Cache API) and hosting | — |
+| **W9** | Model delivery (HF + Cache API) and hosting — plan in [deploy.md](deploy.md) | — |
 | **W10** | Friends release | — |
 
 ## What each rung established

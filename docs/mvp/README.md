@@ -20,8 +20,24 @@ one, and **nothing a friend would notice**. Meanwhile the product half of the go
 2026-07-27 (≥90% of pages ≤5 corrections, *and the app shows you where they are*) has never been
 built at all.
 
-So: **freeze the model, finish the pipeline, release, then train Round 3 against real feedback.**
-The model stays `round2-stage2-best` int8 for the whole ladder. This track trains nothing.
+So: **finish the pipeline and get it in front of people.** This track trains nothing.
+
+### Re-scoped 2026-08-05 (owner) — read this before planning W9 or W10
+
+The original framing was "freeze the model, release, then train Round 3 against real feedback."
+**The freeze and the wait are gone**; the rest stands.
+
+| | |
+|---|---|
+| **Who** | Exactly **two friends**, to start |
+| **What they are asked** | *"What features should I add?"* — **the interface, not the model** |
+| **Round 3** | **Runs in parallel**, unpaused. It is not aimed by this feedback, so it does not wait for it |
+| **The model in the friends build** | **Swaps to a better one as soon as one lands** — a server redeploy, no client download. ⚠ Cost: decode-quality comments cannot be attributed to a version. They are anecdotes; the exam still judges models |
+| **How feedback returns** | **By talking to them.** No in-app button, no telemetry — at n=2 a conversation returns better information and costs nothing |
+| **Phones** | **Out of scope** until the web app is done |
+| **Public launch** | A later rung, gated on **Round 3's exam result**. Good → open it up; not good → Round 4, and so on |
+
+Full rows and reasoning: [../DECISIONS.md](../DECISIONS.md).
 
 The gap turned out to be narrower than it looked. Decode, Donut preprocessing, detokenization,
 stitching, the editor and playback all already existed in browser-safe form; the decode helpers in
@@ -37,19 +53,19 @@ crops — and **wired into the app at W7 (2026-08-05)**, so an uploaded page bec
 |---|---|
 | Slicer ported with **opencv.js**, not hand-rolled | Parity over bundle size; 13 MB is noise beside 211 MB of weights. Validated at W0. |
 | **Screenshots and clean scans only** | Real uploads are mostly web screenshots. Cuts the hardest third of the port. ⚠ The stated reason — "the photo front-end is a no-op on clean input" — held for the perspective crop and **failed for the deskew** (W4): 15.3% of corpus pages take a real rotation, so it is ported. |
-| ~~Weights on **Hugging Face Hub**, app on a COOP/COEP-capable static host~~ | **SUPERSEDED 2026-08-05**: decode moves to a server, so the weights never reach the browser and the COOP/COEP requirement (which existed for `onnxruntime-web`'s threads) mostly goes away. Keep it only if the browser path is retained as a fallback — and it is, as the reference the server is checked against. [deploy.md](deploy.md) |
-| **Confidence highlighting is in the MVP** | It is half of the stated goal, and per-strip logprobs are nearly free. |
+| Weights on **Hugging Face Hub**, app on a COOP/COEP-capable static host | **STANDS 2026-08-05, with a correction.** It was briefly written up as superseded — "decode moves to a server, so the weights never reach the browser". Wrong: the client keeps an in-browser decode **fallback**, which needs both the weights and wasm threads. What changed is *when* — weights are fetched **lazily, only if the fallback fires**. [deploy.md](deploy.md) |
+| ~~**Confidence highlighting is in the MVP**~~ | ⛔ **DROPPED 2026-08-05** (owner). The logprobs were nearly free, as predicted — but the signal missed its pre-registered bar and the bar was not moved to fit it. [../DECISIONS.md](../DECISIONS.md) |
 
 ## The ladder
 
-Ten rungs, each independently pausable with its own acceptance check. W2 already gets an image to
+Each rung is independently pausable with its own acceptance check. W2 already gets an image to
 the editor; the slicer does not block a demo.
 
 ```
 W0 ─┐                                    opencv.js risk — first, it can force a re-plan
     ├─→ W4 → W5 → W6 ─┐
-W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
-         (ceiling)
+W1 → W2 → W3 ─────────┴─→ W7 ──────→ W9 → W10 ─────→ public
+         (ceiling)          ⛔W8              (gated on Round 3)
 ```
 
 | Rung | Goal | State |
@@ -62,9 +78,10 @@ W1 → W2 → W3 ─────────┴─→ W7 → W8 → W9 → W10
 | **W5** | Slicer: barlines (the riskiest file) | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
-| **W8** | Confidence: **decide first** (soft −0.5 cut / per-token / drop), then build | **next** |
-| **W9** | **Server-side decode** + hosting — the backend question is SETTLED, plan in [deploy.md](deploy.md) | — |
-| **W10** | Friends release | — |
+| **W8** | Confidence highlighting | ⛔ **DROPPED 2026-08-05** — the pre-registered bar was NOT met (best at a 10% budget is 26.3% against ≥60%) and the owner dropped it rather than moving the bar. Half of the 2026-07-27 goal stays unbuilt, stated out loud. Nothing deleted; may return if a friend asks. [../DECISIONS.md](../DECISIONS.md) |
+| **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | **next** — build order in [deploy.md](deploy.md) |
+| **W10** | Friends release — **two friends, interface feedback** | — |
+| **public** | Open it to everyone | — gated on Round 3's exam result, not on W10 |
 
 ## What each rung established
 

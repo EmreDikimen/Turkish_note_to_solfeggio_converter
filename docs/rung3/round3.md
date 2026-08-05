@@ -2,11 +2,21 @@
 
 purpose: what Round 3 targets, the evidence behind it, and the checks to run BEFORE rendering anything
 audience: agents and the owner working the real-page track
-updated: 2026-07-28
+updated: 2026-08-05
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md).
+>
+> ▶ **UNPAUSED 2026-08-05 (owner): this round runs in PARALLEL with the product work** and no longer
+> waits for the friends release. The release asks friends about the interface, so its feedback would
+> not aim this round either way. [../DECISIONS.md](../DECISIONS.md)
+>
+> ⚠ **This round's acceptance bar is still OWED, and it now decides two things.** It must be written
+> down before training starts — on the user-effort metric (≥90% of pages ≤5 corrections; baseline
+> 57%), with micro and macro≥30 quoted beside the macro mean. As of 2026-08-05 it is **also the gate
+> for opening the app beyond the two friends**: good result → public launch, otherwise Round 4. A
+> number carrying that much weight cannot be chosen after seeing the result.
 
 ## What this round is for
 

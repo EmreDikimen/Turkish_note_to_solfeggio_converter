@@ -9,6 +9,98 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-05 (later) — the release is RE-SCOPED, and seven open questions are settled
+
+The owner set the scope of the release, and it changed enough of the surrounding plan that most of
+the MVP track's open questions closed at once. **The premise that moved everything: the friends
+release tests the INTERFACE, not the model.**
+
+> *"I will make the app in web first. Then I will think about phones. The first release to friends
+> only for interface, not for the model. I want some feedback about what should I add as a feature,
+> I will continue to upgrade model paralelly without asking to the friends. I just share it with two
+> friends at the beginning, then I make round 3 and if result is good, release it to all people, if
+> not, make round 4 etc."*
+
+**What follows from it, and why each one is a consequence rather than a separate choice:**
+
+- **Round 3 is UNPAUSED and runs in parallel.** The 2026-08-02 pause existed so Round 3 could be
+  *aimed* by real feedback. Feature feedback will not aim it, so the reason for the pause evaporated
+  with the scope. The two tracks are now independent: the product track never trains, the model
+  track never touches the app.
+- **The friends build swaps to a better model whenever one lands** (owner's choice over freezing).
+  Cheap now that decode is server-side — a redeploy, no client download. ⚠ **Recorded because it is
+  a real cost, not a free lunch:** a friend's decode-quality remark can no longer be attributed to a
+  model version. Those remarks are anecdotes. The exam stays the only thing that judges a model.
+- **Feedback comes back by talking to them.** No in-app reporting button. The earlier `deploy.md`
+  argued one was "worth more to Round 3 than any speedup here" — true at scale, wrong at n=2, where
+  a conversation returns feature ideas and a button returns bug reports.
+- **Phones are out of scope**, which **removes the strongest argument on the deploy page**. The
+  iOS-Safari cache-eviction case (~200 MB re-downloaded every week or two on cellular) was reason #1
+  for moving decode off the client, and it does not apply to a web-first release. It is **parked,
+  not refuted** — it returns intact when phones do. **So the server now rests on the thermal
+  argument alone** — which the owner confirmed later the same day still holds at ~25 s (see the end
+  of this entry), so resting on it is sound rather than a gap.
+- **The public launch is gated on Round 3's exam result**, so the ladder no longer ends at W10.
+  ⚠ That bar is **not written down yet** — `rung3/round3.md` owes it, on the user-effort metric,
+  before training starts. It now decides two things (ship Round 3, and open the app), which is more
+  weight than a number gets by default.
+
+**W8 (confidence highlighting) is DROPPED.** The pre-registered bar — flag 10% of tokens, catch
+≥60% of errors — was not met (best at that budget: 26.3%). A usable soft cut existed
+(`min_logprob < -0.5`: 22.6% of strips, 57.1% of edits, 2.5× lift) and was not taken. **Two things
+worth recording:** the bar was *not* moved to fit the result, which is the failure mode that has
+already cost this project twice on exam headlines; and dropping it leaves half of the 2026-07-27
+goal unbuilt, which is said out loud in STATUS, DECISIONS and OVERVIEW rather than quietly dropped.
+Nothing is deleted — the measurement, `check:logprobs` and the per-token logprobs all stay.
+
+**The server stack: Node + `onnxruntime-node` importing `apps/web/src/omr/decode.ts`, not Python.**
+This is the decision with the most leverage per line of code. A Python service could run
+`decode_page.py` nearly verbatim and Modal is built for exactly that — but it would create a **third**
+decode implementation to hold in parity with the browser and with Python-ORT. Proving two
+implementations agree cost this project an entire rung the last time: W4, W5, W6, a Python control
+arm, a paired decode A/B and a McNemar test. Reusing the module that was already validated at W3
+(SER 0.0818 vs 0.0821) makes "the server matches the browser" true by construction.
+✅ **It also closes, without a change, the open question `CLAUDE.md` was carrying**: "Python is
+training/data only and never ships" stands, and nothing under `src/vision/` becomes shippable.
+
+**Hosting: Cloud Run free tier**, adopted with its weakness on the record. A ~1 GB container
+cold-starts in 10–30 s and two-friend traffic is sparse, so nearly every upload is cold — **the same
+sparse-traffic argument this project uses to reject GPU, which the deploy page had applied to only
+one of the two options.** It is survivable because of the fallback below. Hetzner CX22 (~€4/month,
+always on) is the named fallback and costs less than keeping Cloud Run warm (~$15–25/month).
+
+**The client falls back to in-browser decode** on failure, timeout or cold start. Near-free (the
+path exists and is under test) and it means a server outage never reads as "the app is broken" to a
+friend who cannot debug it. **Two consequences that were nearly missed:** the browser must still be
+able to *get* the weights, so the HF Hub delivery decision stays LOCKED — with weights fetched
+lazily, only if the fallback fires; and **the COOP/COEP host requirement does NOT lapse**, because
+the fallback wants wasm threads. Both `deploy.md` and the MVP README had written the opposite
+("weights never reach the browser", "COOP/COEP mostly goes away"); both are corrected.
+
+**Two things checked rather than assumed, before any of this was written down:**
+
+1. ✅ **Batched server decode needs no model re-export.** `encoder_model.onnx` and
+   `decoder_model.onnx` both carry a dynamic `batch_size` axis. Had it been pinned at 1, the entire
+   batching argument would have dragged a re-export and a re-run of the parity chain behind it.
+2. ⚠ **The server probably will not make a page faster**, and this is now written down as a
+   non-claim in `deploy.md`. A shared cloud vCPU is slower per core than an M4 P-core, and the cold
+   start adds 10–30 s. Warm, expect roughly today's ~25 s; cold, worse. **The purchase is a cool
+   laptop, not a fast page** — without this stated, the first benchmark reads as a failure.
+
+**Then the thermal question closed too, and the re-test was removed from the plan.** Owner: *"We do
+not need to check whether mac still gets hot. We already know this."* The plan above had a
+half-hour thermal re-test as the first step of Track A, on the grounds that the original complaint
+was made when a page took ~56 s rather than ~25. That reasoning was sound when nobody had used the
+app at the new speed; the owner has, and answered from direct experience. **Recorded as an
+observation, not an instrumented number — and that is the right standard here**, because the claim
+is "this laptop gets hot in normal use", which the person holding the laptop is the authority on.
+The docs no longer ask for it, and W9 now starts at the endpoint.
+
+**A doc conflict fixed while here:** `DECISIONS.md` carried two rows dated 2026-08-05 with opposite
+status — "DECODE MOVES TO A SERVER … LOCKED" and "PROPOSED — NOT TAKEN … the owner will settle it
+once the app is feature-complete". Whoever read it next had a coin flip. The proposal row is now
+marked SUPERSEDED, keeping its GPU and ads reasoning, which still stands.
+
 ## 2026-08-05 — the backend decision is TAKEN: decode moves to a server
 
 **Owner: "I am sure about deploy the app in a server to protect computers for now."** That settles

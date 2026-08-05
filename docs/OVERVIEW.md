@@ -100,17 +100,63 @@ bottom of this page.
 
 ## Where we are right now
 
-### The plan changed on 2 August 2026: finish the app first, train later
+### The plan as of 5 August 2026: two things at once
 
-**We stopped improving the model and started finishing the product.** The model is frozen — the one
-in the app stays exactly as it is — and the work is now to turn it into a link a friend can open.
-The next training round (Round 3) is **paused, not cancelled**; it starts again after friends have
-tried it and told us what is wrong.
+Earlier (2 August) the plan was "stop the model work, finish the app, then train again." **On 5
+August you changed it: now both happen at the same time.** Here is the whole plan in one table.
 
-Three reasons, in plain terms: Round 3 is a bet we cannot price (it changes what we *draw* for
-practice, and we do not know how much that helps); **a friend would not notice it either way**; and
-half of the goal we set in July — *the app shows you where it is unsure* — had never been built at
-all, which we cannot fix or test without a working pipeline.
+| | |
+|---|---|
+| **Who sees it first** | **Two friends.** Not a public launch |
+| **What you ask them** | **"What should I add?"** — you want feedback on the **app**, not on how well it reads music |
+| **The model** | **Round 3 starts now**, in parallel. It does not wait for the friends, because what they say about features will not change how we train it |
+| **Which model the friends get** | **Whatever is best at the time.** Because the model now runs on a server, swapping it is something you do on your side — the friends download nothing and notice nothing |
+| **How you collect feedback** | **You talk to them.** With two people, a conversation tells you more than any button inside the app, and costs nothing to build |
+| **Phones** | **Later.** Web first, finish it, then think about phones |
+| **Opening it to everyone** | **Only after Round 3's exam result is good.** If it is not good, do Round 4, then look again |
+
+⚠ **One honest cost of swapping the model whenever it improves:** if a friend says "it read this
+page badly", we will not know for certain which model did it. That is acceptable *because* you are
+asking them about features — but it means those remarks are stories, not measurements. The exam is
+still the only thing that tells us whether a model got better.
+
+### Why the app needs a server now (decided 5 August)
+
+Today the reading happens **on the user's own computer**, and it works — but it burns the processor
+hard for about 19 seconds per page, which makes a fanless laptop hot. **You decided to move that
+work to a server so your friends' computers stay cool.** The app will still cut the page into strips
+locally (that part is fast and cheap) and send only the small strips to the server.
+
+Three things worth knowing about this, in plain words:
+
+- ⚠ **It will probably not feel faster.** A cheap server processor is slower than your Mac's, and a
+  free server "goes to sleep" when nobody uses it — waking it up takes 10–30 seconds. So a page may
+  take about the same time, or longer on the first upload. **The thing you are buying is a cool
+  laptop, not a fast one.** If we forget this, the first measurement will look like a failure when
+  it is not.
+- ✅ **If the server is asleep or broken, the app quietly reads the page on your own computer
+  instead**, and says so. That code already exists and is tested, so it is nearly free — and it
+  means a friend never sees a broken app.
+- ✅ **Nothing has to be rewritten.** The server runs *the same reading code the browser already
+  runs*. That matters because last week proved how expensive a second copy is: rewriting the
+  page-cutter in a second language took three whole stages of checking to prove the two copies
+  agreed. We are not paying that bill twice.
+
+**And it is still hot at the new speed** — you confirmed that from using it, so there is nothing to
+re-measure here. (An earlier draft of this plan asked for a re-test, because the original complaint
+was made when a page took ~56 seconds rather than ~25. You have used it since; that answers it.)
+
+### Something we decided NOT to build (5 August)
+
+**"Show me where the app is unsure."** We had promised ourselves a specific standard: *look at 1 mark
+in 10, and catch 6 mistakes out of 10.* We measured it, and the best it can actually do at that
+budget is **about 2.6 out of 10**. A weaker version works (look at 1 strip in 5, catch just over half
+the mistakes), but you chose not to ship that.
+
+**Two things worth saying plainly.** First: this means half of the goal we set in July is not built,
+and we are writing that down rather than quietly forgetting it. Second: **we did not lower the
+standard to make the result look like a pass** — that is the mistake that has caught us twice before
+with exam scores. Nothing is deleted; if a friend asks for exactly this feature, it comes back.
 
 **The page-cutter was finished on 4 August.** It existed only in Python; it has now been rewritten
 to run in the browser as a strict copy, not an improvement, and checked against the Python original
@@ -137,10 +183,15 @@ its 41 attempts, so the tab keeps breathing and you see a counter move. **Nothin
 changed** — we re-ran the comparison against Python on 20 pages and the tilt answer was identical on
 all 20.
 
-⚠ **Still slow: about 56 seconds for a page** (35 of them the tilt check, ~19 the reading). A page
-that is already straight still pays the full 41 attempts to find that out. Making it faster means
-changing *how* we look for tilt, which could change results, so it needs its own careful check
-rather than being slipped in. That is written down as the next piece of work.
+✅ **And then the slowness was fixed, the same day: a page went from ~56 seconds to ~25.** The tilt
+check was doing an expensive image operation 41 times over. It turned out that operation had an
+exact shortcut — not an approximation, the *same answer* by a cheaper route — so it now takes 7
+milliseconds instead of 856. **We checked it as a shortcut, not as an improvement**: both versions
+were run side by side on real pages at every angle, **328 comparisons, zero disagreements**. The
+page-cutter in the browser is now faster than the Python original it was copied from.
+
+What is left of the 25 seconds is **the reading itself (~19 seconds)** — which is exactly the part
+moving to the server.
 
 ⚠ **One trap worth remembering:** for a while the first upload just hung, with the computer doing
 nothing at all. It was not our code — the development tools were quietly reloading the page in the
@@ -236,22 +287,35 @@ shoot **different** pieces (there are thousands available).
 
 ---
 
-## What we do next (in order)
+## What we do next
 
-**Everything in the numbered list below is PAUSED until the app is released.** It is kept because
-the reasoning is still good, not because it is the next thing to do. The live list is short:
+**Two lists now, and they run at the same time.** Nothing on one waits for the other.
 
-1. **Upload a page in the app — DONE 5 August** (see above). The 56-second wait is now item 4.
-2. **Decide about "show me where it is unsure".** We measured it, and it does **not** do what we
-   promised: we wanted "check 1 line in 10, catch 6 mistakes in 10", and the best at that budget is
-   **about 2.6 in 10**. A weaker setting works — check 1 strip in 5, see just over half the
-   mistakes. So the choice is: ship that as a *hint*, do the harder work of pointing at individual
-   notes, or drop it. A real decision, not a formality.
-3. **Serve the model files and release to friends.**
-4. **Make the page faster.** Mostly the tilt check. Needs its own measurement, because a
-   cheaper check could give different answers on the ~15 pages in 100 that really are tilted.
+### List A — the app (this is what reaches your friends)
 
-Then the list below restarts, with real feedback to aim it.
+1. **Build the server and put it online.** One job, not two: to measure what a page costs on a
+   server you have to put the model on a server anyway, so doing it once answers the cost, the
+   wake-up delay and the upload size all together.
+2. **Check the server gives the same answers as the browser.** Same discipline as the page-cutter:
+   the version we already trust is the yardstick.
+3. **Switch the app over, keeping the "read it here instead" fallback.**
+4. **Turn on the safety limits** — a hard spending cap, a spending alarm, a limit on how often one
+   person can upload, and a maximum file size. This goes in **before the link reaches anyone**, even
+   your two friends. An open link that costs money per use is the classic way to get a shock bill.
+5. **Send the link to two friends and ask what to add.**
+6. **Open it to everyone — but only if Round 3's exam result is good.**
+
+### List B — the model (Round 3, running in parallel)
+
+1. **Write down what Round 3 has to achieve, before training starts.** On the honest measure — *9
+   pages in 10 need 5 fixes or fewer* — with today's 57% as the starting point. This number now does
+   double duty: it is also the gate for opening the app to everyone.
+2. **Draw more eighth notes and longer bars** (the item explained below). Check on 300 sample
+   pictures before redrawing all 40,826.
+3. **Decide whether to rebuild the training sets from the newly-cut strips.** Not automatic — it
+   would rewrite the lists that our hand-checked answers hang off.
+
+The list below is the older backlog, kept because the reasoning is still good.
 
 1. **Photo test — DONE** (slicer fixed, honest photo score ~74%, photos basically solved — see above).
 

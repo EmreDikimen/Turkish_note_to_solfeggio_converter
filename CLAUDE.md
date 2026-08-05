@@ -5,10 +5,12 @@ microtonal accidentals* → editable score → playback at exact 53-TET (Arel-Ez
 Web app first, mobile later. Inference runs in the browser via `onnxruntime-web` — though whether it
 stays there is [reopened](docs/mvp/deploy.md).
 
-**The MVP track is the live work (owner, 2026-08-02): the model is FROZEN and the in-browser
-pipeline is being wired for a release to friends.** Do not start Round 3 training — the real-page
-track is paused until feedback comes back. Ladder and state: [docs/mvp/README.md](docs/mvp/README.md).
-Synthetic accuracy is solved (99.9%); the remaining model work is about real printed pages.
+**TWO TRACKS RUN IN PARALLEL (owner, 2026-08-05).** The product track is building a decode server
+(W9) for a release to **two friends** who will be asked about the **interface, not the model**; the
+model track is **Round 3, now UNPAUSED** — it no longer waits for feedback, because feature feedback
+would not aim it. Neither blocks the other. The public launch is gated on Round 3's exam result.
+Ladder and state: [docs/mvp/README.md](docs/mvp/README.md). Synthetic accuracy is solved (99.9%);
+the remaining model work is about real printed pages.
 
 > **Current state + the next action → [docs/STATUS.md](docs/STATUS.md). Never answer "what's next"
 > from this file or from ROADMAP.** Plain-English version for the project owner:
@@ -73,15 +75,18 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,
-  ever"): the browser slices and POSTs crops, a scale-to-zero CPU server runs the model. Reason:
+  ever"): the browser slices and POSTs crops, a **Cloud Run** CPU server runs the model. Reason:
   protect the user's machine — a page burns ~19 s of multi-threaded CPU on the client. Plan:
   [docs/mvp/deploy.md](docs/mvp/deploy.md). **Everything else stays local** — audio, the editor, and
   the W4–W6 slicer port. **Do not delete the in-browser decode path**: `gate:browser`,
-  `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all rest on it.
-- **Python is still training/data only for TRAINING.** Nothing in `src/vision/train*` or the data
-  scripts ships. ⚠ The serving half is now an open design question — a Python decode service would
-  make part of `src/` shippable for the first time, and that needs its own decision, not an
-  assumption.
+  `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all rest on it, and
+  it is also the **live fallback** when the server is cold or down.
+- **The server is Node + `onnxruntime-node` importing `apps/web/src/omr/decode.ts`** — the browser's
+  own module, so there is ONE decode implementation, not a third to hold in parity. Do not write a
+  second decoder in any language.
+- **Python is training/data only, and NOTHING ships.** The rule stands unchanged: the open question
+  about a Python decode service was **closed on 2026-08-05** by choosing the Node stack above.
+  Nothing under `src/vision/` becomes shippable.
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
   stable across checkpoints.
 - **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COLAB.md`), or locally with

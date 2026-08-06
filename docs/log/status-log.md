@@ -2,12 +2,64 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-05
+updated: 2026-08-06
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+## 2026-08-06 — W9: the decode server is built, checked, and NOT deployed
+
+The whole of `apps/server/` plus the client swap, in one session. Four things are worth keeping,
+and two of them are results that went against the plan.
+
+**The design that made it cheap: there is no second decoder.** The server imports
+`apps/web/src/omr/decode.ts` — the browser's own module — so the greedy loop, the stopping rule and
+the logprob scoring are the same lines on both sides. Paying for that meant getting ORT out from
+under `decode.ts`: types now come from `onnxruntime-common` and the `Tensor` constructor travels on
+`Sessions`, which is exactly the move `omr/types.ts` predicted for the mobile app. The browser gate
+was re-run and is **27/28, unchanged**. Compare the alternative: the slicer port needed W4, W5, W6,
+a Python control arm, a paired A/B and a McNemar test to prove a second implementation matched.
+
+**The seam sits after preprocessing, not at the raw crop.** The client rotates/resizes/pads and
+uploads a finished 409×583 PNG; the server does only the rescale (`omr/pixels.ts`). Reason: a
+server-side resize would be a THIRD resampler — the canvas draw already is not PIL BILINEAR — and
+another rung to prove it equal. PNG is lossless, so both runtimes see identical bytes.
+
+**Result 1 — the quality question was answered with the right instrument.** Strip-level agreement
+between server and browser is 93.8% (120/128), which is *not* the number that matters: agreement
+cannot say which side is right, and it also moves with the batch size (batch 1 gives 93.8% too, but
+a different 8 strips). So both arms were scored against the same 267 hand-verified `_realval_v2`
+strips with the same scorer, **paired**, the way W6 settled arm A vs arm B: **no detectable
+difference** — McNemar exact p = 0.727, total edits 780 vs 768, per-strip sign test p = 0.664. The
+divergences sit at tokens the model was on average ~55% sure of.
+
+**Result 2 — batching does not pay, and that withdrew a stated reason for having a server at all.**
+`deploy.md` listed "no batching, ever" as a structural advantage over `onnxruntime-web`. Measured:
+batch 8 is a few percent SLOWER than batch 1 at 1, 2 and 4 threads, and costs **2.9× the peak
+memory** (2,778 MB vs 955 MB on a 38-strip page) — on Cloud Run, a 4 GiB container instead of 1 GiB.
+One 409×583 Swin forward already fills the cores. `OMR_MAX_BATCH` defaults to 1 now; the batched
+path stays behind the knob because this is one CPU architecture, but the *claim* is gone. The
+"smaller upload" reason went the same way: the crops upload is a median 1.7× the page image, not
+smaller. What survives as the second reason, and it is a big one: **native ORT is ~4× faster than
+wasm on the same laptop** — 6.0 s a page against 24.5 s, with the tab's worst stall dropping
+2,358 ms → 29 ms.
+
+**What is NOT done, and why:** nobody has deployed it. `gcloud` is not installed and no project
+exists, so cold start and a real cloud vCPU's speed are unmeasured — every number above is from the
+dev M4 and is an upper bound on speed, a lower bound on cost. The container has never been built
+either: the Docker CLI here comes from Rancher Desktop and its daemon was not running. It is
+designed to build in Cloud Build anyway (the Dockerfile is not at the context root, and an Apple
+Silicon `docker build` would produce arm64), but that means the first deploy is also the first
+build. The **hard billing cap** stays owed — the one safety item that bounds the bill and the one
+that cannot be asserted from the repo.
+
+**A cached measurement was destroyed and restored.** `scripts/score_browser_gold.py` wrote its
+result to one fixed path, so scoring the server arm overwrote W3's stored browser numbers. The
+browser arm was re-run to restore them (it reproduced exactly: SER 0.0818, exact 60.2%), and the
+script now takes `--score-out`. Worth recording as a near miss: nothing in the file said it was a
+single-arm store, and a second arm was always going to arrive.
 
 ## 2026-08-05 (later) — the release is RE-SCOPED, and seven open questions are settled
 

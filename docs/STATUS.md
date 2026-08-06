@@ -2,12 +2,13 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-05
+updated: 2026-08-06
 
 ## Now
 
-**The app reads a whole page end to end. The next build is the decode server (W9), and TWO tracks
-now run in parallel.** Everything about the release was re-scoped by the owner on 2026-08-05:
+**The decode server is BUILT and checked; it has never been deployed. The next action is a
+`gcloud` deploy, which needs the owner's Google account.** TWO tracks run in parallel, as re-scoped
+by the owner on 2026-08-05:
 
 | | |
 |---|---|
@@ -21,44 +22,65 @@ now run in parallel.** Everything about the release was re-scoped by the owner o
 **W8 (confidence highlighting) is DROPPED** — its pre-registered bar was not met and the bar was not
 moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is the saying-so.
 
-**W9 is settled down to the stack**: Cloud Run free tier; the server is **Node + `onnxruntime-node`
-importing the browser's own `decode.ts`** (so there is one decode implementation, not a third — and
-`CLAUDE.md`'s Python-never-ships rule stands unchanged); the client **falls back to in-browser
-decode** when the server is cold or down. Build order and the open numbers:
-[mvp/deploy.md](mvp/deploy.md). Ladder: [mvp/README.md](mvp/README.md).
-
+- **✅ W9 IS BUILT — `apps/server/`, and the app reads a page through it (2026-08-06).** Node +
+  `onnxruntime-node` importing the browser's own `decode.ts`, so there is **one decode
+  implementation, not a third**; `CLAUDE.md`'s Python-never-ships rule is untouched. The client
+  swaps behind `VITE_DECODE_URL` and falls back to in-browser decode on any failure. All three
+  paths give the **same score** on the same page (7 staves → 16 strips → **344 notes / 28
+  measures**): browser **24.5 s**, server **6.0 s**, dead-server fallback **25.0 s** while saying so
+  in the status line. The tab's slowest reply during a read drops **2,358 ms → 29 ms**.
+  **What decides the quality question is the gold check, not agreement**: both arms scored on the
+  same 267 hand-verified `_realval_v2` strips with the same scorer, **paired — no detectable
+  difference** (McNemar exact **p = 0.727**, edits 780 vs 768). Strip-level agreement is 93.8%, and
+  the divergences sit at tokens the model was ~55% sure of.
+  ⚠ **NOT DEPLOYED.** No `gcloud` on this machine and no project set up, so **cold start and a real
+  cloud vCPU's speed are unmeasured** — every server number is from the dev M4 and is an upper bound
+  on speed, a lower bound on cost. ⚠ Docker could not be run locally either (Rancher Desktop is
+  installed but its daemon is not running), so the **container has never been built**; it builds in
+  Cloud Build by design, but that is one more thing the first deploy will discover.
+  ⚠ The **hard billing cap is still owed** — the only safety item that bounds the bill, and the only
+  one not checkable from the repo. Commands, flags and reasoning: [mvp/deploy.md](mvp/deploy.md).
+  ⚠ **The HOSTING half of W9's title is untouched, and W10 cannot happen without it**: the app still
+  runs from `npm run dev:web`, and the fallback's weights still come from `apps/web/public/models/`
+  rather than the Hugging Face Hub. The decision is unchanged and unbuilt — it simply was not part
+  of the server work, and saying so now is cheaper than discovering it at the release.
+- **⛔ THE BATCHING ARGUMENT FOR HAVING A SERVER IS WITHDRAWN — measured, not argued (2026-08-06).**
+  `deploy.md` listed "no batching, ever" as a structural advantage over `onnxruntime-web`. Batch 8
+  against batch 1 is **slower at every thread count** (1 thread 12.0 vs 11.8 s/page, 2 threads 8.7
+  vs 8.3, 4 threads 7.4 vs 7.4) and costs **2.9× the peak memory** (2,778 MB vs 955 MB on a 38-strip
+  page). One 409×583 Swin forward already fills the cores. `OMR_MAX_BATCH` now defaults to **1**; the
+  batched path stays behind the knob because this is one CPU architecture. **The real second reason
+  for a server is that native ORT is ~4× faster than wasm** — 6.0 s against 24.5 s on the same M4.
+  The **"smaller upload" reason is withdrawn too**: the crops upload is a median **1.7× the page
+  image**, not smaller.
+- **A page costs 11.7 vCPU-seconds at 1 vCPU** — measured from the server's own `process.cpuUsage()`,
+  which is what Cloud Run bills. **1 vCPU is the cheapest shape by 2.5×** (2 vCPU 16.8, 4 vCPU 29.3),
+  and the free tier covers roughly **15,400 pages/month** there. The earlier 30–60 vCPU-s estimate
+  was ~3× pessimistic because it assumed the batching that does not exist.
+- **The safety checklist is a command now**: `npm run check:limits` — **6/6** payload cases plus the
+  per-IP rate limit, and it prints the billing-cap item it cannot check instead of counting it.
 - **There is a SLICE INSPECTOR now (`/slices.html`), and it is how the two fixes below were found.**
   Upload a page, see every crop the slicer made, captioned with the slicer's own decisions, its
   decoded label with note names substituted (`si'16`), its confidence and its vertical placement —
   in red with the shortfall when a side is cut. It loads the model but never builds a score, so it
   cannot disturb the editor. [MANUAL_CHECKS.md](MANUAL_CHECKS.md) Check 13.
-- **✅ A SLUR ABOVE THE STAFF WAS SHEARING THE BEAMS BELOW, AND IT IS FIXED (2026-08-05).** Owner
-  reported a crop cut so "notes and their times could not be read"; reproduced on corpus pages.
+- **✅ A SLUR ABOVE THE STAFF WAS SHEARING THE BEAMS BELOW, AND IT IS FIXED (2026-08-05).**
   `place_band` let ink above the staff claim room without limit, so a slur pushed the staff down and
-  the frame cut the beams — the ink that carries duration. Ink above may now claim only **3.5 sp**,
-  the height a real ledger note reaches. Over 120 pages / 901 rows: **0 px lost inside the
-  ledger-note zone, exactly as before**, beam loss **19,932 → 17,231 (−13.6%)**. **Not a trade** —
-  bottom-first destroys 500 px of real ledger-note ink, and the old rule destroys beams.
-  ⚠ **An information argument, not a decode result** — at 2.6% of rows an A/B is underpowered. ⚠ The
-  other **85% of clipped rows are not fixable by placement**: their music genuinely exceeds the frame
-  (short by a median 2.31 sp), mostly degraded scans where the row's ink connects to lyrics or the
-  next system. Only a scale change reaches those, and scale costs 12–15% edits per 1%.
-  Parity still reads **W4/W5/W6 PASS, deskew 20/20**; app smoke unchanged at 16 strips / 344 notes.
+  the frame cut the beams — the ink that carries duration. Ink above may now claim only **3.5 sp**.
+  Over 120 pages / 901 rows: **0 px lost inside the ledger-note zone**, beam loss **19,932 → 17,231
+  (−13.6%)**. **Not a trade** — bottom-first destroys 500 px of real ledger-note ink.
+  ⚠ **An information argument, not a decode result** (at 2.6% of rows an A/B is underpowered), and
+  ⚠ the other **85% of clipped rows are not fixable by placement** — their music genuinely exceeds
+  the frame, and only a scale change reaches those, at 12–15% edits per 1%.
 - **✅ THE PAGE LATENCY IS FIXED, EXACTLY (2026-08-05): 36.6 → 1.3 s/page, answers unchanged.** The
-  skew sweep ran one page-wide `morphologyEx` per rotation, 41 times; its kernel is `len`×1, so the
-  opening is per-row and has a closed form (a pixel survives iff it sits in a run of `len`
-  foreground pixels). `qualifyingLineRows` only wanted the ROW SUMS, so the morphology plus two Mat
-  copies became one run-length scan: **856 ms → 6.8 ms per call, 125.8×**.
-  **A substitution, not a heuristic, and checked as one** — `npm run check:deskew` runs both
-  implementations at every angle the coarse pass evaluates, over real pages: **0 disagreements in
-  328 evaluations**, and the parity harness with the REAL estimator still reads **deskew angle
-  identical 20/20** with every W4/W5/W6 bar exact. The browser slicer is now **faster than the
-  Python it copies** (~1.9 s stage 1). In the app a page went **~56 s → ~25 s**, the slice being
-  **1.6 s** — decode (19.1 s) is the bottleneck now, which is exactly what W9 moves.
-  ⚠ The subtle part is the border rule: `morphologyEx` erodes as if outside the frame were
-  foreground, so an edge-touching run survives however short it is — which is why the check sweeps
-  angles rather than testing one. ⚠ Neither idea the plan proposed (early exit, replacing the
-  estimator) was needed; all 41 angles are still evaluated.
+  41-rotation skew sweep ran a page-wide `morphologyEx` per angle; its kernel is `len`×1, so the
+  opening is per-row and has a closed form, and `qualifyingLineRows` only wanted the row sums:
+  **856 ms → 6.8 ms per call, 125.8×**. **A substitution, not a heuristic, and checked as one** —
+  `npm run check:deskew` runs both implementations at every angle the coarse pass evaluates:
+  **0 disagreements in 328 evaluations**, deskew angle still identical 20/20, W4/W5/W6 exact. The
+  browser slicer is now faster than the Python it copies. ⚠ The subtle part is the border rule —
+  `morphologyEx` erodes as if outside the frame were foreground — which is why the check sweeps
+  angles rather than testing one. Detail: [log/status-log.md](log/status-log.md).
 - **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
   Owner-reported as "`\repstart`/`\repend`/`\tup3` are not seen in the sheet"; over the 1,704 decode
   caches it was two different things. **Repeats are not lost** — the note model has no field for one,
@@ -74,47 +96,25 @@ decode** when the server is cold or down. Build order and the open numbers:
   with 0 dropped measures.
 - **✅ W7 PASSED (2026-08-05): THE APP READS A WHOLE PAGE.** Upload an image, get a playable,
   editable, saveable score — slice, decode, stitch, render, play, nothing stubbed. `npm run
-  smoke:page` drives the real app: **7 staves → 16 strips → 344 notes / 28 measures**, strip count
-  matching local Python **16 vs 16**, no page errors. W2's smoke reads *Python's* crops of the same
-  page and gets the same 344 notes / 28 measures — a free n=1 confirmation of the whole path.
-  **The interesting half was the 35-second freeze.** `estimate_skew` is now a **generator with two
-  drivers** — `estimateSkew` runs it to completion (parity), `estimateSkewAsync` steps it and yields
-  between rotations (the app) — with `guardedAngle` holding `deskew`'s two guards. **No arithmetic
-  changed, and that was verified, not argued**: 20 pages, **deskew angle identical 20/20**, W4/W5/W6
-  still PASS. An async *copy* was rejected as the duplication CLAUDE.md warns about.
-  ⚠ **A hang at 0% CPU was Vite, not the port**: opencv.js sits behind a lazy `import()`, so the dep
-  optimizer discovered it at the first upload and full-reloaded the tab mid-slice, discarding the
-  upload. `optimizeDeps.include` fixes it; re-verified against a **cold** `.vite` cache.
-- **✅ W4–W6 PASSED (2026-08-04): THE SLICER PORT IS DONE and the browser cuts the same strips
-  Python does** — whole corpus, 1,781 pages / 33,805 strips. Bars, windows, strip spans and the
-  width/measure invariants all reproduce local Python; `hasNotehead` is exercised by 861 clef-prefix
-  trims, identical both sides. **The decode arm is the verdict that matters and it is PAIRED**: arm
-  A **395/450 (87.78%)** against arm B's **387/450 (86.00%)**, **12 vs 4 discordant, McNemar exact
-  p = 0.077 — no detectable difference**, and all 16 discordant strips have **identical crop
-  widths**, which is what rules the slicer out as the cause. Rung write-ups:
-  [mvp/rungs.md](mvp/rungs.md). Numbers: [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md).
-  ⚠ Two bars were **restated** mid-rung, once at W4 and once at W6, because they were written before
-  the ±1 grayscale residue was understood — both print the raw number beside the restated one, which
-  is what keeps a restatement honest.
-  ⚠ **Owed:** every full-corpus run used `--inject-skew`, so the deskew *estimator* is validated on
-  132 pages, not the corpus.
-- **`prepPage` could NOT be the planned no-op, and that was worth 22 of 23 failures.** True of the
-  perspective crop (0% of pages), false of the deskew: **15.3% of corpus pages (272/1,781) take a
-  real rotation**, and skipping it took one page from 10 staves to 0.
-- **The `strips_v2` manifests are NOT the acceptance bar — the current Python does not reproduce
-  them either** (1,680/1,704, 98.59%), because 1,578 of 1,781 page dirs were sliced on Colab.
-  `scripts/slicer_ref.py` is the control and defines the sample. Same lesson as W3's arm-B ceiling
-  and W7's first strip-count bar: **agreement with an artifact is not correctness** — three times.
-- **✅ W0–W3 PASSED (2026-08-02/03)** — opencv.js bit-identical on all five primitives, the decode
-  module extracted with per-token confidence, strips read end to end at ~1.1 s/strip, and **THE
-  BROWSER IS NOT WORSE THAN PYTHON**: same 261 hand-verified strips, same scorer, **SER 0.0821 →
-  0.0818, exact-match 60.2% both, AEU macro recall 94.8% → 94.9%**. ⚠ A *paired* Δ on real-val — it
-  establishes the difference, not the absolute level. Detail: [mvp/rungs.md](mvp/rungs.md).
-- **The browser-vs-Python ceiling is 86.0%** of strips (450 strips, 20 pages) and the resampler
-  theory behind it is DEAD: disagreement concentrates in strips the model was already unsure about
-  (**21.9% agreement where `min_logprob < -1.0` against 90.9% where it is confident**), while crop
-  width shows no trend. `preprocess.ts` is unchanged. ⚠ The first measurement said 10% and was
-  wrong — the two sides serialize tokens differently and must be compared after `normalizeTokens`.
+  smoke:page`: **7 staves → 16 strips → 344 notes / 28 measures**, strip count matching local Python
+  16 vs 16. The 35-second freeze was fixed by making `estimate_skew` a **generator with two
+  drivers** rather than an async copy, with **no arithmetic change** — verified, deskew angle
+  identical 20/20. ⚠ A hang at 0% CPU turned out to be Vite's dep optimizer full-reloading the tab
+  mid-slice, not the port; `optimizeDeps.include` fixes it. Detail: [mvp/rungs.md](mvp/rungs.md).
+- **✅ W0–W6 PASSED (2026-08-02/04) — the slicer port is done and the browser is not worse than
+  Python.** opencv.js bit-identical on all five primitives; decode extracted with per-token
+  confidence; the browser scored against the SAME hand-verified gold as Python — **SER 0.0821 →
+  0.0818, exact-match 60.2% both**; and the ported slicer checked over the whole corpus, 1,781 pages
+  / 33,805 strips, with the decode arm **paired** (McNemar p = 0.077, no detectable difference).
+  Write-ups, including the four hypotheses that died along the way: [mvp/rungs.md](mvp/rungs.md).
+  Numbers: [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md).
+  ⚠ Three things from those rungs that still bind: **agreement with an artifact is not correctness**
+  (the `strips_v2` manifests are not the bar — the current Python reproduces only 98.59% of them,
+  and three separate criteria had to be restated for this reason); **`prepPage` is not a no-op**
+  (15.3% of corpus pages take a real rotation); and the **86.0% browser-vs-Python ceiling** is
+  near-ties, not a resampler — disagreement concentrates where the model is unsure (21.9% agreement
+  below `min_logprob < -1.0` against 90.9% above), so `preprocess.ts` is unchanged. **Owed:** every
+  full-corpus run used `--inject-skew`, so the deskew *estimator* is validated on 132 pages.
 - **⛔ The confidence signal missed its pre-registered bar, and W8 is DROPPED (owner, 2026-08-05).**
   Against gold, flagged strips do average **8.60 token edits vs 2.69** — the signal is real — but
   "flag 10% of tokens, catch ≥60% of errors" is **NOT MET**: the best achievable at a 10% budget is
@@ -122,10 +122,6 @@ decode** when the server is cold or down. Build order and the open numbers:
   57.1% of edits, 2.5× lift) and was **not** taken. **The bar was not moved to fit the result.**
   Nothing is deleted — the measurement, `check:logprobs` and the per-token logprobs all stay, and it
   is a strong candidate to return if a friend asks for it. Detail: [mvp/rungs.md](mvp/rungs.md).
-- **Grayscale can never be exact from a browser, and it does not matter.** `imread(IMREAD_GRAYSCALE)`
-  converts inside the PNG decoder and OpenCV's own two paths already differ by ±1 on 7.4% of a
-  colour page; the slicer's output is bit-identical under that perturbation, 119 strips
-  ([METRICS-SLICER.md](METRICS-SLICER.md)).
 
 ## Previously (real-page track — all still true)
 
@@ -266,22 +262,26 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-1. **W9 — build the decode server.** Settled down to the stack: **Cloud Run** free tier; **Node +
-   `onnxruntime-node` importing `apps/web/src/omr/decode.ts`**; **in-browser fallback** on failure,
-   timeout or cold start. Order, and why it is this order, in [mvp/deploy.md](mvp/deploy.md):
-   **(a)** the endpoint, deployed — this *is* the benchmark, since containerising the model to time
-   it is most of the endpoint, and one deploy answers cost, cold start and payload size together;
-   **(b)** show the server matches the browser; **(c)** client swap behind a flag, plus the
-   fallback; **(d)** the safety checklist before the URL reaches anyone.
+1. **DEPLOY THE SERVER — the one step W9 cannot finish on this machine.** Needs a Google account, a
+   project and billing; the commands, the flags and *why each flag* are in
+   [mvp/deploy.md](mvp/deploy.md) ("Running it, and deploying it"). Order: create the Artifact
+   Registry repo → `gcloud builds submit` (the image builds in Cloud Build, **not** locally — an
+   Apple Silicon `docker build` produces arm64 and Cloud Run will not start it) → `gcloud run deploy
+   --cpu 1 --concurrency 1 --max-instances 3 --memory 2Gi` → **set the hard billing cap and alert**
+   → re-run `npm run check:limits -- --url <service>` and `npm run bench:server -- --url <service>`
+   against the real thing and replace the laptop numbers in [METRICS.md](METRICS.md).
+   ⚠ **The first deploy is also the first cold-start measurement.** If it is intolerable, deploy.md
+   names the fallback: Hetzner at ~€4/month, which is cheaper than keeping Cloud Run warm.
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.
-   ⚠ **Expect no speedup.** A shared cloud vCPU is slower than an M4 core, and Cloud Run adds a
-   10–30 s cold start that two-friend traffic pays on nearly every upload. The win is the friend's
-   laptop staying cool — read the first benchmark against that, not against ~25 s.
-2. **W10 — release to two friends.** Ask what features to add. Safety checklist first. No ads and no
+2. **Host the app, and move the weights to the Hugging Face Hub.** The other half of W9's title,
+   and W10's blocker: a COOP/COEP-capable static host (the fallback needs wasm threads — this
+   requirement did NOT go away when decode moved server-side) plus Hub-delivered weights fetched
+   lazily on first fallback. Decisions are settled; the code is not written.
+3. **W10 — release to two friends.** Ask what features to add. Billing cap first. No ads and no
    in-app feedback widget: talk to them.
-3. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
+4. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
 ### Track B — the model (Round 3, UNPAUSED)
 

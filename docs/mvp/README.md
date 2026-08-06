@@ -2,7 +2,7 @@
 
 purpose: the plan and running state of the W0–W10 ladder that turns the frozen model into a link someone can open
 audience: agents and the owner working the product side (not the training side)
-updated: 2026-08-05
+updated: 2026-08-06
 
 > **Picking up W4–W6 (the slicer port)? Read [slicer-port.md](slicer-port.md) first** — it carries
 > the function map, the acceptance thresholds and the traps that were found the expensive way.
@@ -79,7 +79,7 @@ W1 → W2 → W3 ─────────┴─→ W7 ──────→ W
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
 | **W8** | Confidence highlighting | ⛔ **DROPPED 2026-08-05** — the pre-registered bar was NOT met (best at a 10% budget is 26.3% against ≥60%) and the owner dropped it rather than moving the bar. Half of the 2026-07-27 goal stays unbuilt, stated out loud. Nothing deleted; may return if a friend asks. [../DECISIONS.md](../DECISIONS.md) |
-| **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | **next** — build order in [deploy.md](deploy.md) |
+| **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | ✅ **BUILT 2026-08-06, ⚠ NOT DEPLOYED** — endpoint, container, client swap and fallback all done and checked on a laptop; server vs browser on gold is a **paired wash** (McNemar p = 0.727). Nobody has run `gcloud`, so cold start and a real vCPU are unmeasured, and the billing cap is owed. [deploy.md](deploy.md) |
 | **W10** | Friends release — **two friends, interface feedback** | — |
 | **public** | Open it to everyone | — gated on Round 3's exam result, not on W10 |
 
@@ -132,6 +132,11 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |
 | `tools/vision/parity/slicer-parity.ts` | slicer parity harness, `npm run parity:slicer` (W4–W6) |
 | `tools/vision/parity/deskew-check.ts` | the exactness gate behind the 126× skew-sweep speedup (W7) |
+| `apps/server/` | the decode server: `index.ts` (HTTP), `decodeBatch.ts` (imports the browser's `decode.ts`), `model.ts` (the only ORT-runtime-specific file), `limits.ts`, `png.ts`, `Dockerfile`, `cloudbuild.yaml` (W9) |
+| `apps/web/src/omr/pixels.ts` | the client/server seam — the rescale, DOM-free, so the server needs no resampler (W9) |
+| `apps/web/src/omr/remote.ts` | `decodeStripsRouted` — server first behind `VITE_DECODE_URL`, in-browser fallback on any failure (W9) |
+| `apps/web/src/checks/serverParityHarness.ts` + `apps/web/server-parity.html` | the client half of the contract: the PNG it would upload AND what the browser read from it (W9) |
+| `tools/vision/parity/server-parity.ts`, `server-bench.ts`, `server-limits.ts` | server vs browser, vCPU-seconds/payload, and the safety checklist as a command (W9) |
 
 ## Verification gates
 
@@ -150,3 +155,8 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | Slicer port vs local Python | `scripts/slicer_ref.py --pages 120 --out ref.json` then `npm run parity:slicer -- --ref ref.json` |
 | Skew sweep's fast path is EXACT | `npm run check:deskew -- --pages 8` |
 | Browser quality vs Python, against gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --out b.json` then `scripts/score_browser_gold.py --browser b.json` |
+| Server matches the browser | `npm run dev:server` then `npm run parity:server -- --pages 6 --fixture f.json` (`--replay f.json` re-runs the server half with no browser) |
+| Server quality vs gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --server http://localhost:8080 --out s.json` then `scripts/score_browser_gold.py --browser s.json --score-out data/checkpoints/server_gold_score.json` |
+| Server cost per page, payload bytes | `npm run bench:server -- --fixture f.json` |
+| The safety checklist | `npm run check:limits` |
+| The app, through the server (and through the fallback) | `VITE_DECODE_URL=http://localhost:8080 npm run smoke:page` · point it at a dead port for the fallback |

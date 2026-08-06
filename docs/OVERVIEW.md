@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-05
+updated: 2026-08-06
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -45,50 +45,13 @@ wipes out most of the time you saved. If the app highlighted the few places it w
 check five spots instead of two hundred and fifty notes. We already compute that "unsure" signal
 internally; we have simply never shown it to you.
 
-## What we learned last (27 July 2026) — we were fixing the wrong 13%
+## What we learned before that (27 July 2026) — we were fixing the wrong 13%
 
-We counted every correction a user would have to make on the exam, and sorted them by *what* needs
-fixing:
-
-| what you would have to fix | share |
-|---|---|
-| **the note itself (which line/space it sits on)** | **40%** |
-| **how long the note is** | **28%** |
-| tie / triplet / grace marks | 13% |
-| **the microtonal marks (koma, küçük, bakiye…)** | **13%** |
-| bar-lines, repeats | 5% |
-
-Two whole rounds of work went into that 13%. Not because it was the biggest problem — but because
-our old score *only measured that*. It could not see the other 87%.
-
-Two more things came out of the same count:
-
-- **A few bad strips do most of the damage.** Strips with three notes or fewer are only about 1 in
-  18, but they cause a fifth of all corrections. ⚠ **We first thought the model "invents a whole bar"
-  on these — that was checked on 28 July and it is wrong** (only 1 of the 8 such strips in existence
-  did anything of the sort). It simply cannot read them. See the 28 July section below.
-- **You were right about the octave labels.** Every octave disagreement we found is a case where our
-  *answer key* is wrong and the model is right. But there are only a handful, and the training data
-  is clean — so it is worth fixing, and it is not what is holding the model back.
-
-**So the next round targets the notes and their lengths, not the microtonal marks.**
-
-### What we already know about those two (the plan: [rung3/round3.md](rung3/round3.md))
-
-- **Note heights are slightly off, not wrong.** When the model misses, it is usually off by only
-  one or two positions up or down — 74% of the time. It is not confused about which note it sees; it
-  is misjudging the height, like reading a thermometer one mark off.
-  We suspected this came from our training pictures being too uniform — and they are: the staff lines
-  sit at **exactly** the same size in every single one, while real strips vary. ⚠ **But testing on
-  28 July says that is not what is costing us corrections today**, so the "shake the pictures more"
-  setting is kept as cheap insurance rather than a fix. See the 28 July section below.
-- **Note lengths are nearly always "twice too long".** A short note carries a little flag or beam on
-  its stem, and the model is missing it. It also adds or drops the small dot that lengthens a note,
-  about equally often. We assumed the **same story as the sharp marks**: our music font draws thicker
-  strokes than real printing. ⚠ **Checked on 28 July — it is the opposite.** Our beams are exactly the
-  textbook thickness and real printed music is *heavier*, so this idea is closed.
-
-Both were checks to run *before* making new pictures. Both were run — see the 28 July section.
+We counted every correction a user would have to make on the exam and sorted them by *what* needs
+fixing. The answer changed the plan: **the note itself is 40% of the work and its length 28%, while
+the microtonal marks — which two whole rounds went into — are only 13%.** The old score could only
+see that 13%, which is why it looked like the whole problem. The full count, and what we already
+know about note heights and note lengths, moved to **[OVERVIEW-JULY.md](OVERVIEW-JULY.md)**.
 
 ## What happened on 28 July 2026 — we tested four ideas and three were wrong
 
@@ -127,13 +90,17 @@ hard for about 19 seconds per page, which makes a fanless laptop hot. **You deci
 work to a server so your friends' computers stay cool.** The app will still cut the page into strips
 locally (that part is fast and cheap) and send only the small strips to the server.
 
+**Built on 6 August. It works, but it is not online yet** — see "What is done and what is not"
+below.
+
 Three things worth knowing about this, in plain words:
 
 - ⚠ **It will probably not feel faster.** A cheap server processor is slower than your Mac's, and a
   free server "goes to sleep" when nobody uses it — waking it up takes 10–30 seconds. So a page may
   take about the same time, or longer on the first upload. **The thing you are buying is a cool
   laptop, not a fast one.** If we forget this, the first measurement will look like a failure when
-  it is not.
+  it is not. (On *your* Mac the server version is 4× faster — 6 seconds against 24 — but that is
+  your fast processor doing the work, not a cheap rented one.)
 - ✅ **If the server is asleep or broken, the app quietly reads the page on your own computer
   instead**, and says so. That code already exists and is tested, so it is nearly free — and it
   means a friend never sees a broken app.
@@ -145,6 +112,35 @@ Three things worth knowing about this, in plain words:
 **And it is still hot at the new speed** — you confirmed that from using it, so there is nothing to
 re-measure here. (An earlier draft of this plan asked for a re-test, because the original complaint
 was made when a page took ~56 seconds rather than ~25. You have used it since; that answers it.)
+
+### What is done and what is not (6 August 2026)
+
+**Done:** the server exists, the app uses it, and the app falls back to your own computer if the
+server does not answer — all three tested on a real page, all three giving *exactly the same music*
+(344 notes, 28 bars).
+
+**We also checked the thing that actually matters: does the server read music as well as the
+browser?** Not "do they agree" — they disagree on about 6% of strips — but "is either one *better*".
+On 267 strips where we know the right answer, the difference is **too small to detect**. Neither is
+worse.
+
+**Not done: nobody has put it on the internet.** That needs a Google Cloud account and a card on
+file, so it is yours to do. Until then we do not know the two numbers that only the real thing can
+tell us: how long the wake-up really takes, and how slow a rented processor really is.
+
+**Two things we believed and then measured, and both were wrong:**
+
+- We thought sending the small strips instead of the whole page picture would **save upload data**.
+  It does not — it is usually about **1.7× bigger**, because of how the pieces are packaged. The
+  reason for sending strips is still good (the server does not have to cut the page up), but "it is
+  smaller" was not true.
+- We thought reading all ~19 strips **together in one go** would be faster than one at a time. It is
+  not: it is slightly *slower* and uses **three times the memory**, which on a rented server means
+  paying for a bigger machine for nothing. Switched off.
+
+**The one safety job left before any link goes out: set a hard spending limit on the account.**
+Everything else on the safety list is built and tested. That one lives in Google's billing settings
+and only you can set it.
 
 ### Something we decided NOT to build (5 August)
 
@@ -293,17 +289,21 @@ shoot **different** pieces (there are thousands available).
 
 ### List A — the app (this is what reaches your friends)
 
-1. **Build the server and put it online.** One job, not two: to measure what a page costs on a
-   server you have to put the model on a server anyway, so doing it once answers the cost, the
-   wake-up delay and the upload size all together.
-2. **Check the server gives the same answers as the browser.** Same discipline as the page-cutter:
-   the version we already trust is the yardstick.
-3. **Switch the app over, keeping the "read it here instead" fallback.**
-4. **Turn on the safety limits** — a hard spending cap, a spending alarm, a limit on how often one
-   person can upload, and a maximum file size. This goes in **before the link reaches anyone**, even
-   your two friends. An open link that costs money per use is the classic way to get a shock bill.
-5. **Send the link to two friends and ask what to add.**
-6. **Open it to everyone — but only if Round 3's exam result is good.**
+1. ~~Build the server.~~ ✅ **Done 6 August.**
+2. ~~Check it gives the same answers as the browser.~~ ✅ **Done** — no detectable difference on 267
+   strips where we know the right answer.
+3. ~~Switch the app over, keeping the "read it here instead" fallback.~~ ✅ **Done and tested.**
+4. **PUT IT ONLINE — this is the next thing, and only you can do it.** It needs a Google Cloud
+   account with billing. The exact commands are written down and ready to paste
+   ([mvp/deploy.md](mvp/deploy.md)); expect the first run to also be the first time we learn the
+   real wake-up delay.
+5. **Set the hard spending cap and the spending alarm** in the Google billing settings. Everything
+   else on the safety list is already built and tested (upload size, uploads per person, refusing
+   anything that is not a proper strip picture). **This one goes in before the link reaches anyone**,
+   even your two friends. An open link that costs money per use is the classic way to get a shock
+   bill.
+6. **Send the link to two friends and ask what to add.**
+7. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)
 

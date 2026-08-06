@@ -51,6 +51,12 @@ npm run check:logprobs               # browser confidence signal vs onnx_parity.
 npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
 npm run smoke:page -- --ref ref.json # real app: a PAGE image in → playable score out (MVP W7)
 npm run check:deskew                 # the skew sweep's fast path is EXACT vs the morphology (W7)
+node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs
+npm run dev:server                   # the decode server on :8080 (W9) — needs the line above once
+npm run parity:server -- --pages 6 --fixture f.json   # server vs browser; --replay f.json skips the browser
+npm run bench:server -- --fixture f.json              # vCPU-seconds per page, payload bytes
+npm run check:limits                 # the deploy safety checklist, against a running server
+VITE_DECODE_URL=http://localhost:8080 npm run smoke:page   # the app THROUGH the server
 npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
 npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED (MVP W6)
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
@@ -83,7 +89,11 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   it is also the **live fallback** when the server is cold or down.
 - **The server is Node + `onnxruntime-node` importing `apps/web/src/omr/decode.ts`** — the browser's
   own module, so there is ONE decode implementation, not a third to hold in parity. Do not write a
-  second decoder in any language.
+  second decoder in any language. **Built 2026-08-06 in `apps/server/`, not yet deployed.** Two
+  rules follow from how it was made to work: `decode.ts` may **not** import an ORT runtime (types
+  come from `onnxruntime-common`, the `Tensor` constructor rides on `Sessions`), and **the client
+  preprocesses** — the server receives finished 409×583 PNGs and applies only the rescale, so there
+  is no second resampler to hold in parity either.
 - **Python is training/data only, and NOTHING ships.** The rule stands unchanged: the open question
   about a Python decode service was **closed on 2026-08-05** by choosing the Node stack above.
   Nothing under `src/vision/` becomes shippable.

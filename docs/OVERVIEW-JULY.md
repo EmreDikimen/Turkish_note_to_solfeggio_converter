@@ -1,12 +1,59 @@
-# What happened on 28 July 2026 — in plain words
+# What we found in late July 2026 — in plain words
 
-purpose: the plain-English write-up of the 28 July test day, split out of OVERVIEW.md when it hit the 400-line cap
+purpose: the plain-English write-up of the late-July findings (the 27 July correction count and the 28 July test day), split out of OVERVIEW.md at the 400-line cap
 audience: the project owner (basic English, same as OVERVIEW)
-updated: 2026-08-05
+updated: 2026-08-06
 
 > Split out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-05. This page is **history** — it records what
 > we found on one day, not what to do now. Current state in plain words is
 > [OVERVIEW.md](OVERVIEW.md); the short do-not-re-propose list lives there too.
+
+---
+
+## What we learned last (27 July 2026) — we were fixing the wrong 13%
+
+We counted every correction a user would have to make on the exam, and sorted them by *what* needs
+fixing:
+
+| what you would have to fix | share |
+|---|---|
+| **the note itself (which line/space it sits on)** | **40%** |
+| **how long the note is** | **28%** |
+| tie / triplet / grace marks | 13% |
+| **the microtonal marks (koma, küçük, bakiye…)** | **13%** |
+| bar-lines, repeats | 5% |
+
+Two whole rounds of work went into that 13%. Not because it was the biggest problem — but because
+our old score *only measured that*. It could not see the other 87%.
+
+Two more things came out of the same count:
+
+- **A few bad strips do most of the damage.** Strips with three notes or fewer are only about 1 in
+  18, but they cause a fifth of all corrections. ⚠ **We first thought the model "invents a whole bar"
+  on these — that was checked on 28 July and it is wrong** (only 1 of the 8 such strips in existence
+  did anything of the sort). It simply cannot read them. See the 28 July section below.
+- **You were right about the octave labels.** Every octave disagreement we found is a case where our
+  *answer key* is wrong and the model is right. But there are only a handful, and the training data
+  is clean — so it is worth fixing, and it is not what is holding the model back.
+
+**So the next round targets the notes and their lengths, not the microtonal marks.**
+
+### What we already know about those two (the plan: [rung3/round3.md](rung3/round3.md))
+
+- **Note heights are slightly off, not wrong.** When the model misses, it is usually off by only
+  one or two positions up or down — 74% of the time. It is not confused about which note it sees; it
+  is misjudging the height, like reading a thermometer one mark off.
+  We suspected this came from our training pictures being too uniform — and they are: the staff lines
+  sit at **exactly** the same size in every single one, while real strips vary. ⚠ **But testing on
+  28 July says that is not what is costing us corrections today**, so the "shake the pictures more"
+  setting is kept as cheap insurance rather than a fix. See the 28 July section below.
+- **Note lengths are nearly always "twice too long".** A short note carries a little flag or beam on
+  its stem, and the model is missing it. It also adds or drops the small dot that lengthens a note,
+  about equally often. We assumed the **same story as the sharp marks**: our music font draws thicker
+  strokes than real printing. ⚠ **Checked on 28 July — it is the opposite.** Our beams are exactly the
+  textbook thickness and real printed music is *heavier*, so this idea is closed.
+
+Both were checks to run *before* making new pictures. Both were run — see the 28 July section.
 
 ---
 

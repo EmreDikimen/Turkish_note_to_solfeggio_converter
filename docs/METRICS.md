@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-08-05
+updated: 2026-08-06
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -290,6 +290,24 @@ replicate.
 Moved to [METRICS-CORPUS.md](METRICS-CORPUS.md) on 2026-07-28 (this file hit the 400-line cap).
 That file owns corpus sizes, pool composition, hand-audited label-noise rates, the carry
 pixels-vs-labels defect and the `verify-labels.ts` verification.
+
+## Decode server (MVP W9) — all measured on the dev M4, nothing on a cloud vCPU
+
+⚠ **Read every row here as an upper bound on speed and a lower bound on cost.** No deploy has
+happened, so cold start and a shared vCPU's real speed are unmeasured. Plan: [mvp/deploy.md](mvp/deploy.md).
+
+| Measure | Value |
+|---|---|
+| **Server vs browser, same pixels** (2026-08-06) | **120/128 strips (93.8%)** identical token ids over 6 pages. Identical rate at `OMR_MAX_BATCH=1` — 120/128 again, but **a different 8 strips**, so batching moves *which* near-ties flip and not *how many*. Divergences sit where the model was unsure: median browser log-prob at the diverging token **−0.60 (p = 0.55)** |
+| **Server vs browser, against GOLD** (2026-08-06) | The check that decides it, since agreement cannot say which side is right. Same 267 hand-verified `_realval_v2` strips, same scorer, **paired: no detectable difference.** Exact-match discordance browser-only 3 / server-only 5, **McNemar exact p = 0.727**; total edits **780 vs 768**; per-strip sign test **p = 0.664** |
+| Unpaired columns for the same run | python SER 0.0821 / exact 60.2% / AEU macro 94.8% / micro 92.5% · browser 0.0818 / 60.2% / 94.9% / 92.5% · **server 0.0806 / 60.5% / 94.6% / 91.9%** (n = 261 head-to-head). ⚠ Every gap is ≤0.6 pp and the paired test above is the one to quote |
+| **Cost per page, by container shape** | 1 vCPU **11.7 vCPU-s** (11.8 s wall) · 2 vCPU 16.8 (8.3 s) · 4 vCPU 29.3 (7.4 s), median over 6 pages / 128 strips, from the server's own `process.cpuUsage()`. **1 vCPU is the cheapest by 2.5×**; free tier ≈ **15,400 pages/month** there |
+| **Batching does not pay** (2026-08-06) | Batch 8 vs batch 1 is **slower at every thread count** (1 thr 12.0 vs 11.8 s/page, 2 thr 8.7 vs 8.3, 4 thr 7.4 vs 7.4) and costs **2.9× the peak memory** — 38-strip page, **2,778 MB vs 955 MB**. `OMR_MAX_BATCH` now defaults to **1**. This withdrew a stated advantage of having a server at all |
+| **A page in the real app, server vs browser** | Same page, same M4, `smoke:page`: **6.0 s on the server against 24.5 s in the browser** (~4×, native ORT vs wasm), identical result — 7 staves → 16 strips → **344 notes / 28 measures** either way. The tab's slowest reply during the read: **29 ms vs 2,358 ms** |
+| Fallback | A dead server produces the same 344 notes / 28 measures in **25.0 s** locally and says so in the status line |
+| Upload payload | Crops upload is **0.11×–2.03× the page image, median ~1.7×** (6 pages) — base64 costs a third and a padded 409×583 PNG is not small. ⚠ This **withdrew** the "smaller upload" reason for the client/server seam |
+| Server model load | **1.5 s** for the three int8 graphs (`onnxruntime-node`), against ~3.0–3.4 s in the browser. It is the *floor* for a Cloud Run cold start, not the cold start |
+| Safety limits | `npm run check:limits`: **6/6** payload cases + the per-IP rate limit. Caps: 12 MB body (on bytes seen), 40 strips, 409×583 8-bit PNG only, 20 requests / 60 s |
 
 ## Runtime / engineering
 

@@ -28,7 +28,8 @@
     "parity:server": "npx tsx tools/vision/parity/server-parity.ts",
     "dev:server": "npm run -w @turkish-omr/server dev",
     "bench:server": "npx tsx tools/vision/parity/server-bench.ts",
-    "check:limits": "npx tsx tools/vision/parity/server-limits.ts"
+    "check:limits": "npx tsx tools/vision/parity/server-limits.ts",
+    "check:bundle": "npm run -w @turkish-omr/server check:bundle"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

@@ -64,6 +64,7 @@ npm run dev:server                   # the decode server on :8080 — needs the 
 npm run parity:server -- --pages 6 --fixture f.json   # server vs browser; --replay f.json skips the browser
 npm run bench:server -- --fixture f.json              # vCPU-seconds per page, payload bytes
 npm run check:limits                 # the deploy safety checklist, against a running server
+npm run check:bundle                 # the BUNDLED server boots — not the same artifact as dev:server
 VITE_DECODE_URL=http://localhost:8080 npm run smoke:page   # the app THROUGH the server
 npm run build:app                    # the deployable app — FAILS if the weights leak into dist/
 npm run smoke:build                  # builds, then drives the BUILT app: server path + fallback

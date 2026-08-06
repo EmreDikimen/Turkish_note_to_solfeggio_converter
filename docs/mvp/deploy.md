@@ -311,12 +311,21 @@ Locally — the model directory is assembled from the same int8 graphs the brows
 ```bash
 node apps/server/tools/prepare-models.mjs        # apps/web/public/models → apps/server/models
 npm run dev:server                               # :8080, model ready in ~1.5 s
+npm run check:bundle                             # the CONTAINER's artifact boots (see below)
 npm run check:limits                             # the safety checklist
 npm run parity:server -- --pages 6 --fixture f.json   # server vs browser, saves a replay fixture
 npm run bench:server -- --fixture f.json         # vCPU-s/page, payload bytes
 VITE_DECODE_URL=http://localhost:8080 npm run smoke:page      # the real app, through the server
 VITE_DECODE_URL=http://localhost:9999 npm run smoke:page      # the real app, through the FALLBACK
 ```
+
+⚠ **`dev:server` and the container do not run the same thing, and the difference broke the first
+deploy.** Dev goes through `tsx`, which resolves CommonJS natively; the container runs an **ESM
+bundle**, where `pngjs`'s `require("util")` hits an esbuild shim that throws *Dynamic require of
+"util" is not supported* — so the container exited before binding the port and Cloud Run reported
+only "failed to start and listen on PORT". Fixed with a `createRequire` banner in
+`apps/server/tools/bundle.mjs`. **`npm run check:bundle` boots the bundled artifact and is the
+check that would have caught it**; running the server locally a hundred times would not have.
 
 **Never used Google Cloud before? [gcloud-setup.md](gcloud-setup.md) is the step-by-step version of
 this section** — accounts, projects, billing, and what a budget alert does and does not do.

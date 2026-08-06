@@ -307,6 +307,8 @@ happened, so cold start and a shared vCPU's real speed are unmeasured. Plan: [mv
 | Fallback | A dead server produces the same 344 notes / 28 measures in **25.0 s** locally and says so in the status line |
 | Upload payload | Crops upload is **0.11×–2.03× the page image, median ~1.7×** (6 pages) — base64 costs a third and a padded 409×583 PNG is not small. ⚠ This **withdrew** the "smaller upload" reason for the client/server seam |
 | Server model load | **1.5 s** for the three int8 graphs (`onnxruntime-node`), against ~3.0–3.4 s in the browser. It is the *floor* for a Cloud Run cold start, not the cold start |
+| **The deployable app** (2026-08-06) | `npm run build:app` → **43.3 MB** (ORT wasm 25.6, opencv.js 14.8), from a `public/` of 332 MB + 220 render scores. `smoke:build` drives the BUILT app on both paths: server **8.3 s**, cross-origin fallback **34.0 s**, identical score (9 staves → 26 strips → **399 notes / 26 measures**) |
+| **A production-only bug the build check caught** | In the built app every `InferenceSession.create` logged `document is not defined` and **never resolved** — the fallback hung forever. The bundler inlines ORT's `…jsep.mjs`, which is also the worker script, and a Worker has no `document`. Dev, `smoke:page` and the 27/28 gate were all green throughout |
 | Safety limits | `npm run check:limits`: **6/6** payload cases + the per-IP rate limit. Caps: 12 MB body (on bytes seen), 40 strips, 409×583 8-bit PNG only, 20 requests / 60 s |
 
 ## Runtime / engineering

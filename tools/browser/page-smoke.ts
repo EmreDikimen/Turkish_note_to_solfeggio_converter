@@ -113,11 +113,14 @@ async function main() {
       return "";
     }
   })();
-  const provoked = (text: string) =>
-    !!decodeHost && text.includes(decodeHost) && /ERR_|Failed to load resource/.test(text);
+  // ⚠ The URL of a failed fetch appears in the console message's LOCATION, not in its text, so a
+  // text-only match would never fire and the provoked error would fail the run.
+  const provoked = (url: string, text: string) =>
+    !!decodeHost && `${url} ${text}`.includes(decodeHost) && /ERR_|Failed to load resource/.test(text);
 
   page.on("console", (msg) => {
-    if (msg.type() === "error" && !provoked(msg.text())) pageErrors.push(`console: ${msg.text()}`);
+    if (msg.type() === "error" && !provoked(msg.location()?.url ?? "", msg.text()))
+      pageErrors.push(`console: ${msg.text()}`);
   });
 
   console.log(`  dev server up at ${base}`);

@@ -180,6 +180,43 @@ tells the user it is running on their machine this time.
    threads, and the fallback wants them. An earlier version of this page guessed it would mostly
    lapse once decode moved server-side; that was wrong, and the fallback is why.
 
+## Hosting the app itself (the other half of W9)
+
+The decode server is one of three things that have to be somewhere. All three are free.
+
+| What | Where | Why there |
+|---|---|---|
+| The app (HTML/JS/wasm, **43 MB**) | **Cloudflare Pages or Netlify** — both read `public/_headers`, so the choice stays open | It must send **COOP/COEP**, or `onnxruntime-web` loses `SharedArrayBuffer` and the fallback has no wasm threads |
+| The weights (**211 MB**) | **Hugging Face Hub**, fetched only if the fallback fires | A static host will not take a 90 MB file, and a friend on the normal path must never download them |
+| Decode | **Cloud Run** | Above |
+
+Three rules that follow, each of which was a way to get this wrong:
+
+- **`npm run build:app` refuses to produce a deployable-looking build that carries the weights.**
+  Vite copies all of `public/` into `dist/`, which is 332 MB of ONNX graphs and 220 render-corpus
+  scores. `apps/web/tools/prune-dist.mjs` removes them and then **fails the build** if the output
+  crosses 60 MB or contains an `.onnx` — deleting a directory is easy to forget, a failing build is
+  not. A clean build is **43.3 MB**, most of it ORT's wasm (25.6 MB) and opencv.js (14.8 MB).
+- **The weights come from `VITE_WEIGHTS_URL`**, and the layout is exactly what
+  `apps/server/tools/prepare-models.mjs` emits — three graphs plus a trimmed `model.json`. **Upload
+  that same directory to the Hub.** One artifact set feeds the container, the Hub and a local
+  checkout; assembled separately they would drift, and the first symptom would be a friend's
+  fallback disagreeing with the server for no visible reason.
+- **Weights are cached in Cache Storage** so the second fallback of the day is instant, keyed on the
+  checkpoint name so new weights cannot be shadowed by an old copy. ⚠ Best-effort by design: absent
+  in a non-secure context, and iOS evicts it after ~a week (parked with phones). A miss costs a
+  re-download, never a failure.
+
+```bash
+npm run smoke:build          # builds, serves dist/ with the real headers, weights from a SECOND
+                             # origin, and drives both paths in a browser
+```
+
+That check exists because three things only appear in a production build: cross-origin weights under
+`require-corp` (the combination that fails quietly), COOP/COEP coming from the host rather than from
+Vite, and a decode URL baked in at build time. It runs the build itself — a check that accepts
+whatever `dist/` is lying around eventually passes on a stale one.
+
 ## Cost — now measured, on a laptop
 
 The server reports its own `process.cpuUsage()` per request, so this is CPU time as Cloud Run bills

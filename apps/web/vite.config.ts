@@ -17,7 +17,18 @@ export default defineConfig({
   },
   // Cross-origin isolation enables SharedArrayBuffer, which onnxruntime-web needs for
   // multi-threaded wasm (the Rung-1.5 OMR gate page; realistic latency numbers).
+  //
+  // The SAME two headers must be served by whatever hosts the built app — `public/_headers` carries
+  // them for Cloudflare Pages and Netlify. `preview` repeats them so `vite preview` is a faithful
+  // local rehearsal of the deployed site rather than a subtly easier one: without them the built
+  // app's in-browser fallback loses wasm threads, and it would be discovered by a friend.
   server: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
+  preview: {
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",

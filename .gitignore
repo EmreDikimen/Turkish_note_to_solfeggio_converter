@@ -103,3 +103,6 @@ apps/web/public/probe/
 # W9 decode server (MVP): assembled model dir + bundle
 apps/server/models/
 apps/server/dist/
+
+# ORT runtime copied in at build time by apps/web/tools/copy-ort.mjs
+apps/web/public/ort/

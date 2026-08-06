@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node tools/copy-ort.mjs && tsc --noEmit && vite build && node tools/prune-dist.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

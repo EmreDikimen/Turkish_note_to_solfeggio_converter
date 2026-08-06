@@ -17,6 +17,8 @@
     "check:logprobs": "npx tsx tools/browser/run-page.ts logprob-check.html __logprobCheck --timeout 600000",
     "smoke:app": "npx tsx tools/browser/app-smoke.ts",
     "smoke:page": "npx tsx tools/browser/page-smoke.ts",
+    "smoke:build": "npx tsx tools/browser/build-smoke.ts",
+    "build:app": "npm run -w @turkish-omr/web build",
     "parity:armb": "npx tsx tools/vision/parity/arm-b.ts",
     "parity:arma": "npx tsx tools/vision/parity/arm-a.ts",
     "parity:slicer": "npx tsx tools/vision/parity/slicer-parity.ts",

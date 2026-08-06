@@ -9,6 +9,41 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-06 (later) — the app can be deployed too, and building it found a frozen fallback
+
+The server was only half of W9's title. The other half — hosting the app — turned out to carry the
+session's most useful failure.
+
+**What was built:** `npm run build:app` produces a 43.3 MB site (ORT's wasm 25.6, opencv.js 14.8)
+out of a `public/` holding 332 MB of ONNX graphs and 220 render-corpus scores. It **fails** if the
+output crosses 60 MB or contains an `.onnx`, because deleting a directory by hand is exactly the
+step someone forgets. Weights move to `VITE_WEIGHTS_URL` — a Hugging Face Hub repo holding exactly
+what `prepare-models.mjs` already emits, so the container, the Hub and a local checkout stay one
+artifact set — cached in Cache Storage and fetched only if the fallback fires. `public/_headers`
+carries COOP/COEP and is read by both Cloudflare Pages and Netlify, so the host choice stays open.
+
+**Then `smoke:build` found that the built app's fallback hung forever.** Every
+`InferenceSession.create` logged `document is not defined` and never resolved. The cause: the
+bundler inlines `ort-wasm-simd-threaded.jsep.mjs`, which is *also* ORT's worker script, and a Worker
+has no `document`. Fixed by copying ORT's runtime to `public/ort/` and setting
+`wasmPaths = "/ort/"` — **in production only**, because dev has never had the bug and dev is the
+configuration the browser gate passes at 27/28. A `?url` deep import was tried first and fails:
+ORT's package `exports` does not expose `./dist/*.wasm`.
+
+**Why this is the entry worth keeping.** Dev was green. `smoke:page` was green. The gate was 27/28.
+Every check the project had said the app worked, while the thing a friend would actually open was
+frozen on the path that exists precisely for when the server is cold. The only reason it was caught
+is that the new check runs the BUILD, serves it with the real headers, and puts the weights on a
+SECOND origin — each of which was a deliberate choice to make the rehearsal harder than the dev run
+rather than more convenient.
+
+Both paths now read one page to the same score, 9 staves → 26 strips → 399 notes / 26 measures:
+server 8.3 s, cross-origin fallback 34.0 s.
+
+⚠ A smaller lesson, twice: the console error for a failed fetch carries its URL in the message's
+*location*, not its text. Both smokes filtered on text, so the error each one provokes on purpose
+was being counted as a real failure. `page-smoke` had the same bug and it is fixed there too.
+
 ## 2026-08-06 — W9: the decode server is built, checked, and NOT deployed
 
 The whole of `apps/server/` plus the client swap, in one session. Four things are worth keeping,

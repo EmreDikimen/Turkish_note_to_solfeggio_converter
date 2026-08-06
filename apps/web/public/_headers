@@ -1,0 +1,15 @@
+# Cross-origin isolation for the deployed app (MVP W9/W10).
+#
+# Read by BOTH Cloudflare Pages and Netlify, which share this file format — so the choice of static
+# host stays open without a config rewrite.
+#
+# ⚠ These two headers are not optional and not a security nicety here: they are what enables
+# SharedArrayBuffer, which `onnxruntime-web` needs for multi-threaded wasm. Without them the
+# in-browser FALLBACK either refuses to start or runs single-threaded and takes minutes per page.
+# An earlier plan assumed this requirement would lapse once decode moved to the server; it does not,
+# because the fallback is a real path that a friend WILL hit on a cold container.
+#
+# The dev server sets the same two headers in apps/web/vite.config.ts. Keep them in step.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

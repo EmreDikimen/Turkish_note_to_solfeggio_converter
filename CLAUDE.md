@@ -51,16 +51,28 @@ npm run check:logprobs               # browser confidence signal vs onnx_parity.
 npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
 npm run smoke:page -- --ref ref.json # real app: a PAGE image in → playable score out (MVP W7)
 npm run check:deskew                 # the skew sweep's fast path is EXACT vs the morphology (W7)
+npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
+npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED (MVP W6)
+npm run parity:slicer -- --ref ref.json                # ported slicer vs local python (MVP W4-W6)
+```
+
+### The decode server and the deployable app (W9)
+
+```bash
 node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs
-npm run dev:server                   # the decode server on :8080 (W9) — needs the line above once
+npm run dev:server                   # the decode server on :8080 — needs the line above once
 npm run parity:server -- --pages 6 --fixture f.json   # server vs browser; --replay f.json skips the browser
 npm run bench:server -- --fixture f.json              # vCPU-seconds per page, payload bytes
 npm run check:limits                 # the deploy safety checklist, against a running server
 VITE_DECODE_URL=http://localhost:8080 npm run smoke:page   # the app THROUGH the server
-npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
-npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED (MVP W6)
+npm run build:app                    # the deployable app — FAILS if the weights leak into dist/
+npm run smoke:build                  # builds, then drives the BUILT app: server path + fallback
+```
+
+### Python (training and data only — never shipped)
+
+```bash
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
-npm run parity:slicer -- --ref ref.json                # ported slicer vs local python (MVP W4-W6)
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
@@ -87,6 +99,7 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   the W4–W6 slicer port. **Do not delete the in-browser decode path**: `gate:browser`,
   `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all rest on it, and
   it is also the **live fallback** when the server is cold or down.
+
 - **The server is Node + `onnxruntime-node` importing `apps/web/src/omr/decode.ts`** — the browser's
   own module, so there is ONE decode implementation, not a third to hold in parity. Do not write a
   second decoder in any language. **Built 2026-08-06 in `apps/server/`, not yet deployed.** Two
@@ -94,6 +107,12 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   come from `onnxruntime-common`, the `Tensor` constructor rides on `Sessions`), and **the client
   preprocesses** — the server receives finished 409×583 PNGs and applies only the rescale, so there
   is no second resampler to hold in parity either.
+
+- **A production build is not the dev server, and only `smoke:build` knows the difference.** ORT's
+  wasm runtime must be served as real files (`/ort/`, via `copy-ort.mjs`) or the bundler inlines its
+  worker glue and every session creation hangs — dev, `smoke:page` and the 27/28 gate stayed green
+  while the built app's fallback was frozen. Weights ship from `VITE_WEIGHTS_URL`, never from
+  `dist/`; `build:app` fails if they leak in.
 - **Python is training/data only, and NOTHING ships.** The rule stands unchanged: the open question
   about a Python decode service was **closed on 2026-08-05** by choosing the Node stack above.
   Nothing under `src/vision/` becomes shippable.

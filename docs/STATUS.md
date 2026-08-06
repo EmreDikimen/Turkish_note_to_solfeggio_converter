@@ -40,10 +40,25 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   Cloud Build by design, but that is one more thing the first deploy will discover.
   ⚠ The **hard billing cap is still owed** — the only safety item that bounds the bill, and the only
   one not checkable from the repo. Commands, flags and reasoning: [mvp/deploy.md](mvp/deploy.md).
-  ⚠ **The HOSTING half of W9's title is untouched, and W10 cannot happen without it**: the app still
-  runs from `npm run dev:web`, and the fallback's weights still come from `apps/web/public/models/`
-  rather than the Hugging Face Hub. The decision is unchanged and unbuilt — it simply was not part
-  of the server work, and saying so now is cheaper than discovering it at the release.
+- **✅ THE APP IS NOW BUILDABLE FOR A STATIC HOST (2026-08-06)** — the other half of W9's title.
+  `npm run build:app` produces **43.3 MB** (ORT's wasm 25.6 + opencv.js 14.8), and it **fails** if
+  the output crosses 60 MB or contains an `.onnx`: Vite copies all of `public/` into `dist/`, which
+  is 332 MB of graphs plus 220 render-corpus scores, and deleting a directory by hand is easy to
+  forget. Weights now come from `VITE_WEIGHTS_URL` — a Hugging Face Hub repo holding exactly what
+  `prepare-models.mjs` emits, so the container, the Hub and a local checkout are one artifact set —
+  cached in Cache Storage, and fetched **only if the fallback fires**. `public/_headers` carries
+  COOP/COEP for Cloudflare Pages *or* Netlify. `npm run smoke:build` builds, serves `dist/` with the
+  real headers, serves the weights from a **second origin**, and drives both paths.
+- **⛔ AND IT FOUND A BUG THAT ONLY EXISTS IN THE BUILT APP: the fallback hung forever.** Every
+  `InferenceSession.create` logged `document is not defined` and never resolved — so a friend whose
+  server was cold would have watched a spinner until they gave up. The bundler inlines ORT's
+  `ort-wasm-simd-threaded.jsep.mjs`, which is *also* the worker script, and there is no `document`
+  in a Worker. Fixed by shipping ORT's runtime as real files (`/ort/`) and pointing `wasmPaths` at
+  them, **in production only** — dev has never had the bug and is the configuration the gate passes
+  at 27/28. Both paths now read the same page to the **same score** (9 staves → 26 strips → 399
+  notes / 26 measures), server **8.4 s**, fallback **33.1 s**.
+  ⚠ This is the argument for the check: dev, `smoke:page` and the gate were all green while the
+  thing a friend would actually open was broken.
 - **⛔ THE BATCHING ARGUMENT FOR HAVING A SERVER IS WITHDRAWN — measured, not argued (2026-08-06).**
   `deploy.md` listed "no batching, ever" as a structural advantage over `onnxruntime-web`. Batch 8
   against batch 1 is **slower at every thread count** (1 thread 12.0 vs 11.8 s/page, 2 threads 8.7
@@ -59,28 +74,15 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   was ~3× pessimistic because it assumed the batching that does not exist.
 - **The safety checklist is a command now**: `npm run check:limits` — **6/6** payload cases plus the
   per-IP rate limit, and it prints the billing-cap item it cannot check instead of counting it.
-- **There is a SLICE INSPECTOR now (`/slices.html`), and it is how the two fixes below were found.**
-  Upload a page, see every crop the slicer made, captioned with the slicer's own decisions, its
-  decoded label with note names substituted (`si'16`), its confidence and its vertical placement —
-  in red with the shortfall when a side is cut. It loads the model but never builds a score, so it
-  cannot disturb the editor. [MANUAL_CHECKS.md](MANUAL_CHECKS.md) Check 13.
-- **✅ A SLUR ABOVE THE STAFF WAS SHEARING THE BEAMS BELOW, AND IT IS FIXED (2026-08-05).**
-  `place_band` let ink above the staff claim room without limit, so a slur pushed the staff down and
-  the frame cut the beams — the ink that carries duration. Ink above may now claim only **3.5 sp**.
-  Over 120 pages / 901 rows: **0 px lost inside the ledger-note zone**, beam loss **19,932 → 17,231
-  (−13.6%)**. **Not a trade** — bottom-first destroys 500 px of real ledger-note ink.
-  ⚠ **An information argument, not a decode result** (at 2.6% of rows an A/B is underpowered), and
-  ⚠ the other **85% of clipped rows are not fixable by placement** — their music genuinely exceeds
-  the frame, and only a scale change reaches those, at 12–15% edits per 1%.
-- **✅ THE PAGE LATENCY IS FIXED, EXACTLY (2026-08-05): 36.6 → 1.3 s/page, answers unchanged.** The
-  41-rotation skew sweep ran a page-wide `morphologyEx` per angle; its kernel is `len`×1, so the
-  opening is per-row and has a closed form, and `qualifyingLineRows` only wanted the row sums:
-  **856 ms → 6.8 ms per call, 125.8×**. **A substitution, not a heuristic, and checked as one** —
-  `npm run check:deskew` runs both implementations at every angle the coarse pass evaluates:
-  **0 disagreements in 328 evaluations**, deskew angle still identical 20/20, W4/W5/W6 exact. The
-  browser slicer is now faster than the Python it copies. ⚠ The subtle part is the border rule —
-  `morphologyEx` erodes as if outside the frame were foreground — which is why the check sweeps
-  angles rather than testing one. Detail: [log/status-log.md](log/status-log.md).
+- **A slice inspector, and two crop fixes from 2026-08-05.** `/slices.html` shows every crop a page
+  is cut into with the slicer's own reasoning, its decoded label and its vertical placement — it is
+  how both fixes below were found ([MANUAL_CHECKS.md](MANUAL_CHECKS.md) Check 13). **A slur above
+  the staff was shearing the beams below**: ink above may now claim only 3.5 sp, cutting beam loss
+  **19,932 → 17,231 (−13.6%)** with 0 px lost in the ledger-note zone. ⚠ An information argument,
+  not a decode result, and the other 85% of clipped rows are not fixable by placement. **The page
+  latency was fixed exactly**, 36.6 → 1.3 s/page with answers unchanged: the skew sweep's per-angle
+  morphology had a closed form, **856 ms → 6.8 ms per call**, checked at every angle over real pages
+  with **0 disagreements in 328 evaluations**. Detail: [log/status-log.md](log/status-log.md).
 - **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
   Owner-reported as "`\repstart`/`\repend`/`\tup3` are not seen in the sheet"; over the 1,704 decode
   caches it was two different things. **Repeats are not lost** — the note model has no field for one,
@@ -275,10 +277,11 @@ the model track never touches the app.** Either can be worked on without waiting
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.
-2. **Host the app, and move the weights to the Hugging Face Hub.** The other half of W9's title,
-   and W10's blocker: a COOP/COEP-capable static host (the fallback needs wasm threads — this
-   requirement did NOT go away when decode moved server-side) plus Hub-delivered weights fetched
-   lazily on first fallback. Decisions are settled; the code is not written.
+2. **Put the app and the weights somewhere.** The code is done (`npm run build:app` →
+   43.3 MB, `smoke:build` green on both paths); what is left is three accounts' worth of clicking:
+   upload `apps/server/models/` to a **Hugging Face Hub** repo, push `dist/` to **Cloudflare Pages
+   or Netlify**, and build with `VITE_DECODE_URL` + `VITE_WEIGHTS_URL` set to the two URLs.
+   ⚠ Then set the server's `ALLOWED_ORIGINS` to the app's host — it defaults to `*`.
 3. **W10 — release to two friends.** Ask what features to add. Billing cap first. No ads and no
    in-app feedback widget: talk to them.
 4. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.

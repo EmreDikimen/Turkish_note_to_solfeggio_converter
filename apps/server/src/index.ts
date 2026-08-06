@@ -81,16 +81,26 @@ function readBody(req: http.IncomingMessage, cap: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
+    let over = false;
     req.on("data", (c: Buffer) => {
+      if (over) return; // keep draining, keep nothing — the cap is about memory, not politeness
       size += c.length;
       if (size > cap) {
+        over = true;
+        chunks.length = 0;
+        // ⚠ Do NOT destroy the socket here. Killing the connection mid-request reaches a proxy as
+        // a BACKEND FAILURE: measured against Cloud Run, the caller got 503 instead of 413, which
+        // turns a client's mistake into what looks like an outage — and the app's fallback would
+        // then decode locally, slowly, instead of reporting a plain error. Stop buffering, answer
+        // properly, and let TCP backpressure discourage the rest.
         reject(Object.assign(new Error("payload too large"), { status: 413 }));
-        req.destroy();
         return;
       }
       chunks.push(c);
     });
-    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("end", () => {
+      if (!over) resolve(Buffer.concat(chunks));
+    });
     req.on("error", reject);
   });
 }
@@ -251,7 +261,12 @@ const server = http.createServer((req, res) => {
       const status = (err as { status?: number })?.status ?? 500;
       const message = err instanceof Error ? err.message : String(err);
       if (status === 500) console.error("decode failed:", err);
-      if (!res.headersSent) send(res, status, { error: message });
+      if (!res.headersSent) {
+        // The client may still be uploading a body we have stopped reading; closing the connection
+        // after the response is what tells it to stop, without a mid-request socket kill.
+        if (status === 413) res.setHeader("Connection", "close");
+        send(res, status, { error: message });
+      }
     });
     return;
   }

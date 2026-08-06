@@ -318,6 +318,9 @@ VITE_DECODE_URL=http://localhost:8080 npm run smoke:page      # the real app, th
 VITE_DECODE_URL=http://localhost:9999 npm run smoke:page      # the real app, through the FALLBACK
 ```
 
+**Never used Google Cloud before? [gcloud-setup.md](gcloud-setup.md) is the step-by-step version of
+this section** — accounts, projects, billing, and what a budget alert does and does not do.
+
 Deploying — ⚠ **not yet run by anyone.** The image builds in Cloud Build rather than locally for two
 reasons: the Dockerfile is not at the context root (the server bundles `apps/web/src/omr/decode.ts`
 on purpose), and a `docker build` on an Apple Silicon Mac produces arm64, which Cloud Run will not

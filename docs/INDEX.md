@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-04
+updated: 2026-08-06
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -37,6 +37,7 @@ wrong — fix by deleting, not by syncing.
 | What each MVP rung established (results, and the hypotheses that died) | [mvp/rungs.md](mvp/rungs.md) |
 | How to port the slicer to TypeScript (W4–W6) | [mvp/slicer-port.md](mvp/slicer-port.md) |
 | How the app gets hosted, what it costs, and the server question (W9–W10) | [mvp/deploy.md](mvp/deploy.md) |
+| **Setting up Google Cloud from scratch, step by step** (owner walkthrough) | [mvp/gcloud-setup.md](mvp/gcloud-setup.md) |
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | How real pages get labelled without hand work | [rung3/labeling.md](rung3/labeling.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |

@@ -291,10 +291,27 @@ Moved to [METRICS-CORPUS.md](METRICS-CORPUS.md) on 2026-07-28 (this file hit the
 That file owns corpus sizes, pool composition, hand-audited label-noise rates, the carry
 pixels-vs-labels defect and the `verify-labels.ts` verification.
 
-## Decode server (MVP W9) — all measured on the dev M4, nothing on a cloud vCPU
+## Decode server (MVP W9) — DEPLOYED 2026-08-06, measured on Cloud Run
 
-⚠ **Read every row here as an upper bound on speed and a lower bound on cost.** No deploy has
-happened, so cold start and a shared vCPU's real speed are unmeasured. Plan: [mvp/deploy.md](mvp/deploy.md).
+Service: `omr-decode`, europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3.
+Rows marked **M4** are the dev laptop; rows marked **Cloud Run** are the deployed service.
+Plan: [mvp/deploy.md](mvp/deploy.md).
+
+| Measure (Cloud Run, 1 vCPU) | Value |
+|---|---|
+| **Cold start** | **10.6 s** to a first answer, of which **9.5 s is loading the three graphs** (against 1.5 s on the M4). Container start is the small half |
+| **Cost per strip** | **1.93 vCPU-s** — against **0.55** on an M4 core at 1 thread, so **a shared cloud vCPU is ~3.5× slower** |
+| **Cost per page** | ~**40 vCPU-s** for a 21-strip page → free tier ≈ **4,450 pages/month**. A 38-strip page measured **69.9 vCPU-s / 71 s** |
+| **⚠ It is SLOWER than the user's own browser** | 128 strips: **250 s on Cloud Run vs 166 s in the M4 browser (0.66×)**. Warm. Cold adds 10.6 s. **This is the outcome deploy.md predicted and the release was chosen on** — the win is the friend's laptop staying cool, not speed |
+| **Reads the same as the browser** | **120/128 strips (93.8%)** identical token ids — *the same rate as the local server*, and the divergences again sit on near-ties (median browser log-prob at the diverging token **−0.87, p = 0.42**) |
+| Safety limits, live | `check:limits` **6/6** after one fix: a destroyed socket reached Cloud Run's proxy as a **503** rather than a 413, turning a client error into an apparent outage |
+
+⚠ **Still not measured:** a second cold start after real idle (this one was minutes after deploy),
+and behaviour with two friends uploading at once.
+
+### The pre-deploy laptop numbers, kept for the comparison
+
+⚠ Every row below is the dev M4. They are what the cloud figures above should be read against.
 
 | Measure | Value |
 |---|---|

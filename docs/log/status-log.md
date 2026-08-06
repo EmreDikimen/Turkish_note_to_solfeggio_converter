@@ -9,6 +9,46 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-06 (evening) — deployed, and two bugs of the same shape stood in the way
+
+The decode server is live on Cloud Run: `omr-decode`, europe-west3, 1 vCPU / 2 GiB / concurrency 1 /
+max-instances 3. Google Cloud was set up from nothing in the same sitting — the owner's previous
+`gcloud` install turned out to be already deleted, leaving only credentials from a finished job in
+`~/.config/gcloud`, which a reinstall would not have cleaned. Walkthrough:
+[../mvp/gcloud-setup.md](../mvp/gcloud-setup.md).
+
+**The measurements, which change the story deploy.md told.** A cloud vCPU costs **1.93 vCPU-s per
+strip** against 0.55 on an M4 core — **3.5× slower**. So a page is ~40 vCPU-s, the free tier covers
+**~4,450 pages/month** (a third of the laptop estimate, still far more than 50 users need), and
+**the server is SLOWER than the owner's own browser: 250 s vs 166 s over 128 strips, plus a 10.6 s
+cold start.** That is not a disappointment, it is the outcome deploy.md predicted in writing before
+any of this was built, and the release was chosen on the thermal argument rather than a speed one.
+The prediction holding is worth more than a good number would have been.
+
+Quality survived the move intact: **120/128 strips (93.8%) identical to the browser — the same rate
+as the local server** — with divergences on near-ties (median log-prob −0.87).
+
+**Two bugs stood between "built" and "running", and they are the same bug twice: the artifact that
+ships was never the artifact under test.**
+
+1. The container exited before binding its port. Cloud Run said only "failed to start and listen on
+   PORT"; the logs said `Dynamic require of "util" is not supported`. `pngjs` is CommonJS, the
+   bundle is ESM, and esbuild's shim throws. `npm run dev:server` never saw it because `tsx`
+   resolves CommonJS natively. Fixed with a `createRequire` banner; `npm run check:bundle` now boots
+   the bundled artifact, which is the check that was missing.
+2. `check:limits` failed one case against the live service: an oversized body returned **503, not
+   413**. The server was destroying the request socket, which reaches a proxy as a backend failure —
+   turning a client's mistake into an apparent outage, and sending the app into a slow local
+   fallback instead of a clear error. It now answers first and closes after.
+
+That is three for three today, counting the frozen fallback in the built web app this morning. The
+pattern is worth naming: **every check in this project ran the convenient artifact — dev server, dev
+bundle, `tsx` — and each time the shipped one differed, it differed in a way that was invisible
+until something real ran it.**
+
+⚠ Still owed: the $5 budget alert (owner's console), the 413 fix is committed but not redeployed, a
+second cold start after genuine idle, and two-at-once uploads.
+
 ## 2026-08-06 (later) — the app can be deployed too, and building it found a frozen fallback
 
 The server was only half of W9's title. The other half — hosting the app — turned out to carry the

@@ -6,9 +6,9 @@ updated: 2026-08-06
 
 ## Now
 
-**The decode server is BUILT and checked; it has never been deployed. The next action is a
-`gcloud` deploy, which needs the owner's Google account.** TWO tracks run in parallel, as re-scoped
-by the owner on 2026-08-05:
+**The decode server is DEPLOYED and answering on Cloud Run. The next action is the owner's $5
+budget alert, then hosting the app itself.** TWO tracks run in parallel, as re-scoped by the owner
+on 2026-08-05:
 
 | | |
 |---|---|
@@ -22,24 +22,29 @@ by the owner on 2026-08-05:
 **W8 (confidence highlighting) is DROPPED** — its pre-registered bar was not met and the bar was not
 moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is the saying-so.
 
-- **✅ W9 IS BUILT — `apps/server/`, and the app reads a page through it (2026-08-06).** Node +
-  `onnxruntime-node` importing the browser's own `decode.ts`, so there is **one decode
-  implementation, not a third**; `CLAUDE.md`'s Python-never-ships rule is untouched. The client
-  swaps behind `VITE_DECODE_URL` and falls back to in-browser decode on any failure. All three
-  paths give the **same score** on the same page (7 staves → 16 strips → **344 notes / 28
-  measures**): browser **24.5 s**, server **6.0 s**, dead-server fallback **25.0 s** while saying so
-  in the status line. The tab's slowest reply during a read drops **2,358 ms → 29 ms**.
-  **What decides the quality question is the gold check, not agreement**: both arms scored on the
-  same 267 hand-verified `_realval_v2` strips with the same scorer, **paired — no detectable
-  difference** (McNemar exact **p = 0.727**, edits 780 vs 768). Strip-level agreement is 93.8%, and
-  the divergences sit at tokens the model was ~55% sure of.
-  ⚠ **NOT DEPLOYED.** No `gcloud` on this machine and no project set up, so **cold start and a real
-  cloud vCPU's speed are unmeasured** — every server number is from the dev M4 and is an upper bound
-  on speed, a lower bound on cost. ⚠ Docker could not be run locally either (Rancher Desktop is
-  installed but its daemon is not running), so the **container has never been built**; it builds in
-  Cloud Build by design, but that is one more thing the first deploy will discover.
-  ⚠ The **hard billing cap is still owed** — the only safety item that bounds the bill, and the only
-  one not checkable from the repo. Commands, flags and reasoning: [mvp/deploy.md](mvp/deploy.md).
+- **✅ W9 IS DEPLOYED AND RUNNING (2026-08-06):
+  `https://omr-decode-706571981988.europe-west3.run.app`** — Cloud Run, 1 vCPU / 2 GiB /
+  concurrency 1 / max-instances 3. Node + `onnxruntime-node` importing the browser's own
+  `decode.ts`, so there is **one decode implementation, not a third**. The client swaps behind
+  `VITE_DECODE_URL` and falls back to in-browser decode on any failure.
+  **The deployed service reads what the browser reads**: 120/128 strips (93.8%) identical ids — the
+  same rate as the local server — with divergences on near-ties (median log-prob −0.87). Against
+  gold the two are a **paired wash**: McNemar exact **p = 0.727** over 267 hand-verified strips.
+  Live safety checks **6/6**.
+  ⚠ **It is SLOWER than the owner's own browser: 250 s vs 166 s over 128 strips (0.66×), plus a
+  10.6 s cold start** — 9.5 s of which is loading the graphs. **This is exactly what
+  [mvp/deploy.md](mvp/deploy.md) predicted and what the release was chosen on**: the win is a
+  friend's laptop staying cool, not speed. A cloud vCPU costs **1.93 vCPU-s per strip** against 0.55
+  on an M4 core (~3.5× slower), so a page is ~40 vCPU-s and the free tier covers **~4,450
+  pages/month** — a third of the laptop estimate, and still ~4× more than 50 users would ever need.
+  ⚠ **Owed:** the **$5 budget alert** is still not set (owner's console), a second cold start after
+  real idle is unmeasured, and two-at-once uploads are untested.
+  ⚠ **Two bugs stood between "built" and "running", and both were the same shape**: what ships was
+  never what was tested. The container's ESM bundle threw on `pngjs`'s CommonJS `require("util")`
+  (dev runs `tsx`, which resolves it natively) — `npm run check:bundle` now boots the bundled
+  artifact. And a destroyed socket reached Cloud Run's proxy as a **503** instead of a 413, so a
+  client's oversized upload looked like an outage and would have sent the app into a slow local
+  fallback.
 - **✅ THE APP IS NOW BUILDABLE FOR A STATIC HOST (2026-08-06)** — the other half of W9's title.
   `npm run build:app` produces **43.3 MB** (ORT's wasm 25.6 + opencv.js 14.8), and it **fails** if
   the output crosses 60 MB or contains an `.onnx`: Vite copies all of `public/` into `dist/`, which
@@ -264,16 +269,11 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-1. **DEPLOY THE SERVER — the one step W9 cannot finish on this machine.** Needs a Google account, a
-   project and billing; the commands, the flags and *why each flag* are in
-   [mvp/deploy.md](mvp/deploy.md) ("Running it, and deploying it"). Order: create the Artifact
-   Registry repo → `gcloud builds submit` (the image builds in Cloud Build, **not** locally — an
-   Apple Silicon `docker build` produces arm64 and Cloud Run will not start it) → `gcloud run deploy
-   --cpu 1 --concurrency 1 --max-instances 3 --memory 2Gi` → **set the hard billing cap and alert**
-   → re-run `npm run check:limits -- --url <service>` and `npm run bench:server -- --url <service>`
-   against the real thing and replace the laptop numbers in [METRICS.md](METRICS.md).
-   ⚠ **The first deploy is also the first cold-start measurement.** If it is intolerable, deploy.md
-   names the fallback: Hetzner at ~€4/month, which is cheaper than keeping Cloud Run warm.
+1. **Set the $5 budget alert** (owner, Google billing console). It is the last unticked safety item
+   and the only one not assertable from the repo. ⚠ It emails, it does not stop spending — the
+   actual ceilings are `--max-instances 3` and the per-IP rate limit, both live.
+   Also owed on the next redeploy: the **413 fix** (commit `0b1cb44`) is committed but **not yet on
+   Cloud Run** — rebuild and redeploy when convenient, it is not urgent.
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.

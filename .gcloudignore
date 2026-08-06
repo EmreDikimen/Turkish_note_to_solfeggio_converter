@@ -1,11 +1,20 @@
 # What `gcloud builds submit` uploads as the build context for the decode server (MVP W9).
 #
-# ⚠ THE REASON THIS FILE EXISTS: without it, gcloud derives the upload list from `.gitignore` — and
-# `apps/web/public/models/` is gitignored (the weights are too big for GitHub). The build would then
-# arrive without the three ONNX graphs and fail at `prepare-models.mjs`, or worse, produce an image
-# with no model in it. Naming the exclusions here explicitly keeps the weights IN.
+# ⚠ TWO TRAPS LIVE HERE, and both were hit before the first real deploy.
 #
-# Everything the Dockerfile does not COPY is excluded, because `data/` alone is tens of gigabytes.
+# 1. **The weights are gitignored.** Without this file, gcloud derives the upload list from
+#    `.gitignore` — and `apps/web/public/models/` is excluded there because the graphs are too big
+#    for GitHub. The build would arrive with no model in it.
+#
+# 2. **A bare `src/` or `tools/` matches at EVERY depth**, not just the root — that is gitignore
+#    syntax, and it is what these patterns are. Written unanchored, `src/` silently excluded
+#    `apps/web/src/`, which holds `omr/decode.ts`, the one module the whole server design exists to
+#    reuse; and `tools/` excluded `apps/server/tools/prepare-models.mjs`, which the Dockerfile runs
+#    to assemble the model directory. **Every root-only exclusion below is anchored with a leading
+#    slash for this reason. Do not remove the slashes.**
+#
+# The Dockerfile copies: package manifests, packages/core, apps/server, apps/web/src and
+# apps/web/public/models. Everything else is excluded, because `data/` alone is tens of gigabytes.
 
 .git/
 .gitignore
@@ -13,21 +22,29 @@ node_modules/
 **/node_modules/
 
 # Training and research material — none of it ships (CLAUDE.md: Python is training/data only).
-data/
-.venv-ml/
-src/
-scripts/
-docs/
-tools/
-archive/
+/data/
+/.venv-ml/
+/src/
+/scripts/
+/docs/
+/archive/
+/tools/
 
 # Build outputs and local state.
-dist/
-**/dist/
-apps/server/models/
+/dist/
+/apps/web/dist/
+/apps/server/dist/
+/apps/server/models/
 *.log
 
-# The gate's 14 test strips live beside the graphs; `prepare-models.mjs` reads gate.json for the
+# Browser-only assets: the server never serves a page. `ort/` is 26 MB of wasm for the web build,
+# `scores/` ~20 MB of render-automation corpus, `probe/` the opencv reference dumps.
+/apps/web/public/ort/
+/apps/web/public/scores/
+/apps/web/public/probe/
+/apps/web/public/fonts/
+
+# The gate's 14 test strips sit beside the graphs; `prepare-models.mjs` reads gate.json for the
 # token map and drops the fixture, so the images themselves never need to travel.
-apps/web/public/models/*.png
-apps/web/public/models/*.pixels.bin
+/apps/web/public/models/*.png
+/apps/web/public/models/*.pixels.bin

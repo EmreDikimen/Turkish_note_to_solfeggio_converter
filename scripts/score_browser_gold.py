@@ -77,6 +77,14 @@ def main() -> None:
     ap.add_argument("--browser", required=True, help="JSON from decode-pool.ts")
     ap.add_argument("--pool", default=str(POOL))
     ap.add_argument("--checkpoint", default="data/checkpoints/round2-stage2-best")
+    # W9 added a second arm (`decode-pool.ts --server`), and this script used to write its result to
+    # ONE fixed path — so scoring the server silently overwrote the browser's stored W3 numbers.
+    # It did, once. Name the destination when the arm is not the browser.
+    ap.add_argument(
+        "--score-out",
+        default="data/checkpoints/browser_gold_score.json",
+        help="where to store the scored comparison (use a different path for a non-browser arm)",
+    )
     args = ap.parse_args()
 
     pool = Path(args.pool)
@@ -223,9 +231,10 @@ def main() -> None:
         print(f"VERDICT: the browser reads BETTER — SER {dser:+.4f}. Suspicious; check the harness.")
     print("=" * 52)
 
-    Path("data/checkpoints/browser_gold_score.json").write_text(
-        json.dumps({"python": py, "browser": js, "n": len(both)}, indent=1)
+    Path(args.score_out).write_text(
+        json.dumps({"python": py, "browser": js, "n": len(both), "arm": args.browser}, indent=1)
     )
+    print(f"wrote {args.score_out}")
 
 
 if __name__ == "__main__":

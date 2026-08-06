@@ -1,0 +1,20 @@
+# Build the decode server image in Cloud Build (MVP W9).
+#
+# Used instead of `gcloud run deploy --source .` for one reason: the Dockerfile is not at the root
+# of the build context. The context MUST be the repo root — the server bundles
+# `apps/web/src/omr/decode.ts`, the browser's own module, and that is the design (docs/mvp/deploy.md).
+#
+#   gcloud builds submit --config apps/server/cloudbuild.yaml \
+#     --substitutions _IMAGE=REGION-docker.pkg.dev/PROJECT/omr/decode:latest .
+#
+# Builds for linux/amd64 by default, which is what Cloud Run runs — a local `docker build` on an
+# Apple Silicon Mac produces arm64 and will not start there.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "apps/server/Dockerfile", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]
+options:
+  # The image is ~1 GB, most of it weights; the default machine spends the build waiting on I/O.
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s

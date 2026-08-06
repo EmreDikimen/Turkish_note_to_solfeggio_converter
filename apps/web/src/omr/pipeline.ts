@@ -71,7 +71,23 @@ export async function decodeStrips(
   return out;
 }
 
-/** Decode a page's strips and stitch them into a loadable note model. */
+/**
+ * Stitch decoded strips into one score.
+ *
+ * Split from `decodeStripsToDoc` at W9 so the SERVER path stitches through the same call: where the
+ * tokens were produced is not the stitcher's business, and a second `stitchStrips` call site with
+ * its own options is how `accidentals: "carry"` would eventually get dropped from one of them.
+ */
+export function stitchDecoded(decoded: readonly DecodedStripResult[], name?: string): StitchResult {
+  const forStitch: DecodedStrip[] = decoded.map((d) => ({
+    system: d.system,
+    window: d.window,
+    tokens: d.tokens,
+  }));
+  return stitchStrips(forStitch, { name: name ?? "decoded-page", accidentals: "carry" });
+}
+
+/** Decode a page's strips in the browser and stitch them into a loadable note model. */
 export async function decodeStripsToDoc(
   sessions: Sessions,
   meta: ModelMeta,
@@ -80,13 +96,7 @@ export async function decodeStripsToDoc(
 ): Promise<PageResult> {
   const t0 = performance.now();
   const decoded = await decodeStrips(sessions, meta, strips, opts);
-  const forStitch: DecodedStrip[] = decoded.map((d) => ({
-    system: d.system,
-    window: d.window,
-    tokens: d.tokens,
-  }));
-  const stitched = stitchStrips(forStitch, { name: opts.name ?? "decoded-page", accidentals: "carry" });
-  return { ...stitched, strips: decoded, totalMs: performance.now() - t0 };
+  return { ...stitchDecoded(decoded, opts.name), strips: decoded, totalMs: performance.now() - t0 };
 }
 
 /**

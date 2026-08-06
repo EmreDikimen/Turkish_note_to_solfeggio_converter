@@ -115,7 +115,7 @@ async function main() {
     ort.InferenceSession.create("/models/decoder_model.onnx", opts),
     ort.InferenceSession.create("/models/decoder_with_past_model.onnx", opts),
   ]);
-  const sessions: Sessions = { encoder, decoder, decoderWithPast };
+  const sessions: Sessions = { encoder, decoder, decoderWithPast, Tensor: ort.Tensor };
   print(`sessions ready in ${(performance.now() - tLoad).toFixed(0)} ms\n`);
   setupUpload(sessions, gate);
 

@@ -10,15 +10,25 @@
  * being thrown away; `decode_page.py` has recorded `min_logprob`/`mean_logprob` on the Python side
  * all along, and those are what the labelling queue orders on. Surfacing them is what lets the app
  * show a user WHERE to look (ROADMAP §0).
+ *
+ * **This module runs in BOTH the browser and the decode server (W9).** Two consequences:
+ *
+ *  1. It imports no ORT runtime — only types, from `onnxruntime-common`. The `Tensor` constructor
+ *     arrives on `Sessions` (see `./types`). Adding `import * as ort from "onnxruntime-web"` back
+ *     would break the server at import time, which is the whole reason it is gone.
+ *  2. The encoder is separable from the decode loop (`runEncoder` / `decodeFromHidden`), because
+ *     the server runs ONE batched encoder pass over a page's ~19 strips and then loops each strip's
+ *     decoder separately. `greedyDecode` is those two, unchanged, and is still what the browser and
+ *     the gate call.
  */
-import * as ort from "onnxruntime-web";
+import type { InferenceSession, Tensor, TensorConstructor } from "onnxruntime-common";
 import type { ModelMeta, Sessions, StripDecode } from "./types";
 
 /** Matches overfit10.py / onnx_parity.py judgement decoding. */
 export const MAX_TOKENS = 100;
 
-export function int64(values: number[], dims: number[]): ort.Tensor {
-  return new ort.Tensor("int64", BigInt64Array.from(values.map(BigInt)), dims);
+export function int64(T: TensorConstructor, values: number[], dims: number[]): Tensor {
+  return new T("int64", BigInt64Array.from(values.map(BigInt)), dims);
 }
 
 /**
@@ -29,7 +39,7 @@ export function int64(values: number[], dims: number[]): ort.Tensor {
  * `onnx_parity.py:83` does. Because `tok` is the argmax every exponent is ≤ 0, so this is stable
  * by construction — no separate max-subtraction needed.
  */
-export function argmaxLast(logits: ort.Tensor): { id: number; logprob: number } {
+export function argmaxLast(logits: Tensor): { id: number; logprob: number } {
   const seq = logits.dims[1]!;
   const vocab = logits.dims[2]!;
   const data = logits.data as Float32Array;
@@ -42,43 +52,82 @@ export function argmaxLast(logits: ort.Tensor): { id: number; logprob: number } 
   return { id: best, logprob: -Math.log(sum) };
 }
 
-export async function greedyDecode(
+/**
+ * The encoder pass. `pixelValues` may carry a BATCH of strips ([n, 3, h, w]) — both graphs were
+ * exported with a dynamic `batch_size` axis (verified 2026-08-05, docs/mvp/deploy.md), so batching
+ * needs no re-export. The browser passes n = 1; the server passes a whole page.
+ */
+export async function runEncoder(
   s: Sessions,
-  pixelValues: ort.Tensor,
-  startId: number,
-  eosId: number
-): Promise<{ ids: number[]; logprobs: number[]; encoderMs: number; decodeMs: number }> {
+  pixelValues: Tensor
+): Promise<{ hidden: Tensor; encoderMs: number }> {
   const t0 = performance.now();
   const enc = await s.encoder.run({ pixel_values: pixelValues });
-  const t1 = performance.now();
+  return { hidden: enc.last_hidden_state! as Tensor, encoderMs: performance.now() - t0 };
+}
 
+/**
+ * Row `i` of a batched encoder output as its own [1, seq, hidden] tensor.
+ *
+ * `subarray` is a VIEW, not a copy: the decoder only reads its encoder states, and copying ~19
+ * of these per page would be pure waste. Nothing downstream writes to it.
+ */
+export function sliceHidden(T: TensorConstructor, hidden: Tensor, i: number): Tensor {
+  const [, seq, size] = hidden.dims as readonly [number, number, number];
+  const data = hidden.data as Float32Array;
+  const n = seq * size;
+  return new T("float32", data.subarray(i * n, (i + 1) * n), [1, seq, size]);
+}
+
+/**
+ * The greedy loop for ONE strip, given its encoder states: first-step decoder (which also builds
+ * the encoder cross-attention K/V cache), then the decoder-with-past loop, argmax, stop on `</s>`.
+ */
+export async function decodeFromHidden(
+  s: Sessions,
+  hidden: Tensor,
+  startId: number,
+  eosId: number
+): Promise<{ ids: number[]; logprobs: number[]; decodeMs: number }> {
+  const t0 = performance.now();
   // First step (no cache yet): also emits the encoder cross-attention K/V, computed once.
-  let outs = await s.decoder.run({
-    input_ids: int64([startId], [1, 1]),
-    encoder_hidden_states: enc.last_hidden_state!,
+  let outs: InferenceSession.OnnxValueMapType = await s.decoder.run({
+    input_ids: int64(s.Tensor, [startId], [1, 1]),
+    encoder_hidden_states: hidden,
   });
-  const past: Record<string, ort.Tensor> = {};
-  const keepPresents = (o: typeof outs) => {
+  const past: Record<string, Tensor> = {};
+  const keepPresents = (o: InferenceSession.OnnxValueMapType) => {
     for (const [name, value] of Object.entries(o))
       if (name.startsWith("present."))
-        past[name.replace("present.", "past_key_values.")] = value;
+        past[name.replace("present.", "past_key_values.")] = value as Tensor;
   };
   keepPresents(outs);
 
   const ids: number[] = [];
   const logprobs: number[] = [];
   for (;;) {
-    const { id: tok, logprob } = argmaxLast(outs.logits!);
+    const { id: tok, logprob } = argmaxLast(outs.logits! as Tensor);
     ids.push(tok);
     logprobs.push(logprob);
     if (tok === eosId || ids.length >= MAX_TOKENS) break;
     // Later steps: only the new token goes in; the self-attention cache grows, the encoder
     // K/V entries stay as computed on step one.
-    outs = await s.decoderWithPast.run({ input_ids: int64([tok], [1, 1]), ...past });
+    outs = await s.decoderWithPast.run({ input_ids: int64(s.Tensor, [tok], [1, 1]), ...past });
     keepPresents(outs);
   }
-  const t2 = performance.now();
-  return { ids, logprobs, encoderMs: t1 - t0, decodeMs: t2 - t1 };
+  return { ids, logprobs, decodeMs: performance.now() - t0 };
+}
+
+/** One strip, end to end: encoder then decode loop. The browser's and the gate's entry point. */
+export async function greedyDecode(
+  s: Sessions,
+  pixelValues: Tensor,
+  startId: number,
+  eosId: number
+): Promise<{ ids: number[]; logprobs: number[]; encoderMs: number; decodeMs: number }> {
+  const { hidden, encoderMs } = await runEncoder(s, pixelValues);
+  const { ids, logprobs, decodeMs } = await decodeFromHidden(s, hidden, startId, eosId);
+  return { ids, logprobs, encoderMs, decodeMs };
 }
 
 /** Raw space-joined tokens — the gate's diff format, unreadable but exact. */
@@ -110,24 +159,18 @@ export function stripEos(ids: number[], eosId: number): number[] {
 }
 
 /**
- * Decode one preprocessed strip into the shape the stitcher and the confidence UI want.
+ * A raw greedy result in the shape the stitcher and the confidence UI want.
  *
- * `hitCap` deserves its name: stopping at MAX_TOKENS instead of `</s>` means the strip is a
- * truncated read, not a short one, and W8 treats it as "check this" regardless of logprob.
+ * Shared by the browser (`decodeStrip`) and the server (`apps/server/src/decodeBatch.ts`) so the
+ * scoring rules below have exactly one definition. `hitCap` deserves its name: stopping at
+ * MAX_TOKENS instead of `</s>` means the strip is a truncated read, not a short one, and W8 treats
+ * it as "check this" regardless of logprob.
  */
-export async function decodeStrip(
-  sessions: Sessions,
+export function summarizeDecode(
   meta: ModelMeta,
-  pixels: Float32Array
-): Promise<StripDecode> {
-  const { height, width } = meta.preprocess.size;
-  const tensor = new ort.Tensor("float32", pixels, [1, 3, height, width]);
-  const { ids, logprobs, encoderMs, decodeMs } = await greedyDecode(
-    sessions,
-    tensor,
-    meta.startId,
-    meta.eosId
-  );
+  raw: { ids: number[]; logprobs: number[]; encoderMs: number; decodeMs: number }
+): StripDecode {
+  const { ids, logprobs } = raw;
   const hitCap = ids.length >= MAX_TOKENS && ids[ids.length - 1] !== meta.eosId;
 
   // Score the content tokens only: the </s> step is a formality and is always confident, so
@@ -143,7 +186,18 @@ export async function decodeStrip(
     hitCap,
     minLogprob: contentLp.length ? Math.min(...contentLp) : 0,
     meanLogprob: contentLp.length ? contentLp.reduce((a, b) => a + b, 0) / contentLp.length : 0,
-    encoderMs,
-    decodeMs,
+    encoderMs: raw.encoderMs,
+    decodeMs: raw.decodeMs,
   };
+}
+
+/** Decode one preprocessed strip. */
+export async function decodeStrip(
+  sessions: Sessions,
+  meta: ModelMeta,
+  pixels: Float32Array
+): Promise<StripDecode> {
+  const { height, width } = meta.preprocess.size;
+  const tensor = new sessions.Tensor("float32", pixels, [1, 3, height, width]);
+  return summarizeDecode(meta, await greedyDecode(sessions, tensor, meta.startId, meta.eosId));
 }

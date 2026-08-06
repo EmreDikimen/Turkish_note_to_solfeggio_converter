@@ -1,0 +1,33 @@
+# What `gcloud builds submit` uploads as the build context for the decode server (MVP W9).
+#
+# ⚠ THE REASON THIS FILE EXISTS: without it, gcloud derives the upload list from `.gitignore` — and
+# `apps/web/public/models/` is gitignored (the weights are too big for GitHub). The build would then
+# arrive without the three ONNX graphs and fail at `prepare-models.mjs`, or worse, produce an image
+# with no model in it. Naming the exclusions here explicitly keeps the weights IN.
+#
+# Everything the Dockerfile does not COPY is excluded, because `data/` alone is tens of gigabytes.
+
+.git/
+.gitignore
+node_modules/
+**/node_modules/
+
+# Training and research material — none of it ships (CLAUDE.md: Python is training/data only).
+data/
+.venv-ml/
+src/
+scripts/
+docs/
+tools/
+archive/
+
+# Build outputs and local state.
+dist/
+**/dist/
+apps/server/models/
+*.log
+
+# The gate's 14 test strips live beside the graphs; `prepare-models.mjs` reads gate.json for the
+# token map and drops the fixture, so the images themselves never need to travel.
+apps/web/public/models/*.png
+apps/web/public/models/*.pixels.bin

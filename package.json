@@ -22,7 +22,11 @@
     "parity:slicer": "npx tsx tools/vision/parity/slicer-parity.ts",
     "check:edge": "npx tsx tools/vision/parity/edge-cases.ts",
     "decode:pool": "npx tsx tools/vision/parity/decode-pool.ts",
-    "check:deskew": "npx tsx tools/vision/parity/deskew-check.ts"
+    "check:deskew": "npx tsx tools/vision/parity/deskew-check.ts",
+    "parity:server": "npx tsx tools/vision/parity/server-parity.ts",
+    "dev:server": "npm run -w @turkish-omr/server dev",
+    "bench:server": "npx tsx tools/vision/parity/server-bench.ts",
+    "check:limits": "npx tsx tools/vision/parity/server-limits.ts"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

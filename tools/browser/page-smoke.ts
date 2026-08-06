@@ -102,8 +102,22 @@ async function main() {
   const pageErrors: string[] = [];
   page.on("pageerror", (e) => pageErrors.push(e.message));
 
+  // Pointing `VITE_DECODE_URL` at a dead server is how the FALLBACK gets exercised, and a browser
+  // logs a console error for the refused request no matter how cleanly the app recovers. Ignore
+  // exactly that one line — the failure this run is provoking on purpose — and nothing else, so a
+  // real error in the fallback path still fails the check.
+  const decodeHost = (() => {
+    try {
+      return process.env.VITE_DECODE_URL ? new URL(process.env.VITE_DECODE_URL).host : "";
+    } catch {
+      return "";
+    }
+  })();
+  const provoked = (text: string) =>
+    !!decodeHost && text.includes(decodeHost) && /ERR_|Failed to load resource/.test(text);
+
   page.on("console", (msg) => {
-    if (msg.type() === "error") pageErrors.push(`console: ${msg.text()}`);
+    if (msg.type() === "error" && !provoked(msg.text())) pageErrors.push(`console: ${msg.text()}`);
   });
 
   console.log(`  dev server up at ${base}`);
@@ -168,8 +182,24 @@ async function main() {
   await browser.close();
   await server.close();
 
+  // W9 step 3: with a decode server configured, the app must actually USE it — and say so. Run
+  // the same smoke with `VITE_DECODE_URL` pointed at a dead port to exercise the other half: the
+  // fallback must produce the same score on the user's own machine, and admit that it did.
+  const decodeUrl = process.env.VITE_DECODE_URL?.trim();
+  const ranOnServer = /read on the server/.test(summary);
+  const fellBack = /the server did not answer/.test(summary);
+
   const checks: [string, boolean, string][] = [
     ["page read end to end", !!m, summary || errText || "no result"],
+    ...(decodeUrl
+      ? ([
+          [
+            "decode ran where it was told",
+            ranOnServer || fellBack,
+            ranOnServer ? `on the server (${decodeUrl})` : `fell back: ${summary.slice(-60)}`,
+          ],
+        ] as [string, boolean, string][])
+      : []),
     ...(pyStrips == null
       ? []
       : ([

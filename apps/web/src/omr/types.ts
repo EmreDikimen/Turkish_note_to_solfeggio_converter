@@ -10,14 +10,28 @@
  *  2. **This is not `packages/core`.** ROADMAP §2 keeps core free of platform APIs, and
  *     onnxruntime + canvas are platform APIs. When a mobile app arrives, this directory becomes a
  *     package and the ORT import moves behind `Sessions`; nothing else should have to change.
+ *
+ * That second rule came due at W9, and this is where it was paid. The types below name
+ * `onnxruntime-common` — the package both `onnxruntime-web` and `onnxruntime-node` re-export — so
+ * `decode.ts` compiles against neither runtime in particular, and the DECODE SERVER runs the
+ * browser's own module instead of a second implementation to hold in parity (docs/mvp/deploy.md).
  */
-import type * as ort from "onnxruntime-web";
+import type * as ort from "onnxruntime-common";
 
-/** The three ONNX graphs the encoder-decoder needs. Split export, so three sessions. */
+/**
+ * The runtime handle: the three ONNX graphs the encoder-decoder needs (split export, so three
+ * sessions), plus the one ORT *value* the decode path cannot do without.
+ *
+ * `Tensor` is here because `decode.ts` has to construct inputs, and each runtime must build them
+ * with its OWN constructor — web's and node's come from different copies of `onnxruntime-common`.
+ * Carrying it beside the sessions is what keeps `decode.ts` free of a runtime import; the three
+ * places that create a `Sessions` are the three places that know which runtime they are on.
+ */
 export interface Sessions {
   encoder: ort.InferenceSession;
   decoder: ort.InferenceSession;
   decoderWithPast: ort.InferenceSession;
+  Tensor: ort.TensorConstructor;
 }
 
 /**

@@ -13,7 +13,9 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    // `import.meta.env` — the build-time decode-server URL (VITE_DECODE_URL) is read in omr/remote.ts.
+    "types": ["vite/client"]
   },
   "include": ["src", "vite.config.ts"]
 }

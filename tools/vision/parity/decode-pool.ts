@@ -8,6 +8,16 @@
  *
  *   npx tsx tools/vision/parity/decode-pool.ts \
  *     --pool data/real/rung3/_realval_v2 --out <file>.json
+ *
+ * **`--server <url>` decodes the same pool on the DECODE SERVER instead** (MVP W9). Same pool,
+ * same scorer, same gold — so the server's column can be read against the browser's without
+ * anything else moving. It exists because server-vs-browser *agreement* is 93.8% and agreement
+ * cannot say which side is right; the friends release turns on which one reads better, not on
+ * whether they differ. Preprocessing still happens in the browser, because the upload must be the
+ * bytes a real client would send.
+ *
+ *   npx tsx tools/vision/parity/decode-pool.ts \
+ *     --pool data/real/rung3/_realval_v2 --server http://localhost:8080 --out <file>.json
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -30,6 +40,14 @@ async function main() {
     process.exit(2);
   }
   const batch = Number(arg("--batch", "20"));
+  const serverUrl = arg("--server").replace(/\/$/, "");
+  if (serverUrl) {
+    const h = (await (await fetch(`${serverUrl}/health`)).json()) as { ready: boolean };
+    if (!h.ready) {
+      console.error(`decode server at ${serverUrl} is not ready`);
+      process.exit(2);
+    }
+  }
 
   const pngs = readdirSync(pool).filter((f) => f.endsWith(".png")).sort();
   if (!pngs.length) {
@@ -44,8 +62,15 @@ async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   page.on("pageerror", (e) => console.log(`  [pageerror] ${e.message}`));
-  await page.goto(`${base}/strips-harness.html`, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => (window as any).__omr?.ready === true, null, { timeout: 120000 });
+  // The server arm uses the parity harness, which can preprocess WITHOUT loading the weights.
+  const harness = serverUrl ? "server-parity.html" : "strips-harness.html";
+  const globalName = serverUrl ? "__omrParity" : "__omr";
+  await page.goto(`${base}/${harness}`, { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(
+    (g) => (window as any)[g]?.ready === true,
+    globalName,
+    { timeout: 120000 }
+  );
 
   const results: Record<string, unknown> = {};
   const t0 = Date.now();
@@ -59,18 +84,52 @@ async function main() {
       window: k,
       dataUrl: "data:image/png;base64," + readFileSync(path.join(pool, name)).toString("base64"),
     }));
-    const res = (await page.evaluate(
-      ([strips]) => (window as any).__omr.decode(strips, "pool"),
-      [inputs] as const
-    )) as { strips: { name: string; tokens: string; nIds: number; hitCap: boolean; minLogprob: number; meanLogprob: number }[] };
-    for (const s of res.strips)
-      results[s.name] = {
-        tokens: s.tokens,
-        nIds: s.nIds,
-        hitCap: s.hitCap,
-        minLogprob: s.minLogprob,
-        meanLogprob: s.meanLogprob,
+    if (serverUrl) {
+      const prepared = (await page.evaluate(
+        (strips) => (window as any).__omrParity.prepare(strips, { preprocessOnly: true }),
+        inputs
+      )) as { name: string; system: number; window: number; png: string }[];
+      const res = await fetch(`${serverUrl}/decode`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          strips: prepared.map((s) => ({
+            system: s.system,
+            window: s.window,
+            name: s.name,
+            png: s.png,
+          })),
+        }),
+      });
+      if (!res.ok) {
+        console.error(`server said ${res.status}: ${await res.text()}`);
+        process.exit(1);
+      }
+      const reply = (await res.json()) as {
+        strips: { name: string; ids: number[]; tokens: string; hitCap: boolean; minLogprob: number; meanLogprob: number }[];
       };
+      for (const s of reply.strips)
+        results[s.name] = {
+          tokens: s.tokens,
+          nIds: s.ids.length,
+          hitCap: s.hitCap,
+          minLogprob: s.minLogprob,
+          meanLogprob: s.meanLogprob,
+        };
+    } else {
+      const res = (await page.evaluate(
+        ([strips]) => (window as any).__omr.decode(strips, "pool"),
+        [inputs] as const
+      )) as { strips: { name: string; tokens: string; nIds: number; hitCap: boolean; minLogprob: number; meanLogprob: number }[] };
+      for (const s of res.strips)
+        results[s.name] = {
+          tokens: s.tokens,
+          nIds: s.nIds,
+          hitCap: s.hitCap,
+          minLogprob: s.minLogprob,
+          meanLogprob: s.meanLogprob,
+        };
+    }
     const done = Math.min(i + batch, pngs.length);
     const rate = (Date.now() - t0) / done;
     console.log(

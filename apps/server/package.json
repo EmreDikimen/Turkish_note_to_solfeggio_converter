@@ -1,0 +1,25 @@
+{
+  "name": "@turkish-omr/server",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Decode server (MVP W9) — runs the browser's own decode.ts on onnxruntime-node.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --external:onnxruntime-node --outfile=dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "onnxruntime-node": "^1.27.0",
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pngjs": "^6.0.5",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}

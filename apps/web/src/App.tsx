@@ -21,8 +21,8 @@ import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
-import { getModel } from "./omr/session";
-import { decodeStripsToDoc, positionFromName, type StripInput } from "./omr/pipeline";
+import { decodeStripsRouted, decodeUrl, type RoutedResult } from "./omr/remote";
+import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
@@ -39,6 +39,22 @@ export type NoteEdit = Partial<Pick<NoteEvent, "koma53" | "durationMs">>;
 // One shared audio backend for the whole app. Created once at module load (not per render)
 // so Play/Stop always talk to the same instance.
 const backend = new WebAudioBackend();
+
+// Progress text for a decode, which now happens in one of two places (MVP W9). On the server a
+// page is ONE batched request, so there is no per-strip progress to report and pretending
+// otherwise would be a fake progress bar; in the browser the count is real.
+function readingStatus(done: number, total: number, current?: string): string {
+  if (current === "server") return `reading ${total} strip${total > 1 ? "s" : ""} on the server…`;
+  return done < total ? `reading strip ${done + 1} of ${total}…` : "stitching…";
+}
+
+// Say where the decode ran, and say it plainly when the server was meant to and did not. A friend
+// who cannot debug anything should still be able to tell us "it said it used my machine".
+function whereSuffix(routed: RoutedResult): string {
+  if (routed.where === "server") return " · read on the server";
+  if (routed.fellBackBecause) return " · read on your machine (the server did not answer)";
+  return decodeUrl() ? "" : " · read on your machine";
+}
 
 // Example scores bundled in apps/web/public/ (exported from SymbTr via scripts/symbtr_to_json.py).
 // The first entry auto-loads on startup; the rest are selectable from the Sample dropdown.
@@ -495,8 +511,6 @@ export function App() {
     void (async () => {
       const urls: string[] = [];
       try {
-        const { sessions, meta } = await getModel(setOmrStatus);
-
         setOmrStatus(`reading ${files.length} strip${files.length > 1 ? "s" : ""}…`);
         const strips: StripInput[] = [];
         for (const [i, f] of files.entries()) {
@@ -506,11 +520,12 @@ export function App() {
         }
 
         const pageName = files[0]!.name.replace(/_s\d+_w\d+\.\w+$/, "") || "decoded-page";
-        const result = await decodeStripsToDoc(sessions, meta, strips, {
-          name: pageName,
-          onProgress: (done, total) =>
-            setOmrStatus(done < total ? `reading strip ${done + 1} of ${total}…` : "stitching…"),
+        const t0 = performance.now();
+        const routed = await decodeStripsRouted(strips, {
+          onProgress: (done, total, current) => setOmrStatus(readingStatus(done, total, current)),
         });
+        const totalMs = performance.now() - t0;
+        const result = stitchDecoded(routed.strips, pageName);
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length) throw new Error("the model read nothing from these images");
@@ -518,10 +533,11 @@ export function App() {
         onStop();
         loadDoc(result.doc);
         setSampleFile("");
-        const perStrip = result.totalMs / strips.length;
+        const perStrip = totalMs / strips.length;
         setOmrStatus(
           `read ${strips.length} strips → ${notes} notes, ${result.writtenMeasures} measures ` +
-            `in ${(result.totalMs / 1000).toFixed(1)} s (${perStrip.toFixed(0)} ms/strip)` +
+            `in ${(totalMs / 1000).toFixed(1)} s (${perStrip.toFixed(0)} ms/strip)` +
+            whereSuffix(routed) +
             (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
         );
         // Warnings are the stitcher's "this construct was malformed" notes; a mostly-right score in
@@ -563,7 +579,6 @@ export function App() {
     void (async () => {
       const url = URL.createObjectURL(file);
       try {
-        const { sessions, meta } = await getModel(setOmrStatus);
         const { slicePage } = await import("./omr/page");
 
         const stem = file.name.replace(/\.[^.]+$/, "") || "page";
@@ -579,11 +594,12 @@ export function App() {
           );
 
         const sliceS = (sliced.totalMs / 1000).toFixed(1);
-        const result = await decodeStripsToDoc(sessions, meta, sliced.strips, {
-          name: stem,
-          onProgress: (done, total) =>
-            setOmrStatus(done < total ? `reading strip ${done + 1} of ${total}…` : "stitching…"),
+        const t0 = performance.now();
+        const routed = await decodeStripsRouted(sliced.strips, {
+          onProgress: (done, total, current) => setOmrStatus(readingStatus(done, total, current)),
         });
+        const decodeMs = performance.now() - t0;
+        const result = stitchDecoded(routed.strips, stem);
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length) throw new Error("the model read nothing from this page");
@@ -595,7 +611,8 @@ export function App() {
           `read a page: ${sliced.nStaves} staves → ${sliced.strips.length} strips → ${notes} notes, ` +
             `${result.writtenMeasures} measures — sliced in ${sliceS} s` +
             (sliced.skewDeg ? ` (deskewed ${sliced.skewDeg.toFixed(1)}°)` : "") +
-            `, read in ${(result.totalMs / 1000).toFixed(1)} s` +
+            `, read in ${(decodeMs / 1000).toFixed(1)} s` +
+            whereSuffix(routed) +
             (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
         );
         if (result.warnings.length) console.warn("stitch warnings:", result.warnings);

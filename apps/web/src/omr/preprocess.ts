@@ -12,7 +12,11 @@
  * the browser's own filter. That is why this path is not expected to agree with Python on 100% of
  * strips, and why the slicer parity harness (MVP W3) measures a *ceiling* from this arm before the
  * slicer is judged against it. See docs/mvp/README.md.
+ *
+ * The final rescale lives in `./pixels` — DOM-free, because the decode server runs that step and
+ * none of this one. That split is the W9 seam and the reasoning is written there.
  */
+import { pixelsFromRGBA } from "./pixels";
 
 /**
  * Natural pixel size of anything drawable. `HTMLImageElement` reports it as `naturalWidth`;
@@ -44,13 +48,16 @@ export function canvasFromImageData(data: ImageData): HTMLCanvasElement {
  *  2. resize: shortest edge → min(583, 409) = 409, aspect preserved (int truncation like HF).
  *  3. thumbnail: shrink to fit within 409×583 (never enlarges).
  *  4. pad: center on a 409×583 black canvas (constant 0, HF's default).
- *  5. rescale + normalize: x/255 → (x − 0.5)/0.5, i.e. [0, 255] → [−1, 1], channels-first.
+ *
+ * Steps 1–4 only — the geometry. Step 5 (rescale + normalize) is `pixelsFromRGBA` below, split off
+ * because the server does that half and only that half. Returns the canvas rather than pixels so
+ * the caller can either read it (`preprocessCanvas`) or encode it for upload (`omr/remote.ts`).
  */
-export function preprocessCanvas(
+export function preprocessToCanvas(
   img: CanvasImageSource,
   targetW: number,
   targetH: number
-): Float32Array {
+): HTMLCanvasElement {
   const size = sourceSize(img);
   let w = size.width;
   let h = size.height;
@@ -88,16 +95,18 @@ export function preprocessCanvas(
     ctx.drawImage(img, padLeft, padTop, tw, th);
   }
   ctx.restore();
+  return canvas;
+}
 
-  const { data } = ctx.getImageData(0, 0, targetW, targetH); // RGBA, row-major
-  const n = targetW * targetH;
-  const out = new Float32Array(3 * n);
-  for (let i = 0; i < n; i++) {
-    out[i] = data[i * 4]! / 127.5 - 1; // R plane
-    out[n + i] = data[i * 4 + 1]! / 127.5 - 1; // G plane
-    out[2 * n + i] = data[i * 4 + 2]! / 127.5 - 1; // B plane
-  }
-  return out;
+/** Steps 1–5: a strip image straight to the model's pixel tensor. The in-browser decode path. */
+export function preprocessCanvas(
+  img: CanvasImageSource,
+  targetW: number,
+  targetH: number
+): Float32Array {
+  const canvas = preprocessToCanvas(img, targetW, targetH);
+  const { data } = canvas.getContext("2d")!.getImageData(0, 0, targetW, targetH); // RGBA, row-major
+  return pixelsFromRGBA(data, targetW, targetH);
 }
 
 export function loadImage(url: string): Promise<HTMLImageElement> {

@@ -99,3 +99,7 @@ apps/web/public/probe/
 # Colab round-trip archives downloaded to the repo root (GB-scale; the unpacked
 # result lives under data/real/, which is already ignored)
 /*.zip
+
+# W9 decode server (MVP): assembled model dir + bundle
+apps/server/models/
+apps/server/dist/

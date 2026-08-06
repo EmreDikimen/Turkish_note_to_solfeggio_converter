@@ -1,0 +1,17 @@
+# The build context is the repo root (the server bundles apps/web/src/omr). Everything here would
+# otherwise be shipped to the daemon — `data/` alone is tens of GB.
+node_modules
+**/node_modules
+data
+.venv-ml
+.git
+docs
+dist
+**/dist
+apps/server/models
+apps/web/public/models/*.png
+apps/web/public/models/*.bin
+scripts
+src/vision
+tools/render/out
+*.log

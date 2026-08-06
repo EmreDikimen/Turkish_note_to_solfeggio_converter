@@ -11,39 +11,62 @@ updated: 2026-08-06
 
 ---
 
-## First: do NOT delete your old gcloud
+## First: the program and its memory are two different things
 
-You installed `gcloud` before, for freelance work. **Keep it.** Deleting and reinstalling would not
-make anything cleaner, and it could break the other job's setup.
+This trips people up, so it comes first.
 
-`gcloud` is built for exactly your situation. It can hold **several accounts** and **several
-projects** at the same time, kept apart in things called **configurations**. A configuration is just
-a saved set of three answers: *which Google account*, *which project*, *which region*.
+| | Where it lives | What happens if you reinstall |
+|---|---|---|
+| **The program** (`gcloud` itself) | wherever you installed it | replaced |
+| **Its memory** (accounts, tokens, configurations) | `~/.config/gcloud` | **untouched** |
 
-**The one real danger** is doing this work while the old freelance configuration is active. Then a
-deploy could go into someone else's project. So step 2 below makes a separate configuration, and
-after that the two never touch each other.
+So "delete it and reinstall to get a clean slate" does not work. You would reinstall, type
+`gcloud auth list`, and still be logged in as before. **If you want a clean slate, clean
+`~/.config/gcloud` — that is the part that remembers.**
+
+A **configuration** is just a saved set of three answers: *which Google account*, *which project*,
+*which region*. `gcloud` can hold several, so one machine can serve two unrelated jobs safely.
 
 ---
 
-## Step 1 — see what you already have
+## Step 1 — find out what is actually on this machine
 
 ```bash
-gcloud version                        # is it installed, and how old is it
-gcloud config configurations list     # the setups you already have (one is probably "default")
-gcloud auth list                      # which Google accounts are logged in
-gcloud config list                    # what the ACTIVE setup points at right now
+which gcloud                          # is the program there at all?
+ls ~/.config/gcloud                   # is the memory there? (it survives an uninstall)
+cat ~/.config/gcloud/active_config    # which setup is switched on
+cat ~/.config/gcloud/configurations/* # which account and project it points at
 ```
 
-Write down what you see, or take a screenshot. That is your "before" picture — if anything looks
-wrong later, you know what to go back to.
+**On this machine, as of 2026-08-06:** the program is **gone** (it used to be at
+`~/Desktop/google-cloud-sdk`) but the memory is **still there**, holding a logged-in account from
+the old freelance job. `~/.zshrc` also still has two lines pointing at the deleted folder; they are
+harmless (guarded by `if [ -f … ]`) but untidy.
 
-If `gcloud version` says it is very old, update it:
+### Clearing the old job out, safely
+
+Rename rather than delete — if something turns out to be needed, renaming is one command to undo:
 
 ```bash
-gcloud components update              # if you installed it from Google's installer
-brew upgrade google-cloud-sdk         # if you installed it with Homebrew (the first one will error)
+mv ~/.config/gcloud ~/.config/gcloud.old-job     # reversible; delete it in a month if all is well
 ```
+
+Then remove the two dead `google-cloud-sdk` lines from `~/.zshrc` (the installer adds fresh ones).
+
+---
+
+## Step 1b — install it
+
+Homebrew is the tidy way on a Mac: it keeps the program out of your Desktop and updates it with
+everything else.
+
+```bash
+brew install --cask google-cloud-cli
+gcloud version
+```
+
+⚠ With the Homebrew version, **`gcloud components update` is disabled** — use `brew upgrade` instead.
+That is the only day-to-day difference from Google's own installer.
 
 ---
 
@@ -55,11 +78,12 @@ gcloud config configurations create turkish-omr
 
 This creates it **and switches to it**. From now on, everything you type affects only this one.
 
-To go back to your freelance work later:
+If a second job ever needs its own account and project, make it another configuration rather than
+logging in and out:
 
 ```bash
-gcloud config configurations activate default      # or whatever its name was in step 1
-gcloud config configurations activate turkish-omr  # and back again
+gcloud config configurations list                  # what exists
+gcloud config configurations activate turkish-omr  # switch between them
 ```
 
 ---

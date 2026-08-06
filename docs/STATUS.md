@@ -65,20 +65,15 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   ⚠ This is the argument for the check: dev, `smoke:page` and the gate were all green while the
   thing a friend would actually open was broken.
 - **⛔ THE BATCHING ARGUMENT FOR HAVING A SERVER IS WITHDRAWN — measured, not argued (2026-08-06).**
-  `deploy.md` listed "no batching, ever" as a structural advantage over `onnxruntime-web`. Batch 8
-  against batch 1 is **slower at every thread count** (1 thread 12.0 vs 11.8 s/page, 2 threads 8.7
-  vs 8.3, 4 threads 7.4 vs 7.4) and costs **2.9× the peak memory** (2,778 MB vs 955 MB on a 38-strip
-  page). One 409×583 Swin forward already fills the cores. `OMR_MAX_BATCH` now defaults to **1**; the
-  batched path stays behind the knob because this is one CPU architecture. **The real second reason
-  for a server is that native ORT is ~4× faster than wasm** — 6.0 s against 24.5 s on the same M4.
-  The **"smaller upload" reason is withdrawn too**: the crops upload is a median **1.7× the page
-  image**, not smaller.
+  `deploy.md` listed "no batching, ever" as a structural advantage over `onnxruntime-web`. Batch 8 is
+  **slower at every thread count** and costs **2.9× the peak memory**, so `OMR_MAX_BATCH` defaults to
+  **1**. **The real second reason for a server is that native ORT is ~4× faster than wasm.** The
+  **"smaller upload" reason is withdrawn too**: the crops upload is a median **1.7× the page image**.
+  Numbers: [METRICS.md](METRICS.md).
 - **A page costs 11.7 vCPU-seconds at 1 vCPU** — measured from the server's own `process.cpuUsage()`,
   which is what Cloud Run bills. **1 vCPU is the cheapest shape by 2.5×** (2 vCPU 16.8, 4 vCPU 29.3),
   and the free tier covers roughly **15,400 pages/month** there. The earlier 30–60 vCPU-s estimate
   was ~3× pessimistic because it assumed the batching that does not exist.
-- **The safety checklist is a command now**: `npm run check:limits` — **6/6** payload cases plus the
-  per-IP rate limit, and it prints the billing-cap item it cannot check instead of counting it.
 - **A slice inspector, and two crop fixes from 2026-08-05.** `/slices.html` shows every crop a page
   is cut into with the slicer's own reasoning, its decoded label and its vertical placement — it is
   how both fixes below were found ([MANUAL_CHECKS.md](MANUAL_CHECKS.md) Check 13). **A slur above
@@ -269,22 +264,26 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-1. **Set the $5 budget alert** (owner, Google billing console). It is the last unticked safety item
-   and the only one not assertable from the repo. ⚠ It emails, it does not stop spending — the
-   actual ceilings are `--max-instances 3` and the per-IP rate limit, both live.
-   Also owed on the next redeploy: the **413 fix** (commit `0b1cb44`) is committed but **not yet on
-   Cloud Run** — rebuild and redeploy when convenient, it is not urgent.
+1. **Redeploy to pick up the 413 fix** (`0b1cb44`, committed, not on Cloud Run). Not urgent — until
+   then an oversized upload returns 503 instead of 413, so a live `check:limits` reads 5/6.
+   ✅ The **$5 budget alert is SET** (owner, 2026-08-06) — the safety checklist is complete.
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.
-2. **Put the app and the weights somewhere.** The code is done (`npm run build:app` →
+2. **Optionally, make it faster before the friends see it — the options are costed and one of them
+   is measured.** A page is ~35–55 s on Cloud Run against ~34 s in the owner's own browser, and
+   **parallelism across instances is proven to work** (3 requests at once, full speed each). The
+   recommended order is a warm-up ping → `--cpu-boost` → splitting a page across instances
+   (~52 s → ~13 s), with the five things that last one requires written down:
+   [mvp/latency.md](mvp/latency.md). ⚠ Not started, and W10 does not depend on it.
+3. **Put the app and the weights somewhere.** The code is done (`npm run build:app` →
    43.3 MB, `smoke:build` green on both paths); what is left is three accounts' worth of clicking:
    upload `apps/server/models/` to a **Hugging Face Hub** repo, push `dist/` to **Cloudflare Pages
    or Netlify**, and build with `VITE_DECODE_URL` + `VITE_WEIGHTS_URL` set to the two URLs.
    ⚠ Then set the server's `ALLOWED_ORIGINS` to the app's host — it defaults to `*`.
-3. **W10 — release to two friends.** Ask what features to add. Billing cap first. No ads and no
+4. **W10 — release to two friends.** Ask what features to add. Billing cap first. No ads and no
    in-app feedback widget: talk to them.
-4. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
+5. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
 ### Track B — the model (Round 3, UNPAUSED)
 

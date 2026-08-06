@@ -219,6 +219,14 @@ That check exists because three things only appear in a production build: cross-
 Vite, and a decode URL baked in at build time. It runs the build itself — a check that accepts
 whatever `dist/` is lying around eventually passes on a stale one.
 
+## Making a page faster
+
+Not this file's job — the deployed service raised it, and it has its own page with the measured
+options and what each one costs: **[latency.md](latency.md)**. Short version: a strip is ~2.0 s, the
+encoder is ~78% of it, **parallelism across instances is measured to work** (3 requests at once ran
+at full speed each), and the recommended order is warm-up ping → `--cpu-boost` → splitting a page
+across instances. Batching and GPU are measured dead ends.
+
 ## Cost — now measured, on a laptop
 
 The server reports its own `process.cpuUsage()` per request, so this is CPU time as Cloud Run bills

@@ -304,6 +304,8 @@ Plan: [mvp/deploy.md](mvp/deploy.md).
 | **Cost per page** | ~**40 vCPU-s** for a 21-strip page → free tier ≈ **4,450 pages/month**. A 38-strip page measured **69.9 vCPU-s / 71 s** |
 | **⚠ It is SLOWER than the user's own browser** | 128 strips: **250 s on Cloud Run vs 166 s in the M4 browser (0.66×)**. Warm. Cold adds 10.6 s. **This is the outcome deploy.md predicted and the release was chosen on** — the win is the friend's laptop staying cool, not speed |
 | **Reads the same as the browser** | **120/128 strips (93.8%)** identical token ids — *the same rate as the local server*, and the divergences again sit on near-ties (median browser log-prob at the diverging token **−0.87, p = 0.42**) |
+| **Per strip / per page** | **~2.0 s a strip**; a 16-strip page **~35 s** warm and ~46 s cold, a 26-strip page **~55 s** warm. The encoder is **74–81%** of it, so nothing that leaves the encoder alone matters. ⚠ The same 26-strip page reads in **34 s in the owner's browser** — the server is slower, by choice |
+| **Parallelism works** (2026-08-06) | Three page requests at once finished in **35.5 s**, against ~80 s if run one after another, and **server-side time did not degrade** (23.5 / 26.4 / 22.6 s) — Cloud Run gave three machines and each kept full speed. The extra wall time on two of them is their own cold start. This is the measured basis for splitting ONE page across instances: [mvp/latency.md](mvp/latency.md) |
 | Safety limits, live | `check:limits` **6/6** after one fix: a destroyed socket reached Cloud Run's proxy as a **503** rather than a 413, turning a client error into an apparent outage |
 
 ⚠ **Still not measured:** a second cold start after real idle (this one was minutes after deploy),

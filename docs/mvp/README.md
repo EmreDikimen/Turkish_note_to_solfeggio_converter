@@ -79,8 +79,8 @@ W1 → W2 → W3 ─────────┴─→ W7 ──────→ W
 | **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
 | **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
 | **W8** | Confidence highlighting | ⛔ **DROPPED 2026-08-05** — the pre-registered bar was NOT met (best at a 10% budget is 26.3% against ≥60%) and the owner dropped it rather than moving the bar. Half of the 2026-07-27 goal stays unbuilt, stated out loud. Nothing deleted; may return if a friend asks. [../DECISIONS.md](../DECISIONS.md) |
-| **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | ✅ **DEPLOYED 2026-08-06** — live at `omr-decode…europe-west3.run.app`, reads what the browser reads (93.8% ids, gold a paired wash), cold start 10.6 s, ~40 vCPU-s/page. ⚠ Slower than the owner's own browser, as predicted. ⚠ App hosting still owed. Gold quality is a paired wash (McNemar p = 0.727). ⚠ Owed: the $5 budget alert, and the 413 fix is committed but not redeployed. [deploy.md](deploy.md) |
-| **W10** | Friends release — **two friends, interface feedback** | — |
+| **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | ✅ **DEPLOYED 2026-08-06** — live at `omr-decode…europe-west3.run.app`, reads what the browser reads (93.8% ids, gold a paired wash), cold start 10.6 s, ~40 vCPU-s/page. ⚠ Slower than the owner's own browser, as predicted. Gold quality is a paired wash (McNemar p = 0.727). Safety checklist complete ($5 budget alert set, `--max-instances 3`). ✅ **Hosting DONE the same day** — app on Netlify at **<https://komavision.netlify.app>**, weights on the Hub (`Beyaban/omr-weights`), origin lock + 413 fix + `--cpu-boost` deployed. Cloudflare Pages was ruled out on its 25 MiB per-asset cap against our 25.58 MiB wasm. [hosting-setup.md](hosting-setup.md) · [deploy.md](deploy.md) |
+| **W10** | Friends release — **two friends, interface feedback** | **UNBLOCKED 2026-08-06** — there is a link to send |
 | **public** | Open it to everyone | — gated on Round 3's exam result, not on W10 |
 
 ## What each rung established
@@ -126,6 +126,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
 | `apps/web/src/omr/page.ts` | page image → crops, the seam between the slicer and the decode path (W7) |
 | `tools/browser/page-smoke.ts` | the real app: a page image in → playable score out, plus a responsiveness bar (W7) |
+| `tools/browser/build-smoke.ts`, `live-smoke.ts` | the BUILT app (`dist/`, real headers, cross-origin weights) and the DEPLOYED site (W9) |
 | `apps/web/slices.html`, `apps/web/src/slices/slicesView.ts` | slice inspector — see the crops a page is cut into, no model loaded (owner request, W7) |
 | `tools/vision/parity/arm-a.ts` | the port's crops decoded and compared to arm B, **paired** (W6) |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
@@ -160,3 +161,5 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | Server cost per page, payload bytes | `npm run bench:server -- --fixture f.json` |
 | The safety checklist | `npm run check:limits` |
 | The app, through the server (and through the fallback) | `VITE_DECODE_URL=http://localhost:8080 npm run smoke:page` · point it at a dead port for the fallback |
+| The BUILT app, against the real remotes | `npm run smoke:build -- --decode-url <service> --weights-url <hub>` — `--weights-url` swaps the local weights stand-in for the actual Hub, which sends a *reflected* CORS origin behind a 307, not the `*` the stand-in sends. ⚠ Costs a 211 MB download |
+| **The DEPLOYED site** | `npm run smoke:live` (`-- --site https://…` for another deployment). **The only check that still exercises the shipped configuration**: a localhost preview is now refused by `ALLOWED_ORIGINS`, so `smoke:build` against the live server fails CORS by design |

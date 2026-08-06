@@ -6,12 +6,15 @@ audience: the owner (and whoever wires the deploy), picking up W9
 updated: 2026-08-06
 
 > ✅ **DEPLOYED 2026-08-06** — `https://omr-decode-706571981988.europe-west3.run.app`, Cloud Run
-> europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3. All four build steps are done and
-> the cloud-side numbers below are **measured, not extrapolated**. ⚠ Two things are still owed: the
-> **$5 budget alert** (owner's console) and **hosting the app itself**. This file does not state the
-> next action: [../STATUS.md](../STATUS.md). The ladder: [README.md](README.md). Decisions:
+> europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3. All four build steps are done, the
+> safety checklist is complete, and the cloud-side numbers below are **measured, not extrapolated**.
+> ✅ **AND THE APP IS HOSTED (2026-08-06)** — **<https://komavision.netlify.app>** on Netlify, weights
+> on the Hub at `Beyaban/omr-weights`, service redeployed with `ALLOWED_ORIGINS` set to that host,
+> the 413 fix and `--cpu-boost`. This file does not state the next action:
+> [../STATUS.md](../STATUS.md). The ladder: [README.md](README.md). Decisions:
 > [../DECISIONS.md](../DECISIONS.md). Numbers: [../METRICS.md](../METRICS.md).
-> Never used Google Cloud? [gcloud-setup.md](gcloud-setup.md).
+> Never used Google Cloud? [gcloud-setup.md](gcloud-setup.md). Doing the app/weights hosting?
+> **[hosting-setup.md](hosting-setup.md)** is the same thing for Hugging Face and Netlify.
 >
 > ✅ **Everything on this page is SETTLED** (owner, 2026-08-05). The server happens; it runs on
 > Cloud Run; it is Node, not Python; the client falls back to in-browser decode; confidence
@@ -155,9 +158,9 @@ pages. Re-verify before committing money** — these move, and free tiers get wi
 | **HF Spaces (CPU basic)** | 2 vCPU / 16 GB, free | Simplest; weights already headed for HF | Sleeps when idle; public unless PRO |
 | **Fly.io** | small always-free allowance | Fast resume from suspended machines | More hands-on config |
 
-**Cloud Run is chosen with its cold start on the record.** It is only survivable because of the
-fallback below. If cold starts prove intolerable in testing, **Hetzner at ~€4/month buys the problem
-away entirely** — and costs less than keeping Cloud Run warm (`min-instances=1` runs ~$15–25/month).
+**Cloud Run is chosen with its cold start on the record**, survivable only because of the fallback
+below. If cold starts prove intolerable, **Hetzner at ~€4/month buys the problem away** — and costs
+less than keeping Cloud Run warm (`min-instances=1` runs ~$15–25/month).
 
 ## The in-browser fallback
 
@@ -188,11 +191,15 @@ The decode server is one of three things that have to be somewhere. All three ar
 
 | What | Where | Why there |
 |---|---|---|
-| The app (HTML/JS/wasm, **43 MB**) | **Cloudflare Pages or Netlify** — both read `public/_headers`, so the choice stays open | It must send **COOP/COEP**, or `onnxruntime-web` loses `SharedArrayBuffer` and the fallback has no wasm threads |
+| The app (HTML/JS/wasm, **43 MB**) | **Netlify** ✅ chosen 2026-08-06 — it reads `public/_headers`, so no config changed | It must send **COOP/COEP**, or `onnxruntime-web` loses `SharedArrayBuffer` and the fallback has no wasm threads |
 | The weights (**211 MB**) | **Hugging Face Hub**, fetched only if the fallback fires | A static host will not take a 90 MB file, and a friend on the normal path must never download them |
 | Decode | **Cloud Run** | Above |
 
-Three rules that follow, each of which was a way to get this wrong:
+Four rules that follow, each of which was a way to get this wrong:
+
+- **The app host must accept a 25.58 MiB file** — that is `dist/ort/…jsep.wasm`, and it is what ruled
+  Cloudflare Pages out (25 MiB cap) on 2026-08-06. Check it before switching hosts again. The
+  available shrink to 12.86 MiB, and why it was not taken yet: [../DECISIONS.md](../DECISIONS.md).
 
 - **`npm run build:app` refuses to produce a deployable-looking build that carries the weights.**
   Vite copies all of `public/` into `dist/`, which is 332 MB of ONNX graphs and 220 render-corpus
@@ -223,9 +230,10 @@ whatever `dist/` is lying around eventually passes on a stale one.
 
 Not this file's job — the deployed service raised it, and it has its own page with the measured
 options and what each one costs: **[latency.md](latency.md)**. Short version: a strip is ~2.0 s, the
-encoder is ~78% of it, **parallelism across instances is measured to work** (3 requests at once ran
-at full speed each), and the recommended order is warm-up ping → `--cpu-boost` → splitting a page
-across instances. Batching and GPU are measured dead ends.
+encoder is ~78% of it, and **parallelism across instances is measured to work** (3 requests at once
+ran at full speed each). ✅ **Decided 2026-08-06: only `--cpu-boost` is bought before W10** — it
+rides the redeploy below — and W10 ships at 35–55 s a page, because the cold start is only 10.6 s of
+that and the rest costs real work. Batching and GPU are measured dead ends.
 
 ## Cost — now measured, on a laptop
 
@@ -292,9 +300,12 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
       409×583 8-bit is refused. That doubles as a correctness guard: a wrong-sized strip means the
       client did not preprocess it, and decoding it would silently produce a bad read instead of an
       error. (`tools/vision/parity/edge-cases.ts` covers the client side.)
-- [ ] **Hard billing cap and a billing alert, plus `--max-instances`** — ⚠ **STILL OWED, and it is
-      the only one that bounds the bill when this process is the thing being abused.** It lives in
-      the Cloud Run / billing console and cannot be asserted from the repo.
+- [x] **A billing alert plus `--max-instances`** — ✅ **done 2026-08-06**: a **$5 budget alert** in
+      the owner's console, and `--max-instances 3` on the service. This is the one item that bounds
+      the bill when this process is the thing being abused, and it lives in the Cloud Run / billing
+      console — `check:limits` prints it rather than counting it, because it cannot be asserted from
+      the repo. ⚠ **An alert notifies; it does not stop spend.** `--max-instances` is the part that
+      actually caps the rate, which is why raising it (latency option 3) widens the worst case.
 
 ## The build order
 
@@ -303,7 +314,8 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
 | 1 | **Build the endpoint and deploy it** | ✅ **done and live.** Built in Cloud Build (1 m 27 s, 213 MB context) and deployed. ⚠ Two bugs sat between "built" and "running", both the same shape — the shipped artifact was never the tested one: the ESM bundle threw on `pngjs`'s CommonJS `require` (dev uses `tsx`), and a destroyed socket became a 503. `check:bundle` and a live `check:limits` now cover both. |
 | 2 | **Prove the server matches the browser** | ✅ done — `npm run parity:server`, and then the check that actually decides it: both arms scored against `_realval_v2` gold, **paired, no detectable difference** (McNemar p = 0.727). [../METRICS.md](../METRICS.md) |
 | 3 | **Client swap behind a flag, plus the fallback** | ✅ done — `VITE_DECODE_URL` (or `localStorage.omrDecodeUrl`). All three paths pass `smoke:page` with the SAME score: browser 24.5 s, server 6.0 s, and a dead server falling back in 25.0 s while telling the user so. |
-| 4 | **Safety checklist** | ✅ code done (`npm run check:limits`, 6/6 + rate limit). ⚠ Billing cap still owed — see above. |
+| 4 | **Safety checklist** | ✅ **complete** — `npm run check:limits` 6/6 + rate limit, $5 budget alert set, `--max-instances 3`. |
+| 5 | **Host the app and the weights** | ✅ **done 2026-08-06** — Netlify + Hugging Face Hub, then one redeploy for `ALLOWED_ORIGINS` + the 413 fix + `--cpu-boost`. Walkthrough: [hosting-setup.md](hosting-setup.md). |
 
 ## Open questions
 
@@ -311,8 +323,7 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
 |---|---|
 | What does a page cost in vCPU-seconds? | **~40 on Cloud Run** (1.93 vCPU-s/strip), against 11.7 on the M4 — a shared vCPU is **~3.5× slower**. Free tier ≈ **4,450 pages/month**. |
 | How long is a real cold start? | **10.6 s**, of which **9.5 s is loading the graphs** (1.5 s on the M4). Container start is the small half. ⚠ Measured minutes after a deploy; a cold start after genuine idle is still unmeasured. |
-| Does the ~19 crops/page upload beat sending the page image? | **No — it is usually larger** (median ~1.7×, range 0.11–2.03×). The seam stays where it is for the other reasons, and the byte argument is withdrawn. |
-| Is the batched encoder worth it? | **No.** Slower and 2.9× the memory; `OMR_MAX_BATCH` defaults to 1. |
+| Does the ~19 crops/page upload beat sending the page image? | **No — usually larger** (median ~1.7×). The seam stays for the other reasons; the byte argument is withdrawn. **Is the batched encoder worth it? No** — slower and 2.9× the memory, `OMR_MAX_BATCH` defaults to 1. |
 
 ## Running it, and deploying it
 
@@ -353,7 +364,7 @@ gcloud artifacts repositories create omr --repository-format=docker --location=$
 gcloud builds submit --config apps/server/cloudbuild.yaml --substitutions _IMAGE=$IMAGE .
 
 gcloud run deploy omr-decode --image $IMAGE --region $REGION \
-  --cpu 1 --memory 2Gi --concurrency 1 --max-instances 3 --timeout 300 \
+  --cpu 1 --memory 2Gi --concurrency 1 --max-instances 3 --timeout 300 --cpu-boost \
   --set-env-vars OMR_ORT_THREADS=1,ALLOWED_ORIGINS=https://<the-app-host> \
   --allow-unauthenticated
 ```
@@ -361,11 +372,18 @@ gcloud run deploy omr-decode --image $IMAGE --region $REGION \
 Why those flags: `--cpu 1` is the cheapest shape (see Cost); `--concurrency 1` because ORT already
 uses the whole core and a second page in flight only doubles memory (the process serializes anyway,
 this makes Cloud Run agree); `--memory 2Gi` against a measured 955 MB peak at batch 1;
-`--max-instances 3` is the cheap ceiling on total spend.
+`--max-instances 3` is the cheap ceiling on total spend. **`--cpu-boost` shipped 2026-08-06** and
+aimed at the 9.5 s of model load inside the cold start — ⚠ **the first reading with it on was WORSE
+(`loadMs` 25,857 ms vs 9,500), and that is not a finding**: n=1 vs n=1, both on a freshly pushed
+image whose layers Cloud Run streams lazily. [../METRICS.md](../METRICS.md).
 
 ✅ Verified against the live service: `check:limits` **6/6** and `parity:server --replay` **120/128
-strips identical to the browser** — the same rate as the local server. ⚠ **Still owed: the $5 budget
-alert**, and the 413 fix (`0b1cb44`) is committed but not yet redeployed.
+strips identical to the browser** — the same rate as the local server. ✅ **The redeploy happened
+2026-08-06** (revision `omr-decode-00003-jrl`): 413 fix, `--cpu-boost`, and
+`ALLOWED_ORIGINS=https://komavision.netlify.app` — verified by preflight, which returns the header
+for that origin and **nothing for a stranger**. ⚠ Two consequences: `smoke:build` driven from a
+localhost preview against the live server now fails CORS **by design**, and `--cpu-boost` did not
+visibly help (below).
 
 ⚠ `.gcloudignore` is load-bearing: `apps/web/public/models/` is gitignored, and without an explicit
 ignore file gcloud derives the upload list from `.gitignore` and ships a context with **no weights
@@ -376,6 +394,6 @@ in it**.
 | Rung | Effect |
 |---|---|
 | **W8** (confidence) | **DROPPED** for this release — the pre-registered bar was not met. Half of the 2026-07-27 goal stays unbuilt, said out loud. [../DECISIONS.md](../DECISIONS.md) |
-| **W9** (server + hosting) | **Server BUILT 2026-08-06, not deployed.** ⚠ The *hosting* half of this rung's title is untouched: the app still runs from `npm run dev:web` and the fallback's weights still come from `apps/web/public/models/`. **Putting the app on a COOP/COEP host and the weights on Hugging Face Hub is owed** — nothing about it changed, it simply was not built, and W10 cannot happen without it. |
+| **W9** (server + hosting) | ✅ **COMPLETE 2026-08-06.** Server on Cloud Run, app on Netlify (**<https://komavision.netlify.app>**), weights on the Hub (`Beyaban/omr-weights`), origin lock on, safety checklist complete. Verified against the deployed site rather than assumed: COOP/COEP present, the 25.58 MiB wasm served whole, `/models/*.onnx` 404, both URLs live in the shipped bundle. |
 | **W10** (friends release) | Two friends, interface feedback, no ads, no in-app reporting; safety checklist first. |
 | **public launch** | A new rung after W10, gated on Round 3's exam result. |

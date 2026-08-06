@@ -6,9 +6,12 @@ updated: 2026-08-06
 
 ## Now
 
-**The decode server is DEPLOYED and answering on Cloud Run. The next action is the owner's $5
-budget alert, then hosting the app itself.** TWO tracks run in parallel, as re-scoped by the owner
-on 2026-08-05:
+**W9 IS COMPLETE AND NOTHING IS OWED ON IT.** The app is LIVE at
+**<https://komavision.netlify.app>**, the weights are on the Hub, decode is on Cloud Run behind the
+origin lock, and `npm run smoke:live` **passes on both paths against the deployed site** — the
+shipped configuration, driven as a friend would. **The next action is a STYLE PASS** (owner,
+2026-08-06): the site is a working harness and looks like one, and W10 exists to ask two friends
+about the interface. Then W10. TWO tracks run in parallel, as re-scoped on 2026-08-05:
 
 | | |
 |---|---|
@@ -27,101 +30,86 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   concurrency 1 / max-instances 3. Node + `onnxruntime-node` importing the browser's own
   `decode.ts`, so there is **one decode implementation, not a third**. The client swaps behind
   `VITE_DECODE_URL` and falls back to in-browser decode on any failure.
-  **The deployed service reads what the browser reads**: 120/128 strips (93.8%) identical ids — the
-  same rate as the local server — with divergences on near-ties (median log-prob −0.87). Against
-  gold the two are a **paired wash**: McNemar exact **p = 0.727** over 267 hand-verified strips.
-  Live safety checks **6/6**.
+  **The deployed service reads what the browser reads**: 120/128 strips (93.8%) identical ids, with
+  divergences on near-ties; against gold a **paired wash**, McNemar exact **p = 0.727** over 267
+  hand-verified strips. Live safety checks **6/6**.
   ⚠ **It is SLOWER than the owner's own browser: 250 s vs 166 s over 128 strips (0.66×), plus a
-  10.6 s cold start** — 9.5 s of which is loading the graphs. **This is exactly what
-  [mvp/deploy.md](mvp/deploy.md) predicted and what the release was chosen on**: the win is a
-  friend's laptop staying cool, not speed. A cloud vCPU costs **1.93 vCPU-s per strip** against 0.55
-  on an M4 core (~3.5× slower), so a page is ~40 vCPU-s and the free tier covers **~4,450
-  pages/month** — a third of the laptop estimate, and still ~4× more than 50 users would ever need.
-  ⚠ **Owed:** the **$5 budget alert** is still not set (owner's console), a second cold start after
-  real idle is unmeasured, and two-at-once uploads are untested.
-  ⚠ **Two bugs stood between "built" and "running", and both were the same shape**: what ships was
-  never what was tested. The container's ESM bundle threw on `pngjs`'s CommonJS `require("util")`
-  (dev runs `tsx`, which resolves it natively) — `npm run check:bundle` now boots the bundled
-  artifact. And a destroyed socket reached Cloud Run's proxy as a **503** instead of a 413, so a
-  client's oversized upload looked like an outage and would have sent the app into a slow local
-  fallback.
-- **✅ THE APP IS NOW BUILDABLE FOR A STATIC HOST (2026-08-06)** — the other half of W9's title.
-  `npm run build:app` produces **43.3 MB** (ORT's wasm 25.6 + opencv.js 14.8), and it **fails** if
-  the output crosses 60 MB or contains an `.onnx`: Vite copies all of `public/` into `dist/`, which
-  is 332 MB of graphs plus 220 render-corpus scores, and deleting a directory by hand is easy to
-  forget. Weights now come from `VITE_WEIGHTS_URL` — a Hugging Face Hub repo holding exactly what
-  `prepare-models.mjs` emits, so the container, the Hub and a local checkout are one artifact set —
-  cached in Cache Storage, and fetched **only if the fallback fires**. `public/_headers` carries
-  COOP/COEP for Cloudflare Pages *or* Netlify. `npm run smoke:build` builds, serves `dist/` with the
-  real headers, serves the weights from a **second origin**, and drives both paths.
-- **⛔ AND IT FOUND A BUG THAT ONLY EXISTS IN THE BUILT APP: the fallback hung forever.** Every
-  `InferenceSession.create` logged `document is not defined` and never resolved — so a friend whose
-  server was cold would have watched a spinner until they gave up. The bundler inlines ORT's
-  `ort-wasm-simd-threaded.jsep.mjs`, which is *also* the worker script, and there is no `document`
-  in a Worker. Fixed by shipping ORT's runtime as real files (`/ort/`) and pointing `wasmPaths` at
-  them, **in production only** — dev has never had the bug and is the configuration the gate passes
-  at 27/28. Both paths now read the same page to the **same score** (9 staves → 26 strips → 399
-  notes / 26 measures), server **8.4 s**, fallback **33.1 s**.
-  ⚠ This is the argument for the check: dev, `smoke:page` and the gate were all green while the
-  thing a friend would actually open was broken.
+  10.6 s cold start** — 9.5 s of it loading the graphs. **Exactly what [mvp/deploy.md](mvp/deploy.md)
+  predicted and what the release was chosen on**: the win is a friend's laptop staying cool, not
+  speed. A cloud vCPU costs **1.93 vCPU-s per strip** against 0.55 on an M4 core (~3.5× slower), so a
+  page is ~40 vCPU-s and the free tier covers **~4,450 pages/month** — still ~4× more than 50 users
+  would need.
+  ✅ Safety checklist complete, and **concurrent uploads are measured, not assumed**: three page
+  requests at once got three instances, each at full speed
+  ([mvp/latency.md](mvp/latency.md)). ⚠ **Owed, and an attempt on 2026-08-06 FAILED to get it:** a
+  genuine cold start after real idle — the probe hit a warm instance (`uptimeS` 315), so it needs
+  container-start timestamps from the logs. ⚠ Also owed: one controlled read of `--cpu-boost`, which
+  across two revisions has **not** beaten the 9.5 s it aimed at ([METRICS.md](METRICS.md)).
+  ⚠ **Two bugs stood between "built" and "running", both the same shape** — what ships was never
+  what was tested (an ESM-bundle `require`, and a 503 that should have been a 413). `check:bundle`
+  and a live `check:limits` now cover them; the standing rule is [DECISIONS.md](DECISIONS.md).
+- **✅ THE APP IS BUILT, HOSTED AND CHECKED WHERE IT LIVES (2026-08-06)** — the other half of W9's
+  title. `build:app` produces **43.3 MB** and **fails** if the output crosses 60 MB or contains an
+  `.onnx` (Vite copies all of `public/` — 332 MB of graphs — into `dist/`, and deleting a directory
+  by hand is easy to forget). Weights come from `VITE_WEIGHTS_URL`, cached in Cache Storage and
+  fetched **only if the fallback fires**; `public/_headers` carries COOP/COEP, which **Netlify**
+  reads unchanged. **`npm run smoke:live` drives the deployed site and passes on both paths**
+  (server 49.8 s, Hub-weights fallback 73.0 s, same score, no page errors) — and it exists because
+  the origin lock refuses a localhost preview, so `smoke:build` can no longer reach the real chain.
+- **⛔ AND IT FOUND A BUG THAT ONLY EXISTS IN THE BUILT APP: the fallback hung forever** — the
+  bundler inlines ORT's `…jsep.mjs`, which is *also* the worker script, and a Worker has no
+  `document`. Fixed by shipping ORT's runtime as real files (`/ort/`, `wasmPaths`), production only.
+  ⚠ The argument for the check: dev, `smoke:page` and the 27/28 gate were all green while the thing
+  a friend would open was broken.
 - **⛔ THE BATCHING ARGUMENT FOR HAVING A SERVER IS WITHDRAWN — measured, not argued (2026-08-06).**
-  `deploy.md` listed "no batching, ever" as a structural advantage over `onnxruntime-web`. Batch 8 is
-  **slower at every thread count** and costs **2.9× the peak memory**, so `OMR_MAX_BATCH` defaults to
-  **1**. **The real second reason for a server is that native ORT is ~4× faster than wasm.** The
-  **"smaller upload" reason is withdrawn too**: the crops upload is a median **1.7× the page image**.
-  Numbers: [METRICS.md](METRICS.md).
-- **A page costs 11.7 vCPU-seconds at 1 vCPU** — measured from the server's own `process.cpuUsage()`,
-  which is what Cloud Run bills. **1 vCPU is the cheapest shape by 2.5×** (2 vCPU 16.8, 4 vCPU 29.3),
-  and the free tier covers roughly **15,400 pages/month** there. The earlier 30–60 vCPU-s estimate
-  was ~3× pessimistic because it assumed the batching that does not exist.
-- **A slice inspector, and two crop fixes from 2026-08-05.** `/slices.html` shows every crop a page
-  is cut into with the slicer's own reasoning, its decoded label and its vertical placement — it is
-  how both fixes below were found ([MANUAL_CHECKS.md](MANUAL_CHECKS.md) Check 13). **A slur above
-  the staff was shearing the beams below**: ink above may now claim only 3.5 sp, cutting beam loss
-  **19,932 → 17,231 (−13.6%)** with 0 px lost in the ledger-note zone. ⚠ An information argument,
-  not a decode result, and the other 85% of clipped rows are not fixable by placement. **The page
-  latency was fixed exactly**, 36.6 → 1.3 s/page with answers unchanged: the skew sweep's per-angle
-  morphology had a closed form, **856 ms → 6.8 ms per call**, checked at every angle over real pages
-  with **0 disagreements in 328 evaluations**. Detail: [log/status-log.md](log/status-log.md).
+  Batch 8 is **slower at every thread count** and costs **2.9× the peak memory**, so `OMR_MAX_BATCH`
+  defaults to **1**. **The real second reason for a server is that native ORT is ~4× faster than
+  wasm.** The **"smaller upload" reason is withdrawn too** (median **1.7× the page image**).
+- **A page costs 11.7 vCPU-seconds at 1 vCPU** (the server's own `process.cpuUsage()`, what Cloud Run
+  bills). **1 vCPU is the cheapest shape by 2.5×**; the earlier 30–60 vCPU-s estimate was ~3×
+  pessimistic because it assumed the batching that does not exist.
+- **A slice inspector, and two crop fixes from 2026-08-05.** `/slices.html` shows every crop with the
+  slicer's own reasoning, its decoded label and its placement ([MANUAL_CHECKS.md](MANUAL_CHECKS.md)
+  Check 13) — it is how both were found. **A slur above the staff was shearing the beams below**: ink
+  above may claim only 3.5 sp, cutting beam loss **−13.6%** with 0 px lost in the ledger-note zone
+  (⚠ an information argument, not a decode result). **The page latency was fixed exactly**,
+  36.6 → 1.3 s/page with answers unchanged — the skew sweep's per-angle morphology had a closed form,
+  **0 disagreements in 328 evaluations**. Detail: [log/status-log.md](log/status-log.md).
 - **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
   Owner-reported as "`\repstart`/`\repend`/`\tup3` are not seen in the sheet"; over the 1,704 decode
   caches it was two different things. **Repeats are not lost** — the note model has no field for one,
-  so they are consumed into an UNFOLDED playing order, the wanted behaviour (owner: no repeat
-  barlines drawn, unfold with correct voltas, cursor forward only); **1,165/1,262 pages unfold
-  (92.3%)**, the other **97 (7.7%)** carry a `\repstart` the model never closed and are left alone
-  rather than guessed at. **Triplets were genuinely broken**: an unclosed run yielded no group, so
-  every member snapped to the nearest plain value — a definitely-wrong rhythm with no mark saying
-  so, **1,287 notes / 22.9% of `\tup3`-bearing pages**, now **0**.
-  ⚠ `tupletGroupsIn` is shared with the label serializer by design, so both moved: **5 measures in 1
-  of 190 training pieces**, on a future re-render only. ⚠ **`verify-labels.ts` cannot see this** — it
-  inspects accidental glyphs; the real check was rendering the 3 worst pages through both draw paths
-  with 0 dropped measures.
+  so they are consumed into an UNFOLDED playing order, the wanted behaviour (no repeat barlines
+  drawn, correct voltas, cursor forward only); **1,165/1,262 pages unfold (92.3%)**, the other **97
+  (7.7%)** carry a `\repstart` the model never closed and are left alone rather than guessed at.
+  **Triplets were genuinely broken**: an unclosed run yielded no group, so every member snapped to
+  the nearest plain value — a definitely-wrong rhythm with no mark saying so, **1,287 notes / 22.9%
+  of `\tup3`-bearing pages**, now **0**. ⚠ `tupletGroupsIn` is shared with the label serializer, so
+  both moved: **5 measures in 1 of 190 training pieces**, on a future re-render only. ⚠
+  **`verify-labels.ts` cannot see this** — the real check was rendering the 3 worst pages through
+  both draw paths with 0 dropped measures.
 - **✅ W7 PASSED (2026-08-05): THE APP READS A WHOLE PAGE.** Upload an image, get a playable,
-  editable, saveable score — slice, decode, stitch, render, play, nothing stubbed. `npm run
-  smoke:page`: **7 staves → 16 strips → 344 notes / 28 measures**, strip count matching local Python
-  16 vs 16. The 35-second freeze was fixed by making `estimate_skew` a **generator with two
-  drivers** rather than an async copy, with **no arithmetic change** — verified, deskew angle
-  identical 20/20. ⚠ A hang at 0% CPU turned out to be Vite's dep optimizer full-reloading the tab
-  mid-slice, not the port; `optimizeDeps.include` fixes it. Detail: [mvp/rungs.md](mvp/rungs.md).
+  editable, saveable score — nothing stubbed. `smoke:page`: **7 staves → 16 strips → 344 notes /
+  28 measures**, strip count matching local Python. The 35-second freeze was fixed by making
+  `estimate_skew` a **generator with two drivers**, with **no arithmetic change** (deskew angle
+  identical 20/20). ⚠ A hang at 0% CPU was Vite's dep optimizer full-reloading the tab mid-slice,
+  not the port. Detail: [mvp/rungs.md](mvp/rungs.md).
 - **✅ W0–W6 PASSED (2026-08-02/04) — the slicer port is done and the browser is not worse than
-  Python.** opencv.js bit-identical on all five primitives; decode extracted with per-token
-  confidence; the browser scored against the SAME hand-verified gold as Python — **SER 0.0821 →
-  0.0818, exact-match 60.2% both**; and the ported slicer checked over the whole corpus, 1,781 pages
-  / 33,805 strips, with the decode arm **paired** (McNemar p = 0.077, no detectable difference).
-  Write-ups, including the four hypotheses that died along the way: [mvp/rungs.md](mvp/rungs.md).
-  Numbers: [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md).
-  ⚠ Three things from those rungs that still bind: **agreement with an artifact is not correctness**
-  (the `strips_v2` manifests are not the bar — the current Python reproduces only 98.59% of them,
-  and three separate criteria had to be restated for this reason); **`prepPage` is not a no-op**
-  (15.3% of corpus pages take a real rotation); and the **86.0% browser-vs-Python ceiling** is
-  near-ties, not a resampler — disagreement concentrates where the model is unsure (21.9% agreement
-  below `min_logprob < -1.0` against 90.9% above), so `preprocess.ts` is unchanged. **Owed:** every
-  full-corpus run used `--inject-skew`, so the deskew *estimator* is validated on 132 pages.
+  Python.** opencv.js bit-identical on all five primitives; the browser scored against the SAME
+  hand-verified gold as Python (**SER 0.0821 → 0.0818**, exact-match 60.2% both); the ported slicer
+  checked over 1,781 pages / 33,805 strips with the decode arm **paired** (McNemar p = 0.077).
+  Write-ups and the four hypotheses that died: [mvp/rungs.md](mvp/rungs.md). Numbers:
+  [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md).
+  ⚠ Three things still bind: **agreement with an artifact is not correctness** (the `strips_v2`
+  manifests are not the bar — current Python reproduces 98.59%, and three criteria had to be
+  restated for it); **`prepPage` is not a no-op** (15.3% of pages take a real rotation); and the
+  **86.0% browser-vs-Python ceiling** is near-ties, not a resampler, so `preprocess.ts` is
+  unchanged. **Owed:** every full-corpus run used `--inject-skew`, so the deskew *estimator* is
+  validated on 132 pages.
 - **⛔ The confidence signal missed its pre-registered bar, and W8 is DROPPED (owner, 2026-08-05).**
-  Against gold, flagged strips do average **8.60 token edits vs 2.69** — the signal is real — but
-  "flag 10% of tokens, catch ≥60% of errors" is **NOT MET**: the best achievable at a 10% budget is
-  **26.3%**. A usable soft operating point existed (`min_logprob < -0.5`: flag 22.6% of strips, catch
-  57.1% of edits, 2.5× lift) and was **not** taken. **The bar was not moved to fit the result.**
+  Flagged strips do average **8.60 token edits vs 2.69** — the signal is real — but "flag 10% of
+  tokens, catch ≥60% of errors" is **NOT MET**: the best at a 10% budget is **26.3%**. A usable soft
+  point existed (`min_logprob < -0.5`: 22.6% of strips, 57.1% of edits) and was **not** taken.
+  **The bar was not moved to fit the result.**
   Nothing is deleted — the measurement, `check:logprobs` and the per-token logprobs all stay, and it
   is a strong candidate to return if a friend asks for it. Detail: [mvp/rungs.md](mvp/rungs.md).
 
@@ -264,26 +252,42 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-1. **Redeploy to pick up the 413 fix** (`0b1cb44`, committed, not on Cloud Run). Not urgent — until
-   then an oversized upload returns 503 instead of 413, so a live `check:limits` reads 5/6.
-   ✅ The **$5 budget alert is SET** (owner, 2026-08-06) — the safety checklist is complete.
+1. **✅ DONE 2026-08-06 — the app and the weights are hosted.** `dist/` on **Netlify** at
+   **<https://komavision.netlify.app>**, weights on the Hub at **`Beyaban/omr-weights`** (uploaded
+   from `apps/server/models/`, so container, Hub and checkout stay one artifact set). Checks against
+   the deployed site, and the two traps — the Hub's *reflected* CORS origin, and Netlify SSO-gating
+   every new site behind a 401 — are in [METRICS.md](METRICS.md) and
+   [mvp/hosting-setup.md](mvp/hosting-setup.md). ⚠ **Cloudflare Pages was ruled OUT on a number:** a
+   **25 MiB** per-asset cap against our **25.58 MiB** wasm. The shrink to 12.86 MiB
+   (`onnxruntime-web/wasm`) is **deferred on purpose** — it changes the fallback's runtime.
+2. **⬅ THE NEXT ACTION: one redeploy, carrying everything owed.** `ALLOWED_ORIGINS` must become
+   `https://komavision.netlify.app` (it defaults to `*`, so the live app already works — this
+   closes the door rather than opening it); the **413 fix** (`0b1cb44`) is committed but not on
+   Cloud Run, so until it is, an oversized upload reads as a 503 outage and `check:limits` scores
+   5/6; and **`--cpu-boost`** goes on the same command (owner, 2026-08-06 — the only speed work
+   bought before W10). ⚠ Afterwards, **re-read `/health`'s `loadMs`** rather than assuming the boost
+   worked, and expect `smoke:build` run from localhost against the live server to start failing
+   CORS — that is the lock working, not a regression.
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.
-2. **Optionally, make it faster before the friends see it — the options are costed and one of them
-   is measured.** A page is ~35–55 s on Cloud Run against ~34 s in the owner's own browser, and
-   **parallelism across instances is proven to work** (3 requests at once, full speed each). The
-   recommended order is a warm-up ping → `--cpu-boost` → splitting a page across instances
-   (~52 s → ~13 s), with the five things that last one requires written down:
-   [mvp/latency.md](mvp/latency.md). ⚠ Not started, and W10 does not depend on it.
-3. **Put the app and the weights somewhere.** The code is done (`npm run build:app` →
-   43.3 MB, `smoke:build` green on both paths); what is left is three accounts' worth of clicking:
-   upload `apps/server/models/` to a **Hugging Face Hub** repo, push `dist/` to **Cloudflare Pages
-   or Netlify**, and build with `VITE_DECODE_URL` + `VITE_WEIGHTS_URL` set to the two URLs.
-   ⚠ Then set the server's `ALLOWED_ORIGINS` to the app's host — it defaults to `*`.
-4. **W10 — release to two friends.** Ask what features to add. Billing cap first. No ads and no
-   in-app feedback widget: talk to them.
-5. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
+3. **⏸ Everything else about speed is DEFERRED to after W10** (owner, 2026-08-06): ship at **~35–55 s
+   a page**. Splitting a page across instances (~52 s → ~13 s) is the only option that touches the
+   warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
+   chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
+   annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
+4. **⬅ A STYLE PASS ON THE APP, BEFORE W10** (owner, 2026-08-06). The app is a working harness and
+   looks like one. The owner is doing this before the link goes out, and the reason is the release's
+   own purpose: **W10 asks two friends about the interface**, so shipping an unstyled page spends
+   both friends' first impressions on feedback we already have ("make it look better"). ⚠ Scope is
+   presentation only — nothing about slicing, decode or the fallback moves. `smoke:live` is the
+   check that it still works afterwards, and any change needs a **rebuild with both env vars** and a
+   redeploy (`hosting-setup.md` steps 7–8), because the URLs are baked in at build time.
+   `http://localhost:5173` and `:4173` are in `ALLOWED_ORIGINS` (revision `omr-decode-00004-nc2`) so
+   `dev:web` can reach the live decode server while this is worked on.
+5. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback widget:
+   talk to them.
+6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
 ### Track B — the model (Round 3, UNPAUSED)
 
@@ -321,9 +325,6 @@ the model track never touches the app.** Either can be worked on without waiting
    - **Not recoverable, for the record:** the owner's 130 v1 verdicts (**65 ok / 22 fix / 43 bad**)
      did not transfer — no crop survives a re-slice unchanged. What they bought is the confidence
      calibration and the 33% crop-failure rate that sized the 165-row v2 queue.
-
-   *(The re-emit decision and the `select_pieces.py` content work used to sit here; both are now
-   live under Track B above.)*
 
 2. **The error-localisation UI — deferred 2026-07-27, then DROPPED as W8 on 2026-08-05.** The
    measurement is done and it is the reason it was dropped: flagging 10% of tokens catches 26.3% of

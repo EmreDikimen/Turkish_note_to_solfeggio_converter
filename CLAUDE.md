@@ -56,7 +56,11 @@ npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED
 npm run parity:slicer -- --ref ref.json                # ported slicer vs local python (MVP W4-W6)
 ```
 
-### The decode server and the deployable app (W9)
+### The decode server and the deployable app (W9 — SHIPPED)
+
+**It is live**: app <https://komavision.netlify.app> (Netlify), weights `Beyaban/omr-weights`
+(Hugging Face Hub), decode on Cloud Run behind `ALLOWED_ORIGINS`. Setup recipe and its two traps:
+[docs/mvp/hosting-setup.md](docs/mvp/hosting-setup.md).
 
 ```bash
 node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs
@@ -68,7 +72,12 @@ npm run check:bundle                 # the BUNDLED server boots — not the same
 VITE_DECODE_URL=http://localhost:8080 npm run smoke:page   # the app THROUGH the server
 npm run build:app                    # the deployable app — FAILS if the weights leak into dist/
 npm run smoke:build                  # builds, then drives the BUILT app: server path + fallback
+npm run smoke:live                   # drives the DEPLOYED site — the only check the origin lock allows
 ```
+
+⚠ **`smoke:build` from localhost can no longer reach the live server** — `ALLOWED_ORIGINS` refuses
+it, by design. Use `smoke:live` for the deployed chain, or a local `dev:server` for `smoke:build`.
+`http://localhost:5173` / `:4173` ARE allowed, so `dev:web` still reaches the live decode server.
 
 ### Python (training and data only — never shipped)
 

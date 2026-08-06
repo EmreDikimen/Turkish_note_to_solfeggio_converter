@@ -8,8 +8,11 @@ updated: 2026-08-06
 > Deployment, hosting and the bill: [deploy.md](deploy.md). Every number below also lives in
 > [../METRICS.md](../METRICS.md). Current state and next action: [../STATUS.md](../STATUS.md).
 >
-> ⚠ **None of this is built.** It is a menu with prices, written after the first real measurements
-> on Cloud Run, so that whoever picks it up does not start with the expensive option.
+> ⚠ **None of this is built, and the owner decided on 2026-08-06 that almost none of it will be
+> before W10.** Only **`--cpu-boost`** is bought, because it rides a redeploy that has to happen
+> anyway; everything else is **deferred, not dropped**, and the trigger is a friend saying the wait
+> is annoying. The reasoning is in [../DECISIONS.md](../DECISIONS.md); the prices below are what
+> that decision was made against, so they stay exactly as measured.
 
 ## Where the time goes
 
@@ -63,6 +66,13 @@ so one page can be split across several instances the same way three pages were.
 **Recommended order: 1, then 2, then 3.** 1 and 2 are nearly free and attack the cold start; 3 is
 the only one that attacks the decode itself. 4 and 5 are for when 3 has been done and is not enough;
 6 is last because its gain is unmeasured and overlaps with 2.
+
+✅ **What was actually chosen (owner, 2026-08-06): option 2 only, and W10 ships at 35–55 s.** Option
+2 goes on the redeploy that `ALLOWED_ORIGINS` and the 413 fix already require, so it costs nothing.
+Option 1 was passed over despite being cheap — it is client code, and it buys the same thing option 2
+does. **The distinction that decided it: options 1 and 2 remove the 10.6 s cold start, not the
+31–51 s of decode**, so neither changes the wait a friend feels on a typical page. Only option 3
+does, and it is deferred until someone says the wait bothers them.
 
 ### What option 3 actually requires
 

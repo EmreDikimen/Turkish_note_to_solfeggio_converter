@@ -144,10 +144,19 @@ async function main() {
   const decodeUrl = arg("--decode-url", "http://localhost:8080");
 
   // The weights origin must exist before the build, because its URL is baked into the bundle.
-  const weights = await serveWeights();
+  //
+  // `--weights-url` swaps the local stand-in for the REAL Hugging Face repo. The local server is a
+  // faithful imitation on the one header that matters (`access-control-allow-origin: *`) — but the
+  // Hub does not send `*`, it REFLECTS the requesting origin behind `vary: Origin`, and it answers
+  // through a 307 to a different host. Neither is exercised by the imitation, and both are on the
+  // path that fails quietly under `require-corp`. Costs a 211 MB download, so it is opt-in.
+  const remoteWeights = arg("--weights-url");
+  const weights = remoteWeights
+    ? { url: remoteWeights.replace(/\/$/, ""), close: async () => {} }
+    : await serveWeights();
   console.log(
     `build smoke — ${path.relative(ROOT, image)}\n` +
-      `  weights from a second origin: ${weights.url}\n` +
+      `  weights from a second origin: ${weights.url}${remoteWeights ? "  (REAL, not the stand-in)" : ""}\n` +
       `  decode server:                ${decodeUrl}\n  building…`
   );
   execFileSync("npm", ["run", "build:app"], {

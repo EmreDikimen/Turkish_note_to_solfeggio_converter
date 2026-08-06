@@ -18,6 +18,7 @@
     "smoke:app": "npx tsx tools/browser/app-smoke.ts",
     "smoke:page": "npx tsx tools/browser/page-smoke.ts",
     "smoke:build": "npx tsx tools/browser/build-smoke.ts",
+    "smoke:live": "npx tsx tools/browser/live-smoke.ts",
     "build:app": "npm run -w @turkish-omr/web build",
     "parity:armb": "npx tsx tools/vision/parity/arm-b.ts",
     "parity:arma": "npx tsx tools/vision/parity/arm-a.ts",

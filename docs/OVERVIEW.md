@@ -113,41 +113,61 @@ was made when a page took ~56 seconds rather than ~25. You have used it since; t
 
 ### What is done and what is not (6 August 2026)
 
-**The server is live.** It runs at a Google address, it wakes up when someone uploads a page, and it
-sleeps when nobody does. The app can use it, and if it is asleep or broken the app quietly reads the
-page on your own computer instead and says so. All of that is tested.
+**The server is live.** It wakes when someone uploads a page and sleeps when nobody does; if it is
+asleep or broken the app reads the page on your own computer instead and says so. All tested.
 
-**We also checked the thing that matters most: does the server read music as well as the browser?**
-Not "do they agree" — they disagree on about 6% of strips — but "is either one *better*". On 267
-strips where we know the right answer, the difference is **too small to detect**. Neither is worse.
+**The thing that matters most: does the server read music as well as the browser?** Not "do they
+agree" — they disagree on about 6% of strips — but "is either *better*". On 267 strips where we know
+the right answer, the difference is **too small to detect**. Neither is worse.
 
 **The honest headline about speed: the server is SLOWER than your own laptop.** About 250 seconds
-where your browser takes 166, for the same work, plus roughly 11 seconds to wake up if it has been
-idle. A rented shared processor is about 3.5× slower than the one in your Mac.
-
-That is not bad news, and it is worth understanding why. **You did not buy speed. You bought your
-friends' laptops staying cool** — that was the whole reason for the server, written down before any
-of it was built. Your friends' computers are probably slower than yours anyway, so for them it may
-feel about the same.
+where your browser takes 166, plus ~11 seconds to wake up. A rented shared processor is about 3.5×
+slower than the one in your Mac. That is not bad news: **you did not buy speed, you bought your
+friends' laptops staying cool** — the whole reason for the server, written down before it was built.
+Your friends' computers are probably slower than yours anyway, so for them it may feel the same.
 
 **Cost: still effectively free.** A page uses about 40 seconds of rented processor time, and Google
 gives away enough for roughly **4,450 pages a month**. Fifty users would not come close.
 
-**Two things are left before your friends can use it:**
+**✅ It is online: <https://komavision.netlify.app>.** Done on 6 August. The safety list is complete
+too. What is left before you send the link is nothing technical — it is deciding to send it.
 
-1. **Set a $5 spending alert** in the Google billing page. Only you can do this. Remember it only
-   emails you — the real protection is the limit of 3 running copies and the upload limit per
-   person, and both are already switched on.
-2. **Put the app itself online** (the part with the buttons). The code is ready; it needs a free
-   account at Cloudflare or Netlify for the app and one at Hugging Face for the model file.
+### The three places it lives, and why it is not just one
 
-**Three bugs today, and they were all the same mistake in different clothes.** Each time, the thing
-that gets shipped was not the thing being tested — we tested the convenient version. Once the app
-worked perfectly while running from the development server but froze when built properly. Once the
-server ran fine on this Mac but the packed-up version crashed instantly in the cloud. Once an
-oversized upload was refused correctly here and looked like a crash through Google's system. All
-three are fixed, and there are now checks that run the *real* version. If something surprises us
-next time, that is the first thing to suspect.
+This confused things when it was being set up, so it is written down plainly. Your app is in three
+different places because they are three different *kinds* of job, and no single free service does
+all three well.
+
+| | What it is | What it does for you | Why not somewhere else |
+|---|---|---|---|
+| **Netlify** | A **filing cabinet for a website**. It stores files and hands them to whoever asks. | Holds the page itself: the buttons, the sheet-music drawing, the sound. 43 MB. | It only ever hands out files. It cannot *run* anything, so it cannot read music. |
+| **Hugging Face** | A **filing cabinet for big AI files**, free for public ones. | Holds the model — the 211 MB the app learned to read music with. | Netlify refuses files this big, and your friends should never download them anyway (see below). |
+| **Google Cloud Run** | A **computer you rent by the second**. It wakes when asked, works, and sleeps. | Actually reads the music. Your friend's page is sent here, and notes come back. | This is the only one of the three that runs a program. It is also the only one that could cost money — hence the $5 alert. |
+
+The everyday path is: **Netlify gives your friend the page → the page cuts the photo into strips →
+the strips go to Cloud Run → the notes come back.** Hugging Face is not involved at all.
+
+Hugging Face only wakes up in an emergency. If Cloud Run is asleep or broken, the page downloads the
+model from Hugging Face and reads the music **on your friend's own computer** instead — slower, and
+their laptop gets warm, but it works rather than showing an error. That is why the model has to live
+somewhere a browser can reach, even though almost nobody will ever fetch it.
+
+**One good way to picture it:** Netlify is the *menu*, Hugging Face is the *emergency recipe book*,
+and Cloud Run is the *kitchen*. Normally you order from the menu and the kitchen cooks. If the
+kitchen is closed, you get handed the recipe book and cook at home.
+
+The step-by-step of how it was set up: **[mvp/hosting-setup.md](mvp/hosting-setup.md)**.
+
+**Netlify, not Cloudflare — for an oddly specific reason.** Cloudflare refuses any single file over
+25 MiB and one of ours is 25.58 — over by half a megabyte. Netlify does not mind and reads the same
+settings file, so nothing had to be rewritten. That file can be halved later; it changes how the app
+reads music on its own, so it is not something to rush the day before a release.
+
+**Three bugs today, all the same mistake in different clothes: what gets shipped was not what we
+tested.** The app worked from the development server but froze when built properly; the server ran
+here but crashed packed up in the cloud; an oversized upload was refused correctly here and looked
+like a crash through Google's system. All fixed, and there are now checks that run the *real*
+version. If something surprises us next time, suspect this first.
 
 ### Something we decided NOT to build (5 August)
 
@@ -156,42 +176,34 @@ in 10, and catch 6 mistakes out of 10.* We measured it, and the best it can actu
 budget is **about 2.6 out of 10**. A weaker version works (look at 1 strip in 5, catch just over half
 the mistakes), but you chose not to ship that.
 
-**Two things worth saying plainly.** First: this means half of the goal we set in July is not built,
-and we are writing that down rather than quietly forgetting it. Second: **we did not lower the
-standard to make the result look like a pass** — that is the mistake that has caught us twice before
-with exam scores. Nothing is deleted; if a friend asks for exactly this feature, it comes back.
+**Two things worth saying plainly.** Half of the goal we set in July is therefore not built, and we
+are writing that down rather than quietly forgetting it. And **we did not lower the standard to make
+the result look like a pass** — the mistake that has caught us twice before with exam scores.
+Nothing is deleted; if a friend asks for this feature, it comes back.
 
-**The page-cutter was finished on 4 August.** It existed only in Python; it has now been rewritten
-to run in the browser as a strict copy, not an improvement, and checked against the Python original
-over **every page we have** (1,781 pages) — staff lines, bar-lines and strips all match, except for
-a handful caused by a 1-shade difference in how a browser reads colours, where Python makes the
-*same* change if we feed it that difference. We also cut 20 pages both ways and read both sets of
-strips: same reading, and every strip the two disagreed on was **exactly the same width** in both,
-which is how we know the cutter is not the cause.
+**The page-cutter was finished on 4 August.** It existed only in Python and has been rewritten to run
+in the browser as a strict copy, not an improvement, then checked against the original over **every
+page we have** (1,781) — staff lines, bar-lines and strips all match, bar a handful caused by a
+1-shade difference in how a browser reads colours, where Python makes the *same* change if fed that
+difference. We also cut 20 pages both ways and read both sets: same reading, and every strip they
+disagreed on was **exactly the same width** in both, which is how we know the cutter is not the cause.
 ### The app now reads a whole page (5 August)
 
-**You can hand it a picture of a page and get music back.** Before today the app could only read the
-small strips *after* someone else had cut them up. Now you pick one image — a screenshot or a clean
-scan of a page — and the app cuts it, reads it, puts it back together, and shows you a score you can
-play, edit and save. That is the whole thing working end to end for the first time.
+**You can hand it a picture of a page and get music back.** Before that day the app could only read
+small strips *after* someone else cut them up. Now you pick one image — a screenshot or a clean scan
+— and the app cuts it, reads it, puts it back together, and shows a score you can play, edit and
+save. On the test page: **7 lines of music → 16 strips → 344 notes**, and the browser and Python cut
+it the same way, so the new cutter and the old one agree all the way through.
 
-On the test page: **7 lines of music → 16 strips → 344 notes**. Both the browser and Python cut it
-into 16 strips, and the same page read the *old* way gives the same 344 notes — so the new cutter
-and the old one agree all the way through.
+**The hard part was not the wiring, it was the waiting.** Checking a page for tilt froze the tab for
+~35 seconds — no progress shown, and the browser offering to kill the page. Letting the check pause
+between each of its 41 attempts fixed that with **no change to the answer** (identical on 20 pages).
 
-**The hard part was not the wiring, it was the waiting.** Checking the page for tilt takes ~35
-seconds, and during that time the browser tab was completely frozen: no progress shown, and the
-browser would offer to kill the page. We fixed that by letting the tilt check pause between each of
-its 41 attempts, so the tab keeps breathing and you see a counter move. **Nothing about the result
-changed** — we re-ran the comparison against Python on 20 pages and the tilt answer was identical on
-all 20.
-
-✅ **And then the slowness was fixed, the same day: a page went from ~56 seconds to ~25.** The tilt
-check was doing an expensive image operation 41 times over. It turned out that operation had an
-exact shortcut — not an approximation, the *same answer* by a cheaper route — so it now takes 7
-milliseconds instead of 856. **We checked it as a shortcut, not as an improvement**: both versions
-were run side by side on real pages at every angle, **328 comparisons, zero disagreements**. The
-page-cutter in the browser is now faster than the Python original it was copied from.
+✅ **Then the slowness itself was fixed: a page went from ~56 seconds to ~25.** The tilt check was
+doing an expensive image operation 41 times, and that operation had an exact shortcut — not an
+approximation, the *same answer* more cheaply — so it takes 7 milliseconds instead of 856. **Checked
+as a shortcut, not an improvement:** both versions run side by side at every angle, **328
+comparisons, zero disagreements**.
 
 What is left of the 25 seconds is **the reading itself (~19 seconds)** — which is exactly the part
 moving to the server.
@@ -215,14 +227,12 @@ middle of the job and throwing the upload away. One line of configuration fixed 
   perfectly, and the new model is better.
 - **So we shipped Round 2 — it is the model in the app now** (2026-07-27). Same wording as Round 1:
   *an improvement, not a pass* — it still does not clear our 85% bar, and we say so rather than
-  quietly redefining the bar. Shipping means the model was converted to the small, fast form the
-  browser runs (221 MB) and checked at every step: it gives **exactly** the same answers in that
-  form (14 out of 14 test pictures, twice over), and in a real browser it read 27 of 28 correctly.
-  The one miss is not a reading mistake: on that picture the model itself was only **69% sure** a
-  triplet bracket was there (its next guess, 31%, was "no bracket"), and the browser's slightly
-  different arithmetic tips that coin the other way. Every other symbol in the strip is 94–100%
-  certain, and the path the actual app uses reads it correctly. The old model is kept, so we can
-  switch back in minutes.
+  quietly redefining it. Shipping meant converting the model to the small, fast form the browser
+  runs (221 MB) and checking each step: **exactly** the same answers in that form (14/14 test
+  pictures, twice), and 27 of 28 correct in a real browser. The one miss is not a reading mistake —
+  the model was only **69% sure** a triplet bracket was there, and the browser's slightly different
+  arithmetic tips that coin. The path the app actually uses reads it correctly, and the old model is
+  kept so we can switch back in minutes.
 - **Important honesty note:** the fairer score looks higher (≈85% instead of 74%), but that does
   **not** mean we hit our 85% goal. The goal was written against the old, stricter score. We did not
   move the goalposts to a number that flatters us — we use the fair score to tell whether a change
@@ -235,10 +245,10 @@ middle of the job and throwing the upload away. One line of configuration fixed 
   underneath is different: the model now mixes koma and küçük up **in both directions, equally**, and
   **only inside the key signature** (the marks printed once at the start of each line). It is no
   longer guessing; it genuinely cannot tell 2 bars from 3 bars there.
-- **The next thing to check.** All our careful measuring of how these marks should look was done on
-  marks printed **on a note**. The marks in the key signature are squeezed together in a fixed space,
-  and we have **never measured those** — even though that is where almost all the hard marks are.
-  We may even have made them worse by widening them. So: measure first, and only then change anything.
+- **The next thing to check.** All our measuring of how these marks should look was done on marks
+  printed **on a note**. The key-signature marks are squeezed into a fixed space and have **never
+  been measured** — even though that is where almost all the hard marks are, and widening them may
+  have made things worse. Measure first, change second.
 - We finished **Round 1** — the first time the model trained on **real** printed pages (before, it
   only trained on clean computer-made ones). It scored **about 66%** on the exam (real pages it never
   trains on), below our **85%** target, but clearly better than the old model, so we **shipped it**.
@@ -252,19 +262,16 @@ middle of the job and throwing the upload away. One line of configuration fixed 
   for a person). The direct result: **about 74%** on the hard marks — only **~3–4 points behind clean
   pages**. **So photos are basically a solved problem now** — the model reads them almost as well as
   clean scans, and the slicer clean-up was the fix.
-- **What the honest photo score revealed:** the model's real weakness is **two specific marks — the
-  koma and küçük sharp** (it mixes them up with each other and with the bakiye sharp). This is *not* a
-  photo problem — it happens on clean pages too. And two things we *thought* were problems — the
-  bar-lines (`|`) and the "tie" marks — are actually read **well** (about 90%+). So the one thing worth
-  fixing in the model is telling those three sharps apart.
-- **We re-checked the exam's answer key and found it had a few wrong answers.** After fixing 13 of
-  them, the exam score went from 66% to **about 78%**. But be careful: **most of that jump is a
-  scoring quirk**, not the model getting better. The score is an *average across mark-types*, and one
-  tiny mark-type (only **3 examples**, all scored 0) was dragging the average down; fixing those 3
-  removed it from the average. The model's actual reading barely changed. **Takeaway:** the model was
-  a little better than 66% suggested, but it still has a **real weakness on two of the hardest marks**
-  (koma/küçük sharp), and our exam's headline number is **too easily swung by tiny categories** — we
-  will fix how it is averaged.
+- **What the honest photo score revealed:** the model's real weakness is **two marks — the koma and
+  küçük sharp** (mixed up with each other and with the bakiye sharp), and it is *not* a photo problem
+  — it happens on clean pages too. Two things we *thought* were problems, the bar-lines (`|`) and the
+  "tie" marks, are read **well** (~90%+). So the one thing worth fixing is telling those sharps apart.
+- **We re-checked the exam's answer key and found a few wrong answers.** Fixing 13 took the score
+  from 66% to **about 78%** — but **most of that jump is a scoring quirk**, not the model improving.
+  The score averages across mark-types, and one tiny type (**3 examples**, all scored 0) was dragging
+  it down; fixing those 3 removed it from the average. **Takeaway:** the model was a little better
+  than 66% suggested, it still has a **real weakness on koma/küçük sharp**, and our headline number
+  is **too easily swung by tiny categories** — we will fix how it is averaged.
 
 ---
 
@@ -302,12 +309,15 @@ shoot **different** pieces (there are thousands available).
 3. ~~Switch the app over, keeping the "read it here instead" fallback.~~ ✅ **Done and tested.**
 4. ~~Put it online.~~ ✅ **Done 6 August** — the server is live, and the wake-up delay turned out to
    be about 11 seconds.
-5. **Set the $5 spending alert** in the Google billing settings — the last safety item, and only you
-   can do it. Everything else is built and tested (upload size, uploads per person, refusing
-   anything that is not a proper strip picture, at most 3 copies running).
-6. **Put the app itself online** — a free Cloudflare or Netlify account for the buttons, and a free
-   Hugging Face account for the model file. The code is ready and tested.
-7. **Send the link to two friends and ask what to add.**
+5. ~~Set the $5 spending alert.~~ ✅ **Done 6 August** — the safety list is complete (upload size,
+   uploads per person, refusing anything that is not a proper strip picture, at most 3 copies
+   running).
+6. ~~Put the app itself online.~~ ✅ **Done 6 August** — <https://komavision.netlify.app>, with the
+   model on Hugging Face and the door locked so only your own site may use the reading server.
+7. **Send the link to two friends and ask what to add. This is the next thing, and it is yours.**
+   Tell them the first upload of the day is slow (the rented computer has to wake up), and that a
+   page takes about a minute. Ask about the **buttons and the screen**, not about mistakes in the
+   notes — the notes are the exam's job, not theirs.
 8. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)

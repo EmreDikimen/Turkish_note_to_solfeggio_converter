@@ -9,6 +9,78 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
+## 2026-08-06 (night) — W9 is finished: there is a link
+
+**<https://komavision.netlify.app>** serves the app, `Beyaban/omr-weights` holds the 211 MB of
+graphs, and `omr-decode-00003-jrl` on Cloud Run reads the music with the door now locked to that one
+host. The owner made the two accounts; everything else was driven from here. Recipe and the two
+traps: [../mvp/hosting-setup.md](../mvp/hosting-setup.md).
+
+**Two things cost time, and neither was our code.**
+
+*The Hub does not send `access-control-allow-origin: *` for `model.json`.* The three `.onnx` files
+do — they are LFS, from a CDN — but the small file comes from the Hub app, which **reflects the
+caller's origin** behind `vary: Origin`. A bare `curl` sends no Origin and shows `huggingface.co`,
+which reads as broken. It is not, and `model.json` is fetched on **every** page load rather than only
+on the fallback, so a wrong conclusion there would have been expensive. `build-smoke.ts` gained
+`--weights-url` for exactly this: the local stand-in sends `*` and answers directly, the Hub reflects
+and answers through a 307, and only the real thing exercises either.
+
+*A brand-new Netlify site is private and does not say so.* Every path answered **401** with a login
+redirect. Account and email were both fine — Netlify now defaults new sites to `sso_login: true`.
+Also worth recording: the interactive CLI (`sites:create`, plain `deploy`) is unusable in this
+monorepo because it stops to ask which workspace; the `netlify api` calls ask nothing.
+
+**Measured on the way through.** The whole chain passes `smoke:build` on both paths with identical
+scores. The fallback costs **69.9 s against 33.2 s** with local weights — a friend's first fallback
+pays a **211 MB** download, once. And **`--cpu-boost` did not visibly help**: `loadMs` read
+**25,857 ms against 9,500** without it. That is deliberately *not* written up as "cpu-boost is
+worse" — n=1 against n=1, both on the first start of a freshly pushed image, and Cloud Run streams
+image layers lazily, so a first read of the graphs is partly network. The flag was taken because it
+was free on a redeploy and it still has no evidence behind it.
+
+## 2026-08-06 (late) — the host was re-picked on a number, and the built app met the live server
+
+Picking up "host the app and the weights", two things came out of it before either account existed.
+
+**Cloudflare Pages cannot host this build, and the reason is one file.** Pages refuses any single
+asset over **25 MiB** (checked against Cloudflare's own limits page, not from memory) and
+`dist/ort/ort-wasm-simd-threaded.jsep.wasm` is **26,827,543 bytes = 25.58 MiB** — over by ~613 KB.
+The app moved to **Netlify**, which reads the same `public/_headers`; **nothing in the repo changed**,
+which is exactly what the 2026-08-02 decision bought by keeping the two hosts interchangeable
+instead of picking one. Worth recording that the fix was available and was **not** taken: importing
+`onnxruntime-web/wasm` selects the non-jsep binary at **12.86 MiB** and would take `dist/` from 43.3
+to ~30 MB, losing nothing in use (`executionProviders: ["wasm"]` is all this app ever asks for) — but
+it changes the runtime the fallback loads, so it owes `gate:browser` and `smoke:build`, and a
+hosting deadline is the wrong reason to spend that.
+
+**The built app was driven against the LIVE Cloud Run service for the first time** —
+`smoke:build --decode-url <service>`, previously only ever run against `localhost:8080`. **PASS on
+both paths**: same 26-strip page, **61.2 s reading on the server against 33.2 s in the local
+fallback**, identical score (9 staves → 26 strips → 399 notes / 26 measures), `crossOriginIsolated`
+true, no page errors. The first run of it that day *failed*, and that is worth keeping: no decode
+server was running, so the server path fell back to the browser and the check reported a broken app.
+It is doing its job — the header says it needs `dev:server` — but the failure it prints looks like a
+product bug rather than a missing prerequisite.
+
+Everything past this point needs accounts the owner has to create, so the session ended with the
+walkthrough rather than a deploy: [../mvp/hosting-setup.md](../mvp/hosting-setup.md).
+
+**Closing note, written after the deploy: the last check had to be built, because the lock broke the
+existing one.** Setting `ALLOWED_ORIGINS` means a localhost preview is refused by the decode server,
+so `smoke:build` — the check written specifically to run the artifact that ships — could no longer
+reach the shipped configuration. `npm run smoke:live` (`tools/browser/live-smoke.ts`) drives the
+deployed site instead, and it **passed on both paths**: server **49.8 s**, fallback **73.0 s** with
+the weights coming from the Hub over the real network, same score, no page errors. The localhost dev
+origins were then added back to `ALLOWED_ORIGINS` so `dev:web` still works, which is a convenience
+and not a hole — a CORS origin is forgeable outside a browser, and the rate limit, payload caps and
+`--max-instances 3` are what actually bound abuse.
+
+**Then W10 grew a prerequisite.** The owner looked at the deployed site and stopped short of sending
+the link: it is a working harness and looks like one. A style pass goes first, on the release's own
+logic — W10 exists to ask two friends about the *interface*, and there are only two first
+impressions to spend.
+
 ## 2026-08-06 (evening) — deployed, and two bugs of the same shape stood in the way
 
 The decode server is live on Cloud Run: `omr-decode`, europe-west3, 1 vCPU / 2 GiB / concurrency 1 /

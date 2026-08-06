@@ -61,12 +61,19 @@ Homebrew is the tidy way on a Mac: it keeps the program out of your Desktop and 
 everything else.
 
 ```bash
-brew install --cask google-cloud-cli
+brew install --cask gcloud-cli     # NOT google-cloud-sdk, NOT google-cloud-cli
+hash -r                            # your shell caches which commands exist; this forgets that
 gcloud version
 ```
 
+⚠ **The cask name has changed twice.** It was `google-cloud-sdk`, and Homebrew now calls it
+`gcloud-cli` (Google renamed the product from "SDK" to "CLI"). If it ever fails with *No Cask with
+this name exists*, do not guess — run `brew search gcloud` and read the second group, which is the
+cask list.
+
 ⚠ With the Homebrew version, **`gcloud components update` is disabled** — use `brew upgrade` instead.
-That is the only day-to-day difference from Google's own installer.
+That is the only day-to-day difference from Google's own installer. It also installs `python@3.14`
+as a dependency (gcloud is written in Python); that does not disturb conda or `.venv-ml`.
 
 ---
 

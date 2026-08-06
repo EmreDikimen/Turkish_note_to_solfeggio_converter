@@ -188,9 +188,12 @@ gcloud run deploy omr-decode --image $IMAGE --region $REGION \
   --allow-unauthenticated
 ```
 
-The build takes a few minutes and uploads about 211 MB of model. **Expect the first attempt to need
-a fix or two** — the container has never been built anywhere, because there was no working Docker on
-the dev machine (deploy.md says so out loud).
+The build takes a few minutes and uploads about 213 MB. **This was run for real on 2026-08-06**: the
+build succeeded first time in **1 m 27 s**, and the *deploy* failed once — the container exited
+before opening its port, and Cloud Run reported only "failed to start and listen on PORT". The real
+error was in the logs (`gcloud logging read`), and it is fixed. If a deploy ever fails that way
+again, **read the logs before changing anything** — the message Cloud Run shows you is never the
+error itself.
 
 At the end Google prints a URL. Check it:
 

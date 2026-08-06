@@ -5,11 +5,13 @@ audience: the owner (and whoever wires the deploy), picking up W9
 
 updated: 2026-08-06
 
-> **The server is BUILT and checked; it is not DEPLOYED.** Steps 1–4 below are done as code and as
-> measurements, on a laptop. Nobody has run `gcloud` yet, so every cloud-side number here (cold
-> start, a shared vCPU's speed, the real bill) is still unmeasured. This file does not state the
+> ✅ **DEPLOYED 2026-08-06** — `https://omr-decode-706571981988.europe-west3.run.app`, Cloud Run
+> europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3. All four build steps are done and
+> the cloud-side numbers below are **measured, not extrapolated**. ⚠ Two things are still owed: the
+> **$5 budget alert** (owner's console) and **hosting the app itself**. This file does not state the
 > next action: [../STATUS.md](../STATUS.md). The ladder: [README.md](README.md). Decisions:
 > [../DECISIONS.md](../DECISIONS.md). Numbers: [../METRICS.md](../METRICS.md).
+> Never used Google Cloud? [gcloud-setup.md](gcloud-setup.md).
 >
 > ✅ **Everything on this page is SETTLED** (owner, 2026-08-05). The server happens; it runs on
 > Cloud Run; it is Node, not Python; the client falls back to in-browser decode; confidence
@@ -290,7 +292,7 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
 
 | # | Step | State |
 |---|---|---|
-| 1 | **Build the endpoint** | ✅ done — `apps/server/`, Dockerfile, `cloudbuild.yaml`, `.gcloudignore`. ⚠ **Deploying it is NOT done**: no `gcloud` on the dev machine and no project has been set up, so cold start and a real vCPU's speed stay unmeasured. |
+| 1 | **Build the endpoint and deploy it** | ✅ **done and live.** Built in Cloud Build (1 m 27 s, 213 MB context) and deployed. ⚠ Two bugs sat between "built" and "running", both the same shape — the shipped artifact was never the tested one: the ESM bundle threw on `pngjs`'s CommonJS `require` (dev uses `tsx`), and a destroyed socket became a 503. `check:bundle` and a live `check:limits` now cover both. |
 | 2 | **Prove the server matches the browser** | ✅ done — `npm run parity:server`, and then the check that actually decides it: both arms scored against `_realval_v2` gold, **paired, no detectable difference** (McNemar p = 0.727). [../METRICS.md](../METRICS.md) |
 | 3 | **Client swap behind a flag, plus the fallback** | ✅ done — `VITE_DECODE_URL` (or `localStorage.omrDecodeUrl`). All three paths pass `smoke:page` with the SAME score: browser 24.5 s, server 6.0 s, and a dead server falling back in 25.0 s while telling the user so. |
 | 4 | **Safety checklist** | ✅ code done (`npm run check:limits`, 6/6 + rate limit). ⚠ Billing cap still owed — see above. |
@@ -299,8 +301,8 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
 
 | Question | Answer |
 |---|---|
-| What does a page cost in vCPU-seconds? | **11.7 at 1 vCPU** (measured, M4). See Cost above. |
-| How long is a real cold start? | ⚠ **STILL OPEN — needs a deploy.** Locally the model loads in **1.5 s** after the port binds, which is the *floor*; Cloud Run adds container scheduling and a ~1 GB image pull on top. |
+| What does a page cost in vCPU-seconds? | **~40 on Cloud Run** (1.93 vCPU-s/strip), against 11.7 on the M4 — a shared vCPU is **~3.5× slower**. Free tier ≈ **4,450 pages/month**. |
+| How long is a real cold start? | **10.6 s**, of which **9.5 s is loading the graphs** (1.5 s on the M4). Container start is the small half. ⚠ Measured minutes after a deploy; a cold start after genuine idle is still unmeasured. |
 | Does the ~19 crops/page upload beat sending the page image? | **No — it is usually larger** (median ~1.7×, range 0.11–2.03×). The seam stays where it is for the other reasons, and the byte argument is withdrawn. |
 | Is the batched encoder worth it? | **No.** Slower and 2.9× the memory; `OMR_MAX_BATCH` defaults to 1. |
 
@@ -330,8 +332,8 @@ check that would have caught it**; running the server locally a hundred times wo
 **Never used Google Cloud before? [gcloud-setup.md](gcloud-setup.md) is the step-by-step version of
 this section** — accounts, projects, billing, and what a budget alert does and does not do.
 
-Deploying — ⚠ **not yet run by anyone.** The image builds in Cloud Build rather than locally for two
-reasons: the Dockerfile is not at the context root (the server bundles `apps/web/src/omr/decode.ts`
+Deploying — ✅ **run, and these are the commands that worked.** The image builds in Cloud Build
+rather than locally for two reasons: the Dockerfile is not at the context root (the server bundles `apps/web/src/omr/decode.ts`
 on purpose), and a `docker build` on an Apple Silicon Mac produces arm64, which Cloud Run will not
 start.
 
@@ -351,9 +353,11 @@ gcloud run deploy omr-decode --image $IMAGE --region $REGION \
 Why those flags: `--cpu 1` is the cheapest shape (see Cost); `--concurrency 1` because ORT already
 uses the whole core and a second page in flight only doubles memory (the process serializes anyway,
 this makes Cloud Run agree); `--memory 2Gi` against a measured 955 MB peak at batch 1;
-`--max-instances 3` is the cheap ceiling on total spend. Then, before the URL goes anywhere:
-set the **billing cap and alert**, run `npm run check:limits -- --url <service>`, and re-run
-`npm run bench:server -- --url <service>` to replace the laptop numbers above.
+`--max-instances 3` is the cheap ceiling on total spend.
+
+✅ Verified against the live service: `check:limits` **6/6** and `parity:server --replay` **120/128
+strips identical to the browser** — the same rate as the local server. ⚠ **Still owed: the $5 budget
+alert**, and the 413 fix (`0b1cb44`) is committed but not yet redeployed.
 
 ⚠ `.gcloudignore` is load-bearing: `apps/web/public/models/` is gitignored, and without an explicit
 ignore file gcloud derives the upload list from `.gitignore` and ships a context with **no weights

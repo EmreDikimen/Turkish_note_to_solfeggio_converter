@@ -90,17 +90,15 @@ hard for about 19 seconds per page, which makes a fanless laptop hot. **You deci
 work to a server so your friends' computers stay cool.** The app will still cut the page into strips
 locally (that part is fast and cheap) and send only the small strips to the server.
 
-**Built on 6 August. It works, but it is not online yet** — see "What is done and what is not"
-below.
+**Built AND put online on 6 August.** See "What is done and what is not" below.
 
 Three things worth knowing about this, in plain words:
 
-- ⚠ **It will probably not feel faster.** A cheap server processor is slower than your Mac's, and a
-  free server "goes to sleep" when nobody uses it — waking it up takes 10–30 seconds. So a page may
-  take about the same time, or longer on the first upload. **The thing you are buying is a cool
-  laptop, not a fast one.** If we forget this, the first measurement will look like a failure when
-  it is not. (On *your* Mac the server version is 4× faster — 6 seconds against 24 — but that is
-  your fast processor doing the work, not a cheap rented one.)
+- ⚠ **It does not feel faster — and that was predicted before it was built.** We wrote down "expect
+  no speedup" in advance, and the measurement agreed: the rented processor is about 3.5× slower than
+  your Mac's, so a page takes longer on the server than in your own browser, plus about 11 seconds
+  to wake up. **The thing you are buying is a cool laptop, not a fast one.** Writing the prediction
+  down first is what stops a correct result from reading like a failure.
 - ✅ **If the server is asleep or broken, the app quietly reads the page on your own computer
   instead**, and says so. That code already exists and is tested, so it is nearly free — and it
   means a friend never sees a broken app.
@@ -115,32 +113,41 @@ was made when a page took ~56 seconds rather than ~25. You have used it since; t
 
 ### What is done and what is not (6 August 2026)
 
-**Done:** the server exists, the app uses it, and the app falls back to your own computer if the
-server does not answer — all three tested on a real page, all three giving *exactly the same music*
-(344 notes, 28 bars).
+**The server is live.** It runs at a Google address, it wakes up when someone uploads a page, and it
+sleeps when nobody does. The app can use it, and if it is asleep or broken the app quietly reads the
+page on your own computer instead and says so. All of that is tested.
 
-**We also checked the thing that actually matters: does the server read music as well as the
-browser?** Not "do they agree" — they disagree on about 6% of strips — but "is either one *better*".
-On 267 strips where we know the right answer, the difference is **too small to detect**. Neither is
-worse.
+**We also checked the thing that matters most: does the server read music as well as the browser?**
+Not "do they agree" — they disagree on about 6% of strips — but "is either one *better*". On 267
+strips where we know the right answer, the difference is **too small to detect**. Neither is worse.
 
-**Not done: nobody has put it on the internet.** That needs a Google Cloud account and a card on
-file, so it is yours to do. Until then we do not know the two numbers that only the real thing can
-tell us: how long the wake-up really takes, and how slow a rented processor really is.
+**The honest headline about speed: the server is SLOWER than your own laptop.** About 250 seconds
+where your browser takes 166, for the same work, plus roughly 11 seconds to wake up if it has been
+idle. A rented shared processor is about 3.5× slower than the one in your Mac.
 
-**Two things we believed and then measured, and both were wrong:**
+That is not bad news, and it is worth understanding why. **You did not buy speed. You bought your
+friends' laptops staying cool** — that was the whole reason for the server, written down before any
+of it was built. Your friends' computers are probably slower than yours anyway, so for them it may
+feel about the same.
 
-- We thought sending the small strips instead of the whole page picture would **save upload data**.
-  It does not — it is usually about **1.7× bigger**, because of how the pieces are packaged. The
-  reason for sending strips is still good (the server does not have to cut the page up), but "it is
-  smaller" was not true.
-- We thought reading all ~19 strips **together in one go** would be faster than one at a time. It is
-  not: it is slightly *slower* and uses **three times the memory**, which on a rented server means
-  paying for a bigger machine for nothing. Switched off.
+**Cost: still effectively free.** A page uses about 40 seconds of rented processor time, and Google
+gives away enough for roughly **4,450 pages a month**. Fifty users would not come close.
 
-**The one safety job left before any link goes out: set a hard spending limit on the account.**
-Everything else on the safety list is built and tested. That one lives in Google's billing settings
-and only you can set it.
+**Two things are left before your friends can use it:**
+
+1. **Set a $5 spending alert** in the Google billing page. Only you can do this. Remember it only
+   emails you — the real protection is the limit of 3 running copies and the upload limit per
+   person, and both are already switched on.
+2. **Put the app itself online** (the part with the buttons). The code is ready; it needs a free
+   account at Cloudflare or Netlify for the app and one at Hugging Face for the model file.
+
+**Three bugs today, and they were all the same mistake in different clothes.** Each time, the thing
+that gets shipped was not the thing being tested — we tested the convenient version. Once the app
+worked perfectly while running from the development server but froze when built properly. Once the
+server ran fine on this Mac but the packed-up version crashed instantly in the cloud. Once an
+oversized upload was refused correctly here and looked like a crash through Google's system. All
+three are fixed, and there are now checks that run the *real* version. If something surprises us
+next time, that is the first thing to suspect.
 
 ### Something we decided NOT to build (5 August)
 
@@ -293,17 +300,15 @@ shoot **different** pieces (there are thousands available).
 2. ~~Check it gives the same answers as the browser.~~ ✅ **Done** — no detectable difference on 267
    strips where we know the right answer.
 3. ~~Switch the app over, keeping the "read it here instead" fallback.~~ ✅ **Done and tested.**
-4. **PUT IT ONLINE — this is the next thing, and only you can do it.** It needs a Google Cloud
-   account with billing. The exact commands are written down and ready to paste
-   ([mvp/deploy.md](mvp/deploy.md)); expect the first run to also be the first time we learn the
-   real wake-up delay.
-5. **Set the hard spending cap and the spending alarm** in the Google billing settings. Everything
-   else on the safety list is already built and tested (upload size, uploads per person, refusing
-   anything that is not a proper strip picture). **This one goes in before the link reaches anyone**,
-   even your two friends. An open link that costs money per use is the classic way to get a shock
-   bill.
-6. **Send the link to two friends and ask what to add.**
-7. **Open it to everyone — but only if Round 3's exam result is good.**
+4. ~~Put it online.~~ ✅ **Done 6 August** — the server is live, and the wake-up delay turned out to
+   be about 11 seconds.
+5. **Set the $5 spending alert** in the Google billing settings — the last safety item, and only you
+   can do it. Everything else is built and tested (upload size, uploads per person, refusing
+   anything that is not a proper strip picture, at most 3 copies running).
+6. **Put the app itself online** — a free Cloudflare or Netlify account for the buttons, and a free
+   Hugging Face account for the model file. The code is ready and tested.
+7. **Send the link to two friends and ask what to add.**
+8. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)
 

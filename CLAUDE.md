@@ -103,7 +103,7 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 
 - **The server is Node + `onnxruntime-node` importing `apps/web/src/omr/decode.ts`** — the browser's
   own module, so there is ONE decode implementation, not a third to hold in parity. Do not write a
-  second decoder in any language. **Built 2026-08-06 in `apps/server/`, not yet deployed.** Two
+  second decoder in any language. **Built AND DEPLOYED 2026-08-06** — live on Cloud Run (europe-west3, 1 vCPU); URL and numbers in [docs/STATUS.md](docs/STATUS.md). Two
   rules follow from how it was made to work: `decode.ts` may **not** import an ORT runtime (types
   come from `onnxruntime-common`, the `Tensor` constructor rides on `Sessions`), and **the client
   preprocesses** — the server receives finished 409×583 PNGs and applies only the rescale, so there

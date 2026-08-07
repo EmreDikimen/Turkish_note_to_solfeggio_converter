@@ -188,7 +188,7 @@ const NAMED: Record<number, string> = { 1: "koma", 4: "bakiye", 5: "küçük mü
  * Examples: +1 → "koma diyezi", -4 → "bakiye bemolü", +2 → "2 koma diyezi".
  */
 export function accidentalLabel(alterCommas: number): string {
-  if (alterCommas === 0) return "natural";
+  if (alterCommas === 0) return "doğal";
   const dir = alterCommas > 0 ? "diyezi" : "bemolü"; // sharp / flat
   const mag = Math.abs(alterCommas);
   const base = NAMED[mag] ?? `${mag} koma`;

@@ -12,6 +12,8 @@ import {
   type NoteModelDocument,
 } from "@turkish-omr/core";
 import { AccidentalSelect } from "./AccidentalSelect";
+import { Segmented } from "./ui/Segmented";
+import { TR } from "./ui/strings";
 
 // Common note-values offered in the duration dropdown.
 const DURATIONS: Array<[string, number, number]> = [
@@ -155,28 +157,32 @@ export function MeasureEditModal({
   }
 
   return (
-    <div onClick={onCancel} style={backdrop}>
-      <div onClick={(e) => e.stopPropagation()} style={panel}>
+    <div onClick={onCancel} className="kv-modal">
+      <div onClick={(e) => e.stopPropagation()} className="kv-modal__panel kv-modal__panel--wide" role="dialog">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h3 style={{ margin: "0 0 4px" }}>Edit measure {measure.index}</h3>
-          <span style={{ display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
-            <TabButton active={!advanced} onClick={() => setAdvanced(false)}>Basic</TabButton>
-            <TabButton active={advanced} onClick={() => setAdvanced(true)}>Advanced</TabButton>
-          </span>
+          <h3 className="kv-modal__title">{TR.measureModal.title(measure.index)}</h3>
+          <Segmented
+            value={advanced ? "advanced" : "basic"}
+            onChange={(v) => setAdvanced(v === "advanced")}
+            items={[
+              { value: "basic", label: TR.measureModal.basic },
+              { value: "advanced", label: TR.measureModal.advanced },
+            ]}
+          />
         </div>
-        <div style={{ color: "#666", fontSize: 13, margin: "4px 0 12px" }}>
-          Choose each note's pitch and how many commas sharp/flat. Total duration must equal the
-          measure length.{advanced ? " Advanced: edit absolute koma / frequency directly." : ""}
-          {graces.length > 0 ? " Grace notes (çarpma) stay attached to their following note." : ""}
-        </div>
+        <p className="kv-modal__lead">
+          {TR.measureModal.leadBasic}
+          {advanced ? ` ${TR.measureModal.leadAdvanced}` : ""}
+          {graces.length > 0 ? ` ${TR.measureModal.leadGrace}` : ""}
+        </p>
 
-        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 13 }}>
+        <table className="kv-table">
           <thead>
-            <tr style={{ textAlign: "left", color: "#888" }}>
-              <th style={th}>Type</th><th style={th}>Note</th><th style={th}>Accidental</th>
-              {advanced && <th style={th}>Koma</th>}
-              {advanced && <th style={th}>Hz</th>}
-              <th style={th}>Name</th><th style={th}>Duration</th><th style={th}>Lyric</th><th style={th}></th>
+            <tr>
+              <th>{TR.measureModal.colType}</th><th>{TR.measureModal.colNote}</th><th>{TR.measureModal.colAccidental}</th>
+              {advanced && <th>{TR.measureModal.colKoma}</th>}
+              {advanced && <th>{TR.measureModal.colHz}</th>}
+              <th>{TR.measureModal.colName}</th><th>{TR.measureModal.colDuration}</th><th>{TR.measureModal.colLyric}</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -188,13 +194,13 @@ export function MeasureEditModal({
                 ? DURATIONS : [[durValue, r.num, r.den] as [string, number, number], ...DURATIONS];
               return (
                 <tr key={r.id}>
-                  <td style={td}>
+                  <td>
                     <select value={r.kind} onChange={(e) => patch(r.id, { kind: e.target.value as "note" | "rest" })}>
-                      <option value="note">note</option>
-                      <option value="rest">rest</option>
+                      <option value="note">{TR.measureModal.note}</option>
+                      <option value="rest">{TR.measureModal.rest}</option>
                     </select>
                   </td>
-                  <td style={td}>
+                  <td>
                     {isNote ? (
                       <select
                         value={`${r.letter}_${r.octave}`}
@@ -206,32 +212,32 @@ export function MeasureEditModal({
                       </select>
                     ) : "—"}
                   </td>
-                  <td style={td}>
+                  <td>
                     {isNote ? <AccidentalSelect value={r.alter} onChange={(commas) => patch(r.id, { alter: commas })} /> : "—"}
                   </td>
                   {advanced && (
-                    <td style={td}>
+                    <td>
                       <input type="number" value={koma} disabled={!isNote} style={{ width: 60 }}
                         onChange={(e) => setFromKoma(r.id, parseInt(e.target.value, 10) || koma)} />
                     </td>
                   )}
                   {advanced && (
-                    <td style={td}>
+                    <td>
                       <input type="number" value={Math.round(freqFromTuning(koma, doc.tuning))} disabled={!isNote} style={{ width: 74 }}
                         onChange={(e) => setFromKoma(r.id, komaFromHz(parseFloat(e.target.value) || freqFromTuning(koma, doc.tuning)))} />
                     </td>
                   )}
-                  <td style={{ ...td, fontFamily: "monospace" }}>{isNote ? spellNote(r.letter, r.octave, r.alter) : "—"}</td>
-                  <td style={td}>
+                  <td style={{ fontFamily: "var(--font-mono)" }}>{isNote ? spellNote(r.letter, r.octave, r.alter) : "—"}</td>
+                  <td>
                     <select value={durValue} onChange={(e) => { const [, n, d] = presets.find(([label]) => label === e.target.value)!; patch(r.id, { num: n, den: d }); }}>
                       {presets.map(([label]) => <option key={label} value={label}>{label}</option>)}
                     </select>
                   </td>
-                  <td style={td}>
+                  <td>
                     <input value={r.lyric} style={{ width: 70 }} onChange={(e) => patch(r.id, { lyric: e.target.value })} />
                   </td>
-                  <td style={td}>
-                    <button onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} title="delete">✕</button>
+                  <td>
+                    <button type="button" className="kv-btn kv-btn--tiny" onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} title={TR.measureModal.remove}>✕</button>
                   </td>
                 </tr>
               );
@@ -240,46 +246,28 @@ export function MeasureEditModal({
         </table>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
-          <button onClick={addNote}>+ Add note</button>
-          <span style={{ color: valid ? "#16a34a" : "#dc2626", fontSize: 13 }}>
-            Total {fmt(totalBeats)} / required {fmt(measure.lengthBeats)} whole-notes
+          <button type="button" className="kv-btn" onClick={addNote}>{TR.measureModal.add}</button>
+          <span style={{ color: valid ? "var(--ok)" : "var(--danger)", fontSize: "var(--text-sm)" }}>
+            {TR.measureModal.total(fmt(totalBeats), fmt(measure.lengthBeats))}
           </span>
         </div>
 
         {!valid && (
-          <div style={{ color: "#dc2626", fontSize: 13, marginTop: 8 }}>
-            ⚠ The notes don't fill the measure exactly — adjust durations (or add/remove notes)
-            so the total matches before saving.
+          <div style={{ color: "var(--danger)", fontSize: "var(--text-sm)", marginTop: "var(--space-2)" }}>
+            {TR.measureModal.invalid}
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-          <button onClick={onCancel}>Cancel</button>
-          <button onClick={save} disabled={!valid} style={{ fontWeight: 600 }}>Save</button>
+        <div className="kv-modal__actions">
+          <button type="button" className="kv-btn" onClick={onCancel}>{TR.measureModal.cancel}</button>
+          <button type="button" className="kv-btn kv-btn--primary" onClick={save} disabled={!valid}>
+            {TR.measureModal.save}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} style={{ border: "none", padding: "5px 12px", background: active ? "#3b82f6" : "#fff", color: active ? "#fff" : "#333", cursor: "pointer", fontSize: 13 }}>
-      {children}
-    </button>
-  );
-}
-
 const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString();
 
-const backdrop: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)",
-  display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
-};
-const panel: React.CSSProperties = {
-  background: "#fff", borderRadius: 8, padding: 20, width: 720, maxWidth: "94vw",
-  maxHeight: "85vh", overflow: "auto", boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
-  fontFamily: "system-ui, sans-serif",
-};
-const th: React.CSSProperties = { padding: "4px 6px", borderBottom: "1px solid #eee" };
-const td: React.CSSProperties = { padding: "4px 6px", borderBottom: "1px solid #f4f4f4" };

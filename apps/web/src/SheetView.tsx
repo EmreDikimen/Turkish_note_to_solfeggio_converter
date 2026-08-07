@@ -1229,12 +1229,14 @@ export function SheetView({
   }
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 6, overflowX: "auto", background: "#fff" }}>
+    // No frame of its own: this sits inside the score card (.kv-score), which supplies the paper,
+    // the border and the horizontal scroll. A second border here would double-frame the sheet.
+    <div>
       {/* Engraved-style header: the makam/form/usul/composer/tempo extracted from the score. */}
       <div
         style={{
           display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 16px 4px",
-          fontFamily: "Georgia, 'Times New Roman', serif", color: "#1a1a1a",
+          fontFamily: "var(--font-display)", color: "var(--ink)",
         }}
       >
         <div style={{ flex: "1 1 0", fontSize: 13, fontStyle: "italic", whiteSpace: "nowrap" }}>
@@ -1348,13 +1350,19 @@ export function SheetView({
 function Legend({ used }: { used: number[] }) {
   if (used.length === 0) return null;
   return (
-    <div style={{ display: "flex", gap: 16, flexWrap: "wrap", padding: "8px 12px", borderTop: "1px solid #eee", color: "#555", fontSize: 13 }}>
-      <span style={{ color: "#999" }}>Accidentals:</span>
+    <div
+      style={{
+        display: "flex", gap: 16, flexWrap: "wrap", padding: "var(--space-3) var(--space-2) 0",
+        marginTop: "var(--space-3)", borderTop: "1px solid var(--rule)",
+        color: "var(--ink-soft)", fontSize: "var(--text-sm)",
+      }}
+    >
+      <span style={{ color: "var(--ink-faint)" }}>Değiştirme işaretleri:</span>
       {used.map((commas) => {
         const g = accidentalGlyph(commas);
         return (
           <span key={commas} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {g && <span style={{ fontFamily: "Bravura", fontSize: 22, lineHeight: 1 }}>{String.fromCodePoint(g.codepoint)}</span>}
+            {g && <span className="kv-glyph" style={{ fontSize: 22 }}>{String.fromCodePoint(g.codepoint)}</span>}
             {accidentalLabel(commas)} ({commas > 0 ? `+${commas}` : commas} koma)
           </span>
         );

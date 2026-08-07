@@ -147,7 +147,8 @@ export interface IntonationRule {
   alterCommas: number;
   /** Signed commas added to the SOUNDING koma. Fractional on purpose — audio is float. */
   deltaCommas: number;
-  /** Plain-English reason, shown in the UI. This table is its own documentation. */
+  /** Why, in plain Turkish — this is shown in the makam prompt. The table is its own
+   *  documentation; the English rationale and the sources live in docs/mvp/makam.md. */
   why: string;
 }
 
@@ -163,7 +164,7 @@ const USSAK_SEGAH: IntonationRule = {
   letter: "B",
   alterCommas: -1,
   deltaCommas: -1.5,
-  why: "Uşşak's segah is played below its written koma-bemol — dügâh→segah is 6–7 commas in practice ('eksik büyük mücennep'), not AEU's 8.",
+  why: "Uşşak'ın segâhı yazılı koma-bemolünün altında icra edilir: dügâh→segâh pratikte 6–7 komadır ('eksik büyük mücennep'), AEU'nun 8'i değil.",
 };
 
 /**
@@ -193,7 +194,7 @@ export const MAKAM_INTONATION: Record<string, IntonationRule[]> = {
       letter: "D",
       alterCommas: -4,
       deltaCommas: 1.5,
-      why: "Sabâ's hicaz is played sharper than its written bakiye-bemol: Rauf Yektâ's 12/11 çargâh–hicaz puts 2.5 commas of flatness on the re-bemol, not 4.",
+      why: "Sabâ'nın hicazı yazılı bakiye-bemolünden tiz icra edilir: Rauf Yektâ'nın 12/11 çargâh–hicazı re-bemole 4 değil 2,5 koma pestlik verir.",
     },
   ],
 
@@ -203,7 +204,7 @@ export const MAKAM_INTONATION: Record<string, IntonationRule[]> = {
       letter: "B",
       alterCommas: -1,
       deltaCommas: -1,
-      why: "The Ottoman segah perde sits about a comma below the Arelian one.",
+      why: "Osmanlı segâh perdesi, Arel'inkinin yaklaşık bir koma altındadır.",
     },
   ],
   huzzam: [
@@ -211,13 +212,13 @@ export const MAKAM_INTONATION: Record<string, IntonationRule[]> = {
       letter: "B",
       alterCommas: -1,
       deltaCommas: -1,
-      why: "The Ottoman segah perde sits about a comma below the Arelian one.",
+      why: "Osmanlı segâh perdesi, Arel'inkinin yaklaşık bir koma altındadır.",
     },
     {
       letter: "E",
       alterCommas: -4,
       deltaCommas: 1,
-      why: "Hüzzam's hisar is played above its written bakiye-bemol — the pentachord's augmented second shrinks from 12 commas to about 10.5–11.",
+      why: "Hüzzam'ın hisarı yazılı bakiye-bemolünün üstünde icra edilir: beşlinin artık ikilisi 12 komadan 10,5–11'e daralır.",
     },
   ],
 

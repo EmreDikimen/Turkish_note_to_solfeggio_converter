@@ -13,7 +13,7 @@ function glyphCp(commas: number): number {
   return accidentalGlyph(commas)?.codepoint ?? NATURAL_CP;
 }
 function label(commas: number): string {
-  return commas === 0 ? "doğal (natural)" : `${accidentalLabel(commas)} (${commas > 0 ? `+${commas}` : commas})`;
+  return commas === 0 ? "doğal" : `${accidentalLabel(commas)} (${commas > 0 ? `+${commas}` : commas})`;
 }
 
 /**
@@ -25,10 +25,10 @@ export function AccidentalSelect({ value, onChange }: { value: number; onChange:
   const [open, setOpen] = useState(false);
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={() => setOpen((o) => !o)} style={trigger}>
-        <span style={{ fontFamily: "Bravura", fontSize: 18, minWidth: 14, display: "inline-block" }}>{char(glyphCp(value))}</span>
-        <span style={{ fontSize: 12 }}>{value === 0 ? "doğal" : accidentalLabel(value)}</span>
-        <span style={{ color: "#999", fontSize: 10 }}>▾</span>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="kv-btn" style={trigger}>
+        <span className="kv-glyph" style={{ fontSize: 18, minWidth: 14, display: "inline-block" }}>{char(glyphCp(value))}</span>
+        <span>{value === 0 ? "doğal" : accidentalLabel(value)}</span>
+        <span style={{ color: "var(--ink-faint)", fontSize: 10, marginLeft: "auto" }}>▾</span>
       </button>
       {open && (
         <>
@@ -38,10 +38,10 @@ export function AccidentalSelect({ value, onChange }: { value: number; onChange:
               <li
                 key={commas}
                 onClick={() => { onChange(commas); setOpen(false); }}
-                style={{ ...item, background: commas === value ? "#eef4ff" : "transparent" }}
+                style={{ ...item, background: commas === value ? "var(--accent-soft)" : "transparent" }}
               >
-                <span style={{ fontFamily: "Bravura", fontSize: 18, width: 18, display: "inline-block", textAlign: "center" }}>{char(glyphCp(commas))}</span>
-                <span style={{ fontSize: 13 }}>{label(commas)}</span>
+                <span className="kv-glyph" style={{ fontSize: 18, width: 18, display: "inline-block", textAlign: "center" }}>{char(glyphCp(commas))}</span>
+                <span style={{ fontSize: "var(--text-sm)" }}>{label(commas)}</span>
               </li>
             ))}
           </ul>
@@ -52,15 +52,16 @@ export function AccidentalSelect({ value, onChange }: { value: number; onChange:
 }
 
 const trigger: React.CSSProperties = {
-  display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 8px",
-  border: "1px solid #ccc", borderRadius: 4, background: "#fff", cursor: "pointer", minWidth: 130, justifyContent: "flex-start",
+  display: "inline-flex", alignItems: "center", gap: 6, minWidth: 130, justifyContent: "flex-start",
 };
 const overlay: React.CSSProperties = { position: "fixed", inset: 0, zIndex: 200 };
 const menu: React.CSSProperties = {
   position: "absolute", top: "100%", left: 0, zIndex: 201, margin: "2px 0 0", padding: 4,
-  listStyle: "none", background: "#fff", border: "1px solid #ccc", borderRadius: 6,
-  boxShadow: "0 6px 20px rgba(0,0,0,0.15)", maxHeight: 280, overflowY: "auto", minWidth: 200,
+  listStyle: "none", background: "var(--paper-raised)", border: "1px solid var(--rule-strong)",
+  borderRadius: "var(--radius)", boxShadow: "var(--shadow-card)", maxHeight: 280,
+  overflowY: "auto", minWidth: 200,
 };
 const item: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 10, padding: "5px 8px", borderRadius: 4, cursor: "pointer", whiteSpace: "nowrap",
+  display: "flex", alignItems: "center", gap: 10, padding: "5px 8px",
+  borderRadius: "var(--radius-sm)", cursor: "pointer", whiteSpace: "nowrap",
 };

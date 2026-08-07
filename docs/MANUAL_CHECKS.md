@@ -180,8 +180,12 @@ Goal: see Mus2's model working — arm a tool, click a note, the note changes. S
 
 1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
 2. A **palette appears to the left of the sheet**: a **SÜRE** row of six note glyphs and a
-   **DEĞİŞTİRME** row of the AEU signs. The score itself must not move, resize or re-flow when it
-   appears, and the page must not gain a sideways scrollbar.
+   **DEĞİŞTİRME** row of the AEU signs. Every glyph is whole — no stem or flag cut off by its
+   button. The score itself must not move, resize or re-flow when it appears, and the page must not
+   gain a sideways scrollbar.
+   ⚠ **Do this on a window at least ~1250 px wide.** The sheet is engraved at a fixed 1020 px and
+   the palette costs 164 px, so on a narrower window the last measures of each system scroll off the
+   paper — expected, not a bug (see [mvp/editor.md](mvp/editor.md), trap 3).
 3. **Click the ♪ (1/8).** It fills terracotta, the hint under the palette changes, and the pointer
    over a note becomes a *copy* cursor rather than a grab hand.
 4. **Click a note that is longer than an eighth.** It re-engraves as an eighth **in place** — its

@@ -256,18 +256,32 @@ cannot half-apply. Two notes on what was deliberately *not* changed:
 Verification throughout: `npm run typecheck`, `npm test`, `npm run smoke:app`, `npm run smoke:page`,
 and a real correction pass on a decoded page.
 
-### ⚠ Two traps the palette found (2026-08-08)
+### ⚠ Three traps the palette found (2026-08-08)
 
 1. **A Bravura glyph paints outside its em box, and that made clicks land on the wrong tool.** The
    1/32 button's notehead+flag ink overhung the 1/8 button above it, so `elementFromPoint` in the
    middle of the 1/8 tool returned the 1/32 one — and a click there armed 1/32. It reproduced in
-   Playwright *and* by hand. The fix is in `styles/app.css`: `.kv-tool { overflow: hidden }` plus
-   `.kv-tool .kv-glyph { pointer-events: none }`, so ink is clipped and clicks resolve to the button
-   that owns the pixel. Any future glyph button needs both.
+   Playwright *and* by hand, and it hit only *some* of the buttons, so `smoke:editor` now arms all
+   14 and checks each one arms itself. The fix is one line in `styles/app.css`:
+   `.kv-tool .kv-glyph { pointer-events: none }`, which makes a click resolve to the button that
+   owns the pixel. ⚠ **Clipping the ink (`overflow: hidden`) was tried first and reverted** — it cut
+   the stems and flags off the note glyphs, which is the only thing they are read by. The buttons
+   are 40 px tall instead, so the ink fits.
 2. **An absolute alteration is not transpose-safe, unlike a relative nudge.** The sheet draws
    `displayDoc`, so `onApplyTool` builds the accidental edit in DISPLAY space and maps the single
    event back with the same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` uses.
    `onNudgePitch` never needed this only because ±1 step means the same thing in both spaces.
+
+3. **The palette costs horizontal room the page did not have.** `--page-max` (1100 px) was sized so
+   the **1020 px** engraved sheet fits exactly, and the palette's footprint is **164 px** (136 wide
+   + gap + margin), so edit mode needs **~1250 px of window** to show a whole system. The engraved
+   width cannot shrink to make room — it is `SVG_WIDTH` in `SheetView`, and it is also the
+   training-strip geometry. So the **page** grows by exactly the footprint while editing
+   (`.kv-page:has(.kv-card--editing)`), keyed off a class `ScoreCard` sets when a palette is passed.
+   Measured cut-off while editing: **1090 px window → 160 px still cut · 1280 px → 0 · 1470 px → 0**.
+   Below ~1250 px the sheet scrolls sideways inside `.kv-score`, exactly as it did before edit mode
+   existed — **owner's call, 2026-08-08**: keep the palette beside the sheet and widen the window,
+   rather than floating it over the paper or moving it above the score.
 
 Also settled while building it: **re-applying the accidental a note already carries is not an undo
 entry** (`withAlter` returns the event unchanged, and `useDocHistory.apply` drops no-op edits), and

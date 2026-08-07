@@ -212,6 +212,23 @@ async function main() {
     await page.locator(`#edit-palette [data-tool="${id}"]`).click();
     check(`armed ${id}`, await palette.getAttribute("data-armed"), id);
   };
+
+  // EVERY tool must arm ITSELF. This is not paranoia: a Bravura glyph paints outside its em box, so
+  // one tool's ink covered its neighbour and clicking 1/8 armed 1/32 — and it hit only some of the
+  // buttons, so checking one would have missed it.
+  {
+    const ids = await page
+      .locator("#edit-palette [data-tool]")
+      .evaluateAll((els) => els.map((e) => e.getAttribute("data-tool")!));
+    const wrong: string[] = [];
+    for (const id of ids) {
+      await page.locator(`#edit-palette [data-tool="${id}"]`).click();
+      const got = (await palette.getAttribute("data-armed")) ?? "none";
+      if (got !== id) wrong.push(`${id}→${got}`);
+      if (id !== "none") await page.keyboard.press("Escape");
+    }
+    check(`all ${ids.length} tools arm themselves`, wrong.length ? wrong.join(" ") : "none", "none");
+  }
   const clickNote = async (index: number) => {
     await page.locator(`[data-omr-note="${index}"]`).first().click({ force: true });
     await page.waitForTimeout(250);

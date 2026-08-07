@@ -58,7 +58,9 @@ export function ScoreCard({
 }) {
   const notes = doc.events.filter((e) => e.kind === "note").length;
   return (
-    <section className="kv-card">
+    // `kv-card--editing` is what the page shell keys its extra width off (styles/app.css): the
+    // palette takes room from the row the score is in, and the sheet's engraved width is fixed.
+    <section className={`kv-card${palette ? " kv-card--editing" : ""}`}>
       <header className="kv-card__head">
         <h2 className="kv-card__title">
           {doc.title || doc.name}

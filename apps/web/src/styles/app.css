@@ -16,6 +16,20 @@
   padding: var(--space-7) var(--space-5) var(--space-8);
 }
 
+/* What the edit palette costs the row it shares with the score: its width, the flex gap, and its
+   own left margin. Declared once — the page shell below and the palette itself both need it. */
+:root {
+  --palette-footprint: 164px;
+}
+
+/* Edit mode widens the PAGE by exactly that, rather than narrowing the sheet. The engraved width
+   is fixed (`SVG_WIDTH` in SheetView, and it is also the training-strip geometry), so the only
+   honest way to keep a whole page of music visible is to give the page more room. On a window too
+   narrow for both, the score falls back to scrolling inside `.kv-score`, as it did before. */
+.kv-page:has(.kv-card--editing) {
+  max-width: calc(var(--page-max) + var(--palette-footprint));
+}
+
 .kv-header {
   margin-bottom: var(--space-6);
 }
@@ -386,7 +400,11 @@
 }
 
 /* The palette sits beside the score, so the row is a flex pair. `min-width: 0` on the score is
-   what keeps its own sideways scroll working inside a flex child instead of stretching the page. */
+   what keeps its own sideways scroll working inside a flex child instead of stretching the page.
+   ⚠ The palette costs horizontal room the sheet does not have to spare: `--page-max` (1100px) was
+   sized so the 1020px engraved sheet fits exactly, so a palette taking width from the same row
+   pushes the last measures off the paper. The page grows by the palette's footprint while editing
+   (see `.kv-page:has(…)` in the page shell) instead of the score shrinking. */
 .kv-score-row {
   display: flex;
   align-items: flex-start;
@@ -440,18 +458,18 @@
   color: var(--ink-faint);
 }
 
-/* ⚠ `overflow: hidden` and the pointer-transparent glyph below are load-bearing, not polish. A
-   Bravura note glyph is ~4 staff spaces tall and draws well outside its em box, so the span of one
-   tool painted OVER its neighbours: `elementFromPoint` in the middle of the 1/8 button returned the
-   1/32 one, and a click there armed the wrong value. Clip the ink, and let clicks resolve to the
-   button that owns the pixel. */
+/* ⚠ The pointer-transparent glyph below is load-bearing, not polish. A Bravura note glyph is ~4
+   staff spaces tall and draws well outside its em box, so one tool's ink paints OVER its
+   neighbours: `elementFromPoint` in the middle of the 1/8 button used to return the 1/32 one, and a
+   click there armed the wrong value. `pointer-events: none` on the ink makes a click resolve to the
+   button that owns the pixel. (Clipping the ink instead was tried and reverted — it cut the stems
+   and flags off the note glyphs, which is what the tools are read by.) */
 .kv-tool {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   width: 34px;
-  height: 34px;
+  height: 40px;
   padding: 0;
   border: 1px solid var(--rule);
   border-radius: var(--radius-sm);

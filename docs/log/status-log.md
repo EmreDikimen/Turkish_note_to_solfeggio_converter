@@ -22,6 +22,13 @@ armed id, and it reproduces by hand — this was a real UI bug, not a Playwright
 `overflow: hidden` on the button and `pointer-events: none` on the glyph span, so ink is clipped and
 clicks resolve to the button that owns the pixel. Worth remembering for any future glyph button.
 
+**The palette also cost room the page did not have, found by looking at it.** `--page-max` was
+sized so the 1020 px engraved sheet fits exactly, so a 164 px palette in the same row pushed the end
+of every system off the paper. The **page** now grows by that footprint while editing; the sheet
+cannot shrink, because its width is also the training-strip geometry. Edit mode therefore wants a
+window ≥ ~1250 px (measured: 1090 → 160 px still cut, 1280 → 0, 1470 → 0), and the owner's call was
+to keep the palette beside the sheet and widen the window rather than float it over the paper.
+
 **An absolute edit is not transpose-safe the way a relative one is.** `onNudgePitch` never needed to
 think about the transposed staff, because ±1 diatonic step means the same thing in both spaces. An
 accidental does not: it is applied in DISPLAY space and the single event is mapped back with the

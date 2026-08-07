@@ -126,7 +126,7 @@ async function main() {
 
   console.log(`  dev server up at ${base}`);
   await page.goto(base, { waitUntil: "domcontentloaded" });
-  await page.waitForSelector("text=Turkish OMR", { timeout: 60000 });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
   console.log("  app loaded, uploading the page…");
 
   const t0 = Date.now();
@@ -153,8 +153,9 @@ async function main() {
       seen.add(text);
       console.log(`    [${((Date.now() - t0) / 1000).toFixed(1).padStart(6)}s] ${text}`);
     }
-    // NOT anchored: the status paragraph prefixes its text with "⏳ " or "✓ ".
-    if (/read a page:/.test(text) || (await page.locator("#omr-error").count())) break;
+    // The FACT that the read finished, not the sentence saying so (apps/web/src/ui/status.ts).
+    if ((await status.getAttribute("data-state")) === "done" || (await page.locator("#omr-error").count()))
+      break;
     await page.waitForTimeout(500);
   }
   const summary = (await status.textContent())?.trim() ?? "";
@@ -164,25 +165,30 @@ async function main() {
   console.log(`  ${polls} polls over ${elapsedS.toFixed(1)} s, ${seen.size} distinct status lines`);
   console.log(`  slowest reply from the page: ${maxGapMs} ms`);
 
-  const m = /(\d+) staves → (\d+) strips → (\d+) notes/.exec(summary);
-  const nStrips = m ? Number(m[2]) : 0;
+  const num = async (attr: string) => Number(await status.getAttribute(attr));
+  const done = (await status.getAttribute("data-state")) === "done";
+  const nStrips = done ? await num("data-strips") : 0;
+  const nStaves = done ? await num("data-staves") : 0;
+  const nNotes = done ? await num("data-notes") : 0;
+  const where = done ? await status.getAttribute("data-where") : null;
+  const read = done && nStaves > 0 && nStrips > 0 && nNotes > 0;
 
   // The score must be on screen and playable, exactly as in app-smoke.
   let svgCount = 0;
   let playable = false;
-  let pausedLabel = "";
-  if (m) {
+  let playingState = "";
+  if (read) {
     // The makam prompt's backdrop would swallow every click below — accept it first.
     await dismissMakamPrompt(page);
-    await page.getByRole("button", { name: /Sheet/ }).click();
+    await page.locator("#view-sheet").click();
     await page.waitForSelector("svg", { timeout: 30000 });
     svgCount = await page.locator("svg").count();
-    const playBtn = page.getByRole("button", { name: /Play/ });
+    const playBtn = page.locator("#play");
     playable = await playBtn.isEnabled();
     await playBtn.click();
     await page.waitForTimeout(700);
-    pausedLabel = (await page.getByRole("button", { name: /Pause|Play/ }).textContent()) ?? "";
-    await page.getByRole("button", { name: /Stop/ }).click();
+    playingState = (await playBtn.getAttribute("data-play-state")) ?? "";
+    await page.locator("#stop").click();
   }
 
   await browser.close();
@@ -192,17 +198,17 @@ async function main() {
   // the same smoke with `VITE_DECODE_URL` pointed at a dead port to exercise the other half: the
   // fallback must produce the same score on the user's own machine, and admit that it did.
   const decodeUrl = process.env.VITE_DECODE_URL?.trim();
-  const ranOnServer = /read on the server/.test(summary);
-  const fellBack = /the server did not answer/.test(summary);
+  const ranOnServer = where === "server";
+  const fellBack = where === "local-fallback";
 
   const checks: [string, boolean, string][] = [
-    ["page read end to end", !!m, summary || errText || "no result"],
+    ["page read end to end", read, summary || errText || "no result"],
     ...(decodeUrl
       ? ([
           [
             "decode ran where it was told",
             ranOnServer || fellBack,
-            ranOnServer ? `on the server (${decodeUrl})` : `fell back: ${summary.slice(-60)}`,
+            ranOnServer ? `on the server (${decodeUrl})` : `fell back (${where})`,
           ],
         ] as [string, boolean, string][])
       : []),
@@ -219,7 +225,7 @@ async function main() {
     ["progress actually moved", seen.size >= 3, `${seen.size} distinct lines`],
     ["sheet renders", svgCount > 0, `${svgCount} svg`],
     ["play enabled", playable, String(playable)],
-    ["playback started", /Pause/.test(pausedLabel), pausedLabel.trim()],
+    ["playback started", playingState === "playing", playingState || "(none)"],
     ["no uncaught page errors", pageErrors.length === 0, pageErrors.join("; ") || "none"],
   ];
   console.log("");

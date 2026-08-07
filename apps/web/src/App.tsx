@@ -29,9 +29,21 @@ import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
-import { decodeStripsRouted, decodeUrl, type RoutedResult } from "./omr/remote";
+import { decodeStripsRouted } from "./omr/remote";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
+import { StatusLine } from "./ui/StatusLine";
+import { ErrorNote } from "./ui/ErrorNote";
+import { ReadError, toAppError, type AppError } from "./ui/errors";
+import {
+  busy as busyStatus,
+  makamSuffix,
+  pageSummary,
+  readingStatus,
+  stripsSummary,
+  whereOf,
+  type OmrStatus,
+} from "./ui/status";
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { respellAeu } from "../../../tools/render/respell";
@@ -47,30 +59,6 @@ export type NoteEdit = Partial<Pick<NoteEvent, "koma53" | "durationMs">>;
 // One shared audio backend for the whole app. Created once at module load (not per render)
 // so Play/Stop always talk to the same instance.
 const backend = new WebAudioBackend();
-
-// Progress text for a decode, which now happens in one of two places (MVP W9). On the server a
-// page is ONE batched request, so there is no per-strip progress to report and pretending
-// otherwise would be a fake progress bar; in the browser the count is real.
-function readingStatus(done: number, total: number, current?: string): string {
-  if (current === "server") return `reading ${total} strip${total > 1 ? "s" : ""} on the server…`;
-  return done < total ? `reading strip ${done + 1} of ${total}…` : "stitching…";
-}
-
-// Say where the decode ran, and say it plainly when the server was meant to and did not. A friend
-// who cannot debug anything should still be able to tell us "it said it used my machine".
-function whereSuffix(routed: RoutedResult): string {
-  if (routed.where === "server") return " · read on the server";
-  if (routed.fellBackBecause) return " · read on your machine (the server did not answer)";
-  return decodeUrl() ? "" : " · read on your machine";
-}
-
-// What the makam guess adds to a decode's one-line summary. It belongs there because the makam
-// changes what the piece SOUNDS like, so "which one did it pick" is part of the result, not a
-// filing detail. Sits BEFORE whereSuffix on purpose: the smoke checks match the head of this line
-// and print its tail as evidence for "ran where told", so the where-clause stays last.
-function makamSuffix(detected: MakamDetection): string {
-  return detected.slug ? ` · makam: ${makamDisplay(detected.slug)}` : " · makam: not recognised";
-}
 
 // Every makam the app can play, built once at module load — the list is static.
 const MAKAM_OPTIONS = makamOptions();
@@ -134,7 +122,7 @@ export function App() {
   // The piano-roll's vertical pitch range. Computed ONCE per loaded score (not on every
   // edit) so dragging a note doesn't make the whole view jump/rescale under the cursor.
   const [pitchRange, setPitchRange] = useState<PitchRange | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   // Transport state: "stopped" → Play; "playing" → Pause; "paused" → Resume. Stop resets it.
   const [playState, setPlayState] = useState<"stopped" | "playing" | "paused">("stopped");
   // Which view is shown, whether the sheet is in edit mode, and which measure's modal is open.
@@ -156,8 +144,9 @@ export function App() {
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
   // In-browser OMR: the model reads strip images and the result loads as a score. `omrStatus` is
   // the user-visible progress line — a page is ~20 strips at ~1 s each, so silence would read as
-  // a hang. `omrBusy` disables the picker mid-read.
-  const [omrStatus, setOmrStatus] = useState<string>("");
+  // a hang — plus the structured facts the deploy checks assert on (see ui/status.ts).
+  // `omrBusy` disables the picker mid-read.
+  const [omrStatus, setOmrStatus] = useState<OmrStatus | null>(null);
   const [omrBusy, setOmrBusy] = useState(false);
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
@@ -260,7 +249,7 @@ export function App() {
         setSampleFile(file);
         setError(null);
       })
-      .catch((err) => setError(String(err)));
+      .catch((err) => setError(toAppError(err, "file")));
   }
 
   // Load the URL-requested score (render automation) or the first bundled sample on first render.
@@ -534,7 +523,7 @@ export function App() {
         setSampleFile(""); // a user-picked file isn't one of the bundled samples
         setError(null);
       })
-      .catch((err) => setError(String(err)));
+      .catch((err) => setError(toAppError(err, "file")));
   }
 
   /**
@@ -556,12 +545,18 @@ export function App() {
     files.sort((a, b) => a.name.localeCompare(b.name));
     setError(null);
     setOmrBusy(true);
-    setOmrStatus("loading model…");
+    setOmrStatus(busyStatus("strips", "model", "loading model…"));
 
     void (async () => {
       const urls: string[] = [];
       try {
-        setOmrStatus(`reading ${files.length} strip${files.length > 1 ? "s" : ""}…`);
+        setOmrStatus(
+          busyStatus(
+            "strips",
+            "decode",
+            `reading ${files.length} strip${files.length > 1 ? "s" : ""}…`
+          )
+        );
         const strips: StripInput[] = [];
         for (const [i, f] of files.entries()) {
           const url = URL.createObjectURL(f);
@@ -572,13 +567,15 @@ export function App() {
         const pageName = files[0]!.name.replace(/_s\d+_w\d+\.\w+$/, "") || "decoded-page";
         const t0 = performance.now();
         const routed = await decodeStripsRouted(strips, {
-          onProgress: (done, total, current) => setOmrStatus(readingStatus(done, total, current)),
+          onProgress: (done, total, current) =>
+            setOmrStatus(readingStatus("strips", done, total, current)),
         });
         const totalMs = performance.now() - t0;
         const result = stitchDecoded(routed.strips, pageName);
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
-        if (!result.doc.events.length) throw new Error("the model read nothing from these images");
+        if (!result.doc.events.length)
+          throw new ReadError("read-failed", "the model read nothing from these images");
 
         // Nothing decoded carries metadata, so the makam is guessed from the notes themselves and
         // then confirmed by the user — it decides how the piece SOUNDS, not just how it is filed.
@@ -587,20 +584,23 @@ export function App() {
         loadDoc(result.doc, detected);
         setMakamPrompt(detected);
         setSampleFile("");
-        const perStrip = totalMs / strips.length;
         setOmrStatus(
-          `read ${strips.length} strips → ${notes} notes, ${result.writtenMeasures} measures ` +
-            `in ${(totalMs / 1000).toFixed(1)} s (${perStrip.toFixed(0)} ms/strip)` +
-            makamSuffix(detected) +
-            whereSuffix(routed) +
-            (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
+          stripsSummary({
+            strips: strips.length,
+            notes,
+            measures: result.writtenMeasures,
+            totalMs,
+            detected,
+            where: whereOf(routed),
+            warnings: result.warnings.length,
+          })
         );
         // Warnings are the stitcher's "this construct was malformed" notes; a mostly-right score in
         // the editor IS the point, so they inform rather than block.
         if (result.warnings.length) console.warn("stitch warnings:", result.warnings);
       } catch (err) {
-        setError(String(err));
-        setOmrStatus("");
+        setError(toAppError(err, "read-failed"));
+        setOmrStatus(null);
       } finally {
         urls.forEach(URL.revokeObjectURL);
         setOmrBusy(false);
@@ -622,14 +622,10 @@ export function App() {
    *
    * The slicer is imported lazily so opening the harness does not download opencv.js.
    */
-  function onPage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // re-picking the same file must fire change again
-    if (!file) return;
-
+  function readPageFile(file: File) {
     setError(null);
     setOmrBusy(true);
-    setOmrStatus("loading model…");
+    setOmrStatus(busyStatus("page", "model", "loading model…"));
 
     void (async () => {
       const url = URL.createObjectURL(file);
@@ -637,27 +633,31 @@ export function App() {
         const { slicePage } = await import("./omr/page");
 
         const stem = file.name.replace(/\.[^.]+$/, "") || "page";
-        setOmrStatus("slicing the page…");
+        setOmrStatus(busyStatus("page", "slice", "slicing the page…"));
         const sliced = await slicePage(url, stem, {
           onProgress: (phase, done, total) =>
-            setOmrStatus(done != null ? `${phase}… ${done}/${total}` : `${phase}…`),
+            setOmrStatus(
+              busyStatus("page", "slice", done != null ? `${phase}… ${done}/${total}` : `${phase}…`)
+            ),
         });
         if (!sliced.strips.length)
-          throw new Error(
+          throw new ReadError(
+            "no-staves",
             "no staves found on this page — the MVP reads screenshots and clean scans of Turkish " +
               "notation, one page at a time"
           );
 
-        const sliceS = (sliced.totalMs / 1000).toFixed(1);
         const t0 = performance.now();
         const routed = await decodeStripsRouted(sliced.strips, {
-          onProgress: (done, total, current) => setOmrStatus(readingStatus(done, total, current)),
+          onProgress: (done, total, current) =>
+            setOmrStatus(readingStatus("page", done, total, current)),
         });
         const decodeMs = performance.now() - t0;
         const result = stitchDecoded(routed.strips, stem);
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
-        if (!result.doc.events.length) throw new Error("the model read nothing from this page");
+        if (!result.doc.events.length)
+          throw new ReadError("read-failed", "the model read nothing from this page");
 
         const detected = detectMakam(result.doc);
         onStop();
@@ -665,18 +665,23 @@ export function App() {
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
-          `read a page: ${sliced.nStaves} staves → ${sliced.strips.length} strips → ${notes} notes, ` +
-            `${result.writtenMeasures} measures — sliced in ${sliceS} s` +
-            (sliced.skewDeg ? ` (deskewed ${sliced.skewDeg.toFixed(1)}°)` : "") +
-            `, read in ${(decodeMs / 1000).toFixed(1)} s` +
-            makamSuffix(detected) +
-            whereSuffix(routed) +
-            (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
+          pageSummary({
+            staves: sliced.nStaves,
+            strips: sliced.strips.length,
+            notes,
+            measures: result.writtenMeasures,
+            sliceMs: sliced.totalMs,
+            skewDeg: sliced.skewDeg,
+            decodeMs,
+            detected,
+            where: whereOf(routed),
+            warnings: result.warnings.length,
+          })
         );
         if (result.warnings.length) console.warn("stitch warnings:", result.warnings);
       } catch (err) {
-        setError(String(err));
-        setOmrStatus("");
+        setError(toAppError(err, "read-failed"));
+        setOmrStatus(null);
       } finally {
         URL.revokeObjectURL(url);
         setOmrBusy(false);
@@ -684,8 +689,22 @@ export function App() {
     })();
   }
 
+  // The file-input half of the above. Split so that the picker, drag-and-drop and paste all reach
+  // `readPageFile` — one read path, three gestures.
+  function onPage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // re-picking the same file must fire change again
+    if (file) readPageFile(file);
+  }
+
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+    <div
+      id="app"
+      // `data-ready` is what the deploy checks wait for instead of matching the page's title text
+      // — the title is copy and will change; "a score is installed" is the fact they need.
+      data-ready={doc ? "1" : undefined}
+      style={{ fontFamily: "system-ui, sans-serif", padding: 24, maxWidth: 1100, margin: "0 auto" }}
+    >
       <h1 style={{ marginBottom: 4 }}>Turkish OMR — Web Harness</h1>
       <p style={{ color: "#666", marginTop: 0 }}>
         Phase 1 testing tool. Loads note-model JSON (from the Python exporter), shows a
@@ -693,10 +712,10 @@ export function App() {
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", margin: "16px 0" }}>
-        <button onClick={onPlayPause} disabled={!timeline}>
+        <button id="play" data-play-state={playState} onClick={onPlayPause} disabled={!timeline}>
           {playState === "playing" ? "⏸ Pause" : playState === "paused" ? "▶ Resume" : "▶ Play"}
         </button>
-        <button onClick={onStop} disabled={playState === "stopped"}>■ Stop</button>
+        <button id="stop" onClick={onStop} disabled={playState === "stopped"}>■ Stop</button>
         <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }} title={naturalBpm ? `natural tempo ≈ ${naturalBpm} BPM` : undefined}>
           <span role="img" aria-label="tempo">🎚️</span>
           <input
@@ -761,8 +780,8 @@ export function App() {
           </select>
         </label>
         <span style={{ marginLeft: 12, display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
-          <ModeButton active={viewMode === "roll"} onClick={() => setViewMode("roll")}>Piano-roll</ModeButton>
-          <ModeButton active={viewMode === "sheet"} onClick={() => setViewMode("sheet")}>Sheet</ModeButton>
+          <ModeButton id="view-roll" active={viewMode === "roll"} onClick={() => setViewMode("roll")}>Piano-roll</ModeButton>
+          <ModeButton id="view-sheet" active={viewMode === "sheet"} onClick={() => setViewMode("sheet")}>Sheet</ModeButton>
         </span>
         <label style={{ marginLeft: 12 }}>
           Sample:{" "}
@@ -794,7 +813,7 @@ export function App() {
         <a href="/slices.html" title="See the strips the slicer cuts from a page — no model, no score">
           🔍 Slice inspector
         </a>
-        <button onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
+        <button id="save-json" onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
           ⬇ Save JSON
         </button>
         <label
@@ -874,13 +893,8 @@ export function App() {
         )}
       </div>
 
-      {error && <p id="omr-error" style={{ color: "crimson" }}>Error: {error}</p>}
-      {omrStatus && (
-        <p id="omr-status" style={{ color: omrBusy ? "#0a58ca" : "#666", margin: "8px 0" }}>
-          {omrBusy ? "⏳ " : "✓ "}
-          {omrStatus}
-        </p>
-      )}
+      <ErrorNote error={error} />
+      <StatusLine status={omrStatus} />
 
       {doc ? (
         <>
@@ -1046,9 +1060,10 @@ function StripPanel({
 }
 
 // A segmented-control button for the Piano-roll / Sheet toggle.
-function ModeButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function ModeButton({ id, active, onClick, children }: { id?: string; active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
+      id={id}
       onClick={onClick}
       style={{
         border: "none",

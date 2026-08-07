@@ -54,15 +54,26 @@ async function main() {
 
   await page.goto(base, { waitUntil: "domcontentloaded" });
   // The bundled sample auto-loads first; wait for the app to settle before swapping it out.
-  await page.waitForSelector("text=Turkish OMR", { timeout: 60000 });
+  // `data-ready` rather than the page's title text: the title is copy and is free to change.
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+
+  // "Read strips" is a developer control and lives inside the collapsed Gelişmiş panel; a closed
+  // <details> hides its subtree. Opening it is also the only coverage that panel gets.
+  await page
+    .locator("#advanced")
+    .evaluate((d) => ((d as HTMLDetailsElement).open = true))
+    .catch(() => {});
 
   const input = page.locator("#strips-input");
   await input.setInputFiles(pngs);
 
-  // Reading is ~1 s/strip plus a one-off model load; the status line ends with "read N strips".
-  const status = page.locator("text=/read \\d+ strips/");
+  // Reading is ~1 s/strip plus a one-off model load. Wait on the status line's STATE, not its
+  // wording — see apps/web/src/ui/status.ts for the contract.
+  const status = page.locator('#omr-status[data-state="done"][data-kind="strips"]');
   await status.waitFor({ timeout: 600000 });
   const summary = (await status.textContent())?.trim() ?? "";
+  const nStrips = Number(await status.getAttribute("data-strips"));
+  const nDecoded = Number(await status.getAttribute("data-notes"));
   console.log(`  status: ${summary}`);
 
   // A decode raises the makam prompt, and its backdrop covers the page — every click below would
@@ -70,21 +81,22 @@ async function main() {
   // picked is not what this check is about (that is MANUAL_CHECKS check 14).
   await dismissMakamPrompt(page);
 
-  // The score must actually be on screen and playable.
-  await page.getByRole("button", { name: /Sheet/ }).click();
+  // The score must actually be on screen and playable. Ids, not button LABELS — the labels are
+  // user-facing copy (and are Turkish).
+  await page.locator("#view-sheet").click();
   await page.waitForSelector("svg", { timeout: 30000 });
   const svgCount = await page.locator("svg").count();
 
-  const playBtn = page.getByRole("button", { name: /Play/ });
+  const playBtn = page.locator("#play");
   const playable = await playBtn.isEnabled();
   await playBtn.click();
   await page.waitForTimeout(700);
-  const pausedLabel = (await page.getByRole("button", { name: /Pause|Play/ }).textContent()) ?? "";
-  await page.getByRole("button", { name: /Stop/ }).click();
+  const playingState = (await playBtn.getAttribute("data-play-state")) ?? "";
+  await page.locator("#stop").click();
 
-  // "Save JSON" is the Rung-3 labeling loop's output — it must yield a schemaVersion-1 doc.
+  // Save JSON is the Rung-3 labeling loop's output — it must yield a schemaVersion-1 doc.
   const dl = page.waitForEvent("download", { timeout: 30000 });
-  await page.getByRole("button", { name: /Save JSON/ }).click();
+  await page.locator("#save-json").click();
   const file = await (await dl).path();
   const doc = JSON.parse(readFileSync(file!, "utf8")) as {
     schemaVersion: number;
@@ -96,10 +108,10 @@ async function main() {
   await server.close();
 
   const checks: [string, boolean, string][] = [
-    ["status reports a read", /read \d+ strips/.test(summary), summary],
+    ["status reports a read", nStrips > 0 && nDecoded > 0, `${nStrips} strips, ${nDecoded} notes`],
     ["sheet renders", svgCount > 0, `${svgCount} svg`],
     ["play enabled", playable, String(playable)],
-    ["playback started", /Pause/.test(pausedLabel), pausedLabel.trim()],
+    ["playback started", playingState === "playing", playingState || "(none)"],
     ["saved schemaVersion 1", doc.schemaVersion === 1, String(doc.schemaVersion)],
     ["saved doc has notes", notes > 0, `${notes} notes`],
     ["no uncaught page errors", pageErrors.length === 0, pageErrors.join("; ") || "none"],

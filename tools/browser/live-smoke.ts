@@ -77,13 +77,24 @@ async function readOnePage(page: Page, image: string, deadDecodeUrl?: string) {
   let summary = "";
   while (Date.now() < deadline) {
     summary = (await status.textContent({ timeout: 15000 }).catch(() => null))?.trim() ?? "";
-    if (/read a page:/.test(summary) || (await page.locator("#omr-error").count())) break;
+    if ((await status.getAttribute("data-state")) === "done" || (await page.locator("#omr-error").count()))
+      break;
     await page.waitForTimeout(500);
   }
+  // The facts, not the sentence — apps/web/src/ui/status.ts owns this contract.
+  const done = (await status.getAttribute("data-state")) === "done";
+  const where = done ? await status.getAttribute("data-where") : null;
+  const counts = done
+    ? await Promise.all(
+        ["data-staves", "data-strips", "data-notes", "data-measures"].map(async (a) =>
+          Number(await status.getAttribute(a))
+        )
+      )
+    : [];
   if (await page.locator("#omr-error").count())
     summary = (await page.locator("#omr-error").textContent())?.trim() ?? summary;
 
-  return { summary, errors, isolated, elapsedS: (Date.now() - t0) / 1000 };
+  return { summary, where, counts, errors, isolated, elapsedS: (Date.now() - t0) / 1000 };
 }
 
 async function main() {
@@ -91,26 +102,29 @@ async function main() {
   console.log(`live smoke — ${SITE}\n  page: ${path.relative(ROOT, image)}\n`);
 
   const browser = await chromium.launch();
-  const runs: { label: string; want: RegExp; res: Awaited<ReturnType<typeof readOnePage>> }[] = [];
+  // `want` is the exact `data-where` the run must report; "local-fallback" is stricter than the
+  // old prose match — it proves the configured server was tried and did not answer.
+  const runs: { label: string; want: string; res: Awaited<ReturnType<typeof readOnePage>> }[] = [];
 
   const a = await browser.newPage();
-  runs.push({ label: "server path", want: /read on the server/, res: await readOnePage(a, image) });
+  runs.push({ label: "server path", want: "server", res: await readOnePage(a, image) });
   await a.close();
 
   const b = await browser.newPage();
   runs.push({
     label: "fallback (weights from the Hub)",
-    want: /read on your machine/,
+    want: "local-fallback",
     res: await readOnePage(b, image, "http://127.0.0.1:9931"),
   });
   await b.close();
   await browser.close();
 
-  const notes = (s: string) => /(\d+) staves → (\d+) strips → (\d+) notes, (\d+) measures/.exec(s);
+  const key = (r: Awaited<ReturnType<typeof readOnePage>>) =>
+    r.counts.every((n) => n > 0) ? r.counts.join("/") : "";
   const checks: [string, boolean, string][] = [];
   for (const r of runs) {
-    checks.push([`${r.label}: read a page`, !!notes(r.res.summary), r.res.summary.slice(0, 110) || "(nothing)"]);
-    checks.push([`${r.label}: ran where told`, r.want.test(r.res.summary), r.res.summary.slice(-50)]);
+    checks.push([`${r.label}: read a page`, !!key(r.res), r.res.summary.slice(0, 110) || "(nothing)"]);
+    checks.push([`${r.label}: ran where told`, r.res.where === r.want, `${r.res.where ?? "?"} (want ${r.want})`]);
     checks.push([`${r.label}: cross-origin isolated`, r.res.isolated, String(r.res.isolated)]);
     checks.push([
       `${r.label}: no page errors`,
@@ -121,7 +135,7 @@ async function main() {
   }
 
   // The whole point of a fallback: same page, same music, wherever it ran.
-  const [x, y] = runs.map((r) => notes(r.res.summary)?.slice(1).join("/") ?? "");
+  const [x, y] = runs.map((r) => key(r.res));
   checks.push(["both paths gave the same score", !!x && x === y, `${x || "?"} vs ${y || "?"}`]);
 
   console.log("");

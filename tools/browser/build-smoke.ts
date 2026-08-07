@@ -96,6 +96,10 @@ function serveWeights(): Promise<{ url: string; close: () => Promise<void> }> {
 
 interface RunResult {
   summary: string;
+  /** Where the model ran, straight off the status line's data attributes (ui/status.ts). */
+  where: string | null;
+  /** staves/strips/notes/measures — the score itself, for the "both paths agree" check. */
+  counts: number[];
   errors: string[];
   isolated: boolean;
   elapsedS: number;
@@ -130,13 +134,23 @@ async function readOnePage(page: Page, base: string, image: string, deadDecodeUr
   let summary = "";
   while (Date.now() < deadline) {
     summary = (await status.textContent({ timeout: 15000 }).catch(() => null))?.trim() ?? "";
-    if (/read a page:/.test(summary) || (await page.locator("#omr-error").count())) break;
+    if ((await status.getAttribute("data-state")) === "done" || (await page.locator("#omr-error").count()))
+      break;
     await page.waitForTimeout(500);
   }
+  const done = (await status.getAttribute("data-state")) === "done";
+  const where = done ? await status.getAttribute("data-where") : null;
+  const counts = done
+    ? await Promise.all(
+        ["data-staves", "data-strips", "data-notes", "data-measures"].map(async (a) =>
+          Number(await status.getAttribute(a))
+        )
+      )
+    : [];
   if (await page.locator("#omr-error").count())
     summary = (await page.locator("#omr-error").textContent())?.trim() ?? summary;
 
-  return { summary, errors, isolated, elapsedS: (Date.now() - t0) / 1000 } satisfies RunResult;
+  return { summary, where, counts, errors, isolated, elapsedS: (Date.now() - t0) / 1000 } satisfies RunResult;
 }
 
 async function main() {
@@ -172,17 +186,20 @@ async function main() {
   const base = server.resolvedUrls!.local[0]!.replace(/\/$/, "");
   const browser = await chromium.launch();
 
-  const runs: { label: string; want: RegExp; res: RunResult }[] = [];
+  // `want` is the exact `data-where` this run must report. Stricter than the old prose match:
+  // "local-fallback" proves the configured server was tried and missed, where "read on your
+  // machine" also matched a build that had no decode server configured at all.
+  const runs: { label: string; want: string; res: RunResult }[] = [];
 
   const a = await browser.newPage();
-  runs.push({ label: "server path", want: /read on the server/, res: await readOnePage(a, base, image) });
+  runs.push({ label: "server path", want: "server", res: await readOnePage(a, base, image) });
   await a.close();
 
   const dead = "http://127.0.0.1:9931";
   const b = await browser.newPage();
   runs.push({
     label: "fallback path (weights cross-origin)",
-    want: /read on your machine/,
+    want: "local-fallback",
     res: await readOnePage(b, base, image, dead),
   });
   await b.close();
@@ -191,19 +208,18 @@ async function main() {
   await server.close();
   await weights.close();
 
-  const notes = (s: string) => /(\d+) staves → (\d+) strips → (\d+) notes, (\d+) measures/.exec(s);
+  const key = (r: RunResult) => (r.counts.every((n) => n > 0) ? r.counts.join("/") : "");
   const checks: [string, boolean, string][] = [];
   for (const r of runs) {
-    const m = notes(r.res.summary);
-    checks.push([`${r.label}: read a page`, !!m, r.res.summary.slice(0, 120) || "(nothing)"]);
-    checks.push([`${r.label}: ran where told`, r.want.test(r.res.summary), r.res.summary.slice(-52)]);
+    checks.push([`${r.label}: read a page`, !!key(r.res), r.res.summary.slice(0, 120) || "(nothing)"]);
+    checks.push([`${r.label}: ran where told`, r.res.where === r.want, `${r.res.where ?? "?"} (want ${r.want})`]);
     checks.push([`${r.label}: cross-origin isolated`, r.res.isolated, String(r.res.isolated)]);
     checks.push([`${r.label}: no page errors`, r.res.errors.length === 0, r.res.errors.join("; ").slice(0, 140) || "none"]);
     console.log(`  ${r.label}: ${r.res.elapsedS.toFixed(1)} s — ${r.res.summary.slice(0, 110)}`);
   }
 
   // The whole point of a fallback: same page, same music, wherever it ran.
-  const [x, y] = runs.map((r) => notes(r.res.summary)?.slice(1).join("/") ?? "");
+  const [x, y] = runs.map((r) => key(r.res));
   checks.push(["both paths gave the same score", !!x && x === y, `${x || "?"} vs ${y || "?"}`]);
 
   console.log("");

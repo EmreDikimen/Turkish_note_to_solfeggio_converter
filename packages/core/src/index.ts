@@ -3,6 +3,7 @@ export * from "./tuning";
 export * from "./scheduling";
 export * from "./notation";
 export * from "./measures";
+export * from "./edits";
 export * from "./tempo";
 export * from "./usul";
 export * from "./transpose";

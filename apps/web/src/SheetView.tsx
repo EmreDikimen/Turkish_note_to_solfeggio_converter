@@ -19,6 +19,7 @@ import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
 import { tieSplitBeats, tupletGroupsIn, tupletWrittenBeats } from "../../../tools/render/rhythm";
 import { buildTextNoise } from "./textNoise";
+import { TR } from "./ui/strings";
 import { mulberry32 } from "../../../tools/render/rng";
 
 // --- layout constants -------------------------------------------------------
@@ -765,6 +766,53 @@ interface MeasureBox {
   width: number;
 }
 
+/**
+ * Where one DRAWN note sits on screen, so edit mode can hit-test a click against it.
+ *
+ * Kept deliberately inside SheetView rather than pushed out through `onLayout`: that payload is
+ * a contract shared with stripExport.ts and tools/render/render.ts, which crop training strips by
+ * those measure rects, and the only consumer of per-note geometry is the overlay a few lines
+ * below. (`onLayout` is also an engrave dependency, so a second callback prop would have to be
+ * stable in the parent or re-engrave forever.)
+ *
+ * Two known holes, both documented rather than papered over:
+ *  - a tie-split event draws TWO StaveNotes, so it gets two boxes with the same `evIndex`;
+ *  - grace notes (çarpma) are modifiers on the following note, never entries in `notes[]`, so
+ *    they get no box and cannot be selected. Deleting their host takes them with it.
+ */
+interface NoteBox {
+  /** `NoteEvent.index` — the same 1-based handle updateEvent and the edit primitives match on. */
+  evIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Fallback half-width for a note whose bounding box VexFlow won't give us. */
+const NOTE_FALLBACK_W = 14;
+/** Slack around a note's box so a click near the notehead still lands on it. */
+const NOTE_HIT_PAD = 3;
+/** Vertical drag (px) that moves a note one diatonic step — half a staff space, i.e. the real
+ *  distance between a line and the space above it, so the note tracks the pointer. */
+const DRAG_PX_PER_STEP = STAFF_SPACE / 2;
+
+/**
+ * The clickable box of one drawn note, in the SVG's coordinate space (which is the overlay's too
+ * — the container is never transformed; see the .kv-score rule in CLAUDE.md).
+ */
+function noteBoxOf(n: StaveNote, evIndex: number, barTop: number, barHeight: number): NoteBox {
+  try {
+    const bb = n.getBoundingBox();
+    if (bb && Number.isFinite(bb.getW()) && bb.getW() > 0) {
+      return { evIndex, x: bb.getX(), y: bb.getY(), width: bb.getW(), height: bb.getH() };
+    }
+  } catch {
+    // fall through to the stave-height fallback below
+  }
+  return { evIndex, x: n.getAbsoluteX() - NOTE_FALLBACK_W / 2, y: barTop, width: NOTE_FALLBACK_W, height: barHeight };
+}
+
 /** Where a single timed event sits on screen, so the playhead can follow playback. */
 interface NotePos {
   startMs: number;
@@ -793,6 +841,12 @@ export function SheetView({
   getPositionMs,
   onMeasureClick,
   onSeekToMeasure,
+  selectedNote,
+  onSelectNote,
+  onDeleteNote,
+  onNudgePitch,
+  armed,
+  onApplyTool,
   onLayout,
   highlightRect,
   repeatSpans,
@@ -821,10 +875,27 @@ export function SheetView({
   playing: boolean;
   /** Current playback position in ms (from the audio backend), or null when stopped. */
   getPositionMs: () => number | null;
-  /** Edit mode: open the editor for a measure. */
+  /** Edit mode: open the editor for a measure. Fires on a click that misses every note — the
+   *  measure modal is still how notes are inserted and re-valued until the palette lands. */
   onMeasureClick: (m: Measure) => void;
   /** Non-edit mode: seek/play from the clicked measure. */
   onSeekToMeasure: (m: Measure) => void;
+  /** Edit mode: which event (`NoteEvent.index`) is selected, or null. */
+  selectedNote?: number | null;
+  /** Edit mode: a note was clicked (null when a click landed on nothing selectable). */
+  onSelectNote?: (index: number | null) => void;
+  /** Edit mode: the selected note's ✕ was pressed. */
+  onDeleteNote?: (index: number) => void;
+  /** Edit mode: the note was dragged up or down — ±1 diatonic step per half staff space,
+   *  accidental carried. Signed steps, not a delta in pixels. */
+  onNudgePitch?: (index: number, steps: number) => void;
+  /** Edit mode: is a palette tool armed? Only its ARMEDNESS matters here — the sheet does not
+   *  care which tool it is; it just routes the click to `onApplyTool` instead of starting a
+   *  pitch drag, and shows the "this click applies something" cursor. */
+  armed?: boolean;
+  /** Edit mode: a note was clicked while a tool was armed. Fires once per click, even for a
+   *  tie-split event (two boxes, one `evIndex`). */
+  onApplyTool?: (index: number) => void;
   /** Fired after each engrave with every measure's on-screen rectangle (1-based `index`, `x`, `y`,
    *  `width`) and the SVG size. Used by the Step-2c strip exporter to compute crop rectangles. */
   onLayout?: (layout: { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number }) => void;
@@ -854,10 +925,17 @@ export function SheetView({
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  // An in-progress pitch drag: which event, where the pointer went down, and how many steps have
+  // already been applied. A ref, not state — every applied step re-engraves the score, and the
+  // drag has to survive those re-renders unchanged.
+  const dragRef = useRef<{ index: number; startY: number; applied: number } | null>(null);
   // On-screen position of every timed event, in playback order. A ref (not state) because the
   // playhead animation reads it every frame and must not trigger re-renders.
   const positionsRef = useRef<NotePos[]>([]);
   const [boxes, setBoxes] = useState<MeasureBox[]>([]);
+  // Per-note click targets for edit mode. State (not a ref like `positionsRef`) because the
+  // overlay renders from them; they change only on a re-engrave, so this costs nothing.
+  const [noteBoxes, setNoteBoxes] = useState<NoteBox[]>([]);
   const [svgHeight, setSvgHeight] = useState(ROW_HEIGHT + 20);
   const [hover, setHover] = useState<number | null>(null);
 
@@ -977,6 +1055,7 @@ export function SheetView({
 
     const collected: MeasureBox[] = [];
     const positions: NotePos[] = [];
+    const noteRects: NoteBox[] = [];
     const lyricItems: LyricItem[] = []; // collected across all staves, drawn in one pass below
     let tMs = 0; // running playback clock, matches buildTimeline's accumulation order
     rows.forEach((cells, r) => {
@@ -1126,6 +1205,11 @@ export function SheetView({
             notes.forEach((n, i) => {
               const slot = slots[i]!;
               positions.push({ startMs: tMs, endMs: tMs + slot.durationMs, x: n.getAbsoluteX(), top: barTop, height: barHeight });
+              // The same walk records each note's clickable box for edit mode. VexFlow's own
+              // bounding box covers notehead + stem + accidental; when it isn't available (the
+              // try/catch in attachTitles shows some notes have no element) fall back to a small
+              // box on the stave, which is still a usable click target.
+              noteRects.push(noteBoxOf(n, slot.ev.index, barTop, barHeight));
               tMs += slot.durationMs;
               // Collect each note's lyric slot; the connectors (hyphens / melisma lines) need the
               // neighbours, so the actual drawing happens in one pass after the whole score is laid out.
@@ -1170,6 +1254,7 @@ export function SheetView({
 
     setSvgHeight(height);
     setBoxes(collected);
+    setNoteBoxes(noteRects);
     positionsRef.current = positions;
     onLayout?.({
       boxes: collected.map((b) => ({ index: b.index, x: b.x, y: b.y, width: b.width })),
@@ -1212,6 +1297,48 @@ export function SheetView({
     return () => cancelAnimationFrame(raf);
   }, [playing, getPositionMs]);
 
+
+  // Drag a note up and down to change its pitch (owner, 2026-08-07 — this replaces an earlier
+  // scroll-wheel version, which fought the page's own scrolling and moved the note in jumps).
+  //
+  // Pointer events, not mouse events, so a trackpad, a mouse and a touchscreen all behave the
+  // same. Three details carry the whole gesture:
+  //  - `setPointerCapture` on pointerdown, so the drag keeps working once the pointer leaves the
+  //    note's small box — which it does immediately, because the note moves out from under it;
+  //  - steps are measured from where the pointer WENT DOWN, not from the previous event, so
+  //    rounding cannot accumulate drift over a long drag;
+  //  - `applied` remembers how far the note has already moved, and only the difference is sent,
+  //    because `onNudgePitch` is relative.
+  function onPitchDragStart(e: React.PointerEvent<HTMLDivElement>, index: number) {
+    e.stopPropagation();
+    e.preventDefault(); // no text selection, no native image drag
+    onSelectNote?.(index);
+    // A tool is armed: this click APPLIES it. Deliberately no drag — a click that both re-values a
+    // note and nudges its pitch by whatever the pointer wobbled is not one edit, it is two.
+    if (armed) {
+      onApplyTool?.(index);
+      return;
+    }
+    if (!onNudgePitch) return;
+    dragRef.current = { index, startY: e.clientY, applied: 0 };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onPitchDragMove(e: React.PointerEvent<HTMLDivElement>) {
+    const d = dragRef.current;
+    if (!d || !onNudgePitch) return;
+    // Down the screen is a lower pitch, so the sign flips.
+    const want = -Math.round((e.clientY - d.startY) / DRAG_PX_PER_STEP);
+    if (want === d.applied) return;
+    onNudgePitch(d.index, want - d.applied);
+    d.applied = want;
+  }
+
+  function onPitchDragEnd(e: React.PointerEvent<HTMLDivElement>) {
+    dragRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+  }
+
   // Map a mouse event to the measure under it, by hit-testing against the recorded boxes. Used
   // for non-edit "click to play from here" (and its hover highlight). Coordinates are relative
   // to the positioned container, matching the SVG's own coordinate space.
@@ -1252,6 +1379,12 @@ export function SheetView({
       </div>
       <div
         ref={containerRef}
+        // The deploy checks read state, never copy: edit mode and the selection are attributes.
+        // The id matters — `#edit-toggle` also carries `data-edit-mode`, so a check that wants the
+        // SHEET's state has to name this element rather than match the attribute alone.
+        id="sheet-surface"
+        data-edit-mode={editMode ? "on" : "off"}
+        data-selected-note={editMode && selectedNote != null ? selectedNote : undefined}
         style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
         onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}
@@ -1316,13 +1449,18 @@ export function SheetView({
           }}
         />
         {editMode && (
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }} data-omr="edit-overlay">
+            {/* Measure targets, underneath the note targets: a click that misses every note opens
+                the measure modal, which is still the only way to insert a note or change a
+                duration until the palette lands.
+                ⚠ NO hover highlight here (owner, 2026-08-07). Editing is whole-score, so framing a
+                measure says the wrong thing about what a click does — and it also cost a re-render
+                per mouse-move across the sheet. The note boxes below carry the only hover state
+                edit mode has. */}
             {boxes.map((b) => (
               <div
                 key={b.index}
-                onMouseEnter={() => setHover(b.index)}
-                onMouseLeave={() => setHover(null)}
-                onClick={() => onMeasureClick(b.measure)}
+                onClick={() => { onSelectNote?.(null); onMeasureClick(b.measure); }}
                 style={{
                   position: "absolute",
                   left: b.x,
@@ -1330,14 +1468,74 @@ export function SheetView({
                   width: b.width,
                   height: ROW_HEIGHT - 16,
                   pointerEvents: "auto",
-                  cursor: "pointer",
+                  cursor: "default",
                   boxSizing: "border-box",
-                  borderRadius: 4,
-                  background: hover === b.index ? "rgba(59,130,246,0.08)" : "transparent",
-                  border: hover === b.index ? "1px solid #3b82f6" : "1px solid transparent",
                 }}
               />
             ))}
+            {/* Note targets. A tie-split event has two boxes sharing one evIndex; both highlight
+                when it is selected, and either one selects it. */}
+            {noteBoxes.map((nb, i) => {
+              const on = selectedNote != null && nb.evIndex === selectedNote;
+              return (
+                <div
+                  key={`${nb.evIndex}_${i}`}
+                  className={`kv-note-hit${on ? " is-selected" : ""}${armed ? " is-armed" : ""}`}
+                  data-omr-note={nb.evIndex}
+                  data-selected={on ? "1" : undefined}
+                  onPointerDown={(e) => onPitchDragStart(e, nb.evIndex)}
+                  onPointerMove={onPitchDragMove}
+                  onPointerUp={onPitchDragEnd}
+                  onPointerCancel={onPitchDragEnd}
+                  // The measure box underneath opens the modal; a click on a note must not.
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: "absolute",
+                    left: nb.x - NOTE_HIT_PAD,
+                    top: nb.y - NOTE_HIT_PAD,
+                    width: nb.width + 2 * NOTE_HIT_PAD,
+                    height: nb.height + 2 * NOTE_HIT_PAD,
+                    pointerEvents: "auto",
+                    cursor: armed ? "copy" : "grab",
+                    touchAction: "none", // or the browser pans the page instead of dragging
+                  }}
+                />
+              );
+            })}
+            {/* The ✕, on the FIRST box of the selected event (a tie-split has two) so a split
+                note doesn't sprout two delete buttons. */}
+            {(() => {
+              if (selectedNote == null || !onDeleteNote) return null;
+              const nb = noteBoxes.find((b) => b.evIndex === selectedNote);
+              if (!nb) return null;
+              return (
+                <button
+                  id="note-delete"
+                  type="button"
+                  title={TR.sheet.deleteNote}
+                  aria-label={TR.sheet.deleteNote}
+                  onClick={(e) => { e.stopPropagation(); onDeleteNote(selectedNote); }}
+                  style={{
+                    position: "absolute",
+                    left: nb.x + nb.width + NOTE_HIT_PAD - 2,
+                    top: nb.y - NOTE_HIT_PAD - 16,
+                    width: 20,
+                    height: 20,
+                    lineHeight: "18px",
+                    padding: 0,
+                    pointerEvents: "auto",
+                    cursor: "pointer",
+                    borderRadius: "50%",
+                    border: "1px solid #b91c1c",
+                    background: "#fff",
+                    color: "#b91c1c",
+                    fontSize: 13,
+                  }}
+                >
+                  ✕
+                </button>
+              );
+            })()}
           </div>
         )}
       </div>

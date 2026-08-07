@@ -30,7 +30,12 @@ export function ScoreCard({
   onShowLyrics,
   editMode,
   onEditMode,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
   onSave,
+  palette,
   children,
 }: {
   doc: NoteModelDocument;
@@ -41,7 +46,14 @@ export function ScoreCard({
   onShowLyrics: (v: boolean) => void;
   editMode: boolean;
   onEditMode: (v: boolean) => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
   onSave: () => void;
+  /** The edit palette, shown BESIDE the score in edit mode. Passed in (rather than built here)
+   *  so the armed tool stays with the edit state in App. Null outside edit mode. */
+  palette?: ReactNode;
   children: ReactNode;
 }) {
   const notes = doc.events.filter((e) => e.kind === "note").length;
@@ -81,12 +93,40 @@ export function ScoreCard({
               <span>{TR.card.lyrics}</span>
             </label>
             <button
+              id="edit-toggle"
+              data-edit-mode={editMode ? "on" : "off"}
               type="button"
               className={`kv-btn${editMode ? " is-on" : ""}`}
               onClick={() => onEditMode(!editMode)}
             >
               {editMode ? TR.card.editing : TR.card.edit}
             </button>
+            {/* Undo/redo ship WITH direct editing, not after it: clicking a note and pressing ✕
+                with no way back is worse than the modal this replaces, which had Cancel. */}
+            {editMode && (
+              <>
+                <button
+                  id="undo"
+                  type="button"
+                  className="kv-btn kv-btn--ghost"
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                  title={TR.card.undoTitle}
+                >
+                  {TR.card.undo}
+                </button>
+                <button
+                  id="redo"
+                  type="button"
+                  className="kv-btn kv-btn--ghost"
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                  title={TR.card.redoTitle}
+                >
+                  {TR.card.redo}
+                </button>
+              </>
+            )}
           </>
         )}
 
@@ -101,7 +141,13 @@ export function ScoreCard({
         </button>
       </header>
 
-      <div className="kv-score">{children}</div>
+      {/* The palette is a SIBLING of .kv-score, never a child: that container is screenshotted
+          by rect for training strips, so nothing may nest inside it, set a font in it, or
+          transform it. A flex row around it is safe. */}
+      <div className="kv-score-row">
+        {palette}
+        <div className="kv-score">{children}</div>
+      </div>
 
       <p className="kv-hint">
         {viewMode === "sheet"

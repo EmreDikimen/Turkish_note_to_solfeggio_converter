@@ -385,6 +385,126 @@
   padding: var(--space-4);
 }
 
+/* The palette sits beside the score, so the row is a flex pair. `min-width: 0` on the score is
+   what keeps its own sideways scroll working inside a flex child instead of stretching the page. */
+.kv-score-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.kv-score-row > .kv-score {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── The edit palette (armed tools) ─────────────────────────────────────── */
+
+/* Sticky, not fixed, and no transform anywhere near the score. */
+.kv-palette {
+  position: sticky;
+  top: var(--space-3);
+  flex: 0 0 auto;
+  /* Three 34px tools plus two 4px gaps = 110px of content, inside 12px padding each side. Narrower
+     and the rows wrap to two, which makes the palette taller than the first system of music. */
+  width: 136px;
+  margin: var(--space-4) 0 var(--space-4) var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+}
+
+.kv-palette__group + .kv-palette__group {
+  margin-top: var(--space-3);
+}
+
+.kv-palette__label {
+  display: block;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--space-1);
+}
+
+.kv-palette__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.kv-palette__hint {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: var(--ink-faint);
+}
+
+/* ⚠ `overflow: hidden` and the pointer-transparent glyph below are load-bearing, not polish. A
+   Bravura note glyph is ~4 staff spaces tall and draws well outside its em box, so the span of one
+   tool painted OVER its neighbours: `elementFromPoint` in the middle of the 1/8 button returned the
+   1/32 one, and a click there armed the wrong value. Clip the ink, and let clicks resolve to the
+   button that owns the pixel. */
+.kv-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+  cursor: pointer;
+}
+.kv-tool:hover {
+  border-color: var(--rule-strong);
+}
+.kv-tool.is-armed {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.kv-tool .kv-glyph {
+  pointer-events: none;
+}
+.kv-tool--wide {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+}
+
+/* With a tool armed, a click APPLIES it rather than starting a drag — say so with the cursor. */
+.kv-note-hit.is-armed {
+  cursor: copy;
+}
+
+/* Edit mode's per-note click targets. These are overlay DIVS beside the SVG, never inside it, so
+   they are invisible to the strip exporter — but they still live under .kv-score, so they may set
+   no font and no transform. Hover is CSS, not React state: a re-render per mouse-move would
+   re-run the engrave effect's neighbours for nothing. */
+.kv-note-hit {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.kv-note-hit:hover {
+  background: rgba(20, 184, 166, 0.1);
+  border-color: rgba(20, 184, 166, 0.55);
+}
+.kv-note-hit.is-selected,
+.kv-note-hit.is-selected:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1.5px solid #f59e0b;
+}
+.kv-note-hit:active {
+  cursor: grabbing;
+}
+
 .kv-hint {
   font-size: var(--text-sm);
   color: var(--ink-faint);

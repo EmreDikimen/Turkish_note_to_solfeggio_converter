@@ -50,15 +50,37 @@ export const TR = {
     lyricsTitle: "Notaların altına güfte hecelerini yaz",
     edit: "✎ Düzenle",
     editing: "✓ Düzenleniyor",
+    undo: "↶ Geri al",
+    undoTitle: "Son değişikliği geri al (Ctrl/⌘+Z)",
+    redo: "↷ Yinele",
+    redoTitle: "Geri alınan değişikliği yinele (Ctrl/⌘+Shift+Z)",
     save: "⬇ JSON indir",
     saveTitle: "Düzelttiğiniz eseri nota-modeli JSON dosyası olarak indirin",
     meta: (makam: string, usul: string, composer: string | undefined, notes: number, dur: string) =>
       `makam ${makam} · usul ${usul}${composer ? ` · ${composer}` : ""} · ${notes} nota · ${dur}`,
     hintSheet: "Bir ölçüye tıklayın, eser oradan çalar.",
-    hintSheetEditing: "Düzenleme açık — bir ölçüye tıklayın, notalarını değiştirin.",
+    hintSheetEditing:
+      "Düzenleme açık — bir notaya tıklayın: seçilir, ✕ ile silinir, yukarı/aşağı sürükleyince " +
+      "perdesi değişir. Soldaki paletten bir süre ya da değiştirme işareti seçip notaya " +
+      "tıklarsanız o nota değişir. Boşluğa tıklarsanız o ölçünün penceresi açılır.",
     hintRoll:
       "Dikey eksen 53 koma. Notayı yukarı/aşağı sürükleyin: perde değişir. Sağ kenarından " +
       "çekin: süresi değişir.",
+  },
+
+  sheet: {
+    deleteNote: "Notayı sil",
+  },
+
+  palette: {
+    durations: "Süre",
+    accidentals: "Değiştirme",
+    durationTitle: (frac: string) => `${frac} — seçip bir notaya tıklayın, süresi bu olur`,
+    accidentalTitle: (name: string) => `${name} — seçip bir notaya tıklayın`,
+    select: "↖ Seçim",
+    selectTitle: "Aracı bırak: tıklamak seçer, sürüklemek perdeyi değiştirir (Esc)",
+    hintIdle: "Bir araç seçin, sonra notaya tıklayın.",
+    hintArmed: "Şimdi bir notaya tıklayın. Bırakmak için Esc.",
   },
 
   advanced: {

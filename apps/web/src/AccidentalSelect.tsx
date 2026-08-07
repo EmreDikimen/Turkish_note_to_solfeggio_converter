@@ -1,20 +1,10 @@
 import { useState } from "react";
-import { accidentalGlyph, accidentalLabel } from "@turkish-omr/core";
-
-// Accidentals offered in the EDITOR, low pitch → high pitch — the full range incl. the numbered
-// ±2/±3, so the user can see and set the exact comma they want. (The engraved staff snaps these to
-// the standard AEU signs; the editor does not.) Natural = 0.
-const VALUES = [-8, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 8];
-const NATURAL_CP = 0xe261;
-const char = (cp: number) => String.fromCodePoint(cp);
-
-function glyphCp(commas: number): number {
-  if (commas === 0) return NATURAL_CP;
-  return accidentalGlyph(commas)?.codepoint ?? NATURAL_CP;
-}
-function label(commas: number): string {
-  return commas === 0 ? "doğal" : `${accidentalLabel(commas)} (${commas > 0 ? `+${commas}` : commas})`;
-}
+import {
+  ACCIDENTAL_VALUES as VALUES,
+  accidentalChar,
+  accidentalLongLabel as label,
+  accidentalName,
+} from "./ui/accidentals";
 
 /**
  * Pitch-alteration picker: the user chooses how many commas sharp/flat, shown as the real
@@ -26,8 +16,8 @@ export function AccidentalSelect({ value, onChange }: { value: number; onChange:
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       <button type="button" onClick={() => setOpen((o) => !o)} className="kv-btn" style={trigger}>
-        <span className="kv-glyph" style={{ fontSize: 18, minWidth: 14, display: "inline-block" }}>{char(glyphCp(value))}</span>
-        <span>{value === 0 ? "doğal" : accidentalLabel(value)}</span>
+        <span className="kv-glyph" style={{ fontSize: 18, minWidth: 14, display: "inline-block" }}>{accidentalChar(value)}</span>
+        <span>{accidentalName(value)}</span>
         <span style={{ color: "var(--ink-faint)", fontSize: 10, marginLeft: "auto" }}>▾</span>
       </button>
       {open && (
@@ -40,7 +30,7 @@ export function AccidentalSelect({ value, onChange }: { value: number; onChange:
                 onClick={() => { onChange(commas); setOpen(false); }}
                 style={{ ...item, background: commas === value ? "var(--accent-soft)" : "transparent" }}
               >
-                <span className="kv-glyph" style={{ fontSize: 18, width: 18, display: "inline-block", textAlign: "center" }}>{char(glyphCp(commas))}</span>
+                <span className="kv-glyph" style={{ fontSize: 18, width: 18, display: "inline-block", textAlign: "center" }}>{accidentalChar(commas)}</span>
                 <span style={{ fontSize: "var(--text-sm)" }}>{label(commas)}</span>
               </li>
             ))}

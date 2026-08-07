@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import {
-  beatsToMs,
   freqFromTuning,
   isMeasureValid,
   komaOf,
   komaToName,
   parseNoteName,
   spellNote,
+  withDurationBeats,
+  withPitch,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
@@ -130,20 +131,16 @@ export function MeasureEditModal({
     // notes stay grouped in this bar even though their `offset` is now stale/unset.
     const bar = measure.events.find((e) => e.bar != null)?.bar;
     const events: NoteEvent[] = rows.map((r) => {
-      const durationMs = beatsToMs(r.num, r.den, doc);
-      const durationBeats = { num: r.num, den: r.den };
-      if (r.kind === "rest") {
-        return { index: r.origIndex ?? -1, kind: "rest", koma53: -1, noteName: "Es", noteAE: "Es", durationMs, durationBeats, freqHz: null, lyric: r.lyric, offset: 0, bar };
-      }
-      const koma = komaOf(r.letter, r.octave, r.alter);
-      return {
-        index: r.origIndex ?? -1, kind: "note", koma53: koma,
-        noteName: spellNote(r.letter, r.octave, r.alter, "solfege"),
-        noteAE: spellNote(r.letter, r.octave, r.alter, "western"),
-        durationMs, durationBeats,
-        freqHz: Math.round(freqFromTuning(koma, doc.tuning) * 1e4) / 1e4,
+      // Pitch and duration go through core's shared edit primitives, so a note edited here and a
+      // note edited on the sheet come out byte-identical (see packages/core/src/edits.ts).
+      const base: NoteEvent = {
+        index: r.origIndex ?? -1, kind: r.kind, koma53: -1, noteName: "Es", noteAE: "Es",
+        durationMs: 0, durationBeats: { num: r.num, den: r.den }, freqHz: null,
         lyric: r.lyric, offset: 0, bar,
       };
+      const timed = withDurationBeats(base, { num: r.num, den: r.den }, doc);
+      if (r.kind === "rest") return timed;
+      return withPitch(timed, { letter: r.letter, octave: r.octave, alter: r.alter }, doc.tuning);
     });
     // Re-insert the preserved grace notes, each right before its (surviving) host note.
     const withGraces: NoteEvent[] = [];

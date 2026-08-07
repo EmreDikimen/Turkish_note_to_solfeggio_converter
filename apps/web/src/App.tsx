@@ -5,24 +5,32 @@ import {
   buildMetronomeTrack,
   buildTimeline,
   centsAboveRef,
+  deleteEvent,
   deriveTimeSignature,
   estimateBpm,
   detectMakam,
   findUsul,
-  freqFromTuning,
   groupMeasures,
   makamDisplay,
   makamKomaDeltas,
   makamOptions,
+  nudgePitch,
+  renumber,
   resolveMakam,
+  spellingOf,
   transpose as transposeDoc,
   USULS,
+  withAlter,
+  withDurationBeats,
+  withKoma,
   withKomaDeltas,
+  withPitch,
   type MakamDetection,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
+import { useDocHistory } from "./useDocHistory";
 import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
@@ -35,6 +43,7 @@ import { loadImage } from "./omr/preprocess";
 import { UploadHero } from "./ui/UploadHero";
 import { TransportBar } from "./ui/TransportBar";
 import { ScoreCard } from "./ui/ScoreCard";
+import { EditPalette, type Tool } from "./ui/EditPalette";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
@@ -121,7 +130,10 @@ const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
  * `useEffect` = run a side-effect (here: fetch the sample once on mount).
  */
 export function App() {
-  const [doc, setDoc] = useState<NoteModelDocument | null>(null);
+  // The score, with undo/redo. Every write goes through `history.apply` (or `history.reset` for a
+  // freshly loaded file) — there is no bare setter, so nothing can edit the doc off the stack.
+  const history = useDocHistory();
+  const doc = history.doc;
   // The piano-roll's vertical pitch range. Computed ONCE per loaded score (not on every
   // edit) so dragging a note doesn't make the whole view jump/rescale under the cursor.
   const [pitchRange, setPitchRange] = useState<PitchRange | null>(null);
@@ -145,6 +157,14 @@ export function App() {
   // playback, and playhead are untouched.
   const [showRepeats, setShowRepeats] = useState(false);
   const [editing, setEditing] = useState<Measure | null>(null);
+  // Edit mode: which event (`NoteEvent.index`) is selected on the sheet, or null. A selection is
+  // a POSITION, not an identity — deletes renumber — so it is cleared on load, on leaving edit
+  // mode, and on undo/redo rather than being translated across those.
+  const [selectedNote, setSelectedNote] = useState<number | null>(null);
+  // Edit mode: the ARMED palette tool, or null for plain selection (click selects, drag moves the
+  // pitch). Armed, a click on a note applies the tool instead — the Mus2 model. Cleared with the
+  // edit toggle so a friend cannot leave a tool armed and come back to it.
+  const [armed, setArmed] = useState<Tool | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
   // In-browser OMR: the model reads strip images and the result loads as a score. `omrStatus` is
@@ -234,7 +254,8 @@ export function App() {
     const slug = detected ? detected.slug ?? "" : resolveMakam(d.makam);
     setMakamSlug(slug);
     setTranspose(0); // a freshly loaded score starts untransposed
-    setDoc(detected ? { ...d, makam: slug } : d);
+    setSelectedNote(null);
+    history.reset(detected ? { ...d, makam: slug } : d);
   }
 
   // Apply a makam choice: stop first (a running playback does not pick up a new timeline — the
@@ -243,7 +264,7 @@ export function App() {
   function applyMakam(slug: string) {
     onStop();
     setMakamSlug(slug);
-    setDoc((prev) => (prev && prev.makam !== slug ? { ...prev, makam: slug } : prev));
+    history.apply((prev) => (prev.makam !== slug ? { ...prev, makam: slug } : prev));
   }
 
   // Fetch a bundled/exported score by URL and install it (stops any playback first).
@@ -375,6 +396,24 @@ export function App() {
   // playhead. Stable identity (the backend is a module constant) keeps the rAF effect steady.
   const getPositionMs = useCallback(() => backend.getPositionMs(), []);
 
+  // Undo/redo from the keyboard, the way every editor does it. Skipped while the focus is in a
+  // text field (the browser's own undo belongs to that field) and outside edit mode.
+  useEffect(() => {
+    if (!editMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      e.preventDefault();
+      if (e.shiftKey) onRedo();
+      else onUndo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // No dependency array on purpose: onUndo/onRedo are plain functions rebuilt each render, so
+    // re-binding a single keydown listener per render is cheaper than memoising the whole chain.
+  });
+
   // When the piece finishes on its own, reset the transport to "stopped" so the UI shows Play.
   useEffect(() => {
     backend.setOnEnded(() => setPlayState("stopped"));
@@ -384,28 +423,117 @@ export function App() {
   // Apply one note edit from the piano-roll. This is the heart of "correct OMR mistakes".
   // What/why: edits must flow back into `doc` so that BOTH the view and playback reflect
   // them. We update immutably (build a new doc) so React re-renders; the timeline + redraw
-  // recompute automatically. If pitch changed, recompute the cached `freqHz` so the next
-  // playback uses the corrected frequency. Editing also stops any current playback, since
-  // the old scheduled audio no longer matches what's on screen.
+  // recompute automatically. Editing also stops any current playback, since the old scheduled
+  // audio no longer matches what's on screen.
+  //
+  // A pitch drag goes through core's `withKoma`, which rewrites `noteName`/`noteAE` alongside
+  // `koma53`/`freqHz`. Before that, this function patched the koma only — and since the sheet
+  // reads its staff position from `parseNoteName(ev.noteName)`, a roll drag moved the SOUND and
+  // left the notehead behind. ⚠ The duration drag still writes `durationMs` alone and leaves
+  // `durationBeats` (what the sheet engraves) stale; fixing that means snapping a continuous
+  // drag to a note value, which is the palette's job, not this one.
   function updateEvent(index: number, patch: NoteEdit) {
     onStop();
     // Edits arrive in the DISPLAYED pitch space. When the staff is rewritten by the transpose,
     // map the dragged pitch back to the stored (base) score before applying.
     const shift = !keepSheet && transpose !== 0 ? transpose : 0;
-    const adj: NoteEdit =
-      shift && patch.koma53 !== undefined ? { ...patch, koma53: patch.koma53 - shift } : patch;
-    setDoc((prev) => {
-      if (!prev) return prev;
-      const events = prev.events.map((ev) => {
-        if (ev.index !== index) return ev;
-        const next: NoteEvent = { ...ev, ...adj };
-        if (patch.koma53 !== undefined && next.kind === "note") {
-          next.freqHz = Math.round(freqFromTuning(next.koma53, prev.tuning) * 1e4) / 1e4;
-        }
-        return next;
-      });
+    // One drag = one undo entry: a pointer-move emits an edit per frame (see PianoRoll), and
+    // stepping back through forty of them is not undo.
+    history.apply(
+      (prev) => {
+        const events = prev.events.map((ev) => {
+          if (ev.index !== index) return ev;
+          const next: NoteEvent = patch.durationMs !== undefined ? { ...ev, durationMs: patch.durationMs } : ev;
+          if (patch.koma53 === undefined || next.kind !== "note") return next;
+          return withKoma(next, patch.koma53 - shift, prev.tuning);
+        });
+        return { ...prev, events };
+      },
+      { coalesce: `roll:${index}:${patch.koma53 !== undefined ? "pitch" : "duration"}` },
+    );
+  }
+
+  /** Edit mode: move the selected note up (+1) or down (−1) diatonic steps, keeping its
+   *  accidental. The doc stores pitch as letter+octave+alter separately, so carrying the
+   *  alteration is the ordinary operation — see core's `nudgePitch`. */
+  function onNudgePitch(index: number, steps: number) {
+    onStop();
+    history.apply(
+      (prev) => {
+        const events = prev.events.map((ev) => {
+          if (ev.index !== index || ev.kind !== "note") return ev;
+          const s = spellingOf(ev);
+          return s ? withPitch(ev, nudgePitch(s, steps), prev.tuning) : ev;
+        });
+        return { ...prev, events };
+      },
+      { coalesce: `nudge:${index}` }, // one wheel gesture, one undo
+    );
+  }
+
+  /**
+   * Edit mode: apply the ARMED palette tool to the clicked note.
+   *
+   * A note value goes through `withDurationBeats`, which moves `durationMs` and `durationBeats`
+   * together — the sheet engraves the beats and playback reads the ms, and an edit that moved only
+   * one of them is exactly the bug shape `edits.ts` exists to prevent. An accidental goes through
+   * `withAlter`: the staff position stays, the alteration changes.
+   *
+   * The bar is left OVER or UNDER its length on purpose — an edit absorbs into its bar and bar
+   * lines never move. The warning for that is step 8, and it needs the derived meter, not
+   * `Measure.lengthBeats` (which is computed from the bar's own contents and so is true by
+   * construction).
+   *
+   * ⚠ Transpose: the sheet draws `displayDoc`, so an alteration picked on screen is not the stored
+   * one when the staff has been rewritten. The edit is built in DISPLAY space and mapped back with
+   * the same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` uses. A duration needs none
+   * of it, and `onNudgePitch` escapes it only because a nudge is relative.
+   */
+  function onApplyTool(index: number) {
+    if (!armed || !doc) return;
+    onStop();
+    const shift = !keepSheet && transpose !== 0 ? transpose : 0;
+    history.apply((prev) => {
+      const at = prev.events.findIndex((ev) => ev.index === index);
+      if (at < 0) return prev;
+      const stored = prev.events[at]!;
+      let next: NoteEvent;
+      if (armed.kind === "duration") {
+        next = withDurationBeats(stored, { num: armed.num, den: armed.den }, prev);
+      } else {
+        if (stored.kind === "rest") return prev; // a rest takes no accidental
+        // Alter in the space the user is looking at, then map the single event back.
+        const shown = shift ? transposeDoc({ ...prev, events: [stored] }, shift).events[0]! : stored;
+        const altered = withAlter(shown, armed.alter, prev.tuning);
+        if (altered === shown) return prev; // already that accidental — not an undo entry
+        next = shift ? transposeDoc({ ...prev, events: [altered] }, -shift).events[0]! : altered;
+      }
+      if (next === stored) return prev;
+      const events = [...prev.events];
+      events[at] = next;
       return { ...prev, events };
     });
+  }
+
+  /** Edit mode: delete the selected note (and any grace notes leading into it). The bar is left
+   *  SHORT on purpose — an edit absorbs into its bar and bar lines never move. */
+  function onDeleteNote(index: number) {
+    onStop();
+    setSelectedNote(null);
+    history.apply((prev) => deleteEvent(prev, index));
+  }
+
+  // Undo/redo drop the selection: a delete renumbers every event, so an index held across one
+  // can name a different note. Clearing is cheap and cannot be subtly wrong.
+  function onUndo() {
+    onStop();
+    setSelectedNote(null);
+    history.undo();
+  }
+  function onRedo() {
+    onStop();
+    setSelectedNote(null);
+    history.redo();
   }
 
   // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`keepSheet` are applied
@@ -434,8 +562,8 @@ export function App() {
       !keepSheet && transpose !== 0 && doc
         ? transposeDoc({ ...doc, events: newEvents }, -transpose).events
         : newEvents;
-    setDoc((prev) => {
-      if (!prev) return prev;
+    setSelectedNote(null); // the splice renumbers, so any held selection is stale
+    history.apply((prev) => {
       const target = groupMeasures(prev).find((m) => m.index === measureIndex);
       if (!target || target.events.length === 0) return prev;
       const oldIds = new Set(target.events.map((e) => e.index));
@@ -450,8 +578,7 @@ export function App() {
           merged.push(e);
         }
       }
-      const renumbered = merged.map((e, i) => ({ ...e, index: i + 1 }));
-      return { ...prev, events: renumbered };
+      return { ...prev, events: renumber(merged) };
     });
   }
 
@@ -748,8 +875,15 @@ export function App() {
             showLyrics={showLyrics}
             onShowLyrics={setShowLyrics}
             editMode={editMode}
-            onEditMode={setEditMode}
+            onEditMode={(v) => { setEditMode(v); if (!v) { setSelectedNote(null); setArmed(null); } }}
+            onUndo={onUndo}
+            onRedo={onRedo}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
             onSave={onDownload}
+            palette={
+              editMode && viewMode === "sheet" ? <EditPalette armed={armed} onArm={setArmed} /> : null
+            }
           >
             {viewMode === "roll" ? (
               pitchRange && (
@@ -767,6 +901,12 @@ export function App() {
                 getPositionMs={getPositionMs}
                 onMeasureClick={setEditing}
                 onSeekToMeasure={(m) => onSeekMs(m.startMs)}
+                selectedNote={selectedNote}
+                onSelectNote={setSelectedNote}
+                onDeleteNote={onDeleteNote}
+                onNudgePitch={onNudgePitch}
+                armed={armed != null}
+                onApplyTool={onApplyTool}
                 onLayout={onLayout}
                 highlightRect={selectedStrip?.rect ?? null}
                 repeatSpans={repeatSpans}

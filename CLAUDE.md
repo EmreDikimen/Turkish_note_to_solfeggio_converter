@@ -44,7 +44,8 @@ Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces 
 ```bash
 npm run dev:web                      # harness → http://localhost:5173
 npm run typecheck                    # all workspaces
-npm test                             # stitcher unit tests + 194-score label round-trip
+npm test                             # stitcher unit tests + label round-trip + edit primitives
+npm run smoke:editor                 # real app: select a note, drag its pitch, delete, undo/redo
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
@@ -123,7 +124,12 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 - **The deploy checks read DOM state, never the words on the page** (2026-08-07, the style pass).
   `apps/web/src/ui/status.ts` is the single producer of the contract — `#omr-status` carries
   `data-state`, `data-kind`, `data-where` and the counts; `#omr-error` carries `data-error-kind`;
-  `#play` carries `data-play-state`; `#app` carries `data-ready`. The five `tools/browser/*-smoke.ts`
+  `#play` carries `data-play-state`; `#app` carries `data-ready`. The editor adds
+  `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`,
+  `[data-omr-note]` / `[data-selected]` per note, `#note-delete` / `#undo` / `#redo`, and the
+  palette's `#edit-palette[data-armed]` + `[data-tool]` per tool
+  (⚠ `data-edit-mode` is on **two** elements — select the one you mean by id). The six
+  `tools/browser/*-smoke.ts`
   assert on those, so **all user-facing copy is free to change** — that is what let the UI become
   Turkish. Never reintroduce a text/regex matcher for a status message or a button label. Every
   user-visible string lives in `apps/web/src/ui/strings.ts`. ⚠ Two traps: nothing that ticks on a

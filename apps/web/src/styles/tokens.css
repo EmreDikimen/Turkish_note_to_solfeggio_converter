@@ -1,0 +1,97 @@
+/**
+ * Design tokens — the whole visual vocabulary of KomaVision, in one place.
+ *
+ * The direction is warm editorial: paper rather than screen, ink rather than grey, one warm
+ * accent and nothing else. The reasoning is that the engraved score IS the product, so the chrome
+ * around it should sit BELOW it in visual weight — hairline rules instead of shadows, small
+ * control text, colour spent only where it means something.
+ *
+ * Nothing here is a component. Only `:root` custom properties, so the diagnostic pages
+ * (slices.html, omr-gate.html, …) can adopt the palette later by importing this file alone.
+ */
+
+:root {
+  /* ── Paper ──────────────────────────────────────────────────────────────
+     Three surfaces, all warm. `raised` is where the score lives (the lightest
+     thing on the page, so the notation reads as the sheet it is); `sunken` is
+     for wells and the collapsed developer panel — things that recede. */
+  --paper: #fbf7f0;
+  --paper-raised: #fffdf9;
+  --paper-sunken: #f3ece1;
+
+  /* ── Ink ────────────────────────────────────────────────────────────────
+     Warm near-black, never #000: pure black against warm paper reads as a
+     hole. `soft` is body copy, `faint` is for captions and disabled text. */
+  --ink: #1a1614;
+  --ink-soft: #4a423c;
+  --ink-faint: #857a70;
+
+  /* ── Rules ──────────────────────────────────────────────────────────────
+     Grouping is done with hairlines, not shadows. `strong` is for a border
+     that has to be seen (inputs, the dropzone at rest). */
+  --rule: #e3d9c9;
+  --rule-strong: #cdbfa9;
+
+  /* ── The one accent ─────────────────────────────────────────────────────
+     Terracotta. Used ONLY on: the primary button, focus rings, the active
+     segment of a toggle. Everywhere else is ink on paper. If a third thing
+     wants to be terracotta, the answer is that it does not. */
+  --accent: #b4472c;
+  --accent-hover: #9c3b23;
+  --accent-soft: #f2e1da;
+  --accent-on: #fff8f4;
+
+  /* ── Semantic ───────────────────────────────────────────────────────────
+     Muted on purpose, so a warning never out-shouts the accent. `--danger` is
+     brick rather than crimson for the same reason. */
+  --ok: #4f6f52;
+  --warn: #a2681b;
+  --danger: #8e2f1f;
+  --highlight: #e8c97a; /* the selected strip's crop box on the sheet */
+
+  /* ── Type ───────────────────────────────────────────────────────────────
+     `--font-display` deliberately matches the serif SheetView already engraves
+     its score header in, so the page and the notation are one object rather
+     than two typefaces arguing. Self-hosting a display serif is a one-line
+     change here (a webfont CDN is not an option — COEP: require-corp blocks
+     it, see vite.config.ts). */
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-music: "Bravura";
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.375rem;
+  --leading-tight: 1.2;
+  --leading: 1.55;
+
+  /* ── Space, shape, motion ───────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 3px;
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  --shadow-card: 0 1px 2px rgba(60, 40, 20, 0.06), 0 8px 24px rgba(60, 40, 20, 0.07);
+  --shadow-modal: 0 12px 48px rgba(40, 26, 14, 0.28);
+  --focus-ring: 0 0 0 3px rgba(180, 71, 44, 0.28);
+
+  --page-max: 1100px; /* unchanged from the harness — the sheet is engraved to fit it */
+  --measure: 66ch; /* prose never wider than this */
+
+  --dur-fast: 120ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+}

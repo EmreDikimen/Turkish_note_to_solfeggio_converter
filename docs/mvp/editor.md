@@ -99,31 +99,53 @@ the first**, if the durations match.
 
 ---
 
-## Where an inserted or deleted note leaves the bar lines — THE open question
+## Inserting and deleting: the bar ABSORBS, and says when it does not add up
 
-This is the one thing left to settle, and it got sharper once editing became whole-score with
-insertion anywhere. The doc is a **sequential event list** (`offset` in bar units, `bar` assigned by
-`assignBars`), so inserting between two notes has to do one of:
+**Settled 2026-08-07 (owner): absorb, never ripple.** An inserted note goes into its bar, which
+becomes over-full; a deletion leaves its bar short. **Bar lines never move.** The alternative —
+rippling the following events so bar lines re-flow down the page — was rejected because on a decoded
+page the bar lines came from the model's own `|` tokens, and re-flowing rewrites the one piece of
+structure a corrected page most wants to keep.
 
-1. **Ripple** — following events shift, and bar lines re-flow down the page. Consistent with
-   "editing covers the whole score", and it is what a sequencer does. ⚠ But on a *decoded* page the
-   bar lines came from the model's own `|` tokens, and re-flowing them rewrites the one piece of
-   structure a corrected page most wants to keep.
-2. **Absorb** — the note goes into its bar, which becomes over-full; bar lines never move, and the
-   bar is **marked** as not adding up. ⬅ **Recommended.** It matches the show-don't-block rule
-   below, keeps the decoded structure, and makes the consequence visible instead of silent.
+**A bar that is over OR under its length warns.** Both directions, and the warning is an indicator,
+never a block: `isMeasureValid` (`../../packages/core/src/measures.ts:145`) currently greys out the
+modal's **Save**, and that behaviour cannot survive — it would make the ✕ refuse to work.
 
-⚠ Whichever is chosen, it applies to **deletion** too (a bar that loses a note is short), and
-deletion is a primary gesture here.
+### ⚠ The warning needs a reference length, and the obvious one is circular
 
-### The related rule: never block, always show
+`Measure.lengthBeats` is computed **from the bar's own contents**
+(`measureBeats(current)`, `../../packages/core/src/measures.ts:123`). So
+`isMeasureValid(m.events, m.lengthBeats)` is **true by construction** for any freshly loaded score —
+it can only ever mean *"you have changed this bar's total since it was measured"*. That is how the
+modal uses it (it freezes `lengthBeats` when it opens), and it is **not** what "this bar is over its
+duration" means to a musician.
 
-`isMeasureValid` (`../../packages/core/src/measures.ts:145`) currently **greys out the modal's
-Save** when a bar does not total its length. That behaviour cannot survive: it would make the ✕
-refuse to work. It stops gating a button and starts **feeding an indicator** — tint the bar, or mark
-its number — and editing carries on.
+The reference must come from outside the bar. Use **the derived meter** —
+`deriveTimeSignature(doc)` → `num/den` in whole-note units — and compare each bar's
+`measureBeats` against it.
 
----
+### That reference also localises the model's mistakes — measured
+
+Comparing every bar against the derived meter, excluding bar 1 and the final bar (a pickup and a
+closing bar are legitimately short):
+
+| Score | Meter | Interior bars off-meter |
+|---|---|---|
+| `sample.json` (clean SymbTr) | 8/8 | **0** / 32 |
+| `gamzedeyim-deva.json` (clean) | 4/4 | **0** / 60 |
+| `safalar-getirdiniz.json` (clean) | 9/8 | **0** / 108 |
+| `decoded.json` (**a real decoded page**) | 9/8 | **8** / 28 |
+
+So the warning is **silent on correct music and lights up where the model misread a duration** —
+which is error localisation, the half of the 2026-07-27 goal that W8 was dropped without delivering
+([../DECISIONS.md](../DECISIONS.md)). Getting it as a side effect of a warning the editor needs
+anyway is worth noticing.
+
+⚠ **Do not over-read this yet.** It is **one** decoded page against three clean ones. The 8 bars are
+*candidates*, not confirmed model errors — some may be legitimate. And two known sources of false
+positives are not handled: a **usul change** mid-piece (SymbTr `Kod` 51 meta events) makes one
+derived meter wrong for part of the score, and `deriveTimeSignature` is itself derived from the
+data. Verify on more decoded pages before promising anything.
 
 ## What already exists
 
@@ -166,19 +188,18 @@ modal, which at least has Cancel.
 
 ## Suggested order
 
-1. **Settle the bar-line question** (ripple vs absorb). Everything else is cheaper and independent.
-2. **Per-note rects out of `SheetView`** (extend `onLayout`), nothing consuming them yet.
+1. **Per-note rects out of `SheetView`** (extend `onLayout`), nothing consuming them yet.
    Verify: `npm test`, `smoke:page` — the engraving must be byte-identical.
-3. **Selection, the ✕, and scroll-to-change-pitch.** The smallest useful editor on its own.
-4. **Undo/redo** — before any of this is called done.
-5. **The palette, armed-tool model**: note values first (the most common fix), then accidentals
+2. **Selection, the ✕, and scroll-to-change-pitch.** The smallest useful editor on its own.
+3. **Undo/redo** — before any of this is called done.
+4. **The palette, armed-tool model**: note values first (the most common fix), then accidentals
    lifted from `AccidentalSelect`.
-6. **Çal / Dur in the palette**, playing from the last edited measure.
-7. **Insert-on-empty-space**, per (1).
-8. **The tuplet tool**, with the three-note rule and non-clickable invalid targets.
-9. **The invalid-bar indicator**, replacing the modal's Save gate.
-10. **Remove `Save JSON`** and its two `app-smoke` checks; update `PIPELINE.md`.
-11. **Delete `MeasureEditModal.tsx`** — last, so there is always a working way to edit.
+5. **Çal / Dur in the palette**, playing from the last edited measure.
+6. **Insert-on-empty-space**, absorbing into the bar.
+7. **The tuplet tool**, with the three-note rule and non-clickable invalid targets.
+8. **The invalid-bar indicator**, replacing the modal's Save gate.
+9. **Remove `Save JSON`** and its two `app-smoke` checks; update `PIPELINE.md`.
+10. **Delete `MeasureEditModal.tsx`** — last, so there is always a working way to edit.
 
 Verification throughout: `npm run typecheck`, `npm test`, `npm run smoke:app`, `npm run smoke:page`,
 and a real correction pass on a decoded page.

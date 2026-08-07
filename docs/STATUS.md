@@ -166,9 +166,14 @@ the model track never touches the app.** Either can be worked on without waiting
    measure**. **`Save JSON` is deleted** in the same pass.
    ⚠ Settled, do not re-open: **repeats stay uneditable** (the stitcher unfolds them), **tuplets are
    exactly three notes** (the drawn digit is hardcoded "3"), and **token-editing was rejected**.
-   ⚠ **One question is open** — whether an insert/delete ripples the bar lines or over-fills the bar
-   and marks it (the brief recommends the second). Brief: **[mvp/editor.md](mvp/editor.md)**.
-   Does not gate W10.
+   ⚠ Also settled: an edit **absorbs into its bar and bar lines never move**, and a bar over *or*
+   under its length **warns** rather than blocking. The reference for that warning must be the
+   **derived meter**, not `Measure.lengthBeats` (which is computed from the bar's own contents and
+   so is true by construction). **Nothing is open** — the brief is buildable as written:
+   **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
+   ⚠ Worth a look while building: that same meter check flags **8/28 interior bars on a decoded
+   page vs 0/200 across three clean scores** — error localisation, free, from a warning the editor
+   needs anyway. n = 1 page; verify before promising it.
 6. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
    widget: talk to them.
 7. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.

@@ -58,10 +58,23 @@ click now selects or inserts), which would have removed "play from this bar" exa
 hunting for a wrong note; playing from the last edit answers it directly — fix a note, press Çal,
 hear the bar. It costs one tracked number.
 
-**One question is left open on purpose**: whether inserting or deleting **ripples the bar lines** or
-**over-fills the bar and marks it**. The brief recommends the second — on a decoded page the bar
-lines came from the model's own `|` tokens, and re-flowing them rewrites the structure a corrected
-page most wants to keep.
+**The last question closed the same day: the bar ABSORBS.** An insert over-fills its bar, a delete
+leaves it short, **bar lines never move**, and a bar that is over *or* under its length **warns**
+rather than blocking — rippling was rejected because on a decoded page the bar lines came from the
+model's own `|` tokens, and re-flowing rewrites the structure a corrected page most wants to keep.
+
+**Writing that warning up found a circularity, and then something better.** The obvious reference
+length is `Measure.lengthBeats` — but it is computed **from the bar's own contents**
+(`measures.ts:123`), so `isMeasureValid` is **true by construction** on any freshly loaded score and
+can only ever mean "you have changed this bar". A first attempt to measure how often decoded pages
+have bad bars returned a meaningless 0/28 for exactly that reason. The honest reference is the
+**derived meter** (`deriveTimeSignature`) — and against that, interior bars off-meter run **0/32,
+0/60 and 0/108 on three clean SymbTr scores** but **8/28 on a real decoded page**. So the warning is
+silent on correct music and lights up where the model misread a duration: **error localisation, as a
+side effect of a warning the editor needs anyway** — the half of the 2026-07-27 goal that W8 was
+dropped without delivering. ⚠ n = 1 decoded page, the 8 are *candidates* rather than confirmed
+errors, and a mid-piece usul change (`Kod` 51) is a known false-positive source. Verify before
+promising it.
 
 Also cheap, and worth knowing: **per-note rects are nearly free** — `attachTitles`
 (`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()`, so the same walk

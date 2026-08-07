@@ -269,27 +269,8 @@ middle of the job and throwing the upload away. One line of configuration fixed 
 
 ---
 
-## An old problem we decided NOT to fix (kept for the record)
-
-When the model reads a strip from the **middle** of a line, that strip does not show the
-**signature** — the note at the *start* of the line that says which notes are quietly lowered. (It
-got cut off when we sliced the page.)
-
-So the model sees a plain note with no mark. The right thing to do is simple: **write it down plain**
-(the signature gets applied later, at reassembly). But the model sometimes **adds a mark that is not
-actually printed**, out of habit — *"this note is usually lowered, so I'll add the mark."* That
-invents a mistake. It happens most on the note **'si'**.
-
-**This is a fixable habit, not an impossible task** — the right answer is always "copy what you see."
-But we **dropped it on 2026-07-25**: the marks it affects (the flat family) now score 89–92%, so this
-is no longer where the model loses points. The sharps are.
-
-**Your 284 photo labels: they stay as a test only.** They are photos of the *exam* pieces, so training
-on them would let the model see the exam in advance — the same mistake that spoiled Round 1. They are
-now frozen as the photo part of the next exam. If we want camera photos to *train* on, we print and
-shoot **different** pieces (there are thousands available).
-
----
+*(The one old problem we decided **not** to fix — the cut-off signature, and why your 284 photo
+labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 August.)*
 
 ## What we do next
 
@@ -313,10 +294,14 @@ shoot **different** pieces (there are thousands available).
    developer switches fold into a **Gelişmiş** drawer that stays shut.
 9. **Put the new version on the website.** One rebuild, one upload — it carries items 7 and 8
    together. Then check it with `npm run smoke:live`.
-10. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
+10. **Make fixing a wrong note quick.** Today you click a bar, a window opens on top of the music,
+   you edit a table of rows — and it will not save until the bar adds up again. It should work like
+   MuseScore or Mus2: click the note, nudge it with the arrow keys, keep going. Worth doing properly
+   because it is also *your labelling tool* — every page you correct becomes training data.
+11. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
    slow (the rented computer has to wake up), and that a page takes about a minute. Ask about the
    **buttons and the screen**, not about mistakes in the notes — the notes are the exam's job.
-11. **Open it to everyone — but only if Round 3's exam result is good.**
+12. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)
 

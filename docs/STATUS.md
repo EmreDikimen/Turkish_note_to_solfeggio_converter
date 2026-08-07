@@ -19,17 +19,18 @@ intonation — uşşak's segah 1.5 commas below its written koma-bemol, and an e
 for hüseyni, the contrast the whole feature turns on. **Sound only: the engraving, `Save JSON` and
 the training strips never move.** Audibly correct on **204/213** bundled scores
 ([METRICS.md](METRICS.md)); table, sources and the guessing rule in [mvp/makam.md](mvp/makam.md).
+
 **THE STYLE PASS IS DONE, 2026-08-07 — BUILT, GREEN, NOT YET DEPLOYED.** The harness is now
 **KomaVision**, in **Turkish**, on warm paper: upload is the hero (drag, drop or paste), the
-transport keeps only the six controls a musician touches, the twelve developer controls fold into a
-collapsed **Gelişmiş**. Slicing, decode, the fallback and the origin lock did not move. The
-load-bearing change underneath: **the deploy checks no longer read the copy** — `#omr-status` carries
-`data-state / data-kind / data-where` + counts (`apps/web/src/ui/status.ts`), which is what let the
-UI become Turkish without touching one assertion.
+transport keeps the six controls a musician touches, the rest fold into a collapsed **Gelişmiş**.
+Slicing, decode, the fallback and the origin lock did not move. Underneath it, the load-bearing
+change: **the deploy checks no longer read the copy** — `#omr-status` carries `data-state / kind /
+where` + counts (`apps/web/src/ui/status.ts`), which is what let the UI become Turkish without
+touching one assertion.
 
-**The next action is the REDEPLOY**, which carries the style pass **and** makam selection in one
-build (both are committed, neither is live). Then W10. TWO tracks run in parallel, as re-scoped on
-2026-08-05:
+**The next action is the REDEPLOY** (style pass + makam selection in one build, both committed,
+neither live), **then the EDITOR REWORK** ([mvp/editor.md](mvp/editor.md)). TWO tracks run in
+parallel, as re-scoped on 2026-08-05:
 
 | | |
 |---|---|
@@ -71,9 +72,9 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   the origin lock refuses a localhost preview, so `smoke:build` can no longer reach the real chain.
 - **⛔ AND IT FOUND A BUG THAT ONLY EXISTS IN THE BUILT APP: the fallback hung forever** — the
   bundler inlines ORT's `…jsep.mjs`, which is *also* the worker script, and a Worker has no
-  `document`. Fixed by shipping ORT's runtime as real files (`/ort/`, `wasmPaths`), production only.
-  ⚠ The argument for the check: dev, `smoke:page` and the 27/28 gate were all green while the thing
-  a friend would open was broken.
+  `document`. Fixed by shipping ORT's runtime as real files (`/ort/`, `wasmPaths`). ⚠ Dev,
+  `smoke:page` and the 27/28 gate were all green while the thing a friend would open was broken —
+  which is the whole argument for `smoke:build`; it is a hard rule in [../CLAUDE.md](../CLAUDE.md).
 - **⛔ THE BATCHING ARGUMENT FOR HAVING A SERVER IS WITHDRAWN — measured, not argued (2026-08-06).**
   Batch 8 is **slower at every thread count** and costs **2.9× the peak memory**, so `OMR_MAX_BATCH`
   defaults to **1**. **The real second reason for a server is that native ORT is ~4× faster than
@@ -85,8 +86,8 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   slicer's own reasoning, its decoded label and its placement ([MANUAL_CHECKS.md](MANUAL_CHECKS.md)
   Check 13) — it is how both were found: a slur above the staff shearing the beams below (beam loss
   **−13.6%**, ⚠ an information argument, not a decode result), and the page latency fixed **exactly**
-  (36.6 → 1.3 s/page, the skew sweep's per-angle morphology had a closed form, **0 disagreements in
-  328 evaluations**). Detail: [log/status-log.md](log/status-log.md), numbers: [METRICS.md](METRICS.md).
+  (36.6 → 1.3 s/page, a closed form for the skew sweep, **0 disagreements in 328 evaluations**).
+  Detail: [log/status-log.md](log/status-log.md), numbers: [METRICS.md](METRICS.md).
 - **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
   Owner-reported as "`\repstart`/`\repend`/`\tup3` are not seen in the sheet"; it was two different
   things. **Repeats are not lost** — they are consumed into an UNFOLDED playing order, the wanted
@@ -121,136 +122,11 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   existed and was **not** taken. **The bar was not moved to fit the result.** Nothing is deleted;
   it is a strong candidate to return if a friend asks. Detail: [mvp/rungs.md](mvp/rungs.md).
 
-## Previously (real-page track — all still true)
+## Previously — the settled context
 
-**The re-slice is DONE and REAL-VAL v2 IS BUILT.** `data/real/rung3/_realval_v2` holds **267 strips
-at the exam's own difficulty mix — 47 easy / 110 mid / 110 hard (17.6 / 41.2 / 41.2%)**, against the
-old pool's 59 / 41 / **0**. The 110 hard strips are hand-verified, every crop comes from the new
-slicer, and no decode-derived label survives. Numbers: [METRICS-SLICER.md](METRICS-SLICER.md).
-Full account: [log/status-log.md](log/status-log.md).
-
-- **The val-side pool is 146 pieces / 194 pages** — the old "158 pages" figure was wrong by more
-  than the stem fix could explain, and 37 page stems had never been sliced at all.
-  `emit_strip_labels.py --val-side` now derives the list through `data.is_real_val_piece`.
-- **The queue ordering was REVERSED (owner, 2026-07-29): worst rows first — and the finished queue
-  proves it.** All 165 rows were read by hand (111 ok / 44 fix / 10 bad, 155 usable): the **worst
-  half needed a fix 46% of the time, the best half 7%** — a 6.5× concentration. Under the old
-  most-confident-first ordering half the effort would have gone to rows that needed nothing. The
-  early-stop protocol was not used and stays available; why the stop is gated on error
-  *clustering* rather than error count is in [rung3/labeling.md](rung3/labeling.md).
-- **The full re-slice is DONE (2026-07-31).** `data/real/strips_v2` now holds **1,781 page dirs /
-  1,704 decode caches / 35,586 crops** — 1,578 re-sliced on Colab plus the 203 val-side pages. Every
-  cache passes `window_cache_ok` and records `round2-stage2-best`, so the emitter reuses all 1,704.
-  67 pages (4.2%) found no staves — covers and near-empty continuation pages, matching the val side.
-  ⚠ **The 67 exam pages were deliberately excluded**
-  (`data/colab/decode_pages_reslice_EXAM_EXCLUDED.txt`): the exam is frozen and its gold describes
-  crops under `data/real/strips/`. Re-cutting them belongs to exam v3.
-- **All of the re-slice is now REVIEWABLE (2026-07-31).** `scripts/rung3/build_reslice_queue.py`
-  writes one `reslice-all` queue over every crop the re-slice decoded, so any strip can be pulled
-  up in `review_ui.py` and verdicted against its picture instead of only the hard-tier sample.
-  It is a browsing tool — nothing consumes it, and it is not a labelling target. Sizes, what a row
-  means and what is deliberately NOT joined into it: [rung3/labeling.md](rung3/labeling.md).
-- **Two silent-staleness traps were closed before any labelling** — a strip filename survives a
-  re-slice but its pixels do not. Queues are now versioned per re-slice, and image lookup is keyed
-  per queue (`QUEUE_IMG_ROOTS`); without the latter, 129 of the 165 rows would have shown old
-  crops against new rows with nothing to notice.
-- **The windowing constants STAY** (`MEASURES_PER_STRIP = 3`, `MAX_STRIP_W = 1450`). The sweep
-  pointing at 1 measure/window was scored on usable *yield*, which cannot charge for the near-empty
-  crops that shrinking creates; re-scored with that cost, 1 measure/window takes the healthy band
-  81.6% → 60.4%. A budget-aware packer was built, decoded head-to-head and is a **wash** — it ships
-  OFF (`OMR_WINDOW_MODE=budget`).
-- **Two cap bugs fixed** — the measure cap was unenforced (13 of 3,168 strips) and the width cap was
-  violated 82 times by three separate paths. Both verified to **0**, measure coverage invariant.
-- **Crops no longer overlap** — the 6 px left pad had no matching right trim, so 74.8% of mid-row
-  strips shared pixels with their predecessor (195 → 0 pairs). ⚠ The double-count worry behind it is
-  **not** real; it was kept for pixel/label agreement, and the decode A/B is a wash.
-- **The staff now floats inside the frame** so low beams are not cut off (bottom clipping
-  11.9% → 4.4%). ⚠ Decode A/B is **neutral and underpowered, with no dose-response** — this is a
-  geometric argument, **not** a measured accuracy win. `OMR_VPLACE=0` disables it.
-- **Decode caches now key on the full windowing signature**, so a slicer change can no longer
-  silently reuse crops cut by different code.
-- **The page-stem collision is FIXED (2026-07-29)** — and only one of the two was a collision.
-  `bir_nigah_et_ney` really is two different songs under one stem (now qualified with the makam);
-  `nesem_emelim_ney` is one upload filed under two makams, byte-identical, so the duplicate was
-  dropped rather than renamed. A full scan found exactly these two. `emit_strip_labels.py` now
-  refuses to slice when two pages resolve to one stem. Detail:
-  [METRICS-SLICER.md](METRICS-SLICER.md).
-
-**✅ The "2% pre-shrink" is CLOSED (2026-07-31): it does not replicate, and off the exam it makes
-things WORSE.** Shrinking exam strips ~2% removed 12–15.5% of corrections (562 → 475) and looked
-like the biggest free lever this project had found. Re-run on the rebuilt `_realval_v2` — which now
-has the hard tier whose absence was the last defence of the result — **every scale is worse:
-+2.7% at 1%, +5.2% at 2.5%** ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)). The effect
-reverses off the exam. Do not re-propose it.
-
-- **How it happened, so it is not repeated:** ~15 variations were run against the frozen exam and
-  the best-scoring one was reported as a finding — selection on the test set — before any holdout
-  was tried. The holdout should have come first. Mechanism tests along the way ruled out resampling
-  (down-up = 555), blur (562), ink weight (lighten 565, thin 589) and staff-size matching (the
-  benefit appears in every size bucket, including strips already at 30.0 px), so there was never a
-  mechanism either.
-- **The rebuilt pool is what closed it.** Real-val v2 carries the hard tier the old pool lacked and
-  is harder than the exam on SER, so "an effect confined to hard pages could hide there" is no
-  longer available as an explanation. That is the first decision `_realval_v2` has actually
-  settled — and it settled it against the result.
-
-## Previously (Round 3 pre-render checks, 2026-07-28)
-
-**All four hypotheses were RUN against the shipped model, with no training and no re-render. Three
-died.** Dropped, measured, do not re-propose: rendering the odd crop shapes, cutting wide crops
-narrower (**+31.8% edits**), thinning beams. Still standing: the content work — eighth/quarter-note
-mix and bar-line density in `select_pieces.py`. `USUL_BEAM_GROUPS` remains **unvalidated and
-quarantined** (the beam check measured thickness, not grouping) and `staff_jitter` is insurance, not
-a fix. Full detail: [rung3/round3.md](rung3/round3.md); why each was dropped:
-[DECISIONS.md](DECISIONS.md).
-
-## Previously (Round 2, still true)
-
-**Phase 3 (real pages).** Synthetic reading is solved; every open problem is about real printed
-pages and photos of them.
-
-- **The goal changed on 2026-07-27: ≥90% of pages need ≤5 corrections, and the app shows where they
-  are** ([ROADMAP.md](../ROADMAP.md) §0). Model accuracy is now a diagnostic, not the target.
-  Baseline: **57% of pages ≤5** (median 5, mean 12.2, 52% of strips already perfect). The second
-  half — surfacing *where* the model is unsure — **is deferred by the owner (2026-07-27)**; the work
-  is therefore on reducing errors, and the evidence for what to reduce is below.
-- **Round 2 was read once on 2026-07-27. Its apparent regression was a METRIC ARTIFACT, and it
-  SHIPPED the same day** as an improvement, not a pass. The macro headline fell 78.0 → 73.9% mean
-  AEU F1, but that average gives a 14-gold class the same weight as a 145-gold one. Re-scored on the
-  same strips with low-n-robust measures: **micro recall 83.9 → 84.8%**, **macro≥30 recall 81.4 →
-  84.8%**, micro F1 85.0 → 84.8% — flat-to-better, on top of SER 0.059 → 0.052 and 9 of 11 floors.
-- **Live model is `round2-stage2-best` int8** (shipped 2026-07-27) — ship chain all green: parity
-  14/14 fp32 + 14/14 int8, browser gate 27/28 with the product (canvas) path clean 14/14. Runtime in
-  `apps/web/public/models/`; Round 1 is backed up at
-  `data/checkpoints/_public_models_backup_round1/` (revert = re-stage it).
-- **Every eval now reports MICRO and MACRO≥30 beside the macro mean**; past runs back-fill with
-  `scripts/rung3/rescore_headline.py`. The macro mean stays the pre-registered bar — micro was
-  computed after the fact and flatters us, so promoting it now would move the goalposts.
-- **Accidentals are only 13% of what a user has to fix.** Classifying all 562 exam edits: pitch 40%,
-  duration 28%, rhythm signs 13%, **accidentals 13%**, structure 5%. Two rounds went into the 13%,
-  because the old headline only measured accidentals. Pitch and duration have never been targeted by
-  any synthetic work.
-- **Sparse crops are the most expensive shape** — crops with ≤3 notes are 5.5% of exam strips and
-  **20.8% of all corrections**. ⚠ **The "hallucinates a bar" reading was DISPROVED 2026-07-28** (1 of
-  8 note-free crops invented anything, against a ≥50% bar): it cannot *read* them, and the shape is
-  the slicer's trade-off. The `stripExport` fix that sat here is dropped ([DECISIONS.md](DECISIONS.md)).
-- **The sharp diagnosis was right and incomplete.** The label-noise fix killed the one-directional
-  küçük→koma fallback as predicted, and küçük-in-signature went **50 → 72%**. Underneath is a
-  **symmetric** koma↔küçük confusion — 8× one way, 7× the other, **all 15 inside the `\sig` block**,
-  net `\komaSharp` emission 0. Not a bias: a discrimination failure. It wrecks `\komaSharp` (F1
-  21.4%) because n=14, and a six-class mean carries that into the headline.
-- **The sharps are read in the KEY SIGNATURE, not on noteheads** (exam gold: 32 in-signature vs 1
-  inline). `eval_omr.py` now reports recall split by print position — that split is the only reason
-  the signature-only confinement was visible.
-- **The photo domain is basically solved.** The wall was the slicer, not the model: a guarded photo
-  front-end took yield 28% → 97% of pages, and hand-labelled photo strips score within ~3–4pp of
-  clean pages.
-- **`strips_v4` is built and verified** — 40,826 strips / 202 pieces, thin sharps + the
-  pixels-vs-labels fix + 23 küçük-bearing pieces − 5 exam pieces; `verify-labels.ts` clean, audit
-  PASS. It is sound data; the corpus is not what failed.
-
-Numbers for all of the above: [METRICS.md](METRICS.md). Why things were decided this way:
-[DECISIONS.md](DECISIONS.md). Round 2 in full: [rung3/round2.md](rung3/round2.md).
+The real-page track's established findings (real-val v2 and the re-slice, the Round 3 pre-render
+checks, the Round 2 position) moved to **[rung3/standing.md](rung3/standing.md)** on 2026-08-07, so
+this file can hold only "now" and "next". Nothing there is a next action.
 
 ## Next — two tracks, running in parallel
 
@@ -261,13 +137,11 @@ the model track never touches the app.** Either can be worked on without waiting
 
 1. **✅ DONE 2026-08-06 — the app and the weights are hosted.** `dist/` on **Netlify** at
    **<https://komavision.netlify.app>**, weights on the Hub at **`Beyaban/omr-weights`** (uploaded
-   from `apps/server/models/`, so container, Hub and checkout stay one artifact set). The two traps
-   — the Hub's *reflected* CORS origin, and Netlify SSO-gating every new site behind a 401 — are in
-   [mvp/hosting-setup.md](mvp/hosting-setup.md). ⚠ **Cloudflare Pages was ruled OUT on a number**
-   (25 MiB per-asset cap vs our 25.58 MiB wasm); the shrink to `onnxruntime-web/wasm` is **deferred
-   on purpose** — it changes the fallback's runtime.
-2. **The origin lock, the 413 fix and `--cpu-boost` are all deployed** (2026-08-06) — this row used
-   to be the next action and is now history; the log has it.
+   from `apps/server/models/`, so container, Hub and checkout stay one artifact set). The two traps,
+   and why Cloudflare Pages was ruled out: [mvp/hosting-setup.md](mvp/hosting-setup.md) and
+   [DECISIONS.md](DECISIONS.md). ⚠ The `onnxruntime-web/wasm` shrink is **deferred on purpose** — it
+   changes the fallback's runtime.
+2. **The origin lock, the 413 fix and `--cpu-boost` are all deployed** (2026-08-06); the log has it.
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.
@@ -282,6 +156,13 @@ the model track never touches the app.** Either can be worked on without waiting
    (`9/26/399/26` server vs fallback). What remains is one command pair from
    [mvp/hosting-setup.md](mvp/hosting-setup.md) ("Shipping a change afterwards") — a **rebuild with
    BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
+   ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
+   reach the live decode server; on :5174 they fall back to the laptop.
+5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The per-measure modal goes; editing becomes
+   direct manipulation on the staff, MuseScore/Mus2-style. Not cosmetic — the editor is the
+   **Rung-3 labeling loop's tool**, so seconds per correction is labelling throughput. The brief,
+   the per-note-rect finding and the one real design call (a bar that no longer adds up: show it,
+   don't block it) are in **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
    ⚠ **That one deploy carries TWO changes**: the style pass and makam selection. So if `smoke:live`
    goes red it has two suspects; `smoke:build` against a local `dev:server` was run first for
    exactly that reason, and passed.
@@ -290,9 +171,9 @@ the model track never touches the app.** Either can be worked on without waiting
    Still genuinely open on makam: detection accuracy is scored on **clean SymbTr scores, never on
    decoded pages**, where the derived signature is noisier — and stage 9's **header OCR** still does
    not exist, so the makam is inferred from the notes rather than read off the page.
-5. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback widget:
-   talk to them.
-6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
+6. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
+   widget: talk to them.
+7. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
 ### Track B — the model (Round 3, UNPAUSED)
 

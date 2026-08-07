@@ -163,3 +163,25 @@ pictures about five times less than reality moves; the truth is we do not shake 
 the shaking step. That makes the shaking change we had already written more sensible than we
 thought — but our tests say it is **not** what is costing us corrections today, so it stays as
 cheap insurance, not a fix.
+
+## An old problem we decided NOT to fix (kept for the record)
+
+When the model reads a strip from the **middle** of a line, that strip does not show the
+**signature** — the note at the *start* of the line that says which notes are quietly lowered. (It
+got cut off when we sliced the page.)
+
+So the model sees a plain note with no mark. The right thing to do is simple: **write it down plain**
+(the signature gets applied later, at reassembly). But the model sometimes **adds a mark that is not
+actually printed**, out of habit — *"this note is usually lowered, so I'll add the mark."* That
+invents a mistake. It happens most on the note **'si'**.
+
+**This is a fixable habit, not an impossible task** — the right answer is always "copy what you see."
+But we **dropped it on 2026-07-25**: the marks it affects (the flat family) now score 89–92%, so this
+is no longer where the model loses points. The sharps are.
+
+**Your 284 photo labels: they stay as a test only.** They are photos of the *exam* pieces, so training
+on them would let the model see the exam in advance — the same mistake that spoiled Round 1. They are
+now frozen as the photo part of the next exam. If we want camera photos to *train* on, we print and
+shoot **different** pieces (there are thousands available).
+
+---

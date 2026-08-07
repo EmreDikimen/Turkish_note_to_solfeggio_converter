@@ -34,15 +34,20 @@ wrong — fix by deleting, not by syncing.
 | Question | File |
 |---|---|
 | The MVP track: in-browser pipeline → release to friends | [mvp/README.md](mvp/README.md) |
-| What each MVP rung established (results, and the hypotheses that died) | [mvp/rungs.md](mvp/rungs.md) |
+| What each MVP rung established: the slicer rungs W4–W7 | [mvp/rungs.md](mvp/rungs.md) |
+| The earlier rungs W0–W3 (opencv.js parity, decode module, browser-vs-Python) | [mvp/rungs-w0-w3.md](mvp/rungs-w0-w3.md) |
 | How to port the slicer to TypeScript (W4–W6) | [mvp/slicer-port.md](mvp/slicer-port.md) |
 | How the app gets hosted, what it costs, and the server question (W9–W10) | [mvp/deploy.md](mvp/deploy.md) |
+| Running and redeploying the decode server — the actual commands | [mvp/deploy-ops.md](mvp/deploy-ops.md) |
 | **Setting up Google Cloud from scratch, step by step** (owner walkthrough) | [mvp/gcloud-setup.md](mvp/gcloud-setup.md) |
 | **Putting the app and the weights online, step by step** (owner walkthrough) | [mvp/hosting-setup.md](mvp/hosting-setup.md) |
 | How to make a page faster, and what each option costs | [mvp/latency.md](mvp/latency.md) |
 | **The makam intonation table, its sources, and how a page's makam is guessed** | [mvp/makam.md](mvp/makam.md) |
+| **Reworking note editing into a direct, MuseScore/Mus2-style editor** | [mvp/editor.md](mvp/editor.md) |
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | How real pages get labelled without hand work | [rung3/labeling.md](rung3/labeling.md) |
+| The two review queues that were run (realval-hard, reslice-all) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
+| The real-page track's settled findings (moved out of STATUS) | [rung3/standing.md](rung3/standing.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |
 | Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](rung3/round1.md) |
 | Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
@@ -56,7 +61,8 @@ wrong — fix by deleting, not by syncing.
 |---|---|
 | Where does this code live, in what reading order? | [CODE_TOUR.md](CODE_TOUR.md) |
 | How does a page become strips, decode, and stitch back? | [PIPELINE.md](PIPELINE.md) |
-| How do I see a feature working with my own eyes? | [MANUAL_CHECKS.md](MANUAL_CHECKS.md) |
+| How do I see a feature working with my own eyes? (the app) | [MANUAL_CHECKS.md](MANUAL_CHECKS.md) |
+| …and the synthetic corpus / renderer side | [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) |
 | How do I train on Colab? | [COLAB.md](COLAB.md) |
 | How does the synthetic renderer work? | [../tools/render/README.md](../tools/render/README.md) |
 | The synthetic track (Rungs 0–2.2b) — CLOSED | [PHASE2.md](PHASE2.md) |

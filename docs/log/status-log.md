@@ -7,6 +7,29 @@ updated: 2026-08-07
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-07 (later) — the editor's next shape, and five docs pulled back from the cap
+
+**The modal is going.** Owner, after using it: fixing one wrong note should not cost a dialog. The
+brief is [../mvp/editor.md](../mvp/editor.md) — the argument for treating it as real work rather
+than polish is that **the editor is the Rung-3 labeling loop's tool**, so seconds per correction is
+labelling throughput and the model track is rate-limited by it. The load-bearing finding while
+writing it: per-note rects are cheap, because `attachTitles` (`SheetView.tsx:285`) already walks
+every drawn note calling `getSVGElement()` — the same walk can record a rect. And the one design
+call that should be made deliberately rather than discovered: when an edit leaves a bar not adding
+up, **show it rather than block it** (the modal blocks, which is why a single wrong duration cannot
+be fixed alone today).
+
+**Then the docs were refactored, not squeezed.** Four files sat at exactly **399** lines and one at
+397, against a 400 cap — every one of them one line from failing `check_docs.py`, which is a trap
+rather than a limit. Split by genre, each leaving a pointer behind:
+`STATUS.md` **404 → 279** (its three "Previously" blocks were real-page-track context, now
+[../rung3/standing.md](../rung3/standing.md)); `MANUAL_CHECKS.md` **399 → 225** (corpus/renderer
+checks 1–8 out); `mvp/rungs.md` **397 → 192** (W0–W3 out); `mvp/deploy.md` **399 → 340** (the
+commands out, so *why* and *how* stop sharing a page); `rung3/labeling.md` **399 → 304** (the two
+review queues out). Nothing above 384 now. ⚠ The moves needed link-depth rewriting in both
+directions — a `docs/`-relative link does not survive a move into `docs/rung3/`, and
+`check_docs.py` caught every one.
+
 ## 2026-08-07 — the style pass: the harness became KomaVision
 
 _The prerequisite W10 grew on 2026-08-06, now paid. The release exists to ask two friends about the

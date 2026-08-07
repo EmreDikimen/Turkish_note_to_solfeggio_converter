@@ -83,6 +83,7 @@ W1 → W2 → W3 ─────────┴─→ W7 ──────→ W
 | **W9.5** | **Makam selection + performed intonation** (pipeline stage 9's makam half) — guess the makam from the decoded signature + karar, confirm it in a prompt, bend the SOUNDING komas to that makam's real intonation | ✅ **DONE 2026-08-07** — audibly correct on **204/213** bundled scores; sound only, the staff never moves. Not a planned rung: added before W10 alongside the style pass, because playing uşşak as AEU spells it is wrong in a way a friend WILL hear. [makam.md](makam.md) |
 | **W9.6** | **The style pass** — the harness becomes a product a friend can be shown | ✅ **DONE 2026-08-07** — KomaVision, Turkish, warm editorial; upload is the hero, developer controls fold into Gelişmiş. Presentation only. Also moved the deploy checks off the copy and onto `data-*` (`apps/web/src/ui/status.ts`), which is what made a Turkish UI possible at all. Built and green on both paths; **not yet deployed** |
 | **W10** | Friends release — **two friends, interface feedback** | **UNBLOCKED 2026-08-06** — one redeploy away (it carries W9.5 + W9.6 together) |
+| **W9.7** | **The editor rework** — drop the per-measure modal for direct editing on the staff | ⬅ **NEXT, owner 2026-08-07.** Not cosmetic: the editor is the Rung-3 labeling loop's tool, so correction speed is labelling throughput. Does **not** gate W10 — it can land either side of the link. Brief: [editor.md](editor.md) |
 | **public** | Open it to everyone | — gated on Round 3's exam result, not on W10 |
 
 ## What each rung established

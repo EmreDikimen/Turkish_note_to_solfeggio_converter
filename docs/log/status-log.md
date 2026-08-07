@@ -7,32 +7,46 @@ updated: 2026-08-07
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-07 (later) — the editor's next shape, and five docs pulled back from the cap
+## 2026-08-07 (later) — the editor is specified, and five docs pulled back from the cap
 
 **The modal is going, and the owner specified what replaces it:** press **Düzenle**, the sheet
-zooms, a **palette appears beside it** (note values, AEU accidentals, `\repstart`/`\repend`/
-`\tup3`), and clicking a note shows an **✕** to delete it in place — Mus2's shape, which the owner
-uses. Brief: [../mvp/editor.md](../mvp/editor.md). It is real work, not polish, because **the editor
-is the Rung-3 labeling loop's tool**: seconds per correction is labelling throughput.
+zooms, a **palette appears beside it**, and you **arm a tool** — a note value, an accidental, the
+tuplet sign — then click the score. Clicking a note selects it, shows an **✕** to delete, and the
+**scroll wheel** moves its pitch, carrying its accidental. Inserting a note = arm a value and click
+empty space, pitch from the click's height. **Playback stays live while editing.** Mus2's shape,
+which the owner uses. Brief: [../mvp/editor.md](../mvp/editor.md).
 
-**Reading the code for it turned up three things that decide the shape**, and two were surprises.
-**`\tup3` is not an object — it is arithmetic**: `isTupletMember` is literally "the duration's
-denominator is divisible by 3", and a group closes when the run sums to a plain value. So the
-palette's tup3 button is a **⅔ / ³⁄₂ duration operation**, `\tupend` needs no button at all, and no
-schema changes. **`\repstart`/`\repend` are derived too** — `detectRepeats` fingerprints duplicate
-measures, because SymbTr writes a repeat out twice — so "insert a repeat" has nowhere to live today;
-that is a genuine schema fork to settle *before* building the palette, and the brief recommends
-storing an explicit span with detection as the default. **And zoom cannot be a CSS transform**: the
-strip exporter crops that same SVG by rect, so zoom must re-engrave (`renderer.resize` + context
-scale) — with an explicit guard that zoomed layout boxes never reach `buildStrips`, since those
-boxes ARE the exporter's crop rectangles. The two paths never overlap in practice, and "in practice"
-is how the Round-1 label bug happened.
+**Reading the code settled three design questions, and two went against the first draft of the
+brief.** The owner's instinct was that the sheet is rendered from the model's decoded tokens and
+editing should just edit those and re-render — and the tokens *are* real (`\tup3`, `\tupend`,
+`\repstart`, `\repend`, parsed in `stitch.ts`). But **`stitchStrips` consumes them**: tuplet members
+come out as written × 2/3 durations, and `expandRepeats` **duplicates** the repeated measures into a
+playing order ("Output is FLATTENED — what the editor and playback want"). So by the time the sheet
+is engraved there are no tokens left. Token-editing was then **rejected on the owner's own
+reasoning**: playback needs the flattened doc, and a repeated passage renders twice from one token,
+so a click cannot be attributed to a pass.
 
-Also cheap, and worth knowing: **per-note rects are nearly free** — `attachTitles`
-(`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()`, so the same walk can
-record a rect. And the standing design call: when an edit leaves a bar not adding up, **show it
-rather than block it** — deletion is a primary gesture here, so the modal's "Save stays greyed"
-behaviour would make the ✕ refuse to work.
+That resolved the rest. **Repeats stay uneditable** — inserting a repeat barline into already
+unfolded music would corrupt it — which also **dissolved the schema fork** an earlier draft raised.
+**Tuplets stay editable**, because `\tup3` is arithmetic and not an object: `isTupletMember` is
+literally "the duration's denominator is divisible by 3", so the tool multiplies each member by ⅔
+and needs no schema change. Two rules the owner set: members must share a duration, and the run must
+be contiguous.
+
+**`Save JSON` is deleted, and that retires the rationale this page had been using.** Earlier drafts
+justified the rework as "the editor is the Rung-3 labeling loop's tool, so seconds per correction is
+labelling throughput". With the export gone that is false, and it was corrected rather than left to
+rot. It is a defensible deletion — the labelling loop's primary path is `scripts/rung3/review_ui.py`,
+not the web app — and the honest remaining reason is simply that a friend with a wrong note should
+be able to fix it.
+
+**Two traps recorded for the build.** Zoom must **re-engrave** (`renderer.resize` + context scale),
+never a CSS transform, because `render.ts` crops training strips from that SVG by rect — and
+`onLayout`'s boxes *are* those crop rects, so zoomed coordinates must never reach `buildStrips`.
+And **per-note rects are nearly free**: `attachTitles` (`SheetView.tsx:285`) already walks every
+drawn note calling `getSVGElement()`, so the same walk records a rect. Two questions left open on
+purpose: how many notes a tuplet run takes (the owner wrote "two"; `\tup3` needs three to close),
+and where an inserted note lands in time.
 
 **Then the docs were refactored, not squeezed.** Four files sat at exactly **399** lines and one at
 397, against a 400 cap — every one of them one line from failing `check_docs.py`, which is a trap
@@ -42,7 +56,7 @@ rather than a limit. Split by genre, each leaving a pointer behind:
 checks 1–8 out); `mvp/rungs.md` **397 → 192** (W0–W3 out); `mvp/deploy.md` **399 → 340** (the
 commands out, so *why* and *how* stop sharing a page); `rung3/labeling.md` **399 → 304** (the two
 review queues out). Nothing above 384 now. ⚠ The moves needed link-depth rewriting in both
-directions — a `docs/`-relative link does not survive a move into `docs/rung3/`, and
+directions — a `docs/`-relative link does not survive a move into `docs/rung3/` — and
 `check_docs.py` caught every one.
 
 ## 2026-08-07 — the style pass: the harness became KomaVision

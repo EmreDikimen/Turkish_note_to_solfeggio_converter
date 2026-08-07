@@ -159,21 +159,14 @@ the model track never touches the app.** Either can be worked on without waiting
    ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
    reach the live decode server; on :5174 they fall back to the laptop.
 5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The modal goes; **Düzenle** zooms the sheet and
-   opens a **Mus2-style palette** beside it (note values, accidentals, `\repstart`/`\repend`/
-   `\tup3`), and clicking a note shows an **✕** to delete it in place. Not cosmetic — the editor is
-   the **Rung-3 labeling loop's tool**, so seconds per correction is labelling throughput.
-   ⚠ **One thing to decide before building:** `\repstart`/`\repend` are *derived* by `detectRepeats`,
-   not stored, so making them editable is a schema fork. (`\tup3` is fine — it is arithmetic, not an
-   object.) That, the zoom-vs-strip-exporter trap and the ordered slices:
-   **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
-   ⚠ **That one deploy carries TWO changes**: the style pass and makam selection. So if `smoke:live`
-   goes red it has two suspects; `smoke:build` against a local `dev:server` was run first for
-   exactly that reason, and passed.
-   ⚠ `smoke:build` from localhost cannot reach the LIVE server (`ALLOWED_ORIGINS` refuses it — the
-   lock working). Use a local `dev:server` for `smoke:build`, and `smoke:live` for the deployed chain.
-   Still genuinely open on makam: detection accuracy is scored on **clean SymbTr scores, never on
-   decoded pages**, where the derived signature is noisier — and stage 9's **header OCR** still does
-   not exist, so the makam is inferred from the notes rather than read off the page.
+   opens a **Mus2-style armed palette** — pick a note value, an accidental or the tuplet tool, then
+   click the score. Clicking a note gives an **✕** to delete and a **scroll wheel** to move its
+   pitch. Playback stays live while editing. **`Save JSON` is deleted** in the same pass.
+   ⚠ Settled, and worth not re-litigating: **repeats stay uneditable** (the stitcher unfolds them,
+   so inserting a repeat barline would corrupt flattened music), **tuplets are editable** (`\tup3`
+   is arithmetic, not an object), and **token-editing was rejected** (playback needs the flat doc).
+   ⚠ Two questions are still open — the tuplet run length and where an inserted note lands in time.
+   Brief: **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
 6. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
    widget: talk to them.
 7. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.

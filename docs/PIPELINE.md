@@ -20,6 +20,9 @@ updated: 2026-08-05
 > round-trip-verified on all 194 bundled scores by `stitch-test.ts`); **stage 10** is the
 > existing harness — the stitched JSON loads via its file picker / `?score=` URL, and the new
 > **⬇ Save JSON** button closes the Rung-3 labeling loop.
+> ⚠ **Save JSON is scheduled for deletion** (owner, 2026-08-07) — it went unused, and the labeling
+> loop's real path is `scripts/rung3/review_ui.py`. Until the editor rework lands it still works;
+> after it, this sentence and the §3.2 reference below stop being true. [mvp/editor.md](mvp/editor.md)
 > **Update (2026-08-05): stages 2–8 now ALSO run in the browser.** The slicer is ported to
 > TypeScript (`apps/web/src/omr/slicer/`, MVP W4–W6, verified against this Python over the whole
 > corpus) and wired into the app at W7 via `apps/web/src/omr/page.ts`, so an uploaded page becomes a

@@ -152,7 +152,9 @@ the user-editable dropdown all ship — [mvp/makam.md](mvp/makam.md). The **head
 open, so the makam is inferred from the notes rather than read off the page.
 
 **10. Note model → editor → playback.** The existing Phase-1 product. The editor is the safety
-net for every residual OMR error — and (see §3) the labeling tool for Rung 3.
+net for every residual OMR error. ⚠ It is **no longer the Rung-3 labeling tool** — that rationale
+retired with the `Save JSON` deletion (owner, 2026-08-07); the labelling loop's path is
+`scripts/rung3/review_ui.py`. Reasoning: [mvp/editor.md](mvp/editor.md).
 
 ## 2. What each training-set feature buys at inference
 

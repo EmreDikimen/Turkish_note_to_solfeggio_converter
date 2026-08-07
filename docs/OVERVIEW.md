@@ -294,10 +294,17 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    developer switches fold into a **Gelişmiş** drawer that stays shut.
 9. **Put the new version on the website.** One rebuild, one upload — it carries items 7 and 8
    together. Then check it with `npm run smoke:live`.
-10. **Make fixing a wrong note quick.** Today you click a bar, a window opens on top of the music,
-   you edit a table of rows — and it will not save until the bar adds up again. It should work like
-   MuseScore or Mus2: click the note, nudge it with the arrow keys, keep going. Worth doing properly
-   because it is also *your labelling tool* — every page you correct becomes training data.
+10. **Make fixing a wrong note quick — started 7 August, about a third done.** It used to be: click
+   a bar, a window opens on top of the music, edit a table of rows, and it refuses to save until the
+   bar adds up again. Now you can **click a note right on the page**, **drag it up or down** to
+   change its pitch, or press the **✕** to delete it — and **undo** anything (Ctrl/⌘+Z). It works
+   like Mus2, which is the point.
+   Still to come: a **palette** beside the music for choosing note lengths and accidentals, adding a
+   note by clicking empty space, and then the old window goes away.
+   ⚠ One thing to be honest about: this is **not** a labelling tool any more. An earlier plan said
+   every page you corrected would become training data, but the **Save JSON** button is being
+   removed, so that stops being true. The reason to build it now is simpler — *a friend whose page
+   has a wrong note should be able to fix it.*
 11. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
    slow (the rented computer has to wake up), and that a page takes about a minute. Ask about the
    **buttons and the screen**, not about mistakes in the notes — the notes are the exam's job.

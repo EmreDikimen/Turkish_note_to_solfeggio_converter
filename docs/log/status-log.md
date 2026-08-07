@@ -2,10 +2,123 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-07
+updated: 2026-08-08
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-08-08 (latest) — the armed palette, and the glyph that stole its neighbour's clicks
+
+**Editor step 4 is built and green** ([../mvp/editor.md](../mvp/editor.md)). A column beside the
+sheet holds six note values (Bravura glyphs) and the AEU accidentals; arm one, click a note, the
+note takes it. `Esc` and **↖ Seçim** disarm, leaving edit mode disarms, and with nothing armed the
+sheet behaves exactly as slice 1 left it. One new core primitive, `withAlter` — the mirror of
+`nudgePitch`: the alteration moves and the staff position does not.
+
+**A Bravura glyph paints outside its em box, and that broke clicking.** The 1/32 tool's ink overhung
+the 1/8 tool above it, so `elementFromPoint` in the *centre* of the 1/8 button returned the 1/32 one
+and a click there armed the wrong value. It was found because the new smoke assertions failed on the
+armed id, and it reproduces by hand — this was a real UI bug, not a Playwright artifact. Fixed with
+`overflow: hidden` on the button and `pointer-events: none` on the glyph span, so ink is clipped and
+clicks resolve to the button that owns the pixel. Worth remembering for any future glyph button.
+
+**An absolute edit is not transpose-safe the way a relative one is.** `onNudgePitch` never needed to
+think about the transposed staff, because ±1 diatonic step means the same thing in both spaces. An
+accidental does not: it is applied in DISPLAY space and the single event is mapped back with the
+same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` already used.
+
+**Deliberately not done, so the bar stays honest.** An edit still absorbs into its bar and bar lines
+never move, so a re-valued note leaves its bar over or under length with **no warning yet** — that
+is step 8, and it needs the derived meter rather than `Measure.lengthBeats` (which is computed from
+the bar's own contents and so is true by construction). The measure modal, `Save JSON` and the piano
+roll all still work; the modal is deleted last, at step 10.
+
+⚠ **The editor smoke reads the document through `#save-json`.** Step 9 deletes that button, so it
+has to grow another handle first — do not remove the download without moving the harness.
+
+Green on: `typecheck`, `npm test` (incl. new `withAlter` cases), `smoke:editor`, `smoke:app`,
+`smoke:page` (7 porte → 16 şerit → 344 nota), `gate:browser` 27/28.
+
+## 2026-08-07 — the editor's first slice, and the bug the refactor found
+
+**Steps 1–3 of [../mvp/editor.md](../mvp/editor.md) are built and green.** In edit mode a click on
+a note selects it, an **✕** deletes it, **dragging it** moves its pitch, and **undo/redo**
+works (buttons + Ctrl/⌘+Z). The measure modal, `Save JSON` and the piano roll all still work —
+step 10 deletes the modal *last*, so there is always a working way to edit.
+
+**The refactor was the load-bearing part, and it found a live bug.** The app had grown two disjoint
+edit vocabularies over one document: the piano-roll patched `koma53` + `freqHz`, the modal rebuilt
+events from an explicit `{letter, octave, alter}` spelling. Since the sheet reads its staff position
+from `parseNoteName(ev.noteName)`, and `updateEvent` **never wrote `noteName`**, *dragging a note in
+the roll moved the sound and left the notehead where it was.* Both paths now compose
+`packages/core/src/edits.ts`, so a pitch edit cannot half-apply. Pinned by a unit test that asserts
+`noteName` moves, and by `smoke:editor` in the real app.
+
+**Two things were deliberately NOT fixed, and saying so is the point.** The roll's *duration* drag
+still writes `durationMs` alone and leaves `durationBeats` (what the sheet engraves) stale — the
+same bug shape, but fixing it means snapping a continuous drag to a note value, which is the
+palette's job. And `noteAE` stays exact rather than AEU-snapped: the Python exporter snaps it (152
+of 2,297 notes in the bundled scores), `stitch.ts` and the modal never did, and `withPitch` matches
+the two TS producers. Nothing reads `noteAE` but a hover label.
+
+**The brief said to push per-note rects through `onLayout`; that was wrong and they don't.**
+`onLayout`'s payload is the contract `stripExport.ts` and `tools/render/render.ts` crop training
+strips by, the only consumer of per-note geometry is the overlay in the same file, and `onLayout` is
+an engrave dependency — a second non-stable callback prop would re-engrave forever. They are local
+`NoteBox[]` state instead, filled in the walk that already records the playhead's positions.
+
+**A trap worth keeping.** `data-edit-mode` ended up
+on *two* elements (the toggle button and the sheet), so a check matching the attribute alone picks
+the wrong one; the sheet got `id="sheet-surface"` for that reason, found by the smoke failing.
+
+### Owner feedback, same day: DRAG, not the wheel — and no measure hover
+
+**The brief said "scroll it up and down to change its pitch". It is now a DRAG** (owner). The wheel
+version shipped first and was thrown away, and the reasons are worth keeping because they are why
+a wheel is the wrong instrument here:
+
+- **It fights the page.** The handler has to `preventDefault`, which means it cannot be a React
+  `onWheel` prop at all (React registers wheel on the root as **passive**); it has to be a native
+  listener attached by ref with `{passive: false}`.
+- **It moves the note in jumps, not under your finger.** A mouse notch is one event of ±100–120,
+  but a **trackpad swipe is dozens of events of ±2–10** — and every pitch step re-engraves the whole
+  score. Acting per event gave **12 steps and 12 re-engraves for 12 synthetic trackpad deltas**, so
+  a real swipe threw the note off the staff and stalled the tab on a fanless M4. Accumulating travel
+  fixed the symptom, but only by adding a second thing to tune.
+- **And the accumulator was fragile in two ways that each looked like "the wheel is dead":** a `let`
+  inside the effect is wiped every re-attach (**~6 times during one swipe**), and a time-based
+  "gesture gap" is exactly backwards on a slow machine — a step re-engraves, so every event arrives
+  "late" and the accumulator resets each time.
+
+**The drag has none of that.** `setPointerCapture` on pointerdown (the note leaves the pointer on
+the first step, so without capture the gesture dies), steps measured from where the pointer went
+down rather than from the previous event (no accumulated rounding drift), and
+`DRAG_PX_PER_STEP = STAFF_SPACE / 2` so the notehead tracks the pointer exactly. Verified:
+`Si4b2` dragged up 15 px becomes `Mi5b2` — **exactly three staff steps**, across the octave seam,
+carrying its 2-comma flat, and **one undo reverses the whole drag**.
+
+⚠ **A test bug wasted a round in the middle of this.** After `save()` clicks the header button,
+Playwright scrolls it into view and pushes the sheet off-screen; the cached bounding box then
+pointed outside the viewport, `mouse.move` put the cursor off-page, and **no pointer events were
+delivered at all**. That reads identically to "the interaction is broken". `hoverNote` now scrolls
+the note into view, re-reads the box, and **asserts the pointer is actually over the intended note**
+before acting — so this failure can never masquerade as an app bug again.
+
+**Measure hover is gone in edit mode** (owner): editing is whole-score, so framing a bar says the
+wrong thing about what a click does. Note hover moved to CSS (`.kv-note-hit`) rather than React
+state, so it costs no re-render — teal on hover, amber + ✕ when selected. Clicking empty space
+still opens the measure modal, which is still the only way to insert a note until step 4.
+
+Re-verified after the rework: `npm test` 217/217, `smoke:app`, `smoke:page`, `smoke:editor` all
+pass, and the 302 strip PNGs are **still byte-identical** (the new CSS is scoped to overlay divs).
+
+**Undo coalesces by gesture.** `apply(fn, {coalesce})` merges same-keyed edits inside 600 ms, so one
+wheel gesture — or one piano-roll drag, which emits an edit per pointer-move — is one undo entry.
+
+**The engraving did not move:** 2 pieces re-rendered before and after, **302 strip PNGs and every
+label byte-identical** (only the `.done` marker's timestamp differs). `npm test` 217/217 unchanged,
+`smoke:app` and `smoke:page` pass with the same counts (7 staves → 16 strips → 344 notes / 28
+measures).
 
 ## 2026-08-07 (later) — the editor is specified, and five docs pulled back from the cap
 

@@ -2,11 +2,11 @@
 
 purpose: the design brief for reworking note editing into an armed-tool palette over the whole score
 audience: whoever builds it next — start here, then CODE_TOUR rows 16–19
-updated: 2026-08-07
+updated: 2026-08-08
 
 > Owner decision, 2026-08-07. Pressing **Düzenle** opens a **palette beside the sheet**; you **arm a
 > tool** (a note value, an accidental, the tuplet sign) and **click the score** to apply it. Clicking
-> a note selects it, shows an **✕** to delete, and lets you **scroll it up and down** to change its
+> a note selects it, shows an **✕** to delete, and lets you **drag it up and down** to change its
 > pitch. The palette carries its own **Çal / Dur**, and **Çal starts from the last edited measure**.
 > Mus2 works this way and the owner uses it. Current state: [../STATUS.md](../STATUS.md).
 
@@ -53,17 +53,34 @@ checks that drive it ("saved schemaVersion 1", "saved doc has notes"), and the r
 | **Note value** | arm it, click an **existing note** | that note's duration changes |
 | **Accidental** (the AEU set) | arm it, click a **note** | the accidental is applied |
 | **Tuplet** | arm it, click the **first** note, then the **last** | the run becomes a triplet — rules below |
-| *(none)* | click a note | selected; an **✕** appears; **scroll wheel** moves its pitch |
+| *(none)* | click a note | selected; an **✕** appears |
+| *(none)* | **drag a note up/down** | its pitch moves by staff step, accidental carried. ⚠ A drag, not the wheel — see below |
+| *(none)* | hover a note | a teal outline — **the only hover edit mode has.** ⚠ Measures do **not** highlight on hover (owner, 2026-08-07): editing is whole-score, so framing a bar says the wrong thing about what a click does |
 | *(none)* | click the **✕** | the note is deleted |
 | **Çal / Dur** | in the palette | plays from the **last edited measure** |
 
 **"Empty" means anywhere** — between two notes, before the first, after the last. Not just the slack
 at the end of a bar.
 
-**Scrolling a selected note carries its accidental.** The doc stores pitch as letter + octave +
+**Dragging a selected note carries its accidental.** The doc stores pitch as letter + octave +
 `alter` separately (this is how `MeasureEditModal` works today), so moving the staff position while
 keeping the alteration is the natural operation, not a special case.
-⚠ The wheel handler must `preventDefault`, or the page scrolls underneath it.
+
+⚠ **It is a DRAG, not the scroll wheel** (owner, 2026-08-07, revising the line above this section).
+A wheel version was built first and thrown away: it fights the page's own scrolling, and it moves
+the note in jumps rather than under your finger. Grab the note and pull it up or down;
+`DRAG_PX_PER_STEP` is **half a staff space**, so the notehead tracks the pointer exactly.
+
+Three details carry the gesture, and each was a bug first:
+1. **`setPointerCapture` on pointerdown.** The note's hit box is ~20 px wide and the note moves out
+   from under the pointer on the first step; without capture the drag dies immediately.
+2. **Steps are measured from where the pointer went down**, never from the previous event, so
+   rounding cannot accumulate drift across a long drag. `applied` remembers how far the note has
+   already moved and only the difference is sent, because `onNudgePitch` is relative.
+3. **`preventDefault` + `touch-action: none`**, or the browser text-selects on desktop and pans the
+   page on a touchscreen instead of dragging.
+
+⚠ A **plain click must not move the pitch** — it only selects. Pinned by `smoke:editor`.
 
 **Çal-from-last-edit is what replaces click-to-seek.** In edit mode a click means select or insert,
 so "play from this bar" would otherwise be lost — and that is exactly how you check a fix. Starting
@@ -151,17 +168,33 @@ data. Verify on more decoded pages before promising anything.
 
 | Piece | State | Where |
 |---|---|---|
-| Measure hit-testing | ✅ | `SheetView.tsx:1218` `measureAt()` |
-| **Per-note positions** | ❌ needed — but nearly free | `attachTitles` (`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()`; the same walk records `getBoundingClientRect()` per event index |
-| Accidental glyphs + Turkish names | ✅ lift wholesale for the palette | `AccidentalSelect.tsx` |
-| Pitch/duration edit primitives | ✅ the piano-roll already drags these | `updateEvent` in `App.tsx` |
-| Pitch as letter+octave+alter | ✅ makes "scroll carries the accidental" natural | `MeasureEditModal.tsx` |
+| Measure hit-testing | ✅ | `SheetView.tsx` `measureAt()` |
+| **Per-note positions** | ✅ **built 2026-08-07** | `NoteBox[]` state in `SheetView.tsx`, filled in the same walk that records the playhead's `NotePos` |
+| Accidental glyphs + Turkish names | ✅ **lifted 2026-08-08** into `ui/accidentals.ts` | shared by `AccidentalSelect.tsx` and the palette |
+| **Pitch/duration edit primitives** | ✅ **extracted 2026-08-07** | `../../packages/core/src/edits.ts` — `withPitch`, `withKoma`, `withDurationBeats`, `nudgePitch`, `deleteEvent`, `renumber` |
+| Pitch as letter+octave+alter | ✅ makes "scroll carries the accidental" natural | `spellingOf` / `nudgePitch` in `edits.ts` |
 | Transport (play/stop/seek-to-ms) | ✅ reuse for the palette's Çal/Dur | `webAudioBackend.ts`, `onSeekMs` in `App.tsx` |
 | Measure-total validation | ✅ exists, needs a new role | `../../packages/core/src/measures.ts:145` |
-| Undo/redo | ❌ nothing | — |
+| **Undo/redo** | ✅ **built 2026-08-07** | `../../apps/web/src/useDocHistory.ts` |
+| **The armed palette** | ✅ **built 2026-08-08** | `../../apps/web/src/ui/EditPalette.tsx` + `ui/accidentals.ts` |
 
-**Undo/redo ships in the first slice, not after it.** Direct editing without undo is worse than a
+**Undo/redo shipped in the first slice, not after it.** Direct editing without undo is worse than a
 modal, which at least has Cancel.
+
+### ⚠ The extraction found a live bug, and fixed it
+
+`updateEvent` patched `koma53` + `freqHz` and left `noteName` alone — and the sheet reads its staff
+position from `parseNoteName(ev.noteName)`. **So dragging a note in the piano roll moved the SOUND
+and left the notehead where it was.** Both edit paths now go through `edits.ts`, so a pitch edit
+cannot half-apply. Two notes on what was deliberately *not* changed:
+
+- **The roll's DURATION drag still writes `durationMs` alone**, leaving `durationBeats` (what the
+  sheet engraves) stale — the same bug shape. Fixing it means snapping a continuous drag to a note
+  value, which is the palette's job (step 4), not the extraction's.
+- **`noteAE` is left exact, not AEU-snapped.** The Python exporter snaps it (152 of 2,297 notes in
+  the bundled scores carry e.g. `noteName "Si4b2"` beside `noteAE "B4b1"`); `tools/render/stitch.ts`
+  and the modal never did. `withPitch` matches the two TS producers. Nothing reads `noteAE` but the
+  piano-roll's hover label, so this is cosmetic — but it is real, and unifying it is its own call.
 
 ---
 
@@ -175,11 +208,20 @@ modal, which at least has Cancel.
 - **Editing while playing rebuilds the timeline.** It is a `useMemo` over `doc`, so the rebuild is
   automatic; what is not automatic is telling the running backend. Rebuild, then resume from the
   same millisecond.
-- **Grace notes (çarpma)** belong to the note that follows them and take no time; the modal sets
-  them aside and re-inserts on save (`MeasureEditModal.tsx:56`). Deleting a host note must do
-  something *defined* with its graces.
+- **Grace notes (çarpma)** belong to the note that follows them and take no time. ✅ **Settled
+  2026-08-07: deleting a host deletes its leading graces with it** (`deleteEvent` in
+  `../../packages/core/src/edits.ts`). That was already the modal's de-facto behaviour — a grace
+  whose host row was gone matched nothing on save and was silently dropped — so this makes the
+  existing rule explicit and unit-tested rather than inventing a new one. ⚠ Graces get **no
+  `NoteBox`** (they are VexFlow modifiers on the following note, never entries in `notes[]`), so
+  they cannot be selected or deleted on their own.
 - **The DOM contract holds** — ids and `data-*` per `apps/web/src/ui/status.ts` and the CLAUDE.md
   rule. Give the editor's own state `data-*` attributes rather than making a test read Turkish.
+  Shipped in slice 1: `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` +
+  `[data-selected-note]`, `[data-omr-note]` / `[data-selected]` per note, and
+  `#note-delete` / `#undo` / `#redo`. ⚠ `data-edit-mode` sits on **two** elements (the button and
+  the sheet), so a check must name the one it means by id — matching the attribute alone picks the
+  button. `npm run smoke:editor` drives all of it.
 - **All new copy goes in `apps/web/src/ui/strings.ts`**, in Turkish.
 - **Edit mode stays behind the `✎ Düzenle` toggle**, so a friend who never enters it cannot select,
   insert or delete anything by accident.
@@ -188,13 +230,23 @@ modal, which at least has Cancel.
 
 ## Suggested order
 
-1. **Per-note rects out of `SheetView`** (extend `onLayout`), nothing consuming them yet.
-   Verify: `npm test`, `smoke:page` — the engraving must be byte-identical.
-2. **Selection, the ✕, and scroll-to-change-pitch.** The smallest useful editor on its own.
-3. **Undo/redo** — before any of this is called done.
-4. **The palette, armed-tool model**: note values first (the most common fix), then accidentals
-   lifted from `AccidentalSelect`.
-5. **Çal / Dur in the palette**, playing from the last edited measure.
+1. ✅ **DONE 2026-08-07 — per-note rects out of `SheetView`.** ⚠ **NOT through `onLayout`**, as
+   this line originally said. They are `NoteBox[]` state local to `SheetView`: `onLayout`'s payload
+   is a contract shared with `stripExport.ts` and `tools/render/render.ts` (which crops training
+   strips by those measure rects), the only consumer is the overlay in the same file, and `onLayout`
+   is an engrave dependency — a second, non-stable callback prop would re-engrave forever. Filled in
+   the walk that already records `NotePos` for the playhead.
+2. ✅ **DONE 2026-08-07 — selection, the ✕, and drag-to-change-pitch.**
+3. ✅ **DONE 2026-08-07 — undo/redo** (`apps/web/src/useDocHistory.ts`), with same-gesture
+   coalescing so one drag (on the sheet or in the piano roll) is one undo entry.
+4. ✅ **DONE 2026-08-08 — the palette, armed-tool model.** `apps/web/src/ui/EditPalette.tsx`: six
+   note values as Bravura glyphs (SMuFL `U+E1D2/E1D3/E1D5/E1D7/E1D9/E1DB`) and the AEU signs, armed
+   one at a time; a click on a note applies the armed tool instead of starting a pitch drag. `Esc`
+   or `↖ Seçim` disarms, and leaving edit mode does too. The accidental list now lives once in
+   `apps/web/src/ui/accidentals.ts`, read by both the palette and the modal's picker. New core
+   primitive: `withAlter` (the mirror of `nudgePitch` — the alteration moves, the staff position
+   does not). See the two traps recorded below.
+5. **Çal / Dur in the palette**, playing from the last edited measure. ⬅ **NEXT.**
 6. **Insert-on-empty-space**, absorbing into the bar.
 7. **The tuplet tool**, with the three-note rule and non-clickable invalid targets.
 8. **The invalid-bar indicator**, replacing the modal's Save gate.
@@ -203,3 +255,21 @@ modal, which at least has Cancel.
 
 Verification throughout: `npm run typecheck`, `npm test`, `npm run smoke:app`, `npm run smoke:page`,
 and a real correction pass on a decoded page.
+
+### ⚠ Two traps the palette found (2026-08-08)
+
+1. **A Bravura glyph paints outside its em box, and that made clicks land on the wrong tool.** The
+   1/32 button's notehead+flag ink overhung the 1/8 button above it, so `elementFromPoint` in the
+   middle of the 1/8 tool returned the 1/32 one — and a click there armed 1/32. It reproduced in
+   Playwright *and* by hand. The fix is in `styles/app.css`: `.kv-tool { overflow: hidden }` plus
+   `.kv-tool .kv-glyph { pointer-events: none }`, so ink is clipped and clicks resolve to the button
+   that owns the pixel. Any future glyph button needs both.
+2. **An absolute alteration is not transpose-safe, unlike a relative nudge.** The sheet draws
+   `displayDoc`, so `onApplyTool` builds the accidental edit in DISPLAY space and maps the single
+   event back with the same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` uses.
+   `onNudgePitch` never needed this only because ±1 step means the same thing in both spaces.
+
+Also settled while building it: **re-applying the accidental a note already carries is not an undo
+entry** (`withAlter` returns the event unchanged, and `useDocHistory.apply` drops no-op edits), and
+the palette's accidental row carries the **AEU signs only** — the numbered ±2/±3 stay in the modal's
+dropdown, from the same list in `apps/web/src/ui/accidentals.ts`.

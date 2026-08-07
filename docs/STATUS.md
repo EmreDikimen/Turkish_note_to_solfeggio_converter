@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-07
+updated: 2026-08-08
 
 ## Now
 
@@ -28,8 +28,28 @@ change: **the deploy checks no longer read the copy** — `#omr-status` carries 
 where` + counts (`apps/web/src/ui/status.ts`), which is what let the UI become Turkish without
 touching one assertion.
 
-**The next action is the REDEPLOY** (style pass + makam selection in one build, both committed,
-neither live), **then the EDITOR REWORK** ([mvp/editor.md](mvp/editor.md)). TWO tracks run in
+**THE PALETTE IS BUILT AND GREEN, 2026-08-08 — editor step 4.** A column beside the sheet holds
+six note values and the AEU signs; **arm one and click a note** and that note takes it — the Mus2
+model, which is what the owner already uses. `Esc` or **↖ Seçim** disarms, and with nothing armed
+the sheet behaves exactly as it did in slice 1. The edited bar is left over or under its length on
+purpose (**edits absorb, bar lines never move**); the warning for that is step 8. Two traps are
+written up in [mvp/editor.md](mvp/editor.md), and the first is worth knowing before drawing any
+glyph in a button: **Bravura ink paints outside its em box**, so one tool's notehead overhung its
+neighbour and a click on 1/8 armed 1/32.
+
+**THE EDITOR REWORK STARTED — SLICE 1 WAS BUILT AND GREEN, 2026-08-07.** Steps 1–3 of
+[mvp/editor.md](mvp/editor.md): in edit mode you click a note on the sheet, it selects, an **✕**
+deletes it and **dragging it up or down** moves its pitch — carrying its accidental across the octave
+seam — with **undo/redo** (buttons plus Ctrl/⌘+Z) shipping in the same slice, as the brief
+required. The measure modal, `Save JSON` and the piano roll all still work; nothing is deleted yet.
+Underneath it the actual refactor: **one set of edit primitives**
+(`packages/core/src/edits.ts`) now serves every edit path, which **fixed a live bug** — the piano
+roll used to move a dragged note's *sound* and leave its notehead behind. Driven end to end by the
+new `npm run smoke:editor`; the engraving is byte-identical (302 strip PNGs, 0 diffs).
+
+**The next action is the REDEPLOY** — one build carrying makam selection, the style pass and the
+editor (slice 1 + the palette). Nothing on the live site has moved since 2026-08-06. After it,
+**editor step 5 — Çal/Dur in the palette, playing from the last edited measure**. TWO tracks run in
 parallel, as re-scoped on 2026-08-05:
 
 | | |
@@ -150,7 +170,9 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-4. **✅ THE STYLE PASS IS DONE (2026-08-07), and ⬅ THE REDEPLOY IS THE NEXT ACTION.** Scope held:
+4. **✅ THE STYLE PASS IS DONE (2026-08-07), and ⬅ THE REDEPLOY IS THE NEXT ACTION** — it now
+   carries the editor as well (steps 1–4), by the owner's call on 2026-08-08 to build first and
+   deploy once. Scope of the style pass itself held:
    presentation only. Every check passes on the built artifact — `npm test`, `gate:browser` 27/28,
    `smoke:app`, `smoke:page`, and **`smoke:build` on both paths with identical scores**
    (`9/26/399/26` server vs fallback). What remains is one command pair from
@@ -158,12 +180,21 @@ the model track never touches the app.** Either can be worked on without waiting
    BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
    ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
    reach the live decode server; on :5174 they fall back to the laptop.
-5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The modal goes; **Düzenle** opens a **Mus2-style
-   armed palette** beside the sheet — pick a note value, an accidental or the tuplet tool, then click
-   the score. Clicking a note gives an **✕** to delete and a **scroll wheel** to move its pitch;
-   inserting is a click on **any empty space**. Editing is **whole-score, not measure-scoped**, there
-   is **no zoom**, the palette has its own **Çal/Dur**, and **Çal starts from the last edited
-   measure**. **`Save JSON` is deleted** in the same pass.
+5. **THE EDITOR REWORK — steps 1–4 are DONE (slice 1 on 2026-08-07, the palette on 2026-08-08);
+   ⬅ step 5, Çal/Dur in the palette, is next.**
+   The modal goes; **Düzenle** opens a **Mus2-style armed palette** beside the sheet — pick a note
+   value, an accidental or the tuplet tool, then click the score. **✅ Built:** clicking a note
+   selects it, an **✕** deletes it, **dragging it** moves its pitch, **undo/redo** works
+   (buttons + Ctrl/⌘+Z), and **arming a note value or an accidental and clicking a note applies
+   it**. **Still owed:** insert-on-empty-space, the tuplet
+   tool, the invalid-bar indicator, Çal-from-last-edit, and deleting **`Save JSON`** + the modal.
+   Editing is **whole-score, not measure-scoped**, there is **no zoom**, the palette has its own
+   **Çal/Dur**, and **Çal starts from the last edited measure**.
+   ⚠ Slice 1 deviated from the brief in one place, on purpose: the per-note rects are **local
+   `SheetView` state, not part of `onLayout`** — that payload is the training-strip crop contract.
+   ⚠ It also **fixed a live bug it found**: the piano roll moved a dragged note's sound and left
+   the notehead behind (`updateEvent` never rewrote `noteName`). Both edit paths now share
+   `packages/core/src/edits.ts`.
    ⚠ Settled, do not re-open: **repeats stay uneditable** (the stitcher unfolds them), **tuplets are
    exactly three notes** (the drawn digit is hardcoded "3"), and **token-editing was rejected**.
    ⚠ Also settled: an edit **absorbs into its bar and bar lines never move**, and a bar over *or*

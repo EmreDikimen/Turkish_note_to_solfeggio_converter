@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-07
+updated: 2026-08-08
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -149,6 +149,51 @@ strip count will be low for the number of staves), or a page that reports 0 stav
 
 ⚠ It is **view-only by design** (owner, 2026-08-05): deleting a strip changes nothing outside this
 page — no score is built here, and nothing is written to disk. A reload starts empty.
+
+## Check 15 — editing a note on the sheet (editor slice 1, 2026-08-07)
+
+Goal: see the direct editor do what the modal did, without the modal. Scripted version:
+`npm run smoke:editor` — this is the version you do with your eyes.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; stay on **Nota**.
+2. Press **✎ Düzenle**. **Geri al** / **Yinele** appear beside it, both greyed out.
+3. **Move the pointer across the sheet.** Notes outline in teal as you pass them; **bars do not
+   highlight at all** — editing is whole-score, so there is no measure hover.
+4. **Click a note.** An amber ring appears around it and an **✕** above its right shoulder.
+   Clicking *empty* space in a bar still opens that bar's window — the modal is deliberately still
+   there until the palette lands.
+5. **Drag the note up or down.** The notehead follows your pointer, one line/space at a time, and
+   **the page itself must not scroll or select text**. Pick a note with an accidental: the
+   accidental moves *with* it — a Si♭ dragged up becomes a Do♭, not a plain Do. Let go anywhere;
+   the drag keeps working even though the note has slid out from under the pointer.
+6. **Press the ✕.** The note disappears; its bar is now one note short and **the bar lines do not
+   move**. That is the intended behaviour — an edit absorbs into its bar.
+7. **Geri al** (or Ctrl/⌘+Z) puts it back; pressing it again undoes the pitch change. **One whole
+   drag is one undo**, not one per staff step. **Yinele** replays them.
+8. ⚠ **Grace notes (çarpma) are not selectable** — they are drawn attached to the note after them
+   and have no click target of their own. Deleting their host takes them with it.
+
+## Check 16 — the armed palette (editor step 4, 2026-08-08)
+
+Goal: see Mus2's model working — arm a tool, click a note, the note changes. Scripted version:
+`npm run smoke:editor`.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
+2. A **palette appears to the left of the sheet**: a **SÜRE** row of six note glyphs and a
+   **DEĞİŞTİRME** row of the AEU signs. The score itself must not move, resize or re-flow when it
+   appears, and the page must not gain a sideways scrollbar.
+3. **Click the ♪ (1/8).** It fills terracotta, the hint under the palette changes, and the pointer
+   over a note becomes a *copy* cursor rather than a grab hand.
+4. **Click a note that is longer than an eighth.** It re-engraves as an eighth **in place** — its
+   bar is now short and **the bar lines do not move**. Nothing else in the bar changes.
+   ⚠ With a tool armed a click must **not** drag the pitch: the notehead stays on its line.
+5. **Geri al** once puts the whole thing back — one click is one undo entry.
+6. **Press Esc.** The armed tool clears (`↖ Seçim` lights up instead) and dragging a note moves its
+   pitch again, exactly as in check 15.
+7. **Arm a koma bemol and click a note with no accidental.** The sign appears before the notehead,
+   the note stays on its line, and the pitch you hear on **Çal** drops by one koma. Clicking it a
+   second time with the same sign armed does nothing at all — including nothing to the undo stack.
+8. ⚠ Leaving edit mode disarms the palette; re-entering starts on **Seçim**.
 
 ## Check 14 — the makam changes what you HEAR (2026-08-07)
 

@@ -24,7 +24,17 @@ spellings (hicaz, şehnaz, nisaburek, sultaniyegah) — and the renderer samples
 `weight`. Single-strip spellings (n < --min-n) are dropped as decode noise UNLESS they are a
 makam's only evidence.
 
+`--ts-out` emits the SAME table as a TypeScript module for the shipped app, which needs it
+for makam detection (signature → candidate makams; see `packages/core/src/makam.ts`). Python
+never ships, and neither does `data/`, so the app cannot read the JSON at runtime — the
+generated module is how this table crosses into the browser, and keeping both writes in one
+script is what stops the two copies drifting. `--from-json` re-emits the TS from the
+COMMITTED table without rescanning the manifests, which is what you want when only the TS
+side changed (a rescan would silently rewrite the JSON from whatever pools exist locally).
+
 Run: .venv-ml/bin/python scripts/build_makam_signatures.py [--min-frac 0.15] [--out PATH]
+     .venv-ml/bin/python scripts/build_makam_signatures.py \\
+         --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts
 """
 from __future__ import annotations
 import argparse, glob, json, re, collections, sys
@@ -67,17 +77,100 @@ THEORY = {
 }
 
 
+TS_HEADER = '''/**
+ * Per-makam conventional PRINTED key signatures — GENERATED, do not edit by hand.
+ *
+ * Regenerate with:
+ *   .venv-ml/bin/python scripts/build_makam_signatures.py \\
+ *       --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts
+ *
+ * Same table as `data/makam_signatures.json`, transcoded because the app ships without `data/`
+ * and without Python. `sig` is the drawn-order signature body in the label token vocabulary
+ * ("\\\\komaFlat b \\\\bakiyeSharp f"); `n` is how many adjudication-confirmed real strips showed
+ * that spelling (0 = AEU theory fallback, no real evidence). Consumed by
+ * `packages/core/src/makam.ts` to turn a decoded score's derived signature into candidate makams.
+ */
+
+export interface MakamSignatureVariant {
+  /** Drawn-order signature body, label token vocabulary. */
+  sig: string;
+  /** Share of this makam's real strips carrying this spelling. */
+  weight: number;
+  /** Real strips behind it — 0 means the row is AEU theory, not observed. */
+  n: number;
+}
+
+export interface MakamSignatureEntry {
+  /** Raw makam spellings seen in the corpus that normalise to this key. */
+  names: string[];
+  source: "real" | "theory" | "real+theory";
+  variants: MakamSignatureVariant[];
+  /** Set when this key is a spelling alias of another ("nihavent" -> "nihavend"). */
+  aliasOf?: string;
+}
+
+/** Keyed by NORMALISED makam name (lowercase, alphanumerics only). */
+export const MAKAM_SIGNATURES: Record<string, MakamSignatureEntry> = '''
+
+
+def to_ts(table: dict) -> str:
+    """Render the signature table as a TypeScript module.
+
+    Hand-rolled rather than json.dumps'd straight in so the backslash-heavy `sig` strings come
+    out as valid TS string literals (JSON's `\\komaFlat` would be an invalid escape in TS) and
+    the file reads like source rather than a blob.
+    """
+    lines = [TS_HEADER + "{"]
+    for k in sorted(table):
+        e = table[k]
+        names = ", ".join(json.dumps(n, ensure_ascii=False) for n in e.get("names", []))
+        lines.append(f"  {json.dumps(k)}: {{")
+        lines.append(f"    names: [{names}],")
+        lines.append(f"    source: {json.dumps(e['source'])},")
+        if e.get("alias_of"):
+            lines.append(f"    aliasOf: {json.dumps(e['alias_of'])},")
+        lines.append("    variants: [")
+        for v in e["variants"]:
+            # Escape for a TS single-quoted-ish double-quoted literal: only the backslashes need it.
+            sig = v["sig"].replace("\\", "\\\\")
+            lines.append(f'      {{ sig: "{sig}", weight: {v["weight"]}, n: {v["n"]} }},')
+        lines.append("    ],")
+        lines.append("  },")
+    lines.append("};\n")
+    return "\n".join(lines)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pools", default="data/real/rung3/strips_*/manifest.jsonl")
     ap.add_argument("--corpus", default="data/pieces.json")
     ap.add_argument("--out", default="data/makam_signatures.json")
+    ap.add_argument("--ts-out", default=None,
+                    help="also write the table as a TypeScript module for the shipped app")
+    ap.add_argument("--from-json", default=None,
+                    help="skip the manifest scan and re-emit from this existing table "
+                         "(use with --ts-out when only the TS side needs regenerating)")
     ap.add_argument("--min-frac", type=float, default=0.0,
                     help="optional extra floor: also require a variant's share ≥ this (0 = off)")
     ap.add_argument("--min-n", type=int, default=2,
                     help="min real strips to trust a non-modal variant (drops single-strip noise)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    # Re-emit mode: the committed table is the input, nothing is rescanned and `--out` is never
+    # touched. Rebuilding from the manifests would rewrite the JSON from whatever pools happen to
+    # be on this machine, which is not a doc-sync-safe thing to do just to refresh the TS copy.
+    if args.from_json:
+        table = json.load(open(args.from_json))
+        print(f"re-emitting {len(table)} makams from {args.from_json} (no rescan)")
+        if args.ts_out and not args.dry_run:
+            with open(args.ts_out, "w") as f:
+                f.write(to_ts(table))
+            print(f"wrote {args.ts_out}")
+        elif not args.ts_out:
+            print("nothing to do — --from-json without --ts-out", file=sys.stderr)
+            return 1
+        return 0
 
     counts: dict[str, collections.Counter] = collections.defaultdict(collections.Counter)
     raw_names: dict[str, set] = collections.defaultdict(set)
@@ -170,6 +263,10 @@ def main() -> int:
         with open(args.out, "w") as f:
             json.dump(table, f, ensure_ascii=False, indent=2, sort_keys=True)
         print(f"\nwrote {args.out} ({len(table)} makams)")
+        if args.ts_out:
+            with open(args.ts_out, "w") as f:
+                f.write(to_ts(table))
+            print(f"wrote {args.ts_out}")
     return 0
 
 

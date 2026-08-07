@@ -7,11 +7,18 @@ import {
   centsAboveRef,
   deriveTimeSignature,
   estimateBpm,
+  detectMakam,
   findUsul,
   freqFromTuning,
   groupMeasures,
+  makamDisplay,
+  makamKomaDeltas,
+  makamOptions,
+  resolveMakam,
   transpose as transposeDoc,
   USULS,
+  withKomaDeltas,
+  type MakamDetection,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
@@ -20,6 +27,7 @@ import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MeasureEditModal } from "./MeasureEditModal";
+import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, decodeUrl, type RoutedResult } from "./omr/remote";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
@@ -55,6 +63,17 @@ function whereSuffix(routed: RoutedResult): string {
   if (routed.fellBackBecause) return " · read on your machine (the server did not answer)";
   return decodeUrl() ? "" : " · read on your machine";
 }
+
+// What the makam guess adds to a decode's one-line summary. It belongs there because the makam
+// changes what the piece SOUNDS like, so "which one did it pick" is part of the result, not a
+// filing detail. Sits BEFORE whereSuffix on purpose: the smoke checks match the head of this line
+// and print its tail as evidence for "ran where told", so the where-clause stays last.
+function makamSuffix(detected: MakamDetection): string {
+  return detected.slug ? ` · makam: ${makamDisplay(detected.slug)}` : " · makam: not recognised";
+}
+
+// Every makam the app can play, built once at module load — the list is static.
+const MAKAM_OPTIONS = makamOptions();
 
 // Example scores bundled in apps/web/public/ (exported from SymbTr via scripts/symbtr_to_json.py).
 // The first entry auto-loads on startup; the rest are selectable from the Sample dropdown.
@@ -145,6 +164,13 @@ export function App() {
   const [metronome, setMetronome] = useState(false);
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
+  // Which makam's PERFORMED intonation playback uses. "" = none, i.e. sound the notes exactly as
+  // the staff spells them (the old behaviour, and the safe default). Set from the score's own
+  // metadata when it has any, guessed from the notes after a decode, always user-editable.
+  const [makamSlug, setMakamSlug] = useState("");
+  // The post-decode prompt: non-null while the modal is up. Only a decode raises it — a loaded
+  // sample already knows its makam and has nothing to ask.
+  const [makamPrompt, setMakamPrompt] = useState<MakamDetection | null>(null);
   // Currently-applied chromatic transposition, in commas (0 = original). A test control for the
   // core `transpose`; later this becomes the ahenk selector (each ahenk is a fixed comma offset).
   const [transpose, setTranspose] = useState(0);
@@ -183,7 +209,8 @@ export function App() {
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
-  function loadDoc(raw: NoteModelDocument) {
+  // `detected` is passed only by the decode paths, whose scores carry no metadata at all.
+  function loadDoc(raw: NoteModelDocument, detected?: MakamDetection) {
     // Assign each event a stable bar number from SymbTr's offset column up front, so measure
     // grouping is correct for every usul and survives edits (which would otherwise lose it).
     const d = assignBars(raw);
@@ -204,8 +231,23 @@ export function App() {
     const matched =
       findUsul(d.usul) ?? USULS.find((u) => ts != null && u.num === ts.num && u.den === ts.den) ?? USULS[0]!;
     setUsulName(matched.name);
+    // Same idea for the makam: a score that knows its own (samples, SymbTr JSON) keeps it, resolved
+    // to a table key so the dropdown can show it; a decoded page never does (stitch.ts writes
+    // `makam: ""`), so the decode paths hand in a guess. Only the guess is written back onto the
+    // doc — a sample's own spelling is left alone, since resolving it could only lose information.
+    const slug = detected ? detected.slug ?? "" : resolveMakam(d.makam);
+    setMakamSlug(slug);
     setTranspose(0); // a freshly loaded score starts untransposed
-    setDoc(d);
+    setDoc(detected ? { ...d, makam: slug } : d);
+  }
+
+  // Apply a makam choice: stop first (a running playback does not pick up a new timeline — the
+  // same rule updateEvent/applyTranspose/onSaveMeasure follow), then store it on the doc so the
+  // engraved header and the saved JSON agree with what is sounding.
+  function applyMakam(slug: string) {
+    onStop();
+    setMakamSlug(slug);
+    setDoc((prev) => (prev && prev.makam !== slug ? { ...prev, makam: slug } : prev));
   }
 
   // Fetch a bundled/exported score by URL and install it (stops any playback first).
@@ -241,17 +283,25 @@ export function App() {
     return d;
   }, [doc, transpose, keepSheet]);
 
+  // Which notes the selected makam bends, and by how many commas. Read from the BASE doc's
+  // written spelling — the rules match a written letter+accidental, and `transposeDoc` respells
+  // every note from its koma, so by then the letters they key on are gone. Keyed by event index
+  // so the result survives a transpose and can be applied on the far side of it.
+  const makamDeltas = useMemo(() => makamKomaDeltas(doc, makamSlug), [doc, makamSlug]);
+
   // The playable timeline. The SOUND shifts by `transpose` in BOTH modes: when the staff is
   // rewritten, displayDoc already carries the shifted komas; when keeping the sheet, we instead
   // nudge the tuning anchor so only the frequencies move. Both yield identical sounding pitches.
+  // The makam's deltas go on LAST, so their fractional komas reach buildTimeline (which recomputes
+  // frequency from koma53) and nothing that spells a note name.
   const timeline = useMemo(() => {
     if (!doc) return null;
     if (keepSheet && transpose !== 0) {
       const tuned = { ...doc, tuning: { ...doc.tuning, refKoma: doc.tuning.refKoma - transpose } };
-      return buildTimeline(tuned);
+      return buildTimeline(withKomaDeltas(tuned, makamDeltas));
     }
-    return displayDoc ? buildTimeline(displayDoc) : null;
-  }, [doc, displayDoc, keepSheet, transpose]);
+    return displayDoc ? buildTimeline(withKomaDeltas(displayDoc, makamDeltas)) : null;
+  }, [doc, displayDoc, keepSheet, transpose, makamDeltas]);
 
   // Detected repeat spans for the drawn score (doc unmodified — signs are drawn onto the same
   // engraving). SheetView draws them and the strip labels get the matching tokens from the SAME
@@ -530,13 +580,18 @@ export function App() {
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length) throw new Error("the model read nothing from these images");
 
+        // Nothing decoded carries metadata, so the makam is guessed from the notes themselves and
+        // then confirmed by the user — it decides how the piece SOUNDS, not just how it is filed.
+        const detected = detectMakam(result.doc);
         onStop();
-        loadDoc(result.doc);
+        loadDoc(result.doc, detected);
+        setMakamPrompt(detected);
         setSampleFile("");
         const perStrip = totalMs / strips.length;
         setOmrStatus(
           `read ${strips.length} strips → ${notes} notes, ${result.writtenMeasures} measures ` +
             `in ${(totalMs / 1000).toFixed(1)} s (${perStrip.toFixed(0)} ms/strip)` +
+            makamSuffix(detected) +
             whereSuffix(routed) +
             (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
         );
@@ -604,14 +659,17 @@ export function App() {
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length) throw new Error("the model read nothing from this page");
 
+        const detected = detectMakam(result.doc);
         onStop();
-        loadDoc(result.doc);
+        loadDoc(result.doc, detected);
+        setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
           `read a page: ${sliced.nStaves} staves → ${sliced.strips.length} strips → ${notes} notes, ` +
             `${result.writtenMeasures} measures — sliced in ${sliceS} s` +
             (sliced.skewDeg ? ` (deskewed ${sliced.skewDeg.toFixed(1)}°)` : "") +
             `, read in ${(decodeMs / 1000).toFixed(1)} s` +
+            makamSuffix(detected) +
             whereSuffix(routed) +
             (result.warnings.length ? ` — ${result.warnings.length} warning(s)` : "")
         );
@@ -678,6 +736,26 @@ export function App() {
             {USULS.map((u) => (
               <option key={u.name} value={u.name}>
                 {u.label} ({u.num}/{u.den})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label
+          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+          title="Makam — how the piece is PLAYED. Some perdes sound away from where they are written (♪ marks those makams); the staff never changes."
+        >
+          <span>Makam:</span>
+          <select
+            id="makam-select"
+            value={makamSlug}
+            onChange={(e) => applyMakam(e.target.value)}
+            disabled={!timeline}
+          >
+            <option value="">none (as written)</option>
+            {MAKAM_OPTIONS.map((m) => (
+              <option key={m.slug} value={m.slug}>
+                {m.label}
+                {m.hasIntonation ? " ♪" : ""}
               </option>
             ))}
           </select>
@@ -882,6 +960,17 @@ export function App() {
           doc={doc}
           onSave={(events) => onSaveMeasure(editing.index, events)}
           onCancel={() => setEditing(null)}
+        />
+      )}
+      {makamPrompt && (
+        <MakamModal
+          detection={makamPrompt}
+          onConfirm={(slug) => {
+            applyMakam(slug);
+            setMakamPrompt(null);
+          }}
+          // Dismissed without choosing: the detected makam is already applied, so this keeps it.
+          onDismiss={() => setMakamPrompt(null)}
         />
       )}
     </div>

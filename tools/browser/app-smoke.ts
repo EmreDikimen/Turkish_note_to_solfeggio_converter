@@ -12,6 +12,7 @@ import { createServer } from "vite";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { dismissMakamPrompt } from "./makamPrompt";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const WEB_ROOT = path.join(ROOT, "apps/web");
@@ -63,6 +64,11 @@ async function main() {
   await status.waitFor({ timeout: 600000 });
   const summary = (await status.textContent())?.trim() ?? "";
   console.log(`  status: ${summary}`);
+
+  // A decode raises the makam prompt, and its backdrop covers the page — every click below would
+  // fail on "element intercepts pointer events". Accept the guess and move on; which makam it
+  // picked is not what this check is about (that is MANUAL_CHECKS check 14).
+  await dismissMakamPrompt(page);
 
   // The score must actually be on screen and playable.
   await page.getByRole("button", { name: /Sheet/ }).click();

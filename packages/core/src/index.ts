@@ -7,3 +7,5 @@ export * from "./tempo";
 export * from "./usul";
 export * from "./transpose";
 export * from "./metadata";
+export * from "./makamSignatures";
+export * from "./makam";

@@ -27,6 +27,7 @@ import { createServer } from "vite";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { dismissMakamPrompt } from "./makamPrompt";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const WEB_ROOT = path.join(ROOT, "apps/web");
@@ -171,6 +172,8 @@ async function main() {
   let playable = false;
   let pausedLabel = "";
   if (m) {
+    // The makam prompt's backdrop would swallow every click below — accept it first.
+    await dismissMakamPrompt(page);
     await page.getByRole("button", { name: /Sheet/ }).click();
     await page.waitForSelector("svg", { timeout: 30000 });
     svgCount = await page.locator("svg").count();

@@ -27,11 +27,19 @@ import {
   eventBeats,
   groupMeasures,
   komaOf,
+  MAKAM_SIGNATURES,
   parseNoteName,
+  signatureKey,
   toAeuAlter,
   type NoteModelDocument,
 } from "@turkish-omr/core";
-import { docToStrips, lilyDuration, serializeMeasures, serializeSignature } from "./lilypond";
+import {
+  docToStrips,
+  lilyDuration,
+  parseSignatureBody,
+  serializeMeasures,
+  serializeSignature,
+} from "./lilypond";
 import { tupletGroupsIn, tieSplitBeats } from "./rhythm";
 import { stitchTokenRows } from "./stitch";
 
@@ -345,6 +353,34 @@ for (const file of files) {
   }
 }
 console.log(`  ${cPass}/${cPass + cFail} scores round-trip exactly (carry mode)`);
+
+// Makam-detection signature vocabulary. `packages/core/src/makam.ts` spells signatures with its
+// own `SIG_TOKEN_BY_ALTER` rather than importing `AEU_TOKEN` from here (core must not depend on
+// tools/, and the label path is load-bearing enough not to move). That is a deliberate second
+// copy, so pin it: every signature in the generated table must survive this file's parser and
+// come back byte-identical through core's formatter. If the two vocabularies ever drift, makam
+// detection would silently stop matching anything — this fails instead.
+console.log("\nmakam signature vocabulary (core vs the label serializer):");
+let sPass = 0;
+let sFail = 0;
+for (const [slug, entry] of Object.entries(MAKAM_SIGNATURES)) {
+  for (const v of entry.variants) {
+    let back = "";
+    try {
+      back = signatureKey(parseSignatureBody(v.sig));
+    } catch (err) {
+      back = `THREW: ${String(err)}`;
+    }
+    if (back === v.sig) {
+      sPass++;
+    } else {
+      sFail++;
+      failures++;
+      console.log(`  FAIL ${slug}: "${v.sig}" -> "${back}"`);
+    }
+  }
+}
+console.log(`  ${sPass}/${sPass + sFail} signature variants round-trip exactly`);
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURE(S)`);
 process.exit(failures === 0 ? 0 : 1);

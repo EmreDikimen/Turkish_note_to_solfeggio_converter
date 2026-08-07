@@ -9,15 +9,30 @@ Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.
 
 ## 2026-08-07 (later) — the editor's next shape, and five docs pulled back from the cap
 
-**The modal is going.** Owner, after using it: fixing one wrong note should not cost a dialog. The
-brief is [../mvp/editor.md](../mvp/editor.md) — the argument for treating it as real work rather
-than polish is that **the editor is the Rung-3 labeling loop's tool**, so seconds per correction is
-labelling throughput and the model track is rate-limited by it. The load-bearing finding while
-writing it: per-note rects are cheap, because `attachTitles` (`SheetView.tsx:285`) already walks
-every drawn note calling `getSVGElement()` — the same walk can record a rect. And the one design
-call that should be made deliberately rather than discovered: when an edit leaves a bar not adding
-up, **show it rather than block it** (the modal blocks, which is why a single wrong duration cannot
-be fixed alone today).
+**The modal is going, and the owner specified what replaces it:** press **Düzenle**, the sheet
+zooms, a **palette appears beside it** (note values, AEU accidentals, `\repstart`/`\repend`/
+`\tup3`), and clicking a note shows an **✕** to delete it in place — Mus2's shape, which the owner
+uses. Brief: [../mvp/editor.md](../mvp/editor.md). It is real work, not polish, because **the editor
+is the Rung-3 labeling loop's tool**: seconds per correction is labelling throughput.
+
+**Reading the code for it turned up three things that decide the shape**, and two were surprises.
+**`\tup3` is not an object — it is arithmetic**: `isTupletMember` is literally "the duration's
+denominator is divisible by 3", and a group closes when the run sums to a plain value. So the
+palette's tup3 button is a **⅔ / ³⁄₂ duration operation**, `\tupend` needs no button at all, and no
+schema changes. **`\repstart`/`\repend` are derived too** — `detectRepeats` fingerprints duplicate
+measures, because SymbTr writes a repeat out twice — so "insert a repeat" has nowhere to live today;
+that is a genuine schema fork to settle *before* building the palette, and the brief recommends
+storing an explicit span with detection as the default. **And zoom cannot be a CSS transform**: the
+strip exporter crops that same SVG by rect, so zoom must re-engrave (`renderer.resize` + context
+scale) — with an explicit guard that zoomed layout boxes never reach `buildStrips`, since those
+boxes ARE the exporter's crop rectangles. The two paths never overlap in practice, and "in practice"
+is how the Round-1 label bug happened.
+
+Also cheap, and worth knowing: **per-note rects are nearly free** — `attachTitles`
+(`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()`, so the same walk can
+record a rect. And the standing design call: when an edit leaves a bar not adding up, **show it
+rather than block it** — deletion is a primary gesture here, so the modal's "Save stays greyed"
+behaviour would make the ✕ refuse to work.
 
 **Then the docs were refactored, not squeezed.** Four files sat at exactly **399** lines and one at
 397, against a 400 cap — every one of them one line from failing `check_docs.py`, which is a trap

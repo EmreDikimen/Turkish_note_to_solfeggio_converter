@@ -158,11 +158,14 @@ the model track never touches the app.** Either can be worked on without waiting
    BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
    ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
    reach the live decode server; on :5174 they fall back to the laptop.
-5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The per-measure modal goes; editing becomes
-   direct manipulation on the staff, MuseScore/Mus2-style. Not cosmetic — the editor is the
-   **Rung-3 labeling loop's tool**, so seconds per correction is labelling throughput. The brief,
-   the per-note-rect finding and the one real design call (a bar that no longer adds up: show it,
-   don't block it) are in **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
+5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The modal goes; **Düzenle** zooms the sheet and
+   opens a **Mus2-style palette** beside it (note values, accidentals, `\repstart`/`\repend`/
+   `\tup3`), and clicking a note shows an **✕** to delete it in place. Not cosmetic — the editor is
+   the **Rung-3 labeling loop's tool**, so seconds per correction is labelling throughput.
+   ⚠ **One thing to decide before building:** `\repstart`/`\repend` are *derived* by `detectRepeats`,
+   not stored, so making them editable is a schema fork. (`\tup3` is fine — it is arithmetic, not an
+   object.) That, the zoom-vs-strip-exporter trap and the ordered slices:
+   **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
    ⚠ **That one deploy carries TWO changes**: the style pass and makam selection. So if `smoke:live`
    goes red it has two suspects; `smoke:build` against a local `dev:server` was run first for
    exactly that reason, and passed.

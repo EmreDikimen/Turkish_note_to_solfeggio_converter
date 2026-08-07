@@ -81,7 +81,8 @@ W1 → W2 → W3 ─────────┴─→ W7 ──────→ W
 | **W8** | Confidence highlighting | ⛔ **DROPPED 2026-08-05** — the pre-registered bar was NOT met (best at a 10% budget is 26.3% against ≥60%) and the owner dropped it rather than moving the bar. Half of the 2026-07-27 goal stays unbuilt, stated out loud. Nothing deleted; may return if a friend asks. [../DECISIONS.md](../DECISIONS.md) |
 | **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | ✅ **DEPLOYED 2026-08-06** — live at `omr-decode…europe-west3.run.app`, reads what the browser reads (93.8% ids, gold a paired wash), cold start 10.6 s, ~40 vCPU-s/page. ⚠ Slower than the owner's own browser, as predicted. Gold quality is a paired wash (McNemar p = 0.727). Safety checklist complete ($5 budget alert set, `--max-instances 3`). ✅ **Hosting DONE the same day** — app on Netlify at **<https://komavision.netlify.app>**, weights on the Hub (`Beyaban/omr-weights`), origin lock + 413 fix + `--cpu-boost` deployed. Cloudflare Pages was ruled out on its 25 MiB per-asset cap against our 25.58 MiB wasm. [hosting-setup.md](hosting-setup.md) · [deploy.md](deploy.md) |
 | **W9.5** | **Makam selection + performed intonation** (pipeline stage 9's makam half) — guess the makam from the decoded signature + karar, confirm it in a prompt, bend the SOUNDING komas to that makam's real intonation | ✅ **DONE 2026-08-07** — audibly correct on **204/213** bundled scores; sound only, the staff never moves. Not a planned rung: added before W10 alongside the style pass, because playing uşşak as AEU spells it is wrong in a way a friend WILL hear. [makam.md](makam.md) |
-| **W10** | Friends release — **two friends, interface feedback** | **UNBLOCKED 2026-08-06** — there is a link to send |
+| **W9.6** | **The style pass** — the harness becomes a product a friend can be shown | ✅ **DONE 2026-08-07** — KomaVision, Turkish, warm editorial; upload is the hero, developer controls fold into Gelişmiş. Presentation only. Also moved the deploy checks off the copy and onto `data-*` (`apps/web/src/ui/status.ts`), which is what made a Turkish UI possible at all. Built and green on both paths; **not yet deployed** |
+| **W10** | Friends release — **two friends, interface feedback** | **UNBLOCKED 2026-08-06** — one redeploy away (it carries W9.5 + W9.6 together) |
 | **public** | Open it to everyone | — gated on Round 3's exam result, not on W10 |
 
 ## What each rung established
@@ -141,6 +142,8 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `tools/vision/parity/server-parity.ts`, `server-bench.ts`, `server-limits.ts` | server vs browser, vCPU-seconds/payload, and the safety checklist as a command (W9) |
 | `packages/core/src/makam.ts`, `makamSignatures.ts` (generated) | makam detection + the performed-intonation table (W9.5) — [makam.md](makam.md) |
 | `apps/web/src/MakamModal.tsx`, `tools/browser/makamPrompt.ts` | the post-decode makam prompt, and the smoke checks' dismissal of it (W9.5) |
+| `apps/web/src/ui/` | the interface, split out of App.tsx (W9.6). **`status.ts` is the DOM contract the deploy checks assert on**; `strings.ts` is every user-visible word, in one file |
+| `apps/web/src/styles/` | `tokens.css` (the design vocabulary), `base.css`, `app.css` (the `.kv-*` components) |
 
 ## Verification gates
 

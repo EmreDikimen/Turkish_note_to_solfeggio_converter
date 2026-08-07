@@ -7,6 +7,51 @@ updated: 2026-08-07
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-07 — the style pass: the harness became KomaVision
+
+_The prerequisite W10 grew on 2026-08-06, now paid. The release exists to ask two friends about the
+**interface**, and there were only two first impressions to spend — an unstyled page would have
+bought back feedback we already had._
+
+**The problem that had to be solved first, and it was not a visual one.** Five Playwright tools
+drove this DOM by matching English prose: `text=Turkish OMR`, `/read a page:/`, `/read \d+ strips/`,
+`/read on the server/`, `/(\d+) staves → (\d+) strips → …/`, and button names like `/Save JSON/`.
+That made the user-facing copy load-bearing — a Turkish UI would have broken every one of them at
+once, and translating the regexes would only have moved the coupling one step and broken again at
+the next rewording. **Rewording is what a style pass IS.** So the facts were separated from the
+sentence: `apps/web/src/ui/status.ts` now returns `{ text, state, kind, where, counts }`, and
+`#omr-status` renders the non-text half as `data-*`. The checks assert on that; the copy is free.
+This landed as **step 0, before anything was styled**, so the tools went green against the OLD UI
+first — and from then on any red was unambiguously the redesign's fault. It also made the fallback
+assertion *stricter*: `data-where="local-fallback"` proves the configured server was tried and
+missed, where `/read on your machine/` also matched a build with no decode server at all.
+
+**What the friend now sees.** Warm editorial paper — ivory, warm near-black ink, one terracotta
+accent used only on the primary button, focus rings and the active toggle; hairline rules instead
+of shadows, so the chrome sits *below* the engraved score in visual weight. The display serif is
+the one `SheetView` already engraves its header in (Georgia), so page and notation read as one
+object rather than two typefaces arguing. A webfont was never an option regardless: **COEP
+`require-corp` blocks a font CDN outright**, which is worth remembering before anyone proposes one.
+
+**The restructure is what actually stops it reading as a harness**, not the colour. Upload became
+the hero and takes drag, drop or **paste** (the real gesture for someone screenshotting a PDF); the
+transport kept only the six controls a musician touches; the other twelve folded into a collapsed
+**Gelişmiş**. Three blocks of developer prose were deleted, including an empty state that told the
+user to run a Python script. Progress is honest — a determinate bar only where a real count exists
+(the 41-rotation deskew sweep, the browser's per-strip decode), a moving stripe and an elapsed clock
+for the server's single batched request, never an invented percentage.
+
+**Two traps worth writing down.** The elapsed clock must live OUTSIDE `#omr-status`, or
+`page-smoke`'s "progress actually moved ≥3 distinct lines" passes for free (it reported 13, which is
+real). And `#strips-input` now sits inside a collapsed `<details>`, whose subtree is hidden — so
+`app-smoke` opens `#advanced` first, and the file inputs use the clip pattern, never `display:none`,
+which would drop them from the accessibility tree as well as from Playwright's reach.
+
+**Checked, on the built artifact, not just in dev:** `npm test` (217/217 round-trip, 90/90 signature
+vocabulary), `gate:browser` 27/28 as expected, `smoke:app`, `smoke:page`, and `smoke:build` green on
+**both** paths with identical scores. Not deployed yet — that one redeploy carries the style pass
+and makam selection together.
+
 ## 2026-08-07 — makam selection: the app plays the makam, not the notation
 
 _Owner request, taken before the style pass. Pipeline stage 9's makam half, designed in

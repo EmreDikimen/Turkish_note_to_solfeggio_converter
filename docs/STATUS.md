@@ -19,12 +19,17 @@ intonation — uşşak's segah 1.5 commas below its written koma-bemol, and an e
 for hüseyni, the contrast the whole feature turns on. **Sound only: the engraving, `Save JSON` and
 the training strips never move.** Audibly correct on **204/213** bundled scores
 ([METRICS.md](METRICS.md)); table, sources and the guessing rule in [mvp/makam.md](mvp/makam.md).
-⚠ **Not deployed** — the live site plays as written until the next redeploy, which the style pass
-carries anyway.
+**THE STYLE PASS IS DONE, 2026-08-07 — BUILT, GREEN, NOT YET DEPLOYED.** The harness is now
+**KomaVision**, in **Turkish**, on warm paper: upload is the hero (drag, drop or paste), the
+transport keeps only the six controls a musician touches, the twelve developer controls fold into a
+collapsed **Gelişmiş**. Slicing, decode, the fallback and the origin lock did not move. The
+load-bearing change underneath: **the deploy checks no longer read the copy** — `#omr-status` carries
+`data-state / data-kind / data-where` + counts (`apps/web/src/ui/status.ts`), which is what let the
+UI become Turkish without touching one assertion.
 
-**The next action is still the STYLE PASS** (owner, 2026-08-06): the site is a working harness and
-looks like one, and W10 exists to ask two friends about the interface. Then W10. TWO tracks run in
-parallel, as re-scoped on 2026-08-05:
+**The next action is the REDEPLOY**, which carries the style pass **and** makam selection in one
+build (both are committed, neither is live). Then W10. TWO tracks run in parallel, as re-scoped on
+2026-08-05:
 
 | | |
 |---|---|
@@ -261,14 +266,8 @@ the model track never touches the app.** Either can be worked on without waiting
    [mvp/hosting-setup.md](mvp/hosting-setup.md). ⚠ **Cloudflare Pages was ruled OUT on a number**
    (25 MiB per-asset cap vs our 25.58 MiB wasm); the shrink to `onnxruntime-web/wasm` is **deferred
    on purpose** — it changes the fallback's runtime.
-2. **⬅ THE NEXT ACTION: one redeploy, carrying everything owed.** `ALLOWED_ORIGINS` must become
-   `https://komavision.netlify.app` (it defaults to `*`, so the live app already works — this
-   closes the door rather than opening it); the **413 fix** (`0b1cb44`) is committed but not on
-   Cloud Run, so until it is, an oversized upload reads as a 503 outage and `check:limits` scores
-   5/6; and **`--cpu-boost`** goes on the same command (owner, 2026-08-06 — the only speed work
-   bought before W10). ⚠ Afterwards, **re-read `/health`'s `loadMs`** rather than assuming the boost
-   worked, and expect `smoke:build` run from localhost against the live server to start failing
-   CORS — that is the lock working, not a regression.
+2. **The origin lock, the 413 fix and `--cpu-boost` are all deployed** (2026-08-06) — this row used
+   to be the next action and is now history; the log has it.
    ⚠ **Do not delete the in-browser decode.** `gate:browser`, `parity:armb`, `parity:arma`,
    `smoke:page` and the W3 browser-vs-gold result all rest on it; it is both the reference the
    server is checked against and the live fallback path.
@@ -277,20 +276,20 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-4. **⬅ A STYLE PASS ON THE APP, BEFORE W10** (owner, 2026-08-06). The app is a working harness and
-   looks like one. The owner is doing this before the link goes out, and the reason is the release's
-   own purpose: **W10 asks two friends about the interface**, so shipping an unstyled page spends
-   both friends' first impressions on feedback we already have ("make it look better"). ⚠ Scope is
-   presentation only — nothing about slicing, decode or the fallback moves. `smoke:live` is the
-   check that it still works afterwards, and any change needs a **rebuild with both env vars** and a
-   redeploy (`hosting-setup.md` steps 7–8), because the URLs are baked in at build time.
-   `http://localhost:5173` and `:4173` are in `ALLOWED_ORIGINS` (revision `omr-decode-00004-nc2`) so
-   `dev:web` can reach the live decode server while this is worked on.
-   ⚠ **That redeploy also carries makam selection**, committed but not live; `typecheck`, `npm test`
-   (incl. the new 90/90 signature-vocabulary guard) and `smoke:app` all pass. Genuinely open on it:
-   detection accuracy is scored on **clean SymbTr scores, never on decoded pages**, where the derived
-   signature is noisier — and stage 9's **header OCR** still does not exist, so the makam is inferred
-   from the notes rather than read off the page.
+4. **✅ THE STYLE PASS IS DONE (2026-08-07), and ⬅ THE REDEPLOY IS THE NEXT ACTION.** Scope held:
+   presentation only. Every check passes on the built artifact — `npm test`, `gate:browser` 27/28,
+   `smoke:app`, `smoke:page`, and **`smoke:build` on both paths with identical scores**
+   (`9/26/399/26` server vs fallback). What remains is one command pair from
+   [mvp/hosting-setup.md](mvp/hosting-setup.md) ("Shipping a change afterwards") — a **rebuild with
+   BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
+   ⚠ **That one deploy carries TWO changes**: the style pass and makam selection. So if `smoke:live`
+   goes red it has two suspects; `smoke:build` against a local `dev:server` was run first for
+   exactly that reason, and passed.
+   ⚠ `smoke:build` from localhost cannot reach the LIVE server (`ALLOWED_ORIGINS` refuses it — the
+   lock working). Use a local `dev:server` for `smoke:build`, and `smoke:live` for the deployed chain.
+   Still genuinely open on makam: detection accuracy is scored on **clean SymbTr scores, never on
+   decoded pages**, where the derived signature is noisier — and stage 9's **header OCR** still does
+   not exist, so the makam is inferred from the notes rather than read off the page.
 5. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback widget:
    talk to them.
 6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.

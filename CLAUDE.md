@@ -120,6 +120,21 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   preprocesses** — the server receives finished 409×583 PNGs and applies only the rescale, so there
   is no second resampler to hold in parity either.
 
+- **The deploy checks read DOM state, never the words on the page** (2026-08-07, the style pass).
+  `apps/web/src/ui/status.ts` is the single producer of the contract — `#omr-status` carries
+  `data-state`, `data-kind`, `data-where` and the counts; `#omr-error` carries `data-error-kind`;
+  `#play` carries `data-play-state`; `#app` carries `data-ready`. The five `tools/browser/*-smoke.ts`
+  assert on those, so **all user-facing copy is free to change** — that is what let the UI become
+  Turkish. Never reintroduce a text/regex matcher for a status message or a button label. Every
+  user-visible string lives in `apps/web/src/ui/strings.ts`. ⚠ Two traps: nothing that ticks on a
+  timer may render inside `#omr-status` (`page-smoke` counts distinct texts to prove progress
+  moved), and `#strips-input` lives inside the collapsed `<details id="advanced">`, so `app-smoke`
+  opens it first and the file inputs use the clip pattern, never `display:none`.
+- **The score's SVG is also the training-strip source, so CSS must not reach it.** No selector under
+  `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that container —
+  `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not
+  survive a transform. The design system is `apps/web/src/styles/` (`tokens.css` → `base.css` →
+  `app.css`); classes are `.kv-*`.
 - **A production build is not the dev server, and only `smoke:build` knows the difference.** ORT's
   wasm runtime must be served as real files (`/ort/`, via `copy-ort.mjs`) or the bundler inlines its
   worker glue and every session creation hangs — dev, `smoke:page` and the 27/28 gate stayed green

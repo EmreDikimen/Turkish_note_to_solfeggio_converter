@@ -297,30 +297,26 @@ shoot **different** pieces (there are thousands available).
 
 ### List A — the app (this is what reaches your friends)
 
-1. ~~Build the server.~~ ✅ **Done 6 August.**
-2. ~~Check it gives the same answers as the browser.~~ ✅ **Done** — no detectable difference on 267
-   strips where we know the right answer.
-3. ~~Switch the app over, keeping the "read it here instead" fallback.~~ ✅ **Done and tested.**
-4. ~~Put it online.~~ ✅ **Done 6 August** — the server is live, and the wake-up delay turned out to
-   be about 11 seconds.
-5. ~~Set the $5 spending alert.~~ ✅ **Done 6 August** — the safety list is complete (upload size,
-   uploads per person, refusing anything that is not a proper strip picture, at most 3 copies
-   running).
-6. ~~Put the app itself online.~~ ✅ **Done 6 August** — <https://komavision.netlify.app>, with the
-   model on Hugging Face and the door locked so only your own site may use the reading server.
-7. ~~Make the app play the right makam.~~ ✅ **Done 7 August.** Until now the app played every note
+1–6. ~~Build the reading server, check it matches the browser, switch the app over with a fallback,
+   put both online, set the $5 alert, lock the door.~~ ✅ **All done 6 August** —
+   <https://komavision.netlify.app>, the model on Hugging Face, the wake-up delay about 11 seconds.
+7. ~~Make the app play the right makam.~~ ✅ **Done 7 August.** The app used to play every note
    exactly where it is written — but Turkish music does not work like that. In **uşşak** the note
-   written "si with one small flat" is actually **played lower than that**, and no sign exists for
-   where it really goes; only the makam tells you. The app now **guesses the makam from the page**,
-   shows the guess and why, lets you change it from a list, and plays the piece the way that makam
-   is really played. Choosing one **only changes the sound — the notes on screen never move.** Right
-   on 204 of 213 test pieces. ⚠ Not on the website yet: the site needs one rebuild.
-8. **Make the app look good.** It works, but it looks like a testing tool. Do this before the link
-   goes out — otherwise both friends spend their first impression telling you it looks unfinished.
-9. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
+   written "si with one small flat" is actually **played lower**, and no sign exists for where it
+   really goes; only the makam tells you. The app now **guesses the makam from the page**, shows the
+   guess and why, lets you change it, and plays the piece the way that makam is really played. It
+   **only changes the sound — the notes on screen never move.** Right on 204 of 213 test pieces.
+8. ~~Make the app look good.~~ ✅ **Done 7 August.** It is called **KomaVision**, it is in Turkish,
+   and it looks like a music page rather than a testing tool: warm paper, the sheet music as the
+   main thing on screen, one big box at the top to drop (or paste) the photo into. Only the buttons
+   a musician uses stay in the open — play, stop, tempo, metronome, usul, makam; the dozen
+   developer switches fold into a **Gelişmiş** drawer that stays shut.
+9. **Put the new version on the website.** One rebuild, one upload — it carries items 7 and 8
+   together. Then check it with `npm run smoke:live`.
+10. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
    slow (the rented computer has to wake up), and that a page takes about a minute. Ask about the
    **buttons and the screen**, not about mistakes in the notes — the notes are the exam's job.
-10. **Open it to everyone — but only if Round 3's exam result is good.**
+11. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)
 

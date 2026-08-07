@@ -265,8 +265,17 @@ and a real correction pass on a decoded page.
    14 and checks each one arms itself. The fix is one line in `styles/app.css`:
    `.kv-tool .kv-glyph { pointer-events: none }`, which makes a click resolve to the button that
    owns the pixel. ⚠ **Clipping the ink (`overflow: hidden`) was tried first and reverted** — it cut
-   the stems and flags off the note glyphs, which is the only thing they are read by. The buttons
-   are 40 px tall instead, so the ink fits.
+   the stems and flags off the note glyphs, which is the only thing they are read by.
+
+   **The same glyph then broke out of the top of its button, and the cause is worth knowing: a music
+   glyph's ink is nowhere near its baseline.** Measured off the shipped Bravura with
+   `TextMetrics.actualBoundingBox*`, a stemmed note draws **87–102 units up and ~14 down** per 100 of
+   font-size, while an accidental is roughly balanced (34/34). Ordinary centring centres the *line
+   box*, so the stems pushed out through the top while the space under the notehead sat empty — and
+   the ink was never too big for the button (~30 px inside 38). `EditPalette`'s `INK` table carries
+   the measurements and `inkCentred` shifts each glyph by half its own imbalance, with
+   `line-height: 0` so the baseline lands at the button's centre. `smoke:editor` measures the result
+   against the real font, so a font swap or a size change cannot quietly undo it.
 2. **An absolute alteration is not transpose-safe, unlike a relative nudge.** The sheet draws
    `displayDoc`, so `onApplyTool` builds the accidental edit in DISPLAY space and maps the single
    event back with the same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` uses.

@@ -229,6 +229,32 @@ async function main() {
     }
     check(`all ${ids.length} tools arm themselves`, wrong.length ? wrong.join(" ") : "none", "none");
   }
+
+  // Every glyph must sit INSIDE its button. A music glyph's ink is nowhere near its baseline — a
+  // stemmed note draws ~88 units up and 14 down — so ordinary centring pushed the stems out through
+  // the top of the button. `EditPalette`'s INK table shifts each glyph onto its own ink; this
+  // measures the result the way an eye does, against the real font.
+  {
+    const over = await page.evaluate(async () => {
+      await (document as { fonts?: { ready: Promise<unknown> } }).fonts!.ready;
+      const c = document.createElement("canvas").getContext("2d")!;
+      return Array.from(document.querySelectorAll<HTMLElement>("#edit-palette .kv-tool .kv-glyph"))
+        .map((g) => {
+          const btn = g.closest(".kv-tool") as HTMLElement;
+          const b = btn.getBoundingClientRect();
+          const s = g.getBoundingClientRect(); // line-height 0 → the span's top IS the baseline
+          const cs = getComputedStyle(g);
+          c.font = `${cs.fontSize} ${cs.fontFamily}`;
+          const m = c.measureText(g.textContent!);
+          const top = b.top - (s.top - m.actualBoundingBoxAscent);
+          const bottom = s.top + m.actualBoundingBoxDescent - b.bottom;
+          return { tool: btn.getAttribute("data-tool"), top, bottom };
+        })
+        .filter((r) => r.top > 0 || r.bottom > 0)
+        .map((r) => `${r.tool}(${r.top.toFixed(1)}/${r.bottom.toFixed(1)})`);
+    });
+    check("every glyph fits inside its button", over.length ? over.join(" ") : "none", "none");
+  }
   const clickNote = async (index: number) => {
     await page.locator(`[data-omr-note="${index}"]`).first().click({ force: true });
     await page.waitForTimeout(250);

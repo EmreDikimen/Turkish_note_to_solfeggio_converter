@@ -13,7 +13,7 @@
  */
 
 import { useEffect } from "react";
-import { PALETTE_ACCIDENTALS, accidentalChar, accidentalName } from "./accidentals";
+import { PALETTE_ACCIDENTALS, accidentalCp, accidentalName } from "./accidentals";
 import { TR } from "./strings";
 
 /** What a click on a note does while this tool is armed. */
@@ -40,6 +40,41 @@ const DURATIONS: { num: number; den: number; cp: number }[] = [
   { num: 1, den: 32, cp: 0xe1db },
 ];
 
+/**
+ * How far each glyph's INK sits above its baseline, and how far below — measured from the shipped
+ * Bravura with `TextMetrics.actualBoundingBox*` at `font-size: 100px`.
+ *
+ * Why this table exists: centring a glyph the ordinary way centres its *line box*, and a music
+ * glyph's ink is nowhere near its baseline. A stemmed note draws **87–102 units up and 14 down**,
+ * so flex-centring pushed the stems clean out through the top of the button while the space under
+ * the notehead sat empty. (The ink itself is small enough to fit: ~30 px inside a 38 px box.) With
+ * `line-height: 0` the baseline lands at the button's centre, so shifting the glyph down by half
+ * its ink imbalance centres what you can actually see. Codepoints not listed fall back to no shift.
+ */
+const INK: Record<number, { up: number; down: number }> = {
+  0xe1d2: { up: 13.6, down: 13.7 },   // noteWhole — an oval on the line, already balanced
+  0xe1d3: { up: 87.5, down: 14.5 },   // noteHalfUp
+  0xe1d5: { up: 87.5, down: 14.1 },   // noteQuarterUp
+  0xe1d7: { up: 87.3, down: 13.8 },   // note8thUp
+  0xe1d9: { up: 87.3, down: 13.8 },   // note16thUp
+  0xe1db: { up: 102.3, down: 13.8 },  // note32ndUp — the tallest, and the one that broke out first
+  0xe260: { up: 43.9, down: 17.5 },   // accidentalFlat
+  0xe261: { up: 34.1, down: 33.5 },   // accidentalNatural
+  0xe442: { up: 43.9, down: 17.5 },   // accidentalBuyukMucennepFlat
+  0xe443: { up: 43.9, down: 17.5 },   // accidentalBakiyeFlat
+  0xe444: { up: 32.2, down: 33.7 },   // accidentalKomaSharp
+  0xe445: { up: 35.0, down: 34.8 },   // accidentalBakiyeSharp
+  0xe446: { up: 32.1, down: 33.8 },   // accidentalKucukMucennepSharp
+  0xe447: { up: 34.8, down: 35.0 },   // accidentalBuyukMucennepSharp
+};
+
+/** Centre a glyph on its INK rather than on its baseline. `size` is the font-size in px. */
+function inkCentred(cp: number, size: number): React.CSSProperties {
+  const ink = INK[cp];
+  const dy = ink ? ((ink.up - ink.down) / 2) * (size / 100) : 0;
+  return { fontSize: size, lineHeight: 0, display: "block", transform: `translateY(${dy.toFixed(1)}px)` };
+}
+
 export function EditPalette({ armed, onArm }: { armed: Tool | null; onArm: (t: Tool | null) => void }) {
   // Esc disarms. Bound while the palette is mounted, i.e. only in edit mode.
   useEffect(() => {
@@ -51,7 +86,7 @@ export function EditPalette({ armed, onArm }: { armed: Tool | null; onArm: (t: T
   }, [onArm]);
 
   const armedId = armed ? toolId(armed) : null;
-  const tool = (t: Tool, glyph: string, title: string, fontSize: number) => {
+  const tool = (t: Tool, cp: number, title: string, fontSize: number) => {
     const id = toolId(t);
     const on = id === armedId;
     return (
@@ -65,7 +100,7 @@ export function EditPalette({ armed, onArm }: { armed: Tool | null; onArm: (t: T
         // Toggle: clicking the armed tool disarms it, so there is always a way back to selection.
         onClick={() => onArm(on ? null : t)}
       >
-        <span className="kv-glyph" style={{ fontSize }}>{glyph}</span>
+        <span className="kv-glyph" style={inkCentred(cp, fontSize)}>{String.fromCodePoint(cp)}</span>
       </button>
     );
   };
@@ -76,12 +111,7 @@ export function EditPalette({ armed, onArm }: { armed: Tool | null; onArm: (t: T
         <span className="kv-palette__label">{TR.palette.durations}</span>
         <div className="kv-palette__row">
           {DURATIONS.map((d) =>
-            tool(
-              { kind: "duration", num: d.num, den: d.den },
-              String.fromCodePoint(d.cp),
-              TR.palette.durationTitle(`${d.num}/${d.den}`),
-              26,
-            ),
+            tool({ kind: "duration", num: d.num, den: d.den }, d.cp, TR.palette.durationTitle(`${d.num}/${d.den}`), 26),
           )}
         </div>
       </div>
@@ -90,7 +120,7 @@ export function EditPalette({ armed, onArm }: { armed: Tool | null; onArm: (t: T
         <span className="kv-palette__label">{TR.palette.accidentals}</span>
         <div className="kv-palette__row">
           {PALETTE_ACCIDENTALS.map((a) =>
-            tool({ kind: "accidental", alter: a }, accidentalChar(a), TR.palette.accidentalTitle(accidentalName(a)), 22),
+            tool({ kind: "accidental", alter: a }, accidentalCp(a), TR.palette.accidentalTitle(accidentalName(a)), 24),
           )}
         </div>
       </div>

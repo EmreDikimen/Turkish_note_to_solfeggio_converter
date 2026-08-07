@@ -22,6 +22,15 @@ armed id, and it reproduces by hand — this was a real UI bug, not a Playwright
 `overflow: hidden` on the button and `pointer-events: none` on the glyph span, so ink is clipped and
 clicks resolve to the button that owns the pixel. Worth remembering for any future glyph button.
 
+**A music glyph's ink is nowhere near its baseline, and that is why the notes broke out of their
+buttons.** Measured off the shipped Bravura: a stemmed note draws **87–102 units up and ~14 down**
+per 100 of font-size; an accidental is balanced (34/34). Centring the *line box* therefore pushed
+the stems out through the top while the space under the notehead sat empty — the ink was never too
+big (~30 px inside a 38 px button). `EditPalette` now carries the measured table and shifts each
+glyph onto its own ink, and `smoke:editor` measures ink-vs-button against the real font so a font
+swap cannot quietly undo it. ⚠ The first attempt at this — clipping with `overflow: hidden` — was
+reverted: it cut off the stems and flags, which is the only thing the tools are read by.
+
 **The palette also cost room the page did not have, found by looking at it.** `--page-max` was
 sized so the 1020 px engraved sheet fits exactly, so a 164 px palette in the same row pushed the end
 of every system off the paper. The **page** now grows by that footprint while editing; the sheet

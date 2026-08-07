@@ -48,7 +48,11 @@ roll used to move a dragged note's *sound* and leave its notehead behind. Driven
 new `npm run smoke:editor`; the engraving is byte-identical (302 strip PNGs, 0 diffs).
 
 **The next action is the REDEPLOY** — one build carrying makam selection, the style pass and the
-editor (slice 1 + the palette). Nothing on the live site has moved since 2026-08-06. After it,
+editor (slice 1 + the palette). Nothing on the live site has moved since 2026-08-06.
+⚠ **Re-run `smoke:build` first**: the last green one (2026-08-08, both paths, `9/26/399/26`) was
+taken *before* the palette's two follow-up fixes. They are CSS and markup only — but "what ships was
+never what was tested" is the exact shape of the two bugs that cost W9 a day
+([DECISIONS.md](DECISIONS.md)). After it,
 **editor step 5 — Çal/Dur in the palette, playing from the last edited measure**. TWO tracks run in
 parallel, as re-scoped on 2026-08-05:
 

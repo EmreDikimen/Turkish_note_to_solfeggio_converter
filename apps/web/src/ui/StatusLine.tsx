@@ -6,18 +6,26 @@
  *
  * ⚠ Nothing that ticks on a timer may render inside this element. `tools/browser/page-smoke.ts`
  * counts DISTINCT textContent values to prove the phase actually advanced during a read; an
- * elapsed-seconds counter in here would make that check pass for free. Put tickers in a sibling.
+ * elapsed-seconds counter in here would make that check pass for free. Tickers go in
+ * ReadProgress, which is a sibling.
  */
 
 import type { OmrStatus } from "./status";
 
-export function StatusLine({ status }: { status: OmrStatus | null }) {
+export function StatusLine({
+  status,
+  /** Hide it from sight — never from the DOM — when the dropzone is already showing the phase. */
+  visuallyHidden = false,
+}: {
+  status: OmrStatus | null;
+  visuallyHidden?: boolean;
+}) {
   if (!status) return null;
-  const busy = status.state === "busy";
   const c = status.counts;
   return (
     <p
       id="omr-status"
+      className={visuallyHidden ? "kv-visually-hidden" : "kv-status"}
       data-state={status.state}
       data-kind={status.kind}
       data-phase={status.phase}
@@ -27,9 +35,8 @@ export function StatusLine({ status }: { status: OmrStatus | null }) {
       data-notes={c?.notes}
       data-measures={c?.measures}
       data-warnings={status.warnings}
-      style={{ color: busy ? "#0a58ca" : "#666", margin: "8px 0" }}
     >
-      {busy ? "⏳ " : "✓ "}
+      {status.state === "done" ? "✓ " : ""}
       {status.text}
     </p>
   );

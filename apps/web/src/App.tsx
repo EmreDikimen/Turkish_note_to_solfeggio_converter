@@ -32,8 +32,11 @@ import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted } from "./omr/remote";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
-import { StatusLine } from "./ui/StatusLine";
-import { ErrorNote } from "./ui/ErrorNote";
+import { UploadHero } from "./ui/UploadHero";
+import { TransportBar } from "./ui/TransportBar";
+import { ScoreCard } from "./ui/ScoreCard";
+import { AdvancedPanel } from "./ui/AdvancedPanel";
+import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
 import {
   busy as busyStatus,
@@ -126,7 +129,9 @@ export function App() {
   // Transport state: "stopped" → Play; "playing" → Pause; "paused" → Resume. Stop resets it.
   const [playState, setPlayState] = useState<"stopped" | "playing" | "paused">("stopped");
   // Which view is shown, whether the sheet is in edit mode, and which measure's modal is open.
-  const [viewMode, setViewMode] = useState<ViewMode>(URL_SCORE ? "sheet" : "roll");
+  // The engraved sheet is the product; the piano-roll is a diagnostic. Sheet by default now,
+  // where the harness opened on the roll. (Render automation always wanted sheet anyway.)
+  const [viewMode, setViewMode] = useState<ViewMode>("sheet");
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
@@ -148,6 +153,8 @@ export function App() {
   // `omrBusy` disables the picker mid-read.
   const [omrStatus, setOmrStatus] = useState<OmrStatus | null>(null);
   const [omrBusy, setOmrBusy] = useState(false);
+  // When the current read began — the elapsed clock's only input. Null when nothing is running.
+  const [readStartedAt, setReadStartedAt] = useState<number | null>(null);
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
   const [metronome, setMetronome] = useState(false);
@@ -190,10 +197,10 @@ export function App() {
   // accidental re-spelling; the larger AEU intervals (whole tone 9, fourth 22, fifth 31, octave
   // 53) check octave/range + naming. (53-TET: 53 commas = one octave.)
   const TRANSPOSE_OPTIONS: ReadonlyArray<readonly [number, string]> = [
-    [-53, "−Octave (−53)"], [-31, "−Fifth (−31)"], [-22, "−Fourth (−22)"], [-9, "−Whole tone (−9)"],
-    [-5, "−5 koma"], [-4, "−Bakiye (−4)"], [-1, "−1 koma"], [0, "Original"], [1, "+1 koma"],
-    [4, "+Bakiye (+4)"], [5, "+5 koma"], [9, "+Whole tone (+9)"], [22, "+Fourth (+22)"],
-    [31, "+Fifth (+31)"], [53, "+Octave (+53)"],
+    [-53, "−Sekizli (−53)"], [-31, "−Beşli (−31)"], [-22, "−Dörtlü (−22)"], [-9, "−Tanini (−9)"],
+    [-5, "−5 koma"], [-4, "−Bakiye (−4)"], [-1, "−1 koma"], [0, "Özgün hâli"], [1, "+1 koma"],
+    [4, "+Bakiye (+4)"], [5, "+5 koma"], [9, "+Tanini (+9)"], [22, "+Dörtlü (+22)"],
+    [31, "+Beşli (+31)"], [53, "+Sekizli (+53)"],
   ];
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
@@ -545,18 +552,13 @@ export function App() {
     files.sort((a, b) => a.name.localeCompare(b.name));
     setError(null);
     setOmrBusy(true);
-    setOmrStatus(busyStatus("strips", "model", "loading model…"));
+    setReadStartedAt(Date.now());
+    setOmrStatus(busyStatus("strips", "model", TR.status.loadingModel));
 
     void (async () => {
       const urls: string[] = [];
       try {
-        setOmrStatus(
-          busyStatus(
-            "strips",
-            "decode",
-            `reading ${files.length} strip${files.length > 1 ? "s" : ""}…`
-          )
-        );
+        setOmrStatus(busyStatus("strips", "decode", TR.status.readingStrips(files.length)));
         const strips: StripInput[] = [];
         for (const [i, f] of files.entries()) {
           const url = URL.createObjectURL(f);
@@ -575,7 +577,7 @@ export function App() {
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length)
-          throw new ReadError("read-failed", "the model read nothing from these images");
+          throw new ReadError("read-failed", TR.errors.nothingReadStrips);
 
         // Nothing decoded carries metadata, so the makam is guessed from the notes themselves and
         // then confirmed by the user — it decides how the piece SOUNDS, not just how it is filed.
@@ -604,6 +606,7 @@ export function App() {
       } finally {
         urls.forEach(URL.revokeObjectURL);
         setOmrBusy(false);
+        setReadStartedAt(null);
       }
     })();
   }
@@ -625,7 +628,8 @@ export function App() {
   function readPageFile(file: File) {
     setError(null);
     setOmrBusy(true);
-    setOmrStatus(busyStatus("page", "model", "loading model…"));
+    setReadStartedAt(Date.now());
+    setOmrStatus(busyStatus("page", "model", TR.status.loadingModel));
 
     void (async () => {
       const url = URL.createObjectURL(file);
@@ -633,19 +637,17 @@ export function App() {
         const { slicePage } = await import("./omr/page");
 
         const stem = file.name.replace(/\.[^.]+$/, "") || "page";
-        setOmrStatus(busyStatus("page", "slice", "slicing the page…"));
+        setOmrStatus(busyStatus("page", "slice", TR.status.slicing));
         const sliced = await slicePage(url, stem, {
-          onProgress: (phase, done, total) =>
+          onProgress: (phase, done, total) => {
+            // The slicer reports its phases in English; the UI names them in Turkish.
+            const name = TR.phases[phase] ?? phase;
             setOmrStatus(
-              busyStatus("page", "slice", done != null ? `${phase}… ${done}/${total}` : `${phase}…`)
-            ),
+              busyStatus("page", "slice", done != null ? `${name}… ${done}/${total}` : `${name}…`)
+            );
+          },
         });
-        if (!sliced.strips.length)
-          throw new ReadError(
-            "no-staves",
-            "no staves found on this page — the MVP reads screenshots and clean scans of Turkish " +
-              "notation, one page at a time"
-          );
+        if (!sliced.strips.length) throw new ReadError("no-staves", TR.errors.noStaves);
 
         const t0 = performance.now();
         const routed = await decodeStripsRouted(sliced.strips, {
@@ -657,7 +659,7 @@ export function App() {
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length)
-          throw new ReadError("read-failed", "the model read nothing from this page");
+          throw new ReadError("read-failed", TR.errors.nothingRead);
 
         const detected = detectMakam(result.doc);
         onStop();
@@ -685,236 +687,75 @@ export function App() {
       } finally {
         URL.revokeObjectURL(url);
         setOmrBusy(false);
+        setReadStartedAt(null);
       }
     })();
-  }
-
-  // The file-input half of the above. Split so that the picker, drag-and-drop and paste all reach
-  // `readPageFile` — one read path, three gestures.
-  function onPage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // re-picking the same file must fire change again
-    if (file) readPageFile(file);
   }
 
   return (
     <div
       id="app"
+      className="kv-page"
       // `data-ready` is what the deploy checks wait for instead of matching the page's title text
       // — the title is copy and will change; "a score is installed" is the fact they need.
       data-ready={doc ? "1" : undefined}
-      style={{ fontFamily: "system-ui, sans-serif", padding: 24, maxWidth: 1100, margin: "0 auto" }}
     >
-      <h1 style={{ marginBottom: 4 }}>Turkish OMR — Web Harness</h1>
-      <p style={{ color: "#666", marginTop: 0 }}>
-        Phase 1 testing tool. Loads note-model JSON (from the Python exporter), shows a
-        piano-roll, and plays it back at 53-TET frequencies via Web Audio.
-      </p>
+      <header className="kv-header">
+        <h1 className="kv-brand">
+          <span className="kv-brand__mark" aria-hidden="true">
+            &#xE282;
+          </span>
+          {TR.brand}
+        </h1>
+        <p className="kv-tagline">{TR.tagline}</p>
+      </header>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", margin: "16px 0" }}>
-        <button id="play" data-play-state={playState} onClick={onPlayPause} disabled={!timeline}>
-          {playState === "playing" ? "⏸ Pause" : playState === "paused" ? "▶ Resume" : "▶ Play"}
-        </button>
-        <button id="stop" onClick={onStop} disabled={playState === "stopped"}>■ Stop</button>
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }} title={naturalBpm ? `natural tempo ≈ ${naturalBpm} BPM` : undefined}>
-          <span role="img" aria-label="tempo">🎚️</span>
-          <input
-            type="number"
-            min={20}
-            max={400}
-            value={bpm}
-            onChange={(e) => {
-              const v = Math.round(Number(e.target.value));
-              if (Number.isFinite(v) && v >= 20 && v <= 400) applyPlayback(v, metronome, usulName);
-            }}
-            disabled={!timeline}
-            style={{ width: 56 }}
-          />
-          BPM
-          {naturalBpm > 0 && bpm !== naturalBpm && (
-            <button
-              onClick={() => applyPlayback(naturalBpm, metronome, usulName)}
-              title={`reset to natural tempo (${naturalBpm} BPM)`}
-              style={{ fontSize: 11, padding: "0 4px" }}
-            >
-              ⟲
-            </button>
-          )}
-        </label>
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-          <input type="checkbox" checked={metronome} onChange={(e) => applyPlayback(bpm, e.target.checked, usulName)} disabled={!timeline} />
-          Metronome
-        </label>
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }} title="Usul — sets the metronome's beat pattern (editable; OMR can misread it)">
-          <span>Usul:</span>
-          <select
-            value={usulName}
-            onChange={(e) => applyPlayback(bpm, metronome, e.target.value)}
-            disabled={!timeline}
-          >
-            {USULS.map((u) => (
-              <option key={u.name} value={u.name}>
-                {u.label} ({u.num}/{u.den})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label
-          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-          title="Makam — how the piece is PLAYED. Some perdes sound away from where they are written (♪ marks those makams); the staff never changes."
-        >
-          <span>Makam:</span>
-          <select
-            id="makam-select"
-            value={makamSlug}
-            onChange={(e) => applyMakam(e.target.value)}
-            disabled={!timeline}
-          >
-            <option value="">none (as written)</option>
-            {MAKAM_OPTIONS.map((m) => (
-              <option key={m.slug} value={m.slug}>
-                {m.label}
-                {m.hasIntonation ? " ♪" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span style={{ marginLeft: 12, display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
-          <ModeButton id="view-roll" active={viewMode === "roll"} onClick={() => setViewMode("roll")}>Piano-roll</ModeButton>
-          <ModeButton id="view-sheet" active={viewMode === "sheet"} onClick={() => setViewMode("sheet")}>Sheet</ModeButton>
-        </span>
-        <label style={{ marginLeft: 12 }}>
-          Sample:{" "}
-          <select value={sampleFile} onChange={(e) => e.target.value && loadSample(e.target.value)}>
-            <option value="" disabled>
-              (loaded file)
-            </option>
-            {SAMPLES.map((s) => (
-              <option key={s.file} value={s.file}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Load JSON:{" "}
-          <input type="file" accept="application/json,.json" onChange={onFile} />
-        </label>
-        <label title="Pick the *_sNN_wNN.png crops of one page — the OMR model reads them in the browser and loads the result">
-          Read strips:{" "}
-          <input id="strips-input" type="file" accept="image/*" multiple onChange={onStrips} disabled={omrBusy} />
-        </label>
-        <label title="Pick a screenshot or clean scan of ONE page — it is sliced and read in the browser. ~1.6 s to slice, then ~1 s per strip.">
-          Read page:{" "}
-          <input id="page-input" type="file" accept="image/*" onChange={onPage} disabled={omrBusy} />
-        </label>
-        {/* Separate page on purpose (owner, 2026-08-05): a diagnostic view that loads no model and
-            makes no score, so it can never disturb what is loaded here. */}
-        <a href="/slices.html" title="See the strips the slicer cuts from a page — no model, no score">
-          🔍 Slice inspector
-        </a>
-        <button id="save-json" onClick={onDownload} disabled={!doc} title="Download the current score (with your edits) as note-model JSON — the Rung-3 labeling loop's output">
-          ⬇ Save JSON
-        </button>
-        <label
-          style={{ marginLeft: 12, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
-          title="Transpose: shifts pitch by the chosen number of commas"
-        >
-          <span>Transpose:</span>
-          <select
-            value={transpose}
-            onChange={(e) => applyTranspose(Number(e.target.value), keepSheet)}
-            style={{ fontWeight: 600 }}
-          >
-            {TRANSPOSE_OPTIONS.map(([commas, label]) => (
-              <option key={commas} value={commas}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
-          title="Transpose the SOUND only and keep the notation as written — for transposing instruments (kız/mansur ney)"
-        >
-          <input type="checkbox" checked={keepSheet} onChange={(e) => applyTranspose(transpose, e.target.checked)} />
-          <span>Keep sheet (sound only)</span>
-        </label>
-        {viewMode === "sheet" && (
-          <>
-            <label
-              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
-              title="How accidentals are displayed on the staff"
-            >
-              <span>Accidentals:</span>
-              <select
-                value={accidentalMode}
-                onChange={(e) => setAccidentalMode(e.target.value as AccidentalMode)}
-                style={{ fontWeight: 600 }}
-              >
-                <option value="every">On every note</option>
-                <option value="keysig">Key signature (row start)</option>
-                <option value="measure">Standard (per measure)</option>
-              </select>
-            </label>
-            <label
-              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
-              title="Draw lyric syllables under the notes (vocal scores)"
-            >
-              <input type="checkbox" checked={showLyrics} onChange={(e) => setShowLyrics(e.target.checked)} />
-              <span>Lyrics</span>
-            </label>
-            <label
-              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, opacity: showLyrics ? 1 : 0.5 }}
-              title="Draw a hyphen between a word's syllables (Gam-ze-de). Most sheets omit these."
-            >
-              <input
-                type="checkbox"
-                checked={lyricHyphens}
-                disabled={!showLyrics}
-                onChange={(e) => setLyricHyphens(e.target.checked)}
-              />
-              <span>Hyphens</span>
-            </label>
-            <label
-              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}
-              title="Phase-2: draw repeat barlines + volta brackets where a repeated passage is detected (SymbTr writes repeats out twice). Visual + strip-label tokens only — layout, playback and playhead are unchanged."
-            >
-              <input type="checkbox" checked={showRepeats} onChange={(e) => setShowRepeats(e.target.checked)} />
-              <span>Repeats</span>
-            </label>
-            <button
-              onClick={() => setEditMode((v) => !v)}
-              style={{ fontWeight: 600, background: editMode ? "#3b82f6" : undefined, color: editMode ? "#fff" : undefined }}
-            >
-              {editMode ? "✓ Editing" : "✎ Edit"}
-            </button>
-          </>
-        )}
-      </div>
+      <UploadHero
+        // The hero shrinks once the score on screen came from a read or a loaded file, which is
+        // exactly when `sampleFile` is empty — no extra state to keep in step.
+        compact={omrBusy || sampleFile === ""}
+        busy={omrBusy}
+        status={omrStatus}
+        error={error}
+        startedAt={readStartedAt}
+        onFile={readPageFile}
+      />
 
-      <ErrorNote error={error} />
-      <StatusLine status={omrStatus} />
-
-      {doc ? (
+      {doc && (
         <>
-          <div style={{ color: "#444", marginBottom: 8 }}>
-            <strong>{doc.title || doc.name}</strong> — makam <em>{doc.makam}</em>, usul{" "}
-            <em>{doc.usul}</em>
-            {doc.composer ? <> · {doc.composer}</> : null} · {doc.events.length} events ·{" "}
-            {timeline ? `${(timeline.totalMs / 1000).toFixed(1)}s` : ""}
-          </div>
-          {viewMode === "roll" ? (
-            <>
-              {pitchRange && <PianoRoll doc={displayDoc ?? doc} pitchRange={pitchRange} onEditNote={updateEvent} />}
-              <p style={{ color: "#888", fontSize: 12 }}>
-                Pitch axis is 53-TET commas (microtonal). Hover for details. <strong>Drag a note
-                up/down</strong> to change its pitch; <strong>drag its right edge</strong> to change
-                its duration. Edits update playback.
-              </p>
-            </>
-          ) : (
-            <>
+          <TransportBar
+            canPlay={!!timeline}
+            playState={playState}
+            onPlayPause={onPlayPause}
+            onStop={onStop}
+            bpm={bpm}
+            naturalBpm={naturalBpm}
+            onBpm={(v) => applyPlayback(v, metronome, usulName)}
+            metronome={metronome}
+            onMetronome={(v) => applyPlayback(bpm, v, usulName)}
+            usulName={usulName}
+            onUsul={(v) => applyPlayback(bpm, metronome, v)}
+            makamSlug={makamSlug}
+            onMakam={applyMakam}
+            makamOptions={MAKAM_OPTIONS}
+          />
+
+          <ScoreCard
+            doc={doc}
+            totalMs={timeline?.totalMs ?? null}
+            viewMode={viewMode}
+            onViewMode={setViewMode}
+            showLyrics={showLyrics}
+            onShowLyrics={setShowLyrics}
+            editMode={editMode}
+            onEditMode={setEditMode}
+            onSave={onDownload}
+          >
+            {viewMode === "roll" ? (
+              pitchRange && (
+                <PianoRoll doc={displayDoc ?? doc} pitchRange={pitchRange} onEditNote={updateEvent} />
+              )
+            ) : (
               <SheetView
                 doc={displayDoc ?? doc}
                 editMode={editMode}
@@ -935,38 +776,36 @@ export function App() {
                 thinSharps={URL_THIN_SHARPS}
                 printNoise={PRINT_NOISE}
               />
-              <StripPanel
-                strips={strips}
-                selectedId={selectedStripId}
-                onSelect={setSelectedStripId}
-                mode={accidentalMode === "keysig" ? "keysig" : "every"}
-                onMode={(m) => { setAccidentalMode(m); setSelectedStripId(null); }}
-              />
-              <p style={{ color: "#888", fontSize: 12 }}>
-                Western staff with Turkish (AEU) accidental glyphs from the Bravura font.
-                {editMode
-                  ? " Edit is on — click a measure to edit its notes."
-                  : " Click a measure to play from there. Click ✎ Edit to edit notes instead."}
-                {" "}
-                The <strong>Accidentals</strong> selector switches between showing one on every
-                note, the makam key signature at each row start (deviations marked), and standard
-                per-measure notation (an accidental carries to the rest of its measure).{" "}
-                <strong>Transpose</strong> shifts pitch; tick <strong>Keep sheet (sound only)</strong>
-                {" "}to move only the sound and leave the notation as written — for transposing
-                instruments like kız/mansur ney.
-              </p>
-            </>
-          )}
+            )}
+          </ScoreCard>
         </>
-      ) : (
-        <p style={{ color: "#888" }}>
-          No score loaded. Export one with{" "}
-          <code>python scripts/symbtr_to_json.py &lt;file.txt&gt;</code> and load the JSON, or
-          drop a <code>sample.json</code> in <code>apps/web/public/</code>.
-        </p>
       )}
 
-      <Legend doc={doc} />
+      <AdvancedPanel
+        doc={doc}
+        samples={SAMPLES}
+        sampleFile={sampleFile}
+        onSample={loadSample}
+        onLoadJson={onFile}
+        onStrips={onStrips}
+        omrBusy={omrBusy}
+        transpose={transpose}
+        transposeOptions={TRANSPOSE_OPTIONS}
+        onTranspose={(c) => applyTranspose(c, keepSheet)}
+        keepSheet={keepSheet}
+        onKeepSheet={(v) => applyTranspose(transpose, v)}
+        accidentalMode={accidentalMode}
+        onAccidentalMode={setAccidentalMode}
+        showLyrics={showLyrics}
+        lyricHyphens={lyricHyphens}
+        onLyricHyphens={setLyricHyphens}
+        showRepeats={showRepeats}
+        onShowRepeats={setShowRepeats}
+        sheetView={viewMode === "sheet"}
+        strips={strips}
+        selectedStripId={selectedStripId}
+        onSelectStrip={setSelectedStripId}
+      />
 
       {editing && doc && (
         <MeasureEditModal
@@ -991,106 +830,3 @@ export function App() {
   );
 }
 
-/**
- * Step-2c Strip panel: lists the training strips for the current score + mode, highlights the
- * selected strip's crop rectangle on the live sheet (via `highlightRect`), and shows its LilyPond
- * label + decoded notes — the manual image-vs-label check. The actual PNG files are produced by the
- * Playwright batch exporter (`tools/render/render.ts`), which reads `window.__omrStrips`.
- */
-function StripPanel({
-  strips,
-  selectedId,
-  onSelect,
-  mode,
-  onMode,
-}: {
-  strips: ExportStrip[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  mode: "every" | "keysig";
-  onMode: (m: "every" | "keysig") => void;
-}) {
-  const sel = strips.find((s) => s.id === selectedId) ?? null;
-  return (
-    <div style={{ marginTop: 12, border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#fafafa" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
-        <strong style={{ fontSize: 14 }}>Strip export (Step 2c)</strong>
-        <span style={{ display: "inline-flex", border: "1px solid #ccc", borderRadius: 6, overflow: "hidden" }}>
-          <ModeButton active={mode === "every"} onClick={() => onMode("every")}>every-note</ModeButton>
-          <ModeButton active={mode === "keysig"} onClick={() => onMode("keysig")}>key-signature</ModeButton>
-        </span>
-        <span style={{ color: "#666", fontSize: 13 }}>{strips.length} strips · select one to highlight its crop</span>
-      </div>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, maxHeight: 120, overflowY: "auto", flex: "0 0 320px" }}>
-          {strips.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => onSelect(s.id)}
-              style={{
-                fontSize: 12, padding: "2px 6px",
-                background: s.id === selectedId ? "#fde68a" : "#fff",
-                border: s.id === selectedId ? "1px solid #f59e0b" : "1px solid #ddd",
-                borderRadius: 4, cursor: "pointer",
-              }}
-            >
-              {s.id}
-            </button>
-          ))}
-        </div>
-        <div style={{ flex: 1, fontSize: 13, minWidth: 0 }}>
-          {sel ? (
-            <>
-              <div style={{ marginBottom: 4 }}>
-                <span style={{ color: "#888" }}>label: </span>
-                <code style={{ wordBreak: "break-word" }}>{sel.label}</code>
-              </div>
-              <div>
-                <span style={{ color: "#888" }}>decoded: </span>
-                {sel.decoded}
-              </div>
-            </>
-          ) : (
-            <span style={{ color: "#999" }}>Select a strip to see its label + decoded notes; the orange box on the sheet is its crop region.</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// A segmented-control button for the Piano-roll / Sheet toggle.
-function ModeButton({ id, active, onClick, children }: { id?: string; active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      id={id}
-      onClick={onClick}
-      style={{
-        border: "none",
-        padding: "6px 12px",
-        background: active ? "#3b82f6" : "#fff",
-        color: active ? "#fff" : "#333",
-        cursor: "pointer",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-// Small read-out of the piece's pitch span (lowest to highest comma), shown under the roll.
-// What/why: a quick orientation aid while learning — confirms the data covers the range you
-// expect. A separate tiny component keeps App's render readable.
-function Legend({ doc }: { doc: NoteModelDocument | null }) {
-  if (!doc) return null;
-  const notes = doc.events.filter((e) => e.kind === "note");
-  const komas = notes.map((n) => n.koma53);
-  const lo = Math.min(...komas);
-  const hi = Math.max(...komas);
-  return (
-    <div style={{ color: "#999", fontSize: 12, marginTop: 8 }}>
-      pitch range: comma {lo}–{hi} (
-      {centsAboveRef(hi - lo + doc.tuning.refKoma, doc.tuning.refKoma, doc.tuning.commasPerOctave).toFixed(0)} cents span)
-    </div>
-  );
-}

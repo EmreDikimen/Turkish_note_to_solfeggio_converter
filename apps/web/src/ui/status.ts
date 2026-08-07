@@ -21,6 +21,7 @@
 
 import { makamDisplay, type MakamDetection } from "@turkish-omr/core";
 import { decodeUrl, type RoutedResult } from "../omr/remote";
+import { num, TR } from "./strings";
 
 /** Which of the two read paths produced this — a whole page, or hand-picked strips. */
 export type OmrKind = "page" | "strips";
@@ -69,11 +70,10 @@ export function readingStatus(
   total: number,
   current?: string
 ): OmrStatus {
-  if (current === "server")
-    return busy(kind, "decode", `reading ${total} strip${total > 1 ? "s" : ""} on the server…`);
+  if (current === "server") return busy(kind, "decode", TR.status.readingOnServer(total));
   return done < total
-    ? busy(kind, "decode", `reading strip ${done + 1} of ${total}…`)
-    : busy(kind, "stitch", "stitching…");
+    ? busy(kind, "decode", TR.status.readingStrip(done + 1, total))
+    : busy(kind, "stitch", TR.status.stitching);
 }
 
 /** Where the decode ran, as a fact. */
@@ -87,9 +87,9 @@ export function whereOf(routed: RoutedResult): OmrWhere {
  * who cannot debug anything should still be able to tell us "it said it used my machine".
  */
 export function whereSuffix(where: OmrWhere): string {
-  if (where === "server") return " · read on the server";
-  if (where === "local-fallback") return " · read on your machine (the server did not answer)";
-  return decodeUrl() ? "" : " · read on your machine";
+  if (where === "server") return TR.status.onServer;
+  if (where === "local-fallback") return TR.status.onDeviceFallback;
+  return decodeUrl() ? "" : TR.status.onDevice;
 }
 
 /**
@@ -98,11 +98,11 @@ export function whereSuffix(where: OmrWhere): string {
  * filing detail.
  */
 export function makamSuffix(detected: MakamDetection): string {
-  return detected.slug ? ` · makam: ${makamDisplay(detected.slug)}` : " · makam: not recognised";
+  return detected.slug ? TR.status.makam(makamDisplay(detected.slug)) : TR.status.makamUnknown;
 }
 
 function warnSuffix(warnings: number): string {
-  return warnings ? ` — ${warnings} warning(s)` : "";
+  return warnings ? TR.status.warnings(warnings) : "";
 }
 
 /** The one-line summary of a finished "read strips". */
@@ -116,11 +116,15 @@ export function stripsSummary(args: {
   warnings: number;
 }): OmrStatus {
   const { strips, notes, measures, totalMs, detected, where, warnings } = args;
-  const perStrip = totalMs / strips;
   return {
     text:
-      `read ${strips} strips → ${notes} notes, ${measures} measures ` +
-      `in ${(totalMs / 1000).toFixed(1)} s (${perStrip.toFixed(0)} ms/strip)` +
+      TR.status.stripsDone(
+        strips,
+        notes,
+        measures,
+        num(totalMs / 1000),
+        (totalMs / strips).toFixed(0)
+      ) +
       makamSuffix(detected) +
       whereSuffix(where) +
       warnSuffix(warnings),
@@ -149,10 +153,15 @@ export function pageSummary(args: {
     args;
   return {
     text:
-      `read a page: ${staves} staves → ${strips} strips → ${notes} notes, ` +
-      `${measures} measures — sliced in ${(sliceMs / 1000).toFixed(1)} s` +
-      (skewDeg ? ` (deskewed ${skewDeg.toFixed(1)}°)` : "") +
-      `, read in ${(decodeMs / 1000).toFixed(1)} s` +
+      TR.status.pageDone(
+        staves,
+        strips,
+        notes,
+        measures,
+        num(sliceMs / 1000),
+        num(decodeMs / 1000)
+      ) +
+      (skewDeg ? TR.status.deskewed(num(skewDeg)) : "") +
       makamSuffix(detected) +
       whereSuffix(where) +
       warnSuffix(warnings),

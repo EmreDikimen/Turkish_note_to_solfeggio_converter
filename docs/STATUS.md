@@ -158,15 +158,17 @@ the model track never touches the app.** Either can be worked on without waiting
    BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
    ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
    reach the live decode server; on :5174 they fall back to the laptop.
-5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The modal goes; **Düzenle** zooms the sheet and
-   opens a **Mus2-style armed palette** — pick a note value, an accidental or the tuplet tool, then
-   click the score. Clicking a note gives an **✕** to delete and a **scroll wheel** to move its
-   pitch. Playback stays live while editing. **`Save JSON` is deleted** in the same pass.
-   ⚠ Settled, and worth not re-litigating: **repeats stay uneditable** (the stitcher unfolds them,
-   so inserting a repeat barline would corrupt flattened music), **tuplets are editable** (`\tup3`
-   is arithmetic, not an object), and **token-editing was rejected** (playback needs the flat doc).
-   ⚠ Two questions are still open — the tuplet run length and where an inserted note lands in time.
-   Brief: **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
+5. **⬅ THEN THE EDITOR REWORK** (owner, 2026-08-07). The modal goes; **Düzenle** opens a **Mus2-style
+   armed palette** beside the sheet — pick a note value, an accidental or the tuplet tool, then click
+   the score. Clicking a note gives an **✕** to delete and a **scroll wheel** to move its pitch;
+   inserting is a click on **any empty space**. Editing is **whole-score, not measure-scoped**, there
+   is **no zoom**, the palette has its own **Çal/Dur**, and **Çal starts from the last edited
+   measure**. **`Save JSON` is deleted** in the same pass.
+   ⚠ Settled, do not re-open: **repeats stay uneditable** (the stitcher unfolds them), **tuplets are
+   exactly three notes** (the drawn digit is hardcoded "3"), and **token-editing was rejected**.
+   ⚠ **One question is open** — whether an insert/delete ripples the bar lines or over-fills the bar
+   and marks it (the brief recommends the second). Brief: **[mvp/editor.md](mvp/editor.md)**.
+   Does not gate W10.
 6. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
    widget: talk to them.
 7. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.

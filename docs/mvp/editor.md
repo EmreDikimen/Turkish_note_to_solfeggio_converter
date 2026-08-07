@@ -1,66 +1,75 @@
 # The editor — a Mus2-style palette, replacing the measure modal
 
-purpose: the design brief for reworking note editing into a zoomed sheet with an armed-tool palette
+purpose: the design brief for reworking note editing into an armed-tool palette over the whole score
 audience: whoever builds it next — start here, then CODE_TOUR rows 16–19
 updated: 2026-08-07
 
-> Owner decision, 2026-08-07. Pressing **Düzenle** zooms the sheet and opens a **palette beside
-> it**; you **arm a tool** (a note value, an accidental, the tuplet sign) and **click the score** to
-> apply it. Clicking a note selects it, shows an **✕** to delete, and lets you **scroll it up and
-> down** to change its pitch. Mus2 works this way and the owner uses it.
-> Current state: [../STATUS.md](../STATUS.md).
+> Owner decision, 2026-08-07. Pressing **Düzenle** opens a **palette beside the sheet**; you **arm a
+> tool** (a note value, an accidental, the tuplet sign) and **click the score** to apply it. Clicking
+> a note selects it, shows an **✕** to delete, and lets you **scroll it up and down** to change its
+> pitch. The palette carries its own **Çal / Dur**, and **Çal starts from the last edited measure**.
+> Mus2 works this way and the owner uses it. Current state: [../STATUS.md](../STATUS.md).
 
 ---
 
-## Settled, 2026-08-07 — read these before designing anything
+## Settled — do not re-open these
 
 | Decision | Consequence |
 |---|---|
-| **`Save JSON` goes.** It will not be used | See "what this costs" below — it changes *why* this work is worth doing |
-| **Playback must work WHILE editing** | The transport stays live in edit mode; the playhead runs over the score being edited |
-| **Tokens are NOT the edit surface** | Editing the decoded `\tup3`/`\repstart` tokens and re-stitching was considered and dropped — playback needs the flattened doc, and the doc is what every other feature already consumes |
-| **`\repstart` / `\repend` are NOT editable** | Repeats are **unfolded** by the stitcher (the music is written out twice), so inserting a repeat barline into flattened music would corrupt it. No repeat marks in the palette. This also removes the schema fork an earlier draft of this page raised |
-| **Tuplets ARE editable** | Because `\tup3` is not an object — it is arithmetic. See below |
+| **Editing covers the WHOLE score, not one measure at a time** | The modal's per-measure scope is the thing being removed. There is one edit surface: the engraved page |
+| **No zoom** | An earlier draft had the sheet zoom on entering edit mode; dropped as unnecessary. This also removes the re-engrave trap that came with it |
+| **`Save JSON` goes.** It will not be used | It changes *why* this work is worth doing — see below |
+| **Playback works WHILE editing**, from the palette's own Çal/Dur | And Çal resumes from the **last edited measure**, not from the top |
+| **Tokens are NOT the edit surface** | Editing the decoded `\tup3`/`\repstart` tokens and re-stitching was considered and dropped: playback needs the flattened doc, and a repeated passage renders **twice** from one token, so a click cannot be attributed to a pass |
+| **`\repstart` / `\repend` are NOT editable** | The stitcher **unfolds** repeats (the music is written out twice), so inserting a repeat barline into flattened music would corrupt it. No repeat marks in the palette |
+| **Tuplets ARE editable** | `\tup3` is arithmetic, not an object — see the rules below |
 
 ### ⚠ What deleting `Save JSON` costs, said out loud
 
-Earlier drafts of this page justified the rework as *"the editor is the Rung-3 labeling loop's tool,
-so seconds per correction is labelling throughput."* **With `Save JSON` gone that is no longer
-true**, and the claim must not survive in the docs.
+Earlier drafts justified the rework as *"the editor is the Rung-3 labeling loop's tool, so seconds
+per correction is labelling throughput."* **With `Save JSON` gone that is no longer true**, and the
+claim must not survive in the docs.
 
-It is a defensible deletion: the labelling loop's **primary** path is
-`scripts/rung3/review_ui.py` (per-strip verdicts, its own queues), not the web app. What goes is the
-*page-level* export — load a decoded page, correct it, save a note-model JSON that serializes to
-training labels. Nobody used it.
+It is a defensible deletion: the labelling loop's **primary** path is `scripts/rung3/review_ui.py`
+(per-strip verdicts, its own queues), not the web app. What goes is the unused *page-level* export.
 
 So the honest rationale is now simply: **a friend whose page has a wrong note should be able to fix
 it.** That is a product feature, and it is enough.
 
-Downstream, when it is removed: `onDownload` + `#save-json` (`App.tsx:507`, `ScoreCard.tsx:94`),
-the two `app-smoke.ts` checks that drive it ("saved schemaVersion 1", "saved doc has notes"), and
-the references in [../PIPELINE.md](../PIPELINE.md) (lines 22 and 232).
+To remove: `onDownload` + `#save-json` (`App.tsx:507`, `ScoreCard.tsx:94`), the two `app-smoke.ts`
+checks that drive it ("saved schemaVersion 1", "saved doc has notes"), and the references in
+[../PIPELINE.md](../PIPELINE.md) (lines 22 and 232).
 ⚠ **Assumption to confirm:** *Load* JSON stays in Gelişmiş as a development input — only *Save* goes.
 
 ---
 
-## The interaction, as specified
+## The interaction
 
-**Arm a tool, then click a target.** (This replaces an earlier draft's "select first, then apply" —
-the owner's model is the armed palette, which is what Mus2 does.)
+**Arm a tool, then click a target.**
 
 | Tool | Gesture | Result |
 |---|---|---|
-| **Note value** (2nd / 4th / 8th / 16th…) | arm it, click **empty space** on the sheet | a new note is inserted; **pitch comes from the click's height** on the staff, duration from the armed value |
+| **Note value** (2nd / 4th / 8th / 16th…) | arm it, click **anywhere empty** | a note is inserted at that point — **pitch from the click's height**, duration from the armed value |
 | **Note value** | arm it, click an **existing note** | that note's duration changes |
-| **Accidental** (the AEU set) | arm it, click a **note** | the accidental is applied to that note |
-| **Tuplet** | arm it, then **select a run of notes** | the run becomes a triplet — *see the two rules below* |
-| *(none)* | click a note | it is selected; an **✕** appears; **scroll wheel** moves its pitch |
+| **Accidental** (the AEU set) | arm it, click a **note** | the accidental is applied |
+| **Tuplet** | arm it, click the **first** note, then the **last** | the run becomes a triplet — rules below |
+| *(none)* | click a note | selected; an **✕** appears; **scroll wheel** moves its pitch |
 | *(none)* | click the **✕** | the note is deleted |
+| **Çal / Dur** | in the palette | plays from the **last edited measure** |
 
-**Scrolling a selected note carries its accidental.** The doc already stores pitch as
-letter + octave + `alter` separately (this is how `MeasureEditModal` works today), so moving the
-staff position while keeping the alteration is the natural operation, not a special case.
-⚠ The wheel handler must `preventDefault` or the page scrolls underneath it.
+**"Empty" means anywhere** — between two notes, before the first, after the last. Not just the slack
+at the end of a bar.
+
+**Scrolling a selected note carries its accidental.** The doc stores pitch as letter + octave +
+`alter` separately (this is how `MeasureEditModal` works today), so moving the staff position while
+keeping the alteration is the natural operation, not a special case.
+⚠ The wheel handler must `preventDefault`, or the page scrolls underneath it.
+
+**Çal-from-last-edit is what replaces click-to-seek.** In edit mode a click means select or insert,
+so "play from this bar" would otherwise be lost — and that is exactly how you check a fix. Starting
+playback from the last edited measure answers it directly: fix a note, press Çal, hear the bar.
+Track one number (the measure index of the most recent edit); before any edit, Çal starts from the
+top.
 
 ---
 
@@ -71,83 +80,48 @@ staff position while keeping the alteration is the natural operation, not a spec
 and `tupletGroupsIn` closes a group the moment a run of such notes **sums to a plain value**.
 Nothing is stored; the bracket and the italic 3 are drawn because the arithmetic says so.
 
-So applying the tuplet tool means **multiplying each member's duration by ⅔** (a 1/8 becomes 1/12),
-and removing one means multiplying back by ³⁄₂. `\tupend` needs no button — it is implied.
-**No schema change, and one source of truth for rhythm.**
+Applying the tool means **multiplying each member's duration by ⅔** (a 1/8 becomes 1/12); removing
+one multiplies back by ³⁄₂. `\tupend` needs no button — it is implied. **No schema change.**
 
-Two rules the owner specified, both enforced before the tool applies:
+**Selection is first-note-then-last-note, and the page must refuse anything that would not make a
+valid tuplet.** Invalid end notes are not clickable (dim them; do not pop an error). A candidate end
+note is valid only when all three hold:
 
-1. **All members must have the same duration.** Refuse (and say why) otherwise.
-2. **The selection must be a contiguous run** — a tuplet cannot skip notes.
+1. **The run is contiguous** — a tuplet cannot skip notes.
+2. **Every member has the same duration.**
+3. **The run is exactly three notes.** ⚠ This is not arbitrary: the drawn digit is **hardcoded
+   `"3"`** (`SheetView.tsx:392`), so a six-member run — which *would* also sum to a plain value and
+   so *would* satisfy `tupletGroupsIn` — draws a bracket that says 3 and lies about the rhythm.
+   Until that digit is derived from the group size, three is the only honest length.
 
-⚠ **Open — confirm before building:** the owner wrote *"we select two notes"*. A `\tup3` has
-**three** members, and the arithmetic only closes a group when the run sums to a plain value (three
-1/12s make a 1/4; two do not). This brief assumes **click the first and last note of the run**, so
-for a triplet that run contains three notes. If two notes were meant literally, the group will never
-close and the bracket will not draw — so this needs settling first.
-
----
-
-## The two traps found while reading the code
-
-### 1. Zoom must RE-ENGRAVE, not CSS-transform
-
-`.kv-score` **may not carry a `transform`/`zoom`/`scale`**: `../../tools/render/render.ts`
-screenshots the VexFlow SVG **by rect** to cut training strips, and rects do not survive a
-transform. So zoom is `renderer.resize(SVG_WIDTH * z, height * z)` plus a context scale
-(`SheetView.tsx:973`) — a real re-engrave.
-
-⚠ And then the sharper edge: `onLayout` (`SheetView.tsx:1174`) reports measure boxes in **engraved
-coordinates**, and those boxes **are** `buildStrips`' crop rectangles. Multiply them by `z` and
-every exported crop silently changes. Report unscaled boxes plus a separate `zoom`, or do not report
-layout while zoomed. The two paths never overlap in practice — the batch renderer drives the app by
-URL and never enters edit mode — but "in practice" is how the Round-1 label bug happened.
-
-### 2. Per-note rects are nearly free
-
-`attachTitles` (`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()` to
-hang a `<title>` on it. The same walk records `getBoundingClientRect()` per event index. No new
-engraving pass, no second layout model — this is the hit-testing for select, ✕, and click-to-apply.
+In practice that makes the rule cheap to implement: the only valid end note is **two positions after
+the first**, if the durations match.
 
 ---
 
-## Playing while editing
+## Where an inserted or deleted note leaves the bar lines — THE open question
 
-The transport stays live, so an edit lands **while a timeline is running**. Two consequences:
+This is the one thing left to settle, and it got sharper once editing became whole-score with
+insertion anywhere. The doc is a **sequential event list** (`offset` in bar units, `bar` assigned by
+`assignBars`), so inserting between two notes has to do one of:
 
-- **The timeline must be rebuilt after an edit** — it is a `useMemo` over `doc`, so this already
-  happens; what does not happen today is telling the running backend about it. Recommended
-  behaviour: rebuild, then resume from the same millisecond. A duration edit shifts everything
-  after the edited note, which is honest and expected.
-- **Click-to-seek is gone in edit mode**, because click now means select/insert. Seeking during an
-  edit session happens from the transport only. ⚠ This is a real loss — "play from this bar" is how
-  you *find* the wrong note. Consider a modifier (⌥-click to seek) or keeping the playhead
-  draggable.
+1. **Ripple** — following events shift, and bar lines re-flow down the page. Consistent with
+   "editing covers the whole score", and it is what a sequencer does. ⚠ But on a *decoded* page the
+   bar lines came from the model's own `|` tokens, and re-flowing them rewrites the one piece of
+   structure a corrected page most wants to keep.
+2. **Absorb** — the note goes into its bar, which becomes over-full; bar lines never move, and the
+   bar is **marked** as not adding up. ⬅ **Recommended.** It matches the show-don't-block rule
+   below, keeps the decoded structure, and makes the consequence visible instead of silent.
 
----
+⚠ Whichever is chosen, it applies to **deletion** too (a bar that loses a note is short), and
+deletion is a primary gesture here.
 
-## Where an inserted note lands in time — open
+### The related rule: never block, always show
 
-Clicking "empty space" gives a **pitch** (the click's height) but the time position is not obvious:
-the sheet is justified, so there is no true empty space *inside* a measure, and the doc is a
-sequential event list where inserting shifts everything after.
-
-Recommendation: **append to the clicked measure** at the clicked pitch, let the bar go over-full,
-and show it (below). The alternative — inserting at the nearest slot and rippling — rewrites bar
-lines, which is the thing a corrected page most needs to keep.
-
----
-
-## When a bar no longer adds up
-
-Deletion and insertion are **primary gestures** here, so this happens constantly. Three options:
-
-1. **Block it** (what the modal does — `isMeasureValid` greys out Save). Wrong here: it would make
-   the ✕ refuse to work.
-2. **Ripple** — shift following notes across bar lines. Destructive, and bar lines are what a
-   corrected page needs to preserve.
-3. **Let the bar be temporarily wrong, and SHOW it.** ⬅ **Recommended.** Tint the bar or mark its
-   number and carry on. `isMeasureValid` stops gating a button and starts feeding an indicator.
+`isMeasureValid` (`../../packages/core/src/measures.ts:145`) currently **greys out the modal's
+Save** when a bar does not total its length. That behaviour cannot survive: it would make the ✕
+refuse to work. It stops gating a button and starts **feeding an indicator** — tint the bar, or mark
+its number — and editing carries on.
 
 ---
 
@@ -156,13 +130,13 @@ Deletion and insertion are **primary gestures** here, so this happens constantly
 | Piece | State | Where |
 |---|---|---|
 | Measure hit-testing | ✅ | `SheetView.tsx:1218` `measureAt()` |
-| **Per-note positions** | ❌ needed — but cheap (above) | `SheetView.tsx:285` |
+| **Per-note positions** | ❌ needed — but nearly free | `attachTitles` (`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()`; the same walk records `getBoundingClientRect()` per event index |
 | Accidental glyphs + Turkish names | ✅ lift wholesale for the palette | `AccidentalSelect.tsx` |
 | Pitch/duration edit primitives | ✅ the piano-roll already drags these | `updateEvent` in `App.tsx` |
-| Pitch stored as letter+octave+alter | ✅ makes "scroll carries the accidental" natural | `MeasureEditModal.tsx` |
+| Pitch as letter+octave+alter | ✅ makes "scroll carries the accidental" natural | `MeasureEditModal.tsx` |
+| Transport (play/stop/seek-to-ms) | ✅ reuse for the palette's Çal/Dur | `webAudioBackend.ts`, `onSeekMs` in `App.tsx` |
 | Measure-total validation | ✅ exists, needs a new role | `../../packages/core/src/measures.ts:145` |
 | Undo/redo | ❌ nothing | — |
-| Zoom | ❌ nothing | `SVG_WIDTH` is a module const (`SheetView.tsx:30`) |
 
 **Undo/redo ships in the first slice, not after it.** Direct editing without undo is worse than a
 modal, which at least has Cancel.
@@ -171,8 +145,14 @@ modal, which at least has Cancel.
 
 ## Constraints — things that must not break
 
-- **The engraving may not move.** Selection, the ✕, hover and the invalid-bar mark are overlays or
-  attributes, never changes to what is drawn. No selector reaching into `.kv-score svg`.
+- **The engraving may not move.** Selection, the ✕, hover, dimmed-invalid targets and the
+  invalid-bar mark are **overlays or attributes**, never changes to what is drawn. No selector
+  reaching into `.kv-score svg`, and no `transform` on that container — `../../tools/render/render.ts`
+  crops training strips from the SVG **by rect**, and `onLayout`'s boxes *are* those crop rects.
+  (Dropping zoom removes the only reason this was going to come up. Keep the rule.)
+- **Editing while playing rebuilds the timeline.** It is a `useMemo` over `doc`, so the rebuild is
+  automatic; what is not automatic is telling the running backend. Rebuild, then resume from the
+  same millisecond.
 - **Grace notes (çarpma)** belong to the note that follows them and take no time; the modal sets
   them aside and re-inserts on save (`MeasureEditModal.tsx:56`). Deleting a host note must do
   something *defined* with its graces.
@@ -186,18 +166,17 @@ modal, which at least has Cancel.
 
 ## Suggested order
 
-1. **Settle the two open questions**: the tuplet run (two notes or three?) and where an inserted
-   note lands.
+1. **Settle the bar-line question** (ripple vs absorb). Everything else is cheaper and independent.
 2. **Per-note rects out of `SheetView`** (extend `onLayout`), nothing consuming them yet.
    Verify: `npm test`, `smoke:page` — the engraving must be byte-identical.
-3. **Zoom on entering edit mode**, re-engraved, with the layout-box guard.
-4. **Selection, the ✕, and scroll-to-change-pitch.** The smallest useful editor on its own.
-5. **Undo/redo** — before any of this is called done.
-6. **The palette, armed-tool model**: note values first (the most common fix), then accidentals
-   from `AccidentalSelect`, then the tuplet tool with its two rules.
+3. **Selection, the ✕, and scroll-to-change-pitch.** The smallest useful editor on its own.
+4. **Undo/redo** — before any of this is called done.
+5. **The palette, armed-tool model**: note values first (the most common fix), then accidentals
+   lifted from `AccidentalSelect`.
+6. **Çal / Dur in the palette**, playing from the last edited measure.
 7. **Insert-on-empty-space**, per (1).
-8. **The invalid-bar indicator**, replacing the modal's Save gate.
-9. **Playback during editing** — rebuild-and-resume, plus whatever replaces click-to-seek.
+8. **The tuplet tool**, with the three-note rule and non-clickable invalid targets.
+9. **The invalid-bar indicator**, replacing the modal's Save gate.
 10. **Remove `Save JSON`** and its two `app-smoke` checks; update `PIPELINE.md`.
 11. **Delete `MeasureEditModal.tsx`** — last, so there is always a working way to edit.
 

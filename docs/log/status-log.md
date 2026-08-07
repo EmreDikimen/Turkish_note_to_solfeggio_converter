@@ -40,13 +40,32 @@ rot. It is a defensible deletion — the labelling loop's primary path is `scrip
 not the web app — and the honest remaining reason is simply that a friend with a wrong note should
 be able to fix it.
 
-**Two traps recorded for the build.** Zoom must **re-engrave** (`renderer.resize` + context scale),
-never a CSS transform, because `render.ts` crops training strips from that SVG by rect — and
-`onLayout`'s boxes *are* those crop rects, so zoomed coordinates must never reach `buildStrips`.
-And **per-note rects are nearly free**: `attachTitles` (`SheetView.tsx:285`) already walks every
-drawn note calling `getSVGElement()`, so the same walk records a rect. Two questions left open on
-purpose: how many notes a tuplet run takes (the owner wrote "two"; `\tup3` needs three to close),
-and where an inserted note lands in time.
+**The owner then closed three of the four open questions.** Tuplet selection is **first note, then
+last note** — and the page must **refuse** any end note that would not make a valid tuplet rather
+than erroring after the fact. Reading the draw code turned that into a hard rule: the tuplet digit
+is **hardcoded `"3"`** (`SheetView.tsx:392`), so a six-member run — which *would* satisfy
+`tupletGroupsIn`, since it also sums to a plain value — would draw a bracket that lies about the
+rhythm. **Exactly three members** until that digit is derived from the group size. "Empty space"
+means **anywhere** (between notes, before the first, after the last), editing is **whole-score and
+never measure-scoped**, and **zoom is dropped** as unnecessary — which conveniently removes the
+re-engrave trap it would have created, though the underlying rule stands: no transform on the score
+container, because `render.ts` crops training strips from that SVG by rect and `onLayout`'s boxes
+*are* those crop rects.
+
+**And one addition solved a problem this page had flagged.** The palette carries its own **Çal/Dur**,
+and **Çal starts from the last edited measure**. Edit mode necessarily consumes click-to-seek (a
+click now selects or inserts), which would have removed "play from this bar" exactly when you are
+hunting for a wrong note; playing from the last edit answers it directly — fix a note, press Çal,
+hear the bar. It costs one tracked number.
+
+**One question is left open on purpose**: whether inserting or deleting **ripples the bar lines** or
+**over-fills the bar and marks it**. The brief recommends the second — on a decoded page the bar
+lines came from the model's own `|` tokens, and re-flowing them rewrites the structure a corrected
+page most wants to keep.
+
+Also cheap, and worth knowing: **per-note rects are nearly free** — `attachTitles`
+(`SheetView.tsx:285`) already walks every drawn note calling `getSVGElement()`, so the same walk
+records a rect.
 
 **Then the docs were refactored, not squeezed.** Four files sat at exactly **399** lines and one at
 397, against a 400 cap — every one of them one line from failing `check_docs.py`, which is a trap

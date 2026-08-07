@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-08-06
+updated: 2026-08-07
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -339,6 +339,31 @@ settle it.
 | **The deployable app** (2026-08-06) | `npm run build:app` → **43.3 MB** (ORT wasm 25.6, opencv.js 14.8), from a `public/` of 332 MB + 220 render scores. `smoke:build` drives the BUILT app on both paths: server **8.3 s**, cross-origin fallback **34.0 s**, identical score (9 staves → 26 strips → **399 notes / 26 measures**). **Largest single file: `ort/ort-wasm-simd-threaded.jsep.wasm` at 26,827,543 bytes = 25.58 MiB** — the number that ruled out Cloudflare Pages (25 MiB cap) and sent the app to Netlify. ORT's non-jsep binary is **12.86 MiB**, unused for now |
 | **A production-only bug the build check caught** | In the built app every `InferenceSession.create` logged `document is not defined` and **never resolved** — the fallback hung forever. The bundler inlines ORT's `…jsep.mjs`, which is also the worker script, and a Worker has no `document`. Dev, `smoke:page` and the 27/28 gate were all green throughout |
 | Safety limits | `npm run check:limits`: **6/6** payload cases + the per-IP rate limit. Caps: 12 MB body (on bytes seen), 40 strips, 409×583 8-bit PNG only, 20 requests / 60 s |
+
+## Makam detection (2026-08-07) — signature + karar, over the 213 bundled scores
+
+The table and the method: [mvp/makam.md](mvp/makam.md). Scored two ways, because the useful
+question is not "did it name the makam" but **"does the piece come out in tune"** — a makam with
+no intonation rules sounds identical to `none`, so a wrong *name* there costs nothing.
+
+| Measure | Value |
+|---|---|
+| **Audibly correct** — selected makam's intonation rules equal the true makam's (both-empty counts) | **204/213 (95.8%)** |
+| Audibly wrong — a bend applied that the true makam does not take, or the wrong bend | **5/213 (2.3%)** |
+| Missed a bend — declined or matched a no-rule makam where the true one does bend | 4/213 (1.9%) |
+| Exact makam name | 101/213 (47.4%) |
+| Right sound under a different name (e.g. beyati read as ussak) | 57/213 |
+| Declined (`none`, plays as written) | 50/213 |
+
+⚠ **Measured on clean SymbTr scores, not on decoded pages.** It scores the heuristic, not the
+product: a decoded page's `deriveKeySignature` is noisier than a corpus score's, so this is an
+upper bound on what a user sees. No decoded-page measurement exists yet.
+
+The "decline when the karar contradicts the signature" rule was chosen on this measurement: it
+traded **2 audibly wrong pieces for 2 that merely stay as written** (7→5 wrong, 2→4 missed), which
+is the trade the feature exists to make. The residual 5 are the genuinely hard pairs — beyati vs
+hüseyni share both a signature and a karar, and only the seyir separates them, which nothing here
+reads.
 
 ## Runtime / engineering
 

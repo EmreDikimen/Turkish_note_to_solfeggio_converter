@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-06
+updated: 2026-08-07
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -94,22 +94,17 @@ locally (that part is fast and cheap) and send only the small strips to the serv
 
 Three things worth knowing about this, in plain words:
 
-- ⚠ **It does not feel faster — and that was predicted before it was built.** We wrote down "expect
-  no speedup" in advance, and the measurement agreed: the rented processor is about 3.5× slower than
-  your Mac's, so a page takes longer on the server than in your own browser, plus about 11 seconds
-  to wake up. **The thing you are buying is a cool laptop, not a fast one.** Writing the prediction
-  down first is what stops a correct result from reading like a failure.
+- ⚠ **It does not feel faster — and that was predicted before it was built.** We wrote "expect no
+  speedup" down in advance and the measurement agreed. **You are buying a cool laptop, not a fast
+  one.** Writing the prediction down first is what stops a correct result reading like a failure.
 - ✅ **If the server is asleep or broken, the app quietly reads the page on your own computer
-  instead**, and says so. That code already exists and is tested, so it is nearly free — and it
-  means a friend never sees a broken app.
+  instead**, and says so. That code already exists and is tested, so a friend never sees a broken app.
 - ✅ **Nothing has to be rewritten.** The server runs *the same reading code the browser already
-  runs*. That matters because last week proved how expensive a second copy is: rewriting the
-  page-cutter in a second language took three whole stages of checking to prove the two copies
-  agreed. We are not paying that bill twice.
+  runs*. Last week proved how expensive a second copy is: rewriting the page-cutter in a second
+  language took three whole stages of checking to prove the two copies agreed. Not paying that twice.
 
 **And it is still hot at the new speed** — you confirmed that from using it, so there is nothing to
-re-measure here. (An earlier draft of this plan asked for a re-test, because the original complaint
-was made when a page took ~56 seconds rather than ~25. You have used it since; that answers it.)
+re-measure. (An earlier draft asked for a re-test, from when a page took ~56 seconds, not ~25.)
 
 ### What is done and what is not (6 August 2026)
 
@@ -121,16 +116,15 @@ agree" — they disagree on about 6% of strips — but "is either *better*". On 
 the right answer, the difference is **too small to detect**. Neither is worse.
 
 **The honest headline about speed: the server is SLOWER than your own laptop.** About 250 seconds
-where your browser takes 166, plus ~11 seconds to wake up. A rented shared processor is about 3.5×
-slower than the one in your Mac. That is not bad news: **you did not buy speed, you bought your
-friends' laptops staying cool** — the whole reason for the server, written down before it was built.
-Your friends' computers are probably slower than yours anyway, so for them it may feel the same.
+where your browser takes 166, plus ~11 seconds to wake up — a rented shared processor is about 3.5×
+slower than the one in your Mac. Not bad news: **you did not buy speed, you bought your friends'
+laptops staying cool**, the whole reason for the server and written down before it was built. Their
+computers are probably slower than yours anyway, so for them it may feel the same.
 
 **Cost: still effectively free.** A page uses about 40 seconds of rented processor time, and Google
 gives away enough for roughly **4,450 pages a month**. Fifty users would not come close.
 
-**✅ It is online: <https://komavision.netlify.app>.** Done on 6 August. The safety list is complete
-too. What is left before you send the link is nothing technical — it is deciding to send it.
+**✅ It is online: <https://komavision.netlify.app>.** Done on 6 August, safety list complete.
 
 ### The three places it lives, and why it is not just one
 
@@ -314,11 +308,19 @@ shoot **different** pieces (there are thousands available).
    running).
 6. ~~Put the app itself online.~~ ✅ **Done 6 August** — <https://komavision.netlify.app>, with the
    model on Hugging Face and the door locked so only your own site may use the reading server.
-7. **Send the link to two friends and ask what to add. This is the next thing, and it is yours.**
-   Tell them the first upload of the day is slow (the rented computer has to wake up), and that a
-   page takes about a minute. Ask about the **buttons and the screen**, not about mistakes in the
-   notes — the notes are the exam's job, not theirs.
-8. **Open it to everyone — but only if Round 3's exam result is good.**
+7. ~~Make the app play the right makam.~~ ✅ **Done 7 August.** Until now the app played every note
+   exactly where it is written — but Turkish music does not work like that. In **uşşak** the note
+   written "si with one small flat" is actually **played lower than that**, and no sign exists for
+   where it really goes; only the makam tells you. The app now **guesses the makam from the page**,
+   shows the guess and why, lets you change it from a list, and plays the piece the way that makam
+   is really played. Choosing one **only changes the sound — the notes on screen never move.** Right
+   on 204 of 213 test pieces. ⚠ Not on the website yet: the site needs one rebuild.
+8. **Make the app look good.** It works, but it looks like a testing tool. Do this before the link
+   goes out — otherwise both friends spend their first impression telling you it looks unfinished.
+9. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
+   slow (the rented computer has to wake up), and that a page takes about a minute. Ask about the
+   **buttons and the screen**, not about mistakes in the notes — the notes are the exam's job.
+10. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)
 
@@ -338,10 +340,9 @@ The list below is the older backlog, kept because the reasoning is still good.
    cause was **our own drawing**, not the model. The model was right 100% of the time when it said
    "küçük sharp" but only spotted 48% of them — so it could not *see* them. These signs are told
    apart only by **counting bars** (koma has 2, küçük has 3), and our music font drew the bars 22%
-   thicker and packed küçük's three 14% closer than real print, leaving less than half the white
-   gap. The three bars merged into a block, and a block *is* a 2-bar koma. We now draw all four
-   sharps ourselves with thinner, better-spaced bars. Full story and pictures:
-   [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+   thicker and packed küçük's three 14% closer than real print. The three bars merged into a block,
+   and a block *is* a 2-bar koma. We now draw all four sharps ourselves with thinner, better-spaced
+   bars. Full story and pictures: [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
 
    **One thing still to do on this:** our training pictures contain koma **1,887** times but küçük
    only **206** times, and **never both in the same picture**. The next render should even that out
@@ -388,7 +389,6 @@ The list below is the older backlog, kept because the reasoning is still good.
 | Word | Plain meaning |
 |---|---|
 | **strip** | One small horizontal slice of a page (2–3 measures) that the model reads. |
-| **signature** | The note at the **start of a line** saying which notes are lowered for that whole line. |
 | **mark (accidental)** | A small symbol on one note that raises or lowers it. ~8 kinds; telling them apart is the hard part. |
 | **bare note** | A note with no mark drawn. It may still be "lowered" by the line's signature — but the model should still write it bare and let reassembly apply the signature. |
 | **slicer** | Step 1: the tool that cuts a page into strips. It first finds the staff lines; on tilted photos it failed, which we fixed with a "clean-up" step. |
@@ -396,3 +396,4 @@ The list below is the older backlog, kept because the reasoning is still good.
 | **Round 1** | The first cycle of training the model on real pages. Shipped 2026-07-23; replaced by Round 2. |
 | **Round 2** | The second cycle. Fixed two problems in how we make training pictures. The old score read 78% → 74%, but that turned out to be a scoring quirk; on the fair scores it is better, so it **shipped** on 2026-07-27 and is the model in the app. |
 | **key signature** | The group of marks printed once at the start of a line, which apply to every matching note on it. This is where almost all the hard marks are — and where the model still gets confused. |
+| **makam** | The "mode" a Turkish piece is in (uşşak, hicaz, hüzzam…). It decides not just which notes are used but **exactly where some of them are played**, which the written page cannot tell you. The app guesses it and lets you change it. |

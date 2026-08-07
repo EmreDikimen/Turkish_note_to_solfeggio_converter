@@ -2,10 +2,76 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-06
+updated: 2026-08-07
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-08-07 — makam selection: the app plays the makam, not the notation
+
+_Owner request, taken before the style pass. Pipeline stage 9's makam half, designed in
+`PIPELINE.md` since June and never built. The reason it jumped the queue: playback sounded every
+note exactly where the staff spells it, and for a Turkish listener that is audibly wrong on the most
+common makam there is — uşşak's segah is not where AEU writes it. A friend opening the link would
+hear that before noticing anything about the interface._
+
+**What the research settled.** AEU has four accidentals and several perdes are performed away from
+all of them, because the notation has no sign for where they sit. Four deviations have numbers
+behind them and made the table; everything else was left out rather than guessed. Uşşak's segah:
+dügâh→segah is 6–7 commas in practice (the *eksik büyük mücennep*), not AEU's 8 — the owner chose
+the **−1.5 comma** midpoint. Sabâ's hicaz: Rauf Yektâ's 12/11 puts **2.5** commas of flatness on the
+re-bemol, not 4, so **+1.5**. Hüzzam's hisar: the pentachord's augmented second shrinks 12 → ~10.5–11
+commas, so **+1**. Segah karar: the Ottoman perde sits about a comma below the Arelian, **−1**. And
+the row that is not padding — **hüseyni and muhayyer explicitly do NOT take the uşşak lowering**,
+which is written into the table as an empty rule list so nobody "completes" it by symmetry.
+Sources are in [../mvp/makam.md](../mvp/makam.md); the literature disagrees on magnitudes and the
+table takes midpoints, saying so.
+
+**Three owner decisions, all narrowing.** Documented deviations only (every makam selectable, only
+sourced ones bend anything). Sound only — no key-signature redraw, so the engraving, `Save JSON`
+and `buildStrips` are untouched and the OMR never claims to have read something it did not.
+`none` is the default.
+
+**Detection, and the thing that made it hard.** A decoded page has no metadata, so the makam is
+guessed from the score: derived signature (`deriveKeySignature` → the string
+`data/makam_signatures.json` is keyed on) plus the **karar**, the note it ends on. The karar is not
+garnish — `\komaFlat b \bakiyeFlat e \bakiyeSharp f` is printed by hüzzam, karcığar AND sûznâk,
+three makams with three different intonations behind one signature.
+
+**A measurement changed the design.** Scored over the 213 bundled scores, ranking by corpus weight
+whenever the karar failed to narrow gave 7 audibly-wrong pieces. Declining outright when *some*
+candidate declares a karar and the piece ends elsewhere traded **2 wrong bends for 2 pieces that
+merely stay as written** — 5 wrong, 4 missed, **204/213 (95.8%) audibly correct**. That is the trade
+the feature exists to make: a wrong makam detunes notes that should not move, `none` only declines
+to help. ⚠ Measured on **clean SymbTr scores, not decoded pages**, so it is an upper bound; the
+residual 5 are beyati-vs-hüseyni-shaped pairs that share both signature and karar and are separated
+only by seyir, which nothing here reads.
+
+**Two duplications were accepted on purpose, both pinned by tests.** `SIG_TOKEN_BY_ALTER` in core
+mirrors `AEU_TOKEN` in `tools/render/lilypond.ts` (core must not depend on `tools/`, and the label
+path is load-bearing) — `npm test` now round-trips all **90 signature variants** through both
+vocabularies. And `packages/core/src/makamSignatures.ts` mirrors `data/makam_signatures.json`,
+because the app ships without `data/` and without Python; one script writes both, and `--from-json`
+re-emits the TS without rescanning the manifests, so refreshing the TS copy cannot silently rewrite
+the JSON from whatever pools happen to be on the machine.
+
+**The wiring trap.** The rules match a note by its **written** letter + accidental, but
+`transposeDoc` respells every note from its koma — so reading the rules after a transpose finds
+nothing. The deltas are computed from the base doc and applied **by event index, last**, immediately
+before `buildTimeline`, which recomputes frequency from `koma53` and ignores the cached `freqHz`.
+That also keeps the fractional komas (−1.5) away from every speller.
+
+**And a trap in the checks.** The new prompt is a modal with a full-viewport backdrop, so
+`app-smoke` and `page-smoke` would have failed at their first click after a decode with "element
+intercepts pointer events" — a green-to-red that has nothing to do with the feature.
+`tools/browser/makamPrompt.ts` is the shared dismissal; `build-smoke`/`live-smoke` read text only
+and needed nothing. `smoke:app` passes end to end and reads its real page as **Uşşak**.
+
+⚠ **Not deployed.** The live site plays as written until the next rebuild-and-redeploy, which the
+style pass carries anyway. Still open: the **header OCR** half of stage 9, direction-dependent
+intonation (the uşşak lowering is strongest in descent; karcığar's hicaz-on-nevâ is an *average* of
+ascending and descending), and degree-relative rules for pages written away from a makam's own
+perde.
 Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 

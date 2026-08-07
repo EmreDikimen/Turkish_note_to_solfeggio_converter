@@ -24,8 +24,9 @@ updated: 2026-08-05
 > TypeScript (`apps/web/src/omr/slicer/`, MVP W4–W6, verified against this Python over the whole
 > corpus) and wired into the app at W7 via `apps/web/src/omr/page.ts`, so an uploaded page becomes a
 > playable score with no Python anywhere. The Python path below is unchanged and remains the
-> reference the port is scored against. Still open: **stage 9** (header OCR / makam table). Also
-> covered: the Rung-3 collection plan.
+> reference the port is scored against. Still open: **stage 9's header OCR** — the makam table and
+> its signature+karar inference shipped 2026-08-07 ([mvp/makam.md](mvp/makam.md)); nothing yet reads
+> the printed header text. Also covered: the Rung-3 collection plan.
 
 ## 0. The one-line answer to "how does a page become strips?"
 
@@ -142,7 +143,10 @@ playback want.
 **9. Header metadata — never through the OMR model.** Makam/usul/tempo/title come from a
 separate OCR pass over the header text (plus signature+note-distribution heuristics as
 fallback), feed the makam intonation table (written accidental → sounding koma, e.g. Uşşak's
-koma-flat si sounding as 2-koma), and stay **user-editable** with `none` = play-as-written.
+koma-flat si sounding lower), and stay **user-editable** with `none` = play-as-written.
+**The makam half is BUILT** (2026-08-07): the signature+karar heuristic, the intonation table and
+the user-editable dropdown all ship — [mvp/makam.md](mvp/makam.md). The **header OCR** is still
+open, so the makam is inferred from the notes rather than read off the page.
 
 **10. Note model → editor → playback.** The existing Phase-1 product. The editor is the safety
 net for every residual OMR error — and (see §3) the labeling tool for Rung 3.

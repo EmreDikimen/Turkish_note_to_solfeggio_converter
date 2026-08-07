@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-06
+updated: 2026-08-07
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -40,6 +40,7 @@ wrong — fix by deleting, not by syncing.
 | **Setting up Google Cloud from scratch, step by step** (owner walkthrough) | [mvp/gcloud-setup.md](mvp/gcloud-setup.md) |
 | **Putting the app and the weights online, step by step** (owner walkthrough) | [mvp/hosting-setup.md](mvp/hosting-setup.md) |
 | How to make a page faster, and what each option costs | [mvp/latency.md](mvp/latency.md) |
+| **The makam intonation table, its sources, and how a page's makam is guessed** | [mvp/makam.md](mvp/makam.md) |
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | How real pages get labelled without hand work | [rung3/labeling.md](rung3/labeling.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |

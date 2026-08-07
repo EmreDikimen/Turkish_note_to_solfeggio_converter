@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-05
+updated: 2026-08-07
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -318,6 +318,33 @@ strip count will be low for the number of staves), or a page that reports 0 stav
 
 ⚠ It is **view-only by design** (owner, 2026-08-05): deleting a strip changes nothing outside this
 page — no score is built here, and nothing is written to disk. A reload starts empty.
+
+## Check 14 — the makam changes what you HEAR (2026-08-07)
+
+Goal: the only check in this file that needs your ears. A makam is not a label — picking one bends
+the sounding pitches to how the makam is actually performed, while the staff stays exactly as
+drawn. Table and sources: [mvp/makam.md](mvp/makam.md).
+
+1. `npm run dev:web` → `http://localhost:5173`. From **Sample**, load **"gamzedeyim deva — uşşak ·
+   sofyan"**. **Makam** should already read **Uşşak ♪** (the sample carries its own makam; ♪ marks
+   the makams that bend something), and **no popup appears** — a sample knows the answer already.
+2. Set **Makam** to **none (as written)**, ▶ Play, and listen to the si (B) notes.
+3. Switch back to **Uşşak ♪** — playback stops, as for any change that moves pitches — and Play
+   again. **Every written si koma-bemol now sounds noticeably flatter**: 1.5 commas ≈ 34 cents, so
+   dügâh→segah goes from 181 to ~147 cents — the gap between how AEU spells the note and where an
+   uşşak player puts it.
+4. Switch to **Hüseyni**, which is deliberately *not* marked ♪ — it is documented as **not** taking
+   that lowering, so it plays as written. That contrast is the whole point of the feature.
+5. **The staff must not have moved through any of this.** Switch to **Sheet**: same accidentals,
+   same noteheads. Confirm it properly with ⬇ **Save JSON** under `none` and again under `Uşşak` —
+   the two files may differ in the `makam` field and nowhere else, never a `koma53` or `noteName`.
+6. **The popup**, which only a decode raises: follow Check 12 with any page image. When the read
+   finishes, a dialog names the makam it guessed **and shows why** — the signature it matched and
+   the note the piece ends on. Accept or change it; the status line carries the same guess.
+
+⚠ Fair to notice: the makam is inferred from the notes, not read off the printed header — header
+OCR is still open. On a page whose signature matches nothing it says so and plays as written,
+which is the intended answer, not a failure.
 
 ## Check 12 — upload a whole page in the app (MVP W7, 2026-08-05)
 

@@ -86,6 +86,8 @@ it, by design. Use `smoke:live` for the deployed chain, or a local `dev:server` 
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python scripts/build_makam_signatures.py \
+    --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts  # TS copy only
 npx --yes tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/<set> [--thin-sharps]
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]
@@ -126,6 +128,15 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 - **Python is training/data only, and NOTHING ships.** The rule stands unchanged: the open question
   about a Python decode service was **closed on 2026-08-05** by choosing the Node stack above.
   Nothing under `src/vision/` becomes shippable.
+- **The makam bends the SOUND ONLY** (owner decision 2026-08-06, shipped 2026-08-07). Selecting a
+  makam adds comma deltas to the sounding koma on the way into `buildTimeline` — the engraving,
+  `Save JSON` and `buildStrips` never move, and no key signature is redrawn. The table carries
+  **documented deviations only**; `none` is the default. Table, sources and the signature+karar
+  guess: [docs/mvp/makam.md](docs/mvp/makam.md). Two deliberate duplications live here and are both
+  pinned by `npm test`: core's `SIG_TOKEN_BY_ALTER` mirrors `AEU_TOKEN` in `tools/render/
+  lilypond.ts`, and `packages/core/src/makamSignatures.ts` is **GENERATED** from
+  `data/makam_signatures.json` — never hand-edit it, and re-emit with `--from-json` so refreshing
+  the TS copy cannot rewrite the JSON from whatever pools are on the machine.
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
   stable across checkpoints.
 - **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COLAB.md`), or locally with

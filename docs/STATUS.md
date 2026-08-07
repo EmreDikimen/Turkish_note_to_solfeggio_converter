@@ -2,16 +2,29 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-06
+updated: 2026-08-07
 
 ## Now
 
 **W9 IS COMPLETE AND NOTHING IS OWED ON IT.** The app is LIVE at
 **<https://komavision.netlify.app>**, the weights are on the Hub, decode is on Cloud Run behind the
 origin lock, and `npm run smoke:live` **passes on both paths against the deployed site** — the
-shipped configuration, driven as a friend would. **The next action is a STYLE PASS** (owner,
-2026-08-06): the site is a working harness and looks like one, and W10 exists to ask two friends
-about the interface. Then W10. TWO tracks run in parallel, as re-scoped on 2026-08-05:
+shipped configuration, driven as a friend would.
+
+**MAKAM SELECTION SHIPPED 2026-08-07** (not on the ladder — an owner request taken before the style
+pass). Playback used to sound every note where the staff spells it, which is the written skeleton
+and not what a player plays. The app now guesses the makam from a decoded page's own signature and
+karar, confirms it in a prompt, and bends the **sounding** komas to that makam's performed
+intonation — uşşak's segah 1.5 commas below its written koma-bemol, and an explicit *no deviation*
+for hüseyni, the contrast the whole feature turns on. **Sound only: the engraving, `Save JSON` and
+the training strips never move.** Audibly correct on **204/213** bundled scores
+([METRICS.md](METRICS.md)); table, sources and the guessing rule in [mvp/makam.md](mvp/makam.md).
+⚠ **Not deployed** — the live site plays as written until the next redeploy, which the style pass
+carries anyway.
+
+**The next action is still the STYLE PASS** (owner, 2026-08-06): the site is a working harness and
+looks like one, and W10 exists to ask two friends about the interface. Then W10. TWO tracks run in
+parallel, as re-scoped on 2026-08-05:
 
 | | |
 |---|---|
@@ -29,22 +42,17 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   `https://omr-decode-706571981988.europe-west3.run.app`** — Cloud Run, 1 vCPU / 2 GiB /
   concurrency 1 / max-instances 3. Node + `onnxruntime-node` importing the browser's own
   `decode.ts`, so there is **one decode implementation, not a third**. The client swaps behind
-  `VITE_DECODE_URL` and falls back to in-browser decode on any failure.
-  **The deployed service reads what the browser reads**: 120/128 strips (93.8%) identical ids, with
-  divergences on near-ties; against gold a **paired wash**, McNemar exact **p = 0.727** over 267
-  hand-verified strips. Live safety checks **6/6**.
-  ⚠ **It is SLOWER than the owner's own browser: 250 s vs 166 s over 128 strips (0.66×), plus a
-  10.6 s cold start** — 9.5 s of it loading the graphs. **Exactly what [mvp/deploy.md](mvp/deploy.md)
-  predicted and what the release was chosen on**: the win is a friend's laptop staying cool, not
-  speed. A cloud vCPU costs **1.93 vCPU-s per strip** against 0.55 on an M4 core (~3.5× slower), so a
-  page is ~40 vCPU-s and the free tier covers **~4,450 pages/month** — still ~4× more than 50 users
-  would need.
-  ✅ Safety checklist complete, and **concurrent uploads are measured, not assumed**: three page
-  requests at once got three instances, each at full speed
-  ([mvp/latency.md](mvp/latency.md)). ⚠ **Owed, and an attempt on 2026-08-06 FAILED to get it:** a
-  genuine cold start after real idle — the probe hit a warm instance (`uptimeS` 315), so it needs
-  container-start timestamps from the logs. ⚠ Also owed: one controlled read of `--cpu-boost`, which
-  across two revisions has **not** beaten the 9.5 s it aimed at ([METRICS.md](METRICS.md)).
+  `VITE_DECODE_URL` and falls back to in-browser decode on any failure. **It reads what the browser
+  reads** (93.8% identical ids, and against gold a paired wash) and the safety checklist is complete
+  — numbers, costs and the concurrency measurement in [METRICS.md](METRICS.md) and
+  [mvp/latency.md](mvp/latency.md).
+  ⚠ **It is SLOWER than the owner's own browser (0.66×), plus a 10.6 s cold start** — **exactly what
+  [mvp/deploy.md](mvp/deploy.md) predicted and what the release was chosen on**: the win is a
+  friend's laptop staying cool, not speed. The free tier still covers ~4× more than 50 users need.
+  ⚠ **Two things are OWED.** A genuine cold start after real idle — the 2026-08-06 attempt FAILED,
+  hitting a warm instance (`uptimeS` 315), so it needs container-start timestamps from the logs. And
+  one controlled read of `--cpu-boost`, which across two revisions has **not** beaten the 9.5 s it
+  aimed at.
   ⚠ **Two bugs stood between "built" and "running", both the same shape** — what ships was never
   what was tested (an ESM-bundle `require`, and a 503 that should have been a 413). `check:bundle`
   and a live `check:limits` now cover them; the standing rule is [DECISIONS.md](DECISIONS.md).
@@ -70,23 +78,20 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   pessimistic because it assumed the batching that does not exist.
 - **A slice inspector, and two crop fixes from 2026-08-05.** `/slices.html` shows every crop with the
   slicer's own reasoning, its decoded label and its placement ([MANUAL_CHECKS.md](MANUAL_CHECKS.md)
-  Check 13) — it is how both were found. **A slur above the staff was shearing the beams below**: ink
-  above may claim only 3.5 sp, cutting beam loss **−13.6%** with 0 px lost in the ledger-note zone
-  (⚠ an information argument, not a decode result). **The page latency was fixed exactly**,
-  36.6 → 1.3 s/page with answers unchanged — the skew sweep's per-angle morphology had a closed form,
-  **0 disagreements in 328 evaluations**. Detail: [log/status-log.md](log/status-log.md).
+  Check 13) — it is how both were found: a slur above the staff shearing the beams below (beam loss
+  **−13.6%**, ⚠ an information argument, not a decode result), and the page latency fixed **exactly**
+  (36.6 → 1.3 s/page, the skew sweep's per-angle morphology had a closed form, **0 disagreements in
+  328 evaluations**). Detail: [log/status-log.md](log/status-log.md), numbers: [METRICS.md](METRICS.md).
 - **A decoded `\tup3` that could not close was drawing the WRONG rhythm, and is fixed (2026-08-05).**
-  Owner-reported as "`\repstart`/`\repend`/`\tup3` are not seen in the sheet"; over the 1,704 decode
-  caches it was two different things. **Repeats are not lost** — the note model has no field for one,
-  so they are consumed into an UNFOLDED playing order, the wanted behaviour (no repeat barlines
-  drawn, correct voltas, cursor forward only); **1,165/1,262 pages unfold (92.3%)**, the other **97
-  (7.7%)** carry a `\repstart` the model never closed and are left alone rather than guessed at.
-  **Triplets were genuinely broken**: an unclosed run yielded no group, so every member snapped to
-  the nearest plain value — a definitely-wrong rhythm with no mark saying so, **1,287 notes / 22.9%
-  of `\tup3`-bearing pages**, now **0**. ⚠ `tupletGroupsIn` is shared with the label serializer, so
-  both moved: **5 measures in 1 of 190 training pieces**, on a future re-render only. ⚠
-  **`verify-labels.ts` cannot see this** — the real check was rendering the 3 worst pages through
-  both draw paths with 0 dropped measures.
+  Owner-reported as "`\repstart`/`\repend`/`\tup3` are not seen in the sheet"; it was two different
+  things. **Repeats are not lost** — they are consumed into an UNFOLDED playing order, the wanted
+  behaviour; **92.3% of pages unfold**, the rest carry a `\repstart` the model never closed and are
+  left alone rather than guessed at. **Triplets were genuinely broken**: an unclosed run yielded no
+  group, so every member snapped to the nearest plain value — a definitely-wrong rhythm with no mark
+  saying so, now **0**. ⚠ `tupletGroupsIn` is shared with the label serializer, so both moved: **5
+  measures in 1 of 190 training pieces**, on a future re-render only. ⚠ **`verify-labels.ts` cannot
+  see this** — the real check was rendering the 3 worst pages through both draw paths with 0 dropped
+  measures. Counts: [METRICS.md](METRICS.md); reasoning: [DECISIONS.md](DECISIONS.md).
 - **✅ W7 PASSED (2026-08-05): THE APP READS A WHOLE PAGE.** Upload an image, get a playable,
   editable, saveable score — nothing stubbed. `smoke:page`: **7 staves → 16 strips → 344 notes /
   28 measures**, strip count matching local Python. The 35-second freeze was fixed by making
@@ -106,12 +111,10 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   unchanged. **Owed:** every full-corpus run used `--inject-skew`, so the deskew *estimator* is
   validated on 132 pages.
 - **⛔ The confidence signal missed its pre-registered bar, and W8 is DROPPED (owner, 2026-08-05).**
-  Flagged strips do average **8.60 token edits vs 2.69** — the signal is real — but "flag 10% of
-  tokens, catch ≥60% of errors" is **NOT MET**: the best at a 10% budget is **26.3%**. A usable soft
-  point existed (`min_logprob < -0.5`: 22.6% of strips, 57.1% of edits) and was **not** taken.
-  **The bar was not moved to fit the result.**
-  Nothing is deleted — the measurement, `check:logprobs` and the per-token logprobs all stay, and it
-  is a strong candidate to return if a friend asks for it. Detail: [mvp/rungs.md](mvp/rungs.md).
+  The signal is real (flagged strips average **8.60 token edits vs 2.69**) but "flag 10% of tokens,
+  catch ≥60% of errors" is **NOT MET** — best at a 10% budget is **26.3%**, and a usable soft point
+  existed and was **not** taken. **The bar was not moved to fit the result.** Nothing is deleted;
+  it is a strong candidate to return if a friend asks. Detail: [mvp/rungs.md](mvp/rungs.md).
 
 ## Previously (real-page track — all still true)
 
@@ -131,10 +134,9 @@ Full account: [log/status-log.md](log/status-log.md).
   early-stop protocol was not used and stays available; why the stop is gated on error
   *clustering* rather than error count is in [rung3/labeling.md](rung3/labeling.md).
 - **The full re-slice is DONE (2026-07-31).** `data/real/strips_v2` now holds **1,781 page dirs /
-  1,704 decode caches / 35,586 crops** — 1,578 re-sliced on Colab plus the 203 val-side pages.
-  Verified: every cache passes `window_cache_ok` and records `round2-stage2-best`, so the emitter
-  reuses all 1,704 rather than discarding them. 67 pages (4.2%) found no staves — covers and
-  near-empty continuation pages, matching the 4.6% seen on the val side.
+  1,704 decode caches / 35,586 crops** — 1,578 re-sliced on Colab plus the 203 val-side pages. Every
+  cache passes `window_cache_ok` and records `round2-stage2-best`, so the emitter reuses all 1,704.
+  67 pages (4.2%) found no staves — covers and near-empty continuation pages, matching the val side.
   ⚠ **The 67 exam pages were deliberately excluded**
   (`data/colab/decode_pages_reslice_EXAM_EXCLUDED.txt`): the exam is frozen and its gold describes
   crops under `data/real/strips/`. Re-cutting them belongs to exam v3.
@@ -254,12 +256,11 @@ the model track never touches the app.** Either can be worked on without waiting
 
 1. **✅ DONE 2026-08-06 — the app and the weights are hosted.** `dist/` on **Netlify** at
    **<https://komavision.netlify.app>**, weights on the Hub at **`Beyaban/omr-weights`** (uploaded
-   from `apps/server/models/`, so container, Hub and checkout stay one artifact set). Checks against
-   the deployed site, and the two traps — the Hub's *reflected* CORS origin, and Netlify SSO-gating
-   every new site behind a 401 — are in [METRICS.md](METRICS.md) and
-   [mvp/hosting-setup.md](mvp/hosting-setup.md). ⚠ **Cloudflare Pages was ruled OUT on a number:** a
-   **25 MiB** per-asset cap against our **25.58 MiB** wasm. The shrink to 12.86 MiB
-   (`onnxruntime-web/wasm`) is **deferred on purpose** — it changes the fallback's runtime.
+   from `apps/server/models/`, so container, Hub and checkout stay one artifact set). The two traps
+   — the Hub's *reflected* CORS origin, and Netlify SSO-gating every new site behind a 401 — are in
+   [mvp/hosting-setup.md](mvp/hosting-setup.md). ⚠ **Cloudflare Pages was ruled OUT on a number**
+   (25 MiB per-asset cap vs our 25.58 MiB wasm); the shrink to `onnxruntime-web/wasm` is **deferred
+   on purpose** — it changes the fallback's runtime.
 2. **⬅ THE NEXT ACTION: one redeploy, carrying everything owed.** `ALLOWED_ORIGINS` must become
    `https://komavision.netlify.app` (it defaults to `*`, so the live app already works — this
    closes the door rather than opening it); the **413 fix** (`0b1cb44`) is committed but not on
@@ -285,6 +286,11 @@ the model track never touches the app.** Either can be worked on without waiting
    redeploy (`hosting-setup.md` steps 7–8), because the URLs are baked in at build time.
    `http://localhost:5173` and `:4173` are in `ALLOWED_ORIGINS` (revision `omr-decode-00004-nc2`) so
    `dev:web` can reach the live decode server while this is worked on.
+   ⚠ **That redeploy also carries makam selection**, committed but not live; `typecheck`, `npm test`
+   (incl. the new 90/90 signature-vocabulary guard) and `smoke:app` all pass. Genuinely open on it:
+   detection accuracy is scored on **clean SymbTr scores, never on decoded pages**, where the derived
+   signature is noisier — and stage 9's **header OCR** still does not exist, so the makam is inferred
+   from the notes rather than read off the page.
 5. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback widget:
    talk to them.
 6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
@@ -301,10 +307,9 @@ the model track never touches the app.** Either can be worked on without waiting
    and after on the same pilot and treat a drop as a stop sign, not a trade.
 6. **Decide whether to re-emit the training pools from the new crops.** The re-slice is done; this
    is the separate decision it unlocks, **not** a formality — re-emitting rewrites the manifests the
-   promoted verdicts hang off, so it needs its own `--out` and a look at what moved before anything
-   is promoted. Weigh it against the evidence that Round 3's target — pitch (40%) and duration (28%)
-   of user edits — is a *synthetic content mix* problem rather than a shortage of real strips: the
-   pools already hold 2,330 accepted real strips (nota 1,740, r1 421, tup 169).
+   promoted verdicts hang off, so it needs its own `--out` and a look at what moved first. Weigh it
+   against the evidence that Round 3's target — pitch (40%) and duration (28%) of user edits — is a
+   *synthetic content mix* problem, not a shortage of real strips (2,330 accepted already).
 
 ### Cheap, owed, and independent of both
 
@@ -314,14 +319,9 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Further out (not next, not cancelled)
 
-1. **DONE (2026-07-31): every consumer now reads `_realval_v2`.** `degrade_probe.py` and
-   `empty_crop_probe.py` default to it; `staff_geometry_probe.py` gained `--strips-dir` (still
-   defaulting to the frozen exam). `make_realval_pool.py` is **not** the selection set any more —
-   its `_realval` output is the *base* `--build` extends, and its docstring now says so, because
-   pointing an eval at it silently restores the no-hard-tier pool. It also stopped carrying a third
-   verbatim copy of the val-split hash and calls `data.is_real_val_piece` (verified: 0 of 444
-   pieces change side). Round-1/2 notebooks are left alone — one notebook per round, never
-   re-pointed.
+1. **DONE (2026-07-31): every consumer now reads `_realval_v2`**, and `make_realval_pool.py` is no
+   longer the selection set — pointing an eval at its `_realval` output silently restores the
+   no-hard-tier pool. Detail: [log/status-log.md](log/status-log.md).
    - **Not recoverable, for the record:** the owner's 130 v1 verdicts (**65 ok / 22 fix / 43 bad**)
      did not transfer — no crop survives a re-slice unchanged. What they bought is the confidence
      calibration and the 33% crop-failure rate that sized the 165-row v2 queue.

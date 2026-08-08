@@ -6,10 +6,27 @@ updated: 2026-08-08
 
 ## Now
 
+**THE REDEPLOY IS DONE, 2026-08-08.** <https://komavision.netlify.app> now carries **makam
+selection**, **the style pass** and **the editor, steps 1–8 + 10** — one build, as the owner asked.
+`smoke:live` passes on both paths and the editor was additionally driven on the *deployed* bundle
+(`smoke:editor` only ever ran on the dev server). It needed no Cloud Run rebuild and no Hub
+re-upload: nothing under `apps/server/` or `apps/web/src/omr/` had moved since the live revision.
+Numbers: [METRICS.md](METRICS.md); how and what it found: [log/status-log.md](log/status-log.md).
+
+⛔ **It found one real thing, and it is a product problem, not a deploy fault: a cold container does
+not delay the server path, it cancels it.** Cloud Run routes traffic as soon as the container
+listens, which happens ~9.5 s before its graphs are loaded; `/decode` then answers a truthful `503
+model still loading`, and `remote.ts` falls back on **any** error without retrying. So **a friend's
+first upload after idle is read on their own machine**, pulling 211 MB of weights — which is close to
+the common case at n=2, and gives back the cool laptop the server exists to buy. Both halves were
+deliberate in isolation, so the fix is an owner call: see [mvp/latency.md](mvp/latency.md) option 1
+(warm on open **plus** a client that retries `ready: false`). Nothing about it is built.
+
 **W9 IS COMPLETE AND NOTHING IS OWED ON IT.** The app is LIVE at
 **<https://komavision.netlify.app>**, the weights are on the Hub, decode is on Cloud Run behind the
 origin lock, and `npm run smoke:live` **passes on both paths against the deployed site** — the
-shipped configuration, driven as a friend would.
+shipped configuration, driven as a friend would. ⚠ Its server-path assertion is only meaningful
+against a **warm** service, for the reason above.
 
 **MAKAM SELECTION SHIPPED 2026-08-07** (not on the ladder — an owner request taken before the style
 pass). Playback used to sound every note where the staff spells it, which is the written skeleton
@@ -20,7 +37,7 @@ for hüseyni, the contrast the whole feature turns on. **Sound only: the engravi
 the training strips never move.** Audibly correct on **204/213** bundled scores
 ([METRICS.md](METRICS.md)); table, sources and the guessing rule in [mvp/makam.md](mvp/makam.md).
 
-**THE STYLE PASS IS DONE, 2026-08-07 — BUILT, GREEN, NOT YET DEPLOYED.** The harness is now
+**THE STYLE PASS IS DONE, 2026-08-07 — AND LIVE SINCE 2026-08-08.** The harness is now
 **KomaVision**, in **Turkish**, on warm paper: upload is the hero (drag, drop or paste), the
 transport keeps the controls a musician touches, the rest fold into a collapsed **Gelişmiş**. ⚠ **Three of them came back up on 2026-08-08** (owner): transposition, *porte değişmesin* and the accidental mode are in the transport bar, because a ney player transposing a score is using the app as intended and should not have to open "geliştirici ayarları" to do it. The transposition list is now in **komas**, named by scale degree where one lands ("4 ses (22 koma)"), and the accidental control is *arıza işaretleri*, which is what it is called.
 Slicing, decode, the fallback and the origin lock did not move. Underneath it, the load-bearing
@@ -78,17 +95,15 @@ bracket-vs-arc choice is a per-piece coin and the first version read 0 on a brac
 first and last bar are **exempt** from the "short" warning (pickup, closing bar), so a triplet made
 in bar 1 shows no badge — which reads exactly like a broken indicator.
 
-**The next action is the REDEPLOY** — one build carrying makam selection, the style pass and the
-editor (slice 1 + the palette + insert + the tuplet tool + the off-meter mark, steps 1–8). Nothing
-on the live site has moved since 2026-08-06.
-⚠ **Re-run `smoke:build` first**: the last green one (2026-08-08, both paths, `9/26/399/26`) was
-taken *before* the palette's follow-up fixes and steps 5–8. Those are CSS, markup, one seek, one
-insert path, one duration edit and one overlay badge — but "what ships was never what was tested" is
-the exact shape of the two bugs that cost W9 a day ([DECISIONS.md](DECISIONS.md)). After it,
-**editor step 9 — delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
-references), the last item on the editor's list. ⚠ It needs one thing solved first: `smoke:editor`
-reads the document by clicking `#save-json`, so deleting the button removes the check's only way to
-see what an edit did. TWO tracks run in
+**The next action is EDITOR STEP 9 — delete `Save JSON`** (and its two `app-smoke` checks and the
+`PIPELINE.md` references), the last item on the editor's list. ⚠ It needs one thing solved first:
+`smoke:editor` reads the document by clicking `#save-json`, so deleting the button removes the
+check's only way to see what an edit did.
+
+⚠ **Weigh the cold-start finding above against it before starting.** Step 9 is a deletion; the
+cold-start fallback is the deployed app not doing the one thing the server was built for, on what may
+be a friend's most common upload. Neither is urgent enough to skip a decision — but the second is
+about to be seen by the two friends W10 exists for. TWO tracks run in
 parallel, as re-scoped on 2026-08-05:
 
 | | |
@@ -114,6 +129,8 @@ moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is 
   ⚠ **It is SLOWER than the owner's own browser (0.66×), plus a 10.6 s cold start** — **exactly what
   [mvp/deploy.md](mvp/deploy.md) predicted and what the release was chosen on**: the win is a
   friend's laptop staying cool, not speed. The free tier still covers ~4× more than 50 users need.
+  ⚠ **And the cold start is not paid as 10.6 s of waiting — it is paid by losing the server path for
+  that page entirely** (2026-08-08, top of this file).
   ⚠ **Two things are OWED.** A genuine cold start after real idle — the 2026-08-06 attempt FAILED,
   hitting a warm instance (`uptimeS` 315), so it needs container-start timestamps from the logs. And
   one controlled read of `--cpu-boost`, which across two revisions has **not** beaten the 9.5 s it
@@ -209,19 +226,20 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-4. **✅ THE STYLE PASS IS DONE (2026-08-07), and ⬅ THE REDEPLOY IS THE NEXT ACTION** — it now
-   carries the editor as well (steps 1–5), by the owner's call on 2026-08-08 to build first and
-   deploy once. Scope of the style pass itself held:
-   presentation only. Every check passes on the built artifact — `npm test`, `gate:browser` 27/28,
-   `smoke:app`, `smoke:page`, and **`smoke:build` on both paths with identical scores**
-   (`9/26/399/26` server vs fallback). What remains is one command pair from
-   [mvp/hosting-setup.md](mvp/hosting-setup.md) ("Shipping a change afterwards") — a **rebuild with
-   BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
+4. **✅ THE STYLE PASS IS DONE (2026-08-07) AND DEPLOYED (2026-08-08)** — in one build with makam
+   selection and the editor, by the owner's call to build first and deploy once. Scope of the style
+   pass itself held: presentation only. `smoke:build` came out `9/26/399/26` on both paths,
+   **identical to the pre-editor run**, and `smoke:live` passes warm.
    ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
    reach the live decode server; on :5174 they fall back to the laptop.
-5. **THE EDITOR REWORK — steps 1–8 AND step 10 are DONE (slice 1 on 2026-08-07; the palette, its
-   Çal/Dur, insert-on-empty-space, the tuplet tool, the off-meter bar mark and the **deletion of the
-   per-measure modal** on 2026-08-08); ⬅ step 9, deleting `Save JSON`, is all that is left.**
+   ⚠ The redeploy recipe has one trap worth keeping: the `dist/` that `smoke:build` leaves behind is
+   baked with `localhost:8080`, so the artifact that ships must be a **second** build with both real
+   env vars.
+5. **THE EDITOR REWORK — steps 1–8 AND step 10 are DONE AND DEPLOYED (slice 1 on 2026-08-07; the
+   palette, its Çal/Dur, insert-on-empty-space, the tuplet tool, the off-meter bar mark and the
+   **deletion of the per-measure modal** on 2026-08-08); ⬅ step 9, deleting `Save JSON`, is all that
+   is left.** ⚠ Steps 1–8 are now checked on the **deployed production bundle** as well as on dev —
+   worth keeping up, because `smoke:editor` cannot see that build ([METRICS.md](METRICS.md)).
    ⚠ **The modal was deleted out of order, at the owner's request.** It took four things with it;
    **two came back into the palette the same day** (owner's call): an **Es row of six rest values**
    — arm one and click blank staff, or click a note to turn it into a rest, and a note value on a
@@ -320,6 +338,11 @@ both reference-path only and both fine under Python-ORT int8.
 
 ## Open risks and non-claims
 
+- **A cold container costs the server path, not 10.6 s** (measured 2026-08-08, see "Now"). The
+  in-browser fallback makes this invisible rather than harmless: the page is still read correctly, so
+  nothing looks broken, and the only evidence is `data-where` and a friend's warm laptop. ⚠ It also
+  means **`smoke:live`'s server assertion is warm-only** — ping `/health`, wait for it to answer, then
+  run it, or it fails on a truth about the server rather than about the deploy.
 - **Real-val orders candidates; it does not predict exam performance.** Measured gap: 28pp.
 - **The AEU headline is a per-class mean and is fragile to low-n classes.** A 3-gold class swung it
   ~11pp in Round 1; a 14-gold class swung it 4pp in Round 2 and was the entire reason that round

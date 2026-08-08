@@ -3,7 +3,7 @@
 purpose: the owner's walkthrough for the two accounts W9 still needs (Hugging Face for the weights, Netlify for the app), from "no account" to "a link a friend can open"
 audience: the project owner (basic English, same style as OVERVIEW.md)
 
-updated: 2026-08-06
+updated: 2026-08-08
 
 > ✅ **This was all done on 2026-08-06** — the app is at **<https://komavision.netlify.app>**, the
 > weights at **`Beyaban/omr-weights`**. The page is kept as the record of how, and as the recipe for
@@ -241,8 +241,14 @@ Open the Netlify address in a browser and upload a page of sheet music. Then che
 
 1. It says **"read on the server"** at the end, not "read on your machine". If it says the second
    one, the app could not reach Cloud Run — most likely step 9 has a typo in the address.
-2. It finishes. A page takes **35–65 seconds** depending on how many lines of music are on it, plus
-   about 10 seconds extra if it is the first upload in a while and the server was asleep.
+   ⚠ **On the first upload after a quiet spell it will say "read on your machine", and nothing is
+   broken.** The server takes ~10 seconds to wake and honestly says "not ready yet" until it has; the
+   app does not wait, it just reads the page here instead. Upload a second page and it will say "on
+   the server". If you want the first one to go to the server, open the page, wait ten seconds, then
+   upload. (Whether the app *should* wait is an open call — [latency.md](latency.md), option 1.)
+2. It finishes. A page takes **35–65 seconds** depending on how many lines of music are on it. The
+   first upload after idle is the one read on your own machine, which is a similar wait but also
+   downloads the 211 MB of model files once.
 
 And re-check the machine-run version, which tests both paths at once:
 

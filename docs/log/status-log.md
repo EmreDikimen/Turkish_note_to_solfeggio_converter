@@ -7,7 +7,58 @@ updated: 2026-08-08
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-08 (latest) — gamzedeyim deva is the default sample; aldanma leaves the dropdown
+## 2026-08-08 (latest) — the redeploy: makam selection, the style pass and the editor go live
+
+One build carrying everything since 2026-08-06: **makam selection**, **the style pass** and **the
+editor, steps 1–8 + 10**. Netlify deploy `6a7713bc1830de6894e19afe` replaces
+`6a74d71557de4c1a2264d10e`; the CDN moved **4 files**. <https://komavision.netlify.app>.
+
+**Nothing server-side was touched, and that was checked rather than assumed.** `git diff
+4fd91c9..HEAD` reaches nothing under `apps/server/` or `apps/web/src/omr/`, and `apps/server/` has no
+dependency on `packages/core` (where the diff actually landed) — so no Cloud Run rebuild and no Hub
+re-upload were needed. A frontend-only redeploy is two commands, and knowing *that* is what kept it
+to two.
+
+Pre-flight, in this order: `typecheck`, `npm test`, then `smoke:build` against a local `dev:server`
+(the live server refuses a preview origin by design). It came out **9/26/399/26 on both paths —
+identical to the 2026-08-06 run**, which is the reassurance STATUS asked for: the palette's follow-up
+fixes and steps 5–8 changed nothing the built artifact reads. ⚠ The `dist/` that `smoke:build` leaves
+behind is baked with `localhost:8080` and a throwaway weights port, so the shipping artifact is a
+*second* build with both real URLs — verified by grepping the bundle for them, and for the absence of
+`localhost`.
+
+**The editor was driven on the deployed bundle, not just on dev.** `smoke:editor` uses Vite's
+`createServer` and `smoke:live` only exercises decode, so steps 1–8 had never run in a production
+build on the real host — the exact "what ships was never what was tested" shape that cost W9 a day.
+A throwaway Playwright pass (scratchpad, nothing added to `package.json`, because `#save-json` is
+about to be deleted) found it all working: 27 tools arming, glyphs inside their buttons against the
+real Bravura, select/delete/undo, ghost-previewed insert, the palette's Çal and its playhead.
+
+### ⛔ And it found a real one: a cold container does not delay the server path, it CANCELS it
+
+`smoke:live`'s **first** run failed — `data-where=local-fallback` where `server` was wanted, with a
+503 in the console. Not a deploy fault and not flakiness to retry past:
+
+- Cloud Run routes traffic as soon as the container **listens**, which `apps/server/src/index.ts`
+  does before loading its graphs (deliberate: `/health` then answers `ready: false`, and a 503 is
+  reserved for a load that genuinely failed).
+- So a `/decode` arriving in that ~9.5 s window gets `503 model still loading`.
+- `remote.ts` treats **any** error as "fall back", with no retry — while holding a 180 s timeout
+  budget it would happily have spent waiting 9 s.
+
+Consequence: **a friend's first upload after any idle period is read on their own machine** and pulls
+211 MB of weights, silently. At n=2 friends uploading occasionally, that is not the edge case — it is
+close to the common case, and it undoes the one thing the server was built for (a cool laptop). The
+docs said a cold start costs "about 10 seconds extra"; that was never measured and is wrong.
+
+Corrected in [../METRICS.md](../METRICS.md), [../mvp/latency.md](../mvp/latency.md) (option 1 is now
+a correctness fix, and needs a client that retries a `ready: false` 503) and
+[../mvp/hosting-setup.md](../mvp/hosting-setup.md) (the owner will see "read on your machine" on a
+first upload and should know nothing is broken). **Left unbuilt on purpose** — the current behaviour
+is what `index.ts` and `remote.ts` were each deliberately designed to do, so changing the contract
+between them is an owner call, not a tidy-up. Re-run warm, `smoke:live` passes on both paths.
+
+## 2026-08-08 — gamzedeyim deva is the default sample; aldanma leaves the dropdown
 
 Owner: the page should open on **gamzedeyim deva** (uşşak · sofyan), and **aldanma dünya** should
 not be offered at all. The Sample dropdown is now two entries — gamzedeyim first, so it is what

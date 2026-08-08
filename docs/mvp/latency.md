@@ -3,7 +3,7 @@
 purpose: the measured options for cutting the time a friend waits for a page, and the honest cost of each; owns the latency decisions the deployed server raised
 audience: whoever picks up "make it faster" — the numbers here are measured, not estimated
 
-updated: 2026-08-06
+updated: 2026-08-08
 
 > Deployment, hosting and the bill: [deploy.md](deploy.md). Every number below also lives in
 > [../METRICS.md](../METRICS.md). Current state and next action: [../STATUS.md](../STATUS.md).
@@ -29,6 +29,15 @@ Measured on the deployed service (Cloud Run, europe-west3, 1 vCPU), 2026-08-06.
 |---|---|---|---|
 | 16 strips | 31 s | **~35 s** | ~46 s |
 | 26 strips | 51 s | **~55 s** | ~66 s |
+
+⚠ **The "total (cold)" column is wrong about what a user experiences, and 2026-08-08 measured it.**
+It assumes the upload *waits* out the boot. It does not: the container accepts connections before its
+graphs are loaded, so `/decode` answers a truthful `503 model still loading`, and `remote.ts` routes
+**any** failure to the browser without retrying. A cold start therefore does not add ~11 s — it moves
+the entire page onto the friend's own machine, plus a 211 MB weights download the first time. Those
+numbers are the fallback's, not the server's. **This is the strongest argument for option 1 below**,
+and it makes option 1 a correctness fix rather than a polish item. Numbers:
+[../METRICS.md](../METRICS.md).
 
 ⚠ For comparison, the same 26-strip page reads in **34 s in the owner's own browser** on an M4. The
 server is slower, deliberately — the release was chosen on thermals, not speed
@@ -56,7 +65,7 @@ so one page can be split across several instances the same way three pages were.
 
 | # | Option | Wins | Costs |
 |---|---|---|---|
-| 1 | **Warm the server when the app opens** | Removes the 10.6 s cold start from most real uploads | Hides the boot, does not shorten decode; useless if the user uploads immediately; `/health` is not rate-limited, so crawlers would wake containers |
+| 1 | **Warm the server when the app opens** | **Recovers the server path itself on the first upload after idle, not merely 10.6 s** — see the warning above; a cold container currently sends the whole page to the browser. A `/health` ping while the user is still picking a file costs nothing | Hides the boot, does not shorten decode; useless if the user uploads immediately; `/health` is not rate-limited, so crawlers would wake containers. ⚠ Not sufficient alone — a user who uploads within ~9 s still 503s, so pair it with a client that retries a `ready: false` 503 instead of falling back on it |
 | 2 | **`--cpu-boost` on deploy** | Targets the 9.5 s model load — the big half of the cold start. One flag, no code | Unmeasured for us; Google says "up to", so the gain is not guaranteed. Slightly higher startup billing |
 | 3 | **Split a page across instances** | **The real win: a 26-strip page ~52 s → ~13 s at four chunks.** Measured basis above | Five separate risks — see below. This is a real piece of work, not a flag |
 | 4 | **`--cpu 2`** | ~1.4× on the decode itself, no code | Sub-linear (on the M4, 2→4 threads bought only 1.12× for 1.74× the CPU); doubles vCPU-seconds; largely redundant with 3 |
@@ -73,6 +82,12 @@ Option 1 was passed over despite being cheap — it is client code, and it buys 
 does. **The distinction that decided it: options 1 and 2 remove the 10.6 s cold start, not the
 31–51 s of decode**, so neither changes the wait a friend feels on a typical page. Only option 3
 does, and it is deferred until someone says the wait bothers them.
+
+⚠ **That reasoning rests on a premise measured false on 2026-08-08 — recorded here rather than
+rewritten, because the decision was the owner's.** Option 1 was priced as buying ~10.6 s of waiting.
+It is not: a cold container makes the app read the whole page **on the friend's machine**, so option 1
+(with a `ready: false` retry) is what buys the server path at all on a first upload. The "it only
+removes the cold start" argument still holds for option 2. Worth re-deciding, not worth assuming.
 
 ### What option 3 actually requires
 

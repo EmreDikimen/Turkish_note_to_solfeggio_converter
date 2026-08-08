@@ -1,10 +1,18 @@
 /**
  * Design tokens — the whole visual vocabulary of KomaVision, in one place.
  *
- * The direction is warm editorial: paper rather than screen, ink rather than grey, one warm
- * accent and nothing else. The reasoning is that the engraved score IS the product, so the chrome
- * around it should sit BELOW it in visual weight — hairline rules instead of shadows, small
- * control text, colour spent only where it means something.
+ * The direction is İZNİK: the white ground and turquoise of Turkish çini, as paper and one accent.
+ * Cool ivory rather than screen-white, ink rather than grey, and nothing else coloured. The
+ * reasoning is that the engraved score IS the product, so the chrome around it should sit BELOW it
+ * in visual weight — hairline rules instead of shadows, small control text, colour spent only where
+ * it means something.
+ *
+ * It replaced a warm cream-and-terracotta palette on 2026-08-08 (owner: it read as somebody else's
+ * website). Two things the turquoise buys beyond not being that: it belongs to the repertoire the
+ * app is for, and the editor's overlays — selection, hover, the playhead, the insert ghost — were
+ * ALREADY teal, so the accent now agrees with them instead of arguing. Those overlays stay their
+ * brighter `#14b8a6`: they are drawn over black notation and have to out-shout it, which a token
+ * meant for buttons on paper cannot do.
  *
  * Nothing here is a component. Only `:root` custom properties, so the diagnostic pages
  * (slices.html, omr-gate.html, …) can adopt the palette later by importing this file alone.
@@ -12,41 +20,47 @@
 
 :root {
   /* ── Paper ──────────────────────────────────────────────────────────────
-     Three surfaces, all warm. `raised` is where the score lives (the lightest
-     thing on the page, so the notation reads as the sheet it is); `sunken` is
-     for wells and the collapsed developer panel — things that recede. */
-  --paper: #fbf7f0;
-  --paper-raised: #fffdf9;
-  --paper-sunken: #f3ece1;
+     Three surfaces, all faintly cool — çini's white ground, not screen white.
+     `raised` is where the score lives and IS pure white, so the notation reads
+     as the sheet it is and nothing on the page is lighter than the music;
+     `sunken` is for wells and the collapsed developer panel — things that
+     recede. */
+  --paper: #f6f8f7;
+  --paper-raised: #ffffff;
+  --paper-sunken: #e9edeb;
 
   /* ── Ink ────────────────────────────────────────────────────────────────
-     Warm near-black, never #000: pure black against warm paper reads as a
-     hole. `soft` is body copy, `faint` is for captions and disabled text. */
-  --ink: #1a1614;
-  --ink-soft: #4a423c;
-  --ink-faint: #857a70;
+     Near-black with a trace of the accent's green in it, never #000: pure
+     black against a tinted ground reads as a hole. `soft` is body copy,
+     `faint` is for captions and disabled text. */
+  --ink: #13201e;
+  --ink-soft: #3d4a47;
+  --ink-faint: #74827e;
 
   /* ── Rules ──────────────────────────────────────────────────────────────
      Grouping is done with hairlines, not shadows. `strong` is for a border
      that has to be seen (inputs, the dropzone at rest). */
-  --rule: #e3d9c9;
-  --rule-strong: #cdbfa9;
+  --rule: #d7dedb;
+  --rule-strong: #b6c2be;
 
   /* ── The one accent ─────────────────────────────────────────────────────
-     Terracotta. Used ONLY on: the primary button, focus rings, the active
+     İznik turquoise. Used ONLY on: the primary button, focus rings, the active
      segment of a toggle. Everywhere else is ink on paper. If a third thing
-     wants to be terracotta, the answer is that it does not. */
-  --accent: #b4472c;
-  --accent-hover: #9c3b23;
-  --accent-soft: #f2e1da;
-  --accent-on: #fff8f4;
+     wants to be turquoise, the answer is that it does not.
+     ⚠ Dark enough to carry white text (≈4.8:1) — the primary button is the one
+     place this palette has to pass a contrast bar, so do not lighten it. */
+  --accent: #0f766e;
+  --accent-hover: #0b5d57;
+  --accent-soft: #d9ebe8;
+  --accent-on: #f2fbf9;
 
   /* ── Semantic ───────────────────────────────────────────────────────────
      Muted on purpose, so a warning never out-shouts the accent. `--danger` is
-     brick rather than crimson for the same reason. */
-  --ok: #4f6f52;
-  --warn: #a2681b;
-  --danger: #8e2f1f;
+     brick rather than crimson for the same reason, and it is the one warm
+     thing on the page — which is exactly why an error is impossible to miss. */
+  --ok: #3f6f52;
+  --warn: #9a6a17;
+  --danger: #a33a2a;
   --highlight: #e8c97a; /* the selected strip's crop box on the sheet */
 
   /* ── Type ───────────────────────────────────────────────────────────────
@@ -85,9 +99,11 @@
   --radius: 6px;
   --radius-lg: 10px;
 
-  --shadow-card: 0 1px 2px rgba(60, 40, 20, 0.06), 0 8px 24px rgba(60, 40, 20, 0.07);
-  --shadow-modal: 0 12px 48px rgba(40, 26, 14, 0.28);
-  --focus-ring: 0 0 0 3px rgba(180, 71, 44, 0.28);
+  /* Shadows are tinted with the ink, not with black — a neutral grey shadow on
+     a tinted ground is the thing that makes a palette look printed-on. */
+  --shadow-card: 0 1px 2px rgba(16, 42, 39, 0.06), 0 8px 24px rgba(16, 42, 39, 0.08);
+  --shadow-modal: 0 12px 48px rgba(10, 30, 28, 0.3);
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.3);
 
   --page-max: 1100px; /* unchanged from the harness — the sheet is engraved to fit it */
   --measure: 66ch; /* prose never wider than this */

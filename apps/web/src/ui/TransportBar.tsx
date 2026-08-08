@@ -1,16 +1,21 @@
 /**
- * The six controls a musician actually touches while listening: play, stop, tempo, metronome,
- * usul, makam.
+ * The controls a musician actually touches, in two clusters separated by a rule.
  *
- * Everything else the app can do lives in the score card's head (what is on screen) or the
- * Gelişmiş panel (developer settings). This bar is deliberately short — it is the only chrome
- * between the upload and the score.
+ *  - **Listening:** play, stop, tempo, metronome, usul, makam.
+ *  - **Reading:** transposition, keep-the-staff, and which accidentals the staff prints.
+ *
+ * The reading three moved up from `Gelişmiş` on 2026-08-08 (owner): they change what a player sees
+ * and hears, which is not a developer setting — a ney player transposing a score is using the app
+ * exactly as intended, and having to open a panel called "geliştirici ayarları" to do it said the
+ * opposite. What stays down there is genuinely for the project: sample/JSON loading, the strip
+ * exporter, the repeat preview.
  *
  * `#play` carries `data-play-state` and `#stop` its id because the deploy checks drive them; the
  * LABELS are copy and are free to change. See apps/web/src/ui/status.ts for the reasoning.
  */
 
 import { USULS, type MakamOption } from "@turkish-omr/core";
+import type { AccidentalMode } from "../SheetView";
 import { TR } from "./strings";
 
 export function TransportBar({
@@ -28,6 +33,13 @@ export function TransportBar({
   makamSlug,
   onMakam,
   makamOptions,
+  transpose,
+  transposeOptions,
+  onTranspose,
+  keepSheet,
+  onKeepSheet,
+  accidentalMode,
+  onAccidentalMode,
 }: {
   canPlay: boolean;
   playState: "stopped" | "playing" | "paused";
@@ -44,6 +56,15 @@ export function TransportBar({
   makamSlug: string;
   onMakam: (slug: string) => void;
   makamOptions: readonly MakamOption[];
+  /** Transposition in commas. 0 is the score as written. */
+  transpose: number;
+  transposeOptions: readonly (readonly [number, string])[];
+  onTranspose: (commas: number) => void;
+  /** Transposing instruments: move the SOUND, leave the staff where it is. */
+  keepSheet: boolean;
+  onKeepSheet: (v: boolean) => void;
+  accidentalMode: AccidentalMode;
+  onAccidentalMode: (m: AccidentalMode) => void;
 }) {
   return (
     <div className="kv-transport">
@@ -139,6 +160,43 @@ export function TransportBar({
           ))}
         </select>
       </label>
+
+      {/* The reading cluster, wrapped as a GROUP so the three stay together when the bar wraps —
+          they read as one thought, and interleaving them with the listening controls on a narrow
+          window would lose that. ⚠ A vertical rule between the clusters was tried and removed: when
+          the row wraps it is left dangling at the end of a line, which reads as a mistake. */}
+      <div className="kv-transport__group kv-transport__group--reading">
+        <label className="kv-field" title={TR.transport.transposeTitle}>
+          <span>{TR.transport.transpose}</span>
+          <select value={transpose} onChange={(e) => onTranspose(Number(e.target.value))}>
+            {transposeOptions.map(([commas, label]) => (
+              <option key={commas} value={commas}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {/* ⚠ NOT disabled at transpose 0, though it does nothing there: a player ticks "keep the
+            staff" and THEN picks the interval, and a checkbox that only wakes up afterwards makes
+            that order impossible. */}
+        <label className="kv-field" title={TR.transport.keepSheetTitle}>
+          <input type="checkbox" checked={keepSheet} onChange={(e) => onKeepSheet(e.target.checked)} />
+          <span>{TR.transport.keepSheet}</span>
+        </label>
+
+        <label className="kv-field" title={TR.transport.accidentalsTitle}>
+          <span>{TR.transport.accidentals}</span>
+          <select
+            value={accidentalMode}
+            onChange={(e) => onAccidentalMode(e.target.value as AccidentalMode)}
+          >
+            <option value="every">{TR.transport.accidentalsEvery}</option>
+            <option value="keysig">{TR.transport.accidentalsKeysig}</option>
+            <option value="measure">{TR.transport.accidentalsMeasure}</option>
+          </select>
+        </label>
+      </div>
     </div>
   );
 }

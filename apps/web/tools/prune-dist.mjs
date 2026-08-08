@@ -23,8 +23,9 @@ const DROP = [
   "models", // 332 MB: the int8 graphs, gate.json and the gate's 14 test strips
   "probe", // opencv.js / logprob reference dumps, read only by the harness pages
   // ~20 MB / 220 files: the render automation's corpus, loaded only via `?score=…` by
-  // tools/render/render.ts. The app's own Sample dropdown reads three files at the public root
-  // (sample.json, safalar-getirdiniz.json, gamzedeyim-deva.json), which stay.
+  // tools/render/render.ts. The files at the public ROOT stay: gamzedeyim-deva.json and
+  // safalar-getirdiniz.json are the Sample dropdown, and sample.json is still driven by the manual
+  // checks' `?score=/sample.json` even though it left the dropdown on 2026-08-08.
   "scores",
 ];
 

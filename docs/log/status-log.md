@@ -7,7 +7,307 @@ updated: 2026-08-08
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-08 (latest) — the armed palette, and the glyph that stole its neighbour's clicks
+## 2026-08-08 (latest) — gamzedeyim deva is the default sample; aldanma leaves the dropdown
+
+Owner: the page should open on **gamzedeyim deva** (uşşak · sofyan), and **aldanma dünya** should
+not be offered at all. The Sample dropdown is now two entries — gamzedeyim first, so it is what
+loads on startup, then safalar getirdiniz.
+
+⚠ **`apps/web/public/sample.json` (aldanma) is still on disk, deliberately.** It is out of the UI,
+not out of the repo: `npm test`'s round-trip corpus reads it **by name**
+(`tools/render/stitch-test.ts`), and the manual checks drive it through `?score=/sample.json`.
+Deleting the file would break the test corpus for no gain — it is gitignored anyway (SymbTr-derived,
+not redistributed).
+
+⚠ **`smoke:editor` drives whatever loads first, so this changed what it tests** — from a 274-event
+acem düyek score to a 541-event uşşak sofyan one. It passes unchanged, which is worth noting: every
+target it picks (a note carrying an accidental, a note in the last system, three equal plain notes
+in an interior bar, a gap between two noteheads) is *searched for* in the loaded document rather
+than hardcoded, so swapping the sample exercised that and found nothing brittle.
+
+## 2026-08-08 — three controls come up out of Gelişmiş, and the transposition list speaks komas
+
+**Owner: transposition, *porte değişmesin* and the accidental mode do not belong in a drawer
+labelled "geliştirici ayarları".** They are now in the **transport bar**, as a second cluster
+beside the listening controls. The reasoning is the same one that put the style pass in front of
+W10: a ney player transposing a score is using the app exactly as intended, and burying that under
+a developer panel says the opposite. What stays in `Gelişmiş` is genuinely for the project —
+sample/JSON loading, the strip exporter, the slice inspector, the repeat preview.
+
+**Two renames, both to what the thing is actually called:** *Aktarım* → **Transpozisyon**, and
+*Değiştirme işaretleri* → **Arıza işaretleri**.
+
+**The transposition list is now in komas, named by scale degree where one lands.** It used to read
+"−Dörtlü (−22)"; it now reads **"−4 ses (22 koma)"**. The unit is the koma because that is what the
+app is about and what `transposeDoc` and `?transpose=` take; the degree goes first because a player
+thinks "up a fourth". The comma counts are the çargâh scale in AEU — 9 + 9 + 4 + 9 + 9 + 9 + 4 = 53
+— so 2 ses = 9, 3 ses = 18, 4 ses = 22, 5 ses = 31, 6 ses = 40, 7 ses = 49, 8 ses = 53. Below a
+degree the label is plain commas (1, 4, 5, 8 — the four AEU accidental sizes), which is the step
+size that actually gets used. Eleven magnitudes each way instead of seven, and regular rather than
+curated.
+
+Two small decisions while placing them, both visible in the screenshot and both reversals of a
+first attempt:
+
+- **A vertical rule between the two clusters was tried and removed.** The bar wraps, and a divider
+  left dangling at the end of a line reads as a mistake. The reading three are wrapped in their own
+  flex group instead, so they stay together and never interleave with the listening controls.
+- **"Porte değişmesin" is NOT disabled at transposition 0**, though it does nothing there. A player
+  ticks "keep the staff" and *then* picks the interval; a checkbox that only wakes up afterwards
+  makes that order impossible.
+
+Green: `typecheck`, `npm test`, `smoke:editor`, `smoke:app`, `smoke:page`. No check drove any of the
+three controls, so nothing needed rewiring — which is the `data-*` contract paying off again.
+
+## 2026-08-08 — rests and the numbered koma signs move into the palette
+
+**Owner, straight after the modal was deleted: put rests and the other koma signs in the palette.**
+Two of the four capabilities the deletion cost are therefore back the same day; only lyric editing
+and exact koma/Hz entry are still gone ([../mvp/editor.md](../mvp/editor.md)).
+
+**Rests are the SAME tool as a note value, with `rest: true`** — not a new kind. They insert and
+re-value through exactly the same paths, so there is no second insert path to keep in step and
+"arm a thing, click a target" stays true of the whole palette. An **Es** row of six rest glyphs sits
+under the note values; arm one and click blank staff to insert a rest, or click a note to turn it
+into one. Two new core primitives: `toRest`, which clears the **whole** pitch side (koma, both
+names, `freqHz`, and the lyric — nothing sings on a rest), and `toNote`, its inverse.
+
+⚠ **`toNote` needs a spelling handed to it, because a rest has none to keep** — so the editor takes
+it from the **click's height**, the same mapping the insert ghost uses. That makes "the model read a
+rest where a note belongs" a one-click fix instead of a delete-and-reinsert. The rest preview
+deliberately does NOT follow the pointer up and down: a rest goes mid-staff, and a ghost that
+tracked the pointer would promise a pitch the insert then ignores.
+
+**All thirteen alterations are now in the accidental row**, not seven. The palette had been carrying
+the AEU signs only, on the argument that the numbered ±2/±3 would need text labels and make the row
+unreadable — **that argument did not survive checking**: every one of them has its own Bravura sign
+(`accidental2CommaSharp` and friends), so they read as signs like the rest. ±8 (büyük mücennep) had
+been missing from the palette too, which was simply a gap.
+
+⚠ **A ±2/±3 is stored exactly and DRAWN SNAPPED.** `toAeuAlter` prints the nearest standard sign,
+because that is what a Turkish edition prints — so those two tools move the sound exactly and the
+printed sign only approximately. The tooltip names the comma count so the difference is visible
+before you click, and `smoke:editor` asserts on the stored comma (+2) rather than on the glyph.
+
+The palette is 27 armable tools now, and `smoke:editor` still arms **every one** and measures
+**every glyph's ink** against the real font — the check that exists because a Bravura glyph paints
+outside its em box and one tool's ink once stole its neighbour's clicks. Both passed first try with
+the twenty new buttons, including the two widest signs in the set (the numbered sharps, ~45 units
+wide against 23–34 for the others).
+
+Green: `typecheck`, `npm test` (217/217 both modes + new `toRest`/`toNote` cases), `smoke:editor`,
+`smoke:app`, `smoke:page`.
+
+## 2026-08-08 — the per-measure modal is deleted
+
+**Editor step 10, taken out of order at the owner's request** (step 9, `Save JSON`, is still owed).
+`apps/web/src/MeasureEditModal.tsx` is gone, and `apps/web/src/AccidentalSelect.tsx` with it (both
+deleted, not moved) — the modal was that dropdown's only caller, and the palette's accidentals come from `ui/accidentals.ts`. With nothing armed, a
+click on blank staff now clears the selection; **no window can appear over the score any more.**
+Also gone: `onSaveMeasure` and the `editing` state in `App`, `onMeasureClick` in `SheetView`, the
+`measureModal` strings, and the modal-only CSS (`.kv-table`, `.kv-modal__panel--wide`).
+
+**Four capabilities went with it, and none has a replacement**, which is worth saying plainly
+because each existed this morning:
+
+| Gone | Was |
+|---|---|
+| Adding a **rest**, or turning a note into one | the row-type dropdown. Deleting a rest still works; only creating one is gone |
+| Editing a **lyric syllable** | the `Hece` column — the app's only lyric editor |
+| Exact **koma / Hz** entry | the Gelişmiş tab's two numeric fields |
+| The numbered **±2/±3/±8** alterations | `AccidentalSelect`'s dropdown; the palette carries the AEU signs only |
+
+The judgement on each is in [../mvp/editor.md](../mvp/editor.md); the rest is the likeliest to come
+back, as a tool in the palette's duration row.
+
+⚠ **`isMeasureValid` (core) now has no consumer.** It was the modal's Save gate, and the editor's
+off-meter mark deliberately does not use it — the length you would naturally hand it,
+`Measure.lengthBeats`, is computed from the bar's own contents, so the answer is true by
+construction. Kept, with that written into its docstring, because the predicate is sound with a
+reference length from outside the bar.
+
+⚠ **A flake in `smoke:editor` surfaced on this run and is now fixed properly.** "A bar-1 target
+plays from the top of the sheet" read the playhead 300 ms after the FIRST Çal of the run — which is
+also when the WebAudio context starts, and in headless Chromium that can take over a second. The
+playhead is hidden until the clock returns a position, so the check read "hidden" and looked exactly
+like a broken seek. It now polls for the playhead instead of sleeping. Not caused by the deletion,
+but found by it.
+
+Green after the deletion: `typecheck`, `npm test` (217/217 both modes), `smoke:editor`, `smoke:app`,
+`smoke:page`.
+
+## 2026-08-08 — the tuplet tool, and the bar that says it does not add up
+
+**Editor steps 7 and 8 are built and green** ([../mvp/editor.md](../mvp/editor.md), build notes in
+[../mvp/editor-built.md](../mvp/editor-built.md)). They shipped together on purpose: applying a
+triplet turns 3 × 1/8 into 3 × 1/12, so it leaves a short bar **every single time**, and step 8 is
+the only thing on screen that says so.
+
+**Step 7 — one tool, both directions.** Arm ÜÇLEME, click a note and the note two along: the three
+become a triplet. Click **any member** of an existing one and it comes apart again (owner's call —
+a note already inside a triplet cannot mean "start a new run", so the removal needs no second
+click). Dimming starts **the moment the tool is armed**, not after the first click: anything that
+cannot begin a legal run is pale and `pointer-events: none`, so the page refuses it instead of
+swallowing a click that does nothing.
+
+**The rule that took the thinking: a member must be a PLAIN `1/2^k` value.** Not dotted, not a
+tie-split, not already a tuplet. This is arithmetic, not fastidiousness — three equal members at ×⅔
+sum to `2v`, and a group only closes when its sum lands on a plain value, so `2v` is plain exactly
+when `v` is. Three dotted 8ths would sum to 9/16, never close, and draw the *incomplete-group*
+bracket — which exists to flag a MODEL mistake. Letting the editor produce that mark by hand would
+have quietly destroyed its meaning. The same reasoning is why only a **closed** three-member group
+can be removed: `tupletGroupsIn` also yields the model's unclosed runs, and ×³⁄₂ on one of those
+invents a rhythm nobody read.
+
+**Where the code went, and why it is split in two.** "Which notes" lives in `tools/render/rhythm.ts`
+(`plainTupletBase`, `tupletRunFrom`, `closedTupletAt`), beside the functions that draw the bracket
+and write the `\tup3` label — a second copy in the app is exactly the pixels-vs-labels divergence
+the one-code-path rule exists to prevent. The rewrite is one core primitive, `scaleDurations`. Both
+existing rhythm functions are **untouched**: 217/217 label round-trips, both modes, so no strip and
+no label moved.
+
+⚠ **Nothing about a tuplet is stored**, so no attribute can prove one was made — `smoke:editor`
+counts the marks the **engraver drew**. The first version counted only the curved arc's italic "3"
+and read 0: the sample happened to draw VexFlow's bracket instead, and the style is a per-piece
+coin. It now counts both.
+
+**Step 8 — the off-meter mark.** A `+` / `−` badge at the bar's top-right in the edit overlay,
+against the **derived meter** (never `Measure.lengthBeats`, which is computed from the bar's own
+contents and is therefore true by construction). Three calls inside it: **edit mode only** (a friend
+opening a decoded page should not meet eight warnings before touching anything), **the first and
+last bar warn only when OVER** (a pickup and a closing bar are legitimately short), and **the
+modal's Save is no longer gated on it** — over- and under-full bars are ordinary, reachable states
+of the document now, so locking someone inside a modal over one would be wrong the same way a ✕ that
+refuses to work is wrong.
+
+⚠ That exemption is load-bearing for anyone writing a check, and it cost a debugging round here: a
+triplet made in **bar 1** produces no mark, which reads exactly like a broken indicator. The smoke
+check now picks its run from an **interior** bar.
+
+Green: `typecheck`, `npm test` (217/217 + 90/90 + the new tuplet unit cases), `smoke:editor`,
+`smoke:app`, `smoke:page`. The brief's step list is down to the two deletions — `Save JSON`, then
+`MeasureEditModal`.
+
+## 2026-08-08 — the interface is repainted İznik turquoise
+
+**Owner, on seeing the style pass: it looks like Claude's website.** Fair — the W9.6 direction was
+warm cream paper with a terracotta accent, which is a well-known house style and not ours. The
+palette is now **İznik**: the white ground and turquoise of Turkish çini. Cool ivory surfaces
+(`--paper #f6f8f7`, the score itself on pure white so nothing on the page is lighter than the
+music), near-black ink carrying a trace of the accent's green, and one accent at `#0f766e`.
+
+**Tokens only** — `apps/web/src/styles/tokens.css` plus one hardcoded modal backdrop that had been
+missed in `app.css`. No layout, no component, no copy and no check moved; the accent was already
+used exclusively through `var(--accent)`, which is what made this a ten-line change.
+
+Two things the turquoise buys beyond not being terracotta: it belongs to the repertoire the app is
+for, and **the editor's overlays were already teal** (selection, hover, the playhead, the insert
+ghost), so the accent now agrees with them instead of arguing. Those overlays keep their brighter
+`#14b8a6` on purpose: they are drawn over black notation and have to out-shout it, which a token
+sized for buttons on paper cannot do.
+
+⚠ **`--accent` may not be lightened.** The primary button is the one place this palette has to clear
+a contrast bar (white on `#0f766e` ≈ 4.8:1), and it is the only reason that particular teal was
+picked over a prettier lighter one.
+
+⚠ **The engraved SVG is untouched**, as it must be: its `#222` ink is training-strip pixels, not
+chrome.
+
+## 2026-08-08 — the palette inserts, and the bar absorbs it
+
+**Editor step 6 is built and green** ([../mvp/editor.md](../mvp/editor.md)). Arm a note value, click
+blank staff, and a note lands there: **pitch from the click's height**, duration from the tool. That
+completes the note-value row's meaning — until now arming 1/8 and clicking blank staff opened the
+old measure modal, which is not what a palette promises.
+
+**One new core primitive**, `insertInMeasure` — the mirror of `deleteEvent`: it splices into the
+bar, stamps that bar's own number on the new event, renumbers, and **checks no total**. The bar comes
+out over its length exactly as a delete leaves one short, because edits absorb and bar lines never
+move. Its companion `insertIndexIn` exists for an unobvious reason: `renumber` rebuilds every event,
+so the object just spliced in cannot be found again by identity, and the caller has to *ask* which
+index it ended up with in order to select it.
+
+**Three rules keep the splice honest**, and each was a way it could have gone quietly wrong:
+
+- **The position is resolved inside the target measure only.** `groupMeasures` starts a new measure
+  wherever the `bar` number CHANGES, so a note stamped bar 7 spliced outside bar 7's own run cuts one
+  bar into two on the page — bar lines moving, the one thing the absorb rule exists to prevent.
+- **A leading grace run belongs to the note that follows it**, so an insert before a note goes before
+  its graces too — but never past the measure's first event. When the run reaches the bar's head the
+  new note simply becomes the bar's first event.
+- **A doc with no `bar` numbers is run through `assignBars` first.** `groupMeasures` derives bars on
+  the fly and discards the copies, so stamping only the new event would leave one numbered event in
+  an unnumbered array. The app assigns bars at load; this makes the primitive safe standalone.
+
+**Two owner calls, taken before building.** A **ghost notehead** previews the insert (a teal oval,
+moved by mutating the element like the playhead — never state, because a preview that re-rendered the
+overlay per mouse-move is the cost that got the measure hover highlight removed in slice 1). And an
+inserted note takes the **key signature's** alteration for its letter, so it is born koma-flat under
+a koma-bemol signature and the engraver prints nothing on it; natural would have printed a ♮ nobody
+asked for.
+
+⚠ **A preview cannot check the mapping it shares.** The ghost and the insert come out of one
+function, so "they agree" proves self-consistency and nothing else — an origin off by a line would
+agree with itself while putting every note a third out. `smoke:editor` pins the origin against the
+**playhead** instead: it spans the staff symmetrically, so its vertical centre is the middle staff
+line, which in treble is **B4**. No constant of the test's own.
+
+⚠ **Two false trails while writing that check, both the same shape: `elementFromPoint` answers null
+off-screen**, which reads exactly like "the ghost is broken". The gap-finder now scrolls the sheet in
+first and treats a null hit as off-screen rather than as blank staff — and the playhead check scrolls
+to the **playhead**, not to the top of the sheet, because Çal starts at the last edited bar and the
+earlier section had left that at bar 31.
+
+Green: `typecheck`, `npm test` (18 new `insertInMeasure` checks), `smoke:editor`, `smoke:app`,
+`smoke:page`.
+
+## 2026-08-08 — Çal from the bar you just fixed
+
+**Editor step 5 is built and green** ([../mvp/editor.md](../mvp/editor.md)). The palette has its own
+Çal/Dur, and Çal plays from the **last edited bar**. The reason it is needed at all is easy to miss:
+in edit mode a click on the sheet selects or inserts, so `SheetView` binds its click-to-seek handler
+only when `!editMode` — entering edit mode silently removes the only way to hear one bar. This is
+what replaces it.
+
+**It cost almost nothing, because the pieces existed.** One core primitive (`measureOfEvent`, over
+the same `groupMeasures` the sheet and the modal use), one number in `App` (`lastEditMeasure`), and
+two buttons calling the existing `onSeekMs` / `onStop`. No new backend code and no second notion of
+where a bar starts — `Measure.startMs` is what non-edit-mode click-to-seek already hands to
+`onSeekMs`.
+
+**Three decisions, all owner-approved before building:**
+
+- **Çal always restarts from that bar**; pause/resume is not duplicated in the palette, because the
+  transport bar is still on screen in edit mode.
+- **An edit still stops playback.** editor.md's "rebuild the timeline and resume from the same
+  millisecond" constraint is therefore **not built**, and now says so in the brief rather than
+  reading as done. It is also self-consistent: Çal-from-last-edit exists *because* you stop, fix,
+  and press Çal. Picking it up later means firing on gesture end, which the pitch drag (an edit per
+  animation frame) does not currently signal.
+- **Undo/redo do not move the remembered bar**, unlike the selection, which they clear. The bar you
+  were working in is still the bar you want to hear.
+
+**The remembered value is a measure number, not an event index** — a delete renumbers every event.
+⚠ And it can outrun the score: deleting a bar's last note removes that measure, so the lookup falls
+back to the top rather than throwing.
+
+**The check that matters is on the playhead, not on the attribute.** `data-play-from` says which bar
+Çal *aims* at; it cannot say the audio *began* there — a wrong `startMs` would leave it green. So
+`smoke:editor` measures the playhead's position down `#sheet-surface`: aimed at bar 1 it sits 0.050
+down, aimed at bar 31 of the sample it sits 0.946. This works even with a suspended AudioContext,
+because `getPositionMs` is `startMs + elapsed`, and `startMs` is exactly the seek under test.
+
+⚠ **One check had to move, and the reason is the undo decision above.** "Nothing edited yet → no bar
+named" was written into the new section, where it failed: the sections above it had already edited
+bar 1, and `rewindAll` undoes the document without moving the pointer — by design. The assertion
+belongs at the one honest place for it, right after entering edit mode on a freshly loaded score,
+and that is where it now lives. The failure was the check's assumption, not the code's behaviour.
+
+Palette geometry is unchanged: still **136 px**, still **0 px** of sheet cut off at a 1280 px window,
+so editor.md's measured cut-off table still holds. Verified: `typecheck`, `npm test`,
+`smoke:editor` ALL PASS, `smoke:app`, `smoke:page`.
+
+## 2026-08-08 — the armed palette, and the glyph that stole its neighbour's clicks
 
 **Editor step 4 is built and green** ([../mvp/editor.md](../mvp/editor.md)). A column beside the
 sheet holds six note values (Bravura glyphs) and the AEU accidentals; arm one, click a note, the

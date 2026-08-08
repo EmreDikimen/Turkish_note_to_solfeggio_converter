@@ -356,6 +356,13 @@
   gap: var(--space-2);
 }
 
+/* The reading cluster (transposition, keep-the-staff, accidental mode) stays together when the bar
+   wraps, instead of interleaving with the listening controls. */
+.kv-transport__group--reading {
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+}
+
 /* ── Score card ─────────────────────────────────────────────────────────── */
 
 .kv-card {
@@ -451,6 +458,22 @@
   gap: 4px;
 }
 
+/* Çal/Dur, side by side. `flex: 1 1 0` + `min-width: 0` on purpose: the palette's 136px width is
+   load-bearing (the page grows by exactly `--palette-footprint` while editing, and editor.md's
+   measured cut-off numbers are taken against it), so these two buttons SHARE the column rather
+   than setting their own width from their labels. */
+.kv-palette__transport {
+  display: flex;
+  gap: 4px;
+}
+.kv-palette__transport > .kv-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--space-1) var(--space-1);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
 .kv-palette__hint {
   margin: var(--space-3) 0 0;
   font-size: var(--text-xs);
@@ -521,6 +544,44 @@
 }
 .kv-note-hit:active {
   cursor: grabbing;
+}
+
+/* The tuplet tool's targets (editor step 7). A note that cannot be part of a triplet is dimmed
+   AND pointer-transparent (set inline, beside the state that decides it), so the page refuses it
+   instead of popping an error. `.is-anchor` is the run's first note, waiting for its end. */
+.kv-note-hit.is-dim {
+  background: rgba(120, 120, 120, 0.14);
+  border-color: transparent;
+}
+.kv-note-hit.is-anchor,
+.kv-note-hit.is-anchor:hover {
+  background: rgba(20, 184, 166, 0.22);
+  border: 1.5px solid #0d9488;
+}
+
+/* A bar that is over or under the derived meter (editor step 8) — an indicator, never a block.
+   Sits in the edit overlay beside the sheet, never inside the SVG. */
+.kv-bar-warn {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: center;
+  font-weight: 700;
+  pointer-events: auto; /* the title is the whole explanation */
+  cursor: help;
+  box-sizing: border-box;
+}
+.kv-bar-warn--over {
+  color: #b45309;
+  border: 1px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.18);
+}
+.kv-bar-warn--under {
+  color: #7c3aed;
+  border: 1px solid #a78bfa;
+  background: rgba(167, 139, 250, 0.18);
 }
 
 .kv-hint {
@@ -637,7 +698,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
-  background: rgba(26, 22, 20, 0.4);
+  background: rgba(12, 30, 28, 0.42); /* the ink, dimmed — not neutral black */
 }
 
 .kv-modal__panel {
@@ -651,10 +712,6 @@
   max-height: 85vh;
   overflow: auto;
 }
-.kv-modal__panel--wide {
-  width: 780px;
-}
-
 .kv-modal__title {
   font-size: var(--text-xl);
   margin-bottom: var(--space-2);
@@ -691,24 +748,3 @@
   color: var(--ink-faint);
 }
 
-/* ── Tables (the measure editor) ────────────────────────────────────────── */
-
-.kv-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-}
-.kv-table th {
-  text-align: left;
-  font-weight: 600;
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-  padding: var(--space-2) var(--space-2);
-  border-bottom: 1px solid var(--rule);
-}
-.kv-table td {
-  padding: var(--space-1) var(--space-2);
-  border-bottom: 1px solid var(--rule);
-}

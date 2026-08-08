@@ -11,13 +11,18 @@ import {
   detectMakam,
   findUsul,
   groupMeasures,
+  insertIndexIn,
+  insertInMeasure,
   makamDisplay,
   makamKomaDeltas,
   makamOptions,
+  measureOfEvent,
   nudgePitch,
-  renumber,
   resolveMakam,
+  scaleDurations,
   spellingOf,
+  toNote,
+  toRest,
   transpose as transposeDoc,
   USULS,
   withAlter,
@@ -26,15 +31,14 @@ import {
   withKomaDeltas,
   withPitch,
   type MakamDetection,
-  type Measure,
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
+import { closedTupletAt, memberPositions, tupletRunFrom } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
 import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
-import { MeasureEditModal } from "./MeasureEditModal";
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted } from "./omr/remote";
@@ -77,10 +81,12 @@ const MAKAM_OPTIONS = makamOptions();
 
 // Example scores bundled in apps/web/public/ (exported from SymbTr via scripts/symbtr_to_json.py).
 // The first entry auto-loads on startup; the rest are selectable from the Sample dropdown.
+// ⚠ `sample.json` (aldanma dünya) was REMOVED from this list on 2026-08-08 (owner) — but the file
+// stays in public/: `npm test`'s round-trip corpus reads it by name, and the manual checks drive it
+// through `?score=/sample.json`. Out of the UI, still on disk.
 const SAMPLES: { label: string; file: string }[] = [
-  { label: "aldanma dünya — acem · düyek (zekai dede)", file: "/sample.json" },
-  { label: "safalar getirdiniz — kürdilihicazkâr · aksak (avni anıl)", file: "/safalar-getirdiniz.json" },
   { label: "gamzedeyim deva — uşşak · sofyan (tatyos efendi)", file: "/gamzedeyim-deva.json" },
+  { label: "safalar getirdiniz — kürdilihicazkâr · aksak (avni anıl)", file: "/safalar-getirdiniz.json" },
 ];
 
 // Render-automation parameters: the batch renderer (tools/render/render.ts) drives the harness
@@ -116,6 +122,36 @@ const SLUR_NOISE = URL_SLURSEED != null ? { seed: URL_SLURSEED } : undefined;
 const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
 
 /**
+ * What the transposition dropdown offers, and how each step is named.
+ *
+ * The unit is the KOMA, because that is what the app is about and what the number in the URL
+ * parameter means. Small steps are named in commas alone (an accidental's worth of movement: koma
+ * 1, bakiye 4, küçük mücennep 5, büyük mücennep 8). Anything that lands on a scale degree is named
+ * as the degree FIRST, with the comma count after it — "4 ses (22 koma)" — because a player thinks
+ * "up a fourth", not "up twenty-two commas", and the comma count is what the app then does.
+ *
+ * The degrees are the çargâh (major) scale in AEU, which is where these comma counts come from:
+ * 9 + 9 + 4 + 9 + 9 + 9 + 4 = 53. So 2 ses = 9, 3 ses = 18, 4 ses = 22, 5 ses = 31, 6 ses = 40,
+ * 7 ses = 49, 8 ses (the octave) = 53.
+ *
+ * ⚠ The labels are copy and free to change; the NUMBERS are the contract (`transposeDoc` takes
+ * commas, and `?transpose=` in the render automation is the same unit).
+ */
+const TRANSPOSE_STEPS: ReadonlyArray<readonly [number, string]> = (() => {
+  const steps: [number, string][] = [
+    [1, "1 koma"], [4, "4 koma"], [5, "5 koma"], [8, "8 koma"],
+    [9, "2 ses (9 koma)"], [18, "3 ses (18 koma)"], [22, "4 ses (22 koma)"],
+    [31, "5 ses (31 koma)"], [40, "6 ses (40 koma)"], [49, "7 ses (49 koma)"],
+    [53, "8 ses — sekizli (53 koma)"],
+  ];
+  return [
+    ...[...steps].reverse().map(([n, label]) => [-n, `−${label}`] as const),
+    [0, "Özgün hâli"] as const,
+    ...steps.map(([n, label]) => [n, `+${label}`] as const),
+  ];
+})();
+
+/**
  * The whole web harness UI, as one React component.
  *
  * What/why: this is the "shell" — it owns the loaded score and wires the buttons to the
@@ -140,7 +176,7 @@ export function App() {
   const [error, setError] = useState<AppError | null>(null);
   // Transport state: "stopped" → Play; "playing" → Pause; "paused" → Resume. Stop resets it.
   const [playState, setPlayState] = useState<"stopped" | "playing" | "paused">("stopped");
-  // Which view is shown, whether the sheet is in edit mode, and which measure's modal is open.
+  // Which view is shown, and whether the sheet is in edit mode.
   // The engraved sheet is the product; the piano-roll is a diagnostic. Sheet by default now,
   // where the harness opened on the roll. (Render automation always wanted sheet anyway.)
   const [viewMode, setViewMode] = useState<ViewMode>("sheet");
@@ -156,7 +192,6 @@ export function App() {
   // strip labels then carry the matching repeat tokens. Purely visual + labels — the doc, layout,
   // playback, and playhead are untouched.
   const [showRepeats, setShowRepeats] = useState(false);
-  const [editing, setEditing] = useState<Measure | null>(null);
   // Edit mode: which event (`NoteEvent.index`) is selected on the sheet, or null. A selection is
   // a POSITION, not an identity — deletes renumber — so it is cleared on load, on leaving edit
   // mode, and on undo/redo rather than being translated across those.
@@ -165,6 +200,20 @@ export function App() {
   // pitch). Armed, a click on a note applies the tool instead — the Mus2 model. Cleared with the
   // edit toggle so a friend cannot leave a tool armed and come back to it.
   const [armed, setArmed] = useState<Tool | null>(null);
+  // Tuplet tool only: the FIRST note of the run, waiting for its end. The one two-click gesture in
+  // the palette, so it is the one tool with a state between clicks. Like the selection this is a
+  // position, not an identity, so it is dropped rather than translated whenever the document or
+  // the tool changes — see `armTool` and the undo/redo handlers.
+  const [tupletAnchor, setTupletAnchor] = useState<number | null>(null);
+  // Edit mode: the 1-based measure the most recent edit landed in, and the whole of what the
+  // palette's Çal needs. In edit mode a click means select or insert, so the sheet's click-to-seek
+  // is off — this is what replaces it: fix a note, press Çal, hear the bar.
+  //
+  // A MEASURE number, not an event index, because a delete renumbers every event. Cleared when a
+  // score loads (nothing edited yet → Çal starts at the top) and deliberately NOT touched by
+  // undo/redo: the bar you were working in is still the bar you want to hear, and threading it
+  // through useDocHistory's two stacks would buy nothing.
+  const [lastEditMeasure, setLastEditMeasure] = useState<number | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
   const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
   // In-browser OMR: the model reads strip images and the result loads as a score. `omrStatus` is
@@ -216,12 +265,7 @@ export function App() {
   // Test offsets for the transpose dropdown [commas, label]: small comma steps exercise the
   // accidental re-spelling; the larger AEU intervals (whole tone 9, fourth 22, fifth 31, octave
   // 53) check octave/range + naming. (53-TET: 53 commas = one octave.)
-  const TRANSPOSE_OPTIONS: ReadonlyArray<readonly [number, string]> = [
-    [-53, "−Sekizli (−53)"], [-31, "−Beşli (−31)"], [-22, "−Dörtlü (−22)"], [-9, "−Tanini (−9)"],
-    [-5, "−5 koma"], [-4, "−Bakiye (−4)"], [-1, "−1 koma"], [0, "Özgün hâli"], [1, "+1 koma"],
-    [4, "+Bakiye (+4)"], [5, "+5 koma"], [9, "+Tanini (+9)"], [22, "+Dörtlü (+22)"],
-    [31, "+Beşli (+31)"], [53, "+Sekizli (+53)"],
-  ];
+  const TRANSPOSE_OPTIONS = TRANSPOSE_STEPS;
 
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
@@ -255,11 +299,13 @@ export function App() {
     setMakamSlug(slug);
     setTranspose(0); // a freshly loaded score starts untransposed
     setSelectedNote(null);
+    setTupletAnchor(null); // a half-finished tuplet names a note in the score being replaced
+    setLastEditMeasure(null); // nothing edited yet → the palette's Çal starts at the top
     history.reset(detected ? { ...d, makam: slug } : d);
   }
 
   // Apply a makam choice: stop first (a running playback does not pick up a new timeline — the
-  // same rule updateEvent/applyTranspose/onSaveMeasure follow), then store it on the doc so the
+  // same rule updateEvent/applyTranspose follow), then store it on the doc so the
   // engraved header and the saved JSON agree with what is sounding.
   function applyMakam(slug: string) {
     onStop();
@@ -432,8 +478,22 @@ export function App() {
   // left the notehead behind. ⚠ The duration drag still writes `durationMs` alone and leaves
   // `durationBeats` (what the sheet engraves) stale; fixing that means snapping a continuous
   // drag to a note value, which is the palette's job, not this one.
+  /**
+   * Remember which bar an edit landed in, so the palette's Çal can start there.
+   *
+   * Read from `doc` as it is BEFORE the edit, on purpose: for a delete the bar is only knowable
+   * beforehand, and a duration/accidental/pitch change never moves a note into another bar. An
+   * index we cannot place leaves the pointer where it was rather than resetting it to the top.
+   */
+  function markEdited(index: number) {
+    if (!doc) return;
+    const m = measureOfEvent(doc, index);
+    if (m != null) setLastEditMeasure(m);
+  }
+
   function updateEvent(index: number, patch: NoteEdit) {
     onStop();
+    markEdited(index);
     // Edits arrive in the DISPLAYED pitch space. When the staff is rewritten by the transpose,
     // map the dragged pitch back to the stored (base) score before applying.
     const shift = !keepSheet && transpose !== 0 ? transpose : 0;
@@ -458,6 +518,7 @@ export function App() {
    *  alteration is the ordinary operation — see core's `nudgePitch`. */
   function onNudgePitch(index: number, steps: number) {
     onStop();
+    markEdited(index);
     history.apply(
       (prev) => {
         const events = prev.events.map((ev) => {
@@ -486,12 +547,14 @@ export function App() {
    *
    * ⚠ Transpose: the sheet draws `displayDoc`, so an alteration picked on screen is not the stored
    * one when the staff has been rewritten. The edit is built in DISPLAY space and mapped back with
-   * the same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` uses. A duration needs none
+   * the same `transposeDoc(…, -transpose)` round-trip `onInsertNote` uses. A duration needs none
    * of it, and `onNudgePitch` escapes it only because a nudge is relative.
    */
-  function onApplyTool(index: number) {
-    if (!armed || !doc) return;
+  function onApplyTool(index: number, pitchAt?: { letter: string; octave: number; alter: number }) {
+    // The tuplet has its own two-click gesture (`onTupletPick`) and never comes through here.
+    if (!armed || armed.kind === "tuplet" || !doc) return;
     onStop();
+    markEdited(index);
     const shift = !keepSheet && transpose !== 0 ? transpose : 0;
     history.apply((prev) => {
       const at = prev.events.findIndex((ev) => ev.index === index);
@@ -499,7 +562,21 @@ export function App() {
       const stored = prev.events[at]!;
       let next: NoteEvent;
       if (armed.kind === "duration") {
-        next = withDurationBeats(stored, { num: armed.num, den: armed.den }, prev);
+        const value = { num: armed.num, den: armed.den };
+        if (armed.rest) {
+          // A rest tool over anything makes a rest of that value — the pitch side is cleared by
+          // the primitive, not left behind to claim a note nobody can hear.
+          next = toRest(stored, value, prev);
+        } else if (stored.kind === "rest") {
+          // The inverse, for a rest the model read where a note belongs. A rest carries no pitch,
+          // so it comes from the HEIGHT of the click — the same mapping the insert tool uses, in
+          // DISPLAY space, so the finished event is mapped back like every other spelling here.
+          if (!pitchAt) return prev;
+          const shown = toNote(stored, pitchAt, value, prev);
+          next = shift ? transposeDoc({ ...prev, events: [shown] }, -shift).events[0]! : shown;
+        } else {
+          next = withDurationBeats(stored, value, prev);
+        }
       } else {
         if (stored.kind === "rest") return prev; // a rest takes no accidental
         // Alter in the space the user is looking at, then map the single event back.
@@ -515,10 +592,113 @@ export function App() {
     });
   }
 
+  /**
+   * Edit mode: a note value is armed and empty staff was clicked — put a note there (step 6).
+   *
+   * The sheet has already resolved the geometry into an intent (which bar, which event to go in
+   * front of, and the staff position the click's HEIGHT names); this builds the event and splices
+   * it in. The bar ends up OVER its length on purpose — an edit absorbs into its bar and bar lines
+   * never move, which is what `insertInMeasure` is careful about.
+   *
+   * The event is built from an empty shell through `withDurationBeats` (ms and beats together) and
+   * then `withPitch` (every derived pitch field together), so nothing derived can be left stale.
+   * `bar` is stamped by the core primitive, from the bar it lands in.
+   *
+   * ⚠ Same transpose trap as `onApplyTool`, and worse here: a spelling read off the drawn staff is
+   * a DISPLAY spelling, so the finished event is mapped back with `transposeDoc(…, -transpose)`.
+   * The tool stays armed afterwards — inserting several notes in a row is the point of a palette.
+   */
+  function onInsertNote(at: {
+    measureIndex: number;
+    beforeEventIndex: number | null;
+    letter: string;
+    octave: number;
+    alter: number;
+  }) {
+    if (!armed || armed.kind !== "duration" || !doc) return;
+    onStop();
+    setLastEditMeasure(at.measureIndex); // the sheet names the bar outright
+    const shift = !keepSheet && transpose !== 0 ? transpose : 0;
+    const value = { num: armed.num, den: armed.den };
+    const rest = armed.rest === true;
+    history.apply((prev) => {
+      const blank: NoteEvent = {
+        index: -1, kind: "note", koma53: -1, noteName: "Es", noteAE: "Es",
+        durationMs: 0, durationBeats: value, freqHz: null, lyric: "", offset: 0,
+      };
+      // A rest ignores the click's height — it has no pitch, and the engraver puts it mid-staff.
+      const shown = rest
+        ? toRest(blank, value, prev)
+        : withPitch(withDurationBeats(blank, value, prev), at, prev.tuning);
+      // Map the single event back to the stored score before splicing it in.
+      const stored = !rest && shift ? transposeDoc({ ...prev, events: [shown] }, -shift).events[0]! : shown;
+      const next = insertInMeasure(prev, stored, at.measureIndex, at.beforeEventIndex);
+      if (next === prev) return prev;
+      // Select what was just inserted, so the ✕ and the accidental tools land on it without
+      // hunting for it again. The index has to be ASKED for: `renumber` rebuilds every event, so
+      // the object we spliced in cannot be found again by identity.
+      setSelectedNote(insertIndexIn(prev, at.measureIndex, at.beforeEventIndex));
+      return next;
+    });
+  }
+
+  /**
+   * Edit mode: the tuplet tool's click (step 7). One tool, both directions.
+   *
+   * The order of the three cases IS the gesture:
+   *  1. the note is inside a CLOSED three-member triplet → take that triplet apart (×3/2). Clicking
+   *     a member can mean nothing else: it cannot start a new run, because a tuplet fraction is not
+   *     a plain value (see `plainTupletBase`);
+   *  2. nothing anchored → this note is the run's first, remember it (no document change);
+   *  3. anchored → apply (×2/3) if this is the run's third note; clicking the anchor again cancels.
+   *
+   * Which notes make a legal run is `tupletRunFrom` in `tools/render/rhythm.ts` — the same module
+   * that draws the bracket, so the tool cannot promise a triplet the engraver would not draw. The
+   * sheet dims and un-clicks everything this would refuse, so case 3's "not the end note" is
+   * unreachable through the UI; it is still handled, because a stale click must not invent one.
+   *
+   * ⚠ No transpose round-trip, unlike the accidental tool: a duration means the same thing in
+   * display space and stored space, and `tupletRunFrom` reads durations only.
+   */
+  function onTupletPick(index: number) {
+    if (!doc) return;
+    const m = groupMeasures(doc).find((mm) => mm.events.some((e) => e.index === index));
+    if (!m) return;
+    const pos = m.events.findIndex((e) => e.index === index);
+
+    const closed = closedTupletAt(m.events, pos);
+    if (closed) {
+      const idx = memberPositions(m.events, closed).map((p) => m.events[p]!.index);
+      onStop();
+      markEdited(index);
+      setTupletAnchor(null);
+      history.apply((prev) => scaleDurations(prev, idx, { num: 3, den: 2 }));
+      return;
+    }
+
+    if (tupletAnchor == null) {
+      if (tupletRunFrom(m.events, pos)) setTupletAnchor(index);
+      return;
+    }
+    if (tupletAnchor === index) {
+      setTupletAnchor(null); // clicking the anchor again backs out
+      return;
+    }
+    const from = m.events.findIndex((e) => e.index === tupletAnchor);
+    const run = from < 0 ? null : tupletRunFrom(m.events, from);
+    if (!run || m.events[run[2]!]!.index !== index) return; // not this run's end note
+    const idx = run.map((p) => m.events[p]!.index);
+    onStop();
+    markEdited(index);
+    setTupletAnchor(null);
+    history.apply((prev) => scaleDurations(prev, idx, { num: 2, den: 3 }));
+  }
+
   /** Edit mode: delete the selected note (and any grace notes leading into it). The bar is left
    *  SHORT on purpose — an edit absorbs into its bar and bar lines never move. */
   function onDeleteNote(index: number) {
     onStop();
+    markEdited(index);
     setSelectedNote(null);
     history.apply((prev) => deleteEvent(prev, index));
   }
@@ -528,12 +708,22 @@ export function App() {
   function onUndo() {
     onStop();
     setSelectedNote(null);
+    setTupletAnchor(null);
     history.undo();
   }
   function onRedo() {
     onStop();
     setSelectedNote(null);
+    setTupletAnchor(null);
     history.redo();
+  }
+
+  /** Arm a tool (or disarm — the palette's Seçim and Esc both come through here). A half-finished
+   *  tuplet cannot survive a tool change: its anchor names a note in a run the next tool knows
+   *  nothing about. */
+  function armTool(t: Tool | null) {
+    setArmed(t);
+    setTupletAnchor(null);
   }
 
   // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`keepSheet` are applied
@@ -547,39 +737,6 @@ export function App() {
     if (komas.length) setPitchRange({ minKoma: Math.min(...komas) - 3, maxKoma: Math.max(...komas) + 3 });
     setTranspose(target);
     setKeepSheet(keep);
-  }
-
-  // Replace a whole measure's events with the edited set from the modal. We splice the new
-  // events in place of the measure's old ones (located by identity from groupMeasures), then
-  // renumber every event's `index` sequentially so indices stay unique (new notes had -1).
-  // Playback stops because timing changed.
-  function onSaveMeasure(measureIndex: number, newEvents: NoteEvent[]) {
-    onStop();
-    setEditing(null);
-    // The modal edits the DISPLAYED notes; when the staff is rewritten by the transpose, map the
-    // new events back to the stored (base) score before splicing.
-    const baseEvents =
-      !keepSheet && transpose !== 0 && doc
-        ? transposeDoc({ ...doc, events: newEvents }, -transpose).events
-        : newEvents;
-    setSelectedNote(null); // the splice renumbers, so any held selection is stale
-    history.apply((prev) => {
-      const target = groupMeasures(prev).find((m) => m.index === measureIndex);
-      if (!target || target.events.length === 0) return prev;
-      const oldIds = new Set(target.events.map((e) => e.index));
-      // Single pass: where the measure's first old event sat, drop the whole measure and
-      // splice in the new events; keep everything else (incl. meta) in place.
-      const merged: NoteEvent[] = [];
-      let inserted = false;
-      for (const e of prev.events) {
-        if (oldIds.has(e.index)) {
-          if (!inserted) { merged.push(...baseEvents); inserted = true; }
-        } else {
-          merged.push(e);
-        }
-      }
-      return { ...prev, events: renumber(merged) };
-    });
   }
 
   // The single Play/Pause/Resume control. From stopped it starts from the top; while playing
@@ -610,6 +767,23 @@ export function App() {
     if (!timeline) return;
     void backend.play(timeline, ms, buildPlayOptions(bpm, metronome, usulName));
     setPlayState("playing");
+  }
+
+  // Where the palette's Çal starts: the top of the last edited bar, or the top of the piece before
+  // any edit. `Measure.startMs` is musical ms (a running sum of durationMs) — the same thing the
+  // sheet's click-to-seek hands to onSeekMs, so tempo/metronome/makam all follow from there.
+  // ⚠ The `?? 0` is a real case, not defensiveness: deleting a bar's last note removes that
+  // measure, so a remembered index can outrun the score. Falling back to the top is the safe read.
+  const editStartMs = useMemo(() => {
+    if (!doc || lastEditMeasure == null) return 0;
+    return groupMeasures(doc).find((m) => m.index === lastEditMeasure)?.startMs ?? 0;
+  }, [doc, lastEditMeasure]);
+
+  // The palette's Çal. Always (re)starts from the last edited bar — pause and resume stay in the
+  // transport above, which is still on screen in edit mode (owner, 2026-08-08). Pressing it again
+  // mid-playback replays the same bar, which is what checking a fix by ear actually looks like.
+  function onPlayFromEdit() {
+    onSeekMs(editStartMs);
   }
 
   // Apply a tempo / metronome / usul change. If something is playing or paused, re-schedule from
@@ -865,6 +1039,13 @@ export function App() {
             makamSlug={makamSlug}
             onMakam={applyMakam}
             makamOptions={MAKAM_OPTIONS}
+            transpose={transpose}
+            transposeOptions={TRANSPOSE_OPTIONS}
+            onTranspose={(v) => applyTranspose(v, keepSheet)}
+            keepSheet={keepSheet}
+            onKeepSheet={(v) => applyTranspose(transpose, v)}
+            accidentalMode={accidentalMode}
+            onAccidentalMode={setAccidentalMode}
           />
 
           <ScoreCard
@@ -875,14 +1056,25 @@ export function App() {
             showLyrics={showLyrics}
             onShowLyrics={setShowLyrics}
             editMode={editMode}
-            onEditMode={(v) => { setEditMode(v); if (!v) { setSelectedNote(null); setArmed(null); } }}
+            onEditMode={(v) => { setEditMode(v); if (!v) { setSelectedNote(null); armTool(null); } }}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}
             canRedo={history.canRedo}
             onSave={onDownload}
             palette={
-              editMode && viewMode === "sheet" ? <EditPalette armed={armed} onArm={setArmed} /> : null
+              editMode && viewMode === "sheet" ? (
+                <EditPalette
+                  armed={armed}
+                  onArm={armTool}
+                  canPlay={!!timeline}
+                  playState={playState}
+                  fromMeasure={lastEditMeasure}
+                  anchored={tupletAnchor != null}
+                  onPlay={onPlayFromEdit}
+                  onStop={onStop}
+                />
+              ) : null
             }
           >
             {viewMode === "roll" ? (
@@ -899,14 +1091,17 @@ export function App() {
                 lyricHyphens={lyricHyphens}
                 playing={playState !== "stopped"}
                 getPositionMs={getPositionMs}
-                onMeasureClick={setEditing}
                 onSeekToMeasure={(m) => onSeekMs(m.startMs)}
                 selectedNote={selectedNote}
                 onSelectNote={setSelectedNote}
                 onDeleteNote={onDeleteNote}
                 onNudgePitch={onNudgePitch}
-                armed={armed != null}
+                armedTool={armed?.kind ?? null}
+                armedRest={armed?.kind === "duration" && armed.rest === true}
                 onApplyTool={onApplyTool}
+                onInsertNote={onInsertNote}
+                tupletAnchor={tupletAnchor}
+                onTupletPick={onTupletPick}
                 onLayout={onLayout}
                 highlightRect={selectedStrip?.rect ?? null}
                 repeatSpans={repeatSpans}
@@ -929,11 +1124,6 @@ export function App() {
         onLoadJson={onFile}
         onStrips={onStrips}
         omrBusy={omrBusy}
-        transpose={transpose}
-        transposeOptions={TRANSPOSE_OPTIONS}
-        onTranspose={(c) => applyTranspose(c, keepSheet)}
-        keepSheet={keepSheet}
-        onKeepSheet={(v) => applyTranspose(transpose, v)}
         accidentalMode={accidentalMode}
         onAccidentalMode={setAccidentalMode}
         showLyrics={showLyrics}
@@ -947,14 +1137,6 @@ export function App() {
         onSelectStrip={setSelectedStripId}
       />
 
-      {editing && doc && (
-        <MeasureEditModal
-          measure={editing}
-          doc={doc}
-          onSave={(events) => onSaveMeasure(editing.index, events)}
-          onCancel={() => setEditing(null)}
-        />
-      )}
       {makamPrompt && (
         <MakamModal
           detection={makamPrompt}

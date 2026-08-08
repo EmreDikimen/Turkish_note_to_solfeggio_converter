@@ -22,38 +22,73 @@ the training strips never move.** Audibly correct on **204/213** bundled scores
 
 **THE STYLE PASS IS DONE, 2026-08-07 — BUILT, GREEN, NOT YET DEPLOYED.** The harness is now
 **KomaVision**, in **Turkish**, on warm paper: upload is the hero (drag, drop or paste), the
-transport keeps the six controls a musician touches, the rest fold into a collapsed **Gelişmiş**.
+transport keeps the controls a musician touches, the rest fold into a collapsed **Gelişmiş**. ⚠ **Three of them came back up on 2026-08-08** (owner): transposition, *porte değişmesin* and the accidental mode are in the transport bar, because a ney player transposing a score is using the app as intended and should not have to open "geliştirici ayarları" to do it. The transposition list is now in **komas**, named by scale degree where one lands ("4 ses (22 koma)"), and the accidental control is *arıza işaretleri*, which is what it is called.
 Slicing, decode, the fallback and the origin lock did not move. Underneath it, the load-bearing
 change: **the deploy checks no longer read the copy** — `#omr-status` carries `data-state / kind /
 where` + counts (`apps/web/src/ui/status.ts`), which is what let the UI become Turkish without
 touching one assertion.
 
-**THE PALETTE IS BUILT AND GREEN, 2026-08-08 — editor step 4.** A column beside the sheet holds
-six note values and the AEU signs; **arm one and click a note** and that note takes it — the Mus2
-model, which is what the owner already uses. `Esc` or **↖ Seçim** disarms, and with nothing armed
-the sheet behaves exactly as it did in slice 1. The edited bar is left over or under its length on
-purpose (**edits absorb, bar lines never move**); the warning for that is step 8. Two traps are
-written up in [mvp/editor.md](mvp/editor.md), and the first is worth knowing before drawing any
-glyph in a button: **Bravura ink paints outside its em box**, so one tool's notehead overhung its
-neighbour and a click on 1/8 armed 1/32.
+**THE PALETTE IS BUILT AND GREEN, 2026-08-08 — editor steps 4 and 5.** A column beside the sheet
+holds six note values and the AEU signs; **arm one and click a note** and that note takes it — the
+Mus2 model, which is what the owner already uses. `Esc` or **↖ Seçim** disarms, and with nothing
+armed the sheet behaves exactly as it did in slice 1. The edited bar is left over or under its
+length on purpose (**edits absorb, bar lines never move**); the warning for that is step 8. Two
+traps are written up in [mvp/editor.md](mvp/editor.md), and the first is worth knowing before
+drawing any glyph in a button: **Bravura ink paints outside its em box**, so one tool's notehead
+overhung its neighbour and a click on 1/8 armed 1/32.
+
+**Step 5 landed the same day: the palette has its own Çal/Dur, and Çal plays from the LAST EDITED
+BAR.** That is not a duplicate of the transport above — in edit mode a click on the sheet selects or
+inserts, so click-a-bar-to-play is switched off, and this is what replaces it: fix a note, press
+Çal, hear the bar. Çal always restarts from that bar (pause/resume stays in the transport), undo
+does **not** move it, and an edit still **stops** playback — editor.md's resume-in-place constraint
+is deliberately **not** built, and says so. Cheap by construction: one core primitive
+(`measureOfEvent`), one number in `App`, and two buttons reusing the existing `onSeekMs`/`onStop`.
+⚠ `smoke:editor` asserts on the **playhead's position down the sheet**, not on the attribute naming
+the bar — an attribute cannot prove the audio began there.
 
 **THE EDITOR REWORK STARTED — SLICE 1 WAS BUILT AND GREEN, 2026-08-07.** Steps 1–3 of
 [mvp/editor.md](mvp/editor.md): in edit mode you click a note on the sheet, it selects, an **✕**
 deletes it and **dragging it up or down** moves its pitch — carrying its accidental across the octave
 seam — with **undo/redo** (buttons plus Ctrl/⌘+Z) shipping in the same slice, as the brief
-required. The measure modal, `Save JSON` and the piano roll all still work; nothing is deleted yet.
+required. (The measure modal it was replacing is now gone — deleted 2026-08-08.)
 Underneath it the actual refactor: **one set of edit primitives**
 (`packages/core/src/edits.ts`) now serves every edit path, which **fixed a live bug** — the piano
 roll used to move a dragged note's *sound* and leave its notehead behind. Driven end to end by the
 new `npm run smoke:editor`; the engraving is byte-identical (302 strip PNGs, 0 diffs).
 
+**STEP 6 IS BUILT AND GREEN, 2026-08-08 — the palette inserts.** Arm a note value, click blank
+staff, and a note appears there: **pitch from the click's height**, duration from the tool, with a
+**ghost notehead** showing exactly what will land before you commit. The bar **absorbs** it and bar
+lines never move. Detail and the two traps: [mvp/editor-built.md](mvp/editor-built.md).
+
+**STEPS 7 AND 8 ARE BUILT AND GREEN, 2026-08-08 — the tuplet tool, and the bar that says it does not
+add up.** They shipped together because a triplet turns 3 × 1/8 into 3 × 1/12 and so leaves a short
+bar every time. Arm **ÜÇLEME**, click a note and the note two along and the three become a triplet;
+click **any member** of one and it comes apart again. Everything that cannot make a legal run is
+**dim and unclickable from the moment the tool is armed** — the page refuses, it never pops an
+error. The rule that took the thinking: **a member must be a plain `1/2^k` value**, because three
+members at ×⅔ sum to `2v`, which is plain only when `v` is — a dotted run would draw the
+*incomplete-group* bracket, and that mark means the MODEL misread something. Step 8 puts a `+`/`−`
+badge on any bar that is off the **derived meter** (never `Measure.lengthBeats`, which is true by
+construction), edit mode only, and the modal's Save gate is gone.
+⚠ Two things to carry forward, both in [mvp/editor-built.md](mvp/editor-built.md): **nothing about a
+tuplet is stored**, so the check counts the marks the *engraver drew* — in both styles, because the
+bracket-vs-arc choice is a per-piece coin and the first version read 0 on a bracket page. And the
+first and last bar are **exempt** from the "short" warning (pickup, closing bar), so a triplet made
+in bar 1 shows no badge — which reads exactly like a broken indicator.
+
 **The next action is the REDEPLOY** — one build carrying makam selection, the style pass and the
-editor (slice 1 + the palette). Nothing on the live site has moved since 2026-08-06.
+editor (slice 1 + the palette + insert + the tuplet tool + the off-meter mark, steps 1–8). Nothing
+on the live site has moved since 2026-08-06.
 ⚠ **Re-run `smoke:build` first**: the last green one (2026-08-08, both paths, `9/26/399/26`) was
-taken *before* the palette's two follow-up fixes. They are CSS and markup only — but "what ships was
-never what was tested" is the exact shape of the two bugs that cost W9 a day
-([DECISIONS.md](DECISIONS.md)). After it,
-**editor step 5 — Çal/Dur in the palette, playing from the last edited measure**. TWO tracks run in
+taken *before* the palette's follow-up fixes and steps 5–8. Those are CSS, markup, one seek, one
+insert path, one duration edit and one overlay badge — but "what ships was never what was tested" is
+the exact shape of the two bugs that cost W9 a day ([DECISIONS.md](DECISIONS.md)). After it,
+**editor step 9 — delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
+references), the last item on the editor's list. ⚠ It needs one thing solved first: `smoke:editor`
+reads the document by clicking `#save-json`, so deleting the button removes the check's only way to
+see what an edit did. TWO tracks run in
 parallel, as re-scoped on 2026-08-05:
 
 | | |
@@ -175,7 +210,7 @@ the model track never touches the app.** Either can be worked on without waiting
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
 4. **✅ THE STYLE PASS IS DONE (2026-08-07), and ⬅ THE REDEPLOY IS THE NEXT ACTION** — it now
-   carries the editor as well (steps 1–4), by the owner's call on 2026-08-08 to build first and
+   carries the editor as well (steps 1–5), by the owner's call on 2026-08-08 to build first and
    deploy once. Scope of the style pass itself held:
    presentation only. Every check passes on the built artifact — `npm test`, `gate:browser` 27/28,
    `smoke:app`, `smoke:page`, and **`smoke:build` on both paths with identical scores**
@@ -184,31 +219,46 @@ the model track never touches the app.** Either can be worked on without waiting
    BOTH env vars** and `netlify deploy --prod` — then `npm run smoke:live`.
    ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS` so uploads
    reach the live decode server; on :5174 they fall back to the laptop.
-5. **THE EDITOR REWORK — steps 1–4 are DONE (slice 1 on 2026-08-07, the palette on 2026-08-08);
-   ⬅ step 5, Çal/Dur in the palette, is next.**
-   The modal goes; **Düzenle** opens a **Mus2-style armed palette** beside the sheet — pick a note
+5. **THE EDITOR REWORK — steps 1–8 AND step 10 are DONE (slice 1 on 2026-08-07; the palette, its
+   Çal/Dur, insert-on-empty-space, the tuplet tool, the off-meter bar mark and the **deletion of the
+   per-measure modal** on 2026-08-08); ⬅ step 9, deleting `Save JSON`, is all that is left.**
+   ⚠ **The modal was deleted out of order, at the owner's request.** It took four things with it;
+   **two came back into the palette the same day** (owner's call): an **Es row of six rest values**
+   — arm one and click blank staff, or click a note to turn it into a rest, and a note value on a
+   rest turns it back, pitched by the click's height — and **all thirteen alterations**, the
+   numbered ±2/±3 and the previously-missing ±8 included. Still gone: editing a **lyric syllable**
+   and typing an exact **koma/Hz**. ⚠ A ±2/±3 is stored exactly and **drawn snapped** to the nearest
+   AEU sign, because that is what a Turkish edition prints. Detail: [mvp/editor.md](mvp/editor.md).
+   The modal is gone; **Düzenle** opens a **Mus2-style armed palette** beside the sheet — pick a note
    value, an accidental or the tuplet tool, then click the score. **✅ Built:** clicking a note
    selects it, an **✕** deletes it, **dragging it** moves its pitch, **undo/redo** works
-   (buttons + Ctrl/⌘+Z), and **arming a note value or an accidental and clicking a note applies
-   it**. **Still owed:** insert-on-empty-space, the tuplet
-   tool, the invalid-bar indicator, Çal-from-last-edit, and deleting **`Save JSON`** + the modal.
-   Editing is **whole-score, not measure-scoped**, there is **no zoom**, the palette has its own
-   **Çal/Dur**, and **Çal starts from the last edited measure**.
+   (buttons + Ctrl/⌘+Z), **arming a note value or an accidental and clicking a note applies
+   it**, the palette's **Çal plays from the last edited bar**, **arming a note value and
+   clicking blank staff inserts one there** — pitch from the click's height, previewed by a ghost
+   notehead, absorbed into the bar — **the tuplet tool** (click a note and the note two along; click
+   any member to take one apart; everything illegal is dim and unclickable) and **the off-meter bar
+   mark** against the derived meter, **rests** and **every koma sign** in the palette, and the
+   per-measure **modal is deleted**. **Still owed: one deletion, `Save JSON`.** Editing is **whole-score, not measure-scoped**, and there is **no zoom**.
+   ⚠ Step 5 left one thing deliberately unbuilt and said so in the brief: **an edit still stops
+   playback**. Resume-in-place is deferred, not done.
    ⚠ Slice 1 deviated from the brief in one place, on purpose: the per-note rects are **local
    `SheetView` state, not part of `onLayout`** — that payload is the training-strip crop contract.
    ⚠ It also **fixed a live bug it found**: the piano roll moved a dragged note's sound and left
    the notehead behind (`updateEvent` never rewrote `noteName`). Both edit paths now share
    `packages/core/src/edits.ts`.
    ⚠ Settled, do not re-open: **repeats stay uneditable** (the stitcher unfolds them), **tuplets are
-   exactly three notes** (the drawn digit is hardcoded "3"), and **token-editing was rejected**.
+   exactly three notes** (the drawn digit is hardcoded "3") and their members must be **plain
+   `1/2^k` values** (a dotted run's ×⅔ never closes), and **token-editing was rejected**.
    ⚠ Also settled: an edit **absorbs into its bar and bar lines never move**, and a bar over *or*
    under its length **warns** rather than blocking. The reference for that warning must be the
    **derived meter**, not `Measure.lengthBeats` (which is computed from the bar's own contents and
    so is true by construction). **Nothing is open** — the brief is buildable as written:
-   **[mvp/editor.md](mvp/editor.md)**. Does not gate W10.
-   ⚠ Worth a look while building: that same meter check flags **8/28 interior bars on a decoded
+   **[mvp/editor.md](mvp/editor.md)**; what each step built and the traps it found:
+   **[mvp/editor-built.md](mvp/editor-built.md)**. Does not gate W10.
+   ⚠ **Now visible, and still unverified:** that meter check flags **8/28 interior bars on a decoded
    page vs 0/200 across three clean scores** — error localisation, free, from a warning the editor
-   needs anyway. n = 1 page; verify before promising it.
+   needed anyway. It is on screen as of step 8, so it can now be looked at on more decoded pages.
+   n = 1 page; verify before promising it.
 6. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
    widget: talk to them.
 7. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.

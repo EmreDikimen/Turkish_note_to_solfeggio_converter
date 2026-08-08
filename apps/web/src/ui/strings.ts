@@ -41,6 +41,17 @@ export const TR = {
     makamTitle:
       "Eserin nasıl ÇALINDIĞI. ♪ işaretli makamlarda bazı perdeler yazıldığı yerden farklı " +
       "seslenir; portedeki notalar değişmez.",
+    transpose: "Transpozisyon",
+    transposeTitle: "Eserin tamamını seçtiğiniz kadar tizleştirir ya da pesleştirir",
+    keepSheet: "Porte değişmesin (yalnızca ses)",
+    keepSheetTitle:
+      "Göçürücü sazlar için — kız/mansur ney aynı notayı okur, farklı seslendirir. Ses kayar, " +
+      "yazı olduğu gibi kalır.",
+    accidentals: "Arıza işaretleri",
+    accidentalsTitle: "Arıza işaretlerinin portede nasıl gösterileceği",
+    accidentalsEvery: "Her notada",
+    accidentalsKeysig: "Donanım (satır başında)",
+    accidentalsMeasure: "Standart (ölçü boyunca)",
   },
 
   card: {
@@ -62,7 +73,10 @@ export const TR = {
     hintSheetEditing:
       "Düzenleme açık — bir notaya tıklayın: seçilir, ✕ ile silinir, yukarı/aşağı sürükleyince " +
       "perdesi değişir. Soldaki paletten bir süre ya da değiştirme işareti seçip notaya " +
-      "tıklarsanız o nota değişir. Boşluğa tıklarsanız o ölçünün penceresi açılır.",
+      "tıklarsanız o nota değişir. Bir süre seçiliyken boşluğa tıklarsanız oraya yeni nota " +
+      "eklenir — perdesini tıkladığınız yükseklik belirler. Üçleme aracıyla bir notaya, sonra iki " +
+      "sonrakine tıklayın: üçü üçleme olur. Ölçü usulden uzun ya da kısa kalırsa sağ üst köşesinde " +
+      "bir işaret belirir.",
     hintRoll:
       "Dikey eksen 53 koma. Notayı yukarı/aşağı sürükleyin: perde değişir. Sağ kenarından " +
       "çekin: süresi değişir.",
@@ -73,14 +87,44 @@ export const TR = {
   },
 
   palette: {
+    playback: "Dinle",
+    play: "▶ Çal",
+    stop: "■ Dur",
+    playFromTitle: (measure: number) =>
+      `Son düzenlenen ölçüden (${measure}. ölçü) çal — düzeltmeyi duymak için`,
+    playFromTopTitle: "Baştan çal — henüz bir düzenleme yapılmadı",
+    stopTitle: "Çalmayı durdur",
     durations: "Süre",
+    rests: "Es",
     accidentals: "Değiştirme",
-    durationTitle: (frac: string) => `${frac} — seçip bir notaya tıklayın, süresi bu olur`,
+    durationTitle: (frac: string) =>
+      `${frac} — seçip bir notaya tıklayın, süresi bu olur; boşluğa tıklayın, oraya eklenir`,
+    restTitle: (frac: string) =>
+      `${frac} es — seçip boşluğa tıklayın, oraya es girer; bir notaya tıklarsanız o nota es olur`,
     accidentalTitle: (name: string) => `${name} — seçip bir notaya tıklayın`,
+    tuplets: "Üçleme",
+    tupletTitle:
+      "Üçleme — ilk notaya, sonra iki sonrakine tıklayın: üçü üçleme olur. Var olan bir " +
+      "üçlemenin herhangi bir notasına tıklarsanız üçleme kalkar",
     select: "↖ Seçim",
     selectTitle: "Aracı bırak: tıklamak seçer, sürüklemek perdeyi değiştirir (Esc)",
     hintIdle: "Bir araç seçin, sonra notaya tıklayın.",
-    hintArmed: "Şimdi bir notaya tıklayın. Bırakmak için Esc.",
+    hintArmedDuration:
+      "Notaya tıklayın: süresi değişir. Boşluğa tıklayın: oraya yeni nota eklenir — perdesini " +
+      "tıkladığınız yükseklik belirler. Bir ese tıklarsanız o es, tıkladığınız yükseklikteki " +
+      "notaya döner. Bırakmak için Esc.",
+    hintArmedRest:
+      "Boşluğa tıklayın: oraya es girer. Bir notaya tıklarsanız o nota es olur. Bırakmak için Esc.",
+    hintArmedAccidental: "Şimdi bir notaya tıklayın. Bırakmak için Esc.",
+    hintTupletStart:
+      "Üçlemenin ilk notasına tıklayın. Soluk notalar üçleme yapamaz. Var olan bir üçlemenin " +
+      "notasına tıklarsanız üçleme kalkar. Bırakmak için Esc.",
+    hintTupletEnd: "Şimdi üçlemenin son notasına tıklayın. Vazgeçmek için ilk notaya ya da Esc.",
+  },
+
+  bar: {
+    over: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden uzun (${beats})`,
+    under: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden kısa (${beats})`,
   },
 
   advanced: {
@@ -94,17 +138,6 @@ export const TR = {
       "Bir sayfanın *_sNN_wNN.png kırpımlarını seçin — model bunları okur ve sonucu yükler",
     sliceInspector: "🔍 Dilim denetçisi",
     sliceInspectorTitle: "Dilimleyicinin bir sayfadan kestiği şeritleri gösterir — model yok, eser yok",
-    transpose: "Aktarım",
-    transposeTitle: "Perdeyi seçilen koma kadar kaydırır",
-    keepSheet: "Porte değişmesin (yalnızca ses)",
-    keepSheetTitle:
-      "Göçürücü sazlar için — kız/mansur ney aynı notayı okur, farklı seslendirir. Ses kayar, " +
-      "yazı olduğu gibi kalır.",
-    accidentals: "Değiştirme işaretleri",
-    accidentalsTitle: "İşaretlerin portede nasıl gösterileceği",
-    accidentalsEvery: "Her notada",
-    accidentalsKeysig: "Donanım (satır başında)",
-    accidentalsMeasure: "Standart (ölçü boyunca)",
     hyphens: "Hece çizgisi",
     hyphensTitle: "Bir kelimenin heceleri arasına çizgi koyar (Gam-ze-de). Çoğu nota koymaz.",
     repeats: "Tekrarlar",
@@ -207,32 +240,6 @@ export const TR = {
     useThis: "Bunu kullan",
   },
 
-  measureModal: {
-    title: (n: number) => `Ölçü ${n}`,
-    basic: "Temel",
-    advanced: "Gelişmiş",
-    leadBasic:
-      "Her notanın perdesini ve kaç koma diyez/bemol olduğunu seçin. Toplam süre ölçü uzunluğuna " +
-      "eşit olmalı.",
-    leadAdvanced: "Komayı ve frekansı doğrudan girin.",
-    leadGrace: "Çarpma notaları bağlı oldukları notayla birlikte kalır.",
-    colType: "Tür",
-    colNote: "Nota",
-    colAccidental: "İşaret",
-    colKoma: "Koma",
-    colHz: "Hz",
-    colName: "Ad",
-    colDuration: "Süre",
-    colLyric: "Hece",
-    note: "nota",
-    rest: "es",
-    remove: "sil",
-    add: "+ Nota ekle",
-    total: (have: string, want: string) => `Toplam ${have} / gereken ${want} (birlik)`,
-    invalid: "⚠ Notalar ölçüyü tam doldurmuyor — süreleri düzeltin ya da nota ekleyip çıkarın.",
-    cancel: "Vazgeç",
-    save: "Kaydet",
-  },
 } as const;
 
 /** Turkish decimal comma, for the numbers shown in the status line. */

@@ -150,6 +150,97 @@ export function tupletGroupAt(groups: readonly TupletGroup[], pos: number): Tupl
   return groups.find((g) => pos >= g.from && pos <= g.to);
 }
 
+/* ── The editor's tuplet tool (editor step 7) ──────────────────────────────────────────────────
+ *
+ * Everything below answers "which notes", never "what happens to them" — the rewrite itself is
+ * core's `scaleDurations`. It lives HERE, beside `tupletGroupsIn`/`isTupletMember`, so the tool's
+ * idea of a triplet is literally the code that draws the bracket and writes the `\tup3` label. A
+ * second copy in the app could disagree with the page, which is the failure mode CLAUDE.md's
+ * "pixels and labels come from one code path" rule exists to prevent.
+ *
+ * ⚠ Nothing above this line changed. These are additions: a rendered strip and its label cannot
+ * move because the editor grew a button.
+ */
+
+/**
+ * Can this event START or JOIN a triplet the tool makes? Only a PLAIN 1/2^k value can — not a
+ * dotted or double-dotted one, not a tie-split (5/8, 9/8 …), and not something already inside a
+ * tuplet.
+ *
+ * This is arithmetic, not taste. Applying the tool multiplies each of three equal members by ⅔, so
+ * the group sums to 3 × (⅔v) = 2v — and `tupletGroupsIn` closes a group only when its sum lands on
+ * a plain power-of-two value. 2v is plain exactly when v is. A run of three dotted 8ths would sum
+ * to 9/16, never close, and draw the "incomplete group" bracket that exists to flag a MODEL
+ * mistake. Refusing it up front is what keeps that bracket meaningful.
+ */
+export function plainTupletBase(ev: NoteEvent): boolean {
+  if (ev.kind !== "note" && ev.kind !== "rest") return false;
+  const f = fracOf(ev);
+  return f.n === 1 && f.d > 0 && (f.d & (f.d - 1)) === 0;
+}
+
+/**
+ * The run the tuplet tool would make, starting at position `pos` in ONE MEASURE's events: that
+ * event plus the next two real (non-grace) note/rest positions, when all three are
+ * {@link plainTupletBase} and share one duration. Null when no valid run starts there — which is
+ * what the palette dims and un-clicks, rather than popping an error.
+ *
+ * Three positions, because the drawn digit is hardcoded "3" (SheetView): a six-member run would
+ * also sum plain, and would draw a bracket that lies about the rhythm.
+ *
+ * ⚠ `events` must be one measure's array (`Measure.events`), not the whole document — a tuplet is
+ * strictly intra-measure, and passing the document would happily span a bar line.
+ *
+ * Grace notes take no time and are drawn attached to the note that follows them, so they are
+ * skipped when counting members and left untouched by the edit — the same treatment they get
+ * inside `tupletGroupsIn`.
+ */
+export function tupletRunFrom(events: readonly NoteEvent[], pos: number): number[] | null {
+  const first = events[pos];
+  if (!first || !plainTupletBase(first)) return null;
+  const run = [pos];
+  const want = fracOf(first);
+  for (let i = pos + 1; i < events.length && run.length < 3; i++) {
+    const ev = events[i]!;
+    if (ev.kind === "grace") continue; // rides along, is not a member
+    if (!plainTupletBase(ev)) return null;
+    const f = fracOf(ev);
+    if (f.n !== want.n || f.d !== want.d) return null; // every member has the same duration
+    run.push(i);
+  }
+  return run.length === 3 ? run : null; // ran out of bar before three
+}
+
+/**
+ * The CLOSED three-member group containing position `pos`, or null. This is what the tool removes:
+ * clicking any member with the tuplet armed multiplies that group's durations back by ³⁄₂.
+ *
+ * Deliberately narrower than `tupletGroupsIn`, which also yields runs that never sum plain. Those
+ * are the model's unclosed `\tup3`s — drawn with a bracket precisely because they are WRONG and
+ * need a correction. Multiplying one back by ³⁄₂ would not restore anything; it would invent a
+ * rhythm nobody read. Leave them to the note-value tools.
+ */
+export function closedTupletAt(events: readonly NoteEvent[], pos: number): TupletGroup | null {
+  const g = tupletGroupAt(tupletGroupsIn(events), pos);
+  if (!g) return null;
+  const members = memberPositions(events, g);
+  if (members.length !== 3) return null;
+  // A closed group sums to a plain value by construction; check it anyway, because `tupletGroupsIn`
+  // also emits runs that merely ENDED (see its doc), and one of those can hold three members.
+  let sum: Frac = { n: 0, d: 1 };
+  for (const i of members) sum = add(sum, fracOf(events[i]!));
+  return sum.n === 1 && (sum.d & (sum.d - 1)) === 0 ? g : null;
+}
+
+/** The real (non-grace) member positions of a group, in order. */
+export function memberPositions(events: readonly NoteEvent[], g: TupletGroup): number[] {
+  const out: number[] = [];
+  for (let i = g.from; i <= g.to; i++) {
+    if (events[i]?.kind !== "grace") out.push(i);
+  }
+  return out;
+}
+
 /**
  * Does this event need a tied written pair? True for a note/rest whose duration is neither
  * drawable as one written value nor a tuplet fraction (those belong to `tupletGroupsIn`).

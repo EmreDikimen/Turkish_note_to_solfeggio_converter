@@ -291,7 +291,10 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    and it looks like a music page rather than a testing tool: warm paper, the sheet music as the
    main thing on screen, one big box at the top to drop (or paste) the photo into. Only the buttons
    a musician uses stay in the open — play, stop, tempo, metronome, usul, makam; the dozen
-   developer switches fold into a **Gelişmiş** drawer that stays shut.
+   developer switches fold into a **Gelişmiş** drawer that stays shut. The bar also carries the
+   three that change what you see and hear: **Transpozisyon** (how far up or down to move the
+   whole piece, in komas — and named by interval where one fits, like "4 ses (22 koma)"),
+   whether the written staff moves with it, and how **arıza işaretleri** are printed.
 9. **Put the new version on the website.** One rebuild, one upload — it carries items 7 and 8
    together. Then check it with `npm run smoke:live`.
 10. **Make fixing a wrong note quick — started 7 August, about a third done.** It used to be: click

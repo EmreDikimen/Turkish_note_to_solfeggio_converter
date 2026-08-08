@@ -45,7 +45,7 @@ Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces 
 npm run dev:web                      # harness → http://localhost:5173
 npm run typecheck                    # all workspaces
 npm test                             # stitcher unit tests + label round-trip + edit primitives
-npm run smoke:editor                 # real app: select a note, drag its pitch, delete, undo/redo
+npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
@@ -127,8 +127,16 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   `#play` carries `data-play-state`; `#app` carries `data-ready`. The editor adds
   `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`,
   `[data-omr-note]` / `[data-selected]` per note, `#note-delete` / `#undo` / `#redo`, and the
-  palette's `#edit-palette[data-armed]` + `[data-tool]` per tool
-  (⚠ `data-edit-mode` is on **two** elements — select the one you mean by id). The six
+  palette's `#edit-palette[data-armed]` + `[data-tool]` per tool, its transport
+  `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, the
+  insert preview `[data-omr="insert-ghost"][data-insert-pitch]`, the tuplet tool's
+  `#sheet-surface[data-tuplet-anchor]` + `[data-tuplet="start|member|anchor|end|blocked"]` per note,
+  and the off-meter mark `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`
+  (⚠ **`data-edit-mode` AND `data-play-state` are each on two elements** — select the one you mean
+  by id). The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
+  prove playback began there. A tuplet is **not stored** anywhere, so no attribute can prove one was
+  made: `smoke:editor` counts the marks the engraver drew, in **both** styles (`.vf-tuplet` and the
+  curved arc's italic "3" — the style is a per-piece coin). The six
   `tools/browser/*-smoke.ts`
   assert on those, so **all user-facing copy is free to change** — that is what let the UI become
   Turkish. Never reintroduce a text/regex matcher for a status message or a button label. Every

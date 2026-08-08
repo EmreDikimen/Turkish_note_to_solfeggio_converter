@@ -2,9 +2,13 @@
  * Gelişmiş — everything that serves the project rather than the listener.
  *
  * What lives here and why: sample/JSON loading and the slice inspector are development inputs;
- * "Şeritleri oku" is the Rung-3 labeling loop's entry; aktarım, değiştirme işaretleri, hece
- * çizgisi and tekrarlar are engraving options a friend has no reason to touch (tekrarlar in
- * particular is a drawn-only Phase-2 preview that changes the notation for no musical reason).
+ * "Şeritleri oku" is the Rung-3 labeling loop's entry; hece çizgisi and tekrarlar are engraving
+ * options a friend has no reason to touch (tekrarlar in particular is a drawn-only Phase-2 preview
+ * that changes the notation for no musical reason).
+ *
+ * ⚠ Transposition, "porte değişmesin" and the accidental mode used to be here and are now in the
+ * TRANSPORT BAR (owner, 2026-08-08): a ney player transposing a score is using the app as intended,
+ * and making them open "geliştirici ayarları" for it said the opposite.
  *
  * It is a plain <details>, collapsed by default. Verbose props on purpose: App owns every piece
  * of state, and this panel holds none of it.
@@ -28,11 +32,6 @@ export function AdvancedPanel({
   onLoadJson,
   onStrips,
   omrBusy,
-  transpose,
-  transposeOptions,
-  onTranspose,
-  keepSheet,
-  onKeepSheet,
   accidentalMode,
   onAccidentalMode,
   showLyrics,
@@ -52,11 +51,6 @@ export function AdvancedPanel({
   onLoadJson: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onStrips: (e: React.ChangeEvent<HTMLInputElement>) => void;
   omrBusy: boolean;
-  transpose: number;
-  transposeOptions: readonly (readonly [number, string])[];
-  onTranspose: (commas: number) => void;
-  keepSheet: boolean;
-  onKeepSheet: (v: boolean) => void;
   accidentalMode: AccidentalMode;
   onAccidentalMode: (m: AccidentalMode) => void;
   showLyrics: boolean;
@@ -116,39 +110,11 @@ export function AdvancedPanel({
           </a>
         </div>
 
+        {/* ⚠ Transposition, "porte değişmesin" and the accidental mode moved to the TRANSPORT BAR on
+            2026-08-08 (owner): they change what a player sees and hears, so they are not developer
+            settings. `accidentalMode` is still read here — the strip exporter below shows the mode
+            it will label with, and can switch it. */}
         <div className="kv-advanced__row">
-          <label className="kv-field" title={TR.advanced.transposeTitle}>
-            <span>{TR.advanced.transpose}</span>
-            <select value={transpose} onChange={(e) => onTranspose(Number(e.target.value))}>
-              {transposeOptions.map(([commas, label]) => (
-                <option key={commas} value={commas}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="kv-field" title={TR.advanced.keepSheetTitle}>
-            <input
-              type="checkbox"
-              checked={keepSheet}
-              onChange={(e) => onKeepSheet(e.target.checked)}
-            />
-            <span>{TR.advanced.keepSheet}</span>
-          </label>
-
-          <label className="kv-field" title={TR.advanced.accidentalsTitle}>
-            <span>{TR.advanced.accidentals}</span>
-            <select
-              value={accidentalMode}
-              onChange={(e) => onAccidentalMode(e.target.value as AccidentalMode)}
-            >
-              <option value="every">{TR.advanced.accidentalsEvery}</option>
-              <option value="keysig">{TR.advanced.accidentalsKeysig}</option>
-              <option value="measure">{TR.advanced.accidentalsMeasure}</option>
-            </select>
-          </label>
-
           <label
             className={`kv-field${showLyrics ? "" : " is-disabled"}`}
             title={TR.advanced.hyphensTitle}

@@ -44,6 +44,7 @@ wrong — fix by deleting, not by syncing.
 | How to make a page faster, and what each option costs | [mvp/latency.md](mvp/latency.md) |
 | **The makam intonation table, its sources, and how a page's makam is guessed** | [mvp/makam.md](mvp/makam.md) |
 | **Reworking note editing into a direct, MuseScore/Mus2-style editor** | [mvp/editor.md](mvp/editor.md) |
+| What each editor step BUILT, and the traps it found | [mvp/editor-built.md](mvp/editor-built.md) |
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | How real pages get labelled without hand work | [rung3/labeling.md](rung3/labeling.md) |
 | The two review queues that were run (realval-hard, reslice-all) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |

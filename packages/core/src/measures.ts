@@ -139,8 +139,31 @@ export function groupMeasures(doc: NoteModelDocument): Measure[] {
 }
 
 /**
- * Is an edited set of events still a valid measure? True when its total duration equals the
- * measure's required length (within epsilon). Drives the modal's Save-enabled / warning state.
+ * Which measure holds the event with this `index`? Returns the 1-based `Measure.index`, or null
+ * when no measure contains it (an unknown index, or a meta event — those are not grouped).
+ *
+ * Grouping goes through `groupMeasures`, deliberately: the sheet, the modal and the editor must
+ * all mean the same thing by "measure 7". The editor uses this to remember which bar the last edit
+ * landed in, so playback can start there.
+ */
+export function measureOfEvent(doc: NoteModelDocument, eventIndex: number): number | null {
+  for (const m of groupMeasures(doc)) {
+    if (m.events.some((ev) => ev.index === eventIndex)) return m.index;
+  }
+  return null;
+}
+
+/**
+ * Is a set of events still a valid measure? True when its total duration equals the length passed
+ * in (within epsilon).
+ *
+ * ⚠ **Nothing calls this today.** Its only consumer was the per-measure modal's Save gate, deleted
+ * with the modal on 2026-08-08, and the editor's off-meter mark deliberately does NOT use it: the
+ * length you would naturally pass — `Measure.lengthBeats` — is computed from the bar's own contents
+ * (`measureBeats` above), so the answer is true by construction and can only ever mean "you have
+ * changed this bar since it was measured". The editor compares against `deriveTimeSignature`
+ * instead. Kept because the predicate itself is sound; use it only with a reference length that
+ * came from OUTSIDE the bar.
  */
 export function isMeasureValid(events: NoteEvent[], lengthBeats: number, eps = 1e-4): boolean {
   return Math.abs(measureBeats(events) - lengthBeats) < eps;

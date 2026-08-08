@@ -8,6 +8,8 @@ import {
   estimateBpm,
   eventBeats,
   groupMeasures,
+  measureBeats,
+  nudgePitch,
   parseNoteName,
   scoreHeader,
   toAeuAlter,
@@ -17,7 +19,13 @@ import {
 } from "@turkish-omr/core";
 import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
-import { tieSplitBeats, tupletGroupsIn, tupletWrittenBeats } from "../../../tools/render/rhythm";
+import {
+  closedTupletAt,
+  tieSplitBeats,
+  tupletGroupsIn,
+  tupletRunFrom,
+  tupletWrittenBeats,
+} from "../../../tools/render/rhythm";
 import { buildTextNoise } from "./textNoise";
 import { TR } from "./ui/strings";
 import { mulberry32 } from "../../../tools/render/rng";
@@ -764,6 +772,9 @@ interface MeasureBox {
   x: number;
   y: number;
   width: number;
+  /** y of this row's TOP staff line — the origin the insert tool reads a pitch from. Not the same
+   *  as `y`, which is the stave's bounding-box top and sits well above the first line. */
+  topLineY: number;
 }
 
 /**
@@ -796,6 +807,34 @@ const NOTE_HIT_PAD = 3;
 /** Vertical drag (px) that moves a note one diatonic step — half a staff space, i.e. the real
  *  distance between a line and the space above it, so the note tracks the pointer. */
 const DRAG_PX_PER_STEP = STAFF_SPACE / 2;
+
+/** The pitch of the TOP staff line in treble clef — the origin every insert height is measured
+ *  from. VexFlow's `getYForLine(0)` is this line, and each further diatonic step down is
+ *  {@link DRAG_PX_PER_STEP} px lower. */
+const TOP_LINE_PITCH = { letter: "F", octave: 5, alter: 0 } as const;
+/** How far above the top line / below the bottom line an insert may be aimed, in diatonic steps —
+ *  three ledger lines each way. The measure's click band is taller than that, and a click in its
+ *  far corner should land on a readable note rather than four octaves out. (Line 0 is step 0 and
+ *  line 4 is step 8, so the staff itself is 0..8.) */
+const INSERT_STEP_RANGE = { min: -6, max: 14 };
+/** The ghost notehead's size, in SVG units — one staff space tall and a little wider, which is
+ *  roughly a real notehead. ⚠ It is a plain oval, NOT a Bravura glyph: nothing inside `.kv-score`
+ *  may set a font (CLAUDE.md), because the renderer crops training strips out of that container. */
+const GHOST_W = 12;
+const GHOST_H = 9;
+
+/**
+ * Which staff position a click at height `y` is aiming at, as a spelling — the insert tool's
+ * pitch-from-height. `alter` comes from the drawn key signature, so a note inserted on Si under a
+ * koma-bemol-Si signature is born koma-flat and the engraver prints nothing on it: the note looks
+ * exactly like the place that was clicked. The palette's accidental tool changes it afterwards.
+ */
+function pitchAtHeight(y: number, topLineY: number, signatureMap: Map<string, number>) {
+  const raw = Math.round((y - topLineY) / DRAG_PX_PER_STEP);
+  const steps = Math.max(INSERT_STEP_RANGE.min, Math.min(INSERT_STEP_RANGE.max, raw));
+  const at = nudgePitch(TOP_LINE_PITCH, -steps); // down the screen is a lower pitch
+  return { letter: at.letter, octave: at.octave, alter: signatureMap.get(at.letter) ?? 0, steps };
+}
 
 /**
  * The clickable box of one drawn note, in the SVG's coordinate space (which is the overlay's too
@@ -839,14 +878,17 @@ export function SheetView({
   lyricHyphens,
   playing,
   getPositionMs,
-  onMeasureClick,
   onSeekToMeasure,
   selectedNote,
   onSelectNote,
   onDeleteNote,
   onNudgePitch,
-  armed,
+  armedTool,
+  armedRest = false,
   onApplyTool,
+  onInsertNote,
+  tupletAnchor = null,
+  onTupletPick,
   onLayout,
   highlightRect,
   repeatSpans,
@@ -875,9 +917,6 @@ export function SheetView({
   playing: boolean;
   /** Current playback position in ms (from the audio backend), or null when stopped. */
   getPositionMs: () => number | null;
-  /** Edit mode: open the editor for a measure. Fires on a click that misses every note — the
-   *  measure modal is still how notes are inserted and re-valued until the palette lands. */
-  onMeasureClick: (m: Measure) => void;
   /** Non-edit mode: seek/play from the clicked measure. */
   onSeekToMeasure: (m: Measure) => void;
   /** Edit mode: which event (`NoteEvent.index`) is selected, or null. */
@@ -889,13 +928,36 @@ export function SheetView({
   /** Edit mode: the note was dragged up or down — ±1 diatonic step per half staff space,
    *  accidental carried. Signed steps, not a delta in pixels. */
   onNudgePitch?: (index: number, steps: number) => void;
-  /** Edit mode: is a palette tool armed? Only its ARMEDNESS matters here — the sheet does not
-   *  care which tool it is; it just routes the click to `onApplyTool` instead of starting a
-   *  pitch drag, and shows the "this click applies something" cursor. */
-  armed?: boolean;
+  /** Edit mode: which KIND of palette tool is armed, or null for plain selection.
+   *
+   *  A click on a NOTE routes to `onApplyTool`, except for the tuplet, which has its own two-click
+   *  gesture (`onTupletPick`). The kind also decides what EMPTY space does: a note value inserts
+   *  there (step 6), while an accidental or the tuplet has nothing to attach to and does nothing —
+   *  opening the measure modal on an armed click would be a surprise. */
+  armedTool?: "duration" | "accidental" | "tuplet" | null;
+  /** True when the armed note value is a REST tool. Only the preview cares: a rest has no pitch, so
+   *  the ghost parks mid-staff and stops naming one. The insert/apply paths are the same. */
+  armedRest?: boolean;
   /** Edit mode: a note was clicked while a tool was armed. Fires once per click, even for a
    *  tie-split event (two boxes, one `evIndex`). */
-  onApplyTool?: (index: number) => void;
+  onApplyTool?: (index: number, pitchAt?: { letter: string; octave: number; alter: number }) => void;
+  /** Edit mode, a note value armed: empty staff was clicked, so insert a note there. Everything
+   *  is already resolved from the geometry — which bar, which event to go in front of (null =
+   *  the end of that bar), and the staff position the click's HEIGHT names. The spelling is in
+   *  DISPLAY space: the sheet draws `displayDoc`, so a transposed score needs it mapped back. */
+  onInsertNote?: (at: {
+    measureIndex: number;
+    beforeEventIndex: number | null;
+    letter: string;
+    octave: number;
+    alter: number;
+  }) => void;
+  /** Edit mode, the tuplet armed: the first note of the run, or null when none is picked yet.
+   *  Drives which targets stay clickable — see `tupletStates`. */
+  tupletAnchor?: number | null;
+  /** Edit mode, the tuplet armed: a clickable note was clicked. The sheet only refuses what it has
+   *  dimmed; deciding what the click MEANS (anchor, apply, remove, cancel) is App's. */
+  onTupletPick?: (index: number) => void;
   /** Fired after each engrave with every measure's on-screen rectangle (1-based `index`, `x`, `y`,
    *  `width`) and the SVG size. Used by the Step-2c strip exporter to compute crop rectangles. */
   onLayout?: (layout: { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number }) => void;
@@ -938,6 +1000,15 @@ export function SheetView({
   const [noteBoxes, setNoteBoxes] = useState<NoteBox[]>([]);
   const [svgHeight, setSvgHeight] = useState(ROW_HEIGHT + 20);
   const [hover, setHover] = useState<number | null>(null);
+  // The insert preview: a ghost notehead at the staff position an empty click would use. Moved by
+  // mutating the element directly (like the playhead above), never through state — a preview that
+  // re-rendered the overlay on every mouse-move is exactly the cost that got the measure hover
+  // highlight removed in slice 1.
+  const ghostRef = useRef<HTMLDivElement>(null);
+
+  /** Is any tool armed? The note-hit path only cares about this; the empty-space path needs the
+   *  kind, because only a note value can be inserted into blank staff. */
+  const armed = armedTool != null;
 
   // Distinct accidentals used, for the legend.
   const usedAccidentals = useMemo(() => {
@@ -960,6 +1031,69 @@ export function SheetView({
 
   // The usul meter (e.g. 9/8 for aksak), printed once at the start of the first staff.
   const timeSig = useMemo(() => deriveTimeSignature(doc), [doc]);
+
+  /**
+   * Edit mode, the tuplet armed: what a click on each note would do (editor step 7).
+   *
+   *  - `start`  — a legal run begins here (nothing anchored yet);
+   *  - `member` — inside an existing closed triplet; a click takes that triplet apart;
+   *  - `anchor` — the run's first note, already picked; clicking it again backs out;
+   *  - `end`    — the one note that closes the run from the anchor;
+   *  - `blocked` — everything else. Rendered dim and with `pointer-events: none`, which is what
+   *    makes an invalid target literally unclickable rather than merely unresponsive (the brief:
+   *    dim them, do not pop an error).
+   *
+   * Once a run is open only its own two ends stay live — an existing triplet elsewhere on the page
+   * would otherwise silently abandon the anchor when clicked.
+   *
+   * All of it comes from `tools/render/rhythm.ts`, the module that draws the bracket, so the sheet
+   * cannot offer a triplet the engraver would refuse to draw. Empty when the tool is not armed, so
+   * nothing here costs anything in the other modes.
+   */
+  const tupletStates = useMemo(() => {
+    const out = new Map<number, "start" | "member" | "anchor" | "end" | "blocked">();
+    if (armedTool !== "tuplet") return out;
+    for (const m of groupMeasures(doc)) {
+      const anchorPos = tupletAnchor == null ? -1 : m.events.findIndex((e) => e.index === tupletAnchor);
+      const endPos = anchorPos < 0 ? null : tupletRunFrom(m.events, anchorPos)?.[2] ?? null;
+      m.events.forEach((ev, pos) => {
+        const state =
+          tupletAnchor != null
+            ? ev.index === tupletAnchor ? "anchor" : pos === endPos ? "end" : "blocked"
+            : closedTupletAt(m.events, pos) ? "member"
+              : tupletRunFrom(m.events, pos) ? "start"
+                : "blocked";
+        out.set(ev.index, state);
+      });
+    }
+    return out;
+  }, [doc, armedTool, tupletAnchor]);
+
+  /**
+   * Edit mode: which bars do not add up, and in which direction (editor step 8).
+   *
+   * ⚠ The reference is the DERIVED METER, never `Measure.lengthBeats` — that is computed from the
+   * bar's own contents (`measureBeats`), so `isMeasureValid` against it is true by construction and
+   * can only ever mean "you changed this bar since it was measured". A musician means something
+   * else by "this bar is too long", and so does a model that misread a duration.
+   *
+   * The first and last bar warn only when OVER: a pickup and a closing bar are legitimately short,
+   * an overfull one never is.
+   */
+  const barFill = useMemo(() => {
+    const out = new Map<number, "over" | "under">();
+    if (!editMode || !timeSig) return out;
+    const meterWhole = timeSig.num / timeSig.den;
+    const measures = groupMeasures(doc);
+    measures.forEach((m, i) => {
+      const d = measureBeats(m.events) - meterWhole;
+      if (Math.abs(d) < 1e-4) return;
+      const edge = i === 0 || i === measures.length - 1;
+      if (d < 0 && edge) return;
+      out.set(m.index, d > 0 ? "over" : "under");
+    });
+    return out;
+  }, [doc, editMode, timeSig]);
 
   // Printed-header metadata extracted from the score (makam, form, usul, composer) + its notated
   // tempo (we estimate it; SymbTr stores none). Rendered as an engraved-style header above the staff.
@@ -1225,7 +1359,7 @@ export function SheetView({
         } catch (e) {
           console.warn(`sheet: failed to render measure ${cell.m.index}`, e);
         }
-        collected.push({ index: cell.m.index, measure: cell.m, x, y, width: cell.width });
+        collected.push({ index: cell.m.index, measure: cell.m, x, y, width: cell.width, topLineY: stave.getYForLine(0) });
         x += cell.width;
       }
     });
@@ -1312,11 +1446,21 @@ export function SheetView({
   function onPitchDragStart(e: React.PointerEvent<HTMLDivElement>, index: number) {
     e.stopPropagation();
     e.preventDefault(); // no text selection, no native image drag
+    // The tuplet is a two-click gesture and its own path: it never selects, because the selection
+    // highlight beside an anchor highlight would say there are two marked notes when there is one.
+    if (armedTool === "tuplet") {
+      onTupletPick?.(index);
+      return;
+    }
     onSelectNote?.(index);
     // A tool is armed: this click APPLIES it. Deliberately no drag — a click that both re-values a
     // note and nudges its pitch by whatever the pointer wobbled is not one edit, it is two.
     if (armed) {
-      onApplyTool?.(index);
+      // The click's HEIGHT rides along, because one case needs it: a note value dropped on a REST
+      // turns it back into a note, and a rest carries no pitch to keep. Same mapping as the insert
+      // ghost, so a rest clicked at a given height becomes the note that height names. App ignores
+      // it for every other target.
+      onApplyTool?.(index, armedTool === "duration" ? pitchAtNote(e, index) : undefined);
       return;
     }
     if (!onNudgePitch) return;
@@ -1355,6 +1499,92 @@ export function SheetView({
     );
   }
 
+  // Disarming (or switching to an accidental) must take the ghost with it — nothing else clears
+  // it, because the pointer may never leave the bar it was last drawn over.
+  useEffect(() => {
+    if (armedTool !== "duration") hideGhost();
+  }, [armedTool]);
+
+  // --- insert on empty space (editor step 6) ------------------------------------------------
+  //
+  // The sheet owns all of the geometry and hands `App` a resolved intent, never pixels: which bar,
+  // which event the new note goes in front of, and the staff position the click's height names.
+
+  /** A pointer position in the container's (= the SVG's) coordinate space. */
+  function localXY(e: React.MouseEvent): { x: number; y: number } | null {
+    const cont = containerRef.current;
+    if (!cont) return null;
+    const r = cont.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  /**
+   * What an empty click inside measure `b` would insert: the pitch from its height, and the event
+   * it goes in FRONT of from its x — the first note of that bar whose centre lies to the right,
+   * or null to append at the end of the bar.
+   *
+   * ⚠ A tie-split event owns two boxes sharing one `evIndex`; first match wins, which is the right
+   * answer (the split is one event, and it starts at the first box).
+   */
+  function insertAt(b: MeasureBox, at: { x: number; y: number }) {
+    const own = new Set(b.measure.events.map((ev) => ev.index));
+    let before: number | null = null;
+    let bestX = Infinity;
+    for (const nb of noteBoxes) {
+      if (!own.has(nb.evIndex)) continue;
+      const cx = nb.x + nb.width / 2;
+      if (cx > at.x && cx < bestX) {
+        bestX = cx;
+        before = nb.evIndex;
+      }
+    }
+    return { ...pitchAtHeight(at.y, b.topLineY, signatureMap), measureIndex: b.index, beforeEventIndex: before };
+  }
+
+  /** The staff position a click on an existing note is pointing at — the rest→note case. Needs the
+   *  note's own bar, because the origin (`topLineY`) is per row. Null when the event is not on a
+   *  laid-out bar, which a stale click can be. */
+  function pitchAtNote(e: React.PointerEvent, index: number) {
+    const at = localXY(e);
+    const b = boxes.find((bx) => bx.measure.events.some((ev) => ev.index === index));
+    if (!at || !b) return undefined;
+    const p = pitchAtHeight(at.y, b.topLineY, signatureMap);
+    return { letter: p.letter, octave: p.octave, alter: p.alter };
+  }
+
+  /** Move the ghost notehead to the position an insert would use, and label it with the pitch it
+   *  would produce. `data-insert-pitch` is the contract `smoke:editor` reads: the preview and the
+   *  insert must come out of the same mapping, and an attribute is how that is provable. */
+  function moveGhost(b: MeasureBox, e: React.MouseEvent) {
+    const g = ghostRef.current;
+    const at = localXY(e);
+    if (!g || !at) return;
+    const spot = insertAt(b, at);
+    g.style.display = "block";
+    if (armedRest) {
+      // A rest has no pitch: it goes where the engraver puts it, in the middle of the staff, and
+      // the preview must not promise otherwise by following the pointer up and down. Drawn as a
+      // squat bar rather than an oval, because that is what a rest looks like.
+      g.style.borderRadius = "1px";
+      g.style.transform =
+        `translate(${at.x - GHOST_W / 2}px, ${b.topLineY + 4 * DRAG_PX_PER_STEP - GHOST_H / 2}px)`;
+      g.setAttribute("data-insert-pitch", "es");
+      return;
+    }
+    g.style.borderRadius = "50%";
+    // The rotation rides along in the same property — assigning `transform` replaces all of it.
+    g.style.transform =
+      `translate(${at.x - GHOST_W / 2}px, ${b.topLineY + spot.steps * DRAG_PX_PER_STEP - GHOST_H / 2}px) rotate(-20deg)`;
+    g.setAttribute("data-insert-pitch", `${spot.letter}${spot.octave}`);
+  }
+
+  function hideGhost() {
+    const g = ghostRef.current;
+    if (!g) return;
+    g.style.display = "none";
+    g.removeAttribute("data-insert-pitch");
+  }
+
   return (
     // No frame of its own: this sits inside the score card (.kv-score), which supplies the paper,
     // the border and the horizontal scroll. A second border here would double-frame the sheet.
@@ -1385,6 +1615,7 @@ export function SheetView({
         id="sheet-surface"
         data-edit-mode={editMode ? "on" : "off"}
         data-selected-note={editMode && selectedNote != null ? selectedNote : undefined}
+        data-tuplet-anchor={editMode && tupletAnchor != null ? tupletAnchor : undefined}
         style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
         onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}
@@ -1431,9 +1662,12 @@ export function SheetView({
               />
             );
           })()}
-        {/* Playhead: a teal bar that tracks the currently-playing note (positioned via transform). */}
+        {/* Playhead: a teal bar that tracks the currently-playing note (positioned via transform).
+            `data-omr` so a check can read WHERE playback started — an attribute saying which bar
+            Çal aims at cannot prove the audio actually began there. */}
         <div
           ref={cursorRef}
+          data-omr="playhead"
           style={{
             position: "absolute",
             top: 0,
@@ -1450,17 +1684,30 @@ export function SheetView({
         />
         {editMode && (
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }} data-omr="edit-overlay">
-            {/* Measure targets, underneath the note targets: a click that misses every note opens
-                the measure modal, which is still the only way to insert a note or change a
-                duration until the palette lands.
+            {/* Measure targets, underneath the note targets. What an empty click does depends on
+                what is armed: a NOTE VALUE inserts a note right there (step 6 — pitch from the
+                click's height, duration from the tool); an ACCIDENTAL or the TUPLET does nothing,
+                because neither has anything to attach to; with nothing armed it clears the
+                selection. ⚠ It used to open the per-measure modal — deleted 2026-08-08, so a click
+                on blank staff can no longer produce a window over the score.
                 ⚠ NO hover highlight here (owner, 2026-08-07). Editing is whole-score, so framing a
                 measure says the wrong thing about what a click does — and it also cost a re-render
                 per mouse-move across the sheet. The note boxes below carry the only hover state
-                edit mode has. */}
+                edit mode has; the insert ghost moves without one. */}
             {boxes.map((b) => (
               <div
                 key={b.index}
-                onClick={() => { onSelectNote?.(null); onMeasureClick(b.measure); }}
+                onClick={(e) => {
+                  if (armedTool === "duration") {
+                    const at = localXY(e);
+                    if (at) onInsertNote?.(insertAt(b, at));
+                    return;
+                  }
+                  if (armedTool) return; // an accidental (or the tuplet) needs a note
+                  onSelectNote?.(null);
+                }}
+                onMouseMove={armedTool === "duration" ? (e) => moveGhost(b, e) : undefined}
+                onMouseLeave={armedTool === "duration" ? hideGhost : undefined}
                 style={{
                   position: "absolute",
                   left: b.x,
@@ -1468,21 +1715,82 @@ export function SheetView({
                   width: b.width,
                   height: ROW_HEIGHT - 16,
                   pointerEvents: "auto",
-                  cursor: "default",
+                  cursor: armedTool === "duration" ? "copy" : "default",
                   boxSizing: "border-box",
                 }}
               />
             ))}
+            {/* Bars that do not add up (editor step 8). An INDICATOR, never a block: an edit
+                absorbs into its bar and bar lines never move, so over- and under-full bars are
+                ordinary, reachable states of the document — a triplet makes one every time.
+                ⚠ The reference is the DERIVED METER (see `barFill`), not `Measure.lengthBeats`.
+                Drawn in the overlay, never in the SVG: the engraving may not move. */}
+            {boxes.map((b) => {
+              const fill = barFill.get(b.index);
+              if (!fill) return null;
+              const beats = measureBeats(b.measure.events);
+              const meter = timeSig ? `${timeSig.num}/${timeSig.den}` : "";
+              return (
+                <div
+                  key={`fill_${b.index}`}
+                  data-omr="bar-warning"
+                  data-bar={b.index}
+                  data-bar-fill={fill}
+                  className={`kv-bar-warn kv-bar-warn--${fill}`}
+                  title={
+                    fill === "over"
+                      ? TR.bar.over(beats.toFixed(3), meter)
+                      : TR.bar.under(beats.toFixed(3), meter)
+                  }
+                  // Just above the top staff line at the bar's right edge — `b.y` is the stave's
+                  // bounding box, which starts a whole STAVE_TOP_PAD higher and reads as floating
+                  // over the system rather than belonging to the bar.
+                  style={{ position: "absolute", left: b.x + b.width - 20, top: b.topLineY - 24 }}
+                >
+                  {fill === "over" ? "+" : "−"}
+                </div>
+              );
+            })}
+            {/* The insert preview. One element for the whole sheet, parked until a note value is
+                armed and the pointer is over a bar; `moveGhost` positions it and names the pitch
+                it would produce. */}
+            <div
+              ref={ghostRef}
+              data-omr="insert-ghost"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: GHOST_W,
+                height: GHOST_H,
+                borderRadius: "50%",
+                background: "rgba(20,184,166,0.45)",
+                border: "1px solid #14b8a6",
+                boxSizing: "border-box",
+                transform: "rotate(-20deg)", // a notehead leans, and it reads as one at this size
+                pointerEvents: "none",
+                display: "none",
+                willChange: "transform",
+              }}
+            />
             {/* Note targets. A tie-split event has two boxes sharing one evIndex; both highlight
                 when it is selected, and either one selects it. */}
             {noteBoxes.map((nb, i) => {
               const on = selectedNote != null && nb.evIndex === selectedNote;
+              // Tuplet armed: what this note would do, and whether it can be clicked at all. A
+              // tie-split event owns two boxes sharing one evIndex; both read the same state.
+              const tup = tupletStates.get(nb.evIndex);
+              const dead = tup === "blocked";
               return (
                 <div
                   key={`${nb.evIndex}_${i}`}
-                  className={`kv-note-hit${on ? " is-selected" : ""}${armed ? " is-armed" : ""}`}
+                  className={
+                    `kv-note-hit${on ? " is-selected" : ""}${armed ? " is-armed" : ""}` +
+                    `${dead ? " is-dim" : ""}${tup === "anchor" ? " is-anchor" : ""}`
+                  }
                   data-omr-note={nb.evIndex}
                   data-selected={on ? "1" : undefined}
+                  data-tuplet={tup}
                   onPointerDown={(e) => onPitchDragStart(e, nb.evIndex)}
                   onPointerMove={onPitchDragMove}
                   onPointerUp={onPitchDragEnd}
@@ -1495,7 +1803,9 @@ export function SheetView({
                     top: nb.y - NOTE_HIT_PAD,
                     width: nb.width + 2 * NOTE_HIT_PAD,
                     height: nb.height + 2 * NOTE_HIT_PAD,
-                    pointerEvents: "auto",
+                    // A note the tuplet tool would refuse is not a target at all — the click falls
+                    // through to the measure box below, which with a tool armed does nothing.
+                    pointerEvents: dead ? "none" : "auto",
                     cursor: armed ? "copy" : "grab",
                     touchAction: "none", // or the browser pans the page instead of dragging
                   }}

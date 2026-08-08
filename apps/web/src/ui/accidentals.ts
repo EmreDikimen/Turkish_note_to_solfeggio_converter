@@ -1,23 +1,22 @@
 /**
- * The accidentals the EDITOR offers, and how each one is shown — one list, two consumers.
+ * The accidentals the EDITOR offers, and how each one is shown.
  *
- * Both the palette's accidental tools and the measure modal's dropdown pick from here, so the two
- * edit paths cannot drift into offering different alterations. (The modal goes at step 10 of
- * docs/mvp/editor.md; until then it stays working off the same source.)
+ * The list is the FULL range: the four AEU signs each way (koma 1, bakiye 4, küçük 5, büyük 8),
+ * natural, and the numbered 2- and 3-comma alterations. Every one of them has its own Bravura
+ * glyph (`accidental2CommaSharp` and friends), so they can all be shown as signs rather than as
+ * text — which is why the palette can carry the whole set without becoming unreadable.
  *
- * The list is the full range INCLUDING the numbered ±2/±3, so the user can set the exact comma
- * they want. The engraved staff snaps what it draws to the standard AEU signs (`toAeuAlter`); the
- * editor does not snap what it stores.
+ * ⚠ The numbered ±2/±3 are stored exactly and **drawn snapped**: the engraver prints the nearest
+ * standard AEU sign (`toAeuAlter`), because that is what a Turkish edition prints. So a ±2 changes
+ * the SOUND exactly and the printed sign only approximately — the tooltip says the comma count for
+ * that reason. Until 2026-08-08 these lived in the measure modal's dropdown; the modal is gone and
+ * the palette carries them.
  */
 
 import { accidentalGlyph, accidentalLabel } from "@turkish-omr/core";
 
 /** Offered alterations in commas, low pitch → high pitch. 0 is natural. */
 export const ACCIDENTAL_VALUES = [-8, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 8];
-
-/** The four AEU signs plus natural — the palette's row, kept short enough to click without
- *  reading. The numbered alterations stay in the modal's dropdown. */
-export const PALETTE_ACCIDENTALS = [-5, -4, -1, 0, 1, 4, 5];
 
 const NATURAL_CP = 0xe261;
 

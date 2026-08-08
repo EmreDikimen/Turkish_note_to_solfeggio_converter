@@ -7,7 +7,38 @@ updated: 2026-08-08
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-08 (latest) — a cold server is now waited for, not abandoned
+## 2026-08-08 (latest) — the "one giant note" was a grace note's bounding box
+
+Owner, from a real upload: in edit mode a huge tinted rectangle covered much of the page, and nothing
+could be edited until it was deleted with the ✕. Not a decode problem and not a stray note — a
+**geometry bug in the editor's click targets**, and the notes people deleted to escape it were real.
+
+**Cause.** `SheetView`'s `noteBoxOf` trusted `StaveNote.getBoundingBox()`, which VexFlow computes by
+**merging every modifier's box** into the note's. `GraceNoteGroup` never overrides
+`Element.getBoundingBox()`, and that reads `this.x`/`this.y` — still **0**, because the group
+positions its inner notes and never itself. Merging a box at the SVG origin stretches the note's box
+from the top-left of the score all the way down to the note. So the bug fires on exactly one thing:
+**a note carrying a grace note**, which is why no bundled sample showed it and no check caught it.
+
+**Measured before fixing, on `beyati-delisin.json`** (the one bundled score with grace notes, 14 of
+them): 14 boxes anchored at the origin, largest 949×1805 px, and **126 of 134 on-screen boxes had
+their own centre stolen** by a giant box lying over them. That last number is the report restated —
+almost every click in that region went to the wrong note. Numbers: [../METRICS.md](../METRICS.md).
+
+**Fix.** A box that reaches the origin is rejected, and the note's own ink is used instead —
+noteheads plus stem, from `getNoteHeadBounds()` / `getStemExtents()` / `getGlyphWidth()`, all of which
+report real positioned geometry. ⚠ **The test has no tunable threshold in it, deliberately**: a drawn
+note has a clef to its left and a title above it, so nothing legitimate can sit at x ≤ 0 or y ≤ 0 —
+only an unpositioned modifier can. If VexFlow ever fixes `GraceNoteGroup`, the branch stops firing on
+its own. Ordinary notes keep VexFlow's box, so their click targets are byte-identical (median 18×47
+before and after).
+
+**`smoke:editor` now covers it, on a score that HAS grace notes** — the default sample has none, which
+is precisely why the bug shipped. Two assertions, neither tunable: no box may sit at the sheet's
+origin, and clicking a box's centre must land on that box. Confirmed to fail without the fix
+(126 violations) and pass with it, because a check that cannot fail proves nothing.
+
+## 2026-08-08 — a cold server is now waited for, not abandoned
 
 Owner, immediately after the redeploy found it: fix the cold-start fallback. Built, checked and
 deployed the same day — Netlify `6a771a5cc56797b5dfe8e246`.

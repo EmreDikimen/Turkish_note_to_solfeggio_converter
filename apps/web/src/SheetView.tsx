@@ -837,15 +837,63 @@ function pitchAtHeight(y: number, topLineY: number, signatureMap: Map<string, nu
 }
 
 /**
+ * The note's OWN ink — noteheads plus stem, and nothing a modifier claims.
+ *
+ * Built from public accessors that report real, positioned geometry, so it is immune to the
+ * modifier-merge bug documented on `noteBoxOf`. Returns null when VexFlow has not formatted the note
+ * far enough to answer (a rest has no stem, an unformatted note has no heads).
+ */
+function inkBoxOf(n: StaveNote, evIndex: number): NoteBox | null {
+  try {
+    const { yTop, yBottom } = n.getNoteHeadBounds();
+    if (!Number.isFinite(yTop) || !Number.isFinite(yBottom)) return null;
+    let top = yTop;
+    let bottom = yBottom;
+    if (!n.isRest() && n.hasStem()) {
+      const { topY, baseY } = n.getStemExtents();
+      if (Number.isFinite(topY) && Number.isFinite(baseY)) {
+        top = Math.min(top, topY, baseY);
+        bottom = Math.max(bottom, topY, baseY);
+      }
+    }
+    const width = n.getGlyphWidth();
+    if (!Number.isFinite(width) || width <= 0) return null;
+    return { evIndex, x: n.getAbsoluteX(), y: top, width, height: bottom - top };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The clickable box of one drawn note, in the SVG's coordinate space (which is the overlay's too
  * — the container is never transformed; see the .kv-score rule in CLAUDE.md).
+ *
+ * ⚠ **VexFlow's own box cannot be trusted on a note that carries a grace group.**
+ * `StaveNote.getBoundingBox()` is a MERGE over the note's modifiers, and `GraceNoteGroup` never
+ * overrides `Element.getBoundingBox()` — which reads `this.x`/`this.y`, still **0** because the group
+ * positions its inner notes and never itself. Merging a box at the SVG origin stretches the note's
+ * box from the top-left of the score all the way to the note: measured on `beyati-delisin.json`,
+ * 14 boxes (exactly its 14 grace notes) up to **949×1805 px**, each one starting at (0,0).
+ *
+ * Owner-reported 2026-08-08 as "one giant note I have to delete before I can edit", and that is
+ * what it looks like: the box is a click target AND the tinted selection overlay, so the topmost
+ * such box swallows every click over a third of the page. Nothing was wrong with the score — the
+ * notes people deleted to escape it were real.
+ *
+ * So a box that reaches the origin is rejected in favour of the note's own ink. The test needs no
+ * tuning and encodes the mechanism exactly: a drawn note is never at x ≤ 0 (the clef is left of it)
+ * nor y ≤ 0 (the title is above it), so only an unpositioned modifier can put it there. If VexFlow
+ * ever fixes `GraceNoteGroup`, this simply stops firing.
  */
 function noteBoxOf(n: StaveNote, evIndex: number, barTop: number, barHeight: number): NoteBox {
   try {
     const bb = n.getBoundingBox();
-    if (bb && Number.isFinite(bb.getW()) && bb.getW() > 0) {
+    const reachesOrigin = bb && (bb.getX() <= 0 || bb.getY() <= 0);
+    if (bb && Number.isFinite(bb.getW()) && bb.getW() > 0 && !reachesOrigin) {
       return { evIndex, x: bb.getX(), y: bb.getY(), width: bb.getW(), height: bb.getH() };
     }
+    const ink = inkBoxOf(n, evIndex);
+    if (ink) return ink;
   } catch {
     // fall through to the stave-height fallback below
   }

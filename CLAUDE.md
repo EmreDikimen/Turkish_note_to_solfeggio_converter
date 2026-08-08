@@ -46,6 +46,7 @@ npm run dev:web                      # harness → http://localhost:5173
 npm run typecheck                    # all workspaces
 npm test                             # stitcher unit tests + label round-trip + edit primitives
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
+                                     # …and note-box geometry on a GRACE-NOTE score (see the rule below)
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
@@ -150,6 +151,15 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not
   survive a transform. The design system is `apps/web/src/styles/` (`tokens.css` → `base.css` →
   `app.css`); classes are `.kv-*`.
+- **`StaveNote.getBoundingBox()` is a merge over the note's MODIFIERS, so it is not safe on its own**
+  (2026-08-08, a live bug). `GraceNoteGroup` never positions itself, so it reports its box at the SVG
+  **origin**, and merging that stretched a graced note's click box from the top-left of the score to
+  the note — 949×1805 px, stealing 126 of 134 clicks on the page. `noteBoxOf` in `SheetView.tsx`
+  therefore rejects any box reaching x ≤ 0 or y ≤ 0 and falls back to the note's own ink
+  (`getNoteHeadBounds` / `getStemExtents` / `getGlyphWidth`, all real positioned geometry). Two things
+  follow: **the default sample has no grace notes, so `smoke:editor` loads `beyati-delisin.json` for
+  its geometry section** — keep it that way, a check on a graceless score cannot see this class of
+  bug; and if you ever add a modifier, verify it positions itself before trusting a merged box.
 - **A production build is not the dev server, and only `smoke:build` knows the difference.** ORT's
   wasm runtime must be served as real files (`/ort/`, via `copy-ort.mjs`) or the bundler inlines its
   worker glue and every session creation hangs — dev, `smoke:page` and the 27/28 gate stayed green

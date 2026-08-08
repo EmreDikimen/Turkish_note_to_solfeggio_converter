@@ -13,18 +13,26 @@ selection**, **the style pass** and **the editor, steps 1–8 + 10** — one bui
 re-upload: nothing under `apps/server/` or `apps/web/src/omr/` had moved since the live revision.
 Numbers: [METRICS.md](METRICS.md); how and what it found: [log/status-log.md](log/status-log.md).
 
-**✅ AND THE COLD-START BUG IT FOUND IS FIXED AND DEPLOYED, same day.** A cold container answered
-`/decode` with a truthful `503 model still loading` for its first ~9.5 s, and `remote.ts` fell back on
-**any** error without retrying — so **a friend's first upload after idle was read on their own
-machine**, pulling 211 MB of weights, which is close to the common case at n=2 and gives back the cool
-laptop the server exists to buy. The fix is [mvp/latency.md](mvp/latency.md)'s option 1, both halves:
-the client **waits out** a warming server (40 s budget, ~10 s boot) and **pings `/health` when the app
-opens**. **Client-only — the server's contract did not change, so no Cloud Run redeploy.**
-⚠ **Only a `ready: false` 503 is waited on**; `model failed to load` and every other failure still
-fall back at once, or a broken container would strand the user for 40 s. Both halves are pinned by
+**✅ AND THE COLD-START BUG IT FOUND IS FIXED AND DEPLOYED, same day.** A cold container answers
+`/decode` with a truthful `503 model still loading` for ~9.5 s, and `remote.ts` fell back on **any**
+error without retrying — so **a friend's first upload after idle was read on their own machine**, plus
+211 MB of weights, which is close to the common case at n=2 and gives back the cool laptop the server
+exists to buy. Fixed per [mvp/latency.md](mvp/latency.md) option 1, both halves: the client **waits
+out** a warming server (40 s budget, ~10 s boot) and **pings `/health` on open**. Client-only, so no
+Cloud Run redeploy. ⚠ **Only a `ready: false` 503 is waited on**; `model failed to load` and every
+other failure still fall back at once, or a broken container would strand the user for 40 s. Pinned by
 **`npm run check:coldstart`**, which fakes the cold window instead of racing it — the only check that
-can see this, since every other one runs against a warm server. Also fixed: the upload hint claimed
-"20 saniye", never measured and half the truth; now **35–55 sn**, matching `expectServer`.
+can see this, since every other one runs warm. Also fixed: the upload hint claimed "20 saniye", never
+measured and half the truth; now **35–55 sn**, matching `expectServer`.
+
+**✅ AND THE "ONE GIANT NOTE" IN EDIT MODE IS FIXED — a grace note's bounding box.** Owner-reported
+from a real upload. `StaveNote.getBoundingBox()` merges every modifier's box in, and `GraceNoteGroup`
+never positions itself, so it reports (0,0): a graced note's click box ran from the score's top-left
+down to the note — 14 of them on the one bundled grace-note score, largest **949×1805 px**, **stealing
+126 of 134 clicks** ([METRICS.md](METRICS.md)). ⚠ **The notes people deleted to escape it were real** —
+the score was never wrong. Boxes reaching the origin now fall back to the note's own ink; ordinary
+notes are unchanged. **`smoke:editor` asserts it on a grace-note score** (the default sample has none,
+which is why it shipped) and was confirmed to fail without the fix. Rule: [../CLAUDE.md](../CLAUDE.md).
 
 **W9 IS COMPLETE AND NOTHING IS OWED ON IT.** The app is LIVE at
 **<https://komavision.netlify.app>**, the weights are on the Hub, decode is on Cloud Run behind the
@@ -41,72 +49,35 @@ the training strips never move.** Audibly correct on **204/213** bundled scores
 ([METRICS.md](METRICS.md)); table, sources and the guessing rule in [mvp/makam.md](mvp/makam.md).
 
 **THE STYLE PASS IS DONE, 2026-08-07 — AND LIVE SINCE 2026-08-08.** The harness is now
-**KomaVision**, in **Turkish**, on warm paper: upload is the hero (drag, drop or paste), the
-transport keeps the controls a musician touches, the rest fold into a collapsed **Gelişmiş**. ⚠ **Three of them came back up on 2026-08-08** (owner): transposition, *porte değişmesin* and the accidental mode are in the transport bar, because a ney player transposing a score is using the app as intended and should not have to open "geliştirici ayarları" to do it. The transposition list is now in **komas**, named by scale degree where one lands ("4 ses (22 koma)"), and the accidental control is *arıza işaretleri*, which is what it is called.
-Slicing, decode, the fallback and the origin lock did not move. Underneath it, the load-bearing
-change: **the deploy checks no longer read the copy** — `#omr-status` carries `data-state / kind /
-where` + counts (`apps/web/src/ui/status.ts`), which is what let the UI become Turkish without
-touching one assertion.
+**KomaVision**, in **Turkish**, on warm paper: upload is the hero (drag, drop or paste), the transport
+keeps the controls a musician touches, the rest fold into a collapsed **Gelişmiş**. ⚠ **Three came
+back up on 2026-08-08** (owner): transposition, *porte değişmesin* and *arıza işaretleri* sit in the
+transport bar, because a ney player transposing a score is using the app as intended and should not
+have to open "geliştirici ayarları"; the transposition list now speaks **komas**, named by the scale
+degree one lands on ("4 ses (22 koma)"). Slicing, decode, the fallback and the origin lock did not
+move. Underneath it, the load-bearing change: **the deploy checks no longer read the copy** —
+`#omr-status` carries `data-state / kind / where` + counts (`apps/web/src/ui/status.ts`), which is what
+let the UI become Turkish without touching one assertion.
 
-**THE PALETTE IS BUILT AND GREEN, 2026-08-08 — editor steps 4 and 5.** A column beside the sheet
-holds six note values and the AEU signs; **arm one and click a note** and that note takes it — the
-Mus2 model, which is what the owner already uses. `Esc` or **↖ Seçim** disarms, and with nothing
-armed the sheet behaves exactly as it did in slice 1. The edited bar is left over or under its
-length on purpose (**edits absorb, bar lines never move**); the warning for that is step 8. Two
-traps are written up in [mvp/editor.md](mvp/editor.md), and the first is worth knowing before
-drawing any glyph in a button: **Bravura ink paints outside its em box**, so one tool's notehead
-overhung its neighbour and a click on 1/8 armed 1/32.
-
-**Step 5 landed the same day: the palette has its own Çal/Dur, and Çal plays from the LAST EDITED
-BAR.** That is not a duplicate of the transport above — in edit mode a click on the sheet selects or
-inserts, so click-a-bar-to-play is switched off, and this is what replaces it: fix a note, press
-Çal, hear the bar. Çal always restarts from that bar (pause/resume stays in the transport), undo
-does **not** move it, and an edit still **stops** playback — editor.md's resume-in-place constraint
-is deliberately **not** built, and says so. Cheap by construction: one core primitive
-(`measureOfEvent`), one number in `App`, and two buttons reusing the existing `onSeekMs`/`onStop`.
-⚠ `smoke:editor` asserts on the **playhead's position down the sheet**, not on the attribute naming
-the bar — an attribute cannot prove the audio began there.
-
-**THE EDITOR REWORK STARTED — SLICE 1 WAS BUILT AND GREEN, 2026-08-07.** Steps 1–3 of
-[mvp/editor.md](mvp/editor.md): in edit mode you click a note on the sheet, it selects, an **✕**
-deletes it and **dragging it up or down** moves its pitch — carrying its accidental across the octave
-seam — with **undo/redo** (buttons plus Ctrl/⌘+Z) shipping in the same slice, as the brief
-required. (The measure modal it was replacing is now gone — deleted 2026-08-08.)
-Underneath it the actual refactor: **one set of edit primitives**
-(`packages/core/src/edits.ts`) now serves every edit path, which **fixed a live bug** — the piano
-roll used to move a dragged note's *sound* and leave its notehead behind. Driven end to end by the
-new `npm run smoke:editor`; the engraving is byte-identical (302 strip PNGs, 0 diffs).
-
-**STEP 6 IS BUILT AND GREEN, 2026-08-08 — the palette inserts.** Arm a note value, click blank
-staff, and a note appears there: **pitch from the click's height**, duration from the tool, with a
-**ghost notehead** showing exactly what will land before you commit. The bar **absorbs** it and bar
-lines never move. Detail and the two traps: [mvp/editor-built.md](mvp/editor-built.md).
-
-**STEPS 7 AND 8 ARE BUILT AND GREEN, 2026-08-08 — the tuplet tool, and the bar that says it does not
-add up.** They shipped together because a triplet turns 3 × 1/8 into 3 × 1/12 and so leaves a short
-bar every time. Arm **ÜÇLEME**, click a note and the note two along and the three become a triplet;
-click **any member** of one and it comes apart again. Everything that cannot make a legal run is
-**dim and unclickable from the moment the tool is armed** — the page refuses, it never pops an
-error. The rule that took the thinking: **a member must be a plain `1/2^k` value**, because three
-members at ×⅔ sum to `2v`, which is plain only when `v` is — a dotted run would draw the
-*incomplete-group* bracket, and that mark means the MODEL misread something. Step 8 puts a `+`/`−`
-badge on any bar that is off the **derived meter** (never `Measure.lengthBeats`, which is true by
-construction), edit mode only, and the modal's Save gate is gone.
-⚠ Two things to carry forward, both in [mvp/editor-built.md](mvp/editor-built.md): **nothing about a
-tuplet is stored**, so the check counts the marks the *engraver drew* — in both styles, because the
-bracket-vs-arc choice is a per-piece coin and the first version read 0 on a bracket page. And the
-first and last bar are **exempt** from the "short" warning (pickup, closing bar), so a triplet made
-in bar 1 shows no badge — which reads exactly like a broken indicator.
+**THE EDITOR REWORK IS BUILT AND LIVE — steps 1–8 and 10, 2026-08-07/08.** Edit mode is a Mus2-style
+armed palette beside the sheet: click a note to select, **✕** to delete, **drag** to move its pitch
+(carrying its accidental across the octave seam), **undo/redo** (buttons + Ctrl/⌘+Z); arm a value, a
+rest or any of the thirteen koma signs and click a note to apply it, or click blank staff to **insert**
+one — pitch from the click's height, previewed by a ghost notehead. **ÜÇLEME** makes and unmakes
+triplets, with everything illegal dim and unclickable rather than erroring. A `+`/`−` badge marks any
+bar off the **derived meter**; **edits absorb and bar lines never move**. The palette's own **Çal
+plays from the last edited bar**. The per-measure modal is deleted.
+Underneath it, one set of edit primitives (`packages/core/src/edits.ts`) serves every edit path, which
+fixed a live bug on the way: the piano roll moved a dragged note's *sound* and left its notehead
+behind. What each step built, and the traps worth knowing before touching any of it (Bravura ink
+outside its em box; a tuplet is **not stored**, so the check counts drawn marks in both styles; bar 1
+is exempt from the short-bar warning): **[mvp/editor-built.md](mvp/editor-built.md)** and the brief
+**[mvp/editor.md](mvp/editor.md)**. Blow-by-blow: [log/status-log.md](log/status-log.md).
 
 **The next action is EDITOR STEP 9 — delete `Save JSON`** (and its two `app-smoke` checks and the
 `PIPELINE.md` references), the last item on the editor's list. ⚠ It needs one thing solved first:
 `smoke:editor` reads the document by clicking `#save-json`, so deleting the button removes the
-check's only way to see what an edit did.
-
-⚠ **Weigh the cold-start finding above against it before starting.** Step 9 is a deletion; the
-cold-start fallback is the deployed app not doing the one thing the server was built for, on what may
-be a friend's most common upload. Neither is urgent enough to skip a decision — but the second is
-about to be seen by the two friends W10 exists for. TWO tracks run in
+check's only way to see what an edit did. TWO tracks run in
 parallel, as re-scoped on 2026-08-05:
 
 | | |

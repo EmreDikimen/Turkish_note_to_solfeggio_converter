@@ -868,6 +868,51 @@ async function main() {
   await page.waitForTimeout(200);
   check("rewinding leaves a clean score again", await warn.count(), 0);
 
+  // --- every note box belongs to its own note (the grace-note geometry bug, 2026-08-08) ---------
+  //
+  // `StaveNote.getBoundingBox()` merges each MODIFIER's box in, and `GraceNoteGroup` never positions
+  // itself, so it reports its box at the SVG origin — which stretched a graced note's box from the
+  // top-left of the score down to the note. Owner-visible as "one giant note" covering a third of the
+  // page and swallowing every click in it, and the escape people found was to DELETE a real note.
+  //
+  // The default sample has no grace notes, which is exactly why this section loads one that does.
+  // Two assertions, neither with a tunable threshold in it:
+  //   - no box may sit at the sheet's own origin (a drawn note has a clef to its left and a title
+  //     above it, so only an unpositioned modifier can put a box there);
+  //   - clicking the centre of a box must land on that box — the user-visible property, and what
+  //     actually broke.
+  console.log("\nnote-box geometry, on a score WITH grace notes");
+  const graced = "/beyati-delisin.json";
+  await page.goto(`${base}/?score=${graced}`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#edit-toggle").click();
+  await page.waitForTimeout(600);
+
+  const geometry = await page.evaluate(() => {
+    const surface = document.querySelector("#sheet-surface")!;
+    surface.scrollIntoView({ block: "start" });
+    const s = surface.getBoundingClientRect();
+    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-omr-note]"));
+    const atOrigin: string[] = [];
+    const stolen: string[] = [];
+    let onScreen = 0;
+    for (const el of els) {
+      const idx = el.getAttribute("data-omr-note")!;
+      const r = el.getBoundingClientRect();
+      // "At the origin" with a few px of slack for the hit padding the overlay adds.
+      if (r.left - s.left <= 4 && r.top - s.top <= 4) atOrigin.push(idx);
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      if (y < 0 || y > innerHeight || x < 0 || x > innerWidth) continue; // not clickable, not testable
+      onScreen++;
+      if (document.elementFromPoint(x, y)?.getAttribute("data-omr-note") !== idx)
+        stolen.push(`${idx}→${document.elementFromPoint(x, y)?.getAttribute("data-omr-note") ?? "none"}`);
+    }
+    return { total: els.length, onScreen, atOrigin, stolen };
+  });
+  console.log(`  ${graced}: ${geometry.total} boxes, ${geometry.onScreen} on screen`);
+  check("no note box is anchored at the sheet's origin", geometry.atOrigin.join(" ") || "none", "none");
+  check("every box's centre hits its own note", geometry.stolen.join(" ") || "none", "none");
+
   check("no uncaught page errors", pageErrors.length ? pageErrors.join("; ") : "none", "none");
 
   await browser.close();

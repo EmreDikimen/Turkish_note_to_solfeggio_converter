@@ -41,6 +41,25 @@ export interface RoutedResult {
 const TIMEOUT_MS = 180_000;
 
 /**
+ * How long to wait for a container that is WARMING UP before handing the page to the browser.
+ *
+ * A cold Cloud Run container accepts connections ~9.5 s before its graphs are loaded, and answers
+ * `/decode` with a truthful 503 in that window (`apps/server/src/index.ts`: "listen first, load
+ * after"). Until 2026-08-08 this file treated that 503 like a dead server and fell back — so the
+ * first upload after any idle period was read on the user's own machine, pulling 211 MB of weights,
+ * which is precisely the outcome the server exists to prevent. Measured, not theorised:
+ * `docs/METRICS.md`, and it is why `smoke:live` failed its first run that day.
+ *
+ * Waiting is nearly free: the budget above already allows 180 s, and the cold start is ~10 s of it.
+ * The wait is bounded anyway, because a container that never becomes ready must not strand a user
+ * who could have read the page locally in a minute.
+ */
+const WARMUP_WAIT_MS = 40_000;
+
+/** How often to ask a warming server whether it is ready yet. `/health` is cheap by contract. */
+const WARMUP_POLL_MS = 1_000;
+
+/**
  * The decode server's URL, or "" for the all-browser build.
  *
  * `VITE_DECODE_URL` is the build-time flag the ladder calls for — the swap is behind a flag so the
@@ -51,6 +70,65 @@ export function decodeUrl(): string {
   const stored = typeof localStorage !== "undefined" ? localStorage.getItem("omrDecodeUrl") : null;
   const url = (stored ?? import.meta.env.VITE_DECODE_URL ?? "") as string;
   return url.trim().replace(/\/$/, "");
+}
+
+/**
+ * A 503 that means "loading, ask again" rather than "broken".
+ *
+ * The distinction is the whole fix: every OTHER failure — offline, CORS, 500, 413, 429, a malformed
+ * reply — must still fall back immediately, because none of them get better by waiting.
+ */
+class ServerWarmingError extends Error {}
+
+/** The subset of `/health` this file acts on. `ready` is the fact; `error` means a load FAILED. */
+interface HealthReply {
+  ready?: boolean;
+  error?: string;
+}
+
+async function health(url: string, signal?: AbortSignal): Promise<HealthReply | null> {
+  try {
+    const res = await fetch(`${url}/health`, { signal });
+    // A 503 here is `loadError` — a genuine failure, and the body says so.
+    return (await res.json()) as HealthReply;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Wake the decode server, without waiting for it.
+ *
+ * Called once when the app opens: by the time a user has picked a file, a container that was asleep
+ * is already loading its graphs, so the upload finds it ready and never pays the wait above. This
+ * is option 1 of `docs/mvp/latency.md`, and it is a companion to the retry rather than a substitute
+ * — someone who drops a file in immediately still needs the retry to hold the page.
+ *
+ * Deliberately fire-and-forget: it must never delay first paint, and a server that is down is not
+ * this function's problem — the upload path already handles that.
+ */
+export function warmDecodeServer(): void {
+  const url = decodeUrl();
+  if (!url) return;
+  void health(url);
+}
+
+/**
+ * Wait until the server reports `ready`, or until the budget runs out.
+ *
+ * Returns true if it became ready. A load that has actually FAILED (`error` set) returns false at
+ * once — retrying a broken container is just a slower way to fall back.
+ */
+async function waitForReady(url: string, budgetMs: number, signal?: AbortSignal): Promise<boolean> {
+  const deadline = Date.now() + budgetMs;
+  while (Date.now() < deadline) {
+    if (signal?.aborted) return false;
+    const h = await health(url, signal);
+    if (h?.error) return false;
+    if (h?.ready) return true;
+    await new Promise((r) => setTimeout(r, WARMUP_POLL_MS));
+  }
+  return false;
 }
 
 interface ServerStripReply {
@@ -97,7 +175,13 @@ async function postStrips(
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    throw new Error(`server ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`);
+    const message = `server ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`;
+    // 503 is the server's readiness answer. It says which kind it is in the body — "model still
+    // loading" is worth waiting for, "model failed to load" is not. Matching the text is safe
+    // because both strings are produced by `apps/server/src/index.ts` in this repo, and the
+    // no-match case simply falls back as before.
+    if (res.status === 503 && !/failed to load/i.test(detail)) throw new ServerWarmingError(message);
+    throw new Error(message);
   }
 
   const reply = (await res.json()) as { strips?: ServerStripReply[] };
@@ -139,7 +223,19 @@ export async function decodeStripsRouted(
     try {
       opts.onProgress?.(0, strips.length, "server");
       const meta = await getMeta();
-      const decoded = await postStrips(url, meta, strips, opts);
+      let decoded: DecodedStripResult[];
+      try {
+        decoded = await postStrips(url, meta, strips, opts);
+      } catch (err) {
+        if (!(err instanceof ServerWarmingError) || opts.signal?.aborted) throw err;
+        // The container is booting. Say so — a wait nobody explained looks like a hang — then ask
+        // again once it is ready. One retry: if a server that just told us it was ready fails the
+        // second attempt, that is a real failure and the fallback is the right answer.
+        opts.onProgress?.(0, strips.length, "waking");
+        if (!(await waitForReady(url, WARMUP_WAIT_MS, opts.signal))) throw err;
+        opts.onProgress?.(0, strips.length, "server");
+        decoded = await postStrips(url, meta, strips, opts);
+      }
       opts.onProgress?.(strips.length, strips.length);
       return { strips: decoded, where: "server" };
     } catch (err) {

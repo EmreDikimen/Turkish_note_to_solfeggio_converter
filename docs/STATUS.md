@@ -13,20 +13,23 @@ selection**, **the style pass** and **the editor, steps 1–8 + 10** — one bui
 re-upload: nothing under `apps/server/` or `apps/web/src/omr/` had moved since the live revision.
 Numbers: [METRICS.md](METRICS.md); how and what it found: [log/status-log.md](log/status-log.md).
 
-⛔ **It found one real thing, and it is a product problem, not a deploy fault: a cold container does
-not delay the server path, it cancels it.** Cloud Run routes traffic as soon as the container
-listens, which happens ~9.5 s before its graphs are loaded; `/decode` then answers a truthful `503
-model still loading`, and `remote.ts` falls back on **any** error without retrying. So **a friend's
-first upload after idle is read on their own machine**, pulling 211 MB of weights — which is close to
-the common case at n=2, and gives back the cool laptop the server exists to buy. Both halves were
-deliberate in isolation, so the fix is an owner call: see [mvp/latency.md](mvp/latency.md) option 1
-(warm on open **plus** a client that retries `ready: false`). Nothing about it is built.
+**✅ AND THE COLD-START BUG IT FOUND IS FIXED AND DEPLOYED, same day.** A cold container answered
+`/decode` with a truthful `503 model still loading` for its first ~9.5 s, and `remote.ts` fell back on
+**any** error without retrying — so **a friend's first upload after idle was read on their own
+machine**, pulling 211 MB of weights, which is close to the common case at n=2 and gives back the cool
+laptop the server exists to buy. The fix is [mvp/latency.md](mvp/latency.md)'s option 1, both halves:
+the client **waits out** a warming server (40 s budget, ~10 s boot) and **pings `/health` when the app
+opens**. **Client-only — the server's contract did not change, so no Cloud Run redeploy.**
+⚠ **Only a `ready: false` 503 is waited on**; `model failed to load` and every other failure still
+fall back at once, or a broken container would strand the user for 40 s. Both halves are pinned by
+**`npm run check:coldstart`**, which fakes the cold window instead of racing it — the only check that
+can see this, since every other one runs against a warm server. Also fixed: the upload hint claimed
+"20 saniye", never measured and half the truth; now **35–55 sn**, matching `expectServer`.
 
 **W9 IS COMPLETE AND NOTHING IS OWED ON IT.** The app is LIVE at
 **<https://komavision.netlify.app>**, the weights are on the Hub, decode is on Cloud Run behind the
 origin lock, and `npm run smoke:live` **passes on both paths against the deployed site** — the
-shipped configuration, driven as a friend would. ⚠ Its server-path assertion is only meaningful
-against a **warm** service, for the reason above.
+shipped configuration, driven as a friend would.
 
 **MAKAM SELECTION SHIPPED 2026-08-07** (not on the ladder — an owner request taken before the style
 pass). Playback used to sound every note where the staff spells it, which is the written skeleton
@@ -338,11 +341,15 @@ both reference-path only and both fine under Python-ORT int8.
 
 ## Open risks and non-claims
 
-- **A cold container costs the server path, not 10.6 s** (measured 2026-08-08, see "Now"). The
-  in-browser fallback makes this invisible rather than harmless: the page is still read correctly, so
-  nothing looks broken, and the only evidence is `data-where` and a friend's warm laptop. ⚠ It also
-  means **`smoke:live`'s server assertion is warm-only** — ping `/health`, wait for it to answer, then
-  run it, or it fails on a truth about the server rather than about the deploy.
+- **The cold-start fix is proven on a FAKED cold window, not yet on a genuinely idle service.**
+  `check:coldstart` controls the window deliberately, which is the better test of the mechanism — but
+  the real thing has only been seen warm since the fix. One `smoke:live` after ~20 minutes of nobody
+  touching the site would close it; it was armed on 2026-08-08 and cancelled, because using the app
+  for a demo recording warms the service and voids the test. Until then, that a real Cloud Run cold
+  start now reaches the server is an inference from a local reproduction.
+- **The in-browser fallback hides its own reasons.** Whenever the server is missed the page is still
+  read correctly, so nothing looks broken — the only evidence is `data-where` and a warm laptop. That
+  is what let the cold-start bug live from 2026-08-06 to 2026-08-08 in a fully "passing" deployment.
 - **Real-val orders candidates; it does not predict exam performance.** Measured gap: 28pp.
 - **The AEU headline is a per-class mean and is fragile to low-n classes.** A 3-gold class swung it
   ~11pp in Round 1; a 14-gold class swung it 4pp in Round 2 and was the entire reason that round

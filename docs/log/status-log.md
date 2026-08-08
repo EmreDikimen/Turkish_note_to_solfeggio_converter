@@ -7,7 +7,51 @@ updated: 2026-08-08
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-08 (latest) — the redeploy: makam selection, the style pass and the editor go live
+## 2026-08-08 (latest) — a cold server is now waited for, not abandoned
+
+Owner, immediately after the redeploy found it: fix the cold-start fallback. Built, checked and
+deployed the same day — Netlify `6a771a5cc56797b5dfe8e246`.
+
+**Client-only, which is the part worth remembering.** The server's behaviour was already right: it
+listens before loading so Cloud Run does not read a slow boot as a failed start, answers `/health`
+with `ready: false`, and reserves 503 for a load that genuinely failed. The bug was entirely in
+[`apps/web/src/omr/remote.ts`](../../apps/web/src/omr/remote.ts), which treated that honest 503 like a
+dead server. So no image rebuild, no Cloud Run redeploy, no Hub upload — and `decode.ts` was not
+touched, so nothing moved in parity.
+
+Two halves, in the order they matter:
+
+1. **The retry (the correctness half).** A `ready: false` 503 now raises a distinct
+   `ServerWarmingError`; the router polls `/health` for up to **40 s** and re-POSTs once ready. The
+   180 s budget already allowed this — the old code fell back rather than spend 9 s of it.
+2. **The warm-up ping (the polish half).** `warmDecodeServer()` fires one `/health` when the app
+   opens, so a container is usually ready before a file has been chosen. Fire-and-forget; it cannot
+   delay first paint or fail visibly.
+
+⚠ **The half that keeps it honest: only `ready: false` is waited on.** `model failed to load` and
+every other failure — offline, CORS, 500, 413, 429, a malformed reply — still fall back immediately.
+"Retry any 503" would strand a user behind a broken container for the full 40 s, which is a worse bug
+than the one being fixed and would have looked like a hang.
+
+**`npm run check:coldstart` is the new check, and it exists because nothing else could have caught
+this**: every other check runs against an already-warm server, which is exactly why `smoke:live` — the
+only one that talks to a service that scales to zero — was what found it. It puts a deliberately-cold
+proxy in front of a real decode server so the cold window is a **parameter, not a race**: cold for
+12 s and the page still finishes on the server (9/26/399/26); a failed load draws one `/decode` and
+zero follow-up polls. That second run is the regression guard on the paragraph above.
+
+Also corrected while in the strings file, owner-reported: the upload hint promised **"yaklaşık 20
+saniye"**, which was never measured and undersold a page by half. It now says **35–55 sn**, the same
+range the app's own `expectServer` already used — one number, two places, now agreeing. The
+cold-start hint moved from "10–30 sn" to "10–15 sn", which is true now that the wait is real.
+
+Green before shipping: `typecheck`, `npm test`, `check:coldstart`, `smoke:build` (both paths,
+`9/26/399/26`), and `smoke:live` after the deploy (server 48.4 s, fallback 72.5 s, same score).
+⚠ **Still owed: one live run against a genuinely idle container.** It was armed as a 21-minute wait
+and cancelled — the owner wanted to record a demo video, and any use of the app warms the service and
+voids the test. The mechanism is proven locally; this would only confirm it on the real one.
+
+## 2026-08-08 — the redeploy: makam selection, the style pass and the editor go live
 
 One build carrying everything since 2026-08-06: **makam selection**, **the style pass** and **the
 editor, steps 1–8 + 10**. Netlify deploy `6a7713bc1830de6894e19afe` replaces

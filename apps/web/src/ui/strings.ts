@@ -19,7 +19,10 @@ export const TR = {
     lead: "Notanın fotoğrafını buraya sürükleyin",
     leadCompact: "Yeni nota yükle",
     pick: "Dosya seç",
-    hint: "JPG veya PNG · tek sayfa · yaklaşık 20 saniye",
+    // ⚠ Keep this in step with `status.expectServer` below — they are the same promise, said twice
+    // (before the upload and during it). 35–55 sn is the measured range for a page, docs/METRICS.md;
+    // the "20 saniye" this replaced on 2026-08-08 was never measured and undersold it by half.
+    hint: "JPG veya PNG · tek sayfa · yaklaşık 35–55 saniye",
     hintPaste: "Sürükleyin, yapıştırın (⌘/Ctrl+V) ya da seçin",
     sampleNudge: "Ya da hazır bir örneği dinleyin",
   },
@@ -163,6 +166,7 @@ export const TR = {
     slicing: "sayfa dilimleniyor…",
     readingStrips: (n: number) => `${n} şerit okunuyor…`,
     readingOnServer: (n: number) => `${n} şerit sunucuda okunuyor…`,
+    wakingServer: "sunucu uyanıyor…",
     readingStrip: (i: number, n: number) => `şerit ${i} / ${n} okunuyor…`,
     stitching: "birleştiriliyor…",
     stripsDone: (strips: number, notes: number, measures: number, secs: string, perStrip: string) =>
@@ -188,7 +192,9 @@ export const TR = {
     elapsed: (s: number) => `${s} sn`,
     expectServer: "genelde 35–55 sn sürer",
     expectLocal: "bu okuma sizin cihazınızda yapılıyor, biraz uzun sürebilir",
-    coldStart: "Sunucu uykudaysa ilk okuma 10–30 sn daha uzun sürebilir.",
+    // True as of the 2026-08-08 retry fix: a sleeping server is now WAITED for (~10 s, docs/METRICS.md)
+    // instead of the page silently being read on the user's own machine.
+    coldStart: "Sunucu uykudaysa ilk okuma 10–15 sn daha uzun sürebilir.",
   },
 
   /** The slicer's own phase names (apps/web/src/omr/page.ts reports these keys). */

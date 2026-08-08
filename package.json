@@ -19,6 +19,7 @@
     "smoke:editor": "npx tsx tools/browser/editor-smoke.ts",
     "smoke:page": "npx tsx tools/browser/page-smoke.ts",
     "smoke:build": "npx tsx tools/browser/build-smoke.ts",
+    "check:coldstart": "npx tsx tools/browser/coldstart-smoke.ts",
     "smoke:live": "npx tsx tools/browser/live-smoke.ts",
     "build:app": "npm run -w @turkish-omr/web build",
     "parity:armb": "npx tsx tools/vision/parity/arm-b.ts",

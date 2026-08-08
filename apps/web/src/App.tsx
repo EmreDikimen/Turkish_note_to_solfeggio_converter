@@ -41,7 +41,7 @@ import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
-import { decodeStripsRouted } from "./omr/remote";
+import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
 import { UploadHero } from "./ui/UploadHero";
@@ -332,6 +332,10 @@ export function App() {
     loadSample(URL_SCORE ?? SAMPLES[0]!.file).then(() => {
       if (URL_SCORE && URL_TRANSPOSE !== 0) setTranspose(URL_TRANSPOSE);
     });
+    // Start the decode server waking while the user is still choosing a file: a cold container is
+    // ~10 s from ready, and picking a file takes longer than that. Costs one cheap GET and cannot
+    // fail visibly (omr/remote.ts).
+    warmDecodeServer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

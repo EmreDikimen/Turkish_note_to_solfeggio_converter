@@ -241,14 +241,14 @@ Open the Netlify address in a browser and upload a page of sheet music. Then che
 
 1. It says **"read on the server"** at the end, not "read on your machine". If it says the second
    one, the app could not reach Cloud Run — most likely step 9 has a typo in the address.
-   ⚠ **On the first upload after a quiet spell it will say "read on your machine", and nothing is
-   broken.** The server takes ~10 seconds to wake and honestly says "not ready yet" until it has; the
-   app does not wait, it just reads the page here instead. Upload a second page and it will say "on
-   the server". If you want the first one to go to the server, open the page, wait ten seconds, then
-   upload. (Whether the app *should* wait is an open call — [latency.md](latency.md), option 1.)
-2. It finishes. A page takes **35–65 seconds** depending on how many lines of music are on it. The
-   first upload after idle is the one read on your own machine, which is a similar wait but also
-   downloads the 211 MB of model files once.
+   ⚠ **This used to be wrong on a first upload, and was fixed on 2026-08-08.** The server sleeps when
+   nobody uses it and takes ~10 seconds to wake; it says "not ready yet" until then, and the app used
+   to give up and read the page on your own machine instead. Now it **waits** for it — and it also
+   nudges the server awake the moment you open the page, so by the time you have picked a file it is
+   usually ready anyway. If it still says "read on your machine", something is actually wrong: check
+   step 9's address.
+2. It finishes. A page takes **35–55 seconds** depending on how many lines of music are on it, plus
+   about 10 seconds if the server was asleep.
 
 And re-check the machine-run version, which tests both paths at once:
 

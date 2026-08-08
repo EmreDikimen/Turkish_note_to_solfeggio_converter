@@ -30,13 +30,12 @@ Measured on the deployed service (Cloud Run, europe-west3, 1 vCPU), 2026-08-06.
 | 16 strips | 31 s | **~35 s** | ~46 s |
 | 26 strips | 51 s | **~55 s** | ~66 s |
 
-⚠ **The "total (cold)" column is wrong about what a user experiences, and 2026-08-08 measured it.**
-It assumes the upload *waits* out the boot. It does not: the container accepts connections before its
-graphs are loaded, so `/decode` answers a truthful `503 model still loading`, and `remote.ts` routes
-**any** failure to the browser without retrying. A cold start therefore does not add ~11 s — it moves
-the entire page onto the friend's own machine, plus a 211 MB weights download the first time. Those
-numbers are the fallback's, not the server's. **This is the strongest argument for option 1 below**,
-and it makes option 1 a correctness fix rather than a polish item. Numbers:
+⚠ **The "total (cold)" column was wrong until 2026-08-08, and the story is worth keeping.** It
+assumes the upload *waits* out the boot. It did not: the container accepts connections before its
+graphs are loaded, so `/decode` answered a truthful `503 model still loading`, and `remote.ts` routed
+**any** failure to the browser without retrying — so a cold start did not add ~11 s, it moved the
+entire page onto the friend's own machine plus a 211 MB weights download. **Fixed the same day**
+(option 1 below, both halves), so the column is now what it always claimed to be. Numbers:
 [../METRICS.md](../METRICS.md).
 
 ⚠ For comparison, the same 26-strip page reads in **34 s in the owner's own browser** on an M4. The
@@ -87,7 +86,16 @@ does, and it is deferred until someone says the wait bothers them.
 rewritten, because the decision was the owner's.** Option 1 was priced as buying ~10.6 s of waiting.
 It is not: a cold container makes the app read the whole page **on the friend's machine**, so option 1
 (with a `ready: false` retry) is what buys the server path at all on a first upload. The "it only
-removes the cold start" argument still holds for option 2. Worth re-deciding, not worth assuming.
+removes the cold start" argument still holds for option 2.
+
+✅ **RE-DECIDED AND BUILT the same day, at the owner's request: option 1, both halves.** The client
+now **waits out a warming container** instead of falling back on its 503 (up to `WARMUP_WAIT_MS`,
+40 s, against a cold start of ~10 s), and **pings `/health` when the app opens** so a container is
+usually ready by the time a file has been chosen. Client-only — the server's contract did not change,
+so it needed no Cloud Run redeploy. The retry is the correctness half; the ping only hides the wait.
+⚠ **Only a `ready: false` 503 is waited on.** A load that actually failed (`model failed to load`),
+and every other failure, still falls back at once — waiting on those would strand a user behind a
+broken container for 40 s. Both halves are pinned by `npm run check:coldstart`.
 
 ### What option 3 actually requires
 

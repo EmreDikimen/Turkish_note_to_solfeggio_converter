@@ -70,6 +70,11 @@ export function readingStatus(
   total: number,
   current?: string
 ): OmrStatus {
+  // "waking" is the cold-container wait (omr/remote.ts). Still `decode` as a phase — the read is
+  // under way from the user's point of view — but a distinct sentence, because a silent 10 s pause
+  // before any progress reads as a hang. ⚠ Static text, no ticking clock: `page-smoke` counts
+  // DISTINCT status texts to prove progress moved, so a countdown here would forge that signal.
+  if (current === "waking") return busy(kind, "decode", TR.status.wakingServer);
   if (current === "server") return busy(kind, "decode", TR.status.readingOnServer(total));
   return done < total
     ? busy(kind, "decode", TR.status.readingStrip(done + 1, total))

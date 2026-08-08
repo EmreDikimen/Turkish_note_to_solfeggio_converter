@@ -57,6 +57,22 @@
   margin-top: var(--space-2);
 }
 
+/* The legal footer: the no-storage promise, whose sheet it is, and how to object. Quiet on
+   purpose — it must be readable, not read. It sits at page level, well outside `.kv-score`, so it
+   cannot violate the rule that no selector under the score may set a font or a transform. */
+.kv-footer {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  max-width: var(--measure);
+}
+
+.kv-footer p + p {
+  margin-top: var(--space-2);
+}
+
 /* ── Buttons and form controls ──────────────────────────────────────────── */
 
 .kv-btn {

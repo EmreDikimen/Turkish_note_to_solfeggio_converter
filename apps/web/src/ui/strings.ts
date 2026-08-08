@@ -14,6 +14,25 @@ export const TR = {
   tagline:
     "Notanın fotoğrafını yükleyin: perdeler okunur, nota dizilir ve 53 komalı sesiyle çalınır.",
 
+  // The legal footer (added 2026-08-08, the copyright pass). Three separate promises, and each one
+  // is a statement of fact about the code, not a disclaimer:
+  //   - uploads are not stored: apps/server/src/index.ts never writes an image to disk;
+  //   - the user owns what they upload: the app bundles no score of its own any more;
+  //   - there is a way to reach a human: the repo's issue tracker, so no personal address is
+  //     published (owner's choice, 2026-08-08).
+  // ⚠ If the server ever starts persisting an upload, the first line becomes false — change it
+  // there and here in the same commit.
+  footer: {
+    privacy: "Yüklediğiniz görüntüler sunucuda saklanmaz; okunur ve silinir.",
+    rights:
+      "Yüklediğiniz notanın haklarından siz sorumlusunuz. Uygulama kendi içinde hiçbir eser barındırmaz.",
+    contactLabel: "Hak sahibiyseniz ve itirazınız varsa:",
+    contactText: "bildirin",
+    contactHref: "https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues",
+    noticesText: "Kullanılan açık kaynak bileşenler",
+    noticesHref: "/THIRD-PARTY.txt",
+  },
+
   hero: {
     title: "Nota sayfasını yükleyin",
     lead: "Notanın fotoğrafını buraya sürükleyin",
@@ -24,7 +43,6 @@ export const TR = {
     // the "20 saniye" this replaced on 2026-08-08 was never measured and undersold it by half.
     hint: "JPG veya PNG · tek sayfa · yaklaşık 35–55 saniye",
     hintPaste: "Sürükleyin, yapıştırın (⌘/Ctrl+V) ya da seçin",
-    sampleNudge: "Ya da hazır bir örneği dinleyin",
   },
 
   transport: {

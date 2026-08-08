@@ -28,6 +28,7 @@ the remaining model work is about real printed pages.
 | What ships today, what's next, open risks | [docs/STATUS.md](docs/STATUS.md) |
 | Any headline number (accuracy, corpus size, yield) | [docs/METRICS.md](docs/METRICS.md) |
 | Why something was decided (and what overturned it) | [docs/DECISIONS.md](docs/DECISIONS.md) |
+| **What we may publish** — licences, attribution, why no score ships | **[docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)** |
 | The full doc map | [docs/INDEX.md](docs/INDEX.md) |
 | **MVP track (in-browser pipeline → friends release)** | **[docs/mvp/README.md](docs/mvp/README.md)** |
 | Real-page track (collect → label → exam → rounds) | [docs/rung3/](docs/rung3/) |
@@ -146,6 +147,20 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   timer may render inside `#omr-status` (`page-smoke` counts distinct texts to prove progress
   moved), and `#strips-input` lives inside the collapsed `<details id="advanced">`, so `app-smoke`
   opens it first and the file inputs use the clip pattern, never `display:none`.
+- **THE APP PUBLISHES NO SCORE, AND NOTHING MAY PUT ONE BACK** (owner decision 2026-08-08). Every
+  score this project has is a SymbTr export, and SymbTr is **CC BY-NC-SA 4.0** — serving one binds
+  the app to **NonCommercial forever**, and two of them were compositions still in copyright under
+  FSEK 5846. So `SAMPLES` in `App.tsx` is **empty**, there is no Sample dropdown, and the app opens
+  on the upload prompt. The files stay on disk **gitignored** because `npm test`, `smoke:editor` and
+  the manual checks read them through **`?score=…`** against a dev server — local use is not
+  distribution, adding a `SAMPLES` entry is. ⚠ The enforcement is `prune-dist.mjs`, which **fails
+  the build on any `.json` at the dist root**: everything under `public/` is served to whoever
+  guesses the name, so "no UI links to it" proves nothing. An own-work score would go in a
+  subdirectory. ⚠ Consequence for browser checks: **`data-ready` never appears on a bare visit** —
+  it means "a score is installed" and none is. Ask for `?score=` if you need one; wait on
+  `#page-input` if you are uploading your own. ⚠ The footer (`#legal`) claims uploads are not
+  stored — true only while `apps/server/src/index.ts` writes no image to disk; change both together.
+  Full map: [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md).
 - **The score's SVG is also the training-strip source, so CSS must not reach it.** No selector under
   `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that container —
   `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not

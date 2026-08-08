@@ -74,10 +74,22 @@ dist/
 *.tsbuildinfo
 .vite/
 
-# SymbTr-derived sample (don't redistribute dataset content)
+# SymbTr-derived scores — NONE of these are redistributed (2026-08-08 copyright pass).
+# SymbTr is CC BY-NC-SA 4.0, so shipping any of them would bind this app to NonCommercial for good;
+# two were also still-protected compositions under FSEK 5846 (life + 70). They stay on disk because
+# `npm test`, `smoke:editor` and the manual checks read them through `?score=…`, and local use is
+# not distribution — but nothing here may be committed or built into dist/. See docs/THIRD-PARTY.md.
 apps/web/public/sample.json
+apps/web/public/beyati-delisin.json
+apps/web/public/gamzedeyim-deva.json
+apps/web/public/safalar-getirdiniz.json
 # Rung-2 batch-exported scores (SymbTr-derived; regenerate via scripts/export_scores.py)
 apps/web/public/scores/
+# A neyzen.com screenshot and its transcription — someone else's engraving, never redistributed.
+# ⚠ Both were tracked until 2026-08-08; `git rm --cached` took them out of HEAD, but they are
+# still in the repo's HISTORY. Removing them from there needs a rewrite (see docs/THIRD-PARTY.md).
+/Meltem - 1. Hane.png
+apps/web/public/meltem_notes.json
 
 # IDEs
 .idea/

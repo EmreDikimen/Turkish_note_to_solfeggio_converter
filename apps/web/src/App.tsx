@@ -79,15 +79,21 @@ const backend = new WebAudioBackend();
 // Every makam the app can play, built once at module load — the list is static.
 const MAKAM_OPTIONS = makamOptions();
 
-// Example scores bundled in apps/web/public/ (exported from SymbTr via scripts/symbtr_to_json.py).
-// The first entry auto-loads on startup; the rest are selectable from the Sample dropdown.
-// ⚠ `sample.json` (aldanma dünya) was REMOVED from this list on 2026-08-08 (owner) — but the file
-// stays in public/: `npm test`'s round-trip corpus reads it by name, and the manual checks drive it
-// through `?score=/sample.json`. Out of the UI, still on disk.
-const SAMPLES: { label: string; file: string }[] = [
-  { label: "gamzedeyim deva — uşşak · sofyan (tatyos efendi)", file: "/gamzedeyim-deva.json" },
-  { label: "safalar getirdiniz — kürdilihicazkâr · aksak (avni anıl)", file: "/safalar-getirdiniz.json" },
-];
+// EMPTY ON PURPOSE, and it must stay empty (owner decision 2026-08-08, the copyright pass).
+//
+// Every score we had to hand is derived from SymbTr, which is **CC BY-NC-SA 4.0**: shipping one
+// would carry an attribution duty, a ShareAlike duty on the derived file, and — the reason the
+// owner chose removal over attribution — a NonCommercial clause binding this app forever. Two of
+// them were also still-protected compositions under FSEK 5846 (life + 70): "safalar getirdiniz"
+// (Avni Anıl, d. 2008) and "delisin deli" (Selahattin Pınar, d. 1960). So the deployed app ships
+// no third-party score at all and opens empty — see docs/THIRD-PARTY.md.
+//
+// ⚠ The files still exist in apps/web/public/ for LOCAL work — gitignored, and dropped from the
+// build by tools/prune-dist.mjs. `npm test`'s round-trip corpus, `smoke:editor`'s grace-note
+// geometry section and the manual checks all read them through `?score=…`, which still works on a
+// dev server and is the only way in now that the dropdown is gone. Local use is not distribution;
+// re-adding an entry here would be.
+const SAMPLES: { label: string; file: string }[] = [];
 
 // Render-automation parameters: the batch renderer (tools/render/render.ts) drives the harness
 // with one page.goto per job instead of UI clicks, e.g.
@@ -215,7 +221,8 @@ export function App() {
   // through useDocHistory's two stacks would buy nothing.
   const [lastEditMeasure, setLastEditMeasure] = useState<number | null>(null);
   // Which bundled sample is loaded (its file path), or "" when a user-picked file is loaded.
-  const [sampleFile, setSampleFile] = useState<string>(SAMPLES[0]!.file);
+  // Starts "" now that SAMPLES is empty — the app opens with no score.
+  const [sampleFile, setSampleFile] = useState<string>("");
   // In-browser OMR: the model reads strip images and the result loads as a score. `omrStatus` is
   // the user-visible progress line — a page is ~20 strips at ~1 s each, so silence would read as
   // a hang — plus the structured facts the deploy checks assert on (see ui/status.ts).
@@ -326,12 +333,17 @@ export function App() {
       .catch((err) => setError(toAppError(err, "file")));
   }
 
-  // Load the URL-requested score (render automation) or the first bundled sample on first render.
+  // Load the URL-requested score (render automation, the manual checks, the browser smokes) — and
+  // nothing otherwise. There is no bundled sample to fall back to any more, so a plain visit opens
+  // on the upload prompt and `#app` never gets `data-ready`, which is the honest reading of that
+  // attribute: no score is loaded. Anything that needs one starts at `?score=…`.
   // The transpose must be applied AFTER the load — loadDoc resets it to 0.
   useEffect(() => {
-    loadSample(URL_SCORE ?? SAMPLES[0]!.file).then(() => {
-      if (URL_SCORE && URL_TRANSPOSE !== 0) setTranspose(URL_TRANSPOSE);
-    });
+    if (URL_SCORE) {
+      loadSample(URL_SCORE).then(() => {
+        if (URL_TRANSPOSE !== 0) setTranspose(URL_TRANSPOSE);
+      });
+    }
     // Start the decode server waking while the user is still choosing a file: a cold container is
     // ~10 s from ready, and picking a file takes longer than that. Costs one cheap GET and cannot
     // fail visibly (omr/remote.ts).
@@ -1016,9 +1028,11 @@ export function App() {
       </header>
 
       <UploadHero
-        // The hero shrinks once the score on screen came from a read or a loaded file, which is
-        // exactly when `sampleFile` is empty — no extra state to keep in step.
-        compact={omrBusy || sampleFile === ""}
+        // The hero shrinks once a score is on screen. ⚠ This used to read `sampleFile === ""`,
+        // which meant the same thing only while a bundled sample auto-loaded: with SAMPLES empty
+        // `sampleFile` is ALWAYS "", so that test would open the app in the compact state with
+        // nothing on screen — the opposite of what a first-time visitor needs. `doc` is the fact.
+        compact={omrBusy || !!doc}
         busy={omrBusy}
         status={omrStatus}
         error={error}
@@ -1152,6 +1166,23 @@ export function App() {
           onDismiss={() => setMakamPrompt(null)}
         />
       )}
+
+      {/* Always rendered, score or no score — the upload promise and the takedown route are what a
+          first-time visitor needs most, and that is exactly the empty state. */}
+      <footer className="kv-footer" id="legal">
+        <p>{TR.footer.privacy}</p>
+        <p>{TR.footer.rights}</p>
+        <p>
+          {TR.footer.contactLabel}{" "}
+          <a href={TR.footer.contactHref} target="_blank" rel="noreferrer noopener">
+            {TR.footer.contactText}
+          </a>
+          {" · "}
+          <a href={TR.footer.noticesHref} target="_blank" rel="noreferrer noopener">
+            {TR.footer.noticesText}
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }

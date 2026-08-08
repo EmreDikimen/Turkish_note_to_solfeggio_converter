@@ -1,0 +1,82 @@
+KomaVision — üçüncü taraf bileşenler / third-party notices
+==========================================================
+
+Bu sayfa, uygulamanın kullandığı açık kaynak bileşenleri ve lisanslarını listeler.
+This file lists the third-party components KomaVision ships, and their licenses.
+
+Son güncelleme / last updated: 2026-08-08
+
+
+ESERLER HAKKINDA / ABOUT MUSICAL WORKS
+--------------------------------------
+
+KomaVision hiçbir nota veya eser barındırmaz ve dağıtmaz. Uygulama yalnızca
+kullanıcının kendi yüklediği görüntüyü işler; görüntüler sunucuda saklanmaz.
+
+KomaVision bundles and distributes NO musical scores of any kind. It only
+processes the image a user uploads, and uploaded images are not stored.
+
+Hak sahibiyseniz ve bir itirazınız varsa / rights holders may object at:
+https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues
+
+
+YAZI TİPİ / FONT
+----------------
+
+Bravura (SMuFL music font)
+  © Steinberg Media Technologies GmbH
+  SIL Open Font License 1.1 — tam metin: /fonts/OFL.txt
+  https://github.com/steinbergmedia/bravura
+
+
+MODEL
+-----
+
+Flova/omr_transformer  —  Apache License 2.0
+  https://huggingface.co/Flova/omr_transformer
+  KomaVision'ın modeli bu önceden eğitilmiş modelden ince ayarlanmıştır.
+  KomaVision's model is fine-tuned from this pretrained checkpoint.
+  Türetilen ağırlıklar / the derived weights, also Apache-2.0:
+  https://huggingface.co/Beyaban/omr-weights
+
+
+KÜTÜPHANELER / LIBRARIES
+------------------------
+
+React 18.3.1, React DOM 18.3.1  —  MIT
+  © Meta Platforms, Inc. and affiliates
+  https://github.com/facebook/react
+
+VexFlow 5.0.0  —  MIT
+  © Mohit Muthanna Cheppudira and contributors
+  https://github.com/vexflow/vexflow
+
+ONNX Runtime Web 1.27.0, ONNX Runtime Common 1.27.0  —  MIT
+  © Microsoft Corporation
+  https://github.com/microsoft/onnxruntime
+
+@techstark/opencv-js 5.0.0  —  Apache License 2.0
+  OpenCV © OpenCV team; JS build © techstark
+  https://github.com/TechStark/opencv-js
+  Apache-2.0 tam metin / full text: https://www.apache.org/licenses/LICENSE-2.0
+
+
+MIT LİSANSI / MIT LICENSE (yukarıdaki MIT bileşenler için / for the MIT components above)
+----------------------------------------------------------------------------------------
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

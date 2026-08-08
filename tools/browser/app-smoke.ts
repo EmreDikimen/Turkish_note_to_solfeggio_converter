@@ -53,9 +53,12 @@ async function main() {
   page.on("pageerror", (e) => pageErrors.push(e.message));
 
   await page.goto(base, { waitUntil: "domcontentloaded" });
-  // The bundled sample auto-loads first; wait for the app to settle before swapping it out.
-  // `data-ready` rather than the page's title text: the title is copy and is free to change.
-  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  // Wait for the app to boot before feeding it strips. ⚠ This used to wait on `data-ready`, which
+  // worked only because a bundled sample auto-loaded; the app has bundled no score since
+  // 2026-08-08 (App.tsx SAMPLES — they were all SymbTr-derived, CC BY-NC-SA), so `data-ready`
+  // never appears on a bare visit. `#page-input` is DOM state, not copy, so the rule that these
+  // checks never match on wording still holds.
+  await page.waitForSelector("#page-input", { timeout: 60000 });
 
   // "Read strips" is a developer control and lives inside the collapsed Gelişmiş panel; a closed
   // <details> hides its subtree. Opening it is also the only coverage that panel gets.

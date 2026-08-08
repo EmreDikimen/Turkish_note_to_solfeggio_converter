@@ -15,6 +15,7 @@ wrong — fix by deleting, not by syncing.
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
 | The 28 July test day, in plain English (history) | [OVERVIEW-JULY.md](OVERVIEW-JULY.md) |
+| Can I publish this? In plain English | [OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md) |
 | I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
 
 ## Facts and decisions
@@ -27,6 +28,7 @@ wrong — fix by deleting, not by syncing.
 | How the page-cutter behaves on real pages — retunes, cap bugs, crop geometry | [METRICS-SLICER.md](METRICS-SLICER.md) |
 | Whether the TypeScript slicer port reproduces the Python, rung by rung | [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |
 | Why do we do X this way? What was overturned? | [DECISIONS.md](DECISIONS.md) |
+| What may we publish? Licences, attribution, why no score ships | [THIRD-PARTY.md](THIRD-PARTY.md) |
 | Raw log of a training run or export | [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) |
 
 ## The work

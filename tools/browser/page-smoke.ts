@@ -126,7 +126,11 @@ async function main() {
 
   console.log(`  dev server up at ${base}`);
   await page.goto(base, { waitUntil: "domcontentloaded" });
-  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  // ⚠ Wait for the upload control, NOT for `data-ready`. Since 2026-08-08 the app bundles no score
+  // (App.tsx SAMPLES), so on a bare visit `data-ready` never appears — correctly, because it means
+  // "a score is installed" and none is. This run makes its own score from the page it uploads, so
+  // the boot signal it actually needs is "the file input is there".
+  await page.waitForSelector("#page-input", { timeout: 60000 });
   console.log("  app loaded, uploading the page…");
 
   const t0 = Date.now();

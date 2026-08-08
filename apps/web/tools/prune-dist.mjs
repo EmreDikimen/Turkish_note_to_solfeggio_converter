@@ -23,10 +23,30 @@ const DROP = [
   "models", // 332 MB: the int8 graphs, gate.json and the gate's 14 test strips
   "probe", // opencv.js / logprob reference dumps, read only by the harness pages
   // ~20 MB / 220 files: the render automation's corpus, loaded only via `?score=…` by
-  // tools/render/render.ts. The files at the public ROOT stay: gamzedeyim-deva.json and
-  // safalar-getirdiniz.json are the Sample dropdown, and sample.json is still driven by the manual
-  // checks' `?score=/sample.json` even though it left the dropdown on 2026-08-08.
+  // tools/render/render.ts.
   "scores",
+];
+
+/**
+ * Third-party-derived scores at the public ROOT, dropped since 2026-08-08 (the copyright pass).
+ *
+ * Every one is a SymbTr export, and SymbTr is **CC BY-NC-SA 4.0** — serving one from the deployed
+ * site is redistribution, which would owe attribution, bind the derived file to ShareAlike, and
+ * hold the whole app to NonCommercial forever. Two were also compositions still in copyright under
+ * FSEK 5846 (life + 70): safalar-getirdiniz (Avni Anıl, d. 2008), beyati-delisin (Selahattin Pınar,
+ * d. 1960). `meltem_notes.json` is a transcription of a neyzen.com engraving.
+ *
+ * ⚠ This list is a BACKSTOP, not the mechanism — `SAMPLES` in App.tsx is empty, so nothing links
+ * to them. It exists because "no UI links to it" is not the same as "not published": a file under
+ * `public/` is served to anyone who guesses its name. Deleting it here is what makes that untrue.
+ */
+const DROP_SCORES = [
+  "sample.json",
+  "beyati-delisin.json",
+  "gamzedeyim-deva.json",
+  "safalar-getirdiniz.json",
+  "meltem_notes.json",
+  "decoded.json", // a stitched decode of a real (copyrighted) page — stage-8 output
 ];
 
 /**
@@ -53,6 +73,9 @@ async function walk(dir) {
 for (const name of DROP) {
   await rm(path.join(DIST, name), { recursive: true, force: true });
 }
+for (const name of DROP_SCORES) {
+  await rm(path.join(DIST, name), { force: true });
+}
 const assetsDir = path.join(DIST, "assets");
 for (const f of await readdir(assetsDir).catch(() => [])) {
   if (DROP_ASSETS.test(f)) await rm(path.join(assetsDir, f), { force: true });
@@ -76,6 +99,16 @@ for (const f of files) {
 }
 if (files.some((f) => f.path.endsWith(".onnx")))
   problems.push("an .onnx graph reached dist/ — weights belong on the Hub, not the static host");
+
+// Every score this project has is third-party-derived (SymbTr, CC BY-NC-SA), and every one of them
+// lived as a .json at the dist ROOT — `fonts/glyphnames.json` is Bravura's own and sits a level
+// down. So "no .json directly in dist/" is the whole rule, and it catches a NEW score too, which a
+// name list never would. If a genuinely own-work score ever ships, put it in a subdirectory.
+const rootJson = files
+  .map((f) => path.relative(DIST, f.path))
+  .filter((rel) => rel.endsWith(".json") && !rel.includes(path.sep));
+for (const rel of rootJson)
+  problems.push(`${rel} reached dist/ — third-party-derived scores are not redistributed`);
 
 if (problems.length) {
   console.error(`\n✗ this build should not be deployed:`);

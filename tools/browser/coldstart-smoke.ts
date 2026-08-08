@@ -198,7 +198,10 @@ async function main() {
     // build gets pointed at a local server.
     await page.evaluate((u) => localStorage.setItem("omrDecodeUrl", u), fake.url);
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+    // ⚠ `#page-input`, not `data-ready`: the app bundles no score since 2026-08-08 (App.tsx
+    // SAMPLES), so nothing is installed on a bare visit and `data-ready` never appears. This run
+    // uploads its own page anyway.
+    await page.waitForSelector("#page-input", { timeout: 60000 });
 
     // The app pings /health on open (the warm-up half of the fix). That is a real behaviour, so it
     // is asserted rather than tolerated.
@@ -248,7 +251,7 @@ async function main() {
     await page.goto(base, { waitUntil: "domcontentloaded" });
     await page.evaluate((u) => localStorage.setItem("omrDecodeUrl", u), fake.url);
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+    await page.waitForSelector("#page-input", { timeout: 60000 }); // see run 1 — no bundled score
 
     fake.resetCounts();
     await page.locator("#page-input").setInputFiles(image);

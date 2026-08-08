@@ -72,19 +72,25 @@ export function AdvancedPanel({
 
       <div className="kv-advanced__body">
         <div className="kv-advanced__row">
-          <label className="kv-field">
-            <span>{TR.advanced.sample}</span>
-            <select value={sampleFile} onChange={(e) => e.target.value && onSample(e.target.value)}>
-              <option value="" disabled>
-                {TR.advanced.sampleLoaded}
-              </option>
-              {samples.map((s) => (
-                <option key={s.file} value={s.file}>
-                  {s.label}
+          {/* No bundled scores ship any more (see the SAMPLES comment in App.tsx — every one we
+              had was SymbTr-derived, CC BY-NC-SA). The picker renders only if something is there,
+              so a local checkout that still has the files can put them back by filling SAMPLES,
+              and the deployed build simply doesn't draw it. */}
+          {samples.length > 0 && (
+            <label className="kv-field">
+              <span>{TR.advanced.sample}</span>
+              <select value={sampleFile} onChange={(e) => e.target.value && onSample(e.target.value)}>
+                <option value="" disabled>
+                  {TR.advanced.sampleLoaded}
                 </option>
-              ))}
-            </select>
-          </label>
+                {samples.map((s) => (
+                  <option key={s.file} value={s.file}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <label className="kv-field">
             <span>{TR.advanced.loadJson}</span>

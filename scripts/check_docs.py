@@ -39,7 +39,9 @@ LONG_OK = {              # append-only records: size is inherent, structure is w
     "src/vision/MODEL_EVAL.md",
 }
 # Docs that need no header block / index entry (archived verbatim copies, external READMEs).
-EXEMPT_PREFIXES = ("docs/archive/",)
+# `hf/` is the model card uploaded verbatim to the Hugging Face Hub as the weights repo's README —
+# a purpose:/audience:/updated: block would be published to strangers as if it were house style.
+EXEMPT_PREFIXES = ("docs/archive/", "hf/")
 
 HEADER_KEYS = ("purpose:", "audience:", "updated:")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")

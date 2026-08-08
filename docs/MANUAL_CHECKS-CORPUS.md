@@ -10,6 +10,11 @@ updated: 2026-08-07
 >
 > Prerequisite for the browser-driven ones is the same: `npm run dev:web` → <http://localhost:5173>,
 > and the render-automation URL parameters are documented in [MANUAL_CHECKS.md](MANUAL_CHECKS.md).
+>
+> ⚠ **The `?score=…` URLs below still work, but only against a dev server.** Since 2026-08-08 the
+> app bundles no score and the deployed build has none — the files are on disk and gitignored
+> ([THIRD-PARTY.md](THIRD-PARTY.md)). A fresh checkout regenerates them with
+> `scripts/export_scores.py`. There is no Sample dropdown any more, so `?score=` is the only way in.
 
 ---
 

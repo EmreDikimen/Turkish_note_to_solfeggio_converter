@@ -6,6 +6,40 @@ updated: 2026-08-08
 
 ## Now
 
+**⚠ A COPYRIGHT PASS LANDED 2026-08-08 AND IS NOT DEPLOYED YET — the live site still serves the old
+build.** The next action is a redeploy (recipe in Track A below). What changed and why:
+[THIRD-PARTY.md](THIRD-PARTY.md), decision row in [DECISIONS.md](DECISIONS.md).
+
+The finding: **the deployed app was publishing content it had no right to publish.** Every bundled
+score is a SymbTr export, and SymbTr is **CC BY-NC-SA 4.0** — serving one owes attribution, binds
+the derived file to ShareAlike, and holds the whole app to **NonCommercial forever**. Two were also
+compositions still in copyright under FSEK 5846 (life + 70): *safalar getirdiniz* (Avni Anıl,
+d. 2008) and *delisin deli* (Selahattin Pınar, d. 1960). A neyzen.com screenshot
+(`Meltem - 1. Hane.png`) was committed to the **public** GitHub repo.
+
+The owner chose **removal over attribution**, to keep the app commercially unencumbered. So:
+
+- **`SAMPLES` is empty and the app opens on the upload prompt** — no bundled score, no Sample
+  dropdown. The files stay on disk (gitignored) because `npm test`, `smoke:editor` and the manual
+  checks read them through `?score=…`; local use is not distribution.
+- **`prune-dist.mjs` now fails the build on any `.json` at the dist root.** That is the real guard —
+  "no UI links to it" is not "not published", since everything under `public/` is served to whoever
+  guesses the name. Negative-tested: it exits 1.
+- **A legal footer** (`#legal`) states that uploads are not stored — true: the server never writes
+  an image to disk — that the user owns what they upload, and links the repo's issue tracker as the
+  takedown route. Notices ship at `/THIRD-PARTY.txt`.
+- **The Hub weights need a model card**; [`hf/README.md`](../hf/README.md) is written and awaits
+  upload. `Flova/omr_transformer` is Apache-2.0, whose §4 requires attribution to travel.
+
+Green after the change: `typecheck`, `npm test` (217/217 round-trip), `smoke:editor` (**ALL PASS**,
+including the grace-note geometry section, which still reads its 427 boxes off the local file),
+`smoke:page` (**PASS** — page in, playable score out, from the empty state), `build:app` (11 files,
+42.7 MB, no score reaches `dist/`).
+
+⚠ **Still open, both the owner's call:** the samples and the screenshot are out of HEAD but remain
+in the repo's **git history**, and the repo is public — clearing them needs a `filter-repo` rewrite
+and a force-push. And there is still **no LICENSE file**.
+
 **THE REDEPLOY IS DONE, 2026-08-08.** <https://komavision.netlify.app> now carries **makam
 selection**, **the style pass** and **the editor, steps 1–8 + 10** — one build, as the owner asked.
 `smoke:live` passes on both paths and the editor was additionally driven on the *deployed* bundle
@@ -13,26 +47,14 @@ selection**, **the style pass** and **the editor, steps 1–8 + 10** — one bui
 re-upload: nothing under `apps/server/` or `apps/web/src/omr/` had moved since the live revision.
 Numbers: [METRICS.md](METRICS.md); how and what it found: [log/status-log.md](log/status-log.md).
 
-**✅ AND THE COLD-START BUG IT FOUND IS FIXED AND DEPLOYED, same day.** A cold container answers
-`/decode` with a truthful `503 model still loading` for ~9.5 s, and `remote.ts` fell back on **any**
-error without retrying — so **a friend's first upload after idle was read on their own machine**, plus
-211 MB of weights, which is close to the common case at n=2 and gives back the cool laptop the server
-exists to buy. Fixed per [mvp/latency.md](mvp/latency.md) option 1, both halves: the client **waits
-out** a warming server (40 s budget, ~10 s boot) and **pings `/health` on open**. Client-only, so no
-Cloud Run redeploy. ⚠ **Only a `ready: false` 503 is waited on**; `model failed to load` and every
-other failure still fall back at once, or a broken container would strand the user for 40 s. Pinned by
-**`npm run check:coldstart`**, which fakes the cold window instead of racing it — the only check that
-can see this, since every other one runs warm. Also fixed: the upload hint claimed "20 saniye", never
-measured and half the truth; now **35–55 sn**, matching `expectServer`.
-
-**✅ AND THE "ONE GIANT NOTE" IN EDIT MODE IS FIXED — a grace note's bounding box.** Owner-reported
-from a real upload. `StaveNote.getBoundingBox()` merges every modifier's box in, and `GraceNoteGroup`
-never positions itself, so it reports (0,0): a graced note's click box ran from the score's top-left
-down to the note — 14 of them on the one bundled grace-note score, largest **949×1805 px**, **stealing
-126 of 134 clicks** ([METRICS.md](METRICS.md)). ⚠ **The notes people deleted to escape it were real** —
-the score was never wrong. Boxes reaching the origin now fall back to the note's own ink; ordinary
-notes are unchanged. **`smoke:editor` asserts it on a grace-note score** (the default sample has none,
-which is why it shipped) and was confirmed to fail without the fix. Rule: [../CLAUDE.md](../CLAUDE.md).
+**✅ TWO BUGS THAT REDEPLOY FOUND ARE FIXED, same day — both settled, nothing owed.** The
+**cold-start fallback** (a warming container's truthful `503` made a friend's first upload after
+idle decode on their own laptop; the client now waits it out and pings `/health` on open, pinned by
+`check:coldstart`) and the **"one giant note"** (a grace note's merged bounding box stole 126 of 134
+clicks; boxes reaching the SVG origin now fall back to the note's own ink, pinned by `smoke:editor`
+on a grace-note score). Both are written up in full — mechanism, what was rejected, and the numbers
+— in [log/status-log.md](log/status-log.md); the rules they left behind are in
+[../CLAUDE.md](../CLAUDE.md), the numbers in [METRICS.md](METRICS.md).
 
 **W9 IS COMPLETE AND NOTHING IS OWED ON IT.** The app is LIVE at
 **<https://komavision.netlify.app>**, the weights are on the Hub, decode is on Cloud Run behind the
@@ -185,6 +207,12 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
+0. **⏭ THE NEXT ACTION: redeploy, carrying the copyright pass.** The live site still serves scores
+   that are not ours to serve. Nothing under `apps/server/` or `apps/web/src/omr/` moved, so this is
+   Netlify only — no Cloud Run rebuild, no Hub re-upload of the weights. Build with both real env
+   vars (⚠ not the `smoke:build` artifact, which is baked with `localhost:8080` — see item 4), then
+   `npm run smoke:live`. **Upload `hf/README.md` to the Hub as the model card in the same sitting**:
+   `huggingface-cli upload Beyaban/omr-weights hf/README.md README.md`.
 1. **✅ DONE 2026-08-06 — the app and the weights are hosted.** `dist/` on **Netlify** at
    **<https://komavision.netlify.app>**, weights on the Hub at **`Beyaban/omr-weights`** (uploaded
    from `apps/server/models/`, so container, Hub and checkout stay one artifact set). The two traps,

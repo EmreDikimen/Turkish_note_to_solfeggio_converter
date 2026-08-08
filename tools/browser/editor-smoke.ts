@@ -80,7 +80,11 @@ async function main() {
     return b;
   };
 
-  await page.goto(base, { waitUntil: "domcontentloaded" });
+  // ⚠ The score comes from `?score=` now, not from an auto-loading bundled sample. The app ships
+  // no scores since 2026-08-08 (all of them were SymbTr-derived, CC BY-NC-SA — see App.tsx's
+  // SAMPLES comment), so a bare visit has nothing to edit and never gets `data-ready`. The file is
+  // still on disk, gitignored, and a dev server serves it.
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
 
   const before = await save();

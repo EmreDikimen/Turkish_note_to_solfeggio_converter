@@ -63,6 +63,15 @@ bottom of this page.
 
 ## Where we are right now
 
+### 8 August 2026: the app no longer gives away other people's music
+
+You asked whether publishing the app causes a copyright problem. It did, and it is fixed — the full
+plain-English answer is **[OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md)**. Short version: the
+example songs built into the app came from a database whose licence says *nobody may ever make money
+from anything built with it*, and two were by composers still in copyright. You chose to **remove the
+examples** rather than credit them, so the app stays free of strings and now opens straight on
+"upload your sheet music". ⚠ **Not live yet** — the website still shows the old version.
+
 ### The plan as of 5 August 2026: two things at once
 
 Earlier (2 August) the plan was "stop the model work, finish the app, then train again." **On 5

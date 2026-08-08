@@ -7,7 +7,65 @@ updated: 2026-08-08
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-08 (latest) — the "one giant note" was a grace note's bounding box
+## 2026-08-08 (latest) — the copyright pass: the app stops publishing other people's work
+
+Owner's question, before telling anyone about the link: *"if I publish this app publicly, is there
+any problem in copyrights."* There was. The site had been public and unauthenticated since
+2026-08-06, so this was already past tense, not hypothetical.
+
+**What was actually being published.** Four scores at the `public/` root, served by Netlify and
+tracked in the **public** GitHub repo, plus a neyzen.com screenshot (`Meltem - 1. Hane.png`)
+committed at the repo root — it had slipped past the `test_images/` and `data/real/*` rules that
+catch everything else. The `.gitignore` already said "don't redistribute dataset content" over
+`sample.json` and `scores/`, so the intent was there; `prune-dist.mjs` was deliberately keeping the
+root four as the Sample dropdown, and that is where it leaked.
+
+**The licence that decided it.** SymbTr is **CC BY-NC-SA 4.0**. Attribution and ShareAlike are
+paperwork; **NonCommercial is not** — it binds the app for as long as a derived file is served. The
+owner picked removal over attribution to keep the app unencumbered, which is why there is now no
+Sample dropdown at all rather than a credits line.
+
+**A second, independent problem the licence fix would have missed.** Two of the four were
+compositions still in copyright under FSEK 5846 (life + 70): *safalar getirdiniz* (Avni Anıl,
+d. 2008 → ~2079) and *delisin deli* (Selahattin Pınar, d. 1960 → ~2031). The other two are public
+domain (Tatyos Efendi d. 1913, Zekai Dede d. 1897). So the dataset licence removed all four, but
+composition copyright would have removed two of them anyway.
+
+**What was checked and found clean**, worth recording because it is the biggest risk reducer here:
+the decode server **never writes an uploaded image to disk** — `apps/server/src/index.ts` logs a
+size and a count and nothing else. There is no library of other people's sheet music on a server.
+Bravura already shipped with its `OFL.txt` beside it, which is the one thing that was correct from
+the start. And the base model `Flova/omr_transformer` is **Apache-2.0**, so the fine-tune is
+publishable — it just owes the attribution §4 requires, which is why `hf/README.md` now exists.
+
+**The guard that matters is not the empty `SAMPLES` list.** Anything under `public/` is served to
+whoever guesses its filename, so "no UI links to it" is not "not published". `prune-dist.mjs` now
+**fails the build on any `.json` at the dist root** — chosen over a name list because a name list
+cannot catch a *new* score. `fonts/glyphnames.json` is Bravura's own and sits a level down, so the
+root-only rule needs no exception. Negative-tested by planting a file: exits 1.
+
+**What it cost elsewhere.** Removing the auto-load broke an assumption four browser smokes shared:
+they waited on `#app[data-ready="1"]` after a bare visit, which only worked because a sample loaded
+itself. `data-ready` means "a score is installed" and that is now honestly false on first visit, so
+the attribute was left alone — `editor-smoke` asks for `?score=` (its grace-note section already
+did), and `app-smoke` / `page-smoke` / `coldstart-smoke`, which make their own score from an upload,
+wait on `#page-input` instead. One live bug came with it: `UploadHero`'s `compact` prop read
+`sampleFile === ""`, which meant "a user loaded this" only while a bundled sample existed — with
+`SAMPLES` empty it is always true, and the app would have opened in the shrunken state with nothing
+on screen. It reads `!!doc` now.
+
+**Verified after the change:** `typecheck`; `npm test` 217/217 round-trip both modes; `smoke:editor`
+ALL PASS including the grace-note geometry section, still reading its 427 boxes off the local
+`beyati-delisin.json` through `?score=`; `smoke:page` PASS end to end from the empty state (7 staves
+→ 16 strips → 344 notes, playback started); `build:app` 11 files / 42.7 MB with no score in `dist/`.
+
+⚠ **Two things deliberately left for the owner.** The files are out of HEAD but remain in the repo's
+**git history**, and the repo is public — clearing that needs `filter-repo` and a force-push that
+breaks every clone. And there is still no LICENSE file, so the repo defaults to all rights reserved.
+
+⏭ **Not deployed.** The live site still serves the old build.
+
+## 2026-08-08 — the "one giant note" was a grace note's bounding box
 
 Owner, from a real upload: in edit mode a huge tinted rectangle covered much of the page, and nothing
 could be edited until it was deleted with the ✕. Not a decode problem and not a stray note — a

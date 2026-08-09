@@ -6,24 +6,30 @@ updated: 2026-08-09
 
 ## Now
 
-**The beta is live and a friend could be sent the link today.** <https://komavision.netlify.app> —
-page upload, the slicer, server decode with an in-browser fallback, makam-aware playback, the armed
-editor, Turkish throughout. What each of those established, and the traps inside them, moved to
-**[mvp/standing.md](mvp/standing.md)** (2026-08-08). Nothing there is a next action.
+**The beta is live, the copyright pass is deployed, and a friend could be sent the link today.**
+<https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
+fallback, makam-aware playback, the armed editor, Turkish throughout. What each of those
+established, and the traps inside them, moved to **[mvp/standing.md](mvp/standing.md)**
+(2026-08-08). Nothing there is a next action.
 
-**⚠ ONE THING BLOCKS "the live site is what we mean to publish": THE COPYRIGHT PASS OF 2026-08-08
-IS NOT DEPLOYED.** The deployed build still serves bundled SymbTr scores, which the project has no
-right to serve — CC BY-NC-SA would bind the whole app to NonCommercial forever, and two were
-compositions still in copyright under FSEK 5846. In HEAD, `SAMPLES` is empty, the app opens on the
-upload prompt, `prune-dist.mjs` fails the build on any `.json` at the dist root, and a legal footer
-ships. **The live site has none of it.** The full account — what was found, why removal beat
-attribution, and the enforcement — is [THIRD-PARTY.md](THIRD-PARTY.md); the decision row is in
-[DECISIONS.md](DECISIONS.md); the hard rule is in [../CLAUDE.md](../CLAUDE.md).
+**The copyright redeploy went out 2026-08-09 and the live site is now what we mean to publish.**
+Before it, the deployed build served five bundled SymbTr scores — CC BY-NC-SA, which would bind the
+whole app to NonCommercial forever, and two were compositions still in copyright under FSEK 5846.
+All five answered **200** on the live host that morning and all five answer **404** now, alongside
+`/scores/` and `/models/`. The legal footer ships. The full account — what was found, why removal
+beat attribution, and the enforcement — is [THIRD-PARTY.md](THIRD-PARTY.md); the decision row is in
+[DECISIONS.md](DECISIONS.md); the hard rule is in [../CLAUDE.md](../CLAUDE.md). The model card is
+now on the Hub as `Beyaban/omr-weights/README.md`.
 
-Green in HEAD after that change: `typecheck`, `npm test` (217/217 round-trip), `smoke:editor` (**ALL
-PASS**, including the grace-note geometry section, which still reads its 427 boxes off the local
-file), `smoke:page` (**PASS** — page in, playable score out, from the empty state), `build:app`
-(11 files, 42.7 MB, no score reaches `dist/`).
+Green for that deploy: `typecheck`, `build:app` (11 files, 42.7 MB, no score at the dist root, both
+real URLs baked in and no `localhost:8080` left in the bundle), and `smoke:live` **PASS on both
+paths** — numbers in [METRICS.md](METRICS.md). `npm test` (217/217), `smoke:editor` (**ALL PASS**,
+including the grace-note geometry section) and `smoke:page` were green in this HEAD on 2026-08-08 and
+no source moved since.
+
+**A genuine cold start is finally measured, and the 2026-08-08 fix survived it** — that `smoke:live`
+ran against a service idle ~3 h, and the server path still won. It closes the open risk that stood
+here since the fix. Evidence: [METRICS.md](METRICS.md).
 
 ⚠ **Two copyright items remain open and are both the owner's call**, independent of the redeploy:
 the samples and the neyzen.com screenshot are out of HEAD but remain in the **public** repo's git
@@ -56,16 +62,10 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-0. **⏭ THE NEXT ACTION: redeploy, carrying the copyright pass.** The live site still serves scores
-   that are not ours to serve. Nothing under `apps/server/` or `apps/web/src/omr/` moved, so this is
-   Netlify only — no Cloud Run rebuild, no Hub re-upload of the weights. Build with both real env
-   vars, then `npm run smoke:live`. **Upload `hf/README.md` to the Hub as the model card in the same
-   sitting**: `huggingface-cli upload Beyaban/omr-weights hf/README.md README.md`.
-   ⚠ **The trap:** the `dist/` that `smoke:build` leaves behind is baked with `localhost:8080`, so
-   the artifact that ships must be a **second** build with both real env vars.
-   ⚠ Reviewing locally first: `dev:web` on **:5173** — that port is in `ALLOWED_ORIGINS`, so uploads
-   reach the live decode server; on :5174 they fall back to the laptop.
-1. **EDITOR STEP 9 — delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
+0. **DONE 2026-08-09 — the copyright redeploy shipped**, Netlify only, plus the model card on the
+   Hub. Kept here for one sitting because it is what the state above rests on; the recipe for the
+   next frontend deploy is [mvp/hosting-setup.md](mvp/hosting-setup.md).
+1. **⏭ THE NEXT ACTION — EDITOR STEP 9: delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
    references). The last item on the editor's list; steps 1–8 and 10 are done, deployed and checked
    on the production bundle. ⚠ It needs one thing solved first: **`smoke:editor` reads the document
    by clicking `#save-json`**, so deleting the button removes the check's only way to see what an
@@ -147,12 +147,15 @@ both reference-path only and both fine under Python-ORT int8.
 
 ## Open risks and non-claims
 
-- **The cold-start fix is proven on a FAKED cold window, not yet on a genuinely idle service.**
-  `check:coldstart` controls the window deliberately, which is the better test of the mechanism — but
-  the real thing has only been seen warm since the fix. One `smoke:live` after ~20 minutes of nobody
-  touching the site would close it; it was armed on 2026-08-08 and cancelled, because using the app
-  for a demo recording warms the service and voids the test. Until then, that a real Cloud Run cold
-  start now reaches the server is an inference from a local reproduction.
+- **CLOSED 2026-08-09: the cold-start fix is now proven on a genuinely idle service.** It had only
+  ever been seen on `check:coldstart`'s faked window. The redeploy's `smoke:live` happened to be the
+  test — the service had been idle ~3 h, the app's on-open `/health` absorbed an 11.3 s cold start,
+  and the page then read **on the server**. Read from Cloud Run's own logs, not inferred from wall
+  clock. Numbers: [METRICS.md](METRICS.md).
+- **A busy instance is indistinguishable from a cold one at `/health`, and it fooled this session.**
+  Concurrency is 1, so a second request during a decode gets a **fresh container** — `uptimeS` a
+  handful of seconds, exactly what scale-to-zero looks like. Never read cold-start behaviour off a
+  single `/health`; read the request log and the `model ready` lines together.
 - **The in-browser fallback hides its own reasons.** Whenever the server is missed the page is still
   read correctly, so nothing looks broken — the only evidence is `data-where` and a warm laptop. That
   is what let the cold-start bug live from 2026-08-06 to 2026-08-08 in a fully "passing" deployment.

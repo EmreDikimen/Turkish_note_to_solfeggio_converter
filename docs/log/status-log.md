@@ -7,7 +7,45 @@ updated: 2026-08-09
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-09 (latest) — the audio is sourced, and it is all CC0
+## 2026-08-09 (latest) — the copyright pass is DEPLOYED, and a real cold start finally got measured
+
+The redeploy STATUS had been pointing at since 2026-08-08. Netlify only — nothing under
+`apps/server/` or `apps/web/src/omr/` had moved, so no Cloud Run rebuild and no re-upload of the
+weights. `hf/README.md` went to the Hub as the model card in the same sitting, as planned.
+
+**The live site was still serving all five SymbTr-derived scores that morning** — `sample.json`,
+`beyati-delisin.json`, `gamzedeyim-deva.json`, `safalar-getirdiniz.json`, `meltem_notes.json` and
+`decoded.json`, every one **200** to anyone typing the name. All **404** now, along with `/scores/`
+and `/models/model.json`. That check is worth repeating on any future deploy: a Netlify deploy
+publishes the manifest of `dist/`, so removal is real, but nothing says so out loud.
+
+The shipped artifact was built fresh with both real env vars — the trap STATUS flagged is that
+`smoke:build` leaves a `dist/` baked with `localhost:8080`, so the build that ships must be a second
+one. Verified rather than assumed: the bundle contains both real URLs and **zero** `localhost:8080`
+strings. 11 files, 42.7 MB, no `.json` at the dist root.
+
+**Then the interesting part, which nobody planned.** `smoke:live` passed on both paths — and the
+Cloud Run logs show that run started against a service **idle ~3 h**. The app's on-open `/health`
+absorbed an **11.29 s** cold start (10,093 ms of it graph loading), the page's `/decode` landed 25 s
+later and returned 200 in 43.7 s, `data-where=server`. That is the live confirmation the 2026-08-08
+cold-start fix had been waiting for, and it closes an open risk that had already been armed once and
+cancelled. It also retires the "a genuine cold start is STILL not measured" row, using exactly the
+method that row prescribed: container `model ready` timestamps, not a wall-clock guess.
+
+Two corrections came out of reading the logs properly, and both are the kind that would have become
+folklore:
+
+- **`uptimeS` from a single `/health` cannot tell a busy service from an idle one.** A curl fired
+  during the owner's own upload came back `uptimeS` 11 — read at first as "the service scales to zero
+  within minutes". Concurrency is 1, so that request simply got its own fresh container. The request
+  log is what distinguishes the two; the health endpoint never can.
+- **The `--cpu-boost` 25 s alarm was a fresh-push artifact.** Two post-deploy readings of ~25 s had
+  been recorded against a 9,500 ms baseline, and the "two consistent readings" argument had been used
+  to weaken the lazy-image-layer explanation. **Four later starts on the same revision `…00004-nc2`
+  read 10,096 / 11,166 / 10,093 / 9,849 ms** — back at baseline. Holding the revision constant is
+  what showed it; the earlier reading changed too many things at once.
+
+## 2026-08-09 — the audio is sourced, and it is all CC0
 
 The search the entry below asked for was run. **Every instrument the owner wants to start with is
 covered by CC0, with no NC file anywhere**: bendir, darbuka, tef and zil, clarinet, violin — and

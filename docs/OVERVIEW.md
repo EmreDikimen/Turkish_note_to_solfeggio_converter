@@ -272,14 +272,16 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    summons the robot. And an alarm from 6 August turned out to be nothing — the rented computer
    looked like it had got **2.5× slower to wake**, but that only happens on the first wake after new
    code is uploaded; four later wakes are back to normal.
-   **You also have real users already, and all of them were on a phone.** Three people who are not
-   you read a page on 8 August, every one on an **Android phone**, and one of them came back twice
-   more the same day. We can see this because the app quietly says hello to the server when someone
-   opens it. Most of the other visits are robots, not people — see the note under item 11.
+   **Somebody you have not told about it has already used it.** Three pages were read on 8 August:
+   one was **your own phone**, and the other two were not. Those two might be one person or two — we
+   cannot tell, because a phone that moves from home internet to your network looks exactly like a
+   second phone. So: **at least one stranger, at most two.** We can see any of this only because the
+   app quietly says hello to the server when someone opens it; most of the *other* visits are robots,
+   not people — see the note under item 11.
    ⚠ **Worth thinking about before you send the link:** the plan says "web first, phones later", but
-   the people who found it are already on phones, and one of them switched their phone to "desktop
-   site" a minute after opening — then uploaded. Three people is far too few to redraw the plan on.
-   It is a **question to ask your two friends**, not an answer.
+   everyone who has actually used it was on a phone, and one of them switched to "desktop site" a
+   minute after opening — then uploaded. That is far too few people to redraw the plan on. It is a
+   **question to ask your two friends**, not an answer.
 10. **Make fixing a wrong note quick — started 7 August, about a third done.** It used to be: click
    a bar, a window opens on top of the music, edit a table of rows, and it refuses to save until the
    bar adds up again. Now you can **click a note right on the page**, **drag it up or down** to

@@ -42,10 +42,24 @@ that warms the service.** That is now the third warming mechanism found — a de
 crawler, and the owner's own use.
 
 The session also produced a first look at **who is using the app**, since the on-open `/health` ping
-makes Cloud Run's log a visit counter nobody built: **three real page reads from three non-owner
-addresses on 2026-08-08**, and otherwise `/health` with no `/decode`. Whois places most of that tail
-on AWS, a datacenter and a ProtonVPN exit, and one iPhone UA appears from four unrelated IPs across
-two days. `/decode` is the honest count of humans; `/health` is an upper bound.
+makes Cloud Run's log a visit counter nobody built: **three page reads on 2026-08-08**, and otherwise
+`/health` with no `/decode`. Whois places most of that tail on AWS, a datacenter and a ProtonVPN
+exit, and one iPhone UA appears from four unrelated IPs across two days. `/decode` is the honest
+count of humans; `/health` is an upper bound.
+
+⚠ **Those three reads were first written up as three visitors. One was the owner's own phone** —
+identified only by asking him, because nothing in the log distinguishes an owner from a stranger.
+The remaining two both ran Chrome/151, six hours apart, from a home ADSL line and from the owner's
+own network; a phone moving between the two is indistinguishable from a second phone, so the count is
+**one stranger or two, and cannot be narrowed further**. What *is* certain is that at least one
+exists: the owner's phone was on Chrome/150 at 13:14 and 16:38 while the 14:18 upload came from
+Chrome/151, and browsers do not downgrade. **The build number is the only device discriminator this
+log has**, because Chrome freezes the Android UA to `Android 10; K`.
+
+The standing lesson is about the shape of the evidence, not the count: **server logs can say how many
+devices, never how many people, and never who.** Closing that gap means asking (W10) or storing a
+client id — tracking, and against the no-analytics stance. Two corrections in one session came from
+the owner supplying what the logs could not: that nobody here runs Linux, and that one phone was his.
 
 **All three humans were on Android phones** — which took one correction to see. The 20:32 upload was
 first recorded here as "a Linux desktop", because its UA said `X11; Linux x86_64`. The owner pointed

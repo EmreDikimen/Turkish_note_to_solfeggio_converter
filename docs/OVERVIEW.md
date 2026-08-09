@@ -261,12 +261,21 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    whether the written staff moves with it, and how **arıza işaretleri** are printed.
 9. ~~Put the new version on the website.~~ ✅ **Done 9 August.** One rebuild, one upload — it carried
    items 7 and 8 **and** the copyright removal. Checked afterwards: the app reads a page both ways,
-   and the five songs that used to be downloadable are gone. Two useful things fell out of it. The
-   **wake-up problem is now proven fixed on the real thing**: that check happened to land on a server
-   that had been asleep for three hours, it woke in **11 seconds** while the page was being cut up,
-   and the reading still happened on the server, not on the laptop. And an alarm from 6 August turned
-   out to be nothing — the rented computer looked like it had got **2.5× slower to wake**, but that
-   only happens on the first wake after new code is uploaded; four later wakes are back to normal.
+   and the five songs that used to be downloadable are gone.
+   Three things fell out of it. **We now know how long the rented computer really takes to wake up
+   after a proper sleep: about 11 seconds** — measured on a server nobody had touched for three
+   hours, rather than minutes after an upload as before. ⚠ But **we still have not proved the app
+   handles that wait on the real website.** It briefly looked like we had; in fact an automatic
+   visitor — some robot that visits every site right after it changes — had woken the server 33
+   seconds before our check ran, so our check found it already awake. Worth knowing for next time:
+   **checking straight after an upload can never test the sleeping case**, because uploading is what
+   summons the robot. And an alarm from 6 August turned out to be nothing — the rented computer
+   looked like it had got **2.5× slower to wake**, but that only happens on the first wake after new
+   code is uploaded; four later wakes are back to normal.
+   **You also have real users already.** Three people who are not you read a page on 8 August (two on
+   Android phones, one on a desktop). We can see this because the app quietly says hello to the
+   server when someone opens it. Most of the other visits are robots, not people — see the note under
+   item 11.
 10. **Make fixing a wrong note quick — started 7 August, about a third done.** It used to be: click
    a bar, a window opens on top of the music, edit a table of rows, and it refuses to save until the
    bar adds up again. Now you can **click a note right on the page**, **drag it up or down** to
@@ -281,6 +290,10 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
 11. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
    slow (the rented computer has to wake up), and that a page takes about a minute. Ask about the
    **buttons and the screen**, not about mistakes in the notes — the notes are the exam's job.
+   ⚠ **How to tell a real visitor from a robot, when you look at who used it.** The server knows two
+   different things: someone **opened** the page, and someone **uploaded** a page. Only the second
+   means a person used it. Robots do the first constantly — one of them pretended to be an iPhone
+   from four different places in two days — so count uploads, not visits.
 12. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### List B — the model (Round 3, running in parallel)

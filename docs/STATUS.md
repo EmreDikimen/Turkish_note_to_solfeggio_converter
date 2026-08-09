@@ -27,9 +27,14 @@ paths** — numbers in [METRICS.md](METRICS.md). `npm test` (217/217), `smoke:ed
 including the grace-note geometry section) and `smoke:page` were green in this HEAD on 2026-08-08 and
 no source moved since.
 
-**A genuine cold start is finally measured, and the 2026-08-08 fix survived it** — that `smoke:live`
-ran against a service idle ~3 h, and the server path still won. It closes the open risk that stood
-here since the fix. Evidence: [METRICS.md](METRICS.md).
+**A genuine Cloud Run cold start is finally measured** (11.3 s wall, 10,093 ms of it graph loading,
+after ~3 h idle) — but it was caused by a post-deploy crawler, not by the app, so it does **not**
+close the cold-start open risk below. Evidence and the correction: [METRICS.md](METRICS.md).
+
+**The service has real users already.** Cloud Run's log shows three page reads on 2026-08-08 from
+three addresses that are not the owner's, plus a steady trickle of `/health`-only visits — the app
+pings `/health` when it opens, so that trickle is a visit counter nobody built. Most of it is
+crawlers; the three uploads are people.
 
 ⚠ **Two copyright items remain open and are both the owner's call**, independent of the redeploy:
 the samples and the neyzen.com screenshot are out of HEAD but remain in the **public** repo's git
@@ -147,15 +152,24 @@ both reference-path only and both fine under Python-ORT int8.
 
 ## Open risks and non-claims
 
-- **CLOSED 2026-08-09: the cold-start fix is now proven on a genuinely idle service.** It had only
-  ever been seen on `check:coldstart`'s faked window. The redeploy's `smoke:live` happened to be the
-  test — the service had been idle ~3 h, the app's on-open `/health` absorbed an 11.3 s cold start,
-  and the page then read **on the server**. Read from Cloud Run's own logs, not inferred from wall
-  clock. Numbers: [METRICS.md](METRICS.md).
-- **A busy instance is indistinguishable from a cold one at `/health`, and it fooled this session.**
-  Concurrency is 1, so a second request during a decode gets a **fresh container** — `uptimeS` a
-  handful of seconds, exactly what scale-to-zero looks like. Never read cold-start behaviour off a
-  single `/health`; read the request log and the `model ready` lines together.
+- **STILL OPEN: the cold-start fix is proven on a FAKED cold window, not on a genuinely idle
+  service.** `check:coldstart` controls the window deliberately, which is the better test of the
+  mechanism — but the real thing has still only been seen warm since the fix.
+  ⚠ **It was briefly written up as closed on 2026-08-09 and that was wrong**, which is worth keeping
+  because of *how* it was wrong. The redeploy's `smoke:live` did follow a real ~3 h idle and a real
+  11.3 s cold start — but an **automated visitor** (`HeadlessChrome/131`, referer the unique deploy
+  URL) hit the site seconds after the deploy went live and absorbed that cold start; `smoke:live`
+  opened 33 s later and got `/health` in **2 ms**. A warm run was read as a cold one because only the
+  wall clock was checked. **The bot is the standing obstacle**: it arrives right after every deploy,
+  so a post-deploy `smoke:live` can never be the cold test. Measure it on an untouched service, and
+  confirm from the request log which client caused the container start.
+- **Three things now warm this service behind your back** — a demo recording (2026-08-08), a
+  post-deploy crawler and the owner's own use. Any cold-start claim has to name the client that
+  caused the `model ready` line, not just the elapsed time.
+- **A busy instance is indistinguishable from a cold one at `/health`.** Concurrency is 1, so a
+  second request during a decode gets a **fresh container** — `uptimeS` a handful of seconds, exactly
+  what scale-to-zero looks like. Never read cold-start behaviour off a single `/health`; read the
+  request log and the `model ready` lines together.
 - **The in-browser fallback hides its own reasons.** Whenever the server is missed the page is still
   read correctly, so nothing looks broken — the only evidence is `data-where` and a warm laptop. That
   is what let the cold-start bug live from 2026-08-06 to 2026-08-08 in a fully "passing" deployment.

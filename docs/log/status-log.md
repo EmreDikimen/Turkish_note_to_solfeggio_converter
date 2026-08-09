@@ -24,15 +24,30 @@ The shipped artifact was built fresh with both real env vars — the trap STATUS
 one. Verified rather than assumed: the bundle contains both real URLs and **zero** `localhost:8080`
 strings. 11 files, 42.7 MB, no `.json` at the dist root.
 
-**Then the interesting part, which nobody planned.** `smoke:live` passed on both paths — and the
-Cloud Run logs show that run started against a service **idle ~3 h**. The app's on-open `/health`
-absorbed an **11.29 s** cold start (10,093 ms of it graph loading), the page's `/decode` landed 25 s
-later and returned 200 in 43.7 s, `data-where=server`. That is the live confirmation the 2026-08-08
-cold-start fix had been waiting for, and it closes an open risk that had already been armed once and
-cancelled. It also retires the "a genuine cold start is STILL not measured" row, using exactly the
-method that row prescribed: container `model ready` timestamps, not a wall-clock guess.
+**Then the part worth writing down, which is a mistake and its correction.** `smoke:live` passed on
+both paths, and the logs showed a real cold start at 10:11:41 — 11.29 s, 10,093 ms of it graph
+loading, after ~3 h idle. That was written up as "the cold-start fix is proven on a genuinely idle
+service", closing an open risk. **It was wrong, and only the wall clock supported it.** The request
+log names the client: the cold start was caused by an **automated visitor** (`HeadlessChrome/131`,
+referer the *unique deploy URL*) that arrives seconds after a Netlify deploy. `smoke:live` opened 33 s
+later and got `/health` back in **2 ms** — warm, off the instance the crawler had just started. Its
+server-path result is a warm result, like the two before it.
 
-Two corrections came out of reading the logs properly, and both are the kind that would have become
+What survives is the **number**: ~11 s is now the honest cold-start cost on a genuinely idle service,
+measured the way METRICS asked for — container `model ready` timestamps, not a wall-clock guess. What
+does not survive is any claim about the *app* surviving a live cold start; the crawler only asked
+`/health`, and no `/decode` followed it. The risk is back open in STATUS with the reason it is hard to
+close: **a post-deploy `smoke:live` can never be the cold test, because the deploy summons the thing
+that warms the service.** That is now the third warming mechanism found — a demo recording, this
+crawler, and the owner's own use.
+
+The session also produced a first look at **who is using the app**, since the on-open `/health` ping
+makes Cloud Run's log a visit counter nobody built: **three real page reads from three non-owner
+addresses on 2026-08-08**, and otherwise `/health` with no `/decode`. Much of that tail is
+automated — one iPhone UA appears from four unrelated IPs across two days. `/decode` is the honest
+count of humans; `/health` is an upper bound.
+
+Two further corrections came out of reading the logs properly, both the kind that would have become
 folklore:
 
 - **`uptimeS` from a single `/health` cannot tell a busy service from an idle one.** A curl fired

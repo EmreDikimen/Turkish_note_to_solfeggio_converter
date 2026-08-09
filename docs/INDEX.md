@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-07
+updated: 2026-08-09
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -36,6 +36,7 @@ wrong — fix by deleting, not by syncing.
 | Question | File |
 |---|---|
 | The MVP track: in-browser pipeline → release to friends | [mvp/README.md](mvp/README.md) |
+| The product track's settled findings (moved out of STATUS) | [mvp/standing.md](mvp/standing.md) |
 | What each MVP rung established: the slicer rungs W4–W7 | [mvp/rungs.md](mvp/rungs.md) |
 | The earlier rungs W0–W3 (opencv.js parity, decode module, browser-vs-Python) | [mvp/rungs-w0-w3.md](mvp/rungs-w0-w3.md) |
 | How to port the slicer to TypeScript (W4–W6) | [mvp/slicer-port.md](mvp/slicer-port.md) |
@@ -56,6 +57,8 @@ wrong — fix by deleting, not by syncing.
 | Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
 | Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
 | Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
+| **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
+| Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

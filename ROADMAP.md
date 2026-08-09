@@ -333,6 +333,11 @@ produce a real, demoable app with zero machine learning.
 Nice-to-haves explicitly **off the critical path** — build them only after the core product works.
 (UI-level optional items also live in `README.md` → "Not essential for now but can be added after.")
 
+The post-beta *product* features the owner raised on 2026-08-08 — instrument voices, usul percussion
+with darbuka/tef, and a fingerboard tab showing where the finger goes — have their own designed
+backlog in [docs/features/README.md](docs/features/README.md). None of them needs the server or any
+new ML.
+
 - **Rule-based import for digital sheets (no AI).** For *born-digital* scores (engraved by
   MuseScore/Finale/Sibelius/LilyPond and exported as PDF, or downloaded from the internet), the notes
   can be extracted **deterministically without the OMR model**: parse the PDF's vector content —

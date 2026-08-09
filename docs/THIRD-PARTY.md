@@ -2,7 +2,7 @@
 
 purpose: the licence of every third-party thing this project touches, and the rule each one imposes on publishing
 audience: whoever is about to ship, deploy, push weights, or add a file to `apps/web/public/`
-updated: 2026-08-08
+updated: 2026-08-09
 
 This file owns the **licensing facts**. Nothing else should restate them — link here.
 
@@ -21,6 +21,9 @@ stays on the developer's disk, where local use is not distribution.
 | React, VexFlow, ONNX Runtime | MIT | Ship, with the copyright notice |
 | `@techstark/opencv-js` | Apache-2.0 | Ship, with the notice |
 | Turkish makam theory, AEU, 53-TET, usul names | not copyrightable | Free — facts and systems, not expression |
+| **VCSL** and **VSCO 2 Community Edition** (sample libraries) | **CC0 1.0** | Serve the sample files, commercially, forever. No duty at all — a credit line is courtesy |
+| **Freesound 140291** (bendir strokes) and **211133** (kanun chromatic notes), both CompMusic/UPF | **CC0** | Same. ⚠ CC0 on Freesound is the *uploader's* claim; these two are trusted on provenance |
+| **Freesound 194637** (ney, Huzzam scale) — only if used | **CC BY 4.0** | Serve it, commercially, **with attribution in `/THIRD-PARTY.txt`** |
 
 Shipped notices live in [`apps/web/public/THIRD-PARTY.txt`](../apps/web/public/THIRD-PARTY.txt),
 served at `/THIRD-PARTY.txt` and linked from the app footer.
@@ -69,6 +72,20 @@ Three independent places, because one of them is a person remembering:
 geometry section and [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) all read them through
 `?score=…`, which still works against a dev server. Regenerate them with
 `scripts/export_scores.py` if a fresh checkout needs them.
+
+## Audio assets — chosen, not yet shipped
+
+Nothing above the line in the audio rows is in the repo or the app yet. When the first file lands,
+three things happen in the same commit: it is served **by URL, never bundled** (the weights are the
+model); it gets a manifest row carrying `source` and `license`; and it is added to
+`apps/web/public/THIRD-PARTY.txt`. The per-file list, with each licence read on its own source page
+and the traps found there — including a **CC0-vs-readme contradiction in VSCO 2 CE** — is
+[features/audio-sources.md](features/audio-sources.md).
+
+⚠ **The one to watch is not a licence, it is a category.** Most commercial sample libraries, *paid
+ones included*, forbid redistributing the sample files themselves. A web app serves the raw file and
+anyone can lift it out of the network tab, so those libraries are unusable here no matter what is
+paid for them. Reasoning: [features/README.md](features/README.md#audio-assets--what-may-be-used).
 
 ## The weights
 

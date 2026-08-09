@@ -7,6 +7,10 @@ updated: 2026-08-08
 > **Picking up W4–W6 (the slicer port)? Read [slicer-port.md](slicer-port.md) first** — it carries
 > the function map, the acceptance thresholds and the traps that were found the expensive way.
 >
+> This track's **settled findings** — what the server, the build and the three shipped features
+> established, and the traps inside them — are in [standing.md](standing.md).
+> Post-beta feature ideas that are designed but not started: [../features/README.md](../features/README.md).
+>
 > Current state and next action for the WHOLE project are NOT here: see [../STATUS.md](../STATUS.md).
 > Numbers: [../METRICS.md](../METRICS.md), [../METRICS-SLICER.md](../METRICS-SLICER.md) and
 > [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).

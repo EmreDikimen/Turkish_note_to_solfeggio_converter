@@ -2,12 +2,136 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-08
+updated: 2026-08-09
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-08 (latest) — the copyright pass: the app stops publishing other people's work
+## 2026-08-09 (latest) — the audio is sourced, and it is all CC0
+
+The search the entry below asked for was run. **Every instrument the owner wants to start with is
+covered by CC0, with no NC file anywhere**: bendir, darbuka, tef and zil, clarinet, violin — and
+kanun, which was the surprise. Licences read on each source's own page, not on an aggregator.
+Per-file list, contents and the prep each one needs: [../features/audio-sources.md](../features/audio-sources.md).
+
+Where it came from: **VCSL** and **VSCO 2 Community Edition**, both CC0 1.0 on GitHub (Versilian
+Studios), and two **CompMusic/UPF** Freesound uploads by Barış Bozkurt — bendir *düm* and *tek*
+strokes played by Eren Ergen, and a kanun recording holding *all chromatic tones within the range of
+the instrument*, isolated.
+
+Three things this changed, and each is a correction rather than a confirmation:
+
+- **CC BY was missing from the licence table** in the entry below. That was the real error. CC BY is
+  not a milder NC — it is *cleared*: one line in `/THIRD-PARTY.txt` and it is safe commercially
+  forever, no swap owed. It also happens to be exactly where the only free ney material lives (a
+  32-second Huzzam scale on ney, CC BY 4.0, CompMusic). Added to the table.
+- **Kanun no longer has to be Karplus–Strong.** The plan sent oud/tanbur/kanun to physical modelling
+  because no files exist; for kanun that was simply false. K–S is still tried first — it costs no
+  bytes and is natively microtonal — but there is now a real recording to A/B it against.
+- **Ney's emptiness is measured, not assumed.** Freesound CC0 counts on the day: ney 11 hits and
+  none usable, tanbur 1, zurna 0, oud 23, kanun 4, bendir 10, darbuka 43. The owner's own ney
+  recording stays the plan.
+
+⚠ Two traps worth keeping. **VSCO 2 CE contradicts itself** — a CC0 `LICENSE` beside a `Readme.txt`
+asking for credit and for the samples not to be sold directly. CC0 governs (it is irrevocable), the
+readme is a request; so credit anyway, and stay off the v1.1 Ivy Audio / legacy piano material where
+provenance is mixed. And **CC0 on Freesound is the uploader's claim** — these two are trusted on
+provenance (named research recordings, named performer, a university project), which is not a
+courtesy extendable to a random upload of a commercial-sounding loop.
+
+**Nothing is downloaded and no code moved.** What stands between these files and hearing them is
+F0 (the look-ahead scheduler on one long-lived `AudioContext`), a hosting decision for the assets,
+and per-file prep: splitting the two Freesound takes at their onsets, mapping VCSL's five darbuka
+hit types to düm/tek/ka by ear, and trimming the clarinet and violin sustains.
+
+## 2026-08-09 — where the feature track's audio may come from
+
+Follow-up to the backlog below. Owner: *"I have no percussion instrument, no good mic, no friend who
+plays. Can I use percussion audio from the internet until I record my own? I'll make it non-profit at
+the beginning anyway."* Same question for ney and clarinet, which the owner plays at amateur level.
+
+**Answer: yes, and it is legal.** But the first pass of advice put NC in a list beside unlicensed
+audio, and the owner read that as *"NC is illegal"* — it is not. The correction is the useful part of
+this entry, because it changes what to do:
+
+- **CC0** — no conditions, ever, including commercial.
+- **CC BY-NC** — **legal right now**, while the app is free. It only carries a bill if the app is
+  monetised later.
+- **Unknown licence** — the actual blocker, and what most search results are. Non-profit does not
+  cure it.
+- **"No redistribution" packs** — the non-obvious blocker, and it covers **paid** libraries.
+  Distributing the sample *files* is forbidden by most of them; a web app serves the raw file and
+  anyone can pull it out of the network tab. So paying for a good library does not solve this.
+
+**What CC0 does and does not cover**, which decided the per-instrument plan: hand percussion and the
+Western orchestra are well covered; **ney, oud, kanun, tanbur, kemençe, zurna are thin to
+nonexistent** — the same gap that gives this app its niche. And "a recording exists" is not "a sample
+set exists": a sampler needs matched tone, level and room, which one person's uploaded phrase is not.
+
+So: **percussion + clarinet/violin from CC0** (equally easy to find as NC, so NC would buy a future
+obligation for nothing), **oud from Karplus–Strong** (no files at all), **ney recorded by the owner**.
+That plan needs no NC content anywhere. NC stays acceptable where CC0 is genuinely thin, rather than
+stalling a feature.
+
+**The point worth keeping about self-recording:** the owner's "I'm an amateur and my mic is bad" is
+probably an overestimate of the bar. A sampler wants one steady ~2-second tone per pitch — no
+phrasing, no tempo, retakeable twenty times. Holding one clean note is not the skill that playing a
+phrase well is. And for sustained single notes the *room* matters more than the microphone. Ney is
+simultaneously the instrument with no CC0 coverage and the one this app is most likely to be used
+with, so the owner is plausibly its cheapest source.
+
+Written into [../features/README.md](../features/README.md) as an "Audio assets" section governing
+both F1 and F2, with the swap discipline that makes any of it reversible: no audio in the bundle,
+`source` + `license` per file from the first one, `/THIRD-PARTY.txt` extended as files land. Decision
+row in [../DECISIONS.md](../DECISIONS.md). ⚠ The failure mode being designed against is not a
+lawsuit; it is *"I no longer know where four of these files came from"*, which makes the set
+unauditable and the swap impossible.
+
+## 2026-08-08 — a post-beta feature backlog, and STATUS split a second time
+
+Owner, after the beta went live, asked for advice on four ideas and then to write them down as
+TODO: a better model, real instrument sounds for playback (ney, oud, kemençe, clarinet), usul
+percussion with darbuka/tef, and a new tab showing finger positions on an instrument while the piece
+plays.
+
+**Where they went.** "Better model" is not a feature and already has a home (Round 3). The other
+three became **[../features/README.md](../features/README.md)** — a new track doc holding the design
+work, not a ladder in progress. The one property that made them worth grouping: **none needs the
+server, a GPU or any new ML.** They are client-side, they touch playback and the view layer only,
+and they run alongside Round 3 without touching `apps/web/src/omr/`.
+
+Three findings from the design pass worth keeping, because each one kills an obvious approach:
+
+- **Off-the-shelf sound libraries cannot be used.** SoundFont/GM/commercial packs are built around 12
+  pitches per octave; this project has 53. The fix is sampler practice — play the nearest recording
+  back slightly faster or slower (`playbackRate`) to land on the exact `freqHz` the `Timeline`
+  already carries. Karplus–Strong is the better answer for the plucked instruments: no samples, no
+  licence, and natively microtonal.
+- **The famous free orchestral sample sets are NonCommercial** (Philharmonia among them) — the
+  *exact* bind that emptied `SAMPLES` the same day. CC0 or self-recorded only. Written into the
+  feature doc next to the plan, not left as a thing to rediscover.
+- **The fingerboard tab is a formula, not a table, for fretless instruments** —
+  `length × (1 − openStringFreq / noteFreq)` accepts any frequency, so all 53 komas are exact. A
+  12-tone app cannot draw a koma position; this is the one feature of the four that no general OMR
+  app could copy.
+
+**Why STATUS was split again.** Adding one backlog line pushed it to 402 lines, over the 400 cap —
+and cramming it back down would have preserved exactly the problem the cap exists to catch. "Now"
+had grown to ~190 lines of *what was built*: W9's deploy, the batching withdrawal, W0–W7, the makam
+feature, the style pass, the editor's whole step list. That is settled context, not current state,
+and most of it also lived in `mvp/rungs.md` and `mvp/editor-built.md`.
+
+So the product track got the same treatment the model track got on 2026-08-07:
+**[../mvp/standing.md](../mvp/standing.md)**, mirroring `rung3/standing.md`. STATUS went **402 → 198
+lines** and now holds only "now" and "next". `check_docs.py --facts` passes, so nothing was dropped —
+the facts moved, they did not evaporate.
+
+⚠ **One real defect the split exposed:** STATUS named *two different* next actions — "redeploy,
+carrying the copyright pass" at the top and in Track A, and "EDITOR STEP 9" in the middle. Resolved
+in favour of the redeploy (the copyright pass is the newest commit and is not on the live site);
+editor step 9 is now Track A item 1, the next *build* item.
+
+## 2026-08-08 — the copyright pass: the app stops publishing other people's work
 
 Owner's question, before telling anyone about the link: *"if I publish this app publicly, is there
 any problem in copyrights."* There was. The site had been public and unauthenticated since

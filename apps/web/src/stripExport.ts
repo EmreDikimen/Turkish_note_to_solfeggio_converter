@@ -67,6 +67,11 @@ export function buildStrips(
   // parseSignatureBody). When set, replaces the content-derived signature so carry/keysig labels wear
   // the makam's real PRINTED signature — MUST be the same entries SheetView draws (faithful scheme).
   sigOverride?: { letter: string; alterCommas: number }[],
+  // "measure" mode only: does a same-direction intonation refinement go BARE under the signature
+  // (the printed-page convention a synthetic page imitates) or does it print its own sign? MUST be
+  // the value SheetView draws with — this is the pixels==labels pair. See `SIG_TOLERANT` in App.tsx.
+  // Defaults to the printed-page convention so a caller that omits it renders the corpus as before.
+  sigTolerant = true,
   { maxMeasures = STRIP_BUDGET.maxMeasures, maxTokens = STRIP_BUDGET.maxTokens }: { maxMeasures?: number; maxTokens?: number } = {},
 ): ExportStrip[] {
   const byIndex = new Map(groupMeasures(doc).map((m) => [m.index, m]));
@@ -129,7 +134,7 @@ export function buildStrips(
     for (const [ci, c] of keep.entries()) {
       const ms = c.map((b) => byIndex.get(b.index)).filter((m): m is Measure => !!m);
       if (ms.length === 0) continue;
-      const body = serializeMeasures(ms, sigMap, repeatSpans, navMarks, carry, carry);
+      const body = serializeMeasures(ms, sigMap, repeatSpans, navMarks, carry, carry && sigTolerant);
       // A SINGLE measure denser than the token budget can't be split (crops must fall on
       // barlines) and can't be trained (its label exceeds the decoder's max_length, so
       // generation could never reach EOS) — drop it rather than emit a poisoned sample.

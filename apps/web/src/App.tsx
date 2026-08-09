@@ -109,6 +109,17 @@ const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
 // printed signature. Absent in interactive use → each derives the signature from the doc.
 const URL_SIG = RENDER_PARAMS.get("sig");
 const SIG_OVERRIDE = URL_SIG ? parseSignatureBody(URL_SIG) : undefined;
+// The same-direction accidental tolerance (`sigTolerant` — see SheetView's `applyAccidental`):
+// ON for a renderer-driven page, OFF for a human (owner decision 2026-08-09). A synthetic page has
+// to imitate a real printed edition, which writes an intonation refinement BARE under the donanım;
+// the app instead has to show what it PLAYS, and it was showing a koma bemol as a küçük bemol
+// wherever the two pointed the same way (134 of the 213 bundled scores have at least one such
+// letter). Both the draw path (SheetView) and the label path (buildStrips) read this ONE flag, so
+// pixels still equal labels on either setting.
+// Why "the mode came from the URL" IS "this is a render job": every render job's URL carries
+// `mode` (render.ts `jobUrl`, and verify-labels' manifest replay), and the tolerance only ever
+// applies in measure mode — so no existing corpus job or replay changes.
+const SIG_TOLERANT = URL_MODE != null;
 const URL_TRANSPOSE = Number(RENDER_PARAMS.get("transpose") ?? 0) || 0; // commas
 const URL_REPSEED = RENDER_PARAMS.has("repseed") ? Number(RENDER_PARAMS.get("repseed")) : null;
 const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("navseed")) : null;
@@ -411,10 +422,11 @@ export function App() {
   // one. Uses the SAME doc + repeat spans SheetView draws, so crop geometry and labels match pixels.
   const strips = useMemo<ExportStrip[]>(() => {
     const drawn = displayDoc ?? doc;
-    // Pass the real mode (incl. "measure"/carry) and the same conventional-signature override
-    // SheetView draws with, so carry labels equal the drawn signature (faithful scheme).
+    // Pass the real mode (incl. "measure"/carry), the same conventional-signature override
+    // SheetView draws with, and the same accidental tolerance it draws with, so carry labels equal
+    // the drawn signature AND the drawn accidentals (faithful scheme).
     return drawn && layout
-      ? buildStrips(drawn, layout.boxes, accidentalMode, repeatSpans, navMarks, SIG_OVERRIDE)
+      ? buildStrips(drawn, layout.boxes, accidentalMode, repeatSpans, navMarks, SIG_OVERRIDE, SIG_TOLERANT)
       : [];
   }, [repeatSpans, navMarks, displayDoc, doc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
@@ -1105,6 +1117,7 @@ export function App() {
                 editMode={editMode}
                 accidentalMode={accidentalMode}
                 signatureOverride={SIG_OVERRIDE}
+                sigTolerant={SIG_TOLERANT}
                 showLyrics={showLyrics}
                 lyricHyphens={lyricHyphens}
                 playing={playState !== "stopped"}

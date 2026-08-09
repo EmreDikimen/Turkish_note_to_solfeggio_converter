@@ -143,7 +143,8 @@ const GRACE_VEX_DURATION = "8";
 /**
  * Build the VexFlow StaveNotes for one measure (parallel `slots` keeps the source events).
  * `signatureMap` is the makam key signature (alteration per letter); it's consulted in the
- * `"keysig"` and `"measure"` modes and ignored in `"every"`.
+ * `"keysig"` and `"measure"` modes and ignored in `"every"`. `sigTolerant` only bites in
+ * `"measure"` mode — see the rule inside `applyAccidental`.
  *
  * Rhythm signs (rhythm.ts — the SAME detection the label serializer uses, so pixels == labels):
  *  - a triplet group's members draw their ×3/2 WRITTEN value and are returned in `tuplets` for
@@ -156,6 +157,7 @@ function buildStaveNotes(
   measure: Measure,
   mode: AccidentalMode,
   signatureMap: Map<string, number>,
+  sigTolerant: boolean,
 ): { notes: StaveNote[]; slots: NoteSlot[]; tuplets: StaveNote[][]; ties: [StaveNote, StaveNote][] } {
   const notes: StaveNote[] = [];
   const slots: NoteSlot[] = [];
@@ -197,21 +199,28 @@ function buildStaveNotes(
       const posKey = `${parsed.letter}${parsed.octave}`;
       const sigAlter = signatureMap.get(parsed.letter) ?? 0;
       const effective = active.has(posKey) ? active.get(posKey)! : sigAlter;
-      // SAME-DIRECTION notes are drawn BARE — this is `sigTolerant` in noteToLily
-      // (tools/render/lilypond.ts), and it must be applied here too or the page shows a sign the
+      // `sigTolerant` ON: SAME-DIRECTION notes are drawn BARE — the rule of the same name in
+      // noteToLily (tools/render/lilypond.ts), applied here too or the page would show a sign the
       // label doesn't carry. Real editions print the degree under its signature sign and leave the
       // makam intonation to the performer: eviç is a 5-comma F♯ printed bare under a koma-sharp-F
       // donanım, because SymbTr stores the SOUNDING value. Explicit signs mark genuine chromatic
-      // deviations only — a direction change, or a cancel to natural.
+      // deviations only — a direction change, or a cancel to natural. That is what a SYNTHETIC page
+      // must imitate, so the renderer keeps it on.
       //
       // Until 2026-07-26 this rule lived only on the label side, so 18.8% of `strips_v3`'s
       // signature-bearing carry strips drew an accidental their label omitted — 2,369 of them
       // `\kucukSharp`, against just 234 correctly labelled inline. That taught the model to see
       // the küçük glyph and emit nothing, which is exactly its measured failure (48% recall at
       // 100% precision). Numbers in docs/METRICS.md.
+      //
+      // `sigTolerant` OFF (a human using the app — owner decision 2026-08-09): a sign prints
+      // whenever the note's alteration differs from the one in effect AT ALL, so the staff says
+      // what the audio plays. With it on, a koma bemol under a küçük-bemol donanım printed bare and
+      // READ as a küçük bemol while sounding a koma — the sheet and the sound disagreeing is the
+      // one thing this app may not do. Which side each caller takes: `SIG_TOLERANT` in App.tsx.
       const covered =
         alter === effective ||
-        (effective !== 0 && alter !== 0 && Math.sign(alter) === Math.sign(effective));
+        (sigTolerant && effective !== 0 && alter !== 0 && Math.sign(alter) === Math.sign(effective));
       if (!covered) {
         if (alter === 0) n.addModifier(new Accidental("n"), 0); // cancel back to natural
         else addAccidental(n, alter);
@@ -922,6 +931,7 @@ export function SheetView({
   doc,
   editMode,
   accidentalMode,
+  sigTolerant,
   showLyrics,
   lyricHyphens,
   playing,
@@ -952,6 +962,13 @@ export function SheetView({
   /** How accidentals are displayed (see {@link AccidentalMode}). The key signature is drawn at
    *  each row start in `"keysig"` and `"measure"` modes. */
   accidentalMode: AccidentalMode;
+  /** `"measure"` mode only: write a same-direction intonation refinement BARE under the signature
+   *  (a 5-comma F♯ under a koma-sharp-F donanım), the real printed-page convention — or print its
+   *  own sign whenever the alteration differs at all, so the staff matches the sound. Required, not
+   *  optional: the renderer and the app want opposite answers, and a caller that forgets would
+   *  silently change what the corpus draws. The strip labels must be built with the SAME value
+   *  (`buildStrips`' `sigTolerant`) or pixels stop equalling labels. See `SIG_TOLERANT` in App.tsx. */
+  sigTolerant: boolean;
   /** CONVENTIONAL printed-signature override (drawn-order entries). When set, replaces the
    *  content-derived `deriveKeySignature` for BOTH the drawn glyphs and the mode's accidental
    *  decisions, so the makam's real PRINTED signature is engraved. Must be the SAME entries the
@@ -1290,7 +1307,7 @@ export function SheetView({
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
         const barHeight = stave.getYForLine(4) - stave.getYForLine(0) + 2 * CURSOR_MARGIN;
         try {
-          const { notes, slots, tuplets, ties } = buildStaveNotes(cell.m, accidentalMode, signatureMap);
+          const { notes, slots, tuplets, ties } = buildStaveNotes(cell.m, accidentalMode, signatureMap, sigTolerant);
           if (notes.length > 0) {
             // Beaming: a triplet's members must beam TOGETHER (one beam under the "3" bracket,
             // as engraved) — auto-beam groups by quarter-note beat and would split or absorb
@@ -1448,7 +1465,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps, printNoise]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps, printNoise]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

@@ -31,10 +31,13 @@ no source moved since.
 after ~3 h idle) — but it was caused by a post-deploy crawler, not by the app, so it does **not**
 close the cold-start open risk below. Evidence and the correction: [METRICS.md](METRICS.md).
 
-**The service has real users already.** Cloud Run's log shows three page reads on 2026-08-08 from
-three addresses that are not the owner's, plus a steady trickle of `/health`-only visits — the app
-pings `/health` when it opens, so that trickle is a visit counter nobody built. Most of it is
-crawlers; the three uploads are people.
+**The service has real users already, and every one of them is on a phone.** Cloud Run's log shows
+three page reads on 2026-08-08 from three non-owner addresses, **all Android**, one of them a
+returning visitor — plus a `/health`-only trickle that whois puts on AWS, a datacenter and a
+ProtonVPN exit. The app pings `/health` when it opens, so that trickle is a visit counter nobody
+built; `/decode` is the honest count. This is the first evidence that touches the "web first, mobile
+later" plan, and it is **a question for W10's friends, not a finding** — n=3. Detail:
+[METRICS.md](METRICS.md).
 
 ⚠ **Two copyright items remain open and are both the owner's call**, independent of the redeploy:
 the samples and the neyzen.com screenshot are out of HEAD but remain in the **public** repo's git

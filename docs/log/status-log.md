@@ -43,9 +43,22 @@ crawler, and the owner's own use.
 
 The session also produced a first look at **who is using the app**, since the on-open `/health` ping
 makes Cloud Run's log a visit counter nobody built: **three real page reads from three non-owner
-addresses on 2026-08-08**, and otherwise `/health` with no `/decode`. Much of that tail is
-automated — one iPhone UA appears from four unrelated IPs across two days. `/decode` is the honest
-count of humans; `/health` is an upper bound.
+addresses on 2026-08-08**, and otherwise `/health` with no `/decode`. Whois places most of that tail
+on AWS, a datacenter and a ProtonVPN exit, and one iPhone UA appears from four unrelated IPs across
+two days. `/decode` is the honest count of humans; `/health` is an upper bound.
+
+**All three humans were on Android phones** — which took one correction to see. The 20:32 upload was
+first recorded here as "a Linux desktop", because its UA said `X11; Linux x86_64`. The owner pointed
+out that neither he nor his friends run Linux, and the log then gave the mechanism: same IP, same
+Chrome build, `/health` on the **Android mobile** UA at 20:29:57, `/health` on the **Linux desktop**
+UA at 20:30:57, upload at 20:32. That is Chrome for Android's **"Request desktop site"**, not a
+second machine. Worth remembering whenever this log is read for device mix — and worth noting that
+the correction came from domain knowledge the logs could not supply.
+
+That leaves a real tension with the plan, stated as a question rather than a finding: **the plan is
+"web first, mobile later", and every human who has used the app so far arrived on a phone** — one of
+them switching to desktop mode within 60 s. n=3, and the switch has no stated reason, so it is
+something to **ask W10's two friends about**, not something to re-plan on.
 
 Two further corrections came out of reading the logs properly, both the kind that would have become
 folklore:

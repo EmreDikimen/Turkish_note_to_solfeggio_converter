@@ -400,6 +400,26 @@ async function main() {
   console.log(`  playhead aimed at bar 1: ${topFrac?.toFixed(3) ?? "hidden"} down the sheet`);
   check("a bar-1 target plays from the top of the sheet", topFrac != null && topFrac < 0.2, true);
 
+  // --- the look-ahead scheduler keeps feeding (feature track F0) --------------------------------
+  //
+  // ⚠ The playhead cannot prove this. It is derived from the AUDIO CLOCK, so it glides down the
+  // sheet at the right speed even if the scheduler died on its first tick and the page has gone
+  // completely silent — every check above would still pass. `window.__omrAudio()` reports how many
+  // events the backend has actually handed to Web Audio, which is the only thing that can tell
+  // "playing" from "the clock is running".
+  const audioProgress = async (): Promise<{ scheduled: number; total: number }> =>
+    page.evaluate(() =>
+      (window as unknown as { __omrAudio: () => { scheduled: number; total: number } }).__omrAudio(),
+    );
+
+  const early = await audioProgress();
+  // The whole point of the refactor: a piece is scheduled a second at a time, not all at once.
+  check("playback does not schedule the whole piece up front", early.scheduled < early.total, true);
+  await page.waitForTimeout(2000);
+  const later = await audioProgress();
+  console.log(`  scheduler fed ${early.scheduled} → ${later.scheduled} of ${later.total} events`);
+  check("the scheduler kept feeding over 2 s", later.scheduled > early.scheduled, true);
+
   await page.locator("#palette-stop").click();
   await page.waitForTimeout(200);
   check("Dur stops it", await page.locator("#palette-play").getAttribute("data-play-state"), "stopped");

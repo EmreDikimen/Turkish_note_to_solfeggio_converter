@@ -77,6 +77,13 @@ export type NoteEdit = Partial<Pick<NoteEvent, "koma53" | "durationMs">>;
 // so Play/Stop always talk to the same instance.
 const backend = new WebAudioBackend();
 
+// The look-ahead scheduler's progress, for the headless checks only (tools/browser/editor-smoke.ts),
+// alongside the `window.__omr*` hooks further down. It has to be read from the backend rather than
+// from the screen: the playhead is driven by the audio clock, so it keeps moving even if the
+// scheduler stalled and the page fell silent — only this counter can tell those two apart.
+(window as unknown as { __omrAudio?: () => { scheduled: number; total: number } }).__omrAudio = () =>
+  backend.scheduleProgress();
+
 // Every makam the app can play, built once at module load — the list is static.
 const MAKAM_OPTIONS = makamOptions();
 

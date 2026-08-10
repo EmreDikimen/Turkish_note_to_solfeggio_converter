@@ -169,6 +169,31 @@ export const TR = {
       `ses alanı: koma ${lo}–${hi} (${cents} sent)`,
   },
 
+  // The raw decode inspector: what the MODEL said, before the stitcher and the editor touched it.
+  // Deliberately not the same thing as `strips` below, which re-serializes the score on screen.
+  decode: {
+    title: "Modelin ham çıktısı",
+    subtitle:
+      "Son okunan sayfanın her şeridi için modelin ürettiği bütün jetonlar — birleştirmeden ve " +
+      "düzenlemeden önce. Portede göremediğiniz bir şey burada görünür.",
+    empty: "Henüz bir sayfa okunmadı. Bir görsel yükleyin, sonra buraya bakın.",
+    summary: (strips: number, tokens: number, where: string) =>
+      `${strips} şerit · ${tokens} jeton · ${where}`,
+    whereServer: "sunucuda okundu",
+    whereBrowser: "bu bilgisayarda okundu",
+    stripLine: (system: number, window: number) => `porte ${system} · pencere ${window}`,
+    tokenCount: (n: number) => `${n} jeton`,
+    confidence: (mean: string, min: string) => `güven: ort ${mean} · en düşük ${min}`,
+    hitCap: "⚠ jeton sınırına dayandı — bu şerit yarım okunmuş olabilir",
+    text: "okunan satır:",
+    tokenList: "jetonlar (sırayla, her birinin güveniyle):",
+    warnings: (n: number) => `${n} birleştirme uyarısı`,
+    warningsNote: "Modelin ürettiği ama birleştiricinin kullanamadığı yerler:",
+    download: "Ham çıktıyı indir (JSON)",
+    downloadTitle: "Bütün şeritlerin jetonları, id'leri ve güven değerleri tek dosyada",
+    empty2: "Bir şerit seçin: modelin o şeritte ürettiği jetonlar burada görünsün.",
+  },
+
   strips: {
     title: "Şerit dışa aktarımı (Adım 2c)",
     modeEvery: "her nota",

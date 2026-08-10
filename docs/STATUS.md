@@ -27,6 +27,24 @@ paths** — numbers in [METRICS.md](METRICS.md). `npm test` (217/217), `smoke:ed
 including the grace-note geometry section) and `smoke:page` were green in this HEAD on 2026-08-08 and
 no source moved since.
 
+**A second deploy went out the same day: the sheet no longer shows a koma bemol as a küçük bemol.**
+Owner report from real use — in `Standart (ölçü boyunca)` the staff dropped the sign on any
+alteration pointing the same way as the donanım, so it read as the signature's size while the audio
+played the true koma (**134 of 213 bundled scores** have at least one such letter). The
+`sigTolerant` printing rule is now the **renderer's only**: on for render jobs, which must imitate
+real printed pages, off for a human. The corpus is untouched — same glyph tally on `?mode=measure`
+before and after — and pixels==labels holds on both settings. Decision row in
+[DECISIONS.md](DECISIONS.md), account in [log/status-log.md](log/status-log.md). Green for it:
+`typecheck`, `npm test`, `smoke:editor`, a fresh `build:app` (both real URLs, no `localhost:8080`),
+`smoke:live` **PASS on both paths**, and the fix confirmed **on the deployed bundle** (51 signs on
+the human path vs 40 on `?mode=measure`, same score).
+
+**And the model's own tokens are visible in the app** (owner request): `Gelişmiş` → **Modelin ham
+çıktısı** shows, per strip of the last read, every token the model produced with its confidence,
+the truncation flag, and the stitcher's warnings — the answer to "the model saw it, so why is it not
+on the page". Nothing kept those tokens before; `stitchDecoded` consumes them. `smoke:app` asserts
+it. Walkthrough: check 22 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md).
+
 **A genuine Cloud Run cold start is finally measured** (11.3 s wall, 10,093 ms of it graph loading,
 after ~3 h idle) — but it was caused by a post-deploy crawler, not by the app, so it does **not**
 close the cold-start open risk below. Evidence and the correction: [METRICS.md](METRICS.md).

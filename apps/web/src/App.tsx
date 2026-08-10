@@ -42,6 +42,7 @@ import { SheetView, type AccidentalMode } from "./SheetView";
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
+import type { RawDecode } from "./ui/DecodePanel";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
 import { UploadHero } from "./ui/UploadHero";
@@ -242,6 +243,12 @@ export function App() {
   const [omrBusy, setOmrBusy] = useState(false);
   // When the current read began — the elapsed clock's only input. Null when nothing is running.
   const [readStartedAt, setReadStartedAt] = useState<number | null>(null);
+  // The last page's RAW decode — every token the model produced, before `stitchDecoded` merged the
+  // strips and before any edit. Nothing else keeps it (the stitcher takes `tokens` and returns a
+  // document), so without this the model's own output is invisible to the person reading the page.
+  // Developer view only: ui/DecodePanel.tsx, inside Gelişmiş. Cleared when a score arrives from
+  // anywhere else, because it would then describe a different piece than the one on screen.
+  const [rawDecode, setRawDecode] = useState<RawDecode | null>(null);
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
   const [metronome, setMetronome] = useState(false);
@@ -338,6 +345,7 @@ export function App() {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`could not load ${file}`))))
       .then((d: NoteModelDocument) => {
         loadDoc(d);
+        setRawDecode(null); // a bundled/URL score, not a model read
         setSampleFile(file);
         setError(null);
       })
@@ -856,6 +864,7 @@ export function App() {
         if (parsed.schemaVersion !== 1) throw new Error(`unsupported schemaVersion ${parsed.schemaVersion}`);
         onStop();
         loadDoc(parsed);
+        setRawDecode(null); // this score did not come from the model — see the state's comment
         setSampleFile(""); // a user-picked file isn't one of the bundled samples
         setError(null);
       })
@@ -903,6 +912,12 @@ export function App() {
         });
         const totalMs = performance.now() - t0;
         const result = stitchDecoded(routed.strips, pageName);
+        setRawDecode({
+          name: pageName,
+          where: routed.where,
+          strips: routed.strips,
+          warnings: result.warnings,
+        });
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length)
@@ -985,6 +1000,12 @@ export function App() {
         });
         const decodeMs = performance.now() - t0;
         const result = stitchDecoded(routed.strips, stem);
+        setRawDecode({
+          name: stem,
+          where: routed.where,
+          strips: routed.strips,
+          warnings: result.warnings,
+        });
 
         const notes = result.doc.events.filter((ev) => ev.kind === "note").length;
         if (!result.doc.events.length)
@@ -1155,6 +1176,7 @@ export function App() {
         onLoadJson={onFile}
         onStrips={onStrips}
         omrBusy={omrBusy}
+        rawDecode={rawDecode}
         accidentalMode={accidentalMode}
         onAccidentalMode={setAccidentalMode}
         showLyrics={showLyrics}

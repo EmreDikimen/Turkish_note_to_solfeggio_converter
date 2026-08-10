@@ -7,7 +7,75 @@ updated: 2026-08-09
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-09 (latest) — the copyright pass is DEPLOYED, and a real cold start finally got measured
+## 2026-08-09 (latest) — the model's own tokens are visible in the app now
+
+Owner request: a developer view showing **all** the tokens the model decoded for a photo. Something
+like it existed and did not answer the question — `/slices.html` prints raw tokens for a page **it**
+re-slices, and `Gelişmiş`'s strip panel prints labels **re-serialized from the score on screen**.
+Neither is the model's output for the read you actually did: `stitchDecoded` takes the tokens and
+returns a document, so nothing downstream kept them and the app threw them away.
+
+`App` now keeps the last read's `rawDecode` and **ui/DecodePanel.tsx** (`#decode-panel`, inside
+Gelişmiş) shows it: per strip, the detokenized line, then every token in vocabulary spelling with
+its log-probability, the `hitCap` flag on strips that hit the token cap, and the **stitcher's
+warnings** for the page — which is the part that answers "the model saw it, so why is it not on the
+page" (`row 0: mid-row \sig ignored`, `row 6: \tie into a rest ignored`). Plus a JSON download of
+the lot. Token spellings come from the model's own `id2token` (`getMeta`, ~12 KB, already fetched by
+every decode path), so they are the vocabulary's, not a prettified version.
+
+⚠ `</s>` is deliberately absent — `summarizeDecode` strips it before anything downstream sees it,
+and a strip that never produced one is flagged as `hitCap`, which is the fact worth reading.
+
+`smoke:app` now asserts it, on DOM state only (`#decode-panel[data-decode="ready"]`,
+`data-decode-strips`, `data-decode-tokens`, `[data-token-count]`): **16/16 strips, 780 tokens, 39 on
+strip 1**, alongside the checks it already ran. It costs nothing — that tool already decodes a page.
+Walkthrough: check 22 in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md).
+
+## 2026-08-09 — the sheet was showing a koma bemol as a küçük bemol
+
+Owner report, from using the app: a si carrying a **koma bemol** in `Her notada` lost its sign in
+`Standart (ölçü boyunca)` and read as a **küçük bemol**, while the audio still played the koma.
+
+Not a glyph bug and not the makam table — it was the **`sigTolerant`** printing rule (the 2026-07-26
+row in [../DECISIONS.md](../DECISIONS.md)) doing exactly what it says: an alteration pointing the
+**same way** as the one in effect is written bare under the donanım, whatever its size. Real editions
+do that and leave the intonation to the performer, which is why the rule was put into `SheetView`
+in the first place — to stop the corpus drawing signs its labels omitted. What nobody checked then
+is what it does to a **person reading the app**: the staff and the sound disagree, silently. Scope,
+counted over the bundled scores: **134 of 213** have at least one letter whose signature sign hides
+a different same-direction alteration (e.g. `sevkefza…geldik_gidiyoruz`, si signature −5 over 31
+koma flats; `suzinak…gunden_gune`, si signature −1 over 21 küçük flats).
+
+The fix splits the two audiences instead of choosing between them. `sigTolerant` is now a flag on
+both the draw path (`SheetView`) and the label path (`buildStrips`), fed by one constant —
+`SIG_TOLERANT` in `App.tsx`, **true only when the URL carries `mode=`**, which is precisely what
+makes a page a render job (`render.ts`'s `jobUrl`, and `verify-labels`' manifest replay, both always
+set it; the tolerance only ever applies in measure mode). So the corpus keeps the printed-page
+convention and a human gets a sign whenever the alteration differs at all.
+
+Checked rather than assumed, because this rule has already cost one round:
+
+- **the corpus does not move** — `?mode=measure` on `beyati-delisin` draws the same 40 glyphs
+  (`komaFlat×20 komaSharp×5 bakiyeSharp×15`) before and after the change, compared against a stash
+  of the pre-change tree;
+- **the app's view does** — the same page, dropdown-switched, now draws 51: the 11 that were hidden
+  are 5 küçük flats, 1 bakiye flat and 4 koma sharps;
+- **pixels still equal labels on both settings** — verify-labels' own geometry (glyphs assigned to
+  the strip rect they fall inside, multiset-compared to the label's accidental tokens), run live over
+  five bundled scores: 192/192 strips match in the app setting, 193/193 in the render setting.
+
+⚠ Two deliberate gaps remain, both the owner's: the **makam bends the sound only** (uşşak, hüzzam),
+and a **±2/±3 alteration is drawn snapped** to the nearest AEU sign — 154 such notes sit in the
+bundled scores, and art-music notation has no sign for them.
+
+**Deployed the same day** (Netlify only — nothing under `apps/server/` or `apps/web/src/omr/` moved,
+so no Cloud Run rebuild). Fresh `build:app` with both real URLs and zero `localhost:8080`, 11 files /
+42.7 MB, `smoke:live` PASS on both paths (server 77.0 s, Hub fallback 99.5 s, identical scores). The
+fix was then confirmed **on the deployed bundle rather than on the source**, which is the standing
+rule from 2026-08-06: a score JSON loaded into the live site draws **51** accidentals on the human
+path and **40** on `?mode=measure` — the renderer's convention still there, the reader's now honest.
+
+## 2026-08-09 — the copyright pass is DEPLOYED, and a real cold start finally got measured
 
 The redeploy STATUS had been pointing at since 2026-08-08. Netlify only — nothing under
 `apps/server/` or `apps/web/src/omr/` had moved, so no Cloud Run rebuild and no re-upload of the

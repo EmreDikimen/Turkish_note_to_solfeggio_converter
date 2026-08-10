@@ -84,6 +84,20 @@ async function main() {
   // picked is not what this check is about (that is MANUAL_CHECKS check 14).
   await dismissMakamPrompt(page);
 
+  // The raw decode inspector (ui/DecodePanel.tsx) must have caught what the model said. It is the
+  // only place the model's own tokens survive — `stitchDecoded` consumes them and returns a
+  // document — so a silent regression here would be invisible everywhere else. DOM state only:
+  // the counts, and the token list of the first strip.
+  const decodePanel = page.locator('#decode-panel[data-decode="ready"]');
+  const decodeReady = (await decodePanel.count()) > 0;
+  const decodeStrips = Number((await decodePanel.getAttribute("data-decode-strips")) ?? 0);
+  const decodeTokens = Number((await decodePanel.getAttribute("data-decode-tokens")) ?? 0);
+  const decodeWhere = (await decodePanel.getAttribute("data-decode-where")) ?? "";
+  await page.locator("[data-decode-strip]").first().click();
+  const shownTokens = Number(
+    (await page.locator("[data-token-count]").first().getAttribute("data-token-count")) ?? 0
+  );
+
   // The score must actually be on screen and playable. Ids, not button LABELS — the labels are
   // user-facing copy (and are Turkish).
   await page.locator("#view-sheet").click();
@@ -112,6 +126,9 @@ async function main() {
 
   const checks: [string, boolean, string][] = [
     ["status reports a read", nStrips > 0 && nDecoded > 0, `${nStrips} strips, ${nDecoded} notes`],
+    ["raw decode kept", decodeReady && decodeStrips === nStrips, `${decodeStrips}/${nStrips} strips, ${decodeWhere}`],
+    ["…and it has tokens", decodeTokens > 0, `${decodeTokens} tokens`],
+    ["…a strip lists its own", shownTokens > 0, `${shownTokens} on strip 1`],
     ["sheet renders", svgCount > 0, `${svgCount} svg`],
     ["play enabled", playable, String(playable)],
     ["playback started", playingState === "playing", playingState || "(none)"],

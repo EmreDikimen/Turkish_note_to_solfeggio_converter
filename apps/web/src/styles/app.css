@@ -704,6 +704,78 @@
   color: var(--ink-faint);
 }
 
+/* ── The raw decode inspector (ui/DecodePanel.tsx) ──────────────────────── */
+
+.kv-decode {
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule);
+}
+.kv-decode__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+}
+.kv-decode__cap {
+  color: var(--warn);
+  font-size: var(--text-xs);
+}
+/* The model's own sentence: long, and it must wrap rather than stretch the panel. */
+.kv-decode__line {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  word-break: break-word;
+  color: var(--ink);
+}
+.kv-decode__tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.kv-decode__token {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 2px var(--space-1);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.1;
+}
+/* Confidence is a HINT for the eye; the number under each token is the claim. */
+.kv-decode__token[data-conf="unsure"] {
+  border-color: var(--warn);
+}
+.kv-decode__token[data-conf="doubt"] {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, var(--paper-raised));
+}
+.kv-decode__tok {
+  color: var(--ink);
+  white-space: pre;
+}
+.kv-decode__lp {
+  color: var(--ink-faint);
+  font-size: 0.6875rem;
+}
+.kv-decode__warnings > ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+}
+
 /* ── Modals ─────────────────────────────────────────────────────────────── */
 
 .kv-modal {

@@ -20,6 +20,7 @@
 import type { NoteModelDocument } from "@turkish-omr/core";
 import type { AccidentalMode } from "../SheetView";
 import type { ExportStrip } from "../stripExport";
+import { DecodePanel, type RawDecode } from "./DecodePanel";
 import { PitchRangeNote } from "./PitchRangeNote";
 import { StripPanel } from "./StripPanel";
 import { TR } from "./strings";
@@ -32,6 +33,7 @@ export function AdvancedPanel({
   onLoadJson,
   onStrips,
   omrBusy,
+  rawDecode,
   accidentalMode,
   onAccidentalMode,
   showLyrics,
@@ -51,6 +53,8 @@ export function AdvancedPanel({
   onLoadJson: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onStrips: (e: React.ChangeEvent<HTMLInputElement>) => void;
   omrBusy: boolean;
+  /** The last page's raw model output, or null when the score on screen did not come from a read. */
+  rawDecode: RawDecode | null;
   accidentalMode: AccidentalMode;
   onAccidentalMode: (m: AccidentalMode) => void;
   showLyrics: boolean;
@@ -143,6 +147,8 @@ export function AdvancedPanel({
             <span>{TR.advanced.repeats}</span>
           </label>
         </div>
+
+        <DecodePanel decode={rawDecode} />
 
         {sheetView && (
           <StripPanel

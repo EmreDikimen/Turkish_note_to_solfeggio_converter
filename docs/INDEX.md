@@ -71,6 +71,7 @@ wrong — fix by deleting, not by syncing.
 | How does a page become strips, decode, and stitch back? | [PIPELINE.md](PIPELINE.md) |
 | How do I see a feature working with my own eyes? (the app) | [MANUAL_CHECKS.md](MANUAL_CHECKS.md) |
 | …and the synthetic corpus / renderer side | [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) |
+| …and the editor (select, palette, insert, tuplets) | [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md) |
 | How do I train on Colab? | [COLAB.md](COLAB.md) |
 | How does the synthetic renderer work? | [../tools/render/README.md](../tools/render/README.md) |
 | The synthetic track (Rungs 0–2.2b) — CLOSED | [PHASE2.md](PHASE2.md) |

@@ -11,7 +11,7 @@
     "typecheck": "npm run -ws --if-present typecheck",
     "build": "npm run -ws --if-present build",
     "dev:web": "npm run -w @turkish-omr/web dev",
-    "test": "npx tsx tools/render/stitch-test.ts && npx tsx tools/core/edits-test.ts",
+    "test": "npx tsx tools/render/stitch-test.ts && npx tsx tools/core/edits-test.ts && npx tsx tools/core/usul-test.ts",
     "gate:browser": "npx tsx tools/browser/run-page.ts omr-gate.html __gateResult --timeout 600000 --expect 27/28",
     "probe:cv": "npx tsx tools/browser/run-page.ts cv-probe.html __cvProbe",
     "check:logprobs": "npx tsx tools/browser/run-page.ts logprob-check.html __logprobCheck --timeout 600000",

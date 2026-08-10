@@ -55,6 +55,10 @@ export const TR = {
     tempoReset: "⟲",
     tempoResetTitle: (n: number) => `doğal tempoya dön (${n} BPM)`,
     metronome: "Metronom",
+    percussion: "Usul vuruşu",
+    percussionTitle:
+      "Metronom yerine usulün kendi düm-tek-ke vuruşlarını çalar. İkisi birlikte de açılabilir.",
+    percussionUnavailable: "Bu usulün vuruş kalıbı henüz tanımlı değil",
     usul: "Usul",
     usulTitle: "Metronomun vuruş kalıbı. Okuma yanılabilir; buradan düzeltebilirsiniz.",
     makam: "Makam",

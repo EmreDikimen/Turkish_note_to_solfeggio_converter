@@ -26,7 +26,7 @@
  * adding one would be a mistake.
  */
 
-import type { AudioBackend, Timeline } from "@turkish-omr/core";
+import type { AudioBackend, PercussionHit, Stroke, Timeline } from "@turkish-omr/core";
 
 // A gently decaying harmonic spectrum — same idea as the Python reference synth,
 // less harsh than a pure sine.
@@ -51,6 +51,12 @@ export interface PlayOptions {
    * measure downbeat. Omit/empty for no metronome.
    */
   clicks?: { ms: number; accent: boolean }[];
+  /**
+   * The usul's hand strokes to play, in MUSICAL ms. Built by the core from the selected usul
+   * (`buildPercussionTrack`). Independent of `clicks` — a metronome marks the beats, a usul plays
+   * a rhythm, and either, both or neither is a reasonable thing to want. Omit/empty for silence.
+   */
+  percussion?: PercussionHit[];
 }
 
 /**
@@ -59,7 +65,8 @@ export interface PlayOptions {
  */
 type Pending =
   | { at: number; kind: "note"; freqHz: number; durMs: number; midNote: boolean }
-  | { at: number; kind: "click"; accent: boolean };
+  | { at: number; kind: "click"; accent: boolean }
+  | { at: number; kind: "stroke"; stroke: Stroke };
 
 /**
  * Build a custom oscillator waveform with harmonics (the browser's version of the Python
@@ -91,8 +98,9 @@ export class WebAudioBackend implements AudioBackend {
   private ctx: AudioContext | null = null;
   /** Rebuilt per playback; dropping it is how `stop()` silences anything it fails to catch. */
   private master: GainNode | null = null;
-  /** Cached per context, since the context now outlives a playback. */
+  /** Both cached per context, since the context now outlives a playback. */
   private wave: PeriodicWave | null = null;
+  private noise: AudioBuffer | null = null;
   private timeline: Timeline | null = null;
   /** AudioContext time (seconds) when playback started, and the musical ms it began at. */
   private startCtxTime = 0;
@@ -216,9 +224,14 @@ export class WebAudioBackend implements AudioBackend {
       if (c.ms < fromMs - 1e-6) continue;
       pending.push({ at: c.ms, kind: "click", accent: c.accent });
     }
+    for (const h of opts.percussion ?? []) {
+      if (h.ms < fromMs - 1e-6) continue;
+      pending.push({ at: h.ms, kind: "stroke", stroke: h.stroke });
+    }
 
-    // Both inputs are already ascending (buildTimeline accumulates a monotonic cursor;
-    // buildMetronomeTrack walks the bars in order), so this only interleaves the two.
+    // Every input is already ascending (buildTimeline accumulates a monotonic cursor;
+    // buildMetronomeTrack and buildPercussionTrack walk the bars in order), so this only
+    // interleaves them.
     pending.sort((a, b) => a.at - b.at);
     this.pending = pending;
     this.cursor = 0;
@@ -247,6 +260,7 @@ export class WebAudioBackend implements AudioBackend {
     while (this.cursor < this.pending.length && this.pending[this.cursor]!.at <= horizon) {
       const p = this.pending[this.cursor++]!;
       if (p.kind === "note") this.scheduleNote(this.toReal(p.at), p.freqHz, p.durMs, p.midNote);
+      else if (p.kind === "stroke") this.scheduleStroke(this.toReal(p.at), p.stroke);
       else this.scheduleClick(this.toReal(p.at), p.accent);
     }
 
@@ -314,6 +328,74 @@ export class WebAudioBackend implements AudioBackend {
     osc.start(when);
     osc.stop(when + 0.06);
     this.own(osc);
+  }
+
+  /**
+   * A quarter-second of white noise, built once per context and reused as the source for every
+   * rim stroke. ⚠ This is the codebase's first `AudioBuffer`, and it is exactly what the old
+   * `stop()` used to throw away by closing the context — the reason F0 came first.
+   */
+  private noiseBuffer(ctx: AudioContext): AudioBuffer {
+    if (this.noise) return this.noise;
+    const len = Math.ceil(ctx.sampleRate * 0.25);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    this.noise = buf;
+    return buf;
+  }
+
+  /**
+   * Schedule one usul hand stroke at AudioContext time `when` — synthesised, not sampled.
+   *
+   * Why synthesised: it ships today with no download, no licence question and nothing to keep out
+   * of `dist/`. CC0 recordings of a real darbuka and bendir are already sourced
+   * (docs/features/audio-sources.md) and swap in behind this same method; until then the point is
+   * that düm and tek must be *told apart by ear*, which two hundred lines of asset plumbing are
+   * not needed for.
+   *
+   * The shapes are the standard percussion-synthesis pair:
+   *   - **düm** — the open centre hit: a sine dropping fast in pitch (a real drumhead's tension
+   *     falls as it settles), with a long-ish body.
+   *   - **tek / ka** — the rim: a bandpassed noise burst, over in a blink. `ka` is the weak hand,
+   *     so it is the same sound quieter — which is what makes düyek's "te-ke" read as one gesture
+   *     rather than two equal hits.
+   */
+  private scheduleStroke(when: number, stroke: Stroke): void {
+    const ctx = this.ctx!;
+    const master = this.master!;
+
+    if (stroke === "dum") {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(115, when);
+      osc.frequency.exponentialRampToValueAtTime(55, when + 0.06);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(0.9, when + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + 0.25);
+      osc.connect(g).connect(master);
+      osc.start(when);
+      osc.stop(when + 0.28);
+      this.own(osc);
+      return;
+    }
+
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuffer(ctx);
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = 2200;
+    band.Q.value = 1.2;
+    const g = ctx.createGain();
+    const peak = stroke === "tek" ? 0.5 : 0.26; // `ka` is the weak hand
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(peak, when + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.045);
+    src.connect(band).connect(g).connect(master);
+    src.start(when);
+    src.stop(when + 0.06);
+    this.own(src);
   }
 
   /** Pause playback, keeping the position so it can be resumed. */

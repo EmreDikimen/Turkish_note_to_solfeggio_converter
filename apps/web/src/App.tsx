@@ -3,6 +3,7 @@ import {
   assignBars,
   beatMsOf,
   buildMetronomeTrack,
+  buildPercussionTrack,
   buildTimeline,
   centsAboveRef,
   deleteEvent,
@@ -259,6 +260,10 @@ export function App() {
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
   const [metronome, setMetronome] = useState(false);
+  // Play the usul's own düm/tek/ke strokes (feature track F2). Deliberately separate from the
+  // metronome rather than a mode of it: one marks the beats, the other plays a rhythm, and wanting
+  // both at once (learning a usul against a steady pulse) is a normal thing to want.
+  const [percussion, setPercussion] = useState(false);
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
   // Which makam's PERFORMED intonation playback uses. "" = none, i.e. sound the notes exactly as
@@ -469,14 +474,16 @@ export function App() {
     };
   }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
 
-  // Translate the current tempo/metronome/usul UI state into backend PlayOptions. Speed is the
-  // chosen BPM over the natural BPM; the metronome clicks are the selected usul's beat pattern
-  // (built in core, in musical ms), so they stay aligned to the bars at any tempo.
+  // Translate the current tempo/metronome/percussion/usul UI state into backend PlayOptions. Speed
+  // is the chosen BPM over the natural BPM; the clicks are the selected usul's beat pattern and the
+  // strokes are its düm/tek/ke pattern (both built in core, in musical ms, off the same whole-note
+  // length), so they stay aligned to the bars at any tempo.
   const buildPlayOptions = useCallback(
-    (targetBpm: number, metro: boolean, uName: string): PlayOptions => {
+    (targetBpm: number, metro: boolean, uName: string, perc: boolean): PlayOptions => {
       const u = findUsul(uName);
       const clicks = metro && doc && u ? buildMetronomeTrack(doc, u, beatMs * 4) : undefined;
-      return { speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1, clicks };
+      const strokes = perc && doc && u ? buildPercussionTrack(doc, u, beatMs * 4) : undefined;
+      return { speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1, clicks, percussion: strokes };
     },
     [doc, naturalBpm, beatMs],
   );
@@ -793,7 +800,7 @@ export function App() {
       backend.resume();
       setPlayState("playing");
     } else {
-      void backend.play(timeline, 0, buildPlayOptions(bpm, metronome, usulName));
+      void backend.play(timeline, 0, buildPlayOptions(bpm, metronome, usulName, percussion));
       setPlayState("playing");
     }
   }
@@ -808,7 +815,7 @@ export function App() {
   // mode) to "play from here". The click is the user gesture the AudioContext needs.
   function onSeekMs(ms: number) {
     if (!timeline) return;
-    void backend.play(timeline, ms, buildPlayOptions(bpm, metronome, usulName));
+    void backend.play(timeline, ms, buildPlayOptions(bpm, metronome, usulName, percussion));
     setPlayState("playing");
   }
 
@@ -829,17 +836,20 @@ export function App() {
     onSeekMs(editStartMs);
   }
 
-  // Apply a tempo / metronome / usul change. If something is playing or paused, re-schedule from
-  // the current position so the change is heard immediately (position is musical ms, so it's
-  // tempo-independent); otherwise it just takes effect on the next Play.
-  function applyPlayback(nextBpm: number, nextMetro: boolean, nextUsul: string) {
+  // Apply a tempo / metronome / percussion / usul change. If something is playing or paused,
+  // re-schedule from the current position so the change is heard immediately (position is musical
+  // ms, so it's tempo-independent); otherwise it just takes effect on the next Play.
+  // ⚠ Every argument needs its setter here, not just the one the caller changed: the controls are
+  // React-controlled, so a missing setter leaves the box un-ticked and the change silently reverts.
+  function applyPlayback(nextBpm: number, nextMetro: boolean, nextUsul: string, nextPerc: boolean) {
     setBpm(nextBpm);
     setMetronome(nextMetro);
     setUsulName(nextUsul);
+    setPercussion(nextPerc);
     if (!timeline || playState === "stopped") return;
     const pos = Math.max(0, backend.getPositionMs() ?? 0);
     const wasPaused = playState === "paused";
-    void backend.play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul)).then(() => {
+    void backend.play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul, nextPerc)).then(() => {
       if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
     });
   }
@@ -1089,11 +1099,13 @@ export function App() {
             onStop={onStop}
             bpm={bpm}
             naturalBpm={naturalBpm}
-            onBpm={(v) => applyPlayback(v, metronome, usulName)}
+            onBpm={(v) => applyPlayback(v, metronome, usulName, percussion)}
             metronome={metronome}
-            onMetronome={(v) => applyPlayback(bpm, v, usulName)}
+            onMetronome={(v) => applyPlayback(bpm, v, usulName, percussion)}
+            percussion={percussion}
+            onPercussion={(v) => applyPlayback(bpm, metronome, usulName, v)}
             usulName={usulName}
-            onUsul={(v) => applyPlayback(bpm, metronome, v)}
+            onUsul={(v) => applyPlayback(bpm, metronome, v, percussion)}
             makamSlug={makamSlug}
             onMakam={applyMakam}
             makamOptions={MAKAM_OPTIONS}

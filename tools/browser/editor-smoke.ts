@@ -426,6 +426,29 @@ async function main() {
   check("the transport agrees again", await page.locator("#play").getAttribute("data-play-state"), "stopped");
   check("the playhead is gone", await playheadFraction(), null);
 
+  // --- the usul's strokes reach the scheduler (feature track F2) --------------------------------
+  //
+  // `total` is the whole event list this playback holds. Replaying the SAME bar with percussion on
+  // must make it bigger by exactly the strokes the usul contributes — which is the only way from
+  // here to prove `buildPercussionTrack` ran and its hits were handed to the backend. (Whether they
+  // SOUND like a düm is an ears question: docs/MANUAL_CHECKS.md.)
+  const perc = page.locator("#percussion");
+  const strokesInUsul = Number(await perc.getAttribute("data-usul-strokes"));
+  check("the selected usul has a drafted stroke pattern", strokesInUsul > 0, true);
+  check("...so the percussion toggle is offered", await perc.isDisabled(), false);
+
+  const silentTotal = later.total;
+  await perc.check();
+  await page.locator("#palette-play").click();
+  await page.waitForTimeout(400);
+  const withPercussion = await audioProgress();
+  console.log(`  ${silentTotal} events without the usul, ${withPercussion.total} with it`);
+  check("turning on the usul adds events to the same playback", withPercussion.total > silentTotal, true);
+
+  await page.locator("#palette-stop").click();
+  await perc.uncheck(); // leave the transport as the rest of this run expects it
+  await page.waitForTimeout(200);
+
   // Now edit a note in the LAST system, so "it started at the edited bar" and "it started at the
   // top" cannot look the same. Skip notes already valued 1/8 — those apply as a no-op, which would
   // leave nothing on the undo stack for the last check.

@@ -14,7 +14,7 @@
  * LABELS are copy and are free to change. See apps/web/src/ui/status.ts for the reasoning.
  */
 
-import { USULS, type MakamOption } from "@turkish-omr/core";
+import { findUsul, USULS, type MakamOption } from "@turkish-omr/core";
 import type { AccidentalMode } from "../SheetView";
 import { TR } from "./strings";
 
@@ -28,6 +28,8 @@ export function TransportBar({
   onBpm,
   metronome,
   onMetronome,
+  percussion,
+  onPercussion,
   usulName,
   onUsul,
   makamSlug,
@@ -51,6 +53,9 @@ export function TransportBar({
   onBpm: (v: number) => void;
   metronome: boolean;
   onMetronome: (v: boolean) => void;
+  /** Play the usul's own düm/tek/ke strokes. Independent of the metronome, not a replacement. */
+  percussion: boolean;
+  onPercussion: (v: boolean) => void;
   usulName: string;
   onUsul: (v: string) => void;
   makamSlug: string;
@@ -66,6 +71,11 @@ export function TransportBar({
   accidentalMode: AccidentalMode;
   onAccidentalMode: (m: AccidentalMode) => void;
 }) {
+  // How many strokes the SELECTED usul has. 0 means its pattern has not been written yet
+  // (packages/core/src/usul.ts) — the checkbox says so instead of silently playing nothing, and
+  // `data-usul-strokes` is how a headless check reads that without matching the sentence.
+  const strokeCount = findUsul(usulName)?.strokes?.length ?? 0;
+
   return (
     <div className="kv-transport">
       <div className="kv-transport__group">
@@ -130,6 +140,21 @@ export function TransportBar({
           onChange={(e) => onMetronome(e.target.checked)}
         />
         <span>{TR.transport.metronome}</span>
+      </label>
+
+      <label
+        className={`kv-field${canPlay && strokeCount ? "" : " is-disabled"}`}
+        title={strokeCount ? TR.transport.percussionTitle : TR.transport.percussionUnavailable}
+      >
+        <input
+          id="percussion"
+          type="checkbox"
+          data-usul-strokes={strokeCount}
+          checked={percussion && strokeCount > 0}
+          disabled={!canPlay || strokeCount === 0}
+          onChange={(e) => onPercussion(e.target.checked)}
+        />
+        <span>{TR.transport.percussion}</span>
       </label>
 
       <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.usulTitle}>

@@ -192,6 +192,11 @@ tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
 [`packages/core/src/usul.ts`](../packages/core/src/usul.ts). Why it was built this way:
 [features/README.md](features/README.md).
 
+⏸ **STEP 6 IS ON HOLD UNTIL THE REAL SAMPLES LAND** (owner rejected the synthesised strokes,
+2026-08-11). Steps 1–5 still verify the *mechanism* and are worth running. Step 6 judges the
+**patterns**, and doing that through a drum sound you dislike conflates two questions — the four
+`[derived]` patterns are exactly the ones needing an unclouded ear, so they get one.
+
 1. `npm run dev:web` → open `http://localhost:5173/?score=/sample.json` (any score on disk; there is
    no Sample dropdown since 2026-08-08, so the score comes from the URL).
 2. Set **Usul** to **Sofyan**, tick **Usul vuruşu**, ▶ Çal. You should hear a low **düm** on each
@@ -220,7 +225,8 @@ tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
 
 ⚠ These are the *sade* (simple) forms — the velvele, which subdivides the strokes for a fuller
 sound, is deliberately not implemented. "It is too plain" is expected; "it is the wrong rhythm" is
-the finding this check exists for.
+the finding this check exists for. ⚠ **"It does not sound like a drum" is already known and
+recorded** — that is what put step 6 on hold; it is not a new finding to re-report.
 
 ## Check 14 — the makam changes what you HEAR (2026-08-07)
 

@@ -2,7 +2,7 @@
 
 purpose: the per-file source + licence list for F1/F2 audio, verified on each source's own page
 audience: whoever downloads, prepares or audits an audio asset
-updated: 2026-08-09
+updated: 2026-08-11
 
 The rules these files must obey (no bundling, a `source`+`license` per file, `/THIRD-PARTY.txt` as
 each lands) are in [README.md](README.md#the-swap-discipline--required-whatever-is-chosen). This
@@ -10,6 +10,13 @@ file is the shortlist that search produced, checked on 2026-08-09.
 
 Every licence below was read **on the source's own page**, not on an aggregator. Nothing has been
 downloaded yet.
+
+⏭ **This file stopped being a shortlist for later on 2026-08-11 — it is now the active step.** F2
+shipped with synthesised strokes and the owner rejected them by ear (*"we need to use real
+sounds"*), so these files are what F2 needs rather than what it might eventually prefer. The
+decision and what the synthesis did buy: [../DECISIONS.md](../DECISIONS.md); what the swap costs, in
+order: [README.md](README.md). ⚠ Downloading the two Freesound files needs a free account, so the
+first step of this is manual and cannot be scripted.
 
 ## Cleared — CC0, usable commercially, forever
 

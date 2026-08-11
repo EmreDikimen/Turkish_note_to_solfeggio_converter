@@ -19,9 +19,19 @@ strokes **synthesised** rather than sampled so it works with no download and no 
 Green: `typecheck`, `npm test` (three files now), `smoke:editor` ALL PASS, `smoke:app` PASS. The
 account, including the one bug this found: [log/status-log.md](log/status-log.md).
 
-⚠ **Two things are open on it, and both are below in Next**: the ten stroke tables are **drafted, not
-verified by ear** (four are marked `[derived]`), and none of this is on the live site — the last
-deploy was 2026-08-09.
+⛔ **The owner listened, and the SOUND is rejected** (2026-08-11): *"I do not like it much. We need
+to use real sounds."* The synthesis met the bar the plan wrote down — düm and tek are tellable apart,
+and audible after that day's attack fix — and it is still not something to play along with. **A
+distinguishability bar was the wrong proxy for a musical one, and it was passed on the way to
+failing.** Everything except the sound survives: the scheduling, the stroke tables, the toggle, the
+volume stage and the checks are untouched, and the swap reaches one method (`scheduleStroke`) plus a
+loader. Getting the CC0 files in is now F2's next move — see Next below, and
+[features/README.md](features/README.md) for what it costs, in order.
+
+⚠ **Two more things are open, both below in Next**: the ten stroke tables are **drafted, not verified
+by ear** (four are `[derived]`) — and that verification now **waits for the samples**, because judging
+a pattern through a drum you dislike conflates two questions. And none of this is on the live site;
+the last deploy was 2026-08-09.
 
 **The beta is live, the copyright pass is deployed, and a friend could be sent the link today.**
 <https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
@@ -106,13 +116,21 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-0. **⏭ THE NEXT ACTION — CHECK THE USUL STROKE TABLES BY EAR.** F2 is built and its data is the part
-   no test can judge: six of the ten patterns are the standard simple forms, four (Devr-i Hindî,
-   Curcuna, Aksak Semâi, and Ağır Aksak riding on Aksak) are marked `[derived]` in
-   `packages/core/src/usul.ts` because they are our reduction of that usul's beat grouping rather
-   than a quoted pattern. A wrong Düyek is obvious to a musician and invisible to every check here.
-   Walkthrough: **check 23** in [MANUAL_CHECKS.md](MANUAL_CHECKS.md). Cheap, and it gates whether F2
-   is fit to deploy.
+0. **⏭ THE NEXT ACTION — PUT REAL DRUM SAMPLES INTO F2.** The synthesised strokes were rejected by
+   ear (owner, 2026-08-11) and the CC0 files have been cleared since 2026-08-09, so this is a
+   download-and-wire job, not a search. Order and what each step costs:
+   [features/README.md](features/README.md); the per-file list and the prep each needs (mapping
+   VCSL's darbuka hit types 1–5 to düm/tek/ka by listening, splitting `bendir_basicStrokes.wav` at
+   its onsets): [features/audio-sources.md](features/audio-sources.md). ⚠ **The swap discipline
+   becomes real with the first file** — nothing bundled, `source` + `license` recorded per file, a
+   `/THIRD-PARTY.txt` line as each lands, and a `dist/` guard mirroring `prune-dist.mjs`. ⚠ The two
+   Freesound downloads need a free account, so the first step is **manual**.
+0b. **THEN check the usul stroke tables by ear** — deliberately after the samples, not before. Six of
+   the ten patterns are the standard simple forms; four (Devr-i Hindî, Curcuna, Aksak Semâi, and
+   Ağır Aksak riding on Aksak) are marked `[derived]` in `packages/core/src/usul.ts` because they are
+   our reduction of that usul's beat grouping rather than a quoted pattern. A wrong Düyek is obvious
+   to a musician and invisible to every check here. Walkthrough: **check 23** in
+   [MANUAL_CHECKS.md](MANUAL_CHECKS.md), whose step 6 is on hold until the drum sounds right.
 1. **F0 + F2 are BUILT AND UNDEPLOYED.** The live site is still the 2026-08-09 build. They can ride
    along with whatever goes out next rather than earning their own deploy — nothing about them is
    urgent. `npm run deploy:app` is now the whole recipe in one command (2026-08-11), with

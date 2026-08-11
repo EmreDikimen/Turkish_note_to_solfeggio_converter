@@ -7,7 +7,42 @@ updated: 2026-08-11
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-11 (latest) — the feature track opens: playback rebuilt, and the usul plays itself
+## 2026-08-11 (latest) — the owner listened to F2 and rejected the sound
+
+*"I do not like it much. We need to use real sounds."* The synthesised düm/tek/ka shipped that
+morning are out. No code was changed — this entry and the doc updates around it are the whole of it,
+at the owner's instruction.
+
+**The bar was met and the feature still failed, which is the part worth keeping.** The plan wrote
+down an explicit test for the synthesised version — *"düm and tek must be unmistakable from each
+other, that is the whole bar"* — and it passed twice over: the strokes are tellable apart, and after
+the same day's ~400 Hz attack fix they are clearly audible on a laptop speaker. Neither made it a
+drum. **A distinguishability bar was the wrong proxy for a musical one, and it was passed on the way
+to failing.** Percussion is a timbre problem; two oscillators can be identifiable without being an
+instrument. The "Level 0 first, find out whether more is wanted" argument — borrowed from F1's own
+brief — turns out not to transfer from *pitched* timbres to *drums*, and F1 should not read this
+entry as evidence against its own Level 0.
+
+**What the bet bought, so nobody reads it as wasted.** Everything except the sound is correct and
+survives untouched: `buildPercussionTrack` and the stroke tables in core, the separate percussion
+toggle, the `Vuruş sesi` gain stage, `usul-test.ts`, and the two browser sections in `smoke:editor`.
+The swap reaches **one method** (`scheduleStroke`) plus a loader — the seam this was deliberately
+designed around is exactly where the change lands. F0 is what makes it possible at all: a decoded
+`AudioBuffer` now survives a Stop, which it would not have on the old backend.
+
+**Two second-order consequences, both now written into the plan.** (1) The stroke tables must be
+verified **after** the samples land, not before — judging whether Curcuna's pattern is right through
+a drum sound the owner dislikes conflates two questions, and the four `[derived]` patterns are the
+ones most needing an unclouded ear. Step 6 of check 23 is on hold accordingly. (2) The **swap
+discipline goes live with the first file** — nothing bundled, `source` + `license` per file, a
+`/THIRD-PARTY.txt` line as each lands, a `dist/` guard mirroring `prune-dist.mjs`. None of it applied
+while nothing was loaded, which is why F2 could ship without touching it at all.
+
+One thing the synthesis work leaves behind as a **requirement on the recordings**: whatever is used
+has to read on a laptop speaker, which rolls off below ~200 Hz. Prefer takes with a defined attack
+over ones that are all low body, and audition on the built-in speaker rather than headphones.
+
+## 2026-08-11 — the feature track opens: playback rebuilt, and the usul plays itself
 
 The owner re-confirmed the two-track split (2026-08-10) and asked for the **other** track — features,
 not the model — to start. It runs on `main`: the feature track touches `webAudioBackend.ts`,

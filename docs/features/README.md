@@ -24,25 +24,39 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 |---|---|---|---|---|---|
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (ney, oud, kemençe, clarinet, …) | medium | no | CC0 hunting + one ney recording | not started |
-| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **BUILT 2026-08-11**, synthesised; stroke tables await the owner's ear |
+| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ⚠ **MECHANISM BUILT 2026-08-11; the SOUND is rejected.** Scheduling, tables, toggle and volume stand; the synthesised strokes must be replaced by the CC0 samples |
 | **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
 
 Order: **F0 → F2 → F1 → F3**. The first two are built (owner, 2026-08-10 — the two tracks were
 re-confirmed as parallel and this one was opened on `main`, since it shares no file with Round 3).
 F2 came first among the visible ones because it has the best payoff per hour.
 
-⚠ **F2 shipped SYNTHESISED, not sampled** (owner decision 2026-08-10). Düm/tek/ka are made with an
-oscillator and a noise burst in `webAudioBackend.ts`, so the feature works end to end with **no
-download, no licence question and nothing to keep out of `dist/`** — the same "Level 0 first"
-reasoning F1 argues for itself below. The CC0 files in [audio-sources.md](audio-sources.md) are
-still the plan; they swap in behind `scheduleStroke` without touching core or the UI, and only then
-does the swap discipline start to apply.
+⛔ **THE SYNTHESISED STROKES ARE REJECTED — F2 NEEDS REAL SAMPLES** (owner, 2026-08-11, after
+listening: *"I do not like it much. We need to use real sounds."*). F2 shipped synthesised on
+2026-08-10 under the "Level 0 first" argument F1 still makes for itself below; for percussion that
+argument does not survive contact with the ear. **Getting the CC0 files in is now the next move on
+this feature** — what they are and what each needs first: [audio-sources.md](audio-sources.md).
 
-⚠ **The stroke tables are drafted, not verified.** All 10 usuls in `USULS` have a `strokes` array;
-six are the standard simple forms and four (marked `[derived]` in the source) are our reduction of
-that usul's own beat grouping. `npm test` checks that they are well-formed — inside the cycle,
-ascending, opening on a düm — and **cannot check that they are musically right**. That is the ears
-check in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) and it is owed.
+⚠ **The instructive part is the BAR, not the code.** The plan wrote one down — *"düm and tek must be
+unmistakable from each other, that is the whole bar for the synthesised version"* — and the
+synthesis met it, twice: the strokes are tellable apart, and after the 2026-08-11 attack fix they
+are clearly audible. It was still not something to play along with. **A distinguishability bar was
+the wrong proxy for a musical one, and it was passed on the way to failing.** Percussion is a timbre
+problem; two oscillators can be *identifiable* without being a drum.
+
+✅ **What the bet did buy, so it is not read as wasted.** Everything except the sound is correct and
+survives untouched: `buildPercussionTrack` and the stroke tables in core, the separate toggle, the
+volume stage, `usul-test.ts`, and the browser checks. The swap reaches **one method**
+(`scheduleStroke`) plus a loader — the seam this was designed around is exactly where the change
+lands. F0 is what makes it possible at all, since a decoded `AudioBuffer` now survives a Stop.
+
+⚠ **The stroke tables are drafted, not verified — and verification now WAITS for the samples.** All
+10 usuls in `USULS` have a `strokes` array; six are the standard simple forms and four (marked
+`[derived]` in the source) are our reduction of that usul's own beat grouping. `npm test` checks
+they are well-formed — inside the cycle, ascending, opening on a düm — and **cannot check that they
+are musically right**. Doing that ears check through a drum sound the owner dislikes would conflate
+two questions, and the `[derived]` patterns are the ones that most need an unclouded ear. Check 23
+in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md), after the swap.
 
 ---
 
@@ -262,7 +276,8 @@ ke*. So:
 4. A **`Vuruş sesi` slider** balances the strokes against the notes. It rides a gain node between
    the strokes and the master, so dragging it applies live — every other playback control
    re-schedules from the current position, which is fine for a thing you set once and wrong for a
-   thing you drag.
+   thing you drag. **Keep this when the samples land**: a real drum needs balancing against the
+   notes just as much, and the gain stage is where a sample would be routed anyway.
 
 ⚠ **Loudness was not the whole problem, and the first fix would have been the wrong one** (owner:
 *"I barely can hear the rhythms"*, 2026-08-11). The düm was a sine sweeping 115 → 55 Hz — the right
@@ -270,7 +285,28 @@ musical shape, numerically the loudest thing in the mix, and nearly inaudible on
 MacBook speaker rolls off hard below ~200 Hz. Turning the gain up would have made an inaudible thing
 inaudible and distorted. It now carries a short ~400 Hz attack on top of the low body, so the small
 speaker gets the hit and headphones still get the weight. Worth remembering before reaching for a
-level to solve a balance.
+level to solve a balance. ⚠ **It is also the check that a real sample must pass**: whatever is
+recorded has to read on a laptop speaker, so prefer takes with a defined attack over ones that are
+all low body, and audition on the built-in speaker rather than headphones.
+
+### What the swap actually costs
+
+Not a rewrite — the seam was built for it. In order:
+
+1. **Download and prepare the files** — [audio-sources.md](audio-sources.md) names them and the prep
+   each needs (the VCSL darbuka's hit types 1–5 have to be mapped to düm/tek/ka by listening, and
+   `bendir_basicStrokes.wav` has to be split at its onsets). Freesound needs a free account, so this
+   step is manual, not scripted.
+2. **Host them off `dist/`**, behind an env URL the way `VITE_WEIGHTS_URL` works, plus a build guard
+   mirroring `prune-dist.mjs`. This is the swap discipline becoming real; none of it applied while
+   nothing was loaded.
+3. **A loader** — fetch and `decodeAudioData` once per context, cache the buffers. This is what F0
+   made possible; on the old backend the cache died with every Stop.
+4. **`scheduleStroke` plays a buffer instead of building an oscillator.** One method. Core, the
+   toggle, the volume stage, the tables and every check stay exactly as they are.
+5. **Keep a synthesised fallback for when a sample has not loaded** rather than dropping the stroke —
+   silence would look like the feature being broken, which is the same reasoning that keeps the
+   in-browser decode fallback alive.
 
 Assets: **three sounds per instrument** (düm / tek / ka), well under a second each — the easiest
 asset hunt in this track, and the licence work is **done**: VCSL's darbuka (5 hit types × 2

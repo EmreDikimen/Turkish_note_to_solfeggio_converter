@@ -43,7 +43,8 @@ the remaining model work is about real printed pages.
 Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces at the root.
 
 ```bash
-npm run dev:web                      # harness → http://localhost:5173
+npm run dev:web                      # harness → http://localhost:5173 (decode on YOUR machine)
+npm run dev:cloud                    # the same harness, but decode runs on Cloud Run — see below
 npm run typecheck                    # all workspaces
 npm test                             # stitcher unit tests + label round-trip + edit primitives + usul strokes
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
@@ -65,6 +66,20 @@ npm run parity:slicer -- --ref ref.json                # ported slicer vs local 
 (Hugging Face Hub), decode on Cloud Run behind `ALLOWED_ORIGINS`. Setup recipe and its two traps:
 [docs/mvp/hosting-setup.md](docs/mvp/hosting-setup.md).
 
+⚠ **DEPLOYING IS NOT HOW YOU GET THE WORK OFF THIS MACHINE — `npm run dev:cloud` is** (owner asked
+2026-08-11, wanting a cool laptop rather than a public URL). It is `dev:web` with `VITE_DECODE_URL`
+pointed at the live Cloud Run service, which works from localhost because `:5173` and `:4173` are in
+`ALLOWED_ORIGINS`. Verified end to end: `data-where="server"`, 27.3 s of decode on Cloud Run against
+1.6 s of slicing locally. Plain `dev:web` sets no decode URL, so it decodes **in your browser** and
+heats the Mac — that is the difference between the two lines above. ⚠ The fallback still exists: if
+the service is cold past its wait or down, the read silently moves to this machine and pulls 211 MB
+of weights. The status line says which happened (`sunucuda okundu` vs `kendi cihazınızda okundu`) —
+believe it, not the elapsed time.
+
+`npm run deploy:app` is the one-command version of the two-command recipe in `hosting-setup.md`
+(build with both URLs baked in, then `netlify-cli deploy --prod` to the pinned site id). It publishes
+to the real site, so run it deliberately; `npm run smoke:live` after.
+
 ```bash
 node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs
 npm run dev:server                   # the decode server on :8080 — needs the line above once
@@ -81,7 +96,14 @@ npm run smoke:live                   # drives the DEPLOYED site — the only che
 
 ⚠ **`smoke:build` from localhost can no longer reach the live server** — `ALLOWED_ORIGINS` refuses
 it, by design. Use `smoke:live` for the deployed chain, or a local `dev:server` for `smoke:build`.
-`http://localhost:5173` / `:4173` ARE allowed, so `dev:web` still reaches the live decode server.
+`http://localhost:5173` / `:4173` ARE allowed by the server, so a harness on those ports MAY reach
+the live decode service. ⚠ **"May" is the whole word** — this line used to say `dev:web` "still
+reaches" it, which is false and misread as a promise (owner, 2026-08-11). `ALLOWED_ORIGINS` only
+decides whether the server accepts the origin; the CLIENT still has to know the address, and
+`dev:web` sets no `VITE_DECODE_URL` (there is no `.env` in this repo), so `decodeUrl()` returns `""`
+and the model runs **in the browser**. Measured with the port empty: plain `dev:web` serves
+`import.meta.env` with no `VITE_DECODE_URL` in it at all. Use **`npm run dev:cloud`** to decode on
+Cloud Run from localhost.
 
 ### Python (training and data only — never shipped)
 

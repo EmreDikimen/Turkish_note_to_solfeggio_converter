@@ -115,8 +115,14 @@ the model track never touches the app.** Either can be worked on without waiting
    is fit to deploy.
 1. **F0 + F2 are BUILT AND UNDEPLOYED.** The live site is still the 2026-08-09 build. They can ride
    along with whatever goes out next rather than earning their own deploy — nothing about them is
-   urgent, and the recipe is [mvp/hosting-setup.md](mvp/hosting-setup.md). If they do go out, the
-   deploy checks are unchanged: `build:app`, then `smoke:live` on both paths.
+   urgent. `npm run deploy:app` is now the whole recipe in one command (2026-08-11), with
+   `smoke:live` after; the long form stays in [mvp/hosting-setup.md](mvp/hosting-setup.md).
+   ⚠ **Deploying is NOT what keeps the owner's Mac cool, and it was believed to be** (owner asked
+   2026-08-11). `npm run dev:cloud` is: the local harness with `VITE_DECODE_URL` pointed at the live
+   service, verified end to end that day (`data-where="server"`, 27.3 s of decode on Cloud Run
+   against 1.6 s of slicing locally). **Plain `dev:web` sets no decode URL and reads the page in the
+   browser** — measured, not assumed: with port 5173 genuinely empty it serves an `import.meta.env`
+   with no `VITE_DECODE_URL` in it. A CLAUDE.md line claiming otherwise was the cause and is fixed.
 2. **DONE 2026-08-09 — the copyright redeploy shipped**, Netlify only, plus the model card on the
    Hub. Kept here for one sitting because it is what the state above rests on.
 3. **EDITOR STEP 9: delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`

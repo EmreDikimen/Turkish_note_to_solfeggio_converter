@@ -30,6 +30,8 @@ export function TransportBar({
   onMetronome,
   percussion,
   onPercussion,
+  percussionVolume,
+  onPercussionVolume,
   usulName,
   onUsul,
   makamSlug,
@@ -56,6 +58,9 @@ export function TransportBar({
   /** Play the usul's own düm/tek/ke strokes. Independent of the metronome, not a replacement. */
   percussion: boolean;
   onPercussion: (v: boolean) => void;
+  /** Stroke loudness against the notes; 1 = the default balance. Applies live, mid-playback. */
+  percussionVolume: number;
+  onPercussionVolume: (v: number) => void;
   usulName: string;
   onUsul: (v: string) => void;
   makamSlug: string;
@@ -155,6 +160,27 @@ export function TransportBar({
           onChange={(e) => onPercussion(e.target.checked)}
         />
         <span>{TR.transport.percussion}</span>
+      </label>
+
+      {/* ⚠ NOT disabled when percussion is off, for the same reason `keepSheet` isn't disabled at
+          transpose 0: people set a level and THEN turn the thing on. Dragging it does NOT
+          re-schedule playback — it rides a gain node, so it is smooth mid-piece. */}
+      <label
+        className={`kv-field${canPlay && strokeCount ? "" : " is-disabled"}`}
+        title={TR.transport.percussionVolumeTitle}
+      >
+        <span>{TR.transport.percussionVolume}</span>
+        <input
+          id="percussion-volume"
+          type="range"
+          min={0}
+          max={200}
+          step={5}
+          data-percussion-volume={percussionVolume}
+          value={Math.round(percussionVolume * 100)}
+          disabled={!canPlay || strokeCount === 0}
+          onChange={(e) => onPercussionVolume(Number(e.target.value) / 100)}
+        />
       </label>
 
       <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.usulTitle}>

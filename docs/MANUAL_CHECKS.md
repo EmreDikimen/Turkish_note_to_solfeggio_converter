@@ -197,6 +197,12 @@ tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
 2. Set **Usul** to **Sofyan**, tick **Usul vuruşu**, ▶ Çal. You should hear a low **düm** on each
    downbeat and two brighter **tek**s after it, repeating every bar. Düm and tek must be
    unmistakable from each other — that is the whole bar for the synthesised version.
+2b. **Drag `Vuruş sesi` while it is playing.** The strokes must get louder and quieter **smoothly,
+   without the music restarting or clicking** — the slider rides a gain node rather than
+   re-scheduling. ⚠ The düm carries a deliberate ~400 Hz attack on top of its low body: without it
+   the stroke is inaudible on a laptop speaker, which rolls off below ~200 Hz (owner report,
+   2026-08-11). Check on **both** the built-in speaker and headphones — on headphones the low end
+   should do most of the work, on the speaker the attack should.
 3. Tick **Metronom** as well. Both play; the clicks mark the beats, the strokes play the rhythm.
    They are separate controls on purpose, and where a stroke shares a beat they must sound
    **together**, not a hair apart.

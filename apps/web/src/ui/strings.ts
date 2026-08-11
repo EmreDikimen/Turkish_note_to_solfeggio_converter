@@ -59,6 +59,8 @@ export const TR = {
     percussionTitle:
       "Metronom yerine usulün kendi düm-tek-ke vuruşlarını çalar. İkisi birlikte de açılabilir.",
     percussionUnavailable: "Bu usulün vuruş kalıbı henüz tanımlı değil",
+    percussionVolume: "Vuruş sesi",
+    percussionVolumeTitle: "Usul vuruşlarının notalara göre ne kadar yüksek çalacağı",
     usul: "Usul",
     usulTitle: "Metronomun vuruş kalıbı. Okuma yanılabilir; buradan düzeltebilirsiniz.",
     makam: "Makam",

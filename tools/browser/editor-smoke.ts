@@ -445,7 +445,23 @@ async function main() {
   console.log(`  ${silentTotal} events without the usul, ${withPercussion.total} with it`);
   check("turning on the usul adds events to the same playback", withPercussion.total > silentTotal, true);
 
+  // The volume slider must ride a gain node, NOT re-schedule. A re-schedule would restart the
+  // playback from the current position, which resets the backend's cursor to 0 — so "scheduled did
+  // not go backwards, and the transport never left `playing`" is exactly the assertion that
+  // separates the two implementations. (Whether it got LOUDER is an ears question.)
+  const vol = page.locator("#percussion-volume");
+  check("the volume slider is offered", await vol.isDisabled(), false);
+  const beforeVol = await audioProgress();
+  await vol.fill("180");
+  await page.waitForTimeout(500);
+  const afterVol = await audioProgress();
+  check("changing the volume does not restart playback",
+    afterVol.scheduled >= beforeVol.scheduled && afterVol.total === beforeVol.total, true);
+  check("...and it is still playing", await page.locator("#palette-play").getAttribute("data-play-state"), "playing");
+  check("the slider reports its value as state", await vol.getAttribute("data-percussion-volume"), "1.8");
+
   await page.locator("#palette-stop").click();
+  await vol.fill("100");
   await perc.uncheck(); // leave the transport as the rest of this run expects it
   await page.waitForTimeout(200);
 

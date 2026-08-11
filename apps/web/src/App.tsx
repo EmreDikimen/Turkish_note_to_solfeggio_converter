@@ -264,6 +264,11 @@ export function App() {
   // metronome rather than a mode of it: one marks the beats, the other plays a rhythm, and wanting
   // both at once (learning a usul against a steady pulse) is a normal thing to want.
   const [percussion, setPercussion] = useState(false);
+  // How loud the strokes are against the notes; 1 = the default balance. ⚠ This one does NOT go
+  // through `applyPlayback`: it rides a gain node in the backend, so dragging the slider changes
+  // the level of already-scheduled strokes without restarting the audio. Re-scheduling per pixel
+  // is what the alternative would cost.
+  const [percussionVolume, setPercussionVolume] = useState(1);
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
   // Which makam's PERFORMED intonation playback uses. "" = none, i.e. sound the notes exactly as
@@ -483,10 +488,21 @@ export function App() {
       const u = findUsul(uName);
       const clicks = metro && doc && u ? buildMetronomeTrack(doc, u, beatMs * 4) : undefined;
       const strokes = perc && doc && u ? buildPercussionTrack(doc, u, beatMs * 4) : undefined;
-      return { speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1, clicks, percussion: strokes };
+      return {
+        speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1,
+        clicks,
+        percussion: strokes,
+        percussionVolume,
+      };
     },
-    [doc, naturalBpm, beatMs],
+    [doc, naturalBpm, beatMs, percussionVolume],
   );
+
+  // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
+  function applyPercussionVolume(v: number) {
+    setPercussionVolume(v);
+    backend.setPercussionVolume(v);
+  }
 
   // Stable accessor for the live playback position (ms), read each frame by the sheet's
   // playhead. Stable identity (the backend is a module constant) keeps the rAF effect steady.
@@ -1104,6 +1120,8 @@ export function App() {
             onMetronome={(v) => applyPlayback(bpm, v, usulName, percussion)}
             percussion={percussion}
             onPercussion={(v) => applyPlayback(bpm, metronome, usulName, v)}
+            percussionVolume={percussionVolume}
+            onPercussionVolume={applyPercussionVolume}
             usulName={usulName}
             onUsul={(v) => applyPlayback(bpm, metronome, v, percussion)}
             makamSlug={makamSlug}

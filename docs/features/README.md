@@ -259,6 +259,18 @@ ke*. So:
 2. `buildPercussionTrack(doc, usul, wholeNoteMs)` — a near-copy of `buildMetronomeTrack`, same shape,
    same bar walking, same partial-bar rule.
 3. The backend plays a short sample per stroke instead of the metronome blip.
+4. A **`Vuruş sesi` slider** balances the strokes against the notes. It rides a gain node between
+   the strokes and the master, so dragging it applies live — every other playback control
+   re-schedules from the current position, which is fine for a thing you set once and wrong for a
+   thing you drag.
+
+⚠ **Loudness was not the whole problem, and the first fix would have been the wrong one** (owner:
+*"I barely can hear the rhythms"*, 2026-08-11). The düm was a sine sweeping 115 → 55 Hz — the right
+musical shape, numerically the loudest thing in the mix, and nearly inaudible on a laptop, because a
+MacBook speaker rolls off hard below ~200 Hz. Turning the gain up would have made an inaudible thing
+inaudible and distorted. It now carries a short ~400 Hz attack on top of the low body, so the small
+speaker gets the hit and headphones still get the weight. Worth remembering before reaching for a
+level to solve a balance.
 
 Assets: **three sounds per instrument** (düm / tek / ka), well under a second each — the easiest
 asset hunt in this track, and the licence work is **done**: VCSL's darbuka (5 hit types × 2

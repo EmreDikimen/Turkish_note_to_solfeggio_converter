@@ -57,6 +57,12 @@ export interface PlayOptions {
    * a rhythm, and either, both or neither is a reasonable thing to want. Omit/empty for silence.
    */
   percussion?: PercussionHit[];
+  /**
+   * How loud the strokes are against the notes. 1 = the default balance, 0 = silent, 2 = twice.
+   * Only the STARTING value — `setPercussionVolume` changes it live, without re-scheduling, which
+   * is what a slider needs (see that method).
+   */
+  percussionVolume?: number;
 }
 
 /**
@@ -98,6 +104,13 @@ export class WebAudioBackend implements AudioBackend {
   private ctx: AudioContext | null = null;
   /** Rebuilt per playback; dropping it is how `stop()` silences anything it fails to catch. */
   private master: GainNode | null = null;
+  /**
+   * The percussion's own gain stage, between the strokes and `master`, so the usul can be balanced
+   * against the notes while everything plays. Rebuilt per playback like `master`.
+   */
+  private percGain: GainNode | null = null;
+  /** The user's chosen percussion level. Survives stop/play — it is a preference, not per-playback. */
+  private percVolume = 1;
   /** Both cached per context, since the context now outlives a playback. */
   private wave: PeriodicWave | null = null;
   private noise: AudioBuffer | null = null;
@@ -187,6 +200,12 @@ export class WebAudioBackend implements AudioBackend {
     master.gain.value = 0.85;
     master.connect(ctx.destination);
     this.master = master;
+
+    if (opts.percussionVolume != null) this.percVolume = Math.max(0, opts.percussionVolume);
+    const percGain = ctx.createGain();
+    percGain.gain.value = this.percVolume;
+    percGain.connect(master);
+    this.percGain = percGain;
 
     // ⚠ Before scheduleFrom, not after: its first tick can legitimately reach the end of the piece
     // (seek past the last note) and call stop(), and a later assignment here would overwrite that
@@ -331,6 +350,25 @@ export class WebAudioBackend implements AudioBackend {
   }
 
   /**
+   * Set how loud the usul's strokes are against the notes — **live, with no re-scheduling**.
+   *
+   * This is why the percussion has a gain stage of its own. Every other playback control (tempo,
+   * usul, the metronome) goes through `applyPlayback`, which re-schedules from the current position
+   * — fine for something you change once, wrong for a slider you drag, which would restart the
+   * audio on every pixel. Strokes already queued in the look-ahead window pass through this same
+   * node, so they follow the new level too.
+   *
+   * The value is ramped rather than assigned: a step change in gain is a discontinuity in the
+   * waveform, which clicks.
+   */
+  setPercussionVolume(v: number): void {
+    this.percVolume = Math.max(0, v);
+    if (this.percGain && this.ctx) {
+      this.percGain.gain.setTargetAtTime(this.percVolume, this.ctx.currentTime, 0.01);
+    }
+  }
+
+  /**
    * A quarter-second of white noise, built once per context and reused as the source for every
    * rim stroke. ⚠ This is the codebase's first `AudioBuffer`, and it is exactly what the old
    * `stop()` used to throw away by closing the context — the reason F0 came first.
@@ -356,28 +394,52 @@ export class WebAudioBackend implements AudioBackend {
    *
    * The shapes are the standard percussion-synthesis pair:
    *   - **düm** — the open centre hit: a sine dropping fast in pitch (a real drumhead's tension
-   *     falls as it settles), with a long-ish body.
+   *     falls as it settles) for the body, **plus a short mid-range attack**.
    *   - **tek / ka** — the rim: a bandpassed noise burst, over in a blink. `ka` is the weak hand,
    *     so it is the same sound quieter — which is what makes düyek's "te-ke" read as one gesture
    *     rather than two equal hits.
+   *
+   * ⚠ **The attack on the düm is not decoration, it is why the düm is audible at all** (owner
+   * reported the rhythms were barely there, 2026-08-11). The first version was body only, sweeping
+   * 115 → 55 Hz — musically the right shape and nearly inaudible on a laptop, because a MacBook
+   * speaker rolls off hard below ~200 Hz. It was numerically the loudest thing in the mix and
+   * perceptually the quietest. The body now starts higher and a ~400 Hz click carries the hit on a
+   * small speaker; on headphones the low end still does the work. Raising the gain alone would not
+   * have fixed this, which is worth remembering before reaching for a level to solve a balance.
    */
   private scheduleStroke(when: number, stroke: Stroke): void {
     const ctx = this.ctx!;
-    const master = this.master!;
+    const out = this.percGain!;
 
     if (stroke === "dum") {
       const osc = ctx.createOscillator();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(115, when);
-      osc.frequency.exponentialRampToValueAtTime(55, when + 0.06);
+      osc.frequency.setValueAtTime(190, when);
+      osc.frequency.exponentialRampToValueAtTime(62, when + 0.07);
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, when);
-      g.gain.exponentialRampToValueAtTime(0.9, when + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.0001, when + 0.25);
-      osc.connect(g).connect(master);
+      g.gain.exponentialRampToValueAtTime(0.95, when + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + 0.3);
+      osc.connect(g).connect(out);
       osc.start(when);
-      osc.stop(when + 0.28);
+      osc.stop(when + 0.33);
       this.own(osc);
+
+      // The attack: a brief mid-range thud that survives a small speaker.
+      const click = ctx.createBufferSource();
+      click.buffer = this.noiseBuffer(ctx);
+      const lp = ctx.createBiquadFilter();
+      lp.type = "bandpass";
+      lp.frequency.value = 400;
+      lp.Q.value = 0.8;
+      const cg = ctx.createGain();
+      cg.gain.setValueAtTime(0.0001, when);
+      cg.gain.exponentialRampToValueAtTime(0.6, when + 0.002);
+      cg.gain.exponentialRampToValueAtTime(0.0001, when + 0.06);
+      click.connect(lp).connect(cg).connect(out);
+      click.start(when);
+      click.stop(when + 0.08);
+      this.own(click);
       return;
     }
 
@@ -388,13 +450,13 @@ export class WebAudioBackend implements AudioBackend {
     band.frequency.value = 2200;
     band.Q.value = 1.2;
     const g = ctx.createGain();
-    const peak = stroke === "tek" ? 0.5 : 0.26; // `ka` is the weak hand
+    const peak = stroke === "tek" ? 0.7 : 0.36; // `ka` is the weak hand
     g.gain.setValueAtTime(0.0001, when);
     g.gain.exponentialRampToValueAtTime(peak, when + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.045);
-    src.connect(band).connect(g).connect(master);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    src.connect(band).connect(g).connect(out);
     src.start(when);
-    src.stop(when + 0.06);
+    src.stop(when + 0.07);
     this.own(src);
   }
 
@@ -439,6 +501,10 @@ export class WebAudioBackend implements AudioBackend {
       node.disconnect();
     }
     this.sources.clear();
+    if (this.percGain) {
+      this.percGain.disconnect();
+      this.percGain = null;
+    }
     if (this.master) {
       this.master.disconnect();
       this.master = null;

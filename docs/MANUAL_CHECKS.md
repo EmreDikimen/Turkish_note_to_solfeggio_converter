@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-09
+updated: 2026-08-11
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -183,6 +183,38 @@ describe a different piece than the one on the screen.
 > bar you just fixed, inserting notes, rests and the numbered koma signs, triplets, and bars that do
 > not add up.
 
+
+## Check 23 — the usul plays its own strokes, and are they the RIGHT ones? (feature track F2, 2026-08-11)
+
+Goal: the second check in this file that needs your ears, and the only one that is a **gate on
+shipping something**. `npm test` proves the stroke tables are well-formed; nothing automatable can
+tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
+[`packages/core/src/usul.ts`](../packages/core/src/usul.ts). Why it was built this way:
+[features/README.md](features/README.md).
+
+1. `npm run dev:web` → open `http://localhost:5173/?score=/sample.json` (any score on disk; there is
+   no Sample dropdown since 2026-08-08, so the score comes from the URL).
+2. Set **Usul** to **Sofyan**, tick **Usul vuruşu**, ▶ Çal. You should hear a low **düm** on each
+   downbeat and two brighter **tek**s after it, repeating every bar. Düm and tek must be
+   unmistakable from each other — that is the whole bar for the synthesised version.
+3. Tick **Metronom** as well. Both play; the clicks mark the beats, the strokes play the rhythm.
+   They are separate controls on purpose, and where a stroke shares a beat they must sound
+   **together**, not a hair apart.
+4. Set **Usul** to **Düyek**. Listen for `düm — te-ke — düm — tek`: the *te-ke* is two strokes inside
+   one beat, the second quieter (it is the weak hand). If düyek does not have that limp, the table is
+   wrong, not the synth.
+5. Take the tempo to **2×**. The strokes must stay locked to the barlines — they are built in musical
+   ms from the same whole-note length the metronome uses, so drift here is a real bug.
+6. **Now the part that matters.** Go through the usuls and say for each whether the pattern is right:
+   Nîm Sofyan, Sofyan, Türk Aksağı, Yürük Semâi and Aksak are drafted as the standard simple forms;
+   **Devr-i Hindî, Curcuna and Aksak Semâi are marked `[derived]`** — a reduction of the beat
+   grouping rather than a quoted pattern — so start there. Ağır Aksak is Aksak at half speed.
+7. A usul whose table were removed would show the checkbox **disabled**, saying so rather than
+   playing nothing. All ten have one today, so this is a thing to know, not a step to perform.
+
+⚠ These are the *sade* (simple) forms — the velvele, which subdivides the strokes for a fuller
+sound, is deliberately not implemented. "It is too plain" is expected; "it is the wrong rhythm" is
+the finding this check exists for.
 
 ## Check 14 — the makam changes what you HEAR (2026-08-07)
 

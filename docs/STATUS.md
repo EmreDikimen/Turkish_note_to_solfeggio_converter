@@ -2,9 +2,26 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-09
+updated: 2026-08-11
 
 ## Now
+
+**The feature track is open, and the first two features are built but NOT deployed.** The owner
+re-confirmed the parallel split on 2026-08-10 and asked for the non-model track to start; it runs on
+`main`, since it shares no file with Round 3. Scope was **F0 + F2 only** — F1 (instrument voices) and
+F3 (fingerboard tab) stay designed-not-started ([features/README.md](features/README.md)).
+
+**F0 rebuilt playback** on one long-lived `AudioContext` with a look-ahead scheduler. Nothing
+user-visible changed; it exists so a *sample* can be cached at all, because the old `stop()` closed
+the context and an `AudioBuffer` dies with it. **F2 made the usul play its own düm/tek/ke strokes**
+instead of a metronome blip — a new checkbox beside `Metronom`, `buildPercussionTrack` in core, and
+strokes **synthesised** rather than sampled so it works with no download and no licence question.
+Green: `typecheck`, `npm test` (three files now), `smoke:editor` ALL PASS, `smoke:app` PASS. The
+account, including the one bug this found: [log/status-log.md](log/status-log.md).
+
+⚠ **Two things are open on it, and both are below in Next**: the ten stroke tables are **drafted, not
+verified by ear** (four are marked `[derived]`), and none of this is on the live site — the last
+deploy was 2026-08-09.
 
 **The beta is live, the copyright pass is deployed, and a friend could be sent the link today.**
 <https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
@@ -89,23 +106,35 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-0. **DONE 2026-08-09 — the copyright redeploy shipped**, Netlify only, plus the model card on the
-   Hub. Kept here for one sitting because it is what the state above rests on; the recipe for the
-   next frontend deploy is [mvp/hosting-setup.md](mvp/hosting-setup.md).
-1. **⏭ THE NEXT ACTION — EDITOR STEP 9: delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
+0. **⏭ THE NEXT ACTION — CHECK THE USUL STROKE TABLES BY EAR.** F2 is built and its data is the part
+   no test can judge: six of the ten patterns are the standard simple forms, four (Devr-i Hindî,
+   Curcuna, Aksak Semâi, and Ağır Aksak riding on Aksak) are marked `[derived]` in
+   `packages/core/src/usul.ts` because they are our reduction of that usul's beat grouping rather
+   than a quoted pattern. A wrong Düyek is obvious to a musician and invisible to every check here.
+   Walkthrough: **check 23** in [MANUAL_CHECKS.md](MANUAL_CHECKS.md). Cheap, and it gates whether F2
+   is fit to deploy.
+1. **F0 + F2 are BUILT AND UNDEPLOYED.** The live site is still the 2026-08-09 build. They can ride
+   along with whatever goes out next rather than earning their own deploy — nothing about them is
+   urgent, and the recipe is [mvp/hosting-setup.md](mvp/hosting-setup.md). If they do go out, the
+   deploy checks are unchanged: `build:app`, then `smoke:live` on both paths.
+2. **DONE 2026-08-09 — the copyright redeploy shipped**, Netlify only, plus the model card on the
+   Hub. Kept here for one sitting because it is what the state above rests on.
+3. **EDITOR STEP 9: delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
    references). The last item on the editor's list; steps 1–8 and 10 are done, deployed and checked
    on the production bundle. ⚠ It needs one thing solved first: **`smoke:editor` reads the document
    by clicking `#save-json`**, so deleting the button removes the check's only way to see what an
    edit did. Does not gate W10. Brief: [mvp/editor.md](mvp/editor.md); what each step built and
    what is settled-do-not-re-open: [mvp/standing.md](mvp/standing.md).
-2. **⏸ Everything else about speed is DEFERRED to after W10** (owner, 2026-08-06): ship at **~35–55 s
+4. **⏸ Everything else about speed is DEFERRED to after W10** (owner, 2026-08-06): ship at **~35–55 s
    a page**. Splitting a page across instances (~52 s → ~13 s) is the only option that touches the
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-3. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
-   widget: talk to them.
-4. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
+5. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
+   widget: talk to them. ⚠ Note the tension, stated on purpose: F0 and F2 were built *before* asking,
+   from the owner's own list ([DECISIONS.md](DECISIONS.md)). Nothing stops the question being asked
+   anyway, and the answer is still the thing that should aim F1/F3.
+6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
 ### Track B — the model (Round 3, UNPAUSED)
 
@@ -157,15 +186,16 @@ the model track never touches the app.** Either can be worked on without waiting
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.
 
-6. **The post-beta feature backlog — instrument voices, usul percussion, the fingerboard tab.**
-   Raised by the owner on 2026-08-08, after the beta went live; designed, not started. All three are
+6. **The rest of the feature track — F1 (instrument voices) and F3 (the fingerboard tab).**
+   **F0 and F2 are DONE (2026-08-10/11)**; these two are still designed-not-started. Both are
    client-side (no server, no GPU, no new ML), so they run alongside Round 3 without touching it.
-   Plan, ordering and the licence traps: [features/README.md](features/README.md).
+   Plan and the licence traps: [features/README.md](features/README.md).
    **The audio is no longer an open question** (2026-08-09): bendir, darbuka, tef, zil, clarinet,
    violin and kanun are all sourced under **CC0**, licences verified per file, no NC anywhere — ney
-   still needs the owner's own recording. If this track is picked up, the first move is **F0** (the
-   look-ahead scheduler on one long-lived `AudioContext`), because sample playback cannot be built
-   on a context that is closed after every play. Files and prep: [features/audio-sources.md](features/audio-sources.md).
+   still needs the owner's own recording. F0 removed the blocker they shared: the `AudioContext` now
+   survives a Stop, so a decoded sample can be cached. Files and prep:
+   [features/audio-sources.md](features/audio-sources.md). Also cheap and owed on F2: swapping the
+   synthesised strokes for those CC0 recordings, which touches only `scheduleStroke`.
 
 Also queued, cheap: the additive-only re-slice (deferred here from Round 1 — see
 [log/superseded.md](log/superseded.md) for its constraints), and the ORT-web int8 numerics

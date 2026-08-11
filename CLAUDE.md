@@ -45,7 +45,7 @@ Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces 
 ```bash
 npm run dev:web                      # harness → http://localhost:5173
 npm run typecheck                    # all workspaces
-npm test                             # stitcher unit tests + label round-trip + edit primitives
+npm test                             # stitcher unit tests + label round-trip + edit primitives + usul strokes
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
                                      # …and note-box geometry on a GRACE-NOTE score (see the rule below)
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28

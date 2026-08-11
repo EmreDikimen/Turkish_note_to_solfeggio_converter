@@ -2,12 +2,65 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-09
+updated: 2026-08-11
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-09 (latest) — the model's own tokens are visible in the app now
+## 2026-08-11 (latest) — the feature track opens: playback rebuilt, and the usul plays itself
+
+The owner re-confirmed the two-track split (2026-08-10) and asked for the **other** track — features,
+not the model — to start. It runs on `main`: the feature track touches `webAudioBackend.ts`,
+`usul.ts`, `App.tsx` and `TransportBar.tsx`, Round 3 touches `src/vision/`, `data/` and `docs/rung3/`,
+and a branch would have bought rebase ceremony for isolation that already existed. Scope chosen:
+**F0 + F2 only** ([../features/README.md](../features/README.md)); F1 and F3 stay designed-not-started.
+
+**F0 — the audio engine (landed 2026-08-10 evening).** `play()` used to build every note's
+`OscillatorNode` in one pass and `stop()` used to `close()` the `AudioContext`, which is what
+silenced them. Now there is ONE context, created lazily and never closed, and a 100 ms tick that
+schedules the next ~1 s. `stop()` stops and disconnects the live source nodes and throws away the
+master gain instead. Nothing user-visible changed; it exists so a *sample* can be played at all — a
+decoded `AudioBuffer` belongs to the context that decoded it, so the old `stop()` would have thrown
+the cache away after every playback, and mobile Safari caps how many contexts a page may create.
+
+⚠ **The thing worth keeping from F0: the existing checks could not have caught it breaking.** The
+playhead is driven by the AUDIO CLOCK, so it glides down the sheet at exactly the right speed even
+if the scheduler died on its first tick and the page has gone completely silent — every assertion in
+`smoke:editor` passed in that world. The backend now reports `scheduleProgress()` through
+`window.__omrAudio`, and the check asserts two things off it: that a playback does **not** schedule
+the whole piece up front (3 of 511 events in the first window) and that the count **grew** over 2 s.
+That is the only signal available here that separates "playing" from "the clock is running".
+
+**F2 — the usul plays its own strokes (landed just after midnight, 2026-08-11).** A usul is not a
+list of beats, it is a sequence of named strokes, and `usul.ts`'s own header comment had named this
+as future work since it was written. `Usul` gains an optional `strokes` array and core gains
+`buildPercussionTrack` — deliberately a near-copy of `buildMetronomeTrack`, same bar walking, same
+partial-bar rule, so the two cannot drift. The transport gains a checkbox **separate from the
+metronome**, not a mode of it: one marks the beats, the other plays a rhythm, and wanting both at
+once (learning a usul against a steady pulse) is normal.
+
+The strokes are **synthesised**, not sampled — düm is a sine dropping 115→55 Hz, tek/ka a bandpassed
+noise burst — so the feature works with no download, no licence question and nothing to keep out of
+`dist/`. The CC0 files sourced on 2026-08-09 remain the plan and swap in behind `scheduleStroke`.
+
+⚠ **The risk in F2 is data, and it is unresolved.** All 10 usuls have a drafted `strokes` table; six
+are the standard simple forms, four are marked `[derived]` because they are our reduction of that
+usul's beat grouping rather than a quoted pattern. The new `tools/core/usul-test.ts` checks they are
+**well-formed** — inside the cycle, ascending, opening on a düm, and lining up to the millisecond
+with the metronome wherever both name the same position. It cannot check they are musically right.
+A wrong Düyek is obvious to anyone who knows the repertoire and invisible to every test we have.
+
+**One real bug, found by the new check and worth the line:** `applyPlayback` sets each control's
+React state, and the percussion setter was missing. The toggle looked dead — Playwright reported
+"clicking the checkbox did not change its state" — because the controlled input reverted on the next
+render. The lesson is small and repeatable: every argument that function takes needs its setter.
+
+Green: `typecheck`, `npm test` (now three files — the stitcher round-trip, the edit primitives and
+the new usul suite, ALL PASS on each), `smoke:editor` **ALL PASS** including the two new sections,
+`smoke:app` PASS. Not run, and not needed: nothing here touches the decode path, the server or the
+build.
+
+## 2026-08-09 — the model's own tokens are visible in the app now
 
 Owner request: a developer view showing **all** the tokens the model decoded for a photo. Something
 like it existed and did not answer the question — `/slices.html` prints raw tokens for a page **it**

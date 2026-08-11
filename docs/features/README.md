@@ -2,7 +2,7 @@
 
 purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
 audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-09
+updated: 2026-08-11
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
@@ -18,19 +18,31 @@ other three are **product** work, and they share a property worth stating up fro
 touch playback and the view layer only, and they can be built in parallel with Round 3 without
 touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 
-Nothing here is started. This is a backlog with the design work done, not a ladder in progress.
-
 ## The features
 
-| | Feature | Effort | Server? | The real cost |
-|---|---|---|---|---|
-| **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 |
-| **F1** | Instrument voices (ney, oud, kemençe, clarinet, …) | medium | no | CC0 hunting + one ney recording |
-| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns |
-| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule |
+| | Feature | Effort | Server? | The real cost | State |
+|---|---|---|---|---|---|
+| **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
+| **F1** | Instrument voices (ney, oud, kemençe, clarinet, …) | medium | no | CC0 hunting + one ney recording | not started |
+| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **BUILT 2026-08-11**, synthesised; stroke tables await the owner's ear |
+| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
 
-Suggested order: **F0 → F2 → F1 → F3**. F2 is first among the visible ones because it has the best
-payoff per hour and its assets can be self-recorded in an afternoon.
+Order: **F0 → F2 → F1 → F3**. The first two are built (owner, 2026-08-10 — the two tracks were
+re-confirmed as parallel and this one was opened on `main`, since it shares no file with Round 3).
+F2 came first among the visible ones because it has the best payoff per hour.
+
+⚠ **F2 shipped SYNTHESISED, not sampled** (owner decision 2026-08-10). Düm/tek/ka are made with an
+oscillator and a noise burst in `webAudioBackend.ts`, so the feature works end to end with **no
+download, no licence question and nothing to keep out of `dist/`** — the same "Level 0 first"
+reasoning F1 argues for itself below. The CC0 files in [audio-sources.md](audio-sources.md) are
+still the plan; they swap in behind `scheduleStroke` without touching core or the UI, and only then
+does the swap discipline start to apply.
+
+⚠ **The stroke tables are drafted, not verified.** All 10 usuls in `USULS` have a `strokes` array;
+six are the standard simple forms and four (marked `[derived]` in the source) are our reduction of
+that usul's own beat grouping. `npm test` checks that they are well-formed — inside the cycle,
+ascending, opening on a düm — and **cannot check that they are musically right**. That is the ears
+check in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) and it is owed.
 
 ---
 
@@ -146,9 +158,12 @@ recording tagged CC0 is still unusable.
 
 ---
 
-## F0 — the enabling refactor
+## F0 — the enabling refactor ✅ DONE 2026-08-10
 
-`apps/web/src/webAudioBackend.ts` today does two things that are fine for oscillators and awkward
+**Built as designed.** What follows is the brief; what it cost and the one thing that was harder
+than it reads are in [../log/status-log.md](../log/status-log.md).
+
+`apps/web/src/webAudioBackend.ts` used to do two things that are fine for oscillators and awkward
 for anything else:
 
 1. `play()` schedules **the entire piece up front** — every note gets its own `OscillatorNode` in one
@@ -227,7 +242,10 @@ instruments belongs in `packages/core`.
 
 ---
 
-## F2 — usul percussion
+## F2 — usul percussion ✅ BUILT 2026-08-11
+
+**Built as designed**, with the asset half deferred (synthesised strokes — see the ⚠ above). The
+brief below stands as the description of what was made; the three numbered steps all landed.
 
 The nearest of the three, because half of it exists. `packages/core/src/usul.ts` already carries
 each usul's meter and beat grouping, and `buildMetronomeTrack` already walks the bars, places clicks
@@ -243,9 +261,11 @@ ke*. So:
 3. The backend plays a short sample per stroke instead of the metronome blip.
 
 Assets: **three sounds per instrument** (düm / tek / ka), well under a second each — the easiest
-asset hunt in this track, and it is **done**: VCSL's darbuka (5 hit types × 2 velocities × 2
-round-robins) and frame drum, plus a CC0 CompMusic take of düm and tek on a real bendir. Files and
-licences: **[audio-sources.md](audio-sources.md)**. No drum, mic or player is needed.
+asset hunt in this track, and the licence work is **done**: VCSL's darbuka (5 hit types × 2
+velocities × 2 round-robins) and frame drum, plus a CC0 CompMusic take of düm and tek on a real
+bendir. Files and licences: **[audio-sources.md](audio-sources.md)**. No drum, mic or player is
+needed. ⚠ **Nothing is downloaded yet** — what shipped synthesises the three strokes instead, so
+this is the next move on F2 rather than a finished step.
 
 ⚠ **The risk here is data, not code.** Düyek, Aksak, Curcuna and the rest have canonical stroke
 patterns, and a wrong one is immediately obvious to anyone who knows the repertoire. Keep them as

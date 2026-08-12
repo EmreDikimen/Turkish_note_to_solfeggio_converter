@@ -192,8 +192,10 @@ tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
 [`packages/core/src/usul.ts`](../packages/core/src/usul.ts). Why it was built this way:
 [features/README.md](features/README.md).
 
-✅ **STEP 6 IS UNBLOCKED** — the real CC0 samples landed 2026-08-11, so the patterns can now be
-judged through a drum you are not fighting. That was the whole reason it waited.
+✅ **RUN AND PASSED 2026-08-11** — the owner listened after the real samples landed and accepted all
+ten patterns (*"they sound really nice"*), the four `[derived]` ones included. **This check is no
+longer owed.** Re-run it if `USULS` gains a usul or a `strokes` array is edited; the `[derived]`
+four are the ones to listen to first, because they are ours rather than quoted.
 
 1. `npm run dev:web` → open `http://localhost:5173/?score=/sample.json` (any score on disk; there is
    no Sample dropdown since 2026-08-08, so the score comes from the URL).

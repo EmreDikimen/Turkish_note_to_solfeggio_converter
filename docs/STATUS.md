@@ -53,8 +53,9 @@ both drum kits, the copyright pass and the koma-bemol fix. `smoke:live` **PASS o
 the twelve `/audio/*.wav` files answer 200 while `sample.json` still answers 404. Numbers:
 [METRICS.md](METRICS.md).
 
-⚠ **One thing is open, below in Next**: the ten stroke tables are **drafted, not verified by ear**
-(four are `[derived]`) — now unblocked, and the owner's call, not an agent's.
+✅ **And the stroke tables are verified** (owner, by ear, 2026-08-11): all ten accepted, including
+the four `[derived]` ones no automated check could judge. **F2 is finished** — nothing about it is
+open, and the next action is W10.
 
 **The beta is live, the copyright pass is deployed, and a friend could be sent the link today.**
 <https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
@@ -123,15 +124,13 @@ the model track never touches the app.** Either can be worked on without waiting
 0. **DONE 2026-08-11 — the real drum samples are in.** VCSL darbuka + frame drum, CC0, chosen by
    measurement and shipping from `public/audio/` behind `VITE_AUDIO_URL`. Kept here for one sitting
    because item 0b below rests on it.
-0b. **⏭ THE NEXT ACTION — check the usul stroke tables by ear.** Six of
-   the ten patterns are the standard simple forms; four (Devr-i Hindî, Curcuna, Aksak Semâi, and
-   Ağır Aksak riding on Aksak) are marked `[derived]` in `packages/core/src/usul.ts` because they are
-   our reduction of that usul's beat grouping rather than a quoted pattern. A wrong Düyek is obvious
-   to a musician and invisible to every check here. It waited for the samples on purpose — judging a
-   pattern through a drum you dislike conflates two questions — and the drum is now real, so it is
-   unblocked. ⚠ **This one needs the owner, not an agent.** Walkthrough: **check 23** in
-   [MANUAL_CHECKS.md](MANUAL_CHECKS.md). Audition on the **built-in speaker**, not headphones: that
-   is the constraint that caught the inaudible düm, and the same one the recordings had to pass.
+0b. **DONE 2026-08-11 — the usul stroke tables are VERIFIED BY EAR and accepted** (owner, after
+   listening: *"they sound really nice"*). That covers all ten, **including the four `[derived]`
+   ones** — Devr-i Hindî, Curcuna, Aksak Semâi and Ağır Aksak — which were our reduction of the
+   usul's beat grouping rather than a quoted pattern, and which no automated check could ever
+   judge. F2 now has nothing open. ⚠ The verdict is one musician's ear, which is the only standard
+   that exists for this and is **not** the same as a cited source; if a pattern is ever disputed,
+   re-open the `[derived]` four first and cite a source rather than re-deriving.
 1. **DONE 2026-08-11 — F0 + F2 ARE DEPLOYED.** `npm run deploy:app` then `smoke:live`, PASS on both
    paths. ⚠ **`deploy:app` needed a fix to run unattended and it is in**: `netlify-cli` now detects
    the workspaces and *stops on an interactive "select the project" prompt* unless given
@@ -157,10 +156,16 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-5. **W10 — release to two friends.** Ask what features to add. No ads and no in-app feedback
-   widget: talk to them. ⚠ Note the tension, stated on purpose: F0 and F2 were built *before* asking,
-   from the owner's own list ([DECISIONS.md](DECISIONS.md)). Nothing stops the question being asked
-   anyway, and the answer is still the thing that should aim F1/F3.
+5. **⏭ THE NEXT ACTION — W10, release to two friends.** Send them the link and ask **what to add**.
+   No ads and no in-app feedback widget: talk to them. This is the next thing because everything
+   ahead of it is done and items 3 and 4 explicitly do not gate it — 3 is optional cleanup, and 4 is
+   waiting on a friend to complain about the wait, which cannot happen until there are friends.
+   ⚠ Note the tension, stated on purpose: F0 and F2 were built *before* asking, from the owner's own
+   list ([DECISIONS.md](DECISIONS.md)). Nothing stops the question being asked anyway, and the answer
+   is still the thing that should aim F1/F3. ⚠ Worth knowing before they arrive: **every human who
+   has used the live app so far was on a phone** (n=2, so a question rather than a finding —
+   [METRICS.md](METRICS.md)), and a friend's first upload after an idle period silently takes the
+   ~10 s cold start. Neither blocks sending the link.
 6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
 ### Track B — the model (Round 3, UNPAUSED)

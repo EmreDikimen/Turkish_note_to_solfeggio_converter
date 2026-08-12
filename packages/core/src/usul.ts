@@ -60,7 +60,7 @@ export interface Usul {
 /**
  * Common usuls, smallest cycle first. Patterns are the conventional beat groupings.
  *
- * ## ⚠ The `strokes` tables are DRAFTED AND NOT YET VERIFIED BY EAR (2026-08-10)
+ * ## The `strokes` tables — VERIFIED BY EAR 2026-08-11, and how to keep them that way
  *
  * These are the *sade* (simple, unornamented) forms — the velvele, which subdivides the strokes
  * for a fuller sound, is deliberately not here. The risk in this file is **data, not code**: a
@@ -74,8 +74,18 @@ export interface Usul {
  *                reading rather than a quoted pattern. **These are the ones to check first.**
  *
  * Source for the [standard] rows: the conventional simple forms as taught for TRT/AEU repertoire
- * (İ. H. Özkan, *Türk Mûsikîsi Nazariyatı ve Usûlleri*, the usul tables). Verify against the
- * owner's ear before this ships — see docs/MANUAL_CHECKS.md.
+ * (İ. H. Özkan, *Türk Mûsikîsi Nazariyatı ve Usûlleri*, the usul tables).
+ *
+ * ✅ **All ten were checked by the owner's ear on 2026-08-11 and accepted**, once the real drum
+ * samples landed — the check waited for them on purpose, because judging a pattern through a drum
+ * you dislike conflates two questions. Walkthrough: check 23 in docs/MANUAL_CHECKS.md.
+ *
+ * ⚠ **What that verdict is and is not.** It is one musician's ear, which is the only standard that
+ * exists for this and is stronger than anything automatable — `tools/core/usul-test.ts` proves a
+ * table is well-formed (inside the cycle, ascending, opening on a düm) and can never prove it is
+ * musically right. It is **not** a citation. So: adding or editing a `strokes` array re-opens the
+ * question and needs check 23 run again, and if a pattern is ever disputed, settle it with a source
+ * rather than re-deriving it — re-deriving would only reproduce whatever the first reading got wrong.
  */
 export const USULS: Usul[] = [
   // [standard] Düm Tek.

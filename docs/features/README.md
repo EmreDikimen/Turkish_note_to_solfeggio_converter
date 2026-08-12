@@ -24,7 +24,7 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 |---|---|---|---|---|---|
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (ney, oud, kemençe, clarinet, …) | medium | no | CC0 hunting + one ney recording | not started |
-| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included. ⏭ The stroke tables still need an ears check |
+| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
 | **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
 
 Order: **F0 → F2 → F1 → F3**. The first two are built (owner, 2026-08-10 — the two tracks were
@@ -50,13 +50,14 @@ volume stage, `usul-test.ts`, and the browser checks. The swap reaches **one met
 (`scheduleStroke`) plus a loader — the seam this was designed around is exactly where the change
 lands. F0 is what makes it possible at all, since a decoded `AudioBuffer` now survives a Stop.
 
-⏭ **The stroke tables are drafted, not verified — and the ears check is now UNBLOCKED.** All 10
+✅ **The stroke tables are VERIFIED** (owner, by ear, 2026-08-11: *"they sound really nice"*). All 10
 usuls in `USULS` have a `strokes` array; six are the standard simple forms and four (marked
-`[derived]` in the source) are our reduction of that usul's own beat grouping. `npm test` checks
-they are well-formed — inside the cycle, ascending, opening on a düm — and **cannot check that they
-are musically right**. That check waited for the samples deliberately, since judging a Curcuna
-pattern through a drum you dislike conflates two questions; the drum is now real, so it is check 23
-in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) and it needs the owner, not an agent.
+`[derived]` in the source) are our reduction of that usul's own beat grouping — and **all ten are
+accepted**, the `[derived]` four included. `npm test` checks they are well-formed — inside the
+cycle, ascending, opening on a düm — and never could check that they are musically right; that is
+what check 23 in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) was for. ⚠ The standard here is one
+musician's ear, not a cited source. If a pattern is ever disputed, re-open the `[derived]` four
+first and settle it with a source rather than re-deriving it.
 
 ---
 

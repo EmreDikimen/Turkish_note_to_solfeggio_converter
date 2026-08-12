@@ -93,6 +93,14 @@ four new percussion assertions, `build:app` (43.4 MB, up from 42.7), and both ne
 proven to **fail** the build when tripped. ⏭ Still owed and not automatable: the ears check — whether
 the four `[derived]` stroke tables are musically correct.
 
+**And the stroke tables passed the ears check the same evening** — *"they sound really nice"*, all
+ten accepted including the four `[derived]` (Devr-i Hindî, Curcuna, Aksak Semâi, Ağır Aksak). That
+retires the last open item on F2 and the last thing gating Track A, so **the next action is W10**.
+⚠ Worth stating plainly: the standard here is one musician's ear, which is the only standard that
+exists for this and is **not** a cited source. If a pattern is ever disputed, re-open the `[derived]`
+four and settle it with a citation rather than re-deriving it from the beat grouping — re-deriving
+would just reproduce whatever the first derivation got wrong.
+
 **Deployed the same day, and `deploy:app` was quietly broken.** ⚠ `netlify-cli` now detects the npm
 workspaces and stops on an interactive *"select the project you want to work with"* prompt; the
 documented one-command recipe therefore **built successfully and published nothing**, then died on an

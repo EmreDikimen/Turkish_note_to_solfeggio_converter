@@ -101,6 +101,19 @@ exists for this and is **not** a cited source. If a pattern is ever disputed, re
 four and settle it with a citation rather than re-deriving it from the beat grouping — re-deriving
 would just reproduce whatever the first derivation got wrong.
 
+**W10 was released the same day** — the owner sent the link to the friends. ⚠ Recorded with the
+distinction intact: W10 is defined as asking *"what features should I add?"*, so **sending the link
+is half of it and the answers are the deliverable**. Consequence written into STATUS rather than
+left to judgement: **F1 and F3 stay unpicked until they reply.** F0 and F2 were already built ahead
+of the question from the owner's own list — that was a stated tension the first time, and picking a
+third feature before hearing back would make it a habit.
+
+With that, **Track A has no substantial unblocked work left**: the public launch is gated on Round
+3's exam, F1/F3 on the friends, the latency work on a friend actually complaining about the wait,
+and Editor Step 9 is optional cleanup carrying a snag of its own (`smoke:editor` reads the document
+by clicking `#save-json`). So the project's next move is **Track B**, which is what the launch gate
+is made of.
+
 **Deployed the same day, and `deploy:app` was quietly broken.** ⚠ `netlify-cli` now detects the npm
 workspaces and stops on an interactive *"select the project you want to work with"* prompt; the
 documented one-command recipe therefore **built successfully and published nothing**, then died on an

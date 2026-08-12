@@ -53,11 +53,18 @@ both drum kits, the copyright pass and the koma-bemol fix. `smoke:live` **PASS o
 the twelve `/audio/*.wav` files answer 200 while `sample.json` still answers 404. Numbers:
 [METRICS.md](METRICS.md).
 
+**W10 IS RELEASED (2026-08-11) — the link is with the friends.** What it still owes is their
+*answers*: W10 is defined as asking **what to add**, about the interface rather than the model
+([mvp/README.md](mvp/README.md)). Until they reply, **F1 and F3 stay unpicked** — choosing one
+now would repeat, deliberately this time, the tension F0/F2 already created by being built
+before anyone was asked. With that sent, **the project's next move is Track B (Round 3)**, which
+is what the public launch is gated on.
+
 ✅ **And the stroke tables are verified** (owner, by ear, 2026-08-11): all ten accepted, including
 the four `[derived]` ones no automated check could judge. **F2 is finished** — nothing about it is
-open, and the next action is W10.
+open.
 
-**The beta is live, the copyright pass is deployed, and a friend could be sent the link today.**
+**The beta is live, the copyright pass is deployed, and the link HAS been sent (2026-08-11).**
 <https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
 fallback, makam-aware playback, the armed editor, Turkish throughout. What each of those
 established, and the traps inside them, moved to **[mvp/standing.md](mvp/standing.md)**
@@ -74,7 +81,8 @@ say whether that is **one stranger or two**. Around them is a `/health`-only tri
 on AWS, a datacenter and a ProtonVPN exit — the app pings `/health` when it opens, so that trickle is
 a visit counter nobody built, and `/decode` is the honest count. This is the first evidence touching
 the "web first, mobile later" plan, and at n=2 it is **a question for W10's friends, not a finding**.
-Detail and the limits of it: [METRICS.md](METRICS.md).
+Detail and the limits of it: [METRICS-USAGE.md](METRICS-USAGE.md). ⚠ **The friends can now answer it** —
+their own reads are the first data that can move n past 2; see Track A item 5b.
 
 ⚠ **Two copyright items remain open and are both the owner's call**, independent of the redeploy:
 the samples and the neyzen.com screenshot are out of HEAD but remain in the **public** repo's git
@@ -156,19 +164,28 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-5. **⏭ THE NEXT ACTION — W10, release to two friends.** Send them the link and ask **what to add**.
-   No ads and no in-app feedback widget: talk to them. This is the next thing because everything
-   ahead of it is done and items 3 and 4 explicitly do not gate it — 3 is optional cleanup, and 4 is
-   waiting on a friend to complain about the wait, which cannot happen until there are friends.
-   ⚠ Note the tension, stated on purpose: F0 and F2 were built *before* asking, from the owner's own
-   list ([DECISIONS.md](DECISIONS.md)). Nothing stops the question being asked anyway, and the answer
-   is still the thing that should aim F1/F3. ⚠ Worth knowing before they arrive: **every human who
-   has used the live app so far was on a phone** (n=2, so a question rather than a finding —
-   [METRICS.md](METRICS.md)), and a friend's first upload after an idle period silently takes the
-   ~10 s cold start. Neither blocks sending the link.
+5. **W10 — RELEASED 2026-08-11 (owner). The link is out; the ANSWERS are what it owes.** W10 was
+   never defined as "send a link" — it is *"what features should I add?"*, about the interface and
+   not the model ([mvp/README.md](mvp/README.md)). So this rung is **half done**, and the missing
+   half is a conversation, not a task an agent can run. ⚠ **Do not pick F1 or F3 before they
+   answer.** That is the entire reason W10 exists, and F0/F2 were already built ahead of it from the
+   owner's own list — doing it twice would turn a stated tension into a habit
+   ([DECISIONS.md](DECISIONS.md)). ⚠ A friend's first upload after an idle period silently takes the
+   ~10 s cold start; it works, it is just slower, and the status line says where it read.
+5b. **Cheap and newly possible: read the request log now that real users exist.** Until today the
+   "every human so far was on a phone" line rested on **n=2** and could not be more than a question
+   ([METRICS-USAGE.md](METRICS-USAGE.md)). The friends' own reads are the first data that can move
+   it, and `/decode` is the honest counter (`/health` fires on every page open, robots included).
+   This needs no feedback from anyone and answers a real planning question — "web first, mobile
+   later" is a **plan**, not a finding, and two friends on phones would be evidence against it.
 6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
-### Track B — the model (Round 3, UNPAUSED)
+### Track B — the model (Round 3, UNPAUSED) — ⏭ **AND NOW THE WHOLE PROJECT'S NEXT MOVE**
+
+With W10 released (2026-08-11), **Track A has no substantial unblocked work left**: the public launch
+is gated on Round 3's exam, F1/F3 are gated on what the friends say, the speed work is gated on a
+friend complaining, and Editor Step 9 is optional cleanup. Round 3 is therefore the only thing that
+still moves the project on its own — and it is what the launch gate is made of.
 
 1. **Write down what Round 3 must reach, BEFORE training starts** — on the user-effort metric (≥90%
    of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro mean.

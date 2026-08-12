@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-09
+updated: 2026-08-11
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.

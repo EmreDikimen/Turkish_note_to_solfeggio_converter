@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-09
+updated: 2026-08-11
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -62,6 +62,33 @@ kept because the reasoning stops us re-proposing them — the short do-not-repea
 bottom of this page.
 
 ## Where we are right now
+
+### 11 August 2026: the usul now plays on a real drum, and it is LIVE
+
+The app could already tap out the usul (the rhythm cycle), but the sound was **made by the computer**
+— two tones pretending to be a drum. You listened and said it was not good enough, and you were
+right. It now plays **real recordings of a real darbuka and a real bendir**, and you can switch
+between them while the music plays. They are free-to-use recordings with no strings attached, so
+nothing here can ever cost money or need removing later.
+
+One problem was interesting enough to be worth knowing about. The recordings came in a set where the
+five different hits are only **numbered** — nothing says which one is the deep centre hit (*düm*) and
+which is the sharp rim hit (*tek*). Rather than guess, the computer **measured** them: a düm has its
+energy low down and rings on, a tek is bright and over instantly. To check that this way of measuring
+actually works, it was first tried on a second drum whose recordings *do* say what they are — and it
+got them right. So the choices are not a guess.
+
+Then you heard the drum sounding **"patlamış"** (blown out), and that was our mistake, not the
+recordings'. The drum was simply set too loud: when a drum and a note sounded at the same moment they
+added up to more than the loudspeaker can carry, and the tops of the waves got cut flat — which is
+what that crunch is. The levels are lower now, and there is a safety device on the output so that
+however far you push the drum volume slider, it can never do that again.
+
+⚠ **One thing still needs your ears, and only yours.** Each usul has a written-down pattern of
+strokes. Six of the ten are the standard well-known forms, but **four were worked out by us** from
+the usul's beat grouping — Devr-i Hindî, Curcuna, Aksak Semâi and Ağır Aksak. No test a computer can
+run will notice if one of them is simply wrong; a musician hears it immediately. Check 23 in
+[MANUAL_CHECKS.md](MANUAL_CHECKS.md) walks through it.
 
 ### 8–9 August 2026: the app no longer gives away other people's music, and that is now LIVE
 

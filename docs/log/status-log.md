@@ -36,7 +36,7 @@ muted hit, large-drum muted hit.
 2. **Inheriting the source levels would have re-created the bug fixed that morning.** The plan said
    to normalise the kit by one common factor to "preserve the natural dynamics"; with articulations
    recorded 40 dB apart, "natural dynamics" means "whatever the session did". The three strokes are
-   now levelled to fixed targets — 0.89 / 0.62 / 0.34, the ratios the owner had already tuned by ear
+   levelled to fixed targets — first cut 0.89 / 0.62 / 0.34, the ratios the owner had already tuned by ear
    on the synthesised version — with the round-robins of one stroke sharing a factor, since scaling
    each take to its own peak would turn the alternation into a volume wobble.
 

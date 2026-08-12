@@ -2,7 +2,7 @@
 
 purpose: the settled context behind the product track — what is already built and known, so STATUS can hold only "now" and "next"
 audience: agents and the owner working the product side
-updated: 2026-08-08
+updated: 2026-08-11
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-08, when that file crossed its 400-line limit
 > a second time. Nothing here is a next action; it is the background a next action rests on. The
@@ -204,3 +204,40 @@ needed anyway. n = 1 page; verify before promising it.
 The traps worth knowing before touching any of it (Bravura ink outside its em box; a tuplet is **not
 stored**, so the check counts drawn marks in both styles; bar 1 is exempt from the short-bar warning):
 **[editor-built.md](editor-built.md)** and the brief **[editor.md](editor.md)**.
+
+## The 2026-08-09 copyright + koma-bemol deploys, and the raw-token panel
+
+Moved out of STATUS.md on 2026-08-11 (it holds only "now" and "next"). Settled; no next action here.
+
+**The copyright redeploy went out 2026-08-09 and the live site is now what we mean to publish.**
+Before it, the deployed build served five bundled SymbTr scores — CC BY-NC-SA, which would bind the
+whole app to NonCommercial forever, and two were compositions still in copyright under FSEK 5846.
+All five answered **200** on the live host that morning and all five answer **404** now, alongside
+`/scores/` and `/models/`. The legal footer ships. The full account — what was found, why removal
+beat attribution, and the enforcement — is [THIRD-PARTY.md](../THIRD-PARTY.md); the decision row is in
+[DECISIONS.md](../DECISIONS.md); the hard rule is in [../CLAUDE.md](../../CLAUDE.md). The model card is
+now on the Hub as `Beyaban/omr-weights/README.md`.
+
+Green for that deploy: `typecheck`, `build:app` (11 files, 42.7 MB, no score at the dist root, both
+real URLs baked in and no `localhost:8080` left in the bundle), and `smoke:live` **PASS on both
+paths** — numbers in [METRICS.md](../METRICS.md). `npm test` (217/217), `smoke:editor` (**ALL PASS**,
+including the grace-note geometry section) and `smoke:page` were green in this HEAD on 2026-08-08 and
+no source moved since.
+
+**A second deploy went out the same day: the sheet no longer shows a koma bemol as a küçük bemol.**
+Owner report from real use — in `Standart (ölçü boyunca)` the staff dropped the sign on any
+alteration pointing the same way as the donanım, so it read as the signature's size while the audio
+played the true koma (**134 of 213 bundled scores** have at least one such letter). The
+`sigTolerant` printing rule is now the **renderer's only**: on for render jobs, which must imitate
+real printed pages, off for a human. The corpus is untouched — same glyph tally on `?mode=measure`
+before and after — and pixels==labels holds on both settings. Decision row in
+[DECISIONS.md](../DECISIONS.md), account in [log/status-log.md](../log/status-log.md). Green for it:
+`typecheck`, `npm test`, `smoke:editor`, a fresh `build:app` (both real URLs, no `localhost:8080`),
+`smoke:live` **PASS on both paths**, and the fix confirmed **on the deployed bundle** (51 signs on
+the human path vs 40 on `?mode=measure`, same score).
+
+**And the model's own tokens are visible in the app** (owner request): `Gelişmiş` → **Modelin ham
+çıktısı** shows, per strip of the last read, every token the model produced with its confidence,
+the truncation flag, and the stitcher's warnings — the answer to "the model saw it, so why is it not
+on the page". Nothing kept those tokens before; `stitchDecoded` consumes them. `smoke:app` asserts
+it. Walkthrough: check 22 in [MANUAL_CHECKS.md](../MANUAL_CHECKS.md).

@@ -460,8 +460,36 @@ async function main() {
   check("...and it is still playing", await page.locator("#palette-play").getAttribute("data-play-state"), "playing");
   check("the slider reports its value as state", await vol.getAttribute("data-percussion-volume"), "1.8");
 
+  // --- the strokes are the REAL recordings, not the synthesised fallback (F2, 2026-08-11) --------
+  //
+  // ⚠ Nothing on the page can show this. A sampled düm and a synthesised one produce identical DOM,
+  // identical `data-*` and identical event counts — the difference is entirely in what comes out of
+  // the speaker. So the backend reports which kit decoded, the same way `__omrAudio` reports the
+  // scheduler: without it, the swap could silently fall back to synthesis on every playback and
+  // every other check here would still pass.
+  const percussionInfo = async (): Promise<{ kit: string | null; loaded: number }> =>
+    page.evaluate(() =>
+      (
+        window as unknown as { __omrPercussion: () => { kit: string | null; loaded: number } }
+      ).__omrPercussion(),
+    );
+  const loadedKit = await percussionInfo();
+  console.log(`  percussion kit "${loadedKit.kit}", ${loadedKit.loaded} strokes decoded`);
+  check("a drum kit decoded rather than falling back to synthesis", loadedKit.loaded, 3);
+  check("...and it is the one the picker shows",
+    loadedKit.kit, await page.locator("#percussion-kit").getAttribute("data-percussion-kit"));
+
+  // Switching kits must re-schedule (unlike the volume), because the buffer is chosen as each
+  // stroke is scheduled — a change that did not re-schedule would not be heard until the next Play.
+  await page.locator("#percussion-kit").selectOption("bendir");
+  await page.waitForTimeout(600);
+  const swapped = await percussionInfo();
+  check("switching the kit loads the other drum", swapped.kit, "bendir");
+  check("...with all three of its strokes", swapped.loaded, 3);
+
   await page.locator("#palette-stop").click();
   await vol.fill("100");
+  await page.locator("#percussion-kit").selectOption("darbuka");
   await perc.uncheck(); // leave the transport as the rest of this run expects it
   await page.waitForTimeout(200);
 

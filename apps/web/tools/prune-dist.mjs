@@ -60,6 +60,24 @@ const DROP_ASSETS = /^ort-wasm-.*\.wasm$/;
 const MAX_TOTAL_MB = 60;
 const MAX_FILE_MB = 30;
 
+/**
+ * Audio (F2's usul drums, and F1's instruments later) may ship, under two conditions.
+ *
+ * ⚠ This REPLACES the "never bundle audio into the app" rule of docs/features/README.md, which was
+ * written against 211 MB of model weights and does not carry at 660 KB of drum hits (owner
+ * decision, 2026-08-11). What made that rule worth having — the set stays auditable and a swap
+ * stays cheap — is kept by `src/audio/strokeKits.ts` carrying a source and licence per file, and by
+ * the loader reading `VITE_AUDIO_URL` so the files can move off the app without a code change.
+ *
+ * ⚠ **`MAX_AUDIO_MB` is a decision point, not a dial.** It is set just above what the two drum kits
+ * need, so the first thing that trips it will be F1's instrument voices — ~4 MB per sampled
+ * instrument, which genuinely does not belong on the static host. When that happens, set
+ * `VITE_AUDIO_URL` and upload; do not raise this number.
+ */
+const AUDIO_RE = /\.(wav|mp3|ogg|opus|m4a|flac|aac)$/i;
+const AUDIO_DIR = "audio";
+const MAX_AUDIO_MB = 1;
+
 async function walk(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -109,6 +127,23 @@ const rootJson = files
   .filter((rel) => rel.endsWith(".json") && !rel.includes(path.sep));
 for (const rel of rootJson)
   problems.push(`${rel} reached dist/ — third-party-derived scores are not redistributed`);
+
+// Same shape as the rule above: structural, so it catches a NEW file rather than a listed one.
+const audio = files
+  .map((f) => ({ rel: path.relative(DIST, f.path), size: f.size }))
+  .filter((f) => AUDIO_RE.test(f.rel));
+for (const f of audio) {
+  if (f.rel.split(path.sep)[0] !== AUDIO_DIR)
+    problems.push(`${f.rel} is audio outside ${AUDIO_DIR}/ — every sample lives in that one place`);
+}
+const audioBytes = audio.reduce((a, f) => a + f.size, 0);
+if (audioBytes > MAX_AUDIO_MB * 1024 * 1024) {
+  problems.push(
+    `audio is ${(audioBytes / 1024 / 1024).toFixed(1)} MB > ${MAX_AUDIO_MB} MB — this is the ` +
+      `signal to host the samples off the app: set VITE_AUDIO_URL and upload them, rather than ` +
+      `raising MAX_AUDIO_MB`,
+  );
+}
 
 if (problems.length) {
   console.error(`\n✗ this build should not be deployed:`);

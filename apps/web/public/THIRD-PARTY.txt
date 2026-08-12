@@ -4,7 +4,7 @@ KomaVision — üçüncü taraf bileşenler / third-party notices
 Bu sayfa, uygulamanın kullandığı açık kaynak bileşenleri ve lisanslarını listeler.
 This file lists the third-party components KomaVision ships, and their licenses.
 
-Son güncelleme / last updated: 2026-08-08
+Son güncelleme / last updated: 2026-08-11
 
 
 ESERLER HAKKINDA / ABOUT MUSICAL WORKS
@@ -38,6 +38,27 @@ Flova/omr_transformer  —  Apache License 2.0
   KomaVision's model is fine-tuned from this pretrained checkpoint.
   Türetilen ağırlıklar / the derived weights, also Apache-2.0:
   https://huggingface.co/Beyaban/omr-weights
+
+
+SES / AUDIO
+-----------
+
+Usul vuruşları — darbuka ve bendir örnekleri / usul stroke samples:
+
+VCSL (Versilian Community Sample Library)  —  CC0 1.0 (kamu malı / public domain)
+  © Versilian Studios LLC / Sam Gossner — CC0 ile yayımlanmıştır
+  https://github.com/sgossner/VCSL
+  Darbuka:  Membranophones/Struck Membranophones/Darbuka
+  Bendir:   Membranophones/Struck Membranophones/Frame Drum
+
+  /audio/ altındaki dosyalar bu kayıtlardan türetilmiştir: tek kanala indirildi,
+  sessizlikleri kırpıldı, 700 ms'de kısa bir sönümle kesildi ve düm/tek/ke için
+  sabit seviyelere getirildi (scripts/prepare_strokes.py).
+
+  The files under /audio/ are derived from those recordings: downmixed to mono,
+  silence trimmed, tails cut at 700 ms with a short fade, and levelled to fixed
+  düm/tek/ke targets (scripts/prepare_strokes.py). CC0 permits this; it is noted
+  so the files are not mistaken for the untouched originals.
 
 
 KÜTÜPHANELER / LIBRARIES

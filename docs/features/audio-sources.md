@@ -11,12 +11,16 @@ file is the shortlist that search produced, checked on 2026-08-09.
 Every licence below was read **on the source's own page**, not on an aggregator. Nothing has been
 downloaded yet.
 
-⏭ **This file stopped being a shortlist for later on 2026-08-11 — it is now the active step.** F2
-shipped with synthesised strokes and the owner rejected them by ear (*"we need to use real
-sounds"*), so these files are what F2 needs rather than what it might eventually prefer. The
-decision and what the synthesis did buy: [../DECISIONS.md](../DECISIONS.md); what the swap costs, in
-order: [README.md](README.md). ⚠ Downloading the two Freesound files needs a free account, so the
-first step of this is manual and cannot be scripted.
+✅ **F2's files are IN as of 2026-08-11** — the darbuka and frame-drum rows below are downloaded,
+prepared and shipping. What was taken from each, and the mapping problem that had to be solved
+first, is the section immediately below. Everything else here is still a shortlist for F1.
+
+⚠ **Neither Freesound file was needed after all.** The plan expected the CompMusic bendir take
+(140291) to be F2's Turkish-stroke source and warned that its download is manual, needing a free
+account. VCSL's frame drum covered it from GitHub with no account, so 140291 is **deferred, not
+rejected** — it is a real bendir played by a named performer with Turkish strokes, which is a better
+provenance than a general frame-drum library, and it is the obvious upgrade if the bendir kit ever
+sounds wrong. 211133 (kanun) remains F1's.
 
 ## Cleared — CC0, usable commercially, forever
 
@@ -52,12 +56,56 @@ research recordings from the CompMusic project at Universitat Pompeu Fabra, by a
 researcher, with the performer named. A random upload of a commercial-sounding loop tagged CC0 does
 not get the same benefit. Downloading needs a free Freesound account — a manual step, not a script.
 
+## What F2 actually took, and how the düm was identified ✅ 2026-08-11
+
+Produced by **`scripts/prepare_strokes.py`** (`--analyse` to see the measurements without writing).
+Never edit a file under `apps/web/public/audio/` by hand — re-run the script.
+
+| Kit | düm | tek | ka |
+|---|---|---|---|
+| **darbuka** | `Darbuka_1_hit_vl2_rr{1,2}` | `Darbuka_2_hit_vl2_rr{1,2}` | `Darbuka_3_hit_vl2_rr{1,2}` |
+| **bendir** | `HDrumL_Hit_v3_rr{1,2}` | `HDrumS_HitMuted_v3_rr{1,2}` | `HDrumL_HitMuted_v3_rr{1,2}` |
+
+**The problem was that VCSL's darbuka files are numbered, not named** — nothing says which of the
+five hit types is the open centre stroke. So each is *measured* (energy below 200 Hz, spectral
+centroid, decay to −40 dB) and the mapping follows the physics: a düm is the whole head moving, so
+it is low and rings; a tek is a fingertip on the rim, so it is bright and over instantly.
+
+**The frame drum is the control that makes the darbuka result trustworthy.** Its files *are*
+self-describing, so the same measurement ran against a known answer — and agreed. Without that the
+darbuka mapping would be a plausible guess with nothing behind it. `--analyse` prints the agreement
+line on every run; if it ever says DISAGREE, the metric has drifted and the darbuka mapping is no
+longer supported.
+
+Two findings that listening to the file names would have got wrong:
+
+- ⚠ **Both `Hand` articulations are unusable** — they peak at −57 dB (large drum) and −62 dB (small),
+  40+ dB under the struck takes. That is VCSL's session, not a dynamic. The natural-looking mapping
+  (`Hand` → tek, since a tek is played with the hand) would have produced an inaudible tek, and
+  lifting one to a usable level lifts its noise floor with it.
+- ⚠ **The source levels are overridden, not preserved.** Inheriting them sounds respectful and is
+  not, when articulations sit 40 dB apart. The three strokes are levelled to **0.50 / 0.35 / 0.19** —
+  the *ratios* the owner tuned by ear on the synthesised version — with the round-robins of one
+  stroke sharing a factor, since per-file normalisation would turn the alternation into a volume
+  wobble.
+- ⚠ **Those were 0.89 / 0.62 / 0.34 for a few hours and the drum audibly clipped** (owner:
+  *"darbukanın sesi biraz patlamış"*). The files were never clipped; the **sum** was. A note is a
+  normalised wave at gain 1.0 into the same master, so a note plus a 0.89 düm reached 1.61 at a
+  destination that hard-clips at 1.0 — 38% of the waveform flattened at the *default* slider
+  position. The level that was safe for a synthesised blip is **not** safe for a sample with a
+  body that sustains. **Do not raise these to make the drum louder**; `Vuruş sesi` is for that, and
+  a 15–24 dB crest factor means the peak drop cost far less loudness than it looks like.
+
+Tails are cut at **700 ms** with a 25 ms fade (a darbuka düm rings 1.25 s, the bendir 2 s, nearly all
+of it under the notes). Two kits come to **660 KB**; the fade prevents the click that cutting a
+ringing drum at a non-zero sample would leave.
+
 ## Not licence work — what each file still needs before it plays
 
 | File | Prep |
 |---|---|
-| VCSL darbuka | Listen and **map hit types 1–5 to düm / tek / ka**; the file names don't say. Pick one velocity + both round-robins |
-| `bendir_basicStrokes.wav` | **Split** the 3.28 s take into individual strokes at the onsets |
+| ~~VCSL darbuka~~ | ✅ done — mapped by measurement, not by listening; see above |
+| `bendir_basicStrokes.wav` | ⏸ deferred — **Split** the 3.28 s take into individual strokes at the onsets |
 | `kanun_..._moreIsolated.mp3` | **Split** 2 minutes into per-note files at the onsets; it is **lossy mp3**, so re-encoding compounds — keep the decode once and trim |
 | Clarinet / violin | Pick the sustain layer, **trim and loop**, convert to mono compressed. Raw folders are 66 MB and 235 MB of wav; what ships is a handful of notes |
 

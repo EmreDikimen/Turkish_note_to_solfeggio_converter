@@ -192,28 +192,32 @@ tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
 [`packages/core/src/usul.ts`](../packages/core/src/usul.ts). Why it was built this way:
 [features/README.md](features/README.md).
 
-⏸ **STEP 6 IS ON HOLD UNTIL THE REAL SAMPLES LAND** (owner rejected the synthesised strokes,
-2026-08-11). Steps 1–5 still verify the *mechanism* and are worth running. Step 6 judges the
-**patterns**, and doing that through a drum sound you dislike conflates two questions — the four
-`[derived]` patterns are exactly the ones needing an unclouded ear, so they get one.
+✅ **STEP 6 IS UNBLOCKED** — the real CC0 samples landed 2026-08-11, so the patterns can now be
+judged through a drum you are not fighting. That was the whole reason it waited.
 
 1. `npm run dev:web` → open `http://localhost:5173/?score=/sample.json` (any score on disk; there is
    no Sample dropdown since 2026-08-08, so the score comes from the URL).
 2. Set **Usul** to **Sofyan**, tick **Usul vuruşu**, ▶ Çal. You should hear a low **düm** on each
-   downbeat and two brighter **tek**s after it, repeating every bar. Düm and tek must be
-   unmistakable from each other — that is the whole bar for the synthesised version.
+   downbeat and two brighter **tek**s after it, repeating every bar — on a real darbuka.
+2a. **Switch `Vurmalı çalgı` between Darbuka and Bendir while it plays.** Both are real CC0
+   recordings (VCSL); the bendir is deeper and woodier. ⚠ Also worth judging here: **is each kit's
+   düm/tek/ka assignment right?** The darbuka's three were picked by *measurement*, not by ear —
+   VCSL numbers its five articulations and never says which is which — so this is the first time a
+   person hears the result. Detail: [features/audio-sources.md](features/audio-sources.md).
 2b. **Drag `Vuruş sesi` while it is playing.** The strokes must get louder and quieter **smoothly,
    without the music restarting or clicking** — the slider rides a gain node rather than
-   re-scheduling. ⚠ The düm carries a deliberate ~400 Hz attack on top of its low body: without it
-   the stroke is inaudible on a laptop speaker, which rolls off below ~200 Hz (owner report,
-   2026-08-11). Check on **both** the built-in speaker and headphones — on headphones the low end
-   should do most of the work, on the speaker the attack should.
+   re-scheduling. ⚠ Audition on **the built-in speaker**, not only headphones: a MacBook speaker
+   rolls off below ~200 Hz, which is what made the synthesised düm inaudible (owner report,
+   2026-08-11) and is the bar the recordings had to pass too. A stroke that only works on
+   headphones has not passed. ⚠ **Push the slider to its maximum and listen for distortion** — the
+   first cut of these samples clipped ("patlamış") because a note and a düm summed past the
+   destination's range. There is a limiter now; this is the step that would catch it coming back.
 3. Tick **Metronom** as well. Both play; the clicks mark the beats, the strokes play the rhythm.
    They are separate controls on purpose, and where a stroke shares a beat they must sound
    **together**, not a hair apart.
 4. Set **Usul** to **Düyek**. Listen for `düm — te-ke — düm — tek`: the *te-ke* is two strokes inside
    one beat, the second quieter (it is the weak hand). If düyek does not have that limp, the table is
-   wrong, not the synth.
+   wrong, not the drum.
 5. Take the tempo to **2×**. The strokes must stay locked to the barlines — they are built in musical
    ms from the same whole-note length the metronome uses, so drift here is a real bug.
 6. **Now the part that matters.** Go through the usuls and say for each whether the pattern is right:
@@ -225,8 +229,9 @@ tell you a Düyek is wrong. Tables and their `[standard]`/`[derived]` marks:
 
 ⚠ These are the *sade* (simple) forms — the velvele, which subdivides the strokes for a fuller
 sound, is deliberately not implemented. "It is too plain" is expected; "it is the wrong rhythm" is
-the finding this check exists for. ⚠ **"It does not sound like a drum" is already known and
-recorded** — that is what put step 6 on hold; it is not a new finding to re-report.
+the finding this check exists for. ⚠ If a stroke ever sounds like a synthesiser rather than a drum,
+that means its **sample did not load** and the fallback is playing — check the network tab for
+`/audio/`, do not report it as the sound being wrong.
 
 ## Check 14 — the makam changes what you HEAR (2026-08-07)
 

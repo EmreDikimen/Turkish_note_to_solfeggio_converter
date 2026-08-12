@@ -11,6 +11,41 @@ this file keeps the **investigations** behind those scores. Nothing is duplicate
 **Read the negative results.** Most of what follows is a hypothesis that was tested and did not
 survive — each one is a change that was not built on a guess, and re-proposing it costs a round.
 
+### Tuplets — the corpus scan and the renderer constants (2026-08-11)
+
+Taken while diagnosing why `\tup3` recall misses its floor. Reading:
+[rung3/tuplets.md](rung3/tuplets.md). Scores themselves: [METRICS.md](METRICS.md).
+
+**Noteheads per `\tup3` group**, over every label pool we own — `strips_tup`, `strips_nota`,
+`strips_exam_v2`, `strips_v4`:
+
+| noteheads | groups | note |
+|---|---|---|
+| 3 | **20,244** | 99.98% |
+| 2 | **4** | all in `strips_tup`; 2 legitimate, 2 do not sum |
+| >3 | **0** | the shape is rare in Turkish notation (owner) — absence is correct, not a gap |
+
+The two legitimate ones are a 32nd + a 16th (`c''32 b'16`, `c''32 \natural b'16`) — three units of
+time in two noteheads, which the closing arithmetic accepts. The two that do not sum are
+`\bakiyeSharp g''8 a''8` (twice): 2 units where 3 are needed. Unresolved — a wrong label or a crop
+that cut a group.
+
+⚠ **This retires "all groups are exactly 3 closed notes"** ([rung3/labeling.md](rung3/labeling.md),
+2026-07-18). It was true of the 114-group manifest and is not true of the 205-group one.
+
+**What the renderer draws**, as of this date (`apps/web/src/SheetView.tsx`):
+
+| constant | value | where |
+|---|---|---|
+| curved-arc style share | 70% of pieces, by name hash | `tupletCurved` |
+| slur distractors | fire on **35%** of eligible ≥3-note runs | `slurRng() < 0.35` |
+| the "3" | 13 px bold italic serif, placed **above** the arc apex | `drawTupletArc` |
+| arc stroke | 1.1 px, one unbroken quadratic | `drawTupletArc` |
+
+⚠ **Real Turkish print breaks the arc and sets the "3" inside the gap** (owner, 2026-08-11, from a
+real page). The renderer's continuous-arc-plus-floating-digit is not the printed shape, and it is
+the leading hypothesis for the recall deficit. Untested — no A/B has been run.
+
 ### ⛔ A ~2% pre-shrink: exam −15.5%, real-val −1.6%. DID NOT REPLICATE (2026-07-28)
 
 Per-strip staff-line spacing, measured on the strips as they reach the model. The slicer targets

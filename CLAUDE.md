@@ -78,7 +78,12 @@ believe it, not the elapsed time.
 
 `npm run deploy:app` is the one-command version of the two-command recipe in `hosting-setup.md`
 (build with both URLs baked in, then `netlify-cli deploy --prod` to the pinned site id). It publishes
-to the real site, so run it deliberately; `npm run smoke:live` after.
+to the real site, so run it deliberately; `npm run smoke:live` after. ⚠ **A successful build is not a
+deploy** — `netlify-cli` detects the npm workspaces and stops on an interactive "select the project"
+prompt, which once let the recipe build cleanly and publish **nothing**. `--filter @turkish-omr/web`
+is in the script for that reason; read the output for `Deploy is live!` rather than trusting exit 0.
+⚠ `smoke:live` does not check the audio — spot-check `/audio/<kit>/<stroke>-rr1.wav` for 200 after a
+deploy that touches it.
 
 ```bash
 node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs
@@ -117,6 +122,7 @@ Cloud Run from localhost.
 npx --yes tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/<set> [--thin-sharps]
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]
+.venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
 .venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
 ```
 
@@ -178,7 +184,14 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   distribution, adding a `SAMPLES` entry is. ⚠ The enforcement is `prune-dist.mjs`, which **fails
   the build on any `.json` at the dist root**: everything under `public/` is served to whoever
   guesses the name, so "no UI links to it" proves nothing. An own-work score would go in a
-  subdirectory. ⚠ Consequence for browser checks: **`data-ready` never appears on a bare visit** —
+  subdirectory. ⚠ **AUDIO IS THE ONE THING THAT MAY SHIP FROM `public/`** (2026-08-11): F2's two CC0
+  drum kits, 660 KB, under `public/audio/`. `prune-dist.mjs` fails the build on any audio file
+  outside `audio/` or over **1 MB total** — and that 1 MB is a decision point, not a dial. The
+  loader already reads **`VITE_AUDIO_URL`** (falling back to `/audio/`), so when F1's ~4 MB-per-
+  instrument voices trip it, the fix is to set that variable and upload, **never** to raise the
+  number. Provenance per file lives in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`,
+  and the wavs are **generated** by `scripts/prepare_strokes.py` — never hand-edit one.
+  ⚠ Consequence for browser checks: **`data-ready` never appears on a bare visit** —
   it means "a score is installed" and none is. Ask for `?score=` if you need one; wait on
   `#page-input` if you are uploading your own. ⚠ The footer (`#legal`) claims uploads are not
   stored — true only while `apps/server/src/index.ts` writes no image to disk; change both together.

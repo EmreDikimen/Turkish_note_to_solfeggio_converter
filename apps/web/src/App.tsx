@@ -37,6 +37,7 @@ import {
 } from "@turkish-omr/core";
 import { closedTupletAt, memberPositions, tupletRunFrom } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
+import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
@@ -84,6 +85,13 @@ const backend = new WebAudioBackend();
 // scheduler stalled and the page fell silent — only this counter can tell those two apart.
 (window as unknown as { __omrAudio?: () => { scheduled: number; total: number } }).__omrAudio = () =>
   backend.scheduleProgress();
+
+// Which drum kit actually decoded, for the same checks and for the same reason: a sampled stroke
+// and a synthesised one are indistinguishable from the DOM, so without this nothing could prove the
+// samples are being played rather than the fallback.
+(
+  window as unknown as { __omrPercussion?: () => { kit: string | null; loaded: number } }
+).__omrPercussion = () => backend.percussionInfo();
 
 // Every makam the app can play, built once at module load — the list is static.
 const MAKAM_OPTIONS = makamOptions();
@@ -269,6 +277,9 @@ export function App() {
   // the level of already-scheduled strokes without restarting the audio. Re-scheduling per pixel
   // is what the alternative would cost.
   const [percussionVolume, setPercussionVolume] = useState(1);
+  // Which drum plays them. Unlike the volume this DOES go through `applyPlayback`, because the
+  // buffers are chosen as each stroke is scheduled — a change has to re-schedule to be heard.
+  const [percussionKit, setPercussionKit] = useState<KitId>(DEFAULT_KIT);
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
   // Which makam's PERFORMED intonation playback uses. "" = none, i.e. sound the notes exactly as
@@ -484,7 +495,13 @@ export function App() {
   // strokes are its düm/tek/ke pattern (both built in core, in musical ms, off the same whole-note
   // length), so they stay aligned to the bars at any tempo.
   const buildPlayOptions = useCallback(
-    (targetBpm: number, metro: boolean, uName: string, perc: boolean): PlayOptions => {
+    (
+      targetBpm: number,
+      metro: boolean,
+      uName: string,
+      perc: boolean,
+      kit: KitId = percussionKit,
+    ): PlayOptions => {
       const u = findUsul(uName);
       const clicks = metro && doc && u ? buildMetronomeTrack(doc, u, beatMs * 4) : undefined;
       const strokes = perc && doc && u ? buildPercussionTrack(doc, u, beatMs * 4) : undefined;
@@ -493,9 +510,10 @@ export function App() {
         clicks,
         percussion: strokes,
         percussionVolume,
+        percussionKit: kit,
       };
     },
-    [doc, naturalBpm, beatMs, percussionVolume],
+    [doc, naturalBpm, beatMs, percussionVolume, percussionKit],
   );
 
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
@@ -857,17 +875,26 @@ export function App() {
   // ms, so it's tempo-independent); otherwise it just takes effect on the next Play.
   // ⚠ Every argument needs its setter here, not just the one the caller changed: the controls are
   // React-controlled, so a missing setter leaves the box un-ticked and the change silently reverts.
-  function applyPlayback(nextBpm: number, nextMetro: boolean, nextUsul: string, nextPerc: boolean) {
+  function applyPlayback(
+    nextBpm: number,
+    nextMetro: boolean,
+    nextUsul: string,
+    nextPerc: boolean,
+    nextKit: KitId = percussionKit,
+  ) {
     setBpm(nextBpm);
     setMetronome(nextMetro);
     setUsulName(nextUsul);
     setPercussion(nextPerc);
+    setPercussionKit(nextKit);
     if (!timeline || playState === "stopped") return;
     const pos = Math.max(0, backend.getPositionMs() ?? 0);
     const wasPaused = playState === "paused";
-    void backend.play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul, nextPerc)).then(() => {
-      if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
-    });
+    void backend
+      .play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul, nextPerc, nextKit))
+      .then(() => {
+        if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
+      });
   }
 
   // Download the current (possibly edited) score as note-model JSON. This is the output side of
@@ -1122,6 +1149,8 @@ export function App() {
             onPercussion={(v) => applyPlayback(bpm, metronome, usulName, v)}
             percussionVolume={percussionVolume}
             onPercussionVolume={applyPercussionVolume}
+            percussionKit={percussionKit}
+            onPercussionKit={(v) => applyPlayback(bpm, metronome, usulName, percussion, v)}
             usulName={usulName}
             onUsul={(v) => applyPlayback(bpm, metronome, v, percussion)}
             makamSlug={makamSlug}

@@ -61,6 +61,8 @@ export const TR = {
     percussionUnavailable: "Bu usulün vuruş kalıbı henüz tanımlı değil",
     percussionVolume: "Vuruş sesi",
     percussionVolumeTitle: "Usul vuruşlarının notalara göre ne kadar yüksek çalacağı",
+    percussionKit: "Vurmalı çalgı",
+    percussionKitTitle: "Usul vuruşlarının hangi davulda çalınacağı",
     usul: "Usul",
     usulTitle: "Metronomun vuruş kalıbı. Okuma yanılabilir; buradan düzeltebilirsiniz.",
     makam: "Makam",

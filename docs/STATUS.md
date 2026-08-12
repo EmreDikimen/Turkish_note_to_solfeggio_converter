@@ -14,24 +14,47 @@ F3 (fingerboard tab) stay designed-not-started ([features/README.md](features/RE
 **F0 rebuilt playback** on one long-lived `AudioContext` with a look-ahead scheduler. Nothing
 user-visible changed; it exists so a *sample* can be cached at all, because the old `stop()` closed
 the context and an `AudioBuffer` dies with it. **F2 made the usul play its own düm/tek/ke strokes**
-instead of a metronome blip — a new checkbox beside `Metronom`, `buildPercussionTrack` in core, and
-strokes **synthesised** rather than sampled so it works with no download and no licence question.
-Green: `typecheck`, `npm test` (three files now), `smoke:editor` ALL PASS, `smoke:app` PASS. The
-account, including the one bug this found: [log/status-log.md](log/status-log.md).
+instead of a metronome blip — a checkbox beside `Metronom`, `buildPercussionTrack` in core, a
+`Vuruş sesi` slider, and now a **`Vurmalı çalgı` picker** choosing between a real **darbuka** and a
+real **bendir**.
 
-⛔ **The owner listened, and the SOUND is rejected** (2026-08-11): *"I do not like it much. We need
-to use real sounds."* The synthesis met the bar the plan wrote down — düm and tek are tellable apart,
-and audible after that day's attack fix — and it is still not something to play along with. **A
-distinguishability bar was the wrong proxy for a musical one, and it was passed on the way to
-failing.** Everything except the sound survives: the scheduling, the stroke tables, the toggle, the
-volume stage and the checks are untouched, and the swap reaches one method (`scheduleStroke`) plus a
-loader. Getting the CC0 files in is now F2's next move — see Next below, and
-[features/README.md](features/README.md) for what it costs, in order.
+✅ **The synthesised strokes were rejected by ear that morning and replaced the same day.** The
+strokes are CC0 VCSL recordings, prepared by `scripts/prepare_strokes.py`; the synthesis survives
+only as the fallback for a kit that has not downloaded. The swap reached exactly the one method it
+was designed to reach, and `usul-test.ts` passes **unchanged**, which is how we know core did not
+move. ⚠ The instructive part is the **bar**, not the code: the plan wrote down *"düm and tek must be
+unmistakable from each other"*, the synthesis met it, and meeting it is how it failed.
 
-⚠ **Two more things are open, both below in Next**: the ten stroke tables are **drafted, not verified
-by ear** (four are `[derived]`) — and that verification now **waits for the samples**, because judging
-a pattern through a drum you dislike conflates two questions. And none of this is on the live site;
-the last deploy was 2026-08-09.
+**Which drum a file is was decided by measurement, not by its name.** VCSL numbers its darbuka
+articulations 1–5 and never says which is the open centre hit, so each is measured (low-band energy,
+spectral centroid, decay) and the mapping follows the physics. The frame drum — whose files *are*
+self-described — was the control, and agreed. That caught two things a reasonable guess would not:
+both `Hand` takes are 40+ dB down and unusable as a tek, and inheriting VCSL's session levels would
+have re-created the inaudibility bug fixed that morning from a different cause. Detail:
+[features/audio-sources.md](features/audio-sources.md); the account:
+[log/status-log.md](log/status-log.md).
+
+⚠ **The first cut clipped, and the fix is a level rule worth carrying into F1.** The owner heard the
+darbuka "patlamış"; the files were clean and the **mix** was not — a note is a normalised wave at
+gain 1.0 into the same master as a düm normalised to 0.89, which hard-clipped 38% of the waveform at
+the default slider. Stroke peaks dropped to 0.50/0.35/0.19 (ratios kept), master 0.85 → 0.72, and a
+**limiter** now sits before the destination so no slider setting can clip again. **A level that is
+safe for a synthesised blip is not safe for a recorded instrument** — F1 puts more recordings through
+this same master. Numbers: [log/status-log.md](log/status-log.md).
+
+**Audio ships from the app, but behind `VITE_AUDIO_URL`** — the owner asked which is easier to
+maintain given more instruments are coming. 660 KB does not justify a second host; ~4 MB per F1
+instrument will. So the files are local and the loader already reads the env var, tested against an
+off-app origin, and `MAX_AUDIO_MB` in `prune-dist.mjs` fails the build when it is time to move.
+Decision and its pre-registered trigger: [DECISIONS.md](DECISIONS.md).
+
+**All of it is DEPLOYED** (2026-08-11) — <https://komavision.netlify.app> now carries F0, F2 with
+both drum kits, the copyright pass and the koma-bemol fix. `smoke:live` **PASS on both paths**, and
+the twelve `/audio/*.wav` files answer 200 while `sample.json` still answers 404. Numbers:
+[METRICS.md](METRICS.md).
+
+⚠ **One thing is open, below in Next**: the ten stroke tables are **drafted, not verified by ear**
+(four are `[derived]`) — now unblocked, and the owner's call, not an agent's.
 
 **The beta is live, the copyright pass is deployed, and a friend could be sent the link today.**
 <https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
@@ -95,6 +118,20 @@ model track never touches the app, and neither waits for the other. Who the rele
 they are asked, and why Round 3 is not aimed by their answers: [mvp/README.md](mvp/README.md) and
 [DECISIONS.md](DECISIONS.md).
 
+**On the model side, the tuplet weakness was diagnosed on 2026-08-11 and it is not what anyone
+thought.** An owner report of two misread triplets led to reading the data instead of the docs.
+Three things came out of it. **The tuplet labelling is finished and promoted** — 169 strips / 205
+groups, training at `:8`, exam gold 4 → 55 — and [rung3/labeling.md](rung3/labeling.md) had said
+otherwise for three weeks, so "finish the queue" was recommended three times in a row from a stale
+file. **The real weakness is a trade we made on purpose**: the slur distractors took `\tup3`
+precision 15.1% → 91.2% and pushed recall **92.7% → 83.8%**, under its floor and below where it
+started — the model misses triplets now rather than inventing them. **And the likely cause is that we
+draw the mark wrong**: real Turkish editions break the arc and set the "3" in the gap, while
+`drawTupletArc` draws an unbroken curve with the digit floating above, so our corpus separates a
+triplet from a phrase slur by a faint mark where real print separates them structurally. Same shape
+as the Bravura sharp-bar defect — **a hypothesis with a mechanism, A/B'd against nothing yet**. Full
+account: [rung3/tuplets.md](rung3/tuplets.md).
+
 **W8 (confidence highlighting) is DROPPED** — its pre-registered bar was not met and the bar was not
 moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is the saying-so. The
 measurement that dropped it: [mvp/standing.md](mvp/standing.md).
@@ -116,25 +153,24 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-0. **⏭ THE NEXT ACTION — PUT REAL DRUM SAMPLES INTO F2.** The synthesised strokes were rejected by
-   ear (owner, 2026-08-11) and the CC0 files have been cleared since 2026-08-09, so this is a
-   download-and-wire job, not a search. Order and what each step costs:
-   [features/README.md](features/README.md); the per-file list and the prep each needs (mapping
-   VCSL's darbuka hit types 1–5 to düm/tek/ka by listening, splitting `bendir_basicStrokes.wav` at
-   its onsets): [features/audio-sources.md](features/audio-sources.md). ⚠ **The swap discipline
-   becomes real with the first file** — nothing bundled, `source` + `license` recorded per file, a
-   `/THIRD-PARTY.txt` line as each lands, and a `dist/` guard mirroring `prune-dist.mjs`. ⚠ The two
-   Freesound downloads need a free account, so the first step is **manual**.
-0b. **THEN check the usul stroke tables by ear** — deliberately after the samples, not before. Six of
+0. **DONE 2026-08-11 — the real drum samples are in.** VCSL darbuka + frame drum, CC0, chosen by
+   measurement and shipping from `public/audio/` behind `VITE_AUDIO_URL`. Kept here for one sitting
+   because item 0b below rests on it.
+0b. **⏭ THE NEXT ACTION — check the usul stroke tables by ear.** Six of
    the ten patterns are the standard simple forms; four (Devr-i Hindî, Curcuna, Aksak Semâi, and
    Ağır Aksak riding on Aksak) are marked `[derived]` in `packages/core/src/usul.ts` because they are
    our reduction of that usul's beat grouping rather than a quoted pattern. A wrong Düyek is obvious
-   to a musician and invisible to every check here. Walkthrough: **check 23** in
-   [MANUAL_CHECKS.md](MANUAL_CHECKS.md), whose step 6 is on hold until the drum sounds right.
-1. **F0 + F2 are BUILT AND UNDEPLOYED.** The live site is still the 2026-08-09 build. They can ride
-   along with whatever goes out next rather than earning their own deploy — nothing about them is
-   urgent. `npm run deploy:app` is now the whole recipe in one command (2026-08-11), with
-   `smoke:live` after; the long form stays in [mvp/hosting-setup.md](mvp/hosting-setup.md).
+   to a musician and invisible to every check here. It waited for the samples on purpose — judging a
+   pattern through a drum you dislike conflates two questions — and the drum is now real, so it is
+   unblocked. ⚠ **This one needs the owner, not an agent.** Walkthrough: **check 23** in
+   [MANUAL_CHECKS.md](MANUAL_CHECKS.md). Audition on the **built-in speaker**, not headphones: that
+   is the constraint that caught the inaudible düm, and the same one the recordings had to pass.
+1. **DONE 2026-08-11 — F0 + F2 ARE DEPLOYED.** `npm run deploy:app` then `smoke:live`, PASS on both
+   paths. ⚠ **`deploy:app` needed a fix to run unattended and it is in**: `netlify-cli` now detects
+   the workspaces and *stops on an interactive "select the project" prompt* unless given
+   `--filter @turkish-omr/web`, so the documented one-command recipe hung after a successful build
+   and published nothing. The build succeeding is not the deploy happening — read for the
+   `Deploy is live!` line. Long form: [mvp/hosting-setup.md](mvp/hosting-setup.md).
    ⚠ **Deploying is NOT what keeps the owner's Mac cool, and it was believed to be** (owner asked
    2026-08-11). `npm run dev:cloud` is: the local harness with `VITE_DECODE_URL` pointed at the live
    service, verified end to end that day (`data-where="server"`, 27.3 s of decode on Cloud Run
@@ -166,6 +202,15 @@ the model track never touches the app.** Either can be worked on without waiting
    of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro mean.
    This is now also the **public-launch gate**, so it settles more than one thing. Then render once,
    train stage 1 once with several cheap stage-2 variants, read the exam once.
+1b. **⏭ THE TUPLET MARK — redraw the arc broken, with the "3" in the gap**, and raise the curved-arc
+   share above 70% (owner, 2026-08-11). `drawTupletArc` in `apps/web/src/SheetView.tsx`; **pixels
+   only, no label moves**, so it costs a re-render and nothing else. Show a rendered sample beside a
+   real page before re-rendering at scale — the shape is a domain judgement. Then A/B on `\tup3`
+   recall, which has missed its floor twice and now sits *below* its own pre-work baseline. ⚠ Do
+   **not** touch the 35% slur-distractor rate in the same change; it is the obvious second knob and
+   moving both makes the result unreadable. Diagnosis, plan and non-claims:
+   [rung3/tuplets.md](rung3/tuplets.md). ⚠ **No new labelling** — the tuplet queues are finished and
+   promoted, whatever [rung3/labeling.md](rung3/labeling.md) said until 2026-08-11.
 2. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner
    decision 2026-07-27: these only; ties and accidentals stay out). Verify on a 300-strip pilot with
    `domain_gap.py` before regenerating `data/pieces.json`. Guard: check the accidental counts before

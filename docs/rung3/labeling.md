@@ -269,6 +269,23 @@ tuplet runs need 1-measure windows at most, and often less. Consequences:
    `\cmd`/`|`=1, +EOS) and warns OVER BUDGET >59 — over-budget corrections are unwinnable,
    verdict `bad`.
 
+### ✅ SUPERSEDED 2026-08-11 — the tuplet queues are FINISHED and PROMOTED
+
+Everything above §1c describes is the state on **2026-07-18**, and it was still being read as
+current three weeks later. It is not. Verified on disk 2026-08-11:
+
+- **All three queues are fully verdicted**, no pending rows: `emit_review.csv` 113 rows
+  (72 fix / 31 ok / 10 bad), `full_audit.csv` 70 (63 ok / 6 fix / 1 bad), `emit_audit.csv` 6 (all ok).
+- **The promote has run**: `manifest.jsonl` = **169 strips / 205 `\tup3` groups** (was 78 / 114).
+- **It trains**, at `:8` pool oversampling (`--real-dir data/real/rung3/strips_tup:8`).
+- **The exam extension happened too** — tup3 gold 4 → 55 groups at the v2.1 freeze.
+
+⚠ Two corrections to the 2026-07-18 text above, both found by re-reading the data rather than the
+doc: the **"0 two-member groups" claim no longer holds** (the current manifest has four groups with
+≠3 noteheads, two of them legitimate), and **a triplet is not always three noteheads** — the "3"
+counts units of time. The member-count rule stays a review *gate* and must never become an
+auto-repair. Why, and what the remaining tuplet weakness actually is: **[tuplets.md](tuplets.md)**.
+
 **Is this enough tuplet data? (assessed 2026-07-18)**
 
 - **Training: YES for Round 1** — completing the queues yields ~78 accepted + ~90–110

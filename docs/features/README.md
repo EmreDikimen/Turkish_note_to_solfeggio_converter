@@ -24,18 +24,18 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 |---|---|---|---|---|---|
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (ney, oud, kemençe, clarinet, …) | medium | no | CC0 hunting + one ney recording | not started |
-| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ⚠ **MECHANISM BUILT 2026-08-11; the SOUND is rejected.** Scheduling, tables, toggle and volume stand; the synthesised strokes must be replaced by the CC0 samples |
+| **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included. ⏭ The stroke tables still need an ears check |
 | **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
 
 Order: **F0 → F2 → F1 → F3**. The first two are built (owner, 2026-08-10 — the two tracks were
 re-confirmed as parallel and this one was opened on `main`, since it shares no file with Round 3).
 F2 came first among the visible ones because it has the best payoff per hour.
 
-⛔ **THE SYNTHESISED STROKES ARE REJECTED — F2 NEEDS REAL SAMPLES** (owner, 2026-08-11, after
-listening: *"I do not like it much. We need to use real sounds."*). F2 shipped synthesised on
-2026-08-10 under the "Level 0 first" argument F1 still makes for itself below; for percussion that
-argument does not survive contact with the ear. **Getting the CC0 files in is now the next move on
-this feature** — what they are and what each needs first: [audio-sources.md](audio-sources.md).
+✅ **THE SAMPLES ARE IN** (2026-08-11, the same day the synthesis was rejected). F2 plays CC0
+recordings of a **darbuka** and a **bendir**, chosen with a picker; the synthesis survives only as
+the fallback for a kit that has not downloaded yet. What was taken and how it was prepared:
+[audio-sources.md](audio-sources.md). The account, including what the measurement caught that
+listening by file name would not have: [../log/status-log.md](../log/status-log.md).
 
 ⚠ **The instructive part is the BAR, not the code.** The plan wrote one down — *"düm and tek must be
 unmistakable from each other, that is the whole bar for the synthesised version"* — and the
@@ -50,13 +50,13 @@ volume stage, `usul-test.ts`, and the browser checks. The swap reaches **one met
 (`scheduleStroke`) plus a loader — the seam this was designed around is exactly where the change
 lands. F0 is what makes it possible at all, since a decoded `AudioBuffer` now survives a Stop.
 
-⚠ **The stroke tables are drafted, not verified — and verification now WAITS for the samples.** All
-10 usuls in `USULS` have a `strokes` array; six are the standard simple forms and four (marked
+⏭ **The stroke tables are drafted, not verified — and the ears check is now UNBLOCKED.** All 10
+usuls in `USULS` have a `strokes` array; six are the standard simple forms and four (marked
 `[derived]` in the source) are our reduction of that usul's own beat grouping. `npm test` checks
 they are well-formed — inside the cycle, ascending, opening on a düm — and **cannot check that they
-are musically right**. Doing that ears check through a drum sound the owner dislikes would conflate
-two questions, and the `[derived]` patterns are the ones that most need an unclouded ear. Check 23
-in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md), after the swap.
+are musically right**. That check waited for the samples deliberately, since judging a Curcuna
+pattern through a drum you dislike conflates two questions; the drum is now real, so it is check 23
+in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) and it needs the owner, not an agent.
 
 ---
 
@@ -159,6 +159,13 @@ ones.
 
 1. **Never bundle audio into the app.** Every sample stays a separate file loaded by URL — the way
    weights come from `VITE_WEIGHTS_URL` and never from `dist/`.
+   ⚠ **AMENDED 2026-08-11** ([../DECISIONS.md](../DECISIONS.md)): audio may ship from the app's own
+   `public/audio/` **while it stays under 1 MB**, which F2's two kits do at 660 KB. The rule was
+   written against 211 MB of weights and did not carry at that size. What it was protecting is kept
+   by the two rules below plus the loader's `VITE_AUDIO_URL` indirection, which is already in place
+   and already tested against an off-app host — so the move is an upload and an env var, never a
+   code change. `MAX_AUDIO_MB` in `prune-dist.mjs` fails the build when the limit is crossed and its
+   message says to make that move. **Do not raise the number instead.**
 2. **A manifest with `source` and `license` on every file, from the first one.** This is the rule
    that matters. These things do not fail as lawsuits; they fail as *"I no longer know where four of
    these came from"*, which makes the set unauditable and the swap impossible.
@@ -238,7 +245,13 @@ option: a CC0 chromatic recording of the real instrument turned up on 2026-08-09
 - Load **only on selection**. Never in the main bundle.
 - Serve from the same place the weights come from (the Hub) behind an env URL, mirroring
   `VITE_WEIGHTS_URL`; cache in the browser.
-- Add a guard so audio assets cannot leak into `dist/`, the way `prune-dist.mjs` guards scores.
+- The guard already exists (`MAX_AUDIO_MB` in `prune-dist.mjs`), and so does the env URL.
+
+✅ **F1 inherits an answered hosting question, not an open one** (2026-08-11). `src/audio/
+loadStrokeKit.ts` already resolves its base from **`VITE_AUDIO_URL`**, falling back to `/audio/`,
+and that branch has been run end-to-end against a cross-origin host. So F1's asset step is *upload
+the files and set the variable* — no call-site changes, and no decision to re-argue. Expect to need
+it: at ~4 MB per sampled instrument, the second or third voice is what trips `MAX_AUDIO_MB`.
 
 ⚠ **A first version does not need 25–35 notes.** One good note per instrument, stretched by
 `playbackRate`, covers roughly ±5–6 semitones before it starts sounding thin or chipmunky. That is
@@ -256,10 +269,9 @@ instruments belongs in `packages/core`.
 
 ---
 
-## F2 — usul percussion ✅ BUILT 2026-08-11
+## F2 — usul percussion ✅ DONE 2026-08-11
 
-**Built as designed**, with the asset half deferred (synthesised strokes — see the ⚠ above). The
-brief below stands as the description of what was made; the three numbered steps all landed.
+**Built as designed, samples and all.** The brief below stands as the description of what was made.
 
 The nearest of the three, because half of it exists. `packages/core/src/usul.ts` already carries
 each usul's meter and beat grouping, and `buildMetronomeTrack` already walks the bars, places clicks
@@ -289,31 +301,26 @@ level to solve a balance. ⚠ **It is also the check that a real sample must pas
 recorded has to read on a laptop speaker, so prefer takes with a defined attack over ones that are
 all low body, and audition on the built-in speaker rather than headphones.
 
-### What the swap actually costs
+### What the swap cost — done, and it was the estimate
 
-Not a rewrite — the seam was built for it. In order:
+Not a rewrite; the seam held. What landed, in the order it was planned:
 
-1. **Download and prepare the files** — [audio-sources.md](audio-sources.md) names them and the prep
-   each needs (the VCSL darbuka's hit types 1–5 have to be mapped to düm/tek/ka by listening, and
-   `bendir_basicStrokes.wav` has to be split at its onsets). Freesound needs a free account, so this
-   step is manual, not scripted.
-2. **Host them off `dist/`**, behind an env URL the way `VITE_WEIGHTS_URL` works, plus a build guard
-   mirroring `prune-dist.mjs`. This is the swap discipline becoming real; none of it applied while
-   nothing was loaded.
-3. **A loader** — fetch and `decodeAudioData` once per context, cache the buffers. This is what F0
-   made possible; on the old backend the cache died with every Stop.
-4. **`scheduleStroke` plays a buffer instead of building an oscillator.** One method. Core, the
-   toggle, the volume stage, the tables and every check stay exactly as they are.
-5. **Keep a synthesised fallback for when a sample has not loaded** rather than dropping the stroke —
-   silence would look like the feature being broken, which is the same reasoning that keeps the
-   in-browser decode fallback alive.
+1. **`scripts/prepare_strokes.py`** downloads the VCSL originals, **measures** them to pick which
+   articulation is a düm, then trims, mono-downmixes and levels them into `public/audio/<kit>/`.
+   Freesound's bendir take was **not** needed and stays deferred — VCSL is on GitHub, so no account
+   and no manual step. See [audio-sources.md](audio-sources.md).
+2. **They ship from the app**, not from a Hub — 660 KB does not justify a second host — but behind
+   `VITE_AUDIO_URL` so they can move when F1 makes them big. `prune-dist.mjs` enforces both halves.
+3. **A loader** (`src/audio/loadStrokeKit.ts`) — fetch and `decodeAudioData` once, cached for the
+   life of the page. This is what F0 made possible; on the old backend the cache died with a Stop.
+4. **`scheduleStroke` plays a buffer**, alternating two round-robins so a repeated stroke does not
+   machine-gun. One method. Core, the toggle, the volume stage and the tables are untouched.
+5. **The synthesis stays as the fallback** rather than dropping an unloaded stroke — silence would
+   look like the feature being broken, the same reasoning that keeps the in-browser decode fallback
+   alive.
 
-Assets: **three sounds per instrument** (düm / tek / ka), well under a second each — the easiest
-asset hunt in this track, and the licence work is **done**: VCSL's darbuka (5 hit types × 2
-velocities × 2 round-robins) and frame drum, plus a CC0 CompMusic take of düm and tek on a real
-bendir. Files and licences: **[audio-sources.md](audio-sources.md)**. No drum, mic or player is
-needed. ⚠ **Nothing is downloaded yet** — what shipped synthesises the three strokes instead, so
-this is the next move on F2 rather than a finished step.
+Assets: **three sounds per kit** (düm / tek / ka) × two round-robins, ~110 KB a kit. No drum, mic or
+player was needed. Files and licences: **[audio-sources.md](audio-sources.md)**.
 
 ⚠ **The risk here is data, not code.** Düyek, Aksak, Curcuna and the rest have canonical stroke
 patterns, and a wrong one is immediately obvious to anyone who knows the repertoire. Keep them as

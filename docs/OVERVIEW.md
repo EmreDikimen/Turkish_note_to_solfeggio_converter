@@ -302,11 +302,40 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    from four different places in two days — so count uploads, not visits.
 12. **Open it to everyone — but only if Round 3's exam result is good.**
 
+### The triplets — what we found on 11 August 2026
+
+You reported two triplets read wrongly on a real page. Looking into it changed three things we
+believed.
+
+**The triplet labelling was already finished.** For three weeks one of our notes said there were 147
+rows still waiting to be checked by hand, so that job kept being recommended. On disk it was done and
+already in use for training. The note was simply out of date. Now fixed.
+
+**The model is not inventing triplets any more — it is missing them.** A while back it drew a "3" on
+almost every curved line it saw, so we added plain curved lines *without* a "3" to the practice
+pictures, to teach it the difference. That worked, completely. But it overshot: the model became so
+careful that it now misses about **one triplet in six**. Which is exactly what you saw.
+
+**And we think we know why: we draw the mark in the wrong shape.** In real Turkish sheet music the
+curve is *broken in the middle* and the "3" sits in the gap. Our program draws an unbroken curve with
+a small "3" floating above it. So on a real page a triplet is easy to tell from an ordinary curved
+line — the curve is cut. In our practice pictures the only difference is a tiny floating mark.
+
+We taught it to look for the wrong thing.
+
+This is the same kind of mistake as the sharp signs last month, where our music font drew the little
+bars too thick and the model learned our version instead of the real one. That one cost two rounds.
+
+**What we will do:** redraw the mark properly — broken curve, "3" in the gap — then show you a sample
+next to a real page before redrawing everything. **No new hand-labelling is needed.** Details:
+[rung3/tuplets.md](rung3/tuplets.md).
+
 ### List B — the model (Round 3, running in parallel)
 
 1. **Write down what Round 3 has to achieve, before training starts.** On the honest measure — *9
    pages in 10 need 5 fixes or fewer* — with today's 57% as the starting point. This number now does
    double duty: it is also the gate for opening the app to everyone.
+1b. **Redraw the triplet mark** — the item just above. Small change, and nothing to re-label.
 2. **Draw more eighth notes and longer bars** (the item explained below). Check on 300 sample
    pictures before redrawing all 40,826.
 3. **Decide whether to rebuild the training sets from the newly-cut strips.** Not automatic — it

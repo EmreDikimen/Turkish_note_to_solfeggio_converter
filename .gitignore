@@ -55,6 +55,11 @@ data/real/*
 data/real/rung3/*
 !data/real/rung3/testset.json
 
+# The untouched VCSL drum recordings scripts/prepare_strokes.py downloads. A cache, not a source:
+# re-running the script fetches them again, and what SHIPS is the prepared copy in
+# apps/web/public/audio/ (which is committed, and is what /THIRD-PARTY.txt accounts for).
+data/audio_src/
+
 # Data and models (Ignore large files to prevent them from hitting GitHub limits)
 data/raw/*
 !data/raw/.gitkeep

@@ -7,7 +7,151 @@ updated: 2026-08-11
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-11 (latest) — the owner listened to F2 and rejected the sound
+## 2026-08-11 (latest) — F2 plays a real drum, and the measurement picked which one
+
+The synthesised usul strokes were rejected by ear that morning; by the evening the usul plays CC0
+recordings of a darbuka and a bendir. The seam held exactly as designed — the change is one branch
+at the top of `scheduleStroke`, a loader, and a picker. Core is untouched, and `usul-test.ts` passes
+**unchanged**, which is the evidence for that claim.
+
+**The interesting problem was not code, it was which file is a düm.** VCSL names its darbuka takes
+`Darbuka_<1..5>_hit_vl2_rr<1,2>.wav` and nothing anywhere says which of the five articulations is
+the open centre stroke. Rather than guess, `scripts/prepare_strokes.py` measures each one — energy
+below 200 Hz, spectral centroid, decay to −40 dB — and proposes the mapping from the physics: a düm
+is the whole head moving (low, long), a tek is a fingertip on the rim (bright, over instantly).
+
+**The frame drum was the control, and it is why the darbuka result is believable.** Its files *are*
+self-describing (`Hit`, `Hand`, `HitMuted`), so the same measurement ran against a known answer and
+agreed with it. Without that, the darbuka mapping would have been a plausible-sounding guess with
+nothing behind it. Result: darbuka düm/tek/ka = hit types 1/2/3; bendir = large-drum hit, small-drum
+muted hit, large-drum muted hit.
+
+**Two things the measurement caught that listening-by-name would not have.**
+
+1. **Both `Hand` articulations are unusable** — they peak at −57 dB (large drum) and −62 dB (small),
+   40+ dB below the struck takes. That is VCSL's recording session, not a musical dynamic, and the
+   obvious mapping (`Hand` → tek, since a tek is played with the hand) would have produced an
+   inaudible tek. Lifting one to a usable level would have lifted its noise floor with it. They are
+   excluded and the small drum's muted hit is the tek instead.
+2. **Inheriting the source levels would have re-created the bug fixed that morning.** The plan said
+   to normalise the kit by one common factor to "preserve the natural dynamics"; with articulations
+   recorded 40 dB apart, "natural dynamics" means "whatever the session did". The three strokes are
+   now levelled to fixed targets — 0.89 / 0.62 / 0.34, the ratios the owner had already tuned by ear
+   on the synthesised version — with the round-robins of one stroke sharing a factor, since scaling
+   each take to its own peak would turn the alternation into a volume wobble.
+
+Tails are cut at 700 ms with a 25 ms fade. A darbuka düm rings for 1.25 s and the bendir's for 2 s,
+nearly all of it underneath the notes it accompanies; the cap is what keeps two kits at **660 KB**.
+The fade is not cosmetic — cutting a ringing drum at a non-zero sample is a click, which is exactly
+the kind of artefact that gets reported as "the drum sounds wrong".
+
+**Where the files live was the owner's question, and the answer changed the design.** Asked whether
+Netlify or a Hub would be easier to maintain *given that more instruments are coming*. Netlify, for
+660 KB — but F1's instruments are ~4 MB each and four of them would not fit under the build budget.
+So the files ship locally **and** the loader reads `VITE_AUDIO_URL` with `/audio/` as its fallback,
+mirroring `session.ts`. Five lines now; a change at every call site later. `MAX_AUDIO_MB = 1` in
+`prune-dist.mjs` is what makes the trigger mechanical rather than a memory — the first instrument
+set that trips it gets an error message telling it to set the env var, not to raise the number.
+Decision row: [../DECISIONS.md](../DECISIONS.md).
+
+**Two checks exist because nothing else could see the difference.** A sampled düm and a synthesised
+one produce identical DOM, identical `data-*` and identical event counts — the swap could have
+silently fallen back to synthesis on every playback with every existing check still green. So the
+backend reports `percussionInfo()` (which kit decoded, how many strokes) the same way it reports
+scheduler progress, and `smoke:editor` asserts on it. The migration path got the same treatment:
+`smoke:editor` was run once with `VITE_AUDIO_URL` pointed at a cross-origin stand-in host, which
+served all 12 files under COEP — otherwise the escape hatch would be untested code claiming to be a
+migration plan.
+
+**Then the owner listened and the drum was clipping** — *"darbukanın sesi biraz patlamış"* — and the
+cause was arithmetic, not the recordings. The files were clean (no clipped samples, all starting at
+zero); **the sum was not.** A note is a normalised `PeriodicWave` at gain **1.0** into the master, and
+the düm had been normalised to **0.89** into the same master at 0.85, so a note and a düm together
+came to **1.61** at a destination that hard-clips at 1.0 — **38% of the waveform flattened**, at the
+*default* slider position. At `Vuruş sesi` 200% it was 58%.
+
+⚠ **Why this did not show up with the synthesised strokes**, which peaked just as high: that düm was
+a fast exponential blip with most of its energy under 200 Hz, so its overlap with the notes was
+brief. A recorded drum has a body that sustains for hundreds of ms and overlaps constantly. **The
+level that was safe for a synth is not the level that is safe for a sample** — worth knowing before
+F1 puts recorded instruments through the same master.
+
+Fixed in three places, deliberately not one: stroke peaks **0.89/0.62/0.34 → 0.50/0.35/0.19**
+(ratios unchanged, so the balance the owner tuned survives), master **0.85 → 0.72**, and a
+`DynamicsCompressorNode` **limiter** before the destination (−1 dBFS, hard knee, 20:1, attack 0).
+The limiter is a safety net and the levels must not lean on it: it is mathematically inert on notes
+alone (0.72), and exists because `Vuruş sesi` reaches 200%, so a user can always ask for more drum
+than the range holds — the honest answer to that is to squash the peak, not to shatter it. Worst
+case now lands at **0.92** with 3.9 dB of transient trim instead of hard clipping.
+
+⚠ **Percussion has a 15–24 dB crest factor**, so dropping the peak ~5 dB costs much less loudness
+than it reads like — what a listener hears tracks the RMS, which barely moved. Do not raise the
+stroke peaks to make the drum louder; that is what the slider is for, and it now has room to work.
+
+Green: `typecheck`, `npm test` (`usul-test.ts` unchanged), `smoke:editor` **ALL PASS** including the
+four new percussion assertions, `build:app` (43.4 MB, up from 42.7), and both new guard conditions
+proven to **fail** the build when tripped. ⏭ Still owed and not automatable: the ears check — whether
+the four `[derived]` stroke tables are musically correct.
+
+**Deployed the same day, and `deploy:app` was quietly broken.** ⚠ `netlify-cli` now detects the npm
+workspaces and stops on an interactive *"select the project you want to work with"* prompt; the
+documented one-command recipe therefore **built successfully and published nothing**, then died on an
+unsettled top-level await. Adding `--filter @turkish-omr/web` fixes it and is now in the script. The
+lesson is cheap and worth keeping: **a successful build is not a deploy** — the line to look for is
+`Deploy is live!`, and had the tail of that output not been read, the site would have been reported
+as updated while still serving the 2026-08-09 build.
+
+`smoke:live` PASS on both paths (server 47.5 s, fallback 62.9 s, identical scores). Since `smoke:live`
+does not know about audio, the twelve `/audio/*.wav` were spot-checked directly: **200**, correct
+sizes, `audio/x-wav`. `/THIRD-PARTY.txt` serves the VCSL attribution and `sample.json` still answers
+**404**, so the copyright guard survived the new deploy. Also fixed on the way past:
+`data/audio_src/` — the untouched VCSL downloads — was **not** gitignored and would have committed
+~3 MB of re-downloadable originals.
+
+## 2026-08-11 — tuplets: the data work was already done, and the mark is drawn wrong
+
+An owner report of two misread triplets on a real page turned into a session of reading data instead
+of docs. Nothing was built; four beliefs changed. Full write-up: [../rung3/tuplets.md](../rung3/tuplets.md).
+
+**The tuplet labelling has been finished for weeks and nobody noticed.** Across three exchanges the
+recommendation "finish the 147-row `tup-review` queue" was given from [../rung3/labeling.md](../rung3/labeling.md),
+which still described 2026-07-18. On disk: every queue fully verdicted, the promote run, manifest
+**169 strips / 205 groups**, training at `:8`, exam extension done (tup3 gold 4 → 55). **The doc was
+three weeks stale and was read as current three times in a row** — the cost of a `updated:` header
+that says when the file was *touched*, not when its facts were *checked*. Corrected in place.
+
+**The remaining weakness is a trade we made deliberately and never rebalanced.** `\tup3` precision
+went 15.1% → 91.2% when the label-free slur distractors landed; recall went **92.7% → 83.8%**,
+under its ≥85% floor, and below where it started. The model no longer invents triplets — it misses
+about one in six, which is exactly the owner's second error (a whole group emitted as plain notes).
+
+**The likely mechanism, from the owner reading a real page: we draw the mark in a shape real print
+does not use.** Turkish editions break the arc and set the "3" in the gap; `drawTupletArc` draws one
+unbroken quadratic with a 13 px digit floating above it. So in real print a triplet differs from a
+phrase slur *structurally*; in our corpus it differs by a faint floating mark. We taught
+discrimination on our own cue and paid for it in recall. **Same shape as the Bravura sharp-bar
+defect** — and that precedent is why it is worth taking seriously, not why it is proven. Nothing has
+been A/B'd; it is a hypothesis with a mechanism.
+
+**A triplet is not always three noteheads.** The "3" counts units of time. Scanning all 20,259 groups
+in the label pools found four with ≠3 noteheads, two of them legitimate (a 32nd + a 16th = three
+units in two noteheads) and two that do not sum. **This retires the 2026-07-18 "0 two-member or
+unclosed groups" claim**, and it kills the obvious repair rule: "make the nearest 3 notes a triplet"
+would corrupt precisely the fast 32nd-note passages the model already reads worst. The correct rule
+is arithmetic — close where the running sum lands on a plain value — and it acts only when one
+neighbour exactly fits the deficit.
+
+**Also settled: `\tupend` stays.** It is redundant (the durations determine closure), but removing it
+would regenerate every label including the frozen exam gold, mid-round, for one token per group.
+Constrained decoding gets the same guarantee for free and, unlike the stitcher's existing repairs,
+shows up in a score that reads token ids.
+
+**One correction worth keeping**, because it shaped two turns of bad advice: the "every
+decode-proposed `\tup3` is a hallucination (0 of 39)" result was measured on the
+*pre-tuplet-collection* model. Quoting it at `round2-stage2-best` argued against a repair the current
+evidence supports. A finding about a checkpoint needs the checkpoint's name attached to it.
+
+## 2026-08-11 — the owner listened to F2 and rejected the sound
 
 *"I do not like it much. We need to use real sounds."* The synthesised düm/tek/ka shipped that
 morning are out. No code was changed — this entry and the doc updates around it are the whole of it,

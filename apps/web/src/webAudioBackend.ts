@@ -27,6 +27,8 @@
  */
 
 import type { AudioBackend, PercussionHit, Stroke, Timeline } from "@turkish-omr/core";
+import { loadStrokeKit, type StrokeBuffers } from "./audio/loadStrokeKit";
+import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 
 // A gently decaying harmonic spectrum — same idea as the Python reference synth,
 // less harsh than a pure sine.
@@ -37,6 +39,24 @@ const LOOKAHEAD_S = 1.0;
 
 /** How often the scheduler tops up that window, in wall-clock ms. Must be well under the above. */
 const TICK_MS = 100;
+
+/**
+ * How long `play()` will wait for a drum kit before starting without it. Long enough for a local or
+ * cached fetch of ~660 KB, short enough that a bad line does not make the Play button feel broken.
+ */
+const KIT_LOAD_BUDGET_MS = 1500;
+
+/**
+ * Master level, and the headroom question behind it.
+ *
+ * Lowered from 0.85 on 2026-08-11, when the drum samples arrived and the mix started clipping
+ * (owner: *"darbukanın sesi biraz patlamış"*). A note is a normalised `PeriodicWave` at gain 1.0, so
+ * at 0.85 the notes alone used **85% of the available range** and anything played alongside them had
+ * nowhere to go. That was survivable while the only companion was a metronome tick and a
+ * near-instant synthesised blip; a real drum has a body that sustains for hundreds of ms and
+ * overlaps the notes constantly.
+ */
+const MASTER_GAIN = 0.72;
 
 /** Transport state, mirrored by the UI to pick the right play/pause/stop affordances. */
 export type PlaybackState = "stopped" | "playing" | "paused";
@@ -63,6 +83,11 @@ export interface PlayOptions {
    * is what a slider needs (see that method).
    */
   percussionVolume?: number;
+  /**
+   * Which drum the strokes are played on. Its samples are loaded on demand and cached for the life
+   * of the page; until they arrive the strokes are synthesised (see `scheduleStroke`).
+   */
+  percussionKit?: KitId;
 }
 
 /**
@@ -104,6 +129,8 @@ export class WebAudioBackend implements AudioBackend {
   private ctx: AudioContext | null = null;
   /** Rebuilt per playback; dropping it is how `stop()` silences anything it fails to catch. */
   private master: GainNode | null = null;
+  /** The output limiter. Lives with the context, not the playback — see `limiterNode`. */
+  private limiter: DynamicsCompressorNode | null = null;
   /**
    * The percussion's own gain stage, between the strokes and `master`, so the usul can be balanced
    * against the notes while everything plays. Rebuilt per playback like `master`.
@@ -114,6 +141,19 @@ export class WebAudioBackend implements AudioBackend {
   /** Both cached per context, since the context now outlives a playback. */
   private wave: PeriodicWave | null = null;
   private noise: AudioBuffer | null = null;
+  /**
+   * The loaded drum, and which kit it is. Cached here beside `wave`/`noise` for exactly the same
+   * reason and with the same lifetime: `stop()` does not clear them, so the samples are decoded
+   * once per page rather than once per Play. This is the cache F0 exists to make possible — on the
+   * old backend `stop()` closed the context, and an `AudioBuffer` dies with the context that
+   * decoded it.
+   */
+  private strokeBuffers: StrokeBuffers | null = null;
+  private strokeKit: KitId | null = null;
+  /** What the last `ensureKit` asked for — see the out-of-order guard there. */
+  private strokeKitWanted: KitId | null = null;
+  /** Which round-robin each stroke plays next. See `scheduleStroke`. */
+  private rr: Record<Stroke, number> = { dum: 0, tek: 0, ka: 0 };
   private timeline: Timeline | null = null;
   /** AudioContext time (seconds) when playback started, and the musical ms it began at. */
   private startCtxTime = 0;
@@ -197,8 +237,8 @@ export class WebAudioBackend implements AudioBackend {
     await ctx.resume();
 
     const master = ctx.createGain();
-    master.gain.value = 0.85;
-    master.connect(ctx.destination);
+    master.gain.value = MASTER_GAIN;
+    master.connect(this.limiterNode(ctx));
     this.master = master;
 
     if (opts.percussionVolume != null) this.percVolume = Math.max(0, opts.percussionVolume);
@@ -206,6 +246,8 @@ export class WebAudioBackend implements AudioBackend {
     percGain.gain.value = this.percVolume;
     percGain.connect(master);
     this.percGain = percGain;
+
+    if (opts.percussion?.length) await this.ensureKit(ctx, opts.percussionKit ?? DEFAULT_KIT);
 
     // ⚠ Before scheduleFrom, not after: its first tick can legitimately reach the end of the piece
     // (seek past the last note) and call stop(), and a later assignment here would overwrite that
@@ -373,6 +415,77 @@ export class WebAudioBackend implements AudioBackend {
    * rim stroke. ⚠ This is the codebase's first `AudioBuffer`, and it is exactly what the old
    * `stop()` used to throw away by closing the context — the reason F0 came first.
    */
+  /**
+   * Have the chosen drum's samples ready, if they can be ready in time.
+   *
+   * ⚠ **The timeout is the design, not a safety net.** `play()` awaits this, so without a bound a
+   * slow line would leave the Play button doing nothing while six files download — the one thing a
+   * transport control must never do. Missing the deadline is not a failure: the fetch keeps going,
+   * `scheduleStroke` falls back to the synthesised strokes for this playback, and the next Play has
+   * the buffers. A failed load is swallowed for the same reason — a drum that will not download is
+   * a reason to hear the fallback, not a reason for silence or an error dialog.
+   */
+  private async ensureKit(ctx: AudioContext, kit: KitId): Promise<void> {
+    if (this.strokeKit === kit && this.strokeBuffers) return;
+    const load = loadStrokeKit(ctx, kit).then((bufs) => {
+      // Guard against a slow load for kit A landing after the user has switched to kit B.
+      if (this.strokeKitWanted === kit) {
+        this.strokeBuffers = bufs;
+        this.strokeKit = kit;
+      }
+    });
+    this.strokeKitWanted = kit;
+    // Anything already loaded belongs to the other kit, so stop using it rather than play a mixture.
+    if (this.strokeKit !== kit) {
+      this.strokeBuffers = null;
+      this.strokeKit = null;
+    }
+    await Promise.race([
+      load.catch(() => undefined),
+      new Promise<void>((r) => setTimeout(r, KIT_LOAD_BUDGET_MS)),
+    ]);
+  }
+
+  /**
+   * The last thing before the speakers: a limiter, so nothing downstream of a user control can
+   * clip.
+   *
+   * ⚠ **This is a safety net, not a mixing tool, and the levels must not lean on it.** Lowering
+   * `MASTER_GAIN` and the stroke peaks is what stops it engaging in normal playback; this catches
+   * what arithmetic cannot be asked to guarantee — `Vuruş sesi` goes to 200%, so the user can always
+   * ask for more drum than the range holds, and the honest answer to that is to squash the peak
+   * rather than to shatter it. Hard clipping is what "patlamış" was.
+   *
+   * Threshold just under 0 dBFS with a hard knee and a high ratio, which is a limiter rather than a
+   * compressor: below the threshold it is mathematically inert, so the notes are untouched until
+   * something genuinely runs out of room. Attack 0 because a drum transient is over in
+   * milliseconds — a compressor's default 3 ms attack would let the very peak through, which is the
+   * one part that matters here.
+   *
+   * Created once per context and reused; `stop()` drops the master gain feeding it, not this.
+   */
+  private limiterNode(ctx: AudioContext): DynamicsCompressorNode {
+    if (this.limiter) return this.limiter;
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -1;
+    lim.knee.value = 0;
+    lim.ratio.value = 20;
+    lim.attack.value = 0;
+    lim.release.value = 0.15;
+    lim.connect(ctx.destination);
+    this.limiter = lim;
+    return lim;
+  }
+
+  /**
+   * Which kit is loaded and how many of its strokes decoded. For the headless checks only: nothing
+   * user-visible can distinguish a sampled stroke from a synthesised one, so `smoke:editor` has no
+   * other way to prove the swap actually happened. Same role as `scheduleProgress`.
+   */
+  percussionInfo(): { kit: KitId | null; loaded: number } {
+    return { kit: this.strokeKit, loaded: this.strokeBuffers?.size ?? 0 };
+  }
+
   private noiseBuffer(ctx: AudioContext): AudioBuffer {
     if (this.noise) return this.noise;
     const len = Math.ceil(ctx.sampleRate * 0.25);
@@ -384,15 +497,20 @@ export class WebAudioBackend implements AudioBackend {
   }
 
   /**
-   * Schedule one usul hand stroke at AudioContext time `when` — synthesised, not sampled.
+   * Schedule one usul hand stroke at AudioContext time `when`.
    *
-   * Why synthesised: it ships today with no download, no licence question and nothing to keep out
-   * of `dist/`. CC0 recordings of a real darbuka and bendir are already sourced
-   * (docs/features/audio-sources.md) and swap in behind this same method; until then the point is
-   * that düm and tek must be *told apart by ear*, which two hundred lines of asset plumbing are
-   * not needed for.
+   * A real recording when the kit has loaded, and the synthesis below when it has not. The samples
+   * are the point — the synthesised version shipped on 2026-08-10 and the owner rejected it by ear
+   * the next day ("we need to use real sounds"), which is worth keeping written down: the plan's
+   * bar was that düm and tek be *tellable apart*, the synthesis met that bar, and meeting it is how
+   * it failed. Percussion is a timbre problem, and two oscillators can be identifiable without
+   * being a drum.
    *
-   * The shapes are the standard percussion-synthesis pair:
+   * ⚠ **The synthesis stays as the fallback and must not be deleted.** A stroke that has not
+   * downloaded should sound wrong, not sound like nothing: silence reads as the feature being
+   * broken, which is the same reasoning that keeps the in-browser decode fallback alive.
+   *
+   * The synthesised shapes are the standard percussion-synthesis pair:
    *   - **düm** — the open centre hit: a sine dropping fast in pitch (a real drumhead's tension
    *     falls as it settles) for the body, **plus a short mid-range attack**.
    *   - **tek / ka** — the rim: a bandpassed noise burst, over in a blink. `ka` is the weak hand,
@@ -406,10 +524,26 @@ export class WebAudioBackend implements AudioBackend {
    * perceptually the quietest. The body now starts higher and a ~400 Hz click carries the hit on a
    * small speaker; on headphones the low end still does the work. Raising the gain alone would not
    * have fixed this, which is worth remembering before reaching for a level to solve a balance.
+   * ⚠ It is also the bar the RECORDINGS had to pass, which is why `scripts/prepare_strokes.py`
+   * chooses articulations by measured low-band energy and decay rather than by file name, and
+   * levels the three strokes to fixed targets instead of inheriting VCSL's session levels.
    */
   private scheduleStroke(when: number, stroke: Stroke): void {
     const ctx = this.ctx!;
     const out = this.percGain!;
+
+    const takes = this.strokeBuffers?.get(stroke);
+    if (takes?.length) {
+      const src = ctx.createBufferSource();
+      // Round-robin, so a usul striking the same stroke every cycle does not machine-gun. The
+      // counter is per stroke, because düm and tek recur at different rates within one cycle.
+      src.buffer = takes[this.rr[stroke]++ % takes.length]!;
+      // → percGain, never master: that is the node the `Vuruş sesi` slider rides.
+      src.connect(out);
+      src.start(when);
+      this.own(src);
+      return;
+    }
 
     if (stroke === "dum") {
       const osc = ctx.createOscillator();

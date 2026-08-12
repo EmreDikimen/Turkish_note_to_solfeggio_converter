@@ -15,6 +15,7 @@
  */
 
 import { findUsul, USULS, type MakamOption } from "@turkish-omr/core";
+import { KITS, type KitId } from "../audio/strokeKits";
 import type { AccidentalMode } from "../SheetView";
 import { TR } from "./strings";
 
@@ -32,6 +33,8 @@ export function TransportBar({
   onPercussion,
   percussionVolume,
   onPercussionVolume,
+  percussionKit,
+  onPercussionKit,
   usulName,
   onUsul,
   makamSlug,
@@ -61,6 +64,9 @@ export function TransportBar({
   /** Stroke loudness against the notes; 1 = the default balance. Applies live, mid-playback. */
   percussionVolume: number;
   onPercussionVolume: (v: number) => void;
+  /** Which drum the strokes are played on. Real CC0 recordings, one set per kit. */
+  percussionKit: KitId;
+  onPercussionKit: (v: KitId) => void;
   usulName: string;
   onUsul: (v: string) => void;
   makamSlug: string;
@@ -181,6 +187,29 @@ export function TransportBar({
           disabled={!canPlay || strokeCount === 0}
           onChange={(e) => onPercussionVolume(Number(e.target.value) / 100)}
         />
+      </label>
+
+      {/* No "synthesised" option: that sound was rejected by ear (owner, 2026-08-11) and survives
+          only as the fallback for a kit that has not downloaded. Offering it would be offering
+          something nobody should pick. */}
+      <label
+        className={`kv-field${canPlay && strokeCount ? "" : " is-disabled"}`}
+        title={TR.transport.percussionKitTitle}
+      >
+        <span>{TR.transport.percussionKit}</span>
+        <select
+          id="percussion-kit"
+          data-percussion-kit={percussionKit}
+          value={percussionKit}
+          disabled={!canPlay || strokeCount === 0}
+          onChange={(e) => onPercussionKit(e.target.value as KitId)}
+        >
+          {KITS.map((k) => (
+            <option key={k.id} value={k.id}>
+              {k.label}
+            </option>
+          ))}
+        </select>
       </label>
 
       <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.usulTitle}>

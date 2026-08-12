@@ -31,6 +31,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [round1.md](round1.md) | Round-1 plan, init A/B, the one-shot exam read, the ship decision, plan-review addenda | Step 4, 4.2, 4.3, 4.4, 4.4a |
 | [round2.md](round2.md) | Entry plan, photo axis, the microtonal-sharp fix, what is still open | Step 4.4 (Round-2 part), Step 4.5 |
 | [round3.md](round3.md) | Round 3: why it targets note heights and note lengths, and the four checks to run before rendering | new 2026-07-27 |
+| [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
 | [followups.md](followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
 
 ## State of the six steps

@@ -24,6 +24,7 @@ wrong — fix by deleting, not by syncing.
 | Question | File |
 |---|---|
 | What is the accuracy / yield of X? | [METRICS.md](METRICS.md) |
+| What did the one-shot real exam score, in any round? | [METRICS-EXAM.md](METRICS-EXAM.md) |
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
 | Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |

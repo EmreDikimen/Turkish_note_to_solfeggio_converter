@@ -37,14 +37,54 @@ that cut a group.
 
 | constant | value | where |
 |---|---|---|
-| curved-arc style share | 70% of pieces, by name hash | `tupletCurved` |
+| curved-arc style share | 70% of pieces, by name hash → **90% from 2026-08-12** | `tupletCurved` |
 | slur distractors | fire on **35%** of eligible ≥3-note runs | `slurRng() < 0.35` |
 | the "3" | 13 px bold italic serif, placed **above** the arc apex | `drawTupletArc` |
 | arc stroke | 1.1 px, one unbroken quadratic | `drawTupletArc` |
 
 ⚠ **Real Turkish print breaks the arc and sets the "3" inside the gap** (owner, 2026-08-11, from a
 real page). The renderer's continuous-arc-plus-floating-digit is not the printed shape, and it is
-the leading hypothesis for the recall deficit. Untested — no A/B has been run.
+the leading hypothesis for the recall deficit.
+
+### The printed triplet mark, MEASURED (2026-08-12) — the owner's report holds, 16/16
+
+`scripts/rung3/tuplet_mark_probe.py`. The script locates digit-like components that have arc-like ink
+beside them and writes matched-staff-size tiles (a 4× zoom with a one-staff-space ruler, and the same
+window after the 409×583 Donut resize); **a human accepts or rejects each tile** and the geometry is
+then taken by scanning outward from the digit along its own row band. It deliberately builds no mark
+detector — the false positives it does surface (lyric syllables, the tempo mark `♩=76—84`) are exactly
+why. 20 tiles read on `strips_tup` → 12 accepted; 8 read on `strips_exam_v2_clean` → 5 accepted.
+
+**Every one of the 16 accepted marks is BROKEN with the "3" in the gap.** Not one continuous arc with
+a floating digit, across ~11 editions.
+
+| quantity, in staff spaces | real print (n=16) | ours, curved style | ours, bracket style |
+|---|---|---|---|
+| gap between the arc's inner ends | **1.63** (range 1.55–1.69) | — (continuous) | 1.27 |
+| clearance each side of the digit | **0.43** | — | — |
+| digit height | **1.20** | 0.97 | 0.97 |
+| digit width | **0.76** | 0.87 | 0.70 |
+| digit centre vs the arc's inner ends | **+0.20** (just inside, toward the staff) | +1.27 (fully outside) | in the gap |
+| one segment's rise, outer end → gap | **~0.95** | 1.00 (whole arc's depth) | — |
+| arc stroke | 0.133–0.168 | 0.100 | — |
+
+**The gap is sized to the digit, not to the group.** It is 1.63 S whether the mark spans 4.5 S or 28 S
+— i.e. the digit's own width plus ~0.43 S of air each side. A fraction-of-span rule would have been
+the natural guess and it is wrong.
+
+**Our own bracket style is structurally closer to real print than our arc is** — it already breaks
+around the digit. Only the curved style, which is 70% of pieces, carries the defect.
+
+- **Caveat on the `span`, `seg w` and `rise` columns:** where a segment merges with a staff line or a
+  long slur, its component inflates those three (4 of 17 rows). `gap`, `digit_h` and `digit_w` are
+  band-scanned locally and unaffected. One exam row (`askin_o_sihirli…`) reports `gap 0.77 / gapL
+  0.00` because a staff line crosses the digit's row band; its tile shows a normal gap.
+- **Deliberately NOT changed:** real print's arc stroke is *heavier* than ours (0.133–0.168 vs 0.100).
+  Thickening only the tuplet arc would hand the model a thickness cue separating it from a phrase
+  slur that real pages do not have — the same trap `AEU_SHARP_STROKE` documents. It is owed as a
+  joint change with `drawSlurArc`, after the shape A/B.
+- **Unmeasured:** the digit's slant. Ours is bold italic; the real tiles look upright. A separate
+  pixel question, not part of the structural change under test.
 
 ### ⛔ A ~2% pre-shrink: exam −15.5%, real-val −1.6%. DID NOT REPLICATE (2026-07-28)
 

@@ -49,6 +49,14 @@ sounds wrong. 211133 (kanun) remains F1's.
   needed.
 - **VSCO 2 CE** — <https://github.com/sgossner/VSCO-2-CE>, `LICENSE` is CC0 1.0.
 
+⚠ **Sizes, measured 2026-08-11 rather than guessed.** Clarinet `susLong` is **33 files averaging
+~1.8 MB** (11 pitches × 3 velocities); taking one velocity is **~20 MB**, and the whole folder ~59 MB.
+Solo Violin `Arco Vib` is comparable. So **three instruments are 40–60 MB uncompressed**, which is
+why they go to a Hub repo rather than shipping with the app ([../DECISIONS.md](../DECISIONS.md)) —
+the app's whole dist is capped at 60 MB and already uses 43.4. ⚠ These files are **7–10 second
+sustained notes**, not the ~2 s a sampler usually wants. That is a feature here: they outlast any
+notated note, so **nothing needs looping**.
+
 ⚠ **VSCO 2 CE contradicts itself, and the resolution is recorded here so it is not re-litigated.**
 Its `Readme.txt` "Terms" asks *"that you do not sell the samples directly"* and *"Please provide
 credit to Versilian Studios/Sam Gossner, and/or Ivy Audio/Simon Dalzell where applicable"* — neither

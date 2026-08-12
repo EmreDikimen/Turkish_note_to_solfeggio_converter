@@ -43,8 +43,8 @@ safe for a synthesised blip is not safe for a recorded instrument** — F1 puts 
 this same master. Numbers: [log/status-log.md](log/status-log.md).
 
 **Audio ships from the app, but behind `VITE_AUDIO_URL`** — the owner asked which is easier to
-maintain given more instruments are coming. 660 KB does not justify a second host; ~4 MB per F1
-instrument will. So the files are local and the loader already reads the env var, tested against an
+maintain given more instruments are coming. 660 KB does not justify a second host; F1's instruments
+do — measured at **~20 MB each**, 40–60 MB for the three. So the files are local and the loader already reads the env var, tested against an
 off-app origin, and `MAX_AUDIO_MB` in `prune-dist.mjs` fails the build when it is time to move.
 Decision and its pre-registered trigger: [DECISIONS.md](DECISIONS.md).
 
@@ -179,25 +179,35 @@ the model track never touches the app.** Either can be worked on without waiting
 5b. **⏭ THE NEXT ACTION — F1, INSTRUMENT VOICES: violin, clarinet, kanun.** The friends' own
    request, and the three the owner named are **exactly** the three with verified CC0 coverage — so
    this is a download-and-wire job like F2, not a search: clarinet and violin from **VSCO 2 CE**,
-   kanun from **CompMusic Freesound 211133** (a free account is needed, so that download is manual).
+   kanun from **CompMusic Freesound 211133** (needs a free account, so that download is manual).
    Ney has **no** CC0 source and needs the owner's own recording; oud and tanbur are
-   **Karplus–Strong**, code rather than files. Per-file list and the prep each needs:
-   [features/audio-sources.md](features/audio-sources.md); the design and the 53-TET constraint:
-   [features/README.md](features/README.md).
-   ⚠ **Start with ONE instrument and ONE note.** `playbackRate` covers ±5–6 semitones before it
-   sounds thin — enough to hear an instrument choice working, and it turns the asset problem from
-   "build a sample set" into "find one usable note". Add notes only where it sounds worst.
-   ⚠ **This is the change that trips `MAX_AUDIO_MB`, and it is supposed to.** The response is
-   pre-registered: set **`VITE_AUDIO_URL`**, upload, **do not raise the number**. The indirection is
-   already built and already tested against a cross-origin host, so it costs an upload and an env
-   var, not a code change.
-   ⚠ **The real new obstacle is compression, not licensing.** There is **no `ffmpeg`/`sox` on this
-   machine**, and ~25 notes × ~2 s is ~4 MB per instrument as WAV against well under 1 MB
-   compressed. Install an encoder or ship fewer, shorter notes — decide before promising a size.
+   **Karplus–Strong**, code rather than files. Files and licences:
+   [features/audio-sources.md](features/audio-sources.md); design and the 53-TET constraint:
+   [features/README.md](features/README.md); the rules every file obeys:
+   [features/audio-policy.md](features/audio-policy.md).
+
+   **Settled with the owner before starting** ([DECISIONS.md](DECISIONS.md)):
+   **(a) Nothing is compressed or trimmed** — full length, stereo, original bit depth. Quality is the
+   priority and size is not a constraint once the files leave the app.
+   **(b) They live in a Hugging Face Hub repo**, served through `VITE_AUDIO_URL`. This is the
+   pre-registered trigger firing, not a new decision — measured, VSCO 2's clarinet `susLong` is 33
+   files at ~1.8 MB each, so **one velocity across 11 pitches is ~20 MB and three instruments are
+   40–60 MB**, against a 60 MB dist already at 43.4. **`MAX_AUDIO_MB` stays at 1; do not raise it.**
+   **(c) Not committed to git** — ~50 MB of binaries in a public repo is permanent, and this project
+   already has files stuck in its history.
+
+   ⚠ **Two consequences of (a) worth carrying in.** These are **7–10 second sustains**, longer than
+   almost any notated note, so **no sample needs looping** — the expensive-looking choice is also the
+   simpler one. And at ~20 MB an instrument, **loading only on selection stops being an optimisation
+   and becomes a requirement**; the `loadStrokeKit.ts` comment saying Cache Storage is not worth it
+   is **true for 660 KB of drums and false here**, so F1 should cache like `omr/session.ts` does for
+   the weights. Revisit that comment rather than inheriting it.
    ⚠ **Carry F2's level lesson in.** A level safe for a synthesised tone is not safe for a recording,
-   and unlike a drum these voices **replace the notes** rather than sitting beside them — so they go
-   through `MASTER_GAIN` and the limiter where the notes' own 1.0 used to be. Check the mix, not the
-   file: "patlamış" was arithmetic, and the arithmetic changes again here.
+   and unlike a drum these voices **replace** the notes rather than sitting beside them — so a sample
+   lands where the synthesised note's gain of 1.0 used to be, and `MASTER_GAIN` (0.72) plus the
+   limiter were retuned around exactly that. "Patlamış" was arithmetic, and it changes again here.
+   Check the mix, not the file.
+
 5c. **Cheap and newly possible: read the request log now that real users exist.** Until today the
    "every human so far was on a phone" line rested on **n=2** and could not be more than a question
    ([METRICS-USAGE.md](METRICS-USAGE.md)). The friends' own reads are the first data that can move

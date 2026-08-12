@@ -73,6 +73,17 @@ This is worth pausing on, because it is the thing the last three months of work 
 always said: get it into someone's hands, ask what to add, then build that. It has now happened, and
 the answer was clear enough to act on.
 
+**How good will they sound?** As good as the recordings are — you asked for full quality and nothing
+gets squeezed. The catch is size: a single instrument is about **20 MB** of sound files, and all
+three together are 40–60 MB. That is far too big to sit inside the app itself, so the files go to the
+**same online storage the AI model already lives in**, and your browser fetches an instrument only
+when you actually pick it. Nothing is downloaded for an instrument you never choose.
+
+One nice accident came out of measuring this. The recordings are **7 to 10 seconds** of a single held
+note — much longer than a sampler usually needs. Keeping them whole is the expensive-looking option,
+but it is also the simpler one: no note in real music lasts that long, so the app never has to fake a
+longer note by looping the sound, which is the usual way sampled instruments start sounding fake.
+
 ⚠ **Two honest limits.** It was **two people, and they are friends** — friendly reactions are not a
 measurement, and they were asked *what to add* rather than *whether it is any good*. And the three
 instruments are convenient: they happen to be the three we already have free, legal recordings for.

@@ -119,6 +119,28 @@ good*. "They liked it" is not a usage measurement — `/decode` in the request l
 ([../METRICS-USAGE.md](../METRICS-USAGE.md)), and reading it is now possible for the first time with
 real users on the other end.
 
+**F1's shape was settled the same evening, and measuring beat estimating twice.** The owner asked for
+**no compression and high quality**, and for the files to live **in a repo**. Both answers came after
+looking at the actual source: VSCO 2's clarinet `susLong` is **33 files averaging ~1.8 MB**, so one
+velocity across 11 pitches is **~20 MB** and three instruments are **40–60 MB** — against a dist
+capped at 60 MB that already uses 43.4. That makes "where do they live" arithmetic rather than
+preference: a **Hugging Face Hub repo** behind `VITE_AUDIO_URL`, which is the trigger pre-registered
+hours earlier firing exactly as designed. Not committed to git, since ~50 MB of binaries in a
+**public** repo is permanent and this project already has files stuck in its history.
+
+⚠ **A concern this log raised was withdrawn rather than solved, and the distinction matters.** F1's
+"real obstacle" was recorded as compression — no `ffmpeg` on this machine, ~4 MB per instrument as
+WAV. The owner removed the *premise* (size stopped being a constraint once the files left the app),
+so the obstacle evaporated instead of being worked around. ⚠ Its one durable finding survives and is
+worth more than the concern was: the samples are **7–10 second sustains**, longer than any notated
+note, so **nothing needs looping** — trimming them to save space would have *introduced* that
+problem. The expensive-looking option was the simpler one.
+
+⚠ **And one comment written this morning is already wrong for F1.** `loadStrokeKit.ts` says Cache
+Storage is not worth a second invalidation path, reasoning explicitly from 660 KB of drums. At 20 MB
+an instrument that reverses: F1 should cache the way `omr/session.ts` does for the weights. Noted in
+STATUS rather than pre-emptively edited, because the comment is still true for what it describes.
+
 **So W10 is complete**, which retires the last rung of the W0–W10 ladder. The loop the ladder was
 built for — ship a link, get a directed answer, build the answer — actually closed. Round 3 remains
 the public-launch gate and lost nothing waiting, which is what the 2026-08-05 parallel re-scope was

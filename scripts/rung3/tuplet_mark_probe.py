@@ -286,6 +286,9 @@ def main() -> int:
     ap.add_argument("-n", type=int, default=40, help="tuplet-bearing strips sampled per pool")
     ap.add_argument("--tiles", type=int, default=14, help="candidate tiles written per pool")
     ap.add_argument("--pool", default=None, help="only this pool")
+    ap.add_argument("--dir", default=None,
+                    help="measure an arbitrary strips dir instead of the pools — e.g. a pilot render, "
+                         "to check a redraw landed on the measured geometry")
     ap.add_argument("--accept", default=None,
                     help="comma list of tile indices a HUMAN confirmed are tuplet marks; prints the "
                          "geometry summary over those only (same -n/--seed → same indices)")
@@ -294,7 +297,8 @@ def main() -> int:
     accept = {int(v) for v in args.accept.split(",")} if args.accept else None
 
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, pool in POOLS.items():
+    pools = {f"dir {Path(args.dir).name}": Path(args.dir)} if args.dir else POOLS
+    for name, pool in pools.items():
         if args.pool and args.pool != name:
             continue
         if not pool.exists():
@@ -347,7 +351,7 @@ def main() -> int:
         for r in rows:
             sheet.paste(r, (0, y))
             y += r.height + 6
-        slug = name.split()[0] + "_" + name.split()[1].strip("()")
+        slug = "_".join(w.strip("()") for w in name.split()[:2])
         out = OUT / f"marks_{slug}.png"
         sheet.save(out)
         print(f"LOOK AT THIS before quoting any number: {out}")

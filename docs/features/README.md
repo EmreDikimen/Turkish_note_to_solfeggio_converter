@@ -134,26 +134,33 @@ and should be tried before any recording is commissioned. ⚠ For **kanun** it i
 option: a CC0 chromatic recording of the real instrument turned up on 2026-08-09
 ([audio-sources.md](audio-sources.md)), so that one can be decided by ear rather than by necessity.
 
-**Level 1 — recorded samples.**
-~25–35 notes per instrument (one per semitone over ~2.5 octaves), mono, compressed. Order of
-**0.5–1 MB per instrument** — an estimate, not a measurement; measure before promising it. Rules:
+**Level 1 — recorded samples. THIS IS WHAT F1 IS BUILDING** (owner, 2026-08-11).
+Uncompressed, untrimmed, as recorded: full length, stereo, original bit depth. **Measured, not
+estimated**: VSCO 2's clarinet `susLong` is 33 files averaging ~1.8 MB, so one velocity across its
+11 pitches is **~20 MB**, and three instruments come to **40–60 MB**. ⚠ The old figure here was
+"0.5–1 MB per instrument, mono, compressed" — wrong by ~20× and written before anyone looked.
+Rules:
 
-- Load **only on selection**. Never in the main bundle.
-- Serve from the same place the weights come from (the Hub) behind an env URL, mirroring
-  `VITE_WEIGHTS_URL`; cache in the browser.
-- The guard already exists (`MAX_AUDIO_MB` in `prune-dist.mjs`), and so does the env URL.
+- Load **only on selection** — at ~20 MB an instrument this is a requirement, not an optimisation.
+- Serve from a **Hugging Face Hub repo** behind `VITE_AUDIO_URL`, exactly as the weights come from
+  `VITE_WEIGHTS_URL`. **Not committed to git**: ~50 MB of binaries in a public repo is permanent.
+- **Cache in the browser like the weights do.** ⚠ `loadStrokeKit.ts` says Cache Storage is not worth
+  a second invalidation path — that is **true for 660 KB of drums and false at 20 MB**. Copy
+  `graphBytes` in `omr/session.ts` instead of inheriting the drum comment.
+- `MAX_AUDIO_MB = 1` in `prune-dist.mjs` **stays at 1**. It is what forces all of the above.
 
 ✅ **F1 inherits an answered hosting question, not an open one** (2026-08-11). `src/audio/
 loadStrokeKit.ts` already resolves its base from **`VITE_AUDIO_URL`**, falling back to `/audio/`,
 and that branch has been run end-to-end against a cross-origin host. So F1's asset step is *upload
 the files and set the variable* — no call-site changes, and no decision to re-argue. Expect to need
-it: at ~4 MB per sampled instrument, the second or third voice is what trips `MAX_AUDIO_MB`.
+it: measured at **~20 MB per instrument**, the **first** voice trips `MAX_AUDIO_MB`, not the third.
 
-⚠ **The obstacle F1 actually has is COMPRESSION, and it is not solved.** There is **no `ffmpeg` and
-no `sox` on this machine** (checked 2026-08-11), and `scipy.io.wavfile` writes WAV only. ~25 notes ×
-~2 s is ~4 MB per instrument as WAV against well under 1 MB compressed, so the choice is: install an
-encoder, or ship fewer and shorter notes. **Decide this before promising a size** — the 0.5–1 MB
-figure above is an estimate that assumed compression exists.
+✅ **The compression problem is WITHDRAWN, not solved** (owner, 2026-08-11). It was real only while
+size was a constraint, and taking the files off the app removed that premise — so no encoder is
+needed and nothing is trimmed. ⚠ One finding from measuring it is worth keeping: the sustains are
+**7–10 seconds long**, longer than almost any notated note, so **no sample needs looping**. Trimming
+to ~3 s to save space would have *introduced* that problem — the expensive-looking option was also
+the simpler one.
 
 ⚠ **F1's levels are a harder problem than F2's, not an easier one.** A drum sits *beside* the notes;
 an instrument voice **replaces** them, so a sample lands where the synthesised note's gain of 1.0

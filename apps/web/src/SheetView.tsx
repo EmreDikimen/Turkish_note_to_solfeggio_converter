@@ -371,12 +371,42 @@ function tupletAbove(group: StaveNote[]): boolean {
 }
 
 /**
- * Draw the CURVED tuplet mark — a slur-like arc with an italic "3" at its apex — as raw SVG,
- * like the voltas/nav marks. This is the shape most printed Turkish scores use (VexFlow's
- * `Tuplet` only draws the square bracket, which stays as the minority per-piece style).
+ * The printed triplet mark, in STAFF SPACES — MEASURED on real editions, not designed.
+ *
+ * `scripts/rung3/tuplet_mark_probe.py` read 16 marks across ~11 Turkish editions (`strips_tup` and
+ * `strips_exam_v2_clean`, tiles accepted by eye at matched staff size). **All 16 break the arc and set
+ * the "3" inside the gap.** Until 2026-08-12 we drew one unbroken quadratic with the digit floating
+ * 1.27 S OUTSIDE it, which left a triplet separated from a plain phrase slur (`drawSlurArc`) by a
+ * hovering digit — the weakest cue available, where real print differs structurally. `\tup3` recall
+ * had fallen to 83.8%, below its own pre-slur-distractor baseline; this is the leading hypothesis
+ * for that, same shape as the Bravura sharp-bar defect. Numbers and the caveats:
+ * docs/METRICS-DIAGNOSTICS.md.
+ *
+ * ⚠ `gap` is sized to the DIGIT, not to the group: real print holds 1.63 S whether the mark spans
+ * 4.5 S or 28 S. A fraction-of-span rule is the natural guess and it is wrong.
+ * ⚠ `stroke` stays at `drawSlurArc`'s weight even though real print draws both HEAVIER (0.133–0.168 S
+ * vs our 0.100). Thickening only this one would hand the model a thickness cue separating a triplet
+ * from a slur that real pages do not have — the trap `AEU_SHARP_STROKE` documents. Owed as a joint
+ * change with the slur, after this shape has been A/B'd.
+ */
+const TUPLET_MARK = {
+  gap: 1.63,       // S — arc-end to arc-end, the hole the digit sits in (real: 1.55–1.69, n=16)
+  digitH: 1.2,     // S — digit height (real 1.20, ours was 0.97)
+  digitDrop: 0.2,  // S — digit centre just INSIDE the arc ends, toward the staff (real +0.20)
+  rise: 0.9,       // S — how far each segment climbs from its outer end to the gap (real ~0.95)
+  minSeg: 0.5,     // S — shortest segment worth drawing; a narrow group widens OUTWARD instead
+  stroke: 0.11,    // S — deliberately equal to drawSlurArc's; see the warning above
+};
+
+/**
+ * Draw the CURVED tuplet mark as raw SVG, like the voltas/nav marks: two arc segments with the "3"
+ * set in the gap between them, to the measurements in `TUPLET_MARK`. This is the shape printed
+ * Turkish scores use (VexFlow's `Tuplet` only draws the square bracket, which stays as the minority
+ * per-piece style — and which, note, already breaks around its digit).
  */
 function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   const SVG_NS = "http://www.w3.org/2000/svg";
+  const S = STAFF_SPACE;
   const xs = group.map((n) => n.getAbsoluteX());
   const x1 = Math.min(...xs) - 2;
   const x2 = Math.max(...xs) + 12;
@@ -389,21 +419,34 @@ function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   });
   if (ys.length === 0) return;
   const yEdge = above ? Math.min(...ys) - 9 : Math.max(...ys) + 9;
-  const bulge = above ? -9 : 9;
+  // Where the two segments end: the mark's high point, as far from the notes as the old apex was.
+  const yGap = yEdge + (above ? -1 : 1) * TUPLET_MARK.rise * S;
   const midX = (x1 + x2) / 2;
-  const path = document.createElementNS(SVG_NS, "path");
-  // Quadratic arc; its apex sits at yEdge + bulge, where the digit goes.
-  path.setAttribute("d", `M ${x1} ${yEdge} Q ${midX} ${yEdge + bulge * 2} ${x2} ${yEdge}`);
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "#222");
-  path.setAttribute("stroke-width", "1.1");
-  svg.appendChild(path);
+  const half = (TUPLET_MARK.gap * S) / 2;
+  // A group too narrow for a full-width gap widens the mark OUTWARD — never narrows the gap, or the
+  // digit fuses with the arc ends after the encoder's shrink (the sharp-bar failure mode).
+  const outer = Math.max(TUPLET_MARK.minSeg * S, 0);
+  const ax1 = Math.min(x1, midX - half - outer);
+  const ax2 = Math.max(x2, midX + half + outer);
+  // Each segment: quadratic from the outer end up to the gap, control point at the gap's HEIGHT so
+  // the curve arrives horizontally there and does its bending at the outer end — the printed shape.
+  for (const [from, to] of [[ax1, midX - half], [ax2, midX + half]] as const) {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", `M ${from} ${yEdge} Q ${from + 0.55 * (to - from)} ${yGap} ${to} ${yGap}`);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "#222");
+    path.setAttribute("stroke-width", String(TUPLET_MARK.stroke * S));
+    svg.appendChild(path);
+  }
   const text = document.createElementNS(SVG_NS, "text");
   text.setAttribute("x", String(midX));
-  text.setAttribute("y", String(yEdge + bulge + (above ? -2 : 11)));
+  // `y` is the baseline: put the digit's CENTRE `digitDrop` inside the gap, then drop half a digit.
+  const centre = yGap + (above ? 1 : -1) * TUPLET_MARK.digitDrop * S;
+  text.setAttribute("y", String(centre + (TUPLET_MARK.digitH * S) / 2));
   text.setAttribute("text-anchor", "middle");
   text.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
-  text.setAttribute("font-size", "13");
+  // Sized so the glyph measures TUPLET_MARK.digitH: 13 px drew 0.97 S, so 1.20 S needs ~16.
+  text.setAttribute("font-size", "16");
   text.setAttribute("font-style", "italic");
   text.setAttribute("font-weight", "bold");
   text.setAttribute("fill", "#222");
@@ -1203,11 +1246,12 @@ export function SheetView({
       : 0;
 
     // Tuplet mark style, chosen ONCE per piece (a real edition engraves them one way): the
-    // curved arc + "3" of most printed Turkish scores (~70% of pieces, by name hash) or
+    // curved arc + "3" of most printed Turkish scores (~90% of pieces, by name hash) or
     // VexFlow's square bracket. The label token is identical either way — the style variety
-    // is free training realism.
+    // is free training realism. 70% until 2026-08-12; the owner reads arcs as more dominant than
+    // that in real editions, and 10% keeps the bracket represented, since real print does use it.
     const tupletCurved =
-      Array.from(doc.name ?? "").reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10 < 7;
+      Array.from(doc.name ?? "").reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10 < 9;
 
     // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef;
     // the very first measure additionally pays for the one-time time signature.

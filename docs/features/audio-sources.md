@@ -5,7 +5,7 @@ audience: whoever downloads, prepares or audits an audio asset
 updated: 2026-08-11
 
 The rules these files must obey (no bundling, a `source`+`license` per file, `/THIRD-PARTY.txt` as
-each lands) are in [README.md](README.md#the-swap-discipline--required-whatever-is-chosen). This
+each lands) are in [audio-policy.md](audio-policy.md#the-swap-discipline--required-whatever-is-chosen). This
 file is the shortlist that search produced, checked on 2026-08-09.
 
 Every licence below was read **on the source's own page**, not on an aggregator. Nothing has been
@@ -13,7 +13,14 @@ downloaded yet.
 
 ✅ **F2's files are IN as of 2026-08-11** — the darbuka and frame-drum rows below are downloaded,
 prepared and shipping. What was taken from each, and the mapping problem that had to be solved
-first, is the section immediately below. Everything else here is still a shortlist for F1.
+first, is the section immediately below.
+
+⏭ **AND F1 IS NOW THE ACTIVE STEP** (2026-08-11): W10's friends asked for more instrument sounds and
+the owner named **violin, clarinet and kanun** — which are exactly the three rows below that are
+already cleared CC0. So the clarinet, violin and kanun rows stop being a shortlist for later and
+become the shopping list. Ney is still empty under CC0 and needs the owner's own recording; oud and
+tanbur are Karplus–Strong and need no files at all. ⚠ **Kanun's download needs a free Freesound
+account**, so that one step is manual — the same trap F2 dodged by taking VCSL from GitHub.
 
 ⚠ **Neither Freesound file was needed after all.** The plan expected the CompMusic bendir take
 (140291) to be F2's Turkish-stroke source and warned that its download is manual, needing a free
@@ -148,6 +155,6 @@ also CC BY and is a phrase, not notes.
    natively microtonal and costs no bytes — but there is a real recording of the real instrument to
    A/B it against, in an hour.
 2. **CC BY was missing from the licence table** and that omission is exactly where ney lives. It is
-   now a row in [README.md](README.md#four-categories--two-usable-two-not).
+   now a row in [audio-policy.md](audio-policy.md).
 3. **No NC file is needed for anything being built first.** The 2026-08-09 decision hoped for that;
    it is now measured rather than hoped.

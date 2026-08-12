@@ -53,12 +53,20 @@ both drum kits, the copyright pass and the koma-bemol fix. `smoke:live` **PASS o
 the twelve `/audio/*.wav` files answer 200 while `sample.json` still answers 404. Numbers:
 [METRICS.md](METRICS.md).
 
-**W10 IS RELEASED (2026-08-11) — the link is with the friends.** What it still owes is their
-*answers*: W10 is defined as asking **what to add**, about the interface rather than the model
-([mvp/README.md](mvp/README.md)). Until they reply, **F1 and F3 stay unpicked** — choosing one
-now would repeat, deliberately this time, the tension F0/F2 already created by being built
-before anyone was asked. With that sent, **the project's next move is Track B (Round 3)**, which
-is what the public launch is gated on.
+✅ **W10 IS COMPLETE — the friends used it, liked it, and said what to add next: MORE INSTRUMENT
+SOUNDS** (2026-08-11). The link went out, they came back, and the answer was directed enough to
+build from. **This is the loop the whole W0–W10 ladder was for, and it closed.** ⚠ Non-claim, since
+it would be easy to over-read: **n=2 and they are friends**, they were asked what to add rather than
+whether the app is good, and "I like it" is not a usage measurement — `/decode` in the request log
+is ([METRICS-USAGE.md](METRICS-USAGE.md)).
+
+**⏭ So F1 — instrument voices — is next, and it is the friends' request, not a guess.** The owner
+named **violin, clarinet and kanun**, which are *exactly* the three with verified CC0 coverage.
+⚠ Worth keeping straight, because the opposite was written here twice: F0 and F2 **were** built
+before anyone was asked, and that was a genuine tension. It resolved the pleasant way — the friends
+independently pointed where the owner's own list already pointed — but that is **evidence the guess
+was good, not that asking was unnecessary**. F3 and any instrument past these three should still be
+aimed by what the friends say next. Decision rows: [DECISIONS.md](DECISIONS.md).
 
 ✅ **And the stroke tables are verified** (owner, by ear, 2026-08-11): all ten accepted, including
 the four `[derived]` ones no automated check could judge. **F2 is finished** — nothing about it is
@@ -82,7 +90,7 @@ on AWS, a datacenter and a ProtonVPN exit — the app pings `/health` when it op
 a visit counter nobody built, and `/decode` is the honest count. This is the first evidence touching
 the "web first, mobile later" plan, and at n=2 it is **a question for W10's friends, not a finding**.
 Detail and the limits of it: [METRICS-USAGE.md](METRICS-USAGE.md). ⚠ **The friends can now answer it** —
-their own reads are the first data that can move n past 2; see Track A item 5b.
+their own reads are the first data that can move n past 2; see Track A item 5c.
 
 ⚠ **Two copyright items remain open and are both the owner's call**, independent of the redeploy:
 the samples and the neyzen.com screenshot are out of HEAD but remain in the **public** repo's git
@@ -164,15 +172,33 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-5. **W10 — RELEASED 2026-08-11 (owner). The link is out; the ANSWERS are what it owes.** W10 was
-   never defined as "send a link" — it is *"what features should I add?"*, about the interface and
-   not the model ([mvp/README.md](mvp/README.md)). So this rung is **half done**, and the missing
-   half is a conversation, not a task an agent can run. ⚠ **Do not pick F1 or F3 before they
-   answer.** That is the entire reason W10 exists, and F0/F2 were already built ahead of it from the
-   owner's own list — doing it twice would turn a stated tension into a habit
-   ([DECISIONS.md](DECISIONS.md)). ⚠ A friend's first upload after an idle period silently takes the
-   ~10 s cold start; it works, it is just slower, and the status line says where it read.
-5b. **Cheap and newly possible: read the request log now that real users exist.** Until today the
+5. **DONE 2026-08-11 — W10 SHIPPED AND ANSWERED.** Link to two friends, no ads and no in-app
+   widget, just a conversation ([mvp/README.md](mvp/README.md)). They liked it and asked for **more
+   instrument sounds**, which is what item 5b now builds. The rung is complete: it was defined as
+   *"what features should I add?"*, and that question has an answer.
+5b. **⏭ THE NEXT ACTION — F1, INSTRUMENT VOICES: violin, clarinet, kanun.** The friends' own
+   request, and the three the owner named are **exactly** the three with verified CC0 coverage — so
+   this is a download-and-wire job like F2, not a search: clarinet and violin from **VSCO 2 CE**,
+   kanun from **CompMusic Freesound 211133** (a free account is needed, so that download is manual).
+   Ney has **no** CC0 source and needs the owner's own recording; oud and tanbur are
+   **Karplus–Strong**, code rather than files. Per-file list and the prep each needs:
+   [features/audio-sources.md](features/audio-sources.md); the design and the 53-TET constraint:
+   [features/README.md](features/README.md).
+   ⚠ **Start with ONE instrument and ONE note.** `playbackRate` covers ±5–6 semitones before it
+   sounds thin — enough to hear an instrument choice working, and it turns the asset problem from
+   "build a sample set" into "find one usable note". Add notes only where it sounds worst.
+   ⚠ **This is the change that trips `MAX_AUDIO_MB`, and it is supposed to.** The response is
+   pre-registered: set **`VITE_AUDIO_URL`**, upload, **do not raise the number**. The indirection is
+   already built and already tested against a cross-origin host, so it costs an upload and an env
+   var, not a code change.
+   ⚠ **The real new obstacle is compression, not licensing.** There is **no `ffmpeg`/`sox` on this
+   machine**, and ~25 notes × ~2 s is ~4 MB per instrument as WAV against well under 1 MB
+   compressed. Install an encoder or ship fewer, shorter notes — decide before promising a size.
+   ⚠ **Carry F2's level lesson in.** A level safe for a synthesised tone is not safe for a recording,
+   and unlike a drum these voices **replace the notes** rather than sitting beside them — so they go
+   through `MASTER_GAIN` and the limiter where the notes' own 1.0 used to be. Check the mix, not the
+   file: "patlamış" was arithmetic, and the arithmetic changes again here.
+5c. **Cheap and newly possible: read the request log now that real users exist.** Until today the
    "every human so far was on a phone" line rested on **n=2** and could not be more than a question
    ([METRICS-USAGE.md](METRICS-USAGE.md)). The friends' own reads are the first data that can move
    it, and `/decode` is the honest counter (`/health` fires on every page open, robots included).
@@ -180,12 +206,11 @@ the model track never touches the app.** Either can be worked on without waiting
    later" is a **plan**, not a finding, and two friends on phones would be evidence against it.
 6. **Public launch** — a later rung, gated on Round 3's exam result, not on W10.
 
-### Track B — the model (Round 3, UNPAUSED) — ⏭ **AND NOW THE WHOLE PROJECT'S NEXT MOVE**
+### Track B — the model (Round 3, UNPAUSED)
 
-With W10 released (2026-08-11), **Track A has no substantial unblocked work left**: the public launch
-is gated on Round 3's exam, F1/F3 are gated on what the friends say, the speed work is gated on a
-friend complaining, and Editor Step 9 is optional cleanup. Round 3 is therefore the only thing that
-still moves the project on its own — and it is what the launch gate is made of.
+Still the **public-launch gate**, and still runnable at any time — it shares no file with the feature
+track. It stopped being "the whole project's next move" when the owner picked F1 (2026-08-11); the
+two now run in parallel exactly as the 2026-08-05 scoping intended.
 
 1. **Write down what Round 3 must reach, BEFORE training starts** — on the user-effort metric (≥90%
    of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro mean.

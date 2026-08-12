@@ -62,6 +62,7 @@ wrong — fix by deleting, not by syncing.
 | Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
 | **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
 | Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
+| Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

@@ -63,6 +63,22 @@ bottom of this page.
 
 ## Where we are right now
 
+### 11 August 2026: you showed it to two friends, and they told you what to build next
+
+You sent the link to two friends. **They liked it, and they said it would be good to add other
+instrument sounds** — so the next piece of work is exactly that: playing a piece back on a **violin,
+a clarinet and a kanun** instead of the plain tone it uses now.
+
+This is worth pausing on, because it is the thing the last three months of work were *for*. The plan
+always said: get it into someone's hands, ask what to add, then build that. It has now happened, and
+the answer was clear enough to act on.
+
+⚠ **Two honest limits.** It was **two people, and they are friends** — friendly reactions are not a
+measurement, and they were asked *what to add* rather than *whether it is any good*. And the three
+instruments are convenient: they happen to be the three we already have free, legal recordings for.
+Ney, the one you play, has **no** free recording of usable quality anywhere — that one still needs an
+evening of you and a quiet room.
+
 ### 11 August 2026: the usul now plays on a real drum, and it is LIVE
 
 The app could already tap out the usul (the rhythm cycle), but the sound was **made by the computer**

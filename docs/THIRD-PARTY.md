@@ -85,7 +85,7 @@ and the traps found there — including a **CC0-vs-readme contradiction in VSCO 
 ⚠ **The one to watch is not a licence, it is a category.** Most commercial sample libraries, *paid
 ones included*, forbid redistributing the sample files themselves. A web app serves the raw file and
 anyone can lift it out of the network tab, so those libraries are unusable here no matter what is
-paid for them. Reasoning: [features/README.md](features/README.md#audio-assets--what-may-be-used).
+paid for them. Reasoning: [features/audio-policy.md](features/audio-policy.md).
 
 ## The weights
 

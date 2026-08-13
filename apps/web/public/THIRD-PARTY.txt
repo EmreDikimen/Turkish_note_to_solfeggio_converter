@@ -4,7 +4,7 @@ KomaVision — üçüncü taraf bileşenler / third-party notices
 Bu sayfa, uygulamanın kullandığı açık kaynak bileşenleri ve lisanslarını listeler.
 This file lists the third-party components KomaVision ships, and their licenses.
 
-Son güncelleme / last updated: 2026-08-11
+Son güncelleme / last updated: 2026-08-13
 
 
 ESERLER HAKKINDA / ABOUT MUSICAL WORKS
@@ -59,6 +59,29 @@ VCSL (Versilian Community Sample Library)  —  CC0 1.0 (kamu malı / public dom
   silence trimmed, tails cut at 700 ms with a short fade, and levelled to fixed
   düm/tek/ke targets (scripts/prepare_strokes.py). CC0 permits this; it is noted
   so the files are not mistaken for the untouched originals.
+
+
+Çalgı sesleri — klarnet ve keman / instrument voices:
+
+VSCO 2 Community Edition  —  CC0 1.0 (kamu malı / public domain)
+  © Versilian Studios LLC / Sam Gossner
+  https://github.com/sgossner/VSCO-2-CE
+  Klarnet / clarinet:  Woodwinds/Clarinet/susLong (v2)
+  Keman / violin:      Strings/Solo Violin/Arco Vib (f)
+
+  Bu dosyalar DEĞİŞTİRİLMEDEN sunulur — tam uzunlukta, stereo, özgün bit
+  derinliğiyle. Uygulamayla birlikte gelmezler; ayrı bir depodan indirilir
+  (yukarıdaki davul örneklerinin aksine). Ses seviyesi dosyada değil, çalarken
+  uygulanır.
+
+  These files are served UNMODIFIED — full length, stereo, original bit depth —
+  and are downloaded from a separate repository rather than shipping with the
+  app, unlike the drum samples above. Level is applied at playback, not baked in.
+
+  Attribution is given although CC0 does not require it: VSCO 2 CE's own readme
+  asks for credit to Versilian Studios / Sam Gossner, and the CC0 file beside it
+  governs. Only Versilian's own clarinet and solo violin material is used — never
+  the v1.1 "legacy" / Ivy Audio content, where provenance is mixed.
 
 
 KÜTÜPHANELER / LIBRARIES

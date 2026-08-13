@@ -63,6 +63,12 @@ export const TR = {
     percussionVolumeTitle: "Usul vuruşlarının notalara göre ne kadar yüksek çalacağı",
     percussionKit: "Vurmalı çalgı",
     percussionKitTitle: "Usul vuruşlarının hangi davulda çalınacağı",
+    voice: "Çalgı sesi",
+    voiceTitle:
+      "Notaların hangi çalgıyla seslendirileceği. Gerçek kayıtlar ilk seçtiğinizde indirilir " +
+      "(çalgı başına 20–35 MB); inene kadar varsayılan sesle çalar.",
+    voiceLoading: (done: number, total: number) => `ses indiriliyor… ${done}/${total}`,
+    voiceFailed: "ses indirilemedi — varsayılan sesle çalıyor",
     usul: "Usul",
     usulTitle: "Metronomun vuruş kalıbı. Okuma yanılabilir; buradan düzeltebilirsiniz.",
     makam: "Makam",

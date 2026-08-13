@@ -5,12 +5,21 @@
  * from an env var, and a memoised promise that resets on failure so one bad attempt does not poison
  * every later one.
  *
- * ⚠ **Why the base URL is indirected today when nothing needs it.** The kits are ~660 KB and ship
- * from `public/audio/`, which is why `VITE_AUDIO_URL` is unset. F1's instrument voices are the
- * reason it exists anyway: a sampled instrument is ~25 notes at ~4 MB, and four of them would not
- * fit under `prune-dist.mjs`'s budget. When that happens the fix is to point this at a Hub repo and
- * upload — no call site changes. Adding the indirection after the fact would have meant changing
- * every caller and re-arguing a settled decision (docs/DECISIONS.md, 2026-08-11).
+ * ⚠ **The prediction this header used to make came true and was answered differently, so read the
+ * answer rather than re-deriving it.** It said F1's instrument voices would outgrow
+ * `prune-dist.mjs`'s budget and the fix would be to point `VITE_AUDIO_URL` at a Hub repo — "no call
+ * site changes". F1 arrived at 20–35 MB per voice, and the owner ruled on 2026-08-12 that **the
+ * drums stay with the app**: percussion is essential to playback and must not depend on a second
+ * host, and 660 KB fits under the budget with room to spare.
+ *
+ * So the voices got **their own** variable (`VITE_VOICES_URL`, in `loadInstrument.ts`) and this one
+ * stays unset. ⚠ **Do not set `VITE_AUDIO_URL` in a deploy.** It is the base for the whole `audio/`
+ * tree, so pointing it at the voices' repo would take the drums with it, 404 them, and drop
+ * percussion back to the synthesis the owner rejected by ear — silently, because the fallback still
+ * makes a sound. The indirection stays because it costs nothing and a third kit might yet need it.
+ *
+ * A consequence worth keeping: `MAX_AUDIO_MB = 1` in `prune-dist.mjs` is therefore a PERMANENT guard
+ * on these files rather than a trigger that has now fired. (docs/DECISIONS.md, 2026-08-11/12.)
  */
 import type { Stroke } from "@turkish-omr/core";
 import { findKit, type KitId } from "./strokeKits";

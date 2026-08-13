@@ -2,7 +2,7 @@
 
 purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
 audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-11
+updated: 2026-08-13
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
@@ -23,12 +23,19 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | | Feature | Effort | Server? | The real cost | State |
 |---|---|---|---|---|---|
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
-| **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | compression, not licences | ⏭ **NEXT, and it is what W10's friends asked for** (2026-08-11) |
+| **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **BUILT 2026-08-13** — clarinet + violin play; kanun deferred. Waiting on the upload and on check 24 |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
 | **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
 
-Order: **F0 → F2 → F1 → F3**. The first two are built and deployed; **F1 is now active**. F2 came
-first among the visible ones because it has the best payoff per hour.
+Order: **F0 → F2 → F1 → F3**. F0 and F2 are built and deployed, **F1 is built and awaiting its
+upload and its ear check**; only F3 has not started. F2 came first among the visible ones because it
+has the best payoff per hour.
+
+⚠ **"The real cost is compression" was wrong**, and it is worth recording because it steered the
+planning for two weeks. Compression was withdrawn as a problem when the files left the app, and what
+actually cost the time was **asset measurement** — an octave-wrong labelling convention, a
+semitone-wrong file, a URL-hostile filename and a rounding error in the level clamp. None of those
+are visible from a licence table. See [audio-sources.md](audio-sources.md).
 
 ✅ **F1 is no longer a guess about what the owner might want — W10's friends asked for it**
 (2026-08-11). The link went out, they liked it, and said more instrument sounds would be good; the

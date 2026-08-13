@@ -46,8 +46,9 @@ Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces 
 npm run dev:web                      # harness → http://localhost:5173 (decode on YOUR machine)
 npm run dev:cloud                    # the same harness, but decode runs on Cloud Run — see below
 npm run typecheck                    # all workspaces
-npm test                             # stitcher unit tests + label round-trip + edit primitives + usul strokes
+npm test                             # stitcher + label round-trip + edit primitives + usul strokes + voice manifest
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
+                                     # …plus the instrument voices; add --voices-url <hub> for the REAL samples
                                      # …and note-box geometry on a GRACE-NOTE score (see the rule below)
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
@@ -123,6 +124,7 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces.json --out data/synthe
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]
 .venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
+.venv-ml/bin/python scripts/prepare_voices.py [--analyse|--manifest]  # F1's voices: fetch VSCO 2, measure, stage for the Hub
 .venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
 ```
 
@@ -191,6 +193,17 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   instrument voices trip it, the fix is to set that variable and upload, **never** to raise the
   number. Provenance per file lives in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`,
   and the wavs are **generated** by `scripts/prepare_strokes.py` — never hand-edit one.
+  ⚠ **THE INSTRUMENT VOICES DO NOT SHIP AND THE DRUMS DO** (owner, 2026-08-12). F1's clarinet and
+  violin are 20–35 MB each, live in a Hugging Face **dataset** repo, and are fetched at runtime from
+  **`VITE_VOICES_URL`** — a *separate* variable from the drums' `VITE_AUDIO_URL`, which must stay
+  **unset in every deploy**. The reason is not tidiness: `VITE_AUDIO_URL` is one base for the whole
+  `audio/` tree, so pointing it at the voices repo takes the two drum kits with it, 404s them, and
+  drops percussion back to the synthesised strokes the owner rejected by ear — silently, because the
+  fallback still makes a sound. `MAX_AUDIO_MB` is therefore a **permanent guard on the drums**, not
+  a trigger that has now fired. Voice files are never committed, never trimmed and never
+  re-encoded; `scripts/prepare_voices.py` copies them and checks sha256, and every number in
+  `apps/web/src/audio/instruments.ts` is emitted by that script — **never read a pitch off a
+  filename**, VSCO's clarinet labels are an octave low.
   ⚠ Consequence for browser checks: **`data-ready` never appears on a bare visit** —
   it means "a score is installed" and none is. Ask for `?score=` if you need one; wait on
   `#page-input` if you are uploading your own. ⚠ The footer (`#legal`) claims uploads are not

@@ -46,7 +46,25 @@ interface Ev {
 }
 interface Doc { events: Ev[] }
 
+/**
+ * Where the instrument voices are served from, for the OPT-IN real-sample arm (F1).
+ *
+ * Off by default on purpose: the samples are 20–35 MB an instrument, and a check that every run
+ * downloads that much is a check people stop running. Without it this file still exercises the more
+ * important half — the FALLBACK — because an unset base makes every voice load fail, which is
+ * exactly the condition a friend hits when the Hub is unreachable.
+ *
+ *   npm run smoke:editor -- --voices-url https://huggingface.co/datasets/…/resolve/main
+ */
+const VOICES_URL = (() => {
+  const i = process.argv.indexOf("--voices-url");
+  return i >= 0 ? (process.argv[i + 1] ?? "") : "";
+})();
+
 async function main() {
+  // Vite reads VITE_* from the environment at config time, so this has to be set before the server
+  // is created — not after, and not per-page.
+  if (VOICES_URL) process.env.VITE_VOICES_URL = VOICES_URL;
   const server = await createServer({ root: WEB_ROOT, server: { port: 0 } });
   await server.listen();
   const base = server.resolvedUrls!.local[0]!.replace(/\/$/, "");
@@ -487,7 +505,103 @@ async function main() {
   check("switching the kit loads the other drum", swapped.kit, "bendir");
   check("...with all three of its strokes", swapped.loaded, 3);
 
+  // --- the instrument voice (feature track F1) ---------------------------------------------------
+  //
+  // ⚠ Same blind spot as the drums, one step worse: a note sounded by a recording and a note sounded
+  // by an oscillator are the same DOM, the same event counts and the same playhead. `__omrVoice()`
+  // reports which path each note actually took, and `sampled`/`synth` is the only evidence the
+  // feature does anything at all.
+  const voiceInfo = async (): Promise<{
+    voice: string; state: string; loaded: number; total: number;
+    sampled: number; synth: number; truncated: number;
+  }> =>
+    page.evaluate(() =>
+      (window as unknown as { __omrVoice: () => never }).__omrVoice(),
+    );
+
+  const picker = page.locator("#instrument");
+  check("an instrument picker is offered", await picker.isDisabled(), false);
+  check("...defaulting to the built-in tone", await picker.getAttribute("data-instrument"), "sine");
+  // ⚠ Not gated on the usul, unlike the drum controls: an instrument has nothing to do with the
+  // rhythm, and gating it would hide the feature on any piece whose usul has no stroke pattern.
+  await page.locator("#percussion-kit").selectOption("darbuka");
+  await perc.uncheck();
+  await page.waitForTimeout(100);
+  check("...and still offered with the usul's strokes off", await picker.isDisabled(), false);
+
+  await picker.selectOption("clarinet");
+  await page.waitForTimeout(300);
+  check("choosing an instrument is mirrored as state", await picker.getAttribute("data-instrument"), "clarinet");
+  check("...and the backend agrees", (await voiceInfo()).voice, "clarinet");
+
+  // The transport must not wait for a 20–35 MB download. This is the regression guard on
+  // `play()` deliberately NOT awaiting `ensureVoice` — if it ever starts awaiting it, this hangs
+  // rather than failing quietly.
+  const beforePlay = Date.now();
+  await page.locator("#palette-play").click();
+  await page.waitForFunction(
+    () => document.querySelector("#play")?.getAttribute("data-play-state") === "playing",
+    undefined,
+    { timeout: 5000 },
+  );
+  console.log(`  Play responded in ${Date.now() - beforePlay} ms with a voice selected`);
+  await page.waitForTimeout(600);
+
+  const heard = await voiceInfo();
+  console.log(
+    `  voice "${heard.voice}" ${heard.state}, ${heard.loaded}/${heard.total} decoded, ` +
+      `${heard.sampled} sampled / ${heard.synth} synthesised notes`,
+  );
+
+  if (VOICES_URL) {
+    // The opt-in arm: real files, from the real host.
+    await page.waitForFunction(
+      () => (window as unknown as { __omrVoice: () => { state: string } }).__omrVoice().state === "ready",
+      undefined,
+      { timeout: 120000 },
+    );
+    await page.locator("#palette-play").click();
+    await page.waitForTimeout(800);
+    const real = await voiceInfo();
+    check("every sample of the voice decoded", real.loaded, real.total);
+    check("...and the notes were sounded by recordings", real.sampled > 0 && real.synth === 0, true);
+    check("...with none outlasting its recording", real.truncated, 0);
+  } else {
+    // ⚠ The default arm, and the property that matters most: with no host configured every voice
+    // load FAILS, and the app must keep playing anyway. A voice that will not download is a reason
+    // to hear the built-in tone, never a reason for silence — the same rule as the drums' fallback
+    // and the in-browser decode fallback. Nothing else here would notice the difference.
+    await page.waitForFunction(
+      () => (window as unknown as { __omrVoice: () => { state: string } }).__omrVoice().state === "failed",
+      undefined,
+      { timeout: 15000 },
+    );
+    check("an unreachable voice host is reported, not hidden",
+      await picker.getAttribute("data-voice-state"), "failed");
+    check("...but the piece is still playing",
+      await page.locator("#play").getAttribute("data-play-state"), "playing");
+    const fell = await voiceInfo();
+    check("...every note sounded by the built-in tone", fell.sampled === 0 && fell.synth > 0, true);
+    const fedOn = await audioProgress();
+    check("...and the scheduler is still feeding", fedOn.scheduled > 0, true);
+  }
+
+  // ⚠ The drums must be untouched by all of this. They resolve from the app's own origin
+  // (`VITE_AUDIO_URL`, deliberately unset) while the voices resolve from `VITE_VOICES_URL` — this is
+  // the check that the two bases stayed separate. Merging them would 404 the percussion in
+  // production and silently regress it to the synthesis the owner rejected by ear.
   await page.locator("#palette-stop").click();
+  await perc.check();
+  await page.locator("#palette-play").click();
+  await page.waitForTimeout(600);
+  const stillDrums = await percussionInfo();
+  check("the drums still come from the app, whatever the voices do", stillDrums.loaded, 3);
+
+  await page.locator("#palette-stop").click();
+  await picker.selectOption("sine");
+  await page.waitForTimeout(200);
+  check("switching back to the built-in tone", (await voiceInfo()).voice, "sine");
+
   await vol.fill("100");
   await page.locator("#percussion-kit").selectOption("darbuka");
   await perc.uncheck(); // leave the transport as the rest of this run expects it

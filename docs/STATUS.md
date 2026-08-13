@@ -2,123 +2,85 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-11
+updated: 2026-08-13
 
 ## Now
 
-**The feature track is open, and its first two features are BUILT AND DEPLOYED.** The owner
-re-confirmed the parallel split on 2026-08-10 and asked for the non-model track to start; it runs on
-`main`, since it shares no file with Round 3. Scope was **F0 + F2 only** — F1 (instrument voices) and
-F3 (fingerboard tab) stay designed-not-started ([features/README.md](features/README.md)).
+✅ **Two rounds of ear feedback have landed, and each corrected the previous measurement.** Round 1:
+16th notes came out as *"just like breath"* (clarinet) and an annoying *creak* (violin) — a short note
+was playing the attack transient and stopping before the instrument spoke, at up to **13× less
+volume** than a long one. Round 2, after the first fix: *"we can trim less from the beginning… or
+maybe trim differently for different duration of the notes"* — both right. The first fix used an
+**amplitude** threshold, which waits for full loudness rather than for the noise to stop, and
+overshot in every file (158 ms where the tone settles at 92, 1178 where it settles at 404). Breath is
+spectral, so the settled point is now measured on **harmonic content**, and **how much attack a note
+keeps depends on the note**: it inherits the recorded swell only when that swell is ≤25% of it.
+⚠ A smooth blend was tried and is wrong — it lands *inside* the transient for files with a long one,
+which put the creak back in the middle of the range while both ends measured fine. ⚠ Cost: one
+subtraction and one comparison per note; nothing measurable. ⚠ **The trim is in TIME, not in the
+file** — the wavs stay byte-identical, so round 2 cost no re-upload, which is exactly why that
+decision keeps paying. **Still needs a re-listen** — check 24 is not closed. Numbers: [features/audio-sources.md](features/audio-sources.md).
 
-**F0 rebuilt playback** on one long-lived `AudioContext` with a look-ahead scheduler. Nothing
-user-visible changed; it exists so a *sample* can be cached at all, because the old `stop()` closed
-the context and an `AudioBuffer` dies with it. **F2 made the usul play its own düm/tek/ke strokes**
-instead of a metronome blip — a checkbox beside `Metronom`, `buildPercussionTrack` in core, a
-`Vuruş sesi` slider, and now a **`Vurmalı çalgı` picker** choosing between a real **darbuka** and a
-real **bendir**.
+**F1 — instrument voices — is BUILT, UPLOADED and verified; it is not deployed and the fix above is
+unheard.** The app has a `Çalgı sesi` picker offering **Klarnet** and **Keman** beside the built-in tone,
+and a note is sounded by a real recording resampled onto its exact koma. The 26 CC0 files are live at
+<https://huggingface.co/datasets/Beyaban/omr-voices> (55.6 MB); `smoke:editor` driven against that URL
+reads **11/11 decoded, every note sounded by a recording and none by the synth**, with the drums still
+loading from the app in the same run. The two open steps are **check 24 by ear**
+([MANUAL_CHECKS.md](MANUAL_CHECKS.md)) and a deploy — see Track A item 5b.
 
-✅ **The synthesised strokes were rejected by ear that morning and replaced the same day.** The
-strokes are CC0 VCSL recordings, prepared by `scripts/prepare_strokes.py`; the synthesis survives
-only as the fallback for a kit that has not downloaded. The swap reached exactly the one method it
-was designed to reach, and `usul-test.ts` passes **unchanged**, which is how we know core did not
-move. ⚠ The instructive part is the **bar**, not the code: the plan wrote down *"düm and tek must be
-unmistakable from each other"*, the synthesis met it, and meeting it is how it failed.
+✅ **The per-note fallback earned itself over a real network.** Against the Hub the first few notes of
+a playback are still synthesised while the download runs, and the piece switches to recordings
+mid-phrase with no re-schedule. That is why `play()` never waits on 20–35 MB, and only real latency
+could show it — the local stand-in was ready before the first note.
 
-**Which drum a file is was decided by measurement, not by its name.** VCSL numbers its darbuka
-articulations 1–5 and never says which is the open centre hit, so each is measured (low-band energy,
-spectral centroid, decay) and the mapping follows the physics. The frame drum — whose files *are*
-self-described — was the control, and agreed. That caught two things a reasonable guess would not:
-both `Hand` takes are 40+ dB down and unusable as a tek, and inheriting VCSL's session levels would
-have re-created the inaudibility bug fixed that morning from a different cause. Detail:
-[features/audio-sources.md](features/audio-sources.md); the account:
-[log/status-log.md](log/status-log.md).
+⚠ **The drums do NOT move to the Hub, and that reverses what three files predicted** (owner,
+2026-08-12). Percussion is essential to playback, so the kits keep shipping with the app and only the
+voices are hosted off it, on **their own `VITE_VOICES_URL`**. `VITE_AUDIO_URL` is one base for the
+whole `audio/` tree, so setting it in a deploy would take the drums with it and 404 them into the
+synthesis the owner rejected by ear — silently, since the fallback still makes a sound.
+`MAX_AUDIO_MB = 1` is therefore a **permanent guard on the drums**, not a trigger that has fired.
+Rows: [DECISIONS.md](DECISIONS.md).
 
-⚠ **The first cut clipped, and the fix is a level rule worth carrying into F1.** The owner heard the
-darbuka "patlamış"; the files were clean and the **mix** was not — a note is a normalised wave at
-gain 1.0 into the same master as a düm normalised to 0.89, which hard-clipped 38% of the waveform at
-the default slider. Stroke peaks dropped to 0.50/0.35/0.19 (ratios kept), master 0.85 → 0.72, and a
-**limiter** now sits before the destination so no slider setting can clip again. **A level that is
-safe for a synthesised blip is not safe for a recorded instrument** — F1 puts more recordings through
-this same master. Numbers: [log/status-log.md](log/status-log.md).
+**Measuring the audio files rather than trusting their names paid for itself three times** — the
+method `prepare_strokes.py` used on VCSL's numbered drums, applied to a library whose files *look*
+self-describing. VSCO's clarinet labels sit **an octave below** sounding pitch; the violin needed no
+offset and was the control that proved it; and one file is **mislabelled by a semitone at source**.
+It also corrected a number the docs had carried twice: the widest pitch gap is **5 semitones**, so the
+worst stretch is ±2.5, not ±1.5. Detail: [features/audio-sources.md](features/audio-sources.md).
 
-**Audio ships from the app, but behind `VITE_AUDIO_URL`** — the owner asked which is easier to
-maintain given more instruments are coming. 660 KB does not justify a second host; F1's instruments
-do — measured at **~20 MB each**, 40–60 MB for the three. So the files are local and the loader already reads the env var, tested against an
-off-app origin, and `MAX_AUDIO_MB` in `prune-dist.mjs` fails the build when it is time to move.
-Decision and its pre-registered trigger: [DECISIONS.md](DECISIONS.md).
+**On the model side, the tuplet mark has been MEASURED against real print, REDRAWN, and passed the
+owner's eye.** 16 of 16 marks across ~11 real editions **break the arc and set the "3" in the gap**,
+and no continuous-arc-with-a-floating-digit exists in the real pools. `drawTupletArc` now draws two
+arms with the digit in the gap and the curved-arc share is 70% → 90%. The owner's review then changed
+it twice more — arms follow the notes, the digit is regular weight — and the correction that did
+**not** survive measurement was sliding the gap toward the high side: print puts the digit dead centre
+(0.49–0.50 of the span). ⚠ **Nothing about recall is claimed; the A/B has not run.** Numbers:
+[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md); account: [rung3/tuplets.md](rung3/tuplets.md).
 
-**All of it is DEPLOYED** (2026-08-11) — <https://komavision.netlify.app> now carries F0, F2 with
-both drum kits, the copyright pass and the koma-bemol fix. `smoke:live` **PASS on both paths**, and
-the twelve `/audio/*.wav` files answer 200 while `sample.json` still answers 404. Numbers:
-[METRICS.md](METRICS.md).
+**Why that redraw was worth doing:** the `\tup3` weakness is a trade made on purpose — the slur
+distractors took precision 15.1% → 91.2% and pushed recall **92.7% → 83.8%**, under its floor and
+below where it started, so the model now *misses* triplets rather than inventing them. Drawing the
+mark unlike real print was the suspected cause, and the measurement held.
 
-✅ **W10 IS COMPLETE — the friends used it, liked it, and said what to add next: MORE INSTRUMENT
-SOUNDS** (2026-08-11). The link went out, they came back, and the answer was directed enough to
-build from. **This is the loop the whole W0–W10 ladder was for, and it closed.** ⚠ Non-claim, since
-it would be easy to over-read: **n=2 and they are friends**, they were asked what to add rather than
-whether the app is good, and "I like it" is not a usage measurement — `/decode` in the request log
-is ([METRICS-USAGE.md](METRICS-USAGE.md)).
-
-**⏭ So F1 — instrument voices — is next, and it is the friends' request, not a guess.** The owner
-named **violin, clarinet and kanun**, which are *exactly* the three with verified CC0 coverage.
-⚠ Worth keeping straight, because the opposite was written here twice: F0 and F2 **were** built
-before anyone was asked, and that was a genuine tension. It resolved the pleasant way — the friends
-independently pointed where the owner's own list already pointed — but that is **evidence the guess
-was good, not that asking was unnecessary**. F3 and any instrument past these three should still be
-aimed by what the friends say next. Decision rows: [DECISIONS.md](DECISIONS.md).
-
-✅ **And the stroke tables are verified** (owner, by ear, 2026-08-11): all ten accepted, including
-the four `[derived]` ones no automated check could judge. **F2 is finished** — nothing about it is
-open.
-
-**The beta is live, the copyright pass is deployed, and the link HAS been sent (2026-08-11).**
-<https://komavision.netlify.app> — page upload, the slicer, server decode with an in-browser
-fallback, makam-aware playback, the armed editor, Turkish throughout. What each of those
-established, and the traps inside them, moved to **[mvp/standing.md](mvp/standing.md)**
-(2026-08-08). Nothing there is a next action.
-
-**A genuine Cloud Run cold start is finally measured** (11.3 s wall, 10,093 ms of it graph loading,
-after ~3 h idle) — but it was caused by a post-deploy crawler, not by the app, so it does **not**
-close the cold-start open risk below. Evidence and the correction: [METRICS.md](METRICS.md).
-
-**Someone who is not the owner has already used it, unannounced — and every human so far was on a
-phone.** Of the three page reads on 2026-08-08, one was the owner's own Android; the other two came
-from a home ADSL line and from the owner's network six hours apart, both Android, and the log cannot
-say whether that is **one stranger or two**. Around them is a `/health`-only trickle that whois puts
-on AWS, a datacenter and a ProtonVPN exit — the app pings `/health` when it opens, so that trickle is
-a visit counter nobody built, and `/decode` is the honest count. This is the first evidence touching
-the "web first, mobile later" plan, and at n=2 it is **a question for W10's friends, not a finding**.
-Detail and the limits of it: [METRICS-USAGE.md](METRICS-USAGE.md). ⚠ **The friends can now answer it** —
-their own reads are the first data that can move n past 2; see Track A item 5c.
-
-⚠ **Two copyright items remain open and are both the owner's call**, independent of the redeploy:
-the samples and the neyzen.com screenshot are out of HEAD but remain in the **public** repo's git
-history (clearing them needs a `filter-repo` rewrite and a force-push), and there is still **no
-LICENSE file**. Detail: [THIRD-PARTY.md](THIRD-PARTY.md).
-
-**The two tracks run in parallel, as re-scoped 2026-08-05:** the product track never trains, the
-model track never touches the app, and neither waits for the other. Who the release is for, what
-they are asked, and why Round 3 is not aimed by their answers: [mvp/README.md](mvp/README.md) and
-[DECISIONS.md](DECISIONS.md).
-
-**On the model side, the tuplet weakness was diagnosed on 2026-08-11 and it is not what anyone
-thought.** An owner report of two misread triplets led to reading the data instead of the docs.
-Three things came out of it. **The tuplet labelling is finished and promoted** — 169 strips / 205
-groups, training at `:8`, exam gold 4 → 55 — and [rung3/labeling.md](rung3/labeling.md) had said
-otherwise for three weeks, so "finish the queue" was recommended three times in a row from a stale
-file. **The real weakness is a trade we made on purpose**: the slur distractors took `\tup3`
-precision 15.1% → 91.2% and pushed recall **92.7% → 83.8%**, under its floor and below where it
-started — the model misses triplets now rather than inventing them. **And the likely cause is that we
-draw the mark wrong**: real Turkish editions break the arc and set the "3" in the gap, while
-`drawTupletArc` draws an unbroken curve with the digit floating above, so our corpus separates a
-triplet from a phrase slur by a faint mark where real print separates them structurally. Same shape
-as the Bravura sharp-bar defect — **a hypothesis with a mechanism, A/B'd against nothing yet**. Full
-account: [rung3/tuplets.md](rung3/tuplets.md).
+**The two tracks run in parallel, as re-scoped 2026-08-05:** the product track never trains, the model
+track never touches the app, and neither waits for the other. [mvp/README.md](mvp/README.md).
 
 **W8 (confidence highlighting) is DROPPED** — its pre-registered bar was not met and the bar was not
-moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is the saying-so. The
-measurement that dropped it: [mvp/standing.md](mvp/standing.md).
+moved to fit. That leaves half of the 2026-07-27 goal unbuilt, and this line is the saying-so.
+Measurement: [mvp/standing.md](mvp/standing.md).
+
+⚠ **Two copyright items remain open and are both the owner's call**: the samples and the neyzen.com
+screenshot are out of HEAD but remain in the **public** repo's git history (clearing them needs a
+`filter-repo` rewrite and a force-push), and there is still **no LICENSE file**.
+[THIRD-PARTY.md](THIRD-PARTY.md).
+
+⚠ **Every human who has used the deployed app was on a phone, and n is still 2.** Of the three page
+reads on 2026-08-08 one was the owner's Android and two came from elsewhere, both Android; the log
+cannot say whether that is one stranger or two. `/health` fires on every page open, so `/decode` is
+the honest counter. This is the first evidence touching "web first, mobile later" and it is **a
+question, not a finding** — the friends' own reads can now move it (Track A item 5c).
+[METRICS-USAGE.md](METRICS-USAGE.md).
 
 ## Previously — the settled context
 
@@ -129,6 +91,8 @@ a next action.
 |---|---|
 | Product (W0–W9.7, the server, the three shipped features) | [mvp/standing.md](mvp/standing.md) — moved 2026-08-08 |
 | Real pages (real-val v2, the re-slice, Round 3 pre-render checks, the Round 2 position) | [rung3/standing.md](rung3/standing.md) — moved 2026-08-07 |
+| The feature track (F0's scheduler, F2's drums and how each stroke was identified, F1's voices) | [features/README.md](features/README.md) + [features/audio-sources.md](features/audio-sources.md) — the narrative left this file 2026-08-13 |
+| What happened on any given day, and why | [log/status-log.md](log/status-log.md) |
 
 ## Next — two tracks, running in parallel
 
@@ -137,30 +101,14 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-0. **DONE 2026-08-11 — the real drum samples are in.** VCSL darbuka + frame drum, CC0, chosen by
-   measurement and shipping from `public/audio/` behind `VITE_AUDIO_URL`. Kept here for one sitting
-   because item 0b below rests on it.
-0b. **DONE 2026-08-11 — the usul stroke tables are VERIFIED BY EAR and accepted** (owner, after
-   listening: *"they sound really nice"*). That covers all ten, **including the four `[derived]`
-   ones** — Devr-i Hindî, Curcuna, Aksak Semâi and Ağır Aksak — which were our reduction of the
-   usul's beat grouping rather than a quoted pattern, and which no automated check could ever
-   judge. F2 now has nothing open. ⚠ The verdict is one musician's ear, which is the only standard
-   that exists for this and is **not** the same as a cited source; if a pattern is ever disputed,
-   re-open the `[derived]` four first and cite a source rather than re-deriving.
-1. **DONE 2026-08-11 — F0 + F2 ARE DEPLOYED.** `npm run deploy:app` then `smoke:live`, PASS on both
-   paths. ⚠ **`deploy:app` needed a fix to run unattended and it is in**: `netlify-cli` now detects
-   the workspaces and *stops on an interactive "select the project" prompt* unless given
-   `--filter @turkish-omr/web`, so the documented one-command recipe hung after a successful build
-   and published nothing. The build succeeding is not the deploy happening — read for the
-   `Deploy is live!` line. Long form: [mvp/hosting-setup.md](mvp/hosting-setup.md).
-   ⚠ **Deploying is NOT what keeps the owner's Mac cool, and it was believed to be** (owner asked
-   2026-08-11). `npm run dev:cloud` is: the local harness with `VITE_DECODE_URL` pointed at the live
-   service, verified end to end that day (`data-where="server"`, 27.3 s of decode on Cloud Run
-   against 1.6 s of slicing locally). **Plain `dev:web` sets no decode URL and reads the page in the
-   browser** — measured, not assumed: with port 5173 genuinely empty it serves an `import.meta.env`
-   with no `VITE_DECODE_URL` in it. A CLAUDE.md line claiming otherwise was the cause and is fixed.
-2. **DONE 2026-08-09 — the copyright redeploy shipped**, Netlify only, plus the model card on the
-   Hub. Kept here for one sitting because it is what the state above rests on.
+0. **Items 0, 0b, 1 and 2 are DONE and have been retired from this list** (the real drum samples,
+   the ear-verified stroke tables, the F0+F2 deploy, the copyright redeploy — all 2026-08-09/11).
+   They were each parked here "for one sitting"; that sitting has passed, and the account of every
+   one of them is in [log/status-log.md](log/status-log.md). ⚠ Two traps they left behind live
+   elsewhere now: `deploy:app` needs `--filter @turkish-omr/web` or `netlify-cli` hangs on a
+   workspace prompt after a successful build and publishes nothing
+   ([mvp/hosting-setup.md](mvp/hosting-setup.md)), and **`dev:cloud`, not deploying, keeps the Mac
+   cool** ([../CLAUDE.md](../CLAUDE.md)).
 3. **EDITOR STEP 9: delete `Save JSON`** (and its two `app-smoke` checks and the `PIPELINE.md`
    references). The last item on the editor's list; steps 1–8 and 10 are done, deployed and checked
    on the production bundle. ⚠ It needs one thing solved first: **`smoke:editor` reads the document
@@ -172,41 +120,37 @@ the model track never touches the app.** Either can be worked on without waiting
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
    chunked-vs-unchunked parity check. **The trigger to build it is a friend saying the wait is
    annoying**, which is exactly what W10 is for. Menu and prices: [mvp/latency.md](mvp/latency.md).
-5. **DONE 2026-08-11 — W10 SHIPPED AND ANSWERED.** Link to two friends, no ads and no in-app
-   widget, just a conversation ([mvp/README.md](mvp/README.md)). They liked it and asked for **more
-   instrument sounds**, which is what item 5b now builds. The rung is complete: it was defined as
-   *"what features should I add?"*, and that question has an answer.
-5b. **⏭ THE NEXT ACTION — F1, INSTRUMENT VOICES: violin, clarinet, kanun.** The friends' own
-   request, and the three the owner named are **exactly** the three with verified CC0 coverage — so
-   this is a download-and-wire job like F2, not a search: clarinet and violin from **VSCO 2 CE**,
-   kanun from **CompMusic Freesound 211133** (needs a free account, so that download is manual).
-   Ney has **no** CC0 source and needs the owner's own recording; oud and tanbur are
-   **Karplus–Strong**, code rather than files. Files and licences:
-   [features/audio-sources.md](features/audio-sources.md); design and the 53-TET constraint:
-   [features/README.md](features/README.md); the rules every file obeys:
-   [features/audio-policy.md](features/audio-policy.md).
+5. **DONE 2026-08-11 — W10 SHIPPED AND ANSWERED**: the link went to two friends, they liked it, and
+   asked for **more instrument sounds** — which is what 5b built. The rung is complete. Account:
+   [mvp/README.md](mvp/README.md).
+5b. **F1, INSTRUMENT VOICES — BUILT 2026-08-13 (clarinet + violin). Kanun deferred.** The friends'
+   own request. Everything in the app is done and checked: the `Çalgı sesi` picker, per-note
+   selection between a recording and the built-in tone, `playbackRate` onto the exact koma,
+   Cache-Storage caching like the weights, and a fallback that keeps playing when the host is
+   unreachable. Kanun stayed out because it needs a Freesound account and onset-splitting a
+   two-minute take — a different job, and the manifest is shaped so it is a data change.
+   ⚠ Ney still has **no** CC0 source and needs the owner's own recording; oud and tanbur remain
+   **Karplus–Strong**, code rather than files.
 
-   **Settled with the owner before starting** ([DECISIONS.md](DECISIONS.md)):
-   **(a) Nothing is compressed or trimmed** — full length, stereo, original bit depth. Quality is the
-   priority and size is not a constraint once the files leave the app.
-   **(b) They live in a Hugging Face Hub repo**, served through `VITE_AUDIO_URL`. This is the
-   pre-registered trigger firing, not a new decision — measured, VSCO 2's clarinet `susLong` is 33
-   files at ~1.8 MB each, so **one velocity across 11 pitches is ~20 MB and three instruments are
-   40–60 MB**, against a 60 MB dist already at 43.4. **`MAX_AUDIO_MB` stays at 1; do not raise it.**
-   **(c) Not committed to git** — ~50 MB of binaries in a public repo is permanent, and this project
-   already has files stuck in its history.
+   **✅ UPLOADED 2026-08-13** to `Beyaban/omr-voices` (a **dataset** repo — note the `/datasets/`
+   path segment, which does not resolve like the weights' model repo). Verified from outside: 200
+   after the LFS redirect, byte counts identical to the VSCO originals, `access-control-allow-origin`
+   echoed for the deployed origin, and the `#` in `A#2` resolving percent-encoded.
 
-   ⚠ **Two consequences of (a) worth carrying in.** These are **7–10 second sustains**, longer than
-   almost any notated note, so **no sample needs looping** — the expensive-looking choice is also the
-   simpler one. And at ~20 MB an instrument, **loading only on selection stops being an optimisation
-   and becomes a requirement**; the `loadStrokeKit.ts` comment saying Cache Storage is not worth it
-   is **true for 660 KB of drums and false here**, so F1 should cache like `omr/session.ts` does for
-   the weights. Revisit that comment rather than inheriting it.
-   ⚠ **Carry F2's level lesson in.** A level safe for a synthesised tone is not safe for a recording,
-   and unlike a drum these voices **replace** the notes rather than sitting beside them — so a sample
-   lands where the synthesised note's gain of 1.0 used to be, and `MASTER_GAIN` (0.72) plus the
-   limiter were retuned around exactly that. "Patlamış" was arithmetic, and it changes again here.
-   Check the mix, not the file.
+   **⏭ WHAT IS LEFT IS TWO STEPS:**
+   **(1) Check 24 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md) — by ear**, which is the gate, as check 23
+   was for F2. Nobody has heard this yet.
+   **(2) Deploy** (`npm run deploy:app`, then `smoke:live`). `VITE_VOICES_URL` is already in that
+   script, so the voices ship with the next deploy whether or not anyone has listened — which is the
+   argument for doing check 24 first. The one number most likely to come back wrong is the per-voice `gain`: the voices are
+   **peak-matched**, so they will sound a few dB quieter than the beep, which is the trade and not a
+   fault. If the owner wants them louder the order is `gain` → a `Çalgı sesi` slider → **never**
+   `MASTER_GAIN`.
+
+   **What the owner settled before it started, all three honoured** ([DECISIONS.md](DECISIONS.md)):
+   nothing compressed or trimmed (the staged files are **byte-identical to the library's**, asserted
+   by sha256); hosted on the Hub; not committed to git. ⚠ What CHANGED during the work: the host
+   variable is **`VITE_VOICES_URL`**, not `VITE_AUDIO_URL` — see the "Now" section above.
 
 5c. **Cheap and newly possible: read the request log now that real users exist.** Until today the
    "every human so far was on a phone" line rested on **n=2** and could not be more than a question
@@ -226,13 +170,22 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro mean.
    This is now also the **public-launch gate**, so it settles more than one thing. Then render once,
    train stage 1 once with several cheap stage-2 variants, read the exam once.
-1b. **⏭ THE TUPLET MARK — redraw the arc broken, with the "3" in the gap**, and raise the curved-arc
-   share above 70% (owner, 2026-08-11). `drawTupletArc` in `apps/web/src/SheetView.tsx`; **pixels
-   only, no label moves**, so it costs a re-render and nothing else. Show a rendered sample beside a
-   real page before re-rendering at scale — the shape is a domain judgement. Then A/B on `\tup3`
-   recall, which has missed its floor twice and now sits *below* its own pre-work baseline. ⚠ Do
-   **not** touch the 35% slur-distractor rate in the same change; it is the obvious second knob and
-   moving both makes the result unreadable. Diagnosis, plan and non-claims:
+1b. **THE TUPLET MARK — DONE 2026-08-12, and it is measured, not guessed.** The arc is broken with the
+   "3" in the gap and the curved-arc share is 90% (`TUPLET_MARK` + `drawTupletArc`,
+   `apps/web/src/SheetView.tsx`); pixels only, and `verify-labels` on the pilot is 309/309 exact, so no
+   label moved. Real print was measured first (16/16 marks broken, ~11 editions) and the redraw lands on
+   every quantity: [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+1c. **DONE 2026-08-12 — the owner judged the shape** on
+   `data/real/rung3/tuplet_probe/mark_comparison.png` (regenerate:
+   `.venv-ml/bin/python scripts/rung3/tuplet_mark_sheet.py`; ⚠ **local viewing only**, the real row is a
+   third-party edition — [THIRD-PARTY.md](THIRD-PARTY.md)). Two corrections came back and are in: the
+   arms follow the notes, the digit is lighter.
+1d. **⏭ THE NEXT ACTION — re-render the corpus and A/B `\tup3` recall**, which has missed its floor
+   twice and now sits *below* its own pre-work baseline. ⚠ Write item 1's acceptance bar down **first**,
+   because an A/B is training. ⚠ Do **not** touch the 35% slur-distractor rate in the same change; it is
+   the obvious second knob and moving both makes the result unreadable. ⚠ Also owed and deliberately
+   deferred: real print draws the arc **heavier** than we do, and that must change jointly with
+   `drawSlurArc` or it becomes a thickness cue real pages do not have. Plan and non-claims:
    [rung3/tuplets.md](rung3/tuplets.md). ⚠ **No new labelling** — the tuplet queues are finished and
    promoted, whatever [rung3/labeling.md](rung3/labeling.md) said until 2026-08-11.
 2. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner

@@ -16,6 +16,8 @@
 
 import { findUsul, USULS, type MakamOption } from "@turkish-omr/core";
 import { KITS, type KitId } from "../audio/strokeKits";
+import { VOICES, type VoiceId } from "../audio/instruments";
+import type { VoiceStatus } from "../webAudioBackend";
 import type { AccidentalMode } from "../SheetView";
 import { TR } from "./strings";
 
@@ -35,6 +37,9 @@ export function TransportBar({
   onPercussionVolume,
   percussionKit,
   onPercussionKit,
+  voice,
+  onVoice,
+  voiceStatus,
   usulName,
   onUsul,
   makamSlug,
@@ -67,6 +72,11 @@ export function TransportBar({
   /** Which drum the strokes are played on. Real CC0 recordings, one set per kit. */
   percussionKit: KitId;
   onPercussionKit: (v: KitId) => void;
+  /** Which instrument sounds the notes. `sine` is the built-in tone and needs no download. */
+  voice: VoiceId;
+  onVoice: (v: VoiceId) => void;
+  /** Load progress for the chosen voice, so the picker can say why nothing has changed yet. */
+  voiceStatus: VoiceStatus;
   usulName: string;
   onUsul: (v: string) => void;
   makamSlug: string;
@@ -210,6 +220,35 @@ export function TransportBar({
             </option>
           ))}
         </select>
+      </label>
+
+      {/* ⚠ Unlike the kit picker above, this one offers its synthesised option and is NOT gated on
+          the usul: an instrument has nothing to do with the rhythm, and the default tone is the only
+          thing that plays before a 20–35 MB download finishes, so hiding it would be hiding the one
+          choice that always works. `data-voice-state` is how a headless check reads the load without
+          matching Turkish copy — and how it can tell a working fallback from a broken feature. */}
+      <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.voiceTitle}>
+        <span>{TR.transport.voice}</span>
+        <select
+          id="instrument"
+          data-instrument={voice}
+          data-voice-state={voiceStatus.state}
+          value={voice}
+          disabled={!canPlay}
+          onChange={(e) => onVoice(e.target.value as VoiceId)}
+        >
+          {VOICES.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.label}
+            </option>
+          ))}
+        </select>
+        {voiceStatus.state === "loading" && (
+          <small className="kv-hint">
+            {TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total)}
+          </small>
+        )}
+        {voiceStatus.state === "failed" && <small className="kv-hint">{TR.transport.voiceFailed}</small>}
       </label>
 
       <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.usulTitle}>

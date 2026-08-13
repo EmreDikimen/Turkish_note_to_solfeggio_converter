@@ -38,7 +38,8 @@ import {
 import { closedTupletAt, memberPositions, tupletRunFrom } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
-import { WebAudioBackend, type PlayOptions } from "./webAudioBackend";
+import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
+import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
 import { MakamModal } from "./MakamModal";
@@ -92,6 +93,11 @@ const backend = new WebAudioBackend();
 (
   window as unknown as { __omrPercussion?: () => { kit: string | null; loaded: number } }
 ).__omrPercussion = () => backend.percussionInfo();
+
+// Which instrument voice decoded, and which path actually sounded this playback's notes. Same
+// blind spot as the drums, one step worse: a note is a note on screen whether a recording or an
+// oscillator made it, so `sampled`/`synth` is the only evidence that F1 is doing anything at all.
+(window as unknown as { __omrVoice?: () => VoiceStatus }).__omrVoice = () => backend.voiceInfo();
 
 // Every makam the app can play, built once at module load — the list is static.
 const MAKAM_OPTIONS = makamOptions();
@@ -280,6 +286,11 @@ export function App() {
   // Which drum plays them. Unlike the volume this DOES go through `applyPlayback`, because the
   // buffers are chosen as each stroke is scheduled — a change has to re-schedule to be heard.
   const [percussionKit, setPercussionKit] = useState<KitId>(DEFAULT_KIT);
+  // Which instrument sounds the NOTES (feature track F1 — what W10's friends asked for). Goes
+  // through `applyPlayback` for the same reason the kit does: the buffer is chosen as each note is
+  // scheduled. The default is the synthesised tone, which is the only voice that needs no download.
+  const [voice, setVoice] = useState<VoiceId>(DEFAULT_VOICE);
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>(() => backend.voiceInfo());
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
   // Which makam's PERFORMED intonation playback uses. "" = none, i.e. sound the notes exactly as
@@ -501,6 +512,7 @@ export function App() {
       uName: string,
       perc: boolean,
       kit: KitId = percussionKit,
+      v: VoiceId = voice,
     ): PlayOptions => {
       const u = findUsul(uName);
       const clicks = metro && doc && u ? buildMetronomeTrack(doc, u, beatMs * 4) : undefined;
@@ -511,10 +523,19 @@ export function App() {
         percussion: strokes,
         percussionVolume,
         percussionKit: kit,
+        voice: v,
       };
     },
-    [doc, naturalBpm, beatMs, percussionVolume, percussionKit],
+    [doc, naturalBpm, beatMs, percussionVolume, percussionKit, voice],
   );
+
+  // The picker's handler. `ensureVoice` FIRST and outside `applyPlayback`, so choosing an instrument
+  // starts its download immediately — including while stopped, which is when someone browsing the
+  // list is most likely to be. `applyPlayback` then re-schedules if something is already playing.
+  function applyVoice(v: VoiceId) {
+    void backend.ensureVoice(v);
+    applyPlayback(bpm, metronome, usulName, percussion, percussionKit, v);
+  }
 
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
   function applyPercussionVolume(v: number) {
@@ -548,6 +569,13 @@ export function App() {
   useEffect(() => {
     backend.setOnEnded(() => setPlayState("stopped"));
     return () => backend.setOnEnded(null);
+  }, []);
+
+  // Mirror the voice's load state into React, so the picker can show "3/11" and say when a download
+  // failed. Push rather than poll: the backend already knows when each sample lands.
+  useEffect(() => {
+    backend.setOnVoiceStatus(setVoiceStatus);
+    return () => backend.setOnVoiceStatus(null);
   }, []);
 
   // Apply one note edit from the piano-roll. This is the heart of "correct OMR mistakes".
@@ -881,17 +909,19 @@ export function App() {
     nextUsul: string,
     nextPerc: boolean,
     nextKit: KitId = percussionKit,
+    nextVoice: VoiceId = voice,
   ) {
     setBpm(nextBpm);
     setMetronome(nextMetro);
     setUsulName(nextUsul);
     setPercussion(nextPerc);
     setPercussionKit(nextKit);
+    setVoice(nextVoice);
     if (!timeline || playState === "stopped") return;
     const pos = Math.max(0, backend.getPositionMs() ?? 0);
     const wasPaused = playState === "paused";
     void backend
-      .play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul, nextPerc, nextKit))
+      .play(timeline, pos, buildPlayOptions(nextBpm, nextMetro, nextUsul, nextPerc, nextKit, nextVoice))
       .then(() => {
         if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
       });
@@ -1151,6 +1181,9 @@ export function App() {
             onPercussionVolume={applyPercussionVolume}
             percussionKit={percussionKit}
             onPercussionKit={(v) => applyPlayback(bpm, metronome, usulName, percussion, v)}
+            voice={voice}
+            onVoice={applyVoice}
+            voiceStatus={voiceStatus}
             usulName={usulName}
             onUsul={(v) => applyPlayback(bpm, metronome, v, percussion)}
             makamSlug={makamSlug}

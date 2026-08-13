@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-11
+updated: 2026-08-13
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -305,6 +305,57 @@ after the model's input shrink the three bars fuse into a block that IS a 2-bar 
    (our two drawings against real printed editions).
 3. Rendering a corpus with the fix: add `--thin-sharps` to `tools/render/render.ts`. It is **off by
    default** so an A/B against `strips_v3` stays possible.
+
+
+## Check 24 — do the instrument voices sound like instruments? (feature track F1, 2026-08-13)
+
+Goal: the third check here that needs your ears, and — like check 23 — **a gate on shipping**.
+Everything automatable already passes: `npm test` pins the manifest and the pitch maths,
+`smoke:editor` proves recordings decode and play, and the arithmetic guarantees no clipping. None of
+that can tell you the clarinet sounds like a clarinet, or that it is loud enough to enjoy.
+
+⚠ **RUN TWICE 2026-08-13, and it earned its keep both times.** First pass: the clarinet was breath
+on 16th notes and the violin creaked — notes were playing the attack transient and never reaching the
+tone. Second pass, after the fix: still some breath, and the trim was too deep — which was right, the
+first measurement used amplitude where it should have used harmonic content. The window is now
+measured spectrally AND varies with note length. **Still owed: a third listen**, especially step 3a.
+
+⚠ **The upload has to happen first** (`hf upload`, see
+[features/audio-sources.md](features/audio-sources.md)). Then:
+
+1. `VITE_VOICES_URL=<base> npm run dev:web` → open a score (`?score=/sample.json`). Set **Çalgı
+   sesi** to **Klarnet**. Watch the counter run to 11/11, then ▶ Çal.
+2. **Switch back and forth with `Varsayılan ses` while it plays.** ⚠ **Expect the clarinet to be
+   QUIETER than the beep.** That is peak-matching and it is deliberate — a recorded sustain has
+   twice the crest factor of a synthesised tone, so matching peaks means losing a few dB of loudness
+   ([DECISIONS.md](DECISIONS.md)). The question this step exists to answer is not "is it quieter"
+   but **"is it too quiet to enjoy"**. If it is, that is one number (`gain` in
+   `apps/web/src/audio/instruments.ts`), then a slider — never `MASTER_GAIN`.
+3. **On the built-in speaker, not only headphones** — the same bar the drums had to pass.
+3a. **Play something with 16th notes, then the same phrase in long notes** — the two cases the
+   trimming has to satisfy at once. A 16th must speak as the instrument immediately, not as breath
+   (clarinet) or a bow scratch (violin), and must not be noticeably quieter than a long note. A long
+   note should keep some of the instrument's own swell rather than sounding spliced. ⚠ **Short notes
+   are slurred by design** — they start mid-sustain, so no tonguing and no re-bowing. Two dials, both
+   free to re-tune because the trim is a playback window and not a cut: `MAX_ATTACK_SHARE` in
+   `webAudioBackend.ts` decides how long a note must be to keep its attack, and `TONE_DROP` in
+   `scripts/prepare_voices.py` decides where the breath is judged to end. **No re-upload either way.**
+4. **Play a piece that goes low, and one that goes high.** The clarinet's layer spans **13 dB**
+   between its quietest and loudest file, so its bottom register is the most likely thing to
+   disappoint, and one global gain cannot fix a spread. Listen also for notes that sound *thin* or
+   chipmunky near the edges: the worst stretch inside the range is ±2.5 semitones.
+5. **Tick `Usul vuruşu` and push `Vuruş sesi` to maximum.** Two things at once: distortion (the
+   arithmetic says F1 adds nothing to the limiter's load — this is what would catch that being
+   wrong), and that **the drum is still a real darbuka**, which proves the drums stayed on the app
+   while the voices came from the Hub.
+6. **Take the tempo to its slowest on a long note.** It should fade where the recording ends, not
+   click off. (The samples are 7–16 s, so you may not reach it — that is the expected outcome.)
+7. **Switch Klarnet → Keman mid-playback.** The swap should be clean, and the violin should arrive
+   without the clarinet lingering.
+8. ⚠ If it sounds like the beep, **the samples did not load** — look at the picker's state before
+   reporting the sound as wrong.
+9. ⚠ **A violin is not a kemençe.** Confirm the label says **Keman**. It is a free stand-in for a
+   bowed sound and must never claim to be the Turkish instrument.
 
 ---
 

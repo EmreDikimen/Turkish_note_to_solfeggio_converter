@@ -61,18 +61,22 @@ const MAX_TOTAL_MB = 60;
 const MAX_FILE_MB = 30;
 
 /**
- * Audio (F2's usul drums, and F1's instruments later) may ship, under two conditions.
+ * Audio may ship, under two conditions: it lives under `audio/`, and all of it fits in
+ * `MAX_AUDIO_MB`. In practice that means F2's two usul drum kits, and nothing else.
  *
  * ⚠ This REPLACES the "never bundle audio into the app" rule of docs/features/README.md, which was
  * written against 211 MB of model weights and does not carry at 660 KB of drum hits (owner
  * decision, 2026-08-11). What made that rule worth having — the set stays auditable and a swap
- * stays cheap — is kept by `src/audio/strokeKits.ts` carrying a source and licence per file, and by
- * the loader reading `VITE_AUDIO_URL` so the files can move off the app without a code change.
+ * stays cheap — is kept by `src/audio/strokeKits.ts` carrying a source and licence per file.
  *
- * ⚠ **`MAX_AUDIO_MB` is a decision point, not a dial.** It is set just above what the two drum kits
- * need, so the first thing that trips it will be F1's instrument voices — ~4 MB per sampled
- * instrument, which genuinely does not belong on the static host. When that happens, set
- * `VITE_AUDIO_URL` and upload; do not raise this number.
+ * ⚠ **`MAX_AUDIO_MB` is a decision point, not a dial — and F1 came and went without moving it.**
+ * This comment used to predict that F1's instrument voices would be the first thing to trip the
+ * budget and that the answer would be to point `VITE_AUDIO_URL` at a Hub and upload. The voices
+ * turned out to be 20–35 MB each (not ~4), and the owner ruled on 2026-08-12 that **the drums stay
+ * with the app** — percussion is essential to playback and must not depend on a second host. So the
+ * voices got their own variable (`VITE_VOICES_URL`, `src/audio/loadInstrument.ts`) and never enter
+ * `dist/` at all, while this stays a PERMANENT guard on the drums rather than a trigger that has
+ * fired. If a third kit ever trips it, that is a decision to make; it is not a number to raise.
  */
 const AUDIO_RE = /\.(wav|mp3|ogg|opus|m4a|flac|aac)$/i;
 const AUDIO_DIR = "audio";
@@ -139,9 +143,9 @@ for (const f of audio) {
 const audioBytes = audio.reduce((a, f) => a + f.size, 0);
 if (audioBytes > MAX_AUDIO_MB * 1024 * 1024) {
   problems.push(
-    `audio is ${(audioBytes / 1024 / 1024).toFixed(1)} MB > ${MAX_AUDIO_MB} MB — this is the ` +
-      `signal to host the samples off the app: set VITE_AUDIO_URL and upload them, rather than ` +
-      `raising MAX_AUDIO_MB`,
+    `audio is ${(audioBytes / 1024 / 1024).toFixed(1)} MB > ${MAX_AUDIO_MB} MB — only the usul ` +
+      `drums may ship with the app. Host these off it (an own variable, the way ` +
+      `VITE_VOICES_URL serves the instrument voices), rather than raising MAX_AUDIO_MB`,
   );
 }
 

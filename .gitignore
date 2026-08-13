@@ -60,6 +60,13 @@ data/real/rung3/*
 # apps/web/public/audio/ (which is committed, and is what /THIRD-PARTY.txt accounts for).
 data/audio_src/
 
+# F1's instrument voices, staged for upload by scripts/prepare_voices.py. ~56 MB of wav, and unlike
+# the drums NOTHING here ever ships with the app: they are uploaded to a Hugging Face dataset repo
+# and fetched at runtime through VITE_VOICES_URL. Committing them would put ~56 MB of binaries in a
+# public repo permanently (owner decision, 2026-08-11), and this project already has files stuck in
+# its history. Re-run the script to rebuild the folder.
+data/audio_voices/
+
 # Data and models (Ignore large files to prevent them from hitting GitHub limits)
 data/raw/*
 !data/raw/.gitkeep

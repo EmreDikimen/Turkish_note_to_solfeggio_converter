@@ -29,6 +29,15 @@
 import type { AudioBackend, PercussionHit, Stroke, Timeline } from "@turkish-omr/core";
 import { loadStrokeKit, type StrokeBuffers } from "./audio/loadStrokeKit";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
+import { loadInstrument, type VoiceBuffer } from "./audio/loadInstrument";
+import {
+  DEFAULT_VOICE,
+  findVoice,
+  pickSample,
+  type SamplePick,
+  type Voice,
+  type VoiceId,
+} from "./audio/instruments";
 
 // A gently decaying harmonic spectrum — same idea as the Python reference synth,
 // less harsh than a pure sine.
@@ -58,8 +67,69 @@ const KIT_LOAD_BUDGET_MS = 1500;
  */
 const MASTER_GAIN = 0.72;
 
+/**
+ * How long a sampled note fades in, and out, in real seconds.
+ *
+ * ⚠ These are NOT the synth's envelope and must not be tuned to match it. The release is longer than
+ * the synth's 0.03 because a sustained bowed tone chopped in 30 ms sounds cut rather than ended.
+ *
+ * ⚠ **The fade-in stopped being a pure declick on 2026-08-13.** It used to open on the recording's
+ * own attack, so 6 ms was plenty; a short note now starts inside the sustain (`toneS`), which is a
+ * splice into a moving waveform and wants a slightly softer edge. A long note still opens on the
+ * recorded attack (`MAX_ATTACK_SHARE`), where the fade is doing nothing much.
+ */
+const SAMPLE_FADE_IN_S = 0.012;
+
+/**
+ * The note lengths (REAL seconds, so tempo is already in them) between which a sampled note slides
+ * from "start at the settled tone" to "start at the recorded attack".
+ *
+ * ⚠ Real seconds, not note values, is the point — the owner asked for this to be "calculated by
+ * metronome speed and note duration", and `dur` is already `durationMs / speed`. A 16th at 60 BPM is
+ * a quarter at 240; what decides whether an attack fits is how long the note actually lasts.
+ *
+ * The rule: **include the recording's own attack only when it is a small enough share of the note**,
+ * otherwise start at the settled tone. All-or-nothing, per note.
+ *
+ * ⚠ It is not a smooth blend, and that was tried first and measured wrong. Interpolating the start
+ * point between "attack" and "tone" lands *inside* the transient for anything with a long one —
+ * violin C7's bow-bite runs 300 ms, so a quarter note came out starting at 64% harmonic and a half
+ * note at 33%, i.e. exactly the creak the owner complained about, reintroduced in the middle of the
+ * range while both ends looked fine. Either the whole attack fits or none of it is used; there is no
+ * setting at which a note begins halfway through a scrape.
+ *
+ * ⚠ 0.25 is conservative on purpose, because of what these recordings ARE: VSCO's `susLong` and
+ * `Arco Vib` are **sustained** takes, so their opening is a slow swell, not a crisp articulation. It
+ * reads as shape on a long note and as a mistake on a short one.
+ */
+const MAX_ATTACK_SHARE = 0.25;
+const SAMPLE_RELEASE_S = 0.06;
+
 /** Transport state, mirrored by the UI to pick the right play/pause/stop affordances. */
 export type PlaybackState = "stopped" | "playing" | "paused";
+
+/** What the picker shows about the chosen voice. `idle` means nothing has been asked for yet. */
+export type VoiceState = "idle" | "loading" | "ready" | "failed";
+
+/**
+ * Everything the UI and the headless checks can know about the voice.
+ *
+ * ⚠ `sampled` and `synth` are the only way to prove a real recording is playing: a sampled note and
+ * a synthesised one are indistinguishable from the DOM, exactly as a sampled stroke was
+ * (`percussionInfo`). `sampled > 0 && synth === 0` is what `editor-smoke.ts` asserts on.
+ */
+export interface VoiceStatus {
+  voice: VoiceId;
+  state: VoiceState;
+  /** Samples decoded so far, out of the voice's total. Both 0 for the synthesised voice. */
+  loaded: number;
+  total: number;
+  /** Notes scheduled this playback, by which path sounded them. */
+  sampled: number;
+  synth: number;
+  /** Notes that outlasted their recording and were faded out early. See `scheduleSampledNote`. */
+  truncated: number;
+}
 
 /** Per-playback options: tempo scaling and an optional metronome click track. */
 export interface PlayOptions {
@@ -88,6 +158,12 @@ export interface PlayOptions {
    * of the page; until they arrive the strokes are synthesised (see `scheduleStroke`).
    */
   percussionKit?: KitId;
+  /**
+   * Which instrument sounds the notes. Its samples are large (20–35 MB), so they are downloaded only
+   * when the user picks one and `play()` does NOT wait for them — until they arrive the notes are
+   * synthesised, per note, as they are scheduled (see `scheduleNote`).
+   */
+  voice?: VoiceId;
 }
 
 /**
@@ -95,7 +171,7 @@ export interface PlayOptions {
  * look-ahead loop only ever compares `at` against the horizon and never re-derives anything.
  */
 type Pending =
-  | { at: number; kind: "note"; freqHz: number; durMs: number; midNote: boolean }
+  | { at: number; kind: "note"; freqHz: number; durMs: number; intoMs: number }
   | { at: number; kind: "click"; accent: boolean }
   | { at: number; kind: "stroke"; stroke: Stroke };
 
@@ -154,6 +230,25 @@ export class WebAudioBackend implements AudioBackend {
   private strokeKitWanted: KitId | null = null;
   /** Which round-robin each stroke plays next. See `scheduleStroke`. */
   private rr: Record<Stroke, number> = { dum: 0, tek: 0, ka: 0 };
+  /**
+   * The loaded instrument voice, cached with the same lifetime as `strokeBuffers` and for the same
+   * reason. ⚠ Exactly ONE voice at a time: a decoded violin is ~47 MB of Float32, so `ensureVoice`
+   * drops the previous one rather than keeping both. Cache Storage is what makes switching back
+   * cheap (`loadInstrument.ts`).
+   */
+  private voiceBuffers: VoiceBuffer[] | null = null;
+  private voiceDef: Voice | null = null;
+  private voice: VoiceId = DEFAULT_VOICE;
+  /** What the last `ensureVoice` asked for — the same out-of-order guard `strokeKitWanted` is. */
+  private voiceWanted: VoiceId | null = null;
+  private voiceState: VoiceState = "idle";
+  private voiceLoaded = 0;
+  private voiceTotal = 0;
+  private onVoiceCb: ((s: VoiceStatus) => void) | null = null;
+  /** Per-playback counters, reset in `scheduleFrom`. See `VoiceStatus`. */
+  private sampledNotes = 0;
+  private synthNotes = 0;
+  private truncatedNotes = 0;
   private timeline: Timeline | null = null;
   /** AudioContext time (seconds) when playback started, and the musical ms it began at. */
   private startCtxTime = 0;
@@ -249,6 +344,13 @@ export class WebAudioBackend implements AudioBackend {
 
     if (opts.percussion?.length) await this.ensureKit(ctx, opts.percussionKit ?? DEFAULT_KIT);
 
+    // ⚠ Deliberately NOT awaited, unlike the drum kit above. `KIT_LOAD_BUDGET_MS` exists because a
+    // drum has no visible loading state, so the wait-or-synthesise decision has to be made before
+    // the first stroke; a voice has a picker that shows its own progress, and 20–35 MB is not
+    // something the Play button may ever block on. The download normally started when the user
+    // chose the instrument; whatever has arrived by each note is what that note uses.
+    void this.ensureVoice(opts.voice ?? DEFAULT_VOICE);
+
     // ⚠ Before scheduleFrom, not after: its first tick can legitimately reach the end of the piece
     // (seek past the last note) and call stop(), and a later assignment here would overwrite that
     // back to "playing" with nothing scheduled.
@@ -260,9 +362,13 @@ export class WebAudioBackend implements AudioBackend {
    * Turn the timeline and the click track into one ascending `Pending` list starting at `fromMs`,
    * then open the look-ahead window on it.
    *
-   * Notes that already ended before `fromMs` are dropped; one straddling the offset is marked
-   * `midNote`, so it starts at full gain with no attack and seeking into a held note doesn't
+   * Notes that already ended before `fromMs` are dropped; one straddling the offset carries a
+   * non-zero `intoMs`, so it starts at full gain with no attack and seeking into a held note doesn't
    * re-articulate it. Clicks before the offset are dropped outright.
+   *
+   * ⚠ `intoMs` is HOW FAR into the note, not just whether — the synth only needs the boolean, but a
+   * sampled voice has to start the recording that far in, or seeking into a held note would replay
+   * its attack.
    *
    * All times here are MUSICAL ms; `toReal()` maps them to AudioContext seconds via the speed
    * factor, so tempo scaling applies uniformly to notes and the metronome.
@@ -273,13 +379,17 @@ export class WebAudioBackend implements AudioBackend {
     this.startCtxTime = ctx.currentTime + 0.05; // small lead-in
     this.startMs = fromMs;
 
+    this.sampledNotes = 0;
+    this.synthNotes = 0;
+    this.truncatedNotes = 0;
+
     const pending: Pending[] = [];
     for (const n of timeline.notes) {
       if (n.isRest || !Number.isFinite(n.freqHz)) continue;
       const noteEnd = n.startMs + n.durationMs;
       if (noteEnd <= fromMs) continue; // already over by the time we start
       const at = Math.max(n.startMs, fromMs);
-      pending.push({ at, kind: "note", freqHz: n.freqHz, durMs: noteEnd - at, midNote: at > n.startMs });
+      pending.push({ at, kind: "note", freqHz: n.freqHz, durMs: noteEnd - at, intoMs: at - n.startMs });
     }
     for (const c of opts.clicks ?? []) {
       if (c.ms < fromMs - 1e-6) continue;
@@ -320,7 +430,7 @@ export class WebAudioBackend implements AudioBackend {
     const horizon = pos + LOOKAHEAD_S * 1000 * this.speed;
     while (this.cursor < this.pending.length && this.pending[this.cursor]!.at <= horizon) {
       const p = this.pending[this.cursor++]!;
-      if (p.kind === "note") this.scheduleNote(this.toReal(p.at), p.freqHz, p.durMs, p.midNote);
+      if (p.kind === "note") this.scheduleNote(this.toReal(p.at), p.freqHz, p.durMs, p.intoMs);
       else if (p.kind === "stroke") this.scheduleStroke(this.toReal(p.at), p.stroke);
       else this.scheduleClick(this.toReal(p.at), p.accent);
     }
@@ -344,12 +454,30 @@ export class WebAudioBackend implements AudioBackend {
 
   /**
    * Schedule one sounding note at AudioContext time `start`, lasting `durMs` musical ms.
-   * `midNote` means playback seeked into the middle of this note, so it opens at full gain with
+   * `intoMs > 0` means playback seeked into the middle of this note, so it opens at full gain with
    * no attack rather than re-articulating.
+   *
+   * ⚠ The voice decision is made HERE, per note, not once per playback — the same shape
+   * `scheduleStroke` uses. Two consequences, both wanted: a voice that finishes downloading
+   * mid-piece starts sounding at the very next note without a re-schedule (which is what lets
+   * `play()` refuse to wait for it), and a note outside the instrument's recorded range falls back
+   * to synthesis on its own rather than dragging the whole piece down with it.
    */
-  private scheduleNote(start: number, freqHz: number, durMs: number, midNote: boolean): void {
+  private scheduleNote(start: number, freqHz: number, durMs: number, intoMs: number): void {
     const ctx = this.ctx!;
     const master = this.master!;
+
+    if (this.voiceBuffers?.length && this.voiceDef) {
+      const pick = pickSample(this.voiceDef, freqHz);
+      if (pick) {
+        this.sampledNotes++;
+        this.scheduleSampledNote(start, pick, durMs, intoMs);
+        return;
+      }
+    }
+    this.synthNotes++;
+
+    const midNote = intoMs > 0;
     if (!this.wave) this.wave = buildPeriodicWave(ctx);
     const dur = durMs / 1000 / this.speed; // real seconds, tempo-scaled
     const attack = 0.01;
@@ -370,6 +498,93 @@ export class WebAudioBackend implements AudioBackend {
     osc.start(start);
     osc.stop(start + dur + 0.02);
     this.own(osc);
+  }
+
+  /**
+   * Schedule one note as a RECORDING, resampled to the exact 53-TET frequency.
+   *
+   * `playbackRate` is what makes 53 pitches out of 11–15 recordings: the rate is the frequency
+   * ratio, so the nearest sample is nudged onto the wanted koma. It changes the recording's length
+   * too (~12% at the worst shift this manifest allows), which is why nothing here reads
+   * `buffer.duration` without dividing by the rate.
+   *
+   * ⚠ **Where the level lives.** The files ship byte-identical to the library's originals, so a
+   * voice cannot be levelled in its file the way a drum stroke is (`prepare_strokes.py`). It is
+   * levelled here instead, by the manifest's per-voice `gain`, set so `gain × peak` stays under full
+   * scale — i.e. a sampled note never peaks above where the synthesised note it replaces peaked.
+   * That is what keeps F1 out of the limiter and stops the F2 clipping bug recurring: there a drum
+   * was ADDED to a note at 1.0, here a recording REPLACES one, and the arithmetic differs.
+   *
+   * ⚠ **When a note outlasts its recording** it is faded out where the recording ends, rather than
+   * looped (the samples are 7–16 s sustains, so nothing needs looping — owner, 2026-08-11) or cut
+   * dead. It is reachable in ordinary use despite that length, because `dur` is REAL seconds: a
+   * whole note at the tempo box's floor, or at 0.5× speed, passes it easily. Counted, so a listener
+   * reporting "the long notes stop early" has a number rather than a mystery.
+   */
+  private scheduleSampledNote(start: number, pick: SamplePick, durMs: number, intoMs: number): void {
+    const ctx = this.ctx!;
+    const master = this.master!;
+    const buffer = this.voiceBuffers?.find((b) => b.hz === pick.sample.hz)?.buffer;
+    if (!buffer) {
+      // The manifest and the decoded set disagreed — can only happen mid-swap. Silence would look
+      // like a broken feature, so hand it back to the tone that always works.
+      this.sampledNotes--;
+      this.synthNotes++;
+      this.scheduleNote(start, pick.sample.hz * pick.playbackRate, durMs, intoMs);
+      return;
+    }
+
+    const dur = durMs / 1000 / this.speed; // real seconds, tempo-scaled, exactly as the synth does
+    const rate = pick.playbackRate;
+
+    // ⚠ **How much of the recorded attack to keep depends on how long this note is** (owner,
+    // 2026-08-13: *"maybe we can trim differently for different duration of the notes"*). A 16th
+    // note has no time to develop, so it starts at `toneS` and speaks immediately; a note long
+    // enough to carry the recorded swell starts at `attackS` and keeps the real articulation, which
+    // is what stops the whole line sounding slurred. See `MAX_ATTACK_SHARE` for why this is a
+    // threshold rather than a smooth blend.
+    //
+    // Costs nothing, which is the answer to "if it does not make the app slow": one subtraction and
+    // one comparison on numbers the manifest already carries, per note, at schedule time. No extra
+    // buffer, no second decode, nothing that touches memory — unlike the obvious alternative of
+    // storing two differently-trimmed copies of every sample, which would double the download.
+    const preTone = Math.max(0, pick.sample.toneS - pick.sample.attackS);
+    const windowFrom = preTone <= dur * MAX_ATTACK_SHARE ? pick.sample.attackS : pick.sample.toneS;
+
+    const from = Math.max(0, Math.min(windowFrom, buffer.duration - 0.05));
+    const until = Math.min(pick.sample.endS, buffer.duration);
+
+    // Seeking into a held note advances inside the BUFFER's timebase, which `playbackRate` does not
+    // affect — one real second consumes `rate` buffer seconds, so the elapsed musical time has to be
+    // converted through both `speed` and `rate` to land in the right place.
+    const intoBuf = Math.max(0, intoMs / 1000 / this.speed) * rate;
+    const offset = Math.min(from + intoBuf, Math.max(from, until - 0.05));
+    const available = (until - offset) / rate;
+    const sound = Math.min(dur, available);
+    if (sound <= 0) return;
+    if (sound < dur - 1e-3) this.truncatedNotes++;
+
+    const g = this.voiceDef?.gain ?? 1;
+    const fade = Math.min(SAMPLE_FADE_IN_S, sound / 2);
+    const release = Math.min(SAMPLE_RELEASE_S, sound / 3);
+
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = rate;
+
+    const env = ctx.createGain();
+    // Seeking into a held note opens at level with no fade, for the same reason the synth path does:
+    // re-articulating a note the listener is already hearing is the audible bug.
+    env.gain.setValueAtTime(intoMs > 0 ? g : 0, start);
+    if (intoMs <= 0) env.gain.linearRampToValueAtTime(g, start + fade);
+    env.gain.setValueAtTime(g, Math.max(start + fade, start + sound - release));
+    env.gain.linearRampToValueAtTime(0, start + sound);
+
+    // → master, never percGain: that node is the `Vuruş sesi` slider's, and a note is not a stroke.
+    src.connect(env).connect(master);
+    src.start(start, offset);
+    src.stop(start + sound + 0.02);
+    this.own(src);
   }
 
   /**
@@ -444,6 +659,96 @@ export class WebAudioBackend implements AudioBackend {
       load.catch(() => undefined),
       new Promise<void>((r) => setTimeout(r, KIT_LOAD_BUDGET_MS)),
     ]);
+  }
+
+  /**
+   * Start loading an instrument voice, and report progress to whoever is listening.
+   *
+   * ⚠ **No timeout, and nothing awaits this** — the opposite of `ensureKit` above, for a reason
+   * worth keeping straight. A drum kit is 660 KB with no visible loading state, so it is worth
+   * blocking `play()` for a moment and then giving up. A voice is 20–35 MB and the picker shows its
+   * own progress, so blocking the transport would be indefensible: notes are synthesised until the
+   * samples land, per note, and the piece switches over mid-phrase without a re-schedule.
+   *
+   * ⚠ A failure is **reported**, not swallowed the way a kit's is. Nobody asked for the darbuka
+   * specifically — it is the default — but a voice is something the user went and chose, so silence
+   * about it would read as the app ignoring them.
+   */
+  async ensureVoice(id: VoiceId): Promise<void> {
+    const ctx = this.ctx ?? (this.ctx = new AudioContext());
+    this.voice = id;
+    this.voiceWanted = id;
+
+    const def = findVoice(id);
+    if (!def || !def.samples.length) {
+      // The synthesised voice: nothing to load, and switching to it must drop what is held, since
+      // ~47 MB of decoded violin has no business surviving a switch back to the default tone.
+      this.voiceBuffers = null;
+      this.voiceDef = null;
+      this.voiceLoaded = 0;
+      this.voiceTotal = 0;
+      this.voiceState = "idle";
+      this.emitVoice();
+      return;
+    }
+
+    if (this.voiceDef?.id === id && this.voiceBuffers?.length) return; // already here
+
+    // Anything loaded belongs to the other instrument. Drop it before the new one arrives rather
+    // than after, so two voices are never decoded at once.
+    this.voiceBuffers = null;
+    this.voiceDef = null;
+    this.voiceLoaded = 0;
+    this.voiceTotal = def.samples.length;
+    this.voiceState = "loading";
+    this.emitVoice();
+
+    try {
+      const bufs = await loadInstrument(ctx, id, (done, total) => {
+        if (this.voiceWanted !== id) return;
+        this.voiceLoaded = done;
+        this.voiceTotal = total;
+        this.emitVoice();
+      });
+      // The same out-of-order guard `strokeKitWanted` is: a slow load for voice A must not install
+      // itself after the user has moved to voice B.
+      if (this.voiceWanted !== id) return;
+      this.voiceBuffers = bufs;
+      this.voiceDef = def;
+      this.voiceState = "ready";
+    } catch {
+      if (this.voiceWanted !== id) return;
+      this.voiceState = "failed";
+    }
+    this.emitVoice();
+  }
+
+  /** Register a callback fired whenever the voice's load state moves. */
+  setOnVoiceStatus(cb: ((s: VoiceStatus) => void) | null): void {
+    this.onVoiceCb = cb;
+  }
+
+  private emitVoice(): void {
+    this.onVoiceCb?.(this.voiceInfo());
+  }
+
+  /**
+   * Which voice is loaded, how far, and which path actually sounded this playback's notes.
+   *
+   * For the UI (the picker's progress) and the headless checks. ⚠ The counters are the only proof
+   * that a RECORDING played: a sampled note and a synthesised one are identical from the DOM, the
+   * same blind spot `percussionInfo` exists for. `sampled > 0 && synth === 0` is the assertion.
+   */
+  voiceInfo(): VoiceStatus {
+    return {
+      voice: this.voice,
+      state: this.voiceState,
+      loaded: this.voiceLoaded,
+      total: this.voiceTotal,
+      sampled: this.sampledNotes,
+      synth: this.synthNotes,
+      truncated: this.truncatedNotes,
+    };
   }
 
   /**

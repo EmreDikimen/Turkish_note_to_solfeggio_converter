@@ -2,12 +2,154 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-11
+updated: 2026-08-13
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-11 (latest) — F2 plays a real drum, and the measurement picked which one
+## 2026-08-13 (latest) — F1's instrument voices, and what measuring the files caught
+
+**Clarinet and violin play, and every note is a recording resampled onto its exact koma.** The app
+side is finished: a `Çalgı sesi` picker, per-note choice between a sample and the built-in tone,
+Cache-Storage caching copied from `omr/session.ts`, and a fallback that keeps the piece playing when
+the host is unreachable. Verified against a local stand-in for the Hub: **11/11 samples decoded, 11
+sampled notes and 0 synthesised, 0 truncated**, with the drums still loading from the app in the same
+run. Kanun was deferred — it needs a Freesound account and onset-splitting a two-minute take.
+
+**The single most valuable hour was spent NOT trusting the filenames.** `prepare_voices.py` measures
+every file's fundamental with YIN and derives the label offset per library, which is the method
+`prepare_strokes.py` used on VCSL's numbered darbuka hits — applied here to files that *look*
+self-describing. It caught: the clarinet's labels sitting **a whole octave** below sounding pitch
+(`D2` sounds D3 — parsing would have transposed the instrument an octave and sounded plausible
+enough to ship); the violin needing **no** offset, which is what turns the clarinet result from a
+guess into a measurement; and `F#5` being **mislabelled by a semitone at source**, sounding F6,
+confirmed independently against its own second partial. ⚠ It also corrected a number we had written
+down twice: the widest pitch gap is **5 semitones**, not the "minor third" the docs said or the 4 the
+planning assumed — D–F–A# is a minor third and then a *perfect fourth*. Worst stretch ±2.5 semitones.
+
+**Two bugs were found by building a throwaway host rather than by reading.** A stand-in HTTP server
+over the staged folder took twenty lines and immediately exposed what no amount of review had: the
+third clarinet file is `A#2`, **`#` opens a URL fragment**, and the fetch silently truncated to
+`…/DCClar_susLong_A` — a 404 that looks exactly like a missing upload, costing 3 of 11 samples. It
+would have hit the Hub identically. The second was duller and would have been worse to debug later:
+`gain` and `peak` are rounded to three decimals into the manifest, so a clamp set at *exactly* full
+scale produced a stored pair whose product was 1.0017 and failed the very invariant it existed to
+guarantee. The clamp moved to 0.98.
+
+⚠ **The drums did not move, and that reverses what three files predicted.** The plan of record was
+that F1 would fire the pre-registered `MAX_AUDIO_MB` trigger and point `VITE_AUDIO_URL` at a Hub;
+`loadStrokeKit.ts` said so in a comment written the day before. The owner ruled otherwise —
+percussion is essential to playback and must not depend on a second host — and the ruling turns out
+to be load-bearing rather than conservative: `VITE_AUDIO_URL` is one base for the whole `audio/`
+tree, so the merged version would have 404'd the drums into the synthesis rejected by ear on
+2026-08-11, silently, with every existing check still green. The voices got `VITE_VOICES_URL` and
+`smoke:editor` now asserts the drums survive whatever the voices do.
+
+**Uploaded the same day** to `Beyaban/omr-voices` (26 files, 55.6 MB, CC0) and re-checked against the
+real host rather than the stand-in: 11/11 decoded, byte counts identical to the VSCO originals, CORS
+echoed for the deployed origin. ⚠ One behaviour only real latency showed: the first ~4 notes of a
+playback are still **synthesised** while the download runs, and the piece switches to recordings
+mid-phrase with no re-schedule. That is the per-note fallback working as designed — the local
+stand-in was ready before the first note and could never have exercised it.
+
+**Two listens, two fixes, and the second one corrected the first.** Round 2: *"we can hear some
+breath sound in clarinet… but we can trim less from the beginning. Or maybe we can trim differently
+for different duration of the notes"*. Both halves were right, and the reason is instructive — the
+round-1 fix measured breathiness by **amplitude**, which is a proxy for the wrong thing: loudness
+arrives well after the noise stops, so it overshot in every file (158 ms where the tone actually
+settles at 92, 1178 where it settles at 404). Measuring **harmonic content** instead cut the trim
+roughly in half everywhere. ⚠ Two traps inside that: the threshold has to be relative to each file's
+own tonality (a clarinet's sustain is only ~94% harmonic, so an absolute bar is unreachable), and it
+has to require the tone to *stay* settled — violin C7 shows a momentary 89.6% blip at 50 ms before
+falling back to 36%, and first-crossing started the note immediately before the worst of the scrape.
+⚠ And the duration idea needed one correction of its own: a smooth blend between "attack" and "tone"
+lands *inside* the transient for any file with a long one, so a quarter note on C7 began at 64%
+harmonic — the creak reintroduced in the middle of the range while both ends measured fine. It is a
+threshold instead: a note inherits the recorded swell only when the swell is ≤25% of it, so no note
+ever begins halfway through a scrape. Cost, since the owner asked: one subtraction and one comparison
+per note.
+
+**The first listen found a real defect and it was fixed the same day.** The owner: the clarinet is
+*"just like breath"* on 16th notes, the violin's *creak* is annoying, and *"it is okey to have violin
+and clarinet sounds like slurred"*. Measuring it explained the report better than the report did: the
+tone does not arrive for **76–1178 ms** (per FILE — the clarinet's own onsets span that whole range),
+a 16th note at 120 BPM is 125 ms, and on a 125 ms window the clarinet's D2 sample is **35.8% tonal
+and 13.4× quieter** at the file start than 1.18 s in. So short notes were not merely breathy, they
+were *much quieter than long notes* — which is the thing an ear notices first. Each sample now
+carries `skipS`/`endS` and notes start inside the sustain. ⚠ **The trim is a playback window, not a
+re-cut**: the wavs stay byte-identical, the sha256 table stays valid, nothing is re-uploaded, and
+re-tuning by ear is free. That is the second time this session that keeping the files untouched paid
+off in a way the original decision did not anticipate.
+
+**What is NOT done, stated plainly:** it is **not deployed**; and **the fix above has not been heard
+yet** — check 24 is still open. The voices are peak-matched to the synthesised note
+they replace, which is what keeps F1 out of the limiter and also makes them a few dB quieter than the
+beep — deliberate, and exactly the kind of trade that only survives contact with an ear
+(MANUAL_CHECKS check 24). ⚠ The clarinet's layer also spans **13 dB** between its quietest and
+loudest file, so its low register may need attention that one global gain cannot give it.
+
+## 2026-08-12 — the triplet mark, measured against real print and redrawn
+
+The owner's report from a real page was right, and the measurement is the point: **16 of 16 tuplet
+marks read across ~11 real editions break the arc and set the "3" in the gap.** Not one continuous arc
+with a floating digit exists in `strips_tup` or the exam pool. `drawTupletArc` now draws two segments
+with the digit in the gap, on every measured quantity (gap 1.63 S, digit 0.77 × 1.20 S, digit centre
+0.20 S inside the ends), and the curved-arc share went 70% → 90%.
+
+**The method is the sharp-bar method, and it was kept deliberately dumb.** `tuplet_mark_probe.py`
+locates *candidates* — digit-sized components with arc-like ink beside them — and writes tiles at
+matched staff size plus the post-encoder (409×583) view; a human accepts or rejects each tile and only
+then is the geometry taken, by scanning outward from the digit along its own row band. No mark
+detector was built, on purpose: two detectors earlier in this round failed silently and were caught
+only by contact sheets. The tiles it *did* surface as false positives — lyric syllables, the tempo
+mark `♩=76—84`, a bar number with volta dashes — are the argument for that choice, and the pilot's own
+"27" bar numbers fooled the table again on the last run.
+
+**Three things came out of doing it that reading the docs could not have given.**
+
+1. **Our old mark was worse than "a digit above the arc".** The floating "3" *touched* the apex, so
+   mark and digit were ONE connected component — a slur with a bump on top. That is the shape the model
+   was asked to tell apart from a phrase slur.
+2. **The gap is sized to the digit, not the group** — 1.63 S whether the mark spans 4.5 S or 28 S,
+   i.e. the digit's width plus ~0.43 S of air each side. "A fraction of the span" was the natural guess
+   and it is wrong.
+3. **Our own bracket style already breaks around its digit**, so only the curved style ever carried the
+   defect — which is a small independent reason to expect the shape matters.
+
+**The digit had to stop being bold italic Georgia, and that was forced by the measurement, not taste.**
+Georgia's "3" is an old-style figure: at the size that matched real print's height it measured **1.10 S
+wide against real 0.76**, leaving 0.26 S of clearance where print leaves 0.43 — the digit would have
+fused with the arc ends after the encoder's shrink, which is the exact failure the sharp bars already
+cost us once. Upright Times at 16 px measures 0.77 × 1.20 S and restores the clearance. Pre-registered
+rule kept for later: if the digit ever fuses again, **widen the gap, never shrink the digit**.
+
+**What was deliberately NOT changed.** Real print draws the arc *heavier* than we do (0.133–0.168 S vs
+0.100). Thickening only the tuplet arc would hand the model a thickness cue separating it from a phrase
+slur that real pages do not have — the trap `AEU_SHARP_STROKE` documents — so it is owed as a joint
+change with `drawSlurArc`, after the shape has been A/B'd. The 35% slur-distractor rate was left alone
+for the same attribution reason.
+
+**Then the owner looked at the comparison sheet, and the mark changed twice more.** The verdict was
+"right shape, too rigid": *"in real editions the tuplets' arms follow the notes, up or down"*, plus
+"reduce the font weight of the 3". Both were measured before being believed, on one strip carrying
+four descending triplets (`ben_guzele_…_p2_s01_w03.png`, 7 arms): an arm clears **its own** end note by
+0.60–0.93 S, and the gap sits 1.43 S over the group's **highest** note. So the mark now tilts with the
+contour instead of floating at one height, and the digit is regular weight.
+
+⚠ **The correction that did NOT survive measurement was mine.** A descending printed mark looks
+weighted toward its high side, so the first attempt slid the gap over the highest note — which turns
+one arm into a stub whenever that note is an outer one. Measured, the digit sits at **0.49–0.50 of the
+mark's span** on every group on that page, descending or not: the asymmetry a reader sees is entirely
+in the arms' SLOPES. Two lessons, both cheap here and expensive later: the eye reads a tilted shape as
+a shifted one, and a screenshot is not a measurement.
+
+**Evidence it is pixels only:** `npm test`, `smoke:editor` (its triplet-mark count is style-blind, so
+it saw the new shape without a change) and `verify-labels` on a 309-strip pilot — **309/309 exact, 0
+label drift**, re-run after each revision. ⚠ **No recall claim.** The A/B has not run; what is
+established is that our drawing differed from print, not what fixing it buys. Next is the corpus
+re-render and the A/B — after Round 3's acceptance bar is written down, since an A/B is training.
+
+## 2026-08-11 — F2 plays a real drum, and the measurement picked which one
 
 The synthesised usul strokes were rejected by ear that morning; by the evening the usul plays CC0
 recordings of a darbuka and a bendir. The seam held exactly as designed — the change is one branch

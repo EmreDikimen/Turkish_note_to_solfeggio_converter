@@ -2,7 +2,7 @@
 
 purpose: the per-file source + licence list for F1/F2 audio, verified on each source's own page
 audience: whoever downloads, prepares or audits an audio asset
-updated: 2026-08-11
+updated: 2026-08-13
 
 The rules these files must obey (no bundling, a `source`+`license` per file, `/THIRD-PARTY.txt` as
 each lands) are in [audio-policy.md](audio-policy.md#the-swap-discipline--required-whatever-is-chosen). This
@@ -15,12 +15,12 @@ downloaded yet.
 prepared and shipping. What was taken from each, and the mapping problem that had to be solved
 first, is the section immediately below.
 
-⏭ **AND F1 IS NOW THE ACTIVE STEP** (2026-08-11): W10's friends asked for more instrument sounds and
-the owner named **violin, clarinet and kanun** — which are exactly the three rows below that are
-already cleared CC0. So the clarinet, violin and kanun rows stop being a shortlist for later and
-become the shopping list. Ney is still empty under CC0 and needs the owner's own recording; oud and
-tanbur are Karplus–Strong and need no files at all. ⚠ **Kanun's download needs a free Freesound
-account**, so that one step is manual — the same trap F2 dodged by taking VCSL from GitHub.
+✅ **F1's CLARINET AND VIOLIN ARE IN as of 2026-08-13** — downloaded, measured and staged. What was
+taken, what the measurements found, and how to upload them is the section
+[What F1 actually took](#what-f1-actually-took--2026-08-13) below. **Kanun is deferred**, not
+rejected: its download needs a free Freesound account and its single two-minute take has to be split
+at the onsets, which is a different job from copying files off GitHub. Ney is still empty under CC0
+and needs the owner's own recording; oud and tanbur are Karplus–Strong and need no files at all.
 
 ⚠ **Neither Freesound file was needed after all.** The plan expected the CompMusic bendir take
 (140291) to be F2's Turkish-stroke source and warned that its download is manual, needing a free
@@ -124,14 +124,158 @@ ringing drum at a non-zero sample would leave.
 | `kanun_..._moreIsolated.mp3` | **Split** 2 minutes into per-note files at the onsets; it is **lossy mp3**, so re-encoding compounds — keep the decode once and trim |
 | Clarinet / violin | Pick the sustain layer, **trim and loop**, convert to mono compressed. Raw folders are 66 MB and 235 MB of wav; what ships is a handful of notes |
 
-Pitch coverage is fine for `playbackRate`: the clarinet sustains sit a **minor third** apart and the
-violin's about the same, so the largest shift is **±1.5 semitones**. ⚠ Resampling also changes
-*length* (~9% at that shift) — irrelevant for enveloped sustains, and percussion one-shots are never
-shifted at all.
+⚠ **This "minor third apart, so ±1.5 semitones" figure was WRONG and is kept only to mark the
+correction.** Measured 2026-08-13: the clarinet steps D–F–A#–D, and F→A# is a *perfect fourth*, so
+its widest gap is **5 semitones** and the worst shift is **±2.5**. The violin's widest is 4.3
+(C→E plus real intonation). Planning had also independently guessed ±2 by miscounting the same
+interval. The real bound is now asserted in `tools/audio/voices-test.ts` rather than written in
+prose. Resampling also changes *length* (~12% at ±2.5 semitones) — irrelevant for sustains that
+outlast the note anyway, and percussion one-shots are never shifted at all.
 
 ⚠ **A violin is not a kemençe.** It is a good stand-in and it is free; it must not be *labelled*
 kemençe in the UI. Same for clarinet, which is genuinely a Turkish-repertoire instrument and can be
 called one.
+
+## What F1 actually took — 2026-08-13
+
+Produced by **`scripts/prepare_voices.py`** (`--analyse` to measure without writing, `--manifest` to
+print the TypeScript block for `apps/web/src/audio/instruments.ts`). ⚠ Unlike the drums, these files
+are **copied, not prepared**: no trim, no fade, no downmix, no resample, no re-level. `write()` is a
+byte copy followed by a **sha256 comparison against the source**, and a mismatch is a hard failure —
+that check is what replaces the drum script's trim/level stage and turns "as recorded" into an
+assertion.
+
+| Voice | Source folder | Layer | Files | Size | Widest gap |
+|---|---|---|---|---|---|
+| **Klarnet** | `Woodwinds/Clarinet/susLong` | `v2` (middle of three) | 11 | 20.2 MB | 5.0 semitones |
+| **Keman** | `Strings/Solo Violin/Arco Vib` | `f` (of f/p) | 15 | 35.4 MB | 4.3 semitones |
+
+Layer choice, for the record: the app has no dynamics, so a **middle** velocity is the honest single
+sound — `v1` is a whisper the notes would bury and `v3` an accent on every note. The violin's `f` is
+both the clearer tone and the smaller of its two layers.
+
+### Three things measuring caught that reading the filenames would not
+
+1. ⚠ **The clarinet's labels are an octave below its sounding pitch.** `DCClar_susLong_D2_…` sounds
+   **D3** (146.7 Hz), and so on for all 11 files, within 1 cent. A clarinet cannot produce the D2 its
+   name claims. Parsing the name would have transposed the whole instrument an octave — and it would
+   have sounded like a plausible instrument, just the wrong one.
+2. ✅ **The violin's labels need no offset**, which is the point of including it: it is the *control*
+   that makes the clarinet's answer a measurement rather than a guess, exactly the role the
+   self-describing frame drum played for VCSL's numbered darbuka hits.
+3. ⚠ **`DCClar_susLong_F#5_v2_rr1_sum.wav` sounds F6, not F#6** — mislabelled by a semitone at
+   source. 1397 Hz, confirmed independently against its own second partial at 2794 Hz. The file is in
+   tune with itself and perfectly usable; it keeps its original name because the files ship untouched
+   and the name is provenance. `hz` in the manifest is what plays.
+
+### The playback window — 2026-08-13, revised twice by ear
+
+The owner listened twice, and each pass corrected something the previous measurement got wrong.
+
+**Round 1 — "just like breath" on 16th notes, and an annoying violin creak.** The tone does not
+arrive immediately, and a 16th note at 120 BPM is 125 ms, so a short note played the attack transient
+and stopped before the instrument spoke. Measured on a 125 ms window (fraction of energy on the
+harmonic series, which separates a tone from breath or bow noise):
+
+| sample | tonal at file start | tonal once settled | level change |
+|---|---|---|---|
+| clarinet D2 | **35.8%** | 96.9% | **13.4× louder** |
+| clarinet D3 | 82.6% | 92.1% | 2.3× |
+| violin G4 | 91.4% | 98.8% | 1.9× |
+
+⚠ Short notes were not only breathy but **up to 13× quieter** than long ones, because they played
+only the ramp-up. That is the part an ear notices first.
+
+**Round 2 — "we can trim less from the beginning", and trim per note duration.** Both right.
+
+The first fix used an **amplitude** threshold as a proxy for breathiness, and amplitude waits for
+full *loudness*, which arrives well after the noise stops. It overshot in every file:
+
+| sample | amplitude-based (wrong) | spectral (now) |
+|---|---|---|
+| clarinet D3 | 158 ms | **92 ms** |
+| clarinet F4 | 765 ms | **275 ms** |
+| clarinet D2 | 1178 ms | **404 ms** |
+| violin G4 | 156 ms | **80 ms** |
+
+So `toneS` is now the first moment the sound is within **10 harmonic-percentage-points of that
+file's own settled tonality, and stays there**. ⚠ Relative, never absolute — a clarinet's sustain is
+only ~94% harmonic, so an absolute bar is unreachable for some of its notes. ⚠ "And stays there"
+matters: violin C7's bow-bite shows a momentary 89.6% blip at 50 ms and then falls back to 36%, so
+first-crossing started the note immediately before the worst of the scrape.
+
+**And the trim now depends on the note, not only the file.** Each sample carries `attackS` (first
+sound), `toneS` (settled) and `endS` (before the release). A note starts at `attackS` — keeping the
+instrument's real articulation — only when that swell is at most **25%** of the note; otherwise it
+starts at `toneS`. ⚠ **A smooth blend was tried and measured wrong**: interpolating the start point
+lands *inside* the transient for any file with a long one, so a quarter note on C7 began at 64%
+harmonic and a half note at 33% — the creak reintroduced in the middle of the range while both ends
+looked fine. All-or-nothing means no note ever begins halfway through a scrape.
+
+Measured tonality at the start of each note length, after the fix:
+
+| sample | 16th | quarter | half | whole |
+|---|---|---|---|---|
+| clarinet D3 (80 ms swell) | 94.3% | 83.9% | 83.9% | 83.9% |
+| clarinet D2 (400 ms swell) | 92.8% | 92.8% | 92.8% | 36.7% |
+| violin C7 (300 ms bite) | 92.3% | 92.3% | 92.3% | 51.3% |
+| violin G4 (80 ms swell) | 98.4% | 91.4% | 91.4% | 91.4% |
+
+Read it as: short notes always speak immediately; a note only inherits the recorded swell once it is
+long enough to carry it. ⚠ **Cost: none** — one subtraction and one comparison per note at schedule
+time. The alternative (shipping two trimmed copies of every sample) would have doubled the download.
+
+⚠ All of this is applied **at playback, not to the wavs**, so the files stay byte-identical, the
+sha256 table above stays valid, and re-tuning by ear costs no re-upload. That paid off immediately:
+the round-1 numbers were replaced by the round-2 numbers for free.
+
+### Levels
+
+Measured peaks are low: **0.26** (clarinet) and **0.31** (violin) full scale. The manifest carries a
+per-voice `gain` (3.775 and 3.156) applied in the note's envelope, clamped so `gain × peak ≤ 0.98`.
+⚠ **The clarinet's layer spans 13 dB** between its quietest and loudest file — the same shape of
+finding as VCSL's unusable `Hand` takes, though not as extreme. One global gain cannot fix a spread,
+so its low register is the first thing to listen to (MANUAL_CHECKS check 24).
+
+### Uploading them ✅ DONE 2026-08-13
+
+Live at **<https://huggingface.co/datasets/Beyaban/omr-voices>** — 26 files, 55.6 MB, CC0. Verified
+from outside the app: 200 after the LFS redirect with byte counts identical to the VSCO originals,
+`access-control-allow-origin` echoed for `https://komavision.netlify.app`, and the `#` in `A#2`
+resolving when percent-encoded. `npm run smoke:editor -- --voices-url <base>` against it reads 11/11
+decoded, 11 sampled notes and 0 synthesised.
+
+The recipe, for the next instrument:
+
+```bash
+.venv-ml/bin/python scripts/prepare_voices.py --analyse   # measure, print, write nothing
+.venv-ml/bin/python scripts/prepare_voices.py             # stage data/audio_voices/ (55.6 MB)
+.venv-ml/bin/python scripts/prepare_voices.py --manifest  # the TS block + the sha256 table
+
+.venv-ml/bin/hf auth login                                 # already done for the weights
+.venv-ml/bin/hf repo create omr-voices --repo-type dataset # public: do NOT pass --private
+.venv-ml/bin/hf upload Beyaban/omr-voices data/audio_voices . --repo-type dataset
+```
+
+Then check it from outside, the way `mvp/hosting-setup.md` checks the weights — ⚠ a bare `curl` is
+not enough, because the Hub reflects the caller's Origin behind `vary: Origin`:
+
+```bash
+BASE=https://huggingface.co/datasets/Beyaban/omr-voices/resolve/main
+curl -sIL "$BASE/clarinet/DCClar_susLong_D3_v2_rr1_sum.wav" | head -20      # want 200
+curl -s -o /dev/null -D - -H "Origin: https://komavision.netlify.app" \
+  "$BASE/clarinet/DCClar_susLong_D3_v2_rr1_sum.wav" | grep -i access-control-allow-origin
+```
+
+The CORS header is load-bearing: the app is served under COEP `require-corp`, and a plain CORS
+`fetch` is what satisfies that without the Hub sending CORP. ⚠ Note the **`/datasets/`** segment — a
+dataset repo does not resolve like the weights' model repo, and getting it wrong gives 404s that look
+like a failed upload. ⚠ And note that filenames contain `#`: it must arrive percent-encoded, which
+`loadInstrument.ts` does per path segment. Pasting a path into a URL raw truncates it at the `#` and
+404s — measured, it cost 3 of the clarinet's 11 samples before it was fixed.
+
+Then `npm run smoke:editor -- --voices-url $BASE` to drive the real files, and check 24 by ear.
+
 
 ## The gaps, measured
 

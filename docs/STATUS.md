@@ -137,15 +137,17 @@ the model track never touches the app.** Either can be worked on without waiting
    after the LFS redirect, byte counts identical to the VSCO originals, `access-control-allow-origin`
    echoed for the deployed origin, and the `#` in `A#2` resolving percent-encoded.
 
-   **⏭ WHAT IS LEFT IS TWO STEPS:**
-   **(1) Check 24 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md) — by ear**, which is the gate, as check 23
-   was for F2. Nobody has heard this yet.
-   **(2) Deploy** (`npm run deploy:app`, then `smoke:live`). `VITE_VOICES_URL` is already in that
-   script, so the voices ship with the next deploy whether or not anyone has listened — which is the
-   argument for doing check 24 first. The one number most likely to come back wrong is the per-voice `gain`: the voices are
-   **peak-matched**, so they will sound a few dB quieter than the beep, which is the trade and not a
-   fault. If the owner wants them louder the order is `gain` → a `Çalgı sesi` slider → **never**
-   `MASTER_GAIN`.
+   **✅ DEPLOYED 2026-08-13** — `Deploy is live!`, `smoke:live` PASS on both paths. Verified beyond
+   what that check covers: the voices URL is baked into the shipped bundle (env vars inline at build
+   time, so a wrong one is invisible until someone clicks the picker), the drum wavs still answer 200
+   from `/audio/`, and `sample.json` still 404s.
+
+   **⏭ WHAT IS LEFT: a third listen.** Check 24 has been run twice and both passes found real
+   defects — 16th notes coming out as breath, then the trim being too deep. Both are fixed and
+   measured; neither fix has been heard. ⚠ The number most likely to come back wrong is the per-voice
+   `gain`: the voices are **peak-matched**, so they sound a few dB quieter than the built-in tone,
+   which is the trade and not a fault. If they should be louder the order is `gain` → a `Çalgı sesi`
+   slider → **never** `MASTER_GAIN`.
 
    **What the owner settled before it started, all three honoured** ([DECISIONS.md](DECISIONS.md)):
    nothing compressed or trimmed (the staged files are **byte-identical to the library's**, asserted

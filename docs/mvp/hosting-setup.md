@@ -161,16 +161,26 @@ Go to <https://app.netlify.com/signup> and sign up with your email. No card.
 
 ### Step 7 — build the app, with both addresses baked in
 
-The app has to be built **knowing** where the server and the weights are. These are not settings you
-can change afterwards — they are written into the files.
+The app has to be built **knowing** where the server, the weights and the instrument voices are.
+These are not settings you can change afterwards — they are written into the files.
 
 ```bash
 VITE_DECODE_URL=https://omr-decode-706571981988.europe-west3.run.app \
 VITE_WEIGHTS_URL=https://huggingface.co/<your-username>/omr-weights/resolve/main \
+VITE_VOICES_URL=https://huggingface.co/datasets/<your-username>/omr-voices/resolve/main \
 npm run build:app
 ```
 
 ⚠ It is the whole address from step 5, `huggingface.co` included — and no trailing slash.
+
+⚠ **`VITE_VOICES_URL` includes `/datasets/`** — the voices live in a *dataset* repo, which does not
+resolve like the weights' model repo. Get it wrong and you get 404s that look like a failed upload.
+
+⚠ **Do NOT set `VITE_AUDIO_URL`, ever.** It is the base for the app's *own* `audio/` folder, which is
+where F2's two drum kits ship from. Pointing it anywhere takes the drums off the app with it and
+404s them into the synthesised strokes the owner rejected by ear — **silently**, because the fallback
+still makes a sound. The voices have their own variable precisely so this cannot happen
+([../DECISIONS.md](../DECISIONS.md), 2026-08-12).
 
 The build takes a few seconds and ends with `✓ deployable (under 60 MB, no weights)`. That last
 check exists because the project folder holds 332 MB of model files that must **not** be published;
@@ -276,11 +286,16 @@ rebuild always needs both variables. Two commands:
 ```bash
 VITE_DECODE_URL=https://omr-decode-706571981988.europe-west3.run.app \
 VITE_WEIGHTS_URL=https://huggingface.co/Beyaban/omr-weights/resolve/main \
+VITE_VOICES_URL=https://huggingface.co/datasets/Beyaban/omr-voices/resolve/main \
 npm run build:app
 
 cd apps/web && npx netlify-cli deploy --dir "$PWD/dist" --prod \
   --site f16514d1-b17b-4dcd-8fc9-2f93816b1d64 --no-build
 ```
+
+⚠ In practice use **`npm run deploy:app`**, which carries all three variables and the
+`--filter @turkish-omr/web` that stops `netlify-cli` hanging on a workspace prompt. The two-command
+form above is what it expands to.
 
 Then `npm run smoke:live` — it confirms the machinery still works after the furniture moved. A bad
 deploy is one click to undo: Netlify keeps every previous version under **Deploys → Publish deploy**.

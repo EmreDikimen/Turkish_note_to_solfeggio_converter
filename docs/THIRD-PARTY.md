@@ -75,10 +75,16 @@ geometry section and [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) all read
 
 ## Audio assets — chosen, not yet shipped
 
-Nothing above the line in the audio rows is in the repo or the app yet. When the first file lands,
-three things happen in the same commit: it is served **by URL, never bundled** (the weights are the
-model); it gets a manifest row carrying `source` and `license`; and it is added to
-`apps/web/public/THIRD-PARTY.txt`. The per-file list, with each licence read on its own source page
+✅ **The audio has landed, in two batches, and the "never bundled" rule bent once on purpose.**
+F2's two CC0 drum kits (VCSL, 660 KB) **do ship with the app** from `public/audio/` — small enough
+that a second host was not worth it, and since 2026-08-12 they stay there permanently because
+percussion is essential to playback. F1's clarinet and violin (VSCO 2 CE, 55.6 MB) do **not**: they
+are served from a Hugging Face dataset repo through `VITE_VOICES_URL`, byte-identical to the
+originals. ⚠ Two variables, deliberately: `VITE_AUDIO_URL` must stay unset in a deploy, or the drums
+follow the voices off the app and 404. Each file arrived with the three things this rule asks for —
+a manifest row carrying `source` and `license` (`strokeKits.ts`, `instruments.ts`), a line in
+`apps/web/public/THIRD-PARTY.txt`, and its licence read on the source's own page. Still unlanded:
+the ney and kanun rows. The per-file list, with each licence read on its own source page
 and the traps found there — including a **CC0-vs-readme contradiction in VSCO 2 CE** — is
 [features/audio-sources.md](features/audio-sources.md).
 

@@ -149,17 +149,20 @@ estimated**: VSCO 2's clarinet `susLong` is 33 files averaging ~1.8 MB, so one v
 Rules:
 
 - Load **only on selection** — at ~20 MB an instrument this is a requirement, not an optimisation.
-- Serve from a **Hugging Face Hub repo** behind `VITE_AUDIO_URL`, exactly as the weights come from
-  `VITE_WEIGHTS_URL`. **Not committed to git**: ~50 MB of binaries in a public repo is permanent.
+- Serve from a **Hugging Face Hub repo** behind **`VITE_VOICES_URL`** — its own variable, *not* the
+  drums' `VITE_AUDIO_URL` (owner, 2026-08-12: percussion is essential and stays on the app, and one
+  base for both would 404 the drums). **Not committed to git**: ~50 MB of binaries in a public repo
+  is permanent.
 - **Cache in the browser like the weights do.** ⚠ `loadStrokeKit.ts` says Cache Storage is not worth
   a second invalidation path — that is **true for 660 KB of drums and false at 20 MB**. Copy
   `graphBytes` in `omr/session.ts` instead of inheriting the drum comment.
 - `MAX_AUDIO_MB = 1` in `prune-dist.mjs` **stays at 1**. It is what forces all of the above.
 
-✅ **F1 inherits an answered hosting question, not an open one** (2026-08-11). `src/audio/
-loadStrokeKit.ts` already resolves its base from **`VITE_AUDIO_URL`**, falling back to `/audio/`,
-and that branch has been run end-to-end against a cross-origin host. So F1's asset step is *upload
-the files and set the variable* — no call-site changes, and no decision to re-argue. Expect to need
+⚠ **F1 was expected to inherit an answered hosting question and did not** (written 2026-08-11,
+corrected 2026-08-12). The plan was to point `loadStrokeKit.ts`'s existing `VITE_AUDIO_URL` at a Hub
+— no call-site changes. That fails, because it is one base for the whole `audio/` tree and would take
+the drums with it. F1 got `VITE_VOICES_URL` and its own loader instead. The indirection work was not
+wasted: it proved the cross-origin path under COEP. Expect to need
 it: measured at **~20 MB per instrument**, the **first** voice trips `MAX_AUDIO_MB`, not the third.
 
 ✅ **The compression problem is WITHDRAWN, not solved** (owner, 2026-08-11). It was real only while
@@ -231,8 +234,10 @@ Not a rewrite; the seam held. What landed, in the order it was planned:
    articulation is a düm, then trims, mono-downmixes and levels them into `public/audio/<kit>/`.
    Freesound's bendir take was **not** needed and stays deferred — VCSL is on GitHub, so no account
    and no manual step. See [audio-sources.md](audio-sources.md).
-2. **They ship from the app**, not from a Hub — 660 KB does not justify a second host — but behind
-   `VITE_AUDIO_URL` so they can move when F1 makes them big. `prune-dist.mjs` enforces both halves.
+2. **They ship from the app**, not from a Hub — 660 KB does not justify a second host — behind
+   `VITE_AUDIO_URL`, which now stays **unset for good**: F1's voices got their own variable, and the
+   drums are essential enough that moving them off the app is not on the table
+   ([../DECISIONS.md](../DECISIONS.md), 2026-08-12). `prune-dist.mjs` enforces both halves.
 3. **A loader** (`src/audio/loadStrokeKit.ts`) — fetch and `decodeAudioData` once, cached for the
    life of the page. This is what F0 made possible; on the old backend the cache died with a Stop.
 4. **`scheduleStroke` plays a buffer**, alternating two round-robins so a repeated stroke does not

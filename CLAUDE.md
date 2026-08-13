@@ -188,10 +188,10 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   guesses the name, so "no UI links to it" proves nothing. An own-work score would go in a
   subdirectory. ⚠ **AUDIO IS THE ONE THING THAT MAY SHIP FROM `public/`** (2026-08-11): F2's two CC0
   drum kits, 660 KB, under `public/audio/`. `prune-dist.mjs` fails the build on any audio file
-  outside `audio/` or over **1 MB total** — and that 1 MB is a decision point, not a dial. The
-  loader already reads **`VITE_AUDIO_URL`** (falling back to `/audio/`), so when F1's ~4 MB-per-
-  instrument voices trip it, the fix is to set that variable and upload, **never** to raise the
-  number. Provenance per file lives in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`,
+  outside `audio/` or over **1 MB total** — and that 1 MB is a decision point, not a dial. ⚠ It was
+  written as a trigger that F1 would fire; **F1 came and went without moving it** (2026-08-13), so it
+  is now a **permanent guard on the drums**. A future kit that trips it is a decision to make, not a
+  number to raise. Provenance per file lives in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`,
   and the wavs are **generated** by `scripts/prepare_strokes.py` — never hand-edit one.
   ⚠ **THE INSTRUMENT VOICES DO NOT SHIP AND THE DRUMS DO** (owner, 2026-08-12). F1's clarinet and
   violin are 20–35 MB each, live in a Hugging Face **dataset** repo, and are fetched at runtime from

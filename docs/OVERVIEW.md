@@ -63,11 +63,39 @@ bottom of this page.
 
 ## Where we are right now
 
+### 13 August 2026: the violin and the clarinet play, and they are LIVE
+
+The thing your friends asked for is built and on the site. Pick **Çalgı sesi → Klarnet** or
+**Keman** and the piece plays on a real recorded instrument instead of the plain computer tone.
+Kanun is not in yet: its recording needs an account to download and has to be cut up by hand first.
+
+Three things are worth knowing in plain terms.
+
+**The recordings are real, and they are not altered.** They are free-to-use recordings of a real
+clarinet and a real violin. We do not cut or squash the files at all — they are downloaded exactly
+as the people who recorded them made them, and the app decides which slice of each one to play. That
+turned out to matter: you asked twice for the sound to be changed, and both times it cost nothing to
+redo, because nothing had to be re-uploaded.
+
+**Your microtones are exact.** This was the thing to get right, and it is measured: every koma, and
+every makam that bends a note away from how it is written, comes out of the violin and the clarinet
+at exactly the same pitch as the plain tone — to about one two-hundred-thousandth of a koma. ⚠ One
+honest limit: the violin recording has *vibrato* (the player wobbling the pitch on purpose), and that
+wobble is about **one koma wide**. The note's centre is right, but you cannot use the violin to hear
+the difference between two neighbouring komas. **Use the clarinet for that** — it holds steady.
+
+⚠ **This needs your ears once more.** You have listened twice and been right twice: first the short
+notes were all breath, then the fix cut too much off the front. Both are fixed and measured, and
+neither fix has been heard. Check 24 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md) walks through it. The
+most likely complaint is that the instruments are **quieter** than the plain tone — that is on
+purpose, so the sound can never crackle, and it is one number to change if you want more.
+
 ### 11 August 2026: you showed it to two friends, and they told you what to build next
 
 You sent the link to two friends. **They liked it, and they said it would be good to add other
-instrument sounds** — so the next piece of work is exactly that: playing a piece back on a **violin,
-a clarinet and a kanun** instead of the plain tone it uses now.
+instrument sounds** — so the next piece of work was exactly that: playing a piece back on a
+**violin, a clarinet and a kanun** instead of the plain tone. ✅ The violin and clarinet are **done
+and live** (see the section above); kanun is still to come.
 
 This is worth pausing on, because it is the thing the last three months of work were *for*. The plan
 always said: get it into someone's hands, ask what to add, then build that. It has now happened, and
@@ -111,11 +139,10 @@ added up to more than the loudspeaker can carry, and the tops of the waves got c
 what that crunch is. The levels are lower now, and there is a safety device on the output so that
 however far you push the drum volume slider, it can never do that again.
 
-⚠ **One thing still needs your ears, and only yours.** Each usul has a written-down pattern of
-strokes. Six of the ten are the standard well-known forms, but **four were worked out by us** from
-the usul's beat grouping — Devr-i Hindî, Curcuna, Aksak Semâi and Ağır Aksak. No test a computer can
-run will notice if one of them is simply wrong; a musician hears it immediately. Check 23 in
-[MANUAL_CHECKS.md](MANUAL_CHECKS.md) walks through it.
+✅ **You listened, and all ten patterns passed** (*"they sound really nice"*, 11 August). That
+included the **four we worked out ourselves** from the usul's beat grouping — Devr-i Hindî, Curcuna,
+Aksak Semâi and Ağır Aksak — which no computer test could ever have judged. Nothing about the drums
+is open now.
 
 ### 8–9 August 2026: the app no longer gives away other people's music, and that is now LIVE
 

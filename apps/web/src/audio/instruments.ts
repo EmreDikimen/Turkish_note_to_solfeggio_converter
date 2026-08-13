@@ -16,7 +16,8 @@
  * depth — from a Hugging Face dataset repo, not from the app (owner, 2026-08-11). The level is the
  * `gain` field here, applied in the note's envelope at playback; nothing is baked into a file.
  *
- * ⚠ **Trimming happens here too, in TIME rather than in the file** (`skipS` / `endS`, 2026-08-13).
+ * ⚠ **Trimming happens here too, in TIME rather than in the file**
+ * (`attackS` / `toneS` / `endS`, 2026-08-13).
  * The owner asked for the attacks and tails to be trimmed after hearing 16th notes come out as
  * breath and bow-creak; doing it as playback offsets rather than by re-cutting the wavs keeps the
  * files byte-identical to the library's — so the provenance, the sha256 table and the "served

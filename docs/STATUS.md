@@ -234,16 +234,17 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.
 
-6. **The rest of the feature track — F1 (instrument voices) and F3 (the fingerboard tab).**
-   **F0 and F2 are DONE (2026-08-10/11)**; these two are still designed-not-started. Both are
-   client-side (no server, no GPU, no new ML), so they run alongside Round 3 without touching it.
-   Plan and the licence traps: [features/README.md](features/README.md).
+6. **The rest of the feature track — F3 (the fingerboard tab).**
+   **F0, F2 and F1 are DONE** (2026-08-10/11/13); only F3 is designed-not-started. It is
+   client-side (no server, no GPU, no new ML), so it runs alongside Round 3 without touching it.
+   Plan and the licence traps: [features/README.md](features/README.md). ⚠ `features/README.md` says
+   to aim F3 by what the friends say next, so it is **not** simply the next thing to build.
    **The audio is no longer an open question** (2026-08-09): bendir, darbuka, tef, zil, clarinet,
    violin and kanun are all sourced under **CC0**, licences verified per file, no NC anywhere — ney
-   still needs the owner's own recording. F0 removed the blocker they shared: the `AudioContext` now
-   survives a Stop, so a decoded sample can be cached. Files and prep:
-   [features/audio-sources.md](features/audio-sources.md). Also cheap and owed on F2: swapping the
-   synthesised strokes for those CC0 recordings, which touches only `scheduleStroke`.
+   still needs the owner's own recording. Of those, the drums and the clarinet/violin are **in and
+   shipping**; **kanun** is the one left that has a source, and it needs a manual Freesound download
+   plus onset-splitting a two-minute take. Files and prep:
+   [features/audio-sources.md](features/audio-sources.md).
 
 Also queued, cheap: the additive-only re-slice (deferred here from Round 1 — see
 [log/superseded.md](log/superseded.md) for its constraints), and the ORT-web int8 numerics

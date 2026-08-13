@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-07-29
+updated: 2026-08-12
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -39,8 +39,8 @@ that cut a group.
 |---|---|---|
 | curved-arc style share | 70% of pieces, by name hash → **90% from 2026-08-12** | `tupletCurved` |
 | slur distractors | fire on **35%** of eligible ≥3-note runs | `slurRng() < 0.35` |
-| the "3" | 13 px bold italic serif, placed **above** the arc apex | `drawTupletArc` |
-| arc stroke | 1.1 px, one unbroken quadratic | `drawTupletArc` |
+| the "3" | 13 px bold italic serif, placed **above** the arc apex → **redrawn 2026-08-12** | `drawTupletArc` |
+| arc stroke | 1.1 px, one unbroken quadratic → **two segments 2026-08-12**, same weight | `drawTupletArc` |
 
 ⚠ **Real Turkish print breaks the arc and sets the "3" inside the gap** (owner, 2026-08-11, from a
 real page). The renderer's continuous-arc-plus-floating-digit is not the printed shape, and it is
@@ -73,7 +73,33 @@ a floating digit, across ~11 editions.
 the natural guess and it is wrong.
 
 **Our own bracket style is structurally closer to real print than our arc is** — it already breaks
-around the digit. Only the curved style, which is 70% of pieces, carries the defect.
+around the digit. Only the curved style (70% of pieces then, 90% now) ever carried the defect.
+
+**The redraw lands on the measurements**, checked with `--dir` on the pilot render: gap **1.63**,
+digit **0.70 × 1.20**, clearance **0.43 / 0.50**, digit centre **0.20** inside the ends.
+
+### The mark FOLLOWS THE NOTES — measured 2026-08-12 after the owner's review
+
+The owner's verdict on the first redraw: right shape, wrong rigidity — *"in real editions the tuplets'
+arms follow the notes, up or down"* — plus "reduce the font weight of the 3". Both were then measured
+on `strips_tup/ben_guzele_…_p2_s01_w03.png`, one strip carrying **four descending triplets** (7 arms):
+
+| quantity, in staff spaces | real print | ours now |
+|---|---|---|
+| an arm's outer end clears **its own** end note | 0.86–0.93 (left arms), 0.60–0.73 (right arms) | 0.85 both |
+| the gap's height over the group's **highest** note | 1.40–1.43 (n=3) | 1.43 |
+| the digit's position along the mark's span | **0.49–0.50** — the middle | 0.50 |
+
+**The digit stays centred, and that is the non-obvious part.** A descending printed mark *looks*
+weighted toward its high side, so the first attempt slid the gap over the highest note — which
+degenerates into a stub arm whenever that note is an outer one. The measurement says the asymmetry
+comes entirely from the arms' **slopes**: ends follow the notes, digit stays at mid-span.
+
+- The printed digit is **regular weight**, not bold (owner, against real pages). At the same 16 px it
+  measures 0.70 S wide against print's 0.76 — narrower, which only widens the clearance, so the
+  shrink rule is satisfied with more margin.
+- ⚠ **n is small and one-page for the arm numbers** (7 arms, 3 gap heights, one edition), against 16
+  marks / ~11 editions for the gap-and-digit table above. Quote them with that.
 
 - **Caveat on the `span`, `seg w` and `rise` columns:** where a segment merges with a staff line or a
   long slur, its component inflates those three (4 of 17 rows). `gap`, `digit_h` and `digit_w` are
@@ -83,8 +109,11 @@ around the digit. Only the curved style, which is 70% of pieces, carries the def
   Thickening only the tuplet arc would hand the model a thickness cue separating it from a phrase
   slur that real pages do not have — the same trap `AEU_SHARP_STROKE` documents. It is owed as a
   joint change with `drawSlurArc`, after the shape A/B.
-- **Unmeasured:** the digit's slant. Ours is bold italic; the real tiles look upright. A separate
-  pixel question, not part of the structural change under test.
+- **The digit's FONT changed, and the gap is why.** Bold italic Georgia (an old-style figure) measured
+  **1.10 S wide** at real print's height, leaving 0.26 S of clearance instead of 0.43 — it would have
+  fused with the arc ends after the shrink. Upright Times at 16 px measures 0.77 × 1.20 S. The slant
+  itself stays unmeasured; the width was not optional. Pre-registered: if the digit fuses again,
+  **widen the gap, never shrink the digit**.
 
 ### ⛔ A ~2% pre-shrink: exam −15.5%, real-val −1.6%. DID NOT REPLICATE (2026-07-28)
 

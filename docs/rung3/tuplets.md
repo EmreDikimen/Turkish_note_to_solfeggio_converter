@@ -2,7 +2,7 @@
 
 purpose: the tuplet diagnosis, the printed-notation facts behind it, and the plan that follows
 audience: agents and the owner working the real-page track
-updated: 2026-08-11
+updated: 2026-08-12
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -105,10 +105,39 @@ until the running sum is plain, force it when it is. A malformed group becomes u
 unlike a stitch-time repair it shows up in the exam score. Decision row:
 [../DECISIONS.md](../DECISIONS.md).
 
-## The likely root cause: we draw the mark wrong
+## The root cause is CONFIRMED as a drawing defect (2026-08-12) — and the redraw is in
 
-**Real Turkish editions break the arc and put the "3" in the gap. We draw a continuous arc with the
-digit floating above it** (owner, 2026-08-11, from a real page).
+`scripts/rung3/tuplet_mark_probe.py` measured the mark on real editions the way `sharp_probe` measured
+the sharps. **16 of 16 accepted marks, across ~11 editions, break the arc and set the "3" in the gap.**
+Not one continuous arc with a floating digit exists in the real pools. Geometry, the caveats and what
+our two styles do instead: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+
+Three things came out of doing it that reading could not have given:
+
+- **Our old mark was worse than "a digit above the arc".** The floating "3" *touched* the apex, so the
+  whole mark was ONE connected component — a slur with a bump. That is what the model had to tell
+  apart from a phrase slur.
+- **The gap is sized to the digit, not the group** — 1.63 S whether the mark spans 4.5 S or 28 S.
+- **Our own bracket style already breaks around its digit**, so only the curved style (then 70% of
+  pieces, now 90%) ever carried the defect.
+
+`drawTupletArc` now draws two segments with the digit in the gap, to those measurements, and the pilot
+re-render lands on every one of them. ⚠ **Nothing about recall is claimed yet** — the A/B has not run,
+and step 3 below is where that happens.
+
+**The owner reviewed the sheet the same day and the mark changed twice more, both measured after the
+fact.** The verdict was "right shape, too rigid": in real editions **the arms follow the notes, up or
+down**, and the "3" is lighter than we drew it. So each arm's outer end now clears **its own** end
+note (the mark tilts with the contour) and the digit is regular weight. ⚠ The one thing that did NOT
+change is where the digit sits: a descending printed mark *looks* weighted toward its high side, but
+measured it is at **0.49–0.50 of the span** — dead centre. Sliding the gap toward the high note was
+tried first and degenerates into a stub arm whenever that note is an outer one. Numbers, with their
+small n: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+
+## Why the shape matters — the reasoning, as written 2026-08-11
+
+**Real Turkish editions break the arc and put the "3" in the gap. We drew a continuous arc with the
+digit floating above it** (owner, 2026-08-11, from a real page; measured and fixed the next day).
 
 ```
 real print:   ⌒‾‾  3  ‾‾⌒          our renderer:        3
@@ -128,23 +157,31 @@ the printed one, and the cost landed on recall.
 
 This is the same shape as the Bravura sharp-bar defect: a glyph we drew unlike real print, learned
 faithfully, and paid for on real pages. That diagnosis method — measure our glyph against real
-print at matched staff size — is the one that worked, and it has never been pointed at the tuplet
-mark. Renderer constants as they stand: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+print at matched staff size — is the one that worked, and it was pointed at this mark on 2026-08-12
+(see the section above; it held). Both sets of constants:
+[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
 ## The plan
 
 Ordered, one change at a time, because Round 1 and Round 2 each moved several things and neither can
 be attributed.
 
-1. **Redraw the mark**: break the arc, put the digit in the gap, raise the arc share above its
-   current 70% (owner: arcs are more dominant than that). **Pixels only** — the `\tup3` token is
-   identical either way, so no label moves and no re-labelling is needed. `drawTupletArc` in
-   `apps/web/src/SheetView.tsx`. ⚠ That file is both the app's score view and the training-strip
-   source, so this also fixes how the app draws triplets for a reader.
-2. **Show the owner a rendered sample beside a real page** before re-rendering at scale. The shape
-   is a domain judgement, not a measurement.
-3. **Re-render and A/B** on `\tup3` recall specifically, with precision watched (it has ~20 points
-   of headroom above its floor and can afford to give some back).
+1. ✅ **DONE 2026-08-12 — redraw the mark**: break the arc, put the digit in the gap, raise the arc
+   share above its current 70% (owner: arcs are more dominant than that) — now 90%. **Pixels only** —
+   the `\tup3` token is identical either way, so no label moves and no re-labelling is needed.
+   `TUPLET_MARK` + `drawTupletArc` in `apps/web/src/SheetView.tsx`. ⚠ That file is both the app's score
+   view and the training-strip source, so this also fixes how the app draws triplets for a reader.
+   Checks: `npm test`, `smoke:editor` and `verify-labels` on the pilot all pass unchanged (309/309
+   exact), which is how we know the label path did not move.
+2. ✅ **DONE 2026-08-12 — the owner looked at the shape** on
+   `data/real/rung3/tuplet_probe/mark_comparison.png` (`scripts/rung3/tuplet_mark_sheet.py`: real
+   edition / ours before / ours now, same piece and same strip, each also as the encoder sees it; ⚠
+   local viewing only, the real row is a third-party edition —
+   [../THIRD-PARTY.md](../THIRD-PARTY.md)). Two corrections came back — arms follow the notes, lighter
+   digit — and both are in. **This is the gate the plan put here, and it is passed.**
+3. ⏭ **Re-render and A/B** on `\tup3` recall specifically, with precision watched (it has ~20 points
+   of headroom above its floor and can afford to give some back). ⚠ Round 3's acceptance bar is owed
+   **before** this, since an A/B is training ([../STATUS.md](../STATUS.md), Track B item 1).
 4. **Ship the arithmetic repair** for the wrong-edge groups that survive, plus the decode
    constraint above.
 5. **Only then** revisit the 35% slur-distractor rate. It may be fine once the two shapes genuinely
@@ -154,9 +191,10 @@ be attributed.
 
 ## Non-claims
 
-- The arc-shape story is a **hypothesis with a mechanism**, not a measurement. Nothing has been
-  A/B'd yet. It is consistent with the precision/recall history and with the Bravura precedent, and
-  that is all.
+- **The SHAPE is now measured; the RECALL story is still a hypothesis.** What 2026-08-12 established
+  is that real print breaks the arc and we did not (16/16, ~11 editions) — it says nothing about what
+  fixing that buys. Nothing has been A/B'd. The mechanism is consistent with the precision/recall
+  history and with the Bravura precedent, and that is all it is.
 - The missed-group failure (shape 2 above) is **not** addressed by any repair rule here. Bar-length
   comparison across a page could reach it — most bars agreeing sets the expected length without a
   time signature — but that is untested and unbuilt.

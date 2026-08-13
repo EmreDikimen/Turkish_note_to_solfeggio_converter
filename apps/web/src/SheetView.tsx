@@ -392,9 +392,14 @@ function tupletAbove(group: StaveNote[]): boolean {
 const TUPLET_MARK = {
   gap: 1.63,       // S — arc-end to arc-end, the hole the digit sits in (real: 1.55–1.69, n=16)
   digitH: 1.2,     // S — digit height (real 1.20, ours was 0.97)
-  digitDrop: 0.2,  // S — digit centre just INSIDE the arc ends, toward the staff (real +0.20)
-  rise: 0.9,       // S — how far each segment climbs from its outer end to the gap (real ~0.95)
-  minSeg: 0.5,     // S — shortest segment worth drawing; a narrow group widens OUTWARD instead
+  // S — digit centre just INSIDE the arc ends, toward the staff. The probe's +0.20 is measured from
+  // the stroke's TOP ink row; `yGap` below is its centreline, so the constant carries that offset.
+  digitDrop: 0.07,
+  clear: 0.85,     // S — how far an arm's OUTER end clears its OWN end note (real 0.60–0.93, n=7 arms)
+  rise: 0.58,      // S — how much further the gap sits above the group's outermost note: clear+rise
+                   //     = 1.43 S over the highest notehead, measured on 3 marks of one real page
+  minSeg: 0.5,     // S — shortest arm worth drawing; a group too narrow for the gap widens OUTWARD
+                   //     rather than closing it
   stroke: 0.11,    // S — deliberately equal to drawSlurArc's; see the warning above
 };
 
@@ -403,52 +408,83 @@ const TUPLET_MARK = {
  * set in the gap between them, to the measurements in `TUPLET_MARK`. This is the shape printed
  * Turkish scores use (VexFlow's `Tuplet` only draws the square bracket, which stays as the minority
  * per-piece style — and which, note, already breaks around its digit).
+ *
+ * **THE ARMS FOLLOW THE NOTES** (owner, 2026-08-12, looking at the redraw beside real pages;
+ * measured on `strips_tup/ben_guzele_…_p2_s01_w03.png`, four descending triplets in one strip). A
+ * printed mark is NOT a fixed shape floating at one height: **each arm's outer end clears its OWN end
+ * note** (0.60–0.93 S over that notehead), while the gap sits 1.43 S above the group's HIGHEST note.
+ * So a descending triplet gets a nearly flat left arm and a long sweeping right one — the mark tilts
+ * with the contour, which is how a reader sees which notes it covers.
+ *
+ * ⚠ The digit stays at the **middle of the span**, and that is measured, not assumed: on that page it
+ * sits at 0.49–0.50 of the mark's width even on descending figures. Sliding the gap toward the high
+ * note (tried first, 2026-08-12) looks right in a screenshot and is wrong — it degenerates into a stub
+ * arm whenever the highest note is an outer one. The visual asymmetry of a printed mark comes from the
+ * arms' SLOPES, not from where the "3" sits.
  */
 function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const S = STAFF_SPACE;
-  const xs = group.map((n) => n.getAbsoluteX());
-  const x1 = Math.min(...xs) - 2;
-  const x2 = Math.max(...xs) + 12;
-  const ys = group.flatMap((n) => {
-    try {
-      return n.getYs();
-    } catch {
-      return [];
-    }
-  });
-  if (ys.length === 0) return;
-  const yEdge = above ? Math.min(...ys) - 9 : Math.max(...ys) + 9;
-  // Where the two segments end: the mark's high point, as far from the notes as the old apex was.
-  const yGap = yEdge + (above ? -1 : 1) * TUPLET_MARK.rise * S;
-  const midX = (x1 + x2) / 2;
+  const sign = above ? -1 : 1; // -1 = the mark is above the noteheads, so "outward" is up
+  // Per note: its x and the notehead edge the mark sits beyond. `getYs` is the noteheads, which IS
+  // the outer ink on the mark's side — the sign chooses which end of a chord to clear.
+  const notes = group
+    .map((n) => {
+      let ys: number[] = [];
+      try {
+        ys = n.getYs();
+      } catch {
+        ys = [];
+      }
+      return { x: n.getAbsoluteX(), edge: ys.length ? (above ? Math.min(...ys) : Math.max(...ys)) : NaN };
+    })
+    .filter((p) => Number.isFinite(p.edge))
+    .sort((a, b) => a.x - b.x);
+  if (notes.length === 0) return;
+  const first = notes[0]!;
+  const last = notes[notes.length - 1]!;
+  const x1 = first.x - 2;
+  const x2 = last.x + 12;
+  // The gap's HEIGHT comes from the group's outermost note, so the mark clears every notehead under
+  // it; its horizontal position is simply the middle of the span (see the ⚠ above).
+  const peak = above ? Math.min(...notes.map((p) => p.edge)) : Math.max(...notes.map((p) => p.edge));
+  const yGap = peak + sign * (TUPLET_MARK.clear + TUPLET_MARK.rise) * S;
+
   const half = (TUPLET_MARK.gap * S) / 2;
+  const minSeg = TUPLET_MARK.minSeg * S;
   // A group too narrow for a full-width gap widens the mark OUTWARD — never narrows the gap, or the
   // digit fuses with the arc ends after the encoder's shrink (the sharp-bar failure mode).
-  const outer = Math.max(TUPLET_MARK.minSeg * S, 0);
-  const ax1 = Math.min(x1, midX - half - outer);
-  const ax2 = Math.max(x2, midX + half + outer);
-  // Each segment: quadratic from the outer end up to the gap, control point at the gap's HEIGHT so
-  // the curve arrives horizontally there and does its bending at the outer end — the printed shape.
-  for (const [from, to] of [[ax1, midX - half], [ax2, midX + half]] as const) {
+  const ax1 = Math.min(x1, (x1 + x2) / 2 - half - minSeg);
+  const ax2 = Math.max(x2, (x1 + x2) / 2 + half + minSeg);
+  const gapX = (ax1 + ax2) / 2;
+  // Each arm: quadratic from its own note's clearance point up to the gap, control point at the gap's
+  // HEIGHT so the curve arrives horizontally there and does its bending at the outer end.
+  for (const [from, yFrom, to] of [
+    [ax1, first.edge + sign * TUPLET_MARK.clear * S, gapX - half],
+    [ax2, last.edge + sign * TUPLET_MARK.clear * S, gapX + half],
+  ] as const) {
     const path = document.createElementNS(SVG_NS, "path");
-    path.setAttribute("d", `M ${from} ${yEdge} Q ${from + 0.55 * (to - from)} ${yGap} ${to} ${yGap}`);
+    path.setAttribute("d", `M ${from} ${yFrom} Q ${from + 0.55 * (to - from)} ${yGap} ${to} ${yGap}`);
     path.setAttribute("fill", "none");
     path.setAttribute("stroke", "#222");
     path.setAttribute("stroke-width", String(TUPLET_MARK.stroke * S));
     svg.appendChild(path);
   }
   const text = document.createElementNS(SVG_NS, "text");
-  text.setAttribute("x", String(midX));
+  text.setAttribute("x", String(gapX));
   // `y` is the baseline: put the digit's CENTRE `digitDrop` inside the gap, then drop half a digit.
-  const centre = yGap + (above ? 1 : -1) * TUPLET_MARK.digitDrop * S;
+  const centre = yGap - sign * TUPLET_MARK.digitDrop * S;
   text.setAttribute("y", String(centre + (TUPLET_MARK.digitH * S) / 2));
   text.setAttribute("text-anchor", "middle");
-  text.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
-  // Sized so the glyph measures TUPLET_MARK.digitH: 13 px drew 0.97 S, so 1.20 S needs ~16.
+  // ⚠ UPRIGHT Times at REGULAR weight, not the bold italic Georgia this used to be. Two reasons, and
+  // neither is taste: an italic Georgia "3" (an old-style figure) measured 1.10 S wide where real
+  // print draws 0.76, which left 0.26 S of air each side instead of 0.43 — the digit would fuse with
+  // the arc ends after the encoder's shrink, the failure mode the sharp bars already cost us once —
+  // and the printed digit is a REGULAR-weight serif (owner, 2026-08-12, against real pages; bold was
+  // this renderer's invention). Sized so the ink measures TUPLET_MARK.digitH; verify with
+  // tuplet_mark_probe.py --dir on a pilot render.
+  text.setAttribute("font-family", "'Times New Roman', Georgia, serif");
   text.setAttribute("font-size", "16");
-  text.setAttribute("font-style", "italic");
-  text.setAttribute("font-weight", "bold");
   text.setAttribute("fill", "#222");
   text.textContent = "3";
   svg.appendChild(text);

@@ -229,6 +229,34 @@ time. The alternative (shipping two trimmed copies of every sample) would have d
 sha256 table above stays valid, and re-tuning by ear costs no re-upload. That paid off immediately:
 the round-1 numbers were replaced by the round-2 numbers for free.
 
+### Do the samples keep the microtones? — measured 2026-08-13
+
+**Yes, exactly.** A makam's comma deltas are added to `koma53` *before* a frequency exists
+(`withKomaDeltas` → `buildTimeline` → `freqFromTuning`), so the sampled and synthesised paths consume
+one and the same `freqHz`. The sampler then sets `playbackRate = freqHz / sample.hz`, which lands on
+`freqHz` by construction. Swept over every koma in both instruments' ranges × the fractional deltas a
+makam applies (−1.5, −1, +1, +1.5), **1,841 sampled pitches, worst error 9.9e-5 cents** — about
+1/229,000 of a koma, after storing the ratio in the float32 AudioParam the browser actually uses.
+Pinned by `tools/audio/voices-test.ts` so it cannot regress. Pitches outside a voice's range fall
+back to the synth, which is exact by definition.
+
+⚠ **But a violin note is not a steady pitch, and that is worth knowing for this app specifically.**
+The layer is `Arco Vib` — vibrato — and its pitch swings **0.9–1.2 komas** peak to peak:
+
+| sample | pitch swing | in komas |
+|---|---|---|
+| violin G4 | 28.0 cents | **1.24** |
+| violin C5 | 19.6 cents | 0.86 |
+| clarinet D4 | 3.6 cents | 0.16 |
+| clarinet A#3 | 2.2 cents | 0.10 |
+
+The *centre* is exactly right; the note moves around it by roughly one koma while sounding. So the
+violin plays the makam correctly but **cannot be used to hear the difference between adjacent komas**
+— for that the clarinet is the reference voice, being steady to a tenth of a koma. ⚠ VSCO's Solo
+Violin has no non-vibrato arco articulation (only `Arco Vib`, `Pizz`, `Trem`, `spic`), so this is a
+property of the source, not something a setting can fix. A straight-tone violin would need a
+different recording.
+
 ### Levels
 
 Measured peaks are low: **0.26** (clarinet) and **0.31** (violin) full scale. The manifest carries a

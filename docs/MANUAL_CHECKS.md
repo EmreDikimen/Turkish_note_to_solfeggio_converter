@@ -354,7 +354,12 @@ measured spectrally AND varies with note length. **Still owed: a third listen**,
    without the clarinet lingering.
 8. ⚠ If it sounds like the beep, **the samples did not load** — look at the picker's state before
    reporting the sound as wrong.
-9. ⚠ **A violin is not a kemençe.** Confirm the label says **Keman**. It is a free stand-in for a
+9. **Check a makam that bends its perdes** (uşşak, sabâ, hüzzam) against `yok (yazıldığı gibi)`.
+   The bent perdes must move by the same amount on Klarnet as on the default tone — the sampler
+   resamples onto the exact 53-TET frequency, measured to 1/229,000 of a koma, so any audible
+   difference is a bug rather than a limitation. ⚠ Judge this on the **clarinet**: the violin's
+   vibrato swings about a koma, so it cannot show a koma-sized difference either way.
+10. ⚠ **A violin is not a kemençe.** Confirm the label says **Keman**. It is a free stand-in for a
    bowed sound and must never claim to be the Turkish instrument.
 
 ---

@@ -253,5 +253,47 @@ ok("zero is refused", pickSample(violin, 0) === null);
 ok("the synthesised voice never picks a sample", pickSample(findVoice("sine")!, 440) === null);
 
 // ---------------------------------------------------------------------------------------------
+console.log("\n53-TET is not lost in the resampling");
+
+// ⚠ The property this whole project rests on: a sampled voice must land on the SAME frequency the
+// synthesised one would, including the fractional koma deltas a makam applies (uşşak segah −1.5,
+// sabâ hicaz +1.5, hüzzam hisar +1, segah karar −1). Those are added to `koma53` before the
+// frequency exists, so both paths consume one `freqHz` — but `playbackRate` is a **float32**
+// AudioParam, so the ratio is stored at reduced precision and that is worth pinning rather than
+// assuming. A 12-TET sampler would fail this by a whole koma; a rounding bug, by a few cents.
+const KOMA_CENTS = 1200 / 53;
+const f32 = new Float32Array(1);
+const refFreq = (koma: number) => 440 * Math.pow(2, (koma - 353) / 53);
+
+let worstCents = 0;
+let worstWhere = "";
+let sampledPitches = 0;
+for (const v of sampled) {
+  for (let koma = 200; koma <= 460; koma++) {
+    for (const delta of [0, -1.5, 1.5, 1, -1]) {
+      const want = refFreq(koma + delta);
+      const pick = pickSample(v, want);
+      if (!pick) continue; // out of range: the synth takes it, and the synth is exact
+      sampledPitches++;
+      f32[0] = pick.playbackRate; // what the AudioParam actually stores
+      const got = pick.sample.hz * f32[0]; // what the speaker produces
+      const off = Math.abs(1200 * Math.log2(got / want));
+      if (off > worstCents) {
+        worstCents = off;
+        worstWhere = `${v.id} koma ${koma}${delta ? (delta > 0 ? `+${delta}` : `${delta}`) : ""}`;
+      }
+    }
+  }
+}
+console.log(
+  `  note  ${sampledPitches} sampled pitches, worst ${worstCents.toExponential(1)} cents (${worstWhere})`,
+);
+ok(
+  "every koma, and every makam delta, resamples to its exact frequency",
+  worstCents < KOMA_CENTS / 1000,
+  `${worstCents.toExponential(2)} cents is more than a thousandth of a koma`,
+);
+
+// ---------------------------------------------------------------------------------------------
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURE(S)`);
 process.exit(failures === 0 ? 0 : 1);

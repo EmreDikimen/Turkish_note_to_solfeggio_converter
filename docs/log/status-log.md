@@ -2,12 +2,115 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-13
+updated: 2026-08-14
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-13 (latest) — F1's instrument voices, and what measuring the files caught
+## 2026-08-14 (latest) — the kanun ships, and four listens beat four green checks
+
+**F1 is complete: Klarnet, Keman and Kanun, uploaded, deployed, heard.** 62 CC0 files / 65.9 MB at
+`Beyaban/omr-voices`; `Deploy is live!` and `smoke:live` PASS on both paths, with the drums still
+answering 200 from the app's own `/audio/` and `/THIRD-PARTY.txt` carrying the kanun's block.
+
+**The kanun is the first audio this project MADE rather than copied.** One CC0 take
+([Freesound 211133](https://freesound.org/s/211133/), CompMusic/UPF, 2:02 mono mp3, downloaded by
+hand because Freesound needs an account) → 36 wav, F3-E6, 9.9 MB, every semitone. `prepare_voices.py`
+grew a second acquisition path for it: decode once, split at the onsets, never re-encode. The sha256
+identity check cannot apply to a file cut out of a longer one, so the **source take's** hash replaces
+it, and both `/THIRD-PARTY.txt` and the Hub card were reworded to say *which* folders are untouched
+rather than implying all of them are.
+
+**The split is trusted because the run is chromatic.** The source promises all chromatic tones, so
+the measured pitches must step by a semitone — a missed onset shows as ~200 cents, a note cut in two
+as ~0. That check is also what *selects* the notes: the two events at the head of the take are
+excluded by not belonging to the run. ⚠ Excluding them by level or by harmonicity was tried and is
+wrong — the genuine bottom note F3 is 61% harmonic against the intruders' 72%.
+
+**Four ear passes, four real defects, none of which any green check saw.** Breath on 16th notes; then
+too deep a trim; then the kanun's pitch measured a **whole koma sharp** (stiff strings stretch their
+partials, so a period-based estimator reads a pluck sharp — 22 cents at F3/F♯3, 2 at E6), which put
+microtonal accidentals on the wrong comma; then `attackS` landing **150 ms before the pluck** on
+`kanun_17_Cs5.wav`, so a 16th note was over before the kanun spoke. Both kanun fixes are
+plucked-ONLY — the pitch refinement moved violin C7 by 22 cents, because `Arco Vib` has no peak to
+find — and both now have guards that fail the run instead of the listener.
+
+⚠ **Three fixes needed a second fix, and each is recorded where it was made.** The pitch refinement
+had to prove it agreed with itself (on D♯6 the fundamental is 6× quieter than its second partial, and
+hunting a weak peak returned 1220/1247/1247). The re-articulation scan flagged 9 files of which 8
+were decayed-tail noise. And the attack guard's first version measured time-to-*peak*, failing four
+correct samples because a low pluck has a broad top. The lesson each time was the same: a measurement
+that looks principled can still be measuring the wrong quantity.
+
+**Also landed:** `tools/audio/serve-voices.ts` (`npm run serve:voices` + `dev:voices:local`), so a
+voice can be heard before it is published — a plain static server cannot do it, because dev serves
+under COEP `require-corp`. Both kanun bugs were found this way, locally, before any upload.
+
+Detail: [../features/kanun.md](../features/kanun.md). Deployed state: [../STATUS.md](../STATUS.md).
+
+## 2026-08-14 — Round 3 gets its bar, and the tuplet A/B is built up to the Colab handoff
+
+**The acceptance bar exists, and it is the launch gate.** [../rung3/round3-criteria.md](../rung3/round3-criteria.md)
+is written before any Round-3 training: floors beside their Round-2 baselines, and one number that
+decides both the round and whether the app opens beyond the two friends — **≥75% of exam pages
+needing ≤5 corrections**, against 57% today. It is marked **PROPOSED**: the owner signs it off before
+a run, because a gate chosen after seeing a result is a description, not a gate. Why the product
+number and not the AEU headline: Round 3 targets pitch (40% of user edits) and duration (28%), and
+the macro mean cannot see either. Why 75 and not the standing 90: from 57% in one round, 90 is a
+floor nobody clears, and a floor nobody clears stops discriminating.
+
+**The `\tup3` A/B is assembled and waiting on two Colab runs.** Both corpora are rendered —
+`strips_v5_tupnew` (the mark as measured: arc broken, "3" in the gap) and `strips_v5_tupctl` (the
+pre-2026-08-12 continuous arc with the digit above it), **40,841 strips each**. The control arm is a
+frozen copy of the old drawing behind `render.ts --legacy-tuplet-mark`; the app itself never draws it.
+
+**What the two corpora prove about each other, exactly:** their manifests are **byte-identical**, and
+of 40,841 strips **1,691 differ in pixels** — 1,690 of them are the curved-style strips whose label
+carries `\tup3`, and the 379 `\tup3` strips that are pixel-identical are **exactly** the 22
+bracket-style pieces, which never call the changed function. The partition is perfect in both
+directions. The one leftover is a strip with no `\tup3` in its label that differs by **20 pixels in a
+4×7 box at x 0–3** — a neighbouring measure's mark bleeding over the crop edge.
+
+**And against Round 2's corpus, nothing moved but the mark:** all **40,826** strips shared with
+`strips_v4` carry **byte-identical labels**, and the new corpus's only extra rows are the same 15
+`verify-labels` flags v4 excluded. ⚠ That also **retires a prediction**: [../DECISIONS.md](../DECISIONS.md)
+recorded that the 2026-08-05 unclosed-`\tup3` fix would move synthetic labels on the next re-render
+(5 measures in 1 piece). On this re-render **no label moved**, and the reason is not established.
+
+**The selection pool had to be built, because the standing one cannot carry this measurement.**
+`_realval_v2` holds 35 `\tup3` groups; `_tupletval` (`scripts/rung3/build_tuplet_val.py`) pools every
+`\tup3`-bearing strip already on the val side and reaches **54 groups over 28 strips**. That is still
+small, and the consequence is written into the pre-registration rather than discovered afterwards:
+one group is 1.9 pp, exact McNemar needs ~6 discordant groups one way, so the **minimum resolvable
+effect is ~11 pp** against a hoped-for ~5. A null is the likely outcome and the rule for it is
+already written — keep the shape (it is measured against real print), claim nothing.
+
+⚠ **`data/pieces.json` is stale, and it cost a full corpus render.** CLAUDE.md documented
+`--pieces data/pieces.json`, but `strips_v4` **and** `data/split_v4.json` were both built from
+`data/pieces_v4.json` — 208 pieces against the older file's 190. The first render finished before the
+mismatch surfaced: 23 of Round 2's pieces missing and **528 strips in neither side of the split**,
+silently dropped at train time. Nothing errors, nothing looks wrong; the only signal is a piece count.
+The correct file is now beside the command in [../../CLAUDE.md](../../CLAUDE.md).
+
+⚠ **A render aborts the whole chain on one Playwright timeout.** Piece 69/208 timed out on a
+screenshot and took the run with it. Renders are resumable by design, so the fix was a retry loop
+rather than a code change — but a 208-piece job that dies at 69 and has to be noticed by a human is
+worth knowing about before starting one overnight.
+
+**Also built, so the read is one command when the checkpoints come back:**
+`scripts/rung3/tuplet_ab_score.py` decodes both arms over the pool, scores every gold `\tup3`
+occurrence with `eval_omr.align`, and prints each arm's recall/precision with the exact McNemar p on
+the discordant groups — paired, because at 54 groups an unpaired 4 pp can rest on a single group.
+`scripts/make_round3_colab_zip.sh <arm>` and `notebooks/round3_tuplet_ab_colab.ipynb` complete the
+handoff; both assert `render_config.json`, which is the **only** file that can tell the two corpora
+apart.
+
+**One reference number, measured before the arms exist:** `round2-stage2-best` reads **85.2% `\tup3`
+recall / 97.9% precision** on `_tupletval` ([../METRICS.md](../METRICS.md)). The pool is therefore not
+flattering on the class it exists to measure — 85.2% here against 83.8% on the exam, where real-val
+normally reads far higher.
+
+## 2026-08-13 — F1's instrument voices, and what measuring the files caught
 
 **Clarinet and violin play, and every note is a recording resampled onto its exact koma.** The app
 side is finished: a `Çalgı sesi` picker, per-note choice between a sample and the built-in tone,

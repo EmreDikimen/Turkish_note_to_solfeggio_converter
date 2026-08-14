@@ -2,9 +2,32 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-13
+updated: 2026-08-14
 
 ## Now
+
+⏭ **Round 3 has an acceptance bar for the first time, and it needs your signature.**
+[rung3/round3-criteria.md](rung3/round3-criteria.md) is written and dated before any training, as the
+rules require. One number decides both the round and the public launch: **≥75% of exam pages needing
+≤5 corrections**, against 57% today. It is the *product* number rather than the accidental headline
+because Round 3 targets pitch (40% of user edits) and duration (28%), which the macro AEU mean cannot
+see. **Nothing trains until it is signed** — a bar chosen after a result is a description.
+
+✅ **The `\tup3` A/B is built to the edge of the GPU.** Both corpora are rendered and are **row-for-row
+identical to `strips_v4` apart from how the triplet mark is drawn** — same 40,826 strips, every label
+byte-identical. Between the arms, 1,691 PNGs differ: 1,690 curved-style `\tup3` strips plus one
+20-pixel crop-edge bleed, and the 379 `\tup3` strips that are identical are exactly the 22
+bracket-style pieces. A clean partition in both directions is the strongest attribution this
+experiment can have before it runs. ⚠ **What it cannot have is power**: the selection pool holds
+**54 `\tup3` groups**, one group is 1.9 pp, and exact McNemar needs ~6 discordant groups — so a real
+5 pp gain would read as a null. That is pre-registered, with its own decision rule, rather than
+discovered afterwards. Two Colab runs are all that is left.
+
+⚠ **`data/pieces.json` is stale and cost a full corpus render.** `strips_v4` and `data/split_v4.json`
+were both built from **`data/pieces_v4.json`** (208 pieces vs 190), but the documented command named
+the older file. The wrong render completed and looked normal — 23 of Round 2's pieces missing and 528
+strips in neither side of the split, which training drops silently. The correct file is now beside the
+command in [../CLAUDE.md](../CLAUDE.md).
 
 ✅ **Two rounds of ear feedback have landed, and each corrected the previous measurement.** Round 1:
 16th notes came out as *"just like breath"* (clarinet) and an annoying *creak* (violin) — a short note
@@ -19,15 +42,33 @@ keeps depends on the note**: it inherits the recorded swell only when that swell
 which put the creak back in the middle of the range while both ends measured fine. ⚠ Cost: one
 subtraction and one comparison per note; nothing measurable. ⚠ **The trim is in TIME, not in the
 file** — the wavs stay byte-identical, so round 2 cost no re-upload, which is exactly why that
-decision keeps paying. **Still needs a re-listen** — check 24 is not closed. Numbers: [features/audio-sources.md](features/audio-sources.md).
+decision keeps paying. ⚠ **Rounds 3 and 4 then landed on the kanun** (pitch a koma sharp; the attack
+starting before the pluck) and cost no re-upload either, for the same reason. All four are closed.
+Numbers: [features/audio-sources.md](features/audio-sources.md).
 
-**F1 — instrument voices — is BUILT, UPLOADED and verified; it is not deployed and the fix above is
-unheard.** The app has a `Çalgı sesi` picker offering **Klarnet** and **Keman** beside the built-in tone,
-and a note is sounded by a real recording resampled onto its exact koma. The 26 CC0 files are live at
-<https://huggingface.co/datasets/Beyaban/omr-voices> (55.6 MB); `smoke:editor` driven against that URL
-reads **11/11 decoded, every note sounded by a recording and none by the synth**, with the drums still
-loading from the app in the same run. The two open steps are **check 24 by ear**
-([MANUAL_CHECKS.md](MANUAL_CHECKS.md)) and a deploy — see Track A item 5b.
+✅ **F1 IS DONE, HEARD AND LIVE — and the kanun is in it (2026-08-14).** The `Çalgı sesi` picker
+offers **Klarnet**, **Keman** and **Kanun** beside the built-in tone, and a note is sounded by a real
+recording resampled onto its exact koma. 62 CC0 files at
+<https://huggingface.co/datasets/Beyaban/omr-voices> (65.9 MB), deployed and `smoke:live` PASS on
+both paths. The owner listened and accepted it; check 24's third pass is closed.
+
+⚠ **The kanun is the first voice whose files this project MADE rather than copied**, and three things
+follow from that which no other voice needed. It is **derived** — one two-minute take, cut at the
+onsets — so the sha256 identity check cannot apply and the source take's hash stands in its place;
+"served unmodified" is now a per-voice claim. It is **plucked**, so its notes decay and end early by
+design, and `voices-test.ts` asks it for a 0.8 s window where a sustained voice must reach 4 s. And it
+is **not in equal temperament** — steps of 62–137 cents, because a kanun's mandals are spaced in
+komas — which is the point of it rather than a defect. Everything measured:
+[features/audio-sources.md](features/audio-sources.md).
+
+⚠ **Two bugs the owner's ear found that no automated check would have**, both now guarded. The pitch
+was measured with YIN, which reads a *plucked* string sharp because stiff strings stretch their
+partials — **22 cents on the bottom courses, a whole koma**, so microtonal accidentals down there
+landed on the wrong comma. And `attackS` was "first audible sample", which on a note cut out of a
+longer take is whatever the take was doing beforehand: `kanun_17_Cs5.wav` had **150 ms of another
+sound** before its pluck, so a 16th note was over before the kanun spoke. Both fixes are
+plucked-only — applying the pitch one to the violin moved C7 by 22 cents, because vibrato has no peak
+to find — and both now have guards that fail the run rather than the listener.
 
 ✅ **The per-note fallback earned itself over a real network.** Against the Hub the first few notes of
 a playback are still synthesised while the download runs, and the piece switches to recordings
@@ -123,31 +164,40 @@ the model track never touches the app.** Either can be worked on without waiting
 5. **DONE 2026-08-11 — W10 SHIPPED AND ANSWERED**: the link went to two friends, they liked it, and
    asked for **more instrument sounds** — which is what 5b built. The rung is complete. Account:
    [mvp/README.md](mvp/README.md).
-5b. **F1, INSTRUMENT VOICES — BUILT 2026-08-13 (clarinet + violin). Kanun deferred.** The friends'
-   own request. Everything in the app is done and checked: the `Çalgı sesi` picker, per-note
-   selection between a recording and the built-in tone, `playbackRate` onto the exact koma,
-   Cache-Storage caching like the weights, and a fallback that keeps playing when the host is
-   unreachable. Kanun stayed out because it needs a Freesound account and onset-splitting a
-   two-minute take — a different job, and the manifest is shaped so it is a data change.
+5b. **✅ F1, INSTRUMENT VOICES — DONE 2026-08-14. Klarnet, Keman and Kanun, deployed and heard.**
+   The friends' own request, all three instruments the owner named. Everything in the app is done and
+   checked: the `Çalgı sesi` picker, per-note selection between a recording and the built-in tone,
+   `playbackRate` onto the exact koma, Cache-Storage caching like the weights, and a fallback that
+   keeps playing when the host is unreachable. The kanun took a second acquisition path in
+   `prepare_voices.py` (split a local take, rather than copy files off GitHub) and it is the only
+   voice that needed one.
    ⚠ Ney still has **no** CC0 source and needs the owner's own recording; oud and tanbur remain
-   **Karplus–Strong**, code rather than files.
+   **Karplus–Strong**, code rather than files. ⚠ `features/README.md` says any instrument past these
+   three should be aimed by what the friends say next — so this is not a queue to work down.
 
-   **✅ UPLOADED 2026-08-13** to `Beyaban/omr-voices` (a **dataset** repo — note the `/datasets/`
-   path segment, which does not resolve like the weights' model repo). Verified from outside: 200
-   after the LFS redirect, byte counts identical to the VSCO originals, `access-control-allow-origin`
-   echoed for the deployed origin, and the `#` in `A#2` resolving percent-encoded.
+   **✅ UPLOADED** to `Beyaban/omr-voices` (a **dataset** repo — note the `/datasets/` path segment,
+   which does not resolve like the weights' model repo), 62 files / 65.9 MB after the kanun. Verified
+   from outside each time: 200 after the LFS redirect, byte counts matching what was staged,
+   `access-control-allow-origin` echoed for the deployed origin, and the `#` in `A#2` resolving
+   percent-encoded.
 
-   **✅ DEPLOYED 2026-08-13** — `Deploy is live!`, `smoke:live` PASS on both paths. Verified beyond
-   what that check covers: the voices URL is baked into the shipped bundle (env vars inline at build
-   time, so a wrong one is invisible until someone clicks the picker), the drum wavs still answer 200
-   from `/audio/`, and `sample.json` still 404s.
+   **✅ DEPLOYED 2026-08-13, redeployed with the kanun 2026-08-14** — `Deploy is live!`,
+   `smoke:live` PASS on both paths. Verified beyond what that check covers: the voices URL is baked
+   into the shipped bundle (env vars inline at build time, so a wrong one is invisible until someone
+   clicks the picker), the drum wavs still answer 200 from `/audio/`, and `/THIRD-PARTY.txt` carries
+   the kanun's block.
 
-   **⏭ WHAT IS LEFT: a third listen.** Check 24 has been run twice and both passes found real
-   defects — 16th notes coming out as breath, then the trim being too deep. Both are fixed and
-   measured; neither fix has been heard. ⚠ The number most likely to come back wrong is the per-voice
-   `gain`: the voices are **peak-matched**, so they sound a few dB quieter than the built-in tone,
-   which is the trade and not a fault. If they should be louder the order is `gain` → a `Çalgı sesi`
-   slider → **never** `MASTER_GAIN`.
+   **✅ CHECK 24 IS CLOSED.** It ran four times and every pass found a real defect no automated check
+   had — breath on 16th notes, then too deep a trim, then the kanun's pitch a koma out, then its
+   attack landing before the pluck. All four are fixed, measured and guarded. ⚠ The number most
+   likely to come back is the per-voice `gain`: the voices are **peak-matched**, so they sound a few
+   dB quieter than the built-in tone, which is the trade and not a fault. If they should be louder
+   the order is `gain` → a `Çalgı sesi` slider → **never** `MASTER_GAIN`.
+
+   ⚠ **What that repeated pattern says, for whoever adds the ney.** Four listens, four real bugs, and
+   every one of them was a *timing or tuning* error that every green check sailed past — because the
+   checks assert shape (ordering, bounds, licence) and the ear assays the sound. Budget an ear pass
+   per instrument; do not treat a passing `npm test` as evidence the audio is right.
 
    **What the owner settled before it started, all three honoured** ([DECISIONS.md](DECISIONS.md)):
    nothing compressed or trimmed (the staged files are **byte-identical to the library's**, asserted
@@ -168,10 +218,14 @@ Still the **public-launch gate**, and still runnable at any time — it shares n
 track. It stopped being "the whole project's next move" when the owner picked F1 (2026-08-11); the
 two now run in parallel exactly as the 2026-08-05 scoping intended.
 
-1. **Write down what Round 3 must reach, BEFORE training starts** — on the user-effort metric (≥90%
-   of pages ≤5 corrections; baseline 57%), with micro and macro≥30 quoted beside the macro mean.
-   This is now also the **public-launch gate**, so it settles more than one thing. Then render once,
-   train stage 1 once with several cheap stage-2 variants, read the exam once.
+1. **⏭ THE NEXT ACTION IS YOURS: sign off Round 3's acceptance bar.** It is written and dated before
+   any training — [rung3/round3-criteria.md](rung3/round3-criteria.md), 2026-08-14 — but the primary
+   number is **also the public-launch gate**, so it is marked PROPOSED until the owner takes it:
+   **≥75% of exam pages needing ≤5 corrections** (Round-2 baseline 57%; the standing product goal of
+   ≥90% is the destination, not a one-round floor). The accidental measures become no-regression
+   clauses at their Round-2 values, because Round 3 aims at pitch and duration and must not buy them
+   by giving back the microtonal reading. **Nothing trains until this is signed** — the A/B below
+   included.
 1b. **THE TUPLET MARK — DONE 2026-08-12, and it is measured, not guessed.** The arc is broken with the
    "3" in the gap and the curved-arc share is 90% (`TUPLET_MARK` + `drawTupletArc`,
    `apps/web/src/SheetView.tsx`); pixels only, and `verify-labels` on the pilot is 309/309 exact, so no
@@ -182,12 +236,20 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    `.venv-ml/bin/python scripts/rung3/tuplet_mark_sheet.py`; ⚠ **local viewing only**, the real row is a
    third-party edition — [THIRD-PARTY.md](THIRD-PARTY.md)). Two corrections came back and are in: the
    arms follow the notes, the digit is lighter.
-1d. **⏭ THE NEXT ACTION — re-render the corpus and A/B `\tup3` recall**, which has missed its floor
-   twice and now sits *below* its own pre-work baseline. ⚠ Write item 1's acceptance bar down **first**,
-   because an A/B is training. ⚠ Do **not** touch the 35% slur-distractor rate in the same change; it is
-   the obvious second knob and moving both makes the result unreadable. ⚠ Also owed and deliberately
-   deferred: real print draws the arc **heavier** than we do, and that must change jointly with
-   `drawSlurArc` or it becomes a thickness cue real pages do not have. Plan and non-claims:
+1d. **THE `\tup3` A/B IS BUILT AND WAITING ON TWO COLAB RUNS (2026-08-14).** Everything off the GPU is
+   done: both corpora rendered (`strips_v5_tupnew` / `strips_v5_tupctl`, 40,826 strips each, **row-for-row
+   identical to `strips_v4` apart from the mark**), the selection pool `_tupletval` built (**54 `\tup3`
+   groups over 28 strips**), the two Colab packages zipped (~690 MB each),
+   `notebooks/round3_tuplet_ab_colab.ipynb` (one `ARM` knob, run twice), and
+   `scripts/rung3/tuplet_ab_score.py` for the paired read. Recipe per arm: stage 1 6k steps synthetic
+   from BASE → stage 2 2k steps @ lr 1e-5 with the real pools at `:9`.
+   ⚠ **Read the power line before spending the GPU**: at 54 groups one group is 1.9 pp and exact
+   McNemar needs ~6 discordant groups, so the **minimum resolvable effect is ~11 pp** against a
+   hoped-for ~5 — a null is the likely outcome, and the rule for it is already written (keep the
+   shape, claim nothing). ⚠ Do **not** touch the 35% slur-distractor rate in the same change. ⚠ Also
+   owed and deliberately deferred: real print draws the arc **heavier** than we do, and that must
+   change jointly with `drawSlurArc` or it becomes a thickness cue real pages do not have. Protocol:
+   [rung3/round3-criteria.md](rung3/round3-criteria.md); plan and non-claims:
    [rung3/tuplets.md](rung3/tuplets.md). ⚠ **No new labelling** — the tuplet queues are finished and
    promoted, whatever [rung3/labeling.md](rung3/labeling.md) said until 2026-08-11.
 2. **The content work in `select_pieces.py`** — eighth/quarter-note mix and bar-line density (owner

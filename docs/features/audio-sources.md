@@ -15,12 +15,12 @@ downloaded yet.
 prepared and shipping. What was taken from each, and the mapping problem that had to be solved
 first, is the section immediately below.
 
-✅ **F1's CLARINET AND VIOLIN ARE IN as of 2026-08-13** — downloaded, measured and staged. What was
+✅ **ALL THREE OF F1's VOICES ARE IN — clarinet and violin 2026-08-13, KANUN 2026-08-14.** What was
 taken, what the measurements found, and how to upload them is the section
-[What F1 actually took](#what-f1-actually-took--2026-08-13) below. **Kanun is deferred**, not
-rejected: its download needs a free Freesound account and its single two-minute take has to be split
-at the onsets, which is a different job from copying files off GitHub. Ney is still empty under CC0
-and needs the owner's own recording; oud and tanbur are Karplus–Strong and need no files at all.
+[What F1 actually took](#what-f1-actually-took--2026-08-13) below; the kanun has its own section
+after it, because it arrived by a different route and taught different lessons. Ney is still empty
+under CC0 and needs the owner's own recording; oud and tanbur are Karplus–Strong and need no files
+at all.
 
 ⚠ **Neither Freesound file was needed after all.** The plan expected the CompMusic bendir take
 (140291) to be F2's Turkish-stroke source and warned that its download is manual, needing a free
@@ -121,7 +121,7 @@ ringing drum at a non-zero sample would leave.
 |---|---|
 | ~~VCSL darbuka~~ | ✅ done — mapped by measurement, not by listening; see above |
 | `bendir_basicStrokes.wav` | ⏸ deferred — **Split** the 3.28 s take into individual strokes at the onsets |
-| `kanun_..._moreIsolated.mp3` | **Split** 2 minutes into per-note files at the onsets; it is **lossy mp3**, so re-encoding compounds — keep the decode once and trim |
+| ~~`kanun_..._moreIsolated.mp3`~~ | ✅ done 2026-08-14 — split at the onsets, decoded once, never re-encoded; see the kanun section below |
 | Clarinet / violin | Pick the sustain layer, **trim and loop**, convert to mono compressed. Raw folders are 66 MB and 235 MB of wav; what ships is a handful of notes |
 
 ⚠ **This "minor third apart, so ±1.5 semitones" figure was WRONG and is kept only to mark the
@@ -304,6 +304,18 @@ like a failed upload. ⚠ And note that filenames contain `#`: it must arrive pe
 
 Then `npm run smoke:editor -- --voices-url $BASE` to drive the real files, and check 24 by ear.
 
+⚠ **Hear it BEFORE uploading, not after.** `npm run serve:voices` serves `data/audio_voices/` on
+:8788 with the two headers COEP needs, and `npm run dev:voices:local` points the app at it — so a bad
+split is caught on this machine instead of being published first. A plain static server will not do:
+dev sends `Cross-Origin-Embedder-Policy: require-corp`, so a voice fetched without CORS headers is
+blocked by the embedder policy while the file itself serves fine in a browser tab. Both of the kanun's
+ear-found bugs were found this way.
+
+
+## The kanun
+
+One CC0 take → 36 files, F3-E6, 9.9 MB, and the project's first DERIVED audio. It took a second
+acquisition path, and four measurement traps that a copy job never meets: [kanun.md](kanun.md).
 
 ## The gaps, measured
 

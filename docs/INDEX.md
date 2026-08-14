@@ -60,10 +60,12 @@ wrong — fix by deleting, not by syncing.
 | Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](rung3/round1.md) |
 | Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
 | Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
+| Round 3's floors, the launch gate, and the tuplet A/B protocol | [rung3/round3-criteria.md](rung3/round3-criteria.md) |
 | Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
 | **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
 | Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
 | Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
+| How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

@@ -67,7 +67,7 @@ bottom of this page.
 
 The thing your friends asked for is built and on the site. Pick **Çalgı sesi → Klarnet** or
 **Keman** and the piece plays on a real recorded instrument instead of the plain computer tone.
-Kanun is not in yet: its recording needs an account to download and has to be cut up by hand first.
+The kanun is in too, since 2026-08-14. Its recording is one long take of every note, so it had to be cut into 36 separate notes first — and the app had to learn that a plucked string is measured differently from a blown or bowed one.
 
 Three things are worth knowing in plain terms.
 
@@ -94,8 +94,8 @@ purpose, so the sound can never crackle, and it is one number to change if you w
 
 You sent the link to two friends. **They liked it, and they said it would be good to add other
 instrument sounds** — so the next piece of work was exactly that: playing a piece back on a
-**violin, a clarinet and a kanun** instead of the plain tone. ✅ The violin and clarinet are **done
-and live** (see the section above); kanun is still to come.
+**violin, a clarinet and a kanun** instead of the plain tone. ✅ All three are **done and live**
+(see the section above).
 
 This is worth pausing on, because it is the thing the last three months of work were *for*. The plan
 always said: get it into someone's hands, ask what to add, then build that. It has now happened, and

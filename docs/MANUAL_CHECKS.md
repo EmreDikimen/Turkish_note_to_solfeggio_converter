@@ -314,14 +314,21 @@ Everything automatable already passes: `npm test` pins the manifest and the pitc
 `smoke:editor` proves recordings decode and play, and the arithmetic guarantees no clipping. None of
 that can tell you the clarinet sounds like a clarinet, or that it is loud enough to enjoy.
 
-⚠ **RUN TWICE 2026-08-13, and it earned its keep both times.** First pass: the clarinet was breath
-on 16th notes and the violin creaked — notes were playing the attack transient and never reaching the
-tone. Second pass, after the fix: still some breath, and the trim was too deep — which was right, the
-first measurement used amplitude where it should have used harmonic content. The window is now
-measured spectrally AND varies with note length. **Still owed: a third listen**, especially step 3a.
+⚠ **RUN FOUR TIMES, AND EVERY PASS FOUND A REAL DEFECT THAT EVERY GREEN CHECK HAD MISSED.**
+(1) The clarinet was breath on 16th notes and the violin creaked — notes were playing the attack
+transient and never reaching the tone. (2) After that fix the trim was too deep: the first
+measurement used amplitude where it should have used harmonic content. (3) The kanun's F♯ "did not
+sound like a kanun" — its pitch was measured a whole **koma** sharp, because a period-based estimator
+reads a stiff string sharp. (4) The kanun's F♯ *still* sounded wrong: `attackS` was landing 150 ms
+before the pluck, on another sound entirely, so a 16th note ended before the instrument spoke. All
+four are fixed, measured and guarded. ⚠ **Read that pattern before adding the ney**: the checks
+assert shape (ordering, bounds, licences) and only the ear assays sound. Budget a listen per
+instrument.
 
-⚠ **The upload has to happen first** (`hf upload`, see
-[features/audio-sources.md](features/audio-sources.md)). Then:
+⚠ **Hear it BEFORE uploading.** `npm run serve:voices` + `npm run dev:voices:local` runs the app
+against `data/audio_voices/` on this machine — a plain static server will not do, because dev sends
+COEP `require-corp`. Upload (`hf upload`, see [features/audio-sources.md](features/audio-sources.md))
+once it sounds right. Then:
 
 1. `VITE_VOICES_URL=<base> npm run dev:web` → open a score (`?score=/sample.json`). Set **Çalgı
    sesi** to **Klarnet**. Watch the counter run to 11/11, then ▶ Çal.
@@ -352,6 +359,15 @@ measured spectrally AND varies with note length. **Still owed: a third listen**,
    click off. (The samples are 7–16 s, so you may not reach it — that is the expected outcome.)
 7. **Switch Klarnet → Keman mid-playback.** The swap should be clean, and the violin should arrive
    without the clarinet lingering.
+7a. **Kanun: play a run of 16th notes, and check the microtones.** Two things only this voice can get
+   wrong. ⚠ **Every note must speak AT the pluck** — if a short note sounds like nothing, or like
+   something that is not a kanun, its `attackS` is landing before the pluck again (that is exactly
+   what bug 4 above was, on `kanun_17_Cs5.wav`). ⚠ **Play a phrase with `komaSharp` and `kucukSharp`
+   accidentals** and listen for whether the comma actually lands: this is the voice where a
+   mismeasured pitch is audible as the *wrong note*, because a koma is 22.6 cents and the whole point
+   of the instrument is that it plays them. ⚠ Expect a long kanun note to **decay and die** — it is
+   plucked, so it cannot hold, and `truncated` counting up is correct here where it would be a fault
+   for the clarinet.
 8. ⚠ If it sounds like the beep, **the samples did not load** — look at the picker's state before
    reporting the sound as wrong.
 9. **Check a makam that bends its perdes** (uşşak, sabâ, hüzzam) against `yok (yazıldığı gibi)`.

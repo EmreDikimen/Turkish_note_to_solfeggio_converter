@@ -23,11 +23,11 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | | Feature | Effort | Server? | The real cost | State |
 |---|---|---|---|---|---|
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
-| **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **BUILT 2026-08-13** — clarinet + violin play; kanun deferred. Waiting on the upload and on check 24 |
+| **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
 | **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
 
-Order: **F0 → F2 → F1 → F3**. F0 and F2 are built and deployed, **F1 is built and awaiting its
+Order: **F0 → F2 → F1 → F3**. F0, F2 and F1 are built and deployed, **F1 is done as of 2026-08-14 and awaiting its
 upload and its ear check**; only F3 has not started. F2 came first among the visible ones because it
 has the best payoff per hour.
 

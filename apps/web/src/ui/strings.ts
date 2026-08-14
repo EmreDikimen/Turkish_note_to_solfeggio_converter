@@ -66,7 +66,7 @@ export const TR = {
     voice: "Çalgı sesi",
     voiceTitle:
       "Notaların hangi çalgıyla seslendirileceği. Gerçek kayıtlar ilk seçtiğinizde indirilir " +
-      "(çalgı başına 20–35 MB); inene kadar varsayılan sesle çalar.",
+      "(çalgı başına 10–35 MB); inene kadar varsayılan sesle çalar.",
     voiceLoading: (done: number, total: number) => `ses indiriliyor… ${done}/${total}`,
     voiceFailed: "ses indirilemedi — varsayılan sesle çalıyor",
     usul: "Usul",

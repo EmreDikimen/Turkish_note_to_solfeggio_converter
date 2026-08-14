@@ -12,9 +12,17 @@
  * clarinet labels sit an octave below sounding pitch while its violin labels do not, so a name like
  * `..._D2_...` is **provenance, not pitch**.
  *
- * ⚠ Unlike the drums, these files are **served unmodified** — full length, stereo, original bit
- * depth — from a Hugging Face dataset repo, not from the app (owner, 2026-08-11). The level is the
- * `gain` field here, applied in the note's envelope at playback; nothing is baked into a file.
+ * ⚠ Unlike the drums, these files are served from a Hugging Face dataset repo, not from the app
+ * (owner, 2026-08-11). The level is the `gain` field here, applied in the note's envelope at
+ * playback; nothing is baked into a file.
+ *
+ * ⚠ **"Served unmodified" is a per-voice claim, not a claim about the folder.** The clarinet and the
+ * violin are byte copies of VSCO 2 files, checked by sha256 against the source. The **kanun cannot
+ * be**: its source is one two-minute recording of the whole range, so its notes are cut out of it
+ * and are new files by construction. What stands in for the identity check there is the source
+ * take's own sha256, recorded in `hf/omr-voices-README.md`, so the derivation stays reproducible.
+ * `/THIRD-PARTY.txt` states the difference too — a derived file must not be mistaken for an
+ * untouched original.
  *
  * ⚠ **Trimming happens here too, in TIME rather than in the file**
  * (`attackS` / `toneS` / `endS`, 2026-08-13).
@@ -25,12 +33,25 @@
  */
 
 /** `sine` is the built-in synthesised tone: always available, needs no download. */
-export type VoiceId = "sine" | "clarinet" | "violin";
+export type VoiceId = "sine" | "clarinet" | "violin" | "kanun";
 
 export interface VoiceSample {
-  /** Path under the voices base. The ORIGINAL library filename — these ship untouched. */
+  /**
+   * Path under the voices base. For the clarinet and violin this is the ORIGINAL library filename,
+   * kept because it is provenance; for the kanun it is generated, because a note cut out of a longer
+   * take never had a name of its own (its number is its position in that take).
+   */
   rel: string;
-  /** MEASURED fundamental in Hz. Never parsed from `rel`. */
+  /**
+   * MEASURED fundamental in Hz. Never parsed from `rel`.
+   *
+   * ⚠ **On a plucked voice this is measured spectrally, and the reason is audible.** A stiff string's
+   * partials are stretched sharp, so a period-based estimator reads the note sharp — up to 22 cents
+   * on the kanun's bottom courses, which is a whole koma, and it made microtonal accidentals down
+   * there land on the wrong comma (owner heard it on F♯). `scripts/prepare_voices.py` therefore lets
+   * YIN choose the partial and the spectrum say where it is. ⚠ For a BOWED voice the same refinement
+   * is wrong and is not applied: `Arco Vib`'s ±30-cent swing has no single peak to find.
+   */
   hz: number;
   /** Nearest MIDI number to `hz`. For reading the table; the maths uses `hz`. */
   midi: number;
@@ -61,6 +82,11 @@ export interface VoiceSample {
   /**
    * Buffer seconds at which the recording's natural release begins — a note must be faded out by
    * here, or the listener hears the player stopping rather than the note ending.
+   *
+   * ⚠ For a plucked voice it means the end of the DECAY instead (a pluck runs out; nobody releases
+   * it), and it is additionally pulled back before any second attack in the file. The player struck
+   * a couple of strings twice, and without that a held note re-articulates halfway through — a sound
+   * no player made.
    */
   endS: number;
 }
@@ -74,6 +100,17 @@ export interface Voice {
   license: string;
   /** Asked for by the library's readme even though its licence does not require it. */
   credit?: string;
+  /**
+   * True for an instrument whose notes decay and die — a pluck, not a bow or a breath.
+   *
+   * ⚠ It exists because the invariants differ, not for display. A sustained voice's recording must
+   * outlast the longest notated note, so `voices-test.ts` demands a window of at least 4 seconds; a
+   * plucked one **cannot** meet that and must not be asked to, because a kanun note ending before
+   * its written length is the instrument behaving correctly. Nothing in playback reads this: a pluck
+   * needs no special case there, since its `toneS === attackS` already makes `preTone` zero in
+   * `scheduleSampledNote`, so every note of every length starts at the transient.
+   */
+  plucked?: boolean;
   /**
    * Peak-normalisation factor applied in the note's gain envelope.
    *
@@ -171,6 +208,71 @@ export const VOICES: Voice[] = [
       { rel: "violin/LLVln_ArcoVib_G6_f.wav", hz: 1577.52, midi: 91, attackS: 0.000, toneS: 0.010, endS: 11.658 }, // G6
       { rel: "violin/LLVln_ArcoVib_A6_f.wav", hz: 1779.2, midi: 93, attackS: 0.000, toneS: 0.010, endS: 10.819 }, // A6
       { rel: "violin/LLVln_ArcoVib_C7_f.wav", hz: 2097.51, midi: 96, attackS: 0.000, toneS: 0.300, endS: 11.814 }, // C7
+    ],
+  },
+  {
+    id: "kanun",
+    label: "Kanun",
+    source:
+      "https://freesound.org/s/211133/ — 211133__barisbozkurt__kanun_moderate_chromatic_moreisolated.mp3, " +
+      "split at the onsets (CompMusic / Universitat Pompeu Fabra)",
+    license: "CC0 1.0",
+    credit: "Barış Bozkurt / CompMusic, Universitat Pompeu Fabra",
+    // ⚠ The one DERIVED voice — cut from a single two-minute take, not copied. See the file header.
+    plucked: true,
+    gain: 1.313,
+    peak: 0.746,
+    // ⚠ **The best-covered voice here, and by a distance**: every semitone from F3 to E6, so the
+    // worst stretch `pickSample` ever makes is ±0.7 semitones against the clarinet's ±2.5.
+    //
+    // ⚠ **The steps are 74-135 cents, not 100, and that is the instrument rather than an error.** A
+    // kanun's mandals are spaced in komas, so a "chromatic" run on one gives bakiye and mücennep
+    // steps where a piano gives a semitone. `hz` is measured, so the app plays what was recorded;
+    // the note names below are nearest-12-TET LABELS for reading the table and nothing more. Do not
+    // "correct" them toward equal temperament — on this project of all projects.
+    //
+    // ⚠ `attackS === toneS` on every row, deliberately. A pluck's transient IS the instrument, so
+    // there is nothing to skip past the way a clarinet's breath or a violin's bow scrape must be.
+    // It also makes `preTone` zero in `scheduleSampledNote`, so a 16th note and a whole note both
+    // start at the pluck. The numbering is the note's position in the source take — 02-37, because
+    // 00 and 01 are two events before the run starts and are not part of it.
+    samples: [
+      { rel: "kanun/kanun_37_F3.wav", hz: 173.8, midi: 53, attackS: 0.14, toneS: 0.14, endS: 1.911 }, // F3
+      { rel: "kanun/kanun_36_Fs3.wav", hz: 183.88, midi: 54, attackS: 0.153, toneS: 0.153, endS: 5.012 }, // F#3
+      { rel: "kanun/kanun_35_G3.wav", hz: 194.96, midi: 55, attackS: 0.157, toneS: 0.157, endS: 4.374 }, // G3
+      { rel: "kanun/kanun_34_Gs3.wav", hz: 206.79, midi: 56, attackS: 0.054, toneS: 0.054, endS: 3.866 }, // G#3
+      { rel: "kanun/kanun_33_A3.wav", hz: 219.95, midi: 57, attackS: 0.137, toneS: 0.137, endS: 4.962 }, // A3
+      { rel: "kanun/kanun_32_As3.wav", hz: 235.48, midi: 58, attackS: 0.079, toneS: 0.079, endS: 1.762 }, // A#3
+      { rel: "kanun/kanun_31_B3.wav", hz: 249.25, midi: 59, attackS: 0.112, toneS: 0.112, endS: 4.646 }, // B3
+      { rel: "kanun/kanun_30_C4.wav", hz: 258.62, midi: 60, attackS: 0.136, toneS: 0.136, endS: 3.952 }, // C4
+      { rel: "kanun/kanun_29_Cs4.wav", hz: 277.22, midi: 61, attackS: 0.044, toneS: 0.044, endS: 4.165 }, // C#4
+      { rel: "kanun/kanun_28_D4.wav", hz: 293.04, midi: 62, attackS: 0.089, toneS: 0.089, endS: 5.119 }, // D4
+      { rel: "kanun/kanun_27_Ds4.wav", hz: 310.26, midi: 63, attackS: 0.09, toneS: 0.09, endS: 2.055 }, // D#4
+      { rel: "kanun/kanun_26_E4.wav", hz: 330.05, midi: 64, attackS: 0.142, toneS: 0.142, endS: 4.84 }, // E4
+      { rel: "kanun/kanun_25_F4.wav", hz: 348.37, midi: 65, attackS: 0.12, toneS: 0.12, endS: 1.806 }, // F4
+      { rel: "kanun/kanun_24_Fs4.wav", hz: 369.95, midi: 66, attackS: 0.119, toneS: 0.119, endS: 3.816 }, // F#4
+      { rel: "kanun/kanun_23_G4.wav", hz: 390.9, midi: 67, attackS: 0.063, toneS: 0.063, endS: 3.291 }, // G4
+      { rel: "kanun/kanun_22_Gs4.wav", hz: 412.12, midi: 68, attackS: 0.027, toneS: 0.027, endS: 1.547 }, // G#4
+      { rel: "kanun/kanun_21_A4.wav", hz: 438.89, midi: 69, attackS: 0.133, toneS: 0.133, endS: 4.097 }, // A4
+      { rel: "kanun/kanun_20_As4.wav", hz: 466.16, midi: 70, attackS: 0.137, toneS: 0.137, endS: 1.485 }, // A#4
+      { rel: "kanun/kanun_19_B4.wav", hz: 496.71, midi: 71, attackS: 0.078, toneS: 0.078, endS: 3.012 }, // B4
+      { rel: "kanun/kanun_18_C5.wav", hz: 520.15, midi: 72, attackS: 0.121, toneS: 0.121, endS: 1.831 }, // C5
+      { rel: "kanun/kanun_17_Cs5.wav", hz: 546.96, midi: 73, attackS: 0.163, toneS: 0.163, endS: 1.952 }, // C#5
+      { rel: "kanun/kanun_16_D5.wav", hz: 583.32, midi: 74, attackS: 0.062, toneS: 0.062, endS: 1.896 }, // D5
+      { rel: "kanun/kanun_15_Ds5.wav", hz: 617.95, midi: 75, attackS: 0.049, toneS: 0.049, endS: 1.841 }, // D#5
+      { rel: "kanun/kanun_14_E5.wav", hz: 659.39, midi: 76, attackS: 0.083, toneS: 0.083, endS: 2.783 }, // E5
+      { rel: "kanun/kanun_13_F5.wav", hz: 695.35, midi: 77, attackS: 0.044, toneS: 0.044, endS: 1.426 }, // F5
+      { rel: "kanun/kanun_12_Fs5.wav", hz: 748.61, midi: 78, attackS: 0.047, toneS: 0.047, endS: 2.567 }, // F#5
+      { rel: "kanun/kanun_11_G5.wav", hz: 782.28, midi: 79, attackS: 0.12, toneS: 0.12, endS: 1.231 }, // G5
+      { rel: "kanun/kanun_10_Gs5.wav", hz: 839.08, midi: 80, attackS: 0.06, toneS: 0.06, endS: 1.454 }, // G#5
+      { rel: "kanun/kanun_09_A5.wav", hz: 884.08, midi: 81, attackS: 0.143, toneS: 0.143, endS: 1.781 }, // A5
+      { rel: "kanun/kanun_08_As5.wav", hz: 928.48, midi: 82, attackS: 0.048, toneS: 0.048, endS: 1.155 }, // A#5
+      { rel: "kanun/kanun_07_B5.wav", hz: 1003.54, midi: 83, attackS: 0.137, toneS: 0.137, endS: 2.013 }, // B5
+      { rel: "kanun/kanun_06_C6.wav", hz: 1044.56, midi: 84, attackS: 0.166, toneS: 0.166, endS: 1.131 }, // C6
+      { rel: "kanun/kanun_05_Cs6.wav", hz: 1111.97, midi: 85, attackS: 0.134, toneS: 0.134, endS: 1.08 }, // C#6
+      { rel: "kanun/kanun_04_D6.wav", hz: 1173.06, midi: 86, attackS: 0.104, toneS: 0.104, endS: 1.114 }, // D6
+      { rel: "kanun/kanun_03_Ds6.wav", hz: 1227.88, midi: 87, attackS: 0.11, toneS: 0.11, endS: 0.968 }, // D#6
+      { rel: "kanun/kanun_02_E6.wav", hz: 1325.27, midi: 88, attackS: 0.085, toneS: 0.085, endS: 0.941 }, // E6
     ],
   },
 ];

@@ -122,11 +122,38 @@ for (const v of sampled) {
   );
   // A note is scheduled from `toneS` at worst, so the window has to cover the longest plausible
   // note. At the tempo box's floor a whole note runs several seconds — hence the bound, not 0.
+  //
+  // ⚠ **Unless the instrument is plucked, and then the bound is a different one on purpose.** A
+  // kanun cannot hold a note: it is struck and it decays, so its longest window is a couple of
+  // seconds and a whole note WILL run off the end of it. That is the instrument working, not a
+  // defect — a player cannot do otherwise either. So a plucked voice is asked only whether there is
+  // enough sound to be a note at all. ⚠ The consequence downstream is that `truncatedNotes` counts
+  // routinely for a plucked voice, where for a sustained one it means something has gone wrong.
+  const shortest = Math.min(...v.samples.map((s) => s.endS - s.toneS));
   ok(
-    `${v.id}: the shortest window still covers a long note`,
-    Math.min(...v.samples.map((s) => s.endS - s.toneS)) >= 4,
-    `shortest is ${Math.min(...v.samples.map((s) => s.endS - s.toneS)).toFixed(1)} s`,
+    v.plucked
+      ? `${v.id}: every note has room to sound (plucked, so it decays)`
+      : `${v.id}: the shortest window still covers a long note`,
+    shortest >= (v.plucked ? 0.8 : 4),
+    `shortest is ${shortest.toFixed(1)} s`,
   );
+
+  // ⚠ A plucked voice here comes out of a SPLITTER (scripts/prepare_voices.py cuts one take at its
+  // onsets), and a splitter fails in a way a download cannot: it can miss an onset or cut one note
+  // in two, and every individual sample still looks perfectly fine. The source take is a chromatic
+  // run, so neighbouring pitches are the evidence — this is the repo-side half of the check the
+  // script prints, and it is what stops a bad split reaching the app.
+  if (v.plucked) {
+    const steps = v.samples.slice(1).map((s, i) => cents(s.hz, v.samples[i]!.hz));
+    const odd = steps
+      .map((c, i) => ({ c, at: `${v.samples[i]!.midi}→${v.samples[i + 1]!.midi}` }))
+      .filter(({ c }) => Math.abs(c - 100) > 40);
+    check(
+      `${v.id}: the split is a chromatic run`,
+      odd.map(({ c, at }) => `${at} is ${c.toFixed(0)}c`),
+      [],
+    );
+  }
   // ⚠ Regression guard on the correction the owner asked for. The first attempt used an AMPLITUDE
   // threshold, which waits for full loudness rather than for the noise to stop, and overshot in
   // every file (158 ms where the tone settles at 92, 765 where it settles at 275). If a future

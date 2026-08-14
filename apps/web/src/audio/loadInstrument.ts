@@ -44,7 +44,7 @@ function voiceUrl(rel: string): string {
 }
 
 /** Bump when a voice's file list changes, so a stale cached copy cannot outlive the manifest. */
-const CACHE_NAME = "omr-voices-v1";
+const CACHE_NAME = "omr-voices-v2";
 
 /** One decoded sample, with the pitch it was recorded at. Ascending by `hz`, like the manifest. */
 export interface VoiceBuffer {

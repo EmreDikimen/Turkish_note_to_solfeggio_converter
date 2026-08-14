@@ -61,7 +61,7 @@ VCSL (Versilian Community Sample Library)  —  CC0 1.0 (kamu malı / public dom
   so the files are not mistaken for the untouched originals.
 
 
-Çalgı sesleri — klarnet ve keman / instrument voices:
+Çalgı sesleri — klarnet, keman ve kanun / instrument voices:
 
 VSCO 2 Community Edition  —  CC0 1.0 (kamu malı / public domain)
   © Versilian Studios LLC / Sam Gossner
@@ -82,6 +82,29 @@ VSCO 2 Community Edition  —  CC0 1.0 (kamu malı / public domain)
   asks for credit to Versilian Studios / Sam Gossner, and the CC0 file beside it
   governs. Only Versilian's own clarinet and solo violin material is used — never
   the v1.1 "legacy" / Ivy Audio content, where provenance is mixed.
+
+
+Freesound 211133  —  CC0 1.0 (kamu malı / public domain)
+  © Barış Bozkurt — CompMusic, Universitat Pompeu Fabra
+  https://freesound.org/s/211133/
+  Kanun:  211133__barisbozkurt__kanun_moderate_chromatic_moreisolated.mp3
+
+  Kanun sesleri bu TEK kayıttan TÜRETİLMİŞTİR: mp3 bir kez çözülüp notaların
+  başlangıçlarından kesildi ve 16-bit mono PCM olarak yazıldı (36 dosya). Yeniden
+  kodlama yapılmadı. Yukarıdaki klarnet ve keman dosyalarının aksine bunlar
+  özgün dosyalar değildir; bu, dosyaların değiştirilmemiş sanılmaması için
+  belirtilmiştir. Kaynak kaydın sha256'sı depo kartında yer alır.
+
+  The kanun notes are DERIVED from that single recording: the mp3 is decoded once,
+  cut at the note onsets and written as 16-bit mono PCM (36 files). Nothing is
+  re-encoded. Unlike the clarinet and violin files above these are NOT the original
+  files, and that is stated so they are not mistaken for untouched originals; the
+  source take's sha256 is recorded on the dataset card.
+
+  ⚠ Freesound'da CC0, yükleyenin beyanıdır. Bu kayıt, adı belirtilen bir
+  araştırmacının CompMusic projesi kapsamındaki kaydı olduğu için güvenilmiştir.
+  ⚠ On Freesound, CC0 is the uploader's own declaration. This one is trusted on
+  provenance: a named researcher's recording made for the CompMusic project.
 
 
 KÜTÜPHANELER / LIBRARIES

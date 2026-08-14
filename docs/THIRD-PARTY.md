@@ -78,13 +78,21 @@ geometry section and [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) all read
 ✅ **The audio has landed, in two batches, and the "never bundled" rule bent once on purpose.**
 F2's two CC0 drum kits (VCSL, 660 KB) **do ship with the app** from `public/audio/` — small enough
 that a second host was not worth it, and since 2026-08-12 they stay there permanently because
-percussion is essential to playback. F1's clarinet and violin (VSCO 2 CE, 55.6 MB) do **not**: they
-are served from a Hugging Face dataset repo through `VITE_VOICES_URL`, byte-identical to the
-originals. ⚠ Two variables, deliberately: `VITE_AUDIO_URL` must stay unset in a deploy, or the drums
-follow the voices off the app and 404. Each file arrived with the three things this rule asks for —
-a manifest row carrying `source` and `license` (`strokeKits.ts`, `instruments.ts`), a line in
-`apps/web/public/THIRD-PARTY.txt`, and its licence read on the source's own page. Still unlanded:
-the ney and kanun rows. The per-file list, with each licence read on its own source page
+percussion is essential to playback. F1's three voices (65.5 MB) do **not**: they are served from a
+Hugging Face dataset repo through `VITE_VOICES_URL`. ⚠ Two variables, deliberately: `VITE_AUDIO_URL`
+must stay unset in a deploy, or the drums follow the voices off the app and 404. Each file arrived
+with the three things this rule asks for — a manifest row carrying `source` and `license`
+(`strokeKits.ts`, `instruments.ts`), a line in `apps/web/public/THIRD-PARTY.txt`, and its licence
+read on the source's own page. Still unlanded: **the ney row only** — the kanun landed 2026-08-14.
+
+⚠ **"Byte-identical to the originals" is now a per-voice claim, not a blanket one.** The clarinet and
+violin are copies checked by sha256 against VSCO 2 CE. The **kanun cannot be**: its source is one
+two-minute take of the whole range, so its 36 notes are cut out of it and are new files by
+construction. What replaces the identity check is the source take's own sha256, recorded on the
+dataset card; `/THIRD-PARTY.txt` states plainly that those files are derived, so they are not
+mistaken for untouched originals. Nothing is re-encoded — the mp3 is decoded once.
+
+The per-file list, with each licence read on its own source page
 and the traps found there — including a **CC0-vs-readme contradiction in VSCO 2 CE** — is
 [features/audio-sources.md](features/audio-sources.md).
 

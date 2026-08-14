@@ -105,6 +105,13 @@ const SAMPLE_FADE_IN_S = 0.012;
 const MAX_ATTACK_SHARE = 0.25;
 const SAMPLE_RELEASE_S = 0.06;
 
+/**
+ * How long a re-plucked string takes to go quiet — the damping a hand does to a course it is about
+ * to play again. Short enough to read as one note replacing another rather than as a crossfade, long
+ * enough not to click.
+ */
+const STRING_DAMP_S = 0.015;
+
 /** Transport state, mirrored by the UI to pick the right play/pause/stop affordances. */
 export type PlaybackState = "stopped" | "playing" | "paused";
 
@@ -249,6 +256,18 @@ export class WebAudioBackend implements AudioBackend {
   private sampledNotes = 0;
   private synthNotes = 0;
   private truncatedNotes = 0;
+  /**
+   * Plucked voices only: the note currently sounding on each recorded string, so re-plucking it can
+   * damp the old vibration. Keyed by the SAMPLE, because one file is one course of the instrument —
+   * two komas a mandal apart are the same physical string and do damp each other.
+   */
+  private ringing = new Map<string, { env: GainNode; gain: number; from: number; until: number }>();
+  /**
+   * AudioContext time the last ring finishes. The natural end of playback waits for it, so a piece
+   * does not end by chopping its final note mid-decay. An explicit `stop()` ignores it — when a
+   * listener presses stop they mean now.
+   */
+  private ringUntil = 0;
   private timeline: Timeline | null = null;
   /** AudioContext time (seconds) when playback started, and the musical ms it began at. */
   private startCtxTime = 0;
@@ -308,7 +327,12 @@ export class WebAudioBackend implements AudioBackend {
    */
   getPositionMs(): number | null {
     if (this.state === "stopped") return null;
-    return this.positionMs();
+    const pos = this.positionMs();
+    // ⚠ Clamped to the end, which only bites while a plucked voice is still ringing after the last
+    // note (`tick` holds the stop open for it). The playhead should rest on the final note while it
+    // decays, not walk off the end of the score into empty bars.
+    if (pos != null && this.timeline && pos > this.timeline.totalMs) return this.timeline.totalMs;
+    return pos;
   }
 
   /**
@@ -382,6 +406,9 @@ export class WebAudioBackend implements AudioBackend {
     this.sampledNotes = 0;
     this.synthNotes = 0;
     this.truncatedNotes = 0;
+    // Nothing is ringing from a previous playback — the sources behind those envelopes were stopped.
+    this.ringing.clear();
+    this.ringUntil = 0;
 
     const pending: Pending[] = [];
     for (const n of timeline.notes) {
@@ -438,6 +465,12 @@ export class WebAudioBackend implements AudioBackend {
     // Detect the natural end by watching the audio clock. Using the clock (not a wall-clock
     // timer) makes this automatically pause-aware: currentTime freezes while suspended.
     if (this.timeline && pos >= this.timeline.totalMs) {
+      // ⚠ **Let a plucked instrument finish ringing before the piece is declared over.** The last
+      // note of a piece is exactly where a kanun's decay carries the most, and `stop()` silences
+      // every source immediately — so ending on the timeline would chop the final note dead, which
+      // is both a click and the wrong ending. This waits for the longest tail still scheduled.
+      // ⚠ Only the NATURAL end waits. A listener pressing stop calls `stop()` directly and means now.
+      if (this.ctx && this.ctx.currentTime < this.ringUntil) return;
       const cb = this.onEndedCb;
       this.stop();
       cb?.();
@@ -560,8 +593,25 @@ export class WebAudioBackend implements AudioBackend {
     const intoBuf = Math.max(0, intoMs / 1000 / this.speed) * rate;
     const offset = Math.min(from + intoBuf, Math.max(from, until - 0.05));
     const available = (until - offset) / rate;
-    const sound = Math.min(dur, available);
+
+    // ⚠ **A PLUCKED note is not cut at its written length — it rings until the recording runs out**
+    // (owner, 2026-08-14). A kanun has a separate course per note, so plucking the next one does
+    // nothing to the last: the previous string keeps sounding, quieter, until it dies on its own.
+    // Cutting each note at its notated duration was modelling an instrument that can stop a note,
+    // and a kanun cannot. So the note's length decides when the NEXT one starts, not when this one
+    // ends.
+    //
+    // ⚠ Measured before it was written, because this project has a clipping rule: the notes overlap
+    // but their PEAKS do not. At a 16th-note spacing each transient lands 83-125 ms after the last,
+    // by which time the previous note is already well down, so a dense passage sums to **0.45**
+    // against the limiter's 0.89 — about 6 dB of headroom, and the limiter stays inert as its own
+    // docblock requires. Ring-out costs ~50% more peak than cutting, not 7× (7 notes are audible at
+    // once at that speed).
+    const plucked = this.voiceDef?.plucked === true;
+    const sound = plucked ? available : Math.min(dur, available);
     if (sound <= 0) return;
+    // ⚠ For a pluck this counts something different and expected: not "cut short" but "the recording
+    // ran out before the written note did", which is the instrument, not a fault.
     if (sound < dur - 1e-3) this.truncatedNotes++;
 
     const g = this.voiceDef?.gain ?? 1;
@@ -580,11 +630,54 @@ export class WebAudioBackend implements AudioBackend {
     env.gain.setValueAtTime(g, Math.max(start + fade, start + sound - release));
     env.gain.linearRampToValueAtTime(0, start + sound);
 
+    // ⚠ **Re-plucking a string damps whatever it was still doing** — the other half of the physics
+    // above, and without it the ring-out is audibly wrong. A course cannot vibrate twice at once, so
+    // two overlapping copies of the same recording is a sound the instrument cannot make: it combs
+    // and flams, which is exactly what a repeated note in this repertoire would expose. Keyed by the
+    // sample, since one file is one course.
+    if (plucked) {
+      this.damp(pick.sample.rel, start);
+      this.ringing.set(pick.sample.rel, { env, gain: g, from: start, until: start + sound });
+      this.ringUntil = Math.max(this.ringUntil, start + sound);
+    }
+
     // → master, never percGain: that node is the `Vuruş sesi` slider's, and a note is not a stroke.
     src.connect(env).connect(master);
     src.start(start, offset);
     src.stop(start + sound + 0.02);
     this.own(src);
+  }
+
+  /**
+   * Silence whatever is still ringing on one string, starting at AudioContext time `at`.
+   *
+   * ⚠ The envelope's value at `at` is COMPUTED rather than read, and that is deliberate. Notes are
+   * scheduled ahead of time, so `at` is in the future and there is nothing to read yet;
+   * `cancelAndHoldAtTime` would do it but is the one part of the AudioParam API whose support is
+   * uneven. The shape was written by `scheduleSampledNote` a few lines above, so it is known exactly
+   * — fade in, hold, release — and evaluating it costs nothing and cannot be unsupported.
+   *
+   * ⚠ A ramp, not a `stop()`: cutting a vibrating string dead is a click, and a real hand landing on
+   * a course is not instant either.
+   */
+  private damp(rel: string, at: number): void {
+    const held = this.ringing.get(rel);
+    if (!held || at >= held.until) return;
+
+    const { env, gain, from, until } = held;
+    const fadeIn = Math.min(SAMPLE_FADE_IN_S, (until - from) / 2);
+    const release = Math.min(SAMPLE_RELEASE_S, (until - from) / 3);
+    const level =
+      at < from + fadeIn
+        ? (gain * (at - from)) / Math.max(fadeIn, 1e-6)
+        : at > until - release
+          ? (gain * (until - at)) / Math.max(release, 1e-6)
+          : gain;
+
+    env.gain.cancelScheduledValues(at);
+    env.gain.setValueAtTime(Math.max(0, Math.min(gain, level)), at);
+    env.gain.linearRampToValueAtTime(0, at + STRING_DAMP_S);
+    this.ringing.delete(rel);
   }
 
   /**
@@ -940,6 +1033,10 @@ export class WebAudioBackend implements AudioBackend {
       node.disconnect();
     }
     this.sources.clear();
+    // The strings are gone with their sources; `ringUntil` must not outlive them, or the next
+    // natural end would wait on a tail that no longer exists.
+    this.ringing.clear();
+    this.ringUntil = 0;
     if (this.percGain) {
       this.percGain.disconnect();
       this.percGain = null;

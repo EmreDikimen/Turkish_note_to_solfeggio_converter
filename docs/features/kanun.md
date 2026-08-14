@@ -81,3 +81,46 @@ past the second strike a held note re-articulates halfway through — a sound no
 now stops before it. ⚠ The first scan for this flagged 9 files and **8 were false**: fluctuations in
 tails that had already decayed to nothing, which clear any ratio test because both sides are tiny.
 Requiring the rise to land above 10% of the file's peak left the 2 real ones.
+
+## How it plays — a string is not a note (2026-08-14)
+
+⚠ **A plucked note is not cut at its written length.** A kanun has a separate course per note, so
+plucking the next one does nothing to the last: the previous string keeps sounding, quieter, until it
+dies. The notated duration therefore decides **when the next note starts, not when this one ends**.
+`scheduleSampledNote` gives a `plucked` voice the whole remaining window instead of `min(dur,
+available)`; every other voice is untouched.
+
+⚠ **Measured before it was written, because of the clipping rule.** Ringing notes overlap — about
+**7 are audible at once** in a 16th-note run — but their *peaks* do not stack: each transient lands
+83–125 ms after the last, by which time the previous note is well down. Summed with the real files at
+`gain 1.313 × MASTER_GAIN 0.72`:
+
+| passage | cut at duration | ringing |
+|---|---|---|
+| 16ths at 120 BPM | 0.290 | **0.430** |
+| 16ths at 180 BPM | 0.302 | **0.453** |
+| 8ths at 120 BPM | 0.290 | 0.318 |
+
+Against the limiter's threshold of **0.891** (−1 dBFS) that is ~6 dB of headroom, so the limiter
+stays inert exactly as its own docblock requires. Ring-out costs ~50% more peak than cutting, not 7×.
+
+**Two consequences came with it, and both are `plucked`-gated.**
+
+⚠ **Re-plucking a string damps it.** A course cannot vibrate twice at once, so two overlapping copies
+of one recording is a sound the instrument cannot make — it combs and flams, which a repeated note in
+this repertoire exposes at once. `damp()` ramps the old one down over `STRING_DAMP_S` (15 ms — a hand
+landing on a course is not instant either, and a hard stop is a click). Keyed by the **sample**,
+because one file is one course: two komas a mandal apart are the same physical string and do damp
+each other. ⚠ Its envelope value at the damp moment is **computed, not read** — notes are scheduled
+ahead, so there is nothing to read yet, and `cancelAndHoldAtTime` is the one AudioParam call whose
+support is uneven. The shape was written a few lines above, so evaluating it is exact and free.
+
+⚠ **The natural end waits for the last tail.** `stop()` silences every source instantly, so ending on
+the timeline would chop the final note dead — a click, and the wrong ending, where a kanun's decay
+carries most. `tick` holds the stop open until the longest scheduled ring finishes, and the playhead
+is clamped to the end so it rests on the final note rather than walking off the score. ⚠ Only the
+*natural* end waits: a listener pressing Stop calls `stop()` directly and means now.
+
+**If it needs re-tuning by ear**, the dials are `endS` in the manifest (how long a note may ring — a
+playback window, so it costs no re-upload) and `STRING_DAMP_S` in `webAudioBackend.ts` (how fast a
+re-plucked string goes quiet). Neither touches a file.

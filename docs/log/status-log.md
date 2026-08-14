@@ -46,6 +46,15 @@ that looks principled can still be measuring the wrong quantity.
 voice can be heard before it is published — a plain static server cannot do it, because dev serves
 under COEP `require-corp`. Both kanun bugs were found this way, locally, before any upload.
 
+**Then the owner asked for the strings to ring, and they now do.** A kanun has a course per note, so
+plucking the next one does nothing to the last — notes are no longer cut at their written length, and
+the duration only decides when the *next* one starts. Measured first, against the clipping rule: ~7
+notes overlap at 16th-note speed but their peaks never stack, so a dense passage sums to 0.45 against
+the limiter's 0.89. Two consequences shipped with it — re-plucking a string damps it (two copies of
+one recording combs, which the instrument cannot do), and the natural end waits for the last tail
+instead of chopping it, while an explicit Stop stays immediate. All three are `plucked`-gated, so the
+clarinet and violin are untouched. Deployed and `smoke:live` PASS the same day.
+
 Detail: [../features/kanun.md](../features/kanun.md). Deployed state: [../STATUS.md](../STATUS.md).
 
 ## 2026-08-14 — Round 3 gets its bar, and the tuplet A/B is built up to the Colab handoff
@@ -104,6 +113,18 @@ the discordant groups — paired, because at 54 groups an unpaired 4 pp can rest
 `scripts/make_round3_colab_zip.sh <arm>` and `notebooks/round3_tuplet_ab_colab.ipynb` complete the
 handoff; both assert `render_config.json`, which is the **only** file that can tell the two corpora
 apart.
+
+**The control arm was challenged and survived the challenge on evidence** (owner: "round 2 already
+has a model trained on the old notation — why train twice?"). It was the right question and the
+answer is measured: a Round-3 model differs from `round2-stage2-best` by **four** things. The mark;
+**`staff_jitter`**, an augmentation added to `augment.py` on 2026-07-29 — *two days after* Round 2
+trained — which scales ±4% and shifts ±2% on **80% of every training sample** and has never been
+A/B'd; a **sub-visual rasterizer drift** that moves **every one of the 40,826 strips** (mean 0.3–4.8
+grey levels, no integer shift, ink fraction equal to four decimals, invisible side by side, and *not*
+a renderer change of ours — `--thin-sharps` was already in v4); and the training environment. The two
+arms share all three nuisances, so only the mark separates them; against the live model nothing
+would. ⚠ The same four-way caveat now attaches to **Round 3's own exam read**, and is written into
+[../rung3/round3-criteria.md](../rung3/round3-criteria.md) rather than left to be rediscovered.
 
 **One reference number, measured before the arms exist:** `round2-stage2-best` reads **85.2% `\tup3`
 recall / 97.9% precision** on `_tupletval` ([../METRICS.md](../METRICS.md)). The pool is therefore not

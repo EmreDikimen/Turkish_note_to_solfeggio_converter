@@ -29,22 +29,13 @@ the older file. The wrong render completed and looked normal — 23 of Round 2's
 strips in neither side of the split, which training drops silently. The correct file is now beside the
 command in [../CLAUDE.md](../CLAUDE.md).
 
-✅ **Two rounds of ear feedback have landed, and each corrected the previous measurement.** Round 1:
-16th notes came out as *"just like breath"* (clarinet) and an annoying *creak* (violin) — a short note
-was playing the attack transient and stopping before the instrument spoke, at up to **13× less
-volume** than a long one. Round 2, after the first fix: *"we can trim less from the beginning… or
-maybe trim differently for different duration of the notes"* — both right. The first fix used an
-**amplitude** threshold, which waits for full loudness rather than for the noise to stop, and
-overshot in every file (158 ms where the tone settles at 92, 1178 where it settles at 404). Breath is
-spectral, so the settled point is now measured on **harmonic content**, and **how much attack a note
-keeps depends on the note**: it inherits the recorded swell only when that swell is ≤25% of it.
-⚠ A smooth blend was tried and is wrong — it lands *inside* the transient for files with a long one,
-which put the creak back in the middle of the range while both ends measured fine. ⚠ Cost: one
-subtraction and one comparison per note; nothing measurable. ⚠ **The trim is in TIME, not in the
-file** — the wavs stay byte-identical, so round 2 cost no re-upload, which is exactly why that
-decision keeps paying. ⚠ **Rounds 3 and 4 then landed on the kanun** (pitch a koma sharp; the attack
-starting before the pluck) and cost no re-upload either, for the same reason. All four are closed.
-Numbers: [features/audio-sources.md](features/audio-sources.md).
+✅ **FOUR rounds of ear feedback landed on F1, and every one corrected a measurement.** Breath on
+16th notes and a violin creak; then a trim that was too deep (amplitude waits for loudness, not for
+the noise to stop); then the kanun measured a whole **koma** sharp; then its attack landing before
+the pluck. ⚠ **None of the four cost a re-upload**, because the trim is a playback window and not a
+cut — which is exactly why that decision keeps paying. All closed; the numbers and what each fix
+replaced are in [features/audio-sources.md](features/audio-sources.md) and
+[features/kanun.md](features/kanun.md).
 
 ✅ **F1 IS DONE, HEARD AND LIVE — and the kanun is in it (2026-08-14).** The `Çalgı sesi` picker
 offers **Klarnet**, **Keman** and **Kanun** beside the built-in tone, and a note is sounded by a real
@@ -59,7 +50,17 @@ onsets — so the sha256 identity check cannot apply and the source take's hash 
 design, and `voices-test.ts` asks it for a 0.8 s window where a sustained voice must reach 4 s. And it
 is **not in equal temperament** — steps of 62–137 cents, because a kanun's mandals are spaced in
 komas — which is the point of it rather than a defect. Everything measured:
-[features/audio-sources.md](features/audio-sources.md).
+[features/kanun.md](features/kanun.md).
+
+✅ **A plucked note now RINGS instead of being cut** (owner, 2026-08-14, deployed the same day): a
+kanun has a course per note, so plucking the next one does nothing to the last. The written duration
+decides when the next note starts, not when this one ends. ⚠ Measured before it was written, because
+of the clipping rule: ~7 notes are audible at once in a 16th-note run, but their peaks never stack —
+a dense passage sums to **0.45** against the limiter's 0.89, so the limiter stays inert as its
+docblock requires. Two consequences came with it, both `plucked`-gated so the other voices are
+untouched: **re-plucking a string damps it** (a course cannot vibrate twice, and two copies of one
+recording combs), and **the natural end waits for the last tail** rather than chopping the final
+note — an explicit Stop is still immediate.
 
 ⚠ **Two bugs the owner's ear found that no automated check would have**, both now guarded. The pitch
 was measured with YIN, which reads a *plucked* string sharp because stiff strings stretch their
@@ -348,6 +349,13 @@ both reference-path only and both fine under Python-ORT int8.
   problem rather than a carry-resolution one.
 - **Round 2's three changes are not separable.** Glyph weight, label noise and corpus size all moved
   together, so nothing in that read attributes to one of them.
+- **NEW (2026-08-14): a Round-3 model will differ from `round2-stage2-best` by four things, not one** —
+  the corpus change, the **`staff_jitter` augmentation added 2026-07-29** (two days after Round 2
+  trained; ±4% scale on 80% of samples, never A/B'd), a sub-visual **rasterizer drift** that moves
+  every one of the 40,826 strips, and the training environment. This is why the tuplet A/B trains its
+  own control instead of reusing the live model, and it is a caveat on Round 3's exam read too.
+  Measurements: [METRICS-CORPUS.md](METRICS-CORPUS.md); reasoning:
+  [rung3/round3-criteria.md](rung3/round3-criteria.md).
 - **Label noise in the training pools:** ~7% pitch-level content error in nota auto-accepts, ~38%
   structurally noisy tie annotation. A 5% re-audit after Round 1 is owed.
 - **Signature-position vs note-position accuracy is now MEASURED** (2026-07-27) and the sharps live

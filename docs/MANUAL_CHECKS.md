@@ -368,6 +368,13 @@ once it sounds right. Then:
    of the instrument is that it plays them. ⚠ Expect a long kanun note to **decay and die** — it is
    plucked, so it cannot hold, and `truncated` counting up is correct here where it would be a fault
    for the clarinet.
+7b. **Kanun: the strings must RING THROUGH each other.** Play a fast passage — each note should keep
+   sounding under the ones after it and die on its own, the way a kanun's courses do; nothing should
+   stop when the next note starts. Then three things that ride on it: a **repeated note** should
+   sound like one string re-plucked, not two copies layered (that is `damp()`); the **last note of a
+   piece** should ring out rather than being chopped when playback ends; and pressing **Stop** should
+   still silence everything immediately. ⚠ If a dense passage sounds crowded or pumping, the limiter
+   is engaging and it should not be — the measured headroom is ~6 dB ([features/kanun.md](features/kanun.md)).
 8. ⚠ If it sounds like the beep, **the samples did not load** — look at the picker's state before
    reporting the sound as wrong.
 9. **Check a makam that bends its perdes** (uşşak, sabâ, hüzzam) against `yok (yazıldığı gibi)`.

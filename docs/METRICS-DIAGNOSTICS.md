@@ -266,9 +266,15 @@ spacing with each confound pinned in turn:
   length fixed keeps the effect; holding width fixed and varying length removes it — so this is
   **resolution, not autoregressive drift over a longer sequence**.
 - ⚠ **Observational, not causal.** Wide crops may differ in ways not controlled here, and the
-  buckets are ~40 strips each. The causal test is `--make-padded`: widen a strip with
-  `BORDER_REPLICATE` (content and gold identical, resolution lower) and read the dose-response.
-  **Not yet run.**
+  buckets are ~40 strips each. The causal test is `--make-padded`: widen a strip with more of its
+  own empty staff (content and gold identical, resolution lower) and read the dose-response.
+  **RUN 2026-08-15 — see the next section. It is causal, and it replicates on the holdout.**
+- **Measured while building that probe, and it killed the obvious implementation:** the last column
+  of an exam crop is **36% ink at the median** — the 120 px staff span, i.e. **the crop ends on a
+  barline**, not on the blank staff the `PAD_PX = 6` trim suggests. Extending it (`BORDER_REPLICATE`)
+  would pad with a black band. Two more reference points from the same pass: a genuinely blank column
+  is **4.6%** ink (the five staff lines are thicker than they look), and the probe's tiled padding
+  lands at **5.6%**, with ~25 of 326 strips dense enough to have no quiet window at all.
 - ⚠ **This probe's own re-alignment totals 433 edits where `eval_omr` reports 562** — different
   tokenizer and alignment. Trends only; quote `eval_omr` for any total.
 - ⚠ **The high-resolution end is NOT better**: short crops (<10 gold tokens, median 558 px) run
@@ -277,6 +283,75 @@ spacing with each confound pinned in turn:
 - ⚠ **The current slicer made this worse, not better**: crops >1200 px went **13.8% → 27.8%** of
   the same 67 pages (row above). The exam was cut by the old slicer, so production is further into
   the bad end than these numbers show.
+
+### The padding probe (2026-08-15) — CAUSAL, and it replicates on the holdout
+
+`crop_geometry_probe.py --make-padded` widens each crop with more of **its own quietest columns**,
+so content and gold are untouched and only the resolution the encoder sees falls. Decoded with
+`round2-stage2-best`; totals below are `eval_omr`'s.
+
+| pad | staff spacing at the encoder | SER (edits/token) | exact-match | pages ≤5 edits |
+|---|---|---|---|---|
+| **×1.00** | 19.2 px | **0.052** | 52.1% | 57% |
+| ×1.25 | 15.4 px | 0.059 | 38.0% | 50% |
+| ×1.50 | 12.8 px | 0.061 | 35.0% | 54% |
+| ×1.75 | 11.0 px | 0.070 | 27.9% | 41% |
+| **×2.00** | 9.6 px | **0.083** | 16.6% | 37% |
+
+**Strictly monotone across all four doses — +59% edits/token at ×2.00 — which is the branch the
+pre-registration called causal.** The ×1.00 row reproduced the known Round-2 read exactly
+(S=209 D=144 I=209 = **562 edits**, 52.1%, 57%), so the harness is the same one that produced it.
+
+Paired bootstrap over strip names (10k resamples; padding does not change a filename, so every dose
+is the same 326 images), on this probe's own re-alignment:
+
+| pad | Δ edits/strip vs ×1.00 | 95% CI | same, dropping the 25 artifact strips |
+|---|---|---|---|
+| ×1.25 | +0.132 | [−0.015, +0.282] | +0.126 |
+| ×1.50 | +0.267 | **[+0.110, +0.426]** | +0.269 |
+| ×1.75 | +0.534 | **[+0.359, +0.706]** | +0.525 |
+| ×2.00 | +0.874 | **[+0.684, +1.061]** | +0.874 |
+
+**Real-val holdout** (`_realval_v2`, 267 strips; ×1.00 also reproduced its recorded SER 0.079 /
+62.9% exactly): **0.079 → 0.096 → 0.127**, i.e. **+61% at ×2.00**, Δ +0.462 [+0.244, +0.691] and
++1.187 [+0.901, +1.500]. The direction replicates and is **steeper** than the exam's — the check §1
+of [rung3/round3.md](rung3/round3.md) skipped when its 2% shrink won 15.5% on the exam and −1.6% here.
+
+- ⚠ **×2.00 extrapolates** below the exam's natural 12.2–36.5 px range: the in-range doses carry the
+  claim, the wide ones establish the shape. ⚠ **25 of 326 crops are too dense to have a quiet
+  window**, so their padding tiles symbol fragments (max 17.2% ink vs a 5.6% median) — dropping them
+  moves every delta by ≤0.01, so the artifact is not what produces the curve. ⚠ A tiled window also
+  repeats at a fixed period, a texture no real page has; that residual is why the reading rests on
+  the **dose-response** rather than on any single arm.
+
+### Staccato read as an augmentation dot (2026-08-15) — measured with a paired control
+
+Owner-reported, then measured. `ADDED_TOKENS` has **no articulation token** (all 25 are accidentals,
+structure and navigation) and the renderer draws no staccato, so 0 of 40,826 training strips carry
+one: every dot the model has ever seen meant *longer*. A 1,215-strip pilot rendered twice from
+`pieces_v4.json`, identical apart from the marks (manifests byte-identical, `verify-labels` PASS
+1215/1215), gives a pool of **110 strips carrying ≥1 staccato whose gold has no dotted duration**:
+
+| arm | strips decoded exactly | SER | **decoded a dot gold does not have** |
+|---|---|---|---|
+| control (no marks) | **110/110 = 100%** | 0.000 | **0 / 110 = 0.0%** |
+| staccato | 30/110 = 27.3% | 0.058 | **80 / 110 = 72.7%** |
+
+**The staccato-triggered false-dot rate is 72.7%, against 0.0% on the same music without the marks**
+— the baseline Lever 6 is stated against. The dominant substitutions are exactly `X → X.`
+(`d''4 → d''4.`, `g''8 → g''8.`, …). 43% of pilot strips carry at least one mark.
+
+Where the same error lands on the Round-2 exam, by quality tier — the reason a whole-exam floor
+would measure scan quality rather than this defect:
+
+| direction | easy | mid | hard | total |
+|---|---|---|---|---|
+| dot **added** | 0 | 1 | 3 | **4** |
+| dot **lost** | 0 | 5 | 7 | **12** |
+
+Dropped dots concentrate in degraded scans (7 of 12 hard-tier, six with `nd` up to 1.14), and the
+easy tier shows **zero of either** — so the exam is nearly blind to this and the pilot above is the
+instrument.
 
 ## The microtonal-sharp defect (measured against two real printed editions)
 

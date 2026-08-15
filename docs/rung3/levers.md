@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-08-15
+updated: 2026-08-16
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -36,6 +36,14 @@ listed below in the order their evidence-per-hour justifies, not in the order th
 
 ## Lever 1 — crop geometry: the model sees a fifth of the page it is given
 
+> ✅ **THE PROBE RAN 2026-08-15 AND THE PRE-REGISTERED READING IS THE CAUSAL BRANCH.** Padding the
+> exam crops with their own empty staff raises edits/token **monotonically across all four doses**,
+> the bootstrap CI excludes zero from ×1.50 on, and the real-val holdout replicates **steeper**. The
+> unpadded arms reproduced both recorded baselines exactly. **This lever proceeds to step 2 below.**
+> Numbers, caveats and the artifact sensitivity check: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md), "The padding probe".
+> ⚠ The probe lowers resolution; it does not prove raising it helps. The short-crop hole below is
+> still the failure mode to design against, and step 2 is still a pilot, not a render.
+
 **The finding.** The encoder frame is a fixed **409×583**; a strip is rotated and fitted into it, so
 the net scale is `min(583/W, 409/H)`. We cut strips at 3 measures / up to 1450 px, which means the
 median strip arrives downscaled by half, with **61% of the frame spent on black padding**. A strip
@@ -57,9 +65,14 @@ their signature — is a bug about crops that straddle the context they need.
 **What to run, in order:**
 
 1. **The causal probe, half a day, no GPU.**
-   `scripts/rung3/crop_geometry_probe.py --make-padded …` widens exam crops with
-   `BORDER_REPLICATE`, which lowers resolution while leaving content and gold identical; decode each
-   pad factor with `eval_omr.py` and read the dose-response. **Pre-registered reading, written
+   `scripts/rung3/crop_geometry_probe.py --make-padded …` widens exam crops with **more of their own
+   empty staff**, which lowers resolution while leaving content and gold identical; decode each pad
+   factor with `eval_omr.py` and read the dose-response. ⚠ The obvious implementation — extend the
+   last column — was measured and **rejected before use**: the last column of an exam crop is 36% ink
+   at the median, because the crop ends on a barline, so replicating it would paint a black band and
+   change far more than the resolution. The probe tiles the strip's own quietest columns instead
+   (5.6% ink against a 4.6% blank-staff floor). It still has a tail: ~25 of 326 strips are dense
+   enough to have no quiet window, and the run prints how many. **Pre-registered reading, written
    here before the run: monotone rise in edits/token → resolution is causal and Lever 1 proceeds;
    flat within noise → the correlation is a confound and this lever is dropped, in writing, like the
    five above it.**
@@ -169,6 +182,50 @@ the gate any second renderer has to pass before a corpus built with it is traina
   answer is not a shorter stage 2 chosen by hand (that is tuning on a pool with a measured gap to
   the exam) but EMA plus early stopping on the free-running metric, and a lower encoder LR.
 
+## Lever 6 — the articulation hole: every dot we have ever drawn meant "longer"
+
+**Owner-reported 2026-08-15, then measured.** The model reads a printed **staccato** as an
+**augmentation dot** and lengthens the note. The cause is structural, not a tuning problem:
+
+- **`ADDED_TOKENS` has no articulation token** — all 25 are accidentals, structure and navigation.
+  The augmentation dot is not a token either; it is a suffix inside the duration (`8` vs `8.`). So
+  the label language has **no legal way to say "dot, but not a duration dot."**
+- **The renderer draws no staccato**, so 0 of 40,826 strips contain one. The same shape of hole as
+  the signature-only crop, and as the bare phrase slur before it was fixed.
+
+**Measured, with a paired control** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)): on 110
+pilot strips carrying a staccato whose gold has no dotted duration, the model decodes a dot it has
+no gold for **72.7% of the time** — against **0.0% on the identical music without the marks**, which
+it reads 110/110 exactly. That is as clean as a causal attribution gets here.
+
+**Built 2026-08-15, off by default:** `--staccato-noise` (`render.ts`) → `drawStaccatoDot`
+(`SheetView.tsx`), label-free dots on the notehead side, following `drawSlurArc` exactly. The two
+arms' manifests are **byte-identical** and `verify-labels` passes 1215/1215 with the marks on.
+
+**What it teaches is POSITIONAL, and that is the design.** An augmentation dot is a suffix beside
+the notehead, on its line or space; a staccato sits above or below it. So the draw deliberately
+seeks out **already-dotted notes** — a notehead carrying both marks at once isolates position from
+everything else, and is the only example that can. ⚠ Three placement drafts were rejected by eye
+before one worked; the trap is that VexFlow's `getNoteHeadBounds()` returns the notehead's **anchor**
+(`notehead.getY()`), not its ink edges, so any clearance measured from it lands half a notehead too
+close. Notes on a line also cannot take the adjacent space centre at all — the dot's radius overlaps
+the notehead's ink there at *any* clearance — so they get the space beyond it.
+
+**Pre-registration, signed before any training (owner: duration over pitch):**
+
+1. **Primary — the staccato-triggered false-dot rate must fall** from the 72.7% baseline.
+2. **No-regression on real dots, on EASY+MID tiers only.** Hard-tier dropped dots are scan
+   degradation (7 of 12, `nd` up to 1.14) and are excluded **here, in advance** — not after seeing a
+   result. Hard tier is reported, never gated on.
+3. **Reported, not gated:** pitch/AEU macro F1, so the price of clause 1 is on the record.
+
+⚠ The slur distractor's cost is the thing to watch: it took `\tup3` precision 15.1% → 91.2% and
+**recall 92.7% → 83.8%, below its own floor**. Clause 2 exists so that outcome is caught rather than
+discovered. ⚠ `STACCATO_RATE` is **chosen, not measured** — nobody has counted staccato frequency in
+real Turkish editions, and doing so is how to replace it. ⚠ The alternative not taken is a
+`\staccato` token: possible, but `ADDED_TOKENS` is **append-only** so it goes at the END, and it
+needs gold annotation and an engraver change.
+
 ## The ordering, and the content work
 
 The content work in `select_pieces.py` — the eighth/quarter-note mix and bar-line density — remains
@@ -189,6 +246,12 @@ because they decide what to render first:
 whether the next render is a geometry render or a content render. The content work is not cancelled
 and nothing about it is superseded; it is sequenced behind a measurement that can change what it
 should render.
+
+> ✅ **That probe has now run (2026-08-15) and came back causal**, so the question it was sequencing
+> is answered: **the next render is a geometry render**, and the content work stays behind it. What
+> is still unanswered is the half the probe cannot reach — it lowered resolution and showed the cost,
+> which is not the same as showing that raising it pays. Step 2's 300-strip `domain_gap.py` pilot is
+> where that gets tested, and the **short-crop hole** is what it has to watch.
 
 ## ⚠ A power note on the primary criterion — the owner's call, not an agent's
 

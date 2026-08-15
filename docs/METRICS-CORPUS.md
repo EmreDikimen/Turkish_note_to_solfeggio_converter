@@ -26,6 +26,25 @@ and how trustworthy its labels are**. Model-quality numbers stay there; nothing 
 Exam v2.1 class gold: bakiyeSharp 117, bakiyeFlat 60, kucukFlat 54, natural 48, komaFlat 39,
 kucukSharp 28, komaSharp 19 (18 scorable), buyukSharp 3 → 0 after the re-audit, buyukFlat 0.
 
+## ⚠ `_realval_v2` has 5 DUPLICATE MANIFEST ROWS, 4 of them contradictory (found 2026-08-16)
+
+Found incidentally while checking pad-directory integrity for the crop-geometry probe. The pool has
+**267 rows over 262 distinct images**: five PNGs appear twice, and **four of the five carry two
+different labels for the same pixels**, so at least one gold string in each pair is wrong. They are
+not near-misses — e.g. `bakma_sakin_benden_yana_nota_p1_s02_w01.png` is scored against both
+`r8 f'8 g'8 a'8 b'8. d''8 c''8 b'8 | a'8. f'16 g'8 e'8` and `f'4. c''8 d''8 e''8 f''4 \segno`.
+
+- **Scope: `_realval_v2` only.** `strips_exam_v2_clean` (326), `_tupletval` (28) and `strips_nota`
+  (1,740) each have zero duplicate rows.
+- **Effect:** every recorded `_realval_v2` number counts those 5 images twice and scores 4 of them
+  against a label that cannot be right — ~1.9% of the pool. Small, but it inflates the pool's error
+  floor and it is in the tuplet A/B's guard number and the geometry probe's holdout baseline alike.
+- **Not a threat to a PAIRED result**: the duplicates are identical in every arm, so they cancel in
+  a delta. The geometry probe's `--compare` deduplicates by filename (n=262) and reproduces the same
+  monotone rise, which is what says so.
+- **Owed:** de-duplicate and re-derive, then re-check whether any *other* pool built by the same
+  path shares the defect. Until then, quote `_realval_v2` absolutes with this caveat.
+
 ## Label quality (measured by hand audits)
 
 | Pool | Content-error rate | Date |

@@ -42,6 +42,7 @@ import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
 import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
+import { Fingerboard } from "./Fingerboard";
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
@@ -69,7 +70,7 @@ import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { respellAeu } from "../../../tools/render/respell";
 import { parseSignatureBody } from "../../../tools/render/lilypond";
 
-type ViewMode = "roll" | "sheet";
+type ViewMode = "roll" | "sheet" | "fingerboard";
 // SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
 type SheetLayout = { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number };
 
@@ -149,6 +150,10 @@ const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("nav
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
 const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
 const URL_SLURSEED = RENDER_PARAMS.has("slurseed") ? Number(RENDER_PARAMS.get("slurseed")) : null;
+// Round-3 staccato distractors: label-free dots on the notehead side (see SheetView's
+// drawStaccatoDot), teaching that a dot only means "longer" BESIDE the notehead. Absent → none,
+// i.e. every strip rendered before 2026-08-15.
+const URL_STACCATOSEED = RENDER_PARAMS.has("staccatoseed") ? Number(RENDER_PARAMS.get("staccatoseed")) : null;
 // Round-3 print realism: seeded staff-line weight + usul beam grouping (see SheetView's
 // STAFF_LINE_WIDTH / USUL_BEAM_GROUPS). Absent → VexFlow's defaults, i.e. every pre-Round-3 strip.
 const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get("printseed")) : null;
@@ -163,6 +168,7 @@ const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
 // re-engrave on every render). Constant per page load, like all render params.
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
 const SLUR_NOISE = URL_SLURSEED != null ? { seed: URL_SLURSEED } : undefined;
+const STACCATO_NOISE = URL_STACCATOSEED != null ? { seed: URL_STACCATOSEED } : undefined;
 const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
 
 /**
@@ -321,6 +327,7 @@ export function App() {
   const renderTag = JSON.stringify({
     score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
     repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
+    staccatoseed: URL_STACCATOSEED,
     printseed: URL_PRINTSEED,
   });
   const renderTagRef = useRef(renderTag);
@@ -491,6 +498,7 @@ export function App() {
       __omrConfig?: {
         score: string; mode: AccidentalMode; lyrics: boolean; transpose: number; sig: string | null;
         repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null; slurseed: number | null;
+        staccatoseed: number | null;
         printseed: number | null;
         /** Which tuplet mark this page drew — the A/B arm, so a renderer can assert it once
          *  instead of discovering a mis-set flag after 40k strips. */
@@ -503,6 +511,7 @@ export function App() {
     w.__omrConfig = {
       score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose, sig: URL_SIG ?? null,
       repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
+      staccatoseed: URL_STACCATOSEED,
       printseed: URL_PRINTSEED,
       legacyTuplet: URL_LEGACY_TUPLET,
       applied: layoutTag === renderTag,
@@ -1239,6 +1248,18 @@ export function App() {
               pitchRange && (
                 <PianoRoll doc={displayDoc ?? doc} pitchRange={pitchRange} onEditNote={updateEvent} />
               )
+            ) : viewMode === "fingerboard" ? (
+              // ⚠ `timeline` is passed, never rebuilt inside the view: it is the one place the
+              // makam bend and the transpose are already resolved into freqHz, and a finger
+              // position drawn from written pitches would be wrong on exactly the makams this
+              // feature exists to show. (PianoRoll above does rebuild — harmless for a roll.)
+              timeline && (
+                <Fingerboard
+                  timeline={timeline}
+                  playing={playState !== "stopped"}
+                  getPositionMs={getPositionMs}
+                />
+              )
             ) : (
               <SheetView
                 doc={displayDoc ?? doc}
@@ -1267,6 +1288,7 @@ export function App() {
                 navMarks={navMarks}
                 textNoise={TEXT_NOISE}
                 slurNoise={SLUR_NOISE}
+                staccatoNoise={STACCATO_NOISE}
                 thinSharps={URL_THIN_SHARPS}
                 printNoise={PRINT_NOISE}
                 legacyTupletMark={URL_LEGACY_TUPLET}

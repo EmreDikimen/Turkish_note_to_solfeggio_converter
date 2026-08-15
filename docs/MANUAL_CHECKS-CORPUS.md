@@ -191,3 +191,35 @@ independent photo draws, since that profile varies the most).
   two runs with the same `--seed` producing different grids.
 - This is the human gate on augmentation strength — **look at it before spending GPU time**,
   and re-check after any parameter tweak in `augment.py`.
+
+---
+
+## Check 9 — staccato distractors (pixels only, and the POSITION is the point)
+
+Added 2026-08-15. The model reads a printed staccato as an augmentation dot and lengthens the note;
+this check is the human gate on the mark that teaches otherwise. Numbers:
+[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md). Floors: [rung3/levers.md](rung3/levers.md) Lever 6.
+
+Open, with a score that has dotted notes:
+
+> http://localhost:5173/?score=/sample.json&mode=measure&lyrics=0&staccatoseed=9
+
+- **Look for:** small filled dots **above or below** noteheads, always on the side **opposite the
+  stem**, always centred in a staff SPACE and never sitting on a line. They should be the same size
+  as an augmentation dot — the two marks must differ only in *where* they are, or the model can
+  separate them by size and learns nothing.
+- **The case that matters most:** a note that carries **both** — augmentation dot to the RIGHT, on
+  the notehead's own line/space; staccato ABOVE or BELOW. Find one and satisfy yourself the two are
+  unmistakably different positions and clearly detached.
+- **The critical check — labels unchanged:** open the same URL *without* `&staccatoseed=9` and
+  compare any strip's label: **character-identical**. Or, for a whole corpus, render both arms and
+  `diff` the manifests — they are byte-identical by construction (`staccatoseed` is deliberately not
+  a manifest field).
+- **Wrong looks like:** a dot fused to a notehead or sitting on a staff line (both were real bugs in
+  the first two drafts — `getNoteHeadBounds()` returns the notehead's *anchor*, not its ink edges);
+  a dot on the stem side; a dot noticeably bigger or smaller than the augmentation dot; or any label
+  difference between the two tabs.
+- ⚠ **Density is a judgement call, not a measurement.** `STACCATO_RATE` in `SheetView.tsx` is
+  `{dotted: 0.30, run: 0.18}`, chosen because nobody has counted staccato frequency in real Turkish
+  editions. If it reads heavier or lighter than the printed music you know, that is the number to
+  change — and counting a few real editions is how to replace the guess.

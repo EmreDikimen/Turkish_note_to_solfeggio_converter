@@ -2,7 +2,7 @@
 
 purpose: what Round 3 targets, the evidence behind it, and the checks to run BEFORE rendering anything
 audience: agents and the owner working the real-page track
-updated: 2026-08-15
+updated: 2026-08-16
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
@@ -17,10 +17,11 @@ updated: 2026-08-15
 > exam pages needing ≤5 corrections** as the primary number and the public-launch gate. It was fixed
 > before any Round-3 training and is not re-opened after the read. Do not restate the numbers here.
 
-> ⚠ **A FIFTH check was added 2026-08-15, after the four below had all come back negative** — and it
-> is not about what we draw, but about how much of the strip the encoder is given. It has its own
-> file with the other unpulled levers: [levers.md](levers.md). Read it before rendering anything,
-> including the content change described here.
+> ✅ **A FIFTH check was added 2026-08-15, after the four below had all come back negative — and it
+> is the one that came back POSITIVE.** It is not about what we draw, but about how much of the strip
+> the encoder is given. Result in §5 below; the lever and its next step live with the other levers in
+> [levers.md](levers.md). Read that before rendering anything, including the content change described
+> here — **the next render is a geometry render, and the content work is sequenced behind it.**
 
 ## What this round is for
 
@@ -57,6 +58,7 @@ exactly ([../METRICS.md](../METRICS.md)).
 | 2. beam/flag weight → note lengths | **disproved.** Ours are at the engraving standard; real print is *heavier* |
 | 3. render the odd crop shapes | **dropped.** The cost is real, the stated mechanism is wrong |
 | 4. how crowded are the strips | **already answered** by `domain_gap.py` before this session |
+| **5. how much of the strip does the encoder SEE** (added 2026-08-15) | ✅ **CAUSAL — the first check here that came back positive**, and the first that is not about what we draw. See §5 |
 
 **⛔ The apparent win did not survive a holdout.** Shrinking real strips ~2% removed **15.5% of exam
 corrections** (562 → 475) across four scale values, with no mechanism ever found — resampling, blur,
@@ -242,11 +244,29 @@ Strip width 1229 px synthetic vs 904 (exam) / 1018 (nota); notes per strip 8.6 v
 with ≤3 notes 0.67% vs 6.0%. No further measurement needed. The width half of this gap is now
 double-motivated — see the encoder-shrink note in §2.
 
+### ✅ §5 RESULT (2026-08-15) — CAUSAL, and it replicates on the holdout
+
+Measured with `scripts/rung3/crop_geometry_probe.py --make-padded`, which widens each exam crop with
+more of **its own quietest columns** — content and gold untouched, only the resolution the encoder
+sees goes down. Pre-registered before the run in [levers.md](levers.md): *monotone rise → causal;
+flat within noise → drop the lever in writing.*
+
+**It is monotone across all four doses**, as the encoder's staff spacing falls 19.2 → 9.6 px; the
+paired bootstrap excludes zero from ×1.50 onward, and the **real-val holdout replicates steeper**.
+Both unpadded arms reproduced their recorded baselines exactly — the exam's to the individual edit,
+which is what says this is the same harness that produced the Round-2 read. The dose table, the
+CIs and every caveat: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+
+Two limits worth stating with the result, not after it: **×2.00 extrapolates** below the exam's
+natural width range, and the probe **lowers** resolution — showing that costs edits is not the same
+as showing that raising it pays. The **short-crop hole** (§3) is why that matters, and it is what
+the 300-strip pilot has to watch.
+
 ## Then
 
-Render the corpus with whatever those four checks say. Train with the recipe held fixed again
-(two-stage, `--every-share 0.15`, real oversampled to ~34% of batches — recompute the `:N` repeat if
-the corpus size changes). Read the exam **once**.
+Render the corpus with whatever those checks say. **§5 has now answered the one that was open: the
+next render is a GEOMETRY render**, and the content work below is sequenced behind it. Train with the recipe held fixed again (two-stage, `--every-share 0.15`, real oversampled to
+~34% of batches — recompute the `:N` repeat if the corpus size changes). Read the exam **once**.
 
 ## The real pool changed too (2026-07-27)
 

@@ -47,9 +47,11 @@ npm run dev:web                      # harness → http://localhost:5173 (decode
 npm run dev:cloud                    # the same harness, but decode runs on Cloud Run — see below
 npm run typecheck                    # all workspaces
 npm test                             # stitcher + label round-trip + edit primitives + usul strokes + voice manifest
+                                     # …plus violin fingering (the 53-TET position formula + string choice)
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
                                      # …plus the instrument voices; add --voices-url <hub> for the REAL samples
                                      # …and note-box geometry on a GRACE-NOTE score (see the rule below)
+                                     # …and the fingerboard tab: the marker lands on a string and MOVES
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
@@ -128,8 +130,11 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/syn
     # nothing and reads as a normal render. Cost one full corpus render on 2026-08-13.
     # [--legacy-tuplet-mark] renders the tuplet A/B's control arm; [--print-noise] opts INTO the
     # Round-3 print realism, which is off by default (it carries the quarantined USUL_BEAM_GROUPS)
+    # [--staccato-noise] opts INTO the Round-3 staccato distractors — label-free dots on the
+    # notehead side, teaching that a dot means "longer" only BESIDE the notehead. Off by default;
+    # `staccatoseed` is deliberately NOT a manifest field, so the two arms stay byte-diffable.
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
-npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]
+npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise]
 .venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
 .venv-ml/bin/python scripts/prepare_voices.py [--analyse|--manifest]  # F1's voices: fetch VSCO 2, measure, stage for the Hub
 .venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
@@ -173,7 +178,11 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   `#sheet-surface[data-tuplet-anchor]` + `[data-tuplet="start|member|anchor|end|blocked"]` per note,
   and the off-meter mark `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`
   (⚠ **`data-edit-mode` AND `data-play-state` are each on two elements** — select the one you mean
-  by id). The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
+  by id). The fingerboard tab (F3) adds `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings]`,
+  `[data-omr="finger-marker"]` carrying `data-string` / `data-ratio` / `data-finger-state="idle|open|stopped|rest|out-of-range"`,
+  and `[data-omr="fingerboard-tick"]` per drawn position — so a check reads WHERE the finger is, never
+  a label. ⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the
+  position formula and the string-choice rule. The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
   prove playback began there. A tuplet is **not stored** anywhere, so no attribute can prove one was
   made: `smoke:editor` counts the marks the engraver drew, in **both** styles (`.vf-tuplet` and the
   curved arc's italic "3" — the style is a per-piece coin). The six

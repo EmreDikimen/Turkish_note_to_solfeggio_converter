@@ -2,19 +2,31 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-15
+updated: 2026-08-16
 
 ## Now
 
-⭐ **A FIFTH ROUND-3 CHECK WAS ADDED AND IT IS THE FIRST ONE THAT IS NOT ABOUT WHAT WE DRAW: the
-encoder is given a strip and throws half of it away.** The frame is a fixed 409×583, so a median
-strip arrives downscaled by half with **61% of the frame spent on black padding**, and one note
-position lands on ~7 px. Re-aligning the spent Round-2 exam decode and pinning the confounds one at a
-time, **the most-squashed third costs 2.4× the edits per token at matched musical density**; holding
-length fixed keeps the effect, holding width fixed removes it — so it is resolution, not sequence
-length. ⚠ **Observational, ~40 strips a bucket, and the causal test has NOT been run** — that is the
-next action below. Numbers: [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md). What it implies, and the
-four other levers nobody has pulled: [rung3/levers.md](rung3/levers.md).
+⭐ **THE CROP-GEOMETRY PROBE RAN AND IT IS CAUSAL — the first of Round 3's six pre-render checks to
+come back positive, and the first that is not about what we draw.** Padding exam crops with more of
+**their own empty staff** (content and gold untouched, only the encoder's resolution falling) raises
+edits/token **monotonically across all four doses — 0.052 → 0.059 → 0.061 → 0.070 → 0.083, +59%** —
+with the paired bootstrap CI excluding zero from ×1.50 on, and the **real-val holdout replicating
+steeper (+61%)**. Both unpadded arms reproduced their recorded baselines exactly, the exam's to the
+edit (562). **So the next render is a GEOMETRY render and the content work is sequenced behind it.**
+⚠ It shows lowering resolution **costs** edits; it does not show raising it **pays** — that is the
+300-strip pilot's job, and the **short-crop hole** is what it must watch. ⚠ A second look at a spent
+exam read; the Round-3 exam is still read once, on the final model. Numbers:
+[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) · lever and next step: [rung3/levers.md](rung3/levers.md).
+
+⭐ **THE STACCATO DISTRACTOR IS BUILT, AND THE DEFECT IT TARGETS IS NOW MEASURED AT 72.7%.** The
+owner spotted the model reading printed **staccato dots as augmentation dots**, lengthening notes
+that were never long. The cause is structural: `ADDED_TOKENS` has **no articulation token** and the
+renderer draws none, so **0 of 40,826 strips carry one** and every dot the model has ever seen meant
+*longer*. On a paired pilot — same 110 strips, marks the only difference — it decodes a dot gold does
+not have **72.7% of the time, against 0.0% unmarked**, which it reads 110/110 exactly. `--staccato-noise`
+is built and **off by default**, following `drawSlurArc`: manifests byte-identical, `verify-labels`
+PASS 1215/1215. **Nothing is trained yet** — the floors are pre-registered in
+[rung3/levers.md](rung3/levers.md) Lever 6, and the trade is **duration over pitch** (owner).
 
 ⚠ **This partially re-scopes a line that read as closed.** "Resolution was ruled out" in
 [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) was measured on per-class **accidental recall**, on
@@ -29,29 +41,6 @@ duration (28%), which the macro AEU mean cannot see. Written and dated **before*
 training, taken unchanged, and **not re-opened after the exam is read** — a miss is written up as a
 miss and the launch waits for Round 4. [rung3/round3-criteria.md](rung3/round3-criteria.md).
 
-✅ **THE `\tup3` A/B RAN, AND IT IS A NULL — the redrawn mark stays, and no recall claim is made.**
-Two arms on the identical recipe, over corpora **row-for-row identical to `strips_v4` apart from the
-mark**: `\tup3` recall **88.9% (new) vs 85.2% (control)** on `_tupletval` — **2 net groups of 54**,
-paired 4-vs-2 discordant, **exact McNemar p = 0.688** against a pre-registered ~6-group threshold.
-Precision cleared its veto (98.0% / 95.8%) and the `_realval_v2` guard passed (mean AEU F1 83.9% vs
-83.3%). The null branch of the rule written *before* the render applies: **keep the shape** — it
-stands on the print measurement (16/16 marks, ~11 editions), not on recall — and claim nothing either
-way. ⚠ **Not "the shape doesn't help"**: 54 groups cannot resolve under ~11 pp, and ~5 was the hope.
-⚠ **The `_realval_v2` `\tup3` split (91.4% vs 80.0%) is NOT a second result** — those 35 groups are a
-subset of these 54. [METRICS.md](METRICS.md) · [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md).
-
-✅ **The control also answered a question nothing else could**: it scored **85.2%, exactly
-`round2-stage2-best`'s score on the same pool** — so `staff_jitter`, the rasterizer drift and a fresh
-training environment moved this class by **zero, together**. Reassuring for Round 3's attribution,
-and only learnable by training the arm. ⚠ Reading the misses afterwards produced a **lead** worth
-more than the A/B did — see Track B item 1e.
-
-⚠ **`data/pieces.json` is stale and cost a full corpus render.** `strips_v4` and `data/split_v4.json`
-were both built from **`data/pieces_v4.json`** (208 pieces vs 190), but the documented command named
-the older file. The wrong render completed and looked normal — 23 of Round 2's pieces missing, 528
-strips in neither side of the split, dropped in silence at train time. Fixed beside the command in
-[../CLAUDE.md](../CLAUDE.md).
-
 ✅ **F1 IS DONE, HEARD AND LIVE (2026-08-14)** — `Çalgı sesi` offers **Klarnet**, **Keman** and
 **Kanun** beside the built-in tone, 62 CC0 files on the Hub, deployed and `smoke:live` PASS on both
 paths. Four rounds of ear feedback each corrected a real measurement no green check caught (breath on
@@ -62,24 +51,34 @@ all four are closed and guarded. The account, and every number: [features/README
 and the drums ship with the app — setting `VITE_AUDIO_URL` in a deploy would 404 the drums into the
 synthesis the owner rejected, silently ([../CLAUDE.md](../CLAUDE.md), [DECISIONS.md](DECISIONS.md)).
 
-✅ **F3 IS SCOPED — THE VIOLIN AND ONLY THE VIOLIN — AND ITS ARTWORK HAS LANDED** (owner,
-2026-08-15). It is Track A's next action, item 3b. What was actually in the way turned out to be one
-bullet, not the work: `features/README.md` demanded **own artwork**, which read as *you must draw a
-violin*. F3 needs a **fingerboard**, not a violin, and the rule was protecting **provenance** rather
-than banning third-party pixels — so it is amended, not dropped. A CC0 image whose chain has been
-read now counts; an unlicensed one still does not.
-`apps/web/public/instruments/violin-vl100.png` is CC0 1.0 from Wikimedia Commons, and ⚠ **its
-derivation was followed rather than assumed**, because CC0 on a user-upload site is the uploader's
-claim and a CC0 derivative of a restricted photo would be worthless.
-[THIRD-PARTY.md](THIRD-PARTY.md) · [DECISIONS.md](DECISIONS.md).
+✅ **F3 IS BUILT — THE VIOLIN FINGERBOARD TAB, AND TRACK A HAS NO DESIGNED-NOT-STARTED WORK LEFT**
+(2026-08-16). A third view beside Nota and Piyano rulosu: a violin neck, a dot that follows the audio
+clock, and a tick at **every position the loaded score itself uses** on each string — so the uneven,
+microtonal spacing on screen is the music's, not a diagram's. `npm test` (38 new assertions),
+`typecheck` and `smoke:editor` pass, and a local `dist/` build was driven headlessly to prove the
+photo is served and the marker tracks in the **production bundle**, which dev mode cannot show.
+What it built, the three things the photo corrected, and the traps:
+[features/README.md](features/README.md) · [log/status-log.md](log/status-log.md).
 
-⚠ **Opening the image corrected the plan written before it was downloaded**, which is the part worth
-keeping. The advice had been that a neck crop puts the bridge out of frame and forces a three-point
-projective calibration; the real file is a **straight-on front view with the nut and the bridge both
-in frame**, so it is the easy two-points-per-string case. The limit is elsewhere and is the thing to
-design against: the nut→bridge run is ~580 px, putting a koma at roughly **7 px near the nut** and
-less higher up — so the **high positions** are where this image runs out. A bare-neck photo at higher
-resolution is the upgrade, and because the calibration is *data* a swap costs no code.
+⛔ **IT IS NOT DEPLOYED AND NOT COMMITTED. <https://komavision.netlify.app> DOES NOT HAVE IT.** "The
+production bundle" above means a `dist/` built and served **on this machine**; `smoke:live` has not
+run. F3 lives in the working tree only — see it with `npm run dev:cloud`. ⚠ The tree holds **two
+independent uncommitted changes**: F3 (Track A) and the staccato distractor (Track B, above), which
+share no source file. Commit them **separately, staging by path** — `git add -A` would fuse a product
+feature and a corpus change into one diff that cannot be reverted alone.
+
+⚠ **NOTHING ABOUT IT HAS BEEN SEEN BY A PERSON**, and every automated check reads the *same geometry
+the drawing does* — so none can say the dot is where a violinist would put the finger, or whether the
+ticks inform or clutter. That is **[MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 25**,
+and it is Track A's next action (item 3b), before any deploy.
+
+✅ **The blocking question was answered first: standard Sol–Re–La–Mi, table left open** (owner,
+2026-08-16) — the frequencies are data, so a Turkish scordatura is a row and no geometry moves.
+⚠ Two consequences to know before looking: the open strings sit on **this project's 53-TET grid**,
+not a tuner's (open Sol 195.571 Hz, ~4 cents = a fifth of a koma, which is what makes an open string
+land at ratio 0 exactly); and because Turkish notation transposes down a fourth, **low written
+passages sound below the open Sol and get no marker at all**, reported as `out-of-range` rather than
+clamped. [DECISIONS.md](DECISIONS.md).
 
 **The mark itself is settled history now** — measured against ~11 real editions (16/16 break the arc),
 redrawn to those numbers, corrected twice by the owner's eye, and A/B'd above. Geometry:
@@ -142,16 +141,19 @@ the model track never touches the app.** Either can be worked on without waiting
    and removing it would have to buy a new DOM seam first. **The editor's list is now complete: steps
    1–8 and 10, built, deployed and checked on the production bundle. There is no step 9.**
    [mvp/editor.md](mvp/editor.md) · [mvp/standing.md](mvp/standing.md) · [DECISIONS.md](DECISIONS.md).
-3b. **⏭ THE NEXT PRODUCT ACTION — F3, the fingerboard tab, VIOLIN ONLY** (owner, 2026-08-15). Show
-   where the finger goes as the piece plays. It is the last designed-not-started feature, it is
-   client-side (no server, no GPU, no ML), and it runs beside Round 3 without touching it. A fretless
-   position is the exact formula `length × (1 − openStringFreq / noteFreq)`, so **all 53 komas land
-   exactly — a 12-tone app cannot draw a koma position at all**, which is what makes this the feature
-   worth having. ✅ The artwork is **in hand and CC0**: `apps/web/public/instruments/violin-vl100.png`
-   ([THIRD-PARTY.md](THIRD-PARTY.md)). ⚠ **Blocked on one answer only, and it is the owner's:** the
-   four open strings — standard G3–D4–A4–E5 or a Turkish keman tuning. Everything else takes them as
-   data and can be built first. Brief, and the two things measured off the image itself:
-   [features/README.md](features/README.md).
+3b. **✅ F3 IS BUILT (2026-08-16) — what is left is a LOOK, then a deploy, not more code.**
+   ⛔ **Not deployed, not committed** — the live site does not have it (see "Now").
+   ⏭ **THE NEXT PRODUCT ACTION, and the only one that needs a person, is
+   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 25**: open it, play a piece with
+   Keman selected, and answer the two things no automated check can — does the dot sit where your
+   finger would (open strings are the free calibration: the dot must be **at** the nut), and do the
+   ticks read as information or as clutter? ⚠ Do **not** report the thin high positions as a finding;
+   ~7 px per koma near the nut and less above is the shipped photo's known limit, and a
+   higher-resolution bare-neck image fixes it with no code change. Everything it built, and the
+   traps inside it, are in [features/README.md](features/README.md).
+   **Then, and only after that look:** commit (staging by path — see "Now"), `npm run deploy:app`,
+   `npm run smoke:live`. ⚠ `smoke:live` does not check images any more than it checks audio, so
+   spot-check `/instruments/violin-vl100.png` for 200 after the deploy.
 4. **⏸ Everything else about speed is DEFERRED to after W10** (owner, 2026-08-06): ship at **~35–55 s
    a page**. Splitting a page across instances (~52 s → ~13 s) is the only option that touches the
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a
@@ -160,10 +162,8 @@ the model track never touches the app.** Either can be worked on without waiting
 5. **DONE 2026-08-11 — W10 SHIPPED AND ANSWERED**: the link went to two friends, they liked it, and
    asked for **more instrument sounds** — which is what 5b built. The rung is complete. Account:
    [mvp/README.md](mvp/README.md).
-5b. **✅ F1, INSTRUMENT VOICES — DONE 2026-08-14, AND THE FRIENDS LIKED IT** (owner, 2026-08-15).
-   Klarnet, Keman and Kanun: uploaded, deployed, `smoke:live` PASS on both paths, check 24 closed
-   after four ear-passes. Retired from this list — everything it built, every number, and the traps
-   inside it are in [features/README.md](features/README.md),
+5b. **✅ F1, INSTRUMENT VOICES — DONE 2026-08-14, AND THE FRIENDS LIKED IT.** Retired from this list;
+   everything it built and every trap inside it is in [features/README.md](features/README.md),
    [features/audio-sources.md](features/audio-sources.md) and [features/kanun.md](features/kanun.md).
    ⚠ Three things outlive it. Ney has **no** CC0 source and needs the owner's own recording; oud and
    tanbur stay **Karplus–Strong**, code rather than files. `features/README.md` says any instrument
@@ -172,8 +172,9 @@ the model track never touches the app.** Either can be worked on without waiting
    `MASTER_GAIN`; they are peak-matched, so sounding a few dB under the built-in tone is the trade
    and not a fault.
 
-5c. **Cheap and newly possible: read the request log now that real users exist.** Until today the
-   "every human so far was on a phone" line rested on **n=2** and could not be more than a question
+5c. **Cheap, independent, and still open — but it is NOT the next action; 3b is.** Read the request
+   log now that real users exist. The
+   "every human so far was on a phone" line rests on **n=2** and cannot be more than a question
    ([METRICS-USAGE.md](METRICS-USAGE.md)). The friends' own reads are the first data that can move
    it, and `/decode` is the honest counter (`/health` fires on every page open, robots included).
    This needs no feedback from anyone and answers a real planning question — "web first, mobile
@@ -186,22 +187,13 @@ Still the **public-launch gate**, and still runnable at any time — it shares n
 track. It stopped being "the whole project's next move" when the owner picked F1 (2026-08-11); the
 two now run in parallel exactly as the 2026-08-05 scoping intended.
 
-1. ✅ **DONE 2026-08-15 — the acceptance bar is written AND SIGNED**:
-   [rung3/round3-criteria.md](rung3/round3-criteria.md). **≥75% of exam pages needing ≤5 corrections**
-   (Round-2 baseline 57%), doubling as the public-launch gate; the accidental measures are
-   no-regression clauses at their Round-2 values. Binding from here: not re-opened after the read,
-   and the exam is still read **once**, on Round 3's final model.
-1b. **DONE 2026-08-12 and retired from this list — the mark was measured against real print, redrawn,
-   and judged by the owner.** Geometry and the two corrections that came back:
-   [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md); the account, including the comparison sheet and
-   its ⚠ local-viewing-only caveat: [rung3/tuplets.md](rung3/tuplets.md).
-1d. **THE `\tup3` A/B IS DONE (2026-08-15) — NULL, shape kept, no recall claim.** Both arms trained and
-   read; the numbers and the caveats are in the "Now" section above, [METRICS.md](METRICS.md) and
-   [rung3/tuplets.md](rung3/tuplets.md). **`strips_v5_tupnew` is the corpus Round 3 continues from**,
-   and **neither arm ships** — the exam is unread and neither is a Round-3 model, so
-   `round2-stage2-best` stays the runtime. ⚠ Do **not** re-run this A/B hoping for a cleaner answer:
-   the exam and every real pool together hold too few `\tup3` groups to resolve ~5 pp, so the way to
-   answer it is more tuplet gold, not another pair of runs.
+1. ✅ **DONE 2026-08-15 — the acceptance bar is written AND SIGNED**, and it doubles as the
+   public-launch gate: [rung3/round3-criteria.md](rung3/round3-criteria.md). Binding from here — not
+   re-opened after the read, and the exam is still read **once**, on Round 3's final model.
+1d. **THE `\tup3` A/B IS DONE (2026-08-15) — NULL, shape kept, no recall claim.** Retired to
+   [rung3/standing.md](rung3/standing.md) on 2026-08-16 with every number and caveat, including why
+   **not to re-run it**. Live consequences only: **`strips_v5_tupnew` is the corpus Round 3 continues
+   from**, and **neither arm ships** — so `round2-stage2-best` stays the runtime.
 1e. **NEXT ON THE TUPLET THREAD, but NOT next overall — and the target may have moved.** Reading the
    10 groups either arm missed showed the model **marks the first triplet of a passage and forgets the
    later ones** (recall 96%→81% by position, in both arms), which points away from the renderer
@@ -214,18 +206,32 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    not have. ⚠ **No new
    labelling** — the tuplet queues are finished and promoted, whatever
    [rung3/labeling.md](rung3/labeling.md) said until 2026-08-11.
-1f. **⏭ THE NEXT ACTION — the crop-geometry probe. Half a day, no GPU, no render.**
-   `scripts/rung3/crop_geometry_probe.py --make-padded …` widens exam crops with `BORDER_REPLICATE`,
-   which lowers the resolution the encoder sees while leaving content and gold **identical**, then
-   `eval_omr.py` reads each pad factor. **Pre-registered in [rung3/levers.md](rung3/levers.md) before
-   the run: monotone rise in edits/token → resolution is causal and the next render is a geometry
-   render; flat within noise → the correlation is a confound and the lever is dropped in writing**,
-   like the five checks before it. It is first because its answer changes *what* item 2 should render,
-   and because it is the cheapest measurement left. ⚠ It is a second look at a spent exam read and
-   must be written up as one; the Round-3 exam is still read once, on the final model.
+1f. ✅ **DONE 2026-08-15 — CAUSAL, on the pre-registered reading, and it replicates on the holdout.**
+   The numbers are in the "Now" section above and [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+   What it settles: **the next render is a GEOMETRY render**, and item 2 below is sequenced behind it.
+   ⚠ Two limits stated with the result rather than after it — **×2.00 extrapolates** below the exam's
+   natural width range, and the probe **lowers** resolution, which is not the same as showing that
+   raising it pays.
+1g. **⏭ THE NEXT ACTION — Lever 1 step 2: a 300-strip pilot at the new geometry through
+   `domain_gap.py`, BEFORE any full render.** This is where "narrower crops actually help" gets
+   tested, because 1f could only show that squashing hurts. ⚠ **The short-crop hole is the failure
+   mode to design against, not the resolution arithmetic**: crops under ~10 gold tokens are the worst
+   thing this model reads (0 of 40,826 training strips are signature-only), and narrow geometry makes
+   them the *common* case — so the render must include those shapes or this lever makes the exam
+   worse. ⚠ It also costs ~3× the strips per page, i.e. roughly 3× decode time; the owner should
+   price that before the render ([mvp/latency.md](mvp/latency.md)). Constants are
+   `MEASURES_PER_STRIP` / `MAX_STRIP_W`, shared by the renderer and the slicer.
+   [rung3/levers.md](rung3/levers.md).
+1h. **THE STACCATO DISTRACTOR IS BUILT AND MEASURED, NOT TRAINED** (owner, 2026-08-15).
+   `--staccato-noise`, off by default; baseline **72.7%** false-dot rate against **0.0%** on the same
+   music unmarked. What is owed is a **trained arm**, and the pre-registered floors it must clear are
+   [rung3/levers.md](rung3/levers.md) Lever 6 — in particular clause 2, no regression on real dots
+   **on easy+mid tiers only**. ⚠ `STACCATO_RATE` is **chosen, not measured**; counting staccato
+   frequency in real editions is how to replace it. ⚠ Not sequenced ahead of 1g: it is a second
+   render variable, and Round 3 has been unattributable twice already.
 2. **The content work in `select_pieces.py`** — what Round 3 actually *is*: eighth/quarter-note mix
    and bar-line density (owner decision 2026-07-27: these only; ties and accidentals stay out). **Not
-   cancelled and not superseded — sequenced behind 1f**, because the note-value mix changes how wide a
+   cancelled and not superseded — sequenced behind 1g**, because the note-value mix changes how wide a
    measure is and therefore moves the geometry variable as a side effect; rendering both at once would
    leave Round 3 unattributable for the third round running. ⚠ Our strips are already **wider** than
    the real pools' and denser music widens them further, so the selection needs a **strip-width
@@ -240,15 +246,29 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    must be re-checked, not assumed.
 3. **Decide whether to re-emit the training pools from the new crops.** The re-slice is done; this
    is the separate decision it unlocks, **not** a formality — re-emitting rewrites the manifests the
-   promoted verdicts hang off, so it needs its own `--out` and a look at what moved first. Weigh it
-   against the evidence that Round 3's target — pitch (40%) and duration (28%) of user edits — is a
-   *synthetic content mix* problem, not a shortage of real strips (2,330 accepted already).
+   promoted verdicts hang off, so it needs its own `--out` and a look at what moved first. ⚠ **The
+   framing under this item was narrowed 2026-08-15.** It used to weigh re-emission against "Round 3's
+   target is a synthetic content mix problem, not a shortage of real strips (2,330 accepted)". The
+   count is still not the issue — but **label noise on the axis Round 3 targets is**: the nota pool's
+   audited pitch-level error rate sits under a target where pitch is 40% of user edits
+   ([METRICS-CORPUS.md](METRICS-CORPUS.md)), and every audit so far aimed at accidentals. So "more
+   real strips" stays unpersuasive while **auditing the pitch/duration axis, and growing exam PAGES
+   rather than strips**, moved onto the list: [rung3/levers.md](rung3/levers.md) Lever 3.
 
 ### Cheap, owed, and independent of both
 
 1. **The deskew *estimator* is validated on 132 pages, not the corpus** — every full run injects
    Python's angle. It used to cost ~18 h of browser time; at 1.3 s/page a full un-injected corpus
    run is now well under an hour, so this is worth simply doing.
+2. **NEW 2026-08-16 — `_realval_v2` has 5 duplicate manifest rows, 4 with CONTRADICTORY labels.**
+   267 rows over 262 distinct images; four PNGs are scored against two unrelated gold strings, so at
+   least one of each pair is wrong. Found while checking pad-directory integrity, not by looking for
+   it. **Scope is that pool only** — the exam, `_tupletval` and `strips_nota` are clean. It is ~1.9%
+   of the pool and it sits inside every recorded `_realval_v2` absolute, including the tuplet A/B's
+   guard number. ⚠ It does **not** threaten a paired result (the duplicates are identical in every
+   arm and cancel in a delta), which is why the geometry probe's holdout stands. Owed: de-duplicate,
+   re-derive, and check whether any other pool built by the same path shares it.
+   [METRICS-CORPUS.md](METRICS-CORPUS.md).
 
 ### Further out (not next, not cancelled)
 
@@ -278,15 +298,14 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.
 
-6. **⬆ THE FEATURE TRACK LEFT THIS SECTION on 2026-08-15** — F0, F2 and F1 are done and F3 is now
-   **Track A item 3b**, the next product action, scoped to the violin. This line stays only to say
-   where it went. ⚠ One caveat from here still holds and is now recorded in
-   [features/README.md](features/README.md): F3 was supposed to be aimed by what the friends say
-   next, and it is being built on the owner's own call instead — the friends were asked once (W10)
-   and said "more instrument sounds", which F1 delivered. **The audio is settled** (2026-08-09):
-   drums, clarinet, violin and kanun all shipped under **CC0**, licences read per file, no NC
-   anywhere; **ney alone** still needs the owner's own recording, and oud and tanbur stay
-   Karplus–Strong. Files: [features/audio-sources.md](features/audio-sources.md).
+6. **⬆ THE FEATURE TRACK LEFT THIS SECTION on 2026-08-15**, and finished on 2026-08-16 — F0, F2, F1
+   and F3 are all built. This line stays only to say where it went: [features/README.md](features/README.md).
+   ⚠ One caveat from here still holds and is recorded there: F3 was supposed to be aimed by what the
+   friends say next, and it was built on the owner's own call instead — they were asked once (W10),
+   said "more instrument sounds", and F1 delivered that. **The audio is settled** (2026-08-09): drums,
+   clarinet, violin and kanun all shipped under **CC0**, licences read per file, no NC anywhere;
+   **ney alone** still needs the owner's own recording, and oud and tanbur stay Karplus–Strong.
+   Files: [features/audio-sources.md](features/audio-sources.md).
 
 Also queued, cheap: the additive-only re-slice (deferred here from Round 1 — see
 [log/superseded.md](log/superseded.md) for its constraints), and the ORT-web int8 numerics

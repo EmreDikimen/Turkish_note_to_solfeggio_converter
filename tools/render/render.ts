@@ -29,6 +29,9 @@
  *                                  arc with the digit floating above it
  *             [--print-noise]      OPT-IN Round-3 print realism (seeded staff-line weight + usul
  *                                  beam grouping). Off by default — see the constant below
+ *             [--staccato-noise]   OPT-IN staccato distractors: label-free dots on the notehead
+ *                                  side, teaching that a dot means "longer" only BESIDE the
+ *                                  notehead. Off by default — see the constant below
  */
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -70,6 +73,9 @@ interface Job {
   textseed: number;
   respellseed: number;
   slurseed: number;
+  /** Round-3 staccato distractors (SheetView's drawStaccatoDot).
+   *  `null` unless `--staccato-noise` — see STACCATO_NOISE above. */
+  staccatoseed: number | null;
   /** Round-3 print realism: seeded staff-line weight + usul beam grouping (SheetView).
    *  `null` unless `--print-noise` — see PRINT_NOISE above. */
   printseed: number | null;
@@ -101,6 +107,12 @@ const LEGACY_TUPLET = has("legacy-tuplet-mark");
 // USUL_BEAM_GROUPS into ~40k strips — and that change is measured as unvalidated and deliberately
 // quarantined (docs/METRICS-DIAGNOSTICS.md). Off ⇒ this render matches the strips_v4 recipe.
 const PRINT_NOISE = has("print-noise");
+// Round-3 staccato distractors (2026-08-15, owner): the model reads a printed staccato as an
+// augmentation dot and lengthens the note. Nothing in 40,826 strips has ever carried an
+// articulation, and ADDED_TOKENS has no name for one, so the corpus taught "every dot means
+// longer". These label-free dots teach the POSITIONAL rule instead — a dot lengthens only when it
+// sits BESIDE the notehead. Opt-in, so probe and control arms are one flag apart.
+const STACCATO_NOISE = has("staccato-noise");
 
 // Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
 // scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
@@ -154,6 +166,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       textseed: hashStr(`${piece.slug}:c${p}:text`),
       respellseed: hashStr(`${piece.slug}:c${p}:respell`),
       slurseed: hashStr(`${piece.slug}:c${p}:slur`),
+      staccatoseed: STACCATO_NOISE ? hashStr(`${piece.slug}:c${p}:staccato`) : null,
       printseed: PRINT_NOISE ? hashStr(`${piece.slug}:c${p}:print`) : null,
     });
   }
@@ -173,6 +186,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       textseed: hashStr(`${piece.slug}:${t}:text`),
       respellseed: hashStr(`${piece.slug}:${t}:respell`),
       slurseed: hashStr(`${piece.slug}:${t}:slur`),
+      staccatoseed: STACCATO_NOISE ? hashStr(`${piece.slug}:${t}:staccato`) : null,
       printseed: PRINT_NOISE ? hashStr(`${piece.slug}:${t}:print`) : null,
     });
   }
@@ -192,6 +206,7 @@ function jobUrl(job: Job): string {
   if (job.sig) q.set("sig", job.sig);
   if (job.repseed != null) q.set("repseed", String(job.repseed));
   if (job.navseed != null) q.set("navseed", String(job.navseed));
+  if (job.staccatoseed != null) q.set("staccatoseed", String(job.staccatoseed));
   if (job.printseed != null) q.set("printseed", String(job.printseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (LEGACY_TUPLET) q.set("legacytuplet", "1");
@@ -215,7 +230,8 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
         c.lyrics === want.lyrics && c.transpose === want.transpose && c.sig === want.sig &&
         c.repseed === want.repseed && c.navseed === want.navseed &&
         c.textseed === want.textseed && c.respellseed === want.respellseed &&
-        c.slurseed === want.slurseed && c.printseed === want.printseed &&
+        c.slurseed === want.slurseed && c.staccatoseed === want.staccatoseed &&
+        c.printseed === want.printseed &&
         // Which tuplet mark the page drew. Checked per job rather than once, because a wrong arm is
         // invisible in the labels and would only surface as a corpus that fails to reproduce.
         c.legacyTuplet === want.legacyTuplet
@@ -224,7 +240,8 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
     {
       score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose, sig: job.sig,
       repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-      slurseed: job.slurseed, printseed: job.printseed, legacyTuplet: LEGACY_TUPLET,
+      slurseed: job.slurseed, staccatoseed: job.staccatoseed, printseed: job.printseed,
+      legacyTuplet: LEGACY_TUPLET,
     },
     { timeout: 20000 },
   );
@@ -259,7 +276,11 @@ async function renderPiece(page: Page, piece: PieceEntry, shardPath: string): Pr
         image: `${name}.png`, label: s.label, mode: job.mode, makam: piece.makam, sig: job.sig,
         piece: piece.slug, transpose: job.transpose, lyrics: job.lyrics,
         repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-        slurseed: job.slurseed, printseed: job.printseed, from: s.fromMeasure, to: s.toMeasure,
+        // staccatoseed is deliberately NOT recorded here, the way legacyTuplet is not: it is an
+        // A/B arm marker, and keeping it out is what makes the two arms' manifests byte-identical
+        // and therefore diffable as a proof that the distractor is pixels-only.
+        slurseed: job.slurseed, printseed: job.printseed,
+        from: s.fromMeasure, to: s.toMeasure,
       }) + "\n");
       count++;
       if (DELAY > 0) await page.waitForTimeout(DELAY);

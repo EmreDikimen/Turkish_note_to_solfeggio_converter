@@ -28,6 +28,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { chromium, type Page } from "playwright";
+import { hashStr } from "./rng";
 
 const URL = process.env.OMR_URL ?? "http://localhost:5173";
 
@@ -39,6 +40,12 @@ const has = (name: string) => process.argv.includes(`--${name}`);
 
 const STRIPS = arg("strips") ?? "data/synthetic/strips_v4";
 const THIN_SHARPS = has("thin-sharps");
+// Round-3 staccato distractors. Not a manifest field (it is an A/B arm marker, kept out so the two
+// arms' manifests stay byte-identical), so this reseeds per piece rather than replaying the render's
+// seed — the check is "do the extra dots break the glyph<->label correspondence", not "reproduce
+// that exact page". Without it the distractor is simply absent and this file would pass trivially.
+const STACCATO_NOISE = has("staccato-noise");
+const staccatoSeed = (piece: string) => hashStr(`${piece}:verify:staccato`);
 const LIMIT = arg("limit") != null ? Number(arg("limit")) : Infinity;
 const EVERY = Number(arg("every") ?? 1);
 const OUT = arg("out") ?? `${STRIPS}/verify_labels.json`;
@@ -75,6 +82,7 @@ function jobUrl(r: Row): string {
   if (r.repseed != null) q.set("repseed", String(r.repseed));
   if (r.navseed != null) q.set("navseed", String(r.navseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
+  if (STACCATO_NOISE) q.set("staccatoseed", String(staccatoSeed(r.piece)));
   return `${URL}/?${q}`;
 }
 
@@ -157,13 +165,15 @@ async function openJob(page: Page, r: Row): Promise<void> {
         c && c.applied && c.score === want.score && c.mode === want.mode &&
         c.lyrics === want.lyrics && c.transpose === want.transpose && c.sig === want.sig &&
         c.repseed === want.repseed && c.navseed === want.navseed &&
-        c.textseed === want.textseed && c.respellseed === want.respellseed && c.slurseed === want.slurseed
+        c.textseed === want.textseed && c.respellseed === want.respellseed && c.slurseed === want.slurseed &&
+        c.staccatoseed === want.staccatoseed
       );
     },
     {
       score: `/scores/${r.piece}.json`, mode: r.mode, lyrics: r.lyrics, transpose: r.transpose,
       sig: r.sig, repseed: r.repseed, navseed: r.navseed, textseed: r.textseed,
       respellseed: r.respellseed, slurseed: r.slurseed,
+      staccatoseed: STACCATO_NOISE ? staccatoSeed(r.piece) : null,
     },
     { timeout: 30000 },
   );

@@ -2,12 +2,158 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-15
+updated: 2026-08-16
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-15 (latest) — F3 is scoped to the violin, and its artwork rule was the thing in the way
+## 2026-08-16 (latest) — Track B: crop geometry is CAUSAL, and the staccato/augmentation-dot confusion is built and measured
+
+**Two pieces of Track B, kept deliberately apart** — one is a measurement whose whole purpose is to
+keep Round 3 attributable, the other a renderer change that trains nothing and stays off by default.
+
+### The crop-geometry probe (item 1f) — the first pre-render check to come back positive
+
+Five checks before it asked *do we DRAW something wrong?* and all five said no. This one asked how
+much of the strip the encoder is **given**, and the answer is that resolution costs real edits.
+`--make-padded` widens each crop with **its own quietest columns**, so content and gold are byte-
+identical and only the encoder's effective resolution falls. Edits/token rose **monotonically across
+all four doses (+59% at ×2.00)**, the paired bootstrap excluded zero from ×1.50 on, and the
+**real-val holdout replicated steeper (+61%)**.
+
+**Why the harness is believable here:** both unpadded arms reproduced their *recorded* baselines
+exactly — the exam's to the individual edit (S=209 D=144 I=209 = 562, 52.1%, 57% of pages ≤5), the
+holdout's to SER 0.079 / 62.9%. That is the same read that produced the Round-2 numbers, not a
+re-derivation of them.
+
+**The half-day estimate was wrong by an order of magnitude** — the whole 8-condition sweep took
+minutes, because a 32-strip timing probe showed most of `eval_omr`'s wall clock is model loading.
+Worth remembering before budgeting a day for the next one.
+
+**What was NOT concluded, and this is the part that matters later:** the probe *lowers* resolution.
+Showing that squashing hurts is not the same as showing that narrowing crops pays, and the two are
+separated by the **short-crop hole** — 0 of 40,826 training strips are signature-only, and narrow
+geometry makes short crops the common case. So the next action is a 300-strip pilot, not a render.
+Also stated with the result rather than after it: ×2.00 extrapolates below the exam's natural width
+range, and ~25 of 326 crops are too dense to have a quiet window so their padding tiles symbol
+fragments. Dropping those 25 moves every delta by ≤0.01, which is why the artifact is not the story.
+
+`--compare` was added to the probe for the *"flat within noise"* half of the pre-registered rule,
+which never said what the noise was. Greedy decode is deterministic, so the only sampling error is
+over which strips are in the pool — and since padding does not change a filename, every dose is the
+same 326 images and the comparison is naturally **paired**.
+
+### The staccato distractor (owner-found, 2026-08-15)
+
+**The owner spotted it in real use**: the model reads printed staccato dots as augmentation dots and
+lengthens notes. Checking rather than assuming turned it into a structural finding — `ADDED_TOKENS`
+has **no articulation token at all**, and the augmentation dot is not a token either but a suffix
+inside the duration, so the label language has no way to say *"dot, but not a duration dot."* The
+renderer draws no staccato, so **0 of 40,826 strips carry one**: every dot the model has ever seen
+meant longer.
+
+**Measured with a paired control, which is what makes it more than a report.** Two 1,215-strip pilot
+renders identical apart from the marks: on the 110 strips carrying a staccato whose gold has no
+dotted duration, the model decodes a dot it has no gold for **72.7% of the time** — against **0.0%**
+on the same music unmarked, which it reads **110/110 exactly**. The substitutions are literally
+`d''4 → d''4.`, `g''8 → g''8.`.
+
+**A concern was raised and overruled, and both halves belong in the record.** The exam shows
+dot-**lost** outnumbering dot-**added** 12:4, and the slur distractor's precedent is precision
+15.1%→91.2% bought at recall 92.7%→**83.8%, below its floor** — so a distractor risks pushing on the
+larger error. The owner's answer: the dropped dots come from bad scans, and hallucinated length is
+the costlier error. **Stratifying confirmed the premise** — 7 of the 12 dropped dots are hard-tier
+and six carry `nd` up to 1.14, while the easy tier has **zero of either**. That is also why the
+pre-registered no-regression clause is scoped to **easy+mid tiers only**, written down in advance
+rather than chosen after a result, and why the exam cannot be this lever's instrument at all.
+
+**Three placement drafts were rejected by eye before one worked**, and the reason is a trap worth
+keeping: VexFlow's `getNoteHeadBounds()` returns `notehead.getY()` — the notehead's **anchor**, not
+its ink edges — so on a single-notehead note `yTop === yBottom === the centre`, and every clearance
+measured from it lands half a notehead too close. The dots came out fused to the noteheads twice
+before that was found by reading the VexFlow source instead of tuning constants. A second, genuine
+geometric limit: a note sitting **on a line** cannot take the adjacent space centre at all, because
+the dot's radius overlaps the notehead's ink there at *any* clearance — those get the space beyond
+it, which is looser than an engraver would set and the right trade when the mark's whole job is to
+be unmistakably *not* beside the notehead.
+
+The design point the build turns on: the lesson is **positional**, so the draw deliberately seeks out
+**already-dotted notes** — a notehead carrying an augmentation dot beside it and a staccato above it
+is the only example that isolates position from everything else.
+
+Guards: manifests **byte-identical** between arms (`staccatoseed` is kept out of the manifest the way
+`legacyTuplet` is, precisely so the two arms stay diffable), `verify-labels` **PASS 1215/1215** with
+the marks on, `npm test` and `smoke:editor` green with the flag off. **Nothing is trained yet.**
+
+## 2026-08-16 — F3 is BUILT: the violin fingerboard tab, and the photo told us where the strings are
+
+**Track A's last designed-not-started feature is done.** A third view beside Nota and Piyano rulosu:
+a violin neck with a dot that follows playback, and a tick at every position the loaded score uses on
+each string. Built, checked on the production bundle, not yet seen by the owner or the friends.
+
+**The two open questions were answered by the owner before any code was written.** Tuning: ship
+**standard Sol–Re–La–Mi**, but hold the four frequencies in a data table so a Turkish scordatura is a
+row rather than a rewrite. What it draws: the dot **plus ticks from the score's own pitches**, not a
+fixed reference chart — which is what makes the microtonal spacing on screen the spacing of the music
+in front of you, rather than a diagram.
+
+**The calibration was measured, and measuring it is the part worth keeping.** Each string was tracked
+down `violin-vl100.png` as a brightness peak and line-fitted with outlier rejection: residuals came
+out **0.06–0.10 px over 348–432 rows**, far finer than the ~7 px a koma occupies near the nut. Nut and
+bridge are the pale ridges in the luminance profile between the strings, at y **171.5** and **659.0**.
+
+⚠ **Two independent sanity checks were run precisely because a self-consistent fit can still be
+nonsense.** The nut→bridge run of 487.5 px scales to **328.1 mm** at the image's own px/mm — a 4/4
+violin's vibrating length is 328 mm — and the string spread comes out **17.2 mm at the nut, 34.2 mm at
+the bridge** against a real ~16.3 and ~33.5. Neither number was used to fit anything; they are what
+says the photo is a real straight-on 4/4 and the lines are its actual strings.
+
+**Three things the picture corrected, none of which were guessable from the licence page.**
+
+1. **The neck is a 6:1 vertical sliver**, which is unreadable on a phone — and every human who has
+   opened the deployed app so far was on one. It is rotated a quarter turn so the nut is on the left,
+   guitar-tab fashion. ⚠ A true rotation, not a transpose, so the photo is never mirrored.
+2. **A tuning peg sticks out sideways across image rows 172–176**, just past the nut, and rendered as
+   a grey smudge floating under the Sol string. Found by looking at the render, not by reasoning. The
+   photo is now masked to the fingerboard's **own tapered outline** instead of a rectangle, which
+   removes it and gives the picture its real taper.
+3. **A naive "darker than the belly" scan reads the fingerboard as 109 px wide** by the time it
+   reaches the body, because the f-holes, the fingerboard's shadow and the dark body all pass it. Only
+   rows near the neck are usable; the taper is straight, so the edges extrapolate from two clean rows.
+
+**A test disagreed with the code and the code was right.** "A low melody stays in first position"
+failed: the melody dips below the open Re, which forces a shift down to the Sol string, and the rule
+then keeps the hand there for the note after. That is what a violinist does, so the assertion was
+describing the wrong thing and was replaced by the two claims actually worth pinning — a melody that
+fits under one hand never climbs, and a forced shift does not bounce back.
+
+⚠ **Out-of-range notes are a normal case here, not an edge case.** Turkish notation transposes down a
+fourth, so a written G3 sounds D3 ≈ 147 Hz, well under a standard violin's open Sol at 195.6. Those
+notes draw **no dot** and say `data-finger-state="out-of-range"` rather than being clamped onto a
+position they are not at. It is also the strongest practical argument for eventually adding a lower
+Turkish tuning — which is exactly the seam the data table was built for.
+
+⚠ **`openHz` is on this project's 53-TET grid, not twelve-tone equal temperament.** A fifth here is 31
+commas = 701.89 cents, so the open Sol is 195.571 Hz rather than a tuner's 196.00. That ~4-cent
+difference is a fifth of a koma — the scale of thing this view exists to show — and it is what makes
+an open string land at ratio 0 *exactly* for the note that should be played open.
+
+**What it cost:** `packages/core/src/fingering.ts` (the maths, portable),
+`apps/web/src/ui/fingerboardGeometry.ts` (every pixel, in one place),
+`apps/web/src/Fingerboard.tsx` (drawing and the clock), 38 assertions in
+`tools/core/fingering-test.ts`, and a section in `smoke:editor`. `npm test`, `typecheck` and
+`smoke:editor` all pass, and the built `dist/` was driven headlessly to prove the photo is served and
+the marker tracks in the production bundle — dev mode cannot prove that.
+
+⚠ **The tuning picker exists but is hidden** while `VIOLIN_TUNINGS` has one entry. The seam, the data
+and the attribute are all real; a select with one option is dead UI, and inventing a second tuning to
+fill it would be a repertoire claim this project has not made.
+
+⚠ **Nothing here has been seen by a person yet.** Every check is a machine check. Whether the dot lands
+where a violinist would put the finger, and whether the ticks read as informative or as clutter, is
+check 25 in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) and it has not been run.
+
+## 2026-08-15 — F3 is scoped to the violin, and its artwork rule was the thing in the way
 
 **Track A had one feature left and it looked expensive for a reason that turned out to be a
 misreading.** The owner confirmed F1 landed well (*"my friends loved the instrument sounds"*), dropped
@@ -82,9 +228,14 @@ disappears — so it is resolution and not autoregressive drift. Numbers and eve
 
 **Why this is written as a lead and not a finding.** It is observational, ~40 strips a bucket, on
 crops the current slicer no longer produces; the probe's own re-alignment totals 433 edits where
-`eval_omr` reports 562, so only the trend is usable. The causal test — widen a crop with
-`BORDER_REPLICATE`, which lowers resolution while leaving content and gold identical — is written
-into the same script with its reading pre-registered, and **has not been run**. This project has
+`eval_omr` reports 562, so only the trend is usable. The causal test — widen a crop with more of its
+own empty staff, which lowers resolution while leaving content and gold identical — is written
+into the same script with its reading pre-registered, and **has not been run**. ⚠ Building it
+produced a small measured surprise worth keeping: the **obvious** implementation (extend the last
+column) is wrong, because the last column of an exam crop is **36% ink at the median** — the crop
+ends on a *barline*, not on the blank staff the 6 px trim implies — so it would have padded with a
+black band and measured that instead of resolution. Checked before it was used, not after. This
+project has
 already published one 15.5% exam gain that reversed on a holdout; the discipline that caught that is
 what this entry is trying to keep.
 

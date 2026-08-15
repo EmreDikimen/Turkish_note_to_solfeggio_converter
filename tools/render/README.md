@@ -138,7 +138,7 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
   the accidental glyphs out of the live SVG (SMuFL codepoint; the `--thin-sharps` AEU sharps by
   their unique stem/bar counts) and checks each crop rect's glyphs against that strip's label,
   `\sig` block included. Run:
-  `npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]`
+  `npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise]`
   (`--limit`/`--every` for a quick pass). **A corpus is not trainable until this passes** — the
   carry decision is duplicated between `SheetView.tsx` and `lilypond.ts`, and when they silently
   diverged, 18.8% of `strips_v3`'s carry strips drew accidentals their labels omitted. If you change
@@ -206,6 +206,16 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       SVG at real-print bar weight — all four, so bar COUNT stays the only difference; flats
       untouched. Off by default so an A/B against `strips_v3` stays possible.
       Diagnosis: `docs/rung3/round2.md`; the measured widths: `docs/METRICS.md`.
+- [x] **Staccato distractors — `--staccato-noise` (2026-08-15), OFF by default.** `ADDED_TOKENS` has
+      no articulation token and the renderer drew no staccato, so 0 of 40,826 strips carried one and
+      **every dot the model had ever seen meant *longer***: it reads a printed staccato as an
+      augmentation dot. Measured with a paired control — **72.7%** of marked strips get a dot the gold
+      does not have, against **0.0%** unmarked. `drawStaccatoDot` (SheetView) draws it as raw SVG on
+      the notehead side, and the draw deliberately seeks out **already-dotted notes**, because a
+      notehead carrying both marks is the only example that isolates position. ⚠ `staccatoseed` is
+      **not** a manifest field (like `legacyTuplet`), so the two arms' manifests stay byte-identical
+      and diffable. ⚠ `STACCATO_RATE` is chosen, not measured. Floors and the account:
+      `docs/rung3/levers.md` Lever 6.
 - [ ] **Next re-render owes the sharp FREQUENCY balance:** inline, `strips_v3` carries far more
       `\komaSharp` than `\kucukSharp` and **no** strip holds both — the model has never seen the pair
       contrasted in one image (counts: `docs/METRICS.md`). Balance them and place koma/küçük/bakiye

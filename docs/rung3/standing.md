@@ -88,10 +88,44 @@ reverses off the exam. Do not re-propose it.
 **All four hypotheses were RUN against the shipped model, with no training and no re-render. Three
 died.** Dropped, measured, do not re-propose: rendering the odd crop shapes, cutting wide crops
 narrower (**+31.8% edits**), thinning beams. Still standing: the content work — eighth/quarter-note
-mix and bar-line density in `select_pieces.py`. `USUL_BEAM_GROUPS` remains **unvalidated and
+mix and bar-line density in `select_pieces.py`. ⚠ **A FIFTH check was added 2026-08-15** — the
+encoder's input geometry, the first one not about what we draw — and the content work is now
+sequenced behind it; the full ranked menu is [levers.md](levers.md).
+`USUL_BEAM_GROUPS` remains **unvalidated and
 quarantined** (the beam check measured thickness, not grouping) and `staff_jitter` is insurance, not
 a fix. Full detail: [rung3/round3.md](round3.md); why each was dropped:
 [DECISIONS.md](../DECISIONS.md).
+
+## Previously (moved out of STATUS 2026-08-16 — settled, no next action here)
+
+These were "Now" items that are finished. They are kept because each carries a caveat that outlives
+the result.
+
+✅ **THE `\tup3` A/B RAN, AND IT IS A NULL — the redrawn mark stays, and no recall claim is made.**
+Two arms on the identical recipe over corpora row-for-row identical apart from the mark: **88.9% (new)
+vs 85.2% (control)** on `_tupletval` — 2 net groups of 54, **exact McNemar p = 0.688** against a
+pre-registered ~6-group threshold. Precision cleared its veto and the `_realval_v2` guard passed. The
+null branch of the rule written *before* the render applies: **keep the shape**, on the print
+measurement (16/16 marks, ~11 editions), and claim nothing either way. ⚠ **Not "the shape doesn't
+help"** — 54 groups cannot resolve under ~11 pp. ⚠ The `_realval_v2` `\tup3` split is **not** a second
+result; those 35 groups are a subset of these 54.
+**The mark itself (2026-08-12, retired from STATUS 2026-08-16):** measured against ~11 real printed
+editions (16/16 break the arc), redrawn to those numbers, and corrected twice by the owner's eye.
+Geometry: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md); the account, including the
+comparison sheet and its ⚠ local-viewing-only caveat: [tuplets.md](tuplets.md).
+
+[../METRICS.md](../METRICS.md) · [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+✅ **The control also answered a question nothing else could**: it scored **85.2%, exactly
+`round2-stage2-best`'s score on the same pool** — so `staff_jitter`, the rasterizer drift and a fresh
+training environment moved this class by **zero, together**. Only learnable by training the arm.
+⚠ Reading the misses afterwards produced a **lead** worth more than the A/B did — Track B item 1e.
+
+⚠ **`data/pieces.json` is stale and cost a full corpus render.** `strips_v4` and `data/split_v4.json`
+were both built from **`data/pieces_v4.json`** (208 pieces vs 190), but the documented command named
+the older file. The wrong render completed and looked normal — 23 of Round 2's pieces missing, 528
+strips in neither side of the split, dropped in silence at train time. Fixed beside the command in
+[../../CLAUDE.md](../../CLAUDE.md).
 
 ## Previously (Round 2, still true)
 

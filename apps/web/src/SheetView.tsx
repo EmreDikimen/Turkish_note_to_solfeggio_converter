@@ -697,6 +697,94 @@ function drawSlurArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   svg.appendChild(path);
 }
 
+/** Staccato dot radius, in STAFF SPACES. It must LOOK like Bravura's augmentation dot — the whole
+ *  experiment rests on the two marks being the same ink in different PLACES, so if one reads as
+ *  bigger the model can separate them by size instead of by position and learns nothing. Checked by
+ *  eye on the pilot render, not asserted. Vertical placement is not a constant: see the space-centre
+ *  rule in drawStaccatoDot. */
+const STACCATO_RADIUS = 0.15;
+
+/** How often a staccato is drawn. CHOSEN, NOT MEASURED — like the slur distractor's 0.35, which is
+ *  the precedent this follows. `dotted` is the rate on notes that ALREADY carry an augmentation
+ *  dot and is deliberately the higher of the two: those are the strips that isolate position from
+ *  everything else, so the corpus should be rich in them even though real print is not. Nobody has
+ *  counted staccato frequency in real Turkish editions; doing so is the way to replace these. */
+const STACCATO_RATE = { dotted: 0.3, run: 0.18 } as const;
+
+/**
+ * Draw a STACCATO dot — a filled dot on the notehead side, opposite the stem — as raw SVG.
+ *
+ * WHY. The corpus has never contained one: 0 of 40,826 strips carry an articulation, and
+ * `ADDED_TOKENS` has no name for one either (the augmentation dot is not a token, it is a suffix
+ * inside the duration — `8` vs `8.`). So every dot the model has ever seen meant *longer*, and it
+ * reads a printed staccato as an augmentation dot, lengthening notes that were never long (owner,
+ * 2026-08-15).
+ *
+ * What this teaches is POSITIONAL, and that is the whole design: an augmentation dot is a suffix
+ * beside the notehead, on its line or space (VexFlow's `Dot`, via `Dot.buildAndAttach` above); a
+ * staccato sits above or below it. Drawn on the wrong side this distractor teaches the confusion
+ * instead of curing it.
+ *
+ * Raw SVG rather than VexFlow's `Articulation` on purpose. A modifier feeds
+ * `StaveNote.getBoundingBox()`, the merge that once stretched a graced note's click box across the
+ * whole score (see `noteBoxOf`) — appending to the SVG keeps every note box untouched. It is also
+ * what `drawSlurArc` does, and this is that same idea for a different mark: label-free ink that
+ * teaches what a symbol is NOT.
+ *
+ * Pixels only: a staccato is never a label token, and buildStrips serializes from the doc, so the
+ * labels stay identical with and without it.
+ */
+function drawStaccatoDot(svg: SVGSVGElement, note: StaveNote): void {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let yTop: number;
+  let yBottom: number;
+  let nonDisplacedX: number | undefined;
+  let displacedX: number | undefined;
+  let width: number;
+  let stemUp: boolean;
+  let stave: Stave;
+  try {
+    ({ yTop, yBottom, nonDisplacedX, displacedX } = note.getNoteHeadBounds());
+    width = note.getGlyphWidth();
+    stemUp = note.getStemDirection() >= 0;
+    stave = note.checkStave();
+  } catch {
+    return;
+  }
+  if (!Number.isFinite(yTop) || !Number.isFinite(yBottom) || !Number.isFinite(width) || width <= 0) return;
+  const space = stave.getSpacingBetweenLines();
+  const yTopLine = stave.getYForLine(0);
+  if (!Number.isFinite(space) || space <= 0 || !Number.isFinite(yTopLine)) return;
+
+  // ⚠ `yTop`/`yBottom` are NOT the ink's edges — VexFlow builds them from `notehead.getY()`, the
+  // notehead's ANCHOR, so on a single-notehead note they are both simply its CENTRE. Two drafts
+  // were rejected by eye on the pilot for missing that, and the failure is worth keeping: treating
+  // the anchor as an edge measures every clearance from half a notehead too close, and the dots
+  // came out fused to the noteheads.
+  //
+  // So: the notehead spans centre ± ~0.5 spaces. Step outward from its far side by the dot's own
+  // radius plus a margin, then land on the first SPACE CENTRE beyond that — never on a staff line,
+  // where a 0.3-space dot simply disappears into the line.
+  const centre = (yTop + yBottom) / 2;
+  const dir = stemUp ? 1 : -1;
+  const clearance = 0.5 + STACCATO_RADIUS + 0.1; // half a notehead, the dot's radius, a margin
+  const t0 = (centre - yTopLine) / space + dir * clearance;
+  const slot = stemUp ? Math.ceil(t0 - 0.5) + 0.5 : Math.floor(t0 - 0.5) + 0.5;
+  // Notes IN a space get the neighbouring space, the textbook placement. Notes ON a line get the
+  // one beyond it, because the adjacent space centre is exactly where an on-line notehead's ink
+  // already reaches — that collision is geometry, not tuning, and no clearance value avoids it.
+  // Looser than a fastidious engraver would set, and the right trade here: an ambiguous mark
+  // teaches nothing, a clearly detached one IS the lesson — this dot is not beside the notehead.
+
+  const dot = document.createElementNS(SVG_NS, "circle");
+  dot.setAttribute("cx", String((nonDisplacedX ?? displacedX ?? note.getAbsoluteX()) + width / 2));
+  dot.setAttribute("cy", String(yTopLine + slot * space));
+  dot.setAttribute("r", String(STACCATO_RADIUS * space));
+  dot.setAttribute("fill", "#000");
+  dot.setAttribute("data-omr", "staccato"); // inspection only (an attribute, not pixels)
+  svg.appendChild(dot);
+}
+
 // Volta bracket height above the top staff line: close to the row (clear of most beams) and well
 // inside the strip-crop window (which starts ~46px above the top line).
 const VOLTA_ABOVE = 26;
@@ -1080,6 +1168,7 @@ export function SheetView({
   navMarks,
   textNoise,
   slurNoise,
+  staccatoNoise,
   thinSharps,
   printNoise,
   legacyTupletMark,
@@ -1168,6 +1257,10 @@ export function SheetView({
   /** Round-1 phrase-slur distractors: label-free arcs over non-triplet note runs (see drawSlurArc)
    *  so the model stops reading every arc as a `\tup3`. Pixels only. Undefined → none. */
   slurNoise?: { seed: number } | null;
+  /** Round-3 staccato distractors: label-free dots on the notehead side (see drawStaccatoDot), so
+   *  the model learns that a dot means "longer" only BESIDE the notehead, not above or below it.
+   *  Pixels only. Undefined → none, which is every strip rendered before 2026-08-15. */
+  staccatoNoise?: { seed: number } | null;
   /** Round-2: redraw the AEU sharps with real-print bar weight so the three bars of a küçük/büyük
    *  mücennep stay separated after downscaling (see drawThinSharps). Pixels only. → Bravura. */
   thinSharps?: boolean;
@@ -1306,6 +1399,10 @@ export function SheetView({
 
     // Seeded RNG for the phrase-slur distractors (drawn per measure below; same seed → same slurs).
     const slurRng = slurNoise ? mulberry32(slurNoise.seed) : null;
+    // Seeded RNG for the staccato distractors, drawn in the same per-measure walk. Its own stream,
+    // so turning staccato on does not shift which slurs the slur seed draws — the two distractors
+    // have to be separable, or an A/B on one of them silently moves the other.
+    const staccatoRng = staccatoNoise ? mulberry32(staccatoNoise.seed) : null;
 
     // Round-3 print realism, drawn once per render so a whole page is internally consistent (a
     // real edition has ONE staff weight and ONE beaming convention). Draw order is fixed so a
@@ -1527,6 +1624,45 @@ export function SheetView({
               }
               trySlur();
             }
+            // Staccato distractors: label-free dots on the notehead side (see drawStaccatoDot).
+            // Two passes, because they teach two different halves of the same rule.
+            if (staccatoRng && svg) {
+              const marked = new Set<StaveNote>();
+              const mark = (n: StaveNote) => {
+                if (marked.has(n) || n.isRest()) return;
+                marked.add(n);
+                drawStaccatoDot(svg, n);
+              };
+              // PASS 1 — the both-dots case, and the reason this distractor can work at all. A
+              // notehead carrying an augmentation dot BESIDE it and a staccato ABOVE it is the only
+              // example that isolates position from everything else: same ink, same note, one dot
+              // lengthens and one does not. Deliberately sought out rather than left to chance,
+              // because a run-based draw would hit dotted notes only occasionally and the contrast
+              // is the whole lesson. Real editions print this constantly.
+              for (const n of notes) {
+                if (n.isRest()) continue;
+                const dotted = n.getModifiers().some((m) => m instanceof Dot);
+                if (dotted && staccatoRng() < STACCATO_RATE.dotted) mark(n);
+              }
+              // PASS 2 — ordinary phrase staccato, in RUNS, because real editions mark a phrase and
+              // not a scattering of single notes. Within one measure, so a barline crop never cuts
+              // a marked phrase in half (the same care drawSlurArc takes).
+              let run: StaveNote[] = [];
+              const tryStaccato = () => {
+                if (run.length >= 2 && staccatoRng() < STACCATO_RATE.run) {
+                  const maxLen = Math.min(4, run.length);
+                  const len = 2 + Math.floor(staccatoRng() * (maxLen - 1)); // 2..maxLen
+                  const start = Math.floor(staccatoRng() * (run.length - len + 1));
+                  for (const n of run.slice(start, start + len)) mark(n);
+                }
+                run = [];
+              };
+              for (const n of notes) {
+                if (n.isRest()) tryStaccato();
+                else run.push(n);
+              }
+              tryStaccato();
+            }
             for (const [a, b] of ties) {
               new StaveTie({ firstNote: a, lastNote: b, firstIndexes: [0], lastIndexes: [0] })
                 .setContext(ctx)
@@ -1599,7 +1735,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps, printNoise, legacyTupletMark]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, thinSharps, printNoise, legacyTupletMark]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

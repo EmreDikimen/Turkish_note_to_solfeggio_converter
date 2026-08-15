@@ -103,6 +103,18 @@ apps/web/public/scores/
 /Meltem - 1. Hane.png
 apps/web/public/meltem_notes.json
 
+# NO IMAGE AT THE REPO ROOT IS COMMITTED. Structural, not a name list, because the next one will
+# have a different name: a page to test with gets dropped here, `git add -A` sweeps it up, and the
+# repo is PUBLIC. That is exactly how the neyzen.com screenshot above got into a history we now
+# cannot clean without a force-push. Caught in the act on 2026-08-15 —
+# bozukNihavendLonga.png, a printed engraving of Kevser Hanım's Nihavend Longa, sitting untracked
+# at the root and one `git add -A` from being permanent.
+# Real pages belong in data/real/ (ignored). The app's OWN artwork lives under apps/web/public/,
+# which these three lines do not touch.
+/*.png
+/*.jpg
+/*.jpeg
+
 # IDEs
 .idea/
 .vscode/

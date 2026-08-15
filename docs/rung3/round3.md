@@ -2,7 +2,7 @@
 
 purpose: what Round 3 targets, the evidence behind it, and the checks to run BEFORE rendering anything
 audience: agents and the owner working the real-page track
-updated: 2026-08-05
+updated: 2026-08-15
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
@@ -12,11 +12,15 @@ updated: 2026-08-05
 > waits for the friends release. The release asks friends about the interface, so its feedback would
 > not aim this round either way. [../DECISIONS.md](../DECISIONS.md)
 >
-> ⚠ **This round's acceptance bar is still OWED, and it now decides two things.** It must be written
-> down before training starts — on the user-effort metric (≥90% of pages ≤5 corrections; baseline
-> 57%), with micro and macro≥30 quoted beside the macro mean. As of 2026-08-05 it is **also the gate
-> for opening the app beyond the two friends**: good result → public launch, otherwise Round 4. A
-> number carrying that much weight cannot be chosen after seeing the result.
+> ✅ **This round's acceptance bar is WRITTEN AND SIGNED (2026-08-15) and lives in
+> [round3-criteria.md](round3-criteria.md)** — floors beside their Round-2 baselines, with **≥75% of
+> exam pages needing ≤5 corrections** as the primary number and the public-launch gate. It was fixed
+> before any Round-3 training and is not re-opened after the read. Do not restate the numbers here.
+
+> ⚠ **A FIFTH check was added 2026-08-15, after the four below had all come back negative** — and it
+> is not about what we draw, but about how much of the strip the encoder is given. It has its own
+> file with the other unpulled levers: [levers.md](levers.md). Read it before rendering anything,
+> including the content change described here.
 
 ## What this round is for
 
@@ -260,11 +264,10 @@ pool is worth cleaning further or is ready to enlarge.
 
 ## Two things to settle before training, not after
 
-1. **Write down what counts as success first.** The goal is now **≥90% of pages needing ≤5
-   corrections**; the Round-2 baseline is **57%**. Pick the number Round 3 must reach and write it
-   here before the run. Deciding afterwards is how people talk themselves into whatever they got —
-   and this project has already been burned twice by a headline that moved for reasons unrelated to
-   reading ability.
+1. ✅ **DONE — what counts as success was written down first**, and signed before training:
+   [round3-criteria.md](round3-criteria.md). Deciding afterwards is how people talk themselves into
+   whatever they got, and this project has already been burned twice by a headline that moved for
+   reasons unrelated to reading ability.
 2. **Decide whether to change one thing or four.** Round 2 changed the glyph weight, the label bug
    and the corpus size together, and we still cannot say which of them moved the number. That may be
    an acceptable trade again — but choose it deliberately rather than drifting into it.

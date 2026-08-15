@@ -24,6 +24,7 @@ stays on the developer's disk, where local use is not distribution.
 | **VCSL** and **VSCO 2 Community Edition** (sample libraries) | **CC0 1.0** | Serve the sample files, commercially, forever. No duty at all — a credit line is courtesy |
 | **Freesound 140291** (bendir strokes) and **211133** (kanun chromatic notes), both CompMusic/UPF | **CC0** | Same. ⚠ CC0 on Freesound is the *uploader's* claim; these two are trusted on provenance |
 | **Freesound 194637** (ney, Huzzam scale) — only if used | **CC BY 4.0** | Serve it, commercially, **with attribution in `/THIRD-PARTY.txt`** |
+| **`Violin VL100.png`** (Wikimedia Commons — F3's fingerboard artwork) | **CC0 1.0** | Ship it, crop it, overlay it, commercially, forever. No duty at all — the credit line is courtesy |
 
 Shipped notices live in [`apps/web/public/THIRD-PARTY.txt`](../apps/web/public/THIRD-PARTY.txt),
 served at `/THIRD-PARTY.txt` and linked from the app footer.
@@ -100,6 +101,32 @@ and the traps found there — including a **CC0-vs-readme contradiction in VSCO 
 ones included*, forbid redistributing the sample files themselves. A web app serves the raw file and
 anyone can lift it out of the network tab, so those libraries are unusable here no matter what is
 paid for them. Reasoning: [features/audio-policy.md](features/audio-policy.md).
+
+## Images — F3's violin, and the rule it sets
+
+**One image has landed** (2026-08-15), for the fingerboard tab: `apps/web/public/instruments/
+violin-vl100.png`, 700×951, 356 KB, **CC0 1.0**. It is
+[`File:Violin VL100.png`](https://commons.wikimedia.org/wiki/File:Violin_VL100.png) on Wikimedia
+Commons by the user *Just plain Bill*, a front-and-side view of a standard modern trade violin on a
+transparent background.
+
+⚠ **The derivation chain was checked, not assumed**, because CC0 on a user-upload site is the
+uploader's claim and a CC0 derivative of a restricted photo would be worthless. The PNG's own page
+names its source as `File:Violin VL100.jpg`, which is **the same author's own work, released public
+domain** — so both links in the chain are clear and neither is somebody else's photograph.
+
+This is the first third-party **image** the app ships, and it amends a rule rather than following
+one: [features/README.md](features/README.md) said F3's artwork must be **own** artwork — drawn as
+SVG or photographed by the owner. What that rule was protecting is *provenance*, after the
+2026-08-08 copyright pass found instrument and score images with none. A CC0 file whose chain has
+been read satisfies it; "found on the internet" still does not. Owner decision, 2026-08-15
+([DECISIONS.md](DECISIONS.md)).
+
+⚠ **No structural guard covers images**, unlike scores and audio. `prune-dist.mjs` fails a build on
+any `.json` at the dist root and on audio outside `audio/` or over `MAX_AUDIO_MB`; there is **no
+equivalent test for a picture**, so an unlicensed image would ship silently under the 60 MB total.
+The only thing standing there is this file and a manifest row. If a second image ever lands, that
+asymmetry is worth closing rather than noting again.
 
 ## The weights
 

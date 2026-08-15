@@ -2,7 +2,7 @@
 
 purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
 audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-13
+updated: 2026-08-15
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
@@ -25,11 +25,15 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
-| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | own artwork + a string-choice rule | not started |
+| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | calibration + a string-choice rule | **SCOPED 2026-08-15 — violin only, artwork in hand**, not started |
 
-Order: **F0 → F2 → F1 → F3**. F0, F2 and F1 are built and deployed, **F1 is done as of 2026-08-14 and awaiting its
-upload and its ear check**; only F3 has not started. F2 came first among the visible ones because it
-has the best payoff per hour.
+Order: **F0 → F2 → F1 → F3**. F0, F2 and F1 are built, deployed and **accepted by ear** — F1 finished
+2026-08-14 and the friends who asked for it liked the result. Only F3 has not started. F2 came first
+among the visible ones because it has the best payoff per hour.
+
+⚠ **The artwork cost moved off this table on 2026-08-15.** It said "own artwork" for weeks, which read
+as *you must draw a violin* and was the reason F3 looked expensive. It is not what the rule meant, and
+it is no longer what F3 needs — see the section below.
 
 ⚠ **"The real cost is compression" was wrong**, and it is worth recording because it steered the
 planning for two weeks. Compression was withdrawn as a problem when the files left the app, and what
@@ -263,6 +267,45 @@ the same reasoning that put `usul.ts` there.
 
 Show the instrument, and show where the finger goes as the piece plays.
 
+### Scope: VIOLIN ONLY (owner, 2026-08-15)
+
+Not "one instrument first, then the rest" as a plan to work down — **violin, and nothing else is
+committed**. Three reasons it is the right one: it is fretless, so the position is a formula rather
+than a table; **Keman is already a shipped F1 voice**, so the same instrument can be heard and seen
+at once; and the friends have just said they liked the voices, which is the closest thing to a signal
+this track has. The winds' lookup tables and the tanbur's fret table below stay written down as
+*design*, not as a queue.
+
+### The artwork: a licensed photo, not a drawing (owner, 2026-08-15)
+
+The original rule here was **own artwork** — draw it as SVG or photograph your own — and it was read,
+reasonably, as *you must draw a violin*. That was the whole reason F3 looked expensive, and it is a
+misreading of what the rule protects. What the 2026-08-08 copyright pass was defending against is
+**unknown provenance**, not third-party pixels. A CC0 file whose chain has been read satisfies it.
+
+✅ **The asset has landed**: `apps/web/public/instruments/violin-vl100.png` — Wikimedia Commons
+`File:Violin VL100.png`, **CC0 1.0**, 700×951, 356 KB, front and side views on a transparent
+background. Licence, the checked derivation chain, and the guard that does *not* exist for images:
+[../THIRD-PARTY.md](../THIRD-PARTY.md).
+
+⚠ **What that file does and does not buy.** Measured on the file itself, not guessed: the front view
+is **straight on**, and **both the nut and the bridge are in frame** — so the calibration is the easy
+two-points-per-string case, not the projective one that a cropped neck close-up would have forced. The
+full nut→bridge run is ~580 px, which puts a koma at roughly **7 px near the nut** and less further
+up. That is workable for a first version and **thin in the high positions**, which is the known limit
+to design against rather than discover. A higher-resolution bare-neck photo is the upgrade if one
+turns up; because the calibration is *data*, swapping the image costs no code.
+
+⚠ **A tutorial photo is the wrong photo even when its licence is fine.** The obvious candidates —
+someone's violin lesson still — carry a hand and a bow across the neck, and coloured tapes marking
+**12-tone** finger positions. Fixed tapes contradict the entire feature. What is wanted is a bare
+fingerboard with nothing on it.
+
+**Draw the markers in SVG over the photo.** The instrument is a picture; the moving dot and the koma
+ticks are vector, so they stay sharp and follow the theme.
+
+### Where the marker goes
+
 The tab itself is cheap: `ViewMode` in `apps/web/src/App.tsx` is `"roll" | "sheet"`; this adds a
 third. The interesting part is *where to draw the marker*, and it splits by instrument family.
 
@@ -285,9 +328,13 @@ rather than a smoke check.
 
 ### House rules this must follow
 
-- **Own artwork.** Draw the instrument as SVG, or photograph your own. Do not lift an instrument
-  photo off the web — the 2026-08-08 copyright pass exists precisely to stop that class of mistake
-  ([../THIRD-PARTY.md](../THIRD-PARTY.md)). SVG also scales and lets markers be placed exactly.
+- **Artwork with a READ licence** — amended 2026-08-15, was "own artwork". A CC0 or public-domain
+  image counts, provided its licence was read on the source's own page and its provenance recorded in
+  [../THIRD-PARTY.md](../THIRD-PARTY.md) and `/THIRD-PARTY.txt`. Still forbidden, unchanged: lifting a
+  photo with no licence, which is the class of mistake the 2026-08-08 copyright pass exists to stop.
+  ⚠ On a user-upload site CC0 is the *uploader's* claim — follow the derivation chain before trusting
+  it, the way the shipped violin's was. **Markers stay SVG** whatever the background is, so they
+  scale and can be placed exactly.
 - **DOM state, never copy.** The marker exposes `data-*` attributes for the checks to read, per the
   contract in [../../CLAUDE.md](../../CLAUDE.md) and `apps/web/src/ui/status.ts`. No text matching.
 - **All strings in `apps/web/src/ui/strings.ts`.**
@@ -295,7 +342,17 @@ rather than a smoke check.
   so the marker cannot drift from the sound.
 
 **Scope advice:** ship **one** instrument first, and make it a fretless one, because the formula is
-exact and it demonstrates the microtones. The rest is then mostly data.
+exact and it demonstrates the microtones. The rest is then mostly data. ✅ Settled 2026-08-15 — it is
+the violin, see the scope section above.
+
+### The one thing still unanswered — the open strings
+
+`openStringFreq` is an input to every marker position, so the four open strings have to be decided
+before any of them can be right, and it is **not a detail the code can default**. Standard
+G3–D4–A4–E5, or a Turkish keman tuning? Turkish violinists do not universally use the Western
+tuning, and this is a repertoire question rather than a programming one — **the owner's call, asked
+2026-08-15 and still open.** Everything else about F3 is buildable without it: the geometry, the
+calibration, the string-choice rule and the overlay all take the open strings as data.
 
 ---
 

@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-11
+updated: 2026-08-15
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -61,105 +61,41 @@ checked four hunches about *why* the model makes mistakes. Three did not survive
 kept because the reasoning stops us re-proposing them — the short do-not-repeat list is near the
 bottom of this page.
 
+## What we found on 15 August 2026 — the model may simply not see the page well enough
+
+Five ideas in a row have now failed their test, and every one of them asked the same question: *are
+we drawing something wrong?* So on 15 August we asked a different one — **how much of the picture
+does the model actually get to look at?**
+
+The model has a fixed-size window: 409 by 583 dots. A strip of music is turned on its side and
+shrunk to fit. A normal strip of ours is about two and a half times too long for that window, so it
+gets shrunk to **half size** and **61% of the window is left over as empty black**. After that, the
+gap between two staff lines is 14 dots, and the difference between a note *on* a line and one *in*
+the space above it is about **7 dots** — very little for the two mistakes we make most: which note it
+is, and how long it is.
+
+Then we checked the results we already had. Comparing strips carrying the **same amount of music**,
+the most-shrunk third cost **2.4 times as many corrections per note**. Longer strips are not the
+problem — *more shrunken* ones are.
+
+⚠ **This is a lead, not a proven fact.** It is a pattern in old results, not an experiment. The
+experiment is cheap and is the next thing on the list: make a strip artificially wider by adding
+blank paper, which changes nothing except how much the model shrinks it, and see whether the mistakes
+go up. If they do, we cut the strips shorter — about one bar each instead of three — and the model
+sees roughly two and a half times more detail for the same effort. If they don't, we write that down
+and drop it, like the five before it.
+
 ## Where we are right now
 
-### 13 August 2026: the violin and the clarinet play, and they are LIVE
+### The features that shipped in early August → [OVERVIEW-AUGUST.md](OVERVIEW-AUGUST.md)
 
-The thing your friends asked for is built and on the site. Pick **Çalgı sesi → Klarnet** or
-**Keman** and the piece plays on a real recorded instrument instead of the plain computer tone.
-The kanun is in too, since 2026-08-14. Its recording is one long take of every note, so it had to be cut into 36 separate notes first — and the app had to learn that a plucked string is measured differently from a blown or bowed one.
-
-Three things are worth knowing in plain terms.
-
-**The recordings are real, and they are not altered.** They are free-to-use recordings of a real
-clarinet and a real violin. We do not cut or squash the files at all — they are downloaded exactly
-as the people who recorded them made them, and the app decides which slice of each one to play. That
-turned out to matter: you asked twice for the sound to be changed, and both times it cost nothing to
-redo, because nothing had to be re-uploaded.
-
-**Your microtones are exact.** This was the thing to get right, and it is measured: every koma, and
-every makam that bends a note away from how it is written, comes out of the violin and the clarinet
-at exactly the same pitch as the plain tone — to about one two-hundred-thousandth of a koma. ⚠ One
-honest limit: the violin recording has *vibrato* (the player wobbling the pitch on purpose), and that
-wobble is about **one koma wide**. The note's centre is right, but you cannot use the violin to hear
-the difference between two neighbouring komas. **Use the clarinet for that** — it holds steady.
-
-⚠ **This needs your ears once more.** You have listened twice and been right twice: first the short
-notes were all breath, then the fix cut too much off the front. Both are fixed and measured, and
-neither fix has been heard. Check 24 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md) walks through it. The
-most likely complaint is that the instruments are **quieter** than the plain tone — that is on
-purpose, so the sound can never crackle, and it is one number to change if you want more.
-
-### 11 August 2026: you showed it to two friends, and they told you what to build next
-
-You sent the link to two friends. **They liked it, and they said it would be good to add other
-instrument sounds** — so the next piece of work was exactly that: playing a piece back on a
-**violin, a clarinet and a kanun** instead of the plain tone. ✅ All three are **done and live**
-(see the section above).
-
-This is worth pausing on, because it is the thing the last three months of work were *for*. The plan
-always said: get it into someone's hands, ask what to add, then build that. It has now happened, and
-the answer was clear enough to act on.
-
-**How good will they sound?** As good as the recordings are — you asked for full quality and nothing
-gets squeezed. The catch is size: a single instrument is about **20 MB** of sound files, and all
-three together are 40–60 MB. That is far too big to sit inside the app itself, so the files go to the
-**same online storage the AI model already lives in**, and your browser fetches an instrument only
-when you actually pick it. Nothing is downloaded for an instrument you never choose.
-
-One nice accident came out of measuring this. The recordings are **7 to 10 seconds** of a single held
-note — much longer than a sampler usually needs. Keeping them whole is the expensive-looking option,
-but it is also the simpler one: no note in real music lasts that long, so the app never has to fake a
-longer note by looping the sound, which is the usual way sampled instruments start sounding fake.
-
-⚠ **Two honest limits.** It was **two people, and they are friends** — friendly reactions are not a
-measurement, and they were asked *what to add* rather than *whether it is any good*. And the three
-instruments are convenient: they happen to be the three we already have free, legal recordings for.
-Ney, the one you play, has **no** free recording of usable quality anywhere — that one still needs an
-evening of you and a quiet room.
-
-### 11 August 2026: the usul now plays on a real drum, and it is LIVE
-
-The app could already tap out the usul (the rhythm cycle), but the sound was **made by the computer**
-— two tones pretending to be a drum. You listened and said it was not good enough, and you were
-right. It now plays **real recordings of a real darbuka and a real bendir**, and you can switch
-between them while the music plays. They are free-to-use recordings with no strings attached, so
-nothing here can ever cost money or need removing later.
-
-One problem was interesting enough to be worth knowing about. The recordings came in a set where the
-five different hits are only **numbered** — nothing says which one is the deep centre hit (*düm*) and
-which is the sharp rim hit (*tek*). Rather than guess, the computer **measured** them: a düm has its
-energy low down and rings on, a tek is bright and over instantly. To check that this way of measuring
-actually works, it was first tried on a second drum whose recordings *do* say what they are — and it
-got them right. So the choices are not a guess.
-
-Then you heard the drum sounding **"patlamış"** (blown out), and that was our mistake, not the
-recordings'. The drum was simply set too loud: when a drum and a note sounded at the same moment they
-added up to more than the loudspeaker can carry, and the tops of the waves got cut flat — which is
-what that crunch is. The levels are lower now, and there is a safety device on the output so that
-however far you push the drum volume slider, it can never do that again.
-
-✅ **You listened, and all ten patterns passed** (*"they sound really nice"*, 11 August). That
-included the **four we worked out ourselves** from the usul's beat grouping — Devr-i Hindî, Curcuna,
-Aksak Semâi and Ağır Aksak — which no computer test could ever have judged. Nothing about the drums
-is open now.
-
-### 8–9 August 2026: the app no longer gives away other people's music, and that is now LIVE
-
-You asked whether publishing the app causes a copyright problem. It did, and it is fixed — the full
-plain-English answer is **[OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md)**. Short version: the
-example songs built into the app came from a database whose licence says *nobody may ever make money
-from anything built with it*, and two were by composers still in copyright. You chose to **remove the
-examples** rather than credit them, so the app stays free of strings and now opens straight on
-"upload your sheet music".
-
-**Put online on 9 August.** Until that morning the website still handed out all five of those songs
-to anyone who typed the file name — the fix existed only on this computer. Now every one of them
-answers "not found", and the app was checked end to end afterwards and still reads a page both ways.
-
-⚠ **Two copyright jobs are still open, and both are yours to decide.** The old files are still in
-the **public code history** on GitHub (removing them means rewriting that history), and the project
-still has **no LICENCE file** of its own. Detail: [THIRD-PARTY.md](THIRD-PARTY.md).
+Moved there on 15 August 2026, when this page grew past its size limit — the same move July's account
+got. **Nothing was dropped.** In one line each: the **violin, clarinet and kanun** play real
+recordings and are live (13 August, and you signed them off after four rounds of listening); your
+**two friends** liked the app and asked for exactly those instrument sounds (11 August); the **usul
+plays on a real darbuka and bendir** and all ten patterns passed your ear (11 August); the **example
+songs were removed** so the app gives away nobody's music (8–9 August, two copyright jobs still
+yours to decide); and the app learned to **read a whole page** at about 25 seconds (5 August).
 
 ### The plan as of 5 August 2026: two things at once
 
@@ -187,31 +123,6 @@ Moved there on 11 August 2026, when this page grew past its size limit. It expla
 plain words — why the reading now happens on a rented computer instead of your laptop, the three
 places the app lives and why it is not just one, what it all costs, and one thing we decided **not**
 to build. None of it has changed; it is background rather than news.
-
-### The app now reads a whole page (5 August)
-
-**You can hand it a picture of a page and get music back.** Before that day the app could only read
-small strips *after* someone else cut them up. Now you pick one image — a screenshot or a clean scan
-— and the app cuts it, reads it, puts it back together, and shows a score you can play, edit and
-save. On the test page: **7 lines of music → 16 strips → 344 notes**, and the browser and Python cut
-it the same way, so the new cutter and the old one agree all the way through.
-
-**The hard part was not the wiring, it was the waiting.** Checking a page for tilt froze the tab for
-~35 seconds — no progress shown, and the browser offering to kill the page. Letting the check pause
-between each of its 41 attempts fixed that with **no change to the answer** (identical on 20 pages).
-
-✅ **Then the slowness itself was fixed: a page went from ~56 seconds to ~25.** The tilt check was
-doing an expensive image operation 41 times, and that operation had an exact shortcut — not an
-approximation, the *same answer* more cheaply — so it takes 7 milliseconds instead of 856. **Checked
-as a shortcut, not an improvement:** both versions run side by side at every angle, **328
-comparisons, zero disagreements**.
-
-What is left of the 25 seconds is **the reading itself (~19 seconds)** — which is exactly the part
-moving to the server.
-
-⚠ **One trap worth remembering:** for a while the first upload just hung, with the computer doing
-nothing at all. It was not our code — the development tools were quietly reloading the page in the
-middle of the job and throwing the upload away. One line of configuration fixed it.
 
 ### Before that — the model work
 
@@ -272,17 +183,18 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    everyone who has actually used it was on a phone, and one of them switched to "desktop site" a
    minute after opening — then uploaded. That is far too few people to redraw the plan on. It is a
    **question to ask your two friends**, not an answer.
-10. **Make fixing a wrong note quick — started 7 August, about a third done.** It used to be: click
-   a bar, a window opens on top of the music, edit a table of rows, and it refuses to save until the
-   bar adds up again. Now you can **click a note right on the page**, **drag it up or down** to
-   change its pitch, or press the **✕** to delete it — and **undo** anything (Ctrl/⌘+Z). It works
-   like Mus2, which is the point.
-   Still to come: a **palette** beside the music for choosing note lengths and accidentals, adding a
-   note by clicking empty space, and then the old window goes away.
-   ⚠ One thing to be honest about: this is **not** a labelling tool any more. An earlier plan said
-   every page you corrected would become training data, but the **Save JSON** button is being
-   removed, so that stops being true. The reason to build it now is simpler — *a friend whose page
-   has a wrong note should be able to fix it.*
+10. ~~Make fixing a wrong note quick.~~ ✅ **Done — finished 15 August.** It used to be: click a bar,
+   a window opens on top of the music, edit a table of rows, and it refuses to save until the bar
+   adds up again. Now you **click a note right on the page**, **drag it up or down** to change its
+   pitch, or press the **✕** to delete it — and **undo** anything (Ctrl/⌘+Z). There is a **palette**
+   beside the music for note lengths and accidentals, you add a note by clicking empty space, and the
+   old window is gone. It works like Mus2, which is the point.
+   The last item on the list was to remove the **Save JSON** button. **You decided on 15 August to
+   leave it**, and that is the better call: our automatic test uses that button to look at what an
+   edit actually did, so removing it would have cost us the test and bought nothing.
+   ⚠ One thing to stay honest about: this is **not** a labelling tool. An earlier plan said every
+   page you corrected would become training data. That was never built, and the reason to have the
+   editor is simpler — *a friend whose page has a wrong note should be able to fix it.*
 11. **Send the link to two friends and ask what to add.** Tell them the first upload of the day is
    slow (the rented computer has to wake up), and that a page takes about a minute. Ask about the
    **buttons and the screen**, not about mistakes in the notes — the notes are the exam's job.
@@ -290,7 +202,30 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    different things: someone **opened** the page, and someone **uploaded** a page. Only the second
    means a person used it. Robots do the first constantly — one of them pretended to be an iPhone
    from four different places in two days — so count uploads, not visits.
-12. **Open it to everyone — but only if Round 3's exam result is good.**
+12. ~~Give the app real instrument sounds.~~ ✅ **Done 14 August, and your friends liked it.** They
+   asked for more instrument sounds, and now the app plays **klarnet**, **keman** and **kanun** —
+   real recordings of real instruments, not made-up tones. Every note is stretched slightly to land
+   on its exact koma, so the microtones are right. It took **four rounds of you listening**, and
+   every single one found something wrong that no automatic test had caught: breath noise on fast
+   notes, a trim that cut too deep, the kanun tuned a whole **koma** too high, and a note that
+   started before the string was even plucked. Worth remembering for the ney: **the tests check the
+   shape, only the ear checks the sound.** Budget one listening pass per instrument.
+13. **⏭ NEXT: show where to put your finger — the violin, and only the violin.** As the piece plays,
+   a violin appears with a dot showing where the finger goes. This is the feature no ordinary music
+   app can copy: a normal app knows twelve frets, so it **cannot** show you where a koma is. Ours
+   works it out with one line of arithmetic, so all 53 land exactly — you can see that a koma sharp
+   and a küçük sharp are millimetres apart.
+   **It looked expensive and it is not.** The old note said we had to draw the violin ourselves,
+   which sounded like a lot of work. Two things were wrong with that. We only need the **neck**, not
+   a whole violin. And the rule was never really "draw it yourself" — it was "know where the picture
+   came from", after the copyright clean-up in August. So a free picture is fine, as long as we
+   checked its licence properly. **We now have one**: a public-domain photo of a violin, downloaded
+   15 August, free for any use forever. We also checked where *that* photo came from, because on
+   those websites "free" is only what the uploader claims.
+   ⚠ **One thing needs your answer before the dots can be right**: how are the four open strings
+   tuned — the standard G–D–A–E, or a Turkish keman tuning? That is a question about the music, not
+   about the program. Everything else can be built while you decide.
+14. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### The triplets — what we found on 11 August 2026
 
@@ -316,18 +251,43 @@ We taught it to look for the wrong thing.
 This is the same kind of mistake as the sharp signs last month, where our music font drew the little
 bars too thick and the model learned our version instead of the real one. That one cost two rounds.
 
-**What we will do:** redraw the mark properly — broken curve, "3" in the gap — then show you a sample
-next to a real page before redrawing everything. **No new hand-labelling is needed.** Details:
-[rung3/tuplets.md](rung3/tuplets.md).
+**What we did, and what came of it (finished 15 August).** We redrew the mark properly — broken
+curve, "3" in the gap, measured against real pages — you looked at it beside a real edition, and then
+we tested whether it actually helps: two identical trainings, one on the new mark and one on the old,
+different in nothing else. The new one read **48 of 54** triplets, the old one **46**. Two more
+triplets is too small a difference to trust — with only 54 examples to test on, a coin lands there
+about seven times in ten — so the honest answer is **we could not tell**.
+
+**We are keeping the new mark anyway**, because it is what real Turkish sheet music looks like, and
+that was always the reason for it. What we are *not* doing is claiming it fixed the missed triplets.
+It might have; this test could not see a change that small. To answer it properly we would need more
+hand-checked triplets to test on, not another pair of trainings.
+
+Two things worth knowing about how that went. **We nearly had a flattering number**: looked at
+through a smaller slice of the same test, the new mark reads 91% against 80% — but that slice is part
+of the same 54, chosen after the fact, which is exactly the trap that cost us a whole round in July.
+And the **old-mark training scored identically to the model we have been running since July**, which
+tells us the other things that changed in between (a new training wobble, a browser update that moved
+every pixel a hair) did nothing to triplets — worth knowing before we blame them for anything later.
+
+**No new hand-labelling was needed.** Details: [rung3/tuplets.md](rung3/tuplets.md).
 
 ### List B — the model (Round 3, running in parallel)
 
-1. **Write down what Round 3 has to achieve, before training starts.** On the honest measure — *9
-   pages in 10 need 5 fixes or fewer* — with today's 57% as the starting point. This number now does
-   double duty: it is also the gate for opening the app to everyone.
-1b. **Redraw the triplet mark** — the item just above. Small change, and nothing to re-label.
-2. **Draw more eighth notes and longer bars** (the item explained below). Check on 300 sample
-   pictures before redrawing all 40,826.
+1. ✅ **DONE — Round 3's target is written down and you signed it (15 August).** On the honest
+   measure: **3 pages in 4 need 5 fixes or fewer**, against 57% today. It does double duty as the gate
+   for opening the app to everyone. It was fixed *before* training, and it does not move afterwards —
+   if the round lands under it, the app stays with the two friends and we do a Round 4.
+   Why three-in-four and not nine-in-ten: nine-in-ten is where we are going, but no round so far has
+   moved this number that far in one go, and a target nobody can reach stops telling us anything.
+1b. ✅ **DONE — the triplet mark is redrawn, tested, and kept** — the item just above.
+1c. ⏭ **NEXT, and it takes half a day with no training: the blank-paper test** described further up.
+   It decides what the next redraw should be, so it goes first.
+2. **Draw more eighth notes and longer bars** (the item explained below) — this is Round 3 itself.
+   **Still on, just not first**: how many short notes are in a bar also changes how *wide* a bar is,
+   which is the very thing the test above is about. Doing both at once would leave us unable to say
+   which one helped — the mistake we made in Round 2 and deliberately avoided with the triplet test.
+   Check on 300 sample pictures before redrawing all 40,826.
 3. **Decide whether to rebuild the training sets from the newly-cut strips.** Not automatic — it
    would rewrite the lists that our hand-checked answers hang off.
 

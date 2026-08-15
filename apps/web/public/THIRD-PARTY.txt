@@ -4,7 +4,7 @@ KomaVision — üçüncü taraf bileşenler / third-party notices
 Bu sayfa, uygulamanın kullandığı açık kaynak bileşenleri ve lisanslarını listeler.
 This file lists the third-party components KomaVision ships, and their licenses.
 
-Son güncelleme / last updated: 2026-08-13
+Son güncelleme / last updated: 2026-08-15
 
 
 ESERLER HAKKINDA / ABOUT MUSICAL WORKS
@@ -105,6 +105,25 @@ Freesound 211133  —  CC0 1.0 (kamu malı / public domain)
   araştırmacının CompMusic projesi kapsamındaki kaydı olduğu için güvenilmiştir.
   ⚠ On Freesound, CC0 is the uploader's own declaration. This one is trusted on
   provenance: a named researcher's recording made for the CompMusic project.
+
+
+GÖRSELLER / IMAGES
+------------------
+
+Keman görseli — parmak tahtası sekmesi / violin artwork for the fingerboard tab:
+
+Wikimedia Commons, "Violin VL100.png"  —  CC0 1.0 (kamu malı / public domain)
+  © Just plain Bill — CC0 ile yayımlanmıştır
+  https://commons.wikimedia.org/wiki/File:Violin_VL100.png
+  /instruments/violin-vl100.png
+
+  Kaynak zinciri denetlendi: bu dosya aynı kişinin kendi çektiği ve kamu malı
+  olarak yayımladığı "Violin VL100.jpg" görselinden türetilmiştir. CC0 atıf
+  gerektirmez; yine de kaynağın izlenebilir kalması için yazılmıştır.
+
+  The provenance chain was checked: this file derives from "Violin VL100.jpg",
+  the same author's own photograph, released into the public domain. CC0 requires
+  no attribution; the credit is given so the source stays traceable.
 
 
 KÜTÜPHANELER / LIBRARIES

@@ -120,7 +120,14 @@ Cloud Run from localhost.
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
 .venv-ml/bin/python scripts/build_makam_signatures.py \
     --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts  # TS copy only
-npx --yes tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/<set> [--thin-sharps]
+npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/synthetic/<set> [--thin-sharps]
+    # ⚠ --pieces data/pieces_v4.json, NOT data/pieces.json — the latter is the stale 2026-07-08
+    # selection (190 pieces). `strips_v4` AND `data/split_v4.json` were both built from
+    # pieces_v4.json (208), so rendering from pieces.json silently produces a corpus the split does
+    # not cover: 528 strips in neither train nor val, and 23 of Round 2's pieces missing. It fails
+    # nothing and reads as a normal render. Cost one full corpus render on 2026-08-13.
+    # [--legacy-tuplet-mark] renders the tuplet A/B's control arm; [--print-noise] opts INTO the
+    # Round-3 print realism, which is off by default (it carries the quarantined USUL_BEAM_GROUPS)
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps]
 .venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write

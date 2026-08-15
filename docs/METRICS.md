@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-08-11
+updated: 2026-08-15
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -84,6 +84,53 @@ Both pools read with the SAME model (`round2-stage2-best`) on the same day, so t
   **SER is 5× worse on nota**, and the hard tier is nota-dominant — so "hard" in this pool largely
   means *scan quality and engraving age*, not musical density. Worth keeping in view before
   attributing a future round's real-val movement to anything else.
+
+### `_tupletval` — the tuplet A/B's selection pool (built 2026-08-13)
+
+Every `\tup3`-bearing strip already on the VAL side of `strips_tup` + `_realval_v2`
+(`scripts/rung3/build_tuplet_val.py`): **54 gold groups over 28 strips, 11 pieces**, neyzen 24 /
+nota 4. Exam pieces refused, one decode-derived label dropped, 8 filename collisions resolved to
+the newer slicer's crop. Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md).
+
+**THE A/B RESULT (2026-08-15) — NULL.** Both arms trained on the identical recipe; the pre-registered
+statistic is free-running `\tup3` recall on this pool, paired.
+
+| arm | gold | hit | recall | precision |
+|---|---|---|---|---|
+| **tupnew** (arc broken, "3" in the gap) | 54 | 48 | **88.9%** | 98.0% |
+| **tupctl** (the pre-2026-08-12 continuous arc) | 54 | 46 | **85.2%** | 95.8% |
+
+**Δ +3.7 pp = 2 net groups; paired 4 NEW-only vs 2 CTL-only; exact McNemar p = 0.688.** The
+pre-registered threshold was ~6 discordant groups one way (~11 pp), so this is a null and is reported
+as one. Guard on `_realval_v2`: mean AEU F1 **83.9% vs 83.3%** (the ≤1 pp clause passes), everything
+else a wash. ⚠ **`\tup3` on `_realval_v2` reads 91.4% vs 80.0% — not a second result**: those 35
+groups are a SUBSET of these 54. Full read: [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md).
+
+⚠ **The control scored 85.2% — exactly what `round2-stage2-best` scores below.** The `staff_jitter`
+augmentation, the rasterizer drift and a new training environment together moved this class by zero.
+
+Reference read, `round2-stage2-best` (the live model) on this pool, CPU, 2026-08-13 — **context for
+the A/B, not a selection**:
+
+| | value |
+|---|---|
+| `\tup3` recall / precision | **85.2% / 97.9%** (54 gold) |
+| `\tupend` recall / precision | 79.2% / 93.3% |
+| SER · exact-match | 0.071 · 42.9% |
+| pages ≤5 corrections | 75% (16 pages, 1.8 strips/page) |
+
+- **The pool is not flattering on the class it exists to measure**: 85.2% here against 83.8% on the
+  exam, where real-val's headline usually reads far higher than the exam's. That is the one property
+  a selection set for this A/B needs.
+- ⚠ **AEU gold is nearly absent** (13 tokens over 4 classes) — this pool measures tuplets and
+  nothing else. The accidental guard is read on `_realval_v2`.
+- ⚠ n=54 means one group is 1.9 pp, and the exact-McNemar threshold is ~6 discordant groups
+  (~11 pp). Quote every number here with its n.
+- ⚠ **The pool is PIECE-CONCENTRATED** (found 2026-08-15, after the A/B): one piece
+  (`acemasiran--sarki--senginsemai--canan_okuyor`) supplies **19 of the 54 groups — 35%** — and 7 of
+  the 8 strips either arm got wrong. Any *subgroup* claim off this pool is really a claim about that
+  piece. The headline paired comparison is unaffected (both arms read the same strips), but a future
+  build of this pool should cap per-piece share the way the labelling queues cap 3 strips per piece.
 
 ## Photo domain (phone photos of exam pieces — EXAM-ONLY)
 

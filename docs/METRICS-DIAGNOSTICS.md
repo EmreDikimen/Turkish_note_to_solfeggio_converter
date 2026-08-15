@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-08-12
+updated: 2026-08-15
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -108,7 +108,8 @@ comes entirely from the arms' **slopes**: ends follow the notes, digit stays at 
 - **Deliberately NOT changed:** real print's arc stroke is *heavier* than ours (0.133–0.168 vs 0.100).
   Thickening only the tuplet arc would hand the model a thickness cue separating it from a phrase
   slur that real pages do not have — the same trap `AEU_SHARP_STROKE` documents. It is owed as a
-  joint change with `drawSlurArc`, after the shape A/B.
+  joint change with `drawSlurArc` — still owed, and still joint, now that the shape A/B has run and
+  come back null (2026-08-15, [rung3/tuplets.md](rung3/tuplets.md)).
 - **The digit's FONT changed, and the gap is why.** Bold italic Georgia (an old-style figure) measured
   **1.10 S wide** at real print's height, leaving 0.26 S of clearance instead of 0.43 — it would have
   fused with the arc ends after the shrink. Upright Times at 16 px measures 0.77 × 1.20 S. The slant
@@ -232,8 +233,50 @@ Whole-exam decode, 326 strips, 562 edits. Per-bucket detail in
   cannot validate `USUL_BEAM_GROUPS`.
 - Post-encoder the model sees synthetic beams at **6.5 px** and real at **9–14.6 px** — a *width*
   effect, since our strips average 1229 px against real 904–1018 and shrink harder through the
-  encoder's fixed box.
+  encoder's fixed box. **Followed up 2026-08-15 in the section below**, which measures what that
+  costs in edits.
 
+### The encoder's input box (2026-08-15) — 61% of it is padding, and edits track what is left
+
+`scripts/rung3/crop_geometry_probe.py`. The arithmetic first, because it had never been written
+down: `preprocess.ts` rotates a strip 90° and fits it into a fixed **409×583** frame, so the net
+scale is `min(583/W, 409/H)` with H = 336 for every strip we cut.
+
+| strip | net scale | staff spacing the encoder sees | one note position | frame used |
+|---|---|---|---|---|
+| synthetic median, 1212 px | 0.48 | **14.4 px** | 7.2 px | 161 of 409 columns — **39%** |
+| exam median, 924 px | 0.63 | 18.9 px | 9.5 px | 51% |
+| exam p90, 1285 px | 0.45 | 13.6 px | 6.8 px | 37% |
+| **≤479 px** (the aspect the frame wants) | **1.22 (upscale)** | **36.5 px** | 18.3 px | **100%** |
+
+**A strip narrower than 479 px is the only one this encoder does not throw resolution away on**, and
+we cut them at 3 measures / up to 1450 px. Two consequences already in this file get a common cause:
+synthetic beams arriving at 6.5 px, and crops >1200 px carrying 28.6% of exam edits.
+
+Then the same 326-strip Round-2 exam decode, re-aligned by this probe and bucketed by effective
+spacing with each confound pinned in turn:
+
+| control | low res | mid | high res |
+|---|---|---|---|
+| **density held** (10–14 gold tokens / 1000 px) | 14.3 px → **0.161** ed/token, 40% perfect | 18.2 px → 0.103, 48% | 22.0 px → **0.066**, 64% |
+| **length held** (12–18 gold tokens) | 13.9 px → **0.162** | 17.0 px → 0.058 | 19.7 px → 0.101 |
+| **width held** (900–1150 px), bucketed by LENGTH instead | 9 tok → 0.094 | 13 tok → 0.099 | 16 tok → 0.076 |
+
+- **At matched musical density the most-squashed third costs 2.4× the edits per token.** Holding
+  length fixed keeps the effect; holding width fixed and varying length removes it — so this is
+  **resolution, not autoregressive drift over a longer sequence**.
+- ⚠ **Observational, not causal.** Wide crops may differ in ways not controlled here, and the
+  buckets are ~40 strips each. The causal test is `--make-padded`: widen a strip with
+  `BORDER_REPLICATE` (content and gold identical, resolution lower) and read the dose-response.
+  **Not yet run.**
+- ⚠ **This probe's own re-alignment totals 433 edits where `eval_omr` reports 562** — different
+  tokenizer and alignment. Trends only; quote `eval_omr` for any total.
+- ⚠ **The high-resolution end is NOT better**: short crops (<10 gold tokens, median 558 px) run
+  **0.259 ed/token**, the known crop-shape hole (0 of 40,826 training strips are signature-only).
+  Narrowing crops without rendering the short shapes would enlarge that hole, not close it.
+- ⚠ **The current slicer made this worse, not better**: crops >1200 px went **13.8% → 27.8%** of
+  the same 67 pages (row above). The exam was cut by the old slicer, so production is further into
+  the bad end than these numbers show.
 
 ## The microtonal-sharp defect (measured against two real printed editions)
 
@@ -247,8 +290,11 @@ Whole-exam decode, 326 strips, 562 edits. Per-bucket detail in
 - The error was **one-directional**: gold `\kucukSharp` decoded as `\komaSharp` **11× on the clean
   exam, 10× on photos**; the reverse essentially never. Matches the 100%-precision / 48%-recall
   signature.
-- Resolution was **ruled out**: recall does not fall with encoder scale (1.22 → 0.24) on either
-  dataset; `\bakiyeSharp` holds 84–94% in every bucket.
+- Resolution was **ruled out for this defect**: recall does not fall with encoder scale
+  (1.22 → 0.24) on either dataset; `\bakiyeSharp` holds 84–94% in every bucket. ⚠ **Scope, added
+  2026-08-15:** that test was per-class ACCIDENTAL RECALL, on glyphs that survive a shrink. It was
+  never run against the edit budget, and the edit budget *does* move with encoder scale — see "The
+  encoder's input box" above. Both statements stand; they are about different measures.
 ### Where the sharps are PRINTED (measured 2026-07-26 — corrects the framing above)
 
 Every gold and corpus label split into tokens inside the row-start `\sig … \sigend` block versus

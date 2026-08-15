@@ -2,12 +2,159 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-14
+updated: 2026-08-15
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-14 (latest) — the kanun ships, and four listens beat four green checks
+## 2026-08-15 (latest) — F3 is scoped to the violin, and its artwork rule was the thing in the way
+
+**Track A had one feature left and it looked expensive for a reason that turned out to be a
+misreading.** The owner confirmed F1 landed well (*"my friends loved the instrument sounds"*), dropped
+the last editor item, and asked what the next feature is. The answer is F3, the fingerboard tab — and
+the conversation that followed changed what F3 costs.
+
+**The blocker was one bullet in `features/README.md`: "own artwork — draw the instrument as SVG, or
+photograph your own."** The owner's objection was immediate and correct: *SVG artwork can be hard*.
+Two things were wrong with that rule as written. It sounded like *draw a violin*, when F3 needs only a
+**fingerboard** — a tapered shape with four lines, no artistic skill. And more importantly it banned
+more than it meant to: what the 2026-08-08 copyright pass was defending against is **unknown
+provenance**, not third-party pixels. A CC0 image whose chain has been read was never the risk. The
+rule is amended rather than dropped ([../DECISIONS.md](../DECISIONS.md)).
+
+**What that unlocked, and the check that made it trustworthy.** The owner showed a violin-tutorial
+screenshot as the format they wanted — a neck with position markers on it — which is a good format
+and an unusable file (someone's video frame, all rights reserved, plus a hand, a bow and **12-tone**
+coloured tapes that contradict the whole feature). The usable file is
+[`File:Violin VL100.png`](https://commons.wikimedia.org/wiki/File:Violin_VL100.png), CC0 1.0, now at
+`apps/web/public/instruments/violin-vl100.png`. ⚠ **Its derivation was followed, not assumed** —
+CC0 on a user-upload site is the uploader's claim, and a CC0 derivative of a restricted photo would be
+worth nothing. Its source `File:Violin VL100.jpg` is the same author's own public-domain photograph,
+so both links are clear.
+
+**One prediction in this conversation was wrong and the file corrected it.** The advice given before
+downloading was that the bridge would be out of frame on a neck crop, forcing a three-point
+cross-ratio calibration to survive perspective. Opening the actual image showed a **straight-on front
+view with the nut AND the bridge both in frame** — so it is the easy two-points-per-string case. The
+real limit is elsewhere and is now written down: the nut→bridge run is ~580 px, which puts a koma at
+about **7 px near the nut and less further up**, so the high positions are where this image runs out.
+Worth keeping as the pattern rather than the fact: the asset was argued about for three exchanges and
+answered in one look, the same way the audio measurements kept beating the filenames.
+
+**Also settled: editor step 9 is dropped and `Save JSON` stays.** The 2026-08-07 decision to delete it
+was never carried out, and the deletion has a real cost — `smoke:editor` reads the edited document by
+clicking `#save-json`, so the button is the check's only view of what an edit did. The editor's list
+is complete; there is no step 9. ⚠ The 2026-08-07 row's *reasoning* is not reinstated: the export is
+still unused and the editor's honest justification is still that a friend with a wrong note should be
+able to fix it.
+
+**Left open on purpose:** the four open strings. `openStringFreq` feeds every marker position, and
+standard G3–D4–A4–E5 vs a Turkish keman tuning is a repertoire question rather than a programming
+one. Nothing else in F3 waits on it — the geometry, the calibration, the string-choice rule and the
+overlay all take the open strings as data.
+
+## 2026-08-15 — the encoder's input box, and a re-read of every negative result so far
+
+**A review of the whole training history, asked for by the owner** ("model her ölçüde hata yapıyor,
+kesinliği fazlasıyla artırmamız gerek"), reading MODEL_EVAL.md end to end, the training code, and the
+current outside literature. It produced one new measurement and one reframing.
+
+**The reframing first, because it is the reason the measurement was looked for.** Five investigations
+in a row — staff geometry, beam weight, crop shape, decode-time width splitting, the tuplet mark —
+plus `staff_jitter` and the rasterizer drift, have all come back negative or null. Every one of them
+asked the same question: *do we DRAW something wrong?* The answer has been no for a month, while
+pitch and duration have stayed at 68% of the edit budget. That is a signal about the axis, not a run
+of bad luck: the "make the synthetic pixels more realistic" lever is at diminishing returns, and the
+remaining levers are elsewhere — what the model is allowed to SEE, how it DECODES, what its real data
+is worth, and how a run is selected. All five are written up ranked in
+[../rung3/levers.md](../rung3/levers.md).
+
+**The measurement.** Nobody had written down the arithmetic of the encoder's fixed 409×583 frame. A
+strip is rotated and *fitted* into it, so the net scale is `min(583/W, 409/H)`: the median synthetic
+strip arrives at **half size**, its 30 px staff spacing becomes 14.4 px, one note position becomes
+~7 px, and **61% of the frame is black padding**. A strip narrower than **479 px** — about one
+measure — is the only shape that is not downscaled at all. Re-aligning the spent Round-2 exam decode
+and bucketing by effective spacing, with density pinned, the most-squashed third costs **2.4× the
+edits per token**; with length pinned instead the effect survives, and with width pinned it
+disappears — so it is resolution and not autoregressive drift. Numbers and every caveat:
+[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md). Probe:
+`scripts/rung3/crop_geometry_probe.py`.
+
+**Why this is written as a lead and not a finding.** It is observational, ~40 strips a bucket, on
+crops the current slicer no longer produces; the probe's own re-alignment totals 433 edits where
+`eval_omr` reports 562, so only the trend is usable. The causal test — widen a crop with
+`BORDER_REPLICATE`, which lowers resolution while leaving content and gold identical — is written
+into the same script with its reading pre-registered, and **has not been run**. This project has
+already published one 15.5% exam gain that reversed on a holdout; the discipline that caught that is
+what this entry is trying to keep.
+
+**One old line is re-scoped rather than overturned.** METRICS-DIAGNOSTICS said "resolution was ruled
+out". That test was per-class **accidental recall**, on glyphs that survive a shrink, and it holds.
+It was never run against the **edit budget**, which is what Round 3 targets. Both are true; they
+measure different things, and the file now says which is which.
+
+**What it does to the plan.** The content work in `select_pieces.py` is **not cancelled and not
+superseded** — it is sequenced behind the probe, because the note-value mix changes how wide a
+measure is and therefore moves the geometry variable as a side effect. Rendering both at once would
+make Round 3 unattributable for the third round running, which is the exact failure the tuplet A/B
+was designed to avoid. A second, quieter point came out of it: our strips are already *wider* than
+the real pools', and denser music widens them further, so the content selection needs a strip-width
+target rather than only a note-value histogram.
+
+**Also recorded, and owed to the owner before the exam is read:** the primary Round-3 floor is a
+per-page rate over **46 pages**, so its 95% interval is about **±12 points**. The signed criteria are
+untouched; the choice between growing the exam first and reporting the interval beside the result is
+the owner's, and it has to be made before the read.
+
+## 2026-08-15 — the tuplet A/B ran: NULL, and that is the useful outcome
+
+**Both arms trained on Colab and the pre-registered read came back null.** `\tup3` recall **88.9%**
+(the measured shape) vs **85.2%** (the pre-2026-08-12 continuous arc) on `_tupletval` — **2 net
+groups out of 54**, paired **4 NEW-only vs 2 CTL-only**, **exact McNemar p = 0.688** against a
+threshold of ~6 discordant groups one way. Precision cleared its veto on both arms (98.0% / 95.8%)
+and the `_realval_v2` guard passed (mean AEU F1 83.9% vs 83.3%, everything else a wash). By the rule
+written before the corpora were rendered: **the redraw is kept — it stands on the print measurement,
+not on recall — and nothing about recall is claimed in either direction.**
+
+**Why this counts as a good outcome rather than a wasted 5 h.** The power limit was computed and
+written down *before* the render (one group = 1.9 pp; ~11 pp minimum resolvable; the hoped-for effect
+~5 pp), so the result could be read the moment it appeared instead of argued about afterwards.
+Compare Round 1, where a 15.5% exam gain was written up before anyone tried a holdout and then
+reversed. The temptation was live here too: `_realval_v2` shows `\tup3` **91.4% vs 80.0%**, an 11 pp
+gap in the flattering direction — and it is the **same experiment re-sliced**, since those 35 groups
+are a subset of the 54. It is recorded as a non-result in three places for that reason.
+
+**The control paid for itself in a way that could not have been predicted.** It scored **85.2% —
+exactly `round2-stage2-best`'s score on the same pool** (46/54 both). So the three differences that
+ruled out reusing the live model as a control — the `staff_jitter` augmentation added 2026-07-29, the
+sub-visual rasterizer drift across all 40,826 strips, and a fresh training environment — moved this
+class by **zero, together**. That is real information about Round 3's attribution, and the only way
+to get it was to train the arm. ⚠ It does **not** retroactively make the control unnecessary: had the
+answer gone the other way, a single-arm design would have credited the mark with someone else's
+movement.
+
+**Both runs were mechanically clean and symmetric.** Stage 1 to 6,000 steps in each (best synth val
+0.0086 / 0.0093), stage 2 to 2,000 (best mix 0.0101 / 0.0106), and in **both** arms real-val loss was
+still falling at the last step, so `best` == `last` on each side and no checkpoint choice was left to
+make. ⚠ That is the Round-1/2 overfitting caveat **failing to reproduce** — worth noting, because the
+recipe was held fixed precisely so a surprise like this would be visible.
+
+**The acceptance bar was SIGNED the same day** (owner), unchanged from what was proposed on
+2026-08-14: **≥75% of exam pages needing ≤5 corrections**, doubling as the public-launch gate, with
+the accidental measures as no-regression clauses. It is the first round of the three to enter
+training with a bar already fixed — Round 1 wrote one and missed five floors, Round 2 was judged
+against Round 1's because no new one existed. ⚠ It is binding in the unpleasant direction too: it is
+not re-opened after the read, and a near-miss keeps the app with the two friends. ⚠ The tuplet A/B
+above ran *before* the signature and selects nothing against these floors, so the two are
+independent.
+
+**Disposition:** `strips_v5_tupnew` is the corpus Round 3 continues from; **neither arm ships** (the
+exam is unread and neither is a Round-3 model, so `round2-stage2-best` remains the runtime); the next
+lever is the 35% slur-distractor rate, alone. ⚠ **Do not re-run this A/B for a cleaner answer** — the
+exam and every real pool together hold too few `\tup3` groups to resolve 5 pp. The way to answer it
+is more tuplet gold, not another pair of runs.
+
+## 2026-08-14 — the kanun ships, and four listens beat four green checks
 
 **F1 is complete: Klarnet, Keman and Kanun, uploaded, deployed, heard.** 62 CC0 files / 65.9 MB at
 `Beyaban/omr-voices`; `Deploy is live!` and `smoke:live` PASS on both paths, with the drums still

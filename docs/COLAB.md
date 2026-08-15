@@ -2,7 +2,7 @@
 
 purpose: how to run training on Colab (the fanless-Mac offload path)
 audience: whoever is launching a training run
-updated: 2026-07-30
+updated: 2026-08-15
 
 > How to run the scaled fine-tune (`src/vision/train.py`) on Colab, written for someone who has
 > never used Colab. This doc is the context around the notebooks: what Colab is, which plan to buy,
@@ -16,6 +16,13 @@ updated: 2026-07-30
 > | Rung 2 | `notebooks/rung2_colab.ipynb` | `tnc_rung2_colab.zip` | `strips_v2_2` |
 > | Round 1 | `notebooks/round1_colab.ipynb` | `tnc_round1_colab.zip` | `strips_v3` + real pools |
 > | **Round 2** | **`notebooks/round2_colab.ipynb`** | `tnc_round2_colab.zip` (`scripts/make_round2_colab_zip.sh`) | `strips_v4` + real pools |
+> | **Round 3 — the tuplet A/B** | **`notebooks/round3_tuplet_ab_colab.ipynb`** | `tnc_round3_<arm>_colab.zip` (`scripts/make_round3_colab_zip.sh tupnew\|tupctl`) | `strips_v5_tupnew` / `strips_v5_tupctl` + real pools |
+>
+> The Round-3 notebook is **run twice**, once per arm, off a single `ARM` cell — it is one
+> experiment, and the arms must not drift apart in recipe. ⚠ The two corpora have **byte-identical
+> manifests** (the tuplet mark is pixels only), so nothing downstream can tell them apart: the zip
+> script and the notebook both assert `render_config.json`, which is the only file that can.
+> Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md).
 >
 > Round 2 differs from Round 1 in three places that matter: `--strips-dir data/synthetic/strips_v4`,
 > `--split data/split_v4.json`, and the real-pool oversample **`:9` not `:8`** (synthetic grew, so

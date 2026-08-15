@@ -2,7 +2,7 @@
 
 purpose: the single home for corpus sizes, pool composition and measured label-noise rates
 audience: agents and the owner, whenever a question is about the data rather than the model
-updated: 2026-07-28
+updated: 2026-08-15
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps **how well the model reads**, this file keeps **what the data is
@@ -17,6 +17,7 @@ and how trustworthy its labels are**. Model-quality numbers stay there; nothing 
 | strips_v2_2 | 18,777 strips / 474 MB → 23,391 after the triplet expansion (190 pieces) | + rhythm tokens |
 | strips_v3 | 38,091 strips, 73.3% carry, 49 makams, 33 signature variants | budget gate PASS (57 ids, cap 59) — the Round-1 corpus |
 | **strips_v4** | **40,826 strips / 202 pieces, 75.5% carry** | the Round-2 corpus (2026-07-26): thin sharps, the carry pixels-vs-labels fix, +23 küçük-bearing pieces, −5 exam pieces. Audit PASS. `\kucukSharp` in the signature 1,210 → **1,998** tokens; inline unchanged (206 → 209 strips). Val is `split_v3`'s **verbatim** (24 pieces / 4,772 strips) so v3-vs-v4 stays matched |
+| **strips_v5_tupnew / _tupctl** | **40,826 strips / 202 pieces each** (40,841 rendered, the same 15 boundary-bleed strips excluded) | the tuplet A/B's two arms (2026-08-14), from `data/pieces_v4.json` with `--thin-sharps` and no print noise. **Row-for-row identical to `strips_v4`** — same image set, and every field including the label matches on all 40,826. The arms differ from each other in **1,691 PNGs**: 1,690 curved-style `\tup3` strips plus one 20-pixel crop-edge bleed; the 379 `\tup3` strips that are pixel-identical are exactly the 22 bracket-style pieces. Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md) |
 | Real training pool | 2,160 strips (1,758 nota + 418 neyzen, incl. 172 tup3) | after all promotes |
 | Exam v2.1 (frozen) | **352 strips / 45 piece entries**, tup3 gold 55 groups | `testset.json` |
 | Photo exam | 690 strips sliced, 284 hand-labelled | exam-only |
@@ -85,6 +86,18 @@ against the label of the crop it falls in — signature block included.
   they occur in ± pairs on adjacent strips. Geometric and pre-existing (v3 has it too). Listed in
   `data/synthetic/strips_v4/excluded_boundary_bleed.txt`; PNGs left on disk, rows removed from the
   manifest, so the shipped corpus is 40,826 strips.
+- ⚠ **`strips_v4` and the 2026-08-14 re-render are NOT pixel-equal, and the difference is not ours.**
+  Every one of the 40,826 shared strips differs — non-tuplet strips included — by a mean absolute
+  **0.3–4.8 grey levels of 255**, with no integer shift (dx=dy=0 minimises the error), ink fraction
+  equal to four decimals, and no visible difference side by side. The labels are byte-identical and
+  no renderer constant moved (`--thin-sharps` was already in v4; print realism is off), so this is a
+  rasterizer/Chromium change since 2026-07-26. Recorded because sub-visual has bitten this project
+  twice — the 22%-too-thick sharp bars and the 2% pre-shrink were both invisible to the eye.
+- **Re-verified 2026-08-14 on both tuplet-A/B arms**: 40,841 checked, **40,826 exact, 15 flagged, 0
+  drift** on each — and the flagged 15 are the **same filenames** as v4's. A redraw that moved a label
+  would have shown up here as a different set; it did not. Both arms follow v4's convention:
+  `manifest.full.jsonl` keeps everything, `manifest.jsonl` ships the clean subset,
+  `excluded_boundary_bleed.txt` names what left.
 
 ⚠ **The 30% figure is over the REVIEWED population, not a random sample.** Every strip checked so
 far was selected for being suspicious — high decode disagreement, or flagged by the low-confidence

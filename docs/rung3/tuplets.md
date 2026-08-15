@@ -2,7 +2,7 @@
 
 purpose: the tuplet diagnosis, the printed-notation facts behind it, and the plan that follows
 audience: agents and the owner working the real-page track
-updated: 2026-08-12
+updated: 2026-08-15
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -122,8 +122,9 @@ Three things came out of doing it that reading could not have given:
   pieces, now 90%) ever carried the defect.
 
 `drawTupletArc` now draws two segments with the digit in the gap, to those measurements, and the pilot
-re-render lands on every one of them. ⚠ **Nothing about recall is claimed yet** — the A/B has not run,
-and step 3 below is where that happens.
+re-render lands on every one of them. ⚠ **Nothing about recall is claimed** — the A/B ran on
+2026-08-15 and came back null (step 3 below), so what is established remains the SHAPE and nothing
+more.
 
 **The owner reviewed the sheet the same day and the mark changed twice more, both measured after the
 fact.** The verdict was "right shape, too rigid": in real editions **the arms follow the notes, up or
@@ -161,6 +162,43 @@ print at matched staff size — is the one that worked, and it was pointed at th
 (see the section above; it held). Both sets of constants:
 [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
+## What the surviving failures LOOK like (2026-08-15) — a lead, not a finding
+
+Taken after the A/B, by reading the 10 groups either arm missed rather than by computing another
+statistic. Both arms were decoded over `_tupletval` and every miss was printed beside its gold.
+
+**The shape of the failure: the model marks the FIRST triplet of a passage and forgets the later
+ones.** In 8 of the 10 problem groups the missed group is a later one in the same strip, and the
+first group is read correctly — the notes come out right, only the `\tup3` (and often its `\tupend`)
+is absent. Recall by position, both arms independently:
+
+| | first group in the strip | a later group |
+|---|---|---|
+| NEW | 96% (27/28) | **81% (21/26)** |
+| CTL | 93% (26/28) | **77% (20/26)** |
+
+- **Same direction in both arms**, which is mild corroboration that it is a property of the task
+  rather than of the mark.
+- ⚠ **Adjacency is NOT the mechanism.** Restricting to groups whose `\tup3` follows the previous
+  `\tupend` within 2 tokens gives **91% in both arms** — no effect. So it is not "the second of a
+  directly abutting pair"; it is position in the strip.
+- ⚠⚠ **One piece holds 19 of the 54 gold groups (35%) and 7 of the 8 problem strips**
+  (`acemasiran--sarki--senginsemai--canan_okuyor`). The position split is therefore confounded with
+  that piece, and rests on ~5 groups. **This is a lead to test, not a result to act on** — the
+  ±2% pre-shrink is what acting on this class of evidence costs
+  ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)).
+- ⚠ One of the 10 is not a tuplet failure at all: both arms misread
+  `…askin_ilahi…_p1_s03_w01` end to end, reading a different passage than the gold.
+
+**How to settle it for free.** The exam carries **55 `\tup3` groups over 38 strips** across many more
+pieces. When Round 3's one-shot read happens, split `\tup3` recall by first-group-in-strip vs later —
+the decode already runs, so it costs nothing and is far less piece-concentrated than this pool. If it
+holds there, the lever is decode-side (below), not the renderer.
+
+**Why this matters for reading the A/B.** The model evidently *can* see the mark — it fires on the
+first group. That is consistent with a redraw buying little, and it points the next effort away from
+how the mark is drawn.
+
 ## The plan
 
 Ordered, one change at a time, because Round 1 and Round 2 each moved several things and neither can
@@ -179,9 +217,20 @@ be attributed.
    local viewing only, the real row is a third-party edition —
    [../THIRD-PARTY.md](../THIRD-PARTY.md)). Two corrections came back — arms follow the notes, lighter
    digit — and both are in. **This is the gate the plan put here, and it is passed.**
-3. ⏭ **Re-render and A/B** on `\tup3` recall specifically, with precision watched (it has ~20 points
-   of headroom above its floor and can afford to give some back). ⚠ Round 3's acceptance bar is owed
-   **before** this, since an A/B is training ([../STATUS.md](../STATUS.md), Track B item 1).
+3. ✅ **DONE 2026-08-15 — the A/B RAN and came back NULL. The shape stays; no recall claim is made.**
+   Two arms, identical but for the mark: **88.9% vs 85.2%** `\tup3` recall on `_tupletval`, which is
+   **+3.7 pp = 2 net groups**, paired 4-vs-2 discordant, **exact McNemar p = 0.688**. The
+   pre-registered threshold was ~6 discordant groups one way, so this is a null by the rule written
+   before the corpora were rendered — and the rule's null branch is what applies: **the redraw is
+   kept**, because it stands on the print measurement (16/16 marks, ~11 editions) rather than on
+   recall, and **nothing about recall is claimed in either direction**. Precision cleared its veto
+   on both arms (98.0% / 95.8%); the `_realval_v2` guard passed (mean AEU F1 83.9% vs 83.3%).
+   Numbers: [../METRICS.md](../METRICS.md); full read: [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+   ⚠ **What this does NOT say**: that the shape does not help. 54 gold groups cannot resolve less
+   than ~11 pp, and the effect hoped for was ~5. The experiment was run knowing that
+   ([round3-criteria.md](round3-criteria.md)), which is why the number can be read honestly now.
+   ⚠ **Do not quote the `_realval_v2` split (91.4% vs 80.0%) as a second result** — those 35 groups
+   are a subset of these 54, so it is this same experiment re-sliced in the direction one would like.
 4. **Ship the arithmetic repair** for the wrong-edge groups that survive, plus the decode
    constraint above.
 5. **Only then** revisit the 35% slur-distractor rate. It may be fine once the two shapes genuinely
@@ -191,10 +240,11 @@ be attributed.
 
 ## Non-claims
 
-- **The SHAPE is now measured; the RECALL story is still a hypothesis.** What 2026-08-12 established
-  is that real print breaks the arc and we did not (16/16, ~11 editions) — it says nothing about what
-  fixing that buys. Nothing has been A/B'd. The mechanism is consistent with the precision/recall
-  history and with the Bravura precedent, and that is all it is.
+- **The SHAPE is measured; the RECALL story was TESTED and came back null (2026-08-15).** Real print
+  breaks the arc and we did not (16/16, ~11 editions) — that part is solid. What the A/B adds is only
+  that any recall gain is below what 54 gold groups can resolve (~11 pp); it is **not** evidence that
+  the shape is irrelevant, and it is not evidence that it helps. The mechanism remains consistent
+  with the precision/recall history and with the Bravura precedent, and that is still all it is.
 - The missed-group failure (shape 2 above) is **not** addressed by any repair rule here. Bar-length
   comparison across a page could reach it — most bars agreeing sets the expected length without a
   time signature — but that is untested and unbuilt.

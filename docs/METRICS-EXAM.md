@@ -3,7 +3,7 @@
 purpose: every number the one-shot real-page exam has produced, round by round
 audience: agents and the owner, whenever an exam result is quoted or compared
 
-updated: 2026-08-11
+updated: 2026-08-15
 
 Split out of [METRICS.md](METRICS.md) on 2026-08-11, when that file reached its 400-line cap — this
 section was 188 of its 399 lines. **Nothing here changed in the move.** Every other measured number
@@ -181,6 +181,11 @@ Round-2 recall by print position (the split `eval_omr.py` now reports):
   above were measured with them present.
 
 ### Round-1 floors vs what was achieved (pre-registered 2026-07-20)
+
+⚠ **These are Rounds 1 and 2's floors. Round 3 has its OWN, signed 2026-08-15** —
+[rung3/round3-criteria.md](rung3/round3-criteria.md), where the pass/fail number is the product one
+(≥75% of pages needing ≤5 corrections) and the accidental measures below become no-regression
+clauses. Do not judge Round 3 against this table.
 
 Round 2 was read against the same floors (never re-registered, so the comparison stays honest).
 Its column is measured on the 326-strip clean set; Round 1's is its original as-read 352.

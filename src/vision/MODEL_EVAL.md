@@ -1056,3 +1056,93 @@ move against Round 1 is `\komaSharp` at n=14 inside a six-class mean. Like Round
   **The Round-1 double-dot failure did NOT reproduce** — `a''2..` / `b''2..` (hicaz `yalan_degil`,
   the same piece) passes both paths on this model.
   Latency: session load ~3.0 s; ~0.9–1.0 s encoder + 0.13–0.32 s decode ≈ ~1.1 s/strip.
+
+## Round 3 — the tuplet-mark A/B (Colab, 2026-08-14/15): NULL, and the shape stays
+
+Two arms, identical in everything but how the triplet mark is drawn: `strips_v5_tupnew` (arc broken,
+"3" in the gap — the shape measured on real print) vs `strips_v5_tupctl` (the pre-2026-08-12
+continuous arc with the digit floating above). Both from `data/pieces_v4.json` with `--thin-sharps`
+and no print noise, 40,826 strips each, **row-for-row identical to `strips_v4`** (same image set,
+every label byte-identical). Recipe held at Round 2's: stage 1 6,000 steps from BASE at lr 3e-5,
+stage 2 2,000 steps at lr 1e-5 with the real pools at `:9`, `--every-share 0.15`, batch 16.
+Pre-registration: [docs/rung3/round3-criteria.md](../../docs/rung3/round3-criteria.md).
+
+| | tupnew | tupctl |
+|---|---|---|
+| stage 1, best synth val | **0.0086** (step 5,500) | **0.0093** (step 5,000) |
+| stage 2, best mix | **0.0101** (step 2,000) | **0.0106** (step 2,000) |
+| stage 2 real val, first → last | 0.0862 → **0.0852** | 0.0843 → **0.0835** |
+
+⚠ **Real val fell to the last step in BOTH arms**, so `best` == `last` on each side — the Round-1/2
+overfitting caveat did not reproduce, and no checkpoint choice was left to make.
+
+Every eval point of both runs (the Colab console logs themselves were deleted after this table was
+taken — this IS the record):
+
+| step | stage 1 tupnew | stage 1 tupctl | | step | stage 2 tupnew (synth / real / mix) | stage 2 tupctl (synth / real / mix) |
+|---|---|---|---|---|---|---|
+| 500 | 0.1032 | 0.0900 | | 500 | 0.0063 / 0.0862 / **0.0106** | 0.0074 / 0.0843 / **0.0115** |
+| 1000 | 0.0281 | 0.0325 | | 1000 | 0.0067 / 0.0861 / 0.0110 | 0.0077 / 0.0879 / 0.0120 |
+| 1500 | 0.0174 | 0.0212 | | 1500 | 0.0060 / 0.0856 / **0.0103** | 0.0066 / 0.0839 / **0.0107** |
+| 2000 | 0.0125 | 0.0165 | | 2000 | 0.0059 / 0.0852 / **0.0101** | 0.0064 / 0.0835 / **0.0106** |
+| 2500 | 0.0145 | 0.0136 | | | | |
+| 3000 | 0.0110 | 0.0111 | | | | |
+| 3500 | **0.0099** | 0.0105 | | | | |
+| 4000 | 0.0101 | 0.0102 | | | | |
+| 4500 | 0.0100 | 0.0096 | | | | |
+| 5000 | 0.0092 | **0.0093** | | | | |
+| 5500 | **0.0086** | 0.0096 | | | | |
+| 6000 | 0.0086 | 0.0096 | | | | |
+
+Both stage 1s converged on the same shape and are within 0.0007 of each other at their best; stage 2
+improved the mix monotonically apart from one bump at step 1000 in each arm. One loss spike in
+tupnew's stage 1 (0.1278 at step 5,575, one batch) recovered immediately.
+
+### The pre-registered read: `\tup3` recall on `_tupletval`, paired
+
+`scripts/rung3/tuplet_ab_score.py`, 54 gold groups over 28 strips.
+
+| arm | gold | hit | recall | predicted | precision |
+|---|---|---|---|---|---|
+| **NEW** | 54 | 48 | **88.9%** | 49 | 98.0% |
+| **CTL** | 54 | 46 | **85.2%** | 48 | 95.8% |
+
+**Δ recall +3.7 pp = 2 net groups. Paired: 4 NEW-only, 2 CTL-only, 44 both, 4 neither. Exact
+McNemar p = 0.688 → NULL**, against a pre-registered threshold of ~6 discordant groups one way
+(~11 pp). Precision clears its ≥70% veto on both arms.
+
+**The control landed on 85.2%, exactly `round2-stage2-best`'s score on this pool (46/54 both).** So
+the three nuisance differences that ruled out using the live model as a control — the `staff_jitter`
+augmentation added 2026-07-29, the sub-visual rasterizer drift across all 40,826 strips, and a new
+training environment — moved this class by **zero**, together. That could only be known by running
+the control; it does not retire the reason for running it.
+
+### The guard read: `_realval_v2` (267 strips)
+
+| | tupnew | tupctl | guard |
+|---|---|---|---|
+| **mean AEU F1** | **83.9%** | **83.3%** | ≤1 pp fall — **PASS** (+0.6) |
+| AEU recall headline | 92.3% | 93.8% | reported |
+| micro F1 | 89.3% | 90.1% | reported |
+| macro≥30 F1 | 89.5% | 89.9% | reported |
+| SER · exact | 0.089 · 57.3% | 0.086 · 57.7% | reported |
+| pages ≤5 corrections | 63% | 67% | reported |
+| arc-triggered false `\tup3` | 0/64 | 1/64 (1.6%) | ≤10% — PASS both |
+
+Everything outside the guard is a wash or a shade toward the control. Nothing is vetoed and nothing
+is decided by these numbers.
+
+⚠ **`\tup3` on this pool reads 91.4% (NEW) vs 80.0% (CTL) — do NOT quote that as a second result.**
+`_realval_v2`'s 35 tuplet groups are a **subset** of `_tupletval`'s 54, so it is the same experiment
+re-sliced, and the slice that favours the new mark is exactly the post-hoc move that produced the
+±2% pre-shrink illusion (docs/METRICS-DIAGNOSTICS.md). The pre-registered number is the whole pool,
+paired.
+
+### Disposition, by the rule written before the run
+
+**Null → the redraw is KEPT and no recall claim is made.** It stands on the print measurement
+(16/16 marks across ~11 editions break the arc), which is its own justification; what this A/B
+establishes is that a recall gain, if one exists, is smaller than 54 groups can resolve. `strips_v5_tupnew`
+is the corpus Round 3 continues from. Neither checkpoint ships — the exam is unread and neither arm
+is a Round-3 model; `round2-stage2-best` remains the runtime. Next lever, alone as always: the 35%
+slur-distractor rate ([docs/rung3/tuplets.md](../../docs/rung3/tuplets.md) step 5).

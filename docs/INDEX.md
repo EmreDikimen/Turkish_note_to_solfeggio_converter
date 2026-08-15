@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-11
+updated: 2026-08-15
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -15,6 +15,7 @@ wrong — fix by deleting, not by syncing.
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
 | The 28 July test day, in plain English (history) | [OVERVIEW-JULY.md](OVERVIEW-JULY.md) |
+| The features that shipped in early August, in plain English (history) | [OVERVIEW-AUGUST.md](OVERVIEW-AUGUST.md) |
 | Can I publish this? In plain English | [OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md) |
 | Why is there a server, where does the app live, what does it cost? In plain English | [OVERVIEW-SERVER.md](OVERVIEW-SERVER.md) |
 | The model story so far, in plain English (Rounds 1–2 + backlog) | [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md) |
@@ -61,6 +62,7 @@ wrong — fix by deleting, not by syncing.
 | Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
 | Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
 | Round 3's floors, the launch gate, and the tuplet A/B protocol | [rung3/round3-criteria.md](rung3/round3-criteria.md) |
+| The remaining model levers, ranked, and what to measure first | [rung3/levers.md](rung3/levers.md) |
 | Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
 | **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
 | Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |

@@ -387,7 +387,8 @@ function tupletAbove(group: StaveNote[]): boolean {
  * ⚠ `stroke` stays at `drawSlurArc`'s weight even though real print draws both HEAVIER (0.133–0.168 S
  * vs our 0.100). Thickening only this one would hand the model a thickness cue separating a triplet
  * from a slur that real pages do not have — the trap `AEU_SHARP_STROKE` documents. Owed as a joint
- * change with the slur, after this shape has been A/B'd.
+ * change with the slur. The shape A/B has now run (2026-08-15) and came back null, so the stroke is
+ * still owed and still joint — see docs/rung3/round3-criteria.md and docs/rung3/tuplets.md step 5.
  */
 const TUPLET_MARK = {
   gap: 1.63,       // S — arc-end to arc-end, the hole the digit sits in (real: 1.55–1.69, n=16)
@@ -485,6 +486,53 @@ function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   // tuplet_mark_probe.py --dir on a pilot render.
   text.setAttribute("font-family", "'Times New Roman', Georgia, serif");
   text.setAttribute("font-size", "16");
+  text.setAttribute("fill", "#222");
+  text.textContent = "3";
+  svg.appendChild(text);
+}
+
+/**
+ * The mark as it was drawn until 2026-08-12 — ONE unbroken quadratic with a bold italic "3"
+ * floating above its apex. It exists for exactly one reason: it is the **control arm** of the
+ * tuplet A/B pre-registered in docs/rung3/round3-criteria.md, reached only through
+ * `render.ts --legacy-tuplet-mark` (URL `?legacytuplet=1`). The app itself always draws the
+ * measured shape above.
+ *
+ * ⚠ Do not "fix" or tidy this function. It is a frozen copy of what `strips_v4` was rendered with,
+ * and any change to it silently changes what the A/B is comparing against. Delete it once the A/B
+ * has been read and written up.
+ */
+function drawTupletArcLegacy(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const xs = group.map((n) => n.getAbsoluteX());
+  const x1 = Math.min(...xs) - 2;
+  const x2 = Math.max(...xs) + 12;
+  const ys = group.flatMap((n) => {
+    try {
+      return n.getYs();
+    } catch {
+      return [];
+    }
+  });
+  if (ys.length === 0) return;
+  const yEdge = above ? Math.min(...ys) - 9 : Math.max(...ys) + 9;
+  const bulge = above ? -9 : 9;
+  const midX = (x1 + x2) / 2;
+  const path = document.createElementNS(SVG_NS, "path");
+  // Quadratic arc; its apex sits at yEdge + bulge, where the digit goes.
+  path.setAttribute("d", `M ${x1} ${yEdge} Q ${midX} ${yEdge + bulge * 2} ${x2} ${yEdge}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#222");
+  path.setAttribute("stroke-width", "1.1");
+  svg.appendChild(path);
+  const text = document.createElementNS(SVG_NS, "text");
+  text.setAttribute("x", String(midX));
+  text.setAttribute("y", String(yEdge + bulge + (above ? -2 : 11)));
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("font-family", "Georgia, 'Times New Roman', serif");
+  text.setAttribute("font-size", "13");
+  text.setAttribute("font-style", "italic");
+  text.setAttribute("font-weight", "bold");
   text.setAttribute("fill", "#222");
   text.textContent = "3";
   svg.appendChild(text);
@@ -1034,6 +1082,7 @@ export function SheetView({
   slurNoise,
   thinSharps,
   printNoise,
+  legacyTupletMark,
   signatureOverride,
 }: {
   doc: NoteModelDocument;
@@ -1127,6 +1176,10 @@ export function SheetView({
    *  come from the note model and are identical with and without it. Undefined → VexFlow's
    *  defaults, i.e. every strip rendered before Round 3. */
   printNoise?: { seed: number } | null;
+  /** The tuplet A/B's CONTROL arm: draw the pre-2026-08-12 continuous arc with the digit floating
+   *  above it (see drawTupletArcLegacy). Pixels only — the `\tup3` token is identical either way.
+   *  Corpus rendering only; the app never sets it. docs/rung3/round3-criteria.md */
+  legacyTupletMark?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1439,7 +1492,8 @@ export function SheetView({
             // ratio) even for a mixed-value group, matching the `\tup3` label.
             for (const group of tuplets) {
               const above = tupletAbove(group);
-              if (tupletCurved && svg) drawTupletArc(svg, group, above);
+              if (tupletCurved && svg)
+                (legacyTupletMark ? drawTupletArcLegacy : drawTupletArc)(svg, group, above);
               else
                 new Tuplet(group, {
                   numNotes: 3,
@@ -1545,7 +1599,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps, printNoise]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, thinSharps, printNoise, legacyTupletMark]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

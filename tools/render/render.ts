@@ -25,6 +25,10 @@
  *             [--clean]            wipe the output dir first (default: resume)
  *             [--finalize]         only rebuild manifest.jsonl + index.html from the shards
  *             [--thin-sharps]      draw the AEU sharps at real-print bar weight
+ *             [--legacy-tuplet-mark]  the tuplet A/B's CONTROL arm: the pre-2026-08-12 continuous
+ *                                  arc with the digit floating above it
+ *             [--print-noise]      OPT-IN Round-3 print realism (seeded staff-line weight + usul
+ *                                  beam grouping). Off by default — see the constant below
  */
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -66,8 +70,9 @@ interface Job {
   textseed: number;
   respellseed: number;
   slurseed: number;
-  /** Round-3 print realism: seeded staff-line weight + usul beam grouping (SheetView). */
-  printseed: number;
+  /** Round-3 print realism: seeded staff-line weight + usul beam grouping (SheetView).
+   *  `null` unless `--print-noise` — see PRINT_NOISE above. */
+  printseed: number | null;
 }
 
 function arg(name: string): string | undefined {
@@ -86,6 +91,16 @@ const TO = arg("to") != null ? Number(arg("to")) : Infinity;
 // their 2-bar cousins (see SheetView's drawThinSharps). Opt-in, so an A/B against the current
 // corpus stays possible.
 const THIN_SHARPS = has("thin-sharps");
+// The tuplet A/B (docs/rung3/round3-criteria.md): the CONTROL arm renders the mark as it was drawn
+// until 2026-08-12 — one unbroken arc with the digit floating above it. Pixels only; the `\tup3`
+// token and every manifest field are identical either way, which is what makes the two arms'
+// manifests byte-comparable.
+const LEGACY_TUPLET = has("legacy-tuplet-mark");
+// Round-3 print realism (seeded staff-line weight + usul beam grouping) is OPT-IN as of 2026-08-13.
+// It used to ride along unconditionally, which meant any fresh render silently shipped
+// USUL_BEAM_GROUPS into ~40k strips — and that change is measured as unvalidated and deliberately
+// quarantined (docs/METRICS-DIAGNOSTICS.md). Off ⇒ this render matches the strips_v4 recipe.
+const PRINT_NOISE = has("print-noise");
 
 // Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
 // scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
@@ -139,7 +154,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       textseed: hashStr(`${piece.slug}:c${p}:text`),
       respellseed: hashStr(`${piece.slug}:c${p}:respell`),
       slurseed: hashStr(`${piece.slug}:c${p}:slur`),
-      printseed: hashStr(`${piece.slug}:c${p}:print`),
+      printseed: PRINT_NOISE ? hashStr(`${piece.slug}:c${p}:print`) : null,
     });
   }
   for (const t of piece.transposes) {
@@ -158,7 +173,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       textseed: hashStr(`${piece.slug}:${t}:text`),
       respellseed: hashStr(`${piece.slug}:${t}:respell`),
       slurseed: hashStr(`${piece.slug}:${t}:slur`),
-      printseed: hashStr(`${piece.slug}:${t}:print`),
+      printseed: PRINT_NOISE ? hashStr(`${piece.slug}:${t}:print`) : null,
     });
   }
   return jobs;
@@ -173,12 +188,13 @@ function jobUrl(job: Job): string {
     textseed: String(job.textseed),
     respellseed: String(job.respellseed),
     slurseed: String(job.slurseed),
-    printseed: String(job.printseed),
   });
   if (job.sig) q.set("sig", job.sig);
   if (job.repseed != null) q.set("repseed", String(job.repseed));
   if (job.navseed != null) q.set("navseed", String(job.navseed));
+  if (job.printseed != null) q.set("printseed", String(job.printseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
+  if (LEGACY_TUPLET) q.set("legacytuplet", "1");
   return `${URL}/?${q}`;
 }
 
@@ -199,13 +215,16 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
         c.lyrics === want.lyrics && c.transpose === want.transpose && c.sig === want.sig &&
         c.repseed === want.repseed && c.navseed === want.navseed &&
         c.textseed === want.textseed && c.respellseed === want.respellseed &&
-        c.slurseed === want.slurseed && c.printseed === want.printseed
+        c.slurseed === want.slurseed && c.printseed === want.printseed &&
+        // Which tuplet mark the page drew. Checked per job rather than once, because a wrong arm is
+        // invisible in the labels and would only surface as a corpus that fails to reproduce.
+        c.legacyTuplet === want.legacyTuplet
       );
     },
     {
       score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose, sig: job.sig,
       repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-      slurseed: job.slurseed, printseed: job.printseed,
+      slurseed: job.slurseed, printseed: job.printseed, legacyTuplet: LEGACY_TUPLET,
     },
     { timeout: 20000 },
   );
@@ -283,6 +302,15 @@ async function main() {
     finalize();
     return;
   }
+
+  // Provenance for the corpus on disk: which flags made it. Deliberately NOT a manifest field — the
+  // tuplet A/B's two arms must have byte-identical manifests, since the mark is pixels only
+  // (docs/rung3/round3-criteria.md).
+  writeFileSync(`${OUT}/render_config.json`, JSON.stringify({
+    pieces: PIECES_PATH, carryPasses: CARRY_PASSES, thinSharps: THIN_SHARPS,
+    legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE,
+    started: new Date().toISOString(),
+  }, null, 2) + "\n");
 
   const pieces: PieceEntry[] = JSON.parse(readFileSync(PIECES_PATH, "utf8")).pieces;
   const chunk = pieces.slice(FROM, TO === Infinity ? undefined : TO);

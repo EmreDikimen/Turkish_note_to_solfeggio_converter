@@ -155,6 +155,10 @@ const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get(
 // Round-2: draw the four AEU sharps with real-print bar weight (see SheetView's drawThinSharps).
 // Render-automation only; absent → Bravura's glyphs, as before.
 const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
+// The tuplet A/B's CONTROL arm: draw the pre-2026-08-12 continuous arc with the digit floating above
+// it (see SheetView's drawTupletArcLegacy). Render-automation only — absent → the measured shape the
+// app ships. docs/rung3/round3-criteria.md
+const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
 // Stable object identity (SheetView's engrave effect depends on it; an inline literal would
 // re-engrave on every render). Constant per page load, like all render params.
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
@@ -488,6 +492,9 @@ export function App() {
         score: string; mode: AccidentalMode; lyrics: boolean; transpose: number; sig: string | null;
         repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null; slurseed: number | null;
         printseed: number | null;
+        /** Which tuplet mark this page drew — the A/B arm, so a renderer can assert it once
+         *  instead of discovering a mis-set flag after 40k strips. */
+        legacyTuplet: boolean;
         applied: boolean;
       };
     };
@@ -497,6 +504,7 @@ export function App() {
       score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose, sig: URL_SIG ?? null,
       repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
       printseed: URL_PRINTSEED,
+      legacyTuplet: URL_LEGACY_TUPLET,
       applied: layoutTag === renderTag,
     };
   }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
@@ -1261,6 +1269,7 @@ export function App() {
                 slurNoise={SLUR_NOISE}
                 thinSharps={URL_THIN_SHARPS}
                 printNoise={PRINT_NOISE}
+                legacyTupletMark={URL_LEGACY_TUPLET}
               />
             )}
           </ScoreCard>

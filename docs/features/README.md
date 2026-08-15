@@ -2,7 +2,7 @@
 
 purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
 audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-15
+updated: 2026-08-16
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
@@ -25,11 +25,13 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
-| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | calibration + a string-choice rule | **SCOPED 2026-08-15 — violin only, artwork in hand**, not started |
+| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | calibration + a string-choice rule | ✅ **DONE 2026-08-16** — violin only; built, checked on the production bundle, **not yet seen by a person** |
 
-Order: **F0 → F2 → F1 → F3**. F0, F2 and F1 are built, deployed and **accepted by ear** — F1 finished
-2026-08-14 and the friends who asked for it liked the result. Only F3 has not started. F2 came first
-among the visible ones because it has the best payoff per hour.
+Order: **F0 → F2 → F1 → F3**. All four are built. F0, F2 and F1 are deployed and **accepted by ear** —
+F1 finished 2026-08-14 and the friends who asked for it liked the result. F2 came first among the
+visible ones because it has the best payoff per hour. ⚠ **F3 is the one that has passed only machine
+checks**: nothing about it has been judged by an eye yet (check 25 in
+[../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md)).
 
 ⚠ **The artwork cost moved off this table on 2026-08-15.** It said "own artwork" for weeks, which read
 as *you must draw a violin* and was the reason F3 looked expensive. It is not what the rule meant, and
@@ -73,7 +75,7 @@ usuls in `USULS` have a `strokes` array; six are the standard simple forms and f
 `[derived]` in the source) are our reduction of that usul's own beat grouping — and **all ten are
 accepted**, the `[derived]` four included. `npm test` checks they are well-formed — inside the
 cycle, ascending, opening on a düm — and never could check that they are musically right; that is
-what check 23 in [../MANUAL_CHECKS.md](../MANUAL_CHECKS.md) was for. ⚠ The standard here is one
+what check 23 in [../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md) was for. ⚠ The standard here is one
 musician's ear, not a cited source. If a pattern is ever disputed, re-open the `[derived]` four
 first and settle it with a source rather than re-deriving it.
 
@@ -163,11 +165,9 @@ Rules:
 - `MAX_AUDIO_MB = 1` in `prune-dist.mjs` **stays at 1**. It is what forces all of the above.
 
 ⚠ **F1 was expected to inherit an answered hosting question and did not** (written 2026-08-11,
-corrected 2026-08-12). The plan was to point `loadStrokeKit.ts`'s existing `VITE_AUDIO_URL` at a Hub
-— no call-site changes. That fails, because it is one base for the whole `audio/` tree and would take
-the drums with it. F1 got `VITE_VOICES_URL` and its own loader instead. The indirection work was not
-wasted: it proved the cross-origin path under COEP. Expect to need
-it: measured at **~20 MB per instrument**, the **first** voice trips `MAX_AUDIO_MB`, not the third.
+corrected 2026-08-12). Pointing `loadStrokeKit.ts`'s `VITE_AUDIO_URL` at a Hub fails: it is one base
+for the whole `audio/` tree and would take the drums with it. F1 got `VITE_VOICES_URL` and its own
+loader. At **~20 MB per instrument** the **first** voice trips `MAX_AUDIO_MB`, not the third.
 
 ✅ **The compression problem is WITHDRAWN, not solved** (owner, 2026-08-11). It was real only while
 size was a constraint, and taking the files off the app removed that premise — so no encoder is
@@ -296,10 +296,9 @@ up. That is workable for a first version and **thin in the high positions**, whi
 to design against rather than discover. A higher-resolution bare-neck photo is the upgrade if one
 turns up; because the calibration is *data*, swapping the image costs no code.
 
-⚠ **A tutorial photo is the wrong photo even when its licence is fine.** The obvious candidates —
-someone's violin lesson still — carry a hand and a bow across the neck, and coloured tapes marking
-**12-tone** finger positions. Fixed tapes contradict the entire feature. What is wanted is a bare
-fingerboard with nothing on it.
+⚠ **A tutorial photo is the wrong photo even when its licence is fine**: a violin-lesson still
+carries a hand and a bow across the neck, and coloured tapes marking **12-tone** finger positions —
+and fixed tapes contradict the entire feature. What is wanted is a bare fingerboard.
 
 **Draw the markers in SVG over the photo.** The instrument is a picture; the moving dot and the koma
 ticks are vector, so they stay sharp and follow the theme.
@@ -341,26 +340,54 @@ rather than a smoke check.
 - **One clock.** Drive the animation from `getPositionMs()` — the source the playhead already uses —
   so the marker cannot drift from the sound.
 
-**Scope advice:** ship **one** instrument first, and make it a fretless one, because the formula is
-exact and it demonstrates the microtones. The rest is then mostly data. ✅ Settled 2026-08-15 — it is
-the violin, see the scope section above.
 
-### The one thing still unanswered — the open strings
+### ✅ The open strings — ANSWERED 2026-08-16, and the table stays open
 
-`openStringFreq` is an input to every marker position, so the four open strings have to be decided
-before any of them can be right, and it is **not a detail the code can default**. Standard
-G3–D4–A4–E5, or a Turkish keman tuning? Turkish violinists do not universally use the Western
-tuning, and this is a repertoire question rather than a programming one — **the owner's call, asked
-2026-08-15 and still open.** Everything else about F3 is buildable without it: the geometry, the
-calibration, the string-choice rule and the overlay all take the open strings as data.
+**Standard Sol–Re–La–Mi** (owner). It was the one input the code could not default, so it was asked
+rather than guessed: Turkish violinists do not universally use the Western tuning, and that is a
+repertoire question. The four frequencies live in `VIOLIN_TUNINGS` as **data**, so a Turkish
+scordatura is a row and touches no geometry — the picker is written and hides itself while there is
+only one entry. [../DECISIONS.md](../DECISIONS.md)
+
+⚠ **They are on this project's 53-TET grid, not on a tuner's.** A fifth here is 31 commas =
+701.89 cents, so open Sol is 195.571 Hz against twelve-tone's 196.00. Four cents is a fifth of a
+koma — the scale of thing this view exists to show — and it is what makes an open string land at
+ratio 0 *exactly* for the note that should be played open.
+
+⚠ **Notes below the open Sol are a normal case, not an edge case.** Turkish notation transposes down
+a fourth, so a written G3 sounds D3 ≈ 147 Hz, under a standard violin's 195.6. Those notes draw **no
+dot** and report `out-of-range` rather than being clamped somewhere they are not. It is also the
+strongest practical argument for adding a lower Turkish tuning later.
+
+### What was built, and the three things the photo corrected
+
+The maths is `packages/core/src/fingering.ts` (portable, unit-tested); every pixel is
+`apps/web/src/ui/fingerboardGeometry.ts`; `apps/web/src/Fingerboard.tsx` does only the drawing and
+the clock. Numbers and the account: [../log/status-log.md](../log/status-log.md).
+
+The calibration was **measured, then sanity-checked against a real instrument** — the nut→bridge run
+scales to 328.1 mm and the string spread to 17.2/34.2 mm, which is a 4/4 violin. That check matters
+more than the fit residuals: a line fit is self-consistent whether or not it found the strings.
+
+Three things only became visible once the image was rendered rather than reasoned about:
+
+1. **The neck is a 6:1 vertical sliver**, unreadable on a phone — so it is rotated a quarter turn,
+   nut on the left. A true rotation, never a mirror.
+2. **A tuning peg pokes into frame just past the nut** and read as a smudge under the Sol string.
+   The photo is masked to the fingerboard's own tapered outline, which removes it and looks better.
+3. **The fingerboard's edges cannot be found by "darker than the belly"** below the neck — f-holes
+   and shadows pass the same test. Two clean rows near the neck, extrapolated.
+
+⚠ **The upgrade path is unchanged and costs no code**: a higher-resolution bare-neck photo. The
+shipped one gives ~7 px per koma near the nut and less further up, which is thin in the high
+positions.
 
 ---
 
 ## What this track does NOT change
 
 - **Cloud Run cost is unchanged.** The server decodes images; none of these features call it.
-- **The only new hosting need is static assets** (audio, artwork) — bandwidth, not compute. Lazy
-  loaded, browser cached, kept out of `dist/`.
+- **The only new hosting need is static assets** (audio, artwork) — bandwidth, not compute.
 - **Client CPU is a non-issue.** Sample playback is negligible beside the ONNX decode that was moved
   off the client in the first place.
 - **The mobile split holds.** Stroke patterns, fingering maths and timing are pure data + maths and
@@ -368,5 +395,5 @@ calibration, the string-choice rule and the overlay all take the open strings as
 - **The model track is untouched.** Nothing here reads or writes `apps/web/src/omr/`, the exam, or
   any corpus.
 
-The real cost of this track is **assets and curation** — recordings, verified usul strokes, instrument
-drawings — not infrastructure. Budget time, not money.
+The real cost of this track is **assets and curation** — recordings, verified usul strokes, a
+licence-checked photograph — not infrastructure. Budget time, not money.

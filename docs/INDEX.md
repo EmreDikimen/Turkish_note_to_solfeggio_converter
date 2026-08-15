@@ -79,6 +79,7 @@ wrong — fix by deleting, not by syncing.
 | How do I see a feature working with my own eyes? (the app) | [MANUAL_CHECKS.md](MANUAL_CHECKS.md) |
 | …and the synthetic corpus / renderer side | [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) |
 | …and the editor (select, palette, insert, tuplets) | [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md) |
+| …and the feature track — the checks that need EARS or EYES (usul strokes, voices, fingerboard) | [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) |
 | How do I train on Colab? | [COLAB.md](COLAB.md) |
 | How does the synthetic renderer work? | [../tools/render/README.md](../tools/render/README.md) |
 | The synthetic track (Rungs 0–2.2b) — CLOSED | [PHASE2.md](PHASE2.md) |

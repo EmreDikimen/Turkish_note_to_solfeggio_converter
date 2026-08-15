@@ -10,3 +10,4 @@ export * from "./transpose";
 export * from "./metadata";
 export * from "./makamSignatures";
 export * from "./makam";
+export * from "./fingering";

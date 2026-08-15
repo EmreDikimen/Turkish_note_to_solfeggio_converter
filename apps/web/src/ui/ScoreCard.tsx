@@ -14,7 +14,7 @@ import type { NoteModelDocument } from "@turkish-omr/core";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
 
-export type ViewMode = "roll" | "sheet";
+export type ViewMode = "roll" | "sheet" | "fingerboard";
 
 function duration(totalMs: number): string {
   const s = Math.round(totalMs / 1000);
@@ -81,6 +81,7 @@ export function ScoreCard({
           items={[
             { value: "sheet", label: TR.card.viewSheet, id: "view-sheet" },
             { value: "roll", label: TR.card.viewRoll, id: "view-roll" },
+            { value: "fingerboard", label: TR.card.viewFingerboard, id: "view-fingerboard" },
           ]}
         />
 
@@ -156,7 +157,9 @@ export function ScoreCard({
           ? editMode
             ? TR.card.hintSheetEditing
             : TR.card.hintSheet
-          : TR.card.hintRoll}
+          : viewMode === "fingerboard"
+            ? TR.card.hintFingerboard
+            : TR.card.hintRoll}
       </p>
     </section>
   );

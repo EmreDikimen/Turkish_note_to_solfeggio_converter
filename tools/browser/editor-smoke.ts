@@ -1073,6 +1073,72 @@ async function main() {
   await page.waitForTimeout(200);
   check("rewinding leaves a clean score again", await warn.count(), 0);
 
+  // --- the fingerboard tab: a violin position that follows the audio clock (F3, 2026-08-15) -----
+  //
+  // Three properties, none of which can be asked of the copy on the page:
+  //   - the tab draws THIS score's pitches — ticks are built from the timeline, so a score with
+  //     notes must produce some;
+  //   - while playing, the marker is on a real string at a position on the string;
+  //   - it MOVES. An attribute reading "stopped" cannot prove the clock is driving anything, which
+  //     is the same reason the sheet's playhead is asserted by position and not by existence.
+  // The string-choice rule itself is NOT checked here: it is a pure function and a browser is the
+  // wrong place to check arithmetic — see tools/core/fingering-test.ts.
+  console.log("\nfingerboard tab (F3)");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#view-fingerboard").click();
+  await page.waitForSelector("#fingerboard", { timeout: 10000 });
+
+  check("four strings", await page.getAttribute("#fingerboard", "data-strings"), "4");
+  check("standard tuning", await page.getAttribute("#fingerboard", "data-tuning"), "standard");
+  check(
+    "the score's own pitches are ticked",
+    (await page.locator('[data-omr="fingerboard-tick"]').count()) > 0,
+    true,
+  );
+  check(
+    "the marker starts idle",
+    await page.getAttribute('[data-omr="finger-marker"]', "data-finger-state"),
+    "idle",
+  );
+
+  // Poll rather than sleep: the first Play also boots the AudioContext, which is why
+  // `waitForPlayhead` above exists. Collect distinct positions until there are enough to prove
+  // movement, or give up — a stuck marker must fail, not hang.
+  await page.locator("#play").click();
+  const fingerMarks: string[] = [];
+  for (let i = 0; i < 40 && fingerMarks.length < 3; i++) {
+    await page.waitForTimeout(150);
+    const m = await page.evaluate(() => {
+      const d = document.querySelector('[data-omr="finger-marker"]');
+      const state = d?.getAttribute("data-finger-state");
+      return state === "open" || state === "stopped"
+        ? `${d!.getAttribute("data-string")}@${d!.getAttribute("data-ratio")}`
+        : null;
+    });
+    if (m && m !== fingerMarks[fingerMarks.length - 1]) fingerMarks.push(m);
+  }
+  await page.locator("#stop").click();
+  console.log(`  marker: ${fingerMarks.join(" → ") || "never landed"}`);
+
+  check("the marker lands on a string while playing", fingerMarks.length > 0, true);
+  check("…and it moves with the music", fingerMarks.length >= 2, true);
+  check(
+    "…always on a string that exists",
+    fingerMarks.every((m) => ["g", "d", "a", "e"].includes(m.split("@")[0]!)),
+    true,
+  );
+  // A position is a fraction of the vibrating length, so anything outside [0, 1) is a geometry
+  // bug rather than a fingering choice — it would draw the finger past the bridge.
+  check(
+    "…at a position ON the string",
+    fingerMarks.every((m) => {
+      const r = Number(m.split("@")[1]);
+      return Number.isFinite(r) && r >= 0 && r < 1;
+    }),
+    true,
+  );
+
   // --- every note box belongs to its own note (the grace-note geometry bug, 2026-08-08) ---------
   //
   // `StaveNote.getBoundingBox()` merges each MODIFIER's box in, and `GraceNoteGroup` never positions

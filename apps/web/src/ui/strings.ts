@@ -92,6 +92,7 @@ export const TR = {
   card: {
     viewSheet: "Nota",
     viewRoll: "Piyano rulosu",
+    viewFingerboard: "Keman",
     lyrics: "Güfte",
     lyricsTitle: "Notaların altına güfte hecelerini yaz",
     edit: "✎ Düzenle",
@@ -115,6 +116,10 @@ export const TR = {
     hintRoll:
       "Dikey eksen 53 koma. Notayı yukarı/aşağı sürükleyin: perde değişir. Sağ kenarından " +
       "çekin: süresi değişir.",
+    hintFingerboard:
+      "Çalın: nokta, parmağın kemanda basacağı yeri gösterir. Küçük çizgiler bu eserin bu telde " +
+      "kullandığı perdelerdir — perdeler eşit aralıklı değildir, koma farkları buradan görülür. " +
+      "Açık Sol telinin altına düşen sesler kemanda çıkmaz; o notada nokta görünmez.",
   },
 
   sheet: {
@@ -160,6 +165,12 @@ export const TR = {
   bar: {
     over: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden uzun (${beats})`,
     under: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden kısa (${beats})`,
+  },
+
+  fingerboard: {
+    // The tuning picker only appears once there is more than one tuning to pick — see Fingerboard.tsx.
+    tuning: "Akort",
+    alt: "Keman klavyesi — çalınan sesin parmak yeri",
   },
 
   advanced: {

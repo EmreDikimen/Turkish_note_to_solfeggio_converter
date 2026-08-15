@@ -843,3 +843,54 @@
   color: var(--ink-faint);
 }
 
+
+/* ── The fingerboard tab (F3) ───────────────────────────────────────────── */
+
+/* ⚠ Lives under `.kv-score`, so the two rules that container imposes apply: no transform, and no
+   selector here may set a font. The SVG's rotation is an attribute on an inner <g>, not CSS, and
+   the string names carry `font-size` as a presentation attribute on the element — see
+   Fingerboard.tsx. Nothing below sets anything but colour, stroke and box. */
+.kv-fingerboard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+/* The neck is a ~6:1 strip. It fills the card, but never shrinks past the width where a koma stops
+   being a visible distance — below that it scrolls sideways inside `.kv-score`, which already has
+   `overflow-x: auto`. Every human who has opened the deployed app so far was on a phone. */
+.kv-fingerboard__svg {
+  display: block;
+  width: 100%;
+  min-width: 420px;
+  height: auto;
+}
+
+/* The line every position is measured from. Bright, because it sits on near-black ebony. */
+.kv-fingerboard__nut {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+/* This score's own pitches on each string — NOT frets. Deliberately quiet: they are a reference
+   for the dot, and a violin has no lines on it. */
+.kv-fingerboard__ticks line {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+/* The names sit in the margin left of the nut, on paper rather than on the instrument. */
+.kv-fingerboard__labels text {
+  fill: var(--ink-soft);
+}
+
+/* The moving finger. Teal like the sheet's playhead — the same event, shown twice — and outlined
+   so it stays legible over both the black fingerboard and the varnished belly. */
+.kv-fingerboard__dot {
+  fill: #14b8a6;
+  stroke: #f2fbf9;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.8));
+}

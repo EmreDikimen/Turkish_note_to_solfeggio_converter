@@ -46,6 +46,22 @@ const THIN_SHARPS = has("thin-sharps");
 // that exact page". Without it the distractor is simply absent and this file would pass trivially.
 const STACCATO_NOISE = has("staccato-noise");
 const staccatoSeed = (piece: string) => hashStr(`${piece}:verify:staccato`);
+// Round-3 Lever 1: the strip-packing measure rail the corpus was rendered at. This one MUST be
+// replayed rather than reseeded, because unlike the staccato dots it changes the strip BOUNDARIES —
+// the manifest's `m<from>-<to>` ids are what this file looks strips up by, so replaying a narrow arm
+// at the default budget makes every id unresolvable and reports the whole corpus as "strip not
+// published by the harness". Read from render_config.json when present so it cannot be forgotten,
+// with the flag as an override for a pool rendered before that field existed.
+const MAX_MEASURES = (() => {
+  const flag = arg("max-measures");
+  if (flag != null) return Number(flag);
+  try {
+    const cfg = JSON.parse(readFileSync(`${STRIPS}/render_config.json`, "utf8"));
+    return typeof cfg.maxMeasures === "number" ? cfg.maxMeasures : null;
+  } catch {
+    return null; // no config on disk (pre-2026-08-17 pool) => the default budget, as before
+  }
+})();
 const LIMIT = arg("limit") != null ? Number(arg("limit")) : Infinity;
 const EVERY = Number(arg("every") ?? 1);
 const OUT = arg("out") ?? `${STRIPS}/verify_labels.json`;
@@ -83,6 +99,7 @@ function jobUrl(r: Row): string {
   if (r.navseed != null) q.set("navseed", String(r.navseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (STACCATO_NOISE) q.set("staccatoseed", String(staccatoSeed(r.piece)));
+  if (MAX_MEASURES != null) q.set("maxmeasures", String(MAX_MEASURES));
   return `${URL}/?${q}`;
 }
 
@@ -166,7 +183,10 @@ async function openJob(page: Page, r: Row): Promise<void> {
         c.lyrics === want.lyrics && c.transpose === want.transpose && c.sig === want.sig &&
         c.repseed === want.repseed && c.navseed === want.navseed &&
         c.textseed === want.textseed && c.respellseed === want.respellseed && c.slurseed === want.slurseed &&
-        c.staccatoseed === want.staccatoseed
+        c.staccatoseed === want.staccatoseed &&
+        // The rail that decides the strip boundaries this file matches ids against — so a
+        // mismatched replay fails loudly here instead of as 100% "strip not published".
+        c.maxmeasures === want.maxmeasures
       );
     },
     {
@@ -174,6 +194,7 @@ async function openJob(page: Page, r: Row): Promise<void> {
       sig: r.sig, repseed: r.repseed, navseed: r.navseed, textseed: r.textseed,
       respellseed: r.respellseed, slurseed: r.slurseed,
       staccatoseed: STACCATO_NOISE ? staccatoSeed(r.piece) : null,
+      maxmeasures: MAX_MEASURES,
     },
     { timeout: 30000 },
   );

@@ -65,7 +65,13 @@ VPLACE_TOP_CLAIM_SP = float(os.environ.get("OMR_VPLACE_TOP_CLAIM", "3.5"))
 # targeted tuplet emit slices at 1 measure/window so the fitting 61% survive the budget gate.
 MEASURES_PER_STRIP = int(os.environ.get("OMR_MEASURES_PER_STRIP", "3"))
 # target measures per window (2-4 is the training range)
-MAX_STRIP_W = 1450         # cap width (training strips topped out ~1443 px)
+#
+# OMR_MAX_STRIP_W: the width rail, env-switchable since 2026-08-17 for Round-3 Lever 1's crop-geometry
+# pilot (docs/rung3/levers.md). It had to be monkeypatched before that — width_split_probe.py still
+# shows the pattern. ⚠ This is the SLICER's pair; the renderer packs training strips by measures and
+# LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no width rail at all, so changing
+# this alone moves the real crops and leaves the synthetic corpus where it was.
+MAX_STRIP_W = int(os.environ.get("OMR_MAX_STRIP_W", "1450"))   # cap width (training strips ~1443 px)
 MIN_STRIP_W = 200          # ignore degenerate slivers
 
 # ---- label-budget-aware packing ---------------------------------------------------------------
@@ -857,7 +863,7 @@ def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
 
 def window_signature() -> dict:
     """The windowing settings a cached decode was produced under — store this beside a decode."""
-    return {"measures_per_strip": MEASURES_PER_STRIP,
+    return {"measures_per_strip": MEASURES_PER_STRIP, "max_strip_w": MAX_STRIP_W,
             "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET,
             "edge_trim": TRIM_SHARED_EDGE, "vplace": VPLACE_ADAPTIVE}
 
@@ -871,6 +877,12 @@ def window_cache_ok(prev: dict) -> bool:
     legacy by definition.
     """
     if prev.get("measures_per_strip", 3) != MEASURES_PER_STRIP:
+        return False
+    # The width rail moves crop boundaries just as directly as the measure rail, and until 2026-08-17
+    # it was absent here: a decode cached at MAX_STRIP_W 1450 stayed "valid" after the cap was
+    # lowered, so a geometry pilot would silently score new crops against old decodes. Default 1450
+    # so every cache written before this field existed reads as the shipped geometry, which it was.
+    if int(prev.get("max_strip_w", 1450)) != MAX_STRIP_W:
         return False
     if prev.get("window_mode", "legacy") != WINDOW_MODE:
         return False

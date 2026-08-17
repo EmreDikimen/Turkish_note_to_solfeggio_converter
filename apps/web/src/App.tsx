@@ -164,6 +164,23 @@ const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
 // it (see SheetView's drawTupletArcLegacy). Render-automation only — absent → the measured shape the
 // app ships. docs/rung3/round3-criteria.md
 const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
+// Round-3 Lever 1 (crop geometry): how many measures one training strip may span. Render-automation
+// only; absent → STRIP_BUDGET.maxMeasures, i.e. every strip rendered before 2026-08-17.
+//
+// ⚠ This is the RENDERER's rail and it is NOT the slicer's. The slicer cuts real pages at
+// MEASURES_PER_STRIP = 3 / MAX_STRIP_W = 1450 px (apps/web/src/omr/slicer/constants.ts); the renderer
+// packs by measures and LABEL TOKENS and has no pixel-width rail at all, which is why our strips run
+// wider than the real pools' (docs/rung3/round3.md §4). Lowering this alone narrows the synthetic
+// side only — the matching re-slice is the other half. docs/rung3/levers.md, Lever 1.
+const URL_MAX_MEASURES = RENDER_PARAMS.has("maxmeasures")
+  ? Number(RENDER_PARAMS.get("maxmeasures"))
+  : null;
+// Passed to buildStrips as its budget override. Undefined (not a partial object) when the param is
+// absent, so the default STRIP_BUDGET destructuring applies untouched.
+const STRIP_BUDGET_OVERRIDE =
+  URL_MAX_MEASURES != null && Number.isFinite(URL_MAX_MEASURES) && URL_MAX_MEASURES > 0
+    ? { maxMeasures: URL_MAX_MEASURES }
+    : undefined;
 // Stable object identity (SheetView's engrave effect depends on it; an inline literal would
 // re-engrave on every render). Constant per page load, like all render params.
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
@@ -484,7 +501,12 @@ export function App() {
     // SheetView draws with, and the same accidental tolerance it draws with, so carry labels equal
     // the drawn signature AND the drawn accidentals (faithful scheme).
     return drawn && layout
-      ? buildStrips(drawn, layout.boxes, accidentalMode, repeatSpans, navMarks, SIG_OVERRIDE, SIG_TOLERANT)
+      ? buildStrips(
+          drawn, layout.boxes, accidentalMode, repeatSpans, navMarks, SIG_OVERRIDE, SIG_TOLERANT,
+          // Absent in interactive use and in every pre-2026-08-17 render job, so the default
+          // STRIP_BUDGET applies and the corpus recipe is unchanged. See URL_MAX_MEASURES.
+          STRIP_BUDGET_OVERRIDE,
+        )
       : [];
   }, [repeatSpans, navMarks, displayDoc, doc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
@@ -503,6 +525,10 @@ export function App() {
         /** Which tuplet mark this page drew — the A/B arm, so a renderer can assert it once
          *  instead of discovering a mis-set flag after 40k strips. */
         legacyTuplet: boolean;
+        /** The strip-packing measure rail this page cut with — `null` = STRIP_BUDGET's default.
+         *  Exposed for the same reason `legacyTuplet` is: a renderer can assert the geometry it
+         *  asked for was actually applied, rather than finding out after a whole pilot arm. */
+        maxmeasures: number | null;
         applied: boolean;
       };
     };
@@ -514,6 +540,7 @@ export function App() {
       staccatoseed: URL_STACCATOSEED,
       printseed: URL_PRINTSEED,
       legacyTuplet: URL_LEGACY_TUPLET,
+      maxmeasures: URL_MAX_MEASURES,
       applied: layoutTag === renderTag,
     };
   }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);

@@ -32,6 +32,8 @@
  *             [--staccato-noise]   OPT-IN staccato distractors: label-free dots on the notehead
  *                                  side, teaching that a dot means "longer" only BESIDE the
  *                                  notehead. Off by default — see the constant below
+ *             [--max-measures n]   Round-3 Lever 1: how many measures one strip may span. Absent =>
+ *                                  STRIP_BUDGET.maxMeasures, i.e. the corpus recipe. See below
  */
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -113,6 +115,25 @@ const PRINT_NOISE = has("print-noise");
 // longer". These label-free dots teach the POSITIONAL rule instead — a dot lengthens only when it
 // sits BESIDE the notehead. Opt-in, so probe and control arms are one flag apart.
 const STACCATO_NOISE = has("staccato-noise");
+// Round-3 Lever 1 (docs/rung3/levers.md): the crop-geometry pilot's only variable. The renderer packs
+// a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no pixel
+// width rail at all — which is why our strips run wider than the real pools' and reach the encoder
+// downscaled by half (docs/METRICS-DIAGNOSTICS.md, "The encoder's input box").
+//
+// ⚠ Do NOT read this as "the constant the slicer shares". It does not: the slicer cuts real pages at
+// MEASURES_PER_STRIP = 3 / MAX_STRIP_W = 1450 px, a separate pair with its own env knobs. Narrowing
+// only this narrows the SYNTHETIC side, and a pilot that does that alone measures a corpus that no
+// longer matches what the model will be asked to read. The matching re-slice is the other half.
+//
+// Absent → undefined → App.tsx passes no override → STRIP_BUDGET applies, so every pre-2026-08-17
+// render command reproduces exactly what it did before.
+const MAX_MEASURES = arg("max-measures") != null ? Number(arg("max-measures")) : null;
+if (MAX_MEASURES != null && (!Number.isInteger(MAX_MEASURES) || MAX_MEASURES < 1)) {
+  // A typo here would silently render a whole arm at the default budget and read as a normal run —
+  // the same failure shape as rendering from the stale pieces.json.
+  console.error(`--max-measures must be a positive integer, got ${arg("max-measures")}`);
+  process.exit(1);
+}
 
 // Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
 // scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
@@ -210,6 +231,7 @@ function jobUrl(job: Job): string {
   if (job.printseed != null) q.set("printseed", String(job.printseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (LEGACY_TUPLET) q.set("legacytuplet", "1");
+  if (MAX_MEASURES != null) q.set("maxmeasures", String(MAX_MEASURES));
   return `${URL}/?${q}`;
 }
 
@@ -234,14 +256,18 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
         c.printseed === want.printseed &&
         // Which tuplet mark the page drew. Checked per job rather than once, because a wrong arm is
         // invisible in the labels and would only surface as a corpus that fails to reproduce.
-        c.legacyTuplet === want.legacyTuplet
+        c.legacyTuplet === want.legacyTuplet &&
+        // The strip-packing rail. Asserted per job for the same reason as the tuplet arm: a wrong
+        // geometry is invisible in a label and would surface only as a pilot arm that cannot be
+        // attributed. Cheap insurance against the whole point of the run being lost.
+        c.maxmeasures === want.maxmeasures
       );
     },
     {
       score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose, sig: job.sig,
       repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
       slurseed: job.slurseed, staccatoseed: job.staccatoseed, printseed: job.printseed,
-      legacyTuplet: LEGACY_TUPLET,
+      legacyTuplet: LEGACY_TUPLET, maxmeasures: MAX_MEASURES,
     },
     { timeout: 20000 },
   );
@@ -329,7 +355,8 @@ async function main() {
   // (docs/rung3/round3-criteria.md).
   writeFileSync(`${OUT}/render_config.json`, JSON.stringify({
     pieces: PIECES_PATH, carryPasses: CARRY_PASSES, thinSharps: THIN_SHARPS,
-    legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE,
+    legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE, staccatoNoise: STACCATO_NOISE,
+    maxMeasures: MAX_MEASURES,
     started: new Date().toISOString(),
   }, null, 2) + "\n");
 

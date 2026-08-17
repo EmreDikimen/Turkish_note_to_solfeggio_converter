@@ -134,3 +134,68 @@ the longer list they were chosen from.
 
 The four hunches tested that same day, three of which did not survive, are on
 [OVERVIEW-JULY.md](OVERVIEW-JULY.md).
+
+## The "can the model even see the page?" idea — tested 15 August, closed 17 August
+
+Moved out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-17 when that page passed its size limit. It is
+history now: the idea was tested properly and stopped by a rule written down beforehand. Kept in full
+because **how** it closed is the useful part, and because it should not be re-proposed.
+
+## What we found on 15 August 2026 — the model may simply not see the page well enough
+
+Five ideas in a row have now failed their test, and every one of them asked the same question: *are
+we drawing something wrong?* So on 15 August we asked a different one — **how much of the picture
+does the model actually get to look at?**
+
+The model has a fixed-size window: 409 by 583 dots. A strip of music is turned on its side and
+shrunk to fit. A normal strip of ours is about two and a half times too long for that window, so it
+gets shrunk to **half size** and **61% of the window is left over as empty black**. After that, the
+gap between two staff lines is 14 dots, and the difference between a note *on* a line and one *in*
+the space above it is about **7 dots** — very little for the two mistakes we make most: which note it
+is, and how long it is.
+
+Then we checked the results we already had. Comparing strips carrying the **same amount of music**,
+the most-shrunk third cost **2.4 times as many corrections per note**. Longer strips are not the
+problem — *more shrunken* ones are.
+
+✅ **The experiment ran on 15 August and it worked.** We made real test strips artificially wider by
+pasting in blank staff from the same strip — identical music, identical answer key, the only change
+being *more shrinking*. Mistakes went up at **every** step, 59% worse at the extreme, and it repeated
+on a second, separate set of pages. So shrinking genuinely does cost accuracy. That much is solid.
+
+## What happened on 17 August 2026 — we cannot buy the reverse, and we stopped the idea
+
+Showing that shrinking **hurts** is not the same as showing that un-shrinking **helps**. So we tested
+whether we could actually cut strips narrower and give the model a better look. **We can't, and there
+is no room to.** Two reasons, both measured:
+
+1. **Real pages are already at the good size.** The blank-paper test's own starting point — normal,
+   unpadded strips — was *already* at 19.2 dots between staff lines. That is simply what a real test
+   page looks like. To do better, a strip would have to be narrower than **one bar of music**, which
+   means cutting through the middle of a bar. We tested that in July: **32% worse**.
+2. **Cutting to one bar per strip causes a worse problem than it solves.** Very short strips are the
+   single worst thing this model handles — it gets almost everything wrong on them, because among
+   40,826 practice pictures there is not one that is just a key signature with no notes. It has never
+   seen that shape. Cutting real pages to one bar each took those tiny strips from **0.8% to 4.3%** of
+   all strips — five times more.
+
+**We wrote down before running the test that "more than double" would kill the idea.** It came out at
+five times. So the idea is dead, and it died by a rule set in advance rather than one invented
+afterwards to fit the answer. That is the whole point of writing the rule down first.
+
+**What we did get, and it is cheap and real.** Our practice pictures reach the model at **16 dots**
+between staff lines; real test pages arrive at **19.2**. So **the model practises on blurrier music
+than it is examined on** — a 20% handicap we created ourselves. Cutting only the *practice* pictures to
+one bar each fixes exactly that. It costs 13% more practice pictures and changes nothing about how real
+pages are sliced, so none of the problems above apply. Worth doing; we cannot know whether it helps
+until we retrain.
+
+⚠ **Two numbers in our own notes were wrong, and both had been frightening us off this.** We believed
+it would cost **3× more computing per page** (real answer: **1.22×**) and **3× more practice pictures**
+(real answer: **1.13×**). Both came from confusing the tool that cuts *real* pages with the one that
+prints our *practice* pages — they are separate and only the first has a width limit at all.
+
+⚠ **And the "very short strip" weakness is now the blocker on this whole idea**, not a footnote. We set
+it aside in July because our *explanation* for it turned out to be wrong — but its *cost* was never in
+doubt, and it is now the thing standing in front of the only version of this change that works.
+

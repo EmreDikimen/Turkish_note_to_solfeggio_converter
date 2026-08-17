@@ -167,3 +167,90 @@ of [rung3/round3.md](rung3/round3.md) skipped when its 2% shrink won 15.5% on th
   repeats at a fixed period, a texture no real page has; that residual is why the reading rests on
   the **dose-response** rather than on any single arm.
 
+
+## Step 2's pre-registration, as signed (2026-08-17, before any arm ran)
+
+Kept verbatim so the result above can be checked against what was actually promised, rather than
+against a memory of it. Moved here from [rung3/levers.md](rung3/levers.md) on 2026-08-17 when that
+file crossed its 400-line cap — the lever is closed, so its pre-registration is history.
+
+
+**Three arms, one variable.** `maxMeasures` 4 (control, the corpus recipe), 2, and 1 — swept rather
+than picked, because the decode cost the winner carries is the owner's call and the numbers should be
+on the table when it is made. `--max-measures` on `render.ts` carries it, so the arms are one flag
+apart in the manner of `--thin-sharps` and `--staccato-noise`.
+
+**Both sides move, or the measurement is meaningless.** The real pools on disk were cut at 3 / 1450,
+so narrowing only the synthetic side would *invert* the width gap rather than close it — and
+production slices real pages with our own slicer too. Each arm therefore also re-slices ~25 real
+pages at the matching rails (`OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W`), and **the control arm is a
+fresh re-slice, not the pools already on disk** — those predate the pale-line binarizer
+([../METRICS-SLICER.md](METRICS-SLICER.md)), and reusing them would move two variables at once.
+
+**⛔ The stop rule (owner, signed before the run).** An arm is **stopped, or must carry a short-shape
+render alongside**, if the re-sliced **real** side's share of crops under **10 gold tokens** more than
+**doubles** against the control re-slice. The real side is where the hole bites, because that is what
+the model reads at inference, and short crops are the worst thing it reads: **0.259 ed/token against
+a 0.03–0.05 baseline** ([../METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)). ⚠ The threshold is
+in `crop_geometry_probe.tokenize()`'s units — `domain_gap.py` cannot report it, since its
+`strips_<=3_notes_%` is a *note* count on a naive whitespace split.
+
+**What a surviving arm must show:** strip width and tokens/strip moving *toward* the real pools'
+without overshooting them, the effective encoder spacing rising, and the strips/page cost stated so
+the render is priced before it is run ([../mvp/latency.md](mvp/latency.md)).
+
+**⚠ What this pilot may NOT claim, written here so a later reader cannot borrow it.** Nothing about
+accuracy. `domain_gap.py` measures distribution similarity; the accuracy claim belongs to a trained
+arm and to nothing before it. Decoding narrow crops with `round2-stage2-best` would repeat the
+`width_split_probe` confound exactly — a model trained on wide crops cannot separate *"narrow is
+bad"* from *"never saw narrow"* — so the arms are **not decoded**.
+
+**Costs and risks, stated up front:**
+
+- ~3× more strips per page → decode time roughly triples. The page-splitting plan in
+  [../mvp/latency.md](mvp/latency.md) exists for exactly this, and the current gate is accuracy,
+  not latency — but this is a real product cost and the owner should price it before the render.
+- ⚠ **The short-crop hole gets bigger before it gets smaller.** Crops under ~10 gold tokens are the
+  worst thing this model reads, because 0 of 40,826 training strips are signature-only. Narrow
+  geometry makes short crops the *common* case, so the render must include those shapes or Lever 1
+  will make the exam worse. This is the failure mode to watch, not the resolution arithmetic.
+- ⚠ The 2026-07-28 result that splitting wide crops made things **worse** is not a refutation: that
+  split happened at decode time on a model trained on wide crops. It does say that half-measures are
+  a bad target — cut on barlines.
+- A re-slice changes which real strips are val-side, so `_realval_v2` and `_tupletval` must be
+  re-checked rather than assumed (same warning the content work carries).
+
+**The alternative shape of the same lever**, if the probe is positive but narrow crops prove too
+expensive: keep the crops and enlarge the encoder frame instead (Donut-Swin tiles its windows, so
+the input size can be raised with interpolated position embeddings). It costs the same compute per
+page, changes the ONNX bundle and the browser path, and is the more invasive of the two. Prefer the
+crop change; keep this in the drawer.
+
+
+## Lever 1's plan as written, for the record (moved 2026-08-17)
+
+The three-step plan Lever 1 carried before it was run. Steps 1 and 2 executed; step 3 is dead with
+the lever. Kept verbatim because the *reasoning* in step 1 — why the probe tiles a quiet window
+rather than replicating the last column — is the reusable part, and because a spent plan should be
+checkable against what was actually done. Moved from [rung3/levers.md](rung3/levers.md) at its cap.
+
+**What to run, in order:**
+
+1. **The causal probe, half a day, no GPU.**
+   `scripts/rung3/crop_geometry_probe.py --make-padded …` widens exam crops with **more of their own
+   empty staff**, which lowers resolution while leaving content and gold identical; decode each pad
+   factor with `eval_omr.py` and read the dose-response. ⚠ The obvious implementation — extend the
+   last column — was measured and **rejected before use**: the last column of an exam crop is 36% ink
+   at the median, because the crop ends on a barline, so replicating it would paint a black band and
+   change far more than the resolution. The probe tiles the strip's own quietest columns instead
+   (5.6% ink against a 4.6% blank-staff floor). It still has a tail: ~25 of 326 strips are dense
+   enough to have no quiet window, and the run prints how many. **Pre-registered reading, written
+   here before the run: monotone rise in edits/token → resolution is causal and Lever 1 proceeds;
+   flat within noise → the correlation is a confound and this lever is dropped, in writing, like the
+   five above it.**
+2. **A 300-strip pilot** at the new geometry through `domain_gap.py`, before any full render — the
+   same gate the content work carries. **Design and pre-registration signed 2026-08-17, before any
+   arm was rendered — see the block below.**
+3. Full render + **re-slice of the real pools** at matching constants, then the Round-2 recipe
+   unchanged. One variable.
+

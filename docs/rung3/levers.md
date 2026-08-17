@@ -83,25 +83,9 @@ one-measure crop is the natural unit of the carry convention. The carry-sig hall
 characterized on 2026-07-24 — accidentals invented on bare noteheads in mid-row crops that discarded
 their signature — is a bug about crops that straddle the context they need.
 
-**What to run, in order:**
-
-1. **The causal probe, half a day, no GPU.**
-   `scripts/rung3/crop_geometry_probe.py --make-padded …` widens exam crops with **more of their own
-   empty staff**, which lowers resolution while leaving content and gold identical; decode each pad
-   factor with `eval_omr.py` and read the dose-response. ⚠ The obvious implementation — extend the
-   last column — was measured and **rejected before use**: the last column of an exam crop is 36% ink
-   at the median, because the crop ends on a barline, so replicating it would paint a black band and
-   change far more than the resolution. The probe tiles the strip's own quietest columns instead
-   (5.6% ink against a 4.6% blank-staff floor). It still has a tail: ~25 of 326 strips are dense
-   enough to have no quiet window, and the run prints how many. **Pre-registered reading, written
-   here before the run: monotone rise in edits/token → resolution is causal and Lever 1 proceeds;
-   flat within noise → the correlation is a confound and this lever is dropped, in writing, like the
-   five above it.**
-2. **A 300-strip pilot** at the new geometry through `domain_gap.py`, before any full render — the
-   same gate the content work carries. **Design and pre-registration signed 2026-08-17, before any
-   arm was rendered — see the block below.**
-3. Full render + **re-slice of the real pools** at matching constants, then the Round-2 recipe
-   unchanged. One variable.
+**What was run, and the plan as written** → [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md). Steps 1
+(the padding probe) and 2 (the three-arm pilot) executed; step 3 — full render plus a matching
+re-slice — is dead with the lever. The verdict is below.
 
 ### ⛔ STEP 2 RESULT (2026-08-17) — the stop rule FIRED on the only arm that does anything
 
@@ -137,58 +121,66 @@ to cut **inside** measures — `split_wide` 25% → 76% → 94.7% — so the fir
 half-measure target by accident and "failed" the lever for the wrong reason. The cap must stay at 1450
 and `split_wide` is the tell, not the widths.
 
-### Step 2's design and its pre-registration (signed 2026-08-17, before any arm ran)
+### The pre-registration itself → [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md)
 
-**Three arms, one variable.** `maxMeasures` 4 (control, the corpus recipe), 2, and 1 — swept rather
-than picked, because the decode cost the winner carries is the owner's call and the numbers should be
-on the table when it is made. `--max-measures` on `render.ts` carries it, so the arms are one flag
-apart in the manner of `--thin-sharps` and `--staccato-noise`.
+The step-2 design and the stop rule **as signed**, kept verbatim so the result above can be checked
+against what was promised rather than against a memory of it. Moved there 2026-08-17 at this file's
+400-line cap: the lever is closed, so its pre-registration is history and belongs with its numbers.
 
-**Both sides move, or the measurement is meaningless.** The real pools on disk were cut at 3 / 1450,
-so narrowing only the synthetic side would *invert* the width gap rather than close it — and
-production slices real pages with our own slicer too. Each arm therefore also re-slices ~25 real
-pages at the matching rails (`OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W`), and **the control arm is a
-fresh re-slice, not the pools already on disk** — those predate the pale-line binarizer
-([../METRICS-SLICER.md](../METRICS-SLICER.md)), and reusing them would move two variables at once.
+## Lever 1b — FORM COVERAGE: the corpus is half şarkı, and the ornate vocal forms cost ~3×
 
-**⛔ The stop rule (owner, signed before the run).** An arm is **stopped, or must carry a short-shape
-render alongside**, if the re-sliced **real** side's share of crops under **10 gold tokens** more than
-**doubles** against the control re-slice. The real side is where the hole bites, because that is what
-the model reads at inference, and short crops are the worst thing it reads: **0.259 ed/token against
-a 0.03–0.05 baseline** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)). ⚠ The threshold is
-in `crop_geometry_probe.tokenize()`'s units — `domain_gap.py` cannot report it, since its
-`strips_<=3_notes_%` is a *note* count on a naive whitespace split.
+**NEW 2026-08-17, owner-reported then measured.** Using the product, the owner found many mistakes
+"especially in classical parts", **including on clean computer-generated PDFs**. Bucketing the spent
+Round-2 exam dump by form: **non-şarkı 1.73× şarkı's edits/token, and beste/nakış ~2.9×**. Training is
+**52.9% şarkı**, with beste at 3.8%, nakış 1.4% and kâr at **0%**. Numbers and every caveat:
+[../METRICS-EXAM.md](../METRICS-EXAM.md).
 
-**What a surviving arm must show:** strip width and tokens/strip moving *toward* the real pools'
-without overshooting them, the effective encoder spacing rising, and the strips/page cost stated so
-the render is priced before it is run ([../mvp/latency.md](../mvp/latency.md)).
+**Why this is ranked here rather than lower.** It is the only lever on this page that came from a
+person using the app, and this project's record on that is unusually good — the staccato hole, the
+kanun's koma, the tuplet mark's shape and the pale staff lines were all owner observations that
+survived measurement. It also needs **no new labels**: the piece list already has a `form` field.
 
-**⚠ What this pilot may NOT claim, written here so a later reader cannot borrow it.** Nothing about
-accuracy. `domain_gap.py` measures distribution similarity; the accuracy claim belongs to a trained
-arm and to nothing before it. Decoding narrow crops with `round2-stage2-best` would repeat the
-`width_split_probe` confound exactly — a model trained on wide crops cannot separate *"narrow is
-bad"* from *"never saw narrow"* — so the arms are **not decoded**.
+**What it does NOT say.** "Classical is hard" is refuted by its own table: peşrev (0.039) and
+yürüksemai (0.044) are the *cheapest* rows. What is expensive is the **dense ornate vocal** forms plus
+marş. So the mechanism is not the genre label; the candidates are what those forms actually contain —
+denser note values, longer usul cycles (therefore wider bars), and heavier ornamentation.
 
-**Costs and risks, stated up front:**
+⚠ **This partly rescues the content work** (the section at the bottom of this file), which is exactly
+"more eighth notes, denser bars" — but it gives it a **target** it never had. The 2026-07-27 version
+was a histogram exercise with no failing population to aim at; this names one.
 
-- ~3× more strips per page → decode time roughly triples. The page-splitting plan in
-  [../mvp/latency.md](../mvp/latency.md) exists for exactly this, and the current gate is accuracy,
-  not latency — but this is a real product cost and the owner should price it before the render.
-- ⚠ **The short-crop hole gets bigger before it gets smaller.** Crops under ~10 gold tokens are the
-  worst thing this model reads, because 0 of 40,826 training strips are signature-only. Narrow
-  geometry makes short crops the *common* case, so the render must include those shapes or Lever 1
-  will make the exam worse. This is the failure mode to watch, not the resolution arithmetic.
-- ⚠ The 2026-07-28 result that splitting wide crops made things **worse** is not a refutation: that
-  split happened at decode time on a model trained on wide crops. It does say that half-measures are
-  a bad target — cut on barlines.
-- A re-slice changes which real strips are val-side, so `_realval_v2` and `_tupletval` must be
-  re-checked rather than assumed (same warning the content work carries).
+**What to measure first, cheaply and with no training:**
 
-**The alternative shape of the same lever**, if the probe is positive but narrow crops prove too
-expensive: keep the crops and enlarge the encoder frame instead (Donut-Swin tiles its windows, so
-the input size can be raised with interpolated position embeddings). It costs the same compute per
-page, changes the ONNX bundle and the browser path, and is the more invasive of the two. Prefer the
-crop change; keep this in the drawer.
+1. **Confirm the mechanism before selecting on it.** Compare beste/nakış against şarkı on the things we
+   can already count from labels: notes per bar, share of 16th/32nd values, grace notes per 100 notes,
+   `\tup3` per 100 notes, bar width in px. `domain_gap.py` computes every one of those — run it with
+   the pools split by form instead of by source. If the ornate forms differ on *density*, the content
+   work is the lever; if they differ only on *ornament count*, it is a different fix.
+2. **Then grow the exam on those forms.** ⚠ The exam is **68.9% şarkı** — *more* song-weighted than the
+   training data — so it is nearly blind to this. Growing it on beste/nakış is the only way the signed
+   floor can ever register the defect, and it must happen **before** the next exam read.
+3. Only then re-select pieces. ⚠ A new list needs its own filename **and its own split**
+   (`scripts/make_split.py`), and it changes which real strips are val-side.
+
+⚠ **The low-n caveat is load-bearing**: ağırsemai is 2 strips, kâr 5, peşrev 6. Only şarkı (194) and
+yürüksemai (43) carry weight. The owner's report is what makes this worth acting on; the table is
+consistent with it, not proof of it.
+
+⛔ **AND THIS CANNOT BE FIXED BY LABELLING HARDER — the music is not on disk.** Measured 2026-08-17
+over the nota pool's 1,740 strips: **86.0% şarkı**, and the expensive forms total **118 strips** —
+beste 52, nakış 34, ağırsemai 22, kâr 10. Labelling every one of them perfectly would still not teach
+these forms. **So collection is a PREREQUISITE here, not an alternative** — which is what promotes the
+owner's 2026-08-17 broad-collection decision from "worth doing" to "the thing in front".
+
+**Sizing, so the ask is concrete rather than "more data".** At ~19 crops per page from the slicer,
+**~25–30 pages of beste/nakış/kâr yields ~500 strips**, taking those forms from ~5% of the real
+fine-tune set to ~20%. That is a fivefold coverage change for a few dozen pages — a much smaller ask
+than the "few thousand strips" the owner offered, and aimed where the errors are.
+
+⚠ **Growing the exam on the same forms is the other half and it is not optional**, because a training
+change nothing can measure is worth nothing. The exam is 68.9% şarkı; the signed floor would barely
+register a beste/nakış improvement. Exam growth must happen **before** the next read
+([exam.md](exam.md), and the power note at the bottom of this file).
 
 ## Lever 2 — decoding: we have never used anything but greedy
 

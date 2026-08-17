@@ -238,6 +238,21 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    **on easy+mid tiers only**. ⚠ `STACCATO_RATE` is **chosen, not measured**; counting staccato
    frequency in real editions is how to replace it. ⚠ Not sequenced ahead of 1g: it is a second
    render variable, and Round 3 has been unattributable twice already.
+1a. ⭐ **NEW 2026-08-17, AND IT RE-ORDERS THE TRACK — THE CORPUS IS THE WRONG SHAPE, NOT JUST SMALL.**
+   The owner reported from **using the product** that it makes many mistakes "especially in classical
+   parts", *including on clean computer-generated PDFs*. Measured on the spent Round-2 dump:
+   **non-şarkı runs 1.73× şarkı's edits/token, beste/nakış ~2.9×** ([METRICS-EXAM.md](METRICS-EXAM.md)).
+   Training is **52.9% şarkı**; the **exam is 68.9% şarkı**, so it is *more* song-weighted than the data
+   and nearly blind to the defect. ⛔ **And it cannot be fixed by labelling harder: the nota pool is
+   86.0% şarkı and holds only 118 strips of the expensive forms.** The music is not on disk.
+   ⏭ **So COLLECTION becomes the first move, not an extra** — specifically peşrev/beste/nakış/kâr/semai.
+   Sizing: **~25–30 pages of those forms ≈ 500 strips**, taking them from ~5% to ~20% of the real
+   fine-tune set. Exam growth on the same forms is the other half and must precede the next read.
+   ⚠ **A number I quoted was misleading and is corrected here**: the "94.8% on clean pages" tier figure
+   is **accidental** accuracy only, not page-level correctness — it never measured pitch or duration,
+   which are 68% of user fixes. The owner's hands-on report is the better evidence, and it is why the
+   clean-first launch idea below needs measuring rather than assuming. Lever:
+   [rung3/levers.md](rung3/levers.md) Lever 1b.
 1h2. **⏭ IN PROGRESS — THE OWNER IS HAND-CORRECTING REAL LABELS THIS WEEK** (owner, 2026-08-17),
    chosen over more synthetic experiments. The case: of the real labels checked so far in the nota
    pool, **531 needed fixing against 167 that were fine** — three in four wrong — and pitch is 40% of

@@ -17,6 +17,45 @@ is read once per round on the final model. All iteration happens on real-val, wh
 ⚠ **The AEU headline is a per-class mean and is fragile to low-n classes.** Quote micro and
 macro≥30 beside it; see the caveats in [METRICS.md](METRICS.md).
 
+## Errors by MUSICAL FORM (2026-08-17) — owner-reported, then measured
+
+**The owner reported it from using the product**: the app makes many mistakes "especially in classical
+parts", *including on clean computer-generated PDFs*. Bucketing the **already-spent** Round-2 exam
+error dump by the form in each strip's `piece` slug:
+
+| form | strips | gold tokens | edits | ed/token |
+|---|---|---|---|---|
+| marş | 13 | 126 | 46 | **0.365** |
+| nakış | 24 | 269 | 73 | **0.271** |
+| beste | 26 | 227 | 61 | **0.269** |
+| sirto | 9 | 92 | 15 | 0.163 |
+| ağırsemai | 2 | 26 | 3 | 0.115 |
+| **şarkı** | **194** | 2166 | 201 | **0.093** |
+| kâr-ı nâtık | 5 | 55 | 4 | 0.073 |
+| zeybek | 4 | 92 | 6 | 0.065 |
+| yürüksemai | 43 | 455 | 20 | 0.044 |
+| peşrev | 6 | 103 | 4 | 0.039 |
+
+**Non-şarkı runs 1.73× şarkı's rate (0.161 vs 0.093), and beste/nakış run ~2.9×.**
+
+- ⚠ **"Classical" is the wrong category** and the table says so: peşrev (0.039) and yürüksemai (0.044)
+  are the *best* rows. What is expensive is the dense ornate **vocal** forms — beste, nakış — plus
+  marş, which is not Turkish art music at all. Any explanation has to fit that shape.
+- ⚠ **Tiny n per form**: ağırsemai 2 strips, kâr 5, peşrev 6, zeybek 4, sirto 9, marş 13. Only şarkı
+  (194) and yürüksemai (43) carry any weight. Treat everything else as a direction.
+- ⚠ Totals are `crop_geometry_probe`'s own re-alignment (433 edits where `eval_omr` reports 562), so
+  ratios only — never quote these as absolutes.
+
+**Why it matters more than its n suggests: the exam cannot see this.** The exam is **68.9% şarkı** (31
+of 45 entries) against a training corpus that is 52.9% şarkı — so the exam is *more* song-weighted than
+the data, and the signed page-level floor would barely move if the ornate forms got worse. Same shape
+as the staccato finding: the owner's eye found something the exam is nearly blind to.
+
+**Training coverage on the expensive forms** ([../data/pieces_v4.json](../data/pieces_v4.json), 208
+pieces): beste **3.8%**, nakış **1.4%**, ağırsemai 1.9%, kâr **0%**. The forms at ~3× the error rate
+are ~5% of everything the model has practised on. Coverage and error rate line up; the lever is in
+[rung3/levers.md](rung3/levers.md).
+
 ## Model quality — real exam (never trained on, read once per round)
 
 | Read | Date | Set | AEU recall | AEU F1 | SER | Exact |

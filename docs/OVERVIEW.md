@@ -61,63 +61,13 @@ checked four hunches about *why* the model makes mistakes. Three did not survive
 kept because the reasoning stops us re-proposing them — the short do-not-repeat list is near the
 bottom of this page.
 
-## What we found on 15 August 2026 — the model may simply not see the page well enough
+## The "can the model even see the page?" idea → [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md)
 
-Five ideas in a row have now failed their test, and every one of them asked the same question: *are
-we drawing something wrong?* So on 15 August we asked a different one — **how much of the picture
-does the model actually get to look at?**
-
-The model has a fixed-size window: 409 by 583 dots. A strip of music is turned on its side and
-shrunk to fit. A normal strip of ours is about two and a half times too long for that window, so it
-gets shrunk to **half size** and **61% of the window is left over as empty black**. After that, the
-gap between two staff lines is 14 dots, and the difference between a note *on* a line and one *in*
-the space above it is about **7 dots** — very little for the two mistakes we make most: which note it
-is, and how long it is.
-
-Then we checked the results we already had. Comparing strips carrying the **same amount of music**,
-the most-shrunk third cost **2.4 times as many corrections per note**. Longer strips are not the
-problem — *more shrunken* ones are.
-
-✅ **The experiment ran on 15 August and it worked.** We made real test strips artificially wider by
-pasting in blank staff from the same strip — identical music, identical answer key, the only change
-being *more shrinking*. Mistakes went up at **every** step, 59% worse at the extreme, and it repeated
-on a second, separate set of pages. So shrinking genuinely does cost accuracy. That much is solid.
-
-## What happened on 17 August 2026 — we cannot buy the reverse, and we stopped the idea
-
-Showing that shrinking **hurts** is not the same as showing that un-shrinking **helps**. So we tested
-whether we could actually cut strips narrower and give the model a better look. **We can't, and there
-is no room to.** Two reasons, both measured:
-
-1. **Real pages are already at the good size.** The blank-paper test's own starting point — normal,
-   unpadded strips — was *already* at 19.2 dots between staff lines. That is simply what a real test
-   page looks like. To do better, a strip would have to be narrower than **one bar of music**, which
-   means cutting through the middle of a bar. We tested that in July: **32% worse**.
-2. **Cutting to one bar per strip causes a worse problem than it solves.** Very short strips are the
-   single worst thing this model handles — it gets almost everything wrong on them, because among
-   40,826 practice pictures there is not one that is just a key signature with no notes. It has never
-   seen that shape. Cutting real pages to one bar each took those tiny strips from **0.8% to 4.3%** of
-   all strips — five times more.
-
-**We wrote down before running the test that "more than double" would kill the idea.** It came out at
-five times. So the idea is dead, and it died by a rule set in advance rather than one invented
-afterwards to fit the answer. That is the whole point of writing the rule down first.
-
-**What we did get, and it is cheap and real.** Our practice pictures reach the model at **16 dots**
-between staff lines; real test pages arrive at **19.2**. So **the model practises on blurrier music
-than it is examined on** — a 20% handicap we created ourselves. Cutting only the *practice* pictures to
-one bar each fixes exactly that. It costs 13% more practice pictures and changes nothing about how real
-pages are sliced, so none of the problems above apply. Worth doing; we cannot know whether it helps
-until we retrain.
-
-⚠ **Two numbers in our own notes were wrong, and both had been frightening us off this.** We believed
-it would cost **3× more computing per page** (real answer: **1.22×**) and **3× more practice pictures**
-(real answer: **1.13×**). Both came from confusing the tool that cuts *real* pages with the one that
-prints our *practice* pages — they are separate and only the first has a width limit at all.
-
-⚠ **And the "very short strip" weakness is now the blocker on this whole idea**, not a footnote. We set
-it aside in July because our *explanation* for it turned out to be wrong — but its *cost* was never in
-doubt, and it is now the thing standing in front of the only version of this change that works.
+Tested 15 August, **closed 17 August**. Short version: making a strip artificially wider (so the model
+shrinks it more) genuinely does cost accuracy — but we then found we cannot buy the reverse, because
+real pages are *already* at the good size, and cutting them smaller than one bar creates a worse
+problem than it solves. It was stopped by a rule written down before the test ran. Two numbers we had
+been believing turned out to be three times too pessimistic. Full account on that page.
 
 ## Where we are right now
 
@@ -319,6 +269,42 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    described further up. Shrinking does cost accuracy; we cannot buy the reverse. What is left of it is
    one cheap change: **print the practice pictures one bar per strip** so the model stops practising on
    blurrier music than it is tested on. 13% more pictures, nothing else moves.
+1b2. ⭐ **17 August — THE BIGGEST FINDING IN A WHILE, AND IT CAME FROM YOU USING THE APP.** You
+   reported that it makes many mistakes "especially in classical parts", **even on clean pages made by
+   a computer**. That turned out to be measurable and true:
+
+   | kind of piece | mistakes per note |
+   |---|---|
+   | marş | 0.365 |
+   | **nakış** | **0.271** |
+   | **beste** | **0.269** |
+   | **şarkı** (ordinary songs) | **0.093** |
+   | yürüksemai | 0.044 |
+   | peşrev | 0.039 |
+
+   **Anything that is not a şarkı costs about 1.7× as many fixes, and beste and nakış about 3×.**
+   Note that peşrev and yürüksemai are the *best* rows — so it is not "classical is hard", it is the
+   dense, heavily ornamented **vocal** forms specifically.
+
+   Now the reason this matters so much: **our practice music is 53% şarkı and our exam is 69% şarkı.**
+   So the exam is even more song-heavy than the training material, which means **our official score
+   cannot see the problem you found in a few minutes of real use.** That is the second time your own
+   ears and eyes have found something every green tick missed.
+
+   ⛔ **And you cannot fix it by labelling harder — the music is not on the disk.** Of the 1,740 real
+   strips we have, **86% are şarkı**, and the expensive forms come to **118 strips** in total. Even
+   labelling every one perfectly would not teach the model those forms.
+
+   ⏭ **So collecting more sheet music moves to the front** — specifically peşrev, beste, nakış, kâr and
+   semai. Encouragingly it is a small ask, not a huge one: **about 25–30 pages of those forms gives
+   ~500 strips**, taking them from 5% of the real training material to about 20%. The exam needs to
+   grow on the same forms too, or an improvement there would not show up in the score.
+
+   ⚠ **A number I gave you earlier was misleading and I am correcting it here.** I said the model reads
+   clean computer-set pages at 94.8%. That figure is **only about the tiny microtonal marks** — it never
+   measured the notes or their lengths, which are two-thirds of what you fix. Your experience of real
+   PDFs is the better evidence, and it is why "publish for clean pages first" now has to be measured
+   properly rather than assumed.
 1c2. ⏭ **THIS WEEK — you are hand-correcting real answer keys, and that is the better bet.** Why:
    of the real answers we have checked so far, **531 needed fixing against 167 that were fine — three
    in four wrong.** And the note itself is 40% of what a user fixes. If the answers we train on have
@@ -332,6 +318,13 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    ⚠ **Look at the note and its length, not just the tiny marks.** Every check we have ever done went
    looking for the tiny marks, because that is what the old score measured. Notes and lengths are
    two-thirds of the problem and nobody has ever checked them.
+   ⚠ **Old handwritten sheets: mark them `bad` and move on** (your call, 17 August). There are real
+   handwritten pages mixed into the scans — the project had assumed everything was printed. Handwriting
+   is a genuinely different and harder problem (not one of our 40,826 practice sheets looks anything
+   like it), so it gets its own effort later rather than being smuggled into this one.
+   ⚠ **Honest expectation on yield:** on this queue, two clicks in three just confirm the model was
+   already right. That is the price of the queue being safe. Filtering for bars whose note lengths do
+   not add up (your choice, 17 August) is how we raise it.
    ⚠ **You were right to ask whether the pictures were out of date, and it nearly cost you the week.**
    Some of the tabs show pictures cut by the *old* version of the page-cutter: we measured it, and
    **18 of 20 pages there would throw your work away** — the same way you lost 130 answers in July.

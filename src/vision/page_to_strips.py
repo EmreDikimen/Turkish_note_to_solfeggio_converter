@@ -24,6 +24,7 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from pathlib import Path
+from typing import Callable
 
 import cv2
 import numpy as np
@@ -230,9 +231,14 @@ SKEW_MAX_DEG = 7.0      # search range; beyond this it's perspective/curl (rotat
 SKEW_DEADBAND_DEG = 0.3  # don't rotate an essentially-straight page (avoid interpolation blur)
 SKEW_MIN_GAIN = 3        # ... and only rotate if it buys >= this many more staff-line rows
 
-def _qualifying_line_rows(gray: np.ndarray) -> int:
-    """#clustered staff-line rows detect_staves() would see — its len<2 gate is the 0-staff cliff."""
-    ink = binarize_ink(gray)
+def _qualifying_line_rows(gray: np.ndarray, binarize=None) -> int:
+    """#clustered staff-line rows detect_staves() would see — its len<2 gate is the 0-staff cliff.
+
+    `binarize` lets estimate_skew() pass the page's chosen binarizer (page_binarizer). It matters:
+    on a pale-line page Otsu leaves nothing to measure, so the sweep maximizes noise and returns an
+    angle that ROTATES THE PAGE WRONG — measured at +7.5 deg where the truth was about -0.25.
+    """
+    ink = (binarize or binarize_ink)(gray)
     hor_len = max(20, gray.shape[1] // 4)
     horiz = cv2.morphologyEx(
         ink, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (hor_len, 1))
@@ -257,13 +263,14 @@ def estimate_skew(gray: np.ndarray) -> tuple[float, int, int]:
         small = cv2.resize(gray, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
     h, w = small.shape
     c = (w / 2, h / 2)
+    binz = page_binarizer(small)   # decided once; a property of the page, not of the rotation
 
     def rows_at(a: float) -> int:
         if a == 0.0:
-            return _qualifying_line_rows(small)
+            return _qualifying_line_rows(small, binz)
         M = cv2.getRotationMatrix2D(c, a, 1.0)
         rot = cv2.warpAffine(small, M, (w, h), flags=cv2.INTER_LINEAR, borderValue=255)
-        return _qualifying_line_rows(rot)
+        return _qualifying_line_rows(rot, binz)
 
     rows0 = rows_at(0.0)
     coarse = [(rows_at(a), a) for a in np.arange(-SKEW_MAX_DEG, SKEW_MAX_DEG + 0.01, 0.5)]
@@ -317,8 +324,46 @@ def prep_page(gray: np.ndarray) -> tuple[np.ndarray, bool, float]:
 # (it sharpens the angle peak), whereas here sensitivity is what we want.
 STAFF_HOR_FRAC = 0.11
 
-def detect_staves(ink: np.ndarray) -> list[Staff]:
-    """Find 5-line staff systems via a horizontal-opening + row projection, then group lines."""
+# ---------------------------------------------------------------- pale-staff-line binarization
+# binarize_ink() is global Otsu, which splits the page into TWO classes. A page with black
+# noteheads and pale staff lines has THREE (paper / line / note), and Otsu puts the line on the
+# paper side: measured on a 1056px re-scanned photocopy, paper=253, staff lines=219, noteheads=27,
+# Otsu threshold=156 -> every staff line erased, 0 staves, 0 strips, while the notes survived
+# intact. The damage compounds: estimate_skew() gates on the same staff-line rows, so with the
+# lines gone it returns a garbage angle (+7.5 deg on that page) and the rotation destroys what was
+# left.
+#
+# The fallback thresholds relative to the PAPER instead. It is gated hard, because a wider guard
+# is actively harmful: an earlier version fired whenever no row spanned half the page width, which
+# is true of many perfectly readable pages (detect_staves itself only needs 20%) -- measured over
+# the 2,987-page real corpus it fired on 65 working pages and pushed 62 of them from 9-11 staves
+# to ZERO. The guard below only fires where Otsu exposes almost no staff line at all, and only
+# wins when what it finds is shaped like a staff. Over the same 2,987 pages, re-measured 2026-08-17
+# by scripts/rung3/pale_line_probe.py: the fallback is TRIED on 93 and BELIEVED on 37 -- every one
+# of the 37 already at 0 staves, so 37 recovered and 0 regressions, and 0 staves overall falls
+# 144 -> 107. (Those two counts are different quantities; this comment used to give 93 as the
+# number that fired.) Of the 56 tried but not believed, 51 find nothing either and 5 are refused
+# by the shape check below.
+PALE_LINE_MIN_ROWS = 4   # fewer clustered staff-line rows than this = Otsu found no staff at all
+PALE_LINE_DELTA = 25     # ink is anything this much darker than the paper
+
+# What the fallback's result must look like to be believed, as interline / page height. Many of the
+# pages Otsu reports 0 staves on are LYRICS pages that genuinely have no staff, and on those a more
+# sensitive binarization finds text baselines and groups them into "staves" with interlines of
+# 90-471px. Measured over the 2,843 corpus pages that detect staves today, interline/height sits
+# between 0.29% and 0.73% for 99 of every 100; this band is deliberately wider than that on both
+# sides, so it rejects only the absurd. Re-measured 2026-08-17: it refuses 5 pages, all of them for
+# being too COARSE (0.0387-0.2014), while the 37 it believes sit at 0.0035-0.0152.
+PALE_LINE_MIN_REL = 0.0025
+PALE_LINE_MAX_REL = 0.02
+
+
+def _staff_line_rows(ink: np.ndarray) -> list[int]:
+    """detect_staves()' candidate staff-line rows — the opening + row projection, on its own.
+
+    Shared with binarize_page_ink() so the fallback's guard is measured against the SAME signal
+    detect_staves gates on, rather than a second rule that could drift away from it.
+    """
     h, w = ink.shape
     # keep only long horizontal structures (staff lines), drop noteheads/stems/text
     hor_len = max(20, int(w * STAFF_HOR_FRAC))
@@ -330,7 +375,60 @@ def detect_staves(ink: np.ndarray) -> list[Staff]:
         return []
     # candidate staff-line rows: strong horizontal ink
     thr = max(row_ink.max() * 0.3, w * 0.2)
-    line_rows = _cluster_rows(np.where(row_ink > thr)[0])
+    return _cluster_rows(np.where(row_ink > thr)[0])
+
+
+def _binarize_paper_relative(gray: np.ndarray) -> np.ndarray:
+    """Ink = anything PALE_LINE_DELTA darker than the paper. The paper level is re-measured per
+    call because deskew's rotation pads with white, which shifts the page's brightness histogram.
+
+    ⚠ The comparison is `>=`, not `>`, and that is not a detail. A scan whose paper is one flat
+    value (the page this was built for is 78% exactly 253) has NOTHING strictly above its own 60th
+    percentile, so `>` takes the median of an EMPTY array -> nan -> `gray < nan` is all False ->
+    an empty ink mask and 0 staves. It read as working only because deskew pads its rotation with
+    white and cubic upscaling overshoots, both of which happen to introduce a few brighter pixels;
+    an unrotated page at native scale got an empty mask.
+    """
+    paper = float(np.median(gray[gray >= np.percentile(gray, 60)]))
+    return ((gray < paper - PALE_LINE_DELTA).astype(np.uint8) * 255)
+
+
+def page_binarizer(gray: np.ndarray) -> Callable[[np.ndarray], np.ndarray]:
+    """Choose ONCE which binarizer this page needs — see the note above.
+
+    Returned rather than applied because estimate_skew() binarizes 41 times (one per rotation) and
+    the choice is a property of the page, not of the rotation; deciding per call would triple the
+    cost of the sweep, which is already the slowest thing the slicer does.
+
+    PAGE level only. binarize_ink() is also called per-row by the barline gates, where this guard
+    is meaningless (one row holds exactly one staff) and the extra opening is pure cost.
+    """
+    otsu = binarize_ink(gray)
+    if len(_staff_line_rows(otsu)) >= PALE_LINE_MIN_ROWS:
+        return binarize_ink
+    # Otsu exposes no staff here, so the fallback has nothing to lose -- but it does have something
+    # to INVENT, which is what the shape check is for: most pages that reach this point are lyrics
+    # pages with no staff at all, and a more sensitive threshold happily groups their text baselines
+    # into "staves". Believe the fallback only when what it finds is shaped like a staff.
+    staves = detect_staves(_binarize_paper_relative(gray))
+    if not staves:
+        return binarize_ink
+    interline = float(np.median([np.median(np.diff(s.lines)) for s in staves]))
+    rel = interline / gray.shape[0]
+    if not (PALE_LINE_MIN_REL <= rel <= PALE_LINE_MAX_REL):
+        return binarize_ink
+    return _binarize_paper_relative
+
+
+def binarize_page_ink(gray: np.ndarray) -> np.ndarray:
+    """binarize_ink() for a whole PAGE, with the pale-staff-line fallback."""
+    return page_binarizer(gray)(gray)
+
+
+def detect_staves(ink: np.ndarray) -> list[Staff]:
+    """Find 5-line staff systems via a horizontal-opening + row projection, then group lines."""
+    h, w = ink.shape
+    line_rows = _staff_line_rows(ink)
     if len(line_rows) < 2:
         return []
     # group consecutive lines into systems: a gap >> median spacing starts a new system
@@ -974,7 +1072,7 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
     # perspective-rectify an obliquely-shot page + deskew residual rotation; no-op on clean scans,
     # and the crop is auto-discarded when it doesn't improve staff detectability (see prep_page)
     page, cropped, skew_angle = prep_page(page)
-    ink = binarize_ink(page)
+    ink = binarize_page_ink(page)
     # one page-level labelling, reused by every row: it is how normalize_row tells THIS row's
     # music (connected to its staff) from a neighbouring system or page furniture
     lab = cv2.connectedComponents((ink > 0).astype(np.uint8), connectivity=8)[1] \

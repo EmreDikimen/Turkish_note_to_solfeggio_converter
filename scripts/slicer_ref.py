@@ -42,7 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from vision.page_to_strips import (  # noqa: E402
     VPLACE_ADAPTIVE,
-    binarize_ink,
+    binarize_page_ink,
     detect_barlines,
     detect_staves,
     load_gray,
@@ -131,7 +131,7 @@ def stage1(image: Path) -> dict:
     """Everything page_to_strips() does before window_measures (L962-982)."""
     gray = load_gray(image)
     page, cropped, skew = prep_page(gray)
-    ink = binarize_ink(page)
+    ink = binarize_page_ink(page)   # PAGE level, like page_to_strips (pale-line fallback)
     lab = (
         cv2.connectedComponents((ink > 0).astype(np.uint8), connectivity=8)[1]
         if VPLACE_ADAPTIVE

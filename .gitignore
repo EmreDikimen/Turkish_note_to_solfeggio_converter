@@ -47,6 +47,11 @@ venv.bak/
 # Local test photos / scratch sheets (not redistributed)
 test_images/
 
+# The slicer port's Python control arm (`scripts/slicer_ref.py --out ref.json`, see CLAUDE.md). A
+# generated artifact, ~1.2 MB, and it goes STALE the moment the slicer changes — committing it would
+# invite `parity:slicer` being run against a reference that predates the code it is checking.
+/ref.json
+
 # Real reference scores / neyzen strips (copyrighted; not redistributed).
 # The frozen Rung-3 exam list (testset.json — names/counts only, no copyrighted content) IS
 # committed, which needs the negation chain below (git can't re-include inside an ignored DIR).

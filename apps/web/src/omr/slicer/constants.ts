@@ -63,6 +63,20 @@ export const TRIM_SHARED_EDGE = true; // L102 (OMR_EDGE_TRIM unset => "1")
 // not the older 0.25: the long kernel erased faint/short bottom systems.
 export const STAFF_HOR_FRAC = 0.11;
 
+// ---- pale-staff-line binarization (L361-362) --------------------------------------------------
+// Why the fallback exists and why its guard is this narrow: `pageBinarizer` in staves.ts.
+export const PALE_LINE_MIN_ROWS = 4; // fewer clustered line rows than this = Otsu found no staff
+export const PALE_LINE_DELTA = 25; // ink is anything this much darker than the paper
+
+// What the fallback's result must look like to be believed, as interline / page height. Many pages
+// Otsu reports 0 staves on are LYRICS pages that genuinely have no staff, and on those a more
+// sensitive binarization finds text baselines and groups them into "staves" with interlines of
+// 90-471 px. Measured over the 2,843 corpus pages that detect staves today, interline/height sits
+// between 0.29% and 0.73% for 99 of every 100; this band is deliberately wider on both sides, so it
+// rejects only the absurd. Without it the fallback invents staves on 13 lyrics pages.
+export const PALE_LINE_MIN_REL = 0.0025;
+export const PALE_LINE_MAX_REL = 0.02;
+
 /**
  * Python's `round()` — half-to-EVEN — which JavaScript's `Math.round` (half-UP) is not.
  *

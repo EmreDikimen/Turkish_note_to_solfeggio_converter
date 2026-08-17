@@ -18,10 +18,10 @@ import {
   VPLACE_ADAPTIVE,
   pyRound,
 } from "./constants";
-import { binarizeInk, connectedComponents, subCols, type Gray, type Labels } from "./cvOps";
+import { connectedComponents, subCols, type Gray, type Labels } from "./cvOps";
 import { prepPage, prepPageWithAngle } from "./prepPage";
 import { normalizeRow, type NormalizedRow } from "./rows";
-import { detectStaves, type Staff } from "./staves";
+import { binarizePageInk, detectStaves, type Staff } from "./staves";
 import { windowMeasures, type Window } from "./windows";
 
 export interface Stage1Row {
@@ -76,7 +76,7 @@ export interface Stage2Result extends Omit<Stage1Result, "rows"> {
 export function sliceStage1(gray: Gray, opts: Stage1Options = {}): Stage1Result {
   const { gray: page, cropped, skewDeg } =
     opts.skewDeg === undefined ? prepPage(gray) : prepPageWithAngle(gray, opts.skewDeg);
-  const ink = binarizeInk(page);
+  const ink = binarizePageInk(page);
   // one page-level labelling, reused by every row: it is how normalize_row tells THIS row's music
   // (connected to its staff) from a neighbouring system or page furniture
   const lab = VPLACE_ADAPTIVE ? connectedComponents(ink) : null;

@@ -97,6 +97,71 @@ export function binarizeInk(gray: Gray): Gray {
   return out;
 }
 
+/** The k-th smallest byte (0-indexed) of a 256-bin histogram — the order statistic both stats need. */
+function orderStat(hist: Float64Array, k: number): number {
+  let seen = 0;
+  for (let v = 0; v < 256; v++) {
+    seen += hist[v]!;
+    if (seen > k) return v;
+  }
+  return 255;
+}
+
+function histOf(data: Uint8Array, ge: number): { hist: Float64Array; n: number } {
+  const hist = new Float64Array(256);
+  let n = 0;
+  for (let i = 0; i < data.length; i++) {
+    const v = data[i]!;
+    if (v >= ge) {
+      hist[v]! += 1;
+      n++;
+    }
+  }
+  return { hist, n };
+}
+
+/**
+ * `np.percentile(gray, q)` over 8-bit pixels, with numpy's DEFAULT "linear" interpolation.
+ *
+ * Built from a 256-bin histogram rather than by sorting — millions of byte-valued pixels, so the
+ * histogram is exact and O(n). The interpolation is not cosmetic: the result feeds a `>` comparison
+ * in `pageBinarizer`, and a half-step there moves which pixels count as paper.
+ */
+export function percentileUint8(data: Uint8Array, q: number): number {
+  const n = data.length;
+  if (n === 0) return NaN;
+  const { hist } = histOf(data, 0);
+  const pos = (q / 100) * (n - 1);
+  const lo = Math.floor(pos);
+  const frac = pos - lo;
+  const vLo = orderStat(hist, lo);
+  if (frac === 0) return vLo;
+  return vLo + (orderStat(hist, Math.min(lo + 1, n - 1)) - vLo) * frac;
+}
+
+/**
+ * `np.median` over the 8-bit pixels at or above `ge` — averages the two middle values on an even count.
+ *
+ * ⚠ At-or-above, not strictly-above. A scan whose paper is one flat value (the page this was built
+ * for is 78% exactly 253) has NOTHING strictly above its own 60th percentile, so `>` medians an
+ * EMPTY set -> NaN -> an empty ink mask and 0 staves.
+ */
+export function medianUint8AtLeast(data: Uint8Array, ge: number): number {
+  const { hist, n } = histOf(data, ge);
+  if (n === 0) return NaN;
+  const mid = n >> 1;
+  return n % 2 === 1
+    ? orderStat(hist, mid)
+    : (orderStat(hist, mid - 1) + orderStat(hist, mid)) / 2;
+}
+
+/** `gray < level` as an ink mask (ink = 255) — the paper-relative fallback's thresholding step. */
+export function thresholdBelow(gray: Gray, level: number): Gray {
+  const out = new Uint8Array(gray.data.length);
+  for (let i = 0; i < gray.data.length; i++) out[i] = gray.data[i]! < level ? 255 : 0;
+  return { width: gray.width, height: gray.height, data: out };
+}
+
 /**
  * MORPH_OPEN with a `len`×1 rectangle — `detect_staves` L315-317. Keeps long horizontals only.
  *

@@ -19,7 +19,7 @@
  */
 import { pyRound } from "./constants";
 import { binarizeInk, openHorizontalRowSums, resizeScale, rotate, type Gray } from "./cvOps";
-import { clusterRows } from "./staves";
+import { clusterRows, pageBinarizer } from "./staves";
 
 // ---- deskew (L219-221) -------------------------------------------------------------------------
 export const SKEW_MAX_DEG = 7.0; // search range; beyond this it is perspective/curl
@@ -33,8 +33,8 @@ export const SKEW_MIN_GAIN = 3; // ... and only if it buys >= this many more sta
  * not a proxy for it. Note the kernel is the OLD long `w // 4`, deliberately: here intolerance
  * sharpens the angle peak, where `detect_staves` wants sensitivity and uses STAFF_HOR_FRAC.
  */
-export function qualifyingLineRows(gray: Gray): number {
-  const ink = binarizeInk(gray);
+export function qualifyingLineRows(gray: Gray, binarize: (g: Gray) => Gray = binarizeInk): number {
+  const ink = binarize(gray);
   const horLen = Math.max(20, Math.floor(gray.width / 4));
   // The row sums of `openHorizontal(ink, horLen)`, computed in closed form instead of by running
   // the morphology — an exact substitution that removes the single most expensive call in the
@@ -90,8 +90,10 @@ function* skewSearch(gray: Gray): Generator<number, SkewEstimate, void> {
     small = resizeScale(gray, s, s);
   }
 
+  // decided once; the choice is a property of the page, not of the rotation (see `pageBinarizer`)
+  const binz = pageBinarizer(small);
   const rowsAt = (a: number): number =>
-    a === 0.0 ? qualifyingLineRows(small) : qualifyingLineRows(rotate(small, a));
+    a === 0.0 ? qualifyingLineRows(small, binz) : qualifyingLineRows(rotate(small, a), binz);
 
   // Python compares (rows, angle) TUPLES, so ties on the row count are broken by the larger angle,
   // and `max` keeps the first strictly-greater item. Both details are reproduced here.

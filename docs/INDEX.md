@@ -29,6 +29,7 @@ wrong — fix by deleting, not by syncing.
 | What did the one-shot real exam score, in any round? | [METRICS-EXAM.md](METRICS-EXAM.md) |
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
+| What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |
 | Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |
 | How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |
 | How a row is cut into strips — the windowing retune, the crop frame, the geometry rails | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |

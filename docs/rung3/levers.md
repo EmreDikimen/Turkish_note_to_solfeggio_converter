@@ -39,10 +39,16 @@ listed below in the order their evidence-per-hour justifies, not in the order th
 > ✅ **THE PROBE RAN 2026-08-15 AND THE PRE-REGISTERED READING IS THE CAUSAL BRANCH.** Padding the
 > exam crops with their own empty staff raises edits/token **monotonically across all four doses**,
 > the bootstrap CI excludes zero from ×1.50 on, and the real-val holdout replicates **steeper**. The
-> unpadded arms reproduced both recorded baselines exactly. **This lever proceeds to step 2 below.**
-> Numbers, caveats and the artifact sensitivity check: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md), "The padding probe".
-> ⚠ The probe lowers resolution; it does not prove raising it helps. The short-crop hole below is
-> still the failure mode to design against, and step 2 is still a pilot, not a render.
+> unpadded arms reproduced both recorded baselines exactly. **Numbers and caveats:**
+> [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md), "The padding probe".
+>
+> ⛔ **AND STEP 2 THEN STOPPED THE LEVER (2026-08-17).** The caveat this box already carried — *the
+> probe lowers resolution and does not prove raising it helps* — turned out to be the whole story:
+> the probe's own ×1.00 baseline **was** the exam's 19.2 px, so there is nothing above it to reach
+> without cutting inside measures. The measure rail is a no-op on the synthetic side at anything but
+> 1, and on the real side the 1-measure arm trips the pre-registered short-crop stop rule at **5.4×**
+> the control. **Result and what survives: the STEP 2 RESULT block below.** Both statements stand —
+> squashing crops costs edits, and we cannot buy the reverse.
 
 **The finding.** The encoder frame is a fixed **409×583**; a strip is rotated and fitted into it, so
 the net scale is `min(583/W, 409/H)`. We cut strips at 3 measures / up to 1450 px, which means the
@@ -96,6 +102,40 @@ their signature — is a bug about crops that straddle the context they need.
    arm was rendered — see the block below.**
 3. Full render + **re-slice of the real pools** at matching constants, then the Round-2 recipe
    unchanged. One variable.
+
+### ⛔ STEP 2 RESULT (2026-08-17) — the stop rule FIRED on the only arm that does anything
+
+Numbers, both sides, in [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md). Read against the
+pre-registration below, which was signed before the arms ran and is **not** re-opened now.
+
+1. **The measure rail is not the lever on the synthetic side** — the 56-**token** budget binds first,
+   so the renderer was already emitting one measure per strip 87% of the time.
+2. **It cannot raise resolution at all**, only close a *training* gap. The padding probe's ×1.00
+   baseline **was** the exam's own spacing, and exceeding it needs crops narrower than one measure —
+   the half-measure target already measured at **+31.8% worse**.
+3. **Both costs this file carried were wrong**, and much lower than feared.
+4. ⛔ **The stop rule fires**: short crops on the re-sliced real side reach **5.4×** the control
+   against a **2×** threshold. Arm 1 is stopped; arm 2 survives and does nothing. A rough independent
+   estimate agrees — the resolution gain and the short-crop cost are the same size, sign probably
+   negative.
+
+**So the lever as written is spent, and it is written up as spent rather than re-aimed.** Two things
+survive it and neither is a version of "narrow the crops":
+
+- **A real, cheap, separable change**: render the corpus at **one measure per strip** to remove the
+  16.0-vs-19.2 px *training* gap, for +12.9% strips and no change to the slicer, therefore **no
+  decode cost and no short-crop risk at all** — the stop rule is about the *real* side, which this
+  does not touch. ⚠ Untested as an accuracy claim; it needs a trained arm like anything else.
+- **The short-crop hole is now the blocking item on this axis, not a side condition.** It was dropped
+  in July on a disproved *mechanism* (§3 of [round3.md](round3.md)) while its **cost** was confirmed,
+  and it is what stops the only geometry arm that works. Any return to crop geometry goes through it
+  first.
+
+⚠ **One arm design error is recorded with the result**, because it produced numbers that looked
+decisive and were not: pairing each arm with a lowered `MAX_STRIP_W` (800, 500 px) forced `_split_wide`
+to cut **inside** measures — `split_wide` 25% → 76% → 94.7% — so the first run measured the
+half-measure target by accident and "failed" the lever for the wrong reason. The cap must stay at 1450
+and `split_wide` is the tell, not the widths.
 
 ### Step 2's design and its pre-registration (signed 2026-08-17, before any arm ran)
 

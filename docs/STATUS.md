@@ -6,17 +6,20 @@ updated: 2026-08-17
 
 ## Now
 
-⭐ **THE CROP-GEOMETRY PROBE RAN AND IT IS CAUSAL — the first of Round 3's six pre-render checks to
-come back positive, and the first that is not about what we draw.** Padding exam crops with more of
-**their own empty staff** (content and gold untouched, only the encoder's resolution falling) raises
-edits/token **monotonically across all four doses — 0.052 → 0.059 → 0.061 → 0.070 → 0.083, +59%** —
-with the paired bootstrap CI excluding zero from ×1.50 on, and the **real-val holdout replicating
-steeper (+61%)**. Both unpadded arms reproduced their recorded baselines exactly, the exam's to the
-edit (562). **So the next render is a GEOMETRY render and the content work is sequenced behind it.**
-⚠ It shows lowering resolution **costs** edits; it does not show raising it **pays** — that is the
-300-strip pilot's job, and the **short-crop hole** is what it must watch. ⚠ A second look at a spent
-exam read; the Round-3 exam is still read once, on the final model. Numbers:
-[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) · lever and next step: [rung3/levers.md](rung3/levers.md).
+⛔ **LEVER 1 IS SPENT: THE GEOMETRY PILOT RAN AND THE PRE-REGISTERED STOP RULE FIRED.** The padding
+probe (2026-08-15) was causal — squashing exam crops raises edits/token monotonically, +59%, holdout
++61%. The pilot (2026-08-17) then found we **cannot buy the reverse**: that probe's ×1.00 baseline
+*was* the exam's own **19.2 px**, and exceeding it needs crops under 479 px, i.e. narrower than one
+measure — the half-measure target already measured at **+31.8% worse**. On the synthetic side
+`maxMeasures = 2` is a **no-op** (87% of strips were already one measure; the 56-**token** budget binds
+first). On the real side the 1-measure arm raises encoder spacing 17.3 → 21.1 px but takes short crops
+**0.8% → 4.3% = 5.4× the control**, against a 2× stop threshold. **Written up as spent, not re-aimed.**
+✅ **Two things survive it.** A cheap separable change — render the corpus at **one measure per strip**
+to close the *training* gap (`strips_v4` reads at **16.0 px**, the exam at **19.2**) for **+12.9%**
+strips, no slicer change, therefore no decode cost and no short-crop risk. And the **short-crop hole is
+now the blocking item** on this axis rather than a side condition. ⚠ Both cost estimates this lever
+carried were wrong: corpus +12.9% and decode **1.22×**, not ~3× either. Numbers:
+[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) · verdict: [rung3/levers.md](rung3/levers.md).
 
 ⭐ **THE STACCATO DISTRACTOR IS BUILT, AND THE DEFECT IT TARGETS IS NOW MEASURED AT 72.7%.** The
 owner spotted the model reading printed **staccato dots as augmentation dots**, lengthening notes
@@ -213,22 +216,21 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    ⚠ Two limits stated with the result rather than after it — **×2.00 extrapolates** below the exam's
    natural width range, and the probe **lowers** resolution, which is not the same as showing that
    raising it pays.
-1g. **⏭ THE NEXT ACTION — Lever 1 step 2: a 300-strip pilot at the new geometry through
-   `domain_gap.py`, BEFORE any full render.** This is where "narrower crops actually help" gets
-   tested, because 1f could only show that squashing hurts. ⚠ **The short-crop hole is the failure
-   mode to design against, not the resolution arithmetic**: crops under ~10 gold tokens are the worst
-   thing this model reads (0 of 40,826 training strips are signature-only), and narrow geometry makes
-   them the *common* case — so the render must include those shapes or this lever makes the exam
-   worse. ⚠ It also costs ~3× the strips per page, i.e. roughly 3× decode time; the owner should
-   price that before the render ([mvp/latency.md](mvp/latency.md)). ⚠ **This line used to say the
-   rails are `MEASURES_PER_STRIP` / `MAX_STRIP_W` "shared by the renderer and the slicer" — they are
-   not shared, and the renderer has no pixel-width rail at all.** Corrected 2026-08-17 with the table
-   in [rung3/levers.md](rung3/levers.md); the lever is two edits on two mechanisms.
-   ✅ **The design and the stop rule are signed and written down** (2026-08-17, before any arm ran):
-   three arms at `maxMeasures` 4/2/1, each with a **matching re-slice of ~25 real pages** so both
-   sides move together, and an arm is stopped if the real side's share of crops under 10 gold tokens
-   more than doubles. The plumbing is built — `--max-measures` on `render.ts` and `OMR_MAX_STRIP_W` on
-   the slicer. [rung3/levers.md](rung3/levers.md).
+1g. **⛔ DONE AND STOPPED 2026-08-17 — Lever 1 step 2 ran and the pre-registered stop rule fired.**
+   The full verdict is in "Now" above and [rung3/levers.md](rung3/levers.md); numbers in
+   [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md). ⏭ **What is left of it and is worth doing on its own:
+   re-render the corpus at ONE measure per strip** (`render.ts --max-measures 1`) to close the
+   16.0-vs-19.2 px *training* gap — +12.9% strips, the slicer untouched, so no decode cost and none of
+   the short-crop risk that stopped the lever. It still needs a trained arm to claim anything.
+   ⚠ **The short-crop hole is now the blocking item on this axis**, promoted from side condition: it
+   was dropped in July on a disproved *mechanism* while its **cost** stayed confirmed, and it is what
+   stops the only geometry arm that works. Anything that returns to crop geometry goes through it.
+   ⚠ **Two things this item asserted are now measured and were wrong.** The rails are **not** "shared
+   by the renderer and the slicer" — the renderer has no pixel-width rail at all — and the cost is not
+   ~3×: corpus **+12.9%**, decode **1.22×**. ⚠ A third trap is recorded with the result rather than
+   after it: pairing an arm with a lowered `MAX_STRIP_W` makes `_split_wide` cut **inside** measures
+   (94.7% of crops), which silently tests the half-measure target instead of the lever.
+   [rung3/levers.md](rung3/levers.md) · [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
 1h. **THE STACCATO DISTRACTOR IS BUILT AND MEASURED, NOT TRAINED** (owner, 2026-08-15).
    `--staccato-noise`, off by default; baseline **72.7%** false-dot rate against **0.0%** on the same
    music unmarked. What is owed is a **trained arm**, and the pre-registered floors it must clear are

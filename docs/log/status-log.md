@@ -53,6 +53,47 @@ each with a matching re-slice so both sides move together, the control being a *
 rather than the pools on disk, and an arm stopped if the real side's share of crops under 10 gold
 tokens more than doubles. [../rung3/levers.md](../rung3/levers.md).
 
+**Then it ran, and the stop rule fired — Lever 1 is spent.** Numbers:
+[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md), split out of METRICS-DIAGNOSTICS at the cap because
+the input-geometry thread is now three sections and a genre of its own.
+
+Four things came out of it, and only the last was the question we set out to answer:
+
+- **Sweeping three arms is what earned the result.** `maxMeasures = 2` moved **one strip in 433**,
+  because the renderer already emitted one measure per strip 87% of the time — the **56-token** budget
+  binds before the measure rail ever does. Had we picked "2" on the reasoning in the docs, the pilot
+  would have returned a null and read as a refuted lever.
+- **The lever cannot do what it was named for.** It was framed as *raise the resolution the encoder
+  sees*. The padding probe's ×1.00 baseline **was** the exam's own 19.2 px, so there is nothing above
+  it to reach without crops under 479 px — narrower than one measure, which is the half-measure target
+  already measured at **+31.8% worse**. The caveat the probe shipped with ("lowering costs edits is not
+  the same as raising pays") turned out to be the whole story.
+- **Both costs the lever carried were wrong, and wrong in our favour**: corpus **+12.9%**, decode
+  **1.22×**, not ~3× either. The 3× came from reading the slicer's 3-measure rail onto the renderer,
+  which does not have one.
+- ⛔ **The stop rule fires on the only arm that does anything**: short crops **0.8% → 4.3%**, 5.4×
+  against a 2× threshold. A rough independent estimate lands in the same place — the resolution gain
+  (~−10% SER) and the short-crop cost (~+15%) are the same size, sign probably negative.
+
+**What survives, and it is worth having:** the *training* corpus reads at **16.0 px** while the exam
+reads at **19.2**, and rendering at one measure per strip closes exactly that, for +12.9% strips, with
+the slicer untouched — so none of the decode cost or short-crop risk that stopped the lever applies.
+And the **short-crop hole is promoted from side condition to the blocking item** on this axis: it was
+dropped in July on a *mechanism* that was disproved while its **cost** stayed confirmed, and it is now
+the thing standing in front of the only geometry change that works.
+
+⚠ **An arm design error is recorded with the result, because its numbers looked decisive.** The first
+run paired each arm with a lowered `MAX_STRIP_W` (800, 500 px). A real measure is ~1012 px, so those
+caps cannot be met by packing fewer measures — `_split_wide` cut **inside** measures instead:
+`split_wide` 25% → 76% → **94.7%**, widths down to 334 px, 3.06× strips/page, short crops 19.8%. Every
+number read as a crushing verdict on the lever and none of it was about the lever; it was the
+half-measure target, tested by accident. **The tell was `split_wide`, not the widths.** With the cap
+held at its shipped 1450 it is flat at 118 strips in all three arms and every crop falls on a barline.
+
+**Also corrected while here:** STATUS had claimed since 2026-08-16 that F3 and the staccato distractor
+were uncommitted. Both were committed (`469c87e`/`64a6702`, `1c106b0`). A stale "uncommitted" warning
+costs a session's planning and, worse, camouflaged the genuinely uncommitted binarizer above.
+
 ## 2026-08-16 — Track B: crop geometry is CAUSAL, and the staccato/augmentation-dot confusion is built and measured
 
 **Two pieces of Track B, kept deliberately apart** — one is a measurement whose whole purpose is to

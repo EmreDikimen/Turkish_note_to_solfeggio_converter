@@ -236,93 +236,16 @@ Whole-exam decode, 326 strips, 562 edits. Per-bucket detail in
   encoder's fixed box. **Followed up 2026-08-15 in the section below**, which measures what that
   costs in edits.
 
-### The encoder's input box (2026-08-15) — 61% of it is padding, and edits track what is left
+### Crop geometry: moved to its own file (2026-08-17)
 
-`scripts/rung3/crop_geometry_probe.py`. The arithmetic first, because it had never been written
-down: `preprocess.ts` rotates a strip 90° and fits it into a fixed **409×583** frame, so the net
-scale is `min(583/W, 409/H)` with H = 336 for every strip we cut.
+The encoder's fixed 409×583 box, how much of a strip survives it, the padding probe that made
+resolution **causal**, and the three-arm pilot that priced the fix are now
+**[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md)** — a genre split at the 400-line cap: this file is
+*what the model gets wrong*, that one is *what the model is given*.
 
-| strip | net scale | staff spacing the encoder sees | one note position | frame used |
-|---|---|---|---|---|
-| synthetic median, 1212 px | 0.48 | **14.4 px** | 7.2 px | 161 of 409 columns — **39%** |
-| exam median, 924 px | 0.63 | 18.9 px | 9.5 px | 51% |
-| exam p90, 1285 px | 0.45 | 13.6 px | 6.8 px | 37% |
-| **≤479 px** (the aspect the frame wants) | **1.22 (upscale)** | **36.5 px** | 18.3 px | **100%** |
-
-**A strip narrower than 479 px is the only one this encoder does not throw resolution away on**, and
-we cut them at 3 measures / up to 1450 px. Two consequences already in this file get a common cause:
-synthetic beams arriving at 6.5 px, and crops >1200 px carrying 28.6% of exam edits.
-
-Then the same 326-strip Round-2 exam decode, re-aligned by this probe and bucketed by effective
-spacing with each confound pinned in turn:
-
-| control | low res | mid | high res |
-|---|---|---|---|
-| **density held** (10–14 gold tokens / 1000 px) | 14.3 px → **0.161** ed/token, 40% perfect | 18.2 px → 0.103, 48% | 22.0 px → **0.066**, 64% |
-| **length held** (12–18 gold tokens) | 13.9 px → **0.162** | 17.0 px → 0.058 | 19.7 px → 0.101 |
-| **width held** (900–1150 px), bucketed by LENGTH instead | 9 tok → 0.094 | 13 tok → 0.099 | 16 tok → 0.076 |
-
-- **At matched musical density the most-squashed third costs 2.4× the edits per token.** Holding
-  length fixed keeps the effect; holding width fixed and varying length removes it — so this is
-  **resolution, not autoregressive drift over a longer sequence**.
-- ⚠ **Observational, not causal.** Wide crops may differ in ways not controlled here, and the
-  buckets are ~40 strips each. The causal test is `--make-padded`: widen a strip with more of its
-  own empty staff (content and gold identical, resolution lower) and read the dose-response.
-  **RUN 2026-08-15 — see the next section. It is causal, and it replicates on the holdout.**
-- **Measured while building that probe, and it killed the obvious implementation:** the last column
-  of an exam crop is **36% ink at the median** — the 120 px staff span, i.e. **the crop ends on a
-  barline**, not on the blank staff the `PAD_PX = 6` trim suggests. Extending it (`BORDER_REPLICATE`)
-  would pad with a black band. Two more reference points from the same pass: a genuinely blank column
-  is **4.6%** ink (the five staff lines are thicker than they look), and the probe's tiled padding
-  lands at **5.6%**, with ~25 of 326 strips dense enough to have no quiet window at all.
-- ⚠ **This probe's own re-alignment totals 433 edits where `eval_omr` reports 562** — different
-  tokenizer and alignment. Trends only; quote `eval_omr` for any total.
-- ⚠ **The high-resolution end is NOT better**: short crops (<10 gold tokens, median 558 px) run
-  **0.259 ed/token**, the known crop-shape hole (0 of 40,826 training strips are signature-only).
-  Narrowing crops without rendering the short shapes would enlarge that hole, not close it.
-- ⚠ **The current slicer made this worse, not better**: crops >1200 px went **13.8% → 27.8%** of
-  the same 67 pages (row above). The exam was cut by the old slicer, so production is further into
-  the bad end than these numbers show.
-
-### The padding probe (2026-08-15) — CAUSAL, and it replicates on the holdout
-
-`crop_geometry_probe.py --make-padded` widens each crop with more of **its own quietest columns**,
-so content and gold are untouched and only the resolution the encoder sees falls. Decoded with
-`round2-stage2-best`; totals below are `eval_omr`'s.
-
-| pad | staff spacing at the encoder | SER (edits/token) | exact-match | pages ≤5 edits |
-|---|---|---|---|---|
-| **×1.00** | 19.2 px | **0.052** | 52.1% | 57% |
-| ×1.25 | 15.4 px | 0.059 | 38.0% | 50% |
-| ×1.50 | 12.8 px | 0.061 | 35.0% | 54% |
-| ×1.75 | 11.0 px | 0.070 | 27.9% | 41% |
-| **×2.00** | 9.6 px | **0.083** | 16.6% | 37% |
-
-**Strictly monotone across all four doses — +59% edits/token at ×2.00 — which is the branch the
-pre-registration called causal.** The ×1.00 row reproduced the known Round-2 read exactly
-(S=209 D=144 I=209 = **562 edits**, 52.1%, 57%), so the harness is the same one that produced it.
-
-Paired bootstrap over strip names (10k resamples; padding does not change a filename, so every dose
-is the same 326 images), on this probe's own re-alignment:
-
-| pad | Δ edits/strip vs ×1.00 | 95% CI | same, dropping the 25 artifact strips |
-|---|---|---|---|
-| ×1.25 | +0.132 | [−0.015, +0.282] | +0.126 |
-| ×1.50 | +0.267 | **[+0.110, +0.426]** | +0.269 |
-| ×1.75 | +0.534 | **[+0.359, +0.706]** | +0.525 |
-| ×2.00 | +0.874 | **[+0.684, +1.061]** | +0.874 |
-
-**Real-val holdout** (`_realval_v2`, 267 strips; ×1.00 also reproduced its recorded SER 0.079 /
-62.9% exactly): **0.079 → 0.096 → 0.127**, i.e. **+61% at ×2.00**, Δ +0.462 [+0.244, +0.691] and
-+1.187 [+0.901, +1.500]. The direction replicates and is **steeper** than the exam's — the check §1
-of [rung3/round3.md](rung3/round3.md) skipped when its 2% shrink won 15.5% on the exam and −1.6% here.
-
-- ⚠ **×2.00 extrapolates** below the exam's natural 12.2–36.5 px range: the in-range doses carry the
-  claim, the wide ones establish the shape. ⚠ **25 of 326 crops are too dense to have a quiet
-  window**, so their padding tiles symbol fragments (max 17.2% ink vs a 5.6% median) — dropping them
-  moves every delta by ≤0.01, so the artifact is not what produces the curve. ⚠ A tiled window also
-  repeats at a fixed period, a texture no real page has; that residual is why the reading rests on
-  the **dose-response** rather than on any single arm.
+⚠ One line from it belongs here because it re-scopes a claim below: the edit budget **does** move with
+encoder scale, while "resolution was ruled out" (the sharp-glyph section) was measured on per-class
+accidental recall. Both stand; they measure different things.
 
 ### Staccato read as an augmentation dot (2026-08-15) — measured with a paired control
 

@@ -1,0 +1,200 @@
+{
+  "generatedBy": "scripts/select_pieces.py --keep",
+  "corpus": "/Users/emredikimen/Downloads/SymbTr-2.0.0/txt",
+  "projectedTotals": {
+    "\\bakiyeSharp": 34066,
+    "\\komaFlat": 19922,
+    "\\kucukFlat": 3087,
+    "\\komaSharp": 4962,
+    "\\bakiyeFlat": 19361,
+    "\\kucukSharp": 2918
+  },
+  "pieces": [
+    {
+      "slug": "suzidil--agirsemai--aksaksemai--beni_ey--sadullah_aga",
+      "txt": "suzidil--agirsemai--aksaksemai--beni_ey--sadullah_aga.txt",
+      "file": "/scores/suzidil--agirsemai--aksaksemai--beni_ey--sadullah_aga.json",
+      "makam": "suzidil",
+      "form": "agirsemai",
+      "usul": "aksaksemai",
+      "hasLyrics": true,
+      "events": 572,
+      "measures": 52,
+      "transposes": [
+        0
+      ],
+      "accCounts": {
+        "0": {
+          "\\bakiyeSharp": 117,
+          "\\kucukSharp": 1,
+          "\\komaSharp": 2
+        }
+      },
+      "pairableShare": {
+        "0": 0.0
+      }
+    },
+    {
+      "slug": "muhayyerkurdi--sarki--aksak--sevgi_deli--alaeddin_yavasca",
+      "txt": "muhayyerkurdi--sarki--aksak--sevgi_deli--alaeddin_yavasca.txt",
+      "file": "/scores/muhayyerkurdi--sarki--aksak--sevgi_deli--alaeddin_yavasca.json",
+      "makam": "muhayyerkurdi",
+      "form": "sarki",
+      "usul": "aksak",
+      "hasLyrics": true,
+      "events": 512,
+      "measures": 73,
+      "transposes": [
+        -9,
+        -4,
+        0
+      ],
+      "accCounts": {
+        "0": {
+          "\\kucukFlat": 84,
+          "\\bakiyeFlat": 2,
+          "\\bakiyeSharp": 8,
+          "\\komaSharp": 1
+        },
+        "-9": {
+          "\\bakiyeSharp": 189,
+          "\\bakiyeFlat": 3,
+          "\\komaFlat": 6
+        },
+        "-4": {
+          "\\bakiyeFlat": 285,
+          "\\komaSharp": 3,
+          "\\komaFlat": 4
+        }
+      },
+      "pairableShare": {
+        "0": 0.5,
+        "-9": 0.486,
+        "-4": 0.417
+      }
+    },
+    {
+      "slug": "zavil--agirsemai--aksaksemai--bulunmaz_nev-civansin--kucuk_mehmet_aga",
+      "txt": "zavil--agirsemai--aksaksemai--bulunmaz_nev-civansin--kucuk_mehmet_aga.txt",
+      "file": "/scores/zavil--agirsemai--aksaksemai--bulunmaz_nev-civansin--kucuk_mehmet_aga.json",
+      "makam": "zavil",
+      "form": "agirsemai",
+      "usul": "aksaksemai",
+      "hasLyrics": true,
+      "events": 604,
+      "measures": 40,
+      "transposes": [
+        0
+      ],
+      "accCounts": {
+        "0": {
+          "\\kucukSharp": 50,
+          "\\bakiyeSharp": 47,
+          "\\bakiyeFlat": 27,
+          "\\komaFlat": 28
+        }
+      },
+      "pairableShare": {
+        "0": 0.0
+      }
+    },
+    {
+      "slug": "buselik--sarki--duyek--sunbulistan_etmis--sakir_aga",
+      "txt": "buselik--sarki--duyek--sunbulistan_etmis--sakir_aga.txt",
+      "file": "/scores/buselik--sarki--duyek--sunbulistan_etmis--sakir_aga.json",
+      "makam": "buselik",
+      "form": "sarki",
+      "usul": "duyek",
+      "hasLyrics": false,
+      "events": 663,
+      "measures": 74,
+      "transposes": [
+        0
+      ],
+      "accCounts": {
+        "0": {
+          "\\bakiyeSharp": 59,
+          "\\bakiyeFlat": 19,
+          "\\kucukFlat": 20,
+          "\\komaSharp": 12
+        }
+      },
+      "pairableShare": {
+        "0": 0.082
+      }
+    },
+    {
+      "slug": "sultanisegah--pesrev--cifteduyek----santuri_ethem_efendi",
+      "txt": "sultanisegah--pesrev--cifteduyek----santuri_ethem_efendi.txt",
+      "file": "/scores/sultanisegah--pesrev--cifteduyek----santuri_ethem_efendi.json",
+      "makam": "sultanisegah",
+      "form": "pesrev",
+      "usul": "cifteduyek",
+      "hasLyrics": true,
+      "events": 492,
+      "measures": 64,
+      "transposes": [
+        -9,
+        0
+      ],
+      "accCounts": {
+        "0": {
+          "\\komaFlat": 84,
+          "\\bakiyeSharp": 98,
+          "\\bakiyeFlat": 26,
+          "\\komaSharp": 1,
+          "\\kucukFlat": 4
+        },
+        "-9": {
+          "\\bakiyeSharp": 64,
+          "\\komaFlat": 167,
+          "\\bakiyeFlat": 26,
+          "\\komaSharp": 1
+        }
+      },
+      "pairableShare": {
+        "0": 0.127,
+        "-9": 0.127
+      }
+    },
+    {
+      "slug": "suzinak--sarki--senginsemai--gunden_gune--hafiz_mehmet_esref",
+      "txt": "suzinak--sarki--senginsemai--gunden_gune--hafiz_mehmet_esref.txt",
+      "file": "/scores/suzinak--sarki--senginsemai--gunden_gune--hafiz_mehmet_esref.json",
+      "makam": "suzinak",
+      "form": "sarki",
+      "usul": "senginsemai",
+      "hasLyrics": true,
+      "events": 539,
+      "measures": 42,
+      "transposes": [
+        -9,
+        -1,
+        0
+      ],
+      "accCounts": {
+        "-9": {
+          "\\komaFlat": 104,
+          "\\bakiyeSharp": 74,
+          "\\bakiyeFlat": 60
+        },
+        "-1": {
+          "\\komaFlat": 363,
+          "\\bakiyeSharp": 146
+        },
+        "0": {
+          "\\bakiyeSharp": 65,
+          "\\komaFlat": 39,
+          "\\bakiyeFlat": 60,
+          "\\kucukFlat": 21
+        }
+      },
+      "pairableShare": {
+        "-9": 0.0,
+        "-1": 0.0,
+        "0": 0.0
+      }
+    }
+  ],
+  "note": "Round-3 Lever 1 crop-geometry pilot (docs/rung3/levers.md step 2). 6 pieces, one per makam, 40-80 measures, seed 17, derived from data/pieces_v4.json by scripts/rung3/make_geom_pilot_list.py. NOT a training selection: it has no split, and nothing rendered from it should reach a training run."
+}

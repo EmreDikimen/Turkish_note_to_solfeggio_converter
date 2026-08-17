@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-08-16
+updated: 2026-08-17
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -54,8 +54,23 @@ resolution away on. Measured, and re-measured with the two obvious confounds pin
 **Why it is ranked first.** It predicts three findings this project already owns and never
 connected: crops >1200 px carrying a fifth of exam edits, synthetic beams reaching the encoder at
 6.5 px, and the one-or-two-position pitch errors that §1 of [round3.md](round3.md) chased into a
-dead end. It needs **no new labels and no architecture change** — only two constants
-(`MEASURES_PER_STRIP`, `MAX_STRIP_W`) that the renderer and the slicer already share.
+dead end. It needs **no new labels and no architecture change** — only the strip-cutting rails.
+
+⚠ **CORRECTED 2026-08-17: the renderer and the slicer do NOT share those constants**, and this file
+said they did. They are parallel implementations cutting on different quantities, so the lever is two
+edits rather than one:
+
+| | slicer (real pages) | renderer (synthetic strips) |
+|---|---|---|
+| where | `src/vision/page_to_strips.py` → `apps/web/src/omr/slicer/windows.ts` | `STRIP_BUDGET` in `tools/render/lilypond.ts` → `apps/web/src/stripExport.ts` |
+| measure rail | `MEASURES_PER_STRIP = 3` | `maxMeasures = 4` |
+| second rail | `MAX_STRIP_W = 1450` **px** | `maxTokens = 56` **label tokens** |
+| knob | `OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W` | `--max-measures` on `render.ts` |
+
+Two consequences that change what the pilot has to do. **The renderer has no pixel-width rail at
+all** — a wide row is emitted at whatever width the engraving produced, which is *why* our strips run
+wider than the real pools' (§4 of [round3.md](round3.md)) rather than an accident on top of it. And
+the two sides already disagree by one measure, 4 against 3, which nothing had flagged.
 
 **A second argument, free with it.** An accidental carries to the end of its measure, so a
 one-measure crop is the natural unit of the carry convention. The carry-sig hallucination
@@ -77,9 +92,42 @@ their signature — is a bug about crops that straddle the context they need.
    flat within noise → the correlation is a confound and this lever is dropped, in writing, like the
    five above it.**
 2. **A 300-strip pilot** at the new geometry through `domain_gap.py`, before any full render — the
-   same gate the content work carries.
+   same gate the content work carries. **Design and pre-registration signed 2026-08-17, before any
+   arm was rendered — see the block below.**
 3. Full render + **re-slice of the real pools** at matching constants, then the Round-2 recipe
    unchanged. One variable.
+
+### Step 2's design and its pre-registration (signed 2026-08-17, before any arm ran)
+
+**Three arms, one variable.** `maxMeasures` 4 (control, the corpus recipe), 2, and 1 — swept rather
+than picked, because the decode cost the winner carries is the owner's call and the numbers should be
+on the table when it is made. `--max-measures` on `render.ts` carries it, so the arms are one flag
+apart in the manner of `--thin-sharps` and `--staccato-noise`.
+
+**Both sides move, or the measurement is meaningless.** The real pools on disk were cut at 3 / 1450,
+so narrowing only the synthetic side would *invert* the width gap rather than close it — and
+production slices real pages with our own slicer too. Each arm therefore also re-slices ~25 real
+pages at the matching rails (`OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W`), and **the control arm is a
+fresh re-slice, not the pools already on disk** — those predate the pale-line binarizer
+([../METRICS-SLICER.md](../METRICS-SLICER.md)), and reusing them would move two variables at once.
+
+**⛔ The stop rule (owner, signed before the run).** An arm is **stopped, or must carry a short-shape
+render alongside**, if the re-sliced **real** side's share of crops under **10 gold tokens** more than
+**doubles** against the control re-slice. The real side is where the hole bites, because that is what
+the model reads at inference, and short crops are the worst thing it reads: **0.259 ed/token against
+a 0.03–0.05 baseline** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)). ⚠ The threshold is
+in `crop_geometry_probe.tokenize()`'s units — `domain_gap.py` cannot report it, since its
+`strips_<=3_notes_%` is a *note* count on a naive whitespace split.
+
+**What a surviving arm must show:** strip width and tokens/strip moving *toward* the real pools'
+without overshooting them, the effective encoder spacing rising, and the strips/page cost stated so
+the render is priced before it is run ([../mvp/latency.md](../mvp/latency.md)).
+
+**⚠ What this pilot may NOT claim, written here so a later reader cannot borrow it.** Nothing about
+accuracy. `domain_gap.py` measures distribution similarity; the accuracy claim belongs to a trained
+arm and to nothing before it. Decoding narrow crops with `round2-stage2-best` would repeat the
+`width_split_probe` confound exactly — a model trained on wide crops cannot separate *"narrow is
+bad"* from *"never saw narrow"* — so the arms are **not decoded**.
 
 **Costs and risks, stated up front:**
 
@@ -127,6 +175,14 @@ running it. ⚠ It also changes the browser/server decode path, so `gate:browser
 
 ## Lever 3 — real data: clean it before growing it
 
+> ⚠ **PARTLY OVERRULED 2026-08-17 (owner): collect broadly from more sources now**, beyond
+> neyzen.com and notaarsivleri.com. The cleaning argument below is unchanged and still owed — what the
+> owner rejected is the *sequencing*, i.e. "clean first, then grow". Both halves are on the record in
+> [../DECISIONS.md](../DECISIONS.md), including the cost: 2,486 real page PNGs already sit on disk
+> unlabelled, so a wider funnel does not relieve the bottleneck this section names. Two rules do not
+> bend with it — read a new source's licence before redistributing anything, and any flow that feeds
+> training must keep **refusing exam pieces**.
+
 The owner has offered to label more real pages ([../STATUS.md](../STATUS.md)). The evidence says the
 first move is not more rows:
 
@@ -156,6 +212,23 @@ first move is not more rows:
   reads agree.
 
 ## Lever 4 — renderer diversity: one engine, one font, one spacing
+
+> ⏭ **PROMOTED 2026-08-17 (owner): this runs AFTER Lever 1 and BEFORE the content work**, re-ordering
+> the 2026-07-27 decision that made the note-value mix Round 3's content change. The content work is
+> not cancelled — it moves behind a second engraver, because the *make-our-pixels-more-realistic* axis
+> is at diminishing returns while the engraving itself has never been varied at all.
+> [../DECISIONS.md](../DECISIONS.md).
+>
+> **A candidate arrived with it, from the owner's eye rather than a probe.** A real page sets the
+> triplet "3" **between the curve and the noteheads** — inside the arc's concavity — which is neither
+> shape we have drawn (legacy: continuous arc, digit outside above the apex; current: broken arc,
+> digit in the gap). ⚠ That is a potential counterexample to *"16 of 16 marks break the arc, and not
+> one continuous arc with a floating digit exists in the real pools"* ([tuplets.md](tuplets.md)) — a
+> sample of 16 across ~11 editions is small enough for one to exist. **Measure it with
+> `tuplet_mark_probe.py`; render nothing yet** (a third mark style inside the geometry render is a
+> second variable). If it confirms, it enters as a **per-piece coin** like bracket-vs-curved, which
+> makes it a diversity item rather than a correction. ⚠ Expect little from it on recall: the shape A/B
+> was **null** (p = 0.688) and the surviving lead points away from the renderer.
 
 Every one of the 40,826 strips is VexFlow + Bravura at a staff spacing whose raw standard deviation
 is **zero** ([round3.md](round3.md) §1). Current synthetic-data work in this field does the opposite

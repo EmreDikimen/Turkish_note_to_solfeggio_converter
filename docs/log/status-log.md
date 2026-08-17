@@ -2,12 +2,58 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-16
+updated: 2026-08-17
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-16 (latest) — Track B: crop geometry is CAUSAL, and the staccato/augmentation-dot confusion is built and measured
+## 2026-08-17 (latest) — the pale-line binarizer is landed and re-measured, and Lever 1's plumbing is built
+
+**Found rather than planned.** Picking up Track B's next action (Lever 1 step 2) turned up a **third**
+uncommitted change in the tree beside F3 and the staccato distractor, which STATUS did not mention: a
+pale-staff-line binarization fallback in the slicer, ported to both sides, with a new
+`tools/vision/binarize-test.ts` already wired into `npm test` — and **no documentation anywhere**. It
+had to be landed first, because the re-slice Lever 1 needs would otherwise have moved the binarizer
+and the geometry in the same step, which is the mistake Round 2 and the tuplet A/B were built to stop
+repeating.
+
+**Its corpus claim lived in a code comment with no script behind it**, so it was made re-runnable:
+`scripts/rung3/pale_line_probe.py`. That mattered more than expected — **the numbers do not say what
+the comment said**. The comment reads "it fires on 93 … 37 pages recovered"; the sweep says the
+fallback is **TRIED on 93 and BELIEVED on 37**. Both facts were right, one word covered both, and the
+93 would have been quoted as a firing rate forever. Recovered 37, regressed 0 and 0-stave pages
+144 → 107 all reproduce exactly. Full anatomy: [../METRICS-SLICER.md](../METRICS-SLICER.md).
+
+**A new blind spot came out of writing the probe**: of the 107 pages still at 0 staves, **51 are
+never offered to the fallback**. `PALE_LINE_MIN_ROWS` gates on clustered *line rows*, not on staves,
+so a page with ≥4 rows of horizontal ink that `detect_staves` cannot group into 5-line systems fails
+late and is never retried. Recorded, not acted on.
+
+**Parity held.** `slicer_ref.py --pages 120` regenerated and `parity:slicer` re-run: **W4/W5/W6 all
+PASS**, deskew angle identical 132/132 — which is the half the change actually touches, since the
+skew sweep now takes the page's binarizer instead of re-deciding per rotation. Three pages show
+manifest drift where local Python now finds staves the manifests record as zero; that is the
+recovery, showing up exactly where it should.
+
+**Then Lever 1's plumbing, which is two mechanisms and not one.** `levers.md` and `STATUS.md` both
+said the renderer and the slicer share `MEASURES_PER_STRIP` / `MAX_STRIP_W`. They do not: the
+renderer packs by measures and **label tokens** (`STRIP_BUDGET`, 4 / 56) and has **no pixel-width
+rail at all** — which is *why* our strips run wider than the real pools' rather than an accident on
+top of it — while the slicer cuts at 3 / 1450 px. The two also already disagreed by one measure, 4
+against 3, which nothing had flagged. Built: `--max-measures` on `render.ts` (URL param → `App.tsx` →
+`buildStrips`' budget override, asserted per job in `__omrConfig` the way the tuplet arm is), the same
+flag mirrored in `verify-labels.ts` — **read from `render_config.json` so it cannot be forgotten**,
+because a mismatched replay would report the whole corpus as "strip not published" rather than fail —
+and `OMR_MAX_STRIP_W` on the slicer. ⚠ `window_signature()` recorded the measure rail but **not** the
+width rail, so a decode cached at 1450 stayed "valid" after the cap moved; it is in the signature now,
+defaulting to 1450 so every existing cache reads as the geometry it was made under.
+
+**The pilot's design and stop rule are signed before any arm ran** — three arms (4/2/1 measures),
+each with a matching re-slice so both sides move together, the control being a *fresh* re-slice
+rather than the pools on disk, and an arm stopped if the real side's share of crops under 10 gold
+tokens more than doubles. [../rung3/levers.md](../rung3/levers.md).
+
+## 2026-08-16 — Track B: crop geometry is CAUSAL, and the staccato/augmentation-dot confusion is built and measured
 
 **Two pieces of Track B, kept deliberately apart** — one is a measurement whose whole purpose is to
 keep Round 3 attributable, the other a renderer change that trains nothing and stays off by default.

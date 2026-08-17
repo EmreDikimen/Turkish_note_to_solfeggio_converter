@@ -238,6 +238,20 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    **on easy+mid tiers only**. ⚠ `STACCATO_RATE` is **chosen, not measured**; counting staccato
    frequency in real editions is how to replace it. ⚠ Not sequenced ahead of 1g: it is a second
    render variable, and Round 3 has been unattributable twice already.
+1h2. **⏭ IN PROGRESS — THE OWNER IS HAND-CORRECTING REAL LABELS THIS WEEK** (owner, 2026-08-17),
+   chosen over more synthetic experiments. The case: of the real labels checked so far in the nota
+   pool, **531 needed fixing against 167 that were fine** — three in four wrong — and pitch is 40% of
+   what a user corrects, so dirty pitch labels cap the metric Round 3 is graded on no matter what the
+   renderer does. Queue: **`reslice-all`** in `review_ui.py` (33,639 of 33,804 pending, worst-first).
+   ⚠ **Attend to PITCH AND DURATION, not accidentals** — every audit so far chased accidentals because
+   the old headline measured them; this axis has never been audited.
+   ⚠ **The queue choice is load-bearing and was nearly got wrong.** The owner asked whether the pools
+   were stale; measured, they are — but only some. `reslice-all` reads `strips_v2` and keeps **100%** of
+   labels under today's slicer; the nota/exam-fix/r1/tup queues read the July 15–17 crops and would
+   **void 90%** of them ([METRICS-SLICER.md](METRICS-SLICER.md)). Run
+   `scripts/rung3/check_crop_staleness.py` before any future labelling push.
+   ⚠ Consequence: the 531 existing `fix` verdicts are **stranded** on old crops. They evidence bad
+   auto-derived labels; they are not corrections we can bank.
 1i. **NEW 2026-08-17 — MEASURE THE TUPLET DIGIT'S POSITION, RENDER NOTHING** (owner, from a real
    page). The "3" is set **between the curve and the noteheads**, inside the arc's concavity — neither
    shape we have drawn. ⚠ Possible counterexample to *"16 of 16 marks break the arc"*

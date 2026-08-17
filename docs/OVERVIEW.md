@@ -319,7 +319,25 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    described further up. Shrinking does cost accuracy; we cannot buy the reverse. What is left of it is
    one cheap change: **print the practice pictures one bar per strip** so the model stops practising on
    blurrier music than it is tested on. 13% more pictures, nothing else moves.
-1d. ⏭ **NEXT, and it needs your eyes rather than a computer: where is the "3" on a triplet printed?**
+1c2. ⏭ **THIS WEEK — you are hand-correcting real answer keys, and that is the better bet.** Why:
+   of the real answers we have checked so far, **531 needed fixing against 167 that were fine — three
+   in four wrong.** And the note itself is 40% of what a user fixes. If the answers we train on have
+   wrong notes in them, the model learns wrong notes, and no amount of redrawing our practice music
+   repairs that. Against seven synthetic ideas that mostly came back "no", this is measured, large,
+   and on the right axis.
+   **The tool:** `.venv-ml/bin/python scripts/rung3/review_ui.py`, then open
+   <http://localhost:8377> and pick the **reslice-all** tab. Each row shows a real strip with the
+   model's reading already filled in, so you correct rather than type from scratch. 33,639 rows to go,
+   ordered so the model's least-confident guesses come first.
+   ⚠ **Look at the note and its length, not just the tiny marks.** Every check we have ever done went
+   looking for the tiny marks, because that is what the old score measured. Notes and lengths are
+   two-thirds of the problem and nobody has ever checked them.
+   ⚠ **You were right to ask whether the pictures were out of date, and it nearly cost you the week.**
+   Some of the tabs show pictures cut by the *old* version of the page-cutter: we measured it, and
+   **18 of 20 pages there would throw your work away** — the same way you lost 130 answers in July.
+   The **reslice-all** tab is the safe one: **20 of 20 pages keep their answers**. If you ever want to
+   check another tab first, run `scripts/rung3/check_crop_staleness.py`.
+1d. ⏭ **THEN, and it needs your eyes rather than a computer: where is the "3" on a triplet printed?**
    You spotted it sitting **between the curve and the notes** on a real page, which is neither of the
    two ways we have drawn it. Our notes say all 16 marks we measured do it differently — but 16 marks
    is a small sample, and one clear counter-example is enough to reopen it. The tool shows you real

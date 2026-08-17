@@ -90,6 +90,32 @@ number read as a crushing verdict on the lever and none of it was about the leve
 half-measure target, tested by accident. **The tell was `split_wide`, not the widths.** With the cap
 held at its shipped 1450 it is flat at 118 strips in all three arms and every crop falls on a barline.
 
+**Then the owner changed the strategy, and caught an error doing it.** Tired of synthetic experiments
+(and of spending a week's usage budget on them), they offered to hand-correct real labels instead —
+a few thousand this week. The evidence backs it: in the nota pool **531 checked labels needed fixing
+against 167 that were fine**, and pitch is 40% of what a user corrects, so dirty pitch labels cap the
+metric Round 3 is graded on however good the renderer gets. Seven synthetic ideas have now come back
+"no"; this one is measured, large, and on the right axis.
+
+**The recommendation given was wrong, and the owner spotted it.** Asked which queue to work, the
+suggestion was "finish the nota pool — 556 rows left, finishable in a week". The owner's reply was to
+guess those crops were cut by the **old** slicer. Measured with a new
+`scripts/rung3/check_crop_staleness.py`, over 20 pages per root:
+
+- `data/real/strips_v2` (what `reslice-all` reads): **100% of pages keep their labels** — 18
+  byte-identical, 2 differing only in width with **the same measures in every crop**.
+- `data/real/strips` (what `nota-*`, `exam-fix`, `r1-*`, `tup-*` read): **10%.** 16 of 20 pages come
+  out with a different crop COUNT, 2 more with different measures.
+
+So the recommended week would have been ~90% wasted, in exactly the way the 130 July verdicts were.
+**Third time crop staleness has cost something**, which is why the check is now a committed script and
+a standing instruction rather than a thing to remember. The grading order matters and is the reusable
+part: different measures or crop count **voids** a label, a different width does **not**.
+
+Two consequences: `reslice-all` is the queue (33,639 of 33,804 pending, worst-first), and the **531
+existing `fix` verdicts are stranded** on crops the slicer no longer makes — evidence that the
+auto-derived labels were bad, not corrections anyone can bank. Re-slicing those pools is a rebuild.
+
 **Also corrected while here:** STATUS had claimed since 2026-08-16 that F3 and the staccato distractor
 were uncommitted. Both were committed (`469c87e`/`64a6702`, `1c106b0`). A stale "uncommitted" warning
 costs a session's planning and, worse, camouflaged the genuinely uncommitted binarizer above.

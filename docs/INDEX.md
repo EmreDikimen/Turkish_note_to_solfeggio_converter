@@ -13,6 +13,8 @@ wrong — fix by deleting, not by syncing.
 |---|---|
 | What is this project, how do I run it, what may I not do? | [../CLAUDE.md](../CLAUDE.md) |
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
+| What is owed but is NOT next, and why is it deferred? | [BACKLOG.md](BACKLOG.md) |
+| What is measured but fragile, and what do we NOT claim? | [RISKS.md](RISKS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
 | The 28 July test day, in plain English (history) | [OVERVIEW-JULY.md](OVERVIEW-JULY.md) |
 | The features that shipped in early August, in plain English (history) | [OVERVIEW-AUGUST.md](OVERVIEW-AUGUST.md) |

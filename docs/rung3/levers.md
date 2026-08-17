@@ -34,100 +34,55 @@ returns**, and the remaining levers are on four other axes — what the model is
 is allowed to DECODE, what its real data is worth, and how its training run is selected. They are
 listed below in the order their evidence-per-hour justifies, not in the order they are interesting.
 
-## Lever 1 — crop geometry: the model sees a fifth of the page it is given
+## Lever 1 — crop geometry: ⛔ CLOSED 2026-08-17, and it is not to be re-proposed
 
-> ✅ **THE PROBE RAN 2026-08-15 AND THE PRE-REGISTERED READING IS THE CAUSAL BRANCH.** Padding the
-> exam crops with their own empty staff raises edits/token **monotonically across all four doses**,
-> the bootstrap CI excludes zero from ×1.50 on, and the real-val holdout replicates **steeper**. The
-> unpadded arms reproduced both recorded baselines exactly. **Numbers and caveats:**
-> [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md), "The padding probe".
+The encoder's frame is fixed at 409×583, so a long strip is squashed to fit. Padding exam crops with
+their own empty staff proved **causally** that squashing costs edits (+59%, replicated on a holdout).
+The pilot then showed **we cannot buy the reverse**: that probe's own baseline was already the exam's
+19.2 px, and beating it needs crops narrower than one measure — the half-measure target measured at
+**+31.8% worse**. The pre-registered short-crop stop rule fired at **5.4×** the control.
+
+**The full case, the numbers, the pre-registration as signed, and the two claims in it that turned out
+to be wrong** → **[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md)**.
+
+✅ **The one thing that survives**, separable and cheap: render the corpus at **one measure per strip**
+so training stops reading at 16.0 px while the exam reads at 19.2. +12.9% strips, slicer untouched, so
+no decode cost and none of the short-crop risk. Needs a trained arm to claim anything.
+⚠ **The short-crop hole is now the blocking item on this axis**, promoted from side condition.
+
+## Lever 1b — the form signal is CONFOUNDED with scan quality; the owner's real report is still open
+
+> ⛔ **PARTLY RETRACTED THE SAME DAY IT WAS WRITTEN (2026-08-17), by two checks that took ten minutes.**
+> The section below proposed collecting classical repertoire because beste/nakış cost ~2.9× the edits.
+> Both halves of its mechanism failed:
 >
-> ⛔ **AND STEP 2 THEN STOPPED THE LEVER (2026-08-17).** The caveat this box already carried — *the
-> probe lowers resolution and does not prove raising it helps* — turned out to be the whole story:
-> the probe's own ×1.00 baseline **was** the exam's 19.2 px, so there is nothing above it to reach
-> without cutting inside measures. The measure rail is a no-op on the synthetic side at anything but
-> 1, and on the real side the 1-measure arm trips the pre-registered short-crop stop rule at **5.4×**
-> the control. **Result and what survives: the STEP 2 RESULT block below.** Both statements stand —
-> squashing crops costs edits, and we cannot buy the reverse.
+> 1. **They are not denser.** Measured on the 86 beste/nakış strips we already own against 1,496 şarkı:
+>    16th/32nd notes **11.4% vs 18.4%**, `\tup3` per 100 notes **0.0 vs 0.3**, median width **1006 vs
+>    1010 px**, notes per strip 8.0 vs 7.4. The "dense ornate music" story is refuted outright — they
+>    are *simpler* on every count that can be counted.
+> 2. **They are worse SCANS.** `nd` (degradation) mean **0.167 vs 0.070** in the nota pool, and median
+>    **0.522 vs 0.143** on the exam. Classical repertoire is older and less reprinted, so the copies
+>    that exist are worse photocopies. So the form ranking is largely **the known hard-tier effect
+>    re-sliced** — the project already had hard tier at 58.3% — not a new axis.
+>
+> **Therefore the collection plan below is withdrawn**, and the supply ceiling would have bitten anyway:
+> SymbTr has **39 beste** and **<13 nakış** in 2,200 pieces, so free answer keys for these forms barely
+> exist. ⚠ Also worth knowing before anyone re-proposes collecting: **the notaarsivleri catalog is
+> already censused and matched** (20,833 rows), its accept tier is **84% şarkı and 1,000 of 1,002
+> already downloaded**, and it contains **zero peşrev and zero nakış** at accept — peşrev is
+> instrumental and not in that vocal catalog at all.
+>
+> ✅ **WHAT SURVIVES, AND IT IS THE ORIGINAL REPORT.** The owner's observation was failures on
+> classical pieces **"even if it created online"** — i.e. on CLEAN computer-generated PDFs. Scan
+> degradation cannot explain that, and nothing here measures it: the exam's clean tier is **10 pages**,
+> nearly all şarkı. ⏭ **The next step is not collection, it is getting the owner's own failing pages** —
+> a real failing population on the clean end, worth more than a thousand scraped ones and free.
+>
+> ⚠ **The lesson, since this is the second confound in one day**: a correlation with n=26 that lands on
+> a category we already had a story for deserves the ten-minute confound check *before* it becomes a
+> plan. Nothing was rendered or collected on it, which is the process working — but only just.
 
-**The finding.** The encoder frame is a fixed **409×583**; a strip is rotated and fitted into it, so
-the net scale is `min(583/W, 409/H)`. We cut strips at 3 measures / up to 1450 px, which means the
-median strip arrives downscaled by half, with **61% of the frame spent on black padding**. A strip
-narrower than **479 px** — roughly one measure — is the only shape this encoder does not throw
-resolution away on. Measured, and re-measured with the two obvious confounds pinned:
-[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md), "The encoder's input box".
-
-**Why it is ranked first.** It predicts three findings this project already owns and never
-connected: crops >1200 px carrying a fifth of exam edits, synthetic beams reaching the encoder at
-6.5 px, and the one-or-two-position pitch errors that §1 of [round3.md](round3.md) chased into a
-dead end. It needs **no new labels and no architecture change** — only the strip-cutting rails.
-
-⚠ **CORRECTED 2026-08-17: the renderer and the slicer do NOT share those constants**, and this file
-said they did. They are parallel implementations cutting on different quantities, so the lever is two
-edits rather than one:
-
-| | slicer (real pages) | renderer (synthetic strips) |
-|---|---|---|
-| where | `src/vision/page_to_strips.py` → `apps/web/src/omr/slicer/windows.ts` | `STRIP_BUDGET` in `tools/render/lilypond.ts` → `apps/web/src/stripExport.ts` |
-| measure rail | `MEASURES_PER_STRIP = 3` | `maxMeasures = 4` |
-| second rail | `MAX_STRIP_W = 1450` **px** | `maxTokens = 56` **label tokens** |
-| knob | `OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W` | `--max-measures` on `render.ts` |
-
-Two consequences that change what the pilot has to do. **The renderer has no pixel-width rail at
-all** — a wide row is emitted at whatever width the engraving produced, which is *why* our strips run
-wider than the real pools' (§4 of [round3.md](round3.md)) rather than an accident on top of it. And
-the two sides already disagree by one measure, 4 against 3, which nothing had flagged.
-
-**A second argument, free with it.** An accidental carries to the end of its measure, so a
-one-measure crop is the natural unit of the carry convention. The carry-sig hallucination
-characterized on 2026-07-24 — accidentals invented on bare noteheads in mid-row crops that discarded
-their signature — is a bug about crops that straddle the context they need.
-
-**What was run, and the plan as written** → [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md). Steps 1
-(the padding probe) and 2 (the three-arm pilot) executed; step 3 — full render plus a matching
-re-slice — is dead with the lever. The verdict is below.
-
-### ⛔ STEP 2 RESULT (2026-08-17) — the stop rule FIRED on the only arm that does anything
-
-Numbers, both sides, in [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md). Read against the
-pre-registration below, which was signed before the arms ran and is **not** re-opened now.
-
-1. **The measure rail is not the lever on the synthetic side** — the 56-**token** budget binds first,
-   so the renderer was already emitting one measure per strip 87% of the time.
-2. **It cannot raise resolution at all**, only close a *training* gap. The padding probe's ×1.00
-   baseline **was** the exam's own spacing, and exceeding it needs crops narrower than one measure —
-   the half-measure target already measured at **+31.8% worse**.
-3. **Both costs this file carried were wrong**, and much lower than feared.
-4. ⛔ **The stop rule fires**: short crops on the re-sliced real side reach **5.4×** the control
-   against a **2×** threshold. Arm 1 is stopped; arm 2 survives and does nothing. A rough independent
-   estimate agrees — the resolution gain and the short-crop cost are the same size, sign probably
-   negative.
-
-**So the lever as written is spent, and it is written up as spent rather than re-aimed.** Two things
-survive it and neither is a version of "narrow the crops":
-
-- **A real, cheap, separable change**: render the corpus at **one measure per strip** to remove the
-  16.0-vs-19.2 px *training* gap, for +12.9% strips and no change to the slicer, therefore **no
-  decode cost and no short-crop risk at all** — the stop rule is about the *real* side, which this
-  does not touch. ⚠ Untested as an accuracy claim; it needs a trained arm like anything else.
-- **The short-crop hole is now the blocking item on this axis, not a side condition.** It was dropped
-  in July on a disproved *mechanism* (§3 of [round3.md](round3.md)) while its **cost** was confirmed,
-  and it is what stops the only geometry arm that works. Any return to crop geometry goes through it
-  first.
-
-⚠ **One arm design error is recorded with the result**, because it produced numbers that looked
-decisive and were not: pairing each arm with a lowered `MAX_STRIP_W` (800, 500 px) forced `_split_wide`
-to cut **inside** measures — `split_wide` 25% → 76% → 94.7% — so the first run measured the
-half-measure target by accident and "failed" the lever for the wrong reason. The cap must stay at 1450
-and `split_wide` is the tell, not the widths.
-
-### The pre-registration itself → [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md)
-
-The step-2 design and the stop rule **as signed**, kept verbatim so the result above can be checked
-against what was promised rather than against a memory of it. Moved there 2026-08-17 at this file's
-400-line cap: the lever is closed, so its pre-registration is history and belongs with its numbers.
-
-## Lever 1b — FORM COVERAGE: the corpus is half şarkı, and the ornate vocal forms cost ~3×
+### The original section, kept because its numbers are real and its exam-blindness point stands
 
 **NEW 2026-08-17, owner-reported then measured.** Using the product, the owner found many mistakes
 "especially in classical parts", **including on clean computer-generated PDFs**. Bucketing the spent

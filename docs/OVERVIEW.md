@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-15
+updated: 2026-08-17
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -78,12 +78,46 @@ Then we checked the results we already had. Comparing strips carrying the **same
 the most-shrunk third cost **2.4 times as many corrections per note**. Longer strips are not the
 problem — *more shrunken* ones are.
 
-⚠ **This is a lead, not a proven fact.** It is a pattern in old results, not an experiment. The
-experiment is cheap and is the next thing on the list: make a strip artificially wider by adding
-blank paper, which changes nothing except how much the model shrinks it, and see whether the mistakes
-go up. If they do, we cut the strips shorter — about one bar each instead of three — and the model
-sees roughly two and a half times more detail for the same effort. If they don't, we write that down
-and drop it, like the five before it.
+✅ **The experiment ran on 15 August and it worked.** We made real test strips artificially wider by
+pasting in blank staff from the same strip — identical music, identical answer key, the only change
+being *more shrinking*. Mistakes went up at **every** step, 59% worse at the extreme, and it repeated
+on a second, separate set of pages. So shrinking genuinely does cost accuracy. That much is solid.
+
+## What happened on 17 August 2026 — we cannot buy the reverse, and we stopped the idea
+
+Showing that shrinking **hurts** is not the same as showing that un-shrinking **helps**. So we tested
+whether we could actually cut strips narrower and give the model a better look. **We can't, and there
+is no room to.** Two reasons, both measured:
+
+1. **Real pages are already at the good size.** The blank-paper test's own starting point — normal,
+   unpadded strips — was *already* at 19.2 dots between staff lines. That is simply what a real test
+   page looks like. To do better, a strip would have to be narrower than **one bar of music**, which
+   means cutting through the middle of a bar. We tested that in July: **32% worse**.
+2. **Cutting to one bar per strip causes a worse problem than it solves.** Very short strips are the
+   single worst thing this model handles — it gets almost everything wrong on them, because among
+   40,826 practice pictures there is not one that is just a key signature with no notes. It has never
+   seen that shape. Cutting real pages to one bar each took those tiny strips from **0.8% to 4.3%** of
+   all strips — five times more.
+
+**We wrote down before running the test that "more than double" would kill the idea.** It came out at
+five times. So the idea is dead, and it died by a rule set in advance rather than one invented
+afterwards to fit the answer. That is the whole point of writing the rule down first.
+
+**What we did get, and it is cheap and real.** Our practice pictures reach the model at **16 dots**
+between staff lines; real test pages arrive at **19.2**. So **the model practises on blurrier music
+than it is examined on** — a 20% handicap we created ourselves. Cutting only the *practice* pictures to
+one bar each fixes exactly that. It costs 13% more practice pictures and changes nothing about how real
+pages are sliced, so none of the problems above apply. Worth doing; we cannot know whether it helps
+until we retrain.
+
+⚠ **Two numbers in our own notes were wrong, and both had been frightening us off this.** We believed
+it would cost **3× more computing per page** (real answer: **1.22×**) and **3× more practice pictures**
+(real answer: **1.13×**). Both came from confusing the tool that cuts *real* pages with the one that
+prints our *practice* pages — they are separate and only the first has a width limit at all.
+
+⚠ **And the "very short strip" weakness is now the blocker on this whole idea**, not a footnote. We set
+it aside in July because our *explanation* for it turned out to be wrong — but its *cost* was never in
+doubt, and it is now the thing standing in front of the only version of this change that works.
 
 ## Where we are right now
 
@@ -281,15 +315,29 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    Why three-in-four and not nine-in-ten: nine-in-ten is where we are going, but no round so far has
    moved this number that far in one go, and a target nobody can reach stops telling us anything.
 1b. ✅ **DONE — the triplet mark is redrawn, tested, and kept** — the item just above.
-1c. ⏭ **NEXT, and it takes half a day with no training: the blank-paper test** described further up.
-   It decides what the next redraw should be, so it goes first.
-2. **Draw more eighth notes and longer bars** (the item explained below) — this is Round 3 itself.
-   **Still on, just not first**: how many short notes are in a bar also changes how *wide* a bar is,
-   which is the very thing the test above is about. Doing both at once would leave us unable to say
-   which one helped — the mistake we made in Round 2 and deliberately avoided with the triplet test.
-   Check on 300 sample pictures before redrawing all 40,826.
+1c. ✅ **DONE 15 August, and then STOPPED 17 August** — the blank-paper test and the follow-up, both
+   described further up. Shrinking does cost accuracy; we cannot buy the reverse. What is left of it is
+   one cheap change: **print the practice pictures one bar per strip** so the model stops practising on
+   blurrier music than it is tested on. 13% more pictures, nothing else moves.
+1d. ⏭ **NEXT, and it needs your eyes rather than a computer: where is the "3" on a triplet printed?**
+   You spotted it sitting **between the curve and the notes** on a real page, which is neither of the
+   two ways we have drawn it. Our notes say all 16 marks we measured do it differently — but 16 marks
+   is a small sample, and one clear counter-example is enough to reopen it. The tool shows you real
+   examples one at a time and you say yes or no; we change no drawing until you have.
+1e. ⏭ **THEN THE BIG UNTRIED ONE — variety.** Every single one of our 40,826 practice pictures comes
+   from **one** music-printing program, **one** font, and **one** spacing; the variation is exactly
+   zero. Real sheet music comes from many publishers that all look slightly different. This is now the
+   most promising idea we have left, and **you moved it ahead of the note-mix work on 17 August** after
+   asking about fonts. The cheap version: we already own a second music printer, so the same pieces can
+   be printed a genuinely different way at no labelling cost.
+2. **Draw more eighth notes and longer bars** (the item explained below) — the original Round 3.
+   **Still on, now behind both items above.** Check on 300 sample pictures before redrawing all 40,826.
 3. **Decide whether to rebuild the training sets from the newly-cut strips.** Not automatic — it
    would rewrite the lists that our hand-checked answers hang off.
+4. **Collect real pages from more websites than the two we use** (your decision, 17 August). ⚠ Worth
+   knowing what it does and does not buy: we already have about **2,500 real page pictures nobody has
+   checked by hand**, so the thing slowing us down is the checking, not the collecting. More pages will
+   not speed that up — but you decided to widen the net anyway, and that is recorded.
 
 The longer backlog those three were chosen from — and the three ideas we tested and closed on 28
 July, which should not be re-proposed — are on [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md).

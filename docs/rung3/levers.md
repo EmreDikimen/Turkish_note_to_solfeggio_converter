@@ -90,6 +90,17 @@ running it. ⚠ It also changes the browser/server decode path, so `gate:browser
 
 ## Lever 3 — real data: clean it before growing it
 
+> ⏭ **RE-AIMED 2026-08-19 (owner): clean the SCANNED pages, not the born-digital ones.** The cleaning
+> argument below is unchanged and is now the live work; what moved is *which tier* it runs in. Two
+> measurements decided it ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)): **93% of exam pages are
+> scans** (62 of 67), so `batch2` was cut from the tier supplying 7% of the graded medium; and its
+> own verdicts read a **~12% fix rate** against **30%** in the scanned nota pool. A batch row is
+> seeded with the decode, so an `ok` changes the training data by nothing — the yield of a batch is
+> its *fix* rate. The plan is a `batch3` on the scanned tier, **not** unparking `batch1` (it is the
+> most-damaged pages corpus-wide, so it concentrates the deferred handwriting, and 10 of its 52 pages
+> are born-digital anyway). [../DECISIONS.md](../DECISIONS.md) ·
+> [labeling-queues.md](labeling-queues.md).
+
 > ⚠ **PARTLY OVERRULED 2026-08-17 (owner): collect broadly from more sources now**, beyond
 > neyzen.com and notaarsivleri.com. The cleaning argument below is unchanged and still owed — what the
 > owner rejected is the *sequencing*, i.e. "clean first, then grow". Both halves are on the record in
@@ -132,6 +143,21 @@ first move is not more rows:
 
 ## Lever 4 — renderer diversity: one engine, one font, one spacing
 
+> ✅ **BUILT AND PILOTED 2026-08-18 — the second engraver works, the gate passes 312/312, and the
+> domain gap did NOT move.** LilyPond 2.26 renders our own labels (`tools/render/render-ly.ts`),
+> its `makam.ly` draws all eight AEU accidentals under the same comma→glyph convention we use, and
+> a full corpus would cost ~76 min. Every number, and the two limits the null result carries — the
+> measurement is blind to most of what an engraver changes, and the staff geometry was **pinned on
+> purpose** — are in [../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md).
+> ⏭ **The decision this leaves open is whether a mixed corpus earns a trained arm.** Nothing below
+> this line is evidence for it; the pilot bought feasibility and a gate, not an accuracy claim.
+> ⚠ **The "one spacing" third of the premise is still untouched**: varying document scale per strip
+> is engraver-neutral and one line in either renderer, and it is the part that actually addresses the
+> SD-zero number. It is a separate change and it is not made.
+> ⚠ **Four things are owed before this arm could stand beside `strips_v4`** rather than beside a
+> control: slur distractors, repeat/volta/nav marks, lyrics and text, and the `every`-mode transposed
+> share. Listed with the reasons in [../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md).
+
 > ⏭ **PROMOTED 2026-08-17 (owner): this runs AFTER Lever 1 and BEFORE the content work**, re-ordering
 > the 2026-07-27 decision that made the note-value mix Round 3's content change. The content work is
 > not cancelled — it moves behind a second engraver, because the *make-our-pixels-more-realistic* axis
@@ -154,7 +180,9 @@ is **zero** ([round3.md](round3.md) §1). Current synthetic-data work in this fi
 — randomising font family, document scale, margins, line width and system spacing, or compositing
 real glyphs and paper — and reports the diversity itself as the thing that closes the synthetic→real
 gap. We have varied the *degradation* of one engraving heavily (`augment.py`) and the engraving
-itself not at all.
+itself not at all. ⚠ **"Heavily" needs one qualification, added 2026-08-19**: the degradation we vary
+is aimed at the *deployment* distribution (screenshots and camera photos), and there is **no scan
+profile at all** — see Lever 7.
 
 The cheapest second domain is one we half-own: `tools/render/lilypond.ts` already emits the label
 language, so rendering the same pieces through real LilyPond would give a genuinely different
@@ -217,6 +245,12 @@ the notehead's ink there at *any* clearance — so they get the space beyond it.
    > the model disagrees with the label most there". The **exclusion itself may still be right** —
    > hard tier is defined independently of `nd` — but its written reason does not carry it. Decide
    > before the staccato arm is scored, not after.
+   > ✅ **SETTLED 2026-08-19 (owner), before any training: the exclusion STANDS, the reason is
+   > replaced.** Re-opening a signed pre-registration mid-round is what would make the round
+   > meaningless, so the gate does not move a point. It survives on two reasons that hold: hard tier
+   > carries **~12 real-dot instances in total**, too few to gate on in either direction, and its
+   > gold is the least reliable pool we own. Hard tier stays reported, never gated on — as written.
+   > [../DECISIONS.md](../DECISIONS.md).
 3. **Reported, not gated:** pitch/AEU macro F1, so the price of clause 1 is on the record.
 
 ⚠ The slur distractor's cost is the thing to watch: it took `\tup3` precision 15.1% → 91.2% and
@@ -225,6 +259,50 @@ discovered. ⚠ `STACCATO_RATE` is **chosen, not measured** — nobody has count
 real Turkish editions, and doing so is how to replace it. ⚠ The alternative not taken is a
 `\staccato` token: possible, but `ADDED_TOKENS` is **append-only** so it goes at the END, and it
 needs gold annotation and an engraver change.
+
+## Lever 7 — the medium hole: we have never simulated a SCAN
+
+**New 2026-08-19, and it is the next trained arm** ([../DECISIONS.md](../DECISIONS.md)).
+[`src/vision/augment.py`](../../src/vision/augment.py) has exactly two profiles:
+
+| profile | share | what it models |
+|---|---|---|
+| `screenshot` | 0.65 | resample softness, JPEG, mild brightness/contrast, light sensor noise |
+| `photo` | 0.35 (`PHOTO_SHARE`) | paper tint/texture, uneven lighting, shadows, rotation/perspective, ink bleed, camera blur |
+
+**There is no scan profile, and 93% of the exam is scans** (62 of 67 pages —
+[../METRICS-CORPUS.md](../METRICS-CORPUS.md)). A flatbed or office scan of a TRT-era print is
+neither of the two: it has **flat lighting and no perspective** (so the photo pipeline's most
+expensive ops model nothing that is there) while it *does* have speckle and dust, broken or
+half-missing thin lines, ink spread on thick strokes, bleed-through from the reverse side, small
+skew, and threshold/halftone damage — none of which either profile draws.
+
+⚠ **`augment.py`'s own comment has been asking for this since July**: *"Revisit against real usage at
+Rung 3."* We are in Round 3 and it was never revisited.
+
+**Why it goes first among the trained arms.** No re-render, no new labels, no render slot, one
+module. Every other item on this list costs a corpus render or human labelling.
+
+⚠ **The trade, stated before the arm runs.** `PHOTO_SHARE` was set from the owner's report that real
+uploads are mostly web screenshots, and the constant carries an explicit warning against pushing the
+mix for "harder training" — over-warped data trades the common case for the rare one. Aiming
+augmentation at scans optimises **the exam**, and we do not know that the exam's medium is what the
+app's users upload (n=2 — [../METRICS-USAGE.md](../METRICS-USAGE.md)). So the scan profile is added
+**beside** the two, not substituted for them, and the mix is pre-registered rather than tuned.
+
+**Pre-registration — to be signed before the arm is trained:**
+
+1. **Primary: edits/page on `_realval_v2`, hard tier**, which is where the scanned pages are. A win
+   is a fall against the same model trained with today's two-profile mix — same seed, same corpus,
+   same steps, the profile mix the only difference.
+2. **No-regression on easy tier**, which is the closest thing we have to the screenshot case. This
+   clause is the trade above made checkable: if scan realism costs the clean case, that shows here.
+3. **Reported, not gated:** the three-way mix actually used, and per-class accidental F1.
+
+⚠ **What must be decided before running, not after:** the share the scan profile takes. It is a
+`STACCATO_RATE`-shaped hazard — a chosen number with no measurement behind it. The honest version is
+to set it from the **corpus** composition we intend to serve, not from what makes the arm win.
+⚠ It changes training only, so nothing in the browser or the server moves and no gate is at risk.
 
 ## The ordering, and the content work
 
@@ -252,6 +330,37 @@ behind measurements that can change what it should render.
 > Lever 4's second engraver, Lever 1's surviving one-measure-per-strip corpus render, and Lever 6's
 > staccato arm. Lever 4 is first by the owner's decision; the order of the other two is undecided and
 > is a call to take deliberately. The content work stays behind all of them.
+>
+> ⏭ **Updated 2026-08-18: Lever 4's PILOT is done and it did not consume the render slot.** It
+> rendered 312 strips into a pilot pool, not a corpus, and its result (null on the domain gap) is not
+> a reason to render one. So **two render-side items remain owed** — the one-measure-per-strip corpus
+> render and the staccato arm — and the choice between them is still a deliberate call, now with no
+> third item competing.
+
+### ⏭ The order as it now stands (owner, 2026-08-19) — four trained arms, one variable each
+
+| # | Arm | Costs a render? | Scored on |
+|---|---|---|---|
+| 1 | **Lever 7** — the scan profile | no | edits/page on `_realval_v2` **hard tier** |
+| 2 | **Lever 1's survivor** — one measure per strip | yes (+12.9% strips) | edits/page on `_realval_v2` |
+| 3 | **Lever 6** — the staccato arm | yes | the **paired false-dot pool**, against 72.7% |
+| 4 | the final Round-3 model | — | **the exam, read once** |
+
+**No two together.** Round 3 has been unattributable twice already, and the tuplet A/B was built
+specifically to stop it happening a third time.
+
+⚠ **One asymmetry worth knowing when the budget gets tight.** The staccato arm is the only one with
+its **own** targeted instrument — the paired pool (`_staccato_falsedot_ctl` / `_staccato_falsedot_stac`)
+measures the false-dot rate whatever else changed in the corpus. So folding it into another render
+would leave the *staccato* claim intact and the general result unattributable. That is a real option
+and it is **not** the plan; it is written here so the trade is visible rather than rediscovered.
+
+⚠ **Arms 1–3 do not need the labelling to finish.** Only the final model consumes the corrected
+scanned labels, so the human and compute tracks run in parallel.
+
+⚠ **Lever 4 gets no arm.** A LilyPond corpus is not rendered: the pilot returned null on the domain
+gap, and four recipe items are owed before that arm could stand beside `strips_v4` at all
+([../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md)).
 
 ## ⚠ A power note on the primary criterion — the owner's call, not an agent's
 

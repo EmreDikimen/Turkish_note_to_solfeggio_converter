@@ -106,6 +106,41 @@ Of the 88 born-digital pieces, **84 are sliced — 115 pages / 2,956 strips**, a
 source. That tier is what `build_label_batch.py --clean` cuts a labelling batch from
 ([rung3/labeling-queues.md](rung3/labeling-queues.md)).
 
+### ⚠ The same census run against the EXAM (2026-08-19) — 93% of it is scans
+
+The census above was run over the corpus. Run over `data/real/rung3/testset.json` it answers a
+sharper question — *what medium is Round 3 actually graded on?*
+
+| | pieces | pages |
+|---|---|---|
+| exam total | 45 | 67 |
+| **born-digital** | **4** | **5 (7%)** |
+| **scanned** | **41** | **62 (93%)** |
+
+The four are all nota (`ey_gonca_acil…`, `ab_u_tab_ile…`, `gozlerinden_icti…`, `ay_dalgalanirken…`);
+all 17 neyzen exam pieces are scans, consistent with 0 of 1,055 neyzen PDFs being born-digital.
+
+This is the number that re-aimed the labelling on 2026-08-19 ([DECISIONS.md](DECISIONS.md)). It turns
+a qualitative caveat — "a clean-page batch cannot be expected to move the floor much" — into a
+measured one: **`batch2` is cut entirely from the tier that supplies 7% of the exam's pages.**
+
+### Labelling yield by tier — what a strip-look actually buys (2026-08-19)
+
+| Batch | Tier | Verdicts so far | Fix rate |
+|---|---|---|---|
+| `batch2` | born-digital (52/52 pages) | 59 ok / 8 fix / 1 bad, n=68 | **~12%** |
+| nota training pool (2026-07-27 audit, row below) | scanned | 521 corrected of 1,740 | **30%** |
+
+⚠ **n = 68, so the batch2 rate carries roughly a 5–22% interval** — it is a direction, not a
+precise rate. It agrees with the owner's own read of those strips ("mostly decoded correctly") and
+with the tier being the clean one, which is why it was acted on rather than measured further.
+
+⚠ **What an `ok` verdict costs and buys.** Batch rows are seeded with the model's own decode, so
+`ok` means the training label was **already right** — the row changes the training data by nothing.
+The yield of a batch is therefore its *fix* rate, not its throughput. ⚠ Composition matters too:
+`batch1` is not the inverse of `batch2` — 10 of its 52 pages are born-digital, 5 are neyzen, and it
+carries the handwritten manuscript the ranking surfaces at the top.
+
 ## Label quality (measured by hand audits)
 
 | Pool | Content-error rate | Date |

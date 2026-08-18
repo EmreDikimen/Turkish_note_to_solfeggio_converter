@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-18
+updated: 2026-08-19
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -219,148 +219,11 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    about the program. Everything else can be built while you decide.
 14. **Open it to everyone — but only if Round 3's exam result is good.**
 
-### The triplets — what we found on 11 August 2026
+### The model work → [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md)
 
-You reported two triplets read wrongly on a real page. Looking into it changed three things we
-believed.
-
-**The triplet labelling was already finished.** For three weeks one of our notes said there were 147
-rows still waiting to be checked by hand, so that job kept being recommended. On disk it was done and
-already in use for training. The note was simply out of date. Now fixed.
-
-**The model is not inventing triplets any more — it is missing them.** A while back it drew a "3" on
-almost every curved line it saw, so we added plain curved lines *without* a "3" to the practice
-pictures, to teach it the difference. That worked, completely. But it overshot: the model became so
-careful that it now misses about **one triplet in six**. Which is exactly what you saw.
-
-**And we think we know why: we draw the mark in the wrong shape.** In real Turkish sheet music the
-curve is *broken in the middle* and the "3" sits in the gap. Our program draws an unbroken curve with
-a small "3" floating above it. So on a real page a triplet is easy to tell from an ordinary curved
-line — the curve is cut. In our practice pictures the only difference is a tiny floating mark.
-
-We taught it to look for the wrong thing.
-
-This is the same kind of mistake as the sharp signs last month, where our music font drew the little
-bars too thick and the model learned our version instead of the real one. That one cost two rounds.
-
-**What we did, and what came of it (finished 15 August).** We redrew the mark properly — broken
-curve, "3" in the gap, measured against real pages — you looked at it beside a real edition, and then
-we tested whether it actually helps: two identical trainings, one on the new mark and one on the old,
-different in nothing else. The new one read **48 of 54** triplets, the old one **46**. Two more
-triplets is too small a difference to trust — with only 54 examples to test on, a coin lands there
-about seven times in ten — so the honest answer is **we could not tell**.
-
-**We are keeping the new mark anyway**, because it is what real Turkish sheet music looks like, and
-that was always the reason for it. What we are *not* doing is claiming it fixed the missed triplets.
-It might have; this test could not see a change that small. To answer it properly we would need more
-hand-checked triplets to test on, not another pair of trainings.
-
-Two things worth knowing about how that went. **We nearly had a flattering number**: looked at
-through a smaller slice of the same test, the new mark reads 91% against 80% — but that slice is part
-of the same 54, chosen after the fact, which is exactly the trap that cost us a whole round in July.
-And the **old-mark training scored identically to the model we have been running since July**, which
-tells us the other things that changed in between (a new training wobble, a browser update that moved
-every pixel a hair) did nothing to triplets — worth knowing before we blame them for anything later.
-
-**No new hand-labelling was needed.** Details: [rung3/tuplets.md](rung3/tuplets.md).
-
-### List B — the model (Round 3, running in parallel)
-
-1. ✅ **DONE — Round 3's target is written down and you signed it (15 August).** On the honest
-   measure: **3 pages in 4 need 5 fixes or fewer**, against 57% today. It does double duty as the gate
-   for opening the app to everyone. It was fixed *before* training, and it does not move afterwards —
-   if the round lands under it, the app stays with the two friends and we do a Round 4.
-   Why three-in-four and not nine-in-ten: nine-in-ten is where we are going, but no round so far has
-   moved this number that far in one go, and a target nobody can reach stops telling us anything.
-1b. ✅ **DONE — the triplet mark is redrawn, tested, and kept** — the item just above.
-1c. ✅ **DONE 15 August, and then STOPPED 17 August** — the blank-paper test and the follow-up, both
-   described further up. Shrinking does cost accuracy; we cannot buy the reverse. What is left of it is
-   one cheap change: **print the practice pictures one bar per strip** so the model stops practising on
-   blurrier music than it is tested on. 13% more pictures, nothing else moves.
-1b2. ⛔ **17 August — DROPPED, AND YOU ARE THE ONE WHO DROPPED IT.** You first reported that the app
-   makes many mistakes "especially in classical parts", even on clean pages made by a computer. We
-   measured it and it looked real. Then you **tried it again** and found it was not: classical pages
-   come out no better and no worse than songs — *"it is not read it well but it cannot read the songs
-   as well."* So there is no "classical problem", and the plan to go and collect classical sheet music
-   is cancelled.
-   ⚠ **This is the right outcome, not a wasted day.** Before you retested, we had already found that
-   the classical pieces in our collection are **not harder music** — they have fewer fast notes and
-   fewer triplets than the songs do. Nothing was drawn or collected on the idea.
-   ⚠ **And one thing we told you here on 17 August was wrong, so it is corrected on 18 August.** We
-   said those pieces were simply **worse photocopies**. That came from a number called `nd`, which we
-   had been reading as "how bad the scan is". It is not — it measures **how much the model's reading
-   differs from the answer key**. So saying "the model does badly there because `nd` is high" is just
-   saying "the model does badly there because the model does badly there". It explained nothing. Your
-   retest is what settled the question, and it never needed an explanation to do so.
-   ⚠ **A number we gave you earlier still needs its correction, and it stands on its own.** We said the
-   model reads clean computer-set pages at 94.8%. That figure is **only about the tiny microtonal
-   marks** — it never measured the notes or their lengths, which are two-thirds of what you fix. So
-   "publish for clean pages first" still has to be measured properly rather than assumed.
-   ⚠ What is left after all this is the plain version: **the model is not good enough yet, on
-   everything.** That is exactly what Round 3 is for, and it is what the items below are.
-1c2. ⏭ **THIS WEEK — you are hand-correcting real answer keys, and that is the better bet.** Why:
-   of the real answers we have checked so far, **531 needed fixing against 167 that were fine — three
-   in four wrong.** And the note itself is 40% of what a user fixes. If the answers we train on have
-   wrong notes in them, the model learns wrong notes, and no amount of redrawing our practice music
-   repairs that. Against seven synthetic ideas that mostly came back "no", this is measured, large,
-   and on the right axis.
-   **The tool:** `.venv-ml/bin/python scripts/rung3/review_ui.py`, then open
-   <http://localhost:8377> and pick the **batch2** tab (new, 18 August). Each row shows a real strip
-   with the model's reading already filled in, so you correct rather than type from scratch.
-   **What changed and why:** the old **reslice-all** tab has 33,804 rows in an order we then measured
-   and found **worse than random** — working down it was close to picking strips by chance. So we cut
-   a batch out of it instead: **52 pages, about 1,500 strips**, chosen as the pages showing the most
-   visible damage, with **every strip of a page kept together and in reading order**, so you read a
-   page once instead of meeting its pieces twenty times. Your verdicts are copied back into the big
-   list afterwards, so nothing lives only in the batch.
-   ⚠ **These are the clean, computer-typeset pages — your call on 18 August: teach the clean modern
-   sheets first.** We can tell which pages those are *for certain*, not by guessing: a computer-set PDF
-   contains drawing instructions, a scan contains one big photograph, and the file says which. A first
-   batch cut without that filter came back full of old scans and handwriting, so it was parked unread.
-   ⚠ One honest note on what this buys: it aims at the "publish for clean pages first" question, not at
-   the Round 3 exam, which is mostly older scans.
-   ⚠ **Look at the note and its length, not just the tiny marks.** Every check we have ever done went
-   looking for the tiny marks, because that is what the old score measured. Notes and lengths are
-   two-thirds of the problem and nobody has ever checked them.
-   ⚠ **Old handwritten sheets: mark them `bad` and move on** (your call, 17 August). There are real
-   handwritten pages mixed into the scans — the project had assumed everything was printed. Handwriting
-   is a genuinely different and harder problem (not one of our 40,826 practice sheets looks anything
-   like it), so it gets its own effort later rather than being smuggled into this one.
-   ⚠ **Honest expectation on yield:** on this queue, two clicks in three just confirm the model was
-   already right. That is the price of the queue being safe. Filtering for bars whose note lengths do
-   not add up (your choice, 17 August) is how we raise it.
-   ⚠ **You were right to ask whether the pictures were out of date, and it nearly cost you the week.**
-   Some of the tabs show pictures cut by the *old* version of the page-cutter: we measured it, and
-   **18 of 20 pages there would throw your work away** — the same way you lost 130 answers in July.
-   The **reslice-all** tab is the safe one — **20 of 20 pages keep their answers** — and the new
-   **batch2** tab is cut from the same pictures, so it inherits that. If you ever want to check first,
-   run `scripts/rung3/check_crop_staleness.py`; it can now check **exactly the pages of your batch**
-   (`--pages-from …_pages.json`) instead of twenty random ones, which is the honest version of the
-   question, because a batch is on purpose made of the roughest pages.
-1d. ⏭ **THEN, and it needs your eyes rather than a computer: where is the "3" on a triplet printed?**
-   You spotted it sitting **between the curve and the notes** on a real page, which is neither of the
-   two ways we have drawn it. Our notes say all 16 marks we measured do it differently — but 16 marks
-   is a small sample, and one clear counter-example is enough to reopen it. The tool shows you real
-   examples one at a time and you say yes or no; we change no drawing until you have.
-1e. ⏭ **THEN THE BIG UNTRIED ONE — variety.** Every single one of our 40,826 practice pictures comes
-   from **one** music-printing program, **one** font, and **one** spacing; the variation is exactly
-   zero. Real sheet music comes from many publishers that all look slightly different. This is now the
-   most promising idea we have left, and **you moved it ahead of the note-mix work on 17 August** after
-   asking about fonts. The cheap version: we already own a second music printer, so the same pieces can
-   be printed a genuinely different way at no labelling cost.
-2. **Draw more eighth notes and longer bars** (the item explained below) — the original Round 3.
-   **Still on, now behind both items above.** Check on 300 sample pictures before redrawing all 40,826.
-3. **Decide whether to rebuild the training sets from the newly-cut strips.** Not automatic — it
-   would rewrite the lists that our hand-checked answers hang off.
-4. **Collect real pages from more websites than the two we use** (your decision, 17 August). ⚠ Worth
-   knowing what it does and does not buy: we already have about **2,500 real page pictures nobody has
-   checked by hand**, so the thing slowing us down is the checking, not the collecting. More pages will
-   not speed that up — but you decided to widen the net anyway, and that is recorded.
-
-The longer backlog those three were chosen from — and the three ideas we tested and closed on 28
-July, which should not be re-proposed — are on [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md).
-
----
+The whole model plan in plain words — what the triplet work settled, the scanned-pages decision, the
+**four trainings** and what each one changes, when we train, and what the one-shot exam decides.
+Moved out of this page on 19 August when it passed its size limit.
 
 ## Small glossary (only the words used above)
 

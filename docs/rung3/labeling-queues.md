@@ -137,8 +137,9 @@ the signed floor. Exam growth is a separate job needing a random/stratified samp
 
 | Batch | Cut | Pages / strips | Sources | Evidence | State |
 |---|---|---|---|---|---|
-| `batch1` | whole corpus | 52 / 1,500 | nota 47, neyzen 5 | 48.6 units/page | ⛔ **PARKED, not labelled** |
-| `batch2` | `--clean` (born-digital only) | 52 / 1,497 | nota 52 | 30.2 units/page, from 115 ranked pages | ✅ **the live one** |
+| `batch1` | whole corpus | 52 / 1,500 | nota 47, neyzen 5 | 48.6 units/page | ⛔ **PARKED — and not the answer, see below** |
+| `batch2` | `--clean` (born-digital only) | 52 / 1,497 | nota 52 | 30.2 units/page, from 115 ranked pages | ⛔ **STOOD DOWN 2026-08-19** at 68 verdicts |
+| `batch3` | `--scanned` (the inverse filter) | not cut yet | — | — | ⏭ **the plan — the flag does not exist yet** |
 
 **Why batch 1 is parked.** Unfiltered, the ranking selected exactly what it is built to select — the
 most damaged pages — and those turn out to be old scans and **real handwritten manuscript**.
@@ -146,12 +147,43 @@ Handwriting is a **deferred category** ([../DECISIONS.md](../DECISIONS.md), owne
 not enter a printed-page pool. The file is kept on disk as the record of what the unfiltered ranking
 returns; it carries 4 verdicts from a look at the top rows and no more.
 
-**Why batch 2 is the live one.** `--clean` restricts the ranking to **born-digital** pages — a
+**Why batch 2 was the live one.** `--clean` restricts the ranking to **born-digital** pages — a
 file-format fact, not a heuristic, so no scan and no handwriting can enter
-([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The owner's call on 2026-08-18 is to teach the clean
-modern sheets first. ⚠ **Know what it aims at**: the still-open *"publish for clean pages first"*
+([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The owner's call on 2026-08-18 was to teach the clean
+modern sheets first. ⚠ **Know what it aimed at**: the still-open *"publish for clean pages first"*
 question, **not** the signed Round-3 floor — that exam is 41 nota / 26 neyzen pages and only 18% of
 it is the easy tier, so a clean-page batch cannot be expected to move it much.
+
+## ⛔ Why batch 2 was stood down after 68 rows (2026-08-19) — and what replaces it
+
+The caveat above turned out to be understated, and two measurements say so
+([../METRICS-CORPUS.md](../METRICS-CORPUS.md)):
+
+- **93% of exam pages are scans** — 62 of 67; only 4 of 45 exam pieces are born-digital. So `batch2`
+  was cut entirely from the tier that supplies **7%** of the medium Round 3 is graded on.
+- **Its own fix rate is ~12%** (59 ok / 8 fix / 1 bad, n=68), against **30%** in the scanned nota
+  pool. Since a row is seeded with the decode, an `ok` changes the training data by **nothing** — so
+  the yield of a batch is its *fix* rate, and ~88% of those looks bought nothing.
+
+The owner's goal changed with it: the model must be **good enough on scans too**
+([../DECISIONS.md](../DECISIONS.md)).
+
+⚠ **`batch1` is NOT the inverse and unparking it is the wrong move.** It ranks the most damaged pages
+*corpus-wide*, which is why it surfaced handwritten manuscript in the first place — and 10 of its 52
+pages are born-digital anyway. Handwriting stays **deferred**.
+
+**What `batch3` needs, in order** — ⚠ `--scanned` **is not built yet**:
+
+1. **Merge `batch2`'s 68 verdicts back first** (`--merge-back --batch 2`) or they stay stranded.
+2. Add `--scanned` to `build_label_batch.py` — the inverse of `--clean` over the same
+   `born_digital_stems` set, so it stays a file-format fact.
+3. **Triage handwriting at PAGE level before any strip work** — 52 page images, drop the handwritten
+   ones. Minutes, and it stops a deferred category eating strip-looks one crop at a time.
+4. `check_crop_staleness.py --pages-from data/real/rung3/_pagequeue/batch3_pages.json`. Step 2 of the
+   loop below is not optional, and the scanned tier is likelier to be stale than the corpus average.
+5. **Probe 100 rows before committing 1,500** — record the fix rate AND the bad rate. The scanned
+   tail is where `realval-hard` lost **33%** of its crops as unusable, and the ranking selects
+   exactly that tail. If bad-rate is high, cap the impact score rather than reading on.
 
 **The loop**, and the two steps that are easy to skip:
 

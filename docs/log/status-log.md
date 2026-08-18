@@ -7,7 +7,143 @@ updated: 2026-08-18
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-18 (latest) — the stopped UI's RANKING got a cheap consumer: page-complete labelling batches, and a census that corrected "neyzen is vector PDFs"
+## 2026-08-19 (latest) — the exam is 93% scans, so the labelling turns around; and a lever nobody had noticed
+
+**No model code ran today.** What changed is where the work points, and two measurements did it.
+
+**The exam's medium, measured for the first time.** The 2026-08-18 born-digital census was run over
+the *corpus*; run over `testset.json` it answers a sharper question. **4 of 45 exam pieces and 5 of 67
+exam pages are born-digital — 93% of the exam is scans.** So `batch2`, cut with `--clean` the day
+before, was drawn entirely from the tier supplying **7%** of the medium Round 3 is graded on. The
+2026-08-18 entry already said a clean-page batch "cannot be expected to move the floor much"; this
+turns that caveat into a number, and the number is bigger than the caveat sounded.
+
+**The owner's own read said the same thing from the other end.** After labelling 68 rows of `batch2`
+he reported the strips were mostly decoded correctly — and the verdicts bear it out: **59 ok / 8 fix /
+1 bad, a ~12% fix rate**, against **30%** in the scanned nota pool. ⚠ n=68, so read it as 5–22%; it is
+a direction, not a rate. The consequence is the part worth keeping: a batch row is **seeded with the
+decode**, so an `ok` changes the training data by nothing. **The yield of a batch is its fix rate, not
+its throughput** — seven or eight looks in ten were buying nothing.
+
+**So the labelling turns around, but NOT by unparking `batch1`.** Measured while checking: `batch1` is
+not the inverse of `batch2` — **10 of its 52 pages are born-digital**, 5 are neyzen, and it ranks the
+most damaged pages *corpus-wide*, which is precisely why it filled with handwritten manuscript. The
+plan is a `batch3` on the scanned tier behind a `--scanned` filter that **does not exist yet**, a
+page-level handwriting triage before any strip work, and a **100-row probe** of fix-rate and bad-rate
+before committing 1,500 — the scanned tail is where `realval-hard` lost 33% of its crops as unusable.
+Handwriting stays deferred.
+
+**A lever nobody had noticed, and it is the next trained arm.** `augment.py` has exactly two profiles,
+`screenshot` (0.65) and `photo` (0.35). **There is no scan profile** — and a flatbed scan of a TRT-era
+print is neither: flat lighting and no perspective, but speckle, broken thin lines, ink spread,
+bleed-through and threshold damage. `levers.md` said the degradation axis had been "varied heavily",
+which was true and misleading: it is varied for the **deployment** distribution, not the exam's
+medium. `augment.py`'s own comment has read *"Revisit against real usage at Rung 3"* since July. It
+goes first because it costs no render, no labels and no render slot. ⚠ The trade is recorded rather
+than glossed: `PHOTO_SHARE` came from the owner's report that real uploads are screenshots, so aiming
+at scans optimises the **exam**, not necessarily the app's users (n=2). The scan profile is added
+**beside** the two, never substituted, and the mix is pre-registered.
+
+**Lever 6 clause 2, settled before the arm rather than after it.** The `nd`-as-degradation
+justification was void. The owner's call: **the exclusion stands, the reason is replaced** — hard tier
+carries ~12 real-dot instances in total, too few to gate on, and its gold is the least reliable we
+own. Re-opening a signed pre-registration mid-round is what would make the round meaningless, so the
+gate does not move a point.
+
+**The tuplet thread is closed.** Confirmed while ordering the arms: the A/B ran, it was null, the
+shape stands on the print measurement, and **no trained arm belongs to tuplets**. Two items survive
+and neither costs a render or a run — the position lead (first triplet marked, later ones forgotten;
+96% → 81%) is settled **for free** at the exam read, and the digit-position probe is a person looking
+at tiles.
+
+**Round 3 now has an order: four arms, one variable each** — scan profile → one measure per strip →
+staccato → the final model, then the exam once. Lever 4 gets no arm: the pilot was null and four
+recipe items are owed before a LilyPond corpus could stand beside `strips_v4` at all.
+
+⚠ **Doc structure changed too.** `STATUS.md` was rewritten (399 → 308 lines) and `OVERVIEW.md` was
+**split by genre** rather than shaved: the model plan in plain words is now
+[../OVERVIEW-ROUND3.md](../OVERVIEW-ROUND3.md), and the closed narratives (the triplet mark, the
+classical-forms lead, the second printer's limits) moved to
+[../OVERVIEW-MODEL.md](../OVERVIEW-MODEL.md). The first attempt at this was trimming to fit, which is
+the thing [../MAINTAINING.md](../MAINTAINING.md) explicitly forbids; the owner caught it.
+
+## 2026-08-18 — F3 deployed to the live site, ahead of its own manual gate
+
+**What happened.** The owner asked for a deploy of the current product. `npm run deploy:app`
+published HEAD to <https://komavision.netlify.app>, putting **F3 (the violin fingerboard tab) on the
+live site for the first time**. Preflight: `npm run typecheck` clean across all three workspaces,
+`npm test` ALL PASS. The build reported 24 files / 43.7 MB and "deployable (under 60 MB, no weights)";
+5 files changed on the CDN.
+
+**Why the ordering is worth recording.** STATUS item 3b said the deploy comes **after**
+[MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md) check 25 — a person looking at whether the
+fingerboard dot lands where a violinist's finger would. That gate was **skipped on the owner's direct
+instruction**, not overlooked. It is defensible because check 25 is a look at rendered UI and the
+deployed bundle shows the same thing, so the check's substance survives the reordering; what was
+given up is the option to fix a bad-looking fingerboard before two friends could open it. **The look
+is still owed** and stays Track A's next action. Recorded rather than smoothed over, because a
+skipped gate that leaves no trace reads later as a gate that passed.
+
+**What was verified after.** `npm run smoke:live` **PASS on both paths** — server 47.8 s, Hub
+fallback 67.6 s, both returning an identical 9 staves / 26 strips / 399 notes / 26 bars, both
+cross-origin isolated, no page errors. Then the two things `smoke:live` structurally cannot see:
+`/instruments/violin-vl100.png` → 200 (355 KB), and every drum stroke → 200.
+
+**One trap found by walking into it.** A spot-check of `/audio/kudum/dum-rr1.wav` returned 404 — and
+that was a **wrong guess, not a deploy gap**: the shipped kits are **bendir and darbuka**, the two CC0
+sets, and there is no kudum kit. All six real files (dum/tek/ka × 2 kits) serve 200. Worth knowing
+because a 404 on an audio path is exactly the silent failure `MAX_AUDIO_MB` and the `VITE_AUDIO_URL`
+rule exist to prevent, so it looks alarming until the kit list is checked — read
+`apps/web/public/audio/` before believing one.
+
+## 2026-08-18 — Lever 4: a second engraver exists, its gate passes 312/312, and it bought no measurable realism
+
+**What ran.** LilyPond 2.26.0 (Homebrew, training-side only) now renders our own strip labels:
+`tools/render/ly-engrave.ts` (label → LilyPond source), `ly-svg.ts` (read back what was drawn),
+`render-ly.ts` (the corpus arm) and `verify-labels-ly.ts` (this arm's pixels-vs-labels gate). A
+312-strip pilot on the six `pieces_geom_pilot.json` pieces passed the gate **312/312, 501
+accidentals, 0 bar-check failures**, at **112 ms/strip** — a whole corpus would be ~76 min. Numbers:
+[../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md).
+
+**Why it was buildable at all.** LilyPond ships `ly/makam.ly`, which maps ninth-tone alterations to
+Emmentaler glyphs with the **same convention we use** — koma = mirrored flat / 1-stem-2-bar sharp,
+bakiye = slashed flat / plain sharp, küçük = plain flat / 1-stem-3-bar, büyük = double-slashed flat /
+2-stem-3-bar. That was checked glyph by glyph against Bravura before any code was written, because it
+was the one thing that could have killed the lever in a morning.
+
+**The design decision that makes pixels == labels provable.** The translator re-decides nothing. A
+note the label marks is written at that alteration and forced with `!`; a note the label leaves bare
+is written at the *drawn signature's* alteration; `\accidentalStyle "forget"` removes LilyPond's own
+memory, so its print rule collapses to "differs from the key signature" and those two cases pin it
+exactly. The written pitch is then what a *reader of the picture* would infer, which is all a training
+image needs — a suppressed accidental cannot move a notehead.
+
+**Two things the gate caught that reasoning had not.** (1) Emmentaler is an **optical-size family**:
+a grace note's accidental is a different outline, so an outline table calibrated only at full size
+reported "no accidentals drawn" on a strip that visibly had two. The calibration now renders every
+sign twice. (2) The first domain-gap run compared against the wrong control — 48% of `_pilot_geom_m4`
+is transposed `every`-mode strips, and a different signature seed moved the measured accidental rate
+**3.6×**, which would have read as an engraver effect. Both were recipe faults, and both were invisible
+until something compared drawn ink with label text.
+
+**The result, stated as it came out: NULL.** Against the matched control (carry-mode strips only, same
+signature variants, same six pieces) every column `domain_gap.py` can see is unchanged or slightly
+further from real pages; beam spans get *longer* where real pages are shorter. **Two limits belong
+with that number rather than after it.** The instrument is blind to most of what an engraver changes —
+glyph shapes, spacing inside a measure, stem lengths, beam angles — which the 99-pair side-by-side
+(`data/real/rung3/domain_gap/ly_vs_vexflow.png`) shows plainly while the table barely moves. And the
+arm's **staff geometry was pinned to the corpus on purpose**, so the "spacing SD is zero" third of
+Lever 4's premise was never tested: varying document scale per strip is a separate, engraver-neutral
+change that neither renderer makes today.
+
+**What this does NOT license.** Rendering a LilyPond corpus. 312 strips is a pilot pool; the claim a
+mixed corpus would need is an accuracy claim and only a trained arm can make it. Four things are owed
+first anyway — slur distractors (they took `\tup3` precision 15.1% → 91.2%, so an arm without them
+teaches the opposite lesson), repeat/volta/nav marks, lyrics and text, and the `every`-mode transposed
+share. Consequence for the ordering: the render slot Lever 4 was holding is **free**, and the choice
+between the one-measure-per-strip render and the staccato arm is the owner's next call.
+
+## 2026-08-18 — the stopped UI's RANKING got a cheap consumer: page-complete labelling batches, and a census that corrected "neyzen is vector PDFs"
 
 **Later the same day as the entry below, and it partly supersedes it.** That entry ends "what is on
 disk and works, **unconsumed**". It is consumed now — by the cheap half rather than the expensive one.

@@ -154,6 +154,13 @@ cap). That file owns the microtonal-sharp defect, the crop-shape and beam-weight
 confidence calibration, the old-slicer staleness finding, and the ~2% pre-shrink that failed to
 replicate.
 
+## The second engraver (Lever 4) → [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md)
+
+New 2026-08-18. That file owns the LilyPond arm: the AEU glyph-mapping check, the 312-strip pilot,
+its pixels-vs-labels gate, the domain-gap read against a matched VexFlow control, and the two limits
+that read matters under — the instrument is blind to most of what an engraver changes, and the staff
+geometry was pinned on purpose.
+
 ## Corpora, pools and label quality
 
 Moved to [METRICS-CORPUS.md](METRICS-CORPUS.md) on 2026-07-28 (this file hit the 400-line cap).

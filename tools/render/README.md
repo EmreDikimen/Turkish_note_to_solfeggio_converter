@@ -156,6 +156,31 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
   (strips_v2_2; pure per-measure functions shared by the serializer and SheetView, so pixels ==
   labels by construction — no seeds, no injection: these signs are real data).
 - `rng.ts` — seeded PRNG (`mulberry32`) + `hashStr`, shared by every seeded render step.
+
+**The second engraver (`ly-*.ts`, 2026-08-18 — Round 3 Lever 4).** A pilot arm, not a corpus: real
+GNU LilyPond 2.26 renders the *same* labels this directory already serializes, so a second visual
+domain costs no new labelling. It needs `brew install lilypond` and runs training-side only.
+- `ly-engrave.ts` — label → LilyPond source. It **re-decides nothing**: a note the label marks is
+  written at that alteration and forced with `!`, a note it leaves bare takes the drawn signature's
+  alteration, and `\accidentalStyle "forget"` removes LilyPond's own accidental memory — so its
+  engine can neither add nor drop a sign. `\time` per measure comes from `deriveTimeSignature`
+  (LilyPond beams by it) and every measure carries a bar check. **Throws** on repeat/volta/nav
+  tokens rather than approximating them.
+- `ly-svg.ts` — reads a LilyPond SVG back: staff lines, and glyph identity **by font outline**,
+  self-calibrated by rendering the nine signs twice. ⚠ Twice because Emmentaler is an optical-size
+  family — a grace note's accidental is a different outline, and a full-size-only table silently
+  reports "no accidentals" on a strip that has them.
+- `render-ly.ts` — the corpus arm: labels from `labels-cli.ts --ranges`, one LilyPond run per piece,
+  one SVG page per strip, cropped by Playwright at the corpus geometry (336 px tall, 30 px staff
+  spacing — pinned on purpose, so the engraver is the only variable). Run:
+  `npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --out data/synthetic/<set>`
+- `verify-labels-ly.ts` — **this arm's own** pixels-vs-labels gate (`verify-labels.ts` cannot read
+  it: different engine, different glyph identification). Re-engraves from the manifest and compares
+  drawn accidentals against label tokens in reading order. A pool it produced is not trainable until
+  this passes. Run: `npx --yes tsx tools/render/verify-labels-ly.ts --strips data/synthetic/<set>`
+
+Result of the pilot — 312/312 gate pass, and a **null** domain-gap read against a matched VexFlow
+control: [../../docs/METRICS-ENGRAVER.md](../../docs/METRICS-ENGRAVER.md).
 (Browser-side counterparts live in `apps/web/src/`: `stripExport.ts` builds crop rects + labels
 from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 

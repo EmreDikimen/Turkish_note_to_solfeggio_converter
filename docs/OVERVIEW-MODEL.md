@@ -135,6 +135,92 @@ the longer list they were chosen from.
 The four hunches tested that same day, three of which did not survive, are on
 [OVERVIEW-JULY.md](OVERVIEW-JULY.md).
 
+## The second printing program (18 August) — what the null result does and does not mean
+
+Moved out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-19 for space; the result itself stayed there.
+
+**The safety check earned its keep twice.** It compares what was actually printed against what the
+answer key says, symbol by symbol. It caught that the second program draws a *smaller version* of the
+same symbol on grace notes, which our first reader was blind to, and it caught that we were comparing
+against the wrong batch of pictures.
+
+⚠ **Two honest limits sit with the null result.** First, our measuring tool mostly looks at things a
+printing program does **not** change — it cannot see the differences in letter shapes and spacing that
+you can see with your own eyes when the two are side by side. Second, we deliberately kept the new
+pictures the **same size** as the old ones so that only the printer changed, which means the "one
+spacing" part of the original complaint was never actually tested. Changing the size is a separate,
+one-line change that neither printer makes today.
+
+⚠ **Four things would have to be added before the new pictures could stand beside the old ones**
+rather than beside a test batch: the practice arcs, repeat signs, the words under the notes, and the
+transposed quarter of the collection.
+
+## The "classical parts are worse" idea — raised and dropped on 17 August, by the owner
+
+Moved out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-19 for space; a short version stayed there.
+
+You first reported that the app makes many mistakes "especially in classical parts", even on clean
+pages made by a computer. We measured it and it looked real. Then you **tried it again** and found it
+was not: classical pages come out no better and no worse than songs — *"it is not read it well but it
+cannot read the songs as well."* So there is no "classical problem", and the plan to go and collect
+classical sheet music is cancelled.
+
+⚠ **This is the right outcome, not a wasted day.** Before you retested, we had already found that the
+classical pieces in our collection are **not harder music** — they have fewer fast notes and fewer
+triplets than the songs do. Nothing was drawn or collected on the idea.
+
+⚠ **One thing we told you on 17 August was wrong, and it is corrected here.** We said those pieces
+were simply **worse photocopies**. That came from a number called `nd`, which we had been reading as
+"how bad the scan is". It is not — it measures **how much the model's reading differs from the answer
+key**. So "the model does badly there because `nd` is high" just says "the model does badly there
+because the model does badly there". It explained nothing. Your retest is what settled the question,
+and it never needed an explanation to do so.
+
+⚠ **A number we gave you earlier still needs its correction, and it stands on its own.** We said the
+model reads clean computer-set pages at 94.8%. That figure is **only about the tiny microtonal
+marks** — it never measured the notes or their lengths, which are two-thirds of what you fix. So
+"publish for clean pages first" still has to be measured properly rather than assumed.
+
+## The triplet mark — the full account (11–15 August, closed 19 August)
+
+Moved out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-19 when that page passed its size limit. The short
+version and the two items that survive stayed there; this is the reasoning behind them.
+
+**What we believed.** The model was no longer *inventing* triplets — it was **missing** about one in
+six. A while back it drew a "3" on almost every curved line it saw, so we added plain curved lines
+*without* a "3" to the practice pictures to teach it the difference. That worked completely, but it
+overshot, and the model became too careful.
+
+**And we thought we knew why: we drew the mark in the wrong shape.** In real Turkish sheet music the
+curve is **broken in the middle** and the "3" sits in the gap. Our program drew an unbroken curve with
+a small "3" floating above it. So on a real page a triplet is easy to tell from an ordinary curved
+line — the curve is cut — while in our pictures the only difference was a tiny floating mark. We had
+taught it to look for the wrong thing. It was the same shape of mistake as the sharp signs in July,
+where our music font drew the little bars too thick and the model learned our version instead of the
+real one. That one cost two rounds.
+
+**What we did, and what came of it (finished 15 August).** We redrew the mark properly — broken curve,
+"3" in the gap, measured against real pages — the owner looked at it beside a real edition, and then
+we tested whether it actually helps: two identical trainings, one on the new mark and one on the old,
+different in nothing else. The new one read **48 of 54** triplets, the old one **46**. Two more
+triplets is too small a difference to trust — with only 54 examples to test on, a coin lands there
+about seven times in ten — so the honest answer is **we could not tell**.
+
+**We are keeping the new mark anyway**, because it is what real Turkish sheet music looks like, and
+that was always the reason for it. What we are *not* doing is claiming it fixed the missed triplets.
+To answer that properly we would need more hand-checked triplets to test on, not another pair of
+trainings.
+
+⚠ **We nearly had a flattering number.** Looked at through a smaller slice of the same test, the new
+mark reads 91% against 80% — but that slice is part of the same 54, chosen after the fact, which is
+exactly the trap that cost us a whole round in July.
+⚠ **The old-mark training scored identically to the model we have been running since July**, which
+tells us the other things that changed in between (a new training wobble, a browser update that moved
+every pixel a hair) did nothing to triplets — worth knowing before we blame them for anything later.
+⚠ **The triplet labelling was already finished** before any of this. For three weeks one of our notes
+said 147 rows were still waiting to be checked by hand, so that job kept being recommended; on disk it
+was done and already in use. The note was simply out of date.
+
 ## The "can the model even see the page?" idea — tested 15 August, closed 17 August
 
 Moved out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-17 when that page passed its size limit. It is

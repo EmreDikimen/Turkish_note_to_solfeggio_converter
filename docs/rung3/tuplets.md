@@ -238,6 +238,29 @@ be attributed.
 
 **No new labelling appears in this list.** That work is done.
 
+### ⛔ The DRAWING thread is closed, and no trained arm belongs to tuplets (2026-08-19)
+
+Confirmed with the owner while planning Round 3's arms. Steps 1–3 above ran and the A/B was **null**;
+the shape is kept on the print measurement alone. **Nothing further about how we draw a triplet is
+scheduled, and none of Round 3's four trained arms is a tuplet arm**
+([levers.md](levers.md) — the arms are the scan profile, one-measure-per-strip, and staccato).
+
+Two items survive, and neither costs a render or a training run:
+
+- **The position lead (step 4's real target).** The model marks the **first** triplet of a passage and
+  loses the later ones — recall 96% → 81% by position, in *both* A/B arms, which points away from the
+  renderer entirely. ⚠ Still a **lead, not a finding**: one piece supplied 35% of that pool and 7 of
+  the 8 problem strips. **It is settled for free at Round 3's exam read** — split `\tup3` recall by
+  first-in-strip vs later over the exam's 55 groups across many more pieces; the decode already runs,
+  so this costs one extra column in the report. If it holds, the repair is decode-side (step 4), not
+  a redraw.
+- **The digit-inside-the-concavity probe** (owner, from a real page): `tuplet_mark_probe.py`, a
+  person accepting each tile. Renders nothing. If it confirms, it enters as a **per-piece coin** like
+  bracket-vs-curved — renderer diversity, not a correction.
+
+⚠ Also still owed and deliberately deferred: real print draws the arc **heavier** than we do, and that
+must move jointly with `drawSlurArc` or it becomes a thickness cue real pages do not have.
+
 ## Non-claims
 
 - **The SHAPE is measured; the RECALL story was TESTED and came back null (2026-08-15).** Real print

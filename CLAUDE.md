@@ -135,6 +135,11 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/syn
     # `staccatoseed` is deliberately NOT a manifest field, so the two arms stay byte-diffable.
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise]
+npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --out data/synthetic/<set>
+    # the SECOND ENGRAVER (Round 3 Lever 4): real LilyPond renders the SAME labels — needs
+    # `brew install lilypond` (2.26), decides nothing itself, and draws no lyrics/repeats/nav
+    # marks/slur distractors, so it is a pilot arm and not a corpus. Result: docs/METRICS-ENGRAVER.md
+npx --yes tsx tools/render/verify-labels-ly.ts --strips data/synthetic/<set>   # that arm's OWN gate
 .venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
 .venv-ml/bin/python scripts/prepare_voices.py [--analyse|--manifest]  # F1's voices: fetch VSCO 2, measure, stage for the Hub
 .venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
@@ -270,6 +275,11 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   human, because the app's staff must say what it plays (owner, 2026-08-09; docs/DECISIONS.md). It
   is ONE flag for the draw path and the label path, so pixels == labels either way — never set them
   apart, and note that `?mode=` in the URL is what makes a page "renderer-driven".
+  ⚠ **A SECOND ENGRAVER EXISTS AND IT OBEYS THE SAME RULE** (2026-08-18): `tools/render/ly-engrave.ts`
+  renders real LilyPond from a label the shared serializer already wrote, re-deciding nothing —
+  `\accidentalStyle "forget"` plus a forced `!` leaves LilyPond unable to add or drop an accidental.
+  Its gate is **`verify-labels-ly.ts`**, not `verify-labels.ts` (different engine, different glyph
+  identification), and a pool it produced is not trainable until that passes.
 - **Commits:** short lowercase subject, no co-author trailer.
 
 ## Doc conventions (keep them or the docs rot)

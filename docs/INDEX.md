@@ -21,6 +21,7 @@ wrong — fix by deleting, not by syncing.
 | Can I publish this? In plain English | [OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md) |
 | Why is there a server, where does the app live, what does it cost? In plain English | [OVERVIEW-SERVER.md](OVERVIEW-SERVER.md) |
 | The model story so far, in plain English (Rounds 1–2 + backlog) | [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md) |
+| The Round 3 plan in plain English — the four trainings, when we train, what the exam decides | [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md) |
 | I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
 
 ## Facts and decisions
@@ -32,6 +33,7 @@ wrong — fix by deleting, not by syncing.
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
 | What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |
+| The second engraver (LilyPond) — feasibility, its own gate, the null domain-gap read | [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md) |
 | Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |
 | How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |
 | How a row is cut into strips — the windowing retune, the crop frame, the geometry rails | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |

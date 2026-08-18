@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-08-17
+updated: 2026-08-18
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -50,92 +50,20 @@ so training stops reading at 16.0 px while the exam reads at 19.2. +12.9% strips
 no decode cost and none of the short-crop risk. Needs a trained arm to claim anything.
 ⚠ **The short-crop hole is now the blocking item on this axis**, promoted from side condition.
 
-## Lever 1b — the form signal is CONFOUNDED with scan quality; the owner's real report is still open
+## Lever 1b — musical form: ⛔ DEAD 2026-08-17, and the premise itself is withdrawn
 
-> ⛔ **PARTLY RETRACTED THE SAME DAY IT WAS WRITTEN (2026-08-17), by two checks that took ten minutes.**
-> The section below proposed collecting classical repertoire because beste/nakış cost ~2.9× the edits.
-> Both halves of its mechanism failed:
->
-> 1. **They are not denser.** Measured on the 86 beste/nakış strips we already own against 1,496 şarkı:
->    16th/32nd notes **11.4% vs 18.4%**, `\tup3` per 100 notes **0.0 vs 0.3**, median width **1006 vs
->    1010 px**, notes per strip 8.0 vs 7.4. The "dense ornate music" story is refuted outright — they
->    are *simpler* on every count that can be counted.
-> 2. **They are worse SCANS.** `nd` (degradation) mean **0.167 vs 0.070** in the nota pool, and median
->    **0.522 vs 0.143** on the exam. Classical repertoire is older and less reprinted, so the copies
->    that exist are worse photocopies. So the form ranking is largely **the known hard-tier effect
->    re-sliced** — the project already had hard tier at 58.3% — not a new axis.
->
-> **Therefore the collection plan below is withdrawn**, and the supply ceiling would have bitten anyway:
-> SymbTr has **39 beste** and **<13 nakış** in 2,200 pieces, so free answer keys for these forms barely
-> exist. ⚠ Also worth knowing before anyone re-proposes collecting: **the notaarsivleri catalog is
-> already censused and matched** (20,833 rows), its accept tier is **84% şarkı and 1,000 of 1,002
-> already downloaded**, and it contains **zero peşrev and zero nakış** at accept — peşrev is
-> instrumental and not in that vocal catalog at all.
->
-> ✅ **WHAT SURVIVES, AND IT IS THE ORIGINAL REPORT.** The owner's observation was failures on
-> classical pieces **"even if it created online"** — i.e. on CLEAN computer-generated PDFs. Scan
-> degradation cannot explain that, and nothing here measures it: the exam's clean tier is **10 pages**,
-> nearly all şarkı. ⏭ **The next step is not collection, it is getting the owner's own failing pages** —
-> a real failing population on the clean end, worth more than a thousand scraped ones and free.
->
-> ⚠ **The lesson, since this is the second confound in one day**: a correlation with n=26 that lands on
-> a category we already had a story for deserves the ten-minute confound check *before* it becomes a
-> plan. Nothing was rendered or collected on it, which is the process working — but only just.
+Proposed and retracted the same day, then killed outright when the **owner retested the app**:
+classical pages read no worse than songs (*"it is not read it well but it cannot read the songs as
+well"*). There is no form axis. The measured ranking that started it survives as a number in
+[../METRICS-EXAM.md](../METRICS-EXAM.md); the full reasoning, the supply ceiling, and the process
+lesson are in [../log/superseded.md](../log/superseded.md). ⚠ **The "it is really scan quality"
+explanation is ALSO withdrawn (2026-08-18)** — it rested on `nd`, which is `lev(label, decode)/
+len(label)`, not degradation, so it restated the finding instead of explaining it
+([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). What killed the lead is the owner's retest, which
+needs no mechanism.
 
-### The original section, kept because its numbers are real and its exam-blindness point stands
-
-**NEW 2026-08-17, owner-reported then measured.** Using the product, the owner found many mistakes
-"especially in classical parts", **including on clean computer-generated PDFs**. Bucketing the spent
-Round-2 exam dump by form: **non-şarkı 1.73× şarkı's edits/token, and beste/nakış ~2.9×**. Training is
-**52.9% şarkı**, with beste at 3.8%, nakış 1.4% and kâr at **0%**. Numbers and every caveat:
-[../METRICS-EXAM.md](../METRICS-EXAM.md).
-
-**Why this is ranked here rather than lower.** It is the only lever on this page that came from a
-person using the app, and this project's record on that is unusually good — the staccato hole, the
-kanun's koma, the tuplet mark's shape and the pale staff lines were all owner observations that
-survived measurement. It also needs **no new labels**: the piece list already has a `form` field.
-
-**What it does NOT say.** "Classical is hard" is refuted by its own table: peşrev (0.039) and
-yürüksemai (0.044) are the *cheapest* rows. What is expensive is the **dense ornate vocal** forms plus
-marş. So the mechanism is not the genre label; the candidates are what those forms actually contain —
-denser note values, longer usul cycles (therefore wider bars), and heavier ornamentation.
-
-⚠ **This partly rescues the content work** (the section at the bottom of this file), which is exactly
-"more eighth notes, denser bars" — but it gives it a **target** it never had. The 2026-07-27 version
-was a histogram exercise with no failing population to aim at; this names one.
-
-**What to measure first, cheaply and with no training:**
-
-1. **Confirm the mechanism before selecting on it.** Compare beste/nakış against şarkı on the things we
-   can already count from labels: notes per bar, share of 16th/32nd values, grace notes per 100 notes,
-   `\tup3` per 100 notes, bar width in px. `domain_gap.py` computes every one of those — run it with
-   the pools split by form instead of by source. If the ornate forms differ on *density*, the content
-   work is the lever; if they differ only on *ornament count*, it is a different fix.
-2. **Then grow the exam on those forms.** ⚠ The exam is **68.9% şarkı** — *more* song-weighted than the
-   training data — so it is nearly blind to this. Growing it on beste/nakış is the only way the signed
-   floor can ever register the defect, and it must happen **before** the next exam read.
-3. Only then re-select pieces. ⚠ A new list needs its own filename **and its own split**
-   (`scripts/make_split.py`), and it changes which real strips are val-side.
-
-⚠ **The low-n caveat is load-bearing**: ağırsemai is 2 strips, kâr 5, peşrev 6. Only şarkı (194) and
-yürüksemai (43) carry weight. The owner's report is what makes this worth acting on; the table is
-consistent with it, not proof of it.
-
-⛔ **AND THIS CANNOT BE FIXED BY LABELLING HARDER — the music is not on disk.** Measured 2026-08-17
-over the nota pool's 1,740 strips: **86.0% şarkı**, and the expensive forms total **118 strips** —
-beste 52, nakış 34, ağırsemai 22, kâr 10. Labelling every one of them perfectly would still not teach
-these forms. **So collection is a PREREQUISITE here, not an alternative** — which is what promotes the
-owner's 2026-08-17 broad-collection decision from "worth doing" to "the thing in front".
-
-**Sizing, so the ask is concrete rather than "more data".** At ~19 crops per page from the slicer,
-**~25–30 pages of beste/nakış/kâr yields ~500 strips**, taking those forms from ~5% of the real
-fine-tune set to ~20%. That is a fivefold coverage change for a few dozen pages — a much smaller ask
-than the "few thousand strips" the owner offered, and aimed where the errors are.
-
-⚠ **Growing the exam on the same forms is the other half and it is not optional**, because a training
-change nothing can measure is worth nothing. The exam is 68.9% şarkı; the signed floor would barely
-register a beste/nakış improvement. Exam growth must happen **before** the next read
-([exam.md](exam.md), and the power note at the bottom of this file).
+⚠ **Do not re-propose collecting repertoire by form.** ⚠ The separate decision to collect real pages
+**broadly** is unaffected and still stands ([../DECISIONS.md](../DECISIONS.md)).
 
 ## Lever 2 — decoding: we have never used anything but greedy
 
@@ -182,9 +110,13 @@ first move is not more rows:
 - **Then grow PAGES, not strips.** Round 3's primary number is a per-page rate and the exam is 46
   pages; see the power note below. More pages is the only thing that makes that number mean
   something.
-- **Then nota over neyzen.** The scanned TRT-era prints run ~5× the SER of the clean vector PDFs
+- **Then nota over neyzen.** The scanned TRT-era prints run ~5× the SER of the neyzen scans
   ([../METRICS.md](../METRICS.md)) and dominate the hard tier. That is where a labelled row buys the
-  most.
+  most. ⚠ This line used to call neyzen "clean vector PDFs"; a 2026-08-18 census found **none** of
+  them born-digital ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The ranking is unchanged — it
+  rests on the SER split, not on the file format. ⚠ **Nota is not one tier either**: 88 nota pieces
+  ARE born-digital, and the owner's 2026-08-18 call is to label those first
+  ([../DECISIONS.md](../DECISIONS.md)).
 - **The raw material is already on disk** — 1,259 + 1,227 real page PNGs
   ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). Collection is not the bottleneck; labelling
   throughput is.
@@ -277,6 +209,14 @@ the notehead's ink there at *any* clearance — so they get the space beyond it.
 2. **No-regression on real dots, on EASY+MID tiers only.** Hard-tier dropped dots are scan
    degradation (7 of 12, `nd` up to 1.14) and are excluded **here, in advance** — not after seeing a
    result. Hard tier is reported, never gated on.
+   > ⚠ **FLAGGED 2026-08-17, NOT CHANGED — this clause is signed, so altering it is the owner's
+   > call.** The stated *reason* for the exclusion uses `nd` as a scan-quality measure, and it is
+   > not one: `emit_strip_labels.py` defines `nd` as `lev(label_ids, decoded_ids)/len(label_ids)`, a
+   > label-vs-decode disagreement, and there is only one `nd` in the repo. Read literally, the
+   > justification says "exclude the strips where the model disagrees with the label most, because
+   > the model disagrees with the label most there". The **exclusion itself may still be right** —
+   > hard tier is defined independently of `nd` — but its written reason does not carry it. Decide
+   > before the staccato arm is scored, not after.
 3. **Reported, not gated:** pitch/AEU macro F1, so the price of clause 1 is on the record.
 
 ⚠ The slur distractor's cost is the thing to watch: it took `\tup3` precision 15.1% → 91.2% and
@@ -302,16 +242,16 @@ because they decide what to render first:
    should carry a **strip-width target**, measured on the 300-strip pilot, rather than being read
    only as a note-value histogram.
 
-**Therefore:** run the Lever-1 probe first — it is half a day, needs no GPU, and its answer decides
-whether the next render is a geometry render or a content render. The content work is not cancelled
-and nothing about it is superseded; it is sequenced behind a measurement that can change what it
-should render.
+**Therefore:** the content work is not cancelled and nothing about it is superseded; it is sequenced
+behind measurements that can change what it should render.
 
-> ✅ **That probe has now run (2026-08-15) and came back causal**, so the question it was sequencing
-> is answered: **the next render is a geometry render**, and the content work stays behind it. What
-> is still unanswered is the half the probe cannot reach — it lowered resolution and showed the cost,
-> which is not the same as showing that raising it pays. Step 2's 300-strip `domain_gap.py` pilot is
-> where that gets tested, and the **short-crop hole** is what it has to watch.
+> ⏭ **The ordering as it actually stands, 2026-08-17.** The Lever-1 probe ran (causal), its follow-up
+> pilot ran and was **stopped by the pre-registered rule**, and the owner then promoted **Lever 4
+> ahead of the content work**. So "the next render is a geometry render" — true on 2026-08-15 — is
+> **no longer the ordering**. Three render-side items are owed and **no two may be rendered together**:
+> Lever 4's second engraver, Lever 1's surviving one-measure-per-strip corpus render, and Lever 6's
+> staccato arm. Lever 4 is first by the owner's decision; the order of the other two is undecided and
+> is a call to take deliberately. The content work stays behind all of them.
 
 ## ⚠ A power note on the primary criterion — the owner's call, not an agent's
 

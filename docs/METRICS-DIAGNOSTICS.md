@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-08-15
+updated: 2026-08-18
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -10,6 +10,60 @@ this file keeps the **investigations** behind those scores. Nothing is duplicate
 
 **Read the negative results.** Most of what follows is a hypothesis that was tested and did not
 survive — each one is a change that was not built on a guess, and re-proposing it costs a round.
+
+### The off-meter bar mark as an error localiser — 37.8% corpus-wide (2026-08-18)
+
+Measured while costing the page-level correction UI ([BACKLOG.md](BACKLOG.md)), which would have
+leaned on this mark to find errors. Run with `npx tsx tools/vision/page-structure.ts`, which uses the
+**shipped** stitcher and core helpers (`stitchStrips` with `expand:false`, `deriveTimeSignature`,
+`measureBeats`) so the number is the one the editor actually draws.
+
+| | pages | interior bars | off-meter |
+|---|---|---|---|
+| real decoded pages, `strips_v2` | **1,670** | 40,937 | **15,491 = 37.8%** |
+
+Median share per page **40%**; only **7.2%** of pages come out clean.
+
+⚠ **This tempers, without contradicting, the claim in [mvp/editor.md](mvp/editor.md)** that the mark
+"is silent on correct music and lights up where the model misread a duration". That was measured on
+**one** decoded page (8 of 28 bars) against three clean scores, and the file says in its own words not
+to over-read it. At corpus scale the mark flags **2 bars in 5**, so it narrows a duration hunt by
+about **2.6×** — useful, not a spotlight. It also cannot see pitch, which is 40% of the edit budget.
+
+⚠ **A false-positive source is now quantified too**: `deriveTimeSignature` takes the *modal* bar
+length, so on a badly decoded page the mode is a coin flip and "off-meter" counts the derivation
+failing rather than the music. Pages whose modal bar length is supported by <25% of their bars were
+producing derived meters of **2/8 and 3/8** — no Turkish usul uses those. `page-structure.ts` reports
+`modeShare` beside the meter so a consumer can tell the two apart.
+
+### Model confidence does NOT rank strips by error — lift 0.44× (2026-08-18)
+
+Measured while choosing a ranking signal for the page queue, on `reslice_all.csv`. ⚠ The test is only
+well-posed on the **3,755 `src=local` rows that carry an INDEPENDENT emitted label** — the 30,049
+colab rows are seeded with their own decode and cannot disagree by construction. (Run against all
+33,801 rows first, which is why this caveat is recorded.)
+
+Sorting worst-`mean_logprob`-first, share of the 869 label/decode disagreements captured:
+
+| budget | captured | lift |
+|---|---|---|
+| worst 10% | 4% | **0.44×** |
+| worst 20% | 13% | 0.65× |
+| worst 30% | 23% | 0.78× |
+| worst 50% | 43% | 0.87× |
+
+**Every budget is worse than random.** Consistent with W8 being dropped — the same signal caught
+26.3% of errors at a 10% budget against a ≥60% bar ([mvp/standing.md](mvp/standing.md)). ⚠ Note what
+the target here is: a label/decode **disagreement**, and ~78% of those are the *label* being wrong
+(below), so this measures ranking-for-review, not ranking-for-decode-error. Both readings say the
+same thing — do not build a review queue on logprobs.
+
+### Window overlap on real pages is 1.15×, not 3× (2026-08-18)
+
+Over all 1,704 re-sliced pages: **43,586** measure-instances across 33,804 crops against **38,026**
+distinct measures = **1.15×**. Assumed to be ~3× (k≈3 measures per window with shared edges) when
+costing page-level review; it is not, so there is no redundancy for a page-level tool to collapse.
+19.8 crops/page, 22.3 distinct measures/page, and **35.9%** of crops are row-starts carrying `\sig`.
 
 ### Tuplets — the corpus scan and the renderer constants (2026-08-11)
 
@@ -272,9 +326,16 @@ would measure scan quality rather than this defect:
 | dot **added** | 0 | 1 | 3 | **4** |
 | dot **lost** | 0 | 5 | 7 | **12** |
 
-Dropped dots concentrate in degraded scans (7 of 12 hard-tier, six with `nd` up to 1.14), and the
-easy tier shows **zero of either** — so the exam is nearly blind to this and the pilot above is the
-instrument.
+Dropped dots concentrate in the **hard tier** (7 of 12), and the easy tier shows **zero of either** —
+so the exam is nearly blind to this and the pilot above is the instrument.
+
+⚠ **CORRECTED 2026-08-18.** This line used to read "concentrate in degraded scans … six with `nd` up
+to 1.14", i.e. it read `nd` as scan quality. It is not: `nd` is `lev(label, decode)/len(label)`, a
+label-vs-decode disagreement ([METRICS-CORPUS.md](METRICS-CORPUS.md)). "The dots we lose are on
+strips where the model disagrees with the label most" is a restatement, not an explanation, so the
+**tier** concentration is the only claim the data supports here. ⚠ This matters beyond wording: it is
+the stated basis for Lever 6 clause 2 excluding hard tier in advance — flagged in
+[rung3/levers.md](rung3/levers.md), decision owed to the owner ([STATUS.md](STATUS.md)).
 
 ## The microtonal-sharp defect (measured against two real printed editions)
 

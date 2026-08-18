@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-17
+updated: 2026-08-18
 
 ## Now
 
@@ -70,6 +70,23 @@ above means a `dist/` built and served **on this machine**; `smoke:live` has not
 checked rather than believed**; it was written while both were in the tree and never revised after they
 landed. A stale "uncommitted" warning is worse than none, because the next session budgets a commit it
 does not owe — and it hid a *genuinely* uncommitted third change, the pale-line binarizer, for a day.
+
+✅ **THE TREE IS COMMITTED as of 2026-08-18** (checked with `git status`, not believed): the page-queue
+half, the labelling batches and every doc edit behind them are in. ⚠ **Worth knowing before reading
+`git log`:** the 2026-08-17 commit subject *"the classical-forms lead was scan quality, and the docs
+say so"* names an explanation that was **withdrawn the next day** as circular. The commit is history
+and stays; the subject is not current.
+
+⭐ **THE LABELLING IS RUNNING ON `batch2` — 52 born-digital pages / 1,497 strips, staged and live.**
+The page-level *UI* stayed stopped ([BACKLOG.md](BACKLOG.md)); its **ranking** did not —
+`build_label_batch.py` cuts a page-complete batch out of `reslice-all` on structural evidence and
+hands it to the strip UI as its own queue, because that queue's own worst-confidence-first order was
+measured at **0.44× lift**. Batch 1 was cut over the whole corpus and is **parked**: the ranking
+returned old scans and handwritten manuscript, a deferred category. The owner's call is to teach the
+clean modern sheets first ([DECISIONS.md](DECISIONS.md)); the loop, and the crop-staleness step that
+must precede it, are in [rung3/labeling-queues.md](rung3/labeling-queues.md). ⚠ **Training only** —
+this ranking selects the worst pages in its tier, so nothing cut here may become exam gold. ⚠ It aims
+at the OPEN "publish for clean pages first" question, **not** at the signed Round-3 floor.
 
 ⚠ **NOTHING ABOUT IT HAS BEEN SEEN BY A PERSON**, and every automated check reads the *same geometry
 the drawing does* — so none can say the dot is where a violinist would put the finger, or whether the
@@ -191,6 +208,14 @@ Still the **public-launch gate**, and still runnable at any time — it shares n
 track. It stopped being "the whole project's next move" when the owner picked F1 (2026-08-11); the
 two now run in parallel exactly as the 2026-08-05 scoping intended.
 
+⏭ **THE NEXT ACTIONS, after the form lead died (item 1a):** the owner's own is **1h2**, the label
+correction already under way. The next *agent-side* action is **1j — Lever 4, the LilyPond second
+engraver**, which the owner sequenced ahead of the content work and which Lever 1's closure unblocked.
+⚠ **Three render-side items are now owed at once and no two may be rendered together** — 1j's second
+engraver, 1g's one-measure-per-strip geometry render, and 1h's staccato arm. Each is a separate
+render variable and Round 3 has been unattributable twice already, so the order among them is a
+decision to take deliberately, not a queue to work down.
+
 1. ✅ **DONE 2026-08-15 — the acceptance bar is written AND SIGNED**, and it doubles as the
    public-launch gate: [rung3/round3-criteria.md](rung3/round3-criteria.md). Binding from here — not
    re-opened after the read, and the exam is still read **once**, on Round 3's final model.
@@ -212,7 +237,9 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    [rung3/labeling.md](rung3/labeling.md) said until 2026-08-11.
 1f. ✅ **DONE 2026-08-15 — CAUSAL, on the pre-registered reading, and it replicates on the holdout.**
    The numbers are in the "Now" section above and [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
-   What it settles: **the next render is a GEOMETRY render**, and item 2 below is sequenced behind it.
+   What it settled at the time: the next render is a geometry render, item 2 below behind it. ⚠ **That
+   ordering no longer holds** — 1g stopped the geometry pilot and Lever 4 was promoted the same day
+   (see the ⏭ line at the top of this list). The *finding* is untouched; only the order moved.
    ⚠ Two limits stated with the result rather than after it — **×2.00 extrapolates** below the exam's
    natural width range, and the probe **lowers** resolution, which is not the same as showing that
    raising it pays.
@@ -235,48 +262,53 @@ two now run in parallel exactly as the 2026-08-05 scoping intended.
    `--staccato-noise`, off by default; baseline **72.7%** false-dot rate against **0.0%** on the same
    music unmarked. What is owed is a **trained arm**, and the pre-registered floors it must clear are
    [rung3/levers.md](rung3/levers.md) Lever 6 — in particular clause 2, no regression on real dots
-   **on easy+mid tiers only**. ⚠ `STACCATO_RATE` is **chosen, not measured**; counting staccato
-   frequency in real editions is how to replace it. ⚠ Not sequenced ahead of 1g: it is a second
-   render variable, and Round 3 has been unattributable twice already.
-1a. ⏭ **THE NEXT ACTION IS FREE AND IT NEEDS THE OWNER: SEND THE PAGES THAT READ BADLY.** The owner
-   reported from **using the product** that it fails on classical pieces **"even if it created
-   online"** — clean, computer-generated PDFs. ⚠ **The form theory built on that report was chased and
-   largely RETRACTED the same day**: beste/nakış are *simpler* than şarkı on every countable property
-   (16ths **11.4% vs 18.4%**, `\tup3` **0.0 vs 0.3**, same width) and their errors track **scan
-   degradation** instead (nd **0.167 vs 0.070**), so the form ranking is mostly the known hard-tier
-   effect re-sliced. Collection is **withdrawn** as the answer, and the supply ceiling would have
-   stopped it anyway (SymbTr has 39 beste, <13 nakış; the notaarsivleri accept tier is 84% şarkı and
-   already fully downloaded). **What survives is the original report, and it is unexplained**: scan
-   quality cannot account for failures on clean PDFs, and the exam's clean tier is 10 pages of mostly
-   şarkı, so nothing we own can see it. **The owner's own failing pages are the evidence** — worth more
-   than a thousand scraped ones and free. [rung3/levers.md](rung3/levers.md) Lever 1b.
-1a2. **Superseded on the same day — kept because the numbers are real.**
-   The owner reported from **using the product** that it makes many mistakes "especially in classical
-   parts", *including on clean computer-generated PDFs*. Measured on the spent Round-2 dump:
-   **non-şarkı runs 1.73× şarkı's edits/token, beste/nakış ~2.9×** ([METRICS-EXAM.md](METRICS-EXAM.md)).
-   Training is **52.9% şarkı**; the **exam is 68.9% şarkı**, so it is *more* song-weighted than the data
-   and nearly blind to the defect. ⛔ **And it cannot be fixed by labelling harder: the nota pool is
-   86.0% şarkı and holds only 118 strips of the expensive forms.** The music is not on disk.
-   ⏭ **So COLLECTION becomes the first move, not an extra** — specifically peşrev/beste/nakış/kâr/semai.
-   Sizing: **~25–30 pages of those forms ≈ 500 strips**, taking them from ~5% to ~20% of the real
-   fine-tune set. Exam growth on the same forms is the other half and must precede the next read.
-   ⚠ **A number I quoted was misleading and is corrected here**: the "94.8% on clean pages" tier figure
-   is **accidental** accuracy only, not page-level correctness — it never measured pitch or duration,
-   which are 68% of user fixes. The owner's hands-on report is the better evidence, and it is why the
-   clean-first launch idea below needs measuring rather than assuming. Lever:
-   [rung3/levers.md](rung3/levers.md) Lever 1b.
+   **on easy+mid tiers only**.
+   ⏭ **AN OWNER DECISION IS OWED ON CLAUSE 2 BEFORE THE ARM IS SCORED, NOT AFTER** (new 2026-08-18).
+   That clause excludes hard tier because "hard-tier dropped dots are scan degradation, `nd` up to
+   1.14" — and **`nd` is not degradation**: it is `lev(label, decode)/len(label)`, a label-vs-decode
+   disagreement ([METRICS-CORPUS.md](METRICS-CORPUS.md)). So the written justification reads "exclude
+   where the model disagrees most, because the model disagrees most there". The **exclusion may still
+   be right** — hard tier is defined independently of `nd` — but it needs a reason that holds. The
+   clause is **signed, so it was flagged in place and NOT changed**; deciding after seeing a result is
+   the one option not available. ⚠ `STACCATO_RATE` is **chosen, not measured**; counting staccato
+   frequency in real editions is how to replace it. ⚠ **Its place in the order is open**: it is one of
+   the three render-side items at the top of this list, and no two of them may be rendered together —
+   Round 3 has been unattributable twice already.
+1a. **⛔ DEAD 2026-08-17 — THE MUSICAL-FORM LEAD, AND THE REPORT UNDER IT.** The owner **retested the
+   app** and withdrew the observation the whole thread rested on: classical pages read **no worse than
+   songs** — *"it is not read it well but it cannot read the songs as well."* So there is no form axis
+   and no form-aimed collection. ⚠ **One half of it survives, re-aimed and demoted**: the app still
+   reads clean computer-set PDFs badly, and the owner's own failing pages would be direct evidence for
+   the **still-open** "publish for clean pages first" question ([DECISIONS.md](DECISIONS.md)), whose
+   clean tier is only 10 pages. That is a cheap ask whenever it suits the owner — it is **not** a
+   next action and no longer points at repertoire. ⚠ It had already been half-retracted hours
+   earlier on mechanism (beste/nakış are *simpler* than şarkı on every countable property — that half
+   stands). ⚠ **The OTHER half of that check was circular and is withdrawn**: `nd` is not scan
+   degradation but `lev(label, decode)/len(label)`, so "their errors track nd" restates the finding
+   instead of explaining it ([METRICS-CORPUS.md](METRICS-CORPUS.md)). The retraction does not depend
+   on it — the owner's retest is independent. ⚠ **Do not re-derive it**: the numbers are real and
+   kept in [METRICS-EXAM.md](METRICS-EXAM.md), the reasoning and the supply ceiling in
+   [log/superseded.md](log/superseded.md). What survives is unglamorous and already known — the model
+   is not good enough **generally**, which is what Round 3 is for.
 1h2. **⏭ IN PROGRESS — THE OWNER IS HAND-CORRECTING REAL LABELS THIS WEEK** (owner, 2026-08-17),
    chosen over more synthetic experiments. The case: of the real labels checked so far in the nota
    pool, **531 needed fixing against 167 that were fine** — three in four wrong — and pitch is 40% of
    what a user corrects, so dirty pitch labels cap the metric Round 3 is graded on no matter what the
-   renderer does. Queue: **`reslice-all`** in `review_ui.py` (33,639 of 33,804 pending, worst-first).
+   renderer does. Queue: **`batch2`** in `review_ui.py` since 2026-08-18 — 52 born-digital pages /
+   1,497 strips cut out of `reslice-all`, page-complete and in reading order, because that queue's own
+   ordering is worse than random and its 33,804 rows are not a plan
+   ([rung3/labeling-queues.md](rung3/labeling-queues.md)). Verdicts go home with `--merge-back`, so
+   `reslice_all.csv` stays the record.
    ⚠ **Attend to PITCH AND DURATION, not accidentals** — every audit so far chased accidentals because
    the old headline measured them; this axis has never been audited.
    ⚠ **The queue choice is load-bearing and was nearly got wrong.** The owner asked whether the pools
    were stale; measured, they are — but only some. `reslice-all` reads `strips_v2` and keeps **100%** of
    labels under today's slicer; the nota/exam-fix/r1/tup queues read the July 15–17 crops and would
    **void 90%** of them ([METRICS-SLICER.md](METRICS-SLICER.md)). Run
-   `scripts/rung3/check_crop_staleness.py` before any future labelling push.
+   `scripts/rung3/check_crop_staleness.py` before any future labelling push — with
+   **`--pages-from <batch>_pages.json`**, which checks the batch's own pages rather than a random
+   sample of the corpus. A batch is deliberately the most damaged pages, so the corpus average does
+   not speak for it.
    ⚠ Consequence: the 531 existing `fix` verdicts are **stranded** on old crops. They evidence bad
    auto-derived labels; they are not corrections we can bank.
 1i. **NEW 2026-08-17 — MEASURE THE TUPLET DIGIT'S POSITION, RENDER NOTHING** (owner, from a real

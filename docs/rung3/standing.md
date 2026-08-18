@@ -2,7 +2,7 @@
 
 purpose: the settled context behind the model track — what is already known, so STATUS can hold only "now" and "next"
 audience: agents and the owner working the real-page track
-updated: 2026-08-07
+updated: 2026-08-17
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-07, when that file crossed its 400-line
 > limit. Nothing here is a next action; it is the background a next action rests on. Current state
@@ -89,8 +89,9 @@ reverses off the exam. Do not re-propose it.
 died.** Dropped, measured, do not re-propose: rendering the odd crop shapes, cutting wide crops
 narrower (**+31.8% edits**), thinning beams. Still standing: the content work — eighth/quarter-note
 mix and bar-line density in `select_pieces.py`. ⚠ **A FIFTH check was added 2026-08-15** — the
-encoder's input geometry, the first one not about what we draw — and the content work is now
-sequenced behind it; the full ranked menu is [levers.md](levers.md).
+encoder's input geometry, the first one not about what we draw. It came back causal, its follow-up
+pilot was **stopped 2026-08-17**, and the owner then put **Lever 4 (renderer diversity)** in front of
+the content work, which stays behind all of it. Ranked menu and the live order: [levers.md](levers.md).
 `USUL_BEAM_GROUPS` remains **unvalidated and
 quarantined** (the beam check measured thickness, not grouping) and `staff_jitter` is insurance, not
 a fix. Full detail: [rung3/round3.md](round3.md); why each was dropped:

@@ -3,7 +3,7 @@
 purpose: every number the one-shot real-page exam has produced, round by round
 audience: agents and the owner, whenever an exam result is quoted or compared
 
-updated: 2026-08-15
+updated: 2026-08-18
 
 Split out of [METRICS.md](METRICS.md) on 2026-08-11, when that file reached its 400-line cap — this
 section was 188 of its 399 lines. **Nothing here changed in the move.** Every other measured number
@@ -17,11 +17,20 @@ is read once per round on the final model. All iteration happens on real-val, wh
 ⚠ **The AEU headline is a per-class mean and is fragile to low-n classes.** Quote micro and
 macro≥30 beside it; see the caveats in [METRICS.md](METRICS.md).
 
-## Errors by MUSICAL FORM (2026-08-17) — owner-reported, then measured
+## Errors by MUSICAL FORM (2026-08-17) — ⛔ THE LEAD IS DEAD; THE TABLE IS KEPT
 
-**The owner reported it from using the product**: the app makes many mistakes "especially in classical
-parts", *including on clean computer-generated PDFs*. Bucketing the **already-spent** Round-2 exam
-error dump by the form in each strip's `piece` slug:
+⛔ **Read this before quoting anything below.** These numbers were measured because the owner reported
+the app failing on classical pieces. **The owner retested the app the same week and withdrew that
+report** — classical pages read no worse than songs (*"it is not read it well but it cannot read the
+songs as well"*). Hours before that, the mechanism had already half-failed a confound check:
+beste/nakış are *simpler* than şarkı on every countable property. ⚠ The other half of that check —
+"they are worse SCANS, `nd` 0.167 vs 0.070" — was **circular and is withdrawn**: `nd` is
+`lev(label, decode)/len(label)`, a label-vs-decode disagreement, so it restates this very table
+rather than explaining it ([METRICS-CORPUS.md](METRICS-CORPUS.md)). The
+table is arithmetic on a spent dump and is correct as such; **it is not evidence of a form effect**,
+and no plan may be built on it. Full account: [log/superseded.md](log/superseded.md).
+
+Bucketing the **already-spent** Round-2 exam error dump by the form in each strip's `piece` slug:
 
 | form | strips | gold tokens | edits | ed/token |
 |---|---|---|---|---|
@@ -46,15 +55,18 @@ error dump by the form in each strip's `piece` slug:
 - ⚠ Totals are `crop_geometry_probe`'s own re-alignment (433 edits where `eval_omr` reports 562), so
   ratios only — never quote these as absolutes.
 
-**Why it matters more than its n suggests: the exam cannot see this.** The exam is **68.9% şarkı** (31
-of 45 entries) against a training corpus that is 52.9% şarkı — so the exam is *more* song-weighted than
-the data, and the signed page-level floor would barely move if the ornate forms got worse. Same shape
-as the staccato finding: the owner's eye found something the exam is nearly blind to.
+**The one line here that outlives the retraction: the exam's composition.** The exam is **68.9% şarkı**
+(31 of 45 entries) against a training corpus that is 52.9% şarkı — so it is *more* song-weighted than
+the data. That was written as "the exam cannot see the form defect"; there is no form defect, so it
+now stands only as a **description of the exam's mix**, worth knowing whenever exam v3 is composed.
+It is not an argument for weighting v3 by form.
 
-**Training coverage on the expensive forms** ([../data/pieces_v4.json](../data/pieces_v4.json), 208
-pieces): beste **3.8%**, nakış **1.4%**, ağırsemai 1.9%, kâr **0%**. The forms at ~3× the error rate
-are ~5% of everything the model has practised on. Coverage and error rate line up; the lever is in
-[rung3/levers.md](rung3/levers.md).
+**Training coverage, for the record** ([../data/pieces_v4.json](../data/pieces_v4.json), 208 pieces):
+beste **3.8%**, nakış **1.4%**, ağırsemai 1.9%, kâr **0%**. Coverage and the error ranking above do
+line up. ⛔ **Do not read this as a coverage argument** — the lead was killed by the owner retesting
+the app, not by any mechanism, and at n = 2–26 strips per form this table cannot carry one either
+way. ⚠ An earlier version of this line blamed "scan age"; that explanation rested on `nd` and is
+withdrawn as circular ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
 
 ## Model quality — real exam (never trained on, read once per round)
 

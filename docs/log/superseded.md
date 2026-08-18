@@ -2,7 +2,7 @@
 
 purpose: keep the reasoning behind dead plans so nobody re-proposes them, without leaving them where they read as instructions
 audience: agents about to propose a direction change
-updated: 2026-07-26
+updated: 2026-08-17
 
 > ⛔ **DO NOT ACT ON ANYTHING IN THIS FILE.** Every item here was cancelled, overturned, or has
 > already been carried out. It is kept because the *reasoning* is what stops the same idea coming
@@ -77,6 +77,52 @@ there is no automatic guard against a sunk-cost "one more round".
 
 *(An earlier ROADMAP entry said this was "RATIFIED", contradicting the track doc. Corrected
 2026-07-25; the track doc was authoritative.)*
+
+## The musical-form lever (proposed 2026-08-17, RETRACTED twice, dead 2026-08-17)
+
+Proposed: collect and train on classical repertoire — peşrev, beste, nakış, kâr, semai — because the
+app failed on classical pieces. It died in two stages on the day it was written, and both are worth
+keeping because the same correlation will present itself again.
+
+**Stage 1 — the mechanism failed, ten minutes after the plan was drafted.** The story was "dense
+ornate music is harder". Measured on the 86 beste/nakış strips we own against 1,496 şarkı, they are
+*simpler* on every countable property: 16th/32nd notes **11.4% vs 18.4%**, `\tup3` per 100 notes
+**0.0 vs 0.3**, median width **1006 vs 1010 px**, notes per strip 8.0 vs 7.4. **That half stands.**
+
+⚠ **The second half of that check was CIRCULAR and is withdrawn (corrected 2026-08-17).** It read:
+"what they actually are is worse scans — `nd` mean 0.167 vs 0.070 in the nota pool, 0.522 vs 0.143 on
+the exam". **`nd` is not scan degradation.** `emit_strip_labels.py` defines it as
+`lev(label_ids, decoded_ids) / len(label_ids)` — the normalized edit distance between the SymbTr
+label and the model's own decode. There is exactly one `nd` in this repo and that is it. So "beste/
+nakış have higher `nd`" says *the model disagrees with the label more on beste/nakış*, which is a
+restatement of the finding it was offered to explain, not a confound for it. The numbers are real;
+the inference was not.
+
+**Stage 2 — the owner retested the app and the premise itself failed.** Trying it again on classical
+pages, the app read them no worse than songs: *"it is not read it well but it cannot read the songs
+as well."* The original report — failures on classical pieces even on clean computer-set PDFs — is
+**withdrawn by the person who made it**. There is no form axis. What is left is that the model is not
+good enough generally, which is Round 3, not a lever.
+
+**The numbers are real and are kept** in [../METRICS-EXAM.md](../METRICS-EXAM.md): bucketing the spent
+Round-2 exam dump by form does give non-şarkı 1.73× and beste/nakış ~2.9× the edits per token of
+şarkı. They are consistent with the scan-quality confound and with n as low as 2 strips per form.
+They were never evidence for a *form* effect on their own; the owner's report is what promoted them,
+and it is gone.
+
+**Two facts from the aborted collection plan, so nobody re-derives them:** SymbTr has **39 beste** and
+**<13 nakış** in 2,200 pieces, and the notaarsivleri catalog (20,833 rows, censused and matched) is
+**84% şarkı at accept**, holds **zero peşrev and zero nakış** there, and 1,000 of its 1,002 accept-tier
+pages are already downloaded. Free answer keys for these forms barely exist.
+
+⚠ **The process lesson, which is the expensive part.** A correlation with n=26 landed on a category
+we already had a story for, and became a plan before anyone spent ten minutes on the obvious
+confound. It then survived a retraction and stayed in four files as a live next action until the
+owner retested by hand. Cost: nothing rendered, nothing collected — but only because the confound
+check happened before the render, not because the process caught it.
+
+⚠ **Not superseded by this**: the separate owner decision to **collect real pages broadly** from more
+sources ([../DECISIONS.md](../DECISIONS.md), 2026-08-17) stands on its own reasoning and is unaffected.
 
 ## Overturned data-mix ideas
 

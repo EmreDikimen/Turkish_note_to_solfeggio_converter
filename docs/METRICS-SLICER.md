@@ -153,6 +153,13 @@ the row rescales ~5% narrower. A label still names the right notes.
 row below, and nearly a week here. **Run this script before any labelling push**, and never infer a
 root's freshness from a date.
 
+⚠ **The n=20 row above is a corpus average, and a batch is not a random sample** (2026-08-18). The
+labelling batches cut by `build_label_batch.py` deliberately select the *most damaged* pages, which
+is the population most likely to move under a re-slice. `--pages-from <batch>_pages.json` therefore
+re-slices **exactly the batch's pages** instead of a random sample — the difference between "the
+root is mostly current" and "the work I am about to do will survive". Pages of the batch with no dir
+under the root are reported, not skipped silently. Usage: [rung3/labeling-queues.md](rung3/labeling-queues.md).
+
 ## Windowing and the crop frame: measured in their own file
 
 How a row is CUT into strips — the 2026-07-29 windowing retune and why the constants were not the

@@ -1,8 +1,8 @@
-# The labelling queues — realval-hard and reslice-all
+# The labelling queues — realval-hard, reslice-all and the batches
 
-purpose: the two dated review queues, why each exists and what it produced
+purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-07
+updated: 2026-08-18
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -107,3 +107,72 @@ yet, and promoting from it needs the same rules as any other queue.
 
 Run: `review_ui.py` → queue **`reslice-all`** (the default tab); its rows load on first open, too
 big (16 MB) to ship with every `/api/state`.
+
+## The labelling BATCHES (2026-08-18) — a page-complete cut of `reslice-all`
+
+**Why they exist.** `reslice-all` is a browsing tool, not a labelling target: 33,804 hand checks is
+not a plan, and the UI sorts nothing. Worse, the queue ships **worst-confidence-first**, an ordering
+since measured at **0.44× lift** on this very pool ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)),
+so taking its first 1,500 rows is close to labelling 1,500 random strips. A batch is therefore cut
+outside the UI by `scripts/rung3/build_label_batch.py` and handed to it as its own queue.
+
+**What it ranks on, and what it refuses to rank on.** Per-page **structural evidence** — off-meter
+bars, stitch warnings, truncated (`hit_cap`) strips, slicer-flagged crops — reusing
+`build_page_queue.py`'s scorer, so there is one ranking implementation. The two obvious alternatives
+are ruled out by measurements already on record: **decode confidence** (0.44× lift, and W8 was
+dropped for it) and **label/decode disagreement** (~78% of disagreements are the *label* being wrong,
+and `nd` is empty for all 33,804 reslice rows anyway).
+⚠ It is a heuristic over **visible damage**, not a validated predictor of edits/page — and it cannot
+be validated, because the only pages carrying gold are the exam's and those are (correctly) refused.
+Read the order as "where the damage is", which is what it measures.
+
+**Page-complete, in reading order** (`s00_w00`, `s00_w01`, `s01_w00`, …): the strip-level order is
+worthless, reading a page once beats reading it 20 times, and a page is the unit Round 3's primary
+floor is stated in.
+
+⚠ **A batch is TRAINING data and nothing else.** Exam pieces are refused twice over (here, and by
+the re-slice that produced the decodes), but the deeper reason is the ranking: it selects *the worst
+pages in its tier*, so an exam drawn from it would not be comparable to exam v2.1's baseline or to
+the signed floor. Exam growth is a separate job needing a random/stratified sample ([levers.md](levers.md)).
+
+| Batch | Cut | Pages / strips | Sources | Evidence | State |
+|---|---|---|---|---|---|
+| `batch1` | whole corpus | 52 / 1,500 | nota 47, neyzen 5 | 48.6 units/page | ⛔ **PARKED, not labelled** |
+| `batch2` | `--clean` (born-digital only) | 52 / 1,497 | nota 52 | 30.2 units/page, from 115 ranked pages | ✅ **the live one** |
+
+**Why batch 1 is parked.** Unfiltered, the ranking selected exactly what it is built to select — the
+most damaged pages — and those turn out to be old scans and **real handwritten manuscript**.
+Handwriting is a **deferred category** ([../DECISIONS.md](../DECISIONS.md), owner 2026-08-17) and must
+not enter a printed-page pool. The file is kept on disk as the record of what the unfiltered ranking
+returns; it carries 4 verdicts from a look at the top rows and no more.
+
+**Why batch 2 is the live one.** `--clean` restricts the ranking to **born-digital** pages — a
+file-format fact, not a heuristic, so no scan and no handwriting can enter
+([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The owner's call on 2026-08-18 is to teach the clean
+modern sheets first. ⚠ **Know what it aims at**: the still-open *"publish for clean pages first"*
+question, **not** the signed Round-3 floor — that exam is 41 nota / 26 neyzen pages and only 18% of
+it is the easy tier, so a clean-page batch cannot be expected to move it much.
+
+**The loop**, and the two steps that are easy to skip:
+
+```bash
+npx tsx tools/vision/page-structure.ts                                    # 1. stitch stats (once)
+.venv-ml/bin/python scripts/rung3/check_crop_staleness.py \
+    --pages-from data/real/rung3/_pagequeue/batch2_pages.json             # 2. are these crops current?
+.venv-ml/bin/python scripts/rung3/build_label_batch.py --clean --batch 2  # 3. cut it
+.venv-ml/bin/python scripts/rung3/review_ui.py                            # 4. label the `batch2` tab
+.venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 2   # 5. verdicts home
+```
+
+- ⚠ **Step 2 is not optional.** A verdict is only worth what its crop is worth, and a strip filename
+  survives a re-slice while its pixels do not — `--pages-from` checks *exactly this batch's* pages
+  rather than a random sample, which is the difference between "the corpus is mostly current" and
+  "the work I am about to do will survive".
+- **Step 5 keeps `reslice_all.csv` the record**, so no verdict lives only in a batch file. A strip
+  that already carries a *different* verdict in the master queue is a real conflict: the merge
+  reports it and leaves it alone rather than picking silently. Cutting over an existing batch CSV
+  refuses unless `--force`, because that file may hold verdicts.
+- The batches share `reslice-all`'s row schema and its crop root (`data/real/strips_v2`, bound per
+  queue in `QUEUE_IMG_ROOTS`), so verdicts carried in from the master queue show up already judged.
+- `--makam-cap` (default 0.15 of the strip budget) stops one makam taking the batch — Lever 4's whole
+  argument is that the corpus is already too uniform.

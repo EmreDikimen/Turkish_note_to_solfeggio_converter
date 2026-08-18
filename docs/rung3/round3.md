@@ -2,7 +2,7 @@
 
 purpose: what Round 3 targets, the evidence behind it, and the checks to run BEFORE rendering anything
 audience: agents and the owner working the real-page track
-updated: 2026-08-16
+updated: 2026-08-17
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
@@ -21,7 +21,11 @@ updated: 2026-08-16
 > is the one that came back POSITIVE.** It is not about what we draw, but about how much of the strip
 > the encoder is given. Result in §5 below; the lever and its next step live with the other levers in
 > [levers.md](levers.md). Read that before rendering anything, including the content change described
-> here — **the next render is a geometry render, and the content work is sequenced behind it.**
+> here. ⚠ **The sequencing this note used to state is out of date**: "the next render is a geometry
+> render" was true on 2026-08-15, but the geometry pilot was **stopped 2026-08-17** by its
+> pre-registered rule and the owner promoted **Lever 4 (renderer diversity) ahead of the content
+> work** the same day. The content work is still behind everything; what is in front of it now is in
+> [levers.md](levers.md).
 
 ## What this round is for
 
@@ -264,8 +268,10 @@ the 300-strip pilot has to watch.
 
 ## Then
 
-Render the corpus with whatever those checks say. **§5 has now answered the one that was open: the
-next render is a GEOMETRY render**, and the content work below is sequenced behind it. Train with the recipe held fixed again (two-stage, `--every-share 0.15`, real oversampled to
+Render the corpus with whatever those checks say. ⚠ **§5 answered the one that was open — and then
+the answer was overtaken.** Its geometry pilot was stopped on 2026-08-17 and Lever 4 was promoted
+ahead of the content work, so the render order lives in [levers.md](levers.md) and not here; the
+content work below is behind all of it either way. Train with the recipe held fixed again (two-stage, `--every-share 0.15`, real oversampled to
 ~34% of batches — recompute the `:N` repeat if the corpus size changes). Read the exam **once**.
 
 ## The real pool changed too (2026-07-27)

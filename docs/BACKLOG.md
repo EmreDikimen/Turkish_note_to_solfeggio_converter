@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-17
+updated: 2026-08-18
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -28,6 +28,37 @@ starting. Abandoned plans are a different thing again and live in
    arm and cancel in a delta), which is why the geometry probe's holdout stands. Owed: de-duplicate,
    re-derive, and check whether any other pool built by the same path shares it.
    [METRICS-CORPUS.md](METRICS-CORPUS.md).
+
+3. **NEW 2026-08-18 — "REVIEW UI 2": a PAGE-level correction UI. Designed, costed, and STOPPED by the
+   owner on the arithmetic, with the queue half already BUILT and working.** The ask was a tool like
+   the app — photo and rendered score side by side, tokens visible, all editor mechanics, plus
+   editable `\sig` blocks and a selectable/deletable tuplet mark — to correct real pages page by page
+   instead of strip by strip.
+   ⛔ **Do not restart it without re-reading the cost case**, which is the reason it stopped:
+   the win is concentrated **entirely in the ~1/3 of strips that need a fix** (~45 s of typing a token
+   string in `review_ui.py` → ~3 s of dragging a notehead). Checking speed barely moves, because you
+   read every note either way. Whole-queue estimate **~175 h → ~55 h**: real, but not the order of
+   magnitude that would justify the build.
+   ⚠ **Two assumptions that would have justified it were measured FALSE**, and this is the part worth
+   inheriting: window **overlap is only 1.15×** (43,586 measure-instances over 38,026 distinct
+   measures — there is no "each bar is verdicted three times" redundancy to collapse), and the
+   editor's off-meter mark flags **37.8%** of interior bars corpus-wide, so it narrows the duration
+   hunt ~2.6× rather than lighting up the errors ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)).
+   ✅ **What survives and is on disk, documented and re-runnable** — the ranking half, which is
+   independently useful if page gold is ever wanted: `tools/vision/page-structure.ts` (per-page stitch
+   stats, reusing the shipped stitcher and core so the meter rule is not duplicated) and
+   `scripts/rung3/build_page_queue.py` (ranks pages by structural error evidence, refuses exam
+   pieces, caps per makam). A 150-page queue is built at
+   `data/real/rung3/_pagequeue/page_queue.json`.
+   ✅ **Update, same day: the ranking IS consumed now** — `build_label_batch.py` reuses its scorer to
+   cut page-complete labelling batches for the *existing* strip UI, and `batch2` is live
+   ([rung3/labeling-queues.md](rung3/labeling-queues.md)). What stays deferred is only the **page-level
+   UI**, i.e. the expensive half the cost case stopped. The ranking earning its keep in a cheaper
+   consumer is the reason it was kept rather than deleted.
+   ⚠ The strongest remaining argument for ever building it is **not** throughput: nothing this project
+   owns produces **page-level gold**, which is the unit Round 3's signed floor is stated in, measured
+   today on 46 pages at ±12 points ([rung3/levers.md](rung3/levers.md) Lever 3). ~150 corrected pages
+   would triple the exam. If it returns, it returns for that reason.
 
 ### Further out (not next, not cancelled)
 

@@ -2,7 +2,7 @@
 
 purpose: the single home for corpus sizes, pool composition and measured label-noise rates
 audience: agents and the owner, whenever a question is about the data rather than the model
-updated: 2026-08-15
+updated: 2026-08-18
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps **how well the model reads**, this file keeps **what the data is
@@ -44,6 +44,67 @@ not near-misses — e.g. `bakma_sakin_benden_yana_nota_p1_s02_w01.png` is scored
   monotone rise, which is what says so.
 - **Owed:** de-duplicate and re-derive, then re-check whether any *other* pool built by the same
   path shares the defect. Until then, quote `_realval_v2` absolutes with this caveat.
+
+## ⚠ What `nd` actually is — it is NOT scan degradation (corrected 2026-08-18)
+
+Several docs read `nd` as a scan-quality or degradation measure. It is not, and there is exactly one
+`nd` in this repo. [`scripts/rung3/emit_strip_labels.py`](../scripts/rung3/emit_strip_labels.py)
+defines it as
+
+```
+nd = lev(label_ids, decoded_ids) / len(label_ids)      # empty \sig pairs stripped from both sides
+```
+
+— the **normalized edit distance between the SymbTr label and the model's own decode**. Every other
+script (`build_reslice_queue.py`, `build_realval_v2.py`, `build_exam_fix_queue.py`) only passes it
+through, and `nd_high` is a drop *reason* meaning "label and decode disagree a lot".
+
+Three consequences, all of them bites that have already happened:
+
+1. **It needs an independent label to exist.** Measured: `nd` is empty for **all 33,804 rows** of
+   `_reslice_v2/reslice_all.csv`, because 30,049 of them are seeded with their own decode. A filter
+   built on it there is silently inert.
+2. **"High `nd`" cannot explain "the model does badly here"** — it *is* that statement. Any argument
+   of the form "these strips are harder, see their `nd`" is circular. This voided one half of the
+   2026-08-17 classical-forms confound check ([log/superseded.md](log/superseded.md)); the other half
+   (they are simpler on every countable property) is independent and stands.
+3. ⚠ **One signed pre-registration uses it this way and has been flagged, not changed** — Lever 6
+   clause 2 excludes hard tier because "hard-tier dropped dots are scan degradation, `nd` up to 1.14"
+   ([rung3/levers.md](rung3/levers.md)). The exclusion may still be correct, since hard tier is
+   defined independently of `nd`; its written justification is not. Owner's call, owed before the
+   staccato arm is scored.
+
+⚠ Where a genuine scan-quality number is wanted, the honest one on record is the source split: nota
+(scanned TRT-era prints) runs ~5× the SER of neyzen ([METRICS.md](METRICS.md)) — that inference is
+safe because the *source* difference is known independently of any model output. ⚠ But neyzen is
+**not** the "clean vector PDFs" several docs called it; see the census below.
+
+## The born-digital census (measured 2026-08-18) — and what it corrects
+
+Asked while looking for a *non-circular* difficulty signal: which pages were **typeset by software**
+and never scanned? The test is a **file-format fact, not a heuristic** — page 1 embeds no raster
+image at all and is drawn with >150 vector operators. A scan is always one big embedded image, so
+the two cannot be confused, and no model, threshold or eyeball is involved. That is the point: every
+other difficulty signal this project has is either circular (`nd`, above) or measured worse than
+random (decode confidence, [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)).
+
+Over all **2,055 PDFs** on disk (`scripts/rung3/build_label_batch.py::born_digital_stems`, cached to
+`data/real/rung3/_pagequeue/born_digital.json`):
+
+| Source | PDFs | Born-digital | Scanned |
+|---|---|---|---|
+| nota | 1,000 | **88** | 912 |
+| neyzen | 1,055 | **0** | 1,055 |
+
+⚠ **This corrects a line repeated across several docs**: neyzen was described as "clean vector PDFs"
+and it is nothing of the kind — **every neyzen page is a raster scan**. Its ~5× lower SER is real,
+but the cause is that it is a *better scan*, not a born-digital one. Fixed in [METRICS.md](METRICS.md)
+and [rung3/levers.md](rung3/levers.md); the SER numbers themselves are unaffected, only the label on
+the row.
+
+Of the 88 born-digital pieces, **84 are sliced — 115 pages / 2,956 strips**, all from the nota
+source. That tier is what `build_label_batch.py --clean` cuts a labelling batch from
+([rung3/labeling-queues.md](rung3/labeling-queues.md)).
 
 ## Label quality (measured by hand audits)
 

@@ -2,7 +2,7 @@
 
 purpose: the design brief for reworking note editing into an armed-tool palette over the whole score
 audience: whoever builds it next — start here, then CODE_TOUR rows 16–18
-updated: 2026-08-08
+updated: 2026-08-18
 
 > Owner decision, 2026-08-07. Pressing **Düzenle** opens a **palette beside the sheet**; you **arm a
 > tool** (a note value, an accidental, the tuplet sign) and **click the score** to apply it. Clicking
@@ -218,6 +218,15 @@ anyway is worth noticing.
 positives are not handled: a **usul change** mid-piece (SymbTr `Kod` 51 meta events) makes one
 derived meter wrong for part of the score, and `deriveTimeSignature` is itself derived from the
 data. Verify on more decoded pages before promising anything.
+
+> ✅ **VERIFIED AT CORPUS SCALE 2026-08-18, and the caution above was right.** Over **1,670** real
+> decoded pages: **37.8%** of interior bars are off-meter (median 40% per page; only 7.2% of pages
+> clean). So the mark is a **~2.6× narrowing** of a duration hunt, not a spotlight — and it cannot
+> see pitch, which is 40% of the edit budget. The "silent on correct music" half still holds: the
+> three clean scores above stay at 0. ⚠ The second false-positive source is now quantified too —
+> where the modal bar length has <25% support the derived meter is a coin flip, which was producing
+> **2/8 and 3/8** meters that no Turkish usul uses. Numbers and the re-runnable probe
+> (`tools/vision/page-structure.ts`): [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
 ## What already exists
 

@@ -2,7 +2,7 @@
 
 purpose: index and one-page plan for the real-page track; routes to the six detail files
 audience: agents and the owner working on real data
-updated: 2026-08-15
+updated: 2026-08-17
 
 > This track's **current state and next action are NOT here** — they live in
 > [../STATUS.md](../STATUS.md). This file describes the plan and where each part is written up.
@@ -45,7 +45,7 @@ so correcting is "glance and confirm", not "repair everything".
 | 3 — strip-label emitter | ✅ built and calibrated |
 | 4 — Round 1 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-23) |
 | 4 — Round 2 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-27) |
-| 4 — Round 3 | 🔄 in progress: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)), the tuplet-mark A/B run and **null** ([tuplets.md](tuplets.md)); the content work in `select_pieces.py` remains, now sequenced behind the crop-geometry probe ([levers.md](levers.md)) |
+| 4 — Round 3 | 🔄 in progress: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)), the tuplet-mark A/B run and **null** ([tuplets.md](tuplets.md)); the content work in `select_pieces.py` remains, sequenced behind the render-side levers — crop geometry ran and was **stopped**, and **Lever 4 (renderer diversity) is in front** as of 2026-08-17 ([levers.md](levers.md)) |
 | 5 — hand-correction loop on unmatched pieces | ⏸ not started (scheduled after the rounds) |
 
 ## Standing rules for this track

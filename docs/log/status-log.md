@@ -2,12 +2,143 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-17
+updated: 2026-08-18
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-17 (latest) — the pale-line binarizer is landed and re-measured, and Lever 1's plumbing is built
+## 2026-08-18 (latest) — the stopped UI's RANKING got a cheap consumer: page-complete labelling batches, and a census that corrected "neyzen is vector PDFs"
+
+**Later the same day as the entry below, and it partly supersedes it.** That entry ends "what is on
+disk and works, **unconsumed**". It is consumed now — by the cheap half rather than the expensive one.
+`scripts/rung3/build_label_batch.py` reuses `build_page_queue.py`'s scorer to cut a **page-complete
+batch** out of `reslice_all.csv` and hands it to the *existing* strip UI as its own queue. No new UI
+was built; the page-level tool stays stopped for the cost reasons in [../BACKLOG.md](../BACKLOG.md).
+
+**Why a batch at all.** `reslice-all` sorts nothing and ships **worst-confidence-first** — the very
+ordering measured at **0.44× lift** on this pool the day before. Taking its first 1,500 rows is close
+to labelling 1,500 random strips, so the selection had to happen outside the UI, on the only signal
+that survived measurement: per-page structural evidence (off-meter bars, stitch warnings, `hit_cap`,
+flagged crops). ⚠ It is a heuristic over **visible damage**, not a validated predictor of edits/page —
+and it cannot be validated here, because the only gold-bearing pages are the exam's and those are
+refused. Everything it cuts is therefore **training only**; exam growth still needs a random sample.
+
+**Batch 1 was cut, read at the top, and PARKED.** Over the whole corpus the ranking returned exactly
+what it is built to return — the most damaged pages — which turned out to be old scans and **real
+handwritten manuscript**, a category the owner deferred on 2026-08-17. Kept on disk as the record of
+what the unfiltered ranking gives back. **Batch 2 is the live one**: 52 pages / 1,497 strips, all
+nota, cut with `--clean` and ranked *inside* the born-digital tier (30.2 evidence units/page against
+that tier's own median 16.0). Owner's call: teach the clean modern sheets first.
+
+**The filter is a file-format fact, and that is the whole point.** Born-digital = page 1 embeds no
+raster image and is drawn with vector operators; a scan is always one big embedded image, so the two
+cannot be confused and no model, threshold or eyeball is involved. Every other difficulty signal this
+project has is either circular (`nd`, below) or measured worse than random (decode confidence) — this
+one is neither, which is why it was trusted to keep handwriting out.
+
+**⚠ The census corrected a claim that had been repeated for weeks.** Over all 2,055 PDFs: **88 of
+1,000 nota are born-digital, and 0 of 1,055 neyzen are.** Neyzen has been described in several docs as
+"clean vector PDFs" and it is nothing of the kind — every neyzen page is a raster scan. Its ~5× lower
+SER is real; the cause is that it is a *better scan*. Fixed in [../METRICS.md](../METRICS.md),
+[../METRICS-CORPUS.md](../METRICS-CORPUS.md) and [../rung3/levers.md](../rung3/levers.md); no SER
+number moved, only the label on the row — and "nota over neyzen" still holds, since it rests on the
+SER split rather than on the file format.
+
+**One thing was built because the corpus average could not answer the question asked.**
+`check_crop_staleness.py --pages-from <batch>_pages.json` re-slices *exactly* a batch's pages instead
+of 20 random ones. A batch is by construction the most damaged pages — the population most likely to
+move under a re-slice — so the 100%-labels-kept figure for `strips_v2` does not speak for it. Crop
+staleness has already cost this project three times; checking the actual work is cheaper than a
+fourth. `--merge-back` closes the loop the other way: verdicts return to `reslice_all.csv`, and a
+strip that already carries a *different* verdict there is reported as a conflict, never silently
+overwritten.
+
+## 2026-08-18 — a page-level review UI was designed, costed, and STOPPED; three measurements survive it
+
+**The ask:** "review UI 2" — a page-level correction tool like the app (photo and rendered score side
+by side, tokens visible, every editor mechanic, plus editable `\sig` blocks and a
+selectable/deletable tuplet mark), so real pages could be corrected page by page instead of strip by
+strip, with a queue aimed at the 150 pages that would most move the model.
+
+**The outcome: the owner stopped it on the cost case, and that was the right call.** The win is
+concentrated entirely in the ~1/3 of strips that need a fix (~45 s of typing a token string in
+`review_ui.py` → ~3 s of dragging a notehead); checking speed barely moves, because you read every
+note either way. Whole-queue estimate ~175 h → ~55 h — real, but not the order of magnitude that
+justifies the build. Recorded with the full case in [../BACKLOG.md](../BACKLOG.md) so it is not
+re-proposed from scratch.
+
+**Two assumptions that would have justified it were measured FALSE**, which is most of why the
+arithmetic came out where it did:
+
+- **Window overlap is 1.15×, not ~3×.** 43,586 measure-instances across 33,804 crops against 38,026
+  distinct measures. There is no "every bar is verdicted three times" redundancy for a page tool to
+  collapse — the assumption was mine and it was wrong.
+- **The off-meter bar mark flags 37.8% of interior bars corpus-wide** (1,670 pages), against the
+  one-page 8/28 that [../mvp/editor.md](../mvp/editor.md) rests on — a file that told its readers not
+  to over-read it, correctly. It narrows a duration hunt ~2.6×; it is not a spotlight, and it cannot
+  see pitch.
+
+**A third measurement killed the obvious queue design.** Ranking pages by model confidence captures
+**4%** of known disagreements in its worst decile — **lift 0.44×, worse than random** — which agrees
+with W8 being dropped for catching 26.3% at a 10% budget. ⚠ The first run of that test was ill-posed
+(all 33,801 rows, of which 30,049 are seeded with their own decode and cannot disagree); it only
+means anything on the 3,755 rows carrying an independent label. Both the result and the trap are in
+[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+
+**What is on disk and works, unconsumed:** `tools/vision/page-structure.ts` and
+`scripts/rung3/build_page_queue.py`, plus a built 150-page queue. Kept rather than deleted because
+this project's own rule is that a corpus claim needs a re-runnable script behind it, and the three
+numbers above are now such claims.
+
+**⚠ The finding with the longest reach came out of looking for a scan-quality filter: `nd` is not
+scan degradation.** `emit_strip_labels.py` defines it as `lev(label_ids, decoded_ids)/len(label_ids)`
+— a label-vs-decode disagreement — and there is exactly one `nd` in the repo. So any argument of the
+form "these strips are harder, see their `nd`" is **circular**. It voided one half of the previous
+day's classical-forms confound check (corrected in eight files, including the plain-English page and two LOCKED rows that were flagged rather than rewritten; the other half, that beste/nakış are
+simpler on every countable property, is independent and stands — and the retraction never depended on
+either, since the owner's retest is direct evidence). ⚠ **One signed pre-registration uses `nd` the
+same way and was FLAGGED, not changed**: Lever 6 clause 2 excludes hard tier from the staccato arm's
+no-regression floor on that basis. The exclusion may still be right — hard tier is defined
+independently of `nd` — but its written reason does not carry it. Owner's call, owed before the
+staccato arm is scored. [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+
+## 2026-08-17 — the classical-forms lead is dead, killed by the owner retesting the app
+
+**The shortest useful session in a while, and none of it was code.** The owner retested the deployed
+app on classical pieces and withdrew the report that started the whole thread: classical pages read
+**no worse than songs** — *"it is not read it well but it cannot read the songs as well."* The lead
+was already half-dead on mechanism (measured hours earlier: beste/nakış are *simpler* than şarkı on
+every countable property). ⚠ The scan-degradation half of that check was **circular** and is
+corrected below. The retest kills the
+premise itself, so there is no form axis left to salvage: no form-aimed collection, no exam growth by
+form, and no request for the owner's failing pages.
+
+**What was removed, and from where.** `rung3/levers.md` Lever 1b (84 lines) → a six-line tombstone,
+with its reasoning moved to [superseded.md](superseded.md) as the doc rules require. STATUS items 1a
+and 1a2 → one `1a.` tombstone. `DECISIONS.md`'s "collection aimed at classical forms" row → marked
+**OVERTURNED** rather than deleted; the "publish for clean pages first" row keeps its argument but
+loses "especially on classical forms", which was its only form-specific clause. `METRICS-EXAM.md`
+keeps the table — the arithmetic on the spent Round-2 dump is correct — under a ⛔ header saying it is
+not evidence of a form effect. `OVERVIEW.md`'s List B item, which was still carrying the *un*-retracted
+version a day after the retraction, rewritten in plain English.
+
+**Why the write-up is longer than the finding.** This lead reached four live files and STATUS's
+"next action" slot inside one day, on n=26 with a category we already had a story for. It survived one
+retraction and was still being read as the next thing to do until a person opened the app. The
+process did not catch it; the owner did. That is the entry worth keeping.
+
+⚠ **Not touched by any of this**: the separate 2026-08-17 decision to collect real pages **broadly**
+from more sources stands on its own reasoning. And the exam-composition fact (68.9% şarkı against
+training's 52.9%) survives as a *description* to know when exam v3 is composed — not as an argument
+for weighting v3 by form.
+
+**Consequence for what happens next.** With 1a gone, Track B's owner-side action is the label
+correction already under way (STATUS 1h2), and the agent-side one is **Lever 4, the LilyPond second
+engraver**, which Lever 1's closure unblocked. ⚠ Three render-side items are now owed at once — the
+second engraver, the one-measure-per-strip geometry render, and the staccato arm — and no two may be
+rendered together.
+
+## 2026-08-17 — the pale-line binarizer is landed and re-measured, and Lever 1's plumbing is built
 
 **Found rather than planned.** Picking up Track B's next action (Lever 1 step 2) turned up a **third**
 uncommitted change in the tree beside F3 and the staccato distractor, which STATUS did not mention: a

@@ -78,12 +78,16 @@ Both pools read with the SAME model (`round2-stage2-best`) on the same day, so t
 
   | source | n | AEU headline | SER | exact |
   |---|---|---|---|---|
-  | neyzen (clean vector PDFs) | 79 | 96.5% | 0.021 | 77.2% |
+  | neyzen (cleaner scans) | 79 | 96.5% | 0.021 | 77.2% |
   | nota (scanned TRT-era prints) | 188 | 93.8% | **0.105** | 56.9% |
 
   **SER is 5× worse on nota**, and the hard tier is nota-dominant — so "hard" in this pool largely
   means *scan quality and engraving age*, not musical density. Worth keeping in view before
   attributing a future round's real-val movement to anything else.
+  ⚠ **The neyzen row said "clean vector PDFs" until 2026-08-18 and that was wrong** — a census of
+  every PDF on disk found **0 of 1,055 neyzen files born-digital**; they are all raster scans, just
+  better ones ([METRICS-CORPUS.md](METRICS-CORPUS.md)). The numbers above are untouched; only the
+  label was. The genuinely born-digital pages are **88 nota pieces**, and they are their own tier.
 
 ### `_tupletval` — the tuplet A/B's selection pool (built 2026-08-13)
 

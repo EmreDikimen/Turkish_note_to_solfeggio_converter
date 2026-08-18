@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-17
+updated: 2026-08-18
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -41,9 +41,17 @@ So the work is the harder pages, not the typical one.
 
 The second half matters more than it sounds. Today the app gives you a page that is ~95% correct —
 but it does not tell you *which* 5 marks are wrong, so you have to check all of them yourself. That
-wipes out most of the time you saved. If the app highlighted the few places it was unsure, you would
-check five spots instead of two hundred and fifty notes. We already compute that "unsure" signal
-internally; we have simply never shown it to you.
+wipes out most of the time you saved.
+
+⛔ **This half is still NOT built, and the obvious way to build it was tried and failed.** This page
+used to end the paragraph above with "if the app highlighted the places it was unsure you would check
+five spots instead of two hundred and fifty — we already compute that signal, we simply never showed
+it to you." **That was too optimistic, and it stayed here for months after we knew better.** The
+model's own "how sure am I" number was tested on 5 August against a target set in advance — highlight
+the 10% of the page it is least sure about, and catch at least 60% of the real mistakes. It caught
+**26.3%**. The idea was dropped rather than the target lowered. ⚠ Re-measured a different way on 18
+August, it came out **worse than picking at random**. So finding the mistakes for you is still an
+open, unsolved problem — not a feature waiting to be switched on.
 
 ## What we learned before that (27 July 2026) — we were fixing the wrong 13%
 
@@ -269,42 +277,27 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    described further up. Shrinking does cost accuracy; we cannot buy the reverse. What is left of it is
    one cheap change: **print the practice pictures one bar per strip** so the model stops practising on
    blurrier music than it is tested on. 13% more pictures, nothing else moves.
-1b2. ⭐ **17 August — THE BIGGEST FINDING IN A WHILE, AND IT CAME FROM YOU USING THE APP.** You
-   reported that it makes many mistakes "especially in classical parts", **even on clean pages made by
-   a computer**. That turned out to be measurable and true:
-
-   | kind of piece | mistakes per note |
-   |---|---|
-   | marş | 0.365 |
-   | **nakış** | **0.271** |
-   | **beste** | **0.269** |
-   | **şarkı** (ordinary songs) | **0.093** |
-   | yürüksemai | 0.044 |
-   | peşrev | 0.039 |
-
-   **Anything that is not a şarkı costs about 1.7× as many fixes, and beste and nakış about 3×.**
-   Note that peşrev and yürüksemai are the *best* rows — so it is not "classical is hard", it is the
-   dense, heavily ornamented **vocal** forms specifically.
-
-   Now the reason this matters so much: **our practice music is 53% şarkı and our exam is 69% şarkı.**
-   So the exam is even more song-heavy than the training material, which means **our official score
-   cannot see the problem you found in a few minutes of real use.** That is the second time your own
-   ears and eyes have found something every green tick missed.
-
-   ⛔ **And you cannot fix it by labelling harder — the music is not on the disk.** Of the 1,740 real
-   strips we have, **86% are şarkı**, and the expensive forms come to **118 strips** in total. Even
-   labelling every one perfectly would not teach the model those forms.
-
-   ⏭ **So collecting more sheet music moves to the front** — specifically peşrev, beste, nakış, kâr and
-   semai. Encouragingly it is a small ask, not a huge one: **about 25–30 pages of those forms gives
-   ~500 strips**, taking them from 5% of the real training material to about 20%. The exam needs to
-   grow on the same forms too, or an improvement there would not show up in the score.
-
-   ⚠ **A number I gave you earlier was misleading and I am correcting it here.** I said the model reads
-   clean computer-set pages at 94.8%. That figure is **only about the tiny microtonal marks** — it never
-   measured the notes or their lengths, which are two-thirds of what you fix. Your experience of real
-   PDFs is the better evidence, and it is why "publish for clean pages first" now has to be measured
-   properly rather than assumed.
+1b2. ⛔ **17 August — DROPPED, AND YOU ARE THE ONE WHO DROPPED IT.** You first reported that the app
+   makes many mistakes "especially in classical parts", even on clean pages made by a computer. We
+   measured it and it looked real. Then you **tried it again** and found it was not: classical pages
+   come out no better and no worse than songs — *"it is not read it well but it cannot read the songs
+   as well."* So there is no "classical problem", and the plan to go and collect classical sheet music
+   is cancelled.
+   ⚠ **This is the right outcome, not a wasted day.** Before you retested, we had already found that
+   the classical pieces in our collection are **not harder music** — they have fewer fast notes and
+   fewer triplets than the songs do. Nothing was drawn or collected on the idea.
+   ⚠ **And one thing we told you here on 17 August was wrong, so it is corrected on 18 August.** We
+   said those pieces were simply **worse photocopies**. That came from a number called `nd`, which we
+   had been reading as "how bad the scan is". It is not — it measures **how much the model's reading
+   differs from the answer key**. So saying "the model does badly there because `nd` is high" is just
+   saying "the model does badly there because the model does badly there". It explained nothing. Your
+   retest is what settled the question, and it never needed an explanation to do so.
+   ⚠ **A number we gave you earlier still needs its correction, and it stands on its own.** We said the
+   model reads clean computer-set pages at 94.8%. That figure is **only about the tiny microtonal
+   marks** — it never measured the notes or their lengths, which are two-thirds of what you fix. So
+   "publish for clean pages first" still has to be measured properly rather than assumed.
+   ⚠ What is left after all this is the plain version: **the model is not good enough yet, on
+   everything.** That is exactly what Round 3 is for, and it is what the items below are.
 1c2. ⏭ **THIS WEEK — you are hand-correcting real answer keys, and that is the better bet.** Why:
    of the real answers we have checked so far, **531 needed fixing against 167 that were fine — three
    in four wrong.** And the note itself is 40% of what a user fixes. If the answers we train on have
@@ -312,9 +305,20 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    repairs that. Against seven synthetic ideas that mostly came back "no", this is measured, large,
    and on the right axis.
    **The tool:** `.venv-ml/bin/python scripts/rung3/review_ui.py`, then open
-   <http://localhost:8377> and pick the **reslice-all** tab. Each row shows a real strip with the
-   model's reading already filled in, so you correct rather than type from scratch. 33,639 rows to go,
-   ordered so the model's least-confident guesses come first.
+   <http://localhost:8377> and pick the **batch2** tab (new, 18 August). Each row shows a real strip
+   with the model's reading already filled in, so you correct rather than type from scratch.
+   **What changed and why:** the old **reslice-all** tab has 33,804 rows in an order we then measured
+   and found **worse than random** — working down it was close to picking strips by chance. So we cut
+   a batch out of it instead: **52 pages, about 1,500 strips**, chosen as the pages showing the most
+   visible damage, with **every strip of a page kept together and in reading order**, so you read a
+   page once instead of meeting its pieces twenty times. Your verdicts are copied back into the big
+   list afterwards, so nothing lives only in the batch.
+   ⚠ **These are the clean, computer-typeset pages — your call on 18 August: teach the clean modern
+   sheets first.** We can tell which pages those are *for certain*, not by guessing: a computer-set PDF
+   contains drawing instructions, a scan contains one big photograph, and the file says which. A first
+   batch cut without that filter came back full of old scans and handwriting, so it was parked unread.
+   ⚠ One honest note on what this buys: it aims at the "publish for clean pages first" question, not at
+   the Round 3 exam, which is mostly older scans.
    ⚠ **Look at the note and its length, not just the tiny marks.** Every check we have ever done went
    looking for the tiny marks, because that is what the old score measured. Notes and lengths are
    two-thirds of the problem and nobody has ever checked them.
@@ -328,8 +332,11 @@ every pixel a hair) did nothing to triplets — worth knowing before we blame th
    ⚠ **You were right to ask whether the pictures were out of date, and it nearly cost you the week.**
    Some of the tabs show pictures cut by the *old* version of the page-cutter: we measured it, and
    **18 of 20 pages there would throw your work away** — the same way you lost 130 answers in July.
-   The **reslice-all** tab is the safe one: **20 of 20 pages keep their answers**. If you ever want to
-   check another tab first, run `scripts/rung3/check_crop_staleness.py`.
+   The **reslice-all** tab is the safe one — **20 of 20 pages keep their answers** — and the new
+   **batch2** tab is cut from the same pictures, so it inherits that. If you ever want to check first,
+   run `scripts/rung3/check_crop_staleness.py`; it can now check **exactly the pages of your batch**
+   (`--pages-from …_pages.json`) instead of twenty random ones, which is the honest version of the
+   question, because a batch is on purpose made of the roughest pages.
 1d. ⏭ **THEN, and it needs your eyes rather than a computer: where is the "3" on a triplet printed?**
    You spotted it sitting **between the curve and the notes** on a real page, which is neither of the
    two ways we have drawn it. Our notes say all 16 marks we measured do it differently — but 16 marks

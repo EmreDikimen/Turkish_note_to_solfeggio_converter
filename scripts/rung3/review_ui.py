@@ -72,6 +72,27 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # BATCH 2 (2026-08-18) — THE LIVE ONE, and the reason batch 1 is parked: 52 pages / 1,497
+    # strips drawn ONLY from BORN-DIGITAL pages (the PDF embeds no raster image and is drawn with
+    # vector operators — a file-format fact, so no scan and no handwriting can enter). 84 of the
+    # corpus's 88 born-digital pieces are sliced, 115 pages / 2,956 strips, ALL from the nota
+    # source. Ranked by the same structural evidence inside that tier, 30.2 units/page against the
+    # tier's own median of 16.0. Owner's call 2026-08-18: teach the clean modern sheets first.
+    # ⚠ It aims at the OPEN "publish for clean pages first" question, NOT at the signed Round-3
+    # floor — that exam is 41 nota / 26 neyzen pages and 81% mid+hard tier (docs/DECISIONS.md).
+    "batch2": "data/real/rung3/_pagequeue/batch2.csv",
+    # BATCH 1 (2026-08-18) — ⛔ PARKED, NOT LABELLED. Same builder without --clean, so it ranked
+    # the whole corpus and the ranking selected exactly what it is built to select: the most
+    # damaged pages, which turn out to be old scans and real handwritten manuscript. Handwriting
+    # is a DEFERRED category (owner, 2026-08-17) and must not enter a printed-page pool. Kept on
+    # disk as the record of what the unfiltered ranking returns.
+    # Both batches are page-complete subsets of reslice-all, cut by
+    # scripts/rung3/build_label_batch.py: same schema, same crops (data/real/strips_v2), rows in
+    # reading order within each page, and verdicts go back with `--merge-back` before the next cut.
+    # ⚠ TRAINING ONLY, either of them. The ranking picks the WORST pages in its tier, so nothing
+    # labelled here may become exam gold — exam growth needs a random/stratified sample
+    # (docs/rung3/levers.md).
+    "batch1": "data/real/rung3/_pagequeue/batch1.csv",
     # RESLICE-ALL (2026-07-31) — EVERY strip the 2026-07-29 re-slice decoded: 33,804 crops over
     # 1,704 pages, 30,049 of them decoded on Colab. Built by scripts/rung3/build_reslice_queue.py;
     # rows are ordered WORST-FIRST and seeded with the page cache's decode (`round2-stage2-best`
@@ -139,6 +160,8 @@ IMG_ROOTS = ["data/real/strips",
 QUEUE_IMG_ROOTS = {
     "realval-hard-v2": ["data/real/strips_v2"],
     "reslice-all": ["data/real/strips_v2"],
+    "batch1": ["data/real/strips_v2"],
+    "batch2": ["data/real/strips_v2"],
 }
 # Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
 # on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is

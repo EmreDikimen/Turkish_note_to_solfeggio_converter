@@ -58,12 +58,23 @@ def main() -> int:
     ap.add_argument("--root", default=str(ROOT / "data/real/strips_v2"))
     ap.add_argument("--pages", type=int, default=20)
     ap.add_argument("--seed", type=int, default=11)
+    ap.add_argument("--pages-from", metavar="BATCH_PAGES.JSON",
+                    help="check exactly the pages of a labelling batch "
+                         "(data/real/rung3/_pagequeue/batch<N>_pages.json) instead of a random "
+                         "sample — the question 'is the work I already did still valid?'")
     args = ap.parse_args()
 
     root = Path(args.root)
     imgs = {p.stem: p for p in (ROOT / "data/real/images").rglob("*.png")}
     dirs = [d for d in sorted(root.iterdir()) if d.is_dir() and d.name in imgs]
-    sample = random.Random(args.seed).sample(dirs, min(args.pages, len(dirs)))
+    if args.pages_from:
+        want = {p["page"] for p in json.loads(Path(args.pages_from).read_text())["pages"]}
+        sample = [d for d in dirs if d.name in want]
+        missing = want - {d.name for d in sample}
+        if missing:
+            print(f"⚠ {len(missing)} batch pages have no dir under {root} — not checked")
+    else:
+        sample = random.Random(args.seed).sample(dirs, min(args.pages, len(dirs)))
     print(f"{root}: {len(dirs)} page dirs with a source PNG; re-slicing {len(sample)}\n")
 
     tmp = Path(tempfile.mkdtemp(prefix="staleness_"))

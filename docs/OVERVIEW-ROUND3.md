@@ -68,8 +68,9 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    repairs that. Against seven synthetic ideas that mostly came back "no", this is measured, large,
    and on the right axis.
    **The tool:** `.venv-ml/bin/python scripts/rung3/review_ui.py`, then open
-   <http://localhost:8377> and pick the **batch2** tab (new, 18 August). Each row shows a real strip
-   with the model's reading already filled in, so you correct rather than type from scratch.
+   <http://localhost:8377> and pick the **batch3** tab (cut 19 August — it replaces batch2, see
+   below). Each row shows a real strip with the model's reading already filled in, so you correct
+   rather than type from scratch.
    **What changed and why:** the old **reslice-all** tab has 33,804 rows in an order we then measured
    and found **worse than random** — working down it was close to picking strips by chance. So we cut
    a batch out of it instead: **52 pages, about 1,500 strips**, chosen as the pages showing the most
@@ -89,8 +90,31 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
 
    ⚠ **We are not simply switching to the parked first batch.** That one is the most damaged pages of
    the *whole* collection, which is why it filled up with handwriting — and 10 of its 52 pages are
-   computer-set anyway. We cut a **new** batch of scans instead, look at the 52 page images first and
-   drop the handwritten ones, and check 100 rows before committing to 1,500.
+   computer-set anyway. We cut a **new** batch of scans instead.
+
+   ✅ **THAT BATCH IS CUT AND WAITING FOR YOU (19 August): 54 pages, 1,499 strips, the `batch3` tab.**
+   Your 8 corrections from batch2 were copied into the master list first, so none of that work is
+   stranded. **Two things about the cut are worth your knowing, because both cost something:**
+   - **28 pages were thrown out before you see them**, over four rounds of cut-check-recut (dropping a
+     page pulls the next one in, and that one has to be checked too).
+     **11 were handwritten.** We looked at 56 page pictures, and 20 of them again at full size. The
+     rule we settled on is deliberately **narrow**: throw out pages where the *notes themselves* are
+     written by hand with a pen — but **keep** the ones a professional copyist wrote out neatly and a
+     publisher then printed. Most of the Turkish sheet music we have is exactly that, and so is the
+     exam. The wide rule would have emptied the batch and taught the model a kind of page the exam
+     does not contain.
+     **17 were out of date — 24% of the 71 pages we checked.** Their pictures were cut by an older
+     version of the page-cutter, so your answers on them would be thrown away if we ever re-cut. You
+     chose to exclude them rather than label into them, and that is the right call while rebuilding
+     the training sets (item 3) is still an open question.
+   - ⚠ **The cost, on the record**: the pages we dropped were the *most* damaged ones, so the batch is
+     now a little less rich than it started — 43.0 units of visible damage a page instead of 46.3.
+     You accepted that trade knowingly.
+   ⏭ **What is left is yours: check 100 rows first**, then run
+   `scripts/rung3/build_label_batch.py --stats --batch 3` and look at **how many you had to fix**. A
+   row arrives with the model's reading already in it, so a row you mark "right" changes the training
+   data by nothing — **the fix rate is the whole value of the batch.** For comparison: about **3 in
+   10** in the scanned pages, about **1 in 8** in the clean batch you just left.
    ⚠ **The clean-pages question is not dead**, it is just not what your hands are for right now: it
    still has to be measured before anyone talks about publishing for clean input only.
    ⚠ **Look at the note and its length, not just the tiny marks.** Every check we have ever done went
@@ -140,10 +164,30 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    never drawn any of that — and **93% of the exam is scans**.
    ✅ **Why this one goes first:** nothing has to be redrawn, no new answer keys are needed, and it is
    one file. Every other idea on this list costs either a full redraw or your hands.
+   ✅ **BUILT AND PACKED THE SAME DAY, AND IT NEEDS ONE THING FROM YOU: one run on the rented Google
+   computer** (about 3 hours, roughly 5–10 credits). Everything else is finished — the six new ways of
+   roughing up a picture, the recipe written down and signed *before* the code was written (out of
+   every 100 practice pictures: **55 screenshot-like, 20 photo-like, 25 scan-like**), the pages we
+   will score it on, and the zip and the notebook ready to upload.
+   **Why it is one run and not two:** the model we compare against already exists on disk — same
+   practice pictures, same split, same recipe, same length. The *only* difference between the two is
+   the mix above. Your laptop cannot do this one; it has no fan, and a smaller run on it would break
+   exactly the sameness that makes the comparison worth anything.
    ⚠ **One honest trade, decided in advance.** The reason we lean toward screenshots is *you* — real
    uploads to the app are mostly screenshots. Aiming at scans makes the model better at the **exam**,
    which may not be what your friends upload. So the scan look is **added beside** the other two rather
-   than replacing them, and we write down the recipe before running it, not after seeing the score.
+   than replacing them, and we wrote down the recipe before running it, not after seeing the score.
+   ⚠ **Two things we found while building it, and both change what we are allowed to claim.**
+   - **We cannot make the same practice picture twice.** The library that roughs up the pictures picks
+     its randomness from the computer itself, not from a number we choose — so "same settings, same
+     pictures" is a sentence this project may not write. Every comparison we have ever run still
+     stands (they compare *whole piles* of pictures, not single ones), but nobody should ever claim we
+     re-ran one exactly.
+   - **The pages we called "hard" are not the hard ones.** They were filled in by the model first and
+     then confirmed by hand — so that model's descendants find them *easy*, and the numbers say so
+     plainly. We caught this while building the scoring, and moved what this run is judged on
+     **before signing it**: scanned pages against computer-set pages, which is the thing the scan look
+     actually changes. If we had noticed after seeing the score, the result would have been worthless.
 2. **Draw more eighth notes and longer bars** (the item explained below) — the original Round 3.
    **Still on, and now last of the drawing changes.** Check on 300 sample pictures before redrawing all
    40,826.
@@ -163,8 +207,9 @@ expensive part is deciding **what to change before each run**, because we can on
 run — change three things at once and a better score tells you nothing about which one did it. That
 has already happened to us twice.
 
-**Right now: no training.** Two things happen first, at the same time — you correct answer keys on
-scanned pages, and we build the scan look. Then four runs, in this order, one change each:
+**Right now: two jobs, both yours, and they do not wait for each other** — correcting answer keys in
+the `batch3` tab, and starting the scan-look run on the rented computer. Everything an agent can do on
+either is finished. Then four runs, in this order, one change each:
 
 | # | The run | Needs a redraw? |
 |---|---|---|
@@ -187,6 +232,12 @@ Choosing after seeing the score is the one thing we cannot do.
 
 ⚠ **Your labelling is the slow part, not the training.** The first three runs do not wait for it; only
 the final one uses your corrections.
+
+⚠ **Correcting answers while the scan run is going is safe — *using* them is not, yet.** A verdict you
+give lands in one list and nowhere else, so it cannot disturb anything. But folding those corrections
+into the training sets would change the practice material underneath the scan run, and then a better
+score would no longer tell us the scan look did it. So the corrections wait until that one result has
+been read. Nothing about this slows your hands down.
 
 The longer backlog these were chosen from — and the three ideas we tested and closed on 28
 July, which should not be re-proposed — are on [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md).

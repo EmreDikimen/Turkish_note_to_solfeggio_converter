@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-18
+updated: 2026-08-19
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -139,7 +139,7 @@ the signed floor. Exam growth is a separate job needing a random/stratified samp
 |---|---|---|---|---|---|
 | `batch1` | whole corpus | 52 / 1,500 | nota 47, neyzen 5 | 48.6 units/page | ⛔ **PARKED — and not the answer, see below** |
 | `batch2` | `--clean` (born-digital only) | 52 / 1,497 | nota 52 | 30.2 units/page, from 115 ranked pages | ⛔ **STOOD DOWN 2026-08-19** at 68 verdicts |
-| `batch3` | `--scanned` (the inverse filter) | not cut yet | — | — | ⏭ **the plan — the flag does not exist yet** |
+| `batch3` | `--scanned` (the inverse filter) | **54 / 1,499** | nota 46, neyzen 8 | 43.0 units/page, from 1,504 ranked pages (corpus median 12.0) | ✅ **CUT 2026-08-19 — THE LIVE ONE** |
 
 **Why batch 1 is parked.** Unfiltered, the ranking selected exactly what it is built to select — the
 most damaged pages — and those turn out to be old scans and **real handwritten manuscript**.
@@ -172,28 +172,60 @@ The owner's goal changed with it: the model must be **good enough on scans too**
 *corpus-wide*, which is why it surfaced handwritten manuscript in the first place — and 10 of its 52
 pages are born-digital anyway. Handwriting stays **deferred**.
 
-**What `batch3` needs, in order** — ⚠ `--scanned` **is not built yet**:
+## ✅ `batch3` — cut 2026-08-19, and what the cut cost
 
-1. **Merge `batch2`'s 68 verdicts back first** (`--merge-back --batch 2`) or they stay stranded.
-2. Add `--scanned` to `build_label_batch.py` — the inverse of `--clean` over the same
-   `born_digital_stems` set, so it stays a file-format fact.
-3. **Triage handwriting at PAGE level before any strip work** — 52 page images, drop the handwritten
-   ones. Minutes, and it stops a deferred category eating strip-looks one crop at a time.
-4. `check_crop_staleness.py --pages-from data/real/rung3/_pagequeue/batch3_pages.json`. Step 2 of the
-   loop below is not optional, and the scanned tier is likelier to be stale than the corpus average.
-5. **Probe 100 rows before committing 1,500** — record the fix rate AND the bad rate. The scanned
-   tail is where `realval-hard` lost **33%** of its crops as unusable, and the ranking selects
-   exactly that tail. If bad-rate is high, cap the impact score rather than reading on.
+All five steps ran. `--scanned` and `--exclude-pages` are now in `build_label_batch.py`;
+`--stats --batch N` reads the yield while labelling.
+
+**The batch: 54 pages / 1,499 strips**, nota 46 + neyzen 8, 43.0 evidence units a page against the
+scanned tier's median of 12.0. Two rows arrive already judged, carried in from the master queue.
+
+**28 pages were excluded, and it took four cut/check rounds to converge** — dropping a page pulls
+the next-ranked one in, and that one has to be triaged and checked too. The list, with a reason per
+page, is `data/real/rung3/_pagequeue/handwritten_pages.json`; the crop verdicts are
+`batch3_staleness.json`.
+
+| Excluded | n | Why |
+|---|---|---|
+| handwritten | 11 | free-hand pen manuscript — a **deferred category**, and the scanned tier is the first tier that can contain it |
+| stale crops | 17 | the page no longer re-slices to the same crops, so a verdict on it would not survive a re-slice |
+
+⚠ **The handwriting rule is narrow, deliberately.** A page is dropped when its **note glyphs** are
+drawn free-hand — irregular noteheads, wobbly stems, hand-drawn staff extensions, visible
+corrections. The professionally **hand-copied editions** that were reproduced and published are
+KEPT, even where the lyrics are hand-lettered: most of the Turkish nota corpus is exactly that, and
+so is the exam, so the wide rule would empty the scanned tier and train on a medium the exam does
+not have. 56 pages were read by eye at contact-sheet scale and 20 of them again at native
+resolution, before and after each re-cut.
+
+⚠ **24% of the pages the ranking offered are stale** (17 of 71 checked) — the scanned tier really is
+staler than the corpus average, as this file predicted. Every page in the final batch is verified:
+40 identical, 11 size-only, 3 pixels-only, **0 void**. The owner's call was to exclude rather than
+label into them, because B8 (re-emitting the pools from the new crops) is still an open decision, so
+a re-slice is a real possibility rather than a hypothetical one. The cost is real too: the excluded
+pages were the highest-evidence ones in the tier.
+
+⏭ **What is left is the owner's: probe 100 rows before committing to all 1,499**, then
+`--stats --batch 3` for the fix rate AND the bad rate. Reference points: **~30%** fix in the scanned
+nota pool (why this tier), **~12%** in `batch2` (why that one was stood down), **33%** crops lost in
+`realval-hard` (the bad-rate warning). If the bad rate is high, cap the impact score rather than
+reading on. ⚠ Attend to **pitch and duration, not accidentals** — every audit so far chased
+accidentals because the old headline measured them, and that axis has never been audited.
 
 **The loop**, and the two steps that are easy to skip:
 
 ```bash
 npx tsx tools/vision/page-structure.ts                                    # 1. stitch stats (once)
-.venv-ml/bin/python scripts/rung3/check_crop_staleness.py \
-    --pages-from data/real/rung3/_pagequeue/batch2_pages.json             # 2. are these crops current?
-.venv-ml/bin/python scripts/rung3/build_label_batch.py --clean --batch 2  # 3. cut it
-.venv-ml/bin/python scripts/rung3/review_ui.py                            # 4. label the `batch2` tab
-.venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 2   # 5. verdicts home
+.venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 2   # 2. LAST batch home
+.venv-ml/bin/python scripts/rung3/build_label_batch.py --scanned --batch 3 \
+    --exclude-pages data/real/rung3/_pagequeue/handwritten_pages.json     # 3. cut it
+.venv-ml/bin/python scripts/rung3/check_crop_staleness.py --root data/real/strips_v2 \
+    --pages-from data/real/rung3/_pagequeue/batch3_pages.json \
+    --out data/real/rung3/_pagequeue/batch3_staleness.json                # 4. will the work survive?
+#    -> add every `wouldLoseLabels` page to the exclude list, re-cut, re-check the NEWCOMERS
+.venv-ml/bin/python scripts/rung3/review_ui.py                            # 5. label the `batch3` tab
+.venv-ml/bin/python scripts/rung3/build_label_batch.py --stats --batch 3  # 6. what is it yielding?
+.venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 3   # 7. verdicts home
 ```
 
 - ⚠ **Step 2 is not optional.** A verdict is only worth what its crop is worth, and a strip filename

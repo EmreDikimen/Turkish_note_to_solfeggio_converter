@@ -37,6 +37,9 @@ MAX_PARA_CHARS = 2500    # a paragraph longer than this is unreadable and un-gre
 LONG_OK = {              # append-only records: size is inherent, structure is what matters
     "docs/log/status-log.md",
     "src/vision/MODEL_EVAL.md",
+    # A verbatim training console log. Its length IS the artifact — trimming it would defeat the
+    # reason it is kept (the tuplet A/B's equivalent was deleted and that entry has to say so).
+    "round_3_scan_logs.md",
 }
 # Docs that need no header block / index entry (archived verbatim copies, external READMEs).
 # `hf/` is the model card uploaded verbatim to the Hugging Face Hub as the weights repo's README —

@@ -12,23 +12,33 @@ model**, then the exam is read once. **No two run together** — Round 3 has bee
 already. The table, what each is scored on, and the one asymmetry that would tempt you to combine
 them: [rung3/levers.md](rung3/levers.md).
 
-⭐ **THE LABELLING MOVES TO THE SCANNED PAGES, AND TWO MEASUREMENTS MOVED IT** (owner, 2026-08-19,
+⭐ **THE LABELLING MOVED TO THE SCANNED PAGES AND `batch3` IS CUT AND OPEN** (owner, 2026-08-19,
 superseding the 2026-08-18 clean-pages-first call). **93% of exam pages are scans**, so `batch2` was
 cut entirely from the tier supplying **7%** of the medium Round 3 is graded on; and `batch2`'s own fix
 rate came in at **~12%** against **30%** in the scanned nota pool. A batch row is seeded with the
 decode, so an `ok` changes the training data by nothing — **the yield of a batch is its *fix* rate.**
 ⛔ **`batch1` is not the answer and stays parked**: it ranks the most damaged pages corpus-wide, so it
 concentrates the deferred handwritten manuscript, and 10 of its 52 pages are born-digital anyway.
+⚠ **The scanned tier costs something the born-digital one did not**: it contains handwriting, and
+**24% of its pages are stale** — 28 of 71 pages had to be excluded before the batch was clean.
 [METRICS-CORPUS.md](METRICS-CORPUS.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
-⭐ **THE MEDIUM HOLE IS NEW AND IT IS THE NEXT ARM: WE HAVE NEVER SIMULATED A SCAN.**
-`src/vision/augment.py` has exactly two profiles — "screenshot" (0.65) and "photo" (0.35, the camera
-pipeline). A scan is neither: flat lighting and no perspective, but speckle, broken thin lines, ink
-spread, bleed-through and threshold damage. Its own comment has said *"revisit at Rung 3"* since
-July. ⚠ **The trade is real and accepted knowingly**: `PHOTO_SHARE` was set from real upload
-behaviour, so aiming augmentation at scans optimises **the exam**, not necessarily the app's users
-(n=2). The profile is added **beside** the two, never substituted, and the mix is pre-registered
-before the arm runs. [rung3/levers.md](rung3/levers.md) Lever 7 · [DECISIONS.md](DECISIONS.md).
+⛔ **ROUND 3'S ARM 1 RAN AND IT IS A NULL. The scan profile changed nothing on scanned pages**
+(2026-08-19): paired over 197 strips, `best` **+0.071** edits/strip (p = 0.105) and `last`
+**+0.010** (p = 0.488), both intervals spanning zero — and the interval excludes anything better
+than a **~5% reduction**, so the effect is absent rather than unresolved. The no-regression clause
+on born-digital pages **passes**, point estimate favouring the arm and also spanning zero.
+**Reported as a null; the mix is not re-tuned.** ⏭ One question is left open and it is the owner's:
+does the profile stay ON in the final model? ⚠ Two findings came out of building it: **no augmented
+image in this project is reproducible from a seed** (albumentations 2.0.8 seeds from OS entropy),
+and **the `hard` tier is not the hard one** — its gold is decode-seeded, so it scores better than
+mid, which moved the arm's primary to a medium split before signing.
+[rung3/scan-profile.md](rung3/scan-profile.md) · [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+
+⚠ **THAT IS THREE NULLS ON THE SAME AXIS, AND THE THIRD IS A TRAINED ARM.** Tuplet mark p = 0.688,
+the second engraver's domain gap null, now the scan profile. "Make the synthetic pixels look more
+like real pages" was *inferred* to be at diminishing returns; it is now measured that way. Arms 2
+and 3 are on different axes and stand. A fourth realism arm does not. [DECISIONS.md](DECISIONS.md).
 
 ✅ **LEVER 6 CLAUSE 2 IS SETTLED — the exclusion stands, the reason is replaced** (owner,
 2026-08-19), taken **before** the arm was trained rather than after seeing a result. The
@@ -97,11 +107,12 @@ finger or whether the ticks inform or clutter. That look is
 **[MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 25** and it is still Track A's next
 action (item 3b) — now on a page two friends can open, which is the cost of the inverted order.
 
-✅ **THE TREE IS COMMITTED as of 2026-08-19** (checked with `git status`, not believed): the second
-engraver's four tools and every doc edit behind them are in. ⚠ **Worth knowing before reading
-`git log`:** the 2026-08-17 subject *"the classical-forms lead was scan quality, and the docs say so"*
-names an explanation **withdrawn the next day** as circular. The commit is history and stays; the
-subject is not current.
+✅ **THE TREE IS COMMITTED as of 2026-08-19** (checked with `git status` after committing, not
+believed): the scan profile, `batch3`'s cut, the two new scoring scripts, the arm's raw Colab log and
+every doc edit behind them are in, as two commits — the code, then the docs. ⚠ **Worth knowing before
+reading `git log`:** the 2026-08-17 subject *"the classical-forms lead was scan quality, and the docs
+say so"* names an explanation **withdrawn the next day** as circular. The commit is history and stays;
+the subject is not current.
 
 ⚠ **Two copyright items remain open and are both the owner's call**: the samples and the neyzen.com
 screenshot are out of HEAD but remain in the **public** repo's git history (clearing them needs a
@@ -192,45 +203,51 @@ Still the **public-launch gate**, and runnable at any time — it shares no file
 **`strips_v5_tupnew` is the corpus Round 3 continues from**, and `round2-stage2-best` stays the
 runtime until a Round-3 model beats it.
 
-⏭ **THE NEXT ACTIONS, and they run in parallel.** The owner's own is **B2**, the label correction,
-which needs **B1** cut first. The agent-side one is **B3**, the scan profile — it needs no render, no
-labels and no render slot, so it does not wait for either.
+⏭ **THE NEXT ACTIONS ARE BOTH THE OWNER'S, and they run in parallel** — every agent-side step either
+side of them is done (2026-08-19). **B2** is the labelling; **B3** now needs one Colab run.
 
-**B1. ⏭ CUT `batch3` FROM THE SCANNED TIER — five steps, none optional.**
-   ⚠ **`--scanned` does not exist yet**; it is the inverse of `--clean` over the same
-   `born_digital_stems` set, so it stays a file-format fact rather than a heuristic.
-   1. **Merge `batch2`'s 68 verdicts back first** (`--merge-back --batch 2`) or they stay stranded in
-      the batch CSV.
-   2. Add `--scanned` to `scripts/rung3/build_label_batch.py`.
-   3. **Triage handwriting at PAGE level before any strip work** — 52 page images, drop the
-      handwritten ones. Handwriting stays a **deferred category**; this does not reopen it.
-   4. `check_crop_staleness.py --pages-from …/batch3_pages.json` — a verdict is only worth what its
-      crop is worth, and the scanned tier is likelier to be stale than the corpus average.
-   5. **Probe 100 rows before committing 1,500**, recording fix rate AND bad rate. The scanned tail is
-      where `realval-hard` lost **33%** of its crops as unusable, and the ranking selects that tail.
-      If the bad rate is high, cap the impact score rather than reading on.
-   ⚠ **Training only** — the ranking selects the worst pages in its tier, so nothing cut here may
-   become exam gold; exam growth needs a random/stratified sample.
-   [rung3/labeling-queues.md](rung3/labeling-queues.md) · [DECISIONS.md](DECISIONS.md).
+**B1. ✅ `batch3` IS CUT — 54 pages / 1,499 strips from the SCANNED tier, and the queue is open** in
+   `review_ui.py` (`batch3` tab, crop root `data/real/strips_v2`). `batch2`'s 68 verdicts went home
+   first; `--scanned`, `--exclude-pages` and `--stats` are in `build_label_batch.py`.
+   **28 pages were excluded over four cut/check rounds**: 11 free-hand **handwritten** (a deferred
+   category — the narrow rule keeps professionally hand-copied editions, which most of the corpus and
+   the exam are), and **17 stale — 24% of the pages checked** — whose crops no longer re-slice to the
+   same music. Every page in the batch is verified: 0 void. ⚠ The exclusions cost the
+   highest-evidence pages in the tier (evidence/page 46.3 → 43.0), and that trade is the owner's, on
+   the record. ⚠ **Training only** — the ranking selects the worst pages in its tier, so nothing cut
+   here may become exam gold. [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
-**B2. ⏭ THE OWNER HAND-CORRECTS REAL LABELS — now on scanned pages** (owner, 2026-08-17, re-aimed
-   2026-08-19). The case is unchanged: of the real labels checked in the nota pool, **531 needed
-   fixing against 167 that were fine**, and pitch is 40% of what a user corrects, so dirty pitch
-   labels cap the metric Round 3 is graded on no matter what the renderer does. Verdicts go home with
-   `--merge-back`, so `reslice_all.csv` stays the record.
+**B2. ⏭ THE OWNER HAND-CORRECTS REAL LABELS — the `batch3` tab is waiting** (owner, 2026-08-17,
+   re-aimed 2026-08-19). The case is unchanged: of the real labels checked in the nota pool, **531
+   needed fixing against 167 that were fine**, and pitch is 40% of what a user corrects, so dirty
+   pitch labels cap the metric Round 3 is graded on no matter what the renderer does.
+   ⏭ **Probe 100 rows before committing to all 1,499**, then read
+   `build_label_batch.py --stats --batch 3` for the fix rate **and** the bad rate — a row is seeded
+   with the decode, so an `ok` changes the training data by nothing and **the yield of a batch is its
+   fix rate**. Reference points: ~30% (scanned nota pool), ~12% (`batch2`), 33% crops lost
+   (`realval-hard`). Verdicts go home with `--merge-back`, so `reslice_all.csv` stays the record.
    ⚠ **Attend to PITCH AND DURATION, not accidentals** — every audit so far chased accidentals
    because the old headline measured them; this axis has never been audited.
    ⚠ The 531 existing `fix` verdicts are **stranded on old crops**: they evidence bad auto-derived
    labels, they are not corrections we can bank ([METRICS-SLICER.md](METRICS-SLICER.md)).
-   ⚠ Only the **final** model consumes this work, so B3–B5 do not wait for it.
+   ⚠ Only the **final** model consumes this work, so B3–B5 do not wait for it — **B2 and B3 may run
+   in either order, or at the same time.** ⛔ But **do not run `promote_labels.py`, and do not start
+   B8, until the scan arm has been read**: labelling is safe (a verdict lands in `reslice_all.csv`
+   and nowhere else), while promotion rewrites the real pools' manifests — and the arm shares those
+   pools with its control, so a promotion between now and the read makes it differ in **corpus and
+   mix** ([rung3/scan-profile.md](rung3/scan-profile.md)).
 
-**B3. ⏭ ARM 1 — THE SCAN PROFILE.** Pre-register the mix and the floors, then build and train it.
-   Scored on edits/page on `_realval_v2`'s **hard tier**, with a no-regression clause on easy tier so
-   the accepted trade is checkable rather than assumed. ⚠ The share the profile takes is a
-   `STACCATO_RATE`-shaped hazard — a chosen number — so set it from the corpus we intend to serve, not
-   from what makes the arm win. [rung3/levers.md](rung3/levers.md) Lever 7.
+**B3. ⛔ ARM 1 — THE SCAN PROFILE: RAN, SCORED, NULL.** Trained on Colab (L4, ~2.6 h), scored paired
+   against `r3-tupnew-stage2-best` on both checkpoints, both null on the primary with the clause
+   passing. Written up in full; the raw console log is kept this time
+   ([round_3_scan_logs.md](../round_3_scan_logs.md)) because the tuplet A/B's was lost.
+   ⏭ **The only thing owed is a decision, not work: does `scan_share=0.25` stay ON in the final
+   Round-3 model?** It is off by default in code, so doing nothing = leaving it out. It costs
+   nothing and did not hurt; the born-digital point estimate favours it; and "keep it because it
+   didn't hurt" is a choice made on two nulls. Owner's call.
+   [rung3/scan-profile.md](rung3/scan-profile.md) · [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
 
-**B4. ARM 2 — ONE MEASURE PER STRIP.** `render.ts --max-measures 1`, closing the 16.0-vs-19.2 px
+**B4. ⏭ ARM 2 — ONE MEASURE PER STRIP. This is now the next model action.** `render.ts --max-measures 1`, closing the 16.0-vs-19.2 px
    *training* gap: +12.9% strips, slicer untouched, so no decode cost and none of the short-crop risk
    that stopped Lever 1. ⚠ Pairing it with a lowered `MAX_STRIP_W` makes `_split_wide` cut **inside**
    measures (94.7% of crops) and silently tests the half-measure target instead of the lever.

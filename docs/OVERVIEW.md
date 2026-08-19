@@ -202,21 +202,35 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    notes, a trim that cut too deep, the kanun tuned a whole **koma** too high, and a note that
    started before the string was even plucked. Worth remembering for the ney: **the tests check the
    shape, only the ear checks the sound.** Budget one listening pass per instrument.
-13. **⏭ NEXT: show where to put your finger — the violin, and only the violin.** As the piece plays,
-   a violin appears with a dot showing where the finger goes. This is the feature no ordinary music
-   app can copy: a normal app knows twelve frets, so it **cannot** show you where a koma is. Ours
-   works it out with one line of arithmetic, so all 53 land exactly — you can see that a koma sharp
-   and a küçük sharp are millimetres apart.
-   **It looked expensive and it is not.** The old note said we had to draw the violin ourselves,
-   which sounded like a lot of work. Two things were wrong with that. We only need the **neck**, not
-   a whole violin. And the rule was never really "draw it yourself" — it was "know where the picture
-   came from", after the copyright clean-up in August. So a free picture is fine, as long as we
-   checked its licence properly. **We now have one**: a public-domain photo of a violin, downloaded
-   15 August, free for any use forever. We also checked where *that* photo came from, because on
-   those websites "free" is only what the uploader claims.
-   ⚠ **One thing needs your answer before the dots can be right**: how are the four open strings
-   tuned — the standard G–D–A–E, or a Turkish keman tuning? That is a question about the music, not
-   about the program. Everything else can be built while you decide.
+13. ~~Show where to put your finger — the violin, and only the violin.~~ ✅ **Built 16 August, and it
+   has been on the website since 18 August.** Open <https://komavision.netlify.app>, pick **Keman**,
+   and there is now a third tab beside the notes and the piano roll: a violin neck, a dot that moves
+   with the music as it plays, and a small tick at **every position the piece you loaded actually
+   uses** on each string. So the uneven spacing you see is the music's own, not a diagram's.
+   This is the feature no ordinary music app can copy: a normal app knows twelve frets, so it
+   **cannot** show you where a koma is. Ours works it out with one line of arithmetic, so all 53 land
+   exactly — you can see that a koma sharp and a küçük sharp are millimetres apart.
+   ✅ **Your tuning question is answered**: the four open strings are the standard **Sol–Re–La–Mi**,
+   placed on this project's 53-step grid. If a written note falls **below** the open Sol string, the
+   app says so plainly instead of quietly moving it to the nearest playable spot — a wrong dot would
+   teach you the wrong place.
+   ⏭ **What is left is your eyes, and it is the next thing on this list** (see the note below). It
+   went onto the website **before** anyone looked at it, on your instruction. Every automatic check we
+   have reads the *same numbers the drawing uses*, so not one of them can tell you whether the dot is
+   where a violinist would really put the finger.
+   ⚠ **Do not report the high positions as a fault.** Near the nut one koma is about 7 screen pixels,
+   and less further up — that is the resolution of the photo we shipped, not a mistake in the
+   arithmetic. A sharper picture of a violin neck fixes it with no change to the program.
+   ⚠ **If your look does find something, the fix now needs its own upload to the website.** That is
+   the cost of having put it out before looking; it is small.
+13b. ⏭ **NEXT ON THE APP SIDE, AND IT IS TEN MINUTES OF YOUR TIME: look at the violin neck.** Open
+   the site (or run it on your own machine with `npm run dev:cloud`), load a piece, choose **Keman**
+   and press play. Two questions only a person can answer:
+   **(1) Does the dot sit where your finger would go?** The open strings are the free check — on an
+   open string the dot must sit **at the very top of the neck**, against the nut. If it does, the
+   arithmetic underneath is right.
+   **(2) Do the little ticks help, or are they clutter?** Say so either way; it is a drawing choice,
+   not a measurement, and yours is the only opinion that settles it.
 14. **Open it to everyone — but only if Round 3's exam result is good.**
 
 ### The model work → [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md)

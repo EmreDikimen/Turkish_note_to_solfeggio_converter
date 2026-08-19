@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-08-18
+updated: 2026-08-19
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -10,6 +10,98 @@ this file keeps the **investigations** behind those scores. Nothing is duplicate
 
 **Read the negative results.** Most of what follows is a hypothesis that was tested and did not
 survive — each one is a change that was not built on a guess, and re-proposing it costs a round.
+
+### ⛔ LEVER 7, THE SCAN PROFILE: NULL on its primary (2026-08-19, trained arm)
+
+The arm ran on Colab (L4, 12 vCPU, ~2.6 h; stage 1 6,000 steps then stage 2 2,000, batch 16, mix
+**screenshot .55 / photo .20 / scan .25** printed in both stages' startup line). Scored **paired**
+against `r3-tupnew-stage2-best` with `scripts/rung3/paired_arm_score.py`, which reuses
+`eval_omr.align`, so an edit here is an edit there.
+
+| pool | arm ckpt | n | control | arm | mean difference (arm − control) | sign test |
+|---|---|---|---|---|---|---|
+| **`_scan`** — the signed primary | **`best`** (step 500) | 197 | 3.66 | 3.73 | **+0.071, 95% CI [−0.203, +0.335]** | 21 W / 34 L / 142 tied, **p = 0.105** |
+| **`_scan`** | `last` (step 2000) | 197 | 3.66 | 3.67 | **+0.010, 95% CI [−0.198, +0.208]** | 23 W / 29 L / 145 tied, **p = 0.488** |
+| **`_borndigital`** — the clause | **`best`** | 65 | 0.75 | 0.66 | −0.092, 95% CI [−0.415, +0.231] | 8 W / 6 L / 51 tied, p = 0.791 |
+| **`_borndigital`** | `last` | 65 | 0.75 | 0.58 | −0.169, 95% CI [−0.477, +0.077] | 8 W / 6 L / 51 tied, p = 0.791 |
+
+(edits/strip. The signed read is `best` vs `best`; `last` is the **step-matched** one, because the
+control's `best == last` at step 2,000.)
+
+Pool aggregates from `eval_omr.py`, control → arm: `_scan` SER 0.107 → 0.108, exact 52.5% → 51.5%;
+`_borndigital` SER 0.024 → **0.019**, exact 72.3% → **75.4%**. Reported, not gated: mid 0.145 →
+0.141, hard 0.051 → 0.054, easy 0.060 → 0.058, whole pool 0.089 → 0.088. Stage-1 synthetic val
+landed at 0.0104 against the control's 0.0086 — the expected direction, since the arm trained on
+harder pictures.
+
+- **The primary is a null, and an INFORMATIVE one.** The interval is ±0.20 edits/strip on a base of
+  3.66, so a **>5% reduction in corrections on scanned pages would have been detected**. This is not
+  an underpowered test failing to see a large effect; the effect is not there.
+- **The no-regression clause passes**, and the point estimate runs the *other* way — the arm is 22%
+  better on born-digital pages, though that interval also crosses zero. Teaching the model what a
+  scan looks like appears to have made it a slightly better reader in general rather than a
+  specialist on scans. ⚠ Two nulls do not become a finding by pointing in a pleasing direction.
+- ⚠ **n = 197, not 202**: the pool's 5 duplicate rows (4 contradictory) are all in the scan half, and
+  the paired read counts each image once. It treats both models identically, so the difference is
+  unaffected; the absolute totals are not comparable to `eval_omr`'s 202-row figures.
+- ✅ **The conclusion does not hinge on the checkpoint choice**, which is the one thing that could
+  have muddied it: stage 2 saved `best` at step **500** on a mix loss that peaked early while
+  real-val loss kept falling to step 1,500 — [levers.md](rung3/levers.md) Lever 5's selector problem
+  showing up live. **Both** checkpoints were therefore read, and both are null on the primary. The
+  step-500 model is slightly the worse of the two on scanned pages (+0.071 vs +0.010), which is the
+  direction under-training predicts.
+
+### `_realval_v2` split five ways, and the "hard" tier is not the hard one (2026-08-19)
+
+Measured while building Lever 7's scoring instrument (`scripts/rung3/split_realval_tiers.py`), on
+**`r3-tupnew-stage2-best`** — the checkpoint that is also the arm's control. Both splits partition
+the 267-strip pool exactly: the tiers and the media each re-sum to the whole pool's 153 exact matches
+and S=267 D=340 I=236 over N=9461.
+
+| pool | strips | pages | strips/page | SER | exact | edits/page (median, mean) | hand-verified rows |
+|---|---|---|---|---|---|---|---|
+| whole `_realval_v2` | 267 | 87 | 3.1 | 0.089 | 57.3% | 2, 9.7 | 110 |
+| **`_scan`** (the Lever-7 primary) | **202** | 74 | 2.7 | **0.107** | 52.5% | 2, 10.7 | 97 |
+| **`_borndigital`** (its clause) | **65** | 13 | 5.0 | **0.024** | 72.3% | 2, 3.8 | 13 |
+| `_easy` | 47 | 22 | 2.1 | 0.060 | 66.0% | 2, 4.0 | 0 |
+| `_mid` | 110 | 44 | 2.5 | **0.145** | 55.5% | 5, 12.1 | 0 |
+| `_hard` | 110 | 51 | 2.2 | **0.051** | 55.5% | 1, 4.4 | **110** |
+
+Two findings, and the second changed a pre-registration before it was signed:
+
+- **The medium separates the model by 4.5×** — scanned pages 0.107 SER against born-digital 0.024,
+  on the axis a scan-augmentation profile changes. 88% of the hard tier is scan-sourced, so the
+  tier's premise was right; the split is simply the direct measurement of it, at twice the n.
+- ⚠ **The `hard` tier scores BETTER than `mid` (0.051 vs 0.145), and the cause is its gold.** All 110
+  hard rows were seeded with `round2-stage2-best`'s own decode and then confirmed or corrected by a
+  person, so a descendant of that model is being scored partly against its ancestor's output. Mid
+  and easy carry emitter-derived labels and no such rows. This is the mechanism behind "its gold is
+  the least reliable pool we own" ([DECISIONS.md](DECISIONS.md), the Lever-6 clause-2 settlement) —
+  and it is why Lever 7's primary was moved from the tier to the medium
+  ([rung3/scan-profile.md](rung3/scan-profile.md)).
+
+⚠ **Non-claim:** none of these pools is page-complete (2.1–5.0 strips a page), so their `edits/page`
+is edits per *page fragment*. `share_le5` is not quoted from them at all — that number is defined on
+the 46-page exam.
+
+### The scan profile moves the geometry family toward real pages (2026-08-19, pre-GPU)
+
+`domain_gap.py --augment --scan-share 0.25 --photo-share 0.20` on `strips_v5_tupnew`, against the
+**non-exam** real pools (`strips_nota`, `strips_r1`) — the exam's pixel statistics are deliberately
+not a target for a mix that has to be chosen without reading the exam.
+
+| | control mix | scan mix | nota | r1 | verdict |
+|---|---|---|---|---|---|
+| `staff_detect_fail_%` | 28.7 | **17.3** | 15.0 | 15.3 | CLOSER (13.5 → 2.2) |
+| `spacing_px_sd` | 0.788 | 0.710 | 0.715 | 0.288 | CLOSER |
+| `staff_top_y_sd` | 4.18 | 3.79 | 3.59 | 0.76 | CLOSER |
+| `thickness_px_mean` | 3.08 | 3.04 | 4.19 | 3.81 | further |
+
+Content, density and beam-group columns are **unchanged to the digit**, as they must be — the profile
+is pixels only. ⚠ Two caveats: `domain_gap` is a weak instrument (the LilyPond pilot returned null on
+it while changing the engraver outright), and its `beam_span_px` family is unreliable on degraded
+images by its own docstring. This says the profile builds a scan rather than a mess. It is not
+evidence that the arm will win.
 
 ### The off-meter bar mark as an error localiser — 37.8% corpus-wide (2026-08-18)
 
@@ -65,110 +157,11 @@ distinct measures = **1.15×**. Assumed to be ~3× (k≈3 measures per window wi
 costing page-level review; it is not, so there is no redundancy for a page-level tool to collapse.
 19.8 crops/page, 22.3 distinct measures/page, and **35.9%** of crops are row-starts carrying `\sig`.
 
-### Tuplets — the corpus scan and the renderer constants (2026-08-11)
+### Tuplets — moved to their own file (2026-08-19)
 
-Taken while diagnosing why `\tup3` recall misses its floor. Reading:
-[rung3/tuplets.md](rung3/tuplets.md). Scores themselves: [METRICS.md](METRICS.md).
-
-**Noteheads per `\tup3` group**, over every label pool we own — `strips_tup`, `strips_nota`,
-`strips_exam_v2`, `strips_v4`:
-
-| noteheads | groups | note |
-|---|---|---|
-| 3 | **20,244** | 99.98% |
-| 2 | **4** | all in `strips_tup`; 2 legitimate, 2 do not sum |
-| >3 | **0** | the shape is rare in Turkish notation (owner) — absence is correct, not a gap |
-
-The two legitimate ones are a 32nd + a 16th (`c''32 b'16`, `c''32 \natural b'16`) — three units of
-time in two noteheads, which the closing arithmetic accepts. The two that do not sum are
-`\bakiyeSharp g''8 a''8` (twice): 2 units where 3 are needed. Unresolved — a wrong label or a crop
-that cut a group.
-
-⚠ **This retires "all groups are exactly 3 closed notes"** ([rung3/labeling.md](rung3/labeling.md),
-2026-07-18). It was true of the 114-group manifest and is not true of the 205-group one.
-
-**What the renderer draws**, as of this date (`apps/web/src/SheetView.tsx`):
-
-| constant | value | where |
-|---|---|---|
-| curved-arc style share | 70% of pieces, by name hash → **90% from 2026-08-12** | `tupletCurved` |
-| slur distractors | fire on **35%** of eligible ≥3-note runs | `slurRng() < 0.35` |
-| the "3" | 13 px bold italic serif, placed **above** the arc apex → **redrawn 2026-08-12** | `drawTupletArc` |
-| arc stroke | 1.1 px, one unbroken quadratic → **two segments 2026-08-12**, same weight | `drawTupletArc` |
-
-⚠ **Real Turkish print breaks the arc and sets the "3" inside the gap** (owner, 2026-08-11, from a
-real page). The renderer's continuous-arc-plus-floating-digit is not the printed shape, and it is
-the leading hypothesis for the recall deficit.
-
-### The printed triplet mark, MEASURED (2026-08-12) — the owner's report holds, 16/16
-
-`scripts/rung3/tuplet_mark_probe.py`. The script locates digit-like components that have arc-like ink
-beside them and writes matched-staff-size tiles (a 4× zoom with a one-staff-space ruler, and the same
-window after the 409×583 Donut resize); **a human accepts or rejects each tile** and the geometry is
-then taken by scanning outward from the digit along its own row band. It deliberately builds no mark
-detector — the false positives it does surface (lyric syllables, the tempo mark `♩=76—84`) are exactly
-why. 20 tiles read on `strips_tup` → 12 accepted; 8 read on `strips_exam_v2_clean` → 5 accepted.
-
-**Every one of the 16 accepted marks is BROKEN with the "3" in the gap.** Not one continuous arc with
-a floating digit, across ~11 editions.
-
-| quantity, in staff spaces | real print (n=16) | ours, curved style | ours, bracket style |
-|---|---|---|---|
-| gap between the arc's inner ends | **1.63** (range 1.55–1.69) | — (continuous) | 1.27 |
-| clearance each side of the digit | **0.43** | — | — |
-| digit height | **1.20** | 0.97 | 0.97 |
-| digit width | **0.76** | 0.87 | 0.70 |
-| digit centre vs the arc's inner ends | **+0.20** (just inside, toward the staff) | +1.27 (fully outside) | in the gap |
-| one segment's rise, outer end → gap | **~0.95** | 1.00 (whole arc's depth) | — |
-| arc stroke | 0.133–0.168 | 0.100 | — |
-
-**The gap is sized to the digit, not to the group.** It is 1.63 S whether the mark spans 4.5 S or 28 S
-— i.e. the digit's own width plus ~0.43 S of air each side. A fraction-of-span rule would have been
-the natural guess and it is wrong.
-
-**Our own bracket style is structurally closer to real print than our arc is** — it already breaks
-around the digit. Only the curved style (70% of pieces then, 90% now) ever carried the defect.
-
-**The redraw lands on the measurements**, checked with `--dir` on the pilot render: gap **1.63**,
-digit **0.70 × 1.20**, clearance **0.43 / 0.50**, digit centre **0.20** inside the ends.
-
-### The mark FOLLOWS THE NOTES — measured 2026-08-12 after the owner's review
-
-The owner's verdict on the first redraw: right shape, wrong rigidity — *"in real editions the tuplets'
-arms follow the notes, up or down"* — plus "reduce the font weight of the 3". Both were then measured
-on `strips_tup/ben_guzele_…_p2_s01_w03.png`, one strip carrying **four descending triplets** (7 arms):
-
-| quantity, in staff spaces | real print | ours now |
-|---|---|---|
-| an arm's outer end clears **its own** end note | 0.86–0.93 (left arms), 0.60–0.73 (right arms) | 0.85 both |
-| the gap's height over the group's **highest** note | 1.40–1.43 (n=3) | 1.43 |
-| the digit's position along the mark's span | **0.49–0.50** — the middle | 0.50 |
-
-**The digit stays centred, and that is the non-obvious part.** A descending printed mark *looks*
-weighted toward its high side, so the first attempt slid the gap over the highest note — which
-degenerates into a stub arm whenever that note is an outer one. The measurement says the asymmetry
-comes entirely from the arms' **slopes**: ends follow the notes, digit stays at mid-span.
-
-- The printed digit is **regular weight**, not bold (owner, against real pages). At the same 16 px it
-  measures 0.70 S wide against print's 0.76 — narrower, which only widens the clearance, so the
-  shrink rule is satisfied with more margin.
-- ⚠ **n is small and one-page for the arm numbers** (7 arms, 3 gap heights, one edition), against 16
-  marks / ~11 editions for the gap-and-digit table above. Quote them with that.
-
-- **Caveat on the `span`, `seg w` and `rise` columns:** where a segment merges with a staff line or a
-  long slur, its component inflates those three (4 of 17 rows). `gap`, `digit_h` and `digit_w` are
-  band-scanned locally and unaffected. One exam row (`askin_o_sihirli…`) reports `gap 0.77 / gapL
-  0.00` because a staff line crosses the digit's row band; its tile shows a normal gap.
-- **Deliberately NOT changed:** real print's arc stroke is *heavier* than ours (0.133–0.168 vs 0.100).
-  Thickening only the tuplet arc would hand the model a thickness cue separating it from a phrase
-  slur that real pages do not have — the same trap `AEU_SHARP_STROKE` documents. It is owed as a
-  joint change with `drawSlurArc` — still owed, and still joint, now that the shape A/B has run and
-  come back null (2026-08-15, [rung3/tuplets.md](rung3/tuplets.md)).
-- **The digit's FONT changed, and the gap is why.** Bold italic Georgia (an old-style figure) measured
-  **1.10 S wide** at real print's height, leaving 0.26 S of clearance instead of 0.43 — it would have
-  fused with the arc ends after the shrink. Upright Times at 16 px measures 0.77 × 1.20 S. The slant
-  itself stays unmeasured; the width was not optional. Pre-registered: if the digit fuses again,
-  **widen the gap, never shrink the digit**.
+The corpus scan (99.98% of groups are 3 noteheads), the 16-of-16 measurement of how real editions
+draw the triplet mark, and the finding that the mark FOLLOWS the notes rather than sitting at a
+fixed height → **[METRICS-TUPLETS.md](METRICS-TUPLETS.md)**.
 
 ### ⛔ A ~2% pre-shrink: exam −15.5%, real-val −1.6%. DID NOT REPLICATE (2026-07-28)
 
@@ -337,47 +330,9 @@ strips where the model disagrees with the label most" is a restatement, not an e
 the stated basis for Lever 6 clause 2 excluding hard tier in advance — flagged in
 [rung3/levers.md](rung3/levers.md), decision owed to the owner ([STATUS.md](STATUS.md)).
 
-## The microtonal-sharp defect (measured against two real printed editions)
+## The microtonal-sharp defect — moved to its own file (2026-08-19)
 
-| Quantity | Real print | Bravura (ours, before) | Ours, after `--thin-sharps` |
-|---|---|---|---|
-| Sharp bar thickness | 0.300 S | 0.367 S (+22%) | 0.300 S |
-| küçük bar pitch (spacing) | 0.550 S | 0.483 S (−14%) | 0.65 S (deliberately wider) |
-| küçük white gap | 0.250 S | **0.116 S** (~1–2 px after the encoder shrink) | clears the shrink |
-
-- koma/bakiye were never at risk (0.58–0.66 S gaps).
-- The error was **one-directional**: gold `\kucukSharp` decoded as `\komaSharp` **11× on the clean
-  exam, 10× on photos**; the reverse essentially never. Matches the 100%-precision / 48%-recall
-  signature.
-- Resolution was **ruled out for this defect**: recall does not fall with encoder scale
-  (1.22 → 0.24) on either dataset; `\bakiyeSharp` holds 84–94% in every bucket. ⚠ **Scope, added
-  2026-08-15:** that test was per-class ACCIDENTAL RECALL, on glyphs that survive a shrink. It was
-  never run against the edit budget, and the edit budget *does* move with encoder scale — see "The
-  encoder's input box" above. Both statements stand; they are about different measures.
-### Where the sharps are PRINTED (measured 2026-07-26 — corrects the framing above)
-
-Every gold and corpus label split into tokens inside the row-start `\sig … \sigend` block versus
-tokens on a note. The scorers count both (no stripping), so both feed the AEU headline.
-
-| Set | `\kucukSharp` on a note | `\kucukSharp` in the signature |
-|---|---|---|
-| Clean exam v2.1 (352 strips) | **1** | **30** |
-| Clean exam, contamination-corrected (326) | 1 | 32 |
-| Photo gold (109 hand-corrected labels) | 3 | 13 |
-| `strips_v3` corpus | 234 tokens / 206 strips | 1,210 strips |
-
-- **The class is scored almost entirely in the key signature**, not on noteheads. `\komaSharp` runs
-  the same way on the exam (2 inline / 12 in-signature).
-- Structural reason: the carry serializer's `sigTolerant` rule prints a note bare when its
-  alteration runs the same direction as the signature's (SymbTr stores the SOUNDING value — eviç is
-  a 5-comma F♯ printed bare under a koma-sharp-F signature). Real pages therefore rarely print
-  küçük on a note at all. Verified end-to-end: a dry render of two küçük-heavy pieces under
-  non-küçük signature variants produced **zero** inline `\kucukSharp`.
-- **In the context that scores, `strips_v3` is not imbalanced**: küçük appears in 1,210 signature
-  strips against koma's 1,422 (bakiye 6,512). The 9× "1,887 vs 206" gap below is an inline-only
-  statistic about a context holding ~1 of the exam's 33 küçük tokens.
-- The real corpus gap is **diversity, not count**: signature-position küçük comes from just **3
-  makams** (mahur, nisaburek, süzidilara) and 4 distinct spellings.
-- **Inline counts, for the record:** `strips_v3` carries `\komaSharp` inline in 1,887 strips vs
-  `\kucukSharp` in 206 (0.5%), and zero strips hold both. Kept because it is a true statement about
-  note-position coverage — it is simply not what the exam measures.
+Bravura's sharp bars were **22% too thick** and küçük's were packed too close, so its three bars
+fused into a two-bar koma after the encoder shrink. Measured against two real printed editions,
+fixed by `--thin-sharps`, and the "resolution was ruled out" line that came out of it carries a
+scope caveat. All of it → **[METRICS-SHARPS.md](METRICS-SHARPS.md)**.

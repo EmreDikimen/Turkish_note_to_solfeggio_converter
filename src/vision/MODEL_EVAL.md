@@ -1057,6 +1057,35 @@ move against Round 1 is `\komaSharp` at n=14 inside a six-class mean. Like Round
   the same piece) passes both paths on this model.
   Latency: session load ~3.0 s; ~0.9–1.0 s encoder + 0.13–0.32 s decode ≈ ~1.1 s/strip.
 
+## Round 3 — arm 1, the SCAN PROFILE (Colab, 2026-08-19): NULL on its primary
+
+One arm, one run: the corpus, split, recipe, step counts and seed are the tuplet A/B's `tupnew`
+arm's, and **the augmentation mix is the only difference** — screenshot .55 / photo .20 / scan .25
+against the two-profile .65 / .35. That is why `data/checkpoints/r3-tupnew-stage2-best` serves as
+the control and the arm cost one GPU run rather than two. L4 (12 vCPU), ~1.25 s/step at batch 16,
+stage 1 6,000 steps at lr 3e-5 then stage 2 2,000 at lr 1e-5 with the real pools at `:9`.
+
+**The console log is kept this time**: [`round_3_scan_logs.md`](../../round_3_scan_logs.md), both
+stages in full. ⚠ The tuplet A/B's own entry records that its Colab logs were deleted after the
+table was taken; keeping this one is the correction of that.
+
+| | stage 1 | stage 2 |
+|---|---|---|
+| best synth val | **0.0104** (step 6,000) | 0.0075 (step 500) |
+| best mix | — | **0.0116** (step 500) |
+| real val, first → last | — | 0.0843 → **0.0820** (best 0.0819 at 1,500) |
+
+⚠ **`best` is step 500 and `last` is step 2,000, and they are different models** — the mix loss
+peaked early while real val kept falling, which is Lever 5's selector problem live. Both were
+scored; both are null. Stage 1's 0.0104 against the control's 0.0086 is the expected direction, the
+arm having trained on harder pictures.
+
+**Result: NULL on the primary, clause passes.** Paired over 197 strips on `_realval_v2_scan`:
+`best` +0.071 edits/strip (95% CI [−0.203, +0.335], p = 0.105), `last` +0.010 (CI [−0.198, +0.208],
+p = 0.488). Born-digital clause: −0.092 and −0.169, both spanning zero. Full table and the
+interpretation: [docs/METRICS-DIAGNOSTICS.md](../../docs/METRICS-DIAGNOSTICS.md), disposition in
+[docs/rung3/scan-profile.md](../../docs/rung3/scan-profile.md).
+
 ## Round 3 — the tuplet-mark A/B (Colab, 2026-08-14/15): NULL, and the shape stays
 
 Two arms, identical in everything but how the triplet mark is drawn: `strips_v5_tupnew` (arc broken,

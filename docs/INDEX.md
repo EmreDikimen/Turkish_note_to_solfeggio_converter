@@ -33,6 +33,8 @@ wrong — fix by deleting, not by syncing.
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
 | What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |
+| The koma/küçük sharp glyph — what real print does, what we drew, where sharps appear | [METRICS-SHARPS.md](METRICS-SHARPS.md) |
+| Tuplets — the corpus scan, the printed mark, the mark's geometry | [METRICS-TUPLETS.md](METRICS-TUPLETS.md) |
 | The second engraver (LilyPond) — feasibility, its own gate, the null domain-gap read | [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md) |
 | Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |
 | How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |

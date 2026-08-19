@@ -2,12 +2,99 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-18
+updated: 2026-08-19
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-19 (latest) — the exam is 93% scans, so the labelling turns around; and a lever nobody had noticed
+## 2026-08-19 (latest) — arm 1 ran and it is a NULL, and that is now three nulls on one axis
+
+The scan profile trained on Colab (L4, 12 vCPU, ~1.25 s/step at batch 16, ~2.6 h for both stages)
+and **changed nothing on the medium it was built for**. Paired over 197 strips of
+`_realval_v2_scan`: `best` +0.071 edits/strip (95% CI [−0.203, +0.335], p = 0.105), `last` +0.010
+(CI [−0.198, +0.208], p = 0.488). The born-digital no-regression clause **passes**, with point
+estimates that favour the arm (−0.092 / −0.169) and also span zero.
+
+**Why this null is worth more than most.** The interval is ±0.2 edits/strip on a base of 3.66, so
+anything better than about a **5% reduction in corrections would have shown**. The effect is absent,
+not unresolved — which is a different and more useful statement than "we couldn't tell".
+
+**Three things went right procedurally, and they are the reason the result is usable:**
+
+- **The mix was signed before the code was written**, so a disappointing result could not be
+  answered by moving the number. It is not moved.
+- **Both checkpoints were read.** Stage 2 saved `best` at step 500 on a mix loss that peaked early
+  while real-val loss kept falling to 1,500 — Lever 5's selector problem, live. Reading only `best`
+  would have left the result hostage to a selector this project already distrusts; reading both
+  showed they agree, with the under-trained one slightly the worse, as under-training predicts.
+- **The paired instrument was built before the arm trained** (`paired_arm_score.py`, reusing
+  `eval_omr.align` so an edit means the same thing in both places), so nothing about how it would be
+  scored was chosen after seeing a number.
+
+**The reading that outlives the arm.** This is the **third** null on "make the synthetic pixels look
+more like real pages" — after the tuplet-mark A/B (p = 0.688) and the second engraver's domain gap —
+and the first one from a *trained* model rather than a probe. `levers.md` opened by inferring that
+axis was at diminishing returns; it is now measured. Arms 2 and 3 are not on it (what the encoder is
+**given**, and a symbol it has **never seen**), so they stand. What should not happen is a fourth
+realism arm on the grounds that these three nearly worked.
+
+⏭ **One question is left open and it is the owner's**: whether `scan_share=0.25` stays on in the
+final Round-3 model. It is off by default, so doing nothing leaves it out.
+
+⚠ **Kept this time:** the full Colab console log ([../../round_3_scan_logs.md](../../round_3_scan_logs.md)).
+The tuplet A/B's equivalent was deleted after its table was taken, and that entry has to say so.
+
+## 2026-08-19 — `batch3` is cut and the scan profile is built; both arms of Track B are now waiting on a person
+
+Two things that run in parallel, and neither blocked the other: the owner's labelling queue was cut,
+and Round 3's arm 1 was built up to the one step an agent cannot do — the GPU run.
+
+**`batch3` — 54 pages / 1,499 strips from the SCANNED tier, and the cut cost more than expected.**
+`--scanned` (the exact inverse of `--clean` over the same born-digital set, so it stays a file-format
+fact), `--exclude-pages` and `--stats` are now in `build_label_batch.py`; `batch2`'s 68 verdicts went
+home first. **28 pages were excluded over four cut/check rounds** — dropping a page pulls the
+next-ranked one in, and that one has to be triaged and staleness-checked too.
+
+- **11 handwritten.** 56 page images read at contact-sheet scale, 20 of them again at native
+  resolution. ⚠ The rule that emerged is **narrow, and it is the part worth keeping**: drop pages
+  whose *note glyphs* are free-hand, KEEP the professionally hand-copied editions that were
+  reproduced and published. Most of the Turkish nota corpus is hand-copied lithograph, and so is the
+  exam — the wide rule would have emptied the tier and trained on a medium the exam does not have.
+- **17 stale — 24% of the 71 pages checked.** Their crops no longer re-slice to the same music, so a
+  verdict on them would not survive a re-slice. This file predicted the scanned tier would be staler
+  than average; it is. Owner's call: exclude rather than label into them, because **B8 is still an
+  open decision** so a re-slice is live. Cost accepted: evidence/page 46.3 → 43.0.
+- `check_crop_staleness.py` grew `--out`, because its stdout list is truncated at 10 and re-running
+  it costs ~12 minutes a batch — which is how an exclusion list ends up hand-copied and short.
+
+**The scan profile (Lever 7) is built, pre-registered and packaged.** Six new ops in `augment.py`
+behind `scan_share` (default **0.0 = off**), in the order a scan actually degrades — which is not the
+photo order. Three design points are load-bearing: `line_dropout` masks **thin ink only**
+(`dark − open(dark)`, so a beam cannot enter it) and erases in **runs**, not single pixels; the skew
+is **±0.3°** because ±1° once pushed the too-skewed share to 68%; and `threshold_damage` is a soft
+sigmoid, because a real 1-bit threshold destroys the beam detail that carries duration.
+
+**Two things were found while building it, and both change what we may claim.**
+
+- ⚠ **No augmented image in this project is reproducible from a seed** — albumentations 2.0.8 seeds
+  its transforms at construction from OS entropy. The same module run twice gives different pixels.
+  Every paired A/B on record still stands (they compare distributions), but "same seed, same data"
+  is not a sentence this project may write. Recorded in `augment.py` and [../DECISIONS.md](../DECISIONS.md).
+- ⚠ **The `hard` tier is not the hard one.** Building the scoring instrument
+  (`split_realval_tiers.py`) and scoring the control on it: hard **SER 0.051** against mid's
+  **0.145** — because all 110 hard rows are gold seeded with `round2-stage2-best`'s own decode and
+  then confirmed, so its descendants are flattered. Lever 7's drafted primary was aimed at exactly
+  that pool. It was moved, **before signing**, to the **medium split** — 202 scanned strips at 0.107
+  SER against 65 born-digital at 0.024, a 4.5× separation on the axis the profile changes.
+
+**What the arm is waiting on.** One Colab run: `tnc_round3_scan_colab.zip` (688 MB, ships
+`strips_v5_tupnew` — the *same* corpus as the control) and `round3_scan_profile_colab.ipynb`. The
+control is `r3-tupnew-stage2-best`, already on disk, so this costs one run and not two. Pre-GPU
+evidence, which is a sanity check and not a result: `staff_detect_fail_%` **28.7 → 17.3** against
+15.0/15.3 on the real pools, with spacing and placement spread all closer; stroke thickness moves
+slightly further.
+
+## 2026-08-19 — the exam is 93% scans, so the labelling turns around; and a lever nobody had noticed
 
 **No model code ran today.** What changed is where the work points, and two measurements did it.
 

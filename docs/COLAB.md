@@ -2,7 +2,7 @@
 
 purpose: how to run training on Colab (the fanless-Mac offload path)
 audience: whoever is launching a training run
-updated: 2026-08-15
+updated: 2026-08-19
 
 > How to run the scaled fine-tune (`src/vision/train.py`) on Colab, written for someone who has
 > never used Colab. This doc is the context around the notebooks: what Colab is, which plan to buy,
@@ -17,8 +17,16 @@ updated: 2026-08-15
 > | Round 1 | `notebooks/round1_colab.ipynb` | `tnc_round1_colab.zip` | `strips_v3` + real pools |
 > | **Round 2** | **`notebooks/round2_colab.ipynb`** | `tnc_round2_colab.zip` (`scripts/make_round2_colab_zip.sh`) | `strips_v4` + real pools |
 > | **Round 3 — the tuplet A/B** | **`notebooks/round3_tuplet_ab_colab.ipynb`** | `tnc_round3_<arm>_colab.zip` (`scripts/make_round3_colab_zip.sh tupnew\|tupctl`) | `strips_v5_tupnew` / `strips_v5_tupctl` + real pools |
+> | **Round 3 — arm 1, the scan profile** | **`notebooks/round3_scan_profile_colab.ipynb`** | `tnc_round3_scan_colab.zip` (`scripts/make_round3_colab_zip.sh scan`, 688 MB) | `strips_v5_tupnew` + real pools — **the same corpus as its control** |
 >
-> The Round-3 notebook is **run twice**, once per arm, off a single `ARM` cell — it is one
+> ⚠ **The scan arm ships no corpus of its own, and that is the design.** Its only variable is the
+> augmentation mix (`--photo-share 0.20 --scan-share 0.25`), chosen at training time, so its control
+> is `data/checkpoints/r3-tupnew-stage2-best` — already trained, same corpus, split, recipe, steps
+> and seed. **One run, not two.** Nothing downstream records the mix, so `train.py` prints it in its
+> startup line and the notebook asserts it before any long run; that log line is the only evidence of
+> which arm a checkpoint is. Protocol: [rung3/scan-profile.md](rung3/scan-profile.md).
+>
+> The Round-3 tuplet notebook is **run twice**, once per arm, off a single `ARM` cell — it is one
 > experiment, and the arms must not drift apart in recipe. ⚠ The two corpora have **byte-identical
 > manifests** (the tuplet mark is pixels only), so nothing downstream can tell them apart: the zip
 > script and the notebook both assert `render_config.json`, which is the only file that can.

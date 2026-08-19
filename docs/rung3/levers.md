@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-08-18
+updated: 2026-08-19
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -262,47 +262,38 @@ needs gold annotation and an engraver change.
 
 ## Lever 7 — the medium hole: we have never simulated a SCAN
 
-**New 2026-08-19, and it is the next trained arm** ([../DECISIONS.md](../DECISIONS.md)).
-[`src/vision/augment.py`](../../src/vision/augment.py) has exactly two profiles:
+> ⛔ **BUILT, TRAINED AND NULL — 2026-08-19.** Round 3's arm 1 ran and moved nothing on the medium
+> it was built for: **+0.071 edits/strip on scanned pages (`best`), +0.010 (`last`)**, both intervals
+> spanning zero, over 197 paired strips. The no-regression clause on born-digital pages **passes**,
+> with a point estimate that favours the arm and also spans zero. ⚠ The interval excludes anything
+> better than a **~5% reduction**, so this is an informative null, not an underpowered one. The
+> profile, the ops, the signed pre-registration and the disposition are in
+> **[scan-profile.md](scan-profile.md)**; the numbers in
+> [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
-| profile | share | what it models |
-|---|---|---|
-| `screenshot` | 0.65 | resample softness, JPEG, mild brightness/contrast, light sensor noise |
-| `photo` | 0.35 (`PHOTO_SHARE`) | paper tint/texture, uneven lighting, shadows, rotation/perspective, ink bleed, camera blur |
-
-**There is no scan profile, and 93% of the exam is scans** (62 of 67 pages —
+`src/vision/augment.py` had exactly two profiles — `screenshot` (0.65) and `photo` (0.35,
+`PHOTO_SHARE`) — and **93% of the exam is scans** (62 of 67 pages,
 [../METRICS-CORPUS.md](../METRICS-CORPUS.md)). A flatbed or office scan of a TRT-era print is
-neither of the two: it has **flat lighting and no perspective** (so the photo pipeline's most
-expensive ops model nothing that is there) while it *does* have speckle and dust, broken or
-half-missing thin lines, ink spread on thick strokes, bleed-through from the reverse side, small
-skew, and threshold/halftone damage — none of which either profile draws.
-
-⚠ **`augment.py`'s own comment has been asking for this since July**: *"Revisit against real usage at
-Rung 3."* We are in Round 3 and it was never revisited.
+neither: **flat lighting and no perspective**, so the photo pipeline's most expensive ops model
+nothing that is there, while it *does* have speckle and dust, broken thin lines, ink spread,
+bleed-through, small skew and threshold damage — none of which either profile drew. ⚠ `augment.py`'s
+own comment had been asking for this since July: *"Revisit against real usage at Rung 3."*
 
 **Why it goes first among the trained arms.** No re-render, no new labels, no render slot, one
-module. Every other item on this list costs a corpus render or human labelling.
+module — and its control is already on disk (`r3-tupnew-stage2-best`), so it costs **one** GPU run.
+Every other item on this list costs a corpus render or human labelling.
 
-⚠ **The trade, stated before the arm runs.** `PHOTO_SHARE` was set from the owner's report that real
-uploads are mostly web screenshots, and the constant carries an explicit warning against pushing the
-mix for "harder training" — over-warped data trades the common case for the rare one. Aiming
-augmentation at scans optimises **the exam**, and we do not know that the exam's medium is what the
-app's users upload (n=2 — [../METRICS-USAGE.md](../METRICS-USAGE.md)). So the scan profile is added
-**beside** the two, not substituted for them, and the mix is pre-registered rather than tuned.
+⚠ **The trade, on the record before the arm ran.** `PHOTO_SHARE` came from the owner's report that
+real uploads are mostly web screenshots, and the constant explicitly warns against pushing the mix
+for "harder training". Aiming augmentation at scans optimises **the exam**, which may not be what
+the app's users upload (n=2 — [../METRICS-USAGE.md](../METRICS-USAGE.md)). The profile is added
+**beside** the two, never substituted, and the no-regression clause on born-digital pages is that
+trade made checkable.
 
-**Pre-registration — to be signed before the arm is trained:**
-
-1. **Primary: edits/page on `_realval_v2`, hard tier**, which is where the scanned pages are. A win
-   is a fall against the same model trained with today's two-profile mix — same seed, same corpus,
-   same steps, the profile mix the only difference.
-2. **No-regression on easy tier**, which is the closest thing we have to the screenshot case. This
-   clause is the trade above made checkable: if scan realism costs the clean case, that shows here.
-3. **Reported, not gated:** the three-way mix actually used, and per-class accidental F1.
-
-⚠ **What must be decided before running, not after:** the share the scan profile takes. It is a
-`STACCATO_RATE`-shaped hazard — a chosen number with no measurement behind it. The honest version is
-to set it from the **corpus** composition we intend to serve, not from what makes the arm win.
-⚠ It changes training only, so nothing in the browser or the server moves and no gate is at risk.
+⚠ **The signed instrument is the MEDIUM split, not the difficulty tier this file first drafted** —
+the hard tier's gold is 110 rows seeded with a model decode and then confirmed, which flatters that
+model's descendants, and it scores *better* than mid as a result. The reasoning and the numbers are
+in [scan-profile.md](scan-profile.md) and [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
 ## The ordering, and the content work
 
@@ -341,13 +332,22 @@ behind measurements that can change what it should render.
 
 | # | Arm | Costs a render? | Scored on |
 |---|---|---|---|
-| 1 | **Lever 7** — the scan profile | no | edits/page on `_realval_v2` **hard tier** |
+| 1 | **Lever 7** — the scan profile | no | ⛔ **RAN, NULL** — edits on `_realval_v2_scan`, paired ([scan-profile.md](scan-profile.md)) |
 | 2 | **Lever 1's survivor** — one measure per strip | yes (+12.9% strips) | edits/page on `_realval_v2` |
 | 3 | **Lever 6** — the staccato arm | yes | the **paired false-dot pool**, against 72.7% |
 | 4 | the final Round-3 model | — | **the exam, read once** |
 
 **No two together.** Round 3 has been unattributable twice already, and the tuplet A/B was built
 specifically to stop it happening a third time.
+
+⛔ **ARM 1 IS SPENT AND IT WAS A NULL (2026-08-19).** ⚠ **Read this before choosing what follows arms
+2 and 3.** That is now **three** results on the "make the synthetic pixels look more like real pages"
+axis and all three are null: the tuplet-mark A/B (p = 0.688), the second engraver's domain gap
+(measured, null, no arm), and this scan profile (p = 0.105 / 0.488). This file's opening argument —
+that the axis is at diminishing returns — was an inference from pre-render probes; it is now backed
+by a **trained** arm. Arms 2 and 3 are not on that axis (one is what the model is *given*, the other
+a symbol it has *never seen*), so they stand. What should not happen is a fourth realism arm being
+proposed because the first three "nearly" worked.
 
 ⚠ **One asymmetry worth knowing when the budget gets tight.** The staccato arm is the only one with
 its **own** targeted instrument — the paired pool (`_staccato_falsedot_ctl` / `_staccato_falsedot_stac`)

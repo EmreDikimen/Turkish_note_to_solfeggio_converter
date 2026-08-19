@@ -72,13 +72,29 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
-    # BATCH 2 (2026-08-18) — THE LIVE ONE, and the reason batch 1 is parked: 52 pages / 1,497
+    # BATCH 3 (2026-08-19) — THE LIVE ONE. 54 pages / 1,499 strips from the SCANNED tier: the exact
+    # inverse of batch 2's `--clean`, over the same born-digital set, so the tier stays a file-format
+    # fact. Two measurements moved the labelling here (docs/METRICS-CORPUS.md): 93% of exam pages are
+    # scans (62 of 67), so batch 2 was cut from the tier supplying 7% of the medium Round 3 is graded
+    # on; and batch 2's own FIX rate came in at ~12% against ~30% in the scanned nota pool. A row is
+    # seeded with the decode, so an `ok` changes the training data by nothing — the yield of a batch
+    # is its fix rate.
+    # ⚠ 11 pages were dropped by hand as HANDWRITTEN before this was cut
+    # (data/real/rung3/_pagequeue/handwritten_pages.json, which carries the rule used). Handwriting
+    # is a DEFERRED category (owner, 2026-08-17); the scanned tier contains it and the born-digital
+    # tier could not.
+    # ⚠ Attend to PITCH AND DURATION, not accidentals — every audit so far chased accidentals
+    # because the old headline measured them, and that axis has never been audited (docs/STATUS.md).
+    "batch3": "data/real/rung3/_pagequeue/batch3.csv",
+    # BATCH 2 (2026-08-18) — ⛔ STOOD DOWN at 68 verdicts, merged back 2026-08-19. 52 pages / 1,497
     # strips drawn ONLY from BORN-DIGITAL pages (the PDF embeds no raster image and is drawn with
     # vector operators — a file-format fact, so no scan and no handwriting can enter). 84 of the
     # corpus's 88 born-digital pieces are sliced, 115 pages / 2,956 strips, ALL from the nota
     # source. Ranked by the same structural evidence inside that tier, 30.2 units/page against the
-    # tier's own median of 16.0. Owner's call 2026-08-18: teach the clean modern sheets first.
-    # ⚠ It aims at the OPEN "publish for clean pages first" question, NOT at the signed Round-3
+    # tier's own median of 16.0. Owner's call 2026-08-18: teach the clean modern sheets first —
+    # reversed a day later, see batch 3 above. Its 68 verdicts live in reslice_all.csv now; the file
+    # is kept as the record of what a born-digital batch yields.
+    # ⚠ It aimed at the OPEN "publish for clean pages first" question, NOT at the signed Round-3
     # floor — that exam is 41 nota / 26 neyzen pages and 81% mid+hard tier (docs/DECISIONS.md).
     "batch2": "data/real/rung3/_pagequeue/batch2.csv",
     # BATCH 1 (2026-08-18) — ⛔ PARKED, NOT LABELLED. Same builder without --clean, so it ranked
@@ -162,6 +178,7 @@ QUEUE_IMG_ROOTS = {
     "reslice-all": ["data/real/strips_v2"],
     "batch1": ["data/real/strips_v2"],
     "batch2": ["data/real/strips_v2"],
+    "batch3": ["data/real/strips_v2"],
 }
 # Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
 # on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is

@@ -3,6 +3,15 @@
 #
 #   scripts/make_round3_colab_zip.sh tupnew   -> data/colab/tnc_round3_tupnew_colab.zip
 #   scripts/make_round3_colab_zip.sh tupctl   -> data/colab/tnc_round3_tupctl_colab.zip
+#   scripts/make_round3_colab_zip.sh scan     -> data/colab/tnc_round3_scan_colab.zip
+#
+# THE `scan` ARM IS NOT A THIRD CORPUS. It ships `strips_v5_tupnew` — byte for byte the corpus the
+# tuplet A/B's winning arm trained on — because Lever 7's only variable is the AUGMENTATION MIX
+# (`--photo-share 0.20 --scan-share 0.25`), which lives in src/vision/augment.py and is chosen at
+# training time. That is also what lets `data/checkpoints/r3-tupnew-stage2-best` stand as its
+# control instead of costing a second GPU run: same corpus, same split, same recipe, same steps.
+# ⚠ So DO NOT "fix" the corpus path below to a scan-specific pool. There isn't one, and there must
+# not be — a second variable is exactly what Round 3 has been unattributable for twice already.
 #
 # Same shape as scripts/make_round2_colab_zip.sh — read that one for the per-file rationale. What
 # changes here is that there are TWO corpora, identical except for how the triplet mark is drawn:
@@ -23,12 +32,13 @@ cd "$(dirname "$0")/.."
 
 ARM=$1
 case "$ARM" in
-  tupnew) WANT_LEGACY=false ;;
-  tupctl) WANT_LEGACY=true ;;
-  *) echo "usage: $0 tupnew|tupctl"; exit 2 ;;
+  tupnew) WANT_LEGACY=false; CORPUS=strips_v5_tupnew ;;
+  tupctl) WANT_LEGACY=true;  CORPUS=strips_v5_tupctl ;;
+  scan)   WANT_LEGACY=false; CORPUS=strips_v5_tupnew ;;   # same corpus — see the header
+  *) echo "usage: $0 tupnew|tupctl|scan"; exit 2 ;;
 esac
 
-STRIPS=data/synthetic/strips_v5_$ARM
+STRIPS=data/synthetic/$CORPUS
 SPLIT=data/split_v4.json
 TESTSET=data/real/rung3/testset.json
 REAL_POOLS="data/real/rung3/strips_nota data/real/rung3/strips_r1 data/real/rung3/strips_tup"

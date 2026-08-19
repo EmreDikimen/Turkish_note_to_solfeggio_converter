@@ -153,6 +153,10 @@ def main() -> int:
                     help="run the Augmenter on real strips too (default: real strips train clean)")
     ap.add_argument("--no-augment", action="store_true")
     ap.add_argument("--photo-share", type=float, default=None, help="override augment.PHOTO_SHARE")
+    ap.add_argument("--scan-share", type=float, default=None,
+                    help="override augment.SCAN_SHARE (default 0.0 = no scan profile). The Round-3 "
+                         "Lever-7 arm is --photo-share 0.20 --scan-share 0.25; leaving both unset "
+                         "reproduces the control's augmentation exactly")
     ap.add_argument("--limit-train", type=int, default=None, help="smoke tests only")
     ap.add_argument("--limit-val", type=int, default=None)
     ap.add_argument("--device", default=None, help="cuda | mps | cpu (default: best available)")
@@ -262,12 +266,23 @@ def main() -> int:
                   f"expected per-epoch mix: every {drawn:.1%} of all draws")
 
     augment = None
+    mix = ""
     if not args.no_augment:
         from augment import Augmenter
 
-        augment = Augmenter(seed=args.seed, **({"photo_share": args.photo_share} if args.photo_share is not None else {}))
+        kw = {}
+        if args.photo_share is not None:
+            kw["photo_share"] = args.photo_share
+        if args.scan_share is not None:
+            kw["scan_share"] = args.scan_share
+        augment = Augmenter(seed=args.seed, **kw)
+        # The augmentation MIX is the whole variable of the Lever-7 arm, and nothing downstream
+        # records it — the corpus, the split and the checkpoint are identical between that arm and
+        # its control. Printing it here is what makes a finished run say which arm it was.
+        mix = (f" (screenshot {1 - augment.photo_share - augment.scan_share:.2f} / "
+               f"photo {augment.photo_share:.2f} / scan {augment.scan_share:.2f})")
     print(f"== data: {len(train_items)} train / {len(val_items)} synth-val / {len(real_val_items)} real-val strips; "
-          f"augment={'on' if augment else 'OFF'}; device={device}")
+          f"augment={'on' + mix if augment else 'OFF'}; device={device}")
 
     # ---- model (resume = reload our own last checkpoint, weights already extended) ------------
     source = str(out_dir / "last") if args.resume else args.model

@@ -4,7 +4,25 @@
     npx tsx tools/vision/page-structure.ts                              # 1. stitch stats (once)
     .venv-ml/bin/python scripts/rung3/build_label_batch.py --strips 1500   # 2. cut the batch
     .venv-ml/bin/python scripts/rung3/review_ui.py                      # 3. label the `batch1` tab
+    .venv-ml/bin/python scripts/rung3/build_label_batch.py --stats --batch 1   # 3b. what is it yielding?
     .venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back  # 4. verdicts -> reslice_all
+
+Which TIER to cut from — `--clean` / `--scanned`
+------------------------------------------------
+Both read the same `born_digital_stems()` set and are exact inverses of each other, so the tier is a
+**file-format fact** rather than a heuristic: `--clean` keeps only pages whose PDF is born-digital,
+`--scanned` keeps only the pages whose PDF is a scan. Neither is a difficulty score.
+
+⚠ `--scanned` is where Round 3 is graded: **93% of exam pages are scans** (62 of 67), and the
+born-digital `batch2` measured a ~12% fix rate against ~30% in the scanned nota pool. A row is seeded
+with the decode, so an `ok` changes the training data by nothing — **the yield of a batch is its FIX
+rate** (docs/METRICS-CORPUS.md, docs/rung3/labeling-queues.md).
+
+⚠ `--scanned` does NOT mean "printed". The scanned tier contains real handwritten manuscript, which
+is a DEFERRED category (owner, 2026-08-17) and must not enter a printed-page pool. Triage it at PAGE
+level — 52 page images, minutes — and feed the result back with `--exclude-pages`, which is also
+where a page whose crops are STALE goes (`check_crop_staleness.py`, "measures differ" = the label
+would describe a picture that no longer exists).
 
 Why this exists rather than a filter in review_ui
 -------------------------------------------------
@@ -118,6 +136,33 @@ def piece_stem(page: str) -> str:
     """`…_nota_p1` -> `…_nota`, the stem the PDF is named with."""
     return re.sub(r"_p\d+$", "", page)
 
+
+def excluded_pages(path: str | None) -> dict[str, str]:
+    """PAGE stems the ranking must skip, mapped to the reason they were dropped.
+
+    Why a file rather than a flag: the two things that drop a page here — handwriting and stale
+    crops — are JUDGEMENTS, and a judgement that lives only in a shell history cannot be re-read,
+    corrected, or held against the next cut. Both are recorded once and reused by every later cut.
+
+    Accepts whichever shape is convenient to write by hand:
+        ["page_stem", …]                          | {"pages": [ … ]}
+        [{"page": "…", "why": "handwritten"}, …]  | {"page_stem": "why", …}
+    """
+    if not path:
+        return {}
+    data = json.loads(Path(path).read_text())
+    if isinstance(data, dict) and "pages" in data:
+        data = data["pages"]
+    if isinstance(data, dict):
+        return {str(k): str(v) for k, v in data.items()}
+    out: dict[str, str] = {}
+    for item in data:
+        if isinstance(item, str):
+            out[item] = ""
+        else:
+            out[str(item["page"])] = str(item.get("why", ""))
+    return out
+
 # Reading order inside a page: system index, then window index, then the raw name as a tiebreak.
 _SW = re.compile(r"_s(\d+)_w(\d+)\.png$")
 
@@ -186,23 +231,36 @@ def cut(args: argparse.Namespace) -> None:
     exam = exam_page_stems()
     fields, by_page = load_reslice()
 
-    clean = born_digital_stems(args.refresh_pdfs) if args.clean else None
+    # ONE set behind both flags, read in opposite directions — see the module docstring. `--clean`
+    # keeps the born-digital pages, `--scanned` keeps everything that is not one, and no page can
+    # satisfy both: the tier is decided by whether page 1 of the PDF embeds a raster image.
+    tier = born_digital_stems(args.refresh_pdfs) if (args.clean or args.scanned) else None
+    dropped = excluded_pages(args.exclude_pages)
 
     rows: list[dict] = []
     refused = off_tier = 0
+    skipped: Counter = Counter()
     for stem, st in structure.items():
         if stem in exam:
             refused += 1
             continue
-        if clean is not None and piece_stem(stem) not in clean:
+        if tier is not None and (piece_stem(stem) in tier) is not bool(args.clean):
             off_tier += 1
+            continue
+        if stem in dropped:
+            skipped[dropped[stem] or "no reason given"] += 1
             continue
         row = score_page(stem, st, feats.get(stem, {"nd": [], "makam": Counter(), "src": Counter()}),
                          flags.get(stem, {}))
         if row:
             rows.append(row)
-    if clean is not None:
-        print(f"born-digital filter: {len(rows)} pages kept, {off_tier} scanned pages skipped")
+    if tier is not None:
+        kept, skip = ("born-digital", "scanned") if args.clean else ("scanned", "born-digital")
+        print(f"{kept} filter: {len(rows)} pages kept, {off_tier} {skip} pages skipped")
+    if dropped:
+        print(f"excluded pages: {sum(skipped.values())} of the {len(dropped)} listed in "
+              f"{args.exclude_pages} were in this tier — "
+              + ", ".join(f"{w}:{c}" for w, c in skipped.most_common()))
 
     picked = pick_pages(rows, by_page, args.strips, args.makam_cap)
     out_csv = OUT_DIR / f"batch{args.batch}.csv"
@@ -222,6 +280,11 @@ def cut(args: argparse.Namespace) -> None:
     out_json.write_text(json.dumps({
         "generatedBy": "scripts/rung3/build_label_batch.py",
         "from": str(RESLICE.relative_to(ROOT)),
+        # WHICH TIER this batch is, recorded in the batch itself: the CSV rows carry no trace of the
+        # filter, so without this line a batch cannot say afterwards what it was cut from.
+        "tier": "born-digital" if args.clean else "scanned" if args.scanned else "whole corpus",
+        "excludePages": args.exclude_pages,
+        "excludedInTier": dict(skipped),
         "stripBudget": args.strips,
         "makamCapFrac": args.makam_cap,
         "examPagesRefused": refused,
@@ -301,6 +364,40 @@ def merge_back(args: argparse.Namespace) -> None:
               f"untouched, resolve by hand")
 
 
+def stats(args: argparse.Namespace) -> None:
+    """What the batch is YIELDING, while it is being labelled — the stop/continue instrument.
+
+    ⚠ The number that matters is the **fix rate**, not the count of rows read. Every row is seeded
+    with the model's own decode, so an `ok` verdict changes the training data by exactly nothing; a
+    batch whose rows are mostly `ok` bought looks and no data (docs/rung3/labeling-queues.md).
+    `bad` is the other side of it: the ranking selects the most damaged pages, and the scanned tail
+    is where `realval-hard` lost 33% of its crops as unusable.
+    """
+    src = OUT_DIR / f"batch{args.batch}.csv"
+    if not src.exists():
+        raise SystemExit(f"missing {src.relative_to(ROOT)}")
+    with src.open(newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    judged = [r for r in rows if r.get("verdict")]
+    if not judged:
+        print(f"batch {args.batch}: 0 of {len(rows)} rows judged — nothing to read yet")
+        return
+    counts = Counter(r["verdict"] for r in judged)
+    n = len(judged)
+    pages = {r["page"] for r in rows}
+    touched = {r["page"] for r in judged}
+
+    print(f"batch {args.batch}   {n} of {len(rows)} rows judged "
+          f"({len(touched)} of {len(pages)} pages touched)")
+    print("  " + ", ".join(f"{v}:{c}" for v, c in counts.most_common()))
+    print(f"  FIX rate  {counts['fix'] / n:6.1%}   <- the yield: an `ok` changes the data by nothing")
+    print(f"  bad rate  {counts['bad'] / n:6.1%}   <- unusable crops; cap the impact score if high")
+    print("\n  for scale, already on record (docs/METRICS-CORPUS.md, docs/rung3/labeling-queues.md):")
+    print("    ~30%   fix rate in the scanned nota pool      <- why the scanned tier was chosen")
+    print("    ~12%   fix rate of batch2, born-digital       <- why it was stood down at 68 rows")
+    print("     33%   crops lost as unusable in realval-hard <- the bad-rate warning")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -308,15 +405,23 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=1, help="batch number (names the files)")
     ap.add_argument("--makam-cap", type=float, default=0.15,
                     help="max share of the batch's strips one makam may take (default 0.15)")
-    ap.add_argument("--clean", action="store_true",
-                    help="BORN-DIGITAL pages only — software-typeset, never scanned or handwritten")
+    tier = ap.add_mutually_exclusive_group()
+    tier.add_argument("--clean", action="store_true",
+                      help="BORN-DIGITAL pages only — software-typeset, never scanned or handwritten")
+    tier.add_argument("--scanned", action="store_true",
+                      help="SCANNED pages only — the exact inverse of --clean over the same set. "
+                           "⚠ includes handwritten manuscript: triage it with --exclude-pages")
+    ap.add_argument("--exclude-pages", metavar="PAGES.JSON",
+                    help="page stems to skip (handwritten, or stale crops) — see excluded_pages()")
     ap.add_argument("--refresh-pdfs", action="store_true",
                     help="re-scan the PDFs instead of reading the cached born_digital.json")
     ap.add_argument("--force", action="store_true", help="overwrite an existing batch CSV")
     ap.add_argument("--merge-back", action="store_true",
                     help="copy this batch's verdicts into reslice_all.csv")
+    ap.add_argument("--stats", action="store_true",
+                    help="what this batch is yielding so far (fix rate AND bad rate)")
     args = ap.parse_args()
-    (merge_back if args.merge_back else cut)(args)
+    (stats if args.stats else merge_back if args.merge_back else cut)(args)
 
 
 if __name__ == "__main__":

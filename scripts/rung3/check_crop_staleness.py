@@ -62,6 +62,11 @@ def main() -> int:
                     help="check exactly the pages of a labelling batch "
                          "(data/real/rung3/_pagequeue/batch<N>_pages.json) instead of a random "
                          "sample — the question 'is the work I already did still valid?'")
+    ap.add_argument("--out", metavar="RESULT.JSON",
+                    help="write the per-page verdict, so the pages that would lose their labels can "
+                         "be fed to `build_label_batch.py --exclude-pages` MECHANICALLY. The stdout "
+                         "list is truncated at 10 and re-running this check costs ~12 min a batch, "
+                         "which is how an exclusion list ends up hand-copied and short.")
     args = ap.parse_args()
 
     root = Path(args.root)
@@ -80,6 +85,7 @@ def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="staleness_"))
     tally = {"identical": 0, "pixels": 0, "size": 0, "measures": 0, "count": 0}
     music_bad: list[str] = []
+    verdict: dict[str, str] = {}
 
     for i, d in enumerate(sample, 1):
         n = d.name
@@ -90,6 +96,7 @@ def main() -> int:
             print(f"  [{i}] CROP COUNT/NAMES  {n}: {len(old)} -> {len(new)}")
             tally["count"] += 1
             music_bad.append(n)
+            verdict[n] = "crop count differs"
             continue
 
         o_rows = manifest_rows(d / f"{n}_manifest.json")
@@ -102,20 +109,24 @@ def main() -> int:
             print(f"  [{i}] MEASURES DIFFER   {n}  <- labels on this page would be VOID")
             tally["measures"] += 1
             music_bad.append(n)
+            verdict[n] = "measures differ"
             continue
 
         sizes = [f for f in old if Image.open(d / f).size != Image.open(tmp / f).size]
         if sizes:
             print(f"  [{i}] size only         {n}: {len(sizes)}/{len(old)} crops, same music")
             tally["size"] += 1
+            verdict[n] = "size only"
             continue
         px = [f for f in old
               if Image.open(d / f).tobytes() != Image.open(tmp / f).tobytes()]
         if px:
             print(f"  [{i}] pixels only       {n}: {len(px)}/{len(old)} crops, same music + size")
             tally["pixels"] += 1
+            verdict[n] = "pixels only"
         else:
             tally["identical"] += 1
+            verdict[n] = "identical"
 
     n = len(sample)
     print(f"\n{'=' * 70}")
@@ -130,6 +141,21 @@ def main() -> int:
         print("   pages that would lose labels:")
         for p in music_bad[:10]:
             print(f"     {p}")
+        if len(music_bad) > 10:
+            print(f"     … and {len(music_bad) - 10} more — pass --out to get all of them")
+    if args.out:
+        Path(args.out).write_text(json.dumps({
+            "generatedBy": "scripts/rung3/check_crop_staleness.py",
+            "root": str(root),
+            "pagesFrom": args.pages_from,
+            "tally": tally,
+            # The two verdicts that void a label, named so a caller can filter on meaning rather
+            # than on a string it guessed.
+            "voidVerdicts": ["crop count differs", "measures differ"],
+            "wouldLoseLabels": music_bad,
+            "verdict": verdict,
+        }, indent=1))
+        print(f"\nwrote {args.out}")
     return 0
 
 

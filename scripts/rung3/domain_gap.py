@@ -443,6 +443,14 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--augment", action="store_true",
                     help="apply src/vision/augment.py to the synthetic pool — what the model sees")
+    ap.add_argument("--photo-share", type=float, default=None,
+                    help="override augment.PHOTO_SHARE for --augment (Lever-7 arm: 0.20)")
+    ap.add_argument("--scan-share", type=float, default=None,
+                    help="override augment.SCAN_SHARE for --augment (Lever-7 arm: 0.25). ⚠ Judge a "
+                         "mix against the NON-exam real pools: --real data/real/rung3/strips_nota "
+                         "data/real/rung3/strips_r1. The exam is read once, on the final model, and "
+                         "fitting an augmentation mix to its pixel statistics is a way of reading it "
+                         "early")
     ap.add_argument("--sheets", type=int, default=6, help="strips per contact sheet (0 = skip)")
     ap.add_argument("--out", default=None, help="write <out>.json / <out>.txt / <out>_sheets/")
     ap.add_argument("--diff", nargs=2, metavar=("BEFORE.json", "AFTER.json"),
@@ -461,7 +469,14 @@ def main() -> int:
         from augment import Augmenter
         random.seed(args.seed)
         _np.random.seed(args.seed)
-        augment = Augmenter(seed=args.seed)
+        kw = {}
+        if args.photo_share is not None:
+            kw["photo_share"] = args.photo_share
+        if args.scan_share is not None:
+            kw["scan_share"] = args.scan_share
+        augment = Augmenter(seed=args.seed, **kw)
+        print(f"augment mix: screenshot {1 - augment.photo_share - augment.scan_share:.2f} / "
+              f"photo {augment.photo_share:.2f} / scan {augment.scan_share:.2f}")
 
     pools = [(f"SYNTH{'+aug' if args.augment else ''}", Path(args.synth))]
     pools += [(Path(p).name.replace("strips_", "").replace("_v2_clean", ""), Path(p)) for p in args.real]
@@ -478,7 +493,9 @@ def main() -> int:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.with_suffix(".json").write_text(json.dumps(
-            {"synth": args.synth, "augment": args.augment, "n": args.n, "reports": reports}, indent=1))
+            {"synth": args.synth, "augment": args.augment, "n": args.n,
+             "photoShare": args.photo_share, "scanShare": args.scan_share,
+             "reports": reports}, indent=1))
         out.with_suffix(".txt").write_text(table + "\n")
         if args.sheets:
             contact_sheet(pools, Path(str(out) + "_sheets"), args.sheets, args.seed, augment)

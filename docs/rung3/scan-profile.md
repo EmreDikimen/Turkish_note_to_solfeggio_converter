@@ -166,11 +166,14 @@ tuned against this pool stops being evidence about anything.
 non-significant improvement on the medium it was not. It cost one GPU run and no render slot, which
 is exactly why it went first.
 
-⏭ **One decision is the owner's and it is NOT settled here: does the scan profile stay on in the
-final Round-3 model?** The case for keeping it is that it did not hurt and the born-digital point
-estimate favours it. The case against is that "keep it because it didn't hurt" is a choice made on
-two nulls, and every profile in the mix is a claim about what users upload. It changes training
-only, so either answer is cheap to act on.
+✅ **SETTLED 2026-08-19 (owner): the profile does NOT stay on. `scan_share` is left at its 0.0
+default, so the final Round-3 model trains without it.** The case for keeping it was only that it did
+not hurt and that the born-digital point estimate favoured it — a choice made on two nulls. Against
+that: every profile in the mix is a claim about what users upload, and `PHOTO_SHARE` came from the
+owner's report that real uploads are mostly web screenshots. The flag is off by default, so **doing
+nothing carries the decision** and no code moves. ⚠ The profile itself is **not** deleted: the module,
+the preview command and this write-up stand, so a later round can turn it on with one flag rather
+than rebuild it. [../DECISIONS.md](../DECISIONS.md)
 
 ⚠ **This is the second trained Round-3 arm to return a null** — the tuplet-mark A/B was p = 0.688,
 this is p = 0.488 — and Lever 4's second engraver returned a third null on the domain gap without

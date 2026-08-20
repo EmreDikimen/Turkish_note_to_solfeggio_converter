@@ -18,6 +18,7 @@ updated: 2026-08-19
 > | **Round 2** | **`notebooks/round2_colab.ipynb`** | `tnc_round2_colab.zip` (`scripts/make_round2_colab_zip.sh`) | `strips_v4` + real pools |
 > | **Round 3 — the tuplet A/B** | **`notebooks/round3_tuplet_ab_colab.ipynb`** | `tnc_round3_<arm>_colab.zip` (`scripts/make_round3_colab_zip.sh tupnew\|tupctl`) | `strips_v5_tupnew` / `strips_v5_tupctl` + real pools |
 > | **Round 3 — arm 1, the scan profile** | **`notebooks/round3_scan_profile_colab.ipynb`** | `tnc_round3_scan_colab.zip` (`scripts/make_round3_colab_zip.sh scan`, 688 MB) | `strips_v5_tupnew` + real pools — **the same corpus as its control** |
+> | **Round 3 — the staccato arm** | **`notebooks/round3_staccato_colab.ipynb`** | `tnc_round3_stac_colab.zip` (`scripts/make_round3_colab_zip.sh stac`, 704 MB) | `strips_v6_stac` + real pools — tupnew re-rendered with `--staccato-noise`, **manifest matched to the control's row set** |
 >
 > ⚠ **The scan arm ships no corpus of its own, and that is the design.** Its only variable is the
 > augmentation mix (`--photo-share 0.20 --scan-share 0.25`), chosen at training time, so its control

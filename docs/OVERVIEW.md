@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-19
+updated: 2026-08-20
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -236,7 +236,7 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
 ### The model work → [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md)
 
 The whole model plan in plain words — what the triplet work settled, the scanned-pages decision, the
-**four trainings** and what each one changes, when we train, and what the one-shot exam decides.
+**three trainings** and what each one changes, when we train, and what the one-shot exam decides.
 Moved out of this page on 19 August when it passed its size limit.
 
 ## Small glossary (only the words used above)

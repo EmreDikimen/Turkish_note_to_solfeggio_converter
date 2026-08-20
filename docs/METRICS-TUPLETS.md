@@ -55,8 +55,16 @@ then taken by scanning outward from the digit along its own row band. It deliber
 detector — the false positives it does surface (lyric syllables, the tempo mark `♩=76—84`) are exactly
 why. 20 tiles read on `strips_tup` → 12 accepted; 8 read on `strips_exam_v2_clean` → 5 accepted.
 
-**Every one of the 16 accepted marks is BROKEN with the "3" in the gap.** Not one continuous arc with
-a floating digit, across ~11 editions.
+**Every one of the 16 accepted marks is BROKEN with the "3" in the gap**, across ~11 editions.
+
+> ⛔ **CORRECTED 2026-08-19 — this measurement stands, the generalisation drawn from it does not.**
+> The line that followed read *"Not one continuous arc with a floating digit, across ~11 editions."*
+> Two real scanned editions supplied by the owner draw a **continuous arc with the italic "3" set
+> inside the concavity** — Kemânî Sebuh / Sofyan, and Avni Anıl / Düyek (the latter over dense
+> contiguous triplet runs). The sample was 16 tiles from **two pools we already own**, and the style
+> is absent from both, so the probe could not have found it. 16/16 describes those pools; Turkish
+> print at large has at least two shapes. Geometry for the third style is measured separately, on
+> those pages, before it is drawn ([rung3/tuplets.md](rung3/tuplets.md), [DECISIONS.md](DECISIONS.md)).
 
 | quantity, in staff spaces | real print (n=16) | ours, curved style | ours, bracket style |
 |---|---|---|---|
@@ -77,6 +85,49 @@ around the digit. Only the curved style (70% of pieces then, 90% now) ever carri
 
 **The redraw lands on the measurements**, checked with `--dir` on the pilot render: gap **1.63**,
 digit **0.70 × 1.20**, clearance **0.43 / 0.50**, digit centre **0.20** inside the ends.
+
+### The THIRD style measured (2026-08-19) — continuous arc, "3" inside the concavity
+
+`tuplet_mark_probe.py --images data/real/tuplet_marks --accept …`, on the two real editions the
+owner supplied. The probe needed three additions to read them at all, and each is a fact about
+scanned pages rather than about tuplets:
+
+- **A scanned page is ONE connected component.** On the Kemânî Sebuh page the arc, the digit, every
+  notehead, both beams and all five staff lines form a single blob 2,026 px wide — component logic,
+  which is this file's whole method, can say nothing until the staff lines are erased (`--destaff`).
+- **A full-width row rarely reaches the 0.6 ink fraction** that defines a staff line here: 0.57 and
+  0.61 maxima on the two scans, against 0.95 born-digital. `--staff-thresh` exists for that and
+  **the pools keep 0.6**.
+- **The concave style sets its digit ON the top staff line**, so the candidate filter's "reject
+  anything touching a line" rule threw it away. Dropped only when the lines have been erased.
+
+**n = 5 marks, one page.** The second page (Avni Anıl) confirms the style by eye but its staff
+detection reads 12.6–14.8 px across thresholds — unstable, so it is **not** measured. Sub-staff-space
+geometry off a 548 px two-system scan would not be worth quoting.
+
+| quantity, in staff spaces | real, concave (n=5) | ours, as rendered | ours, broken style |
+|---|---|---|---|
+| clearance, arc underside → digit top | **0.91** (0.57–1.00, n=3 clean) | 1.00 | — (digit is in the gap) |
+| **digit and arc are ONE component** | **no, 0 of 5** | no, 0 of 6 | no |
+| digit centre along the span | **0.44** (0.40–0.56) | 0.50 | in the gap, 0.49–0.50 |
+| digit height | **1.22** (1.13–1.26) | 1.20 | 1.20 |
+| digit width | **0.83** (0.83–0.91) | 0.77 | 0.76 real / 0.70 ours |
+| whole mark's span | 6.74 (5.87–7.26) | 7.20 | — |
+| arc depth | 1.65–2.39 | 1.60 | — |
+| arc stroke | 0.174–0.217 | **0.100** | 0.100 |
+
+**The load-bearing row is the second one.** Our *legacy* mark had the digit touching the apex, so arc
+and digit were one component — a slur with a bump, and that is what made it indistinguishable from a
+phrase slur. Real print in this style keeps them apart, which is why the shape is worth drawing at
+all rather than being a repaint of the mark we already abandoned.
+
+⚠ **The arc stroke is again left at the slur's weight**, and again deliberately: real print draws
+this arc heavier still (0.174–0.217 S against our 0.100), but thickening only the tuplet arc invents
+a thickness cue against phrase slurs. Owed jointly with `drawSlurArc`, exactly as for the broken mark.
+
+⚠ **How often either style is used is NOT measured.** Two pages are an existence proof, not a
+frequency, so `TUPLET_MARK_CONCAVE.share` is chosen. Replace it by counting marks across editions
+with the probe.
 
 ### The mark FOLLOWS THE NOTES — measured 2026-08-12 after the owner's review
 

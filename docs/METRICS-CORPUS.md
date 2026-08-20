@@ -2,7 +2,7 @@
 
 purpose: the single home for corpus sizes, pool composition and measured label-noise rates
 audience: agents and the owner, whenever a question is about the data rather than the model
-updated: 2026-08-18
+updated: 2026-08-20
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps **how well the model reads**, this file keeps **what the data is
@@ -25,6 +25,45 @@ and how trustworthy its labels are**. Model-quality numbers stay there; nothing 
 
 Exam v2.1 class gold: bakiyeSharp 117, bakiyeFlat 60, kucukFlat 54, natural 48, komaFlat 39,
 kucukSharp 28, komaSharp 19 (18 scorable), buyukSharp 3 → 0 after the re-audit, buyukFlat 0.
+
+## ⚠ Which slicer cut which pool, and what the checkpoint selector sees (measured 2026-08-20)
+
+Prompted by the owner asking whether the data trained against every 500 steps is out of date. It is,
+and the second table is the larger finding.
+
+`page_to_strips.py` was **overhauled 2026-07-25** and fixed four more times on **2026-07-29** (width
+and measure caps enforced, overlapping crops trimmed, the staff floated in the frame). A pool cut
+before that date is not what the shipped slicer produces — measured on a 5-page re-slice sample,
+**0 of 30 crops came out identical**, old 207 px slivers becoming 1435 px full rows.
+
+| pool | role | crops cut | slicer |
+|---|---|---|---|
+| `strips_nota` / `strips_r1` / `strips_tup` | training **and** the real half of the selector | 11–17 Jul | **old** |
+| `strips_exam_v2_clean` | **the exam**, read once, the launch gate | 17 Jul | **old** |
+| `_realval_v2` | what every Round-3 arm is scored on | 31 Jul | current |
+
+So the pool the arms are *scored* on is current; the pools they *train* on, and the exam that decides
+the launch, are not. Re-emitting the training pools is the standing B8 decision; the exam's version of
+it is exam v3 ([BACKLOG.md](BACKLOG.md)).
+
+**What picks `best`.** `train.py` blends two val losses by strip count —
+`select = (synth × n_s + real × n_r) / (n_s + n_r)` — evaluated every `--eval-every` (default 500)
+steps. At the default `--real-val-frac 0.10` that every notebook uses, against `strips_v6_stac`:
+
+| val pool | strips | weight in the number that saves `best` |
+|---|---|---|
+| synthetic (val pieces of the corpus) | 4,769 | **94.6%** |
+| real (nota 224 + r1 26 + tup 21) | 271 | **5.4%** |
+
+**`best` is therefore chosen 94.6% on synthetic val loss**, in a round graded entirely on real pages.
+[rung3/levers.md](rung3/levers.md) Lever 5 already said "strip-weighted toward synthetic"; this is the
+number under it. ⚠ The staleness of the real half matters **less than its weight** — fixing the crops
+without changing the blend moves 5.4% of the selector.
+
+⚠ **This does not invalidate a paired arm.** An arm and its control share these pools, so a stale
+crop or a synthetic-heavy selector applies identically to both and cancels in the delta. It bears on
+which checkpoint is called `best` — which is why both `best` and `last` are read, and why arm 1's two
+checkpoints disagreed.
 
 ## ⚠ `_realval_v2` has 5 DUPLICATE MANIFEST ROWS, 4 of them contradictory (found 2026-08-16)
 

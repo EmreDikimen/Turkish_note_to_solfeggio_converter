@@ -133,8 +133,14 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/syn
     # [--staccato-noise] opts INTO the Round-3 staccato distractors — label-free dots on the
     # notehead side, teaching that a dot means "longer" only BESIDE the notehead. Off by default;
     # `staccatoseed` is deliberately NOT a manifest field, so the two arms stay byte-diffable.
+    # [--concave-tuplet] opts INTO the THIRD tuplet shape (2026-08-19): a CONTINUOUS arc with the
+    # "3" inside its concavity, on a per-piece coin. Measured off two real scanned editions, which
+    # refuted this project's own "16 of 16 marks break the arc" (docs/METRICS-TUPLETS.md).
+    # ⚠ Off by default and NO TRAINED ARM MAY CARRY IT — it changes a share of every piece, so a
+    # corpus with it on is not comparable to one without. It belongs to the FINAL model's render.
+    # `make_round3_colab_zip.sh` refuses any arm whose render_config.json has it on.
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
-npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise]
+npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise] [--concave-tuplet]
 npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --out data/synthetic/<set>
     # the SECOND ENGRAVER (Round 3 Lever 4): real LilyPond renders the SAME labels — needs
     # `brew install lilypond` (2.26), decides nothing itself, and draws no lyrics/repeats/nav

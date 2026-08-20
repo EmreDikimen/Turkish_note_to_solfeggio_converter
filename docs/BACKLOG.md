@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-18
+updated: 2026-08-20
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -29,7 +29,54 @@ starting. Abandoned plans are a different thing again and live in
    re-derive, and check whether any other pool built by the same path shares it.
    [METRICS-CORPUS.md](METRICS-CORPUS.md).
 
-3. **NEW 2026-08-18 — "REVIEW UI 2": a PAGE-level correction UI. Designed, costed, and STOPPED by the
+3. **NEW 2026-08-20 — `best` is chosen 94.6% on SYNTHETIC val loss. Re-weight the selector, or
+   select on a real metric.** Raised by the owner asking what the every-500-steps evaluation actually
+   reads. `train.py` blends the two val losses by strip count, so at the default `--real-val-frac
+   0.10` the synthetic val pool (4,769 strips) outvotes the real one (271) nineteen to one — in a
+   round whose acceptance bar is a **real-page** number ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
+   [rung3/levers.md](rung3/levers.md) Lever 5 named this without a number; the number is what makes
+   it actionable. Three fixes, cheapest first: weight the blend deliberately instead of by strip
+   count; raise `--real-val-frac` so the real pool is not 271 strips; or select on a **free-running**
+   real metric (edits/strip) rather than teacher-forced loss, which is Lever 5's own preferred answer
+   and the only one that measures what the round is graded on.
+   ⚠ **Deferred, not ignored, for one reason: changing the selector mid-round makes the arms
+   incomparable.** `r3-tupnew-stage2-best` was selected under the current blend, so every arm scored
+   against it must be too. This lands **after** the staccato arm is read, and it is a Round-4 recipe
+   change, not a Round-3 patch.
+   ⚠ It does **not** invalidate any paired arm result — an arm and its control share the selector.
+
+4. **NEW 2026-08-20 — the real TRAINING pools are old-slicer crops, and so is the real half of the
+   selector.** `strips_nota` / `strips_r1` / `strips_tup` were cut **11–17 July**; the slicer was
+   overhauled **25 July** and fixed four more times on **29 July**. On a 5-page re-slice sample **0 of
+   30 crops were identical**. So 2,330 training strips, and the 271 val-side strips inside the
+   checkpoint selector, are crops the shipped slicer no longer produces
+   ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
+   ⚠ **This is the concrete half of B8** ([STATUS.md](STATUS.md)), which frames re-emitting as a
+   decision about *training* data; the selector consequence is the part that had not been stated.
+   ⚠ Do the re-emit with its own `--out` and look at what moved first — it rewrites the manifests the
+   promoted verdicts hang off. And note the priority: fixing these crops without touching the blend
+   above improves **5.4%** of the number that picks `best`.
+
+5. **NEW 2026-08-20 — the DOTTED (usul) BARLINE has no token and is never drawn, so the model reads
+   it as `\repstart`.** Owner-found while labelling `batch3`, then measured: **117 of 1,499 rows
+   (7.8%)** decode a `\repstart`, and of the 23 judged so far **13 had it removed as wrong**
+   ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)). Turkish editions print a dotted barline to mark
+   usul subdivisions inside a measure; `ADDED_TOKENS` has no spelling for one and the renderer draws
+   only single and repeat barlines, so **0 of 40,826 strips** contain one and the nearest thing the
+   model knows is a repeat sign — a line plus *dots*.
+   **This is the same structural hole as the staccato one** (Lever 6), which is now a trained arm, and
+   as the signature-only crop and the bare phrase slur before it. The fix has the same two halves:
+   draw it (a renderer change plus a per-piece coin) and give it a name — ⚠ and `ADDED_TOKENS` is
+   **append-only**, so a `\dottedbar` token goes at the END and needs gold annotation before it can
+   be scored.
+   ⚠ **Deferred, not next, for the usual reason**: it is a corpus change, and no two render-side
+   variables may move together. It queues behind the staccato arm's read, and it is a candidate for
+   the FINAL model's render alongside the concave tuplet mark — not an arm of its own unless it earns
+   one.
+   ⚠ **Cheap first step, no render**: count dotted barlines across the real pools with a probe, the
+   way the tuplet mark was counted. 7.8% of one batch is a decode statistic, not a print frequency.
+
+6. **NEW 2026-08-18 — "REVIEW UI 2": a PAGE-level correction UI. Designed, costed, and STOPPED by the
    owner on the arithmetic, with the queue half already BUILT and working.** The ask was a tool like
    the app — photo and rendered score side by side, tokens visible, all editor mechanics, plus
    editable `\sig` blocks and a selectable/deletable tuplet mark — to correct real pages page by page
@@ -84,6 +131,16 @@ starting. Abandoned plans are a different thing again and live in
    more `\komaSharp` gold — at n=14 the class cannot carry the weight the headline gives it. The
    train-time disjointness guard is already shipped; give v3 a one-time `round1-best` bridge read as
    its baseline. (The low-n weighting it also owed was done on 2026-07-27.)
+   ⚠ **ADDED 2026-08-20 — the exam's crops are OLD-SLICER output too** (`strips_exam_v2_clean`, cut
+   **17 July**, against the 25/29 July overhaul), so **the launch gate is measured on crops the
+   shipped slicer no longer produces** ([METRICS-CORPUS.md](METRICS-CORPUS.md)). That is a decision to
+   take **before** the one-shot read, not after — re-cutting the exam afterwards would either waste
+   the shot or invite re-reading it, and the one-shot rule is what makes the number mean anything.
+   ⚠ It cuts both ways and neither direction is measured: the exam carries retired defects the
+   current slicer has fixed (flattering), while crops over 1200 px went **13.8% → 27.8%** on the same
+   67 pages under the new slicer, so production sits further into the bad end than the exam shows
+   ([METRICS-GEOMETRY.md](METRICS-GEOMETRY.md)). ⚠ Growing the exam and re-cutting it are the same
+   job — do them in one pass or the disjointness re-validation runs twice.
 5. **Extend the train-time exam guard to the SYNTHETIC corpus.** It inspects only the `--real-dir`
    pools today, which is how 5 exam pieces sat in `strips_v3`. `select_pieces.py --exam` now blocks
    them at selection, but the training guard should refuse them too.

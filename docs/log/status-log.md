@@ -2,12 +2,112 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-19
+updated: 2026-08-20
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-19 (latest) — arm 1 ran and it is a NULL, and that is now three nulls on one axis
+## 2026-08-20 (latest) — what the selector actually reads, and a hole the labelling found
+
+**The owner asked what the every-500-steps evaluation is computed on, and whether it is out of date.**
+It is, and measuring it turned up something bigger. `train.py` blends two val losses by strip count to
+pick `best`; at the default `--real-val-frac 0.10` that is **4,769 synthetic val strips against 271
+real ones — 94.6% / 5.4%**. So the checkpoint for a round graded on real pages is chosen almost
+entirely on synthetic loss. Lever 5 has said "strip-weighted toward synthetic" since it was written;
+nobody had put the number under it, and the number is what makes it actionable.
+
+The staleness the question started from is real but secondary: `strips_nota`/`strips_r1`/`strips_tup`
+were cut **11–17 July** against a slicer overhauled on the **25th** and fixed four more times on the
+**29th** (0 of 30 crops identical on a re-slice sample). **The exam is old-slicer output too** — which
+matters more, because it is the launch gate, and re-cutting it is a decision owed *before* the
+one-shot read rather than after. ⚠ None of this invalidates a paired arm: an arm and its control share
+the pools and the selector, so it cancels in the delta. Written up as three backlog items rather than
+acted on, because changing the selector mid-round would make the arms incomparable.
+
+**Separately, the labelling found a structural hole by eye that no probe had.** On one `batch3` strip
+the owner noticed the model emitting `\repstart` where the page prints a **dotted barline** — the usul
+subdivision mark Turkish editions set inside a measure. Measured from the queue: **117 of 1,499 rows
+(7.8%) decode a `\repstart`**, and **13 of the 23 judged had it removed as wrong**. The cause is the
+now-familiar one: `ADDED_TOKENS` has no spelling for a dotted barline, the renderer draws only single
+and repeat barlines, so **0 of 40,826 strips** contain one and the nearest thing the model knows is a
+repeat sign — a line plus *dots*. That is the fourth instance of one pattern (signature-only crop,
+bare phrase slur, staccato, now this), and the second found by a person looking rather than by a
+probe. ⚠ The 23 judged rows are not a random sample — the owner works in page order and was drawn to
+the pattern — so 57% is not a rate; what it establishes is that the failure is systematic.
+
+⚠ Worth noting beside it: `batch3` is running **56 fixes in 95 judged rows**, well above the ~30% the
+scanned nota pool set as the reference and far above `batch2`'s ~12%. The re-aim to the scanned tier
+is paying.
+
+## 2026-08-19 — arm 2 dropped on the owner's objection, arm 3 rendering, and a third real tuplet mark
+
+**The owner asked what was next in Track B, then rejected the answer, and was right to.** The plan
+was arm 2 (one measure per strip). The objection: *"one strip is not seem so make many gains. Our
+slicer already handles if anything is over the budget."* Checked against the code, and it holds —
+`_split_wide` (`page_to_strips.py:907`) splits any span over `MAX_STRIP_W` at zero-ink gutters, ~25%
+of real crops, and the thing that actually drops a strip is the **59-id label budget**: 8.9% of
+*single*-measure windows blow it alone, so no measure rail can fix them (measured 2026-07-29, in a
+comment nobody had connected to this lever). What was left for the arm was a *training* geometry
+match on the 32% of synthetic strips spanning 2+ measures, on the axis that has returned three
+consecutive nulls. **Dropped, not deferred.**
+
+**Settled at the same time:** `scan_share` stays **off** in the final model. It is off by default, so
+the decision costs nothing to carry out — but "keep it because it didn't hurt" would have been a
+choice made on two nulls, and every profile in the mix is a claim about what users upload.
+
+**Then the owner supplied three real pages, and two of them refute one of our own measurements.**
+This project's docs said *"not one continuous arc with a floating digit exists in the real pools"*,
+from a 16-of-16 probe. Two scanned editions (Kemânî Sebuh / Sofyan; Avni Anıl / Düyek) draw a
+**continuous arc with the italic "3" inside the concavity**. The probe sampled two pools we own and
+**no labelled real strip in either carries the style**, so it could not have found it. 16/16 still
+describes those pools; the generalisation is withdrawn.
+
+Three things came out of measuring it that reading could not have given:
+
+- **A scanned page is ONE connected component.** Arc, digit, noteheads, beams and all five staff
+  lines: a single blob 2,026 px wide. Component logic — the whole method of `tuplet_mark_probe.py` —
+  can say nothing until the staff lines are erased. Hence `--destaff`.
+- **The concave style sets its digit ON the top staff line**, so the probe's "reject anything
+  touching a line" filter threw the mark away even after destaffing was possible.
+- **Digit and arc never touch — 5 of 5.** That is the load-bearing number. Our *legacy* mark had the
+  digit welded to the apex, one component, "a slur with a bump" — which is exactly what made it
+  indistinguishable from a phrase slur. This style is a second cue, not a repaint of the old defect.
+
+Built as an opt-in per-piece coin (`render.ts --concave-tuplet`), verified against the page by the
+probe (arc clearance 1.00 S vs 0.91 real, digit at 0.50 vs 0.44, height 1.20 vs 1.22, never touching).
+⛔ It goes in the **final model's** render, never an arm's.
+
+**The arm's corpus rendered clean — and did not match its control, for a reason that is not the
+arm.** 208/208 pieces, **40,841** strips against `strips_v5_tupnew`'s **40,826**. Every one of the
+control's rows was present byte-identical and none were missing: the difference was purely additive,
+15 extra strips (0.037%) filling gaps in the control's measure coverage, in 7 jobs across 5 pieces.
+Re-rendering one affected piece with `--staccato-noise` **off** reproduced the higher yield exactly
+(45 rows for the `t-5_every` job against the control's 40), so the dots are not the cause — something
+between the control's 2026-08-14 render and today is, and it is **not diagnosed**. The manifest was
+filtered down to the control's row set (sorted, the two now match exactly), with the removed rows and
+the reasoning kept beside the corpus. 15 strips could not move a trained arm, but keeping them would
+have made the corpus differ from its control in *two* ways, and that is the thing this round keeps
+paying for. ⚠ The lesson for the next render: **a strip count is not a corpus identity check** —
+diff the manifests.
+
+**The arm is packed and waiting on a GPU.** `verify-labels` **PASS** — 40,826 strips checked, 40,826
+exact, 0 mismatched, 0 label drift, no unknown glyphs. `make_round3_colab_zip.sh stac` built
+`tnc_round3_stac_colab.zip` (704 MB, 43,193 files) with both guards firing on the way
+(`staccatoNoise=True`, `concaveTuplet=False` — the second one exists so the new mark can never ride
+into an arm). `notebooks/round3_staccato_colab.ipynb` passes **no mix flag at all**: the arm trains
+at `train.py`'s defaults, which is what the control trained at, and the notebook asserts
+`(photo_share, scan_share) == (0.35, 0.0)` before spending a GPU hour — the same shape of check the
+scan arm used to prove its mix was ON, pointed the other way.
+
+**⚠ The mistake of the session, recorded because it will recur.** The staccato render was already
+running when the engraver was edited — and `render.ts` drives the **live dev server**, so Vite pushed
+the new mark into a corpus mid-flight. 95 of 208 pieces were rendered against an unknown mix of two
+engravers. Caught by reasoning about HMR rather than by any check, and the corpus was wiped and
+re-rendered from clean. Two rules follow: **every engraver change is opt-in behind a flag** (which is
+why the concave mark is), and **a render in progress means no engraver edits**. This is the same
+shape as `--print-noise` riding along unconditionally into ~40k strips, and it is the second time.
+
+## 2026-08-19 — arm 1 ran and it is a NULL, and that is now three nulls on one axis
 
 The scan profile trained on Colab (L4, 12 vCPU, ~1.25 s/step at batch 16, ~2.6 h for both stages)
 and **changed nothing on the medium it was built for**. Paired over 197 strips of

@@ -2,7 +2,7 @@
 
 purpose: the tuplet diagnosis, the printed-notation facts behind it, and the plan that follows
 audience: agents and the owner working the real-page track
-updated: 2026-08-15
+updated: 2026-08-19
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -109,8 +109,24 @@ unlike a stitch-time repair it shows up in the exam score. Decision row:
 
 `scripts/rung3/tuplet_mark_probe.py` measured the mark on real editions the way `sharp_probe` measured
 the sharps. **16 of 16 accepted marks, across ~11 editions, break the arc and set the "3" in the gap.**
-Not one continuous arc with a floating digit exists in the real pools. Geometry, the caveats and what
-our two styles do instead: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+Geometry, the caveats and what our two styles do instead:
+[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+
+> ⛔ **CORRECTED 2026-08-19 — the second half of that sentence was wrong, and it is struck.** It read
+> *"Not one continuous arc with a floating digit exists in the real pools."* The owner produced two
+> real scanned editions that draw exactly that: **a continuous arc with the italic "3" set INSIDE the
+> concavity**, between the curve and the noteheads (Kemânî Sebuh / Sofyan, and Avni Anıl / Düyek —
+> the second over dense contiguous triplet runs). The probe's own caveat had already said 16 across
+> ~11 editions was small enough for one to exist; it was.
+>
+> ⚠ **It is a THIRD style, not our legacy one.** `drawTupletArcLegacy` floats the digit *above* the
+> arc, touching the apex — one connected component, "a slur with a bump". These pages keep the digit
+> clear of the curve on the notehead side. Neither of our two functions draws it.
+>
+> ⚠ **Why the probe could not have found it: no labelled real strip in any pool carries this style.**
+> That is also why nothing we own can score it, and why collecting such pages is half the work — see
+> the follow-ups below. **16/16 still describes the pools we sampled**; what is refuted is the claim
+> about Turkish print in general. [../DECISIONS.md](../DECISIONS.md)
 
 Three things came out of doing it that reading could not have given:
 
@@ -243,7 +259,10 @@ be attributed.
 Confirmed with the owner while planning Round 3's arms. Steps 1–3 above ran and the A/B was **null**;
 the shape is kept on the print measurement alone. **Nothing further about how we draw a triplet is
 scheduled, and none of Round 3's four trained arms is a tuplet arm**
-([levers.md](levers.md) — the arms are the scan profile, one-measure-per-strip, and staccato).
+([levers.md](levers.md) — the arms are the scan profile and staccato; one-measure-per-strip was
+dropped 2026-08-19). ⚠ **The third mark style added that day is not an arm either**: it is a per-piece
+coin in the final model's render, on print evidence, with no recall claim — the same footing the
+2026-08-12 redraw was kept on after its A/B came back null.
 
 Two items survive, and neither costs a render or a training run:
 
@@ -254,9 +273,12 @@ Two items survive, and neither costs a render or a training run:
   first-in-strip vs later over the exam's 55 groups across many more pieces; the decode already runs,
   so this costs one extra column in the report. If it holds, the repair is decode-side (step 4), not
   a redraw.
-- **The digit-inside-the-concavity probe** (owner, from a real page): `tuplet_mark_probe.py`, a
-  person accepting each tile. Renders nothing. If it confirms, it enters as a **per-piece coin** like
-  bracket-vs-curved — renderer diversity, not a correction.
+- ✅ **The digit-inside-the-concavity probe is ANSWERED (2026-08-19) — it confirms, from two real
+  pages the owner supplied.** So it enters as written: a **per-piece coin** like bracket-vs-curved,
+  renderer diversity rather than a correction, with **no recall claim**. Two things it changes that
+  the original one-liner did not anticipate — it lands in the FINAL model's render, never in an arm's
+  (a third mark style inside an arm is a second variable), and it comes with a **collection** job,
+  because no labelled real strip carries the style and an unscoreable shape is not worth teaching.
 
 ⚠ Also still owed and deliberately deferred: real print draws the arc **heavier** than we do, and that
 must move jointly with `drawSlurArc` or it becomes a thickness cue real pages do not have.
@@ -264,7 +286,9 @@ must move jointly with `drawSlurArc` or it becomes a thickness cue real pages do
 ## Non-claims
 
 - **The SHAPE is measured; the RECALL story was TESTED and came back null (2026-08-15).** Real print
-  breaks the arc and we did not (16/16, ~11 editions) — that part is solid. What the A/B adds is only
+  breaks the arc and we did not (16/16, ~11 editions) — that part is solid **for the editions we
+  sampled**, and 2026-08-19 found a real counterexample outside them (see the correction above), so
+  it is a majority shape and not the only one. What the A/B adds is only
   that any recall gain is below what 54 gold groups can resolve (~11 pp); it is **not** evidence that
   the shape is irrelevant, and it is not evidence that it helps. The mechanism remains consistent
   with the precision/recall history and with the Bravura precedent, and that is still all it is.

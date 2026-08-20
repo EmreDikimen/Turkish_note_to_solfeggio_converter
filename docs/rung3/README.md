@@ -33,6 +33,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [round2.md](round2.md) | Entry plan, photo axis, the microtonal-sharp fix, what is still open | Step 4.4 (Round-2 part), Step 4.5 |
 | [round3.md](round3.md) | Round 3: why it targets note heights and note lengths, and the four checks to run before rendering | new 2026-07-27 |
 | [../../names_of_bad_cropped_images.md](../../names_of_bad_cropped_images.md) | Unusable crops noticed by eye during the batch3 labelling pass (the UI's `bad` verdict stays authoritative) | new 2026-08-19 |
+| [../../some_problems_seen_while_labeling.md](../../some_problems_seen_while_labeling.md) | MODEL failures noticed by eye during the same pass — the pattern behind the corrections, which the CSV cannot show. Its first entry (the dotted barline read as `\repstart`) was measured and is now [BACKLOG.md](../BACKLOG.md) item 5 | new 2026-08-20 |
 | [../../round_3_scan_logs.md](../../round_3_scan_logs.md) | Arm 1's raw Colab training log, both stages, kept verbatim | new 2026-08-19 |
 | [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |

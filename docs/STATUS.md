@@ -2,15 +2,54 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-19
+updated: 2026-08-20
 
 ## Now
 
-⭐ **ROUND 3 HAS AN ORDER: FOUR TRAINED ARMS, ONE VARIABLE EACH, AND THE FIRST NEEDS NO RENDER**
-(owner, 2026-08-19). **The scan profile → one measure per strip → the staccato arm → the final
-model**, then the exam is read once. **No two run together** — Round 3 has been unattributable twice
-already. The table, what each is scored on, and the one asymmetry that would tempt you to combine
-them: [rung3/levers.md](rung3/levers.md).
+⭐ **ROUND 3 IS DOWN TO THREE ARMS, AND THE STACCATO ONE HAS RENDERED** (owner, 2026-08-19). The
+order was four; **arm 2 (one measure per strip) is dropped** and the staccato arm took its slot, so it
+is now **scan profile (null) → staccato → the final model**, then the exam once. **No two run
+together.** [rung3/levers.md](rung3/levers.md).
+
+⛔ **ARM 2 IS DROPPED, on the owner's objection, checked and upheld.** The slicer **already** splits
+over-wide real crops at whitespace gutters (`_split_wide`, `MAX_STRIP_W` 1450, ~25% of crops), and
+what actually drops a strip is the **59-id label budget**, not width — 8.9% of *single*-measure
+windows blow it alone, which no measure rail can fix. What was left for the arm to buy was a
+*training* geometry match on the 32% of synthetic strips spanning 2+ measures; it cannot raise
+resolution at all, because the padding probe's ×1.00 baseline **was** the exam's 19.2 px. That is the
+same axis as three consecutive nulls. [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) ·
+[DECISIONS.md](DECISIONS.md).
+
+✅ **B3 IS SETTLED: `scan_share` STAYS OFF in the final model** (owner, 2026-08-19). It is off by
+default, so **doing nothing carries the decision** and no code moved. The profile is not deleted —
+one flag turns it on in a later round. [rung3/scan-profile.md](rung3/scan-profile.md).
+
+⭐ **A THIRD PRINTED TUPLET MARK EXISTS, AND IT REFUTES ONE OF OUR OWN MEASUREMENTS.** The owner
+supplied two real scanned editions drawing a **continuous** arc with the italic "3" set **inside the
+concavity** — between the curve and the noteheads. This project's docs said *"not one continuous arc
+with a floating digit exists in the real pools"*, from a 16-of-16 probe; that probe sampled two pools
+we own, and **no labelled real strip in either carries this style**, which is why it could not have
+found it. Built as an **opt-in per-piece coin** (`render.ts --concave-tuplet`), measured against the
+page (n=5 marks) rather than eyeballed, and ⛔ **it goes in the FINAL model's render, never an arm's**.
+[METRICS-TUPLETS.md](METRICS-TUPLETS.md) · [rung3/tuplets.md](rung3/tuplets.md).
+
+⚠ **THE LABELLING IS ALREADY PAYING, AND IT FOUND A HOLE THE PROBES DID NOT** (owner, 2026-08-20).
+`batch3` is **95 of 1,499 rows judged, 56 of them fixes** — a fix rate far above the ~30% the scanned
+nota pool set as the reference, and it surfaced a **structural** failure by eye: the model reads a
+**dotted (usul) barline as `\repstart`**. There is no token for one and the renderer draws none, so 0
+of 40,826 strips contain one and the nearest thing the model knows is a repeat sign — a line plus
+*dots*. **117 of 1,499 rows (7.8%) decode a `\repstart`**, and 13 of the 23 judged had it removed as
+wrong. Same shape as the staccato hole, and it is **owed, not next**
+([BACKLOG.md](BACKLOG.md) item 5 · [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)).
+
+⚠ **`best` IS CHOSEN 94.6% ON SYNTHETIC VAL LOSS, and the real pools it trains on are old-slicer
+crops** (owner's question, measured 2026-08-20). `train.py` blends the two val losses by strip count
+every 500 steps, so 4,769 synthetic val strips outvote 271 real ones nineteen to one — in a round
+graded on real pages. Separately, `strips_nota`/`strips_r1`/`strips_tup` were cut 11–17 July against a
+slicer overhauled on the 25th, **and so was the exam**. ⚠ **No paired arm result is invalidated** — an
+arm and its control share both — but it decides which checkpoint is called `best`, and the exam's
+version is a decision owed **before** the one-shot read. [METRICS-CORPUS.md](METRICS-CORPUS.md) ·
+[BACKLOG.md](BACKLOG.md) items 3, 4 and "Exam v3".
 
 ⭐ **THE LABELLING MOVED TO THE SCANNED PAGES AND `batch3` IS CUT AND OPEN** (owner, 2026-08-19,
 superseding the 2026-08-18 clean-pages-first call). **93% of exam pages are scans**, so `batch2` was
@@ -28,8 +67,8 @@ concentrates the deferred handwritten manuscript, and 10 of its 52 pages are bor
 **+0.010** (p = 0.488), both intervals spanning zero — and the interval excludes anything better
 than a **~5% reduction**, so the effect is absent rather than unresolved. The no-regression clause
 on born-digital pages **passes**, point estimate favouring the arm and also spanning zero.
-**Reported as a null; the mix is not re-tuned.** ⏭ One question is left open and it is the owner's:
-does the profile stay ON in the final model? ⚠ Two findings came out of building it: **no augmented
+**Reported as a null; the mix is not re-tuned.** ✅ Its one open question is now answered — the
+profile stays **off** (above). ⚠ Two findings came out of building it: **no augmented
 image in this project is reproducible from a seed** (albumentations 2.0.8 seeds from OS entropy),
 and **the `hard` tier is not the hard one** — its gold is decode-seeded, so it scores better than
 mid, which moved the arm's primary to a medium split before signing.
@@ -37,8 +76,9 @@ mid, which moved the arm's primary to a medium split before signing.
 
 ⚠ **THAT IS THREE NULLS ON THE SAME AXIS, AND THE THIRD IS A TRAINED ARM.** Tuplet mark p = 0.688,
 the second engraver's domain gap null, now the scan profile. "Make the synthetic pixels look more
-like real pages" was *inferred* to be at diminishing returns; it is now measured that way. Arms 2
-and 3 are on different axes and stand. A fourth realism arm does not. [DECISIONS.md](DECISIONS.md).
+like real pages" was *inferred* to be at diminishing returns; it is now measured that way. The
+staccato arm is on a different axis — a symbol the model has **never seen** — and stands; arm 2 was
+on this one and is dropped. A fourth realism arm does not follow. [DECISIONS.md](DECISIONS.md).
 
 ✅ **LEVER 6 CLAUSE 2 IS SETTLED — the exclusion stands, the reason is replaced** (owner,
 2026-08-19), taken **before** the arm was trained rather than after seeing a result. The
@@ -66,8 +106,9 @@ arm's **staff geometry was pinned on purpose**, so the "spacing SD is zero" thir
 ⛔ **LEVER 1 IS SPENT: THE GEOMETRY PILOT RAN AND THE PRE-REGISTERED STOP RULE FIRED.** The padding
 probe was causal (+59%, holdout +61%), but the reverse **cannot be bought**: beating the exam's own
 19.2 px needs crops narrower than one measure, and that target measured **+31.8% worse**; the
-real-side 1-measure arm tripped the short-crop stop rule at **5.4×** the control. ✅ What survives is
-arm 2 below. ⚠ The **short-crop hole is now the blocking item** on this axis, and both of the lever's
+real-side 1-measure arm tripped the short-crop stop rule at **5.4×** the control. ⛔ The one thing
+that survived it — one measure per strip — is **also dropped now** (see above). ⚠ The **short-crop
+hole is the blocking item** on this axis, and both of the lever's
 cost estimates were wrong (decode **1.22×**, not ~3×). [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
 
 ⚠ **A line that read as closed is partially re-scoped.** "Resolution was ruled out" in
@@ -203,8 +244,9 @@ Still the **public-launch gate**, and runnable at any time — it shares no file
 **`strips_v5_tupnew` is the corpus Round 3 continues from**, and `round2-stage2-best` stays the
 runtime until a Round-3 model beats it.
 
-⏭ **THE NEXT ACTIONS ARE BOTH THE OWNER'S, and they run in parallel** — every agent-side step either
-side of them is done (2026-08-19). **B2** is the labelling; **B3** now needs one Colab run.
+⏭ **TWO THINGS ARE IN FLIGHT AND THEY DO NOT WAIT FOR EACH OTHER** (2026-08-19): **B2**, the
+labelling, is the owner's; **B5**, the staccato arm, is rendering on this machine and then needs one
+Colab run. B3 and B4 are closed — settled and dropped respectively.
 
 **B1. ✅ `batch3` IS CUT — 54 pages / 1,499 strips from the SCANNED tier, and the queue is open** in
    `review_ui.py` (`batch3` tab, crop root `data/real/strips_v2`). `batch2`'s 68 verdicts went home
@@ -237,31 +279,59 @@ side of them is done (2026-08-19). **B2** is the labelling; **B3** now needs one
    pools with its control, so a promotion between now and the read makes it differ in **corpus and
    mix** ([rung3/scan-profile.md](rung3/scan-profile.md)).
 
-**B3. ⛔ ARM 1 — THE SCAN PROFILE: RAN, SCORED, NULL.** Trained on Colab (L4, ~2.6 h), scored paired
-   against `r3-tupnew-stage2-best` on both checkpoints, both null on the primary with the clause
-   passing. Written up in full; the raw console log is kept this time
+**B3. ✅ ARM 1 — THE SCAN PROFILE: RAN, NULL, AND ITS ONE OPEN DECISION IS TAKEN.** Trained on Colab
+   (L4, ~2.6 h), scored paired against `r3-tupnew-stage2-best` on both checkpoints, both null on the
+   primary with the clause passing. The raw console log is kept
    ([round_3_scan_logs.md](../round_3_scan_logs.md)) because the tuplet A/B's was lost.
-   ⏭ **The only thing owed is a decision, not work: does `scan_share=0.25` stay ON in the final
-   Round-3 model?** It is off by default in code, so doing nothing = leaving it out. It costs
-   nothing and did not hurt; the born-digital point estimate favours it; and "keep it because it
-   didn't hurt" is a choice made on two nulls. Owner's call.
-   [rung3/scan-profile.md](rung3/scan-profile.md) · [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
+   **`scan_share` stays OFF in the final model** (owner, 2026-08-19) — off by default, so nothing to
+   do. [rung3/scan-profile.md](rung3/scan-profile.md) · [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
 
-**B4. ⏭ ARM 2 — ONE MEASURE PER STRIP. This is now the next model action.** `render.ts --max-measures 1`, closing the 16.0-vs-19.2 px
-   *training* gap: +12.9% strips, slicer untouched, so no decode cost and none of the short-crop risk
-   that stopped Lever 1. ⚠ Pairing it with a lowered `MAX_STRIP_W` makes `_split_wide` cut **inside**
-   measures (94.7% of crops) and silently tests the half-measure target instead of the lever.
-   [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
+**B4. ⛔ ARM 2 — ONE MEASURE PER STRIP: DROPPED, not deferred.** The reasoning is in "Now" above and
+   the decision row is in [DECISIONS.md](DECISIONS.md). ⚠ The **short-crop hole** remains the blocking
+   item on the crop-geometry axis, and any return to it goes through that first
+   ([METRICS-GEOMETRY.md](METRICS-GEOMETRY.md)).
 
-**B5. ARM 3 — THE STACCATO ARM.** Built and measured, not trained: `--staccato-noise` off by default,
-   **72.7%** false-dot rate against **0.0%** on the same music unmarked, `verify-labels` PASS
-   1215/1215 with the marks on. Floors: [rung3/levers.md](rung3/levers.md) Lever 6, clause 2 now
-   settled. The trade is **duration over pitch** (owner). ⚠ `STACCATO_RATE` is **chosen, not
-   measured**; counting staccato frequency in real editions is how to replace it.
+**B5. ⏭ THE STACCATO ARM — RENDERED; it took arm 2's slot.** `--staccato-noise` produced
+   `data/synthetic/strips_v6_stac`, 208/208 pieces, ~4.5 h on this Mac. ⚠ It came out **15 strips
+   larger than its control** (40,841 vs 40,826) and **the dots are not the cause** — the same piece
+   re-rendered with the flag OFF gives the same higher yield, so it is drift since the control's
+   2026-08-14 render, undiagnosed. The manifest is filtered to the control's exact row set (sorted,
+   they now match byte for byte); removed rows and reasoning sit beside the corpus. Baseline **72.7%**
+   false-dot rate against **0.0%** on the same music unmarked; `verify-labels` PASS 1215/1215 with the
+   marks on. Floors are **already signed** ([rung3/levers.md](rung3/levers.md) Lever 6, clause 2
+   settled) so nothing new is pre-registered. The trade is **duration over pitch** (owner).
+   ✅ **The gate PASSES: 40,826 strips checked, 40,826 exact, 0 mismatched, 0 label drift, no unknown
+   glyphs.** ✅ The Colab package is built — `data/colab/tnc_round3_stac_colab.zip`, 704 MB, 43,193
+   files — and both of its guards fired correctly on the way (`staccatoNoise=True`, `concaveTuplet=False`).
+   ✅ The notebook is `notebooks/round3_staccato_colab.ipynb`, which passes **no mix flag at all**:
+   the arm trains at `train.py`'s defaults because that is what the control trained at, and it
+   asserts `(photo_share, scan_share) == (0.35, 0.0)` before spending a GPU hour.
+   ⏭ **THE ONLY STEP LEFT IS THE OWNER'S: upload the zip, run the notebook top to bottom** (~2.6 h on
+   an L4), bring **both** stage-2 checkpoints home, then read the primary on the paired false-dot
+   pools and the clauses per Lever 6.
+   ⚠ `STACCATO_RATE` is **chosen, not measured**; counting staccato frequency in real editions is how
+   to replace it, on the same pass as the tuplet-style count below.
+   ⚠ **A render reads `SheetView.tsx` live through the dev server**, so editing the engraver during
+   one silently changes the corpus mid-flight. That happened this session and cost 95 pieces of work;
+   the fix is that every engraver change is opt-in behind a flag, and that a render in progress means
+   no engraver edits.
 
-**B6. ARM 4 — THE FINAL MODEL, then the exam, read ONCE.** ⏭ Add one free column to that read: split
+**B6. THE FINAL MODEL, then the exam, read ONCE.** ⏭ Add one free column to that read: split
    `\tup3` recall by first-in-strip vs later, which settles the tuplet position lead over the exam's
    55 groups across many more pieces ([rung3/tuplets.md](rung3/tuplets.md)).
+   ⏭ **This render is where `--concave-tuplet` goes** — the third mark style is diversity, justified
+   on print evidence with no recall claim, and it rides a render the final model needs anyway.
+   ⛔ Not into B5's corpus; `make_round3_colab_zip.sh` refuses any arm carrying it.
+
+**B6b. ⏭ COLLECT REAL PAGES THAT USE THE CONCAVE MARK** — divanmakam and comparable archives (owner,
+   2026-08-19). Not volume: **2,486 unlabelled page PNGs already sit on disk**, so a wider funnel
+   buys nothing here *except* the shape we cannot otherwise score — no labelled real strip in any
+   pool carries it, so `_tupletval` cannot measure whether the model reads it. Worth targeting on the
+   same pass: **dense contiguous triplet runs** (the Avni Anıl page), which meet two known blind
+   spots — "dense contiguous-triplet instrumentals remain unmeasured"
+   ([rung3/round3-criteria.md](rung3/round3-criteria.md) §5) and the position lead. Then re-run
+   `build_tuplet_val.py`; today's pool is **neyzen-heavy**, 24 of 28 strips. ⚠ Read each source's
+   licence before redistributing ([THIRD-PARTY.md](THIRD-PARTY.md)), and keep refusing exam pieces.
 
 **B7. The content work in `select_pieces.py`** — the eighth/quarter-note mix and bar-line density
    (owner, 2026-07-27: these only; ties and accidentals stay out). **Not cancelled and not superseded

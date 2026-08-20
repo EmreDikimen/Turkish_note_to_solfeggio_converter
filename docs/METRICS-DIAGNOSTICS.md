@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-08-19
+updated: 2026-08-20
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -293,6 +293,43 @@ resolution **causal**, and the three-arm pilot that priced the fix are now
 ⚠ One line from it belongs here because it re-scopes a claim below: the edit budget **does** move with
 encoder scale, while "resolution was ruled out" (the sharp-glyph section) was measured on per-class
 accidental recall. Both stand; they measure different things.
+
+### The DOTTED (usul) BARLINE read as `\repstart` (owner-found 2026-08-20, while labelling)
+
+Same shape as the staccato hole below, found the same way — by eye, mid-labelling, on
+`gorunce_ben_seni_ey_mah_nota_p1_s05_w02.png` (`batch3`, karcigar). The strip carries a **column of
+four dots across the staff with no line** — the dotted barline Turkish editions print to mark usul
+subdivisions *inside* a measure — and the model emitted `\repstart` there. The owner's verdict removed
+it; the raw row is decode-seeded, so label and decode both carried the error.
+
+The cause is structural, not tuning, and it is the third instance of one pattern:
+
+- **`ADDED_TOKENS` has no dotted-barline token.** The 25 are 8 accidentals + `\natural`, `\sig`/
+  `\sigend`, 4 repeat, 4 navigation, `|`, `3`, and 4 rhythm signs. A dotted barline has **no legal
+  spelling**, so the model cannot be right about one.
+- **The renderer draws none.** `SheetView.tsx` sets only `Barline.type.REPEAT_BEGIN` / `REPEAT_END`;
+  everything else is VexFlow's default single bar. So **0 of 40,826 strips** carry a dotted barline.
+- **The nearest thing it has seen is a repeat sign** — a line plus *dots*. A column of dots maps onto
+  that, or onto an augmentation dot. Note the prior is not inflated: `\repstart` sits at **3.35%** of
+  synthetic strips against **2.07% / 4.04% / 3.07%** in `strips_nota` / `strips_r1` / the exam.
+
+**Frequency, from the `batch3` queue as it stands:**
+
+| | count |
+|---|---|
+| rows whose decode contains `\repstart` | **117 of 1,499 (7.8%)** |
+| of those, judged by the owner so far | 23 |
+| judged **and the `\repstart` removed as wrong** | **13 (57%)** |
+
+⚠ **Not a random sample.** The owner works in page order and noticed this pattern, so the 23 judged
+rows are drawn toward it; 57% is an upper-ish estimate, not a rate. What it does establish is that
+the failure is **repeated and systematic**, not one strip.
+
+⚠ **A second thing is visible in that row and is not this finding**: the seeded label spells
+`\bakiyeSharpf''8` and `\repstarte''8` with no space, while the correction spells them apart. Spacing
+is id-identical for `32` **only** ([DECISIONS.md](DECISIONS.md)), so for `8` these are different token
+sequences. That is the decode's raw output, not a gold defect — but it means a decode-seeded row can
+differ from its own correction in more than the symbol under discussion.
 
 ### Staccato read as an augmentation dot (2026-08-15) — measured with a paired control
 

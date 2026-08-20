@@ -138,7 +138,7 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
   the accidental glyphs out of the live SVG (SMuFL codepoint; the `--thin-sharps` AEU sharps by
   their unique stem/bar counts) and checks each crop rect's glyphs against that strip's label,
   `\sig` block included. Run:
-  `npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise]`
+  `npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise] [--concave-tuplet]`
   (`--limit`/`--every` for a quick pass). **A corpus is not trainable until this passes** — the
   carry decision is duplicated between `SheetView.tsx` and `lilypond.ts`, and when they silently
   diverged, 18.8% of `strips_v3`'s carry strips drew accidentals their labels omitted. If you change
@@ -241,6 +241,19 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       **not** a manifest field (like `legacyTuplet`), so the two arms' manifests stay byte-identical
       and diffable. ⚠ `STACCATO_RATE` is chosen, not measured. Floors and the account:
       `docs/rung3/levers.md` Lever 6.
+- [x] **A THIRD tuplet mark — `--concave-tuplet` (2026-08-19), OFF by default.** A **continuous** arc
+      with the italic "3" set **inside its concavity**, between the curve and the noteheads, on a
+      per-piece coin (`TUPLET_MARK_CONCAVE.share`). It exists because the owner produced two real
+      scanned editions drawing it that way, refuting this project's own *"not one continuous arc
+      with a floating digit exists in the real pools"* — a 16/16 probe over two pools that, it turns
+      out, contain **no strip in this style at all**. Measured before drawing (n=5 marks, one page):
+      `docs/METRICS-TUPLETS.md`. The load-bearing property is that **digit and arc never touch**,
+      unlike our own legacy mark, which welded them into one component and so read as a phrase slur.
+      ⚠ **No trained arm may carry it** — it changes a share of every piece, and
+      `make_round3_colab_zip.sh` refuses an arm whose `render_config.json` has it on. It belongs to
+      the FINAL model's render. ⚠ **Do not edit the engraver while a render is running**: `render.ts`
+      drives the live dev server, so an edit lands in the corpus mid-flight — that cost 95 pieces on
+      the day this flag was added.
 - [ ] **Next re-render owes the sharp FREQUENCY balance:** inline, `strips_v3` carries far more
       `\komaSharp` than `\kucukSharp` and **no** strip holds both — the model has never seen the pair
       contrasted in one image (counts: `docs/METRICS.md`). Balance them and place koma/küçük/bakiye

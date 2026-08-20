@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-08-19
+updated: 2026-08-20
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -45,9 +45,11 @@ The pilot then showed **we cannot buy the reverse**: that probe's own baseline w
 **The full case, the numbers, the pre-registration as signed, and the two claims in it that turned out
 to be wrong** → **[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md)**.
 
-✅ **The one thing that survives**, separable and cheap: render the corpus at **one measure per strip**
-so training stops reading at 16.0 px while the exam reads at 19.2. +12.9% strips, slicer untouched, so
-no decode cost and none of the short-crop risk. Needs a trained arm to claim anything.
+⛔ **The one thing that survived — one measure per strip — is DROPPED too (owner, 2026-08-19).** The
+slicer **already** splits over-wide real crops at gutters (`_split_wide`, ~25% of crops), and what
+drops a strip is the **59-id label budget**, not width: 8.9% of *single*-measure windows blow it
+alone, which no measure rail can fix. That left a *training* match on the 32% of synthetic strips
+spanning 2+ measures, on the axis of three consecutive nulls. [../DECISIONS.md](../DECISIONS.md).
 ⚠ **The short-crop hole is now the blocking item on this axis**, promoted from side condition.
 
 ## Lever 1b — musical form: ⛔ DEAD 2026-08-17, and the premise itself is withdrawn
@@ -192,8 +194,10 @@ the gate any second renderer has to pass before a corpus built with it is traina
 
 ## Lever 5 — the training recipe: cheap, standard, none of it done
 
-- **`best` is selected on teacher-forced val loss**, strip-weighted toward synthetic
-  ([../../src/vision/train.py](../../src/vision/train.py)). Round 2 selected its final step and
+- **`best` is selected on teacher-forced val loss, and the weighting is now measured: 94.6%
+  SYNTHETIC / 5.4% real** — 4,769 val strips against 271, blended by strip count every 500 steps
+  ([../../src/vision/train.py](../../src/vision/train.py), numbers in
+  [../METRICS-CORPUS.md](../METRICS-CORPUS.md)). Round 2 selected its final step and
   `best == last` while real-val loss had already turned — the selector cannot see the metric we
   care about. Selecting on a **free-running** real-val number (edits/page) is the fix.
 - **No label smoothing, no weight EMA, one seed.** All three are standard for a seq2seq of this size
@@ -332,10 +336,12 @@ behind measurements that can change what it should render.
 
 | # | Arm | Costs a render? | Scored on |
 |---|---|---|---|
-| 1 | **Lever 7** — the scan profile | no | ⛔ **RAN, NULL** — edits on `_realval_v2_scan`, paired ([scan-profile.md](scan-profile.md)) |
-| 2 | **Lever 1's survivor** — one measure per strip | yes (+12.9% strips) | edits/page on `_realval_v2` |
+| 1 | **Lever 7** — the scan profile | no | ⛔ **RAN, NULL** — edits on `_realval_v2_scan`, paired ([scan-profile.md](scan-profile.md)). `scan_share` stays **off** in the final model (owner, 2026-08-19) |
+| 2 | ~~**Lever 1's survivor** — one measure per strip~~ | — | ⛔ **DROPPED 2026-08-19** — see below |
 | 3 | **Lever 6** — the staccato arm | yes | the **paired false-dot pool**, against 72.7% |
 | 4 | the final Round-3 model | — | **the exam, read once** |
+
+⛔ **Arm 2 is dropped; the objection that killed it is under Lever 1 above.**
 
 **No two together.** Round 3 has been unattributable twice already, and the tuplet A/B was built
 specifically to stop it happening a third time.

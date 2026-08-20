@@ -4,7 +4,7 @@ purpose: the plain-English version of the model track: what is being changed, wh
 the exam decides
 audience: the project owner
 
-updated: 2026-08-19
+updated: 2026-08-20
 
 > Split out of [OVERVIEW.md](OVERVIEW.md) on 2026-08-19, when that page passed its size limit. Genre
 > split: that page is the app and where we stand today; this one is the model plan. Neither is the
@@ -25,7 +25,7 @@ is **we could not tell**. We kept the new mark anyway, because it is what real s
 and we claim nothing about accuracy. The full account, including the flattering number we nearly
 quoted: [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md).
 
-⛔ **Closed on 19 August: no more drawing work on triplets, and none of Round 3's four trainings is
+⛔ **Closed on 19 August: no more drawing work on triplets, and none of Round 3's three trainings is
 a triplet training.** Two small things survive and neither costs anything:
 
 - **A better lead, found by accident.** When a piece has several triplets in a row, the model marks
@@ -33,9 +33,10 @@ a triplet training.** Two small things survive and neither costs anything:
   the problem was never the drawing; it is that the model loses the thread as it reads along. ⚠ We do
   not believe it yet: one single piece supplied a third of the examples. **We will check it for free
   during the final exam**, because that reading happens anyway.
-- **The "3" you saw between the curve and the notes** — a position we have never drawn. That needs
-  your eyes on real examples, one at a time (item 1d below). If it is common it goes in as *another*
-  way of drawing it, for variety, not as a correction.
+- **The "3" you saw between the curve and the notes** — ✅ **answered on 19 August, by you.** You
+  produced two real editions printed that way, so it is now drawn as a *third* way on about a quarter
+  of pieces, for variety and **not** as a correction. It goes into the final model's pictures only.
+  It also cost us a claim: our "all 16 marks break the curve" note is withdrawn (item 1d below).
 
 Details: [rung3/tuplets.md](rung3/tuplets.md).
 
@@ -49,9 +50,9 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    moved this number that far in one go, and a target nobody can reach stops telling us anything.
 1b. ✅ **DONE — the triplet mark is redrawn, tested, and kept** — the item just above.
 1c. ✅ **DONE 15 August, and then STOPPED 17 August** — the blank-paper test and the follow-up, both
-   described further up. Shrinking does cost accuracy; we cannot buy the reverse. What is left of it is
-   one cheap change: **print the practice pictures one bar per strip** so the model stops practising on
-   blurrier music than it is tested on. 13% more pictures, nothing else moves.
+   described further up. Shrinking does cost accuracy; we cannot buy the reverse. ⛔ **And the one
+   cheap change it left behind — one bar per picture — was itself dropped on 19 August, on your
+   objection.** The reasoning is in the run table further down. Nothing survives this item.
 1b2. ⛔ **17 August — DROPPED, AND YOU ARE THE ONE WHO DROPPED IT.** You reported that the app does
    badly "especially in classical parts", we measured it and it looked real, then you **tried it
    again** and found it was not: classical pages come out no better and no worse than songs. So there
@@ -110,11 +111,22 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    - ⚠ **The cost, on the record**: the pages we dropped were the *most* damaged ones, so the batch is
      now a little less rich than it started — 43.0 units of visible damage a page instead of 46.3.
      You accepted that trade knowingly.
-   ⏭ **What is left is yours: check 100 rows first**, then run
-   `scripts/rung3/build_label_batch.py --stats --batch 3` and look at **how many you had to fix**. A
-   row arrives with the model's reading already in it, so a row you mark "right" changes the training
-   data by nothing — **the fix rate is the whole value of the batch.** For comparison: about **3 in
-   10** in the scanned pages, about **1 in 8** in the clean batch you just left.
+   ✅ **YOU DID THAT, AND IT IS PAYING BETTER THAN EXPECTED (20 August).** 95 of the 1,499 rows
+   judged, **56 of them fixes** — well above the 3-in-10 the scanned pages set as the mark to beat,
+   and far above the 1-in-8 of the clean batch you left. A row arrives with the model's reading
+   already in it, so a row you mark "right" changes the training data by nothing — **the fix rate is
+   the whole value of the batch.** Keep going; re-read it with
+   `scripts/rung3/build_label_batch.py --stats --batch 3` whenever you want the current number.
+   ⭐ **And your eyes found something no measurement of ours did.** You noticed the model reading a
+   **dotted bar line** — the light dotted divider Turkish editions print inside a bar, to show the
+   beat pattern — as a **repeat sign**. It is not a one-off: we counted it, and **117 of the 1,499
+   rows (about 1 in 13)** claim a repeat sign, and of the ones judged so far **more than half had it
+   deleted as wrong**. The cause is the same shape as the short-note-dots problem: we have **no way of
+   writing a dotted bar line down at all**, so we have never drawn one — **none** of our 40,826
+   practice pictures contains one — and the closest thing the model knows is a repeat sign, which is
+   also a line with dots. ⚠ **This is owed work, not next work**: fixing it means a new symbol and a
+   redraw, which is a Round 4 conversation, not something to squeeze in beside a run that is already
+   packed. It is written down so it cannot be lost.
    ⚠ **The clean-pages question is not dead**, it is just not what your hands are for right now: it
    still has to be measured before anyone talks about publishing for clean input only.
    ⚠ **Look at the note and its length, not just the tiny marks.** Every check we have ever done went
@@ -135,11 +147,18 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    run `scripts/rung3/check_crop_staleness.py`; it can now check **exactly the pages of your batch**
    (`--pages-from …_pages.json`) instead of twenty random ones, which is the honest version of the
    question, because a batch is on purpose made of the roughest pages.
-1d. ⏭ **THEN, and it needs your eyes rather than a computer: where is the "3" on a triplet printed?**
-   You spotted it sitting **between the curve and the notes** on a real page, which is neither of the
-   two ways we have drawn it. Our notes say all 16 marks we measured do it differently — but 16 marks
-   is a small sample, and one clear counter-example is enough to reopen it. The tool shows you real
-   examples one at a time and you say yes or no; we change no drawing until you have.
+1d. ✅ **DONE 19 AUGUST, BY YOUR EYES — and you were right.** You asked where the "3" on a triplet is
+   printed, having spotted it **between the curve and the notes**, which is neither of the two ways we
+   draw it. You then produced **two real scanned editions** doing exactly that. Our own note said all
+   16 marks we had measured break the curve instead — that note is now **withdrawn**. It was never
+   wrong about the 16; it was wrong to speak for Turkish printing in general, and it could not have
+   found your example because **not one checked page we own is printed that way**. We measured your
+   two pages rather than copying them by eye, and drew it as a **third** way, used on about a quarter
+   of pieces. The part that makes it worth having: in real print the "3" and the curve are **separate
+   ink**, never touching — our old mark welded them into one shape, which is exactly why it looked
+   like an ordinary phrase curve. ⚠ It goes into the **final** model's pictures only, never into one
+   of the test runs, because it changes a slice of every piece and would muddy what that run measured.
+   ⚠ And we claim **nothing** about accuracy from it: no page we can score is printed this way.
 1e. ✅ **THE BIG UNTRIED ONE — VARIETY — WAS TRIED ON 18 AUGUST, AND IT DID NOT PAY (yet).** All
    40,826 practice pictures come from **one** music-printing program, one font, one spacing, while real
    sheet music comes from many publishers that each look a little different. You moved this ahead of
@@ -155,8 +174,19 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    "does it teach the model better", and only a training run answers that. The two honest limits on
    that null result, and the four things that would have to be added first, are on
    [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md).
-1f. ⭐ **NEW ON 19 AUGUST, AND IT IS THE NEXT TRAINING: we have never made our practice pictures look
-   like a SCAN.** We do rough up our clean pictures before the model sees them — but only in two ways:
+1f. ⛔ **RAN ON 19 AUGUST — AND IT CHANGED NOTHING. The scan look stays OFF.** Read the item below for
+   what it was and why it was worth trying; this line is the result. Judged the fair way — the same
+   pages read by both models, page by page — the scan-trained model was **very slightly worse**, and
+   the range around that number comfortably includes "no difference". It also rules out any
+   improvement bigger than about **5%**, so this is an answer, not an unresolved question. The check
+   that it did no *harm* to computer-set pages passes. ✅ **Your decision, same day: leave it off in
+   the final model.** That costs nothing to act on — off is what it already is — and the work is kept
+   on the shelf, one switch away, if a later round wants it. ⚠ **That is now three ideas in a row that
+   came back empty, all of them the same idea**: make our practice pictures look more like real pages.
+   The triplet mark, the second printing program, and now the scan look. We had *assumed* this axis
+   was running out; it is now **measured** to be. A fourth one does not follow. The short-note-dots
+   run is a different idea — a symbol the model has **never seen once** — and it stands.
+   **What it was: we have never made our practice pictures look like a SCAN.** We do rough up our clean pictures before the model sees them — but only in two ways:
    like a **screenshot** (slightly resized, a bit of compression) and like a **phone photo** (paper
    texture, shadows, uneven light, held at an angle). A scan of a 1970s printed booklet is neither. It
    has flat light and no angle, but it *does* have speckles, thin lines that break up, ink that spreads
@@ -164,8 +194,8 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
    never drawn any of that — and **93% of the exam is scans**.
    ✅ **Why this one goes first:** nothing has to be redrawn, no new answer keys are needed, and it is
    one file. Every other idea on this list costs either a full redraw or your hands.
-   ✅ **BUILT AND PACKED THE SAME DAY, AND IT NEEDS ONE THING FROM YOU: one run on the rented Google
-   computer** (about 3 hours, roughly 5–10 credits). Everything else is finished — the six new ways of
+   ✅ **BUILT, PACKED AND RUN THE SAME DAY** (about 3 hours on the rented computer, roughly 5–10
+   credits) — the result is the line at the top of this item. What was built: the six new ways of
    roughing up a picture, the recipe written down and signed *before* the code was written (out of
    every 100 practice pictures: **55 screenshot-like, 20 photo-like, 25 scan-like**), the pages we
    will score it on, and the zip and the notebook ready to upload.
@@ -208,15 +238,24 @@ run — change three things at once and a better score tells you nothing about w
 has already happened to us twice.
 
 **Right now: two jobs, both yours, and they do not wait for each other** — correcting answer keys in
-the `batch3` tab, and starting the scan-look run on the rented computer. Everything an agent can do on
-either is finished. Then four runs, in this order, one change each:
+the `batch3` tab, and starting the **short-note-dots** run on the rented computer. Everything an agent
+can do on either is finished. **The list is down to three runs, not four**, and one of them is
+already read:
 
-| # | The run | Needs a redraw? |
-|---|---|---|
-| 1 | Practice pictures that look like scans | no |
-| 2 | One bar of music per picture (ours are wider than real ones, so the model has been practising on more squashed music than it is tested on) | yes |
-| 3 | Short-note dots — the model reads "play it short" as "make it longer" 72.7% of the time, because every dot it has ever seen meant longer | yes |
-| 4 | The final model — whatever won above, plus your corrected answer keys | — |
+| # | The run | Needs a redraw? | Where it stands |
+|---|---|---|---|
+| 1 | Practice pictures that look like scans | no | ✅ **run, and it changed nothing** (19 August). The scan look stays **off** |
+| ~~2~~ | ~~One bar of music per picture~~ | — | ⛔ **dropped 19 August, on your objection** — see below |
+| 2 | Short-note dots — the model reads "play it short" as "make it longer" 72.7% of the time, because every dot it has ever seen meant longer | yes | ⏭ **drawn and packed; needs your one run** |
+| 3 | The final model — whatever won above, plus your corrected answer keys | — | after the above |
+
+⛔ **Why the one-bar-per-picture run is gone, and you are the one who stopped it.** You objected that
+the page-cutter *already* splits over-wide pictures at the gaps, and it does — about a quarter of real
+pictures get split that way. What actually makes us throw a picture away is not its width but the
+**answer being too long to write down**, and nearly one in eleven *single*-bar pictures blows that
+limit on its own, which no amount of narrowing fixes. What was left was making our practice pictures
+match real ones in shape — the same "make it look more real" idea that has now come back empty three
+times in a row. So it does not get a run.
 
 **Then the exam, once.** 45 pieces, 67 pages the model has never seen and never trained on. We read it
 **once**, on the final model — if you keep re-sitting a test you eventually pass by luck and learn
@@ -233,11 +272,12 @@ Choosing after seeing the score is the one thing we cannot do.
 ⚠ **Your labelling is the slow part, not the training.** The first three runs do not wait for it; only
 the final one uses your corrections.
 
-⚠ **Correcting answers while the scan run is going is safe — *using* them is not, yet.** A verdict you
+⚠ **Correcting answers while a run is going is safe — *using* them is not, yet.** A verdict you
 give lands in one list and nowhere else, so it cannot disturb anything. But folding those corrections
-into the training sets would change the practice material underneath the scan run, and then a better
-score would no longer tell us the scan look did it. So the corrections wait until that one result has
-been read. Nothing about this slows your hands down.
+into the training sets would change the practice material underneath the run in progress, and then a
+better score would no longer tell us what did it. The scan run has now been read, so that particular
+wait is over; the same rule now applies to the short-note-dots run. Nothing about this slows your
+hands down.
 
 The longer backlog these were chosen from — and the three ideas we tested and closed on 28
 July, which should not be re-proposed — are on [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md).

@@ -32,6 +32,9 @@
  *             [--staccato-noise]   OPT-IN staccato distractors: label-free dots on the notehead
  *                                  side, teaching that a dot means "longer" only BESIDE the
  *                                  notehead. Off by default — see the constant below
+ *             [--concave-tuplet]   OPT-IN third tuplet shape: a share of pieces draw a CONTINUOUS
+ *                                  arc with the "3" inside its concavity, the style the owner found
+ *                                  on two real scanned editions. Off by default — see the constant
  *             [--max-measures n]   Round-3 Lever 1: how many measures one strip may span. Absent =>
  *                                  STRIP_BUDGET.maxMeasures, i.e. the corpus recipe. See below
  */
@@ -104,6 +107,13 @@ const THIN_SHARPS = has("thin-sharps");
 // token and every manifest field are identical either way, which is what makes the two arms'
 // manifests byte-comparable.
 const LEGACY_TUPLET = has("legacy-tuplet-mark");
+// The THIRD printed tuplet shape (2026-08-19): a CONTINUOUS arc with the "3" hanging inside its
+// concavity, drawn on a share of pieces as a per-piece coin. The owner found it on two real scanned
+// editions, refuting this project's own "16 of 16 marks break the arc" reading (docs/rung3/tuplets.md).
+// OPT-IN, like --print-noise and --staccato-noise, and for the same reason: it changes a share of
+// EVERY piece, so a corpus rendered with it on is not comparable to one rendered with it off. Print
+// noise once rode along unconditionally and shipped an unvalidated change into ~40k strips.
+const CONCAVE_TUPLET = has("concave-tuplet");
 // Round-3 print realism (seeded staff-line weight + usul beam grouping) is OPT-IN as of 2026-08-13.
 // It used to ride along unconditionally, which meant any fresh render silently shipped
 // USUL_BEAM_GROUPS into ~40k strips — and that change is measured as unvalidated and deliberately
@@ -231,6 +241,7 @@ function jobUrl(job: Job): string {
   if (job.printseed != null) q.set("printseed", String(job.printseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (LEGACY_TUPLET) q.set("legacytuplet", "1");
+  if (CONCAVE_TUPLET) q.set("concavetuplet", "1");
   if (MAX_MEASURES != null) q.set("maxmeasures", String(MAX_MEASURES));
   return `${URL}/?${q}`;
 }
@@ -356,7 +367,7 @@ async function main() {
   writeFileSync(`${OUT}/render_config.json`, JSON.stringify({
     pieces: PIECES_PATH, carryPasses: CARRY_PASSES, thinSharps: THIN_SHARPS,
     legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE, staccatoNoise: STACCATO_NOISE,
-    maxMeasures: MAX_MEASURES,
+    concaveTuplet: CONCAVE_TUPLET, maxMeasures: MAX_MEASURES,
     started: new Date().toISOString(),
   }, null, 2) + "\n");
 

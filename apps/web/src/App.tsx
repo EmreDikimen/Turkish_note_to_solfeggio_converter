@@ -164,6 +164,10 @@ const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
 // it (see SheetView's drawTupletArcLegacy). Render-automation only — absent → the measured shape the
 // app ships. docs/rung3/round3-criteria.md
 const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
+// The THIRD printed tuplet shape — a continuous arc with the "3" inside its concavity, drawn on a
+// share of pieces (see SheetView's drawTupletArcConcave). Render-automation only, OPT-IN, absent →
+// every piece draws the broken mark exactly as before. docs/rung3/tuplets.md
+const URL_CONCAVE_TUPLET = RENDER_PARAMS.get("concavetuplet") === "1";
 // Round-3 Lever 1 (crop geometry): how many measures one training strip may span. Render-automation
 // only; absent → STRIP_BUDGET.maxMeasures, i.e. every strip rendered before 2026-08-17.
 //
@@ -1319,6 +1323,7 @@ export function App() {
                 thinSharps={URL_THIN_SHARPS}
                 printNoise={PRINT_NOISE}
                 legacyTupletMark={URL_LEGACY_TUPLET}
+                concaveTuplet={URL_CONCAVE_TUPLET}
               />
             )}
           </ScoreCard>

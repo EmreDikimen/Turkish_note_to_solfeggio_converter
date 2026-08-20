@@ -63,9 +63,16 @@ SIZE_W, SIZE_H = 409, 583
 ZOOM = 4  # tile magnification; NEAREST, so pixel edges stay visible for measuring
 
 
-def staff_rows(bw: np.ndarray) -> tuple[float, list[tuple[int, int]]] | None:
-    """(staff spacing, staff-line row bands). Same rule as beam_weight_probe.staff_spacing."""
-    rows = np.flatnonzero(bw.mean(axis=1) >= 0.6)
+def staff_rows(bw: np.ndarray, thresh: float = 0.6) -> tuple[float, list[tuple[int, int]]] | None:
+    """(staff spacing, staff-line row bands). Same rule as beam_weight_probe.staff_spacing.
+
+    ⚠ `thresh` defaults to the 0.6 every earlier reading used — do NOT lower it for the pools, or the
+    numbers in docs/METRICS-TUPLETS.md stop being reproducible. It exists for `--images` only: a
+    SCANNED page has margins and broken staff lines, so a full-width row rarely reaches 0.6 even
+    where a staff plainly is (measured 2026-08-19: 0.57 and 0.61 maxima on the owner's two scans,
+    against 0.95 on a born-digital page).
+    """
+    rows = np.flatnonzero(bw.mean(axis=1) >= thresh)
     if rows.size < 5:
         return None
     groups, cur = [], [rows[0]]
@@ -97,24 +104,53 @@ def stroke_thickness(mask: np.ndarray, x: int, w: int) -> float | None:
     return float(Counter(runs).most_common(1)[0][0])
 
 
-def candidates(arr: np.ndarray) -> tuple[float, list[dict]]:
+def strip_staff(bw: np.ndarray, sp: float) -> np.ndarray:
+    """Erase the staff lines so components stop being one blob.
+
+    ⚠ Needed for SCANNED pages and for nothing else. Measured 2026-08-19 on the owner's Kemânî
+    Sebuh page: the arc, the digit, every notehead, both beams and all five staff lines are **ONE**
+    connected component 2026 px wide, because scanned ink touches everywhere. Component logic — the
+    whole method of this file — cannot say anything about such a page until the lines are gone.
+    Open with a 2 S horizontal element to FIND the lines, subtract, then close vertically to rejoin
+    glyphs the subtraction cut in half (a stem crossing a line, the "3" sitting on one).
+    """
+    b = bw.astype(np.uint8)
+    lines = cv2.morphologyEx(b, cv2.MORPH_OPEN,
+                             cv2.getStructuringElement(cv2.MORPH_RECT, (max(3, int(2 * sp)), 1)))
+    out = cv2.subtract(b, lines)
+    return cv2.morphologyEx(out, cv2.MORPH_CLOSE,
+                            cv2.getStructuringElement(cv2.MORPH_RECT, (1, 5))).astype(bool)
+
+
+def candidates(arr: np.ndarray, staff_thresh: float = 0.6,
+               destaff: bool = False) -> tuple[float, list[dict]]:
     """Digit-like components with arc-like ink beside them. Permissive by design."""
     bw = arr < 128
-    sr = staff_rows(bw)
+    sr = staff_rows(bw, staff_thresh)
     if sr is None:
         return 0.0, []
     sp, bands = sr
     line_rows = np.zeros(bw.shape[0], bool)
     for a, b in bands:
         line_rows[max(0, a - 1) : b + 2] = True
+    if destaff:
+        # The lines are gone, so "does this component touch a staff line" no longer rejects
+        # anything real — and it MUST not, because the concave style sets its digit ON the top line.
+        bw = strip_staff(bw, sp)
+        line_rows[:] = False
 
     n, lab, stats, _ = cv2.connectedComponentsWithStats(bw.astype(np.uint8), 8)
     boxes = [tuple(int(v) for v in stats[i][:4]) for i in range(1, n)]  # x, y, w, h
 
     # Arc-like: wide and flat, but thinner than a beam (beams survive a 7px vertical erosion).
+    # ⚠ The 1.4 S height ceiling was set on BROKEN marks, where one segment is half the mark. A
+    # continuous arc over a whole triplet is deeper than that — the owner's Kemânî Sebuh page
+    # measures 1.65 S — so the concave path needs the taller ceiling or it rejects the very shape it
+    # is looking for. Pool readings keep 1.4 exactly.
+    arc_h_max = (2.5 if destaff else 1.4) * sp
     arcs = []
     for i, (x, y, w, h) in enumerate(boxes, start=1):
-        if w < 0.9 * sp or w > 8 * sp or h > 1.4 * sp or w < 1.6 * h:
+        if w < 0.9 * sp or w > 8 * sp or h > arc_h_max or w < 1.6 * h:
             continue
         if line_rows[y : y + h].any():
             continue
@@ -219,6 +255,68 @@ def band_geometry(arr: np.ndarray, c: dict) -> dict | None:
     }
 
 
+def concave_geometry(arr: np.ndarray, c: dict, destaff: bool = False) -> dict | None:
+    """The THIRD printed style: a CONTINUOUS arc with the digit inside its concavity.
+
+    Added 2026-08-19, after the owner supplied two real editions drawing it that way — the
+    counterexample to this file's own 16/16 result (docs/METRICS-TUPLETS.md). `band_geometry` above
+    cannot measure it: it scans sideways from the digit expecting to hit two arc ends, and here the
+    arc is ABOVE the digit, not beside it. So the quantities are different ones —
+
+      * `arc_above`     the vertical clearance from the digit's top to the arc's ink directly over
+                        its centre. This is the number the redraw has to land on.
+      * `touches`       whether digit and arc are ONE connected component. The 2026-08-12 measurement
+                        found our legacy mark was — "a slur with a bump" — which is what made it
+                        indistinguishable from a phrase slur. If real print keeps them separate, that
+                        is the load-bearing difference and not the digit's height.
+      * `digit_at`      the digit centre's position along the arc's span, 0..1. The broken style
+                        measured dead centre (0.49-0.50); this style is not assumed to match.
+
+    Returns None when the digit has no arc ink above it — i.e. this is not the concave style.
+    """
+    bw = arr < 128
+    sp = c["sp"]
+    if destaff:
+        bw = strip_staff(bw, sp)
+    x, y, w, h = c["digit"]
+    cx = x + w // 2
+
+    n, lab, stats, _ = cv2.connectedComponentsWithStats(bw.astype(np.uint8), 8)
+    digit_lab = lab[y + h // 2, cx] if bw[y + h // 2, cx] else 0
+    if digit_lab == 0:  # the digit's centre pixel is white (an open glyph like "3" often is)
+        ys, xs = np.nonzero(bw[y : y + h, x : x + w])
+        if ys.size == 0:
+            return None
+        digit_lab = lab[y + int(ys[0]), x + int(xs[0])]
+
+    # First ink ABOVE the digit, in a narrow column band around its centre, skipping the digit itself.
+    top = max(0, int(y - 2.5 * sp))
+    band = bw[top:y, max(0, cx - int(0.15 * sp)) : cx + int(0.15 * sp) + 1]
+    rows_with_ink = np.flatnonzero(band.any(axis=1))
+    if rows_with_ink.size == 0:
+        return None
+    arc_y = top + int(rows_with_ink[-1])          # the LOWEST ink above the digit = the arc's underside
+    arc_lab = lab[arc_y, cx] if bw[arc_y, cx] else 0
+    if arc_lab == 0:
+        col = np.flatnonzero(bw[arc_y, max(0, cx - int(0.15 * sp)) : cx + int(0.15 * sp) + 1])
+        if col.size:
+            arc_lab = lab[arc_y, max(0, cx - int(0.15 * sp)) + int(col[0])]
+    if arc_lab == 0:
+        return None
+    ax, ay, aw, ah = (int(v) for v in stats[arc_lab][:4])
+    thick = stroke_thickness(lab[ay : ay + ah, ax : ax + aw] == arc_lab, 0, aw)
+    return {
+        "arc_above": (y - arc_y) / sp,
+        "touches": bool(arc_lab == digit_lab),
+        "digit_at": float((cx - ax) / aw) if aw else float("nan"),
+        "span": aw / sp,
+        "arc_depth": ah / sp,
+        "arc_thick": (thick / sp) if thick else float("nan"),
+        "digit_h": h / sp,
+        "digit_w": w / sp,
+    }
+
+
 def donut_scale(w: int, h: int) -> float:
     """Fraction of original size the encoder sees. Same geometry as beam_weight_probe.donut_scale."""
     rot = (h < w and SIZE_H > SIZE_W) or (h > w and SIZE_H < SIZE_W)
@@ -265,6 +363,20 @@ def tiles_for(path: Path, c: dict, idx: int) -> Image.Image:
     return row
 
 
+def loose_images(spec: str) -> list[tuple[Path, str]]:
+    """Every PNG/JPG under a directory (or one file) — pages, not strips, so no manifest and no
+    `\\tup3` filter. Added 2026-08-19 for `data/real/tuplet_marks/`, where the evidence for the third
+    mark style lives: those are full-page screenshots the owner supplied, not pool members.
+    ⚠ Nothing here is labelled, so every number this mode prints is descriptive of the PICTURE only —
+    a human still reads the tiles before any of it is quoted."""
+    p = Path(spec)
+    files = sorted(
+        [p] if p.is_file()
+        else [q for q in p.iterdir() if q.suffix.lower() in {".png", ".jpg", ".jpeg"}]
+    )
+    return [(q, "") for q in files]
+
+
 def images(pool: Path, n: int, seed: int) -> list[tuple[Path, str]]:
     """(path, label) for strips whose label carries a triplet — the only ones with a mark to measure."""
     mf = pool / "manifest.jsonl"
@@ -289,6 +401,18 @@ def main() -> int:
     ap.add_argument("--dir", default=None,
                     help="measure an arbitrary strips dir instead of the pools — e.g. a pilot render, "
                          "to check a redraw landed on the measured geometry")
+    ap.add_argument("--images", default=None,
+                    help="measure loose PAGE images (a dir or one file) instead of a strip pool — "
+                         "e.g. data/real/tuplet_marks. Implies --concave reporting")
+    ap.add_argument("--destaff", action="store_true",
+                    help="erase the staff lines before finding components. Implied by --images; a "
+                         "scanned page is otherwise ONE component and nothing can be measured")
+    ap.add_argument("--staff-thresh", type=float, default=0.6,
+                    help="row-ink fraction that counts as a staff line. LEAVE AT 0.6 for the pools; "
+                         "a scanned page with margins needs ~0.45 (see staff_rows)")
+    ap.add_argument("--concave", action="store_true",
+                    help="report the CONTINUOUS-arc/digit-in-the-concavity geometry (the third style, "
+                         "docs/rung3/tuplets.md) instead of the broken-arc one")
     ap.add_argument("--accept", default=None,
                     help="comma list of tile indices a HUMAN confirmed are tuplet marks; prints the "
                          "geometry summary over those only (same -n/--seed → same indices)")
@@ -297,18 +421,27 @@ def main() -> int:
     accept = {int(v) for v in args.accept.split(",")} if args.accept else None
 
     OUT.mkdir(parents=True, exist_ok=True)
-    pools = {f"dir {Path(args.dir).name}": Path(args.dir)} if args.dir else POOLS
+    concave = args.concave or args.images is not None
+    destaff = args.destaff or args.images is not None
+    if args.images:
+        pools = {f"images {Path(args.images).name}": Path(args.images)}
+    elif args.dir:
+        pools = {f"dir {Path(args.dir).name}": Path(args.dir)}
+    else:
+        pools = POOLS
     for name, pool in pools.items():
         if args.pool and args.pool != name:
             continue
         if not pool.exists():
             print(f"{name}: missing {pool}")
             continue
-        picks = images(pool, args.n, args.seed)
+        picks = loose_images(args.images) if args.images else images(pool, args.n, args.seed)
         found: list[tuple[dict, Path]] = []
         for p, _label in picks:
             arr = np.asarray(Image.open(p).convert("L"))
-            _sp, cs = candidates(arr)
+            sp, cs = candidates(arr, args.staff_thresh, destaff)
+            if args.images:
+                print(f"   {p.name[:48]:48} staff spacing {sp:.1f} px, {len(cs)} candidates")
             found += [(c, p) for c in cs]
         print(f"\n=== {name}: {len(picks)} strips with \\tup3, {len(found)} digit-like candidates")
         print(f"{'#':>3} {'segs':>4} {'gap S':>6} {'span S':>6} {'digit hxw S':>12} "
@@ -321,7 +454,28 @@ def main() -> int:
         if not found:
             continue
 
-        if accept is not None:
+        if accept is not None and concave:
+            keep = [(c, p) for i, (c, p) in enumerate(found[: args.tiles]) if i in accept]
+            print(f"\n--- CONCAVE geometry over the {len(keep)} HUMAN-CONFIRMED marks (staff spaces)")
+            print(f"{'#':>3} {'arc above':>9} {'touches':>7} {'digit at':>8} {'span':>5} "
+                  f"{'depth':>5} {'arc S':>6} {'digit h':>7} {'digit w':>7}  file")
+            gs = []
+            for i, (c, p) in zip(sorted(accept), keep):
+                g = concave_geometry(np.asarray(Image.open(p).convert("L")), c, destaff)
+                if g is None:
+                    print(f"{i:>3}   (no arc ink above the digit — not the concave style)")
+                    continue
+                gs.append(g)
+                print(f"{i:>3} {g['arc_above']:>9.2f} {str(g['touches']):>7} {g['digit_at']:>8.2f} "
+                      f"{g['span']:>5.2f} {g['arc_depth']:>5.2f} {g['arc_thick']:>6.3f} "
+                      f"{g['digit_h']:>7.2f} {g['digit_w']:>7.2f}  {p.name[:30]}")
+            if gs:
+                print(f"\n{'median':>3}", end=" ")
+                for k in ("arc_above", "digit_at", "span", "arc_depth", "arc_thick", "digit_h", "digit_w"):
+                    print(f"{k}={np.nanmedian([g[k] for g in gs]):.2f}", end="  ")
+                print(f"\n(n={len(gs)} marks; digit and arc are ONE component in "
+                      f"{sum(g['touches'] for g in gs)} of them)")
+        elif accept is not None:
             keep = [(c, p) for i, (c, p) in enumerate(found[: args.tiles]) if i in accept]
             print(f"\n--- geometry over the {len(keep)} HUMAN-CONFIRMED marks (staff spaces)")
             print(f"{'#':>3} {'gap':>5} {'gapL':>5} {'gapR':>5} {'digit h':>7} {'digit w':>7} "

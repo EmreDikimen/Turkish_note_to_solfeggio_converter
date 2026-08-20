@@ -46,6 +46,11 @@ const THIN_SHARPS = has("thin-sharps");
 // that exact page". Without it the distractor is simply absent and this file would pass trivially.
 const STACCATO_NOISE = has("staccato-noise");
 const staccatoSeed = (piece: string) => hashStr(`${piece}:verify:staccato`);
+// The concave tuplet mark (2026-08-19). Like the staccato dots it is pixels only and NOT a manifest
+// field, so it is replayed from the flag rather than from the row. It changes no strip boundary and
+// no accidental, so this file passes with or without it — it is carried so the verifier looks at the
+// same picture the corpus ships, which is the whole point of running it against an arm.
+const CONCAVE_TUPLET = has("concave-tuplet");
 // Round-3 Lever 1: the strip-packing measure rail the corpus was rendered at. This one MUST be
 // replayed rather than reseeded, because unlike the staccato dots it changes the strip BOUNDARIES —
 // the manifest's `m<from>-<to>` ids are what this file looks strips up by, so replaying a narrow arm
@@ -99,6 +104,7 @@ function jobUrl(r: Row): string {
   if (r.navseed != null) q.set("navseed", String(r.navseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (STACCATO_NOISE) q.set("staccatoseed", String(staccatoSeed(r.piece)));
+  if (CONCAVE_TUPLET) q.set("concavetuplet", "1");
   if (MAX_MEASURES != null) q.set("maxmeasures", String(MAX_MEASURES));
   return `${URL}/?${q}`;
 }
@@ -211,8 +217,13 @@ async function main() {
     jobs.get(k)!.push(r);
   }
   const jobList = [...jobs.values()].filter((_, i) => i % EVERY === 0).slice(0, LIMIT);
+  // Name EVERY arm flag, not just one: the whole failure mode this gate exists inside is checking a
+  // different picture than the corpus ships, and a banner that mentions only thin sharps reads as a
+  // full description of the run when it is not.
+  const flags = [THIN_SHARPS && "thin sharps", STACCATO_NOISE && "staccato", CONCAVE_TUPLET && "concave tuplet"]
+    .filter(Boolean).join(", ");
   console.log(`${rows.length} strips / ${jobs.size} jobs in ${STRIPS}; verifying ${jobList.length} jobs` +
-    (THIN_SHARPS ? " (thin sharps)" : ""));
+    (flags ? ` (${flags})` : " (no arm flags)"));
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1200, height: 1600 } });

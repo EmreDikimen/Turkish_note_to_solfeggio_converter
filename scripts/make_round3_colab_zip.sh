@@ -4,6 +4,14 @@
 #   scripts/make_round3_colab_zip.sh tupnew   -> data/colab/tnc_round3_tupnew_colab.zip
 #   scripts/make_round3_colab_zip.sh tupctl   -> data/colab/tnc_round3_tupctl_colab.zip
 #   scripts/make_round3_colab_zip.sh scan     -> data/colab/tnc_round3_scan_colab.zip
+#   scripts/make_round3_colab_zip.sh stac     -> data/colab/tnc_round3_stac_colab.zip
+#
+# THE `stac` ARM (Round 3 arm 3, Lever 6) IS its own corpus — `strips_v6_stac`, rendered with
+# `--staccato-noise` and identical to strips_v5_tupnew in every other flag. Its control is the same
+# `data/checkpoints/r3-tupnew-stage2-best`, trained on this recipe at the DEFAULT augmentation mix,
+# so the notebook must NOT pass --scan-share (settled 2026-08-19: the scan profile stays off) and
+# must NOT pass --photo-share. The dots are label-free, so the two manifests are byte-identical and
+# render_config.json is again the only place the arm is checkable.
 #
 # THE `scan` ARM IS NOT A THIRD CORPUS. It ships `strips_v5_tupnew` — byte for byte the corpus the
 # tuplet A/B's winning arm trained on — because Lever 7's only variable is the AUGMENTATION MIX
@@ -32,11 +40,16 @@ cd "$(dirname "$0")/.."
 
 ARM=$1
 case "$ARM" in
-  tupnew) WANT_LEGACY=false; CORPUS=strips_v5_tupnew ;;
-  tupctl) WANT_LEGACY=true;  CORPUS=strips_v5_tupctl ;;
-  scan)   WANT_LEGACY=false; CORPUS=strips_v5_tupnew ;;   # same corpus — see the header
-  *) echo "usage: $0 tupnew|tupctl|scan"; exit 2 ;;
+  tupnew) WANT_LEGACY=false; WANT_STACCATO=false; CORPUS=strips_v5_tupnew ;;
+  tupctl) WANT_LEGACY=true;  WANT_STACCATO=false; CORPUS=strips_v5_tupctl ;;
+  scan)   WANT_LEGACY=false; WANT_STACCATO=false; CORPUS=strips_v5_tupnew ;;   # same corpus — see the header
+  stac)   WANT_LEGACY=false; WANT_STACCATO=true;  CORPUS=strips_v6_stac ;;
+  *) echo "usage: $0 tupnew|tupctl|scan|stac"; exit 2 ;;
 esac
+# `--staccato-noise` on verify-labels too: the verifier renders its own comparison pixels, so an arm
+# gated without the flag would be checking a different image than the corpus ships.
+VERIFY_FLAGS="--thin-sharps"
+[ "$WANT_STACCATO" = true ] && VERIFY_FLAGS="$VERIFY_FLAGS --staccato-noise"
 
 STRIPS=data/synthetic/$CORPUS
 SPLIT=data/split_v4.json
@@ -59,10 +72,21 @@ python3 -c "
 import json,sys
 c=json.load(open('$CFG'))
 want = '$WANT_LEGACY' == 'true'
-ok = c.get('legacyTupletMark') is want and c.get('thinSharps') is True and c.get('printNoise') is False
-print(f\"   render_config: legacyTupletMark={c.get('legacyTupletMark')} thinSharps={c.get('thinSharps')} printNoise={c.get('printNoise')}\")
+want_stac = '$WANT_STACCATO' == 'true'
+# staccatoNoise / maxMeasures postdate strips_v5_*: an ABSENT key means the flag was off, so read
+# them with a default rather than 'is False', which would fail every pre-2026-08-15 corpus.
+stac = bool(c.get('staccatoNoise', False))
+conc = bool(c.get('concaveTuplet', False))
+# No ARM may carry the concave tuplet mark: it is a diversity item for the FINAL model's render, and
+# inside an arm it would be a second variable (docs/rung3/tuplets.md).
+ok = (c.get('legacyTupletMark') is want and c.get('thinSharps') is True
+      and c.get('printNoise') is False and stac is want_stac and conc is False
+      and c.get('maxMeasures', None) is None)
+print(f\"   render_config: legacyTupletMark={c.get('legacyTupletMark')} thinSharps={c.get('thinSharps')} \"
+      f\"printNoise={c.get('printNoise')} staccatoNoise={stac} concaveTuplet={conc} \"
+      f\"maxMeasures={c.get('maxMeasures', None)}\")
 sys.exit(0 if ok else 1)
-" || { echo "ERROR: $CFG does not describe arm '$ARM' (want legacyTupletMark=$WANT_LEGACY, thinSharps=true, printNoise=false)"; exit 1; }
+" || { echo "ERROR: $CFG does not describe arm '$ARM' (want legacyTupletMark=$WANT_LEGACY, thinSharps=true, printNoise=false, staccatoNoise=$WANT_STACCATO, concaveTuplet=false, maxMeasures=null)"; exit 1; }
 
 # The corpus must have passed the pixels-vs-labels verifier before it is worth a Colab run: a label
 # that disagrees with its own image is what cost Round 1.
@@ -81,7 +105,7 @@ for s in still[:10]: print(f'     STILL SHIPPED: {s}')
 sys.exit(1 if (still or errs or r['labelDrift']) else 0)
 " || { echo "ERROR: $VERIFY flags strips that are still in the manifest — fix or exclude them first"; exit 1; }
 else
-  echo "ERROR: $VERIFY missing — run: npx tsx tools/render/verify-labels.ts --strips $STRIPS --thin-sharps"
+  echo "ERROR: $VERIFY missing — run: npx tsx tools/render/verify-labels.ts --strips $STRIPS $VERIFY_FLAGS"
   exit 1
 fi
 

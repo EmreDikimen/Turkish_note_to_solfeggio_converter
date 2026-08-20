@@ -405,6 +405,41 @@ const TUPLET_MARK = {
 };
 
 /**
+ * The THIRD printed shape: a CONTINUOUS arc with the "3" hanging INSIDE its concavity — between the
+ * curve and the noteheads — rather than in a break or floating above the apex.
+ *
+ * ⚠ This refutes the sentence `TUPLET_MARK` above is built on. "All 16 break the arc" is still true
+ * of the two pools that probe sampled; it is NOT true of Turkish print in general. The owner supplied
+ * two real scanned editions drawing it this way (2026-08-19, `data/real/tuplet_marks/`), and the
+ * probe could not have found them because **no labelled real strip we own carries this style**.
+ *
+ * Measured with `tuplet_mark_probe.py --images --accept`, n=5 marks on the Kemânî Sebuh page (the
+ * second page confirms the style by eye but its staff detection is unstable at 12.6–14.8 px, so it
+ * is not measured). The load-bearing number is the LAST one:
+ *
+ *   * digit and arc are SEPARATE ink in 5 of 5. Our legacy mark was one connected component — "a
+ *     slur with a bump" — which is exactly what made it indistinguishable from a phrase slur. This
+ *     style keeps the two apart, so it is a real second cue rather than a variant of the old defect.
+ *
+ * ⚠ `share` is CHOSEN, NOT MEASURED — like `STACCATO_RATE`. Nobody has counted how often Turkish
+ * editions use this shape against the broken one; two pages is an existence proof, not a frequency.
+ * Replace it by reading marks across editions with the probe, not by taste.
+ */
+const TUPLET_MARK_CONCAVE = {
+  arcAbove: 0.91,  // S — the arc's underside down to the digit's TOP (real 0.57–1.00, n=3 clean marks)
+  digitH: 1.22,    // S — digit height (real 1.13–1.26, n=5). Taller than the broken style's 1.20
+  digitW: 0.83,    // S — recorded for the probe to check a pilot render against (real 0.83–0.91)
+  digitAt: 0.5,    // fraction of the span — real 0.40–0.56, n=5, i.e. centred within the spread
+  digitClear: 0.25, // S — digit's bottom to the outermost notehead. ⚠ DERIVED, not measured: it is
+                   //     what stops the digit colliding with the notes, and the apex follows from it
+  clear: 0.85,     // S — an end of the arc over its OWN end note; same rule as the broken mark
+  stroke: 0.11,    // S — the SAME as drawSlurArc and drawTupletArc. Real print draws this one
+                   //     heavier (0.174–0.217 S here) but thickening only the tuplet arc invents a
+                   //     thickness cue against phrase slurs; owed jointly with drawSlurArc, as before
+  share: 0.25,     // of CURVED-style pieces (see the ⚠ above — chosen, not measured)
+};
+
+/**
  * Draw the CURVED tuplet mark as raw SVG, like the voltas/nav marks: two arc segments with the "3"
  * set in the gap between them, to the measurements in `TUPLET_MARK`. This is the shape printed
  * Turkish scores use (VexFlow's `Tuplet` only draws the square bracket, which stays as the minority
@@ -486,6 +521,78 @@ function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   // tuplet_mark_probe.py --dir on a pilot render.
   text.setAttribute("font-family", "'Times New Roman', Georgia, serif");
   text.setAttribute("font-size", "16");
+  text.setAttribute("fill", "#222");
+  text.textContent = "3";
+  svg.appendChild(text);
+}
+
+/**
+ * The concave style: ONE continuous arc with the "3" hanging inside it, to `TUPLET_MARK_CONCAVE`.
+ *
+ * ⚠ It is NOT `drawTupletArcLegacy` with the digit moved. The legacy mark's digit touched the apex,
+ * making arc+digit one connected component; here they are deliberately separate ink, which is what
+ * the real pages measure (5 of 5) and the only reason this shape is worth drawing at all.
+ *
+ * The arms follow the notes exactly as `drawTupletArc`'s do — each end clears its OWN end note — so
+ * the two styles differ in the mark's topology and nothing else. The apex is DERIVED from the digit
+ * it has to hold (`arcAbove + digitH + digitClear` above the outermost notehead), never given as a
+ * constant, so changing the digit cannot silently push it into the noteheads.
+ */
+function drawTupletArcConcave(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const S = STAFF_SPACE;
+  const M = TUPLET_MARK_CONCAVE;
+  const sign = above ? -1 : 1; // -1 = mark above the noteheads, so "outward" is up
+  const notes = group
+    .map((n) => {
+      let ys: number[] = [];
+      try {
+        ys = n.getYs();
+      } catch {
+        ys = [];
+      }
+      return { x: n.getAbsoluteX(), edge: ys.length ? (above ? Math.min(...ys) : Math.max(...ys)) : NaN };
+    })
+    .filter((p) => Number.isFinite(p.edge))
+    .sort((a, b) => a.x - b.x);
+  if (notes.length === 0) return;
+  const first = notes[0]!;
+  const last = notes[notes.length - 1]!;
+  const x1 = first.x - 2;
+  const x2 = last.x + 12;
+  const peak = above ? Math.min(...notes.map((p) => p.edge)) : Math.max(...notes.map((p) => p.edge));
+  // The apex has to hold the whole digit plus its clearance over the outermost notehead.
+  const yApex = peak + sign * (M.arcAbove + M.digitH + M.digitClear) * S;
+  const y1 = first.edge + sign * M.clear * S;
+  const y2 = last.edge + sign * M.clear * S;
+  // One quadratic. With the control point at mid-span the curve's t=0.5 point is (y1 + 2yc + y2)/4,
+  // so solving for yc puts the apex exactly at yApex — and x is then linear in t, which is what lets
+  // the digit be placed at `digitAt` of the span without solving the Bezier.
+  const yc = (4 * yApex - y1 - y2) / 2;
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${yc} ${x2} ${y2}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#222");
+  path.setAttribute("stroke-width", String(M.stroke * S));
+  svg.appendChild(path);
+
+  const t = M.digitAt;
+  const xd = x1 + t * (x2 - x1);
+  const yArc = (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * yc + t * t * y2;
+  const text = document.createElementNS(SVG_NS, "text");
+  text.setAttribute("x", String(xd));
+  // `y` is the baseline. Above: the digit hangs BELOW the arc, so its top is arcAbove under the
+  // curve and the baseline a further digitH down. Below: mirrored, the digit sits over the arc.
+  const top = yArc - sign * M.arcAbove * S;
+  text.setAttribute("y", String(above ? top + M.digitH * S : top));
+  text.setAttribute("text-anchor", "middle");
+  // ⚠ ITALIC here, unlike drawTupletArc's upright Times — and that is measured, not a preference.
+  // The upright form was chosen for the BROKEN mark because an italic digit at 1.10 S wide ate the
+  // clearance inside a 1.63 S gap. This style has no gap to fuse across: the digit hangs in open
+  // space under the curve, real print draws it slanted, and it measures 0.83 S wide there.
+  text.setAttribute("font-family", "'Times New Roman', Georgia, serif");
+  text.setAttribute("font-size", "16");
+  text.setAttribute("font-style", "italic");
   text.setAttribute("fill", "#222");
   text.textContent = "3";
   svg.appendChild(text);
@@ -1172,6 +1279,7 @@ export function SheetView({
   thinSharps,
   printNoise,
   legacyTupletMark,
+  concaveTuplet,
   signatureOverride,
 }: {
   doc: NoteModelDocument;
@@ -1273,6 +1381,13 @@ export function SheetView({
    *  above it (see drawTupletArcLegacy). Pixels only — the `\tup3` token is identical either way.
    *  Corpus rendering only; the app never sets it. docs/rung3/round3-criteria.md */
   legacyTupletMark?: boolean;
+  /** OPT-IN (2026-08-19): let a share of pieces draw the CONCAVE mark — a continuous arc with the
+   *  "3" hanging inside it (see drawTupletArcConcave). Pixels only; the `\tup3` token is identical.
+   *  ⚠ OFF by default and it must stay that way: it changes a share of every rendered piece, so a
+   *  corpus rendered with it on is not comparable to one rendered with it off. That is precisely how
+   *  `--print-noise` once shipped USUL_BEAM_GROUPS into ~40k strips by riding along unconditionally.
+   *  docs/rung3/tuplets.md */
+  concaveTuplet?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1438,6 +1553,16 @@ export function SheetView({
     // that in real editions, and 10% keeps the bracket represented, since real print does use it.
     const tupletCurved =
       Array.from(doc.name ?? "").reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10 < 9;
+    // A SECOND coin inside the curved style (2026-08-19): the continuous arc with the "3" inside its
+    // concavity, which the owner found on two real scanned editions. Hashed on a DIFFERENT salt than
+    // `tupletCurved` so the two styles are independent — reusing the same sum would tie "is it
+    // curved" to "is it concave" and put a hidden correlation in the corpus.
+    // ⚠ Chosen share, not measured — see TUPLET_MARK_CONCAVE. OPT-IN: without the flag this is
+    // always false, so every render made before 2026-08-19 reproduces byte for byte.
+    const tupletConcave =
+      !!concaveTuplet &&
+      Array.from(`${doc.name ?? ""}:concave`).reduce((s, ch) => s + ch.charCodeAt(0), 0) % 100
+      < TUPLET_MARK_CONCAVE.share * 100;
 
     // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef;
     // the very first measure additionally pays for the one-time time signature.
@@ -1590,7 +1715,11 @@ export function SheetView({
             for (const group of tuplets) {
               const above = tupletAbove(group);
               if (tupletCurved && svg)
-                (legacyTupletMark ? drawTupletArcLegacy : drawTupletArc)(svg, group, above);
+                (legacyTupletMark
+                  ? drawTupletArcLegacy
+                  : tupletConcave
+                    ? drawTupletArcConcave
+                    : drawTupletArc)(svg, group, above);
               else
                 new Tuplet(group, {
                   numNotes: 3,
@@ -1735,7 +1864,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, thinSharps, printNoise, legacyTupletMark]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

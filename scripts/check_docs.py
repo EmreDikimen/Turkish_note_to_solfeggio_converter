@@ -40,6 +40,7 @@ LONG_OK = {              # append-only records: size is inherent, structure is w
     # A verbatim training console log. Its length IS the artifact — trimming it would defeat the
     # reason it is kept (the tuplet A/B's equivalent was deleted and that entry has to say so).
     "round_3_scan_logs.md",
+    "round_3_staccato_logs.md",
 }
 # Docs that need no header block / index entry (archived verbatim copies, external READMEs).
 # `hf/` is the model card uploaded verbatim to the Hugging Face Hub as the weights repo's README —

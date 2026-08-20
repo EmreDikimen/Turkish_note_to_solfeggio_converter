@@ -30,6 +30,7 @@ updated: 2026-07-27
 | Round 2 — `strips_v4` two-stage fine-tune (Colab) | 2026-07-26 | converged |
 | Round 2 — exam v2.1 FINAL (read once) | 2026-07-27 | ⛔ headline regressed, NOT shipped |
 | Round-2 run-first diagnostics (tiers, degrade probe) | 2026-07-23 | done |
+| Round 3 — arm 2, the staccato distractor | 2026-08-20 | ✅ PASSES its primary (72.7% → 0.0%) |
 | Carry-sig bug characterization | 2026-07-24 | logged |
 
 
@@ -1056,6 +1057,118 @@ move against Round 1 is `\komaSharp` at n=14 inside a six-class mean. Like Round
   **The Round-1 double-dot failure did NOT reproduce** — `a''2..` / `b''2..` (hicaz `yalan_degil`,
   the same piece) passes both paths on this model.
   Latency: session load ~3.0 s; ~0.9–1.0 s encoder + 0.13–0.32 s decode ≈ ~1.1 s/strip.
+
+## Round 3 — arm 2, the STACCATO DISTRACTOR (Colab, 2026-08-20): ✅ PASSES its primary
+
+One arm, one run, and the only difference from its control is what the renderer *draws*:
+`strips_v6_stac` carries label-free staccato dots (`--staccato-noise`), the control does not.
+Corpus, split, recipe, step counts and seed are the tuplet A/B's `tupnew` arm's, so
+`data/checkpoints/r3-tupnew-stage2-best` serves as the control and this arm cost one GPU run.
+L4, stage 1 6,000 steps at lr 3e-5 then stage 2 2,000 at lr 1e-5 with the real pools at `:9`,
+`--every-share 0.15`, batch 16, **no mix flag** (train.py defaults: screenshot .65 / photo .35 /
+scan .00 — the notebook asserts this before spending a GPU hour).
+
+The console log is kept in full: [`round_3_staccato_logs.md`](../../round_3_staccato_logs.md).
+
+| | stage 1 | stage 2 |
+|---|---|---|
+| best synth val | **0.0090** (step 5,500) | 0.0069 (step 2,000) |
+| best mix | — | **0.0108** (step 2,000) |
+| real val, first → last | — | 0.0845 → **0.0801** (still falling at the last step) |
+
+⚠ **`best` == `last` here**, unlike arm 1 where they were different models and both had to be
+scored. Real val fell to the final step, so no checkpoint choice was left to make and the arm is
+one model. ⚠ The step-2,000 mix beat step 500's by **0.0001** — noise — so the selector did not
+really choose; what makes step 2,000 right is that real val agrees. That is luck, not a fix:
+Lever 5's selector problem (4,769 synthetic val strips outvoting 271 real ones) is untouched, it
+simply did not bite this time. ⚠ Stage 1's 0.0090 against the control's 0.0086 is the expected
+direction — harder pictures, marks carrying no label — and is **not comparable anyway**, because
+this arm's synth-val split contains the staccato dots. Its real val (0.0801) is the lowest of any
+Round 3 arm (tupnew 0.0852, tupctl 0.0835, scan 0.0820); that is a single unpaired scalar on the
+old pool and decides nothing.
+
+Every eval point of the run:
+
+| step | stage 1 | | step | stage 2 (synth / real / mix) |
+|---|---|---|---|---|
+| 500 | 0.0888 | | 500 | 0.0068 / 0.0845 / **0.0109** |
+| 1000 | 0.0298 | | 1000 | 0.0080 / 0.0846 / 0.0121 |
+| 1500 | 0.0201 | | 1500 | 0.0075 / 0.0806 / 0.0114 |
+| 2000 | 0.0138 | | 2000 | 0.0069 / 0.0801 / **0.0108** |
+| 2500 | 0.0119 | | | |
+| 3000 | 0.0118 | | | |
+| 3500 | 0.0102 | | | |
+| 4000 | 0.0100 | | | |
+| 4500 | 0.0092 | | | |
+| 5000 | 0.0093 | | | |
+| 5500 | **0.0090** | | | |
+| 6000 | 0.0090 | | | |
+
+### Clause 1, the primary: the staccato-triggered false-dot rate, 72.7% → **0.0%**
+
+`scripts/rung3/staccato_falsedot_score.py`, the two 110-strip pilot pools that differ only by the
+marks (manifests byte-identical; both pools' gold carries **zero** dotted durations by
+construction, which is what selected them, so the metric is "did a dotted duration appear at all").
+
+| checkpoint | pool | exact | SER | **decoded a dot gold does not have** |
+|---|---|---|---|---|
+| **`r3-stac-stage2-best`** | unmarked | 99.1% | 0.0002 | **0 / 110 = 0.0%** |
+| **`r3-stac-stage2-best`** | **marked** | **99.1%** | **0.0002** | **0 / 110 = 0.0%** |
+| `r3-tupnew-stage2-best` (control) | marked | 43.6% | 0.0396 | 60 / 110 = 54.5% |
+| `round2-stage2-best` (live) | marked | 27.3% | 0.0578 | **80 / 110 = 72.7%** |
+
+Paired on the marked pool: **60 strips the control gets wrong and the arm gets right, 0 the other
+way** (exact McNemar p = 1.7e-18); against the live model 80 vs 0 (p = 1.7e-24).
+
+**Two things make this more than a big number.** `round2-stage2-best` reproduces the 2026-08-15
+baseline **exactly** — 80/110, exact 27.3%, SER 0.0578, the recorded table to the digit — from a
+script written off the definition, so the instrument is right. And the arm reads the **marked**
+pool exactly as well as the unmarked one: same 99.1% exact, same SER 0.0002, and its single
+non-exact strip is the *same file with the same error* in both pools (`\bakiyeSharp → \komaSharp`
+on one note, a microtonal-sharp confusion untouched by dots). The marks did not become tolerable,
+they became **invisible**.
+
+⚠ The control sits at 54.5%, not 72.7% — the defect's severity varies by checkpoint, which is why
+the published number could not have served as the control on its own.
+
+### Clause 2, no-regression on REAL dots — passes
+
+`scripts/rung3/staccato_realdot_score.py`. The dot is a suffix inside a duration token, not a
+token, so eval_omr.py has no per-class row for it; counted per strip in both directions.
+
+| checkpoint | easy+mid (**the gate**) | hard (reported, never gated) |
+|---|---|---|
+| **arm** | 65/71 kept = **91.5%** | 56/64 = 87.5% |
+| control (`tupnew`) | 66/71 kept = **93.0%** | 57/64 = 89.1% |
+| live (`round2`) | 66/71 = 93.0% | 59/64 = 92.2% |
+
+One dot. Paired over the gated strips: **1 strip where only the arm lost a dot, 0 where only the
+control did, exact McNemar p = 1**. Easy tier is 18/18 for all three checkpoints. ⚠ Reported and
+not gated, by the signed clause: on **hard** tier the arm loses 3 strips the live model does not
+and 0 the other way (p = 0.25) — directionally worse, n far too small to read.
+
+### Clause 3, reported not gated: the price is zero
+
+| pool | arm AEU / F1 | control AEU / F1 | arm SER / exact | control SER / exact |
+|---|---|---|---|---|
+| `_realval_v2` | 92.9 / **84.7** | 92.3 / 83.9 | 0.0896 / 58.4% | 0.0891 / 57.3% |
+| easy | **97.1 / 96.6** | 95.7 / 94.5 | 0.0569 / 66.0% | 0.0603 / 66.0% |
+| mid | 92.5 / 82.7 | 92.4 / 82.0 | 0.1424 / 54.5% | 0.1446 / 55.5% |
+| hard | 89.7 / 91.5 | 88.3 / 90.7 | 0.0555 / 59.1% | 0.0513 / 55.5% |
+
+Every AEU and F1 cell is level or slightly up. **This is not the slur distractor's outcome** — that
+bought `\tup3` precision 15.1%→91.2% at recall 92.7%→83.8%, below its own floor. Nothing here is
+below a floor, and clause 3 existed precisely so that comparison could be made.
+
+### What the arm does NOT establish
+
+⚠ **The primary is measured on our own rendered staccato.** It shows the model no longer maps *the
+dot this renderer draws* onto a duration dot; it does not show it reads a real printed staccato,
+because **no labelled real strip in any pool carries one**. Same blind spot as the concave tuplet
+mark, and the same fix — collect pages that use it. ⚠ `STACCATO_RATE` is still **chosen, not
+measured**. ⚠ The `_realval_v2` absolutes carry that pool's known 5-duplicate-row defect
+([../../docs/METRICS-CORPUS.md](../../docs/METRICS-CORPUS.md)); both sides carry it equally, so the
+paired reads are unaffected.
 
 ## Round 3 — arm 1, the SCAN PROFILE (Colab, 2026-08-19): NULL on its primary
 

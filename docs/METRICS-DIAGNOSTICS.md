@@ -294,78 +294,13 @@ resolution **causal**, and the three-arm pilot that priced the fix are now
 encoder scale, while "resolution was ruled out" (the sharp-glyph section) was measured on per-class
 accidental recall. Both stand; they measure different things.
 
-### The DOTTED (usul) BARLINE read as `\repstart` (owner-found 2026-08-20, while labelling)
+### The dot and articulation holes — moved to their own file (2026-08-20)
 
-Same shape as the staccato hole below, found the same way — by eye, mid-labelling, on
-`gorunce_ben_seni_ey_mah_nota_p1_s05_w02.png` (`batch3`, karcigar). The strip carries a **column of
-four dots across the staff with no line** — the dotted barline Turkish editions print to mark usul
-subdivisions *inside* a measure — and the model emitted `\repstart` there. The owner's verdict removed
-it; the raw row is decode-seeded, so label and decode both carried the error.
-
-The cause is structural, not tuning, and it is the third instance of one pattern:
-
-- **`ADDED_TOKENS` has no dotted-barline token.** The 25 are 8 accidentals + `\natural`, `\sig`/
-  `\sigend`, 4 repeat, 4 navigation, `|`, `3`, and 4 rhythm signs. A dotted barline has **no legal
-  spelling**, so the model cannot be right about one.
-- **The renderer draws none.** `SheetView.tsx` sets only `Barline.type.REPEAT_BEGIN` / `REPEAT_END`;
-  everything else is VexFlow's default single bar. So **0 of 40,826 strips** carry a dotted barline.
-- **The nearest thing it has seen is a repeat sign** — a line plus *dots*. A column of dots maps onto
-  that, or onto an augmentation dot. Note the prior is not inflated: `\repstart` sits at **3.35%** of
-  synthetic strips against **2.07% / 4.04% / 3.07%** in `strips_nota` / `strips_r1` / the exam.
-
-**Frequency, from the `batch3` queue as it stands:**
-
-| | count |
-|---|---|
-| rows whose decode contains `\repstart` | **117 of 1,499 (7.8%)** |
-| of those, judged by the owner so far | 23 |
-| judged **and the `\repstart` removed as wrong** | **13 (57%)** |
-
-⚠ **Not a random sample.** The owner works in page order and noticed this pattern, so the 23 judged
-rows are drawn toward it; 57% is an upper-ish estimate, not a rate. What it does establish is that
-the failure is **repeated and systematic**, not one strip.
-
-⚠ **A second thing is visible in that row and is not this finding**: the seeded label spells
-`\bakiyeSharpf''8` and `\repstarte''8` with no space, while the correction spells them apart. Spacing
-is id-identical for `32` **only** ([DECISIONS.md](DECISIONS.md)), so for `8` these are different token
-sequences. That is the decode's raw output, not a gold defect — but it means a decode-seeded row can
-differ from its own correction in more than the symbol under discussion.
-
-### Staccato read as an augmentation dot (2026-08-15) — measured with a paired control
-
-Owner-reported, then measured. `ADDED_TOKENS` has **no articulation token** (all 25 are accidentals,
-structure and navigation) and the renderer draws no staccato, so 0 of 40,826 training strips carry
-one: every dot the model has ever seen meant *longer*. A 1,215-strip pilot rendered twice from
-`pieces_v4.json`, identical apart from the marks (manifests byte-identical, `verify-labels` PASS
-1215/1215), gives a pool of **110 strips carrying ≥1 staccato whose gold has no dotted duration**:
-
-| arm | strips decoded exactly | SER | **decoded a dot gold does not have** |
-|---|---|---|---|
-| control (no marks) | **110/110 = 100%** | 0.000 | **0 / 110 = 0.0%** |
-| staccato | 30/110 = 27.3% | 0.058 | **80 / 110 = 72.7%** |
-
-**The staccato-triggered false-dot rate is 72.7%, against 0.0% on the same music without the marks**
-— the baseline Lever 6 is stated against. The dominant substitutions are exactly `X → X.`
-(`d''4 → d''4.`, `g''8 → g''8.`, …). 43% of pilot strips carry at least one mark.
-
-Where the same error lands on the Round-2 exam, by quality tier — the reason a whole-exam floor
-would measure scan quality rather than this defect:
-
-| direction | easy | mid | hard | total |
-|---|---|---|---|---|
-| dot **added** | 0 | 1 | 3 | **4** |
-| dot **lost** | 0 | 5 | 7 | **12** |
-
-Dropped dots concentrate in the **hard tier** (7 of 12), and the easy tier shows **zero of either** —
-so the exam is nearly blind to this and the pilot above is the instrument.
-
-⚠ **CORRECTED 2026-08-18.** This line used to read "concentrate in degraded scans … six with `nd` up
-to 1.14", i.e. it read `nd` as scan quality. It is not: `nd` is `lev(label, decode)/len(label)`, a
-label-vs-decode disagreement ([METRICS-CORPUS.md](METRICS-CORPUS.md)). "The dots we lose are on
-strips where the model disagrees with the label most" is a restatement, not an explanation, so the
-**tier** concentration is the only claim the data supports here. ⚠ This matters beyond wording: it is
-the stated basis for Lever 6 clause 2 excluding hard tier in advance — flagged in
-[rung3/levers.md](rung3/levers.md), decision owed to the owner ([STATUS.md](STATUS.md)).
+**The staccato read as an augmentation dot** (72.7% → **0.0%**, closed by a trained arm) and **the
+dotted usul barline read as `\repstart`** (7.8% of `batch3` rows, owed) both live in
+**[METRICS-UNSEEN.md](METRICS-UNSEEN.md)** — together, because they have the same cause: a printed
+symbol with no token, no drawn pixels, and therefore no legal way to say it. That file also carries
+the finding the pairing produced — **a hole responds to being filled; a domain gap does not**.
 
 ## The microtonal-sharp defect — moved to its own file (2026-08-19)
 

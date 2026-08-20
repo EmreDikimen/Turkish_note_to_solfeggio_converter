@@ -32,6 +32,7 @@ wrong — fix by deleting, not by syncing.
 | What did the one-shot real exam score, in any round? | [METRICS-EXAM.md](METRICS-EXAM.md) |
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
+| A symbol the model reads as something else — staccato, the dotted usul barline | [METRICS-UNSEEN.md](METRICS-UNSEEN.md) |
 | What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |
 | The koma/küçük sharp glyph — what real print does, what we drew, where sharps appear | [METRICS-SHARPS.md](METRICS-SHARPS.md) |
 | Tuplets — the corpus scan, the printed mark, the mark's geometry | [METRICS-TUPLETS.md](METRICS-TUPLETS.md) |

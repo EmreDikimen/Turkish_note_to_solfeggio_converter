@@ -110,6 +110,14 @@ running it. ⚠ It also changes the browser/server decode path, so `gate:browser
 > unlabelled, so a wider funnel does not relieve the bottleneck this section names. Two rules do not
 > bend with it — read a new source's licence before redistributing anything, and any flow that feeds
 > training must keep **refusing exam pieces**.
+>
+> ⏭ **NARROWED 2026-08-20 (owner), not reversed.** Broad collection stays permitted; what is
+> *scheduled* is two targets volume cannot substitute for — pages drawing the **concave tuplet mark**
+> (unscoreable today: no labelled real strip carries it) and **tuplet-dense instrumentals**
+> (sirto/longa/saz semaisi, excluded from training *and* the exam by the 59-id budget, not by taste).
+> ⚠ Collecting the second **does not fix it** — the same budget drops the new pages too, so it is
+> paired with the ceiling measurement in [../BACKLOG.md](../BACKLOG.md) or it buys drops. Candidate
+> sources are listed once, in [../DECISIONS.md](../DECISIONS.md), so they are not re-searched.
 
 The owner has offered to label more real pages ([../STATUS.md](../STATUS.md)). The evidence says the
 first move is not more rows:
@@ -208,61 +216,26 @@ the gate any second renderer has to pass before a corpus built with it is traina
 
 ## Lever 6 — the articulation hole: every dot we have ever drawn meant "longer"
 
-**Owner-reported 2026-08-15, then measured.** The model reads a printed **staccato** as an
-**augmentation dot** and lengthens the note. The cause is structural, not a tuning problem:
+> ✅ **BUILT, TRAINED AND PASSED — 2026-08-20.** Round 3's arm 2 did what it was built to do: the
+> staccato-triggered false-dot rate goes **72.7% → 0.0%** (0 of 110 marked strips), paired **60–0**
+> against its training control (p = 1.7e-18). Clause 2 **passes**, clause 3 shows **no price**.
+> ⚠ Transfer to a *real printed* staccato is **unmeasured** — no labelled real strip carries one.
+> ⏭ **Whether the flag rides the final render is OPEN and the owner's.**
 
-- **`ADDED_TOKENS` has no articulation token** — all 25 are accidentals, structure and navigation.
-  The augmentation dot is not a token either; it is a suffix inside the duration (`8` vs `8.`). So
-  the label language has **no legal way to say "dot, but not a duration dot."**
-- **The renderer draws no staccato**, so 0 of 40,826 strips contain one. The same shape of hole as
-  the signature-only crop, and as the bare phrase slur before it was fixed.
+**The model read a printed staccato as an augmentation dot and lengthened the note**, because
+`ADDED_TOKENS` has no articulation token and the renderer drew none — 0 of 40,826 strips carried one,
+so every dot the model had ever seen meant *longer*. The label language had no legal way to say
+"dot, but not a duration dot".
 
-**Measured, with a paired control** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)): on 110
-pilot strips carrying a staccato whose gold has no dotted duration, the model decodes a dot it has
-no gold for **72.7% of the time** — against **0.0% on the identical music without the marks**, which
-it reads 110/110 exactly. That is as clean as a causal attribution gets here.
+⭐ **This is the one lever in this file that a trained arm has moved**, and the contrast is the
+transferable part: the three nulls all asked the model to read something it **already knew** from
+more realistic pixels; this one showed it a symbol it had **never seen**. A **hole** responds; a
+**domain gap** does not.
 
-**Built 2026-08-15, off by default:** `--staccato-noise` (`render.ts`) → `drawStaccatoDot`
-(`SheetView.tsx`), label-free dots on the notehead side, following `drawSlurArc` exactly. The two
-arms' manifests are **byte-identical** and `verify-labels` passes 1215/1215 with the marks on.
-
-**What it teaches is POSITIONAL, and that is the design.** An augmentation dot is a suffix beside
-the notehead, on its line or space; a staccato sits above or below it. So the draw deliberately
-seeks out **already-dotted notes** — a notehead carrying both marks at once isolates position from
-everything else, and is the only example that can. ⚠ Three placement drafts were rejected by eye
-before one worked; the trap is that VexFlow's `getNoteHeadBounds()` returns the notehead's **anchor**
-(`notehead.getY()`), not its ink edges, so any clearance measured from it lands half a notehead too
-close. Notes on a line also cannot take the adjacent space centre at all — the dot's radius overlaps
-the notehead's ink there at *any* clearance — so they get the space beyond it.
-
-**Pre-registration, signed before any training (owner: duration over pitch):**
-
-1. **Primary — the staccato-triggered false-dot rate must fall** from the 72.7% baseline.
-2. **No-regression on real dots, on EASY+MID tiers only.** Hard-tier dropped dots are scan
-   degradation (7 of 12, `nd` up to 1.14) and are excluded **here, in advance** — not after seeing a
-   result. Hard tier is reported, never gated on.
-   > ⚠ **FLAGGED 2026-08-17, NOT CHANGED — this clause is signed, so altering it is the owner's
-   > call.** The stated *reason* for the exclusion uses `nd` as a scan-quality measure, and it is
-   > not one: `emit_strip_labels.py` defines `nd` as `lev(label_ids, decoded_ids)/len(label_ids)`, a
-   > label-vs-decode disagreement, and there is only one `nd` in the repo. Read literally, the
-   > justification says "exclude the strips where the model disagrees with the label most, because
-   > the model disagrees with the label most there". The **exclusion itself may still be right** —
-   > hard tier is defined independently of `nd` — but its written reason does not carry it. Decide
-   > before the staccato arm is scored, not after.
-   > ✅ **SETTLED 2026-08-19 (owner), before any training: the exclusion STANDS, the reason is
-   > replaced.** Re-opening a signed pre-registration mid-round is what would make the round
-   > meaningless, so the gate does not move a point. It survives on two reasons that hold: hard tier
-   > carries **~12 real-dot instances in total**, too few to gate on in either direction, and its
-   > gold is the least reliable pool we own. Hard tier stays reported, never gated on — as written.
-   > [../DECISIONS.md](../DECISIONS.md).
-3. **Reported, not gated:** pitch/AEU macro F1, so the price of clause 1 is on the record.
-
-⚠ The slur distractor's cost is the thing to watch: it took `\tup3` precision 15.1% → 91.2% and
-**recall 92.7% → 83.8%, below its own floor**. Clause 2 exists so that outcome is caught rather than
-discovered. ⚠ `STACCATO_RATE` is **chosen, not measured** — nobody has counted staccato frequency in
-real Turkish editions, and doing so is how to replace it. ⚠ The alternative not taken is a
-`\staccato` token: possible, but `ADDED_TOKENS` is **append-only** so it goes at the END, and it
-needs gold annotation and an engraver change.
+**Moved out of this file 2026-08-20** — the hole, the draw and its three rejected placements, the
+signed pre-registration, the result and the open disposition are in
+**[staccato-arm.md](staccato-arm.md)**, the way arm 1's live in
+[scan-profile.md](scan-profile.md). Numbers: [../METRICS-UNSEEN.md](../METRICS-UNSEEN.md).
 
 ## Lever 7 — the medium hole: we have never simulated a SCAN
 
@@ -332,14 +305,14 @@ behind measurements that can change what it should render.
 > render and the staccato arm — and the choice between them is still a deliberate call, now with no
 > third item competing.
 
-### ⏭ The order as it now stands (owner, 2026-08-19) — four trained arms, one variable each
+### ✅ The order as it ran — the arms are DONE (2026-08-20)
 
 | # | Arm | Costs a render? | Scored on |
 |---|---|---|---|
 | 1 | **Lever 7** — the scan profile | no | ⛔ **RAN, NULL** — edits on `_realval_v2_scan`, paired ([scan-profile.md](scan-profile.md)). `scan_share` stays **off** in the final model (owner, 2026-08-19) |
 | 2 | ~~**Lever 1's survivor** — one measure per strip~~ | — | ⛔ **DROPPED 2026-08-19** — see below |
-| 3 | **Lever 6** — the staccato arm | yes | the **paired false-dot pool**, against 72.7% |
-| 4 | the final Round-3 model | — | **the exam, read once** |
+| 3 | **Lever 6** — the staccato arm | yes | ✅ **RAN, PASSES** — the paired false-dot pool, **72.7% → 0.0%** ([staccato-arm.md](staccato-arm.md)). ⏭ Whether the flag rides the final render is **open, the owner's** |
+| 4 | the final Round-3 model | — | ⏭ **next** — then **the exam, read once** |
 
 ⛔ **Arm 2 is dropped; the objection that killed it is under Lever 1 above.**
 
@@ -352,7 +325,11 @@ axis and all three are null: the tuplet-mark A/B (p = 0.688), the second engrave
 (measured, null, no arm), and this scan profile (p = 0.105 / 0.488). This file's opening argument —
 that the axis is at diminishing returns — was an inference from pre-render probes; it is now backed
 by a **trained** arm. Arms 2 and 3 are not on that axis (one is what the model is *given*, the other
-a symbol it has *never seen*), so they stand. What should not happen is a fourth realism arm being
+a symbol it has *never seen*), so they stand.
+⭐ **AND ARM 3 THEN SETTLED IT (2026-08-20).** The staccato arm — the one off this axis — is the only
+one of the four that **moved its primary**, 72.7% → 0.0%. The contrast is now measured rather than
+argued: **a hole in what the model has been shown responds to being filled; a domain gap does not.**
+That is the sentence to weigh a future arm against ([staccato-arm.md](staccato-arm.md)). What should not happen is a fourth realism arm being
 proposed because the first three "nearly" worked.
 
 ⚠ **One asymmetry worth knowing when the budget gets tight.** The staccato arm is the only one with
@@ -383,6 +360,20 @@ There are exactly two honest responses, and both have to be chosen **before** th
    near-pass are not distinguishable at this n.
 
 Choosing after seeing the number is the one option that is not available.
+
+✅ **ANSWERED 2026-08-20 (owner): BOTH, and option 1 is bounded.** The exam grows to **67 pages** —
+the 21 it already owns and has never labelled, free in training terms because their pieces are
+already exam-only — and then stops; the interval is reported beside the result regardless. ⭐ **The
+number that decided the bound is not the error bar but what it takes to DEMONSTRATE a pass**: against
+a 75% floor a model must *measure* ~86% at 46 pages and still ~81% at 200, so no affordable exam
+makes a near-boundary call crisp, and buying pages is the wrong purchase. Plan, cost and the binding
+side condition (re-score the Round-2 baseline on the grown exam): [exam.md](exam.md). Census, drop
+table and sizing arithmetic: [../METRICS-EXAM.md](../METRICS-EXAM.md). Decision row:
+[../DECISIONS.md](../DECISIONS.md).
+⭐ **A second finding came with it and it is not about size at all**: the exam grades **326 of 608**
+candidate strips on its own pages — 282 are dropped, and they are the **wide and dense** ones. So the
+exam reads each page on its easier material, which is a further reason the ceiling measurement in
+[../BACKLOG.md](../BACKLOG.md) pays here and not only on training data.
 
 ## Where the outside evidence comes from
 

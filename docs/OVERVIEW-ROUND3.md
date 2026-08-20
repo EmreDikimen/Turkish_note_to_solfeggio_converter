@@ -237,17 +237,60 @@ expensive part is deciding **what to change before each run**, because we can on
 run — change three things at once and a better score tells you nothing about which one did it. That
 has already happened to us twice.
 
-**Right now: two jobs, both yours, and they do not wait for each other** — correcting answer keys in
-the `batch3` tab, and starting the **short-note-dots** run on the rented computer. Everything an agent
-can do on either is finished. **The list is down to three runs, not four**, and one of them is
-already read:
+**The practice runs are finished. One job is yours and one decision is yours** — correcting answer
+keys in the `batch3` tab, and telling us whether the short-note dots go into the final drawing (see
+just below the table). **All the practice runs have now been read:**
 
 | # | The run | Needs a redraw? | Where it stands |
 |---|---|---|---|
 | 1 | Practice pictures that look like scans | no | ✅ **run, and it changed nothing** (19 August). The scan look stays **off** |
 | ~~2~~ | ~~One bar of music per picture~~ | — | ⛔ **dropped 19 August, on your objection** — see below |
-| 2 | Short-note dots — the model reads "play it short" as "make it longer" 72.7% of the time, because every dot it has ever seen meant longer | yes | ⏭ **drawn and packed; needs your one run** |
-| 3 | The final model — whatever won above, plus your corrected answer keys | — | after the above |
+| 2 | Short-note dots — the model read "play it short" as "make it longer" 72.7% of the time, because every dot it had ever seen meant longer | yes | ✅ **run 20 August, and it WORKED — 72.7% → 0%** |
+| 3 | The final model — whatever won above, plus your corrected answer keys | — | ⏭ **next.** Everything it was waiting on was decided on 20 August |
+
+⭐ **The short-note-dots run is the first thing we have tried in Round 3 that actually worked**, and
+it is worth knowing why. The three that came back empty all asked the model to read something **it
+already knew** from slightly more realistic-looking practice pictures. This one showed it a mark it
+had **never seen even once** — we had never drawn a short-note dot, not in any of the 40,826 practice
+pictures. A **gap in what it has been shown** is a different kind of problem from *pictures that look
+a bit wrong*, and only the first kind responded.
+
+How well it worked: on the test pictures that carry the mark, it now gets the length wrong **0 times
+out of 110**, down from 80 out of 110. It also did not break anything to get there — the real dots
+that genuinely *do* mean "longer" are still read just as well as before, and the note-name accuracy
+did not drop. Best of all, it now reads a page **with** these marks exactly as well as the same page
+**without** them: the marks stopped confusing it entirely rather than merely confusing it less.
+
+⚠ **One honest limit, and it is not small.** We tested this on **our own drawn version** of the mark.
+We do not own a single hand-checked real page that carries one, so we cannot yet prove the model
+reads a *printed* short-note dot from a real edition. It is the same gap we have with the third
+triplet shape, and the same fix: find real pages that use it.
+
+✅ **DECIDED 20 August: the short-note dots GO IN.** The worry was that the final drawing already
+carries the new third triplet shape, so turning on two new things at once would leave us unable to say
+which one did what. Three things answered it. The run **measured no cost** — every accuracy number
+came out level or slightly up, so nothing is being traded blind. Neither of the two is an *experiment*:
+the triplet shape is there because we measured real printed pages, and the dots are there because the
+run passed. And the dots keep **their own separate test**, so that particular result stays readable
+whatever else changes. What we genuinely give up: if the final model moves overall, we cannot say which
+switch moved it — and that was already true, because the exam cannot resolve a difference that small.
+
+⭐ **AND A THIRD THING GOES IN, which you found yourself while labelling.** Turkish editions print a
+**dotted bar line** to mark the beats of the usul inside a bar. We have never drawn one — not once in
+40,826 practice pictures — and there is no name for it in the model's vocabulary, so the model reaches
+for the closest thing it knows: a **repeat sign**, which is also a line with dots. It is the same kind
+of problem as the short-note dots, and that now means something proven rather than argued.
+
+How big it is: **117 of 1,499** pictures in your current batch produce a false repeat sign, and about
+**one correction in five that you are typing right now is deleting one**. You are fixing by hand
+something one drawing change removes at the source.
+
+⚠ **We draw it, but we do NOT give it a name.** That sounds odd, so here is the reason. If we gave it
+a name, every answer key we already own would become wrong — none of them mentions a dotted bar line,
+because we never drew one. Drawing it *without* a name teaches the model "this mark means nothing",
+which agrees with every answer key on disk, and therefore costs **no new labelling at all**. That is
+exactly the trick that made the short-note dots work. Teaching the model to write the mark down is a
+question for Round 4.
 
 ⛔ **Why the one-bar-per-picture run is gone, and you are the one who stopped it.** You objected that
 the page-cutter *already* splits over-wide pictures at the gaps, and it does — about a quarter of real
@@ -257,17 +300,52 @@ limit on its own, which no amount of narrowing fixes. What was left was making o
 match real ones in shape — the same "make it look more real" idea that has now come back empty three
 times in a row. So it does not get a run.
 
-**Then the exam, once.** 45 pieces, 67 pages the model has never seen and never trained on. We read it
-**once**, on the final model — if you keep re-sitting a test you eventually pass by luck and learn
-nothing. The pass mark was written down and signed before any of this started and does not move:
-**at least 3 pages in 4 needing 5 fixes or fewer**, against 57 in 100 today. Pass, and the app can go
-public. Miss, and we say so plainly and start Round 4; your two friends keep the link either way.
+**Then the exam, once.** We read it **once**, on the final model — if you keep re-sitting a test you
+eventually pass by luck and learn nothing. The pass mark was written down and signed before any of this
+started and does not move: **at least 3 pages in 4 needing 5 fixes or fewer**, against 57 in 100 today.
+Pass, and the app can go public. Miss, and we say so plainly and start Round 4; your two friends keep
+the link either way.
 
-⚠ **One warning worth having now rather than on the day.** 67 pages is a small test, so the score
-wobbles by about ±12 points either way: a model truly at 72 can score 78, and one truly at 78 can
-score 72. There are exactly two honest ways to handle that and **both have to be chosen before we
-read it** — grow the exam first, or read it as signed and print the wobble beside the number.
-Choosing after seeing the score is the one thing we cannot do.
+⛔ **A correction to what this page used to say.** It said the exam is "45 pieces, 67 pages". The
+pieces and the 67 pages are right — but we have only ever **marked 46 of those pages**. The other 21
+were never labelled. They are page 2 of a piece whose page 1 was done, and they have been sitting on
+the disk unused.
+
+⭐ **So the exam grows, and the growth is free.** Those 21 pages belong to pieces the model is
+**already** forbidden to train on, so labelling them takes nothing away from the model. **46 → 67
+pages, about 150 strips, roughly 120–130 needing your eyes.** For comparison, `batch3` has about 1,385
+rows still open — so this is about a tenth of the labelling you are already committed to, and it is
+the tenth that decides whether the exam result means anything. ⏭ **If you only have one evening, spend
+it here.**
+
+⚠ **Why we stop at 67 and do not keep going.** A small test wobbles. At 46 pages the wobble is about
+±12 points — a model truly at 72 can score 78, and one truly at 78 can score 72. At 67 pages it is
+about ±10. But the number that actually decided it is a different one: **to prove you passed a 75 mark,
+you would have to score about 86 at 46 pages, and still about 81 at 200 pages.** Precision improves
+only with the *square root* of the effort, so no exam we can afford makes a close result clear. Buying
+more pages is the wrong purchase; printing the wobble beside the score is the right one. We are doing
+**both** honest things: growing to 67 **before** we read it, and printing the wobble with the result.
+
+⚠ **One rule that comes with growing it, and it is not optional.** The 57-in-100 we are measuring
+against was measured on the 46-page version. If the exam grows and that older number does not get
+re-measured on the same 67 pages, we would be comparing two different tests. So the old model gets
+re-marked on the new exam first. It is one cheap computer run, not another training.
+
+⭐ **One more thing the counting turned up, and it is uncomfortable.** On the pages we *do* mark, we
+only actually grade **326 strips out of 608** — the other 282 are thrown away, and they are the
+**widest and busiest** ones. So the exam has been reading each page on its easier half. It does not
+change the pass mark (it makes the exam a little too kind, which we had already written down as a
+known bias), but it must be said out loud beside the result.
+
+⭐ **And it points at the single best-value thing on the list.** The reason those busy strips get
+thrown away is a limit of **59** on how long an answer may be. That limit is not a law of the
+machine — it is a **setting** we inherited from the original model, a number in a file. Raising it
+would pay three times over: it would return those thrown-away exam strips, it would let in the busy
+triplet music (**sirto, longa, saz semaisi**) that today is excluded from both the training and the
+exam, and it would recover about 2,100 discarded practice pictures. ⏭ **The next step is only to
+measure it** — count how many of the thrown-away pieces would fit if the limit were 90, or 120. That
+is a small script, no training, no redraw. Actually raising it is a Round-4 job, because it would
+change every file we own and how fast the app runs, all at once.
 
 ⚠ **Your labelling is the slow part, not the training.** The first three runs do not wait for it; only
 the final one uses your corrections.

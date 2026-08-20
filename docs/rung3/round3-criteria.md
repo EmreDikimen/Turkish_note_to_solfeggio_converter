@@ -2,7 +2,7 @@
 
 purpose: what Round 3 must reach (and what opens the public launch), written before any training runs
 audience: agents and the owner working the real-page track
-updated: 2026-08-15
+updated: 2026-08-20
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -181,6 +181,38 @@ pairs the outcomes by gold occurrence and prints the exact p. Two consequences, 
    [tuplets.md](tuplets.md).
 
 **The exam is not read for this A/B.** It is read once, later, on Round 3's final model, against §1.
+
+## 3b. ADDENDUM 2026-08-20 — the exam grows before the read, and the floors do NOT move
+
+Added after signing, and it is written here rather than inside §1 so the signed text stays auditable
+as signed. **Nothing in §1 or §2 is edited, re-opened or re-numbered by this section.**
+
+**What changed.** The exam grows from **46 to 67 graded pages** before the one-shot read — the 21
+pages it already owns and has never labelled ([exam.md](exam.md)). This is the power note's option 1
+([levers.md](levers.md)), which exists precisely so that growing *before* a read is legal; §4's rules
+are unaffected because the exam is still read **once**, on the final model.
+
+**Why this is not moving the goalposts.** Three things keep it honest, and all three were fixed
+before any Round-3 number was seen:
+
+1. **The floors are unchanged.** ≥75% of pages at ≤5 corrections is still the primary and still the
+   launch gate. A bigger exam changes the *precision* of the estimate, not the bar it is compared to.
+2. ⚠ **The Round-2 baseline column is re-measured on the grown exam.** `round2-stage2-best` is
+   re-scored over the 67 pages, so every "Round-2 baseline / Round-3 floor" pair in §1 refers to the
+   same instrument. Without this the table would silently compare two different exams. One CPU decode
+   run; it is a **precondition of the read**, not a follow-up to it.
+3. **The interval is reported beside the result**, which is the power note's option 2 taken as well.
+   At 67 pages the 95% half-width is ~±10.4 pp, so a near-miss and a near-pass remain
+   indistinguishable — that is stated *before* the number exists, and it does not soften §2's "a
+   near-miss is a miss".
+
+⚠ **A blind spot in §5 is now sized, and it is bigger than §5 implies.** §5 says dense
+contiguous-triplet instrumentals are unmeasured. The census behind this addendum shows the exam grades
+**326 of 608** candidate strips on its own pages — the other 282 are dropped as `split_wide` (203) or
+`over_budget` (78), i.e. the **wide and the dense** ones ([../METRICS-EXAM.md](../METRICS-EXAM.md)).
+So the exam reads each page on its easier material. This does **not** change the floors either: the
+bias runs in the same direction as the already-declared "matched upper bound" optimism, which §2
+accepts on the record. It is stated so the result is quoted with it.
 
 ## 4. What makes this binding
 

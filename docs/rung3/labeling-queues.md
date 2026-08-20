@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-19
+updated: 2026-08-20
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -205,8 +205,19 @@ label into them, because B8 (re-emitting the pools from the new crops) is still 
 a re-slice is a real possibility rather than a hypothetical one. The cost is real too: the excluded
 pages were the highest-evidence ones in the tier.
 
-⏭ **What is left is the owner's: probe 100 rows before committing to all 1,499**, then
-`--stats --batch 3` for the fix rate AND the bad rate. Reference points: **~30%** fix in the scanned
+✅ **THE PROBE IS IN AND `batch3` IS THE BEST-PAYING QUEUE THIS PROJECT HAS RUN (read 2026-08-20,
+114 of 1,499 judged: 66 fix / 39 ok / 9 bad).** That is a **~58% fix rate** — against ~30% in the
+scanned nota pool and **~12%** in `batch2` — so the tier re-aim was right and the queue is worth
+finishing. The bad rate is **7.9%**, far under `realval-hard`'s 33%, so no impact-score cap is
+needed. ⚠ **~1 in 5 of those fixes is deleting a false `\repstart`**, i.e. hand-payment for the
+dotted-barline hole, which is now going into the final render label-free
+([../DECISIONS.md](../DECISIONS.md)) — expect the fix rate to fall once a model trained on that
+render replaces the seeding decode. ⚠ **Priority note (2026-08-20): exam v3 outranks this queue for
+a scarce evening** — ~120–130 rows that decide whether the one-shot read can be interpreted, against
+~1,385 rows here that improve training ([exam.md](exam.md)).
+
+⏭ **The original instruction, kept for the record: probe 100 rows before committing to all 1,499**,
+then `--stats --batch 3` for the fix rate AND the bad rate. Reference points: **~30%** fix in the scanned
 nota pool (why this tier), **~12%** in `batch2` (why that one was stood down), **33%** crops lost in
 `realval-hard` (the bad-rate warning). If the bad rate is high, cap the impact score rather than
 reading on. ⚠ Attend to **pitch and duration, not accidentals** — every audit so far chased

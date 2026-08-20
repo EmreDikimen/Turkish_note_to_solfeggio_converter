@@ -20,6 +20,24 @@ the remaining model work is about real printed pages.
 > work? READ [docs/MAINTAINING.md](docs/MAINTAINING.md) FIRST and follow it** — it says which file
 > owns what, and the end-of-session checklist. Do not improvise doc updates.
 
+## How to write to the owner (2026-08-20 — applies to EVERY reply, not just docs)
+
+**Answer in plain, basic English — assume the reader is neither a musician nor a computer-vision
+engineer.** The owner reads English as a second language and asked for this to be the default for
+*all* responses, not only for documentation.
+
+- Short sentences. One idea per sentence.
+- Define every term the first time it appears in the reply — "tuplet", "token", "checkpoint",
+  "augmentation" are all jargon. A one-clause gloss in brackets is enough.
+- Use a plain analogy when a mechanism is being explained (the model as a student, the exam as a
+  final test, the corpus as practice questions).
+- **Keep the numbers.** Plain English means simple words, not vague claims. Every number still comes
+  from [docs/METRICS.md](docs/METRICS.md) or its source log, and still gets its n.
+- Say plainly when something is a guess, a lead, or unmeasured. Do not dress a feeling as a finding.
+- This does **not** change the doc conventions below, and it does not license rewriting history —
+  see [docs/MAINTAINING.md](docs/MAINTAINING.md). It is about the voice of the reply.
+- If you are not sure about something, ask to user. If anything ambigous ask. Do not assume. Also if a heavy command that would heat the pc, ask to user with its estimated finish time.
+
 ## Where things are
 
 | Need | File |
@@ -120,6 +138,13 @@ Cloud Run from localhost.
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python scripts/rung3/staccato_falsedot_score.py --checkpoint <ckpt> [--compare <ckpt>]
+    # Lever 6's PRIMARY: the staccato-triggered false-dot rate on the two paired 110-strip pools.
+    # The augmentation dot is a SUFFIX inside a duration token, not a token, so eval_omr.py has no
+    # per-class row for it and never will. Both pools' gold carries zero dotted durations by
+    # construction. --compare pairs a second checkpoint per strip with an exact McNemar.
+.venv-ml/bin/python scripts/rung3/staccato_realdot_score.py --checkpoint <ckpt> [--compare <ckpt>]
+    # the same read inverted — real dots LOST, gated on easy+mid only, hard tier printed never gated
 .venv-ml/bin/python scripts/build_makam_signatures.py \
     --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts  # TS copy only
 npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/synthetic/<set> [--thin-sharps]

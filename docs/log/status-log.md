@@ -7,7 +7,151 @@ updated: 2026-08-20
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-20 (latest) — what the selector actually reads, and a hole the labelling found
+## 2026-08-20 (latest) — a planning session: the final render is specified, and the exam grows before it is read
+
+**No code ran and no model trained.** This was the owner asking, in one sitting, what path Track B
+should take — and it closed every decision the final render was waiting on, plus two the project had
+not noticed it was owed. The measurements below were taken *during* the conversation, off files
+already on disk; none required a run.
+
+**What was decided.**
+
+1. **`--staccato-noise` rides the final render.** The open disposition from the passed arm is taken.
+   The owner's framing was *"even if it decreases the model's overall success, the wrong false dot is
+   the thing I really avoid, so I probably keep it"* — worth recording because the premise turned out
+   not to apply: clause 3 had already measured **no cost**. The two-variable objection was answered on
+   three grounds rather than waved away (no measured price, neither flag is an experiment, and the arm
+   keeps its own paired instrument so its claim stays attributable).
+2. **The dotted (usul) barline is promoted out of the backlog into the same render, drawn
+   LABEL-FREE.** The label-free half is the part worth inheriting: naming the symbol would make every
+   existing real gold label silently wrong, because no pool annotates one, whereas drawing it without a
+   label agrees with every label on disk and costs **zero new labelling**. That is the same mechanism
+   that made the staccato arm work, and it is why this could join a render instead of waiting a
+   labelling cycle. ⚠ It also means the model will read the mark as *nothing* rather than reproduce
+   it; a `\dottedbar` token is a Round-4 question.
+3. **Exam v3 is bounded: label the 21 pages the exam already owns, then stop at 67.** Both of the
+   power note's honest responses are taken — grow before the read *and* print the interval — and the
+   growth is capped where it stops being free.
+4. **The final run saves two checkpoints** (current selector, and one selected on a free-running real
+   metric) and chooses between them on real-val before the exam. The deferral's reason — that changing
+   the selector mid-round makes the arms incomparable — expired when the arms were read.
+5. **Collection is narrowed, not broadened**: the concave tuplet mark and tuplet-dense instrumentals,
+   because 2,486 unlabelled pages already sit on disk and volume relieves nothing.
+6. **Plain English becomes the default for every reply**, not only for docs — written into
+   `CLAUDE.md` as *How to write to the owner*.
+
+**What was measured, and what it changed.**
+
+- ⭐ **The exam owns 67 pages and grades 46.** 45 pieces, all 67 page PNGs on disk; only page 1 (268
+  strips) and page 2 (58) ever produced graded strips. The 21 unused pages are free to label because
+  their pieces are already exam-only. Nobody had counted this; `OVERVIEW-ROUND3.md` had been telling
+  the owner the exam *was* 67 pages, conflating owned with graded, and that line is now corrected.
+- ⭐ **The exam grades 326 of 608 candidate strips on those pages** — 282 dropped, `split_wide` 203 and
+  `over_budget` 78. The drops are the wide and dense ones, so the exam reads each page on its easier
+  material. `round3-criteria.md` §5 had said this about tuplets only; it is general, and it is now an
+  addendum (§3b) rather than an edit to the signed text.
+- ⭐ **The sizing arithmetic, which is what actually set the bound.** The useful number is not the
+  error bar but the score needed to *demonstrate* a pass: ~86% at 46 pages, ~84% at 67, still ~81% at
+  200. Precision goes as √n, so no affordable exam makes a near-boundary call crisp. That converted
+  "grow the exam" from an open-ended job into a capped one.
+- ⭐ **The 59-id budget is `generation_config.max_length = 60` inherited from the base weights** — a
+  setting, not an architectural limit. The comment beside `MAX_IDS` (*"cannot be raised without
+  breaking training"*) is true of existing checkpoints, not of a model trained from base. It gates
+  three separate things already measured: 78 dropped exam strips, the tuplet-dense repertoire, and
+  2,108 over-budget training drops. **Measuring it is Round 3; raising it is Round 4.**
+- **`batch3` is at 114 of 1,499 judged: 66 fix / 39 ok / 9 bad — a ~58% fix rate**, against ~30% in
+  the scanned nota pool and ~12% in `batch2`. The tier re-aim was right. ⚠ ~1 in 5 of those fixes is
+  deleting a false `\repstart`, i.e. hand-payment for decision 2 above.
+
+**The owner's own read of the situation was mostly right, and the record should say so plainly**,
+because four "feelings" each mapped onto a number already in this repo: that real tuplet strips are
+missing (39.4% / 80.5% / 92.9% of 1-, 2- and 3-measure triplet windows blow the budget), that the
+slicer has problems (33% unusable crops, 13,975 drops, 24% stale pages — all from the *old* slicer,
+which is why item 8 of the backlog now asks for 100 crops from the current one), that more exam is
+needed, and that the training pools are stale. What the session added was not the leads but the
+arithmetic that ranked them.
+
+**What was argued down, and why it matters more than what was agreed.** The owner proposed rendering
+more than 40,826 synthetic strips and collecting hundreds of new tuplet pages. Both were declined on
+evidence rather than taste: synthetic val is already 99.9%, so more of the same practice questions
+teach nothing, and new tuplet pages get dropped by the same budget that dropped the old ones. The
+lever in both cases is the *vocabulary of things drawn* and the *token ceiling*, not volume. This is
+the same shape as the three-nulls-one-pass result and is the reasoning to reuse.
+
+**Files touched:** `CLAUDE.md` (the new *How to write to the owner* section), `docs/STATUS.md`
+(rewritten "Now" + Track B, with a new B0 and B9), `docs/DECISIONS.md` (six rows),
+`docs/METRICS-EXAM.md` (the census, the drop table, the sizing table), `docs/rung3/exam.md` (the
+bounded v3 plan), `docs/rung3/round3-criteria.md` (§3b addendum, signed text untouched),
+`docs/rung3/levers.md` (power note answered; collection narrowed), `docs/BACKLOG.md` (item 5 promoted,
+items 7 and 8 added), `docs/rung3/labeling-queues.md` (the probe result),
+`docs/rung3/README.md`, `docs/OVERVIEW-ROUND3.md` (the plain-English version, incl. the 46-vs-67
+correction).
+
+## 2026-08-20 — the staccato arm trained, and it is the first Round-3 arm that worked
+
+**Round 3's arm 2 came back from Colab and passes on all three clauses.** The primary — the rate at
+which a printed staccato makes the model lengthen the note — goes **72.7% → 0.0%**, 0 of 110 marked
+strips, paired **60–0** against its training control and **80–0** against the live model. After three
+consecutive nulls on the realism axis, an arm moved its number.
+
+**Why this one and not the other three, stated plainly, because it is the transferable part.** The
+nulls (tuplet mark p = 0.688, the second engraver, the scan profile) all asked the model to read
+something it *already knew* from slightly more realistic pixels. This arm showed it a symbol it had
+**never seen once** — 0 of 40,826 strips carried a staccato, and the label language had no legal way
+to say "dot, but not a duration dot". A hole is not the same kind of problem as a domain gap, and it
+does not respond to the same medicine. The `\repstart`-for-dotted-barline finding two entries above
+is the same shape, and that is now the reason to expect something from it.
+
+**The strongest single line in the result is not the 0.0%.** It is that the arm reads the MARKED pool
+exactly as well as the UNMARKED one — 99.1% exact and SER 0.0002 on both, its one non-exact strip
+being the *same file with the same* `\bakiyeSharp → \komaSharp` *confusion* in each. The marks did
+not become tolerable; they stopped carrying information about duration at all. That is what a
+positional lesson looks like when it lands, and it is why the draw deliberately sought out
+already-dotted noteheads.
+
+**The instrument had to be rebuilt before it could be trusted, and rebuilding it was worth it.** The
+2026-08-15 baseline was measured ad hoc and never committed — so the first job of
+`scripts/rung3/staccato_falsedot_score.py` was to reproduce it, which it does to the digit (80/110,
+exact 27.3%, SER 0.0578) from a script written off the written definition. ⚠ It also exposed
+something the published number hid: the **training control sits at 54.5%, not 72.7%**. The defect's
+severity varies by checkpoint, so quoting the baseline as the control would have understated the
+arm by a quarter of its effect. Running the real control is what made the claim attributable — the
+same lesson the tuplet A/B's control taught, arriving again.
+
+**Clause 2 did what it was written for.** The slur distractor's precedent was precision 15.1%→91.2%
+bought at recall 92.7%→**83.8%, below its floor**, so the pre-registration demanded the opposite
+direction be checked. It was: 65/71 real dots kept on easy+mid against the control's 66/71, one
+discordant strip, p = 1. There is no trade here. Clause 3 says the same — every AEU and F1 cell level
+or slightly up.
+
+**A number in the signed rationale turned out to be wrong, and the gate still stands.** Clause 2
+excludes hard tier, and the 2026-08-19 settlement justified that partly on "hard tier carries ~12
+real-dot instances in total". Measured: `_realval_v2_hard` carries **64**, comparable to easy+mid's
+71 combined. The "12" was the Round-2 **exam's** dropped-dot count — a different pool and a different
+quantity. ⛔ The exclusion is **not** reopened: it is signed, it survives on its other stated reason,
+and the gate passed on easy+mid regardless. Recorded because this is the **second** time this
+clause's written reason has failed to carry what it claims, in the same way both times — a number
+borrowed from a neighbouring table and restated as if it described this pool.
+
+**What the arm does not license, kept next to what it does.** The pool is **our own rendered
+staccato**. No labelled real strip in any pool carries one, so whether this transfers to a real
+printed staccato is **unmeasured** — the identical blind spot as the concave tuplet mark, and the
+identical fix (collect pages that use it). `STACCATO_RATE` is still chosen rather than counted.
+
+**Two things about the run itself worth keeping.** `best` and `last` are the **same checkpoint** —
+the mix loss bottomed at step 2,000, which is also the last step, so unlike arm 1 there was no
+checkpoint choice to make and only one model to score. And the mix beat step 500's by 0.0001, i.e.
+noise; what makes step 2,000 right is that real val agrees. Lever 5's selector problem (the entry
+below) is untouched — it simply did not bite this time, which is luck and should not be recorded as
+a fix.
+
+⏭ **The disposition is the owner's and is deliberately left open**: `--staccato-noise` is off by
+default, so doing nothing leaves it out of the final model, the same way `scan_share` was settled.
+The argument against turning it on is not that the arm failed — it is that the final render already
+carries `--concave-tuplet`, and two flags at once makes that render a two-variable change whose parts
+cannot be separated afterwards. [../DECISIONS.md](../DECISIONS.md).
+
+## 2026-08-20 — what the selector actually reads, and a hole the labelling found
 
 **The owner asked what the every-500-steps evaluation is computed on, and whether it is out of date.**
 It is, and measuring it turned up something bigger. `train.py` blends two val losses by strip count to

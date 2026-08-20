@@ -2,7 +2,7 @@
 
 purpose: how the never-trained-on exam is built, frozen, grown and audited
 audience: agents and the owner working the real-page track
-updated: 2026-07-19
+updated: 2026-08-20
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
@@ -61,6 +61,51 @@ Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIO
 > Rung-2.2b checkpoint scores **83.3% AEU / SER 0.018 / 78.8% exact** on the exam strips (vs
 > 99.9% / 0.002 / 96.7% synthetic) — the synthetic→real gap is now a number for Round 1 to
 > close.
+
+## ⭐ Exam v3 — the bounded growth, decided 2026-08-20
+
+**Decision: label the 21 exam pages we already own and stop there. 46 → 67 graded pages.** Owner,
+2026-08-20, after asking how much more exam labelling was worth doing. This is
+[levers.md](levers.md)'s power-note **option 1** (grow the exam before the read, which keeps the
+one-shot rule intact) taken in a bounded form, with **option 2 applied on top of it** (report the
+interval beside the result). The census, the drop table and the sizing arithmetic are in
+[../METRICS-EXAM.md](../METRICS-EXAM.md) and are not restated here.
+
+**Why these 21 pages and no others.** They belong to pieces that are *already* exam-only, so
+labelling them takes nothing away from training. Every page beyond 67 costs a piece removed from the
+model's training data **and** hand labelling, to buy a precision improvement that goes as the square
+root of the work.
+
+**Why we stop rather than push to 113 or 200.** With a 75% floor, the score a model must *measure*
+before its interval clears the floor is ~86% at 46 pages and still ~81% at 200. No affordable exam
+size makes a near-boundary call crisp, so the honest instrument is the interval, not a bigger n.
+
+**Cost.** ~7.1 strips a page ⇒ **~150 strips**, of which (scaling the v2 emit's 63-accepted /
+329-review split) roughly **120–130 need a human**. For scale: `batch3` has ~1,385 rows still open,
+so exam v3 is about **a tenth** of the labelling already committed — and unlike `batch3` it decides
+whether the one-shot read can be interpreted at all. ⏭ **It outranks `batch3` for a scarce evening.**
+
+**The three rules it must not break.**
+
+1. **Grow BEFORE the read, never after.** Choosing the instrument after seeing the number is the one
+   option that is not available ([round3-criteria.md](round3-criteria.md) §4).
+2. ⚠ **Re-score `round2-stage2-best` on the grown exam.** The signed floors in
+   [round3-criteria.md](round3-criteria.md) §1 were measured on the 46-page / 326-strip exam; if the
+   exam grows and the baseline column does not, the comparison stops being apples-to-apples. It is
+   one CPU decode run, not a retrain — and it is the same rule this file already applied when the
+   exam grew for Round 1 (Step 2 below, *"Re-take the baseline"*).
+3. **The floors themselves are not re-opened.** Growing the exam changes the *precision* of the
+   measurement, not the bar.
+
+⚠ **Not part of this growth: chasing the low-n accidental classes.** `buyukFlat` has 0 real gold and
+`buyukSharp` 3; those glyphs are rare in real print and more pages barely move them. They are
+no-regression clauses in Round 3, not targets, and stay low-n with their n printed.
+
+⏭ **A second, free growth may follow and needs no new page.** 282 candidate strips on the exam pages
+are dropped, 78 of them purely for exceeding the 59-id decoder budget. That budget is
+`generation_config.max_length = 60` inherited from the base weights — a setting, not an
+architectural limit — so measuring what fits at 90 or 120 ids may return those strips to the exam
+without labelling a single new page. Costed in [../BACKLOG.md](../BACKLOG.md).
 
 ## Step 2 — Set the exam aside (before any training on real data)
 

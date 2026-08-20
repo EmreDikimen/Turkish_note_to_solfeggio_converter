@@ -2,7 +2,7 @@
 
 purpose: index and one-page plan for the real-page track; routes to the six detail files
 audience: agents and the owner working on real data
-updated: 2026-08-17
+updated: 2026-08-20
 
 > This track's **current state and next action are NOT here** — they live in
 > [../STATUS.md](../STATUS.md). This file describes the plan and where each part is written up.
@@ -35,7 +35,9 @@ so correcting is "glance and confirm", not "repair everything".
 | [../../names_of_bad_cropped_images.md](../../names_of_bad_cropped_images.md) | Unusable crops noticed by eye during the batch3 labelling pass (the UI's `bad` verdict stays authoritative) | new 2026-08-19 |
 | [../../some_problems_seen_while_labeling.md](../../some_problems_seen_while_labeling.md) | MODEL failures noticed by eye during the same pass — the pattern behind the corrections, which the CSV cannot show. Its first entry (the dotted barline read as `\repstart`) was measured and is now [BACKLOG.md](../BACKLOG.md) item 5 | new 2026-08-20 |
 | [../../round_3_scan_logs.md](../../round_3_scan_logs.md) | Arm 1's raw Colab training log, both stages, kept verbatim | new 2026-08-19 |
+| [../../round_3_staccato_logs.md](../../round_3_staccato_logs.md) | **Arm 2's** raw Colab training log, both stages, kept verbatim | new 2026-08-20 |
 | [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
+| [staccato-arm.md](staccato-arm.md) | **Round 3's arm 2** — the staccato distractor: the hole, the draw, the signed pre-registration, the result (**it passes**) and the open disposition | new 2026-08-20 |
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |
 | [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
 | [followups.md](followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
@@ -45,11 +47,11 @@ so correcting is "glance and confirm", not "repair everything".
 | Step | State |
 |---|---|
 | 1 — free labels from SymbTr matches | ✅ done, both sources (+ targeted tuplet collection) |
-| 2 — freeze the exam | ✅ done; v2.1 frozen 2026-07-19; **v3 owed** (low-n floor, over-budget recoveries, disjointness re-validation) |
+| 2 — freeze the exam | ✅ done; v2.1 frozen 2026-07-19. ⏭ **v3 is now SPECIFIED and BOUNDED (2026-08-20)**: label the **21 pages the exam already owns and has never graded** (46 → 67), re-score the Round-2 baseline on the grown exam, then stop — [exam.md](exam.md). ⚠ It **blocks the one-shot read**. Still owed beyond it: the low-n floor and the over-budget recoveries |
 | 3 — strip-label emitter | ✅ built and calibrated |
 | 4 — Round 1 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-23) |
 | 4 — Round 2 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-27) |
-| 4 — Round 3 | 🔄 in progress: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)), the tuplet-mark A/B run and **null** ([tuplets.md](tuplets.md)); the content work in `select_pieces.py` remains, sequenced behind the render-side levers — crop geometry ran and was **stopped**, and **Lever 4 (renderer diversity) is in front** as of 2026-08-17 ([levers.md](levers.md)) |
+| 4 — Round 3 | 🔄 in progress: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)). Arms run one variable each, never two together. **Arm 1, the scan profile — null** ([scan-profile.md](scan-profile.md)). The one-measure-per-strip arm was **dropped** and the staccato arm took its slot ([../DECISIONS.md](../DECISIONS.md)), so **arm 2, the staccato distractor — ✅ passes**: the first Round-3 arm to move its primary ([levers.md](levers.md) Lever 6). Earlier: the tuplet-mark A/B **null** ([tuplets.md](tuplets.md)), crop geometry ran and was **stopped**. ⏭ What is left is the **final model's render, then the exam read once**. ✅ **The render is fully specified (2026-08-20)** — three flags: `--concave-tuplet`, `--staccato-noise` and a **label-free dotted (usul) barline** ([../DECISIONS.md](../DECISIONS.md)). State and next action in [../STATUS.md](../STATUS.md) |
 | 5 — hand-correction loop on unmatched pieces | ⏸ not started (scheduled after the rounds) |
 
 ## Standing rules for this track

@@ -57,22 +57,37 @@ starting. Abandoned plans are a different thing again and live in
    promoted verdicts hang off. And note the priority: fixing these crops without touching the blend
    above improves **5.4%** of the number that picks `best`.
 
-5. **NEW 2026-08-20 — the DOTTED (usul) BARLINE has no token and is never drawn, so the model reads
-   it as `\repstart`.** Owner-found while labelling `batch3`, then measured: **117 of 1,499 rows
+5. ✅ **PROMOTED OUT OF THIS FILE 2026-08-20 — the dotted (usul) barline goes into the FINAL
+   RENDER, drawn LABEL-FREE.** The decision, its two halves and what is given up are in
+   [DECISIONS.md](DECISIONS.md); the work is tracked in [STATUS.md](STATUS.md). The description below
+   is kept because it is the diagnosis, and because the *token* half of it is still owed to Round 4.
+   ⚠ **What changed:** this item was deferred behind the render-slot rule; the staccato arm's read
+   has happened and the same-shape argument is now backed by a trained result. It is also the only
+   deferred item the owner is paying for **by hand** — ~1 in 5 of `batch3`'s corrections so far is
+   deleting a false `\repstart`.
+
+   **The diagnosis, as written:** the DOTTED (usul) BARLINE has no token and is never drawn, so the
+   model reads it as `\repstart`. Owner-found while labelling `batch3`, then measured: **117 of 1,499 rows
    (7.8%)** decode a `\repstart`, and of the 23 judged so far **13 had it removed as wrong**
-   ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)). Turkish editions print a dotted barline to mark
+   ([METRICS-UNSEEN.md](METRICS-UNSEEN.md)). Turkish editions print a dotted barline to mark
    usul subdivisions inside a measure; `ADDED_TOKENS` has no spelling for one and the renderer draws
    only single and repeat barlines, so **0 of 40,826 strips** contain one and the nearest thing the
    model knows is a repeat sign — a line plus *dots*.
-   **This is the same structural hole as the staccato one** (Lever 6), which is now a trained arm, and
-   as the signature-only crop and the bare phrase slur before it. The fix has the same two halves:
+   ⭐ **This is the same structural hole as the staccato one** (Lever 6) — and as of 2026-08-20 that
+   matters more than it did, because the staccato arm **ran and took its primary from 72.7% to 0.0%**
+   while the three realism arms beside it were all nulls. **A hole responds to being filled; a domain
+   gap does not** ([rung3/staccato-arm.md](rung3/staccato-arm.md)). Same shape as the signature-only
+   crop and the bare phrase slur before it. The fix has the same two halves:
    draw it (a renderer change plus a per-piece coin) and give it a name — ⚠ and `ADDED_TOKENS` is
    **append-only**, so a `\dottedbar` token goes at the END and needs gold annotation before it can
    be scored.
-   ⚠ **Deferred, not next, for the usual reason**: it is a corpus change, and no two render-side
-   variables may move together. It queues behind the staccato arm's read, and it is a candidate for
-   the FINAL model's render alongside the concave tuplet mark — not an arm of its own unless it earns
-   one.
+   ⛔ **The deferral text that stood here is SPENT and is not to be acted on** — it said the item was
+   held behind the render-slot rule and behind the staccato flag's open question. Both resolved on
+   2026-08-20 and the item was promoted; see the head of this entry. ⚠ **What did NOT get promoted is
+   the token half**: the `\dottedbar` spelling stays a Round-4 question, because naming the symbol
+   would make every existing real gold label — none of which annotates one — silently wrong. Drawing
+   it label-free is consistent with every pool on disk, which is the whole reason it costs no
+   labelling ([DECISIONS.md](DECISIONS.md)).
    ⚠ **Cheap first step, no render**: count dotted barlines across the real pools with a probe, the
    way the tuplet mark was counted. 7.8% of one batch is a decode statistic, not a print frequency.
 
@@ -106,6 +121,35 @@ starting. Abandoned plans are a different thing again and live in
    owns produces **page-level gold**, which is the unit Round 3's signed floor is stated in, measured
    today on 46 pages at ±12 points ([rung3/levers.md](rung3/levers.md) Lever 3). ~150 corrected pages
    would triple the exam. If it returns, it returns for that reason.
+
+7. **NEW 2026-08-20 — MEASURE THE 59-id DECODER BUDGET. It is a setting, not an architectural
+   limit, and it is the only item on this list that pays THREE times.** `MAX_IDS = 59` in
+   `src/vision/audit_coverage.py` exists because the base weights' `generation_config.max_length` is
+   **60**; `src/vision/data.py` truncates training targets to it and every emitter drops a strip that
+   exceeds it. The comment beside it — *"cannot be raised without breaking training"* — is true of
+   **existing checkpoints**, which is not the same as true of a model trained from base, and the final
+   render trains from base anyway. What raising it would buy, all three already measured:
+   - **the exam**: 78 of its 282 dropped strips are over-budget alone ([METRICS-EXAM.md](METRICS-EXAM.md))
+   - **the tuplet repertoire**: 39.4% of triplet-bearing *single* measures blow it, 80.5% of 2-measure
+     and 92.9% of 3-measure windows — which is *why* sirto/longa/saz semaisi are unmeasured
+     ([rung3/labeling.md](rung3/labeling.md) §1c, [rung3/round3-criteria.md](rung3/round3-criteria.md) §5)
+   - **training data**: 2,108 over-budget drops plus the `split_wide` pile
+   ⏭ **The step to take is a measurement, not a change**: run the real tokenizer over the existing
+   drop lists and report how many fit at **90** and at **120** ids. One script, no GPU, no render.
+   ⚠ **Do not raise it as part of the final render.** The cost side is unpriced — longer targets mean
+   more decode steps per strip in the browser *and* on Cloud Run, and more training memory — and it
+   would change every pool, every manifest and the shipped latency at once. It is a **Round-4**
+   change that a Round-3 measurement can justify.
+
+8. **NEW 2026-08-20 — audit 100 crops from the CURRENT slicer before pouring more hours into
+   labelling.** The evidence that the slicer's throw-away rate is the bottleneck is scattered across
+   four files and has never been put in one place or re-measured on today's code: **33% of crops
+   unusable** in the first `realval-hard` queue (43 of 130), **13,975** strips dropped corpus-wide for
+   `row_unaligned`/`nd_high`, **2,108** over-budget, and `batch3`'s own cut excluded **24%** of the
+   pages it checked as stale. ⚠ Every one of those numbers is from the OLD slicer or from a queue
+   build, so none of them says what today's code does. ⏭ Draw 100 random crops from a current
+   re-slice, look at them, and report the unusable rate. If it is still ~1 in 3, the slicer outranks
+   labelling and this file's item 4 stops being a cleanup and becomes the main line.
 
 ### Further out (not next, not cancelled)
 

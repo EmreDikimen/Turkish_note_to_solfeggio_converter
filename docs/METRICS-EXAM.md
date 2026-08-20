@@ -109,6 +109,69 @@ One "edit" = one token substitution, deletion or insertion needed to turn the ou
 - The second half of the goal — the app showing *where* the errors are — is unmeasured, because it
   does not exist yet. Finding 5 unknown errors among ~250 notes costs more than fixing them.
 
+### ⭐ What the exam is MADE OF, and what it throws away (census 2026-08-20)
+
+Counted off `testset.json` and `strips_exam_v2/` while answering "how much more exam should I
+label?". Neither number had been written down, and both bear on the one-shot read.
+
+**Pages: we own 67, we grade 46.**
+
+| | count |
+|---|---|
+| exam pieces in `testset.json` | **45** |
+| page images those pieces list — **all present on disk** | **67** |
+| pages that produced graded strips | **46** (page 1 → 268 strips, page 2 → 58) |
+| **pages owned, exam-only, and unused** | **21** |
+
+Pages per piece: 24 pieces have 1, **20 have 2**, 1 has 3. The unused 21 are mostly the *second*
+page of a piece whose first page was labelled. ⭐ **They cost nothing in training data** — their
+pieces are already banned from training by the exam rule — so labelling them is the only way to grow
+the exam that does not take a piece away from the model.
+
+**Strips: 54% of the candidates on those pages are graded.**
+
+| disposition | strips |
+|---|---|
+| in the clean exam (`strips_exam_v2_clean`) | **326** |
+| dropped `split_wide` (crop cut at a gutter; fragment labels do not exist) | 203 |
+| dropped `over_budget` (label exceeds the 59-id decoder budget) | 78 |
+| dropped `empty_range` | 1 |
+| **dropped total** (`emit_drops.csv`, over 33 distinct piece+page) | **282** |
+
+⚠ **The drops are the wide and the dense strips, so the exam grades each page on its easier
+material.** [rung3/round3-criteria.md](rung3/round3-criteria.md) §5 says this about tuplets only
+("dense contiguous-triplet instrumentals remain unmeasured"); 282 against 326 makes it general. It
+is a bias in the *matched upper bound* direction, i.e. it points the same way as the exam's other
+known optimism, not against it.
+⭐ Both drop reasons are blocked by the same two things — the 59-id ceiling and the absence of
+fragment labels — which is why measuring that ceiling pays here as well as on training data
+([BACKLOG.md](BACKLOG.md)).
+
+**Per-class gold** (`testset.json`, v2.1 freeze): bakiyeSharp 141, kucukFlat 70, bakiyeFlat 66,
+komaFlat 48, kucukSharp 31, komaSharp 18, buyukSharp 3, buyukFlat 0.
+
+### How big the exam has to be — the arithmetic behind the ±12 (2026-08-20)
+
+The primary is a **share of pages**, so its precision is binomial in the page count. 95% half-width
+at a true rate near the 75% floor, and — the more useful column — the score you would have to
+measure before the interval's lower bound clears 75%:
+
+| exam pages | 95% half-width | to *demonstrate* a pass, must measure |
+|---|---|---|
+| **46 — today** | **±12.5 pp** | ~86% |
+| **67 — every page we already own** | **±10.4 pp** | ~84% |
+| 92 | ±8.8 pp | ~83% |
+| 113 | ±8.0 pp | ~82.5% |
+| 200 | ±6.0 pp | ~81% |
+
+- **Precision improves with the square root of the work**, so doubling the exam buys ~1.4×. There is
+  no reachable size at which a near-boundary result becomes crisp.
+- ⚠ **The last column is the one that decides policy.** With a 75% floor, a model that is genuinely
+  at 78% cannot *demonstrate* a pass at any exam size this project can afford. That is an argument
+  for reporting the interval, not for buying pages.
+- Consequence, taken as a decision on 2026-08-20: grow to **67 and stop**, and report the interval
+  beside the result. [rung3/exam.md](rung3/exam.md) · [DECISIONS.md](DECISIONS.md).
+
 ### Where the user's corrections actually go (2026-07-27) — accidentals are 13% of them
 
 Every one of the 562 edits in the Round-2 exam read, classified by what the user would have to fix

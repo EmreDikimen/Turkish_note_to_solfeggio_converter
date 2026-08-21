@@ -200,7 +200,9 @@ carries the handwritten manuscript the ranking surfaces at the top.
 the corrections were "mostly `\komaSharp` → `\kucukSharp`". They were **7 of the 18 fixes**, and all
 7 share three things: they are inside the `\sig … \sigend` block, they are on the same note (F), and
 they belong to **2 pieces, both makam mahur**. Seven of the seven `\komaSharp` tokens in those 139
-labels were wrong; none was corrected the other way.
+labels were wrong; none was corrected the other way. ⭐ **Reading the 27 `gold_conflict` rows the same
+day added 3 more of the identical correction** — **10 now, still 10–0 in one direction**, over two
+queues cut differently ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)).
 
 **The mechanism** ([../scripts/rung3/emit_strip_labels.py](../scripts/rung3/emit_strip_labels.py),
 the `sig_votes` block). Everything else in a label comes from SymbTr. The signature does not: the

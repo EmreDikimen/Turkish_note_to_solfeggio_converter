@@ -292,8 +292,11 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
    not seven: `\komaSharp` → `\kucukSharp` inside `\sig … \sigend`, all in one makam — the
    model-voted signature override ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The rest is 12
    repeat/tie marks and 3 durations.
-2. **The 27 `gold_conflict` rows**, where a hand correction and a fresh derivation disagree.
-3. **The rest, PAGE-COMPLETE.** The primary counts corrections *per page*, so a half-labelled page
+2. ✅ **The 27 `gold_conflict` rows — DONE 2026-08-21: 14 `ok`, 13 `fix`.** The fresh derivation won
+   more often than the carried gold, and 3 more signature bugs fell out of the 13 fixes
+   ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
+3. ⏭ **The remaining 636, PAGE-COMPLETE** — 158 carry a suggestion, 329 have no label at all, and
+   **64 pages are still open**. The primary counts corrections *per page*, so a half-labelled page
    under-counts its own errors — grading it would be worse than skipping it. Stopping early should
    cost whole pages, never half ones.
 
@@ -303,6 +306,17 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
   pending, so `e` opens the editor with it already typed. It is confirmed against the new picture,
   never promoted unseen — a label written against a crop that cut a beamed group in half is a reading
   of a truncated picture.
+- ⛔ **THE VIEWER USED TO HIDE THAT SUGGESTION AND SAVE IT ANYWAY — fixed 2026-08-21** after the owner
+  reported it (*"when I click to ok, it saves something different than label"*). Three faults, all
+  landing on the `gold_conflict` rows: the queue builder wrote them with an **empty `decoded`** though
+  the page's `_decode.json` had it, so the viewer fell back to a label-only panel with no decode to
+  compare; a **pending** suggestion was never drawn, because `corrHtml` only rendered for verdicted
+  rows; and **`ok` posted `corrected_label`**, storing text that had never been on screen — on 12 rows,
+  two of them a different measure's music. Now the suggestion is drawn and diffed under a header
+  saying `ok` will not take it, `ok` clears it (a human correction always arrives as `fix`), and the
+  builder copies the decode. ⚠ Exam gold was never at risk: `promote_labels.py` reads `corrected_label`
+  **only** when the verdict is `fix`. The 12 strings were cleared and the 27 decodes backfilled;
+  `emit_review.csv.bak-20260821` is the before-state.
 - ⚠ **`gold_conflict` (27 rows) is where a hand correction and a fresh SymbTr derivation disagree**
   on the same music. Read those first; the first one examined is a `\tie` the gold has and the new
   label does not, with the arc plainly drawn in the crop.

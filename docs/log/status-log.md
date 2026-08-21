@@ -7,7 +7,53 @@ updated: 2026-08-21
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-21 (latest) — the exam's own labels are read, and they expose a bug in how signatures are made
+## 2026-08-21 (latest) — the labelling tool was lying about what it saved, and the conflicts are cleared
+
+**The owner stopped mid-queue with a bug report**: *"there is not any option model decode, just label.
+When I click to ok, it saves something different then label. If I press edit, the edit box come with
+something that is not in the label."* Three separate faults, all landing on the same 27
+`gold_conflict` rows they had been told to read first.
+
+1. **No decode.** `build_exam_v3_queue.py` wrote those rows with `"decoded": ""`. They are synthesised
+   from strips the emitter **auto-accepted**, which therefore never passed through `emit_review` — but
+   the decode was on disk all along, in each page's `_decode.json`. With the field empty, `diffHtml`
+   falls back to its "no cached model decode" panel, which is exactly what the owner described.
+2. **The suggestion was invisible.** `corrHtml` only rendered for rows that already had a verdict, so a
+   **pending** row's carried gold was never drawn.
+3. **`ok` saved that invisible text.** `verdict()` posted `corrected_label` regardless, so pressing `a`
+   stored the suggestion instead of the label on screen — **12 rows**, two of them a different
+   measure's music entirely.
+
+**What was and was not damaged.** Checked before alarming anyone: `promote_labels.py` reads
+`corrected_label` **only** when the verdict is `fix`, using `label` for `ok`. So the exam gold was
+never at risk and those 12 `ok` verdicts would have promoted correctly; the stored strings were
+misleading, not corrupting. The residual risk was real though — re-opening such a row would have
+pre-filled the unseen text into the editor.
+
+**Fixed**: the suggestion is drawn and diffed under a header saying `ok` will not take it; `ok` clears
+it on a pending row (a human correction always arrives as `fix`, so re-confirming a real fix still
+keeps it); the builder copies the decode. **Repaired in place**: 27 decodes backfilled, 12 stray
+strings cleared, verdicts untouched, before-state kept as `emit_review.csv.bak-20260821`.
+
+⚠ **The lesson worth keeping**: a field that is *authoritative* must be *visible*. `corrected_label`
+drove two actions and was rendered by neither, which is why the bug survived the queue's own design
+review — the docs describing the carried suggestion were written from the builder's side, never from
+the screen's.
+
+### And the 27 conflicts are now read: 14 `ok`, 13 `fix`
+
+The fresh SymbTr derivation won more often than the frozen gold it disagreed with. The 13 fixes are
+**9 repeat marks added** (`\repend` / `\volta1` / `\repstart`), **3 more of the signature bug**, 1
+repeat removed, and 5 rhythm/grace corrections.
+
+- ⭐ The koma→küçük signature correction is now **10, still 10–0 in one direction**, and no longer
+  confined to one queue — `examv3-full` and `gold_conflict` were cut differently and both show it.
+- ⭐ **Repeat structure is the second theme**: 22 repeat/volta marks over the 166 rows read so far.
+  That is the same family as the dotted-barline finding — SymbTr and a printed edition disagree about
+  repeats by convention, and the model has no token for the one the page actually prints.
+- ⏭ **636 rows remain over 64 pages**, to be labelled page-complete.
+
+## 2026-08-21 — the exam's own labels are read, and they expose a bug in how signatures are made
 
 **Two things happened, and the second is worth more than the first.**
 

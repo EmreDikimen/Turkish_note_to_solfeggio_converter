@@ -99,17 +99,15 @@ for, so **`scan_share` stays off**. [rung3/scan-profile.md](rung3/scan-profile.m
 
 ⚠ **THAT IS THREE NULLS ON ONE AXIS AND ONE PASS OFF IT.** Tuplet mark p = 0.688, the second
 engraver's domain gap, the scan profile — all "make the synthetic pixels look more like real pages".
-The staccato arm asked a different question and is the only one that moved its primary. **A fourth
-realism arm does not follow**, and the dotted barline is worth something precisely because it is a
-hole rather than a gap. ⚠ **Lever 4 gets no arm and no corpus**: LilyPond renders our labels and its
-gate passes 312/312, but the domain gap did not move, and four recipe items are owed before that arm
-could stand beside `strips_v4`. [rung3/levers.md](rung3/levers.md) · [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md).
+The staccato arm asked a different question and is the only one that moved its primary, so **a fourth
+realism arm does not follow**, and the dotted barline counts because it is a hole rather than a gap.
+⚠ **Lever 4 gets no arm and no corpus**: its gate passes 312/312 but the domain gap did not move, and
+four recipe items are owed first. [rung3/levers.md](rung3/levers.md) · [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md).
 
 ⛔ **THE TUPLET *DRAWING* THREAD IS CLOSED AND NO ARM BELONGS TO IT.** The A/B was null; the shape is
-kept on the print measurement alone. Two items survive and neither costs a render: the **position
-lead** (the model marks the first triplet of a passage and forgets the later ones, 96% → 81%, in both
-arms), settled **for free at the exam read**, and the concave mark, which is a per-piece coin in the
-final render with **no recall claim**. [rung3/tuplets.md](rung3/tuplets.md).
+kept on the print measurement alone. Two items survive, neither costing a render: the **position lead**
+(96% → 81% across a passage, in both arms), settled free at the exam read, and the concave mark — a
+per-piece coin with **no recall claim**. [rung3/tuplets.md](rung3/tuplets.md).
 
 ⛔ **LEVER 1 IS SPENT.** The padding probe was causal (+59%, holdout +61%) but the reverse cannot be
 bought — crops narrower than one measure measured **+31.8% worse**, tripping the stop rule at **5.4×**;
@@ -227,10 +225,10 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 | # | do this | why now | in |
 |---|---|---|---|
 | 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
-| 2 | the **27 `gold_conflict`** rows | a hand correction and a fresh derivation disagree on the same music | B0 |
+| 2 | ✅ **DONE 2026-08-21** — all 27 `gold_conflict` rows | **14 ok / 13 fix**; the fresh derivation mostly won, and **3 more signature bugs** fell out | B0 |
 | 3 | **re-emit the training pools onto the current crops**, all of it on `round2-stage2-best` | the last pool on the retired slicer, and the weak referee drops **10,695** strips on row alignment | B8 |
 | 4 | **measure the 59-id budget** | a script; it costs the exam 153 strips and 3 whole pages today | B9 |
-| 5 | the rest of `examv3`, **page-complete** | the primary is per page, so a half-labelled page under-counts itself | B0 |
+| 5 | ⏭ **NEXT for a person** — the remaining **636** `examv3` rows, **page-complete** | the primary is per page, so a half-labelled page under-counts itself; 64 pages still open | B0 |
 | 6 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
 
 ⚠ **Only B0 gates the read, but step 3 gates the MODEL** — it is the one item that damages the model
@@ -238,19 +236,21 @@ rather than what can be concluded from it. [RISKS.md](RISKS.md) ·
 [rung3/round3-criteria.md](rung3/round3-criteria.md) §3c.
 
 **B0. ⏭ THE EXAM REBUILD — LABEL `examv3`. Highest-value labelling on the board, and it BLOCKS the
-   read.** ✅ All 67 pages are re-sliced and re-emitted on the current slicer; **663 rows over 64
-   pages** are open in `review_ui.py`, with **139** strips the emitter labelled itself and **185 rows
-   arriving with text already in the edit box** (the frozen exam's gold, moved onto the crop holding
-   the same music). ⚠ Read the **27 `gold_conflict`** rows first — a hand correction and a fresh
-   derivation disagree there. ⚠ 329 rows carry no label at all; the verdict is against the picture.
-   ⚠ **Crops live in `data/real/strips_examv3`** — same filenames, retired pixels, in the default root
-   — so `promote_labels.py` needs `--strips-root data/real/strips_examv3`. ⚠ **The ceiling is now 64
-   pages**: 3 pages drop every candidate as `split_wide` / `over_budget`, which B9 would buy back.
-   ⏭ **Order inside this queue**: `examv3-full` first, then the 27 conflicts, then the rest
-   **page-complete** — the primary is per page, so a half-labelled page under-counts its own errors
-   and grading it would be worse than skipping it.
-   ⏭ **Two things must happen before the read**: re-score `round2-stage2-best` on the rebuilt exam,
-   and settle what the signed 75% floor means on a harder instrument.
+   read.** ✅ **166 rows are read**: all 139 of `examv3-full` and all 27 `gold_conflict`.
+   ⏭ **636 remain over 64 pages** — 158 carrying a suggestion, 329 with no label at all, where the
+   verdict is against the picture. **Label PAGE-COMPLETE**: the primary counts corrections per page, so
+   a half-labelled page under-counts its own errors and grading it is worse than skipping it.
+   ⚠ **Crops live in `data/real/strips_examv3`**, so `promote_labels.py` needs
+   `--strips-root data/real/strips_examv3` — the default root holds the same filenames with the
+   retired slicer's pixels. ⚠ **The ceiling is 64 pages**: 3 drop every candidate as `split_wide` /
+   `over_budget`, which B9 would buy back.
+   ⚠ **The viewer had three bugs on exactly the `gold_conflict` rows, found by the owner and fixed
+   2026-08-21**: they were built with an empty decode though the page's `_decode.json` had it, a
+   pending suggestion was never drawn, and **`ok` posted that invisible suggestion** — 12 rows stored
+   text that was never on screen. Exam gold was never at risk (`promote_labels` reads `label` for an
+   `ok` row); the strings are cleared and the 27 decodes backfilled.
+   ⏭ **Two things must still happen before the read**: re-score `round2-stage2-best` on the rebuilt
+   exam, and settle what the signed 75% floor means on a harder instrument.
    [rung3/labeling-queues.md](rung3/labeling-queues.md) · [rung3/exam.md](rung3/exam.md).
 
 **B1. ✅ `batch3` IS CUT AND OPEN — 54 pages / 1,499 strips from the SCANNED tier** in `review_ui.py`

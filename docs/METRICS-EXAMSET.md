@@ -10,7 +10,7 @@ cap. The split is by genre: **METRICS-EXAM.md keeps what models SCORED**, this f
 instrument IS** — its census, the 2026-08-21 rebuild, the hand audit of its auto-written labels, and
 the sizing arithmetic behind the ±12-point interval. Plan and decisions: [rung3/exam.md](rung3/exam.md).
 
-#⭐ What the exam is MADE OF, and what it throws away (census 2026-08-20)
+## ⭐ What the exam is MADE OF, and what it throws away (census 2026-08-20)
 
 Counted off `testset.json` and `strips_exam_v2/` while answering "how much more exam should I
 label?". Neither number had been written down, and both bear on the one-shot read.
@@ -51,7 +51,7 @@ fragment labels — which is why measuring that ceiling pays here as well as on 
 **Per-class gold** (`testset.json`, v2.1 freeze): bakiyeSharp 141, kucukFlat 70, bakiyeFlat 66,
 komaFlat 48, kucukSharp 31, komaSharp 18, buyukSharp 3, buyukFlat 0.
 
-#⭐ THE EXAM IS BEING REBUILT ON THE CURRENT SLICER (2026-08-20/21)
+## ⭐ THE EXAM IS BEING REBUILT ON THE CURRENT SLICER (2026-08-20/21)
 
 **How it started.** The exam-v3 growth queue was cut on the crops already on disk, and the owner
 opened its first strip: a **265 px crop holding one measure**, notehead sliced by the frame, beams
@@ -77,7 +77,7 @@ scratch, it is okey. Just exam need to be okey."*). All 45 pieces / 67 pages wer
 | dropped `over_budget` | 153 |
 | pages producing anything | **64 of 67** |
 
-#`examv3-full` — all 139 auto-accepts read by hand (2026-08-21, COMPLETE)
+## `examv3-full` — all 139 auto-accepts read by hand (2026-08-21, COMPLETE)
 
 The exam's 139 emitter-written labels entered the exam with no human check. The owner read every
 one. This is the audit exam v2 never got (it sampled **2** of its 63; a later full read corrected
@@ -109,7 +109,36 @@ and the seed all byte-identical between the two runs — the re-slice is the onl
 signature bug the exam's auto-labels are close to clean**: what is left is 12 repeat/tie marks and 3
 durations, and repeats/ties are where SymbTr and a printed edition differ by convention, not error.
 
-#What happened to the 326 frozen gold labels (2026-08-21)
+## The 27 `gold_conflict` rows — read, and the fresh derivation mostly won (2026-08-21)
+
+Where a hand correction from the frozen exam and a fresh SymbTr derivation disagreed on the same
+music. All 27 judged against the picture:
+
+| verdict | rows | meaning |
+|---|---|---|
+| `ok` | **14** | the fresh derivation is right; the carried gold is dropped |
+| `fix` | **13** | neither side was right as written |
+
+**What the 13 fixes changed** (token-level; one row can carry more than one):
+
+| change | count |
+|---|---|
+| `\repend` / `\volta1` / `\repstart` added | **9** |
+| `\komaSharp` → `\kucukSharp` **inside `\sig`** | **3** |
+| `\repstart` removed | 1 |
+| rhythm / grace corrections (`a''16` → `g''16 \grace a''8`, `f''8. e''16` → `f''8 e''8`, …) | 5 |
+
+- ⭐ **The signature bug appears again**: 3 of these are the model-voted key signature
+  ([METRICS-CORPUS.md](METRICS-CORPUS.md)) — **10 across the two queues read so far, still 10–0 in
+  one direction**, and now on two differently-cut queues rather than one.
+- ⭐ **Repeat structure is the other repeat offender**: 10 changes here are `\repstart` / `\repend` /
+  `\volta1`. With `examv3-full`'s 12, that is **22 repeat/volta marks over 166 rows** — the largest
+  correction class in the exam after the signature.
+- ⚠ **12 of these rows were judged before the viewer bug was fixed** — the decode panel was blank and
+  the carried gold was invisible. The verdicts stand and their outcome was right (`promote_labels`
+  reads `label` for an `ok` row), but they were decided with less on screen than the layout implied.
+
+## What happened to the 326 frozen gold labels (2026-08-21)
 
 A gold label describes the music of an exact measure span, so it survives on any new crop holding
 that span — a finer question than `check_crop_staleness.py`'s page-level one (which says 45 of 46
@@ -144,7 +173,7 @@ differ, **37 crop count differs** — i.e. "45 of 46 pages lose their labels". A
 loss is **105 of 326 (32%)**, because most labels move with their music. That gap is why the rebuild
 kept 221 of them rather than starting blank.
 
-#How big the exam has to be — the arithmetic behind the ±12 (2026-08-20)
+## How big the exam has to be — the arithmetic behind the ±12 (2026-08-20)
 
 The primary is a **share of pages**, so its precision is binomial in the page count. 95% half-width
 at a true rate near the 75% floor, and — the more useful column — the score you would have to

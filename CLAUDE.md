@@ -188,6 +188,16 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   exam is read once per round on the final model. All iteration happens on real-val.
 - **Photos of exam pieces are EXAM-ONLY.** Training on them leaks the exam. Camera photos for
   training must come from different pieces.
+- **THE EMITTER'S CHECKPOINT DOES TWO JOBS, AND THEY TAKE DIFFERENT MODELS** (owner, 2026-08-21).
+  It **gates** (the `nd` label-vs-decode check, the only independent test that a crop holds the music
+  its label claims) and it **hints** (the `decoded` column, which `review_ui`'s edit box largely
+  copies). ⛔ **Never gate on a model that trained on the pool being emitted** — `round2-stage2-best`
+  oversampled the real training pools 9×, so its agreement is memory, not reading, and it would wave
+  through the span errors a re-emit exists to remove. ⛔ **Never seed EXAM gold from the decode of a
+  model that will be graded on that exam** — it anchors the answer key toward that model. The exam's
+  hint therefore stays on `rung3-labeler`, whose errors are noise rather than bias; `_realval_v2`
+  keeps its `round2-stage2-best` seed because real-val selects and does not grade. Training pools
+  take the better hint with the gate left independent. [docs/DECISIONS.md](docs/DECISIONS.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,
@@ -344,7 +354,9 @@ data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
                       re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
 data/synthetic/       rendered strips — strips_v4 is current, older sets kept (v3 = the A/B control)
-data/checkpoints/     round1-best (+ -onnx int8, the live runtime), earlier rung2*/rung22* runs
+data/checkpoints/     round2-stage2-best (+ -onnx int8, THE LIVE RUNTIME — round1-best is the
+                      superseded one), the r3-* Round-3 arms, and rung3-labeler: a July tooling
+                      checkpoint, NEVER shipped, that only feeds the emitter and decode_page.py
 data/split.json       piece-level train/val split (strips_v4 uses data/split_v4.json, v3 split_v3)
                       — ALWAYS split by piece, never by strip: strips of one piece are near-duplicates
 ```

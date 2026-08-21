@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-20
+updated: 2026-08-21
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -68,6 +68,16 @@ starting. Abandoned plans are a different thing again and live in
    carry rule the exam rebuild used ([rung3/exam.md](rung3/exam.md)).
    ⏭ **Sequence it BEFORE the final render**, not after: a render is the one moment the training set
    is rebuilt anyway.
+   ⭐ **WHICH MODEL, decided 2026-08-21 (owner): two of them, one job each.** The **hint** — the
+   `decoded` column that `review_ui`'s edit box mostly copies — comes from **`round2-stage2-best`**,
+   which cuts the typing on the ~266 labels that do not carry; `build_realval_v2.py` already re-decodes
+   with it for the same reason. The **gate** — the `nd` check — stays on a model that never trained on
+   these pools (`rung3-labeler`, or synthetic-only `rung22-stemfix-best`), because `round2-stage2-best`
+   stage 2 oversampled these very strips **9×** (1,523 + 395 + 148), so its agreement with a label is
+   partly memory and a referee holding the answer key would pass the span errors this item exists to
+   remove. ⏭ **Not built yet**: `emit_strip_labels.py` takes one `--checkpoint` for both jobs, so this
+   needs a second option — the gate decode must cover whole pages (row alignment reads the full row),
+   the hint decode only the review crops. ⛔ The exam takes neither ([rung3/exam.md](rung3/exam.md)).
 
 5. ✅ **PROMOTED OUT OF THIS FILE 2026-08-20 — the dotted (usul) barline goes into the FINAL
    RENDER, drawn LABEL-FREE.** The decision, its two halves and what is given up are in

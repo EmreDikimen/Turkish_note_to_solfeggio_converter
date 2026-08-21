@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-20
+updated: 2026-08-21
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -309,6 +309,13 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
   promote into a training manifest.
 - ⚠ **Attend to the picture.** 329 of the 663 rows are `row_unaligned` and carry no label at all —
   the edit box starts from the model's decode, and `ok` must mean "I looked and it was right".
+- ⛔ **THAT DECODE STAYS ON `rung3-labeler`, AND IT IS NOT UPGRADED** (owner, 2026-08-21). A better
+  hint would save keystrokes here — `round2-stage2-best` reads far better — but it is the **baseline
+  column** re-scored on this exam, so seeding gold from its decode anchors the answer key toward it:
+  an error you do not catch becomes "correct", and it is that model's error. The July model's errors
+  are uncorrelated with either graded model, so they are **noise, not bias**, and a one-shot read
+  survives noise. The training pools take the better hint instead ([../STATUS.md](../STATUS.md) B8);
+  real-val already has it, because real-val selects and does not grade.
 - ⚠ **Preconditions of the read**: finish before the model takes it, and **re-score
   `round2-stage2-best` on the rebuilt exam** — now doubly binding, since the instrument changed
   ([exam.md](exam.md), [round3-criteria.md](round3-criteria.md) §3b).

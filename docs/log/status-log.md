@@ -2,12 +2,49 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-20
+updated: 2026-08-21
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-21 (latest) — a weakness review of Track B, and the order of work it produced
+## 2026-08-21 (latest) — two models, two jobs: the emitter's hint is upgraded, its referee is not
+
+**The owner asked a good question while labelling `examv3`, and the answer split in two.** The
+question: *"emitting them with a better model would make my correcting job easier"* — true, and the
+tool is built to make it true. `review_ui`'s edit box is a **hybrid** (`baseText`, review_ui.py):
+`\sig…\sigend` comes from the label, **everything after it from the decode**, because the model reads
+notes well and signatures badly. So decode quality is paid in keystrokes, directly.
+
+**But the emitter's checkpoint does two jobs and only one may be upgraded.** It **gates** — the `nd`
+label-vs-decode check, which is the only *independent* test that a crop really holds the music its
+label claims — and it **hints**. `round2-stage2-best`'s stage 2 oversampled `strips_nota` /
+`strips_r1` / `strips_tup` **9×** (1,523 + 395 + 148 strips, MODEL_EVAL.md). Those are the pools B8
+re-emits. A referee that memorised the answer key agrees with a label even when the new crop's span is
+wrong — which is precisely the error class the exam rebuild proved was there. Memory is harmless in a
+hint: a bad draft costs keystrokes and never becomes a label unless a human saves it.
+
+**Decision (owner): training pools take the better hint with an independent gate; the exam is not
+re-emitted at all.** The exam's reason is separate and stronger — `round2-stage2-best` is the
+**baseline column** being re-scored on the rebuilt exam. Gold seeded from a graded model's decode is
+anchored toward it: an error the reader lets past becomes part of the answer key, and it is that
+model's own error. `rung3-labeler` is weaker but graded by nobody, and descends from
+`rung22-stemfix-best` while `round2-stage2-best` trained from BASE — so its mistakes are **noise, not
+bias**. Noise costs both models equally; a one-shot read survives noise and not bias. `_realval_v2`
+keeps its good seed, because real-val **selects** and does not grade — the line the project had
+already drawn in `build_realval_v2.py`, now stated as a rule.
+
+⏭ **Not built.** `emit_strip_labels.py` takes one `--checkpoint` for both jobs. The split needs a
+second option: the gate decode must cover whole pages (row alignment reads the full row's id stream),
+the hint decode only the review crops. ⚠ **And the payoff is smaller than it looks** — 2,064 of 2,330
+training labels (89%) carry across by measure span with no edit box at all, so the better hint pays on
+roughly 266 rows plus new review rows, not on thousands.
+
+**Also fixed:** CLAUDE.md's data-layout line still called `round1-best` "the live runtime". It is
+`round2-stage2-best`, and has been since Round 2 shipped. The line now also warns that `rung3-labeler`
+was never shipped — it is a July throwaway fine-tuned on 362 neyzen strips, which is what prompted the
+owner's question in the first place.
+
+## 2026-08-21 — a weakness review of Track B, and the order of work it produced
 
 Asked after the exam rebuild: what is wrong with the Track B plan, before it harms the model. Six
 things, each checked against the files rather than recalled. The owner accepted the analysis and asked

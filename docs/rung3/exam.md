@@ -2,7 +2,7 @@
 
 purpose: how the never-trained-on exam is built, frozen, grown and audited
 audience: agents and the owner working the real-page track
-updated: 2026-08-20
+updated: 2026-08-21
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
@@ -113,6 +113,19 @@ model quality and the primary ("pages needing ≤5 corrections") will read lower
 affected — the `round2-stage2-best` re-score puts both models on the same set — but **what a 75%
 floor means does change**, and that is the owner's to settle before the read, not after it
 ([round3-criteria.md](round3-criteria.md) §3b, §4).
+
+⛔ **THE EXAM IS NOT EMITTED AGAIN, AND ITS HINT MODEL IS NOT UPGRADED** (owner, 2026-08-21). This
+closes a question the training pools answered the other way. The emitter's checkpoint does two jobs:
+it **gates** (the `nd` label-vs-decode check) and it **hints** (the `decoded` column, which
+`review_ui`'s edit box largely copies). Upgrading the hint from `rung3-labeler` to
+`round2-stage2-best` saves real keystrokes, and the training pools take it — but not here, for one
+reason: **`round2-stage2-best` is the baseline column re-scored on this very exam.** Gold seeded from
+a graded model's decode is anchored toward it; every error a tired reader lets past becomes part of
+the answer key, and it is that model's own error. The July model is weaker but is graded by nobody
+and comes from a different lineage (fine-tuned from `rung22-stemfix-best`, while `round2-stage2-best`
+trained from BASE), so its mistakes are **noise rather than bias** — noise costs both models equally,
+and a one-shot read survives that. `_realval_v2` keeps its `round2-stage2-best` seed, because
+real-val **selects** and does not grade ([../DECISIONS.md](../DECISIONS.md)).
 
 ⏭ **Still true, and now the only remaining ceiling**: 3 of the 67 pages produce nothing at all —
 every candidate drops as `split_wide` or `over_budget` — so the exam tops out at **64 pages** until

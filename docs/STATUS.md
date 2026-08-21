@@ -12,15 +12,11 @@ all taken in one session. **It carries three flags**: `--concave-tuplet`, `--sta
 new **label-free dotted (usul) barline**. What is left is **render → train → the exam, read once**.
 [DECISIONS.md](DECISIONS.md).
 
-⭐ **THE STACCATO ARM PASSED, AND ITS FLAG NOW RIDES THE FINAL RENDER.** The staccato-triggered
-false-dot rate goes **72.7% → 0.0%**, paired **60–0** against its training control (exact McNemar
-p = 1.7e-18) and **80–0** against the live model; clause 2 passes and clause 3 shows **no price** —
-every AEU and F1 cell level or slightly up. ⚠ The arm reads the MARKED pool exactly as well as the
-unmarked one, so the marks became *invisible* rather than tolerated, and ⚠ transfer to a **real
-printed** staccato is **unmeasured** (no labelled real strip carries one). ✅ **The open disposition is
-taken**: it ships. The two-variable objection is answered rather than waved away — clause 3 measured
-no price, neither flag is an experiment, and the arm keeps its **own** paired instrument, so the
-staccato claim stays attributable whatever else moved.
+⭐ **THE STACCATO ARM PASSED, AND ITS FLAG NOW RIDES THE FINAL RENDER.** False-dot rate **72.7% →
+0.0%**, paired **60–0** against its training control (exact McNemar p = 1.7e-18) and **80–0** against
+the live model; clause 2 passes, clause 3 shows **no price**. ✅ It ships, and it keeps its **own**
+paired instrument, so the claim stays attributable whatever else moved. ⚠ The marks became
+*invisible* rather than tolerated, and ⚠ transfer to a **real printed** staccato is **unmeasured**.
 [rung3/staccato-arm.md](rung3/staccato-arm.md) · [METRICS-UNSEEN.md](METRICS-UNSEEN.md).
 
 ⭐ **THE DOTTED (USUL) BARLINE IS PROMOTED INTO THAT RENDER, DRAWN LABEL-FREE.** The owner found it by
@@ -231,7 +227,7 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 |---|---|---|---|
 | 1 | read `examv3-full`, all **139** rows | 96 of them are exam gold **no human has read**, and v2's audit corrected **51%** of comparable labels | B0 |
 | 2 | the **27 `gold_conflict`** rows | a hand correction and a fresh derivation disagree on the same music | B0 |
-| 3 | **re-emit the training pools onto the current crops** | training is the LAST pool on the retired slicer — 89% of labels carry, no labelling | B8 |
+| 3 | **re-emit the training pools onto the current crops** — gate on an independent model, hint from `round2-stage2-best` | training is the LAST pool on the retired slicer — 89% of labels carry, no labelling | B8 |
 | 4 | **measure the 59-id budget** | a script; it costs the exam 153 strips and 3 whole pages today | B9 |
 | 5 | the rest of `examv3`, **page-complete** | the primary is per page, so a half-labelled page under-counts itself | B0 |
 | 6 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
@@ -355,10 +351,14 @@ rather than what can be concluded from it. [RISKS.md](RISKS.md) ·
    close. ⭐ **Cost measured: 2,064 of 2,330 labels (89%) carry** by measure span — `strips_r1` 404/421,
    `strips_nota` 1,554/1,740, `strips_tup` 106/169 — **no new labelling**. ⚠ Re-emitting rewrites the
    manifests the promoted verdicts hang off, so give it its own `--out` and look at what moved first.
-   ⚠ Label noise on pitch/duration is still the live problem B2 attacks; this does not replace it. ⚠ **Related and cheap**: audit 100 crops from the *current*
-   slicer before pouring more hours into labelling — every "the slicer throws too much away" number we
-   have (33% unusable, 13,975 dropped, 24% stale pages) is from the old code
-   ([BACKLOG.md](BACKLOG.md) item 8).
+   ⚠ Label noise on pitch/duration is still the live problem B2 attacks; this does not replace it.
+   ⭐ **TWO MODELS, TWO JOBS (owner, 2026-08-21).** The **hint** — the `decoded` column, which the edit
+   box mostly copies — comes from **`round2-stage2-best`**, so the rows that do not carry cost fewer
+   keystrokes. The **gate** — the `nd` check, the only independent test that a crop holds the music its
+   label claims — stays on a model that never trained on these pools, because stage 2 oversampled them
+   9× and a referee holding the answer key waves through the span errors this item exists to fix.
+   ⛔ **The exam gets neither**: not re-emitted, hint stays on the neutral July model
+   ([DECISIONS.md](DECISIONS.md)). ⚠ Also owed: audit 100 current-slicer crops (BACKLOG item 8).
 
 ⚠ **The musical-form lead is DEAD** (owner retest, 2026-08-17) and must not be re-derived
 ([log/superseded.md](log/superseded.md)). ⚠ **A fourth realism arm does not follow from three near

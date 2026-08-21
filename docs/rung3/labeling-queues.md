@@ -295,8 +295,10 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
 2. ✅ **The 27 `gold_conflict` rows — DONE 2026-08-21: 14 `ok`, 13 `fix`.** The fresh derivation won
    more often than the carried gold, and 3 more signature bugs fell out of the 13 fixes
    ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
-3. ⏭ **The remaining 636, PAGE-COMPLETE** — 158 carry a suggestion, 329 have no label at all, and
-   **64 pages are still open**. The primary counts corrections *per page*, so a half-labelled page
+3. **The remaining 636, PAGE-COMPLETE** — 158 carry a suggestion, 329 have no label at all, and
+   **64 pages are still open**. ⚠ **Not the next thing to do**: the training re-emit (B8) sits between
+   this and the two rows above, because it is the one open item that damages the *model* rather than
+   what can be concluded from it, and it costs no labelling ([../STATUS.md](../STATUS.md)). The primary counts corrections *per page*, so a half-labelled page
    under-counts its own errors — grading it would be worse than skipping it. Stopping early should
    cost whole pages, never half ones.
 

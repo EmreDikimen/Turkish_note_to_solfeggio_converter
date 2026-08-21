@@ -226,9 +226,9 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 |---|---|---|---|
 | 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
 | 2 | ✅ **DONE 2026-08-21** — all 27 `gold_conflict` rows | **14 ok / 13 fix**; the fresh derivation mostly won, and **3 more signature bugs** fell out | B0 |
-| 3 | **re-emit the training pools onto the current crops**, all of it on `round2-stage2-best` | the last pool on the retired slicer, and the weak referee drops **10,695** strips on row alignment | B8 |
+| 3 | ⏭ **NEXT** — **re-emit the training pools onto the current crops**, all of it on `round2-stage2-best` | the last pool on the retired slicer, and the weak referee drops **10,695** strips on row alignment | B8 |
 | 4 | **measure the 59-id budget** | a script; it costs the exam 153 strips and 3 whole pages today | B9 |
-| 5 | ⏭ **NEXT for a person** — the remaining **636** `examv3` rows, **page-complete** | the primary is per page, so a half-labelled page under-counts itself; 64 pages still open | B0 |
+| 5 | the remaining **636** `examv3` rows, **page-complete** | the primary is per page, so a half-labelled page under-counts itself; 64 pages still open | B0 |
 | 6 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
 
 ⚠ **Only B0 gates the read, but step 3 gates the MODEL** — it is the one item that damages the model
@@ -240,15 +240,15 @@ rather than what can be concluded from it. [RISKS.md](RISKS.md) ·
    ⏭ **636 remain over 64 pages** — 158 carrying a suggestion, 329 with no label at all, where the
    verdict is against the picture. **Label PAGE-COMPLETE**: the primary counts corrections per page, so
    a half-labelled page under-counts its own errors and grading it is worse than skipping it.
+   ⚠ **This is step 5, not the next step** — B8's re-emit comes first, because it is the one item that
+   damages the MODEL rather than what can be concluded from it, and it needs no labelling.
    ⚠ **Crops live in `data/real/strips_examv3`**, so `promote_labels.py` needs
    `--strips-root data/real/strips_examv3` — the default root holds the same filenames with the
    retired slicer's pixels. ⚠ **The ceiling is 64 pages**: 3 drop every candidate as `split_wide` /
    `over_budget`, which B9 would buy back.
-   ⚠ **The viewer had three bugs on exactly the `gold_conflict` rows, found by the owner and fixed
-   2026-08-21**: they were built with an empty decode though the page's `_decode.json` had it, a
-   pending suggestion was never drawn, and **`ok` posted that invisible suggestion** — 12 rows stored
-   text that was never on screen. Exam gold was never at risk (`promote_labels` reads `label` for an
-   `ok` row); the strings are cleared and the 27 decodes backfilled.
+   ⚠ **The viewer had three bugs on the `gold_conflict` rows, found by the owner and FIXED 2026-08-21**
+   — no decode, an invisible suggestion, and **`ok` saving it**; repaired in place, exam gold never at
+   risk ([rung3/labeling-queues.md](rung3/labeling-queues.md)).
    ⏭ **Two things must still happen before the read**: re-score `round2-stage2-best` on the rebuilt
    exam, and settle what the signed 75% floor means on a harder instrument.
    [rung3/labeling-queues.md](rung3/labeling-queues.md) · [rung3/exam.md](rung3/exam.md).
@@ -342,8 +342,8 @@ rather than what can be concluded from it. [RISKS.md](RISKS.md) ·
    split** — a piece outside `split_v4.json` is dropped from training in silence. ⚠ It also changes
    which real strips are val-side, so `_realval_v2` and `_tupletval` must be re-checked, not assumed.
 
-**B8. ⏭ RE-EMIT THE TRAINING POOLS ONTO THE CURRENT CROPS — step 3 above, and it belongs BEFORE the
-   final render.** ⭐ **Re-framed 2026-08-21**: this was a question about *volume* ("more real strips"
+**B8. ⏭ THE NEXT ACTION — RE-EMIT THE TRAINING POOLS ONTO THE CURRENT CROPS. Step 3 above, and it
+   belongs BEFORE the final render.** ⭐ **Re-framed 2026-08-21**: this was a question about *volume* ("more real strips"
    — unpersuasive at 2,330 accepted). It is now a **train/test mismatch**. The exam is rebuilt on the
    current slicer and `_realval_v2` was already on it, so `strips_nota` / `strips_r1` / `strips_tup`
    are the **only** pools left on retired crops: the model would learn real-page appearance from crops

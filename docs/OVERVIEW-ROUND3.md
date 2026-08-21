@@ -230,16 +230,27 @@ Details: [rung3/tuplets.md](rung3/tuplets.md).
 
 ## When we train the model again, and what happens after
 
-"Training" means showing the model hundreds of thousands of practice pictures, each with the correct
-answer beside it, and letting it adjust itself until it reads them well. One run takes **1 to 4 hours**
-on a rented Google computer and costs a few dollars of credit. The computer time is cheap. The
-expensive part is deciding **what to change before each run**, because we can only learn one thing per
-run — change three things at once and a better score tells you nothing about which one did it. That
-has already happened to us twice.
+"Training" means showing the model hundreds of thousands of practice pictures with the correct answer
+beside each one, until it reads them well. A run takes **1 to 4 hours** on a rented Google computer
+and costs a few dollars. The computer time is cheap; the expensive part is deciding **what to change
+before each run**, because changing three things at once means a better score tells you nothing about
+which one did it. That has happened to us twice.
 
-**The practice runs are finished. One job is yours and one decision is yours** — correcting answer
-keys in the `batch3` tab, and telling us whether the short-note dots go into the final drawing (see
-just below the table). **All the practice runs have now been read:**
+**The practice runs are finished, and on 21 August we checked the plan for weak points. Six were
+found, and this is the order to fix them in:**
+
+1. Read the **`examv3-full`** tab, all 139 strips: 96 are answer keys **nobody has ever looked at**,
+   and last time half of that kind were wrong. A wrong answer key invents mistakes the model never made.
+2. Read the **27 "disagree"** strips, where your old answer and the computer's new one differ.
+3. **Re-cut the practice pictures too** — the exam uses today's cutting program and they still use the
+   old one, and **89 of every 100 answer keys move across by themselves**, so it costs no marking.
+4. **Measure the length limit** (the reader stops after 59 symbols): one small program, and it is why
+   3 exam pages and 153 strips are thrown away today.
+5. Mark the rest of `examv3`, **finishing whole pages**. The score counts mistakes per page, so a
+   half-marked page under-counts itself.
+6. Decide what the pass mark means on the harder exam, then draw, train, read the exam **once**.
+
+**All the practice runs have now been read:**
 
 | # | The run | Needs a redraw? | Where it stands |
 |---|---|---|---|
@@ -248,32 +259,23 @@ just below the table). **All the practice runs have now been read:**
 | 2 | Short-note dots — the model read "play it short" as "make it longer" 72.7% of the time, because every dot it had ever seen meant longer | yes | ✅ **run 20 August, and it WORKED — 72.7% → 0%** |
 | 3 | The final model — whatever won above, plus your corrected answer keys | — | ⏭ **next.** Everything it was waiting on was decided on 20 August |
 
-⭐ **The short-note-dots run is the first thing we have tried in Round 3 that actually worked**, and
-it is worth knowing why. The three that came back empty all asked the model to read something **it
-already knew** from slightly more realistic-looking practice pictures. This one showed it a mark it
-had **never seen even once** — we had never drawn a short-note dot, not in any of the 40,826 practice
-pictures. A **gap in what it has been shown** is a different kind of problem from *pictures that look
-a bit wrong*, and only the first kind responded.
+⭐ **The short-note-dots run is the first thing in Round 3 that actually worked**, and why matters: the
+three empty ones asked the model to read something **it already knew** from more realistic-looking
+pictures, while this one showed it a mark it had **never seen once** in 40,826 pictures. A gap in what
+it has been shown is a different problem from pictures that look a bit wrong; only the first responded.
 
-How well it worked: on the test pictures that carry the mark, it now gets the length wrong **0 times
-out of 110**, down from 80 out of 110. It also did not break anything to get there — the real dots
-that genuinely *do* mean "longer" are still read just as well as before, and the note-name accuracy
-did not drop. Best of all, it now reads a page **with** these marks exactly as well as the same page
-**without** them: the marks stopped confusing it entirely rather than merely confusing it less.
+How well it worked: on the test pictures carrying the mark it now gets the length wrong **0 times out
+of 110**, down from 80. Nothing broke to get there — real "longer" dots and note names are unchanged —
+and it now reads a page **with** the marks exactly as well as one without.
 
-⚠ **One honest limit, and it is not small.** We tested this on **our own drawn version** of the mark.
-We do not own a single hand-checked real page that carries one, so we cannot yet prove the model
-reads a *printed* short-note dot from a real edition. It is the same gap we have with the third
-triplet shape, and the same fix: find real pages that use it.
+⚠ **One honest limit, and it is not small.** We tested this on **our own drawn version** of the mark —
+we own no hand-checked real page carrying one, so we cannot yet prove the model reads a *printed* one.
+Same gap as the third triplet shape, same fix: find real pages that use it.
 
-✅ **DECIDED 20 August: the short-note dots GO IN.** The worry was that the final drawing already
-carries the new third triplet shape, so turning on two new things at once would leave us unable to say
-which one did what. Three things answered it. The run **measured no cost** — every accuracy number
-came out level or slightly up, so nothing is being traded blind. Neither of the two is an *experiment*:
-the triplet shape is there because we measured real printed pages, and the dots are there because the
-run passed. And the dots keep **their own separate test**, so that particular result stays readable
-whatever else changes. What we genuinely give up: if the final model moves overall, we cannot say which
-switch moved it — and that was already true, because the exam cannot resolve a difference that small.
+✅ **DECIDED 20 August: the short-note dots GO IN.** The worry — two new things at once — was answered
+three ways: the run **measured no cost**, neither change is an experiment (the triplet shape rests on
+measured real pages, the dots on a passed run), and the dots keep **their own separate test**. What we
+give up: if the final model moves overall we cannot say which switch moved it, which was already true.
 
 ⭐ **AND A THIRD THING GOES IN, which you found yourself while labelling.** Turkish editions print a
 **dotted bar line** to mark the beats of the usul inside a bar. We have never drawn one — not once in
@@ -281,9 +283,8 @@ switch moved it — and that was already true, because the exam cannot resolve a
 for the closest thing it knows: a **repeat sign**, which is also a line with dots. It is the same kind
 of problem as the short-note dots, and that now means something proven rather than argued.
 
-How big it is: **117 of 1,499** pictures in your current batch produce a false repeat sign, and about
-**one correction in five that you are typing right now is deleting one**. You are fixing by hand
-something one drawing change removes at the source.
+How big it is: **117 of 1,499** pictures in your batch produce a false repeat sign, and about **one
+correction in five you type is deleting one** — hand-fixing what one drawing change removes at source.
 
 ⚠ **We draw it, but we do NOT give it a name.** That sounds odd, so here is the reason. If we gave it
 a name, every answer key we already own would become wrong — none of them mentions a dotted bar line,
@@ -312,11 +313,45 @@ were never labelled. They are page 2 of a piece whose page 1 was done, and they 
 the disk unused.
 
 ⭐ **So the exam grows, and the growth is free.** Those 21 pages belong to pieces the model is
-**already** forbidden to train on, so labelling them takes nothing away from the model. **46 → 67
-pages, about 150 strips, roughly 120–130 needing your eyes.** For comparison, `batch3` has about 1,385
-rows still open — so this is about a tenth of the labelling you are already committed to, and it is
-the tenth that decides whether the exam result means anything. ⏭ **If you only have one evening, spend
-it here.**
+**already** forbidden to train on, so labelling them takes nothing away from the model.
+
+✅ **The whole exam is being made again, and the list is ready.** The tab is called **`examv3`** and
+it holds **663 strips** over 64 of the 67 pages. A second tab, `examv3-full`, holds **139** more that
+the computer marked by itself.
+
+⛔ **What you caught.** The first list used the pictures already on the disk. You opened one and saw it
+at once: **265 pixels wide**, one bar, the left note sliced in half and the beams — the lines that say
+how long a note lasts — outside the frame. Not today's cutting program: that was **fixed a month ago,
+and no exam page was ever cut again with the fixed one**, which the project had written down and
+walked past.
+
+⭐ **So you chose to make the exam from scratch, and that was right.** All 67 pages were cut again
+with today's program, into their own folder, so the old pictures could not be touched.
+
+⭐ **Your old marking was not thrown away.** A mark says "these are the notes in these bars", so it
+still fits any new picture holding the same bars. Of your 326 marked strips:
+
+| what happened | strips | meaning |
+|---|---|---|
+| **agree** | **43** | the computer's fresh reading matches your old mark exactly — nothing for you to do |
+| **suggested** | 151 | the strip is in the list anyway, and your old text is already in the box |
+| **disagree** | 27 | the computer read it differently from you — **read these first** |
+| lost | 105 | no new picture holds those bars any more |
+
+So 221 of 326 came back, not 11. The page-by-page check said "45 of 46 pages lose their marks";
+counting marks instead of pages, the loss is about a third.
+
+⚠ **A suggestion is not an answer.** The text sits in the box waiting for you to look at the picture
+and press the key. A mark typed against a cut-off picture is a reading of a cut-off picture.
+
+⚠ **Three of the 67 pages still give nothing** — every strip on them is too wide or too long for the
+reader — so the exam will end at **64** pages.
+
+⚠ **One thing to decide before the exam is read.** The new exam looks at **about 12 strips a page**
+where the old one looked at about 7. More of each page is being checked, so each page will collect
+more mistakes even from an equally good model — the exam is **harder now**. That is fairer to the
+music, but the pass mark of "3 pages in 4" was chosen against the easier exam. The comparison itself
+stays honest, because the old model is re-measured on the same new exam.
 
 ⚠ **Why we stop at 67 and do not keep going.** A small test wobbles. At 46 pages the wobble is about
 ±12 points — a model truly at 72 can score 78, and one truly at 78 can score 72. At 67 pages it is

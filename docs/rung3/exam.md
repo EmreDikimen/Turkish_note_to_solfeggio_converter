@@ -80,32 +80,43 @@ root of the work.
 before its interval clears the floor is ~86% at 46 pages and still ~81% at 200. No affordable exam
 size makes a near-boundary call crisp, so the honest instrument is the interval, not a bigger n.
 
-**Cost.** ~7.1 strips a page ⇒ **~150 strips**, of which (scaling the v2 emit's 63-accepted /
+**Cost, as estimated before the emit ran** (⚠ the emit came in at 297 rows — see the block below and
+[../METRICS-EXAM.md](../METRICS-EXAM.md); the estimate is kept because its *reasoning* is what set the
+bound). ~7.1 strips a page ⇒ **~150 strips**, of which (scaling the v2 emit's 63-accepted /
 329-review split) roughly **120–130 need a human**. For scale: `batch3` has ~1,385 rows still open,
 so exam v3 is about **a tenth** of the labelling already committed — and unlike `batch3` it decides
 whether the one-shot read can be interpreted at all. ⏭ **It outranks `batch3` for a scarce evening.**
 
-**The three rules it must not break.**
+⭐ **THE EXAM IS BEING REBUILT ON THE CURRENT SLICER — owner, 2026-08-21.** *"I can make it from
+scratch, it is okey. Just exam need to be okey."* All 45 pieces / 67 pages were re-sliced into
+`data/real/strips_examv3` and re-emitted. `examv3` in the review UI now holds **663 rows over 64 of
+the 67 pages**, with **139** strips the emitter labelled by itself. Numbers, and what happened to the
+frozen gold: [../METRICS-EXAM.md](../METRICS-EXAM.md). How to run it:
+[labeling-queues.md](labeling-queues.md).
 
-1. **Grow BEFORE the read, never after.** Choosing the instrument after seeing the number is the one
-   option that is not available ([round3-criteria.md](round3-criteria.md) §4).
-2. ⚠ **Re-score `round2-stage2-best` on the grown exam.** The signed floors in
-   [round3-criteria.md](round3-criteria.md) §1 were measured on the 46-page / 326-strip exam; if the
-   exam grows and the baseline column does not, the comparison stops being apples-to-apples. It is
-   one CPU decode run, not a retrain — and it is the same rule this file already applied when the
-   exam grew for Round 1 (Step 2 below, *"Re-take the baseline"*).
-3. **The floors themselves are not re-opened.** Growing the exam changes the *precision* of the
-   measurement, not the bar.
+**Why a rebuild rather than the planned growth.** The growth queue was cut on the crops already on
+disk and the owner opened its first strip: a 265 px crop holding one measure, its notehead cut by the
+frame and its beams outside it. **No exam page had ever been re-sliced** — every crop was 2026-07-15..17
+output, four weeks after the slicer was overhauled, which the 2026-07-28 decision row had already
+written down as a warning. Growing an instrument that measures a retired slicer is not worth doing.
 
-⚠ **Not part of this growth: chasing the low-n accidental classes.** `buyukFlat` has 0 real gold and
-`buyukSharp` 3; those glyphs are rare in real print and more pages barely move them. They are
-no-regression clauses in Round 3, not targets, and stay low-n with their n printed.
+**The frozen gold was not thrown away.** A label describes the music of an exact measure span, so it
+survives on any new crop holding that span: **43 labels agreed** with the fresh SymbTr derivation and
+need no human at all, **178 came back as pending suggestions** (151 on rows already queued, 27 as
+`gold_conflict` where the two derivations disagree), and **105 were lost** — mostly re-packed into a
+differently-bounded window. `strips_exam_v2_clean/` is untouched and remains the record of what
+Round 2 was measured on.
 
-⏭ **A second, free growth may follow and needs no new page.** 282 candidate strips on the exam pages
-are dropped, 78 of them purely for exceeding the 59-id decoder budget. That budget is
-`generation_config.max_length = 60` inherited from the base weights — a setting, not an
-architectural limit — so measuring what fits at 90 or 120 ids may return those strips to the exam
-without labelling a single new page. Costed in [../BACKLOG.md](../BACKLOG.md).
+⚠ **THE REBUILT EXAM IS A HARDER INSTRUMENT, AND THE SIGNED FLOOR WAS SET ON THE OLD ONE.** It grades
+~12 candidate strips a page against the frozen exam's 7.1, so a page collects more edits at equal
+model quality and the primary ("pages needing ≤5 corrections") will read lower. Fairness is not
+affected — the `round2-stage2-best` re-score puts both models on the same set — but **what a 75%
+floor means does change**, and that is the owner's to settle before the read, not after it
+([round3-criteria.md](round3-criteria.md) §3b, §4).
+
+⏭ **Still true, and now the only remaining ceiling**: 3 of the 67 pages produce nothing at all —
+every candidate drops as `split_wide` or `over_budget` — so the exam tops out at **64 pages** until
+the 59-id decoder budget is measured ([../BACKLOG.md](../BACKLOG.md) item 7).
 
 ## Step 2 — Set the exam aside (before any training on real data)
 

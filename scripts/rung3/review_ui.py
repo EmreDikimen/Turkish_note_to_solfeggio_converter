@@ -17,6 +17,13 @@ into them (adding `verdict` / `corrected_label` columns on first write):
                                            must be labeled by hand — edit starts from the
                                            model's decode; fix what the model misread.
 
+Exam growth (2026-08-20, docs/rung3/exam.md — the queue that blocks the Round-3 read):
+  examv3        strips_exam_v3/emit_review.csv  663 rows — the WHOLE exam, re-cut on the current
+                                                slicer (2026-08-21). EXAM GOLD, never training.
+                                                Crops come from data/real/strips_examv3.
+  examv3-full   strips_exam_v3/full_audit.csv   the 139 strips the emitter labelled by itself, 43 of
+                                                them agreeing with the frozen exam's own gold.
+
 Two-source stage queues (2026-07-15; strips_exam ones above are SUPERSEDED by v2):
   nota-audit    strips_nota/emit_audit.csv     69-strip sample of the 1,262 nota accepts —
                                                the trust gate on the labeler-based emitter.
@@ -72,6 +79,35 @@ ADDED_TOKENS = [
 ACCIDENTALS = set(ADDED_TOKENS[:9])
 
 QUEUES = {
+    # EXAM v3 (2026-08-21) — THE WHOLE EXAM, RE-CUT. 663 rows over 64 of the 67 exam pages, and the
+    # only labelling that BLOCKS the Round-3 read. The owner chose to rebuild rather than grow
+    # ("I can make it from scratch, it is okey. Just exam need to be okey") once it was measured that
+    # the exam had NEVER been re-sliced: every one of its crops was 2026-07-15..17 output, four weeks
+    # after page_to_strips.py was overhauled. Cut by scripts/rung3/build_exam_v3_queue.py --rebuild.
+    # ⚠ EXAM GOLD, NOT TRAINING. Every row carries exam=1 and promotes only through
+    # `promote_labels.py --dir data/real/rung3/strips_exam_v3 --exam --strips-root
+    # data/real/strips_examv3` — the default strips root holds these very filenames with the RETIRED
+    # slicer's pixels.
+    # ⚠ 185 rows arrive with a PENDING SUGGESTION in corrected_label: the frozen exam's own gold,
+    # moved onto the crop holding the same music (gold_carry.csv), or a correction typed against the
+    # superseded first cut (carried_from_oldgeom.csv). A suggestion is not a verdict — press `e` and
+    # it is already in the box, to confirm against the new picture.
+    # ⚠ `gold_conflict` (27 rows) means the re-emitted label DIFFERS from the frozen gold on the same
+    # music. Those are where a hand correction and a fresh SymbTr derivation disagree; read them.
+    # ⚠ Most rows carry NO label (row_unaligned, 329 of 663) — the edit box starts from the model's
+    # decode and the verdict is against the PICTURE, exactly like the realval/batch queues.
+    # ⚠ 3 of the 67 pages produce nothing at all: every candidate on them drops as split_wide or
+    # over_budget, so the exam tops out at 64 pages until the 59-id budget is measured
+    # (docs/BACKLOG.md item 7).
+    "examv3": "data/real/rung3/strips_exam_v3/emit_review.csv",
+    # the 139 strips the emitter labelled BY ITSELF across the whole re-cut exam (43 of them agree
+    # token-for-token with the frozen exam's gold; 96 have no human check at all). They enter the exam
+    # without a human unless someone reads them — v2 sampled 2 of 63, and a later audit corrected 32
+    # of its 63 auto-accepts (51%) — so the sidecar puts every one in
+    # front of you. Generated on first run from strips_exam_v3/manifest.jsonl; the manifest is
+    # never written by this tool.
+    "examv3-full": "data/real/rung3/strips_exam_v3/full_audit.csv",
+    "examv3-audit": "data/real/rung3/strips_exam_v3/emit_audit.csv",
     # BATCH 3 (2026-08-19) — THE LIVE ONE. 54 pages / 1,499 strips from the SCANNED tier: the exact
     # inverse of batch 2's `--clean`, over the same born-digital set, so the tier stays a file-format
     # fact. Two measurements moved the labelling here (docs/METRICS-CORPUS.md): 93% of exam pages are
@@ -156,6 +192,7 @@ QUEUES = {
 
 # full-queue id -> (manifest dir, sampled-audit queue whose verdicts are carried over)
 FULL_AUDITS = {
+    "examv3-full": ("data/real/rung3/strips_exam_v3", "examv3-audit"),
     "r1-full": ("data/real/rung3/strips_r1", "r1-audit"),
     "nota-full": ("data/real/rung3/strips_nota", "nota-audit"),
     "examv2-full": ("data/real/rung3/strips_exam_v2", "examv2-audit"),
@@ -174,6 +211,13 @@ IMG_ROOTS = ["data/real/strips",
 # render the OLD crops from data/real/strips — every row, not just the colliding ones — because
 # that root is searched first. A queue must resolve against the crops it was actually built from.
 QUEUE_IMG_ROOTS = {
+    # exam v3 has its OWN root: the 21 pages were re-sliced with today's slicer on 2026-08-20, into
+    # a root of their own so the FROZEN exam's crops (hardlinked out of data/real/strips) could not
+    # be rewritten in place. ⚠ Do not point these at data/real/strips — the same filenames exist
+    # there with the retired slicer's pixels.
+    "examv3": ["data/real/strips_examv3"],
+    "examv3-full": ["data/real/strips_examv3"],
+    "examv3-audit": ["data/real/strips_examv3"],
     "realval-hard-v2": ["data/real/strips_v2"],
     "reslice-all": ["data/real/strips_v2"],
     "batch1": ["data/real/strips_v2"],

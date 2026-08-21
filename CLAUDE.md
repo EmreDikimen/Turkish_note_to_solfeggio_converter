@@ -138,6 +138,10 @@ Cloud Run from localhost.
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --rebuild
+    # the exam, RE-CUT on today's slicer (owner, 2026-08-21). `--plan` prints the emit command; that
+    # emit must write to --strips-root data/real/strips_examv3 and NEVER to data/real/strips, which
+    # the frozen exam hardlinks from — re-slicing there rewrites the pixels its gold describes.
 .venv-ml/bin/python scripts/rung3/staccato_falsedot_score.py --checkpoint <ckpt> [--compare <ckpt>]
     # Lever 6's PRIMARY: the staccato-triggered false-dot rate on the two paired 110-strip pools.
     # The augmentation dot is a SUFFIX inside a duration token, not a token, so eval_omr.py has no
@@ -335,6 +339,10 @@ Full guide — what to update after a session, and why each rule exists:
 
 ```
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
+                      crop roots, NEVER interchangeable — a strip filename survives a re-slice and
+                      its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
+                      and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
+                      re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
 data/synthetic/       rendered strips — strips_v4 is current, older sets kept (v3 = the A/B control)
 data/checkpoints/     round1-best (+ -onnx int8, the live runtime), earlier rung2*/rung22* runs
 data/split.json       piece-level train/val split (strips_v4 uses data/split_v4.json, v3 split_v3)

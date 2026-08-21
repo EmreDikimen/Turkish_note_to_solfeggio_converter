@@ -35,39 +35,44 @@ consistent with everything on disk and costs **zero new labelling**. The `\dotte
 Round-4 question. ⏭ Probe the real pools for the print frequency before rendering — 7.8% is a
 statistic about the model's guesses. [BACKLOG.md](BACKLOG.md) item 5 · [METRICS-UNSEEN.md](METRICS-UNSEEN.md).
 
-⭐ **EXAM v3 IS DECIDED AND BOUNDED: label the 21 pages we ALREADY OWN, then stop at 67.** A census
-found the exam holds **45 pieces / 67 pages, all on disk — and grades only 46 of them**. Those 21
-pages are free in training terms (their pieces are already exam-only), which no further page is.
-⚠ **The number that set the bound is not the error bar but what it takes to DEMONSTRATE a pass**:
-against a 75% floor a model must *measure* ~86% at 46 pages and still ~81% at 200, so no affordable
-exam makes a near-boundary call crisp. Both of the power note's honest responses are therefore taken —
-grow **before** the read, **and** report the interval beside the result. ⚠ **Binding side condition:
-re-score `round2-stage2-best` on the grown exam**, or the signed floors stop comparing like with like
-(one CPU decode, not a retrain). The floors themselves are **not** re-opened.
-[rung3/exam.md](rung3/exam.md) · [METRICS-EXAM.md](METRICS-EXAM.md) ·
-[rung3/round3-criteria.md](rung3/round3-criteria.md) §3b.
+⭐ **THE EXAM IS BEING REBUILT ON THE CURRENT SLICER, AND THAT IS THE LIVE JOB (owner, 2026-08-21).**
+*"I can make it from scratch, it is okey. Just exam need to be okey."* All 45 pieces / 67 pages were
+re-sliced into `data/real/strips_examv3` and re-emitted; `examv3` in `review_ui.py` holds **663 rows
+over 64 of the 67 pages**, plus **139** strips the emitter labelled by itself. The trigger was one
+strip: the owner opened the growth queue and found a **265 px crop holding one measure**, notehead cut
+by the frame, beams outside it. Cause — **no exam page had ever been re-sliced** (0 of 67 under
+`data/real/strips_v2`), which [DECISIONS.md](DECISIONS.md) warned about on 2026-07-28 and nobody
+carried into the exam-v3 plan. [rung3/exam.md](rung3/exam.md) · [METRICS-EXAM.md](METRICS-EXAM.md).
 
-⚠ **AND THE EXAM THROWS AWAY 46% OF ITS OWN STRIPS — 326 graded against 282 dropped**, the drops
-being `split_wide` (203) and `over_budget` (78), i.e. the **wide and the dense** ones. So the exam
-reads each page on its easier material. It does not move the floors (the bias runs the same way as the
-declared matched-upper-bound optimism) but it must be quoted with the result, and it is a second
-reason to measure the decoder budget. [METRICS-EXAM.md](METRICS-EXAM.md).
+⭐ **THE FROZEN GOLD LARGELY MOVED WITH ITS MUSIC — 221 of 326 labels, not 11.** A label describes an
+exact measure span, so it survives on any new crop holding that span: **43 agree** with the fresh
+SymbTr derivation and need no human, **178 come back as pending suggestions** (27 of them
+`gold_conflict`, where hand correction and fresh derivation disagree), **105 are lost**. The
+page-level staleness check said "45 of 46 pages lose their labels"; at label level the loss is 32%.
+⚠ A suggestion is **not** a verdict — it opens in the edit box and is confirmed against the new
+picture. `strips_exam_v2_clean/` is untouched and stays the record of what Round 2 was measured on.
 
-⭐ **THE 59-id BUDGET IS A SETTING, NOT A LIMIT — and measuring it is the best-value item on the
-board.** `MAX_IDS = 59` exists because the base weights' `generation_config.max_length` is **60**.
-Raising it is a config change plus a retrain-from-base, which the final render does anyway. It would
-pay **three times**, all already measured: 78 dropped exam strips, the tuplet-dense repertoire
-(39.4% of triplet-bearing *single* measures blow it, 80.5% of 2-measure windows, 92.9% of 3-measure —
-which is *why* sirto/longa/saz semaisi are unmeasured), and 2,108 over-budget training drops.
-⏭ **The step is a MEASUREMENT — how many drops fit at 90 and at 120 ids. One script, no GPU, no
-render.** ⛔ Do **not** raise it inside the final render: the cost side is unpriced and it would move
-every pool, every manifest and the shipped latency at once. [BACKLOG.md](BACKLOG.md) item 7.
+⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST, AND THAT NEEDS SETTLING
+BEFORE THE READ.** It grades ~12 candidate strips a page against 7.1, so a page collects more edits at
+equal model quality and the primary ("pages needing ≤5 corrections") reads lower. Fairness is intact —
+the `round2-stage2-best` re-score puts both models on the same set — but **what 75% means changes**.
+[rung3/round3-criteria.md](rung3/round3-criteria.md) §3b · [rung3/exam.md](rung3/exam.md).
 
-⭐ **`batch3` IS THE BEST-PAYING QUEUE THIS PROJECT HAS RUN: 114 of 1,499 judged, 66 fix / 39 ok /
-9 bad — a ~58% fix rate** against ~30% in the scanned nota pool and ~12% in `batch2`. The bad rate is
-7.9%, well under `realval-hard`'s 33%, so no cap is needed and the tier re-aim was right. ⚠ **But exam
-v3 outranks it for a scarce evening** — ~120–130 rows that decide whether the one-shot read can be
-interpreted at all, against ~1,385 rows here that improve training.
+⚠ **THE EXAM STILL THROWS AWAY THE WIDE AND THE DENSE — 567 of 1,369 candidates (41%)**, so it reads
+each page on its easier material. Quote it with the result; it is also a second reason to measure the
+decoder budget. [METRICS-EXAM.md](METRICS-EXAM.md).
+
+⭐ **THE 59-id BUDGET IS A SETTING, NOT A LIMIT — and measuring it is the best-value script on the
+board.** It pays **three times**, all measured: **153 dropped exam strips and the 3 pages that cap the
+exam at 64**, the tuplet-dense repertoire (39.4% / 80.5% / 92.9% of 1-, 2- and 3-measure triplet
+windows blow it — *why* sirto/longa/saz semaisi are unmeasured), and 2,108 over-budget training drops.
+⏭ **The step is a MEASUREMENT**: how many drops fit at 90 and at 120 ids. No GPU, no render.
+⛔ Do **not** raise it inside the final render — the cost side is unpriced. [BACKLOG.md](BACKLOG.md) item 7.
+
+⭐ **`batch3` IS THE BEST-PAYING QUEUE THIS PROJECT HAS RUN: 114 of 1,499 judged, ~58% fix rate**
+against ~30% in the scanned nota pool and ~12% in `batch2`; bad rate 7.9%, so no cap is needed. ⚠ **But
+the exam outranks it for a scarce evening** — 663 rows that decide whether the one-shot read can be
+interpreted at all, against ~1,385 here that improve training.
 [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
 ⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected on
@@ -217,25 +222,39 @@ Still the **public-launch gate**, and runnable at any time — it shares no file
 runtime until a Round-3 model beats it.
 
 ⏭ **THE ARMS ARE DONE AND THE FINAL RENDER IS FULLY SPECIFIED (2026-08-20)** — every decision it was
-waiting on has been taken. Three things are left and **only B0 gates the read**: B0 (exam v3), B2 (the
-labelling) and B6 (render → train → the one-shot exam). B3, B4 and B5 are closed — null, dropped and
-**passed**.
+waiting on has been taken. B3, B4 and B5 are closed — null, dropped and **passed**.
 
-**B0. ⏭ EXAM v3 — LABEL THE 21 PAGES WE ALREADY OWN, THEN STOP AT 67. This is the highest-value
-   labelling on the board and it BLOCKS the exam read.** The exam holds 45 pieces / **67 pages, all on
-   disk**, and grades **46**. The unused 21 are free in training terms — their pieces are already
-   exam-only — which no further page is. **~150 strips, ~120–130 needing a human**, against ~1,385 rows
-   still open in `batch3`: about a tenth of the labelling already committed, and the only tenth that
-   decides whether the one-shot read can be interpreted.
-   ⚠ **Two things are binding, not optional.** Grow **before** the read (option 1 of the power note;
-   choosing the instrument afterwards is the one move that is never available), and **re-score
-   `round2-stage2-best` on the grown exam** so §1's baseline column still compares like with like —
-   one CPU decode, and it is a *precondition* of the read. The floors themselves do not move.
-   ⏭ Report the interval beside the result regardless (option 2, taken as well): ±10.4 pp at 67 pages.
-   ⛔ **Do not chase 113 or 200 pages** — precision improves as √n, and against a 75% floor a model
-   must *measure* ~86% at 46 pages and still ~81% at 200. The purchase is the interval, not the pages.
-   [rung3/exam.md](rung3/exam.md) · [METRICS-EXAM.md](METRICS-EXAM.md) ·
-   [rung3/round3-criteria.md](rung3/round3-criteria.md) §3b.
+⭐ **THE ORDER OF WORK, reviewed 2026-08-21 and accepted by the owner.** Steps 1, 3 and 4 need **no
+labelling at all** and remove the three biggest risks; `batch3` (B2) waits for none of them.
+
+| # | do this | why now | in |
+|---|---|---|---|
+| 1 | read `examv3-full`, all **139** rows | 96 of them are exam gold **no human has read**, and v2's audit corrected **51%** of comparable labels | B0 |
+| 2 | the **27 `gold_conflict`** rows | a hand correction and a fresh derivation disagree on the same music | B0 |
+| 3 | **re-emit the training pools onto the current crops** | training is the LAST pool on the retired slicer — 89% of labels carry, no labelling | B8 |
+| 4 | **measure the 59-id budget** | a script; it costs the exam 153 strips and 3 whole pages today | B9 |
+| 5 | the rest of `examv3`, **page-complete** | the primary is per page, so a half-labelled page under-counts itself | B0 |
+| 6 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
+
+⚠ **Only B0 gates the read, but step 3 gates the MODEL** — it is the one item that damages the model
+rather than what can be concluded from it. [RISKS.md](RISKS.md) ·
+[rung3/round3-criteria.md](rung3/round3-criteria.md) §3c.
+
+**B0. ⏭ THE EXAM REBUILD — LABEL `examv3`. Highest-value labelling on the board, and it BLOCKS the
+   read.** ✅ All 67 pages are re-sliced and re-emitted on the current slicer; **663 rows over 64
+   pages** are open in `review_ui.py`, with **139** strips the emitter labelled itself and **185 rows
+   arriving with text already in the edit box** (the frozen exam's gold, moved onto the crop holding
+   the same music). ⚠ Read the **27 `gold_conflict`** rows first — a hand correction and a fresh
+   derivation disagree there. ⚠ 329 rows carry no label at all; the verdict is against the picture.
+   ⚠ **Crops live in `data/real/strips_examv3`** — same filenames, retired pixels, in the default root
+   — so `promote_labels.py` needs `--strips-root data/real/strips_examv3`. ⚠ **The ceiling is now 64
+   pages**: 3 pages drop every candidate as `split_wide` / `over_budget`, which B9 would buy back.
+   ⏭ **Order inside this queue**: `examv3-full` first, then the 27 conflicts, then the rest
+   **page-complete** — the primary is per page, so a half-labelled page under-counts its own errors
+   and grading it would be worse than skipping it.
+   ⏭ **Two things must happen before the read**: re-score `round2-stage2-best` on the rebuilt exam,
+   and settle what the signed 75% floor means on a harder instrument.
+   [rung3/labeling-queues.md](rung3/labeling-queues.md) · [rung3/exam.md](rung3/exam.md).
 
 **B1. ✅ `batch3` IS CUT AND OPEN — 54 pages / 1,499 strips from the SCANNED tier** in `review_ui.py`
    (`batch3` tab, crop root `data/real/strips_v2`). **28 pages were excluded over four cut/check
@@ -278,8 +297,13 @@ labelling) and B6 (render → train → the one-shot exam). B3, B4 and B5 are cl
    `--concave-tuplet` (a per-piece coin on print evidence, no recall claim), `--staccato-noise` (the
    passed arm) and the new **label-free dotted (usul) barline**. ⛔ **Nothing else joins them** — in
    particular **not** a raised token budget (B9) and **not** the content work (B7).
-   ⏭ **Before rendering**: probe the real pools for how often print actually draws a dotted barline —
-   7.8% is a statistic about the model's guesses, not about print.
+   ⏭ **Before rendering**: how often does print actually draw a dotted barline? 7.8% is a statistic
+   about the model's guesses. ⭐ **Cheapest honest method (2026-08-21): count them while labelling
+   `examv3`** — ~660 real crops are about to pass in front of a person anyway.
+   ⏭ **Give the barline its own paired scorer**, cloned from `staccato_falsedot_score.py` (false
+   `\repstart` rate instead of false dots). Three flags in one render means a general movement is not
+   attributable; the staccato arm survives that because it kept its own instrument, and this makes two
+   of the three attributable instead of one.
    ⏭ **During training**: save **two** checkpoints, one under the current selector and one selected on
    a free-running real metric, and choose between them on `_realval_v2` **before** the exam
    ([BACKLOG.md](BACKLOG.md) item 3).
@@ -321,11 +345,17 @@ labelling) and B6 (render → train → the one-shot exam). B3, B4 and B5 are cl
    split** — a piece outside `split_v4.json` is dropped from training in silence. ⚠ It also changes
    which real strips are val-side, so `_realval_v2` and `_tupletval` must be re-checked, not assumed.
 
-**B8. Decide whether to re-emit the training pools from the new crops.** The re-slice is done; this is
-   the separate decision it unlocks, **not** a formality — re-emitting rewrites the manifests the
-   promoted verdicts hang off, so it needs its own `--out` and a look at what moved first. ⚠ "More
-   real strips" stays unpersuasive (2,330 accepted); **label noise on the axis Round 3 targets** is the
-   live problem, which is what B2 attacks. ⚠ **Related and cheap**: audit 100 crops from the *current*
+**B8. ⏭ RE-EMIT THE TRAINING POOLS ONTO THE CURRENT CROPS — step 3 above, and it belongs BEFORE the
+   final render.** ⭐ **Re-framed 2026-08-21**: this was a question about *volume* ("more real strips"
+   — unpersuasive at 2,330 accepted). It is now a **train/test mismatch**. The exam is rebuilt on the
+   current slicer and `_realval_v2` was already on it, so `strips_nota` / `strips_r1` / `strips_tup`
+   are the **only** pools left on retired crops: the model would learn real-page appearance from crops
+   the shipped slicer does not produce, then be selected *and* graded on crops it does. Lever 1
+   measured crop geometry as **causal** (+59%), so this is a domain gap of the kind the round exists to
+   close. ⭐ **Cost measured: 2,064 of 2,330 labels (89%) carry** by measure span — `strips_r1` 404/421,
+   `strips_nota` 1,554/1,740, `strips_tup` 106/169 — **no new labelling**. ⚠ Re-emitting rewrites the
+   manifests the promoted verdicts hang off, so give it its own `--out` and look at what moved first.
+   ⚠ Label noise on pitch/duration is still the live problem B2 attacks; this does not replace it. ⚠ **Related and cheap**: audit 100 crops from the *current*
    slicer before pouring more hours into labelling — every "the slicer throws too much away" number we
    have (33% unusable, 13,975 dropped, 24% stale pages) is from the old code
    ([BACKLOG.md](BACKLOG.md) item 8).

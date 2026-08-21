@@ -3,7 +3,7 @@
 purpose: the standing caveats — what is measured but fragile, what is NOT claimed, and the traps that survive the work that found them
 audience: anyone about to quote a number, believe a green check, or act on a result
 
-updated: 2026-08-17
+updated: 2026-08-21
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. The split
 is by genre: STATUS holds **current state and the next action** and nothing else; this file holds
@@ -14,8 +14,30 @@ Rule that produced most of this file: a number without its caveat gets quoted la
 solid. That has already happened once, when a 3-gold class swung a headline ~11 points.
 
 
+- **NEW (2026-08-21): the training pools are the last thing still on the RETIRED slicer.** The exam
+  was rebuilt on the current one and `_realval_v2` was already on it; `strips_nota` / `strips_r1` /
+  `strips_tup` — **2,330 real training strips** — were not. Until they are re-emitted, a Round-3 model
+  learns real-page appearance from crops the shipped slicer no longer produces, then is selected and
+  graded on crops it does. Round 3's own Lever 1 measured crop geometry as **causal**, so this is a
+  domain gap of the kind the round exists to close. Cost of fixing it is measured and low: **89% of
+  the labels carry** onto the new crops by measure span, with no new labelling
+  ([BACKLOG.md](BACKLOG.md) item 4).
+
+- **NEW (2026-08-21): 96 labels enter the rebuilt exam's gold without any human having read them.**
+  139 strips come straight from the emitter; 43 agree token-for-token with the frozen exam's hand-made
+  gold, the other 96 have no such check. The reference point is exam v2's own audit: of its 63
+  auto-accepted labels a human later corrected **32 (51%)**. They are the `examv3-full` tab, and
+  reading them is a precondition of the read
+  ([rung3/round3-criteria.md](rung3/round3-criteria.md) §3c).
+
+- **NEW (2026-08-21): the rebuilt exam is a harder instrument than the floors were signed against.**
+  ~12 candidate strips a page against 7.1, so the primary reads lower at equal model quality. The
+  baseline re-score keeps the comparison fair; what the absolute 75% *means* is an open owner
+  decision, and it must be settled before the read (§3c).
+
 - **NEW (2026-08-15): the primary Round-3 floor is measured on 46 pages, so its 95% interval is
-  roughly ±12 points.** A model truly at 72% can read 78% and vice versa. The criteria are signed and
+  roughly ±12 points.** ⚠ Superseded in its numbers by the rebuild — the exam is now 64 pages —
+  but not in its point. A model truly at 72% can read 78% and vice versa. The criteria are signed and
   are **not re-opened**; what is still open, and is the owner's call **before** the read, is whether
   to grow the exam first (v3 is already owed) or to read it as signed and report the interval beside
   the result. Choosing after seeing the number is the one option that is not available.

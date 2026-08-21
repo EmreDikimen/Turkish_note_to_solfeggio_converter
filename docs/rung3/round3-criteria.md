@@ -182,6 +182,52 @@ pairs the outcomes by gold occurrence and prints the exact p. Two consequences, 
 
 **The exam is not read for this A/B.** It is read once, later, on Round 3's final model, against §1.
 
+## 3c. ADDENDUM 2026-08-21 — the exam was REBUILT, and one question is open for the owner
+
+Same rule as §3b: written here, nothing in §1 or §2 edited. **This addendum contains the only
+Round-3 criteria question that is still open**, and it must be closed **before** the read.
+
+**What changed.** The exam is not merely grown, it is **re-cut**. Every one of its 67 pages was
+re-sliced with the current `page_to_strips.py` and re-emitted, because no exam page had ever been
+re-sliced — 46 of them were measuring a slicer no user gets ([exam.md](exam.md),
+[../DECISIONS.md](../DECISIONS.md) 2026-08-21). The frozen `strips_exam_v2_clean/` is untouched and
+remains the record of what Round 2's numbers were measured on.
+
+⚠ **The rebuilt exam is a HARDER instrument than the one §1's floors were signed against.** It grades
+about **12 candidate strips a page against the frozen exam's 7.1** — 802 of 1,369 candidates over 64
+pages, where v2 kept 326 of 608 over 46. A page measured on more of its own material collects more
+edits, so *at equal model quality* the primary ("pages needing ≤5 corrections") reads **lower** on the
+new exam than on the old one. §3b's "a bigger exam changes precision, not the bar" was true of growth;
+it is **not** true of a re-cut that also changes what a page is graded on.
+
+⭐ **Fairness is not at stake — interpretability is.** §3b's precondition 2 already re-scores
+`round2-stage2-best` on the new instrument, so every baseline/floor pair in §1 still refers to one
+exam and the two models still face identical pages. What is unsettled is what the **absolute** 75%
+means once the instrument is harder.
+
+⏭ **The owner's call, to be taken before the read and recorded here.** The two honest readings:
+
+1. **Keep 75% as written.** The floor was signed as an absolute product statement — "3 pages in 4
+   need at most 5 corrections" — and a harder exam simply measures that claim more completely. The
+   bar gets harder because the old bar was flattered.
+2. **Re-express the floor against the re-measured baseline.** Take the Round-2 baseline on the new
+   exam (57% was measured on the old one) and restate the floor as the same *improvement* it
+   represented when signed. This keeps the intended difficulty and makes the instrument change
+   neutral.
+
+⛔ **What is not available**: choosing between them after seeing the Round-3 number. §4 stands.
+
+⚠ **§3b's drop note is superseded in its numbers only.** The rebuilt exam drops **567 of 1,369**
+candidates (41%: `split_wide` 414, `over_budget` 153) where v2 dropped 282 of 608 (46%). The bias is
+the same in kind — the wide and the dense are still what gets thrown away — and still runs in the
+declared matched-upper-bound direction.
+
+⚠ **A new gold-quality precondition.** 139 strips enter the rebuilt exam labelled by the emitter
+alone, and **96 of them have never been read by a human** (the other 43 agree token-for-token with
+the frozen exam's hand-made gold). The comparable historical rate is not reassuring: of exam v2's 63
+auto-accepted labels, a human later corrected **32 (51%)**. Those 96 are the `examv3-full` tab and
+reading them is a **precondition of the read**, not an audit sample.
+
 ## 3b. ADDENDUM 2026-08-20 — the exam grows before the read, and the floors do NOT move
 
 Added after signing, and it is written here rather than inside §1 so the signed text stays auditable

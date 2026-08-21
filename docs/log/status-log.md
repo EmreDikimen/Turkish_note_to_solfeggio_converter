@@ -7,7 +7,166 @@ updated: 2026-08-20
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-20 (latest) — a planning session: the final render is specified, and the exam grows before it is read
+## 2026-08-21 (latest) — a weakness review of Track B, and the order of work it produced
+
+Asked after the exam rebuild: what is wrong with the Track B plan, before it harms the model. Six
+things, each checked against the files rather than recalled. The owner accepted the analysis and asked
+for it to be recorded; the resulting order of work is the table in [../STATUS.md](../STATUS.md).
+
+**1. Training is the last pool still on the retired slicer — and the exam rebuild is what made that
+dangerous.** Checked by inode: `strips_nota` / `strips_r1` / `strips_tup` (2,330 strips) hardlink from
+`data/real/strips`, the 2026-07-15..17 slicer, while `_realval_v2` and now the exam are on the current
+one. Yesterday everything was old, so it was symmetric; fixing the exam alone turned it into a
+train/test mismatch, on the axis Lever 1 measured as **causal**. ⭐ Measured the price of fixing it:
+**2,064 of 2,330 labels (89%) carry** onto the new crops by measure span, no new labelling. Re-framed
+B8 from a volume question into this, and sequenced it **before** the final render.
+
+**2. 96 exam gold labels no human has read.** The rebuild takes 139 strips straight from the emitter;
+43 agree token-for-token with the frozen hand-made gold, 96 have no check at all. The comparable rate
+is on record and is bad: of exam v2's 63 auto-accepted labels, a human later corrected **32 (51%)**.
+A wrong gold label manufactures corrections on its page, which is exactly how the primary moves. So
+`examv3-full` is read in full, first, and it is written into the criteria as a precondition (§3c).
+
+**3. The floor's meaning changed with the instrument** (§3c) — recorded as the only open Round-3
+criteria question, with both honest options written down and the reminder that choosing after the
+number is the one move never available.
+
+**4. The dotted barline still has no print-frequency measurement.** 7.8% is a statistic about the
+model's guesses. Cheapest honest method, now recorded in B6: count them while labelling `examv3` —
+~660 real crops are about to pass in front of a person anyway.
+
+**5. Attribution.** Three flags, one read. Recorded in B6: clone `staccato_falsedot_score.py` into a
+false-`\repstart` scorer, which makes two of the three flags attributable instead of one.
+
+**6. A stopping rule for the labelling.** The primary counts corrections per page, so a half-labelled
+page under-counts itself. Recorded in [labeling-queues.md](../rung3/labeling-queues.md): label
+page-complete; stopping early costs whole pages, never half ones.
+
+Also updated with the rebuild's numbers: BACKLOG item 7 (the budget now costs the exam **153 strips
+and 3 whole pages**), [../RISKS.md](../RISKS.md) (three new standing caveats) and CLAUDE.md (the three
+crop roots, which are never interchangeable).
+
+## 2026-08-21 — the exam is rebuilt from scratch on the current slicer
+
+The owner read yesterday's finding and made the call in one line: *"I can make it from scratch, it is
+okey. Just exam need to be okey."* So the plan stopped being "grow the exam by 21 pages" and became
+"re-cut the instrument".
+
+**What ran.** All 45 exam pieces / 67 pages re-sliced and re-emitted into `data/real/strips_examv3`
+(never into `data/real/strips`, which is hardlinked into the frozen exam). Result: **139 auto-labelled
+strips, 663 rows needing a human over 64 of the 67 pages**, 567 dropped (`split_wide` 414,
+`over_budget` 153).
+
+**The part worth remembering: the page-level staleness number was the wrong unit.**
+`check_crop_staleness.py` says 45 of 46 graded pages change, which reads as "the exam's labelling is
+gone". But a label is attached to a crop, not a page, and it describes an exact measure span — so it
+survives on any new crop holding that span. Carrying the 326 frozen gold labels that way:
+
+| outcome | labels |
+|---|---|
+| agreed with the fresh SymbTr derivation (no human needed) | **43** |
+| offered back as a pending suggestion | 151 |
+| `gold_conflict` — hand correction vs fresh derivation disagree | 27 |
+| lost (88 re-packed, 10 in dropped crops, 7 ambiguous) | **105** |
+
+**221 of 326 came back.** The estimate given to the owner before this was "11 of 326 survive", from
+the page-level check — honest at the time, and wrong by 20×. When a measurement's unit does not match
+the thing being decided, re-derive it before quoting it.
+
+**A suggestion is deliberately not a verdict.** Carried gold lands in `corrected_label` with the row
+still pending, so `e` opens the editor with the text already there. Promoting it unseen would bake a
+label written against a truncated crop into a one-shot instrument.
+
+⚠ **What this changes, and it is not yet settled**: the rebuilt exam grades ~12 candidate strips a
+page against the frozen exam's 7.1, so it is a **harder instrument** — the primary reads lower at
+equal model quality. The comparison stays fair (the `round2-stage2-best` re-score runs on the same
+new set) but the signed **75% floor was fixed against the easier exam**, and what it means now is the
+owner's to settle before the read, not after.
+
+`strips_exam_v2_clean/` is untouched: it remains the record of what Round 2's 74.2% was measured on.
+The two superseded cuts are kept as `strips_exam_v3_oldgeom` and `strips_exam_v3_growthonly`.
+
+## 2026-08-20 — the exam is re-sliced, because the owner opened one strip and looked at it
+
+The queue cut earlier the same day (entry below) was **replaced within the hour**. What happened is
+worth keeping, because the failure was not technical.
+
+**The catch.** The owner opened `examv3`, looked at the first strip, and said the duration of the
+leftmost note could not be seen. It was a **265 px crop holding one measure**: the notehead sliced by
+the left edge, the beams outside the frame. He asked the right question — *"do our slicer have
+problems like this, I thought we solved this problem"* — and the answer was: we did solve it, on
+2026-07-25/29, and **never applied the fix to the exam**. 0 of the 67 exam pages exist under
+`data/real/strips_v2`. [DECISIONS.md](../DECISIONS.md) 2026-07-28 states it outright, warning that
+*"exam v3 needs the same treatment; until then the one-shot instrument measures a retired slicer"*.
+
+**The failure mode is the one this project keeps paying for: a written warning that did not travel.**
+The exam-v3 plan was written as "label 21 more pages"; the re-slice half of the same task was in a
+decision row a month old and nobody carried it forward. The first cut then made it worse *on purpose*
+— it pinned the retired geometry (`OMR_EDGE_TRIM=0 OMR_VPLACE=0`) to stay consistent with the 46
+graded pages. Consistency with a broken instrument is not a virtue.
+
+**The fix.** The 19 pieces were re-sliced and re-emitted with today's slicer into **their own crop
+root**, `data/real/strips_examv3` — separate because the emitter slices in place and
+`data/real/strips` is hardlinked into `strips_exam_v2_clean/`, so re-slicing there would have
+rewritten the frozen exam's pixels.
+
+| the 21 pages | first cut | re-sliced |
+|---|---|---|
+| rows needing a human | 297 | **214** |
+| median crop width | 640 px | **1031 px** |
+| crops under 400 px | 24% | **4%** |
+
+**12 corrections had already been typed** against the first cut. They were carried onto the new crops
+where a crop holds the same music — same system, same measure span — **as pending suggestions in
+`corrected_label`, never as verdicts** (7 of 12 matched; the mapping is `carried_from_oldgeom.csv`).
+A label typed against a truncated picture is a reading of a truncated picture, so it gets confirmed
+against the better one rather than promoted into a one-shot instrument.
+
+**What is now open, with its price measured.** The other 46 exam pages are still retired-slicer
+output. `check_crop_staleness.py` over all of them: **45 of 46 would lose their labels; 11 of the 326
+gold strips survive; 295 of the 326 were made by hand.** So making the whole exam sound means
+re-labelling it almost from scratch. That is the owner's call and it is recorded as OPEN — the case
+for it is that the shipped app slices with the current slicer, so those 46 pages measure a pipeline
+no user gets. Numbers: [../METRICS-EXAM.md](../METRICS-EXAM.md).
+
+## 2026-08-20 — the exam v3 queue is cut: `examv3`, 297 rows, and the exam's ceiling is 65 not 67
+
+The session before this one decided to grow the exam by labelling the 21 pages we already own. This
+one **built the queue** — `scripts/rung3/build_exam_v3_queue.py`, two emitter runs, and three new
+tabs in `review_ui.py` (`examv3`, `examv3-full`, `examv3-audit`).
+
+**What the work actually was, and why it was not one command.** The emitter re-slices a page whenever
+its cached decode does not match the current windowing settings — and a re-slice rewrites the crops
+under `data/real/strips/<page>/` **in place**, which are hardlinked into `strips_exam_v2_clean/`. So
+the obvious "just run the emitter on those pieces" would have silently changed the pixels the
+**frozen exam's gold describes**, on the 6 already-graded pages that share a piece with an ungraded
+one. Every cache on disk reads as stale, because `edge_trim` / `vplace` post-date them and default to
+off. The way through: the affected pieces split cleanly into two crop generations (9 pieces at 3
+measures per strip, 9 at 1, none internally mixed), so each got its own run under
+`OMR_MEASURES_PER_STRIP` with `OMR_EDGE_TRIM=0 OMR_VPLACE=0` — which validates the caches *and*
+makes the one page that had no cache slice to the same geometry as the rest of the exam. Checked
+after both runs: **all 1,026 crops on the graded pages are byte-identical** (size + mtime), and only
+that one uncached page was sliced.
+
+**Two things the emit taught us that the sizing note could not.**
+
+1. **297 rows, not ~150.** The estimate scaled the graded pages' 7.1 strips/page, but 10 of the 21
+   new pages are cut at one measure per strip and contribute 238 of the 297. No extra music — the
+   same music in smaller pictures. ⚠ Mixed geometry is the exam's status quo, not a new defect:
+   253 of the 326 already-graded strips are 1-measure crops.
+2. **The exam tops out at 65 pages.** Two of the 21 produce *nothing*: every candidate drops as
+   `split_wide` or `over_budget`. Both causes are the ones METRICS-EXAM already names, so the 59-id
+   measurement (B9) would buy those two pages on top of the 78 dropped strips.
+
+Also carried out of the emit: **33 strips the emitter labelled by itself**. Those enter exam gold
+with no human in the loop — v2 sampled 2 of its 63 — so `examv3-full` puts every one of them in
+front of a person. Numbers: [../METRICS-EXAM.md](../METRICS-EXAM.md). How to run it:
+[../rung3/labeling-queues.md](../rung3/labeling-queues.md).
+
+⚠ A `review_ui.py` left running from an earlier session does **not** see the new tabs; it reads
+`QUEUES` at import.
+
+## 2026-08-20 — a planning session: the final render is specified, and the exam grows before it is read
 
 **No code ran and no model trained.** This was the owner asking, in one sitting, what path Track B
 should take — and it closed every decision the final render was waiting on, plus two the project had

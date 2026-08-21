@@ -56,6 +56,18 @@ starting. Abandoned plans are a different thing again and live in
    ⚠ Do the re-emit with its own `--out` and look at what moved first — it rewrites the manifests the
    promoted verdicts hang off. And note the priority: fixing these crops without touching the blend
    above improves **5.4%** of the number that picks `best`.
+   ⭐ **UPGRADED 2026-08-21 — this is no longer a tidiness item, it is a train/test mismatch.** The
+   exam was rebuilt on the current slicer and `_realval_v2` was already built on it, so **training is
+   now the only pool still on retired crops**: the model would learn from crops the shipped slicer
+   does not produce and be selected *and* graded on crops it does. Round 3's own Lever 1 measured crop
+   geometry as **causal** (+59% edits when resolution falls), so this is a domain gap of exactly the
+   kind the round is trying to close.
+   ⭐ **And it is cheap, measured 2026-08-21: 2,064 of the 2,330 labels (89%) carry** onto the new
+   crops by measure span (`strips_r1` 404/421, `strips_nota` 1,554/1,740, `strips_tup` 106/169 — the
+   tuplet pool is the weak one at 63%). 248 are lost, 18 ambiguous. **No new labelling** — the same
+   carry rule the exam rebuild used ([rung3/exam.md](rung3/exam.md)).
+   ⏭ **Sequence it BEFORE the final render**, not after: a render is the one moment the training set
+   is rebuilt anyway.
 
 5. ✅ **PROMOTED OUT OF THIS FILE 2026-08-20 — the dotted (usul) barline goes into the FINAL
    RENDER, drawn LABEL-FREE.** The decision, its two halves and what is given up are in
@@ -129,7 +141,9 @@ starting. Abandoned plans are a different thing again and live in
    exceeds it. The comment beside it — *"cannot be raised without breaking training"* — is true of
    **existing checkpoints**, which is not the same as true of a model trained from base, and the final
    render trains from base anyway. What raising it would buy, all three already measured:
-   - **the exam**: 78 of its 282 dropped strips are over-budget alone ([METRICS-EXAM.md](METRICS-EXAM.md))
+   - **the exam**: on the REBUILT exam it drops **153** strips as over-budget (of 567 dropped in all),
+     and **3 of the 67 pages produce nothing at all**, capping the exam at 64 pages
+     ([METRICS-EXAM.md](METRICS-EXAM.md)). The pre-rebuild figure was 78 of 282.
    - **the tuplet repertoire**: 39.4% of triplet-bearing *single* measures blow it, 80.5% of 2-measure
      and 92.9% of 3-measure windows — which is *why* sirto/longa/saz semaisi are unmeasured
      ([rung3/labeling.md](rung3/labeling.md) §1c, [rung3/round3-criteria.md](rung3/round3-criteria.md) §5)

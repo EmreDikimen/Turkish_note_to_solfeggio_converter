@@ -213,8 +213,8 @@ needed. ⚠ **~1 in 5 of those fixes is deleting a false `\repstart`**, i.e. han
 dotted-barline hole, which is now going into the final render label-free
 ([../DECISIONS.md](../DECISIONS.md)) — expect the fix rate to fall once a model trained on that
 render replaces the seeding decode. ⚠ **Priority note (2026-08-20): exam v3 outranks this queue for
-a scarce evening** — ~120–130 rows that decide whether the one-shot read can be interpreted, against
-~1,385 rows here that improve training ([exam.md](exam.md)).
+a scarce evening** — 297 rows that decide whether the one-shot read can be interpreted, against
+~1,385 rows here that improve training ([exam.md](exam.md), and the `examv3` section below).
 
 ⏭ **The original instruction, kept for the record: probe 100 rows before committing to all 1,499**,
 then `--stats --batch 3` for the fix rate AND the bad rate. Reference points: **~30%** fix in the scanned
@@ -251,3 +251,66 @@ npx tsx tools/vision/page-structure.ts                                    # 1. s
   queue in `QUEUE_IMG_ROOTS`), so verdicts carried in from the master queue show up already judged.
 - `--makam-cap` (default 0.15 of the strip budget) stops one makam taking the batch — Lever 4's whole
   argument is that the corpus is already too uniform.
+
+---
+
+## ⏭ `examv3` — the exam, re-cut whole (2026-08-21)
+
+**Why it exists.** It is the labelling that **blocks the Round-3 read**. It began as a growth queue
+over the 21 exam pages we own but never graded; it became a **rebuild of the entire exam** when the
+first strip the owner opened showed that no exam page had ever been re-sliced ([exam.md](exam.md)).
+
+**What is in it.** **663 rows over 64 of the 67 pages**, plus `examv3-full` with the **139** strips
+the emitter labelled by itself. **185 rows arrive with text already in the edit box** — the frozen
+exam's own gold, moved onto the crop holding the same music, or a correction typed against the
+superseded first cut. Composition, the gold-carry table and the harder-instrument caveat:
+[../METRICS-EXAM.md](../METRICS-EXAM.md).
+
+⭐ **It reads its OWN crop root, `data/real/strips_examv3`.** A separate root is what made the
+re-slice safe: the emitter slices in place, and the crops under `data/real/strips` are hardlinked
+into `strips_exam_v2_clean/`, so re-slicing there would have rewritten the pixels the **frozen
+exam's** gold describes. Verified after every run: all 1,026 crops on the graded pages byte-identical.
+
+⛔ **Two superseded cuts are kept and must not be labelled**: `strips_exam_v3_oldgeom` (the first cut,
+on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `strips_exam_v3_growthonly`
+(the 214-row growth queue, before the owner chose a rebuild).
+
+```bash
+.venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --plan      # prints the emit command
+#   … run it: re-slices + decodes all 67 pages into data/real/strips_examv3 …
+.venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --rebuild   # -> the examv3 queue
+.venv-ml/bin/python scripts/rung3/review_ui.py                       # label the `examv3` tab
+.venv-ml/bin/python scripts/rung3/promote_labels.py \
+    --dir data/real/rung3/strips_exam_v3 --exam \
+    --strips-root data/real/strips_examv3                            # verdicts -> exam gold
+```
+
+⏭ **The order to label it in, and the stopping rule** (reviewed 2026-08-21, owner accepted):
+
+1. **`examv3-full` first — all 139 rows.** 96 of them are exam gold no human has ever read. The
+   reference point is exam v2's own audit: of its 63 auto-accepted labels a human later corrected
+   **32 (51%)**. A wrong gold label *manufactures* corrections on the page it sits on, which is how
+   a bad label moves the primary.
+2. **The 27 `gold_conflict` rows**, where a hand correction and a fresh derivation disagree.
+3. **The rest, PAGE-COMPLETE.** The primary counts corrections *per page*, so a half-labelled page
+   under-counts its own errors — grading it would be worse than skipping it. Stopping early should
+   cost whole pages, never half ones.
+
+- ⚠ **`--strips-root data/real/strips_examv3` on the promote step is not optional.** The default root
+  holds the same filenames with the retired slicer's pixels, so the default links the wrong pictures.
+- ⚠ **A SUGGESTION IS NOT A VERDICT.** The carried gold sits in `corrected_label` with the row still
+  pending, so `e` opens the editor with it already typed. It is confirmed against the new picture,
+  never promoted unseen — a label written against a crop that cut a beamed group in half is a reading
+  of a truncated picture.
+- ⚠ **`gold_conflict` (27 rows) is where a hand correction and a fresh SymbTr derivation disagree**
+  on the same music. Read those first; the first one examined is a `\tie` the gold has and the new
+  label does not, with the arc plainly drawn in the crop.
+- ⚠ **EXAM GOLD, NOT TRAINING.** Every row carries `exam=1`, which `promote_labels.py` refuses to
+  promote into a training manifest.
+- ⚠ **Attend to the picture.** 329 of the 663 rows are `row_unaligned` and carry no label at all —
+  the edit box starts from the model's decode, and `ok` must mean "I looked and it was right".
+- ⚠ **Preconditions of the read**: finish before the model takes it, and **re-score
+  `round2-stage2-best` on the rebuilt exam** — now doubly binding, since the instrument changed
+  ([exam.md](exam.md), [round3-criteria.md](round3-criteria.md) §3b).
+- ⏭ Promotion grows `strips_exam_v3/manifest.jsonl`. That manifest **replaces** `strips_exam_v2_clean`
+  as the exam; the old one stays on disk as the record of what Round 2 was measured on.

@@ -150,6 +150,67 @@ fragment labels — which is why measuring that ceiling pays here as well as on 
 **Per-class gold** (`testset.json`, v2.1 freeze): bakiyeSharp 141, kucukFlat 70, bakiyeFlat 66,
 komaFlat 48, kucukSharp 31, komaSharp 18, buyukSharp 3, buyukFlat 0.
 
+### ⭐ THE EXAM IS BEING REBUILT ON THE CURRENT SLICER (2026-08-20/21)
+
+**How it started.** The exam-v3 growth queue was cut on the crops already on disk, and the owner
+opened its first strip: a **265 px crop holding one measure**, notehead sliced by the frame, beams
+outside it. The cause was not today's slicer — **no exam page had ever been re-sliced**. 0 of the 67
+exist under `data/real/strips_v2`; every exam crop was 2026-07-15..17 output, four weeks after
+`page_to_strips.py` was overhauled, exactly as [DECISIONS.md](DECISIONS.md) warned on 2026-07-28
+(*"exam v3 needs the same treatment; until then the one-shot instrument measures a retired slicer"*).
+
+**What re-slicing does to crop shape**, measured on the 21 growth pages (same music, two slicers):
+median crop width **640 → 1031 px**, crops under 400 px **24% → 4%**, and rows needing a human
+**297 → 214**. 4% is the frozen exam's own sliver rate, so the re-slice puts crop shape back where
+it belongs.
+
+**The owner's call, 2026-08-21: rebuild the whole exam, not just grow it** (*"I can make it from
+scratch, it is okey. Just exam need to be okey."*). All 45 pieces / 67 pages were re-sliced into
+`data/real/strips_examv3` and re-emitted:
+
+| the whole exam, re-emitted | strips |
+|---|---|
+| auto-labelled by the emitter | **139** |
+| **rows needing a human** (`examv3`) | **663** |
+| dropped `split_wide` | 414 |
+| dropped `over_budget` | 153 |
+| pages producing anything | **64 of 67** |
+
+### What happened to the 326 frozen gold labels (2026-08-21)
+
+A gold label describes the music of an exact measure span, so it survives on any new crop holding
+that span — a finer question than `check_crop_staleness.py`'s page-level one (which says 45 of 46
+pages change). Per label:
+
+| outcome | labels | what it means |
+|---|---|---|
+| **agreed** | **43** | the re-emitted label is identical to the gold — two SymbTr derivations agree, **no human needed** |
+| **suggested** | 151 | the crop is in the queue anyway; the gold rides along in `corrected_label` as a pending suggestion |
+| **conflict** | 27 | crop auto-accepted but its new label differs from the gold — queued for a human, gold pre-loaded |
+| **lost** | **105** | no crop holds that music any more |
+
+- **185 of the 663 queue rows arrive with text already in the edit box** (the 178 above plus 7
+  corrections carried from the superseded first cut).
+- The 105 lost break down as **88 re-packed** into a differently-bounded window, **10 whose new crop
+  is dropped** (`split_wide` / `over_budget`), and 7 ambiguous matches.
+- ⚠ **The 27 conflicts are the interesting rows**: a hand correction and a fresh derivation disagree
+  on the same music. The first one read is a `\tie` present in the gold and absent from the new
+  label, with the tie arc visible in the crop.
+
+⚠ **The rebuilt exam grades MORE of each page**: ~12 candidate strips a page against the frozen
+exam's 7.1, because it drops 567 of 1,369 candidates (41%) where v2 dropped 46% of a smaller pool.
+A page measured on more of its own material collects more edits, so **the primary ("pages needing ≤5
+corrections") will read lower on the new instrument than on the old one at equal model quality**.
+The signed 75% floor was set against the old, easier instrument. This does not affect *fairness* —
+the baseline re-score puts both models on the same set — but it does change what the floor means,
+and that is the owner's to settle ([rung3/round3-criteria.md](rung3/round3-criteria.md) §3b).
+
+**What it cost, page level vs label level** (`check_crop_staleness.py --root data/real/strips`, all
+46 graded pages, measured before the rebuild was decided): 0 identical, **1** size-only, 8 measures
+differ, **37 crop count differs** — i.e. "45 of 46 pages lose their labels". At *label* level the
+loss is **105 of 326 (32%)**, because most labels move with their music. That gap is why the rebuild
+kept 221 of them rather than starting blank.
+
 ### How big the exam has to be — the arithmetic behind the ±12 (2026-08-20)
 
 The primary is a **share of pages**, so its precision is binomial in the page count. 95% half-width

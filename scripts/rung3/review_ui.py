@@ -665,6 +665,26 @@ function corrHtml(label,corrected,by,verdict){
   return `<div class="lblhead" style="color:var(--fix)">final version (${verdict} by ${who}) — diff vs label</div>
           <div class="toks">${out}</div>`;
 }
+// A PENDING row can carry a machine SUGGESTION in corrected_label (exam v3 carries the frozen
+// exam's gold onto the crop holding the same music). It used to be invisible while still winning
+// both `e` and — worse — `a`, so "ok" stored text nobody had seen (found by the owner, 2026-08-21).
+// It is drawn here, diffed against the label, and `ok` no longer saves it (see verdict()).
+function suggHtml(label,sugg){
+  if(!sugg||!sugg.trim())return '';
+  const base=(label&&label.trim())?label:'';
+  if(base&&tokenize(sugg).join(' ')===tokenize(base).join(' '))return '';
+  const head=`<div class="lblhead" style="color:var(--fix)">carried suggestion — NOT saved by
+    <b>ok</b>; press <b>e</b> to take it, and check it against the picture first</div>`;
+  if(!base)return head+`<div class="toks">${tokenize(sugg).map(t=>tokHtml(t,'diff2')).join('')}</div>`;
+  const ops=align(tokenize(base),tokenize(sugg));
+  let out='';
+  for(const[op,at,bt]of ops){
+    if(op==='=')out+=tokHtml(bt,'');
+    else if(op==='-')out+=`<span class="tok diff" title="not in the suggestion: ${esc(at)}">·</span>`;
+    else out+=tokHtml(bt,'diff2');
+  }
+  return head+`<div class="toks">${out}</div>`;
+}
 function lint(txt){
   const toks=tokenize(txt), bad=[], known=new Set([...CMDS,'|']);
   let sig=0;
@@ -757,7 +777,8 @@ function render(){
   $('strip').src='/img/'+encodeURIComponent(qid)+'/'+encodeURIComponent(r.page)
                 +'/'+encodeURIComponent(r.strip);
   $('labels').innerHTML=diffHtml(r.label,r.decoded)+
-    (r.verdict&&r.verdict!=='bad'?corrHtml(r.label,r.corrected_label,r.by,r.verdict):'');
+    (r.verdict&&r.verdict!=='bad'?corrHtml(r.label,r.corrected_label,r.by,r.verdict)
+     :suggHtml(r.label,r.corrected_label));
   editing=false;$('editbox').style.display='none';$('imgwrap').classList.remove('zoom');
   if(logOpen)renderLog();
 }
@@ -813,7 +834,11 @@ async function verdict(v){
     if(v==='ok'&&txt&&txt!==orig){saveEdit();return} // edited, then "ok" -> they mean the fix
     editing=false;$('editbox').style.display='none';
   }
-  const ok=await post(r.strip,v,v?r.corrected_label:'');
+  // `ok` means "the label shown is right". On a PENDING row corrected_label is a machine
+  // suggestion, not a human correction (a human correction always arrives as verdict `fix`), so
+  // accepting the label must CLEAR it — otherwise ok silently stores text that was never on screen.
+  const keep=r.verdict?r.corrected_label:'';
+  const ok=await post(r.strip,v,v?keep:'');
   if(!ok)return;
   toast(v?`${r.strip.split('_').slice(-2).join('_')} → ${v}`:'cleared');
   // pending / 🤖 filters: the row leaves the list, so idx already points at the next strip

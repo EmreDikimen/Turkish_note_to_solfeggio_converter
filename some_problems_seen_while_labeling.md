@@ -20,3 +20,4 @@ for one, and the renderer draws none — so 0 of 40,826 strips contain one and t
 model knows is a repeat sign, a line plus *dots*. Full write-up:
 [docs/METRICS-DIAGNOSTICS.md](docs/METRICS-DIAGNOSTICS.md); the owed work is item 5 of
 [docs/BACKLOG.md](docs/BACKLOG.md).
+ay_dalgalanirken_p1_s04_w02.png

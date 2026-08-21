@@ -57,6 +57,7 @@ import json
 import os
 import sys
 from collections import Counter, defaultdict
+from functools import lru_cache
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -228,8 +229,12 @@ def carry_gold(root: Path, gold_path: Path, old_strips: Path, new_strips: Path,
                 row = {"piece": m["piece"], "page": page, "strip": target,
                        "reason": "gold_conflict", "nd": m.get("nd", ""),
                        "min_logprob": m.get("min_logprob", ""), "exam": 1,
-                       "label": m["label"], "decoded": "", "verdict": "",
-                       "corrected_label": g["label"], "by": ""}
+                       # the strip WAS auto-accepted, so it never passed through emit_review and
+                       # its decode is not in that CSV — but the page's own _decode.json has it.
+                       # Leaving it empty made the viewer fall back to a label-only panel, i.e. no
+                       # model decode to compare the picture against (owner, 2026-08-21).
+                       "label": m["label"], "decoded": page_decode(page).get(target, ""),
+                       "verdict": "", "corrected_label": g["label"], "by": ""}
                 review.append(row)
                 by_review[target] = row
                 outcome.append({"page": page, "old_strip": g["image"], "new_strip": target,
@@ -246,6 +251,19 @@ def carry_gold(root: Path, gold_path: Path, old_strips: Path, new_strips: Path,
     return outcome, review
 
 
+
+
+@lru_cache(maxsize=None)
+def _decode_index(page: str) -> dict:
+    """{strip filename -> decoded token string} from the page's cached decode, or {}."""
+    f = REPO / STRIPS / page / f"{page}_decode.json"
+    if not f.exists():
+        return {}
+    return {s["strip"]: s.get("tokens", "") for s in json.load(open(f)).get("strips", [])}
+
+
+def page_decode(page: str) -> dict:
+    return _decode_index(page)
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,

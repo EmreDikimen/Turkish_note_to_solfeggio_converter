@@ -2,7 +2,7 @@
 
 purpose: the single home for corpus sizes, pool composition and measured label-noise rates
 audience: agents and the owner, whenever a question is about the data rather than the model
-updated: 2026-08-20
+updated: 2026-08-21
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps **how well the model reads**, this file keeps **what the data is
@@ -190,8 +190,66 @@ carries the handwritten manuscript the ranking surfaces at the top.
 | tup3 auto-accepts (78 strips) | 10% | 2026-07-19 |
 | exam gold, full re-audit | 13 new label errors found (gold over-sized sharps) | 2026-07-25 |
 | **nota training pool, review of every disagreeing strip** | **521 of 1,740 strips (30%) carry a human-corrected label**; of the strips where label and decode disagreed at all, **~78% of the labels were wrong** | 2026-07-27 |
+| **exam v3 auto-accepts (all 139, `examv3-full`)** | **18 fix + 1 bad = 13.7% wrong** — against exam v2's **51%** on the same queue; the drop is the re-slice ([the crop finding below](#the-key-signature-is-decided-by-the-model-not-by-symbtr-found-2026-08-21)) | 2026-08-21 |
 | Tie structure in nota pool | ~38% structurally noisy (why ties carry no floor) | 2026-07-20 |
 | **`strips_v3` carry strips: accidental DRAWN but not labelled** | **18.8% of signature-bearing carry strips** (5,240 / 27,933; 8,485 accidentals over 137 pieces) | 2026-07-26 |
+
+## ⚠ The KEY SIGNATURE is decided by the MODEL, not by SymbTr (found 2026-08-21)
+
+**How it was found.** The owner finished `examv3-full` (all 139 exam auto-accepts) and reported that
+the corrections were "mostly `\komaSharp` → `\kucukSharp`". They were **7 of the 18 fixes**, and all
+7 share three things: they are inside the `\sig … \sigend` block, they are on the same note (F), and
+they belong to **2 pieces, both makam mahur**. Seven of the seven `\komaSharp` tokens in those 139
+labels were wrong; none was corrected the other way.
+
+**The mechanism** ([../scripts/rung3/emit_strip_labels.py](../scripts/rung3/emit_strip_labels.py),
+the `sig_votes` block). Everything else in a label comes from SymbTr. The signature does not: the
+model reads it off every row-start strip, the **majority read wins**, and when that majority differs
+from the SymbTr derivation the model's read **overwrites** it. The reason is legitimate and recorded
+in the code — real editions print the makam's *conventional* signature, which routinely differs from
+the content-derived one (a hicaz page prints flat + 2 sharps where the derivation gives 2). For
+signatures, SymbTr is genuinely not the printed truth.
+
+Three things then compound:
+
+1. **The voter is `rung3-labeler`**, the weak July tooling checkpoint, and koma-vs-küçük is its
+   measured weakness — the fused-bars glyph defect above, plus a **9:1** inline frequency imbalance
+   (`\komaSharp` 1,887 against `\kucukSharp` 206).
+2. **A systematic misread wins a vote unanimously.** The model does not err randomly on one strip; it
+   errs the same way on every row-start of the piece. So the override fires with full confidence.
+3. **The `nd` gate cannot see it.** The whole `\sig … \sigend` block is stripped from both sides
+   before the label-vs-decode comparison, deliberately, because signature reading is noisy. A wrong
+   signature is invisible to the one check that catches wrong labels.
+
+**How far it reaches** (counted from each pool's `emit_report.json`):
+
+| pool | pieces | signature OVERWRITTEN by the model | split-vote (sent to review) |
+|---|---|---|---|
+| exam v3 | 45 | **24 (53%)** | 12 |
+| `strips_nota` | 938 | **406 (43%)** | 384 |
+| `strips_tup` | 293 | **98 (33%)** | 37 |
+| `strips_r1` | 65 | **26 (40%)** | 25 |
+
+**Checked against our own makam table** (`data/makam_signatures.json`, built from real sources): of
+the 36 exam pieces whose labels carry a signature, **8 (22%) disagree with the table's majority
+variant** — and several are *missing* entries the table says are near-universal:
+
+| makam | the label says | the table's majority | weight |
+|---|---|---|---|
+| huseyni | `\komaFlat b` | `\komaFlat b \bakiyeSharp f` | 100% |
+| nikriz | `\bakiyeFlat b` | `\bakiyeFlat b \bakiyeSharp f \bakiyeSharp c` | 94% |
+| segah | `\komaFlat e \bakiyeSharp f` | `\komaFlat b \komaFlat e \bakiyeSharp f` | 93% |
+| mahur | `\komaSharp f` | `\kucukSharp f` | 67% |
+
+⭐ **There is a loop in it.** The model misreads küçük as koma → that becomes the label → the model
+trains on that label → it becomes more koma-biased. This is a plausible partial cause of the 9:1
+imbalance above, on the accidental class the exam headline is most fragile about.
+
+⚠ **What is NOT claimed.** n = 7, on 2 pieces, in 1 makam — a strong signal, not a measured error
+rate for the override. The override exists to fix a real defect and many of those 24 / 406 / 98 are
+probably right. The table is a **guide, not truth**: mahur genuinely prints both ways in our own
+sources (küçük n=35, koma n=17), so it agrees with the owner's reading rather than proving it.
+⏭ The cheap next measurement, and the proposed rule change, are [BACKLOG.md](BACKLOG.md) item 9.
 
 ### The carry pixels-vs-labels defect (found 2026-07-26, fixed at source)
 

@@ -31,22 +31,28 @@ consistent with everything on disk and costs **zero new labelling**. The `\dotte
 Round-4 question. ⏭ Probe the real pools for the print frequency before rendering — 7.8% is a
 statistic about the model's guesses. [BACKLOG.md](BACKLOG.md) item 5 · [METRICS-UNSEEN.md](METRICS-UNSEEN.md).
 
-⭐ **THE EXAM IS BEING REBUILT ON THE CURRENT SLICER, AND THAT IS THE LIVE JOB (owner, 2026-08-21).**
-*"I can make it from scratch, it is okey. Just exam need to be okey."* All 45 pieces / 67 pages were
-re-sliced into `data/real/strips_examv3` and re-emitted; `examv3` in `review_ui.py` holds **663 rows
-over 64 of the 67 pages**, plus **139** strips the emitter labelled by itself. The trigger was one
-strip: the owner opened the growth queue and found a **265 px crop holding one measure**, notehead cut
-by the frame, beams outside it. Cause — **no exam page had ever been re-sliced** (0 of 67 under
-`data/real/strips_v2`), which [DECISIONS.md](DECISIONS.md) warned about on 2026-07-28 and nobody
-carried into the exam-v3 plan. [rung3/exam.md](rung3/exam.md) · [METRICS-EXAM.md](METRICS-EXAM.md).
+⭐ **THE EXAM WAS REBUILT ON THE CURRENT SLICER AND LABELLING IT IS THE LIVE JOB (owner, 2026-08-21).**
+All 45 pieces / 67 pages re-sliced into `data/real/strips_examv3`; `examv3` holds **663 rows over 64 of
+the 67 pages**. ✅ **`examv3-full` is DONE — all 139 auto-written labels read by hand, 13.7% wrong**
+(18 fix + 1 bad) against exam v2's **51%** on the identical queue, which is the re-slice paying off.
+[rung3/exam.md](rung3/exam.md) · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
-⭐ **THE FROZEN GOLD LARGELY MOVED WITH ITS MUSIC — 221 of 326 labels, not 11.** A label describes an
-exact measure span, so it survives on any new crop holding that span: **43 agree** with the fresh
-SymbTr derivation and need no human, **178 come back as pending suggestions** (27 of them
-`gold_conflict`, where hand correction and fresh derivation disagree), **105 are lost**. The
-page-level staleness check said "45 of 46 pages lose their labels"; at label level the loss is 32%.
-⚠ A suggestion is **not** a verdict — it opens in the edit box and is confirmed against the new
+⛔ **AND THAT AUDIT FOUND A BUG WORTH MORE THAN THE EXAM: THE KEY SIGNATURE IS DECIDED BY THE MODEL.**
+The owner noticed the fixes were "mostly `\komaSharp` → `\kucukSharp`" — 7 of the 18, all inside
+`\sig … \sigend`, all one makam. The signature is the **only** part of a label not derived from
+SymbTr: the model reads it off each row-start strip and the majority read **overwrites** the
+derivation, the voter is the weak `rung3-labeler`, its koma/küçük confusion is *systematic* so the vote
+is unanimous and wrong, and the `nd` gate is **blind to `\sig` blocks by design**. It fired on **24 of
+45 exam pieces (53%)** and **406 of 938** `strips_nota` pieces; **8 of 36 exam pieces disagree with our
+own makam table**. ⭐ There is a **loop** in it — the misread becomes the label, the label trains the
+model — and it lands on the accidental class the headline is most fragile about. ⚠ n=7 in one makam is
+a signal, not an error rate. ⏭ [BACKLOG.md](BACKLOG.md) item 9 · [METRICS-CORPUS.md](METRICS-CORPUS.md).
+
+⭐ **THE FROZEN GOLD LARGELY MOVED WITH ITS MUSIC — 221 of 326 labels, not 11** (the page-level
+staleness check said 45 of 46 pages lose everything; at label level the loss is 32%). ⚠ A carried
+label is a **suggestion, not a verdict** — it opens in the edit box and is confirmed against the new
 picture. `strips_exam_v2_clean/` is untouched and stays the record of what Round 2 was measured on.
+Breakdown: [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
 ⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST, AND THAT NEEDS SETTLING
 BEFORE THE READ.** It grades ~12 candidate strips a page against 7.1, so a page collects more edits at
@@ -56,7 +62,7 @@ the `round2-stage2-best` re-score puts both models on the same set — but **wha
 
 ⚠ **THE EXAM STILL THROWS AWAY THE WIDE AND THE DENSE — 567 of 1,369 candidates (41%)**, so it reads
 each page on its easier material. Quote it with the result; it is also a second reason to measure the
-decoder budget. [METRICS-EXAM.md](METRICS-EXAM.md).
+decoder budget. [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
 ⭐ **THE 59-id BUDGET IS A SETTING, NOT A LIMIT — and measuring it is the best-value script on the
 board.** It pays **three times**, all measured: **153 dropped exam strips and the 3 pages that cap the
@@ -66,9 +72,8 @@ windows blow it — *why* sirto/longa/saz semaisi are unmeasured), and 2,108 ove
 ⛔ Do **not** raise it inside the final render — the cost side is unpriced. [BACKLOG.md](BACKLOG.md) item 7.
 
 ⭐ **`batch3` IS THE BEST-PAYING QUEUE THIS PROJECT HAS RUN: 114 of 1,499 judged, ~58% fix rate**
-against ~30% in the scanned nota pool and ~12% in `batch2`; bad rate 7.9%, so no cap is needed. ⚠ **But
-the exam outranks it for a scarce evening** — 663 rows that decide whether the one-shot read can be
-interpreted at all, against ~1,385 here that improve training.
+against ~30% in the scanned nota pool and ~12% in `batch2`; bad rate 7.9%, no cap needed. ⚠ **But the
+exam outranks it** — 663 rows decide whether the one-shot read can be interpreted at all.
 [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
 ⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected on
@@ -87,11 +92,9 @@ tuplet mark** (unscoreable — no labelled real strip carries it) and **tuplet-d
 measurement or it buys drops. Sources are listed once, in [DECISIONS.md](DECISIONS.md), so they are
 not re-searched. ⚠ Read each licence before redistributing; keep refusing exam pieces.
 
-⛔ **ARM 2 (one measure per strip) IS DROPPED and ARM 1 (the scan profile) WAS A NULL.** The slicer
-already splits over-wide crops at gutters and what drops a strip is the **59-id budget**, not width.
-The scan profile moved nothing on the medium it was built for (+0.071 edits/strip `best`, +0.010
-`last`, both spanning zero, the interval excluding better than ~5%), its born-digital clause passes,
-and **`scan_share` stays off** in the final model. [rung3/scan-profile.md](rung3/scan-profile.md) ·
+⛔ **ARM 2 (one measure per strip) IS DROPPED and ARM 1 (the scan profile) WAS A NULL** — what drops a
+strip is the **59-id budget**, not width, and the scan profile moved nothing on the medium it was built
+for, so **`scan_share` stays off**. [rung3/scan-profile.md](rung3/scan-profile.md) ·
 [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
 
 ⚠ **THAT IS THREE NULLS ON ONE AXIS AND ONE PASS OFF IT.** Tuplet mark p = 0.688, the second
@@ -109,12 +112,10 @@ arms), settled **for free at the exam read**, and the concave mark, which is a p
 final render with **no recall claim**. [rung3/tuplets.md](rung3/tuplets.md).
 
 ⛔ **LEVER 1 IS SPENT.** The padding probe was causal (+59%, holdout +61%) but the reverse cannot be
-bought: beating the exam's 19.2 px needs crops narrower than one measure and that measured **+31.8%
-worse**, tripping the pre-registered stop rule at **5.4×**. ⚠ The **short-crop hole** is the blocking
-item on this axis. ⚠ Separately, "resolution was ruled out" in
-[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) was measured on per-class accidental recall, never
-against the **edit budget** — both statements stand, they measure different things.
-[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
+bought — crops narrower than one measure measured **+31.8% worse**, tripping the stop rule at **5.4×**;
+the **short-crop hole** blocks this axis. ⚠ "Resolution was ruled out"
+([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)) was measured on per-class recall, never against the
+**edit budget** — both stand, they measure different things. [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
 
 ✅ **ROUND 3 HAS A SIGNED ACCEPTANCE BAR, and it is also the public-launch gate** (owner, 2026-08-15):
 **≥75% of exam pages needing ≤5 corrections**, against 57% today, with the accidental measures as
@@ -225,9 +226,9 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 
 | # | do this | why now | in |
 |---|---|---|---|
-| 1 | read `examv3-full`, all **139** rows | 96 of them are exam gold **no human has read**, and v2's audit corrected **51%** of comparable labels | B0 |
+| 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
 | 2 | the **27 `gold_conflict`** rows | a hand correction and a fresh derivation disagree on the same music | B0 |
-| 3 | **re-emit the training pools onto the current crops** — gate on an independent model, hint from `round2-stage2-best` | training is the LAST pool on the retired slicer — 89% of labels carry, no labelling | B8 |
+| 3 | **re-emit the training pools onto the current crops**, all of it on `round2-stage2-best` | the last pool on the retired slicer, and the weak referee drops **10,695** strips on row alignment | B8 |
 | 4 | **measure the 59-id budget** | a script; it costs the exam 153 strips and 3 whole pages today | B9 |
 | 5 | the rest of `examv3`, **page-complete** | the primary is per page, so a half-labelled page under-counts itself | B0 |
 | 6 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
@@ -352,13 +353,12 @@ rather than what can be concluded from it. [RISKS.md](RISKS.md) ·
    `strips_nota` 1,554/1,740, `strips_tup` 106/169 — **no new labelling**. ⚠ Re-emitting rewrites the
    manifests the promoted verdicts hang off, so give it its own `--out` and look at what moved first.
    ⚠ Label noise on pitch/duration is still the live problem B2 attacks; this does not replace it.
-   ⭐ **TWO MODELS, TWO JOBS (owner, 2026-08-21).** The **hint** — the `decoded` column, which the edit
-   box mostly copies — comes from **`round2-stage2-best`**, so the rows that do not carry cost fewer
-   keystrokes. The **gate** — the `nd` check, the only independent test that a crop holds the music its
-   label claims — stays on a model that never trained on these pools, because stage 2 oversampled them
-   9× and a referee holding the answer key waves through the span errors this item exists to fix.
-   ⛔ **The exam gets neither**: not re-emitted, hint stays on the neutral July model
-   ([DECISIONS.md](DECISIONS.md)). ⚠ Also owed: audit 100 current-slicer crops (BACKLOG item 8).
+   ⭐ **ONE MODEL DOES IT ALL — `round2-stage2-best`** (owner, 2026-08-21; a morning's "split the gate
+   from the hint" was cancelled the same day). The referee also **aligns rows**, and an unalignable row
+   discards every strip on it: the weak referees dropped **10,695 strips as `row_unaligned`** against
+   **2,330 accepted**. Yield dominates precision here. ⚠ **The `--audit-frac` sample is the guard and
+   it must be READ** — v2 sampled 2 of 63 and a later full read found 51% wrong.
+   ⛔ **The exam is not re-emitted** and keeps the neutral July decode ([DECISIONS.md](DECISIONS.md)).
 
 ⚠ **The musical-form lead is DEAD** (owner retest, 2026-08-17) and must not be re-derived
 ([log/superseded.md](log/superseded.md)). ⚠ **A fourth realism arm does not follow from three near

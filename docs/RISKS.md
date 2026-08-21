@@ -14,6 +14,19 @@ Rule that produced most of this file: a number without its caveat gets quoted la
 solid. That has already happened once, when a 3-gold class swung a headline ~11 points.
 
 
+- **NEW (2026-08-21): every `\sig` block in a real-page label is UNVERIFIED.** The key signature is
+  the only part of a label not derived from SymbTr — the model reads it off each row-start strip and
+  the **majority read overwrites the derivation**. The voter is the weak `rung3-labeler`, whose
+  koma/küçük confusion is *systematic*, so the vote comes out unanimous **and** wrong; and the `nd`
+  gate strips `\sig` blocks from both sides before comparing, so nothing catches it. It fired on
+  **24 of 45 exam pieces (53%)**, **406 of 938** `strips_nota` pieces (43%), 98 of 293 `strips_tup`,
+  26 of 65 `strips_r1`; **8 of the 36 exam pieces** with a signature disagree with our own makam
+  table, several by *missing* an entry it calls near-universal. ⚠ Do not quote a per-class accidental
+  number as if signatures were clean, and do not read the 9:1 `\komaSharp`:`\kucukSharp` imbalance as
+  pure renderer defect — part of it may be this loop feeding itself. ⚠ **Not an error rate**: n = 7
+  corrections in one makam, and many overrides are probably correct
+  ([METRICS-CORPUS.md](METRICS-CORPUS.md) · [BACKLOG.md](BACKLOG.md) item 9).
+
 - **NEW (2026-08-21): the training pools are the last thing still on the RETIRED slicer.** The exam
   was rebuilt on the current one and `_realval_v2` was already on it; `strips_nota` / `strips_r1` /
   `strips_tup` — **2,330 real training strips** — were not. Until they are re-emitted, a Round-3 model

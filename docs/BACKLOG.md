@@ -68,16 +68,15 @@ starting. Abandoned plans are a different thing again and live in
    carry rule the exam rebuild used ([rung3/exam.md](rung3/exam.md)).
    ⏭ **Sequence it BEFORE the final render**, not after: a render is the one moment the training set
    is rebuilt anyway.
-   ⭐ **WHICH MODEL, decided 2026-08-21 (owner): two of them, one job each.** The **hint** — the
-   `decoded` column that `review_ui`'s edit box mostly copies — comes from **`round2-stage2-best`**,
-   which cuts the typing on the ~266 labels that do not carry; `build_realval_v2.py` already re-decodes
-   with it for the same reason. The **gate** — the `nd` check — stays on a model that never trained on
-   these pools (`rung3-labeler`, or synthetic-only `rung22-stemfix-best`), because `round2-stage2-best`
-   stage 2 oversampled these very strips **9×** (1,523 + 395 + 148), so its agreement with a label is
-   partly memory and a referee holding the answer key would pass the span errors this item exists to
-   remove. ⏭ **Not built yet**: `emit_strip_labels.py` takes one `--checkpoint` for both jobs, so this
-   needs a second option — the gate decode must cover whole pages (row alignment reads the full row),
-   the hint decode only the review crops. ⛔ The exam takes neither ([rung3/exam.md](rung3/exam.md)).
+   ⭐ **WHICH MODEL, settled 2026-08-21 (owner): `round2-stage2-best` does the WHOLE job** — a
+   morning's split into "gate" and "hint" models was proposed and **cancelled the same day**
+   ([DECISIONS.md](DECISIONS.md)). The number that settled it: the gate model also **aligns rows**, and
+   an unalignable row discards every strip on it — the weak referees dropped **10,695 strips as
+   `row_unaligned`** (4,467 nota / 5,540 tup / 688 r1) against **2,330 accepted**. Yield, not
+   precision, is the referee's dominant effect. ⚠ **The audit sample must be READ.** `--audit-frac`
+   measures the escaped-bad-label rate, which is the whole guard now that the referee has seen these
+   labels; exam v2 sampled 2 of 63 and a later full read found **51%** wrong. ⛔ The exam is not
+   re-emitted and keeps the neutral decode ([rung3/exam.md](rung3/exam.md)).
 
 5. ✅ **PROMOTED OUT OF THIS FILE 2026-08-20 — the dotted (usul) barline goes into the FINAL
    RENDER, drawn LABEL-FREE.** The decision, its two halves and what is given up are in
@@ -153,7 +152,7 @@ starting. Abandoned plans are a different thing again and live in
    render trains from base anyway. What raising it would buy, all three already measured:
    - **the exam**: on the REBUILT exam it drops **153** strips as over-budget (of 567 dropped in all),
      and **3 of the 67 pages produce nothing at all**, capping the exam at 64 pages
-     ([METRICS-EXAM.md](METRICS-EXAM.md)). The pre-rebuild figure was 78 of 282.
+     ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)). The pre-rebuild figure was 78 of 282.
    - **the tuplet repertoire**: 39.4% of triplet-bearing *single* measures blow it, 80.5% of 2-measure
      and 92.9% of 3-measure windows — which is *why* sirto/longa/saz semaisi are unmeasured
      ([rung3/labeling.md](rung3/labeling.md) §1c, [rung3/round3-criteria.md](rung3/round3-criteria.md) §5)
@@ -174,6 +173,26 @@ starting. Abandoned plans are a different thing again and live in
    build, so none of them says what today's code does. ⏭ Draw 100 random crops from a current
    re-slice, look at them, and report the unusable rate. If it is still ~1 in 3, the slicer outranks
    labelling and this file's item 4 stops being a cleanup and becomes the main line.
+
+9. **NEW 2026-08-21 — THE MODEL-VOTED KEY SIGNATURE: measure it, then change the rule.** Found by the
+   owner reading `examv3-full` ([METRICS-CORPUS.md](METRICS-CORPUS.md) has the mechanism and the
+   counts). The signature is the only part of a label not derived from SymbTr: the model reads it off
+   each row-start strip and the majority read **overwrites** the derivation. The voter is the weak
+   `rung3-labeler`, its koma/küçük confusion is systematic so the vote is unanimous and wrong, and the
+   `nd` gate cannot see signatures at all. It fired on **24 of 45 exam pieces**, **406 of 938**
+   `strips_nota` pieces, 98 of 293 `strips_tup`, 26 of 65 `strips_r1`.
+   ⏭ **The measurement is a script — no labelling, no GPU.** For every piece where the override fired,
+   compare the chosen signature against `data/makam_signatures.json`'s majority variant for that
+   makam and list the disagreements. On the exam that already gives **8 of 36 pieces**, several of
+   them *missing* entries the table calls near-universal (huseyni, nikriz, segah). That turns one
+   owner observation into a checkable list across all four pools.
+   ⏭ **The proposed rule change**: a model may not silently overwrite the table. Where the vote
+   disagrees with the makam's majority variant, send the row-start strips to **review** instead of
+   overriding — the same treatment a split vote already gets.
+   ⚠ **Re-emitting with `round2-stage2-best` does NOT fix this** (item 4): that model trained on these
+   labels, so it inherits the koma bias. A better voter is still the wrong kind of authority.
+   ⚠ **Not yet an error rate.** n=7 corrections in 1 makam; many overrides are probably right, and the
+   table is a guide — mahur genuinely prints both ways (küçük 35, koma 17).
 
 ### Further out (not next, not cancelled)
 

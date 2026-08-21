@@ -3,7 +3,7 @@
 purpose: every number the one-shot real-page exam has produced, round by round
 audience: agents and the owner, whenever an exam result is quoted or compared
 
-updated: 2026-08-18
+updated: 2026-08-21
 
 Split out of [METRICS.md](METRICS.md) on 2026-08-11, when that file reached its 400-line cap — this
 section was 188 of its 399 lines. **Nothing here changed in the move.** Every other measured number
@@ -19,16 +19,14 @@ macro≥30 beside it; see the caveats in [METRICS.md](METRICS.md).
 
 ## Errors by MUSICAL FORM (2026-08-17) — ⛔ THE LEAD IS DEAD; THE TABLE IS KEPT
 
-⛔ **Read this before quoting anything below.** These numbers were measured because the owner reported
-the app failing on classical pieces. **The owner retested the app the same week and withdrew that
-report** — classical pages read no worse than songs (*"it is not read it well but it cannot read the
-songs as well"*). Hours before that, the mechanism had already half-failed a confound check:
-beste/nakış are *simpler* than şarkı on every countable property. ⚠ The other half of that check —
-"they are worse SCANS, `nd` 0.167 vs 0.070" — was **circular and is withdrawn**: `nd` is
-`lev(label, decode)/len(label)`, a label-vs-decode disagreement, so it restates this very table
-rather than explaining it ([METRICS-CORPUS.md](METRICS-CORPUS.md)). The
-table is arithmetic on a spent dump and is correct as such; **it is not evidence of a form effect**,
-and no plan may be built on it. Full account: [log/superseded.md](log/superseded.md).
+⛔ **Read this before quoting anything below.** Measured because the owner reported the app failing on
+classical pieces — then **retested the same week and withdrew the report**. The mechanism had already
+half-failed a confound check (beste/nakış are *simpler* than şarkı on every countable property), and
+the other half — "they are worse SCANS, `nd` 0.167 vs 0.070" — is **withdrawn as circular**, since
+`nd` is a label-vs-decode disagreement and so restates this table rather than explaining it
+([METRICS-CORPUS.md](METRICS-CORPUS.md)). The table is correct arithmetic on a spent dump; it is
+**not evidence of a form effect** and no plan may be built on it. Full account:
+[log/superseded.md](log/superseded.md).
 
 Bucketing the **already-spent** Round-2 exam error dump by the form in each strip's `piece` slug:
 
@@ -62,11 +60,10 @@ now stands only as a **description of the exam's mix**, worth knowing whenever e
 It is not an argument for weighting v3 by form.
 
 **Training coverage, for the record** ([../data/pieces_v4.json](../data/pieces_v4.json), 208 pieces):
-beste **3.8%**, nakış **1.4%**, ağırsemai 1.9%, kâr **0%**. Coverage and the error ranking above do
-line up. ⛔ **Do not read this as a coverage argument** — the lead was killed by the owner retesting
-the app, not by any mechanism, and at n = 2–26 strips per form this table cannot carry one either
-way. ⚠ An earlier version of this line blamed "scan age"; that explanation rested on `nd` and is
-withdrawn as circular ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
+beste **3.8%**, nakış **1.4%**, ağırsemai 1.9%, kâr **0%** — which does line up with the ranking
+above. ⛔ **Not a coverage argument**: the lead died by owner retest, and at n = 2–26 strips per form
+this table cannot carry one either way. ⚠ An earlier version blamed "scan age" — withdrawn as
+circular, same reason as above.
 
 ## Model quality — real exam (never trained on, read once per round)
 
@@ -109,129 +106,13 @@ One "edit" = one token substitution, deletion or insertion needed to turn the ou
 - The second half of the goal — the app showing *where* the errors are — is unmeasured, because it
   does not exist yet. Finding 5 unknown errors among ~250 notes costs more than fixing them.
 
-### ⭐ What the exam is MADE OF, and what it throws away (census 2026-08-20)
+### The exam as an instrument → [METRICS-EXAMSET.md](METRICS-EXAMSET.md)
 
-Counted off `testset.json` and `strips_exam_v2/` while answering "how much more exam should I
-label?". Neither number had been written down, and both bear on the one-shot read.
-
-**Pages: we own 67, we grade 46.**
-
-| | count |
-|---|---|
-| exam pieces in `testset.json` | **45** |
-| page images those pieces list — **all present on disk** | **67** |
-| pages that produced graded strips | **46** (page 1 → 268 strips, page 2 → 58) |
-| **pages owned, exam-only, and unused** | **21** |
-
-Pages per piece: 24 pieces have 1, **20 have 2**, 1 has 3. The unused 21 are mostly the *second*
-page of a piece whose first page was labelled. ⭐ **They cost nothing in training data** — their
-pieces are already banned from training by the exam rule — so labelling them is the only way to grow
-the exam that does not take a piece away from the model.
-
-**Strips: 54% of the candidates on those pages are graded.**
-
-| disposition | strips |
-|---|---|
-| in the clean exam (`strips_exam_v2_clean`) | **326** |
-| dropped `split_wide` (crop cut at a gutter; fragment labels do not exist) | 203 |
-| dropped `over_budget` (label exceeds the 59-id decoder budget) | 78 |
-| dropped `empty_range` | 1 |
-| **dropped total** (`emit_drops.csv`, over 33 distinct piece+page) | **282** |
-
-⚠ **The drops are the wide and the dense strips, so the exam grades each page on its easier
-material.** [rung3/round3-criteria.md](rung3/round3-criteria.md) §5 says this about tuplets only
-("dense contiguous-triplet instrumentals remain unmeasured"); 282 against 326 makes it general. It
-is a bias in the *matched upper bound* direction, i.e. it points the same way as the exam's other
-known optimism, not against it.
-⭐ Both drop reasons are blocked by the same two things — the 59-id ceiling and the absence of
-fragment labels — which is why measuring that ceiling pays here as well as on training data
-([BACKLOG.md](BACKLOG.md)).
-
-**Per-class gold** (`testset.json`, v2.1 freeze): bakiyeSharp 141, kucukFlat 70, bakiyeFlat 66,
-komaFlat 48, kucukSharp 31, komaSharp 18, buyukSharp 3, buyukFlat 0.
-
-### ⭐ THE EXAM IS BEING REBUILT ON THE CURRENT SLICER (2026-08-20/21)
-
-**How it started.** The exam-v3 growth queue was cut on the crops already on disk, and the owner
-opened its first strip: a **265 px crop holding one measure**, notehead sliced by the frame, beams
-outside it. The cause was not today's slicer — **no exam page had ever been re-sliced**. 0 of the 67
-exist under `data/real/strips_v2`; every exam crop was 2026-07-15..17 output, four weeks after
-`page_to_strips.py` was overhauled, exactly as [DECISIONS.md](DECISIONS.md) warned on 2026-07-28
-(*"exam v3 needs the same treatment; until then the one-shot instrument measures a retired slicer"*).
-
-**What re-slicing does to crop shape**, measured on the 21 growth pages (same music, two slicers):
-median crop width **640 → 1031 px**, crops under 400 px **24% → 4%**, and rows needing a human
-**297 → 214**. 4% is the frozen exam's own sliver rate, so the re-slice puts crop shape back where
-it belongs.
-
-**The owner's call, 2026-08-21: rebuild the whole exam, not just grow it** (*"I can make it from
-scratch, it is okey. Just exam need to be okey."*). All 45 pieces / 67 pages were re-sliced into
-`data/real/strips_examv3` and re-emitted:
-
-| the whole exam, re-emitted | strips |
-|---|---|
-| auto-labelled by the emitter | **139** |
-| **rows needing a human** (`examv3`) | **663** |
-| dropped `split_wide` | 414 |
-| dropped `over_budget` | 153 |
-| pages producing anything | **64 of 67** |
-
-### What happened to the 326 frozen gold labels (2026-08-21)
-
-A gold label describes the music of an exact measure span, so it survives on any new crop holding
-that span — a finer question than `check_crop_staleness.py`'s page-level one (which says 45 of 46
-pages change). Per label:
-
-| outcome | labels | what it means |
-|---|---|---|
-| **agreed** | **43** | the re-emitted label is identical to the gold — two SymbTr derivations agree, **no human needed** |
-| **suggested** | 151 | the crop is in the queue anyway; the gold rides along in `corrected_label` as a pending suggestion |
-| **conflict** | 27 | crop auto-accepted but its new label differs from the gold — queued for a human, gold pre-loaded |
-| **lost** | **105** | no crop holds that music any more |
-
-- **185 of the 663 queue rows arrive with text already in the edit box** (the 178 above plus 7
-  corrections carried from the superseded first cut).
-- The 105 lost break down as **88 re-packed** into a differently-bounded window, **10 whose new crop
-  is dropped** (`split_wide` / `over_budget`), and 7 ambiguous matches.
-- ⚠ **The 27 conflicts are the interesting rows**: a hand correction and a fresh derivation disagree
-  on the same music. The first one read is a `\tie` present in the gold and absent from the new
-  label, with the tie arc visible in the crop.
-
-⚠ **The rebuilt exam grades MORE of each page**: ~12 candidate strips a page against the frozen
-exam's 7.1, because it drops 567 of 1,369 candidates (41%) where v2 dropped 46% of a smaller pool.
-A page measured on more of its own material collects more edits, so **the primary ("pages needing ≤5
-corrections") will read lower on the new instrument than on the old one at equal model quality**.
-The signed 75% floor was set against the old, easier instrument. This does not affect *fairness* —
-the baseline re-score puts both models on the same set — but it does change what the floor means,
-and that is the owner's to settle ([rung3/round3-criteria.md](rung3/round3-criteria.md) §3b).
-
-**What it cost, page level vs label level** (`check_crop_staleness.py --root data/real/strips`, all
-46 graded pages, measured before the rebuild was decided): 0 identical, **1** size-only, 8 measures
-differ, **37 crop count differs** — i.e. "45 of 46 pages lose their labels". At *label* level the
-loss is **105 of 326 (32%)**, because most labels move with their music. That gap is why the rebuild
-kept 221 of them rather than starting blank.
-
-### How big the exam has to be — the arithmetic behind the ±12 (2026-08-20)
-
-The primary is a **share of pages**, so its precision is binomial in the page count. 95% half-width
-at a true rate near the 75% floor, and — the more useful column — the score you would have to
-measure before the interval's lower bound clears 75%:
-
-| exam pages | 95% half-width | to *demonstrate* a pass, must measure |
-|---|---|---|
-| **46 — today** | **±12.5 pp** | ~86% |
-| **67 — every page we already own** | **±10.4 pp** | ~84% |
-| 92 | ±8.8 pp | ~83% |
-| 113 | ±8.0 pp | ~82.5% |
-| 200 | ±6.0 pp | ~81% |
-
-- **Precision improves with the square root of the work**, so doubling the exam buys ~1.4×. There is
-  no reachable size at which a near-boundary result becomes crisp.
-- ⚠ **The last column is the one that decides policy.** With a 75% floor, a model that is genuinely
-  at 78% cannot *demonstrate* a pass at any exam size this project can afford. That is an argument
-  for reporting the interval, not for buying pages.
-- Consequence, taken as a decision on 2026-08-20: grow to **67 and stop**, and report the interval
-  beside the result. [rung3/exam.md](rung3/exam.md) · [DECISIONS.md](DECISIONS.md).
+Moved there on 2026-08-21 when this file hit its cap: **what the exam is made of** (census, the 41%
+of candidates it throws away), **the 2026-08-21 rebuild** on the current slicer, **`examv3-full`**
+(all 139 auto-accepts read by hand: 13.7% wrong against v2's 51%), **what happened to the 326 frozen
+gold labels**, and **how big the exam has to be** (the ±12-point arithmetic). This file keeps the
+scores.
 
 ### Where the user's corrections actually go (2026-07-27) — accidentals are 13% of them
 

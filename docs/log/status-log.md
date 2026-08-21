@@ -7,7 +7,71 @@ updated: 2026-08-21
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-21 (latest) — two models, two jobs: the emitter's hint is upgraded, its referee is not
+## 2026-08-21 (latest) — the exam's own labels are read, and they expose a bug in how signatures are made
+
+**Two things happened, and the second is worth more than the first.**
+
+### 1. The model split was proposed and cancelled the same day
+
+The morning's decision (entry below) split the emitter's checkpoint into a "gate" model and a "hint"
+model. The owner pushed back — *"Cannot we basically use last model for everything?"* — and was right.
+The number that settled it had not been looked at: **the gate model also aligns rows**, and a row it
+cannot align throws away every strip on it. The weak referees dropped **10,695 strips as
+`row_unaligned`** (4,467 `strips_nota` = 37% of rows, 5,540 `strips_tup` = 47%, 688 `strips_r1` = 47%)
+against a real training set of **2,330 accepted strips**. The referee's dominant effect is **yield**,
+not precision, and the split optimised the small side of the trade.
+
+The memorisation objection also shrank under inspection. Reproducing the OLD label on a re-cut crop
+mostly *raises* `nd` and sends the strip to review — a yield cost, not a wrong label. The genuinely
+dangerous case is narrower than stated: a **truncated** crop whose old version held the full span,
+where memory and label agree and nothing catches it. Guard kept: `--audit-frac`, which must be **read**
+and not merely produced. The exam half of the morning's decision stands, on a different argument —
+`round2-stage2-best` is the baseline being graded on that exam, so seeding its gold from that model's
+decode is bias rather than noise.
+
+**Process note worth keeping:** the argument was made twice before anyone counted the drops. Two
+mechanisms were weighed against each other for a whole exchange while the deciding number sat in three
+`emit_report.json` files.
+
+### 2. `examv3-full` is read, and 7 of its 18 fixes turned out to be one bug
+
+The owner read all 139 emitter-written exam labels: **120 ok, 18 fix, 1 bad = 13.7% wrong**, against
+exam v2's **51%** on the identical queue. That confirms the re-slice finding from the entry below with
+a complete n rather than a partial one.
+
+Then the observation that mattered: *"the fixes mostly this: `\komaSharp` → `\kucukSharp`"*. All 7
+sit **inside `\sig … \sigend`**, on the same note, in **2 pieces of one makam**. Chasing that:
+
+- The key signature is the **only** part of a label not derived from SymbTr. `emit_strip_labels.py`
+  takes a **majority vote over the model's own row-start reads** and, when it differs from the
+  derivation, **overwrites** the derivation with it.
+- The rule has a real justification, written in the code: real editions print the makam's conventional
+  signature, which routinely differs from the content-derived one.
+- But the voter is `rung3-labeler`, whose koma/küçük confusion is **systematic**. A systematic error
+  wins a vote *unanimously*, so the override fires with full confidence and is wrong on every row-start
+  of the piece. And the `nd` gate strips `\sig` blocks from both sides before comparing — by design,
+  because signature reading is noisy — so the one check that catches wrong labels cannot see it.
+- Reach: **24 of 45 exam pieces (53%)**, **406 of 938** `strips_nota` pieces, 98 of 293 `strips_tup`,
+  26 of 65 `strips_r1`. Against our own `makam_signatures.json`, **8 of the 36 exam pieces** with a
+  signature disagree with the table's majority variant — several *missing* an entry it calls
+  near-universal (huseyni, nikriz, segah).
+- ⭐ **There is a loop**: the misread becomes the label, the label trains the model, the model misreads
+  harder. A plausible partial cause of the 9:1 `\komaSharp`:`\kucukSharp` imbalance, on the accidental
+  class the exam headline is most fragile about.
+
+⚠ **Not claimed**: n = 7 in one makam is a signal, not an error rate for the override; many overrides
+are probably right; and the makam table is a guide, not truth — mahur genuinely prints both ways in our
+sources (küçük 35, koma 17), so it *agrees with* the owner's reading rather than proving it.
+
+**Recorded as**: [../METRICS-CORPUS.md](../METRICS-CORPUS.md) (mechanism + counts),
+[../METRICS-EXAMSET.md](../METRICS-EXAMSET.md) (the audit),
+[../RISKS.md](../RISKS.md) (standing caveat), [../BACKLOG.md](../BACKLOG.md) item 9 (the script and
+the proposed rule change), [../DECISIONS.md](../DECISIONS.md) (two rows).
+⚠ **Doc housekeeping**: `METRICS-EXAM.md` crossed its 400-line cap, so it was split by genre —
+**[../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)** now holds what the exam *is* (census, rebuild,
+`examv3-full`, gold carry, sizing) and `METRICS-EXAM.md` keeps what models *scored*.
+
+## 2026-08-21 — two models, two jobs: the emitter's hint is upgraded, its referee is not (⛔ the split was cancelled hours later, see above)
 
 **The owner asked a good question while labelling `examv3`, and the answer split in two.** The
 question: *"emitting them with a better model would make my correcting job easier"* — true, and the

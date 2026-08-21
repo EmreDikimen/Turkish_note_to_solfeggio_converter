@@ -188,16 +188,21 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   exam is read once per round on the final model. All iteration happens on real-val.
 - **Photos of exam pieces are EXAM-ONLY.** Training on them leaks the exam. Camera photos for
   training must come from different pieces.
-- **THE EMITTER'S CHECKPOINT DOES TWO JOBS, AND THEY TAKE DIFFERENT MODELS** (owner, 2026-08-21).
-  It **gates** (the `nd` label-vs-decode check, the only independent test that a crop holds the music
-  its label claims) and it **hints** (the `decoded` column, which `review_ui`'s edit box largely
-  copies). ⛔ **Never gate on a model that trained on the pool being emitted** — `round2-stage2-best`
-  oversampled the real training pools 9×, so its agreement is memory, not reading, and it would wave
-  through the span errors a re-emit exists to remove. ⛔ **Never seed EXAM gold from the decode of a
-  model that will be graded on that exam** — it anchors the answer key toward that model. The exam's
-  hint therefore stays on `rung3-labeler`, whose errors are noise rather than bias; `_realval_v2`
-  keeps its `round2-stage2-best` seed because real-val selects and does not grade. Training pools
-  take the better hint with the gate left independent. [docs/DECISIONS.md](docs/DECISIONS.md).
+- **NEVER SEED EXAM GOLD FROM THE DECODE OF A MODEL THAT WILL BE GRADED ON THAT EXAM** (owner,
+  2026-08-21). It anchors the answer key toward that model: an error the reader lets past becomes
+  "correct", and it is that model's own error. So the exam is **not re-emitted** and its edit-box
+  decode stays on `rung3-labeler`, whose mistakes are noise rather than bias. `_realval_v2` keeps its
+  `round2-stage2-best` seed because real-val **selects** and does not grade. ⚠ The training pools go
+  the other way — one model, `round2-stage2-best`, for the whole re-emit: the gate model also aligns
+  rows, and the weak referees threw away **10,695 strips** on alignment against 2,330 accepted, so
+  yield dominates. A morning's plan to split "gate" and "hint" models was cancelled the same day.
+- **THE KEY SIGNATURE IS THE ONE PART OF A LABEL THE MODEL DECIDES, NOT SymbTr** — `emit_strip_labels.py`
+  takes a majority vote over the row-start decodes and **overwrites** the derivation with it, and the
+  `nd` gate is blind to `\sig` blocks by design. It fired on 24 of 45 exam pieces and 43% of
+  `strips_nota` pieces, and the weak voter's systematic koma/küçük confusion wins that vote
+  unanimously. ⚠ **Treat any `\sig` block in a real-page label as unverified** until
+  [docs/BACKLOG.md](docs/BACKLOG.md) item 9 is done. [docs/DECISIONS.md](docs/DECISIONS.md) ·
+  [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,

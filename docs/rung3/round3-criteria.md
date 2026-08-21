@@ -255,7 +255,7 @@ before any Round-3 number was seen:
 ⚠ **A blind spot in §5 is now sized, and it is bigger than §5 implies.** §5 says dense
 contiguous-triplet instrumentals are unmeasured. The census behind this addendum shows the exam grades
 **326 of 608** candidate strips on its own pages — the other 282 are dropped as `split_wide` (203) or
-`over_budget` (78), i.e. the **wide and the dense** ones ([../METRICS-EXAM.md](../METRICS-EXAM.md)).
+`over_budget` (78), i.e. the **wide and the dense** ones ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
 So the exam reads each page on its easier material. This does **not** change the floors either: the
 bias runs in the same direction as the already-declared "matched upper bound" optimism, which §2
 accepts on the record. It is stated so the result is quoted with it.

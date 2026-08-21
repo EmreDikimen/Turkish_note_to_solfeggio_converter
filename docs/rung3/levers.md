@@ -368,7 +368,7 @@ number that decided the bound is not the error bar but what it takes to DEMONSTR
 a 75% floor a model must *measure* ~86% at 46 pages and still ~81% at 200, so no affordable exam
 makes a near-boundary call crisp, and buying pages is the wrong purchase. Plan, cost and the binding
 side condition (re-score the Round-2 baseline on the grown exam): [exam.md](exam.md). Census, drop
-table and sizing arithmetic: [../METRICS-EXAM.md](../METRICS-EXAM.md). Decision row:
+table and sizing arithmetic: [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md). Decision row:
 [../DECISIONS.md](../DECISIONS.md).
 ⭐ **A second finding came with it and it is not about size at all**: the exam grades **326 of 608**
 candidate strips on its own pages — 282 are dropped, and they are the **wide and dense** ones. So the

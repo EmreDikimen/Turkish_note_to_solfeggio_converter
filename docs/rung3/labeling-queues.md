@@ -264,7 +264,7 @@ first strip the owner opened showed that no exam page had ever been re-sliced ([
 the emitter labelled by itself. **185 rows arrive with text already in the edit box** — the frozen
 exam's own gold, moved onto the crop holding the same music, or a correction typed against the
 superseded first cut. Composition, the gold-carry table and the harder-instrument caveat:
-[../METRICS-EXAM.md](../METRICS-EXAM.md).
+[../METRICS-EXAMSET.md](../METRICS-EXAMSET.md).
 
 ⭐ **It reads its OWN crop root, `data/real/strips_examv3`.** A separate root is what made the
 re-slice safe: the emitter slices in place, and the crops under `data/real/strips` are hardlinked
@@ -287,10 +287,11 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
 
 ⏭ **The order to label it in, and the stopping rule** (reviewed 2026-08-21, owner accepted):
 
-1. **`examv3-full` first — all 139 rows.** 96 of them are exam gold no human has ever read. The
-   reference point is exam v2's own audit: of its 63 auto-accepted labels a human later corrected
-   **32 (51%)**. A wrong gold label *manufactures* corrections on the page it sits on, which is how
-   a bad label moves the primary.
+1. ✅ **`examv3-full` — DONE 2026-08-21, all 139 read.** 120 `ok`, 18 `fix`, 1 `bad` = **13.7%
+   wrong**, against exam v2's **51%** on the identical queue. ⭐ **7 of the 18 fixes were one bug**,
+   not seven: `\komaSharp` → `\kucukSharp` inside `\sig … \sigend`, all in one makam — the
+   model-voted signature override ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The rest is 12
+   repeat/tie marks and 3 durations.
 2. **The 27 `gold_conflict` rows**, where a hand correction and a fresh derivation disagree.
 3. **The rest, PAGE-COMPLETE.** The primary counts corrections *per page*, so a half-labelled page
    under-counts its own errors — grading it would be worse than skipping it. Stopping early should
@@ -309,6 +310,12 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
   promote into a training manifest.
 - ⚠ **Attend to the picture.** 329 of the 663 rows are `row_unaligned` and carry no label at all —
   the edit box starts from the model's decode, and `ok` must mean "I looked and it was right".
+- ⭐ **WATCH THE `w00` STRIPS — that is where the signature bug lives.** The key signature is the one
+  part of a label the model decides rather than SymbTr, and it overwrote the derivation on **24 of the
+  45 exam pieces**. A signature is identical on every row of a piece, so **checking one `w00` strip per
+  piece settles all of them** — 36 pieces carry a signature, not 663 rows. Start with the 8 that
+  disagree with our makam table ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)): huseyni, nikriz,
+  segah, three mahur pieces, muhayyerkurdi, sehnaz.
 - ⛔ **THAT DECODE STAYS ON `rung3-labeler`, AND IT IS NOT UPGRADED** (owner, 2026-08-21). A better
   hint would save keystrokes here — `round2-stage2-best` reads far better — but it is the **baseline
   column** re-scored on this exam, so seeding gold from its decode anchors the answer key toward it:

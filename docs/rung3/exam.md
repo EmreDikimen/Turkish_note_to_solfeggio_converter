@@ -69,7 +69,7 @@ Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIO
 [levers.md](levers.md)'s power-note **option 1** (grow the exam before the read, which keeps the
 one-shot rule intact) taken in a bounded form, with **option 2 applied on top of it** (report the
 interval beside the result). The census, the drop table and the sizing arithmetic are in
-[../METRICS-EXAM.md](../METRICS-EXAM.md) and are not restated here.
+[../METRICS-EXAMSET.md](../METRICS-EXAMSET.md) and are not restated here.
 
 **Why these 21 pages and no others.** They belong to pieces that are *already* exam-only, so
 labelling them takes nothing away from training. Every page beyond 67 costs a piece removed from the
@@ -91,7 +91,7 @@ whether the one-shot read can be interpreted at all. ⏭ **It outranks `batch3` 
 scratch, it is okey. Just exam need to be okey."* All 45 pieces / 67 pages were re-sliced into
 `data/real/strips_examv3` and re-emitted. `examv3` in the review UI now holds **663 rows over 64 of
 the 67 pages**, with **139** strips the emitter labelled by itself. Numbers, and what happened to the
-frozen gold: [../METRICS-EXAM.md](../METRICS-EXAM.md). How to run it:
+frozen gold: [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md). How to run it:
 [labeling-queues.md](labeling-queues.md).
 
 **Why a rebuild rather than the planned growth.** The growth queue was cut on the crops already on
@@ -107,6 +107,15 @@ need no human at all, **178 came back as pending suggestions** (151 on rows alre
 differently-bounded window. `strips_exam_v2_clean/` is untouched and remains the record of what
 Round 2 was measured on.
 
+✅ **`examv3-full` IS READ — all 139 emitter-written labels, by hand (2026-08-21).** 13.7% were
+wrong against exam v2's 51% on the same queue, so the re-slice paid off twice: better crops **and**
+better labels off them. ⛔ **But the audit found a defect the exam cannot fix by labelling harder**:
+the key signature is decided by a **majority vote over the model's own reads**, not by SymbTr, and it
+overwrote the derivation on **24 of these 45 pieces**. Seven of the 18 corrections were that one bug.
+Row-start (`w00`) strips are therefore the exam's least trustworthy labels until
+[../BACKLOG.md](../BACKLOG.md) item 9 is done — and the cheapest check is one `w00` strip per piece,
+since a signature is identical on every row of a piece. [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+
 ⚠ **THE REBUILT EXAM IS A HARDER INSTRUMENT, AND THE SIGNED FLOOR WAS SET ON THE OLD ONE.** It grades
 ~12 candidate strips a page against the frozen exam's 7.1, so a page collects more edits at equal
 model quality and the primary ("pages needing ≤5 corrections") will read lower. Fairness is not
@@ -114,12 +123,9 @@ affected — the `round2-stage2-best` re-score puts both models on the same set 
 floor means does change**, and that is the owner's to settle before the read, not after it
 ([round3-criteria.md](round3-criteria.md) §3b, §4).
 
-⛔ **THE EXAM IS NOT EMITTED AGAIN, AND ITS HINT MODEL IS NOT UPGRADED** (owner, 2026-08-21). This
-closes a question the training pools answered the other way. The emitter's checkpoint does two jobs:
-it **gates** (the `nd` label-vs-decode check) and it **hints** (the `decoded` column, which
-`review_ui`'s edit box largely copies). Upgrading the hint from `rung3-labeler` to
-`round2-stage2-best` saves real keystrokes, and the training pools take it — but not here, for one
-reason: **`round2-stage2-best` is the baseline column re-scored on this very exam.** Gold seeded from
+⛔ **THE EXAM IS NOT EMITTED AGAIN, AND ITS DECODE IS NOT UPGRADED** (owner, 2026-08-21). The
+training pools answered this the other way — they are re-emitted entirely on `round2-stage2-best`
+([../DECISIONS.md](../DECISIONS.md)) — and the exam does not follow them, for one reason: **`round2-stage2-best` is the baseline column re-scored on this very exam.** Gold seeded from
 a graded model's decode is anchored toward it; every error a tired reader lets past becomes part of
 the answer key, and it is that model's own error. The July model is weaker but is graded by nobody
 and comes from a different lineage (fine-tuned from `rung22-stemfix-best`, while `round2-stage2-best`

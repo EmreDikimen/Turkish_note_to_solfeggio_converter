@@ -6,15 +6,11 @@ updated: 2026-08-22
 
 ## Now
 
-⭐ **`\tie` IS RETIRED — AN ARC IS NOW LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Two tied
-notes are labelled as two plain notes; pitches, total duration and bar arithmetic are unchanged. It
-measured out as a data-quality fix: **65–78% of every `\tie` in the review queues joined two DIFFERENT
-pitches**, which a tie cannot do. ✅ **BOTH SIDES ARE NOW DONE.** The render side was not a pure
-deletion — a bare tie-tail reads as *unaltered* where nothing carries an accidental, so it now
-restrikes on drawing and label together. The real-val gold followed: **771 tokens over 576 rows in 12
-manifests**, **78% of pairs joining different pitches**; no verdict moved, no restrike needed.
-⚠ Real-val's arc-`\tup3` diagnostic now prints `n/a` — its ≤10% floor is read on the **exam**, which
-keeps its ties. [rung3/labeling.md](rung3/labeling.md) · [DECISIONS.md](DECISIONS.md).
+✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — an arc is label-free ink, like
+a slur, because **65–78% of every `\tie` in the queues joined two DIFFERENT pitches**. Render, gold
+and scorer all followed; the tie tail now restrikes its accidental where nothing carries one.
+⚠ Real-val's arc-`\tup3` diagnostic now prints `n/a` — that floor is read on the **exam**, which keeps
+its ties. Account: [log/status-log.md](log/status-log.md) · [rung3/labeling.md](rung3/labeling.md).
 
 ⭐ **THE ARMS ARE DONE AND THE FINAL RENDER IS SPECIFIED (2026-08-20).** Round 3's arm list closed —
 one dropped, one null, one **passed** — and the three decisions the final render was waiting on were
@@ -52,8 +48,8 @@ statistic about the model's guesses. [BACKLOG.md](BACKLOG.md) item 5 · [METRICS
 ⭐ **THE EXAM WAS REBUILT ON THE CURRENT SLICER AND LABELLING IT IS THE LIVE JOB (owner, 2026-08-21).**
 All 45 pieces / 67 pages re-sliced into `data/real/strips_examv3`; `examv3` holds **663 rows over 64 of
 the 67 pages**. ✅ **`examv3-full` is DONE — all 139 auto-written labels read by hand, 13.7% wrong**
-(18 fix + 1 bad) against exam v2's **51%** on the identical queue, which is the re-slice paying off.
-[rung3/exam.md](rung3/exam.md) · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
+(18 fix + 1 bad) against exam v2's **51%** on the identical queue. [rung3/exam.md](rung3/exam.md) ·
+[METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
 ⛔ **AND THAT AUDIT FOUND A BUG WORTH MORE THAN THE EXAM: THE KEY SIGNATURE IS DECIDED BY THE MODEL.**
 The owner noticed the fixes were "mostly `\komaSharp` → `\kucukSharp`" — 7 of the 18, all inside
@@ -66,9 +62,9 @@ own makam table**. ⭐ There is a **loop** in it — the misread becomes the lab
 model — and it lands on the accidental class the headline is most fragile about. ⚠ n=7 in one makam is
 a signal, not an error rate. ⏭ [BACKLOG.md](BACKLOG.md) item 9 · [METRICS-CORPUS.md](METRICS-CORPUS.md).
 
-⭐ **THE FROZEN GOLD LARGELY MOVED WITH ITS MUSIC — 221 of 326 labels, not 11.** ⚠ A carried label is
-a **suggestion, not a verdict**; `strips_exam_v2_clean/` stays the record of what Round 2 was measured
-on. [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
+⭐ **THE FROZEN GOLD LARGELY MOVED WITH ITS MUSIC — 221 of 326 labels, not 11.** ⚠ A carried label is a
+**suggestion, not a verdict**; `strips_exam_v2_clean/` stays the record of what Round 2 was measured on.
+[METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
 ⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST, AND THAT NEEDS SETTLING
 BEFORE THE READ.** It grades ~12 candidate strips a page against 7.1, so a page collects more edits at
@@ -80,18 +76,23 @@ the `round2-stage2-best` re-score puts both models on the same set — but **wha
 each page on its easier material. Quote it with the result; it is also a second reason to measure the
 decoder budget. [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
-⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES — STILL TRUE, AND `?dense=` IS NOT
-THE FIX.** The browser slicer has **no label-budget rail**: at training an over-budget strip is
-dropped, at inference there is none, so the model emits `</s>` early and **confidently**. `hitCap`
-catches **7 of 4,012 (0.2%)** and **998 of 1,689 pages (59.1%)** carry such a strip. ✅ **Both halves
-of the measurement are now done.** The rail's browser-vs-Python **parity is CLOSED** — 132 pages, W4/W5/W6
-pass under the rail as under the shipped rule, and every strip's `est_tokens` agrees. ⛔ **And with
-parity closed the rail measured out as a WASH**: under-fill **15.7% → 16.6%** (p = 0.57) over 117
-shared pages. It does act — over-budget strips fall 119 → 43 and under-filling among them halves —
-but the music lands in **+9.2% more, shorter strips** that under-fill just as often, so nothing
-reaches the page. ⚠ Read against a **7.6% false-alarm floor** measured on gold, and the instrument
-cannot see a wrong pitch. ⏭ **The bug is unchanged and open; only this fix is answered.**
-[METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
+⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES, AND THE FIX IS A PAIR NOBODY HAS
+RUN.** The browser slicer has **no label-budget rail**: at training an over-budget strip is dropped,
+at inference there is none, so the model emits `</s>` early and **confidently** — `hitCap` catches
+**7 of 4,012 (0.2%)**, and **998 of 1,689 pages (59.1%)** carry such a strip. ✅ The rail's
+browser-vs-Python **parity is CLOSED** (132 pages; W4/W5/W6 pass under the rail as under the shipped
+rule). ⛔ **The rail ALONE is a wash** — under-fill 15.7% → 16.6% (p = 0.57), no better on dense
+pages only (19.2% → 18.0%) or on page completeness (0.900 → 0.909, 10 better / 12 worse).
+⚠ **But that tested INFERENCE on a model never trained under the rail, which is not the experiment
+that matters**: a split strip *fits the 59-id emitter gate and therefore enters training*, and today
+**4,012 over-budget strips are dropped**, so the model has never seen dense music in any form.
+Splitting is not optional either — a 130-id label cannot be emitted at all. ⭐ **Dense music already
+reads twice as badly even in a 1-measure strip (9.9% vs 4.8%, p = 0.013)** — a training gap, not a
+cutting one. ⏭ The settling experiment is the **pair**: re-emit with the rail → train → measure.
+⭐ **The budget value is chosen and it is NOT 50**: recovery is flat b=40..59 (~+291 windows), so the
+value rides on over-splitting cost alone, lowest at **b=57** (near-empty 7.5%, under the shipped
+rule's own 7.8%). b=50 makes 162 needless cuts — the likely cause of the measured **non-dense-page
+regression** (10.1% → 14.9%, p = 0.031). [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md).
 
 ⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected on
 a val loss that is **94.6% synthetic** (4,769 strips outvoting 271, nineteen to one) in a round graded
@@ -113,11 +114,11 @@ strip is the **59-id budget**, not width, and `scan_share` stays off. ⚠ Arm 2'
 TRAINING corpus and does **not** cover the inference question above, which is a different trade. [rung3/scan-profile.md](rung3/scan-profile.md) ·
 [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
 
-⚠ **THAT IS THREE NULLS ON ONE AXIS AND ONE PASS OFF IT.** Tuplet mark p = 0.688, the second engraver's
-domain gap, the scan profile — all "make the synthetic pixels look more like real pages". Only the
-staccato arm, which asked a different question, moved its primary, so **a fourth realism arm does not
-follow**; the dotted barline counts because it is a hole rather than a gap. ⚠ **Lever 4 gets no arm and
-no corpus.** [rung3/levers.md](rung3/levers.md) · [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md).
+⚠ **THAT IS THREE NULLS ON ONE AXIS AND ONE PASS OFF IT.** Tuplet mark p = 0.688, the second
+engraver's domain gap, the scan profile — all "make the synthetic pixels look more like real pages".
+Only the staccato arm, which asked a different question, moved its primary, so **a fourth realism arm
+does not follow**; the dotted barline counts because it is a hole rather than a gap. ⚠ **Lever 4 gets
+no arm and no corpus.** [rung3/levers.md](rung3/levers.md) · [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md).
 
 ✅ **ROUND 3 HAS A SIGNED ACCEPTANCE BAR, and it is also the public-launch gate** (owner, 2026-08-15):
 **≥75% of exam pages needing ≤5 corrections**, against 57% today, with the accidental measures as
@@ -136,14 +137,12 @@ app, and setting `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — 
 
 ⚠ **Two copyright items remain open and are both the owner's call**: the samples and the neyzen.com
 screenshot are out of HEAD but remain in the **public** repo's git history (clearing them needs a
-`filter-repo` rewrite and a force-push), and there is still **no LICENSE file**.
-[THIRD-PARTY.md](THIRD-PARTY.md).
+`filter-repo` rewrite and a force-push), and there is still **no LICENSE file**. [THIRD-PARTY.md](THIRD-PARTY.md).
 
-⚠ **Every human who has used the deployed app was on a phone, and n is still 2** — **a question, not a
-finding** about "web first, mobile later". [METRICS-USAGE.md](METRICS-USAGE.md).
+⚠ **Every human who has used the deployed app was on a phone, and n is still 2** — **a question, not a finding**
+about "web first, mobile later". [METRICS-USAGE.md](METRICS-USAGE.md).
 
-**The two tracks run in parallel, as re-scoped 2026-08-05:** the product track never trains, the model
-track never touches the app, and neither waits for the other. [mvp/README.md](mvp/README.md).
+**The two tracks run in parallel, as re-scoped 2026-08-05:** the product track never trains, the model track never touches the app, and neither waits for the other. [mvp/README.md](mvp/README.md).
 
 ## Previously — the settled context
 
@@ -227,13 +226,13 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 | 3 | ✅ **DONE 2026-08-22** — the re-emit ran (37 min, `strips_b8`, **3,955 accepted** against 2,330) and its **201-row audit is read whole** | **13.4% of the auto-accepts are wrong**, repeat structure ahead of pitch ([METRICS-CORPUS.md](METRICS-CORPUS.md)); what still blocks promotion is the **human-fix carry**, not the audit | B8 |
 | 4 | ✅ **DONE 2026-08-22** — the tie change on the RENDER side, plus the accidental restrike it forced and the scorer filter | the deadline item, closed **before** the render rather than after; `npm test`, 218/218 round-trip both modes, and a paired pilot render | — |
 | 5 | ✅ **DONE 2026-08-22** — ties out of `_realval_v2`, its five derived pools, the five `_realval_degraded` levels and v1 `_realval` | **771 tokens over 576 rows in 12 manifests**; **78% of the pairs joined DIFFERENT pitches**, i.e. were slurs. No criterion moved — but real-val's arc-`\tup3` diagnostic now reads `n/a` ([rung3/labeling.md](rung3/labeling.md)) | — |
-| 6 | ✅ **DONE 2026-08-22** — parity closed (132 pages, W4/W5/W6 pass under the rail) and `?dense=50` measured on a label-free proxy | the rail is a **wash**: under-fill 15.7% → 16.6%, p = 0.57 over 117 pages, despite over-budget strips falling 119 → 43 ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) | — |
-| 7 | ⏭ **NEXT, and the ONLY thing waiting on the owner** — decide `dense` now that it is measured | the evidence says **do not ship it**, which would mean the shipping slicer does not change and **B0 can resume from 62/663 without spending the work twice** | B0 |
+| 6 | ✅ **DONE 2026-08-22/23** — parity closed (132 pages, W4/W5/W6 pass under the rail), `?dense=` measured on a label-free proxy, and the budget value swept | rail **alone** is a wash; the value is **b=57, not 50**; splitting's real payoff is at TRAINING, untested ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) | — |
+| 7 | ⏭ **THE OWNER'S CALL: does the rail-plus-retrain pair go in Round 3, or Round 4?** | ⭐ **Round 4 is what unblocks B0** — the shipping slicer then does not change this round, so the exam stays cut on today's rule and its remaining 601 rows are safe to label. Round 3 would add a **fourth** uncontrolled change to a final render whose arm list is closed | B0 |
 | 8 | the remaining **601** `examv3` rows, **page-complete** | ⏸ **PAUSED at 62/663 on purpose** — see step 7; the primary is per page, so a half-labelled page under-counts itself | B0 |
 | 9 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
 
 ⛔ **Steps 5–6 are done and needed nothing from the owner.** Step 7 is the only decision left, and it
-is now a decision with a measurement under it rather than a guess.
+now has measurements under it rather than a guess.
 ⛔ **Measuring the 59-id budget was step 4 and is DROPPED** — it decides which strips we keep, not what
 the model can read ([DECISIONS.md](DECISIONS.md)); its benefit half is measured and kept in
 [BACKLOG.md](BACKLOG.md) item 7.
@@ -244,9 +243,11 @@ data until the audit is **finished** and the old human corrections are carried a
 
 **B0. ⏭ THE EXAM REBUILD — LABEL `examv3`. Highest-value labelling on the board, and it BLOCKS the
    read.** ✅ **166 rows are read**: all 139 of `examv3-full` and all 27 `gold_conflict`.
-   ⏸ **PAUSED at 62 of 663** pending step 7 above — the pause exists only because a slicer change
-   would force a re-cut, and the rail has now measured out as a wash. **Label PAGE-COMPLETE** when it
-   resumes: the primary counts corrections per page, so a half-labelled page under-counts itself.
+   ⏸ **PAUSED at 62 of 663** pending step 7 — the pause exists only because a slicer change forces a
+   re-cut, so **deferring the rail to Round 4 releases this immediately**. ⚠ A Round-4 re-cut would
+   still cost something but not everything: gold carries by measure span (**221 of 326** last
+   rebuild, each a suggestion needing confirmation). **Label PAGE-COMPLETE** — the primary counts
+   corrections per page.
    ⚠ **Crops live in `data/real/strips_examv3`**, so `promote_labels.py` needs
    `--strips-root data/real/strips_examv3` — the default root holds the same filenames with the
    retired slicer's pixels. ⚠ **The ceiling is 64 pages**: 3 drop every candidate as `split_wide` /
@@ -294,8 +295,7 @@ data until the audit is **finished** and the old human corrections are carried a
    passed arm) and the new **label-free dotted (usul) barline**. ⛔ **Nothing else joins them** — in
    particular **not** a raised token budget (B9) and **not** the content work (B7).
    ⏭ **Before rendering**: how often does print actually draw a dotted barline? 7.8% is a statistic
-   about the model's guesses. ⭐ **Cheapest honest method (2026-08-21): count them while labelling
-   `examv3`** — ~660 real crops are about to pass in front of a person anyway.
+   about the model's guesses — ⭐ cheapest honest method is to count them while labelling `examv3`.
    ⏭ **Give the barline its own paired scorer**, cloned from `staccato_falsedot_score.py` (false
    `\repstart` rate instead of false dots). Three flags in one render means a general movement is not
    attributable; the staccato arm survives that because it kept its own instrument, and this makes two

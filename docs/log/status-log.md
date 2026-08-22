@@ -7,6 +7,54 @@ updated: 2026-08-22
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-23 — the dense verdict was too narrow, and the budget value was never chosen
+
+Two corrections to yesterday's read, both from the owner pushing back, and both right.
+
+**1. "More strips is not a problem — I want dense pages read."** Correct, and the write-up invited
+the misreading by listing **+9.2% strips** as a cost row. It was never the objection. The objection
+was that the notes do not get better. Restated properly: the rail moves music into shorter strips
+and those under-fill just as often.
+
+**2. "You cannot read a 130-id label without splitting."** Also correct, and it exposes the real
+limit of the experiment. What was measured is the rail at **INFERENCE, on a model that has never
+been trained under it** — which is not the experiment that decides anything. Splitting's actual
+payoff is upstream: a split strip **fits the 59-id emitter gate and therefore enters training**, and
+today **4,012 over-budget strips are dropped**, so the model has never seen dense music in any form.
+Splitting recovers 83.1% of the multi-measure cases into the trainable set.
+
+⭐ **And a number already in hand says the gap is training, not cutting**: under the shipped rule,
+1-measure strips on dense pages under-fill at **9.9%** against **4.8%** on non-dense pages
+(p = 0.013). Dense music reads twice as badly *even when it is already in a short strip*. Cutting
+cannot fix that; training on it might. So the settling experiment is a **pair** — re-emit with the
+rail, train, measure — and it has not been run.
+
+Two further readings were added while answering, both free, both confirming the inference-only null:
+dense pages alone **19.2% → 18.0%** (p = 0.57), and page completeness **0.900 → 0.909** with **10
+pages better and 12 worse**. Also corrected: the decoder was never out of room — `MAX_TOKENS` is
+**100** and `hit_cap` fired on **0 of 202** misfilled strips. The 59 is the emitter's training gate,
+not an inference cap.
+
+**The budget value had never been selected, and 50 is the wrong one.** `budget_sweep.py`, 200 pages
+/ 3,876 windows, no decoding — it re-windows one stage-1 geometry at every candidate. Recovery is
+**flat from b=40 to b=59 (~+291 windows)**, so cutting harder buys nothing and the value rides
+entirely on what over-splitting costs. That cost falls as b rises: near-empty crops 10.8% → **7.5%**
+at b=57, which is *below the shipped rule's own 7.8%*. b=62 is a cliff (+211) because windows
+estimated between 59 and 62 stand and then blow the gate.
+
+⛔ So **b=50 makes 162 needless extra cuts against b=57 for identical recovery** — the likely cause
+of the non-dense-page regression measured yesterday (10.1% → 14.9%, p = 0.031). **b=57** is the
+value a paired experiment should use. ⚠ Estimated ids (sd ~30), same instrument and same caveat as
+the July sweep, so the ordering holds and the levels do not.
+
+**What it means for the exam.** B0 is paused at 62 of 663 only because a slicer change forces a
+re-cut. Deferring the rail to **Round 4 releases the exam immediately** — it stays cut on today's
+rule and the remaining 601 rows are safe to label page-complete. A Round-4 re-cut would still cost
+something but not everything: gold carries by measure span, 221 of 326 last time, each carried label
+a suggestion needing confirmation. Round 3 remains the alternative and its price is a **fourth**
+uncontrolled change to a final render whose arm list is closed. Owner's call.
+
+
 ## 2026-08-22 — the dense-page rail was measured, and it does not work
 
 Step 6 of the Round-3 order. Two halves, and the second one is a negative result worth more than a

@@ -190,6 +190,94 @@ different thread settings, so the 113-vs-403 ms/strip gap is the machine, not th
 strips** is the machine-independent cost. Also unmeasured: any budget other than 50, any model other
 than `round2-stage2-best`, and whether pitch accuracy moved.
 
+### Asked again the two ways that could have rescued it (2026-08-22)
+
+Both were fair objections to the headline, and both were tested on the data already in hand.
+
+**1. "The representative sample dilutes it — only dense pages matter."** Restricting to the 37
+pages the shipped rule leaves with at least one over-budget strip:
+
+| | shipped rule | rail, b=50 | Fisher |
+|---|---|---|---|
+| under-fill, DENSE pages | 116/604 = 19.2% | 125/696 = 18.0% | p = 0.57 |
+| under-fill, non-dense pages | 39/386 = 10.1% | 84/564 = 14.9% | **p = 0.031** |
+
+No improvement where it was supposed to act, and a **significant regression where it was not** —
+which is a second, independent reason not to make it a default.
+
+**2. "Under-fill per STRIP is unfair — the rail emits more strips."** So score the page instead:
+per page, the music the decode actually spells over the music its crops cover. That number is
+composition-free.
+
+| | shipped rule | rail, b=50 |
+|---|---|---|
+| median page completeness, all pages (n=66) | 0.955 | 0.955 |
+| median page completeness, dense pages (n=35) | 0.900 | 0.909 |
+| pages better / worse under the rail (dense) | — | **10 better, 12 worse** |
+
+⚠ **Roughly as many pages get worse as better.** Three readings — per strip, dense-only, and
+page completeness — and none of them moves.
+
+### The gradient that DOES exist, and it is not the token budget
+
+⭐ Under-filling tracks **how much music is crammed into one crop**, steeply (shipped rule):
+
+| measures in the strip | under-fill |
+|---|---|
+| 1 | **7.5%** (51/679) |
+| 2 | 24.5% (57/233) |
+| 3 | **60.3%** (47/78) |
+
+⚠ **But cutting the crop smaller does not collect that gradient** — that is exactly what the rail
+does, and all three readings above are flat. So the constraint is not "too much music per crop" in
+a form that re-cutting solves.
+
+⚠ **And the decoder was never out of room.** `MAX_TOKENS` is **100** in both `decode.ts` and
+`onnx_parity.py`, and `hit_cap` fired on **0 of 202** misfilled strips here — the model stops on its
+own, well short of the cap. The 59-id figure is the **emitter's training-data gate**
+(`audit_coverage.MAX_IDS`), not an inference limit: the model has only ever been *trained* on labels
+that fit in 59, so it has learned that labels end by then. That points the remaining lever at the
+training gate ([BACKLOG.md](BACKLOG.md) item 7 / B9), not at the slicer.
+
+### The budget VALUE was never chosen, and 50 was the wrong one (2026-08-23)
+
+⚠ The read above tested **b=50** because that is the number `?dense=` documents — it was never
+selected against anything. Choosing it properly costs no decoding at all: re-window the same stage-1
+geometry at every candidate and count what enters the corpus against what it costs.
+`scripts/rung3/budget_sweep.py`, 200 pages / 3,876 legacy windows:
+
+| b | windows | over the 59-id gate | near-empty (≤20) | healthy 21–59 | recovered |
+|---|---|---|---|---|---|
+| shipped rule | 3,876 | 15.1% | 7.8% | 77.1% | — |
+| 40 | 4,503 | 6.5% | **10.8%** | 82.7% | +291 |
+| 50 | 4,286 | 6.8% | 8.4% | 84.8% | +293 |
+| 55 | 4,172 | 7.0% | 7.9% | 85.1% | +292 |
+| **57** | **4,124** | 7.2% | **7.5%** | **85.3%** | +290 |
+| 59 | 4,086 | 7.2% | 7.6% | 85.2% | +290 |
+| 62 | 4,036 | 9.3% | 7.7% | 83.0% | **+211** |
+
+⭐ **Recovery is FLAT from b=40 to b=59 (~+291).** Cutting harder buys nothing — the windows that
+splitting can rescue are rescued at any of these budgets. So the budget should be chosen entirely on
+what over-splitting *costs*, and that cost falls as b rises: near-empty crops go 10.8% → 7.5%,
+which at b=57 is **below the shipped rule's own 7.8%**. On this instrument b=57 recovers 290 windows
+into the trainable corpus at no measured cost.
+
+⛔ **b=62 is a cliff** — recovery collapses to +211, because windows estimated between 59 and 62 are
+allowed to stand and then blow the gate they were supposed to fit.
+
+⛔ **So b=50 over-splits: 162 unnecessary extra windows against b=57, and a worse near-empty rate,
+for the same recovery.** That is the most likely explanation of the **non-dense-page regression**
+measured above (10.1% → 14.9%) — at 50 the rail cuts pages that never needed cutting. The gate is
+59 and the estimator's residual sd is ~30 ids; stopping at 50 pays that margin twice.
+
+⚠ Estimated ids, not decoded (sd ~30) — every arm shares one estimator, so the ordering holds where
+the absolute levels do not. This is the same caveat, and the same "healthy band" instrument, as the
+July sweep in [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md), so the two are comparable.
+
+⚠ **This ranks the budget; it does not show the rail works.** The paired decode read above is still
+a wash, and nothing here changes that — what it changes is which value a *paired* experiment
+(re-emit → train → measure) should use.
+
 ### What this leaves
 
 The dense-page bug is **real and unchanged** — 59.1% of pages carry an over-budget strip and

@@ -467,6 +467,16 @@ PAGE = r"""<!doctype html>
   .tok.accid{font-weight:700}
   .tok.gap{color:var(--mut);background:repeating-linear-gradient(45deg,#f1f2f6 0 4px,#fff 4px 8px)}
   .agree{color:var(--ok);font-size:13px}
+  /* per-block actions: a two-button stack to the LEFT of each token row, so "accept" names the
+     exact text beside it instead of the reviewer having to remember what the bottom row acts on */
+  .lblrow{display:flex;gap:12px;align-items:flex-start;margin-top:10px}
+  .lblrow .lblmain{flex:1;min-width:0}
+  .lblrow .lblhead{margin-top:0}
+  .lblacts{display:flex;flex-direction:column;gap:4px;flex:0 0 128px;padding-top:14px}
+  .mini{padding:4px 8px;font-size:12px;font-weight:600;border-radius:7px;text-align:left;
+        line-height:1.35;white-space:nowrap}
+  .mini.acc{color:var(--ok);border-color:#bfe3cf;background:var(--okbg)}
+  .mini.edt{color:var(--fix);border-color:#ecd9a8;background:var(--fixbg)}
   #editbox{display:none;margin-top:10px}
   #editbox textarea{width:100%;min-height:84px;font:13.5px/1.6 ui-monospace,Menlo,monospace;
         padding:10px;border:1px solid var(--acc);border-radius:8px;background:#fbfcff}
@@ -604,6 +614,8 @@ PAGE = r"""<!doctype html>
     <b>ok</b> label matches the printed strip exactly · <b>fix</b> you corrected the label
     (edit starts from the label, or from the model decode when no label exists) ·
     <b>bad</b> unusable strip (wrong music, illegible, marks we don't model).
+    Beside each block: <b>✓ accept</b> saves that exact text (accepting the decode is stored as a
+    <b>fix</b>), <b>✎ edit from it</b> opens the editor with only that text as the draft.
     Notes shown as solfège (do''4 = c''4; saved CSV stays in letters — hover a token for the raw form).
     Red tokens = label/decode disagreement — check those pixels first; bold = accidental.
     Keys: <b>a</b>/<b>x</b>/<b>e</b>/<b>u</b>, <b>←→</b> move, <b>n</b> next pending, <b>z</b> zoom.
@@ -655,14 +667,28 @@ function tokHtml(t,cls){
   const a=ACC.has(t)?' accid':'';
   return `<span class="tok ${cls}${a}" title="${esc(t)}">${esc(toSolf(t))}</span>`;
 }
+// Each of the two blocks gets its own accept/edit pair, wired by delegation in render(). The
+// point is that "accept" sits BESIDE the text it saves: the bottom row's `ok` always meant "the
+// label is right", which is invisible when the decode is the block you are reading. `acc-decode`
+// saves the decode VERBATIM — deliberately not through baseText(), whose \tup3 guard lives on a
+// checkbox inside the (closed) edit box, and an unseen checkbox must never change what is stored.
+function actsHtml(kind){
+  return `<div class="lblacts">
+    <button class="mini acc" data-act="acc-${kind}" title="save this exact text as the verdict">✓ accept ${kind}</button>
+    <button class="mini edt" data-act="edit-${kind}" title="open the editor with this text as the draft">✎ edit from it</button>
+  </div>`;
+}
+const blockHtml=(kind,head,toks)=>
+  `<div class="lblrow">${actsHtml(kind)}<div class="lblmain">
+     <div class="lblhead">${head}</div><div class="toks">${toks}</div></div></div>`;
 function diffHtml(label,decoded){
   if(!label.trim()){
-    return `<div class="lblhead">no aligned label — model decode (starting point for a fix)</div>
-            <div class="toks">${tokenize(decoded).map(t=>tokHtml(t,'diff2')).join('')}</div>`;
+    return blockHtml('decode','no aligned label — model decode (starting point for a fix)',
+                     tokenize(decoded).map(t=>tokHtml(t,'diff2')).join(''));
   }
   if(!decoded.trim()){
-    return `<div class="lblhead">label (no cached model decode — compare against the image)</div>
-            <div class="toks">${tokenize(label).map(t=>tokHtml(t,'')).join('')}</div>`;
+    return blockHtml('label','label (no cached model decode — compare against the image)',
+                     tokenize(label).map(t=>tokHtml(t,'')).join(''));
   }
   const ops=align(tokenize(label),tokenize(decoded));
   const same=ops.every(o=>o[0]==='=');
@@ -672,9 +698,8 @@ function diffHtml(label,decoded){
     else if(op==='-'){top+=tokHtml(at,'diff');bot+='<span class="tok gap">·</span>';}
     else{top+='<span class="tok gap">·</span>';bot+=tokHtml(bt,'diff2');}
   }
-  return `<div class="lblhead">label (proposed ground truth)</div><div class="toks">${top}</div>
-          <div class="lblhead">model decode ${same?'<span class="agree">— agrees exactly</span>':''}</div>
-          <div class="toks">${bot}</div>`;
+  return blockHtml('label','label (proposed ground truth)',top)
+        +blockHtml('decode',`model decode ${same?'<span class="agree">— agrees exactly</span>':''}`,bot);
 }
 // third block: the FINAL version of every verdicted row. A real fix is diffed against the
 // original label (removed tokens = red gaps, new tokens = green); an untouched label
@@ -911,6 +936,27 @@ function openEdit(){
   editing=true;$('editbox').style.display='block';
   setBase('hybrid',true); // an existing correction wins; the base buttons rebuild from scratch
 }
+// "accept model decode" = the decode is right and the label is not, which is a `fix` whose text
+// is the decode. It stores exactly the tokens drawn in that block (normalised for spacing only),
+// never baseText()'s guarded rewrite — see actsHtml().
+async function acceptDecode(){
+  const r=cur();if(!r)return;
+  const txt=letterText((r.decoded||'').trim());
+  if(!txt){toast('no model decode on this row');return}
+  if(editing){editing=false;$('editbox').style.display='none';}
+  if(!await post(r.strip,'fix',txt))return;
+  toast(`${r.strip.split('_').slice(-2).join('_')} → fix (model decode)`);
+  if(!['pending','claude','rule'].includes($('fshow').value))idx++;
+  render();
+}
+// "edit from X" opens the box on that one source. Unlike `e` it does NOT prefer an existing
+// corrected_label, so the button does what its name says and nothing else.
+function editFrom(mode){
+  const r=cur();if(!r)return;
+  if(striptupQueue!==qid){$('striptup').checked=!qid.startsWith('tup');striptupQueue=qid;}
+  editing=true;$('editbox').style.display='block';
+  setBase(mode);
+}
 function lintNow(){
   const{warn,n,ids,cap}=lint(letterText($('edit').value));
   $('lint').innerHTML=warn.length?warn.map(w=>`<span class="warn">⚠ ${esc(w)}</span>`).join(' · ')
@@ -941,6 +987,12 @@ document.addEventListener('keydown',e=>{
   else if(k==='e')openEdit();
   else if(k==='z')$('imgwrap').classList.toggle('zoom');
   else if(k==='t'){const c=$('refcard');c.style.display=c.style.display==='none'?'block':'none'}
+});
+// the label/decode blocks are re-rendered on every render(), so their buttons are delegated
+$('labels').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  ({'acc-label':()=>verdict('ok'),'acc-decode':acceptDecode,
+    'edit-label':()=>editFrom('label'),'edit-decode':()=>editFrom('decode')})[b.dataset.act]();
 });
 $('b-ok').onclick=()=>verdict('ok');$('b-bad').onclick=()=>verdict('bad');
 $('b-clear').onclick=()=>verdict('');$('b-edit').onclick=openEdit;

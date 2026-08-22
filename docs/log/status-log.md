@@ -7,6 +7,65 @@ updated: 2026-08-22
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-22 — the dense-page rail was measured, and it does not work
+
+Step 6 of the Round-3 order. Two halves, and the second one is a negative result worth more than a
+positive one would have been.
+
+**1. The parity gap is closed.** The browser's `?dense=` rail had never been compared to Python's
+`OMR_WINDOW_MODE=budget` — so every number the experiment produced described something the training
+pipeline does not do. `slicer_ref.py --token-budget N` now makes the reference fix the **packing
+rule** as well as the sample, and `slicer-parity.ts` refuses a reference that mixes the two: scoring
+the shipped rule against a budget-mode control would report a port failure for a configuration
+difference, the same mistake as scoring against a stale manifest. Both arms, 132 pages / 813 rows:
+**W4/W5/W6 pass under the rail exactly as under the shipped rule**, window fields 2,459/2,459.
+
+The budget run adds one check the legacy run cannot have — `est_tokens`, the number the rail
+thresholds on. **Its bar is half a stem (0.94 ids), not exact, and that is the interesting part**:
+the estimate is `1.889 x stems + 0.0288 x inked_columns`, and only the stem term is immune to the
+browser's documented ±1 grayscale difference. A bound at half a stem proves the stem counts are
+identical while charging nothing for threshold-edge ink columns. Worst observed difference: 0.39
+ids = 13.7 columns. An exact bar would have failed a correct port on known residue.
+
+**2. The rail is a wash.** Measuring it needed an accuracy signal for pages with no gold, so the
+instrument is **measure fill**: the slicer cuts on barlines, the manifest knows how many measures a
+crop holds, music is metrical, and an early `</s>` therefore comes up short against
+`n_measures x the page's meter`. No piece match, no usul table, no labelling.
+
+⚠ **It was calibrated before it was used**, which is the only reason its output means anything: run
+over hand-verified gold it flags **10.0% (7.6% under)**, all of it the proxy's own false alarm.
+Tightening it by excluding row-edge windows bought 7.6% → 5.1% at the cost of 72% of the sample —
+refused.
+
+The read, 117 shared pages, `round2-stage2-best` int8 both arms: **under-fill 15.7% → 16.6%,
+Fisher p = 0.57.** The rail does exactly what it was designed to do — over-budget strips 119 → 43,
+under-filling among them 26.9% → 11.6% — and it buys nothing, because the music lands in **+9.2%
+more, shorter strips** that under-fill just as often.
+
+**Why this is believed.** The obvious confound is that more strips means more first/last windows of
+a row, where the gold floor is higher — but arm B's edge share is *lower* (67.4% vs 76.5%), so it
+was flattered rather than penalised, and on interior windows alone the result is unchanged
+(14.2% → 16.5%). ⚠ The per-`n_measures` split shows 2-measure strips at 24.5% → 39.6% (p = 0.0006)
+and that cell is **selection, not effect** — the rail splits the easy 2-measure windows, so what
+remains under that label is different music. The arms cut different crops, so only the page-level
+total is honest and nothing is strip-paired.
+
+**What it costs to have learned this, and what it buys.** The bug is untouched: 59.1% of pages still
+carry an over-budget strip and `hit_cap` saw **0 of 202** misfilled strips in arm A. But B0 — exam
+labelling — was **paused at 62 of 663 rows** purely because a slicer change would force a re-cut of
+the exam. That pause now has an answer under it rather than a guess, and step 7 is the owner's call.
+
+⚠ **Not measured**: wall-clock cost (arm A's timings came from an earlier batch under different
+thread settings, so the 113-vs-403 ms/strip gap is the machine); any budget but 50; whether pitch
+accuracy moved. Measure fill cannot see a wrong pitch — it is a floor on the error rate, not the
+rate — though the failure this fix targets is exactly what it detects.
+
+Also this session: `docs/METRICS-SLICER-WINDOWS.md` crossed the 400-line cap, so the settled
+2026-07-29 windowing retune and crop-frame work moved to `docs/METRICS-SLICER-FRAME.md` and the
+original keeps the one open question. Details: [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) ·
+[../mvp/slicer-port.md](../mvp/slicer-port.md).
+
+
 ## 2026-08-22 (latest) — `b8-audit` is read whole: the re-emitted pool is 13.4% wrong, and repeat structure is the biggest class
 
 Track B step 3's guard, finished. All **201 rows** of the re-emit's seeded 5% sample of ACCEPTED

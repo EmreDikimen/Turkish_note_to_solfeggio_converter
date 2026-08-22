@@ -80,18 +80,18 @@ the `round2-stage2-best` re-score puts both models on the same set — but **wha
 each page on its easier material. Quote it with the result; it is also a second reason to measure the
 decoder budget. [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
-⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES, AND THAT IS THE BIGGEST THING FOUND
-THIS SESSION** (owner, from a real piece: *"he would get totally false notes"*). The browser slicer has
-**no label-budget rail** — budget mode was measured for *labelling yield*, came back a wash, and was
-deliberately not ported. At training an over-budget strip is dropped; at inference there is none, so the
-model emits `</s>` early and **confidently**. ⛔ `hitCap` catches **7 of 4,012 (0.2%)**, so nothing
-warns anyone. **998 of 1,689 pages (59.1%) carry at least one such strip.** ⭐ Splitting dense windows
-into single measures fixes **83.1%** of the multi-measure cases (44.3% of the whole class) and is nearly
-free — **77.4% of real windows are single-measure already**. ⏭ `?dense=<ids>` is in the app as an opt-in
-path. ⚠ **Not a result**: one page, +65% decode time on it and **0% on a normal page**, one recovered
-key-signature flat; **no gold accuracy measurement, and the new rail's browser-vs-Python parity is
-unverified**. ⛔ **Raising the 59-id budget is DROPPED for Round 3** — it decides which strips we keep,
-not what the model can read. [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
+⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES — STILL TRUE, AND `?dense=` IS NOT
+THE FIX.** The browser slicer has **no label-budget rail**: at training an over-budget strip is
+dropped, at inference there is none, so the model emits `</s>` early and **confidently**. `hitCap`
+catches **7 of 4,012 (0.2%)** and **998 of 1,689 pages (59.1%)** carry such a strip. ✅ **Both halves
+of the measurement are now done.** The rail's browser-vs-Python **parity is CLOSED** — 132 pages, W4/W5/W6
+pass under the rail as under the shipped rule, and every strip's `est_tokens` agrees. ⛔ **And with
+parity closed the rail measured out as a WASH**: under-fill **15.7% → 16.6%** (p = 0.57) over 117
+shared pages. It does act — over-budget strips fall 119 → 43 and under-filling among them halves —
+but the music lands in **+9.2% more, shorter strips** that under-fill just as often, so nothing
+reaches the page. ⚠ Read against a **7.6% false-alarm floor** measured on gold, and the instrument
+cannot see a wrong pitch. ⏭ **The bug is unchanged and open; only this fix is answered.**
+[METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
 
 ⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected on
 a val loss that is **94.6% synthetic** (4,769 strips outvoting 271, nineteen to one) in a round graded
@@ -227,12 +227,13 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 | 3 | ✅ **DONE 2026-08-22** — the re-emit ran (37 min, `strips_b8`, **3,955 accepted** against 2,330) and its **201-row audit is read whole** | **13.4% of the auto-accepts are wrong**, repeat structure ahead of pitch ([METRICS-CORPUS.md](METRICS-CORPUS.md)); what still blocks promotion is the **human-fix carry**, not the audit | B8 |
 | 4 | ✅ **DONE 2026-08-22** — the tie change on the RENDER side, plus the accidental restrike it forced and the scorer filter | the deadline item, closed **before** the render rather than after; `npm test`, 218/218 round-trip both modes, and a paired pilot render | — |
 | 5 | ✅ **DONE 2026-08-22** — ties out of `_realval_v2`, its five derived pools, the five `_realval_degraded` levels and v1 `_realval` | **771 tokens over 576 rows in 12 manifests**; **78% of the pairs joined DIFFERENT pitches**, i.e. were slurs. No criterion moved — but real-val's arc-`\tup3` diagnostic now reads `n/a` ([rung3/labeling.md](rung3/labeling.md)) | — |
-| 6 | ⏭ **NEXT** — close the **slicer parity gap**, then measure `?dense=` properly | without parity every dense number measures something the training pipeline does not do; the measure-fill proxy needs no labelling | — |
-| 7 | owner decides `dense`; the exam is then cut **once** on the winning rule | if the shipping slicer changes, an exam cut on the old rule grades crops the product never produces | B0 |
+| 6 | ✅ **DONE 2026-08-22** — parity closed (132 pages, W4/W5/W6 pass under the rail) and `?dense=50` measured on a label-free proxy | the rail is a **wash**: under-fill 15.7% → 16.6%, p = 0.57 over 117 pages, despite over-budget strips falling 119 → 43 ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) | — |
+| 7 | ⏭ **NEXT, and the ONLY thing waiting on the owner** — decide `dense` now that it is measured | the evidence says **do not ship it**, which would mean the shipping slicer does not change and **B0 can resume from 62/663 without spending the work twice** | B0 |
 | 8 | the remaining **601** `examv3` rows, **page-complete** | ⏸ **PAUSED at 62/663 on purpose** — see step 7; the primary is per page, so a half-labelled page under-counts itself | B0 |
 | 9 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
 
-⛔ **Steps 5–6 need nothing from the owner** — no decisions, no labelling. Step 7 is the only decision.
+⛔ **Steps 5–6 are done and needed nothing from the owner.** Step 7 is the only decision left, and it
+is now a decision with a measurement under it rather than a guess.
 ⛔ **Measuring the 59-id budget was step 4 and is DROPPED** — it decides which strips we keep, not what
 the model can read ([DECISIONS.md](DECISIONS.md)); its benefit half is measured and kept in
 [BACKLOG.md](BACKLOG.md) item 7.
@@ -243,10 +244,9 @@ data until the audit is **finished** and the old human corrections are carried a
 
 **B0. ⏭ THE EXAM REBUILD — LABEL `examv3`. Highest-value labelling on the board, and it BLOCKS the
    read.** ✅ **166 rows are read**: all 139 of `examv3-full` and all 27 `gold_conflict`.
-   ⏸ **PAUSED at 62 of 663 (owner, 2026-08-22)** — deliberately, not stalled. If the shipping slicer
-   gains a budget rail the exam must be re-cut on it, and every row labelled before that decision may
-   be spent twice. **Label PAGE-COMPLETE** when it resumes: the primary counts corrections per page, so
-   a half-labelled page under-counts its own errors.
+   ⏸ **PAUSED at 62 of 663** pending step 7 above — the pause exists only because a slicer change
+   would force a re-cut, and the rail has now measured out as a wash. **Label PAGE-COMPLETE** when it
+   resumes: the primary counts corrections per page, so a half-labelled page under-counts itself.
    ⚠ **Crops live in `data/real/strips_examv3`**, so `promote_labels.py` needs
    `--strips-root data/real/strips_examv3` — the default root holds the same filenames with the
    retired slicer's pixels. ⚠ **The ceiling is 64 pages**: 3 drop every candidate as `split_wide` /

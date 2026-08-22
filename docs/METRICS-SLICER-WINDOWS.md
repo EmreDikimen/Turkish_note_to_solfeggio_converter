@@ -133,6 +133,71 @@ residue that the row pixel-sum drift has always reported as never zero. Design a
 ⚠ **Parity is not accuracy.** It says the browser does what Python does. Whether the rail produces
 *better notes* is the measure-fill read below, and it is a separate question.
 
+## `?dense=50` IS A WASH ON THE THING IT WAS BUILT FOR (2026-08-22)
+
+⛔ **The rail does not produce better-filled strips.** Measured with the parity gap closed, so this
+is the browser's own behaviour and not an approximation of it.
+
+### The instrument: measure fill, which needs no labelling
+
+The slicer cuts on **barlines**, so the manifest already knows how many measures a crop holds, and
+music is metrical — a decode that drops notes comes up short against `n_measures x the page's
+meter`. An early `</s>` under-fills, and nothing else in the pipeline produces that signature at
+scale. The meter is derived **per page** from the page's own decodes (the modal beats-per-measure),
+so no piece match, no usul table and no hand labelling is involved; a page whose decodes disagree
+about a meter is reported unscorable rather than guessed at. `scripts/rung3/measure_fill_score.py`.
+
+⚠ **It has a floor, and the floor is measured, not assumed.** Run over hand-verified gold
+(`_realval_v2`, n=211 scorable rows) the same scorer flags **10.0%** — **7.6% under**, 2.4% over.
+Every one of those is the proxy's own false alarm. Excluding first/last windows of a row drops the
+floor to 5.1% but discards 72% of the sample, which is a bad trade, so the floor stays and the arms
+are compared against each other rather than against zero.
+
+⚠ **It cannot see a wrong pitch, a wrong accidental, or two errors that cancel.** It is a floor on
+the error rate, never the rate. It is nevertheless the right instrument for *this* claim, because
+the failure `?dense=` targets — the model emitting `</s>` early — is exactly what it detects.
+
+### The read: 117 shared pages, `round2-stage2-best` int8 both arms
+
+Arm A is the cached corpus decode under the shipped rule; arm B is the same pages re-decoded under
+the rail (`scripts/rung3/decode_budget_arm.py`, 120 pages, 21 min on the laptop).
+
+| | shipped rule | rail, b=50 | Fisher |
+|---|---|---|---|
+| **under-fill, ALL scored strips** | **155/990 = 15.7%** | **209/1260 = 16.6%** | **p = 0.57** |
+| under-fill, `est_tokens > 59` | 32/119 = 26.9% | 5/43 = 11.6% | p = 0.055 |
+| under-fill, `est_tokens <= 59` | 123/871 = 14.1% | 204/1217 = 16.8% | p = 0.11 |
+| strips over budget at all | 119 | **43** | — |
+| strips emitted | 2,255 | 2,462 (**+9.2%**) | — |
+
+**The rail works mechanically and the work does not reach the page.** Over-budget strips fall by
+64% and under-filling among them roughly halves — but the music lands in more, shorter strips that
+under-fill at least as often, so the total does not move.
+
+**The obvious confound was checked and runs the other way.** More strips means more first/last
+windows of a row, where the gold floor is higher (8.6% vs 5.1%) — but arm B's edge share is *lower*
+(67.4% vs 76.5%), so if anything it was flattered. On interior windows alone the picture is
+unchanged: **14.2% -> 16.5%**.
+
+⚠ **Do not read the per-`n_measures` split as a regression.** It shows 2-measure strips at
+24.5% -> 39.6% (p = 0.0006), and that cell is **selection, not effect**: the rail splits the easy
+2-measure windows into single measures, so what remains under that label in arm B is different
+music from arm A's. The arms cut different crops, which is why **only the page-level total is an
+honest comparison** and why nothing here is strip-paired.
+
+⚠ **Not measured**: wall-clock cost. Arm A's `total_ms` was recorded in an earlier batch under
+different thread settings, so the 113-vs-403 ms/strip gap is the machine, not the rule. **+9.2%
+strips** is the machine-independent cost. Also unmeasured: any budget other than 50, any model other
+than `round2-stage2-best`, and whether pitch accuracy moved.
+
+### What this leaves
+
+The dense-page bug is **real and unchanged** — 59.1% of pages carry an over-budget strip and
+`hit_cap` still fires on essentially none of them (0 of 202 misfilled strips in arm A here). What is
+now measured is that **this particular fix is not the answer**: cutting on the estimate moves the
+failure rather than removing it. Splitting *and* something that helps a short strip decode
+correctly would be a different experiment.
+
 ## The 2026-07-29 retune and the crop frame moved out (2026-08-22)
 
 Everything about **which constants were swept and why none of them moved** — the

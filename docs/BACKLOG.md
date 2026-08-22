@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-22
+updated: 2026-08-23
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -256,6 +256,19 @@ starting. Abandoned plans are a different thing again and live in
      *used*. Round 4.
    - **Raising the 59-id budget** — DROPPED for Round 3 (see [DECISIONS.md](DECISIONS.md)); the
      measured benefit is kept in item 7 below.
+   - ⭐ **THE RAIL ITSELF, AS A PAIR — the Round-4 headline** (owner, 2026-08-23). Measured and
+     decided: the rail at *inference alone* is a wash (15.7% → 16.6%, p = 0.57), because it was
+     tested on a model that has never been trained under it. Its real payoff is that a split strip
+     **fits the 59-id emitter gate and enters training** — today 4,012 over-budget strips are simply
+     dropped. The experiment is three steps and none is a research question: **re-emit the pools
+     with the rail at b=57 → train → measure with `measure_fill_score.py`**, which is built and
+     calibrated (7.6% false-alarm floor on gold). ⚠ **b=57, not 50** — recovery is flat b=40..59, so
+     the value rides on over-splitting cost alone, and 50 makes 162 needless cuts
+     ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)). ⚠ **Turn it on in the training emit
+     and the shipping slicer TOGETHER**, or the train/test mismatch B8 existed to close comes back.
+     ⚠ The thing to verify after the retrain is that **non-dense pages do not regress** — that is an
+     assumption today, not a measurement. ⚠ Doing this re-cuts the exam, which is exactly why it was
+     kept out of Round 3.
 
 
 1. **DONE (2026-07-31): every consumer now reads `_realval_v2`**; `make_realval_pool.py` is no longer

@@ -7,6 +7,38 @@ updated: 2026-08-22
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-23 — the rail goes to Round 4, the exam is released, and two files were split
+
+**The decision** (owner): the label-budget rail plus its retrain is **Round 4**, not Round 3. Not
+dropped — specified, at **b=57**, as a three-step pair with no research question in it (re-emit →
+train → measure). The reasons were the two already on the table: Round 3's final render has a closed
+arm list and this would be a fourth uncontrolled change, and ⭐ **deferring is what releases the
+exam** — the shipping slicer does not change this round, so `examv3` stays valid.
+
+⏭ **B0 is therefore UNPAUSED and is now the next action**: the remaining **601 rows**, page-complete.
+It had been stopped at 62 of 663 purely against the risk of a re-cut. ⚠ A Round-4 re-cut will still
+cost something, but gold carries by measure span — 221 of 326 last rebuild, each carried label a
+suggestion needing confirmation, not a free win.
+
+**Two files were split, both at the 400-line cap and both by the genre rule.**
+
+`docs/STATUS.md` (405 → 280) — the **B0–B9 item detail** moved to
+[../rung3/worklist.md](../rung3/worklist.md). This is exactly the split
+[../MAINTAINING.md](../MAINTAINING.md) prescribes: STATUS keeps current state, the ordered table and
+the next action; the track doc holds the per-item narrative. The worklist file says so at the top so
+nobody starts stating "next" in two places.
+
+`CLAUDE.md` (401 → 286) — the **full command reference** moved to
+[../COMMANDS.md](../COMMANDS.md), with the ⚠ traps that go with each command. CLAUDE.md keeps the
+hard rules, the orientation, and a six-line box of the commands used every session, plus the two
+warnings most expensive to miss (`dev:cloud` not deploying; a successful build is not a deploy).
+⚠ The split was chosen this way round on purpose: **the rules must stay in the auto-loaded file**,
+and commands are what an agent can be routed to. Both routing tables now carry the new file.
+
+⚠ Both caps had been fought line-by-line for two sessions — every addition to either file was
+costing a reflow somewhere else, which is precisely the signal the cap exists to give.
+
+
 ## 2026-08-23 — the dense verdict was too narrow, and the budget value was never chosen
 
 Two corrections to yesterday's read, both from the owner pushing back, and both right.

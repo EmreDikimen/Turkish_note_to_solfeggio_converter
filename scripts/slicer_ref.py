@@ -40,6 +40,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import vision.page_to_strips as pts  # noqa: E402
 from vision.page_to_strips import (  # noqa: E402
     VPLACE_ADAPTIVE,
     binarize_page_ink,
@@ -105,11 +106,15 @@ def sample(items: list, n: int) -> list:
     return [items[int(i * stride)] for i in range(n)]
 
 
-# The manifest keys W6 compares. `est_tokens`/`budget_risk` are deliberately absent: they are the
-# Rung-3 emitter's bookkeeping and are not ported (docs/mvp/slicer-port.md), and `strip`/`row_bars`
-# are covered elsewhere.
+# The manifest keys W6 compares. `budget_risk` is deliberately absent (it is `est_tokens > 59`,
+# so it adds nothing), and `strip`/`row_bars` are covered elsewhere.
 STRIP_KEYS = ("system", "window", "row_x0", "row_x1", "width", "pad", "scale",
               "is_row_start", "split_wide", "meas_from", "meas_to", "n_measures", "row_measures")
+# ⚠ Recorded ONLY under --token-budget, and kept out of STRIP_KEYS on purpose. `est_tokens` was
+# "not ported bookkeeping" until the label-budget rail turned it into the number that decides a
+# crop boundary; the manifests on disk are all legacy, so folding it into STRIP_KEYS would make
+# every manifest cross-check below compare a key one side does not have.
+BUDGET_KEYS = ("est_tokens",)
 
 
 def strips_ref(image: Path) -> list[dict]:
@@ -124,7 +129,8 @@ def strips_ref(image: Path) -> list[dict]:
     with tempfile.TemporaryDirectory() as td:
         with contextlib.redirect_stdout(io.StringIO()):   # one progress line per page, not ours
             rows = page_to_strips(image, td)
-    return [{k: r[k] for k in STRIP_KEYS} for r in rows]
+    keys = STRIP_KEYS + (BUDGET_KEYS if pts.WINDOW_MODE == "budget" else ())
+    return [{k: r[k] for k in keys} for r in rows]
 
 
 def stage1(image: Path) -> dict:
@@ -184,7 +190,23 @@ def main() -> None:
     ap.add_argument("--all", action="store_true", help="every page (slow: ~2 s each)")
     ap.add_argument("--stems", nargs="*", help="specific page stems instead of a sample")
     ap.add_argument("--out", required=True, help="reference JSON; also defines the sample")
+    ap.add_argument("--token-budget", type=float, default=None,
+                    help="run the LABEL-BUDGET rail (OMR_WINDOW_MODE=budget) at this many ids "
+                         "instead of the shipped measures+width rule — the control arm for the "
+                         "browser's `?dense=<ids>` experiment. The sample is unchanged.")
     args = ap.parse_args()
+
+    # ⚠ Set on the MODULE, not through os.environ: `WINDOW_MODE`/`TOKEN_BUDGET` are read at import
+    # time (page_to_strips.py L95-96) and this file imports at the top, so an env var set here
+    # would arrive too late. `window_measures` reads both as globals at call time, so this reaches
+    # the real driver inside `strips_ref` as well as anything called from `stage1`.
+    if args.token_budget is not None:
+        pts.WINDOW_MODE = "budget"
+        pts.TOKEN_BUDGET = args.token_budget
+        print(f"⚠ BUDGET MODE — packing to {args.token_budget:g} estimated ids, not "
+              f"{pts.MEASURES_PER_STRIP} measures. The manifest cross-checks below are SKIPPED: "
+              f"every manifest on disk was written in legacy mode, so disagreeing with one is the "
+              f"point rather than a defect.")
 
     images = index_images()
     jobs = collect_jobs(images)
@@ -208,6 +230,11 @@ def main() -> None:
     for i, (stem, kind, image, rows) in enumerate(todo, 1):
         rec = stage1(image)
         rec["kind"] = kind
+        # per page rather than once at the top: the file is a flat {stem: page} map that
+        # slicer-parity.ts enumerates with Object.keys, so a config key at that level would be
+        # read as a page. The harness asserts every page agrees.
+        rec["window_mode"] = pts.WINDOW_MODE
+        rec["token_budget"] = pts.TOKEN_BUDGET if pts.WINDOW_MODE == "budget" else None
         rec["manifest_n_staves"] = (max(r["system"] for r in rows) + 1) if rows else 0
         rec["manifest_scales"] = {
             str(r["system"]): r["scale"] for r in sorted(rows, key=lambda r: r["system"])
@@ -259,7 +286,18 @@ def main() -> None:
 
     # ... and for W6's strip entries. This one also cross-checks `strips_ref` itself: it runs the
     # real driver, so a page whose stage 1 reproduces should reproduce its manifest strips too.
+    # ⚠ Only in legacy mode. The staff-count and bar-list ceilings above are stage-1 geometry and
+    # are mode-independent, but the manifests were all written by the measures+width rule, so
+    # under --token-budget a disagreement here is the rail working, not the port drifting.
     pages_n = pages_same = strips_n = strips_same = 0
+    if pts.WINDOW_MODE == "budget":
+        risky = sum(1 for r in out.values()
+                    for st in (r.get("strips") or []) if st.get("est_tokens", 0) > 59)
+        total = sum(len(r.get("strips") or []) for r in out.values())
+        print(f"budget mode: {total} strips, {risky} still estimated over the 59-id budget "
+              f"({100 * risky / max(1, total):.1f}%) — the manifest strip ceiling is not printed, "
+              f"see the note in the source")
+        return
     for r in out.values():
         man = r.get("manifest_strips")
         if man is None:

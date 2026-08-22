@@ -135,6 +135,7 @@ Cloud Run from localhost.
 
 ```bash
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
+    # `--token-budget 50` = the same arm under the LABEL-BUDGET rail (docs/METRICS-SLICER-WINDOWS.md)
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377

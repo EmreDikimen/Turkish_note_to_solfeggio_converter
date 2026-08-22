@@ -62,6 +62,24 @@ const BAR_STRIPCOUNT = 0.995;
 const BAR_STRIP_FIELDS = 1.0;
 const BAR_STRIP_X_2PX = 0.999;
 const STRIP_X_TOL = 2;
+/** `estimate_tokens`' own coefficients — `page_to_strips.py` L97-98, frozen in constants.ts. */
+const COST_PER_STEM = 1.889;
+const COST_PER_INK_COL = 0.0288;
+/**
+ * The `est_tokens` bar — set at HALF A STEM, and that number is the whole argument.
+ *
+ * `estimate_tokens` is `1.889 x stems + 0.0288 x inked_columns` (+ a row-start constant). The two
+ * terms fail differently. A stem is the longest UNBROKEN vertical run over ~2 staff spaces, so the
+ * browser's documented ±1 grayscale difference cannot create or destroy one; an inked COLUMN is a
+ * single pixel's worth of ink, so a column sitting on the Otsu threshold flips freely — the same
+ * residue the row pixel-sum drift line has always reported as "never 0 by construction".
+ *
+ * So a difference below half a stem's cost proves the STEM counts are identical and the remainder
+ * is ink-column noise (0.94 / 0.0288 = 32 columns of headroom, against a measured worst of ~3).
+ * An actually-ported-wrong estimator miscounts stems and lands at 1.889 or more. Exact agreement
+ * is reported beside it, ungated, exactly like `bar x exact` sits beside `bar x within 1 px`.
+ */
+const EST_TOL = COST_PER_STEM / 2;
 /** The invariants the crops must satisfy — `page_to_strips.py` L55-58, frozen in constants.ts. */
 const MAX_STRIP_W = 1450;
 const MEASURES_PER_STRIP = 3;
@@ -81,6 +99,8 @@ interface RefStrip {
   meas_to: number;
   n_measures: number;
   row_measures: number;
+  /** budget-mode references only — the estimate the rail thresholds on, rounded to 1 dp. */
+  est_tokens?: number;
 }
 
 /** One system as `scripts/slicer_ref.py` records it. */
@@ -100,6 +120,13 @@ interface RefStaff {
 }
 interface RefPage {
   kind: "eligible" | "zero";
+  /**
+   * Which packing rule the CONTROL ran. Written per page by `slicer_ref.py` (the file is a flat
+   * {stem: page} map, so a top-level config key would be enumerated as a page). Absent on a
+   * reference built before the budget rail existed, which reads as legacy.
+   */
+  window_mode?: "legacy" | "budget";
+  token_budget?: number | null;
   page_w: number;
   page_h: number;
   cropped: boolean;
@@ -158,6 +185,8 @@ interface HarnessPage {
   skewDeg: number;
   systems: HarnessSystem[];
   strips: HarnessStrip[];
+  /** index-aligned with `strips`; all-null unless the harness was given a token budget */
+  estTokens: Array<number | null>;
   ms: number;
 }
 
@@ -228,6 +257,20 @@ interface PageResult {
   stripsPairedCond: number;
   stripFieldsOkCond: number;
   stripX2pxCond: number;
+  /**
+   * BUDGET MODE ONLY — the estimate itself, compared where both sides recorded one.
+   *
+   * The crop comparison above says whether the two rails AGREED; this says whether they agreed
+   * for the same reason. `estimate_tokens` is the quantity the rail thresholds on, so a port that
+   * cuts in the same places while computing a different cost is a coincidence waiting to break on
+   * the next page — exactly the failure the W4 "agreement with an artifact" note warns about.
+   * Python stores it `round(x, 1)`, and Python's round is half-to-EVEN (slicer-port.md trap 1), so
+   * the tolerance is a rounding step rather than a re-implementation of the rounding.
+   */
+  estN: number;
+  estOk: number;
+  estExact: number;
+  worstEstDelta: number;
   barsAllOk: boolean; // every system on this page has an identical bar list
   invalidPy: number; // invariant violations, Python's own
   invalidGot: number;
@@ -312,6 +355,21 @@ async function main() {
   const only = arg("--page");
   const images = indexImages();
 
+  // The reference DEFINES the packing rule as well as the sample: running the browser on the
+  // shipped rule against a budget-mode control (or the reverse) would report a port failure for a
+  // configuration difference, which is the same mistake as scoring against a stale manifest.
+  const modes = new Set(Object.values(ref).map((r) => r.window_mode ?? "legacy"));
+  const budgets = new Set(Object.values(ref).map((r) => r.token_budget ?? null));
+  if (modes.size > 1 || budgets.size > 1) {
+    console.error(
+      `--ref mixes packing rules (${[...modes].join("/")}, budgets ${[...budgets].join("/")}). ` +
+        "Rebuild it in one mode — a resumed run picks up whatever the earlier invocation used."
+    );
+    process.exit(2);
+  }
+  const budgetMode = modes.has("budget");
+  const tokenBudget = budgetMode ? ([...budgets][0] as number) : undefined;
+
   let stems = Object.keys(ref).sort();
   if (only) stems = stems.filter((s) => s === only);
   stems = stems.filter((s) => images.has(s));
@@ -322,7 +380,14 @@ async function main() {
   const nEl = stems.filter((s) => ref[s]!.kind === "eligible").length;
   console.log(
     `slicer parity (W4-W6) — ${stems.length} pages from ${path.basename(refFile)} ` +
-      `(${nEl} eligible + ${stems.length - nEl} zero-staff)\n`
+      `(${nEl} eligible + ${stems.length - nEl} zero-staff)`
+  );
+  console.log(
+    budgetMode
+      ? `packing rule: LABEL-BUDGET rail at ${tokenBudget} ids on BOTH sides — the control arm for ` +
+          `the browser's \`?dense=${tokenBudget}\`. ⚠ manifest agreement is not scored: every ` +
+          `manifest on disk is legacy.\n`
+      : "packing rule: the shipped one (measures + width).\n"
   );
 
   const server = await createServer({ root: WEB_ROOT, server: { port: 0 } });
@@ -352,8 +417,9 @@ async function main() {
     let got: HarnessPage;
     try {
       got = (await page.evaluate(
-        ([url, skew]) => (window as any).__slicer.stage1(url, skew ?? undefined, true),
-        [dataUrl, injectSkew ? r.skew_deg : null] as const
+        ([url, skew, budget]) =>
+          (window as any).__slicer.stage1(url, skew ?? undefined, true, budget ?? undefined),
+        [dataUrl, injectSkew ? r.skew_deg : null, tokenBudget ?? null] as const
       )) as HarnessPage;
     } catch (e) {
       results.push({
@@ -390,6 +456,10 @@ async function main() {
         stripsPairedCond: 0,
         stripFieldsOkCond: 0,
         stripX2pxCond: 0,
+        estN: 0,
+        estOk: 0,
+        estExact: 0,
+        worstEstDelta: NaN,
         barsAllOk: false,
         invalidPy: invariantViolations((r.strips ?? []).map(asPort)),
         invalidGot: 0,
@@ -484,6 +554,11 @@ async function main() {
     // otherwise shift every later comparison and report a page-wide failure for a single window.
     const refStrips = r.strips ?? [];
     const gotByKey = new Map(got.strips.map((s) => [`${s.system}:${s.window}`, s]));
+    // `estTokens` rides beside `strips` rather than inside it (the port keeps `Strip` exactly
+    // Python's manifest shape), so re-key it the same way before pairing.
+    const gotEstByKey = new Map(
+      got.strips.map((s, i) => [`${s.system}:${s.window}`, got.estTokens?.[i] ?? null])
+    );
     let stripsPaired = 0;
     let stripFieldsOk = 0;
     let stripX2px = 0;
@@ -492,6 +567,25 @@ async function main() {
     let stripsPairedCond = 0;
     let stripFieldsOkCond = 0;
     let stripX2pxCond = 0;
+    let estN = 0;
+    let estOk = 0;
+    let estExact = 0;
+    let worstEst = 0;
+    // budget mode: the estimate itself, keyed the same way. Scored on the raw pairing rather than
+    // the bar-conditional one — a row whose bars differ produces different SPANS, so its estimate
+    // is expected to differ and is excluded below instead of counted as a mismatch.
+    for (const a of refStrips) {
+      if (a.est_tokens === undefined) continue;
+      if (barsOkBySystem.get(a.system) !== true) continue;
+      const be = gotEstByKey.get(`${a.system}:${a.window}`);
+      if (be === undefined || be === null) continue;
+      estN++;
+      // Python stores 1 dp, so "exact" means inside half a storage step, not bit-identical.
+      const d = Math.abs(be - a.est_tokens);
+      if (d <= EST_TOL) estOk++;
+      if (d <= 0.05) estExact++;
+      if (d > worstEst) worstEst = d;
+    }
     for (const a of refStrips.map(asPort)) {
       const b = gotByKey.get(`${a.system}:${a.window}`);
       if (!b) continue;
@@ -564,6 +658,10 @@ async function main() {
       stripsPairedCond,
       stripFieldsOkCond,
       stripX2pxCond,
+      estN,
+      estOk,
+      estExact,
+      worstEstDelta: estN ? worstEst : NaN,
       barsAllOk,
       invalidPy: invariantViolations(refStrips.map(asPort)),
       invalidGot: invariantViolations(got.strips),
@@ -646,6 +744,13 @@ async function main() {
   // conditional and the raw numbers are printed, so nothing is hidden by the restatement.
   const w6Cond = w6.filter((r) => r.barsAllOk);
   const stripCountOkCond = w6Cond.filter((r) => r.stripCountOk).length;
+  const estN = sum(w6, (r) => r.estN);
+  const estOk = sum(w6, (r) => r.estOk);
+  const estExact = sum(w6, (r) => r.estExact);
+  const worstEst = Math.max(0, ...w6.map((r) => r.worstEstDelta).filter((x) => !Number.isNaN(x)));
+  // The rail thresholds on this number, so it gets no tolerance beyond Python's own 1-dp storage:
+  // one strip estimated differently is one crop boundary that can land elsewhere on another page.
+  const estPass = estN === 0 || estOk === estN;
   const stripsPairedCond = sum(w6, (r) => r.stripsPairedCond);
   const stripFieldsOkCond = sum(w6, (r) => r.stripFieldsOkCond);
   const stripX2pxCond = sum(w6, (r) => r.stripX2pxCond);
@@ -667,6 +772,7 @@ async function main() {
     stripCountPass &&
     stripFieldPass &&
     stripXPass &&
+    estPass &&
     invariantPass &&
     !errors.length;
 
@@ -733,6 +839,19 @@ async function main() {
     `  row_x0/row_x1 exact            ${stripXExact}/${stripsPaired} strips ` +
       `(${pct(stripXExact, stripsPaired).toFixed(2)}%)   <- reported, not gated`
   );
+  if (budgetMode) {
+    console.log(
+      `  est_tokens: stem counts agree  ${mark(estPass)}  ${estOk}/${estN} strips ` +
+        `(${pct(estOk, estN).toFixed(2)}%, bar 100%)   worst Δ ${worstEst.toFixed(2)} ids ` +
+        `= ${(worstEst / COST_PER_INK_COL).toFixed(1)} ink columns, against ${EST_TOL.toFixed(2)} ` +
+        `for one miscounted stem`
+    );
+    console.log(
+      `  est_tokens exact               ${estExact}/${estN} strips ` +
+        `(${pct(estExact, estN).toFixed(2)}%)   <- reported, not gated: the ±1 grayscale residue ` +
+        `flips threshold-edge ink columns`
+    );
+  }
   console.log(
     `  width/measure invariants       ${mark(invariantPass)}  port ${invalidGot} violation(s) vs ` +
       `python ${invalidPy}   [MAX_STRIP_W ${MAX_STRIP_W}, ${MEASURES_PER_STRIP} measures]`

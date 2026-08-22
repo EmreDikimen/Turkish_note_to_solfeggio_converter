@@ -62,6 +62,14 @@ export interface HarnessPage {
   systems: HarnessSystem[];
   /** window_measures + the driver's pad/trim (W6) — the manifest, in manifest order */
   strips: Strip[];
+  /**
+   * ⚠ BUDGET-RAIL PARITY only — `Window.est_tokens`, index-aligned with `strips` (the driver emits
+   * exactly one strip per window). All-`null` unless `stage1` was given a `tokenBudget`, because
+   * the port computes the cost features only where they are used. It is reported separately rather
+   * than folded into `Strip` so the shipped manifest shape stays exactly Python's minus the
+   * emitter's keys.
+   */
+  estTokens: Array<number | null>;
   ms: number;
 }
 
@@ -77,13 +85,16 @@ export interface HarnessCrop {
 async function stage1(
   pageDataUrl: string,
   skewDeg?: number,
-  wantRejects = false
+  wantRejects = false,
+  /** ⚠ opt-in: run the label-budget rail (`?dense=`) instead of the shipped measures+width rule. */
+  tokenBudget?: number
 ): Promise<HarnessPage> {
   const t0 = performance.now();
   const gray = await decodeGray(pageDataUrl);
   const res = sliceStage3(gray, {
     ...(skewDeg === undefined ? {} : { skewDeg }),
     ...(wantRejects ? { rejects: true } : {}),
+    ...(tokenBudget === undefined ? {} : { tokenBudget }),
   });
   const systems: HarnessSystem[] = res.rows.map(({ system, staff, normalized, bars, rejects }) => {
     let rowSum = 0;
@@ -121,6 +132,8 @@ async function stage1(
     skewDeg: res.skewDeg,
     systems,
     strips: res.strips,
+    // same flattening order as `res.strips`, so index i of one describes index i of the other
+    estTokens: res.rows.flatMap((r) => r.windows.map((w) => w.estTokens)),
     ms: performance.now() - t0,
   };
 }

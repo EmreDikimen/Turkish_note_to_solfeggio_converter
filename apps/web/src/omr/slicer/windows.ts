@@ -11,9 +11,12 @@
  * (the escalation loop depends on it), Python's `min(near)` comparing TUPLES, and `binarize_ink`
  * running on the ROW again here rather than being hoisted.
  *
- * **Budget mode is not ported** (docs/mvp/slicer-port.md): it ships OFF as a measured wash, and
- * dropping it removes `window_measures`' whole `cost()` threading — `est_tokens`/`budget_risk` are
- * manifest bookkeeping for the Rung-3 emitter and never move a crop boundary in legacy mode.
+ * **Budget mode was not ported** (docs/mvp/slicer-port.md) — it shipped OFF as a measured wash for
+ * LABELLING yield, and in legacy mode `est_tokens` never moves a crop boundary. ⚠ That reasoning
+ * does not cover INFERENCE, where an over-budget strip cannot be dropped and comes back as a short,
+ * confident, wrong read (docs/METRICS-SLICER-WINDOWS.md). So the `cost()` threading is now here
+ * after all, behind the opt-in `tokenBudget` parameter, and `parity:slicer --token-budget` holds it
+ * against `OMR_WINDOW_MODE=budget` the same way the shipped rule is held against legacy.
  */
 import {
   COST_PER_INK_COL,
@@ -39,6 +42,16 @@ export interface Window {
   mTo: number;
   /** a FRAGMENT of one over-wide measure, cut at a whitespace gutter. */
   splitWide: boolean;
+  /**
+   * ⚠ EXPERIMENT bookkeeping (`?dense=`) — Python's `Window.est_tokens` (L985), the estimated
+   * decoded length of this span. `null` in the shipped path, where the cost features are never
+   * computed. Python records it in BOTH modes as diagnostics; the port computes it only where it
+   * is used, so the normal visit pays nothing. Written at the same three sites Python writes it,
+   * so `parity:slicer --token-budget` can compare the number the rail thresholds on, not just the
+   * crops it produced. NOT rounded here — Python's `round()` is half-to-EVEN (slicer-port.md trap
+   * 1), so the harness compares with a tolerance instead of re-implementing the rounding.
+   */
+  estTokens: number | null;
 }
 
 /**
@@ -245,7 +258,11 @@ export function windowMeasures(
   for (let i = 0; i + 1 < bs.length; i++) spans.push([bs[i]!, bs[i + 1]!]);
   if (!spans.length) return [];
   const cap = spanCap();
-  const cost = tokenBudget === undefined ? null : rowCostFeatures(row, topY);
+  const feat = tokenBudget === undefined ? null : rowCostFeatures(row, topY);
+  // Python's inner `cost(x0, x1, first)` (L1032), including its `row is None` guard: with no
+  // features the estimate is not "0 tokens", it is "not measured", which is what `null` says.
+  const cost = (x0: number, x1: number, isRowStart: boolean): number | null =>
+    feat === null ? null : estimateTokens(feat, x0, x1, isRowStart);
   // the first window starts at the clef prefix when there is one, so the caps below see the crop's
   // TRUE extent (re-extending it afterwards is what broke the width cap on 22 strips)
   const winX0 = (i: number) => (i === 0 && lead !== null ? lead : spans[i]![0]);
@@ -259,14 +276,23 @@ export function windowMeasures(
       const nx1 = spans[j]![1];
       if (nx1 - x0 > cap) break; // width rail
       // label-budget rail — the one that decides whether the model can express the strip at all
-      if (cost !== null && estimateTokens(cost, x0, nx1, i === 0) > tokenBudget!) break;
+      if (feat !== null && estimateTokens(feat, x0, nx1, i === 0) > tokenBudget!) break;
       j++;
     }
     const x1 = spans[j - 1]![1];
     if (x1 - x0 > cap) {
       // over-wide single measure
       for (const [a, b] of splitWide(row, x0, x1, topY))
-        windows.push({ x0: a, x1: b, mFrom: i, mTo: j - 1, splitWide: true });
+        // `cost(a, b, first and a == x0)` — only the piece that still starts at the window's own
+        // left edge carries the row-start discount.
+        windows.push({
+          x0: a,
+          x1: b,
+          mFrom: i,
+          mTo: j - 1,
+          splitWide: true,
+          estTokens: cost(a, b, i === 0 && a === x0),
+        });
     } else if (x1 - x0 < MIN_STRIP_W) {
       // never silently DROP content: a sliver merges into the previous window when the result stays
       // within the trained width AND the measure cap; else it is emitted on its own.
@@ -279,11 +305,14 @@ export function windowMeasures(
       ) {
         prev.x1 = x1;
         prev.mTo = j - 1;
+        // the merged window is a different span, so its estimate is recomputed — and the
+        // row-start flag comes from the PREVIOUS window's measure index, not from `i`
+        prev.estTokens = cost(prev.x0, x1, prev.mFrom === 0);
       } else {
-        windows.push({ x0, x1, mFrom: i, mTo: j - 1, splitWide: false });
+        windows.push({ x0, x1, mFrom: i, mTo: j - 1, splitWide: false, estTokens: cost(x0, x1, i === 0) });
       }
     } else {
-      windows.push({ x0, x1, mFrom: i, mTo: j - 1, splitWide: false });
+      windows.push({ x0, x1, mFrom: i, mTo: j - 1, splitWide: false, estTokens: cost(x0, x1, i === 0) });
     }
     i = j;
   }

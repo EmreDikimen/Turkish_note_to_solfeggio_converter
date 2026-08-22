@@ -40,14 +40,35 @@ no skew), not a W4 one, and it is why the parity harness has `--inject-skew`. Do
 the port: a faster estimator is a behaviour change and needs its own measurement.
 
 **Not ported** — confirm each in review, they are training bookkeeping with no effect on pixels:
-`window_signature` (L749), `window_cache_ok` (L756), `row_cost_features` (L706),
-`estimate_tokens` (L737), `est_tokens`/`budget_risk`, **all of `budget` mode**,
+`window_signature` (L749), `window_cache_ok` (L756), `budget_risk`,
 `meas_from`/`meas_to`/`row_measures` (the stitcher reads only `system`/`window`/`tokens`), the
 `--debug` overlay branch, and every filesystem write.
 
-Dropping budget mode outright rather than defaulting it off also removes `window_measures`' entire
-`cost()` threading (~60 lines of the hardest numpy). It ships OFF as a measured wash and in legacy
-mode never influences a decision — verified.
+⚠ **`budget` mode CAME BACK, and this section used to say it never would** (2026-08-22). It was
+dropped as a measured wash — but the wash was measured for **labelling yield**, and at INFERENCE the
+trade inverts: an over-budget strip cannot be dropped, so it returns a short, confident, wrong read
+([../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)). `row_cost_features` (L706),
+`estimate_tokens` (L737), `est_tokens` and `window_measures`' `cost()` threading are therefore all
+ported now, behind the opt-in `tokenBudget` parameter that only `?dense=` sets. **In legacy mode the
+features are never computed**, so a normal visit pays nothing and `est_tokens` is `null` rather than
+a number nobody measured.
+
+**It has its own acceptance run, on the same instrument as the shipped rule.** `slicer_ref.py
+--token-budget N` makes the reference define the *packing rule* as well as the sample, and
+`slicer-parity.ts` refuses a reference that mixes the two — scoring the shipped rule against a
+budget-mode control would report a port failure for a configuration difference, which is the same
+mistake as scoring against a stale manifest. The budget run adds one check the legacy run cannot
+have: **`est_tokens` agreement**, the quantity the rail thresholds on. A port that cuts in the same
+places while computing a different cost is a coincidence waiting to break on the next page.
+
+⚠ **Its bar is half a stem (0.94 ids), not exact, and that number is the argument.**
+`estimate_tokens` is `1.889 x stems + 0.0288 x inked_columns`, and the two terms fail differently: a
+stem is the longest unbroken vertical run over ~2 staff spaces, which the browser's ±1 grayscale
+difference cannot create or destroy, while an inked *column* is one pixel's worth of ink and flips
+freely at the Otsu threshold. So a difference under half a stem proves the stem counts are identical
+and the rest is the same residue the row pixel-sum drift line has always reported as never zero.
+Exact agreement is reported beside it, ungated — the shape `bar x exact` already has next to
+`bar x within 1 px`. Result: [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md).
 
 ## File layout
 

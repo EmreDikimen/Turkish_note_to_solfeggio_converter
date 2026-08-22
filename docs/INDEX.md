@@ -40,7 +40,8 @@ wrong — fix by deleting, not by syncing.
 | The second engraver (LilyPond) — feasibility, its own gate, the null domain-gap read | [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md) |
 | Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |
 | How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |
-| How a row is cut into strips — the windowing retune, the crop frame, the geometry rails | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
+| The LABEL BUDGET — the rail the shipped app has none of, and the `?dense=` experiment | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
+| The windowing retune and the crop frame — settled: which constants were swept, and why none moved | [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) |
 | Whether the TypeScript slicer port reproduces the Python, rung by rung | [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |
 | Why do we do X this way? What was overturned? | [DECISIONS.md](DECISIONS.md) |
 | What may we publish? Licences, attribution, why no score ships | [THIRD-PARTY.md](THIRD-PARTY.md) |

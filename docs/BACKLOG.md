@@ -45,7 +45,16 @@ starting. Abandoned plans are a different thing again and live in
    change, not a Round-3 patch.
    ⚠ It does **not** invalidate any paired arm result — an arm and its control share the selector.
 
-4. **NEW 2026-08-20 — the real TRAINING pools are old-slicer crops, and so is the real half of the
+4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against
+   2,330; result and carry table in [METRICS-CORPUS.md](METRICS-CORPUS.md), queues in
+   [rung3/labeling-queues.md](rung3/labeling-queues.md)). ⏭ **Two things still owed before it is
+   training data**: its **201-row `b8-audit`** must be finished (**58 read as of 2026-08-21, 15.5%
+   wrong so far** — [METRICS-CORPUS.md](METRICS-CORPUS.md)), and the **1,442 human `fix` labels** in
+   the old pools must be carried across **by measure span, never by filename**. The problem statement
+   below is kept because it is what the run was justified by — and because the *selector* half of it
+   is untouched: the real val strips inside the blend are still the old pools' crops until the carry
+   is done.
+   **NEW 2026-08-20 — the real TRAINING pools are old-slicer crops, and so is the real half of the
    selector.** `strips_nota` / `strips_r1` / `strips_tup` were cut **11–17 July**; the slicer was
    overhauled **25 July** and fixed four more times on **29 July**. On a 5-page re-slice sample **0 of
    30 crops were identical**. So 2,330 training strips, and the 271 val-side strips inside the
@@ -193,6 +202,29 @@ starting. Abandoned plans are a different thing again and live in
    labels, so it inherits the koma bias. A better voter is still the wrong kind of authority.
    ⚠ **Not yet an error rate.** n=7 corrections in 1 makam; many overrides are probably right, and the
    table is a guide — mahur genuinely prints both ways (küçük 35, koma 17).
+
+10. **NEW 2026-08-22 — EVERY PAGE THIS PROJECT OWNS COMES FROM TWO WEBSITES, AND SO DOES THE EXAM.**
+   Raised by the owner (*"is there any strip from other note sheet resources like trt, divanmakam,
+   şarkı notaları"*) and measured: `data/real/manifest.csv` is **1,055 neyzen.com + 1,000
+   notaarsivleri.com and nothing else**; `strips_b8` is nota 2,565 strips / 416 pieces and neyzen
+   1,390 / 159; `testset.json` is **28 nota + 17 neyzen pieces over 67 pages**. So every accuracy
+   number this project has ever produced carries an unstated limit: *on these two engraving houses*.
+   ⏭ **The cheap version is a PROBE, not a corpus** — 20–40 pages from two or three new sites, a
+   couple of hundred strips hand-labelled, `round2-stage2-best` scored on them. It changes no exam and
+   no floor, and it answers the question that matters before the final render: does the model hold up
+   on a third engraver, or fall apart? A collapse would be the most valuable finding available; a
+   pass would retire the worry cheaply.
+   ⚠ **Deferred, and here is the honest reason**: labelling is the bottleneck (2,486 unlabelled pages
+   are already on disk), and ⛔ **the exam must not gain a third source mid-round** — it was signed on
+   46 pages, rebuilt to 64, and what 75% *means* on it is still an open owner decision. A third change
+   to the instrument would make the Round-3 read comparable to nothing.
+   ⏭ **Candidate sources**: the 2026-08-20 list in [DECISIONS.md](DECISIONS.md) — nota.trt.net.tr,
+   sahaney.com, erdincbal.com, neyzenim.com, devletkorosu.com, sarkilarnotalar.blogspot.com,
+   baglamaci.com — **plus `divanmakam`, which the owner named on 2026-08-22 and that list does not
+   carry**. ⚠ Free labels depend on `match_symbtr.py` finding the piece by name, so a site's naming
+   convention decides whether its pages cost nothing or cost hand-labelling. ⚠ Read each licence
+   first: neyzen and notaarsivleri are recorded **all rights reserved / read locally, never
+   redistribute** ([THIRD-PARTY.md](THIRD-PARTY.md)), and TRT is a state broadcaster — its own read.
 
 ### Further out (not next, not cancelled)
 

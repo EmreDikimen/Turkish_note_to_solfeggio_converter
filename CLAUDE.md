@@ -138,6 +138,14 @@ Cloud Run from localhost.
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python scripts/rung3/emit_strip_labels.py --strips-root data/real/strips_v2 \
+    --checkpoint data/checkpoints/round2-stage2-best --onnx-dir data/checkpoints/round2-stage2-best-onnx \
+    --testset data/real/rung3/testset.json --out data/real/rung3/strips_b8
+    # the B8 re-emit as it was RUN 2026-08-21 (37 min, laptop). ⚠ `--strips-root data/real/strips_v2`
+    # is the whole point — the default root is the RETIRED slicer. It reuses the 1,704 page decode
+    # caches, which is why no GPU is needed; `--redecode` would throw that away. Its output is NOT
+    # training data until `b8-audit` is read and the old pools' human fixes are carried BY MEASURE
+    # SPAN (docs/METRICS-CORPUS.md).
 .venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --rebuild
     # the exam, RE-CUT on today's slicer (owner, 2026-08-21). `--plan` prints the emit command; that
     # emit must write to --strips-root data/real/strips_examv3 and NEVER to data/real/strips, which
@@ -354,6 +362,9 @@ Full guide — what to update after a session, and why each rule exists:
 
 ```
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
+data/real/rung3/      the label POOLS: strips_nota / strips_r1 / strips_tup (11-17 Jul crops, and the
+                      1,442 human fixes) + strips_b8 (2026-08-21, the SAME pools re-emitted onto the
+                      current crops). Not interchangeable and not yet merged — see METRICS-CORPUS.md
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29

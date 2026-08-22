@@ -254,6 +254,38 @@ npx tsx tools/vision/page-structure.ts                                    # 1. s
 
 ---
 
+## The `b8` queues (2026-08-21) — the re-emit, put in front of a human
+
+`data/real/rung3/strips_b8/`, wired into `review_ui.py` as three tabs. Images resolve under
+**`data/real/strips_v2`** (`QUEUE_IMG_ROOTS`), because the accepted PNGs are hardlinked out of that
+root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+
+| tab | rows | what a verdict means |
+|---|---|---|
+| **`b8-audit`** | **201** (⏳ **58 read**, 143 open) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
+| `b8-full` | 3,955 | every accepted label, for browsing past the sample |
+| `b8-review` | 4,738 | the unsure ones; a `fix` here promotes a strip into training |
+
+- ⭐ **`b8-audit` is the guard and it must be read.** The referee saw these very labels in stage-2
+  training at 9× oversampling, so its agreement is partly memory rather than judgement. The
+  precedent is exam v2: 2 of 63 sampled, and a later full read found **51%** wrong.
+  ⏳ **58 of 201 read (2026-08-21 evening): 9 fix / 58 = 15.5% wrong.** ⚠ Interim, n=58 — but the
+  sample is shuffled and the judged prefix is no easier than the rest (mean `nd` 0.019 vs 0.018), so
+  it is a fair early read rather than a skimmed one ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)).
+- ⚠ **Promoting is not a re-run of the old promotes.** `strips_nota` / `strips_r1` / `strips_tup` are
+  untouched on disk, and **1,442 human `fix` labels do not carry themselves**. 951 are recoverable
+  (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`).
+- ⛔ **CARRY BY MEASURE SPAN (`page`, `from`, `to`) — NEVER BY FILENAME.** 248 of those fixes match a
+  new strip's *name* while covering different music. This is the standing re-slice trap, now with a
+  number on it.
+- ⚠ **`b8-full`'s `decoded` column needed a code change to be honest.** `build_full_audit` had the
+  strip root hardcoded to `data/real/strips` — the retired slicer, whose caches also hold a July
+  `rung3-labeler` decode. For a b8 tab that would have seeded the edit box from another model's read
+  of a *different* crop, silently. `FULL_AUDITS` entries now take an optional third field, the strip
+  root; the four older full-audit queues keep the old default unchanged.
+- ⚠ **TRAINING ONLY.** Nothing here may become exam gold — these pieces are the training side by
+  construction (the 45 exam pieces were excluded by `--testset`).
+
 ## ⏭ `examv3` — the exam, re-cut whole (2026-08-21)
 
 **Why it exists.** It is the labelling that **blocks the Round-3 read**. It began as a growth queue
@@ -296,9 +328,9 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
    more often than the carried gold, and 3 more signature bugs fell out of the 13 fixes
    ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
 3. **The remaining 636, PAGE-COMPLETE** — 158 carry a suggestion, 329 have no label at all, and
-   **64 pages are still open**. ⚠ **Not the next thing to do**: the training re-emit (B8) sits between
-   this and the two rows above, because it is the one open item that damages the *model* rather than
-   what can be concluded from it, and it costs no labelling ([../STATUS.md](../STATUS.md)). The primary counts corrections *per page*, so a half-labelled page
+   **64 pages are still open**. ✅ The training re-emit (B8) that used to sit in front of this **ran on
+   2026-08-21**, so the only thing now ahead of it is reading `b8-audit`
+   ([below](#the-b8-queues-2026-08-21--the-re-emit-put-in-front-of-a-human)). The primary counts corrections *per page*, so a half-labelled page
    under-counts its own errors — grading it would be worse than skipping it. Stopping early should
    cost whole pages, never half ones.
 

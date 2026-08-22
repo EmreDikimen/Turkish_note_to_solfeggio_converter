@@ -19,6 +19,7 @@ and how trustworthy its labels are**. Model-quality numbers stay there; nothing 
 | **strips_v4** | **40,826 strips / 202 pieces, 75.5% carry** | the Round-2 corpus (2026-07-26): thin sharps, the carry pixels-vs-labels fix, +23 küçük-bearing pieces, −5 exam pieces. Audit PASS. `\kucukSharp` in the signature 1,210 → **1,998** tokens; inline unchanged (206 → 209 strips). Val is `split_v3`'s **verbatim** (24 pieces / 4,772 strips) so v3-vs-v4 stays matched |
 | **strips_v5_tupnew / _tupctl** | **40,826 strips / 202 pieces each** (40,841 rendered, the same 15 boundary-bleed strips excluded) | the tuplet A/B's two arms (2026-08-14), from `data/pieces_v4.json` with `--thin-sharps` and no print noise. **Row-for-row identical to `strips_v4`** — same image set, and every field including the label matches on all 40,826. The arms differ from each other in **1,691 PNGs**: 1,690 curved-style `\tup3` strips plus one 20-pixel crop-edge bleed; the 379 `\tup3` strips that are pixel-identical are exactly the 22 bracket-style pieces. Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md) |
 | Real training pool | 2,160 strips (1,758 nota + 418 neyzen, incl. 172 tup3) | after all promotes |
+| **`strips_b8`** — the re-emit | **3,955 accepted strips / 912 pieces**, 4,738 in review, 201-row audit sample | 2026-08-21, the three training pools re-cut onto the CURRENT crops (`strips_v2`) with `round2-stage2-best` as hint AND gate. **A separate dataset, not a replacement** — the old pools are untouched and their human corrections do not carry themselves ([below](#the-b8-re-emit-what-it-yielded-and-what-it-does-not-carry-2026-08-21)) |
 | Exam v2.1 (frozen) | **352 strips / 45 piece entries**, tup3 gold 55 groups | `testset.json` |
 | Photo exam | 690 strips sliced, 284 hand-labelled | exam-only |
 | Real corpus on disk | 798 PDFs → 1,259 page PNGs (89 makams) + 964 nota pieces / 1,227 pages | |
@@ -39,6 +40,7 @@ before that date is not what the shipped slicer produces — measured on a 5-pag
 | pool | role | crops cut | slicer |
 |---|---|---|---|
 | `strips_nota` / `strips_r1` / `strips_tup` | training **and** the real half of the selector | 11–17 Jul | **old** |
+| **`strips_b8`** | the same three pools, re-emitted | **21 Aug** | current — closes the row above, once its labels are carried |
 | `strips_exam_v2_clean` | **the exam**, read once, the launch gate | 17 Jul | **old** |
 | `_realval_v2` | what every Round-3 arm is scored on | 31 Jul | current |
 
@@ -64,6 +66,54 @@ without changing the blend moves 5.4% of the selector.
 crop or a synthetic-heavy selector applies identically to both and cancels in the delta. It bears on
 which checkpoint is called `best` — which is why both `best` and `last` are read, and why arm 1's two
 checkpoints disagreed.
+
+## The B8 re-emit: what it yielded, and what it does NOT carry (2026-08-21)
+
+`emit_strip_labels.py` over the **1,293 non-exam matched pieces**, `--strips-root
+data/real/strips_v2`, `round2-stage2-best` doing both emitter jobs, into `data/real/rung3/strips_b8`.
+**37 minutes** on the M4 at `OMR_ORT_THREADS=2 nice -19`: 1,704 page decodes were reused from the
+2026-07-29 re-slice (same checkpoint, same `window_cache_ok` signature) and only **16 pages** were
+decoded fresh, so the GPU half of the job had already been paid for.
+
+| | |
+|---|---|
+| pieces | 912 ok / 324 low_coverage / 57 missing_pages |
+| rows | 3,440 ok + 950 `recovered_dc` + 3,616 `recovered_dn`, **3,984 unaligned (33%)** |
+| strips | **accepted 3,955** · review 4,738 · dropped 24,837 · audit sample 201 |
+| drops | **split_wide 10,226** · row_unaligned 7,446 · **over_budget 4,012** · nd_high 3,053 · empty_range 43 |
+
+**Yield: 3,955 against the old pools' 2,330 (+70%)**, which is the referee argument paying out —
+the weak referees dropped 10,695 strips on row alignment alone. ⭐ **Width and budget now dominate**:
+`split_wide` + `over_budget` = **14,238 strips**, nearly twice what alignment loses, so the 59-id
+budget measurement ([BACKLOG.md](BACKLOG.md) item 7) is now the biggest single lever on real training
+volume, not a tidiness item.
+
+### ⚠ The 1,442 human corrections do not come back by themselves
+
+Matching old rows to new by **measure span** (`page`, `from`, `to`), which is the only sound key:
+
+| old row | n | where it landed now |
+|---|---|---|
+| never touched by a human | 844 | 704 on the same measures — and **687 (98%) got an identical label** |
+| **human `fix`** | **1,442** | 445 same measures · 506 → `b8-review` · 248 same FILENAME only · 223 dropped · 20 not produced |
+| human `ok` | 44 | 16 same filename only · 10 review · 10 not produced · 8 dropped |
+
+⭐ **The 98% row is what makes the rest readable.** On rows no one edited, the emitter reproduces its
+own July output almost exactly, so it has not drifted. Which means the disagreement on the corrected
+rows — of the 445 human fixes that land on the same measures, the fresh machine label matches the
+human on only **41** — is most likely the machine repeating the error the person fixed. ⚠ **That is an
+inference, not a measurement**: the pre-correction labels were overwritten at promote time, so the two
+cannot be diffed directly. The observed differences are the known tie/rest conventions
+(`g''4. g''4` vs `g''2 \tie g''8`; `e''4 r8` vs `e''4.`).
+
+⚠ **Carry by measure span, NEVER by filename.** 248 of the 1,442 fixes match a new strip's *name*
+while covering different music — the standing re-slice trap, and here it is quantified.
+**951 of 1,442 (66%) are recoverable now** (445 accepted + 506 in review); the remaining 243 need the
+width/budget rails to move.
+
+⚠ **`\sig` blocks in this pool are unverified like every other real-page pool** — 1,622 of them, voted
+by a model rather than derived ([below](#the-key-signature-is-decided-by-the-model-not-by-symbtr-found-2026-08-21)). The voter here is
+`round2-stage2-best` rather than the weak labeler, which should help and has not been measured.
 
 ## ⚠ `_realval_v2` has 5 DUPLICATE MANIFEST ROWS, 4 of them contradictory (found 2026-08-16)
 
@@ -180,6 +230,21 @@ The yield of a batch is therefore its *fix* rate, not its throughput. ⚠ Compos
 `batch1` is not the inverse of `batch2` — 10 of its 52 pages are born-digital, 5 are neyzen, and it
 carries the handwritten manuscript the ranking surfaces at the top.
 
+## ⚠ The whole corpus comes from TWO websites (measured 2026-08-22)
+
+Raised by the owner, and it is exact — `data/real/manifest.csv` records a source per PDF:
+
+| source | PDFs | in `strips_b8` | in the exam (`testset.json`) |
+|---|---|---|---|
+| neyzen.com | 1,055 | 1,390 strips / 159 pieces | 17 pieces |
+| notaarsivleri.com | 1,000 | 2,565 strips / 416 pieces | 28 pieces |
+| **anything else** | **0** | **0** | **0** |
+
+⚠ **Consequence for every accuracy number here**: they are measured on two engraving houses, so the
+honest form is "reads *these two sources* at X%", not "reads Turkish sheet music at X%". Nothing in
+any pool tests a third engraver. The cheap way to find out — a probe, not a corpus — and why it is
+deferred rather than scheduled: [BACKLOG.md](BACKLOG.md) item 10.
+
 ## Label quality (measured by hand audits)
 
 | Pool | Content-error rate | Date |
@@ -190,6 +255,7 @@ carries the handwritten manuscript the ranking surfaces at the top.
 | tup3 auto-accepts (78 strips) | 10% | 2026-07-19 |
 | exam gold, full re-audit | 13 new label errors found (gold over-sized sharps) | 2026-07-25 |
 | **nota training pool, review of every disagreeing strip** | **521 of 1,740 strips (30%) carry a human-corrected label**; of the strips where label and decode disagreed at all, **~78% of the labels were wrong** | 2026-07-27 |
+| **⏳ `strips_b8` auto-accepts (58 of 201 read, `b8-audit`)** | **9 fix / 58 = 15.5% wrong so far** — an interim read, not a result: 143 rows still open. The judged prefix is a fair subsample (the sample is shuffled; mean `nd` 0.019 judged vs 0.018 unjudged), so it is an estimate with n=58 around it. Errors seen: 3 pitch, 2 rhythm, 2 tie/rest convention, 1 missing `\repstart`, 1 spurious `\sig` block | 2026-08-21 |
 | **exam v3 auto-accepts (all 139, `examv3-full`)** | **18 fix + 1 bad = 13.7% wrong** — against exam v2's **51%** on the same queue; the drop is the re-slice ([the crop finding below](#the-key-signature-is-decided-by-the-model-not-by-symbtr-found-2026-08-21)) | 2026-08-21 |
 | Tie structure in nota pool | ~38% structurally noisy (why ties carry no floor) | 2026-07-20 |
 | **`strips_v3` carry strips: accidental DRAWN but not labelled** | **18.8% of signature-bearing carry strips** (5,240 / 27,933; 8,485 accidentals over 137 pieces) | 2026-07-26 |

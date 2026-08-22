@@ -2,12 +2,91 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-21
+updated: 2026-08-22
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-21 (latest) — the labelling tool was lying about what it saved, and the conflicts are cleared
+## 2026-08-22 (latest) — the b8 guard is a quarter read, and it is holding up so far
+
+Found during a doc sync: `strips_b8/emit_audit.csv` had been worked on the evening of 2026-08-21
+(mtime 23:57, after the 21:59 emit) while every doc still said the audit was **unread**. **58 of 201
+rows are judged: 49 ok, 9 fix — 15.5% wrong.**
+
+⚠ **Interim, and n=58.** What makes it worth writing down anyway is that the read is not skimmed: the
+audit sample is shuffled (not ordered by piece, `nd` or logprob), the judged rows are the first 62 in
+file order, and their mean `nd` is **0.019** against **0.018** for the 143 still open. So the easy
+rows were not cherry-picked — this is a fair early look, not a best case.
+
+**Where it sits.** Against exam v2's 51% and exam v3's 13.7% on the same kind of queue, 15.5% is much
+nearer the good end. That is the answer B8 was waiting on — the referee argument (one strong model
+doing both emitter jobs) does not appear to have bought its +70% yield with a collapse in label
+quality. ⚠ It does not close the question: 143 rows left, and the referee was trained on these very
+labels at 9× oversampling, so its agreement is partly memory.
+
+**What the 9 fixes were**, because the mix matters more than the rate at this n: 3 pitch errors, 2
+rhythm, 2 the known tie/rest convention (`g''2 \tie g''8` → `g''4. g''4`), 1 missing `\repstart`,
+and 1 **spurious `\sig \komaFlat b \sigend`** — the model-voted key signature of
+[BACKLOG.md](../BACKLOG.md) item 9 showing up again, in a fresh pool, as a whole signature block
+invented over what should have been a rest. Two of the nine are therefore not new failures but two
+already-open items appearing in b8.
+
+## 2026-08-22 — the corpus is two websites, and that is now written down
+
+The owner asked whether any strip comes from another sheet-music source — TRT, divanmakam, şarkı
+notaları. **None does.** `data/real/manifest.csv` carries a source per PDF and it is 1,055
+neyzen.com + 1,000 notaarsivleri.com, exactly 2,055, nothing else; `strips_b8` splits nota 2,565 /
+neyzen 1,390; `testset.json` is 28 nota + 17 neyzen pieces. So the limit applies to the **exam** as
+well as to training, which is the half that matters: every accuracy figure this project has published
+means "on these two engraving houses".
+
+Recorded as [BACKLOG.md](../BACKLOG.md) item 10 with the cheap version spelled out — a **probe**
+(20–40 pages, a couple of hundred strips, score the live model) rather than a corpus, because it
+changes no exam and no floor. Deferred for two stated reasons: labelling is the bottleneck (2,486
+unlabelled pages already on disk), and the exam must not gain a third source mid-round after being
+signed on 46 pages and rebuilt to 64. `divanmakam` was added to the candidate list, which did not
+carry it.
+
+⚠ Nothing was collected and no site was contacted — this entry records a finding and a deferral.
+
+## 2026-08-21 — the training pools are re-emitted, and the human corrections did not come with them
+
+**B8 ran.** `emit_strip_labels.py` over the 1,293 non-exam matched pieces, `--strips-root
+data/real/strips_v2`, `round2-stage2-best` as hint AND gate, into `data/real/rung3/strips_b8`.
+**37 minutes** on the fanless M4 at `OMR_ORT_THREADS=2 nice -19` — because the expensive half was
+already bought: 1,704 page decodes were reused from the 2026-07-29 Colab re-slice (same checkpoint,
+same `window_cache_ok` signature) and only **16 pages** were decoded fresh. The owner asked Colab or
+laptop; the honest answer was laptop, and it is the check on the caches that made it so.
+
+**Result: 3,955 accepted strips against the old pools' 2,330 (+70%)**, 4,738 in review, 24,837
+dropped. The referee argument paid out. What was not expected is the shape of the drops: `split_wide`
+10,226 + `over_budget` 4,012 = **14,238**, against 7,446 for row alignment — **the 59-id budget is now
+the binding limit on real training volume**, which is why the budget measurement moved up the order.
+
+**The finding that matters more than the yield.** Matching old rows to new by measure span:
+
+- On the **844 rows no human ever edited**, 704 land on the same measures and **687 (98%) get an
+  identical label** — the emitter has not drifted, which is what makes the next line readable.
+- On the **1,442 human `fix` rows**, only 445 land on the same measures and the fresh machine label
+  agrees with the human on **41** of them. The differences are the known tie/rest conventions. So the
+  machine is most likely repeating the error the person corrected — ⚠ an **inference**, since the
+  pre-correction labels were overwritten at promote time and cannot be diffed.
+- **248 of those fixes match a new strip's FILENAME while covering different music.** The standing
+  re-slice trap, now with a number. Carry by span, never by name.
+
+So the re-emit is a better-cut pool that has **thrown the labelling work off its back**: 951 of the
+1,442 corrections are recoverable (445 accepted + 506 in review), the rest need the width/budget rails
+to move. It is not training data until `b8-audit` (201 rows) is read and the carry is done.
+
+**Tooling.** Three tabs added to `review_ui.py` — `b8-audit` / `b8-full` / `b8-review` — with
+`QUEUE_IMG_ROOTS` pointed at `data/real/strips_v2`. One real defect fixed on the way: `build_full_audit`
+had the strip root **hardcoded** to `data/real/strips`, so a b8 full-audit tab would have seeded its
+edit box with a July `rung3-labeler` decode of a *different* crop, silently. `FULL_AUDITS` entries now
+carry an optional strip root; the four older queues keep the old default. Verified end to end on a
+scratch port: counts 201 / 3,955 / 4,738, an image byte-identical to the `strips_v2` crop and not the
+retired one, every `b8-full` row carrying a `strips_v2` decode, and a verdict round-tripped and cleared.
+
+## 2026-08-21 — the labelling tool was lying about what it saved, and the conflicts are cleared
 
 **The owner stopped mid-queue with a bug report**: *"there is not any option model decode, just label.
 When I click to ok, it saves something different then label. If I press edit, the edit box come with

@@ -108,6 +108,24 @@ QUEUES = {
     # never written by this tool.
     "examv3-full": "data/real/rung3/strips_exam_v3/full_audit.csv",
     "examv3-audit": "data/real/rung3/strips_exam_v3/emit_audit.csv",
+    # B8 RE-EMIT (2026-08-21) — the three training pools re-emitted onto the CURRENT crops
+    # (data/real/strips_v2) with `round2-stage2-best` doing BOTH emitter jobs, hint and gate
+    # (docs/DECISIONS.md — the morning's "split gate from hint" was cancelled the same day).
+    # 3,955 accepted strips against the old pools' 2,330, 4,738 in review, 24,837 dropped.
+    # ⚠ It is a SEPARATE dataset, not a replacement. strips_nota / strips_r1 / strips_tup are
+    # untouched on disk, and the 1,442 human `fix` labels inside them do NOT come back by
+    # themselves: 445 land on a new strip covering the same measures (and the fresh machine label
+    # disagrees with the human on 404 of them — the tie/rest conventions a person already fixed
+    # once), 506 land in b8-review, 223 drop on width/budget, 20 are not produced at all.
+    # ⚠ CARRY THEM BY MEASURE SPAN (page, from, to), NEVER BY FILENAME: 248 of those fixes match a
+    # new strip's NAME while covering different music — the standing re-slice trap.
+    # ⚠ b8-audit is the guard that decides whether any of this is usable, and it must be READ: the
+    # referee was trained on these very labels at 9x oversampling, so its agreement is partly
+    # memory rather than judgement. 201 rows, the emitter's seeded 5% sample. exam v2 read 2 of 63
+    # and a later full read found 51% wrong.
+    "b8-audit": "data/real/rung3/strips_b8/emit_audit.csv",
+    "b8-full": "data/real/rung3/strips_b8/full_audit.csv",
+    "b8-review": "data/real/rung3/strips_b8/emit_review.csv",
     # BATCH 3 (2026-08-19) — THE LIVE ONE. 54 pages / 1,499 strips from the SCANNED tier: the exact
     # inverse of batch 2's `--clean`, over the same born-digital set, so the tier stays a file-format
     # fact. Two measurements moved the labelling here (docs/METRICS-CORPUS.md): 93% of exam pages are
@@ -190,9 +208,15 @@ QUEUES = {
     "r1-review": "data/real/rung3/strips_r1/emit_review.csv",
 }
 
-# full-queue id -> (manifest dir, sampled-audit queue whose verdicts are carried over)
+# full-queue id -> (manifest dir, sampled-audit queue whose verdicts are carried over
+# [, strip root whose *_decode.json seeds the `decoded` column — defaults to STRIPS])
 FULL_AUDITS = {
     "examv3-full": ("data/real/rung3/strips_exam_v3", "examv3-audit"),
+    # ⚠ b8 MUST name its strip root. Its crops are the 2026-07-29 re-slice, and the identical page
+    # stems also exist under data/real/strips with the retired slicer's pixels AND a July
+    # rung3-labeler decode — so the default would seed the edit box from a decode of a different
+    # crop by a different model, with nothing on screen to say so.
+    "b8-full": ("data/real/rung3/strips_b8", "b8-audit", "data/real/strips_v2"),
     "r1-full": ("data/real/rung3/strips_r1", "r1-audit"),
     "nota-full": ("data/real/rung3/strips_nota", "nota-audit"),
     "examv2-full": ("data/real/rung3/strips_exam_v2", "examv2-audit"),
@@ -223,6 +247,11 @@ QUEUE_IMG_ROOTS = {
     "batch1": ["data/real/strips_v2"],
     "batch2": ["data/real/strips_v2"],
     "batch3": ["data/real/strips_v2"],
+    # b8 hardlinks its accepted PNGs out of the re-slice root and stores them FLAT, so the
+    # /img/<qid>/<page>/<strip> handler has to resolve against the page dirs it came from.
+    "b8-audit": ["data/real/strips_v2"],
+    "b8-full": ["data/real/strips_v2"],
+    "b8-review": ["data/real/strips_v2"],
 }
 # Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
 # on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is
@@ -281,7 +310,9 @@ def build_full_audit(root: Path) -> None:
     full_audit.csv only — the manifest is never touched; the sampled-audit verdicts are
     carried over so that work isn't repeated. Generated once per dataset in FULL_AUDITS;
     delete a CSV to rebuild it (re-carrying the sample verdicts made since)."""
-    for full_qid, (dirpath, audit_qid) in FULL_AUDITS.items():
+    for full_qid, spec in FULL_AUDITS.items():
+        dirpath, audit_qid = spec[0], spec[1]
+        strips_root = spec[2] if len(spec) > 2 else STRIPS
         path = root / QUEUES[full_qid]
         mani = root / dirpath / "manifest.jsonl"
         if path.exists() or not mani.exists():
@@ -295,7 +326,7 @@ def build_full_audit(root: Path) -> None:
                 m = json.loads(line)
                 strip, page = Path(m["image"]).name, m["page"]
                 if page not in decodes:
-                    dj = root / STRIPS / page / f"{page}_decode.json"
+                    dj = root / strips_root / page / f"{page}_decode.json"
                     decodes[page] = ({s["strip"]: s["tokens"]
                                       for s in json.load(open(dj))["strips"]}
                                      if dj.exists() else {})

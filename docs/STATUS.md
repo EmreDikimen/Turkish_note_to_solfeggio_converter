@@ -14,9 +14,9 @@ new **label-free dotted (usul) barline**. What is left is **render → train →
 
 ⭐ **THE TRAINING POOLS WERE RE-EMITTED ONTO THE CURRENT CROPS (2026-08-21) — `strips_b8`, 3,955
 accepted strips against 2,330, in 37 minutes on the laptop.** Training was the last thing still cut by
-the retired slicer. ⏭ **It is not training data yet**: the **201-row audit is 58 read / 143 open**
-(**15.5% wrong so far**, interim) and the **1,442 human corrections do not carry themselves** (951
-recoverable, by measure span and never by filename).
+the retired slicer. ⏭ **It is not training data yet**: the **201-row audit is part-read and running**
+(rate in [METRICS-CORPUS.md](METRICS-CORPUS.md)) and the **1,442 human corrections do not carry
+themselves** (951 recoverable, by measure span and never by filename).
 ⭐ The drop table now points at the **59-id budget**, not at alignment.
 [METRICS-CORPUS.md](METRICS-CORPUS.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
@@ -226,7 +226,7 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 |---|---|---|---|
 | 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
 | 2 | ✅ **DONE 2026-08-21** — all 27 `gold_conflict` rows | **14 ok / 13 fix**; the fresh derivation mostly won, and **3 more signature bugs** fell out | B0 |
-| 3 | ✅ **RAN 2026-08-21** — the re-emit, 37 min, `strips_b8`: **3,955 accepted** against 2,330 | ⏳ **its `b8-audit` is 58 of 201 read — 15.5% wrong so far**, and nothing may be promoted until the remaining 143 are done | B8 |
+| 3 | ✅ **RAN 2026-08-21** — the re-emit, 37 min, `strips_b8`: **3,955 accepted** against 2,330 | ⏳ **its `b8-audit` read is UNDER WAY and holding up so far** ([METRICS-CORPUS.md](METRICS-CORPUS.md)); nothing may be promoted until all 201 are done | B8 |
 | 4 | ⏭ **NEXT** — **measure the 59-id budget** | a script, no labelling — and the re-emit just made it the biggest lever: width+budget drop **14,238** strips, twice what alignment loses | B9 |
 | 5 | the remaining **636** `examv3` rows, **page-complete** | the primary is per page, so a half-labelled page under-counts itself; 64 pages still open | B0 |
 | 6 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
@@ -347,10 +347,10 @@ data until the audit is **finished** and the old human corrections are carried a
    against the old pools' 2,330 (+70%)**, 4,738 in review. The train/test mismatch it existed to close
    is closed — training was the last thing on retired crops.
    ⏭ **It is NOT training data yet, and two things stand between:**
-   ⏳ **(a) finish `b8-audit` — 58 of 201 read (2026-08-21 evening), 143 open.** The guard, and the
-   referee was trained on these very labels, so its agreement is partly memory. v2 sampled 2 of 63 and
-   a later read found 51% wrong. **So far 9 fix / 58 = 15.5% wrong** — ⚠ an interim number on n=58, not
-   a verdict on the pool ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
+   ⏳ **(a) finish `b8-audit`, 201 rows — the read is under way and the pool is holding up.** The
+   guard, and the referee was trained on these very labels, so its agreement is partly memory; v2
+   sampled 2 of 63 and a later read found 51% wrong. ⚠ The running rate is an **interim number on a
+   live queue**, not a verdict on the pool — [METRICS-CORPUS.md](METRICS-CORPUS.md).
    ⭐ **(b) carry the 1,442 human `fix` labels across** — they do **not** come back by themselves. 951
    are recoverable (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`);
    ⛔ carry them by **measure span**, never by filename — 248 match a new strip's *name* while holding

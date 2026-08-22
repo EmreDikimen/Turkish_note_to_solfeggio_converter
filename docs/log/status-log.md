@@ -13,19 +13,20 @@ Found during a doc sync: `strips_b8/emit_audit.csv` had been worked on the eveni
 (mtime 23:57, after the 21:59 emit) while every doc still said the audit was **unread**. **58 of 201
 rows are judged: 49 ok, 9 fix — 15.5% wrong.**
 
-⚠ **Interim, and n=58.** What makes it worth writing down anyway is that the read is not skimmed: the
-audit sample is shuffled (not ordered by piece, `nd` or logprob), the judged rows are the first 62 in
-file order, and their mean `nd` is **0.019** against **0.018** for the 143 still open. So the easy
-rows were not cherry-picked — this is a fair early look, not a best case.
+⚠ **Interim, and the queue is live** — it moved from 58 to 88 judged over the day, so the rate in
+[METRICS-CORPUS.md](../METRICS-CORPUS.md) is a snapshot and the tab badge is the truth. What makes it
+worth writing down anyway is that the read is not skimmed: the audit sample is shuffled (not ordered
+by piece, `nd` or logprob), and the judged rows' mean `nd` is **0.019** against **0.018** for those
+still open. So the easy rows were not cherry-picked — this is a fair early look, not a best case.
 
-**Where it sits.** Against exam v2's 51% and exam v3's 13.7% on the same kind of queue, 15.5% is much
+**Where it sits.** Against exam v2's 51% and exam v3's 13.7% on the same kind of queue, ~13% is much
 nearer the good end. That is the answer B8 was waiting on — the referee argument (one strong model
 doing both emitter jobs) does not appear to have bought its +70% yield with a collapse in label
 quality. ⚠ It does not close the question: 143 rows left, and the referee was trained on these very
 labels at 9× oversampling, so its agreement is partly memory.
 
-**What the 9 fixes were**, because the mix matters more than the rate at this n: 3 pitch errors, 2
-rhythm, 2 the known tie/rest convention (`g''2 \tie g''8` → `g''4. g''4`), 1 missing `\repstart`,
+**What the first 9 fixes were**, because the mix matters more than the rate at this n: 3 pitch errors,
+2 rhythm, 2 the known tie/rest convention (`g''2 \tie g''8` → `g''4. g''4`), 1 missing `\repstart`,
 and 1 **spurious `\sig \komaFlat b \sigend`** — the model-voted key signature of
 [BACKLOG.md](../BACKLOG.md) item 9 showing up again, in a fresh pool, as a whole signature block
 invented over what should have been a rest. Two of the nine are therefore not new failures but two
@@ -78,7 +79,18 @@ So the re-emit is a better-cut pool that has **thrown the labelling work off its
 1,442 corrections are recoverable (445 accepted + 506 in review), the rest need the width/budget rails
 to move. It is not training data until `b8-audit` (201 rows) is read and the carry is done.
 
-**Tooling.** Three tabs added to `review_ui.py` — `b8-audit` / `b8-full` / `b8-review` — with
+**Tooling, 2026-08-22.** Each of the two blocks now carries its own **✓ accept** / **✎ edit from it**
+pair, drawn to the left of the text it acts on, alongside the unchanged bottom row. The reason is the
+same one behind the 2026-08-21 bug: `ok` has always meant "the *label* is right", which is invisible
+while you are reading the *decode*, and there was no one-click way to say "the decode is the right
+one". Accepting the decode stores a `fix` carrying that text **verbatim** — deliberately not through
+`baseText()`, whose `\tup3` guard sits on a checkbox inside the closed edit box, and an unseen
+checkbox must never decide what gets written. Driven in a real browser against a throwaway data root:
+both blocks' buttons render and sit left of their text, `edit from` drafts the right source, accepting
+the decode writes `fix` + the exact decode, accepting the label writes `ok` + no corrected text, and
+the decode-only / label-only rows show just their own pair.
+
+**Tooling, 2026-08-21.** Three tabs added to `review_ui.py` — `b8-audit` / `b8-full` / `b8-review` — with
 `QUEUE_IMG_ROOTS` pointed at `data/real/strips_v2`. One real defect fixed on the way: `build_full_audit`
 had the strip root **hardcoded** to `data/real/strips`, so a b8 full-audit tab would have seeded its
 edit box with a July `rung3-labeler` decode of a *different* crop, silently. `FULL_AUDITS` entries now

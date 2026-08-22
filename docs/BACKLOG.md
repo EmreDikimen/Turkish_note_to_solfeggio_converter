@@ -48,9 +48,9 @@ starting. Abandoned plans are a different thing again and live in
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against
    2,330; result and carry table in [METRICS-CORPUS.md](METRICS-CORPUS.md), queues in
    [rung3/labeling-queues.md](rung3/labeling-queues.md)). ⏭ **Two things still owed before it is
-   training data**: its **201-row `b8-audit`** must be finished (**58 read as of 2026-08-21, 15.5%
-   wrong so far** — [METRICS-CORPUS.md](METRICS-CORPUS.md)), and the **1,442 human `fix` labels** in
-   the old pools must be carried across **by measure span, never by filename**. The problem statement
+   training data**: its **201-row `b8-audit`** must be finished (the read is under way; running rate
+   in [METRICS-CORPUS.md](METRICS-CORPUS.md)), and the **1,442 human `fix` labels** in the old pools
+   must be carried across **by measure span, never by filename**. The problem statement
    below is kept because it is what the run was justified by — and because the *selector* half of it
    is untouched: the real val strips inside the blend are still the old pools' crops until the carry
    is done.

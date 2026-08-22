@@ -262,16 +262,17 @@ root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS
 
 | tab | rows | what a verdict means |
 |---|---|---|
-| **`b8-audit`** | **201** (⏳ **58 read**, 143 open) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
+| **`b8-audit`** | **201** (⏳ read in progress) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
 | `b8-full` | 3,955 | every accepted label, for browsing past the sample |
 | `b8-review` | 4,738 | the unsure ones; a `fix` here promotes a strip into training |
 
 - ⭐ **`b8-audit` is the guard and it must be read.** The referee saw these very labels in stage-2
   training at 9× oversampling, so its agreement is partly memory rather than judgement. The
   precedent is exam v2: 2 of 63 sampled, and a later full read found **51%** wrong.
-  ⏳ **58 of 201 read (2026-08-21 evening): 9 fix / 58 = 15.5% wrong.** ⚠ Interim, n=58 — but the
-  sample is shuffled and the judged prefix is no easier than the rest (mean `nd` 0.019 vs 0.018), so
-  it is a fair early read rather than a skimmed one ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)).
+  ⏳ **The read is under way and the pool is holding up so far** — running rate in
+  [../METRICS-CORPUS.md](../METRICS-CORPUS.md), current count on the tab badge. ⚠ Interim: it is a
+  live queue. The judged rows are not a skimmed subset — the sample is shuffled and they are no
+  easier than the rest (mean `nd` 0.019 vs 0.018).
 - ⚠ **Promoting is not a re-run of the old promotes.** `strips_nota` / `strips_r1` / `strips_tup` are
   untouched on disk, and **1,442 human `fix` labels do not carry themselves**. 951 are recoverable
   (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`).

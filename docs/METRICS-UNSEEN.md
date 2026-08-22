@@ -3,7 +3,7 @@
 purpose: the single home for defects whose cause is a HOLE — a printed symbol the renderer never drew and the label language cannot name — and what happened when one was filled
 audience: agents and the owner, before proposing a fix for a symbol the model reads as something else
 
-updated: 2026-08-20
+updated: 2026-08-22
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-20 when that file crossed
 the 400-line cap. The split is by **genre, and the genre turned out to matter**: everything here has
@@ -50,6 +50,13 @@ The cause is structural, not tuning, and it is the third instance of one pattern
 ⚠ **Not a random sample.** The owner works in page order and noticed this pattern, so the 23 judged
 rows are drawn toward it; 57% is an upper-ish estimate, not a rate. What it does establish is that
 the failure is **repeated and systematic**, not one strip.
+
+⭐ **A RANDOM sample now agrees (2026-08-22).** `b8-audit` is a *shuffled* 5% sample of the re-emit's
+accepted TRAINING labels, and all 201 rows were read: **10 carry a `\repstart` and 4 of those 10 were
+wrong**, with 2 further rows missing one that the page draws. Unbiased where the `batch3` count is
+not, and on the training side rather than a review queue — so roughly **2% of accepted strips carry a
+false repeat sign**. ⚠ n=10 for the ratio; treat 40% as an order of magnitude, not a rate. It is also
+the largest error class in that audit ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
 
 ⚠ **A second thing is visible in that row and is not this finding**: the seeded label spells
 `\bakiyeSharpf''8` and `\repstarte''8` with no space, while the correction spells them apart. Spacing

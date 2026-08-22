@@ -9,7 +9,7 @@ updated: 2026-08-19
 > [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
 >
 > Written 2026-08-11 after an owner report of two misread triplets on a real page. The collection
-> side of tuplets is in [labeling.md](labeling.md) §1c; this file is the *reading* side.
+> side of tuplets is in [labeling-collection.md](labeling-collection.md) §1c; this file is the *reading* side.
 
 ## The finding
 
@@ -30,7 +30,7 @@ The model does not invent triplets any more. It **misses about one in six**.
 (`--real-dir data/real/rung3/strips_tup:8`, [round1_colab.ipynb](../../notebooks/round1_colab.ipynb)).
 The exam extension also happened: tup3 gold went 4 → 55 groups at the v2.1 freeze.
 
-⚠ [labeling.md](labeling.md) §1c described "78 accepted + a 147-row review queue" until this date.
+⚠ [labeling-collection.md](labeling-collection.md) §1c described "78 accepted + a 147-row review queue" until this date.
 That was the state on 2026-07-18 and it was read as current three weeks later. Corrected there.
 
 **Not the 0/39 hallucination finding.** The tup3 image pass measured that every decode-proposed NEW

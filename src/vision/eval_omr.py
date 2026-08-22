@@ -14,6 +14,10 @@ Two Step-4.0 metrics report ALONGSIDE the recall headline (docs/rung3/ship-crite
   - **arc-triggered false-\\tup3 rate** — of strips whose gold has \\tie but no \\tup3, the
     fraction whose decode emits a \\tup3 (a slur/tie arc misread as a triplet, the damaging
     directional error), reported beside the same rate on neither-token strips.
+    ⚠ Since \\tie retired (2026-08-22) only pools labelled BEFORE it can feed this bucket; on
+    tie-free gold it prints "n/a" rather than a 0/0 that would read as "no arc errors".
+⛔ \\tie is filtered out of BOTH the gold and the decode before scoring, so a checkpoint that
+still writes it and one that never will are measured on the same footing.
 
 WHY alignment, not counting: a strip where the model drops one note shifts everything after
 it; naive position-wise comparison would count the whole tail wrong. Levenshtein alignment
@@ -158,6 +162,8 @@ def main() -> int:
                     got_ids = got_ids[1:]
                 hyp = strip_special(got_ids, tok)
                 ref = strip_special(tok(label, add_special_tokens=True).input_ids, tok)
+                # The arc bucket reads the RAW gold, before the \tie filter below — on a legacy
+                # pool (strips_exam_v2_clean) that is still how an arc-bearing strip is spotted.
                 if tup3_id not in ref:  # only strips the gold says have NO triplet
                     if tie_id in ref:
                         arc_denom += 1
@@ -165,6 +171,16 @@ def main() -> int:
                     else:
                         noarc_denom += 1
                         noarc_num += tup3_id in hyp
+                # ⛔ \tie IS RETIRED (owner, 2026-08-22) — a tied pair is two plain notes and the
+                # arc is label-free ink. Drop it from BOTH sides so it is neither right nor wrong:
+                #   - gold pools written before the retirement (exam v2) must not charge a
+                #     DELETION to a model that correctly no longer writes it;
+                #   - `round2-stage2-best`, which does write it, must not be charged an INSERTION
+                #     against tie-free gold — and it is the baseline column the Round-3 floor is
+                #     read against, so an unfair baseline would flatter the new model.
+                # Both sides filtered = old and new checkpoints stay comparable either way.
+                hyp = [i for i in hyp if i != tie_id]
+                ref = [i for i in ref if i != tie_id]
                 st = src_stats(ds.strips[at + k].source)
                 st["n"] += 1
                 N += len(ref)
@@ -312,10 +328,21 @@ def main() -> int:
             print(f"{t:<14}{sg:>9}{f(sg, sh):>9}{ig:>12}{f(ig, ih):>11}")
 
     # Arc-triggered false-\tup3 (Step 4.0 floor: arc rate <= 10%; reported beside the neither rate).
-    arc_rate = arc_num / arc_denom if arc_denom else float("nan")
+    # ⚠ It selects arc-bearing strips by \tie IN THE GOLD, so it only works on pools labelled
+    # BEFORE the 2026-08-22 retirement. On tie-free gold the denominator is 0 and the metric says
+    # so instead of printing a number — a silent 0/0 would have read as "no arc errors".
+    # ⏭ To revive it: the arc is still DRAWN, and a strip's manifest row carries `piece`, `from`
+    # and `to`, so the arc-bearing strips can be recovered offline from the score itself
+    # (`needsTieSplit` over that measure range) with no re-render. Nothing about that is blocked
+    # by this change — it is a script, whenever the metric is wanted.
+    if arc_denom == 0:
+        print("== ARC-\\tup3  n/a on this pool: gold carries no \\tie (retired 2026-08-22) — see the "
+              "note in eval_omr.py for how to rebuild the arc bucket from the manifest")
+    else:
+        arc_rate = arc_num / arc_denom
+        print(f"== ARC-\\tup3  gold-has-\\tie-no-\\tup3: {arc_num}/{arc_denom} = {arc_rate:.1%} decode a false \\tup3")
     noarc_rate = noarc_num / noarc_denom if noarc_denom else float("nan")
-    print(f"== ARC-\\tup3  gold-has-\\tie-no-\\tup3: {arc_num}/{arc_denom} = {arc_rate:.1%} decode a false \\tup3"
-          f"   |   neither-token: {noarc_num}/{noarc_denom} = {noarc_rate:.1%}")
+    print(f"== no-arc baseline  neither-token: {noarc_num}/{noarc_denom} = {noarc_rate:.1%}")
 
     # Per-source block (Rung 3): once real strips are in the mix, each engraving source gets
     # its own headline — the style-overfit check, and the honest real-page number.

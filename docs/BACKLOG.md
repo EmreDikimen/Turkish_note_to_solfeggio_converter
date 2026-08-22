@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-21
+updated: 2026-08-22
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -47,9 +47,9 @@ starting. Abandoned plans are a different thing again and live in
 
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against
    2,330; result and carry table in [METRICS-CORPUS.md](METRICS-CORPUS.md), queues in
-   [rung3/labeling-queues.md](rung3/labeling-queues.md)). ⏭ **Two things still owed before it is
-   training data**: its **201-row `b8-audit`** must be finished (the read is under way; running rate
-   in [METRICS-CORPUS.md](METRICS-CORPUS.md)), and the **1,442 human `fix` labels** in the old pools
+   [rung3/labeling-queues.md](rung3/labeling-queues.md)). ✅ **The `b8-audit` guard is READ —
+   all 201 rows, 13.4% wrong** ([METRICS-CORPUS.md](METRICS-CORPUS.md)). ⏭ **One thing is still owed
+   before it is training data**: the **1,442 human `fix` labels** in the old pools
    must be carried across **by measure span, never by filename**. The problem statement
    below is kept because it is what the run was justified by — and because the *selector* half of it
    is untouched: the real val strips inside the blend are still the old pools' crops until the carry
@@ -164,7 +164,7 @@ starting. Abandoned plans are a different thing again and live in
      ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)). The pre-rebuild figure was 78 of 282.
    - **the tuplet repertoire**: 39.4% of triplet-bearing *single* measures blow it, 80.5% of 2-measure
      and 92.9% of 3-measure windows — which is *why* sirto/longa/saz semaisi are unmeasured
-     ([rung3/labeling.md](rung3/labeling.md) §1c, [rung3/round3-criteria.md](rung3/round3-criteria.md) §5)
+     ([rung3/labeling-collection.md](rung3/labeling-collection.md) §1c, [rung3/round3-criteria.md](rung3/round3-criteria.md) §5)
    - **training data**: 2,108 over-budget drops plus the `split_wide` pile
    ⏭ **The step to take is a measurement, not a change**: run the real tokenizer over the existing
    drop lists and report how many fit at **90** and at **120** ids. One script, no GPU, no render.
@@ -200,6 +200,10 @@ starting. Abandoned plans are a different thing again and live in
    overriding — the same treatment a split vote already gets.
    ⚠ **Re-emitting with `round2-stage2-best` does NOT fix this** (item 4): that model trained on these
    labels, so it inherits the koma bias. A better voter is still the wrong kind of authority.
+   ⭐ **That prediction is now OBSERVED, not argued** (2026-08-22): the 201-row `b8-audit` — labels the
+   *re-emit* wrote with `round2-stage2-best` voting — contains **2 more `\komaSharp`→`\kucukSharp`
+   corrections inside `\sig`**, both in the same direction as the exam's ten. ⚠ n=2, so it confirms
+   the mechanism survived the re-emit; it does not size it.
    ⚠ **Not yet an error rate.** n=7 corrections in 1 makam; many overrides are probably right, and the
    table is a guide — mahur genuinely prints both ways (küçük 35, koma 17).
 

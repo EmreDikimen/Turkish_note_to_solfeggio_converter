@@ -24,7 +24,8 @@ so correcting is "glance and confirm", not "repair everything".
 
 | File | Covers | Old section names |
 |---|---|---|
-| [labeling.md](labeling.md) | Collection and free labels: neyzen match, the Round-0.5 labeler, the notaarsivleri run, targeted tuplet collection | §1a, §1a.5, §1b, §1c |
+| [labeling.md](labeling.md) | The label **conventions** — what is a token and what is label-free ink (the retired `\tie`, the arc) | live rules |
+| [labeling-collection.md](labeling-collection.md) | Collection and free labels: neyzen match, the Round-0.5 labeler, the notaarsivleri run, targeted tuplet collection | §1a, §1a.5, §1b, §1c |
 | [exam.md](exam.md) | Freezing the exam, the emitter's calibration, exam v1 → v2 → v2.1 | Steps 2+3, Step 2, Step 3 |
 | [ship-criteria.md](ship-criteria.md) | The pre-registered Round-1 floors and decision rule (Round 2 was judged against these too) | Step 4.0 |
 | [round3-criteria.md](round3-criteria.md) | Round 3's floors + the public-launch gate (**signed 2026-08-15**), and the tuplet A/B protocol with its result | new 2026-08-13 |

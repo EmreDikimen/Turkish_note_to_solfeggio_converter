@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-21
+updated: 2026-08-22
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -262,17 +262,16 @@ root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS
 
 | tab | rows | what a verdict means |
 |---|---|---|
-| **`b8-audit`** | **201** (⏳ read in progress) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
+| **`b8-audit`** | **201** (✅ all read) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
 | `b8-full` | 3,955 | every accepted label, for browsing past the sample |
 | `b8-review` | 4,738 | the unsure ones; a `fix` here promotes a strip into training |
 
-- ⭐ **`b8-audit` is the guard and it must be read.** The referee saw these very labels in stage-2
-  training at 9× oversampling, so its agreement is partly memory rather than judgement. The
-  precedent is exam v2: 2 of 63 sampled, and a later full read found **51%** wrong.
-  ⏳ **The read is under way and the pool is holding up so far** — running rate in
-  [../METRICS-CORPUS.md](../METRICS-CORPUS.md), current count on the tab badge. ⚠ Interim: it is a
-  live queue. The judged rows are not a skimmed subset — the sample is shuffled and they are no
-  easier than the rest (mean `nd` 0.019 vs 0.018).
+- ✅ **THE GUARD IS READ — all 201 rows, by hand, 2026-08-22: 27 `fix` / 174 `ok` = 13.4% wrong.**
+  It was worth reading: the referee saw these very labels in stage-2 training at 9× oversampling, so
+  its agreement is partly memory rather than judgement, and the precedent is exam v2 — 2 of 63
+  sampled, a later full read found **51%** wrong. That did not repeat here. Rate, error mix and the
+  caveats: [../METRICS-CORPUS.md](../METRICS-CORPUS.md). ⚠ **13% wrong is the pool as it stands**, not
+  a clean bill: the biggest class is repeat structure (`\repstart` / `\volta`), not pitch.
 - ⚠ **Promoting is not a re-run of the old promotes.** `strips_nota` / `strips_r1` / `strips_tup` are
   untouched on disk, and **1,442 human `fix` labels do not carry themselves**. 951 are recoverable
   (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`).
@@ -329,9 +328,10 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
    more often than the carried gold, and 3 more signature bugs fell out of the 13 fixes
    ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
 3. **The remaining 636, PAGE-COMPLETE** — 158 carry a suggestion, 329 have no label at all, and
-   **64 pages are still open**. ✅ The training re-emit (B8) that used to sit in front of this **ran on
-   2026-08-21**, so the only thing now ahead of it is reading `b8-audit`
-   ([below](#the-b8-queues-2026-08-21--the-re-emit-put-in-front-of-a-human)). The primary counts corrections *per page*, so a half-labelled page
+   **64 pages are still open**. ✅ Both things that used to sit in front of this are done — the
+   training re-emit (B8) ran on **2026-08-21** and its `b8-audit` was read whole on **2026-08-22**
+   ([below](#the-b8-queues-2026-08-21--the-re-emit-put-in-front-of-a-human)); what governs the order
+   now is [../STATUS.md](../STATUS.md). The primary counts corrections *per page*, so a half-labelled page
    under-counts its own errors — grading it would be worse than skipping it. Stopping early should
    cost whole pages, never half ones.
 

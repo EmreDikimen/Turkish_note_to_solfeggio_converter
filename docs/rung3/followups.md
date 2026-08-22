@@ -48,7 +48,7 @@ in the review UI's editor (safest — human confirms); (b) a post-decode repair 
 dropped opener); (c) longer-term, grammar-constrained decoding in the product (the decoder
 never emits ill-formed bracket structures at all); (d) **adaptive window re-split on cap-hit**
 (added 2026-07-20, Round-2 tooling): when a window's decode hits the 60-id cap without EOS,
-split the window at a gutter/barline and re-decode each half — converts the [labeling.md](labeling.md) §1c budget analysis
+split the window at a gutter/barline and re-decode each half — converts the [labeling-collection.md](labeling-collection.md) §1c budget analysis
 into product-side robustness for dense-triplet pages regardless of how training goes. Never
 silently rewrite labels with these — they propose, a human (or the nd gate) disposes.
 
@@ -217,7 +217,7 @@ data/real/
   and real data can't fix it (depletion above) — the synthetic re-render must OVERSAMPLE
   tuplets aggressively (well above corpus rate, incl. contiguous-triplet runs — the
   two-`\tupend`s-in-a-row shape from the decode-repair note), alongside the
-  rare-accidental and slur-distractor boosts. **→ REAL-DATA SIDE ADDRESSED same day, [labeling.md](labeling.md) §1c:**
+  rare-accidental and slur-distractor boosts. **→ REAL-DATA SIDE ADDRESSED same day, [labeling-collection.md](labeling-collection.md) §1c:**
   293 tuplet pieces collected from both sources; the budget analysis there shows the 2-measure
   re-slice can't recover triplets (80% still over budget) — 1-measure windows + the
   sub-measure fragment follow-up are the cure. Derived signatures used to come out

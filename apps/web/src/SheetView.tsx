@@ -263,9 +263,13 @@ function buildStaveNotes(
         // Staff position comes from letter+octave only (Turkish accidentals don't shift the
         // line); octave numbering already matches VexFlow's scientific pitch (Do5 = c/5 = C5).
         n = new StaveNote({ keys: [`${parsed.letter.toLowerCase()}/${parsed.octave}`], duration });
-        // Only the FIRST written note of a tied pair draws the accidental — engraving never
-        // restrikes it on the tied-to note.
-        if (pi === 0) applyAccidental(n, parsed, true);
+        // ⚠ EVERY written part asks the same question, including a tie-split tail. In "measure"
+        // (carry) mode that is a no-op — the head already put the alteration in `active`, so the
+        // tail is `covered` and stays bare, which is what engraving does. In "keysig"/"every" mode
+        // nothing carries, so the tail draws its own sign — and it must, because `\tie` retired
+        // (2026-08-22) and the arc no longer tells a reader the two notes share a pitch. The label
+        // side takes the identical decision by spelling the tail through `noteToLily`.
+        applyAccidental(n, parsed, true);
       }
       for (let d = 0; d < dots; d++) Dot.buildAndAttach([n], { all: true });
       if (pi === 0 && pendingGraces.length > 0) {

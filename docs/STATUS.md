@@ -9,12 +9,12 @@ updated: 2026-08-22
 ⭐ **`\tie` IS RETIRED — AN ARC IS NOW LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Two tied
 notes are labelled as two plain notes; pitches, total duration and bar arithmetic are unchanged. It
 measured out as a data-quality fix: **65–78% of every `\tie` in the review queues joined two DIFFERENT
-pitches**, which a tie cannot do — the SymbTr derivation is exact (407 of 407) and every wrong one came
-from a model decode. Removed 27,434 tokens over 11,801 queue rows, 652 from five real manifests. ⛔ **Half-applied and this is the deadline item**: the synthetic
-corpus still labels **1,246** ties, so the final render must carry the change or the model is taught the
-exact contradiction — after the render it costs a re-render of 40,826 strips. ⏭ `_realval_v2` still
-expects ties in **64 of 267 rows (24%)**, where they punish the model during *selection*.
-[rung3/labeling.md](rung3/labeling.md) · [DECISIONS.md](DECISIONS.md).
+pitches**, which a tie cannot do. ✅ **BOTH SIDES ARE NOW DONE.** The render side was not a pure
+deletion — a bare tie-tail reads as *unaltered* where nothing carries an accidental, so it now
+restrikes on drawing and label together. The real-val gold followed: **771 tokens over 576 rows in 12
+manifests**, **78% of pairs joining different pitches**; no verdict moved, no restrike needed.
+⚠ Real-val's arc-`\tup3` diagnostic now prints `n/a` — its ≤10% floor is read on the **exam**, which
+keeps its ties. [rung3/labeling.md](rung3/labeling.md) · [DECISIONS.md](DECISIONS.md).
 
 ⭐ **THE ARMS ARE DONE AND THE FINAL RENDER IS SPECIFIED (2026-08-20).** Round 3's arm list closed —
 one dropped, one null, one **passed** — and the three decisions the final render was waiting on were
@@ -23,11 +23,11 @@ new **label-free dotted (usul) barline**. What is left is **render → train →
 [DECISIONS.md](DECISIONS.md).
 
 ⭐ **THE TRAINING POOLS WERE RE-EMITTED ONTO THE CURRENT CROPS (2026-08-21) — `strips_b8`, 3,955
-accepted strips against 2,330, in 37 minutes on the laptop.** Training was the last thing still cut by
-the retired slicer. ⏭ **It is not training data yet**: the **201-row audit is part-read and running**
-(rate in [METRICS-CORPUS.md](METRICS-CORPUS.md)) and the **1,442 human corrections do not carry
-themselves** (951 recoverable, by measure span and never by filename).
-⭐ The drop table now points at the **59-id budget**, not at alignment.
+accepted strips against 2,330, in 37 minutes on the laptop.** ✅ **Its 201-row audit is now read
+whole: 13.4% of the auto-accepted labels are wrong** — the same level as the re-sliced exam, and the
+biggest error class is **repeat structure** (`\repstart` / `\volta`), not pitch. ⏭ **Still not
+training data**: the **1,442 human corrections do not carry themselves** (951 recoverable, by measure
+span and never by filename). ⭐ The drop table points at the **59-id budget**, not at alignment.
 [METRICS-CORPUS.md](METRICS-CORPUS.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
 ⭐ **THE STACCATO ARM PASSED, AND ITS FLAG NOW RIDES THE FINAL RENDER.** False-dot rate **72.7% →
@@ -224,15 +224,15 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 |---|---|---|---|
 | 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
 | 2 | ✅ **DONE 2026-08-21** — all 27 `gold_conflict` rows | **14 ok / 13 fix**; the fresh derivation mostly won, and **3 more signature bugs** fell out | B0 |
-| 3 | ✅ **RAN 2026-08-21** — the re-emit, 37 min, `strips_b8`: **3,955 accepted** against 2,330 | ⏳ **its `b8-audit` read is UNDER WAY and holding up so far** ([METRICS-CORPUS.md](METRICS-CORPUS.md)); nothing may be promoted until all 201 are done | B8 |
-| 4 | ⏭ **NEXT** — **the tie change on the RENDER side** | the only item with a deadline: after the final render it costs a re-render of 40,826 strips, and until it lands synthetic and real labels contradict each other | — |
-| 5 | ties out of **`_realval_v2`** | ten minutes, and it is currently wrong: 24% of the selection gold expects a token the model will never write | — |
-| 6 | close the **slicer parity gap**, then measure `?dense=` properly | without parity every dense number measures something the training pipeline does not do; the measure-fill proxy needs no labelling | — |
+| 3 | ✅ **DONE 2026-08-22** — the re-emit ran (37 min, `strips_b8`, **3,955 accepted** against 2,330) and its **201-row audit is read whole** | **13.4% of the auto-accepts are wrong**, repeat structure ahead of pitch ([METRICS-CORPUS.md](METRICS-CORPUS.md)); what still blocks promotion is the **human-fix carry**, not the audit | B8 |
+| 4 | ✅ **DONE 2026-08-22** — the tie change on the RENDER side, plus the accidental restrike it forced and the scorer filter | the deadline item, closed **before** the render rather than after; `npm test`, 218/218 round-trip both modes, and a paired pilot render | — |
+| 5 | ✅ **DONE 2026-08-22** — ties out of `_realval_v2`, its five derived pools, the five `_realval_degraded` levels and v1 `_realval` | **771 tokens over 576 rows in 12 manifests**; **78% of the pairs joined DIFFERENT pitches**, i.e. were slurs. No criterion moved — but real-val's arc-`\tup3` diagnostic now reads `n/a` ([rung3/labeling.md](rung3/labeling.md)) | — |
+| 6 | ⏭ **NEXT** — close the **slicer parity gap**, then measure `?dense=` properly | without parity every dense number measures something the training pipeline does not do; the measure-fill proxy needs no labelling | — |
 | 7 | owner decides `dense`; the exam is then cut **once** on the winning rule | if the shipping slicer changes, an exam cut on the old rule grades crops the product never produces | B0 |
 | 8 | the remaining **601** `examv3` rows, **page-complete** | ⏸ **PAUSED at 62/663 on purpose** — see step 7; the primary is per page, so a half-labelled page under-counts itself | B0 |
 | 9 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
 
-⛔ **Steps 4–6 need nothing from the owner** — no decisions, no labelling. Step 7 is the only decision.
+⛔ **Steps 5–6 need nothing from the owner** — no decisions, no labelling. Step 7 is the only decision.
 ⛔ **Measuring the 59-id budget was step 4 and is DROPPED** — it decides which strips we keep, not what
 the model can read ([DECISIONS.md](DECISIONS.md)); its benefit half is measured and kept in
 [BACKLOG.md](BACKLOG.md) item 7.
@@ -346,11 +346,11 @@ data until the audit is **finished** and the old human corrections are carried a
    1,704 page decodes were reused from the July re-slice, only 16 were fresh. **3,955 accepted strips
    against the old pools' 2,330 (+70%)**, 4,738 in review. The train/test mismatch it existed to close
    is closed — training was the last thing on retired crops.
-   ⏭ **It is NOT training data yet, and two things stand between:**
-   ⏳ **(a) finish `b8-audit`, 201 rows — the read is under way and the pool is holding up.** The
-   guard, and the referee was trained on these very labels, so its agreement is partly memory; v2
-   sampled 2 of 63 and a later read found 51% wrong. ⚠ The running rate is an **interim number on a
-   live queue**, not a verdict on the pool — [METRICS-CORPUS.md](METRICS-CORPUS.md).
+   ⏭ **It is NOT training data yet — but only ONE thing now stands between:**
+   ✅ **(a) `b8-audit` is READ — all 201 rows, 27 fix / 174 ok = 13.4% wrong.** Worth reading: the
+   referee trained on these very labels, and v2 sampled 2 of 63 before a later read found 51% wrong.
+   ⚠ Not a clean bill — repeat structure is the biggest class (10 of 26) and 2 signature errors are
+   [BACKLOG.md](BACKLOG.md) item 9 inside a training pool. [METRICS-CORPUS.md](METRICS-CORPUS.md).
    ⭐ **(b) carry the 1,442 human `fix` labels across** — they do **not** come back by themselves. 951
    are recoverable (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`);
    ⛔ carry them by **measure span**, never by filename — 248 match a new strip's *name* while holding

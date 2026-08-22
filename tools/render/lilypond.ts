@@ -37,7 +37,8 @@
  * `\sig`/`\sigend`, the 4 repeat-sign tokens (`\repstart`/`\repend`/`\volta1`/`\volta2`), the
  * 4 navigation-mark tokens (`\segno`/`\coda`/`\dc`/`\fine` — see navmarks.ts), `|`,
  * the digit `3` (the base vocab lacks `3`, so it can't write "32" for 32nd notes — see MODEL_EVAL.md),
- * and the 4 rhythm-sign tokens (`\tup3`/`\tupend`/`\tie`/`\grace` — see rhythm.ts, strips_v2_2).
+ * and the rhythm-sign tokens (`\tup3`/`\tupend`/`\grace` — see rhythm.ts, strips_v2_2; the
+ * fourth, `\tie`, is retired and only ever READ now).
  */
 
 import {
@@ -83,9 +84,12 @@ export const FINE_TOKEN = "\\fine";
 /** Rhythm signs recovered from the exact durations (see rhythm.ts, strips_v2_2). Faithful drawn
  *  symbols like everything else: `\tup3 … \tupend` wraps a bracketed triplet group (the digit is
  *  in the name so a future `\tup5` can join, like `\volta1`/`\volta2`; the written durations
- *  inside stay as drawn — three plain 8ths under a "3"); `\tie` sits between the two written
- *  notes of a tied pair (LilyPond's `~` is unspellable in the base vocab); `\grace` prefixes a
- *  small slashed grace note's own spelling (`\grace \bakiyeSharp f''8`). */
+ *  inside stay as drawn — three plain 8ths under a "3"); `\grace` prefixes a small slashed
+ *  grace note's own spelling (`\grace \bakiyeSharp f''8`).
+ *  ⛔ `\tie` is RETIRED (owner, 2026-08-22) — NOTHING emits it any more; a tied pair is two
+ *  plain notes and the arc is label-free ink, like a slur. The constant stays exported because
+ *  the DECODERS (stitch.ts, decode.ts, ly-engrave.ts) must still read labels written before the
+ *  retirement, and its id stays in ADDED_TOKENS because ids are append-only. */
 export const TUP3_TOKEN = "\\tup3";
 export const TUP_END_TOKEN = "\\tupend";
 export const TIE_TOKEN = "\\tie";
@@ -294,18 +298,6 @@ export interface LabelAtom {
   tokens: number;
 }
 
-/** Spell the continuation note of a tie: bare letter+octave+duration — engraving never
- *  restrikes the accidental on the tied-to note, in ANY accidental mode. */
-function tieTailToLily(ev: NoteEvent, writtenBeats: number): LabelAtom {
-  const dur = lilyDuration(writtenBeats);
-  const parsed = parseNoteName(ev.noteName);
-  if (!parsed) return { text: `r${dur}`, tokens: 1 + dur.length };
-  const oct = lilyOctave(parsed.octave);
-  return {
-    text: `${parsed.letter.toLowerCase()}${oct}${dur}`,
-    tokens: 1 + oct.length + dur.length,
-  };
-}
 
 /** The written duration a grace note spells/draws: a small slashed 8th by convention —
  *  SymbTr gives çarpma rows no duration of their own (Pay/Payda 0). */
@@ -388,11 +380,19 @@ export function measureAtoms(
     }
     const split = tieSplitBeats(ev);
     if (split) {
-      const parts: LabelAtom[] = [noteToLily(ev, signature, split[0]!, state, true, sigTolerant)];
-      for (const beats of split.slice(1)) {
-        if (ev.kind === "note") parts.push({ text: TIE_TOKEN, tokens: 1 });
-        parts.push(tieTailToLily(ev, beats));
-      }
+      // ⚠ The arc is still DRAWN (SheetView draws it from `tieSplitBeats` too) — it is simply
+      // LABEL-FREE INK now, like a slur: `\tie` is retired (owner, 2026-08-22), so a tied pair
+      // writes as two plain notes. Same pitches, same total duration, one token fewer.
+      // ⚠ The pair must stay ONE atom: the tail is spelled bare and takes its alteration from
+      // the measure-scoped carry, so a strip boundary between the two would change its pitch.
+      // ⚠ The tail spells like ANY other note, through the same `noteToLily`: in "measure"
+      // (carry) mode the head's alteration is already in `state`, so it comes out BARE exactly as
+      // engraving wants; in "keysig"/"every" mode — where nothing carries — it restrikes, which is
+      // the ONLY way the pitch survives without the `\tie` token. Both sides of that decision are
+      // mirrored in SheetView's `applyAccidental` call, so pixels == labels in all three modes.
+      const parts: LabelAtom[] = split.map((beats) =>
+        noteToLily(ev, signature, beats, state, true, sigTolerant),
+      );
       push(mergeAtoms(parts));
       continue;
     }

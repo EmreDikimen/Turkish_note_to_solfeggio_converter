@@ -39,7 +39,10 @@ NAV = ["\\segno", "\\coda", "\\dc", "\\fine"]
 # strips_v2_2 rhythm signs (tools/render/rhythm.ts) — REAL data recovered from the durations
 # (34 train / 3 val pieces have triplets, 24/3 ties, 86/12 graces of the 150), never injected,
 # so the floors below are regression guards on the renderer, not injection-density tuning.
-RHYTHM = ["\\tup3", "\\tie", "\\grace"]  # \tupend counts == \tup3, no separate floor
+RHYTHM = ["\\tup3", "\\grace"]  # \tupend counts == \tup3, no separate floor
+# ⛔ \\tie was here until 2026-08-22 and was REMOVED, not lowered: the token is retired, a tied
+# pair labels as two plain notes, and the arc is label-free ink. A floor on it would fail every
+# render from now on. Its id stays in ADDED_TOKENS (append-only) — nothing emits it.
 MAX_IDS = 59  # incl. EOS; decoder max_length is 60 (one slot for the decoder-start id)
 
 # DoD thresholds (docs/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
@@ -71,8 +74,9 @@ MIN_REPEAT_SHARE = 0.05
 MIN_NAV_SHARE = 0.02
 MIN_TRAIN_PER_NAV = 100
 MIN_VAL_PER_NAV = 10
-# Rhythm-sign floors, set just under the measured v2_2 render (train \tup3 561 / \tie 544 /
-# \grace 2148; val 9 / 195 / 254) — corpus-driven, not an injection rate. Val \tup3 is
+# Rhythm-sign floors, set just under the measured v2_2 render (train \tup3 561 / \grace 2148;
+# val 9 / 254 — the \tie column, 544 train / 195 val, went with the token) — corpus-driven, not
+# an injection rate. Val \tup3 is
 # STRUCTURALLY thin: only 3 val pieces have triplets and two are dense ağırsemai/aksak pieces
 # whose triplet bars exceed the token budget (they were dropped in v2_1 too) — treat the eval
 # recall on \tup3 as a smoke signal, like \volta2.
@@ -120,12 +124,15 @@ def main() -> int:
     nav = sum(1 for r in rows if any(t in r["label"].split() for t in NAV)) / n
     lyr = sum(1 for r in rows if r.get("lyrics")) / n
     tup = sum(1 for r in rows if "\\tup3" in r["label"].split()) / n
-    tie = sum(1 for r in rows if "\\tie" in r["label"].split()) / n
     grc = sum(1 for r in rows if "\\grace" in r["label"].split()) / n
+    # Reported, never gated: a tie ARC is still drawn on these strips, it just carries no token,
+    # so a non-zero count here means the corpus predates the 2026-08-22 retirement.
+    tie = sum(1 for r in rows if "\\tie" in r["label"].split()) / n
     modes = Counter(r["mode"] for r in rows)
     transposes = Counter(r.get("transpose", 0) for r in rows)
     print(f"repeat-token strips: {rep:.1%}   nav-token strips: {nav:.1%}   lyric strips: {lyr:.1%}   modes: {dict(modes)}")
-    print(f"rhythm-sign strips — triplet: {tup:.1%}   tie: {tie:.1%}   grace: {grc:.1%}")
+    print(f"rhythm-sign strips — triplet: {tup:.1%}   grace: {grc:.1%}"
+          + (f"   ⚠ RETIRED \\tie still present: {tie:.1%}" if tie else ""))
     print(f"transposes: {dict(sorted(transposes.items()))}")
     if rep < MIN_REPEAT_SHARE:
         failures.append(f"repeat share {rep:.1%} < {MIN_REPEAT_SHARE:.0%}")

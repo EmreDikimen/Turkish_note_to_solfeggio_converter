@@ -68,7 +68,7 @@ and drag it; excluding them from the *mean* would be gaming, so the floor absorb
 A missed `\tie` is cheap: the note survives at the right pitch, the duration merge is visible in
 the editor, and the **tie ground truth itself is unstable** (~38% tie/repeat structural label
 noise in nota auto-accepts; hand adjudication applies `\tie` across different-pitch arcs
-inconsistently — see the tup3 image-pass note in [labeling.md](labeling.md) §1b: "printed-arc-vs-`\tie` is user judgment; no
+inconsistently — see the tup3 image-pass note in [labeling-collection.md](labeling-collection.md) §1b: "printed-arc-vs-`\tie` is user judgment; no
 textual rule works"). Gating a ship decision on that would measure the labels, not the model. So
 `\tie` (baseline 66.2% recall / 61.1% precision) is **reported, never floored**.
 
@@ -114,7 +114,7 @@ the measurement is debugged before the one-shot read it gates.)
   with the LOW-N marker. Never silently dropped to flatter the mean.
 - **`\tup3` gold is common-case k=1 material.** Dense contiguous-triplet instrumentals
   (sazsemaisi/longa, 90+ groups) sit in the over_budget/split_wide drops and are **unmeasured**
-  until the sub-measure fragment follow-up ([labeling.md](labeling.md) §1c). Round-1 tup3 numbers speak for the common case
+  until the sub-measure fragment follow-up ([labeling-collection.md](labeling-collection.md) §1c). Round-1 tup3 numbers speak for the common case
   only — say so in `MODEL_EVAL.md` when reporting.
 - **The exam is an upper bound.** Matched, emit-alignable pages only (`caveat:
   matched-upper-bound` in the eval row): handwritten, faded, and slicer-defeating pages never

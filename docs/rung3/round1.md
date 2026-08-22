@@ -118,7 +118,7 @@ source consistency (0.6 vs 2.8 pp) and tup3 precision. The call stands, the marg
 B 93.2% (44 real-val gold) vs baseline 92.7%; the distractors bought precision partly with recall.
 As tup3 F1, B is actually slightly ahead (92.1% vs ~90.3%); both clear the precision floor, which
 is the pathology that mattered. Measurable at the exam too (v2.1 carries 55 tup3 gold / 38 strips
-after the tuplet exam extension, [labeling.md](labeling.md) §1c) — watch whether the winner's recall dip persists there.
+after the tuplet exam extension, [labeling-collection.md](labeling-collection.md) §1c) — watch whether the winner's recall dip persists there.
 
 **Still owed:** the exam, ONCE, on Arm A at `s`=0.15, then the ship chain — **the every-share
 sweep was CANCELLED later the same day, before any sweep run** (decision block below).

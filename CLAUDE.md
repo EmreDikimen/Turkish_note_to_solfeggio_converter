@@ -176,7 +176,7 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/syn
     # ⚠ Off by default and NO TRAINED ARM MAY CARRY IT — it changes a share of every piece, so a
     # corpus with it on is not comparable to one without. It belongs to the FINAL model's render.
     # `make_round3_colab_zip.sh` refuses any arm whose render_config.json has it on.
-npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 217/217 round-trip
+npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 218/218 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise] [--concave-tuplet]
 npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --out data/synthetic/<set>
     # the SECOND ENGRAVER (Round 3 Lever 4): real LilyPond renders the SAME labels — needs
@@ -217,9 +217,11 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   three producers using it three ways — **65–78% of every `\tie` in the review queues joined two
   DIFFERENT pitches**, which is a slur, not a tie. ⚠ **`\tie` stays in `ADDED_TOKENS` at its current
   position** — ids are append-only, so removing it would break every checkpoint; it is simply a token
-  nothing emits. ⚠ **Applied to the real queues and the five real manifests only.** The synthetic
-  corpus still labels 1,246 ties and `_realval_v2` still expects them in 24% of rows; the render-side
-  change must land **before** the final render. `strips_exam_v2*` keeps its ties on purpose — it is
+  nothing emits. ⚠ **The RENDER side landed 2026-08-22** — `measureAtoms` no longer
+  writes the token, and the tie tail now **restrikes its accidental in `every`/`keysig` mode** on both
+  the label and the drawing (a bare tail reads as *unaltered* with no carry and no token; carry mode is
+  unchanged). `_realval_v2` still expects ties in 24% of rows, which no longer decides anything:
+  `eval_omr.py` drops `\tie` from **both** the gold and the decode. `strips_exam_v2*` keeps its ties on purpose — it is
   the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **THE APP HAS NO LABEL-BUDGET RAIL, AND ON DENSE PAGES THAT MEANS SILENTLY WRONG NOTES.** The
   browser slicer packs by measures and width only; at inference an over-budget strip cannot be

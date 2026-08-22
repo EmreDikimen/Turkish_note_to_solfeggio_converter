@@ -64,7 +64,8 @@ wrong — fix by deleting, not by syncing.
 | **Reworking note editing into a direct, MuseScore/Mus2-style editor** | [mvp/editor.md](mvp/editor.md) |
 | What each editor step BUILT, and the traps it found | [mvp/editor-built.md](mvp/editor-built.md) |
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
-| How real pages get labelled without hand work | [rung3/labeling.md](rung3/labeling.md) |
+| The rules a real-page label obeys (what is a token, what is ink) | [rung3/labeling.md](rung3/labeling.md) |
+| How real pages were collected and matched to SymbTr (§1a–§1c) | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
 | The two review queues that were run (realval-hard, reslice-all) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
 | The real-page track's settled findings (moved out of STATUS) | [rung3/standing.md](rung3/standing.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |

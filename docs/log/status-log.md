@@ -7,7 +7,177 @@ updated: 2026-08-22
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-22 (latest) — the arc token is retired, and the slicer is a PRODUCT bug
+## 2026-08-22 (latest) — `b8-audit` is read whole: the re-emitted pool is 13.4% wrong, and repeat structure is the biggest class
+
+Track B step 3's guard, finished. All **201 rows** of the re-emit's seeded 5% sample of ACCEPTED
+labels were read by hand (`by` is empty on every row — no machine verdicts): **27 `fix` / 174 `ok` =
+13.4% wrong**. The interim snapshot at 88 rows read 12%, so the rate did not move as the queue
+finished. This was the one number standing between `strips_b8` and promotion; the other precondition,
+carrying the 1,442 human `fix` labels across by measure span, is untouched and is now the only
+blocker.
+
+**Why it had to be read rather than sampled.** The referee that accepted these labels is
+`round2-stage2-best`, which saw them in stage-2 training at 9× oversampling — its agreement is partly
+memory. The precedent is exam v2: 2 of 63 sampled looked fine, and a later full read found **51%**
+wrong. That did not repeat. 13.4% also sits level with the freshly re-sliced exam's auto-accepts
+(13.7%), which is the second time the same re-slice has produced the same quality on a different pool.
+
+**The error mix, and the finding in it.** Classified by diffing each corrected label against its
+label (a row can carry two kinds):
+
+| class | rows |
+|---|---|
+| pitch / rest | 8 |
+| duration | 6 |
+| **`\repstart`** | **6** |
+| **`\volta`** | **4** |
+| grace | 3 |
+| signature (`\sig`) | 3 |
+
+⭐ **Repeat structure — `\repstart` + `\volta` — is 10 of the 26 real corrections, ahead of pitch.**
+That is not what anyone expected to be the dominant error in a training pool, and it lands on the
+symbol the final render's dotted (usul) barline is aimed at: **4 of the 10 accepted labels that carry
+a `\repstart` were wrong**, with 2 more rows missing one. This is a *shuffled* sample, unlike the
+`batch3` count that first raised the dotted barline, so it is the first unbiased read of that failure
+— and it is on the training side, not a review queue ([../METRICS-UNSEEN.md](../METRICS-UNSEEN.md)).
+
+⭐ **A prediction written in [../BACKLOG.md](../BACKLOG.md) item 9 came true.** Two of the three
+signature errors are `\komaSharp` → `\kucukSharp` inside `\sig`, both in the same direction as the ten
+found on the exam. Item 9 says re-emitting with `round2-stage2-best` cannot fix the model-voted
+signature because that model trained on the biased labels; the audit shows the bias surviving the
+re-emit. ⚠ n=2 — it confirms the mechanism, it does not size it.
+
+**Two things a later reader would otherwise chase.**
+
+1. **Three "corrections" are not corrections.** They differ from their label only by the spacing in
+   `e''16. d''32` vs `e''16. d'' 32`. Checked against `round2-stage2-best`'s own tokenizer (and
+   `rung3-labeler`'s): both spellings encode to the identical ids
+   (`[18,1,1,4,7,34,17,1,37,95,35]`) — the space is a BPE detokenisation artifact of
+   the `'</w>` marker, already recorded in [../DECISIONS.md](../DECISIONS.md) as id-identical **for
+   `32` only**. Nothing to fix, and nothing to "clean up" either.
+2. **One `fix` re-saves an unchanged label.** `gonlumun_ezhar_icinde_ney_p1_s01_w00.png` carries verdict
+   `fix` with `corrected_label` byte-identical to `label`. So **26** rows are real corrections
+   (12.9%), and a raw `fix` count from any queue is an upper bound — diff before quoting one.
+
+**What this does not say.** The audit covers only the **auto-accepted** 3,955; the 4,738 `b8-review`
+rows are a different question, and the 1,442 human corrections in the old pools still do not carry
+themselves. And 13.4% is the quality the pool carries **into training** if it is promoted as it
+stands — a completed guard, not a clean bill.
+
+## 2026-08-22 — the tie retirement reaches the REAL-VAL GOLD, and labeling.md was split
+
+Track B step 5, the last piece of the retirement. `_realval_v2`, its five derived pools (`_easy`,
+`_mid`, `_hard`, `_scan`, `_borndigital`), the five `_realval_degraded` levels and the v1 `_realval`:
+**771 `\tie` tokens over 576 rows in 12 manifests**, `.bak-notie` beside each. Ten minutes of edit,
+most of the session in the checks around it — which is where the two findings came from.
+
+**Finding 1 — a `label.split()` filter would have half-done the job and reported success.** These
+manifests carry **two spellings** of the same label: `a'4. \tie a'8` and the compact `a'4. \tiea'8`.
+The added-token tokenizer splits on the substring, so they are the same thing to the model, but a
+whitespace-token filter sees only the first. On `_realval_v2_hard` that is 7 of 25 tie rows cleaned
+while reporting 25. The first pass of this work did exactly that; it was caught because the row counts
+came out **46/267 against the 64/267 the docs recorded**, and the docs were right. The fix was to
+tokenize with the real `ADDED_TOKENS` list (longest-match on the backslash commands) and to delete the
+substring rather than a whitespace token. ⭐ **The lesson generalises**: a count that disagrees with a
+written-down count is a bug in the new code until proven otherwise.
+
+**Finding 2 — no accidental restrike was needed here, and that had to be checked rather than assumed.**
+The render side had just been bitten by exactly this (a bare tie-tail reads as *unaltered* where
+nothing carries an accidental). On the real side it does not arise, for two measured reasons: **all
+576 rows are `measure` (carry) mode**, where the restrike is a no-op, and **zero** ties crossed a
+barline, so no tail could land where the carry had reset.
+
+**What the tokens joined**, all 12 manifests: **576 different-pitch pairs — a slur, 78% of the 741
+resolvable** — 165 same-pitch, 18 head-in-previous-strip, 12 tail-in-next. The same 65–78% confusion
+the review queues showed, so this gold was not an exception.
+
+**Verification**, since this rewrites selection gold: 2,427 rows re-read against their backups —
+**0 label mismatches** once `\tie` is filtered from the backup's own tokenisation, and **0 changes to
+any other field**. Untouched rows re-serialise byte-identically, which is checked in the same pass.
+
+**The cost, stated because it is real.** `eval_omr.py` selects its arc-triggered false-`\tup3` bucket
+by `\tie` **in the gold**, so on these pools it now prints `n/a`. No criterion moved — that metric's
+≤10% floor is read on the **exam**, which keeps its ties — but real-val loses a selection-side
+diagnostic. It is recoverable from `.bak-notie`, or offline from `piece`/`from`/`to` via
+`needsTieSplit`, as `eval_omr.py`'s own note describes.
+
+**Two scope calls.** `_realval` (v1) was included although it is not a v2 pool, because
+`build_realval_v2.py` reads it as a **source** — leaving its ties in would let a rebuild put them
+back. `_realval_tier_easy` (40/160) and `_realval_tier_mid` (24/111) were left alone: dead v1 tiers,
+read by no code, superseded by `_realval_v2_*`.
+
+**A pre-existing bug this surfaced but did not cause.** `check_token_drift` rejects `_realval_v2`,
+`_hard`, `_scan` and `_borndigital` because its `\\[A-Za-z0-9]+` pattern reads the compact spelling
+`\sigendd''4` as a token `\sigendd`. 45 phantoms remain in `_realval_v2` — **down from 51** with this
+edit, and **zero added**. It is a guard bug, not a gold bug, and it is not fixed here.
+
+**And `labeling.md` was split, because it hit the 400-line cap.** It had reached 390 lines before this
+session and could not absorb the write-up. Per MAINTAINING's rule the split is by genre, not size: the
+file keeps the **live labelling conventions** (what is a token, what is label-free ink) at 135 lines,
+and the collection history — §1a neyzen, §1a.5 the Round-0.5 labeler, §1b notaarsivleri, §1c targeted
+tuplet collection — moved verbatim to **`labeling-collection.md`** (322 lines) with a section map left
+behind. Eight files cited those sections by number and were repointed; `check_docs.py` is green.
+
+## 2026-08-22 — the tie retirement reaches the RENDER, and it was not a deletion
+
+Track B step 4, the one item with a deadline: after the final render, changing this costs a re-render
+of 40,826 strips. It is done. What follows is mostly the part that was not planned.
+
+**The planned half was one line.** `\tie` had exactly ONE producer in the whole codebase —
+`measureAtoms` in `tools/render/lilypond.ts`. Everything else (the stitcher, `decode.ts`,
+`ly-engrave.ts`) only ever READ it, and they all keep reading it, because `round2-stage2-best` still
+writes it and the frozen exam v2 gold still contains 594. **The drawing did not move**: SheetView
+draws the arc from `tieSplitBeats`, not from the label, so the pixels are identical and the arc is now
+ink with no token — the treatment `drawSlurArc` already had.
+
+**The unplanned half: a bare tie-tail is only safe under the carry convention.** The tail of a split
+pair was spelled bare on the engraving rule "never restrike a tied-to note", and the `\tie` token was
+what carried the pitch. Delete the token and the tail says *unaltered* in any mode that has no
+accidental carry. That is not a corner: **9,979 of 40,826 strips (24.4%) render in `every` mode**, and
+**199 of the 1,246 ties sit on an accidented note**. The stitcher round-trip failed **10 of 218
+scores** on pitch the moment the token went — the check earned its keep, since nothing else would have
+noticed until the model was trained on it. Fix: the tail spells through `noteToLily` like any other
+note, and SheetView calls `applyAccidental` on it. **One decision, both sides**, so pixels still equal
+labels. In carry mode both are a no-op (the head's alteration is already in effect), so real printed
+convention is untouched; only `every`/`keysig` restrike, which is what those modes do anyway.
+
+**The cost was measured, paired, not argued.** Restriking adds ink to **160 strips (0.39%)**, and ink
+widens a measure, which can push a later glyph past a strip's crop edge. Rendered the corpus's most
+tie-heavy piece twice, same command, changes stashed for the control: **265/265 exact** against
+**261/263** — 2 strips where an accidental fell into the neighbouring crop, and the strip count moved
+265 → 263 because packing shifted. ⚠ This is the **existing** flagged class, not a new one:
+`strips_v5_tupnew` carries 15 of them, `verify-labels.ts` flags them, and
+`make_round3_colab_zip.sh` already refuses to ship a flagged strip that is still in the manifest.
+
+**Two gates would have failed the new render, and both are fixed.** `audit_coverage.py` required **400
+`\tie` in train** — a floor that no render can ever meet again, so the token came out of `RHYTHM`
+(removed, not lowered) and is now reported-only, with a warning if a corpus still carries one.
+`stitch-test.ts` relied on the stitcher merging `x \tie x` back into one event; its source side now
+expands a tie-split value the same way rests already were. Both legacy tie tests were kept and
+renamed — they guard the stitcher's tolerance for old labels — and a new pair asserts the retired
+spelling, including that a bare tail keeps its alteration through the carry.
+
+**The scoring fix, which was not in the plan and matters more than the render change.** `eval_omr.py`
+compared gold and decode raw, so a retired token would have been charged to somebody: tie-free gold
+charges `round2-stage2-best` an **insertion** for every tie it writes, and that checkpoint is the
+**baseline column the signed 75% floor is read against** — an unfair baseline flatters the Round-3
+model. Legacy gold charges the opposite way. `\tie` is now dropped from **both** sides before
+scoring. ⚠ Consequence: the **arc-triggered false-`\tup3` metric** picks arc-bearing strips by `\tie`
+in the gold, so it only works on pools labelled before the retirement; on tie-free gold it prints
+**n/a** rather than a 0/0 that would have read as "no arc errors". It can be rebuilt with no
+re-render — a manifest row carries `piece`, `from` and `to`, so the arc-bearing strips are recoverable
+offline from the score itself.
+
+**Green:** `npm run typecheck`; `npm test` (218/218 round-trip in both modes, 90/90 signature
+variants, everything else ALL PASS); a 263-strip pilot render with **0 ties** in its labels and both
+modes present; `verify-labels.ts` on the pilot and on its stashed control. **Not run:** anything that
+trains, and the full render — that is step 9 (B6), not this step.
+
+**Left for step 5:** ties out of the real-val gold — `_realval_v2` 64 of 267 rows plus six derived
+pools that copy the same labels. Now a tidiness step rather than a load-bearing one, because the
+scorer neutralises the token on both sides.
+
+## 2026-08-22 — the arc token is retired, and the slicer is a PRODUCT bug
 
 Two findings from one labelling session, and they are unrelated to each other.
 

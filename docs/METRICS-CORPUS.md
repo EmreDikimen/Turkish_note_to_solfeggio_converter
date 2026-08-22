@@ -2,7 +2,7 @@
 
 purpose: the single home for corpus sizes, pool composition and measured label-noise rates
 audience: agents and the owner, whenever a question is about the data rather than the model
-updated: 2026-08-21
+updated: 2026-08-22
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps **how well the model reads**, this file keeps **what the data is
@@ -255,7 +255,7 @@ deferred rather than scheduled: [BACKLOG.md](BACKLOG.md) item 10.
 | tup3 auto-accepts (78 strips) | 10% | 2026-07-19 |
 | exam gold, full re-audit | 13 new label errors found (gold over-sized sharps) | 2026-07-25 |
 | **nota training pool, review of every disagreeing strip** | **521 of 1,740 strips (30%) carry a human-corrected label**; of the strips where label and decode disagreed at all, **~78% of the labels were wrong** | 2026-07-27 |
-| **⏳ `strips_b8` auto-accepts (`b8-audit`, READ IN PROGRESS)** | **11 fix / 88 judged = 12% wrong** as of 2026-08-22 — ⚠ **an interim read of a live queue**, 113 of 201 rows still open; the tab badge in `review_ui.py` is the current count, this row is a snapshot. The judged rows are a fair subsample (the sample is shuffled, and they are no easier: mean `nd` 0.019 vs 0.018 for the rest). Error mix so far: pitch, rhythm, the tie/rest convention, a missing `\repstart`, and a spurious `\sig` block — the last two are [BACKLOG.md](BACKLOG.md) items 5 and 9 reappearing, not new failures | 2026-08-22 |
+| **✅ `strips_b8` auto-accepts (`b8-audit`, ALL 201 READ BY HAND)** | **27 fix / 174 ok = 13.4% wrong.** One `fix` re-saves an unchanged label, so **26 real corrections = 12.9%**; three more differ from their label only by the id-identical `32` spacing ([DECISIONS.md](DECISIONS.md)), which is not an error. Same level as the re-sliced exam's auto-accepts below (13.7%), against the old neyzen pool's 22.6%. ⭐ **Repeat structure is the biggest class, ahead of pitch**: `\repstart` 6 rows + `\volta` 4 = **10 of 26**, against pitch/rest 8, duration 6, grace 3, signature 3. **4 of the 10 accepted labels that carry a `\repstart` were wrong** ([METRICS-UNSEEN.md](METRICS-UNSEEN.md)), and 2 of the 3 signature errors are `\komaSharp`→`\kucukSharp` inside `\sig` — [BACKLOG.md](BACKLOG.md) items 5 and 9 reappearing inside a TRAINING pool, not new failures. ⚠ 12.9% is what the auto-accepted half carries **into training**; carrying the human fixes is a separate job | 2026-08-22 |
 | **exam v3 auto-accepts (all 139, `examv3-full`)** | **18 fix + 1 bad = 13.7% wrong** — against exam v2's **51%** on the same queue; the drop is the re-slice ([the crop finding below](#the-key-signature-is-decided-by-the-model-not-by-symbtr-found-2026-08-21)) | 2026-08-21 |
 | Tie structure in nota pool | ~38% structurally noisy (why ties carry no floor) | 2026-07-20 |
 | **`strips_v3` carry strips: accidental DRAWN but not labelled** | **18.8% of signature-bearing carry strips** (5,240 / 27,933; 8,485 accidentals over 137 pieces) | 2026-07-26 |

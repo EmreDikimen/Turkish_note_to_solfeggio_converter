@@ -15,10 +15,15 @@
  *  - **Ties (long held values):** SymbTr writes 5/8, 5/4, 9/8, 5/16 … as ONE event, but the
  *    engraved form is a tied pair (5/8 = half + tied 8th). `tieSplitBeats` decomposes such a
  *    duration into drawable written values (greedy, largest first — all corpus cases split into
- *    exactly two). Notes get a tie arc + the `\tie` token between the written pair; RESTS are
- *    split too but never tied (rests aren't tied in engraving — they just sit side by side).
+ *    exactly two). Notes get a tie ARC drawn between the written pair; RESTS are split too but
+ *    never tied (rests aren't tied in engraving — they just sit side by side).
+ *    ⛔ The arc carries NO token: `\tie` is retired (owner, 2026-08-22) and the pair labels as
+ *    two plain notes, so an arc is label-free ink exactly like a slur. Pitches and the summed
+ *    duration are unchanged, so bar arithmetic is untouched; what is lost is playback holding
+ *    the note (the app re-strikes where the page holds), which the owner accepted.
  *    The note model keeps the single event untouched (audio/`koma53` stays the source of
- *    truth); the decoder merges `x \tie x` back into one event.
+ *    truth); the decoder still merges a `x \tie x` written BEFORE the retirement back into one
+ *    event, because old labels and old checkpoints must stay readable.
  *
  * Everything works on the exact `durationBeats {num, den}` rational — never on the float
  * `eventBeats` value — because 3/12 must reduce to a plain 1/4 (NOT a tuplet member) and float

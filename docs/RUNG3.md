@@ -12,10 +12,10 @@ split by phase. **Start at [rung3/README.md](rung3/README.md).**
 | Old reference | Now in |
 |---|---|
 | "the plan in one paragraph" | [rung3/README.md](rung3/README.md) |
-| §1a — neyzen SymbTr name match | [rung3/labeling.md](rung3/labeling.md) |
-| §1a.5 — Round-0.5 labeler fine-tune | [rung3/labeling.md](rung3/labeling.md) |
-| §1b — notaarsivleri.com collection | [rung3/labeling.md](rung3/labeling.md) |
-| §1c — targeted tuplet collection | [rung3/labeling.md](rung3/labeling.md) |
+| §1a — neyzen SymbTr name match | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
+| §1a.5 — Round-0.5 labeler fine-tune | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
+| §1b — notaarsivleri.com collection | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
+| §1c — targeted tuplet collection | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
 | §2 / Step 2 — freeze the exam | [rung3/exam.md](rung3/exam.md) |
 | §3 / Step 3 — strip-label emitter | [rung3/exam.md](rung3/exam.md) |
 | Step 4 — Round 1 | [rung3/round1.md](rung3/round1.md) |

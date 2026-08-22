@@ -11,6 +11,10 @@
  * Known, accepted round-trip diffs (the serializer is deliberately lossy there):
  *  - a long REST splits into side-by-side rests with no tie (rests are never tied), so both
  *    sides are normalized by merging consecutive in-bar rests before comparing;
+ *  - a long NOTE now behaves the same way: `\tie` is retired (owner, 2026-08-22), so a 5/8 is
+ *    written as two plain notes and stitches back as two events. The ORIGINAL side is expanded
+ *    by `tieSplitBeats` to match — pitches and the summed duration are what must survive, and
+ *    they do. (The stitcher still MERGES a `\tie` it is given; see the legacy unit tests.);
  *  - a measure-final dangling grace is dropped by the serializer (VexFlow can't draw a grace
  *    without a host), so it is dropped from the original too;
  *  - a tuplet run that never sums to a plain value keeps the legacy nearest-value duration
@@ -86,7 +90,15 @@ console.log("structure unit tests:");
     t(["\\sig \\komaFlat b \\sigend b'4", "b'4", "\\sig \\sigend b'4"]),
     "Si4b1:1/4 | Si4b1:1/4 | Si4b1:1/4",
   );
-  check("tie merges into one event", t(["c''2 \\tie c''8"]), "Do5:5/8");
+  // ⚠ LEGACY LABELS: nothing emits `\tie` since 2026-08-22, but old pools, the frozen exam v2
+  // gold and `round2-stage2-best`'s own decodes still contain it, so the stitcher must keep
+  // merging it. These two checks guard that tolerance, not the serializer.
+  check("legacy `\\tie` still merges into one event", t(["c''2 \\tie c''8"]), "Do5:5/8");
+  check(
+    "retired form: the same pair without the token is two plain notes",
+    t(["c''2 c''8"]),
+    "Do5:1/2 Do5:1/8",
+  );
   check(
     "triplet members sound at written × 2/3",
     t(["\\tup3 c''8 d''8 e''8 \\tupend f''4"]),
@@ -164,9 +176,16 @@ console.log("structure unit tests:");
     "g:Fa5#4 Do5:1/4 Fa5:1/4",
   );
   check(
-    "carry through a tie: the pair is one event; a later bare note keeps the alteration",
+    "legacy carry through a `\\tie`: the pair is one event; a later bare note keeps the alteration",
     c(["\\bakiyeSharp f''2 \\tie f''8 f''8"]),
     "Fa5#4:5/8 Fa5#4:1/8",
+  );
+  check(
+    // THE safety claim of the tie retirement: the tail is spelled BARE, so its pitch comes from
+    // the measure-scoped carry. Same three sounding pitches as the legacy row above.
+    "retired form: a bare tie-tail keeps the alteration through the carry",
+    c(["\\bakiyeSharp f''2 f''8 f''8"]),
+    "Fa5#4:1/2 Fa5#4:1/8 Fa5#4:1/8",
   );
   check(
     "default (keysig) mode is unchanged: bare always means the signature pitch",
@@ -199,11 +218,12 @@ function normalizeOriginal(doc: NoteModelDocument): Norm[] {
     for (let i = 0; i < events.length; i++) {
       const e = events[i]!;
       let beats = eventBeats(e);
+      const split = e.kind === "note" || e.kind === "rest" ? tieSplitBeats(e) : null;
       if (e.kind === "note" || e.kind === "rest") {
         const inGroup = groups.some((g) => i >= g.from && i <= g.to);
         // Outside a closed tuplet group and not tie-split, the label carries whatever
         // `lilyDuration` wrote — exact for drawable values, nearest-snapped otherwise.
-        if (!inGroup && tieSplitBeats(e) === null) beats = snapToWritten(beats);
+        if (!inGroup && split === null) beats = snapToWritten(beats);
       }
       // Compare the WRITTEN pitch: the page draws the AEU-snapped sign (a 2-comma flat is
       // engraved as a koma flat), and recovering that written form is stage 8's contract —
@@ -213,7 +233,10 @@ function normalizeOriginal(doc: NoteModelDocument): Norm[] {
         const p = parseNoteName(e.noteName);
         koma = p ? komaOf(p.letter, p.octave, toAeuAlter(p.alterCommas)) : e.koma53;
       }
-      out.push({ kind: e.kind, koma, beats, bar: m.index });
+      // A tie-split long value is WRITTEN as separate notes and, since `\tie` retired, joined by
+      // nothing — so the stitched side returns one event per written part. Expand to match.
+      if (split) for (const part of split) out.push({ kind: e.kind, koma, beats: part, bar: m.index });
+      else out.push({ kind: e.kind, koma, beats, bar: m.index });
     }
   }
   return mergeRests(out);

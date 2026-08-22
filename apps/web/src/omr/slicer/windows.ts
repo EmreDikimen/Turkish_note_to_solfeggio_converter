@@ -16,6 +16,9 @@
  * manifest bookkeeping for the Rung-3 emitter and never move a crop boundary in legacy mode.
  */
 import {
+  COST_PER_INK_COL,
+  COST_PER_STEM,
+  COST_ROW_START,
   MAX_STRIP_W,
   MEASURES_PER_STRIP,
   MIN_STRIP_W,
@@ -139,6 +142,75 @@ export function splitWide(
   return pieces;
 }
 
+/* ---- DENSE-PAGE EXPERIMENT (opt-in) -------------------------------------------------------
+ * `row_cost_features` (L821) + `estimate_tokens` (L851): the per-column label-cost features the
+ * Python slicer records as `est_tokens`, and the span estimate built from their prefix sums.
+ *
+ * ⚠ NOT the shipped packing rule. Reached only when `windowMeasures` is given a `tokenBudget`,
+ * which only `?dense=` sets. To remove the experiment, delete this block, the `tokenBudget`
+ * parameter and its rail — nothing else refers to them.
+ */
+export interface RowCost {
+  /** prefix sums, length width+1: `cum[i]` = the total over columns [0, i). */
+  cumStems: Int32Array;
+  cumInk: Int32Array;
+}
+
+export function rowCostFeatures(row: Gray, topY: number = TOP_LINE_Y): RowCost {
+  const sp = TARGET_SPACING;
+  const y0 = Math.max(0, Math.trunc(topY - 2.0 * sp)); // ledger notes above ...
+  const y1 = Math.min(row.height, Math.trunc(topY + STAFF_SPAN + 2.0 * sp)); // ... beams below
+  const band = inkMask(row, y0, y1);
+  const w = band.width;
+
+  // longest UNBROKEN vertical ink run per column (`_longest_vertical_run`, L589). Staff rows are
+  // deliberately INCLUDED here: a stem is what crosses them unbroken.
+  const run = new Int32Array(w);
+  const best = new Int32Array(w);
+  for (let y = 0; y < band.height; y++) {
+    const off = y * w;
+    for (let x = 0; x < w; x++) {
+      const r = band.data[off + x] ? run[x]! + 1 : 0;
+      run[x] = r;
+      if (r > best[x]!) best[x] = r;
+    }
+  }
+
+  // columns carrying non-staff-line ink — what has no stem (rests, dots, accidentals, wholes)
+  const inkCol = new Uint8Array(w);
+  for (let y = 0; y < band.height; y++) {
+    const off = y * w;
+    let rowSum = 0;
+    for (let x = 0; x < w; x++) rowSum += band.data[off + x]!;
+    if (rowSum > w * 0.4) continue; // staff lines ink every column
+    for (let x = 0; x < w; x++) if (band.data[off + x]) inkCol[x] = 1;
+  }
+
+  const stemMin = Math.trunc(2.0 * sp);
+  const cumStems = new Int32Array(w + 1);
+  const cumInk = new Int32Array(w + 1);
+  let prevStem = false;
+  for (let x = 0; x < w; x++) {
+    const isStem = best[x]! >= stemMin;
+    // rising edge only: one stem counts once however many columns thick it is
+    cumStems[x + 1] = cumStems[x]! + (isStem && !prevStem ? 1 : 0);
+    cumInk[x + 1] = cumInk[x]! + inkCol[x]!;
+    prevStem = isStem;
+  }
+  return { cumStems, cumInk };
+}
+
+export function estimateTokens(c: RowCost, x0: number, x1: number, isRowStart: boolean): number {
+  const n = c.cumStems.length - 1;
+  const a = Math.max(0, Math.min(x0, n));
+  const b = Math.max(a, Math.min(x1, n));
+  return (
+    COST_PER_STEM * (c.cumStems[b]! - c.cumStems[a]!) +
+    COST_PER_INK_COL * (c.cumInk[b]! - c.cumInk[a]!) +
+    (isRowStart ? COST_ROW_START : 0)
+  );
+}
+
 /**
  * `window_measures` (L867): group consecutive measures into windows that fit the rails.
  *
@@ -150,7 +222,14 @@ export function splitWide(
  * only exists for callers that want spans without pixels (it disables `_split_wide` and the lead
  * trim, so it is not a mode the app can ever be in).
  */
-export function windowMeasures(bars: number[], row: Gray, topY: number = TOP_LINE_Y): Window[] {
+export function windowMeasures(
+  bars: number[],
+  row: Gray,
+  topY: number = TOP_LINE_Y,
+  /** ⚠ EXPERIMENT (`?dense=`): when set, stop adding measures once the estimated label cost
+   *  passes this many ids. Unset = the shipped rule, which packs on measures and width only. */
+  tokenBudget?: number
+): Window[] {
   let lead: number | null = null;
   let bs = bars;
   if (
@@ -166,6 +245,7 @@ export function windowMeasures(bars: number[], row: Gray, topY: number = TOP_LIN
   for (let i = 0; i + 1 < bs.length; i++) spans.push([bs[i]!, bs[i + 1]!]);
   if (!spans.length) return [];
   const cap = spanCap();
+  const cost = tokenBudget === undefined ? null : rowCostFeatures(row, topY);
   // the first window starts at the clef prefix when there is one, so the caps below see the crop's
   // TRUE extent (re-extending it afterwards is what broke the width cap on 22 strips)
   const winX0 = (i: number) => (i === 0 && lead !== null ? lead : spans[i]![0]);
@@ -176,7 +256,10 @@ export function windowMeasures(bars: number[], row: Gray, topY: number = TOP_LIN
     const x0 = winX0(i);
     let j = i + 1; // always take at least one measure
     while (j < spans.length && j - i < MEASURES_PER_STRIP) {
-      if (spans[j]![1] - x0 > cap) break; // width rail
+      const nx1 = spans[j]![1];
+      if (nx1 - x0 > cap) break; // width rail
+      // label-budget rail — the one that decides whether the model can express the strip at all
+      if (cost !== null && estimateTokens(cost, x0, nx1, i === 0) > tokenBudget!) break;
       j++;
     }
     const x1 = spans[j - 1]![1];

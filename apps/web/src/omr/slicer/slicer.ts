@@ -66,6 +66,12 @@ export interface Stage1Options {
   skewDeg?: number;
   /** Collect `detect_barlines`' rejected candidates (W5 diagnosis; Python's `--debug` branch). */
   rejects?: boolean;
+  /**
+   * ⚠ DENSE-PAGE EXPERIMENT (`?dense=`, delete with the block in `windows.ts`). Stop packing a
+   * window once its estimated label cost passes this many ids, so a dense row is cut into
+   * strips the model can actually express. Unset = the shipped rule (measures + width only).
+   */
+  tokenBudget?: number;
 }
 
 export interface Stage2Result extends Omit<Stage1Result, "rows"> {
@@ -148,7 +154,7 @@ export function sliceStage3(gray: Gray, opts: Stage1Options = {}): Stage3Result 
   const s2 = sliceStage2(gray, opts);
   const rows: Stage3Row[] = s2.rows.map((r) => {
     const { row, scale, topLineY } = r.normalized;
-    const windows = windowMeasures(r.bars, row, topLineY);
+    const windows = windowMeasures(r.bars, row, topLineY, opts.tokenBudget);
     // total measures the row's windows cover (a trimmed clef+sig prefix span is no measure)
     const rowMeasures = windows.length ? Math.max(...windows.map((w) => w.mTo)) + 1 : 0;
     const barSet = new Set(r.bars);

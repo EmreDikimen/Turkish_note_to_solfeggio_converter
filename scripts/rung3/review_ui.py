@@ -474,7 +474,9 @@ PAGE = r"""<!doctype html>
      compare against the picture above it. Each block gets ONE horizontal pair. */
   .lblrow{position:relative;margin-top:10px}
   .lblrow .lblhead{margin-top:0}
-  .lblacts{position:absolute;right:calc(100% + 20px);top:1px;display:flex;gap:5px;white-space:nowrap}
+  /* `top` drops the pair off the heading line and onto the TOKEN row it acts on — the tokens are
+     what you accept, so the button should sit beside them, not beside the caption. */
+  .lblacts{position:absolute;right:calc(100% + 20px);top:21px;display:flex;gap:5px;white-space:nowrap}
   /* The card is 1200px, so the margin only holds the pair on a wide window. Below this the pair
      drops above its own block rather than overflow off-screen — still one row, still left-aligned,
      and the token row still does not move. Measured: it stops fitting just under 1440px. */
@@ -594,8 +596,10 @@ PAGE = r"""<!doctype html>
           durations 1 2 4 8 16 32; dot = ×1.5</td></tr>
         <tr><td><code>r4</code> <code>r8</code></td><td>rest (never takes octave marks)</td></tr>
         <tr><td><code>|</code></td><td>barline — also resets carried accidentals</td></tr>
-        <tr><td><code>\tie</code></td><td>between two adjacent SAME-pitch notes (durations add).
-          different pitches under an arc = slur → not labeled</td></tr>
+        <tr><td><code>\tie</code></td><td><b>RETIRED &mdash; do not type it</b> (owner, 2026-08-22).
+          Round 3 labels no ARC at all: a tie and a slur are both label-free ink, so two tied notes
+          are written as two plain notes (<code>la'2 la'8</code>) &mdash; same pitches, same total
+          length, no arc token. The id stays reserved so Round 4 can bring it back.</td></tr>
         <tr><td><code>\tup3 … \tupend</code></td><td>triplet bracket around the 3 notes</td></tr>
         <tr><td><code>\grace</code></td><td>prefixes a small slashed grace note's own spelling</td></tr>
       </table>

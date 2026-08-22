@@ -49,6 +49,16 @@ export const MEASURES_PER_STRIP = 3; // L55 (OMR_MEASURES_PER_STRIP unset => "3"
 export const MAX_STRIP_W = 1450; // L57 — cap width (training strips topped out ~1443 px)
 export const MIN_STRIP_W = 200; // L58 — ignore degenerate slivers
 
+// ---- DENSE-PAGE EXPERIMENT (opt-in, `?dense=` — delete this block with `tokenBudget`) --------
+// Python's label-budget packing constants (page_to_strips L97-100), fitted on 2,500 decoded
+// strips. Python ships this OFF as a measured wash for LABELLING YIELD; the app enables it for a
+// different reason — a strip whose label needs more ids than the model can emit comes back as
+// silently wrong notes, and at inference an over-eager cut is nearly free (77.4% of real windows
+// are single-measure already, so a split strip is the shape the model saw most).
+export const COST_PER_STEM = 1.889; // a stemmed note ~2 ids (pitch + duration); shared beams less
+export const COST_PER_INK_COL = 0.0288; // residual: rests, dots, accidentals, ledgers
+export const COST_ROW_START = -5.25; // a row-start crop carries the \sig block but less music
+
 // ---- barline discrimination, in line-space units (L85-102) — W5 ------------------------------
 export const EXT_SP = 2.5; // L88 — analysis band past the outer staff lines
 export const OV_TOL_SP = 0.5; // L90 — a real barline may overshoot a staff line by this much

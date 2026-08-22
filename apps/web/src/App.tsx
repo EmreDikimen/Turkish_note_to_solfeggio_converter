@@ -150,6 +150,13 @@ const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("nav
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
 const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
 const URL_SLURSEED = RENDER_PARAMS.has("slurseed") ? Number(RENDER_PARAMS.get("slurseed")) : null;
+// ⚠ DENSE-PAGE EXPERIMENT — `?dense=<ids>` (try 50). Cuts a dense row into more, shorter strips
+// so the model is never handed a strip whose label needs more ids than it can emit; without it
+// such a strip comes back as confident, silently wrong notes (`hitCap` catches almost none of
+// them). Costs decode time on dense pages only — a normal page is unchanged. Absent = today's
+// behaviour. Delete with the block in `omr/slicer/windows.ts`.
+const URL_DENSE = RENDER_PARAMS.has("dense") ? Number(RENDER_PARAMS.get("dense")) : null;
+const DENSE_BUDGET = URL_DENSE != null && Number.isFinite(URL_DENSE) && URL_DENSE > 0 ? URL_DENSE : undefined;
 // Round-3 staccato distractors: label-free dots on the notehead side (see SheetView's
 // drawStaccatoDot), teaching that a dot only means "longer" BESIDE the notehead. Absent → none,
 // i.e. every strip rendered before 2026-08-15.
@@ -1121,6 +1128,7 @@ export function App() {
         const stem = file.name.replace(/\.[^.]+$/, "") || "page";
         setOmrStatus(busyStatus("page", "slice", TR.status.slicing));
         const sliced = await slicePage(url, stem, {
+          tokenBudget: DENSE_BUDGET, // ⚠ experiment, `?dense=` — undefined in a normal visit
           onProgress: (phase, done, total) => {
             // The slicer reports its phases in English; the UI names them in Turkish.
             const name = TR.phases[phase] ?? phase;

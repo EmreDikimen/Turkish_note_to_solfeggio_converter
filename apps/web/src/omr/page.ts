@@ -49,6 +49,13 @@ export interface SlicedPage {
 export interface SlicePageOptions {
   /** `phase` is human-readable; `done`/`total` are the skew sweep's steps, absent elsewhere. */
   onProgress?: (phase: string, done?: number, total?: number) => void;
+  /**
+   * ⚠ DENSE-PAGE EXPERIMENT — set only by `?dense=` in `App.tsx`. Cut a row into more, shorter
+   * strips once the estimated label cost passes this many ids. A dense strip whose label needs
+   * more ids than the model can emit comes back as silently wrong notes; splitting it costs
+   * decode time and nothing else. Delete with the block in `slicer/windows.ts`.
+   */
+  tokenBudget?: number;
 }
 
 let cvReady: Promise<void> | null = null;
@@ -89,7 +96,7 @@ export async function slicePage(
   // corpus page against the sweep's ~35, so it is not worth splitting — see METRICS-SLICER-PORT.md.
   opts.onProgress?.("finding the staves");
   await paint();
-  const res = sliceStage3(gray, { skewDeg });
+  const res = sliceStage3(gray, { skewDeg, tokenBudget: opts.tokenBudget });
 
   opts.onProgress?.("cutting the strips");
   await paint();

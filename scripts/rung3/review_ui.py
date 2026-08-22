@@ -469,11 +469,19 @@ PAGE = r"""<!doctype html>
   .agree{color:var(--ok);font-size:13px}
   /* per-block actions: a two-button stack to the LEFT of each token row, so "accept" names the
      exact text beside it instead of the reviewer having to remember what the bottom row acts on */
-  .lblrow{display:flex;gap:12px;align-items:flex-start;margin-top:10px}
-  .lblrow .lblmain{flex:1;min-width:0}
+  /* The actions hang in the page margin OUTSIDE the card, so the label and decode text keeps the
+     x it has always had — a token row that shifts sideways when a button appears is harder to
+     compare against the picture above it. Each block gets ONE horizontal pair. */
+  .lblrow{position:relative;margin-top:10px}
   .lblrow .lblhead{margin-top:0}
-  .lblacts{display:flex;flex-direction:column;gap:4px;flex:0 0 128px;padding-top:14px}
-  .mini{padding:4px 8px;font-size:12px;font-weight:600;border-radius:7px;text-align:left;
+  .lblacts{position:absolute;right:calc(100% + 20px);top:1px;display:flex;gap:5px;white-space:nowrap}
+  /* The card is 1200px, so the margin only holds the pair on a wide window. Below this the pair
+     drops above its own block rather than overflow off-screen — still one row, still left-aligned,
+     and the token row still does not move. Measured: it stops fitting just under 1440px. */
+  @media (max-width:1440px){
+    .lblacts{position:static;margin-bottom:5px}
+  }
+  .mini{padding:3px 7px;font-size:11.5px;font-weight:600;border-radius:6px;
         line-height:1.35;white-space:nowrap}
   .mini.acc{color:var(--ok);border-color:#bfe3cf;background:var(--okbg)}
   .mini.edt{color:var(--fix);border-color:#ecd9a8;background:var(--fixbg)}
@@ -673,14 +681,15 @@ function tokHtml(t,cls){
 // saves the decode VERBATIM — deliberately not through baseText(), whose \tup3 guard lives on a
 // checkbox inside the (closed) edit box, and an unseen checkbox must never change what is stored.
 function actsHtml(kind){
+  const what=kind==='label'?'label':'model decode';
   return `<div class="lblacts">
-    <button class="mini acc" data-act="acc-${kind}" title="save this exact text as the verdict">✓ accept ${kind}</button>
-    <button class="mini edt" data-act="edit-${kind}" title="open the editor with this text as the draft">✎ edit from it</button>
+    <button class="mini acc" data-act="acc-${kind}" title="save this ${what} as the verdict, exactly as shown">✓ accept</button>
+    <button class="mini edt" data-act="edit-${kind}" title="open the editor with this ${what} as the draft">✎ edit</button>
   </div>`;
 }
 const blockHtml=(kind,head,toks)=>
-  `<div class="lblrow">${actsHtml(kind)}<div class="lblmain">
-     <div class="lblhead">${head}</div><div class="toks">${toks}</div></div></div>`;
+  `<div class="lblrow">${actsHtml(kind)}
+     <div class="lblhead">${head}</div><div class="toks">${toks}</div></div>`;
 function diffHtml(label,decoded){
   if(!label.trim()){
     return blockHtml('decode','no aligned label — model decode (starting point for a fix)',

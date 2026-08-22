@@ -228,6 +228,32 @@ starting. Abandoned plans are a different thing again and live in
 
 ### Further out (not next, not cancelled)
 
+0. **THE DENSITY LEVERS — all deferred 2026-08-22, and all deliberately NOT in Round 3.** They came
+   out of the "the app returns wrong notes on dense pieces" session
+   ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)). Splitting dense windows into single
+   measures fixes **44.3%** of the failure class; these four are what the rest needs, and none of them
+   is small:
+   - **A per-notehead ink counter.** Today's `est_tokens` counts *stems*, and a stem does not carry
+     the cost — `d''16` is 5 ids, `g'4` is 3. The two things that vary are **67% of the budget**
+     (octave marks 37.6%, duration digits 29.8%) and both are visible ink: octave marks are the
+     notehead's height against `top_y`, duration digits are the beam/flag count. A counter shaped
+     `1 + octave_marks(y) + duration_digits(beams)` mirrors the tokenizer instead of approximating it.
+     ⚠ Not needed for splitting — a false split is nearly free — so this is only worth it if a
+     *gate* is ever wanted. Test set exists: 7,967 strips with exact id counts, minus the ~38% whose
+     labels are physically impossible.
+   - **Splitting INSIDE a measure.** `_split_wide` already cuts at zero-ink gutters, so the pixels are
+     solved. The blocker is the emitter: it drops every `split_wide` strip unconditionally
+     (`emit_strip_labels.py`) — **10,226 of b8's 24,837 drops, the single biggest reason** — because
+     labels are derived by whole **measure spans** and half a measure has no span to match. Needs
+     partial-measure alignment, which is a project.
+   - **Note-spelling tokens.** The best long-term fix for density and the one with the largest
+     measured headroom: at compact spelling the exam queue's over-budget rows fall **72 → 17 of 661**
+     with the slicer untouched. Ids are append-only so it is *allowed*; it needs a retrain to be
+     *used*. Round 4.
+   - **Raising the 59-id budget** — DROPPED for Round 3 (see [DECISIONS.md](DECISIONS.md)); the
+     measured benefit is kept in item 7 below.
+
+
 1. **DONE (2026-07-31): every consumer now reads `_realval_v2`**; `make_realval_pool.py` is no longer
    the selection set — pointing an eval at its `_realval` output silently restores the no-hard-tier
    pool ([log/status-log.md](log/status-log.md)). **Not recoverable, for the record:** the owner's

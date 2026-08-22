@@ -19,6 +19,90 @@ windowing retune overturned its own premise once measured. Measure against real 
 `OMR_MAX_STRIP_W`) cut real pages; the renderer packs synthetic strips by measures and label tokens
 with no width rail at all. See [rung3/levers.md](rung3/levers.md), Lever 1.
 
+## The label budget is a PRODUCT bug, not a labelling one (2026-08-22)
+
+⛔ **The app hands the model strips it cannot express, and nothing says so.** The browser slicer packs
+up to `MEASURES_PER_STRIP` measures with a width rail and **no label-budget rail at all** — budget mode
+was deliberately not ported (`apps/web/src/omr/slicer/windows.ts`, module doc). At training time an
+over-budget strip is *dropped*; at inference there is no drop, so the model returns a short, confident,
+wrong read.
+
+**The safety net does not catch it.** `hitCap` warns the user when the decoder stops at the cap. Scored
+against 4,012 strips whose true label exceeds the budget: **it fires on 7 of them (0.2%).** The model
+does not run out of room — it emits `</s>` early with normal confidence. So the failure is **silent**.
+
+**How widespread.** Over the 1,689 pages the b8 emit touched: **998 (59.1%) carry at least one
+over-budget strip**; the median affected page carries 3.
+
+### Why the rail was shelved, and why that reasoning does not transfer
+
+Budget mode was measured in July for **labelling yield** and came back a wash — healthy-band share
+75.8% legacy vs 76.2% at b=62 — so it defaulted off and was left out of the port. That evaluation is
+still correct for what it asked. It does not transfer, because the trade inverts:
+
+- **Training**: cutting too eagerly costs labelling yield, and the gain measured nil.
+- **Inference**: cutting too eagerly costs decode time. Cutting too little costs wrong notes.
+
+And an over-eager cut is nearly free: **77.4% of real windows (26,284 of 33,937) are already a single
+measure**, so a split strip is the shape the model saw most.
+
+### The pixel estimate cannot GATE, but it can trigger a split
+
+Scored against 7,967 strips with exact id counts (4,012 over-budget drops, which record their length,
+plus 3,955 accepted labels):
+
+| detector | catches | needlessly cuts good strips |
+|---|---|---|
+| `est_tokens > 59` | 40.9% | 6.3% |
+| `est_tokens > 45` | 77.7% | 32.8% |
+| decode length `> 52` | 68.0% | 9.6% |
+| `hit_cap` | 0.2% | 0.0% |
+
+Estimator error (true minus estimate) has **sd 30.6 ids**, worst underestimate **+307**. Disqualifying
+for a gate. Acceptable as a split trigger, where a false positive costs only time.
+
+⚠ **A large share of that apparent error is not error.** Against the densest measure a human ever
+wrote in the exam queue (66 ids/measure, n=184 uncensored labels), **1,537 of 4,012 over-budget drops
+(38.3%)** claim more music than the crop can physically hold — a misaligned label, with the estimator
+correctly disagreeing. One claims 344 ids over 2 measures against an estimate of 37.
+
+### What splitting to single measures actually buys
+
+| | |
+|---|---|
+| over-budget windows (excluding width-splits) | 4,012 |
+| of those, multi-measure | 2,140 |
+| **fixed by splitting into single measures** | **1,779 of 2,140 = 83.1%** |
+| still over even as single measures | 361 |
+| already single-measure, so unsplittable | 1,872 |
+
+So splitting rescues **44.3% of the whole failure class**. The rest needs a different lever.
+
+### First experiment — `Kurdilihicazkar_sirto_kemani_sebuh_ney_p1` (2026-08-22)
+
+A worst case: **13 of its 15 windows already carry `budget_risk: true`**. Decoded with
+`round2-stage2-best` int8, `OMR_ORT_THREADS=2`, `nice -19`:
+
+| config | strips | decode | decodes over 59 ids | longest |
+|---|---|---|---|---|
+| baseline (shipped rule) | 15 | 6.3 s | 13 | **96 ids** |
+| `OMR_WINDOW_MODE=budget`, b=50 | 28 | 10.4 s | 7 | 70 ids |
+| `OMR_MEASURES_PER_STRIP=1` | 28 | 10.6 s | 7 | 70 ids |
+
+**+65% decode time**, and per-strip cost *fell* (417 → 371 ms) because shorter strips emit fewer
+tokens. On a control page with 0 windows at risk (`her_gordugu_periye_gonul_muptela_olur_nota_p2`) all
+three configs give **16 strips, 5.6 s** — identical. The cost is paid only where it is needed.
+
+**Quality, on row s05**: the baseline reads the key signature as two `\kucukFlat` where the page has
+three (the split read gets all three, matching the owner's hand-checked label on `s06_w00`), and emits
+`\tup3 … \tup3` with no closing `\tupend`. The split read closes every group, and `min_logprob` on
+the later strips improves to −0.04 / −0.01 against −0.50 / −0.62.
+
+⚠ **NOT a result.** One page, one row inspected by eye. **No accuracy measurement against gold
+exists**, and the browser-vs-Python parity of the new rail is **unverified** — the shipped path is
+verified untouched (`parity:slicer`, 16/16 strips exact), but the rail itself has never been compared.
+`?dense=<ids>` is in the app as an opt-in path to look at, not to quote.
+
 ## The slicer's windowing was never retuned after the 2026-07-25 fix (2026-07-29)
 
 **The fix itself was right.** The old staff-detection kernel (`w/4`) lost the ends of staff lines,

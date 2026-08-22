@@ -211,6 +211,24 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
   unanimously. ⚠ **Treat any `\sig` block in a real-page label as unverified** until
   [docs/BACKLOG.md](docs/BACKLOG.md) item 9 is done. [docs/DECISIONS.md](docs/DECISIONS.md) ·
   [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md).
+- **`\tie` IS RETIRED — AN ARC IS LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Never write it,
+  never emit it: two tied notes are two plain notes (`la'2 la'8`), same pitches and same total
+  duration, so bar arithmetic and the stitcher are untouched. It was retired because the token had
+  three producers using it three ways — **65–78% of every `\tie` in the review queues joined two
+  DIFFERENT pitches**, which is a slur, not a tie. ⚠ **`\tie` stays in `ADDED_TOKENS` at its current
+  position** — ids are append-only, so removing it would break every checkpoint; it is simply a token
+  nothing emits. ⚠ **Applied to the real queues and the five real manifests only.** The synthetic
+  corpus still labels 1,246 ties and `_realval_v2` still expects them in 24% of rows; the render-side
+  change must land **before** the final render. `strips_exam_v2*` keeps its ties on purpose — it is
+  the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
+- **THE APP HAS NO LABEL-BUDGET RAIL, AND ON DENSE PAGES THAT MEANS SILENTLY WRONG NOTES.** The
+  browser slicer packs by measures and width only; at inference an over-budget strip cannot be
+  dropped, so the model emits `</s>` early and confidently. `hitCap` catches **7 of 4,012 (0.2%)**.
+  **`?dense=<ids>` (try 50) is an OPT-IN experiment**, not a default — it adds the budget rail so a
+  dense row is cut into strips the model can express. ⚠ Its browser-vs-Python parity is **unverified**
+  and there is **no gold accuracy measurement**; do not quote it as a result. Delete it by removing
+  the marked block in `apps/web/src/omr/slicer/windows.ts`, the `tokenBudget` option and the
+  `?dense=` read in `App.tsx`. [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,

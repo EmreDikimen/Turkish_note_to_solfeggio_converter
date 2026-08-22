@@ -7,7 +7,46 @@ updated: 2026-08-22
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-22 (latest) — the b8 guard is a quarter read, and it is holding up so far
+## 2026-08-22 (latest) — the arc token is retired, and the slicer is a PRODUCT bug
+
+Two findings from one labelling session, and they are unrelated to each other.
+
+**1. `\tie` is retired — an arc is now label-free ink, exactly like a slur.** Owner decision, taken
+because writing ties by hand was a large share of every correction. Measuring it turned the
+convenience argument into a data-quality one. Across the 20 non-frozen review queues, **65–78% of
+every `\tie` sat between two notes of DIFFERENT pitch**, which is not a thing a tie can be. Split by
+where it came from: the SymbTr derivation is perfect (**407 of 407 same-pitch** — it only ever splits
+one long note in two), and every wrong one came from a model decode (70% impossible) or from a decode
+seeded into a queue's `label` column (68%). ⚠ **404 of them were in the owner's own saved verdicts** —
+which is the real explanation, not carelessness: a curve joining two *different* notes is a **slur**,
+and the owner was labelling the ink they could see. A token three different producers use three
+different ways is not worth keeping for a symbol the app does not need.
+
+Removed: **10,951 from `label`, 15,611 from `decoded`, 872 from saved fixes** over 11,801 rows, plus
+**652 from the five real manifests** (all of those genuinely same-pitch). `.bak-notie` beside every
+file. `strips_exam_v2*` and `strips_exam_v2_clean` were **skipped on purpose** — they are the record
+of what Round 2 was graded on. ⚠ **Half-finished**: the synthetic corpus still carries 1,246 ties, and
+`_realval_v2` still has them in 64 of 267 rows, where they would distort model *selection*.
+Conventions: [../rung3/labeling.md](../rung3/labeling.md).
+
+**2. The slicer's label-budget rail was shelved against the wrong question, and that is shipping.**
+`WINDOW_MODE=budget` exists, was measured in July for **labelling yield**, came back a wash
+(75.8% vs 76.2%) and was deliberately **not ported** to the browser. Nobody re-asked it as a product
+question. So the app hands the model strips whose label needs ~130 ids when it can emit ~60, and the
+result is not a visible failure — **`hit_cap` fires on 7 of 4,012** truly over-budget strips, because
+the model stops early and *confidently* rather than running to the cap. **998 of 1,689 pages (59.1%)
+carry at least one such strip.** Numbers and the first experiment:
+[../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md).
+
+⚠ **Not a result yet.** One page was decoded three ways; the browser-vs-Python parity of the new rail
+is unverified, and no accuracy measurement against gold exists. `?dense=<ids>` is in the app as an
+opt-in path so it can be looked at, not quoted.
+
+**The ordering consequence, which is the expensive part.** If the shipping slicer changes, the exam
+should be cut on the same rule, or it grades crops the product never produces. Exam labelling was
+therefore **paused at 62 of 663 rows** rather than spending it twice.
+
+## 2026-08-22 — the b8 guard is a quarter read, and it is holding up so far
 
 Found during a doc sync: `strips_b8/emit_audit.csv` had been worked on the evening of 2026-08-21
 (mtime 23:57, after the 21:59 emit) while every doc still said the audit was **unread**. **58 of 201

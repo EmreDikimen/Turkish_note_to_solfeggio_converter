@@ -10,6 +10,52 @@ Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIO
 > The two review queues that were run through `review_ui.py` — **`realval-hard`** (2026-07-28) and
 > **`reslice-all`** (2026-07-31) — moved to [labeling-queues.md](labeling-queues.md) on 2026-08-07.
 
+## What we do NOT label — the arc (2026-08-22)
+
+⛔ **`\tie` is RETIRED. Do not type it, and do not emit it.** An arc on the page — tie or slur — is
+**label-free ink**, the same treatment `drawSlurArc` already gets. Two tied notes are written as two
+plain notes: `la'2 \tie la'8` becomes `la'2 la'8`. Same pitches, same total length, one token fewer.
+
+**Why this is safe.** A tie only ever exists in our labels for a mechanical reason: SymbTr stores a
+long value like 5/8 as ONE event, and no single notehead draws 5/8, so `tieSplitBeats`
+(`tools/render/rhythm.ts`) writes a pair. Both halves are the **same pitch** and they **sum to the
+original duration**, so dropping the token loses no note, no pitch and no bar arithmetic. The only
+loss is playback: the app re-strikes where the page holds. The owner accepted that — for learning
+notes and fingering it is invisible.
+
+**Why it was worth doing, measured over the 20 non-frozen queues.** The token had three producers and
+they disagreed about what it meant. Classified by whether the notes either side share a pitch (a tie
+can only join identical pitches):
+
+| where the `\tie` came from | real (same pitch) | impossible (different pitch) |
+|---|---|---|
+| `label`, in the emitter-derived pools | **407 (100%)** | 0 |
+| `label`, in decode-seeded queues (batch1/2/3, reslice-all, photo-gold, realval-hard) | 3,080 (29%) | **7,132 (68%)** |
+| `decoded` (the model) | 4,192 (27%) | **10,943 (70%)** |
+| `corrected_label` (saved human verdicts) | 176 (20%) | **681 (78%)** |
+
+The derivation from SymbTr is exact; every wrong one came from a model decode. ⚠ **404 of the human
+ones were the owner's own**, and they are not carelessness — a curve joining two *different* notes is
+a **slur**, and the owner was labelling the ink on the page. That is the confusion the retirement
+removes.
+
+**What was removed.** 10,951 from `label`, 15,611 from `decoded`, 872 from saved verdicts across
+11,801 rows; 652 from the five real manifests (`strips_nota` 563, `strips_r1` 57, `strips_b8` 24,
+`strips_tup` 7, `strips_exam_v3` 1 — all same-pitch, i.e. all genuine). `.bak-notie` sits beside every
+edited file.
+
+⛔ **`strips_exam_v2/` and `strips_exam_v2_clean/` were NOT touched** (594 ties). They are the record
+of what Round 2 was graded on; rewriting them makes that number unreproducible.
+
+⚠ **`\tie` stays in `ADDED_TOKENS` at its existing position.** Ids are append-only — removing it
+would shift every later token and break every checkpoint. It is a token nothing emits, which is also
+what lets Round 4 bring it back.
+
+⏭ **Still owed, or the corpus contradicts itself**: the synthetic corpus still labels 1,246 ties, and
+`_realval_v2` still expects them in 64 of 267 rows (24%), where they punish a model that no longer
+writes them during **selection**. The render-side change must land BEFORE the final render — after it
+costs a re-render of 40,826 strips. [../DECISIONS.md](../DECISIONS.md) · [../STATUS.md](../STATUS.md).
+
 ## Step 1 — Free labels from SymbTr matches
 
 ### 1a. neyzen ✅ DONE (2026-07-11)

@@ -2,10 +2,111 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-22
+updated: 2026-08-24
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-08-24 (latest) — the slice inspector grew a debug.png, and it found three slicer defects in one afternoon
+
+**The owner asked for `debug.png` in the slice inspector and then used it, which is how all of this
+started.** The overlay is the one thing the slicer port had deliberately left out — Python's
+`--debug` branch — and it is drawn from a finished `Stage3Result`, so the crops are identical with it
+on or off. Colours are Python's own, so the two overlays can be compared side by side.
+
+**Defect 1 — a faded photocopy loses whole rows and half-rows.** Three independent causes on
+`bozukNihavendLonga.png`, each measured rather than read: a group of 3 surviving staff lines is
+dropped by the 4-line floor (9 staves for 10 printed rows); the x-extent keeps only the LONGEST run
+of qualifying columns, so a fade throws the rest of the row away (one row discarded 420 px of 1008);
+and `detect_barlines` re-binarized each row with plain Otsu instead of the binarizer the page had
+already chosen, which on a pale page leaves the bars below the continuity floor and cuts every strip
+by WIDTH. Fixes: `STAFF_GAP_BRIDGE_SP`, `_repair_group`, and threading `page_binarizer`'s choice.
+
+**Defect 2 — a stem is a barline with a notehead on it, and the gate had the evidence all along.**
+Reported by the owner from a CLEAN page. `wide_beyond` already finds the notehead; the gate ignored
+it below a 15 px overshoot, and the false bars overshoot by 2, 10 and 14. On one row the rule
+inverted completely — real barline rejected, stem beside it accepted. Truth-based scoring moved
+**73 → 86 of 124 rows** with the regressed count unchanged. This is the session's biggest win and it
+came from the owner's own hypothesis.
+
+**Defect 3 — the repair's unit was wrong**, found because the owner had been uploading a
+**876×1118 screenshot** rather than the 1056×1290 original. On the smaller file one staff line is
+split into two clusters, putting a 6 px gap beside a 19 px one; `min()` took the artifact as the unit
+and rebuilt a 6 px staff, which the spacing band then refused. The base is now the page's own median
+line gap.
+
+**What was retracted.** The owner's notehead rule was first refused on a "runt measure" proxy. A
+false barline that splits a measure evenly produces two normal-width measures and no runt, so the
+proxy was blind to the cases the rule fixes; the threshold sweep built on it is retracted with it.
+Two further crop-quality probes were written and both answered the wrong question — the owner
+stopped the line with *"a cut almost never goes through a note; we should look at whether the cut
+lands somewhere that is not a barline"*, which is the question still open.
+
+**Numbers, all in [../METRICS-SLICER.md](../METRICS-SLICER.md).** 400 pages: +62 staves, +209 strips,
++102k px of extent, 0 pages worse on any structural count, 78.8% byte-identical. SymbTr truth:
+60 → 86 of 124 rows exact. ⚠ The two staff repairs cost ~1 row in 124 each against that truth, and
+the metric cannot see their benefit — the rows they rescue have no truth entry at all.
+
+**Also measured, for a decision the owner has not taken yet:** re-cutting the exam on this slicer
+would leave **1075 of 1369 crops unchanged** and invalidate **78 of the 452 verdicts already
+recorded** (55 fix, 21 bad, 2 ok). That is an optimistic lower bound — it compares crop spans, not
+pixels.
+
+⚠ **Still not fixed.** On the photocopy, 8 of 10 rows find no interior barline, and it is not a gate
+problem: tracing row 0's three real barlines, one runs 136 px, one 115 (4 short of the floor) and one
+only **22 px** — a dashed remnant with gaps of 11, 24, 17, 20 and 9 px. The ink is not on the paper.
+
+## 2026-08-23 — the exam's edit-box hint moves to `round2-stage2-best`, and the rule it broke was half right
+
+**The owner overturned a hard rule, with an argument the rule had not answered.** `examv3`'s edit box
+was seeded by `rung3-labeler`, a weak July checkpoint, deliberately: `round2-stage2-best` is the
+baseline column re-scored on this exam, so seeding gold from its decode anchors the answer key toward
+it. The owner's objection: *"I can make more mistakes if I continue with rung 3 labeler's model."*
+
+⭐ **That is the half the original decision never priced.** It weighed the model's bias against zero
+human cost. But a bad hint does not only cost keystrokes — it *causes reader errors*, and a reader
+error lands in the gold exactly like an anchored one. Both roads lead to a wrong answer key.
+
+**Measured rather than argued.** The exam already holds **214 hand-verified rows** (139 `examv3-full`
++ the review rows verdicted so far), which is a ground truth both decodes can be scored against:
+
+| on 214 verified rows | `rung3-labeler` | `round2-stage2-best` |
+|---|---|---|
+| rows needing no typing (exact match) | 102 (48%) | **135 (63%)** |
+| token edits to type | 223 | **150 (−33%)** |
+| errors per token | 0.103 | **0.069** |
+
+⚠ The comparison is **biased toward the labeler**: those 214 rows were read with the labeler's hint on
+screen, so any anchoring in the gold flatters it. The true gain is a floor, not a ceiling.
+
+⭐ **What did NOT move, and it is the whole safety argument.** Only the `decoded` column changed. The
+`label` column — what an `ok` verdict promotes as gold — is untouched, and `emit_strip_labels.py` was
+**not** re-run, so the model-voted `\sig` override was not re-voted by a graded model. The hint is a
+typing aid a reader overrules by looking at the picture; the label is the answer key.
+
+**Mitigation, built in rather than promised.** All **576** refreshed rows carry `redecoded=1`, so the
+one-shot read reports the primary **twice** — all 64 pages, and pages containing no re-decoded row.
+Divergence becomes measurable instead of arguable.
+
+**The trap that shaped the implementation.** `decode_page()` calls `page_to_strips` *before* it
+decodes, so the ordinary way to refresh a decode also re-cuts the page — and `examv3`'s crops had just
+been frozen (the rail deferral, below), with 87 verdicts and 127 carried-gold suggestions positioned on
+those exact pixels. So `scripts/rung3/redecode_strips.py` reads the PNGs on disk instead and rewrites
+only model-produced fields, copying the stored window signature through so `window_cache_ok()` still
+passes. **Verified after the run: all 1,436 crops byte-identical**, 0 integrity violations in the
+queue merge, 127 suggestions intact. 8.6 min for 1,369 strips at `OMR_ORT_THREADS=2 nice -19`.
+
+⭐ **The hint is also tie-free** (owner, same day). `round2-stage2-best` predates the `\tie` retirement, so it still emits the token — **133 of them over 94 pending rows**, which would have been 133 hand-deletions. Removed as a **substring** and the space collapsed, never by `split()`, because decodes carry both `a'4. \tie a'8` and the compact `a'4. \tiea'8` ([../rung3/labeling.md](../rung3/labeling.md)). Two safety checks first: **0 of 133** had a barline between tie and tail, so no accidental carry could reset and no restrike was needed; and **62% joined two DIFFERENT pitches**, i.e. were slurs — the retirement's own 65–78% finding, reproduced on the exam. `label` and `corrected_label` were already clean.
+
+⚠ **The raw `_decode.json` keeps its ties on purpose** — it is the record of what the model emitted, and `eval_omr.py` already drops `\tie` from both gold and decode at scoring time. The filter lives in `merge_redecode_into_queue.py --drop-ties`, so the queue is clean and the record is intact.
+
+⚠ **The 567 dropped crops do not come back** — they drop on `split_wide` (414) and `over_budget`
+(153), neither of which a better decode touches. The exam stays at **64 pages / 663 rows**; what
+improved is the hint inside them.
+
+⏭ **Not done, and it is a separate decision**: re-running the emitter would re-align the **315**
+pending `row_unaligned` rows that carry no derived label at all. That changes the LABEL, not the hint,
+and would hand the `\sig` vote to a graded model — a materially bigger step than this one.
 
 ## 2026-08-23 — the rail goes to Round 4, the exam is released, and two files were split
 
@@ -146,7 +247,7 @@ original keeps the one open question. Details: [../METRICS-SLICER-WINDOWS.md](..
 [../mvp/slicer-port.md](../mvp/slicer-port.md).
 
 
-## 2026-08-22 (latest) — `b8-audit` is read whole: the re-emitted pool is 13.4% wrong, and repeat structure is the biggest class
+## 2026-08-22 — `b8-audit` is read whole: the re-emitted pool is 13.4% wrong, and repeat structure is the biggest class
 
 Track B step 3's guard, finished. All **201 rows** of the re-emit's seeded 5% sample of ACCEPTED
 labels were read by hand (`by` is empty on every row — no machine verdicts): **27 `fix` / 174 `ok` =

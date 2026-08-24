@@ -2,7 +2,7 @@
 
 purpose: the single home for how a real page is READ INTO AN INK MASK — binarization, grayscale fidelity, opencv.js parity, and which slicer the labelled pools came from
 audience: agents and the owner, before changing the slicer or re-slicing a pool
-updated: 2026-08-17
+updated: 2026-08-24
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-07-29 when that file crossed
 the 400-line cap: that file keeps **what the model gets wrong**, this one **what the page-cutter
@@ -49,6 +49,159 @@ lyrics-page failure, text baselines grouped into "staves".
 the fallback**. `PALE_LINE_MIN_ROWS` gates on clustered *line rows*, not staves, so a page with ≥4 rows
 of horizontal ink that `detect_staves` cannot group into 5-line systems fails late and is never
 retried. Recorded, not acted on.
+
+## A faded page loses whole rows and half-rows, and three fixes for it (2026-08-24)
+
+Owner-reported from the slice inspector's new `debug.png` overlay on `bozukNihavendLonga.png` —
+the same 1056 px re-scanned photocopy the pale-line fallback above was built for. The fallback got
+it from **0 staves to 9**; this is the layer underneath. Three independent causes, all measured on
+that page with `_staff_line_rows` / `_emit_staff` instrumented directly:
+
+| cause | what it does | evidence on that page |
+|---|---|---|
+| a group of **3** surviving staff lines is dropped by the `4 <= len <= 7` floor | the whole row produces no strips | row 2's rows are `[268, 287, 299]` — 2 of 5 lines lost to the opening → 9 staves for 10 printed rows |
+| the x-extent keeps only the **longest** run of qualifying columns | measures at a row's ends are never cut | 7 of 9 staves split into 2-6 runs; s05 discarded **420 px** of a 1008 px row, s07 128 px across 6 runs |
+| `detect_barlines` re-binarized the row with **plain Otsu**, not the binarizer the page chose | no interior barline → every strip cut by WIDTH, through the music | longest vertical run maxed at **115 px** against the 119 needed; under the page's own binarizer, **57** columns pass |
+
+⚠ The gaps that broke the extent runs were **marginal**: 28 px against a 27 px tolerance, 34 against
+31, 45 against 30. A 1 px margin was deciding 159 px of music.
+
+**The fixes**, and what each is worth. `STAFF_GAP_BRIDGE_SP` 3.0 → **6.0** (fades bridge, a scan
+border still does not); `_repair_group` rebuilds a 3-line group; `page_binarizer`'s choice is
+threaded into `detect_barlines` / `window_measures` instead of each re-running Otsu.
+
+400 random corpus pages, geometry only, no deskew and no model (`arms.py` pattern, 0.18 s/page):
+
+| arm | staves | strips | interior bars | measures | x-extent (px) |
+|---|---|---|---|---|---|
+| `+binarizer` | +0 | +3 | +5 | +6 | +0 |
+| `+extent` | +0 | +65 | +41 | +46 | +24,413 |
+| `+repair` | +54 | +117 | +42 | +94 | +64,659 |
+| **all three** | **+54** | **+199** | **+83** | **+141** | **+95,323** |
+
+**0 pages got worse on any of those five counts**, and 318 of 400 (79.5%) are byte-identical. The
+binarizer arm reads near-zero here because it is a literal no-op on every page whose chooser
+returns `binarize_ink`; on the pale page itself it is what took 3 rows from 0 interior barlines to
+4, 2 and 1.
+
+⚠ **The repair's first version invented a staff out of a block of underlined LYRICS**
+(`huzzam/gonul_dustu_care_yoktur_nota_p1`, +79 staves across the sample instead of +54). Even
+spacing and integer gaps were not enough — text baselines pass both. `STAFF_REPAIR_SP_BAND`
+(0.70–1.40 × the page's median line-row gap) is what refuses it: the lyric block repairs at
+**1.97×**, every genuine repair in the sample at **0.94–1.32×**. Same argument as
+`page_binarizer`'s shape check, one level down.
+
+⚠ **The staff fixes COST measure-count accuracy on rows that already worked.** Against SymbTr
+truth (`score_slicer.py --sample 25`, 124 rows), on top of the barline rule below: both off
+**88/124**, extent only 87, repair only 87, both on **86**. So each costs about one row in 124.
+The metric cannot see their benefit by construction — its truth comes from aligning the OLD
+pipeline's decodes, so a row that pipeline never read has no truth entry, and those are exactly the
+faded rows the fixes rescue. Both facts are real; the trade was taken deliberately, because a lost
+row is total data loss while a wrong measure count is a recoverable indexing error.
+
+## A stem is a barline with a notehead on it — and the gate had the evidence all along (2026-08-24)
+
+Owner-reported from the slice inspector on `Meltem - 1. Hane.png`, a **clean** page: all three rows
+cut at note stems. The owner's proposal — *if a notehead sits at the end of the stroke it is a stem,
+not a barline* — turned out to be already computed and simply not acted on.
+
+`_terminal_overshoot` returns `wide_beyond`, "is there a notehead/beam attached past a staff line".
+The gate only consulted it once the stroke ALSO overshot a staff line by more than `OV_TOL_SP`
+(15 px). Every false barline on that page overshoots by **2, 10 and 14 px** — all under it. And on
+row 1 the rule inverted completely: the **real** barline at page x=1180 was rejected `gate3_blob`
+(a notehead touches it) while the **stem** 40 px to its left was accepted.
+
+`wide_beyond` separates the page perfectly — false at every real barline (page x 1331, 1427, 892),
+true at every stem (563, 1139, 785).
+
+**Measured against SymbTr truth**, changing the rule to *any* overshoot carrying a notehead:
+
+| | exact rows | improved | regressed |
+|---|---|---|---|
+| old rule | 73/124 (58.9%) | 28 | 11 |
+| **notehead rule** | **86/124 (69.4%)** | **43** | **11** |
+
+**+13 rows and the regressed count does not move.** `dn` errors of 2 fall 12 → 4. On Meltem all
+three stems are gone and no cut crosses ink; the two remaining non-barline cuts are `_split_wide`
+gutters in whitespace.
+
+**The session as a whole is 60 → 86 of those 124 rows** — `data/real/rung3/score_slicer.csv`, the
+run of 2026-08-24. The `old_*` columns in it are the pipeline the labelled pools were **actually cut
+with**, so that is the honest before: **48.4% of truth-bearing rows matched the printed measure
+count yesterday, 69.4% do now.** ⚠ **Do not read the 73 and the 88 above as that same baseline** —
+each per-fix table holds the other fixes in a fixed state to isolate one change, and only this line
+compares today's slicer against the shipped one. ⚠ Same construction caveat as everywhere in this
+section: the truth comes from aligning the OLD pipeline's decodes, so a row it never read is absent
+from all four numbers.
+
+⚠ **The cost is a real barline that a notehead merely TOUCHES** — the ±3 px walk cannot tell that
+from an attachment, and x=1180 above stays rejected. The owner judged that case rare and took the
+trade; the flat regressed count is the evidence for it.
+
+⚠ **A RETRACTED NUMBER.** This rule was first rejected on a probe that counted "runt measures"
+(a measure far narrower than its row's median) and read −16.1% barlines for −49.4% runts. **That
+metric is not valid for this question**: a false barline splitting a measure roughly in half
+produces two normal-width measures and no runt at all, so the proxy was blind to the very cases the
+rule fixes. The threshold sweep built on it (0/4/8/12/15 px, "monotone, ≥2.9 real bars lost per
+runt fixed") is retracted with it. Truth-based scoring reversed the conclusion.
+
+⚠ **The repair's unit must be the PAGE's spacing, not the group's own smallest gap** (2026-08-24,
+owner-reported on a **876×1118 screenshot** of the same photocopy — a different file from the
+1056×1290 original, and the resolution is what exposed it). There the surviving lines are
+`[266, 285, 291]`: gaps of **19 and 6** on a page whose median line gap is **9**. The 6 is one real
+line split into two clusters; `min()` took it as the unit and rebuilt a 6 px staff, which
+`STAFF_REPAIR_SP_BAND` then refused at 0.67× — so the row was lost twice over. Using `page_sp` as
+the base rebuilds it correctly and costs nothing: the original page is unchanged at 10 staves, the
+screenshot goes 9 → 10, and truth-based scoring is unmoved at **86/124**.
+
+⚠ **Still NOT fixed, and on the worst pages it is NOT a gate problem.** On the photocopy 8 of 10
+rows find no interior barline. The candidates are not being wrongly rejected — the **ink is not
+there**. Tracing row 0's three real barlines against the 119 px continuity floor (85% of the 140 px
+band): page x=572 runs 136 px and does become a candidate, but **x=865 reaches 115 px** (4 px short)
+and **x=425 reaches only 22 px**. That last one is a dashed remnant — 59 px of ink in four pieces
+split by gaps of **11, 24, 17, 20 and 9 px**. Recovering it needs a gap-TOLERANT continuity test,
+which is not a free change: a stem is already ~105 px of solid run, so a ~25 px gap budget lets
+stem+beam chains reach the floor too. Not attempted; it needs its own measurement.
+
+⚠ A two-mask experiment — find candidates on the sensitive mask, test thinness on strict Otsu — was
+tried and **rejected**: interior bars on that page went 3 → 4 while `gate2_fat` rejections rose
+68 → 76. The bloating hypothesis it was built on is wrong.
+
+Corpus-wide, over 400 pages, **27.0% of all strips are width-split** and **11.0% of staff rows have
+no interior barline at all**. Nothing here addresses that.
+
+## Crop quality has no settled metric — two probes answered the wrong question (2026-08-24)
+
+Written up so they are not re-run. The owner wanted a way to collect mis-cut strips automatically
+instead of listing them by hand while labelling.
+
+| probe | reads | verdict |
+|---|---|---|
+| cut passes THROUGH a symbol (a run at least a notehead wide straddles the cut column) | **1 of 754 cuts (0.1%)** — and **the same 1 of 745 before this session's fixes** | ⛔ cannot see the failure; a first version fired on smudged barlines until it was made to use the codebase's own `fat` definition (0.75 sp) |
+| cut lands inside a beamed connected component | **117 of 754 (15.5%)** | closer, **unvalidated**, stopped there |
+
+⭐ **The owner's framing is the one to build on** (*"a cut almost never goes through a note; we should
+look at whether the cut lands somewhere that is not a barline"*). The failure that started this — an
+exam strip whose note read as a quarter — had its **notehead intact and its beam in the previous
+strip**, so nothing straddled the cut and a through-the-ink test is structurally blind to it.
+
+⛔ **No slicer fix should be scored on the first two probes.**
+
+## Re-cutting the exam on the current slicer, priced (2026-08-24)
+
+Read-only comparison of the frozen `strips_examv3` manifests against a fresh slice of the same pages:
+
+| | |
+|---|---|
+| strips in examv3 | 1,369 |
+| crop span **unchanged** | 1,075 (78.5%) |
+| **moved or gone** | 294 (21.5%) |
+| verdicts already recorded | 452 |
+| **verdicts invalidated** | **78** (55 fix, 21 bad, 2 ok) |
+
+⚠ **Optimistic lower bound.** It compares `row_x0`–`row_x1` only; a row whose vertical placement
+moved gives different pixels under the same span. The exact figure needs the crops themselves
+compared.
 
 ## The slicer is insensitive to ±1 grayscale noise (2026-08-02)
 

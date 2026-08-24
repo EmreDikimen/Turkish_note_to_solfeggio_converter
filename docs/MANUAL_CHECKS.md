@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-16
+updated: 2026-08-24
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -148,6 +148,18 @@ bottom** (durations become unreadable), a crop that is nearly empty, a staff mis
 strip count will be low for the number of staves), or a page that reports 0 staves.
 
 **old placement (ornaments outrank beams)** re-slices every page under the pre-2026-08-05 rule, where ink above the staff could claim room without limit and shear the beams below. Tick it on a page with a slur or segno above a beamed run and compare the bottom edge.
+
+**debug overlay (debug.png)** draws the whole page with the slicer's decisions on top of it — the
+same picture `page_to_strips.py --debug` writes, in the same colours, so the browser's and Python's
+can be compared side by side. Green = the staff lines found, blue = the barlines ACCEPTED, red = the
+padded crop each strip holds, and four colours for the barline candidates thrown away (orange too
+fat, purple runs on past the staff, yellow a notehead/flag/beam over a line, grey outside the
+staff). Read it when the crops themselves look wrong for no visible reason: a measure swallowed by
+its neighbour shows up here as a barline coloured as a reject rather than accepted, which the crops
+alone cannot tell you. **⬇ save debug.png** downloads it as `<page>_debug.png`. Ticking the box
+after a page is loaded re-slices that ONE page to draw it (~2.7 s measured, `feryad_kim_ney_p2`,
+n=1) — the slicer is deterministic, so the crops and any labels already read are kept exactly as
+they were.
 
 ⚠ It is **view-only by design** (owner, 2026-08-05): deleting a strip changes nothing outside this
 page — no score is built here, and nothing is written to disk. A reload starts empty.

@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-22
+updated: 2026-08-23
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -365,7 +365,7 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
   piece settles all of them** — 36 pieces carry a signature, not 663 rows. Start with the 8 that
   disagree with our makam table ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)): huseyni, nikriz,
   segah, three mahur pieces, muhayyerkurdi, sehnaz.
-- ⛔ **THAT DECODE STAYS ON `rung3-labeler`, AND IT IS NOT UPGRADED** (owner, 2026-08-21). A better
+- ⛔ ~~**THAT DECODE STAYS ON `rung3-labeler`, AND IT IS NOT UPGRADED** (owner, 2026-08-21)~~ **OVERTURNED 2026-08-23 (owner): the hint IS upgraded to `round2-stage2-best`; the LABEL is not.** Only the `decoded` column moved — `emit_strip_labels.py` was not re-run, so the derived `label` and its model-voted `\sig` are still the July model's, not a graded model's. Why the reversal: a bad hint *causes reader errors* that land in the gold too, which the reasoning below never priced. Measured on the 214 rows already verified here — **223 → 150 token edits (−33%)**, **48% → 63% exact rows** — and that test is biased toward the labeler, since those rows were read with its hint on screen. All 576 refreshed rows carry `redecoded=1` so the read can report the primary with and without them ([../DECISIONS.md](../DECISIONS.md)). Original reasoning kept, because the LABEL half still rests on it: A better
   hint would save keystrokes here — `round2-stage2-best` reads far better — but it is the **baseline
   column** re-scored on this exam, so seeding gold from its decode anchors the answer key toward it:
   an error you do not catch becomes "correct", and it is that model's error. The July model's errors

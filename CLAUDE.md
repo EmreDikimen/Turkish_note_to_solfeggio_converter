@@ -84,11 +84,20 @@ a successful build is not a deploy. Both, and every other command, in
   exam is read once per round on the final model. All iteration happens on real-val.
 - **Photos of exam pieces are EXAM-ONLY.** Training on them leaks the exam. Camera photos for
   training must come from different pieces.
-- **NEVER SEED EXAM GOLD FROM THE DECODE OF A MODEL THAT WILL BE GRADED ON THAT EXAM** (owner,
+- **NEVER SEED EXAM *GOLD* FROM THE DECODE OF A MODEL THAT WILL BE GRADED ON THAT EXAM** (owner,
   2026-08-21). It anchors the answer key toward that model: an error the reader lets past becomes
-  "correct", and it is that model's own error. So the exam is **not re-emitted** and its edit-box
-  decode stays on `rung3-labeler`, whose mistakes are noise rather than bias. `_realval_v2` keeps its
-  `round2-stage2-best` seed because real-val **selects** and does not grade. ⚠ The training pools go
+  "correct", and it is that model's own error. **The `label` column is gold — it is what an `ok`
+  verdict promotes — so it stays derived, and `emit_strip_labels.py` is NOT re-run on the exam**,
+  which is what keeps the model-voted `\sig` override off a graded model.
+  ⚠ **THE *HINT* IS A DIFFERENT THING AND THE RULE WAS OVERTURNED FOR IT ON 2026-08-23** (owner):
+  `examv3`'s edit-box `decoded` column now comes from **`round2-stage2-best`**, not `rung3-labeler`.
+  The argument that won: a bad hint *causes reader errors*, which land in the gold just like an
+  anchored one — the old rule priced the model's bias and priced the human's error at zero. Measured
+  on the 214 already-verified rows: **223 → 150 token edits (−33%)**, **48% → 63% exact rows**.
+  All 576 refreshed rows carry **`redecoded=1`** so the read reports the primary twice, with and
+  without them. ⚠ **Re-decode with `scripts/rung3/redecode_strips.py`, NEVER `decode_page()`** —
+  that slices before it decodes and would re-cut the frozen exam crops.
+  `_realval_v2` keeps its `round2-stage2-best` seed because real-val **selects** and does not grade. ⚠ The training pools go
   the other way — one model, `round2-stage2-best`, for the whole re-emit: the gate model also aligns
   rows, and the weak referees threw away **10,695 strips** on alignment against 2,330 accepted, so
   yield dominates. A morning's plan to split "gate" and "hint" models was cancelled the same day.

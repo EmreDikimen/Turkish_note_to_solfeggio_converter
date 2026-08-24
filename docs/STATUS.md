@@ -2,9 +2,31 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-23
+updated: 2026-08-24
 
 ## Now
+
+⭐ **THE SLICER TOOK THREE FIXES ON 2026-08-24, ALL FOUND WITH THE INSPECTOR'S NEW `debug.png`.**
+The biggest is the owner's own: **a notehead attached past a staff line means STEM, whatever the
+overshoot** — the gate already computed that evidence and ignored it below 15 px, and on one clean
+page it rejected the real barline while keeping the stem beside it. Against SymbTr truth, rows whose
+measure count matches the print go **60 → 86 of 124**, regressed unchanged. With it: **one page, one
+binarizer** (the row gates stop re-running Otsu), fade-broken staff extents bridge, and a staff with
+3 surviving lines is rebuilt. 400 pages: **0 worse** on any structural count, 78.8% unchanged.
+⚠ The two staff repairs cost ~1 row in 124 against that truth, and the metric **cannot see their
+benefit** — the faded rows they rescue have no truth entry.
+[METRICS-SLICER.md](METRICS-SLICER.md) · [DECISIONS.md](DECISIONS.md).
+
+⛔ **CROP QUALITY HAS NO SETTLED METRIC, AND TWO PROBES ANSWERED THE WRONG QUESTION.** Cuts passing
+THROUGH a symbol are **1 in 754 and were already that rare** before the fixes. The owner's framing is
+the one to build on: *does the cut land somewhere that is not a barline?* A third probe (cuts inside a
+beamed group, **15.5%**) is closer but unvalidated. Nothing should be scored on the first two.
+
+⏭ **THE EXAM RE-CUT IS AUTHORISED BUT NOT DONE, AND ONE FIX IS STILL OPEN BEFORE IT.** Re-cutting on
+this slicer leaves **1075 of 1369 crops unchanged** and invalidates **78 of 452 verdicts**. The
+recommendation on the table is to finish the extent rule first — it changes crops again — then cut
+**once**: `strips_examv3` is kept as the record, the new root is `examv4`, and the 374 surviving
+verdicts carry over. ⚠ Exam labelling is paused at 452 of 663 until this is settled.
 
 ✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — an arc is label-free ink, like
 a slur, because **65–78% of every `\tie` in the queues joined two DIFFERENT pitches**. Render, gold

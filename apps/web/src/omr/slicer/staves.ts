@@ -12,7 +12,10 @@ import {
   PALE_LINE_MAX_REL,
   PALE_LINE_MIN_REL,
   PALE_LINE_MIN_ROWS,
+  STAFF_GAP_BRIDGE_SP,
   STAFF_HOR_FRAC,
+  STAFF_REPAIR_3LINE,
+  STAFF_REPAIR_SP_BAND,
   TARGET_SPACING,
   diff,
   median,
@@ -153,11 +156,11 @@ export function detectStaves(ink: Gray): Staff[] {
     if (cur - prev <= sp * 2.2) {
       group.push(cur); // same staff
     } else {
-      emitStaff(group, ink, staves); // new system
+      emitStaff(group, ink, staves, sp); // new system
       group = [cur];
     }
   }
-  emitStaff(group, ink, staves);
+  emitStaff(group, ink, staves, sp);
   return staves;
 }
 
@@ -179,8 +182,63 @@ export function clusterRows(rows: ArrayLike<number>, gap = 3): number[] {
   return out;
 }
 
+/**
+ * `_repair_group` (L355): a 3-line group with the other two lines missing -> the repaired 5, or
+ * null.
+ *
+ * On a faded photocopy the horizontal opening can lose individual staff lines while keeping the
+ * rest, and a group of 3 is thrown away by the 4-line floor in `emitStaff` — the whole row then
+ * produces no strips. The lost lines are recoverable because a staff is EVENLY spaced: a gap of
+ * ~2x its neighbours has one line missing inside it, and a staff short of 5 continues at the same
+ * pitch. Nothing is invented that the surviving lines do not already imply.
+ *
+ * Four tests keep a text block out — integer multiples, at most 5, evenly spaced, and the one that
+ * does the real work: the spacing must match the REST OF THE PAGE (`pageSp`, the median line-row
+ * gap). The first three alone still admitted a block of underlined lyrics as a staff; it is
+ * `STAFF_REPAIR_SP_BAND` that refuses it.
+ */
+export function repairGroup(group: number[], pageSp: number | null = null): number[] | null {
+  if (group.length !== 3) return null;
+  // The unit to rebuild in is the PAGE's line spacing, not the group's own smallest gap. A
+  // detected "line" can be one real line split into two clusters, which puts a 6 px gap next to a
+  // 19 px one on a page whose true spacing is 9; `min` then takes the artifact as the unit and
+  // rebuilds a 6 px staff, which STAFF_REPAIR_SP_BAND rightly refuses — and the row is lost.
+  // Measured on a 876x1118 screenshot of bozukNihavendLonga (owner, 2026-08-24).
+  const base = pageSp ? pageSp : Math.min(...diff(group));
+  if (base < 4) return null; // too fine to be a staff at any real resolution
+  const filled: number[] = [group[0]!];
+  for (let i = 0; i + 1 < group.length; i++) {
+    const prev = group[i]!;
+    const cur = group[i + 1]!;
+    const k = pyRound((cur - prev) / base);
+    if (!(k >= 1 && k <= 3)) return null; // not an integer multiple: not a dropped line
+    for (let j = 1; j < k; j++) filled.push(pyRound(prev + (j * (cur - prev)) / k));
+    filled.push(cur);
+  }
+  if (filled.length > 5) return null;
+  const sp = median(diff(filled));
+  while (filled.length < 5) filled.push(pyRound(filled[filled.length - 1]! + sp));
+  const d = diff(filled);
+  if (Math.max(...d) - Math.min(...d) > 0.5 * sp) return null; // must end up evenly spaced
+  if (pageSp) {
+    // ... and be the same staff as the page's others
+    const [lo, hi] = STAFF_REPAIR_SP_BAND;
+    if (!(lo * pageSp <= sp && sp <= hi * pageSp)) return null;
+  }
+  return filled;
+}
+
 /** `_emit_staff` (L355): accept a group as a staff if it is ~5 evenly-spaced lines. */
-export function emitStaff(group: number[], ink: Gray, out: Staff[]): void {
+export function emitStaff(
+  group: number[],
+  ink: Gray,
+  out: Staff[],
+  pageSp: number | null = null
+): void {
+  if (STAFF_REPAIR_3LINE && group.length === 3) {
+    const repaired = repairGroup(group, pageSp);
+    if (repaired) group = repaired;
+  }
   if (!(group.length >= 4 && group.length <= 7)) return;
   if (group.length > 5) {
     // extra long horizontals (a VOLTA bracket above, an ottava/lyric rule below) can ride along
@@ -225,8 +283,9 @@ export function emitStaff(group: number[], ink: Gray, out: Staff[]): void {
   if (xs.length === 0) return;
 
   // keep the longest gap-tolerant run of qualifying columns: stray blobs and scan-border
-  // artifacts far from the staff must not stretch the extent
-  const gapTol = Math.trunc(3 * sp);
+  // artifacts far from the staff must not stretch the extent. The tolerance is what separates a
+  // FADE inside one staff line from a genuinely separate piece of ink — see STAFF_GAP_BRIDGE_SP.
+  const gapTol = Math.trunc(STAFF_GAP_BRIDGE_SP * sp);
   const runs: Array<[number, number]> = [];
   let start = xs[0]!;
   let prev = xs[0]!;

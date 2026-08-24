@@ -72,6 +72,8 @@ interface PageItem {
   thumbUrl: string;
   sliced: SlicedPage;
   strips: StripItem[];
+  /** the `_debug.png` overlay, once it has been drawn for this page (see the `debug` checkbox) */
+  debugCanvas?: HTMLCanvasElement | null;
 }
 
 const pages: PageItem[] = [];
@@ -119,6 +121,12 @@ style.textContent = `
   .label .raw { display: block; margin-top: 5px; color: #8a8a8a; font-size: 11.5px; font-weight: 400; }
   .label .unsure { float: right; color: #b26a00; font-size: 11.5px; }
   .label.none { color: #888; font-style: italic; font-family: inherit; }
+  .overlay { border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 14px; background: #fff; }
+  .overlay header { display: flex; gap: 12px; align-items: baseline; font-size: 12px; color: #555;
+                    margin-bottom: 6px; flex-wrap: wrap; }
+  .overlay canvas { display: block; max-width: 100%; height: auto; background: #fafafa; }
+  .overlay .legend { font-size: 11.5px; color: #555; margin-top: 6px; display: flex;
+                     flex-wrap: wrap; gap: 4px 14px; }
   .vplace { font-size: 11.5px; color: #777; }
   .vplace.bad { color: #b00; font-weight: 600; }
   .empty { color: #888; padding: 30px 0; }
@@ -137,6 +145,7 @@ root.innerHTML = `
     <label><input id="actual" type="checkbox" /> actual size</label>
     <label title="Decode every strip with the model as soon as the page is sliced (~1.2 s a strip). Untick to slice only, which is ~1.6 s a page."><input id="autoread" type="checkbox" checked /> read with the model</label>
     <label title="Restore the OLD rule, where a slur or ornament above the staff could push the staff down and shear the beams below. Off = the capped rule that ships. Re-slices every page."><input id="bottomfirst" type="checkbox" /> old placement (ornaments outrank beams)</label>
+    <label title="Draw the page with the slicer's decisions on top of it — the same picture page_to_strips.py --debug writes as [page]_debug.png. Ticking it later re-slices the page it is shown for, which costs one more slice and changes no crop."><input id="debug" type="checkbox" /> debug overlay (debug.png)</label>
     <button id="clear">Clear all</button>
   </div>
   <div id="status" class="status"></div>
@@ -149,6 +158,7 @@ const actualBox = root.querySelector<HTMLInputElement>("#actual")!;
 const clearBtn = root.querySelector<HTMLButtonElement>("#clear")!;
 const bottomFirstBox = root.querySelector<HTMLInputElement>("#bottomfirst")!;
 const autoReadBox = root.querySelector<HTMLInputElement>("#autoread")!;
+const debugBox = root.querySelector<HTMLInputElement>("#debug")!;
 const statusEl = root.querySelector<HTMLDivElement>("#status")!;
 const thumbsEl = root.querySelector<HTMLDivElement>("#thumbs")!;
 const detailEl = root.querySelector<HTMLDivElement>("#detail")!;
@@ -176,6 +186,7 @@ async function addPages(files: File[]) {
       const stem = file.name.replace(/\.[^.]+$/, "") || "page";
       try {
         const sliced = await slicePage(url, stem, {
+          debug: debugBox.checked,
           onProgress: (phase, done, total) =>
             setStatus(done != null ? `${prefix}${phase}… ${done}/${total}` : `${prefix}${phase}…`),
         });
@@ -185,7 +196,10 @@ async function addPages(files: File[]) {
           canvas: s.image as HTMLCanvasElement,
           geom: sliced.geometry[k]!,
         }));
-        const page: PageItem = { id: nextId++, fileName: file.name, stem, thumbUrl: url, sliced, strips };
+        const page: PageItem = {
+          id: nextId++, fileName: file.name, stem, thumbUrl: url, sliced, strips,
+          debugCanvas: sliced.debugCanvas,
+        };
         pages.push(page);
         selectedId = page.id;
         render();
@@ -264,6 +278,42 @@ async function readPage(p: PageItem) {
 }
 
 
+// ---------------------------------------------------------------------------------------------
+// The debug overlay
+
+let drawingOverlay = false;
+
+/**
+ * Draw the `_debug.png` overlay for one page, if it does not have one yet.
+ *
+ * It is drawn during the slice, so a page uploaded with the box unticked has to be sliced a second
+ * time to get one. That is deliberate and it is safe: the slicer is deterministic, so the second
+ * pass cuts exactly the same crops — this function therefore keeps the page's existing strips and
+ * their labels and takes nothing from the new result but the picture. It is done for the SELECTED
+ * page only, so ticking the box with ten pages loaded costs one slice, not ten.
+ */
+async function ensureOverlay(p: PageItem) {
+  if (p.debugCanvas || drawingOverlay) return;
+  drawingOverlay = true;
+  try {
+    setStatus(`drawing the debug overlay for ${p.fileName}… (one more slice of this page)`);
+    const again = await slicePage(p.thumbUrl, p.stem, { debug: true });
+    p.debugCanvas = again.debugCanvas;
+    setStatus(`debug overlay drawn for ${p.fileName} — the crops are unchanged`);
+  } catch (err) {
+    setStatus(String(err), true);
+  } finally {
+    drawingOverlay = false;
+    render();
+  }
+}
+
+debugBox.addEventListener("change", () => {
+  const p = pages.find((x) => x.id === selectedId);
+  if (debugBox.checked && p) void ensureOverlay(p);
+  else render();
+});
+
 /**
  * Re-slice everything under the other vertical-placement rule (see `VPLACE_BOTTOM_FIRST`).
  *
@@ -283,8 +333,9 @@ async function resliceAll() {
   try {
     for (const [i, p] of pages.entries()) {
       setStatus(`re-slicing ${i + 1}/${pages.length}: ${p.fileName}…`);
-      const sliced = await slicePage(p.thumbUrl, p.stem);
+      const sliced = await slicePage(p.thumbUrl, p.stem, { debug: debugBox.checked });
       p.sliced = sliced;
+      p.debugCanvas = sliced.debugCanvas;
       p.strips = sliced.strips.map((st, k) => ({
         name: st.name ?? `strip ${k}`,
         canvas: st.image as HTMLCanvasElement,
@@ -376,6 +427,7 @@ function renderThumbs() {
     el.addEventListener("click", () => {
       selectedId = p.id;
       render();
+      if (debugBox.checked) void ensureOverlay(p);
     });
     thumbsEl.appendChild(el);
   }
@@ -429,6 +481,73 @@ function labelEl(st: StripItem): HTMLElement {
   return el;
 }
 
+/**
+ * The whole page with the slicer's decisions drawn on it — Python's `<page>_debug.png`.
+ *
+ * The strips below answer "what did the model get"; this answers "why those and not others". A
+ * missing measure shows up here as a barline the detector coloured as a reject instead of
+ * accepting, which the crops alone cannot tell you.
+ */
+function overlayEl(p: PageItem): HTMLElement {
+  const box = document.createElement("div");
+  box.className = "overlay";
+
+  const head = document.createElement("header");
+  const title = document.createElement("span");
+  title.className = "id";
+  title.textContent = `${p.stem}_debug.png`;
+  head.appendChild(title);
+
+  const spacer = document.createElement("span");
+  spacer.style.flex = "1";
+  head.appendChild(spacer);
+
+  if (!p.debugCanvas) {
+    const wait = document.createElement("span");
+    wait.textContent = drawingOverlay ? "drawing…" : "not drawn yet";
+    head.appendChild(wait);
+    box.appendChild(head);
+    return box;
+  }
+
+  const save = document.createElement("button");
+  save.textContent = "⬇ save debug.png";
+  save.title = "Download this overlay — the same filename page_to_strips.py --debug writes";
+  save.addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = p.debugCanvas!.toDataURL("image/png");
+    a.download = `${p.stem}_debug.png`;
+    a.click();
+  });
+  head.appendChild(save);
+  box.appendChild(head);
+
+  box.appendChild(p.debugCanvas);
+
+  // Plain-English key. The colours are Python's, so the two overlays can be compared side by side.
+  const legend = document.createElement("div");
+  legend.className = "legend";
+  for (const [color, text] of [
+    ["rgb(0,160,0)", "staff lines found"],
+    ["rgb(0,120,220)", "barlines accepted"],
+    ["rgb(220,0,0)", "the crop each strip holds"],
+    ["rgb(255,140,0)", "rejected: too fat for a barline"],
+    ["rgb(180,0,200)", "rejected: runs on past the staff (reads as a clef)"],
+    ["rgb(220,220,0)", "rejected: a notehead, flag or beam over a line"],
+    ["rgb(160,160,160)", "rejected: outside the staff"],
+  ] as const) {
+    const item = document.createElement("span");
+    const swatch = document.createElement("b");
+    swatch.style.color = color; // only the swatch is coloured — yellow text is unreadable
+    swatch.textContent = "▬ ";
+    item.appendChild(swatch);
+    item.appendChild(document.createTextNode(text));
+    legend.appendChild(item);
+  }
+  box.appendChild(legend);
+  return box;
+}
+
 function renderDetail() {
   detailEl.innerHTML = "";
   const p = pages.find((x) => x.id === selectedId);
@@ -458,6 +577,8 @@ function renderDetail() {
   read.addEventListener("click", () => void readPage(p));
   stats.appendChild(read);
   detailEl.appendChild(stats);
+
+  if (debugBox.checked) detailEl.appendChild(overlayEl(p));
 
   for (const st of p.strips) {
     const box = document.createElement("div");

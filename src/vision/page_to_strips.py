@@ -329,6 +329,21 @@ def prep_page(gray: np.ndarray) -> tuple[np.ndarray, bool, float]:
 # NB: the deskew estimator deliberately keeps the long w/4 kernel — there intolerance is a feature
 # (it sharpens the angle peak), whereas here sensitivity is what we want.
 STAFF_HOR_FRAC = 0.11
+# How far apart two runs of qualifying staff-line columns may sit and still count as ONE staff
+# (in line-spaces). A photocopy fades a staff line in patches; each fade splits the run, and
+# `_emit_staff` keeps only the LONGEST piece, so the rest of the row is never cut into strips.
+# It cannot simply be huge: a scan border or a stray blob far from the staff would then stretch
+# the extent across the page. Measured over the corpus in docs/METRICS-SLICER.md.
+STAFF_GAP_BRIDGE_SP = 6.0
+# Rebuild a staff whose horizontal opening dropped lines, when 3 of the 5 survive (_repair_group).
+# A switch, not a dial: the probe that measured it flips this to compare arms.
+STAFF_REPAIR_3LINE = True
+# ... and only when the rebuilt staff has the SAME line spacing as the rest of the page, as a
+# ratio to the page's median line-row gap. Without it the repair invents a staff out of a block of
+# UNDERLINED LYRICS — measured on huzzam/gonul_dustu_care_yoktur_nota_p1, where the lyric block
+# repaired at 1.97x the page's spacing while every genuine repair on the 400-page sample sat at
+# 0.94-1.32x. This is the same argument `page_binarizer`'s shape check makes, at row level.
+STAFF_REPAIR_SP_BAND = (0.70, 1.40)
 
 # ---------------------------------------------------------------- pale-staff-line binarization
 # binarize_ink() is global Otsu, which splits the page into TWO classes. A page with black
@@ -446,9 +461,9 @@ def detect_staves(ink: np.ndarray) -> list[Staff]:
         if cur - prev <= sp * 2.2:          # same staff
             group.append(cur)
         else:                                # new system
-            _emit_staff(group, ink, staves)
+            _emit_staff(group, ink, staves, sp)
             group = [cur]
-    _emit_staff(group, ink, staves)
+    _emit_staff(group, ink, staves, sp)
     return staves
 
 
@@ -466,8 +481,62 @@ def _cluster_rows(rows: np.ndarray, gap: int = 3) -> list[int]:
     return out
 
 
-def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff]) -> None:
+def _repair_group(group: list[int], page_sp: float | None = None) -> list[int] | None:
+    """A 3-line group with the other two lines missing -> the repaired 5, or None.
+
+    On a faded photocopy the horizontal opening can lose individual staff lines while keeping the
+    rest, and a group of 3 is thrown away by the 4-line floor below — the whole row then produces
+    no strips at all. The lost lines are recoverable because a staff is EVENLY spaced: a gap of
+    ~2x its neighbours has one line missing inside it, and a staff short of 5 continues at the
+    same pitch. Nothing is invented that the surviving lines do not already imply.
+
+    Deliberately narrow. Only a group of exactly 3 is repaired (4 is already accepted), every gap
+    must be a small integer multiple of the group's own smallest gap, the result must be evenly
+    spaced, and — the test that does the real work — its spacing must match the REST OF THE PAGE
+    (`page_sp`, the median line-row gap). The first three tests alone still admitted a block of
+    underlined lyrics as a staff; STAFF_REPAIR_SP_BAND is what refuses it. Rejecting is the safe
+    direction: it restores today's behaviour of dropping the row.
+    """
+    if len(group) != 3:
+        return None
+    # The unit to rebuild in is the PAGE's line spacing, not the group's own smallest gap. A
+    # detected "line" can be one real line split into two clusters, which puts a 6 px gap next to
+    # a 19 px one on a page whose true spacing is 9; `min` then takes the artifact as the unit and
+    # rebuilds a 6 px staff, which the spacing band below rightly refuses — and the row is lost.
+    # Measured on a 876x1118 screenshot of bozukNihavendLonga (owner, 2026-08-24).
+    base = float(page_sp) if page_sp else float(np.min(np.diff(group)))
+    if base < 4:                                   # too fine to be a staff at any real resolution
+        return None
+    filled = [group[0]]
+    for prev, cur in zip(group[:-1], group[1:]):
+        k = int(round((cur - prev) / base))
+        if not (1 <= k <= 3):                      # not an integer multiple: not a dropped line
+            return None
+        for j in range(1, k):
+            filled.append(int(round(prev + j * (cur - prev) / k)))
+        filled.append(cur)
+    if len(filled) > 5:
+        return None
+    sp = float(np.median(np.diff(filled)))
+    while len(filled) < 5:                         # a staff short of 5 continues at its own pitch
+        filled.append(int(round(filled[-1] + sp)))
+    d = np.diff(filled)
+    if float(d.max() - d.min()) > 0.5 * sp:        # must end up evenly spaced
+        return None
+    if page_sp:                                    # ... and be the same staff as the page's others
+        lo, hi = STAFF_REPAIR_SP_BAND
+        if not (lo * page_sp <= sp <= hi * page_sp):
+            return None
+    return filled
+
+
+def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff],
+                page_sp: float | None = None) -> None:
     """Accept a group as a staff if it has ~5 evenly-spaced lines; record its x-extent."""
+    if STAFF_REPAIR_3LINE and len(group) == 3:
+        repaired = _repair_group(group, page_sp)
+        if repaired is not None:
+            group = repaired
     if not (4 <= len(group) <= 7):
         return
     if len(group) > 5:
@@ -496,8 +565,10 @@ def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff]) -> None:
     if len(xs) == 0:
         return
     # keep the longest gap-tolerant run of qualifying columns: stray blobs and scan-border
-    # artifacts far from the staff must not stretch the extent
-    gap_tol = int(3 * sp)
+    # artifacts far from the staff must not stretch the extent. The tolerance is what separates a
+    # FADE inside one staff line from a genuinely separate piece of ink, so it is a constant with
+    # a measurement behind it, not an inline number — see STAFF_GAP_BRIDGE_SP.
+    gap_tol = int(STAFF_GAP_BRIDGE_SP * sp)
     runs: list[tuple[int, int]] = []
     start, prev = int(xs[0]), int(xs[0])
     for x in xs[1:]:
@@ -706,7 +777,8 @@ def _terminal_overshoot(band_ext: np.ndarray, x: int, ext: int) -> tuple[int, in
 
 def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
                     debug_info: dict | None = None,
-                    top_y: int = TOP_LINE_Y) -> list[int]:
+                    top_y: int = TOP_LINE_Y,
+                    binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink) -> list[int]:
     """Find real barlines by CONTINUITY + THINNESS + CLEAN TERMINATION.
 
     Three tests a barline passes and notes/stems/clefs do not:
@@ -733,7 +805,7 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     top, bot = top_y, top_y + STAFF_SPAN
     tol = max(3, int(round(TARGET_SPACING * 0.35)))          # ~1/3 line-space slack
     ext = int(round(TARGET_SPACING * EXT_SP))
-    band_ext = binarize_ink(row)[top - ext:bot + ext] > 0    # staff ± EXT_SP (gate 3)
+    band_ext = binarize(row)[top - ext:bot + ext] > 0        # staff ± EXT_SP (gate 3)
     band = band_ext[ext - tol:ext + STAFF_SPAN + tol]        # staff ± tol (gates 1-2)
     span = band.shape[0]
 
@@ -764,7 +836,16 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
             if rejects is not None:
                 rejects.append((center, "gate3_clef"))
             continue
-        if (ov_top > ov_tol or ov_bot > ov_tol) and wide_beyond:  # head/flag/beam past a line
+        # A NOTEHEAD ATTACHED PAST A STAFF LINE MEANS STEM, however little the stroke overshoots
+        # (owner, 2026-08-24). `wide_beyond` always found it; the gate used to ignore it unless the
+        # overshoot also passed OV_TOL_SP, so a stem clearing the line by 14 px against a 15 px
+        # tolerance was taken as a barline — and on Meltem row 1 the REAL barline was rejected
+        # while the stem beside it was kept. Measured against SymbTr truth (score_slicer, 124
+        # rows): rows whose measure count matches the print go 73 -> 86, and the regressed count
+        # does not move (11 -> 11). The cost is a real barline that a notehead merely TOUCHES,
+        # which the ±3 px walk cannot tell from an attachment; that is rare and it is a trade the
+        # owner took deliberately. docs/METRICS-SLICER.md.
+        if (ov_top > 0 or ov_bot > 0) and wide_beyond:  # head/flag/beam past a line
             if rejects is not None:
                 rejects.append((center, "gate3_blob"))
             continue
@@ -791,7 +872,8 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     return bars
 
 
-def _has_notehead(row: np.ndarray, xa: int, xb: int, top_y: int = TOP_LINE_Y) -> bool:
+def _has_notehead(row: np.ndarray, xa: int, xb: int, top_y: int = TOP_LINE_Y,
+                  binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink) -> bool:
     """Any notehead-fat blob in columns [xa, xb)? Same fat semantics as `_is_thin_stroke`:
     a connected horizontal run >= 0.75 sp wide sustained over >= 0.5 sp of consecutive rows.
     Signature accidentals stay under it (a flat's bowl is ~0.55 sp), repeat dots far under."""
@@ -802,7 +884,7 @@ def _has_notehead(row: np.ndarray, xa: int, xb: int, top_y: int = TOP_LINE_Y) ->
         return False
     y0 = max(0, int(top_y - 1.5 * sp))
     y1 = min(row.shape[0], int(top_y + STAFF_SPAN + 1.5 * sp))
-    band = binarize_ink(row)[y0:y1, xa:xb] > 0
+    band = binarize(row)[y0:y1, xa:xb] > 0
     staff_rows = band.sum(axis=1) > band.shape[1] * 0.9   # staff lines ink the whole slice
     run = 0
     for y in range(band.shape[0]):
@@ -819,7 +901,9 @@ def _has_notehead(row: np.ndarray, xa: int, xb: int, top_y: int = TOP_LINE_Y) ->
 
 
 def row_cost_features(row: np.ndarray,
-                      top_y: int = TOP_LINE_Y) -> tuple[np.ndarray, np.ndarray]:
+                      top_y: int = TOP_LINE_Y,
+                      binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink,
+                      ) -> tuple[np.ndarray, np.ndarray]:
     """Per-column token-cost features for a normalized row: (stem_starts, ink_cols).
 
     Both are 0/1 column arrays that SUM over a pixel span, so a window's estimated token cost is
@@ -830,7 +914,7 @@ def row_cost_features(row: np.ndarray,
     stem counts once however many columns thick it is. `ink_cols` marks columns carrying any
     non-staff-line ink, which picks up what has no stem: rests, dots, accidentals, whole notes.
     """
-    ink = binarize_ink(row) > 0
+    ink = binarize(row) > 0
     h = ink.shape[0]
     y0 = max(0, int(top_y - 2.0 * TARGET_SPACING))               # ledger notes above ...
     y1 = min(h, int(top_y + STAFF_SPAN + 2.0 * TARGET_SPACING))  # ... and beams below
@@ -905,7 +989,9 @@ def _span_cap() -> int:
 
 
 def _split_wide(row: np.ndarray, x0: int, x1: int,
-                top_y: int = TOP_LINE_Y) -> list[tuple[int, int]]:
+                top_y: int = TOP_LINE_Y,
+                binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink,
+                ) -> list[tuple[int, int]]:
     """Split an over-wide span (a genuinely wide measure) at whitespace GUTTERS only.
 
     A cut through ink (a notehead / beam) puts half the symbol in each neighbouring strip and
@@ -926,7 +1012,7 @@ def _split_wide(row: np.ndarray, x0: int, x1: int,
     sp = TARGET_SPACING
     y0 = max(0, int(top_y - 2.0 * sp))                   # cover ledger notes above ...
     y1 = min(row.shape[0], int(top_y + STAFF_SPAN + 2.0 * sp))  # ... and beams below
-    band = binarize_ink(row)[y0:y1] > 0
+    band = binarize(row)[y0:y1] > 0
     staff_rows = band.sum(axis=1) > band.shape[1] * 0.4  # staff lines ink every column
     ink = band[~staff_rows].sum(axis=0)
 
@@ -986,7 +1072,8 @@ class Window:
 
 
 def window_measures(bars: list[int], row: np.ndarray | None = None,
-                    top_y: int = TOP_LINE_Y) -> list[Window]:
+                    top_y: int = TOP_LINE_Y,
+                    binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink) -> list[Window]:
     """Group consecutive measures (bar-to-bar spans) into windows that fit the LABEL BUDGET.
 
     The first window of a row keeps the left prefix (clef + key signature -> the \\sig carrier).
@@ -1015,6 +1102,7 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
     if (row is not None and len(bars) >= 3
             and bars[1] - bars[0] <= int(10 * TARGET_SPACING)
             and not _has_notehead(row, bars[0] + int(4 * TARGET_SPACING), bars[1] - 2,
+                                  binarize=binarize,
                                   top_y=top_y)):
         lead, bars = bars[0], bars[1:]         # clef ~3.5 sp: scan for music beyond it
     spans = list(zip(bars[:-1], bars[1:]))     # each = one measure
@@ -1025,7 +1113,7 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
     # only whether it GATES the packing depends on the mode
     budget_mode = WINDOW_MODE == "budget" and row is not None
     if row is not None:
-        st, ic = row_cost_features(row, top_y=top_y)
+        st, ic = row_cost_features(row, top_y=top_y, binarize=binarize)
         cum_stems, cum_ink = np.r_[0, np.cumsum(st)], np.r_[0, np.cumsum(ic)]
 
     def cost(x0: int, x1: int, first: bool) -> float:
@@ -1055,7 +1143,7 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
         if x1 - x0 > cap and row is not None:               # over-wide single measure
             windows.extend(Window(a, b, i, j - 1, split_wide=True,
                                   est_tokens=round(cost(a, b, first and a == x0), 1))
-                           for a, b in _split_wide(row, x0, x1, top_y=top_y))
+                           for a, b in _split_wide(row, x0, x1, top_y=top_y, binarize=binarize))
         elif x1 - x0 < MIN_STRIP_W:
             # never silently DROP content: a sliver merges into the previous window when the
             # result stays within the trained width AND the measure cap; else it is emitted on
@@ -1084,7 +1172,13 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
     # perspective-rectify an obliquely-shot page + deskew residual rotation; no-op on clean scans,
     # and the crop is auto-discarded when it doesn't improve staff detectability (see prep_page)
     page, cropped, skew_angle = prep_page(page)
-    ink = binarize_page_ink(page)
+    # ONE page, ONE binarizer. `page_binarizer` decides from the whole page (a per-row guard is
+    # meaningless — one row holds one staff), and the row-level gates below are handed the SAME
+    # choice rather than re-running plain Otsu. Threading it changes nothing on a page whose
+    # chooser returns `binarize_ink`, which is every page the fallback does not fire on; on a pale
+    # page it stops the barline gates from working off a mask the staff lines are missing from.
+    binz = page_binarizer(page)
+    ink = binz(page)
     # one page-level labelling, reused by every row: it is how normalize_row tells THIS row's
     # music (connected to its staff) from a neighbouring system or page furniture
     lab = cv2.connectedComponents((ink > 0).astype(np.uint8), connectivity=8)[1] \
@@ -1100,8 +1194,9 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
     for si, staff in enumerate(staves):
         row, scale, top_y = normalize_row(page, staff, lab)
         dbg_info: dict | None = {} if debug else None
-        bars = detect_barlines(row, staff, scale, debug_info=dbg_info, top_y=top_y)
-        windows = window_measures(bars, row, top_y=top_y)
+        bars = detect_barlines(row, staff, scale, debug_info=dbg_info, top_y=top_y,
+                               binarize=binz)
+        windows = window_measures(bars, row, top_y=top_y, binarize=binz)
         # total measures the row's windows cover (a trimmed clef+sig prefix span is no measure)
         row_measures = max(w.m_to for w in windows) + 1 if windows else 0
         bar_set = set(bars)

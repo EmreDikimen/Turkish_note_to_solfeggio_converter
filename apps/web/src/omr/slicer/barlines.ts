@@ -44,8 +44,13 @@ export interface Mask {
  * `EXT_SP` or `VPLACE_MIN_HEAD_SP` is ever changed — the constant's own comment at L88 makes the
  * same argument from the other end.)
  */
-export function inkMask(gray: Gray, y0: number, y1: number): Mask {
-  const ink = binarizeInk(gray);
+export function inkMask(
+  gray: Gray,
+  y0: number,
+  y1: number,
+  binarize: (g: Gray) => Gray = binarizeInk
+): Mask {
+  const ink = binarize(gray);
   const a = Math.max(0, Math.min(gray.height, y0));
   const b = Math.max(a, Math.min(gray.height, y1));
   const w = gray.width;
@@ -229,13 +234,14 @@ export function detectBarlines(
   staff: Staff,
   scale: number,
   debugInfo: BarlineDebug | null = null,
-  topY: number = TOP_LINE_Y
+  topY: number = TOP_LINE_Y,
+  binarize: (g: Gray) => Gray = binarizeInk
 ): number[] {
   const top = topY;
   const bot = topY + STAFF_SPAN;
   const tol = Math.max(3, pyRound(TARGET_SPACING * 0.35)); // ~1/3 line-space slack
   const ext = pyRound(TARGET_SPACING * EXT_SP);
-  const bandExt = inkMask(row, top - ext, bot + ext); // staff ± EXT_SP (gate 3)
+  const bandExt = inkMask(row, top - ext, bot + ext, binarize); // staff ± EXT_SP (gate 3)
   const band = maskRows(bandExt, ext - tol, ext + STAFF_SPAN + tol); // staff ± tol (gates 1-2)
   const span = band.height;
   const w = band.width;
@@ -285,7 +291,15 @@ export function detectBarlines(
       rejects?.push([center, "gate3_clef"]); // extends both ways: clef
       continue;
     }
-    if ((ovTop > ovTolPx || ovBot > ovTolPx) && wideBeyond) {
+    // A NOTEHEAD ATTACHED PAST A STAFF LINE MEANS STEM, however little the stroke overshoots
+    // (owner, 2026-08-24). `wideBeyond` always found it; the gate used to ignore it unless the
+    // overshoot also passed OV_TOL_SP, so a stem clearing the line by 14 px against a 15 px
+    // tolerance was taken as a barline — and on the Meltem page the REAL barline was rejected
+    // while the stem beside it was kept. Measured against SymbTr truth (score_slicer, 124 rows):
+    // rows whose measure count matches the print go 73 -> 86, regressed unchanged at 11. The cost
+    // is a real barline a notehead merely TOUCHES, which the ±3 px walk cannot tell from an
+    // attachment — rare, and a trade the owner took deliberately. docs/METRICS-SLICER.md.
+    if ((ovTop > 0 || ovBot > 0) && wideBeyond) {
       rejects?.push([center, "gate3_blob"]); // head/flag/beam past a line
       continue;
     }
@@ -327,14 +341,20 @@ export function detectBarlines(
  * ⚠ `binarize_ink` runs on the WHOLE row here and the slice is taken afterwards — a different Otsu
  * from `detectBarlines`' own. Do not hoist the two into one.
  */
-export function hasNotehead(row: Gray, xa: number, xb: number, topY: number = TOP_LINE_Y): boolean {
+export function hasNotehead(
+  row: Gray,
+  xa: number,
+  xb: number,
+  topY: number = TOP_LINE_Y,
+  binarize: (g: Gray) => Gray = binarizeInk
+): boolean {
   const sp = TARGET_SPACING;
   const fatW = pyRound(sp * 0.75);
   const fatRun = pyRound(sp * 0.5);
   if (xb - xa < fatW) return false;
   const y0 = Math.max(0, Math.trunc(topY - 1.5 * sp));
   const y1 = Math.min(row.height, Math.trunc(topY + STAFF_SPAN + 1.5 * sp));
-  const full = inkMask(row, y0, y1);
+  const full = inkMask(row, y0, y1, binarize);
   const ca = Math.max(0, Math.min(row.width, xa));
   const cb = Math.max(ca, Math.min(row.width, xb));
   const bw = cb - ca;

@@ -14,6 +14,7 @@
  * loading a sample score should pay for.
  */
 import { decodeGray, grayToCanvas, initCv, type Gray } from "./slicer/cvOps";
+import { drawDebugOverlay } from "./slicer/debugOverlay";
 import { estimateSkewAsync, guardedAngle, SKEW_SWEEP_STEPS } from "./slicer/prepPage";
 import { cropStrip, sliceStage3, stripName, type Strip } from "./slicer/slicer";
 import type { StripInput } from "./pipeline";
@@ -44,6 +45,12 @@ export interface SlicedPage {
   pageHeight: number;
   skewMs: number;
   totalMs: number;
+  /**
+   * The `_debug.png` overlay — the deskewed page with the staff lines, the accepted and rejected
+   * barlines and the crop boxes drawn on it. `null` unless `debug` was asked for; it costs a
+   * full-page canvas, and it changes no crop (see `slicer/debugOverlay.ts`).
+   */
+  debugCanvas: HTMLCanvasElement | null;
 }
 
 export interface SlicePageOptions {
@@ -56,6 +63,13 @@ export interface SlicePageOptions {
    * decode time and nothing else. Delete with the block in `slicer/windows.ts`.
    */
   tokenBudget?: number;
+  /**
+   * Also draw the diagnostic overlay Python writes as `<page>_debug.png` (`--debug`), and hand it
+   * back as `debugCanvas`. Off by default: it holds one more full-page canvas per page, and only
+   * the slice inspector wants it. It reads the slicer's output and never feeds back into it, so
+   * the crops are identical either way.
+   */
+  debug?: boolean;
 }
 
 let cvReady: Promise<void> | null = null;
@@ -96,7 +110,11 @@ export async function slicePage(
   // corpus page against the sweep's ~35, so it is not worth splitting — see METRICS-SLICER-PORT.md.
   opts.onProgress?.("finding the staves");
   await paint();
-  const res = sliceStage3(gray, { skewDeg, tokenBudget: opts.tokenBudget });
+  const res = sliceStage3(gray, {
+    skewDeg,
+    tokenBudget: opts.tokenBudget,
+    rejects: opts.debug, // the overlay's colour-coded rejects; not collected otherwise
+  });
 
   opts.onProgress?.("cutting the strips");
   await paint();
@@ -130,6 +148,7 @@ export async function slicePage(
     pageHeight: gray.height,
     skewMs,
     totalMs: performance.now() - t0,
+    debugCanvas: opts.debug ? drawDebugOverlay(res) : null,
   };
 }
 

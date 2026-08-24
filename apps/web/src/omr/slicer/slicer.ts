@@ -21,7 +21,7 @@ import {
 import { connectedComponents, subCols, type Gray, type Labels } from "./cvOps";
 import { prepPage, prepPageWithAngle } from "./prepPage";
 import { normalizeRow, type NormalizedRow } from "./rows";
-import { binarizePageInk, detectStaves, type Staff } from "./staves";
+import { detectStaves, pageBinarizer, type Staff } from "./staves";
 import { windowMeasures, type Window } from "./windows";
 
 export interface Stage1Row {
@@ -40,6 +40,8 @@ export interface Stage2Row extends Stage1Row {
 export interface Stage1Result {
   page: Gray;
   ink: Gray;
+  /** the binarizer this PAGE chose — handed to the row-level gates so there is only ever one */
+  binz: (g: Gray) => Gray;
   lab: Labels | null;
   staves: Staff[];
   rows: Stage1Row[];
@@ -82,7 +84,13 @@ export interface Stage2Result extends Omit<Stage1Result, "rows"> {
 export function sliceStage1(gray: Gray, opts: Stage1Options = {}): Stage1Result {
   const { gray: page, cropped, skewDeg } =
     opts.skewDeg === undefined ? prepPage(gray) : prepPageWithAngle(gray, opts.skewDeg);
-  const ink = binarizePageInk(page);
+  // ONE page, ONE binarizer. `pageBinarizer` decides from the whole page (a per-row guard is
+  // meaningless — one row holds one staff), and the row-level gates are handed the SAME choice
+  // rather than re-running plain Otsu. It changes nothing on a page whose chooser returns
+  // `binarizeInk`, which is every page the pale-line fallback does not fire on; on a pale page it
+  // stops the barline gates working off a mask the staff lines are missing from.
+  const binz = pageBinarizer(page);
+  const ink = binz(page);
   // one page-level labelling, reused by every row: it is how normalize_row tells THIS row's music
   // (connected to its staff) from a neighbouring system or page furniture
   const lab = VPLACE_ADAPTIVE ? connectedComponents(ink) : null;
@@ -92,7 +100,7 @@ export function sliceStage1(gray: Gray, opts: Stage1Options = {}): Stage1Result 
     staff,
     normalized: normalizeRow(page, staff, lab),
   }));
-  return { page, ink, lab, staves, rows, cropped, skewDeg };
+  return { page, ink, binz, lab, staves, rows, cropped, skewDeg };
 }
 
 /** Stage 1 plus `detect_barlines` per row (L982) — everything before `window_measures`. */
@@ -105,7 +113,8 @@ export function sliceStage2(gray: Gray, opts: Stage1Options = {}): Stage2Result 
       r.staff,
       r.normalized.scale,
       dbg,
-      r.normalized.topLineY
+      r.normalized.topLineY,
+      s1.binz
     );
     return { ...r, bars, rejects: dbg ? dbg.rejects : null };
   });
@@ -154,7 +163,7 @@ export function sliceStage3(gray: Gray, opts: Stage1Options = {}): Stage3Result 
   const s2 = sliceStage2(gray, opts);
   const rows: Stage3Row[] = s2.rows.map((r) => {
     const { row, scale, topLineY } = r.normalized;
-    const windows = windowMeasures(r.bars, row, topLineY, opts.tokenBudget);
+    const windows = windowMeasures(r.bars, row, topLineY, opts.tokenBudget, s2.binz);
     // total measures the row's windows cover (a trimmed clef+sig prefix span is no measure)
     const rowMeasures = windows.length ? Math.max(...windows.map((w) => w.mTo)) + 1 : 0;
     const barSet = new Set(r.bars);

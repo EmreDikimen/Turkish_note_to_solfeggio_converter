@@ -71,6 +71,27 @@ export const TRIM_SHARED_EDGE = true; // L102 (OMR_EDGE_TRIM unset => "1")
 // ---- staff detection (L308) ------------------------------------------------------------------
 // Fraction of page width a staff line must span as CONTINUOUS ink to survive the opening. 0.11,
 // not the older 0.25: the long kernel erased faint/short bottom systems.
+/**
+ * How far apart two runs of qualifying staff-line columns may sit and still count as ONE staff
+ * (in line-spaces) — `STAFF_GAP_BRIDGE_SP` (L337). A photocopy fades a staff line in patches;
+ * each fade splits the run, and `emitStaff` keeps only the LONGEST piece, so the rest of the row
+ * is never cut into strips. It cannot simply be huge: a scan border or a stray blob far from the
+ * staff would then stretch the extent across the page. Measured in docs/METRICS-SLICER.md.
+ */
+export const STAFF_GAP_BRIDGE_SP = 6.0;
+
+/** Rebuild a staff whose opening dropped lines when 3 of the 5 survive — `STAFF_REPAIR_3LINE`. */
+export const STAFF_REPAIR_3LINE = true;
+
+/**
+ * ... and only when the rebuilt staff has the SAME line spacing as the rest of the page, as a
+ * ratio to the page's median line-row gap — `STAFF_REPAIR_SP_BAND`. Without it the repair invents
+ * a staff out of a block of UNDERLINED LYRICS: measured on
+ * `huzzam/gonul_dustu_care_yoktur_nota_p1`, where the lyric block repaired at 1.97x the page's
+ * spacing while every genuine repair in the 400-page sample sat at 0.94-1.32x.
+ */
+export const STAFF_REPAIR_SP_BAND: [number, number] = [0.7, 1.4];
+
 export const STAFF_HOR_FRAC = 0.11;
 
 // ---- pale-staff-line binarization (L361-362) --------------------------------------------------

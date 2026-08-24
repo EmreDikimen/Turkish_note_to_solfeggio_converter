@@ -31,7 +31,7 @@ import {
   pyRound,
 } from "./constants";
 import { hasNotehead, inkMask } from "./barlines";
-import type { Gray } from "./cvOps";
+import { binarizeInk, type Gray } from "./cvOps";
 
 /** `Window` (L850): a strip window's pixel span plus the row-local measures it covers. */
 export interface Window {
@@ -72,7 +72,8 @@ export function splitWide(
   row: Gray,
   x0: number,
   x1: number,
-  topY: number = TOP_LINE_Y
+  topY: number = TOP_LINE_Y,
+  binarize: (g: Gray) => Gray = binarizeInk
 ): Array<[number, number]> {
   const cap = spanCap();
   if (x1 - x0 <= cap) return [[x0, x1]];
@@ -80,7 +81,7 @@ export function splitWide(
   const y0 = Math.max(0, Math.trunc(topY - 2.0 * sp)); // cover ledger notes above ...
   const y1 = Math.min(row.height, Math.trunc(topY + STAFF_SPAN + 2.0 * sp)); // ... and beams below
   // ⚠ this is the row's OWN Otsu — a third `binarize_ink` call, not the one detect_barlines ran
-  const band = inkMask(row, y0, y1);
+  const band = inkMask(row, y0, y1, binarize);
   const w = band.width;
   // per-column ink with the full-width staff-line rows excluded (`band[~staff_rows].sum(axis=0)`)
   const ink = new Int32Array(w);
@@ -169,11 +170,15 @@ export interface RowCost {
   cumInk: Int32Array;
 }
 
-export function rowCostFeatures(row: Gray, topY: number = TOP_LINE_Y): RowCost {
+export function rowCostFeatures(
+  row: Gray,
+  topY: number = TOP_LINE_Y,
+  binarize: (g: Gray) => Gray = binarizeInk
+): RowCost {
   const sp = TARGET_SPACING;
   const y0 = Math.max(0, Math.trunc(topY - 2.0 * sp)); // ledger notes above ...
   const y1 = Math.min(row.height, Math.trunc(topY + STAFF_SPAN + 2.0 * sp)); // ... beams below
-  const band = inkMask(row, y0, y1);
+  const band = inkMask(row, y0, y1, binarize);
   const w = band.width;
 
   // longest UNBROKEN vertical ink run per column (`_longest_vertical_run`, L589). Staff rows are
@@ -241,7 +246,8 @@ export function windowMeasures(
   topY: number = TOP_LINE_Y,
   /** ⚠ EXPERIMENT (`?dense=`): when set, stop adding measures once the estimated label cost
    *  passes this many ids. Unset = the shipped rule, which packs on measures and width only. */
-  tokenBudget?: number
+  tokenBudget?: number,
+  binarize: (g: Gray) => Gray = binarizeInk
 ): Window[] {
   let lead: number | null = null;
   let bs = bars;
@@ -249,7 +255,7 @@ export function windowMeasures(
     bs.length >= 3 &&
     bs[1]! - bs[0]! <= Math.trunc(10 * TARGET_SPACING) &&
     // clef ~3.5 sp: scan for music beyond it
-    !hasNotehead(row, bs[0]! + Math.trunc(4 * TARGET_SPACING), bs[1]! - 2, topY)
+    !hasNotehead(row, bs[0]! + Math.trunc(4 * TARGET_SPACING), bs[1]! - 2, topY, binarize)
   ) {
     lead = bs[0]!;
     bs = bs.slice(1);
@@ -258,7 +264,7 @@ export function windowMeasures(
   for (let i = 0; i + 1 < bs.length; i++) spans.push([bs[i]!, bs[i + 1]!]);
   if (!spans.length) return [];
   const cap = spanCap();
-  const feat = tokenBudget === undefined ? null : rowCostFeatures(row, topY);
+  const feat = tokenBudget === undefined ? null : rowCostFeatures(row, topY, binarize);
   // Python's inner `cost(x0, x1, first)` (L1032), including its `row is None` guard: with no
   // features the estimate is not "0 tokens", it is "not measured", which is what `null` says.
   const cost = (x0: number, x1: number, isRowStart: boolean): number | null =>
@@ -282,7 +288,7 @@ export function windowMeasures(
     const x1 = spans[j - 1]![1];
     if (x1 - x0 > cap) {
       // over-wide single measure
-      for (const [a, b] of splitWide(row, x0, x1, topY))
+      for (const [a, b] of splitWide(row, x0, x1, topY, binarize))
         // `cost(a, b, first and a == x0)` — only the piece that still starts at the window's own
         // left edge carries the row-start discount.
         windows.push({

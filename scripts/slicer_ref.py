@@ -43,11 +43,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import vision.page_to_strips as pts  # noqa: E402
 from vision.page_to_strips import (  # noqa: E402
     VPLACE_ADAPTIVE,
-    binarize_page_ink,
     detect_barlines,
     detect_staves,
     load_gray,
     normalize_row,
+    page_binarizer,
     page_to_strips,
     prep_page,
 )
@@ -137,7 +137,11 @@ def stage1(image: Path) -> dict:
     """Everything page_to_strips() does before window_measures (L962-982)."""
     gray = load_gray(image)
     page, cropped, skew = prep_page(gray)
-    ink = binarize_page_ink(page)   # PAGE level, like page_to_strips (pale-line fallback)
+    # PAGE level, like page_to_strips: decide the binarizer once and hand the SAME choice to the
+    # row-level gates below. Calling binarize_page_ink() here and letting detect_barlines fall back
+    # to plain Otsu would make this reference disagree with the driver on every pale page.
+    binz = page_binarizer(page)
+    ink = binz(page)
     lab = (
         cv2.connectedComponents((ink > 0).astype(np.uint8), connectivity=8)[1]
         if VPLACE_ADAPTIVE
@@ -151,7 +155,7 @@ def stage1(image: Path) -> dict:
         # overlay colour-codes. `debug_info` is collected here but costs nothing extra — the gates
         # run either way, it only decides whether their verdicts are recorded.
         dbg: dict = {}
-        bars = detect_barlines(row, st, scale, debug_info=dbg, top_y=top_y)
+        bars = detect_barlines(row, st, scale, debug_info=dbg, top_y=top_y, binarize=binz)
         out.append(
             {
                 "system": si,

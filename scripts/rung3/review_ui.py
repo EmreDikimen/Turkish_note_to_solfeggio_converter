@@ -532,6 +532,7 @@ PAGE = r"""<!doctype html>
   <select id="fshow">
     <option value="pending" selected>pending only</option>
     <option value="reviewed">reviewed only</option>
+    <option value="bad">bad only</option>
     <option value="claude">🤖 claude verdicts</option>
     <option value="rule">🤖 rule drafts</option>
     <option value="all">all strips</option>
@@ -800,6 +801,7 @@ function visible(){
       &&(show==='all'||(show==='pending'?!x.r.verdict
         :show==='claude'?x.r.by==='claude'
         :show==='rule'?(x.r.by||'').startsWith('rule')
+        :show==='bad'?x.r.verdict==='bad'
         :!!x.r.verdict)));
 }
 // counts come from the rows when they are loaded (so a verdict shows up at once) and from the
@@ -910,8 +912,8 @@ async function verdict(v){
   const ok=await post(r.strip,v,v?keep:'');
   if(!ok)return;
   toast(v?`${r.strip.split('_').slice(-2).join('_')} → ${v}`:'cleared');
-  // pending / 🤖 filters: the row leaves the list, so idx already points at the next strip
-  if(v&&!['pending','claude','rule'].includes($('fshow').value))idx++;
+  // pending / 🤖 / bad filters: the row leaves the list, so idx already points at the next strip
+  if(v&&!['pending','claude','rule','bad'].includes($('fshow').value))idx++;
   render();
 }
 // edit-base builder: the model reads notes well but signatures badly, so the default
@@ -959,7 +961,7 @@ async function acceptDecode(){
   if(editing){editing=false;$('editbox').style.display='none';}
   if(!await post(r.strip,'fix',txt))return;
   toast(`${r.strip.split('_').slice(-2).join('_')} → fix (model decode)`);
-  if(!['pending','claude','rule'].includes($('fshow').value))idx++;
+  if(!['pending','claude','rule','bad'].includes($('fshow').value))idx++;
   render();
 }
 // "edit from X" opens the box on that one source. Unlike `e` it does NOT prefer an existing

@@ -43,6 +43,8 @@ wrong — fix by deleting, not by syncing.
 | How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |
 | The LABEL BUDGET — the rail the shipped app has none of, and the `?dense=` experiment | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
 | The windowing retune and the crop frame — settled: which constants were swept, and why none moved | [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) |
+| Barlines — the gates, the hand-marked truth, and what crop quality even means | [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md) |
+| Which crop ROOT a pool came from, and what re-slicing costs in labels | [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md) |
 | Whether the TypeScript slicer port reproduces the Python, rung by rung | [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |
 | Why do we do X this way? What was overturned? | [DECISIONS.md](DECISIONS.md) |
 | What may we publish? Licences, attribution, why no score ships | [THIRD-PARTY.md](THIRD-PARTY.md) |

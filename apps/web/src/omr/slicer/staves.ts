@@ -16,6 +16,13 @@ import {
   STAFF_HOR_FRAC,
   STAFF_REPAIR_3LINE,
   STAFF_REPAIR_SP_BAND,
+  STAFF_SPAN_CONSENSUS,
+  STAFF_SPAN_MIN_GROUPS,
+  STAFF_SPAN_MIN_ROWS,
+  STAFF_SPAN_TOL,
+  STAFF_WIDTH_CONSENSUS,
+  STAFF_WIDTH_MIN_STAVES,
+  STAFF_WIDTH_SLACK_SP,
   TARGET_SPACING,
   diff,
   median,
@@ -148,7 +155,7 @@ export function detectStaves(ink: Gray): Staff[] {
 
   // group consecutive lines into systems: a gap >> median spacing starts a new system
   const sp = median(diff(lineRows));
-  const staves: Staff[] = [];
+  const groups: number[][] = [];
   let group: number[] = [lineRows[0]!];
   for (let i = 1; i < lineRows.length; i++) {
     const prev = lineRows[i - 1]!;
@@ -156,12 +163,54 @@ export function detectStaves(ink: Gray): Staff[] {
     if (cur - prev <= sp * 2.2) {
       group.push(cur); // same staff
     } else {
-      emitStaff(group, ink, staves, sp); // new system
+      groups.push(group); // new system
       group = [cur];
     }
   }
-  emitStaff(group, ink, staves, sp);
+  groups.push(group);
+  const pageSpan = pageStaffSpan(groups);
+  const staves: Staff[] = [];
+  const runsPerStaff: Array<[Array<[number, number]>, number]> = [];
+  for (const g of groups) emitStaff(g, ink, staves, sp, pageSpan, runsPerStaff);
+  widenToPageMargins(staves, runsPerStaff);
   return staves;
+}
+
+/**
+ * `_page_staff_span`: the page's median staff height (first line -> last line), or null if it
+ * cannot be trusted. Only groups that already look like a staff (4+ detected line rows) vote, and
+ * a page needs STAFF_SPAN_MIN_GROUPS of them: on a one- or two-staff page the median is just that
+ * staff's own span, so it carries no independent information and must not be used to rewrite it.
+ */
+export function pageStaffSpan(groups: number[][]): number | null {
+  if (!STAFF_SPAN_CONSENSUS) return null;
+  const spans = groups.filter((g) => g.length >= 4).map((g) => g[g.length - 1]! - g[0]!);
+  if (spans.length < STAFF_SPAN_MIN_GROUPS) return null;
+  return median(spans);
+}
+
+/**
+ * `_widen_to_page_margins`: re-admit runs of staff-line columns that reach the PAGE's own margins
+ * — see STAFF_WIDTH_CONSENSUS.
+ */
+export function widenToPageMargins(
+  staves: Staff[],
+  runsPerStaff: Array<[Array<[number, number]>, number]>
+): void {
+  if (!STAFF_WIDTH_CONSENSUS || staves.length < STAFF_WIDTH_MIN_STAVES) return;
+  const pageX0 = median(staves.map((s) => s.x0));
+  const pageX1 = median(staves.map((s) => s.x1));
+  for (let i = 0; i < staves.length; i++) {
+    const st = staves[i]!;
+    const entry = runsPerStaff[i];
+    if (!entry) continue;
+    const [runs, sp] = entry;
+    const slack = STAFF_WIDTH_SLACK_SP * sp;
+    const left = runs.filter((r) => r[0] < st.x0 && r[0] >= pageX0 - slack);
+    const right = runs.filter((r) => r[1] > st.x1 && r[1] <= pageX1 + slack);
+    if (left.length) st.x0 = Math.min(...left.map((r) => r[0]));
+    if (right.length) st.x1 = Math.max(...right.map((r) => r[1]));
+  }
 }
 
 /** `_cluster_rows` (L341): collapse runs of adjacent row indices to their centers. */
@@ -233,13 +282,26 @@ export function emitStaff(
   group: number[],
   ink: Gray,
   out: Staff[],
-  pageSp: number | null = null
+  pageSp: number | null = null,
+  pageSpan: number | null = null,
+  runsOut: Array<[Array<[number, number]>, number]> | null = null
 ): void {
   if (STAFF_REPAIR_3LINE && group.length === 3) {
     const repaired = repairGroup(group, pageSp);
     if (repaired) group = repaired;
   }
   if (!(group.length >= 4 && group.length <= 7)) return;
+  const span = group[group.length - 1]! - group[0]!;
+  if (
+    pageSpan !== null &&
+    group.length >= STAFF_SPAN_MIN_ROWS &&
+    Math.abs(span - pageSpan) <= STAFF_SPAN_TOL * pageSpan
+  ) {
+    // this group is exactly as tall as the page's other staves, so it IS one staff whose interior
+    // lines the opening chopped up — see STAFF_SPAN_CONSENSUS
+    const step = span / 4;
+    group = [0, 1, 2, 3, 4].map((i) => pyRound(group[0]! + i * step));
+  }
   if (group.length > 5) {
     // extra long horizontals (a VOLTA bracket above, an ottava/lyric rule below) can ride along
     // in the cluster — keep the most evenly-spaced consecutive 5-line window
@@ -303,4 +365,5 @@ export function emitStaff(
   for (const r of runs) if (r[1] - r[0] > bestRun[1] - bestRun[0]) bestRun = r;
 
   out.push({ lines: group, x0: bestRun[0], x1: bestRun[1] });
+  if (runsOut) runsOut.push([runs, sp]);
 }

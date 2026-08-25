@@ -1,0 +1,167 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Barline işaretleme</title>
+<style>
+  :root { --bg:#14161a; --fg:#e8eaed; --dim:#9aa0a6; --mark:#1a73e8; --ok:#34a853; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
+  header { position:sticky; top:0; z-index:5; background:#1e2126; border-bottom:1px solid #2c3036;
+           padding:8px 14px; display:flex; gap:14px; align-items:center; flex-wrap:wrap }
+  button { background:#2c3036; color:var(--fg); border:1px solid #3c4149; border-radius:6px;
+           padding:5px 11px; font:inherit; cursor:pointer }
+  button:hover { background:#363b42 }
+  button.primary { background:var(--ok); border-color:var(--ok); color:#0b1f12; font-weight:600 }
+  .grow { flex:1 }
+  .dim { color:var(--dim) }
+  kbd { background:#2c3036; border:1px solid #3c4149; border-bottom-width:2px; border-radius:4px;
+        padding:0 5px; font:12px ui-monospace,monospace }
+  #wrap { overflow-x:auto; padding:14px }
+  #stage { position:relative; display:inline-block; min-width:100% }
+  #sheet { display:block; image-rendering:auto; background:#fff }
+  .mark { position:absolute; top:0; bottom:0; width:0; border-left:2px solid var(--mark);
+          cursor:pointer }
+  .mark::after { content:""; position:absolute; left:-7px; right:-7px; top:0; bottom:0 }
+  .mark:hover { border-left-color:#ea4335 }
+  .band { position:absolute; left:0; right:0; background:rgba(52,168,83,.10);
+          border-top:1px solid rgba(52,168,83,.35); border-bottom:1px solid rgba(52,168,83,.35);
+          pointer-events:none }
+  #hint { position:absolute; top:0; bottom:0; width:0; border-left:1px dashed #ea4335;
+          pointer-events:none; opacity:.7 }
+  #list { padding:0 14px 40px; font:12px ui-monospace,monospace; color:var(--dim) }
+  .done { color:var(--ok) }
+</style>
+
+<header>
+  <button id="prev">◀ <kbd>p</kbd></button>
+  <b id="who">…</b>
+  <button id="next"><kbd>n</kbd> ▶</button>
+  <span class="dim" id="pos"></span>
+  <span class="grow"></span>
+  <span class="dim">zoom</span>
+  <button id="fit">sığdır <kbd>f</kbd></button>
+  <button data-z="1">1×</button><button data-z="2">2×</button><button data-z="3">3×</button>
+  <button id="clear">Bu satırı temizle <kbd>c</kbd></button>
+  <button id="save" class="primary">Kaydet (JSON indir) <kbd>s</kbd></button>
+</header>
+
+<div id="wrap"><div id="stage">
+  <img id="sheet" alt="">
+  <div class="band" id="band"></div>
+  <div id="hint"></div>
+</div></div>
+<div id="list"></div>
+
+<script>
+// Ground-truth barline marker. Click = add a mark, click a mark = delete it. Coordinates are
+// DESKEWED-PAGE x, i.e. exactly what detect_barlines() works in — the sheet is cut from
+// prep_page()'s output, so nothing has to be transformed later.
+//
+// It deliberately shows NO detected barline. A marker shown the detector's answer anchors to it,
+// which is the same failure the exam's gold rules forbid.
+const KEY = "barline-truth-v1";
+let rows = [], i = 0, zoom = 2, marks = JSON.parse(localStorage.getItem(KEY) || "{}");
+
+const $ = (s) => document.querySelector(s);
+const sheet = $("#sheet"), stage = $("#stage"), band = $("#band"), hint = $("#hint");
+const idOf = (r) => `${r.page}|${r.system}`;
+
+// The row list is INLINED by build_barline_truth.py, because a browser refuses `fetch` from a
+// file:// page (opaque origin) and the sheet then renders blank with no error. `<img src>` is not
+// subject to that, so the PNGs still load straight off disk. The fetch is kept as the path for
+// when the folder is served over http instead.
+function boot(d) {
+  rows = d || [];
+  if (!rows.length) {
+    document.getElementById("list").innerHTML =
+      '<b style="color:#ea4335">Satır listesi yüklenemedi.</b> ' +
+      'Bu dosyayı <code>build_barline_truth.py</code> yeniden üretsin, ya da klasörü sunucuyla açın: ' +
+      '<code>cd data/real/rung3/_barline_truth &amp;&amp; python3 -m http.server 8378</code>';
+    return;
+  }
+  show();
+}
+if (window.__BARLINE_ROWS__) boot(window.__BARLINE_ROWS__);
+else fetch("index.json").then(r => r.json()).then(boot).catch(() => boot(null));
+
+function show() {
+  const r = rows[i]; if (!r) return;
+  sheet.src = r.img;
+  sheet.onload = () => { layout(); render(); };
+  $("#who").textContent = `${r.page}  ·  s${String(r.system).padStart(2, "0")}`;
+  $("#pos").textContent = `satır ${i + 1} / ${rows.length}  ·  aralık ${r.spacing}px  ·  deskew ${r.skew}°`;
+  window.scrollTo(0, 0); $("#wrap").scrollLeft = 0;
+  render();
+}
+function layout() {
+  const r = rows[i];
+  // the sheet PNG is (page_w * r.zoom) wide; displaying it at (page_w * zoom) makes exactly
+  // `zoom` css px per DESKEWED PAGE px, which is what every coordinate below assumes
+  sheet.style.width = (r.page_w * zoom) + "px";
+  band.style.top = (r.staff_top * zoom) + "px";
+  band.style.height = ((r.staff_bot - r.staff_top) * zoom) + "px";
+}
+function pageX(ev) {                              // css px -> deskewed page px
+  const b = sheet.getBoundingClientRect();
+  return Math.round((ev.clientX - b.left) / b.width * rows[i].page_w);
+}
+function render() {
+  const r = rows[i]; if (!r) return;
+  stage.querySelectorAll(".mark").forEach(n => n.remove());
+  const xs = (marks[idOf(r)] || []).slice().sort((a, b) => a - b);
+  const w = sheet.getBoundingClientRect().width || (r.page_w * zoom);
+  for (const x of xs) {
+    const d = document.createElement("div");
+    d.className = "mark"; d.style.left = (x / r.page_w * w) + "px"; d.title = "x=" + x;
+    d.onclick = (e) => { e.stopPropagation();
+      marks[idOf(r)] = xs.filter(v => v !== x); persist(); render(); };
+    stage.appendChild(d);
+  }
+  const done = rows.filter(q => (marks[idOf(q)] || []).length).length;
+  $("#list").innerHTML =
+    `<span class="${done === rows.length ? "done" : ""}">${done} / ${rows.length} satır işaretlendi</span>` +
+    `  ·  bu satır: [${xs.join(", ")}]<br>` +
+    `tıkla = ekle · işarete tıkla = sil · <kbd>n</kbd>/<kbd>p</kbd> satır · <kbd>f</kbd> sığdır · <kbd>c</kbd> temizle · <kbd>s</kbd> kaydet<br>` +
+    `<b>o satırdaki BÜTÜN barline'ları işaretleyin</b> — sadece kaçırılanları değil, yoksa yanlış-pozitif sayılamaz.<br>` +
+    `Porte'nin kendi başlangıç/bitişini işaretlemeyin: slicer o iki sınırı zaten kendisi üretiyor, puanlamadan düşürülür. ` +
+    `Ama sağ uçtaki BASILI çizgiyi (ör. bitiş çift barı) işaretlemek zararsız — slicer satırı erken bitiriyorsa ` +
+    `<i>outside_staff_extent</i> olarak ayrıca raporlanır.`;
+}
+function persist() { localStorage.setItem(KEY, JSON.stringify(marks)); }
+
+stage.onclick = (ev) => {
+  if (ev.target.classList.contains("mark")) return;
+  const r = rows[i], id = idOf(r);
+  marks[id] = [...(marks[id] || []), pageX(ev)];
+  persist(); render();
+};
+stage.onmousemove = (ev) => {
+  const b = sheet.getBoundingClientRect();
+  hint.style.left = (ev.clientX - b.left) + "px";
+};
+$("#prev").onclick = () => { i = (i - 1 + rows.length) % rows.length; show(); };
+$("#next").onclick = () => { i = (i + 1) % rows.length; show(); };
+$("#clear").onclick = () => { delete marks[idOf(rows[i])]; persist(); render(); };
+document.querySelectorAll("[data-z]").forEach(b =>
+  b.onclick = () => { zoom = +b.dataset.z; layout(); render(); });
+// fit-to-window. Fractional zoom is fine: every coordinate below goes through the img's own
+// bounding rect, so nothing assumes an integer scale.
+$("#fit").onclick = () => {
+  zoom = ($("#wrap").clientWidth - 28) / rows[i].page_w;
+  layout(); render();
+};
+$("#save").onclick = () => {
+  const out = { made: new Date().toISOString(), unit: "deskewed page px", marks };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
+  a.download = "barline_truth.json"; a.click();
+};
+addEventListener("keydown", (e) => {
+  if (e.key === "n") $("#next").click();
+  else if (e.key === "p") $("#prev").click();
+  else if (e.key === "c") $("#clear").click();
+  else if (e.key === "f") $("#fit").click();
+  else if (e.key === "s") { e.preventDefault(); $("#save").click(); }
+});
+addEventListener("resize", () => { layout(); render(); });
+</script>

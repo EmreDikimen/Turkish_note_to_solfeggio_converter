@@ -22,6 +22,9 @@ import {
   TOP_LINE_Y,
   WIDE_BEYOND_SP,
   WIDE_NEAR_SP,
+  BLOB_SKIP_LINE,
+  BLOB_LINE_FILL,
+  STAFF_ROW_POS_SP,
   WIDE_RUN_SP,
   pyRound,
 } from "./constants";
@@ -176,6 +179,17 @@ export function terminalOvershoot(bandExt: Mask, x: number, ext: number): [numbe
   const wide = pyRound(TARGET_SPACING * WIDE_BEYOND_SP);
   const wideRun = Math.max(2, pyRound(TARGET_SPACING * WIDE_RUN_SP));
   const wideNear = pyRound(TARGET_SPACING * WIDE_NEAR_SP);
+  // rows that ARE the staff line — looked through, never counted as an attachment. See
+  // BLOB_SKIP_LINE; this is gate 2's staff-row test at the same fill, on the wider band.
+  const lineRows = new Uint8Array(h);
+  if (BLOB_SKIP_LINE) {
+    for (let y = 0; y < h; y++) {
+      const off = y * w;
+      let s = 0;
+      for (let i = 0; i < w; i++) s += bandExt.data[off + i]!;
+      lineRows[y] = s > w * BLOB_LINE_FILL ? 1 : 0;
+    }
+  }
 
   const walk = (yStart: number, step: number, yEnd: number): [number, boolean] => {
     let ov = 0;
@@ -192,7 +206,10 @@ export function terminalOvershoot(bandExt: Mask, x: number, ext: number): [numbe
           break;
         }
       }
-      if (first >= 0) {
+      if (first >= 0 && lineRows[y]) {
+        ov = Math.abs(y - yStart); // the staff line — look straight through it
+        gapRows = 0;
+      } else if (first >= 0) {
         ov = Math.abs(y - yStart);
         gapRows = 0;
         // connected horizontal width through the stroke at this overshoot row
@@ -276,6 +293,16 @@ export function detectBarlines(
     let s = 0;
     for (let x = 0; x < w; x++) s += band.data[off + x]!;
     staffRows[y] = s > w * 0.4 ? 1 : 0;
+  }
+  if (STAFF_ROW_POS_SP > 0) {
+    // ... and a staff row must sit ON a staff line. See STAFF_ROW_POS_SP.
+    const th = Math.max(2, pyRound(TARGET_SPACING * STAFF_ROW_POS_SP));
+    const onLine = new Uint8Array(span);
+    for (let k = 0; k < 5; k++) {
+      const c0 = tol + Math.trunc(STAFF_SPAN / 4) * k;
+      for (let y = Math.max(0, c0 - th); y <= Math.min(span - 1, c0 + th); y++) onLine[y] = 1;
+    }
+    for (let y = 0; y < span; y++) if (!onLine[y]) staffRows[y] = 0;
   }
   const fatW = pyRound(TARGET_SPACING * 0.75); // wider than a thick barline core
   const fatRun = pyRound(TARGET_SPACING * 0.5); // ~a notehead's height

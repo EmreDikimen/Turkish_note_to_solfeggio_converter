@@ -65,6 +65,27 @@ export const OV_TOL_SP = 0.5; // L90 — a real barline may overshoot a staff li
 export const WIDE_BEYOND_SP = 0.5; // L91 — connected ink this wide past a line = notehead/flag/beam
 export const WIDE_RUN_SP = 0.2; // L92 — ... but only when wide for this many CONSECUTIVE rows
 export const WIDE_NEAR_SP = 1.5; // L94 — ... and only within this distance of the staff line
+/**
+ * ... and the STAFF LINE ITSELF is not an attachment — `BLOB_SKIP_LINE` (L152, `OMR_BLOB_LINE`
+ * unset => "1"). The overshoot walk starts ON the outer staff line, so the line's own thickness is
+ * the first thing it meets, and the row is upscaled to TARGET_SPACING, which multiplies it. Those
+ * rows are very wide connected ink hanging off the stroke, so on a coarse scan every barline
+ * carried a "notehead" and gate 3 rejected it. A row whose ink SPANS THE STAFF is therefore
+ * neutral: not a wide attachment, and it does not break the run either, so the walk looks straight
+ * through it for a real notehead. Measured in docs/METRICS-SLICER-BARLINES.md.
+ */
+export const BLOB_SKIP_LINE = true;
+export const BLOB_LINE_FILL = 0.4; // L153 — ... "spans the staff" = this full, gate 2's own test
+/**
+ * ... and a staff row must also BE where a staff line is — `STAFF_ROW_POS_SP` (L163,
+ * `OMR_STAFF_ROW_POS` unset => 0.2). Gate 2 skips staff rows so the five lines cannot make every
+ * candidate look fat, and it found them by fill alone. On a dense photocopy that claims rows the
+ * lines are nowhere near (101 of 140 band rows on one, 61 of them off every line), so gate 2 can
+ * never collect `fatRun` CONSECUTIVE fat rows, a notehead sitting inside the staff is invisible,
+ * and its stem passes as a barline. The normalized row fixes the five line positions exactly, so
+ * requiring a staff row to sit within this many line-spaces of one costs nothing.
+ */
+export const STAFF_ROW_POS_SP = 0.2;
 export const PAD_PX = 6; // L97 — crop padding past enclosing barlines
 export const TRIM_SHARED_EDGE = true; // L102 (OMR_EDGE_TRIM unset => "1")
 
@@ -91,6 +112,45 @@ export const STAFF_REPAIR_3LINE = true;
  * spacing while every genuine repair in the 400-page sample sat at 0.94-1.32x.
  */
 export const STAFF_REPAIR_SP_BAND: [number, number] = [0.7, 1.4];
+
+/**
+ * ---- one page, one staff SIZE — `STAFF_SPAN_CONSENSUS` ----------------------------------------
+ * Every staff printed on a page is the same height, so the page's median first-line-to-last-line
+ * SPAN is a far more reliable measurement than any single group's individual line rows. On a faded
+ * photocopy the horizontal opening does not lose whole lines so much as CHOP them: the thresholded
+ * row profile dips below the threshold at random heights inside one staff and `clusterRows` reports
+ * 6 or 7 "lines" where 5 are printed. `emitStaff`'s most-evenly-spaced-5-window rule then had to
+ * choose among windows that are ALL wrong, and it systematically took the tightest one — measured
+ * on bozukNihavendLonga, every row's span is 43-49 px (true spacing ~11.75) while the chosen
+ * windows read 8-10 px. The consequence is not cosmetic: `normalizeRow` scales by 30/spacing, so a
+ * 30% low spacing upscales the row 30% too much, the staff band the barline gates analyse no longer
+ * sits on the staff, and real barlines fail gate 1 while note stems pass — the "cut through the
+ * music, never at a bar" failure. Measured in docs/METRICS-SLICER.md.
+ */
+export const STAFF_SPAN_CONSENSUS = true;
+/** A page needs this many 4+-line groups before its median span means anything. */
+export const STAFF_SPAN_MIN_GROUPS = 3;
+/** How far a group's span may sit from the page median and still be "one staff". */
+export const STAFF_SPAN_TOL = 0.15;
+/** Smallest group the rebuild touches — 6, because a staff only prints 5 lines. */
+export const STAFF_SPAN_MIN_ROWS = 6;
+
+/**
+ * ---- one page, one staff WIDTH — `STAFF_WIDTH_CONSENSUS` --------------------------------------
+ * `emitStaff` keeps only the LONGEST run of qualifying columns, so a fade that opens a gap wider
+ * than STAFF_GAP_BRIDGE_SP throws away everything on the far side of it — whole measures at a row's
+ * left or right end, which then never become strips at all. Raising the bridge is not the answer:
+ * it is what stops a scan border or a page number from stretching the extent across the paper, and
+ * the gaps that break real rows are MARGINAL (69 px against a 60 px bridge, 73 against 72). The
+ * page settles it: a printed page uses ONE left and ONE right margin, so the median x0/x1 over its
+ * staves say where a row may reach. Only runs that already qualified as staff-line columns can be
+ * re-admitted, so a row that genuinely ends early has nothing out there to re-admit.
+ */
+export const STAFF_WIDTH_CONSENSUS = true;
+/** Same argument as STAFF_SPAN_MIN_GROUPS: 1-2 staves is not a consensus. */
+export const STAFF_WIDTH_MIN_STAVES = 3;
+/** How far past the page margin a re-admitted run may reach, in line-spaces. */
+export const STAFF_WIDTH_SLACK_SP = 2.0;
 
 export const STAFF_HOR_FRAC = 0.11;
 

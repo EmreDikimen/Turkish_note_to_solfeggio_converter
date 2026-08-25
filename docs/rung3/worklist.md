@@ -45,7 +45,7 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    false `\repstart`** — hand-payment for a hole the final render now closes, so expect the fix rate
    to fall once a model trained on that render reseeds the queue.
    ⚠ The 531 existing `fix` verdicts are **stranded on old crops**: they evidence bad auto-derived
-   labels, they are not corrections we can bank ([METRICS-SLICER.md](../METRICS-SLICER.md)).
+   labels, they are not corrections we can bank ([METRICS-SLICER-ROOTS.md](../METRICS-SLICER-ROOTS.md)).
    ⚠ Only the **final** model consumes this work, so the arms never waited for it.
    ✅ **The promotion embargo is LIFTED (2026-08-20)** — both arms are read, so `promote_labels.py`
    and B8 are unblocked, and promoting *before* the final render is the point of B2.

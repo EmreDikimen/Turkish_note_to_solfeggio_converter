@@ -105,12 +105,63 @@ EXT_SP = 2.5           # analysis band extends this far past the outer staff lin
                        # (2.5 sp keeps the band inside STRIP_H across the whole adaptive
                        # placement range: top line 99..138 -> 99-75=24 and 138+120+75=333)
 OV_TOL_SP = 0.5        # a real barline may overshoot a staff line by up to this much
+# How much of a barline may have FADED AWAY at its ends and still be recognised.
+#
+# ⚠ IT SHIPS OFF, and that is a measurement, not caution. Gate 1 asks for one UNBROKEN run covering
+# 0.85 of the analysis band, and because the band is the staff plus 2x its own slack that works out
+# at ~the full staff height — a barline whose bottom few px are lost to a photocopy fails by ONE
+# pixel (measured on bozukNihavendLonga row 0: run 118 against 119, and `touches_bot` false because
+# the run stops short of the bottom window). Rather than lower the fraction — which lets any long
+# stem in anywhere in the band — this rule is POSITIONAL: the run must still START at the top staff
+# line and END at the bottom one, each within this tolerance, and it is OR-ed with the original
+# rule so nothing found today can be lost.
+#
+# It still loses. Against SymbTr truth (`score_slicer.py --sample 25`, 124 rows, 2026-08-25) it
+# takes exact rows 86 -> 83 while buying 2 extra barlines on the photocopy it was written for, so
+# it is 3 real rows for 2 unverified ones. The stems it admits are not caught by gates 2 and 3 as
+# hoped. Kept switchable (`OMR_BAR_FADE=0.25`) because the photocopy failure it targets is real and
+# a future gate 2/3 that separates a faded barline from a stem would make it pay.
+BAR_FADE_SP = float(os.environ.get("OMR_BAR_FADE", "0"))
 WIDE_BEYOND_SP = 0.5   # connected ink this wide past a staff line = notehead/flag/beam ...
 WIDE_RUN_SP = 0.2      # ... but only when wide for this many CONSECUTIVE rows (a notehead is
                        # ~0.8 sp tall; a 2-3 px slur/tie crossing the bar's tip is not a blob)
 WIDE_NEAR_SP = 1.5     # ... and only within this distance of the staff line: a staff-spanning
                        # stem's head/beam attaches nearer (a longer stem couldn't also span the
                        # staff), while colliding TITLE/LYRIC text sits further out (old prints)
+# ... and it is NOT a notehead if the ink is the STAFF LINE ITSELF.
+#
+# The 2026-08-24 "a notehead past a staff line means stem" rule fixed a real inversion on clean
+# pages and was priced as costing "a real barline a notehead merely TOUCHES... rare". Hand-marked
+# barline truth (2026-08-25) says it is not rare: `gate3_blob` rejected 29 of the 93 printed
+# barlines on the four faded pages, 31% of every one of them.
+#
+# The cause is not the rule, it is what the walk counts as an attachment. It starts ON the outer
+# staff line and steps outward, so the line's own thickness is the first thing it meets — and the
+# row is upscaled to TARGET_SPACING, which multiplies that thickness (a 2 px line on a 10 px-spacing
+# photocopy becomes 6 px). Those rows are very wide connected ink hanging off the stroke, so every
+# barline on a coarse scan carried a "notehead". A faded line makes it worse rather than better: it
+# breaks into long one-sided runs, which is why the effect is strongest on exactly the pages the
+# report came from.
+#
+# So a row whose ink SPANS THE STAFF is neutral — it is not a wide attachment and it does not break
+# the run, and the walk looks straight through it for a real notehead. The test is gate 2's own
+# staff-row test, at the same 0.4 fill, so the file keeps ONE definition of "this row is a staff
+# line". ⚠ Switchable, so it stays A/B-able against the rule it amends: `OMR_BLOB_LINE=0` restores
+# 2026-08-24 behaviour exactly. Numbers, and the rejected shape-based alternative:
+# docs/METRICS-SLICER-BARLINES.md.
+BLOB_SKIP_LINE = os.environ.get("OMR_BLOB_LINE", "1") == "1"
+BLOB_LINE_FILL = float(os.environ.get("OMR_BLOB_FILL", "0.4"))   # ... "spans the staff" = this full
+# Gate 2 skips "staff rows" so the five lines cannot make every candidate look fat. It finds them by
+# fill alone (>0.4 of the row width), and on a DENSE photocopy that claims rows the staff lines are
+# nowhere near: 101 of 140 band rows on `bozukNihavendLonga` s03, 61 of them not within a line's
+# thickness of any of the 5 line positions. Gate 2 then cannot collect `fat_run` CONSECUTIVE fat
+# rows anywhere, so a notehead sitting inside the staff is invisible and its stem passes as a
+# barline. A staff row must therefore also BE where a staff line is: within this many line-spaces of
+# one of the five, whose positions the normalized row fixes exactly. `OMR_STAFF_ROW_POS=0` restores
+# fill-only. Measured on hand-marked truth: precision 65.3% -> 79.7% with recall UNCHANGED at 50.5%
+# (false barlines 25 -> 12), and `score_slicer` exactly neutral at 82/124 — it costs nothing on
+# either instrument. Flat over 0.15-0.3; 0.5 is wide enough to re-admit the old behaviour.
+STAFF_ROW_POS_SP = float(os.environ.get("OMR_STAFF_ROW_POS", "0.2"))
 PAD_PX = 6             # crop padding past enclosing barlines (tight: never reaches a notehead)
 # Give the left pad back off the PREVIOUS strip's right edge, so neighbouring crops never carry
 # the same pixels and a strip stops ending on the barline its label does not mention. Measured
@@ -345,6 +396,59 @@ STAFF_REPAIR_3LINE = True
 # 0.94-1.32x. This is the same argument `page_binarizer`'s shape check makes, at row level.
 STAFF_REPAIR_SP_BAND = (0.70, 1.40)
 
+# ---- one page, one staff SIZE ------------------------------------------------------------------
+# Every staff printed on a page is the same height, so the page's median first-line-to-last-line
+# SPAN is a far more reliable measurement than any single group's individual line rows. On a
+# faded photocopy the horizontal opening does not lose whole lines so much as CHOP them: the
+# thresholded row profile dips below the threshold at random heights inside one staff and
+# `_cluster_rows` reports 6 or 7 "lines" where 5 are printed. `_emit_staff`'s
+# most-evenly-spaced-5-window rule then had to choose among windows that are ALL wrong, and it
+# systematically took the tightest one -- measured on bozukNihavendLonga, every row's span is
+# 43-49 px (true spacing ~11.75) while the chosen windows read 8-10 px. The consequence is not
+# cosmetic: `normalize_row` scales by 30/spacing, so a 30% low spacing upscales the row 30% too
+# much, the staff band the barline gates analyse no longer sits on the staff, and real barlines
+# fail gate 1 while note stems pass. That is the "cut through the music, never at a bar" failure.
+#
+# So: when a group's own span already agrees with the page's, spread 5 evenly-spaced lines across
+# it instead of choosing a window. Nothing is invented -- the outer two lines are observed rows,
+# only the interior three are re-derived, and ink OUTSIDE a staff is not long-horizontal, so the
+# first and last rows of a group are the outer staff lines far more reliably than the middle ones.
+# A volta bracket or a lyric rule riding along makes the span too LARGE, which the tolerance
+# refuses, leaving today's window rule in charge exactly where it was written for.
+STAFF_SPAN_CONSENSUS = os.environ.get("OMR_STAFF_SPAN", "1") not in ("0", "false", "False")
+STAFF_SPAN_MIN_GROUPS = 3   # a page needs this many 4+-line groups before its median means anything
+# How far a group's span may sit from the page median and still be "one staff". Swept 0.08 - 0.20
+# on 2026-08-25: BOTH instruments are flat across that range (SymbTr 86/124 with 11 regressed at
+# every value; the 12 owner-flagged pages read 163 interior barlines at every value), so this is a
+# guard rail, not a dial — do not tune it without an instrument that can see it move.
+STAFF_SPAN_TOL = 0.15
+# Smallest group the rebuild touches. 6 is the measurement, not a guess: a group of exactly 5 is
+# usually a correctly detected staff, and re-spacing it moves each line by a px or two, which flips
+# marginal barline decisions in BOTH directions — on `pek_revadir` it won 2 barlines on one row and
+# lost 3 on two others. A group of 6 or 7 is the failure this rule was written for, since a staff
+# only prints 5 lines. At 6, SymbTr exact rows are 86/124 with the regressed count back at the
+# untouched baseline's 11 (against 12 at 5), and the 12 owner-flagged pages read 163 interior
+# barlines against 162. Both instruments point the same way.
+STAFF_SPAN_MIN_ROWS = int(os.environ.get("OMR_STAFF_SPAN_ROWS", "6"))
+
+# ---- one page, one staff WIDTH -----------------------------------------------------------------
+# `_emit_staff` keeps only the LONGEST run of qualifying columns, so a fade that opens a gap wider
+# than STAFF_GAP_BRIDGE_SP throws away everything on the far side of it — whole measures at a row's
+# left or right end, which then never become strips at all. Raising the bridge is not the answer:
+# it is exactly what stops a scan border or a page number from stretching the extent across the
+# paper, and the gaps that break real rows are MARGINAL (measured on bozukNihavendLonga: 69 px
+# against a 60 px bridge, and 73 against 72), so any bridge wide enough to fix them is also wide
+# enough to swallow the artifacts it was written for.
+#
+# The page itself settles it. A printed page uses ONE left and ONE right margin, so the median x0
+# and x1 over its staves say where a row is allowed to reach. A discarded run that starts (or ends)
+# at the page's own margin is the same staff; one out past the margin is the artifact. Only runs
+# that already qualified as staff-line columns can be re-admitted, so a row that genuinely ends
+# early — the last line of a piece — has nothing out there to re-admit and stays short.
+STAFF_WIDTH_CONSENSUS = os.environ.get("OMR_STAFF_WIDTH", "1") not in ("0", "false", "False")
+STAFF_WIDTH_MIN_STAVES = 3   # same argument as STAFF_SPAN_MIN_GROUPS: 1-2 staves is not a consensus
+STAFF_WIDTH_SLACK_SP = 2.0   # how far past the page margin a re-admitted run may reach
+
 # ---------------------------------------------------------------- pale-staff-line binarization
 # binarize_ink() is global Otsu, which splits the page into TWO classes. A page with black
 # noteheads and pale staff lines has THREE (paper / line / note), and Otsu puts the line on the
@@ -455,16 +559,53 @@ def detect_staves(ink: np.ndarray) -> list[Staff]:
     # group consecutive lines into systems: a gap >> median spacing starts a new system
     gaps = np.diff(line_rows)
     sp = float(np.median(gaps))
-    staves: list[Staff] = []
+    groups: list[list[int]] = []
     group = [line_rows[0]]
     for prev, cur in zip(line_rows[:-1], line_rows[1:]):
         if cur - prev <= sp * 2.2:          # same staff
             group.append(cur)
         else:                                # new system
-            _emit_staff(group, ink, staves, sp)
+            groups.append(group)
             group = [cur]
-    _emit_staff(group, ink, staves, sp)
+    groups.append(group)
+    page_span = _page_staff_span(groups)
+    staves: list[Staff] = []
+    runs_per_staff: list = []
+    for g in groups:
+        _emit_staff(g, ink, staves, sp, page_span, runs_per_staff)
+    _widen_to_page_margins(staves, runs_per_staff)
     return staves
+
+
+def _widen_to_page_margins(staves: list[Staff], runs_per_staff: list) -> None:
+    """Re-admit runs of staff-line columns that reach the PAGE's own margins — STAFF_WIDTH_CONSENSUS."""
+    if not STAFF_WIDTH_CONSENSUS or len(staves) < STAFF_WIDTH_MIN_STAVES:
+        return
+    page_x0 = float(np.median([s.x0 for s in staves]))
+    page_x1 = float(np.median([s.x1 for s in staves]))
+    for st, (runs, sp) in zip(staves, runs_per_staff):
+        slack = STAFF_WIDTH_SLACK_SP * sp
+        left = [r for r in runs if r[0] < st.x0 and r[0] >= page_x0 - slack]
+        right = [r for r in runs if r[1] > st.x1 and r[1] <= page_x1 + slack]
+        if left:
+            st.x0 = min(r[0] for r in left)
+        if right:
+            st.x1 = max(r[1] for r in right)
+
+
+def _page_staff_span(groups: list[list[int]]) -> float | None:
+    """The page's median staff height (first line -> last line), or None if it cannot be trusted.
+
+    Only groups that already look like a staff (4+ detected line rows) vote, and a page needs
+    STAFF_SPAN_MIN_GROUPS of them: on a one- or two-staff page the median is just that staff's own
+    span, so it carries no independent information and must not be used to rewrite it.
+    """
+    if not STAFF_SPAN_CONSENSUS:
+        return None
+    spans = [g[-1] - g[0] for g in groups if len(g) >= 4]
+    if len(spans) < STAFF_SPAN_MIN_GROUPS:
+        return None
+    return float(np.median(spans))
 
 
 def _cluster_rows(rows: np.ndarray, gap: int = 3) -> list[int]:
@@ -531,7 +672,8 @@ def _repair_group(group: list[int], page_sp: float | None = None) -> list[int] |
 
 
 def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff],
-                page_sp: float | None = None) -> None:
+                page_sp: float | None = None, page_span: float | None = None,
+                runs_out: list | None = None) -> None:
     """Accept a group as a staff if it has ~5 evenly-spaced lines; record its x-extent."""
     if STAFF_REPAIR_3LINE and len(group) == 3:
         repaired = _repair_group(group, page_sp)
@@ -539,6 +681,13 @@ def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff],
             group = repaired
     if not (4 <= len(group) <= 7):
         return
+    span = group[-1] - group[0]
+    if (page_span and len(group) >= STAFF_SPAN_MIN_ROWS
+            and abs(span - page_span) <= STAFF_SPAN_TOL * page_span):
+        # this group is exactly as tall as the page's other staves, so it IS one staff whose
+        # interior lines the opening chopped up -- see STAFF_SPAN_CONSENSUS
+        step = span / 4.0
+        group = [int(round(group[0] + i * step)) for i in range(5)]
     if len(group) > 5:
         # extra long horizontals (a VOLTA bracket above, an ottava/lyric rule below) can ride
         # along in the cluster — keep the most evenly-spaced consecutive 5-line window
@@ -579,6 +728,8 @@ def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff],
     runs.append((start, prev))
     x0, x1 = max(runs, key=lambda r: r[1] - r[0])
     out.append(Staff(lines=group, x0=x0, x1=x1))
+    if runs_out is not None:
+        runs_out.append((runs, sp))
 
 
 # -------------------------------------------------------------------- normalize + barlines
@@ -657,15 +808,30 @@ def normalize_row(gray: np.ndarray, staff: Staff,
     return row, scale, top_line_y
 
 
-def _longest_vertical_run(band_bool: np.ndarray) -> np.ndarray:
-    """Per column, the length of the longest UNBROKEN run of ink (vectorized over rows)."""
-    run = np.zeros(band_bool.shape[1], dtype=np.int32)
-    best = np.zeros(band_bool.shape[1], dtype=np.int32)
+def _longest_vertical_run(band_bool: np.ndarray,
+                          with_ends: bool = False) -> np.ndarray | tuple[np.ndarray, ...]:
+    """Per column, the length of the longest UNBROKEN run of ink (vectorized over rows).
+
+    With `with_ends`, also the first and last row of that run — what BAR_FADE_SP needs to ask
+    WHERE a stroke sits rather than only how long it is.
+    """
+    n = band_bool.shape[1]
+    run = np.zeros(n, dtype=np.int32)
+    best = np.zeros(n, dtype=np.int32)
+    if not with_ends:
+        for y in range(band_bool.shape[0]):
+            run = (run + 1) * band_bool[y]
+            best = np.maximum(best, run)
+        return best
+    start = np.zeros(n, dtype=np.int32)
+    end = np.zeros(n, dtype=np.int32)
     for y in range(band_bool.shape[0]):
-        row = band_bool[y]
-        run = (run + 1) * row          # reset to 0 where there's no ink
-        best = np.maximum(best, run)
-    return best
+        run = (run + 1) * band_bool[y]
+        upd = run > best
+        best = np.where(upd, run, best)
+        end = np.where(upd, y, end)
+        start = np.where(upd, y - run + 1, start)
+    return best, start, end
 
 
 def _is_thin_stroke(band: np.ndarray, x: int, fat_w: int, fat_run: int,
@@ -734,7 +900,8 @@ def _terminal_overshoot(band_ext: np.ndarray, x: int, ext: int) -> tuple[int, in
     Returns (ov_top, ov_bot, wide_beyond): rows of connected ink (in `x` ±3 px, one-row gaps
     tolerated) above the top staff line / below the bottom line, and whether any overshoot row
     holds a connected horizontal run >= WIDE_BEYOND_SP through the stroke (a notehead, flag or
-    beam — including a hollow half-note head whose thin walls defeat the fat-run test).
+    beam — including a hollow half-note head whose thin walls defeat the fat-run test). Rows that
+    are the STAFF LINE itself are looked through, not counted as an attachment — see BLOB_SKIP_LINE.
     """
     h, w = band_ext.shape
     lo, hi = max(0, x - 3), min(w, x + 4)
@@ -743,12 +910,18 @@ def _terminal_overshoot(band_ext: np.ndarray, x: int, ext: int) -> tuple[int, in
     wide_run = max(2, int(round(TARGET_SPACING * WIDE_RUN_SP)))
     wide_near = int(round(TARGET_SPACING * WIDE_NEAR_SP))
 
+    line_rows = (band_ext.sum(axis=1) > band_ext.shape[1] * BLOB_LINE_FILL) \
+        if BLOB_SKIP_LINE else np.zeros(h, dtype=bool)
+
     def walk(y_start: int, step: int, y_end: int) -> tuple[int, bool]:
         ov, gap_rows, run, is_wide = 0, 0, 0, False
         y = y_start + step
         while y != y_end:
             seg = band_ext[y, lo:hi]
-            if seg.any():
+            if seg.any() and line_rows[y]:
+                ov = abs(y - y_start)                # the staff line — look straight through it
+                gap_rows = 0
+            elif seg.any():
                 ov = abs(y - y_start)
                 gap_rows = 0
                 # connected horizontal width through the stroke at this overshoot row
@@ -809,10 +982,18 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     band = band_ext[ext - tol:ext + STAFF_SPAN + tol]        # staff ± tol (gates 1-2)
     span = band.shape[0]
 
-    longest = _longest_vertical_run(band)
+    longest, run_top, run_bot = _longest_vertical_run(band, with_ends=True)
     touches_top = band[:2 * tol].any(axis=0)                 # ink at/above the top staff line
     touches_bot = band[-2 * tol:].any(axis=0)                # ink at/below the bottom staff line
     is_bar = (longest >= span * 0.85) & touches_top & touches_bot
+    if BAR_FADE_SP > 0:
+        # ... or a stroke that RUNS BETWEEN the two staff lines but has faded at one end. The
+        # staff lines sit at band rows `tol` and `tol + STAFF_SPAN`; a fade may eat BAR_FADE_SP of
+        # a line-space off either end. See BAR_FADE_SP — this only ADDS candidates.
+        fade = int(round(TARGET_SPACING * BAR_FADE_SP))
+        is_bar |= ((longest >= STAFF_SPAN - 2 * fade)
+                   & (run_top <= tol + fade)
+                   & (run_bot >= tol + STAFF_SPAN - fade))
 
     xs = np.where(is_bar)[0]
     clusters = _cluster_cols(xs, longest, gap=max(4, int(TARGET_SPACING * 0.6)))
@@ -822,6 +1003,13 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     # keeping thick/repeat barlines and lines notes merely touch. Staff-line rows ink every
     # column and are skipped.
     staff_rows = band.sum(axis=1) > band.shape[1] * 0.4
+    if STAFF_ROW_POS_SP > 0:
+        # ... and a staff row must sit ON a staff line. See STAFF_ROW_POS_SP.
+        th = max(2, int(round(TARGET_SPACING * STAFF_ROW_POS_SP)))
+        on_line = np.zeros(len(staff_rows), dtype=bool)
+        for k in range(5):
+            on_line[max(0, tol + STAFF_SPAN // 4 * k - th):tol + STAFF_SPAN // 4 * k + th + 1] = True
+        staff_rows &= on_line
     fat_w = int(round(TARGET_SPACING * 0.75))                # wider than a thick barline core
     fat_run = int(round(TARGET_SPACING * 0.5))               # ~a notehead's height
     ov_tol = int(round(TARGET_SPACING * OV_TOL_SP))

@@ -92,6 +92,34 @@ Cloud Run from localhost.
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
     # ⚠ `--token-budget N` runs the SAME arm under the LABEL-BUDGET rail. The reference fixes the
     # packing rule as well as the sample, and `parity:slicer` refuses a ref that mixes the two.
+.venv-ml/bin/python src/vision/page_to_strips.py <page.png> --out <dir> --debug
+    # slice ONE page and write the overlay. `<page>_debug.png` legend: GREEN = detected staff lines,
+    # BLUE = an accepted barline, RED box = a strip crop, and the rejects colour-coded by WHY —
+    # ORANGE gate2_fat, YELLOW gate3_blob, PURPLE gate3_clef, GREY xrange. ⚠ A row with NO blue line
+    # found no barline at all and is being cut by WIDTH, straight through the music.
+.venv-ml/bin/python scripts/rung3/score_slicer.py --sample 25
+    # measure-count regression against SymbTr truth, no model. ⚠ Its truth comes from aligning the
+    # OLD pipeline's decodes, so a row that pipeline never read is ABSENT — the blind spot is
+    # exactly the faded rows a slicer fix rescues. Read it beside the two below, never alone.
+.venv-ml/bin/python scripts/rung3/build_barline_truth.py && open data/real/rung3/_barline_truth/mark.html
+    # cut the hand-marking sheets, then click every printed barline
+    # (n/p = row, f = fit to window, c = clear the row, s = save)
+    # ⚠ The row list is INLINED into mark.html on purpose — a browser refuses `fetch` from a file://
+    # page, and the first build rendered a BLANK sheet with nothing in the console to say why.
+    # and drop `barline_truth.json` back into that folder. ⚠ Mark ALL of a row's barlines, not just
+    # the missed ones, or precision cannot be scored. ⚠ Do NOT mark where a staff starts and stops —
+    # the slicer always emits those two boundaries itself, so they test nothing and are dropped. ⚠ The sheets deliberately show NOTHING the
+    # slicer found — a marker shown the answer anchors to it, the same rule the exam gold lives by.
+.venv-ml/bin/python scripts/rung3/score_barlines.py
+    # what the measure count cannot say: RECALL, PRECISION, and for every miss WHICH GATE rejected
+    # it — or `never_a_candidate`, meaning gate 1 (continuity + touching both staff lines). Honours
+    # the slicer's env flags, so it A/Bs a gate change directly. The gate-3 ones:
+    #   OMR_BLOB_LINE=0   the staff line counts as an attachment again (2026-08-24 behaviour)
+    #   OMR_BLOB_FILL=0.3 how much of a row's width ink must span to BE the staff line (ships 0.4)
+    #   OMR_STAFF_ROW_POS=0 gate 2's staff rows go back to fill-only, ignoring WHERE the lines are
+    #   OMR_BAR_FADE=0.25 gate 1's fade tolerance — a straight recall/precision trade, ships off
+    # ⚠ Read every gate change on `score_slicer.py` too. The two instruments price different pages
+    # and have disagreed on the same change more than once.
 .venv-ml/bin/python scripts/rung3/measure_fill_score.py --decode-root data/real/strips_v2
     # the LABEL-FREE accuracy proxy: a strip covers n measures, so its decode must fill n x the
     # page's meter, and an early `</s>` comes up short. ⚠ ALWAYS read it beside

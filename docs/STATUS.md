@@ -2,31 +2,121 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-24
+updated: 2026-08-25
 
 ## Now
 
-⭐ **THE SLICER TOOK THREE FIXES ON 2026-08-24, ALL FOUND WITH THE INSPECTOR'S NEW `debug.png`.**
-The biggest is the owner's own: **a notehead attached past a staff line means STEM, whatever the
-overshoot** — the gate already computed that evidence and ignored it below 15 px, and on one clean
-page it rejected the real barline while keeping the stem beside it. Against SymbTr truth, rows whose
-measure count matches the print go **60 → 86 of 124**, regressed unchanged. With it: **one page, one
-binarizer** (the row gates stop re-running Otsu), fade-broken staff extents bridge, and a staff with
-3 surviving lines is rebuilt. 400 pages: **0 worse** on any structural count, 78.8% unchanged.
-⚠ The two staff repairs cost ~1 row in 124 against that truth, and the metric **cannot see their
-benefit** — the faded rows they rescue have no truth entry.
+⭐ **THE SLICER TOOK TWO MORE FIXES ON 2026-08-25, BOTH THE SAME ARGUMENT: A PAGE IS ITS OWN
+CONTROL.** Owner-reported, from the exam-queue bad-crop list and *"bozukNihavendLonga is not cut at
+the bars"*. Every staff printed on a page is the same **size** and reaches the same **margins**, so
+the page's median span and median x0/x1 outrank any single row's own measurement — which on a faded
+photocopy is wrong. **Staff SIZE**: a group of 6+ detected line rows is one staff whose lines the
+opening chopped, so 5 evenly-spaced lines are spread across its span instead of picking the tightest
+consecutive 5. That was reading the spacing **30% low**, which upscaled the row 30% too much and made
+real barlines fail the continuity gate while stems passed. **Staff WIDTH**: a discarded run of
+staff-line columns that reaches the page's own margin is re-admitted, restoring rows that were losing
+half their music. On the 12 owner-flagged pages, interior barlines **146 → 164** and rows cut by
+width with **no barline at all 27 → 17**; 200 corpus pages: staves **+0 and 0 pages worse**, x-extent
+**+8,169 px**, 88% identical. ⚠ **Not free, unlike the 2026-08-24 set**: 5 pages lose a barline, the
+worst of them handwritten. ⚠ Against SymbTr truth both fixes are **exactly neutral** (86/124, 11
+regressed, same as untouched) — that instrument cannot see faded rows by construction. ✅ Ported to
+the browser slicer; `parity:slicer` is **100% on all three rungs**. ⛔ A third fix, a fade tolerance
+for the continuity gate, was built and **rejected on measurement** (86 → 83).
+Debug sheets to look at with your own eyes: `data/real/debug/badcrops_2026-08-25/`.
 [METRICS-SLICER.md](METRICS-SLICER.md) · [DECISIONS.md](DECISIONS.md).
+
+⭐ **THE SLICER NOW HAS BARLINE GROUND TRUTH, AND IT IS WHAT FOUND THE BUG ABOVE.** The owner
+hand-marked **every printed barline on 38 staff rows** over the 4 worst pages of his bad-crop list —
+129 marks. It is the first number in this project that says what the slicer *should* have found;
+every other barline figure counts what it did. Its first reading was **recall 26/93 (28.0%),
+precision 26/41 (63.4%)**, and naming the gate behind each miss is what turned a one-line report into
+the two fixes below (today: **50.5% recall / 79.7% precision**). ✅ It also re-scores the day's two staff fixes on the
+right instrument: recall **17.7% → 28.0%**, precision **53.1% → 63.4%**, and barlines the slicer
+could never reach because the row's extent was wrong **5 → 0**. ⚠ On `score_slicer.py` those same
+fixes are exactly neutral — that sample is mostly clean pages, this one is the worst four we have.
+Tools: `build_barline_truth.py` → `mark.html` → `score_barlines.py`.
+[METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md).
+
+⭐ **`gate3_blob` WAS REJECTING 31% OF EVERY PRINTED BARLINE, AND THE "NOTEHEAD" TURNED OUT TO BE
+THE STAFF LINE.** The gate's overshoot walk starts ON the outer staff line and steps outward, so the
+line's own thickness is the first thing it meets — and `normalize_row` upscales the row, multiplying
+that thickness (a 2 px line on a 10 px-spacing photocopy becomes 6). Every barline on a coarse scan
+therefore carried a "notehead". A probe over the 38 marked rows settled it before anything was
+changed: of the **63 candidates the gate rejected, 30 are printed barlines and 33 are stems**, and
+the median width of the ink it called a notehead is **373 px on the barlines against 44 px on the
+stems** — 44 px is one line-space, a real notehead; 373 px is not a glyph. **The fix is one branch**:
+a row whose ink spans the staff is neutral, so the walk looks straight through it for a real
+notehead. Recall **28.0% → 50.5%**, precision **63.4% → 65.3%** — both rise, so this is not a
+recall/precision trade — and `gate3_blob` misses **29 → 8**. On the 12 flagged pages, interior
+barlines **163 → 224** and rows with no barline at all **17 → 10**. ⚠ **It costs 4 rows on
+`score_slicer` (86 → 82)**, taken for the same reason as the 2026-08-24 staff repairs: a clean page's
+staff line is thin, so this ink was never its problem. ⛔ The **shape discriminator** the last session
+asked for (a beam is long and thin, a notehead is round) was built, reads better on truth
+(57.0% / 67.1%), and **costs three times as much** on `score_slicer` (86 → 74) — a clean page's
+beamed stem with its notehead inside the staff is exactly that shape. Removed from the code, numbers
+kept. Switchable: `OMR_BLOB_LINE=0`. ✅ **200 corpus pages: barlines +454 on 127 pages and NO page
+loses one**, staves and x-extent untouched (+0, 0 worse); the 9 pages with fewer strips all found
+MORE barlines — a row with no barline is cut by width into several strips, and finding its bars packs
+the same music into fewer correct ones. ✅ Ported to the browser slicer; `parity:slicer` is **100% on
+all three rungs** (120 pages), including the stricter ungated line — **rejected candidates identical
+844/844 rows**. [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md) ·
+[DECISIONS.md](DECISIONS.md).
+
+⭐ **AND GATE 2 WAS BLIND ON A DENSE PAGE — A "STAFF ROW" ONLY HAD TO BE FULL, NOT TO BE ON A LINE.**
+Owner-reported from the slice inspector: `bozukNihavendLonga` still cuts through note stems. Three
+cuts on that page are not printed barlines and they have **two causes**. **One is a stem taken for a
+barline** — the ink at that column is a **40–55 px blob over a 10–11 px stroke**, a notehead inside
+the staff with its stem below, which is what gate 2 exists to reject. Gate 2 skips *staff rows* so
+the five lines cannot make every candidate read fat, and it found them by **fill alone** (>0.4 of the
+row width). On this page that claims **101 of 140 band rows, 61 of them nowhere near a line** — so it
+can never collect enough CONSECUTIVE fat rows and the notehead is invisible. A staff row must now
+also BE where a line is (the normalized row fixes all five positions). **Precision 65.3% → 79.7% with
+recall unchanged at 50.5%**, false barlines **25 → 12**, and `score_slicer` **exactly neutral at
+82/124** — free on both instruments, so it shipped on the sweep, and `parity:slicer` is 100% again
+after the port. ⚠ **A stricter gate only ever REMOVES barlines**: 200 corpus pages are 92.0%
+identical, bars **−29 on 16 pages, 0 pages gain one**, and those 29 are **unverified** — every
+checkable removal was false (13 of 13 on the marked pages) but no corpus page is covered by either
+instrument. ⛔ **The other two cuts are NOT
+barlines and were left alone**: they are `_split_wide` width gutters on rows that found too few
+barlines, where no zero-ink column exists and the splitter takes the least-inked one. That is gate 1
+arriving one step later, which is the item below. [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md).
+
+⏭ **NEXT: GATE 1 IS NOW THE WHOLE MISS LIST — `never_a_candidate` 37 of 46, and the sweep that
+addresses it needs an owner call, not another measurement.** A missed barline never became a
+candidate because gate 1 wants one unbroken run covering 0.85 of the analysis band with ink touching
+both extremes, and a photocopied bar fades by a pixel. `BAR_FADE_SP` already trades that off, and the
+three points are measured: 0 → 28.0%/63.4% (now 50.5%/65.3% with the staff-line fix), 0.25 →
+32.3%/57.7%, 0.5 → 40.9%/50.0%. ⚠ **The open question is what a FALSE cut is worth against a missed
+one** — a false barline cuts a crop through the music, a missed one only makes the strip wider, and
+nothing has measured which costs more downstream. ⏭ A second, cheaper knob sits beside it:
+`OMR_BLOB_FILL` ships at 0.4 and 0.3 reads **+7.6pp recall for −1 row** on `score_slicer`.
+
+⚠ **A RETRACTED DIAGNOSIS, kept because it is the reason the truth file exists**: the session before
+this one first reported that the barline ink was "absent from the mask" on that page. It was not —
+the columns were read off a 2x preview with a bad coordinate conversion and landed on blank paper. At
+the real columns the ink is 40/44 and 44/44 rows dark. Eyeballing barline positions is what produced
+both that and an arithmetic error the same day; hand marks are the fix.
+
+⭐ **THE SLICER TOOK THREE FIXES ON 2026-08-24, ALL FOUND WITH THE INSPECTOR'S `debug.png`.** The
+biggest is the owner's own — **a notehead attached past a staff line means STEM, whatever the
+overshoot** (SymbTr exact rows 60 → 86 of 124, regressed unchanged). With it: **one page, one
+binarizer**, fade-broken staff extents bridge, and a staff with 3 surviving lines is rebuilt.
+400 pages: **0 worse** on any structural count, 78.8% unchanged. ⚠ The two staff repairs cost ~1 row
+in 124 against that truth, and the metric **cannot see their benefit** — the faded rows they rescue
+have no truth entry. [METRICS-SLICER.md](METRICS-SLICER.md) · [DECISIONS.md](DECISIONS.md).
 
 ⛔ **CROP QUALITY HAS NO SETTLED METRIC, AND TWO PROBES ANSWERED THE WRONG QUESTION.** Cuts passing
 THROUGH a symbol are **1 in 754 and were already that rare** before the fixes. The owner's framing is
 the one to build on: *does the cut land somewhere that is not a barline?* A third probe (cuts inside a
 beamed group, **15.5%**) is closer but unvalidated. Nothing should be scored on the first two.
 
-⏭ **THE EXAM RE-CUT IS AUTHORISED BUT NOT DONE, AND ONE FIX IS STILL OPEN BEFORE IT.** Re-cutting on
-this slicer leaves **1075 of 1369 crops unchanged** and invalidates **78 of 452 verdicts**. The
-recommendation on the table is to finish the extent rule first — it changes crops again — then cut
-**once**: `strips_examv3` is kept as the record, the new root is `examv4`, and the 374 surviving
-verdicts carry over. ⚠ Exam labelling is paused at 452 of 663 until this is settled.
+⏭ **THE EXAM RE-CUT IS AUTHORISED, STILL NOT DONE — AND THE FIX IT WAS WAITING FOR HAS LANDED.**
+The recommendation was to finish the extent rule before cutting, because it changes crops again; the
+2026-08-25 width fix **is** that rule. Re-cutting on the 2026-08-24 slicer left **1075 of 1369 crops
+unchanged** and invalidated **78 of 452 verdicts**; ⚠ **that pricing predates both of today's fixes
+and has to be re-measured** (`check_crop_staleness.py`) before the cut, since staff geometry moved on
+faded pages. Then cut **once**: `strips_examv3` is kept as the record, the new root is `examv4`, and
+the surviving verdicts carry over. ⚠ Exam labelling is paused at 452 of 663 until this is settled.
 
 ✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — an arc is label-free ink, like
 a slur, because **65–78% of every `\tie` in the queues joined two DIFFERENT pitches**. Render, gold

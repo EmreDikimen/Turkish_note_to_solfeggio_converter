@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-08-23
+updated: 2026-08-25
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -97,10 +97,25 @@ Cloud Run from localhost.
     # BLUE = an accepted barline, RED box = a strip crop, and the rejects colour-coded by WHY —
     # ORANGE gate2_fat, YELLOW gate3_blob, PURPLE gate3_clef, GREY xrange. ⚠ A row with NO blue line
     # found no barline at all and is being cut by WIDTH, straight through the music.
-.venv-ml/bin/python scripts/rung3/score_slicer.py --sample 25
+.venv-ml/bin/python scripts/rung3/score_slicer.py --sample 25   # ⚠ a 124-row SAMPLE, see below
+.venv-ml/bin/python scripts/rung3/score_slicer.py              # the real instrument: 6,440 rows, ~30 min
+.venv-ml/bin/python scripts/rung3/score_slicer.py --pair-by-position
+    # ⚠ REQUIRED for any change that adds or removes a STAFF. Both row-level scorers pair a row to
+    # its cached truth by SYSTEM INDEX, so a pass that inserts a staff shifts every later index and
+    # scores each row against another row's answer — a large FALSE regression, not an error. This
+    # re-pairs by vertical position and reports the added rows separately (they cannot be scored:
+    # the truth is aligned from the OLD pipeline's decodes, which never saw them).
+    # ⛔ `score_barlines.py` has the SAME coupling and NO equivalent flag — its hand marks are keyed
+    # to detected rows. Across a staff change `bozukNihavendLonga` read 30 marked before and 3
+    # after. Do not quote it across such a change. docs/METRICS-SLICER.md.
     # measure-count regression against SymbTr truth, no model. ⚠ Its truth comes from aligning the
     # OLD pipeline's decodes, so a row that pipeline never read is ABSENT — the blind spot is
     # exactly the faded rows a slicer fix rescues. Read it beside the two below, never alone.
+    # ⚠ `--sample` has NO default and the sampled form is what every score quoted before
+    # 2026-08-25 evening used — 86/124, 82/124, 86 -> 83. At 124 rows a 3-4 row difference is not
+    # separable from noise, and the full run reversed one such call (BAR_FADE). PRICE A GATE CHANGE
+    # ON THE FULL RUN. ⚠ It does NOT call `window_cache_ok`, deliberately: its `old_*` column IS the
+    # retired pipeline's cache, so the geometry guard does not blind it.
 .venv-ml/bin/python scripts/rung3/build_barline_truth.py && open data/real/rung3/_barline_truth/mark.html
     # cut the hand-marking sheets, then click every printed barline
     # (n/p = row, f = fit to window, c = clear the row, s = save)
@@ -117,7 +132,8 @@ Cloud Run from localhost.
     #   OMR_BLOB_LINE=0   the staff line counts as an attachment again (2026-08-24 behaviour)
     #   OMR_BLOB_FILL=0.3 how much of a row's width ink must span to BE the staff line (ships 0.4)
     #   OMR_STAFF_ROW_POS=0 gate 2's staff rows go back to fill-only, ignoring WHERE the lines are
-    #   OMR_BAR_FADE=0.25 gate 1's fade tolerance — a straight recall/precision trade, ships off
+    #   OMR_BAR_FADE=0.25 gate 1's fade tolerance, ships OFF — turned on 2026-08-25 and reverted
+    #                    the same day: free on the 4 faded pages, net -76 rows at full scale
     # ⚠ Read every gate change on `score_slicer.py` too. The two instruments price different pages
     # and have disagreed on the same change more than once.
 .venv-ml/bin/python scripts/rung3/measure_fill_score.py --decode-root data/real/strips_v2

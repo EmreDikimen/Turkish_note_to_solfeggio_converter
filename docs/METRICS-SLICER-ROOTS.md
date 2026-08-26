@@ -12,21 +12,68 @@ came from**. Nothing is duplicated in either.
 exists for: two roots can hold the same filenames and different images, so a label written against
 one root is not a label for the other.
 
-## Re-cutting the exam on the current slicer, priced (2026-08-24)
+## Re-cutting the exam on the current slicer, priced THREE ways (2026-08-25)
 
-Read-only comparison of the frozen `strips_examv3` manifests against a fresh slice of the same pages:
+⭐ **The answer is 125 verdicts, and the two earlier numbers were both bounds rather than estimates.**
+All three measure the same re-cut; they differ in what they call a loss.
+
+| measurement | verdicts lost | of 455 | what it actually asks |
+|---|---|---|---|
+| span comparison (2026-08-24, **superseded**) | 78 | 17% | did `row_x0`–`row_x1` move? Optimistic — same span can hold different pixels, and it predates the 25 Aug blob fix |
+| page level (`check_crop_staleness.py`) | 287 | 63% | did ANY crop on this page move? Pessimistic — one moved crop voids a whole page |
+| **strip level, `carry_gold`'s own rule** | **125** | **27%** | is there a crop holding this exact music, in a row whose barlines did not move? |
+
+**Page level, all 67 pages** (`--root data/real/strips_examv3 --pages 67`, 2026-08-25):
+
+| | pages |
+|---|---|
+| identical | 25 |
+| pixels only / size only (labels fine) | 0 / 0 |
+| **measures differ** — labels void | 16 |
+| **crop count/names differ** — labels void | 26 |
+
+**37% of pages keep their labels; 42 of 67 lose them.** ⚠ That the "labels fine" rows are both ZERO
+is itself the finding: on this re-cut a page either survives untouched or its music moves.
+
+**Strip level**, matching on `build_exam_v3_queue.py`'s own `MUSIC_KEYS` (L120 — `system`,
+`meas_from`, `meas_to`, `n_measures`, `is_row_start`), with one guard added: an index match only
+means "same music" if that row's **measure count** did not move, because adding a barline renumbers
+every measure after it.
+
+| outcome | crops (of 1,369) | verdicts (of 455) |
+|---|---|---|
+| **carried** — same span, row's barlines unchanged | 899 (65.7%) | **330 (73%)** |
+| bars_changed — lands on a crop, but the row was renumbered | 77 | 25 |
+| staves_changed — the page's staff count moved | 101 | 24 |
+| **lost** — nothing holds that music | 292 (21.3%) | 76 |
+
+Of the **125** needing a person again, **76 are fully lost** (retype from the picture) and **49 land
+on a crop with the old label carried as a suggestion** — a confirm, not a retype.
+
+⚠ **Do not use `check_crop_staleness.py`'s page verdict as a labelling bill.** It grades a page, and
+it is the right tool for *"is this queue safe to label"* — but as a cost it over-counts by 2.3x here.
+
+## What the staff RESCUE would add to that bill (2026-08-25)
+
+Measured on the same 67 exam pages, rescue off vs on ([METRICS-SLICER.md](METRICS-SLICER.md)):
 
 | | |
 |---|---|
-| strips in examv3 | 1,369 |
-| crop span **unchanged** | 1,075 (78.5%) |
-| **moved or gone** | 294 (21.5%) |
-| verdicts already recorded | 452 |
-| **verdicts invalidated** | **78** (55 fix, 21 bad, 2 ok) |
+| staff rows, rescue **off** | 501 |
+| staff rows, rescue **on** | **522 (+21)** |
+| pages gaining a row | **14 of 67 (21%)** |
 
-⚠ **Optimistic lower bound.** It compares `row_x0`–`row_x1` only; a row whose vertical placement
-moved gives different pixels under the same span. The exact figure needs the crops themselves
-compared.
+Concentrated: `vuslata_nail_de_etse_ger_felek_nota_p2` alone gains 4 (4 → 8) and four pages gain 2.
+At ~2–3 strips a row that is roughly **+45–60 new strips**, all unlabelled, on pages already
+verdicted — an `examv4` of ~710–725 rows against `examv3`'s 663.
+
+⚠ **The exam and the training pools do not have to be cut with the same setting**, only to each be
+internally consistent, and `window_signature()`'s `staff_rescue` field records which cut a given
+decode. The rescue's value is highest where rows are free (training: **+320 rows over 227 pages**)
+and lowest on the exam, which grades fine at 663 and whose difficulty has already shifted once.
+⚠ The cost of splitting them is that the model would be **trained** on rescue-cut pages and
+**graded** on pages cut without it. Unmeasured, and small only because every row both settings find
+is cut identically. Not yet decided — [STATUS.md](STATUS.md).
 
 ## The labelling pools are OLD-SLICER output (2026-07-28)
 

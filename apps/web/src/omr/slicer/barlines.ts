@@ -15,6 +15,7 @@
  * 10.5 and 22.5, where `Math.round` would silently retune gates 1 and 2).
  */
 import {
+  BAR_FADE_SP,
   EXT_SP,
   OV_TOL_SP,
   STAFF_SPAN,
@@ -71,18 +72,41 @@ function maskRows(m: Mask, y0: number, y1: number): Mask {
 
 /** `_longest_vertical_run` (L474): per column, the longest UNBROKEN run of ink. */
 export function longestVerticalRun(band: Mask): Int32Array {
+  return longestVerticalRunWithEnds(band).best;
+}
+
+/**
+ * `_longest_vertical_run(..., with_ends=True)` (L474): the same run, plus the first and last row it
+ * occupies — what `BAR_FADE_SP` needs to ask WHERE a stroke sits rather than only how long it is.
+ *
+ * ⚠ `start`/`end` update only where the run is STRICTLY longer than the best so far, matching the
+ * numpy `run > best`. On a tie the FIRST such run keeps the ends, and a faded barline's two halves
+ * are often exactly equal in length — swapping this to `>=` silently picks the lower half and moves
+ * the candidate.
+ */
+export function longestVerticalRunWithEnds(band: Mask): {
+  best: Int32Array;
+  start: Int32Array;
+  end: Int32Array;
+} {
   const w = band.width;
   const run = new Int32Array(w);
   const best = new Int32Array(w);
+  const start = new Int32Array(w);
+  const end = new Int32Array(w);
   for (let y = 0; y < band.height; y++) {
     const off = y * w;
     for (let x = 0; x < w; x++) {
       const r = band.data[off + x] ? run[x]! + 1 : 0; // reset to 0 where there's no ink
       run[x] = r;
-      if (r > best[x]!) best[x] = r;
+      if (r > best[x]!) {
+        best[x] = r;
+        end[x] = y;
+        start[x] = y - r + 1;
+      }
     }
   }
-  return best;
+  return { best, start, end };
 }
 
 /**
@@ -263,7 +287,7 @@ export function detectBarlines(
   const span = band.height;
   const w = band.width;
 
-  const longest = longestVerticalRun(band);
+  const { best: longest, start: runTop, end: runBot } = longestVerticalRunWithEnds(band);
   // ink at/above the top staff line, and at/below the bottom one
   const touchesTop = new Uint8Array(w);
   const touchesBot = new Uint8Array(w);
@@ -277,9 +301,20 @@ export function detectBarlines(
   }
   // `longest >= span * 0.85` compares an int run length against a FLOAT — keep it a float compare
   const minRun = span * 0.85;
+  // ... OR a stroke that RUNS BETWEEN the two staff lines but has faded at one end. The staff lines
+  // sit at band rows `tol` and `tol + STAFF_SPAN`; a fade may eat BAR_FADE_SP of a line-space off
+  // either end. See BAR_FADE_SP — this only ADDS candidates.
+  const fade = BAR_FADE_SP > 0 ? pyRound(TARGET_SPACING * BAR_FADE_SP) : 0;
   const xs: number[] = [];
   for (let x = 0; x < w; x++) {
-    if (longest[x]! >= minRun && touchesTop[x] && touchesBot[x]) xs.push(x);
+    let isBar = longest[x]! >= minRun && touchesTop[x] !== 0 && touchesBot[x] !== 0;
+    if (!isBar && BAR_FADE_SP > 0) {
+      isBar =
+        longest[x]! >= STAFF_SPAN - 2 * fade &&
+        runTop[x]! <= tol + fade &&
+        runBot[x]! >= tol + STAFF_SPAN - fade;
+    }
+    if (isBar) xs.push(x);
   }
   const clusters = clusterCols(xs, longest, Math.max(4, Math.trunc(TARGET_SPACING * 0.6)));
   const rejects: Array<[number, string]> | null = debugInfo !== null ? [] : null;

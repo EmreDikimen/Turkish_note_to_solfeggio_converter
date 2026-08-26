@@ -2,7 +2,7 @@
 
 purpose: what a barline is to the slicer, which gate rejects what, and the hand-marked ground truth that says how often it is right
 audience: anyone about to change `detect_barlines` or argue about crop quality
-updated: 2026-08-25
+updated: 2026-08-26
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-25 at the 400-line cap. That file
 keeps the STAFF and the ink mask — binarization, staff geometry, x-extent; this one keeps the CUT.
@@ -80,7 +80,12 @@ tried and **rejected**: interior bars on that page went 3 → 4 while `gate2_fat
 68 → 76. The bloating hypothesis it was built on is wrong.
 
 Corpus-wide, over 400 pages, **27.0% of all strips are width-split** and **11.0% of staff rows have
-no interior barline at all**. Nothing here addresses that.
+no interior barline at all**. Nothing here addresses that. ⚠ **Re-measured on the FINAL 2026-08-25
+slicer (400 pages, 2,973 staff rows, 8,174 strips): width-split 29.8%, rows with no interior barline
+12.3%** — both *higher*, and that is not a regression. The 24 August repairs rescue faded rows that
+produced nothing before (+54 staves on 400 pages); they enter the denominator and a faded row is
+exactly the kind that finds no barline. ⚠ The 27.0/11.0 pair records no sample or seed, so the two
+are not a paired delta — read the new pair as the current state, not as a change.
 
 ## BARLINE GROUND TRUTH EXISTS NOW, AND THE SLICER FINDS 28% OF THEM (2026-08-25)
 
@@ -279,7 +284,8 @@ have. Neither instrument is wrong; they measure different populations.
 
 ### `BAR_FADE_SP` reopened: it is a straight trade, not a bug
 
-The rejected fade rule, swept on the new instrument:
+The rejected fade rule, swept on the new instrument — ⚠ **this sweep predates the same day's two
+gate fixes and the section below re-runs it after them**:
 
 | `OMR_BAR_FADE` | recall | precision | false barlines |
 |---|---|---|---|
@@ -292,6 +298,88 @@ does not settle it**, and the default was NOT changed on it: a false barline cut
 music, a missed one only makes the strip wider, and nothing has measured which costs more downstream.
 It also still costs 3 rows on `score_slicer` (86 → 83), which is the clean-page population. The
 decision needs an owner call on what a false cut is worth, not another sweep.
+
+## `BAR_FADE_SP` was turned ON at 0.25 and turned back OFF the same day (2026-08-25 evening)
+
+⭐ **This is the section to read before ever re-opening the fade rule.** Turning it on is cheap and
+the faded-page numbers make it look free; the reason it ships OFF is a measurement that only exists
+at full scale, and re-arguing it from the table above is exactly how it got turned on.
+
+**Re-swept on the hand-marked truth AFTER the staff-line-neutral blob walk and gate 2's position
+rule** — both landed after the sweep above, and both change which candidates survive:
+
+| `OMR_BAR_FADE` | recall | precision | false barlines |
+|---|---|---|---|
+| **0 (ships)** | 47/93 (50.5%) | 47/59 (79.7%) | 12 |
+| 0.25 | 51/93 (54.8%) | 51/64 (**79.7%**) | 13 |
+| 0.3 | 52/93 (55.9%) | 52/66 (78.8%) | 14 |
+| 0.35 | 53/93 (57.0%) | 53/68 (77.9%) | 15 |
+| 0.4 | 59/93 (63.4%) | 59/80 (73.8%) | 21 |
+| 0.45 | 63/93 (67.7%) | 63/86 (73.3%) | 23 |
+| 0.5 | 65/93 (69.9%) | 65/90 (72.2%) | 25 |
+
+The recorded trade — *"every step buys recall and pays precision"* — **does not reproduce on this
+code**. Precision is flat to 0.35 and the knee is exactly there: 0.35 → 0.4 is +6.4pp recall for
+−4.1pp precision and 6 more false barlines. At 0.25 precision does not move at all.
+
+⛔ **AND THAT READING DID NOT GENERALISE.** The hand truth is 93 marks on the 4 most faded pages we
+own. `score_slicer.py` run at **FULL scale** pairs the two settings row for row over the same
+population:
+
+| | fade 0 | fade 0.25 |
+|---|---|---|
+| exact rows | 3750/6440 (58.2%) | **3718/6440 (57.7%)** |
+| paired vs fade 0 | — | **BETTER 111, WORSE 187, net −76 rows** |
+
+**How the error moved is the whole argument** — the dominant transition is a row whose measure count
+was RIGHT gaining a spurious barline:
+
+| `dn` move | rows | |
+|---|---|---|
+| **`+0` → `+1`** | **108** | a correct row gains a false barline |
+| `-1` → `+0` | 72 | the intended win: a missing barline recovered |
+| `+1` → `+2` | 46 | already wrong, now worse |
+
+**72 recovered against 108 broken.** That is the original code comment's *"the stems it admits are
+not caught by gates 2 and 3 as hoped"*, confirmed at 50× the scale it was first measured on.
+
+⚠ **The owner had already rejected 0.35+ on the PIXELS rather than the summary**, and that reasoning
+survives the revert: the false barlines each step adds were opened one by one, and **every new one is
+a NOTE STEM** — three of three at 0.35, and the single one 0.25 adds is a stem too. A stem cuts the
+crop through the music, which is the failure this project cares about most.
+
+✅ **The rule IS ported to the browser slicer and was verified at 0.25 before the revert**:
+`parity:slicer` 100% on all three rungs, bar count 844/844 rows, bar x exact 3490/3490, and the
+stricter ungated line **rejected candidates identical 844/844**. So re-enabling it is one constant on
+each side (`BAR_FADE_SP` in `page_to_strips.py` and in `apps/web/src/omr/slicer/constants.ts`), and
+they must move together.
+
+### ⚠ `score_slicer.py` is a 6,440-row instrument, and every earlier number is a 124-row sample
+
+`--sample` has no default, so a bare run scores **1,159 pieces / 6,440 truth-bearing rows**. Every
+score quoted before 2026-08-25 evening — `86/124`, `82/124`, `86 → 74`, `86 → 83` — comes from
+`--sample 25`. That is stated in [COMMANDS.md](COMMANDS.md) and in [METRICS-SLICER.md](METRICS-SLICER.md),
+but the derived decisions quote the bare number, and **at 124 rows a 3–4 row difference is not
+separable from noise**. The full-scale baseline, first run 2026-08-25:
+
+| | rows |
+|---|---|
+| truth-bearing rows | **6,440** (1,159 pieces scored, 179 skipped for no/stale cache) |
+| the slicer the labelled pools were CUT with (`old_dn`) | 3,304 (51.3%) |
+| **today's slicer** | **3,750 (58.2%)** — improved 1,296, regressed 694 |
+
+⭐ So the 24–25 August work is **+446 exact rows** over the pipeline that cut the pools, measured
+properly for the first time. ⚠ Re-price any future gate change here, not on `--sample 25`. A full run
+costs ~30 min on the M4.
+
+## ⛔ `OMR_BLOB_FILL` 0.3 was measured and rejected (2026-08-26)
+
+The third rule this month to look free on the hand-marked faded pages and fail at scale: **+7.6pp
+recall (50.5% -> 58.1%)** for −1.4pp precision on the 93-mark truth, but at 6,440 rows **3741 exact
+against 3750**, paired **BETTER 52 / WORSE 72, net −20** over 131 rows on 105 pages. ⭐ **The dominant move is `+0 -> +1` on 37 rows** — a row whose measure count was RIGHT gaining
+a spurious barline — against 33 recovering a missing one, plus 21 going `+1 -> +2`. Same signature as
+`BAR_FADE_SP` (net −76). ⛔ Do not re-open either from the faded-page table: 93 marks on the 4 worst
+pages we own, and it has now mispredicted the full run three times.
 
 ## Crop quality has no settled metric — two probes answered the wrong question (2026-08-24)
 

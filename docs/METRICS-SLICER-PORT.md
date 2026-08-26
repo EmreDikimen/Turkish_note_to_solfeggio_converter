@@ -11,6 +11,86 @@ cap. The split is by genre: that file keeps **what the Python page-cutter does**
 How to reproduce any number here — and ⚠ why the control is local Python rather than the manifests
 on disk — is [mvp/slicer-port.md](mvp/slicer-port.md). Rung state: [mvp/README.md](mvp/README.md).
 
+## Both 2026-08-26 staff fixes port exactly, and both SHIP ON
+
+`STAFF_GROUP_BY_SPAN` and `STAFF_SPAN_FIX_SPACING` are the first slicer changes this month to go on
+by default, so parity here is not a diagnostic — it is what stops the app cutting differently from
+the training data. 120 pages, run three times as the two landed:
+
+| check | shipped rule | + group merge | **+ spacing fix (ships)** |
+|---|---|---|---|
+| staff line y's identical | 844/844 | 854/854 | **854/854 (100%)** |
+| outer lines + spacing identical | 844/844 | 854/854 | **854/854** |
+| staff x-extent / normalized row width | 844/844 | 854/854 | **854/854** each |
+| strip count exact per page | 120/120 | 120/120 | **120/120** |
+| window fields exact | 2352/2352 | 2379/2379 | **2388/2388** |
+| `row_x0`/`row_x1` within 2 px, worst Δ | 0 px | 0 px | **0 px** |
+| split_wide gutter cuts | 742 = 742 | 750 = 750 | **768 = 768** |
+| deskew angle identical | 132/132 | 132/132 | **132/132** |
+| | W4 W5 W6 PASS | PASS | **PASS** |
+
+⭐ **The counts moving is the evidence the new code ran**: +10 staff rows from the merge, then +9
+more strips as the spacing fix re-magnified rows whose scale had been wrong. Every one of them
+agrees between TypeScript and Python.
+
+⚠ **The bug behind the merge was found IN THE BROWSER and is invisible to Python alone** — the ±1
+grayscale difference is what pushed `bozukNihavendLonga2` across the grouping threshold. It now reads
+**10 staves**, matching Python, with the rescue on or off.
+
+## The grouping repair, measured on its own (2026-08-26)
+
+`STAFF_GROUP_BY_SPAN` is the first slicer change this month to go on by default, so parity here is
+not a diagnostic — it is what stops the app cutting differently from the training data. 120 pages,
+both sides on:
+
+| check | result |
+|---|---|
+| staff line y's identical | **854/854 (100%)** — 844 before the merge, so it added 10 rows on this sample |
+| outer lines + spacing identical | 854/854 |
+| staff x-extent / normalized row width | 854/854 each |
+| strip count exact per page | 120/120 |
+| window fields exact | **2379/2379** strips |
+| `row_x0`/`row_x1` within 2 px | 2379/2379, worst Δ **0 px** |
+| split_wide gutter cuts | 750 = 750 |
+| deskew angle identical | 132/132 |
+| | **W4 PASS   W5 PASS   W6 PASS** |
+
+⭐ **The bug this fixes was found IN THE BROWSER and is invisible to Python alone**: the ±1 grayscale
+difference is what pushed `bozukNihavendLonga2` across the grouping threshold. The browser now reads
+**10 staves**, matching Python, with the rescue on or off.
+
+## The staff RESCUE ports exactly, tested with the flag ON (2026-08-25)
+
+⭐ **The point of this entry is that the FLAG WAS ON.** A parity run with `STAFF_RESCUE` off passes
+100% while executing none of the new code, so it proves only that the port did not disturb the
+existing path. Both runs are recorded because only the second one is evidence about the rescue.
+
+Same 120 pages, `slicer_ref.py` + `slicer-parity.ts`:
+
+| check | rescue OFF both sides | rescue ON both sides |
+|---|---|---|
+| staff line y's identical | 844/844 | **871/871** |
+| outer lines + spacing identical | 844/844 | **871/871** |
+| staff x-extent identical | 844/844 | **871/871** |
+| normalized row width identical | 844/844 | **871/871** |
+| strip count exact per page | 120/120 | **120/120** |
+| window fields exact | 2352/2352 | **2425/2425** |
+| `row_x0`/`row_x1` within 2 px | 2352/2352, worst Δ **0 px** | **2425/2425, worst Δ 0 px** |
+| split_wide gutter cuts | 742 = 742 | **780 = 780** |
+| verdict | W4 W5 W6 **PASS** | W4 W5 W6 **PASS** |
+
+⭐ **The counts moving is the evidence**: +27 staff rows and +73 strips on the same pages, and
+TypeScript agreed with Python on every recovered row — same line positions, same x-extents, same
+windowing, zero drift on any crop boundary.
+
+⚠ **Testing it required editing the TS constant**, because `STAFF_RESCUE` is a compile-time constant
+rather than an env knob (the browser has no environment). The run flips it to `true`, runs, and
+restores `false` from a shell `trap` — and the restore was verified by reading the file afterwards,
+not by trusting the trap. **A forgotten `true` there silently changes what the shipped app cuts.**
+
+⚠ **`row pixel-sum drift max 427.1 ppm` is unchanged and is never zero** — the browser's grayscale
+differs from Python's by ±1 by construction ([METRICS-SLICER.md](METRICS-SLICER.md)).
+
 ## Windowing and the driver reproduce Python (2026-08-04, MVP W6)
 
 Port vs **local Python** over the **whole corpus — 1,781 pages / 33,805 strips**. The reference

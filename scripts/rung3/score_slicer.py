@@ -59,12 +59,43 @@ def cached_decodes(piece, strips_root: Path) -> list[dict] | None:
     return out
 
 
-def new_counts(page_path: Path, rejects: Counter) -> dict[int, int]:
-    """system index -> measure count under the CURRENT slicer CV path (no strip writing)."""
+def new_counts(page_path: Path, rejects: Counter,
+               by_position: bool = False) -> tuple[dict[int, int], int]:
+    """system index -> measure count under the CURRENT slicer CV path (no strip writing).
+
+    Returns (counts, rows_gained). The index is the OLD pipeline's, which is what the cached truth
+    is keyed by.
+
+    ⚠ `by_position` exists because this scorer's docstring assumption — "staff grouping is
+    unchanged" — is FALSE for any change to staff detection. The staff rescue inserts a row, and a
+    plain `enumerate` then shifts every later index, so each row would be scored against another
+    row's truth and the run would report a large regression that is purely an artifact. With this
+    on, staves are re-paired to the pass-1 reading by vertical position, and rows the rescue ADDED
+    are counted separately rather than scored: their truth comes from aligning the OLD pipeline's
+    decodes, and the old pipeline never saw them, so no truth for them exists.
+    """
     page = load_gray(page_path)
     ink = binarize_ink(page)
     out: dict[int, int] = {}
-    for si, staff in enumerate(detect_staves(ink)):
+    gained = 0
+    if by_position:
+        base = detect_staves(ink, rescue=False)
+        full = detect_staves(ink, rescue=True)
+        tol = max(6, int(0.5 * (base[0].lines[-1] - base[0].lines[0]))) if base else 6
+        used: set[int] = set()
+        pairs: list[tuple[int, object]] = []
+        for si, b in enumerate(base):
+            hit = min(((j, f) for j, f in enumerate(full) if j not in used
+                       and abs(f.lines[0] - b.lines[0]) <= tol),
+                      key=lambda jf: abs(jf[1].lines[0] - b.lines[0]), default=None)
+            if hit is not None:
+                used.add(hit[0])
+                pairs.append((si, hit[1]))
+        gained = len(full) - len(used)
+        staves_iter = pairs
+    else:
+        staves_iter = list(enumerate(detect_staves(ink)))
+    for si, staff in staves_iter:
         row, scale, _ = normalize_row(page, staff)
         info: dict = {}
         bars = detect_barlines(row, staff, scale, debug_info=info)
@@ -72,7 +103,7 @@ def new_counts(page_path: Path, rejects: Counter) -> dict[int, int]:
             rejects[why] += 1
         windows = window_measures(bars, row)  # same counting as the manifest (prefix trim etc.)
         out[si] = max(w.m_to for w in windows) + 1 if windows else 0
-    return out
+    return out, gained
 
 
 def main() -> int:
@@ -84,6 +115,9 @@ def main() -> int:
                     help="tokenizer source only — no ONNX is loaded")
     ap.add_argument("--row-nd", type=float, default=0.45)
     ap.add_argument("--margin", type=float, default=0.10)
+    ap.add_argument("--pair-by-position", action="store_true",
+                    help="pair rows to the cached truth by vertical POSITION, not system index — "
+                         "required for any change that adds or removes a staff (see new_counts)")
     ap.add_argument("--sample", type=int, help="score only N randomly chosen cached pieces")
     ap.add_argument("--seed", type=int, default=33)
     ap.add_argument("--csv", default="data/real/rung3/score_slicer.csv")
@@ -115,6 +149,7 @@ def main() -> int:
 
     rejects: Counter = Counter()
     page_cache: dict[str, dict[int, int]] = {}
+    rows_gained: dict[str, int] = {}   # pages where the rescue ADDED a staff, per --pair-by-position
     page_paths: dict[str, Path] = {}
     results: list[dict] = []          # one per truth-bearing row
     piece_counts = {"new_closer": 0, "old_closer": 0, "tied": 0}
@@ -132,7 +167,11 @@ def main() -> int:
             if stem not in page_cache:
                 pp = next((REPO / g for g in piece.pages if (REPO / g).stem == stem), None)
                 page_paths[stem] = pp
-                page_cache[stem] = new_counts(pp, rejects) if pp and pp.exists() else {}
+                if pp and pp.exists():
+                    page_cache[stem], g = new_counts(pp, rejects, args.pair_by_position)
+                    rows_gained[stem] = g
+                else:
+                    page_cache[stem] = {}
             new_rm = page_cache[stem].get(a.row.system)
             p_old += a.row.row_measures
             p_new += new_rm if new_rm is not None else 0
@@ -172,6 +211,14 @@ def main() -> int:
     print(f"dn hist new  {hist('new_dn')}")
     print(f"piece-count gap vs printed: {piece_counts}")
     print(f"gate rejects (new slicer): {dict(rejects)}")
+    if args.pair_by_position:
+        gained_pages = {k: v for k, v in rows_gained.items() if v}
+        print(f"\nstaff ROWS GAINED by the rescue: {sum(gained_pages.values())} "
+              f"on {len(gained_pages)} of {len(rows_gained)} pages")
+        print("  ⚠ these rows are NOT in the numbers above and cannot be: the truth is aligned "
+              "from the OLD pipeline's decodes, which never saw them.")
+        for k, v in sorted(gained_pages.items(), key=lambda kv: -kv[1])[:10]:
+            print(f"    +{v}  {k}")
     if regressed:
         print("\nworst regressions (|new_dn| desc):")
         for r in sorted(regressed, key=lambda r: -abs(r["new_dn"]))[:15]:

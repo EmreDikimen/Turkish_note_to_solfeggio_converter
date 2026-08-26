@@ -3,7 +3,7 @@
 purpose: the single home for the LABEL BUDGET — the rail that decides whether the model can express a strip at all, why the shipped app has none, and what the `?dense=` experiment measures
 audience: agents and the owner, before changing the windowing constants or the strip frame
 
-updated: 2026-08-17
+updated: 2026-08-25
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-17 when that file crossed the 400-line
 cap, and split again on 2026-08-22 — [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) took the
@@ -285,6 +285,68 @@ The dense-page bug is **real and unchanged** — 59.1% of pages carry an over-bu
 now measured is that **this particular fix is not the answer**: cutting on the estimate moves the
 failure rather than removing it. Splitting *and* something that helps a short strip decode
 correctly would be a different experiment.
+
+## HOW FAR over budget, and what 59 actually costs (2026-08-25)
+
+⭐ **The framing "the model chokes on a dense strip" is wrong, and the distribution says so.** Over
+**11,844 real strips** (600 cached page decodes under `strips_v2`, `n_ids` read off the decode, no
+re-decoding):
+
+| | |
+|---|---|
+| decode longer than the 59-id budget | **1,737 (14.67%)** |
+| of those, **median** | **67 ids** — 8 over |
+| p90 / max | 81 / 100 |
+| ran to the hard decode limit (`hit_cap`, 100 ids) | **4 of 11,844 (0.03%)** |
+
+**60% of the over-budget strips sit in the 60–69 band.** The model is not being truncated: 59 is not
+an inference limit at all, it is the **emitter's drop rule** (`MAX_IDS` in `audit_coverage.py`), and
+the decoder's own ceiling is 100, which essentially nothing reaches. ⭐ So the cost of 59 is **14.7%
+of the real training strips thrown away** — a data-volume problem, not a model-capacity one. Read
+[BACKLOG.md](BACKLOG.md) item 7 that way. ✅ The geometry-only estimate agrees with the decodes to the
+decimal (14.7% estimated over 200 pages vs 14.67% measured here), so `estimate_tokens` can be used to
+price a packing change without decoding anything.
+
+## The packer is GREEDY, and on a real row a better cut existed (2026-08-25)
+
+Owner-reported: *"the last strip of row 3 is very narrow, so the model reads it badly"*, on a clean
+neyzen.com page (`nihavend longa garip okunuyor`, kept in
+`data/real/debug/badcrops_2026-08-25/03-son-slicer/`). `window_measures` packs left to right, taking
+measures while they fit the width rail, and never looks at what that leaves for the rest of the row.
+Row `s02` holds 4 measures of **906 · 703 · 612 · 324 px**. Every legal packing:
+
+| packing | strips (width, est_ids) | legal |
+|---|---|---|
+| **1\|2\|1 ← chosen** | (906, 43.2) **(1315, 69.9)** (324, 15.5) | ❌ middle strip over budget |
+| **1\|1\|2** | (906, 43.2) (703, 38.0) (936, 47.4) | ✅ **nothing narrow, nothing over** |
+| 1\|1\|1\|1 | (906,43) (703,38) (612,32) (324,15) | ✅ but 4 strips |
+| 2\|2 | (1609, 81.2) (936, 47.4) | ❌ width rail |
+
+**One greedy choice produced both harms on one row** — the runt *and* the over-budget strip — while a
+3-strip packing existed that had neither. A balanced (DP) packer is cheap: 4–7 measures a row.
+
+⛔ **NOT FIXED IN THE SLICER (owner, 2026-08-25), and the reason is cost, not doubt.** It moves crop
+boundaries, so it stales every labelled pool and the 455 human verdicts on `examv3`; the final render
+rebuilds the training set anyway, so the same ground is cheaper to test at TRAINING. Round 4, with
+the rail.
+
+⚠ **Two candidate explanations were measured and BOTH FAILED**, which is why the packer is the
+remaining one:
+
+- **"the merge rule should catch it"** — it already exists (`MIN_STRIP_W` = 200 px, merge into the
+  previous window) and cannot fire here: the runt is 324 px, and merging it anyway gives 1639 px
+  against the 1435 cap and 85.4 ids against 59. Raising the threshold converts runts into
+  over-wide, over-budget strips, which are dropped.
+- **"training will cover it"** as a data gap — it is not one. Synthetic `strips_v5_tupnew` is
+  **6.5%** strips under 600 px (n=6,000 sample) against **3.5%** in the real pools (`strips_b8`,
+  n=3,955): the model has seen *more* narrow strips than it meets. Nor are real narrow crops unusual
+  in content — repeat/nav tokens appear in 21–25% of their gold, against 19–32% at every other width.
+  What they *are* is end-of-row: **61% of crops under 600 px are the last window on their row**,
+  against a 35% baseline.
+
+⚠ **Narrow crops do cost, and here is the size of it.** Over the 455 human verdicts on `examv3`,
+crops under 600 px are marked `bad` (the crop itself unusable) **19% of the time against 8% overall**
+and 4–9% in every other width band. n=54, so it is a signal, not a rate.
 
 ## The 2026-07-29 retune and the crop frame moved out (2026-08-22)
 

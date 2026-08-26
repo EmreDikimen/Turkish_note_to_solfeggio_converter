@@ -86,6 +86,28 @@ export const BLOB_LINE_FILL = 0.4; // L153 — ... "spans the staff" = this full
  * requiring a staff row to sit within this many line-spaces of one costs nothing.
  */
 export const STAFF_ROW_POS_SP = 0.2;
+/**
+ * How much of a barline may have FADED AWAY at its ends and still be recognised — `BAR_FADE_SP`
+ * (L124, `OMR_BAR_FADE` unset => 0.25). Gate 1 wants one unbroken run covering 0.85 of the analysis
+ * band, which works out at ~the full staff height, so a photocopied barline missing its bottom few
+ * px fails by ONE pixel. Rather than lower the fraction — which lets any long stem in anywhere in
+ * the band — the extra rule is POSITIONAL: the run must still START at the top staff line and END
+ * at the bottom one, each within this tolerance. It is OR-ed with the original, so it only ADDS
+ * candidates and nothing found without it can be lost.
+ *
+ * ⚠ IT SHIPS OFF (0), and that is a measurement. Turned on at 0.25 on 2026-08-25 because on the
+ * hand-marked truth — 93 barlines over the 4 most faded pages we own — it buys +4 real barlines for
+ * +1 false one with precision unmoved (79.7% both ways). That did not generalise: `score_slicer.py`
+ * at FULL scale (6,440 rows) pairs the two settings at BETTER 111 / WORSE 187, net −76 rows, and the
+ * dominant move is a row whose measure count was RIGHT gaining a spurious barline (108 rows). Turned
+ * back off the same day. Higher values were rejected on the PIXELS: every false barline each further
+ * step adds is a NOTE STEM, which cuts a crop through the music.
+ * ⚠ The rule itself is ported and was verified against Python at 0.25 (parity 100% on all three
+ * rungs, rejected candidates identical 844/844), so re-enabling it is this constant plus the Python
+ * one. They must move TOGETHER or the app cuts differently from the training data.
+ * docs/METRICS-SLICER-BARLINES.md.
+ */
+export const BAR_FADE_SP = 0;
 export const PAD_PX = 6; // L97 — crop padding past enclosing barlines
 export const TRIM_SHARED_EDGE = true; // L102 (OMR_EDGE_TRIM unset => "1")
 
@@ -134,6 +156,19 @@ export const STAFF_SPAN_MIN_GROUPS = 3;
 export const STAFF_SPAN_TOL = 0.15;
 /** Smallest group the rebuild touches — 6, because a staff only prints 5 lines. */
 export const STAFF_SPAN_MIN_ROWS = 6;
+/**
+ * ...and the same rebuild fires when a group's MEASURED spacing contradicts its own height —
+ * `STAFF_SPAN_FIX_SPACING`. The line-count gate above only catches a staff chopped into MORE lines
+ * than it has; the identical defect with too FEW lines went straight through, and it is worse,
+ * because `normalizeRow` scales by `30 / spacing` and a spacing read 54% high under-magnifies the
+ * row until its fixed-height frame reaches into the system above (owner-reported on
+ * `bozukNihavendLonga2` s03: the crop included the previous staff). See `emitStaff`.
+ * Full scale: **3748 exact against 3746**, paired BETTER 7 / WORSE 6 over 13 rows on 12 pages.
+ * ⚠ Must move together with Python's `STAFF_SPAN_FIX_SPACING`.
+ */
+export const STAFF_SPAN_FIX_SPACING = true;
+/** Only a GROSS disagreement fires it; a healthy staff's two measurements already agree. */
+export const STAFF_SPAN_SPACING_TOL = 0.25;
 
 /**
  * ---- one page, one staff WIDTH — `STAFF_WIDTH_CONSENSUS` --------------------------------------
@@ -153,6 +188,106 @@ export const STAFF_WIDTH_MIN_STAVES = 3;
 export const STAFF_WIDTH_SLACK_SP = 2.0;
 
 export const STAFF_HOR_FRAC = 0.11;
+
+// ---- grouping lines into systems, by staff HEIGHT — `STAFF_GROUP_BY_SPAN` --------------------
+/**
+ * Where one staff ENDS and the next begins.
+ *
+ * The shipped rule splits when a gap exceeds `2.2 * sp`, where `sp` is the page's MEDIAN LINE GAP —
+ * a page-global number deciding a local question, and close enough to the data to be flipped by
+ * rounding. ⚠ **This browser is where that was caught.** On `bozukNihavendLonga2.png` the port and
+ * Python found the SAME three staff lines on one row (y = 266, 285, 291) and disagreed on whether
+ * they were one staff: Python measured sp = 9.0 -> threshold 19.8 px, the browser sp = 8.0 ->
+ * 17.6 px, and the gap in question is 19 px. Python grouped them and `repairGroup` rebuilt the row
+ * to 5 lines; the browser split them into a 1-line and a 2-line group, both under the 3-line floor,
+ * so the repair never ran and the staff was LOST — 9 staves here against Python's 10.
+ *
+ * ⚠ There is no code difference and it is not a port bug. `cv2.imread(IMREAD_GRAYSCALE)` converts
+ * inside the PNG decoder and a browser cannot (see `decodeGray`), so the two greyscales differ by
+ * ±1 on ~16% of this page's pixels BY CONSTRUCTION. Python won that page by 0.8 px of luck, and
+ * `parity:slicer` passed 100% throughout because its 120-page sample does not contain it.
+ *
+ * A staff is defined by its HEIGHT, not by a multiple of the median line gap, and the page already
+ * measures that height (`pageStaffSpan`). Grouping on it removes the rounding knife-edge.
+ * ⚠ Falls back to the shipped rule when the page has too few confident staves to have a trustworthy
+ * span, so a 1–2 staff page behaves exactly as before.
+ * ⚠ Must move together with Python's `STAFF_GROUP_BY_SPAN` or the app cuts differently from the
+ * training data. docs/METRICS-SLICER.md.
+ */
+export const STAFF_GROUP_BY_SPAN = true;
+/** How far a MERGED pair may EXCEED the page's staff height. ⛔ At 1.2 this meant something
+ * else — the broad regrouping that measured −545 exact rows and was thrown away. */
+export const STAFF_GROUP_SPAN_TOL = 0.15;
+
+// ---- the staff RESCUE second pass — `STAFF_RESCUE` (Python: OMR_STAFF_RESCUE) -----------------
+/**
+ * Re-detect a staff only in the bands where the page's own rhythm says a row is MISSING.
+ *
+ * It exists because a whole row is currently lost on faint, photocopied and hand-ruled pages —
+ * `vuslata_nail_de_etse_ger_felek_nota_p2` finds 4 of its 9 rows, `kacma_mecburundan…_nota_p1` 4
+ * of 9, and that second one is ordinary printed TRT engraving, not handwriting. A lost row is not
+ * a bad crop, it is NO crop: that music never reaches the model at all.
+ *
+ * The mechanism is the `horLen x 1` opening in `staffLineRows` — one pixel tall, so it demands the
+ * line stay inside a single row for 11% of the page width. A line that wanders is erased outright.
+ *
+ * ⚠ WHY A SECOND PASS AND NOT A LOOSER RULE. Loosening detection globally was tried first and
+ * rejected on measurement: dilating before the opening takes one hand-ruled page 5 -> 8 staves and
+ * takes `bozukNihavendLonga` 10 -> 1, because on a page whose lines sit 9 px apart any useful
+ * dilation fuses them. Scaling the dilation to the measured line spacing does not escape it either.
+ * A pass that only looks inside a band pass 1 left EMPTY cannot move a page whose rows were all
+ * found — the property a dial could not have.
+ *
+ * ⚠ SHIPS OFF, and it must move together with the Python constant or `parity:slicer` breaks and
+ * the app cuts differently from the training data. Full-scale reading (`score_slicer.py`, 6,440
+ * rows, 1,159 pieces): every scored number IDENTICAL to the baseline — 3750/6440 exact, 1296
+ * improved, 694 regressed, same dn histogram — while gaining **320 staff rows on 227 of 1,592
+ * pages**. Those gained rows cannot be scored there: the truth is aligned from the OLD pipeline's
+ * decodes, which never saw them. docs/METRICS-SLICER.md.
+ */
+export let STAFF_RESCUE = false;
+
+/**
+ * Turn the rescue on or off for a diagnostic A/B — the shipped app never calls this.
+ *
+ * Same shape as `setVplaceTopClaim`: the slice inspector is where a slicer rule gets checked on a
+ * real page rather than taken on trust, and this rule is invisible in any other view — a row the
+ * slicer never found leaves no crop to look at, so the ONLY way to see it is to draw the page with
+ * the rescue on. ⚠ The inspector therefore defaults it ON while the app and the cutting pipeline
+ * default it OFF, which means **the inspector deliberately shows more staves than the app cuts**.
+ * It says so on screen; do not "fix" that by changing either default.
+ */
+export function setStaffRescue(on: boolean): void {
+  STAFF_RESCUE = on;
+}
+/** A rescued staff's HEIGHT must be within this of the page's median staff height. */
+export const RESCUE_SPAN_TOL = 0.18;
+/**
+ * ...and it must be about as WIDE as the page's real staves. Not a tidy-up: without it the block of
+ * UNDERLINED LYRICS at the foot of a handwritten page is rescued as a staff, because lyric rules sit
+ * at staff-like spacing and so pass the height test. They span only the part of the page the text
+ * occupies. `repairGroup` documents the same false positive and refuses it on spacing; height alone
+ * cannot, since these two agree on height.
+ */
+export const RESCUE_WIDTH_FRAC = 0.6;
+/**
+ * Below this many staves a page has no trustworthy pitch to predict a missing row FROM, so the
+ * second pass does not run at all — the same argument as STAFF_SPAN_MIN_GROUPS.
+ */
+export const RESCUE_MIN_STAVES = 3;
+/**
+ * The readings tried inside a band, cheapest first, stopping at the first accepted:
+ * [dilate, threshold fraction]. The first entry is pass 1's own rule minus its page-GLOBAL parts,
+ * and it is the one that rescues most rows — the ink was there and readable, and it was the
+ * page-wide threshold and grouping that lost it, not absent ink.
+ */
+export const RESCUE_READS: ReadonlyArray<readonly [number, number]> = [
+  [0, 0.3],
+  [0, 0.2],
+  [2, 0.25],
+  [3, 0.25],
+  [0, 0.12],
+];
 
 // ---- pale-staff-line binarization (L361-362) --------------------------------------------------
 // Why the fallback exists and why its guard is this narrow: `pageBinarizer` in staves.ts.

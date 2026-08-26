@@ -12,7 +12,7 @@
  * score, because this page never makes one.
  */
 import { slicePage, type SlicedPage } from "../omr/page";
-import { setVplaceTopClaim } from "../omr/slicer/constants";
+import { setStaffRescue, setVplaceTopClaim } from "../omr/slicer/constants";
 import { decodeStrips, type StripInput } from "../omr/pipeline";
 import { getModel } from "../omr/session";
 import type { Strip } from "../omr/slicer/slicer";
@@ -145,6 +145,7 @@ root.innerHTML = `
     <label><input id="actual" type="checkbox" /> actual size</label>
     <label title="Decode every strip with the model as soon as the page is sliced (~1.2 s a strip). Untick to slice only, which is ~1.6 s a page."><input id="autoread" type="checkbox" checked /> read with the model</label>
     <label title="Restore the OLD rule, where a slur or ornament above the staff could push the staff down and shear the beams below. Off = the capped rule that ships. Re-slices every page."><input id="bottomfirst" type="checkbox" /> old placement (ornaments outrank beams)</label>
+    <label title="Re-detect a staff in the bands where the page's own row spacing says one is missing. ON here by default and OFF in the app: a row the slicer never found leaves no crop, so this is the only view that can show you it was lost. Re-slices every page."><input id="rescue" type="checkbox" checked /> staff rescue (find missing rows)</label>
     <label title="Draw the page with the slicer's decisions on top of it — the same picture page_to_strips.py --debug writes as [page]_debug.png. Ticking it later re-slices the page it is shown for, which costs one more slice and changes no crop."><input id="debug" type="checkbox" /> debug overlay (debug.png)</label>
     <button id="clear">Clear all</button>
   </div>
@@ -157,6 +158,10 @@ const fileInput = root.querySelector<HTMLInputElement>("#file")!;
 const actualBox = root.querySelector<HTMLInputElement>("#actual")!;
 const clearBtn = root.querySelector<HTMLButtonElement>("#clear")!;
 const bottomFirstBox = root.querySelector<HTMLInputElement>("#bottomfirst")!;
+const rescueBox = root.querySelector<HTMLInputElement>("#rescue")!;
+// The inspector opens WITH the rescue on, which the app does not do. This is the only view
+// that can show a row the slicer lost — there is no crop to look at otherwise.
+setStaffRescue(rescueBox.checked);
 const autoReadBox = root.querySelector<HTMLInputElement>("#autoread")!;
 const debugBox = root.querySelector<HTMLInputElement>("#debug")!;
 const statusEl = root.querySelector<HTMLDivElement>("#status")!;
@@ -327,9 +332,23 @@ bottomFirstBox.addEventListener("change", () => {
   void resliceAll();
 });
 
+/**
+ * Re-slice everything with the staff RESCUE on or off (see `STAFF_RESCUE`).
+ *
+ * ⚠ It is ticked when the inspector opens and the shipped app leaves it OFF, so what you see here
+ * is deliberately not what the app cuts. That asymmetry is the point: a staff row the slicer never
+ * found produces NO crop, so it is invisible in every other view — untick this to see what the app
+ * actually does with the page. Labels are dropped because the crops change.
+ */
+rescueBox.addEventListener("change", () => {
+  setStaffRescue(rescueBox.checked);
+  void resliceAll();
+});
+
 async function resliceAll() {
   if (!pages.length) return;
   bottomFirstBox.disabled = true;
+  rescueBox.disabled = true;
   try {
     for (const [i, p] of pages.entries()) {
       setStatus(`re-slicing ${i + 1}/${pages.length}: ${p.fileName}…`);
@@ -344,12 +363,14 @@ async function resliceAll() {
     }
     setStatus(
       `re-sliced ${pages.length} page(s) — ` +
-        (bottomFirstBox.checked ? "OLD placement: ornaments outrank beams" : "back to the shipped placement"),
+        (bottomFirstBox.checked ? "OLD placement: ornaments outrank beams" : "back to the shipped placement") +
+        (rescueBox.checked ? " · staff rescue ON (the app cuts without it)" : " · staff rescue off, as the app cuts"),
     );
   } catch (err) {
     setStatus(String(err), true);
   } finally {
     bottomFirstBox.disabled = false;
+    rescueBox.disabled = false;
     render();
   }
 }

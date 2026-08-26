@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-23
+updated: 2026-08-26
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -230,6 +230,27 @@ starting. Abandoned plans are a different thing again and live in
    first: neyzen and notaarsivleri are recorded **all rights reserved / read locally, never
    redistribute** ([THIRD-PARTY.md](THIRD-PARTY.md)), and TRT is a state broadcaster — its own read.
 
+### ⏭ Are bad CUTS a training signal rather than a defect? (owner, 2026-08-26 — NOT ANSWERED)
+
+The owner's framing: *"if note cutted by a stem and we can see its duration, model should also
+recognize it right?"* — stop chasing a perfect slicer and let imperfect cuts be variation.
+
+⭐ **Two classes, opposite remedies, and that IS the question.** (a) The cut lands mid-measure but no
+notehead loses its beam or flag — readable by a human, so learnable, and **29.8% of real strips are
+already width-split**. (b) The cut severs a notehead from the ink carrying its DURATION — **not** a
+domain gap, and training cannot fix it, because the information is not in the picture. ⚠ Worked
+example: the exam strip that read as a quarter had its **notehead intact and its beam in the previous
+strip** ([METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md)).
+
+⏭ **In order:** (1) **the label question, the blocker** — a strip that cannot map to whole SymbTr
+measures is DROPPED today (`split_wide`), so bad cuts produce no training data at all, and something
+must say what gold for a half-measure strip IS; (2) **size class (b)** via *cuts inside a beamed
+group*, **15.5% of 754, unvalidated**; (3) only then an arm, priced against Lever 6's **a hole
+responds to being filled, a domain gap does not** ([METRICS-UNSEEN.md](METRICS-UNSEEN.md)).
+
+⚠ **Not "the slicer is good enough, stop".** The 2026-08-26 fixes were about a third thing — rows
+lost ENTIRELY, which is neither class.
+
 ### Further out (not next, not cancelled)
 
 0. **THE DENSITY LEVERS — all deferred 2026-08-22, and all deliberately NOT in Round 3.** They came
@@ -270,13 +291,10 @@ starting. Abandoned plans are a different thing again and live in
      assumption today, not a measurement. ⚠ Doing this re-cuts the exam, which is exactly why it was
      kept out of Round 3.
 
-
-1. **DONE (2026-07-31): every consumer now reads `_realval_v2`**; `make_realval_pool.py` is no longer
-   the selection set — pointing an eval at its `_realval` output silently restores the no-hard-tier
-   pool ([log/status-log.md](log/status-log.md)). **Not recoverable, for the record:** the owner's
-   130 v1 verdicts (**65 ok / 22 fix / 43 bad**) did not transfer, since no crop survives a re-slice
-   unchanged — what they bought is the confidence calibration and the 33% crop-failure rate that
-   sized the 165-row v2 queue.
+1. **DONE (2026-07-31): every consumer reads `_realval_v2`** — pointing an eval at
+   `make_realval_pool.py`'s `_realval` output silently restores the no-hard-tier pool. ⚠ The owner's
+   130 v1 verdicts (65 ok / 22 fix / 43 bad) did **not** transfer; what they bought is the confidence
+   calibration and the 33% crop-failure rate that sized the v2 queue ([log/status-log.md](log/status-log.md)).
 
 2. **The error-localisation UI — deferred 2026-07-27, then DROPPED as W8 on 2026-08-05.** The
    measurement is done and it is the reason it was dropped: flagging 10% of tokens catches 26.3% of
@@ -315,6 +333,64 @@ starting. Abandoned plans are a different thing again and live in
    clarinet, violin and kanun all shipped under **CC0**, licences read per file, no NC anywhere;
    **ney alone** still needs the owner's own recording, and oud and tanbur stay Karplus–Strong.
    Files: [features/audio-sources.md](features/audio-sources.md).
+
+**NEW 2026-08-25 — THE LISTENING MIRROR: a live microtonal tuner on the fingerboard. Explicitly
+NOT audio-to-score.** The owner asked whether the app could take a TSM recording, transcribe the
+notes, identify the instruments and say how to play it. The answer splits in two, and **only the
+small half is queued here**; the other half is written down below so it is not re-proposed.
+
+- **What is deferred here.** Microphone in → per-frame f0 (fundamental frequency — the pitch being
+  sounded) from a classic autocorrelation tracker (YIN/pYIN) in an `AudioWorklet` → cents against a
+  chosen karar (tonic) → koma → the F3 marker draws where that finger is. Optionally scored against
+  a loaded piece: *you played N komas above segah*. The player-facing pitch of it is that komas are
+  the hardest thing to hit by ear and the one thing a learner cannot see.
+- **Why this half is cheap: the downstream half is already built.** `positionOnString(openHz,
+  noteHz)` in [../packages/core/src/fingering.ts](../packages/core/src/fingering.ts) already takes
+  **Hz**, so a measured frequency feeds the existing fingerboard with no new arithmetic;
+  `centsAboveRef` / `koma53ToFreq` in [../packages/core/src/tuning.ts](../packages/core/src/tuning.ts)
+  own the 53-TET side and only need inverting. New code is **one audio-analysis module**, not a
+  pipeline.
+- ⭐ **It keeps the feature track's defining property** (see [features/README.md](features/README.md)):
+  no ML, no GPU, no server, no training data — **and no gold labels**, which is the real saving. A
+  tuner has no answer key to build: it reports the frequency it hears. Every expensive thing about
+  the OMR track is the answer key.
+- ⚠ **The one question that decides whether it is honest, and it is UNMEASURED**: a koma is
+  **22.6 cents** (1200/53), and ney/violin vibrato can swing wider than that. So the first thing to
+  do if this is picked up is check whether a browser YIN holds a koma steady on a real tone — not
+  write the UI. If it cannot, the display needs smoothing and the claim needs weakening.
+- ⚠ **The arithmetic stays out of the browser**, same house rule as F3: position formula and
+  string choice live in `packages/core` and are pinned by
+  [../tools/core/fingering-test.ts](../tools/core/fingering-test.ts).
+- ⛔ **NOT THIS ITEM — blind transcription of an ensemble recording (AMT).** Four reasons, none of
+  them small: TSM ensemble texture is **heterophonic** (everyone plays the same line at once with
+  different ornaments), which is the worst case for onset and multi-f0 detection; ornaments —
+  çarpma, glissando, vibrato — read as spurious notes; free-rhythm taksim and elastic ağır usuls
+  defeat beat tracking; and every off-the-shelf transcriber emits **MIDI on a 12-semitone grid**,
+  which quantises away the komas this project exists for. The training data would also be
+  copyrighted recordings — the same licence family as SymbTr's NC clause
+  ([THIRD-PARTY.md](THIRD-PARTY.md)). ⚠ **Unverified, from memory, check before quoting**: the
+  CompMusic/MTG makam work — the circle SymbTr came out of — appears to have gone mostly to
+  audio-**score alignment** rather than blind transcription, which would be evidence in the same
+  direction.
+- ⛔ **NOT THIS ITEM — instrument detection.** It is the weakest part of the original idea. Pretrained
+  instrument taggers are Western-trained and carry little or no ney / kanun / ud / tanbur / kemençe
+  vocabulary, so it needs its **own labelled audio corpus** — a second labelling loop of the kind
+  that has cost this project the most. And it buys nothing a picker does not: the player knows which
+  instrument they are holding, and F3 already has the picker.
+- ⏭ **Sequenced by the owner (2026-08-25): after the public launch, once the shipped app is working
+  well.** It touches no training data, no exam and no round, so it can never be the thing that
+  delays one. Effort is **a guess, not an estimate** — nothing here is measured.
+
+**TWO SMALL UI ITEMS, MOVED OFF THE README on 2026-08-25**, when it was rewritten as a user-facing
+front page. Left unnumbered on purpose: item 0 above already points at "item 7", meaning the 59-id
+budget item in the section above this one. This file was their only home, so they are kept here:
+
+- **The rest of the settings modal.** The sheet view's **Accidentals** selector already covers the
+  display-mode half of the idea (every note / row-start key signature / standard per-measure). Still
+  missing: one settings surface holding the view choice (sheet vs piano roll) and a **dark/light
+  theme** switch.
+- **The sheet view scrolls twice** — an inner scroll inside the score card, on top of the page
+  scroll. The owner asked for the inner one to go.
 
 Also queued, cheap: the additive-only re-slice (deferred here from Round 1 — see
 [log/superseded.md](log/superseded.md) for its constraints), and the ORT-web int8 numerics

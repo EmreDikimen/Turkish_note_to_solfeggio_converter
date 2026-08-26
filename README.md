@@ -1,182 +1,137 @@
-# Classical Turkish Music Optical Music Recognition (OMR)
+# KomaVision — Classical Turkish (makam) sheet music → editable, playable score
 
-> **Current state and next action: [docs/STATUS.md](docs/STATUS.md).** The long-range plan is
-> [ROADMAP.md](ROADMAP.md); agents should start at [CLAUDE.md](CLAUDE.md).
+Upload a photo or screenshot of Turkish sheet music. The app reads the notes — **including the
+microtonal accidentals** (koma, bakiye, küçük mücennep, …) — draws them as a score you can correct
+by hand, and plays them back at exact **53-TET (Arel-Ezgi-Uzdilek)** pitches.
 
-## Context & Problem Statement
-Existing Western Optical Music Recognition (OMR) tools (PlayScore and similar) generally
-fail on Turkish sheet music. They do not recognize the microtonal accidentals intrinsic to
-the genre — *koma*, *bakiye*, *küçük mücennep* — and they cannot synthesize playback in the
-**53-TET (Arel-Ezgi-Uzdilek)** tuning system. This leaves a real gap for musicians and
-students of Classical Turkish Music.
+**Try it: <https://komavision.netlify.app>** — nothing to install, works in a desktop browser.
+The interface is in **Turkish**.
 
-## Project Vision
-An OMR app tailored to Classical Turkish (makam) music. The user photographs a score, the
-app recognizes the notes including microtonal accidentals, presents them in an **editable**
-view (OMR makes mistakes, so every note's pitch and timing can be corrected by hand), and
-plays the result back at precise 53-TET frequencies, with natively synthesized instruments
-(Ney, clarinet, …).
+## Why it exists
 
-**Ship the web app first, then convert it to mobile.** The web app is the first released product;
-a React Native mobile version comes later, reusing the same shared core. **There is no server** —
-OMR inference and audio run **in-browser / on-device** (`onnxruntime-web` + Web Audio), because a
-hosting subscription isn't affordable. Everything runs locally.
+Western OMR (optical music recognition) tools such as PlayScore generally fail on Turkish scores.
+They do not know the microtonal accidentals the genre is built on, and they cannot play back in
+53-TET. That leaves musicians and students of Classical Turkish Music without a working
+photo → score → sound path.
 
-**Architecture:** the app logic (note model, 53-TET tuning, synthesis scheduling, OMR
-decoding) lives once in a shared **TypeScript core**; a **React** web harness and a
-**React Native** mobile app are thin shells over it, with platform specifics (audio output,
-on-device ONNX inference, camera) behind adapter interfaces. There is **no production
-backend** — everything runs on-device. **Python is training/data only** (model training,
-synthetic-data generation, SymbTr→JSON export) and is never shipped in the app.
+## What you can do with it
 
-## Pipeline
+- **Read a page.** Drag in (or paste) a single-page JPG/PNG. A page takes roughly half a minute to
+  a minute; the reading itself runs on a small server, and falls back to your own browser if that
+  server is unreachable. Screenshots and clean scans read best; phone photos of paper work but are
+  the hardest case.
+- **Fix what it got wrong.** Edit mode: click a note to select it, drag up/down to change its
+  pitch, ✕ to delete, and the left-hand palette to change a duration, add an accidental, insert a
+  new note, mark a rest, or make a triplet. Undo/redo included. A measure that does not add up to
+  its usul gets a warning mark in its corner.
+- **Hear it in 53-TET.** Play/pause/stop, click a measure to start from there, set the tempo.
+  Violin, clarinet and kanun play **real recordings** (downloaded the first time you pick one);
+  the rest are synthesised.
+- **Hear the usul.** The rhythmic cycle can click as a metronome or play its real düm-tek-ke
+  strokes on a **darbuka** or **bendir**.
+- **Choose how it is written and how it sounds.** Accidentals on every note / as a row-start key
+  signature / standard per-measure; transpose, with a *keep the sheet, move the sound* option for
+  transposing instruments (ney ahenks); pick a **makam** to bend the *sound only* — the engraved
+  notes never move.
+- **Other views.** Piano roll (vertical axis is the 53 komas), lyrics under the notes, and a
+  **violin fingerboard** tab showing where the finger lands as the piece plays.
+- **Take it with you.** ⬇ JSON downloads the corrected piece as a note-model file; the **Gelişmiş**
+  (Advanced) section loads one back in.
+
+### Honest limits
+
+- The reading is good, not finished. A typical page still needs a handful of corrections, and the
+  app **does not yet tell you which notes it is unsure about** — that feature was tried, measured,
+  and dropped rather than shipped weak. Current accuracy: [docs/METRICS.md](docs/METRICS.md);
+  the plain-English account: [docs/OVERVIEW.md](docs/OVERVIEW.md).
+- One page at a time. PDFs are not read directly — export or screenshot the page first.
+- The app **ships no music of its own**: there are no built-in example scores, by choice — every
+  score we hold is licensed so that publishing it would bind the app to NonCommercial terms
+  ([docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)). You bring your own page.
+- **Your uploads are not stored.** The decode server reads the image and drops it; it never writes
+  one to disk.
+
+## How it works
+
 ```
-Photo
-  → Preprocess            (OpenCV: perspective, binarize, denoise)
-  → Staff isolation       (slice into single-staff strips)
-  → OMR model             (image strip → ordered symbol sequence; a fine-tuned pretrained OMR model)
-  → Decode                (tokens → notes {pitch_53tet, duration, …})
-  → Editable note model   ← the core: OMR feeds it, the user corrects it, synth consumes it
-  → Editor UI             (web: render with VexFlow, drag to fix time & pitch)
-  → Synthesis             (Web Audio at exact 53-TET frequencies)
-  → audio
-```
-
-
-See [ROADMAP.md](ROADMAP.md) for the phased plan, model-training strategy, and rationale.
-
-## Status
-
-> **Working on this repo? Start at [CLAUDE.md](CLAUDE.md)**, then
-> **[docs/STATUS.md](docs/STATUS.md)** — the single always-current state + next action.
-> Plain-English version: [docs/OVERVIEW.md](docs/OVERVIEW.md). Full doc map:
-> [docs/INDEX.md](docs/INDEX.md).
-
-- **Phase 0 — DONE:** symbolic → microtonal audio, no machine learning (SymbTr parser + 53-TET
-  tuning + synth), verified across all 2,200 SymbTr pieces.
-- **Phase 1 — DONE:** shared TypeScript `core` + React web harness — piano-roll, VexFlow-engraved
-  sheet with Turkish AEU accidentals, 53-TET Web Audio playback with transport and editing,
-  usul-aware metronome, transpose/ahenk, lyrics and header.
-- **Phase 2 — DONE:** synthetic training data (VexFlow strips rendered from SymbTr) + fine-tuning a
-  pretrained OMR model (`omr_transformer`) to read the Turkish microtonal accidentals. Every
-  de-risk gate passed, including in-browser int8 inference with no server. Reading *synthetic*
-  music is a solved problem.
-- **Phase 3 — IN PROGRESS:** real printed pages and photos of them — collection, semi-automatic
-  labeling, a frozen honest exam, and the Round-N train/measure loop. Round 1 shipped 2026-07-23 as
-  "an improvement, not a pass". Track: [docs/rung3/](docs/rung3/README.md).
-- **Phases 4–5 — later:** full page → editor integration, then the React Native app.
-
-Numbers for any of the above: [docs/METRICS.md](docs/METRICS.md).
-
-## Directory Structure
-
-Current (monorepo as of Phase 1 — Python reference/data side + TypeScript core + web harness):
-```text
-.
-├── data/
-│   ├── raw/            # input scores (e.g. SymbTr .txt)
-│   ├── processed/      # generated audio / processed data
-│   └── synthetic/      # rendered strip images + labels for training (gitignored)
-├── src/                # Python (reference impl + training side)
-│   ├── symbtr/         # SymbTr .txt parser → Score/Event model + JSON export
-│   ├── audio/          # 53-TET tuning + synthesis (reference impl; ported to TS core)
-│   └── vision/         # OMR gates (model eval, overfit-10, ONNX) + Rung-2 training kit (augment/train/eval)
-├── scripts/            # runnable Python entry points (incl. rung3/ — the real-page collect/label/score loop)
-├── tools/render/       # TS synthetic-data generator (strip labels + Playwright renderer)
-├── packages/core/      # shared TypeScript: note model, tuning, synth scheduling
-├── apps/web/           # React test harness (piano-roll + Web Audio)
-├── docs/               # STATUS.md (state+next), METRICS.md (numbers), DECISIONS.md,
-│                       #   INDEX.md (doc map), OVERVIEW.md (plain English), rung3/ (real-data
-│                       #   track), log/ (history), guides: CODE_TOUR, PIPELINE, MANUAL_CHECKS, COLAB
-├── CLAUDE.md           # entry point for agents: commands, hard rules, doc map
-├── ROADMAP.md          # evergreen plan: architecture, phases, risks (no status)
-├── README.md           # this overview
-└── requirements.txt    # Python dependencies
+page image
+  → slice        find the staves, cut the page into 2–3 measure strips
+  → read         a fine-tuned OMR model turns each strip into a token sequence
+  → stitch       tokens → notes {53-TET pitch, duration, …} → one score
+  → edit         VexFlow engraving; every note correctable by hand
+  → play         Web Audio at exact 53-TET frequencies
 ```
 
-Target (aspirational — not yet renamed; `src/`+`scripts/` still hold the Python side):
-```text
-ml/             # Python: training, synthetic data, SymbTr→JSON export (today's src/ + scripts/)
-packages/core/  # shared TypeScript: note model, tuning, synth scheduling, OMR decode
-apps/web/       # React test harness (VexFlow + Web Audio adapter)
-apps/mobile/    # React Native product (native audio + onnxruntime-react-native)  ← Phase 5
+The slicing runs in your browser. The model runs on a small CPU server (Cloud Run), with the same
+model in-browser as the fallback — one decode implementation, shared by both.
+Design: [docs/PIPELINE.md](docs/PIPELINE.md).
+
+## Running it yourself
+
+Needs **Node 20+** (developed on 22) and npm. Clone the repo, then:
+
+```bash
+npm install
+npm run dev:cloud    # → http://localhost:5173 — reading happens on the server (keeps your machine cool)
+npm run dev:web      # the same app, but the model runs in YOUR browser (downloads ~211 MB of weights)
 ```
 
-## Getting Started
+Open the printed URL and drop a page in. Nothing else is required — no API key, no account, no
+local model files.
 
-### Python reference / data side (Phase 0 + ML training)
+Other useful commands:
+
+```bash
+npm run typecheck    # all workspaces
+npm test             # core logic: stitcher, edits, usul strokes, voices, violin fingering
+npm run build:app    # the deployable web build
+```
+
+The full command reference — including the ones with a failure mode that looks like success — is
+[docs/COMMANDS.md](docs/COMMANDS.md).
+
+### The Python side (training and data only — never shipped)
+
+Model training, synthetic training data and the SymbTr converters live in Python and are not part
+of the app:
 
 ```bash
 python3 -m venv .venv-ml
 source .venv-ml/bin/activate
 pip install -r requirements.txt
-```
 
-Phase 0 only needs `numpy` (plus the standard library); the rest of `requirements.txt`
-(torch, transformers, optimum-onnx, OpenCV, …) is for the Phase-2 ML track in `src/vision/`.
-Convert a SymbTr score to audio:
-
-```bash
+# a SymbTr score straight to 53-TET audio, no machine learning involved
 python3 scripts/symbtr_to_audio.py data/raw/<score>.txt -o data/processed/out.wav --info
+# or to a note-model JSON the web app can open
+python3 scripts/symbtr_to_json.py data/raw/<score>.txt -o out.json
 ```
 
-The `--info` flag prints a score summary and the first notes with their computed 53-TET
-frequencies.
+Data: **SymbTr-2.0.0** (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores. Not
+redistributed here; download it separately and point the scripts at the `.txt` files. Its `Koma53`
+column gives each pitch as an absolute Holdrian comma, which maps straight to a 53-TET frequency.
 
-### Web harness (Phase 1) — view / edit / play a score
+## Repo map
 
-The harness reads a **note-model JSON** produced by the Python exporter. Export one into the
-web app's public dir, then start the dev server:
-
-```bash
-# 1. export a sample score the web app will auto-load on start
-python3 scripts/symbtr_to_json.py data/raw/<score>.txt -o apps/web/public/sample.json
-# 2. install JS deps (npm workspaces) and run the Vite dev server
-npm install
-npm run dev:web
+```text
+packages/core/   shared TypeScript: note model, 53-TET tuning, synthesis scheduling, edits
+apps/web/        the React app — slicer, editor, playback, UI (all user-facing strings in ui/strings.ts)
+apps/server/     the decode server (Node + onnxruntime-node, importing the web app's own decoder)
+tools/           synthetic-strip renderer, browser checks, parity harnesses
+src/, scripts/   Python: OMR training, evaluation, SymbTr parsing, the real-page labeling loop
+data/            scores, corpora, checkpoints (all gitignored)
+docs/            the written record — start at docs/INDEX.md
 ```
 
-Then open the printed `localhost` URL. You can also load any exported JSON from the **Load JSON**
-button. Toggle **Piano-roll / Sheet**; in Sheet view use **Play / Pause / Resume / Stop**, click
-a measure to play from there, set the **BPM** and toggle the **usul metronome**, **Transpose**
-(with **Keep sheet (sound only)** for ney ahenks), pick an **Accidentals** display mode, toggle
-**Lyrics**, and **✎ Edit** to correct notes. The shared logic lives in `packages/core`; the React
-UI in `apps/web` is the first shipped product surface (later converted to mobile in Phase 5).
+## Project state and further reading
 
-## Data
-SymbTr-2.0.0 (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores in txt, MusicXML,
-MIDI, and mu2. Not redistributed here; download separately and point the scripts at the
-`.txt` files. The `Koma53` column encodes each pitch as an absolute Holdrian comma value,
-which maps directly to a 53-TET frequency.
+The web app is live and in use; the model keeps improving in measured rounds against a frozen exam.
+**Current state and next action: [docs/STATUS.md](docs/STATUS.md)** — the only file that states it.
 
-
-## Not essential for now but can be added after
-- We need to add a settings modal. We can select if we want to use note sheet or piano roll, dark mode or light mode, showing the accidentals for every note or using a single sign at the score and only show accidentals if the accidental of that specific note is not match with the accidentals of the score
-  - _Done (selector, not modal): the sheet view's **Accidentals** selector offers three modes — on every note, makam key signature at the row start (only deviations marked), and standard per-measure notation (an accidental carries to the rest of its measure). The rest of the settings modal is still TODO._
-
-- The notesheet part have two scrolling. We can remove the inner scrolling.
-
-- **Transpose / ahenk.** _Partly done:_ the core `transpose(doc, commas)` (chromatic, re-spelling
-  notes) is built, and the harness has a **Transpose** dropdown with a **Keep sheet (sound only)**
-  toggle for transposing instruments (added 2026-06-28). _Still TODO:_ the user-facing **ahenk**
-  selector (Bolahenk, Mansur, Kız, …) — each ahenk is a fixed comma offset, so it's the same
-  chromatic transpose with an ahenk-name label on top; shipped as a mobile feature in Phase 5.
-
-- **Usul-based rhythm.** _Partly done:_ a **usul-aware metronome** now clicks each piece's usul
-  on the correct beat groupings (downbeat accented), locked to the measures, so non-integer usuls
-  like aksak (9/8) stay aligned — with a tempo (BPM) control and a usul selector. _Still TODO:_
-  upgrade those clicks into a real rhythmic cycle on a traditional percussion sound (e.g. darbuka)
-  so the usul sounds idiomatic, and auto-detect the usul from the OMR model while keeping it
-  user-editable (OMR can misread it) — wire the detection in at Phase 3–4.
-
-- **Rule-based import for digital sheets (no AI).** For *born-digital* scores (engraved by
-  MuseScore/Finale/Sibelius/LilyPond and exported as a PDF, or downloaded from the internet) we can
-  extract the notes **deterministically, without the OMR model**: parse the PDF's vector content —
-  the music-font glyph codepoints (noteheads, clefs, accidentals, rests) + their x/y positions and
-  the staff lines — then geometrically decode pitch (notehead position vs. clef/staff) and duration
-  (notehead type + beams/flags/dots) into the note model. This is more reliable than the camera path
-  for clean PDFs, and reads the **exact** AEU accidental from its SMuFL codepoint (e.g. koma U+E444 →
-  exact koma, no guessing) using the map already in `packages/core/notation.ts`. Even simpler: if a
-  **MusicXML / MEI / MIDI** is available, skip OMR entirely and parse it (as we already do for SymbTr).
-  A shipped product could offer both input paths — drop in a PDF (vector parse) or snap a photo (the
-  fine-tuned model). The camera/OMR path stays the priority; this is a clean-input convenience.
+| | |
+|---|---|
+| Plain-English summary, no jargon | [docs/OVERVIEW.md](docs/OVERVIEW.md) |
+| Every headline number | [docs/METRICS.md](docs/METRICS.md) |
+| Why something was decided | [docs/DECISIONS.md](docs/DECISIONS.md) |
+| Licences and what we may publish | [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md) |
+| Long-range plan (incl. the mobile app) | [ROADMAP.md](ROADMAP.md) |
+| Working on the code? Start here | [CLAUDE.md](CLAUDE.md) · [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |

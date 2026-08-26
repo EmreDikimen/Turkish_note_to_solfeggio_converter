@@ -116,11 +116,36 @@ OV_TOL_SP = 0.5        # a real barline may overshoot a staff line by up to this
 # line and END at the bottom one, each within this tolerance, and it is OR-ed with the original
 # rule so nothing found today can be lost.
 #
-# It still loses. Against SymbTr truth (`score_slicer.py --sample 25`, 124 rows, 2026-08-25) it
-# takes exact rows 86 -> 83 while buying 2 extra barlines on the photocopy it was written for, so
-# it is 3 real rows for 2 unverified ones. The stems it admits are not caught by gates 2 and 3 as
-# hoped. Kept switchable (`OMR_BAR_FADE=0.25`) because the photocopy failure it targets is real and
-# a future gate 2/3 that separates a faded barline from a stem would make it pay.
+# ⚠ IT WAS TURNED ON AT 0.25 ON 2026-08-25 AND TURNED BACK OFF THE SAME DAY, MEASURED. Keeping the
+# whole account because the ON case is now priced properly and should not be re-argued from the
+# faded-page numbers alone — which is exactly the mistake that turned it on.
+#
+# Re-swept on the hand-marked truth AFTER that day's two gate fixes (the staff-line neutral blob
+# walk and gate 2's position rule), which the paragraph above predates:
+#
+#   fade   recall          precision       false bars
+#   0      47/93 (50.5%)   47/59 (79.7%)   12     <- ships
+#   0.25   51/93 (54.8%)   51/64 (79.7%)   13
+#   0.35   53/93 (57.0%)   53/68 (77.9%)   15
+#   0.5    65/93 (69.9%)   65/90 (72.2%)   25
+#
+# At 0.25 precision does not move on that instrument — and that reading DID NOT GENERALISE. The
+# hand truth is 93 marks on the 4 most faded pages we own; `score_slicer.py` run at FULL scale
+# (6,440 truth-bearing rows, 1,159 pieces, not the 124-row sample every earlier note used) pairs the
+# two settings row for row:
+#
+#   exact rows 3750 -> 3718 (-32);  paired BETTER 111, WORSE 187, net -76 rows
+#   the dominant move is +0 -> +1 on 108 rows: a row whose measure count was RIGHT gains a
+#   spurious barline. The intended win, -1 -> +0, is 72 rows. So 72 recovered against 108 broken.
+#
+# That is the original note's "the stems it admits are not caught by gates 2 and 3" — confirmed at
+# 50x the scale it was first measured on. The owner had also rejected 0.35+ on the PIXELS: every
+# false barline each further step adds is a NOTE STEM (three of three at 0.35, and the one 0.25 adds
+# is a stem too). A stem cuts the crop through the music.
+# ⚠ Mirrored in the browser slicer (`BAR_FADE_SP` in apps/web/src/omr/slicer/constants.ts) — the two
+# must move together or `parity:slicer` breaks and the app cuts differently from the training data.
+# The TS side of the rule IS ported and was verified at 0.25 (100% on all three rungs, rejected
+# candidates identical 844/844), so re-enabling it is one constant on each side.
 BAR_FADE_SP = float(os.environ.get("OMR_BAR_FADE", "0"))
 WIDE_BEYOND_SP = 0.5   # connected ink this wide past a staff line = notehead/flag/beam ...
 WIDE_RUN_SP = 0.2      # ... but only when wide for this many CONSECUTIVE rows (a notehead is
@@ -380,6 +405,72 @@ def prep_page(gray: np.ndarray) -> tuple[np.ndarray, bool, float]:
 # NB: the deskew estimator deliberately keeps the long w/4 kernel — there intolerance is a feature
 # (it sharpens the angle peak), whereas here sensitivity is what we want.
 STAFF_HOR_FRAC = 0.11
+# ------------------------------------------- repairing a system the gap rule SPLIT (ships ON)
+# Where one staff ENDS and the next begins — `OMR_STAFF_GROUP_SPAN`, on by default since 2026-08-26.
+#
+# The shipped rule splits when a gap exceeds `2.2 x sp`, where `sp` is the page's MEDIAN LINE GAP.
+# That is a page-global number deciding a local question, and it sits close enough to the data to be
+# flipped by rounding: on `bozukNihavendLonga2.png` the browser and Python found the SAME three staff
+# lines on one row (y = 266, 285, 291) and disagreed on whether they were one staff. Python measured
+# sp = 9.0 -> threshold 19.8 px; the browser measured sp = 8.0 -> threshold 17.6 px; the gap in
+# question is 19 px. One grouped them and repaired the row to 5 lines; the other split them into a
+# 1-line and a 2-line group, both under the 3-line floor, so `_repair_group` never ran and the staff
+# was LOST. The browser reads 9 staves where Python reads 10.
+#
+# ⚠ It is not a browser bug and there is no code difference. `cv2.imread(IMREAD_GRAYSCALE)` converts
+# inside the PNG decoder and a browser cannot, so the two greyscales differ by +-1 on ~16% of pixels
+# by construction (see METRICS-SLICER.md). Python won this page by 0.8 px of luck.
+#
+# ⛔ THE FIX IS NOT "GROUP BY HEIGHT INSTEAD". That was built and measured: re-cutting every line
+# row on the page's staff height read 3205 exact rows against the shipped rule's 3750 at full scale
+# — **-545 rows**, regressions 694 -> 1351. The 2.2*sp rule earns its place. See `_regroup_by_span`.
+# What ships is the NARROW repair: merge two adjacent UNDERSIZED groups (under the 3-line floor,
+# so both are being discarded anyway) when together they fit inside one staff. A group with 3+
+# lines is never touched, so a page whose grouping is healthy cannot move.
+# Full scale, paired against the shipped rule: BETTER 29 / WORSE 31, **net -2 of 6,440 rows** — the
+# moves are symmetric with no systematic direction, i.e. a wash, and it buys a real parity fix.
+# ⚠ Falls back to the shipped rule when the page has too few confident staves to have a trustworthy
+# span, so a 1-2 staff page behaves exactly as before.
+STAFF_GROUP_BY_SPAN = os.environ.get("OMR_STAFF_GROUP_SPAN", "1") not in ("0", "false", "False")
+STAFF_GROUP_SPAN_TOL = 0.15  # how far a MERGED pair may EXCEED the page's staff height
+# ⛔ At 1.2 this constant meant something else — the broad regrouping that measured −545 exact
+# rows and was thrown away. See `_regroup_by_span`; do not restore that reading.
+# ------------------------------------------------------------------ the staff RESCUE second pass
+# Re-detect a staff only in the bands where the page's own rhythm says a row is MISSING —
+# `OMR_STAFF_RESCUE`. It exists because a whole row is currently lost on faint and hand-ruled
+# pages: `vuslata_nail_de_etse_ger_felek_nota_p2` finds 4 of its 9 rows, `sevdim_yine_bir_afet_gibi_
+# yar_nota_p1` 5 of 8. A lost row is not a bad crop, it is NO crop — that music never reaches the
+# model at all.
+#
+# The mechanism is the (hor_len, 1) opening in `_staff_line_rows`: one pixel tall, so it demands the
+# line stay inside a single row for 11% of the page width. A hand-ruled line wanders and is erased
+# outright. `_emit_staff` already documents this exact failure for the x-extent and works around it
+# by re-reading the RAW ink; detection never got the same treatment.
+#
+# ⚠ WHY THIS SHAPE AND NOT A KNOB. Loosening detection GLOBALLY was tried first and rejected on
+# measurement: dilating the mask before the opening takes sevdim 5 -> 8, and the same change takes
+# `bozukNihavendLonga` 10 -> 1, because on a page whose lines sit 9 px apart any useful dilation
+# fuses them. Making the dilation a fraction of the measured line spacing does not escape it either
+# (at the fraction that helps sevdim, bozukNihavend still reads 6). A dial that trades one page
+# against another is the wrong shape. A second pass that only looks inside a band pass 1 left empty
+# CANNOT move a page whose rows were all found — which is the property the dial could not have.
+STAFF_RESCUE = os.environ.get("OMR_STAFF_RESCUE", "0") not in ("0", "false", "False")
+# A rescued staff's HEIGHT must be within this of the page's median staff height.
+RESCUE_SPAN_TOL = 0.18
+# ...and it must be about as WIDE as the page's real staves. Not a tidy-up: without it the block of
+# UNDERLINED LYRICS at the foot of a handwritten page is rescued as a staff (seen on sevdim), because
+# lyric rules sit at staff-like spacing and so pass the height test. They span only the part of the
+# page the text occupies. `_repair_group` documents the same false positive and refuses it on
+# spacing; height alone cannot, since these two agree on height.
+RESCUE_WIDTH_FRAC = 0.60
+# Below this many staves a page has no trustworthy pitch to predict a missing row FROM, so the
+# second pass does not run at all — the same argument as STAFF_SPAN_MIN_GROUPS.
+RESCUE_MIN_STAVES = 3
+# The readings tried inside a band, cheapest first, stopping at the first that is accepted:
+# (dilate, threshold fraction). The first entry is pass 1's own rule minus the page-global parts,
+# and it is the one that rescues most rows — the ink was there and readable, and it was the
+# page-wide threshold and grouping that lost it, not absent ink.
+RESCUE_READS = ((0, 0.30), (0, 0.20), (2, 0.25), (3, 0.25), (0, 0.12))
 # How far apart two runs of qualifying staff-line columns may sit and still count as ONE staff
 # (in line-spaces). A photocopy fades a staff line in patches; each fade splits the run, and
 # `_emit_staff` keeps only the LONGEST piece, so the rest of the row is never cut into strips.
@@ -430,6 +521,14 @@ STAFF_SPAN_TOL = 0.15
 # untouched baseline's 11 (against 12 at 5), and the 12 owner-flagged pages read 163 interior
 # barlines against 162. Both instruments point the same way.
 STAFF_SPAN_MIN_ROWS = int(os.environ.get("OMR_STAFF_SPAN_ROWS", "6"))
+# ...and the same rebuild fires when the group's MEASURED spacing contradicts its own height —
+# `OMR_STAFF_SPAN_FIX`. The line-count gate above only catches a staff chopped into MORE lines than
+# it has; the identical defect with too FEW lines went straight through, and it is worse, because
+# `normalize_row` scales by `30 / spacing` and a spacing read 54% high under-magnifies the row until
+# its fixed-height frame reaches into the system above. See `_emit_staff`. Ships ON pending its
+# full-scale read; the tolerance is deliberately loose so only a gross disagreement fires.
+STAFF_SPAN_FIX_SPACING = os.environ.get("OMR_STAFF_SPAN_FIX", "1") not in ("0", "false", "False")
+STAFF_SPAN_SPACING_TOL = 0.25
 
 # ---- one page, one staff WIDTH -----------------------------------------------------------------
 # `_emit_staff` keeps only the LONGEST run of qualifying columns, so a fade that opens a gap wider
@@ -483,24 +582,42 @@ PALE_LINE_MIN_REL = 0.0025
 PALE_LINE_MAX_REL = 0.02
 
 
-def _staff_line_rows(ink: np.ndarray) -> list[int]:
+def _staff_line_rows(ink: np.ndarray, y0: int = 0, y1: int | None = None,
+                     dilate: int = 0, thr_frac: float = 0.3,
+                     width_floor: bool = True) -> list[int]:
     """detect_staves()' candidate staff-line rows — the opening + row projection, on its own.
 
     Shared with binarize_page_ink() so the fallback's guard is measured against the SAME signal
     detect_staves gates on, rather than a second rule that could drift away from it.
+
+    ⚠ Called with no optional argument this is EXACTLY the page-wide rule it has always been; the
+    parameters exist for `_rescue_missing_staves`, which re-asks the same question inside one band.
+    Three of the defaults are page-GLOBAL decisions about a local question, and that is why a band
+    needs to override them: `row_ink.max()` is the whole page's darkest row, so one heavy row lifts
+    the bar for every faint one, and the `w * 0.2` floor asks a row to carry a fifth of the page
+    width in surviving ink.
     """
-    h, w = ink.shape
+    band = ink[y0:y1 if y1 is not None else ink.shape[0]]
+    if band.size == 0:
+        return []
+    w = ink.shape[1]
+    # a line that WANDERS vertically has no unbroken run in any single row, so the (hor_len, 1)
+    # opening below erases it outright rather than weakening it
+    src = (cv2.dilate(band, cv2.getStructuringElement(cv2.MORPH_RECT, (1, dilate)))
+           if dilate > 1 else band)
     # keep only long horizontal structures (staff lines), drop noteheads/stems/text
     hor_len = max(20, int(w * STAFF_HOR_FRAC))
     horiz = cv2.morphologyEx(
-        ink, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (hor_len, 1))
+        src, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (hor_len, 1))
     )
     row_ink = horiz.sum(axis=1) / 255.0
     if row_ink.max() < 1:
         return []
     # candidate staff-line rows: strong horizontal ink
-    thr = max(row_ink.max() * 0.3, w * 0.2)
-    return _cluster_rows(np.where(row_ink > thr)[0])
+    thr = row_ink.max() * thr_frac
+    if width_floor:
+        thr = max(thr, w * 0.2)
+    return [y0 + r for r in _cluster_rows(np.where(row_ink > thr)[0])]
 
 
 def _binarize_paper_relative(gray: np.ndarray) -> np.ndarray:
@@ -550,8 +667,14 @@ def binarize_page_ink(gray: np.ndarray) -> np.ndarray:
     return page_binarizer(gray)(gray)
 
 
-def detect_staves(ink: np.ndarray) -> list[Staff]:
-    """Find 5-line staff systems via a horizontal-opening + row projection, then group lines."""
+def detect_staves(ink: np.ndarray, rescue: bool | None = None) -> list[Staff]:
+    """Find 5-line staff systems via a horizontal-opening + row projection, then group lines.
+
+    `rescue` overrides STAFF_RESCUE for one call. It exists so a SCORER can ask for both readings
+    of the same page: the row-level instruments pair rows by system INDEX against a cached truth,
+    so a pass that inserts a staff shifts every later index and would report a false regression.
+    With both lists in hand a caller can pair on position instead.
+    """
     h, w = ink.shape
     line_rows = _staff_line_rows(ink)
     if len(line_rows) < 2:
@@ -568,13 +691,83 @@ def detect_staves(ink: np.ndarray) -> list[Staff]:
             groups.append(group)
             group = [cur]
     groups.append(group)
+    if STAFF_GROUP_BY_SPAN:
+        groups = _regroup_by_span(line_rows, groups)
     page_span = _page_staff_span(groups)
     staves: list[Staff] = []
     runs_per_staff: list = []
     for g in groups:
         _emit_staff(g, ink, staves, sp, page_span, runs_per_staff)
+    if STAFF_RESCUE if rescue is None else rescue:
+        # before _widen_to_page_margins, so a rescued staff gets the same x-extent treatment as
+        # any other. It appends to BOTH lists in step, because _widen zips them.
+        # ⚠ This can also move an EXISTING row: _widen_to_page_margins takes the median x-extent
+        # over all staves, so a rescued row is a vote in it. That is the coupling the position-
+        # pairing scorer exists to measure, not a reason to reorder the two.
+        _rescue_missing_staves(ink, staves, runs_per_staff)
     _widen_to_page_margins(staves, runs_per_staff)
+    staves.sort(key=lambda s: s.lines[0])
     return staves
+
+
+def _missing_bands(staves: list[Staff], h: int) -> list[tuple[int, int]]:
+    """Vertical bands where the page's OWN rhythm says a staff should be and none was found.
+
+    A page's rows sit at a near-constant pitch, so a gap of ~k x that pitch is k-1 missing rows.
+    This reads the SURVIVING rows, so it cannot be fooled by whatever hid the missing one.
+    """
+    tops = [s.lines[0] for s in staves]
+    pitch = float(np.median(np.diff(tops)))
+    span = float(np.median([s.lines[-1] - s.lines[0] for s in staves]))
+    if pitch <= 0:
+        return []
+    bands: list[tuple[int, int]] = []
+    for a, b in zip(tops[:-1], tops[1:]):
+        k = int(round((b - a) / pitch))
+        for j in range(1, k):
+            y = a + (b - a) * j / k
+            bands.append((int(y - span * 0.4), int(y + span * 1.4)))
+    # above the first row and below the last: no interior gap can reveal these, and a row lost at
+    # the foot of a page is the single most common one (the old w/4 kernel dropped it systematically)
+    if tops[0] - pitch > 0:
+        bands.append((int(tops[0] - pitch - span * 0.4), int(tops[0] - pitch + span * 1.4)))
+    if staves[-1].lines[-1] + pitch < h:
+        bands.append((int(tops[-1] + pitch - span * 0.4), int(tops[-1] + pitch + span * 1.4)))
+    return [(max(0, y0), min(h, y1)) for y0, y1 in bands if y1 > y0]
+
+
+def _rescue_missing_staves(ink: np.ndarray, staves: list[Staff], runs_out: list) -> None:
+    """Second pass: re-detect ONLY inside the bands pass 1 left empty — see STAFF_RESCUE.
+
+    Acceptance is deliberately strict and is the same argument `_repair_group` uses: a rescued
+    group must survive `_emit_staff` (5 evenly-spaced lines) AND match the page's other staves in
+    both HEIGHT and WIDTH. Rejecting restores today's behaviour — the row is simply dropped — so
+    the safe direction is the default.
+    """
+    if len(staves) < RESCUE_MIN_STAVES:
+        return
+    span = float(np.median([s.lines[-1] - s.lines[0] for s in staves]))
+    page_w = float(np.median([s.x1 - s.x0 for s in staves]))
+    for y0, y1 in _missing_bands(staves, ink.shape[0]):
+        for dilate, thr in RESCUE_READS:
+            # no width floor: inside a band we already believe holds a staff, the question is
+            # which rows are lines, not whether the band is music at all
+            rows = _staff_line_rows(ink, y0, y1, dilate, thr, width_floor=False)
+            if len(rows) < 3:
+                continue
+            cand: list[Staff] = []
+            cand_runs: list = []
+            _emit_staff(rows, ink, cand, float(np.median(np.diff(rows))), span, cand_runs)
+            if not cand:
+                continue
+            st = cand[0]
+            if abs((st.lines[-1] - st.lines[0]) - span) > RESCUE_SPAN_TOL * span:
+                continue
+            if (st.x1 - st.x0) < RESCUE_WIDTH_FRAC * page_w:
+                continue                     # underlined lyrics, a title rule, a volta bracket
+            staves.append(st)
+            runs_out.append(cand_runs[0])
+            break
 
 
 def _widen_to_page_margins(staves: list[Staff], runs_per_staff: list) -> None:
@@ -591,6 +784,52 @@ def _widen_to_page_margins(staves: list[Staff], runs_per_staff: list) -> None:
             st.x0 = min(r[0] for r in left)
         if right:
             st.x1 = max(r[1] for r in right)
+
+
+def _regroup_by_span(line_rows: list[int], groups: list[list[int]]) -> list[list[int]]:
+    """Merge ADJACENT UNDERSIZED groups whose combined height is one staff — STAFF_GROUP_BY_SPAN.
+
+    ⛔ AN EARLIER, BROADER VERSION OF THIS WAS MEASURED AND THROWN AWAY. It re-cut *every* line row
+    on the page's staff height instead of only repairing undersized groups, and at full scale
+    (`score_slicer.py`, 6,440 rows) that read **3205 exact against the shipped rule's 3750 — −545
+    rows**, with regressions nearly doubled (694 -> 1351). The `2.2 * sp` rule does real work: a
+    staff spans ~4*sp, so "the group may be one staff tall" permits ~4.8*sp between the first and
+    last line, and on a page whose systems sit close together that merges rows which should be
+    separate. **Do not re-open the global form.** docs/METRICS-SLICER.md.
+
+    What is left is the narrow repair, the same shape as `_rescue_missing_staves`: a group of 1-2
+    lines is BELOW the 4-line floor and below `_repair_group`'s 3-line floor, so it is discarded and
+    its music is lost. Where two such neighbours together are the height of one staff, they are one
+    staff that the gap rule split. A group that already has 3+ lines is never touched, so a page
+    whose grouping is healthy cannot move.
+
+    This is the `bozukNihavendLonga2` case: the browser and Python found the SAME three lines
+    (y = 266, 285, 291) and the 19 px gap fell either side of `2.2 * sp` depending on whether the
+    page's median line gap rounded to 9.0 or 8.0 — one grouped them, the other split them into a
+    1-line and a 2-line group and lost the staff.
+    """
+    span = _page_staff_span(groups)
+    if not span or span <= 0:
+        return groups                       # too few confident staves to know a staff's height
+    out: list[list[int]] = []
+    i = 0
+    while i < len(groups):
+        g = groups[i]
+        nxt = groups[i + 1] if i + 1 < len(groups) else None
+        # The test bounds the merged height from ABOVE only. An undersized group is undersized
+        # BECAUSE lines are missing, so its raw height is naturally SHORT of a full staff — an
+        # equality test rejects exactly the cases this exists for (bozukNihavendLonga2's pair spans
+        # 25 px against a 38 px staff). What must not happen is a merge TALLER than a staff, which
+        # would be two different rows. `_emit_staff` then still has to accept the result: repair to
+        # 5 evenly spaced lines whose spacing matches the rest of the page.
+        if (len(g) < 3 and nxt is not None and len(nxt) < 3
+                and (nxt[-1] - g[0]) <= span * (1 + STAFF_GROUP_SPAN_TOL)):
+            out.append(g + nxt)
+            i += 2                          # both consumed; never merge three
+            continue
+        out.append(g)
+        i += 1
+    return out
 
 
 def _page_staff_span(groups: list[list[int]]) -> float | None:
@@ -682,12 +921,28 @@ def _emit_staff(group: list[int], ink: np.ndarray, out: list[Staff],
     if not (4 <= len(group) <= 7):
         return
     span = group[-1] - group[0]
-    if (page_span and len(group) >= STAFF_SPAN_MIN_ROWS
-            and abs(span - page_span) <= STAFF_SPAN_TOL * page_span):
+    if page_span and abs(span - page_span) <= STAFF_SPAN_TOL * page_span:
         # this group is exactly as tall as the page's other staves, so it IS one staff whose
         # interior lines the opening chopped up -- see STAFF_SPAN_CONSENSUS
         step = span / 4.0
-        group = [int(round(group[0] + i * step)) for i in range(5)]
+        # ⚠ The gate used to be `len(group) >= STAFF_SPAN_MIN_ROWS` (6), written for the symptom
+        # that produced it: a staff CHOPPED into 6-7 fragments. It is blind to the same defect
+        # arriving with too FEW lines. `bozukNihavendLonga2` s03 is detected as 4 lines at
+        # y = 440, 455, 471, 479 -- gaps 15/16/8, median **15**, against the page's 9.75 -- while
+        # its HEIGHT (39 px) matches the page exactly. `normalize_row` scales by `30 / spacing`, so
+        # the row upscaled 2.0x where every healthy row on that page gets 3.0-3.5x; under-magnified
+        # in a fixed 336 px frame, the crop then reached 4.60 sp above the staff and swallowed the
+        # bottom of the previous system (owner, 2026-08-26).
+        # So gate on the DEFECT rather than on the line count: the height already says the spacing
+        # must be `span / 4`, and if the measured median gap disagrees materially the measurement is
+        # what is wrong. On a healthy staff the two agree and this is a no-op.
+        gaps = np.diff(group)
+        measured = float(np.median(gaps)) if len(gaps) else step
+        chopped = len(group) >= STAFF_SPAN_MIN_ROWS
+        misread = (STAFF_SPAN_FIX_SPACING
+                   and abs(measured - step) > STAFF_SPAN_SPACING_TOL * step)
+        if chopped or misread:
+            group = [int(round(group[0] + i * step)) for i in range(5)]
     if len(group) > 5:
         # extra long horizontals (a VOLTA bracket above, an ottava/lyric rule below) can ride
         # along in the cluster — keep the most evenly-spaced consecutive 5-line window
@@ -1133,11 +1388,34 @@ def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
             + (COST_ROW_START if is_row_start else 0.0))
 
 
+# Bump this whenever the CLASSICAL-CV path — staff detection, the ink mask, or barline detection —
+# changes in a way that can move a crop boundary. The settings below cover the env-switchable knobs,
+# but a code change moves crops with every knob left alone: the 2026-08-24/25 staff repairs, the
+# staff-line-neutral blob walk and gate 2's position rule all did, and `window_cache_ok` could not
+# see any of them, so a July decode still read as valid against crops the current code no longer
+# produces. Date-shaped so the value says WHEN the geometry it describes was current.
+GEOMETRY_REV = 20260826
+
+
 def window_signature() -> dict:
-    """The windowing settings a cached decode was produced under — store this beside a decode."""
+    """The settings a cached decode's CROPS were produced under — store this beside a decode.
+
+    Two halves, and both move a crop: the WINDOWING rules (how measures are packed into strips) and
+    the GEOMETRY that decides where a measure is at all. Only the first half was recorded until
+    2026-08-25.
+    """
     return {"measures_per_strip": MEASURES_PER_STRIP, "max_strip_w": MAX_STRIP_W,
             "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET,
-            "edge_trim": TRIM_SHARED_EDGE, "vplace": VPLACE_ADAPTIVE}
+            "edge_trim": TRIM_SHARED_EDGE, "vplace": VPLACE_ADAPTIVE,
+            "geometry_rev": GEOMETRY_REV,
+            "geometry": {"bar_fade": BAR_FADE_SP, "staff_rescue": STAFF_RESCUE,
+                         "staff_group_span": STAFF_GROUP_BY_SPAN,
+                         "blob_skip_line": BLOB_SKIP_LINE,
+                         "blob_line_fill": BLOB_LINE_FILL, "staff_row_pos": STAFF_ROW_POS_SP,
+                         "staff_span_consensus": STAFF_SPAN_CONSENSUS,
+                         "staff_span_min_rows": STAFF_SPAN_MIN_ROWS,
+                         "staff_span_fix": STAFF_SPAN_FIX_SPACING,
+                         "staff_width_consensus": STAFF_WIDTH_CONSENSUS}}
 
 
 def window_cache_ok(prev: dict) -> bool:
@@ -1162,6 +1440,15 @@ def window_cache_ok(prev: dict) -> bool:
         return False        # the crops moved, so every decode under them is stale
     if prev.get("vplace", False) != VPLACE_ADAPTIVE:
         return False        # the staff sits elsewhere in the frame
+    # Where the STAFF and the BARLINES were found, which decides where a measure is — absent from
+    # this check until 2026-08-25, and that is not a theoretical gap: five fixes landed on 24-25
+    # August that move crop boundaries, and a cache written on 31 July still passed. A cache with no
+    # `geometry_rev` was written before the field existed, so nothing in it says which CV code cut
+    # those crops; it cannot be proven current and is refused rather than assumed.
+    if prev.get("geometry_rev") != GEOMETRY_REV:
+        return False
+    if prev.get("geometry") != window_signature()["geometry"]:
+        return False
     # the token budget only moves a crop boundary in budget mode
     return WINDOW_MODE != "budget" or float(prev.get("token_budget", -1)) == TOKEN_BUDGET
 

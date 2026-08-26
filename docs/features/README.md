@@ -2,7 +2,7 @@
 
 purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
 audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-16
+updated: 2026-08-25
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
@@ -26,6 +26,7 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
 | **F3** | Fingerboard tab — where to put your finger, in time | medium | no | calibration + a string-choice rule | ✅ **DONE 2026-08-16** — violin only; built, checked on the production bundle, **not yet seen by a person** |
+| **F4** | Listening mirror — a live microtonal tuner drawn on F3's fingerboard | medium | no | pitch-tracker steadiness at 22.6 cents/koma, unmeasured | ⏸ **PARKED 2026-08-25** (owner) — after the public launch; **not** audio-to-score. Reasoning and what was ruled out: [../BACKLOG.md](../BACKLOG.md) |
 
 Order: **F0 → F2 → F1 → F3**. All four are built. F0, F2 and F1 are deployed and **accepted by ear** —
 F1 finished 2026-08-14 and the friends who asked for it liked the result. F2 came first among the
@@ -187,8 +188,7 @@ is different here. Check the mix, not the file.
 enough to hear an instrument choice working, and it turns the asset problem from "build a sample
 set" into "find one usable note". Add notes later, only where it sounds worst.
 
-Where each instrument's audio may come from: **[audio-policy.md](audio-policy.md)**
-below.
+Where each instrument's audio may come from: **[audio-policy.md](audio-policy.md)** below.
 
 ### Where the code goes
 

@@ -12,13 +12,22 @@ import {
   PALE_LINE_MAX_REL,
   PALE_LINE_MIN_REL,
   PALE_LINE_MIN_ROWS,
+  RESCUE_MIN_STAVES,
+  RESCUE_READS,
+  RESCUE_SPAN_TOL,
+  RESCUE_WIDTH_FRAC,
   STAFF_GAP_BRIDGE_SP,
+  STAFF_GROUP_BY_SPAN,
+  STAFF_GROUP_SPAN_TOL,
   STAFF_HOR_FRAC,
+  STAFF_RESCUE,
   STAFF_REPAIR_3LINE,
   STAFF_REPAIR_SP_BAND,
   STAFF_SPAN_CONSENSUS,
   STAFF_SPAN_MIN_GROUPS,
+  STAFF_SPAN_FIX_SPACING,
   STAFF_SPAN_MIN_ROWS,
+  STAFF_SPAN_SPACING_TOL,
   STAFF_SPAN_TOL,
   STAFF_WIDTH_CONSENSUS,
   STAFF_WIDTH_MIN_STAVES,
@@ -30,9 +39,11 @@ import {
 } from "./constants";
 import {
   binarizeInk,
+  dilateVertical,
   medianUint8AtLeast,
   openHorizontal,
   percentileUint8,
+  subRows,
   thresholdBelow,
   type Gray,
 } from "./cvOps";
@@ -66,13 +77,30 @@ export function staffBottom(s: Staff): number {
  * Shared with `pageBinarizer` so the pale-line fallback's guard is measured against the SAME
  * signal `detectStaves` gates on, rather than a second rule that could drift away from it.
  */
-export function staffLineRows(ink: Gray): number[] {
-  const h = ink.height;
+export function staffLineRows(
+  ink: Gray,
+  y0 = 0,
+  y1: number | null = null,
+  dilate = 0,
+  thrFrac = 0.3,
+  widthFloor = true
+): number[] {
+  // ⚠ Called with no optional argument this is EXACTLY the page-wide rule it has always been; the
+  // parameters exist for `rescueMissingStaves`, which re-asks the same question inside one band.
+  // Three of the defaults are page-GLOBAL decisions about a local question, and that is why a band
+  // must override them: `maxRow` is the whole page's darkest row, so one heavy row lifts the bar
+  // for every faint one, and the `w * 0.2` floor asks a row to carry a fifth of the page width.
   const w = ink.width;
+  const band = y1 === null && y0 === 0 ? ink : subRows(ink, y0, y1 === null ? ink.height : y1);
+  if (band.height <= 0) return [];
+  // a line that WANDERS vertically has no unbroken run in any single row, so the opening below
+  // erases it outright rather than weakening it
+  const src = dilate > 1 ? dilateVertical(band, dilate) : band;
   // keep only long horizontal structures (staff lines), drop noteheads/stems/text
   const horLen = Math.max(20, Math.trunc(w * STAFF_HOR_FRAC));
-  const horiz = openHorizontal(ink, horLen);
+  const horiz = openHorizontal(src, horLen);
 
+  const h = band.height;
   const rowInk = new Float64Array(h);
   let maxRow = 0;
   for (let y = 0; y < h; y++) {
@@ -85,10 +113,11 @@ export function staffLineRows(ink: Gray): number[] {
   if (maxRow < 1) return [];
 
   // candidate staff-line rows: strong horizontal ink
-  const thr = Math.max(maxRow * 0.3, w * 0.2);
+  let thr = maxRow * thrFrac;
+  if (widthFloor) thr = Math.max(thr, w * 0.2);
   const hits: number[] = [];
   for (let y = 0; y < h; y++) if (rowInk[y]! > thr) hits.push(y);
-  return clusterRows(hits);
+  return clusterRows(hits).map((r) => y0 + r);
 }
 
 /**
@@ -148,8 +177,14 @@ export function binarizePageInk(gray: Gray): Gray {
   return pageBinarizer(gray)(gray);
 }
 
-/** `detect_staves` (L310): find 5-line systems via horizontal opening + row projection. */
-export function detectStaves(ink: Gray): Staff[] {
+/**
+ * `detect_staves` (L310): find 5-line systems via horizontal opening + row projection.
+ *
+ * `rescue` overrides STAFF_RESCUE for one call, mirroring the Python `rescue=` parameter. It exists
+ * so a scorer can ask for both readings of the same page: the row-level instruments pair rows by
+ * system INDEX against a cached truth, so a pass that inserts a staff shifts every later index.
+ */
+export function detectStaves(ink: Gray, rescue: boolean | null = null): Staff[] {
   const lineRows = staffLineRows(ink);
   if (lineRows.length < 2) return [];
 
@@ -168,12 +203,151 @@ export function detectStaves(ink: Gray): Staff[] {
     }
   }
   groups.push(group);
-  const pageSpan = pageStaffSpan(groups);
+  // ⚠ Do NOT write this back into `groups` by clearing and re-pushing. Both the flag-off path and
+  // `regroupBySpan`'s own "span not trustworthy" fallback return THE SAME ARRAY, so `groups.length
+  // = 0` empties the thing being copied FROM and every page reads zero staves. That shipped to the
+  // slice inspector and found no staff on any page.
+  const grouped = STAFF_GROUP_BY_SPAN ? regroupBySpan(lineRows, groups) : groups;
+  const pageSpan = pageStaffSpan(grouped);
   const staves: Staff[] = [];
   const runsPerStaff: Array<[Array<[number, number]>, number]> = [];
-  for (const g of groups) emitStaff(g, ink, staves, sp, pageSpan, runsPerStaff);
+  for (const g of grouped) emitStaff(g, ink, staves, sp, pageSpan, runsPerStaff);
+  if (rescue === null ? STAFF_RESCUE : rescue) {
+    // before `widenToPageMargins`, so a rescued staff gets the same x-extent treatment as any
+    // other. It appends to BOTH lists in step, because `widenToPageMargins` walks them paired.
+    // ⚠ This can also move an EXISTING row: `widenToPageMargins` takes the median x-extent over
+    // all staves, so a rescued row is a vote in it.
+    rescueMissingStaves(ink, staves, runsPerStaff);
+  }
   widenToPageMargins(staves, runsPerStaff);
+  staves.sort((a, b) => a.lines[0]! - b.lines[0]!);
   return staves;
+}
+
+/**
+ * `_missing_bands`: vertical bands where the page's OWN rhythm says a staff should be and none was
+ * found.
+ *
+ * A page's rows sit at a near-constant pitch, so a gap of ~k x that pitch is k-1 missing rows. This
+ * reads the SURVIVING rows, so it cannot be fooled by whatever hid the missing one.
+ */
+export function missingBands(staves: Staff[], h: number): Array<[number, number]> {
+  const tops = staves.map((s) => s.lines[0]!);
+  const pitch = median(diff(tops));
+  const span = median(staves.map((s) => s.lines[s.lines.length - 1]! - s.lines[0]!));
+  if (pitch <= 0) return [];
+  const bands: Array<[number, number]> = [];
+  for (let i = 1; i < tops.length; i++) {
+    const a = tops[i - 1]!;
+    const b = tops[i]!;
+    const k = pyRound((b - a) / pitch);
+    for (let j = 1; j < k; j++) {
+      const y = a + ((b - a) * j) / k;
+      bands.push([Math.trunc(y - span * 0.4), Math.trunc(y + span * 1.4)]);
+    }
+  }
+  // above the first row and below the last: no interior gap can reveal these, and a row lost at the
+  // foot of a page is the single most common one (the old w/4 kernel dropped it systematically)
+  if (tops[0]! - pitch > 0) {
+    bands.push([
+      Math.trunc(tops[0]! - pitch - span * 0.4),
+      Math.trunc(tops[0]! - pitch + span * 1.4),
+    ]);
+  }
+  if (staves[staves.length - 1]!.lines.slice(-1)[0]! + pitch < h) {
+    const t = tops[tops.length - 1]!;
+    bands.push([Math.trunc(t + pitch - span * 0.4), Math.trunc(t + pitch + span * 1.4)]);
+  }
+  return bands
+    .map(([a, b]) => [Math.max(0, a), Math.min(h, b)] as [number, number])
+    .filter(([a, b]) => b > a);
+}
+
+/**
+ * `_rescue_missing_staves`: second pass, re-detecting ONLY inside the bands pass 1 left empty.
+ *
+ * Acceptance is deliberately strict and is the same argument `repairGroup` uses: a rescued group
+ * must survive `emitStaff` (5 evenly-spaced lines) AND match the page's other staves in both HEIGHT
+ * and WIDTH. Rejecting restores today's behaviour — the row is simply dropped — so the safe
+ * direction is the default. See STAFF_RESCUE.
+ */
+export function rescueMissingStaves(
+  ink: Gray,
+  staves: Staff[],
+  runsOut: Array<[Array<[number, number]>, number]>
+): void {
+  if (staves.length < RESCUE_MIN_STAVES) return;
+  const span = median(staves.map((s) => s.lines[s.lines.length - 1]! - s.lines[0]!));
+  const pageW = median(staves.map((s) => s.x1 - s.x0));
+  for (const [y0, y1] of missingBands(staves, ink.height)) {
+    for (const [dilate, thr] of RESCUE_READS) {
+      // no width floor: inside a band we already believe holds a staff, the question is which rows
+      // are lines, not whether the band is music at all
+      const rows = staffLineRows(ink, y0, y1, dilate, thr, false);
+      if (rows.length < 3) continue;
+      const cand: Staff[] = [];
+      const candRuns: Array<[Array<[number, number]>, number]> = [];
+      emitStaff(rows, ink, cand, median(diff(rows)), span, candRuns);
+      if (!cand.length) continue;
+      const st = cand[0]!;
+      if (Math.abs(st.lines[st.lines.length - 1]! - st.lines[0]! - span) > RESCUE_SPAN_TOL * span) {
+        continue;
+      }
+      if (st.x1 - st.x0 < RESCUE_WIDTH_FRAC * pageW) continue; // lyrics, a title rule, a bracket
+      staves.push(st);
+      runsOut.push(candRuns[0]!);
+      break;
+    }
+  }
+}
+
+/**
+ * `_regroup_by_span`: merge ADJACENT UNDERSIZED groups whose combined height is one staff.
+ *
+ * ⛔ THE FIX IS NOT "GROUP BY HEIGHT INSTEAD". That was built and measured: re-cutting every line
+ * row on the page's staff height read 3205 exact rows against the shipped rule's 3750 at full scale
+ * — **−545 rows**, regressions 694 → 1351. A staff spans ~4*sp, so "the group may be one staff
+ * tall" permits ~4.8*sp between first and last line, and on a page whose systems sit close together
+ * that merges rows which should be separate. The `2.2 * sp` rule earns its place.
+ *
+ * What ships is the NARROW repair. A group of 1–2 lines is below the 4-line floor AND below
+ * `repairGroup`'s 3-line floor, so it is discarded and its music lost; where two such neighbours
+ * together fit inside one staff, they are one staff the gap rule split. A group with 3+ lines is
+ * never touched, so a page whose grouping is healthy cannot move. Paired at full scale:
+ * BETTER 29 / WORSE 31, **net −2 of 6,440 rows** — symmetric, no systematic direction.
+ *
+ * This is the `bozukNihavendLonga2` case, and it is the browser that exposed it: both sides found
+ * the SAME three lines (y = 266, 285, 291) and the 19 px gap fell either side of `2.2 * sp`
+ * depending on whether the page's median line gap rounded to 9.0 or 8.0 — Python grouped them, the
+ * browser split them into a 1-line and a 2-line group and lost the staff.
+ */
+export function regroupBySpan(lineRows: number[], groups: number[][]): number[][] {
+  const span = pageStaffSpan(groups);
+  if (!span || span <= 0) return groups; // too few confident staves to know a staff's height
+  const out: number[][] = [];
+  let i = 0;
+  while (i < groups.length) {
+    const g = groups[i]!;
+    const nxt = i + 1 < groups.length ? groups[i + 1]! : null;
+    // Bounds the merged height from ABOVE only. An undersized group is undersized BECAUSE lines
+    // are missing, so its raw height is naturally SHORT of a full staff — an equality test rejects
+    // exactly the cases this exists for (bozukNihavendLonga2's pair spans 25 px against a 38 px
+    // staff). What must not happen is a merge TALLER than a staff, which would be two different
+    // rows. `emitStaff` then still has to accept the result.
+    if (
+      g.length < 3 &&
+      nxt !== null &&
+      nxt.length < 3 &&
+      nxt[nxt.length - 1]! - g[0]! <= span * (1 + STAFF_GROUP_SPAN_TOL)
+    ) {
+      out.push([...g, ...nxt]);
+      i += 2; // both consumed; never merge three
+      continue;
+    }
+    out.push(g);
+    i += 1;
+  }
+  return out;
 }
 
 /**
@@ -292,15 +466,29 @@ export function emitStaff(
   }
   if (!(group.length >= 4 && group.length <= 7)) return;
   const span = group[group.length - 1]! - group[0]!;
-  if (
-    pageSpan !== null &&
-    group.length >= STAFF_SPAN_MIN_ROWS &&
-    Math.abs(span - pageSpan) <= STAFF_SPAN_TOL * pageSpan
-  ) {
+  if (pageSpan !== null && Math.abs(span - pageSpan) <= STAFF_SPAN_TOL * pageSpan) {
     // this group is exactly as tall as the page's other staves, so it IS one staff whose interior
     // lines the opening chopped up — see STAFF_SPAN_CONSENSUS
     const step = span / 4;
-    group = [0, 1, 2, 3, 4].map((i) => pyRound(group[0]! + i * step));
+    // ⚠ The gate used to be `group.length >= STAFF_SPAN_MIN_ROWS` (6), written for the symptom that
+    // produced it: a staff CHOPPED into 6–7 fragments. It is blind to the same defect arriving with
+    // too FEW lines. `bozukNihavendLonga2` s03 is detected as 4 lines at y = 440, 455, 471, 479 —
+    // gaps 15/16/8, median **15**, against the page's 9.75 — while its HEIGHT (39 px) matches the
+    // page exactly. `normalizeRow` scales by `30 / spacing`, so that row upscaled 2.0× where every
+    // healthy row on the page gets 3.0–3.5×; under-magnified in a fixed 336 px frame, the crop then
+    // reached 4.60 sp above the staff and swallowed the bottom of the previous system.
+    // So gate on the DEFECT, not the line count: the height already says the spacing must be
+    // `span / 4`, and if the measured median gap disagrees materially the measurement is what is
+    // wrong. On a healthy staff the two agree and this is a no-op — full scale, it moves 13 rows of
+    // 6,440 on 12 pages, paired BETTER 7 / WORSE 6.
+    const gaps = diff(group);
+    const measured = gaps.length ? median(gaps) : step;
+    const chopped = group.length >= STAFF_SPAN_MIN_ROWS;
+    const misread =
+      STAFF_SPAN_FIX_SPACING && Math.abs(measured - step) > STAFF_SPAN_SPACING_TOL * step;
+    if (chopped || misread) {
+      group = [0, 1, 2, 3, 4].map((i) => pyRound(group[0]! + i * step));
+    }
   }
   if (group.length > 5) {
     // extra long horizontals (a VOLTA bracket above, an ottava/lyric rule below) can ride along

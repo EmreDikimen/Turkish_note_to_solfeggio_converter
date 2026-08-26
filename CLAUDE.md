@@ -120,6 +120,41 @@ a successful build is not a deploy. Both, and every other command, in
   unchanged). `_realval_v2` still expects ties in 24% of rows, which no longer decides anything:
   `eval_omr.py` drops `\tie` from **both** the gold and the decode. `strips_exam_v2*` keeps its ties on purpose — it is
   the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
+- **A DECODE CACHE IS ONLY VALID FOR THE CV CODE THAT CUT ITS CROPS** (2026-08-25). `window_signature()`
+  stores `GEOMETRY_REV` plus the geometry knobs; a `<page>_decode.json` without that field is
+  REFUSED, because nothing in it says which slicer produced the crops it describes — and a 31 July
+  cache used to pass every check while the 24–25 August fixes had moved the crops. ⚠ **Bump
+  `GEOMETRY_REV` whenever the classical-CV path (staff detection, ink mask, barline detection)
+  changes in a way that can move a crop boundary**; that invalidates every cache on disk and the
+  next emit re-decodes, which is the point. ⚠ `score_slicer.py` deliberately does NOT consult it —
+  its `old_*` column IS the retired pipeline's cache. ⚠ And `score_slicer.py --sample` has no
+  default: **the instrument is 6,440 rows**, every score quoted before 2026-08-25 evening is a
+  124-row sample, and a full run reversed one call made on the sample.
+  [docs/METRICS-SLICER-BARLINES.md](docs/METRICS-SLICER-BARLINES.md).
+- **A CHANGE THAT ADDS OR REMOVES A STAFF CANNOT BE PRICED BY THE ROW-LEVEL SCORERS AS THEY STAND**
+  (2026-08-25). Both pair a row to its cached truth **by system index**, so an inserted staff shifts
+  every later index and each row is scored against another row's answer — a large **false
+  regression**, not an error, which is the dangerous kind. ⚠ **`score_slicer.py` needs
+  `--pair-by-position`** for any such change; it re-pairs by vertical position and counts added rows
+  separately, because they **cannot be scored at all** — the truth is aligned from the OLD
+  pipeline's decodes, which never saw them. ⛔ **`score_barlines.py` has the same coupling and NO
+  fix**: its hand marks are keyed to detected rows, and across a staff change `bozukNihavendLonga`
+  read **30 marked before and 3 after**. Never quote it across a staff-detection change.
+  [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
+- **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF**
+  (2026-08-25). The horizontal opening's kernel is **one pixel tall**, so a staff line that wanders
+  across rows is **erased, not weakened**; a lost row is not a bad crop, it is **NO crop**, so no
+  accuracy metric has ever shown it. ⛔ **Do not "fix" this with a global knob** — dilating before
+  the opening takes one hand-ruled page 5 → 8 staves and takes `bozukNihavendLonga` **10 → 1**, and
+  scaling the dilation to the measured line spacing does not escape the trade; a horizontal CLOSE is
+  worse still, because it lifts `row_ink.max()` and so lifts the relative threshold. ✅ The shipped
+  shape is a **second pass** that re-detects only in the bands the page's own staff pitch says are
+  empty, so a page whose rows were all found cannot move. ⚠ Its **width** test is load-bearing:
+  without it the underlined-lyrics block at the foot of a page is rescued as a staff. Full scale:
+  all **6,440** scored rows identical, **+320 rows on 227 of 1,592 pages**; `parity:slicer` passes
+  with the flag ON. ⚠ **`STAFF_RESCUE` must move together in Python and `constants.ts`** or the app
+  cuts differently from the training data, and turning it on bumps `GEOMETRY_REV`.
+  [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
 - **THE APP HAS NO LABEL-BUDGET RAIL, AND ON DENSE PAGES THAT MEANS SILENTLY WRONG NOTES.** The
   browser slicer packs by measures and width only; at inference an over-budget strip cannot be
   dropped, so the model emits `</s>` early and confidently. `hitCap` catches **7 of 4,012 (0.2%)**.

@@ -7,7 +7,200 @@ updated: 2026-08-25
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-25 (latest) — gate 2 was blind on a dense page, and only one of three bad cuts was a barline
+## 2026-08-26 (latest) — three slicer rules measured, two shipped, one rejected — and the pattern is now unmistakable
+
+**The owner asked for three things: decide the `examv4` cut setting, fix the browser/Python staff
+divergence, and price `OMR_BLOB_FILL`.** All three are answered.
+
+⭐ **THE PATTERN OF THE WHOLE SESSION, AND IT IS THE MOST REUSABLE THING IN IT.** Four rules were
+built as a GLOBAL loosening of an existing threshold. **Every one of them failed at full scale**, and
+each one had looked right on a handful of pages:
+
+| the global form | on a few pages | at 6,440 rows |
+|---|---|---|
+| `BAR_FADE_SP` 0.25 | +4 real barlines, precision flat | **net −76 rows** |
+| dilate before the opening | one page 5 → 8 staves | another page **10 → 1** |
+| group by staff HEIGHT | fixes the divergent page | **3205 vs 3750, −545 rows** |
+| `OMR_BLOB_FILL` 0.3 | **+7.6pp recall** | **net −20**, `+0 → +1` on 37 rows |
+
+⭐ **What passed, all three of them, share one shape: act ONLY where the shipped rule already
+produced something unusable, never on a healthy case.** The staff rescue (bands pass 1 left empty),
+the group merge (groups under the 3-line floor, already being discarded), the spacing fix (a staff
+whose two measurements contradict each other). Their blast radii are 320 rows / 62 rows / 13 rows,
+and their costs are 0, −2 and +2. **A dial that trades one page against another is the wrong shape
+of fix.** Write the narrow repair instead.
+
+⭐ **`OMR_BLOB_FILL` deserves its own line, because it is the third time the faded-page table has
+mispredicted the full run.** 93 hand marks on the 4 worst pages we own is a good instrument for
+*naming which gate* rejected a barline and a bad one for *pricing a change*. Its failure mode is
+always the same: the dominant move is `+0 → +1`, a row whose measure count was already RIGHT
+gaining a spurious barline.
+
+**The divergence bug, and why parity did not catch it.** `bozukNihavendLonga2.png` read 9 staves in
+the browser and 10 in Python. Not a port bug: `cv2.imread(IMREAD_GRAYSCALE)` converts inside the PNG
+decoder and a browser cannot, so the greyscales differ by ±1 on ~16% of pixels BY CONSTRUCTION. Both
+sides found the SAME three lines; the page's median line gap rounded to 9.0 one way and 8.0 the
+other, moving the split threshold `2.2 * sp` from 19.8 px to 17.6 across a **19 px** gap. ⚠ One pixel
+in a page-wide median deleted a staff, and `parity:slicer` read 100% throughout because its 120-page
+sample does not contain that page. **A green parity check and a real divergence were both true.**
+
+**A second defect on the same page, reported by the owner mid-session and PRE-EXISTING** — the fix
+above only renumbered it (`s02` → `s03`). A staff detected as 4 lines whose median gap read **15**
+against the page's **9.75**, while its height was exactly right. `normalize_row` scales by
+`30 / spacing`, so the row upscaled 2.0× where healthy rows got 3.0–3.5×, and the fixed 336 px frame
+then reached 4.60 sp above the staff into the system above. ⭐ **The fix already existed and was
+gated wrong**: `STAFF_SPAN_CONSENSUS` does exactly this repair, but only for `len(group) >= 6` —
+written for a staff chopped into MORE lines than it has, blind to the same defect with too FEW.
+
+⚠ **TWO MISTAKES OF MINE, both caught by running rather than by reading.** An aliasing bug in the TS
+port — `groups.length = 0` cleared the array being copied FROM, since the flag-off path returns the
+same object — shipped to the slice inspector and made **every page read zero staves**. I had run
+`typecheck` and not the slicer. And `git checkout` on `page_to_strips.py`, to undo my own
+experimental knob, discarded the uncommitted `GEOMETRY_REV` work already in the tree; rebuilt from
+the diff and verified against the original diffstat. **Revert your own hunk, never the file.**
+
+**Also settled:** `examv4` is cut with `STAFF_RESCUE` **off** (owner) — the exam stays 663 rows and
+the re-cut costs the 125 verdicts already priced; whether the TRAINING pools get the rescue is
+explicitly still open. And the slice inspector now opens with the rescue **on** while the app leaves
+it off, because a row the slicer never found produces no crop and is invisible in every other view.
+
+## 2026-08-25 (night) — a whole staff ROW goes missing, and the owner found it by looking
+
+**The session was supposed to be a status question.** *"In track B, about slicer, what should we do,
+is it okay now, how much does it differ from the slicer that sliced examv3."* Answering the third
+part produced everything else.
+
+**The `examv3` staleness number in STATUS was wrong, and wrong in both directions.** It said 78 of
+452 verdicts invalidated — measured on 2026-08-24, i.e. **before** the 25 August blob-walk fix, the
+single biggest crop-mover of the two, and by comparing crop *spans* rather than crops. Re-measured
+at page level: **42 of 67 pages lose their labels**. But that is the opposite bound — it voids a
+whole page when one crop moves. Matching at STRIP level on the carry key `build_exam_v3_queue.py`
+actually uses gives **125 of 455**, with 76 fully lost and 49 coming back as a suggestion to
+confirm. ⚠ Three numbers for one re-cut, and the lesson is that **`check_crop_staleness.py` answers
+"is this queue safe to label", not "what will this cost me"**.
+
+⚠ **A correction caught before it was reported.** The first strip-level pass used
+`check_crop_staleness.py`'s `MUSIC_KEYS`, which omits `system` while `meas_from` restarts at 0 in
+every system — 88.3% of `examv3` crops share their key with another crop on the same page, so the
+rule appeared to lose 90% of the labels on **byte-identical** pages. `build_exam_v3_queue.py`
+defines its **own** `MUSIC_KEYS` at L120 and it does include `system`. There was no bug; there was a
+scorer reading the wrong constant. Two files, one name, different tuples.
+
+**Then the owner looked at the comparison sheets and said the thing that mattered:** *"most of the
+pages has more staves than slicer found... if it depends on a continuous line, we need to consider a
+photocopy that is a bit deleted the staves but still be readable."* Both halves were right.
+
+⭐ **It does depend on a continuous line, and that is the bug.** The horizontal opening uses a
+`hor_len x 1` kernel — **one pixel tall** — so a staff line must stay inside a single pixel row for
+11% of the page width. A hand-ruled or slightly skewed line wanders and is **erased, not weakened**.
+`_emit_staff` already documented this exact failure for the x-extent and worked around it by
+re-reading the raw ink; detection never got the same treatment. **A lost row is not a bad crop, it
+is NO crop** — which is why no accuracy metric has ever shown it.
+
+⛔ **The obvious fix was built, measured and thrown away.** Dilating the mask vertically before the
+opening addresses the mechanism precisely and trades pages against each other: `sevdim` 5 → 8 rows,
+`bozukNihavendLonga` 10 → **1**, because on a page whose lines sit 9 px apart any useful dilation
+fuses them. Scaling the dilation to the page's measured spacing does not escape it. A horizontal
+CLOSE is worse for a reason worth keeping: it raises `row_ink.max()`, which raises the *relative*
+threshold and loses faint lines elsewhere. **A dial that trades one page against another is the
+wrong shape of fix.**
+
+✅ **What ships instead is a second pass that can only look where pass 1 found nothing.** The page's
+own staff pitch predicts where a row should be; detection re-runs inside those bands only. A page
+whose rows were all found has no bands and therefore cannot move — the property the dial could not
+have. **Full scale: every one of 6,440 scored rows identical to baseline, +320 staff rows on 227 of
+1,592 pages.** It ships **OFF**.
+
+⚠ **The width guard is not tidiness, and eyeballing is what found it.** The first version rescued the
+block of **underlined lyrics** at the foot of a handwritten page as a staff — lyric rules sit at
+staff-like spacing and pass the height test. A rescued staff must also be about as WIDE as the
+page's others. `_repair_group` documents the same false positive; height alone cannot refuse it.
+
+⛔ **Both row-level instruments are blind to this class of change.** They pair a row to its truth by
+system INDEX, so inserting a staff shifts every later index and reports a large regression that is
+pure artifact. `score_slicer.py` gained `--pair-by-position`; `score_barlines.py` has no fix and read
+**30 marked before a staff change and 3 after** — the instrument breaking, not the slicer. ⚠ The
+consequence is permanent: the 320 gained rows **cannot** be scored, because the truth is aligned from
+the old pipeline's decodes and the old pipeline never saw them. The evidence they are real is
+visual — **14 of 14 correct across 4 pages**.
+
+**A separate bug, reported by the owner mid-session and still open.** `bozukNihavendLonga2.png` is
+the same music as `bozukNihavendLonga.png` screenshotted smaller, and the slice inspector finds **9
+staves where Python finds 10**. It reproduces, and it is not a code difference: `cv2.imread` converts
+to grey **inside** the decoder and a browser cannot, so the two differ by **±1 on 16.1% of pixels**.
+That moved the page's median line gap from 9.0 to 8.0, which moved the system-splitting threshold
+`2.2 x sp` from 19.8 px to 17.6 — across a **19 px** gap inside one row. Both paths found the *same
+three* staff lines; one grouped them and the other split them into a 1-line and a 2-line group, both
+below the 3-line floor, so the repair never ran. ⚠ **One pixel of difference in a page-wide median
+deleted a staff.** Grouping by the page's staff HEIGHT instead fixed it in prototype (9 → 10, no
+change on three pages that already worked) — **not landed, not measured**.
+
+**Also done:** the browser port, verified with the flag **ON** as well as off (871/871 staff rows,
+2425/2425 strips, W4/W5/W6 PASS both ways) — a rescue-off parity run passes 100% while executing
+none of the new code, so only the ON run is evidence.
+
+⚠ **One mistake worth recording.** `git checkout` on `page_to_strips.py`, to undo an experimental
+knob of mine, also discarded the uncommitted `GEOMETRY_REV` work already in the tree. Rebuilt from
+the diff and verified against the original diffstat. Revert your own hunk, never the file.
+
+## 2026-08-25 (evening) — the fade rule was turned on, measured properly, and turned back off
+
+**Three things happened and only one of them is a code feature.** The session started as "where is
+the slicer bad, and is the plan right", and the plan turned out to have a hole in it.
+
+**1. `BAR_FADE_SP` went on at 0.25 and came back off.** The rule had been rejected that morning on a
+sweep taken BEFORE the day's two gate fixes. Re-swept after them, the recorded trade stopped
+reproducing: precision is flat to 0.35 (79.7% at both 0 and 0.25) while recall climbs 50.5% → 57.0%,
+with the knee exactly at 0.35. On that reading it shipped at 0.25 and was ported to the browser
+slicer, which had never had the rule at all — `parity:slicer` came back 100% on all three rungs, bar
+x exact 3490/3490, rejected candidates identical 844/844.
+
+Then the clean-page instrument was run at full scale and reversed it: **BETTER 111 / WORSE 187, net
+−76 rows**, exact rows 3750 → 3718. The dominant transition is `+0` → `+1` on **108 rows** — a row
+whose measure count was RIGHT gaining a spurious barline — against 72 rows recovering a missing one.
+Reverted on both sides the same evening; the TS port stays in the code, dormant.
+
+**Why this is worth a log entry rather than a line.** The hand-marked truth is 93 barlines on the 4
+most faded pages we own, and it is the instrument built for exactly this question — and it still did
+not generalise. The owner had independently refused 0.35+ by opening the false barlines one at a
+time and finding **every one of them is a NOTE STEM** (3 of 3 at 0.35; the single one 0.25 adds is a
+stem too). The pixels were right and the summary statistic was wrong.
+
+**2. `score_slicer.py` is a 6,440-row instrument and nobody had run it.** `--sample` has no default;
+every score quoted before this evening — 86/124, 82/124, 86 → 74, 86 → 83 — is `--sample 25`. That
+is recorded in COMMANDS.md and METRICS-SLICER.md, so nothing was hidden, but the derived decisions
+quote the bare number and **at 124 rows a 3–4 row difference is not separable from noise**. The full
+run also gives the first honest read of the 24–25 August work: **3,750 of 6,440 exact rows against
+the pool-cutting slicer's 3,304, +446 rows**, improved 1,296 / regressed 694.
+
+**3. The decode cache could not see a slicer change, and a 31 July cache still passed.**
+`window_cache_ok` checked only the WINDOWING settings — nothing about staff detection, the ink mask
+or barline detection — while every fix of 24–25 August moves crop boundaries with those knobs
+untouched. Fixed with `GEOMETRY_REV` plus a `geometry` block in `window_signature()`; a cache
+without the field is refused rather than assumed. ⚠ It invalidates every cache on disk (1,720 pages
+under `strips_v2`, 67 under `strips_examv3`), which is the point and also the cost — the B8
+re-emit's 37 minutes rested on reusing 1,704 of them.
+
+**Two owner calls, both against more slicer work.** The greedy packer produced a runt AND an
+over-budget strip on one real row where a legal 3-strip packing had neither, and it is **not being
+fixed in the slicer** — it moves crop boundaries, so it would stale every labelled pool and the 455
+verdicts on `examv3`, while the final render rebuilds the training set anyway. And the 59-id budget
+turned out to be misframed: over 11,844 real strips the over-budget ones exceed by a **median of 8
+ids**, and the model runs to its actual decode limit on **4 of 11,844 (0.03%)**. 59 is the emitter's
+drop rule, not a model ceiling — its cost is 14.7% of real training strips discarded.
+
+**Also measured, and both are the current state rather than a change:** width-split strips **29.8%**
+and staff rows with no interior barline **12.3%** (400 pages, final slicer). Both read higher than
+the 27.0/11.0 recorded on 24 August because the staff repairs rescue faded rows that produced nothing
+before — they enter the denominator, and a faded row is exactly the kind that finds no barline.
+
+Debug sheets cut with the final slicer, for looking at with your own eyes:
+`data/real/debug/badcrops_2026-08-25/03-son-slicer/` — 12 flagged pages plus the owner's own report
+page. Against the 01:24 cut: interior barlines **164 → 208**, rows with no barline **17 → 10**, no
+page loses one. [../METRICS-SLICER-BARLINES.md](../METRICS-SLICER-BARLINES.md) ·
+[../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) · [../DECISIONS.md](../DECISIONS.md)
+
+## 2026-08-25 — gate 2 was blind on a dense page, and only one of three bad cuts was a barline
 
 **Owner-reported from the slice inspector**, right after the section below shipped: `bozukNihavendLonga`
 still cuts through note stems. Three of that page's cuts are not printed barlines. Separating them

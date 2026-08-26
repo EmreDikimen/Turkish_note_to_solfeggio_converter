@@ -182,6 +182,27 @@ export function openHorizontal(ink: Gray, len: number): Gray {
 }
 
 /**
+ * `cv2.dilate(ink, getStructuringElement(MORPH_RECT, (1, len)))` — grow ink VERTICALLY by `len`.
+ *
+ * Only the staff RESCUE second pass uses it. The horizontal opening above has a `len x 1` kernel,
+ * so it demands a staff line stay inside ONE pixel row for its whole length; a line that wanders
+ * across rows is erased rather than weakened, and dilating first lets it project as one run.
+ * ⚠ It is never applied to a whole page — a global dilation fuses the lines of a tight-spaced
+ * page (measured: `bozukNihavendLonga` 10 staves -> 1). See STAFF_RESCUE in the Python slicer.
+ */
+export function dilateVertical(ink: Gray, len: number): Gray {
+  const src = toMat(ink);
+  const dst = new (cv().Mat)();
+  const kernel = cv().getStructuringElement(cv().MORPH_RECT, new (cv().Size)(1, len));
+  cv().dilate(src, dst, kernel);
+  kernel.delete();
+  src.delete();
+  const out = fromMat(dst);
+  dst.delete();
+  return out;
+}
+
+/**
  * Per-row ink counts of `openHorizontal(ink, len)`, WITHOUT running the morphology.
  *
  * The kernel is `len × 1`, so the opening is purely per-row, and a 1-D opening has a closed form:

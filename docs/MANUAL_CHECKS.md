@@ -146,6 +146,20 @@ was actually handed**, which is the first thing to look at when a page reads bad
 What to look for: music cut in half at a crop edge, **beams or ledger notes clipped off the top or
 bottom** (durations become unreadable), a crop that is nearly empty, a staff missed entirely (the
 strip count will be low for the number of staves), or a page that reports 0 staves.
+⭐ **And a crop that reaches into the system ABOVE it** — that is a staff whose measured spacing was
+read wrong, so `normalize_row` under-magnified the row and its fixed-height frame took in the
+neighbour. The `frame` figure gives it away: 4.60↑ against a healthy row's ~1. Fixed 2026-08-26, and
+worth knowing because it is the failure the crop caption can diagnose on its own.
+
+**staff rescue (find missing rows)** — ⚠ **ticked when the inspector opens, and the app leaves it
+OFF.** So this view deliberately shows **more staves than the app cuts**; the status line says which
+mode you are in, and unticking gives you exactly what the app does. That asymmetry is the point: a
+staff row the slicer never found produces **NO crop at all**, so it is invisible in the strip list,
+in every manifest and in every accuracy number — this is the one place a person can see that a row
+was lost. Try it on a faint photocopy or a hand-ruled page: `vuslata_nail_de_etse_ger_felek_nota_p2`
+finds 4 of its 9 rows without it and 8 with. ⚠ Judge the recovered rows **by eye** — the scorer
+structurally cannot grade them, because its truth comes from the old pipeline's decodes and the old
+pipeline never saw them ([METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md)).
 
 **old placement (ornaments outrank beams)** re-slices every page under the pre-2026-08-05 rule, where ink above the staff could claim room without limit and shear the beams below. Tick it on a page with a slur or segno above a beamed run and compare the bottom edge.
 

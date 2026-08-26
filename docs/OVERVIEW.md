@@ -79,6 +79,51 @@ been believing turned out to be three times too pessimistic. Full account on tha
 
 ## Where we are right now
 
+### The cutting tool got three fixes, and then you froze it (26 August 2026)
+
+The **slicer** cuts a photo of a page into small strips. Before the model can read anything, the
+slicer has to find the staff — the five lines the notes sit on. It was getting that wrong in three
+different ways, and you found two of them **by looking at pages yourself**.
+
+1. **Whole rows of music were disappearing.** Not cut badly — **not found at all**. On a faint
+   photocopy the tool looks for a line that stays perfectly straight for a long way; a hand-ruled or
+   slightly tilted line wanders, so the tool erased it. One page had 9 rows of music and the tool
+   found 4. ⭐ **This is why no accuracy number ever showed it**: a row that is never found makes no
+   strip, so there is nothing to be wrong about. The fix finds **320 extra rows across 227 pages**.
+   It is **switched off** for now, and **on in the slice inspector** so you can see the lost rows.
+2. **The app and the training data cut one page differently.** The browser and Python read the same
+   picture and disagreed about where one staff ended — because a browser cannot convert an image to
+   grey in exactly the same way, and the difference was **one unit of brightness**. That was enough
+   to flip a decision that sat less than a pixel from its edge. Fixed, and now they agree.
+3. **A crop that swallowed the row above it.** The tool measured one staff's line spacing 54% too
+   large, so it magnified that row too little and the fixed-size picture reached up into the
+   neighbouring music. Fixed.
+
+⭐ **The most useful lesson is about the SHAPE of a fix.** Four times we tried to fix something by
+making a rule *looser* everywhere. **All four made things worse** when measured on all 6,440 rows,
+even though each looked right on a handful of pages. The three fixes that worked all do the same
+thing instead: **only act where the normal rule already produced something broken, never touch a page
+that is fine.** That is now written at the top of the slicer notes so nobody spends a day
+rediscovering it.
+
+**Then you froze the slicer**, and that was the right call: the last two fixes were worth **−2 and +2
+rows out of 6,440** — essentially nothing. The tool is not perfect, but it is no longer the thing
+worth working on.
+
+### The exam stays as it is, and you are labelling it
+
+We looked at re-cutting the exam with the improved tool and **decided not to**. The reason is
+simple: when the exam is re-cut, your old answers come back only as **suggestions to confirm**, not
+as finished work — deliberately, because an answer you gave about one picture should not be trusted
+about a different picture. So re-cutting would turn **208 rows left** into **about 663 to look at
+again**. Not worth it.
+
+The exam is fine for grading: all 67 pages were cut by the **same** tool, and that is what makes the
+test fair. ⚠ One thing to say out loud when you quote the score: it describes the model on crops
+**slightly older** than what the app cuts today. The difference is small — 62 and 13 rows out of
+6,440 — but it is not zero.
+
+
 ### The features that shipped in early August → [OVERVIEW-AUGUST.md](OVERVIEW-AUGUST.md)
 
 Moved there on 15 August 2026, when this page grew past its size limit — the same move July's account

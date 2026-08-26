@@ -136,6 +136,24 @@ Cloud Run from localhost.
     #                    the same day: free on the 4 faded pages, net -76 rows at full scale
     # ⚠ Read every gate change on `score_slicer.py` too. The two instruments price different pages
     # and have disagreed on the same change more than once.
+    # ⛔ AND DO NOT USE THIS SCORER ACROSS A STAFF-DETECTION CHANGE AT ALL — its hand marks are keyed
+    # to detected rows, so a changed staff count renumbers them. `bozukNihavendLonga` read 30 marked
+    # before such a change and 3 after. That is the instrument breaking, not the slicer.
+
+# ---- the STAFF knobs (2026-08-26). All three ship ON except the rescue. ----------------------
+OMR_STAFF_GROUP_SPAN=0   # stop repairing a system the 2.2*sp gap rule SPLIT (ships ON)
+OMR_STAFF_SPAN_FIX=0     # stop trusting a staff's HEIGHT over its own measured spacing (ships ON)
+OMR_STAFF_RESCUE=1       # re-detect a staff in the bands the page's row pitch says are EMPTY.
+                         # Ships OFF; +320 rows on 227 of 1,592 pages, all 6,440 scored rows
+                         # unchanged. It is ON in the slice inspector only — a row the slicer never
+                         # found leaves NO crop, so that is the one view that can show you it.
+    # ⚠ Each must move together with its `apps/web/src/omr/slicer/constants.ts` twin or the app cuts
+    # differently from the training data. docs/METRICS-SLICER-STAFF.md.
+npx tsx tools/vision/parity/rescue-check.ts
+    # does a BROWSER-ONLY toggle actually fire? Drives the real slicer harness in headless chromium
+    # and prints staff counts per page with the rescue off and on. It exists because `STAFF_RESCUE`
+    # is a compile-time constant flipped through a setter, so no Python run can test it — and
+    # because a `parity:slicer` pass with a flag OFF executes none of the flagged code.
 .venv-ml/bin/python scripts/rung3/measure_fill_score.py --decode-root data/real/strips_v2
     # the LABEL-FREE accuracy proxy: a strip covers n measures, so its decode must fill n x the
     # page's meter, and an early `</s>` comes up short. ⚠ ALWAYS read it beside

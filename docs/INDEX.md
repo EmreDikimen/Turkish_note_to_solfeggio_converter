@@ -15,6 +15,7 @@ wrong — fix by deleting, not by syncing.
 | What is the command for X, and how does it fail silently? | [COMMANDS.md](COMMANDS.md) |
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
 | What is owed but is NOT next, and why is it deferred? | [BACKLOG.md](BACKLOG.md) |
+| Work deferred PAST this round — density levers, exam v3's owed items, the sharp-glyph measurement | [BACKLOG-LATER.md](BACKLOG-LATER.md) |
 | What is measured but fragile, and what do we NOT claim? | [RISKS.md](RISKS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
 | The 28 July test day, in plain English (history) | [OVERVIEW-JULY.md](OVERVIEW-JULY.md) |

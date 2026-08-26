@@ -49,69 +49,11 @@ is `+0 → +1` on 37 rows — a row that was RIGHT gaining a spurious barline. �
 `BAR_FADE_SP`. ⛔ **The faded-page table has now mispredicted the full run three times**; never price a
 barline gate on it alone. [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md).
 
-⚠ **THE 125-VERDICT FIGURE BELOW PREDATES THE TWO FIXES SHIPPED ON 2026-08-26** — they move crops
-on ~32 corpus pages, one of them an exam page already in the void set, so the number should be close
-but is no longer exactly measured. **Re-run `check_crop_staleness.py` before the cut rather than
-quoting 125.** ⚠ `GEOMETRY_REV` is now **20260826**, so every decode cache on disk is invalid and the
-next emit RE-DECODES rather than reusing them — the B8 re-emit's 37 minutes rested on reusing 1,704
-caches, so budget for a longer run.
-
-⭐ **RE-CUTTING `examv3` COSTS 125 VERDICTS, NOT THE 78 THIS FILE USED TO SAY.** That figure was
-measured before the 25 August blob fix and compared crop spans only. Page level says **42 of 67
-pages** lose their labels; strip level, on the carry key the rebuild actually uses, says **330 of 455
-verdicts carry safely (73%)** and **125 need a person again** — 76 fully lost, 49 returning as a
-suggestion to confirm. ⚠ **`check_crop_staleness.py` answers "is this queue safe to label", not
-"what will this cost"** — here it over-counts by 2.3x. [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md).
-
-⏭ **THE OPEN DECISION: WHICH SETTING CUTS `examv4`.** The rescue would add **+21 rows on 14 of 67
-exam pages (~45–60 new strips)**, taking the exam from 663 to ~710–725 — on pages already verdicted,
-and the owner has said **600 strips is enough for an exam**. The exam and the training pools need not
-share a setting, only to each be internally consistent, and `window_signature()`'s `staff_rescue`
-field records which cut a decode. ⚠ The price of splitting them is training on rescue-cut pages and
-grading on pages cut without it — unmeasured, and small only because every row both settings find is
-cut identically. Options priced in [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md).
-
-⭐ **THE 24–25 AUGUST SLICER WORK, MEASURED AT FULL SCALE.** Five fixes are worth **+446 exact rows**:
-`score_slicer.py` reads **3,750 of 6,440** against the pool-cutting slicer's 3,304. ⛔ A sixth,
-`BAR_FADE_SP` at 0.25, was **shipped and reverted the same evening** — free on the 4 hand-marked
-faded pages, **net −76 rows** at full scale. ⚠ **`score_slicer.py` is a 6,440-row instrument and
-every score quoted before that evening is `--sample 25` (124 rows)**. ✅ `parity:slicer` **100% on
-all three rungs**. Current cut shape, 400 pages: width-split strips **29.8%**, staff rows with no
-interior barline **12.3%**.
-[METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md) · [DECISIONS.md](DECISIONS.md).
-
-⛔ **AND THE DECODE CACHE COULD NOT SEE ANY OF IT — a 31 July cache still passed.**
-`window_cache_ok` checked only the WINDOWING settings, nothing about staff detection, the ink mask
-or barline detection, while every fix above moves crop boundaries with those knobs untouched. Fixed
-with `GEOMETRY_REV` + a `geometry` block in `window_signature()`; a cache without the field is
-refused rather than assumed. ⚠ **This invalidates every cache on disk** (1,720 pages under
-`strips_v2`, 67 under `strips_examv3`), so the next emit re-decodes — the B8 re-emit's 37 minutes
-rested on reusing 1,704 of them. ⚠ **Bump `GEOMETRY_REV` whenever the classical-CV path changes in a
-way that can move a crop.** [DECISIONS.md](DECISIONS.md).
-
-⛔ **TWO SLICER IDEAS WERE CLOSED BY THE OWNER, BOTH AGAINST MORE SLICER WORK** — the greedy packer,
-and the 59-id budget (which is the emitter's DROP RULE, not a model limit: the decoder hits its real
-ceiling on **4 of 11,844 strips**, while the rule discards **14.7% of real training strips**).
-Both, with their numbers: [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md).
-
-⭐ **HOW THE BARLINE GATES GOT HERE** — the owner's 129 hand marks, the two gate fixes they named,
-the rejected shape discriminator and the retracted diagnosis — is settled history and lives in
-[METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md), which owns every number in it. Recall is
-**28.0% → 50.5%**, precision **63.4% → 79.7%**.
-
-⏭ **GATE 1 IS THE WHOLE REMAINING MISS LIST — `never_a_candidate`, 37 of 46 misses.** A missed
-barline never became a candidate because gate 1 wants one unbroken run covering 0.85 of the analysis
-band with ink touching both extremes, and a photocopied bar fades by a pixel. ⛔ **The obvious knob
-for it, `BAR_FADE_SP`, is the one that was measured and reverted above — do not re-open it from the
-faded-page table.** Recovering these needs a gap-TOLERANT continuity test, which is not free (a stem
-is already ~105 px of solid run, so a ~25 px gap budget lets stem+beam chains reach the floor too)
-and has its own measurement owed. ⏭ A cheaper knob sits beside it: `OMR_BLOB_FILL` ships at 0.4 and
-0.3 reads **+7.6pp recall for −1 row**.
-
-⛔ **CROP QUALITY HAS NO SETTLED METRIC, AND TWO PROBES ANSWERED THE WRONG QUESTION.** Cuts passing
-THROUGH a symbol are **1 in 754 and were already that rare** before the fixes. The owner's framing is
-the one to build on: *does the cut land somewhere that is not a barline?* A third probe (cuts inside a
-beamed group, **15.5%**) is closer but unvalidated. Nothing should be scored on the first two.
+⚠ **IF THE EXAM IS EVER RE-CUT, RE-PRICE IT FIRST.** The **125-verdict** figure predates the two
+2026-08-26 fixes and `GEOMETRY_REV` is now **20260826**, so every decode cache on disk is invalid and
+the next emit RE-DECODES rather than reusing 1,704 of them. ⏭ Do the `carry_labels()` fix first —
+**25 of 67 pages are byte-identical and carry 168 verdicts** that need no human at all
+([BACKLOG.md](BACKLOG.md)). [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md).
 
 ⏭ **THE EXAM RE-CUT IS THE NEXT SLICER-SIDE ACTION, AND IT IS NOW PRICED — BUT IT WAITS ON ONE
 DECISION.** ⚠ **The 2026-08-24 freeze no longer holds**: the owner re-opened the slicer on
@@ -348,10 +290,10 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 | 5 | ✅ **DONE 2026-08-22** — ties out of `_realval_v2`, its five derived pools, the five `_realval_degraded` levels and v1 `_realval` | **771 tokens over 576 rows in 12 manifests**; **78% of the pairs joined DIFFERENT pitches**, i.e. were slurs. No criterion moved — but real-val's arc-`\tup3` diagnostic now reads `n/a` ([rung3/labeling.md](rung3/labeling.md)) | — |
 | 6 | ✅ **DONE 2026-08-22/23** — parity closed (132 pages, W4/W5/W6 pass under the rail), `?dense=` measured on a label-free proxy, and the budget value swept | rail **alone** is a wash; the value is **b=57, not 50**; splitting's real payoff is at TRAINING, untested ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) | — |
 | 7 | ✅ **DECIDED 2026-08-23 — the rail-plus-retrain pair goes to ROUND 4** (owner) | the final render's arm list is closed, and deferring **releases the exam**: the shipping slicer does not change, so `examv3` stays valid ([DECISIONS.md](DECISIONS.md)) | — |
-| 8 | ⏭ **NEXT — decide the cut setting, re-cut to `examv4`, then the remaining rows page-complete** | The queue is **455 of 663 verdicted** (398 fix / 35 bad / 22 ok), 31 pages complete of 64. Staleness is now **priced: 330 carry, 125 to redo**. ⚠ Step 7 unpaused this on "the slicer is not changing this round"; that is no longer true — the owner re-opened it and `STAFF_RESCUE` is built, ported and off. Decide rescue on/off for the exam FIRST, then cut once and carry the verdicts | B0 |
+| 8 | ⏭ **NEXT — the remaining 208 rows of `examv3`, page-complete. NO re-cut.** | The queue is **455 of 663 verdicted** (398 fix / 35 bad / 22 ok), **31 pages complete of 64**. ⛔ `examv4` was priced and declined (owner, 2026-08-26): a re-cut does not bank verdicts, it reopens the queue at ~663 rows. The exam grades on `examv3`. The primary is per page, so finish page-complete — a half-labelled page under-counts itself | B0 |
 | 9 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
 
-✅ **Steps 5, 6 and 7 are closed.** ⛔ **The slicer is NOT frozen any more** — re-opened by the owner 2026-08-25. ⏭ **The next action is step 8, and it now opens with a decision: does `examv4` get cut with `STAFF_RESCUE` on or off?** Off keeps the exam at 663 rows and costs 125 verdicts to redo; on adds ~45–60 unlabelled strips on pages already finished, against the owner's *"600 strips is enough for an exam"*. Then cut once, carry the verdicts, finish page-complete.
+✅ **Steps 5, 6 and 7 are closed, and the slicer is FROZEN again** (owner, 2026-08-26, after three fixes landed and two were rejected). ⏭ **The next action is step 8 and it needs no decision: label the remaining 208 rows of `examv3`, page-complete, then grade on it.**
 ⛔ **Measuring the 59-id budget was step 4 and is DROPPED** — it decides which strips we keep, not what
 the model can read ([DECISIONS.md](DECISIONS.md)); its benefit half is measured and kept in
 [BACKLOG.md](BACKLOG.md) item 7.

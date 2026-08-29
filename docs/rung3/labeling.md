@@ -2,7 +2,7 @@
 
 purpose: the rules a real-page label obeys — what is a token, and what is label-free ink
 audience: agents and the owner working the real-page track
-updated: 2026-08-22
+updated: 2026-08-27
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
@@ -121,6 +121,14 @@ freeze reason.
 `\sigendd''4` as a token `\sigendd`. 45 such phantoms remain in `_realval_v2`; the count went **down**
 from 51 with this edit and **zero** were added. Not fixed here — it is a guard bug, not a gold bug.
 [../DECISIONS.md](../DECISIONS.md) · [../STATUS.md](../STATUS.md).
+## ⏭ `\tupend` may follow `\tie` into retirement — proposed, not decided (owner, 2026-08-27)
+
+A triplet's boundary is already implied by its members' durations, `\tup3`/`\tupend` is mismatched
+in **51% of tuplet-bearing decodes**, and the token is only 0.20% of all ids — so this is a
+reliability change, not a budget one. The measurement, the one genuine two-event group that stops
+"always three" from being a safe rule, and what it would touch:
+[tokenization.md](tokenization.md). ⛔ Until it is decided, **keep emitting `\tupend`**.
+
 ## Step 1 — collecting the pages and matching them to SymbTr → [labeling-collection.md](labeling-collection.md)
 
 Moved out on 2026-08-22, when this file crossed the 400-line cap. Nothing was dropped; the section

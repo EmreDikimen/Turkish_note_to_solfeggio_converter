@@ -263,7 +263,7 @@ root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS
 | tab | rows | what a verdict means |
 |---|---|---|
 | **`b8-audit`** | **201** (✅ all read) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
-| `b8-full` | 3,955 | every accepted label, for browsing past the sample |
+| `b8-full` | 3,955 | every accepted label. **2,896 now carry a drafted `ok`** — see the auto-accept below |
 | `b8-review` | 4,738 | the unsure ones; a `fix` here promotes a strip into training |
 
 - ✅ **THE GUARD IS READ — all 201 rows, by hand, 2026-08-22: 27 `fix` / 174 `ok` = 13.4% wrong.**
@@ -272,6 +272,16 @@ root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS
   sampled, a later full read found **51%** wrong. That did not repeat here. Rate, error mix and the
   caveats: [../METRICS-CORPUS.md](../METRICS-CORPUS.md). ⚠ **13% wrong is the pool as it stands**, not
   a clean bill: the biggest class is repeat structure (`\repstart` / `\volta`), not pitch.
+- ⭐ **`b8-full` IS AUTO-ACCEPTED WHERE THE LABEL AND THE DECODE AGREE (2026-08-27).**
+  `scripts/rung3/auto_accept_agree.py` drafts `ok` with `by=agree` on every pending row whose label
+  and model decode are the same token-for-token — **2,896 rows**, leaving **842** disagreements for
+  a human, and it first carries the 201 hand-read `b8-audit` verdicts across (the build-time
+  carry-over predated them). The evidence for the rule and its two caveats are in
+  [../METRICS-CORPUS.md](../METRICS-CORPUS.md); the short version is that agreement was right on
+  **94%** of the rows a human has read and disagreement on **45%**.
+  ⚠ **A draft is not a read.** The review UI's **🤖 auto-accepted (agree)** filter lists them
+  **least-confident first** (by `min_logprob`) so the riskiest machine `ok` is on top; any human
+  verdict clears the 🤖 marker. A `.csv.bak-agree` backup sits beside the queue.
 - ⚠ **Promoting is not a re-run of the old promotes.** `strips_nota` / `strips_r1` / `strips_tup` are
   untouched on disk, and **1,442 human `fix` labels do not carry themselves**. 951 are recoverable
   (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`).

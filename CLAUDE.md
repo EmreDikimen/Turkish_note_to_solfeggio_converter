@@ -193,10 +193,16 @@ a successful build is not a deploy. Both, and every other command, in
   `#sheet-surface[data-tuplet-anchor]` + `[data-tuplet="start|member|anchor|end|blocked"]` per note,
   and the off-meter mark `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`
   (⚠ **`data-edit-mode` AND `data-play-state` are each on two elements** — select the one you mean
-  by id). The fingerboard tab (F3) adds `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings]`,
+  by id). The fingerboard tab (F3) adds `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings][data-lines][data-zoom]`,
   `[data-omr="finger-marker"]` carrying `data-string` / `data-ratio` / `data-finger-state="idle|open|stopped|rest|out-of-range"`,
-  and `[data-omr="fingerboard-tick"]` per drawn position — so a check reads WHERE the finger is, never
-  a label. ⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the
+  and `[data-omr="fingerboard-tick"]` per line of the position chart, carrying `data-commas` /
+  `data-ratio` / `data-finger` — so a check reads WHERE the finger is, never a label. ⚠ The tick is a
+  line ACROSS the neck, not a notch on one string, and the chart is **fixed** (the seven standard
+  first-position notes, identical on every score) — assert it by comparing the whole chart across two
+  pieces, never by counting. `#fingerboard-lines` hides them: assert the marks AND `data-lines`,
+  because the checkbox alone can be unchecked while the lines are still drawn.
+  ⚠ Same for `#fingerboard-zoom`: the **viewBox** is the zoom, so read that — `data-zoom` alone would
+  pass on a control wired to nothing. ⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the
   position formula and the string-choice rule. The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
   prove playback began there. A tuplet is **not stored** anywhere, so no attribute can prove one was
   made: `smoke:editor` counts the marks the engraver drew, in **both** styles (`.vf-tuplet` and the

@@ -263,124 +263,16 @@ the same reasoning that put `usul.ts` there.
 
 ---
 
-## F3 — the fingerboard tab
+## F3 — the fingerboard tab → [fingerboard.md](fingerboard.md)
 
-Show the instrument, and show where the finger goes as the piece plays.
+Show the instrument, and show where the finger goes as the piece plays. **Built 2026-08-16, and
+rebuilt upright on 2026-08-27** after the owner saw it. **Violin only** (owner, 2026-08-15) — the
+winds' lookup tables and the tanbur's fret table are written down there as *design*, not as a queue.
 
-### Scope: VIOLIN ONLY (owner, 2026-08-15)
+The whole chapter — the licensed photo and what it does and does not buy, the calibration, the open
+strings, the string-choice rule, and why a position line is tape rather than a fret — is in
+[fingerboard.md](fingerboard.md). It moved out of this file on 2026-08-27 at the 400-line cap.
 
-Not "one instrument first, then the rest" as a plan to work down — **violin, and nothing else is
-committed**. Three reasons it is the right one: it is fretless, so the position is a formula rather
-than a table; **Keman is already a shipped F1 voice**, so the same instrument can be heard and seen
-at once; and the friends have just said they liked the voices, which is the closest thing to a signal
-this track has. The winds' lookup tables and the tanbur's fret table below stay written down as
-*design*, not as a queue.
-
-### The artwork: a licensed photo, not a drawing (owner, 2026-08-15)
-
-The original rule here was **own artwork** — draw it as SVG or photograph your own — and it was read,
-reasonably, as *you must draw a violin*. That was the whole reason F3 looked expensive, and it is a
-misreading of what the rule protects. What the 2026-08-08 copyright pass was defending against is
-**unknown provenance**, not third-party pixels. A CC0 file whose chain has been read satisfies it.
-
-✅ **The asset has landed**: `apps/web/public/instruments/violin-vl100.png` — Wikimedia Commons
-`File:Violin VL100.png`, **CC0 1.0**, 700×951, 356 KB, front and side views on a transparent
-background. Licence, the checked derivation chain, and the guard that does *not* exist for images:
-[../THIRD-PARTY.md](../THIRD-PARTY.md).
-
-⚠ **What that file does and does not buy.** Measured on the file itself, not guessed: the front view
-is **straight on**, and **both the nut and the bridge are in frame** — so the calibration is the easy
-two-points-per-string case, not the projective one that a cropped neck close-up would have forced. The
-full nut→bridge run is ~580 px, which puts a koma at roughly **7 px near the nut** and less further
-up. That is workable for a first version and **thin in the high positions**, which is the known limit
-to design against rather than discover. A higher-resolution bare-neck photo is the upgrade if one
-turns up; because the calibration is *data*, swapping the image costs no code.
-
-⚠ **A tutorial photo is the wrong photo even when its licence is fine**: a violin-lesson still
-carries a hand and a bow across the neck, and coloured tapes marking **12-tone** finger positions —
-and fixed tapes contradict the entire feature. What is wanted is a bare fingerboard.
-
-**Draw the markers in SVG over the photo.** The instrument is a picture; the moving dot and the koma
-ticks are vector, so they stay sharp and follow the theme.
-
-### Where the marker goes
-
-The tab itself is cheap: `ViewMode` in `apps/web/src/App.tsx` is `"roll" | "sheet"`; this adds a
-third. The interesting part is *where to draw the marker*, and it splits by instrument family.
-
-**Fretless strings (kemençe, violin, oud) — a formula, and the reason this feature is worth
-building.** Distance along the string is `length × (1 − openStringFreq / noteFreq)`. It accepts *any*
-frequency, so all 53 komas are exact. A 12-tone app **cannot** draw a koma position, because it only
-knows twelve frets; this one can show that koma sharp and küçük sharp sit millimetres apart. That is
-a teaching tool no general OMR app can copy, and it falls straight out of the tuning work already
-done.
-
-**Winds (ney, clarinet) — a lookup table.** Fingering charts are fixed and documented: pitch → which
-holes are covered → filled/empty circles. Ney fingerings map onto perde names, which the project
-already speaks.
-
-**Tanbur — a fret table**, since its tied frets are the komas.
-
-**The one genuinely tricky part:** a pitch is playable in several places. A greedy *stay nearest to
-where the hand just was* rule is enough, and it is a small pure function that should get unit tests
-rather than a smoke check.
-
-### House rules this must follow
-
-- **Artwork with a READ licence** — amended 2026-08-15, was "own artwork". A CC0 or public-domain
-  image counts, provided its licence was read on the source's own page and its provenance recorded in
-  [../THIRD-PARTY.md](../THIRD-PARTY.md) and `/THIRD-PARTY.txt`. Still forbidden, unchanged: lifting a
-  photo with no licence, which is the class of mistake the 2026-08-08 copyright pass exists to stop.
-  ⚠ On a user-upload site CC0 is the *uploader's* claim — follow the derivation chain before trusting
-  it, the way the shipped violin's was. **Markers stay SVG** whatever the background is, so they
-  scale and can be placed exactly.
-- **DOM state, never copy.** The marker exposes `data-*` attributes for the checks to read, per the
-  contract in [../../CLAUDE.md](../../CLAUDE.md) and `apps/web/src/ui/status.ts`. No text matching.
-- **All strings in `apps/web/src/ui/strings.ts`.**
-- **One clock.** Drive the animation from `getPositionMs()` — the source the playhead already uses —
-  so the marker cannot drift from the sound.
-
-
-### ✅ The open strings — ANSWERED 2026-08-16, and the table stays open
-
-**Standard Sol–Re–La–Mi** (owner). It was the one input the code could not default, so it was asked
-rather than guessed: Turkish violinists do not universally use the Western tuning, and that is a
-repertoire question. The four frequencies live in `VIOLIN_TUNINGS` as **data**, so a Turkish
-scordatura is a row and touches no geometry — the picker is written and hides itself while there is
-only one entry. [../DECISIONS.md](../DECISIONS.md)
-
-⚠ **They are on this project's 53-TET grid, not on a tuner's.** A fifth here is 31 commas =
-701.89 cents, so open Sol is 195.571 Hz against twelve-tone's 196.00. Four cents is a fifth of a
-koma — the scale of thing this view exists to show — and it is what makes an open string land at
-ratio 0 *exactly* for the note that should be played open.
-
-⚠ **Notes below the open Sol are a normal case, not an edge case.** Turkish notation transposes down
-a fourth, so a written G3 sounds D3 ≈ 147 Hz, under a standard violin's 195.6. Those notes draw **no
-dot** and report `out-of-range` rather than being clamped somewhere they are not. It is also the
-strongest practical argument for adding a lower Turkish tuning later.
-
-### What was built, and the three things the photo corrected
-
-The maths is `packages/core/src/fingering.ts` (portable, unit-tested); every pixel is
-`apps/web/src/ui/fingerboardGeometry.ts`; `apps/web/src/Fingerboard.tsx` does only the drawing and
-the clock. Numbers and the account: [../log/status-log.md](../log/status-log.md).
-
-The calibration was **measured, then sanity-checked against a real instrument** — the nut→bridge run
-scales to 328.1 mm and the string spread to 17.2/34.2 mm, which is a 4/4 violin. That check matters
-more than the fit residuals: a line fit is self-consistent whether or not it found the strings.
-
-Three things only became visible once the image was rendered rather than reasoned about:
-
-1. **The neck is a 6:1 vertical sliver**, unreadable on a phone — so it is rotated a quarter turn,
-   nut on the left. A true rotation, never a mirror.
-2. **A tuning peg pokes into frame just past the nut** and read as a smudge under the Sol string.
-   The photo is masked to the fingerboard's own tapered outline, which removes it and looks better.
-3. **The fingerboard's edges cannot be found by "darker than the belly"** below the neck — f-holes
-   and shadows pass the same test. Two clean rows near the neck, extrapolated.
-
-⚠ **The upgrade path is unchanged and costs no code**: a higher-resolution bare-neck photo. The
-shipped one gives ~7 px per koma near the nut and less further up, which is thin in the high
-positions.
 
 ---
 

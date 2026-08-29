@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-25
+updated: 2026-08-28
 
 ## Now
 
@@ -85,6 +85,11 @@ whole: 13.4% of the auto-accepted labels are wrong** — the same level as the r
 biggest error class is **repeat structure** (`\repstart` / `\volta`), not pitch. ⏭ **Still not
 training data**: the **1,442 human corrections do not carry themselves** (951 recoverable, by measure
 span and never by filename). ⭐ The drop table points at the **59-id budget**, not at alignment.
+✅ **`b8-full` IS NOW DRAFT-ACCEPTED WHERE THE LABEL AND THE DECODE AGREE (owner, 2026-08-27)** —
+**2,896 rows** drafted `ok` (`by=agree`), **842 disagreements left for a human**, and the 201
+hand-read audit verdicts carried in. Agreement was right on **94%** of the rows a human has read
+against **45%** for disagreement; ⚠ a draft is **not** a read, and the misses **clump on one page**.
+Spot-check with the review UI's **🤖 auto-accepted (agree)** filter, least-confident first.
 [METRICS-CORPUS.md](METRICS-CORPUS.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
 ⭐ **THE STACCATO ARM PASSED, AND ITS FLAG NOW RIDES THE FINAL RENDER.** False-dot rate **72.7% →
@@ -191,9 +196,12 @@ read and that the baseline column is re-measured with it; the floors do not move
 
 ✅ **TRACK A IS SHIPPED AND LIVE — <https://komavision.netlify.app>.** F1's instrument voices, F2's
 drums and F3's violin fingerboard are all deployed. ⛔ **The fingerboard went out without check 25, its
-written pre-condition** — skipped on the owner's instruction, so **nothing about it has been seen by a
-person**, and every automated check reads the same geometry the drawing does. That look is Track A's
-next action. ⚠ The trap that outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with the
+written pre-condition** — skipped on the owner's instruction. **Half of that look has now happened
+(2026-08-27) and it changed the view**: the owner rejected how it looked, so the violin stands
+upright with half its body in frame and the per-string notches became hideable lines across the neck
+([features/fingerboard.md](features/fingerboard.md)). ⚠ **That rebuild is on this machine, not on the
+site** — it needs a deploy. The other half of check 25, *is the dot in the right place*, is still
+owed and is still the only thing no automated check can answer. ⚠ The trap that outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with the
 app, and setting `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — silently.
 [features/README.md](features/README.md) · [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md).
 
@@ -230,14 +238,23 @@ the model track never touches the app.** Either can be worked on without waiting
    and removing it would have to buy a new DOM seam first. **The editor's list is now complete: steps
    1–8 and 10, built, deployed and checked on the production bundle. There is no step 9.**
    [mvp/editor.md](mvp/editor.md) · [mvp/standing.md](mvp/standing.md) · [DECISIONS.md](DECISIONS.md).
-3b. **✅ F3 IS BUILT (2026-08-16) AND DEPLOYED (2026-08-18) — what is left is the LOOK, which the
-   deploy went ahead of** on the owner's instruction; this item's ordering ("then, and only after that
-   look") was overridden, not satisfied.
+3b. **✅ F3 IS BUILT (2026-08-16), DEPLOYED (2026-08-18) AND REBUILT UPRIGHT (2026-08-27)** after the
+   owner finally looked at it: *"I want this in vertical position and half of the violin's body should
+   be visible, it looks very bad right now."* The quarter-turn rotation is gone, a position is now one
+   hideable line across all four strings instead of a notch on one, the lines are a **fixed chart** of
+   the seven standard first-position notes (reversed the same day from lines built out of the loaded
+   score — a reference that follows the music is not a reference), and a **neck zoom** was added. ⭐ Asking whether the lines were spaced right
+   then exposed a real fault one level down: the **string choice** had no notion of a hand and let an
+   ascending line climb one string forever (22 of Meltem's 83 notes above the octave). It is now a
+   hand-position model — numbers in [features/fingerboard.md](features/fingerboard.md). Typecheck,
+   `npm test` and `smoke:editor` all pass; the change is **not deployed**. [features/fingerboard.md](features/fingerboard.md) ·
+   [DECISIONS.md](DECISIONS.md).
    ⏭ **THE NEXT PRODUCT ACTION, and the only one that needs a person, is
-   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 25** — now on the live site, or via
-   `npm run dev:cloud`: open it, play a piece with Keman selected, and answer the two things no
-   automated check can — does the dot sit where your finger would (open strings are the free
-   calibration: the dot must be **at** the nut), and do the ticks read as information or as clutter?
+   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 25 on the REBUILT view** — via
+   `npm run dev:cloud`, then a deploy once it passes: open it, play a piece with Keman selected, and
+   answer the two things no automated check can — does the dot sit where your finger would (open
+   strings are the free calibration: the dot must be **at** the nut), and do the lines read as
+   information or as clutter?
    ⚠ Do **not** report the thin high positions as a finding; ~7 px per koma near the nut and less
    above is the shipped photo's known limit, and a higher-resolution bare-neck image fixes it with no
    code change. Everything it built, and the traps inside it: [features/README.md](features/README.md).
@@ -285,7 +302,7 @@ labelling at all** and remove the three biggest risks; `batch3` (B2) waits for n
 |---|---|---|---|
 | 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
 | 2 | ✅ **DONE 2026-08-21** — all 27 `gold_conflict` rows | **14 ok / 13 fix**; the fresh derivation mostly won, and **3 more signature bugs** fell out | B0 |
-| 3 | ✅ **DONE 2026-08-22** — the re-emit ran (37 min, `strips_b8`, **3,955 accepted** against 2,330) and its **201-row audit is read whole** | **13.4% of the auto-accepts are wrong**, repeat structure ahead of pitch ([METRICS-CORPUS.md](METRICS-CORPUS.md)); what still blocks promotion is the **human-fix carry**, not the audit | B8 |
+| 3 | ✅ **DONE 2026-08-22** — the re-emit ran (37 min, `strips_b8`, **3,955 accepted** against 2,330) and its **201-row audit is read whole**; **`b8-full` draft-accepted 2026-08-27** (2,896 `by=agree`, **842 disagreements left pending**) | **13.4% of the auto-accepts are wrong**, repeat structure ahead of pitch ([METRICS-CORPUS.md](METRICS-CORPUS.md)); what still blocks promotion is the **human-fix carry**, not the audit | B8 |
 | 4 | ✅ **DONE 2026-08-22** — the tie change on the RENDER side, plus the accidental restrike it forced and the scorer filter | the deadline item, closed **before** the render rather than after; `npm test`, 218/218 round-trip both modes, and a paired pilot render | — |
 | 5 | ✅ **DONE 2026-08-22** — ties out of `_realval_v2`, its five derived pools, the five `_realval_degraded` levels and v1 `_realval` | **771 tokens over 576 rows in 12 manifests**; **78% of the pairs joined DIFFERENT pitches**, i.e. were slurs. No criterion moved — but real-val's arc-`\tup3` diagnostic now reads `n/a` ([rung3/labeling.md](rung3/labeling.md)) | — |
 | 6 | ✅ **DONE 2026-08-22/23** — parity closed (132 pages, W4/W5/W6 pass under the rail), `?dense=` measured on a label-free proxy, and the budget value swept | rail **alone** is a wash; the value is **b=57, not 50**; splitting's real payoff is at TRAINING, untested ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) | — |
@@ -301,6 +318,14 @@ the model can read ([DECISIONS.md](DECISIONS.md)); its benefit half is measured 
 ⚠ **Only B0 gates the read; step 3 gated the MODEL** and has run — but its output is not training
 data until the audit is **finished** and the old human corrections are carried across. [RISKS.md](RISKS.md) ·
 [rung3/round3-criteria.md](rung3/round3-criteria.md) §3c.
+
+⏭ **B8 HAS LABELLING WORK AVAILABLE IN PARALLEL, AND IT IS NOT STEP 8** — step 8 is still the next
+action. The 2026-08-27 draft-accept left **842 `b8-full` disagreements pending** for a human, and the
+**2,896 drafted `ok` rows are unread** — a draft is not a verdict, and the known misses clump on one
+page, so the spot-check goes through the review UI's **🤖 auto-accepted (agree)** filter,
+least-confident first. ⚠ Neither of those is what blocks promotion: **the 1,442 human-fix carry is**.
+Take this only when the exam queue is not the better use of an hour.
+[rung3/labeling-queues.md](rung3/labeling-queues.md).
 
 **The item-by-item detail — what each of B0-B9 is, what it found, and what it still owes — is in**
 **[rung3/worklist.md](rung3/worklist.md).** Only the ordered table above and the next action stay here.

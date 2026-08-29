@@ -847,43 +847,84 @@
 /* ── The fingerboard tab (F3) ───────────────────────────────────────────── */
 
 /* ⚠ Lives under `.kv-score`, so the two rules that container imposes apply: no transform, and no
-   selector here may set a font. The SVG's rotation is an attribute on an inner <g>, not CSS, and
-   the string names carry `font-size` as a presentation attribute on the element — see
-   Fingerboard.tsx. Nothing below sets anything but colour, stroke and box. */
+   selector here may set a font. The string names carry `font-size` as a presentation attribute on
+   the element — see Fingerboard.tsx. Nothing below sets anything but colour, stroke and box. */
 .kv-fingerboard {
   display: grid;
   gap: var(--space-3);
   padding: var(--space-2) 0;
+  justify-items: center;
 }
 
-/* The neck is a ~6:1 strip. It fills the card, but never shrinks past the width where a koma stops
-   being a visible distance — below that it scrolls sideways inside `.kv-score`, which already has
-   `overflow-x: auto`. Every human who has opened the deployed app so far was on a phone. */
+.kv-fingerboard__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+}
+
+/* The violin STANDS UP (owner, 2026-08-27), so the picture is tall and narrow — 311×674. Height is
+   what has to be bounded, not width: a full-height violin would push the hint text off a phone
+   screen, and every human who has opened the deployed app so far was on one. Sizing by height and
+   letting the width follow keeps the whole instrument in view at any size — and it is also what
+   makes the neck zoom a zoom: the viewBox narrows, the height stays, so the neck fills the same
+   vertical space at ~2.4x. */
 .kv-fingerboard__svg {
   display: block;
-  width: 100%;
-  min-width: 420px;
-  height: auto;
+  margin: 0 auto;
+  height: min(72vh, 760px);
+  width: auto;
+  max-width: 100%;
 }
 
-/* The line every position is measured from. Bright, because it sits on near-black ebony. */
+/* The line every position is measured from. Bright, because it sits on near-black ebony.
+   ⚠ `non-scaling-stroke` here and on the lines below is load-bearing, not polish: the neck zoom
+   changes the viewBox by ~2.4x, and without it every mark on the instrument would get 2.4x fatter
+   as the picture got closer — a dot and a line that grow with the zoom stop pointing at anything.
+   The dot's radius and the string names do the same job in JS (see Fingerboard.tsx). */
 .kv-fingerboard__nut {
-  stroke: rgba(255, 255, 255, 0.85);
-  stroke-width: 1.4;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 2.4;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
-/* This score's own pitches on each string — NOT frets. Deliberately quiet: they are a reference
-   for the dot, and a violin has no lines on it. */
-.kv-fingerboard__ticks line {
-  stroke: rgba(255, 255, 255, 0.5);
-  stroke-width: 0.9;
+/* This score's own positions, laid across the neck like a learner's tape — NOT frets. The colour
+   is the first-position finger the line falls nearest to (`firstPositionFinger`); a position past
+   first position claims no finger and stays neutral white. Colours are for telling the lines
+   apart, so they are fixed rather than themed: they sit on black ebony in either theme. */
+.kv-fingerboard__lines line {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 2.6;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
-/* The names sit in the margin left of the nut, on paper rather than on the instrument. */
+.kv-fingerboard__lines line[data-finger="1"] {
+  stroke: #4ade80;
+}
+
+.kv-fingerboard__lines line[data-finger="2"] {
+  stroke: #60a5fa;
+}
+
+.kv-fingerboard__lines line[data-finger="3"] {
+  stroke: #fbbf24;
+}
+
+.kv-fingerboard__lines line[data-finger="4"] {
+  stroke: #f472b6;
+}
+
+/* The names run up the pegbox above the nut, on wood rather than on paper, so they carry their own
+   dark outline instead of relying on the background. */
 .kv-fingerboard__labels text {
-  fill: var(--ink-soft);
+  fill: #f4f4f5;
+  stroke: rgba(0, 0, 0, 0.75);
+  stroke-width: 1.8;
+  paint-order: stroke;
+  vector-effect: non-scaling-stroke;
 }
 
 /* The moving finger. Teal like the sheet's playhead — the same event, shown twice — and outlined
@@ -891,6 +932,7 @@
 .kv-fingerboard__dot {
   fill: #14b8a6;
   stroke: #f2fbf9;
-  stroke-width: 1;
-  filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.8));
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px rgba(20, 184, 166, 0.85));
 }

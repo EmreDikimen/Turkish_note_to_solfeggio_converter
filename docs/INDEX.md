@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-23
+updated: 2026-08-27
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -81,11 +81,13 @@ wrong — fix by deleting, not by syncing.
 | Round 3's floors, the launch gate, and the tuplet A/B protocol | [rung3/round3-criteria.md](rung3/round3-criteria.md) |
 | What each Round-3 work item B0–B9 is, and what it still owes | [rung3/worklist.md](rung3/worklist.md) |
 | The remaining model levers, ranked, and what to measure first | [rung3/levers.md](rung3/levers.md) |
+| **How a label is spelled, and what re-spelling notes would buy** | [rung3/tokenization.md](rung3/tokenization.md) |
 | Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
 | **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
 | Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
 | Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
 | How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
+| The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

@@ -533,6 +533,7 @@ PAGE = r"""<!doctype html>
     <option value="pending" selected>pending only</option>
     <option value="reviewed">reviewed only</option>
     <option value="bad">bad only</option>
+    <option value="agree">🤖 auto-accepted (agree)</option>
     <option value="claude">🤖 claude verdicts</option>
     <option value="rule">🤖 rule drafts</option>
     <option value="all">all strips</option>
@@ -632,6 +633,11 @@ PAGE = r"""<!doctype html>
     Notes shown as solfège (do''4 = c''4; saved CSV stays in letters — hover a token for the raw form).
     Red tokens = label/decode disagreement — check those pixels first; bold = accidental.
     Keys: <b>a</b>/<b>x</b>/<b>e</b>/<b>u</b>, <b>←→</b> move, <b>n</b> next pending, <b>z</b> zoom.
+    <b>🤖 auto-accepted (agree)</b> lists the rows a script marked <b>ok</b> because the label and
+    the model decode say the same thing — <b>least confident first</b>, so the riskiest one is on
+    top. It is a spot-check list, not a queue to clear: agreement was right on 159 of 169 rows a
+    human has read, and the misses clump on a page where label and decode are wrong the same way.
+    Any verdict you give clears the 🤖 marker.
   </div>
 </main>
 <div id="toast"></div>
@@ -794,15 +800,24 @@ async function ensureRows(id){
   const r=await(await fetch('/api/rows?queue='+encodeURIComponent(Q.id))).json();
   Q.rows=r.rows||[];
 }
+// min_logprob = the LOWEST per-token log-probability in the decode: 0 is certain, more
+// negative is less sure. A row without one sorts last rather than pretending to be certain.
+const lp=r=>{const v=parseFloat(r.min_logprob);return isNaN(v)?Infinity:v};
 function visible(){
   const re=$('freason').value, show=$('fshow').value;
-  return rows().map((r,i)=>({r,i}))
+  const vis=rows().map((r,i)=>({r,i}))
     .filter(x=>(!re||x.r.reason===re)
       &&(show==='all'||(show==='pending'?!x.r.verdict
         :show==='claude'?x.r.by==='claude'
+        :show==='agree'?x.r.by==='agree'
         :show==='rule'?(x.r.by||'').startsWith('rule')
         :show==='bad'?x.r.verdict==='bad'
         :!!x.r.verdict)));
+  // the auto-accept list is a SPOT-CHECK list, not a queue to clear: least-confident first, so
+  // the riskiest machine `ok` is the first thing read. Every other filter keeps CSV order,
+  // which for the worst-first queues is itself a ranking.
+  if(show==='agree')vis.sort((a,b)=>lp(a.r)-lp(b.r));
+  return vis;
 }
 // counts come from the rows when they are loaded (so a verdict shows up at once) and from the
 // server's n/done when they are not — an unopened lazy queue still shows real progress.
@@ -913,7 +928,7 @@ async function verdict(v){
   if(!ok)return;
   toast(v?`${r.strip.split('_').slice(-2).join('_')} → ${v}`:'cleared');
   // pending / 🤖 / bad filters: the row leaves the list, so idx already points at the next strip
-  if(v&&!['pending','claude','rule','bad'].includes($('fshow').value))idx++;
+  if(v&&!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
   render();
 }
 // edit-base builder: the model reads notes well but signatures badly, so the default
@@ -961,7 +976,7 @@ async function acceptDecode(){
   if(editing){editing=false;$('editbox').style.display='none';}
   if(!await post(r.strip,'fix',txt))return;
   toast(`${r.strip.split('_').slice(-2).join('_')} → fix (model decode)`);
-  if(!['pending','claude','rule','bad'].includes($('fshow').value))idx++;
+  if(!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
   render();
 }
 // "edit from X" opens the box on that one source. Unlike `e` it does NOT prefer an existing

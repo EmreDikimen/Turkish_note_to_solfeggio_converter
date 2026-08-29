@@ -3,7 +3,7 @@
 purpose: the deferred work that is NOT near-term — density levers, exam v3's owed items, the signature-packed sharp glyphs, and the rest; kept out of BACKLOG.md so that file holds only what could plausibly be picked up next
 audience: agents with spare capacity, or anyone asking "why was this deferred and what would restart it"
 
-updated: 2026-08-26
+updated: 2026-08-27
 
 Split out of [BACKLOG.md](BACKLOG.md) on 2026-08-26 at the 400-line cap. Phase split: that file
 holds **what could be picked up next**; this one holds **what is deferred past this round**. Nothing
@@ -31,10 +31,16 @@ down.** Each item carries the reason it is deferred; read it before starting. Ab
      (`emit_strip_labels.py`) — **10,226 of b8's 24,837 drops, the single biggest reason** — because
      labels are derived by whole **measure spans** and half a measure has no span to match. Needs
      partial-measure alignment, which is a project.
-   - **Note-spelling tokens.** The best long-term fix for density and the one with the largest
-     measured headroom: at compact spelling the exam queue's over-budget rows fall **72 → 17 of 661**
-     with the slicer untouched. Ids are append-only so it is *allowed*; it needs a retrain to be
-     *used*. Round 4.
+   - **Note-spelling tokens — now specified and costed: [rung3/tokenization.md](rung3/tokenization.md)**
+     (2026-08-27). The best long-term fix for density and the one with the largest measured headroom:
+     at compact spelling the exam queue's over-budget rows fall **72 → 17 of 661** with the slicer
+     untouched. ⭐ **Only 4 ids are missing** (`''`, `'''`, `16`, `32`) and they take a real label to
+     **78%** of its length and rescue **2,410 of the 4,012 over-budget strips** (measured). ⚠ **A
+     16-token variant that also fuses the 14 common letter+octave pitches rescues 3,508** — the
+     4-vs-16 choice is open ([DECISIONS.md](DECISIONS.md), 2026-08-27). ⭐ **No label conversion is
+     involved** — the text is unchanged, only the tokenizer's segmentation. Ids are append-only so it is *allowed*; it needs a retrain to be
+     *used*. ⚠ **Do it in the same re-emit as the rail below**, not as its own round — both re-emit
+     the pools. Round 4.
    - **Raising the 59-id budget** — DROPPED for Round 3 (see [DECISIONS.md](DECISIONS.md)); the
      measured benefit is kept in item 7 below.
    - ⭐ **THE RAIL ITSELF, AS A PAIR — the Round-4 headline** (owner, 2026-08-23). Measured and

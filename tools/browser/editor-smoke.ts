@@ -1076,8 +1076,8 @@ async function main() {
   // --- the fingerboard tab: a violin position that follows the audio clock (F3, 2026-08-15) -----
   //
   // Three properties, none of which can be asked of the copy on the page:
-  //   - the tab draws THIS score's pitches — ticks are built from the timeline, so a score with
-  //     notes must produce some;
+  //   - the tab draws THIS score's pitches — the position lines are built from the timeline, so a
+  //     score with notes must produce some, and they can be hidden and brought back;
   //   - while playing, the marker is on a real string at a position on the string;
   //   - it MOVES. An attribute reading "stopped" cannot prove the clock is driving anything, which
   //     is the same reason the sheet's playhead is asserted by position and not by existence.
@@ -1091,11 +1091,62 @@ async function main() {
 
   check("four strings", await page.getAttribute("#fingerboard", "data-strings"), "4");
   check("standard tuning", await page.getAttribute("#fingerboard", "data-tuning"), "standard");
+  // The chart is FIXED (owner, 2026-08-27, reversing the first version): it shows where a
+  // violinist's fingers normally go, not this score's komas. So the assertion is not "some lines
+  // exist" — it is that the same seven lines, at the same places, come back on a DIFFERENT piece.
+  // A chart that quietly follows the music again would pass any weaker check.
+  const chartOf = () =>
+    page.locator('[data-omr="fingerboard-tick"]').evaluateAll((els) =>
+      els.map((e) => `${e.getAttribute("data-commas")}@${e.getAttribute("data-ratio")}/${e.getAttribute("data-finger")}`),
+    );
+  const chart = await chartOf();
+  console.log(`  chart: ${chart.join(" ")}`);
+  check("seven standard note lines", chart.length, 7);
   check(
-    "the score's own pitches are ticked",
+    "…at the first-position semitone places, each on its finger",
+    chart,
+    ["4@0.0510/1", "9@0.1110/1", "13@0.1563/2", "18@0.2098/2", "22@0.2500/3", "26@0.2883/3", "31@0.3333/4"],
+  );
+  // The lines are a reference the player can put away (owner, 2026-08-27). Asserted as DOM state
+  // on both sides — the marks leave the SVG, and the container says so — because "the checkbox is
+  // unchecked" would pass while the lines were still drawn.
+  await page.locator("#fingerboard-lines").uncheck();
+  check("the position lines can be hidden", await page.locator('[data-omr="fingerboard-tick"]').count(), 0);
+  check("…and the view says so", await page.getAttribute("#fingerboard", "data-lines"), "off");
+  await page.locator("#fingerboard-lines").check();
+  check(
+    "…and brought back",
     (await page.locator('[data-omr="fingerboard-tick"]').count()) > 0,
     true,
   );
+  // The neck zoom (owner, 2026-08-27). Read as geometry, not as a class name: the viewBox IS the
+  // zoom, so a check that only read `data-zoom` would pass on a control wired to nothing. It must
+  // also stay INSIDE the full picture — a window bigger than the crop would be a zoom that showed
+  // less, and it must be shorter, which is what makes it closer.
+  const fullBox = (await page.getAttribute(".kv-fingerboard__svg", "viewBox"))!;
+  await page.locator("#fingerboard-zoom").check();
+  check("the zoom says which level it is on", await page.getAttribute("#fingerboard", "data-zoom"), "neck");
+  const neckBox = (await page.getAttribute(".kv-fingerboard__svg", "viewBox"))!;
+  const [fx, fy, fw, fh] = fullBox.split(/\s+/).map(Number) as [number, number, number, number];
+  const [nx, ny, nw, nh] = neckBox.split(/\s+/).map(Number) as [number, number, number, number];
+  console.log(`  viewBox: ${fullBox} → ${neckBox} (${(fh / nh).toFixed(2)}x)`);
+  check("…and it really is closer", nh < fh && nw < fw, true);
+  check("…on a window inside the picture", nx >= fx && ny >= fy && nx + nw <= fx + fw && ny + nh <= fy + fh, true);
+  // The zoom may never crop a line away, whatever the piece does — a mark drawn outside the
+  // viewBox is invisible, and invisible reads as a bug rather than as a crop.
+  const ys = await page.locator('[data-omr="fingerboard-tick"]').evaluateAll((els) =>
+    els.map((e) => Number((e as SVGLineElement).getAttribute("y1"))),
+  );
+  check("every standard note line is inside the zoom", ys.every((y) => y >= ny && y <= ny + nh), true);
+  await page.locator("#fingerboard-zoom").uncheck();
+  check("…and the whole violin comes back", await page.getAttribute(".kv-fingerboard__svg", "viewBox"), fullBox);
+
+  // A different piece, in a different makam, with a different range: the chart must not move.
+  await page.goto(`${base}/?score=/beyati-delisin.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#view-fingerboard").click();
+  await page.waitForSelector("#fingerboard", { timeout: 10000 });
+  check("the chart is the same on another piece", await chartOf(), chart);
   check(
     "the marker starts idle",
     await page.getAttribute('[data-omr="finger-marker"]', "data-finger-state"),

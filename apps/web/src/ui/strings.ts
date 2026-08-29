@@ -117,9 +117,12 @@ export const TR = {
       "Dikey eksen 53 koma. Notayı yukarı/aşağı sürükleyin: perde değişir. Sağ kenarından " +
       "çekin: süresi değişir.",
     hintFingerboard:
-      "Çalın: nokta, parmağın kemanda basacağı yeri gösterir. Küçük çizgiler bu eserin bu telde " +
-      "kullandığı perdelerdir — perdeler eşit aralıklı değildir, koma farkları buradan görülür. " +
-      "Açık Sol telinin altına düşen sesler kemanda çıkmaz; o notada nokta görünmez.",
+      "Çalın: nokta, parmağın kemanda basacağı yeri gösterir. Renkli çizgiler standart keman " +
+      "notalarıdır — birinci pozisyonda dört parmağın normalde bastığı yedi yer, her eserde " +
+      "aynı; renk, o çizgiyi hangi parmağın bastığını gösterir. Kemanda perde yoktur: koma " +
+      "sesler iki çizginin arasına düşer, koma farkı da buradan görülür. Çizgileri " +
+      "kapatabilirsiniz. Açık Sol telinin altına düşen sesler kemanda çıkmaz; o notada nokta " +
+      "görünmez.",
   },
 
   sheet: {
@@ -171,6 +174,15 @@ export const TR = {
     // The tuning picker only appears once there is more than one tuning to pick — see Fingerboard.tsx.
     tuning: "Akort",
     alt: "Keman klavyesi — çalınan sesin parmak yeri",
+    lines: "Perde çizgileri",
+    linesTitle:
+      "Çizgiler, kemanda birinci pozisyonda parmakların normalde bastığı yedi standart yerdir — " +
+      "her eserde aynıdır. Kemanda perde yoktur; koma sesler iki çizginin arasına düşer. " +
+      "İsterseniz kapatabilirsiniz.",
+    zoom: "Klavyeyi yakınlaştır",
+    zoomTitle:
+      "Yalnızca klavyeyi gösterir. Yakınlık bu esere göre ayarlanır: en yukarıda çalınan " +
+      "perdeye kadar iner, böylece hiçbir nota çerçevenin dışında kalmaz.",
   },
 
   advanced: {

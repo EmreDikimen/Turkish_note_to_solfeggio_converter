@@ -2,12 +2,166 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-25
+updated: 2026-08-27
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-26 (latest) — three slicer rules measured, two shipped, one rejected — and the pattern is now unmistakable
+## 2026-08-27 (latest) — b8-full's agreeing rows are draft-accepted, riskiest first for the human
+
+**The owner's observation, and it holds:** *"if proposed label and model decode matches, then it is
+correct mostly"*. Measured on every b8 row a human has actually read — where the two agree
+token-for-token, **159 ok / 10 fix = 94% correct (n=169)**; where they differ, **20 ok / 24 fix =
+45%** (`b8-audit`, n=44). Numbers and caveats: [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+
+- **New: `scripts/rung3/auto_accept_agree.py`.** It drafts `ok` with `by=agree` on every pending
+  `b8-full` row whose label and decode match, and first carries the 201 hand-read `b8-audit`
+  verdicts onto the same strips — `full_audit.csv` is generated once, and its build-time carry-over
+  ran before those verdicts existed, so the owner was being shown 201 strips he had already judged.
+  Result: **2,896 drafted `ok`, 201 carried (174 ok / 27 fix), 842 disagreements left pending.**
+- **Why a DRAFT and not a verdict.** 94% is not 100%, and the failures are not spread out: **5 of
+  the 7 bad agreements in `b8-full` sit on ONE page** — when a page is misread, the label and the
+  decode tend to be wrong the *same* way, so "both agree" is not two independent votes. Agreement
+  is also partly **memory**: `round2-stage2-best` was the emitter's hint *and* its gate and was
+  trained on these labels at 9× oversampling (the standing caveat in
+  [../../CLAUDE.md](../../CLAUDE.md)). The `by=agree` marker is what keeps the draft distinguishable
+  from a human read; any verdict a human gives clears it.
+- **New review-UI filter: `🤖 auto-accepted (agree)`,** sorted **least-confident first** by
+  `min_logprob` (the lowest per-token log-probability in the decode; 0 = certain). It is the only
+  filter that reorders — every other one keeps CSV order, which in the worst-first queues is itself
+  a ranking. So the spot-check starts at the riskiest machine `ok` (−1.35) rather than at whatever
+  is first alphabetically, and the reader can stop when the rows stop being wrong.
+- **Safety.** A one-time `full_audit.csv.bak-agree` backup; the CSV is re-read immediately before
+  the atomic write and only rows **still pending in the fresh file** are filled, so a review-UI
+  session open at the same time cannot be clobbered. `\tie` is dropped from both sides before
+  comparing (the token is retired) — on this pool that changes nothing, 3,065 rows match either way.
+
+## 2026-08-27 — the violin stands up, and the finger marks became tape
+
+**The owner opened F3's tab and rejected how it looked**: *"I want this in vertical position and
+half of the violin's body should be visible, it looks very bad right now"* — plus two asks about the
+marks. All three are done; the decision row is in [../DECISIONS.md](../DECISIONS.md) and the design
+in [../features/README.md](../features/README.md).
+
+- **The quarter-turn rotation is gone.** Its observation was right (a bare neck is a 6:1 sliver) and
+  its conclusion was wrong: what the view needed was an *instrument*, not a wider neck. The crop is
+  now the upright violin from the scroll to just past the bridge — **60% of the body** — with bounds
+  measured off the file's own alpha channel (the front view occupies x 72..367, y 34..700, and the
+  side view in the same file is cropped away). CSS bounds the picture's **height** now, so the whole
+  violin fits a phone screen above the hint text.
+- **Two things went with the rotation**: the fingerboard-outline mask, which existed only to hide a
+  tuning peg that is now part of the picture on purpose, and the per-string notches.
+- **A position is one line across all four strings**, like a learner's tape. Legitimate rather than
+  decorative: a ratio is a fraction of *each* string's own length, so one line is the same place on
+  every string — only the pitch it produces differs.
+- ⚠ **The first version built those lines from the loaded score's pitches, and the owner reversed it
+  the same day**: *"the lines will show standard violin notes, they will not be arranged by koma."*
+  ⭐ The argument that settles it — **a reference that changes with the music is not a reference**:
+  if the lines move to wherever this piece plays, the dot sits on a line almost always and there is
+  nothing left to see. What ships is a fixed chart of the seven first-position note places
+  (**4, 9, 13, 18, 22, 26, 31 commas** = m2, M2, m3, M3, P4, tritone, P5), the same on every string
+  and every score.
+- ⚠ **The chart is on the 53-TET grid, not in twelve-tone, and that is load-bearing.** The app's
+  naturals are spaced by tanini (9) and bakiye (4) commas, so an **unaltered note lands exactly on
+  its line**; a 12-TET chart would put every ordinary natural a few cents off its own line and read
+  as a drawing error. Everything a makam adds then falls visibly between two lines — a
+  koma-flattened third at 17 commas sits one comma below the M3 line, ~5 px of string on the photo.
+- **They are coloured by the first-position finger they fall on.** New in core:
+  `ratioToCommas` (the inverse of `positionOnString`) and `firstPositionFinger`, banded at the
+  midpoints between the standard placements on the 53-TET grid. ⚠ A position past first position
+  claims **no** finger and stays neutral — naming the band is honest, claiming it is the finger the
+  player will use is not.
+- ⚠ **A line is a reference, never a fret.** The dot keeps its own exact ratio and lands *between*
+  two lines whenever the music does, which on koma-heavy makam music is often and is the whole point
+  of the view. Nothing snaps.
+- **A neck zoom was asked for and built the same day** (`#fingerboard-zoom`): the fingerboard alone,
+  at **2.2–3.6x** depending on the piece. ⭐ The window is **fitted to the loaded score** rather than
+  fixed — down to the highest position it uses plus a margin, with a floor — because a fixed close-up
+  must either cut off a piece that climbs (and a note outside the viewBox is *invisible*, which reads
+  as a bug) or waste half the frame on a piece that never leaves first position. ⚠ Every mark is
+  scaled back by the zoom's own factor so it keeps its size on **screen**: a dot that grew with the
+  picture would be wider than the string spacing it points at.
+- ⚠ **The zoom is where the photo's limit becomes visible**: the neck is ~70 px wide in the source,
+  so the wood goes soft when magnified while the marks stay vector-sharp. Same known limit as the
+  ~7 px per koma, same fix — a higher-resolution bare-neck photo, which costs no code.
+- **The lines can be hidden** (`#fingerboard-lines`), because on a piece that uses many positions
+  they crowd the neck and a real violin has none. Both the marks leaving the SVG and
+  `#fingerboard[data-lines]` are asserted in `smoke:editor` — a check on the checkbox alone would
+  pass while the lines were still drawn. The zoom is asserted the same way, on the **viewBox**: that
+  it shrinks, that it stays inside the full picture, and that every position the piece uses is still
+  inside it.
+- ⭐ **A question about the LINES found a fault in the FINGERING.** The owner asked whether the line
+  spacing was right. It was — a whole tone measures **51.2 px near the nut and 15.1 px high up**,
+  which is the compression a real string has, and the wide gaps he saw are whole tones the piece
+  skips. But the check exposed the string choice: the old *nearest-ratio* rule had **no notion of a
+  hand**, so an ascending line always found sliding one more note up the current string cheaper than
+  crossing to a higher one. `meltem_notes` placed **22 of 83 notes above the octave**, the top at
+  **0.778 of the Sol string** (La5, 115 commas up) where the La string offers it at 0.5;
+  `safalar-getirdiniz` placed **378 of 816** above the octave.
+- ✅ **Replaced with a hand-position model** (owner chose it over a one-number patch): the hand sits
+  somewhere on the neck, written in commas above the open string, and reaches a fourth plus a
+  semitone of stretch each way. Crossing with the hand where it is is nearly free; leaving the frame
+  is a shift. Above the octave **22→0 / 17→0 / 378→0**; past first position **42→6 / 65→3 / 591→24**;
+  and `safalar`'s string changes **fell** 52→35, so the old rule was not trading crossings for height.
+  A two-octave climb now walks `g g g g g · d d d d · a a a a · e e`.
+- ⛔ **The one-number patch was measured and rejected**: nut pull 0.15→0.5 fixed Meltem, 0.8 made
+  string changes explode (gamzedeyim 50→134), and no setting of it models a frame.
+- ⚠ **The old tests passed at every setting of that knob**, which is why this was found by eye.
+  Section 4b of `fingering-test.ts` now pins the climb, the forced-low start that trapped the old
+  rule, and the opposite failure — a note above first position on the Mi string, with nothing to
+  cross to, must still shift.
+- ⭐ **A test written from just intonation caught itself**: 53-TET's fourth is 0.25003 of the string,
+  not 0.25, so the tolerance now says which tuning it is testing. The octave is still exact.
+
+## 2026-08-27 — the label spelling is measured, and 41 of 100 vocabulary slots turn out to be dead
+
+**The owner asked a token-accounting question — does `c'''16` cost 3 ids or 6?** It costs **6**, and
+answering it surfaced enough to specify a Round-4 change. Written up in
+[../rung3/tokenization.md](../rung3/tokenization.md); the design decision is in
+[../DECISIONS.md](../DECISIONS.md).
+
+- **The vocabulary is 100 ids and 45 never appear** in any of 424,867 labels across all 70 manifests.
+  Four are `<unk>`/`</s>`/`<pad>`/`<s>` and in use; the other **41 are dead**, 18 of them the base
+  model's own `\key ` / `\major ` / `\tempo ` / `\pp`…`\fff` LilyPond tokens. They are **not**
+  free slots to reuse — a pretrained embedding for a different meaning is a worse start than a random
+  row, and appending is 0.02% of the model.
+- **Only four pieces of spelling are missing**: `''`, `'''`, `16`, `32`. Adding them takes a real
+  label to **79%** of its length and `c'''16` from 6 ids to 3. Octave apostrophes alone are **37.3%
+  of every id** in `strips_v4` (604,451 of 1,619,274), which corroborates the 37.6% already recorded.
+- ⚠ **The trap, found by trying it rather than reasoning about it**: adding only those four makes the
+  pitch letter take **two different ids** depending on what follows (`c` vs `c</w>`, both present in
+  the real pool). Promoting `'` to a token as well fixes it at no cost — the vocabulary stays at 104.
+- **A fused letter+octave pitch token nearly halves labels (58%) and is riskier**: 7 of the 21
+  combinations occur under 1,000 times in 391,771 notes and `a'''` occurs **once**. Under the chosen
+  scheme those rare cases still inherit their letter's and their octave's full evidence.
+- ⛔ **The owner's premise — that dense 16th-note strips are hard for the model — could not be
+  confirmed, and the reason matters.** Exact reads by 16th/32nd share on `b8` are flat and
+  non-monotonic (67.9% / 61.1% / 60.0% / 68.6%), but that pool is **gate-filtered**: the rows the
+  model read badly were removed before it existed. Survivorship, not a null result. What is measured
+  is that fast-note rows sit against the ceiling — 30.4 ids used with no 16ths, 45.3 at 75–100%.
+- **The case that stands is yield, not comprehension**: `b8` dropped **4,012 strips `over_budget`
+  against 2,330 accepted**. ⚠ **The first pass called the rescue an estimate and it did not have to
+  be** — `emit_drops.csv` keeps only the id count, but `emit_responses.json` keeps **the label of
+  every strip built, dropped ones included** (15,758 rows). Re-costed directly: the owner's 4-token
+  scheme rescues **2,410 of 4,012 (60.1%)**; fusing the 14 pitches with ≥1,000 notes rescues
+  **3,508 (87.4%)** for 16 tokens and matches full fusion to within 2 strips. The whole pool's
+  over-budget count goes 4,012 → 1,602 → 502.
+- ⭐ **And the "conversion script" turned out to be unnecessary.** The label text does not change —
+  `c''16` stays `c''16`; only the tokenizer's segmentation of it changes. `NOTE_RE`, `noteToLily`
+  and every label on disk are untouched; the change is `ADDED_TOKENS` plus a retrain.
+- **The owner also proposed retiring `\tupend`** — a triplet's length is fixed, so `\tup3` at the
+  front should be enough. **99.94% of 33,807 groups are exactly 3 events**, but "always three" is
+  *not* safe: `tupletGroupsIn` closes a run when its duration sum lands on a plain value, so a
+  quarter-triplet plus an eighth-triplet closes at **two**, and the corpus contains exactly one such
+  group. ⭐ That same arithmetic is the correct replacement — the durations already say where the
+  group ends. ⛔ **The budget case is nil** (0.20% of ids; 15 strips rescued alone, 22 on top of H);
+  ⭐ **the reliability case is strong — 154 of 300 tuplet-bearing decodes (51%) mismatch the pair**,
+  98 missing a close and 56 with a stray one, while all 279 gold rows are balanced. Proposed, **not
+  decided**; the `\tie` retirement is the procedure. [../rung3/tokenization.md](../rung3/tokenization.md)
+- **Disposition: Round 4, in the same re-emit as the label-budget rail** ([../BACKLOG-LATER.md](../BACKLOG-LATER.md)
+  item 0). Both re-emit the pools; doing them separately pays that cost twice.
+
+## 2026-08-26 — three slicer rules measured, two shipped, one rejected — and the pattern is now unmistakable
 
 **The owner asked for three things: decide the `examv4` cut setting, fix the browser/Python staff
 divergence, and price `OMR_BLOB_FILL`.** All three are answered.

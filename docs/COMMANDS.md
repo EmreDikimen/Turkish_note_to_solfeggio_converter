@@ -173,6 +173,13 @@ npx tsx tools/vision/parity/rescue-check.ts
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python scripts/rung3/auto_accept_agree.py [--dry-run]
+    # b8-full: draft `ok` (by=agree) on every pending row whose LABEL and model DECODE are the same
+    # token-for-token, and carry the 201 hand-read b8-audit verdicts in first. 2,896 drafted / 842
+    # left pending (2026-08-27). ⚠ A DRAFT IS NOT A READ — agreement was right on 94% of the rows a
+    # human has read and the misses clump on one page, so spot-check in the UI's
+    # `🤖 auto-accepted (agree)` filter, which lists them LEAST CONFIDENT FIRST. Undo = restore
+    # full_audit.csv.bak-agree. Only still-pending rows are written, so a live UI session is safe.
 .venv-ml/bin/python scripts/rung3/emit_strip_labels.py --strips-root data/real/strips_v2 \
     --checkpoint data/checkpoints/round2-stage2-best --onnx-dir data/checkpoints/round2-stage2-best-onnx \
     --testset data/real/rung3/testset.json --out data/real/rung3/strips_b8

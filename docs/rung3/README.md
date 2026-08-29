@@ -2,7 +2,7 @@
 
 purpose: index and one-page plan for the real-page track; routes to the six detail files
 audience: agents and the owner working on real data
-updated: 2026-08-20
+updated: 2026-08-27
 
 > This track's **current state and next action are NOT here** — they live in
 > [../STATUS.md](../STATUS.md). This file describes the plan and where each part is written up.
@@ -40,6 +40,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
 | [staccato-arm.md](staccato-arm.md) | **Round 3's arm 2** — the staccato distractor: the hole, the draw, the signed pre-registration, the result (**it passes**) and the open disposition | new 2026-08-20 |
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |
+| [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **deferred to Round 4** | new 2026-08-27 |
 | [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
 | [followups.md](followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
 

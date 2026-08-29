@@ -11,3 +11,4 @@ export * from "./metadata";
 export * from "./makamSignatures";
 export * from "./makam";
 export * from "./fingering";
+export * from "./kanun";

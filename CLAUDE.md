@@ -203,7 +203,19 @@ a successful build is not a deploy. Both, and every other command, in
   because the checkbox alone can be unchecked while the lines are still drawn.
   ⚠ Same for `#fingerboard-zoom`: the **viewBox** is the zoom, so read that — `data-zoom` alone would
   pass on a control wired to nothing. ⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the
-  position formula and the string-choice rule. The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
+  position formula and the string-choice rule. **The kanun tab (F3's second instrument) adds**
+  `#kanun[data-omr="kanun"][data-courses][data-mandals][data-zoom="full|mandal"][data-note-state="idle|playing|rest|out-of-range"]`,
+  312 `[data-omr="kanun-mandal"]` carrying `data-course` / `data-mandal` / `data-offset` /
+  `data-mandal-state="up|down"` / `data-changed="to|from"`, 26 `[data-omr="kanun-course"]` **groups** carrying
+  `data-perde` / `data-course-state="idle|playing"`, each holding **three `<line>`s** because a perde
+  is three strings sharing one lever (78 in total, and `smoke:editor` asserts the total — 26 would
+  still pass if the view went back to one line each), and one `[data-omr="kanun-opening-item"]` per
+  course the makam sets before playing. ⚠ **`data-mandal-state` is the load-bearing one: exactly ONE
+  lever per course is `up` at every moment**, and `smoke:editor` asserts that at every sample across
+  a whole playback — a mandal is a lever that STAYS WHERE IT IS PUT, so a leak in the replay shows up
+  there and nowhere else. ⚠ `data-changed` **fades**: it marks an event, not a state, so never assert
+  it without driving the clock to a change — and it is drawn as a red **frame**, never a fill,
+  because the fill is what carries `data-mandal-state`. ⚠ Its arithmetic is `tools/core/kanun-test.ts`. The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
   prove playback began there. A tuplet is **not stored** anywhere, so no attribute can prove one was
   made: `smoke:editor` counts the marks the engraver drew, in **both** styles (`.vf-tuplet` and the
   curved arc's italic "3" — the style is a per-piece coin). The six

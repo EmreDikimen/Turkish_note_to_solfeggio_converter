@@ -88,6 +88,7 @@ wrong — fix by deleting, not by syncing.
 | Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
 | How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
 | The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
+| The kanun view (F3): the 26 courses, the mandal state machine, why it is drawn and not photographed | [features/kanun-view.md](features/kanun-view.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

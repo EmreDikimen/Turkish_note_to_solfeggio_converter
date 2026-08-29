@@ -2,12 +2,134 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-27
+updated: 2026-08-29
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-27 (latest) — b8-full's agreeing rows are draft-accepted, riskiest first for the human
+## 2026-08-29 (latest) — the kanun joins F3, the two instrument views become one tab, and the piano roll goes
+
+The owner reopened F3's violin-only scope after seeing the violin view stand up, and asked for the
+kanun next — drawn in SVG, with the courses and their mandals. Built, tested and screenshotted the
+same day. The design chapter is [../features/kanun-view.md](../features/kanun-view.md).
+
+⭐ **The finding worth keeping is that it is NOT the violin view with a different picture, and
+noticing that first is what made it small.** A violin position is a fact about one note — the finger
+goes there, the note ends, the finger leaves — so `Fingerboard.tsx` can draw a frame from the current
+note alone. A mandal is a lever that **stays where it is put**, so the picture depends on every
+mandal move since the piece began. That makes it a state machine over the piece. Two consequences
+fell straight out and both became features: there is something to show **before** a note is played
+(the makam's opening mandals, which a player prepares like tuning, now listed in words above the
+instrument), and a change is an **event** rather than a state, so red fades.
+
+⭐ **The string-choice trap that cost `fingering.ts` a rewrite on 2026-08-27 cannot arise here, and
+the reason is that the notation already answers it.** A player reading a Si♭ lowers the **Si** course;
+they do not play it on the La course raised, even at 5 komas where the raised La is arithmetically
+*nearer* its own natural. So the course comes from the written spelling, and there is no cost
+function, no search and no thrashing to guard against. Measured over the four scores on disk:
+**1,825 of 1,825 notes placed, 0 respellings, 0 unreachable**, using 10–12 of the 26 courses each.
+
+- **The mandal count was researched rather than assumed**, because the owner asked and there is no
+  single right answer. Each mandal is **one koma**; a professional kanun has **26 courses of 3
+  strings**; the *count* varies by maker — 5, 6, 7, 8, 9 are all found, and a modern professional
+  instrument carries **9–12 per whole tone**. The owner's guess of 9 was not arbitrary (a whole tone
+  **is** 9 komas). What ships is his own instrument, **12 with the natural sixth from the bottom**,
+  held in `MANDAL_LAYOUTS` as data exactly like `VIOLIN_TUNINGS`.
+- **Two independent checks fix the 26-course span, and both were run.** The naturals from Kaba Yegâh
+  (written D3) to Tiz Muhayyer (written A6) number **exactly 26** — the professional perde count,
+  with nothing padded — and Tiz Muhayyer sounds **1319.9 Hz** against the **1325.3 Hz** top note of
+  F1's kanun recording, **0.31 of a koma** apart. ⚠ The *bottom* does not match and that is not
+  evidence of anything: a recording may stop early where an instrument may not.
+- **⚠ `Math.round` was the wrong rounding and a test caught it.** A makam deviation can be −1.5
+  komas (uşşak's segâh), which is an exact tie between two levers; `Math.round` breaks ties towards
+  +∞, so the same interval would round *down* written as a flat and *up* written as a sharp — an
+  instrument leaning sharp in one makam and flat in another for no reason but the sign of a number.
+  `roundToMandal` leans towards the natural instead.
+- **⭐ The view turned out to be more precise than the page it came from, and that is worth knowing
+  before someone "fixes" it.** The mandals are read from `koma53`; the spelling gives only the letter
+  and octave. The two genuinely disagree in the shipped scores because `ui/accidentals.ts` stores
+  ±2/±3 comma alterations exactly while the engraver prints the **nearest standard AEU sign** —
+  `beyati-delisin` has **36 notes drawn with a koma-bemol and stored two komas flat**, `gamzedeyim-deva`
+  has 54. A mandal makes a sound and a kanun has a lever at −2, so the view follows the comma and
+  shows `Segâh −2` where the staff shows a one-koma sign.
+- **⚠ Drawn, not photographed, and for the opposite reasons the violin was photographed.** The
+  mandals are the whole point and are unreadable in any photograph of a whole kanun — barely visible
+  in the reference image the owner supplied — there is no licence chain to follow, and a drawing fits
+  26 courses on a phone. The taper is **schematic and says so**: real string lengths would need an
+  **11:1** trapezoid over three and a half octaves, and a maker compensates with string gauge instead.
+- **⚠ Two drawing bugs found by screenshotting rather than by reasoning, both in the close-up.** An
+  `<svg>` fits its viewBox inside the box CSS gives it and pads the leftover dimension, so a crop of a
+  different **shape** gets letterboxed — half the frame went empty and the top and bottom rows were
+  **cut through the middle**. `fitAspect` grows the window to the full view's shape, and the height
+  cap in `app.css` had to be rewritten as a **max-width** for the same reason. Neither was visible
+  from the code.
+- **Checks: 46 in `tools/core/kanun-test.ts` (now in `npm test`), 20 in `smoke:editor` — 207 browser
+  checks ALL PASS.** ⚠ The load-bearing browser assertion is **one lever up per course at every
+  sample taken across a whole playback**, which is the state machine's invariant and the first thing
+  a leak in the animation frame would break. ⚠ It also asserts the opening setting **differs between
+  two pieces** — the deliberate opposite of the violin's check that its chart does *not* move.
+- **⚠ Nobody has looked at it with an eye yet**, the same standing caveat the violin carries. Check
+  26 in [../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md).
+
+⭐ **Then the owner looked at it, the same day, and five things came back — four of which no
+automated check could ever have raised.** Worth recording because they are all the same *kind* of
+mistake: a drawing that is internally consistent and still not the instrument.
+
+1. **A perde is THREE STRINGS.** The code called one line per course "the honest summary". It was a
+   summary that lost the instrument. They share one lever and light together.
+2. **The body's left edge must hug the levers, with the perde names OUTSIDE it.** The edge had been
+   widened to 70 px earlier the same day *to fit the names on the wood* — which broke the very slope
+   the edge exists to show. ⚠ And the fix exposed a second, real bug: `bodyOutline` joined the two
+   **end courses'** x positions, but the body reaches past them, and on a slanted edge those strips
+   move the edge sideways too. Result, visible in the screenshot: the top courses' names sat **on**
+   the wood and the bottom courses' levers **stuck out past the body**. Extrapolating the diagonal
+   fixes both at once.
+3. **Two colours, not filled-versus-empty.** ⭐ The argument is the useful part: **an empty box reads
+   as absence, not as a state**, and on brown wood a faint outline is nearly invisible at the size
+   312 boxes force. Both states are now solid and on opposite sides of the wood's lightness.
+4. ⭐ **A change is a red FRAME, never a red fill** — and this one is structural rather than
+   cosmetic: **the fill carries the up/down state**, so a red fill blacks out exactly the
+   information the flash is pointing at. Raised gets a solid frame, lowered a dashed one.
+5. **The string spacing was set by looking**, not by taste: at 2.4 units the three strokes merged
+   into one grey band at full zoom — the one thing drawing three of them was meant to avoid.
+
+⚠ **The pattern to take away**: four of the five are things a screenshot shows and no assertion
+does, and the fifth (the body outline) was a genuine geometry bug that only became visible once the
+first four were fixed. The browser check gained one assertion out of all this — **78 strings, as a
+total** rather than 26 courses, because a view that quietly went back to one line each would still
+pass a per-course count.
+
+### Then the two views became one tab, and the piano roll was deleted
+
+Also the owner's call, same day: *"bunu keman page'iyle birleştirip tek sayfa haline getirir misin,
+enstrüman üzerinde olsun ismi... piyano rulosunu da kaldır ona ihtiyacımız yok"*. Keman and Kanun
+now share **Enstrüman üzerinde**, with a dropdown that ⭐ **sets the sound as well as the picture**.
+
+⭐ **The merge is worth more than tidiness, and the reason is the sound.** You now see and hear the
+same instrument without having to know that two separate controls existed — the picture and the
+voice were two unrelated pickers before. ⚠ The split stays real *inside* the code (two maths
+modules, two views), because a violin position and a kanun mandal really are two different problems;
+that was never a reason to make the **user** choose between two tabs.
+
+- ⚠ **It deliberately does not set the voice on merely opening the tab.** A sampled voice is a
+  20–35 MB Hub download and "load only on selection" is F1's requirement rather than an
+  optimisation. Consequence to expect rather than discover: a first visit can draw a violin while
+  the default tone still plays. Touching the picker resolves it and the picker says so meanwhile.
+- ⚠ **`instrumentForVoice` supplies only the picker's OPENING value.** A live two-way binding was
+  rejected: choosing Klarnet in the transport must not blank this page, and drawing a violin while a
+  clarinet plays is odd but harmless where an empty instrument page would look broken.
+- ⚠ **Two traps, both found by running it.** The select had to be `#instrument-pick`, because the
+  transport's voice picker already owns `#instrument`; and the wrapper needed `justify-items:
+  stretch` — a centred grid item shrinks to its content, and since the kanun sizes itself by WIDTH
+  the merge **halved it** on the first attempt. The violin was unaffected because it sizes by
+  height, which is exactly why the bug reached a screenshot instead of a type error.
+- **The roll came out clean**: it used inline styles only and `PitchRange` was local to it.
+  `PitchRangeNote` looks related and is not — it lives in the advanced panel and stays.
+- **Checks: `smoke:editor` 217 ALL PASS.** ⚠ The load-bearing new one is that picking Kanun moves
+  the **transport's** voice, not just this page's own attribute — a check reading only the page
+  would pass on a picker wired to nothing but itself. It also asserts the roll's tab is **absent**.
+
+## 2026-08-27 — b8-full's agreeing rows are draft-accepted, riskiest first for the human
 
 **The owner's observation, and it holds:** *"if proposed label and model decode matches, then it is
 correct mostly"*. Measured on every b8 row a human has actually read — where the two agree

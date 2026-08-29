@@ -170,7 +170,7 @@ npm run dev:cloud       # NOT dev:web — keeps the decode off this Mac
 ```
 
 1. Open a score (`?score=/gamzedeyim-deva.json`), pick **Keman** under **Çalgı sesi**, then the
-   **Keman** tab beside Nota and Piyano rulosu. Press ▶ Çal and watch.
+   **Enstrüman üzerinde** tab beside Nota, and pick **Keman** from the dropdown. ⚠ Picking it also switches the SOUND to the violin (owner, 2026-08-29), so what you hear should change too — if it does not, that is a finding on its own. Press ▶ Çal and watch.
 2. **The question this check exists for: does the dot sit where your finger would?** Open strings are
    the free calibration — when an open Sol/Re/La/Mi sounds, the dot must be **at the nut**, not near
    it. After that, judge first position by eye: the first finger should land about a tenth of the way
@@ -207,3 +207,44 @@ npm run dev:cloud       # NOT dev:web — keeps the decode off this Mac
 **7 px per koma near the nut and less further up**, so the high positions are thin. A higher-resolution
 bare-neck photo is the fix and costs no code — the calibration is data. What *would* be a finding is
 the dot being wrong in **first** position, where there is plenty of resolution.
+
+## Check 26 — does the kanun view show a mandal plan a kanuncu would recognise? (feature track F3, 2026-08-29)
+
+**Why this one needs a person.** Everything measurable already passes: the course table is
+re-derived from its own perde names, the plan places **1,825 of 1,825 notes with 0 respellings**,
+and 20 browser checks hold the state machine's invariant across a whole playback
+([features/kanun-view.md](features/kanun-view.md)). None of that can say whether the picture reads
+as a kanun, or whether the mandal plan is one a player would actually set. Only a musician can.
+
+**How.** `npm run dev:web`, open `?score=/beyati-delisin.json`, then the **Enstrüman üzerinde** tab, and pick **Kanun** from the dropdown. ⚠ That also switches the sound to the kanun; check that it does.
+
+1. **Before pressing anything, read the line above the instrument.** It says which mandals to set
+   before playing — the makam's setting. On `beyati-delisin` it says **Segâh −2**. Judge that as a
+   kanuncu: *is that the mandal you would set for this piece?* ⚠ Expect it to disagree with the
+   staff by a koma on some notes, and that is **not a bug** — the engraver prints the nearest
+   standard AEU sign while the file stores the exact comma, so a note drawn with a koma-bemol can be
+   stored two komas flat (36 of them in this piece). The view follows the **sound**. Say if that is
+   confusing in practice; it is a presentation choice we can revisit, not an error.
+2. **Look at the instrument itself and say whether it reads as a kanun.** It is **drawn**, not
+   photographed, and the trapezoid is deliberately **schematic** — do not report the taper as wrong,
+   that is a known and argued choice. What *is* worth reporting: the courses running the wrong way
+   (low at the bottom is intentional, to match the sheet), the mandal band sitting oddly, or the
+   whole thing simply not looking like the instrument.
+3. **Press play and watch the red course.** It should be the note you hear. The interesting check is
+   the **mandal flash** — on this piece the first one is at about **21 seconds** (Acem, natural →
+   +3). Two things only an eye can judge: **did you catch it**, and **was 700 ms long enough**? If
+   the flash is missable, say so — the rejected alternative (everything away from the opening
+   setting stays red) is written down and can be brought back.
+4. **Tick "Mandallara yaklaş".** This is the close-up, and it is the answer to 312 levers being four
+   pixels wide. The frame is fitted to the piece, so **no row should be cut through the middle** — if
+   one is, that is a real finding.
+5. **On a phone.** ⚠ Stated so it is not reported as a discovery: **the full view is a texture on a
+   handset**, and the close-up is the fix. The finding worth reporting is whether you find yourself
+   turning the close-up on every single time — if so, the default should flip.
+6. **Try `?score=/meltem_notes.json` too.** It is eleven seconds long and moves one mandal at 5.3 s,
+   so it is the fastest way to see a change; and its opening setting is five courses at −5, which is
+   a much heavier mandal plan. Judge whether that is really what the piece asks for.
+
+⚠ **The known simplification, so it is not reported as a discovery**: a change is drawn at the note
+that needs it, where a real player moves the lever slightly **before** it with the free hand.
+Nothing models the anticipation.

@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-28
+updated: 2026-08-29
 
 ## Now
 
@@ -195,14 +195,16 @@ read and that the baseline column is re-measured with it; the floors do not move
 [rung3/round3-criteria.md](rung3/round3-criteria.md).
 
 ✅ **TRACK A IS SHIPPED AND LIVE — <https://komavision.netlify.app>.** F1's instrument voices, F2's
-drums and F3's violin fingerboard are all deployed. ⛔ **The fingerboard went out without check 25, its
-written pre-condition** — skipped on the owner's instruction. **Half of that look has now happened
-(2026-08-27) and it changed the view**: the owner rejected how it looked, so the violin stands
-upright with half its body in frame and the per-string notches became hideable lines across the neck
-([features/fingerboard.md](features/fingerboard.md)). ⚠ **That rebuild is on this machine, not on the
-site** — it needs a deploy. The other half of check 25, *is the dot in the right place*, is still
-owed and is still the only thing no automated check can answer. ⚠ The trap that outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with the
-app, and setting `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — silently.
+drums and F3's violin fingerboard are deployed. ⚠ **What is on this machine is now well ahead of what
+is on the site, and all of it needs one deploy**: the violin's 2026-08-27 rebuild, plus F3's whole
+2026-08-29 day — **a kanun view, the two instrument views merged into one "Enstrüman üzerinde" tab
+whose picker also sets the playback voice, and the piano roll deleted** ([features/README.md](features/README.md) ·
+[features/kanun-view.md](features/kanun-view.md)). ⛔ **The fingerboard originally went out without
+check 25, its written pre-condition** — skipped on the owner's instruction. Half of that look has
+since happened and it changed the view twice; ⚠ **the other half — *is the mark in the right place* —
+is still owed for BOTH instruments** (checks 25 and 26) and is still the only thing no automated
+check can answer. ⚠ The trap that outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with
+the app, and setting `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — silently.
 [features/README.md](features/README.md) · [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md).
 
 ⚠ **Two copyright items remain open and are both the owner's call**: the samples and the neyzen.com
@@ -222,7 +224,7 @@ Established findings live in these files, so this one holds only "now" and "next
 |---|---|
 | Product (W0–W9.7, the server, the shipped features) | [mvp/standing.md](mvp/standing.md) — moved 2026-08-08 |
 | Real pages (real-val v2, the re-slice, Round 3 pre-render checks, the Round 2 position, the `\tup3` A/B) | [rung3/standing.md](rung3/standing.md) — moved 2026-08-07 |
-| The feature track (F0's scheduler, F2's drums, F1's voices, F3's fingerboard) | [features/README.md](features/README.md) + [features/audio-sources.md](features/audio-sources.md) + [features/kanun.md](features/kanun.md) |
+| The feature track (F0's scheduler, F2's drums, F1's voices, F3's two instruments) | [features/README.md](features/README.md) + [features/audio-sources.md](features/audio-sources.md) + [features/fingerboard.md](features/fingerboard.md) + [features/kanun-view.md](features/kanun-view.md) + [features/kanun.md](features/kanun.md) |
 | What happened on any given day, and why | [log/status-log.md](log/status-log.md) |
 
 ## Next — two tracks, running in parallel
@@ -249,12 +251,34 @@ the model track never touches the app.** Either can be worked on without waiting
    hand-position model — numbers in [features/fingerboard.md](features/fingerboard.md). Typecheck,
    `npm test` and `smoke:editor` all pass; the change is **not deployed**. [features/fingerboard.md](features/fingerboard.md) ·
    [DECISIONS.md](DECISIONS.md).
+3c. **✅ F3 HAS A SECOND INSTRUMENT: THE KANUN (2026-08-29)**, after the owner reopened the
+   violin-only scope — *"şimdi biz kemanı ekledik çok hoş, kanunu eklemeye başlayabiliriz"*. A drawn
+   kanun: 26 courses, 12 mandal boxes each, the sounding course in red and a lever that has just
+   moved flashing. ⭐ **It is not the violin view with a different picture, and seeing that first is
+   what made it small**: a violin position is a fact about one note, while a mandal **stays where it
+   is put**, so this is a state machine over the whole piece — which is also what buys the piece's
+   **opening mandal plan**, listed in words before you press play. ⭐ The string-choice trap that cost
+   `fingering.ts` a rewrite cannot arise, because the written spelling names the course: **1,825 of
+   1,825 notes placed, 0 respellings, 0 unreachable** on the four scores on disk. Typecheck,
+   `npm test` (46 new checks) and `smoke:editor` (20 new, **207 ALL PASS**) all pass; **not
+   deployed**. [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
+
+3d. **✅ ONE INSTRUMENT PAGE, AND THE PIANO ROLL IS GONE (2026-08-29)**, both the owner's call after
+   seeing the kanun. Keman and Kanun now share one tab — **Enstrüman üzerinde** — with a dropdown
+   that ⭐ **sets the sound as well as the picture**. `PianoRoll.tsx` is deleted; `PitchRangeNote`
+   survives it and is unrelated. ⚠ The tab does **not** set the voice merely by being opened: a
+   sampled voice is a 20–35 MB Hub download and "load only on selection" is F1's requirement, so a
+   first visit can draw a violin while the default tone still plays. `smoke:editor` **217 ALL PASS**,
+   including that picking Kanun moves the transport's own voice. **Not deployed.**
+   [features/README.md](features/README.md) · [DECISIONS.md](DECISIONS.md).
+
    ⏭ **THE NEXT PRODUCT ACTION, and the only one that needs a person, is
-   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 25 on the REBUILT view** — via
-   `npm run dev:cloud`, then a deploy once it passes: open it, play a piece with Keman selected, and
-   answer the two things no automated check can — does the dot sit where your finger would (open
-   strings are the free calibration: the dot must be **at** the nut), and do the lines read as
-   information or as clutter?
+   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) checks 25 AND 26 — the violin view and the
+   kanun view, now both behind the one **Enstrüman üzerinde** tab, neither of which any eye has judged** — via `npm run dev:cloud`, then a deploy once
+   they pass. Check 25: does the dot sit where your finger would (open strings are the free
+   calibration — the dot must be **at** the nut), and do the lines read as information or as clutter?
+   Check 26: is the opening mandal plan one you would actually set, does the flash last long enough
+   to catch, and is the close-up needed every single time (if so its default should flip)?
    ⚠ Do **not** report the thin high positions as a finding; ~7 px per koma near the nut and less
    above is the shipped photo's known limit, and a higher-resolution bare-neck image fixes it with no
    code change. Everything it built, and the traps inside it: [features/README.md](features/README.md).

@@ -2,7 +2,7 @@
 
 purpose: the design, the calibration and the decisions behind the violin fingerboard view
 audience: agents and the owner working on F3, before changing the artwork, the geometry or the marks
-updated: 2026-08-27
+updated: 2026-08-29
 
 > This is the F3 chapter of the feature track — [README.md](README.md) is the track index, and
 > current state is in [../STATUS.md](../STATUS.md). It was split out on 2026-08-27, when the track
@@ -10,7 +10,13 @@ updated: 2026-08-27
 
 Show the instrument, and show where the finger goes as the piece plays.
 
-### Scope: VIOLIN ONLY (owner, 2026-08-15)
+### Scope: VIOLIN ONLY (owner, 2026-08-15) — ⚠ REOPENED 2026-08-29, kanun added
+
+⚠ **This section's decision was reopened by the owner on 2026-08-29 and the kanun was built**
+([kanun-view.md](kanun-view.md)). The *reasoning* below was not overturned and is left as written:
+the violin was the right first instrument, and nothing past it was committed until the owner said
+so. The kanun then qualified on the same ground — it is already a shipped F1 voice. Everything else
+in this section still describes the violin.
 
 Not "one instrument first, then the rest" as a plan to work down — **violin, and nothing else is
 committed**. Three reasons it is the right one: it is fretless, so the position is a formula rather
@@ -48,8 +54,9 @@ ticks are vector, so they stay sharp and follow the theme.
 
 ### Where the marker goes
 
-The tab itself is cheap: `ViewMode` in `apps/web/src/App.tsx` is `"roll" | "sheet"`; this adds a
-third. The interesting part is *where to draw the marker*, and it splits by instrument family.
+The tab itself is cheap: `ViewMode` in `apps/web/src/App.tsx` was `"roll" | "sheet"`; this added a
+third. ⚠ It is now `"sheet" | "instrument"` — the roll is gone and both instruments share one tab
+(2026-08-29). The interesting part is *where to draw the marker*, and it splits by instrument family.
 
 **Fretless strings (kemençe, violin, oud) — a formula, and the reason this feature is worth
 building.** Distance along the string is `length × (1 − openStringFreq / noteFreq)`. It accepts *any*

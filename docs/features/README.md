@@ -2,7 +2,7 @@
 
 purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
 audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-25
+updated: 2026-08-29
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
@@ -25,7 +25,7 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
-| **F3** | Fingerboard tab — where to put your finger, in time | medium | no | calibration + a string-choice rule | ✅ **DONE 2026-08-16** — violin only; built, checked on the production bundle, **not yet seen by a person** |
+| **F3** | Instrument tab — where to put your finger / where the mandals stand, in time | medium | no | calibration + a string-choice rule (violin); an instrument data table (kanun) | ✅ **VIOLIN DONE 2026-08-16**, ✅ **KANUN DONE 2026-08-29**; neither has been **seen by a person** yet |
 | **F4** | Listening mirror — a live microtonal tuner drawn on F3's fingerboard | medium | no | pitch-tracker steadiness at 22.6 cents/koma, unmeasured | ⏸ **PARKED 2026-08-25** (owner) — after the public launch; **not** audio-to-score. Reasoning and what was ruled out: [../BACKLOG.md](../BACKLOG.md) |
 
 Order: **F0 → F2 → F1 → F3**. All four are built. F0, F2 and F1 are deployed and **accepted by ear** —
@@ -263,15 +263,35 @@ the same reasoning that put `usul.ts` there.
 
 ---
 
-## F3 — the fingerboard tab → [fingerboard.md](fingerboard.md)
+## F3 — the instrument tab → [fingerboard.md](fingerboard.md) · [kanun-view.md](kanun-view.md)
 
-Show the instrument, and show where the finger goes as the piece plays. **Built 2026-08-16, and
-rebuilt upright on 2026-08-27** after the owner saw it. **Violin only** (owner, 2026-08-15) — the
-winds' lookup tables and the tanbur's fret table are written down there as *design*, not as a queue.
+Show the instrument, and show what the player does on it as the piece plays. **Two instruments, two
+chapters**, because they turned out to be two different problems — behind **one tab**.
 
-The whole chapter — the licensed photo and what it does and does not buy, the calibration, the open
-strings, the string-choice rule, and why a position line is tape rather than a fret — is in
-[fingerboard.md](fingerboard.md). It moved out of this file on 2026-08-27 at the 400-line cap.
+⭐ **"Enstrüman üzerinde" is one page with a dropdown** (owner, 2026-08-29), and picking an
+instrument there **sets the sound too**. That is the point rather than tidiness: you see and hear
+the same instrument without having to know that two separate controls existed. ⚠ The split stays
+real *inside* the code — two maths modules, two views — because they are two different problems; it
+was never a reason to make the user choose between two tabs. ⛔ **The piano roll was deleted the
+same day** (owner: *"ona ihtiyacımız yok"*); `PitchRangeNote` survives it and is unrelated.
+
+**Violin** (built 2026-08-16, rebuilt upright 2026-08-27) → **[fingerboard.md](fingerboard.md)**: the
+licensed photo and what it does and does not buy, the calibration, the open strings, the
+string-choice rule, and why a position line is tape rather than a fret.
+
+**Kanun** (built 2026-08-29) → **[kanun-view.md](kanun-view.md)**: the 26 courses, the mandal
+research, the two-pass plan, and why the instrument is drawn rather than photographed.
+
+⚠ **The 2026-08-15 "violin only" scope was reopened by the owner on 2026-08-29**, after the violin
+view stood up. That is a scope change, not an overturned argument: the reasoning that made the
+violin first still holds, and the kanun qualified on the same ground — it is already a shipped F1
+voice, so a user can hear and see the same instrument. The winds' lookup tables and the tanbur's
+fret table stay in [fingerboard.md](fingerboard.md) as *design*, not as a queue.
+
+⭐ **The most useful thing this pair taught is that the two views are not the same view twice.** A
+violin position is a fact about one note; a kanun mandal is a lever that stays where it is put, so
+its view is a state machine over the whole piece. Anyone adding a third instrument should ask which
+of the two kinds it is **before** writing anything.
 
 
 ---

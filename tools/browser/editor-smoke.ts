@@ -61,6 +61,20 @@ const VOICES_URL = (() => {
   return i >= 0 ? (process.argv[i + 1] ?? "") : "";
 })();
 
+/**
+ * Open the instrument page and pick one — the F3 views live behind ONE tab since 2026-08-29.
+ *
+ * ⚠ Picking here also starts a 20–35 MB voice download, which is the point of the merge (the sound
+ * follows the picture) and is why this waits on the instrument's own element rather than on the
+ * voice: the drawing must be usable long before the samples land.
+ */
+async function openInstrument(page: import("playwright").Page, id: "violin" | "kanun") {
+  await page.locator("#view-instrument").click();
+  await page.waitForSelector("#instrument-view", { timeout: 10000 });
+  await page.locator("#instrument-pick").selectOption(id);
+  await page.waitForSelector(id === "kanun" ? "#kanun" : "#fingerboard", { timeout: 10000 });
+}
+
 async function main() {
   // Vite reads VITE_* from the environment at config time, so this has to be set before the server
   // is created — not after, and not per-page.
@@ -1086,8 +1100,30 @@ async function main() {
   console.log("\nfingerboard tab (F3)");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
-  await page.locator("#view-fingerboard").click();
-  await page.waitForSelector("#fingerboard", { timeout: 10000 });
+
+  // --- the two instrument views are ONE page now, and the picker drives the sound (2026-08-29) --
+  //
+  // ⚠ The load-bearing assertion is the last one: picking an instrument here must move the
+  // TRANSPORT's voice, because that is the whole reason the merge is worth more than tidiness —
+  // you see and hear the same instrument without knowing two controls existed. A check that only
+  // read this page's own attribute would pass on a picker wired to nothing but itself.
+  await page.locator("#view-instrument").click();
+  await page.waitForSelector("#instrument-view", { timeout: 10000 });
+  check("the piano roll tab is gone", await page.locator("#view-roll").count(), 0);
+  check("…and so are the two separate instrument tabs", await page.locator("#view-fingerboard, #view-kanun").count(), 0);
+  check("one instrument page holds both", await page.locator("#instrument-pick").count(), 1);
+  check("it opens on the violin", await page.getAttribute("#instrument-view", "data-instrument"), "violin");
+  check("…drawing a violin and no kanun", await page.locator("#fingerboard").count() + await page.locator("#kanun").count() * 10, 1);
+
+  await page.locator("#instrument-pick").selectOption("kanun");
+  await page.waitForSelector("#kanun", { timeout: 10000 });
+  check("picking Kanun swaps the drawing", await page.getAttribute("#instrument-view", "data-instrument"), "kanun");
+  check("…and the violin goes away", await page.locator("#fingerboard").count(), 0);
+  check("⭐ …and the SOUND follows it", await page.getAttribute("#instrument", "data-instrument"), "kanun");
+  await page.locator("#instrument-pick").selectOption("violin");
+  check("switching back moves the sound back", await page.getAttribute("#instrument", "data-instrument"), "violin");
+
+  await openInstrument(page, "violin");
 
   check("four strings", await page.getAttribute("#fingerboard", "data-strings"), "4");
   check("standard tuning", await page.getAttribute("#fingerboard", "data-tuning"), "standard");
@@ -1144,8 +1180,7 @@ async function main() {
   // A different piece, in a different makam, with a different range: the chart must not move.
   await page.goto(`${base}/?score=/beyati-delisin.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
-  await page.locator("#view-fingerboard").click();
-  await page.waitForSelector("#fingerboard", { timeout: 10000 });
+  await openInstrument(page, "violin");
   check("the chart is the same on another piece", await chartOf(), chart);
   check(
     "the marker starts idle",
@@ -1189,6 +1224,120 @@ async function main() {
     }),
     true,
   );
+
+  // --- the kanun tab: a course, and mandals that carry state (F3, 2026-08-29) -------------------
+  //
+  // ⚠ **The properties here are not the violin's, and the difference is the point.** A violin
+  // position is a fact about one note; a mandal is a lever that STAYS WHERE IT IS PUT, so what this
+  // has to prove is a state machine, not a lookup:
+  //   - exactly ONE mandal per course is up, at every moment — the invariant the whole replay rests
+  //     on, and the one a leak in the animation frame would break first;
+  //   - the opening setting is read off THIS score (the violin's chart is fixed on purpose; this
+  //     one must differ between pieces, which is the opposite assertion);
+  //   - a course lights while it sounds, and the lit course moves;
+  //   - a mandal change actually flashes, on the right course and at the right comma.
+  // The planning arithmetic is NOT checked here — it is a pure function, and a browser is the wrong
+  // place for arithmetic. See tools/core/kanun-test.ts.
+  console.log("\nkanun tab (F3)");
+  await page.goto(`${base}/?score=/meltem_notes.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await openInstrument(page, "kanun");
+
+  check("twenty-six courses", await page.getAttribute("#kanun", "data-courses"), "26");
+  check("twelve mandals a course", await page.getAttribute("#kanun", "data-mandals"), "12");
+  check("…so 312 levers are drawn", await page.locator('[data-omr="kanun-mandal"]').count(), 312);
+  check("one course each", await page.locator('[data-omr="kanun-course"]').count(), 26);
+  // ⚠ A perde is **three strings in unison** (owner, 2026-08-29), sharing one lever. Asserted as a
+  // total rather than per course, because the failure worth catching is the view quietly going back
+  // to one line each — which 26 would still satisfy.
+  check("…drawn as three strings", await page.locator('[data-omr="kanun-course"] line').count(), 78);
+
+  const upCount = () => page.locator('[data-omr="kanun-mandal"][data-mandal-state="up"]').count();
+  check("exactly one lever up per course", await upCount(), 26);
+  check("nothing is sounding yet", await page.getAttribute("#kanun", "data-note-state"), "idle");
+
+  // The opening setting is the makam's mandals, which a player prepares before the first note. It
+  // is read off the score, so it is asserted by VALUE — "some courses are listed" would pass on a
+  // list built from nothing.
+  const openingOf = () =>
+    page.locator('[data-omr="kanun-opening-item"]').evaluateAll((els) =>
+      els.map((e) => `${e.getAttribute("data-perde")}${e.getAttribute("data-offset")}`),
+    );
+  const meltemOpening = await openingOf();
+  console.log(`  opening: ${meltemOpening.join(" ")}`);
+  check(
+    "the makam's opening mandals, off this score",
+    meltemOpening,
+    ["Dügâh-5", "Segâh-5", "Hüseynî-5", "Muhayyer-5", "Tiz Segâh-5"],
+  );
+
+  // The close-up. Read as geometry like the violin's, and with one extra property this view needs:
+  // the window must keep the full view's SHAPE, or an <svg> letterboxes it and crops rows away.
+  const kFull = (await page.getAttribute(".kv-kanun__svg", "viewBox"))!;
+  await page.locator("#kanun-zoom").check();
+  check("the close-up says which level it is on", await page.getAttribute("#kanun", "data-zoom"), "mandal");
+  const kNeck = (await page.getAttribute(".kv-kanun__svg", "viewBox"))!;
+  const [kfx, kfy, kfw, kfh] = kFull.split(/\s+/).map(Number) as [number, number, number, number];
+  const [knx, kny, knw, knh] = kNeck.split(/\s+/).map(Number) as [number, number, number, number];
+  console.log(`  viewBox: ${kFull} → ${kNeck} (${(kfw / knw).toFixed(2)}x)`);
+  check("…and it really is closer", knw < kfw && knh < kfh, true);
+  check("…on a window inside the instrument", knx >= kfx && kny >= kfy, true);
+  check(
+    "…keeping the full view's shape, so no row is cropped away",
+    Math.abs(knw / knh - kfw / kfh) < 0.01,
+    true,
+  );
+  await page.locator("#kanun-zoom").uncheck();
+  check("…and the whole kanun comes back", await page.getAttribute(".kv-kanun__svg", "viewBox"), kFull);
+
+  // Playing. meltem is eleven seconds long and moves a mandal at 5.3 s (Hüseynî, five komas flat →
+  // one), which is why it is the piece used here rather than a long one.
+  await page.locator("#play").click();
+  const litCourses: string[] = [];
+  const noteStates = new Set<string>();
+  const upCounts = new Set<number>();
+  const flashed: string[] = [];
+  for (let i = 0; i < 80 && flashed.length === 0; i++) {
+    await page.waitForTimeout(120);
+    noteStates.add((await page.getAttribute("#kanun", "data-note-state")) ?? "?");
+    upCounts.add(await upCount());
+    const c = await page.evaluate(() => {
+      const el = document.querySelector('[data-omr="kanun-course"][data-course-state="playing"]');
+      return el ? el.getAttribute("data-perde") : null;
+    });
+    if (c && c !== litCourses[litCourses.length - 1]) litCourses.push(c);
+    const f = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-omr="kanun-mandal"][data-changed="to"]')).map(
+        (e) => `${e.getAttribute("data-course")}@${e.getAttribute("data-offset")}`,
+      ),
+    );
+    flashed.push(...f);
+  }
+  await page.locator("#stop").click();
+  console.log(`  courses lit: ${litCourses.join(" → ") || "never"}`);
+  console.log(`  flashed    : ${flashed.join(" ") || "never"}`);
+
+  check("a course lights while it sounds", litCourses.length > 0, true);
+  check("…and the lit course moves with the music", litCourses.length >= 2, true);
+  // ⚠ THE INVARIANT. One lever up per course, at every single sample taken across the playback —
+  // this is what says the replay moves the mandals rather than accumulating them.
+  check("one lever up per course throughout", [...upCounts], [26]);
+  check("the view says a note is sounding", noteStates.has("playing"), true);
+  // The change flash, asserted by WHICH course and WHICH comma — a count would pass on a flash
+  // fired at the wrong lever. Hüseynî is course 15, moving to one koma flat.
+  check("a mandal change flashes", flashed.length > 0, true);
+  check("…on the course and comma the music asks for", flashed[0], "15@-1");
+
+  // A different piece must produce a DIFFERENT opening setting. ⚠ This is the exact opposite of
+  // the violin check above, and deliberately so: the violin's chart is a fixed reference and must
+  // not follow the music, while the kanun's mandals ARE the music's own setting and must.
+  await page.goto(`${base}/?score=/beyati-delisin.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await openInstrument(page, "kanun");
+  const beyatiOpening = await openingOf();
+  console.log(`  opening: ${beyatiOpening.join(" ")}`);
+  check("another piece sets its own mandals", beyatiOpening, ["Segâh-2"]);
+  check("one lever up per course here too", await upCount(), 26);
 
   // --- every note box belongs to its own note (the grace-note geometry bug, 2026-08-08) ---------
   //

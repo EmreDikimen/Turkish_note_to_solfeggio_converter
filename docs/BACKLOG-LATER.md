@@ -153,7 +153,7 @@ budget item in the section above this one. This file was their only home, so the
 
 - **The rest of the settings modal.** The sheet view's **Accidentals** selector already covers the
   display-mode half of the idea (every note / row-start key signature / standard per-measure). Still
-  missing: one settings surface holding the view choice (sheet vs piano roll) and a **dark/light
+  missing: one settings surface holding the view choice (sheet vs instrument) and a **dark/light
   theme** switch.
 - **The sheet view scrolls twice** — an inner scroll inside the score card, on top of the page
   scroll. The owner asked for the inner one to go.

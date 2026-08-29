@@ -56,10 +56,13 @@ import { TR } from "./ui/strings";
  *    playhead already follows — so it cannot drift from the sound. Never add a second timing
  *    source (docs/features/fingerboard.md).
  * 2. **Take the timeline, never rebuild it.** `props.timeline` has the makam bend and the
- *    transpose already resolved into `freqHz`. `PianoRoll.tsx` calls `buildTimeline(doc)` itself
- *    and therefore draws WRITTEN pitches; that is harmless for a roll and wrong here, where the
- *    bent koma is exactly what the view claims to show. For the same reason nothing here is
- *    labelled with `NoteEvent.noteName`: `withKomaDeltas` leaves that field stale on purpose.
+ *    transpose already resolved into `freqHz`; a view that calls `buildTimeline(doc)` itself gets
+ *    WRITTEN pitches, which would be wrong on exactly the makams this feature exists to show. ⚠ The
+ *    now-deleted piano roll did rebuild it, harmlessly for a roll — the rule survives the file
+ *    (docs/DECISIONS.md, 2026-08-16). For the same reason nothing here is labelled with
+ *    `NoteEvent.noteName`: `withKomaDeltas` leaves that field stale on purpose.
+ * 3. **The kanun half of this feature reads the DOCUMENT instead**, and that is not an
+ *    inconsistency — a kanun course is a written note. See `Kanun.tsx` and `InstrumentView.tsx`.
  */
 
 /**

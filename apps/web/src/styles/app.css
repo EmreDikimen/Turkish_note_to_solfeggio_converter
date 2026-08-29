@@ -936,3 +936,179 @@
   vector-effect: non-scaling-stroke;
   filter: drop-shadow(0 0 3px rgba(20, 184, 166, 0.85));
 }
+
+/* ---------------------------------------------------------------------------------------------
+   The kanun view (F3, 2026-08-29). Unlike the violin above, this instrument is DRAWN rather than
+   photographed, so every colour here is ours and both themes have to be served explicitly — there
+   is no varnished wood underneath to sit on. */
+
+.kv-kanun {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  justify-items: center;
+}
+
+.kv-kanun__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+}
+
+/* ⚠ Sized by WIDTH, not by height like the violin — a kanun is a wide trapezoid, so height is what
+   follows. `max-height` still bounds it so the hint underneath survives on a short screen. */
+/* ⚠ The height cap is expressed as a MAX-WIDTH, not as a max-height, and that is deliberate. An
+   <svg> takes its height from its width and its viewBox shape; capping the height instead leaves
+   the width where it was, so the browser letterboxes — half the frame goes empty and the close-up
+   stops being a close-up. Bounding the width bounds the height with it, because the viewBox shape
+   is now the same at both zoom levels (see `fitAspect` in kanunGeometry.ts). 113vh is 62vh times
+   the 1100:600 shape. */
+.kv-kanun__svg {
+  display: block;
+  width: 100%;
+  max-width: min(1100px, 113vh);
+}
+
+.kv-kanun__opening {
+  margin: 0;
+  max-width: 62ch;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+.kv-kanun__opening-label {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.kv-kanun__opening [data-omr="kanun-opening-item"] {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The soundboard. Warm, because a kanun is wood, but muted enough that the levers on top of it are
+   the thing the eye lands on. */
+.kv-kanun__body {
+  fill: #7c4a24;
+  stroke: #4a2b13;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.kv-kanun__bridge {
+  stroke: #f0e2d0;
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* A course is three strings in unison, so three lines. ⚠ `non-scaling-stroke` matters here for the
+   same reason it does on the violin: the mandal close-up changes the viewBox by 3-4x, and without
+   it a string would get four times fatter as the picture got closer — and three fat strings would
+   merge back into the one line this replaced. */
+.kv-kanun__courses line {
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The course sounding now — all three of its strings, because a player plucks a course and never
+   one of its strings. Red, as the owner asked (2026-08-29); it is the one thing on the instrument
+   that follows the NOTE rather than the mandal state, so it does not share the change frame's job. */
+.kv-kanun__courses g[data-course-state="playing"] line {
+  stroke: #f43f5e;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.85));
+}
+
+/* A mandal. ⚠ **TWO COLOURS, NOT FILLED-VERSUS-EMPTY** (owner, 2026-08-29: *"açık mandallar bir
+   renkte, kapalı mandallar farklı bir renkte olsun... birbirinden ayrı ayırabilelim"*). An empty box
+   reads as absence rather than as a state, and on brown wood a faint outline is nearly invisible at
+   the size these are drawn. Both states are now solid and sit on OPPOSITE sides of the wood's
+   lightness — ivory for a raised lever, near-black for a lowered one — so they are told apart at a
+   glance and at any zoom. Exactly one per course is ivory; see the comment in Kanun.tsx for why
+   that is the truthful drawing rather than a simplification. */
+.kv-kanun__mandals rect {
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.kv-kanun__mandals rect[data-mandal-state="down"] {
+  fill: #2b1a0c;
+  stroke: rgba(0, 0, 0, 0.55);
+}
+
+.kv-kanun__mandals rect[data-mandal-state="up"] {
+  fill: #faf7f0;
+  stroke: #6b4a2c;
+}
+
+/* Where the natural sits, so the eye can read "two komas flat" straight off the picture without
+   counting from the end. ⚠ A stroke, never a fill — a fill would claim the lever is raised. Amber
+   rather than white so it shows on both of the two fills above, and so it cannot be confused with
+   the red change frame below. */
+.kv-kanun__mandals rect[data-natural="1"] {
+  stroke: #fbbf24;
+  stroke-width: 1.6;
+  stroke-dasharray: 2.5 2;
+}
+
+/* ⚠ A CHANGE IS A RED **FRAME**, NOT A RED FILL (owner, 2026-08-29: *"sadece değişenlerin frame i
+   kırmızı olsun"*). The fill is carrying the up/down state and must keep carrying it while the
+   change is lit — a red fill would black out exactly the information the flash is drawing attention
+   to. The lever that came up gets a solid frame, the one that went down a dashed one, so the move
+   reads as a move and not as two unrelated marks. ⚠ These rules must stay AFTER the natural marker
+   above, so a change on the natural lever shows red rather than amber. */
+.kv-kanun__mandals rect[data-changed] {
+  stroke: #f43f5e;
+  stroke-width: 2.6;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.95));
+}
+
+.kv-kanun__mandals rect[data-changed="from"] {
+  stroke-width: 1.8;
+  stroke-dasharray: 3 2.5;
+  filter: none;
+}
+
+/* Perde names, ⚠ OUTSIDE the soundboard since 2026-08-29 — so they sit on the PAGE and take the
+   theme's own colour. The violin's white-with-a-dark-outline treatment would be wrong here: that
+   exists because its string names sit on varnished wood, and these no longer do. */
+.kv-kanun__labels text {
+  fill: var(--fg-muted);
+}
+
+/* ---------------------------------------------------------------------------------------------
+   "Enstrüman üzerinde" — the one page that holds both instruments (owner, 2026-08-29). It owns the
+   picker and the explanation; each instrument's own drawing keeps its own styles above. */
+
+/* ⚠ `justify-items: stretch`, NOT `center` — and this is load-bearing, not a preference. The kanun
+   sizes itself by WIDTH (`.kv-kanun__svg` is `width: 100%`), so a centred grid item shrinks to its
+   content and takes the drawing down with it: merging the two views halved the kanun on the first
+   attempt. The violin is unaffected either way because it sizes by height. Each child below centres
+   itself instead, which is what keeps both instruments right. */
+.kv-instrument {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: stretch;
+}
+
+.kv-instrument__picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+}
+
+.kv-instrument__hint {
+  margin: 0 auto;
+  max-width: 62ch;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}

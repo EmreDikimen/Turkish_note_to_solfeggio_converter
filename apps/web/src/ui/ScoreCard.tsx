@@ -14,7 +14,7 @@ import type { NoteModelDocument } from "@turkish-omr/core";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
 
-export type ViewMode = "roll" | "sheet" | "fingerboard";
+export type ViewMode = "sheet" | "instrument";
 
 function duration(totalMs: number): string {
   const s = Math.round(totalMs / 1000);
@@ -80,8 +80,10 @@ export function ScoreCard({
           onChange={onViewMode}
           items={[
             { value: "sheet", label: TR.card.viewSheet, id: "view-sheet" },
-            { value: "roll", label: TR.card.viewRoll, id: "view-roll" },
-            { value: "fingerboard", label: TR.card.viewFingerboard, id: "view-fingerboard" },
+            // ⚠ ONE instrument tab, not one per instrument (owner, 2026-08-29): from the outside
+            // there is a single question — where do I play this — and the instrument is an answer
+            // to it, chosen by the picker inside. The piano roll was removed the same day.
+            { value: "instrument", label: TR.card.viewInstrument, id: "view-instrument" },
           ]}
         />
 
@@ -157,9 +159,7 @@ export function ScoreCard({
           ? editMode
             ? TR.card.hintSheetEditing
             : TR.card.hintSheet
-          : viewMode === "fingerboard"
-            ? TR.card.hintFingerboard
-            : TR.card.hintRoll}
+          : TR.card.hintInstrument}
       </p>
     </section>
   );

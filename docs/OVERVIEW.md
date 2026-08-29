@@ -249,7 +249,7 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    shape, only the ear checks the sound.** Budget one listening pass per instrument.
 13. ~~Show where to put your finger — the violin, and only the violin.~~ ✅ **Built 16 August, and it
    has been on the website since 18 August.** Open <https://komavision.netlify.app>, pick **Keman**,
-   and there is now a third tab beside the notes and the piano roll: a violin neck, a dot that moves
+   and there is now a second tab beside the notes: an instrument you pick, with a mark that moves
    with the music as it plays, and a small tick at **every position the piece you loaded actually
    uses** on each string. So the uneven spacing you see is the music's own, not a diagram's.
    This is the feature no ordinary music app can copy: a normal app knows twelve frets, so it

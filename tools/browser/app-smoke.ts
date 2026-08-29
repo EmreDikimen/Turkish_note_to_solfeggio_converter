@@ -2,7 +2,7 @@
  * Does the app's "Read strips" button actually produce a playable score? (MVP W2 acceptance)
  *
  * The parity harness (`tools/vision/parity/arm-b.ts`) proves the pipeline; this proves the WIRING —
- * `onStrips` → `loadDoc` → SheetView/PianoRoll → the transport buttons. Those are the parts a
+ * `onStrips` → `loadDoc` → SheetView → the transport buttons. Those are the parts a
  * headless pipeline test cannot reach, and they are what a friend will actually touch.
  *
  *   npx tsx tools/browser/app-smoke.ts [--page data/real/strips_v2/<stem>]

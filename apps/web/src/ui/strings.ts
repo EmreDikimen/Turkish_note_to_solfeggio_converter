@@ -91,8 +91,7 @@ export const TR = {
 
   card: {
     viewSheet: "Nota",
-    viewRoll: "Piyano rulosu",
-    viewFingerboard: "Keman",
+    viewInstrument: "Enstrüman üzerinde",
     lyrics: "Güfte",
     lyricsTitle: "Notaların altına güfte hecelerini yaz",
     edit: "✎ Düzenle",
@@ -113,16 +112,9 @@ export const TR = {
       "eklenir — perdesini tıkladığınız yükseklik belirler. Üçleme aracıyla bir notaya, sonra iki " +
       "sonrakine tıklayın: üçü üçleme olur. Ölçü usulden uzun ya da kısa kalırsa sağ üst köşesinde " +
       "bir işaret belirir.",
-    hintRoll:
-      "Dikey eksen 53 koma. Notayı yukarı/aşağı sürükleyin: perde değişir. Sağ kenarından " +
-      "çekin: süresi değişir.",
-    hintFingerboard:
-      "Çalın: nokta, parmağın kemanda basacağı yeri gösterir. Renkli çizgiler standart keman " +
-      "notalarıdır — birinci pozisyonda dört parmağın normalde bastığı yedi yer, her eserde " +
-      "aynı; renk, o çizgiyi hangi parmağın bastığını gösterir. Kemanda perde yoktur: koma " +
-      "sesler iki çizginin arasına düşer, koma farkı da buradan görülür. Çizgileri " +
-      "kapatabilirsiniz. Açık Sol telinin altına düşen sesler kemanda çıkmaz; o notada nokta " +
-      "görünmez.",
+    hintInstrument:
+      "Çalın: eserin o anda çaldığı yer, seçtiğiniz enstrümanın üzerinde gösterilir. Enstrümanı " +
+      "yukarıdaki listeden değiştirebilirsiniz — ses de ona göre ayarlanır.",
   },
 
   sheet: {
@@ -170,6 +162,25 @@ export const TR = {
     under: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden kısa (${beats})`,
   },
 
+  instrument: {
+    pick: "Enstrüman",
+    hintViolin:
+      "Nokta, parmağın kemanda basacağı yeri gösterir. Renkli çizgiler standart keman " +
+      "notalarıdır — birinci pozisyonda dört parmağın normalde bastığı yedi yer, her eserde " +
+      "aynı; renk, o çizgiyi hangi parmağın bastığını gösterir. Kemanda perde yoktur: koma " +
+      "sesler iki çizginin arasına düşer, koma farkı da buradan görülür. Çizgileri " +
+      "kapatabilirsiniz. Açık Sol telinin altına düşen sesler kemanda çıkmaz; o notada nokta " +
+      "görünmez.",
+    hintKanun:
+      "Kırmızı olan perde, o an çalınan perdedir — üç teli birden yanar, çünkü kanunda bir " +
+      "perde üç teldir. Soldaki kutucuklar mandallardır: her perde için 12 tane, her biri bir " +
+      "koma. Açık renk olan kalkık mandaldır, koyu olanlar inik; sarı kesik çerçeve natürelin " +
+      "yeridir. Bir mandal yeni değiştiyse çerçevesi kırmızı yanar ve sonra söner — kutucuğun " +
+      "rengi değişmez, çünkü renk mandalın durumunu taşır. Eserin başında kurulacak mandallar " +
+      "yukarıda yazılıdır: kanuncu çalmaya başlamadan önce onları kurar. Kanunun sesinin " +
+      "dışındaki notalarda hiçbir perde yanmaz.",
+  },
+
   fingerboard: {
     // The tuning picker only appears once there is more than one tuning to pick — see Fingerboard.tsx.
     tuning: "Akort",
@@ -183,6 +194,16 @@ export const TR = {
     zoomTitle:
       "Yalnızca klavyeyi gösterir. Yakınlık bu esere göre ayarlanır: en yukarıda çalınan " +
       "perdeye kadar iner, böylece hiçbir nota çerçevenin dışında kalmaz.",
+  },
+
+  kanun: {
+    alt: "Kanun — çalınan telin ve mandalların yeri",
+    zoom: "Mandallara yaklaş",
+    zoomTitle:
+      "Mandalları büyütür. Yakınlık bu esere göre ayarlanır: yalnızca eserin kullandığı tel " +
+      "gruplarını gösterir, böylece kutucuklar telefonda da okunur.",
+    opening: "Çalmadan önce kurulacak mandallar:",
+    openingNone: "hepsi natürel",
   },
 
   advanced: {

@@ -40,9 +40,13 @@ import { useDocHistory } from "./useDocHistory";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
-import { PianoRoll, type PitchRange } from "./PianoRoll";
 import { SheetView, type AccidentalMode } from "./SheetView";
-import { Fingerboard } from "./Fingerboard";
+import {
+  InstrumentView,
+  instrumentForVoice,
+  voiceForInstrument,
+  type InstrumentId,
+} from "./InstrumentView";
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
@@ -70,7 +74,7 @@ import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { respellAeu } from "../../../tools/render/respell";
 import { parseSignatureBody } from "../../../tools/render/lilypond";
 
-type ViewMode = "roll" | "sheet" | "fingerboard";
+type ViewMode = "sheet" | "instrument";
 // SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
 type SheetLayout = { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number };
 
@@ -250,7 +254,6 @@ export function App() {
   const doc = history.doc;
   // The piano-roll's vertical pitch range. Computed ONCE per loaded score (not on every
   // edit) so dragging a note doesn't make the whole view jump/rescale under the cursor.
-  const [pitchRange, setPitchRange] = useState<PitchRange | null>(null);
   const [error, setError] = useState<AppError | null>(null);
   // Transport state: "stopped" → Play; "playing" → Pause; "paused" → Resume. Stop resets it.
   const [playState, setPlayState] = useState<"stopped" | "playing" | "paused">("stopped");
@@ -328,6 +331,16 @@ export function App() {
   // through `applyPlayback` for the same reason the kit does: the buffer is chosen as each note is
   // scheduled. The default is the synthesised tone, which is the only voice that needs no download.
   const [voice, setVoice] = useState<VoiceId>(DEFAULT_VOICE);
+  /**
+   * Which instrument the "Enstrüman üzerinde" page draws (owner, 2026-08-29).
+   *
+   * ⚠ It opens on whatever the voice already is, when that is an instrument we can draw, so someone
+   * who chose Kanun in the transport does not find a violin here. It is deliberately NOT a live
+   * two-way binding: choosing Klarnet in the transport must not blank this page.
+   */
+  const [instrument, setInstrument] = useState<InstrumentId>(
+    () => instrumentForVoice(DEFAULT_VOICE) ?? "violin",
+  );
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>(() => backend.voiceInfo());
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
@@ -377,16 +390,6 @@ export function App() {
     // Assign each event a stable bar number from SymbTr's offset column up front, so measure
     // grouping is correct for every usul and survives edits (which would otherwise lose it).
     const d = assignBars(raw);
-    const komas = d.events.filter((e) => e.kind === "note").map((e) => e.koma53);
-    const pad = 3;
-    // A decoded page can legitimately contain no notes (a blank crop, a failed read). Math.min of
-    // an empty spread is Infinity, which produces a dead PitchRange and an unreadable roll — so
-    // fall back to a middle octave rather than propagating it.
-    setPitchRange(
-      komas.length
-        ? { minKoma: Math.min(...komas) - pad, maxKoma: Math.max(...komas) + pad }
-        : { minKoma: 0, maxKoma: 53 }
-    );
     setBpm(estimateBpm(d)); // start each piece at its own natural tempo
     // Default the metronome's usul to the piece's own usul; if it isn't a known one, pick the
     // usul whose meter matches the derived time signature, else fall back to the first.
@@ -592,6 +595,20 @@ export function App() {
     applyPlayback(bpm, metronome, usulName, percussion, percussionKit, v);
   }
 
+  /**
+   * The instrument page's picker: it changes the PICTURE and the SOUND together (owner,
+   * 2026-08-29: *"ses de ona göre otomatik ayarlanacak"*).
+   *
+   * ⚠ Only on an explicit change, never on merely opening the tab — a sampled voice is a 20–35 MB
+   * download and "load only on selection" is F1's requirement, not an optimisation. So a first
+   * visit can show a violin while the default tone still plays; touching this resolves it, and the
+   * picker says so while the samples arrive.
+   */
+  function applyInstrument(id: InstrumentId) {
+    setInstrument(id);
+    applyVoice(voiceForInstrument(id));
+  }
+
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
   function applyPercussionVolume(v: number) {
     setPercussionVolume(v);
@@ -664,7 +681,7 @@ export function App() {
     // Edits arrive in the DISPLAYED pitch space. When the staff is rewritten by the transpose,
     // map the dragged pitch back to the stored (base) score before applying.
     const shift = !keepSheet && transpose !== 0 ? transpose : 0;
-    // One drag = one undo entry: a pointer-move emits an edit per frame (see PianoRoll), and
+    // One drag = one undo entry: a pointer-move emits an edit per frame, and
     // stepping back through forty of them is not undo.
     history.apply(
       (prev) => {
@@ -899,9 +916,6 @@ export function App() {
   function applyTranspose(target: number, keep: boolean) {
     if (!doc) return;
     onStop();
-    const shown = keep || target === 0 ? doc : transposeDoc(doc, target);
-    const komas = shown.events.filter((e) => e.kind === "note").map((e) => e.koma53);
-    if (komas.length) setPitchRange({ minKoma: Math.min(...komas) - 3, maxKoma: Math.max(...komas) + 3 });
     setTranspose(target);
     setKeepSheet(keep);
   }
@@ -1283,20 +1297,23 @@ export function App() {
               ) : null
             }
           >
-            {viewMode === "roll" ? (
-              pitchRange && (
-                <PianoRoll doc={displayDoc ?? doc} pitchRange={pitchRange} onEditNote={updateEvent} />
-              )
-            ) : viewMode === "fingerboard" ? (
-              // ⚠ `timeline` is passed, never rebuilt inside the view: it is the one place the
-              // makam bend and the transpose are already resolved into freqHz, and a finger
-              // position drawn from written pitches would be wrong on exactly the makams this
-              // feature exists to show. (PianoRoll above does rebuild — harmless for a roll.)
-              timeline && (
-                <Fingerboard
+            {viewMode === "instrument" ? (
+              // ⚠ Both the document AND the timeline go in, and each view uses the one it needs:
+              // the violin takes `timeline`, because a fingerboard cares only what a note SOUNDS and
+              // that is the one place the makam bend and the transpose are already in `freqHz`; the
+              // kanun takes the document, because a course is a WRITTEN note. `makamDeltas` rides
+              // along for the kanun, which is the one bend a mandal can express. Neither view ever
+              // calls `buildTimeline` itself. Full reasoning in the two files' headers.
+              timeline && (doc || displayDoc) && (
+                <InstrumentView
+                  doc={displayDoc ?? doc!}
                   timeline={timeline}
+                  makamDeltas={makamDeltas}
                   playing={playState !== "stopped"}
                   getPositionMs={getPositionMs}
+                  instrument={instrument}
+                  onInstrument={applyInstrument}
+                  voiceStatus={voiceStatus}
                 />
               )
             ) : (

@@ -71,3 +71,25 @@ export function centsAboveRef(
 ): number {
   return ((koma - refKoma) / commasPerOctave) * 1200;
 }
+
+/**
+ * The inverse of `koma53ToFreq`: what comma a frequency sits on.
+ *
+ * What/why: the audio side of this project only ever goes comma → Hz, but a view that is handed a
+ * `Timeline` gets Hz and has to name the pitch again. The kanun view needs it (`kanun.ts`), because
+ * a mandal is a comma, not a frequency.
+ *
+ * ⚠ **The result is deliberately NOT rounded.** A makam deviation is a real interval, and
+ * `makam.ts` carries entries like −1.5 komas, so a sounding pitch genuinely can sit between two
+ * commas. Rounding here would hide that from every caller; rounding at the point of use lets the
+ * caller report how far off it landed.
+ */
+export function freqToKoma53(
+  freq: number,
+  refFreq: number = DEFAULT_REF_FREQ,
+  refKoma: number = DEFAULT_REF_KOMA,
+  commasPerOctave: number = COMMAS_PER_OCTAVE,
+): number {
+  if (!Number.isFinite(freq) || freq <= 0) return Number.NaN;
+  return refKoma + commasPerOctave * Math.log2(freq / refFreq);
+}

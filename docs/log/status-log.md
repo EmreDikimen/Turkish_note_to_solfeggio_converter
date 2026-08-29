@@ -2,12 +2,40 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-29
+updated: 2026-08-30
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-29 (latest) — the sol klarnet artwork lands, and the drawing is measured rather than read
+## 2026-08-30 (latest) — the klarnet view is built on a photograph, and the whole F3 backlog deploys at once
+
+The clarinet view was finished and everything waiting on this machine went to the live site in one
+deploy — the violin's 2026-08-27 rebuild, the 2026-08-29 kanun view and one-tab merge, and the sol
+klarnet. `smoke:live` **PASS on both paths** (server 56.8 s, Hub fallback 66.2 s, identical scores:
+9 staves / 26 strips / 399 notes / 26 bars). Current state → [../STATUS.md](../STATUS.md).
+
+⛔ **The entry below this one records the schematic as what ships, and it did not survive the same
+day.** Its keywork was **Boehm (French)** and the sol klarnet is **German**; a drawing of our own was
+rejected on sight too (*"çizim pek olmamış"*). What ships is a crop of Wikimedia's Yamaha
+YCL-457II-22, **CC BY-SA 4.0** — the project's **first asset carrying a duty**, credited in both
+THIRD-PARTY files, and our cropped copy is itself CC BY-SA. ⚠ The chain looked exactly like the thing
+the image rule exists to stop (metadata reads `Artist: Yamaha`, no permission line); it survives only
+on the root `.tiff`'s **VRT ticket 2017012510009331** from Yamaha Music Europe.
+
+⚠ **Three docs carried the crop as 182×1600 / 328 KB and the file on disk is 244×1560 / 453 KB** —
+the numbers were written against an earlier export and never refreshed. Corrected in
+`docs/THIRD-PARTY.md`, `docs/DECISIONS.md` and the **shipped** `apps/web/public/THIRD-PARTY.txt`,
+where the wrong figure was describing the modification a reuser is entitled to know about.
+
+⚠ **The klarnet view shipped with no browser check, which is the one gap this deploy carries.**
+`smoke:editor` picks the clarinet **voice**; nothing asserts the **view**, unlike the kanun's 20
+checks and the violin's. Its DOM contract exists and is unused: `#clarinet[data-holes|data-keys|
+data-lip-reach|data-note-state]`, `[data-omr="clarinet-key"]`, `[data-omr="clarinet-lip-tick"]`,
+`[data-omr="clarinet-back"]`. Before deploying it was driven by hand in the real app instead — 6
+holes, 18 keys, 5 lip ticks, the back panel, the photo loaded, no page errors, and the picker moved
+the transport's voice. That is a look, not a regression guard.
+
+## 2026-08-29 — the sol klarnet artwork lands, and the drawing is measured rather than read
 
 The owner asked for the clarinet next, and specifically the **sol klarnet** — the G clarinet, which
 is *the* Turkish one and carries **Albert (simple) system** keywork. Design chapter:

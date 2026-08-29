@@ -195,11 +195,9 @@ read and that the baseline column is re-measured with it; the floors do not move
 [rung3/round3-criteria.md](rung3/round3-criteria.md).
 
 ✅ **TRACK A IS SHIPPED AND LIVE — <https://komavision.netlify.app>.** F1's instrument voices, F2's
-drums and F3's violin fingerboard are deployed. ⚠ **What is on this machine is now well ahead of what
-is on the site, and all of it needs one deploy**: the violin's 2026-08-27 rebuild, plus F3's whole
-2026-08-29 day — **a kanun view, the two instrument views merged into one "Enstrüman üzerinde" tab
-whose picker also sets the playback voice, and the piano roll deleted** ([features/README.md](features/README.md) ·
-[features/kanun-view.md](features/kanun-view.md)). ⛔ **The fingerboard originally went out without
+drums and all three F3 instruments are deployed. ✅ **The machine's backlog went out in ONE deploy on 2026-08-30** — the violin's 2026-08-27 rebuild, F3's whole 2026-08-29 day (kanun view, the two
+views merged into one "Enstrüman üzerinde" tab whose picker also sets the playback voice, piano roll deleted) and the sol klarnet. `smoke:live` passes
+on both paths; the clarinet photo and its CC BY-SA credit were spot-checked live by hand, which `smoke:live` does not cover. ⛔ **The fingerboard originally went out without
 check 25, its written pre-condition** — skipped on the owner's instruction. Half of that look has
 since happened and it changed the view twice; ⚠ **the other half — *is the mark in the right place* —
 is still owed for BOTH instruments** (checks 25 and 26) and is still the only thing no automated
@@ -249,7 +247,7 @@ the model track never touches the app.** Either can be worked on without waiting
    then exposed a real fault one level down: the **string choice** had no notion of a hand and let an
    ascending line climb one string forever (22 of Meltem's 83 notes above the octave). It is now a
    hand-position model — numbers in [features/fingerboard.md](features/fingerboard.md). Typecheck,
-   `npm test` and `smoke:editor` all pass; the change is **not deployed**. [features/fingerboard.md](features/fingerboard.md) ·
+   `npm test` and `smoke:editor` all pass; **deployed 2026-08-30**. [features/fingerboard.md](features/fingerboard.md) ·
    [DECISIONS.md](DECISIONS.md).
 3c. **✅ F3 HAS A SECOND INSTRUMENT: THE KANUN (2026-08-29)**, after the owner reopened the
    violin-only scope — *"şimdi biz kemanı ekledik çok hoş, kanunu eklemeye başlayabiliriz"*. A drawn
@@ -260,8 +258,8 @@ the model track never touches the app.** Either can be worked on without waiting
    **opening mandal plan**, listed in words before you press play. ⭐ The string-choice trap that cost
    `fingering.ts` a rewrite cannot arise, because the written spelling names the course: **1,825 of
    1,825 notes placed, 0 respellings, 0 unreachable** on the four scores on disk. Typecheck,
-   `npm test` (46 new checks) and `smoke:editor` (20 new, **207 ALL PASS**) all pass; **not
-   deployed**. [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
+   `npm test` (46 new checks) and `smoke:editor` (20 new, **207 ALL PASS**) all pass; **deployed
+   2026-08-30**. [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
 
 3d. **✅ ONE INSTRUMENT PAGE, AND THE PIANO ROLL IS GONE (2026-08-29)**, both the owner's call after
    seeing the kanun. Keman and Kanun now share one tab — **Enstrüman üzerinde** — with a dropdown
@@ -269,7 +267,7 @@ the model track never touches the app.** Either can be worked on without waiting
    survives it and is unrelated. ⚠ The tab does **not** set the voice merely by being opened: a
    sampled voice is a 20–35 MB Hub download and "load only on selection" is F1's requirement, so a
    first visit can draw a violin while the default tone still plays. `smoke:editor` **217 ALL PASS**,
-   including that picking Kanun moves the transport's own voice. **Not deployed.**
+   including that picking Kanun moves the transport's own voice. **Deployed 2026-08-30.**
    [features/README.md](features/README.md) · [DECISIONS.md](DECISIONS.md).
 
    ⏭ **THE NEXT PRODUCT ACTION, and the only one that needs a person, is
@@ -285,9 +283,11 @@ the model track never touches the app.** Either can be worked on without waiting
    ⚠ **If the look finds something, the fix now needs its own deploy** — the cost of the inverted
    order, and it is small (`deploy:app`, then `smoke:live`). ⚠ `smoke:live` checks neither images nor
    audio; spot-check both by hand after any deploy touching them.
-3e. **🚧 F3's THIRD INSTRUMENT — THE SOL KLARNET — RUNS IN THE APP, NOT YET CHECKED (2026-08-29).**
+3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, STILL UNCHECKED IN THE BROWSER (built 2026-08-29).**
    Fingering table, lip bar, view and wiring done; `npm test` (48 new), typecheck and `smoke:editor`
-   pass. ⛔ **Two wrong turns, both caught by the owner's eye and by no test**: the first table came
+   pass. ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,
+   `[data-omr="clarinet-lip-tick"]`) is unasserted, unlike the kanun's and the violin's. Confirmed to render pre-deploy by hand only: 6 holes, 18 keys, 5 lip ticks, photo loaded, no page
+   errors. ⛔ **Two wrong turns, both caught by the owner's eye and by no test**: the first table came
    from **Boehm** diagrams for an **Albert** instrument (`T lh123|rh1--` is Si♭ on one, Si on the
    other), and the artwork went CC0-schematic → own-drawing → **photograph**, no CC0 photo of a
    German-system clarinet existing. The table is now read from the Oehler/Albert chart's own markup;

@@ -7,7 +7,55 @@ updated: 2026-08-29
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-29 (latest) — the kanun joins F3, the two instrument views become one tab, and the piano roll goes
+## 2026-08-29 (latest) — the sol klarnet artwork lands, and the drawing is measured rather than read
+
+The owner asked for the clarinet next, and specifically the **sol klarnet** — the G clarinet, which
+is *the* Turkish one and carries **Albert (simple) system** keywork. Design chapter:
+[../features/clarinet-view.md](../features/clarinet-view.md). The view is **not built**; what landed
+is the artwork, the measurements and the design.
+
+⭐ **The most useful finding is that a wind view needed a DRAWING, and the docs had predicted it
+before either instrument existed.** `fingerboard.md` split the instruments into *formula* and
+*lookup* back in August: a violin position must land on an exact pixel of a photograph, while a
+clarinet fingering is a list of which holes are covered. Nothing needs pixel-exact placement, and
+silver keys on dark wood are the hardest possible way to read open-versus-closed. So the clarinet is
+a CC0 layered schematic and the violin is a photograph, and that is a fact about the instruments.
+
+⛔ **There is also no usable free photograph of a Turkish sol klarnet, which is worth recording so
+nobody searches again.** Commons was searched for `klarnet`, `Turkish clarinet`, `G clarinet` and
+`Albert system clarinet`. The only file named for it is **600×130 at 8 KB** with an unclear author.
+The two good Albert-system photos are **CC BY 4.0** and **CC BY-SA 3.0**; both would have needed the
+CC0-only image rule amended a second time, for an asset that is the wrong shape for the job.
+
+⭐ **The lip bar unblocked winds, and it came from the owner in one sentence.** Winds had been parked
+as *design, not a queue* since 2026-08-15 for a reason that looked fatal: **there is no fingering
+table for komas**, because a printed chart gives twelve notes per octave. The owner's answer —
+*"klarnette koma sesleri vermek için dudağımızı salıyoruz"* — splits the view in two: the schematic
+shows the nearest standard fingering, and a separate bar shows how far to relax the lip. ⭐ It is the
+**same shape as the violin's answer, reached independently**: a fixed chart, with the microtone
+living in the gap between its lines. Reach confirmed by the owner at **~4 komas (a semitone)**, and
+the written note is fingered directly with no transposition to apply.
+
+⭐ **Measuring the drawing beat reading it, twice.** Every layer was rendered alone in headless
+Chromium and read with `getBBox()`. (1) Five layers — `e`, `f`, `fis`, `g`, `gis` — **paint below the
+file's own declared canvas**, so macOS `qlmanage` crops them away and a quick look calls them empty;
+they are the right little-finger keys. (2) The tight ink box is **x 262–449, y 56–988**, a 1:5
+sliver, so the view must be bounded by HEIGHT, the same lesson the violin learned the hard way.
+
+⭐ **And the layer NAMES were then checked against 16 published fingering diagrams rather than
+trusted or re-asked.** The rule turned out to be *a hole is named by the note sounding when it is the
+lowest one still covered*. Two names had looked wrong. **One was right and the doubt was wrong**:
+`bes` at hole 3 is correct — opening the bottom two holes gives **Si♭**, and Si needs an extra lever,
+which is why the file has no `b` layer at all. **One is genuinely wrong**: `fis1` at hole 6 is a
+whole tone out, and that hole is **Mi**. ⚠ The correction belongs in the fingering table, never in
+the SVG — the layer id is the interface.
+
+⚠ **What the table still lacks is a short, specific list.** The sourced set leaves 9-comma gaps
+(Sol→La, Do→Re, Re→Mi), and **a 9-comma gap cannot be bridged by a 4-koma lip**, so Si♮, Do♯, Re♯
+and La♯ need real fingerings. ⛔ They must not be lifted from the diagrams above: those are **Boehm**
+instruments, and a fork fingering is exactly where Boehm and Albert part company.
+
+## 2026-08-29 — the kanun joins F3, the two instrument views become one tab, and the piano roll goes
 
 The owner reopened F3's violin-only scope after seeing the violin view stand up, and asked for the
 kanun next — drawn in SVG, with the courses and their mandals. Built, tested and screenshotted the

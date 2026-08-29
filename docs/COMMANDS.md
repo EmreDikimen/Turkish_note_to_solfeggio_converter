@@ -22,6 +22,8 @@ npm run typecheck                    # all workspaces
 npm test                             # stitcher + label round-trip + edit primitives + usul strokes + voice manifest
                                      # …plus violin fingering (the 53-TET position formula + string choice)
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
+npx tsx tools/core/clarinet-chart.ts out.html   # sol klarnet: all 33 fingerings as one HTML page, for a player to audit
+npx tsx tools/core/clarinet-editor.ts out.html  # …and the editor that produced the table: click points per note, copy the JSON back
                                      # …plus the instrument voices; add --voices-url <hub> for the REAL samples
                                      # …and note-box geometry on a GRACE-NOTE score (see the rule below)
                                      # …and the fingerboard tab: the marker lands on a string and MOVES

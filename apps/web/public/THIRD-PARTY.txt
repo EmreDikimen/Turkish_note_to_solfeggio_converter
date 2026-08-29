@@ -125,6 +125,29 @@ Wikimedia Commons, "Violin VL100.png"  —  CC0 1.0 (kamu malı / public domain)
   the same author's own photograph, released into the public domain. CC0 requires
   no attribution; the credit is given so the source stays traceable.
 
+Sol klarnet fotoğrafı — enstrüman sekmesi / clarinet photo for the instrument tab:
+
+Wikimedia Commons, "Yamaha Clarinet YCL-457II-22"
+  © Yamaha Corporation — kaynak / source: Yamaha Music Europe
+  Lisans / licence: CC BY-SA 4.0  https://creativecommons.org/licenses/by-sa/4.0/
+  Arka planı kaldıran / background removed by: Habitator terrae
+  https://commons.wikimedia.org/wiki/File:Yamaha_Clarinet_YCL-457II-22.png
+  /instruments/clarinet-ycl457-oehler.png
+
+  ⚠ BU DOSYA DEĞİŞTİRİLMİŞTİR: kırpıldı ve 244x1560 boyutuna küçültüldü.
+  Değiştirilmiş hâli de aynı lisansla, CC BY-SA 4.0 ile sunulmaktadır.
+
+  ⚠ THIS FILE IS MODIFIED: cropped to the instrument and scaled to 244x1560.
+  The modified version is likewise offered under CC BY-SA 4.0.
+
+  Kaynak zinciri denetlendi: Yamaha'nın kendi ürün fotoğrafının serbest lisansla
+  yayımlanması, Wikimedia'nın izin kayıt sistemindeki 2017012510009331 numaralı
+  kayda dayanır. Bu, bir kullanıcının üretici fotoğrafı üzerindeki mesnetsiz
+  iddiası değildir.
+
+  The provenance chain was checked: the free licence on Yamaha's own product
+  photograph rests on Wikimedia VRT permission ticket 2017012510009331, from
+  Yamaha Music Europe. It is not a user's bare claim over a manufacturer's photo.
 
 KÜTÜPHANELER / LIBRARIES
 ------------------------

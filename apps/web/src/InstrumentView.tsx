@@ -4,6 +4,7 @@ import {
 } from "@turkish-omr/core";
 import { Fingerboard } from "./Fingerboard";
 import { Kanun } from "./Kanun";
+import { Clarinet } from "./Clarinet";
 import type { VoiceId } from "./audio/instruments";
 import type { VoiceStatus } from "./webAudioBackend";
 import { TR } from "./ui/strings";
@@ -36,6 +37,7 @@ import { TR } from "./ui/strings";
 export const INSTRUMENTS = [
   { id: "violin", label: "Keman", voice: "violin" },
   { id: "kanun", label: "Kanun", voice: "kanun" },
+  { id: "clarinet", label: "Sol klarnet", voice: "clarinet" },
 ] as const;
 
 export type InstrumentId = (typeof INSTRUMENTS)[number]["id"];
@@ -113,7 +115,15 @@ export function InstrumentView({
         )}
       </div>
 
-      {instrument === "kanun" ? (
+      {instrument === "clarinet" ? (
+        <Clarinet
+          doc={doc}
+          timeline={timeline}
+          makamDeltas={makamDeltas}
+          playing={playing}
+          getPositionMs={getPositionMs}
+        />
+      ) : instrument === "kanun" ? (
         <Kanun
           doc={doc}
           timeline={timeline}
@@ -129,7 +139,11 @@ export function InstrumentView({
       )}
 
       <p className="kv-instrument__hint">
-        {instrument === "kanun" ? TR.instrument.hintKanun : TR.instrument.hintViolin}
+        {instrument === "clarinet"
+          ? TR.instrument.hintClarinet
+          : instrument === "kanun"
+            ? TR.instrument.hintKanun
+            : TR.instrument.hintViolin}
       </p>
     </div>
   );

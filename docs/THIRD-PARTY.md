@@ -25,6 +25,7 @@ stays on the developer's disk, where local use is not distribution.
 | **Freesound 140291** (bendir strokes) and **211133** (kanun chromatic notes), both CompMusic/UPF | **CC0** | Same. ⚠ CC0 on Freesound is the *uploader's* claim; these two are trusted on provenance |
 | **Freesound 194637** (ney, Huzzam scale) — only if used | **CC BY 4.0** | Serve it, commercially, **with attribution in `/THIRD-PARTY.txt`** |
 | **`Violin VL100.png`** (Wikimedia Commons — F3's fingerboard artwork) | **CC0 1.0** | Ship it, crop it, overlay it, commercially, forever. No duty at all — the credit line is courtesy |
+| **`Yamaha Clarinet YCL-457II-22.png`** (Wikimedia Commons — F3's clarinet photo) | **CC BY-SA 4.0** | Ship it, crop it, overlay it, commercially — **with attribution**, and our cropped copy stays CC BY-SA. ⚠ The duty is on the IMAGE, never on the app around it |
 
 Shipped notices live in [`apps/web/public/THIRD-PARTY.txt`](../apps/web/public/THIRD-PARTY.txt),
 served at `/THIRD-PARTY.txt` and linked from the app footer.
@@ -122,11 +123,46 @@ SVG or photographed by the owner. What that rule was protecting is *provenance*,
 been read satisfies it; "found on the internet" still does not. Owner decision, 2026-08-15
 ([DECISIONS.md](DECISIONS.md)).
 
-⚠ **No structural guard covers images**, unlike scores and audio. `prune-dist.mjs` fails a build on
+### The clarinet photo — the second image, and the FIRST with a duty (2026-08-29)
+
+`apps/web/public/instruments/clarinet-ycl457-oehler.png`, 244×1560, 453 KB, **CC BY-SA 4.0**. It is
+a crop of [`File:Yamaha Clarinet YCL-457II-22.png`](https://commons.wikimedia.org/wiki/File:Yamaha_Clarinet_YCL-457II-22.png)
+on Wikimedia Commons — a Yamaha YCL-457II-22, **German system (Original Oehler)**, background
+removed by the user *Habitator terrae*.
+
+⭐ **It amends the image rule a second time, from "CC0 or public domain" to "attribution licences
+are allowed too"** (owner, 2026-08-29). The reason it had to: **there is no CC0 photograph of a
+German-system clarinet.** Every one on Commons is CC BY-SA — checked across Yamaha, Leitner+Kraus,
+Rosewood Albert and Yamaha's full-Oehler. The only duty-free option was a 1910 Selmer catalogue
+scan, and the owner chose the photograph that looks like his instrument over the one that costs
+nothing. [features/clarinet-view.md](features/clarinet-view.md).
+
+⚠ **What the duty actually is, since this is the first time the project has carried one.** Credit
+the author (done, in both THIRD-PARTY files); and because our copy is **cropped and scaled**, that
+copy is itself CC BY-SA 4.0 and anyone may reuse it on the same terms. ⚠ **The duty is on the image
+and does not reach the app's code** — this is not the SymbTr situation, where a NonCommercial score
+would have bound the whole product forever.
+
+⚠ **The chain was followed to the root, and at first glance it looks like exactly the thing this
+rule exists to stop**: the file's metadata says `Artist: Yamaha` with no permission statement, which
+reads as a user re-licensing a manufacturer's photograph. It is not. The root
+[`.tiff`](https://commons.wikimedia.org/wiki/File:Yamaha_Clarinet_YCL-457II-22.tiff) carries a
+**VRT permission ticket, 2017012510009331**, from Yamaha Music Europe. ⛔ Two other candidates were
+checked the same way: Leitner+Kraus also has a ticket (2019102110004312); the Rosewood Albert is a
+person's own photograph. Never take a manufacturer-authored file on Commons without finding the
+ticket.
+
+⛔ **A drawing was tried first and rejected** (owner: *"çizim pek olmamış"*), after a CC0 third-party
+schematic turned out to be Boehm keywork. Both are recorded in the feature doc so neither is
+attempted again.
+
+⛔ **No structural guard covers images**, unlike scores and audio. `prune-dist.mjs` fails a build on
 any `.json` at the dist root and on audio outside `audio/` or over `MAX_AUDIO_MB`; there is **no
 equivalent test for a picture**, so an unlicensed image would ship silently under the 60 MB total.
-The only thing standing there is this file and a manifest row. If a second image ever lands, that
-asymmetry is worth closing rather than noting again.
+The only thing standing there is this file and a manifest row. ⚠ **The second image has now landed,
+and it carries a duty**, which was the stated trigger for closing that asymmetry — it is open work
+now, not a note to repeat a third time. A guard here would also have to check that an
+attribution-licensed file still has its credit in `THIRD-PARTY.txt`.
 
 ## The weights
 

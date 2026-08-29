@@ -179,6 +179,15 @@ export const TR = {
       "rengi değişmez, çünkü renk mandalın durumunu taşır. Eserin başında kurulacak mandallar " +
       "yukarıda yazılıdır: kanuncu çalmaya başlamadan önce onları kurar. Kanunun sesinin " +
       "dışındaki notalarda hiçbir perde yanmaz.",
+    hintClarinet:
+      "Kırmızı olan delikler ve tuşlar, o notada basılacak olanlardır — dolu daire kapalı " +
+      "delik, boş daire açık deliktir. Baş parmak deliği ve register tuşu solda çizilir, " +
+      "çünkü onlar enstrümanın arkasındadır. Soldaki çubuk dudak çubuğudur: klarnette koma " +
+      "sesler dudağı bir miktar salarak verilir, çubuk da ne kadar salınacağını gösterir. " +
+      "Her çizgi bir komadır, en fazla beş koma. Çubuk boşsa nota parmağın kendi sesidir, " +
+      "dudak salınmaz. Klarnetin sesinin dışındaki notalarda hiçbir şey yanmaz.",
+    clarinetBack: "arka",
+    hintClarinetAlt: "Sol klarnet fotoğrafı — basılan delikler ve dudak çubuğu",
   },
 
   fingerboard: {

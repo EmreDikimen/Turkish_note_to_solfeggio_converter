@@ -285,6 +285,16 @@ the model track never touches the app.** Either can be worked on without waiting
    ⚠ **If the look finds something, the fix now needs its own deploy** — the cost of the inverted
    order, and it is small (`deploy:app`, then `smoke:live`). ⚠ `smoke:live` checks neither images nor
    audio; spot-check both by hand after any deploy touching them.
+3e. **🚧 F3's THIRD INSTRUMENT — THE SOL KLARNET — RUNS IN THE APP, NOT YET CHECKED (2026-08-29).**
+   Fingering table, lip bar, view and wiring done; `npm test` (48 new), typecheck and `smoke:editor`
+   pass. ⛔ **Two wrong turns, both caught by the owner's eye and by no test**: the first table came
+   from **Boehm** diagrams for an **Albert** instrument (`T lh123|rh1--` is Si♭ on one, Si on the
+   other), and the artwork went CC0-schematic → own-drawing → **photograph**, no CC0 photo of a
+   German-system clarinet existing. The table is now read from the Oehler/Albert chart's own markup;
+   the six tone holes are **measured** off the photo; key positions are by eye and flagged per
+   marker. ⏭ Next: the remaining key-position corrections, the note label, the browser checks.
+   [features/clarinet-view.md](features/clarinet-view.md)
+
 4. **⏸ Everything else about speed is DEFERRED to after W10** (owner, 2026-08-06): ship at **~35–55 s
    a page**. Splitting a page across instances (~52 s → ~13 s) is the only option that touches the
    warm wait — the cold start is just 10.6 s of it — and it costs a rate-limiter rewrite plus a

@@ -25,7 +25,7 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
-| **F3** | Instrument tab — where to put your finger / where the mandals stand, in time | medium | no | calibration + a string-choice rule (violin); an instrument data table (kanun) | ✅ **VIOLIN DONE 2026-08-16**, ✅ **KANUN DONE 2026-08-29**; neither has been **seen by a person** yet |
+| **F3** | Instrument tab — where to put your finger / where the mandals stand / how far the lip relaxes, in time | medium | no | calibration + a string-choice rule (violin); an instrument data table (kanun); a fingering table + the lip-bend bound (clarinet) | ✅ **VIOLIN DONE 2026-08-16**, ✅ **KANUN DONE 2026-08-29**; neither has been **seen by a person** yet. 🚧 **SOL KLARNET started 2026-08-29** — artwork landed, view not built |
 | **F4** | Listening mirror — a live microtonal tuner drawn on F3's fingerboard | medium | no | pitch-tracker steadiness at 22.6 cents/koma, unmeasured | ⏸ **PARKED 2026-08-25** (owner) — after the public launch; **not** audio-to-score. Reasoning and what was ruled out: [../BACKLOG.md](../BACKLOG.md) |
 
 Order: **F0 → F2 → F1 → F3**. All four are built. F0, F2 and F1 are deployed and **accepted by ear** —
@@ -263,10 +263,10 @@ the same reasoning that put `usul.ts` there.
 
 ---
 
-## F3 — the instrument tab → [fingerboard.md](fingerboard.md) · [kanun-view.md](kanun-view.md)
+## F3 — the instrument tab → [fingerboard.md](fingerboard.md) · [kanun-view.md](kanun-view.md) · [clarinet-view.md](clarinet-view.md)
 
-Show the instrument, and show what the player does on it as the piece plays. **Two instruments, two
-chapters**, because they turned out to be two different problems — behind **one tab**.
+Show the instrument, and show what the player does on it as the piece plays. **Three instruments,
+three chapters**, because each turned out to be a different problem — behind **one tab**.
 
 ⭐ **"Enstrüman üzerinde" is one page with a dropdown** (owner, 2026-08-29), and picking an
 instrument there **sets the sound too**. That is the point rather than tidiness: you see and hear
@@ -282,11 +282,16 @@ string-choice rule, and why a position line is tape rather than a fret.
 **Kanun** (built 2026-08-29) → **[kanun-view.md](kanun-view.md)**: the 26 courses, the mandal
 research, the two-pass plan, and why the instrument is drawn rather than photographed.
 
+**Sol klarnet** (artwork landed 2026-08-29, view NOT built) → **[clarinet-view.md](clarinet-view.md)**:
+the CC0 layered schematic and why no photograph was taken, and ⭐ the **lip bar** — the owner's
+answer to the thing that blocked winds all along, that a koma on a clarinet is made by relaxing the
+lip and not by a fingering. Four inputs are still owed before it can be built; they are listed there.
+
 ⚠ **The 2026-08-15 "violin only" scope was reopened by the owner on 2026-08-29**, after the violin
 view stood up. That is a scope change, not an overturned argument: the reasoning that made the
-violin first still holds, and the kanun qualified on the same ground — it is already a shipped F1
-voice, so a user can hear and see the same instrument. The winds' lookup tables and the tanbur's
-fret table stay in [fingerboard.md](fingerboard.md) as *design*, not as a queue.
+violin first still holds, and the kanun and the clarinet qualified on the same ground — each is
+already a shipped F1 voice, so a user can hear and see the same instrument. The **ney** and the
+tanbur's fret table stay in [fingerboard.md](fingerboard.md) as *design*, not as a queue.
 
 ⭐ **The most useful thing this pair taught is that the two views are not the same view twice.** A
 violin position is a fact about one note; a kanun mandal is a lever that stays where it is put, so

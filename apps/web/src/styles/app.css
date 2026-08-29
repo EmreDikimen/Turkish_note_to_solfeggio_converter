@@ -942,6 +942,89 @@
    photographed, so every colour here is ours and both themes have to be served explicitly — there
    is no varnished wood underneath to sit on. */
 
+/* ---------------------------------------------------------------------------------------------
+   F3 — the sol klarnet view. A photograph with SVG markers over it; calibration in
+   ui/clarinetArt.ts. ⚠ The markers must never hide the instrument — an open hole reads as a RING,
+   so the photo shows through, and only a pressed one is filled.
+   --------------------------------------------------------------------------------------------- */
+
+.kv-clarinet {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  justify-items: center;
+}
+
+/* ⚠ Bounded by HEIGHT, not width — the instrument is a 1:8.8 sliver, so a width-bounded card would
+   be taller than any screen. This is the violin's lesson, which it learned by shipping rotated and
+   being rejected on sight (docs/features/fingerboard.md). */
+.kv-clarinet__svg {
+  display: block;
+  height: min(74vh, 780px);
+  width: auto;
+  max-width: 100%;
+}
+
+.kv-clarinet__marker {
+  fill: none;
+  stroke: var(--kv-clarinet-ring, rgba(20, 20, 24, 0.55));
+  stroke-width: 2.5;
+  transition:
+    fill 90ms linear,
+    stroke 90ms linear;
+}
+
+/* The one state that matters. A fill, so it reads at a glance at this size. */
+.kv-clarinet__marker[data-key-state="down"] {
+  fill: var(--kv-clarinet-down, #e8483f);
+  stroke: var(--kv-clarinet-down-edge, #7d1d18);
+}
+
+/* The back inset: the thumb hole and register key, which the front photo cannot show. */
+.kv-clarinet__back-stem {
+  stroke: var(--kv-clarinet-ring, rgba(20, 20, 24, 0.35));
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.kv-clarinet__back-label {
+  font-size: 20px;
+  fill: var(--text-2);
+}
+
+/* --- the lip meter ---------------------------------------------------------------------------
+   ⚠ It fills DOWNWARD, because relaxing the lip lowers the pitch and every other pitch in this app
+   runs up the page. */
+.kv-clarinet__lip-track {
+  fill: var(--kv-clarinet-track, #e6e3dd);
+  stroke: var(--kv-clarinet-track-edge, #b6b1a8);
+  stroke-width: 1;
+}
+
+.kv-clarinet__lip-fill {
+  fill: var(--kv-clarinet-lip, #e8a33f);
+}
+
+.kv-clarinet__lip-tick {
+  stroke: var(--kv-clarinet-track-edge, #b6b1a8);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+
+.kv-clarinet__label {
+  font-size: 30px;
+  font-weight: 600;
+  fill: var(--text-1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .kv-clarinet {
+    --kv-clarinet-ring: rgba(240, 238, 234, 0.6);
+    --kv-clarinet-track: #2a2a2e;
+    --kv-clarinet-track-edge: #55555c;
+  }
+}
+
 .kv-kanun {
   display: grid;
   gap: var(--space-2);

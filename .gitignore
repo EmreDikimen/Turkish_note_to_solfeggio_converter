@@ -147,3 +147,11 @@ apps/server/dist/
 
 # ORT runtime copied in at build time by apps/web/tools/copy-ort.mjs
 apps/web/public/ort/
+
+# generated sol klarnet audit pages (tools/core/clarinet-chart.ts, clarinet-editor.ts)
+# they inline a 460 KB photo, so they are rebuilt rather than committed
+/out.html
+/clarinet-chart.html
+/clarinet-editor.html
+/klarnet-duzenleyici.html
+/klarnet-parmak-tablosu.html

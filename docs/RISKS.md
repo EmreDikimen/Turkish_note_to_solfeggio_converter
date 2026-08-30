@@ -3,7 +3,7 @@
 purpose: the standing caveats — what is measured but fragile, what is NOT claimed, and the traps that survive the work that found them
 audience: anyone about to quote a number, believe a green check, or act on a result
 
-updated: 2026-08-21
+updated: 2026-08-30
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. The split
 is by genre: STATUS holds **current state and the next action** and nothing else; this file holds
@@ -112,6 +112,10 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
   correcting real pages with and without the highlights, not a model metric.
 - **Superseded:** there is no pre-registered pivot trigger. Switching to a correction-loop strategy is a
   situational call after the Round-2 exam, not an automatic rule.
+- **Every human who has used the deployed app was on a phone, and n is still 2.** That is **a
+  question, not a finding** about "web first, mobile later" — two people cannot tell you what the
+  next hundred will do. Moved here from STATUS on 2026-08-30: it is a standing non-claim, not a
+  current state. [METRICS-USAGE.md](METRICS-USAGE.md).
 - **Browser gate is 27/28** on the live model — one strip's *reference*-path decode drops a `\tup3`
   under an ORT-web int8 numerics wobble (the canvas/product path reads all 14 strips exactly, and
   Python-ORT int8 reads that strip exactly). Measured: the flipped token is a real 69/31 near-tie,

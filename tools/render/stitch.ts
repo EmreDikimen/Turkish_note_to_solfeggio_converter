@@ -16,10 +16,13 @@
  *     signature entry; an explicit AEU token / `\natural` overrides. Rhythm signs are folded back
  *     the way the serializer spelled them: `\tup3 … \tupend` members sound at written × 2/3,
  *     `x \tie x` merges into ONE event, `\grace` becomes a zero-duration EventKind "grace".
- *  3. **Expand structure**: `\repstart … \repend` plays twice (voltas: "1." on the last measure
- *     of the pass, "2." right after the `:‖` — same convention as repeats.ts), then `\dc` replays
- *     from the top (or the `\segno` measure) up to `\fine`/"Son", taking the ⊕ → ⊕ coda jump,
- *     repeats not re-taken. Output is FLATTENED — what the editor and playback want.
+ *  3. **Resolve the structure**: `\repstart … \repend` plays twice (voltas: "1." on the last
+ *     measure of the pass, "2." right after the `:‖` — same convention as repeats.ts), then `\dc`
+ *     replays from the top (or the `\segno` measure) up to `\fine`/"Son", taking the ⊕ → ⊕ coda
+ *     jump, repeats not re-taken. The result is the PLAYING ORDER, and it is always returned as
+ *     `structure.playBars`. `expand: true` (the default) also flattens the doc to that order;
+ *     ⚠ the app passes `expand: false`, keeping the WRITTEN score — a repeated bar written once,
+ *     with its `:‖` — and unfolds only at playback time (`unfoldDoc` in core).
  *  4. **Build the document**: sequential bars; `offset` in bar units (integer = barline) so the
  *     harness's `assignBars` reproduces the decoded barlines exactly; durations at a nominal
  *     tempo (the user sets BPM in the editor; SymbTr-less pages have no tempo of their own).
@@ -89,8 +92,52 @@ export interface StitchResult {
   warnings: string[];
   /** Measures in the WRITTEN score (before structure expansion). */
   writtenMeasures: number;
-  /** Measures after expansion (== written when nothing expands). */
+  /** Measures the returned `doc` holds (== written when `expand: false` or nothing expands). */
   playedMeasures: number;
+  /**
+   * The signs the page carries and the order they make the music play in — ALWAYS in the
+   * WRITTEN score's bar numbering, whatever `expand` says.
+   *
+   * With `expand: false` (what the app uses) this pairs with the returned doc bar-for-bar: the
+   * sheet draws the signs and the player follows `playBars`, so the score reads like a printed
+   * page and still sounds the same. With the default `expand: true` the doc is already flattened
+   * and this only describes what WAS folded out.
+   */
+  structure: ScoreStructure;
+}
+
+/** One written bar's structure marks, in the WRITTEN doc's 1-based bar numbering. */
+export interface BarStructure {
+  bar: number;
+  /** `‖:` at this bar's left edge. */
+  repStart?: boolean;
+  /** `:‖` at this bar's right edge. */
+  repEnd?: boolean;
+  volta1?: boolean;
+  volta2?: boolean;
+  segno?: boolean;
+  /** ⊕ in reading order: 0 = the "to coda" jump point, 1 = the coda destination. */
+  codaOrder?: number;
+  dc?: boolean;
+  fine?: boolean;
+}
+
+/** A page's written structure: which bars carry which signs, and what those signs make the
+ *  music DO. `playBars` is the performance order as written-bar numbers, so a repeated bar
+ *  simply appears twice — expanding it reproduces the old flattened document exactly. */
+export interface ScoreStructure {
+  bars: BarStructure[];
+  playBars: number[];
+  /**
+   * The FIRST ENDINGS, as inclusive written-bar ranges: the bars under a "1." bracket, which the
+   * second pass skips whole on its way to the "2.". A first ending is usually one or two bars, not
+   * always the `:‖` bar alone — see `MAX_FIRST_ENDING`.
+   *
+   * ⚠ Resolved once, here, and used by BOTH sides: `playBars` already skips these, and the sheet
+   * draws the "1." at `from`. A second copy of the rule is how the drawn bracket and the music
+   * would come to disagree about where the ending starts.
+   */
+  firstEndings: { from: number; to: number }[];
 }
 
 /** A parsed written event, pre-document (exact duration as a reduced fraction of a whole note). */
@@ -474,12 +521,39 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
 // ---------------------------------------------------------------------------------------------
 // 3. Structure expansion (repeats/voltas, then da capo) — output is the flattened playing order
 
-/** Expand `‖: … :‖` (+ 1./2. voltas) into two written passes. Volta convention matches
- *  repeats.ts: "1." sits on the pass's LAST measure, "2." on the measure right after the `:‖`;
- *  pass 2 replaces the volta-1 measure with what follows. Unmatched `:‖` repeats from the start
- *  of the piece (or the previous span's end) — the engraving convention. */
-function expandRepeats(measures: readonly MeasureRec[], warnings: string[]): number[] {
+/**
+ * The longest run of bars a "1." bracket is allowed to open, in bars INCLUDING the `:‖`.
+ *
+ * A first ending is short. Measured over the 1,128 `\\volta1` marks that fall inside a repeat span
+ * on the real page decodes: **62.1% sit on the `:‖` bar itself** (a one-bar ending), **26.7% one bar
+ * before it** (two bars), and **94.1% are within three**. Past that the mark is far more likely to be
+ * a stray token than an eight-bar first ending — so a farther "1." is IGNORED rather than obeyed.
+ * ⚠ That asymmetry is deliberate: obeying a stray mark would DELETE real music from the second pass,
+ * and ignoring one only replays a passage that was already going to be played.
+ */
+const MAX_FIRST_ENDING = 4;
+
+/**
+ * Expand `‖: … :‖` (+ 1./2. voltas) into two written passes, and report where the first endings are.
+ *
+ * ⭐ **The first ending is a RUN, not one bar** (owner, 2026-08-30: *"2. dönüşte ilk volta çalmamalı,
+ * direkt 2. voltaya geçmeli"*). It runs from the "1." bracket to the `:‖`, and the second pass skips
+ * ALL of it and continues at the "2." — which is the bar after the `:‖`. Until this fix only the
+ * single bar carrying the "1." was skipped, so a two-bar first ending played its tail again on the
+ * repeat: **37.9% of real first endings** were affected.
+ *
+ * Unmatched `:‖` repeats from the start of the piece (or the previous span's end) — the engraving
+ * convention. Where a span carries more than one "1." (26 spans do, all noise), the LAST one wins:
+ * it is the one nearest its `:‖`.
+ */
+function expandRepeats(
+  measures: readonly MeasureRec[],
+  warnings: string[],
+): { order: number[]; endings: [number, number][] } {
   const out: number[] = [];
+  /** First endings as inclusive measure-index ranges — what the second pass, and the da-capo pass
+   *  below, must skip. Resolved HERE and nowhere else, so drawing and playback cannot disagree. */
+  const endings: [number, number][] = [];
   let passStart = 0; // where an unmatched `:‖` would jump back to
   let openStart: number | null = null;
   for (let i = 0; i < measures.length; i++) {
@@ -491,19 +565,34 @@ function expandRepeats(measures: readonly MeasureRec[], warnings: string[]): num
     out.push(i);
     if (m.repEnd) {
       const start = openStart ?? passStart;
-      // Second pass: start..i, skipping any volta-1 measures (their "2." replacement follows i).
-      for (let k = start; k <= i; k++) if (!measures[k]!.volta1) out.push(k);
+      let v1: number | null = null;
+      for (let k = start; k <= i; k++) if (measures[k]!.volta1) v1 = k;
+      if (v1 != null && i - v1 + 1 > MAX_FIRST_ENDING) {
+        warnings.push(
+          `\\volta1 opens ${i - v1 + 1} bars before its :‖ — too long for a first ending, ignored`,
+        );
+        v1 = null;
+      }
+      if (v1 != null) endings.push([v1, i]);
+      // Second pass: the span up to the first ending, which is skipped whole — the "2." that
+      // replaces it follows the `:‖`.
+      for (let k = start; k < (v1 ?? i + 1); k++) out.push(k);
       openStart = null;
       passStart = i + 1;
     }
   }
   if (openStart != null) warnings.push("unmatched \\repstart — played once");
-  return out;
+  return { order: out, endings };
 }
 
 /** Append the da-capo pass: jump to the top (or the 𝄋 segno), play WITHOUT repeats preferring
  *  the "2." ending, stop at "Son" (fine) — or take the ⊕→⊕ coda jump and play the coda out. */
-function expandDaCapo(measures: readonly MeasureRec[], firstPass: number[], warnings: string[]): number[] {
+function expandDaCapo(
+  measures: readonly MeasureRec[],
+  firstPass: number[],
+  endings: readonly [number, number][],
+  warnings: string[],
+): number[] {
   const dcAt = measures.findIndex((m) => m.dc);
   if (dcAt < 0) return firstPass;
   // A real "D.C." sits at the written score's final barline. One decoded mid-piece (a real
@@ -529,11 +618,11 @@ function expandDaCapo(measures: readonly MeasureRec[], firstPass: number[], warn
   const guard = measures.length * 2; // decode noise must never loop forever
   let steps = 0;
   while (i < measures.length && steps++ < guard) {
-    const m = measures[i]!;
-    if (m.volta1) {
-      i++; // D.C. pass takes the second ending
+    if (endings.some(([a, b]) => i >= a && i <= b)) {
+      i++; // D.C. pass takes the second ending — the WHOLE first ending is skipped, not one bar
       continue;
     }
+    const m = measures[i]!;
     out.push(i);
     if (i === fineAt) return out;
     if (codaFrom >= 0 && codaTo > codaFrom && i === codaFrom) {
@@ -552,6 +641,43 @@ function expandDaCapo(measures: readonly MeasureRec[], firstPass: number[], warn
 
 const DEFAULT_WHOLE_NOTE_MS = 2000; // quarter = 500 ms = 120 BPM; the editor's BPM control rescales
 
+/** A written measure's sounding length in whole notes. Zero = graces only, which `buildDoc`
+ *  cannot place, so it is dropped — and the structure map must drop it too or every later bar
+ *  number is off by one. One function, two callers, on purpose. */
+function barLengthOf(m: MeasureRec): number {
+  return m.events.reduce((s, e) => s + e.num / e.den, 0);
+}
+
+/** Written measure index → its 1-based bar number in the built doc (null = dropped, see above). */
+function barNumbers(measures: readonly MeasureRec[]): (number | null)[] {
+  let bar = 0;
+  return measures.map((m) => (barLengthOf(m) > 0 ? ++bar : null));
+}
+
+/** Re-express the parsed marks and the playing order in the WRITTEN doc's bar numbering — the
+ *  only numbering anything outside this file sees. */
+function structureOf(
+  measures: readonly MeasureRec[],
+  played: readonly number[],
+  endings: readonly [number, number][],
+): ScoreStructure {
+  const barOf = barNumbers(measures);
+  const bars: BarStructure[] = [];
+  measures.forEach((m, i) => {
+    const bar = barOf[i];
+    if (bar == null) return;
+    const { events: _events, ...marks } = m;
+    if (Object.keys(marks).length > 0) bars.push({ bar, ...marks });
+  });
+  return {
+    bars,
+    playBars: played.map((i) => barOf[i]).filter((b): b is number => b != null),
+    firstEndings: endings
+      .map(([a, b]) => ({ from: barOf[a], to: barOf[b] }))
+      .filter((e): e is { from: number; to: number } => e.from != null && e.to != null),
+  };
+}
+
 function buildDoc(
   measures: readonly MeasureRec[],
   playlist: readonly number[],
@@ -562,7 +688,7 @@ function buildDoc(
   let bar = 0;
   for (const mi of playlist) {
     const m = measures[mi]!;
-    const barLen = m.events.reduce((s, e) => s + e.num / e.den, 0);
+    const barLen = barLengthOf(m);
     if (barLen <= 0) continue; // nothing sounding (graces only) — unplaceable, skip
     bar++;
     let cum = 0;
@@ -609,13 +735,18 @@ export function stitchTokenRows(rows: readonly string[], opts: StitchOptions = {
   const warnings: string[] = [];
   const measures = parseRows(rows, warnings, opts.accidentals === "carry");
   const written = measures.map((_, i) => i);
-  const playlist =
-    opts.expand === false ? written : expandDaCapo(measures, expandRepeats(measures, warnings), warnings);
+  // The playing order is resolved WHATEVER `expand` says: with `expand: false` the caller keeps
+  // the written score on the page and follows `structure.playBars` at playback time instead, so
+  // the same expansion (and the same warnings about malformed signs) has to run either way.
+  const repeats = expandRepeats(measures, warnings);
+  const played = expandDaCapo(measures, repeats.order, repeats.endings, warnings);
+  const playlist = opts.expand === false ? written : played;
   return {
     doc: buildDoc(measures, playlist, opts),
     warnings,
     writtenMeasures: measures.length,
     playedMeasures: playlist.length,
+    structure: structureOf(measures, played, repeats.endings),
   };
 }
 

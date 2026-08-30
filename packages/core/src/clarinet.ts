@@ -96,8 +96,12 @@ export interface ClarinetFingering {
    */
   label: string;
   /**
-   * For a clarion note, the chalumeau note whose fingering it borrows. `null` in the lower
-   * registers, where the fingering is the note's own.
+   * The note whose fingering this one borrows — *what you finger*, when that is not what sounds.
+   *
+   * Two cases, and both are facts about a clarinet rather than bookkeeping: a **clarion** note is
+   * the chalumeau fingering a twelfth below plus the register key, and an **altissimo** note can
+   * share a fingering with a lower one and be separated only by the embouchure. `null` when the
+   * fingering is the note's own.
    */
   fingeredAs: string | null;
   /** Every hole and key that must be shown pressed to draw it. */
@@ -230,6 +234,40 @@ export const BASE_FINGERINGS: readonly ClarinetFingering[] = [
 ];
 
 /**
+ * THE ALTISSIMO — the notes above Do6, placed by the owner on 2026-08-30.
+ *
+ * ⭐ **Its own table, and structurally so: `CLARION` is derived from `BASE_FINGERINGS` alone, which
+ * is what makes it impossible to overblow one of these a second time.** The earlier version relied
+ * on a koma cutoff to exclude them, which would have worked and would have been an accident.
+ *
+ * ⚠ **A third register is NOT a further overblowing**, so no arithmetic produces these — each is
+ * its own fingering and they had to be collected from a player. The owner filled them in through
+ * `tools/core/clarinet-editor.ts`; every point snapped to a position his earlier pass had already
+ * established, so this range needed no new calibration at all.
+ *
+ * ⭐ **Sol6 and Re6 are the SAME FINGERING**, and that is the owner's own account of it: *"sol6 re6
+ * ile aynı oldu ama aradaki fark dudağını daha sert sıkmak oluyor zaten."* They sit **22 commas —
+ * a perfect fourth — apart**, which is the next partial of the same tube, reached by tightening
+ * rather than by moving a finger. ⚠ So two rows here carry identical `keys` on purpose. Anything
+ * that assumes a fingering identifies a note is wrong on this instrument, which is exactly why the
+ * view labels by the note that SOUNDS.
+ *
+ * ⚠ **Only Re♭6 uses the register key or the thumb** in what the owner gave. That is unusual enough
+ * to be worth a second look with the instrument in hand, and it is recorded as his data rather than
+ * quietly "corrected" — every time this table has been argued with from theory, the theory lost.
+ */
+export const ALTISSIMO_FINGERINGS: readonly ClarinetFingering[] = [
+  { koma: 376, label: NOTE(376), fingeredAs: null, keys: ["thumb", "register"], clarion: false },
+  { koma: 380, label: NOTE(380), fingeredAs: null, keys: ["lh2", "lh3", "rh1", "rh3", "key_gis3"], clarion: false },
+  { koma: 385, label: NOTE(385), fingeredAs: null, keys: ["lh2", "lh3", "rh1", "key_gis3"], clarion: false },
+  { koma: 389, label: NOTE(389), fingeredAs: null, keys: ["lh2", "lh3"], clarion: false },
+  { koma: 393, label: NOTE(393), fingeredAs: null, keys: ["lh2", "lh3", "key_cis"], clarion: false },
+  { koma: 398, label: NOTE(398), fingeredAs: null, keys: ["lh2"], clarion: false },
+  // ⭐ Re6's fingering, a fourth higher, played with a tighter lip — not a key change at all.
+  { koma: 402, label: NOTE(402), fingeredAs: NOTE(380), keys: ["lh2", "lh3", "rh1", "rh3", "key_gis3"], clarion: false },
+];
+
+/**
  * The clarion register: the same fingerings with the register key, a twelfth up.
  *
  * ⚠ Only the fingerings up to Fa4 overblow this way, which is where the source chart's clarion page
@@ -253,7 +291,11 @@ const CLARION: readonly ClarinetFingering[] = BASE_FINGERINGS.filter(
 });
 
 /** Every fingering this module knows, lowest first. */
-export const CLARINET_FINGERINGS: readonly ClarinetFingering[] = [...BASE_FINGERINGS, ...CLARION]
+export const CLARINET_FINGERINGS: readonly ClarinetFingering[] = [
+  ...BASE_FINGERINGS,
+  ...CLARION,
+  ...ALTISSIMO_FINGERINGS,
+]
   .slice()
   .sort((a, b) => a.koma - b.koma);
 

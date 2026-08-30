@@ -637,6 +637,8 @@ PAGE = r"""<!doctype html>
     the model decode say the same thing — <b>least confident first</b>, so the riskiest one is on
     top. It is a spot-check list, not a queue to clear: agreement was right on 159 of 169 rows a
     human has read, and the misses clump on a page where label and decode are wrong the same way.
+    It also holds the <b>agree-ws</b> rows, where the two sides differ only by a space the decoder
+    put inside a note (<code>f'' 32</code> for <code>f''32</code>) and the label was kept as-is.
     Any verdict you give clears the 🤖 marker.
   </div>
 </main>
@@ -809,7 +811,7 @@ function visible(){
     .filter(x=>(!re||x.r.reason===re)
       &&(show==='all'||(show==='pending'?!x.r.verdict
         :show==='claude'?x.r.by==='claude'
-        :show==='agree'?x.r.by==='agree'
+        :show==='agree'?(x.r.by||'').startsWith('agree')
         :show==='rule'?(x.r.by||'').startsWith('rule')
         :show==='bad'?x.r.verdict==='bad'
         :!!x.r.verdict)));

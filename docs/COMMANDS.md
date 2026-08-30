@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-08-25
+updated: 2026-08-30
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -21,6 +21,9 @@ npm run dev:cloud                    # the same harness, but decode runs on Clou
 npm run typecheck                    # all workspaces
 npm test                             # stitcher + label round-trip + edit primitives + usul strokes + voice manifest
                                      # …plus violin fingering (the 53-TET position formula + string choice)
+                                     # …plus the written-score → performance maps (tools/core/structure-test.ts)
+npm run check:fold                   # every cached page decode: does keeping the repeat SIGNS change the sound?
+                                     # …expect 1720 pages, 0 changed. Needs data/real/strips_v2 (this machine only)
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
 npx tsx tools/core/clarinet-chart.ts out.html   # sol klarnet: all 33 fingerings as one HTML page, for a player to audit
 npx tsx tools/core/clarinet-editor.ts out.html  # …and the editor that produced the table: click points per note, copy the JSON back

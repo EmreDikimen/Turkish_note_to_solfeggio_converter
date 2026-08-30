@@ -68,6 +68,7 @@ npm run dev:web       # harness → http://localhost:5173 — decode runs in YOU
 npm run dev:cloud     # the same harness with decode on Cloud Run — ⚠ THIS is how you keep the Mac cool
 npm run typecheck     # all workspaces
 npm test              # stitcher + labels + edit primitives + usul strokes + voices + violin fingering
+npm run check:fold    # does keeping the repeat SIGNS change the sound? expect 1720 pages, 0 changed
 npm run smoke:editor  # real app: select, drag, delete, undo/redo, palette, rests, tuplets, voices
 npm run gate:browser  # in-browser ONNX gate, headless — expect 27/28
 .venv-ml/bin/python scripts/check_docs.py   # doc structure + no-info-loss check
@@ -120,6 +121,27 @@ a successful build is not a deploy. Both, and every other command, in
   unchanged). `_realval_v2` still expects ties in 24% of rows, which no longer decides anything:
   `eval_omr.py` drops `\tie` from **both** the gold and the decode. `strips_exam_v2*` keeps its ties on purpose — it is
   the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
+- **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS
+  REPAIRED** (owner, 2026-08-30). The engraved mark is the click target; its notes are
+  `pointer-events: none`. ⚠ **EVERY drawn mark is holdable, including one over a SINGLE note** —
+  `tupletGroupsIn` brackets runs that never sum plain (the model's misreads; `decoded.json` has five
+  against two real triplets), and those most need fixing. The ✕ clears any of them (each member
+  ×³⁄₂, notes kept); the handles **slide** a real triplet (always three members) but **repair** a
+  broken one — grabbed end moves, other stays, allowed only when the result CLOSES or has FEWER
+  members, so a broken mark can never be made merely broader. `tupletEdgeTo` owns both and
+  `drawnTupletAt` finds a mark where `closedTupletAt` cannot.
+  ⚠ **The target is measured off the mark's STROKES (`markBoxOf`), never off the wrapping group's
+  `getBBox()`** — a `<text>` reports its FONT's em box (a bracket's "3" measured 12 × 160 px) and
+  VexFlow leaves a zero-height `<rect>` at the SVG **origin**, so the group's box was a slab that
+  swallowed note clicks (the `GraceNoteGroup` failure `noteBoxOf` documents, same origin rule).
+  ⚠ The mark style is a per-piece hash and **all six bundled scores draw the arc**, so the
+  VexFlow-**bracket** branch has **no automated coverage** — verified by hand on a renamed score.
+  ⛔ **Do not "improve" a REAL triplet into a 4/5/7-note tuplet**: the digit is a hardcoded `"3"` and
+  the token is `\tup3`, so a wider group would draw AND label a rhythm nobody wrote. A real n-tuplet
+  needs a derived digit **and** new tokens (`\tup5` does not exist) — a corpus decision the owner
+  deferred. ⚠ `tupletEdgeTo` sits beside the code that DRAWS the bracket and ends in a **simulation
+  against `tupletGroupsIn`**, not a rule. Nothing is stored: a held mark is one event index.
+  [docs/mvp/editor-built.md](docs/mvp/editor-built.md) · [docs/DECISIONS.md](docs/DECISIONS.md).
 - **A DECODE CACHE IS ONLY VALID FOR THE CV CODE THAT CUT ITS CROPS** (2026-08-25). `window_signature()`
   stores `GEOMETRY_REV` plus the geometry knobs; a `<page>_decode.json` without that field is
   REFUSED, because nothing in it says which slicer produced the crops it describes — and a 31 July
@@ -163,6 +185,28 @@ a successful build is not a deploy. Both, and every other command, in
   and there is **no gold accuracy measurement**; do not quote it as a result. Delete it by removing
   the marked block in `apps/web/src/omr/slicer/windows.ts`, the `tokenBudget` option and the
   `?dense=` read in `App.tsx`. [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
+- **THE APP KEEPS THE PAGE AS WRITTEN, AND THE REPEAT IS TAKEN WHEN IT PLAYS** (owner, 2026-08-30).
+  A decoded page is stitched with **`expand: false`**, so `‖: … :‖`, the 1./2. brackets and
+  𝄋 / ⊕ / "D.C." / "Son" stay as SIGNS and the repeated bars are drawn **once**. The performance is
+  derived: `stitch.ts` returns `structure` (`bars` + `playBars`), core's **`unfoldDoc`** expands it,
+  and `buildTimeline` runs on that — so everything on the audio side still receives a plain flat
+  document. ⚠ **Never make the app expand again** to "fix" something downstream; the fix is to unfold
+  at that point instead. ⚠ **`buildTimeline` must never be given the WRITTEN doc** when a structure
+  exists — it would play the repeat once and the cursor would still be right, which is the silent
+  version of this bug. ⚠ The playhead follows a **play plan** (`PlayStep[]`: one step per sounding
+  event, naming the WRITTEN note drawn for it) and SheetView indexes its drawn positions **by event
+  index**; a change that breaks that link desynchronises picture from sound without failing anything.
+  ⚠ **A FIRST ENDING IS A RUN, NOT ONE BAR** (owner, 2026-08-30): it goes from the "1." to the `:‖`
+  and the second pass skips **all** of it, capped at `MAX_FIRST_ENDING = 4` bars because a "1." far
+  from its `:‖` is a stray token, and obeying one would delete real music. It is resolved **once**,
+  in `expandRepeats` → `ScoreStructure.firstEndings`; the drawn "1." reads that answer rather than
+  re-deriving it, or the ink and the music drift apart (they did — 37.9% of real first endings).
+  ⚠ **DECODED PAGES ONLY** — a SymbTr sample is flat in the data, so folding one means guessing from
+  duplicate bars; `Tekrarlar` still only DRAWS there, and the renderer path (`?repseed=`/`?navseed=`)
+  is untouched, so the training corpus is byte-identical. ⚠ `Tekrarları açık yaz` is **view-only and
+  closes edit mode** (every repeated bar there is a copy). The safety claim is `npm run check:fold`:
+  unfolding reproduces the old flattened document over **1,720 pages, 0 changed**.
+  [docs/DECISIONS.md](docs/DECISIONS.md) · [docs/METRICS.md](docs/METRICS.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,
@@ -191,6 +235,11 @@ a successful build is not a deploy. Both, and every other command, in
   `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, the
   insert preview `[data-omr="insert-ghost"][data-insert-pitch]`, the tuplet tool's
   `#sheet-surface[data-tuplet-anchor]` + `[data-tuplet="start|member|anchor|end|blocked"]` per note,
+  the drawn mark's own target `[data-omr="tuplet-mark-hit"][data-tuplet-group][data-tuplet-mark="closed|broken"]`
+  (⚠ **the SIGN selects a tuplet; its notes are `pointer-events: none`** — owner, 2026-08-30), a HELD
+  mark's `#sheet-surface[data-tuplet-selected]` + `[data-tuplet-held]` per member +
+  `[data-tuplet-landing="start|end|both"]` (plus `[data-tuplet-fix]` where the move would COMPLETE a
+  broken mark) + `[data-omr="tuplet-handle"][data-edge]` + `[data-omr="tuplet-frame"]` + `#tuplet-remove`,
   and the off-meter mark `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`
   (⚠ **`data-edit-mode` AND `data-play-state` are each on two elements** — select the one you mean
   by id). The fingerboard tab (F3) adds `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings][data-lines][data-zoom]`,
@@ -218,7 +267,9 @@ a successful build is not a deploy. Both, and every other command, in
   because the fill is what carries `data-mandal-state`. ⚠ Its arithmetic is `tools/core/kanun-test.ts`. The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
   prove playback began there. A tuplet is **not stored** anywhere, so no attribute can prove one was
   made: `smoke:editor` counts the marks the engraver drew, in **both** styles (`.vf-tuplet` and the
-  curved arc's italic "3" — the style is a per-piece coin). The six
+  curved arc's italic "3" — the style is a per-piece coin). ⚠ **There is no `#save-json` any more** (owner, 2026-08-30): a check that needs the
+  note model reads **`window.__omrDoc`**, and `window.__omrStructure` carries a decoded page's signs
+  and playing order — both beside the older `__omrStrips` / `__omrMeta` / `__omrConfig` hooks. The six
   `tools/browser/*-smoke.ts`
   assert on those, so **all user-facing copy is free to change** — that is what let the UI become
   Turkish. Never reintroduce a text/regex matcher for a status message or a button label. Every

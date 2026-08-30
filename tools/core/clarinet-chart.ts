@@ -27,6 +27,9 @@ const png = readFileSync(`apps/web/public/${IMAGE.src}`).toString("base64");
 
 /** Which register a fingering belongs to, for grouping. */
 function band(koma: number, clarion: boolean): string {
+  // ⚠ Order matters: the altissimo sits above the clarion in pitch but is NOT clarion, so it has to
+  // be tested first or every one of its rows would fall into the wrong group.
+  if (koma > 371) return "İnce sesler (altissimo) — kendi parmakları var, alttakilerin oktavı değil";
   if (clarion) return "Klarnet (üst) register — register tuşu basılı";
   if (koma >= 292) return "Boğaz sesleri — neredeyse hiçbir delik kapalı değil";
   return "Kalın register (chalumeau) — register tuşu basılı değil";
@@ -66,7 +69,7 @@ for (const f of rows) {
       <figcaption>
         <b>${f.label}</b>
         <small>koma ${f.koma}</small>
-        ${f.fingeredAs ? `<small class="via">${f.fingeredAs} parmağı + register</small>` : ""}
+        ${f.fingeredAs ? `<small class="via">${f.clarion ? `${f.fingeredAs} parmağı + register` : `${f.fingeredAs} ile aynı parmak — dudak daha sert`}</small>` : ""}
         <code>${names}</code>
       </figcaption>
     </figure>`;

@@ -34,6 +34,7 @@ import {
   MAKAM_SIGNATURES,
   parseNoteName,
   signatureKey,
+  unfoldDoc,
   toAeuAlter,
   type NoteModelDocument,
 } from "@turkish-omr/core";
@@ -45,7 +46,9 @@ import {
   serializeSignature,
 } from "./lilypond";
 import { tupletGroupsIn, tieSplitBeats } from "./rhythm";
+import { repeatMarksAt } from "./repeats";
 import { stitchTokenRows } from "./stitch";
+import { repeatSpansFromStructure } from "./structure-view";
 
 let failures = 0;
 
@@ -135,6 +138,133 @@ console.log("structure unit tests:");
     t(["\\repstart c''4 | d''4 \\repend e''4"], { expand: false }),
     "Do5:1/4 | Re5:1/4 | Mi5:1/4",
   );
+
+  // --- the WRITTEN score + its structure (what the app draws and plays) -----------------------
+  //
+  // With `expand: false` the doc is the page as printed and the repeat lives in `structure`: which
+  // bars carry which signs, and the order those signs make the bars sound in.
+  const marksOf = (rows: string[]): string => {
+    const { bars } = stitchTokenRows(rows, { expand: false }).structure;
+    return bars
+      .map((b) =>
+        `${b.bar}:` +
+        Object.entries(b)
+          .filter(([k]) => k !== "bar")
+          .map(([k, v]) => (v === true ? k : `${k}=${v}`))
+          .join(","),
+      )
+      .join(" ");
+  };
+  const playOf = (rows: string[]): string =>
+    stitchTokenRows(rows, { expand: false }).structure.playBars.join("-");
+
+  check(
+    "structure: the repeat signs land on the bars that carry them",
+    marksOf(["\\repstart c''4 | d''4 \\repend e''4"]),
+    "1:repStart 2:repEnd",
+  );
+  check(
+    "structure: a repeat's playing order names the same bars twice",
+    playOf(["\\repstart c''4 | d''4 \\repend e''4"]),
+    "1-2-1-2-3",
+  );
+  check(
+    "structure: voltas mark their own bars, pass 2 skips the 1. ending",
+    marksOf(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"]) +
+      " → " +
+      playOf(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"]),
+    "1:repStart 2:volta1,repEnd 3:volta2 → 1-2-1-3-4",
+  );
+  check(
+    "structure: D.C. al Fine replays from the top and stops at Son",
+    marksOf(["c''4 \\fine | d''4 \\dc"]) + " → " + playOf(["c''4 \\fine | d''4 \\dc"]),
+    "1:fine 2:dc → 1-2-1",
+  );
+  check(
+    "structure: the ⊕ pair is ordered (0 = jump from, 1 = jump to)",
+    marksOf(["c''4 \\coda | d''4 | \\coda e''4 | f''4 \\dc"]),
+    "1:codaOrder=0 3:codaOrder=1 4:dc",
+  );
+  check(
+    "structure: a segno is where the D.S. pass restarts",
+    playOf(["c''4 | \\segno d''4 | e''4 \\dc"]),
+    "1-2-3-2-3",
+  );
+
+  // --- the first ending is a RUN (owner, 2026-08-30) ------------------------------------------
+  //
+  // "2. dönüşte ilk volta çalmamalı, direkt 2. voltaya geçmeli." A "1." bracket that opens BEFORE
+  // the `:‖` covers every bar up to it, and the second pass skips them all. Until 2026-08-30 only
+  // the bar carrying the mark was skipped, so a two-bar first ending played its tail twice — the
+  // shape of 37.9% of real first endings.
+  const twoBar = ["\\repstart c''4 | \\volta1 d''4 | e''4 \\repend \\volta2 f''4 | g''4"];
+  check(
+    "a TWO-bar first ending is skipped whole on the second pass",
+    playOf(twoBar),
+    "1-2-3-1-4-5",
+  );
+  check(
+    "…and that is what sounds: pass 2 goes c → f, never through d or e again",
+    t(twoBar),
+    "Do5:1/4 | Re5:1/4 | Mi5:1/4 | Do5:1/4 | Fa5:1/4 | Sol5:1/4",
+  );
+  check(
+    "…the ending is reported as the bars it covers",
+    stitchTokenRows(twoBar, { expand: false }).structure.firstEndings.map((e) => `${e.from}-${e.to}`).join(" "),
+    "2-3",
+  );
+  check(
+    "the one-bar case still reports itself, and still skips one bar",
+    stitchTokenRows(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4"], { expand: false })
+      .structure.firstEndings.map((e) => `${e.from}-${e.to}`).join(" "),
+    "2-2",
+  );
+  {
+    // ⚠ A "1." far from its `:‖` is a stray token, not a long first ending. Obeying it would DELETE
+    // real music from the second pass; ignoring it only replays what was going to be played anyway.
+    const far = ["\\repstart \\volta1 c''4 | d''4 | e''4 | f''4 | g''4 \\repend a''4"];
+    const res = stitchTokenRows(far, { expand: false });
+    check("a \\volta1 too far from its :‖ is ignored", res.structure.firstEndings.length.toString(), "0");
+    check("…the whole span repeats instead", res.structure.playBars.join("-"), "1-2-3-4-5-1-2-3-4-5-6");
+    check("…and it says so", String(res.warnings.some((w) => w.includes("too long for a first ending"))), "true");
+  }
+
+  // The DRAWN bracket must sit on the bar the skip starts at, or the sheet and the sound disagree
+  // about where the first ending begins. `repeatSpansFromStructure` + `repeatMarksAt` are what the
+  // app and the strip labels both go through.
+  {
+    const st = stitchTokenRows(twoBar, { expand: false });
+    const spans = repeatSpansFromStructure(st.structure, groupMeasures(st.doc).length);
+    const drawn = [1, 2, 3, 4, 5]
+      .map((bar) => {
+        const m = repeatMarksAt(bar, spans);
+        const ink = [m.repStart && "‖:", m.volta1 && "1.", m.volta2 && "2.", m.repEnd && ":‖"].filter(Boolean);
+        return ink.length ? `${bar}:${ink.join("+")}` : "";
+      })
+      .filter(Boolean)
+      .join(" ");
+    check("the 1. is drawn where the ending STARTS, not on the :‖ bar", drawn, "1:‖: 2:1. 3::‖ 4:2.");
+  }
+
+  // ⭐ THE SAFETY CLAIM OF THE WHOLE FOLD: unfolding the written score along `playBars` gives back
+  // exactly what the old flattening produced. Same notes, same order, same durations — so keeping
+  // the signs on the page cannot change a single sound. Checked on every structural case above.
+  console.log("  -- written + playBars == the old flattened doc:");
+  for (const rows of [
+    ["\\repstart c''4 | d''4 \\repend e''4"],
+    ["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"],
+    ["\\repstart c''4 | \\volta1 d''4 | e''4 \\repend \\volta2 f''4 | g''4"],
+    ["c''4 | d''4 \\repend e''4"],
+    ["c''4 \\fine | d''4 \\dc"],
+    ["c''4 \\coda | d''4 | \\coda e''4 | f''4 \\dc"],
+    ["c''4 | \\segno d''4 | e''4 \\dc"],
+    ["\\grace d''8 c''4 \\repend e''4"],
+    ["\\tup3 c''8 d''8 e''8 \\tupend \\repend f''4"],
+  ]) {
+    const written = stitchTokenRows(rows, { expand: false });
+    const unfolded = unfoldDoc(written.doc, written.structure.playBars).doc;
+    check(rows.join(" ⏎ "), compact(unfolded), compact(stitchTokenRows(rows).doc));
+  }
   check(
     "hallucinated mid-piece D.C. is ignored (real pages produced one)",
     t(["c''4 \\dc | d''4 | e''4 | f''4"]),

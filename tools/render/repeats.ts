@@ -32,6 +32,16 @@ export interface RepeatSpan {
    *  under the bracket are the duplicate head, not the true second ending (which stays unmarked at
    *  the pass's end) — drawn positions only, same as everything else here. */
   volta2?: number;
+  /**
+   * The bar the "1." bracket is drawn on, when it is NOT the `:‖` bar.
+   *
+   * A first ending can be more than one bar long — on real pages 26.7% of them are two bars — and
+   * then the bracket opens BEFORE the repeat-end barline. Absent (the renderer's own detected and
+   * injected spans, which are always one bar) means "on `end`", so the synthetic corpus is
+   * untouched. ⚠ Only the bracket's POSITION: what the ending does is `ScoreStructure.firstEndings`,
+   * resolved by the stitcher, and it is what the second pass skips.
+   */
+  volta1?: number;
 }
 
 /** Runs shorter than this don't fold: two identical bars in a row are often genuinely played
@@ -160,8 +170,9 @@ export function repeatMarksAt(index: number, spans: readonly RepeatSpan[] | unde
     repStart: starts,
     /** `:‖` at this measure's right edge. */
     repEnd: ending != null,
-    /** "1." bracket over this measure. */
-    volta1: ending?.volta2 != null,
+    /** "1." bracket over this measure — on the span's `volta1` bar where one is given, else on the
+     *  `:‖` bar (the one-bar first ending, and every renderer-made span). */
+    volta1: spans?.some((s) => s.volta2 != null && (s.volta1 ?? s.end) === index) ?? false,
     /** "2." bracket over this measure. */
     volta2: spans?.some((s) => s.volta2 === index) ?? false,
   };

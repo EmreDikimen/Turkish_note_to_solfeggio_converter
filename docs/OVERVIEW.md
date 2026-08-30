@@ -226,9 +226,27 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    pitch, or press the **✕** to delete it — and **undo** anything (Ctrl/⌘+Z). There is a **palette**
    beside the music for note lengths and accidentals, you add a note by clicking empty space, and the
    old window is gone. It works like Mus2, which is the point.
-   The last item on the list was to remove the **Save JSON** button. **You decided on 15 August to
-   leave it**, and that is the better call: our automatic test uses that button to look at what an
-   edit actually did, so removing it would have cost us the test and bought nothing.
+   The last item on the list was to remove the **Save JSON** button. You left it in August because
+   our automatic test used that button to look at what an edit actually did — **on 30 August it went**,
+   once the test was given a way to read the score directly instead, so removing it would have cost us the test and bought nothing.
+   **30 August: you can now grab a triplet.** A "triplet" is three notes played in the time of two —
+   the page draws a little **3** over them. Now you **click that 3** and it picks the group up: an
+   orange box appears round the three notes, with a small handle at each end and an **✕**. You click
+   the *sign*, not the notes — the notes themselves do nothing, which is what you asked for. Drag a handle sideways and the group **moves**
+   along the bar — the note it leaves behind goes back to its normal length, and the note it reaches
+   joins in. The whole drag is **one undo**. The **✕** takes the *3* away and keeps the notes.
+   **And the broken ones.** On a page read from a photo, the program sometimes draws that **3** over
+   only one or two notes. That is a mistake — a real triplet is three. Those marks are now drawn in
+   **red** so you can find them, and you can fix them: drag a handle onto the note marked **green**
+   and the group becomes a proper triplet, or press **✕** and the mark goes away with the notes left
+   alone. On one test page there are five of these against two correct ones, so on real pages this is
+   the common case, not the rare one. ⚠ Some of them cannot be fixed by dragging, because the notes
+   next to them are the wrong length; for those, use **✕**, or change the neighbour's length first.
+   ⚠ **A CORRECT group always stays three notes**, and you asked about this before it was built. Making it
+   four or five is not a small change: the printed **3** is written into the program as the letter
+   "3", and the word the reading model learns is literally `\tup3`. There is no word for a group of
+   five, so a wider group would print and *label* a rhythm nobody wrote. Adding those words changes
+   what the model can be taught, so it is your call to make later, not a button to add now.
    ⚠ One thing to stay honest about: this is **not** a labelling tool. An earlier plan said every
    page you corrected would become training data. That was never built, and the reason to have the
    editor is simpler — *a friend whose page has a wrong note should be able to fix it.*

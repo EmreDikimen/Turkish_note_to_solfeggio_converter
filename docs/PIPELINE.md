@@ -18,11 +18,10 @@ updated: 2026-08-05
 > `tools/render/stitch.ts` (browser-safe TS: `\sig` resolution, tie/tuplet/grace fold-back,
 > repeat/volta/da-capo expansion → a schemaVersion-1 note model; CLI `stitch-cli.ts`,
 > round-trip-verified on all 194 bundled scores by `stitch-test.ts`); **stage 10** is the
-> existing harness — the stitched JSON loads via its file picker / `?score=` URL, and the new
-> **⬇ Save JSON** button closes the Rung-3 labeling loop.
-> ⚠ **Save JSON is scheduled for deletion** (owner, 2026-08-07) — it went unused, and the labeling
-> loop's real path is `scripts/rung3/review_ui.py`. Until the editor rework lands it still works;
-> after it, this sentence and the §3.2 reference below stop being true. [mvp/editor.md](mvp/editor.md)
+> existing harness — the stitched JSON loads via its file picker / `?score=` URL.
+> ⚠ **`Save JSON` was REMOVED on 2026-08-30** (owner). It went unused, and the labeling loop's real
+> path is `scripts/rung3/review_ui.py`; a browser check that needs the document reads
+> `window.__omrDoc`. [mvp/editor.md](mvp/editor.md)
 > **Update (2026-08-05): stages 2–8 now ALSO run in the browser.** The slicer is ported to
 > TypeScript (`apps/web/src/omr/slicer/`, MVP W4–W6, verified against this Python over the whole
 > corpus) and wired into the app at W7 via `apps/web/src/omr/page.ts`, so an uploaded page becomes a
@@ -153,8 +152,11 @@ open, so the makam is inferred from the notes rather than read off the page.
 
 **10. Note model → editor → playback.** The existing Phase-1 product. The editor is the safety
 net for every residual OMR error. ⚠ It is **no longer the Rung-3 labeling tool** — that rationale
-retired with the `Save JSON` deletion (owner, 2026-08-07); the labelling loop's path is
-`scripts/rung3/review_ui.py`. Reasoning: [mvp/editor.md](mvp/editor.md).
+retired with the `Save JSON` deletion (decided 2026-08-07, carried out 2026-08-30); the labelling
+loop's path is `scripts/rung3/review_ui.py`. Reasoning: [mvp/editor.md](mvp/editor.md).
+⚠ **Since 2026-08-30 the editor loads the page AS WRITTEN**: the stitcher's `expand: false` keeps
+`‖: … :‖` as signs and the repeat is taken at playback time (core's `unfoldDoc`), so what the editor
+shows is the printed score, not the performance. [DECISIONS.md](DECISIONS.md).
 
 ## 2. What each training-set feature buys at inference
 
@@ -234,8 +236,8 @@ own photos.
    page: 7 rows → 21 strips, keysig + repeat/volta structure decoded, ~353 ms/strip int8).
 2. ✅ (2026-07-10) Stitching (stage 8, `tools/render/stitch.ts` + CLI) and the editor feed-in:
    `decode_page.py → stitch-cli.ts → apps/web/public/decoded.json → harness` (file picker or
-   `?score=`), corrected scores exported with the harness's **⬇ Save JSON** — the Rung-3
-   labeling loop (§3.2) is unlocked. Verified on the hicaz test page: 21 strips → 23 written /
+   `?score=`), corrected scores exported with the harness's **⬇ Save JSON** (removed 2026-08-30) —
+   the Rung-3 labeling loop (§3.2) is unlocked. Verified on the hicaz test page: 21 strips → 23 written /
    28 expanded measures, signature + volta structure resolved, renders + plays in the harness.
 3. Photo preprocessing (deskew/perspective/curvature) — only then does the hard 35% matter.
 4. Header OCR + makam table lookup (until then: user picks the makam, `none` default).

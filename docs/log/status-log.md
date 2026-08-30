@@ -7,7 +7,148 @@ updated: 2026-08-30
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-30 (latest) — the klarnet view is built on a photograph, and the whole F3 backlog deploys at once
+## 2026-08-30 (latest) — a tuplet mark becomes something you can hold, and the broken ones most of all
+
+The owner asked for one thing in the editor: *"tupletlere tıklayarak onları seçebilmemi, solundan ve
+sağından tutarak genişletebilmemi veya daraltabilmemi, aynı zamanda silebilmemi sağlayan bir mantık
+ekle"* — click a tuplet to select it, drag its left and right ends, and delete it.
+
+**The interesting part happened before any code.** "Widen it from the edge" has two meanings here
+and they cost wildly different amounts, so both were put to the owner instead of guessed at. A
+tuplet in this codebase is **not an object** — it is arithmetic — and two things downstream are
+hardcoded to three: the drawn digit is the literal `"3"`, and the label token is `\tup3`. A genuine
+4- or 5-note tuplet therefore needs a digit derived from the group size **and** a token that does not
+exist, and new tokens change what the training corpus can express. The owner chose the **three-note
+slide**, and chose that **delete means remove the bracket, not the notes**. Both are recorded in
+[../DECISIONS.md](../DECISIONS.md); the n-tuplet question is deferred, not dropped.
+
+**What landed.** Clicking the drawn **"3"** holds the group: a frame round its three notes, a handle
+at each end, a ✕, and every note a handle could reach marked. ⚠ The first build selected by clicking
+a *member*, and the owner corrected it the same day — *"direkt olarak 3'leme işaretinin tıklanabilir
+olmasını istiyorum. notalarına tıklamak istemiyorum"*. The notes are now inert; the sign is the
+handle. That turned out to be the harder half, for a reason that had nothing to do with the tuplet:
+**the mark's click box cannot come from `getBBox()` on the group that holds it.** Measured on a
+bracket-style page, the group read **96 × 160 px** where the bracket is **96 × 20** — a `<text>`
+reports its FONT's em box (the "3": 12 × 160, a music font's ascent and descent are enormous), and
+VexFlow emits a zero-height `<rect>` at the SVG **origin**. A slab that size over the staff swallows
+the clicks meant for notes, which is exactly the `GraceNoteGroup` bug this codebase already paid for
+in August. `markBoxOf` measures the STROKES and rejects anything at the origin — the same rule
+`noteBoxOf` already carried — and `smoke:editor` now asserts no note's centre falls inside a mark.
+⚠ **The bracket style has no automated coverage**: it is a per-piece hash and all six bundled scores
+land on the arc, so it was verified by hand on a renamed score (both styles: box ~20 px tall, click
+holds the group, handles appear).
+
+**Then the third pass, and it was the one that mattered most.** The owner: *"bazı tupletler 3 notayı
+kapsamıyor, 1 notayı kapsayan tupletler vesaire de olabiliyor onları silebilmek veya
+genişletebilmek istiyorum"*. He is right, and the numbers are stark: `tupletGroupsIn` brackets a run
+that never sums to a plain value — the model's misread, drawn on purpose so a person can see it —
+and on `decoded.json`, a real decoded page, there are **five of those against two real triplets**,
+covering one, two and three notes. The first two passes had made exactly those marks unholdable, so
+the feature worked everywhere except where the corrections actually are.
+
+Every drawn mark is now holdable. The policy is **repair or retreat, never merely broader**: a real
+triplet still only slides (three members, the digit is a "3"), while a broken mark's grabbed end
+moves and the other stays, allowed only when the result CLOSES or has FEWER members. So a two-note
+mark whose neighbour is the right plain value can be pulled out into a real triplet — and the page
+marks that landing green, because on a decoded page it is the move you want.
+
+⚠ This **overturns the 2026-08-08 rule** that only a closed group could be removed. Its argument was
+that ×³⁄₂ "would invent a rhythm nobody read" — but that is an argument about what the page TRULY
+says, and the person looking at the page is the one answering it. ⚠ Two of `decoded.json`'s five
+broken marks have **no legal drag at all**, because their neighbours are not plain values of the
+matching length; those are cleared with the ✕. Offering a drag that could not produce a triplet
+would only move the lie. `smoke:editor` now runs a section against `decoded.json` itself: it finds
+all five, tells them from the two real triplets, clears one (changing exactly its own notes, each by
+exactly ³⁄₂, deleting nothing), and repairs another by dragging onto the note the page marks. Dragging the
+right handle hands the **first** member its plain value back (×³⁄₂) and pulls the **next** note in
+(×⅔) — so the group is always exactly three notes and **the bar length never changes**, which is
+unusual for this editor (every other edit deliberately leaves its bar over or under). One whole drag
+across several notes is **one undo entry**. The ✕ is the second half of what a click on a member used
+to do in one go; splitting them means a mis-aimed click no longer rewrites three durations.
+
+**The check that is not a rule.** `tupletEdgeTo` ends by applying the move to a copy and asking
+`closedTupletAt` — the function that decides what actually gets drawn — whether the group it now
+finds is the intended one. That is not belt-and-braces: a stray unclosed tuplet fraction sitting just
+before the window makes `tupletGroupsIn` open its run early and close a bracket over the **wrong**
+three notes, and no rule about durations can see that. `tools/core/edits-test.ts` builds that exact
+bar and checks the slide is refused.
+
+**Nothing about the corpus moved.** `rhythm.ts` gained functions and changed none, so rendered strips
+and their labels are byte-identical; the held group is stored nowhere (one event index, re-derived
+every render with `closedTupletAt`), so there is no schema change either. `npm test` passes, and
+`npm run smoke:editor` passes with a new section that drags a real handle in a real browser and reads
+the result off `window.__omrDoc` and the `data-tuplet-*` attributes — never off the Turkish copy.
+Where it lives: [../mvp/editor-built.md](../mvp/editor-built.md#step-7b--holding-a-triplet-select-slide-remove).
+
+## 2026-08-30 — the page becomes a normal score: the repeat is a sign again, and the cursor goes back with it
+
+The app drew every repeat **expanded**: the stitcher read `‖: … :‖` off the photograph, threw the
+signs away and wrote the music inside them twice. The owner asked for a real nota kâğıdı —
+*"repstart, repend yazılsın… oynatma da bozulmasın"* — and that is what landed.
+
+**What changed.** `stitchTokenRows` now always resolves the playing order and returns it as
+`structure` (`bars` = which bar carries which sign; `playBars` = the bar numbers in the order they
+sound), whatever `expand` says. The app stitches with `expand: false`, so the document IS the
+written page; core's new `unfoldDoc` turns it into the performance for `buildTimeline`, and
+everything on the audio side — metronome, usul strokes, transpose, makam deltas, the instrument
+views — still receives an ordinary flat document. Drawing needed **no new code**: the per-bar flags
+convert to the `RepeatSpan`/`NavMark` shapes SheetView has engraved since Phase 2
+(`tools/render/structure-view.ts`), so the same spans still feed the strip labels.
+
+**The part that had to be got right is the playhead.** Drawn order is no longer playing order, so
+the cursor can no longer walk the notes it drew. It follows a **play plan** instead — one step per
+sounding event, each naming the WRITTEN note drawn for it — and SheetView keeps a second index of
+its drawn positions **by event**. At a `:‖` two steps in a row name the first pass's notes, so the
+cursor walks back to the `‖:` by itself; nothing about the fold is special-cased there. Clicking a
+bar to play now seeks to the bar's **first** sounding time (`firstStartMs`), not its place on the
+page — a bar inside a repeat has two.
+
+**Why it is safe.** `npm run check:fold` stitches every cached page decode both ways and compares
+the unfolded written score with the old flattened document: **1,720 pages, 0 changed**. The same
+invariant is checked on hand-written token streams in `stitch-test.ts` (8 cases, repeats, voltas,
+D.C., coda and segno), and the maps that move the cursor have their own file,
+`tools/core/structure-test.ts`. Effect: **68.4% of pages fold, and the page is 29.1% shorter**
+([../METRICS.md](../METRICS.md)).
+
+**Checked in the real app** (`smoke:app`, 2026-08-30): a 16-crop page reads to **28 written bars
+drawn against a longer performance**, and the cursor **went back at the `:‖`** — the check clicks a bar inside
+the repeat and watches the playhead's own position until it moves backwards on the page. ⚠ The run
+was launched with `VITE_DECODE_URL` set, and the **server did not answer, so it decoded locally**
+(21.7 s, the live fallback doing its job) — the fold result is unaffected, the strips are the same
+either way. `smoke:editor` and `npm test` pass unchanged.
+
+⭐ **Then the owner named the rule that found a live defect**: *"2. dönüşte ilk volta çalmamalı,
+direkt 2. voltaya geçmeli."* It was half true in the code. `expandRepeats` skipped only the bar
+CARRYING the `\volta1` mark, and a first ending is not always one bar — measured over the 1,128
+volta-1 marks inside a repeat span on real pages, **62.1% sit on the `:‖` bar** (the case that
+worked), **26.7% one bar before it**, **94.1% within three**. So **37.9% of real first endings
+replayed their tail** before jumping to the "2.". The ending is now a RUN from the "1." to the `:‖`,
+skipped whole on the repeat pass and on the da-capo pass: **62,733 → 62,369 played bars** at full
+scale. ⚠ **Capped at four bars**, and the asymmetry is the argument — obeying a stray "1." twelve
+bars back would DELETE real music from the second pass, while ignoring one only replays a passage
+that was going to be played anyway. ⚠ Resolved **once**, in the stitcher
+(`ScoreStructure.firstEndings`): the playing order and the drawn "1." both read it, because a second
+copy of the rule is exactly how the ink and the music come to disagree — which is what this was.
+⚠ Known cosmetic gap, written down rather than hidden: the drawn bracket is still one bar wide (the
+same `repeatMarksAt` emits the strip labels, where a token belongs to one measure); its position is
+now right, and the position is what the music follows.
+
+⚠ **Decoded pages only** — the owner picked that of three offered scopes. A SymbTr sample is flat in
+the DATA, so folding one means guessing structure from duplicate bars, which is a different question
+with a different answer; the `Tekrarlar` toggle still only draws signs there.
+⚠ **`Tekrarları açık yaz`** (Gelişmiş) writes the performance out long again, and is **view-only**:
+it closes edit mode, because every repeated bar in that view is a copy and an edit aimed at a copy
+would land on the wrong note.
+
+**And `Save JSON` is gone** (owner: *"remove save json"*). The 2026-08-15 decision had kept it for
+exactly one reason — `smoke:editor` read the edited document by clicking `#save-json` and had no
+other view of what an edit did. That objection was paid off rather than overruled: `window.__omrDoc`
+now sits beside the existing `__omrStrips`/`__omrConfig` hooks, `save()` and the two `app-smoke`
+checks read it, and `smoke:editor` passes unchanged. It also removed a trap — the smoke had to
+re-read every note box after each `save()` because clicking the header button scrolled the sheet
+away; reading state moves nothing. Current state → [../STATUS.md](../STATUS.md).
+
+## 2026-08-30 — the klarnet view is built on a photograph, and the whole F3 backlog deploys at once
 
 The clarinet view was finished and everything waiting on this machine went to the live site in one
 deploy — the violin's 2026-08-27 rebuild, the 2026-08-29 kanun view and one-tab merge, and the sol

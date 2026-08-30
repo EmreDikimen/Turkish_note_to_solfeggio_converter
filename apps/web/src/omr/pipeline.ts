@@ -78,13 +78,20 @@ export async function decodeStrips(
  * tokens were produced is not the stitcher's business, and a second `stitchStrips` call site with
  * its own options is how `accidentals: "carry"` would eventually get dropped from one of them.
  */
-export function stitchDecoded(decoded: readonly DecodedStripResult[], name?: string): StitchResult {
+export function stitchDecoded(
+  decoded: readonly DecodedStripResult[],
+  name?: string,
+  opts: { expand?: boolean } = {},
+): StitchResult {
   const forStitch: DecodedStrip[] = decoded.map((d) => ({
     system: d.system,
     window: d.window,
     tokens: d.tokens,
   }));
-  return stitchStrips(forStitch, { name: name ?? "decoded-page", accidentals: "carry" });
+  // `expand` defaults to the stitcher's own default (flatten), which is what every GATE and
+  // parity check reads. The app passes `false`: it keeps the written score, draws the repeat and
+  // navigation signs the model read, and unfolds only for playback (`unfoldDoc` in core).
+  return stitchStrips(forStitch, { name: name ?? "decoded-page", accidentals: "carry", ...opts });
 }
 
 /** Decode a page's strips in the browser and stitch them into a loadable note model. */

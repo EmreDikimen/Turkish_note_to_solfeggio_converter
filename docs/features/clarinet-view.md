@@ -92,6 +92,36 @@ that, so a future edit cannot quietly make an id mean two things.
 ⚠ Seven markers I had invented are **gone**, not kept as ghosts: no fingering pressed them, and a
 ring over unused metal is noise on a photograph that already carries twenty-two pieces of silver.
 
+### The altissimo — collected, and it broke an assumption (owner, 2026-08-30)
+
+*"Do6 dan sonra biraz daha farklı parmak pozisyonlarıyla daha incelere çıkabiliyoruz."* The table
+stopped at **Do6**, where the source chart's clarion page stops. ⚠ **Above it nothing is derivable**
+— a clarinet's third register is not a further overblowing, so each note is its own fingering and no
+arithmetic produces one. The owner filled in seven, **Re♭6 to Sol6**, through the editor.
+
+⭐ **They needed no new calibration at all.** Every point he placed landed on a position his earlier
+pass had already fixed — `ALTISSIMO_FINGERINGS` uses not one key the lower registers do not, which
+is asserted rather than observed.
+
+⛔ **AND ONE OF THEM BREAKS THE ASSUMPTION UNDER THE WHOLE VIEW: a fingering does not identify a
+note.** *"Sol6 Re6 ile aynı oldu ama aradaki fark dudağını daha sert sıkmak oluyor zaten."* Sol6 and
+Re6 are the **same seven keys**, **22 commas — a perfect fourth — apart**: the next partial of the
+same tube, reached by tightening the embouchure and not by moving a finger.
+
+⭐ **The design already survives it, by luck rather than foresight.** The view labels by the note
+that **sounds**, so the two rows read correctly even though their pictures are identical; had the
+label still been the fingering's name — as it was until 2026-08-30 — these two notes would have been
+indistinguishable on screen. ⚠ Anything that indexes fingerings by key set is wrong on this
+instrument. `fingeredAs` carries the relationship, and `clarinet-test.ts` pins all three facts.
+
+⚠ **Structural, not incidental:** `CLARION` maps over `BASE_FINGERINGS` alone, so an altissimo row
+**cannot** be overblown a second time. The previous version excluded them with a koma cutoff, which
+would have worked and would have been an accident. There is a test for it.
+
+⚠ **Only Re♭6 uses the register key or the thumb** in what the owner gave, which is unusual enough
+to deserve a second look with the instrument in hand. It is recorded as his data rather than quietly
+"corrected": every time this table has been argued with from theory, the theory lost.
+
 ### What is measured, and what the owner placed
 
 ⭐ **The six tone holes are MEASURED**, by detecting near-black round blobs on the body. Exactly six

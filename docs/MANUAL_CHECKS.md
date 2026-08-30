@@ -2,7 +2,7 @@
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-24
+updated: 2026-08-30
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -111,8 +111,9 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    `\tupend`, tie pitch mismatches) — model noise being tolerated, not fatal.
 3. `npm run dev:web`, open `http://localhost:5173/?score=/decoded.json` — the decoded page is
    engraved, playable, and **editable** (✎ Edit → click a measure). Compare against the source
-   PNG side by side; fix a wrong note; **⬇ Save JSON** downloads the corrected score. That
-   correct-and-save cycle IS the Rung-3 model-assisted labeling loop (`docs/PIPELINE.md` §3.2).
+   PNG side by side and fix a wrong note. ⚠ **`⬇ Save JSON` was removed on 2026-08-30**: to read the
+   corrected document, open the console and type `__omrDoc`. The labelling loop's real path is
+   `scripts/rung3/review_ui.py` (`docs/PIPELINE.md` §3.2).
 4. Stitcher regression suite (structure unit tests + label round-trip on all bundled scores):
    ```
    npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
@@ -213,6 +214,33 @@ describe a different piece than the one on the screen.
 
 
 
+## Check 23 — the repeat is a SIGN, and the cursor goes back with it (2026-08-30)
+
+The point of this one is to see the two halves agree: the page is short, the music is long.
+
+1. Read a page (Check 12) or its crops (Check 10). Most pages carry repeat signs — about two thirds
+   of them do.
+2. Look at the sheet. Where the model read a repeat you should see **`‖:` and `:‖`**, the **1.** and
+   **2.** brackets, and — where the page had them — **𝄋**, **⊕**, **"D.C."** and **"Son"**. The bars
+   between the signs are drawn **once**. Before 2026-08-30 they were drawn twice and no sign appeared.
+3. Count the bars on screen, then open the console and compare:
+   ```js
+   __omrStructure.playBars.length        // how many bars are PLAYED
+   Math.max(...__omrDoc.events.map(e => e.bar))   // how many are WRITTEN
+   ```
+   The played number should be the bigger one. That difference is the fold.
+4. Now click a bar **inside** the repeat to play from there, and watch the blue cursor. When it
+   reaches the `:‖` it must **jump back to the `‖:`** and play the passage again — and the sound must
+   agree with it. ⚠ This is the whole claim; a cursor that runs on past the `:‖` while the music
+   repeats (or the other way round) is the bug to report.
+5. Open **Gelişmiş** and tick **Tekrarları açık yaz**. The score is written out long again, with no
+   signs — the old behaviour, kept for comparison. ⚠ **Düzenle closes when you tick it**, on purpose:
+   in that view every repeated bar is a copy, and an edit aimed at a copy would land on the wrong
+   note. Untick it (or press Düzenle) to fold back.
+6. Headless and asserted, over a real page: `npm run smoke:app` — the last two lines say whether the
+   sheet is shorter than the performance and whether the playhead went back. The claim that folding
+   never changes the SOUND is `npm run check:fold` (1,720 pages, expect 0 changed).
+
 ## Check 14 — the makam changes what you HEAR (2026-08-07)
 
 Goal: the only check in this file that needs your ears. A makam is not a label — picking one bends
@@ -230,8 +258,9 @@ drawn. Table and sources: [mvp/makam.md](mvp/makam.md).
 4. Switch to **Hüseyni**, which is deliberately *not* marked ♪ — it is documented as **not** taking
    that lowering, so it plays as written. That contrast is the whole point of the feature.
 5. **The staff must not have moved through any of this.** Switch to **Sheet**: same accidentals,
-   same noteheads. Confirm it properly with ⬇ **Save JSON** under `none` and again under `Uşşak` —
-   the two files may differ in the `makam` field and nowhere else, never a `koma53` or `noteName`.
+   same noteheads. Confirm it properly in the browser console — `JSON.stringify(__omrDoc)` under
+   `none` and again under `Uşşak` — the two may differ in the `makam` field and nowhere else, never
+   a `koma53` or `noteName`.
 6. **The popup**, which only a decode raises: follow Check 12 with any page image. When the read
    finishes, a dialog names the makam it guessed **and shows why** — the signature it matched and
    the note the piece ends on. Accept or change it; the status line carries the same guess.
@@ -255,8 +284,7 @@ a playable score out. This is Check 10's journey with every stage running in the
    **A frozen counter is the bug to report** — the angle check is ~35 s of work and only stays
    watchable because it yields between rotations.
 4. Expect on that page: **7 staves → 16 strips → 344 notes, 28 measures**, sliced in ~36 s and read
-   in ~19 s. Then switch to **Sheet**, press **▶ Play**, edit a measure (✎ Edit → click one), and
-   **⬇ Save JSON**.
+   in ~19 s. Then switch to **Sheet**, press **▶ Play**, and edit a measure (✎ Edit → click one).
 5. The same thing, headless and asserted, including a strip-count check against Python:
    ```
    .venv-ml/bin/python scripts/slicer_ref.py --pages 8 --out ref.json

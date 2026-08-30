@@ -20,6 +20,7 @@
  */
 
 import {
+  ALTISSIMO_FINGERINGS,
   BASE_FINGERINGS,
   CLARINET_FINGERINGS,
   CLARINET_HIGHEST_KOMA,
@@ -76,6 +77,18 @@ console.log("the fingering table");
 
 // 19 notes: Mi3 up to Si♭4, which is exactly the span of the source chart's chalumeau page.
 check("the base register is 19 fingerings", BASE_FINGERINGS.length, 19);
+check("the altissimo is 7 more", ALTISSIMO_FINGERINGS.length, 7);
+
+// ⛔ THE ALTISSIMO MUST NEVER BE OVERBLOWN. A third register is not a further overblowing of a
+// second, so deriving a "clarion of the altissimo" would invent seven notes the instrument cannot
+// play. It is prevented structurally — `CLARION` maps over BASE_FINGERINGS alone — and this check
+// is what stops a future edit from folding the two lists together for tidiness.
+{
+  const alt = new Set(ALTISSIMO_FINGERINGS.map((f) => f.koma));
+  const derived = CLARINET_FINGERINGS.filter((f) => f.clarion).map((f) => f.koma - REGISTER_TWELFTH);
+  check("no altissimo fingering is used as a clarion base", derived.filter((k) => alt.has(k)), []);
+  check("no altissimo row is marked clarion", ALTISSIMO_FINGERINGS.filter((f) => f.clarion).map((f) => f.label), []);
+}
 check("a twelfth is an octave plus a fifth", REGISTER_TWELFTH, 53 + 31);
 
 // The clarion is the chalumeau rows only — the throat notes must NOT be overblown.
@@ -92,12 +105,13 @@ ok(
   "every clarion fingering carries the register key",
   CLARINET_FINGERINGS.filter((f) => f.clarion).every((f) => f.keys.includes("register")),
 );
-// ⚠ Exactly ONE non-clarion fingering carries the register key — the throat Si♭ vents with it.
-// Asserting "none" would be wrong; asserting the count pins the real shape.
+// ⚠ Two non-clarion fingerings carry the register key, for two unrelated reasons: the throat Si♭
+// vents with it, and the altissimo Re♭6 uses it as part of its own fingering. Asserting "none"
+// would be wrong and asserting a count would hide which; naming them pins the real shape.
 check(
-  "only the throat Si♭ uses the register key outside the clarion",
+  "the register key outside the clarion: the throat Si♭ and the altissimo Re♭6",
   CLARINET_FINGERINGS.filter((f) => !f.clarion && f.keys.includes("register")).map((f) => f.label),
-  ["Si4b4"],
+  ["Si4b4", "Re6b4"],
 );
 
 // Strictly ascending, no repeats — a duplicated koma would silently shadow a fingering.
@@ -163,6 +177,30 @@ check(
   check("…and Fa5 with the Si3b4 one", byLabel("Fa5").fingeredAs, "Si3b4");
   check("a chalumeau row has no borrowed fingering", byLabel("Sol3").fingeredAs, null);
 }
+
+// ---------------------------------------------------------------------------------------------
+// 3b. The altissimo, and the one thing about it that breaks a natural assumption
+// ---------------------------------------------------------------------------------------------
+console.log("\nthe altissimo");
+
+// ⭐ Sol6 IS Re6's fingering. The owner: "sol6 re6 ile aynı oldu ama aradaki fark dudağını daha
+// sert sıkmak oluyor zaten" — a perfect fourth up on the same tube, reached by tightening.
+// ⚠ So a fingering does NOT identify a note on this instrument. Anything that indexes by key set
+// is wrong here, which is why the view labels by what SOUNDS.
+check("Sol6 and Re6 are the same fingering", keysOf("Sol6"), keysOf("Re6"));
+check("…and they are a perfect fourth apart", byLabel("Sol6").koma - byLabel("Re6").koma, 22);
+check("…and Sol6 says which note it is fingered as", byLabel("Sol6").fingeredAs, "Re6");
+
+// The altissimo needed no new calibration: every point the owner placed landed on a position his
+// earlier pass had already fixed. If a later edit introduces one, this says so.
+{
+  const base = new Set(BASE_FINGERINGS.flatMap((f) => f.keys));
+  const extra = [...new Set(ALTISSIMO_FINGERINGS.flatMap((f) => f.keys))].filter((k) => !base.has(k));
+  check("the altissimo uses no key the lower registers do not", extra, []);
+}
+
+// The top of the instrument, stated as a fact rather than left implicit.
+check("the range now tops out at Sol6", CLARINET_FINGERINGS[CLARINET_FINGERINGS.length - 1]!.label, "Sol6");
 
 // No fingering may ask for two of anything, which is what a copy-paste slip produces.
 {
@@ -345,6 +383,15 @@ console.log("\nthe shipped scores are playable");
   for (let k = lo; k <= hi; k++) if (fingerClarinet(k) === null) unplayable++;
   check("every written comma from Sol4 to Do6 is playable", unplayable, 0);
   ok("…and the top of that span is in the clarion", CLARINET_FINGERINGS[fingerClarinet(hi)!.fingeringIndex]!.clarion);
+}
+
+// ⭐ And the whole extended range, Do6 to Sol6, which is what the altissimo was collected for.
+// ⚠ Note the register changes inside it: Do6 is a clarion note, everything above is altissimo.
+{
+  let bad = 0;
+  for (let k = naturalKoma("C", 6); k <= naturalKoma("G", 6); k++) if (fingerClarinet(k) === null) bad++;
+  check("every comma from Do6 up to Sol6 is playable", bad, 0);
+  ok("…and the very top is NOT a clarion note", !CLARINET_FINGERINGS[fingerClarinet(naturalKoma("G", 6))!.fingeringIndex]!.clarion);
 }
 
 {

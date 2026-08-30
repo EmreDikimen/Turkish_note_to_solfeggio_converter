@@ -25,6 +25,7 @@ import {
   toNote,
   toRest,
   transpose as transposeDoc,
+  unfoldDoc,
   USULS,
   withAlter,
   withDurationBeats,
@@ -35,7 +36,7 @@ import {
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
-import { closedTupletAt, memberPositions, tupletRunFrom } from "../../../tools/render/rhythm";
+import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
@@ -71,6 +72,8 @@ import {
 } from "./ui/status";
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
+import { navMarksFromStructure, repeatSpansFromStructure } from "../../../tools/render/structure-view";
+import type { ScoreStructure } from "../../../tools/render/stitch";
 import { respellAeu } from "../../../tools/render/respell";
 import { parseSignatureBody } from "../../../tools/render/lilypond";
 
@@ -273,6 +276,17 @@ export function App() {
   // strip labels then carry the matching repeat tokens. Purely visual + labels — the doc, layout,
   // playback, and playhead are untouched.
   const [showRepeats, setShowRepeats] = useState(false);
+  // A DECODED page's own structure: which bars carry `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son", and the
+  // order those signs make the bars play in (`playBars`). The model reads these signs off the
+  // photograph, so the score is kept as WRITTEN — a repeated passage appears once, with its signs
+  // — and the repeat is taken at playback time instead. Null for a score that has no structure
+  // (a SymbTr sample, a loaded JSON): then written order IS playing order and nothing below fires.
+  const [structure, setStructure] = useState<ScoreStructure | null>(null);
+  // Escape hatch for the folded sheet: write the performance out long, every repeat taken, the way
+  // the app did before the signs existed. VIEW ONLY — the document stays written, so this is not an
+  // edit and cannot be undone into; edit mode is closed while it is on (the long score's notes are
+  // copies, and an edit aimed at a copy would land on the wrong note).
+  const [writeOut, setWriteOut] = useState(false);
   // Edit mode: which event (`NoteEvent.index`) is selected on the sheet, or null. A selection is
   // a POSITION, not an identity — deletes renumber — so it is cleared on load, on leaving edit
   // mode, and on undo/redo rather than being translated across those.
@@ -286,6 +300,12 @@ export function App() {
   // position, not an identity, so it is dropped rather than translated whenever the document or
   // the tool changes — see `armTool` and the undo/redo handlers.
   const [tupletAnchor, setTupletAnchor] = useState<number | null>(null);
+  // Tuplet tool only: a WHOLE triplet is selected, named by its first member's `NoteEvent.index`.
+  // The group itself is never stored — nothing about a tuplet ever is — so this is re-derived from
+  // the document with `closedTupletAt` wherever it is needed; holding the three positions instead
+  // would go stale the moment the handles moved them. Same position-not-identity rule as the
+  // selection above: cleared on load, on a tool change and on undo/redo.
+  const [selectedTuplet, setSelectedTuplet] = useState<number | null>(null);
   // Edit mode: the 1-based measure the most recent edit landed in, and the whole of what the
   // palette's Çal needs. In edit mode a click means select or insert, so the sheet's click-to-seek
   // is off — this is what replaces it: fix a note, press Çal, hear the bar.
@@ -386,7 +406,7 @@ export function App() {
   // Install a freshly loaded score: set the doc AND derive a stable pitch range (padded a
   // few commas above/below the notes used). Both load paths (sample + file) go through here.
   // `detected` is passed only by the decode paths, whose scores carry no metadata at all.
-  function loadDoc(raw: NoteModelDocument, detected?: MakamDetection) {
+  function loadDoc(raw: NoteModelDocument, detected?: MakamDetection, structure?: ScoreStructure) {
     // Assign each event a stable bar number from SymbTr's offset column up front, so measure
     // grouping is correct for every usul and survives edits (which would otherwise lose it).
     const d = assignBars(raw);
@@ -406,7 +426,13 @@ export function App() {
     setTranspose(0); // a freshly loaded score starts untransposed
     setSelectedNote(null);
     setTupletAnchor(null); // a half-finished tuplet names a note in the score being replaced
+    setSelectedTuplet(null); // and so does a selected one
     setLastEditMeasure(null); // nothing edited yet → the palette's Çal starts at the top
+    // Only a decoded page brings a structure; every other source plays exactly as it is written,
+    // so this CLEARS as often as it sets — a leftover from the previous page would fold the next
+    // score along bar numbers that mean nothing in it.
+    setStructure(structure ?? null);
+    setWriteOut(false);
     history.reset(detected ? { ...d, makam: slug } : d);
   }
 
@@ -473,35 +499,79 @@ export function App() {
   // nudge the tuning anchor so only the frequencies move. Both yield identical sounding pitches.
   // The makam's deltas go on LAST, so their fractional komas reach buildTimeline (which recomputes
   // frequency from koma53) and nothing that spells a note name.
-  const timeline = useMemo(() => {
+  //
+  // ⚠ The document is the WRITTEN score, which a repeat sign makes shorter than the performance,
+  // so the timing is built from `unfoldDoc` — the written bars in playing order. Everything the
+  // audio side sees is therefore an ordinary flat document, exactly as before the signs existed.
+  const perf = useMemo(() => {
     if (!doc) return null;
-    if (keepSheet && transpose !== 0) {
-      const tuned = { ...doc, tuning: { ...doc.tuning, refKoma: doc.tuning.refKoma - transpose } };
-      return buildTimeline(withKomaDeltas(tuned, makamDeltas));
-    }
-    return displayDoc ? buildTimeline(withKomaDeltas(displayDoc, makamDeltas)) : null;
-  }, [doc, displayDoc, keepSheet, transpose, makamDeltas]);
+    const base =
+      keepSheet && transpose !== 0
+        ? { ...doc, tuning: { ...doc.tuning, refKoma: doc.tuning.refKoma - transpose } }
+        : displayDoc;
+    if (!base) return null;
+    const played = unfoldDoc(base, structure?.playBars);
+    const timeline = buildTimeline(withKomaDeltas(played.doc, makamDeltas));
+    // One step per sounding event, each naming the WRITTEN note the sheet drew for it. This is the
+    // whole of "sound and picture match": on the second pass the steps name the first pass's notes
+    // again, so the cursor walks back to the `‖:` by itself.
+    const playPlan = timeline.notes.map((n) => ({
+      evIndex: played.srcOf.get(n.index) ?? n.index,
+      startMs: n.startMs,
+      endMs: n.startMs + n.durationMs,
+    }));
+    return {
+      timeline,
+      // The performance as a document: same events as the timeline, in the same order. The
+      // instrument views pair `timeline.notes[i].index` with an event, so they need THIS doc — on
+      // a folded score the written one has no event under a second-pass index.
+      doc: played.doc,
+      // Undefined when the page plays as it is written (and when it is written out long, where the
+      // drawn order IS the playing order): then the playhead's own drawn positions are correct and
+      // nothing has to be mapped.
+      playPlan: played.folded && !writeOut ? playPlan : undefined,
+      firstStartMs: played.firstStartMs,
+    };
+  }, [doc, displayDoc, keepSheet, transpose, makamDeltas, structure, writeOut]);
+  const timeline = perf?.timeline ?? null;
 
-  // Detected repeat spans for the drawn score (doc unmodified — signs are drawn onto the same
-  // engraving). SheetView draws them and the strip labels get the matching tokens from the SAME
-  // spans, so a strip's pixels and label always agree.
+  // What the sheet DRAWS. Normally the written score itself; with the escape hatch on, the
+  // performance written out long (see `writeOut`), which is what the app showed before it could
+  // draw a repeat sign.
+  const drawnDoc = useMemo(() => {
+    const written = displayDoc ?? doc;
+    if (!written || !structure || !writeOut) return written;
+    return unfoldDoc(written, structure.playBars).doc;
+  }, [displayDoc, doc, structure, writeOut]);
+
+  // The repeat signs to draw. SheetView draws them and the strip labels get the matching tokens
+  // from the SAME spans, so a strip's pixels and label always agree.
   const repeatSpans = useMemo<RepeatSpan[] | undefined>(() => {
-    const drawn = displayDoc ?? doc;
+    const drawn = drawnDoc;
     if (!drawn) return undefined;
+    // A DECODED page draws the signs the model actually read off the photograph — never signs
+    // guessed by matching duplicate bars, which is a different question with a different answer.
+    // Written out long, it draws none: the repeat has already been taken, and a `:‖` would be an
+    // instruction to take it a second time.
+    if (structure)
+      return writeOut ? undefined : repeatSpansFromStructure(structure, groupMeasures(drawn).length);
     // Render automation: a repseed adds seeded random spans on top of the detected ones (Rung-2
     // repeat-token coverage — SymbTr itself has no repeats). Interactive: the Repeats toggle.
     if (URL_REPSEED != null) return injectRepeats(drawn, URL_REPSEED, detectRepeats(drawn));
     return showRepeats ? detectRepeats(drawn) : undefined;
-  }, [showRepeats, displayDoc, doc]);
+  }, [showRepeats, drawnDoc, structure, writeOut]);
 
   // Injected navigation marks (segno/coda/D.C./Son — Rung-2 coverage; SymbTr has none, so there
   // is nothing to detect). URL-driven only, like the other render-automation seeds. Depends on
   // the repeat spans: injection keeps nav marks off repeat/volta measures (shared drawing band).
   const navMarks = useMemo<NavMark[] | undefined>(() => {
-    const drawn = displayDoc ?? doc;
+    // A decoded page's 𝄋 / ⊕ / "D.C." / "Son" are read, not injected — and, like the repeat signs,
+    // they are not drawn over a score that has already been written out long.
+    if (structure) return writeOut ? undefined : navMarksFromStructure(structure);
+    const drawn = drawnDoc;
     if (!drawn || URL_NAVSEED == null) return undefined;
     return injectNavMarks(drawn, URL_NAVSEED, repeatSpans ?? []);
-  }, [displayDoc, doc, repeatSpans]);
+  }, [drawnDoc, repeatSpans, structure, writeOut]);
 
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
@@ -510,7 +580,7 @@ export function App() {
   // Step-2c: the training strips for the currently-drawn score + accidental mode, and the selected
   // one. Uses the SAME doc + repeat spans SheetView draws, so crop geometry and labels match pixels.
   const strips = useMemo<ExportStrip[]>(() => {
-    const drawn = displayDoc ?? doc;
+    const drawn = drawnDoc;
     // Pass the real mode (incl. "measure"/carry), the same conventional-signature override
     // SheetView draws with, and the same accidental tolerance it draws with, so carry labels equal
     // the drawn signature AND the drawn accidentals (faithful scheme).
@@ -522,7 +592,7 @@ export function App() {
           STRIP_BUDGET_OVERRIDE,
         )
       : [];
-  }, [repeatSpans, navMarks, displayDoc, doc, layout, accidentalMode]);
+  }, [repeatSpans, navMarks, drawnDoc, layout, accidentalMode]);
   const selectedStrip = useMemo(() => strips.find((s) => s.id === selectedStripId) ?? null, [strips, selectedStripId]);
   // Expose the strips + score meta + applied render config for the Playwright batch exporter
   // (tools/render/render.ts). `applied` is true only once the engraved layout matches the
@@ -531,6 +601,12 @@ export function App() {
     const w = window as unknown as {
       __omrStrips?: ExportStrip[];
       __omrMeta?: { makam: string; name: string };
+      /** The live document — the WRITTEN score, edits included. This is how the browser checks read
+       *  the note model back (`smoke:app`, `smoke:editor`); the app itself has no export button. */
+      __omrDoc?: NoteModelDocument | null;
+      /** A decoded page's signs and playing order, so a check can see that the page is FOLDED —
+       *  written shorter than it sounds — without reading a single word off the screen. */
+      __omrStructure?: ScoreStructure | null;
       __omrConfig?: {
         score: string; mode: AccidentalMode; lyrics: boolean; transpose: number; sig: string | null;
         repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null; slurseed: number | null;
@@ -547,6 +623,8 @@ export function App() {
       };
     };
     w.__omrStrips = strips;
+    w.__omrDoc = doc;
+    w.__omrStructure = structure;
     if (doc) w.__omrMeta = { makam: doc.makam, name: doc.name };
     w.__omrConfig = {
       score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose, sig: URL_SIG ?? null,
@@ -557,7 +635,7 @@ export function App() {
       maxmeasures: URL_MAX_MEASURES,
       applied: layoutTag === renderTag,
     };
-  }, [strips, doc, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
+  }, [strips, doc, structure, sampleFile, accidentalMode, showLyrics, transpose, layoutTag, renderTag]);
 
   // Translate the current tempo/metronome/percussion/usul UI state into backend PlayOptions. Speed
   // is the chosen BPM over the natural BPM; the clicks are the selected usul's beat pattern and the
@@ -826,15 +904,33 @@ export function App() {
     });
   }
 
+  /** The measure holding `index`, and where in it that event sits. Null when the document does not
+   *  hold it — a stale click, which must never be allowed to name a bar it isn't in. Shared by all
+   *  three tuplet handlers below, because a tuplet is strictly intra-measure and every one of them
+   *  starts by finding its bar. */
+  function measureOf(index: number) {
+    if (!doc) return null;
+    const m = groupMeasures(doc).find((mm) => mm.events.some((e) => e.index === index));
+    if (!m) return null;
+    return { m, pos: m.events.findIndex((e) => e.index === index) };
+  }
+
   /**
    * Edit mode: the tuplet tool's click (step 7). One tool, both directions.
    *
    * The order of the three cases IS the gesture:
-   *  1. the note is inside a CLOSED three-member triplet → take that triplet apart (×3/2). Clicking
-   *     a member can mean nothing else: it cannot start a new run, because a tuplet fraction is not
-   *     a plain value (see `plainTupletBase`);
+   *  1. the event is inside a CLOSED three-member triplet → SELECT that triplet, so its two handles
+   *     and its ✕ appear. Clicking the already-selected group again lets it go;
    *  2. nothing anchored → this note is the run's first, remember it (no document change);
    *  3. anchored → apply (×2/3) if this is the run's third note; clicking the anchor again cancels.
+   *
+   * ⚠ **Case 1 arrives from the drawn "3", not from a note** (owner, 2026-08-30: *"direkt olarak
+   * 3'leme işaretinin tıklanabilir olmasını istiyorum. notalarına tıklamak istemiyorum"*). The sheet
+   * makes the engraved mark a click target and its three notes inert, and hands the group's first
+   * member here. The case is still written against an event index rather than a mark, because
+   * nothing about a tuplet is stored — a mark is only ever a handle onto three ordinary notes.
+   * ⚠ It also used to take the triplet apart on the spot (2026-08-08 → 2026-08-30). It now selects:
+   * taking it apart is the ✕ (`onTupletRemove`) and moving it is the handles (`onTupletEdge`).
    *
    * Which notes make a legal run is `tupletRunFrom` in `tools/render/rhythm.ts` — the same module
    * that draws the bracket, so the tool cannot promise a triplet the engraver would not draw. The
@@ -845,20 +941,22 @@ export function App() {
    * display space and stored space, and `tupletRunFrom` reads durations only.
    */
   function onTupletPick(index: number) {
-    if (!doc) return;
-    const m = groupMeasures(doc).find((mm) => mm.events.some((e) => e.index === index));
-    if (!m) return;
-    const pos = m.events.findIndex((e) => e.index === index);
+    const found = measureOf(index);
+    if (!found) return;
+    const { m, pos } = found;
 
-    const closed = closedTupletAt(m.events, pos);
-    if (closed) {
-      const idx = memberPositions(m.events, closed).map((p) => m.events[p]!.index);
-      onStop();
-      markEdited(index);
+    // ⚠ ANY drawn mark can be held, not just a real triplet (owner, 2026-08-30: *"bazı tupletler 3
+    // notayı kapsamıyor, 1 notayı kapsayan tupletler vesaire de olabiliyor onları silebilmek veya
+    // genişletebilmek istiyorum"*). A mark over one or two notes is the model's misread — the whole
+    // reason `tupletGroupsIn` draws it — so it is exactly what most needs to be grabbed and fixed.
+    const drawn = drawnTupletAt(m.events, pos);
+    if (drawn) {
+      const first = m.events[memberPositions(m.events, drawn)[0]!]!.index;
       setTupletAnchor(null);
-      history.apply((prev) => scaleDurations(prev, idx, { num: 3, den: 2 }));
+      setSelectedTuplet(selectedTuplet === first ? null : first); // clicking it again lets it go
       return;
     }
+    setSelectedTuplet(null); // a click off the group is a click away from it
 
     if (tupletAnchor == null) {
       if (tupletRunFrom(m.events, pos)) setTupletAnchor(index);
@@ -876,6 +974,74 @@ export function App() {
     markEdited(index);
     setTupletAnchor(null);
     history.apply((prev) => scaleDurations(prev, idx, { num: 2, den: 3 }));
+    setSelectedTuplet(idx[0]!); // hold what was just made, so the handles are right there
+  }
+
+  /**
+   * Edit mode: the held mark's ✕ — take the bracket off and give its notes their plain values back
+   * (×3/2). The notes STAY; only the grouping goes (owner, 2026-08-30).
+   *
+   * ⚠ It works on a BROKEN mark too — one drawn over a single note, or two (owner, same day). Those
+   * are the model's misreads, and clearing one is the commonest correction there is. The old rule
+   * refused them on the grounds that ×³⁄₂ "would invent a rhythm nobody read"; that was an argument
+   * about what the page TRULY says, and it is the person looking at the page who is answering that
+   * question here. ⚠ The arithmetic is exact for the ordinary cases (a 1/12 goes back to a 1/8), but
+   * a member with an unusual fraction can land on a value no single notehead draws — the engraver
+   * then falls back to its nearest-value snap, exactly as it does for any other odd duration.
+   *
+   * The bar it is in becomes LONGER — an edit absorbs into its bar and bar lines never move, so the
+   * off-meter mark is the indicator, exactly as making a triplet made the bar short.
+   */
+  function onTupletRemove() {
+    if (selectedTuplet == null) return;
+    const found = measureOf(selectedTuplet);
+    if (!found) return;
+    const drawn = drawnTupletAt(found.m.events, found.pos);
+    if (!drawn) return;
+    const idx = memberPositions(found.m.events, drawn).map((p) => found.m.events[p]!.index);
+    onStop();
+    markEdited(selectedTuplet);
+    setTupletAnchor(null);
+    setSelectedTuplet(null);
+    history.apply((prev) => scaleDurations(prev, idx, { num: 3, den: 2 }));
+  }
+
+  /**
+   * Edit mode: a handle of the selected triplet was dragged onto the note `targetIndex` — move the
+   * group so that its `edge` end sits there (owner, 2026-08-30).
+   *
+   * What that MEANS depends on the mark, and `tupletEdgeTo` owns the distinction: a real triplet
+   * **slides** (three members always — the digit is a hardcoded "3"), while a **broken** mark is
+   * **repaired** — the grabbed end moves, the other stays, so it can grow to pick up the member the
+   * model dropped or shrink toward nothing. Either way the edit is the same two scalings — ×³⁄₂ on
+   * what leaves, ×⅔ on what joins — in ONE undo entry.
+   *
+   * ⚠ `coalesce` keys on the edge, not on the target: one drag across four notes is one gesture and
+   * must undo as one. Keying on the target would leave an undo entry per note crossed.
+   *
+   * ⚠ The selection is moved to the group's new first member. It names a POSITION, and the handle
+   * has just changed which notes hold it — leaving it behind would point at a note that is no
+   * longer in any group, and the handles would vanish mid-drag.
+   */
+  function onTupletEdge(edge: "start" | "end", targetIndex: number) {
+    if (selectedTuplet == null) return;
+    const held = measureOf(selectedTuplet);
+    if (!held) return;
+    const drawn = drawnTupletAt(held.m.events, held.pos);
+    if (!drawn) return;
+    const at = held.m.events.findIndex((e) => e.index === targetIndex);
+    if (at < 0) return; // the handle may only land inside the group's own bar
+    const move = tupletEdgeTo(held.m.events, drawn, edge, at);
+    if (!move) return; // the sheet dims what this refuses; a stale drag lands here
+    const leaving = move.leaving.map((p) => held.m.events[p]!.index);
+    const joining = move.joining.map((p) => held.m.events[p]!.index);
+    onStop();
+    markEdited(targetIndex);
+    history.apply(
+      (prev) => scaleDurations(scaleDurations(prev, leaving, { num: 3, den: 2 }), joining, { num: 2, den: 3 }),
+      { coalesce: `tupslide:${edge}` },
+    );
+    setSelectedTuplet(held.m.events[memberPositions(held.m.events, move.group)[0]!]!.index);
   }
 
   /** Edit mode: delete the selected note (and any grace notes leading into it). The bar is left
@@ -893,12 +1059,14 @@ export function App() {
     onStop();
     setSelectedNote(null);
     setTupletAnchor(null);
+    setSelectedTuplet(null);
     history.undo();
   }
   function onRedo() {
     onStop();
     setSelectedNote(null);
     setTupletAnchor(null);
+    setSelectedTuplet(null);
     history.redo();
   }
 
@@ -908,6 +1076,7 @@ export function App() {
   function armTool(t: Tool | null) {
     setArmed(t);
     setTupletAnchor(null);
+    setSelectedTuplet(null); // and a held triplet: the next tool has no handles to hold it with
   }
 
   // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`keepSheet` are applied
@@ -942,6 +1111,20 @@ export function App() {
     setPlayState("stopped");
   }
 
+  /**
+   * Where in the PERFORMANCE a drawn bar starts, in ms.
+   *
+   * On a folded score a bar inside a repeat sounds twice, so `Measure.startMs` — a running sum
+   * over the written score — is not a playing time at all. `firstStartMs` gives the first time the
+   * bar sounds, which is what clicking it means. Written out long, the drawn bars ARE the
+   * performance, so their own start times are already right.
+   */
+  function playStartMs(m: { index: number; startMs: number } | null): number {
+    if (!m) return 0;
+    if (writeOut) return m.startMs;
+    return perf?.firstStartMs.get(m.index) ?? m.startMs;
+  }
+
   // Seek: start playback from a given position (ms). Used by clicking a measure (non-edit
   // mode) to "play from here". The click is the user gesture the AudioContext needs.
   function onSeekMs(ms: number) {
@@ -957,8 +1140,8 @@ export function App() {
   // measure, so a remembered index can outrun the score. Falling back to the top is the safe read.
   const editStartMs = useMemo(() => {
     if (!doc || lastEditMeasure == null) return 0;
-    return groupMeasures(doc).find((m) => m.index === lastEditMeasure)?.startMs ?? 0;
-  }, [doc, lastEditMeasure]);
+    return playStartMs(groupMeasures(doc).find((m) => m.index === lastEditMeasure) ?? null);
+  }, [doc, lastEditMeasure, perf, writeOut]);
 
   // The palette's Çal. Always (re)starts from the last edited bar — pause and resume stay in the
   // transport above, which is still on screen in edit mode (owner, 2026-08-08). Pressing it again
@@ -994,20 +1177,6 @@ export function App() {
       .then(() => {
         if (wasPaused) backend.pause(); // keep the paused state after re-scheduling
       });
-  }
-
-  // Download the current (possibly edited) score as note-model JSON. This is the output side of
-  // the Rung-3 model-assisted labeling loop: a stitched page is loaded, corrected in the editor,
-  // saved here — and the corrected file serializes to training labels via the SAME serializer
-  // that made the synthetic set (tools/render/lilypond.ts).
-  function onDownload() {
-    if (!doc) return;
-    const blob = new Blob([JSON.stringify(doc, null, 1)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${doc.name || "score"}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
   }
 
   // Load a note-model JSON the user picked from disk. Reads the file as text, parses it,
@@ -1070,7 +1239,8 @@ export function App() {
             setOmrStatus(readingStatus("strips", done, total, current)),
         });
         const totalMs = performance.now() - t0;
-        const result = stitchDecoded(routed.strips, pageName);
+        // `expand: false` — keep the page as it is WRITTEN and take the repeats at playback time.
+        const result = stitchDecoded(routed.strips, pageName, { expand: false });
         setRawDecode({
           name: pageName,
           where: routed.where,
@@ -1086,7 +1256,7 @@ export function App() {
         // then confirmed by the user — it decides how the piece SOUNDS, not just how it is filed.
         const detected = detectMakam(result.doc);
         onStop();
-        loadDoc(result.doc, detected);
+        loadDoc(result.doc, detected, result.structure);
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
@@ -1159,7 +1329,7 @@ export function App() {
             setOmrStatus(readingStatus("page", done, total, current)),
         });
         const decodeMs = performance.now() - t0;
-        const result = stitchDecoded(routed.strips, stem);
+        const result = stitchDecoded(routed.strips, stem, { expand: false });
         setRawDecode({
           name: stem,
           where: routed.where,
@@ -1173,7 +1343,7 @@ export function App() {
 
         const detected = detectMakam(result.doc);
         onStop();
-        loadDoc(result.doc, detected);
+        loadDoc(result.doc, detected, result.structure);
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
@@ -1276,12 +1446,13 @@ export function App() {
             showLyrics={showLyrics}
             onShowLyrics={setShowLyrics}
             editMode={editMode}
-            onEditMode={(v) => { setEditMode(v); if (!v) { setSelectedNote(null); armTool(null); } }}
+            // Entering edit mode folds the score back to what is written: you edit the one bar the
+            // page carries, and the repeat follows it. See `writeOut`.
+            onEditMode={(v) => { setEditMode(v); if (v) setWriteOut(false); if (!v) { setSelectedNote(null); armTool(null); } }}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}
             canRedo={history.canRedo}
-            onSave={onDownload}
             palette={
               editMode && viewMode === "sheet" ? (
                 <EditPalette
@@ -1304,9 +1475,9 @@ export function App() {
               // kanun takes the document, because a course is a WRITTEN note. `makamDeltas` rides
               // along for the kanun, which is the one bend a mandal can express. Neither view ever
               // calls `buildTimeline` itself. Full reasoning in the two files' headers.
-              timeline && (doc || displayDoc) && (
+              timeline && perf && (
                 <InstrumentView
-                  doc={displayDoc ?? doc!}
+                  doc={perf.doc}
                   timeline={timeline}
                   makamDeltas={makamDeltas}
                   playing={playState !== "stopped"}
@@ -1317,8 +1488,9 @@ export function App() {
                 />
               )
             ) : (
+              drawnDoc && (
               <SheetView
-                doc={displayDoc ?? doc}
+                doc={drawnDoc}
                 editMode={editMode}
                 accidentalMode={accidentalMode}
                 signatureOverride={SIG_OVERRIDE}
@@ -1327,7 +1499,8 @@ export function App() {
                 lyricHyphens={lyricHyphens}
                 playing={playState !== "stopped"}
                 getPositionMs={getPositionMs}
-                onSeekToMeasure={(m) => onSeekMs(m.startMs)}
+                playPlan={perf?.playPlan}
+                onSeekToMeasure={(m) => onSeekMs(playStartMs(m))}
                 selectedNote={selectedNote}
                 onSelectNote={setSelectedNote}
                 onDeleteNote={onDeleteNote}
@@ -1338,6 +1511,9 @@ export function App() {
                 onInsertNote={onInsertNote}
                 tupletAnchor={tupletAnchor}
                 onTupletPick={onTupletPick}
+                selectedTuplet={selectedTuplet}
+                onTupletEdge={onTupletEdge}
+                onTupletRemove={onTupletRemove}
                 onLayout={onLayout}
                 highlightRect={selectedStrip?.rect ?? null}
                 repeatSpans={repeatSpans}
@@ -1350,6 +1526,7 @@ export function App() {
                 legacyTupletMark={URL_LEGACY_TUPLET}
                 concaveTuplet={URL_CONCAVE_TUPLET}
               />
+              )
             )}
           </ScoreCard>
         </>
@@ -1371,6 +1548,18 @@ export function App() {
         onLyricHyphens={setLyricHyphens}
         showRepeats={showRepeats}
         onShowRepeats={setShowRepeats}
+        canWriteOut={structure != null}
+        writeOut={writeOut}
+        // Writing the score out long makes every repeated bar a COPY, and an edit aimed at a copy
+        // would land on the wrong note — so the view and edit mode are mutually exclusive.
+        onWriteOut={(v) => {
+          setWriteOut(v);
+          if (v) {
+            setEditMode(false);
+            setSelectedNote(null);
+            armTool(null);
+          }
+        }}
         sheetView={viewMode === "sheet"}
         strips={strips}
         selectedStripId={selectedStripId}

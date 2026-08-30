@@ -21,10 +21,14 @@ import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
 import {
   closedTupletAt,
+  drawnTupletAt,
+  memberPositions,
   tieSplitBeats,
   tupletGroupsIn,
   tupletRunFrom,
+  tupletEdgeTo,
   tupletWrittenBeats,
+  type TupletGroup,
 } from "../../../tools/render/rhythm";
 import { buildTextNoise } from "./textNoise";
 import { TR } from "./ui/strings";
@@ -158,7 +162,16 @@ function buildStaveNotes(
   mode: AccidentalMode,
   signatureMap: Map<string, number>,
   sigTolerant: boolean,
-): { notes: StaveNote[]; slots: NoteSlot[]; tuplets: StaveNote[][]; ties: [StaveNote, StaveNote][] } {
+): {
+  notes: StaveNote[];
+  slots: NoteSlot[];
+  tuplets: StaveNote[][];
+  /** Parallel to `tuplets`: the measure positions each drawn mark covers, so a caller can ask
+   *  `closedTupletAt` whether the group behind a mark is one the editor may hold. Without it the
+   *  drawn mark and the document have no link, and the click target would have to guess. */
+  tupletGroups: TupletGroup[];
+  ties: [StaveNote, StaveNote][];
+} {
   const notes: StaveNote[] = [];
   const slots: NoteSlot[] = [];
   const ties: [StaveNote, StaveNote][] = [];
@@ -291,7 +304,16 @@ function buildStaveNotes(
     });
   });
   // Dangling measure-final graces are dropped (the serializer drops them too — see lilypond.ts).
-  return { notes, slots, tuplets: groupNotes.filter((g) => g.length > 0), ties };
+  const drawn = groups
+    .map((group, i) => ({ group, notes: groupNotes[i]! }))
+    .filter((g) => g.notes.length > 0);
+  return {
+    notes,
+    slots,
+    tuplets: drawn.map((g) => g.notes),
+    tupletGroups: drawn.map((g) => g.group),
+    ties,
+  };
 }
 
 /**
@@ -462,7 +484,7 @@ const TUPLET_MARK_CONCAVE = {
  * arm whenever the highest note is an outer one. The visual asymmetry of a printed mark comes from the
  * arms' SLOPES, not from where the "3" sits.
  */
-function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+function drawTupletArc(svg: SVGElement, group: StaveNote[], above: boolean) {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const S = STAFF_SPACE;
   const sign = above ? -1 : 1; // -1 = the mark is above the noteheads, so "outward" is up
@@ -542,7 +564,7 @@ function drawTupletArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
  * it has to hold (`arcAbove + digitH + digitClear` above the outermost notehead), never given as a
  * constant, so changing the digit cannot silently push it into the noteheads.
  */
-function drawTupletArcConcave(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+function drawTupletArcConcave(svg: SVGElement, group: StaveNote[], above: boolean) {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const S = STAFF_SPACE;
   const M = TUPLET_MARK_CONCAVE;
@@ -613,7 +635,7 @@ function drawTupletArcConcave(svg: SVGSVGElement, group: StaveNote[], above: boo
  * and any change to it silently changes what the A/B is comparing against. Delete it once the A/B
  * has been read and written up.
  */
-function drawTupletArcLegacy(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
+function drawTupletArcLegacy(svg: SVGElement, group: StaveNote[], above: boolean) {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const xs = group.map((n) => n.getAbsoluteX());
   const x1 = Math.min(...xs) - 2;
@@ -1135,10 +1157,79 @@ interface NoteBox {
   height: number;
 }
 
+/**
+ * The box of one drawn triplet mark's INK, for its click target.
+ *
+ * ⚠ **`getBBox()` on the wrapping group is NOT the ink, and using it produced a target four times
+ * too tall** (measured 2026-08-30 on a bracket-style page): a group's box is the union of its
+ * children's, and two children lie about theirs.
+ *
+ *  - **A `<text>` reports its FONT's em box, not its glyph.** The bracket's "3" measured
+ *    **12 × 160 px** — 12 px of digit inside the em box of a music font whose ascent and descent
+ *    are enormous. The digit always sits in the mark's own gap, between the strokes, so the strokes
+ *    already bound it: text children are skipped rather than measured.
+ *  - **VexFlow emits a zero-height `<rect>` at the SVG ORIGIN inside its tuplet group** (0,0,95,0).
+ *    Any box reaching x ≤ 0 or y ≤ 0 is rejected, the same rule and the same reason as `noteBoxOf`
+ *    above: a drawn mark is never at the origin, so only an unpositioned element can claim to be.
+ *
+ * Falls back to the group's own box when nothing survives — a loose target beats no target, and the
+ * caller has no other way to find the mark.
+ */
+function markBoxOf(el: SVGGraphicsElement): { x: number; y: number; width: number; height: number } | null {
+  let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+  for (const kid of Array.from(el.querySelectorAll<SVGGraphicsElement>("path, rect, line, polygon, polyline"))) {
+    let b: DOMRect;
+    try {
+      b = kid.getBBox();
+    } catch {
+      continue;
+    }
+    if (b.width <= 0 && b.height <= 0) continue;
+    if (b.x <= 0 || b.y <= 0) continue; // unpositioned — see the note above
+    x1 = Math.min(x1, b.x);
+    y1 = Math.min(y1, b.y);
+    x2 = Math.max(x2, b.x + b.width);
+    y2 = Math.max(y2, b.y + b.height);
+  }
+  if (x1 < x2 && y1 < y2) return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+  try {
+    const b = el.getBBox();
+    return b.width > 0 ? { x: b.x, y: b.y, width: b.width, height: b.height } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One drawn triplet mark — the arc-and-"3" (or VexFlow bracket) over a group — as a click target.
+ *
+ * ⚠ It names the group by its FIRST MEMBER's `NoteEvent.index`, not by anything about the mark:
+ * nothing about a tuplet is stored, so the mark is only ever a handle onto three ordinary notes.
+ * Only groups `closedTupletAt` accepts get one — an unclosed run's bracket is the flag that the
+ * MODEL misread something, and holding it could not mean anything.
+ */
+interface TupletMarkBox {
+  evIndex: number;
+  /** True for a real three-member triplet; false for a mark the arithmetic never closed — the
+   *  model's misread, which the sheet flags and the editor can repair or clear. */
+  closes: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 /** Fallback half-width for a note whose bounding box VexFlow won't give us. */
 const NOTE_FALLBACK_W = 14;
 /** Slack around a note's box so a click near the notehead still lands on it. */
 const NOTE_HIT_PAD = 3;
+/** Slack around a drawn triplet mark so the "3" is comfortable to hit — the arc itself is a hairline
+ *  and the digit is small, so the ink's own box is a poor target. */
+const MARK_HIT_PAD = 5;
+/** Width of a held triplet's drag handle. Wide enough to grab without covering the note beside it
+ *  — the handles sit OUTSIDE the group's frame, so a fat one would sit on the neighbour a drag is
+ *  aiming at. */
+const TUPLET_HANDLE_W = 8;
 /** Vertical drag (px) that moves a note one diatonic step — half a staff space, i.e. the real
  *  distance between a line and the space above it, so the note tracks the pointer. */
 const DRAG_PX_PER_STEP = STAFF_SPACE / 2;
@@ -1239,12 +1330,30 @@ function noteBoxOf(n: StaveNote, evIndex: number, barTop: number, barHeight: num
 interface NotePos {
   startMs: number;
   endMs: number;
+  /** Which event is drawn here (`NoteEvent.index`) — the link a folded score needs, where the
+   *  clock runs over a performance the page does not write out in order. */
+  evIndex: number;
   /** Left x of the note within the SVG (same coordinate space as the overlay). */
   x: number;
   /** Top y of the playhead bar for this note's row (just above the top staff line). */
   top: number;
   /** Height of the playhead bar (staff height plus a small margin each side). */
   height: number;
+}
+
+/**
+ * One sounding event of the PERFORMANCE, pointing at the written note that is drawn for it.
+ *
+ * A folded score writes a repeated bar once and plays it twice, so the drawn order is no longer
+ * the playing order and the playhead cannot simply walk the notes it drew. The player hands over
+ * this list instead — the clock's own order — and each step names the drawn note to sit on. The
+ * cursor jumping back to the `‖:` is nothing more than two steps naming the same note.
+ */
+export interface PlayStep {
+  /** `NoteEvent.index` in the WRITTEN document — the one this view drew. */
+  evIndex: number;
+  startMs: number;
+  endMs: number;
 }
 
 /**
@@ -1262,6 +1371,7 @@ export function SheetView({
   lyricHyphens,
   playing,
   getPositionMs,
+  playPlan,
   onSeekToMeasure,
   selectedNote,
   onSelectNote,
@@ -1273,6 +1383,9 @@ export function SheetView({
   onInsertNote,
   tupletAnchor = null,
   onTupletPick,
+  selectedTuplet = null,
+  onTupletEdge,
+  onTupletRemove,
   onLayout,
   highlightRect,
   repeatSpans,
@@ -1311,6 +1424,10 @@ export function SheetView({
   playing: boolean;
   /** Current playback position in ms (from the audio backend), or null when stopped. */
   getPositionMs: () => number | null;
+  /** The performance, when it differs from what is written: one step per sounding event, naming
+   *  the drawn note it belongs to (see {@link PlayStep}). Undefined for a score that plays exactly
+   *  as it is written — then the playhead walks the drawn notes, as it always did. */
+  playPlan?: readonly PlayStep[];
   /** Non-edit mode: seek/play from the clicked measure. */
   onSeekToMeasure: (m: Measure) => void;
   /** Edit mode: which event (`NoteEvent.index`) is selected, or null. */
@@ -1350,8 +1467,18 @@ export function SheetView({
    *  Drives which targets stay clickable — see `tupletStates`. */
   tupletAnchor?: number | null;
   /** Edit mode, the tuplet armed: a clickable note was clicked. The sheet only refuses what it has
-   *  dimmed; deciding what the click MEANS (anchor, apply, remove, cancel) is App's. */
+   *  dimmed; deciding what the click MEANS (anchor, apply, select, cancel) is App's. */
   onTupletPick?: (index: number) => void;
+  /** Edit mode, the tuplet armed: a whole triplet is HELD, named by its first member's
+   *  `NoteEvent.index`. The group itself is re-derived here with `closedTupletAt` — nothing about a
+   *  tuplet is ever stored — and drives the frame, the two handles and the ✕. */
+  selectedTuplet?: number | null;
+  /** Edit mode: a handle of the held triplet was dragged onto a note. The sheet resolves the
+   *  geometry (which note is under the pointer) and hands over an intent; whether the move is legal
+   *  is `tupletEdgeTo`'s answer, which both sides read. */
+  onTupletEdge?: (edge: "start" | "end", targetIndex: number) => void;
+  /** Edit mode: the held triplet's ✕ was pressed — take the bracket off, keep the notes. */
+  onTupletRemove?: () => void;
   /** Fired after each engrave with every measure's on-screen rectangle (1-based `index`, `x`, `y`,
    *  `width`) and the SVG size. Used by the Step-2c strip exporter to compute crop rectangles. */
   onLayout?: (layout: { boxes: { index: number; x: number; y: number; width: number }[]; svgWidth: number; svgHeight: number; rowHeight: number }) => void;
@@ -1400,13 +1527,22 @@ export function SheetView({
   // already been applied. A ref, not state — every applied step re-engraves the score, and the
   // drag has to survive those re-renders unchanged.
   const dragRef = useRef<{ index: number; startY: number; applied: number } | null>(null);
+  // An in-progress TUPLET-HANDLE drag: which end of the held triplet is following the pointer.
+  // A ref for the same reason `dragRef` is one — every step of the drag rewrites two durations and
+  // re-engraves the score, and the gesture has to survive those re-renders.
+  const tupletDragRef = useRef<{ edge: "start" | "end" } | null>(null);
   // On-screen position of every timed event, in playback order. A ref (not state) because the
   // playhead animation reads it every frame and must not trigger re-renders.
   const positionsRef = useRef<NotePos[]>([]);
+  // The same positions keyed by `NoteEvent.index` — see the write in the draw effect.
+  const posByEvRef = useRef<Map<number, NotePos>>(new Map());
   const [boxes, setBoxes] = useState<MeasureBox[]>([]);
   // Per-note click targets for edit mode. State (not a ref like `positionsRef`) because the
   // overlay renders from them; they change only on a re-engrave, so this costs nothing.
   const [noteBoxes, setNoteBoxes] = useState<NoteBox[]>([]);
+  // The drawn triplet marks that the editor may HOLD, with the box of their real ink. State, like
+  // `noteBoxes`, because the overlay renders from them and they change only on a re-engrave.
+  const [tupletMarks, setTupletMarks] = useState<TupletMarkBox[]>([]);
   const [svgHeight, setSvgHeight] = useState(ROW_HEIGHT + 20);
   const [hover, setHover] = useState<number | null>(null);
   // The insert preview: a ghost notehead at the staff position an empty click would use. Moved by
@@ -1445,7 +1581,9 @@ export function SheetView({
    * Edit mode, the tuplet armed: what a click on each note would do (editor step 7).
    *
    *  - `start`  — a legal run begins here (nothing anchored yet);
-   *  - `member` — inside an existing closed triplet; a click takes that triplet apart;
+   *  - `member` — inside an existing closed triplet. ⚠ Since 2026-08-30 this is INFORMATION, not a
+   *    target: a member is not clickable, because the group is picked up by clicking its drawn "3"
+   *    (owner). The state is still published, so a check can still see where the triplets are;
    *  - `anchor` — the run's first note, already picked; clicking it again backs out;
    *  - `end`    — the one note that closes the run from the anchor;
    *  - `blocked` — everything else. Rendered dim and with `pointer-events: none`, which is what
@@ -1469,7 +1607,7 @@ export function SheetView({
         const state =
           tupletAnchor != null
             ? ev.index === tupletAnchor ? "anchor" : pos === endPos ? "end" : "blocked"
-            : closedTupletAt(m.events, pos) ? "member"
+            : drawnTupletAt(m.events, pos) ? "member"
               : tupletRunFrom(m.events, pos) ? "start"
                 : "blocked";
         out.set(ev.index, state);
@@ -1477,6 +1615,65 @@ export function SheetView({
     }
     return out;
   }, [doc, armedTool, tupletAnchor]);
+
+  /**
+   * Edit mode, the tuplet armed and a whole triplet HELD: its three members and where each handle
+   * may legally land (editor step 7b).
+   *
+   * Nothing about a tuplet is stored, here least of all: `selectedTuplet` is one event index and the
+   * group is re-derived from the document every time with `closedTupletAt` — the same function that
+   * decides whether a bracket gets drawn at all. So a triplet that stops being one (an undo, a
+   * re-valued member) simply loses its handles, and no stale geometry can outlive it.
+   *
+   * The landing sets come from `tupletEdgeTo`, which is also what App calls to make the move — the
+   * sheet cannot offer a handle position the edit would then refuse. Null whenever nothing is held,
+   * so this costs nothing in every other mode.
+   */
+  const tupletSel = useMemo(() => {
+    if (!editMode || armedTool !== "tuplet" || selectedTuplet == null) return null;
+    for (const m of groupMeasures(doc)) {
+      const pos = m.events.findIndex((e) => e.index === selectedTuplet);
+      if (pos < 0) continue;
+      const g = drawnTupletAt(m.events, pos);
+      if (!g) return null;
+      const members = memberPositions(m.events, g).map((p) => m.events[p]!.index);
+      if (members.length === 0) return null;
+      const closedNow = closedTupletAt(m.events, pos) != null;
+      const start: number[] = [];
+      const end: number[] = [];
+      // Landings that would COMPLETE a broken mark — drop the handle here and it becomes a real
+      // triplet. Worth its own mark: on a decoded page most of what you do with these is repair
+      // them, and the page can say where the repair is rather than leaving it to be discovered.
+      const fixes = new Set<number>();
+      m.events.forEach((ev, p) => {
+        const a = tupletEdgeTo(m.events, g, "start", p);
+        const b = tupletEdgeTo(m.events, g, "end", p);
+        if (a) start.push(ev.index);
+        if (b) end.push(ev.index);
+        if ((a?.closes || b?.closes) && !closedNow) fixes.add(ev.index);
+      });
+      // Every legal landing, and WHICH handle can reach it — a note can be a landing for one end,
+      // the other, or both, and a check that drags the wrong handle onto it would look like a bug
+      // in the move rather than in the check.
+      const all = new Map<number, "start" | "end" | "both">();
+      for (const i of start) all.set(i, "start");
+      for (const i of end) all.set(i, all.has(i) ? "both" : "end");
+      return {
+        members,
+        /** Does the held mark close as a real triplet? A broken one is repaired rather than slid,
+         *  and it is drawn differently, so the sheet has to know which it is holding. */
+        closes: closedNow,
+        fixes,
+        /** The event each handle currently sits on — a candidate too, and the one that means
+         *  "stay where you are", so a small wobble does not jump the group. ⚠ A broken mark can
+         *  cover ONE note, and then both handles sit on the same event. */
+        edge: { start: members[0]!, end: members[members.length - 1]! },
+        targets: { start, end },
+        all,
+      };
+    }
+    return null;
+  }, [doc, editMode, armedTool, selectedTuplet]);
 
   /**
    * Edit mode: which bars do not add up, and in which direction (editor step 8).
@@ -1608,12 +1805,22 @@ export function SheetView({
     const renderer = new Renderer(host, Renderer.Backends.SVG);
     renderer.resize(SVG_WIDTH, height);
     const ctx = renderer.getContext();
+    // The SVG backend's group API, used to wrap a VexFlow-drawn triplet bracket so it can be
+    // measured. Typed narrowly and optional rather than cast to SVGContext: the backend is fixed
+    // above, but a render context that cannot open a group should cost a click target, not a page.
+    const svgCtx = ctx as unknown as
+      | { openGroup(cls?: string, id?: string): SVGGElement; closeGroup(): void }
+      | undefined;
     const svg = host.querySelector("svg") as SVGSVGElement | null;
     svg?.setAttribute("data-omr", "sheet-svg"); // stable selector for the Playwright strip exporter
 
     const collected: MeasureBox[] = [];
     const positions: NotePos[] = [];
     const noteRects: NoteBox[] = [];
+    // Every triplet mark drawn on the page, with the element wrapping its ink — a <g> we created for
+    // a curved mark, one the render context opened for a VexFlow bracket. Both are measured the same
+    // way below. `closes` separates a real triplet from a broken mark; both are holdable.
+    const markSlots: { evIndex: number; el: SVGGraphicsElement; closes: boolean }[] = [];
     const lyricItems: LyricItem[] = []; // collected across all staves, drawn in one pass below
     let tMs = 0; // running playback clock, matches buildTimeline's accumulation order
     rows.forEach((cells, r) => {
@@ -1666,7 +1873,7 @@ export function SheetView({
         const barTop = stave.getYForLine(0) - CURSOR_MARGIN;
         const barHeight = stave.getYForLine(4) - stave.getYForLine(0) + 2 * CURSOR_MARGIN;
         try {
-          const { notes, slots, tuplets, ties } = buildStaveNotes(cell.m, accidentalMode, signatureMap, sigTolerant);
+          const { notes, slots, tuplets, tupletGroups, ties } = buildStaveNotes(cell.m, accidentalMode, signatureMap, sigTolerant);
           if (notes.length > 0) {
             // Beaming: a triplet's members must beam TOGETHER (one beam under the "3" bracket,
             // as engraved) — auto-beam groups by quarter-note beat and would split or absorb
@@ -1716,15 +1923,38 @@ export function SheetView({
             // on the notehead side — see tupletAbove/drawTupletArc), and the tie arcs of split
             // long values. The mark always shows "3" (numNotes 3 / notesOccupied 2 = the 3:2
             // ratio) even for a mixed-value group, matching the `\tup3` label.
-            for (const group of tuplets) {
+            tuplets.forEach((group, gi) => {
               const above = tupletAbove(group);
-              if (tupletCurved && svg)
+              // Which event this mark belongs to, and whether it is a REAL triplet or a broken one.
+              // ⚠ Both are holdable (owner, 2026-08-30). A mark over one or two notes is a run that
+              // never summed plain — the model's misread, drawn on purpose so a person can see it —
+              // and being able to grab that one is the whole point of the ask. It is flagged rather
+              // than hidden, so the page says which marks need attention.
+              const pos = tupletGroups[gi]!;
+              const closes = closedTupletAt(cell.m.events, pos.from) != null;
+              const first = cell.m.events[memberPositions(cell.m.events, pos)[0]!]?.index ?? null;
+              if (tupletCurved && svg) {
+                // Drawn INTO a <g> so the mark can be measured with `getBBox()` — the same trick
+                // `g[data-omr="aeu-sharp"]` already uses, and the only way the click target can sit
+                // on the real ink rather than on a second copy of the mark's geometry. The wrapper
+                // changes no pixels: the arc drawers only ever `appendChild`.
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("data-omr", "tuplet-mark");
+                svg.appendChild(g);
                 (legacyTupletMark
                   ? drawTupletArcLegacy
                   : tupletConcave
                     ? drawTupletArcConcave
-                    : drawTupletArc)(svg, group, above);
-              else
+                    : drawTupletArc)(g, group, above);
+                if (first != null) markSlots.push({ evIndex: first, el: g, closes });
+              } else {
+                // The square bracket goes into a group WE open, so it is measured exactly like the
+                // curved mark. ⚠ Not found by its `.vf-tuplet` class and not by document order:
+                // every bundled score hashes to the arc, so a bracket page is code no check on this
+                // machine has ever executed — the fewer of VexFlow's private conventions it leans
+                // on, the better. `openGroup` is the render context's own API and applies no
+                // transform, so the box comes back in the same space as everything else here.
+                const g = svgCtx?.openGroup("tuplet-mark") ?? null;
                 new Tuplet(group, {
                   numNotes: 3,
                   notesOccupied: 2,
@@ -1734,7 +1964,10 @@ export function SheetView({
                 })
                   .setContext(ctx)
                   .draw();
-            }
+                svgCtx?.closeGroup();
+                if (first != null && g) markSlots.push({ evIndex: first, el: g, closes });
+              }
+            });
             // Phrase-slur distractors: label-free arcs over runs of ≥3 consecutive non-tuplet,
             // non-rest notes (≥3 so they never resemble a 2-note tie), on a seeded ~35% of runs.
             // Teaches "arc without a '3' ≠ triplet" — the tup3-precision fix. Within one measure,
@@ -1806,7 +2039,7 @@ export function SheetView({
             const lyricY = stave.getYForLine(4) + LYRIC_DY;
             notes.forEach((n, i) => {
               const slot = slots[i]!;
-              positions.push({ startMs: tMs, endMs: tMs + slot.durationMs, x: n.getAbsoluteX(), top: barTop, height: barHeight });
+              positions.push({ startMs: tMs, endMs: tMs + slot.durationMs, evIndex: slot.ev.index, x: n.getAbsoluteX(), top: barTop, height: barHeight });
               // The same walk records each note's clickable box for edit mode. VexFlow's own
               // bounding box covers notehead + stem + accidental; when it isn't available (the
               // try/catch in attachTitles shows some notes have no element) fall back to a small
@@ -1857,7 +2090,25 @@ export function SheetView({
     setSvgHeight(height);
     setBoxes(collected);
     setNoteBoxes(noteRects);
+
+    // The triplet marks' click targets, measured off the STROKES that were actually drawn (see
+    // `markBoxOf` — the group's own box is not the ink, and two of its children lie about theirs).
+    // The target therefore sits on the mark a reader sees, never on a second copy of its geometry
+    // that could drift from it. All of it is in the SVG's user space, which is the overlay's space
+    // too (the container is never transformed; see the .kv-score rule in CLAUDE.md).
+    const markRects: TupletMarkBox[] = [];
+    for (const slot of markSlots) {
+      const b = markBoxOf(slot.el);
+      if (b) markRects.push({ evIndex: slot.evIndex, closes: slot.closes, ...b });
+    }
+    setTupletMarks(markRects);
     positionsRef.current = positions;
+    // Drawn position BY EVENT, for the folded score's playhead: it follows the performance, so it
+    // asks "where is written note 42 drawn?", not "what did we draw 42nd?". Built here rather than
+    // per frame — the draw is the only thing that can move a note.
+    // ⚠ FIRST box wins: one event can be drawn as two noteheads, and the note starts at the first.
+    posByEvRef.current = new Map();
+    for (const p of positions) if (!posByEvRef.current.has(p.evIndex)) posByEvRef.current.set(p.evIndex, p);
     onLayout?.({
       boxes: collected.map((b) => ({ index: b.index, x: b.x, y: b.y, width: b.width })),
       svgWidth: SVG_WIDTH,
@@ -1884,20 +2135,39 @@ export function SheetView({
     const tick = () => {
       const pos = getPositionMs();
       const ps = positionsRef.current;
-      if (pos != null && pos >= 0 && ps.length > 0) {
-        // First event whose end is still ahead of the clock is the one sounding now.
-        const active = ps.find((p) => pos < p.endMs) ?? ps[ps.length - 1]!;
+      // Two paths, and the plain one is unchanged. Without a `playPlan` the drawn order IS the
+      // playing order, so the positions recorded during the draw are read straight off — including
+      // the case of one event drawn as two noteheads, where the second box must not stand in for
+      // the first. A folded score cannot do that: it plays bars the page does not write out in
+      // order, so the clock is read against the PERFORMANCE and the cursor then looks up where that
+      // written note is drawn.
+      let active: NotePos | undefined;
+      if (pos != null && pos >= 0) {
+        if (playPlan) {
+          if (playPlan.length > 0) {
+            const step = playPlan.find((p) => pos < p.endMs) ?? playPlan[playPlan.length - 1]!;
+            // Missing = the performance names a note this view did not draw (a structure mark
+            // pointing at a bar the same decode dropped). The cursor then stays where it was,
+            // rather than flicking to the top of the page.
+            active = posByEvRef.current.get(step.evIndex);
+          }
+        } else if (ps.length > 0) {
+          // First event whose end is still ahead of the clock is the one sounding now.
+          active = ps.find((p) => pos < p.endMs) ?? ps[ps.length - 1]!;
+        }
+      }
+      if (active) {
         cursor.style.display = "block";
         cursor.style.height = `${active.height}px`;
         cursor.style.transform = `translate(${active.x - 2}px, ${active.top}px)`;
-      } else {
+      } else if (!playPlan || pos == null || pos < 0) {
         cursor.style.display = "none";
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, getPositionMs]);
+  }, [playing, getPositionMs, playPlan]);
 
 
   // Drag a note up and down to change its pitch (owner, 2026-08-07 — this replaces an earlier
@@ -1948,6 +2218,70 @@ export function SheetView({
 
   function onPitchDragEnd(e: React.PointerEvent<HTMLDivElement>) {
     dragRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+  }
+
+  // --- the tuplet handles (editor step 7b) ------------------------------------------------------
+  //
+  // Grab either end of a held triplet and drag it along its bar. The group keeps exactly three
+  // members, so the handle SLIDES it — one member drops back to its plain value and the neighbour
+  // the handle passed over joins. Why three is the only honest length is arithmetic and lives with
+  // `tupletEdgeTo`, not here; the sheet only resolves geometry into "which note is under the
+  // pointer" and hands that over.
+
+  /** The drawn box of an event. A triplet member can never be tie-split (its duration is a tuplet
+   *  fraction, which `needsTieSplit` excludes), so one member is always exactly one box. */
+  function boxOf(evIndex: number): NoteBox | null {
+    return noteBoxes.find((b) => b.evIndex === evIndex) ?? null;
+  }
+
+  function onHandleDown(e: React.PointerEvent<HTMLDivElement>, edge: "start" | "end") {
+    e.stopPropagation();
+    e.preventDefault();
+    tupletDragRef.current = { edge };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  /**
+   * The handle moved: slide the group so its end lands on the nearest note the pointer is over.
+   *
+   * The candidates are the legal landings PLUS the note the handle is already on, and the nearest
+   * centre wins. Including the current one is what makes the gesture stable — without it the
+   * nearest candidate is always a different note, and the group would jump on the first pixel of
+   * movement rather than when the pointer actually reaches the next note.
+   *
+   * Dragging away vertically does nothing: a tuplet is strictly intra-measure and a measure sits on
+   * one row, so a pointer that has left the row is no longer aiming at any of these notes.
+   */
+  function onHandleMove(e: React.PointerEvent<HTMLDivElement>) {
+    const d = tupletDragRef.current;
+    if (!d || !tupletSel || !onTupletEdge) return;
+    const at = localXY(e);
+    if (!at) return;
+    const held = boxOf(tupletSel.edge[d.edge]);
+    if (!held) return;
+    if (Math.abs(at.y - (held.y + held.height / 2)) > ROW_HEIGHT) return; // off this row
+    // "Stay put" first, then every legal landing.
+    const cands = [
+      { evIndex: tupletSel.edge[d.edge], legal: false },
+      ...tupletSel.targets[d.edge].map((evIndex) => ({ evIndex, legal: true })),
+    ];
+    let best: { evIndex: number; legal: boolean } | null = null;
+    let bestDx = Infinity;
+    for (const c of cands) {
+      const b = boxOf(c.evIndex);
+      if (!b) continue;
+      const dx = Math.abs(b.x + b.width / 2 - at.x);
+      if (dx < bestDx) {
+        bestDx = dx;
+        best = c;
+      }
+    }
+    if (best?.legal) onTupletEdge(d.edge, best.evIndex);
+  }
+
+  function onHandleUp(e: React.PointerEvent<HTMLDivElement>) {
+    tupletDragRef.current = null;
     if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
   }
 
@@ -2084,6 +2418,7 @@ export function SheetView({
         data-edit-mode={editMode ? "on" : "off"}
         data-selected-note={editMode && selectedNote != null ? selectedNote : undefined}
         data-tuplet-anchor={editMode && tupletAnchor != null ? tupletAnchor : undefined}
+        data-tuplet-selected={tupletSel ? tupletSel.members[0] : undefined}
         style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
         onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}
@@ -2241,6 +2576,37 @@ export function SheetView({
                 willChange: "transform",
               }}
             />
+            {/* The drawn "3" marks, as click targets (owner, 2026-08-30: *"direkt olarak 3'leme
+                işaretinin tıklanabilir olmasını istiyorum. notalarına tıklamak istemiyorum"*).
+                Clicking the SIGN holds its triplet; its notes are not targets at all. The box is
+                measured off the ink that was engraved, so it lands on the mark a reader sees
+                whichever of the four styles this piece drew. Only holdable groups get one — an
+                unclosed run's bracket means the MODEL misread something and stays inert. */}
+            {armedTool === "tuplet" &&
+              tupletMarks.map((mk) => (
+                <div
+                  key={`tupmark_${mk.evIndex}`}
+                  data-omr="tuplet-mark-hit"
+                  data-tuplet-group={mk.evIndex}
+                  data-tuplet-mark={mk.closes ? "closed" : "broken"}
+                  data-held={selectedTuplet === mk.evIndex ? "1" : undefined}
+                  className={
+                    `kv-tuplet-mark-hit${mk.closes ? "" : " is-broken"}` +
+                    `${selectedTuplet === mk.evIndex ? " is-held" : ""}`
+                  }
+                  title={mk.closes ? TR.sheet.pickTuplet : TR.sheet.pickBrokenTuplet}
+                  onClick={(e) => { e.stopPropagation(); onTupletPick?.(mk.evIndex); }}
+                  style={{
+                    position: "absolute",
+                    left: mk.x - MARK_HIT_PAD,
+                    top: mk.y - MARK_HIT_PAD,
+                    width: mk.width + 2 * MARK_HIT_PAD,
+                    height: mk.height + 2 * MARK_HIT_PAD,
+                    pointerEvents: "auto",
+                    cursor: "pointer",
+                  }}
+                />
+              ))}
             {/* Note targets. A tie-split event has two boxes sharing one evIndex; both highlight
                 when it is selected, and either one selects it. */}
             {noteBoxes.map((nb, i) => {
@@ -2248,17 +2614,30 @@ export function SheetView({
               // Tuplet armed: what this note would do, and whether it can be clicked at all. A
               // tie-split event owns two boxes sharing one evIndex; both read the same state.
               const tup = tupletStates.get(nb.evIndex);
-              const dead = tup === "blocked";
+              // A note inside a triplet is not a target: the SIGN above it is (owner, 2026-08-30).
+              // It keeps its `member` state so the DOM still says where the triplets are.
+              // A held triplet marks its own three notes, and every note either handle could be
+              // dragged onto. A landing is shown but NOT made clickable: the handles do the moving,
+              // and a click that also moved the group would make "which end?" ambiguous.
+              const heldMember = tupletSel?.members.includes(nb.evIndex) === true;
+              const landing = tupletSel?.all.get(nb.evIndex);
+              const isFix = tupletSel?.fixes.has(nb.evIndex) === true;
+              const dead = tup === "blocked" || tup === "member";
               return (
                 <div
                   key={`${nb.evIndex}_${i}`}
                   className={
                     `kv-note-hit${on ? " is-selected" : ""}${armed ? " is-armed" : ""}` +
-                    `${dead ? " is-dim" : ""}${tup === "anchor" ? " is-anchor" : ""}`
+                    `${dead ? " is-dim" : ""}${tup === "anchor" ? " is-anchor" : ""}` +
+                    `${heldMember ? " is-tuplet-held" : ""}${landing ? " is-tuplet-landing" : ""}` +
+                    `${isFix ? " is-tuplet-fix" : ""}`
                   }
                   data-omr-note={nb.evIndex}
                   data-selected={on ? "1" : undefined}
                   data-tuplet={tup}
+                  data-tuplet-held={heldMember ? "1" : undefined}
+                  data-tuplet-landing={landing}
+                  data-tuplet-fix={isFix ? "1" : undefined}
                   onPointerDown={(e) => onPitchDragStart(e, nb.evIndex)}
                   onPointerMove={onPitchDragMove}
                   onPointerUp={onPitchDragEnd}
@@ -2280,6 +2659,94 @@ export function SheetView({
                 />
               );
             })}
+            {/* The held triplet (editor step 7b): a frame round its three notes, a handle at each
+                end, and the ✕ that takes the bracket off.
+                ⚠ Nothing here is stored — `tupletSel` re-derives the group from the document every
+                render — so an undo or a re-valued member simply stops drawing all of it.
+                On a REAL triplet the handles slide the group without ever growing it, because the
+                drawn digit is a hardcoded "3" and the label token is `\tup3`; on a BROKEN mark they
+                repair it — the grabbed end moves and the other stays. `tupletEdgeTo` owns both. */}
+            {(() => {
+              if (!tupletSel || !onTupletEdge) return null;
+              const held = tupletSel.members.map(boxOf).filter((b): b is NoteBox => b != null);
+              // ⚠ Every member must have a box, and there may be ONE of them: a broken mark can
+              // cover a single note. Testing for three here left every broken mark frameless and
+              // handleless — held, with nothing on screen to say so.
+              if (held.length === 0 || held.length !== tupletSel.members.length) return null;
+              const first = held[0]!;
+              const last = held[held.length - 1]!;
+              const top = Math.min(...held.map((b) => b.y)) - NOTE_HIT_PAD;
+              const bottom = Math.max(...held.map((b) => b.y + b.height)) + NOTE_HIT_PAD;
+              const left = first.x - NOTE_HIT_PAD;
+              const right = last.x + last.width + NOTE_HIT_PAD;
+              const handle = (edge: "start" | "end") => (
+                <div
+                  key={`tuplet-handle-${edge}`}
+                  data-omr="tuplet-handle"
+                  data-edge={edge}
+                  data-can-move={tupletSel.targets[edge].length > 0 ? "1" : "0"}
+                  className="kv-tuplet-handle"
+                  title={tupletSel.closes ? TR.sheet.tupletHandle : TR.sheet.tupletHandleFix}
+                  aria-label={tupletSel.closes ? TR.sheet.tupletHandle : TR.sheet.tupletHandleFix}
+                  onPointerDown={(e) => onHandleDown(e, edge)}
+                  onPointerMove={onHandleMove}
+                  onPointerUp={onHandleUp}
+                  onPointerCancel={onHandleUp}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: "absolute",
+                    left: edge === "start" ? left - TUPLET_HANDLE_W - 1 : right + 1,
+                    top,
+                    width: TUPLET_HANDLE_W,
+                    height: bottom - top,
+                    pointerEvents: "auto",
+                    // Inline, not CSS: an inline cursor would win over the class either way, so
+                    // the disabled state has to be decided in the same place.
+                    cursor: tupletSel.targets[edge].length > 0 ? "ew-resize" : "not-allowed",
+                    touchAction: "none", // or the browser pans the page instead of dragging
+                  }}
+                />
+              );
+              return (
+                <>
+                  <div
+                    data-omr="tuplet-frame"
+                    data-tuplet-mark={tupletSel.closes ? "closed" : "broken"}
+                    className={`kv-tuplet-frame${tupletSel.closes ? "" : " is-broken"}`}
+                    style={{ position: "absolute", left, top, width: right - left, height: bottom - top }}
+                  />
+                  {handle("start")}
+                  {handle("end")}
+                  {onTupletRemove && (
+                    <button
+                      id="tuplet-remove"
+                      type="button"
+                      title={TR.sheet.removeTuplet}
+                      aria-label={TR.sheet.removeTuplet}
+                      onClick={(e) => { e.stopPropagation(); onTupletRemove(); }}
+                      style={{
+                        position: "absolute",
+                        left: (left + right) / 2 - 10,
+                        top: top - 24,
+                        width: 20,
+                        height: 20,
+                        lineHeight: "18px",
+                        padding: 0,
+                        pointerEvents: "auto",
+                        cursor: "pointer",
+                        borderRadius: "50%",
+                        border: "1px solid #b91c1c",
+                        background: "#fff",
+                        color: "#b91c1c",
+                        fontSize: 13,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </>
+              );
+            })()}
             {/* The ✕, on the FIRST box of the selected event (a tie-split has two) so a split
                 note doesn't sprout two delete buttons. */}
             {(() => {

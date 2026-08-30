@@ -88,8 +88,9 @@ is **B4**, and that is asserted with no constant of the test's own.
 ## Step 7 — the tuplet tool
 
 ✅ **Built 2026-08-08 (step 7).** One tool, both directions: arm it, click a note and the note two on
-to make a triplet — or click **any member of an existing one** to take it apart again (owner call;
-it needs no second click, because a note already inside a triplet cannot mean "start a new run").
+to make a triplet — or click **any member of an existing one**, which since 2026-08-30 **holds** the
+group rather than taking it apart (step 7b below; a note already inside a triplet still cannot mean
+"start a new run", so the click is unambiguous either way).
 Three things it settled, each of which changes what the tool accepts:
 
 1. **A member must be a PLAIN `1/2^k` value** — not dotted, not a tie-split, not already a tuplet.
@@ -120,6 +121,124 @@ the edit by counting the **triplet marks the engraver actually drew**, not by re
 ⚠ Both mark styles are counted: the per-piece coin picks VexFlow's bracket (`.vf-tuplet`) or the
 curved arc with an italic "3", and which one the sample happens to get must not decide whether the
 check works — the first version of it counted only the arc and read 0 on a bracket page.
+
+---
+
+## Step 7b — holding a triplet: select, slide, remove
+
+✅ **Built 2026-08-30** (owner: *"tupletlere tıklayarak onları seçebilmemi, solundan ve sağından
+tutarak genişletebilmemi veya daraltabilmemi, aynı zamanda silebilmemi sağlayan bir mantık ekle"*).
+A triplet became something you can **hold**: click its drawn **3** and the group is selected — a frame
+round its three notes, a **handle at each end**, and a **✕**.
+
+⚠ **The click target is the SIGN, not the notes** (owner, second pass the same day: *"direkt olarak
+3'leme işaretinin tıklanabilir olmasını istiyorum. notalarına tıklamak istemiyorum"*). The first
+build selected by clicking a member; that is gone. A note inside a triplet keeps its
+`data-tuplet="member"` state — so the DOM still says where the triplets are — but it is
+`pointer-events: none`, exactly like every other target the tool refuses.
+
+### Two kinds of mark, and the handles mean different things on each
+
+⚠ **Not every drawn "3" covers three notes** (owner, third pass the same day: *"bazı tupletler 3
+notayı kapsamıyor, 1 notayı kapsayan tupletler vesaire de olabiliyor onları silebilmek veya
+genişletebilmek istiyorum"*). `tupletGroupsIn` brackets a run that never sums to a plain value —
+the model's misread, drawn on purpose so a person can see it. On a real decoded page these are the
+majority: `decoded.json` carries **five broken marks against two real triplets**, of one, two and
+three members.
+
+**Every drawn mark is holdable**, and `drawnTupletAt` is what finds one where `closedTupletAt`
+cannot. The two shapes then behave differently:
+
+| | a REAL triplet (closes) | a BROKEN mark |
+|---|---|---|
+| **handles** | **slide** — three members always | **repair** — the grabbed end moves, the other stays |
+| **may grow?** | never (the digit is a hardcoded "3") | yes, but only to a move that **CLOSES** it |
+| **may shrink?** | never — that would spoil a correct mark | yes, always (the retreat toward ✕) |
+| **✕** | notes back to plain values | the same, and this is the commonest fix |
+| **drawn** | orange frame | **red**, from the moment the tool is armed |
+
+The growth rule is the whole policy in one line: **a broken mark may be repaired or retreat, never
+made merely broader.** So a two-note mark whose neighbour is the right plain value can be pulled out
+to a real triplet, and the sheet marks that landing green (`data-tuplet-fix`) because on a decoded
+page it is the move you want. ⚠ Some broken marks have **no legal move at all** — two of
+`decoded.json`'s five, whose neighbours are not plain values of the matching length. Those are
+cleared with the ✕, or the neighbour is re-valued first with the note tools. That is honest rather
+than limiting: offering a drag that could not produce a triplet would only move the lie.
+
+⚠ The ✕ on a broken mark reverses the old rule that only a closed group could be removed, whose
+argument was that ×³⁄₂ "would invent a rhythm nobody read". That was an argument about what the page
+TRULY says — and the person looking at the page is the one answering it. ⚠ The arithmetic is exact
+for the ordinary cases (1/12 → 1/8); a member on an unusual fraction can land on a value no single
+notehead draws, and the engraver then falls back to its nearest-value snap, as it does for any other
+odd duration.
+
+### On a REAL triplet, the handle SLIDES the group
+
+**It does not stretch it** — and that is arithmetic, not a shortcut in the UI. The drawn digit is a hardcoded `"3"` and the label token is `\tup3`, so a four- or
+five-member group would draw and label a rhythm nobody wrote. Dragging the right handle one note to
+the right therefore hands the **first** member its plain value back (×³⁄₂) and pulls the **next**
+note in (×⅔); the left handle does the mirror. The group is always exactly three notes, and the bar
+length never changes — one member gives back exactly what the newcomer takes.
+
+Three decisions, each of which the owner was asked about before any of it was written:
+
+1. **Slide, not a real n-tuplet** (owner, 2026-08-30). Widening to a genuine 5- or 7-tuplet needs a
+   digit derived from the group size **and** new label tokens (`\tup5`, `\tup7` do not exist), which
+   is a corpus decision, not an editor one. It is written down as a possible later step rather than
+   guessed at — see [editor.md](editor.md#the-tuplet-rules).
+2. **The ✕ removes the BRACKET, not the notes** (owner, 2026-08-30). The three notes stay and get
+   their plain values back. This is the second half of what a click on a member used to do in one
+   go; splitting it means a mis-aimed click no longer rewrites three durations. The bar it is in
+   becomes longer, and the off-meter mark (step 8) says so — exactly as making the triplet made it
+   short.
+3. **A landing is shown but not clickable.** Every note either handle could be dragged onto is
+   marked (`data-tuplet-landing="start|end|both"`), and it stays pointer-transparent: a click that
+   also moved the group would leave "which end?" ambiguous.
+
+### Measuring the mark, which is where the real bug was
+
+The target has to sit on the ink a reader sees, so it is measured off the mark that was engraved
+rather than computed a second time from the notes — a second copy of the geometry is exactly what
+this project's one-code-path rule exists to prevent. Both styles are wrapped in a `<g>` for that: the
+curved mark is drawn into one we create, and VexFlow's square bracket into one the render context
+opens (`openGroup`), so neither depends on VexFlow's class names or on document order.
+
+⚠ **`getBBox()` on that group is NOT the ink, and using it made a target four times too tall.**
+Measured on a bracket page (2026-08-30): the group read **96 × 160 px** where the bracket is
+**96 × 20**. A group's box is the union of its children's, and two children lie about theirs —
+
+ - **a `<text>` reports its FONT's em box, not its glyph.** The bracket's "3" measured **12 × 160 px**:
+   12 px of digit inside the em box of a music font whose ascent and descent are enormous. The digit
+   always sits in the mark's own gap, between the strokes, so the strokes already bound it —
+   `markBoxOf` skips text children entirely;
+ - **VexFlow emits a zero-height `<rect>` at the SVG ORIGIN** inside its tuplet group (0, 0, 95, 0).
+   Any box reaching x ≤ 0 or y ≤ 0 is rejected, the same rule and the same reason as `noteBoxOf`:
+   a drawn mark is never at the origin, so only an unpositioned element can claim to be.
+
+A slab that size over the staff would have swallowed the clicks meant for notes — the
+`GraceNoteGroup` failure this codebase already paid for once. `smoke:editor` now asserts **no note's
+centre falls inside a mark's target**.
+
+⚠ **The bracket branch has no automated coverage.** The mark style is a per-piece hash and all six
+bundled scores land on the arc, so a bracket page is code no suite on this machine executes. It was
+verified **by hand** on a renamed score, both styles: target ~20 px tall, clicking it holds the group,
+both handles appear. A permanent check needs a bracket-hashing score, and one cannot simply be added
+to `public/` — `prune-dist.mjs` fails the build on any `.json` at the dist root.
+
+⚠ **The last check inside `tupletEdgeTo` is a SIMULATION, not another rule.** The move is applied
+to a copy and `closedTupletAt` — the function that decides what gets drawn — is asked whether the
+group it now finds is exactly the intended one. A stray unclosed tuplet fraction sitting just before
+the window opens the run early, and `tupletGroupsIn` would then close a bracket over the *wrong*
+three notes. Asking the drawing code is the only way to be sure a handle cannot leave a bracket that
+lies; `tools/core/edits-test.ts` builds that exact bar and checks the slide is refused.
+
+Where the code went is unchanged from step 7: **"which notes" is `tupletEdgeTo` in
+[../../tools/render/rhythm.ts](../../tools/render/rhythm.ts)**, beside the functions that draw the
+bracket, and **the rewrite is `scaleDurations` twice** — ×³⁄₂ on what leaves, ×⅔ on what joins, in
+one `history.apply`, so a whole drag across four notes is **one undo entry** (`coalesce` keys on the
+edge, not on the target). Nothing new is stored: the held group is one event index, and the three
+members are re-derived with `closedTupletAt` on every render, so an undo simply makes the handles
+disappear.
 
 ---
 

@@ -34,7 +34,6 @@ export function ScoreCard({
   onRedo,
   canUndo,
   canRedo,
-  onSave,
   palette,
   children,
 }: {
@@ -50,7 +49,6 @@ export function ScoreCard({
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  onSave: () => void;
   /** The edit palette, shown BESIDE the score in edit mode. Passed in (rather than built here)
    *  so the armed tool stays with the edit state in App. Null outside edit mode. */
   palette?: ReactNode;
@@ -135,15 +133,6 @@ export function ScoreCard({
           </>
         )}
 
-        <button
-          id="save-json"
-          type="button"
-          className="kv-btn kv-btn--ghost"
-          onClick={onSave}
-          title={TR.card.saveTitle}
-        >
-          {TR.card.save}
-        </button>
       </header>
 
       {/* The palette is a SIBLING of .kv-score, never a child: that container is screenshotted

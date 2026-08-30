@@ -146,10 +146,64 @@ Goal: see the tool refuse what it cannot do, before you click. Scripted version:
    is now shorter than the usul asks for. That is check 20.
 6. Press the palette's **Çal**: playback starts at that bar and the triplet sounds faster than it
    looked. This is the whole loop — fix, listen.
-7. With ÜÇLEME still armed, click **any one of the three**. The bracket disappears and the notes go
-   back to what they were. One **Geri al** also undoes the whole triplet in a single press.
+7. With ÜÇLEME still armed, click **any one of the three notes**: nothing happens. Since 2026-08-30
+   a triplet is picked up by its **3**, not by its notes — see check 19b. One **Geri al** still
+   undoes the whole triplet in a single press.
 8. ⚠ Try a dotted note or a note already inside a triplet: they stay pale. Three dotted 8ths would
    draw a bracket that never closes, which is the mark that means *the model misread something*.
+
+## Check 19b — hold a triplet: slide it, and take the bracket off (editor step 7b, 2026-08-30)
+
+Goal: see that the handle MOVES the triplet without ever making it four notes, and that the ✕ keeps
+the notes. Scripted version: `npm run smoke:editor`.
+
+1. Carry on from check 19, with a triplet made and **ÜÇLEME** still armed.
+2. Click the **3** the engraver drew over the group — the sign itself, not the notes. Hovering it
+   shows a dashed teal outline, so you can see it is a target. An orange **frame** appears round all
+   three notes, with a small orange **handle** at each end and a **✕** above the middle.
+   ⚠ Try clicking one of the three **notes** instead: nothing happens. That is deliberate.
+3. Look at the notes either side: the ones a handle can be dragged onto are outlined with a **dashed
+   teal border**. Everything else stays pale. A dashed note is a *landing*, not a button — clicking
+   it does nothing, because the handles do the moving.
+4. **Drag the right-hand handle to the right**, onto the next dashed note. The bracket moves with it:
+   the triplet's **first** note drops out and goes back to its printed value, and the note you
+   reached joins the group. It is still three notes, and the **bar length has not changed** — the −
+   badge from check 20 stays exactly as it was. Drag back to the left and it returns.
+5. ⚠ Keep dragging past the end of the bar, or over a note of a different length: **nothing happens.**
+   A tuplet cannot cross a bar line, and three notes of different lengths cannot make one.
+6. Click the **3** again: the group is let go (the frame and the handles disappear). Click it once
+   more to pick it up, then press **✕**. The bracket disappears, the three notes go back to their printed values, **and all
+   three notes are still there** — ✕ removes the *grouping*, never the music. The bar's badge flips,
+   because the bar is now longer again.
+7. ⚠ On roughly one piece in ten the mark is a square **bracket** instead of a curved arc (the style
+   is fixed per piece). It is clickable in exactly the same way — but no automated check covers that
+   style, because every bundled sample draws the arc, so it is worth a look if you meet one.
+8. ⚠ The handles cannot widen a REAL triplet to four or five notes, and that is on purpose: the printed
+   digit is always a "3" and the label the model reads is always `\tup3`. A wider group would draw
+   and label a rhythm nobody wrote. See [mvp/editor.md](mvp/editor.md#the-tuplet-rules).
+
+## Check 19c — the BROKEN marks: a "3" over one or two notes (2026-08-30)
+
+Goal: see the marks the model got wrong, and fix them. This one needs a **decoded page**, because a
+clean SymbTr sample has none. Scripted version: `npm run smoke:editor`.
+
+1. `npm run dev:web` → `http://localhost:5173/?score=/decoded.json`. **Nota**, **✎ Düzenle**, arm
+   **ÜÇLEME**.
+2. Look for the **red** outlines. There are **five** of them on this page, against two orange-on-hover
+   real triplets. A red mark is a "3" the arithmetic could not close — it sits over one or two notes
+   instead of three, which means the model misread something there. They are flagged the moment the
+   tool is armed, not on hover, because finding them is the point.
+3. Click a red one. It is held exactly like a real triplet, and the frame is **red and dashed** so you
+   can still see which kind you have.
+4. Look at the notes beside it. A **green** outline means *"drag a handle here and this becomes a real
+   triplet"*; a dashed teal one is an ordinary landing (it would shrink the mark). Drag the handle onto
+   the green note: the bracket now covers three notes and turns orange — it is a real triplet.
+5. Press **✕** on another red one instead. Its notes go back to their printed values and the mark
+   disappears. **No note is deleted** — count them if you like.
+6. ⚠ **Two of the five have no green note and no landing at all.** Their neighbours are not the right
+   kind of note to complete a triplet, so there is nothing honest to drag to. Use **✕** on those, or
+   fix the neighbour's length first with the note buttons. The page refuses rather than offering a
+   drag that would produce another wrong rhythm.
 
 ## Check 20 — bars that do not add up (editor step 8, 2026-08-08)
 

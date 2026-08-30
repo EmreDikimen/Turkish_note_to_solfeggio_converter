@@ -2,9 +2,30 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-29
+updated: 2026-08-30
 
 ## Now
+
+⭐ **A TUPLET MARK IS NOW SOMETHING YOU CAN HOLD IN THE EDITOR** (owner). Click its drawn **3** — the
+sign, never its notes — for a frame, a **handle at each end** and a **✕** that removes the *bracket*,
+never the notes. ⭐ **The marks that most needed it are the BROKEN ones** — a bracket over one or two
+notes, i.e. the model's misread; `decoded.json` has **five against two real triplets**. A real triplet
+**slides** (three members always); a broken one is **repaired** — completed or cleared, never made
+merely broader — is flagged red, and its completing landing is marked. ⛔ **No handle widens a real
+triplet into a 4/5/7-tuplet**: that needs a derived digit **and new label tokens**; asked, **deferred**.
+✅ `npm test` + `smoke:editor` pass, the latter repairing a real broken mark on a decoded page. [DECISIONS.md](DECISIONS.md) · [mvp/editor-built.md](mvp/editor-built.md#step-7b--holding-a-triplet-select-slide-remove) · [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md).
+
+⭐ **THE APP NOW SHOWS A NORMAL NOTA KÂĞIDI: THE REPEAT IS A SIGN, NOT THE MUSIC WRITTEN TWICE**
+(owner, 2026-08-30). A decoded page is kept **as written** — `‖:` `:‖`, 1./2., 𝄋, ⊕, "D.C.", "Son"
+drawn where they were read — and the repeat is taken **when it plays**. ⭐ The playhead follows a
+**play plan** (one step per sounding event, each naming the written note drawn for it), so at a `:‖`
+the cursor walks back to the `‖:` by itself. ✅ `npm run check:fold`: **1,720 pages, 0 changed** by the fold; **68.2% fold**, the page is
+**28.7% shorter**. ⭐ Asking for the right thing found a live defect — *"2. dönüşte ilk volta
+çalmamalı"* — the second pass skipped only the bar CARRYING the "1.", so **37.9% of real first
+endings replayed their tail**. A first ending is now a RUN, skipped whole ([METRICS.md](METRICS.md)).
+⚠ **DECODED PAGES ONLY** (owner's choice); `Tekrarlar` still only draws on a SymbTr sample, and
+`Tekrarları açık yaz` (Gelişmiş) writes the performance out long, **view-only**, closing edit mode.
+[DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
 
 ⭐ **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES — FOUND BY EYE, FIXED, MEASURED, AND SHIPPING
 OFF UNTIL YOU SAY OTHERWISE.** The owner opened the `examv3`-vs-frozen comparison sheets and saw
@@ -43,20 +64,18 @@ under-magnified and its frame reached into the system above. `STAFF_SPAN_CONSENS
 repair but was gated on line COUNT; it now gates on the defect. **+2 rows, 13 of 6,440 moved.** ⚠ Both bump `GEOMETRY_REV` → **20260826**: every decode cache on disk is invalid.
 [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
 
-⛔ **`OMR_BLOB_FILL` 0.3 WAS MEASURED AND REJECTED.** **+7.6pp recall** on the 93-mark faded-page truth,
-but **3741 exact against 3750** at full scale, paired **BETTER 52 / WORSE 72**, and the dominant move
-is `+0 → +1` on 37 rows — a row that was RIGHT gaining a spurious barline. ⭐ Same signature as
-`BAR_FADE_SP`. ⛔ **The faded-page table has now mispredicted the full run three times**; never price a
-barline gate on it alone. [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md).
-
-⚠ **IF THE EXAM IS EVER RE-CUT, RE-PRICE IT FIRST.** The **125-verdict** figure predates the two
-2026-08-26 fixes and `GEOMETRY_REV` is now **20260826**, so every decode cache on disk is invalid and
-the next emit RE-DECODES rather than reusing 1,704 of them. ⏭ Do the `carry_labels()` fix first —
-**25 of 67 pages are byte-identical and carry 168 verdicts** that need no human at all
-([BACKLOG.md](BACKLOG.md)). [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md).
+⛔ **`OMR_BLOB_FILL` 0.3 was measured and REJECTED** (2026-08-26), and with it the lesson that
+**the faded-page table has now mispredicted the full run three times** — never price a barline gate
+on it alone. Settled, with every number:
+[DECISIONS.md](DECISIONS.md) · [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md#-omr_blob_fill-03-was-measured-and-rejected-2026-08-26).
 
 ⏭ **THE EXAM RE-CUT IS THE NEXT SLICER-SIDE ACTION, AND IT IS NOW PRICED — BUT IT WAITS ON ONE
-DECISION.** ⚠ **The 2026-08-24 freeze no longer holds**: the owner re-opened the slicer on
+DECISION, AND THE PRICE MUST BE RE-READ BEFORE IT IS ACTED ON.** ⚠ The **125-verdict** figure below
+predates the two 2026-08-26 fixes and `GEOMETRY_REV` is now **20260826**, so every decode cache on
+disk is invalid and the next emit RE-DECODES rather than reusing 1,704 of them
+([METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md)). ⏭ Do the `carry_labels()` fix first — **25 of
+67 pages are byte-identical and carry 168 verdicts** that need no human at all
+([BACKLOG.md](BACKLOG.md)). ⚠ **The 2026-08-24 freeze no longer holds**: the owner re-opened the slicer on
 2026-08-25 (*"we did not freeze it"*) and the staff rescue landed behind a flag, so what `examv4`
 gets cut with is a choice, not a given (top of this file). ⚠ **`examv3` crops are definitively
 stale** — five fixes moved staff and barline geometry on 24–25 August, and the decode-cache guard
@@ -67,17 +86,14 @@ verdicts carry over. ⚠ **The exam queue is 455 of 663 verdicted** (398 fix / 3
 **208 rows remain**, over **31 page-complete / 17 partial / 16 untouched** of 64 pages. The primary
 is per page, so a half-labelled page under-counts itself — finish page-complete.
 
-✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — an arc is label-free ink, like
-a slur, because **65–78% of every `\tie` in the queues joined two DIFFERENT pitches**. Render, gold
-and scorer all followed; the tie tail now restrikes its accidental where nothing carries one.
-⚠ Real-val's arc-`\tup3` diagnostic now prints `n/a` — that floor is read on the **exam**, which keeps
-its ties. Account: [log/status-log.md](log/status-log.md) · [rung3/labeling.md](rung3/labeling.md).
+✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — rule and numbers in
+[../CLAUDE.md](../CLAUDE.md); ⚠ real-val's arc-`\tup3` diagnostic now prints `n/a`, because that floor
+is read on the **exam**, which keeps its ties. [rung3/labeling.md](rung3/labeling.md).
 
 ⭐ **THE ARMS ARE DONE AND THE FINAL RENDER IS SPECIFIED (2026-08-20).** Round 3's arm list closed —
-one dropped, one null, one **passed** — and the three decisions the final render was waiting on were
-all taken in one session. **It carries three flags**: `--concave-tuplet`, `--staccato-noise` and a
-new **label-free dotted (usul) barline**. What is left is **render → train → the exam, read once**.
-[DECISIONS.md](DECISIONS.md).
+one dropped, one null, one **passed** — and the final render carries three flags:
+`--concave-tuplet`, `--staccato-noise` and a label-free dotted (usul) barline. What is left is
+**render → train → the exam, read once**. [DECISIONS.md](DECISIONS.md).
 
 ⭐ **THE TRAINING POOLS WERE RE-EMITTED ONTO THE CURRENT CROPS (2026-08-21) — `strips_b8`, 3,955
 accepted strips against 2,330, in 37 minutes on the laptop.** ✅ **Its 201-row audit is now read
@@ -209,9 +225,6 @@ the app, and setting `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis 
 screenshot are out of HEAD but remain in the **public** repo's git history (clearing them needs a
 `filter-repo` rewrite and a force-push), and there is still **no LICENSE file**. [THIRD-PARTY.md](THIRD-PARTY.md).
 
-⚠ **Every human who has used the deployed app was on a phone, and n is still 2** — **a question, not a finding**
-about "web first, mobile later". [METRICS-USAGE.md](METRICS-USAGE.md).
-
 **The two tracks run in parallel, as re-scoped 2026-08-05:** the product track never trains, the model track never touches the app, and neither waits for the other. [mvp/README.md](mvp/README.md).
 
 ## Previously — the settled context
@@ -232,34 +245,23 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-3. **⛔ EDITOR STEP 9 IS DROPPED — `Save JSON` STAYS** (owner, 2026-08-15), superseding the
-   2026-08-07 decision to delete it, which was never carried out. **`smoke:editor` reads the edited
-   document by clicking `#save-json`**, so the button is the check's only view of what an edit did,
-   and removing it would have to buy a new DOM seam first. **The editor's list is now complete: steps
-   1–8 and 10, built, deployed and checked on the production bundle. There is no step 9.**
-   [mvp/editor.md](mvp/editor.md) · [mvp/standing.md](mvp/standing.md) · [DECISIONS.md](DECISIONS.md).
-3b. **✅ F3 IS BUILT (2026-08-16), DEPLOYED (2026-08-18) AND REBUILT UPRIGHT (2026-08-27)** after the
-   owner finally looked at it: *"I want this in vertical position and half of the violin's body should
-   be visible, it looks very bad right now."* The quarter-turn rotation is gone, a position is now one
-   hideable line across all four strings instead of a notch on one, the lines are a **fixed chart** of
-   the seven standard first-position notes (reversed the same day from lines built out of the loaded
-   score — a reference that follows the music is not a reference), and a **neck zoom** was added. ⭐ Asking whether the lines were spaced right
-   then exposed a real fault one level down: the **string choice** had no notion of a hand and let an
-   ascending line climb one string forever (22 of Meltem's 83 notes above the octave). It is now a
-   hand-position model — numbers in [features/fingerboard.md](features/fingerboard.md). Typecheck,
-   `npm test` and `smoke:editor` all pass; **deployed 2026-08-30**. [features/fingerboard.md](features/fingerboard.md) ·
+3. **✅ `Save JSON` IS GONE (owner, 2026-08-30) — and the check that needed it now reads the
+   document directly.** The 2026-08-15 decision kept the button for one reason: `smoke:editor` had no
+   other way to see what an edit did. That is paid off, not overruled — `window.__omrDoc` sits beside
+   the existing `__omrStrips`/`__omrConfig` hooks, `save()` reads it, and both suites pass. **The
+   editor's list is complete: steps 1–8 and 10, built, deployed and checked on the production
+   bundle.** [mvp/editor.md](mvp/editor.md) · [mvp/standing.md](mvp/standing.md) ·
    [DECISIONS.md](DECISIONS.md).
-3c. **✅ F3 HAS A SECOND INSTRUMENT: THE KANUN (2026-08-29)**, after the owner reopened the
-   violin-only scope — *"şimdi biz kemanı ekledik çok hoş, kanunu eklemeye başlayabiliriz"*. A drawn
-   kanun: 26 courses, 12 mandal boxes each, the sounding course in red and a lever that has just
-   moved flashing. ⭐ **It is not the violin view with a different picture, and seeing that first is
-   what made it small**: a violin position is a fact about one note, while a mandal **stays where it
-   is put**, so this is a state machine over the whole piece — which is also what buys the piece's
-   **opening mandal plan**, listed in words before you press play. ⭐ The string-choice trap that cost
-   `fingering.ts` a rewrite cannot arise, because the written spelling names the course: **1,825 of
-   1,825 notes placed, 0 respellings, 0 unreachable** on the four scores on disk. Typecheck,
-   `npm test` (46 new checks) and `smoke:editor` (20 new, **207 ALL PASS**) all pass; **deployed
-   2026-08-30**. [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
+3b. **✅ F3 IS BUILT (2026-08-16), DEPLOYED (2026-08-18), REBUILT UPRIGHT (2026-08-27) AND DEPLOYED
+   AGAIN (2026-08-30).** ⭐ Asking whether its position lines were spaced right exposed a real fault
+   one level down — the **string choice** had no notion of a hand and let an ascending line climb one
+   string forever; it is now a hand-position model. Account and numbers:
+   [features/fingerboard.md](features/fingerboard.md) · [DECISIONS.md](DECISIONS.md).
+3c. **✅ F3 HAS A SECOND INSTRUMENT: THE KANUN (2026-08-29), DEPLOYED 2026-08-30.** ⭐ It is not the
+   violin view with a different picture: a violin position is a fact about one note, while a mandal
+   **stays where it is put**, so this is a state machine over the whole piece — which is what buys the
+   piece's **opening mandal plan**, listed in words before you press play.
+   [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
 
 3d. **✅ ONE INSTRUMENT PAGE, AND THE PIANO ROLL IS GONE (2026-08-29)**, both the owner's call after
    seeing the kanun. Keman and Kanun now share one tab — **Enstrüman üzerinde** — with a dropdown
@@ -284,16 +286,16 @@ the model track never touches the app.** Either can be worked on without waiting
    order, and it is small (`deploy:app`, then `smoke:live`). ⚠ `smoke:live` checks neither images nor
    audio; spot-check both by hand after any deploy touching them.
 3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, STILL UNCHECKED IN THE BROWSER (built 2026-08-29).**
-   Fingering table, lip bar, view and wiring done; `npm test` (48 new), typecheck and `smoke:editor`
-   pass. ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,
-   `[data-omr="clarinet-lip-tick"]`) is unasserted, unlike the kanun's and the violin's. Confirmed to render pre-deploy by hand only: 6 holes, 18 keys, 5 lip ticks, photo loaded, no page
-   errors. ⛔ **Two wrong turns, both caught by the owner's eye and by no test**: the first table came
-   from **Boehm** diagrams for an **Albert** instrument (`T lh123|rh1--` is Si♭ on one, Si on the
-   other), and the artwork went CC0-schematic → own-drawing → **photograph**, no CC0 photo of a
-   German-system clarinet existing. The table is now read from the Oehler/Albert chart's own markup;
-   the six tone holes are **measured** off the photo; key positions are by eye and flagged per
-   marker. ⏭ Next: the remaining key-position corrections, the note label, the browser checks.
-   [features/clarinet-view.md](features/clarinet-view.md)
+   ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract
+   (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,
+   `[data-omr="clarinet-lip-tick"]`) is unasserted, unlike the kanun's and the violin's. Confirmed
+   pre-deploy by hand only: 6 holes, 18 keys, 5 lip ticks, photo loaded, no page errors.
+   ⭐ **THE TABLE IS NOW THE OWNER'S OWN** (2026-08-30), placed note by note in
+   `tools/core/clarinet-editor.ts`: **six of nineteen changed, every one a KEY; no hole, no note.**
+   The chart's *notes* survived a real sol klarnet; five of my six by-eye key positions did not.
+   ⛔ Two earlier wrong turns caught by eye and by no test: a table from **Boehm** diagrams, and
+   artwork that went CC0-schematic → own-drawing → **photograph**. ⏭ Next: the **altissimo**,
+   Re♭6–Sol6 (seven fingerings the owner is filling in), then the browser checks. [features/clarinet-view.md](features/clarinet-view.md)
 
 4. **⏸ Everything else about speed is DEFERRED to after W10** (owner, 2026-08-06): ship at **~35–55 s
    a page**. Splitting a page across instances (~52 s → ~13 s) is the only option that touches the
@@ -366,11 +368,9 @@ Take this only when the exam queue is not the better use of an hour.
 
 ### Owed but not next → [BACKLOG.md](BACKLOG.md)
 
-Genre split: this file holds current state and the next action; a backlog is neither. It carries the
-deskew-estimator corpus run, the **5 duplicate `_realval_v2` rows (4 contradictory)**, exam v3, the
-signature-packed sharp glyphs, the train-time exam guard for the synthetic corpus, the ORT int8
-numerics wobble, and the additive-only re-slice — each with the reason it is deferred. ⚠ Several are
-deferred *because* acting on them would confound something in flight; read the reason before starting.
+Genre split: this file holds current state and the next action; a backlog is neither. Every deferred
+item lives there with the reason it is deferred — ⚠ and several are deferred *because* acting on them
+would confound something in flight, so read the reason before starting one.
 
 ## Open risks and non-claims
 

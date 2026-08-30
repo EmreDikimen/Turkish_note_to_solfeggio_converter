@@ -19,7 +19,7 @@ The page cannot tell you this. Only the makam can. So the app guesses the makam,
 confirm, and bends the **sounding** komas accordingly.
 
 **The written staff never moves.** The deltas reach `buildTimeline` and nothing else — not the
-engraving, not `Save JSON`, not the training strips. Selecting a makam changes what you hear, never
+engraving, not the saved document, not the training strips. Selecting a makam changes what you hear, never
 what the OMR claims it read. `none` is the identity and the default.
 
 ## The intonation table

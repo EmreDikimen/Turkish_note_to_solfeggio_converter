@@ -582,6 +582,92 @@
   border: 1.5px solid #0d9488;
 }
 
+/* A HELD triplet (editor step 7b): its three notes, and the notes either handle could be dragged
+   onto. A landing overrides `.is-dim` — the tuplet tool dims everything it would refuse to START a
+   run on, and those are exactly the notes a handle may land on, so without this the affordance is
+   grey. It stays pointer-transparent: the handles do the moving. */
+.kv-note-hit.is-tuplet-held,
+.kv-note-hit.is-tuplet-held:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: transparent;
+}
+.kv-note-hit.is-tuplet-landing,
+.kv-note-hit.is-tuplet-landing:hover {
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px dashed rgba(13, 148, 136, 0.7);
+}
+/* A landing that would COMPLETE a broken mark — drag the handle here and it becomes a real triplet.
+   Solid where an ordinary landing is dashed, because on a decoded page this is the move you want. */
+.kv-note-hit.is-tuplet-landing.is-tuplet-fix,
+.kv-note-hit.is-tuplet-landing.is-tuplet-fix:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1.5px solid #059669;
+}
+
+/* The drawn "3" mark as a click target (owner, 2026-08-30: the SIGN is clickable, its notes are
+   not). An overlay div sitting exactly over the engraved ink — it may not touch the SVG, which is
+   also the training-strip source. Invisible until pointed at, so the score still looks like a score;
+   the frame appears once the group is held. */
+.kv-tuplet-mark-hit {
+  box-sizing: border-box;
+  border: 1px dashed transparent;
+  border-radius: 4px;
+}
+.kv-tuplet-mark-hit:hover {
+  background: rgba(20, 184, 166, 0.12);
+  border-color: rgba(13, 148, 136, 0.8);
+}
+/* A BROKEN mark — one drawn over fewer than three notes, or over a run that never sums to a plain
+   value. It is the model's misread, so unlike a real triplet it is flagged the moment the tool is
+   armed rather than only on hover: finding these is the reason the owner asked to be able to grab
+   them. Edit-mode overlay only — the engraving itself never changes. */
+.kv-tuplet-mark-hit.is-broken {
+  border-color: rgba(185, 28, 28, 0.65);
+  background: rgba(185, 28, 28, 0.07);
+}
+.kv-tuplet-mark-hit.is-broken:hover {
+  border-color: #b91c1c;
+  background: rgba(185, 28, 28, 0.16);
+}
+.kv-tuplet-mark-hit.is-held,
+.kv-tuplet-mark-hit.is-held:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1.5px solid #f59e0b;
+}
+.kv-tuplet-mark-hit.is-broken.is-held,
+.kv-tuplet-mark-hit.is-broken.is-held:hover {
+  background: rgba(185, 28, 28, 0.16);
+  border: 1.5px solid #b91c1c;
+}
+
+/* The frame round a held triplet, and the handle at each end. Overlay elements beside the SVG, so
+   the engraving never moves — the same rule the note targets follow. */
+.kv-tuplet-frame {
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1.5px solid #f59e0b;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.07);
+}
+/* Holding a broken mark: the frame keeps saying so, or the repair loses the reason for it. */
+.kv-tuplet-frame.is-broken {
+  border: 1.5px dashed #b91c1c;
+  background: rgba(185, 28, 28, 0.07);
+}
+.kv-tuplet-handle {
+  box-sizing: border-box;
+  border: 1.5px solid #b45309;
+  border-radius: 3px;
+  background: #f59e0b;
+}
+.kv-tuplet-handle:hover {
+  background: #d97706;
+}
+.kv-tuplet-handle[data-can-move="0"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* A bar that is over or under the derived meter (editor step 8) — an indicator, never a block.
    Sits in the edit overlay beside the sheet, never inside the SVG. */
 .kv-bar-warn {

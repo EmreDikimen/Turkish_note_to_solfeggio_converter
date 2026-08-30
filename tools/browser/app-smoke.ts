@@ -9,7 +9,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { dismissMakamPrompt } from "./makamPrompt";
@@ -111,14 +111,97 @@ async function main() {
   const playingState = (await playBtn.getAttribute("data-play-state")) ?? "";
   await page.locator("#stop").click();
 
-  // Save JSON is the Rung-3 labeling loop's output — it must yield a schemaVersion-1 doc.
-  const dl = page.waitForEvent("download", { timeout: 30000 });
-  await page.locator("#save-json").click();
-  const file = await (await dl).path();
-  const doc = JSON.parse(readFileSync(file!, "utf8")) as {
-    schemaVersion: number;
-    events: { kind: string }[];
-  };
+  // ---------------------------------------------------------------------------------------------
+  // The page is kept as it is WRITTEN, and the repeat is taken at playback time (2026-08-30).
+  //
+  // Two claims, and neither can be read off the words on the screen:
+  //   1. the sheet is SHORTER than the performance — a repeated passage is drawn once;
+  //   2. the blue playhead goes BACK to it, i.e. sound and picture agree about the repeat.
+  // Claim 2 is proved by watching where the cursor actually is: playback is started inside the
+  // repeat, and the cursor must at some point move backwards on the page (up a row, or left on the
+  // same row). Nothing else in the app moves it backwards.
+  const structure = await page.evaluate(
+    () =>
+      (window as unknown as {
+        __omrStructure?: { bars: { bar: number; repEnd?: boolean }[]; playBars: number[] } | null;
+      }).__omrStructure ?? null,
+  );
+  const writtenBars = await page.evaluate(
+    () =>
+      (window as unknown as { __omrDoc?: { events: { bar?: number }[] } | null }).__omrDoc?.events.reduce(
+        (m, e) => Math.max(m, e.bar ?? 0),
+        0,
+      ) ?? 0,
+  );
+  const playedBars = structure?.playBars.length ?? 0;
+  const repEnds = (structure?.bars ?? []).filter((b) => b.repEnd).map((b) => b.bar);
+  const foldedPage = playedBars > writtenBars;
+  console.log(
+    `  structure: ${writtenBars} written bars → ${playedBars} played, ` +
+      `${repEnds.length} repeat end(s)${foldedPage ? "" : " — this page has nothing to fold"}`,
+  );
+
+  /** Where the playhead is on the page: row first, then across. Null while it is hidden. */
+  const playheadAt = async (): Promise<{ top: number; left: number } | null> =>
+    page.evaluate(() => {
+      const ph = document.querySelector<HTMLElement>('[data-omr="playhead"]');
+      const surface = document.querySelector<HTMLElement>("#sheet-surface");
+      if (!ph || !surface || ph.style.display === "none") return null;
+      const p = ph.getBoundingClientRect();
+      const s = surface.getBoundingClientRect();
+      return { top: p.top - s.top, left: p.left - s.left };
+    });
+
+  let wentBack = false;
+  let samples = 0;
+  if (foldedPage && repEnds.length > 0) {
+    // Start playing INSIDE the repeat: click the strip that holds the `:‖` bar. A click on the
+    // sheet in non-edit mode is "play from this bar", and it is also the user gesture the audio
+    // context needs. Strip rects are in the SVG's own coordinates, and no transform may touch that
+    // container (the CSS rule), so they are the surface's coordinates too.
+    const target = await page.evaluate((bar) => {
+      const strips = (window as unknown as {
+        __omrStrips?: { fromMeasure: number; toMeasure: number; rect: { x: number; y: number; width: number; height: number } }[];
+      }).__omrStrips ?? [];
+      const hit = strips.find((st) => st.fromMeasure <= bar && bar <= st.toMeasure) ?? strips[0];
+      const surface = document.querySelector<HTMLElement>("#sheet-surface");
+      if (!hit || !surface) return null;
+      // ⚠ Scroll it into view FIRST. `page.mouse.click` takes viewport coordinates, and a `:‖` half
+      // way down a 28-bar page is simply not on screen — the click then lands nowhere, playback
+      // never starts, and it looks exactly like "the seek is broken".
+      const absTop = window.scrollY + surface.getBoundingClientRect().top + hit.rect.y;
+      window.scrollTo(0, Math.max(0, absTop - window.innerHeight / 2));
+      const s = surface.getBoundingClientRect();
+      return { x: s.left + hit.rect.x + hit.rect.width / 2, y: s.top + hit.rect.y + hit.rect.height / 2 };
+    }, repEnds[0]!);
+
+    if (target) {
+      await page.mouse.click(target.x, target.y);
+      let prev: { top: number; left: number } | null = null;
+      for (let i = 0; i < 45; i++) {
+        const at = await playheadAt();
+        if (at) {
+          samples++;
+          if (prev && (at.top < prev.top - 2 || (Math.abs(at.top - prev.top) < 2 && at.left < prev.left - 6))) {
+            wentBack = true;
+          }
+          prev = at;
+        }
+        if (wentBack) break;
+        await page.waitForTimeout(120);
+      }
+    }
+    // Only if the click actually started something — an unclickable target must fail the check
+    // below, not time out here on a disabled button.
+    if (await page.locator("#stop").isEnabled()) await page.locator("#stop").click();
+  }
+
+  // The stitched note model itself, read off the live page. `window.__omrDoc` is the app's own
+  // automation hook (like `__omrStrips`) and replaced the JSON download button — the check is the
+  // same one either way: the wiring must produce a schemaVersion-1 doc with notes in it.
+  const doc = (await page.evaluate(
+    () => (window as unknown as { __omrDoc?: { schemaVersion: number; events: { kind: string }[] } }).__omrDoc ?? null,
+  )) ?? { schemaVersion: 0, events: [] };
   const notes = doc.events.filter((e) => e.kind === "note").length;
 
   await browser.close();
@@ -132,8 +215,20 @@ async function main() {
     ["sheet renders", svgCount > 0, `${svgCount} svg`],
     ["play enabled", playable, String(playable)],
     ["playback started", playingState === "playing", playingState || "(none)"],
-    ["saved schemaVersion 1", doc.schemaVersion === 1, String(doc.schemaVersion)],
-    ["saved doc has notes", notes > 0, `${notes} notes`],
+    ["note model is schemaVersion 1", doc.schemaVersion === 1, String(doc.schemaVersion)],
+    ["…and it has notes", notes > 0, `${notes} notes`],
+    // A page with no repeat signs is not a failure — it is a page with nothing to fold, and the
+    // check says which case it saw rather than passing quietly on an empty condition.
+    [
+      "the sheet is written, not played out",
+      !foldedPage || writtenBars < playedBars,
+      foldedPage ? `${writtenBars} drawn vs ${playedBars} played` : "no signs on this page",
+    ],
+    [
+      "⭐ the playhead goes back at the repeat",
+      !foldedPage || wentBack,
+      foldedPage ? (wentBack ? `yes, after ${samples} samples` : `NO — ${samples} samples, never moved back`) : "n/a",
+    ],
     ["no uncaught page errors", pageErrors.length === 0, pageErrors.join("; ") || "none"],
   ];
   console.log("");

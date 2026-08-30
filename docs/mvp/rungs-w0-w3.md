@@ -87,7 +87,8 @@ Run it with `npm run check:logprobs` (reference: `.venv-ml/bin/python scripts/lo
 crops, decodes them in the browser, stitches them and loads the score — playable, editable,
 downloadable as note-model JSON. Verified in the real app, not just a harness
 (`npm run smoke:app`): 16 crops → **344 notes / 28 measures**, sheet renders, playback starts,
-⬇ Save JSON yields a valid `schemaVersion: 1` doc, no uncaught page errors.
+the note model is a valid `schemaVersion: 1` doc, no uncaught page errors. ⚠ That was read from the
+⬇ Save JSON download until 2026-08-30; the button is gone and the check reads `window.__omrDoc`.
 
 New: `apps/web/src/omr/session.ts` (memoised model load — **sequential**, because three
 `InferenceSession.create` calls in flight means three sets of weights live at once and memory, not

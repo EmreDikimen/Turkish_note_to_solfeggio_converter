@@ -100,8 +100,6 @@ export const TR = {
     undoTitle: "Son değişikliği geri al (Ctrl/⌘+Z)",
     redo: "↷ Yinele",
     redoTitle: "Geri alınan değişikliği yinele (Ctrl/⌘+Shift+Z)",
-    save: "⬇ JSON indir",
-    saveTitle: "Düzelttiğiniz eseri nota-modeli JSON dosyası olarak indirin",
     meta: (makam: string, usul: string, composer: string | undefined, notes: number, dur: string) =>
       `makam ${makam} · usul ${usul}${composer ? ` · ${composer}` : ""} · ${notes} nota · ${dur}`,
     hintSheet: "Bir ölçüye tıklayın, eser oradan çalar.",
@@ -119,6 +117,13 @@ export const TR = {
 
   sheet: {
     deleteNote: "Notayı sil",
+    pickTuplet: "Üçleme işareti — tıklayın, üçleme seçilir",
+    pickBrokenTuplet:
+      "Eksik üçleme işareti — üç notayı kapsamıyor, model yanlış okumuş olabilir. " +
+      "Tıklayın: uçlarından sürükleyip tamamlayabilir veya ✕ ile kaldırabilirsiniz",
+    removeTuplet: "Üçlemeyi kaldır — notalar kalır, süreleri eski hâline döner",
+    tupletHandle: "Sürükleyerek üçlemeyi kaydır",
+    tupletHandleFix: "Sürükleyerek üçlemeyi tamamla veya daralt",
   },
 
   palette: {
@@ -139,8 +144,9 @@ export const TR = {
     accidentalTitle: (name: string) => `${name} — seçip bir notaya tıklayın`,
     tuplets: "Üçleme",
     tupletTitle:
-      "Üçleme — ilk notaya, sonra iki sonrakine tıklayın: üçü üçleme olur. Var olan bir " +
-      "üçlemenin herhangi bir notasına tıklarsanız üçleme kalkar",
+      "Üçleme — ilk notaya, sonra iki sonrakine tıklayın: üçü üçleme olur. Var olan bir üçlemeyi " +
+      "seçmek için notalarına değil, üstündeki 3 işaretine tıklayın: sonra uçlarından sürükleyerek " +
+      "kaydırabilir, ✕ ile kaldırabilirsiniz",
     select: "↖ Seçim",
     selectTitle: "Aracı bırak: tıklamak seçer, sürüklemek perdeyi değiştirir (Esc)",
     hintIdle: "Bir araç seçin, sonra notaya tıklayın.",
@@ -232,6 +238,11 @@ export const TR = {
     repeatsTitle:
       "Bulunan tekrar çizgilerini ve volta parantezlerini çizer. Yalnızca görsel — eser, " +
       "yerleşim ve çalma değişmez.",
+    writeOut: "Tekrarları açık yaz",
+    writeOutTitle:
+      "Okunan sayfa normal nota gibi yazılır: tekrar edilen kısım bir kez, başında ‖: sonunda :‖ " +
+      "ile. Bu kutu onu eskisi gibi uzun uzun yazar — her tekrar açılır, işaretler çizilmez. " +
+      "Yalnızca bakmak için: açıkken düzenleme kapanır, çalma iki durumda da aynıdır.",
     pitchRange: (lo: number, hi: number, cents: number) =>
       `ses alanı: koma ${lo}–${hi} (${cents} sent)`,
   },

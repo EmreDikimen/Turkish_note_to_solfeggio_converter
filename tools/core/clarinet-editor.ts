@@ -1,16 +1,24 @@
 /**
  * Build a standalone HTML editor for the sol klarnet fingering table (feature F3).
  *
- * What/why: the note-by-note fingerings come from a printed Oehler/Albert chart, and the marker
- * POSITIONS on the photo are mostly placed by eye — fifteen of twenty-one. Two errors have already
- * been caught by the owner looking at the picture and by nothing else. This page hands him the pen:
- * for each note he deletes the points that are wrong and clicks where the right ones go, and the
- * page hands back JSON to paste into `clarinet.ts` / `clarinetArt.ts`.
+ * What/why: nothing here can prove a fingering is *right* — only somebody who plays the instrument
+ * can. So this page hands him the pen: for each note he deletes the points that are wrong and
+ * clicks where the right ones go, and it hands back JSON to paste into `clarinet.ts` /
+ * `clarinetArt.ts`. Its first pass (2026-08-30) corrected six of nineteen fingerings, every one a
+ * key, five of which I had placed on the wrong piece of metal entirely.
  *
- * ⭐ **Only the nineteen BASE fingerings are editable, and that is deliberate.** The clarion is the
- * same fingerings with the register key added — a fact about a stopped pipe, not a choice — so
- * editing it separately could only introduce a disagreement. Fix a base fingering and its clarion
- * partner follows.
+ * ⭐ **It also collects fingerings that do not exist yet.** Above Do6 the instrument keeps going —
+ * the altissimo — on fingerings that are not the lower ones overblown and that no source here
+ * covers. Those notes appear as EMPTY cards to be filled in, and are marked `"new": true` in the
+ * export so they can be told from a correction to something that already shipped.
+ *
+ * ⭐ **The clarion is NOT editable, and that is deliberate.** It is the base fingerings with the
+ * register key added — a fact about a stopped pipe, not a choice — so editing it separately could
+ * only introduce a disagreement. Fix a base fingering and its clarion partner follows.
+ *
+ * ⚠ **The altissimo is different and IS editable, because it is not derived.** A clarinet's third
+ * register is not a fourth overblowing of anything; each note is its own fingering, which is why
+ * the top of the range has to be collected by hand rather than computed.
  *
  * ⭐ **Komas are not editable either**, because they are not fingered: the owner's own design says a
  * koma is reached by relaxing the lip from the nearest standard fingering. So the table needs the
@@ -24,7 +32,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { BASE_FINGERINGS, type ClarinetKeyId } from "@turkish-omr/core";
+import { ALTISSIMO_FINGERINGS, BASE_FINGERINGS, type ClarinetKeyId } from "@turkish-omr/core";
 import { IMAGE, MARKERS } from "../../apps/web/src/ui/clarinetArt";
 
 const out = process.argv[2] ?? "clarinet-editor.html";
@@ -34,17 +42,28 @@ const png = readFileSync(`apps/web/public/${IMAGE.src}`).toString("base64");
 const spots = MARKERS.map((m) => ({ id: m.id, x: m.cx, y: m.cy, r: m.r, measured: m.source === "measured" }));
 const byId = new Map(spots.map((s) => [s.id, s]));
 
-/** The starting state: one point per key the fingering presses, at that key's calibrated place. */
-const notes = BASE_FINGERINGS.map((f) => ({
+/**
+ * ⚠ **The altissimo is read from core, not held here.** It was a hardcoded to-do list for exactly
+ * one day — the owner filled it in on 2026-08-30 and it moved into `ALTISSIMO_FINGERINGS`. Keeping
+ * a second copy here would let the editor and the app disagree about what the instrument plays,
+ * which is the one thing this page must never do.
+ *
+ * ⚠ The clarion is still absent on purpose: it is derived, so editing it could only introduce a
+ * disagreement.
+ */
+const editable = [...BASE_FINGERINGS, ...ALTISSIMO_FINGERINGS];
+
+const allNotes = editable.map((f) => ({
   note: f.label,
   koma: f.koma,
+  isNew: false,
   points: f.keys
     .map((k: ClarinetKeyId) => byId.get(k))
     .filter(Boolean)
     .map((s) => ({ id: s!.id, x: s!.x, y: s!.y, r: s!.r })),
 }));
 
-const DATA = JSON.stringify({ image: { w: IMAGE.w, h: IMAGE.h }, spots, notes });
+const DATA = JSON.stringify({ image: { w: IMAGE.w, h: IMAGE.h }, spots, notes: allNotes });
 
 const html = `<!doctype html>
 <html lang="tr"><head><meta charset="utf-8">
@@ -66,6 +85,12 @@ const html = `<!doctype html>
                   border:1px solid var(--line); background:var(--card); color:var(--fg); }
   .notes button.sel { background:var(--accent); border-color:var(--accent); color:#fff; }
   .notes button i { font-style:normal; opacity:.6; font-weight:400; font-size:12px; margin-left:5px; }
+  .notes button.todo { border-style:dashed; }
+  .notes button.empty { color:var(--mut); }
+  .notes button.empty i { display:none; }
+  .notes .grp { align-self:center; font-size:12px; color:var(--mut); margin:0 4px 0 10px;
+                text-transform:uppercase; letter-spacing:.05em; }
+  .notes .grp:first-child { margin-left:0; }
   .wrap { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
   .panels { display:flex; gap:10px; background:var(--card); border:1px solid var(--line);
             border-radius:12px; padding:10px; }
@@ -98,7 +123,8 @@ const html = `<!doctype html>
 <b>Kırmızı bir noktaya tıklayın</b> → o noktayı siler. Soluk halkalar bilinen delik ve tuş yerleridir;
 yakınına tıklarsanız oraya yapışır. Komalar için ayrı parmak yok — onlar dudak gevşeterek çıkıyor,
 o yüzden burada sadece tam notalar ve arızalıları var. Register tuşlu (ince) sesler bu tablodan
-kendiliğinden türüyor, ayrıca düzenlemeye gerek yok.</p>
+kendiliğinden türüyor, ayrıca düzenlemeye gerek yok. <b>İnce sesler (Re♭6 – Sol6)</b> aşağıdakilerin
+oktavı değil, kendi parmakları var — onlar da artık tabloda.</p>
 
 <div class="notes" id="notes"></div>
 
@@ -116,7 +142,13 @@ kendiliğinden türüyor, ayrıca düzenlemeye gerek yok.</p>
         <button id="reset">Bu notayı sıfırla</button>
         <button id="clear">Bütün noktaları sil</button>
       </div>
-      <p class="hint" style="margin-top:8px"><kbd>←</kbd> <kbd>→</kbd> ile notalar arasında gezebilirsiniz.</p>
+      <div class="row" style="margin-top:8px">
+        <label class="hint" style="display:flex;align-items:center;gap:6px">
+          Şundan kopyala: <select id="copyfrom"></select>
+        </label>
+      </div>
+      <p class="hint" style="margin-top:8px"><kbd>←</kbd> <kbd>→</kbd> ile notalar arasında gezebilirsiniz.
+      <span id="left" style="display:block;margin-top:4px"></span></p>
     </div>
 
     <div class="box">
@@ -133,13 +165,13 @@ kendiliğinden türüyor, ayrıca düzenlemeye gerek yok.</p>
 
 <script>
 const DATA = ${DATA};
-const KEY = "klarnet-parmak-v1";
+const KEY = "klarnet-parmak-v3";   // v1: 19 base notes. v2: + 7 empty altissimo. v3: altissimo filled
 const IMG = "data:image/png;base64,${png}";
 
 const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } })();
 const state = saved && saved.length === DATA.notes.length
   ? saved
-  : DATA.notes.map(n => ({ note: n.note, koma: n.koma, points: n.points.map(p => ({ ...p })) }));
+  : DATA.notes.map(n => ({ note: n.note, koma: n.koma, isNew: n.isNew, points: n.points.map(p => ({ ...p })) }));
 
 let sel = 0;
 const undoStack = [];
@@ -203,13 +235,17 @@ function draw() {
   panel($("pb"), 460, 1e9);
   $("cur").textContent = state[sel].note;
   $("cnt").textContent = "· " + state[sel].points.length + " nokta";
-  [...$("notes").children].forEach((b, i) => {
+  const btns = [...$("notes").querySelectorAll("button")];
+  btns.forEach((b, i) => {
     b.classList.toggle("sel", i === sel);
+    b.classList.toggle("empty", state[i].points.length === 0 && state[i].isNew);
     b.querySelector("i").textContent = state[i].points.length;
   });
+  const empty = state.filter(n => n.points.length === 0 && n.koma !== 296).length;
+  $("left").textContent = empty ? empty + " nota boş" : "bütün notalar dolu ✓";
   $("outbox").value = JSON.stringify(
     state.map(n => ({ note: n.note, koma: n.koma,
-      points: n.points.map(p => ({ id: p.id, x: p.x, y: p.y })) })), null, 1);
+      new: n.isNew, points: n.points.map(p => ({ id: p.id, x: p.x, y: p.y })) })), null, 1);
   persist();
 }
 
@@ -222,12 +258,36 @@ for (const svg of [$("pa"), $("pb")]) {
   });
 }
 
+function groupLabel(txt) {
+  const h = document.createElement("span");
+  h.className = "grp"; h.textContent = txt;
+  $("notes").appendChild(h);
+}
 state.forEach((n, i) => {
+  if (i === 0) groupLabel("Temel sesler");
+  if (n.koma > 371 && !(state[i - 1]?.koma > 371)) groupLabel("İnce sesler (altissimo) →");
   const b = document.createElement("button");
   b.innerHTML = n.note + ' <i></i>';
+  if (n.koma > 371) b.classList.add("todo");
   b.onclick = () => { sel = i; undoStack.length = 0; draw(); };
   $("notes").appendChild(b);
 });
+
+// ⚠ A starting point, not an answer: an altissimo fingering is usually a lower one plus a vent, so
+// copying then editing is far less clicking than building from nothing. It never auto-applies.
+{
+  const sel2 = $("copyfrom");
+  sel2.innerHTML = '<option value="">—</option>' +
+    state.map((n, i) => \`<option value="\${i}">\${n.note}</option>\`).join("");
+  sel2.onchange = () => {
+    const i = +sel2.value;
+    if (sel2.value === "") return;
+    pushUndo();
+    state[sel].points = state[i].points.map(p => ({ ...p }));
+    sel2.value = "";
+    draw();
+  };
+}
 
 $("undo").onclick = () => { const u = undoStack.pop(); if (u) { state[sel].points = JSON.parse(u); draw(); } };
 $("reset").onclick = () => { pushUndo(); state[sel].points = DATA.notes[sel].points.map(p => ({ ...p })); draw(); };
@@ -253,6 +313,7 @@ draw();
 
 writeFileSync(out, html);
 console.log(
-  `wrote ${out} — ${notes.length} editable notes, ${spots.length} snap targets, ` +
+  `wrote ${out} — ${BASE_FINGERINGS.length} base + ${ALTISSIMO_FINGERINGS.length} altissimo notes, ` +
+    `${spots.length} snap targets, ` +
     `${(html.length / 1024 / 1024).toFixed(2)} MB`,
 );

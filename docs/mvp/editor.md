@@ -18,11 +18,11 @@ updated: 2026-08-18
 |---|---|
 | **Editing covers the WHOLE score, not one measure at a time** | The modal's per-measure scope is the thing being removed. There is one edit surface: the engraved page |
 | **No zoom** | An earlier draft had the sheet zoom on entering edit mode; dropped as unnecessary. This also removes the re-engrave trap that came with it |
-| **`Save JSON` goes.** It will not be used | It changes *why* this work is worth doing — see below |
+| **`Save JSON` goes.** It will not be used | ✅ removed 2026-08-30 (dropped 2026-08-15, then asked for again). It changes *why* this work is worth doing — see below |
 | **The per-measure modal goes** | ✅ deleted 2026-08-08. Rests and the numbered koma signs were rebuilt into the palette the same day; **lyric editing** and exact **koma/Hz** entry went with it — see below |
 | **Playback works WHILE editing**, from the palette's own Çal/Dur | And Çal resumes from the **last edited measure**, not from the top |
 | **Tokens are NOT the edit surface** | Editing the decoded `\tup3`/`\repstart` tokens and re-stitching was considered and dropped: playback needs the flattened doc, and a repeated passage renders **twice** from one token, so a click cannot be attributed to a pass |
-| **`\repstart` / `\repend` are NOT editable** | The stitcher **unfolds** repeats (the music is written out twice), so inserting a repeat barline into flattened music would corrupt it. No repeat marks in the palette |
+| **`\repstart` / `\repend` are NOT editable** | ⚠ **The reason changed on 2026-08-30 and the rule did not.** It used to be that the stitcher unfolded repeats, so a repeat barline inserted into flattened music would corrupt it. Now the app keeps the page AS WRITTEN and the signs are real — but they are held in `structure`, beside the document, and editing one would mean rewriting the playing order. Still no repeat marks in the palette. [../DECISIONS.md](../DECISIONS.md) |
 | **Tuplets ARE editable** | `\tup3` is arithmetic, not an object — see the rules below |
 
 ### ⚠ What deleting `Save JSON` costs, said out loud
@@ -37,8 +37,8 @@ It is a defensible deletion: the labelling loop's **primary** path is `scripts/r
 So the honest rationale is now simply: **a friend whose page has a wrong note should be able to fix
 it.** That is a product feature, and it is enough.
 
-To remove: `onDownload` + `#save-json` (`App.tsx:507`, `ScoreCard.tsx:94`), the two `app-smoke.ts`
-checks that drive it ("saved schemaVersion 1", "saved doc has notes"), and the references in
+Removed 2026-08-30: `onDownload` + `#save-json`, and the two `app-smoke.ts` checks that drove it
+now read `window.__omrDoc` instead. Also updated then: the references in
 [../PIPELINE.md](../PIPELINE.md) (lines 22 and 232).
 ⚠ **Assumption to confirm:** *Load* JSON stays in Gelişmiş as a development input — only *Save* goes.
 
@@ -155,6 +155,23 @@ make a triplet, or click any member of one to take it apart. What it accepts and
 plain-value rule, dimming from the moment it is armed, and why an unclosed run is not
 removable): [editor-built.md](editor-built.md#step-7--the-tuplet-tool).
 
+**A triplet is picked up by its drawn "3", and its handles SLIDE it** (owner, 2026-08-30). Clicking
+the SIGN selects the whole group — a frame, a handle at each end, and a ✕ that removes the bracket
+and keeps the notes. ⚠ **Its notes are not targets**: they keep their `member` state so the page
+still says where the triplets are, but they are `pointer-events: none`. Dragging a handle moves the group along its bar — the first
+member hands its plain value back and the neighbour joins — so the group stays **exactly three
+notes** and the bar length does not change.
+
+⚠ **Widening a triplet into a real 4-, 5- or 7-tuplet is NOT built, and it is not a UI problem.** It
+needs the drawn digit derived from the group size (it is a hardcoded `"3"`, above) **and** a label
+token that does not exist — there is no `\tup5`. New tokens go at the end of `ADDED_TOKENS` and
+change what the corpus can express, so that is a corpus decision for the owner, not an editor
+change. Until it is taken, three is the only honest length in both directions.
+
+✅ **Built 2026-08-30 (step 7b)** — select, slide from either end, remove the bracket. The three
+decisions behind it, and the simulation that stops a handle drawing a bracket over the wrong notes:
+[editor-built.md](editor-built.md#step-7b--holding-a-triplet-select-slide-remove).
+
 ---
 
 ## Inserting and deleting: the bar ABSORBS, and says when it does not add up
@@ -243,6 +260,8 @@ data. Verify on more decoded pages before promising anything.
 | **Undo/redo** | ✅ **built 2026-08-07** | `../../apps/web/src/useDocHistory.ts` |
 | **The armed palette** | ✅ **built 2026-08-08** | `../../apps/web/src/ui/EditPalette.tsx` + `ui/accidentals.ts` |
 | **Which notes can be a triplet** | ✅ **built 2026-08-08** | `plainTupletBase` / `tupletRunFrom` / `closedTupletAt` in `../../tools/render/rhythm.ts`, beside the functions that DRAW the bracket |
+| **Where a held mark's handles may land** | ✅ **built 2026-08-30** | `tupletEdgeTo` in the same file — a real triplet slides, a broken one is repaired, and its last check is a simulation against `tupletGroupsIn`, not a rule |
+| **Finding a mark the arithmetic never closed** | ✅ **built 2026-08-30** | `drawnTupletAt` — the counterpart of `closedTupletAt`: *"is a bracket drawn here"*, not *"is this a real triplet"* |
 | **Scaling durations (make/remove a triplet)** | ✅ **built 2026-08-08** | `scaleDurations` in `../../packages/core/src/edits.ts` |
 | **Inserting into a bar** | ✅ **built 2026-08-08** | `insertInMeasure` / `insertIndexIn` in `../../packages/core/src/edits.ts` |
 | **Pitch from a click's height** | ✅ **built 2026-08-08** | `pitchAtHeight` + `MeasureBox.topLineY` in `SheetView.tsx`, over core's `nudgePitch` |
@@ -334,13 +353,20 @@ cannot half-apply. Two notes on what was deliberately *not* changed:
    geometry and a **ghost notehead** in `SheetView`, and `onInsertNote` in `App` built on the same
    display→stored round trip the accidental tool uses. The two owner calls it settled, and the trap
    it found, are in *Inserting and deleting* below.
+7b. ✅ **DONE 2026-08-30 — holding a triplet**: click its drawn **3** to select (never its notes),
+   drag either end — a real triplet slides, a broken mark is repaired — and ✕ to remove the bracket and keep the notes. `drawnTupletAt` / `tupletEdgeTo` in `rhythm.ts` decide which notes;
+   `scaleDurations` twice does the rewrite, in one undo entry.
 7. ✅ **DONE 2026-08-08 — the tuplet tool**, with the three-note rule and non-clickable invalid
    targets. Selection arithmetic in `rhythm.ts` (`plainTupletBase`, `tupletRunFrom`,
    `closedTupletAt`), one core primitive (`scaleDurations`), and a `data-tuplet` state per note
    target. Built with step 8, because it makes a short bar every time.
 8. ✅ **DONE 2026-08-08 — the invalid-bar indicator**, against the derived meter, and the modal's
    Save gate is gone.
-9. **Remove `Save JSON`** and its two `app-smoke` checks; update `PIPELINE.md`. ⬅ **NEXT.**
+9. ✅ **DONE 2026-08-30 — `Save JSON` is removed.** Dropped on 2026-08-15 because `smoke:editor` had
+   no other way to read an edited document; the owner asked for it again on 2026-08-30 and the
+   objection was paid off instead of overruled — `window.__omrDoc` exposes the live document beside
+   the existing `__omrStrips`/`__omrConfig` hooks, `save()` and the two `app-smoke` checks read it,
+   and both suites pass unchanged.
 10. ✅ **DONE 2026-08-08 — `MeasureEditModal.tsx` is deleted**, and `AccidentalSelect.tsx` with it
     (the modal was its only caller; the palette's accidentals come from `ui/accidentals.ts`). A
     click on blank staff with nothing armed now just clears the selection — no window can appear

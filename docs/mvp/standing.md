@@ -144,7 +144,7 @@ spells it, which is the written skeleton and not what a player plays. The app no
 from a decoded page's own signature and karar, confirms it in a prompt, and bends the **sounding**
 komas to that makam's performed intonation — uşşak's segah 1.5 commas below its written koma-bemol,
 and an explicit *no deviation* for hüseyni, the contrast the whole feature turns on. **Sound only:
-the engraving, `Save JSON` and the training strips never move.** Audibly correct on **204/213**
+the engraving, the document and the training strips never move.** Audibly correct on **204/213**
 bundled scores. Table, sources and the guessing rule: [makam.md](makam.md).
 
 **THE STYLE PASS (W9.6, done 2026-08-07, live 2026-08-08).** The harness is now **KomaVision**, in

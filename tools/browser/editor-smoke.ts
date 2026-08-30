@@ -22,7 +22,6 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { groupMeasures, measureOfEvent, type NoteModelDocument } from "@turkish-omr/core";
 import { tupletRunFrom } from "../render/rhythm";
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -87,18 +86,16 @@ async function main() {
   const pageErrors: string[] = [];
   page.on("pageerror", (e) => pageErrors.push(e.message));
 
-  const save = async (): Promise<Doc> => {
-    const dl = page.waitForEvent("download", { timeout: 30000 });
-    await page.locator("#save-json").click();
-    return JSON.parse(readFileSync((await (await dl).path())!, "utf8")) as Doc;
-  };
+  /** The live note model. Was a JSON download; the app's export button is gone (owner,
+   *  2026-08-30), so it is read straight off the page through the same automation hook the strip
+   *  exporter uses. Reading state beats driving a button: nothing scrolls, so no box goes stale. */
+  const save = async (): Promise<Doc> =>
+    (await page.evaluate(() => (window as unknown as { __omrDoc?: unknown }).__omrDoc)) as Doc;
 
   /** Park the pointer over a note and return its box.
-   *  ⚠ Scroll it into view AND re-read the box every time. `save()` clicks a button in the card
-   *  header, and Playwright scrolls that into view — which pushes the sheet off-screen. A box
-   *  captured before then is stale, and worse, the note may be outside the viewport entirely, so
-   *  `mouse.move` puts the cursor off-page and no pointer event reaches it at all. That failure
-   *  looks exactly like "dragging doesn't work", which already cost one debugging round. */
+   *  ⚠ Scroll it into view AND re-read the box every time — a note can sit outside the viewport,
+   *  and then `mouse.move` puts the cursor off-page and no pointer event reaches it at all. That
+   *  failure looks exactly like "dragging doesn't work", which already cost one debugging round. */
   const hoverNote = async (index: number) => {
     const el = page.locator(`[data-omr-note="${index}"]`).first();
     await el.scrollIntoViewIfNeeded();
@@ -1039,11 +1036,240 @@ async function main() {
   await page.waitForTimeout(300);
   check("redo puts the triplet back", await drawnMarks(), marksBefore + 1);
 
-  // Remove it: with the tool still armed, any member takes the whole group apart.
-  check("a member is offered for removal", await tupletOf(runTarget.idx[1]!), "member");
-  await clickNote(runTarget.idx[1]!);
-  check("clicking a member un-tuplets the group", JSON.stringify(await save()) === JSON.stringify(beforeTup), true);
+  // --- holding a triplet: click the SIGN, slide its ends, take the bracket off (step 7b) ---------
+  //
+  // ⚠ The click target is the drawn "3", not the notes (owner, 2026-08-30). So this clicks
+  // `[data-omr="tuplet-mark-hit"]` and separately proves the notes are NOT targets. Everything else
+  // is read from the DOM, never from copy: `#sheet-surface[data-tuplet-selected]` names the held
+  // group, `[data-tuplet-held]` marks its three notes, `[data-tuplet-landing]` marks every note a
+  // handle may be dragged onto, and `[data-omr="tuplet-handle"][data-edge]` is the handle itself.
+  const surface = page.locator("#sheet-surface");
+  const heldNotes = async () =>
+    new Set(
+      await page
+        .locator("[data-tuplet-held]")
+        .evaluateAll((els) => els.map((e) => Number(e.getAttribute("data-omr-note")))),
+    );
+  /** The click target sitting over the drawn "3" of the group whose first member is `i`. */
+  const markHit = (i: number) => page.locator(`[data-omr="tuplet-mark-hit"][data-tuplet-group="${i}"]`);
+
+  check("the note inside a triplet still says so", await tupletOf(runTarget.idx[1]!), "member");
+  // …and is NOT a target: pointer-events are off, so a click passes straight through it to the
+  // measure box below, which does nothing with a tool armed. This is the owner's ask, and reading
+  // the computed style is the only way to prove a click cannot land rather than merely does not.
+  check("...but it is not clickable",
+    await page.locator(`[data-omr-note="${runTarget.idx[1]}"]`).first()
+      .evaluate((el) => getComputedStyle(el).pointerEvents),
+    "none");
+  check("the drawn 3 is a target instead", await markHit(runTarget.idx[0]!).count(), 1);
+
+  // ⚠ The mark's target must sit on the MARK. A group's `getBBox()` is the union of its children's,
+  // and two children lie about theirs — a `<text>` reports its FONT's em box (a bracket's "3"
+  // measured 12 × 160 px) and VexFlow emits a zero-height rect at the SVG ORIGIN. Measuring the
+  // group directly produced a slab over the staff that would swallow the clicks meant for notes,
+  // which is the `GraceNoteGroup` bug this codebase already paid for once. So: no note's centre may
+  // fall inside a mark's target.
+  {
+    const stolen = await page.evaluate(() => {
+      const marks = Array.from(document.querySelectorAll('[data-omr="tuplet-mark-hit"]'))
+        .map((e) => e.getBoundingClientRect());
+      const bad: string[] = [];
+      for (const n of Array.from(document.querySelectorAll("[data-omr-note]"))) {
+        const r = n.getBoundingClientRect();
+        const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
+        if (marks.some((m) => cx >= m.x && cx <= m.x + m.width && cy >= m.y && cy <= m.y + m.height))
+          bad.push(n.getAttribute("data-omr-note")!);
+      }
+      return bad;
+    });
+    check("no mark's target swallows a note", stolen.join(",") || "none", "none");
+  }
+  await markHit(runTarget.idx[0]!).click();
+  await page.waitForTimeout(250);
+  check("clicking the sign holds the whole group", await surface.getAttribute("data-tuplet-selected"), String(runTarget.idx[0]));
+  check("...without changing a single note", JSON.stringify(await save()) === JSON.stringify(afterTup), true);
+  check("...and all three notes are marked", [...(await heldNotes())].sort((a, b) => a - b).join(","), runTarget.idx.join(","));
+  check("both handles are drawn", await page.locator('[data-omr="tuplet-handle"]').count(), 2);
+
+  // Drag the right handle onto the next note. The group keeps three members, so this SLIDES it:
+  // the first member gets its plain value back and the next note joins. Whether that is legal is
+  // `tupletEdgeTo`'s answer, and the sheet marks the notes it accepts, so the check drags onto one
+  // of those rather than guessing.
+  {
+    // `data-tuplet-landing` says WHICH handle can reach the note ("start", "end" or "both"), so
+    // this drags the right one — dragging the wrong end onto a legal landing would fail and look
+    // like a bug in the slide.
+    const landings = await page
+      .locator("[data-tuplet-landing]")
+      .evaluateAll((els) =>
+        els.map((e) => ({
+          idx: Number(e.getAttribute("data-omr-note")),
+          edge: e.getAttribute("data-tuplet-landing")!,
+        })),
+      );
+    check("the sheet marks where a handle may land", landings.length > 0, true);
+    const to = landings.find((l) => l.idx > runTarget.idx[2]! && l.edge !== "start")?.idx;
+    if (to == null) {
+      console.log("  (no landing to the RIGHT in this bar — the slide check is skipped)");
+    } else {
+      const handle = page.locator('[data-omr="tuplet-handle"][data-edge="end"]');
+      await handle.scrollIntoViewIfNeeded();
+      const hb = (await handle.boundingBox())!;
+      const target = page.locator(`[data-omr-note="${to}"]`).first();
+      const tb = (await target.boundingBox())!;
+      await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(tb.x + tb.width / 2, hb.y + hb.height / 2, { steps: 12 });
+      await page.mouse.up();
+      await page.waitForTimeout(300);
+
+      const slid = await save();
+      const beatsOf = (d: Doc, i: number) => {
+        const b = d.events.find((e) => e.index === i)!.durationBeats;
+        return `${b.num}/${b.den}`;
+      };
+      check("the first member has its plain value back",
+        beatsOf(slid, runTarget.idx[0]!), beatsOf(beforeTup, runTarget.idx[0]!));
+      check("the note the handle reached is now a member",
+        beatsOf(slid, to), beatsOf(afterTup, runTarget.idx[1]!));
+      check("the middle members did not move",
+        beatsOf(slid, runTarget.idx[1]!), beatsOf(afterTup, runTarget.idx[1]!));
+      check("the score still holds exactly one more triplet mark than it started with",
+        await drawnMarks(), marksBefore + 1);
+      check("the group is still held, now by its new first note",
+        await surface.getAttribute("data-tuplet-selected"), String(runTarget.idx[1]));
+      check("the event count is untouched by a slide", slid.events.length, beforeTup.events.length);
+
+      // One drag is one gesture: it must undo as one, however many notes it crossed.
+      await page.locator("#undo").click();
+      await page.waitForTimeout(300);
+      check("one undo puts the slide back", JSON.stringify(await save()) === JSON.stringify(afterTup), true);
+      check("...and undo lets the group go", await surface.getAttribute("data-tuplet-selected"), null);
+      await markHit(runTarget.idx[0]!).click(); // hold it again for the ✕ below
+      await page.waitForTimeout(250);
+    }
+  }
+
+  // The ✕ takes the BRACKET off and keeps the notes (owner, 2026-08-30) — the second half of what a
+  // click on a member used to do in one go.
+  check("the held group offers a ✕", await page.locator("#tuplet-remove").count(), 1);
+  const heldCount = (await save()).events.length;
+  await page.locator("#tuplet-remove").click();
+  await page.waitForTimeout(300);
+  check("the ✕ un-tuplets the group", JSON.stringify(await save()) === JSON.stringify(beforeTup), true);
   check("...and the mark is gone with it", await drawnMarks(), marksBefore);
+  check("...but no note was deleted", (await save()).events.length, heldCount);
+  check("...and nothing is held any more", await surface.getAttribute("data-tuplet-selected"), null);
+
+  // --- BROKEN marks: a bracket over one or two notes, on a real DECODED page --------------------
+  //
+  // `tupletGroupsIn` draws a mark over a run that never sums to a plain value. That is the model's
+  // misread, drawn on purpose so a person can see it — and the owner asked to be able to clear or
+  // complete one (2026-08-30). This runs on `decoded.json`, a real decoded page, because no clean
+  // SymbTr sample has any: it carries five, of one, two and three members.
+  console.log("\nbroken tuplet marks (a real decoded page)");
+
+  await page.goto(`${base}/?score=/decoded.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#app[data-ready]", { timeout: 20000 });
+  await page.locator("#edit-toggle").click();
+  await arm("tuplet");
+  await page.waitForTimeout(300);
+
+  {
+    const marksOf = async (kind: string) =>
+      await page.locator(`[data-omr="tuplet-mark-hit"][data-tuplet-mark="${kind}"]`).evaluateAll((els) =>
+        els.map((e) => Number(e.getAttribute("data-tuplet-group"))),
+      );
+    const broken = await marksOf("broken");
+    const closed = await marksOf("closed");
+    check("the decoded page's broken marks are all offered", broken.length, 5);
+    check("...and its real triplets too", closed.length, 2);
+    check("...and the two kinds are told apart", broken.some((b) => closed.includes(b)), false);
+
+    // Clearing one: the notes stay, their plain values come back, the mark goes.
+    const drawnMarksNow = async () =>
+      await page.evaluate(() => {
+        const svg = document.querySelector('[data-omr="sheet-svg"]')!;
+        const arcs = Array.from(svg.querySelectorAll("text")).filter((t) => t.textContent?.trim() === "3");
+        return svg.querySelectorAll(".vf-tuplet").length + arcs.length;
+      });
+    const beforeClear = await save();
+    const markCountBefore = await drawnMarksNow();
+    const victim = broken[0]!;
+    await page.locator(`[data-omr="tuplet-mark-hit"][data-tuplet-group="${victim}"]`).scrollIntoViewIfNeeded();
+    await page.locator(`[data-omr="tuplet-mark-hit"][data-tuplet-group="${victim}"]`).click();
+    await page.waitForTimeout(250);
+    check("a broken mark can be held", await surface.getAttribute("data-tuplet-selected"), String(victim));
+    check("...and the frame says it is broken",
+      await page.locator('[data-omr="tuplet-frame"]').getAttribute("data-tuplet-mark"), "broken");
+    const heldSize = (await heldNotes()).size;
+    check("...over fewer than three notes", heldSize < 3, true);
+
+    await page.locator("#tuplet-remove").click();
+    await page.waitForTimeout(300);
+    const afterClear = await save();
+    check("the ✕ clears a broken mark too", await drawnMarksNow(), markCountBefore - 1);
+    check("...without deleting a note", afterClear.events.length, beforeClear.events.length);
+    {
+      // Every member went back to ×3/2 of what it was, and nothing else in the score moved.
+      const changed = afterClear.events.filter((e) => {
+        const was = beforeClear.events.find((b) => b.index === e.index)!.durationBeats;
+        return was.num !== e.durationBeats.num || was.den !== e.durationBeats.den;
+      });
+      check("...changing exactly the mark's own notes", changed.length, heldSize);
+      const ok = changed.every((e) => {
+        const was = beforeClear.events.find((b) => b.index === e.index)!.durationBeats;
+        return was.num * 3 * e.durationBeats.den === e.durationBeats.num * was.den * 2;
+      });
+      check("...each by exactly ³⁄₂", ok, true);
+    }
+    await page.locator("#undo").click();
+    await page.waitForTimeout(300);
+    check("one undo brings the broken mark back", JSON.stringify(await save()) === JSON.stringify(beforeClear), true);
+
+    // THE REPAIR. Hold a broken mark that can be completed, and drag the handle onto the note the
+    // page marks as the fix — `data-tuplet-fix` is on exactly the landings whose move CLOSES the
+    // group, so the check drags where the UI points rather than at a hardcoded note.
+    let repaired = false;
+    for (const b of broken) {
+      const hit = page.locator(`[data-omr="tuplet-mark-hit"][data-tuplet-group="${b}"]`);
+      if ((await hit.count()) === 0) continue;
+      await hit.scrollIntoViewIfNeeded();
+      await hit.click();
+      await page.waitForTimeout(250);
+      const fix = await page.locator("[data-tuplet-fix]").evaluateAll((els) =>
+        els.map((e) => ({
+          idx: Number(e.getAttribute("data-omr-note")),
+          edge: e.getAttribute("data-tuplet-landing")!,
+        })),
+      );
+      if (fix.length === 0) continue;
+      const target = fix[0]!;
+      const edge = target.edge === "both" ? "end" : target.edge;
+      const handle = page.locator(`[data-omr="tuplet-handle"][data-edge="${edge}"]`);
+      const hb = (await handle.boundingBox())!;
+      const tb = (await page.locator(`[data-omr-note="${target.idx}"]`).first().boundingBox())!;
+      await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(tb.x + tb.width / 2, hb.y + hb.height / 2, { steps: 12 });
+      await page.mouse.up();
+      await page.waitForTimeout(350);
+      const held = await surface.getAttribute("data-tuplet-selected");
+      check("dragging onto the marked note completes a broken triplet",
+        await page.locator(`[data-omr="tuplet-mark-hit"][data-tuplet-group="${held}"]`).getAttribute("data-tuplet-mark"),
+        "closed");
+      check("...and it now covers three notes", (await heldNotes()).size, 3);
+      repaired = true;
+      break;
+    }
+    check("a broken mark was repairable on this page", repaired, true);
+  }
+
+  // Back to the score the rest of the file works on.
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#app[data-ready]", { timeout: 20000 });
+  await page.locator("#edit-toggle").click();
+  await page.waitForTimeout(300);
 
   // --- the invalid-bar indicator (step 8) --------------------------------------------------------
   //

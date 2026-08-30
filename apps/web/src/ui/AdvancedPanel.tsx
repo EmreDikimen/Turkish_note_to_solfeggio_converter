@@ -41,6 +41,9 @@ export function AdvancedPanel({
   onLyricHyphens,
   showRepeats,
   onShowRepeats,
+  canWriteOut,
+  writeOut,
+  onWriteOut,
   sheetView,
   strips,
   selectedStripId,
@@ -62,6 +65,11 @@ export function AdvancedPanel({
   onLyricHyphens: (v: boolean) => void;
   showRepeats: boolean;
   onShowRepeats: (v: boolean) => void;
+  /** True when the loaded score carries repeat/navigation signs of its own (a decoded page). */
+  canWriteOut: boolean;
+  /** Draw the performance long instead of the written score — view only, see App. */
+  writeOut: boolean;
+  onWriteOut: (v: boolean) => void;
   /** The strip exporter's preview only makes sense while the sheet is engraved. */
   sheetView: boolean;
   strips: ExportStrip[];
@@ -146,6 +154,20 @@ export function AdvancedPanel({
             />
             <span>{TR.advanced.repeats}</span>
           </label>
+
+          {/* Only a decoded page has repeat signs of its own to fold, so the box appears only when
+              there is something to write out — a dead control says the app cannot do it. */}
+          {canWriteOut && (
+            <label className="kv-field" title={TR.advanced.writeOutTitle}>
+              <input
+                id="write-out"
+                type="checkbox"
+                checked={writeOut}
+                onChange={(e) => onWriteOut(e.target.checked)}
+              />
+              <span>{TR.advanced.writeOut}</span>
+            </label>
+          )}
         </div>
 
         <DecodePanel decode={rawDecode} />

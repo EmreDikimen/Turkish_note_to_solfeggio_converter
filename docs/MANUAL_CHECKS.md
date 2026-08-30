@@ -214,7 +214,7 @@ describe a different piece than the one on the screen.
 
 
 
-## Check 23 — the repeat is a SIGN, and the cursor goes back with it (2026-08-30)
+## Check 23 — the repeat is a SIGN, the cursor goes back with it, and the teslim returns (2026-08-30)
 
 The point of this one is to see the two halves agree: the page is short, the music is long.
 
@@ -233,11 +233,18 @@ The point of this one is to see the two halves agree: the page is short, the mus
    reaches the `:‖` it must **jump back to the `‖:`** and play the passage again — and the sound must
    agree with it. ⚠ This is the whole claim; a cursor that runs on past the `:‖` while the music
    repeats (or the other way round) is the bug to report.
-5. Open **Gelişmiş** and tick **Tekrarları açık yaz**. The score is written out long again, with no
+5. **The 𝄋 → 𝄋 return** (2026-08-30). On a page with **two or more 𝄋** — a saz semâî prints one at
+   the head of the teslim and one at the end of each later hâne — the section under the first 𝄋 must
+   be played again at every later one, and the music must then carry on where it jumped from. Read it
+   in the console: `__omrStructure.bars.filter(b => b.segno)` gives the marked bars (`segnoAt` says
+   which edge each is drawn on), and the section's bar numbers should appear in `playBars` once per
+   later 𝄋, in between the hâne's bars. ⚠ If the page carries no "Son" and no `:‖` after the first 𝄋,
+   nothing happens on purpose — the app will not guess where the section ends.
+6. Open **Gelişmiş** and tick **Tekrarları açık yaz**. The score is written out long again, with no
    signs — the old behaviour, kept for comparison. ⚠ **Düzenle closes when you tick it**, on purpose:
    in that view every repeated bar is a copy, and an edit aimed at a copy would land on the wrong
    note. Untick it (or press Düzenle) to fold back.
-6. Headless and asserted, over a real page: `npm run smoke:app` — the last two lines say whether the
+7. Headless and asserted, over a real page: `npm run smoke:app` — the last two lines say whether the
    sheet is shorter than the performance and whether the playhead went back. The claim that folding
    never changes the SOUND is `npm run check:fold` (1,720 pages, expect 0 changed).
 

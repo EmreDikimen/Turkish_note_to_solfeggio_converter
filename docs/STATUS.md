@@ -6,26 +6,28 @@ updated: 2026-08-30
 
 ## Now
 
+⭐ **THE SECOND 𝄋 NOW MEANS SOMETHING: THE TESLİM IS PLAYED AFTER EVERY HÂNE** (owner, reading a
+Muhayyerkürdî saz semâîsi). The first 𝄋 marks a section; **every later 𝄋 plays it again and comes
+back**, and the last has nothing after it, so the piece ends at "Son". Before this the sign did nothing
+without a "D.C." — **249 of the 258 pages carrying two or more 𝄋 carry none**. ⭐ Where the section ends
+must come from the page ("Son", else the first `:‖`); on **58** pages neither is there, so it is **not guessed**. ⚠ A 𝄋 read at a bar's RIGHT barline was filed onto the PREVIOUS bar, on **433 pages** — fixed with it. ✅ `npm test` · `typecheck` · `check:fold` (**0 changed**). [DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md) · [log/status-log.md](log/status-log.md).
+
 ⭐ **A TUPLET MARK IS NOW SOMETHING YOU CAN HOLD IN THE EDITOR** (owner). Click its drawn **3** — the
 sign, never its notes — for a frame, a **handle at each end** and a **✕** that removes the *bracket*,
-never the notes. ⭐ **The marks that most needed it are the BROKEN ones** — a bracket over one or two
-notes, i.e. the model's misread; `decoded.json` has **five against two real triplets**. A real triplet
-**slides** (three members always); a broken one is **repaired** — completed or cleared, never made
-merely broader — is flagged red, and its completing landing is marked. ⛔ **No handle widens a real
-triplet into a 4/5/7-tuplet**: that needs a derived digit **and new label tokens**; asked, **deferred**.
-✅ `npm test` + `smoke:editor` pass, the latter repairing a real broken mark on a decoded page. [DECISIONS.md](DECISIONS.md) · [mvp/editor-built.md](mvp/editor-built.md#step-7b--holding-a-triplet-select-slide-remove) · [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md).
+never the notes. ⭐ **The marks that most needed it are the BROKEN ones** (`decoded.json`: **five
+against two real triplets**): a real triplet **slides**, a broken one is **repaired** — completed or
+cleared, never made merely broader. ⛔ **No handle widens a real triplet into a 4/5/7-tuplet**: that
+needs a derived digit **and new label tokens**; asked, **deferred**. ✅ `npm test` + `smoke:editor`. [DECISIONS.md](DECISIONS.md) · [mvp/editor-built.md](mvp/editor-built.md#step-7b--holding-a-triplet-select-slide-remove) · [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md).
 
 ⭐ **THE APP NOW SHOWS A NORMAL NOTA KÂĞIDI: THE REPEAT IS A SIGN, NOT THE MUSIC WRITTEN TWICE**
 (owner, 2026-08-30). A decoded page is kept **as written** — `‖:` `:‖`, 1./2., 𝄋, ⊕, "D.C.", "Son"
-drawn where they were read — and the repeat is taken **when it plays**. ⭐ The playhead follows a
-**play plan** (one step per sounding event, each naming the written note drawn for it), so at a `:‖`
-the cursor walks back to the `‖:` by itself. ✅ `npm run check:fold`: **1,720 pages, 0 changed** by the fold; **68.2% fold**, the page is
-**28.7% shorter**. ⭐ Asking for the right thing found a live defect — *"2. dönüşte ilk volta
-çalmamalı"* — the second pass skipped only the bar CARRYING the "1.", so **37.9% of real first
-endings replayed their tail**. A first ending is now a RUN, skipped whole ([METRICS.md](METRICS.md)).
-⚠ **DECODED PAGES ONLY** (owner's choice); `Tekrarlar` still only draws on a SymbTr sample, and
-`Tekrarları açık yaz` (Gelişmiş) writes the performance out long, **view-only**, closing edit mode.
-[DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
+drawn where they were read — and every repeat and return is taken **when it plays**; the playhead
+follows a **play plan**, so at a `:‖` the cursor walks back to the `‖:` by itself. ✅ `check:fold`:
+**1,720 pages, 0 changed**, **68.2% fold**, the page **31.4% shorter**. ⭐ It also exposed a live
+defect — a first ending is a **RUN**, skipped whole (**37.9%** of real ones mis-played before).
+⚠ **DECODED PAGES ONLY** (owner's choice); `Tekrarları açık yaz` (Gelişmiş) writes the performance
+out long, **view-only**, closing edit mode, and `Tekrarlar` still only draws on a SymbTr sample.
+[DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md) · [log/status-log.md](log/status-log.md).
 
 ⭐ **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES — FOUND BY EYE, FIXED, MEASURED, AND SHIPPING
 OFF UNTIL YOU SAY OTHERWISE.** The owner opened the `examv3`-vs-frozen comparison sheets and saw
@@ -87,13 +89,11 @@ verdicts carry over. ⚠ **The exam queue is 455 of 663 verdicted** (398 fix / 3
 is per page, so a half-labelled page under-counts itself — finish page-complete.
 
 ✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — rule and numbers in
-[../CLAUDE.md](../CLAUDE.md); ⚠ real-val's arc-`\tup3` diagnostic now prints `n/a`, because that floor
-is read on the **exam**, which keeps its ties. [rung3/labeling.md](rung3/labeling.md).
+[../CLAUDE.md](../CLAUDE.md); ⚠ real-val's arc-`\tup3` diagnostic prints `n/a` (that floor is read on the **exam**, which keeps its ties). [rung3/labeling.md](rung3/labeling.md).
 
 ⭐ **THE ARMS ARE DONE AND THE FINAL RENDER IS SPECIFIED (2026-08-20).** Round 3's arm list closed —
-one dropped, one null, one **passed** — and the final render carries three flags:
-`--concave-tuplet`, `--staccato-noise` and a label-free dotted (usul) barline. What is left is
-**render → train → the exam, read once**. [DECISIONS.md](DECISIONS.md).
+one dropped, one null, one **passed** — and the final render carries `--concave-tuplet`,
+`--staccato-noise` and a label-free dotted (usul) barline. Left: **render → train → the exam, read once**. [DECISIONS.md](DECISIONS.md).
 
 ⭐ **THE TRAINING POOLS WERE RE-EMITTED ONTO THE CURRENT CROPS (2026-08-21) — `strips_b8`, 3,955
 accepted strips against 2,330, in 37 minutes on the laptop.** ✅ **Its 201-row audit is now read

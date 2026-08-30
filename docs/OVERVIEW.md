@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-20
+updated: 2026-08-30
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -78,6 +78,31 @@ problem than it solves. It was stopped by a rule written down before the test ra
 been believing turned out to be three times too pessimistic. Full account on that page.
 
 ## Where we are right now
+
+### The app now reads the page's road signs (30 August 2026)
+
+Sheet music does not write everything out. It uses **road signs** that say "go back and play that
+part again". The app used to ignore two of them.
+
+1. **The repeat sign** (`‖: … :‖`) means "play these bars twice". The app used to print those bars
+   **twice on the paper**. Now the paper looks like a normal printed score — the bars appear once,
+   with the sign — and the repeat is taken **when the music plays**.
+2. **The 𝄋 sign** (called *segno*) is the one you asked about. In a **saz semâîsi** the **teslim**
+   is written only once, and it is played after **every hâne**. The page says that with one glyph: a
+   𝄋 at the start of the teslim, and a 𝄋 at the end of each later hâne. The rule is: the **first**
+   𝄋 is only a bookmark; **every later** 𝄋 means "go back to the bookmark, play that section again,
+   then come back here and carry on". The last one has nothing left to come back to, so the piece
+   ends there — which is where the page prints "Son".
+
+Before this, the second 𝄋 did nothing at all unless the page also said "D.C.", and almost none of
+them do: of the **258** real pages that carry two or more 𝄋, **249** have no "D.C.". So the teslim
+was simply never played after the later hâne.
+
+⚠ **One thing the app cannot guess: where the section ENDS.** It looks for a "Son", and if there is
+none, for the first `:‖` after the 𝄋. If the page has neither, the app **does nothing** and writes a
+note saying why — on **58** of those 258 pages. Replaying a random stretch of music would be wrong;
+playing the page straight through is only incomplete.
+
 
 ### The cutting tool got three fixes, and then you froze it (26 August 2026)
 

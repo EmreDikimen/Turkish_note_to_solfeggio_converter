@@ -149,7 +149,9 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
 - `repeats.ts` — `detectRepeats` (fold detection of flattened duplicate runs) + `injectRepeats`
   (seeded random spans for token coverage) + `repeatMarksAt` (per-measure drawn marks).
 - `navmarks.ts` — seeded navigation-mark injection (segno / coda / D.C. / Son; 4–6 marks on ~70%
-  of renders, never stacked on repeat/volta measures — see `docs/PHASE2.md` §6).
+  of renders, never stacked on repeat/volta measures — see `docs/PHASE2.md` §6). ⚠ Every injected 𝄋
+  is drawn at a measure's **start**, and a real page's RETURNING 𝄋 sits at a bar's right barline —
+  a corpus gap, item 11 in `docs/BACKLOG.md`; the stitcher reads both edges (`segnoAt`).
 - `respell.ts` — seeded low-rate AEU-enharmonic respell (büyük coverage; only `noteName` changes,
   so pixels and labels stay consistent by construction).
 - `rhythm.ts` — triplet-group + tie-split detection from the exact `durationBeats` rationals

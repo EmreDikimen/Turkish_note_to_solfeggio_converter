@@ -121,27 +121,25 @@ a successful build is not a deploy. Both, and every other command, in
   unchanged). `_realval_v2` still expects ties in 24% of rows, which no longer decides anything:
   `eval_omr.py` drops `\tie` from **both** the gold and the decode. `strips_exam_v2*` keeps its ties on purpose — it is
   the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
-- **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS
-  REPAIRED** (owner, 2026-08-30). The engraved mark is the click target; its notes are
-  `pointer-events: none`. ⚠ **EVERY drawn mark is holdable, including one over a SINGLE note** —
-  `tupletGroupsIn` brackets runs that never sum plain (the model's misreads; `decoded.json` has five
-  against two real triplets), and those most need fixing. The ✕ clears any of them (each member
-  ×³⁄₂, notes kept); the handles **slide** a real triplet (always three members) but **repair** a
-  broken one — grabbed end moves, other stays, allowed only when the result CLOSES or has FEWER
-  members, so a broken mark can never be made merely broader. `tupletEdgeTo` owns both and
-  `drawnTupletAt` finds a mark where `closedTupletAt` cannot.
-  ⚠ **The target is measured off the mark's STROKES (`markBoxOf`), never off the wrapping group's
-  `getBBox()`** — a `<text>` reports its FONT's em box (a bracket's "3" measured 12 × 160 px) and
-  VexFlow leaves a zero-height `<rect>` at the SVG **origin**, so the group's box was a slab that
-  swallowed note clicks (the `GraceNoteGroup` failure `noteBoxOf` documents, same origin rule).
-  ⚠ The mark style is a per-piece hash and **all six bundled scores draw the arc**, so the
-  VexFlow-**bracket** branch has **no automated coverage** — verified by hand on a renamed score.
-  ⛔ **Do not "improve" a REAL triplet into a 4/5/7-note tuplet**: the digit is a hardcoded `"3"` and
-  the token is `\tup3`, so a wider group would draw AND label a rhythm nobody wrote. A real n-tuplet
-  needs a derived digit **and** new tokens (`\tup5` does not exist) — a corpus decision the owner
-  deferred. ⚠ `tupletEdgeTo` sits beside the code that DRAWS the bracket and ends in a **simulation
-  against `tupletGroupsIn`**, not a rule. Nothing is stored: a held mark is one event index.
-  [docs/mvp/editor-built.md](docs/mvp/editor-built.md) · [docs/DECISIONS.md](docs/DECISIONS.md).
+- **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS REPAIRED**
+  (owner, 2026-08-30). The engraved mark is the click target; its notes are `pointer-events: none`. ⚠ **EVERY
+  drawn mark is holdable, including one over a SINGLE note** — `tupletGroupsIn` brackets runs that never sum
+  plain (the model's misreads; `decoded.json` has five against two real triplets), and those most need fixing.
+  The ✕ clears any of them (each member ×³⁄₂, notes kept); the handles **slide** a real triplet (always three
+  members) but **repair** a broken one — grabbed end moves, other stays, allowed only when the result CLOSES or
+  has FEWER members, so a broken mark can never be made merely broader. `tupletEdgeTo` owns both and
+  `drawnTupletAt` finds a mark where `closedTupletAt` cannot. ⚠ **The target is measured off the mark's STROKES
+  (`markBoxOf`), never off the wrapping group's `getBBox()`** — a `<text>` reports its FONT's em box (a
+  bracket's "3" measured 12 × 160 px) and VexFlow leaves a zero-height `<rect>` at the SVG **origin**, so the
+  group's box was a slab that swallowed note clicks (the `GraceNoteGroup` failure `noteBoxOf` documents, same
+  origin rule). ⚠ The mark style is a per-piece hash and **all six bundled scores draw the arc**, so the
+  VexFlow-**bracket** branch has **no automated coverage** — verified by hand on a renamed score. ⛔ **Do not
+  "improve" a REAL triplet into a 4/5/7-note tuplet**: the digit is a hardcoded `"3"` and the token is `\tup3`,
+  so a wider group would draw AND label a rhythm nobody wrote. A real n-tuplet needs a derived digit **and** new
+  tokens (`\tup5` does not exist) — a corpus decision the owner deferred. ⚠ `tupletEdgeTo` sits beside the code
+  that DRAWS the bracket and ends in a **simulation against `tupletGroupsIn`**, not a rule. Nothing is stored: a
+  held mark is one event index. [docs/mvp/editor-built.md](docs/mvp/editor-built.md) ·
+  [docs/DECISIONS.md](docs/DECISIONS.md).
 - **A DECODE CACHE IS ONLY VALID FOR THE CV CODE THAT CUT ITS CROPS** (2026-08-25). `window_signature()`
   stores `GEOMETRY_REV` plus the geometry knobs; a `<page>_decode.json` without that field is
   REFUSED, because nothing in it says which slicer produced the crops it describes — and a 31 July
@@ -153,29 +151,25 @@ a successful build is not a deploy. Both, and every other command, in
   default: **the instrument is 6,440 rows**, every score quoted before 2026-08-25 evening is a
   124-row sample, and a full run reversed one call made on the sample.
   [docs/METRICS-SLICER-BARLINES.md](docs/METRICS-SLICER-BARLINES.md).
-- **A CHANGE THAT ADDS OR REMOVES A STAFF CANNOT BE PRICED BY THE ROW-LEVEL SCORERS AS THEY STAND**
-  (2026-08-25). Both pair a row to its cached truth **by system index**, so an inserted staff shifts
-  every later index and each row is scored against another row's answer — a large **false
-  regression**, not an error, which is the dangerous kind. ⚠ **`score_slicer.py` needs
-  `--pair-by-position`** for any such change; it re-pairs by vertical position and counts added rows
-  separately, because they **cannot be scored at all** — the truth is aligned from the OLD
-  pipeline's decodes, which never saw them. ⛔ **`score_barlines.py` has the same coupling and NO
-  fix**: its hand marks are keyed to detected rows, and across a staff change `bozukNihavendLonga`
-  read **30 marked before and 3 after**. Never quote it across a staff-detection change.
-  [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
-- **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF**
-  (2026-08-25). The horizontal opening's kernel is **one pixel tall**, so a staff line that wanders
-  across rows is **erased, not weakened**; a lost row is not a bad crop, it is **NO crop**, so no
-  accuracy metric has ever shown it. ⛔ **Do not "fix" this with a global knob** — dilating before
-  the opening takes one hand-ruled page 5 → 8 staves and takes `bozukNihavendLonga` **10 → 1**, and
-  scaling the dilation to the measured line spacing does not escape the trade; a horizontal CLOSE is
-  worse still, because it lifts `row_ink.max()` and so lifts the relative threshold. ✅ The shipped
-  shape is a **second pass** that re-detects only in the bands the page's own staff pitch says are
-  empty, so a page whose rows were all found cannot move. ⚠ Its **width** test is load-bearing:
-  without it the underlined-lyrics block at the foot of a page is rescued as a staff. Full scale:
-  all **6,440** scored rows identical, **+320 rows on 227 of 1,592 pages**; `parity:slicer` passes
-  with the flag ON. ⚠ **`STAFF_RESCUE` must move together in Python and `constants.ts`** or the app
-  cuts differently from the training data, and turning it on bumps `GEOMETRY_REV`.
+- **A CHANGE THAT ADDS OR REMOVES A STAFF CANNOT BE PRICED BY THE ROW-LEVEL SCORERS AS THEY STAND** (2026-08-25). Both
+  pair a row to its cached truth **by system index**, so an inserted staff shifts every later index and each row is
+  scored against another row's answer — a large **false regression**, not an error, which is the dangerous kind. ⚠
+  **`score_slicer.py` needs `--pair-by-position`** for any such change; it re-pairs by vertical position and counts
+  added rows separately, because they **cannot be scored at all** — the truth is aligned from the OLD pipeline's
+  decodes, which never saw them. ⛔ **`score_barlines.py` has the same coupling and NO fix**: its hand marks are keyed
+  to detected rows, and across a staff change `bozukNihavendLonga` read **30 marked before and 3 after**. Never quote
+  it across a staff-detection change. [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
+- **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF** (2026-08-25). The
+  horizontal opening's kernel is **one pixel tall**, so a staff line that wanders across rows is **erased, not
+  weakened**; a lost row is not a bad crop, it is **NO crop**, so no accuracy metric has ever shown it. ⛔ **Do not
+  "fix" this with a global knob** — dilating before the opening takes one hand-ruled page 5 → 8 staves and takes
+  `bozukNihavendLonga` **10 → 1**, and scaling the dilation to the measured line spacing does not escape the trade; a
+  horizontal CLOSE is worse still, because it lifts `row_ink.max()` and so lifts the relative threshold. ✅ The shipped
+  shape is a **second pass** that re-detects only in the bands the page's own staff pitch says are empty, so a page
+  whose rows were all found cannot move. ⚠ Its **width** test is load-bearing: without it the underlined-lyrics block
+  at the foot of a page is rescued as a staff. Full scale: all **6,440** scored rows identical, **+320 rows on 227 of
+  1,592 pages**; `parity:slicer` passes with the flag ON. ⚠ **`STAFF_RESCUE` must move together in Python and
+  `constants.ts`** or the app cuts differently from the training data, and turning it on bumps `GEOMETRY_REV`.
   [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
 - **THE APP HAS NO LABEL-BUDGET RAIL, AND ON DENSE PAGES THAT MEANS SILENTLY WRONG NOTES.** The
   browser slicer packs by measures and width only; at inference an over-budget strip cannot be
@@ -185,28 +179,34 @@ a successful build is not a deploy. Both, and every other command, in
   and there is **no gold accuracy measurement**; do not quote it as a result. Delete it by removing
   the marked block in `apps/web/src/omr/slicer/windows.ts`, the `tokenBudget` option and the
   `?dense=` read in `App.tsx`. [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
-- **THE APP KEEPS THE PAGE AS WRITTEN, AND THE REPEAT IS TAKEN WHEN IT PLAYS** (owner, 2026-08-30).
-  A decoded page is stitched with **`expand: false`**, so `‖: … :‖`, the 1./2. brackets and
-  𝄋 / ⊕ / "D.C." / "Son" stay as SIGNS and the repeated bars are drawn **once**. The performance is
-  derived: `stitch.ts` returns `structure` (`bars` + `playBars`), core's **`unfoldDoc`** expands it,
-  and `buildTimeline` runs on that — so everything on the audio side still receives a plain flat
-  document. ⚠ **Never make the app expand again** to "fix" something downstream; the fix is to unfold
-  at that point instead. ⚠ **`buildTimeline` must never be given the WRITTEN doc** when a structure
-  exists — it would play the repeat once and the cursor would still be right, which is the silent
-  version of this bug. ⚠ The playhead follows a **play plan** (`PlayStep[]`: one step per sounding
-  event, naming the WRITTEN note drawn for it) and SheetView indexes its drawn positions **by event
-  index**; a change that breaks that link desynchronises picture from sound without failing anything.
-  ⚠ **A FIRST ENDING IS A RUN, NOT ONE BAR** (owner, 2026-08-30): it goes from the "1." to the `:‖`
-  and the second pass skips **all** of it, capped at `MAX_FIRST_ENDING = 4` bars because a "1." far
-  from its `:‖` is a stray token, and obeying one would delete real music. It is resolved **once**,
-  in `expandRepeats` → `ScoreStructure.firstEndings`; the drawn "1." reads that answer rather than
-  re-deriving it, or the ink and the music drift apart (they did — 37.9% of real first endings).
-  ⚠ **DECODED PAGES ONLY** — a SymbTr sample is flat in the data, so folding one means guessing from
-  duplicate bars; `Tekrarlar` still only DRAWS there, and the renderer path (`?repseed=`/`?navseed=`)
-  is untouched, so the training corpus is byte-identical. ⚠ `Tekrarları açık yaz` is **view-only and
-  closes edit mode** (every repeated bar there is a copy). The safety claim is `npm run check:fold`:
-  unfolding reproduces the old flattened document over **1,720 pages, 0 changed**.
-  [docs/DECISIONS.md](docs/DECISIONS.md) · [docs/METRICS.md](docs/METRICS.md).
+- **THE APP KEEPS THE PAGE AS WRITTEN, AND THE REPEAT IS TAKEN WHEN IT PLAYS** (owner, 2026-08-30). A decoded
+  page is stitched with **`expand: false`**, so `‖: … :‖`, the 1./2. brackets and 𝄋 / ⊕ / "D.C." / "Son" stay as
+  SIGNS and repeated bars are drawn **once**. The performance is derived: `stitch.ts` returns `structure`
+  (`bars` + `playBars`), core's **`unfoldDoc`** expands it, `buildTimeline` runs on that — the audio side still
+  gets a plain flat document. ⚠ **Never make the app expand again** to "fix" something downstream; unfold at
+  that point instead. ⚠ **`buildTimeline` must never be given the WRITTEN doc** when a structure exists — it
+  would play the repeat once with the cursor still right, the silent version of this bug. ⚠ The playhead follows
+  a **play plan** (`PlayStep[]`: one step per sounding event, naming the WRITTEN note drawn for it) and SheetView
+  indexes drawn positions **by event index**; breaking that link desynchronises picture from sound silently.
+  ⭐ **THE FIRST 𝄋 MARKS A SECTION; EVERY LATER 𝄋 PLAYS IT AGAIN AND COMES BACK** (owner, 2026-08-30) — a saz
+  semâîsi writes its **teslim once** and plays it after every **hâne**, so the first sign is a place-marker and
+  each later one is a jump that **returns**; the last has nothing after it, so the piece ends at "Son".
+  `expandSegnoJumps` owns it, and it needs no "D.C." (249 of the 258 multi-𝄋 pages have none). ⚠ **Where the
+  section ends must come from the page**: a "Son", else the first `:‖` after the 𝄋 (plus a first ending's "2."
+  bar); with neither, **nothing happens and a warning is written** — guessing an end replays arbitrary music,
+  playing straight through is only incomplete. ⚠ The section is replayed **with its own repeat, every time**
+  (owner's choice over the Western D.S. convention), by running the SAME `expandRepeats` over its bars. ⚠ **A
+  jump fires at the END of its bar** whichever edge the glyph was read on, and a 𝄋 lands on the bar it is DRAWN
+  on (`segnoAt`) — it used to be filed onto the previous bar, on 433 pages. ⚠ **A FIRST ENDING IS A RUN, NOT ONE
+  BAR**: from the "1." to the `:‖`, skipped whole, capped at `MAX_FIRST_ENDING = 4` bars because a far "1." is a
+  stray token and obeying one would delete real music. Resolved **once**, in `expandRepeats` →
+  `ScoreStructure.firstEndings`; the drawn "1." reads that answer or the ink and the music drift apart (they did
+  — 37.9% of real first endings). ⚠ **DECODED PAGES ONLY** — a SymbTr sample is flat in the data, so folding one
+  means guessing from duplicate bars; `Tekrarlar` still only DRAWS there and the renderer path
+  (`?repseed=`/`?navseed=`) is untouched, so the training corpus is byte-identical. ⚠ `Tekrarları açık yaz` is
+  **view-only and closes edit mode**. Safety claim: `npm run check:fold` — unfolding reproduces the old
+  flattened document over **1,720 pages, 0 changed**. [docs/DECISIONS.md](docs/DECISIONS.md) ·
+  [docs/METRICS.md](docs/METRICS.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,

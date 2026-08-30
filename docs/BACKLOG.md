@@ -230,6 +230,17 @@ starting. Abandoned plans are a different thing again and live in
    first: neyzen and notaarsivleri are recorded **all rights reserved / read locally, never
    redistribute** ([THIRD-PARTY.md](THIRD-PARTY.md)), and TRT is a state broadcaster — its own read.
 
+11. **NEW 2026-08-30 — THE SYNTHETIC CORPUS HAS NEVER DRAWN A 𝄋 AT A BAR'S END, AND 433 REAL PAGES
+   CARRY ONE.** `navmarks.ts` places every injected segno at a measure's **start** (`at: "start"`),
+   because that is where the jump TARGET is printed. The returning sign of a hâne is printed at the
+   bar's **right barline**, and the model reads those anyway — **433 of 1,720 decoded pages** carry a
+   𝄋 the stitcher now files as an end-edge mark ([METRICS.md](METRICS.md)). So the ink the 𝄋 → 𝄋 rule
+   depends on is read out of distribution. ⏭ Cheap: let `injectNavMarks` place a segno at either edge
+   (the coda pair already does), which costs one line and one re-emit; the label is unchanged, so
+   nothing about the token vocabulary moves. ⚠ **Not for this round's pools** — it changes a share of
+   every rendered piece, which is exactly the `--print-noise` failure mode, and Round 3's render is
+   already specified.
+
 ### ⏭ `carry_labels()` should carry a verdict when the crop is BYTE-IDENTICAL (owner, 2026-08-26)
 
 It offers every prior label as a pending **suggestion**, never a verdict, without asking whether the

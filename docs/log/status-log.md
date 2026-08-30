@@ -7,7 +7,51 @@ updated: 2026-08-30
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-30 (latest) — a tuplet mark becomes something you can hold, and the broken ones most of all
+## 2026-08-30 (latest) — the second segno stops being decoration: the teslim is played after every hâne
+
+The owner put a Muhayyerkürdî saz semâîsi on the table and read the page out loud: four **hâne**s
+and one **teslim**, a 𝄋 at the head of the teslim and another 𝄋 at the end of every hâne. His
+reading — *"segno işareti ilk görüldüğünde işaret atıyor, sonraki segnolar ilk segnonun olduğu yere
+gidiyor ve orayı yeniden çalıyor, ardından geri eski yerine dönüyor"* — is exactly the convention,
+and the app was not obeying it.
+
+**What the app did before.** The 𝄋 was only ever the TARGET of a "D.C.": with no `\dc` on the page,
+a second 𝄋 changed nothing at all. On real decodes that is nearly every case — **258 of 1,720 pages
+carry two or more 𝄋, and 249 of those carry no `\dc`** ([../METRICS.md](../METRICS.md)). So the
+teslim was simply not played after the later hânes, and the app ran the page top to bottom.
+
+**What it does now** (`expandSegnoJumps` in `tools/render/stitch.ts`): the first 𝄋 opens a section,
+every later 𝄋 plays that section again and comes back to where it jumped from. The last jump has
+nothing after it, so the piece ends there — which is where the page prints "Son". One rule covers
+the şarkı form too (𝄋 at the nakarat, 𝄋 at the end of the meyan, back, stop).
+
+**The one thing the page has to say is where the section ENDS**, and it is read in that order: a
+"Son", else the first `:‖` after the 𝄋 (plus the "2." bar of a first ending). If neither is there
+the jump is **not guessed** — nothing happens and a warning is written, on **58** of those 258
+pages. The asymmetry is the argument, as with `MAX_FIRST_ENDING`: replaying an arbitrary stretch of
+music is wrong, playing the page straight through is merely incomplete.
+
+**One question was worth asking rather than assuming.** The Western convention drops repeat signs on
+a D.S. return; these pages wrap the teslim in `‖: … :‖`. The owner chose **"her seferinde iki
+kere"** — the section is replayed with its own repeat, every visit. It is implemented by running the
+SAME `expandRepeats` over the section's bars, so nothing decides twice what a repeat means.
+
+**Looking at the ink found a second bug.** A 𝄋 read at a bar's RIGHT barline — which is where a
+hâne's returning sign is printed — was filed onto the PREVIOUS bar, because the parser treated the
+glyph as a start-edge mark only. **433 pages carry such a 𝄋**, and on each the jump would have
+fired one bar early, cutting the hâne's last bar off. The mark now lands on the bar it is drawn on,
+carries which edge it was read at (`segnoAt`), and the sheet draws it there instead of always at a
+bar's head. A jump still fires at the END of its bar whichever edge it came from: an extra bar heard
+twice is recoverable, a deleted one is not. The synthetic corpus, incidentally, has **never drawn a
+𝄋 at a bar's end** (`navmarks.ts` only places them at a bar's head) — the model reads them anyway,
+but that is a corpus gap worth closing when the training pools are next re-emitted.
+
+**Checks.** `npm test` (10 new stitcher cases, including the full four-hâne miniature and the "no
+section end → do nothing" case), `npm run typecheck`, and `npm run check:fold` — still **1,720
+pages, 0 changed**, with the corpus's played bars going **62,369 → 64,859 (+4.0%)**, which is the
+teslim finally being played.
+
+## 2026-08-30 — a tuplet mark becomes something you can hold, and the broken ones most of all
 
 The owner asked for one thing in the editor: *"tupletlere tıklayarak onları seçebilmemi, solundan ve
 sağından tutarak genişletebilmemi veya daraltabilmemi, aynı zamanda silebilmemi sağlayan bir mantık

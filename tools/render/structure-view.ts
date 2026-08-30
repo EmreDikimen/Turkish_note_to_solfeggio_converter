@@ -68,12 +68,17 @@ export function repeatSpansFromStructure(structure: ScoreStructure, lastBar: num
 }
 
 /** Navigation marks for the sheet, from the per-bar flags. Edges match the injection convention
- *  (navmarks.ts): 𝄋 and the coda DESTINATION open a bar, "D.C." / "Son" and the coda JUMP POINT
- *  close one — which is where a printed page puts them. */
+ *  (navmarks.ts): the coda DESTINATION opens a bar, "D.C." / "Son" and the coda JUMP POINT close
+ *  one — which is where a printed page puts them.
+ *
+ *  ⚠ The 𝄋 is the exception: it is drawn on the edge it was READ on (`segnoAt`), because both
+ *  edges carry meaning on these pages — the first 𝄋 opens the section at a bar's head, and a
+ *  returning one sits at a hâne's last barline. Drawing every 𝄋 at a bar's start would put the
+ *  hâne's sign one bar-width away from the barline the player jumps at. */
 export function navMarksFromStructure(structure: ScoreStructure): NavMark[] {
   const marks: NavMark[] = [];
   for (const b of structure.bars) {
-    if (b.segno) marks.push({ type: "segno", measure: b.bar, at: "start" });
+    if (b.segno) marks.push({ type: "segno", measure: b.bar, at: b.segnoAt ?? "start" });
     if (b.codaOrder != null) marks.push({ type: "coda", measure: b.bar, at: b.codaOrder === 0 ? "end" : "start" });
     if (b.dc) marks.push({ type: "dc", measure: b.bar, at: "end" });
     if (b.fine) marks.push({ type: "fine", measure: b.bar, at: "end" });

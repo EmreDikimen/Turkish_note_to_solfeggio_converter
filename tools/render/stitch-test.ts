@@ -48,7 +48,7 @@ import {
 import { tupletGroupsIn, tieSplitBeats } from "./rhythm";
 import { repeatMarksAt } from "./repeats";
 import { stitchTokenRows } from "./stitch";
-import { repeatSpansFromStructure } from "./structure-view";
+import { navMarksFromStructure, repeatSpansFromStructure } from "./structure-view";
 
 let failures = 0;
 
@@ -189,6 +189,67 @@ console.log("structure unit tests:");
     "structure: a segno is where the D.S. pass restarts",
     playOf(["c''4 | \\segno d''4 | e''4 \\dc"]),
     "1-2-3-2-3",
+  );
+
+  // --- 𝄋 → 𝄋: the teslim is written once and played after every hâne (owner, 2026-08-30) -------
+  //
+  // A saz semâîsi prints the teslim ONCE, with a 𝄋 at its head and another at the end of each
+  // later hâne. The first sign marks the section; every later one plays it again and comes back.
+  // Miniature of the whole form: hâne1 | 𝄋 ‖: teslim :‖ | hâne2 𝄋 | hâne3 𝄋.
+  {
+    const semai = ["a''4 | \\segno \\repstart b''4 \\repend c''4 \\segno | d''4 \\segno"];
+    const res = stitchTokenRows(semai, { expand: false });
+    check(
+      "a 𝄋 at a bar's END belongs to that bar, not the one before it",
+      marksOf(semai),
+      "2:segno,segnoAt=start,repStart,repEnd 3:segno,segnoAt=end 4:segno,segnoAt=end",
+    );
+    check(
+      "every later 𝄋 replays the section and comes back",
+      playOf(semai),
+      "1-2-2-3-2-2-4-2-2", // hâne1 · teslim×2 · hâne2 · teslim×2 · hâne3 · teslim×2
+    );
+    check("…and no warning is needed to do it", String(res.warnings.length), "0");
+    check(
+      "…the section is replayed WITH its own repeat (owner: her seferinde iki kere)",
+      playOf(["a''4 | \\segno \\repstart b''4 \\repend c''4 \\segno"]).split("-").filter((b) => b === "2").length.toString(),
+      "4", // twice in reading order, twice again on the return
+    );
+    check(
+      "…and the returning 𝄋 is DRAWN at the barline it is read at",
+      navMarksFromStructure(res.structure)
+        .filter((m) => m.type === "segno")
+        .map((m) => `${m.measure}:${m.at}`)
+        .join(" "),
+      "2:start 3:end 4:end",
+    );
+  }
+  check(
+    'a "Son" ends the section where the page says, even with a :‖ further on',
+    playOf(["a''4 | \\segno b''4 \\fine | \\repstart c''4 \\repend d''4 \\segno"]),
+    "1-2-3-3-4-2", // the return plays bar 2 only — the teslim ends at Son
+  );
+  check(
+    "the şarkı shape: one jump, nothing after it, so the piece ends on the nakarat",
+    playOf(["a''4 | \\segno \\repstart b''4 \\repend c''4 \\segno"]),
+    "1-2-2-3-2-2",
+  );
+  {
+    // ⚠ Nothing says where the section ends → the jump is NOT guessed. Playing the page straight
+    // through is incomplete; replaying an arbitrary stretch of music is wrong.
+    const blind = ["a''4 | \\segno b''4 | c''4 \\segno"];
+    const res = stitchTokenRows(blind, { expand: false });
+    check("no Son and no :‖ → the 𝄋 jumps are ignored", playOf(blind), "1-2-3");
+    check(
+      "…and it says why",
+      String(res.warnings.some((w) => w.includes("says where the section ends"))),
+      "true",
+    );
+  }
+  check(
+    "a 𝄋 inside the section is the anchor's own glyph read twice — not a jump",
+    playOf(["\\segno \\repstart a''4 \\segno \\repend b''4"]),
+    "1-1-2",
   );
 
   // --- the first ending is a RUN (owner, 2026-08-30) ------------------------------------------

@@ -253,7 +253,8 @@ export const TR = {
     title: "Modelin ham çıktısı",
     subtitle:
       "Son okunan sayfanın her şeridi için modelin ürettiği bütün jetonlar — birleştirmeden ve " +
-      "düzenlemeden önce. Portede göremediğiniz bir şey burada görünür.",
+      "düzenlemeden önce. Portede göremediğiniz bir şey burada görünür. Notalar do–re–mi olarak " +
+      "yazılır (do''4 = c''4); indirilen JSON harflerle kalır — ham hâli için jetonun üstüne gelin.",
     empty: "Henüz bir sayfa okunmadı. Bir görsel yükleyin, sonra buraya bakın.",
     summary: (strips: number, tokens: number, where: string) =>
       `${strips} şerit · ${tokens} jeton · ${where}`,

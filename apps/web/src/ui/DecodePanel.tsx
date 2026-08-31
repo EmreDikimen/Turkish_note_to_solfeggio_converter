@@ -14,13 +14,17 @@
  * never produced one is flagged as `hitCap` instead, which is the fact worth reading.
  *
  * Token strings come from the model's own `id2token` (`getMeta`, ~12 KB, already fetched by every
- * decode path), so they are the vocabulary's spelling — `\komaFlat`, `c`, `'`, `8</w>` — not a
- * prettified version of it.
+ * decode path), so they are the vocabulary's spelling — `\komaFlat`, `'`, `8</w>` — with ONE
+ * substitution: a pitch letter is shown as its note name (`c` → `do`, `b</w>` → `si</w>`), the way
+ * `review_ui.py` shows the labelling queues (owner request, 2026-08-30). The raw letter is still
+ * one hover away (`title` on every token and on the line), and the JSON download is untouched —
+ * that file is data, and its alphabet is the one the model was trained on.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import type { DecodedStripResult } from "../omr/pipeline";
 import { getMeta } from "../omr/session";
+import { toSolfegeLabel, toSolfegeVocabToken } from "../omr/solfege";
 import { TR } from "./strings";
 
 /** The last page read, kept by App purely for this panel. */
@@ -171,19 +175,30 @@ export function DecodePanel({ decode }: { decode: RawDecode | null }) {
 
               <div>
                 <span className="kv-strips__label">{TR.decode.text} </span>
-                <code className="kv-decode__line">{sel.tokens}</code>
+                <code className="kv-decode__line" title={sel.tokens}>
+                  {toSolfegeLabel(sel.tokens)}
+                </code>
               </div>
 
               <div className="kv-strips__label" style={{ marginTop: "var(--space-2)" }}>
                 {TR.decode.tokenList}
               </div>
               <ol className="kv-decode__tokens" data-token-count={sel.ids.length}>
-                {sel.ids.map((id, i) => (
-                  <li key={i} className="kv-decode__token" data-conf={bucket(sel.logprobs[i] ?? 0)}>
-                    <span className="kv-decode__tok">{id2token?.[String(id)] ?? `#${id}`}</span>
-                    <span className="kv-decode__lp">{fmt(sel.logprobs[i] ?? 0)}</span>
-                  </li>
-                ))}
+                {sel.ids.map((id, i) => {
+                  const raw = id2token?.[String(id)] ?? `#${id}`;
+                  return (
+                    <li
+                      key={i}
+                      className="kv-decode__token"
+                      data-conf={bucket(sel.logprobs[i] ?? 0)}
+                      data-tok={raw}
+                      title={raw}
+                    >
+                      <span className="kv-decode__tok">{toSolfegeVocabToken(raw)}</span>
+                      <span className="kv-decode__lp">{fmt(sel.logprobs[i] ?? 0)}</span>
+                    </li>
+                  );
+                })}
               </ol>
             </>
           ) : (

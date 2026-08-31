@@ -16,43 +16,8 @@ import { setStaffRescue, setVplaceTopClaim } from "../omr/slicer/constants";
 import { decodeStrips, type StripInput } from "../omr/pipeline";
 import { getModel } from "../omr/session";
 import type { Strip } from "../omr/slicer/slicer";
-
-/**
- * LilyPond note letter → the solfège syllable the rest of the app uses (`packages/core`'s
- * `spellNote`). Lower-case here because a decoded token is lower-case: `b'16` reads as `si'16`.
- */
-const LETTER_TO_SOLFEGE: Record<string, string> = {
-  c: "do",
-  d: "re",
-  e: "mi",
-  f: "fa",
-  g: "sol",
-  a: "la",
-  b: "si",
-};
-
-/** A note token: letter, octave marks, an OPTIONAL duration, dots. `\d*` is what lets a bare
- *  signature letter (`\sig \bakiyeFlat b`) be renamed too — it carries no duration. */
-const NOTE_TOKEN = /^([a-g])([',]*)(\d*)(\.*)$/;
-
-/**
- * Rewrite one decoded token with its note name, leaving everything else exactly as the model
- * emitted it: `b'16` → `si'16`, `\komaSharp` → `\komaSharp`, `r4` → `r4`.
- *
- * Rests are deliberately NOT renamed. The note model calls a rest "Es", but `r` is unambiguous in
- * the token stream and inventing a second spelling for it would make the two harder to compare.
- */
-export function toSolfegeToken(tok: string): string {
-  const m = NOTE_TOKEN.exec(tok);
-  if (!m) return tok;
-  const [, letter, octave, dur, dots] = m;
-  return `${LETTER_TO_SOLFEGE[letter!] ?? letter}${octave}${dur}${dots}`;
-}
-
-/** The whole label, token by token. Whitespace is normalized to single spaces. */
-export function toSolfegeLabel(tokens: string): string {
-  return tokens.trim().split(/\s+/).filter(Boolean).map(toSolfegeToken).join(" ");
-}
+// Note names are shared with the raw decode panel — one definition, see omr/solfege.ts.
+import { toSolfegeToken } from "../omr/solfege";
 
 interface StripItem {
   name: string;

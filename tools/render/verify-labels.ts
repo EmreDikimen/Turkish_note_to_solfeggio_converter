@@ -21,6 +21,8 @@
  *
  * Prereq: the harness dev server running (`npm run dev:web`).
  * Run:    npx tsx tools/render/verify-labels.ts --strips data/synthetic/strips_v4 --thin-sharps
+ *         [--staccato-noise] [--concave-tuplet] [--usul-barline] — pass EVERY flag the corpus was
+ *         rendered with, or the verifier checks a different picture than the one that ships.
  *             [--limit 20]      verify only the first N jobs (smoke)
  *             [--every 1]       verify every Nth job (sampling for a quick pass)
  *             [--out report.json]
@@ -51,6 +53,14 @@ const staccatoSeed = (piece: string) => hashStr(`${piece}:verify:staccato`);
 // no accidental, so this file passes with or without it — it is carried so the verifier looks at the
 // same picture the corpus ships, which is the whole point of running it against an arm.
 const CONCAVE_TUPLET = has("concave-tuplet");
+// Round-3 dotted (usul) barlines. Same class as the staccato dots: label-free ink, NOT a manifest
+// field, so it is reseeded per piece rather than replayed. It draws inside the bar and never at a
+// strip boundary, so this file passes with or without it — it is carried so the verifier looks at
+// the picture the corpus actually ships. ⚠ It must be passed whenever the corpus was rendered with
+// `--usul-barline`, for the same reason `--staccato-noise` must be: a gate run on a different
+// image is not this corpus's gate.
+const USUL_BARLINE = has("usul-barline");
+const usulBarSeed = (piece: string) => hashStr(`${piece}:verify:usulbar`);
 // Round-3 Lever 1: the strip-packing measure rail the corpus was rendered at. This one MUST be
 // replayed rather than reseeded, because unlike the staccato dots it changes the strip BOUNDARIES —
 // the manifest's `m<from>-<to>` ids are what this file looks strips up by, so replaying a narrow arm
@@ -105,6 +115,7 @@ function jobUrl(r: Row): string {
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (STACCATO_NOISE) q.set("staccatoseed", String(staccatoSeed(r.piece)));
   if (CONCAVE_TUPLET) q.set("concavetuplet", "1");
+  if (USUL_BARLINE) q.set("usulbarseed", String(usulBarSeed(r.piece)));
   if (MAX_MEASURES != null) q.set("maxmeasures", String(MAX_MEASURES));
   return `${URL}/?${q}`;
 }
@@ -190,6 +201,7 @@ async function openJob(page: Page, r: Row): Promise<void> {
         c.repseed === want.repseed && c.navseed === want.navseed &&
         c.textseed === want.textseed && c.respellseed === want.respellseed && c.slurseed === want.slurseed &&
         c.staccatoseed === want.staccatoseed &&
+        c.usulbarseed === want.usulbarseed &&
         // The rail that decides the strip boundaries this file matches ids against — so a
         // mismatched replay fails loudly here instead of as 100% "strip not published".
         c.maxmeasures === want.maxmeasures
@@ -200,6 +212,7 @@ async function openJob(page: Page, r: Row): Promise<void> {
       sig: r.sig, repseed: r.repseed, navseed: r.navseed, textseed: r.textseed,
       respellseed: r.respellseed, slurseed: r.slurseed,
       staccatoseed: STACCATO_NOISE ? staccatoSeed(r.piece) : null,
+      usulbarseed: USUL_BARLINE ? usulBarSeed(r.piece) : null,
       maxmeasures: MAX_MEASURES,
     },
     { timeout: 30000 },
@@ -220,7 +233,8 @@ async function main() {
   // Name EVERY arm flag, not just one: the whole failure mode this gate exists inside is checking a
   // different picture than the corpus ships, and a banner that mentions only thin sharps reads as a
   // full description of the run when it is not.
-  const flags = [THIN_SHARPS && "thin sharps", STACCATO_NOISE && "staccato", CONCAVE_TUPLET && "concave tuplet"]
+  const flags = [THIN_SHARPS && "thin sharps", STACCATO_NOISE && "staccato", CONCAVE_TUPLET && "concave tuplet",
+                 USUL_BARLINE && "usul barline"]
     .filter(Boolean).join(", ");
   console.log(`${rows.length} strips / ${jobs.size} jobs in ${STRIPS}; verifying ${jobList.length} jobs` +
     (flags ? ` (${flags})` : " (no arm flags)"));

@@ -168,6 +168,10 @@ const DENSE_BUDGET = URL_DENSE != null && Number.isFinite(URL_DENSE) && URL_DENS
 // drawStaccatoDot), teaching that a dot only means "longer" BESIDE the notehead. Absent → none,
 // i.e. every strip rendered before 2026-08-15.
 const URL_STACCATOSEED = RENDER_PARAMS.has("staccatoseed") ? Number(RENDER_PARAMS.get("staccatoseed")) : null;
+// Round-3 dotted (usul) barlines: label-free dashed rules on the usul's beat-group boundaries (see
+// SheetView's drawUsulBars). The symbol has never been drawn, so the model reads a printed one as
+// `\repstart`. Absent → none, i.e. every strip rendered before 2026-08-30.
+const URL_USULBARSEED = RENDER_PARAMS.has("usulbarseed") ? Number(RENDER_PARAMS.get("usulbarseed")) : null;
 // Round-3 print realism: seeded staff-line weight + usul beam grouping (see SheetView's
 // STAFF_LINE_WIDTH / USUL_BEAM_GROUPS). Absent → VexFlow's defaults, i.e. every pre-Round-3 strip.
 const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get("printseed")) : null;
@@ -204,6 +208,7 @@ const STRIP_BUDGET_OVERRIDE =
 const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
 const SLUR_NOISE = URL_SLURSEED != null ? { seed: URL_SLURSEED } : undefined;
 const STACCATO_NOISE = URL_STACCATOSEED != null ? { seed: URL_STACCATOSEED } : undefined;
+const USUL_BAR_NOISE = URL_USULBARSEED != null ? { seed: URL_USULBARSEED } : undefined;
 const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
 
 /**
@@ -389,6 +394,7 @@ export function App() {
     score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose,
     repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
     staccatoseed: URL_STACCATOSEED,
+    usulbarseed: URL_USULBARSEED,
     printseed: URL_PRINTSEED,
   });
   const renderTagRef = useRef(renderTag);
@@ -611,6 +617,7 @@ export function App() {
         score: string; mode: AccidentalMode; lyrics: boolean; transpose: number; sig: string | null;
         repseed: number | null; navseed: number | null; textseed: number | null; respellseed: number | null; slurseed: number | null;
         staccatoseed: number | null;
+        usulbarseed: number | null;
         printseed: number | null;
         /** Which tuplet mark this page drew — the A/B arm, so a renderer can assert it once
          *  instead of discovering a mis-set flag after 40k strips. */
@@ -630,6 +637,7 @@ export function App() {
       score: sampleFile, mode: accidentalMode, lyrics: showLyrics, transpose, sig: URL_SIG ?? null,
       repseed: URL_REPSEED, navseed: URL_NAVSEED, textseed: URL_TEXTSEED, respellseed: URL_RESPELLSEED, slurseed: URL_SLURSEED,
       staccatoseed: URL_STACCATOSEED,
+      usulbarseed: URL_USULBARSEED,
       printseed: URL_PRINTSEED,
       legacyTuplet: URL_LEGACY_TUPLET,
       maxmeasures: URL_MAX_MEASURES,
@@ -953,10 +961,16 @@ export function App() {
     if (drawn) {
       const first = m.events[memberPositions(m.events, drawn)[0]!]!.index;
       setTupletAnchor(null);
+      setSelectedNote(null); // one thing is selected at a time, or there are two ✕ on the page
       setSelectedTuplet(selectedTuplet === first ? null : first); // clicking it again lets it go
       return;
     }
     setSelectedTuplet(null); // a click off the group is a click away from it
+
+    // Everything below is the CREATE gesture, which belongs to the tuplet tool. With nothing armed
+    // (Seçim) a mark can still be picked up — the case above — but a click may not start building
+    // one, or an ordinary note click would silently arm a half-made triplet.
+    if (armed?.kind !== "tuplet") return;
 
     if (tupletAnchor == null) {
       if (tupletRunFrom(m.events, pos)) setTupletAnchor(index);
@@ -1044,6 +1058,13 @@ export function App() {
     setSelectedTuplet(held.m.events[memberPositions(held.m.events, move.group)[0]!]!.index);
   }
 
+  /** Edit mode: select a note, dropping any held tuplet mark. The two selections are exclusive —
+   *  each has its own ✕, and two delete buttons on the page at once could only be a trap. */
+  function onSelectNote(index: number | null) {
+    setSelectedNote(index);
+    if (index != null) setSelectedTuplet(null);
+  }
+
   /** Edit mode: delete the selected note (and any grace notes leading into it). The bar is left
    *  SHORT on purpose — an edit absorbs into its bar and bar lines never move. */
   function onDeleteNote(index: number) {
@@ -1076,7 +1097,10 @@ export function App() {
   function armTool(t: Tool | null) {
     setArmed(t);
     setTupletAnchor(null);
-    setSelectedTuplet(null); // and a held triplet: the next tool has no handles to hold it with
+    // ⚠ A held mark SURVIVES the move between Seçim and ÜÇLEME, because both can hold one. It does
+    // not survive a note value or an accidental: those apply to a note, the mark stops being
+    // pickable, and its handles would vanish leaving a selection nothing on the page explains.
+    if (t != null && t.kind !== "tuplet") setSelectedTuplet(null);
   }
 
   // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`keepSheet` are applied
@@ -1448,7 +1472,7 @@ export function App() {
             editMode={editMode}
             // Entering edit mode folds the score back to what is written: you edit the one bar the
             // page carries, and the repeat follows it. See `writeOut`.
-            onEditMode={(v) => { setEditMode(v); if (v) setWriteOut(false); if (!v) { setSelectedNote(null); armTool(null); } }}
+            onEditMode={(v) => { setEditMode(v); if (v) setWriteOut(false); if (!v) { setSelectedNote(null); setSelectedTuplet(null); armTool(null); } }}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}
@@ -1502,7 +1526,7 @@ export function App() {
                 playPlan={perf?.playPlan}
                 onSeekToMeasure={(m) => onSeekMs(playStartMs(m))}
                 selectedNote={selectedNote}
-                onSelectNote={setSelectedNote}
+                onSelectNote={onSelectNote}
                 onDeleteNote={onDeleteNote}
                 onNudgePitch={onNudgePitch}
                 armedTool={armed?.kind ?? null}
@@ -1521,6 +1545,7 @@ export function App() {
                 textNoise={TEXT_NOISE}
                 slurNoise={SLUR_NOISE}
                 staccatoNoise={STACCATO_NOISE}
+                usulBarNoise={USUL_BAR_NOISE}
                 thinSharps={URL_THIN_SHARPS}
                 printNoise={PRINT_NOISE}
                 legacyTupletMark={URL_LEGACY_TUPLET}

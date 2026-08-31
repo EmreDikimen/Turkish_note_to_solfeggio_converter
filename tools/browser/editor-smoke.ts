@@ -1084,6 +1084,20 @@ async function main() {
     });
     check("no mark's target swallows a note", stolen.join(",") || "none", "none");
   }
+  /** The same guard, callable again — it is the bargain that lets a mark paint OVER the notes. */
+  const markSwallowsNote = async () =>
+    (await page.evaluate(() => {
+      const marks = Array.from(document.querySelectorAll('[data-omr="tuplet-mark-hit"]'))
+        .map((e) => e.getBoundingClientRect());
+      const bad: string[] = [];
+      for (const n of Array.from(document.querySelectorAll("[data-omr-note]"))) {
+        const r = n.getBoundingClientRect();
+        const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
+        if (marks.some((m) => cx >= m.x && cx <= m.x + m.width && cy >= m.y && cy <= m.y + m.height))
+          bad.push(n.getAttribute("data-omr-note")!);
+      }
+      return bad;
+    })).join(",") || "none";
   await markHit(runTarget.idx[0]!).click();
   await page.waitForTimeout(250);
   check("clicking the sign holds the whole group", await surface.getAttribute("data-tuplet-selected"), String(runTarget.idx[0]));
@@ -1264,6 +1278,65 @@ async function main() {
     }
     check("a broken mark was repairable on this page", repaired, true);
   }
+
+  // --- picking a tuplet with NOTHING armed (plain Seçim) ----------------------------------------
+  //
+  // ⚠ Arming ÜÇLEME must not be a precondition (owner, 2026-08-30: *"tupletleri seçmek için
+  // toolkitten ille de tupleti seçmem gerekmesin. Seçim seçiliyken de tupletleri seçip
+  // silebileyim"*). Still on the decoded page, which has both kinds of mark.
+  console.log("\ntuplets in plain Seçim");
+
+  await rewindAll();
+  await page.keyboard.press("Escape"); // disarm — back to Seçim
+  await page.waitForTimeout(250);
+  check("nothing is armed", await palette.getAttribute("data-armed"), null);
+
+  {
+    const anyMark = page.locator('[data-omr="tuplet-mark-hit"]').first();
+    check("the marks are still targets with no tool armed", await anyMark.count(), 1);
+    // ⚠ In Seçim a note IS clickable, so the two overlays really compete. The mark paints on top —
+    // it is the smaller target and sits opposite the stems — and this is the other half of that
+    // bargain: it may cover stem, never a notehead.
+    check("no mark's target swallows a note in Seçim either", await markSwallowsNote(), "none");
+    await anyMark.scrollIntoViewIfNeeded();
+    const group = Number(await anyMark.getAttribute("data-tuplet-group"));
+    await anyMark.click();
+    await page.waitForTimeout(250);
+    check("a mark can be held in Seçim", await surface.getAttribute("data-tuplet-selected"), String(group));
+    check("...with its handles", await page.locator('[data-omr="tuplet-handle"]').count(), 2);
+    check("...and its ✕", await page.locator("#tuplet-remove").count(), 1);
+
+    // ⚠ In Seçim a NOTE is selectable too, and the two must be exclusive: two ✕ on the page at once
+    // would be a trap. Picking a note lets the mark go, and picking the mark lets the note go.
+    const someNote = await page.locator("[data-omr-note]").first().getAttribute("data-omr-note");
+    await page.locator(`[data-omr-note="${someNote}"]`).first().click({ force: true });
+    await page.waitForTimeout(250);
+    check("selecting a note lets the mark go", await surface.getAttribute("data-tuplet-selected"), null);
+    check("...and the mark's ✕ goes with it", await page.locator("#tuplet-remove").count(), 0);
+    await anyMark.click();
+    await page.waitForTimeout(250);
+    check("selecting the mark lets the note go", await surface.getAttribute("data-selected-note"), null);
+    check("...and the note's ✕ goes with it", await page.locator("#note-delete").count(), 0);
+
+    // The ask itself: delete it from here.
+    const before = await save();
+    await page.locator("#tuplet-remove").click();
+    await page.waitForTimeout(300);
+    const after = await save();
+    check("the ✕ works in Seçim too", JSON.stringify(after) === JSON.stringify(before), false);
+    check("...and deletes no note", after.events.length, before.events.length);
+    await page.locator("#undo").click();
+    await page.waitForTimeout(300);
+    check("one undo restores it", JSON.stringify(await save()) === JSON.stringify(before), true);
+  }
+
+  // A note value armed is NOT a tuplet mode: the mark must stop being a target, or a click meant for
+  // a note would land on it.
+  await arm("dur:1/4");
+  await page.waitForTimeout(250);
+  check("a note value armed hides the mark targets", await page.locator('[data-omr="tuplet-mark-hit"]').count(), 0);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
 
   // Back to the score the rest of the file works on.
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });

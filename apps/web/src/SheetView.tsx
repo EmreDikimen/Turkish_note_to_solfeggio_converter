@@ -830,6 +830,87 @@ function drawSlurArc(svg: SVGSVGElement, group: StaveNote[], above: boolean) {
   svg.appendChild(path);
 }
 
+/** How often a bar that HAS internal usul groups gets its dotted lines drawn. CHOSEN, NOT
+ *  MEASURED, exactly like STACCATO_RATE and the slur distractor's 0.35 — nobody has counted how
+ *  often real Turkish editions rule them, and BACKLOG item 5 says the 7.8% on record is a statistic
+ *  about the MODEL'S GUESSES, not about print. Coined per PIECE (not per bar): an edition either
+ *  uses the convention or it does not, and a page that rules some bars and not others is not a
+ *  page any engraver produced. */
+const USUL_BAR_RATE = 0.35;
+
+/** Dash pattern of the usul barline, in staff spaces (dash, gap). A ruled usul line is drawn much
+ *  lighter than a real barline — it is a reading aid, not a division of the music. */
+const USUL_BAR_DASH = [0.22, 0.30] as const;
+
+/**
+ * Draw the DOTTED (usul) BARLINE — a light dashed vertical rule inside a measure, on the usul's
+ * own beat-group boundaries.
+ *
+ * WHY. Turkish editions rule these to show the usul's subdivisions (aksak 9/8 = 2+2+2+3, so the
+ * bar carries three internal rules). The renderer has never drawn one — 0 of 40,826 strips — and
+ * `ADDED_TOKENS` has no name for one, so the nearest thing the model knows is a vertical line with
+ * DOTS beside it: a repeat sign. It duly emits `\repstart`, and the owner has been deleting those
+ * by hand while labelling — ~1 in 5 of `batch3`'s corrections is exactly that (docs/BACKLOG.md
+ * item 5, docs/METRICS-UNSEEN.md).
+ *
+ * ⭐ This is the same SHAPE of change as the staccato distractor, and that now means something
+ * measured rather than argued: a HOLE in what the model has been shown responds to being filled
+ * (72.7% → 0.0%), while a domain gap does not (three nulls). Both are symbols it has never seen.
+ *
+ * ⚠ LABEL-FREE, and that is a decision, not an oversight. Naming it would make every real gold
+ * label silently wrong, because no pool on disk annotates one; drawn without a label it is
+ * consistent with everything we own and costs ZERO new labelling. The `\dottedbar` token is a
+ * Round-4 question (docs/DECISIONS.md).
+ *
+ * Raw SVG rather than a VexFlow `StaveLine`/`Barline` for the same reason `drawStaccatoDot` and
+ * `drawSlurArc` are: a VexFlow modifier feeds `StaveNote.getBoundingBox()`, the merge that once
+ * stretched a graced note's click box across the whole score (see `noteBoxOf`). Appending to the
+ * SVG leaves every note box untouched.
+ *
+ * Pixels only: `buildStrips` serializes from the document, so the labels are byte-identical with
+ * and without it — which is what `verify-labels.ts` re-checks.
+ */
+function drawUsulBars(
+  svg: SVGSVGElement,
+  stave: Stave,
+  notes: StaveNote[],
+  onsets: number[],
+  boundaries: number[],
+): void {
+  const top = stave.getYForLine(0);
+  const bottom = stave.getYForLine(4);
+  const space = (bottom - top) / 4;
+  // A boundary must land ON a note's onset. Syncopation across a group boundary does happen, but
+  // then there is no gap to rule into and an engraver ties or omits the line; guessing an x inside
+  // a note would draw ink through a notehead.
+  const eps = 1e-6;
+  for (const at of boundaries) {
+    const i = onsets.findIndex((o) => Math.abs(o - at) < eps);
+    if (i <= 0 || i >= notes.length) continue;
+    const prev = notes[i - 1]!, cur = notes[i]!;
+    let x0: number, x1: number;
+    try {
+      x0 = prev.getAbsoluteX();
+      x1 = cur.getAbsoluteX();
+    } catch {
+      continue;
+    }
+    if (!Number.isFinite(x0) || !Number.isFinite(x1) || x1 <= x0) continue;
+    // Biased toward the following note, which is where print puts it — the rule belongs to the
+    // group it opens. ⚠ Chosen BY EYE on a pilot render, like STACCATO_RADIUS; not a measurement.
+    const x = x0 + (x1 - x0) * 0.62;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", String(x));
+    line.setAttribute("x2", String(x));
+    line.setAttribute("y1", String(top));
+    line.setAttribute("y2", String(bottom));
+    line.setAttribute("stroke", "#000");
+    line.setAttribute("stroke-width", String(space * 0.11));
+    line.setAttribute("stroke-dasharray", USUL_BAR_DASH.map((d) => d * space).join(" "));
+    svg.appendChild(line);
+  }
+}
+
 /** Staccato dot radius, in STAFF SPACES. It must LOOK like Bravura's augmentation dot — the whole
  *  experiment rests on the two marks being the same ink in different PLACES, so if one reads as
  *  bigger the model can separate them by size instead of by position and learns nothing. Checked by
@@ -1393,6 +1474,7 @@ export function SheetView({
   textNoise,
   slurNoise,
   staccatoNoise,
+  usulBarNoise,
   thinSharps,
   printNoise,
   legacyTupletMark,
@@ -1500,6 +1582,10 @@ export function SheetView({
    *  the model learns that a dot means "longer" only BESIDE the notehead, not above or below it.
    *  Pixels only. Undefined → none, which is every strip rendered before 2026-08-15. */
   staccatoNoise?: { seed: number } | null;
+  /** Round-3: label-free DOTTED (usul) BARLINES inside the bar, on the usul's beat-group
+   *  boundaries (see drawUsulBars). The symbol has never been drawn, so the model reads a real one
+   *  as `\repstart`. Pixels only. Undefined → none, i.e. every strip rendered before 2026-08-30. */
+  usulBarNoise?: { seed: number } | null;
   /** Round-2: redraw the AEU sharps with real-print bar weight so the three bars of a küçük/büyük
    *  mücennep stay separated after downscaling (see drawThinSharps). Pixels only. → Bravura. */
   thinSharps?: boolean;
@@ -1554,6 +1640,19 @@ export function SheetView({
   /** Is any tool armed? The note-hit path only cares about this; the empty-space path needs the
    *  kind, because only a note value can be inserted into blank staff. */
   const armed = armedTool != null;
+
+  /**
+   * Can a drawn tuplet mark be picked up right now? With the TUPLET armed, and also with **nothing**
+   * armed — plain Seçim (owner, 2026-08-30: *"tupletleri seçmek için toolkitten ille de tupleti
+   * seçmem gerekmesin. Seçim seçiliyken de tupletleri seçip silebileyim"*).
+   *
+   * ⚠ Not with a note value or an accidental armed: those apply to a NOTE, and a mark is not one.
+   * A click on a mark while they are armed falls through, exactly as a click on blank staff does.
+   *
+   * In Seçim the two selections are mutually exclusive — App clears the note when a mark is picked
+   * and the mark when a note is — so the page never shows two things selected at once.
+   */
+  const tupletPickable = editMode && (armedTool == null || armedTool === "tuplet");
 
   // Distinct accidentals used, for the legend.
   const usedAccidentals = useMemo(() => {
@@ -1630,7 +1729,7 @@ export function SheetView({
    * so this costs nothing in every other mode.
    */
   const tupletSel = useMemo(() => {
-    if (!editMode || armedTool !== "tuplet" || selectedTuplet == null) return null;
+    if (!tupletPickable || selectedTuplet == null) return null;
     for (const m of groupMeasures(doc)) {
       const pos = m.events.findIndex((e) => e.index === selectedTuplet);
       if (pos < 0) continue;
@@ -1673,7 +1772,7 @@ export function SheetView({
       };
     }
     return null;
-  }, [doc, editMode, armedTool, selectedTuplet]);
+  }, [doc, tupletPickable, selectedTuplet]);
 
   /**
    * Edit mode: which bars do not add up, and in which direction (editor step 8).
@@ -1719,6 +1818,26 @@ export function SheetView({
     // so turning staccato on does not shift which slurs the slur seed draws — the two distractors
     // have to be separable, or an A/B on one of them silently moves the other.
     const staccatoRng = staccatoNoise ? mulberry32(staccatoNoise.seed) : null;
+    // ⭐ The usul rule is coined ONCE for the whole page, not per bar: an edition either uses the
+    // convention or it does not. Its group boundaries come from USUL_BEAM_GROUPS, which already
+    // holds the conventional groupings by meter. ⚠ That table is quarantined as a BEAMING change
+    // (it would move every beam in ~40k strips); reading it for where a RULE goes is a different
+    // use and moves no beam.
+    const usulBarGroups = (() => {
+      if (!usulBarNoise || !timeSig) return null;
+      if (mulberry32(usulBarNoise.seed)() >= USUL_BAR_RATE) return null;
+      const pattern = USUL_BEAM_GROUPS[`${timeSig.num}/${timeSig.den}`];
+      if (!pattern || pattern.length < 2) return null;
+      // Cumulative INTERNAL boundaries, in whole-note units — the same unit `eventBeats` counts in.
+      // The final entry is the barline itself and is dropped.
+      const out: number[] = [];
+      let acc = 0;
+      for (const g of pattern.slice(0, -1)) {
+        acc += g / timeSig.den;
+        out.push(acc);
+      }
+      return out;
+    })();
 
     // Round-3 print realism, drawn once per render so a whole page is internally consistent (a
     // real edition has ONE staff weight and ONE beaming convention). Draw order is fixed so a
@@ -1990,6 +2109,26 @@ export function SheetView({
               }
               trySlur();
             }
+            // Dotted (usul) barlines: label-free rules on the usul's beat-group boundaries.
+            // Onsets are counted off the DOCUMENT's own events (eventBeats, the arithmetic the
+            // off-meter check uses), never off VexFlow ticks — a tuplet's written ticks do not sum
+            // to the bar. A tie-split event keeps ONE onset, so a rule can never land between the
+            // two halves of a single note.
+            if (usulBarGroups && svg) {
+              const onsets: number[] = [];
+              let acc = 0;
+              let seen: (typeof slots)[number]["ev"] | null = null;
+              for (const slot of slots) {
+                if (slot.ev !== seen) {
+                  onsets.push(acc);
+                  acc += eventBeats(slot.ev);
+                  seen = slot.ev;
+                } else {
+                  onsets.push(onsets[onsets.length - 1] ?? 0);
+                }
+              }
+              drawUsulBars(svg, stave, notes, onsets, usulBarGroups);
+            }
             // Staccato distractors: label-free dots on the notehead side (see drawStaccatoDot).
             // Two passes, because they teach two different halves of the same rule.
             if (staccatoRng && svg) {
@@ -2119,7 +2258,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style
@@ -2576,37 +2715,6 @@ export function SheetView({
                 willChange: "transform",
               }}
             />
-            {/* The drawn "3" marks, as click targets (owner, 2026-08-30: *"direkt olarak 3'leme
-                işaretinin tıklanabilir olmasını istiyorum. notalarına tıklamak istemiyorum"*).
-                Clicking the SIGN holds its triplet; its notes are not targets at all. The box is
-                measured off the ink that was engraved, so it lands on the mark a reader sees
-                whichever of the four styles this piece drew. Only holdable groups get one — an
-                unclosed run's bracket means the MODEL misread something and stays inert. */}
-            {armedTool === "tuplet" &&
-              tupletMarks.map((mk) => (
-                <div
-                  key={`tupmark_${mk.evIndex}`}
-                  data-omr="tuplet-mark-hit"
-                  data-tuplet-group={mk.evIndex}
-                  data-tuplet-mark={mk.closes ? "closed" : "broken"}
-                  data-held={selectedTuplet === mk.evIndex ? "1" : undefined}
-                  className={
-                    `kv-tuplet-mark-hit${mk.closes ? "" : " is-broken"}` +
-                    `${selectedTuplet === mk.evIndex ? " is-held" : ""}`
-                  }
-                  title={mk.closes ? TR.sheet.pickTuplet : TR.sheet.pickBrokenTuplet}
-                  onClick={(e) => { e.stopPropagation(); onTupletPick?.(mk.evIndex); }}
-                  style={{
-                    position: "absolute",
-                    left: mk.x - MARK_HIT_PAD,
-                    top: mk.y - MARK_HIT_PAD,
-                    width: mk.width + 2 * MARK_HIT_PAD,
-                    height: mk.height + 2 * MARK_HIT_PAD,
-                    pointerEvents: "auto",
-                    cursor: "pointer",
-                  }}
-                />
-              ))}
             {/* Note targets. A tie-split event has two boxes sharing one evIndex; both highlight
                 when it is selected, and either one selects it. */}
             {noteBoxes.map((nb, i) => {
@@ -2659,6 +2767,46 @@ export function SheetView({
                 />
               );
             })}
+            {/* The drawn "3" marks, as click targets (owner, 2026-08-30: *"direkt olarak 3'leme
+                işaretinin tıklanabilir olmasını istiyorum. notalarına tıklamak istemiyorum"*).
+                Clicking the SIGN holds its tuplet. Every drawn mark gets one, a broken mark included
+                — that is the one most in need of a correction. The box is measured off the ink that
+                was engraved (see `markBoxOf`), so it lands on the mark a reader sees whichever of the
+                four styles this piece drew.
+                ⚠ These render in plain **Seçim** as well as with the tuplet armed (see
+                `tupletPickable`), and they are painted AFTER the note targets on purpose — a later
+                sibling wins an overlapping click. They started out before them, and in Seçim (where
+                a note IS clickable, unlike under the tuplet tool) a note's box swallowed the mark
+                outright: VexFlow's box reaches along the stem, past the noteheads, into the strip of
+                staff the mark is drawn in. The mark wins there because it is the smaller, more
+                specific target and it sits on the NOTEHEAD side, opposite the stems — so the region
+                they fight over is stem, never notehead. `smoke:editor` holds the other half of that
+                bargain: no note's CENTRE may fall inside a mark's box. */}
+            {tupletPickable &&
+              tupletMarks.map((mk) => (
+                <div
+                  key={`tupmark_${mk.evIndex}`}
+                  data-omr="tuplet-mark-hit"
+                  data-tuplet-group={mk.evIndex}
+                  data-tuplet-mark={mk.closes ? "closed" : "broken"}
+                  data-held={selectedTuplet === mk.evIndex ? "1" : undefined}
+                  className={
+                    `kv-tuplet-mark-hit${mk.closes ? "" : " is-broken"}` +
+                    `${selectedTuplet === mk.evIndex ? " is-held" : ""}`
+                  }
+                  title={mk.closes ? TR.sheet.pickTuplet : TR.sheet.pickBrokenTuplet}
+                  onClick={(e) => { e.stopPropagation(); onTupletPick?.(mk.evIndex); }}
+                  style={{
+                    position: "absolute",
+                    left: mk.x - MARK_HIT_PAD,
+                    top: mk.y - MARK_HIT_PAD,
+                    width: mk.width + 2 * MARK_HIT_PAD,
+                    height: mk.height + 2 * MARK_HIT_PAD,
+                    pointerEvents: "auto",
+                    cursor: "pointer",
+                  }}
+                />
+              ))}
             {/* The held triplet (editor step 7b): a frame round its three notes, a handle at each
                 end, and the ✕ that takes the bracket off.
                 ⚠ Nothing here is stored — `tupletSel` re-derives the group from the document every

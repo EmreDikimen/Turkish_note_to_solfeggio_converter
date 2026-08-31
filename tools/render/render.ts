@@ -32,6 +32,8 @@
  *             [--staccato-noise]   OPT-IN staccato distractors: label-free dots on the notehead
  *                                  side, teaching that a dot means "longer" only BESIDE the
  *                                  notehead. Off by default — see the constant below
+ *             [--usul-barline]     OPT-IN dotted (usul) barlines: a share of PIECES rule the
+ *                                  usul's beat groups inside the bar, label-free. Off by default
  *             [--concave-tuplet]   OPT-IN third tuplet shape: a share of pieces draw a CONTINUOUS
  *                                  arc with the "3" inside its concavity, the style the owner found
  *                                  on two real scanned editions. Off by default — see the constant
@@ -81,6 +83,10 @@ interface Job {
   /** Round-3 staccato distractors (SheetView's drawStaccatoDot).
    *  `null` unless `--staccato-noise` — see STACCATO_NOISE above. */
   staccatoseed: number | null;
+  /** Round-3 dotted (usul) barlines (SheetView's drawUsulBars). `null` unless `--usul-barline`.
+   *  ⚠ Seeded per PIECE, never per copy or transpose: an edition either uses the convention or it
+   *  does not, so every copy of one piece must make the same choice. */
+  usulbarseed: number | null;
   /** Round-3 print realism: seeded staff-line weight + usul beam grouping (SheetView).
    *  `null` unless `--print-noise` — see PRINT_NOISE above. */
   printseed: number | null;
@@ -125,6 +131,18 @@ const PRINT_NOISE = has("print-noise");
 // longer". These label-free dots teach the POSITIONAL rule instead — a dot lengthens only when it
 // sits BESIDE the notehead. Opt-in, so probe and control arms are one flag apart.
 const STACCATO_NOISE = has("staccato-noise");
+// Round-3 dotted (usul) BARLINE (2026-08-30, owner): Turkish editions rule the usul's beat groups
+// inside a bar with a light dashed line. The renderer has never drawn one — 0 of 40,826 strips —
+// and ADDED_TOKENS has no name for one, so the nearest symbol the model knows is a vertical line
+// with dots beside it: a repeat sign. It emits `\repstart`, and the owner has been deleting those
+// by hand while labelling batch3 (docs/BACKLOG.md item 5, docs/METRICS-UNSEEN.md).
+// ⭐ Same SHAPE as the staccato hole, which is the only Round-3 arm that moved its primary: a hole
+// in what the model has been shown responds to being filled; a domain gap does not.
+// ⚠ LABEL-FREE, on purpose. Naming it would make every real gold label on disk silently wrong (no
+// pool annotates one); unnamed it is consistent with everything we own and costs zero labelling.
+// The `\dottedbar` token is a Round-4 question (docs/DECISIONS.md).
+// Opt-in for the same reason as the two flags above: it changes a share of every piece.
+const USUL_BARLINE = has("usul-barline");
 // Round-3 Lever 1 (docs/rung3/levers.md): the crop-geometry pilot's only variable. The renderer packs
 // a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no pixel
 // width rail at all — which is why our strips run wider than the real pools' and reach the encoder
@@ -198,6 +216,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       respellseed: hashStr(`${piece.slug}:c${p}:respell`),
       slurseed: hashStr(`${piece.slug}:c${p}:slur`),
       staccatoseed: STACCATO_NOISE ? hashStr(`${piece.slug}:c${p}:staccato`) : null,
+      usulbarseed: USUL_BARLINE ? hashStr(`${piece.slug}:usulbar`) : null,
       printseed: PRINT_NOISE ? hashStr(`${piece.slug}:c${p}:print`) : null,
     });
   }
@@ -218,6 +237,7 @@ function jobsFor(piece: PieceEntry): Job[] {
       respellseed: hashStr(`${piece.slug}:${t}:respell`),
       slurseed: hashStr(`${piece.slug}:${t}:slur`),
       staccatoseed: STACCATO_NOISE ? hashStr(`${piece.slug}:${t}:staccato`) : null,
+      usulbarseed: USUL_BARLINE ? hashStr(`${piece.slug}:usulbar`) : null,
       printseed: PRINT_NOISE ? hashStr(`${piece.slug}:${t}:print`) : null,
     });
   }
@@ -238,6 +258,7 @@ function jobUrl(job: Job): string {
   if (job.repseed != null) q.set("repseed", String(job.repseed));
   if (job.navseed != null) q.set("navseed", String(job.navseed));
   if (job.staccatoseed != null) q.set("staccatoseed", String(job.staccatoseed));
+  if (job.usulbarseed != null) q.set("usulbarseed", String(job.usulbarseed));
   if (job.printseed != null) q.set("printseed", String(job.printseed));
   if (THIN_SHARPS) q.set("thinsharps", "1");
   if (LEGACY_TUPLET) q.set("legacytuplet", "1");
@@ -264,6 +285,7 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
         c.repseed === want.repseed && c.navseed === want.navseed &&
         c.textseed === want.textseed && c.respellseed === want.respellseed &&
         c.slurseed === want.slurseed && c.staccatoseed === want.staccatoseed &&
+        c.usulbarseed === want.usulbarseed &&
         c.printseed === want.printseed &&
         // Which tuplet mark the page drew. Checked per job rather than once, because a wrong arm is
         // invisible in the labels and would only surface as a corpus that fails to reproduce.
@@ -277,7 +299,8 @@ async function openJob(page: Page, job: Job): Promise<Strip[]> {
     {
       score: job.piece.file, mode: job.mode, lyrics: job.lyrics, transpose: job.transpose, sig: job.sig,
       repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-      slurseed: job.slurseed, staccatoseed: job.staccatoseed, printseed: job.printseed,
+      slurseed: job.slurseed, staccatoseed: job.staccatoseed, usulbarseed: job.usulbarseed,
+      printseed: job.printseed,
       legacyTuplet: LEGACY_TUPLET, maxmeasures: MAX_MEASURES,
     },
     { timeout: 20000 },
@@ -313,9 +336,9 @@ async function renderPiece(page: Page, piece: PieceEntry, shardPath: string): Pr
         image: `${name}.png`, label: s.label, mode: job.mode, makam: piece.makam, sig: job.sig,
         piece: piece.slug, transpose: job.transpose, lyrics: job.lyrics,
         repseed: job.repseed, navseed: job.navseed, textseed: job.textseed, respellseed: job.respellseed,
-        // staccatoseed is deliberately NOT recorded here, the way legacyTuplet is not: it is an
-        // A/B arm marker, and keeping it out is what makes the two arms' manifests byte-identical
-        // and therefore diffable as a proof that the distractor is pixels-only.
+        // staccatoseed and usulbarseed are deliberately NOT recorded here, the way legacyTuplet
+        // is not: they are arm markers, and keeping them out is what makes the two arms' manifests
+        // byte-identical and therefore diffable as a proof that the ink is pixels-only.
         slurseed: job.slurseed, printseed: job.printseed,
         from: s.fromMeasure, to: s.toMeasure,
       }) + "\n");
@@ -367,7 +390,7 @@ async function main() {
   writeFileSync(`${OUT}/render_config.json`, JSON.stringify({
     pieces: PIECES_PATH, carryPasses: CARRY_PASSES, thinSharps: THIN_SHARPS,
     legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE, staccatoNoise: STACCATO_NOISE,
-    concaveTuplet: CONCAVE_TUPLET, maxMeasures: MAX_MEASURES,
+    concaveTuplet: CONCAVE_TUPLET, usulBarline: USUL_BARLINE, maxMeasures: MAX_MEASURES,
     started: new Date().toISOString(),
   }, null, 2) + "\n");
 

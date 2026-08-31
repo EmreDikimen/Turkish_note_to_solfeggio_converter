@@ -3,7 +3,7 @@
 purpose: what the one-shot exam is made of, how it was rebuilt, and how big it has to be — not what any model scored on it
 audience: agents and the owner, whenever the question is about the exam itself rather than a result
 
-updated: 2026-08-21
+updated: 2026-08-31
 
 Split out of [METRICS-EXAM.md](METRICS-EXAM.md) on 2026-08-21, when that file crossed its 400-line
 cap. The split is by genre: **METRICS-EXAM.md keeps what models SCORED**, this file keeps **what the
@@ -172,6 +172,74 @@ and that is the owner's to settle ([rung3/round3-criteria.md](rung3/round3-crite
 differ, **37 crop count differs** — i.e. "45 of 46 pages lose their labels". At *label* level the
 loss is **105 of 326 (32%)**, because most labels move with their music. That gap is why the rebuild
 kept 221 of them rather than starting blank.
+
+## ⭐ THE REBUILT EXAM IS PROMOTED AND THE BASELINE IS RE-MEASURED ON IT (2026-08-31)
+
+`promote_labels.py --dir data/real/rung3/strips_exam_v3 --exam --strips-root data/real/strips_examv3`.
+**`strips_exam_v3` is now the exam**; `strips_exam_v2_clean` stays frozen as the record of what
+Round 2 was graded on.
+
+| | frozen v2 | **rebuilt v3** |
+|---|---|---|
+| graded strips | 326 | **660** |
+| graded pages | 46 | **63** |
+| strips per page | 7.1 | **10.5** |
+
+Of 663 verdicted review rows, 61 are `bad` (not gradeable by construction) and **80 were refused by
+the promotion gates**: 77 genuinely over the 59-id budget, 2 `ok` verdicts on rows carrying **no
+label at all** (`row_unaligned` — an empty label is not gold), and 1 round-trip failure (below).
+⚠ **The 64th page is gone**: `vuslata_nail_de_etse_ger_felek_nota_p1` lost every candidate to the
+budget. Page overlap with the frozen exam: **44 shared, 19 never graded before, 2 dropped.**
+
+⚠ **27 rows were nearly lost to a metadata mismatch, not to a bad label.** Their queue `piece`
+column holds the **SymbTr** stem where `load_piece_meta` keys on the **source** stem, and a metadata
+miss REJECTS a row — 27 hand-verdicted rows would have left the exam silently, taking 8 pages out of
+PAGE-COMPLETE. `promote_labels.py` now falls back to the strip FILENAME, which is unambiguous.
+Validated before it was trusted: it agrees with the `piece` column on **636 of 636** well-formed rows
+and resolves **27 of 27** broken ones. ⛔ Not reverse-mapped by SymbTr stem — two of the eight pieces
+have two source editions (a *nota* and a *ney* print), so that key is ambiguous where this one is not.
+
+### The Round-2 baseline on the rebuilt exam — §3b's precondition 2, DONE
+
+`eval_omr.py --checkpoint data/checkpoints/round2-stage2-best --strips-dir data/real/rung3/strips_exam_v3
+--split none`, 660 strips, ~5 min on the laptop. **This is the baseline column of every floor pair in
+[rung3/round3-criteria.md](rung3/round3-criteria.md) §1**, and it was measured *before* any Round-3
+model exists, which is what keeps §3c's choice legal.
+
+| | frozen v2 (Round 2) | **rebuilt v3 (same model)** |
+|---|---|---|
+| **pages needing ≤5 corrections — THE PRIMARY** | **57%** | **44%** |
+| median edits/page | 5 | 6 |
+| mean edits/page | 12.2 | **10.0** |
+| strips already perfect | 52% | **75%** |
+| mean per-class AEU recall | 78.5% | **90.5%** |
+| mean per-class AEU F1 | 78.0% | **84.5%** |
+| SER | 0.059 | **0.027** |
+| exact match | 50.0% | **75.2%** |
+
+⭐ **Read that table twice — it does not say the model got worse.** Every *strip-level* number
+improves sharply, and the **primary still falls 13 points**. The two are not in conflict: the primary
+counts corrections **per page**, and the rebuilt exam grades **10.5 strips a page against 7.1**. Each
+strip is cleaner, and there are half again as many of them, so more pages cross the 5-edit line.
+Mean edits/page falls 12.2 → 10.0 while the *share* under 5 falls — the signature of a
+right-skewed distribution being sampled more densely.
+
+⚠ **The 57% → 44% move mixes THREE changes and must not be quoted as "the re-cut cost 13 points".**
+(1) the crops were re-cut on the current slicer, (2) the strips-per-page rose 7.1 → 10.5, and (3)
+**19 of the 63 pages had never been graded at all**. Separating them would need a per-page edit dump
+restricted to the 44 shared pages; `eval_omr.py` persists only the aggregates today, so it has **not
+been done** and no split of the 13 points between the three is claimed here.
+
+⚠ **`\komaSharp` is the weak class and stays weak**: 65.0% recall / 48.1% precision at n=20 — under
+the LOW-N line, and the same koma/küçük confusion that [BACKLOG.md](BACKLOG.md) item 9 tracks in the
+signature vote. `\buyukFlat` is absent from the exam entirely and `\buyukSharp` has n=1.
+
+⚠ **One exam row is refused and it is the OWNER'S call, not a typo to guess at.**
+`hicazkar_sirto_sebuh_efendi_kemani_p1_s04_w00` fails the round-trip gate on `bad sig token '\segno'`:
+the hand correction reads `… \bakiyeSharp f \bakiyeSharp \segno c \sigend \repstart …`, i.e. a
+`\segno` landed **inside** the `\sig` block and split the `\bakiyeSharp c` pair. The model's decode
+puts `\segno` **before** the signature. Where the sign actually belongs is a question about the
+image, so it is left rejected rather than repaired by inference.
 
 ## How big the exam has to be — the arithmetic behind the ±12 (2026-08-20)
 

@@ -217,6 +217,33 @@ means once the instrument is harder.
 
 ⛔ **What is not available**: choosing between them after seeing the Round-3 number. §4 stands.
 
+> ✅ **SETTLED 2026-08-31 (owner), and it is a THIRD reading, not one of the two above.**
+> *"I will look where it makes mistakes and classify the problems. Then decide ship manually."*
+>
+> **What this means in practice.** The numeric floor stops being the *automatic* ship gate. The exam
+> is still read **once**, and the primary is still **computed and reported with its interval** — that
+> costs nothing and keeps the record comparable — but the launch decision is taken by the owner after
+> reading an **error classification**, not by comparing one number to 75%.
+>
+> ⚠ **What is given up, stated plainly, because that is what a pre-registration is for.** A signed
+> numeric floor is a commitment made while the answer is unknown; a judgement made after seeing the
+> output is not, however honestly it is taken. The specific risk is the one §4 was written against —
+> a result that misses gets re-read as "the errors are the acceptable kind". **Recording the
+> decision now, before any Round-3 model exists, is what keeps it honest**: the rule changed while
+> the answer was still unknown, which is the only time it legitimately can.
+>
+> ⚠ **What is NOT changed.** The exam is still one-shot (§4). The no-regression clauses in §1 are
+> still measured and still reported. `round2-stage2-best`'s baseline on the rebuilt exam
+> (**44%**, [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)) stands as the comparison column, so
+> "better or worse than Round 2" remains a factual question with a factual answer.
+>
+> ⏭ **What this now REQUIRES that the old plan did not**: an error classification the owner can
+> actually read — the exam's mistakes grouped by kind (pitch / duration / accidental / repeat
+> structure / signature), with examples, not just a rate. Without it this decision has no input.
+> `eval_omr.py --show-errors` prints per-strip errors and its payload carries the per-class table;
+> **grouping them into a readable taxonomy is not built yet** and is the thing to build before the
+> read. [../BACKLOG.md](../BACKLOG.md).
+
 ⚠ **§3b's drop note is superseded in its numbers only.** The rebuilt exam drops **567 of 1,369**
 candidates (41%: `split_wide` 414, `over_budget` 153) where v2 dropped 282 of 608 (46%). The bias is
 the same in kind — the wide and the dense are still what gets thrown away — and still runs in the

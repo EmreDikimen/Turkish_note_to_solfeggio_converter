@@ -177,3 +177,58 @@ count (0 easy / 5 mid / 7 hard, the table above), a different pool and a differe
 exclusion still stands on its *other* stated reason — hard tier's gold is the least reliable pool we
 own — and the gate passed either way, so nothing about the round changes. Recorded because this is
 the **second** time a written reason in this section has failed to carry what it claims.
+
+## ⛔ THE DOTTED (USUL) BARLINE'S PREMISE DOES NOT SURVIVE MEASUREMENT (2026-08-31)
+
+Two counts, run as [BACKLOG.md](BACKLOG.md) item 5 asked, **before** the final render baked the flag
+into the graded model's corpus. Both go against the flag.
+
+### 1. How often does real print actually rule a dotted usul barline? **0 of 24 editions.**
+
+24 **pieces** sampled with a fixed seed from the 2,051 distinct pieces in `data/real/images`
+(the coin is per PIECE, so the sample is by piece, not by page). For each, the first one or two staff
+systems of page 1 were read by eye — enough, because ruling usul divisions is an **edition-wide
+convention**: an edition that uses it uses it in every bar.
+
+| | count |
+|---|---|
+| editions sampled | 24 |
+| of those, whose meter `USUL_BEAM_GROUPS` can rule at all | **~17** (9/8, 10/8, 8/8, 9/4, 6/8) |
+| **editions drawing a dotted/dashed rule inside the bar** | **0** |
+
+Every one used **solid, full-height barlines**. The only dashed ink seen was **horizontal** — the
+`(SAZ ‥‥)` section brackets under the staff — which is not a barline and is not what the flag draws.
+
+⚠ **`USUL_BAR_RATE = 0.35` is refuted by this sample.** At a true per-piece rate of 0.35, seeing 0 of
+17 eligible editions has probability `0.65^17 ≈ 0.0016`. The 95% upper bound at 0/17 is **~16%**, and
+at 0/24 it is **~12%**. ⚠ **What this does NOT license**: our pages come from **two websites**
+([BACKLOG.md](BACKLOG.md) item 10), so this measures those two sources' house style, not Turkish
+engraving at large. It is decisive about **our own page distribution** — which is what the model is
+graded on — and no more.
+
+### 2. Where do the false `\repstart`s actually come from? **NOT from a dotted barline.**
+
+The flag's whole justification was that the owner keeps deleting false `\repstart`s by hand. **That
+evidence is real** — over all 1,168 `fix` rows in `strips_b8` and `strips_exam_v3`, **105 (9.0%)
+delete a `\repstart`**. But the *cause* attributed to it does not hold:
+
+| where the deleted `\repstart` sits | share of the 105 |
+|---|---|
+| immediately after `\sigend` — the first token of the music | **97%** |
+| in the first strip of a staff system (`_w00`) | **92%** |
+| in the very first strip of the page (`_s00_w00`) | **83%** |
+
+⛔ **A usul rule cannot produce that distribution.** It is drawn on beat-group boundaries *inside*
+every bar, throughout the piece, so its errors would scatter across strips and across positions.
+This clumps on one position: the start of a line, right after the key signature.
+
+⭐ **Looking at the pixels says what it really is.** The strips carry **clef → key signature → TIME
+SIGNATURE → music**, with no repeat sign and no dashed rule anywhere. The most likely reading is the
+**stacked time signature**: a vertical pair of digits (`6/4`, `8/8`, `9/8`, `10/8`) beside the staff's
+opening vertical looks like the two dots of `‖:`. That is a genuine hole — it is simply **a different
+hole from the one `--usul-barline` fills**.
+
+⏭ **What follows is the owner's call**, and both counts are on the record before any Round-3 model
+exists: drawing dashed rules inside bars is not aimed at the error being paid for by hand. The
+instrument to price it either way already exists —
+`scripts/rung3/usul_falserep_score.py` — and its pilot pools cost two ~40-minute renders.

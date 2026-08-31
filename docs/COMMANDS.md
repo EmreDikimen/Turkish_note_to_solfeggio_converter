@@ -218,6 +218,27 @@ npx tsx tools/vision/parity/rescue-check.ts
     # construction. --compare pairs a second checkpoint per strip with an exact McNemar.
 .venv-ml/bin/python scripts/rung3/staccato_realdot_score.py --checkpoint <ckpt> [--compare <ckpt>]
     # the same read inverted — real dots LOST, gated on easy+mid only, hard tier printed never gated
+.venv-ml/bin/python scripts/rung3/make_usul_pools.py --plan
+    # the DOTTED (USUL) BARLINE's paired pools, built the same way the staccato ones were: two
+    # renders of one 40-piece list differing ONLY in --usul-barline. ⚠ It does NOT re-derive which
+    # pieces the coin picked — it MEASURES it, by sha256 of the two renders' PNGs, so no copy of
+    # hashStr/mulberry32/USUL_BEAM_GROUPS exists in Python to drift from the renderer. Selects
+    # strips whose gold carries ZERO \repstart, so "a repeat sign appeared at all" is the metric.
+    # `--plan` prints the two render commands; pass the OTHER two final-render flags to BOTH.
+.venv-ml/bin/python scripts/rung3/usul_falserep_score.py --checkpoint <ckpt> [--compare <ckpt>]
+    # that flag's PRIMARY: the false-`\repstart` rate on the paired pools. Exists because the final
+    # render carries THREE flags at once, so a general movement is unattributable — this makes two
+    # of the three attributable instead of one (the concave tuplet mark has no instrument and never
+    # claimed one). \repend is reported beside it, never gated with it: different glyph, different
+    # place in the bar, different cause. ⚠ Prices the model's RESPONSE to the mark, not the realism
+    # of USUL_BAR_RATE, which is still chosen not measured (docs/BACKLOG.md item 5).
+sh scripts/make_round3_colab_zip.sh final
+    # the FINAL run's upload package: corpus strips_v7_final (3 flags) + strips_b8 as the ONLY real
+    # pool. ⚠ The four ARMS keep the retired pools on purpose — that is what they trained on — so the
+    # pool set is per-arm, not global. The render_config gate now checks usulBarline and concaveTuplet
+    # against the arm's wanted value instead of refusing them outright. Notebook:
+    # notebooks/round3_final_colab.ipynb (the staccato notebook is that ARM's record — do not edit it
+    # into the final run).
 .venv-ml/bin/python scripts/build_makam_signatures.py \
     --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts  # TS copy only
 npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/synthetic/<set> [--thin-sharps]

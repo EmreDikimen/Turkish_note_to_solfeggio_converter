@@ -118,8 +118,8 @@ a successful build is not a deploy. Both, and every other command, in
   nothing emits. ⚠ **The RENDER side landed 2026-08-22** — `measureAtoms` no longer
   writes the token, and the tie tail now **restrikes its accidental in `every`/`keysig` mode** on both
   the label and the drawing (a bare tail reads as *unaltered* with no carry and no token; carry mode is
-  unchanged). `_realval_v2` still expects ties in 24% of rows, which no longer decides anything:
-  `eval_omr.py` drops `\tie` from **both** the gold and the decode. `strips_exam_v2*` keeps its ties on purpose — it is
+  unchanged). ✅ **2026-08-31: every Round-3 pool has ZERO `\tie`** — b8 0/3,936, examv3 0/660, `_realval_v2` 0/267,
+  `_tupletval` 0/28, **`strips_v7_final` 0/40,795** (v4/v5/v6 have 1,185 each, predating it). `strips_exam_v2*` keeps its ties on purpose — it is
   the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS REPAIRED**
   (owner, 2026-08-30). The mark is the click target — in **Seçim as well as under ÜÇLEME** (`tupletPickable`),
@@ -390,7 +390,7 @@ data/real/rung3/      the label POOLS. ROUND 3 TRAINS ON strips_b8 ALONE (3,936 
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
                       re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
-data/synthetic/       rendered strips — strips_v4 is current, older sets kept (v3 = the A/B control)
+data/synthetic/       rendered strips — ROUND 3 TRAINS ON strips_v7_final (3 flags, 0 \tie); older sets kept
 data/checkpoints/     round2-stage2-best (+ -onnx int8, THE LIVE RUNTIME — round1-best is the
                       superseded one), the r3-* Round-3 arms, and rung3-labeler: a July tooling
                       checkpoint, NEVER shipped, that only feeds the emitter and decode_page.py

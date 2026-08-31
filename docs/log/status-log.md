@@ -7,6 +7,65 @@ updated: 2026-08-31
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-31 — Round 3's data is settled, the corpus is rendered, and the Colab zip is built
+
+**Steps 1–7 of the Round-3 worklist are done; the next action is to train.**
+
+**Promotions.** `strips_b8` → **3,936 strips** (573 audit fixes applied, 3 rejects genuinely over the
+59-id cap). `strips_exam_v3` → **660 strips / 63 pages**, and it now *is* the exam.
+
+⚠ **The exam promotion nearly lost 27 hand-verdicted rows to a metadata mismatch, not a bad label.**
+Their queue `piece` column holds the SymbTr stem where `load_piece_meta` keys on the source stem, and
+a metadata miss REJECTS the row — 8 pages would have silently stopped being PAGE-COMPLETE. Fixed with
+a strip-FILENAME fallback, validated before trusting it (agrees with the column on 636/636 well-formed
+rows, resolves 27/27 broken ones). ⛔ Deliberately *not* reverse-mapped by SymbTr stem: two of the
+eight pieces have two source editions, so that key is ambiguous where the filename is not.
+
+**The baseline on the rebuilt exam: 44%** (57% on the frozen one). ⭐ **The model did not get worse** —
+exact 50.0→75.2%, AEU recall 78.5→90.5%, SER 0.059→0.027. The primary counts corrections *per page*
+and a page is now graded on 10.5 strips against 7.1, so more pages cross the 5-edit line. ⚠ The 13
+points mix three changes (re-cut crops, more strips/page, 19 never-graded pages) and no split is claimed.
+
+⛔ **`eval_omr.py` crashed on every tie-free pool** — `arc_rate` was bound only in the `else` branch
+and read unconditionally, so it printed the whole report and then died. Since `\tie` retired, that is
+now the normal path: it would have hit the baseline re-score *and* the one-shot exam read.
+
+⛔ **THE DOTTED-BARLINE FLAG'S PREMISE FAILED ITS OWN MEASUREMENT.** **0 of 24** sampled editions rule
+one (0 of ~17 with an eligible meter); at `USUL_BAR_RATE = 0.35` that has probability ~0.0016. And the
+false `\repstart`s it was built to fix sit **97% immediately after `\sigend`** and 92% at a system
+start — a distribution a rule drawn *inside* bars cannot produce. The pixels show clef → key signature
+→ **stacked time signature**, no repeat mark, no dashed rule. **A real hole, but a different one.**
+⭐ Ordering the count before the render is the only reason this was caught before ~2.4 h of rendering.
+**The owner chose to render all three flags anyway**; the finding stands on the record.
+
+**The corpus.** `strips_v7_final`, **40,795 strips**, three flags. ⭐ **The first synthetic corpus with
+zero `\tie`** (v4/v5/v6 carry 1,185 rows each — they predate the 2026-08-22 retirement). Every
+Round-3 pool verified tie-free. `verify-labels` with the same three flags: 40,795 exact, 18 mismatched
+(the known `every`-mode accidental-count class, excluded from the manifest as `tupnew`'s 15 were),
+0 drift. `stitch-test` ALL PASS.
+
+⚠ **The render crashed at 207/208** on a dev-server timeout, and `manifest.jsonl` is written only at
+the very end — so 40,718 PNGs sat there unusable. Per-piece shards + `.done` markers made it
+resumable; the re-run left 0 orphan and 0 missing PNGs. ⚠ **The completion watch reported exit 0**
+because it watched for the process to *end*, not to end *well*. Watch conditions need to cover the
+failure path.
+
+**Launch files.** `make_round3_colab_zip.sh` gained a `final` arm (b8 only, `concaveTuplet`/`usulBarline`
+checked against the arm's wanted value); the four arms keep the retired pools on purpose, since that is
+what they trained on. The final run got its **own** notebook rather than editing the staccato arm's
+record. ⚠ **`:5`, not `:9`** — re-measured, not carried over: 3,546 train-side b8 strips ×5 = **33.0%**
+of stage-2 batches, matching the old pools' ×9 at 33.9%; `:9` would put real at 47.0%.
+
+**Zip built and gated**: 771 MB, 44,769 files, `strips_b8` only (0 files from any retired pool), no
+exam strips. Flag-by-flag visual check in `data/synthetic/_flag_check/`, found by sha256-diffing two
+renders because label-free flags leave no manifest trace.
+
+**§3c settled by the owner, and it is a third reading**: the ship call is taken by eye on an error
+classification, not by comparing one number to 75%. The primary is still computed and reported and the
+exam is still one-shot. ⚠ It creates a prerequisite the old plan lacked — an error taxonomy — which is
+**not built**, and it was decided before any Round-3 model existed, which is what keeps it legitimate.
+
+
 ## 2026-08-31 (latest) — Round 3's data is settled: the queues are named, the exam is done, and the third render flag is drawn
 
 The day closed the labelling side of Round 3 and built the last thing the final render was waiting

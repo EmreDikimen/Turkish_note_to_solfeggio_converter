@@ -44,17 +44,30 @@ case "$ARM" in
   tupctl) WANT_LEGACY=true;  WANT_STACCATO=false; CORPUS=strips_v5_tupctl ;;
   scan)   WANT_LEGACY=false; WANT_STACCATO=false; CORPUS=strips_v5_tupnew ;;   # same corpus — see the header
   stac)   WANT_LEGACY=false; WANT_STACCATO=true;  CORPUS=strips_v6_stac ;;
-  *) echo "usage: $0 tupnew|tupctl|scan|stac"; exit 2 ;;
+  final)  WANT_LEGACY=false; WANT_STACCATO=true;  CORPUS=strips_v7_final
+          WANT_CONCAVE=true; WANT_USUL=true;      REAL_POOLS="data/real/rung3/strips_b8" ;;
+  *) echo "usage: $0 tupnew|tupctl|scan|stac|final"; exit 2 ;;
 esac
+# Defaults for the four ARMS. ⛔ No arm may carry --concave-tuplet or --usul-barline: each changes a
+# share of every piece, so an arm with one on is not comparable to one without (docs/rung3/tuplets.md).
+: "${WANT_CONCAVE:=false}"
+: "${WANT_USUL:=false}"
+# ⚠ THE ARMS KEEP THE RETIRED POOLS ON PURPOSE — that is what they trained on, so a rebuilt arm zip
+# still reproduces its own run. ⛔ `final` must NOT: strips_nota / strips_r1 / strips_tup are the
+# SAME MUSIC on the RETIRED slicer's crops, superseded by strips_b8 (3,936 strips, current crops).
+# Passing them beside b8 duplicates the music at two geometries; passing them instead of it trains
+# the graded model on crops the app no longer cuts — silently, nothing downstream checks.
+: "${REAL_POOLS:=data/real/rung3/strips_nota data/real/rung3/strips_r1 data/real/rung3/strips_tup}"
 # `--staccato-noise` on verify-labels too: the verifier renders its own comparison pixels, so an arm
 # gated without the flag would be checking a different image than the corpus ships.
 VERIFY_FLAGS="--thin-sharps"
 [ "$WANT_STACCATO" = true ] && VERIFY_FLAGS="$VERIFY_FLAGS --staccato-noise"
+[ "$WANT_CONCAVE" = true ] && VERIFY_FLAGS="$VERIFY_FLAGS --concave-tuplet"
+[ "$WANT_USUL" = true ] && VERIFY_FLAGS="$VERIFY_FLAGS --usul-barline"
 
 STRIPS=data/synthetic/$CORPUS
 SPLIT=data/split_v4.json
 TESTSET=data/real/rung3/testset.json
-REAL_POOLS="data/real/rung3/strips_nota data/real/rung3/strips_r1 data/real/rung3/strips_tup"
 OUT=data/colab/tnc_round3_${ARM}_colab.zip
 
 mkdir -p data/colab
@@ -73,20 +86,27 @@ import json,sys
 c=json.load(open('$CFG'))
 want = '$WANT_LEGACY' == 'true'
 want_stac = '$WANT_STACCATO' == 'true'
-# staccatoNoise / maxMeasures postdate strips_v5_*: an ABSENT key means the flag was off, so read
-# them with a default rather than 'is False', which would fail every pre-2026-08-15 corpus.
+want_conc = '$WANT_CONCAVE' == 'true'
+want_usul = '$WANT_USUL' == 'true'
+# staccatoNoise / maxMeasures postdate strips_v5_*, concaveTuplet postdates 2026-08-19 and
+# usulBarline 2026-08-31: an ABSENT key means the flag was off, so read them with a default rather
+# than 'is False', which would fail every corpus older than the key.
 stac = bool(c.get('staccatoNoise', False))
 conc = bool(c.get('concaveTuplet', False))
-# No ARM may carry the concave tuplet mark: it is a diversity item for the FINAL model's render, and
-# inside an arm it would be a second variable (docs/rung3/tuplets.md).
+usul = bool(c.get('usulBarline', False))
+# ⛔ No ARM may carry the concave tuplet mark or the dotted barline: each is a diversity item for the
+# FINAL model's render, and inside an arm it would be a second variable (docs/rung3/tuplets.md).
+# The 'final' arm is the one that wants both, which is why these are compared against the wanted
+# value rather than hardcoded to False. (No backticks in here: this is a double-quoted shell string,
+# so a backtick would be command substitution — it ran and printed 'final: command not found'.)
 ok = (c.get('legacyTupletMark') is want and c.get('thinSharps') is True
-      and c.get('printNoise') is False and stac is want_stac and conc is False
-      and c.get('maxMeasures', None) is None)
+      and c.get('printNoise') is False and stac is want_stac and conc is want_conc
+      and usul is want_usul and c.get('maxMeasures', None) is None)
 print(f\"   render_config: legacyTupletMark={c.get('legacyTupletMark')} thinSharps={c.get('thinSharps')} \"
       f\"printNoise={c.get('printNoise')} staccatoNoise={stac} concaveTuplet={conc} \"
-      f\"maxMeasures={c.get('maxMeasures', None)}\")
+      f\"usulBarline={usul} maxMeasures={c.get('maxMeasures', None)}\")
 sys.exit(0 if ok else 1)
-" || { echo "ERROR: $CFG does not describe arm '$ARM' (want legacyTupletMark=$WANT_LEGACY, thinSharps=true, printNoise=false, staccatoNoise=$WANT_STACCATO, concaveTuplet=false, maxMeasures=null)"; exit 1; }
+" || { echo "ERROR: $CFG does not describe arm '$ARM' (want legacyTupletMark=$WANT_LEGACY, thinSharps=true, printNoise=false, staccatoNoise=$WANT_STACCATO, concaveTuplet=$WANT_CONCAVE, usulBarline=$WANT_USUL, maxMeasures=null)"; exit 1; }
 
 # The corpus must have passed the pixels-vs-labels verifier before it is worth a Colab run: a label
 # that disagrees with its own image is what cost Round 1.

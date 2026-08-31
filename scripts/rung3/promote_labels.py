@@ -72,6 +72,22 @@ def norm_label(text: str) -> str:
     return SPACED_32_RE.sub("32", " ".join(text.split()))
 
 
+# A queue row's `piece` column is normally the SOURCE stem, which is what load_piece_meta keys on.
+# ⚠ 27 of examv3's 663 rows carry the SymbTr stem there instead (a second producer wrote them), and
+# a metadata miss REJECTS the row — which would have silently dropped 27 hand-verdicted rows out of
+# the graded exam, leaving 8 pages no longer PAGE-COMPLETE. The strip FILENAME is the unambiguous
+# key: it is "<source stem>_p<N>_s<NN>_w<NN>.png". Validated before it was trusted (2026-08-31):
+# it agrees with the piece column on 636 of 636 well-formed rows and resolves 27 of 27 broken ones.
+# ⛔ Do NOT reverse-map by SymbTr stem instead — two of the eight pieces have TWO source editions
+# (a nota and a ney print), so that key is ambiguous where this one is not.
+STRIP_SUFFIX_RE = re.compile(r"_p\d+_s\d+_w\d+$")
+
+
+def source_stem(image: str) -> str:
+    """The source-side stem a strip filename was cut from."""
+    return STRIP_SUFFIX_RE.sub("", Path(image).stem)
+
+
 def next_bak(path: Path) -> Path:
     for i in range(1, 100):
         bak = path.with_name(path.name + (".bak" if i == 1 else f".bak{i}"))
@@ -263,7 +279,7 @@ def main() -> int:
                                     reason=r.get("reason", ""), verdict=r["verdict"].strip())
                     counts["review_updated"] += 1
                 continue
-            meta = piece_meta.get(r["piece"])
+            meta = piece_meta.get(r["piece"]) or piece_meta.get(source_stem(image))
             if meta is None:
                 reject(kind, r, "no_piece_meta", r["piece"])
                 continue

@@ -1,0 +1,181 @@
+{
+ "generatedBy": "flag-sample set (scratch) \u2014 smallest pieces whose per-PIECE coins fire",
+ "corpus": "/Users/emredikimen/Downloads/SymbTr-2.0.0/txt",
+ "projectedTotals": {
+  "\\bakiyeSharp": 34066,
+  "\\komaFlat": 19922,
+  "\\kucukFlat": 3087,
+  "\\komaSharp": 4962,
+  "\\bakiyeFlat": 19361,
+  "\\kucukSharp": 2918
+ },
+ "pieces": [
+  {
+   "slug": "muhayyersunbule--kupe--duyek--dilberanin--ahmet_avni_konuk",
+   "txt": "muhayyersunbule--kupe--duyek--dilberanin--ahmet_avni_konuk.txt",
+   "file": "/scores/muhayyersunbule--kupe--duyek--dilberanin--ahmet_avni_konuk.json",
+   "makam": "muhayyersunbule",
+   "form": "kupe",
+   "usul": "duyek",
+   "hasLyrics": true,
+   "events": 90,
+   "measures": 8,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 7,
+     "\\bakiyeFlat": 12,
+     "\\kucukFlat": 3,
+     "\\komaSharp": 1,
+     "\\komaFlat": 7
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "isfahan--sarki--duyek--gelirken_meclise--haham_nesim",
+   "txt": "isfahan--sarki--duyek--gelirken_meclise--haham_nesim.txt",
+   "file": "/scores/isfahan--sarki--duyek--gelirken_meclise--haham_nesim.json",
+   "makam": "isfahan",
+   "form": "sarki",
+   "usul": "duyek",
+   "hasLyrics": true,
+   "events": 320,
+   "measures": 24,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 21,
+     "\\komaSharp": 8,
+     "\\komaFlat": 30,
+     "\\kucukFlat": 4
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "muhayyerkurdi--kupe--musemmen--bir--ahmet_avni_konuk",
+   "txt": "muhayyerkurdi--kupe--musemmen--bir--ahmet_avni_konuk.txt",
+   "file": "/scores/muhayyerkurdi--kupe--musemmen--bir--ahmet_avni_konuk.json",
+   "makam": "muhayyerkurdi",
+   "form": "kupe",
+   "usul": "musemmen",
+   "hasLyrics": true,
+   "events": 79,
+   "measures": 8,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaFlat": 5,
+     "\\bakiyeFlat": 5,
+     "\\bakiyeSharp": 2,
+     "\\komaSharp": 1,
+     "\\kucukFlat": 7
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "zavil--seyir--sofyan----sefik_gurmeric",
+   "txt": "zavil--seyir--sofyan----sefik_gurmeric.txt",
+   "file": "/scores/zavil--seyir--sofyan----sefik_gurmeric.json",
+   "makam": "zavil",
+   "form": "seyir",
+   "usul": "sofyan",
+   "hasLyrics": false,
+   "events": 106,
+   "measures": 16,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 9,
+     "\\bakiyeSharp": 4,
+     "\\bakiyeFlat": 3
+    }
+   },
+   "pairableShare": {
+    "0": 0.6
+   },
+   "addedBy": "boost:\\kucukSharp"
+  },
+  {
+   "slug": "suzinak--sarki--agiraksak--sonbahar_goncasi_mi--mustafa_nafiz_irmak",
+   "txt": "suzinak--sarki--agiraksak--sonbahar_goncasi_mi--mustafa_nafiz_irmak.txt",
+   "file": "/scores/suzinak--sarki--agiraksak--sonbahar_goncasi_mi--mustafa_nafiz_irmak.json",
+   "makam": "suzinak",
+   "form": "sarki",
+   "usul": "agiraksak",
+   "hasLyrics": true,
+   "events": 642,
+   "measures": 28,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "-9": {
+     "\\komaFlat": 155,
+     "\\bakiyeFlat": 133,
+     "\\bakiyeSharp": 101
+    },
+    "0": {
+     "\\bakiyeSharp": 91,
+     "\\bakiyeFlat": 133,
+     "\\komaFlat": 64,
+     "\\kucukFlat": 4
+    },
+    "9": {
+     "\\bakiyeSharp": 155,
+     "\\komaSharp": 100,
+     "\\bakiyeFlat": 33
+    }
+   },
+   "pairableShare": {
+    "-9": 0.0,
+    "0": 0.0,
+    "9": 0.0
+   }
+  },
+  {
+   "slug": "beyati--sarki--aksak--delisin_deli--selahattin_pinar",
+   "txt": "beyati--sarki--aksak--delisin_deli--selahattin_pinar.txt",
+   "file": "/scores/beyati--sarki--aksak--delisin_deli--selahattin_pinar.json",
+   "makam": "beyati",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 442,
+   "measures": 40,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaFlat": 42,
+     "\\bakiyeSharp": 25,
+     "\\komaSharp": 11,
+     "\\kucukFlat": 3,
+     "\\bakiyeFlat": 1
+    }
+   },
+   "pairableShare": {
+    "0": 0.051
+   }
+  }
+ ]
+}

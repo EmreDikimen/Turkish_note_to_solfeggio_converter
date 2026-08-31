@@ -1,0 +1,89 @@
+{
+ "generatedBy": "flag-sample: concave-tuplet pieces that actually carry \\tup3",
+ "corpus": "/Users/emredikimen/Downloads/SymbTr-2.0.0/txt",
+ "projectedTotals": {
+  "\\bakiyeSharp": 34066,
+  "\\komaFlat": 19922,
+  "\\kucukFlat": 3087,
+  "\\komaSharp": 4962,
+  "\\bakiyeFlat": 19361,
+  "\\kucukSharp": 2918
+ },
+ "pieces": [
+  {
+   "slug": "hicaz-uzzal--sarki--turkaksagi--gel_nazli--udi_hirant",
+   "txt": "hicaz-uzzal--sarki--turkaksagi--gel_nazli--udi_hirant.txt",
+   "file": "/scores/hicaz-uzzal--sarki--turkaksagi--gel_nazli--udi_hirant.json",
+   "makam": "hicaz-uzzal",
+   "form": "sarki",
+   "usul": "turkaksagi",
+   "hasLyrics": true,
+   "events": 488,
+   "measures": 56,
+   "transposes": [
+    -9,
+    -1,
+    0
+   ],
+   "accCounts": {
+    "-9": {
+     "\\komaFlat": 80,
+     "\\bakiyeSharp": 50,
+     "\\bakiyeFlat": 34
+    },
+    "-1": {
+     "\\komaFlat": 345,
+     "\\bakiyeSharp": 118
+    },
+    "0": {
+     "\\bakiyeSharp": 83,
+     "\\bakiyeFlat": 34,
+     "\\kucukSharp": 1
+    }
+   },
+   "pairableShare": {
+    "-9": 0.091,
+    "-1": 0.073,
+    "0": 0.091
+   }
+  },
+  {
+   "slug": "huzzam--sarki--turkaksagi--sevdasi_henuz--yorgo_bacanos",
+   "txt": "huzzam--sarki--turkaksagi--sevdasi_henuz--yorgo_bacanos.txt",
+   "file": "/scores/huzzam--sarki--turkaksagi--sevdasi_henuz--yorgo_bacanos.json",
+   "makam": "huzzam",
+   "form": "sarki",
+   "usul": "turkaksagi",
+   "hasLyrics": true,
+   "events": 484,
+   "measures": 56,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "-9": {
+     "\\komaFlat": 109,
+     "\\bakiyeFlat": 88,
+     "\\bakiyeSharp": 52
+    },
+    "0": {
+     "\\bakiyeSharp": 89,
+     "\\bakiyeFlat": 88,
+     "\\kucukFlat": 10,
+     "\\komaFlat": 21
+    },
+    "9": {
+     "\\bakiyeSharp": 109,
+     "\\komaSharp": 88
+    }
+   },
+   "pairableShare": {
+    "-9": 0.018,
+    "0": 0.018,
+    "9": 0.0
+   }
+  }
+ ]
+}

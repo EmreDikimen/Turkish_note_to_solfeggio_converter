@@ -1,0 +1,1262 @@
+{
+ "generatedBy": "scripts/rung3/make_usul_pools.py --write-list",
+ "corpus": "/Users/emredikimen/Downloads/SymbTr-2.0.0/txt",
+ "projectedTotals": {
+  "\\bakiyeSharp": 34066,
+  "\\komaFlat": 19922,
+  "\\kucukFlat": 3087,
+  "\\komaSharp": 4962,
+  "\\bakiyeFlat": 19361,
+  "\\kucukSharp": 2918
+ },
+ "pieces": [
+  {
+   "slug": "huseyni--sarki--musemmen--gecti_sevdalarla--sukru_tunar",
+   "txt": "huseyni--sarki--musemmen--gecti_sevdalarla--sukru_tunar.txt",
+   "file": "/scores/huseyni--sarki--musemmen--gecti_sevdalarla--sukru_tunar.json",
+   "makam": "huseyni",
+   "form": "sarki",
+   "usul": "musemmen",
+   "hasLyrics": true,
+   "events": 523,
+   "measures": 54,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaFlat": 31,
+     "\\bakiyeSharp": 57,
+     "\\kucukFlat": 2,
+     "\\komaSharp": 5
+    }
+   },
+   "pairableShare": {
+    "0": 0.019
+   }
+  },
+  {
+   "slug": "huseyni--beste--cenber--nigaha_ruhsat--zaharya",
+   "txt": "huseyni--beste--cenber--nigaha_ruhsat--zaharya.txt",
+   "file": "/scores/huseyni--beste--cenber--nigaha_ruhsat--zaharya.json",
+   "makam": "huseyni",
+   "form": "beste",
+   "usul": "cenber",
+   "hasLyrics": false,
+   "events": 470,
+   "measures": 62,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 42,
+     "\\komaFlat": 57,
+     "\\kucukFlat": 3,
+     "\\komaSharp": 8
+    },
+    "-9": {
+     "\\komaFlat": 97,
+     "\\bakiyeSharp": 81,
+     "\\komaSharp": 8
+    },
+    "9": {
+     "\\bakiyeFlat": 76,
+     "\\bakiyeSharp": 99
+    }
+   },
+   "pairableShare": {
+    "0": 0.344,
+    "-9": 0.344,
+    "9": 0.311
+   }
+  },
+  {
+   "slug": "nikriz--sarki--aksak--elmas_senin--tanburi_mustafa_cavus",
+   "txt": "nikriz--sarki--aksak--elmas_senin--tanburi_mustafa_cavus.txt",
+   "file": "/scores/nikriz--sarki--aksak--elmas_senin--tanburi_mustafa_cavus.json",
+   "makam": "nikriz",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 570,
+   "measures": 45,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 100,
+     "\\bakiyeFlat": 42,
+     "\\komaSharp": 26
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "kurdilihicazkar--sarki--aksak--muntazir_tesrifine--haci_arif_bey",
+   "txt": "kurdilihicazkar--sarki--aksak--muntazir_tesrifine--haci_arif_bey.txt",
+   "file": "/scores/kurdilihicazkar--sarki--aksak--muntazir_tesrifine--haci_arif_bey.json",
+   "makam": "kurdilihicazkar",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 520,
+   "measures": 58,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaFlat": 56,
+     "\\kucukFlat": 120,
+     "\\bakiyeFlat": 16
+    }
+   },
+   "pairableShare": {
+    "0": 0.07
+   }
+  },
+  {
+   "slug": "muhayyer--turku--raksaksagi--istanbuldan_uskudara--",
+   "txt": "muhayyer--turku--raksaksagi--istanbuldan_uskudara--.txt",
+   "file": "/scores/muhayyer--turku--raksaksagi--istanbuldan_uskudara--.json",
+   "makam": "muhayyer",
+   "form": "turku",
+   "usul": "raksaksagi",
+   "hasLyrics": true,
+   "events": 465,
+   "measures": 60,
+   "transposes": [
+    -9,
+    -4,
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaSharp": 24,
+     "\\komaFlat": 72
+    },
+    "-9": {
+     "\\bakiyeFlat": 24,
+     "\\bakiyeSharp": 81,
+     "\\komaFlat": 72
+    },
+    "-4": {
+     "\\bakiyeFlat": 276,
+     "\\komaSharp": 24,
+     "\\bakiyeSharp": 72
+    }
+   },
+   "pairableShare": {
+    "0": 0.288,
+    "-9": 0.288,
+    "-4": 0.169
+   }
+  },
+  {
+   "slug": "sehnaz--sarki--senginsemai--feryad_ki--tanburi_cemil_bey",
+   "txt": "sehnaz--sarki--senginsemai--feryad_ki--tanburi_cemil_bey.txt",
+   "file": "/scores/sehnaz--sarki--senginsemai--feryad_ki--tanburi_cemil_bey.json",
+   "makam": "sehnaz",
+   "form": "sarki",
+   "usul": "senginsemai",
+   "hasLyrics": true,
+   "events": 489,
+   "measures": 53,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 67,
+     "\\komaSharp": 58,
+     "\\bakiyeFlat": 22,
+     "\\kucukSharp": 1
+    }
+   },
+   "pairableShare": {
+    "0": 0.115
+   }
+  },
+  {
+   "slug": "hicaz--pesrev--fahte----neyzen_salim_bey",
+   "txt": "hicaz--pesrev--fahte----neyzen_salim_bey.txt",
+   "file": "/scores/hicaz--pesrev--fahte----neyzen_salim_bey.json",
+   "makam": "hicaz",
+   "form": "pesrev",
+   "usul": "fahte",
+   "hasLyrics": true,
+   "events": 551,
+   "measures": 60,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeFlat": 55,
+     "\\bakiyeSharp": 115,
+     "\\kucukSharp": 2
+    }
+   },
+   "pairableShare": {
+    "0": 0.085
+   },
+   "addedBy": "boost:\\kucukSharp"
+  },
+  {
+   "slug": "muhayyer--sarki--aksak--gunes_gibi--sadettin_kaynak",
+   "txt": "muhayyer--sarki--aksak--gunes_gibi--sadettin_kaynak.txt",
+   "file": "/scores/muhayyer--sarki--aksak--gunes_gibi--sadettin_kaynak.json",
+   "makam": "muhayyer",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 530,
+   "measures": 54,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 46,
+     "\\komaFlat": 56,
+     "\\komaSharp": 4,
+     "\\kucukFlat": 16,
+     "\\bakiyeFlat": 2
+    }
+   },
+   "pairableShare": {
+    "0": 0.038
+   }
+  },
+  {
+   "slug": "nisaburek--sarki--turkaksagi--bir_soz_dedi--munir_nurettin_selcuk",
+   "txt": "nisaburek--sarki--turkaksagi--bir_soz_dedi--munir_nurettin_selcuk.txt",
+   "file": "/scores/nisaburek--sarki--turkaksagi--bir_soz_dedi--munir_nurettin_selcuk.json",
+   "makam": "nisaburek",
+   "form": "sarki",
+   "usul": "turkaksagi",
+   "hasLyrics": true,
+   "events": 647,
+   "measures": 112,
+   "transposes": [
+    -9,
+    -5,
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 152,
+     "\\kucukSharp": 45,
+     "\\bakiyeFlat": 13,
+     "\\komaSharp": 8
+    },
+    "-9": {
+     "\\komaFlat": 120,
+     "\\bakiyeSharp": 36,
+     "\\bakiyeFlat": 21
+    },
+    "-5": {
+     "\\bakiyeSharp": 369,
+     "\\komaSharp": 136,
+     "\\komaFlat": 41
+    }
+   },
+   "pairableShare": {
+    "0": 0.748,
+    "-9": 0.784,
+    "-5": 0.559
+   }
+  },
+  {
+   "slug": "tarzinevin--seyir--sofyan----sefik_gurmeric",
+   "txt": "tarzinevin--seyir--sofyan----sefik_gurmeric.txt",
+   "file": "/scores/tarzinevin--seyir--sofyan----sefik_gurmeric.json",
+   "makam": "tarzinevin",
+   "form": "seyir",
+   "usul": "sofyan",
+   "hasLyrics": false,
+   "events": 85,
+   "measures": 16,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeFlat": 9,
+     "\\komaFlat": 7,
+     "\\kucukFlat": 16
+    },
+    "-9": {
+     "\\bakiyeSharp": 41,
+     "\\bakiyeFlat": 5,
+     "\\komaFlat": 7,
+     "\\komaSharp": 4
+    },
+    "9": {
+     "\\bakiyeFlat": 11,
+     "\\bakiyeSharp": 13
+    }
+   },
+   "pairableShare": {
+    "0": 1.0,
+    "-9": 1.0,
+    "9": 1.0
+   }
+  },
+  {
+   "slug": "sehnaz--yuruksemai--yuruksemai--dem-i_visali--kara_ismail_aga",
+   "txt": "sehnaz--yuruksemai--yuruksemai--dem-i_visali--kara_ismail_aga.txt",
+   "file": "/scores/sehnaz--yuruksemai--yuruksemai--dem-i_visali--kara_ismail_aga.json",
+   "makam": "sehnaz",
+   "form": "yuruksemai",
+   "usul": "yuruksemai",
+   "hasLyrics": true,
+   "events": 550,
+   "measures": 64,
+   "transposes": [
+    -9,
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 103,
+     "\\komaSharp": 39,
+     "\\bakiyeFlat": 30
+    },
+    "-9": {
+     "\\bakiyeSharp": 65,
+     "\\bakiyeFlat": 69,
+     "\\komaFlat": 73
+    }
+   },
+   "pairableShare": {
+    "0": 0.143,
+    "-9": 0.159
+   }
+  },
+  {
+   "slug": "nisaburek--sarki--turkaksagi--varsin_gonul--lemi_atli",
+   "txt": "nisaburek--sarki--turkaksagi--varsin_gonul--lemi_atli.txt",
+   "file": "/scores/nisaburek--sarki--turkaksagi--varsin_gonul--lemi_atli.json",
+   "makam": "nisaburek",
+   "form": "sarki",
+   "usul": "turkaksagi",
+   "hasLyrics": true,
+   "events": 385,
+   "measures": 78,
+   "transposes": [
+    -9,
+    -5,
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 36,
+     "\\bakiyeSharp": 59,
+     "\\komaSharp": 10,
+     "\\bakiyeFlat": 3
+    },
+    "-9": {
+     "\\komaFlat": 46,
+     "\\bakiyeSharp": 14,
+     "\\bakiyeFlat": 13
+    },
+    "-5": {
+     "\\bakiyeSharp": 232,
+     "\\komaSharp": 48,
+     "\\komaFlat": 14
+    }
+   },
+   "pairableShare": {
+    "0": 0.987,
+    "-9": 0.987,
+    "-5": 0.922
+   }
+  },
+  {
+   "slug": "suzidilara--seyir--sofyan----eb",
+   "txt": "suzidilara--seyir--sofyan----eb.txt",
+   "file": "/scores/suzidilara--seyir--sofyan----eb.json",
+   "makam": "suzidilara",
+   "form": "seyir",
+   "usul": "sofyan",
+   "hasLyrics": false,
+   "events": 89,
+   "measures": 16,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 6,
+     "\\bakiyeSharp": 1,
+     "\\bakiyeFlat": 2
+    }
+   },
+   "pairableShare": {
+    "0": 0.867
+   },
+   "addedBy": "boost:\\kucukSharp"
+  },
+  {
+   "slug": "mahur--tavsanca--duyek--ne_ararsam--iii_selim",
+   "txt": "mahur--tavsanca--duyek--ne_ararsam--iii_selim.txt",
+   "file": "/scores/mahur--tavsanca--duyek--ne_ararsam--iii_selim.json",
+   "makam": "mahur",
+   "form": "tavsanca",
+   "usul": "duyek",
+   "hasLyrics": false,
+   "events": 356,
+   "measures": 32,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 44,
+     "\\bakiyeSharp": 8,
+     "\\komaSharp": 14
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "suzinak--pesrev--cenber----tatyos_efendi",
+   "txt": "suzinak--pesrev--cenber----tatyos_efendi.txt",
+   "file": "/scores/suzinak--pesrev--cenber----tatyos_efendi.json",
+   "makam": "suzinak",
+   "form": "pesrev",
+   "usul": "cenber",
+   "hasLyrics": true,
+   "events": 890,
+   "measures": 96,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "-9": {
+     "\\bakiyeFlat": 182,
+     "\\bakiyeSharp": 154,
+     "\\komaFlat": 202
+    },
+    "0": {
+     "\\bakiyeFlat": 182,
+     "\\komaFlat": 97,
+     "\\bakiyeSharp": 110,
+     "\\kucukFlat": 19
+    },
+    "9": {
+     "\\komaSharp": 130,
+     "\\bakiyeSharp": 202,
+     "\\bakiyeFlat": 57
+    }
+   },
+   "pairableShare": {
+    "-9": 0.116,
+    "0": 0.116,
+    "9": 0.095
+   }
+  },
+  {
+   "slug": "sehnaz--divan--sofyan--vardim_ki--nevres_pasa",
+   "txt": "sehnaz--divan--sofyan--vardim_ki--nevres_pasa.txt",
+   "file": "/scores/sehnaz--divan--sofyan--vardim_ki--nevres_pasa.json",
+   "makam": "sehnaz",
+   "form": "divan",
+   "usul": "sofyan",
+   "hasLyrics": true,
+   "events": 764,
+   "measures": 98,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 100,
+     "\\komaSharp": 40,
+     "\\bakiyeFlat": 70
+    },
+    "-9": {
+     "\\komaFlat": 94,
+     "\\bakiyeFlat": 110,
+     "\\bakiyeSharp": 30
+    },
+    "9": {
+     "\\bakiyeSharp": 100,
+     "\\bakiyeFlat": 100,
+     "\\komaSharp": 110
+    }
+   },
+   "pairableShare": {
+    "0": 0.423,
+    "-9": 0.423,
+    "9": 0.237
+   }
+  },
+  {
+   "slug": "hicaz--rumeliturkusu--aksak--yine_de--",
+   "txt": "hicaz--rumeliturkusu--aksak--yine_de--.txt",
+   "file": "/scores/hicaz--rumeliturkusu--aksak--yine_de--.json",
+   "makam": "hicaz",
+   "form": "rumeliturkusu",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 384,
+   "measures": 33,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 47,
+     "\\komaSharp": 17,
+     "\\bakiyeFlat": 37,
+     "\\komaFlat": 6
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "mahur--sarki--duyek--gul_mevsimi--tanburi_mustafa_cavus",
+   "txt": "mahur--sarki--duyek--gul_mevsimi--tanburi_mustafa_cavus.txt",
+   "file": "/scores/mahur--sarki--duyek--gul_mevsimi--tanburi_mustafa_cavus.json",
+   "makam": "mahur",
+   "form": "sarki",
+   "usul": "duyek",
+   "hasLyrics": false,
+   "events": 928,
+   "measures": 83,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukFlat": 20,
+     "\\kucukSharp": 162,
+     "\\bakiyeFlat": 34,
+     "\\bakiyeSharp": 2
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "suzidil--sarki--turkaksagi--vadeyle_vaslin--eyyubi_mehmet_bey",
+   "txt": "suzidil--sarki--turkaksagi--vadeyle_vaslin--eyyubi_mehmet_bey.txt",
+   "file": "/scores/suzidil--sarki--turkaksagi--vadeyle_vaslin--eyyubi_mehmet_bey.json",
+   "makam": "suzidil",
+   "form": "sarki",
+   "usul": "turkaksagi",
+   "hasLyrics": true,
+   "events": 412,
+   "measures": 56,
+   "transposes": [
+    -9,
+    -4,
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaSharp": 33,
+     "\\bakiyeSharp": 73
+    },
+    "-9": {
+     "\\bakiyeFlat": 33,
+     "\\bakiyeSharp": 144
+    },
+    "-4": {
+     "\\bakiyeFlat": 218,
+     "\\komaSharp": 33
+    }
+   },
+   "pairableShare": {
+    "0": 0.309,
+    "-9": 0.309,
+    "-4": 0.309
+   }
+  },
+  {
+   "slug": "sehnazbuselik--agirsemai--aksaksemai--kimseyi_dil--kucuk_muezzin",
+   "txt": "sehnazbuselik--agirsemai--aksaksemai--kimseyi_dil--kucuk_muezzin.txt",
+   "file": "/scores/sehnazbuselik--agirsemai--aksaksemai--kimseyi_dil--kucuk_muezzin.json",
+   "makam": "sehnazbuselik",
+   "form": "agirsemai",
+   "usul": "aksaksemai",
+   "hasLyrics": true,
+   "events": 740,
+   "measures": 64,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 96,
+     "\\komaSharp": 58
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "mahur--pesrev--hafif----rauf_yekta",
+   "txt": "mahur--pesrev--hafif----rauf_yekta.txt",
+   "file": "/scores/mahur--pesrev--hafif----rauf_yekta.json",
+   "makam": "mahur",
+   "form": "pesrev",
+   "usul": "hafif",
+   "hasLyrics": true,
+   "events": 427,
+   "measures": 64,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 44,
+     "\\bakiyeSharp": 8,
+     "\\komaFlat": 12,
+     "\\bakiyeFlat": 2,
+     "\\komaSharp": 1
+    },
+    "-9": {
+     "\\komaFlat": 20,
+     "\\bakiyeSharp": 46,
+     "\\bakiyeFlat": 3
+    },
+    "9": {
+     "\\bakiyeFlat": 119,
+     "\\bakiyeSharp": 20,
+     "\\komaSharp": 3
+    }
+   },
+   "pairableShare": {
+    "0": 0.444,
+    "-9": 0.413,
+    "9": 0.317
+   }
+  },
+  {
+   "slug": "nihavent--sarki--semai--dil_seni--civan_aga",
+   "txt": "nihavent--sarki--semai--dil_seni--civan_aga.txt",
+   "file": "/scores/nihavent--sarki--semai--dil_seni--civan_aga.json",
+   "makam": "nihavent",
+   "form": "sarki",
+   "usul": "semai",
+   "hasLyrics": true,
+   "events": 407,
+   "measures": 111,
+   "transposes": [
+    -9,
+    -1,
+    0
+   ],
+   "accCounts": {
+    "-9": {
+     "\\bakiyeSharp": 147,
+     "\\komaFlat": 23,
+     "\\bakiyeFlat": 6
+    },
+    "-1": {
+     "\\komaFlat": 249,
+     "\\bakiyeSharp": 98,
+     "\\bakiyeFlat": 7
+    },
+    "0": {
+     "\\kucukFlat": 76,
+     "\\bakiyeSharp": 22,
+     "\\bakiyeFlat": 6,
+     "\\komaFlat": 1
+    }
+   },
+   "pairableShare": {
+    "-9": 0.927,
+    "-1": 0.855,
+    "0": 0.945
+   }
+  },
+  {
+   "slug": "huzzam--sarki--aksak--sonbaharin_bizi--bekir_sitki_sezgin",
+   "txt": "huzzam--sarki--aksak--sonbaharin_bizi--bekir_sitki_sezgin.txt",
+   "file": "/scores/huzzam--sarki--aksak--sonbaharin_bizi--bekir_sitki_sezgin.json",
+   "makam": "huzzam",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 358,
+   "measures": 32,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaFlat": 24,
+     "\\bakiyeSharp": 69,
+     "\\bakiyeFlat": 48,
+     "\\kucukFlat": 11,
+     "\\kucukSharp": 6
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "mahur--zeybek--aydin--kirpigine_surme--refik_fersan",
+   "txt": "mahur--zeybek--aydin--kirpigine_surme--refik_fersan.txt",
+   "file": "/scores/mahur--zeybek--aydin--kirpigine_surme--refik_fersan.json",
+   "makam": "mahur",
+   "form": "zeybek",
+   "usul": "aydin",
+   "hasLyrics": true,
+   "events": 688,
+   "measures": 53,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 78,
+     "\\bakiyeSharp": 66,
+     "\\bakiyeFlat": 26
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "isfahan--sarki--duyek--gelirken_meclise--haham_nesim",
+   "txt": "isfahan--sarki--duyek--gelirken_meclise--haham_nesim.txt",
+   "file": "/scores/isfahan--sarki--duyek--gelirken_meclise--haham_nesim.json",
+   "makam": "isfahan",
+   "form": "sarki",
+   "usul": "duyek",
+   "hasLyrics": true,
+   "events": 320,
+   "measures": 24,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 21,
+     "\\komaSharp": 8,
+     "\\komaFlat": 30,
+     "\\kucukFlat": 4
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "sehnaz--aranagme--sofyan----",
+   "txt": "sehnaz--aranagme--sofyan----.txt",
+   "file": "/scores/sehnaz--aranagme--sofyan----.json",
+   "makam": "sehnaz",
+   "form": "aranagme",
+   "usul": "sofyan",
+   "hasLyrics": true,
+   "events": 168,
+   "measures": 16,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 22,
+     "\\bakiyeFlat": 14,
+     "\\komaSharp": 18
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "zavil--turku--aksak--bahceye_bar--",
+   "txt": "zavil--turku--aksak--bahceye_bar--.txt",
+   "file": "/scores/zavil--turku--aksak--bahceye_bar--.json",
+   "makam": "zavil",
+   "form": "turku",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 402,
+   "measures": 34,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 70,
+     "\\bakiyeSharp": 12,
+     "\\bakiyeFlat": 16
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   },
+   "addedBy": "boost:\\kucukSharp"
+  },
+  {
+   "slug": "hicazkar--pesrev--agirduyek----dede_salih_efendi",
+   "txt": "hicazkar--pesrev--agirduyek----dede_salih_efendi.txt",
+   "file": "/scores/hicazkar--pesrev--agirduyek----dede_salih_efendi.json",
+   "makam": "hicazkar",
+   "form": "pesrev",
+   "usul": "agirduyek",
+   "hasLyrics": false,
+   "events": 523,
+   "measures": 40,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 36,
+     "\\kucukFlat": 5,
+     "\\bakiyeFlat": 76,
+     "\\komaFlat": 87,
+     "\\komaSharp": 1
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "isfahan--sazsemaisi--aksaksemai----tanburi_cemil_bey",
+   "txt": "isfahan--sazsemaisi--aksaksemai----tanburi_cemil_bey.txt",
+   "file": "/scores/isfahan--sazsemaisi--aksaksemai----tanburi_cemil_bey.json",
+   "makam": "isfahan",
+   "form": "sazsemaisi",
+   "usul": "aksaksemai",
+   "hasLyrics": true,
+   "events": 726,
+   "measures": 96,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 43,
+     "\\komaFlat": 80,
+     "\\kucukFlat": 8,
+     "\\komaSharp": 2
+    },
+    "-9": {
+     "\\komaFlat": 116,
+     "\\bakiyeSharp": 179,
+     "\\bakiyeFlat": 2
+    },
+    "9": {
+     "\\bakiyeFlat": 102,
+     "\\bakiyeSharp": 119,
+     "\\komaSharp": 2
+    }
+   },
+   "pairableShare": {
+    "0": 0.505,
+    "-9": 0.505,
+    "9": 0.505
+   }
+  },
+  {
+   "slug": "vecdidil--pesrev--muhammes----ruhi_ayangil",
+   "txt": "vecdidil--pesrev--muhammes----ruhi_ayangil.txt",
+   "file": "/scores/vecdidil--pesrev--muhammes----ruhi_ayangil.json",
+   "makam": "vecdidil",
+   "form": "pesrev",
+   "usul": "muhammes",
+   "hasLyrics": true,
+   "events": 828,
+   "measures": 96,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 148,
+     "\\komaFlat": 26,
+     "\\komaSharp": 30,
+     "\\bakiyeFlat": 26,
+     "\\kucukFlat": 18
+    }
+   },
+   "pairableShare": {
+    "0": 0.105
+   }
+  },
+  {
+   "slug": "mahur--sarki--evfer--kalbimdeki_amal-i--muallim_ismail_hakki_bey",
+   "txt": "mahur--sarki--evfer--kalbimdeki_amal-i--muallim_ismail_hakki_bey.txt",
+   "file": "/scores/mahur--sarki--evfer--kalbimdeki_amal-i--muallim_ismail_hakki_bey.json",
+   "makam": "mahur",
+   "form": "sarki",
+   "usul": "evfer",
+   "hasLyrics": true,
+   "events": 351,
+   "measures": 32,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\kucukSharp": 26,
+     "\\bakiyeSharp": 19,
+     "\\komaFlat": 10,
+     "\\kucukFlat": 2,
+     "\\bakiyeFlat": 8
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "beyati--sarki--duyek--askn_fecri--sadettin_kaynak",
+   "txt": "beyati--sarki--duyek--askn_fecri--sadettin_kaynak.txt",
+   "file": "/scores/beyati--sarki--duyek--askn_fecri--sadettin_kaynak.json",
+   "makam": "beyati",
+   "form": "sarki",
+   "usul": "duyek",
+   "hasLyrics": true,
+   "events": 360,
+   "measures": 50,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaFlat": 31,
+     "\\bakiyeSharp": 36,
+     "\\kucukFlat": 2,
+     "\\komaSharp": 3
+    },
+    "-9": {
+     "\\bakiyeSharp": 62,
+     "\\komaFlat": 65,
+     "\\bakiyeFlat": 3
+    },
+    "9": {
+     "\\bakiyeFlat": 49,
+     "\\bakiyeSharp": 65,
+     "\\komaFlat": 2,
+     "\\komaSharp": 3
+    }
+   },
+   "pairableShare": {
+    "0": 0.306,
+    "-9": 0.306,
+    "9": 0.245
+   }
+  },
+  {
+   "slug": "hicaz--sarki--turkaksagi--gonlum_yarali--kadri_sencalar",
+   "txt": "hicaz--sarki--turkaksagi--gonlum_yarali--kadri_sencalar.txt",
+   "file": "/scores/hicaz--sarki--turkaksagi--gonlum_yarali--kadri_sencalar.json",
+   "makam": "hicaz",
+   "form": "sarki",
+   "usul": "turkaksagi",
+   "hasLyrics": true,
+   "events": 475,
+   "measures": 64,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\komaSharp": 22,
+     "\\bakiyeSharp": 88,
+     "\\bakiyeFlat": 39
+    },
+    "-9": {
+     "\\bakiyeFlat": 61,
+     "\\komaFlat": 82,
+     "\\bakiyeSharp": 24
+    },
+    "9": {
+     "\\komaSharp": 61,
+     "\\bakiyeFlat": 87,
+     "\\bakiyeSharp": 88
+    }
+   },
+   "pairableShare": {
+    "0": 0.19,
+    "-9": 0.254,
+    "9": 0.159
+   }
+  },
+  {
+   "slug": "hicaz--sarki--aksak--hastayim_yasiyorum--hirant_kenkiloglu",
+   "txt": "hicaz--sarki--aksak--hastayim_yasiyorum--hirant_kenkiloglu.txt",
+   "file": "/scores/hicaz--sarki--aksak--hastayim_yasiyorum--hirant_kenkiloglu.json",
+   "makam": "hicaz",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 406,
+   "measures": 32,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "-9": {
+     "\\komaFlat": 68,
+     "\\bakiyeFlat": 44,
+     "\\bakiyeSharp": 53
+    },
+    "0": {
+     "\\bakiyeSharp": 77,
+     "\\bakiyeFlat": 36,
+     "\\komaSharp": 8,
+     "\\komaFlat": 3
+    },
+    "9": {
+     "\\bakiyeSharp": 72,
+     "\\bakiyeFlat": 74,
+     "\\komaSharp": 44,
+     "\\komaFlat": 8
+    }
+   },
+   "pairableShare": {
+    "-9": 0.0,
+    "0": 0.0,
+    "9": 0.0
+   }
+  },
+  {
+   "slug": "segah--sarki--aksak--kirdin_ummidimi--fehmi_tokay",
+   "txt": "segah--sarki--aksak--kirdin_ummidimi--fehmi_tokay.txt",
+   "file": "/scores/segah--sarki--aksak--kirdin_ummidimi--fehmi_tokay.json",
+   "makam": "segah",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 362,
+   "measures": 32,
+   "transposes": [
+    -9,
+    -1,
+    0
+   ],
+   "accCounts": {
+    "-9": {
+     "\\komaFlat": 145,
+     "\\bakiyeSharp": 83
+    },
+    "-1": {
+     "\\komaFlat": 274,
+     "\\bakiyeSharp": 65,
+     "\\bakiyeFlat": 12
+    },
+    "0": {
+     "\\komaFlat": 108,
+     "\\bakiyeSharp": 63,
+     "\\kucukFlat": 3
+    }
+   },
+   "pairableShare": {
+    "-9": 0.0,
+    "-1": 0.0,
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "huzzam--sarki--aksak--indirip_yerlere--cinucen_tanrikorur",
+   "txt": "huzzam--sarki--aksak--indirip_yerlere--cinucen_tanrikorur.txt",
+   "file": "/scores/huzzam--sarki--aksak--indirip_yerlere--cinucen_tanrikorur.json",
+   "makam": "huzzam",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 396,
+   "measures": 28,
+   "transposes": [
+    -9,
+    -1,
+    0
+   ],
+   "accCounts": {
+    "-9": {
+     "\\komaFlat": 84,
+     "\\bakiyeSharp": 80,
+     "\\bakiyeFlat": 69
+    },
+    "-1": {
+     "\\komaFlat": 226,
+     "\\bakiyeFlat": 69,
+     "\\komaSharp": 49,
+     "\\bakiyeSharp": 12
+    },
+    "0": {
+     "\\komaFlat": 35,
+     "\\bakiyeFlat": 69,
+     "\\bakiyeSharp": 60,
+     "\\kucukFlat": 6
+    }
+   },
+   "pairableShare": {
+    "-9": 0.0,
+    "-1": 0.0,
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "acemkurdi--sazsemaisi--aksaksemai----ismail_hakki_bey",
+   "txt": "acemkurdi--sazsemaisi--aksaksemai----ismail_hakki_bey.txt",
+   "file": "/scores/acemkurdi--sazsemaisi--aksaksemai----ismail_hakki_bey.json",
+   "makam": "acemkurdi",
+   "form": "sazsemaisi",
+   "usul": "aksaksemai",
+   "hasLyrics": true,
+   "events": 747,
+   "measures": 60,
+   "transposes": [
+    -9,
+    -1,
+    0
+   ],
+   "accCounts": {
+    "-9": {
+     "\\bakiyeSharp": 274,
+     "\\komaFlat": 12,
+     "\\bakiyeFlat": 11,
+     "\\komaSharp": 7
+    },
+    "-1": {
+     "\\komaFlat": 633,
+     "\\bakiyeFlat": 16,
+     "\\bakiyeSharp": 76
+    },
+    "0": {
+     "\\komaFlat": 12,
+     "\\kucukFlat": 65,
+     "\\bakiyeFlat": 18
+    }
+   },
+   "pairableShare": {
+    "-9": 0.153,
+    "-1": 0.051,
+    "0": 0.186
+   }
+  },
+  {
+   "slug": "huseyni--sarki--devrihindi--dil-rubasin_sevdigim--hafiz_esref_efendi",
+   "txt": "huseyni--sarki--devrihindi--dil-rubasin_sevdigim--hafiz_esref_efendi.txt",
+   "file": "/scores/huseyni--sarki--devrihindi--dil-rubasin_sevdigim--hafiz_esref_efendi.json",
+   "makam": "huseyni",
+   "form": "sarki",
+   "usul": "devrihindi",
+   "hasLyrics": true,
+   "events": 474,
+   "measures": 37,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 39,
+     "\\komaSharp": 10,
+     "\\kucukFlat": 2,
+     "\\komaFlat": 52
+    }
+   },
+   "pairableShare": {
+    "0": 0.0
+   }
+  },
+  {
+   "slug": "pesendide--nakis--yuruksemai--ey_afet-i_can--dede_efendi",
+   "txt": "pesendide--nakis--yuruksemai--ey_afet-i_can--dede_efendi.txt",
+   "file": "/scores/pesendide--nakis--yuruksemai--ey_afet-i_can--dede_efendi.json",
+   "makam": "pesendide",
+   "form": "nakis",
+   "usul": "yuruksemai",
+   "hasLyrics": true,
+   "events": 582,
+   "measures": 69,
+   "transposes": [
+    -9,
+    0,
+    9
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 58,
+     "\\kucukFlat": 2,
+     "\\kucukSharp": 4,
+     "\\bakiyeFlat": 4,
+     "\\komaFlat": 14
+    },
+    "-9": {
+     "\\komaFlat": 72,
+     "\\bakiyeSharp": 62,
+     "\\bakiyeFlat": 4
+    },
+    "9": {
+     "\\bakiyeFlat": 136,
+     "\\bakiyeSharp": 72,
+     "\\komaSharp": 4
+    }
+   },
+   "pairableShare": {
+    "0": 0.279,
+    "-9": 0.279,
+    "9": 0.25
+   }
+  },
+  {
+   "slug": "sehnaz--sarki--aksak--denizin_dalgasini--semsettin_ziya",
+   "txt": "sehnaz--sarki--aksak--denizin_dalgasini--semsettin_ziya.txt",
+   "file": "/scores/sehnaz--sarki--aksak--denizin_dalgasini--semsettin_ziya.json",
+   "makam": "sehnaz",
+   "form": "sarki",
+   "usul": "aksak",
+   "hasLyrics": true,
+   "events": 566,
+   "measures": 56,
+   "transposes": [
+    0
+   ],
+   "accCounts": {
+    "0": {
+     "\\bakiyeSharp": 104,
+     "\\komaSharp": 21,
+     "\\bakiyeFlat": 27
+    }
+   },
+   "pairableShare": {
+    "0": 0.036
+   }
+  }
+ ]
+}

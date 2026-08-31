@@ -336,6 +336,12 @@ def main() -> int:
     # (`needsTieSplit` over that measure range) with no re-render. Nothing about that is blocked
     # by this change — it is a script, whenever the metric is wanted.
     if arc_denom == 0:
+        # ⚠ Must still BIND arc_rate — the JSON payload below reads it unconditionally, so leaving it
+        # unset raised UnboundLocalError *after* the whole report had printed. Every pool labelled
+        # since `\tie` retired (2026-08-22) is tie-free, examv3 included, so this is now the NORMAL
+        # path and not the rare one: it crashed the exam baseline re-score. nan, not None, to match
+        # `noarc_rate` below — the file already uses it to mean "this rate is undefined".
+        arc_rate = float("nan")
         print("== ARC-\\tup3  n/a on this pool: gold carries no \\tie (retired 2026-08-22) — see the "
               "note in eval_omr.py for how to rebuild the arc bucket from the manifest")
     else:

@@ -328,8 +328,9 @@ function mergeAtoms(parts: LabelAtom[]): LabelAtom {
  * Serialize one measure's events into unsplittable label atoms, applying the rhythm signs
  * (rhythm.ts — the SAME detection SheetView draws from):
  *  - a triplet group becomes ONE atom `\tup3 <members at ×3/2 written durations> \tupend`;
- *  - an undrawable long value becomes a tied written pair `x \tie x` (notes) or two plain
- *    side-by-side rests (rests are never tied);
+ *  - an undrawable long value becomes a written PAIR — for notes two plain notes of the same
+ *    pitch (the arc is still drawn, but it is label-free ink now that `\tie` is retired; see the
+ *    note at the split below), for rests two plain side-by-side rests;
  *  - a grace note (`\grace` + its small-8th spelling) glues onto the atom that follows it
  *    (its main note), so packing can't separate them. A grace with NO following event in its
  *    measure (only possible at the very end of a piece — `assignBars` moves a barline grace

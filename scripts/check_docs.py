@@ -182,7 +182,10 @@ def check_facts(fail) -> None:
     # Numbers that are pure noise (years, list indices, single digits) or intentionally dropped.
     ignore_num = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "2026", "12", "20", "60"}
     # Deliberate moves: the archive cites the pre-refactor path; the content still exists.
-    moved_paths = {"docs/HISTORY.md", "docs/RUNG3.md"}
+    # ⚠ Dropped ON PURPOSE, per docs/MAINTAINING.md: record the reason rather than the path.
+    #   PianoRoll.tsx — DELETED 2026-08-29 (owner) when Keman and Kanun became one
+    #   "Enstrüman üzerinde" tab; `PitchRangeNote` outlived it and is unrelated.
+    moved_paths = {"docs/HISTORY.md", "docs/RUNG3.md", "apps/web/src/PianoRoll.tsx"}
     missing_nums: dict[str, set[str]] = {}
     missing_paths: dict[str, set[str]] = {}
     for a in sorted(ARCHIVE.glob("*.md")):

@@ -44,6 +44,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -53,9 +54,22 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 
 
+# A written label GLUES the duration to its note ("f''32"); the model emits it SPACED ("f'' 32").
+# Measured: for 32 ONLY the two forms tokenize to identical ids, so normalising is lossless
+# (docs/rung3/labeling-queues.md). ⛔ 16 and 8 DO differ in id space — NEVER widen this pattern.
+# ⚠ Same rule and same regex as build_realval_v2.py's SPACED_32_RE, duplicated deliberately rather
+# than imported (that module runs argument parsing at import); change the two together.
+SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")
+
+
 def norm_label(text: str) -> str:
-    """Collapse the whitespace a hand-edited CSV cell may carry — tokens stay untouched."""
-    return " ".join(text.split())
+    """Collapse the whitespace a hand-edited CSV cell may carry — tokens stay untouched.
+
+    ⭐ Also re-glues a spaced `32`. Without it a hand-typed correction carrying the model's spacing
+    fails the round-trip gate as two unknown tokens — and an audit `fix` that fails the gate REMOVES
+    the manifest row, so the strip is deleted from training over a form measured to be identical in
+    id space. Found on 6 of the 576 b8-full corrections (2026-08-31)."""
+    return SPACED_32_RE.sub("32", " ".join(text.split()))
 
 
 def next_bak(path: Path) -> Path:

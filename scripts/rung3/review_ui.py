@@ -534,6 +534,7 @@ PAGE = r"""<!doctype html>
     <option value="reviewed">reviewed only</option>
     <option value="bad">bad only</option>
     <option value="agree">🤖 auto-accepted (agree)</option>
+    <option value="oldfix">⭐ old human fix</option>
     <option value="claude">🤖 claude verdicts</option>
     <option value="rule">🤖 rule drafts</option>
     <option value="all">all strips</option>
@@ -640,6 +641,14 @@ PAGE = r"""<!doctype html>
     It also holds the <b>agree-ws</b> rows, where the two sides differ only by a space the decoder
     put inside a note (<code>f'' 32</code> for <code>f''32</code>) and the label was kept as-is.
     Any verdict you give clears the 🤖 marker.
+    <b>⭐ old human fix</b> lists the rows where a person already corrected this same music in the
+    RETIRED pools (strips_nota / strips_r1 / strips_tup), which the b8 re-emit did not carry over:
+    <b>1,048</b> matched by measure span (<code>span</code>) and <b>165</b> by filename alone
+    (<code>name</code>, shown with a warning — that is where the re-slice trap lives).
+    <b>Ranked by what the row is worth</b>: the fixes that DISAGREE with the label b8 wrote come
+    first (<b>198</b> in b8-full, <b>441</b> in b8-review), then the ones the re-emit reproduced
+    by itself, which buy nothing. It is a HINT written against a DIFFERENT crop of the same bars, so it has its own
+    <b>✓ accept</b> / <b>✎ edit</b> beside it and plain <b>ok</b> never stores it.
   </div>
 </main>
 <div id="toast"></div>
@@ -763,6 +772,51 @@ function suggHtml(label,sugg){
   }
   return head+`<div class="toks">${out}</div>`;
 }
+// ⭐ THE OLD POOLS' HUMAN CORRECTION FOR THIS MUSIC (scripts/rung3/carry_old_fixes.py).
+// strips_b8 re-cut the training pools onto today's crops and the ~1,479 hand-typed corrections in
+// strips_nota / strips_r1 / strips_tup did not come with them. `oldfix` is what a person once
+// typed for the same measures — a HINT, never a verdict: it was written against a DIFFERENT crop
+// of the same music, and a label written against a crop that cut a beamed group in half is a
+// reading of a truncated picture. So it gets its own accept/edit pair beside the text it saves
+// (the actsHtml rule), and `ok`/`a` never touch it.
+// oldfix_kind: `span` = both slicers agree this crop covers the same measures of the same staff
+// row (validated: where this key says SAME, the SymbTr measure span agrees on 1,002 of 1,026 =
+// 97.7%); `name` = only the filename matched, which is exactly where the 248-row re-slice trap
+// lives — those are drawn with a warning.
+const ofSame=r=>tokenize(r.oldfix||'').join(' ')===tokenize(r.label||'').join(' ');
+const ofRank=r=>(ofSame(r)?2:0)+(r.oldfix_kind==='span'?0:1);
+function oldfixHtml(r){
+  const old=(r.oldfix||'').trim(); if(!old)return '';
+  const weak=r.oldfix_kind!=='span';
+  const head=`<div class="lblhead" style="color:var(--fix)">⭐ old human fix
+      <span class="badge b-reason">${esc(r.oldfix_kind||'?')}</span>
+      <span style="color:var(--mut)">${esc(r.oldfix_src||'')}</span>
+      ${weak?'<b style="color:var(--bad)"> — FILENAME MATCH ONLY: this crop may hold different music, read the picture</b>'
+             :' — same measures on the same staff row'}</div>`;
+  if(ofSame(r))
+    return `<div class="lblrow"><div class="lblhead" style="color:var(--ok)">⭐ old human fix
+      <span class="badge b-reason">${esc(r.oldfix_kind||'?')}</span>
+      <span style="color:var(--mut)">${esc(r.oldfix_src||'')}</span>
+      — identical to the label above: a person typed this same string against the old crop, and
+      the re-emit reproduced it. Nothing to carry; <b>ok</b> saves it.</div></div>`;
+  const acts=`<div class="lblacts">
+    <button class="mini acc" data-act="acc-oldfix" title="save this old correction as the verdict, exactly as shown">✓ accept</button>
+    <button class="mini edt" data-act="edit-oldfix" title="open the editor with the old correction as the draft">✎ edit</button>
+  </div>`;
+  const base=(r.label||'').trim();
+  let toks;
+  if(!base){ toks=tokenize(old).map(t=>tokHtml(t,'diff2')).join(''); }
+  else{
+    let out='';
+    for(const[op,at,bt]of align(tokenize(base),tokenize(old))){
+      if(op==='=')out+=tokHtml(bt,'');
+      else if(op==='-')out+=`<span class="tok diff" title="in the label, not in the old fix: ${esc(at)}">·</span>`;
+      else out+=tokHtml(bt,'diff2');
+    }
+    toks=out;
+  }
+  return `<div class="lblrow">${acts}${head}<div class="toks">${toks}</div></div>`;
+}
 function lint(txt){
   const toks=tokenize(txt), bad=[], known=new Set([...CMDS,'|']);
   let sig=0;
@@ -812,6 +866,7 @@ function visible(){
       &&(show==='all'||(show==='pending'?!x.r.verdict
         :show==='claude'?x.r.by==='claude'
         :show==='agree'?(x.r.by||'').startsWith('agree')
+        :show==='oldfix'?!!(x.r.oldfix||'').trim()
         :show==='rule'?(x.r.by||'').startsWith('rule')
         :show==='bad'?x.r.verdict==='bad'
         :!!x.r.verdict)));
@@ -819,6 +874,11 @@ function visible(){
   // the riskiest machine `ok` is the first thing read. Every other filter keeps CSV order,
   // which for the worst-first queues is itself a ranking.
   if(show==='agree')vis.sort((a,b)=>lp(a.r)-lp(b.r));
+  // old-fix list, ranked by what a row is WORTH. A fix identical to the label b8 already wrote
+  // buys nothing (the re-emit reproduced the person's correction on its own), so the ones that
+  // DISAGREE come first; within that, `span` (both slicers say this crop covers the same measures)
+  // before `name` (filename only — the re-slice trap).
+  if(show==='oldfix')vis.sort((a,b)=>ofRank(a.r)-ofRank(b.r));
   return vis;
 }
 // counts come from the rows when they are loaded (so a verdict shows up at once) and from the
@@ -856,7 +916,8 @@ function render(){
   $('pos').textContent=`${idx+1}/${vis.length} shown · ${d}/${t} done`;
   const v=(r.verdict?`<span class="badge b-${r.verdict}">${r.verdict}</span>`
                     :'<span class="badge b-pend">pending</span>')
-          +(r.by?`<span class="badge b-reason">🤖 ${esc(r.by)}</span>`:'');
+          +(r.by?`<span class="badge b-reason">🤖 ${esc(r.by)}</span>`:'')
+          +((r.oldfix||'').trim()?`<span class="badge b-reason">⭐ old fix (${esc(r.oldfix_kind||'?')})</span>`:'');
   $('meta').innerHTML=
     `${v} ${r.reason?`<span class="badge b-reason">${esc(r.reason)}</span>`:''}
      <span><b>${esc(r.strip)}</b></span>
@@ -864,7 +925,7 @@ function render(){
      ${r.min_logprob?`<span>min&nbsp;logp <b>${r.min_logprob}</b></span>`:''}`;
   $('strip').src='/img/'+encodeURIComponent(qid)+'/'+encodeURIComponent(r.page)
                 +'/'+encodeURIComponent(r.strip);
-  $('labels').innerHTML=diffHtml(r.label,r.decoded)+
+  $('labels').innerHTML=diffHtml(r.label,r.decoded)+oldfixHtml(r)+
     (r.verdict&&r.verdict!=='bad'?corrHtml(r.label,r.corrected_label,r.by,r.verdict)
      :suggHtml(r.label,r.corrected_label));
   editing=false;$('editbox').style.display='none';$('imgwrap').classList.remove('zoom');
@@ -981,6 +1042,25 @@ async function acceptDecode(){
   if(!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
   render();
 }
+// "accept the old human fix" = a person already corrected this music once and it is right for
+// this crop too. Stored as a `fix` with exactly the tokens drawn in that block, like acceptDecode.
+async function acceptOldfix(){
+  const r=cur();if(!r)return;
+  const txt=letterText((r.oldfix||'').trim());
+  if(!txt){toast('no old human fix on this row');return}
+  if(editing){editing=false;$('editbox').style.display='none';}
+  if(!await post(r.strip,'fix',txt))return;
+  toast(`${r.strip.split('_').slice(-2).join('_')} → fix (old human label)`);
+  if(!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
+  render();
+}
+function editFromOldfix(){
+  const r=cur();if(!r)return;
+  const txt=(r.oldfix||'').trim();
+  if(!txt){toast('no old human fix on this row');return}
+  editing=true;$('editbox').style.display='block';
+  $('edit').value=solfText(txt);$('edit').focus();lintNow();
+}
 // "edit from X" opens the box on that one source. Unlike `e` it does NOT prefer an existing
 // corrected_label, so the button does what its name says and nothing else.
 function editFrom(mode){
@@ -1024,7 +1104,8 @@ document.addEventListener('keydown',e=>{
 $('labels').addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   ({'acc-label':()=>verdict('ok'),'acc-decode':acceptDecode,
-    'edit-label':()=>editFrom('label'),'edit-decode':()=>editFrom('decode')})[b.dataset.act]();
+    'edit-label':()=>editFrom('label'),'edit-decode':()=>editFrom('decode'),
+    'acc-oldfix':acceptOldfix,'edit-oldfix':editFromOldfix})[b.dataset.act]();
 });
 $('b-ok').onclick=()=>verdict('ok');$('b-bad').onclick=()=>verdict('bad');
 $('b-clear').onclick=()=>verdict('');$('b-edit').onclick=openEdit;

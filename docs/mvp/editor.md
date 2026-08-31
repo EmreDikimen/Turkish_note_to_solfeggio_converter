@@ -155,12 +155,15 @@ make a triplet, or click any member of one to take it apart. What it accepts and
 plain-value rule, dimming from the moment it is armed, and why an unclosed run is not
 removable): [editor-built.md](editor-built.md#step-7--the-tuplet-tool).
 
-**A triplet is picked up by its drawn "3", and its handles SLIDE it** (owner, 2026-08-30). Clicking
+**A tuplet is picked up by its drawn "3", and its handles move it** (owner, 2026-08-30). Clicking
 the SIGN selects the whole group — a frame, a handle at each end, and a ✕ that removes the bracket
-and keeps the notes. ⚠ **Its notes are not targets**: they keep their `member` state so the page
-still says where the triplets are, but they are `pointer-events: none`. Dragging a handle moves the group along its bar — the first
-member hands its plain value back and the neighbour joins — so the group stays **exactly three
-notes** and the bar length does not change.
+and keeps the notes. It works **with nothing armed (Seçim) as well as under ÜÇLEME**, but not with a
+note value or an accidental armed: those apply to a note, and a mark is not one. ⚠ Under ÜÇLEME
+**its notes are not targets** — `pointer-events: none`, though they keep their `member` state so the
+page still says where the triplets are; in Seçim a note and a mark are **mutually exclusive**
+selections, because each carries its own ✕. Dragging a handle on a REAL triplet moves the group
+along its bar — the first member hands its plain value back and the neighbour joins — so it stays
+**exactly three notes** and the bar length does not change.
 
 ⚠ **Widening a triplet into a real 4-, 5- or 7-tuplet is NOT built, and it is not a UI problem.** It
 needs the drawn digit derived from the group size (it is a hardcoded `"3"`, above) **and** a label

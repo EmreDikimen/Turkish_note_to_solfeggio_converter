@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-08-30
+updated: 2026-08-31
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -178,6 +178,20 @@ npx tsx tools/vision/parity/rescue-check.ts
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python scripts/rung3/carry_old_fixes.py [--apply]
+    # Finds the RETIRED pools' 1,479 hand corrections again inside strips_b8 and marks them with
+    # oldfix / oldfix_kind / oldfix_src, which the review UI's `⭐ old human fix` filter reads.
+    # ⛔ Matches on the MEASURE SPAN the slicer recorded — (page, system, meas_from, meas_to) from
+    # each crop root's <page>_manifest.json — NEVER on the filename: 248 fixes name a strip that now
+    # holds different music. A page whose two slicers disagree on staff-row count is refused.
+    # ⚠ A carried fix is a SUGGESTION, never a verdict: a span match is the same BARS and never the
+    # same pixels (0 of 1,215 crops byte-identical). Writes no verdict; --apply is idempotent, backs
+    # up to .bak-oldfix, and is safe with the review UI open. Report only without --apply.
+.venv-ml/bin/python scripts/rung3/unaccept_sig.py --sig-has '\komaSharp' [--dry-run]
+    # Sends MACHINE-accepted strips back to pending when the label's \sig block carries the given
+    # accidental — because there "label agrees with decode" is circular: the signature is the one
+    # part of a label the MODEL voted on. Never undoes a human read. It was run on b8-full and the
+    # owner then corrected 12 rows, all 12 carrying a \sig block (docs/BACKLOG.md item 9).
 .venv-ml/bin/python scripts/rung3/auto_accept_agree.py [--dry-run]
     # b8-full: draft `ok` (by=agree) on every pending row whose LABEL and model DECODE are the same
     # token-for-token, and carry the 201 hand-read b8-audit verdicts in first. 2,896 drafted / 842
@@ -223,8 +237,16 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/syn
     # ⚠ Off by default and NO TRAINED ARM MAY CARRY IT — it changes a share of every piece, so a
     # corpus with it on is not comparable to one without. It belongs to the FINAL model's render.
     # `make_round3_colab_zip.sh` refuses any arm whose render_config.json has it on.
+    # [--usul-barline] opts INTO the DOTTED (USUL) BARLINE (2026-08-31): a light dashed rule on the
+    # usul's own beat groups INSIDE the bar (aksak 9/8 = 2+2+2+3 -> three rules), which Turkish
+    # editions print and this corpus had never drawn — so the model reads one as `\repstart`.
+    # Label-free: 188 strip labels over 4 scores are byte-identical with it on and off. Coined per
+    # PIECE, not per bar. Off by default and it belongs to the FINAL model's render, like the two
+    # flags above. Previews of all three: data/synthetic/_flag_preview/.
 npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 218/218 round-trip
-npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise] [--concave-tuplet]
+npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise] [--concave-tuplet] [--usul-barline]
+    # ⚠ PASS EVERY FLAG THE CORPUS WAS RENDERED WITH. The verifier renders its own comparison
+    # pixels, so a gate run without them is checking a different picture than the corpus ships.
 npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --out data/synthetic/<set>
     # the SECOND ENGRAVER (Round 3 Lever 4): real LilyPond renders the SAME labels — needs
     # `brew install lilypond` (2.26), decides nothing itself, and draws no lyrics/repeats/nav

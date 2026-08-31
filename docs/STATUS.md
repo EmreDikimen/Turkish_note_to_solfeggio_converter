@@ -2,224 +2,171 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-08-30
+updated: 2026-08-31
 
 ## Now
 
-⭐ **THE SECOND 𝄋 NOW MEANS SOMETHING: THE TESLİM IS PLAYED AFTER EVERY HÂNE** (owner, reading a
-Muhayyerkürdî saz semâîsi). The first 𝄋 marks a section; **every later 𝄋 plays it again and comes
-back**, and the last has nothing after it, so the piece ends at "Son". Before this the sign did nothing
-without a "D.C." — **249 of the 258 pages carrying two or more 𝄋 carry none**. ⭐ Where the section ends
-must come from the page ("Son", else the first `:‖`); on **58** pages neither is there, so it is **not guessed**. ⚠ A 𝄋 read at a bar's RIGHT barline was filed onto the PREVIOUS bar, on **433 pages** — fixed with it. ✅ `npm test` · `typecheck` · `check:fold` (**0 changed**). [DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md) · [log/status-log.md](log/status-log.md).
+⭐ **ROUND 3'S DATA IS SETTLED AND THE ROUND IS READY TO RUN (owner, 2026-08-31).** Every labelling
+question is closed. Round 3 uses **four** things and nothing else: **`strips_b8`** as the real
+training pool (3,936 strips after promotion), a **new 3-flag synthetic render** off
+`data/pieces_v4.json` + `data/split_v4.json`, **`_realval_v2`** (+ `_tupletval`) to select the
+checkpoint, and **`examv3`** to grade. ⏭ **`b8-review`, the old human fixes, `batch3` and
+`reslice-all` all go to ROUND 4** — the last two could not join anyway, see below.
+[rung3/worklist.md](rung3/worklist.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
-⭐ **A TUPLET MARK IS NOW SOMETHING YOU CAN HOLD IN THE EDITOR** (owner). Click its drawn **3** — the
-sign, never its notes — for a frame, a **handle at each end** and a **✕** that removes the *bracket*,
-never the notes. ⭐ **The marks that most needed it are the BROKEN ones** (`decoded.json`: **five
-against two real triplets**): a real triplet **slides**, a broken one is **repaired** — completed or
-cleared, never made merely broader. ⛔ **No handle widens a real triplet into a 4/5/7-tuplet**: that
-needs a derived digit **and new label tokens**; asked, **deferred**. ✅ `npm test` + `smoke:editor`. [DECISIONS.md](DECISIONS.md) · [mvp/editor-built.md](mvp/editor-built.md#step-7b--holding-a-triplet-select-slide-remove) · [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md).
+✅ **THE EXAM IS FINISHED — `examv3` is 663 of 663 verdicted, all 64 pages PAGE-COMPLETE** (573 fix /
+61 bad / 29 ok), on top of the 139 `examv3-full` rows read on 2026-08-21. **B0 no longer blocks the
+read.** ⏭ It still has to be promoted (`promote_labels.py --exam --strips-root
+data/real/strips_examv3` — the default root holds the same filenames with the RETIRED slicer's
+pixels), and that manifest then **replaces** `strips_exam_v2_clean` as the exam.
+[rung3/exam.md](rung3/exam.md) · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
-⭐ **THE APP NOW SHOWS A NORMAL NOTA KÂĞIDI: THE REPEAT IS A SIGN, NOT THE MUSIC WRITTEN TWICE**
-(owner, 2026-08-30). A decoded page is kept **as written** — `‖:` `:‖`, 1./2., 𝄋, ⊕, "D.C.", "Son"
-drawn where they were read — and every repeat and return is taken **when it plays**; the playhead
-follows a **play plan**, so at a `:‖` the cursor walks back to the `‖:` by itself. ✅ `check:fold`:
-**1,720 pages, 0 changed**, **68.2% fold**, the page **31.4% shorter**. ⭐ It also exposed a live
-defect — a first ending is a **RUN**, skipped whole (**37.9%** of real ones mis-played before).
-⚠ **DECODED PAGES ONLY** (owner's choice); `Tekrarları açık yaz` (Gelişmiş) writes the performance
-out long, **view-only**, closing edit mode, and `Tekrarlar` still only draws on a SymbTr sample.
-[DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md) · [log/status-log.md](log/status-log.md).
+✅ **`b8-full` IS READ AND CLOSED (owner, 2026-08-31)** — 3,955 rows, **3,362 ok / 576 fix / 17 bad**,
+of which **1,016 were read by hand**; the remaining 2,939 stand as machine `agree` drafts. The owner
+accepted them, and our own sample says he is right: in the random 201-row `b8-audit`, **41 rows had
+`label == decode` and a human read all 41 as `ok` — 0 wrong** (95% upper bound ~7% at that n).
+⛔ **ONE MEASURED EXCEPTION, AND IT IS `\sig`.** Where the label's signature came from the model's
+own vote, "label agrees with decode" is close to circular. `scripts/rung3/unaccept_sig.py` sends
+such rows back to pending; it was run, and the owner then corrected **12 rows — all 12 carrying a
+`\sig` block**. [BACKLOG.md](BACKLOG.md) item 9 · [METRICS-CORPUS.md](METRICS-CORPUS.md).
 
-⭐ **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES — FOUND BY EYE, FIXED, MEASURED, AND SHIPPING
-OFF UNTIL YOU SAY OTHERWISE.** The owner opened the `examv3`-vs-frozen comparison sheets and saw
-pages with more staff rows than the slicer found. He was right: `vuslata_..._p2` finds **4 of 9**,
-`sevdim_..._p1` **5 of 8**, and it is **not** only handwriting — a printed TRT page loses 4 of 9.
-⭐ **A lost row is not a bad crop, it is NO crop**, so no accuracy metric has ever shown it. Cause:
-the horizontal opening's kernel is **one pixel tall**, so a line that wanders across rows is erased
-rather than weakened. ⛔ **Do not re-open a global knob** — every global form was
-measured and rejected. ✅ What ships is `STAFF_RESCUE`: pass 1 untouched, then re-detect **only in the
-bands the page's own staff pitch says are empty**. Full scale: **all 6,440 scored rows identical**,
-**+320 staff rows on 227 of 1,592 pages**. ✅ Ported to the browser and
-`parity:slicer` passes **with the flag ON** (871/871 staff rows, 2425/2425 strips) — an off-run
-passes while executing none of the new code. ⚠ Its benefit is **unscoreable, not merely unmeasured**
-(below); the evidence it is real is visual, 14 of 14 rows on 4 pages.
-[METRICS-SLICER.md](METRICS-SLICER.md) · [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md).
+⭐ **THE DOTTED (USUL) BARLINE IS NOW DRAWN — the third and last flag the final render was
+specified to carry.** `drawUsulBars` rules the usul's own beat groups inside the bar (aksak 9/8 =
+2+2+2+3, so three rules a bar), reading the groupings already in `USUL_BEAM_GROUPS`; the coin is
+per **PIECE**, because an edition either uses the convention or it does not. ✅ **Label-free, and
+checked: 188 strip labels over 4 scores are byte-identical with the flag on and off.** Previews of
+all three flags: `data/synthetic/_flag_preview/`. ⚠ **`USUL_BAR_RATE = 0.35` and the placement are
+CHOSEN, NOT MEASURED** — counting dotted barlines in real print is still owed **before** the render;
+7.8% is a statistic about the model's guesses. ⏭ It also still owes its **own paired scorer** (a
+clone of `staccato_falsedot_score.py` for the false-`\repstart` rate), or two of the three flags in
+that render are unattributable. [BACKLOG.md](BACKLOG.md) item 5 · [METRICS-UNSEEN.md](METRICS-UNSEEN.md).
+
+⛔ **THE PROMOTION GATE WAS DELETING HAND CORRECTIONS, AND THE DRY RUN CAUGHT IT.** Six of the
+owner's 576 `b8-full` fixes carried the model's `f'' 32` spacing; the round-trip gate read that as
+two unknown tokens and failed the row — and **an audit `fix` that fails the gate REMOVES the
+manifest row**, so six corrected strips would have been *deleted from training* over a form measured
+to be **identical in token ids**. `norm_label` now re-glues a spaced `32`, the same rule and regex as
+`build_realval_v2.py`. ⛔ **`32` ONLY — 16 and 8 DO differ in id space.** Rejects **9 → 3**; the
+three left are genuinely over the 59-id cap (60, 61, 60) and are correctly dropped.
+
+⭐ **THE RETIRED POOLS' 1,479 HUMAN FIXES WERE FOUND AGAIN — AND THE OWNER HAD ALREADY REDONE THE
+WORK BY HAND.** `scripts/rung3/carry_old_fixes.py` locates them by the measure span the slicer
+itself recorded, `(page, system, meas_from, meas_to)`, **never by filename**. ⚠ The key was
+validated before it was trusted: where it says "same music" the real SymbTr span agrees on **1,002
+of 1,026 (97.7%)**, and where it says "different", **35 of 36** really are. Of the 198 span-matched
+fixes disagreeing with b8's label in `b8-full`, **122 the owner had already fixed identically** —
+two independent reads, different crops, months apart, agreeing **122 of 140 (87%)**. ⛔ **A span
+match is the same BARS, never the same pixels: 0 of 1,215 crops are byte-identical and 77.7%
+changed size**, which is why the hint has its own accept button and plain `ok` never stores it. The
+review UI's **⭐ old human fix** filter lists them, worth-first. [METRICS-CORPUS.md](METRICS-CORPUS.md).
+
+⚠ **TWO LAUNCH FILES STILL NAME THE RETIRED POOLS, AND NOTHING DOWNSTREAM CHECKS.**
+`scripts/make_round3_colab_zip.sh` (`REAL_POOLS=`) and `notebooks/round3_staccato_colab.ipynb`
+(`--real-dir …:9`) both hardcode `strips_nota` / `strips_r1` / `strips_tup`. Launched as they stand,
+the final run would ship the **retired crops and never see `strips_b8`** — silently. ⚠ **And `:9`
+must become `:5`**: that suffix holds real at ~34% of stage-2 batches (2,097 train-side real × 9
+against 36,057 synthetic = 34.4%, the figure on record); at 3,936 strips the same share needs `:5`
+(32.9%), while `:9` would push real to 47% and change the recipe as a side effect. `train.py` prints
+the pool counts at startup — read that line rather than trusting this one. ⚠ The zip script also
+**refuses any corpus carrying `concaveTuplet`**, which the final render carries by design.
+
+⏭ **STILL OPEN AND THE OWNER'S, AND IT MUST BE SETTLED BEFORE THE READ:** does **75%** stay as an
+absolute product statement, or is it re-expressed against the Round-2 baseline re-measured on the
+harder rebuilt exam? Choosing after seeing the number is the one option that is not available.
+[rung3/round3-criteria.md](rung3/round3-criteria.md) §3c.
+
+⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected
+on a val loss that is **94.6% synthetic** (4,769 strips outvoting 271, nineteen to one) in a round
+graded on real pages. Rather than swap the selector mid-round, the final run keeps it *and*
+additionally keeps one selected on a free-running real metric, comparing them on `_realval_v2`
+**before** the exam. Legal by the standing rule: real-val selects, the exam is one-shot. ⚠ `train.py`
+saves only one `best` today, so the cheap version is `best` + `last` compared on `_realval_v2` (what
+the arms already did) and the full version is a code change. [BACKLOG.md](BACKLOG.md) item 3.
+
+⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST.** It grades ~12 candidate
+strips a page against 7.1, so a page collects more edits at equal model quality and the primary
+reads lower. Fairness is intact — the `round2-stage2-best` re-score puts both models on the same set,
+and that re-score is a **precondition of the read** — but what 75% *means* changes.
+⚠ **The exam also still throws away the wide and the dense — 567 of 1,369 candidates (41%)** — so it
+reads each page on its easier material. Quote it with the result.
+[rung3/round3-criteria.md](rung3/round3-criteria.md) §3b · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
+
+⛔ **`batch3` AND `reslice-all` COULD NOT HAVE JOINED ROUND 3 EVEN IF ASKED.** Neither has any
+promotion path, and the reason is structural: **53 of `batch3`'s 66 hand corrections sit on strips
+the emitter DROPPED** (`split_wide` / `over_budget` / `row_unaligned`), as do **all 50** of
+`reslice-all`'s. Making them usable IS the label-budget rail. [rung3/labeling-queues.md](rung3/labeling-queues.md).
+
+⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES. THE FIX IS MEASURED, SPECIFIED,
+AND DEFERRED TO ROUND 4 (owner, 2026-08-23) — which is what RELEASES THE EXAM.** The browser slicer
+has **no label-budget rail**: at training an over-budget strip is dropped, at inference there is
+none, so the model emits `</s>` early and **confidently** — `hitCap` catches **7 of 4,012 (0.2%)**,
+and **998 of 1,689 pages (59.1%)** carry such a strip. ✅ Browser-vs-Python parity is **CLOSED**
+(132 pages). ⛔ **The rail ALONE is a wash** (under-fill 15.7% → 16.6%, p = 0.57). ⚠ But that tested
+INFERENCE on a model never trained under the rail: a split strip *fits the 59-id emitter gate and
+therefore enters training*, and today **4,012 over-budget strips are dropped**. ⭐ **Dense music
+already reads twice as badly even in a 1-measure strip (9.9% vs 4.8%, p = 0.013)** — a training gap,
+not a cutting one. ⏭ The settling experiment is the **pair** — re-emit with the rail → train →
+measure — at **b = 57, not 50**. ⭐ Deferring it is what keeps the shipping slicer still, so
+`examv3` stays valid. [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [BACKLOG.md](BACKLOG.md) item 0.
+
+⭐ **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF
+UNTIL YOU SAY OTHERWISE.** The horizontal opening's kernel is **one pixel tall**, so a staff line
+that wanders across rows is **erased, not weakened**; a lost row is not a bad crop, it is **NO
+crop**, so no accuracy metric has ever shown it. ⛔ Every global knob was measured and rejected. ✅
+What ships is a **second pass** re-detecting only in the bands the page's own staff pitch says are
+empty: all **6,440** scored rows identical, **+320 rows on 227 of 1,592 pages**, `parity:slicer`
+passes with the flag ON. ⚠ Its benefit is **unscoreable, not merely unmeasured**; the evidence is
+visual, 14 of 14 rows on 4 pages. ⚠ `STAFF_RESCUE` must move together in Python and `constants.ts`,
+and turning it on bumps `GEOMETRY_REV`. [METRICS-SLICER.md](METRICS-SLICER.md).
 
 ⛔ **THE ROW-LEVEL SLICER INSTRUMENTS ARE BLIND TO STAFF-COUNT CHANGES.** Both pair a row to its
 cached truth by **system index**, so inserting a staff shifts every later index and reports a large
 regression that is pure artifact. `score_slicer.py` gained `--pair-by-position`; ⛔ **`score_barlines.py`
 has the same coupling and NO fix** — `bozukNihavendLonga` read **30 marked before a staff change and
-3 after**. This is also why the rescue's 320 rows can never be scored there: the truth is aligned
-from the OLD pipeline's decodes, which never saw them. [METRICS-SLICER.md](METRICS-SLICER.md).
+3 after**. It is also why the rescue's 320 rows can never be scored there. [METRICS-SLICER.md](METRICS-SLICER.md).
 
-✅ **THE BROWSER/PYTHON STAFF DIVERGENCE IS FIXED AND SHIPPED.** `bozukNihavendLonga2.png` read **9
-staves in the app against Python's 10**; it now reads 10. Cause: the rule deciding where one staff
-ends (`2.2 x median line gap`) sat **0.8 px** from flipping, and the browser's unavoidable ±1
-grayscale difference fell the other side. ⚠ `parity:slicer` read 100% throughout — its 120-page
-sample does not hold that page, so a green check and a real divergence were both true.
-⛔ **Two fixes were rejected before this one** — grouping by staff HEIGHT read **3205 against 3750**
-(−545). ✅ What ships merges two adjacent groups each under the 3-line floor when together they fit
-inside one staff — net **−2 of 6,440**,
-`parity:slicer` **100% on the shipped defaults** (854/854 staff rows, 2388/2388 strips, worst Δ 0 px, W4/W5/W6 PASS). ✅ **A second, PRE-EXISTING defect on the same page is also fixed**
-(owner: *"s03 is read soo wide in vertical, it includes previous staff"*): a staff whose measured
-spacing read **15** against the page's **9.75** while its height was correct, so the row
-under-magnified and its frame reached into the system above. `STAFF_SPAN_CONSENSUS` already did this
-repair but was gated on line COUNT; it now gates on the defect. **+2 rows, 13 of 6,440 moved.** ⚠ Both bump `GEOMETRY_REV` → **20260826**: every decode cache on disk is invalid.
-[METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
+✅ **THE SLICER IS FROZEN AGAIN** (owner, 2026-08-26) after three fixes landed and two were rejected
+— the browser/Python staff divergence, the over-wide staff span, and `OMR_BLOB_FILL` 0.3 (measured
+and **REJECTED**, with the lesson that the faded-page table has now mispredicted the full run three
+times). Both shipped fixes bump `GEOMETRY_REV` → **20260826**, so every decode cache on disk is
+invalid. [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
 
-⛔ **`OMR_BLOB_FILL` 0.3 was measured and REJECTED** (2026-08-26), and with it the lesson that
-**the faded-page table has now mispredicted the full run three times** — never price a barline gate
-on it alone. Settled, with every number:
-[DECISIONS.md](DECISIONS.md) · [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md#-omr_blob_fill-03-was-measured-and-rejected-2026-08-26).
+⭐ **THE ARMS ARE DONE (2026-08-20) — one dropped, one null, one PASSED.** The staccato arm took its
+false-dot rate **72.7% → 0.0%**, paired **60–0** (exact McNemar p = 1.7e-18), and it keeps its own
+paired instrument so the claim survives whatever else moves in the render. ⛔ **ARM 2 (one measure
+per strip) IS DROPPED and ARM 1 (the scan profile) WAS A NULL** — `scan_share` stays **off**.
+⚠ **That is three nulls on one axis and one pass off it**: every "make the synthetic pixels look
+more like real pages" arm returned null, and only the arm that showed the model a symbol it had
+**never seen** moved its primary. **A hole responds to being filled; a domain gap does not** — so a
+fourth realism arm does not follow, and the dotted barline counts because it is a hole.
+[rung3/staccato-arm.md](rung3/staccato-arm.md) · [rung3/levers.md](rung3/levers.md).
 
-⏭ **THE EXAM RE-CUT IS THE NEXT SLICER-SIDE ACTION, AND IT IS NOW PRICED — BUT IT WAITS ON ONE
-DECISION, AND THE PRICE MUST BE RE-READ BEFORE IT IS ACTED ON.** ⚠ The **125-verdict** figure below
-predates the two 2026-08-26 fixes and `GEOMETRY_REV` is now **20260826**, so every decode cache on
-disk is invalid and the next emit RE-DECODES rather than reusing 1,704 of them
-([METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md)). ⏭ Do the `carry_labels()` fix first — **25 of
-67 pages are byte-identical and carry 168 verdicts** that need no human at all
-([BACKLOG.md](BACKLOG.md)). ⚠ **The 2026-08-24 freeze no longer holds**: the owner re-opened the slicer on
-2026-08-25 (*"we did not freeze it"*) and the staff rescue landed behind a flag, so what `examv4`
-gets cut with is a choice, not a given (top of this file). ⚠ **`examv3` crops are definitively
-stale** — five fixes moved staff and barline geometry on 24–25 August, and the decode-cache guard
-refuses their caches by construction. **Re-priced 2026-08-25 on the current slicer: 330 of 455
-verdicts carry safely, 125 need a person again** (76 lost, 49 returning as a suggestion). Then cut
-**once**: `strips_examv3` is kept as the record, the new root is `examv4`, and the surviving
-verdicts carry over. ⚠ **The exam queue is 455 of 663 verdicted** (398 fix / 35 bad / 22 ok), so
-**208 rows remain**, over **31 page-complete / 17 partial / 16 untouched** of 64 pages. The primary
-is per page, so a half-labelled page under-counts itself — finish page-complete.
+⏭ **COLLECTION IS NARROWED TO TWO TARGETS, not broadened.** 2,486 unlabelled page PNGs already sit
+on disk, so volume relieves nothing. What it cannot substitute for: pages drawing the **concave
+tuplet mark** (unscoreable — no labelled real strip carries it) and **tuplet-dense instrumentals**
+(sirto, longa, saz semaisi). ⚠ The second does **not** fix itself — the same budget drops the new
+pages. ⚠ **A THIRD target, DEFERRED not dismissed**: every page we own is from **two websites**,
+exam included ([BACKLOG.md](BACKLOG.md) item 10).
+
+✅ **ROUND 3 HAS A SIGNED ACCEPTANCE BAR, and it is also the public-launch gate** (owner,
+2026-08-15): **≥75% of exam pages needing ≤5 corrections**, against 57% today, with the accidental
+measures as no-regression clauses. Written before any Round-3 training and **not re-opened after the
+read** — a miss is a miss and the launch waits for Round 4. ⚠ Report the primary **with its
+interval**: at 67 pages the 95% half-width is ~±10.4 pp. [rung3/round3-criteria.md](rung3/round3-criteria.md).
 
 ✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — rule and numbers in
-[../CLAUDE.md](../CLAUDE.md); ⚠ real-val's arc-`\tup3` diagnostic prints `n/a` (that floor is read on the **exam**, which keeps its ties). [rung3/labeling.md](rung3/labeling.md).
+[../CLAUDE.md](../CLAUDE.md); ⚠ real-val's arc-`\tup3` diagnostic prints `n/a` (that floor is read on
+the **exam**, which keeps its ties). [rung3/labeling.md](rung3/labeling.md).
 
-⭐ **THE ARMS ARE DONE AND THE FINAL RENDER IS SPECIFIED (2026-08-20).** Round 3's arm list closed —
-one dropped, one null, one **passed** — and the final render carries `--concave-tuplet`,
-`--staccato-noise` and a label-free dotted (usul) barline. Left: **render → train → the exam, read once**. [DECISIONS.md](DECISIONS.md).
-
-⭐ **THE TRAINING POOLS WERE RE-EMITTED ONTO THE CURRENT CROPS (2026-08-21) — `strips_b8`, 3,955
-accepted strips against 2,330, in 37 minutes on the laptop.** ✅ **Its 201-row audit is now read
-whole: 13.4% of the auto-accepted labels are wrong** — the same level as the re-sliced exam, and the
-biggest error class is **repeat structure** (`\repstart` / `\volta`), not pitch. ⏭ **Still not
-training data**: the **1,442 human corrections do not carry themselves** (951 recoverable, by measure
-span and never by filename). ⭐ The drop table points at the **59-id budget**, not at alignment.
-✅ **`b8-full` IS NOW DRAFT-ACCEPTED WHERE THE LABEL AND THE DECODE AGREE (owner, 2026-08-27)** —
-**2,896 rows** drafted `ok` (`by=agree`), **842 disagreements left for a human**, and the 201
-hand-read audit verdicts carried in. Agreement was right on **94%** of the rows a human has read
-against **45%** for disagreement; ⚠ a draft is **not** a read, and the misses **clump on one page**.
-Spot-check with the review UI's **🤖 auto-accepted (agree)** filter, least-confident first.
-[METRICS-CORPUS.md](METRICS-CORPUS.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
-
-⭐ **THE STACCATO ARM PASSED, AND ITS FLAG NOW RIDES THE FINAL RENDER.** False-dot rate **72.7% →
-0.0%**, paired **60–0** against its training control (exact McNemar p = 1.7e-18) and **80–0** against
-the live model; clause 2 passes, clause 3 shows **no price**. ✅ It ships, and it keeps its **own**
-paired instrument, so the claim stays attributable whatever else moved. ⚠ The marks became
-*invisible* rather than tolerated, and ⚠ transfer to a **real printed** staccato is **unmeasured**.
-[rung3/staccato-arm.md](rung3/staccato-arm.md) · [METRICS-UNSEEN.md](METRICS-UNSEEN.md).
-
-⭐ **THE DOTTED (USUL) BARLINE IS PROMOTED INTO THAT RENDER, DRAWN LABEL-FREE.** The owner found it by
-eye while labelling and it measured out: **117 of 1,499 `batch3` rows (7.8%) decode a `\repstart`**,
-and **~1 in 5 of the batch's corrections so far is deleting one** — the owner is paying by hand for a
-symbol the renderer has never drawn (0 of 40,826 strips), so the model reaches for the nearest thing
-it knows, a line plus *dots*. ⭐ It is the **same shape as the staccato hole**, and that now means
-something measured rather than argued: **a hole responds to being filled; a domain gap does not**
-(72.7% → 0.0% against three nulls). ⚠ **Label-free, not a token** — naming it would make every
-existing real gold label silently wrong, since no pool annotates one; drawn without a label it is
-consistent with everything on disk and costs **zero new labelling**. The `\dottedbar` token is a
-Round-4 question. ⏭ Probe the real pools for the print frequency before rendering — 7.8% is a
-statistic about the model's guesses. [BACKLOG.md](BACKLOG.md) item 5 · [METRICS-UNSEEN.md](METRICS-UNSEEN.md).
-
-⭐ **THE EXAM WAS REBUILT ON THE CURRENT SLICER AND LABELLING IT IS THE LIVE JOB (owner, 2026-08-21).**
-All 45 pieces / 67 pages re-sliced into `data/real/strips_examv3`; `examv3` holds **663 rows over 64 of
-the 67 pages**. ✅ **`examv3-full` is DONE — all 139 auto-written labels read by hand, 13.7% wrong**
-(18 fix + 1 bad) against exam v2's **51%** on the identical queue. [rung3/exam.md](rung3/exam.md) ·
-[METRICS-EXAMSET.md](METRICS-EXAMSET.md).
-
-⛔ **AND THAT AUDIT FOUND A BUG WORTH MORE THAN THE EXAM: THE KEY SIGNATURE IS DECIDED BY THE MODEL.**
-The owner noticed the fixes were "mostly `\komaSharp` → `\kucukSharp`" — 7 of the 18, all inside
-`\sig … \sigend`, all one makam. The signature is the **only** part of a label not derived from
-SymbTr: the model reads it off each row-start strip and the majority read **overwrites** the
-derivation, the voter is the weak `rung3-labeler`, its koma/küçük confusion is *systematic* so the vote
-is unanimous and wrong, and the `nd` gate is **blind to `\sig` blocks by design**. It fired on **24 of
-45 exam pieces (53%)** and **406 of 938** `strips_nota` pieces; **8 of 36 exam pieces disagree with our
-own makam table**. ⭐ There is a **loop** in it — the misread becomes the label, the label trains the
-model — and it lands on the accidental class the headline is most fragile about. ⚠ n=7 in one makam is
-a signal, not an error rate. ⏭ [BACKLOG.md](BACKLOG.md) item 9 · [METRICS-CORPUS.md](METRICS-CORPUS.md).
-
-⭐ **THE FROZEN GOLD LARGELY MOVED WITH ITS MUSIC — 221 of 326 labels, not 11.** ⚠ A carried label is a
-**suggestion, not a verdict**; `strips_exam_v2_clean/` stays the record of what Round 2 was measured on.
-[METRICS-EXAMSET.md](METRICS-EXAMSET.md).
-
-⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST, AND THAT NEEDS SETTLING
-BEFORE THE READ.** It grades ~12 candidate strips a page against 7.1, so a page collects more edits at
-equal model quality and the primary ("pages needing ≤5 corrections") reads lower. Fairness is intact —
-the `round2-stage2-best` re-score puts both models on the same set — but **what 75% means changes**.
-[rung3/round3-criteria.md](rung3/round3-criteria.md) §3b · [rung3/exam.md](rung3/exam.md).
-
-⚠ **THE EXAM STILL THROWS AWAY THE WIDE AND THE DENSE — 567 of 1,369 candidates (41%)**, so it reads
-each page on its easier material. Quote it with the result; it is also a second reason to measure the
-decoder budget. [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
-
-⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES. THE FIX IS MEASURED, SPECIFIED, AND
-DEFERRED TO ROUND 4 (owner, 2026-08-23) — which is what RELEASES THE EXAM.** The browser slicer has **no label-budget rail**: at training an over-budget strip is dropped,
-at inference there is none, so the model emits `</s>` early and **confidently** — `hitCap` catches
-**7 of 4,012 (0.2%)**, and **998 of 1,689 pages (59.1%)** carry such a strip. ✅ The rail's
-browser-vs-Python **parity is CLOSED** (132 pages; W4/W5/W6 pass under the rail as under the shipped
-rule). ⛔ **The rail ALONE is a wash** — under-fill 15.7% → 16.6% (p = 0.57), no better on dense
-pages only (19.2% → 18.0%) or on page completeness (0.900 → 0.909, 10 better / 12 worse).
-⚠ **But that tested INFERENCE on a model never trained under the rail, which is not the experiment
-that matters**: a split strip *fits the 59-id emitter gate and therefore enters training*, and today
-**4,012 over-budget strips are dropped**, so the model has never seen dense music in any form.
-Splitting is not optional either — a 130-id label cannot be emitted at all. ⭐ **Dense music already
-reads twice as badly even in a 1-measure strip (9.9% vs 4.8%, p = 0.013)** — a training gap, not a
-cutting one. ⏭ The settling experiment is the **pair** — re-emit with the rail → train
-→ measure — and it is **Round 4's headline**, at **b=57, not 50** (recovery is flat b=40..59, so the
-value rides on over-splitting cost alone; 50 makes 162 needless cuts, the likely cause of the
-measured non-dense-page regression 10.1% → 14.9%, p = 0.031). ⭐ **Deferring it is not a shrug**: the
-shipping slicer therefore does not change this round, so the rebuilt exam stays valid and B0 is
-unblocked. [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [BACKLOG.md](BACKLOG.md) item 0.
-
-⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected on
-a val loss that is **94.6% synthetic** (4,769 strips outvoting 271, nineteen to one) in a round graded
-on real pages. The fix was deferred because changing the selector mid-round makes the arms
-incomparable — **the arms are now read**, so rather than swapping it (a second uncontrolled change) the
-final run keeps the current selector *and* additionally keeps one selected on a free-running real
-metric, comparing them on `_realval_v2` **before** the exam. Legal by the standing rule: real-val is
-the selection set, the exam is one-shot. [BACKLOG.md](BACKLOG.md) item 3 · [DECISIONS.md](DECISIONS.md).
-
-⏭ **COLLECTION IS NARROWED TO TWO TARGETS, not broadened.** 2,486 unlabelled page PNGs already sit on
-disk, so volume relieves nothing. What it cannot substitute for: pages drawing the **concave tuplet
-mark** (unscoreable — no labelled real strip carries it) and **tuplet-dense instrumentals** (sirto,
-longa, saz semaisi — a measured structural hole). ⚠ The second does **not** fix itself: the same budget
-drops the new pages. ⚠ **A THIRD target, DEFERRED not dismissed**: every page we own is from **two
-websites**, exam included ([BACKLOG.md](BACKLOG.md) item 10).
-
-⛔ **ARM 2 (one measure per strip) IS DROPPED and ARM 1 (the scan profile) WAS A NULL** — what drops a
-strip is the **59-id budget**, not width, and `scan_share` stays off. ⚠ Arm 2's drop was about the
-TRAINING corpus and does **not** cover the inference question above, which is a different trade. [rung3/scan-profile.md](rung3/scan-profile.md) ·
-[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md).
-
-⚠ **THAT IS THREE NULLS ON ONE AXIS AND ONE PASS OFF IT.** Tuplet mark p = 0.688, the second
-engraver's domain gap, the scan profile — all "make the synthetic pixels look more like real pages".
-Only the staccato arm, which asked a different question, moved its primary, so **a fourth realism arm
-does not follow**; the dotted barline counts because it is a hole rather than a gap. ⚠ **Lever 4 gets
-no arm and no corpus.** [rung3/levers.md](rung3/levers.md) · [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md).
-
-✅ **ROUND 3 HAS A SIGNED ACCEPTANCE BAR, and it is also the public-launch gate** (owner, 2026-08-15):
-**≥75% of exam pages needing ≤5 corrections**, against 57% today, with the accidental measures as
-no-regression clauses. Written before any Round-3 training and **not re-opened after the read** — a
-miss is a miss and the launch waits for Round 4. ⚠ §3b now records that the exam grows *before* the
-read and that the baseline column is re-measured with it; the floors do not move.
-[rung3/round3-criteria.md](rung3/round3-criteria.md).
-
-✅ **TRACK A IS SHIPPED AND LIVE — <https://komavision.netlify.app>.** F1's instrument voices, F2's
-drums and all three F3 instruments are deployed. ✅ **The machine's backlog went out in ONE deploy on 2026-08-30** — the violin's 2026-08-27 rebuild, F3's whole 2026-08-29 day (kanun view, the two
-views merged into one "Enstrüman üzerinde" tab whose picker also sets the playback voice, piano roll deleted) and the sol klarnet. `smoke:live` passes
-on both paths; the clarinet photo and its CC BY-SA credit were spot-checked live by hand, which `smoke:live` does not cover. ⛔ **The fingerboard originally went out without
-check 25, its written pre-condition** — skipped on the owner's instruction. Half of that look has
-since happened and it changed the view twice; ⚠ **the other half — *is the mark in the right place* —
-is still owed for BOTH instruments** (checks 25 and 26) and is still the only thing no automated
-check can answer. ⚠ The trap that outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with
-the app, and setting `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — silently.
-[features/README.md](features/README.md) · [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md).
+✅ **TRACK A IS SHIPPED AND LIVE — <https://komavision.netlify.app>.** The 2026-08-30 deploy took out
+F1's voices, F2's drums, all three F3 instruments, the sol klarnet, the **repeat drawn as a sign**
+with the teslim replayed after every hâne, and a **tuplet mark you can hold**. `smoke:live` passes on
+both paths. ⏭ **The next product action, and the only one needing a person, is
+[MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) checks 25 AND 26** — is the finger mark in the
+right place, and is the kanun's opening mandal plan one you would actually set. ⚠ The trap that
+outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with the app, and setting
+`VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — silently.
+[features/README.md](features/README.md) · [log/status-log.md](log/status-log.md).
 
 ⚠ **Two copyright items remain open and are both the owner's call**: the samples and the neyzen.com
 screenshot are out of HEAD but remain in the **public** repo's git history (clearing them needs a
@@ -324,47 +271,41 @@ the voices should be louder the order is per-voice `gain` → a `Çalgı sesi` s
 
 ### Track B — the model (Round 3, UNPAUSED)
 
-Still the **public-launch gate**, and runnable at any time — it shares no file with the feature track.
-**`strips_v5_tupnew` is the corpus Round 3 continues from**, and `round2-stage2-best` stays the
-runtime until a Round-3 model beats it.
+Still the **public-launch gate**, and runnable at any time — it shares no file with the feature
+track. ⭐ **THE LABELLING IS DONE. What is left is render → train → read, plus three preparations
+that need no human judgement.** `round2-stage2-best` stays the runtime until a Round-3 model beats it.
 
-⏭ **THE ARMS ARE DONE AND THE FINAL RENDER IS FULLY SPECIFIED (2026-08-20)** — every decision it was
-waiting on has been taken. B3, B4 and B5 are closed — null, dropped and **passed**.
+**What Round 3 consumes — settled 2026-08-31 and closed to additions:**
 
-⭐ **THE ORDER OF WORK, reviewed 2026-08-21 and accepted by the owner.** Steps 1, 3 and 4 need **no
-labelling at all** and remove the three biggest risks; `batch3` (B2) waits for none of them.
+| role | pool | state |
+|---|---|---|
+| real training | **`strips_b8`** | 3,955 read; **3,936 strips** after promotion |
+| synthetic training | the **3-flag render** (`--staccato-noise --concave-tuplet --usul-barline`), `pieces_v4.json` + `split_v4.json` | ⏭ not rendered |
+| selection | **`_realval_v2`** (+ `_tupletval` for the free `\tup3` column) | built |
+| grading | **`examv3`** | 663/663, 64 pages complete; ⏭ not promoted |
 
-| # | do this | why now | in |
+⛔ **Out, by the owner's call or by construction:** `b8-review` (4,738 rows, 450 carrying an old
+human fix) and the old fixes → **Round 4**; `batch3` and `reslice-all` → Round 4 and *unusable*
+before it; `strips_nota` / `strips_r1` / `strips_tup` → **superseded, must not be passed** (same
+music, retired crops). `photo-gold`, `batch1`, `batch2` and the historical tabs are in neither.
+
+⏭ **THE ORDER OF WHAT IS LEFT.** Steps 1–3 need no decision and no labelling.
+
+| # | do this | why now | cost |
 |---|---|---|---|
-| 1 | ✅ **DONE 2026-08-21** — `examv3-full`, all 139 read | **13.7% were wrong** (18 fix + 1 bad) against v2's 51%, and 7 of the fixes turned out to be **one bug** | B0 |
-| 2 | ✅ **DONE 2026-08-21** — all 27 `gold_conflict` rows | **14 ok / 13 fix**; the fresh derivation mostly won, and **3 more signature bugs** fell out | B0 |
-| 3 | ✅ **DONE 2026-08-22** — the re-emit ran (37 min, `strips_b8`, **3,955 accepted** against 2,330) and its **201-row audit is read whole**; **`b8-full` draft-accepted 2026-08-27** (2,896 `by=agree`, **842 disagreements left pending**) | **13.4% of the auto-accepts are wrong**, repeat structure ahead of pitch ([METRICS-CORPUS.md](METRICS-CORPUS.md)); what still blocks promotion is the **human-fix carry**, not the audit | B8 |
-| 4 | ✅ **DONE 2026-08-22** — the tie change on the RENDER side, plus the accidental restrike it forced and the scorer filter | the deadline item, closed **before** the render rather than after; `npm test`, 218/218 round-trip both modes, and a paired pilot render | — |
-| 5 | ✅ **DONE 2026-08-22** — ties out of `_realval_v2`, its five derived pools, the five `_realval_degraded` levels and v1 `_realval` | **771 tokens over 576 rows in 12 manifests**; **78% of the pairs joined DIFFERENT pitches**, i.e. were slurs. No criterion moved — but real-val's arc-`\tup3` diagnostic now reads `n/a` ([rung3/labeling.md](rung3/labeling.md)) | — |
-| 6 | ✅ **DONE 2026-08-22/23** — parity closed (132 pages, W4/W5/W6 pass under the rail), `?dense=` measured on a label-free proxy, and the budget value swept | rail **alone** is a wash; the value is **b=57, not 50**; splitting's real payoff is at TRAINING, untested ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) | — |
-| 7 | ✅ **DECIDED 2026-08-23 — the rail-plus-retrain pair goes to ROUND 4** (owner) | the final render's arm list is closed, and deferring **releases the exam**: the shipping slicer does not change, so `examv3` stays valid ([DECISIONS.md](DECISIONS.md)) | — |
-| 8 | ⏭ **NEXT — the remaining 208 rows of `examv3`, page-complete. NO re-cut.** | The queue is **455 of 663 verdicted** (398 fix / 35 bad / 22 ok), **31 pages complete of 64**. ⛔ `examv4` was priced and declined (owner, 2026-08-26): a re-cut does not bank verdicts, it reopens the queue at ~663 rows. The exam grades on `examv3`. The primary is per page, so finish page-complete — a half-labelled page under-counts itself | B0 |
-| 9 | settle what the 75% floor means, then render → train → read | the rebuilt exam is harder than the instrument the floor was signed on | §3c, B6 |
+| 1 | `promote_labels.py --dir data/real/rung3/strips_b8 --strips-root data/real/strips_v2` | turns 576 hand corrections into the training pool; dry-run is clean at **3,936 rows, 3 rejects** | seconds |
+| 2 | `promote_labels.py --dir data/real/rung3/strips_exam_v3 --exam --strips-root data/real/strips_examv3` | the exam gold; that manifest then **replaces** `strips_exam_v2_clean` | seconds |
+| 3 | re-score `round2-stage2-best` on the rebuilt exam | the **baseline column** of every floor pair; a **precondition of the read** | one CPU decode run |
+| 4 | count dotted barlines in real print | `USUL_BAR_RATE` is chosen, not measured, and 7.8% is a statistic about the model's guesses | a probe |
+| 5 | give the dotted barline its **own paired scorer** | three flags in one render ⇒ a general movement is unattributable; this makes two of three attributable | clone `staccato_falsedot_score.py` |
+| 6 | render the corpus + `stitch-test` + `verify-labels` **with the same three flags** | a gate run on a different picture is not this corpus's gate | ~75–80 min, heats the Mac |
+| 7 | fix `make_round3_colab_zip.sh` and the notebook: `strips_b8`, `:5`, allow `concaveTuplet` | otherwise the run trains on retired crops, silently | minutes |
+| 8 | train (stage 1 6,000 @ 16, stage 2 2,000 @ 16, `--every-share 0.15`, `scan_share` off) | the recipe held fixed from the arms | Colab |
+| 9 | settle what 75% means, pick the checkpoint on `_realval_v2`, then **the exam, read ONCE** | §3c must be answered **before** the read | — |
 
-✅ **Steps 5, 6 and 7 are closed, and the slicer is FROZEN again** (owner, 2026-08-26, after three fixes landed and two were rejected). ⏭ **The next action is step 8 and it needs no decision: label the remaining 208 rows of `examv3`, page-complete, then grade on it.**
-⛔ **Measuring the 59-id budget was step 4 and is DROPPED** — it decides which strips we keep, not what
-the model can read ([DECISIONS.md](DECISIONS.md)); its benefit half is measured and kept in
-[BACKLOG.md](BACKLOG.md) item 7.
+**The item-by-item detail — what each of B0–B9 is, what it found, and what it still owes — is in**
+**[rung3/worklist.md](rung3/worklist.md).** Only the tables above and the next action stay here.
 
-⚠ **Only B0 gates the read; step 3 gated the MODEL** and has run — but its output is not training
-data until the audit is **finished** and the old human corrections are carried across. [RISKS.md](RISKS.md) ·
-[rung3/round3-criteria.md](rung3/round3-criteria.md) §3c.
-
-⏭ **B8 HAS LABELLING WORK AVAILABLE IN PARALLEL, AND IT IS NOT STEP 8** — step 8 is still the next
-action. The 2026-08-27 draft-accept left **842 `b8-full` disagreements pending** for a human, and the
-**2,896 drafted `ok` rows are unread** — a draft is not a verdict, and the known misses clump on one
-page, so the spot-check goes through the review UI's **🤖 auto-accepted (agree)** filter,
-least-confident first. ⚠ Neither of those is what blocks promotion: **the 1,442 human-fix carry is**.
-Take this only when the exam queue is not the better use of an hour.
-[rung3/labeling-queues.md](rung3/labeling-queues.md).
-
-**The item-by-item detail — what each of B0-B9 is, what it found, and what it still owes — is in**
-**[rung3/worklist.md](rung3/worklist.md).** Only the ordered table above and the next action stay here.
 
 ### Owed but not next → [BACKLOG.md](BACKLOG.md)
 

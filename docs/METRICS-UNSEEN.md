@@ -3,7 +3,7 @@
 purpose: the single home for defects whose cause is a HOLE — a printed symbol the renderer never drew and the label language cannot name — and what happened when one was filled
 audience: agents and the owner, before proposing a fix for a symbol the model reads as something else
 
-updated: 2026-08-22
+updated: 2026-08-31
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-20 when that file crossed
 the 400-line cap. The split is by **genre, and the genre turned out to matter**: everything here has
@@ -21,6 +21,20 @@ staccato arm — a symbol the model had **never seen** — took its primary from
 as owed work rather than as a curiosity. Round 3's arm: [rung3/staccato-arm.md](rung3/staccato-arm.md).
 
 ### The DOTTED (usul) BARLINE read as `\repstart` (owner-found 2026-08-20, while labelling)
+
+> ✅ **DRAWN 2026-08-31 — `drawUsulBars` / `render.ts --usul-barline`.** It rules the usul's own beat
+> groups inside the bar (aksak 9/8 = 2+2+2+3 ⇒ three rules a bar), reading the groupings already in
+> `USUL_BEAM_GROUPS`; the coin is per **PIECE**, since an edition either uses the convention or it
+> does not, and a meter with no known grouping gets no rules rather than an invented one.
+> ✅ **Label-free, and verified so: 188 strip labels over 4 scores are byte-identical with the flag
+> on and off** — which is what makes it cost zero new labelling. Previews of it beside the other two
+> final-render flags: `data/synthetic/_flag_preview/`.
+> ⚠ **`USUL_BAR_RATE = 0.35` and the placement (62% of the way to the following note) are CHOSEN,
+> NOT MEASURED** — the same status as `STACCATO_RATE` and `STACCATO_RADIUS`. The print-frequency
+> count below is still owed and is what would replace the rate.
+> ⏭ **It still owes its own paired scorer**, cloned from `staccato_falsedot_score.py` with the false
+> `\repstart` rate in place of the false-dot rate. Without it, three flags in one render leave a
+> general movement unattributable; with it, two of the three are attributable.
 
 Same shape as the staccato hole below, found the same way — by eye, mid-labelling, on
 `gorunce_ben_seni_ey_mah_nota_p1_s05_w02.png` (`batch3`, karcigar). The strip carries a **column of

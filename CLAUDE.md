@@ -68,7 +68,7 @@ npm run dev:web       # harness → http://localhost:5173 — decode runs in YOU
 npm run dev:cloud     # the same harness with decode on Cloud Run — ⚠ THIS is how you keep the Mac cool
 npm run typecheck     # all workspaces
 npm test              # stitcher + labels + edit primitives + usul strokes + voices + violin fingering
-npm run check:fold    # does keeping the repeat SIGNS change the sound? expect 1720 pages, 0 changed
+npm run check:fold    # repeat SIGNS vs sound? 1720 pages, 0 changed. Render flags: COMMANDS.md
 npm run smoke:editor  # real app: select, drag, delete, undo/redo, palette, rests, tuplets, voices
 npm run gate:browser  # in-browser ONNX gate, headless — expect 27/28
 .venv-ml/bin/python scripts/check_docs.py   # doc structure + no-info-loss check
@@ -122,24 +122,24 @@ a successful build is not a deploy. Both, and every other command, in
   `eval_omr.py` drops `\tie` from **both** the gold and the decode. `strips_exam_v2*` keeps its ties on purpose — it is
   the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS REPAIRED**
-  (owner, 2026-08-30). The engraved mark is the click target; its notes are `pointer-events: none`. ⚠ **EVERY
-  drawn mark is holdable, including one over a SINGLE note** — `tupletGroupsIn` brackets runs that never sum
-  plain (the model's misreads; `decoded.json` has five against two real triplets), and those most need fixing.
-  The ✕ clears any of them (each member ×³⁄₂, notes kept); the handles **slide** a real triplet (always three
-  members) but **repair** a broken one — grabbed end moves, other stays, allowed only when the result CLOSES or
-  has FEWER members, so a broken mark can never be made merely broader. `tupletEdgeTo` owns both and
-  `drawnTupletAt` finds a mark where `closedTupletAt` cannot. ⚠ **The target is measured off the mark's STROKES
-  (`markBoxOf`), never off the wrapping group's `getBBox()`** — a `<text>` reports its FONT's em box (a
-  bracket's "3" measured 12 × 160 px) and VexFlow leaves a zero-height `<rect>` at the SVG **origin**, so the
-  group's box was a slab that swallowed note clicks (the `GraceNoteGroup` failure `noteBoxOf` documents, same
-  origin rule). ⚠ The mark style is a per-piece hash and **all six bundled scores draw the arc**, so the
-  VexFlow-**bracket** branch has **no automated coverage** — verified by hand on a renamed score. ⛔ **Do not
-  "improve" a REAL triplet into a 4/5/7-note tuplet**: the digit is a hardcoded `"3"` and the token is `\tup3`,
-  so a wider group would draw AND label a rhythm nobody wrote. A real n-tuplet needs a derived digit **and** new
-  tokens (`\tup5` does not exist) — a corpus decision the owner deferred. ⚠ `tupletEdgeTo` sits beside the code
-  that DRAWS the bracket and ends in a **simulation against `tupletGroupsIn`**, not a rule. Nothing is stored: a
-  held mark is one event index. [docs/mvp/editor-built.md](docs/mvp/editor-built.md) ·
-  [docs/DECISIONS.md](docs/DECISIONS.md).
+  (owner, 2026-08-30). The mark is the click target — in **Seçim as well as under ÜÇLEME** (`tupletPickable`),
+  never with a note value or accidental armed; under ÜÇLEME its notes are `pointer-events: none`, and
+  note-vs-mark selection is exclusive (each carries a ✕). ⚠ **EVERY drawn mark is holdable, including one over
+  a SINGLE note** — `tupletGroupsIn` brackets runs that never sum plain, the model's misreads (`decoded.json`:
+  five against two real triplets). The ✕ clears any (each member ×³⁄₂, notes kept); the handles **slide** a
+  real triplet (three members always) but **repair** a broken one — grabbed end moves, other stays, only when
+  the result CLOSES or has FEWER members, never merely broader. `tupletEdgeTo` owns both, `drawnTupletAt`
+  finds a mark where `closedTupletAt` cannot, and its last check is a **simulation against `tupletGroupsIn`**,
+  not a rule. ⛔ **Never widen a REAL triplet into a 4/5/7-tuplet**: the digit is hardcoded `"3"` and the token
+  `\tup3`, so it would draw AND label a rhythm nobody wrote — needs new tokens, deferred. ⚠ **Two geometry
+  traps, both already paid for.** (1) The target is measured off the mark's STROKES (`markBoxOf`), never its
+  group's `getBBox()`: a `<text>` reports its FONT's em box (a bracket's "3" measured 12 × 160 px) and VexFlow
+  leaves a zero-height `<rect>` at the SVG **origin**, so the group's box was a slab that swallowed note
+  clicks (`noteBoxOf`'s `GraceNoteGroup` failure). (2) The mark overlay paints **after** the note targets so
+  it wins where they overlap (a live note box swallowed the mark in Seçim); the bargain is `smoke:editor`'s
+  **no note's CENTRE may fall inside a mark's box**. ⚠ The style is a per-piece hash and all six bundled
+  scores draw the arc, so the VexFlow-**bracket** branch has **no automated coverage**.
+  [editor-built.md](docs/mvp/editor-built.md).
 - **A DECODE CACHE IS ONLY VALID FOR THE CV CODE THAT CUT ITS CROPS** (2026-08-25). `window_signature()`
   stores `GEOMETRY_REV` plus the geometry knobs; a `<page>_decode.json` without that field is
   REFUSED, because nothing in it says which slicer produced the crops it describes — and a 31 July
@@ -383,9 +383,9 @@ Full guide — what to update after a session, and why each rule exists:
 
 ```
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
-data/real/rung3/      the label POOLS: strips_nota / strips_r1 / strips_tup (11-17 Jul crops, and the
-                      1,442 human fixes) + strips_b8 (2026-08-21, the SAME pools re-emitted onto the
-                      current crops). Not interchangeable and not yet merged — see METRICS-CORPUS.md
+data/real/rung3/      the label POOLS. ROUND 3 TRAINS ON strips_b8 ALONE (3,936 strips) — the old
+                      strips_nota / strips_r1 / strips_tup are the SAME music on RETIRED crops and
+                      MUST NOT be passed beside it; b8-review goes to Round 4 (see METRICS-B8.md)
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29

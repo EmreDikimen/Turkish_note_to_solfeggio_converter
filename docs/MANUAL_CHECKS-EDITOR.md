@@ -162,6 +162,11 @@ the notes. Scripted version: `npm run smoke:editor`.
    shows a dashed teal outline, so you can see it is a target. An orange **frame** appears round all
    three notes, with a small orange **handle** at each end and a **✕** above the middle.
    ⚠ Try clicking one of the three **notes** instead: nothing happens. That is deliberate.
+2b. Press **Esc** (or the **↖ Seçim** button) so no tool is armed, and click the **3** again: it is
+   still a target, and still gives you the frame, the handles and the ✕. Now click one of its
+   **notes**: the note gets selected and the tuplet lets go — only ever one thing is selected, so
+   there is never more than one ✕ on the page. ⚠ Arm a note length instead (say 1/4) and click the
+   **3**: nothing happens. A note length applies to a note, and a sign is not one.
 3. Look at the notes either side: the ones a handle can be dragged onto are outlined with a **dashed
    teal border**. Everything else stays pale. A dashed note is a *landing*, not a button — clicking
    it does nothing, because the handles do the moving.

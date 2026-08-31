@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-08-23
+updated: 2026-08-31
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -263,8 +263,16 @@ root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS
 | tab | rows | what a verdict means |
 |---|---|---|
 | **`b8-audit`** | **201** (✅ all read) | the emitter's seeded 5% sample of ACCEPTED labels — the escaped-bad-label rate |
-| `b8-full` | 3,955 | every accepted label. **2,896 now carry a drafted `ok`** — see the auto-accept below |
-| `b8-review` | 4,738 | the unsure ones; a `fix` here promotes a strip into training |
+| **`b8-full`** | **3,955** (✅ **READ AND CLOSED 2026-08-31**) | every accepted label. **3,362 ok / 576 fix / 17 bad**; 1,016 read by hand, 2,939 machine `agree` drafts accepted by the owner |
+| `b8-review` | 4,738 | the unsure ones; a `fix` here promotes a strip into training. ⏭ **DEFERRED TO ROUND 4** (owner, 2026-08-31), including the **450** rows carrying an old human fix |
+
+- ⭐ **`⭐ old human fix` — a filter over the retired pools' corrections** (`carry_old_fixes.py`,
+  2026-08-31). It marks each row with `oldfix` / `oldfix_kind` / `oldfix_src` and lists them
+  **worth-first**: fixes that DISAGREE with b8's label before the ones the re-emit reproduced by
+  itself, `span` before `name`. ⚠ `span` means the same BARS, **never the same pixels** — 0 of 1,215
+  crops are byte-identical — so it is a suggestion with its own ✓ accept button and plain `ok` never
+  stores it. ⛔ `name`-only rows are drawn with a red warning: that is where the 248-row trap lives.
+  Numbers: [../METRICS-B8.md](../METRICS-B8.md).
 
 - ✅ **THE GUARD IS READ — all 201 rows, by hand, 2026-08-22: 27 `fix` / 174 `ok` = 13.4% wrong.**
   It was worth reading: the referee saw these very labels in stage-2 training at 9× oversampling, so
@@ -337,13 +345,9 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
 2. ✅ **The 27 `gold_conflict` rows — DONE 2026-08-21: 14 `ok`, 13 `fix`.** The fresh derivation won
    more often than the carried gold, and 3 more signature bugs fell out of the 13 fixes
    ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
-3. **The remaining 636, PAGE-COMPLETE** — 158 carry a suggestion, 329 have no label at all, and
-   **64 pages are still open**. ✅ Both things that used to sit in front of this are done — the
-   training re-emit (B8) ran on **2026-08-21** and its `b8-audit` was read whole on **2026-08-22**
-   ([below](#the-b8-queues-2026-08-21--the-re-emit-put-in-front-of-a-human)); what governs the order
-   now is [../STATUS.md](../STATUS.md). The primary counts corrections *per page*, so a half-labelled page
-   under-counts its own errors — grading it would be worse than skipping it. Stopping early should
-   cost whole pages, never half ones.
+3. ✅ **DONE 2026-08-31 — all 663 verdicted, all 64 pages PAGE-COMPLETE** (573 fix / 61 bad /
+   29 ok). Read page-complete throughout, which is what the per-page primary requires. ⏭ What is left
+   is the promote command below and the `round2-stage2-best` re-score.
 
 - ⚠ **`--strips-root data/real/strips_examv3` on the promote step is not optional.** The default root
   holds the same filenames with the retired slicer's pixels, so the default links the wrong pictures.

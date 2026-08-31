@@ -2,12 +2,85 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-30
+updated: 2026-08-31
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
-## 2026-08-30 (latest) — the second segno stops being decoration: the teslim is played after every hâne
+## 2026-08-31 (latest) — Round 3's data is settled: the queues are named, the exam is done, and the third render flag is drawn
+
+The day closed the labelling side of Round 3 and built the last thing the final render was waiting
+on. Nothing here trains anything yet; it makes the round runnable.
+
+**The exam is finished.** `examv3` reads **663 of 663 verdicted, all 64 pages page-complete** (573
+fix / 61 bad / 29 ok), on top of the 139 `examv3-full` rows read on 2026-08-21. B0 no longer blocks
+the read. STATUS had been carrying "455 of 663, 31 pages of 64" for five days.
+
+**`b8-full` is finished and CLOSED by the owner** — 3,955 rows, 3,362 ok / 576 fix / 17 bad, of
+which **1,016 were read by hand** and 2,939 stand as machine `agree` drafts. The owner's reason for
+accepting the drafts is backed by our own sample: in the random 201-row `b8-audit`, **41 rows had
+`label == decode` and a human read all 41 as `ok` — 0 wrong** (95% upper bound ~7% at that n).
+
+**⚠ With one measured exception, and the owner had already built the tool for it.**
+`scripts/rung3/unaccept_sig.py` (2026-08-30) sends machine-accepted rows back to pending when the
+label's `\sig` block carries a given accidental — because on those rows "label agrees with decode"
+is close to circular: the signature is the one part of a label the MODEL votes on, so the decode is
+where the label came from ([../BACKLOG.md](../BACKLOG.md) item 9). It was run, and the owner then
+corrected **12 rows — all 12 carrying a `\sig` block**. Twelve wrong signatures the agreement rule
+had accepted into a training pool. The general rule stands; `\sig` is the exception to it.
+
+**The old human fixes were found again, and then measured into irrelevance for this round.** The
+B8 re-emit did not carry the retired pools' hand corrections across, so
+`scripts/rung3/carry_old_fixes.py` locates them by the measure span the slicer itself recorded —
+`(page, system, meas_from, meas_to)` out of each crop root's page manifest — never by filename.
+⚠ **The key was validated before it was trusted**: where it says "same music", the real SymbTr span
+agrees on **1,002 of 1,026 (97.7%)**; where it says "different", **35 of 36** really are different.
+**1,479** corrections were placed ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)).
+
+⭐ **And the answer was that the owner had already done the work by hand.** Of the 198 span-matched
+fixes disagreeing with b8's label inside `b8-full`, **122 he had fixed identically** — two
+independent human reads of the same music, different crops, months apart, agreeing **122 of 140
+(87%)**. That is the strongest quality signal either label set has ever had, and it did not exist
+before today. Only 55 rows held new information, and the owner declined them.
+
+⛔ **None of these strips survived the re-slice as pictures, and that is the point of the caveat.**
+Of the 1,215 crops carrying a hint, **0 are byte-identical** and **77.7% changed size** (median
++9 px wide, height unchanged). A span match means the same BARS, never the same pixels — which is
+why the hint gets its own accept button and plain `ok` never stores it.
+
+**The dotted (usul) barline is drawn** (`drawUsulBars` in `apps/web/src/SheetView.tsx`,
+`render.ts --usul-barline`), the third and last flag the final render was specified to carry
+(2026-08-20). It rules the usul's own beat groups inside the bar — aksak 9/8 = 2+2+2+3, so three
+rules a bar — reading the groupings already in `USUL_BEAM_GROUPS`. Coined per PIECE, because an
+edition either uses the convention or it does not. ✅ **Label-free, and checked: 188 strip labels
+over 4 scores are byte-identical with the flag on and off.** Previews:
+`data/synthetic/_flag_preview/`. ⚠ `USUL_BAR_RATE = 0.35` and the placement are CHOSEN, not
+measured; counting dotted barlines in real print is still owed before the render.
+
+**A defect found by dry-running the promotion, worth six of the owner's own corrections.**
+`promote_labels.py` rejected 9 rows, and 6 were the documented `f'' 32` form — the model writes a
+32nd-note duration spaced, the owner kept that spacing when typing the fix, and the round-trip gate
+read it as two unknown tokens. That does not skip the row: **an audit `fix` that fails the gate
+REMOVES the manifest row**, so six hand-corrected strips would have been deleted from training over
+a form measured to be identical in token ids. `norm_label` now re-glues a spaced `32`, the same rule
+and the same regex as `build_realval_v2.py`. ⛔ `32` only — 16 and 8 DO differ in id space.
+Rejects 9 → 3, and the three that remain are genuinely over the 59-id cap (60, 61, 60).
+
+**The review UI gained a `⭐ old human fix` filter** beside `pending only` / `reviewed only`,
+ranked by what a row is worth: fixes that DISAGREE with b8's label first, span-matched before
+filename-only, and the ones the re-emit reproduced by itself last. `name`-only rows are drawn with a
+red warning, because that is where the 248-row re-slice trap lives.
+
+**What the owner decided, and it settles the round's data.** `b8-review` and the old fixes go to
+**Round 4**. So Round 3 trains on `strips_b8` alone, grades on `examv3`, and selects on
+`_realval_v2` ([../STATUS.md](../STATUS.md)).
+
+⚠ **`batch3` and `reslice-all` could not have joined even if asked.** Neither has any promotion path,
+and the reason is structural: of `batch3`'s 66 hand corrections **53 sit on strips the emitter
+DROPPED** (`split_wide` / `over_budget` / `row_unaligned`), as do all 50 of `reslice-all`'s. Making
+them usable IS the label-budget rail, which is already Round 4's headline.
+
+## 2026-08-30 — the second segno stops being decoration: the teslim is played after every hâne
 
 The owner put a Muhayyerkürdî saz semâîsi on the table and read the page out loud: four **hâne**s
 and one **teslim**, a 𝄋 at the head of the teslim and another 𝄋 at the end of every hâne. His
@@ -103,7 +176,24 @@ broken marks have **no legal drag at all**, because their neighbours are not pla
 matching length; those are cleared with the ✕. Offering a drag that could not produce a triplet
 would only move the lie. `smoke:editor` now runs a section against `decoded.json` itself: it finds
 all five, tells them from the two real triplets, clears one (changing exactly its own notes, each by
-exactly ³⁄₂, deleting nothing), and repairs another by dragging onto the note the page marks. Dragging the
+exactly ³⁄₂, deleting nothing), and repairs another by dragging onto the note the page marks.
+
+**Fourth pass: arming ÜÇLEME turned out to be a precondition nobody asked for.** *"tupletleri seçmek
+için toolkitten ille de tupleti seçmem gerekmesin. Seçim seçiliyken de tupletleri seçip
+silebileyim"*. A mark is now a target in plain Seçim as well — though **not** with a note value or an
+accidental armed, since those apply to a note and a mark is not one — and in Seçim a note and a mark
+are mutually exclusive selections, because each carries its own ✕.
+
+⚠ **That surfaced a paint-order bug, and it existed only in the new mode.** Under ÜÇLEME the member
+notes are `pointer-events: none`, so the mark was reachable however the overlays were stacked. In
+Seçim the notes are live — and a note's box **swallowed the mark outright**: VexFlow's box reaches
+along the *stem*, well past the noteheads, into the strip of staff the mark is drawn in. Playwright
+named it exactly (*"`<div data-omr-note="99">` intercepts pointer events"*), which is the kind of
+failure a hand check would have called "the click just doesn't work". The mark overlay now paints
+**after** the note targets and wins the overlap. That is the right way round — the mark is the
+smaller, more specific target, and it sits on the **notehead side, opposite the stems**, so the
+region the two fight over is stem, never notehead. The bargain is the guard already written for the
+box-too-big bug: **no note's CENTRE may fall inside a mark's box**, now asserted in both modes. Dragging the
 right handle hands the **first** member its plain value back (×³⁄₂) and pulls the **next** note in
 (×⅔) — so the group is always exactly three notes and **the bar length never changes**, which is
 unusual for this editor (every other edit deliberately leaves its bar over or under). One whole drag

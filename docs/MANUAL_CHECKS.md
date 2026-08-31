@@ -192,13 +192,18 @@ becomes visible.
    many tokens in total, and where it was read (`sunucuda` / `bu bilgisayarda`).
 3. Click a strip chip (`s0w0`, `s1w1`, … — the file name is in the tooltip). You get the
    detokenized line the stitcher was handed, then **every token in order** with its log-probability
-   underneath: `\sig −0.74`, `\komaFlat −0.35`, `b</w> −0.20`. Orange borders are less sure, red
+   underneath: `\sig −0.74`, `\komaFlat −0.35`, `si</w> −0.20`. Orange borders are less sure, red
    ones are doubtful — the number is the claim, the colour is only for the eye.
+   ⚠ Pitches are shown as **note names**, not letters (`la'4`, `si</w>`), the same way
+   `review_ui.py` shows the labelling queues — hover a token, or the line, for the raw vocabulary
+   spelling (`a'4`, `b</w>`). Everything else is verbatim, `</w>` markers included.
 4. A chip marked **⚠** hit the token cap: that strip is a truncated read, not a short one.
 5. **2 birleştirme uyarısı** at the bottom opens the stitcher's own notes — `row 0: mid-row \sig
    ignored`, `row 6: \tie into a rest ignored`. This is the answer to "the model saw it, so why is
    it not on the page".
 6. **Ham çıktıyı indir (JSON)** saves the whole thing — ids, token spellings, logprobs, per strip.
+   The file keeps the **letters**, not the note names: it is data, and its alphabet is the one the
+   model was trained on.
 
 What to look for: a strip whose tokens are confident but wrong (a real model error), against one
 whose tokens are all near −1 (the crop is bad — go to check 13), against a strip whose tokens are

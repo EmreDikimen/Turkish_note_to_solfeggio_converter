@@ -134,8 +134,23 @@ round its three notes, a **handle at each end**, and a **✕**.
 ⚠ **The click target is the SIGN, not the notes** (owner, second pass the same day: *"direkt olarak
 3'leme işaretinin tıklanabilir olmasını istiyorum. notalarına tıklamak istemiyorum"*). The first
 build selected by clicking a member; that is gone. A note inside a triplet keeps its
-`data-tuplet="member"` state — so the DOM still says where the triplets are — but it is
+`data-tuplet="member"` state — so the DOM still says where the triplets are — but under ÜÇLEME it is
 `pointer-events: none`, exactly like every other target the tool refuses.
+
+⚠ **And ÜÇLEME is not a precondition** (owner, fourth pass: *"tupletleri seçmek için toolkitten ille
+de tupleti seçmem gerekmesin. Seçim seçiliyken de tupletleri seçip silebileyim"*). A mark is a target
+in plain **Seçim** too (`tupletPickable`) — but not with a note value or an accidental armed, because
+those apply to a note and a mark is not one. In Seçim a note and a mark are **mutually exclusive
+selections**: each carries its own ✕, and two delete buttons on the page at once could only be a trap.
+
+**That change had a real consequence, and it is a paint-order one.** Under ÜÇLEME the member notes are
+pointer-transparent, so the mark was reachable however the overlays were stacked. In Seçim the notes
+are live, and a note's box **swallowed the mark outright** — VexFlow's box reaches along the *stem*,
+well past the noteheads, into the strip of staff the mark is drawn in. The mark overlay now paints
+**after** the note targets, so it wins where they overlap. That is the right way round: the mark is
+the smaller, more specific target, and it is drawn on the **notehead side, opposite the stems**, so
+the region the two fight over is stem, never notehead. `smoke:editor` holds the other half of the
+bargain — **no note's CENTRE may fall inside a mark's box** — in both modes.
 
 ### Two kinds of mark, and the handles mean different things on each
 

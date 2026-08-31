@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-30
+updated: 2026-08-31
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -78,6 +78,55 @@ problem than it solves. It was stopped by a rule written down before the test ra
 been believing turned out to be three times too pessimistic. Full account on that page.
 
 ## Where we are right now
+
+### Round 3's practice questions and final exam are both finished (31 August 2026)
+
+Round 3 is the next training run. Two piles of paper had to be finished before it could start, and
+both are now done.
+
+**The final exam is ready.** The exam is a set of real printed pages the model has never trained on,
+read **once** at the end to decide whether the round passed. Every one of its **663** strips now has
+a human answer, and all **64** pages are complete — that matters, because the score counts mistakes
+*per page*, so a half-checked page would flatter itself.
+
+**The practice material is ready too.** `strips_b8` is the pile the model learns from: **3,955**
+small pictures of real music with the correct notes written beside each. You read **1,016** of them
+by hand and corrected 576. The other 2,939 were accepted automatically, on a simple rule — if the
+old answer and the model's own reading say exactly the same thing, the answer is probably right.
+**We checked that rule on a random sample: 41 such rows, a human read all 41, none was wrong.**
+
+⚠ **With one exception you had already spotted.** The **key signature** (the flats and sharps at the
+start of a line) is the one part of an answer the *model* decides rather than the music database. So
+for signatures, "the answer agrees with the model" is circular — the answer came from the model.
+Your `unaccept_sig.py` puts those rows back in the queue; running it found **12 more wrong
+signatures**.
+
+**What Round 3 will use, and nothing else:** the 3,936 real pictures above, a fresh set of
+computer-drawn practice pages, a small "practice test" (`_realval_v2`) to pick the best training
+run, and the exam to grade it. The other queue (`b8-review`, about 4,700 more rows) waits for
+**Round 4** — your decision. It would add roughly **11%** more material to a pile that already grew
+70%, so it is not the thing that decides this round.
+
+### The three things we now draw differently for training (31 August 2026)
+
+The computer-drawn practice pages are how the model learns. This round adds three marks to them, and
+all three are now built. You can look at them: `data/synthetic/_flag_preview/`.
+
+1. **Staccato dots.** A dot *beside* a note means "longer". A dot *above* it means "short and
+   detached" — and we had never drawn one, so the model thought every dot meant longer. Teaching it
+   took the mistake from **72.7% to 0%**.
+2. **A second way of drawing the triplet "3"**, which you found on two real scanned editions.
+3. **The dotted usul barline** — the light broken line inside a bar that shows the usul's beats. We
+   had never drawn one either, so the model guessed it was a repeat sign. You have been deleting
+   those by hand while labelling: about **1 in 5** of your corrections was exactly that.
+
+⚠ **None of the three changes the written answer** — they only change the picture. We checked: 188
+answers came out **letter for letter identical** with the marks on and off. That is what makes them
+free: no page has to be re-labelled.
+
+⚠ **One number in the third one is a guess, and it is marked as a guess.** We draw the dotted
+barline on 35% of pieces. Nobody has counted how often real Turkish printing uses it. Counting that
+is still owed before we draw the final set.
 
 ### The app now reads the page's road signs (30 August 2026)
 
@@ -267,6 +316,8 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    alone. On one test page there are five of these against two correct ones, so on real pages this is
    the common case, not the rare one. ⚠ Some of them cannot be fixed by dragging, because the notes
    next to them are the wrong length; for those, use **✕**, or change the neighbour's length first.
+   You do **not** have to pick the üçleme button first: with plain **↖ Seçim** on, clicking a **3**
+   picks it up just the same, and the ✕ deletes it from there.
    ⚠ **A CORRECT group always stays three notes**, and you asked about this before it was built. Making it
    four or five is not a small change: the printed **3** is written into the program as the letter
    "3", and the word the reading model learns is literally `\tup3`. There is no word for a group of

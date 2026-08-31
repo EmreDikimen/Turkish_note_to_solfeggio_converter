@@ -3,7 +3,7 @@
 purpose: what each Round-3 work item B0-B9 is, what it found, and what it still owes
 audience: whoever is picking up a Round-3 item and needs its state and its traps
 
-updated: 2026-08-23
+updated: 2026-08-31
 
 > **This file does NOT state what is next.** The ordered table and the current next action live in
 > [../STATUS.md](../STATUS.md), which is the only file allowed to say either. This one holds the
@@ -13,8 +13,15 @@ Split out of [../STATUS.md](../STATUS.md) on 2026-08-23 when it crossed the 400-
 is the one [../MAINTAINING.md](../MAINTAINING.md) asks for: **STATUS keeps current state and the
 next action; work goes in the track doc it belongs to.** Nothing was dropped in the move.
 
-**B0. ⏭ THE EXAM REBUILD — LABEL `examv3`. Highest-value labelling on the board, and it BLOCKS the
-   read.** ✅ **166 rows are read**: all 139 of `examv3-full` and all 27 `gold_conflict`.
+**B0. ✅ DONE 2026-08-31 — `examv3` IS FULLY LABELLED: 663 of 663 verdicted, all 64 pages
+   PAGE-COMPLETE** (573 fix / 61 bad / 29 ok), on top of the 139 `examv3-full` rows read 2026-08-21.
+   **It no longer blocks the read.** ⏭ What remains is mechanical: promote it
+   (`--exam --strips-root data/real/strips_examv3`, not optional — the default root holds the same
+   filenames with the RETIRED slicer's pixels), after which that manifest **replaces**
+   `strips_exam_v2_clean` as the exam; and re-score `round2-stage2-best` on it, which is the baseline
+   column of every floor pair and a **precondition of the read**. The original framing follows.
+
+   **The job as it stood:** ✅ **166 rows are read**: all 139 of `examv3-full` and all 27 `gold_conflict`.
    ✅ **UNPAUSED 2026-08-23** — it sat at 62 of 663 only because a slicer change would force a re-cut,
    and the label-budget rail is now deferred to Round 4 ([../DECISIONS.md](../DECISIONS.md)), so the
    crops are stable and no row is spent twice. ⚠ A Round-4 re-cut will still cost something, but not
@@ -65,7 +72,14 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
 
 **B6. ⏭ THE FINAL MODEL, then the exam, read ONCE. The render carries THREE flags and no more.**
    `--concave-tuplet` (a per-piece coin on print evidence, no recall claim), `--staccato-noise` (the
-   passed arm) and the new **label-free dotted (usul) barline**. ⛔ **Nothing else joins them** — in
+   passed arm) and `--usul-barline`, the **label-free dotted (usul) barline**.
+   ✅ **All three are BUILT as of 2026-08-31** — `drawUsulBars` was the last one, ruling the usul's own
+   beat groups inside the bar off `USUL_BEAM_GROUPS`, coined per PIECE. **Label-free and checked: 188
+   strip labels over 4 scores byte-identical with the flag on and off.** Previews of all three:
+   `data/synthetic/_flag_preview/`. ⚠ `verify-labels.ts` must be passed **the same three flags** or it
+   gates a different picture. ⚠ `make_round3_colab_zip.sh` **refuses any corpus carrying
+   `concaveTuplet`** and hardcodes the three RETIRED real pools; both need changing, and `:9` must
+   become `:5` at the new pool size. ⛔ **Nothing else joins them** — in
    particular **not** a raised token budget (B9) and **not** the content work (B7).
    ⏭ **Before rendering**: how often does print actually draw a dotted barline? 7.8% is a statistic
    about the model's guesses — ⭐ cheapest honest method is to count them while labelling `examv3`.
@@ -117,6 +131,18 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    ⚠ The live list is `data/pieces_v4.json`, and a new selection needs its own filename **and its own
    split** — a piece outside `split_v4.json` is dropped from training in silence. ⚠ It also changes
    which real strips are val-side, so `_realval_v2` and `_tupletval` must be re-checked, not assumed.
+
+**B8b. ✅ CLOSED 2026-08-31 — `b8-full` IS READ AND THE POOL IS READY.** 3,955 rows,
+   **3,362 ok / 576 fix / 17 bad**; 1,016 read by hand, 2,939 standing as machine `agree` drafts,
+   accepted by the owner on evidence: in the random 201-row audit **41 rows had `label == decode` and
+   a human read all 41 as `ok` — 0 wrong**. ⛔ **`\sig` is the measured exception** — `unaccept_sig.py`
+   reverted machine verdicts on signature-bearing rows and the owner then corrected **12, all 12
+   carrying a `\sig` block** ([BACKLOG.md](../BACKLOG.md) item 9). ⭐ **The 1,442 human-fix carry
+   turned out to be already done by hand**: of the 198 span-matched fixes disagreeing with b8's
+   label, **122 the owner had fixed identically** (two independent reads agreeing 122 of 140 = 87%).
+   ⏭ **`b8-review`'s 450 promotable old fixes go to ROUND 4** (owner). ✅ Promotion dry-run is clean:
+   **3,936 rows, 3 rejects**, all three genuinely over the 59-id cap.
+   [METRICS-B8.md](../METRICS-B8.md).
 
 **B8. ✅ THE RE-EMIT RAN (2026-08-21) — `data/real/rung3/strips_b8`.** 1,293 non-exam matched pieces,
    current crops (`strips_v2`), `round2-stage2-best` as hint AND gate, **37 minutes** on the laptop:

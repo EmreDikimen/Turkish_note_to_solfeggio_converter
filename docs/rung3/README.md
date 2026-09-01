@@ -38,6 +38,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [../../round_3_scan_logs.md](../../round_3_scan_logs.md) | Arm 1's raw Colab training log, both stages, kept verbatim | new 2026-08-19 |
 | [../../round_3_staccato_logs.md](../../round_3_staccato_logs.md) | **Arm 2's** raw Colab training log, both stages, kept verbatim | new 2026-08-20 |
 | [../../round3_final_logs.md](../../round3_final_logs.md) | **THE FINAL MODEL's** raw Colab training log, both stages, kept verbatim. ⚠ Read it beside [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) — the curves show the checkpoint selector picking the WORSE checkpoint for real pages | new 2026-09-01 |
+| [../../round3_runa_logs.md](../../round3_runa_logs.md) | **RUN A's** raw stage-2 log (4,000 steps). ⚠ No stage 1 — it reuses Round 3's, which is what makes step count the only variable | new 2026-09-01 |
 | [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
 | [staccato-arm.md](staccato-arm.md) | **Round 3's arm 2** — the staccato distractor: the hole, the draw, the signed pre-registration, the result (**it passes**) and the open disposition | new 2026-08-20 |
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |

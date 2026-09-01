@@ -1358,3 +1358,51 @@ had converged. A longer stage 2 is a schedule change, and it must be A/B'd, not 
 
 The exam, the `_realval_v2` selection between `best` and `last`, and the two paired flag scorers.
 Those are read on the Mac, in that order, and the exam **once**.
+
+## Round 3 — RUN A (Colab, 2026-09-01): stage 2 at 4,000 steps. Answer: helps a little, done by 2,500
+
+Raw log: `round3_runa_logs.md`. **One variable against the Round-3 final run: stage 2 runs 4,000 steps
+instead of 2,000.** Everything else is held — same corpus `strips_v7_final`, same `strips_b8:5`, same
+lr 1e-5, same warmup, same mix. ⭐ **It starts from Round 3's OWN stage-1 checkpoint**
+(`r3-final-stage1/best`) rather than recomputing one: training is not bit-deterministic, so a fresh
+stage 1 would have made this differ from Round 3 in two places instead of one.
+
+| step | synth val | **real val** | mix (selects `best`) | |
+|---|---|---|---|---|
+| 250 | .0100 | .0297 | **.0115** | ⛔ `best` stamped HERE and never beaten |
+| 500 | .0105 | .0254 | .0117 | |
+| 750 | .0144 | .0199 | .0148 | |
+| 1000 | .0112 | .0207 | .0119 | |
+| 1500 | .0114 | .0186 | .0119 | |
+| 1750 | .0121 | .0194 | .0127 | *Round 3 stopped near here at real .0182* |
+| 2000 | .0116 | .0183 | .0121 | |
+| 2250 | .0126 | .0181 | .0131 | |
+| **2500** | .0125 | **.0171** | .0128 | ⭐ **real minimum — this is `best-real`** |
+| 2750–4000 | ~.0114 | .0175 → .0177 | ~.0119 | flat, drifting slightly UP |
+
+### What it answers
+
+⭐ **More stage-2 steps help, and the gain is small and exhausted by ~2,500.** Real val
+**0.0182 → 0.0171 (−6.0%)**, minimum moving from step 1750 to 2500, then flat-to-worse for the last
+1,500 steps. ⚠ **"2,500" does not transfer as a step count**: it is step 2,500 *of a 4,000-step cosine*,
+which sits at a different learning rate than step 2,500 of a shorter schedule would.
+
+⚠ **This is a teacher-forced loss, not a correction count.** Round 3's `+13.7 pp` exact-match on
+real-val turned out to be almost entirely the retired `\tie`. Only `paired_arm_score.py` on
+`_realval_v2` says whether 6% of loss is worth any edits.
+
+### ⛔ The selector failed again, and much harder
+
+`best` was stamped at **step 250** — the first evaluation, after 250 steps of real specialisation —
+and no later mix ever beat it. Round 3's `best` at least reached step 500. ⭐ **Without the
+`best-real` checkpoint added the same day, this 1.7-hour run would have produced nothing usable**:
+`best` is barely specialised and `last` (step 4,000, real .0177) is past the minimum. Second
+consecutive run where the blended selector picks wrong; the blend is ~92% synthetic by strip count
+([../../docs/BACKLOG.md](../../docs/BACKLOG.md) item 3).
+
+### Cost
+
+`--save-every` 500 (from 250) cut checkpoint writes **48 → 16** while `--eval-every` stayed at 250, so
+selection granularity is unchanged. Step time settled at ~1.63 s/step against Round 3's ~1.57 — twice
+the steps at no per-step penalty, and roughly 50 GB less pushed through the Drive mount. `--save-every`
+only governs `last`; `best`/`best-real` are written on improvement, driven by `--eval-every`.

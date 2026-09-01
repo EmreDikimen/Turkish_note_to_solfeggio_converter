@@ -22,70 +22,58 @@ model is exported, int8-quantized and staged locally (`apps/web/public/models/`,
 for that test; **nothing is published** and the live site is still Round 2. Round 2 is backed up at
 `apps/web/public/models/_round2_backup/`. §3c's ship call is a human judgement, and it was taken.
 
-⏭ **ROUND 3 CONTINUES WITH TWO MORE PAIRED RUNS** (owner, 2026-09-01: *"round 3 is not over. I will
-make 2 new trainings"*). ⚠ **They are ROUND 3, not Round 4** — which matters for one thing only, and
-it is unsettled: **the exam was read on 2026-09-01 for `r3-final-stage2-last`, and the rule is one
-read per round.** ⛔ A second read on run A or B is not available under the rule as written; the
-owner must either re-open it deliberately or select among the runs on `_realval_v2` alone. Flagged,
-not assumed. One variable each, run in two tabs so the pair stays attributable:
+⭐ **RUN A IS TRAINED AND ITS QUESTION IS ANSWERED: a longer stage 2 helps a little, and the gain is
+exhausted by step ~2,500** (2026-09-01). One variable against the Round-3 final run — stage 2 at
+**4,000 steps instead of 2,000**, starting from Round 3's OWN stage-1 checkpoint so nothing else moves.
+Real val **0.0182 → 0.0171 (−6.0%)**, the minimum shifting from step 1750 to **2500**, then flat and
+drifting slightly UP for the last 1,500 steps. ⚠ **A teacher-forced loss, not a correction count** —
+Round 3's `+13.7 pp` on real-val turned out to be almost all `\tie`, so 6% of loss may be worth no
+edits at all. ⚠ "2,500" does not transfer as a step count: it is step 2,500 *of a 4,000-step cosine*.
+[../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) · raw log
+[round3_runa_logs.md](../round3_runa_logs.md).
 
-| run | notebook | zip | the one variable |
-|---|---|---|---|
-| **A** | `round3_runa_steps_colab.ipynb` | `tnc_round3_final_colab.zip` (784 MB, ⚠ **re-upload — it now carries the patched `train.py`**) | stage 2 **4,000 steps** instead of 2,000 |
-| **B** | ⏭ not written yet | `tnc_round3_finalb_colab.zip` (832 MB) | **+1,408** hand-verified retired-crop strips, `:4` |
+⛔ **THE CHECKPOINT SELECTOR FAILED AGAIN, HARDER — `best` WAS STAMPED AT STEP 250.** The first
+evaluation of stage 2, after 250 steps of real specialisation, and no later mix ever beat it (Round 3
+at least reached step 500). ⭐ **`best-real`, added the same day, is the only reason the run produced
+anything usable**: `best` is barely specialised and `last` (step 4,000) is past the minimum. Second
+consecutive run where the ~92%-synthetic blend picks wrong. [BACKLOG.md](BACKLOG.md) item 3.
 
-⭐ **`train.py` now saves a THIRD checkpoint, `best-real`**, selected on the REAL val loss alone.
-`best` is unchanged, so runs stay comparable — but on Round 3 the blend stamped `best` at step 500
-while real val improved to 1750, and that model needed **22% fewer corrections**. Over 4,000 steps the
-good checkpoint would fall between two evals and be lost. Cell 4 of Run A **asserts** the patched
-`train.py` is in the zip and fails loudly if not. [BACKLOG.md](BACKLOG.md) item 3.
+⏭ **THE NEXT ACTION: download `best-real` and score it.** From `MyDrive/tnc/r3-r3a-stage2/` into
+`data/checkpoints/r3a-stage2-best-real` (`best` is not worth the bandwidth), then:
+```
+scripts/rung3/paired_arm_score.py --ctl data/checkpoints/r3-final-stage2-last \
+    --arm data/checkpoints/r3a-stage2-best-real --pool data/real/rung3/_realval_v2
+```
+That is the read that decides whether Run A beat Round 3, on 262 hand-verified strips, paired.
 
-⚠ **`:4`, NOT `:5`, for Run B.** Combined real train-side is **4,777** strips (3,539 b8 + 1,238
-oldhuman), so `:5` reads **39.9%** of stage-2 batches against the recipe's ~33%; `:4` reads 34.7%.
+⏭ **RUN B IS BUILT BUT NOT WRITTEN.** Its zip is ready — `tnc_round3_finalb_colab.zip` (832 MB,
+`sh scripts/make_round3_colab_zip.sh finalb`), carrying `strips_b8` **plus `strips_oldhuman`** (1,408
+hand-verified retired-crop strips). ⛔ **Its notebook does not exist yet.** Copy
+`round3_runa_steps_colab.ipynb` and change three things: `ARM`, add the second `--real-dir`, and
+⚠ **`:4` not `:5`** — combined real train-side is **4,777**, so `:5` reads 39.9% of stage-2 batches
+against the recipe's ~33%. It should reuse Round 3's stage 1 for the same reason Run A does.
 
-⭐ **THE ROUND-3 MODEL IS `r3-final-stage2-last`, AND REAL-VAL CHOSE IT (2026-09-01).** Paired on
-`_realval_v2` (262 unique strips): `last` beats `best` on every column — **667 vs 784 edits, 68.3% vs
-63.4% exact, 39 strips better / 6 worse, sign p = 0.000**. Against **Round 2** it is **68.3% vs 54.6%
-exact (+13.7 pp)** and wins **72 : 22** — ⛔ but the **mean edits/strip CI is [−0.405, +0.008] and
-spans zero, so that statistic is a NULL** and is reported as one. [METRICS.md](METRICS.md).
+⚠ **RUNS A AND B ARE THE SAME ROUND AS THE EXAM READ** (owner, 2026-09-01: *"round 3 is not over. I
+will make 2 new trainings"*). The exam was read on 2026-09-01 for `r3-final-stage2-last`, and the rule
+is **one read per round**. ⛔ A second read is not available without the owner re-opening it
+deliberately — and deciding that *after* seeing A's or B's real-val numbers is the one option that is
+not clean. Unsettled, flagged, not assumed.
 
-⛔ **AND THAT GAIN IS THE `\tie` RETIREMENT, NOT BETTER NOTE READING (2026-09-01).** Found by the
-error taxonomy: Round 2's largest error category is inserting **`\tie`**, retired 2026-08-22 — it
-emits **86 over 60 of 262 strips** and the gold contains **zero**. Discount it and the two models are
-**indistinguishable**: priority-block edits **271 vs 270**, exact **69.7% vs 69.3%**. ⚠ The gain is
-real but small and mechanical — only **26 of the 86 ties (30%) join the same pitch**, which is the
-only case `stitch.ts` turns into a user-visible wrong note; the other 65% are kept separate and cost
-nothing (independently replicating the 65–78% that justified the retirement). ⭐ **The
-product-relevant estimate is −7.2% edits / +4.6 pp exact**, not −21.7% / +16.1 pp.
-⚠ **`examv3` gold is also tie-free**, so the 44% baseline already charges Round 2 for this; Round 3
-will beat it partly on the same mechanism, and **the ship judgement must not credit that to the three
-render flags**. [METRICS.md](METRICS.md).
+⭐ **`--save-every 500` is the right setting and costs nothing.** It governs only `last`; `best` and
+`best-real` are written on improvement, driven by `--eval-every`, which stays at **250**. Run A wrote
+**16 checkpoints against Round 3's 48** at the same ~1.6 s/step — roughly 50 GB less through the Drive
+mount, with selection granularity unchanged.
 
-⭐ **SHORT AND MEDIUM STRIPS ARE THE TARGET (owner, 2026-09-01); LONG STRIPS ARE A FUTURE CONCERN.**
-Round 3's gain is **confined by strip length**: improve:regress is **4.5 : 1 under 30 gold tokens,
-4.4 : 1 at 30–49, and 1.25 : 1 at ≥50**, where the round is net negative. The control holds — a long
-strip should swing more in *both* directions, and the ratio collapse says it does not (Fisher
-one-sided p = 0.0171). ⚠ **A LEAD, not a finding**: n = 44, and it is one of four groupings inspected,
-so it does not clear a multiple-comparison correction. It is acted on because it matches a mechanism
-already measured — the 59-id gate drops 4,012 over-budget strips from training.
-⚠ **Consequence to hold BEFORE the read**: the exam drops **41% of candidates** as
-`split_wide`/`over_budget`, so it grades each page on its shorter material and may **flatter** this
-model relative to real use. [DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md).
+⭐ **THE ROUND-3 MODEL IS `r3-final-stage2-last`** — real-val chose it over `best` (667 vs 784 edits, 39 strips better / 6 worse, sign p = 0.000). Against Round 2 the sign test wins 72 : 22 but the **mean edits/strip CI spans zero and is a NULL**. [METRICS.md](METRICS.md).
 
-⭐ **THE FINAL MODEL IS TRAINED, AND ITS LOG SAYS THE CHECKPOINT SELECTOR PICKED THE WRONG ONE
-(2026-09-01).** Both stages ran clean: stage 1 6,000 steps, stage 2 2,000, exam-disjointness OK on
-568 real pieces. ⛔ **Stage 2's two validation curves moved in OPPOSITE directions** — the real one
-fell **0.0301 → 0.0182 (−39%)** and was still falling at the last step, while the synthetic one rose
-0.0106 → 0.0117. The selector blends them **by strip count, 4,763 : 390 = 92.4% synthetic**, so it
-followed the synthetic curve and stamped `best` at **step 500**, where real val is **0.0234 — 22%
-worse than `last`**. This is [BACKLOG.md](BACKLOG.md) item 3 firing exactly as it was written, and
-the run's own mitigation — bring `last` home, choose on `_realval_v2` — is the only reason it is not
-silent. ⚠ **This is NOT overfitting**: stage 1's val curve flattens and never rises (best 0.0091 at
-4,500 of 6,000), and stage 2's rising synthetic loss is the specialisation being paid for on purpose.
-⏭ **Two leads, both unmeasured**: stage 1 saturates at ~4,500 steps, and stage 2 may be
-under-trained at 2,000 — but its final flatness is confounded by the cosine LR reaching zero there.
-[src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) · raw log
-[round3_final_logs.md](../round3_final_logs.md).
+⛔ **ROUND 3'S REAL-VAL GAIN WAS THE `\tie` RETIREMENT, NOT BETTER NOTE READING.** Discount the retired token and Round 2 and Round 3 are indistinguishable on `_realval_v2` (271 vs 270 edits). Only **26 of 86 ties (30%)** cost a user anything. Product-relevant estimate: **−7.2% edits / +4.6 pp exact**, not −21.7% / +16.1 pp. Full table and the stitcher accounting: [METRICS.md](METRICS.md).
+
+⭐ **SHORT AND MEDIUM STRIPS ARE THE TARGET (owner, 2026-09-01); LONG STRIPS ARE A FUTURE
+CONCERN.** Round 3's gain is confined by length — improve:regress **4.5 : 1** under 30 gold ids,
+**4.4 : 1** at 30–49, **1.25 : 1** at ≥50 where it is net negative. ⚠ A **LEAD, not a finding**
+(n = 44, one of four groupings inspected). ⚠ The exam drops **41% of candidates** as
+`split_wide`/`over_budget`, so it grades each page on its shorter material and may **flatter**
+this model. [DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md).
 
 ⭐ **THE NEXT ATTEMPT GETS EVERY HAND-VERIFIED REAL STRIP, RETIRED CROPS INCLUDED** (owner,
 2026-09-01). This lifts the 2026-08-31 ban on `strips_nota` / `strips_r1` / `strips_tup` **for the

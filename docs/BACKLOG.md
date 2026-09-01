@@ -52,6 +52,14 @@ starting. Abandoned plans are a different thing again and live in
    round's own mitigation (bring `last` home too, and compare on `_realval_v2`) is what saves the run;
    without it the graded checkpoint would have been the worse one on real pages, silently.
    Raw curve: [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md), log `round3_final_logs.md`.
+
+   ⛔ **CONFIRMED A SECOND TIME, AND WORSE, BY RUN A (2026-09-01).** At 4,000 stage-2 steps the blend
+   stamped `best` at **step 250** — the first evaluation — and no later mix ever beat it, while real
+   val went on improving to **step 2,500**. ⭐ The `best-real` checkpoint added the same day is the
+   only reason that 1.7-hour run produced a usable model: `best` is barely specialised and `last` is
+   past the minimum. **Two runs, two wrong picks, the second by 2,250 steps.** The cheap fix is now
+   shipped (a third checkpoint); the real fix — re-weighting the blend, or selecting on a free-running
+   metric — is still owed and is still a recipe change, not a patch.
    ⚠ It does **not** invalidate any paired arm result — an arm and its control share the selector.
 
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against

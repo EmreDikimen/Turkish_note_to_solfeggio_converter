@@ -7,6 +7,40 @@ updated: 2026-09-01
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-01 (run A) — a longer stage 2 helps a little, and the selector failed again
+
+**Run A: stage 2 at 4,000 steps instead of 2,000, and nothing else.** It starts from Round 3's OWN
+stage-1 checkpoint rather than recomputing one — training is not bit-deterministic, so a fresh stage 1
+would have made this differ from Round 3 in two places instead of one. That also took the run from
+~4.2 h to ~1.7 h.
+
+**The answer: yes, a little, and it is exhausted by step ~2,500.** Real val **0.0182 → 0.0171
+(−6.0%)**, the minimum moving from step 1750 to 2500, then flat and drifting slightly UP over the last
+1,500 steps. ⚠ "2,500" does not transfer as a step count — it is step 2,500 of a 4,000-step cosine.
+⚠ And it is a teacher-forced loss, not a correction count: Round 3's +13.7 pp on real-val turned out to
+be almost entirely `\tie`, so 6% of loss may be worth no edits. `paired_arm_score.py` decides that.
+
+⛔ **The selector failed again and much harder: `best` was stamped at STEP 250.** The first evaluation
+of stage 2, and no later mix ever beat it — Round 3 at least reached step 500. ⭐ **`best-real` is the
+only reason the run produced anything usable**, since `best` is barely specialised and `last` sits past
+the minimum. Two runs, two wrong picks, the second by 2,250 steps. The cheap fix is shipped; the real
+one (re-weight the blend, or select on a free-running metric) is still owed.
+
+**`--save-every 500` was the right call.** It governs only `last`; `best`/`best-real` are written on
+improvement and follow `--eval-every`, which stayed at 250. Run A wrote **16 checkpoints against Round
+3's 48** at the same ~1.6 s/step — twice the steps, no per-step penalty, ~50 GB less through the Drive
+mount, selection granularity unchanged.
+
+**Also fixed, from a live failure:** the Drive FUSE mount dropped mid-copy ("Transport endpoint is not
+connected"), `cp` left a truncated zip, and the first visible error was a missing `render_config.json`
+three cells later — which reads like a bad zip and is not. Cell 4 now checks the source size on Drive,
+uses `rsync` (resumable) instead of `cp`, checks the copied size, and runs `unzip -t` before trusting
+the archive. A session restart was what cleared it.
+
+⏭ **Run B is built but not written.** The zip exists (`tnc_round3_finalb_colab.zip`, 832 MB, b8 +
+`strips_oldhuman`); the notebook does not. ⚠ It needs `:4`, not `:5` — combined real train-side is
+4,777 — and should reuse Round 3's stage 1 for the same reason Run A does.
+
 ## 2026-09-01 (later) — the exam read 51%, the gain was `\tie`, and Round 3 gets two more runs
 
 **The exam, read once, on `r3-final-stage2-last`.** Primary **51%** of pages needing ≤5 corrections,

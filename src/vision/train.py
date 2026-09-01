@@ -318,6 +318,15 @@ def main() -> int:
     autocast_ctx = (lambda: torch.autocast("cuda", dtype=amp_dtype)) if use_cuda else nullcontext
 
     step, best_val = 0, float("inf")
+    # ⭐ A THIRD CHECKPOINT, SELECTED ON THE REAL VAL LOSS ALONE (2026-09-01). `best` blends the two
+    # val pools BY STRIP COUNT, so at the default --real-val-frac the synthetic side carries ~92% of
+    # the vote in a round graded on real pages. Measured on the Round-3 final run: `best` landed at
+    # step 500 while real val kept falling to step 1750, and the step-1750 model needed 22% fewer
+    # corrections on _realval_v2 (docs/BACKLOG.md item 3, docs/METRICS.md).
+    # ⚠ THIS DOES NOT CHANGE HOW `best` IS CHOSEN — the blend is untouched, so runs stay comparable
+    # with every earlier one. It only ADDS `best-real`, so a long run cannot silently discard its
+    # best real-page checkpoint between two evals. Costs one extra checkpoint write per improvement.
+    best_real = float("inf")
     state_path = out_dir / "last" / "trainer_state.pt"
     if args.resume:
         state = torch.load(state_path, map_location="cpu", weights_only=False)
@@ -325,6 +334,7 @@ def main() -> int:
         sched.load_state_dict(state["scheduler"])
         scaler.load_state_dict(state["scaler"])
         step, best_val = state["step"], state["best_val"]
+        best_real = state.get("best_real", float("inf"))
         print(f"== resumed at step {step} (best val {best_val:.4f})")
 
     metrics_path = out_dir / "metrics.jsonl"
@@ -337,7 +347,8 @@ def main() -> int:
         d = out_dir / tag
         save_model(d, model, processor)
         torch.save(
-            {"step": step, "best_val": best_val, "optimizer": optim.state_dict(),
+            {"step": step, "best_val": best_val, "best_real": best_real,
+             "optimizer": optim.state_dict(),
              "scheduler": sched.state_dict(), "scaler": scaler.state_dict()},
             d / "trainer_state.pt",
         )
@@ -386,17 +397,26 @@ def main() -> int:
             improved = select < best_val
             best_val = min(best_val, select)
             row["best"] = improved
+            real_improved = real_val_loader is not None and row["val_real"] < best_real
+            if real_improved:
+                best_real = row["val_real"]
+                row["best_real"] = True
             extra = f"  real {row['val_real']:.4f}  mix {row['val_mix']:.4f}" if "val_real" in row else ""
-            print(f"   step {step:5d}  VAL loss {val_loss:.4f}{extra}{'  (new best)' if improved else ''}")
+            tags = ("  (new best)" if improved else "") + ("  (new best-real)" if real_improved else "")
+            print(f"   step {step:5d}  VAL loss {val_loss:.4f}{extra}{tags}")
             log(row)
             if improved:
                 save("best")
+            if real_improved:
+                save("best-real")
 
         if step % args.save_every == 0 or step == args.max_steps:
             save("last")
 
-    print(f"\n== done: {step} steps, best val loss {best_val:.4f}")
-    print(f"   checkpoints: {out_dir}/best (lowest val loss), {out_dir}/last (resume point)")
+    print(f"\n== done: {step} steps, best val loss {best_val:.4f}, best REAL val {best_real:.4f}")
+    print(f"   checkpoints: {out_dir}/best (lowest blended val loss — ~92% synthetic), "
+          f"{out_dir}/best-real (lowest REAL val loss), {out_dir}/last (resume point)")
+    print("   ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.")
     print(f"   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint {out_dir}/best")
     return 0
 

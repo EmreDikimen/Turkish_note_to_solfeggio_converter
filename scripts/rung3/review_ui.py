@@ -99,6 +99,33 @@ QUEUES = {
     # ⚠ 3 of the 67 pages produce nothing at all: every candidate on them drops as split_wide or
     # over_budget, so the exam tops out at 64 pages until the 59-id budget is measured
     # (docs/BACKLOG.md item 7).
+    # ⛔ DIAGNOSTIC, NEVER PROMOTABLE (2026-09-01). The exam strips `r3-final-stage2-last` got wrong,
+    # gold beside the model's decode, worst-first — the input to §3c's manual ship judgement, which
+    # is a human reading of an error classification rather than a comparison to a number.
+    # ⛔ It CANNOT feed a manifest, by two independent guarantees: `corrected_label` is written EMPTY
+    # on every row (so a stray `ok` cannot store the decode — CLAUDE.md: never seed exam gold from a
+    # model that will be graded on that exam), and the filename is neither `emit_review.csv` nor
+    # `full_audit.csv`, the only two `promote_labels.py` reads. ⚠ Do NOT rename it to either.
+    # ⚠ THE VERDICTS MEAN SOMETHING DIFFERENT HERE — this is a triage of three possible causes:
+    #     ok  = the MODEL is right and the GOLD is wrong  (an exam-gold defect, worth its own record)
+    #     fix = the MODEL is wrong                        (a real model error — the normal case)
+    #     bad = the CROP is unusable                      (neither is at fault)
+    # Acting on an `ok` means correcting `examv3` by hand FROM THE PICTURE, never by copying this
+    # decode. Cut by scripts/rung3/build_exam_error_queue.py.
+    # ⛔ SUGGESTIONS ONLY, MACHINE-ACCEPTED ROWS ONLY (2026-09-01). b8 strips that `auto_accept_agree`
+    # marked `ok` where the OLD pools' hand-read label for the SAME BARS carries a navigation token
+    # the b8 label lacks. The worry it tests: `\segno` recall is 43.5% and `\coda` 42.9%, so where
+    # the model is blind, "label agrees with decode" is agreement on an ABSENCE.
+    # ⭐ The scan came back nearly empty — 3 rows over 965 span-matched pairs, and ZERO missing
+    # `\segno` — which is itself the finding: navigation is DERIVED from SymbTr, so it is not subject
+    # to the circularity that makes `\sig` untrustworthy (`\sig` is the one field the emitter
+    # overwrites with a MODEL vote). ⚠ It could only look at 965 of 2,884 machine-ok rows; the rest
+    # have no old strip covering the same bars, so this is silence over a third of the population.
+    # ⛔ Rows the owner read by hand were NEVER considered (`by == agree` only), `corrected_label` is
+    # empty, and the file name is not one `promote_labels.py` reads — act on a row in `b8-full`.
+    # ⚠ `reason` carries the missing token, so the per-reason dropdown separates them.
+    "b8-nav": "data/real/rung3/_navsuggest/nav_suggest.csv",
+    "r3-exam-errors": "data/real/rung3/final/r3_exam_errors.csv",
     "examv3": "data/real/rung3/strips_exam_v3/emit_review.csv",
     # the 139 strips the emitter labelled BY ITSELF across the whole re-cut exam (43 of them agree
     # token-for-token with the frozen exam's gold; 96 have no human check at all). They enter the exam
@@ -239,6 +266,9 @@ QUEUE_IMG_ROOTS = {
     # a root of their own so the FROZEN exam's crops (hardlinked out of data/real/strips) could not
     # be rewritten in place. ⚠ Do not point these at data/real/strips — the same filenames exist
     # there with the retired slicer's pixels.
+    # same crops as examv3 — this queue is a view over the exam, not a new cut.
+    "b8-nav": ["data/real/strips_v2"],   # b8's crops — the CURRENT slicer
+    "r3-exam-errors": ["data/real/strips_examv3"],
     "examv3": ["data/real/strips_examv3"],
     "examv3-full": ["data/real/strips_examv3"],
     "examv3-audit": ["data/real/strips_examv3"],

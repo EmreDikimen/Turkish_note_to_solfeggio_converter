@@ -46,7 +46,17 @@ case "$ARM" in
   stac)   WANT_LEGACY=false; WANT_STACCATO=true;  CORPUS=strips_v6_stac ;;
   final)  WANT_LEGACY=false; WANT_STACCATO=true;  CORPUS=strips_v7_final
           WANT_CONCAVE=true; WANT_USUL=true;      REAL_POOLS="data/real/rung3/strips_b8" ;;
-  *) echo "usage: $0 tupnew|tupctl|scan|stac|final"; exit 2 ;;
+  # ROUND 4 RUN B (owner, 2026-09-01): the same corpus and the same b8, PLUS the 1,408 hand-verified
+  # strips from the three retired pools (strips_oldhuman). ⚠ That pool is on the RETIRED slicer's
+  # crops — it is passed BESIDE b8, never instead of it, so the run adds a second cut of the same
+  # bars rather than replacing the current one. Unmeasured; Run B is what measures it.
+  # ⚠ THE REPEAT MUST DROP TO :4. Combined train-side is 4,777 strips, so `:5` would put real at
+  # 39.9% of stage-2 batches against the recipe's ~33%; :4 reads 34.7%. Carrying :5 over would
+  # change the recipe as a side effect — the same trap `:9` was for b8.
+  finalb) WANT_LEGACY=false; WANT_STACCATO=true;  CORPUS=strips_v7_final
+          WANT_CONCAVE=true; WANT_USUL=true
+          REAL_POOLS="data/real/rung3/strips_b8 data/real/rung3/strips_oldhuman" ;;
+  *) echo "usage: $0 tupnew|tupctl|scan|stac|final|finalb"; exit 2 ;;
 esac
 # Defaults for the four ARMS. ⛔ No arm may carry --concave-tuplet or --usul-barline: each changes a
 # share of every piece, so an arm with one on is not comparable to one without (docs/rung3/tuplets.md).
@@ -54,7 +64,7 @@ esac
 : "${WANT_USUL:=false}"
 # ⚠ THE ARMS KEEP THE RETIRED POOLS ON PURPOSE — that is what they trained on, so a rebuilt arm zip
 # still reproduces its own run. ⛔ `final` must NOT: strips_nota / strips_r1 / strips_tup are the
-# SAME MUSIC on the RETIRED slicer's crops, superseded by strips_b8 (3,936 strips, current crops).
+# SAME MUSIC on the RETIRED slicer's crops, superseded by strips_b8 (3,929 strips, current crops).
 # Passing them beside b8 duplicates the music at two geometries; passing them instead of it trains
 # the graded model on crops the app no longer cuts — silently, nothing downstream checks.
 : "${REAL_POOLS:=data/real/rung3/strips_nota data/real/rung3/strips_r1 data/real/rung3/strips_tup}"

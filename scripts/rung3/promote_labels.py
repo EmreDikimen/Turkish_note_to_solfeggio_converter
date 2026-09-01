@@ -147,6 +147,10 @@ def main() -> int:
                     help="promote exam-queue rows (exam=1) into the EXAM manifest of --dir "
                          "(exam growth); without this flag exam rows are skipped and only "
                          "training rows (exam=0) promote")
+    ap.add_argument("--testset", default="data/real/rung3/testset.json",
+                    help="frozen exam pieces. In TRAINING mode (no --exam) any manifest row whose "
+                         "SymbTr piece is an exam piece is DROPPED and counted — the fail-closed "
+                         "backstop for a second engraving of an exam score. Pass '' to disable.")
     ap.add_argument("--dry-run", action="store_true",
                     help="run every gate and print the report; write no manifest/PNGs/CSVs")
     args = ap.parse_args()
@@ -298,6 +302,28 @@ def main() -> int:
     if removed_images:
         manifest = [row for row in manifest if row["image"] not in removed_images]
 
+    # ---- exam-disjointness backstop (training mode only) -------------------------------------
+    # ⛔ A DIFFERENT PRINTED EDITION OF AN EXAM SCORE STILL LEAKS IT. The emitter's --testset filter
+    # matched on the image STEM until 2026-08-31, so b8 accepted the `neyzen` engravings of two
+    # `nota` exam pieces (7 strips). train.py refuses to start on that — but only after the zip is
+    # built and uploaded, so it is caught here too, on the same key train.py uses (the SymbTr id).
+    # Dropped rather than fatal so a re-run cannot silently re-add rows a hand-clean removed.
+    exam_dropped: list[str] = []
+    if args.testset and not args.exam:
+        ts = json.loads(Path(args.testset).read_text())
+        exam_symbtr = {
+            (e["symbtr_file"][:-4] if e.get("symbtr_file", "").endswith(".txt") else e.get("symbtr_file", ""))
+            for e in ts["pieces"]
+        } - {""}
+        keep = [row for row in manifest if row.get("piece") not in exam_symbtr]
+        exam_dropped = sorted({row["piece"] for row in manifest if row.get("piece") in exam_symbtr})
+        if exam_dropped:
+            counts["exam_piece_dropped"] += len(manifest) - len(keep)
+            print(f"⛔ EXAM LEAK: dropped {len(manifest) - len(keep)} strip(s) of "
+                  f"{len(exam_dropped)} exam piece(s) — record them in "
+                  f"data/real/rung3/excluded_exam_pieces.txt:\n  " + "\n  ".join(exam_dropped))
+        manifest = keep
+
     # ---- outputs ----------------------------------------------------------------------------
     report = {
         "params": {"dir": str(out_dir), "checkpoint": args.checkpoint,
@@ -306,6 +332,7 @@ def main() -> int:
         "rejects": len(rejects),
         "reject_reasons": dict(Counter(x["reason"] for x in rejects)),
         "manifest_rows": len(manifest),
+        "exam_pieces_dropped": exam_dropped,
         "by_provenance": dict(Counter(row.get("promoted", "emitter") for row in manifest)),
     }
 
@@ -317,7 +344,7 @@ def main() -> int:
                 except OSError:
                     shutil.copy2(src, dst)
         changed = (counts["audit_fix_applied"] or counts["review_promoted"]
-                   or counts["review_updated"] or removed_images)
+                   or counts["review_updated"] or removed_images or exam_dropped)
         if changed:
             shutil.copy2(manifest_p, next_bak(manifest_p))
             tmp = manifest_p.with_suffix(".jsonl.tmp")

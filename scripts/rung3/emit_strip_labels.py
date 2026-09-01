@@ -563,9 +563,20 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     exam_pieces: set[str] | None = None
+    exam_symbtr: set[str] = set()
     if args.testset:
         ts = json.loads(Path(args.testset).read_text())
         exam_pieces = {p["stem"] for p in ts["pieces"]}
+        # ⛔ THE IMAGE STEM IS NOT THE SCORE. A second printed edition of an exam piece has a
+        # different page stem and the SAME SymbTr id, so a stem-only filter lets it into TRAINING
+        # — which is the Round-1 contamination, and it happened again: b8's re-emit picked up the
+        # `neyzen` engravings of two `nota` exam pieces (7 strips, data/real/rung3/
+        # excluded_exam_pieces.txt). train.py's guard catches it, but only after the zip is built
+        # and uploaded. Match on the SymbTr id here too, the same key train.py uses.
+        exam_symbtr = {
+            (e["symbtr_file"][:-4] if e.get("symbtr_file", "").endswith(".txt") else e.get("symbtr_file", ""))
+            for e in ts["pieces"]
+        } - {""}
     if args.exam and exam_pieces is None:
         ap.error("--exam requires --testset")
 
@@ -589,8 +600,14 @@ def main() -> int:
         if only and p.stem not in only:
             continue
         if exam_pieces is not None:
-            in_exam = p.stem in exam_pieces
-            if args.exam != in_exam:
+            # ⚠ ASYMMETRIC ON PURPOSE. --exam emits the frozen exam, which is a fixed set of PAGES,
+            # so it selects on the page stem alone; widening it would pull another edition's pages
+            # into the graded set. Training mode excludes on EITHER key, because there the question
+            # is not "is this the exam's page" but "does this leak the exam's score".
+            if args.exam:
+                if p.stem not in exam_pieces:
+                    continue
+            elif p.stem in exam_pieces or p.symbtr_stem in exam_symbtr:
                 continue
         if val_pieces is not None and not is_real_val_piece(p.symbtr_stem, val_pieces):
             continue

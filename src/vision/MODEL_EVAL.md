@@ -1288,3 +1288,73 @@ establishes is that a recall gain, if one exists, is smaller than 54 groups can 
 is the corpus Round 3 continues from. Neither checkpoint ships — the exam is unread and neither arm
 is a Round-3 model; `round2-stage2-best` remains the runtime. Next lever, alone as always: the 35%
 slur-distractor rate ([docs/rung3/tuplets.md](../../docs/rung3/tuplets.md) step 5).
+
+## Round 3 — THE FINAL MODEL (Colab, 2026-09-01): trained, curves read, exam NOT yet read
+
+Raw log: `round3_final_logs.md` (430 lines). Corpus `strips_v7_final` (3 flags) / `split_v4.json`,
+real pool `strips_b8` at `:5`, recipe held fixed from the arms. L4-class GPU, ~0.92–1.65 s/step at
+batch 16 (the step time rises after each eval because checkpoint writes go to Drive).
+
+Startup lines worth keeping, because they are the only place the pool is visible:
+
+```
+real pool data/real/rung3/strips_b8: 3539 train x5 / 390 val strips
+exam-disjointness OK: 568 real pieces, 0 in the 33-piece exam
+stage 1: == data: 36032 train / 4763 synth-val / 0 real-val strips
+stage 2: == data: 53727 train / 4763 synth-val / 390 real-val strips
+```
+
+⭐ 568 real pieces, not 570: the two exam-leaking pieces were removed the previous day, and this line
+is the guard confirming it.
+
+### Stage 1 — synthetic only, 6,000 steps @ lr 3e-5. **No overfitting; it plateaus at 4,500.**
+
+| step | 250 | 500 | 750 | 1000 | 1500 | 2000 | 2500 | 3000 | 3500 | 4000 | **4500** | 5000 | 5500 | 6000 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| val loss | .2797 | .0914 | .0510 | .0269 | .0173 | .0180 | .0122 | .0109 | .0107 | .0097 | **.0091** | .0091 | .0092 | .0093 |
+
+The curve **flattens, it never turns up** — the signature of saturation, not overfitting. Best is
+step 4,500; the last 1,500 steps (~40 min of GPU) bought nothing measurable. Train loss ends at
+0.0002–0.015 against a val of 0.0093, a wide ratio that is a statement about how easy our own
+renderer is, not about memorisation (synthetic accuracy has read 99.9% since Round 2).
+
+⏭ **Lead, not a finding:** stage 1 could be cut to ~4,500 steps. Untested — the cosine LR schedule is
+defined over 6,000, so a 4,500-step run is a different schedule, not a truncation of this one.
+
+### Stage 2 — real specialisation, 2,000 steps @ lr 1e-5. **The two val pools move OPPOSITE ways.**
+
+| step | synth val (4,763) | **real val (390)** | mix = selector | selector verdict |
+|---|---|---|---|---|
+| 250 | .0107 | .0301 | .0121 | new best |
+| **500** | **.0106** | **.0234** | **.0115** | **new best → this is `best`** |
+| 750 | .0109 | .0198 | .0116 | |
+| 1000 | .0110 | .0221 | .0119 | |
+| 1250 | .0118 | .0206 | .0124 | |
+| 1500 | .0116 | .0196 | .0122 | |
+| **1750** | .0117 | **.0182** ← real minimum | .0122 | |
+| 2000 | .0117 | .0183 | .0122 | `last` |
+
+⭐ **THE HEADLINE. Real val fell 0.0301 → 0.0182 (−39%) and was still falling at the end; synthetic
+val rose 0.0106 → 0.0117 (+10%).** That divergence is what stage 2 is *for* — it pulls the model off
+our renderer and onto real printed pages — so the rising synthetic curve is the price being paid on
+purpose, not a defect.
+
+⛔ **The selector followed the wrong curve.** `train.py` blends the two by strip count:
+`(0.0117×4763 + 0.0183×390)/5153`, so synthetic carries **92.4%** of the vote. It stamped `best` at
+step 500, where real val is **0.0234 — 22% worse than `last`'s 0.0182**. This is
+[../../docs/BACKLOG.md](../../docs/BACKLOG.md) item 3 firing exactly as written, and the round's own
+mitigation (bring `last` home, choose on `_realval_v2`) is what keeps it from being silent.
+
+⚠ **Real strips get ~3 views, synthetic gets ~0.6.** 2,000 steps × 16 = 32,000 draws at 32.9% real =
+~10,500 real draws over 3,539 unique strips (≈3 passes), and ~21,500 synthetic draws over 36,032
+unique (**under one epoch**). Read the "still falling at step 2,000" line beside that number.
+
+⏭ **Lead, not a finding:** stage 2 may be under-trained at 2,000 steps. The budget was inherited from
+the arms, which ran against a real pool 72% smaller. ⚠ The final flatness (1750 → 2000) is confounded
+— the cosine LR reaches **zero** at 2,000, so the curve would flatten there whether or not the model
+had converged. A longer stage 2 is a schedule change, and it must be A/B'd, not assumed.
+
+### Not read here
+
+The exam, the `_realval_v2` selection between `best` and `last`, and the two paired flag scorers.
+Those are read on the Mac, in that order, and the exam **once**.

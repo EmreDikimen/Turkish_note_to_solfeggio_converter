@@ -101,7 +101,7 @@ for signatures, "the answer agrees with the model" is circular — the answer ca
 Your `unaccept_sig.py` puts those rows back in the queue; running it found **12 more wrong
 signatures**.
 
-**What Round 3 will use, and nothing else:** the 3,936 real pictures above, a fresh set of
+**What Round 3 will use, and nothing else:** the 3,929 real pictures above, a fresh set of
 computer-drawn practice pages, a small "practice test" (`_realval_v2`) to pick the best training
 run, and the exam to grade it. The other queue (`b8-review`, about 4,700 more rows) waits for
 **Round 4** — your decision. It would add roughly **11%** more material to a pile that already grew

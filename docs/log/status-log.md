@@ -2,10 +2,181 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-08-31
+updated: 2026-09-01
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-01 (later) — the exam read 51%, the gain was `\tie`, and Round 3 gets two more runs
+
+**The exam, read once, on `r3-final-stage2-last`.** Primary **51%** of pages needing ≤5 corrections,
+against a 44% Round-2 baseline and a floor signed at 75%. At 63 pages the 95% half-width is ~±12 pp,
+so **+7 is inside the noise band**. ⚠ Every strip-level metric went flat or down (exact 75.2% → 74.2%,
+per-class F1 84.5% → 78.0%): the distribution tightened at the median, 6 → 5 edits/page, while the
+mean barely moved. [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md).
+
+**Then the confound.** `error_taxonomy.py` (built for §3c's ship judgement) found Round 2's largest
+error class was inserting **`\tie`** — retired 2026-08-22, absent from the gold, 86 emissions over 60
+of 262 real-val strips. Layered removal on the exam: as read **+17 pp**, minus `\tie` **+2 pp**, minus
+`\tie` and navigation **+2 pp**. ⛔ **~15 of the 17 points is a retired token.**
+
+⭐ **The residual, by token class** (`\tie` and navigation out): note/rest **−15**, sig-marker **−8**,
+repeat-bar −5 against tuplet **+1**, accidental **+2**, barline **+2**. **Every class the three render
+flags targeted is flat or slightly worse**, and what improved matches the real pool growing 72%. The
+2026-08-31 pre-registration said three flags in one render would make a general movement
+unattributable; there is now no general movement to attribute.
+
+**Only 30% of those ties cost a user anything.** `stitch.ts` merges a same-pitch tie into one note (a
+real wrong note) and keeps a different-pitch one separate with a warning. Measured strip by strip:
+**26 same / 56 different / 4 dangling**. The 65% independently replicates the 65–78% that justified
+the retirement, on a pool it was not derived from. Product-relevant estimate: **−7.2% edits, +4.6 pp
+exact**, not −21.7% / +16.1 pp.
+
+**Two tools were built and both found something.** `error_taxonomy.py` groups errors by kind; ⛔ its
+first version was wrong twice and the docstring keeps both: it split on whitespace, but the
+tokenizer's `decode` drops the space after every added token (`\bakiyeSharpc''4`), which hit **148 of
+200** gold labels and dumped 30% of everything into "other"; and its length buckets were in id space
+while applied to label tokens, putting **261 of 262** strips in one bucket. `relabel()` fixes the
+first — with three traps: `3` excluded (it is the tuplet digit AND the head of `32`), longest-match
+first (`\sigend` ≠ `\sig`+`end`), and the id-identical `f'' 32` re-glued. Verified 267/267 before
+reuse. Incidental: **52 of 267 gold labels are stored GLUED** in the manifest.
+`build_exam_error_queue.py` cuts the companion `r3-exam-errors` review tab — gold beside decode,
+worst-first — which cannot promote (empty `corrected_label`, and a filename `promote_labels.py` never
+reads).
+
+**Shipped locally for a hand test, and the browser gate failed honestly.** Export → int8 (221 MB) →
+parity. ⭐ **int8 is exact on the 14 synthetic gate strips and diverges on ~10% of REAL ones — in
+Round 2 (54/60) as well as Round 3 (52/60), largely on the same strips.** Ambient, pre-existing, and
+never visible before because the gate is synthetic. ⛔ `gate:browser` read **24/28** against an
+expected 27/28, and the four failures are three causes: **2 are a stale fixture** (the gold still
+contains `\tie`; the model's tie-free output IS correct), 1 is pre-existing (Round 2 byte-identical),
+and **1 is genuinely new** — a dropped `\tup3` in canvas mode, by one token. The 27/28 gate cannot
+pass any post-`\tie` model. [../METRICS-ONNX.md](../METRICS-ONNX.md).
+
+**The owner hand-tested it: "better but not enough to ship."** §3c's manual ship call, taken. Nothing
+published; the live site is still Round 2, backed up at `apps/web/public/models/_round2_backup/`.
+
+**Asked and declined: train on the exam.** The owner observed that hand-testing has replaced the exam
+as the ship criterion, so the exam pieces could join training. Declined on arithmetic — it is **+19%**
+data against the retired pools' **+41%**, and it is irreversible: you cannot measure generalisation on
+data you trained on, and every past number (44%, 51%) would become permanently uncomparable. The
+honest path if the data is wanted is to cut a new exam from the 2,486 unlabelled pages first.
+
+**Round 3 continues with two more runs** (owner: *"round 3 is not over. I will make 2 new trainings"*),
+one variable each: **A** = stage 2 at 4,000 steps; **B** = A plus `strips_oldhuman`. ⚠ **They are the
+SAME round as the exam read**, so a second exam read is not available under the one-shot rule without
+the owner re-opening it — flagged in STATUS, not assumed either way.
+
+**`strips_oldhuman` built — 1,408 strips**, `build_oldhuman_pool.py`. ⚠ Hand-verified only, which is
+narrower than "in the manifest": `strips_nota` gave **818 of 1,740** because the rest were verdicted
+by `rule` / `rule-lowconf` / `claude` or never reviewed. `r1` (421) and `tup` (169) came whole. The
+SymbTr exam filter was re-run over them — those pools were only ever cleaned by the old stem-based
+procedure — and found 0. ⚠ **`:4`, not `:5`**: combined train-side is 4,777, so `:5` reads 39.9% of
+stage-2 batches against the recipe's ~33%.
+
+**`train.py` saves a third checkpoint, `best-real`**, selected on the real val loss alone. `best` is
+unchanged so runs stay comparable; without it a 4,000-step run would lose its best real-page model
+between two evals, which is the 22% the Round-3 run nearly cost.
+
+**The navigation scan came back nearly empty, and that is the finding.** The worry was sound —
+`\segno` recall is 43.5%, so where the model is blind "label agrees with decode" is agreement on an
+absence. `build_nav_suggest_queue.py` checked every machine-accepted b8 row against the old pools'
+hand-read label for the same bars: **3 flagged of 965 span-matched pairs, and ZERO missing `\segno`**.
+⭐ There is a mechanical reason: navigation is **derived from SymbTr**, so it does not depend on the
+model seeing it — unlike `\sig`, the one field the emitter overwrites with a model vote, which is why
+`unaccept_sig.py` had to exist. ⚠ It could only inspect 965 of 2,884 machine-ok rows; the rest have no
+old strip covering the same bars. ⛔ Rows the owner read by hand were never considered (owner: *"Do not
+change any in the strips I fixed"*), `corrected_label` is empty, and the queue cannot promote.
+
+## 2026-09-01 — the final model trained, and the selector picked the worse checkpoint
+
+**Both stages ran clean.** Stage 1: 6,000 steps @ lr 3e-5, synthetic only. Stage 2: 2,000 @ lr 1e-5
+with `strips_b8:5`. `exam-disjointness OK: 568 real pieces, 0 in the 33-piece exam` — the previous
+day's fix confirming itself. Raw log kept verbatim as `round3_final_logs.md`; the reading is in
+[../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+
+**Stage 1 did not overfit.** Val loss 0.2797 → **0.0091 at step 4,500**, then 0.0091–0.0094 to 6,000.
+It flattens; it never turns up. The last 1,500 steps bought nothing measurable. The wide train/val
+ratio at the end (train 0.0002–0.015 vs val 0.0093) is a statement about how easy our own renderer is
+— synthetic accuracy has read 99.9% since Round 2 — not about memorisation.
+
+**Stage 2 is where the finding is, and it is not overfitting either.** The two val pools moved in
+opposite directions for 1,500 steps:
+
+| step | synth val (4,763) | real val (390) | mix = selector |
+|---|---|---|---|
+| 500 | .0106 | .0234 | **.0115 → `best`** |
+| 1750 | .0117 | **.0182** | .0122 |
+| 2000 | .0117 | .0183 | .0122 |
+
+Real val fell **0.0301 → 0.0182 (−39%)** and was still falling at the last step. Synthetic rose 10%.
+That divergence is what stage 2 is *for* — it pulls the model off our renderer and onto real pages —
+so the rising synthetic curve is the price being paid deliberately.
+
+⛔ **The defect is the selector.** `train.py` blends the two val losses **by strip count**, 4,763 to
+390, so synthetic carries **92.4%** of the vote. It followed the synthetic curve and stamped `best` at
+**step 500**, where real val is **0.0234 — 22% worse than `last`**. [../BACKLOG.md](../BACKLOG.md)
+item 3 predicted this in writing on 2026-08-20 and is now confirmed rather than argued. The round's
+own mitigation — bring `last` home and choose on `_realval_v2` — is the only reason it is not silent.
+
+**Why "it overfits early" is the wrong reading, stated plainly because it changes what to do next.**
+Overfitting means the validation curve turns **up**. Neither curve does on the thing being graded:
+stage 1's flattens and stage 2's real curve falls monotonically. Fixing a selector is cheap; fixing
+imagined overfitting would mean shortening training, which the real curve says would make it worse.
+
+**Two leads, both explicitly unmeasured.** Stage 1 saturates around 4,500 steps (~40 min of GPU
+wasted). Stage 2 may be under-trained at 2,000 — real strips get ~3 views while synthetic gets under
+one epoch — ⚠ but its final flatness is confounded, because the cosine LR reaches **zero** at 2,000
+and the curve would flatten there regardless. Both are schedule changes and need an A/B.
+
+**Owner decision the same day: the next attempt uses EVERY hand-verified real strip, retired crops
+included.** This lifts the 2026-08-31 ban on `strips_nota` / `strips_r1` / `strips_tup` for the next
+run only. Inventory taken (human `ok`+`fix` only): the three retired pools hold **1,435** usable
+strips against b8's 1,000 hand verdicts inside its 3,929. ⚠ The old objection is outranked, not
+withdrawn — those crops come from a slicer the app no longer runs, and much of the music is already
+in b8 at the current geometry. The owner's argument is that b8 stays in the mix, so it adds a second
+cut rather than replacing the current one. ⚠ Nobody has scored a model trained on mixed crop roots;
+it is a lead. Recorded as worklist **B10** with the full inventory table and four traps, including
+the one that bites first: the retired pools were hand-cleaned of exam pieces once, in July, by a
+procedure that did not fix the producer — so the new SymbTr-id filter has to be re-run over them.
+
+## 2026-08-31 (later) — two exam pieces were in the real training pool, and the emitter's key is why
+
+**What was wrong.** `strips_b8` carried the **`neyzen`** engraving of two scores the exam grades in
+their **`nota`** engraving: `huzzam--sarki--aksak--sevdim_yine--tanburi_mustafa_cavus` (1 strip) and
+`saba--sarki--senginsemai--neydin_guzelim--serif_icli` (6 strips). A different printed edition of the
+same score leaks the exam exactly as much as the same one. Pool **3,936 → 3,929**, train-side
+3,546 → 3,539; the `:5` repeat is unaffected (33.0% → 32.9% real share).
+
+**Why it happened, which is the part worth keeping.** Two guards used two different keys.
+`emit_strip_labels.py --testset` excluded exam pieces by **image stem**; `train.py`'s guard matches on
+the **SymbTr id**. A second engraving has a different stem and the same id, so the emitter accepted
+precisely what training would refuse — and training refuses at startup, i.e. after an 800 MB zip has
+been built and uploaded to Colab. ⚠ **These are the SAME two scores cleaned out of `strips_tup` on
+2026-07-26**, by hand, without fixing the emitter. b8's wider re-emit (1,293 pieces against the old
+pools') brought them straight back. That is why this time the fix is in the producer.
+
+**What was changed.**
+- `emit_strip_labels.py` now excludes on stem **or** SymbTr id — but **asymmetrically**: `--exam`
+  still selects on the page stem alone, because the exam is a frozen set of PAGES and matching by
+  score would pull another edition's pages into the graded set. Over the matched tree the training
+  filter goes **1,293 → 1,288** pieces (the 3 extra are pieces whose strips never reached a manifest).
+- `promote_labels.py` gained a fail-closed backstop: in training mode it drops any manifest row whose
+  piece is an exam piece, counts it in `promote_report.json`, and prints it. Dropped rather than
+  fatal, so a re-run can never silently re-add rows a hand-clean removed.
+- The 7 rows are out of `strips_b8/manifest.jsonl` (`manifest.jsonl.pre-examclean` kept, PNGs left on
+  disk) and recorded in `data/real/rung3/excluded_exam_pieces.txt`, next to the 2026-07-26 entry.
+- The Colab zip was **rebuilt** — the first one carried the 7 strips. 784 MB, 44,762 files.
+
+**The pre-flight that found it, worth re-running before any real-pool training run:** exam ∩ pool
+pieces on the SymbTr id (**0**), `_realval_v2` and `_tupletval` pieces against the pool's TRAIN side
+(**0** and **0** — the shared `is_real_val_piece` hash holds, 40 and 10 pieces overlap the pool but
+all land val-side), and the real share at `:5` (**32.9%**).
+
+**Also, at the owner's request:** both training stages in `notebooks/round3_final_colab.ipynb` now
+pass `--eval-every 250 --save-every 250` instead of the default 500. It is a reporting cadence, not a
+recipe change — but it doubles the number of selection points, so this run's `best` and the arms'
+were not chosen on the same grid. `--log-every` stays at its default 25.
 
 ## 2026-08-31 — Round 3's data is settled, the corpus is rendered, and the Colab zip is built
 

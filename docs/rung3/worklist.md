@@ -3,7 +3,7 @@
 purpose: what each Round-3 work item B0-B9 is, what it found, and what it still owes
 audience: whoever is picking up a Round-3 item and needs its state and its traps
 
-updated: 2026-08-31
+updated: 2026-09-01
 
 > **This file does NOT state what is next.** The ordered table and the current next action live in
 > [../STATUS.md](../STATUS.md), which is the only file allowed to say either. This one holds the
@@ -140,8 +140,12 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    carrying a `\sig` block** ([BACKLOG.md](../BACKLOG.md) item 9). ⭐ **The 1,442 human-fix carry
    turned out to be already done by hand**: of the 198 span-matched fixes disagreeing with b8's
    label, **122 the owner had fixed identically** (two independent reads agreeing 122 of 140 = 87%).
-   ⏭ **`b8-review`'s 450 promotable old fixes go to ROUND 4** (owner). ✅ Promotion dry-run is clean:
-   **3,936 rows, 3 rejects**, all three genuinely over the 59-id cap.
+   ⏭ **`b8-review`'s 450 promotable old fixes go to ROUND 4** (owner). ✅ Promoted: **3,936 rows, 3
+   rejects**, all three genuinely over the 59-id cap. ⛔ **Then 7 more rows came out the same day**:
+   two pieces whose OTHER printed engraving the exam grades, so the pool is **3,929** (3,539
+   train-side). The emitter had excluded exam pieces by IMAGE STEM while `train.py` guards on the
+   SymbTr id; both now use the SymbTr id. `data/real/rung3/excluded_exam_pieces.txt` ·
+   [../STATUS.md](../STATUS.md).
    [METRICS-B8.md](../METRICS-B8.md).
 
 **B8. ✅ THE RE-EMIT RAN (2026-08-21) — `data/real/rung3/strips_b8`.** 1,293 non-exam matched pieces,
@@ -162,6 +166,46 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    alignment — the **budget rail is now the binding limit**, which is why step 4 moved up. Numbers and
    the 98% self-consistency check: [METRICS-CORPUS.md](../METRICS-CORPUS.md) · [rung3/labeling-queues.md](labeling-queues.md).
    ⛔ **The exam is not re-emitted** and keeps the neutral July decode ([DECISIONS.md](../DECISIONS.md)).
+
+**B10. ✅ BUILT 2026-09-01 — `strips_oldhuman`, the pool of EVERY hand-verified real strip** (owner,
+   2026-09-01, lifting the 2026-08-31 ban for the next run only). ⭐ **The inventory, counting human
+   `ok`+`fix` verdicts only** (machine `agree` drafts excluded; exam and real-val queues excluded by
+   construction):
+
+   | queue | crop root | ok | fix | usable | state |
+   |---|---|---|---|---|---|
+   | `strips_b8` | `strips_v2` (current) | 423 | 577 | **1,000** | already promoted, in Round 3 |
+   | `strips_nota` | `strips` (RETIRED) | 129 | 706 | **835** | ⏭ needs promotion |
+   | `strips_r1` | `strips` (RETIRED) | 68 | 360 | **428** | ⏭ needs promotion |
+   | `strips_tup` | `strips` (RETIRED) | 94 | 78 | **172** | ⏭ needs promotion |
+   | `batch3` | `strips_v2` | 39 | 66 | 105 | ⛔ mostly on emitter-DROPPED strips |
+   | `reslice-all` | `strips_v2` | 164 | 50 | 214 | ⛔ all 50 fixes on dropped strips |
+   | `batch1` + `batch2` | `strips_v2` | 62 | 9 | 71 | ⏭ no promotion path built |
+
+   ⭐ **What the decision unlocks is the 1,435 retired-crop strips.** ⚠ The `batch*` / `reslice-all`
+   rows are a **different** blocker and this decision does not touch them: they sit on strips the
+   emitter dropped as `split_wide` / `over_budget` / `row_unaligned`, so making them usable IS the
+   label-budget rail ([../BACKLOG.md](../BACKLOG.md) item 0). ⚠ `b8-review`'s 4,737 rows are
+   unverdicted — out of scope until someone reads them.
+
+   ⚠ **The overlap must be measured before the run, not after.** `carry_old_fixes.py` already located
+   1,479 old fixes inside `strips_b8` by measure span, and the owner had re-fixed **122 of 140**
+   span-matched disagreements identically. So a large share of the 1,435 is the same BARS as a b8 row
+   at a different geometry. That is the owner's point — a second cut is variety — but the size of the
+   overlap decides whether it reads as augmentation or as a 3× weighting of one subset of the music.
+   ⭐ Cheapest honest method: run `carry_old_fixes.py`'s span key over the three retired manifests
+   against b8's and report how many spans are shared.
+
+   ⛔ **Keep the pools SEPARATELY NAMED on the `train.py` command line** (`--real-dir A --real-dir B`),
+   never merged into one directory. The startup line prints one row per pool, and that line is the
+   only place the mix is visible; merging them hides the very thing this run is testing.
+   ⚠ **Re-check the `:N` repeat.** The recipe is "real ≈ 1/3 of stage-2 batches"; at 3,539 + ~1,435
+   train-side strips `:5` would overshoot. Re-measure against the real manifests, as was done for
+   Round 3 — do not carry `:5` over.
+   ⚠ **The exam guard applies to every pool**: `emit_strip_labels.py`'s SymbTr-id filter (2026-08-31)
+   must be re-run over the retired pools, or `promote_labels.py`'s backstop must catch them. The
+   retired pools were hand-cleaned once, on 2026-07-26, by a procedure that did not fix the producer.
+   [../DECISIONS.md](../DECISIONS.md) · [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
 
 ⚠ **The musical-form lead is DEAD** (owner retest, 2026-08-17) and must not be re-derived
 ([log/superseded.md](../log/superseded.md)). ⚠ **A fourth realism arm does not follow from three near

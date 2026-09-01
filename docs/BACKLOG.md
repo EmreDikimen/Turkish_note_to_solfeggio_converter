@@ -43,6 +43,15 @@ starting. Abandoned plans are a different thing again and live in
    incomparable.** `r3-tupnew-stage2-best` was selected under the current blend, so every arm scored
    against it must be too. This lands **after** the staccato arm is read, and it is a Round-4 recipe
    change, not a Round-3 patch.
+
+   ⭐ **CONFIRMED BY THE ROUND-3 FINAL RUN, 2026-09-01 — this is no longer a prediction.** Stage 2's
+   two val curves moved in **opposite directions** for 1,500 steps: synthetic 0.0106 → 0.0117 while
+   **real fell 0.0301 → 0.0182 (−39%)**, still falling at the last step. The blend weighted them
+   4,763 : 390 (**92.4% synthetic**), so the selector followed the synthetic curve and stamped `best`
+   at **step 500**, where real val was **0.0234 — 22% worse than `last`** at step 1750–2000. The
+   round's own mitigation (bring `last` home too, and compare on `_realval_v2`) is what saves the run;
+   without it the graded checkpoint would have been the worse one on real pages, silently.
+   Raw curve: [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md), log `round3_final_logs.md`.
    ⚠ It does **not** invalidate any paired arm result — an arm and its control share the selector.
 
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against

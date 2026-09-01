@@ -82,22 +82,23 @@ a successful build is not a deploy. Both, and every other command, in
 ## Hard rules
 
 - **The exam is one-shot.** `data/real/rung3/testset.json` pieces are never trained on, and the
-  exam is read once per round on the final model. All iteration happens on real-val.
-- **Photos of exam pieces are EXAM-ONLY.** Training on them leaks the exam. Camera photos for
-  training must come from different pieces.
+  exam is read once per round on the final model. All iteration happens on real-val. ⚠ **It was read
+  on 2026-09-01 for `r3-final-stage2-last`; runs A and B are the SAME round**, so a second read is not
+  available without the owner re-opening it. ⛔ **Training on the exam was proposed 2026-09-01 and
+  DECLINED**: +19% data against the retired pools' +41%, and irreversible — you cannot measure
+  generalisation on data you trained on, and every past number becomes uncomparable.
+- **Photos of exam pieces are EXAM-ONLY** — camera photos for training must come from other pieces.
 - **NEVER SEED EXAM *GOLD* FROM THE DECODE OF A MODEL THAT WILL BE GRADED ON THAT EXAM** (owner,
   2026-08-21). It anchors the answer key toward that model: an error the reader lets past becomes
   "correct", and it is that model's own error. **The `label` column is gold — it is what an `ok`
   verdict promotes — so it stays derived, and `emit_strip_labels.py` is NOT re-run on the exam**,
   which is what keeps the model-voted `\sig` override off a graded model.
   ⚠ **THE *HINT* IS A DIFFERENT THING AND THE RULE WAS OVERTURNED FOR IT ON 2026-08-23** (owner):
-  `examv3`'s edit-box `decoded` column now comes from **`round2-stage2-best`**, not `rung3-labeler`.
-  The argument that won: a bad hint *causes reader errors*, which land in the gold just like an
-  anchored one — the old rule priced the model's bias and priced the human's error at zero. Measured
-  on the 214 already-verified rows: **223 → 150 token edits (−33%)**, **48% → 63% exact rows**.
-  All 576 refreshed rows carry **`redecoded=1`** so the read reports the primary twice, with and
-  without them. ⚠ **Re-decode with `scripts/rung3/redecode_strips.py`, NEVER `decode_page()`** —
-  that slices before it decodes and would re-cut the frozen exam crops.
+  `examv3`'s edit-box `decoded` column comes from **`round2-stage2-best`** — a bad hint *causes*
+  reader errors, so the old rule priced the model's bias and the human's at zero. Numbers and the
+  `redecoded=1` double-report: [docs/DECISIONS.md](docs/DECISIONS.md). ⚠ **Re-decode with
+  `scripts/rung3/redecode_strips.py`, NEVER `decode_page()`** — it slices before it decodes and would
+  re-cut the frozen exam crops.
   `_realval_v2` keeps its `round2-stage2-best` seed because real-val **selects** and does not grade. ⚠ The training pools go
   the other way — one model, `round2-stage2-best`, for the whole re-emit: the gate model also aligns
   rows, and the weak referees threw away **10,695 strips** on alignment against 2,330 accepted, so
@@ -111,16 +112,17 @@ a successful build is not a deploy. Both, and every other command, in
   [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md).
 - **`\tie` IS RETIRED — AN ARC IS LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Never write it,
   never emit it: two tied notes are two plain notes (`la'2 la'8`), same pitches and same total
-  duration, so bar arithmetic and the stitcher are untouched. It was retired because the token had
-  three producers using it three ways — **65–78% of every `\tie` in the review queues joined two
-  DIFFERENT pitches**, which is a slur, not a tie. ⚠ **`\tie` stays in `ADDED_TOKENS` at its current
+  duration, so bar arithmetic and the stitcher are untouched. It was retired because **65–78% of every
+  `\tie` in the review queues joined two DIFFERENT pitches**, which is a slur, not a tie — replicated
+  independently at 65% on `_realval_v2` (2026-09-01). ⚠ **`\tie` stays in `ADDED_TOKENS` at its current
   position** — ids are append-only, so removing it would break every checkpoint; it is simply a token
-  nothing emits. ⚠ **The RENDER side landed 2026-08-22** — `measureAtoms` no longer
-  writes the token, and the tie tail now **restrikes its accidental in `every`/`keysig` mode** on both
-  the label and the drawing (a bare tail reads as *unaltered* with no carry and no token; carry mode is
-  unchanged). ✅ **2026-08-31: every Round-3 pool has ZERO `\tie`** — b8 0/3,936, examv3 0/660, `_realval_v2` 0/267,
-  `_tupletval` 0/28, **`strips_v7_final` 0/40,795** (v4/v5/v6 have 1,185 each, predating it). `strips_exam_v2*` keeps its ties on purpose — it is
-  the record of what Round 2 was graded on. [docs/rung3/labeling.md](docs/rung3/labeling.md).
+  nothing emits. ⚠ The RENDER side landed 2026-08-22; the tie tail **restrikes its accidental in
+  `every`/`keysig` mode** on both label and drawing. ✅ Every Round-3 pool has ZERO `\tie`; counts in
+  [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md). `strips_exam_v2*` keeps its ties on purpose — the
+  record of what Round 2 was graded on. ⛔ **A MODEL TRAINED TIE-FREE FAILS `gate:browser`**: one gate
+  gold still contains `\tie`, so 27/28 is unreachable — [docs/METRICS-ONNX.md](docs/METRICS-ONNX.md).
+  ⚠ It also inflates any comparison against a pre-retirement model: on the exam it was **~15 of 17
+  points**. [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS REPAIRED**
   (owner, 2026-08-30). The mark is the click target — in **Seçim as well as under ÜÇLEME** (`tupletPickable`),
   never with a note value or accidental armed; under ÜÇLEME its notes are `pointer-events: none`, and
@@ -159,26 +161,18 @@ a successful build is not a deploy. Both, and every other command, in
   decodes, which never saw them. ⛔ **`score_barlines.py` has the same coupling and NO fix**: its hand marks are keyed
   to detected rows, and across a staff change `bozukNihavendLonga` read **30 marked before and 3 after**. Never quote
   it across a staff-detection change. [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
-- **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF** (2026-08-25). The
-  horizontal opening's kernel is **one pixel tall**, so a staff line that wanders across rows is **erased, not
-  weakened**; a lost row is not a bad crop, it is **NO crop**, so no accuracy metric has ever shown it. ⛔ **Do not
-  "fix" this with a global knob** — dilating before the opening takes one hand-ruled page 5 → 8 staves and takes
-  `bozukNihavendLonga` **10 → 1**, and scaling the dilation to the measured line spacing does not escape the trade; a
-  horizontal CLOSE is worse still, because it lifts `row_ink.max()` and so lifts the relative threshold. ✅ The shipped
-  shape is a **second pass** that re-detects only in the bands the page's own staff pitch says are empty, so a page
-  whose rows were all found cannot move. ⚠ Its **width** test is load-bearing: without it the underlined-lyrics block
-  at the foot of a page is rescued as a staff. Full scale: all **6,440** scored rows identical, **+320 rows on 227 of
-  1,592 pages**; `parity:slicer` passes with the flag ON. ⚠ **`STAFF_RESCUE` must move together in Python and
-  `constants.ts`** or the app cuts differently from the training data, and turning it on bumps `GEOMETRY_REV`.
+- **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF** (2026-08-25).
+  The horizontal opening's kernel is **one pixel tall**, so a wandering staff line is **erased, not weakened**; a lost
+  row is **NO crop**, which is why no accuracy metric ever showed it. ⛔ **Do not "fix" it with a global knob** —
+  every one was measured and rejected. ✅ What ships is a **second pass** re-detecting only in bands the page's own
+  staff pitch says are empty; its **width** test is load-bearing (else a lyrics block is rescued as a staff).
+  ⚠ **`STAFF_RESCUE` must move together in Python and `constants.ts`**, and turning it on bumps `GEOMETRY_REV`.
   [docs/METRICS-SLICER.md](docs/METRICS-SLICER.md).
-- **THE APP HAS NO LABEL-BUDGET RAIL, AND ON DENSE PAGES THAT MEANS SILENTLY WRONG NOTES.** The
-  browser slicer packs by measures and width only; at inference an over-budget strip cannot be
-  dropped, so the model emits `</s>` early and confidently. `hitCap` catches **7 of 4,012 (0.2%)**.
-  **`?dense=<ids>` (try 50) is an OPT-IN experiment**, not a default — it adds the budget rail so a
-  dense row is cut into strips the model can express. ⚠ Its browser-vs-Python parity is **unverified**
-  and there is **no gold accuracy measurement**; do not quote it as a result. Delete it by removing
-  the marked block in `apps/web/src/omr/slicer/windows.ts`, the `tokenBudget` option and the
-  `?dense=` read in `App.tsx`. [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
+- **THE APP HAS NO LABEL-BUDGET RAIL, AND ON DENSE PAGES THAT MEANS SILENTLY WRONG NOTES.** At
+  inference an over-budget strip cannot be dropped, so the model emits `</s>` early and confidently;
+  `hitCap` catches only 0.2%. **`?dense=<ids>` is an OPT-IN experiment**, not a default — parity
+  unverified, no gold measurement, do not quote it. Removal points and every number:
+  [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
 - **THE APP KEEPS THE PAGE AS WRITTEN, AND THE REPEAT IS TAKEN WHEN IT PLAYS** (owner, 2026-08-30). A decoded
   page is stitched with **`expand: false`**, so `‖: … :‖`, the 1./2. brackets and 𝄋 / ⊕ / "D.C." / "Son" stay as
   SIGNS and repeated bars are drawn **once**. The performance is derived: `stitch.ts` returns `structure`
@@ -383,9 +377,12 @@ Full guide — what to update after a session, and why each rule exists:
 
 ```
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
-data/real/rung3/      the label POOLS. ROUND 3 TRAINS ON strips_b8 ALONE (3,936 strips) — the old
-                      strips_nota / strips_r1 / strips_tup are the SAME music on RETIRED crops and
-                      MUST NOT be passed beside it; b8-review goes to Round 4 (see METRICS-B8.md)
+data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training pool. ⚠ The ban on the
+                      retired pools was LIFTED for run B on 2026-09-01: strips_oldhuman (1,408) holds
+                      every HAND-VERIFIED strip from strips_nota/_r1/_tup and is passed BESIDE b8,
+                      never instead of it — a second cut of the same bars, on RETIRED crops, and
+                      UNMEASURED. ⛔ Never pass the raw old pools: 922 of strips_nota's rows are
+                      machine-verdicted. b8-review is still out (see METRICS-B8.md)
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29

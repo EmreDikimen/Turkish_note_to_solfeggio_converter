@@ -34,6 +34,7 @@ wrong — fix by deleting, not by syncing.
 | What did the one-shot real exam score, in any round? | [METRICS-EXAM.md](METRICS-EXAM.md) |
 | What is the exam MADE of, and how was it rebuilt? | [METRICS-EXAMSET.md](METRICS-EXAMSET.md) |
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
+| Does the SHIPPED (int8/ONNX) model match the one that was measured? | [METRICS-ONNX.md](METRICS-ONNX.md) |
 | The B8 re-emit: its yield, and the 1,479 human fixes it did not carry | [METRICS-B8.md](METRICS-B8.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
 | A symbol the model reads as something else — staccato, the dotted usul barline | [METRICS-UNSEEN.md](METRICS-UNSEEN.md) |

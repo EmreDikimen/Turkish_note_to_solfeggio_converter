@@ -199,6 +199,66 @@ Validated before it was trusted: it agrees with the `piece` column on **636 of 6
 and resolves **27 of 27** broken ones. ⛔ Not reverse-mapped by SymbTr stem — two of the eight pieces
 have two source editions (a *nota* and a *ney* print), so that key is ambiguous where this one is not.
 
+### ⛔ ROUND 3'S EXAM RESULT (2026-09-01) — 51%, A MISS, AND THE GAIN IS MOSTLY `\tie`
+
+`r3-final-stage2-last` (chosen over `best` on `_realval_v2`), `examv3`, read once.
+
+| | Round 2 baseline | **Round 3** | change |
+|---|---|---|---|
+| **pages ≤5 corrections — THE PRIMARY** | 44% | **51%** | **+7 pp** |
+| median edits/page | 6 | **5** | −1 |
+| mean edits/page | 10.0 | 9.8 | flat |
+| strips already perfect | 75.2% | 74.2% | −1.0 |
+| SER | 0.027 | 0.026 | flat |
+| mean per-class AEU recall | 90.5% | 89.1% | −1.4 |
+| mean per-class AEU F1 | 84.5% | **78.0%** | **−6.5** |
+
+⛔ **51% against a floor signed at 75% (62% on the re-expressed reading). It misses either way**, and
+at 63 pages the 95% half-width is ~±12 pp, so **+7 is inside the noise band** — not a demonstrated
+improvement. ⚠ The primary rose while every strip-level metric went flat or slightly down: the error
+distribution tightened at the *median* (6 → 5 edits/page) while the *mean* barely moved, so more pages
+crossed under the threshold without fewer errors overall.
+
+**What is left between the two models once the confounds come out.** Measured in label-token space
+(`error_taxonomy.py`), where both sides get identical treatment and nothing is re-tokenized:
+
+| layer | R2 edits | R3 edits | R2 ≤5 | R3 ≤5 | gap |
+|---|---|---|---|---|---|
+| as read | 567 | 368 | 48% | 65% | **+17 pp** |
+| **minus the retired `\tie`** | 380 | 368 | 63% | 65% | **+2 pp** |
+| minus `\tie` + navigation signs | 363 | 341 | 63% | 65% | +2 pp |
+| minus `\tie` + all repeat structure | 352 | 337 | 63% | 67% | +3 pp |
+
+⛔ **~15 of the 17 points is `\tie`** — the token retired 2026-08-22, which Round 2 still emits and
+`examv3` gold does not contain. ⚠ **A precise tie-adjusted OFFICIAL primary is not claimed**: the
+official number is id-space, and reconstructing id sequences from decoded text is lossy — the
+reconstruction reproduces Round 3's 51% exactly but not Round 2's 44%. The *proportion* above is
+trustworthy because it never re-tokenizes; the adjusted absolute is not.
+
+⭐ **THE RESIDUAL, BY TOKEN CLASS** (`\tie` and navigation removed; negative = Round 3 better):
+
+| class | net edits R3 − R2 |
+|---|---|
+| note/rest | **−15** |
+| sig-marker | **−8** |
+| repeat-bar | −5 |
+| tuplet | **+1** |
+| grace | +1 |
+| accidental | **+2** |
+| barline | **+2** |
+
+⛔ **THE THREE RENDER FLAGS SHOW NO BENEFIT, AND THE CLASSES THEY TARGETED ARE THE ONES THAT GOT
+WORSE.** `--concave-tuplet` aimed at tuplet (**+1**), `--usul-barline` at barline and false
+`\repstart` (**+2**), `--staccato-noise` at duration/accidental (**accidental +2**). Every one is flat
+or slightly negative. What improved is **note/rest (−15)** and **signature markers (−8)** — consistent
+with the real training pool growing 72% (2,059 → 3,539 train-side strips), not with the render.
+⚠ Total residual is **22 edits of 363, about 6%**, at n = 660 strips — small, and no significance test
+is claimed for it.
+
+⚠ This vindicates the 2026-08-31 pre-registration that a three-flag render makes a general movement
+unattributable. The two flags that kept their own paired instruments can still be read on those; the
+concave tuplet mark never had one and now has no general movement to claim either.
+
 ### The Round-2 baseline on the rebuilt exam — §3b's precondition 2, DONE
 
 `eval_omr.py --checkpoint data/checkpoints/round2-stage2-best --strips-dir data/real/rung3/strips_exam_v3

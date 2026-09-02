@@ -316,6 +316,24 @@ catch it was built, read better on hand-marked truth and **cost three times as m
 `score_slicer`** — see [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md), which also carries
 the 2026-08-25 fix for the dense-photocopy variant of the same complaint. Unchanged.
 
+⛔ **AND THE WIDTH VERSION OF THE SHAPE RULE WAS TRIED ON 2026-09-03 AND LOST TOO — do not rebuild
+it.** The stems on this page carry ink **104–292 px** wide where a plain barline carries 5–11 and a
+repeat sign 36–39, a clean gap at ~2–3 sp, so "reject a candidate whose attached run is wider than
+N sp at ANY row, with no contiguity requirement" looks obvious. Two things killed it. (1) Gate 2
+searches only **±1 line-space** sideways, so it cannot see a 104 px attachment at all — a 2.0 sp
+threshold sat just inside that window and behaved wildly (barline recall 48.4% → 10.8%) while 2.5
+did literally nothing. (2) Measuring the run on the **full row** instead makes the rule work on this
+page (39 → 34 interior bars) and destroys everything else: **recall 48.4% → 8.6%** on the
+hand-marked pages, where a faded barline's smeared ink runs the width of the row, and on clean pages
+`score_slicer --sample 25` goes **81 → 78 exact rows** with too-few-measure rows **14 → 40**. Tried
+at 1.5 / 2.0 / 2.5 / 3.0 / 4.0 sp; no threshold is safe on both. Reverted, uncommitted.
+
+⚠ **What the stem cuts COST is now measured, and it is not cosmetic.** Decoding this page with
+`r3b-stage2-last` under both slicings: 8 of 10 rows read identically, and the two that differ show
+the damage — the cut at a stem **inserts a false `|` into the token stream** (row 6) and **fabricates
+a duration** (row 9: `\bakiyeSharpf''4` where the print has `f''16`). So a stem cut is a reading
+error, not just an ugly box. The fix for it remains unfound.
+
 **What IS fixed: the closing `:|` read as two barlines.** That row's bars end `… 2328, 2629, 2664`
 — the final repeat's thin and thick strokes, **35 px apart**, surviving as two candidates because
 `_cluster_cols` merges only within 0.6 sp (18 px). The 35 px gap then became a *measure*, and

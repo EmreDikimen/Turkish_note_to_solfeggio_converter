@@ -3,7 +3,7 @@
 purpose: the single home for the 2026-07-29 windowing retune (which constants were swept, and why none of them moved) and the vertical crop frame — the staff's placement inside a strip and the shared-edge trim
 audience: agents and the owner, before touching `MEASURES_PER_STRIP`, `MAX_STRIP_W`, the vertical placement, or `TRIM_SHARED_EDGE`
 
-updated: 2026-08-22
+updated: 2026-09-03
 
 Split out of [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) on 2026-08-22 when that file
 crossed the 400-line cap. The split is by phase, not by size: **this file is settled** — every
@@ -299,3 +299,68 @@ Overlapping pairs go **195 → 0**, with the same strips, the same measure spans
 holding — only the crop edges moved. Kept because it removes a structural pixel/label
 inconsistency at no measured cost, **not** because it bought accuracy. Switchable via
 `OMR_EDGE_TRIM=0`; it is part of the decode-cache signature.
+
+## `TAIL_SPAN_MAX_SP` — the closing barline counted twice (2026-09-03)
+
+Owner-reported from the slice inspector on `nihavendLongaDuzgun`, a neyzen.com engraving of Kevser
+Hanım's Nihâvend Longa: the last row is cut at a note stem, and it also emits a junk strip.
+**Two unrelated defects**, and only the second one is fixed here.
+
+**The cut at a stem is the known residual and was NOT touched.** Measured on that page, the stem at
+page column 1462 runs top staff line → bottom line +3 px, exactly like the real barline at 1068, and
+is 2–7 px wide over most of its length. Gate 2 should reject it on the attached notehead and beam —
+their ink IS there, **34 px wide against the barline's uniform 6** — but the gate needs `fat_run`
+= 0.5 sp of *contiguous* fat rows and gets **8 (the head) and 9 (the beam) against the 15 required**,
+because the stem's own column cuts the head near its narrow edge. The shape discriminator that would
+catch it was built, read better on hand-marked truth and **cost three times as much on
+`score_slicer`** — see [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md), which also carries
+the 2026-08-25 fix for the dense-photocopy variant of the same complaint. Unchanged.
+
+**What IS fixed: the closing `:|` read as two barlines.** That row's bars end `… 2328, 2629, 2664`
+— the final repeat's thin and thick strokes, **35 px apart**, surviving as two candidates because
+`_cluster_cols` merges only within 0.6 sp (18 px). The 35 px gap then became a *measure*, and
+`MIN_STRIP_W` could not rescue it: a sliver merges into the previous window only while that window
+is under `MEASURES_PER_STRIP`, and this one already held 3. So it emitted as its own crop.
+
+⭐ **Fixed where the error is — it was never a measure** — by mirroring the `lead` prefix rule at the
+other end of the row: a trailing span under `TAIL_SPAN_MAX_SP` (1.5 sp) that holds **no notehead**
+stops being counted, and its ink stays inside the last window's crop, so the row still **ends on its
+own closing barline**. `OMR_TAIL_SPAN=0` restores the old behaviour.
+
+| | before | after |
+|---|---|---|
+| `nihavendLongaDuzgun` strips | 27 | **26** |
+| that row's measures | 6 | **5** |
+| last crop | ended 35 px short, junk strip after it | **ends on the `:|`** |
+
+**Both instruments are exactly neutral, verified by A/B on the same machine** (`OMR_TAIL_SPAN=0`
+against the shipped 1.5):
+
+| | rule OFF | rule ON |
+|---|---|---|
+| `score_barlines` (38 rows, 93 marked) | 48.4% recall / 81.8% precision / 10 false | **identical** |
+| `score_slicer --sample 25` (124 truth rows) | 81 exact | **81 exact** |
+
+That is expected — this changes measure segmentation, not barline detection — and it is why the pair
+is quoted as a guard rather than as evidence of gain.
+
+**Prevalence, and the honest caveat on the threshold.** Over the 12,169 rows recorded in the
+`strips_v2` manifests, **119 rows (0.98%) on 111 of 1,781 pages (6.2%)** have a trailing span ≤ 1.5 sp
+(gaps: min 22, median 33, max 45 px). ⚠ That is an **upper bound on OLD geometry** — it counts the
+width trigger only, and the shipped rule also requires the span to hold no notehead. Slicing 10 of
+those pages both ways under today's code: **215 → 213 strips**, i.e. it removed the sliver and
+touched nothing else.
+
+⛔ **1.5 sp is a judgement, not a discovered boundary.** The trailing-span width distribution is
+**continuous** — 119 rows at ≤ 1.5 sp, **82 more in 1.5–2.5 sp**, 32 in 2.5–3.0, and on up — so no
+valley separates "double bar" from "narrow final measure". The discrimination is carried by the
+**no-notehead test**; the width cap is only there to bound that test's known failure mode, the same
+one the `lead` rule documents (a measure holding ONLY rests has no notehead either, and at ≤ 1.5 sp
+there is no room to print one).
+
+⚠ **`GEOMETRY_REV` 20260826 → 20260903**, because this moves a crop boundary: every
+`<page>_decode.json` cache on disk is now refused and the next emit re-decodes. `TAIL_SPAN_MAX_SP` is
+in `window_signature()`. ⚠ Mirrored in the browser slicer (`TAIL_SPAN_MAX_SP` in
+`apps/web/src/omr/slicer/constants.ts`, the tail trim and `winX1` in `windows.ts`) — the two must
+move together or the port splits.
+

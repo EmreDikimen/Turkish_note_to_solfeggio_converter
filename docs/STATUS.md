@@ -42,6 +42,11 @@ anything usable**: `best` is barely specialised and `last` (step 4,000) is past 
 pool it reads, and B's real-val pool is **30% retired-crop strips**. Three runs, three wrong picks.
 [BACKLOG.md](BACKLOG.md) item 3 · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
 
+⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). A slicer
+fix moved a crop boundary (a closing `:|` read as two barlines, junk strip on ~1% of rows), so the
+next emit re-decodes. Nothing is owed today — this is here so the cost is not a surprise when a pool
+is next built. `OMR_TAIL_SPAN=0` restores it. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md).
+
 ⏭ **THE NEXT ACTION IS AN OWNER DECISION, AND IT IS NOT ANOTHER TRAINING RUN.** Three paired reads
 now say the same thing: `r3-final-stage2-last` is the model we have, and both cheap levers are spent.
 What is NOT spent, in the order the evidence supports it:
@@ -122,17 +127,8 @@ strips per page, and **19 pages never graded before** — and no split between t
 
 ✅ **Three settled 2026-08-31 findings moved out of this file** — the `b8-full` read and its `\sig` exception, — the promote gate that was deleting hand corrections over an `f'' 32` spacing, and the recovery of the retired pools' 1,479 human fixes by measure span. Both are decision rows in [DECISIONS.md](DECISIONS.md) with their numbers in [METRICS-CORPUS.md](METRICS-CORPUS.md).
 
-✅ **THE LAUNCH FILES ARE FIXED (2026-08-31).** `make_round3_colab_zip.sh` gained a **`final`** arm:
-`strips_b8` as the only real pool, corpus `strips_v7_final`, and the render-config gate now checks
-`concaveTuplet`/`usulBarline` against the arm's *wanted* value instead of refusing them outright.
-⚠ **The four ARMS keep the retired pools on purpose** — that is what they trained on, so a rebuilt
-arm zip still reproduces its own run; the pool set is per-arm, not global. ⭐ **The final run has its
-own notebook, `notebooks/round3_final_colab.ipynb`** — the staccato notebook was left untouched as
-that arm's record. It asserts all three flags in `render_config.json` and **refuses to start if a
-retired pool is in the zip**. ⚠ **`:5`, not `:9`**, re-measured today against the real manifests:
-3,539 train-side b8 strips × 5 against 36,032 synthetic = **32.9%**, matching the old pools' ×9 at
-33.9%; `:9` would put real at **47.0%** and change the recipe as a side effect. `train.py` prints the
-pool counts at startup — read that line rather than trusting this one.
+✅ **The launch files were fixed 2026-08-31** — the `final`/`finalb` zip arms, the final
+run's own notebook and the `:5`-not-`:9` re-measure. Detail: [log/status-log.md](log/status-log.md).
 
 ✅ **THE 75%-vs-62% QUESTION IS NOT OPEN — IT WAS SETTLED 2026-08-31, AND WITH A THIRD ANSWER.**
 This file carried it as a live binary choice until 2026-09-01; that was stale. The owner's decision
@@ -193,11 +189,13 @@ regression that is pure artifact. `score_slicer.py` gained `--pair-by-position`;
 has the same coupling and NO fix** — `bozukNihavendLonga` read **30 marked before a staff change and
 3 after**. It is also why the rescue's 320 rows can never be scored there. [METRICS-SLICER.md](METRICS-SLICER.md).
 
-✅ **THE SLICER IS FROZEN AGAIN** (owner, 2026-08-26) after three fixes landed and two were rejected
-— the browser/Python staff divergence, the over-wide staff span, and `OMR_BLOB_FILL` 0.3 (measured
-and **REJECTED**, with the lesson that the faded-page table has now mispredicted the full run three
-times). Both shipped fixes bump `GEOMETRY_REV` → **20260826**, so every decode cache on disk is
-invalid. [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
+⚠ **THE 2026-08-26 SLICER FREEZE WAS LIFTED ONCE, ON 2026-09-03, AT THE OWNER'S REQUEST** — for the
+trailing-`:|` fix above and nothing else. The freeze (owner, 2026-08-26) followed three fixes landing
+and two being rejected — the browser/Python staff divergence, the over-wide staff span, and
+`OMR_BLOB_FILL` 0.3 (measured and **REJECTED**, with the lesson that the faded-page table has now
+mispredicted the full run three times); those two shipped fixes were what took `GEOMETRY_REV` to
+20260826. ⏭ **Treat the slicer as frozen again unless the owner says otherwise.**
+[METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
 
 ⏭ **COLLECTION IS NARROWED TO TWO TARGETS, not broadened.** 2,486 unlabelled page PNGs already sit
 on disk, so volume relieves nothing. What it cannot substitute for: pages drawing the **concave

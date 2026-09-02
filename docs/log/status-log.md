@@ -7,6 +7,23 @@ updated: 2026-09-02
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-08-31 (moved out of STATUS 2026-09-03) — the launch files
+
+Moved here verbatim when STATUS crossed its 400-line cap; it is settled history, not a next
+action. It was not recorded anywhere else, which is why it was moved rather than dropped.
+
+✅ **THE LAUNCH FILES ARE FIXED (2026-08-31).** `make_round3_colab_zip.sh` gained a **`final`** arm:
+`strips_b8` as the only real pool, corpus `strips_v7_final`, and the render-config gate now checks
+`concaveTuplet`/`usulBarline` against the arm's *wanted* value instead of refusing them outright.
+⚠ **The four ARMS keep the retired pools on purpose** — that is what they trained on, so a rebuilt
+arm zip still reproduces its own run; the pool set is per-arm, not global. ⭐ **The final run has its
+own notebook, `notebooks/round3_final_colab.ipynb`** — the staccato notebook was left untouched as
+that arm's record. It asserts all three flags in `render_config.json` and **refuses to start if a
+retired pool is in the zip**. ⚠ **`:5`, not `:9`**, re-measured today against the real manifests:
+3,539 train-side b8 strips × 5 against 36,032 synthetic = **32.9%**, matching the old pools' ×9 at
+33.9%; `:9` would put real at **47.0%** and change the recipe as a side effect. `train.py` prints the
+pool counts at startup — read that line rather than trusting this one.
+
 ## 2026-09-02 — runs A and B are read, and both are nulls
 
 **Round 3's shipped model stands.** Three paired reads on `_realval_v2` (262 strips, the same fixed

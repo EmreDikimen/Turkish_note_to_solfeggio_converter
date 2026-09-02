@@ -36,6 +36,7 @@ wrong — fix by deleting, not by syncing.
 | How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
 | Does the SHIPPED (int8/ONNX) model match the one that was measured? | [METRICS-ONNX.md](METRICS-ONNX.md) |
 | The B8 re-emit: its yield, and the 1,479 human fixes it did not carry | [METRICS-B8.md](METRICS-B8.md) |
+| Did Round 3's two follow-up runs (longer stage 2, retired-crop strips) buy anything? | [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
 | A symbol the model reads as something else — staccato, the dotted usul barline | [METRICS-UNSEEN.md](METRICS-UNSEEN.md) |
 | What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |

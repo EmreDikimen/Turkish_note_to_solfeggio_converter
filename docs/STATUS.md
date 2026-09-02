@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-01
+updated: 2026-09-02
 
 ## Now
 
@@ -29,40 +29,50 @@ Real val **0.0182 → 0.0171 (−6.0%)**, the minimum shifting from step 1750 to
 drifting slightly UP for the last 1,500 steps. ⚠ **A teacher-forced loss, not a correction count** —
 Round 3's `+13.7 pp` on real-val turned out to be almost all `\tie`, so 6% of loss may be worth no
 edits at all. ⚠ "2,500" does not transfer as a step count: it is step 2,500 *of a 4,000-step cosine*.
-[../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) · raw log
-[round3_runa_logs.md](../round3_runa_logs.md).
+⭐ **That question is now answered, and the answer is zero: 6% of loss bought NO edits** (15 strips
+better, 15 worse, p = 1.000). Quote it whenever a loss curve is used to argue for a change.
+[../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) · raw logs `round3_runa_logs.md`,
+`round3_runb_logs.md`.
 
 ⛔ **THE CHECKPOINT SELECTOR FAILED AGAIN, HARDER — `best` WAS STAMPED AT STEP 250.** The first
 evaluation of stage 2, after 250 steps of real specialisation, and no later mix ever beat it (Round 3
 at least reached step 500). ⭐ **`best-real`, added the same day, is the only reason the run produced
-anything usable**: `best` is barely specialised and `last` (step 4,000) is past the minimum. Second
-consecutive run where the ~92%-synthetic blend picks wrong. [BACKLOG.md](BACKLOG.md) item 3.
+anything usable**: `best` is barely specialised and `last` (step 4,000) is past the minimum. ⛔ **AND A THIRD TIME ON RUN B — where the wrong pick was `best-real` ITSELF.** B's `last` (step
+5,000) beats its own `best-real` (step 1,250), 645 edits to 694. `best-real` is only as good as the
+pool it reads, and B's real-val pool is **30% retired-crop strips**. Three runs, three wrong picks.
+[BACKLOG.md](BACKLOG.md) item 3 · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
 
-⏭ **THE NEXT ACTION: download `best-real` and score it.** From `MyDrive/tnc/r3-r3a-stage2/` into
-`data/checkpoints/r3a-stage2-best-real` (`best` is not worth the bandwidth), then:
-```
-scripts/rung3/paired_arm_score.py --ctl data/checkpoints/r3-final-stage2-last \
-    --arm data/checkpoints/r3a-stage2-best-real --pool data/real/rung3/_realval_v2
-```
-That is the read that decides whether Run A beat Round 3, on 262 hand-verified strips, paired.
+⏭ **THE NEXT ACTION IS AN OWNER DECISION, AND IT IS NOT ANOTHER TRAINING RUN.** Three paired reads
+now say the same thing: `r3-final-stage2-last` is the model we have, and both cheap levers are spent.
+What is NOT spent, in the order the evidence supports it:
+1. **The label-budget rail** — **4,012 over-budget strips** are dropped from training and dense music
+   already reads twice as badly (9.9% vs 4.8%, p = 0.013). It is the only remaining lever with a
+   measured mechanism behind it, and it is what RELEASES the exam. [BACKLOG.md](BACKLOG.md) item 0.
+2. **The `\sig` circularity** — every `\sig` block in a real-page label is unverified, and the
+   emitter's model vote fired on 24 of 45 exam pieces. [BACKLOG.md](BACKLOG.md) item 9.
+3. **The selector** — three wrong picks in three runs; a Round-4 recipe change, not a patch.
+⛔ **Not the exam.** It was read for this round on 2026-09-01, runs A and B are the SAME round, and a
+re-read decided *after* seeing these numbers is the one option that is not clean.
 
-⏭ **RUN B IS BUILT BUT NOT WRITTEN.** Its zip is ready — `tnc_round3_finalb_colab.zip` (832 MB,
-`sh scripts/make_round3_colab_zip.sh finalb`), carrying `strips_b8` **plus `strips_oldhuman`** (1,408
-hand-verified retired-crop strips). ⛔ **Its notebook does not exist yet.** Copy
-`round3_runa_steps_colab.ipynb` and change three things: `ARM`, add the second `--real-dir`, and
-⚠ **`:4` not `:5`** — combined real train-side is **4,777**, so `:5` reads 39.9% of stage-2 batches
-against the recipe's ~33%. It should reuse Round 3's stage 1 for the same reason Run A does.
+⛔ **RUNS A AND B ARE BOTH READ, AND BOTH ARE NULLS — ROUND 3's SHIPPED CHOICE STANDS**
+(2026-09-02). On the same 262 `_realval_v2` strips, paired: Run A `best-real` **656 edits** and Run B
+`last` **645**, against `r3-final-stage2-last`'s **667**. Every CI spans zero, every sign test is a
+null, and exact-match moves 68.3% → 69.1% → 69.5% — a spread of **3 strips**. ⭐ Neither a longer
+stage 2 nor a second cut of the same music on retired crops moves real-page accuracy.
+[METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
+
+✅ **RUN B RAN — `strips_b8` + `strips_oldhuman` at `:4` (34.7% real), 5,000 stage-2 steps** (the
+step count is the owner's, 2026-09-01; Run A ran 4,000, so B differs from A in two places, not one).
+Notebook: `notebooks/round3_runb_oldstrips_colab.ipynb`, reusing Round 3's stage 1 like Run A.
+⛔ **Its `real` val column is NOT comparable with Run A's** — a second pool means a second held-out
+set, so B evaluates on **560** strips (170 of them retired-crop) where A used **390**. A higher
+number there is a harder exam, not a worse model. [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
 
 ⚠ **RUNS A AND B ARE THE SAME ROUND AS THE EXAM READ** (owner, 2026-09-01: *"round 3 is not over. I
 will make 2 new trainings"*). The exam was read on 2026-09-01 for `r3-final-stage2-last`, and the rule
 is **one read per round**. ⛔ A second read is not available without the owner re-opening it
 deliberately — and deciding that *after* seeing A's or B's real-val numbers is the one option that is
 not clean. Unsettled, flagged, not assumed.
-
-⭐ **`--save-every 500` is the right setting and costs nothing.** It governs only `last`; `best` and
-`best-real` are written on improvement, driven by `--eval-every`, which stays at **250**. Run A wrote
-**16 checkpoints against Round 3's 48** at the same ~1.6 s/step — roughly 50 GB less through the Drive
-mount, with selection granularity unchanged.
 
 ⭐ **THE ROUND-3 MODEL IS `r3-final-stage2-last`** — real-val chose it over `best` (667 vs 784 edits, 39 strips better / 6 worse, sign p = 0.000). Against Round 2 the sign test wins 72 : 22 but the **mean edits/strip CI spans zero and is a NULL**. [METRICS.md](METRICS.md).
 
@@ -82,8 +92,12 @@ hand-verified strips** (nota 835, r1 428, tup 172, human `ok`+`fix` only) on top
 ⚠ Those crops come from a slicer the app no longer runs, and much of that music is already in b8 at
 the current geometry — so the pools overlap in MUSIC and differ in PIXELS. The owner's argument is
 that b8 stays in the mix, so this **adds a second cut rather than replacing the current one**.
-⚠ **Nobody has scored a model trained on mixed crop roots** — treat it as a lead. ⏭ Not started, and
-not now. [DECISIONS.md](DECISIONS.md) · [rung3/worklist.md](rung3/worklist.md) B10.
+✅ **DONE AND ANSWERED 2026-09-02: it bought nothing measurable** (Run B, above). Somebody has now
+scored a model trained on mixed crop roots, and it is indistinguishable from one that was not.
+⚠ **A null, not a refutation** — at 262 strips a CI half-width of ~±0.13 edits/strip could hide a
+small gain; what it rules out is a gain big enough to reopen the exam.
+[DECISIONS.md](DECISIONS.md) · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) ·
+[rung3/worklist.md](rung3/worklist.md) B10.
 
 ✅ **Two exam pieces were found in `strips_b8` and removed (7 strips, pool now 3,929).** The emitter matched exam pieces by IMAGE STEM where `train.py` guards on the SymbTr id, so a second engraving passed; both now use the SymbTr id and `promote_labels.py` carries a backstop. Detail: [DECISIONS.md](DECISIONS.md) · `data/real/rung3/excluded_exam_pieces.txt`.
 
@@ -133,13 +147,9 @@ with examples, not just a rate. `eval_omr.py --show-errors` prints the raw mater
 diagnoses freely, the exam is one-shot.
 [rung3/round3-criteria.md](rung3/round3-criteria.md) §3c · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
-⏭ **THE FINAL RUN SAVES TWO CHECKPOINTS AND CHOOSES BETWEEN THEM ON REAL-VAL.** `best` is selected
-on a val loss that is **94.6% synthetic** (4,769 strips outvoting 271, nineteen to one) in a round
-graded on real pages. Rather than swap the selector mid-round, the final run keeps it *and*
-additionally keeps one selected on a free-running real metric, comparing them on `_realval_v2`
-**before** the exam. Legal by the standing rule: real-val selects, the exam is one-shot. ⚠ `train.py`
-saves only one `best` today, so the cheap version is `best` + `last` compared on `_realval_v2` (what
-the arms already did) and the full version is a code change. [BACKLOG.md](BACKLOG.md) item 3.
+✅ **DONE — every run since 2026-09-01 saves three checkpoints (`best`, `best-real`, `last`) and
+chooses between them on `_realval_v2`.** That is the mitigation, not the fix: the blend itself is
+still 92% synthetic and has now picked wrong three times running. [BACKLOG.md](BACKLOG.md) item 3.
 
 ⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST.** It grades ~12 candidate
 strips a page against 7.1, so a page collects more edits at equal model quality and the primary

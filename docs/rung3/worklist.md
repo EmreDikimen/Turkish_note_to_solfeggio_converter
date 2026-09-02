@@ -167,7 +167,14 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    the 98% self-consistency check: [METRICS-CORPUS.md](../METRICS-CORPUS.md) · [rung3/labeling-queues.md](labeling-queues.md).
    ⛔ **The exam is not re-emitted** and keeps the neutral July decode ([DECISIONS.md](../DECISIONS.md)).
 
-**B10. ✅ BUILT 2026-09-01 — `strips_oldhuman`, the pool of EVERY hand-verified real strip** (owner,
+**B10. ⛔ RUN AND ANSWERED 2026-09-02 — IT BOUGHT NOTHING MEASURABLE.** Run B trained on
+   `strips_b8` + `strips_oldhuman` at `:4` and lands **645 edits against `r3-final-stage2-last`'s 667**
+   on 262 paired `_realval_v2` strips (CI [−0.218, +0.046], p = 0.736), and −0.042 against Run A
+   (p = 0.860). ⚠ **A null, not a refutation**: ±0.13 edits/strip of CI half-width could hide a small
+   gain. The inventory below stands as the record of what was added.
+   [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)
+
+   **✅ BUILT 2026-09-01 — `strips_oldhuman`, the pool of EVERY hand-verified real strip** (owner,
    2026-09-01, lifting the 2026-08-31 ban for the next run only). ⭐ **The inventory, counting human
    `ok`+`fix` verdicts only** (machine `agree` drafts excluded; exam and real-val queues excluded by
    construction):

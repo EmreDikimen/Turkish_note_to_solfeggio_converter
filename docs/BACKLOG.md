@@ -62,6 +62,17 @@ starting. Abandoned plans are a different thing again and live in
    metric — is still owed and is still a recipe change, not a patch.
    ⚠ It does **not** invalidate any paired arm result — an arm and its control share the selector.
 
+   ⛔ **A THIRD TIME ON RUN B (2026-09-02), AND THE WRONG PICK WAS `best-real` ITSELF.** The blend put
+   `best` at step 3,250 this time — a different place again — but the run's real-page winner was
+   `last` (step 5,000), which beats its own `best-real` (step 1,250) **645 edits to 694** on
+   `_realval_v2`. ⚠ **Why `best-real` failed here is the part to keep**: Run B trains on two real
+   pools, so `train.py` held out ~10% of each and its real-val set is **560 strips, 170 of them
+   retired-crop** — the checkpoint meant to track real pages was 30% steered by pictures the shipped
+   slicer does not produce. ⭐ So the cheap fix has a boundary: **`best-real` is only as good as the
+   pool it reads**, and adding a real pool silently changes that pool. Three runs, three wrong picks,
+   in three different places (steps 500, 250, and `best-real` at 1,250).
+   [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
+
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against
    2,330; result and carry table in [METRICS-CORPUS.md](METRICS-CORPUS.md), queues in
    [rung3/labeling-queues.md](rung3/labeling-queues.md)). ✅ **The `b8-audit` guard is READ —

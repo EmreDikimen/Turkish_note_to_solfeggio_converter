@@ -1406,3 +1406,68 @@ consecutive run where the blended selector picks wrong; the blend is ~92% synthe
 selection granularity is unchanged. Step time settled at ~1.63 s/step against Round 3's ~1.57 — twice
 the steps at no per-step penalty, and roughly 50 GB less pushed through the Drive mount. `--save-every`
 only governs `last`; `best`/`best-real` are written on improvement, driven by `--eval-every`.
+
+### The answer, 2026-09-02: 6% of loss was worth ZERO edits
+
+`paired_arm_score.py` on `_realval_v2`, 262 strips, paired against `r3-final-stage2-last`:
+**656 edits vs 667**, −0.042/strip, 95% CI **[−0.160, +0.073]**, **15 strips better / 15 worse**,
+exact sign test **p = 1.000**. Exact-match 69.1% vs 68.3%. ⭐ **A NULL, and the cleanest evidence this
+project has that a teacher-forced val loss does not convert into corrections.** Table:
+`data/real/rung3/runa_bestreal_vs_r3final.json` · [../../docs/METRICS-ROUND3-RUNS.md](../../docs/METRICS-ROUND3-RUNS.md).
+
+## Round 3, RUN B — every hand-verified real strip, retired crops included (2026-09-02)
+
+**Run:** Colab GPU, stage 1 REUSED from the Round-3 final run (`r3-final-stage1/best`), stage 2 =
+**5,000 steps** @ batch 16, lr 1e-5, warmup 100, cosine to zero. Real pools `strips_b8` **and**
+`strips_oldhuman`, both `:4` → 4,777 combined train-side strips against 36,032 synthetic = **34.7%**
+of stage-2 batches (Round 3's recipe: 32.9%). Raw console log: `round3_runb_logs.md`.
+⚠ **Two things differ from Run A, not one** — the extra pool AND 5,000 steps against A's 4,000 (the
+step count is the owner's, 2026-09-01). So B-vs-A cannot attribute a difference to the data. It is
+moot: the comparison is a null.
+
+### ⛔ Its `real` val column is not comparable with Run A's
+
+`train.py` holds out ~10% of the pieces of **every** real pool it is given, so a second pool means a
+second held-out set: **560** real-val strips here (390 b8 + **170 retired-crop**) against Run A's
+**390**. Run B's `real` numbers are a harder exam, not a worse model.
+
+| step | synth val | **real val (560 strips)** | mix (selects `best`) | |
+|---|---|---|---|---|
+| 250 | .0093 | .0458 | .0131 | |
+| 750 | .0071 | .0383 | .0104 | |
+| **1250** | .0075 | **.0343** | .0103 | ⭐ **real minimum — this is `best-real`** |
+| 2000 | .0060 | .0376 | .0093 | |
+| 2500 | .0060 | .0366 | .0092 | |
+| 3000 | .0059 | .0348 | .0089 | |
+| **3250** | .0055 | .0363 | **.0087** | ⛔ `best` stamped HERE (lowest mix) |
+| 3500–5000 | ~.0059 | .0366 → .0371 | ~.0091 | flat |
+
+- **Real val bottomed at step 1250 and then sat in .0343–.0385 for 3,750 steps.** Same shape as Run A:
+  the back half of the schedule buys nothing.
+- **Synthetic val, which IS comparable (same 4,763 strips), ends .0059 against Run A's .0114** — better
+  at every matching step. ⚠ Not a product number: synthetic has been at 99.9% AEU since Rung 2, and this
+  run's real-page result is a null.
+
+### What it answers
+
+⛔ **Nothing measurable.** `paired_arm_score.py` on `_realval_v2`, 262 strips, paired:
+
+| comparison | edits | mean diff / strip | 95% CI | sign test |
+|---|---|---|---|---|
+| B `last` vs `r3-final-stage2-last` | 645 vs 667 | −0.084 | [−0.218, +0.046] | 19 / 16, p = 0.736 |
+| B `last` vs A `best-real` | 645 vs 656 | −0.042 | [−0.145, +0.057] | 17 / 15, p = 0.860 |
+| B `last` vs B `best-real` | 645 vs 694 | −0.187 | [−0.420, −0.004] | 19 / 13, p = 0.377 |
+
+⭐ **The retired pools' second cut is answered: it bought nothing.** ⚠ A **null, not a refutation** —
+±0.13 edits/strip of CI half-width could hide a small gain. Tables:
+`data/real/rung3/runb_vs_r3final.json`, `runb_vs_runa.json`, `runb_bestreal_vs_last.json`.
+
+### ⛔ The selector failed a THIRD time — and here it was `best-real` that was wrong
+
+`last` (step 5,000) beats the run's own `best-real` (step 1,250), 645 edits to 694. ⚠ **The two
+statistics disagree**: the CI clears zero by 0.004 while the sign test is a null (19 / 13,
+p = 0.377), so this reads as "use `last`", not as a measured margin. ⚠ **Why `best-real` failed here
+is specific and worth keeping**: B's real-val pool is **30% retired-crop strips**, so the checkpoint
+that is supposed to track real pages was partly steered by pictures the shipped slicer does not
+produce. Three runs, three wrong picks
+([../../docs/BACKLOG.md](../../docs/BACKLOG.md) item 3).

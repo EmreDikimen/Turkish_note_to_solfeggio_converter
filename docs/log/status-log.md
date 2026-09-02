@@ -2,10 +2,49 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-01
+updated: 2026-09-02
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-02 — runs A and B are read, and both are nulls
+
+**Round 3's shipped model stands.** Three paired reads on `_realval_v2` (262 strips, the same fixed
+pool every earlier comparison used), against `r3-final-stage2-last`'s 667 edits: Run A `best-real`
+**656**, Run B `last` **645**, and B against A **645 vs 656**. Every confidence interval spans zero;
+every sign test is a null (p = 1.000, 0.736, 0.860). Exact-match moves 68.3% → 69.1% → 69.5%, a
+spread of **3 strips**. Numbers: [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md).
+
+**Why this matters more than the two runs do.** Run A improved the real val loss by **6.0%** and that
+converted into **zero edits** — 15 strips better, 15 worse. The project now has a clean, paired
+demonstration that a teacher-forced loss is not a correction count. It is the second time this
+round's numbers have dissolved on inspection (the first was Round 3's real-val gain turning out to be
+almost all the retired `\tie`), and it is the reason no lever should be argued for on a loss curve
+again.
+
+**Run B, written and run today.** Notebook `notebooks/round3_runb_oldstrips_colab.ipynb`, copied from
+Run A's with `ARM`, a second `--real-dir`, and `:4` instead of `:5` — 4,777 combined train-side
+strips against 36,032 synthetic is **34.7%** of stage-2 batches, where `:5` would have read 39.9% and
+changed the mix as a side effect. It reuses Round 3's stage 1 for the same reason Run A does. ⚠ The
+owner set stage 2 to **5,000 steps** where Run A ran 4,000, so B differs from A in two places rather
+than one; that was flagged before the run and is moot now that the pair is a null.
+
+**One trap found while reading the log, worth remembering.** Run B's `real` val column reads roughly
+double Run A's and that is not a regression: `train.py` holds out ~10% of the pieces of **every** real
+pool it is given, so a second pool means a second held-out set — 560 strips (170 of them retired-crop)
+against Run A's 390. The two columns are different exams. Anyone comparing `real` across runs with
+different `--real-dir` sets is comparing nothing.
+
+**The selector was wrong a third time, and differently.** Round 3 stamped `best` at step 500, Run A at
+step 250; on Run B `best` landed at step 3,250 and it was **`best-real` that was wrong** — `last`
+beats it 645 to 694. `best-real` is only as good as the pool it reads, and B's real-val pool is 30%
+retired-crop strips. The mitigation (save three checkpoints, choose on `_realval_v2`) keeps working;
+the fix is still owed ([../BACKLOG.md](../BACKLOG.md) item 3).
+
+**What closes.** B10 — the owner's 2026-09-01 lead that the retired pools' hand-verified strips would
+help as a second cut of the same music — is answered: no measurable gain. ⚠ It is a **null, not a
+refutation**; at 262 strips a small real gain could hide inside ±0.13 edits/strip. What it rules out
+is a gain large enough to justify reopening the one-shot exam, which stays closed for this round.
 
 ## 2026-09-01 (run A) — a longer stage 2 helps a little, and the selector failed again
 

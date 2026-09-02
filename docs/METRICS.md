@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-08-30
+updated: 2026-09-02
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -84,6 +84,14 @@ measured to read twice as badly ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WIND
 ⚠ Consequence for the exam, worth holding before the read: the exam **drops 41% of candidates as
 `split_wide`/`over_budget`**, so it grades each page on its shorter material and may **flatter** this
 model relative to real use. Raw table: `data/real/rung3/final/r3last_vs_r2_realval_v2.json`.
+
+### Round 3's two follow-up runs (A and B) → [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md)
+
+⛔ **Both are NULLS and Round 3's shipped choice stands.** A longer stage 2 (Run A) and every
+hand-verified real strip including the retired crops (Run B) each land inside the noise of
+`r3-final-stage2-last` on the same 262 strips — exact-match 68.3% / 69.1% / 69.5%, every CI spanning
+zero. ⭐ Run A is also the project's cleanest demonstration that a **6% better val loss can be worth
+zero edits**. Full tables, the training curves and the selector's third wrong pick are in that file.
 
 ### The exported runtime (ONNX / int8) → [METRICS-ONNX.md](METRICS-ONNX.md)
 

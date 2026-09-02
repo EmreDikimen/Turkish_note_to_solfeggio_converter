@@ -380,8 +380,9 @@ data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_
 data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training pool. ⚠ The ban on the
                       retired pools was LIFTED for run B on 2026-09-01: strips_oldhuman (1,408) holds
                       every HAND-VERIFIED strip from strips_nota/_r1/_tup and is passed BESIDE b8,
-                      never instead of it — a second cut of the same bars, on RETIRED crops, and
-                      UNMEASURED. ⛔ Never pass the raw old pools: 922 of strips_nota's rows are
+                      never instead of it — a second cut of the same bars, on RETIRED crops.
+                      ⛔ MEASURED 2026-09-02 AND IT BOUGHT NOTHING: run B is a NULL against the
+                      Round-3 model (645 vs 667 edits, p = 0.736) — docs/METRICS-ROUND3-RUNS.md. ⛔ Never pass the raw old pools: 922 of strips_nota's rows are
                       machine-verdicted. b8-review is still out (see METRICS-B8.md)
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam

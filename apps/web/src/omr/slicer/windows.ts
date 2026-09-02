@@ -26,6 +26,7 @@ import {
   MEASURES_PER_STRIP,
   MIN_STRIP_W,
   STAFF_SPAN,
+  TAIL_SPAN_MAX_SP,
   TARGET_SPACING,
   TOP_LINE_Y,
   pyRound,
@@ -260,6 +261,17 @@ export function windowMeasures(
     lead = bs[0]!;
     bs = bs.slice(1);
   }
+  // ... and the same thing at the other end: a closing `:|` read as two barlines. The span stops
+  // being counted and its ink stays in the last window's crop, so the row still ends on its bar.
+  let tail: number | null = null;
+  if (
+    bs.length >= 3 &&
+    bs[bs.length - 1]! - bs[bs.length - 2]! <= Math.trunc(TAIL_SPAN_MAX_SP * TARGET_SPACING) &&
+    !hasNotehead(row, bs[bs.length - 2]! + 2, bs[bs.length - 1]! - 2, topY, binarize)
+  ) {
+    tail = bs[bs.length - 1]!;
+    bs = bs.slice(0, -1);
+  }
   const spans: Array<[number, number]> = []; // each = one measure
   for (let i = 0; i + 1 < bs.length; i++) spans.push([bs[i]!, bs[i + 1]!]);
   if (!spans.length) return [];
@@ -272,6 +284,9 @@ export function windowMeasures(
   // the first window starts at the clef prefix when there is one, so the caps below see the crop's
   // TRUE extent (re-extending it afterwards is what broke the width cap on 22 strips)
   const winX0 = (i: number) => (i === 0 && lead !== null ? lead : spans[i]![0]);
+  // ... and the last window ends AT the closing barline the tail trim dropped, so the caps below
+  // see the crop's true extent — the mirror of winX0.
+  const winX1 = (k: number) => (tail !== null && k === spans.length - 1 ? tail : spans[k]![1]);
 
   const windows: Window[] = [];
   let i = 0;
@@ -279,13 +294,13 @@ export function windowMeasures(
     const x0 = winX0(i);
     let j = i + 1; // always take at least one measure
     while (j < spans.length && j - i < MEASURES_PER_STRIP) {
-      const nx1 = spans[j]![1];
+      const nx1 = winX1(j);
       if (nx1 - x0 > cap) break; // width rail
       // label-budget rail — the one that decides whether the model can express the strip at all
       if (feat !== null && estimateTokens(feat, x0, nx1, i === 0) > tokenBudget!) break;
       j++;
     }
-    const x1 = spans[j - 1]![1];
+    const x1 = winX1(j - 1);
     if (x1 - x0 > cap) {
       // over-wide single measure
       for (const [a, b] of splitWide(row, x0, x1, topY, binarize))

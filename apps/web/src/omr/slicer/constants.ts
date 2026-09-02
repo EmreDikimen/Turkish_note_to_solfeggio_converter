@@ -48,6 +48,10 @@ export function setVplaceTopClaim(sp: number): void {
 export const MEASURES_PER_STRIP = 3; // L55 (OMR_MEASURES_PER_STRIP unset => "3")
 export const MAX_STRIP_W = 1450; // L57 — cap width (training strips topped out ~1443 px)
 export const MIN_STRIP_W = 200; // L58 — ignore degenerate slivers
+// A TRAILING span narrower than this is the row's closing barline counted twice (a `:|` whose thin
+// and thick strokes sit further apart than the candidate-merge gap), not a measure. Python
+// `TAIL_SPAN_MAX_SP` (OMR_TAIL_SPAN unset => "1.5"); moving one without the other splits the port.
+export const TAIL_SPAN_MAX_SP = 1.5;
 
 // ---- DENSE-PAGE EXPERIMENT (opt-in, `?dense=` — delete this block with `tokenBudget`) --------
 // Python's label-budget packing constants (page_to_strips L97-100), fitted on 2,500 decoded

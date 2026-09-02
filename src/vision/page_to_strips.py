@@ -73,6 +73,16 @@ MEASURES_PER_STRIP = int(os.environ.get("OMR_MEASURES_PER_STRIP", "3"))
 # this alone moves the real crops and leaves the synthetic corpus where it was.
 MAX_STRIP_W = int(os.environ.get("OMR_MAX_STRIP_W", "1450"))   # cap width (training strips ~1443 px)
 MIN_STRIP_W = 200          # ignore degenerate slivers
+# A TRAILING span narrower than this is the row's CLOSING BARLINE COUNTED TWICE, not a measure.
+# A `:|` draws a thin stroke, a gap and a thick one; when the two land further apart than the
+# candidate-merge gap (`_cluster_cols`, 0.6 sp) they survive as two barlines and manufacture a
+# measure a few px wide. `MIN_STRIP_W` then cannot rescue it: the sliver merges into the previous
+# window only while that window is under MEASURES_PER_STRIP, so a full one emits the sliver as its
+# own strip (nihavendLongaDuzgun s09: bars ... 2629, 2664 -> a 35 px "measure", one junk crop).
+# Fixed where the error is — it was never a measure — mirroring the `lead` prefix rule below: the
+# span stops being counted and its ink stays inside the last window's crop, so the row still ends
+# on its own closing barline. 1.5 sp is far under any real measure and over any double-bar gap.
+TAIL_SPAN_MAX_SP = float(os.environ.get("OMR_TAIL_SPAN", "1.5"))
 
 # ---- label-budget-aware packing ---------------------------------------------------------------
 # What actually DROPS a strip is the 59-id label budget (audit_coverage.MAX_IDS), and neither
@@ -1394,7 +1404,7 @@ def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
 # staff-line-neutral blob walk and gate 2's position rule all did, and `window_cache_ok` could not
 # see any of them, so a July decode still read as valid against crops the current code no longer
 # produces. Date-shaped so the value says WHEN the geometry it describes was current.
-GEOMETRY_REV = 20260826
+GEOMETRY_REV = 20260903
 
 
 def window_signature() -> dict:
@@ -1407,6 +1417,7 @@ def window_signature() -> dict:
     return {"measures_per_strip": MEASURES_PER_STRIP, "max_strip_w": MAX_STRIP_W,
             "window_mode": WINDOW_MODE, "token_budget": TOKEN_BUDGET,
             "edge_trim": TRIM_SHARED_EDGE, "vplace": VPLACE_ADAPTIVE,
+            "tail_span": TAIL_SPAN_MAX_SP,
             "geometry_rev": GEOMETRY_REV,
             "geometry": {"bar_fade": BAR_FADE_SP, "staff_rescue": STAFF_RESCUE,
                          "staff_group_span": STAFF_GROUP_BY_SPAN,
@@ -1580,6 +1591,13 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
                                   binarize=binarize,
                                   top_y=top_y)):
         lead, bars = bars[0], bars[1:]         # clef ~3.5 sp: scan for music beyond it
+    # ... and the same thing at the other end: a closing `:|` read as two barlines (TAIL_SPAN_MAX_SP)
+    tail = None
+    if (row is not None and len(bars) >= 3
+            and bars[-1] - bars[-2] <= int(TAIL_SPAN_MAX_SP * TARGET_SPACING)
+            and not _has_notehead(row, bars[-2] + 2, bars[-1] - 2,
+                                  binarize=binarize, top_y=top_y)):
+        tail, bars = bars[-1], bars[:-1]
     spans = list(zip(bars[:-1], bars[1:]))     # each = one measure
     if not spans:
         return []
@@ -1601,6 +1619,11 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
     def win_x0(i: int) -> int:
         return lead if (i == 0 and lead is not None) else spans[i][0]
 
+    # ... and the last window ends AT the closing barline the tail trim dropped, for the same
+    # reason: the caps below must see the crop's true extent, and a strip should end on its bar.
+    def win_x1(k: int) -> int:
+        return tail if (tail is not None and k == len(spans) - 1) else spans[k][1]
+
     windows: list[Window] = []
     i = 0
     while i < len(spans):
@@ -1608,13 +1631,13 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
         x0 = win_x0(i)
         j = i + 1                              # always take at least one measure
         while j < len(spans) and j - i < MEASURES_PER_STRIP:
-            nx1 = spans[j][1]
+            nx1 = win_x1(j)
             if nx1 - x0 > cap:
                 break                          # width rail
             if budget_mode and cost(x0, nx1, first) > TOKEN_BUDGET:
                 break                          # label-budget rail (the one that drops strips)
             j += 1
-        x1 = spans[j - 1][1]
+        x1 = win_x1(j - 1)
         if x1 - x0 > cap and row is not None:               # over-wide single measure
             windows.extend(Window(a, b, i, j - 1, split_wide=True,
                                   est_tokens=round(cost(a, b, first and a == x0), 1))

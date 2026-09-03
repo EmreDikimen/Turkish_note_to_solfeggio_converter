@@ -31,10 +31,25 @@ following off — it owns the scroll itself. Separately, `FOLLOW_SIDE_MIN` keeps
 a box that only overruns by its own padding (~2 px on a wide window), which would twitch the music
 for no reader's benefit.
 
-**Cost**: `FOLLOW_COOLDOWN_MS` (a smooth scroll must land before another is asked for) and
-`FOLLOW_CHECK_MS` (the question is asked four times a second, not sixty — reading the cursor's box
-straight after writing its transform re-lays-out the whole score). `npm test` and `smoke:editor`
-pass, 17 new checks covering both axes, both settings and a reload. Not yet judged by an eye:
+**Then the owner revised it the same day: *"sadece row değiştiğinde tetiklensin"*.** v1 asked the
+question on a timer (four times a second, with a cooldown long enough for a smooth scroll to land).
+It obeyed the band, so it only moved the page when the cursor was off screen — but the MOMENT was
+arbitrary, and could land mid-bar or a second after the reader had deliberately scrolled away. The
+trigger is now the cursor arriving on a new staff row, held as that row's `top` in a ref and reset on
+every fresh playback. Both constants are gone with it: a question asked once per row cannot restart
+its own animation, and it costs one box read per row instead of one per frame. ⚠ The price is on the
+sideways axis and is accepted — on a narrow window a cursor crossing a wide row leaves the box until
+the next row starts.
+
+**The second ask of the same message: *"Çal ve dur tuşu sayfaya yapışık olsun"*.** The transport is a
+wrapping bar at the top of the page and is gone by the third system. Making the whole bar `sticky`
+was rejected — it wraps to two or three rows on a laptop, so it would hold a third of the window and
+hide the music it exists to keep you reading — so only Çal and Dur are pinned, bottom-right, and only
+while the real pair is off screen (an `IntersectionObserver` on `#play`, not a scroll listener). One
+transport shown twice: the check asserts the pinned Çal moves `#play`'s own state, because a check
+reading the pinned button alone would pass on a control wired to nothing.
+
+`npm test` and `smoke:editor` pass. Not yet judged by an eye:
 [../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md) check 28.
 
 ## 2026-09-03 — Round 3 closed, Round 4 opened: the root-cause read, the octave count, and five owner decisions

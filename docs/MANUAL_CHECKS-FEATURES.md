@@ -295,9 +295,11 @@ whose sheet is several screens tall.
 
 `npm run dev:cloud`, open a page, press **▶ Çal** and then read along without touching the mouse.
 
-1. **The moment.** The page must sit still while the cursor crosses a row, and move only when the
-   cursor is about to leave the screen. If it nudges the paper while you are still reading a bar,
-   say so — the band it waits for (`FOLLOW_MARGIN`) is the number to change.
+1. **The moment.** The page must sit **completely still while the cursor crosses a row** — that is
+   the rule, not a tendency — and move only when the cursor steps onto a new row that is off the
+   screen. If it ever nudges the paper mid-bar, that is a bug, not a setting. If it moves at every
+   row change when you would rather it waited longer, the band (`FOLLOW_MARGIN`) is the number to
+   change.
 2. **Where it lands.** After a jump the cursor's row sits about a third of the way down the window,
    so there is music ahead of it. Is that the right share, or do you want more of the page ahead?
 3. **Turn it off.** Uncheck **İmleci takip et** and play again: the page must stay exactly where you
@@ -311,4 +313,25 @@ whose sheet is several screens tall.
 
 ⚠ **Known and deliberate**: a jump is animated (unless your system asks for reduced motion), and
 following resumes wherever you scroll to — if you scroll away mid-playback, the page will come back
-to the cursor at the next jump. Turning the box off is the way to read somewhere else.
+to the cursor **at the next row change**, not immediately. Turning the box off is the way to read
+somewhere else. ⚠ On a narrow window the sideways slide is also once per row, so a cursor crossing a
+wide row leaves the box until the row ends; if that is annoying in real use, say so — it is the
+accepted price of the row rule, not an oversight.
+
+## Check 29 — are Çal and Dur where your hand expects them? (2026-09-03)
+
+Goal: the transport is a bar at the top of the page, so on a long score it is gone by the third
+system. The same two buttons are now pinned to the bottom-right corner while it is off screen. What
+no check can judge is whether that corner is the right one and whether the pair is in the way.
+
+`npm run dev:cloud`, open a long score, scroll down until the transport disappears.
+
+1. **They appear.** A small box with ▶ Çal and ■ Dur must be in the bottom-right corner, and it must
+   go away again when you scroll back up to the real transport. Two identical pairs on screen at
+   once would be a bug.
+2. **They work from there.** Press ▶ Çal in the corner: the piece must start, and the real button up
+   the page must agree when you scroll back to it. Press ■ Dur in the corner: it must stop.
+3. **Does it cover music?** It sits over the paper. Judge the corner — with the score, the toolbox
+   (open **Düzenle** as well) and, on a narrow window, the sideways scrollbar all on screen at once.
+4. **The phone.** Open it on a phone if you can. Bottom-right is the thumb corner, which is why it
+   was chosen; say if it lands under your palm instead.

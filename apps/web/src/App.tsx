@@ -144,6 +144,38 @@ const RENDER_PARAMS = new URLSearchParams(window.location.search);
 const URL_SCORE = RENDER_PARAMS.get("score"); // path under apps/web/public/
 const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" | "keysig" | "measure"
 const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
+const URL_FOLLOW = RENDER_PARAMS.get("follow"); // "1" | "0" — see `readFollow` below
+
+// Does the page chase the playhead while the piece plays? (owner, 2026-09-03)
+//
+// ON by default: a score that runs past the bottom of the window and stays there is a score the
+// reader has to chase by hand, which is the opposite of reading along. It is still the reader's
+// call — the checkbox in the score card's head — so the answer is remembered per browser, and a
+// reader who turns it off never meets it again.
+//
+// ⚠ `?follow=` wins over the remembered answer and is NOT written back, so a harness can pin the
+// behaviour without changing what the next human sees. The render harness never plays a score, so
+// nothing moves under its screenshots either way, but pinning it costs one query parameter.
+const FOLLOW_KEY = "kv.followPlayhead";
+
+/** ⚠ Swallows everything: `localStorage` does not merely come back empty in a private window or
+ *  with site data blocked — the accessor itself throws, and a score that refuses to open because
+ *  it could not remember a scrolling preference would be a much worse bug than the preference. */
+function readFollow(): boolean {
+  if (URL_FOLLOW != null) return URL_FOLLOW === "1";
+  try {
+    return localStorage.getItem(FOLLOW_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+function writeFollow(v: boolean): void {
+  try {
+    localStorage.setItem(FOLLOW_KEY, v ? "1" : "0");
+  } catch {
+    /* remembering the answer is a convenience, never a requirement */
+  }
+}
 // Conventional PRINTED-signature override body (drawn order, e.g. "\bakiyeFlat b \bakiyeSharp c"),
 // the makam variant render.ts sampled from data/makam_signatures.json. Parsed once; fed to BOTH the
 // draw path (SheetView) and the label path (buildStrips) so synthetic carry pages wear the real
@@ -286,6 +318,9 @@ export function App() {
   const [showLyrics, setShowLyrics] = useState(URL_LYRICS != null ? URL_LYRICS === "1" : true);
   // Draw a hyphen between a word's syllables ("Gam-ze-de"). Most sheets omit these → default off.
   const [lyricHyphens, setLyricHyphens] = useState(false);
+  // Sheet: follow the playhead down the page while it plays (see `readFollow` above for the
+  // default and where it is remembered).
+  const [followPlayhead, setFollowPlayhead] = useState(readFollow);
   // Phase-2: draw detected repeat barlines + voltas on the sheet. SymbTr flattens repeats (a
   // repeated passage appears twice in a row), so detectRepeats finds where the signs belong; the
   // strip labels then carry the matching repeat tokens. Purely visual + labels — the doc, layout,
@@ -1574,6 +1609,10 @@ export function App() {
             onViewMode={setViewMode}
             showLyrics={showLyrics}
             onShowLyrics={setShowLyrics}
+            followPlayhead={followPlayhead}
+            // Remembered as it is set, not on unload: a reader who closes the tab straight after
+            // clicking still gets the answer they chose next time.
+            onFollowPlayhead={(v) => { setFollowPlayhead(v); writeFollow(v); }}
             editMode={editMode}
             // Entering edit mode folds the score back to what is written: you edit the one bar the
             // page carries, and the repeat follows it. See `writeOut`.
@@ -1615,6 +1654,7 @@ export function App() {
                 playing={playState !== "stopped"}
                 getPositionMs={getPositionMs}
                 playPlan={perf?.playPlan}
+                followPlayhead={followPlayhead}
                 onSeekToMeasure={(m) => onSeekMs(playStartMs(m))}
                 selectedNote={selectedNote}
                 onSelectNote={onSelectNote}

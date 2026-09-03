@@ -94,6 +94,10 @@ export const TR = {
     viewInstrument: "Enstrüman üzerinde",
     lyrics: "Güfte",
     lyricsTitle: "Notaların altına güfte hecelerini yaz",
+    follow: "İmleci takip et",
+    followTitle:
+      "Çalarken imleç ekrandan çıkarsa sayfa kendiliğinden imlece kayar. Kapatırsanız sayfa " +
+      "olduğu yerde kalır; seçiminiz bu tarayıcıda hatırlanır.",
     edit: "✎ Düzenle",
     editing: "✓ Düzenleniyor",
     undo: "↶ Geri al",

@@ -734,6 +734,12 @@ async function main() {
   // so its vertical CENTRE is the middle staff line — which in treble is B4, full stop. If the
   // origin ever drifts by a line, every inserted note is a third out and this is what says so.
   {
+    // ⚠ FOLLOWING OFF for this block, on purpose (2026-09-03). The page goes to the playhead by
+    // itself now, and this check owns the scroll: it measures a blank point on the playhead's row
+    // and then clicks it, so a second thing moving the page between the two puts a notehead under
+    // the measured point — which is exactly how it failed. The follow has its own section at the
+    // bottom of this file; here it is a nuisance variable.
+    await page.locator("#follow-playhead").uncheck();
     await page.locator("#palette-play").click();
     await waitForPlayhead(); // the B4 read below scrolls to the playhead, so it must be showing
     const aim = await page.evaluate(() => {
@@ -769,6 +775,7 @@ async function main() {
     check("the middle staff line reads B4", await ghost.getAttribute("data-insert-pitch"), "B4");
     await page.locator("#palette-stop").click();
     await page.waitForTimeout(150);
+    await page.locator("#follow-playhead").check();
   }
 
   const spot = (await findGap())!;
@@ -1809,6 +1816,131 @@ async function main() {
   console.log(`  ${graced}: ${geometry.total} boxes, ${geometry.onScreen} on screen`);
   check("no note box is anchored at the sheet's origin", geometry.atOrigin.join(" ") || "none", "none");
   check("every box's centre hits its own note", geometry.stolen.join(" ") || "none", "none");
+
+  // --- the page follows the playhead (owner, 2026-09-03) ----------------------------------------
+  //
+  // A sheet is taller than the window, so the cursor walks off the bottom while the piece plays and
+  // the reader has to chase it by hand. With "İmleci takip et" on, the page goes to the cursor
+  // instead — only once the cursor is off the screen, never continuously.
+  //
+  // ⚠ Neither half can be read off the checkbox: `#follow-playhead[data-follow]` says the control
+  // was clicked, not that the page moved. So both arms do the same thing — start playback, then
+  // shove the window where the cursor is NOT — and read `window.scrollY` afterwards. The OFF arm is
+  // the more important one: a follow that ignored the setting would pass every ON assertion.
+  console.log("\nthe page follows the playhead");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+
+  const follow = page.locator("#follow-playhead");
+  // ON by default, and asserted on the SHEET as well: that is the element that scrolls.
+  check("following is on by default", await page.getAttribute("#sheet-surface", "data-follow"), "on");
+  check("…and the checkbox agrees", await follow.isChecked(), true);
+
+  /** How far the page can scroll. 0 would make every assertion below vacuous. */
+  const maxScroll = await page.evaluate(
+    () => document.documentElement.scrollHeight - window.innerHeight,
+  );
+  check("the sheet is taller than the window", maxScroll > 200, true);
+
+  /** Is the cursor within the window at all? Its own box, in viewport coordinates. */
+  const playheadOnScreen = async (): Promise<boolean> =>
+    page.evaluate(() => {
+      const ph = document.querySelector<HTMLElement>('[data-omr="playhead"]');
+      if (!ph || ph.style.display === "none") return false;
+      const r = ph.getBoundingClientRect();
+      return r.bottom > 0 && r.top < window.innerHeight;
+    });
+  const scrollY = async () => Math.round(await page.evaluate(() => window.scrollY));
+
+  // Playback starts at the top of the sheet, so parking the window at the BOTTOM puts the cursor
+  // off the screen — the situation this feature exists for, without waiting for the music to get
+  // there.
+  await page.locator("#play").click();
+  const startFrac = await waitForPlayhead();
+  check("the playhead is up and running", startFrac != null, true);
+  await page.evaluate((y) => window.scrollTo(0, y), maxScroll);
+  await page.waitForTimeout(150);
+  check("the window is parked away from the cursor", (await scrollY()) > 200, true);
+  check("…with the cursor off the screen", await playheadOnScreen(), false);
+
+  // ⚠ Poll, do not sleep: the scroll is animated (`behavior: "smooth"`), and how long it takes is
+  // the browser's business, not ours.
+  let followedTo = await scrollY();
+  for (let i = 0; i < 30 && !(await playheadOnScreen()); i++) {
+    await page.waitForTimeout(100);
+    followedTo = await scrollY();
+  }
+  console.log(`  parked at ${maxScroll}, followed back to ${followedTo}`);
+  check("the page went to the cursor", await playheadOnScreen(), true);
+  check("…by scrolling back up, not by staying put", followedTo < maxScroll - 100, true);
+
+  await page.locator("#stop").click();
+  await page.waitForTimeout(200);
+
+  // The OFF arm. ⚠ Uncheck BEFORE parking the window: the checkbox is in the card's head, and
+  // Playwright scrolls what it clicks into view — which would undo the parking it is meant to test.
+  await follow.uncheck();
+  check("unchecking reaches the sheet", await page.getAttribute("#sheet-surface", "data-follow"), "off");
+
+  await page.locator("#play").click();
+  check("playback is up again", (await waitForPlayhead()) != null, true);
+  await page.evaluate((y) => window.scrollTo(0, y), maxScroll);
+  await page.waitForTimeout(1200); // longer than FOLLOW_CHECK_MS + a smooth scroll, so a leak shows
+  check("with following off the cursor is still off screen", await playheadOnScreen(), false);
+  check("…and the page has not moved itself", await scrollY(), Math.round(maxScroll));
+  await page.locator("#stop").click();
+
+  // The answer is remembered per browser, so a reader who turns it off does not meet it again.
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  check("the setting survives a reload", await page.getAttribute("#sheet-surface", "data-follow"), "off");
+  await page.locator("#follow-playhead").check();
+  check("…and can be turned back on", await page.getAttribute("#sheet-surface", "data-follow"), "on");
+
+  // The SIDEWAYS axis, which exists only on a window too narrow for the 1020 px sheet — a phone,
+  // and the reason it is worth checking at all: there the cursor spends most of a row off the right
+  // edge. ⚠ It has a threshold of its own (`FOLLOW_SIDE_MIN` in SheetView.tsx), so this arm has to
+  // make the overflow REAL rather than the handful of padding pixels a wide window overflows by;
+  // that is what `setViewportSize` is doing here. ⚠ And the scroller is the SHEET's own box, not the
+  // window — two axes, two different scrolling objects.
+  await page.setViewportSize({ width: 640, height: 720 });
+  await page.waitForTimeout(400);
+  const sideBox = async () =>
+    page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>(".kv-score")!;
+      return { left: el.scrollLeft, max: el.scrollWidth - el.clientWidth };
+    });
+  const playheadInBox = async (): Promise<boolean> =>
+    page.evaluate(() => {
+      const ph = document.querySelector<HTMLElement>('[data-omr="playhead"]');
+      const el = document.querySelector<HTMLElement>(".kv-score");
+      if (!ph || !el || ph.style.display === "none") return false;
+      const r = ph.getBoundingClientRect(), b = el.getBoundingClientRect();
+      return r.right > b.left && r.left < b.right;
+    });
+  check("a narrow window really does hide part of the sheet", (await sideBox()).max > 200, true);
+
+  await page.locator("#play").click();
+  check("playback is up on the narrow window", (await waitForPlayhead()) != null, true);
+  // Park the sheet at its far right: the cursor is at the START of a row, so it is now off to the
+  // left of the box — the sideways version of the parking above.
+  await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>(".kv-score")!;
+    el.scrollLeft = el.scrollWidth;
+  });
+  await page.waitForTimeout(150);
+  const parkedRight = (await sideBox()).left;
+  check("the sheet is parked away from the cursor", parkedRight > 200, true);
+  let cameBack = parkedRight;
+  for (let i = 0; i < 30 && !(await playheadInBox()); i++) {
+    await page.waitForTimeout(100);
+    cameBack = (await sideBox()).left;
+  }
+  console.log(`  parked sideways at ${parkedRight}, followed back to ${cameBack}`);
+  check("the sheet slid back to the cursor", await playheadInBox(), true);
+  check("…by scrolling, not by staying put", cameBack < parkedRight - 100, true);
+  await page.locator("#stop").click();
+  await page.setViewportSize({ width: 1280, height: 720 });
 
   check("no uncaught page errors", pageErrors.length ? pageErrors.join("; ") : "none", "none");
 

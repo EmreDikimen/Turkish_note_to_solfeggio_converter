@@ -28,6 +28,8 @@ export function ScoreCard({
   onViewMode,
   showLyrics,
   onShowLyrics,
+  followPlayhead,
+  onFollowPlayhead,
   editMode,
   onEditMode,
   onUndo,
@@ -42,6 +44,11 @@ export function ScoreCard({
   onViewMode: (v: ViewMode) => void;
   showLyrics: boolean;
   onShowLyrics: (v: boolean) => void;
+  /** Scroll the page to the playhead when it leaves the screen. Lives here, beside Güfte, because
+   *  it is a question about the SHEET on screen — where the eye is — and not about the sound; the
+   *  transport above owns everything that changes what is played. */
+  followPlayhead: boolean;
+  onFollowPlayhead: (v: boolean) => void;
   editMode: boolean;
   onEditMode: (v: boolean) => void;
   onUndo: () => void;
@@ -92,6 +99,16 @@ export function ScoreCard({
                 onChange={(e) => onShowLyrics(e.target.checked)}
               />
               <span>{TR.card.lyrics}</span>
+            </label>
+            <label className="kv-field" title={TR.card.followTitle}>
+              <input
+                id="follow-playhead"
+                type="checkbox"
+                data-follow={followPlayhead ? "on" : "off"}
+                checked={followPlayhead}
+                onChange={(e) => onFollowPlayhead(e.target.checked)}
+              />
+              <span>{TR.card.follow}</span>
             </label>
             <button
               id="edit-toggle"

@@ -43,6 +43,31 @@ const STAVE_TOP_PAD = 40; // headroom above each stave for high notes / beams
 const CLEF_W = 50; // extra width the leading clef costs on the first stave of a row
 const SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
 const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
+
+// --- following the playhead (owner, 2026-09-03) -----------------------------
+//
+// While the piece plays, the cursor walks down a sheet that is taller than the window, so it
+// leaves the screen and the reader has to chase it by hand. With `followPlayhead` on, the page
+// goes to the cursor instead — but ONLY once the cursor is off the visible band, never on every
+// frame: a page that re-centres continuously cannot be read, and it would also fight the reader's
+// own scrolling every time they look somewhere else.
+const FOLLOW_MARGIN = 32; // px of the window's edge that counts as already "off the page"
+const FOLLOW_AIM = 0.35; // after a scroll the cursor's row sits this far down the window
+// One smooth scroll has to LAND before another is asked for. Without this the check fires on every
+// frame of the animation — the cursor is still out of band while the page is travelling to it — and
+// each new call restarts the scroll, so the page crawls or stalls.
+const FOLLOW_COOLDOWN_MS = 500;
+// How often the question is even asked. A row lasts seconds, so four times a second is plenty —
+// and asking per frame would read the cursor's box straight after writing its transform, which
+// forces the browser to re-lay-out the whole score sixty times a second for nothing.
+const FOLLOW_CHECK_MS = 200;
+// How much hidden width a sideways scroller must have before this axis is followed at all. On a
+// wide window the 1020 px sheet overruns `.kv-score`'s content box by about 2 px — absorbed by its
+// own padding, invisible to anyone — and yet a cursor near the end of a row reads as past the right
+// margin, so the sheet would twitch sideways in the middle of playback for no reader's benefit.
+// Below this the box counts as fitting; above it (a narrow window, a phone) the cursor really can
+// be off to the right, which is the case this axis exists for.
+const FOLLOW_SIDE_MIN = 48;
 const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
 // Baseline of the lyric line below the bottom staff line. MUST stay inside the strip crop, which
 // ends 106 px below the stave top = 26 px below the bottom staff line (stripExport's PAD_TOP +
@@ -1450,6 +1475,65 @@ export interface PlayStep {
 }
 
 /**
+ * The nearest ancestor that can actually scroll SIDEWAYS, or null when nothing can.
+ *
+ * Found by MEASUREMENT, not by class name: the sheet's sideways scroll belongs to `.kv-score`
+ * today (styles/app.css), but this view is also mounted by the render harness, and "there is more
+ * content here than box" is true wherever the container ends up. ⚠ The vertical axis is
+ * deliberately not looked for — `.kv-score` is `overflow-y: clip` on purpose (the sheet must not
+ * grow a second scrollbar), so the only thing that scrolls up and down is the page itself.
+ *
+ * ⚠ BOTH tests are needed, and the overflow one is the trap. A box can hold more content than it
+ * shows and still not scroll: on a narrow window the sheet's own wrapper is 1020 px wide inside a
+ * ~600 px column with `overflow: visible`, so it reports 420 px of hidden width — and setting its
+ * `scrollLeft` does exactly nothing. It sits INSIDE `.kv-score`, so it was found first and the
+ * sideways follow was dead on every window narrow enough to need it. `smoke:editor` caught it.
+ */
+function sideScrollerOf(el: HTMLElement): HTMLElement | null {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    if (p.scrollWidth <= p.clientWidth + FOLLOW_SIDE_MIN) continue;
+    const overflow = getComputedStyle(p).overflowX;
+    if (overflow === "auto" || overflow === "scroll") return p;
+  }
+  return null;
+}
+
+/**
+ * Bring the playhead back on screen if it has left it, and say whether anything was scrolled.
+ *
+ * Two different scrollers, because the sheet has two axes and they are not the same object: down
+ * the PAGE (the window), and across the sheet's own box (`sideScrollerOf`). Each axis is touched
+ * only when the cursor is really outside the readable band, so a cursor crossing a wide row moves
+ * nothing at all until it reaches an edge.
+ */
+function followCursorIntoView(cursor: HTMLElement): boolean {
+  const box = cursor.getBoundingClientRect();
+  if (box.height === 0) return false; // hidden — there is nothing to follow yet
+  // Obey the reader's own OS setting: same jump, no animation.
+  const behavior: ScrollBehavior =
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  let moved = false;
+
+  if (box.top < FOLLOW_MARGIN || box.bottom > window.innerHeight - FOLLOW_MARGIN) {
+    // Park the row a third of the way down the window, so there is music AHEAD of the cursor and
+    // not only behind it. The browser clamps this at both ends of the document.
+    window.scrollTo({ top: Math.max(0, window.scrollY + box.top - window.innerHeight * FOLLOW_AIM), behavior });
+    moved = true;
+  }
+
+  const scroller = sideScrollerOf(cursor);
+  if (scroller) {
+    const left = box.left - scroller.getBoundingClientRect().left;
+    const width = scroller.clientWidth;
+    if (left < FOLLOW_MARGIN || left > width - FOLLOW_MARGIN) {
+      scroller.scrollTo({ left: Math.max(0, scroller.scrollLeft + left - width / 2), behavior });
+      moved = true;
+    }
+  }
+  return moved;
+}
+
+/**
  * Sheet-music (notation) view, engraved with VexFlow: real stems, flags, beams, dots and
  * duration-correct noteheads/rests. Turkish (AEU) microtonal accidentals are rendered from
  * the Bravura font via the project's verified SMuFL glyph map. In edit mode, an HTML overlay
@@ -1465,6 +1549,7 @@ export function SheetView({
   playing,
   getPositionMs,
   playPlan,
+  followPlayhead = false,
   onSeekToMeasure,
   selectedNote,
   onSelectNote,
@@ -1530,6 +1615,13 @@ export function SheetView({
    *  the drawn note it belongs to (see {@link PlayStep}). Undefined for a score that plays exactly
    *  as it is written — then the playhead walks the drawn notes, as it always did. */
   playPlan?: readonly PlayStep[];
+  /** Scroll the page to the playhead when the playhead leaves the screen (owner, 2026-09-03).
+   *
+   *  The reader's setting, and it defaults to OFF here on purpose: the app turns it on (see
+   *  `followPlayhead` in App.tsx), while the render harness — which mounts this view to cut
+   *  training strips — must never move the score under the screenshot. Nothing happens while
+   *  `playing` is false either way. */
+  followPlayhead?: boolean;
   /** Non-edit mode: seek/play from the clicked measure. */
   onSeekToMeasure: (m: Measure) => void;
   /** Edit mode: which event (`NoteEvent.index`) is selected, or null. */
@@ -1662,6 +1754,9 @@ export function SheetView({
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  // Earliest time (`performance.now()`) the follow check may run again. A ref, like everything else
+  // the playhead frame touches: it changes sixty times a second and must not re-render anything.
+  const followNextRef = useRef(0);
   // An in-progress pitch drag: which event, where the pointer went down, and how many steps have
   // already been applied. A ref, not state — every applied step re-engraves the score, and the
   // drag has to survive those re-renders unchanged.
@@ -2352,6 +2447,16 @@ export function SheetView({
         cursor.style.display = "block";
         cursor.style.height = `${active.height}px`;
         cursor.style.transform = `translate(${active.x - 2}px, ${active.top}px)`;
+        // ⚠ AFTER the transform, never before: the box is read from the DOM, so it has to be the
+        // position this frame just wrote. And gated by a clock, not run every frame — see
+        // FOLLOW_CHECK_MS for why, and FOLLOW_COOLDOWN_MS for why a scroll silences it longer.
+        if (followPlayhead) {
+          const now = performance.now();
+          if (now >= followNextRef.current) {
+            followNextRef.current =
+              now + (followCursorIntoView(cursor) ? FOLLOW_COOLDOWN_MS : FOLLOW_CHECK_MS);
+          }
+        }
       } else if (!playPlan || pos == null || pos < 0) {
         cursor.style.display = "none";
       }
@@ -2359,7 +2464,7 @@ export function SheetView({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, getPositionMs, playPlan]);
+  }, [playing, getPositionMs, playPlan, followPlayhead]);
 
 
   // Drag a note up and down to change its pitch (owner, 2026-08-07 — this replaces an earlier
@@ -2612,6 +2717,9 @@ export function SheetView({
         data-tuplet-anchor={editMode && tupletAnchor != null ? tupletAnchor : undefined}
         data-repeat-anchor={editMode && repeatAnchor != null ? repeatAnchor : undefined}
         data-tuplet-selected={tupletSel ? tupletSel.members[0] : undefined}
+        // Whether the page chases the playhead. On the SHEET as well as on the checkbox, because
+        // the checkbox only proves the control was clicked — this says what the sheet will do.
+        data-follow={followPlayhead ? "on" : "off"}
         style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
         onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}

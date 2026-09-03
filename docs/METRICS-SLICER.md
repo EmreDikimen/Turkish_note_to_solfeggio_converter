@@ -2,7 +2,7 @@
 
 purpose: the single home for how a real page is READ INTO AN INK MASK — binarization, grayscale fidelity, opencv.js parity, and which slicer the labelled pools came from
 audience: agents and the owner, before changing the slicer or re-slicing a pool
-updated: 2026-08-26
+updated: 2026-09-03
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-07-29 when that file crossed
 the 400-line cap: that file keeps **what the model gets wrong**, this one **what the page-cutter
@@ -111,7 +111,9 @@ checked, not assumed. Fed Python's own grayscale bytes, all five primitives the 
 What a barline IS to the slicer, which gate rejects what, the hand-marked ground truth and the
 recall/precision it produces, and why "does the cut pass through a symbol" was the wrong question —
 all in [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md). Split out 2026-08-25 at the
-400-line cap; this file keeps the STAFF and the ink mask, that one keeps the CUT.
+400-line cap; this file keeps the STAFF and the ink mask, that one keeps the CUT. That file reached
+the cap in turn, so the 2026-09-03 stem gate (`END_BLOBS` — a stroke with wide ink at BOTH ends is
+a stem) lives in [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
 
 ## Which crop root a pool came from: measured in its own file
 

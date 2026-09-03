@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-08-31
+updated: 2026-09-03
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -100,7 +100,7 @@ Cloud Run from localhost.
 .venv-ml/bin/python src/vision/page_to_strips.py <page.png> --out <dir> --debug
     # slice ONE page and write the overlay. `<page>_debug.png` legend: GREEN = detected staff lines,
     # BLUE = an accepted barline, RED box = a strip crop, and the rejects colour-coded by WHY —
-    # ORANGE gate2_fat, YELLOW gate3_blob, PURPLE gate3_clef, GREY xrange. ⚠ A row with NO blue line
+    # ORANGE gate2_fat, AMBER gate2_ends, YELLOW gate3_blob, PURPLE gate3_clef, GREY xrange. ⚠ A row with NO blue line
     # found no barline at all and is being cut by WIDTH, straight through the music.
 .venv-ml/bin/python scripts/rung3/score_slicer.py --sample 25   # ⚠ a 124-row SAMPLE, see below
 .venv-ml/bin/python scripts/rung3/score_slicer.py              # the real instrument: 6,440 rows, ~30 min
@@ -139,6 +139,8 @@ Cloud Run from localhost.
     #   OMR_STAFF_ROW_POS=0 gate 2's staff rows go back to fill-only, ignoring WHERE the lines are
     #   OMR_BAR_FADE=0.25 gate 1's fade tolerance, ships OFF — turned on 2026-08-25 and reverted
     #                    the same day: free on the 4 faded pages, net -76 rows at full scale
+    #   OMR_END_BLOBS=0   gate 2b OFF: a stroke with wide ink at BOTH ends (a head and a beam) is a
+    #                    barline again, the 2026-09-02 behaviour — METRICS-SLICER-STEMS.md
     # ⚠ Read every gate change on `score_slicer.py` too. The two instruments price different pages
     # and have disagreed on the same change more than once.
     # ⛔ AND DO NOT USE THIS SCORER ACROSS A STAFF-DETECTION CHANGE AT ALL — its hand marks are keyed

@@ -2,10 +2,37 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-02
+updated: 2026-09-03
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-03 — a stem taken for a barline: the both-ends gate
+
+Owner-reported on `nihavendLongaDuzgun.png`: the last row was cut at a note stem, between a sharp
+and its own note. The stroke is the stem of a 16th whose head sits ON the top staff line and whose
+second beam ends ON the bottom line, so it spans the staff exactly and keeps both wide parts on the
+outer lines — where gate 2 skips the rows and gate 3 never looks. Gate 2 saw 8 fat rows of the 15
+it needs; gate 3 saw nothing past either line. The same stroke recurs on rows 1, 5, 6 and 8.
+
+**Why not sharpen gate 2:** tried first — counting the line rows on a de-lined view — and dropped.
+It still missed the target (14 < 15) and cost 3 real barlines on the hand-marked truth, because a
+barline a head merely touches at the top line is, at that column, the same picture as the stem's
+head end. Only the far end differs: bare on a barline, in a beam on a stem.
+
+**What shipped:** `END_BLOBS` ("gate 2b") — within 1.5 sp of EACH end of the stroke, 0.3 sp of fat
+rows; reject only when BOTH ends carry it. Python and the browser port both, parity exact on 20
+pages / 154 rows with the gate firing 56 times. On the page 5 stems stop being barlines; hand-marked
+truth recall 48.4 → 47.3%, precision 81.8 → 86.3% (3 false gone, 1 real lost on a dark photocopy
+touched at both ends); `--sample 25` 81 → 86 exact of 124. ⭐ **Full run, owner-approved, same
+day: 3,762 → 4,068 exact (+306), BETTER 547 / WORSE 242**; 200 random pages lose 475 bars on 136
+pages and gain none. The worse rows are stems that were masking a never-found barline, and repeat
+barlines drawn with curved wings (real, lost). A refinement that counts width beyond the stroke's
+own thickness keeps those, and a second full run (owner-approved) priced it: **4,068 → 4,133
+exact (+65), 152 better / 75 worse**, real-barline losses against the baseline 163 → 70 rows;
+200 pages −388 bars, none gained; parity exact with the gate firing. Both ship: **+371 exact rows
+over the 2026-09-02 slicer.** The slicer freeze was lifted a second time for this, at the owner's
+request. [../METRICS-SLICER-STEMS.md](../METRICS-SLICER-STEMS.md).
 
 ## 2026-08-31 (moved out of STATUS 2026-09-03) — the launch files
 

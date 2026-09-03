@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-08-31
+updated: 2026-09-03
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -183,6 +183,12 @@ rediscovering it.
 **Then you froze the slicer**, and that was the right call: the last two fixes were worth **−2 and +2
 rows out of 6,440** — essentially nothing. The tool is not perfect, but it is no longer the thing
 worth working on.
+
+**You lifted the freeze twice on 3 September, and the second time paid.** A row was cut at a note's
+stem (the thin line on a note) that ran exactly from the top staff line to the bottom one, so every
+test read it as a barline. New rule: **a line with something wide at BOTH ends is a stem** — a
+barline's ends are bare. On all 6,440 rows: **+371 rows read exactly right**, and it only ever
+removes cuts. [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
 
 ### The exam stays as it is, and you are labelling it
 

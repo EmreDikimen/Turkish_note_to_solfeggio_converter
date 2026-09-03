@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-02
+updated: 2026-09-03
 
 ## Now
 
@@ -42,10 +42,11 @@ anything usable**: `best` is barely specialised and `last` (step 4,000) is past 
 pool it reads, and B's real-val pool is **30% retired-crop strips**. Three runs, three wrong picks.
 [BACKLOG.md](BACKLOG.md) item 3 · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
 
-⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). A slicer
-fix moved a crop boundary (a closing `:|` read as two barlines, junk strip on ~1% of rows), so the
-next emit re-decodes. Nothing is owed today — this is here so the cost is not a surprise when a pool
-is next built. `OMR_TAIL_SPAN=0` restores it. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md).
+⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer
+fixes moved crop boundaries the same day: a closing `:|` read as two barlines (junk strip on ~1% of
+rows, `OMR_TAIL_SPAN=0` restores) and **a note stem taken for a barline** (`END_BLOBS`, below,
+`OMR_END_BLOBS=0` restores; the `end_blobs` geometry key tells the two apart under one rev). The next
+emit re-decodes; nothing is owed today. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) · [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
 
 ⏭ **THE NEXT ACTION IS AN OWNER DECISION, AND IT IS NOT ANOTHER TRAINING RUN.** Three paired reads
 now say the same thing: `r3-final-stage2-last` is the model we have, and both cheap levers are spent.
@@ -189,9 +190,14 @@ regression that is pure artifact. `score_slicer.py` gained `--pair-by-position`;
 has the same coupling and NO fix** — `bozukNihavendLonga` read **30 marked before a staff change and
 3 after**. It is also why the rescue's 320 rows can never be scored there. [METRICS-SLICER.md](METRICS-SLICER.md).
 
-⚠ **THE 2026-08-26 SLICER FREEZE WAS LIFTED ONCE, ON 2026-09-03, AT THE OWNER'S REQUEST** — for the
-trailing-`:|` fix above and nothing else. The freeze (owner, 2026-08-26) followed three fixes landing
-and two being rejected — the browser/Python staff divergence, the over-wide staff span, and
+⚠ **THE 2026-08-26 SLICER FREEZE WAS LIFTED TWICE ON 2026-09-03, BOTH TIMES AT THE OWNER'S REQUEST**
+— for the trailing-`:|` fix above, and for **a stem taken for a barline** (`nihavendLongaDuzgun`'s
+last row cut between a sharp and its note): a stroke with wide ink at BOTH ends is now a stem
+(`END_BLOBS`), with width counted beyond the stroke's own thickness so winged repeat bars survive.
+⭐ **Priced on two full 6,440-row runs the same day: 3,762 → 4,133 exact (+371), BETTER 502 / WORSE
+122; 200 pages lose 388 bars, gain none; parity exact.** Nothing owed on it. [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
+The freeze (owner, 2026-08-26) followed three fixes landing and two being rejected — the
+browser/Python staff divergence, the over-wide staff span, and
 `OMR_BLOB_FILL` 0.3 (measured and **REJECTED**, with the lesson that the faded-page table has now
 mispredicted the full run three times); those two shipped fixes were what took `GEOMETRY_REV` to
 20260826. ⏭ **Treat the slicer as frozen again unless the owner says otherwise.**

@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-08-27
+updated: 2026-09-03
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -48,6 +48,7 @@ wrong — fix by deleting, not by syncing.
 | The LABEL BUDGET — the rail the shipped app has none of, and the `?dense=` experiment | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
 | The windowing retune and the crop frame — settled: which constants were swept, and why none moved | [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) |
 | Barlines — the gates, the hand-marked truth, and what crop quality even means | [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md) |
+| A STEM taken for a barline — the both-ends gate (2026-09-03), what it costs, and the variant that was dropped | [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md) |
 | How a STAFF is found in that mask — the faded-row fixes, the missing-row rescue, the grouping repair, and the three global knobs that were rejected | [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) |
 | Which crop ROOT a pool came from, and what re-slicing costs in labels | [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md) |
 | Whether the TypeScript slicer port reproduces the Python, rung by rung | [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |

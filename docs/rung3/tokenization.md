@@ -4,11 +4,13 @@ purpose: the measured case for giving octaves and durations their own tokens, th
 chose, the traps in implementing it, and what has to be measured before it is worth a retrain
 audience: agents and the owner picking up the Round-4 density work
 
-updated: 2026-08-27
+updated: 2026-09-03
 
-> Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). This is **deferred
-> work**, listed under [../BACKLOG-LATER.md](../BACKLOG-LATER.md) item 0. It is not Round 3, and
-> acting on it re-cuts nothing but does invalidate every checkpoint's vocabulary.
+> Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). ⏭ **PICKED UP FOR
+> ROUND 4 (2026-09-03)** — the plan, the order and the owner's decisions are in [round4.md](round4.md).
+> Scheme **H** is the recommendation (owner to confirm); **no re-render this round** (owner), so
+> `noteToLily`'s packing estimate is left as is and the synthetic strips stay as cut; **`\tupend`
+> stays** (owner). Acting on it re-cuts nothing but does invalidate every checkpoint's vocabulary.
 
 ## The finding first
 
@@ -154,7 +156,24 @@ for rows with no 16ths, **44.3** at 50–75%, **45.3** at 75–100%.
 chances to slip, which is a real but unquantified effect. It adds no pixels: a crowded crop stays
 crowded, and that is [levers.md](levers.md) Lever 1's territory, which is closed.
 
-## Retiring `\tupend` — proposed 2026-08-27 (owner), NOT decided
+### Fused or compositional? Both — the ≥1,000-examples rule (2026-09-03)
+
+The owner asked whether to add one token per pitch per octave, or one token per octave value and
+combine it with the letter. **Both**, by the rule H already encodes: a letter+octave pair with
+≥1,000 notes is fused (the notehead's height *is* letter+octave together, one decode step fewer,
+and the best-performing kern encoding in the literature keeps pitch as one unit with duration
+separate); a rare pair stays letter + octave so nothing is learned from one example. Vocabulary
+size is not the balance to strike — 16 tokens are 0.01% of the model — examples per token is.
+⚠ Verify with the real tokenizer how the seven rare pitches segment (`a'''8` must always be `a`
+`'''` `8`, never sometimes `a''` `'` `8`); this file verified the split-evidence trap for B only.
+⚠ The 2026-09-03 octave count says a fused token fixes no height misread — 1 octave jump in 69
+wrong pitched notes ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)); the case is yield.
+
+## Retiring `\tupend` — proposed 2026-08-27 (owner), ⛔ DECLINED for Round 4 (owner, 2026-09-03)
+
+> *"tupend i şimdilik tutabiliriz fena okumuyor aslında model şuanda tupletleri."* The analysis below
+> stands as written and is not acted on this round; the stitcher's bracketing of an unclosed run is
+> what makes the 51% unbalanced pairs cost the user nothing.
 
 The owner's argument: a triplet's length is fixed, so `\tup3` at the front is enough and the closing
 token is redundant. **The data agrees, and the reason is stronger than "always three".**
@@ -204,7 +223,11 @@ worth its own round.
 ## If it is picked up — the order
 
 1. ⭐ **NO LABEL CONVERSION IS NEEDED — this is a vocabulary change, not a spelling change**
-   (corrected 2026-08-27). `c''16` stays the string `c''16`; only how the tokenizer *segments* it
+   (corrected 2026-08-27; confirmed by the owner 2026-09-03: *"label lar asla değişmeyecek, sadece
+   modelin onları okuma şekli değişecek"*). ⚠ **And no re-render either (owner, 2026-09-03)** — with
+   one measurable risk: a synthetic strip packed to 57 old ids is ~33 new ids, a re-emitted real
+   strip fills 59 new ids, so long labels would exist only in the real pool. Measure both id-length
+   distributions under the new tokenizer before training; that check alone may reopen the render. `c''16` stays the string `c''16`; only how the tokenizer *segments* it
    changes. Verified by adding the tokens and re-encoding. So `NOTE_RE` in
    [`tools/render/stitch.ts`](../../tools/render/stitch.ts), `noteToLily` in
    [`tools/render/lilypond.ts`](../../tools/render/lilypond.ts) and every label on disk are all

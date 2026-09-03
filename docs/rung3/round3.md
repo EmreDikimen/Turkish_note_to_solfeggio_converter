@@ -2,11 +2,14 @@
 
 purpose: what Round 3 targets, the evidence behind it, and the checks to run BEFORE rendering anything
 audience: agents and the owner working the real-page track
-updated: 2026-08-17
+updated: 2026-09-03
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md).
+>
+> ⛔ **THIS ROUND IS CLOSED (2026-09-03).** Read once on 2026-09-01: **51%** against the 75% floor, ~15
+> of its +17 points the retired `\tie`; runs A and B nulls. What follows is [round4.md](round4.md).
 >
 > ▶ **UNPAUSED 2026-08-05 (owner): this round runs in PARALLEL with the product work** and no longer
 > waits for the friends release. The release asks friends about the interface, so its feedback would

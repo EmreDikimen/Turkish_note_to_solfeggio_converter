@@ -34,7 +34,6 @@ export function ScoreCard({
   onRedo,
   canUndo,
   canRedo,
-  palette,
   children,
 }: {
   doc: NoteModelDocument;
@@ -49,16 +48,15 @@ export function ScoreCard({
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  /** The edit palette, shown BESIDE the score in edit mode. Passed in (rather than built here)
-   *  so the armed tool stays with the edit state in App. Null outside edit mode. */
-  palette?: ReactNode;
   children: ReactNode;
 }) {
   const notes = doc.events.filter((e) => e.kind === "note").length;
   return (
-    // `kv-card--editing` is what the page shell keys its extra width off (styles/app.css): the
-    // palette takes room from the row the score is in, and the sheet's engraved width is fixed.
-    <section className={`kv-card${palette ? " kv-card--editing" : ""}`}>
+    // ⚠ No edit-mode variant of this class any more (owner, 2026-09-03). The palette used to be a
+    // column inside this card, so the card — and the page — had to grow while editing. It is now a
+    // floating `.kv-toolbox` rendered from App, outside the card entirely, and the score keeps its
+    // full width whether you are editing or not.
+    <section className="kv-card">
       <header className="kv-card__head">
         <h2 className="kv-card__title">
           {doc.title || doc.name}
@@ -135,13 +133,10 @@ export function ScoreCard({
 
       </header>
 
-      {/* The palette is a SIBLING of .kv-score, never a child: that container is screenshotted
-          by rect for training strips, so nothing may nest inside it, set a font in it, or
-          transform it. A flex row around it is safe. */}
-      <div className="kv-score-row">
-        {palette}
-        <div className="kv-score">{children}</div>
-      </div>
+      {/* ⚠ Nothing may nest inside `.kv-score`: that container is screenshotted by rect for
+          training strips, so nothing may set a font in it or transform it. The edit toolbox is
+          not here at all — it floats over the page from App. */}
+      <div className="kv-score">{children}</div>
 
       <p className="kv-hint">
         {viewMode === "sheet"

@@ -1638,6 +1638,133 @@ async function main() {
   check("another piece sets its own mandals", beyatiOpening, ["Segâh-2"]);
   check("one lever up per course here too", await upCount(), 26);
 
+  // --- the structure signs (owner, 2026-09-03) --------------------------------------------------
+  //
+  // `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son" can be placed and taken off. What matters is NOT that a flag
+  // was set — a sign that is drawn and does nothing is the bug — so every assertion here is on
+  // `window.__omrStructure.playBars`, the order the page actually SOUNDS in.
+  //
+  // Three things this section exists to catch, each one a real hazard of the design:
+  //   - a SIGN goes on a BAR, so clicking a note with one armed must place it, not do nothing (the
+  //     note targets have to go pointer-transparent, which they did not at first);
+  //   - deleting a `:‖` must take its `‖:` and its brackets with it, or the page keeps a `‖:` that
+  //     draws nothing and warns;
+  //   - the signs share ONE undo stack with the notes, so Ctrl+Z has to walk back through both.
+  console.log("\nstructure signs");
+  await page.goto(`${base}/?score=/decoded.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#edit-toggle").click();
+  await page.waitForTimeout(500);
+
+  /** The playing order, as written-bar numbers. `none` before any sign exists — a bundled score
+   *  carries no structure at all, which is the state the first placement has to create. */
+  const order = async () =>
+    await page.evaluate(() => {
+      const s = (window as unknown as { __omrStructure?: { playBars: number[] } | null }).__omrStructure;
+      return s ? s.playBars.join(" ") : "none";
+    });
+  /** Bar number → the event indices in it, so a click can be aimed at a bar through one of its
+   *  notes. ⚠ Aiming at a NOTE is the point: it is the click the pointer-transparency fixes. */
+  const barNotes = await page.evaluate(() => {
+    const doc = (window as unknown as { __omrDoc: { events: { index: number; bar?: number }[] } }).__omrDoc;
+    const m: Record<string, number[]> = {};
+    for (const e of doc.events) if (e.bar != null) (m[String(e.bar)] ||= []).push(e.index);
+    return m;
+  });
+  const clickBar = async (bar: number) => {
+    const el = page.locator(`[data-omr-note="${barNotes[String(bar)]![0]!}"]`);
+    await el.scrollIntoViewIfNeeded();
+    await el.click({ force: true });
+    await page.waitForTimeout(150);
+  };
+  /** ⚠ Arming is a TOGGLE — clicking the tool that is already armed lets it go — so this drops
+   *  whatever is in hand first. Without that, re-arming the volta to test a refusal disarmed it and
+   *  every assertion after it read `null`. */
+  const armSign = async (mark: string) => {
+    await page.keyboard.press("Escape");
+    await page.locator(`#edit-palette [data-tool="sign:${mark}"]`).click();
+    check(`armed ${mark}`, await page.locator("#edit-palette").getAttribute("data-armed"), `sign:${mark}`);
+  };
+  /** The first `n` bars of the playing order. ⚠ Split, never `slice` on the string: cutting mid-token
+   *  leaves a trailing space and every comparison fails for a reason that is not about the music. */
+  const first = async (n: number) => (await order()).split(" ").slice(0, n).join(" ");
+
+  check("a bundled score starts with no signs at all", await order(), "none");
+
+  // ⭐ ONE tool, TWO clicks, and the clicks are on BARLINES (owner, 2026-09-03). The first writes
+  // nothing: the document must never hold half a repeat, which is what made the two-tool version
+  // confusing — an unclosed `‖:` is a sign the engraved staff refuses to draw, so the click left no
+  // trace at all.
+  const edge = async (bar: number) => {
+    const el = page.locator(`[data-omr="repeat-edge"][data-bar="${bar}"]`);
+    await el.scrollIntoViewIfNeeded();
+    await el.click();
+    await page.waitForTimeout(150);
+  };
+  const anchor = async () => await page.locator("#sheet-surface").getAttribute("data-repeat-anchor");
+
+  await armSign("repeat");
+  check("every barline is on offer to open on", await page.locator('[data-omr="repeat-edge"][data-edge="start"]').count(), 28);
+  await edge(2);
+  check("the first click only ANCHORS", await anchor(), "2");
+  check("…and writes nothing to the page", await order(), "none");
+  check("…and the pending ‖: is drawn", await page.locator('[data-omr="repeat-anchor"][data-bar="2"]').count(), 1);
+  // Phase 2 offers the CLOSING lines, and dims every one at or before the opening: a repeat cannot
+  // close where it opened or earlier.
+  check("now it asks for the closing line", await page.locator('[data-omr="repeat-edge"][data-edge="end"]').count(), 28);
+  check("…with the ones before the opening blocked", await page.locator('[data-omr="repeat-edge"][data-repeat-edge-state="blocked"]').count(), 1);
+  await edge(5);
+  check("the second click places the whole repeat", await first(10), "1 2 3 4 5 2 3 4 5 6");
+  check("…and the gesture is over", await anchor(), null);
+
+  // Cancelling: click the pending `‖:` again. Nothing is placed, nothing is undone.
+  await edge(8);
+  check("a new gesture anchors", await anchor(), "8");
+  await page.locator('[data-omr="repeat-anchor"]').click();
+  await page.waitForTimeout(150);
+  check("clicking the pending ‖: takes it back", await anchor(), null);
+  check("…and the page is untouched", await first(10), "1 2 3 4 5 2 3 4 5 6");
+
+  await armSign("volta");
+  await clickBar(5);
+  check("a volta makes the second pass skip the ending", await first(8), "1 2 3 4 5 2 3 4");
+
+  // ⚠ A refusal has no other way to show itself — nothing appears on the sheet — so the palette's
+  // hint has to carry it. `data-refused` is the state; the words are free to change.
+  check("the tool stays armed after a placement", await page.locator("#edit-palette").getAttribute("data-armed"), "sign:volta");
+  await clickBar(8);
+  check(
+    "a volta outside a repeat is refused, and says so",
+    await page.locator("#edit-palette .kv-toolbox__hint").getAttribute("data-refused"),
+    "voltaOutside",
+  );
+  check("…and the page still plays what it did", await first(8), "1 2 3 4 5 2 3 4");
+
+  // Deleting: the targets only exist in Seçim ("armed places, Seçim removes").
+  await page.locator('#edit-palette [data-tool="none"]').click();
+  await page.waitForTimeout(200);
+  const targets = await page
+    .locator('[data-omr="sign-hit"]')
+    .evaluateAll((els) => els.map((e) => `${e.getAttribute("data-sign")}@${e.getAttribute("data-bar")}`).sort());
+  check("every placed sign offers a delete target", targets.join(" "), "repEnd@5 repStart@2 volta@5 volta@6");
+
+  // ⭐ EITHER end deletes the whole repeat, because it was placed as one object.
+  await page.locator('[data-omr="sign-hit"][data-sign="repStart"]').first().click();
+  await page.waitForTimeout(200);
+  check("deleting the ‖: plays the page straight", await first(8), "1 2 3 4 5 6 7 8");
+  check("…and takes the :‖ and both brackets with it", await page.locator('[data-omr="sign-hit"]').count(), 0);
+
+  await page.locator("#undo").click();
+  await page.waitForTimeout(250);
+  check("one undo brings the whole repeat back", await first(8), "1 2 3 4 5 2 3 4");
+
+  // The signs share ONE undo stack with the notes, so it has to walk back through both.
+  await page.locator("#undo").click();
+  await page.locator("#undo").click();
+  await page.waitForTimeout(300);
+  check("undone back to a page with no signs", await order(), "none");
+  check("…and nothing is left dashed on the staff", await page.locator('[data-omr="open-repeat"]').count(), 0);
+
   // --- every note box belongs to its own note (the grace-note geometry bug, 2026-08-08) ---------
   //
   // `StaveNote.getBoundingBox()` merges each MODIFIER's box in, and `GraceNoteGroup` never positions

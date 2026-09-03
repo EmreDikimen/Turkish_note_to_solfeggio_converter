@@ -24,6 +24,7 @@ wrong — fix by deleting, not by syncing.
 | Why is there a server, where does the app live, what does it cost? In plain English | [OVERVIEW-SERVER.md](OVERVIEW-SERVER.md) |
 | The model story so far, in plain English (Rounds 1–2 + backlog) | [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md) |
 | The Round 3 plan in plain English — the four trainings, when we train, what the exam decides | [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md) |
+| **Round 4 in plain English — what Round 3 taught, what changes and what does not, what you will be asked to do** | [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md) |
 | I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
 
 ## Facts and decisions
@@ -83,6 +84,7 @@ wrong — fix by deleting, not by syncing.
 | Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
 | Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
 | Round 3's floors, the launch gate, and the tuplet A/B protocol | [rung3/round3-criteria.md](rung3/round3-criteria.md) |
+| **Round 4: the dense half, the signature answer key, the selector — evidence, the owner's decisions, the order** | [rung3/round4.md](rung3/round4.md) |
 | What each Round-3 work item B0–B9 is, and what it still owes | [rung3/worklist.md](rung3/worklist.md) |
 | The remaining model levers, ranked, and what to measure first | [rung3/levers.md](rung3/levers.md) |
 | **How a label is spelled, and what re-spelling notes would buy** | [rung3/tokenization.md](rung3/tokenization.md) |

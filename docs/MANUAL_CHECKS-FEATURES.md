@@ -248,3 +248,40 @@ as a kanun, or whether the mandal plan is one a player would actually set. Only 
 ⚠ **The known simplification, so it is not reported as a discovery**: a change is drawn at the note
 that needs it, where a real player moves the lever slightly **before** it with the free hand.
 Nothing models the anticipation.
+
+## Check 27 — can you mark up a page's repeats, and does it then PLAY that way? (2026-09-03)
+
+Goal: the signs are editable now (`‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son"), and every automated check on
+them asserts the playing ORDER. What no check can judge is whether marking a page up feels like
+marking a page up. That is this check.
+
+`npm run dev:cloud`, upload a page (or `?score=/decoded.json` for a fixed one), press **Düzenle**.
+
+1. **Draw a repeat.** Arm **Tekrar** once. The toolbox asks *"Tekrar nerede BAŞLASIN?"* and every
+   barline gets a teal tick; click one. It then asks *"Şimdi nerede BİTSİN?"*, the ticks move to the
+   closing lines, and the ones you cannot close on go faint. Click the second and both signs appear
+   together. ⚠ Between the clicks nothing is written to the page — the pending `‖:` is a dashed
+   preview, and clicking it cancels. Judge whether the two questions arrive at the right moment, and
+   whether the ticks land where you expect a barline to be (especially on the FIRST bar of a row,
+   where the line sits before the clef).
+2. **Press ▶ Çal.** The repeat must be heard, and the blue playhead must walk back to the `‖:` on
+   its own. If the picture and the sound disagree, that is the finding that matters most.
+3. **Add the volta.** Arm 1./2. and click a bar inside the repeat: both brackets appear at once, the
+   "2." landing after the `:‖`. Play it — the second pass must skip the first ending. Then try
+   clicking a bar OUTSIDE any repeat: nothing is placed and the toolbox's hint says why. Judge the
+   wording, not the refusal.
+4. **Delete something.** Press **↖ Seçim** first (armed places, Seçim removes), then click a drawn
+   sign. Hovering it should tint it red. ⚠ Deleting a `:‖` takes its `‖:` and both brackets with it
+   — the whole repeat is one object. Is that what you expected, or did you want the `:‖` alone?
+5. **Ctrl+Z.** One undo must take back one sign, and the notes and the signs share the stack — so
+   alternate a note edit and a sign edit, then undo four times and check it walks back through both.
+6. **The 𝄋.** Put one at the head of a section and a second at the end of a later one, with a "Son"
+   in between. Play it: the section must be replayed and then returned from. ⚠ Without a "Son" or a
+   `:‖` after the first 𝄋 the second one is REFUSED — the page has not said where the section ends.
+   That is the rule real pages follow; judge whether the refusal is understandable at the moment it
+   happens.
+
+⚠ **Known and deliberate, so it is not reported as a discovery**: a sign can only be placed where it
+would sound the way it looks. The editor resolves the whole page after every click and rejects the
+edit if it produced a warning — so a "D.C." in the middle of the piece, a third ⊕, and a "1." more
+than four bars from its `:‖` are all impossible. The one exception is the unfinished `‖:` in step 1.

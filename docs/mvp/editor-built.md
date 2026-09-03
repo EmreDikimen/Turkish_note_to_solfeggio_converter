@@ -306,16 +306,29 @@ Three came out of the palette (2026-08-08); the other two are recorded with thei
    event back with the same `transposeDoc(…, -transpose)` round-trip `onSaveMeasure` uses.
    `onNudgePitch` never needed this only because ±1 step means the same thing in both spaces.
 
-3. **The palette costs horizontal room the page did not have.** `--page-max` (1100 px) was sized so
-   the **1020 px** engraved sheet fits exactly, and the palette's footprint is **164 px** (136 wide
-   + gap + margin), so edit mode needs **~1250 px of window** to show a whole system. The engraved
+3. ⚠ **OVERTURNED 2026-09-03 — the palette FLOATS now, and costs the page nothing.** What follows
+   is why it used to cost something, kept because the arithmetic still explains the constraint.
+   **The palette costs horizontal room the page did not have.** `--page-max` (1100 px) was sized so
+   the **1020 px** engraved sheet fits exactly, and the palette's footprint was **164 px** (136 wide
+   + gap + margin), so edit mode needed **~1250 px of window** to show a whole system. The engraved
    width cannot shrink to make room — it is `SVG_WIDTH` in `SheetView`, and it is also the
-   training-strip geometry. So the **page** grows by exactly the footprint while editing
-   (`.kv-page:has(.kv-card--editing)`), keyed off a class `ScoreCard` sets when a palette is passed.
+   training-strip geometry. So the **page** grew by exactly the footprint while editing
+   (`.kv-page:has(.kv-card--editing)`), keyed off a class `ScoreCard` set when a palette was passed.
    Measured cut-off while editing: **1090 px window → 160 px still cut · 1280 px → 0 · 1470 px → 0**.
-   Below ~1250 px the sheet scrolls sideways inside `.kv-score`, exactly as it did before edit mode
+   Below ~1250 px the sheet scrolled sideways inside `.kv-score`, exactly as it did before edit mode
    existed — **owner's call, 2026-08-08**: keep the palette beside the sheet and widen the window,
    rather than floating it over the paper or moving it above the score.
+
+   ⚠ **The owner reversed exactly that call on 2026-09-03** (*"bu toolun sayfaya yapışık olmasını
+   istemiyorum… gerçekten bir alet çantası gibi"*). The palette is now `.kv-toolbox`: `position:
+   fixed`, rendered from `App` **outside `.kv-card`**, dragged by its title bar and folded to that
+   bar alone by the button on its right. It takes no width from the score row, so `.kv-score` is
+   **1050 px in edit mode and out of it** and pressing Düzenle no longer moves the music; the
+   cut-off numbers above and the ~1250 px window they priced no longer apply, and the
+   `.kv-page:has(.kv-card--editing)` rule is deleted. The cost the 2026-08-08 call was avoiding is
+   now accepted: a floating box **can** cover music, and the answer is that the user moves it.
+   Where it opens (left of the card, clear of the music on a wide window), what is remembered and
+   the two positioning traps are in [../DECISIONS.md](../DECISIONS.md).
 
 Also settled while building it: **re-applying the accidental a note already carries is not an undo
 entry** (`withAlter` returns the event unchanged, and `useDocHistory.apply` drops no-op edits), and

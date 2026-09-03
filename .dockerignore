@@ -15,3 +15,6 @@ scripts
 src/vision
 tools/render/out
 *.log
+
+# Backups of a previously staged model — 211 MB each, never read by the image.
+apps/web/public/models/_*/

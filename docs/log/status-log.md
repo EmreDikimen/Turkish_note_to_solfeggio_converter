@@ -7,6 +7,184 @@ updated: 2026-09-03
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-03 — Round 3 closed, Round 4 opened: the root-cause read, the octave count, and five owner decisions
+
+The owner asked what Round 4 should do, with three ideas of their own: change the vocabulary (the
+octave marks cost one id each, so `'''` costs three; the model sometimes writes two notes as one;
+octaves come out wrong), collect pages from more websites, and leave the synthetic side alone. The
+session read every Round-3 log and doc, re-counted the saved decodes, searched the literature, and
+wrote the plan into [../rung3/round4.md](../rung3/round4.md) (plain English:
+[../OVERVIEW-ROUND4.md](../OVERVIEW-ROUND4.md)).
+
+**What the logs say.** Round 3 fixed pixels and pixels were not the problem: the three flags'
+target classes came out flat or worse, ~15 of the +17 points was `\tie`, runs A and B were nulls, the
+selector was wrong 3 of 3 times. Five causes with a measured mechanism remain, none on the realism
+axis: the 4,012 over-budget real strips dropped from training (Round 3 is net negative on ≥50-id
+strips); the model-voted `\sig` gold (17.5% of edits, 24/45 exam pieces overwritten, corrections
+10:0 koma→küçük); the 92%-synthetic selector; a two-website corpus; and label noise (12.9% of b8's
+auto-accepts wrong). Homes: [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md),
+[../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md), [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+
+**The octave count** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)): off the
+`_taxonomy_cache` files, no model run, no exam re-decode. Of 69 wrong pitched notes on real-val,
+**1** is an octave jump and 14 are one staff step off; on the exam 2 of 94. `'''` notes read about
+twice as badly (3 of 21) — a lead. Two notes merged into one: 3 in 262 strips. So the vocabulary case
+is **yield**, not octave reading, and the owner's "nadiren" is measured.
+
+**The owner's decisions, in their words** ([../DECISIONS.md](../DECISIONS.md)): *"Exam ve
+evaluationlar o kadar fazla şey söylemiyor. round 3 run a gerçekten … gözle görülür şekilde gelişmiş
+bir model oldu"* — the hand test outranks the paired reads for the ship call (both can be right:
+real-val hides a gain under ~5%, the exam drops 41% of candidates); *"tupend i şimdilik
+tutabiliriz"* — `\tupend` stays; *"sentetik tarafta yeni rendere ihtiyaç olduğunu düşünmüyorum …
+label lar asla değişmeyecek"* — no render, labels untouched; *"Şimdilik 4000 olarak kalabilir"* —
+stage 2 at 4,000; and beam search may not slow the user path unless it pays (a page is ~1 min; the
+agent's "×3" was wrong — the decoder is 20–25% of strip time, so beam 3 is ~+40–60%).
+
+**The vocabulary question** (*"her oktavdaki her nota için ayrı bir token mi, yoksa her oktav
+değeri için bir token mi?"*) was answered **both**, by the ≥1,000-examples rule — scheme H, 16
+tokens, rescue 3,508 of 4,012. Recommended, not yet confirmed by the owner. One risk of not
+rendering is written down: synthetic strips are ~33 new ids at most while real ones will fill 59, so
+the length distributions are the first measurement of the round.
+
+**Outside evidence** is named in round4.md so it is not re-searched: Transcoda (beam 3 small gain,
+normalisation dominant), the SMT encoding study (bekern: pitch one unit, duration separate),
+LEGATO (zero real fine-tune, two renderers, beam 10), and the synthetic-to-real scan paper (59
+authentic systems bought 7–8 SER points).
+
+**Docs touched**: STATUS rewritten for Round 4 (settled Round-3 blocks moved out to their homes),
+DECISIONS (seven rows + the 2026-08-27 tokenization row's status), rung3/round4.md and
+OVERVIEW-ROUND4.md created, rung3/README + INDEX + CLAUDE.md + OVERVIEW pointers, tokenization.md
+(`\tupend` declined, no-render note, scheme answer), BACKLOG / BACKLOG-LATER scheduling notes,
+METRICS-DIAGNOSTICS (the count), levers.md (beam cost correction), RISKS (two non-claims),
+round3.md (closed). No code changed.
+
+## 2026-09-03 — the signs become editable, and the decoder's own code says what they mean
+
+Owner, straight after the toolbox: *"repstart ve repend ekleyebilelim veya onlara tıklayarak
+silebilelim. volta ekleyebilelim"*, then two scope choices — the navigation signs INCLUDED
+(𝄋 ⊕ "D.C." "Son"), and the volta placed as a PAIR.
+
+**The design question was never the UI.** A sign is not part of the document: the app keeps the
+written score in `NoteModelDocument` and what the signs make it play in a `ScoreStructure` beside
+it. So editing one means recomputing the playing order — and the rules for that (a first ending is
+a RUN, `MAX_FIRST_ENDING = 4`, a jump fires at the END of its bar, a mid-piece "D.C." is noise, the
+𝄋 section needs an end the page states) were spread through three functions that took the STITCHER's
+parse records. A second copy in the editor would have drifted within a week.
+
+**What shipped instead:** the marks were split out of `MeasureRec` as `StructureMarks`, so
+`expandRepeats` / `expandSegnoJumps` / `expandDaCapo` now take the FLAGS ALONE — no music attached —
+and `resolveStructure(bars, barCount)` runs the same three in the same order over a hand-edited
+`BarStructure[]`. Both call sites were untouched: `MeasureRec` and `BarStructure` are each that
+shape plus one field of their own. The unit test asserts the claim directly — the same marks give
+the same `playBars` whether they were typed by a person or read off a photograph.
+
+**The legality gate is a simulation, not a list.** An edit is resolved and refused if it produced a
+warning the page did not already have. Every warning the resolver emits is exactly "this sign would
+DRAW but not SOUND", so the gate needs no knowledge of which signs exist — and it rejected the
+mid-piece D.C. and the 𝄋 with no section end without being told about either. Same bargain the
+tuplet tool struck with `tupletGroupsIn`.
+
+⭐ **The unit test found a design fault on its first run, before any UI existed.** The natural way to
+write a repeat is left to right: `‖:` first, then `:‖`. But an unmatched `‖:` warns, so the gate
+refused the first half of every repeat — you could only build one backwards. The immediate fix was
+not to relax the gate generally: `WARN_UNMATCHED_REPSTART` became a constant both files read, exempt
+by name, and the unfinished state was DRAWN — dashed and red, in the edit overlay, never on the
+engraved staff. That keeps `repeatSpansFromStructure`'s rule (the staff may not promise a repeat the
+music does not take) exactly as it was: outside edit mode the page is unchanged.
+
+⭐ **…and that patch was the tell. The owner saw the built UI and said so: *"tekrar ekleme ui ı biraz
+karışık duruyor"*.** The failing test had already located the problem and the fix had gone round it
+rather than through it. Two separate tools mean the user is the one holding the question "what
+closes this `‖:`?", and a dashed stand-in for a sign the page refuses to draw is a symptom of that,
+not a solution.
+
+**v2, the same day: one tool, two clicks, on the BARLINES.** Arm **Tekrar** once; the palette asks
+*"Tekrar nerede BAŞLASIN?"*, you click the opening line, it asks *"Şimdi nerede BİTSİN?"*, you click
+the closing one, and `placeRepeat` writes both marks in a single operation. Three things fall out of
+it. The first click **writes nothing**, so the document can never hold half a repeat. The two phases
+target **different lines** — a bar's opening line, then a bar's closing line — which dissolves the
+"clicked the same place twice" question v1 had no good answer to: open-then-close on one bar is
+simply a one-bar repeat. And the barlines a repeat cannot close on are **dimmed and inert**, the
+same idiom the tuplet tool uses for a note it would refuse, so backwards is a mis-click rather than a
+meaning to be guessed at. Clicking the pending `‖:` cancels.
+
+⚠ **Barlines, not bars, was the owner's correction** (*"ölçüye değil de barline lara tıklayabilsin
+kullanıcı"*) and it is the load-bearing half: `‖:` and `:‖` are printed ON lines, so targeting lines
+is both what a musician expects and what makes the two phases distinguishable. Every other sign
+(volta, 𝄋, ⊕, "D.C.", "Son") still belongs to a BAR and is still one click anywhere in it.
+
+⚠ The `WARN_UNMATCHED_REPSTART` exemption and the dashed marker **stay**, and they are no longer
+reachable from the editor: a DECODE can read a stray `‖:` off a photograph, and edit mode has to show
+it so it can be deleted. ⚠ Deleting now works from **either end** — the tool made the repeat as one
+object, so clicking the `‖:` or the `:‖` takes both plus the volta pair.
+
+⚠ One live bug came out of v2 and is worth recording, because it was one flag doing two jobs.
+Arming a sign tool made every note pointer-transparent (a sign goes on a bar, so the click has to
+reach the measure box underneath) — and that flag was the same one the TUPLET tool uses to grey out
+a note it refuses. Result: arming any sign turned the whole score grey. They are now `dead`
+(pointer-events) and `refused` (the grey), separately.
+
+**Three smaller calls, each with a reason:**
+- **Armed places, Seçim removes.** One rule, so clicking a drawn `‖:` never means two things.
+- **A delete takes its whole object** — a `:‖` removes the `‖:` it closed and the volta pair inside
+  it. Clearing only the `:‖` is tidy in the data and baffling on screen: it leaves a `‖:` that draws
+  nothing and warns.
+- **Signs joined the notes' undo stack** (`useDocHistory`'s `ScoreState`). Two stacks would let an
+  undo restore the notes and leave a sign added afterwards — a state nothing on screen explains.
+
+⚠ Two overlap traps, both paid for while building. Note targets had to go **pointer-transparent**
+while a sign tool is armed, or clicking a bar's only note did nothing at all — a sign goes on a BAR,
+so the click has to reach the measure box underneath. And the volta's delete target stops **24 px
+short** of the bar's right edge, because the off-meter `+`/`−` badge lives in the same band and the
+sign targets paint later.
+
+⚠ Not restricted to decoded pages: a score with no structure gets an empty one on its first sign.
+That is also what gives the feature automated coverage — the bundled samples carry no structure, so
+a decoded-pages-only rule would have left `smoke:editor` unable to test any of it.
+
+Verified: `npm test` (`structure-edit-test.ts`, 36 checks, every expectation a `playBars` list) and
+`npm run smoke:editor` (24 checks driving the real app: both phases of the gesture, the blocked
+barlines, cancelling, a refusal, deleting from either end, and undo), both ALL PASS.
+
+## 2026-09-03 — the palette becomes a toolbox, and the sheet loses its scrollbar
+
+Two owner requests off one screenshot of edit mode: *"sayfada 2 tane scroll oluyor… nota kağıdında
+scroll olmasın"* and *"bu toolun sayfaya yapışık olmasını istemiyorum… gerçekten bir alet çantası
+gibi"*.
+
+**The second scrollbar was a font artifact, and three wrong leads were measured out first.**
+`.kv-score` set only `overflow-x: auto`, and a browser computes the other axis's `visible` to
+`auto` — so a 17 px overflow was enough to grow a vertical scrollbar with a nearly full-height
+thumb. Lead 1: the **1020 px** sheet overruns `.kv-score`'s 1018 px content box by 2 px. True, and
+irrelevant — the container's own 16 px padding absorbs it and `scrollWidth == clientWidth` at every
+page width tried. Lead 2: the sheet SVG is `display: inline`, so its host div is 6 px taller than
+the surface. True, and also absorbed. Lead 3: `line-height: 0` on the legend's glyph spans. Took
+the overflow from 33 px to 18, so it is not the mechanism. ⭐ **What it is:** an inline box's
+*layout* overflow is taken from the FONT's ascent/descent, not from its line-height and not from
+its ink, and the accidental legend under the staff sets Bravura, whose metrics are enormous — the
+legend reported **105 px of scroll height inside a 72 px box** while every `getBoundingClientRect`
+fitted and no descendant overflowed. `overflow-y: clip` (which computes to `hidden` beside an
+`auto` axis) ends it: *beyati-delisin* measured **2421 vs 2404 before, 2404 vs 2404 after**, with
+nothing on screen moved and the sideways scroll on the other axis untouched.
+
+**The palette is now `.kv-toolbox`.** `position: fixed`, rendered from `App` outside `.kv-card`,
+dragged by its title bar (pointer capture, clamped to the viewport), folded to that bar alone by
+the button on its right — folded UNMOUNTS the tools rather than hiding them — with the spot and the
+folded state in `localStorage` behind try/catch. It opens in the margin left of the score card, so
+on a wide window it covers no music; on a narrow one it is pinned to the left edge, over the card's
+padding and the clef.
+
+⚠ **This overturns the 2026-08-08 layout call** ([../mvp/editor-built.md](../mvp/editor-built.md)
+§3), which chose *beside the sheet, widen the window* over *floating it over the paper*. That call
+was reasonable and had a real cost the owner did not want: `--page-max` grew by the palette's
+**164 px** while editing, so pressing Düzenle moved the music, and `sticky` still travelled with the
+row it lived in. `.kv-score` now measures **1050 px in edit mode and out of it**, and
+`.kv-page:has(.kv-card--editing)` is deleted. The cost that was being avoided is accepted instead:
+a floating box can cover music, and the answer is that the user moves it.
+
+Verified: `npm test`, `npm run smoke:app` and `npm run smoke:editor` all ALL PASS unchanged — the
+smoke arms all 27 tools and drives the sheet with the toolbox floating over the page's left margin.
+
 ## 2026-09-03 — a stem taken for a barline: the both-ends gate
 
 Owner-reported on `nihavendLongaDuzgun.png`: the last row was cut at a note stem, between a sharp

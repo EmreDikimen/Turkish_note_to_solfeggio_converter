@@ -7,8 +7,7 @@ stays there is [reopened](docs/mvp/deploy.md).
 
 **TWO TRACKS RUN IN PARALLEL (owner, 2026-08-05).** The product track is building a decode server
 (W9) for a release to **two friends** who will be asked about the **interface, not the model**; the
-model track is **Round 3, now UNPAUSED** — it no longer waits for feedback, because feature feedback
-would not aim it. Neither blocks the other. The public launch is gated on Round 3's exam result.
+model track is **Round 4 (opened 2026-09-03; Round 3 read 51% against 75% and missed)** — it draws nothing new: it re-spells labels for the tokenizer, re-emits the dense half of every real page, fixes the model-voted signature and the checkpoint pick ([docs/rung3/round4.md](docs/rung3/round4.md)). Neither blocks the other. The public launch is gated on the exam result of the round in progress.
 Ladder and state: [docs/mvp/README.md](docs/mvp/README.md). Synthetic accuracy is solved (99.9%);
 the remaining model work is about real printed pages.
 
@@ -32,7 +31,7 @@ engineer.** The owner reads English as a second language and asked for this to b
 - Use a plain analogy when a mechanism is being explained (the model as a student, the exam as a
   final test, the corpus as practice questions).
 - **Keep the numbers.** Plain English means simple words, not vague claims. Every number still comes
-  from [docs/METRICS.md](docs/METRICS.md) or its source log, and still gets its n.
+  from [docs/METRICS.md](docs/METRICS.md) or its source log, and still gets its n. If user asks the question in Turkish, answer in Turkish but do not translate the terms in Turkish, use original names.
 - Say plainly when something is a guess, a lead, or unmeasured. Do not dress a feeling as a finding.
 - This does **not** change the doc conventions below, and it does not license rewriting history —
   see [docs/MAINTAINING.md](docs/MAINTAINING.md). It is about the voice of the reply.
@@ -199,7 +198,8 @@ a successful build is not a deploy. Both, and every other command, in
   means guessing from duplicate bars; `Tekrarlar` still only DRAWS there and the renderer path
   (`?repseed=`/`?navseed=`) is untouched, so the training corpus is byte-identical. ⚠ `Tekrarları açık yaz` is
   **view-only and closes edit mode**. Safety claim: `npm run check:fold` — unfolding reproduces the old
-  flattened document over **1,720 pages, 0 changed**. [docs/DECISIONS.md](docs/DECISIONS.md) ·
+  flattened document over **1,720 pages, 0 changed**.
+  ⭐ **THE SIGNS ARE EDITABLE SINCE 2026-09-03** (owner): arm one in the toolbox and click a bar; click a drawn sign in Seçim to delete it. ⚠ **`resolveStructure` in `stitch.ts` is the ONLY thing that says what a sign does** — the marks were split out of `MeasureRec` as `StructureMarks` so a hand edit runs the decoder's own `expandRepeats`/`expandSegnoJumps`/`expandDaCapo`; never write a second rulebook in the editor. ⚠ **A placement is refused by SIMULATION**: resolve it, reject it if it added a warning the page did not have, so a sign that would draw but not sound cannot be placed. ⭐ **THE REPEAT IS ONE TOOL AND TWO CLICKS, ON THE BARLINES** (owner, same day, revising a first version that had a `‖:` tool and a `:‖` tool): arm **Tekrar**, click the opening line, then the closing one, and `placeRepeat` writes both marks at once — the first click writes NOTHING, so the document can never hold half a repeat. Never split it back into two tools: an unmatched `‖:` is a sign `repeatSpansFromStructure` refuses to DRAW, so that click left no trace on the page. ⚠ The `WARN_UNMATCHED_REPSTART` exemption and its dashed overlay marker stay anyway — a DECODE can still read a stray `‖:`, and edit mode must show it to let it be deleted. ⚠ **Armed places, Seçim removes**, and a delete takes its whole object from EITHER end (the `‖:` or the `:‖` takes both plus the brackets). ⚠ Signs share the undo stack with the notes (`useDocHistory`'s `ScoreState`). `tools/render/structure-edit.ts` · `structure-edit-test.ts` · `smoke:editor`. [docs/DECISIONS.md](docs/DECISIONS.md) ·
   [docs/METRICS.md](docs/METRICS.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
@@ -225,10 +225,12 @@ a successful build is not a deploy. Both, and every other command, in
   `#play` carries `data-play-state`; `#app` carries `data-ready`. The editor adds
   `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`,
   `[data-omr-note]` / `[data-selected]` per note, `#note-delete` / `#undo` / `#redo`, and the
-  palette's `#edit-palette[data-armed]` + `[data-tool]` per tool, its transport
-  `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, the
+  palette's `#edit-palette[data-armed]` + `[data-tool]` per tool, its transport `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, its
+  toolbox shell `#edit-palette[data-collapsed]` + `#palette-fold[data-collapsed]` (⚠ **a FLOATING, draggable, foldable toolbox since 2026-09-03** — `fixed`, rendered from `App` OUTSIDE
+  `.kv-card`, taking no width from the score row; folding UNMOUNTS every tool, so unfold before arming one), the
   insert preview `[data-omr="insert-ghost"][data-insert-pitch]`, the tuplet tool's
   `#sheet-surface[data-tuplet-anchor]` + `[data-tuplet="start|member|anchor|end|blocked"]` per note,
+  the SIGN tools `[data-tool="sign:repStart|repEnd|volta|segno|coda|dc|fine"]`, their delete targets `[data-omr="sign-hit"][data-bar][data-sign]`, the unfinished `‖:` `[data-omr="open-repeat"][data-bar]` and a refusal's `.kv-toolbox__hint[data-refused]`,
   the drawn mark's own target `[data-omr="tuplet-mark-hit"][data-tuplet-group][data-tuplet-mark="closed|broken"]`
   (⚠ **the SIGN selects a tuplet; its notes are `pointer-events: none`** — owner, 2026-08-30), a HELD
   mark's `#sheet-surface[data-tuplet-selected]` + `[data-tuplet-held]` per member +
@@ -307,7 +309,7 @@ a successful build is not a deploy. Both, and every other command, in
   `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that container —
   `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not
   survive a transform. The design system is `apps/web/src/styles/` (`tokens.css` → `base.css` →
-  `app.css`); classes are `.kv-*`.
+  `app.css`); classes are `.kv-*`. ⚠ **`.kv-score` keeps `overflow-y: clip`, load-bearing** (owner, 2026-09-03: ONE scrollbar, not two) — `overflow-x` alone computes the other axis to `auto`, and Bravura's font metrics gave the box 17 px of phantom height. [docs/DECISIONS.md](docs/DECISIONS.md).
 - **`StaveNote.getBoundingBox()` is a merge over the note's MODIFIERS, so it is not safe on its own**
   (2026-08-08, a live bug). `GraceNoteGroup` never positions itself, so it reports its box at the SVG
   **origin**, and merging that stretched a graced note's click box from the top-left of the score to
@@ -388,7 +390,7 @@ data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training po
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
                       re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
-data/synthetic/       rendered strips — ROUND 3 TRAINS ON strips_v7_final (3 flags, 0 \tie); older sets kept
+data/synthetic/       rendered strips — ROUND 3 TRAINED ON strips_v7_final (3 flags, 0 \tie) and ROUND 4 REUSES IT UNCHANGED (no render, owner 2026-09-03); older sets kept
 data/checkpoints/     round2-stage2-best (+ -onnx int8, THE LIVE RUNTIME — round1-best is the
                       superseded one), the r3-* Round-3 arms, and rung3-labeler: a July tooling
                       checkpoint, NEVER shipped, that only feeds the emitter and decode_page.py

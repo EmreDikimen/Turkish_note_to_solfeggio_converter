@@ -105,11 +105,14 @@ export const TR = {
     hintSheet: "Bir ölçüye tıklayın, eser oradan çalar.",
     hintSheetEditing:
       "Düzenleme açık — bir notaya tıklayın: seçilir, ✕ ile silinir, yukarı/aşağı sürükleyince " +
-      "perdesi değişir. Soldaki paletten bir süre ya da değiştirme işareti seçip notaya " +
+      "perdesi değişir. Alet çantasından bir süre ya da değiştirme işareti seçip notaya " +
       "tıklarsanız o nota değişir. Bir süre seçiliyken boşluğa tıklarsanız oraya yeni nota " +
       "eklenir — perdesini tıkladığınız yükseklik belirler. Üçleme aracıyla bir notaya, sonra iki " +
       "sonrakine tıklayın: üçü üçleme olur. Ölçü usulden uzun ya da kısa kalırsa sağ üst köşesinde " +
-      "bir işaret belirir.",
+      "bir işaret belirir. Tekrar ve yön işaretlerini (‖: :‖ 1./2. 𝄋 ⊕ D.C. Son) alet çantasından " +
+      "seçip bir ölçüye tıklayarak koyabilirsiniz; kaldırmak için Seçim'e geçip işaretin üstüne " +
+      "tıklayın. Alet çantasını başlığından tutup istediğiniz yere sürükleyebilir, sağ üstteki " +
+      "düğmeyle küçültüp büyütebilirsiniz.",
     hintInstrument:
       "Çalın: eserin o anda çaldığı yer, seçtiğiniz enstrümanın üzerinde gösterilir. Enstrümanı " +
       "yukarıdaki listeden değiştirebilirsiniz — ses de ona göre ayarlanır.",
@@ -124,9 +127,20 @@ export const TR = {
     removeTuplet: "Üçlemeyi kaldır — notalar kalır, süreleri eski hâline döner",
     tupletHandle: "Sürükleyerek üçlemeyi kaydır",
     tupletHandleFix: "Sürükleyerek üçlemeyi tamamla veya daralt",
+    removeSign: "İşareti kaldır — tıklayın",
+    repeatFrom: "Tekrar buradan başlasın",
+    repeatTo: "Tekrar burada bitsin",
+    repeatCancel: "Vazgeç — tekrar konmadı",
+    openRepeat:
+      "Tamamlanmamış tekrar başı ‖: — kapatacak bir :‖ yok, o yüzden portede çizilmiyor ve eser " +
+      "düz çalıyor. Bir :‖ koyun ya da tıklayıp bunu kaldırın",
   },
 
   palette: {
+    title: "Alet çantası",
+    dragTitle: "Başlığından tutup istediğiniz yere sürükleyin",
+    collapse: "Küçült",
+    expand: "Büyüt",
     playback: "Dinle",
     play: "▶ Çal",
     stop: "■ Dur",
@@ -147,6 +161,44 @@ export const TR = {
       "Üçleme — ilk notaya, sonra iki sonrakine tıklayın: üçü üçleme olur. Var olan bir üçlemeyi " +
       "seçmek için notalarına değil, üstündeki 3 işaretine tıklayın: sonra uçlarından sürükleyerek " +
       "kaydırabilir, ✕ ile kaldırabilirsiniz",
+    repeats: "Tekrar",
+    repeatTitle:
+      "Tekrar — seçin, sonra iki çizgiye tıklayın: önce tekrarın başlayacağı ölçü çizgisi, sonra " +
+      "biteceği çizgi. ‖: ve :‖ birlikte konur",
+    hintRepeatStart: "Tekrar nerede BAŞLASIN? Başlangıç ölçü çizgisine tıklayın. Bırakmak için Esc.",
+    hintRepeatEnd: (bar: number) =>
+      `Tekrar ${bar}. ölçüden başlıyor. Şimdi nerede BİTSİN? Bitiş ölçü çizgisine tıklayın — ` +
+      `soluk çizgilere konamaz. Vazgeçmek için kesik çizgiye ya da Esc.`,
+    voltaTitle:
+      "1./2. volta — bir tekrarın içindeki ölçüye tıklayın: o ölçü \"1.\" olur, :‖ işaretinden " +
+      "sonraki ölçü de \"2.\". İkinci dönüşte 1. atlanır. İkisi birlikte konur, birlikte kalkar",
+    navigation: "Yön",
+    segnoTitle:
+      "𝄋 — ilk koyduğunuz 𝄋 bir bölümün başını işaretler; sonraki her 𝄋 o bölümü yeniden çalıp " +
+      "geri döner. Bölümün nerede bittiğini sayfanın söylemesi gerekir: bir \"Son\" ya da bir :‖",
+    codaTitle: "⊕ — birincisi atlama noktası, ikincisi varış noktası. İkiden fazlası konmaz",
+    dc: "D.C.",
+    dcTitle: "D.C. — eserin sonuna konur, baştan bir kez daha çalınır (tekrarlar alınmaz)",
+    fine: "Son",
+    fineTitle: "Son — parçanın bittiği yer. D.C. dönüşü burada durur, 𝄋 bölümü burada biter",
+    hintArmedSign:
+      "Bir ölçüye tıklayın: işaret o ölçüye konur. Konmuş bir işareti kaldırmak için Seçim'e " +
+      "geçip işaretin üstüne tıklayın. Bırakmak için Esc.",
+    // ⚠ Every one of these is a REFUSAL, and each says what would have gone wrong — a sign that
+    // draws one thing and sounds another. The gate is in structure-edit.ts; this is its voice.
+    refused: {
+      offScore: "Burası eserin dışında — işaret konamaz.",
+      backwards: "Tekrar geriye doğru olmaz: bitiş, başlangıçtan önceki bir çizgi olamaz.",
+      voltaOutside: "Volta ancak bir tekrarın içine konur. Önce Tekrar aracıyla bir tekrar çizin.",
+      voltaFar:
+        "Bu ölçü :‖ işaretinden fazla uzakta. Bir volta en çok dört ölçüdür; :‖ işaretine daha " +
+        "yakın bir ölçüye tıklayın.",
+      voltaLast: "\"2.\" için :‖ işaretinden sonra ölçü kalmıyor.",
+      codaFull: "Zaten iki ⊕ var: biri atlama, biri varış. Üçüncüsü bir şey ifade etmez.",
+      conflict:
+        "Bu işaret buraya konursa çizildiği gibi çalmaz. Örneğin: açık bir tekrarın içine ikinci " +
+        "bir ‖:, bölümünün nerede bittiği belli olmayan bir 𝄋, ya da eserin ortasında bir D.C.",
+    },
     select: "↖ Seçim",
     selectTitle: "Aracı bırak: tıklamak seçer, sürüklemek perdeyi değiştirir (Esc)",
     hintIdle: "Bir araç seçin, sonra notaya tıklayın.",

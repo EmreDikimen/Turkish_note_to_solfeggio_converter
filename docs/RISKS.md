@@ -3,7 +3,7 @@
 purpose: the standing caveats — what is measured but fragile, what is NOT claimed, and the traps that survive the work that found them
 audience: anyone about to quote a number, believe a green check, or act on a result
 
-updated: 2026-08-30
+updated: 2026-09-03
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. The split
 is by genre: STATUS holds **current state and the next action** and nothing else; this file holds
@@ -14,6 +14,17 @@ Rule that produced most of this file: a number without its caveat gets quoted la
 solid. That has already happened once, when a 3-gold class swung a headline ~11 points.
 
 
+- **NEW (2026-09-03): the owner's hand test and the paired reads DISAGREE on Run A, and neither is
+  wrong.** The owner reads Run A `best-real` as visibly better than `r3-final-stage2-last` and
+  Round 2 in the app; on `_realval_v2` it is a null (15 better / 15 worse). Real-val's CI half-width
+  is ~±0.13 edits/strip, so a gain under ~5% hides, and the exam drops 41% of its candidates — the
+  dense strips a whole page shows. ⚠ Do not quote "Run A is better" as measured, and do not quote the
+  null as "Run A is no better". The instrument that could settle it — a fixed hand-test page set —
+  does not exist yet ([rung3/round4.md](rung3/round4.md)).
+- **NEW (2026-09-03): under the Round-4 tokenizer, synthetic labels are SHORT and real ones are
+  not.** No render this round (owner), so synthetic strips stay packed to 57 old ids (~33 new) while
+  re-emitted real strips fill 59 new ids. Long, dense labels would then exist only in the real pool.
+  Unmeasured; the first Round-4 measurement is the two length distributions.
 - **NEW (2026-08-21): every `\sig` block in a real-page label is UNVERIFIED.** The key signature is
   the only part of a label not derived from SymbTr — the model reads it off each row-start strip and
   the **majority read overwrites the derivation**. The voter is the weak `rung3-labeler`, whose

@@ -2,7 +2,7 @@
 
 purpose: index and one-page plan for the real-page track; routes to the six detail files
 audience: agents and the owner working on real data
-updated: 2026-08-27
+updated: 2026-09-03
 
 > This track's **current state and next action are NOT here** — they live in
 > [../STATUS.md](../STATUS.md). This file describes the plan and where each part is written up.
@@ -43,7 +43,8 @@ so correcting is "glance and confirm", not "repair everything".
 | [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
 | [staccato-arm.md](staccato-arm.md) | **Round 3's arm 2** — the staccato distractor: the hole, the draw, the signed pre-registration, the result (**it passes**) and the open disposition | new 2026-08-20 |
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |
-| [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **deferred to Round 4** | new 2026-08-27 |
+| [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **picked up by Round 4** | new 2026-08-27 |
+| [round4.md](round4.md) | **Round 4**: the root causes with their homes, the owner's five decisions of 2026-09-03 (no render, `\tupend` stays, stage 2 at 4,000, beam search never on the user path unless it pays, scheme H recommended), the octave count, and the order of work | new 2026-09-03 |
 | [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
 | [followups.md](followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
 
@@ -52,11 +53,12 @@ so correcting is "glance and confirm", not "repair everything".
 | Step | State |
 |---|---|
 | 1 — free labels from SymbTr matches | ✅ done, both sources (+ targeted tuplet collection) |
-| 2 — freeze the exam | ✅ done; v2.1 frozen 2026-07-19. ⏭ **v3 is now SPECIFIED and BOUNDED (2026-08-20)**: label the **21 pages the exam already owns and has never graded** (46 → 67), re-score the Round-2 baseline on the grown exam, then stop — [exam.md](exam.md). ⚠ It **blocks the one-shot read**. Still owed beyond it: the low-n floor and the over-budget recoveries |
+| 2 — freeze the exam | ✅ done; v2.1 frozen 2026-07-19; **v3 promoted 2026-08-31** (660 strips / 63 pages, Round-2 baseline re-scored on it) and read once for Round 3 — [exam.md](exam.md), [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md). ⏭ Round 4 keeps `examv3` as the comparable column and adds the rescued dense strips and any third-source pages as SEPARATE columns |
 | 3 — strip-label emitter | ✅ built and calibrated |
 | 4 — Round 1 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-23) |
 | 4 — Round 2 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-27) |
-| 4 — Round 3 | 🔄 in progress: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)). Arms run one variable each, never two together. **Arm 1, the scan profile — null** ([scan-profile.md](scan-profile.md)). The one-measure-per-strip arm was **dropped** and the staccato arm took its slot ([../DECISIONS.md](../DECISIONS.md)), so **arm 2, the staccato distractor — ✅ passes**: the first Round-3 arm to move its primary ([levers.md](levers.md) Lever 6). Earlier: the tuplet-mark A/B **null** ([tuplets.md](tuplets.md)), crop geometry ran and was **stopped**. ⏭ What is left is the **final model's render, then the exam read once**. ✅ **The render is fully specified (2026-08-20)** — three flags: `--concave-tuplet`, `--staccato-noise` and a **label-free dotted (usul) barline** ([../DECISIONS.md](../DECISIONS.md)). State and next action in [../STATUS.md](../STATUS.md) |
+| 4 — Round 4 | 🔄 **opened 2026-09-03** — [round4.md](round4.md): read the dense half (scheme H tokens + the rail at b = 57), fix the model-voted signature, select on real-val corrections, probe a third source; no render, `\tupend` stays, stage 2 at 4,000 |
+| 4 — Round 3 | ✅ **CLOSED 2026-09-03.** Read once 2026-09-01: **51%** against the 75% floor, a miss; ~15 of +17 points the retired `\tie`; runs A and B nulls on real-val; `r3-final-stage2-last` is the model on record and Run A `best-real` the owner's hand-test pick ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md), [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)). The record as it ran: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)). Arms run one variable each, never two together. **Arm 1, the scan profile — null** ([scan-profile.md](scan-profile.md)). The one-measure-per-strip arm was **dropped** and the staccato arm took its slot ([../DECISIONS.md](../DECISIONS.md)), so **arm 2, the staccato distractor — ✅ passes**: the first Round-3 arm to move its primary ([levers.md](levers.md) Lever 6). Earlier: the tuplet-mark A/B **null** ([tuplets.md](tuplets.md)), crop geometry ran and was **stopped**. ⏭ What is left is the **final model's render, then the exam read once**. ✅ **The render is fully specified (2026-08-20)** — three flags: `--concave-tuplet`, `--staccato-noise` and a **label-free dotted (usul) barline** ([../DECISIONS.md](../DECISIONS.md)). State and next action in [../STATUS.md](../STATUS.md) |
 | 5 — hand-correction loop on unmatched pieces | ⏸ not started (scheduled after the rounds) |
 
 ## Standing rules for this track

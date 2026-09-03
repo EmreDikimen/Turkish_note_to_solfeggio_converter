@@ -48,7 +48,7 @@ const graphUrl = (name: string) =>
   WEIGHTS_BASE ? `${WEIGHTS_BASE}/${name}.onnx` : `/models/${name}.onnx`;
 
 /** Bump when the shipped graphs change, so a stale cached copy cannot outlive them. */
-const CACHE_NAME = "omr-weights-round2-stage2-int8";
+const CACHE_NAME = "omr-weights-r3a-stage2-best-real-int8";
 
 let pending: Promise<LoadedModel> | null = null;
 let metaPending: Promise<ModelMeta> | null = null;

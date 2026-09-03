@@ -376,13 +376,13 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    arithmetic underneath is right.
    **(2) Do the little ticks help, or are they clutter?** Say so either way; it is a drawing choice,
    not a measurement, and yours is the only opinion that settles it.
-14. **Open it to everyone — but only if Round 3's exam result is good.**
+14. **Open it to everyone — but only when a round's exam result is good.** Round 3's was not (51% against 75%), so this waits for Round 4 — [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
 
 ### The model work → [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md)
 
-The whole model plan in plain words — what the triplet work settled, the scanned-pages decision, the
-**three trainings** and what each one changes, when we train, and what the one-shot exam decides.
-Moved out of this page on 19 August when it passed its size limit.
+Round 3 is finished and it missed; **what we do next is [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md)** (3 September).
+The Round 3 story — the triplet work, the scanned-pages decision, the three trainings and what the
+one-shot exam decided — stays in OVERVIEW-ROUND3, moved out of this page on 19 August at its size limit.
 
 ## Small glossary (only the words used above)
 

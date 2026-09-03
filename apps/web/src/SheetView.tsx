@@ -19,6 +19,7 @@ import {
 } from "@turkish-omr/core";
 import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
 import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
+import type { MarkTarget, SignTool, StructureMark } from "../../../tools/render/structure-edit";
 import {
   closedTupletAt,
   drawnTupletAt,
@@ -1003,6 +1004,17 @@ function drawStaccatoDot(svg: SVGSVGElement, note: StaveNote): void {
 // inside the strip-crop window (which starts ~46px above the top line).
 const VOLTA_ABOVE = 26;
 
+/** Delete-target geometry for the structure signs. A repeat barline's target is NARROW on purpose:
+ *  it straddles the barline, where no notehead sits, so what it takes from a note target is stem
+ *  and beam. The nav marks' boxes sit entirely above the top staff line, where the glyphs are
+ *  drawn — they overlap nothing. */
+const SIGN_HIT_W = 16;
+const SIGN_HIT_PAD = 6;
+const NAV_HIT_W = 30;
+const NAV_HIT_H = 22;
+/** The strip at a bar's right edge the off-meter badge owns (`.kv-bar-warn`, 16px + its offset). */
+const BAR_WARN_W = 24;
+
 /**
  * Draw a volta (1./2. ending) bracket over one measure, as raw SVG — like the key signature and
  * meter. VexFlow's own `Volta` places the bracket ~7 staff spaces above the top line and its label
@@ -1460,6 +1472,14 @@ export function SheetView({
   onNudgePitch,
   armedTool,
   armedRest = false,
+  armedSign = null,
+  signTargets,
+  openRepeat = null,
+  repeatAnchor = null,
+  onPlaceMark,
+  onRepeatEdge,
+  onRepeatCancel,
+  onRemoveMark,
   onApplyTool,
   onInsertNote,
   tupletAnchor = null,
@@ -1527,12 +1547,45 @@ export function SheetView({
    *  gesture (`onTupletPick`). The kind also decides what EMPTY space does: a note value inserts
    *  there (step 6), while an accidental or the tuplet has nothing to attach to and does nothing —
    *  opening the measure modal on an armed click would be a surprise. */
-  armedTool?: "duration" | "accidental" | "tuplet" | null;
+  armedTool?: "duration" | "accidental" | "tuplet" | "structure" | null;
   /** True when the armed note value is a REST tool. Only the preview cares: a rest has no pitch, so
    *  the ghost parks mid-staff and stops naming one. The insert/apply paths are the same. */
   armedRest?: boolean;
   /** Edit mode: a note was clicked while a tool was armed. Fires once per click, even for a
    *  tie-split event (two boxes, one `evIndex`). */
+  /**
+   * Edit mode: the structure signs a click can DELETE, with the bar and edge each one is drawn on.
+   * Undefined outside edit mode and while the score is written out long.
+   *
+   * ⚠ Positions come from the caller, not from `repeatSpans`, and the two are not the same list —
+   * see `App`'s `signTargets`. This component only paints a target where it is told to.
+   */
+  signTargets?: MarkTarget[];
+  /**
+   * Edit mode: a bar carrying a `‖:` that nothing closes yet, or null.
+   *
+   * ⚠ This sign is NOT on the engraved staff and must not be — `repeatSpansFromStructure` refuses
+   * to draw a repeat the music does not take. It is drawn here, in the overlay, marked incomplete:
+   * a score is marked up left to right, so a `‖:` is unfinished for as long as it takes to place
+   * its `:‖`, and a tool whose click leaves no trace reads as broken. Same idiom as a broken
+   * tuplet mark.
+   */
+  openRepeat?: number | null;
+  /** Which SIGN is armed, when `armedTool` is `"structure"`. The repeat is the one that is not
+   *  placed on a bar, so the sheet has to tell them apart. */
+  armedSign?: SignTool | null;
+  /** The repeat gesture's first click: the bar whose opening barline carries the pending `‖:`,
+   *  or null. ⚠ Nothing is in the document yet — this is a preview, not a placed sign. */
+  repeatAnchor?: number | null;
+  /** A structure tool is armed and a bar was clicked: put the sign on that bar. */
+  onPlaceMark?: (bar: number) => void;
+  /** A barline was clicked while the repeat tool is armed. `edge` says which line of the bar:
+   *  `"start"` opens the repeat (first click), `"end"` closes it (second). */
+  onRepeatEdge?: (bar: number, edge: "start" | "end") => void;
+  /** The pending `‖:` was clicked again — take the gesture back. */
+  onRepeatCancel?: () => void;
+  /** A drawn sign was clicked in Seçim: take it off. */
+  onRemoveMark?: (bar: number, mark: StructureMark) => void;
   onApplyTool?: (index: number, pitchAt?: { letter: string; octave: number; alter: number }) => void;
   /** Edit mode, a note value armed: empty staff was clicked, so insert a note there. Everything
    *  is already resolved from the geometry — which bar, which event to go in front of (null =
@@ -2557,6 +2610,7 @@ export function SheetView({
         data-edit-mode={editMode ? "on" : "off"}
         data-selected-note={editMode && selectedNote != null ? selectedNote : undefined}
         data-tuplet-anchor={editMode && tupletAnchor != null ? tupletAnchor : undefined}
+        data-repeat-anchor={editMode && repeatAnchor != null ? repeatAnchor : undefined}
         data-tuplet-selected={tupletSel ? tupletSel.members[0] : undefined}
         style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
@@ -2645,6 +2699,14 @@ export function SheetView({
                     if (at) onInsertNote?.(insertAt(b, at));
                     return;
                   }
+                  // A SIGN belongs to the BAR, so anywhere in it will do — including on top of a
+                  // note, which is why the note targets go pointer-transparent while one is armed.
+                  // ⚠ Except the REPEAT: its two signs sit ON barlines, so it has its own targets
+                  // and a click in the middle of a bar means nothing to it.
+                  if (armedTool === "structure") {
+                    if (armedSign !== "repeat") onPlaceMark?.(b.index);
+                    return;
+                  }
                   if (armedTool) return; // an accidental (or the tuplet) needs a note
                   onSelectNote?.(null);
                 }}
@@ -2730,13 +2792,20 @@ export function SheetView({
               const heldMember = tupletSel?.members.includes(nb.evIndex) === true;
               const landing = tupletSel?.all.get(nb.evIndex);
               const isFix = tupletSel?.fixes.has(nb.evIndex) === true;
-              const dead = tup === "blocked" || tup === "member";
+              // ⚠ TWO SEPARATE THINGS, and merging them was a live bug. `refused` is the TUPLET
+              // tool saying "not this note" — it greys the note, which is how the page refuses
+              // instead of popping an error. `dead` is only about pointer-events, and a SIGN tool
+              // makes every note pointer-transparent because a sign goes on a BAR: the click has to
+              // reach the measure box underneath, wherever in the bar it lands. Written as one
+              // flag, arming any sign greyed out the whole score.
+              const refused = tup === "blocked" || tup === "member";
+              const dead = refused || armedTool === "structure";
               return (
                 <div
                   key={`${nb.evIndex}_${i}`}
                   className={
                     `kv-note-hit${on ? " is-selected" : ""}${armed ? " is-armed" : ""}` +
-                    `${dead ? " is-dim" : ""}${tup === "anchor" ? " is-anchor" : ""}` +
+                    `${refused ? " is-dim" : ""}${tup === "anchor" ? " is-anchor" : ""}` +
                     `${heldMember ? " is-tuplet-held" : ""}${landing ? " is-tuplet-landing" : ""}` +
                     `${isFix ? " is-tuplet-fix" : ""}`
                   }
@@ -2807,6 +2876,147 @@ export function SheetView({
                   }}
                 />
               ))}
+            {/* THE STRUCTURE SIGNS (owner, 2026-09-03). Two kinds of ink, and one of them is not on
+                the staff at all.
+
+                ⚠ These are DELETE targets, live only in Seçim. With a sign tool armed every click
+                places one — "armed places, Seçim removes" — so a target here would make clicking an
+                existing `‖:` mean two different things depending on what is in your hand.
+
+                ⚠ Painted after the note targets for the same reason the tuplet marks are: a later
+                sibling wins the overlap, and a repeat barline sits exactly where a note's box
+                reaches. They are narrow and sit ON the barline, so what they take from a note is
+                the sliver of staff no notehead occupies.
+
+                ⚠ `openRepeat` is the odd one: a `‖:` with nothing closing it is deliberately absent
+                from the engraved staff (`repeatSpansFromStructure` will not promise a repeat the
+                music does not take), so edit mode draws it here, dashed. Outside edit mode it is
+                invisible and the page is unchanged — which is the whole point. */}
+            {armedTool == null &&
+              signTargets?.map((t) => {
+                const b = boxes.find((bx) => bx.index === t.bar);
+                if (!b) return null;
+                const bar = t.mark === "repStart" || t.mark === "repEnd";
+                const box = bar
+                  ? {
+                      left: (t.at === "end" ? b.x + b.width : b.x) - SIGN_HIT_W / 2,
+                      top: b.topLineY - SIGN_HIT_PAD,
+                      width: SIGN_HIT_W,
+                      height: 4 * STAFF_SPACE + 2 * SIGN_HIT_PAD,
+                    }
+                  : t.at === "above"
+                    // ⚠ Short of the bar's right edge by `BAR_WARN_W`: the off-meter `+`/`−` badge
+                    // sits there, in the same band, and this target paints later — taking the whole
+                    // width would swallow the one tooltip that explains a bar that does not add up.
+                    ? { left: b.x, top: b.topLineY - VOLTA_ABOVE - 4, width: Math.max(20, b.width - BAR_WARN_W), height: 20 }
+                    : {
+                        left: t.at === "end" ? b.x + b.width - NAV_HIT_W : b.x,
+                        top: b.topLineY - NAV_HIT_H - 4,
+                        width: NAV_HIT_W,
+                        height: NAV_HIT_H,
+                      };
+                return (
+                  <div
+                    key={`sign_${t.bar}_${t.mark}`}
+                    data-omr="sign-hit"
+                    data-bar={t.bar}
+                    data-sign={t.mark}
+                    className="kv-sign-hit"
+                    title={TR.sheet.removeSign}
+                    onClick={(e) => { e.stopPropagation(); onRemoveMark?.(t.bar, t.mark); }}
+                    style={{ position: "absolute", ...box, pointerEvents: "auto", cursor: "pointer" }}
+                  />
+                );
+              })}
+            {/* THE REPEAT'S BARLINE TARGETS (owner, 2026-09-03: *"ölçüye değil de barline lara
+                tıklayabilsin kullanıcı"*). Two clicks, and they are on the two lines a repeat is
+                actually printed on: a bar's OPENING line carries `‖:`, its CLOSING line carries
+                `:‖`. That is also what makes the gesture unambiguous — the phases target different
+                lines, so "the same place twice" is not a state that has to be given a meaning.
+
+                ⚠ Unlike the delete chips these are VISIBLE while the tool is armed: an invisible
+                target teaches nothing, and the user has to see which lines are on offer. Phase 2
+                dims every line at or before the anchor (`data-repeat-edge-state="blocked"`) and
+                makes it inert — a repeat cannot close where it opened or earlier. */}
+            {armedTool === "structure" && armedSign === "repeat" &&
+              boxes.map((b) => {
+                const opening = repeatAnchor == null;
+                const blocked = !opening && b.index < repeatAnchor!;
+                return (
+                  <div
+                    key={`repedge_${b.index}`}
+                    data-omr="repeat-edge"
+                    data-bar={b.index}
+                    data-edge={opening ? "start" : "end"}
+                    data-repeat-edge-state={blocked ? "blocked" : "open"}
+                    className={`kv-repeat-edge${blocked ? " is-blocked" : ""}`}
+                    title={opening ? TR.sheet.repeatFrom : TR.sheet.repeatTo}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!blocked) onRepeatEdge?.(b.index, opening ? "start" : "end");
+                    }}
+                    style={{
+                      position: "absolute",
+                      // The opening line is the bar's left edge, the closing line its right — the
+                      // same two places VexFlow puts `‖:` and `:‖`.
+                      left: (opening ? b.x : b.x + b.width) - SIGN_HIT_W / 2,
+                      top: b.topLineY - SIGN_HIT_PAD,
+                      width: SIGN_HIT_W,
+                      height: 4 * STAFF_SPACE + 2 * SIGN_HIT_PAD,
+                      pointerEvents: blocked ? "none" : "auto",
+                      cursor: "pointer",
+                    }}
+                  />
+                );
+              })}
+            {/* The pending `‖:`. Dashed, because nothing is in the document yet — the repeat is
+                committed only by the second click. Clicking it takes the gesture back. */}
+            {(() => {
+              if (repeatAnchor == null) return null;
+              const b = boxes.find((bx) => bx.index === repeatAnchor);
+              if (!b) return null;
+              return (
+                <div
+                  data-omr="repeat-anchor"
+                  data-bar={repeatAnchor}
+                  className="kv-open-repeat is-anchor"
+                  title={TR.sheet.repeatCancel}
+                  onClick={(e) => { e.stopPropagation(); onRepeatCancel?.(); }}
+                  style={{
+                    position: "absolute",
+                    left: b.x - 2,
+                    top: b.topLineY - SIGN_HIT_PAD,
+                    width: 4,
+                    height: 4 * STAFF_SPACE + 2 * SIGN_HIT_PAD,
+                    pointerEvents: "auto",
+                    cursor: "pointer",
+                  }}
+                />
+              );
+            })()}
+            {(() => {
+              if (openRepeat == null) return null;
+              const b = boxes.find((bx) => bx.index === openRepeat);
+              if (!b) return null;
+              return (
+                <div
+                  data-omr="open-repeat"
+                  data-bar={openRepeat}
+                  className="kv-open-repeat"
+                  title={TR.sheet.openRepeat}
+                  onClick={(e) => { e.stopPropagation(); if (armedTool == null) onRemoveMark?.(openRepeat, "repStart"); }}
+                  style={{
+                    position: "absolute",
+                    left: b.x - 2,
+                    top: b.topLineY - SIGN_HIT_PAD,
+                    width: 4,
+                    height: 4 * STAFF_SPACE + 2 * SIGN_HIT_PAD,
+                    pointerEvents: armedTool == null ? "auto" : "none",
+                    cursor: armedTool == null ? "pointer" : "default",
+                  }}
+                />
+              );
+            })()}
             {/* The held triplet (editor step 7b): a frame round its three notes, a handle at each
                 end, and the ✕ that takes the bracket off.
                 ⚠ Nothing here is stored — `tupletSel` re-derives the group from the document every

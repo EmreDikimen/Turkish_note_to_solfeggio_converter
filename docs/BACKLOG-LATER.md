@@ -3,7 +3,7 @@
 purpose: the deferred work that is NOT near-term — density levers, exam v3's owed items, the signature-packed sharp glyphs, and the rest; kept out of BACKLOG.md so that file holds only what could plausibly be picked up next
 audience: agents with spare capacity, or anyone asking "why was this deferred and what would restart it"
 
-updated: 2026-08-27
+updated: 2026-09-03
 
 Split out of [BACKLOG.md](BACKLOG.md) on 2026-08-26 at the 400-line cap. Phase split: that file
 holds **what could be picked up next**; this one holds **what is deferred past this round**. Nothing
@@ -40,7 +40,8 @@ down.** Each item carries the reason it is deferred; read it before starting. Ab
      4-vs-16 choice is open ([DECISIONS.md](DECISIONS.md), 2026-08-27). ⭐ **No label conversion is
      involved** — the text is unchanged, only the tokenizer's segmentation. Ids are append-only so it is *allowed*; it needs a retrain to be
      *used*. ⚠ **Do it in the same re-emit as the rail below**, not as its own round — both re-emit
-     the pools. Round 4.
+     the pools. Round 4. ⏭ **PICKED UP 2026-09-03**: scheme H recommended (owner to confirm), no
+     re-render this round, `\tupend` stays — [rung3/round4.md](rung3/round4.md).
    - **Raising the 59-id budget** — DROPPED for Round 3 (see [DECISIONS.md](DECISIONS.md)); the
      measured benefit is kept in item 7 below.
    - ⭐ **THE RAIL ITSELF, AS A PAIR — the Round-4 headline** (owner, 2026-08-23). Measured and
@@ -55,7 +56,9 @@ down.** Each item carries the reason it is deferred; read it before starting. Ab
      and the shipping slicer TOGETHER**, or the train/test mismatch B8 existed to close comes back.
      ⚠ The thing to verify after the retrain is that **non-dense pages do not regress** — that is an
      assumption today, not a measurement. ⚠ Doing this re-cuts the exam, which is exactly why it was
-     kept out of Round 3.
+     kept out of Round 3. ⏭ **Round 4, b = 57, in the same re-emit as the tokens; the exam stays
+     `examv3` as the comparable column and the rescued dense strips form a SEPARATE column**
+     ([rung3/round4.md](rung3/round4.md) steps 5 and 8).
 
 1. **DONE (2026-07-31): every consumer reads `_realval_v2`** — pointing an eval at
    `make_realval_pool.py`'s `_realval` output silently restores the no-hard-tier pool. ⚠ The owner's

@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-08-26
+updated: 2026-09-03
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -72,6 +72,8 @@ starting. Abandoned plans are a different thing again and live in
    pool it reads**, and adding a real pool silently changes that pool. Three runs, three wrong picks,
    in three different places (steps 500, 250, and `best-real` at 1,250).
    [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
+   ⏭ **SCHEDULED for Round 4** — select on free-running real-val corrections, plus EMA and label
+   smoothing ([rung3/round4.md](rung3/round4.md) step 2).
 
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against
    2,330; result and carry table in [METRICS-CORPUS.md](METRICS-CORPUS.md), queues in
@@ -234,6 +236,8 @@ starting. Abandoned plans are a different thing again and live in
    the mechanism survived the re-emit; it does not size it.
    ⚠ **Not yet an error rate.** n=7 corrections in 1 makam; many overrides are probably right, and the
    table is a guide — mahur genuinely prints both ways (küçük 35, koma 17).
+   ⏭ **SCHEDULED for Round 4** — the disagreement list, then the review-instead-of-override rule; the
+   owner reads the rows ([rung3/round4.md](rung3/round4.md) step 3).
 
 10. **NEW 2026-08-22 — EVERY PAGE THIS PROJECT OWNS COMES FROM TWO WEBSITES, AND SO DOES THE EXAM.**
    Raised by the owner (*"is there any strip from other note sheet resources like trt, divanmakam,
@@ -257,6 +261,9 @@ starting. Abandoned plans are a different thing again and live in
    convention decides whether its pages cost nothing or cost hand-labelling. ⚠ Read each licence
    first: neyzen and notaarsivleri are recorded **all rights reserved / read locally, never
    redistribute** ([THIRD-PARTY.md](THIRD-PARTY.md)), and TRT is a state broadcaster — its own read.
+   ⏭ **SCHEDULED for Round 4 as the probe, before any crawl** — and the tuplet-dense pages it brings
+   are collected together with the vocabulary change, or the gate drops them
+   ([rung3/round4.md](rung3/round4.md) step 4).
 
 11. **NEW 2026-08-30 — THE SYNTHETIC CORPUS HAS NEVER DRAWN A 𝄋 AT A BAR'S END, AND 433 REAL PAGES
    CARRY ONE.** `navmarks.ts` places every injected segno at a measure's **start** (`at: "start"`),
@@ -267,7 +274,8 @@ starting. Abandoned plans are a different thing again and live in
    (the coda pair already does), which costs one line and one re-emit; the label is unchanged, so
    nothing about the token vocabulary moves. ⚠ **Not for this round's pools** — it changes a share of
    every rendered piece, which is exactly the `--print-noise` failure mode, and Round 3's render is
-   already specified.
+   already specified. ⏸ **Not in Round 4 either — no render this round (owner, 2026-09-03)**; it
+   waits for a round that renders ([rung3/round4.md](rung3/round4.md) "Not this round").
 
 ### ⏭ `carry_labels()` should carry a verdict when the crop is BYTE-IDENTICAL (owner, 2026-08-26)
 

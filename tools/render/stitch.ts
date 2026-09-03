@@ -160,11 +160,19 @@ interface WrittenEvent {
   den: number;
 }
 
-/** One written measure with the structure marks decoded on/around it. */
-interface MeasureRec {
-  events: WrittenEvent[];
+/**
+ * The structure marks on ONE bar, with no music attached.
+ *
+ * ⭐ This is the whole input to the three expanders below: what a page's signs make the music do
+ * depends on the SIGNS ALONE, never on the notes under them. Splitting it out is what lets the
+ * editor re-resolve a page after the user adds or deletes a sign (`resolveStructure`) through the
+ * very same code the decoder runs — one rule, not two that drift. `MeasureRec` and `BarStructure`
+ * are both this shape plus a field of their own, so neither call site needed changing.
+ */
+export interface StructureMarks {
+  /** `‖:` at this bar's left edge. */
   repStart?: boolean;
-  /** `:‖` at this measure's right edge. */
+  /** `:‖` at this bar's right edge. */
   repEnd?: boolean;
   volta1?: boolean;
   volta2?: boolean;
@@ -176,6 +184,11 @@ interface MeasureRec {
   codaOrder?: number;
   dc?: boolean;
   fine?: boolean;
+}
+
+/** One written measure with the structure marks decoded on/around it. */
+interface MeasureRec extends StructureMarks {
+  events: WrittenEvent[];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -566,7 +579,19 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
  * ⚠ That asymmetry is deliberate: obeying a stray mark would DELETE real music from the second pass,
  * and ignoring one only replays a passage that was already going to be played.
  */
-const MAX_FIRST_ENDING = 4;
+export const MAX_FIRST_ENDING = 4;
+
+/**
+ * ⚠ The ONE warning that is not an error, which is why it is a constant rather than a literal.
+ *
+ * A `‖:` with nothing closing it is an UNFINISHED repeat, not a wrong one — and it is the state a
+ * person is in for as long as it takes them to place the matching `:‖`, because a score is read
+ * and edited left to right. The editor therefore ACCEPTS it and the sheet draws it as incomplete
+ * (`structure-edit.ts`, the same idiom as a broken tuplet mark); every OTHER warning here means a
+ * sign that would draw but not sound, and those are refused. Matching the text is what let the two
+ * files disagree, so both read this.
+ */
+export const WARN_UNMATCHED_REPSTART = "unmatched \\repstart — played once";
 
 /**
  * Expand `‖: … :‖` (+ 1./2. voltas) into two written passes, and report where the first endings are.
@@ -582,7 +607,7 @@ const MAX_FIRST_ENDING = 4;
  * it is the one nearest its `:‖`.
  */
 function expandRepeats(
-  measures: readonly MeasureRec[],
+  measures: readonly StructureMarks[],
   warnings: string[],
 ): { order: number[]; endings: [number, number][] } {
   const out: number[] = [];
@@ -616,7 +641,7 @@ function expandRepeats(
       passStart = i + 1;
     }
   }
-  if (openStart != null) warnings.push("unmatched \\repstart — played once");
+  if (openStart != null) warnings.push(WARN_UNMATCHED_REPSTART);
   return { order: out, endings };
 }
 
@@ -661,7 +686,7 @@ function expandRepeats(
  * dropped too: `expandDaCapo` below already performs that return.
  */
 function expandSegnoJumps(
-  measures: readonly MeasureRec[],
+  measures: readonly StructureMarks[],
   order: readonly number[],
   warnings: string[],
 ): number[] {
@@ -715,7 +740,7 @@ function expandSegnoJumps(
 /** Append the da-capo pass: jump to the top (or the 𝄋 segno), play WITHOUT repeats preferring
  *  the "2." ending, stop at "Son" (fine) — or take the ⊕→⊕ coda jump and play the coda out. */
 function expandDaCapo(
-  measures: readonly MeasureRec[],
+  measures: readonly StructureMarks[],
   firstPass: number[],
   endings: readonly [number, number][],
   warnings: string[],
@@ -851,6 +876,59 @@ function buildDoc(
     composer: "",
     tuning: { ...DEFAULT_TUNING },
     events,
+  };
+}
+
+/**
+ * Re-resolve a page's playing order from its SIGNS ALONE — the editor's entry into the very code
+ * the decoder runs.
+ *
+ * ⭐ **Why this exists.** The app lets a person add and delete `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son"
+ * on a decoded page. What those signs DO — `playBars` and `firstEndings` — was until now decided
+ * only while stitching a token stream, so an editor would have needed a second copy of the rules
+ * (a first ending is a run, a jump fires at the end of its bar, a D.C. mid-piece is noise, …) and
+ * the copies would have drifted. Instead the marks were split out of `MeasureRec`, and this runs
+ * the same three expanders in the same order over a bare `BarStructure[]`.
+ *
+ * `barCount` is the WRITTEN bar count of the document the marks belong to. A mark naming a bar
+ * outside it is dropped rather than obeyed — editing a note can delete a bar, and a sign left
+ * pointing past the end of the score must not silently re-point at another bar.
+ *
+ * ⚠ The `warnings` it returns are the editor's ONLY legality test. Every one of them is a sign
+ * that would DRAW but not sound the way it looks ("unmatched \repstart", a "1." too far from its
+ * `:‖`, a 𝄋 with nothing saying where its section ends, a mid-piece "D.C."), so the editor refuses
+ * exactly the placements that would put the staff and the sound at odds — see
+ * `structure-edit.ts`. That is a simulation, not a second rulebook, which is the same bargain the
+ * tuplet tool struck with `tupletGroupsIn`.
+ */
+export function resolveStructure(
+  bars: readonly BarStructure[],
+  barCount: number,
+): { structure: ScoreStructure; warnings: string[] } {
+  const warnings: string[] = [];
+  const marks: StructureMarks[] = Array.from({ length: Math.max(0, barCount) }, () => ({}));
+  for (const b of bars) {
+    const i = b.bar - 1;
+    if (i < 0 || i >= marks.length) continue;
+    const { bar: _bar, ...rest } = b;
+    marks[i] = { ...marks[i], ...rest };
+  }
+
+  // Same order as `stitchTokenRows`: repeats are local, then the 𝄋 → 𝄋 returns that replay a whole
+  // section, then the "D.C." at the very end, which reads the order the other two made.
+  const repeats = expandRepeats(marks, warnings);
+  const withSegno = expandSegnoJumps(marks, repeats.order, warnings);
+  const played = expandDaCapo(marks, withSegno, repeats.endings, warnings);
+
+  return {
+    structure: {
+      bars: marks
+        .map((m, i) => ({ bar: i + 1, ...m }))
+        .filter((b) => Object.keys(b).length > 1),
+      playBars: played.map((i) => i + 1),
+      firstEndings: repeats.endings.map(([a, b]) => ({ from: a + 1, to: b + 1 })),
+    },
+    warnings,
   };
 }
 

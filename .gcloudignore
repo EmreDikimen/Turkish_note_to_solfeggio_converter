@@ -48,3 +48,8 @@ node_modules/
 # token map and drops the fixture, so the images themselves never need to travel.
 /apps/web/public/models/*.png
 /apps/web/public/models/*.pixels.bin
+
+# Backups of the previously staged model, kept on disk so a swap is reversible. They are .onnx, so
+# the *.png / *.pixels.bin rules above do not catch them, and each one is another 211 MB of build
+# context that the image never reads — `prepare-models.mjs` copies the three graphs by name.
+/apps/web/public/models/_*/

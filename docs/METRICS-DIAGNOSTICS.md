@@ -2,7 +2,7 @@
 
 purpose: the single home for "why does it fail, and what did we test" — the probe results, including the ones that came back negative
 audience: agents and the owner, before proposing a fix for a known weakness
-updated: 2026-08-20
+updated: 2026-09-03
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps the **scoreboard** (what the model scores, against which floors);
@@ -10,6 +10,39 @@ this file keeps the **investigations** behind those scores. Nothing is duplicate
 
 **Read the negative results.** Most of what follows is a hypothesis that was tested and did not
 survive — each one is a change that was not built on a guess, and re-proposing it costs a round.
+
+### Octave jumps and merged notes are RARE — a wrong pitch is one line or space off (2026-09-03)
+
+Counted off the saved Round-3 decodes in `data/real/rung3/final/_taxonomy_cache/` (the files
+`error_taxonomy.py` wrote on 2026-09-01), aligned on label tokens with that tool's `relabel` rule;
+**no model ran and the exam was NOT re-decoded** — the exam column is the 2026-09-01 read
+re-counted. Asked because the Round-4 vocabulary change was being argued from "the model gets
+octaves wrong" ([rung3/round4.md](rung3/round4.md)).
+
+| | R3 on `_realval_v2` (262) | R3 on `examv3` (660) | R2 on `_realval_v2` |
+|---|---|---|---|
+| pitched-note substitutions | 69 | 94 | 71 |
+| **exactly one or two octaves off, same letter** | **1** | **2** | 1 |
+| one staff step off | 14 | 13 | 13 |
+| same pitch, wrong duration | 20 | 48 | 22 |
+| two notes read as ONE (their durations sum to the decoded one) | **3 strips** | 0 | 4 |
+| a repeated note dropped / a note doubled | 1 / 3 | 3 / 1 | 0 / 0 |
+
+Per-octave error rate — a note substituted or dropped, over the gold notes at that octave:
+
+| octave marks | real-val | exam |
+|---|---|---|
+| `'` | 5.7% (32 / 560) | 2.8% (35 / 1,252) |
+| `''` | 7.1% (99 / 1,402) | 2.4% (85 / 3,595) |
+| `'''` | **14.3% (3 / 21)** | **4.2% (3 / 72)** |
+
+- **A wrong octave is really a wrong HEIGHT.** The model lands a line or space away, not an octave
+  away. A fused letter+octave token cannot fix that; the vocabulary case rests on yield.
+- **`'''` notes read about twice as badly, on 3 errors each — a LEAD, not a finding.** They are 1.1%
+  of notes and sit on ledger lines; rarity, not token cost, is the likelier cause.
+- **Two notes written as one is rare**, as the owner said ("nadiren"): 3 in 262 strips. Not a lever.
+- ⚠ Substitutions involving a rest are excluded from the octave rows (a rest has no octave); the
+  taxonomy's own `note-vs-rest` category carries them.
 
 ### ⛔ LEVER 7, THE SCAN PROFILE: NULL on its primary (2026-08-19, trained arm)
 

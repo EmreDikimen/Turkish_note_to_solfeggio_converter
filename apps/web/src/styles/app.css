@@ -16,19 +16,11 @@
   padding: var(--space-7) var(--space-5) var(--space-8);
 }
 
-/* What the edit palette costs the row it shares with the score: its width, the flex gap, and its
-   own left margin. Declared once — the page shell below and the palette itself both need it. */
-:root {
-  --palette-footprint: 164px;
-}
-
-/* Edit mode widens the PAGE by exactly that, rather than narrowing the sheet. The engraved width
-   is fixed (`SVG_WIDTH` in SheetView, and it is also the training-strip geometry), so the only
-   honest way to keep a whole page of music visible is to give the page more room. On a window too
-   narrow for both, the score falls back to scrolling inside `.kv-score`, as it did before. */
-.kv-page:has(.kv-card--editing) {
-  max-width: calc(var(--page-max) + var(--palette-footprint));
-}
+/* ⚠ THE PAGE WIDTH DOES NOT CHANGE IN EDIT MODE ANY MORE (owner, 2026-09-03). It used to grow by
+   `--palette-footprint` (164px) because the palette was a column in the score's row and took the
+   width from it. The palette is now a FLOATING toolbox (`.kv-toolbox`), so it costs the row
+   nothing and the music stays exactly where it was drawn when you press Düzenle. Do not
+   reintroduce a width that keys off edit mode. */
 
 .kv-header {
   margin-bottom: var(--space-6);
@@ -421,52 +413,124 @@
   margin-top: 2px;
 }
 
-/* The engraved score itself. Wide sheets scroll INSIDE here; the page never scrolls sideways.
+/* The engraved score itself. Wide sheets scroll INSIDE here sideways; the page never does.
    ⚠ No transform/zoom/scale may ever be set on this element — tools/render/render.ts crops
-   training strips by rect from the SVG inside it, and rects do not survive a transform. */
+   training strips by rect from the SVG inside it, and rects do not survive a transform.
+
+   ⚠ `overflow-y: clip` IS LOAD-BEARING, and it is not tidiness (owner, 2026-09-03: "there are two
+   scrollbars, the sheet must not have one"). Setting `overflow-x` alone makes the browser compute
+   `overflow-y: visible` to `auto`, and this box then measured 17px TALLER than it is — so the sheet
+   grew its own vertical scrollbar beside the page's, with a thumb nearly the full height because
+   there was nothing to scroll to. The 17px is not content: the accidental legend under the staff
+   sets Bravura on its glyph spans, and an inline box's LAYOUT overflow is taken from the font's
+   ascent/descent, not from its line-height or its ink — Bravura's are enormous, so the legend
+   reported 105px of scroll height inside a 72px box while every bounding rect fitted. Measured on
+   beyati-delisin: 2421 vs 2404 before, 2404 vs 2404 after, and nothing on screen moved.
+   `clip` computes to `hidden` next to an `auto` axis, which is exactly what is wanted: no
+   scrollbar, no scrolling, and the sideways scroll on the other axis still works. */
 .kv-score {
   overflow-x: auto;
+  overflow-y: clip;
   padding: var(--space-4);
 }
 
-/* The palette sits beside the score, so the row is a flex pair. `min-width: 0` on the score is
-   what keeps its own sideways scroll working inside a flex child instead of stretching the page.
-   ⚠ The palette costs horizontal room the sheet does not have to spare: `--page-max` (1100px) was
-   sized so the 1020px engraved sheet fits exactly, so a palette taking width from the same row
-   pushes the last measures off the paper. The page grows by the palette's footprint while editing
-   (see `.kv-page:has(…)` in the page shell) instead of the score shrinking. */
-.kv-score-row {
+/* ── The edit toolbox (armed tools) ─────────────────────────────────────── */
+
+/* ⚠ FIXED, not sticky, and it floats over the page rather than sitting in the score's row (owner,
+   2026-09-03). Sticky travelled with the row it lived in, so it slid off the top of a long page;
+   fixed keeps it where the user parked it, whatever the scroll. It also lives OUTSIDE `.kv-card`
+   in the DOM (rendered from App, not from ScoreCard) — `.kv-card` sets `overflow: hidden`, and a
+   card that ever gained a transform or a filter would become the containing block for anything
+   fixed inside it and clip the toolbox to the paper. Its left/top come from React state, in
+   viewport pixels; never position it with a transform. */
+.kv-toolbox {
+  position: fixed;
+  z-index: 40;
+  /* Three 34px tools plus two 4px gaps = 110px of content, inside 12px padding each side. Narrower
+     and the rows wrap to two, which makes the toolbox taller than the first system of music. */
+  width: 136px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+  /* On a short window the tools scroll INSIDE the toolbox. That is not the scrollbar the owner
+     asked to remove — that one was on the sheet — and the alternative is tools off the screen. */
+  max-height: calc(100vh - 24px);
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
+  flex-direction: column;
 }
-.kv-score-row > .kv-score {
+
+/* The drag handle. `touch-action: none` is what makes a drag work on a trackpad-less screen:
+   without it the browser claims the gesture as a scroll and the pointermove events stop. */
+.kv-toolbox__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 4px 4px var(--space-2);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-sunken);
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  flex: 0 0 auto;
+}
+.kv-toolbox__bar:active {
+  cursor: grabbing;
+}
+.kv-toolbox.is-folded .kv-toolbox__bar {
+  border-bottom: none;
+  border-radius: var(--radius);
+}
+
+.kv-toolbox__grip {
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+.kv-toolbox__title {
   flex: 1 1 auto;
   min-width: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── The edit palette (armed tools) ─────────────────────────────────────── */
-
-/* Sticky, not fixed, and no transform anywhere near the score. */
-.kv-palette {
-  position: sticky;
-  top: var(--space-3);
+.kv-toolbox__fold {
+  font: inherit;
+  font-size: var(--text-xs);
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  padding: 0;
   flex: 0 0 auto;
-  /* Three 34px tools plus two 4px gaps = 110px of content, inside 12px padding each side. Narrower
-     and the rows wrap to two, which makes the palette taller than the first system of music. */
-  width: 136px;
-  margin: var(--space-4) 0 var(--space-4) var(--space-4);
-  padding: var(--space-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  background: var(--paper-sunken);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.kv-toolbox__fold:hover {
+  border-color: var(--rule-strong);
+  background: var(--paper-raised);
 }
 
-.kv-palette__group + .kv-palette__group {
+.kv-toolbox__body {
+  padding: var(--space-3);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.kv-toolbox__group + .kv-toolbox__group {
   margin-top: var(--space-3);
 }
 
-.kv-palette__label {
+.kv-toolbox__label {
   display: block;
   font-size: var(--text-xs);
   letter-spacing: 0.04em;
@@ -475,21 +539,21 @@
   margin-bottom: var(--space-1);
 }
 
-.kv-palette__row {
+.kv-toolbox__row {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-/* Çal/Dur, side by side. `flex: 1 1 0` + `min-width: 0` on purpose: the palette's 136px width is
-   load-bearing (the page grows by exactly `--palette-footprint` while editing, and editor.md's
-   measured cut-off numbers are taken against it), so these two buttons SHARE the column rather
-   than setting their own width from their labels. */
-.kv-palette__transport {
+/* Çal/Dur, side by side. `flex: 1 1 0` + `min-width: 0` on purpose: the toolbox's 136px width is
+   what every tool row is laid out against, so these two buttons SHARE the column rather than
+   setting their own width from their labels — a label-sized button would widen the box and wrap
+   the tool rows underneath it. */
+.kv-toolbox__transport {
   display: flex;
   gap: 4px;
 }
-.kv-palette__transport > .kv-btn {
+.kv-toolbox__transport > .kv-btn {
   flex: 1 1 0;
   min-width: 0;
   padding: var(--space-1) var(--space-1);
@@ -497,7 +561,7 @@
   white-space: nowrap;
 }
 
-.kv-palette__hint {
+.kv-toolbox__hint {
   margin: var(--space-3) 0 0;
   font-size: var(--text-xs);
   line-height: 1.35;
@@ -525,6 +589,16 @@
 }
 .kv-tool:hover {
   border-color: var(--rule-strong);
+}
+
+/* ⚠ Deliberately not `.kv-glyph`: "D.C." and "Son" are printed WORDS on a real page, not SMuFL
+   glyphs, so the button carries the same serif italic the sheet draws them in. */
+.kv-tool__text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
 }
 .kv-tool.is-armed {
   border-color: var(--accent);
@@ -704,6 +778,62 @@
 .kv-glyph {
   font-family: var(--font-music);
   line-height: 1;
+}
+
+/* ── The structure signs, as edit targets ───────────────────────────────── */
+
+/* A delete target over a drawn `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son". Invisible until the pointer is on
+   it — the engraved page must look engraved, and a permanent box round every sign would turn a
+   score into a form. On hover it says "this is a thing, and it will go". */
+.kv-sign-hit {
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease);
+}
+.kv-sign-hit:hover {
+  background: rgba(220, 38, 38, 0.16);
+  outline: 1px solid rgba(220, 38, 38, 0.5);
+}
+
+/* The repeat tool's barline targets. ⚠ VISIBLE while the tool is armed, unlike the delete chips:
+   the user is being asked to pick one of these lines, and an invisible target answers no question.
+   A quiet tick on every candidate, the accent under the pointer, and the lines a repeat cannot
+   close on drawn faint and inert. */
+.kv-repeat-edge {
+  border-left: 2px solid rgba(15, 118, 110, 0.35);
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.kv-repeat-edge:hover {
+  border-left-color: var(--accent);
+  background: rgba(15, 118, 110, 0.14);
+}
+.kv-repeat-edge.is-blocked {
+  border-left-color: var(--rule);
+  opacity: 0.5;
+}
+
+/* ⚠ The UNFINISHED `‖:` — a repeat start with nothing closing it. It is NOT on the engraved staff
+   and must never be (see `openRepeat` in SheetView): the staff may not promise a repeat the music
+   does not take. This is the edit-mode stand-in, dashed because it is incomplete, in the same red
+   the broken tuplet mark uses for the same reason — something is half-said. */
+.kv-open-repeat {
+  border-left: 2px dashed rgba(220, 38, 38, 0.85);
+  border-radius: 0;
+}
+.kv-open-repeat:hover {
+  border-left-color: rgb(220, 38, 38);
+  background: rgba(220, 38, 38, 0.14);
+}
+
+/* The same dash, in the accent rather than the alarm colour: a repeat mid-gesture is UNFINISHED,
+   not wrong. (`.kv-open-repeat` proper is a stray `‖:` a decode left on the page — that one is a
+   fault, and red says so.) */
+.kv-open-repeat.is-anchor {
+  border-left-color: var(--accent);
+}
+.kv-open-repeat.is-anchor:hover {
+  border-left-color: var(--accent-hover);
+  background: rgba(15, 118, 110, 0.16);
 }
 
 /* ── Gelişmiş (the developer panel) ─────────────────────────────────────── */

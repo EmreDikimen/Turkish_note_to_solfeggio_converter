@@ -6,41 +6,35 @@ updated: 2026-09-03
 
 ## Now
 
-⛔ **ROUND 3 IS READ AND IT MISSES. THE EXAM PRIMARY IS 51%** (2026-09-01), against a floor signed
-at 75% (62% on the re-expressed reading) and a Round-2 baseline of **44%**. At 63 pages the 95%
-half-width is ~±12 pp, so **+7 is inside the noise band**. ⚠ The primary rose while every strip-level
-metric went flat or slightly down (exact 75.2% → 74.2%, per-class F1 84.5% → 78.0%): the distribution
-tightened at the *median* (6 → 5 edits/page) while the *mean* barely moved.
-⛔ **AND ~15 OF THE 17 POINTS IS THE `\tie` RETIREMENT** — strip it and the gap is **+2 pp**. The
-residual, by token class, is **note/rest −15 and sig-marker −8** against **tuplet +1, accidental +2,
-barline +2** — ⛔ **every class the three render flags targeted is flat or slightly WORSE**, and what
-improved is consistent with the real pool growing 72%, not with the render.
-[METRICS-EXAMSET.md](METRICS-EXAMSET.md).
+⭐ **ROUND 3 IS CLOSED AND ROUND 4 IS OPEN (owner, 2026-09-03).** The exam read **51%** against a
+floor signed at 75% and a Round-2 baseline of 44%; ~15 of its +17 points was the retired `\tie`, and
+every class the three render flags targeted came out flat or slightly worse. Runs A and B were nulls
+on real-val, and the checkpoint selector picked wrong in all three runs. Every number, once:
+[METRICS-EXAMSET.md](METRICS-EXAMSET.md) · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) ·
+[METRICS.md](METRICS.md). **The plan, its evidence and the owner's decisions: [rung3/round4.md](rung3/round4.md)**;
+plain English: [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
 
-⭐ **THE OWNER HAND-TESTED IT AND THE VERDICT IS "BETTER, NOT ENOUGH TO SHIP" (2026-09-01).** The
-model is exported, int8-quantized and staged locally (`apps/web/public/models/`, `apps/server/models/`)
-for that test; **nothing is published** and the live site is still Round 2. Round 2 is backed up at
-`apps/web/public/models/_round2_backup/`. §3c's ship call is a human judgement, and it was taken.
+⭐ **THE OWNER'S HAND TEST OUTRANKS THE PAIRED READS FOR THE SHIP CALL, AND IT SAYS RUN A `best-real`
+IS VISIBLY BETTER than both `r3-final-stage2-last` and Round 2** (owner, 2026-09-03: *"exam ve
+evaluationlar o kadar fazla şey söylemiyor"*). ⚠ Not a contradiction: real-val's ~±0.13 edits/strip
+hides any gain under ~5%, and the exam drops **41%** of its candidates — the wide and dense strips a
+whole page in the app shows. ⏭ **Owner's call, recommended: stage and publish Run A `best-real`**
+through the usual chain (ONNX → int8 → parity → `gate:browser`, where **27/28 is the ceiling for any
+tie-free model** → `deploy:app` + server). Nothing is published; the live site is still Round 2, backed
+up at `apps/web/public/models/_round2_backup/`; the Round-3 model is staged locally from the
+2026-09-01 test. ⏭ Recommended, not decided: a fixed **10–15 page hand-test set** outside the exam,
+corrections counted per page per model — the page-level instrument this project lacks.
 
-⭐ **RUN A IS TRAINED AND ITS QUESTION IS ANSWERED: a longer stage 2 helps a little, and the gain is
-exhausted by step ~2,500** (2026-09-01). One variable against the Round-3 final run — stage 2 at
-**4,000 steps instead of 2,000**, starting from Round 3's OWN stage-1 checkpoint so nothing else moves.
-Real val **0.0182 → 0.0171 (−6.0%)**, the minimum shifting from step 1750 to **2500**, then flat and
-drifting slightly UP for the last 1,500 steps. ⚠ **A teacher-forced loss, not a correction count** —
-Round 3's `+13.7 pp` on real-val turned out to be almost all `\tie`, so 6% of loss may be worth no
-edits at all. ⚠ "2,500" does not transfer as a step count: it is step 2,500 *of a 4,000-step cosine*.
-⭐ **That question is now answered, and the answer is zero: 6% of loss bought NO edits** (15 strips
-better, 15 worse, p = 1.000). Quote it whenever a loss curve is used to argue for a change.
-[../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) · raw logs `round3_runa_logs.md`,
-`round3_runb_logs.md`.
+**Round 4 in one line (owner's decisions, 2026-09-03):** **no new render**, **`\tupend` stays**,
+**stage 2 at 4,000 steps**; re-emit the real pools under **scheme H** note-spelling tokens (16 ids —
+recommended, **owner to confirm**) + the label-budget rail at **b = 57** + a balanced packer, which
+returns 3,508 of the 4,012 over-budget strips; stop the signature vote from overwriting silently;
+select checkpoints on real-val **corrections**, not loss; beam search measured offline first and
+**never on the user path unless it pays**; a 20–40 page **third-source probe** before any crawl.
 
-⛔ **THE CHECKPOINT SELECTOR FAILED AGAIN, HARDER — `best` WAS STAMPED AT STEP 250.** The first
-evaluation of stage 2, after 250 steps of real specialisation, and no later mix ever beat it (Round 3
-at least reached step 500). ⭐ **`best-real`, added the same day, is the only reason the run produced
-anything usable**: `best` is barely specialised and `last` (step 4,000) is past the minimum. ⛔ **AND A THIRD TIME ON RUN B — where the wrong pick was `best-real` ITSELF.** B's `last` (step
-5,000) beats its own `best-real` (step 1,250), 645 edits to 694. `best-real` is only as good as the
-pool it reads, and B's real-val pool is **30% retired-crop strips**. Three runs, three wrong picks.
-[BACKLOG.md](BACKLOG.md) item 3 · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
+⛔ **Two things the round is NOT allowed to do**: read the exam again for an A/B, and retire
+`\tupend` or add a `\dottedbar` token — [rung3/round4.md](rung3/round4.md) "Not this round".
+
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer
 fixes moved crop boundaries the same day: a closing `:|` read as two barlines (junk strip on ~1% of
@@ -48,118 +42,19 @@ rows, `OMR_TAIL_SPAN=0` restores) and **a note stem taken for a barline** (`END_
 `OMR_END_BLOBS=0` restores; the `end_blobs` geometry key tells the two apart under one rev). The next
 emit re-decodes; nothing is owed today. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) · [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
 
-⏭ **THE NEXT ACTION IS AN OWNER DECISION, AND IT IS NOT ANOTHER TRAINING RUN.** Three paired reads
-now say the same thing: `r3-final-stage2-last` is the model we have, and both cheap levers are spent.
-What is NOT spent, in the order the evidence supports it:
-1. **The label-budget rail** — **4,012 over-budget strips** are dropped from training and dense music
-   already reads twice as badly (9.9% vs 4.8%, p = 0.013). It is the only remaining lever with a
-   measured mechanism behind it, and it is what RELEASES the exam. [BACKLOG.md](BACKLOG.md) item 0.
-2. **The `\sig` circularity** — every `\sig` block in a real-page label is unverified, and the
-   emitter's model vote fired on 24 of 45 exam pieces. [BACKLOG.md](BACKLOG.md) item 9.
-3. **The selector** — three wrong picks in three runs; a Round-4 recipe change, not a patch.
-⛔ **Not the exam.** It was read for this round on 2026-09-01, runs A and B are the SAME round, and a
-re-read decided *after* seeing these numbers is the one option that is not clean.
+⏭ **THE NEXT ACTION (agent, no GPU, no labelling), in order:** (1) the synthetic-vs-real id-length
+distributions under the scheme-H tokenizer, and how the 7 rare pitches segment — the only thing that
+could reopen the render question; (2) the selector change in `train.py` (+ EMA, label smoothing);
+(3) the signature-vote disagreement list ([BACKLOG.md](BACKLOG.md) item 9). **Owner:** confirm
+scheme H, decide on publishing Run A, pick the hand-test pages.
 
-⛔ **RUNS A AND B ARE BOTH READ, AND BOTH ARE NULLS — ROUND 3's SHIPPED CHOICE STANDS**
-(2026-09-02). On the same 262 `_realval_v2` strips, paired: Run A `best-real` **656 edits** and Run B
-`last` **645**, against `r3-final-stage2-last`'s **667**. Every CI spans zero, every sign test is a
-null, and exact-match moves 68.3% → 69.1% → 69.5% — a spread of **3 strips**. ⭐ Neither a longer
-stage 2 nor a second cut of the same music on retired crops moves real-page accuracy.
-[METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
-
-✅ **RUN B RAN — `strips_b8` + `strips_oldhuman` at `:4` (34.7% real), 5,000 stage-2 steps** (the
-step count is the owner's, 2026-09-01; Run A ran 4,000, so B differs from A in two places, not one).
-Notebook: `notebooks/round3_runb_oldstrips_colab.ipynb`, reusing Round 3's stage 1 like Run A.
-⛔ **Its `real` val column is NOT comparable with Run A's** — a second pool means a second held-out
-set, so B evaluates on **560** strips (170 of them retired-crop) where A used **390**. A higher
-number there is a harder exam, not a worse model. [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
-
-⚠ **RUNS A AND B ARE THE SAME ROUND AS THE EXAM READ** (owner, 2026-09-01: *"round 3 is not over. I
-will make 2 new trainings"*). The exam was read on 2026-09-01 for `r3-final-stage2-last`, and the rule
-is **one read per round**. ⛔ A second read is not available without the owner re-opening it
-deliberately — and deciding that *after* seeing A's or B's real-val numbers is the one option that is
-not clean. Unsettled, flagged, not assumed.
-
-⭐ **THE ROUND-3 MODEL IS `r3-final-stage2-last`** — real-val chose it over `best` (667 vs 784 edits, 39 strips better / 6 worse, sign p = 0.000). Against Round 2 the sign test wins 72 : 22 but the **mean edits/strip CI spans zero and is a NULL**. [METRICS.md](METRICS.md).
-
-⛔ **ROUND 3'S REAL-VAL GAIN WAS THE `\tie` RETIREMENT, NOT BETTER NOTE READING.** Discount the retired token and Round 2 and Round 3 are indistinguishable on `_realval_v2` (271 vs 270 edits). Only **26 of 86 ties (30%)** cost a user anything. Product-relevant estimate: **−7.2% edits / +4.6 pp exact**, not −21.7% / +16.1 pp. Full table and the stitcher accounting: [METRICS.md](METRICS.md).
-
-⭐ **SHORT AND MEDIUM STRIPS ARE THE TARGET (owner, 2026-09-01); LONG STRIPS ARE A FUTURE
-CONCERN.** Round 3's gain is confined by length — improve:regress **4.5 : 1** under 30 gold ids,
-**4.4 : 1** at 30–49, **1.25 : 1** at ≥50 where it is net negative. ⚠ A **LEAD, not a finding**
-(n = 44, one of four groupings inspected). ⚠ The exam drops **41% of candidates** as
-`split_wide`/`over_budget`, so it grades each page on its shorter material and may **flatter**
-this model. [DECISIONS.md](DECISIONS.md) · [METRICS.md](METRICS.md).
-
-⭐ **THE NEXT ATTEMPT GETS EVERY HAND-VERIFIED REAL STRIP, RETIRED CROPS INCLUDED** (owner,
-2026-09-01). This lifts the 2026-08-31 ban on `strips_nota` / `strips_r1` / `strips_tup` **for the
-next run only** — the Round-3 final model is trained and its pool is history. ⭐ It adds **1,435
-hand-verified strips** (nota 835, r1 428, tup 172, human `ok`+`fix` only) on top of b8's 3,929.
-⚠ Those crops come from a slicer the app no longer runs, and much of that music is already in b8 at
-the current geometry — so the pools overlap in MUSIC and differ in PIXELS. The owner's argument is
-that b8 stays in the mix, so this **adds a second cut rather than replacing the current one**.
-✅ **DONE AND ANSWERED 2026-09-02: it bought nothing measurable** (Run B, above). Somebody has now
-scored a model trained on mixed crop roots, and it is indistinguishable from one that was not.
-⚠ **A null, not a refutation** — at 262 strips a CI half-width of ~±0.13 edits/strip could hide a
-small gain; what it rules out is a gain big enough to reopen the exam.
-[DECISIONS.md](DECISIONS.md) · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) ·
-[rung3/worklist.md](rung3/worklist.md) B10.
-
-✅ **Two exam pieces were found in `strips_b8` and removed (7 strips, pool now 3,929).** The emitter matched exam pieces by IMAGE STEM where `train.py` guards on the SymbTr id, so a second engraving passed; both now use the SymbTr id and `promote_labels.py` carries a backstop. Detail: [DECISIONS.md](DECISIONS.md) · `data/real/rung3/excluded_exam_pieces.txt`.
-
-⭐ **ROUND 3'S DATA IS SETTLED AND THE ROUND IS READY TO RUN (owner, 2026-08-31).** Every labelling
-question is closed. Round 3 uses **four** things and nothing else: **`strips_b8`** as the real
-training pool (3,929 strips after promotion), a **new 3-flag synthetic render** off
-`data/pieces_v4.json` + `data/split_v4.json`, **`_realval_v2`** (+ `_tupletval`) to select the
-checkpoint, and **`examv3`** to grade. ⏭ **`b8-review`, the old human fixes, `batch3` and
-`reslice-all` all go to ROUND 4** — the last two could not join anyway, see below.
-[rung3/worklist.md](rung3/worklist.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
-
-✅ **THE EXAM IS PROMOTED AND THE BASELINE IS RE-MEASURED ON IT (2026-08-31).** `strips_exam_v3` is
-now the exam — **660 strips over 63 pages** (10.5 strips/page against the frozen v2's 7.1);
-`strips_exam_v2_clean` stays frozen as Round 2's record. ⭐ **`round2-stage2-best` re-scored on it:
-the primary reads 44%**, against 57% on the frozen exam — §3b's precondition 2 is DONE, and it was
-measured *before* any Round-3 model exists, which is what keeps §3c's choice legal. ⚠ **The model
-did not get worse**: every strip-level number improves sharply (exact 50.0% → 75.2%, AEU recall
-78.5% → 90.5%, SER 0.059 → 0.027) and the *per-page* primary still falls, because a page is now
-graded on half again as many strips. ⚠ The 13 points mix **three** changes — re-cut crops, more
-strips per page, and **19 pages never graded before** — and no split between them is claimed.
-[rung3/exam.md](rung3/exam.md) · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
-
-✅ **Three settled 2026-08-31 findings moved out of this file** — the `b8-full` read and its `\sig` exception, — the promote gate that was deleting hand corrections over an `f'' 32` spacing, and the recovery of the retired pools' 1,479 human fixes by measure span. Both are decision rows in [DECISIONS.md](DECISIONS.md) with their numbers in [METRICS-CORPUS.md](METRICS-CORPUS.md).
-
-✅ **The launch files were fixed 2026-08-31** — the `final`/`finalb` zip arms, the final
-run's own notebook and the `:5`-not-`:9` re-measure. Detail: [log/status-log.md](log/status-log.md).
-
-✅ **THE 75%-vs-62% QUESTION IS NOT OPEN — IT WAS SETTLED 2026-08-31, AND WITH A THIRD ANSWER.**
-This file carried it as a live binary choice until 2026-09-01; that was stale. The owner's decision
-(*"I will look where it makes mistakes and classify the problems. Then decide ship manually"*) is
-that **the numeric floor stops being the automatic ship gate**. The primary is still computed and
-reported with its interval, and `round2-stage2-best`'s **44%** still stands as the comparison column,
-so "better or worse than Round 2" stays a factual question. But the launch call is taken by the owner
-after reading an **error classification**. ⛔ **That taxonomy is what now blocks the exam read** —
-grouping the exam's mistakes by kind (pitch / duration / accidental / repeat structure / signature)
-with examples, not just a rate. `eval_omr.py --show-errors` prints the raw material;
-**the grouping is not built**. ⚠ Build and rehearse it on **real-val**, never on the exam — real-val
-diagnoses freely, the exam is one-shot.
-[rung3/round3-criteria.md](rung3/round3-criteria.md) §3c · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
-
-✅ **DONE — every run since 2026-09-01 saves three checkpoints (`best`, `best-real`, `last`) and
-chooses between them on `_realval_v2`.** That is the mitigation, not the fix: the blend itself is
-still 92% synthetic and has now picked wrong three times running. [BACKLOG.md](BACKLOG.md) item 3.
-
-⚠ **THE REBUILT EXAM IS HARDER THAN THE ONE THE FLOOR WAS SIGNED AGAINST.** It grades ~12 candidate
-strips a page against 7.1, so a page collects more edits at equal model quality and the primary
-reads lower. Fairness is intact — the `round2-stage2-best` re-score puts both models on the same set,
-and that re-score is a **precondition of the read** — but what 75% *means* changes.
-⚠ **The exam also still throws away the wide and the dense — 567 of 1,369 candidates (41%)** — so it
-reads each page on its easier material. Quote it with the result.
-[rung3/round3-criteria.md](rung3/round3-criteria.md) §3b · [METRICS-EXAMSET.md](METRICS-EXAMSET.md).
-
-⛔ **`batch3` AND `reslice-all` COULD NOT HAVE JOINED ROUND 3 EVEN IF ASKED.** Neither has any
-promotion path, and the reason is structural: **53 of `batch3`'s 66 hand corrections sit on strips
-the emitter DROPPED** (`split_wide` / `over_budget` / `row_unaligned`), as do **all 50** of
-`reslice-all`'s. Making them usable IS the label-budget rail. [rung3/labeling-queues.md](rung3/labeling-queues.md).
+⏭ Settled Round-3 findings that used to sit here — the selector's three picks, the `\tie`
+accounting, the short-strip lead, run B's incomparable pool, the exam-leak removal, the examv3
+promotion and the 75%-vs-62% question — are in their homes: [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md),
+[METRICS.md](METRICS.md), [METRICS-EXAMSET.md](METRICS-EXAMSET.md), [DECISIONS.md](DECISIONS.md),
+[log/status-log.md](log/status-log.md). ⚠ One of them is still a rule: **the ship call is a human
+judgement taken after reading an error classification** (`error_taxonomy.py`, built and run
+2026-09-01), never the numeric floor alone.
 
 ⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES. THE FIX IS MEASURED, SPECIFIED,
 AND DEFERRED TO ROUND 4 (owner, 2026-08-23) — which is what RELEASES THE EXAM.** The browser slicer
@@ -254,32 +149,22 @@ the model track never touches the app.** Either can be worked on without waiting
 
 ### Track A — the product (W9 → W10 → public)
 
-3. **✅ `Save JSON` IS GONE (owner, 2026-08-30) — and the check that needed it now reads the
-   document directly.** The 2026-08-15 decision kept the button for one reason: `smoke:editor` had no
-   other way to see what an edit did. That is paid off, not overruled — `window.__omrDoc` sits beside
-   the existing `__omrStrips`/`__omrConfig` hooks, `save()` reads it, and both suites pass. **The
-   editor's list is complete: steps 1–8 and 10, built, deployed and checked on the production
-   bundle.** [mvp/editor.md](mvp/editor.md) · [mvp/standing.md](mvp/standing.md) ·
+3. **✅ `Save JSON` IS GONE (owner, 2026-08-30); `window.__omrDoc` is the seam the check reads
+   instead. The editor's list is complete — steps 1–8 and 10, built, deployed, checked on the
+   production bundle.** [mvp/editor.md](mvp/editor.md) · [DECISIONS.md](DECISIONS.md).
+3b. **✅ F3 IS BUILT (2026-08-16), DEPLOYED (2026-08-18), REBUILT UPRIGHT (2026-08-27), DEPLOYED
+   AGAIN (2026-08-30).** ⭐ Asking whether its position lines were spaced right exposed a fault one
+   level down: the **string choice** had no notion of a hand and let an ascending line climb one string
+   forever. [features/fingerboard.md](features/fingerboard.md) · [DECISIONS.md](DECISIONS.md).
+3c. **✅ F3 HAS A SECOND INSTRUMENT: THE KANUN (2026-08-29), DEPLOYED 2026-08-30.** ⭐ Not the violin
+   view with another picture: a violin position is a fact about one note, a mandal **stays where it is
+   put** — a state machine over the piece, which buys the **opening mandal plan**. [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
+3d. **✅ ONE INSTRUMENT PAGE, AND THE PIANO ROLL IS GONE (2026-08-29)**, the owner's call after
+   seeing the kanun. Keman and Kanun share one **Enstrüman üzerinde** tab whose dropdown ⭐ sets the
+   sound as well as the picture; `PianoRoll.tsx` is deleted. ⚠ Opening the tab does **not** load a
+   voice — a sampled one is a 20–35 MB Hub download, so a first visit draws a violin while the
+   default tone plays. **Deployed 2026-08-30.** [features/README.md](features/README.md) ·
    [DECISIONS.md](DECISIONS.md).
-3b. **✅ F3 IS BUILT (2026-08-16), DEPLOYED (2026-08-18), REBUILT UPRIGHT (2026-08-27) AND DEPLOYED
-   AGAIN (2026-08-30).** ⭐ Asking whether its position lines were spaced right exposed a real fault
-   one level down — the **string choice** had no notion of a hand and let an ascending line climb one
-   string forever; it is now a hand-position model. Account and numbers:
-   [features/fingerboard.md](features/fingerboard.md) · [DECISIONS.md](DECISIONS.md).
-3c. **✅ F3 HAS A SECOND INSTRUMENT: THE KANUN (2026-08-29), DEPLOYED 2026-08-30.** ⭐ It is not the
-   violin view with a different picture: a violin position is a fact about one note, while a mandal
-   **stays where it is put**, so this is a state machine over the whole piece — which is what buys the
-   piece's **opening mandal plan**, listed in words before you press play.
-   [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
-
-3d. **✅ ONE INSTRUMENT PAGE, AND THE PIANO ROLL IS GONE (2026-08-29)**, both the owner's call after
-   seeing the kanun. Keman and Kanun now share one tab — **Enstrüman üzerinde** — with a dropdown
-   that ⭐ **sets the sound as well as the picture**. `PianoRoll.tsx` is deleted; `PitchRangeNote`
-   survives it and is unrelated. ⚠ The tab does **not** set the voice merely by being opened: a
-   sampled voice is a 20–35 MB Hub download and "load only on selection" is F1's requirement, so a
-   first visit can draw a violin while the default tone still plays. `smoke:editor` **217 ALL PASS**,
-   including that picking Kanun moves the transport's own voice. **Deployed 2026-08-30.**
-   [features/README.md](features/README.md) · [DECISIONS.md](DECISIONS.md).
 
    ⏭ **THE NEXT PRODUCT ACTION, and the only one that needs a person, is
    [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) checks 25 AND 26 — the violin view and the
@@ -294,6 +179,30 @@ the model track never touches the app.** Either can be worked on without waiting
    ⚠ **If the look finds something, the fix now needs its own deploy** — the cost of the inverted
    order, and it is small (`deploy:app`, then `smoke:live`). ⚠ `smoke:live` checks neither images nor
    audio; spot-check both by hand after any deploy touching them.
+3f. **✅ THE EDIT PALETTE IS A FLOATING TOOLBOX, AND THE SHEET HAS NO SCROLLBAR OF ITS OWN
+   (owner, 2026-09-03).** The palette was `sticky` inside the score's row: it took **164 px** from the
+   page, so pressing Düzenle **moved the music**, and it still slid off the top of a long page. Now
+   `.kv-toolbox` — `fixed`, rendered from `App` outside `.kv-card`, **dragged** by its title bar and
+   **folded** to that bar alone, both remembered in `localStorage`; `.kv-score` measures **1050 px in
+   edit mode and out of it**. ⭐ The second scrollbar was a **font artifact, not content**: an inline
+   box's layout overflow comes from the font's ascent/descent, and the accidental legend sets Bravura
+   — 105 px of scroll height in a 72 px box with every rect fitting. `npm test`, `smoke:app`,
+   `smoke:editor` **ALL PASS**. ⏭ Unchecked by an eye; nothing owed beyond opening Düzenle and
+   dragging it. [DECISIONS.md](DECISIONS.md) · [mvp/editor-built.md](mvp/editor-built.md).
+3g. **✅ THE SIGNS ARE EDITABLE (owner, 2026-09-03).** `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son" are placed by
+   arming one in the toolbox and clicking a bar, and deleted by clicking the drawn sign in Seçim.
+   ⭐ **The playing order is re-derived by the DECODER's own expanders** — the marks were split out
+   of `MeasureRec` as `StructureMarks`, so `resolveStructure` runs `expandRepeats`/`expandSegnoJumps`/
+   `expandDaCapo` over a hand-edited page; there is no second rulebook. ⭐ **A placement is refused by
+   SIMULATION**: resolve it, reject it if it added a warning the page did not have — which caught the
+   mid-piece D.C. and the endless-𝄋 section without being told about either. ⭐ **The repeat is ONE
+   tool and TWO clicks, on the barlines** (owner, same day, revising a first version with a `‖:` tool
+   and a `:‖` tool): the palette asks where it starts, then where it ends, and both marks land in one
+   operation — so the page can never hold half a repeat. `npm test` (36 checks, every one a
+   `playBars` list) and
+   `smoke:editor` **ALL PASS**. ⏭ **Unchecked by an eye — [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md)
+   check 27**, which is about whether marking a page up FEELS like marking a page up; nothing else is
+   owed. [DECISIONS.md](DECISIONS.md) · [../tools/render/structure-edit.ts](../tools/render/structure-edit.ts).
 3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, STILL UNCHECKED IN THE BROWSER (built 2026-08-29).**
    ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract
    (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,
@@ -331,39 +240,29 @@ any instrument past those is aimed by what the friends say next — **not a queu
 the voices should be louder the order is per-voice `gain` → a `Çalgı sesi` slider → **never**
 `MASTER_GAIN`.
 
-### Track B — the model (Round 3, UNPAUSED)
+### Track B — the model (Round 4, OPEN 2026-09-03)
 
-Still the **public-launch gate**, and runnable at any time — it shares no file with the feature
-track. ⭐ **THE LABELLING IS DONE. What is left is render → train → read, plus three preparations
-that need no human judgement.** `round2-stage2-best` stays the runtime until a Round-3 model beats it.
-
-**What Round 3 consumes — settled 2026-08-31 and closed to additions:**
+Still the **public-launch gate**, and it shares no file with the feature track. Plan, evidence, the
+owner's decisions and the order of work: **[rung3/round4.md](rung3/round4.md)**. `round2-stage2-best`
+is the live runtime until the owner publishes a better one (Run A `best-real` is the hand-test pick).
 
 | role | pool | state |
 |---|---|---|
-| real training | **`strips_b8`** | 3,955 read; **3,936 promoted**, then **3,929** after 7 exam-leaking strips came out |
-| synthetic training | the **3-flag render** (`--staccato-noise --concave-tuplet --usul-barline`), `pieces_v4.json` + `split_v4.json` | ⏭ not rendered |
-| selection | **`_realval_v2`** (+ `_tupletval` for the free `\tup3` column) | built |
-| grading | **`examv3`** | 663/663, 64 pages complete; ⏭ not promoted |
+| real training | `strips_b8` (3,929) **re-emitted under scheme H + the rail at b = 57 + a balanced packer** — the 4,012 over-budget drops are the target (3,508 return under H, measured) | ⏭ not run; needs a Colab decode, every cache is refused since `GEOMETRY_REV` 20260903 |
+| synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
+| selection | `_realval_v2` (+ `_tupletval`), **on free-running corrections, not loss**, beside the owner's hand-test pages | ⏭ selector change owed |
+| grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
 
-⛔ **Out, by the owner's call or by construction:** `b8-review` (4,738 rows, 450 carrying an old
-human fix) → still out; ⭐ **the old pools' hand-verified strips came BACK IN on 2026-09-01** as
-`strips_oldhuman` (1,408) for run B; `batch3` and `reslice-all` → later, and *unusable*
-before the label-budget rail; `strips_nota` / `strips_r1` / `strips_tup` → **superseded, must not be passed** (same
-music, retired crops). `photo-gold`, `batch1`, `batch2` and the historical tabs are in neither.
+⛔ **Out:** `b8-review`; `strips_oldhuman` (Run B answered it — nothing measurable); the raw old
+pools. `batch3` / `reslice-all`'s hand corrections become usable only through the rail, which is
+part of the re-emit.
 
-✅ **EVERY ROUND-3 STEP IS DONE AND THE ROUND IS CLOSED** — pools promoted, corpus rendered, model
-trained, checkpoint chosen on real-val, exam read once. The per-step record is in
-[log/status-log.md](log/status-log.md) and [rung3/worklist.md](rung3/worklist.md); it is history now,
-not a to-do list.
-
-⏭ **THE NEXT ACTION IS TO UPLOAD AND RUN A AND B** (the table in "Now"). Nothing local blocks either.
-⏭ Then: choose among `best` / `best-real` / `last` on `_realval_v2`, compare A against B, and only
-then decide the exam question above. ⛔ **The exam was read on 2026-09-01 and the rule is one read
-per round; runs A and B are the SAME round.**
-
-**The item-by-item detail — what each of B0–B9 is, what it found, and what it still owes — is in**
-**[rung3/worklist.md](rung3/worklist.md).** Only the tables above and the next action stay here.
+⏭ **Next, in order:** the length-distribution and rare-pitch segmentation check under H (no GPU) →
+`train.py` selector → the signature-vote rule ([BACKLOG.md](BACKLOG.md) item 9) → the third-source
+probe → re-emit → the owner reads the audit sample and every `\sig` row → two arms from base (old
+vocabulary control vs H), stage 2 at 4,000 steps, EMA + label smoothing → real-val paired → `examv3`
+once. ⚠ Beam search is measured offline on the current model first and reaches the user path only
+if it pays.
 
 
 ### Owed but not next → [BACKLOG.md](BACKLOG.md)

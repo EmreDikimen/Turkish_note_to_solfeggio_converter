@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-08-20
+updated: 2026-09-03
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -87,7 +87,9 @@ have, need **no training and no labels**, and are measurable today on `_realval_
 
 ⚠ This lever moves the shipped runtime, not the corpus, so it is scored against the same real-val
 pool and carries the same rule as any other change: pre-register what counts as a win before
-running it. ⚠ It also changes the browser/server decode path, so `gate:browser` and
+running it. ⚠ **Cost corrected 2026-09-03**: the decoder is 20–25% of a strip's time (encoder
+74–81%), so beam 3 costs roughly +40–60% of page time, not ×3 — and the owner's rule is that it may
+not slow the user path unless measured to pay; the emitter may use it freely ([round4.md](round4.md)). ⚠ It also changes the browser/server decode path, so `gate:browser` and
 `parity:server` are part of its cost.
 
 ## Lever 3 — real data: clean it before growing it
@@ -387,3 +389,5 @@ Named here so the next session does not re-derive it. Nothing below is a measure
   <https://link.springer.com/chapter/10.1007/978-3-031-70552-6_1>.
 - Full-page end-to-end OMR with curriculum pretraining (SMT / SMT++) —
   <https://arxiv.org/abs/2402.07596>.
+- Round 4's additions — LEGATO, the SMT encoding study (bekern), Transcoda's beam numbers, the
+  authentic-fine-tune scan paper — are listed once in [round4.md](round4.md).

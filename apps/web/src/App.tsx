@@ -73,6 +73,16 @@ import {
 import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
 import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
 import { navMarksFromStructure, repeatSpansFromStructure } from "../../../tools/render/structure-view";
+import {
+  markTargets,
+  openRepeatBar,
+  placeMark,
+  placeRepeat,
+  removeMark,
+  type RefusalReason,
+  type SignTool,
+  type StructureMark,
+} from "../../../tools/render/structure-edit";
 import type { ScoreStructure } from "../../../tools/render/stitch";
 import { respellAeu } from "../../../tools/render/respell";
 import { parseSignatureBody } from "../../../tools/render/lilypond";
@@ -286,7 +296,7 @@ export function App() {
   // photograph, so the score is kept as WRITTEN — a repeated passage appears once, with its signs
   // — and the repeat is taken at playback time instead. Null for a score that has no structure
   // (a SymbTr sample, a loaded JSON): then written order IS playing order and nothing below fires.
-  const [structure, setStructure] = useState<ScoreStructure | null>(null);
+  const structure = history.structure;
   // Escape hatch for the folded sheet: write the performance out long, every repeat taken, the way
   // the app did before the signs existed. VIEW ONLY — the document stays written, so this is not an
   // edit and cannot be undone into; edit mode is closed while it is on (the long score's notes are
@@ -300,6 +310,15 @@ export function App() {
   // pitch). Armed, a click on a note applies the tool instead — the Mus2 model. Cleared with the
   // edit toggle so a friend cannot leave a tool armed and come back to it.
   const [armed, setArmed] = useState<Tool | null>(null);
+  // Why the last SIGN placement was rejected, or null. A refusal has nowhere else to show itself —
+  // the sheet cannot draw a sign that was not placed — so it takes over the palette's hint line
+  // until the next click or the next armed tool. See `structure-edit.ts` for what refuses.
+  const [refused, setRefused] = useState<RefusalReason | null>(null);
+  // The repeat tool's first click: the bar its `‖:` will open on, with the closing barline still
+  // awaited. ⚠ It is NOT in the document — nothing is committed until the second click, which is
+  // the whole reason the tool asks for both ends (owner, 2026-09-03). Cleared by Esc, by arming
+  // anything else, and by clicking the dashed marker again.
+  const [repeatAnchor, setRepeatAnchor] = useState<number | null>(null);
   // Tuplet tool only: the FIRST note of the run, waiting for its end. The one two-click gesture in
   // the palette, so it is the one tool with a state between clicks. Like the selection this is a
   // position, not an identity, so it is dropped rather than translated whenever the document or
@@ -434,12 +453,13 @@ export function App() {
     setTupletAnchor(null); // a half-finished tuplet names a note in the score being replaced
     setSelectedTuplet(null); // and so does a selected one
     setLastEditMeasure(null); // nothing edited yet → the palette's Çal starts at the top
-    // Only a decoded page brings a structure; every other source plays exactly as it is written,
-    // so this CLEARS as often as it sets — a leftover from the previous page would fold the next
-    // score along bar numbers that mean nothing in it.
-    setStructure(structure ?? null);
     setWriteOut(false);
-    history.reset(detected ? { ...d, makam: slug } : d);
+    // ⚠ The signs go in with the document, in ONE `reset`. Only a decoded page brings a structure;
+    // every other source plays exactly as it is written, so this CLEARS as often as it sets — a
+    // leftover from the previous page would fold the next score along bar numbers that mean
+    // nothing in it. They share the undo stack (see `useDocHistory`'s `ScoreState`), which is why
+    // there is no `setStructure` any more.
+    history.reset(detected ? { ...d, makam: slug } : d, structure ?? null);
   }
 
   // Apply a makam choice: stop first (a running playback does not pick up a new timeline — the
@@ -578,6 +598,30 @@ export function App() {
     if (!drawn || URL_NAVSEED == null) return undefined;
     return injectNavMarks(drawn, URL_NAVSEED, repeatSpans ?? []);
   }, [drawnDoc, repeatSpans, structure, writeOut]);
+
+  /**
+   * The signs a click can delete, and the `‖:` that nothing closes yet.
+   *
+   * ⚠ Both come from the FLAGS, never from `repeatSpans`. The drawn spans include a `‖:` the page
+   * does not carry (an unmatched `:‖` is drawn as repeating from the top — the engraving
+   * convention), and offering to delete that would be a button that does nothing. `openRepeat` is
+   * the opposite case: a flag the engraved staff deliberately does NOT draw, which edit mode has
+   * to show or the tool looks broken.
+   */
+  const signTargets = useMemo(
+    () =>
+      editMode && !writeOut && structure && drawnDoc
+        ? markTargets(structure, groupMeasures(drawnDoc).length)
+        : undefined,
+    [editMode, writeOut, structure, drawnDoc],
+  );
+  const openRepeat = useMemo(
+    () =>
+      editMode && !writeOut && structure && drawnDoc
+        ? openRepeatBar(structure, groupMeasures(drawnDoc).length)
+        : null,
+    [editMode, writeOut, structure, drawnDoc],
+  );
 
   // The piece's natural tempo (speed = 1) and its beat grid, for the speed control + metronome.
   const naturalBpm = useMemo(() => (doc ? estimateBpm(doc) : 0), [doc]);
@@ -821,8 +865,9 @@ export function App() {
    * of it, and `onNudgePitch` escapes it only because a nudge is relative.
    */
   function onApplyTool(index: number, pitchAt?: { letter: string; octave: number; alter: number }) {
-    // The tuplet has its own two-click gesture (`onTupletPick`) and never comes through here.
-    if (!armed || armed.kind === "tuplet" || !doc) return;
+    // The tuplet has its own two-click gesture (`onTupletPick`), and a SIGN belongs to a bar
+    // rather than to a note (`onPlaceMark`) — neither comes through here.
+    if (!armed || armed.kind === "tuplet" || armed.kind === "structure" || !doc) return;
     onStop();
     markEdited(index);
     const shift = !keepSheet && transpose !== 0 ? transpose : 0;
@@ -1006,6 +1051,64 @@ export function App() {
    * The bar it is in becomes LONGER — an edit absorbs into its bar and bar lines never move, so the
    * off-meter mark is the indicator, exactly as making a triplet made the bar short.
    */
+  /**
+   * Put a SIGN on a bar (owner, 2026-09-03) — `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son".
+   *
+   * ⚠ A sign is not a document edit. It sets a flag beside the score and the page's PLAYING ORDER
+   * is then re-derived by the decoder's own expanders (`placeMark` → `resolveStructure`), so the
+   * staff and the sound can never be told two different stories. The structure rides in the undo
+   * stack with the notes, so one Ctrl+Z takes back whichever the user did last.
+   *
+   * ⚠ A score with no structure at all — every source but a decode — gets an EMPTY one on the
+   * first sign, rather than the feature being unavailable there. `barCount` is read from the live
+   * document every time, which is also what quietly drops a sign whose bar an edit has deleted.
+   */
+  function onPlaceMark(bar: number, mark: Exclude<SignTool, "repeat">) {
+    if (!doc) return;
+    onStop(); // the playing order is about to change under a running timeline
+    const barCount = groupMeasures(doc).length;
+    const result = placeMark(structure, barCount, bar, mark);
+    setRefused(result.ok ? null : result.reason);
+    if (!result.ok) return;
+    history.applyStructure(() => result.structure);
+  }
+
+  /**
+   * The repeat's two-click gesture, on the BARLINES (owner, 2026-09-03: *"ilk önce başlangıcı
+   * nereye koymak istersiniz desin, kullanıcı seçtiğinde ise bu sefer bitişi nereye koymak
+   * istersiniz yazsın"*).
+   *
+   * ⚠ The first click writes nothing. It only remembers which bar the `‖:` would open, so the
+   * document can never hold half a repeat — which is what made the old two-tool version confusing:
+   * an unclosed `‖:` is a sign the engraved staff refuses to draw, so the click left no trace.
+   * `edge` names the barline: `"start"` is a bar's opening line, `"end"` its closing one.
+   */
+  function onRepeatEdge(bar: number, edge: "start" | "end") {
+    if (!doc) return;
+    setRefused(null);
+    if (repeatAnchor == null) {
+      if (edge === "start") setRepeatAnchor(bar);
+      return;
+    }
+    onStop();
+    const barCount = groupMeasures(doc).length;
+    const result = placeRepeat(structure, barCount, repeatAnchor, bar);
+    setRepeatAnchor(null);
+    setRefused(result.ok ? null : result.reason);
+    if (result.ok) history.applyStructure(() => result.structure);
+  }
+
+  /** Take a sign off the page. Never refused, and it takes the rest of its own object with it — a
+   *  `:‖` removes the `‖:` it closed and the volta pair inside it, because that whole repeat is
+   *  one thing to the person clicking it. */
+  function onRemoveMark(bar: number, mark: StructureMark) {
+    if (!doc) return;
+    onStop();
+    const barCount = groupMeasures(doc).length;
+    setRefused(null);
+    history.applyStructure((prev) => removeMark(prev, barCount, bar, mark));
+  }
+
   function onTupletRemove() {
     if (selectedTuplet == null) return;
     const found = measureOf(selectedTuplet);
@@ -1097,6 +1200,8 @@ export function App() {
   function armTool(t: Tool | null) {
     setArmed(t);
     setTupletAnchor(null);
+    setRepeatAnchor(null); // a half-drawn repeat cannot survive a tool change either
+    setRefused(null); // a refusal explains the LAST click; arming anything is a fresh start
     // ⚠ A held mark SURVIVES the move between Seçim and ÜÇLEME, because both can hold one. It does
     // not survive a note value or an accidental: those apply to a note, the mark stops being
     // pickable, and its handles would vanish leaving a selection nothing on the page explains.
@@ -1477,20 +1582,6 @@ export function App() {
             onRedo={onRedo}
             canUndo={history.canUndo}
             canRedo={history.canRedo}
-            palette={
-              editMode && viewMode === "sheet" ? (
-                <EditPalette
-                  armed={armed}
-                  onArm={armTool}
-                  canPlay={!!timeline}
-                  playState={playState}
-                  fromMeasure={lastEditMeasure}
-                  anchored={tupletAnchor != null}
-                  onPlay={onPlayFromEdit}
-                  onStop={onStop}
-                />
-              ) : null
-            }
           >
             {viewMode === "instrument" ? (
               // ⚠ Both the document AND the timeline go in, and each view uses the one it needs:
@@ -1530,6 +1621,18 @@ export function App() {
                 onDeleteNote={onDeleteNote}
                 onNudgePitch={onNudgePitch}
                 armedTool={armed?.kind ?? null}
+                signTargets={signTargets}
+                openRepeat={openRepeat}
+                armedSign={armed?.kind === "structure" ? armed.mark : null}
+                repeatAnchor={repeatAnchor}
+                // A repeat is drawn on the BARLINES and has its own two-click path; every other
+                // sign belongs to a bar and lands wherever in it the click fell.
+                onPlaceMark={(bar) => {
+                  if (armed?.kind === "structure" && armed.mark !== "repeat") onPlaceMark(bar, armed.mark);
+                }}
+                onRepeatEdge={onRepeatEdge}
+                onRepeatCancel={() => setRepeatAnchor(null)}
+                onRemoveMark={onRemoveMark}
                 armedRest={armed?.kind === "duration" && armed.rest === true}
                 onApplyTool={onApplyTool}
                 onInsertNote={onInsertNote}
@@ -1554,6 +1657,27 @@ export function App() {
               )
             )}
           </ScoreCard>
+
+          {/* ⚠ The edit toolbox is rendered HERE, outside the score card, not inside it (owner,
+              2026-09-03). It is `position: fixed` and floats over the page, so where it sits in
+              the DOM is only about what could ever clip it: `.kv-card` sets `overflow: hidden`,
+              and a card that gained a transform or a filter would become the containing block for
+              anything fixed inside it. Out here nothing can. The armed tool still lives in App's
+              state, which is why the props are unchanged. */}
+          {editMode && viewMode === "sheet" && (
+            <EditPalette
+              armed={armed}
+              onArm={armTool}
+              canPlay={!!timeline}
+              playState={playState}
+              fromMeasure={lastEditMeasure}
+              anchored={tupletAnchor != null}
+              repeatAnchor={repeatAnchor}
+              refused={refused}
+              onPlay={onPlayFromEdit}
+              onStop={onStop}
+            />
+          )}
         </>
       )}
 

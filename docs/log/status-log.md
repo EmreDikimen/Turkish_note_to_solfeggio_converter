@@ -7,6 +7,36 @@ updated: 2026-09-03
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-03 — the page follows the playhead (product track)
+
+The owner asked for it in one sentence: *"nota üzerinde imleç giderken imleç sayfadan dışarı
+çıktığında sayfa imlece doğru gitsin. Bu optional bir şey olsun ama kullanıcı değiştirebilsin"*. A
+sheet is taller than the window, so during playback the cursor walked off the bottom and the reader
+had to chase it. It now scrolls the page to the cursor, with a checkbox beside **Güfte** to stop it.
+
+**What was decided while building it** ([../DECISIONS.md](../DECISIONS.md)): the follow fires only
+when the cursor is OUTSIDE the visible band, never continuously — a page that re-centres every frame
+cannot be read; **default ON** and remembered in `localStorage`; and the sideways axis is a
+**different scroller** from the vertical one, because the sheet has no vertical scroll of its own
+(the `overflow-y: clip` decision of the same day).
+
+**Two things the check found and no eye on this machine would have.** (1) The sideways follow was
+**dead**: the first ancestor that reports more content than box is the sheet's own 1020 px wrapper
+inside a ~600 px column, and it has `overflow: visible`, so setting its `scrollLeft` did nothing —
+only the narrow-window arm could see this, and the computed `overflow-x` is now part of the test.
+(2) A page that moves during playback costs an existing check: `smoke:editor`'s B4 insert-mapping
+read scrolls to the playhead, measures a blank point on its row and then clicks it, and the follow
+moved the page between the two, so a notehead was under the measured point. That block now turns
+following off — it owns the scroll itself. Separately, `FOLLOW_SIDE_MIN` keeps the sideways axis off
+a box that only overruns by its own padding (~2 px on a wide window), which would twitch the music
+for no reader's benefit.
+
+**Cost**: `FOLLOW_COOLDOWN_MS` (a smooth scroll must land before another is asked for) and
+`FOLLOW_CHECK_MS` (the question is asked four times a second, not sixty — reading the cursor's box
+straight after writing its transform re-lays-out the whole score). `npm test` and `smoke:editor`
+pass, 17 new checks covering both axes, both settings and a reload. Not yet judged by an eye:
+[../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md) check 28.
+
 ## 2026-09-03 — Round 3 closed, Round 4 opened: the root-cause read, the octave count, and five owner decisions
 
 The owner asked what Round 4 should do, with three ideas of their own: change the vocabulary (the

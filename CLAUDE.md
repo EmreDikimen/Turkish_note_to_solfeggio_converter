@@ -220,12 +220,8 @@ a successful build is not a deploy. Both, and every other command, in
   is no second resampler to hold in parity either.
 
 - **The deploy checks read DOM state, never the words on the page** (2026-08-07, the style pass).
-  `apps/web/src/ui/status.ts` is the single producer of the contract — `#omr-status` carries
-  `data-state`, `data-kind`, `data-where` and the counts; `#omr-error` carries `data-error-kind`;
-  `#play` carries `data-play-state`; `#app` carries `data-ready`. The editor adds
-  `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`,
-  `[data-omr-note]` / `[data-selected]` per note, `#note-delete` / `#undo` / `#redo`, and the
-  palette's `#edit-palette[data-armed]` + `[data-tool]` per tool, its transport `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, its
+  `apps/web/src/ui/status.ts` is the single producer of the contract — `#omr-status` carries `data-state`, `data-kind`, `data-where` and the counts; `#omr-error` carries `data-error-kind`; `#play` carries `data-play-state`; `#app` carries `data-ready`. The sheet adds `#follow-playhead[data-follow]` **and** `#sheet-surface[data-follow]` (the follow setting on the control AND on the thing that moves — a checked box only proves it was clicked).
+  The editor adds `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`, `[data-omr-note]` / `[data-selected]` per note, `#note-delete` / `#undo` / `#redo`, and the palette's `#edit-palette[data-armed]` + `[data-tool]` per tool, its transport `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, its
   toolbox shell `#edit-palette[data-collapsed]` + `#palette-fold[data-collapsed]` (⚠ **a FLOATING, draggable, foldable toolbox since 2026-09-03** — `fixed`, rendered from `App` OUTSIDE
   `.kv-card`, taking no width from the score row; folding UNMOUNTS every tool, so unfold before arming one), the
   insert preview `[data-omr="insert-ghost"][data-insert-pitch]`, the tuplet tool's
@@ -309,7 +305,10 @@ a successful build is not a deploy. Both, and every other command, in
   `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that container —
   `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not
   survive a transform. The design system is `apps/web/src/styles/` (`tokens.css` → `base.css` →
-  `app.css`); classes are `.kv-*`. ⚠ **`.kv-score` keeps `overflow-y: clip`, load-bearing** (owner, 2026-09-03: ONE scrollbar, not two) — `overflow-x` alone computes the other axis to `auto`, and Bravura's font metrics gave the box 17 px of phantom height. [docs/DECISIONS.md](docs/DECISIONS.md).
+  `app.css`); classes are `.kv-*`. ⚠ **`.kv-score` keeps `overflow-y: clip`, load-bearing** (owner, 2026-09-03: ONE scrollbar, not two) — `overflow-x` alone computes the other axis to `auto`, and Bravura's font metrics gave the box 17 px of phantom height. ⚠ Consequence, and the follow below depends on it: the sheet scrolls SIDEWAYS in its own box, and up and down **not at all** — the page is the only vertical scroller. [docs/DECISIONS.md](docs/DECISIONS.md).
+- **THE PAGE GOES TO THE PLAYHEAD, AND ONLY ONCE THE PLAYHEAD HAS LEFT THE SCREEN** (owner, 2026-09-03). `followPlayhead` scrolls the page to the cursor while a piece plays — **the reader's setting, ON by default**, remembered in `localStorage` behind try/catch, `?follow=0|1` overrides without being written back. ⚠ **Two axes, two scrollers**: down the PAGE (`window`) and sideways in the sheet's own box (found by MEASUREMENT in `sideScrollerOf` — and the box that reports hidden width is not always the box that scrolls, so its computed `overflow-x` is part of the test; the sheet's own wrapper overflows with `overflow: visible` and killed this axis until the check caught it).
+  ⚠ **Never scroll continuously**: only outside a `FOLLOW_MARGIN` band, at most every `FOLLOW_CHECK_MS`, and a scroll silences it for `FOLLOW_COOLDOWN_MS` (a smooth scroll must LAND or each frame restarts it). ⚠ `FOLLOW_SIDE_MIN` stops the sideways axis firing on a box that only overruns by its own padding (~2 px on a wide window), which would twitch the music mid-playback for nothing. ⚠ **It moves the page, so a check that measures a point and then clicks it must own the scroll**: `smoke:editor`'s B4 insert-mapping read turns following OFF for that block.
+  ⚠ It obeys `prefers-reduced-motion`; the rAF loop reads the cursor's box AFTER writing its transform and touches only refs. `smoke:editor` covers both axes, both settings and a reload — the OFF arm is the load-bearing one, since a follow that ignored the setting passes every ON assertion. [docs/DECISIONS.md](docs/DECISIONS.md).
 - **`StaveNote.getBoundingBox()` is a merge over the note's MODIFIERS, so it is not safe on its own**
   (2026-08-08, a live bug). `GraceNoteGroup` never positions itself, so it reports its box at the SVG
   **origin**, and merging that stretched a graced note's click box from the top-left of the score to

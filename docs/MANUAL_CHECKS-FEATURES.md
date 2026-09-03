@@ -285,3 +285,30 @@ marking a page up. That is this check.
 would sound the way it looks. The editor resolves the whole page after every click and rejects the
 edit if it produced a warning — so a "D.C." in the middle of the piece, a third ⊕, and a "1." more
 than four bars from its `:‖` are all impossible. The one exception is the unfinished `‖:` in step 1.
+
+## Check 28 — does the page follow the cursor the way you want to read? (2026-09-03)
+
+Goal: the page now scrolls to the playhead when the playhead leaves the screen. Every automated
+check proves it MOVED and that the setting is obeyed; none can say whether it moves at the right
+moment or lands where your eye wants to be. That is this check, and it needs a long score — one
+whose sheet is several screens tall.
+
+`npm run dev:cloud`, open a page, press **▶ Çal** and then read along without touching the mouse.
+
+1. **The moment.** The page must sit still while the cursor crosses a row, and move only when the
+   cursor is about to leave the screen. If it nudges the paper while you are still reading a bar,
+   say so — the band it waits for (`FOLLOW_MARGIN`) is the number to change.
+2. **Where it lands.** After a jump the cursor's row sits about a third of the way down the window,
+   so there is music ahead of it. Is that the right share, or do you want more of the page ahead?
+3. **Turn it off.** Uncheck **İmleci takip et** and play again: the page must stay exactly where you
+   put it, even after the cursor has gone. Then reload the page — the box must still be unchecked.
+4. **A narrow window.** Make the window narrower than the sheet (or open it on a phone) so a
+   sideways scrollbar appears under the music. The sheet must slide sideways to the cursor too, and
+   only when the cursor has passed the edge.
+5. **Editing.** Press **Düzenle** while it is on. Nothing may move under your pointer while you
+   click, drag or place a sign — an edit stops playback, so this should be still, but it is the one
+   place a moving page would be worst.
+
+⚠ **Known and deliberate**: a jump is animated (unless your system asks for reduced motion), and
+following resumes wherever you scroll to — if you scroll away mid-playback, the page will come back
+to the cursor at the next jump. Turning the box off is the way to read somewhere else.

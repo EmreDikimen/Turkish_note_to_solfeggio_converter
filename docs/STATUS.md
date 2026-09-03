@@ -203,6 +203,18 @@ the model track never touches the app.** Either can be worked on without waiting
    `smoke:editor` **ALL PASS**. ⏭ **Unchecked by an eye — [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md)
    check 27**, which is about whether marking a page up FEELS like marking a page up; nothing else is
    owed. [DECISIONS.md](DECISIONS.md) · [../tools/render/structure-edit.ts](../tools/render/structure-edit.ts).
+3h. **✅ THE PAGE FOLLOWS THE PLAYHEAD, AND THE READER CAN TURN IT OFF (owner, 2026-09-03).** A
+   sheet is taller than the window, so the cursor used to walk off the bottom and stay there. It now
+   scrolls the page to itself — **only when it is off the visible band**, never continuously — and
+   sideways too on a window too narrow for the 1020 px sheet. **On by default**, a checkbox beside
+   **Güfte**, remembered in `localStorage`; `?follow=0` pins it off for a harness. ⭐ Two things only the
+   check could find: the sideways follow was **dead** (the box that reports hidden width is not the
+   box that scrolls — the sheet's own wrapper overflows with `overflow: visible`), and a page that
+   moves during playback broke an unrelated check — the B4 insert-mapping read measures a blank point
+   and then clicks it, so it now owns the scroll. `npm test` + `smoke:editor` **ALL PASS** (17 new
+   checks: both axes, both settings, and the setting surviving a reload). ⏭ **Unchecked by an eye —
+   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 28**, which is the only thing that can
+   say whether the jump lands where a reader wants to be looking. [DECISIONS.md](DECISIONS.md).
 3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, STILL UNCHECKED IN THE BROWSER (built 2026-08-29).**
    ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract
    (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,

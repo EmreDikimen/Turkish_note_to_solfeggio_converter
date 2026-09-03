@@ -26,6 +26,10 @@ import {
   BLOB_SKIP_LINE,
   BLOB_LINE_FILL,
   STAFF_ROW_POS_SP,
+  END_BLOBS,
+  END_SPAN_SP,
+  END_RUN_SP,
+  LINE_BLOB_MARGIN,
   WIDE_RUN_SP,
   pyRound,
 } from "./constants";
@@ -144,6 +148,139 @@ export function isThinStroke(
     if (run >= fatRun) return false; // a notehead-tall fat blob is attached
   }
   return true;
+}
+
+/**
+ * `_line_row_blobs`: the DE-LINED view of the staff-line rows, for gate 2b (see END_BLOBS).
+ *
+ * Per pixel, the length of the unbroken vertical ink run it belongs to; on each contiguous block
+ * of `skipRows` (one staff line), a pixel is kept when that run is at least the block's own
+ * thickness plus `margin`. Rows outside the blocks are all 0 — they are read from `band` itself.
+ */
+export function lineRowBlobs(band: Mask, skipRows: Uint8Array, margin: number): Mask {
+  const h = band.height;
+  const w = band.width;
+  const down = new Int32Array(h * w); // consecutive ink ending at this row
+  const up = new Int32Array(h * w); // consecutive ink starting at this row
+  for (let y = 0; y < h; y++) {
+    const off = y * w;
+    for (let x = 0; x < w; x++) {
+      down[off + x] = band.data[off + x] ? (y ? down[off - w + x]! : 0) + 1 : 0;
+    }
+  }
+  for (let y = h - 1; y >= 0; y--) {
+    const off = y * w;
+    for (let x = 0; x < w; x++) {
+      up[off + x] = band.data[off + x] ? (y < h - 1 ? up[off + w + x]! : 0) + 1 : 0;
+    }
+  }
+  const out = new Uint8Array(h * w);
+  let y = 0;
+  while (y < h) {
+    if (!skipRows[y]) {
+      y++;
+      continue;
+    }
+    const y0 = y;
+    while (y < h && skipRows[y]) y++;
+    const need = y - y0 + margin;
+    for (let yy = y0; yy < y; yy++) {
+      const off = yy * w;
+      for (let x = 0; x < w; x++) {
+        // runlen = down + up - 1, meaningful where band is set
+        out[off + x] = band.data[off + x] && down[off + x]! + up[off + x]! - 1 >= need ? 1 : 0;
+      }
+    }
+  }
+  return { data: out, width: w, height: h };
+}
+
+/**
+ * `_stroke_width`: the stroke's OWN thickness at column `x` — the median connected horizontal
+ * width through it over the non-line rows of `[y0, y1)`, the middle of a run where nothing is
+ * attached. 0 when no row there carries ink at `x`. ⚠ numpy's median of an even count is the
+ * mean of the two middle values, truncated by `int()`; mirrored exactly.
+ */
+export function strokeWidth(
+  band: Mask,
+  skipRows: Uint8Array,
+  x: number,
+  y0: number,
+  y1: number
+): number {
+  const r = Math.trunc(TARGET_SPACING);
+  const lo = Math.max(0, x - r);
+  const hi = Math.min(band.width, x + r + 1);
+  const subW = hi - lo;
+  const c = x - lo;
+  const widths: number[] = [];
+  const ya = Math.max(0, y0);
+  const yb = Math.min(band.height, y1);
+  for (let y = ya; y < yb; y++) {
+    const off = y * band.width;
+    if (skipRows[y] || !band.data[off + lo + c]) continue;
+    let l = c;
+    while (l > 0 && band.data[off + lo + l - 1]) l--;
+    let rt = c;
+    while (rt < subW - 1 && band.data[off + lo + rt + 1]) rt++;
+    widths.push(rt - l + 1);
+  }
+  if (!widths.length) return 0;
+  widths.sort((a, b) => a - b);
+  const n = widths.length;
+  const med = n % 2 ? widths[(n - 1) / 2]! : (widths[n / 2 - 1]! + widths[n / 2]!) / 2;
+  return Math.trunc(med);
+}
+
+/**
+ * `_fat_rows_in`: longest CONSECUTIVE run of fat rows through column `x` within rows `[y0, y1)`.
+ *
+ * Same fat semantics as `isThinStroke`, with two differences: a staff-line row is read from
+ * `lineBlob`, so a head or beam straddling the line counts there, and it must not fill the whole
+ * window (a beam or an under-read line, never a head) — a bare line row stays neutral; and the
+ * width is counted BEYOND `strokeW`, the stroke's own thickness, so a thick barline is not its
+ * own attachment.
+ */
+export function fatRowsIn(
+  band: Mask,
+  lineBlob: Mask,
+  skipRows: Uint8Array,
+  x: number,
+  y0: number,
+  y1: number,
+  fatW: number,
+  strokeW = 0
+): number {
+  const r = Math.trunc(TARGET_SPACING);
+  const lo = Math.max(0, x - r);
+  const hi = Math.min(band.width, x + r + 1);
+  const subW = hi - lo;
+  const c = x - lo;
+  let run = 0;
+  let best = 0;
+  const ya = Math.max(0, y0);
+  const yb = Math.min(band.height, y1);
+  for (let y = ya; y < yb; y++) {
+    const onLine = skipRows[y] !== 0;
+    const src = onLine ? lineBlob.data : band.data;
+    const off = y * band.width;
+    if (!src[off + lo + c]) {
+      if (!onLine) run = 0;
+      continue;
+    }
+    let l = c;
+    while (l > 0 && src[off + lo + l - 1]) l--;
+    let rt = c;
+    while (rt < subW - 1 && src[off + lo + rt + 1]) rt++;
+    const fat = rt - l + 1 - strokeW >= fatW && (!onLine || l > 0 || rt < subW - 1);
+    if (fat) {
+      run++;
+      if (run > best) best = run;
+    } else if (!onLine) {
+      run = 0;
+    }
+  }
+  return best;
 }
 
 /**
@@ -342,11 +479,29 @@ export function detectBarlines(
   const fatW = pyRound(TARGET_SPACING * 0.75); // wider than a thick barline core
   const fatRun = pyRound(TARGET_SPACING * 0.5); // ~a notehead's height
   const ovTolPx = pyRound(TARGET_SPACING * OV_TOL_SP);
+  const lineBlob = END_BLOBS ? lineRowBlobs(band, staffRows, LINE_BLOB_MARGIN) : null;
+  const endSpan = pyRound(TARGET_SPACING * END_SPAN_SP);
+  const endRun = pyRound(TARGET_SPACING * END_RUN_SP);
   let bars: number[] = [];
   for (const [center, testCol] of clusters) {
     if (!isThinStroke(band, center, fatW, fatRun, staffRows)) {
       rejects?.push([center, "gate2_fat"]);
       continue;
+    }
+    // gate 2b: wide ink attached at BOTH ends of the stroke's run — a head and a beam. See
+    // END_BLOBS. Read at `testCol`, the member column that carries the run.
+    if (lineBlob !== null) {
+      const rt = runTop[testCol]!;
+      const rb = runBot[testCol]!;
+      const third = Math.trunc((rb - rt + 1) / 3);
+      const sw = strokeWidth(band, staffRows, testCol, rt + third, rb - third + 1);
+      if (
+        fatRowsIn(band, lineBlob, staffRows, testCol, rt, rt + endSpan, fatW, sw) >= endRun &&
+        fatRowsIn(band, lineBlob, staffRows, testCol, rb - endSpan + 1, rb + 1, fatW, sw) >= endRun
+      ) {
+        rejects?.push([center, "gate2_ends"]);
+        continue;
+      }
     }
     const [ovTop, ovBot, wideBeyond] = terminalOvershoot(bandExt, testCol, ext);
     if (ovTop > ovTolPx && ovBot > ovTolPx) {

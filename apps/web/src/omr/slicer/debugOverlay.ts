@@ -14,6 +14,7 @@
  *   blue    every ACCEPTED barline — this is where you check the row for a missing measure
  *   red     the PADDED crop boxes: exactly the pixels each strip holds
  *   orange  a rejected barline candidate: too fat (a smudge, a stem cluster)   — gate2_fat
+ *   amber   rejected: wide ink at BOTH ends of the stroke (a head and a beam)  — gate2_ends
  *   purple  rejected: the stroke runs on past the staff, so it reads as a clef — gate3_clef
  *   yellow  rejected: a notehead, flag or beam crossing a staff line           — gate3_blob
  *   grey    rejected: outside the staff's measured x-extent                    — xrange
@@ -29,6 +30,7 @@ import type { Stage3Result } from "./slicer";
 /** L1170-1171 — why a candidate was thrown away, in the colour the overlay draws it. */
 const REJECT_COLOR: Record<string, string> = {
   gate2_fat: "rgb(255,140,0)",
+  gate2_ends: "rgb(255,200,0)",
   gate3_clef: "rgb(180,0,200)",
   gate3_blob: "rgb(220,220,0)",
   xrange: "rgb(160,160,160)",

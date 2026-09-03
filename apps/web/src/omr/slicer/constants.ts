@@ -91,6 +91,24 @@ export const BLOB_LINE_FILL = 0.4; // L153 — ... "spans the staff" = this full
  */
 export const STAFF_ROW_POS_SP = 0.2;
 /**
+ * A STROKE WITH WIDE INK ATTACHED AT BOTH ENDS IS A STEM — `END_BLOBS` (`OMR_END_BLOBS` unset =>
+ * "1"), `END_SPAN_SP`, `END_RUN_SP`, `LINE_BLOB_MARGIN`. A barline's two ends are bare (a note may
+ * touch it at one place, never at both); a beamed stem ends in a head at one end and a beam at the
+ * other. A 16th whose head sits ON the top line and whose second beam ends ON the bottom line spans
+ * the staff exactly, shows gate 2 only 8 fat rows below the line (14 with the line rows it skips)
+ * of the 15 it needs, and pushes nothing past either outer line for gate 3 — so it passed as a
+ * barline and the row was cut between a sharp and its own note (nihavendLongaDuzgun s09). A head
+ * merely touching a real barline looks the same at that end; only the FAR end separates the two,
+ * bare on a barline and in a beam on a stem. Gate 2b looks within END_SPAN_SP of each end of the
+ * run for END_RUN_SP consecutive fat rows and rejects only when BOTH ends carry one. Staff-line
+ * rows are read through a de-lined view (`lineRowBlobs`) so a head or beam straddling a line keeps
+ * its height. Strictly a tightening. Measured in docs/METRICS-SLICER-STEMS.md.
+ */
+export const END_BLOBS = true;
+export const END_SPAN_SP = 1.5;
+export const END_RUN_SP = 0.3;
+export const LINE_BLOB_MARGIN = 3;
+/**
  * How much of a barline may have FADED AWAY at its ends and still be recognised — `BAR_FADE_SP`
  * (L124, `OMR_BAR_FADE` unset => 0.25). Gate 1 wants one unbroken run covering 0.85 of the analysis
  * band, which works out at ~the full staff height, so a photocopied barline missing its bottom few

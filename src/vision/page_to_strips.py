@@ -197,6 +197,34 @@ BLOB_LINE_FILL = float(os.environ.get("OMR_BLOB_FILL", "0.4"))   # ... "spans th
 # (false barlines 25 -> 12), and `score_slicer` exactly neutral at 82/124 — it costs nothing on
 # either instrument. Flat over 0.15-0.3; 0.5 is wide enough to re-admit the old behaviour.
 STAFF_ROW_POS_SP = float(os.environ.get("OMR_STAFF_ROW_POS", "0.2"))
+# A STROKE WITH WIDE INK ATTACHED AT BOTH ENDS IS A STEM (2026-09-03). A barline's two ends are
+# bare — a note may touch it at one place, never at both — while a beamed stem always ends in a
+# notehead at one end and a beam at the other. That is the class the gates above cannot see: a 16th
+# whose head sits ON the top line and whose second beam ends ON the bottom line spans the staff
+# exactly (gate 1); at the stem column the head shows 8 fat rows below the line and 6 more ON the
+# line rows gate 2 skips — 14 even when those are counted, against gate 2's 15 — and it pushes
+# nothing past either outer line for gate 3 (nihavendLongaDuzgun s09, x=1462: the row was cut
+# between a sharp and its own note). Gate 2 alone cannot be sharpened for it: a barline that a
+# head merely TOUCHES at the top line is, at that column, the same picture as this stem's head end,
+# and the de-lined gate-2 variant that counted the line rows still missed the target (14 < 15)
+# while costing three real barlines on the hand-marked pages. Only the FAR end separates the two:
+# the barline's is bare, the stem's is in a beam. So the end test looks at both ends: within
+# END_SPAN_SP of each end of the stroke's run, END_RUN_SP consecutive rows of ink >= 0.75 sp wide
+# connected through the column, and it rejects only when BOTH ends carry one. Staff-line rows are
+# read through a DE-LINED view (`_line_row_blobs`: a pixel counts when its column's ink run is
+# taller than the line block by LINE_BLOB_MARGIN rows) so a head or beam that straddles a line
+# keeps its height; a bare line row stays neutral, as in gate 2. ⚠ "Wide" is measured BEYOND THE
+# STROKE'S OWN THICKNESS (`_stroke_width`, the median through the run's middle third): a repeat
+# barline's thick stroke is ~0.5 sp wide by itself, and the editions that draw curved "wings" on
+# it (`cok_yasa_ayse_ney` s01, 2 real `:|` lost on the first full run) put a thin curve at both
+# ends — bar plus wing read as fat, bar-thickness subtracted does not, while a 2 px stem loses
+# nothing. Strictly a tightening — it can only REJECT candidates.
+# `OMR_END_BLOBS=0` restores the 2026-09-02 behaviour for A/B. docs/METRICS-SLICER-STEMS.md.
+END_BLOBS = os.environ.get("OMR_END_BLOBS", "1") == "1"
+END_SPAN_SP = 1.5           # how far in from an end of the run an attachment may sit: a head is
+                            # 1 sp, a 16th's second beam ends ~1.25 sp in (beam, gap, beam)
+END_RUN_SP = 0.3            # fat rows it must sustain: half a head's attachment, half a beam
+LINE_BLOB_MARGIN = 3        # rows past the line block's thickness before ink counts as a blob
 PAD_PX = 6             # crop padding past enclosing barlines (tight: never reaches a notehead)
 # Give the left pad back off the PREVIOUS strip's right edge, so neighbouring crops never carry
 # the same pixels and a strip stops ending on the barline its label does not mention. Measured
@@ -1135,6 +1163,98 @@ def _is_thin_stroke(band: np.ndarray, x: int, fat_w: int, fat_run: int,
     return True
 
 
+def _line_row_blobs(band: np.ndarray, skip_rows: np.ndarray, margin: int) -> np.ndarray:
+    """The DE-LINED view of the staff-line rows, for the end test (see END_BLOBS).
+
+    Per pixel, the length of the unbroken vertical ink run it belongs to; on each contiguous block
+    of `skip_rows` (one staff line), a pixel is kept when that run is at least the block's own
+    thickness plus `margin`. A pure line pixel's run IS the block (plus a halo row at most); a
+    notehead or beam straddling the line runs far past it. Rows outside the blocks are all False —
+    they are read from `band` itself.
+    """
+    h, w = band.shape
+    down = np.zeros((h, w), dtype=np.int32)          # consecutive ink ending at this row
+    up = np.zeros((h, w), dtype=np.int32)            # consecutive ink starting at this row
+    for y in range(h):
+        down[y] = (down[y - 1] + 1) * band[y] if y else band[y].astype(np.int32)
+    for y in range(h - 1, -1, -1):
+        up[y] = (up[y + 1] + 1) * band[y] if y < h - 1 else band[y].astype(np.int32)
+    runlen = down + up - 1                            # meaningful where band is True
+    out = np.zeros((h, w), dtype=bool)
+    y = 0
+    while y < h:
+        if not skip_rows[y]:
+            y += 1
+            continue
+        y0 = y
+        while y < h and skip_rows[y]:
+            y += 1
+        need = (y - y0) + margin
+        out[y0:y] = band[y0:y] & (runlen[y0:y] >= need)
+    return out
+
+
+def _stroke_width(band: np.ndarray, skip_rows: np.ndarray, x: int, y0: int, y1: int) -> int:
+    """The stroke's OWN thickness at column x: the median connected horizontal width through it
+    over the non-line rows of [y0, y1) — the middle of a run, where nothing is attached. 0 when
+    no row there carries ink at x."""
+    r = int(TARGET_SPACING)
+    lo = max(0, x - r)
+    sub = band[:, lo:x + r + 1]
+    c = x - lo
+    widths = []
+    for y in range(max(0, y0), min(sub.shape[0], y1)):
+        if skip_rows[y] or not sub[y, c]:
+            continue
+        l = c
+        while l > 0 and sub[y, l - 1]:
+            l -= 1
+        rt = c
+        while rt < sub.shape[1] - 1 and sub[y, rt + 1]:
+            rt += 1
+        widths.append(rt - l + 1)
+    return int(np.median(widths)) if widths else 0
+
+
+def _fat_rows_in(band: np.ndarray, line_blob: np.ndarray, skip_rows: np.ndarray, x: int,
+                 y0: int, y1: int, fat_w: int, stroke_w: int = 0) -> int:
+    """Longest CONSECUTIVE run of fat rows through column x within rows [y0, y1).
+
+    Same fat semantics as `_is_thin_stroke` (connected horizontal ink >= `fat_w` through the
+    column, ±1 sp window), with two differences: a staff-line row is read from `line_blob`, so a
+    head or beam straddling the line counts there, and it must not fill the whole window (that is
+    a beam or a line the fill test under-read, never a head) — a bare line row stays neutral; and
+    the width is counted BEYOND `stroke_w`, the stroke's own thickness, so a thick barline is not
+    its own attachment.
+    """
+    r = int(TARGET_SPACING)
+    lo = max(0, x - r)
+    sub = band[:, lo:x + r + 1]
+    sub_lb = line_blob[:, lo:x + r + 1]
+    c = x - lo
+    run = best = 0
+    for y in range(max(0, y0), min(sub.shape[0], y1)):
+        on_line = bool(skip_rows[y])
+        src = sub_lb if on_line else sub
+        if not src[y, c]:
+            if not on_line:
+                run = 0
+            continue
+        l = c
+        while l > 0 and src[y, l - 1]:
+            l -= 1
+        rt = c
+        while rt < src.shape[1] - 1 and src[y, rt + 1]:
+            rt += 1
+        fat = (rt - l + 1) - stroke_w >= fat_w and (not on_line or l > 0 or rt < src.shape[1] - 1)
+        if fat:
+            run += 1
+            best = max(best, run)
+        elif not on_line:
+            run = 0
+    return best
+
+
 def _cluster_cols(xs: np.ndarray, longest: np.ndarray, gap: int) -> list[tuple[int, int]]:
     """Cluster nearby candidate columns; return (center, test_col) per cluster.
 
@@ -1278,12 +1398,28 @@ def detect_barlines(row: np.ndarray, staff: Staff, scale: float,
     fat_w = int(round(TARGET_SPACING * 0.75))                # wider than a thick barline core
     fat_run = int(round(TARGET_SPACING * 0.5))               # ~a notehead's height
     ov_tol = int(round(TARGET_SPACING * OV_TOL_SP))
+    line_blob = _line_row_blobs(band, staff_rows, LINE_BLOB_MARGIN) if END_BLOBS else None
+    end_span = int(round(TARGET_SPACING * END_SPAN_SP))
+    end_run = int(round(TARGET_SPACING * END_RUN_SP))
     bars = []
     for center, test_col in clusters:
         if not _is_thin_stroke(band, center, fat_w, fat_run, staff_rows):
             if rejects is not None:
                 rejects.append((center, "gate2_fat"))
             continue
+        # gate 2b: wide ink attached at BOTH ends of the stroke's run — a head and a beam. See
+        # END_BLOBS. Read at `test_col`, the member column that carries the run.
+        if line_blob is not None:
+            rt_, rb_ = int(run_top[test_col]), int(run_bot[test_col])
+            third = (rb_ - rt_ + 1) // 3
+            sw = _stroke_width(band, staff_rows, test_col, rt_ + third, rb_ - third + 1)
+            if (_fat_rows_in(band, line_blob, staff_rows, test_col,
+                             rt_, rt_ + end_span, fat_w, sw) >= end_run
+                    and _fat_rows_in(band, line_blob, staff_rows, test_col,
+                                     rb_ - end_span + 1, rb_ + 1, fat_w, sw) >= end_run):
+                if rejects is not None:
+                    rejects.append((center, "gate2_ends"))
+                continue
         ov_top, ov_bot, wide_beyond = _terminal_overshoot(band_ext, test_col, ext)
         if ov_top > ov_tol and ov_bot > ov_tol:              # extends both ways: clef
             if rejects is not None:
@@ -1404,6 +1540,9 @@ def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
 # staff-line-neutral blob walk and gate 2's position rule all did, and `window_cache_ok` could not
 # see any of them, so a July decode still read as valid against crops the current code no longer
 # produces. Date-shaped so the value says WHEN the geometry it describes was current.
+# ⚠ 20260903 covers TWO same-day changes — the trailing-span trim (TAIL_SPAN_MAX_SP) and the
+# both-ends stem gate (END_BLOBS). The second is told apart by the `end_blobs` key in `geometry`,
+# which `window_cache_ok` compares as well; no cache on disk carried 20260903 when it landed.
 GEOMETRY_REV = 20260903
 
 
@@ -1420,6 +1559,7 @@ def window_signature() -> dict:
             "tail_span": TAIL_SPAN_MAX_SP,
             "geometry_rev": GEOMETRY_REV,
             "geometry": {"bar_fade": BAR_FADE_SP, "staff_rescue": STAFF_RESCUE,
+                         "end_blobs": END_BLOBS,
                          "staff_group_span": STAFF_GROUP_BY_SPAN,
                          "blob_skip_line": BLOB_SKIP_LINE,
                          "blob_line_fill": BLOB_LINE_FILL, "staff_row_pos": STAFF_ROW_POS_SP,
@@ -1756,7 +1896,8 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
                 cv2.line(dbg, (bx, staff.top - 12), (bx, staff.bottom + 12), (220, 120, 0), 2)
             # rejected candidates, color-coded by WHY (orange=fat blob, purple=clef-like/too
             # long, yellow=head/flag past a staff line, gray=outside the staff x-extent)
-            rej_color = {"gate2_fat": (0, 140, 255), "gate3_clef": (200, 0, 180),
+            rej_color = {"gate2_fat": (0, 140, 255), "gate2_ends": (0, 200, 255),
+                         "gate3_clef": (200, 0, 180),
                          "gate3_blob": (0, 220, 220), "xrange": (160, 160, 160)}
             for rx, why in (dbg_info or {}).get("rejects", []):
                 bx = int(rx / scale)

@@ -378,6 +378,28 @@
   gap: var(--space-3) var(--space-4);
 }
 
+/* ⚠ FIXED, and it exists only while the transport above has scrolled off the screen (owner,
+   2026-09-03: the Çal/Dur pair must not disappear when you scroll). Parked in the BOTTOM-RIGHT
+   corner and never moved: the same bargain the edit toolbox makes — a floating box can cover
+   music, so it sits in a corner the score does not use. It is one step BELOW the toolbox in
+   z-order, because the toolbox is the one the reader can drag on top of things.
+   ⚠ Positioned with right/bottom and never with a transform: a transformed ancestor turns `fixed`
+   into "fixed to that box", and this one lives inside `.kv-page`, which must stay untransformed. */
+.kv-mini-transport {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 39;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+
 /* ── Score card ─────────────────────────────────────────────────────────── */
 
 .kv-card {

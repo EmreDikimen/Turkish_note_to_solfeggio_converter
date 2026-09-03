@@ -1817,16 +1817,18 @@ async function main() {
   check("no note box is anchored at the sheet's origin", geometry.atOrigin.join(" ") || "none", "none");
   check("every box's centre hits its own note", geometry.stolen.join(" ") || "none", "none");
 
-  // --- the page follows the playhead (owner, 2026-09-03) ----------------------------------------
+  // --- the page follows the playhead, ONCE PER ROW (owner, 2026-09-03) --------------------------
   //
   // A sheet is taller than the window, so the cursor walks off the bottom while the piece plays and
-  // the reader has to chase it by hand. With "İmleci takip et" on, the page goes to the cursor
-  // instead — only once the cursor is off the screen, never continuously.
+  // the reader has to chase it. With "İmleci takip et" on, the page goes to the cursor instead —
+  // ⭐ **only when the cursor moves to a new staff ROW**, which is the owner's second call: inside a
+  // row the page must not move at all, whatever the reader has done with it.
   //
   // ⚠ Neither half can be read off the checkbox: `#follow-playhead[data-follow]` says the control
-  // was clicked, not that the page moved. So both arms do the same thing — start playback, then
-  // shove the window where the cursor is NOT — and read `window.scrollY` afterwards. The OFF arm is
-  // the more important one: a follow that ignored the setting would pass every ON assertion.
+  // was clicked, not that the page moved. So every arm below does the same thing — start playback,
+  // shove the window where the cursor is NOT — and then watches `window.scrollY` ACROSS a row
+  // change. The two `false` expectations are the load-bearing ones: a follow that ignored the
+  // setting, or one that ran on a timer, passes every positive assertion here.
   console.log("\nthe page follows the playhead");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
@@ -1842,6 +1844,15 @@ async function main() {
   );
   check("the sheet is taller than the window", maxScroll > 200, true);
 
+  /** Which ROW the cursor is on, as its top INSIDE the sheet — so it does not change when the page
+   *  scrolls, only when the music turns the corner. Null while the playhead is hidden. */
+  const phRow = async (): Promise<number | null> =>
+    page.evaluate(() => {
+      const ph = document.querySelector<HTMLElement>('[data-omr="playhead"]');
+      const surface = document.querySelector<HTMLElement>("#sheet-surface");
+      if (!ph || !surface || ph.style.display === "none") return null;
+      return Math.round(ph.getBoundingClientRect().top - surface.getBoundingClientRect().top);
+    });
   /** Is the cursor within the window at all? Its own box, in viewport coordinates. */
   const playheadOnScreen = async (): Promise<boolean> =>
     page.evaluate(() => {
@@ -1852,27 +1863,43 @@ async function main() {
     });
   const scrollY = async () => Math.round(await page.evaluate(() => window.scrollY));
 
+  /** Watch until the cursor changes row, reporting whether anything scrolled BEFORE it did.
+   *  ⚠ The tempo is raised first (see `#bpm` below), so a row is seconds rather than tens of them. */
+  const acrossRowChange = async (parked: number) => {
+    const from = await phRow();
+    let movedInsideRow = false;
+    let changed = false;
+    for (let i = 0; i < 200; i++) {
+      const [row, y] = [await phRow(), await scrollY()];
+      if (row !== from) { changed = true; break; }
+      if (Math.abs(y - parked) > 4) { movedInsideRow = true; break; }
+      await page.waitForTimeout(100);
+    }
+    await page.waitForTimeout(900); // let the scroll the row change asks for land
+    return { movedInsideRow, changed, after: await scrollY() };
+  };
+
+  // ⚠ Set BEFORE Çal: changing the tempo rebuilds the timeline. 200 BPM makes a row a few seconds,
+  // which is what keeps the waits below honest instead of merely long.
+  await page.fill("#bpm", "200");
+  await page.waitForTimeout(200);
+
   // Playback starts at the top of the sheet, so parking the window at the BOTTOM puts the cursor
-  // off the screen — the situation this feature exists for, without waiting for the music to get
-  // there.
+  // off the screen — the situation this feature exists for, without waiting for the music to reach
+  // the bottom of the page.
   await page.locator("#play").click();
-  const startFrac = await waitForPlayhead();
-  check("the playhead is up and running", startFrac != null, true);
+  check("the playhead is up and running", (await waitForPlayhead()) != null, true);
   await page.evaluate((y) => window.scrollTo(0, y), maxScroll);
   await page.waitForTimeout(150);
   check("the window is parked away from the cursor", (await scrollY()) > 200, true);
   check("…with the cursor off the screen", await playheadOnScreen(), false);
 
-  // ⚠ Poll, do not sleep: the scroll is animated (`behavior: "smooth"`), and how long it takes is
-  // the browser's business, not ours.
-  let followedTo = await scrollY();
-  for (let i = 0; i < 30 && !(await playheadOnScreen()); i++) {
-    await page.waitForTimeout(100);
-    followedTo = await scrollY();
-  }
-  console.log(`  parked at ${maxScroll}, followed back to ${followedTo}`);
-  check("the page went to the cursor", await playheadOnScreen(), true);
-  check("…by scrolling back up, not by staying put", followedTo < maxScroll - 100, true);
+  const on = await acrossRowChange(await scrollY());
+  console.log(`  parked at ${maxScroll}, followed to ${on.after} at the row change`);
+  check("⭐ the page does NOT move inside a row", on.movedInsideRow, false);
+  check("the row changed while we watched", on.changed, true);
+  check("…and THAT is what brings the page to the cursor", await playheadOnScreen(), true);
+  check("…by scrolling back up, not by staying put", on.after < maxScroll - 100, true);
 
   await page.locator("#stop").click();
   await page.waitForTimeout(200);
@@ -1885,9 +1912,11 @@ async function main() {
   await page.locator("#play").click();
   check("playback is up again", (await waitForPlayhead()) != null, true);
   await page.evaluate((y) => window.scrollTo(0, y), maxScroll);
-  await page.waitForTimeout(1200); // longer than FOLLOW_CHECK_MS + a smooth scroll, so a leak shows
-  check("with following off the cursor is still off screen", await playheadOnScreen(), false);
-  check("…and the page has not moved itself", await scrollY(), Math.round(maxScroll));
+  await page.waitForTimeout(150);
+  const off = await acrossRowChange(await scrollY());
+  check("a row change happened with following off too", off.changed, true);
+  check("…the cursor is still off screen", await playheadOnScreen(), false);
+  check("…and the page has not moved itself", off.after, Math.round(maxScroll));
   await page.locator("#stop").click();
 
   // The answer is remembered per browser, so a reader who turns it off does not meet it again.
@@ -1902,13 +1931,13 @@ async function main() {
   // edge. ⚠ It has a threshold of its own (`FOLLOW_SIDE_MIN` in SheetView.tsx), so this arm has to
   // make the overflow REAL rather than the handful of padding pixels a wide window overflows by;
   // that is what `setViewportSize` is doing here. ⚠ And the scroller is the SHEET's own box, not the
-  // window — two axes, two different scrolling objects.
+  // window — two axes, two different scrolling objects, and this one is also once per row.
   await page.setViewportSize({ width: 640, height: 720 });
   await page.waitForTimeout(400);
   const sideBox = async () =>
     page.evaluate(() => {
       const el = document.querySelector<HTMLElement>(".kv-score")!;
-      return { left: el.scrollLeft, max: el.scrollWidth - el.clientWidth };
+      return { left: Math.round(el.scrollLeft), max: Math.round(el.scrollWidth - el.clientWidth) };
     });
   const playheadInBox = async (): Promise<boolean> =>
     page.evaluate(() => {
@@ -1920,6 +1949,7 @@ async function main() {
     });
   check("a narrow window really does hide part of the sheet", (await sideBox()).max > 200, true);
 
+  await page.fill("#bpm", "200");
   await page.locator("#play").click();
   check("playback is up on the narrow window", (await waitForPlayhead()) != null, true);
   // Park the sheet at its far right: the cursor is at the START of a row, so it is now off to the
@@ -1931,16 +1961,55 @@ async function main() {
   await page.waitForTimeout(150);
   const parkedRight = (await sideBox()).left;
   check("the sheet is parked away from the cursor", parkedRight > 200, true);
-  let cameBack = parkedRight;
-  for (let i = 0; i < 30 && !(await playheadInBox()); i++) {
-    await page.waitForTimeout(100);
-    cameBack = (await sideBox()).left;
-  }
+  const fromRow = await phRow();
+  for (let i = 0; i < 200 && (await phRow()) === fromRow; i++) await page.waitForTimeout(100);
+  await page.waitForTimeout(900);
+  const cameBack = (await sideBox()).left;
   console.log(`  parked sideways at ${parkedRight}, followed back to ${cameBack}`);
   check("the sheet slid back to the cursor", await playheadInBox(), true);
   check("…by scrolling, not by staying put", cameBack < parkedRight - 100, true);
   await page.locator("#stop").click();
   await page.setViewportSize({ width: 1280, height: 720 });
+
+  // --- Çal and Dur stay reachable wherever you have scrolled to (owner, 2026-09-03) --------------
+  //
+  // The transport is a wrapping bar at the top of the page, so on a long score it is gone by the
+  // time you are reading the third system. The same two buttons are pinned to the bottom-right
+  // corner while it is off screen.
+  //
+  // ⚠ The load-bearing assertion is the last pair: the pinned Çal must drive the REAL transport,
+  // not a second one of its own. A check that only read the pinned button's own attribute would
+  // pass on a control wired to nothing. ⚠ Following is turned OFF here on purpose — pressing Çal
+  // would otherwise scroll the page to the playhead and bring the real transport back, which is
+  // fine in the app and would make this check race itself.
+  console.log("\nÇal and Dur stay reachable");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json&follow=0`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+
+  const pinned = page.locator("#sticky-transport");
+  check("nothing is pinned while the real transport is on screen", await pinned.count(), 0);
+  await page.evaluate(
+    () => window.scrollTo(0, document.documentElement.scrollHeight - window.innerHeight),
+  );
+  await pinned.waitFor({ timeout: 5000 });
+  check("scrolling away pins the pair", await pinned.count(), 1);
+  check("…carrying the transport's state", await page.getAttribute("#play-sticky", "data-play-state"), "stopped");
+  check("…and Dur is disabled while stopped", await page.locator("#stop-sticky").isDisabled(), true);
+
+  await page.locator("#play-sticky").click();
+  await page.waitForTimeout(600);
+  // Read the REAL button without clicking it — Playwright scrolls what it clicks into view, which
+  // would put the transport back on screen and unpin the pair mid-check.
+  const realState = async () => page.evaluate(() => document.getElementById("play")?.getAttribute("data-play-state"));
+  check("⭐ the pinned Çal drives the real transport", await realState(), "playing");
+  check("…and both say so", await page.getAttribute("#play-sticky", "data-play-state"), "playing");
+  await page.locator("#stop-sticky").click();
+  await page.waitForTimeout(400);
+  check("the pinned Dur stops it too", await realState(), "stopped");
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(600);
+  check("scrolling back to the transport unpins the pair", await pinned.count(), 0);
 
   check("no uncaught page errors", pageErrors.length ? pageErrors.join("; ") : "none", "none");
 

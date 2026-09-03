@@ -12,8 +12,12 @@
  *
  * `#play` carries `data-play-state` and `#stop` its id because the deploy checks drive them; the
  * LABELS are copy and are free to change. See apps/web/src/ui/status.ts for the reasoning.
+ * ⚠ `#play-sticky` / `#stop-sticky` are the SAME transport pinned to the corner once this bar has
+ * scrolled off (see `StickyTransport` at the bottom), so `data-play-state` now names two buttons
+ * here as well as `#palette-play` in the editor's toolbox — a check must say which one it means.
  */
 
+import { useEffect, useRef, useState } from "react";
 import { findUsul, USULS, type MakamOption } from "@turkish-omr/core";
 import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
@@ -96,12 +100,16 @@ export function TransportBar({
   // (packages/core/src/usul.ts) — the checkbox says so instead of silently playing nothing, and
   // `data-usul-strokes` is how a headless check reads that without matching the sentence.
   const strokeCount = findUsul(usulName)?.strokes?.length ?? 0;
+  // The real Çal button, watched by the pinned pair below so it only appears once this one is gone.
+  const playRef = useRef<HTMLButtonElement>(null);
 
   return (
+    <>
     <div className="kv-transport">
       <div className="kv-transport__group">
         <button
           id="play"
+          ref={playRef}
           type="button"
           data-play-state={playState}
           className="kv-btn kv-btn--primary"
@@ -131,6 +139,7 @@ export function TransportBar({
       >
         <span>{TR.transport.tempo}</span>
         <input
+          id="bpm"
           type="number"
           min={20}
           max={400}
@@ -316,6 +325,90 @@ export function TransportBar({
           </select>
         </label>
       </div>
+    </div>
+
+    {/* The same two buttons, pinned to the corner while the real ones are off screen. */}
+    <StickyTransport
+      anchor={playRef}
+      canPlay={canPlay}
+      playState={playState}
+      onPlayPause={onPlayPause}
+      onStop={onStop}
+    />
+    </>
+  );
+}
+
+/**
+ * ▶ Çal and ■ Dur, pinned to the bottom-right corner once the transport itself has scrolled away
+ * (owner, 2026-09-03: *"Çal ve dur tuşu sayfaya yapışık olsun, biz scrolladığımızda kaybolmasın"*).
+ *
+ * Three decisions worth keeping:
+ *
+ *  - **Only these two.** Making the whole transport `sticky` was the obvious move and is wrong: it
+ *    wraps to two or three rows on a laptop, so it would pin a third of the window and hide the
+ *    music it is meant to keep you reading. Tempo, usul and makam are set once, before playing.
+ *  - **Only when the real pair is off screen**, watched with an `IntersectionObserver` on the real
+ *    `#play` — not a scroll listener (no work per frame), and not a fixed scroll threshold (the
+ *    transport's own height changes with the window). With both on screen a second pair would just
+ *    be a duplicate control saying the same thing twice.
+ *  - **Bottom-right, and it never moves.** The same corner-parking bargain the edit toolbox makes:
+ *    a floating box can cover music, and the answer is that it sits in a corner the score does not
+ *    use. It is BELOW the toolbox in z-order, because the toolbox is the one you can drag.
+ *
+ * ⚠ Its state comes from the same props as the real buttons — there is one transport, shown twice.
+ * `#play-sticky` carries `data-play-state` like `#play`, so a check must name the one it means.
+ */
+function StickyTransport({
+  anchor,
+  canPlay,
+  playState,
+  onPlayPause,
+  onStop,
+}: {
+  anchor: React.RefObject<HTMLButtonElement | null>;
+  canPlay: boolean;
+  playState: "stopped" | "playing" | "paused";
+  onPlayPause: () => void;
+  onStop: () => void;
+}) {
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    const el = anchor.current;
+    // ⚠ Both guards are real: the harness renders this view in environments without an observer,
+    // and without one the honest answer is "never show it" — a pinned pair that cannot tell whether
+    // the real one is visible would sit over the score forever.
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setAway(!!entry && !entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [anchor]);
+
+  if (!away || !canPlay) return null;
+  return (
+    <div className="kv-mini-transport" id="sticky-transport">
+      <button
+        id="play-sticky"
+        type="button"
+        data-play-state={playState}
+        className="kv-btn kv-btn--primary"
+        onClick={onPlayPause}
+      >
+        {playState === "playing"
+          ? TR.transport.pause
+          : playState === "paused"
+            ? TR.transport.resume
+            : TR.transport.play}
+      </button>
+      <button
+        id="stop-sticky"
+        type="button"
+        className="kv-btn"
+        onClick={onStop}
+        disabled={playState === "stopped"}
+      >
+        {TR.transport.stop}
+      </button>
     </div>
   );
 }

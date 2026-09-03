@@ -48,19 +48,18 @@ const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff 
 //
 // While the piece plays, the cursor walks down a sheet that is taller than the window, so it
 // leaves the screen and the reader has to chase it by hand. With `followPlayhead` on, the page
-// goes to the cursor instead — but ONLY once the cursor is off the visible band, never on every
-// frame: a page that re-centres continuously cannot be read, and it would also fight the reader's
-// own scrolling every time they look somewhere else.
+// goes to the cursor instead.
+//
+// ⚠ ONCE PER ROW, AND ONLY WHEN THE ROW IS OFF THE SCREEN (owner, 2026-09-03: *"sadece row
+// değiştiğinde tetiklensin"*). The trigger is the cursor moving to a NEW staff row, not the clock:
+// inside a row the page never moves, whatever the reader does with it, so nothing can shift under
+// a pointer mid-bar and a reader who scrolls away to look at something else is left alone until the
+// music turns the corner. It also costs nothing — one box read per row instead of one per frame,
+// and no cooldown, because a scroll that is asked for once cannot restart its own animation.
+// ⚠ Consequence, and it is deliberate: on a window too narrow for the sheet the SIDEWAYS follow
+// also fires only at a row change, so a cursor crossing a wide row leaves the box until then.
 const FOLLOW_MARGIN = 32; // px of the window's edge that counts as already "off the page"
 const FOLLOW_AIM = 0.35; // after a scroll the cursor's row sits this far down the window
-// One smooth scroll has to LAND before another is asked for. Without this the check fires on every
-// frame of the animation — the cursor is still out of band while the page is travelling to it — and
-// each new call restarts the scroll, so the page crawls or stalls.
-const FOLLOW_COOLDOWN_MS = 500;
-// How often the question is even asked. A row lasts seconds, so four times a second is plenty —
-// and asking per frame would read the cursor's box straight after writing its transform, which
-// forces the browser to re-lay-out the whole score sixty times a second for nothing.
-const FOLLOW_CHECK_MS = 200;
 // How much hidden width a sideways scroller must have before this axis is followed at all. On a
 // wide window the 1020 px sheet overruns `.kv-score`'s content box by about 2 px — absorbed by its
 // own padding, invisible to anyone — and yet a cursor near the end of a row reads as past the right
@@ -1499,26 +1498,24 @@ function sideScrollerOf(el: HTMLElement): HTMLElement | null {
 }
 
 /**
- * Bring the playhead back on screen if it has left it, and say whether anything was scrolled.
+ * Bring the playhead back on screen if it has left it. Called once per staff row — see FOLLOW_*.
  *
  * Two different scrollers, because the sheet has two axes and they are not the same object: down
  * the PAGE (the window), and across the sheet's own box (`sideScrollerOf`). Each axis is touched
- * only when the cursor is really outside the readable band, so a cursor crossing a wide row moves
- * nothing at all until it reaches an edge.
+ * only when the cursor is really outside the readable band, so a new row that is already on screen
+ * moves nothing.
  */
-function followCursorIntoView(cursor: HTMLElement): boolean {
+function followCursorIntoView(cursor: HTMLElement): void {
   const box = cursor.getBoundingClientRect();
-  if (box.height === 0) return false; // hidden — there is nothing to follow yet
+  if (box.height === 0) return; // hidden — there is nothing to follow yet
   // Obey the reader's own OS setting: same jump, no animation.
   const behavior: ScrollBehavior =
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-  let moved = false;
 
   if (box.top < FOLLOW_MARGIN || box.bottom > window.innerHeight - FOLLOW_MARGIN) {
     // Park the row a third of the way down the window, so there is music AHEAD of the cursor and
     // not only behind it. The browser clamps this at both ends of the document.
     window.scrollTo({ top: Math.max(0, window.scrollY + box.top - window.innerHeight * FOLLOW_AIM), behavior });
-    moved = true;
   }
 
   const scroller = sideScrollerOf(cursor);
@@ -1527,10 +1524,8 @@ function followCursorIntoView(cursor: HTMLElement): boolean {
     const width = scroller.clientWidth;
     if (left < FOLLOW_MARGIN || left > width - FOLLOW_MARGIN) {
       scroller.scrollTo({ left: Math.max(0, scroller.scrollLeft + left - width / 2), behavior });
-      moved = true;
     }
   }
-  return moved;
 }
 
 /**
@@ -1754,9 +1749,11 @@ export function SheetView({
   const hostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
-  // Earliest time (`performance.now()`) the follow check may run again. A ref, like everything else
-  // the playhead frame touches: it changes sixty times a second and must not re-render anything.
-  const followNextRef = useRef(0);
+  // The row the follow has already answered for (its top in sheet coordinates), so the question is
+  // asked once per row. A ref, like everything else the playhead frame touches: it must not
+  // re-render anything. Null = nothing followed yet, which is why the FIRST row of a playback is a
+  // change and gets its scroll — that is what takes you to the bar Çal was aimed at.
+  const followRowRef = useRef<number | null>(null);
   // An in-progress pitch drag: which event, where the pointer went down, and how many steps have
   // already been applied. A ref, not state — every applied step re-engraves the score, and the
   // drag has to survive those re-renders unchanged.
@@ -2418,6 +2415,8 @@ export function SheetView({
       cursor.style.display = "none";
       return;
     }
+    // A fresh playback answers for its first row again — it may start anywhere on the page.
+    followRowRef.current = null;
     let raf = 0;
     const tick = () => {
       const pos = getPositionMs();
@@ -2448,14 +2447,10 @@ export function SheetView({
         cursor.style.height = `${active.height}px`;
         cursor.style.transform = `translate(${active.x - 2}px, ${active.top}px)`;
         // ⚠ AFTER the transform, never before: the box is read from the DOM, so it has to be the
-        // position this frame just wrote. And gated by a clock, not run every frame — see
-        // FOLLOW_CHECK_MS for why, and FOLLOW_COOLDOWN_MS for why a scroll silences it longer.
-        if (followPlayhead) {
-          const now = performance.now();
-          if (now >= followNextRef.current) {
-            followNextRef.current =
-              now + (followCursorIntoView(cursor) ? FOLLOW_COOLDOWN_MS : FOLLOW_CHECK_MS);
-          }
+        // position this frame just wrote. And only when the ROW changed — see the FOLLOW_* block.
+        if (followPlayhead && active.top !== followRowRef.current) {
+          followRowRef.current = active.top;
+          followCursorIntoView(cursor);
         }
       } else if (!playPlan || pos == null || pos < 0) {
         cursor.style.display = "none";

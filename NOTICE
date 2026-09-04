@@ -1,0 +1,30 @@
+KomaVision — Turkish (makam) music OMR
+Copyright 2026 Emre Dikimen
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+--------------------------------------------------------------------------------
+WHAT THE LICENCE COVERS, AND WHAT IT DOES NOT
+--------------------------------------------------------------------------------
+
+LICENSE applies to THIS PROJECT'S OWN WORK: the source code in this repository,
+its documentation, and the model weights trained from it.
+
+It does NOT apply to third-party material that this project uses, references, or
+that is present in the repository's git history. Those keep their own licences,
+and this file cannot and does not relicense them:
+
+  - Sheet music from SymbTr (CC BY-NC-SA 4.0). No score is served by the app,
+    and none is present in HEAD. Copies remain in the repository's git history.
+  - A screenshot from neyzen.com, likewise out of HEAD and still in history.
+  - The base model `Flova/omr_transformer` (Apache-2.0), which this project's
+    weights are fine-tuned from. Its licence and attribution travel with any
+    derivative, as Apache-2.0 §4 requires.
+  - Audio samples, fonts and libraries bundled with or fetched by the app.
+
+The licence of every third-party thing this project touches, and the rule each
+one imposes, is documented in docs/THIRD-PARTY.md. The list that ships with the
+app is apps/web/public/THIRD-PARTY.txt.
+
+If you own rights in anything here and want it removed, open an issue:
+https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues

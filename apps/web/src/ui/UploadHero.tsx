@@ -22,6 +22,33 @@ import type { OmrStatus } from "./status";
 import type { AppError } from "./errors";
 import { TR } from "./strings";
 
+/**
+ * Is this being touched rather than pointed at?
+ *
+ * The three ways in are not three ways in on a phone: there is nothing to drag a file from, and no
+ * ⌘/Ctrl to paste with. Saying so anyway is not merely noise — it is an instruction a friend cannot
+ * follow, printed under the one button that works. So the copy asks the pointer.
+ *
+ * ⚠ It starts `false` and flips in an effect, so the first paint is the desktop wording everywhere.
+ * That is the right way round: a mouse reading "çekin veya seçin" for one frame has lost nothing,
+ * where a phone rendered server-side into the drag-and-drop wording would keep it.
+ * ⚠ It changes COPY and nothing else. No `data-*` attribute moves with it, so every deploy check is
+ * blind to which wording is up — which is the standing rule for user-facing strings (status.ts).
+ */
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    if (typeof matchMedia !== "function") return;
+    const mq = matchMedia("(pointer: coarse)");
+    const read = () => setCoarse(mq.matches);
+    read();
+    // A tablet with a keyboard folio attached and detached changes the answer while the page is open.
+    mq.addEventListener("change", read);
+    return () => mq.removeEventListener("change", read);
+  }, []);
+  return coarse;
+}
+
 export function UploadHero({
   compact,
   busy,
@@ -39,6 +66,7 @@ export function UploadHero({
   onFile: (file: File) => void;
 }) {
   const [dragging, setDragging] = useState(false);
+  const touch = useCoarsePointer();
 
   // Paste is a window-level gesture: a friend hits ⌘V without focusing anything first.
   useEffect(() => {
@@ -97,10 +125,18 @@ export function UploadHero({
           </>
         ) : (
           <>
-            <span className="kv-drop__lead">{compact ? TR.hero.leadCompact : TR.hero.lead}</span>
-            {!compact && <span className="kv-btn kv-btn--primary">{TR.hero.pick}</span>}
+            <span className="kv-drop__lead">
+              {compact ? TR.hero.leadCompact : touch ? TR.hero.leadTouch : TR.hero.lead}
+            </span>
+            {!compact && (
+              <span className="kv-btn kv-btn--primary">{touch ? TR.hero.pickTouch : TR.hero.pick}</span>
+            )}
+            {/* ⚠ On a touch device the paste half is DROPPED rather than reworded. There is no
+                third gesture to name — the button above already says both of the two that exist —
+                and what is left is the one line that is true everywhere: what the file must be and
+                how long it will take. */}
             <span className="kv-drop__hint">
-              {compact ? TR.hero.hint : `${TR.hero.hintPaste} · ${TR.hero.hint}`}
+              {compact || touch ? TR.hero.hint : `${TR.hero.hintPaste} · ${TR.hero.hint}`}
             </span>
           </>
         )}

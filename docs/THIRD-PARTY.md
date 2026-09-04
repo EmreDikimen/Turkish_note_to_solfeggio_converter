@@ -200,5 +200,10 @@ tracker as the takedown route (no personal address published — owner's choice,
   they remain in the repo's history and the repo is public. Clearing them needs a
   `git filter-repo` rewrite and a force-push, which breaks every existing clone. The owner's call,
   not a default.
-- **No LICENSE file** — the repo defaults to all rights reserved. Fine while it is one person's
-  project; it needs a decision before anyone else can contribute.
+✅ **CLOSED 2026-09-04: the repo is Apache-2.0** (owner). `LICENSE` is the canonical text with the
+copyright line filled in; `NOTICE` carries the scope — the licence covers **this project's own
+work** and nothing else, and names what it does not cover: SymbTr, the neyzen.com screenshot, the
+`Flova/omr_transformer` base model, and the bundled audio, fonts and libraries. ⚠ The scope note is
+load-bearing, not politeness: a bare permissive licence at the root of a repo whose history holds
+CC BY-NC-SA scores would purport to grant rights the owner does not hold. Reasoning:
+[DECISIONS.md](DECISIONS.md).

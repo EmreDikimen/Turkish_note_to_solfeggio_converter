@@ -2,10 +2,300 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-03
+updated: 2026-09-04
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-04 — the licence, and the read that never leaves the server (product track)
+
+Two owner decisions taken while deciding whether to put the app's link on LinkedIn. Neither is about
+the model.
+
+**The licence.** The repo had none, so it defaulted to all rights reserved — which is not what a
+portfolio repo wants, and the app's own footer sends a rights-holder straight to its issue tracker,
+so "I will not announce the repo" was never the same as "the repo is not reachable". Apache-2.0,
+chosen from four options: it is what the base model `Flova/omr_transformer` already uses, so its
+§4 obligation and ours are one rule rather than two; it carries a patent grant MIT does not.
+
+⭐ **The scope note is the part worth remembering.** A bare permissive `LICENSE` at the root of THIS
+repo would have been wrong, not merely thin: SymbTr scores (CC BY-NC-SA 4.0) and a neyzen.com
+screenshot are out of HEAD but still in the **public history**, so a root-level grant would purport
+to license material the owner does not hold. `NOTICE` says what is covered, names the four
+categories that are not, and points at THIRD-PARTY.md. The history rewrite stays open.
+
+**The read that never leaves the server.** Owner: *"ne olursa olsun kullanıcının bilgisayarında
+okunmasını istemiyorum."* Until today a configured server that was cold, dead, rate-limited or
+mid-deploy routed the page to `decodeStrips` and told the user their own machine had done it.
+
+**Why that was worth removing, and it is not the CPU.** The fallback fetches the graphs lazily —
+**211 MB** — over a connection nobody chose. On a laptop that is a slow read. On a phone on mobile
+data it is the worst outcome the system can produce, and a link posted to LinkedIn is opened on
+phones by people who will never come back to find out it got better.
+
+⛔ **What did NOT change, and the distinction is the whole implementation.** The in-browser decode
+path is untouched and still the only path in a build with no `VITE_DECODE_URL` — `gate:browser`,
+`parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all decode through it.
+One decision moved, in one function: whether a SERVER failure may quietly become a local read.
+`localDecodeAllowed()` owns it, the opt-in is `localStorage.omrAllowLocalDecode` or
+`VITE_ALLOW_LOCAL_DECODE`, and **no deploy sets either**.
+
+**What the user sees instead**: `#omr-error[data-error-kind="server-unavailable"]`, a new kind kept
+deliberately apart from `read-failed` — nothing is broken, the app declined, and the recovery is to
+wait rather than to check anything. The server's actual reason survives in the `<details>` tail.
+
+⭐ **Three checks changed meaning, and one of them was asserting the bug.** `smoke:live`'s second arm
+asserted `data-where="local-fallback"` on the DEPLOYED site — precisely the outcome that must now
+never happen — so it asserts the refusal instead. `smoke:build` grew a third arm: its fallback arm
+now OPTS IN (the built bundle must still be proven able to decode locally, which is the only check
+that catches the inlined-worker-glue class of bug from 2026-08-06), and a new arm proves that
+without the opt-in the same dead server produces a refusal. ⚠ In both, the assertion with teeth is
+that **no `data-where` appears at all**: a build that read the page locally would report one, so its
+absence is the proof. `smoke:page` with a dead `VITE_DECODE_URL` now exercises nothing and its
+comment says so.
+
+⚠ **The Hub weights stay load-bearing** even though the graphs are never downloaded:
+`getMeta()`'s ~12 KB `model.json` is fetched on **every** path, the server one included, so a model
+publish still uploads there.
+
+**Then the owner asked the two questions that turned the policy into an operations change** — raise
+`--max-instances`, and *"server coldsa da sadece warning çıkması gerekmez mi, bu biraz daha uzun
+sürecek diye"*.
+
+The warning already existed: a 503 that says "still loading" is distinguished from a dead server,
+and `waitForReady` polls `/health` once a second behind a `sunucu uyanıyor…` status. What did not
+exist was enough budget behind it.
+
+⭐ **The measurement fell out of the capacity change and it is the finding of the day.** Raising
+`--max-instances` 3 → 10 (`gcloud run services update`, no image change, revision
+`omr-decode-00006-7wq`) creates a new revision, so the next `/health` was a cold start — and it read
+**`loadMs` 38,178 ms**. `WARMUP_WAIT_MS` was **40,000**. The app was two seconds from showing a hard
+error on a server that was working perfectly and simply waking up, and until this morning nobody
+would have seen it, because the fallback quietly absorbed the overrun.
+
+⚠ **All three cold starts on record — 9.5 s (2026-08-06), 25.9 s (same day, with `--cpu-boost`),
+38.2 s (today) — are FIRST pulls of a freshly pushed image**, whose layers Cloud Run streams lazily.
+That is not an edge case to discount: it is exactly the state the service is in right after a deploy,
+which is also when a link gets shared. So the budget went to **120 s**, and the waking message now
+says the first read may take about half a minute instead of leaving a 38-second silence.
+
+⚠ **A claim written earlier today was too strong and is corrected here**: at `--concurrency 1` an
+over-capacity request does not error, it **queues** — it fails only if the queue pushes it past the
+client's 180 s. Raising the ceiling is what keeps that queue short. ⚠ The price of a higher ceiling
+is that `RateLimiter` counts **per instance** (20 req/min per IP), so the effective service-wide
+limit loosens with the instance count; the billing cap is what bounds the damage, as `limits.ts`
+already said. ⚠ The rate limit is **not** a spike risk from a shared link: a page is one batched
+request, and the window is per IP.
+
+**Verification.** `npm run typecheck` and `npm test` pass; `tools/browser/{build,live}-smoke.ts`
+typecheck standalone. ⏭ **`smoke:build` has NOT been run** — it needs a local `dev:server` and a
+full production build, and the refusal arm it gained is therefore unexecuted. Nothing else on the
+decode or slicer path was touched.
+
+## 2026-09-04 — the phone, measured (product track)
+
+The owner asked for the phone bugs to be fixed and said plainly: *"nasıl deneyeceğim bilmiyorum"* —
+so half the work is a way to look.
+
+**The starting position: the app had no width-based media query at all.** Not a thin one, none. It
+was laid out for a mouse on a wide window, while `package.json`'s own description has read *"mobile
+is the product"* since the first commit, and the comment on `.kv-fingerboard__svg` already records
+that *every human who has opened the deployed app so far was on a phone*.
+
+**What `tools/browser/phone-probe.ts` found**, at 375×667, 390×844, 412×915 and 744×1133:
+
+| Finding | Measured |
+|---|---|
+| The page scrolled sideways on every phone width | 545px of document in a 375px screen |
+| Every picker and the tempo box were 13px | iOS Safari zooms the page in on focus under 16px, and never back |
+| Every control was 30px | a thumb is ~44px; Apple asks 44, Google 48 |
+| The floating edit toolbox was taller than the screen | 643px of tools in a 667px viewport |
+| The instrument tab overran by 200px | the voice picker's "ses indiriliyor…" note carries the 66ch **prose** measure |
+| The usul stroke slider was 16px tall | the hardest thing on the page to hit with a finger |
+
+**Why the sideways scroll happened, exactly.** `.kv-transport__row` is caption + controls side by
+side; the caption's `flex: 0 0 4.5rem` and the row gap take **88px** before a control is placed, and
+`.kv-field { white-space: nowrap }` plus the select's `min-width: 8.5rem` mean the Perde group
+**physically cannot** get below 433px. 433 into 254 does not go, so the row ran off the right edge
+and took the document's width with it. Stacking the caption above its row was not enough on its own —
+a flex item defaults to `min-width: auto`, "never shrink below your content", so three rules had to
+say the pieces may actually give way.
+
+**The shape of the fix: two media queries, and they answer different questions.** `(pointer: coarse)`
+is *"is this being touched?"* and owns sizes; `(max-width: 700px)` is *"is this narrow?"* and owns
+layout. 700px is not a round number — it is the 433px group plus the window it needs. Everything
+lives at the END of app.css, so ORDER is what makes it win and only the toolbox's four insets need
+`!important` (they beat an inline style, which order cannot).
+
+⭐ **The edit toolbox docks to the bottom under 700px** instead of floating. Its rows already wrap,
+so at full width it spreads eight tools across instead of three and comes out **shorter** than the
+floating box ever was. The parking logic is left alone: a wide window still gets the box back
+exactly where its owner left it.
+
+**Two things worth keeping, both mistakes.**
+
+⭐ **The probe lied for a round, and in the dangerous direction.** One viewport out of four kept
+reporting 84 small targets and seven zoom-on-tap fields against a fix the other three, running
+identical code, passed. It was not a 375px bug: `page.screenshot({ fullPage: true })` makes Chromium
+resize the viewport and **does not restore the touch emulation afterwards**, so every measurement
+after that line saw a phone with a mouse and switched every `(pointer: coarse)` rule off. It showed
+only on the 667px screen because that is the only one whose upload page is taller than its viewport —
+the only one the shot actually had to resize. Two wrong cures were tried first (a throwaway warm-up
+context, then a reload) and neither worked, which is what finally pointed at the screenshot. The
+probe now prints a loud line when a page thinks it has a mouse, so it can never quietly do this again.
+
+⭐ **The numbers passed something the screenshot caught.** `.kv-tool { width: 44px }` in the narrow
+block silently beat `.kv-tool--wide { width: 100% }` — same 0,1,0 specificity, declared later — and
+the full-width **Seçim** button collapsed to a 44px square in the corner of the sheet. No measurement
+could see it: 44×44 passes the tap-target test with room to spare. It was found by looking at the
+picture.
+
+**The one non-CSS change.** On a touch device the dropzone stopped saying *"sürükleyin"* and
+*"⌘/Ctrl+V"* — two instructions a phone cannot follow, printed under the one button that works — and
+names the camera instead. The input was already `accept="image/*"`, so iOS and Android both put the
+camera at the top of the sheet; photographing the music in front of you is the whole product.
+
+**What is deliberately still small.** The footer's prose links (they are links inside a sentence) and
+the strip exporter's chips (behind the collapsed developer panel). And on a tablet at 744px the
+toolbox still floats, by design — it is above the phone breakpoint and has the room.
+
+`npm test`, `smoke:editor`, `smoke:app` and `build:app` all pass unchanged: they drive Playwright at
+1280×720 with a mouse, so not one of these rules is in effect for them.
+
+## 2026-09-03 — one control vocabulary: checkboxes become toggles, selects become ours (product track)
+
+The owner asked a question rather than giving an instruction: *"Checkboxlar falan profesyonel bir
+kullanım mı. Genelde bu tarz applerde frontend nasıl oluyor"*. The count was **11 native checkboxes
+and 10 native `<select>`s**, beside fully custom `.kv-btn` and `.kv-seg`.
+
+**The finding: the checkbox is not the problem, the MIXTURE is.** A checkbox means "a value in a
+form you fill in and submit"; every one of these acted the moment it was clicked, which is a
+**toggle**. And the app already had the toggle vocabulary — `.kv-btn.is-on` for Düzenle, `.kv-seg`
+for the view picker — so half the controls spoke the design system's language and half spoke
+macOS's. That inconsistency is what reads as unfinished, more than any single control does.
+
+**What comparable apps do.** Soundslice (the closest analogue) puts a slim strip under the score
+with icon toggles that light up and a gear for the rest; MuseScore, Dorico and Sibelius use a
+toolbar of icon toggles plus a View menu; DAWs use a transport strip of glowing toggles. The common
+shape is *a transport of toggle buttons + everything rarely touched behind a panel*.
+
+⚠ **Icon-only was rejected.** The owner's users are musicians, not software people, and "Usul
+vuruşu" and "Porte ve ses" have no conventional glyph — guessing between a metronome and a darbuka
+is not a thing to ask of a reader. The target was **labelled** toggle buttons.
+
+**What was built.** `.kv-toggle`: the label becomes a button that stays pressed, in the same
+`--accent-soft` language Düzenle already used, with an LED dot for state. ⭐ **A real
+`<input type="checkbox">` is still inside it** — a restyle, not a replacement — so screen readers
+get a genuine labelled checkbox, the keyboard gets Space and Tab, and `smoke:editor`'s eight
+`.check()` / `.uncheck()` / `.isChecked()` calls cost **zero lines**.
+
+**The one thing that went wrong, and it is the useful part.** The input was first hidden with
+`.kv-visually-hidden` — the same clip pattern the file inputs use — and `smoke:editor` **failed**:
+clip leaves a 1×1 box in the label's corner, so `.check()` scrolled to it, aimed at it, and hit the
+label instead (*"intercepts pointer events"*, then *"element is outside of the viewport"*, 30 s,
+dead). The input is now a **transparent overlay** (`opacity: 0`, `inset: 0`, `appearance: none`)
+covering the whole label. **Clip is right for a file input** — `setInputFiles` needs no visibility
+at all — **and wrong for anything a test clicks.**
+
+**Two smaller calls.** The ON state carries a dot and **no bold**: `--accent-soft` alone left "is
+this on?" ambiguous at a glance, and bolding the label widened it, so switching Metronom on shifted
+everything to its right by 7px and the bar twitched on every click. And `--control-h: 30px` now
+pins a button, a styled label, a `<select>` and a number box to one height — they compute four
+different intrinsic heights from the same font, and a row where they miss each other by two pixels
+is what makes a control bar read as assembled rather than designed.
+
+**`<select>`: `appearance: none`, and nothing else.** The element stays a real `<select>` —
+keyboard-navigable, in the accessibility tree, opening the system picker on a phone. No custom
+listbox matches that, and a custom listbox is where the accessibility bugs live. Only the closed box
+is ours. ⚠ Its chevron colour is hardcoded (`#74827e`, `--ink-faint`) because a `data:` URI cannot
+read a custom property; if that token moves, this moves by hand.
+
+**"Porte değişmesin" was the one control that was wrong regardless of its type.** It is not an
+independent option — it is a **mode of the transposition**, and means nothing on its own. It is now
+two segments grouped with the transpose select at the group's tighter 8px gap. ⚠ The first label
+pair, *"Porte de kaysın" / "Yalnızca ses"*, was rejected by the owner (*"pek açıklayıcı değil"*) for
+a reason worth recording: the two halves were not the same kind of phrase, so nothing on screen said
+they were alternatives **to each other**. Both now answer one question in one grammar —
+*transpozisyon neyi kaydırıyor?* → **"Porte ve ses" / "Yalnızca ses"**.
+
+**Verification.** `typecheck`, `npm test`, `smoke:editor` (320 checks) and `smoke:app` all pass.
+Every `id` and `data-*` in the deploy contract is unchanged, and every converted control is still a
+real checkbox, so CLAUDE.md's DOM contract needed no edit.
+
+⏭ Unchecked by an eye. ⏭ One taste call left open for the owner: the transposition's active segment
+is solid `--accent` like every other segmented control, so on load the bar shows two solid teal
+blocks (Çal and "Porte ve ses") where the default is not a choice anybody made.
+
+## 2026-09-03 — a frontend craft pass: the control bar, and six things that looked like faults (product track)
+
+The owner asked in one line: *"Genel olarak appin frontendini inceler misin. Profesyonel durmayan
+noktaları profesyonelleştirir misin"*. The app was opened in six states (empty, score loaded, edit
+mode, instrument tab, Gelişmiş open, four desktop widths) and read from screenshots rather than from
+the source, because most of what was wrong was invisible in the CSS and obvious in a picture.
+
+**The finding first: the copy and the token system were already good; the LAYOUT of the control bar
+was not, and six separate details read as rendering faults rather than as design.**
+
+**The control bar.** `.kv-transport` was one `flex-wrap` holding twelve controls, so the browser
+decided where it broke — and it broke wherever a `<select>` happened to be widest. Line one ran
+flush into the right edge, line two held two controls and half a page of gap, and the selects ran
+from 130 px (Darbuka) to 300 px (Transpozisyon, sized by its longest OPTION, which is not even on
+screen). It is now three explicit rows with a caption each — **ÇALMA** (Çal/Dur, tempo, çalgı sesi),
+**RİTİM** (usul, metronom, usul vuruşu, vuruş sesi, vurmalı çalgı), **PERDE** (makam, transpozisyon,
+porte değişmesin, arıza işaretleri) — and one width band for every picker. The layout is now
+**identical at 1024, 1280, 1440 and 1680 px**, which the wrapping version was not.
+
+⚠ **The separator stays horizontal.** A vertical rule between clusters was tried and removed before
+this session because it dangled at the end of a wrapped line; a row rule spans the bar and cannot.
+⚠ The PERDE row still wraps its last control onto a second line at every width. That was left: the
+break now falls INSIDE a labelled group and aligns to that group's column, which is the designed
+failure mode, and closing it would have meant shortening the owner's Turkish copy.
+
+**Six details that looked like bugs.**
+
+1. **The wordmark's music glyph** hung below the baseline of "KomaVision" with its stem clipped. A
+   SMuFL accidental's origin is the **middle staff line**, so it has no usable text baseline, and
+   `line-height: 1` then cut the top off because Bravura's ascent is far larger than its em. It now
+   has its own box and is centred in it.
+2. **The footer's hairline was two-thirds wide.** `max-width: var(--measure)` on `.kv-footer`
+   shortened its own `border-top`. The measure moved to the `p`s.
+3. **The edit toolbox kept Seçim and the hint inside its scrolling body.** On a 900 px window that
+   put the only way OUT of an armed tool — and the only place a refused sign is ever explained —
+   below the fold of a box 136 px wide. They are now a fixed foot, and a refusal is drawn in
+   `--danger` rather than in the hint's grey.
+4. **Edit mode's instructions were a ten-line paragraph** under the score, with "click a note"
+   buried in the middle of six rules. Lead sentence + a closed list; nothing was dropped.
+5. **`Gelişmiş` had the same sunken fill and full width as the dropzone**, so on the landing screen
+   the developer drawer and the one thing the page is for read as two halves of a menu. Outline at
+   rest, surface once open. The two native `Choose File | No file chosen` controls inside it became
+   `<label class="kv-btn">` around a clipped input — ⚠ the CLIP pattern, never `display: none`,
+   because `app-smoke` drives `#strips-input` with `setInputFiles`.
+6. **The violin's string names were four dark smudges.** `vector-effect: non-scaling-stroke` fixes
+   the halo in SCREEN pixels while the label is drawn in viewBox units and lands at about 10 px, so
+   1.8 px of black outline ate the white it was separating. Stroke 1 px, `LABEL_SIZE` 8 → 10.
+
+**Two things the screenshots found that no one was looking for.** Seven references to
+`var(--fg)`, `var(--fg-muted)`, `var(--text-1)` and `var(--text-2)` — tokens that have not existed
+since the palette changed on 2026-08-08. An undefined custom property is invalid at computed-value
+time, so for `color` and `fill` it silently resolves to `inherit`: the kanun's perde names, its
+opening-mandal line, the clarinet's labels and the instrument hint were all rendering at the
+inherited colour, and nothing failed. And `StripPanel` carried four inline `style={{…}}` props,
+among them a bare `maxHeight: 120` that fell in the middle of the fifth row of chips, so the list
+ended on a row sliced through its letters.
+
+Also: `.kv-instrument__hint` and `.kv-kanun__opening` were **centred prose** eight lines long,
+directly above a left-aligned paragraph. The block stays centred, the text does not.
+
+**Verification.** `npm run typecheck`, `npm test`, `npm run smoke:editor` and `npm run smoke:app`
+(16 crops, in-browser, 160 notes out) all pass. Every `id` and `data-*` attribute in the deploy
+contract is untouched — the rule that the checks read DOM state and never copy is what made a pass
+this wide safe to do at all. `smoke:page` and `gate:browser` were **not** run: nothing on the decode
+or slicer path was touched.
+
+⏭ **Deferred by the owner: the phone.** A 390 px window still stacks the transport into ten rows of
+native controls and cuts the sheet sideways with no scroll affordance. The app has **no breakpoint
+at all** — one `@media` block exists, and it is `prefers-color-scheme`. Nothing here is checked by
+an eye yet.
 
 ## 2026-09-03 — the page follows the playhead (product track)
 

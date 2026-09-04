@@ -40,8 +40,8 @@ export function StripPanel({
         <span className="kv-advanced__note">{TR.strips.count(strips.length)}</span>
       </div>
 
-      <div className="kv-advanced__row" style={{ alignItems: "flex-start" }}>
-        <div className="kv-strips__list" style={{ flex: "0 0 320px", maxHeight: 120, overflowY: "auto" }}>
+      <div className="kv-advanced__row kv-advanced__row--top">
+        <div className="kv-strips__list">
           {strips.map((s) => (
             <button
               key={s.id}
@@ -53,12 +53,12 @@ export function StripPanel({
             </button>
           ))}
         </div>
-        <div className="kv-strips__detail" style={{ flex: 1 }}>
+        <div className="kv-strips__detail">
           {sel ? (
             <>
               <div>
                 <span className="kv-strips__label">{TR.strips.label} </span>
-                <code style={{ wordBreak: "break-word" }}>{sel.label}</code>
+                <code className="kv-strips__code">{sel.label}</code>
               </div>
               <div>
                 <span className="kv-strips__label">{TR.strips.decoded} </span>

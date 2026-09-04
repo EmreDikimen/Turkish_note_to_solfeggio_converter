@@ -38,6 +38,13 @@ export const TR = {
     lead: "Notanın fotoğrafını buraya sürükleyin",
     leadCompact: "Yeni nota yükle",
     pick: "Dosya seç",
+    // ⚠ The touch wording is not a nicety, it is the desktop wording being FALSE on a phone: there
+    // is nothing to drag a file from and no ⌘/Ctrl to press. It also names the gesture that is
+    // actually best here — the input is `accept="image/*"`, so iOS and Android both open a sheet
+    // with the camera at the top of it, and photographing the sheet music in front of you is the
+    // whole product. Which pair is shown is decided by `(pointer: coarse)` in UploadHero.
+    leadTouch: "Notanın fotoğrafını çekin veya seçin",
+    pickTouch: "Fotoğraf çek veya seç",
     // ⚠ Keep this in step with `status.expectServer` below — they are the same promise, said twice
     // (before the upload and during it). 35–55 sn is the measured range for a page, docs/METRICS.md;
     // the "20 saniye" this replaced on 2026-08-08 was never measured and undersold it by half.
@@ -46,6 +53,13 @@ export const TR = {
   },
 
   transport: {
+    // The three row captions. They exist because the bar is a panel of twelve controls and a
+    // reader needs to know which ones belong together — see the row comment in app.css. Named for
+    // what the row DOES, never for the first control in it: "Usul" is a control, "Ritim" is the
+    // row it lives in.
+    groupPlay: "Çalma",
+    groupRhythm: "Ritim",
+    groupPitch: "Perde",
     play: "▶ Çal",
     pause: "⏸ Duraklat",
     resume: "▶ Devam",
@@ -78,10 +92,24 @@ export const TR = {
       "seslenir; portedeki notalar değişmez.",
     transpose: "Transpozisyon",
     transposeTitle: "Eserin tamamını seçtiğiniz kadar tizleştirir ya da pesleştirir",
-    keepSheet: "Porte değişmesin (yalnızca ses)",
-    keepSheetTitle:
-      "Göçürücü sazlar için — kız/mansur ney aynı notayı okur, farklı seslendirir. Ses kayar, " +
-      "yazı olduğu gibi kalır.",
+    // ⚠ Two SEGMENTS of the transposition control, not a loose checkbox beside it (2026-09-03).
+    // "Keep the staff" is not an independent setting — it is a MODE of transposing, and it means
+    // nothing on its own; notation programs put the same choice inside their transpose dialog
+    // (sounding pitch vs written pitch). As a checkbox next to the interval it read as unrelated.
+    //
+    // ⚠ BOTH LABELS ANSWER ONE QUESTION — "transpozisyon neyi kaydırıyor?" — and they answer it in
+    // the same grammar, so the pair can be read as a pair (owner, 2026-09-03: the first attempt,
+    // "Porte de kaysın" / "Yalnızca ses", was not explanatory: the two halves were not even the
+    // same kind of phrase, so nothing said they were alternatives to each other). `porte` is the
+    // word this app already uses for the staff; see the terminology note at the top of this file.
+    keepSheetMove: "Porte ve ses",
+    keepSheetKeep: "Yalnızca ses",
+    keepSheetMoveTitle:
+      "Eser olduğu gibi göçer: portedeki notalar da yeni yerine yazılır, ses de oradan çalar. " +
+      "Olağan durum.",
+    keepSheetKeepTitle:
+      "Göçürücü sazlar için — kız ney ile mansur ney aynı notayı okur, farklı seslendirir. " +
+      "Yalnızca ses kayar; portede yazan hiçbir şey değişmez.",
     accidentals: "Arıza işaretleri",
     accidentalsTitle: "Arıza işaretlerinin portede nasıl gösterileceği",
     accidentalsEvery: "Her notada",
@@ -107,16 +135,26 @@ export const TR = {
     meta: (makam: string, usul: string, composer: string | undefined, notes: number, dur: string) =>
       `makam ${makam} · usul ${usul}${composer ? ` · ${composer}` : ""} · ${notes} nota · ${dur}`,
     hintSheet: "Bir ölçüye tıklayın, eser oradan çalar.",
+    // ⚠ ONE sentence, then a closed list (2026-09-03). This used to be a single ten-line paragraph
+    // under the score, which is the shape nobody reads: the one thing a first-time editor needs —
+    // click a note — was buried in the middle of six other rules. The list below says exactly the
+    // same things, in the same order, and nothing was dropped; it is simply folded away until
+    // asked for.
     hintSheetEditing:
       "Düzenleme açık — bir notaya tıklayın: seçilir, ✕ ile silinir, yukarı/aşağı sürükleyince " +
-      "perdesi değişir. Alet çantasından bir süre ya da değiştirme işareti seçip notaya " +
-      "tıklarsanız o nota değişir. Bir süre seçiliyken boşluğa tıklarsanız oraya yeni nota " +
-      "eklenir — perdesini tıkladığınız yükseklik belirler. Üçleme aracıyla bir notaya, sonra iki " +
-      "sonrakine tıklayın: üçü üçleme olur. Ölçü usulden uzun ya da kısa kalırsa sağ üst köşesinde " +
-      "bir işaret belirir. Tekrar ve yön işaretlerini (‖: :‖ 1./2. 𝄋 ⊕ D.C. Son) alet çantasından " +
-      "seçip bir ölçüye tıklayarak koyabilirsiniz; kaldırmak için Seçim'e geçip işaretin üstüne " +
-      "tıklayın. Alet çantasını başlığından tutup istediğiniz yere sürükleyebilir, sağ üstteki " +
-      "düğmeyle küçültüp büyütebilirsiniz.",
+      "perdesi değişir.",
+    hintSheetEditingMore: "Alet çantasıyla neler yapılır?",
+    hintSheetEditingSteps: [
+      "Alet çantasından bir süre ya da değiştirme işareti seçip notaya tıklarsanız o nota değişir.",
+      "Bir süre seçiliyken boşluğa tıklarsanız oraya yeni nota eklenir — perdesini tıkladığınız " +
+        "yükseklik belirler.",
+      "Üçleme aracıyla bir notaya, sonra iki sonrakine tıklayın: üçü üçleme olur.",
+      "Ölçü usulden uzun ya da kısa kalırsa sağ üst köşesinde bir işaret belirir.",
+      "Tekrar ve yön işaretlerini (‖: :‖ 1./2. 𝄋 ⊕ D.C. Son) alet çantasından seçip bir ölçüye " +
+        "tıklayarak koyabilirsiniz; kaldırmak için Seçim'e geçip işaretin üstüne tıklayın.",
+      "Alet çantasını başlığından tutup istediğiniz yere sürükleyebilir, sağ üstteki düğmeyle " +
+        "küçültüp büyütebilirsiniz.",
+    ],
     hintInstrument:
       "Çalın: eserin o anda çaldığı yer, seçtiğiniz enstrümanın üzerinde gösterilir. Enstrümanı " +
       "yukarıdaki listeden değiştirebilirsiniz — ses de ona göre ayarlanır.",
@@ -344,7 +382,11 @@ export const TR = {
     slicing: "sayfa dilimleniyor…",
     readingStrips: (n: number) => `${n} şerit okunuyor…`,
     readingOnServer: (n: number) => `${n} şerit sunucuda okunuyor…`,
-    wakingServer: "sunucu uyanıyor…",
+    // ⚠ Says the wait is EXPECTED, not that something is wrong: a cold container took 38 s to load
+    // its graphs on 2026-09-04, and a silent pause that long reads as a hang. ⚠ No ticking clock —
+    // `page-smoke` counts DISTINCT status texts to prove progress moved, so a countdown would forge
+    // that signal (ui/status.ts).
+    wakingServer: "sunucu uyanıyor — ilk okuma yarım dakika kadar uzun sürebilir…",
     readingStrip: (i: number, n: number) => `şerit ${i} / ${n} okunuyor…`,
     stitching: "birleştiriliyor…",
     stripsDone: (strips: number, notes: number, measures: number, secs: string, perStrip: string) =>
@@ -396,6 +438,14 @@ export const TR = {
     nothingRead: "Bu sayfadan hiçbir nota okunamadı.",
     nothingReadStrips: "Bu görüntülerden hiçbir nota okunamadı.",
     readFailed: "Nota okunamadı — bağlantınızı kontrol edip tekrar deneyin.",
+    // The refused local decode (owner, 2026-09-04). Says what is true — the reading happens on the
+    // server, and that server is not answering right now — without asking the visitor to do
+    // anything but wait. ⚠ It must not read as "the app is broken": nothing is.
+    serverUnavailable: "Okuma sunucusuna şu anda ulaşılamıyor. Lütfen birazdan tekrar deneyin.",
+    serverUnavailableTips: [
+      "Sunucu uykudaysa uyanması yarım dakika sürebilir.",
+      "Notalar her zaman sunucuda okunur, sizin cihazınızda değil.",
+    ],
     badSchema: (v: unknown) => `Desteklenmeyen dosya sürümü (schemaVersion ${v}).`,
     couldNotLoad: (f: string) => `${f} yüklenemedi.`,
   },

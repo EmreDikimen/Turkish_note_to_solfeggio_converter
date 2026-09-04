@@ -100,12 +100,28 @@ interface RunResult {
   where: string | null;
   /** staves/strips/notes/measures — the score itself, for the "both paths agree" check. */
   counts: number[];
+  /** `#omr-error`'s `data-error-kind`, or null when no error appeared (ui/errors.ts). */
+  errorKind: string | null;
   errors: string[];
   isolated: boolean;
   elapsedS: number;
 }
 
-async function readOnePage(page: Page, base: string, image: string, deadDecodeUrl?: string) {
+/**
+ * Drive one read of one page in the BUILT app.
+ *
+ * `deadDecodeUrl` points the build at a port nothing listens on, which is how both server-failure
+ * arms are provoked. `allowLocal` is the opt-in from `omr/remote.ts`: with it the failure becomes a
+ * local read, without it the app must refuse — and those are two different checks, so the flag is
+ * explicit here rather than inferred from the dead URL.
+ */
+async function readOnePage(
+  page: Page,
+  base: string,
+  image: string,
+  deadDecodeUrl?: string,
+  allowLocal = false
+) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => {
@@ -118,8 +134,14 @@ async function readOnePage(page: Page, base: string, image: string, deadDecodeUr
   });
 
   await page.goto(base, { waitUntil: "domcontentloaded" });
-  if (deadDecodeUrl) {
-    await page.evaluate((u) => localStorage.setItem("omrDecodeUrl", u), deadDecodeUrl);
+  if (deadDecodeUrl || allowLocal) {
+    await page.evaluate(
+      ([u, local]) => {
+        if (u) localStorage.setItem("omrDecodeUrl", u);
+        if (local) localStorage.setItem("omrAllowLocalDecode", "1");
+      },
+      [deadDecodeUrl ?? "", allowLocal ? "1" : ""] as const
+    );
     await page.reload({ waitUntil: "domcontentloaded" });
   }
 
@@ -147,10 +169,21 @@ async function readOnePage(page: Page, base: string, image: string, deadDecodeUr
         )
       )
     : [];
+  const errorKind = (await page.locator("#omr-error").count())
+    ? await page.locator("#omr-error").getAttribute("data-error-kind")
+    : null;
   if (await page.locator("#omr-error").count())
     summary = (await page.locator("#omr-error").textContent())?.trim() ?? summary;
 
-  return { summary, where, counts, errors, isolated, elapsedS: (Date.now() - t0) / 1000 } satisfies RunResult;
+  return {
+    summary,
+    where,
+    counts,
+    errorKind,
+    errors,
+    isolated,
+    elapsedS: (Date.now() - t0) / 1000,
+  } satisfies RunResult;
 }
 
 async function main() {
@@ -200,9 +233,17 @@ async function main() {
   runs.push({
     label: "fallback path (weights cross-origin)",
     want: "local-fallback",
-    res: await readOnePage(b, base, image, dead),
+    res: await readOnePage(b, base, image, dead, true),
   });
   await b.close();
+
+  // ⭐ The arm that enforces the owner's rule (2026-09-04): a dead server WITHOUT the opt-in must
+  // refuse, not read. It is the load-bearing one of the three — the fallback arm above passes
+  // whether or not the policy exists, because it opts in; only this one can tell a shipped build
+  // that decodes on the visitor's machine from one that does not.
+  const c = await browser.newPage();
+  const refused = await readOnePage(c, base, image, dead);
+  await c.close();
 
   await browser.close();
   await server.close();
@@ -221,6 +262,20 @@ async function main() {
   // The whole point of a fallback: same page, same music, wherever it ran.
   const [x, y] = runs.map((r) => key(r.res));
   checks.push(["both paths gave the same score", !!x && x === y, `${x || "?"} vs ${y || "?"}`]);
+
+  // The refusal arm. Two assertions, and the second is the one with teeth: an app that read the
+  // page locally reports a `data-where`, so its ABSENCE is the proof no local decode happened.
+  checks.push([
+    "server down: refused, not read",
+    refused.errorKind === "server-unavailable",
+    `${refused.errorKind ?? "(no error)"} (want server-unavailable)`,
+  ]);
+  checks.push([
+    "server down: nothing ran on this machine",
+    refused.where === null && refused.counts.length === 0,
+    `where=${refused.where ?? "none"} counts=${refused.counts.join("/") || "none"}`,
+  ]);
+  console.log(`  refusal path: ${refused.elapsedS.toFixed(1)} s — ${refused.summary.slice(0, 110)}`);
 
   console.log("");
   for (const [label, ok, detail] of checks) console.log(`  ${ok ? "✓" : "✗"} ${label.padEnd(46)} ${detail}`);

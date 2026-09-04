@@ -75,10 +75,35 @@ npm run check:limits                 # the deploy safety checklist, against a ru
 npm run check:bundle                 # the BUNDLED server boots — not the same artifact as dev:server
 npm run check:coldstart              # a COLD server still gets the page (needs a running dev:server)
 VITE_DECODE_URL=http://localhost:8080 npm run smoke:page   # the app THROUGH the server
+    # ⚠ Point it at a server that ANSWERS. Since 2026-09-04 a dead URL no longer exercises the
+    # fallback — the app refuses and reads nothing; the refusal is smoke:build's and smoke:live's.
 npm run build:app                    # the deployable app — FAILS if the weights leak into dist/
-npm run smoke:build                  # builds, then drives the BUILT app: server path + fallback
-npm run smoke:live                   # drives the DEPLOYED site — the only check the origin lock allows
+npm run smoke:build                  # builds, then drives the BUILT app: server, local (opt-in), refusal
+npm run smoke:phone                  # opens the app at four PHONE sizes and MEASURES: sideways scroll,
+                                     # tap targets under 32px, iOS zoom-on-tap fields, where the toolbox lands
+                                     # …screenshots → tmp/phone-shots/ (PHONE_SHOTS=<dir> to move them)
+npm run smoke:live                   # drives the DEPLOYED site — server path, then the refusal
 ```
+
+⚠ **`smoke:phone` is a PROBE, not a gate — it prints findings and always exits 0.** Read it, do not
+grep it for a word. Two of its lines are expected and are not bugs: `div#sheet-surface` reported wide
+is the engraved sheet scrolling sideways **inside its own box**, which is the design; and the footer's
+prose links are under 32px because they are links inside a sentence. ⚠ **Never give it
+`fullPage: true` screenshots.** A full-page shot makes Chromium resize the viewport and it does not
+restore the touch emulation afterwards, so every measurement after it reports the phone as having a
+**mouse** — every `(pointer: coarse)` rule switches off and fixed things read as broken. It only ever
+showed on the 667px screen, the one short enough for the shot to need a resize, which is why it looked
+like a 375px bug for a round. The probe now prints a loud line if a page thinks it has a mouse.
+
+⛔ **THE FALLBACK IS OFF WHERE A SERVER IS CONFIGURED (owner, 2026-09-04), AND THAT CHANGED THREE
+CHECKS.** A cold or dead container no longer routes to the browser; the app raises
+`server-unavailable` and reads nothing ([../CLAUDE.md](../CLAUDE.md)). So: `smoke:build` runs
+**three** arms — server, a local read that OPTS IN (`localStorage.omrAllowLocalDecode`, which is how
+the built bundle is still proven able to decode), and the refusal; `smoke:live`'s second arm is the
+**refusal**, where it used to assert `data-where="local-fallback"` — the outcome that must now never
+happen; and `smoke:page` pointed at a dead port simply fails, because there is nothing left for it
+to exercise. ⚠ In all of them the assertion with teeth is that **no `data-where` appears at all** —
+a build that read the page locally would report one.
 
 ⚠ **`smoke:build` from localhost can no longer reach the live server** — `ALLOWED_ORIGINS` refuses
 it, by design. Use `smoke:live` for the deployed chain, or a local `dev:server` for `smoke:build`.

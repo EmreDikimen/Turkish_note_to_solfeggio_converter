@@ -78,6 +78,16 @@ export function ScoreCard({
           </span>
         </h2>
 
+        {/* ⚠ EVERY control in the head is ONE wrapping unit, not six loose children of it
+            (2026-09-03). Loose, they broke wherever the head ran out of room: on the first
+            keystroke of edit mode "Yinele" was pushed onto a line of its own, alone under a row of
+            five, which reads as a layout fault rather than a control. Grouped, the head wraps as
+            title / controls, and the two undo buttons wrap together or not at all.
+            ⚠ The view picker belongs INSIDE it, even though it is the one control that shows in
+            both view modes: the title claims the free space to its right and this group claims the
+            free space to its left, so a picker left outside would be pushed to the middle of the
+            head with a gap on either side of it. */}
+        <div className="kv-card__tools">
         <Segmented
           value={viewMode}
           onChange={onViewMode}
@@ -92,18 +102,20 @@ export function ScoreCard({
 
         {viewMode === "sheet" && (
           <>
-            <label className="kv-field" title={TR.card.lyricsTitle}>
+            <label className="kv-toggle" title={TR.card.lyricsTitle}>
               <input
                 type="checkbox"
+                className="kv-toggle__input"
                 checked={showLyrics}
                 onChange={(e) => onShowLyrics(e.target.checked)}
               />
               <span>{TR.card.lyrics}</span>
             </label>
-            <label className="kv-field" title={TR.card.followTitle}>
+            <label className="kv-toggle" title={TR.card.followTitle}>
               <input
                 id="follow-playhead"
                 type="checkbox"
+                className="kv-toggle__input"
                 data-follow={followPlayhead ? "on" : "off"}
                 checked={followPlayhead}
                 onChange={(e) => onFollowPlayhead(e.target.checked)}
@@ -122,7 +134,7 @@ export function ScoreCard({
             {/* Undo/redo ship WITH direct editing, not after it: clicking a note and pressing ✕
                 with no way back is worse than the modal this replaces, which had Cancel. */}
             {editMode && (
-              <>
+              <div className="kv-card__undo">
                 <button
                   id="undo"
                   type="button"
@@ -143,10 +155,11 @@ export function ScoreCard({
                 >
                   {TR.card.redo}
                 </button>
-              </>
+              </div>
             )}
           </>
         )}
+        </div>
 
       </header>
 
@@ -155,13 +168,27 @@ export function ScoreCard({
           not here at all — it floats over the page from App. */}
       <div className="kv-score">{children}</div>
 
-      <p className="kv-hint">
-        {viewMode === "sheet"
-          ? editMode
-            ? TR.card.hintSheetEditing
-            : TR.card.hintSheet
-          : TR.card.hintInstrument}
-      </p>
+      {/* ⚠ Edit mode's instructions are a LEAD plus a closed list, never the ten-line paragraph
+          they used to be (2026-09-03). Six rules run together under the score is the shape nobody
+          reads — the one thing a first-time editor needs, "click a note", was in the middle of it.
+          Nothing was dropped; the rest is one click away. */}
+      {viewMode === "sheet" && editMode ? (
+        <div className="kv-hint">
+          <p>{TR.card.hintSheetEditing}</p>
+          <details className="kv-hint__more">
+            <summary>{TR.card.hintSheetEditingMore}</summary>
+            <ul>
+              {TR.card.hintSheetEditingSteps.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      ) : (
+        <p className="kv-hint">
+          {viewMode === "sheet" ? TR.card.hintSheet : TR.card.hintInstrument}
+        </p>
+      )}
     </section>
   );
 }

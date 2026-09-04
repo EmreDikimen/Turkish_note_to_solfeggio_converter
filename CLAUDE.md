@@ -2,8 +2,8 @@
 
 Classical Turkish (makam) music **OMR**: photo/screenshot of sheet music → notes *including the
 microtonal accidentals* → editable score → playback at exact 53-TET (Arel-Ezgi-Uzdilek) pitches.
-Web app first, mobile later. Inference runs in the browser via `onnxruntime-web` — though whether it
-stays there is [reopened](docs/mvp/deploy.md).
+Web app first; the phone is a first-class target. Decode runs on Cloud Run, and **only** there where
+a server is configured — the in-browser `onnxruntime-web` path is no longer a fallback (Hard rules).
 
 **TWO TRACKS RUN IN PARALLEL (owner, 2026-08-05).** The product track is building a decode server
 (W9) for a release to **two friends** who will be asked about the **interface, not the model**; the
@@ -33,8 +33,7 @@ engineer.** The owner reads English as a second language and asked for this to b
 - **Keep the numbers.** Plain English means simple words, not vague claims. Every number still comes
   from [docs/METRICS.md](docs/METRICS.md) or its source log, and still gets its n. If user asks the question in Turkish, answer in Turkish but do not translate the terms in Turkish, use original names.
 - Say plainly when something is a guess, a lead, or unmeasured. Do not dress a feeling as a finding.
-- This does **not** change the doc conventions below, and it does not license rewriting history —
-  see [docs/MAINTAINING.md](docs/MAINTAINING.md). It is about the voice of the reply.
+- This is about the VOICE of a reply — it changes no doc convention and licenses no rewriting of history.
 - If you are not sure about something, ask to user. If anything ambigous ask. Do not assume. Also if a heavy command that would heat the pc, ask to user with its estimated finish time.
 
 ## Where things are
@@ -42,7 +41,6 @@ engineer.** The owner reads English as a second language and asked for this to b
 | Need | File |
 |---|---|
 | **Any command, and the traps that make one fail silently** | **[docs/COMMANDS.md](docs/COMMANDS.md)** |
-| **"Sync the docs" / update docs after work** | **[docs/MAINTAINING.md](docs/MAINTAINING.md) — read before editing any doc** |
 | What ships today, what's next, open risks | [docs/STATUS.md](docs/STATUS.md) |
 | Any headline number (accuracy, corpus size, yield) | [docs/METRICS.md](docs/METRICS.md) |
 | Why something was decided (and what overturned it) | [docs/DECISIONS.md](docs/DECISIONS.md) |
@@ -70,13 +68,13 @@ npm test              # stitcher + labels + edit primitives + usul strokes + voi
 npm run check:fold    # repeat SIGNS vs sound? 1720 pages, 0 changed. Render flags: COMMANDS.md
 npm run smoke:editor  # real app: select, drag, delete, undo/redo, palette, rests, tuplets, voices
 npm run gate:browser  # in-browser ONNX gate, headless — expect 27/28
+npm run smoke:phone   # the app at four PHONE sizes, MEASURED — a probe, not a gate; never exits nonzero
 .venv-ml/bin/python scripts/check_docs.py   # doc structure + no-info-loss check
 ```
 
 ⚠ **Deploying is NOT how you get work off this machine — `npm run dev:cloud` is** (owner, 2026-08-11).
 ⚠ **`npm run deploy:app` publishes to the real site**; read the output for `Deploy is live!`, because
-a successful build is not a deploy. Both, and every other command, in
-[docs/COMMANDS.md](docs/COMMANDS.md).
+a successful build is not a deploy.
 
 ## Hard rules
 
@@ -111,17 +109,13 @@ a successful build is not a deploy. Both, and every other command, in
   [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md).
 - **`\tie` IS RETIRED — AN ARC IS LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Never write it,
   never emit it: two tied notes are two plain notes (`la'2 la'8`), same pitches and same total
-  duration, so bar arithmetic and the stitcher are untouched. It was retired because **65–78% of every
-  `\tie` in the review queues joined two DIFFERENT pitches**, which is a slur, not a tie — replicated
-  independently at 65% on `_realval_v2` (2026-09-01). ⚠ **`\tie` stays in `ADDED_TOKENS` at its current
-  position** — ids are append-only, so removing it would break every checkpoint; it is simply a token
-  nothing emits. ⚠ The RENDER side landed 2026-08-22; the tie tail **restrikes its accidental in
-  `every`/`keysig` mode** on both label and drawing. ✅ Every Round-3 pool has ZERO `\tie`; counts in
-  [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md). `strips_exam_v2*` keeps its ties on purpose — the
-  record of what Round 2 was graded on. ⛔ **A MODEL TRAINED TIE-FREE FAILS `gate:browser`**: one gate
-  gold still contains `\tie`, so 27/28 is unreachable — [docs/METRICS-ONNX.md](docs/METRICS-ONNX.md).
-  ⚠ It also inflates any comparison against a pre-retirement model: on the exam it was **~15 of 17
-  points**. [docs/rung3/labeling.md](docs/rung3/labeling.md).
+  duration, so bar arithmetic and the stitcher are untouched. Reason: **65–78% of every `\tie` in the
+  review queues joined two DIFFERENT pitches**, which is a slur. ⚠ **It stays in `ADDED_TOKENS` at its
+  current position** — ids are append-only — as a token nothing emits; `strips_exam_v2*` keeps its
+  ties as the record of what Round 2 was graded on. ⛔ **A TIE-FREE MODEL FAILS `gate:browser`**: one
+  gate gold still contains `\tie`, so 27/28 is unreachable ([docs/METRICS-ONNX.md](docs/METRICS-ONNX.md)),
+  and it inflates any comparison against a pre-retirement model — **~15 of 17 points** on the exam.
+  [docs/rung3/labeling.md](docs/rung3/labeling.md) · [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md).
 - **A TUPLET IS PICKED UP BY ITS DRAWN "3", NOT BY ITS NOTES; A REAL ONE SLIDES, A BROKEN ONE IS REPAIRED**
   (owner, 2026-08-30). The mark is the click target — in **Seçim as well as under ÜÇLEME** (`tupletPickable`),
   never with a note value or accidental armed; under ÜÇLEME its notes are `pointer-events: none`, and
@@ -209,7 +203,17 @@ a successful build is not a deploy. Both, and every other command, in
   [docs/mvp/deploy.md](docs/mvp/deploy.md). **Everything else stays local** — audio, the editor, and
   the W4–W6 slicer port. **Do not delete the in-browser decode path**: `gate:browser`,
   `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all rest on it, and
-  it is also the **live fallback** when the server is cold or down.
+  it is the ONLY path in a build with no `VITE_DECODE_URL`.
+  ⛔ **BUT IT IS NO LONGER A FALLBACK: NOTHING IS READ ON THE VISITOR'S MACHINE WHERE A SERVER IS
+  CONFIGURED** (owner, 2026-09-04) — a dead or cold container raises `server-unavailable` instead,
+  because the fallback's real cost is the **211 MB of graphs** it pulls, worst of all on mobile data.
+  ⚠ One function decides (`localDecodeAllowed()`), opt-in via `localStorage.omrAllowLocalDecode` /
+  `VITE_ALLOW_LOCAL_DECODE`, set by **no deploy**; `smoke:build` (opting in for its local arm) and
+  `smoke:live` gained **refusal arms** asserting that no `data-where` appears, and `smoke:page` on a
+  dead URL exercises nothing. ⚠ The Hub stays load-bearing (`model.json`, every path). ⚠ **Two timings
+  the fallback used to absorb are now user-visible**, both raised 2026-09-04: `--max-instances` 3 →
+  **10** (at concurrency 1 an over-capacity request QUEUES, erroring only past the client's 180 s) and
+  `WARMUP_WAIT_MS` 40 s → **120 s**, after a cold start read **38.2 s**. [docs/DECISIONS.md](docs/DECISIONS.md).
 
 - **The server is Node + `onnxruntime-node` importing `apps/web/src/omr/decode.ts`** — the browser's
   own module, so there is ONE decode implementation, not a third to hold in parity. Do not write a
@@ -270,36 +274,42 @@ a successful build is not a deploy. Both, and every other command, in
   opens it first and the file inputs use the clip pattern, never `display:none`.
 - **THE APP PUBLISHES NO SCORE, AND NOTHING MAY PUT ONE BACK** (owner decision 2026-08-08). Every
   score this project has is a SymbTr export, and SymbTr is **CC BY-NC-SA 4.0** — serving one binds
-  the app to **NonCommercial forever**, and two of them were compositions still in copyright under
-  FSEK 5846. So `SAMPLES` in `App.tsx` is **empty**, there is no Sample dropdown, and the app opens
-  on the upload prompt. The files stay on disk **gitignored** because `npm test`, `smoke:editor` and
-  the manual checks read them through **`?score=…`** against a dev server — local use is not
-  distribution, adding a `SAMPLES` entry is. ⚠ The enforcement is `prune-dist.mjs`, which **fails
+  the app to **NonCommercial forever**, and two were compositions still in copyright under FSEK 5846.
+  So `SAMPLES` in `App.tsx` is **empty**, there is no Sample dropdown, and the app opens on the upload
+  prompt. The files stay on disk **gitignored** because `npm test`, `smoke:editor` and the manual
+  checks read them through **`?score=…`** — local use is not distribution, a `SAMPLES` entry is. ⚠ The enforcement is `prune-dist.mjs`, which **fails
   the build on any `.json` at the dist root**: everything under `public/` is served to whoever
   guesses the name, so "no UI links to it" proves nothing. An own-work score would go in a
   subdirectory. ⚠ **AUDIO IS THE ONE THING THAT MAY SHIP FROM `public/`** (2026-08-11): F2's two CC0
   drum kits, 660 KB, under `public/audio/`. `prune-dist.mjs` fails the build on any audio file
-  outside `audio/` or over **1 MB total** — and that 1 MB is a decision point, not a dial. ⚠ It was
-  written as a trigger that F1 would fire; **F1 came and went without moving it** (2026-08-13), so it
-  is now a **permanent guard on the drums**. A future kit that trips it is a decision to make, not a
-  number to raise. Provenance per file lives in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`,
-  and the wavs are **generated** by `scripts/prepare_strokes.py` — never hand-edit one.
+  outside `audio/` or over **1 MB total** — a **permanent guard on the drums**, a decision point and
+  not a dial. Provenance per file is in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`;
+  the wavs are **generated** by `scripts/prepare_strokes.py` — never hand-edit one.
   ⚠ **THE INSTRUMENT VOICES DO NOT SHIP AND THE DRUMS DO** (owner, 2026-08-12). F1's clarinet and
-  violin are 20–35 MB each, live in a Hugging Face **dataset** repo, and are fetched at runtime from
+  violin are 20–35 MB each, live in a Hugging Face **dataset** repo, and are fetched from
   **`VITE_VOICES_URL`** — a *separate* variable from the drums' `VITE_AUDIO_URL`, which must stay
-  **unset in every deploy**. The reason is not tidiness: `VITE_AUDIO_URL` is one base for the whole
-  `audio/` tree, so pointing it at the voices repo takes the two drum kits with it, 404s them, and
-  drops percussion back to the synthesised strokes the owner rejected by ear — silently, because the
-  fallback still makes a sound. `MAX_AUDIO_MB` is therefore a **permanent guard on the drums**, not
-  a trigger that has now fired. Voice files are never committed, never trimmed and never
-  re-encoded; `scripts/prepare_voices.py` copies them and checks sha256, and every number in
-  `apps/web/src/audio/instruments.ts` is emitted by that script — **never read a pitch off a
-  filename**, VSCO's clarinet labels are an octave low.
+  **unset in every deploy**: `VITE_AUDIO_URL` is one base for the whole `audio/` tree, so pointing it
+  at the voices repo takes the drum kits with it, 404s them, and drops percussion back to the
+  synthesised strokes the owner rejected by ear — silently, because the fallback still makes a sound.
+  Voice files are never committed, trimmed or re-encoded; `scripts/prepare_voices.py` copies them and
+  checks sha256, and every number in `apps/web/src/audio/instruments.ts` is emitted by that script —
+  **never read a pitch off a filename**, VSCO's clarinet labels are an octave low.
   ⚠ Consequence for browser checks: **`data-ready` never appears on a bare visit** —
   it means "a score is installed" and none is. Ask for `?score=` if you need one; wait on
   `#page-input` if you are uploading your own. ⚠ The footer (`#legal`) claims uploads are not
   stored — true only while `apps/server/src/index.ts` writes no image to disk; change both together.
   Full map: [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md).
+- **THE PHONE IS FIXED IN CSS ONLY, IN TWO MEDIA QUERIES AT THE END OF `app.css`** (owner, 2026-09-04;
+  there was no width-based media query at all before it). ⚠ **They answer different questions, never
+  merge them**: `(pointer: coarse)` owns sizes — **16px on every form field**, the threshold under
+  which iOS Safari zooms the page in on focus and never back, plus `--control-h: 44px`; `(max-width:
+  700px)` owns layout (measured: the transpose group cannot shrink below 433px). ⚠ **At the END so
+  ORDER wins**; the only `!important` is the docked toolbox's insets, which beat an inline style. ⚠
+  **That placement is what keeps every existing check valid** — they run at 1280×720 with a mouse. ⚠
+  **No exemption from the `.kv-score` rule below**, "only on small screens" included. ⚠ Height caps
+  use `dvh`. Look with **`npm run smoke:phone`**, and ⛔ **never give that probe `fullPage: true`** —
+  it resizes the viewport without restoring touch emulation, so fixed things report as broken.
+  [docs/DECISIONS.md](docs/DECISIONS.md).
 - **The score's SVG is also the training-strip source, so CSS must not reach it.** No selector under
   `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that container —
   `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not
@@ -322,9 +332,8 @@ a successful build is not a deploy. Both, and every other command, in
   worker glue and every session creation hangs — dev, `smoke:page` and the 27/28 gate stayed green
   while the built app's fallback was frozen. Weights ship from `VITE_WEIGHTS_URL`, never from
   `dist/`; `build:app` fails if they leak in.
-- **Python is training/data only, and NOTHING ships.** The rule stands unchanged: the open question
-  about a Python decode service was **closed on 2026-08-05** by choosing the Node stack above.
-  Nothing under `src/vision/` becomes shippable.
+- **NOTHING under `src/vision/` ever becomes shippable** — the Python-decode-service question was
+  closed 2026-08-05 by the Node stack above.
 - **The makam bends the SOUND ONLY** (owner decision 2026-08-06, shipped 2026-08-07). Selecting a
   makam adds comma deltas to the sounding koma on the way into `buildTimeline` — the engraving,
   `Save JSON` and `buildStrips` never move, and no key signature is redrawn. The table carries
@@ -355,13 +364,7 @@ a successful build is not a deploy. Both, and every other command, in
   identification), and a pool it produced is not trainable until that passes.
 - **Commits:** short lowercase subject, no co-author trailer.
 
-## Doc conventions (keep them or the docs rot)
-
-The short version is below; the full procedure — what to update after a session, and why each rule
-exists — is [docs/MAINTAINING.md](docs/MAINTAINING.md).
-
-Full guide — what to update after a session, and why each rule exists:
-[docs/MAINTAINING.md](docs/MAINTAINING.md).
+## Doc conventions — full procedure in [docs/MAINTAINING.md](docs/MAINTAINING.md)
 
 1. `docs/STATUS.md` is the **only** file that states current state or next action. Everything else
    links to it — never restate status.
@@ -379,11 +382,10 @@ Full guide — what to update after a session, and why each rule exists:
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
 data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training pool. ⚠ The ban on the
                       retired pools was LIFTED for run B on 2026-09-01: strips_oldhuman (1,408) holds
-                      every HAND-VERIFIED strip from strips_nota/_r1/_tup and is passed BESIDE b8,
-                      never instead of it — a second cut of the same bars, on RETIRED crops.
-                      ⛔ MEASURED 2026-09-02 AND IT BOUGHT NOTHING: run B is a NULL against the
-                      Round-3 model (645 vs 667 edits, p = 0.736) — docs/METRICS-ROUND3-RUNS.md. ⛔ Never pass the raw old pools: 922 of strips_nota's rows are
-                      machine-verdicted. b8-review is still out (see METRICS-B8.md)
+                      every HAND-VERIFIED strip from strips_nota/_r1/_tup. ⛔ MEASURED 2026-09-02 AND
+                      IT BOUGHT NOTHING: run B is a NULL (645 vs 667 edits, p = 0.736) —
+                      docs/METRICS-ROUND3-RUNS.md. ⛔ Never pass the raw old pools: 922 of
+                      strips_nota's rows are machine-verdicted. b8-review is out (METRICS-B8.md)
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29

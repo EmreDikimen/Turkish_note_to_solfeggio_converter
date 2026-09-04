@@ -91,10 +91,13 @@ async function readOnePage(page: Page, image: string, deadDecodeUrl?: string) {
         )
       )
     : [];
-  if (await page.locator("#omr-error").count())
-    summary = (await page.locator("#omr-error").textContent())?.trim() ?? summary;
+  const hasError = (await page.locator("#omr-error").count()) > 0;
+  const errorKind = hasError
+    ? await page.locator("#omr-error").getAttribute("data-error-kind")
+    : null;
+  if (hasError) summary = (await page.locator("#omr-error").textContent())?.trim() ?? summary;
 
-  return { summary, where, counts, errors, isolated, elapsedS: (Date.now() - t0) / 1000 };
+  return { summary, where, counts, errorKind, errors, isolated, elapsedS: (Date.now() - t0) / 1000 };
 }
 
 async function main() {
@@ -102,20 +105,20 @@ async function main() {
   console.log(`live smoke — ${SITE}\n  page: ${path.relative(ROOT, image)}\n`);
 
   const browser = await chromium.launch();
-  // `want` is the exact `data-where` the run must report; "local-fallback" is stricter than the
-  // old prose match — it proves the configured server was tried and did not answer.
+  // `want` is the exact `data-where` the run must report — stricter than the old prose match.
   const runs: { label: string; want: string; res: Awaited<ReturnType<typeof readOnePage>> }[] = [];
 
   const a = await browser.newPage();
   runs.push({ label: "server path", want: "server", res: await readOnePage(a, image) });
   await a.close();
 
+  // ⛔ The second arm USED to be "fallback (weights from the Hub)", asserting `local-fallback`.
+  // Since 2026-09-04 that is the outcome the deployed app must never produce (owner: the visitor's
+  // machine never reads a page), so asserting it would be asserting the bug. What the deployed site
+  // owes instead is the refusal — and the Hub graphs it no longer downloads are covered by
+  // `smoke:build`, whose fallback arm opts in and can pull the REAL repo with `--weights-url`.
   const b = await browser.newPage();
-  runs.push({
-    label: "fallback (weights from the Hub)",
-    want: "local-fallback",
-    res: await readOnePage(b, image, "http://127.0.0.1:9931"),
-  });
+  const refused = await readOnePage(b, image, "http://127.0.0.1:9931");
   await b.close();
   await browser.close();
 
@@ -134,14 +137,29 @@ async function main() {
     console.log(`  ${r.label}: ${r.res.elapsedS.toFixed(1)} s — ${r.res.summary.slice(0, 110)}`);
   }
 
-  // The whole point of a fallback: same page, same music, wherever it ran.
-  const [x, y] = runs.map((r) => key(r.res));
-  checks.push(["both paths gave the same score", !!x && x === y, `${x || "?"} vs ${y || "?"}`]);
+  // The refusal, on the real site. The second check is the one with teeth: a build that read the
+  // page on the visitor's machine reports a `data-where`, so its ABSENCE is the proof it did not.
+  checks.push([
+    "server down: refused, not read",
+    refused.errorKind === "server-unavailable",
+    `${refused.errorKind ?? "(no error)"} (want server-unavailable)`,
+  ]);
+  checks.push([
+    "server down: nothing ran on this machine",
+    refused.where === null && refused.counts.length === 0,
+    `where=${refused.where ?? "none"} counts=${refused.counts.join("/") || "none"}`,
+  ]);
+  checks.push([
+    "refusal: no page errors",
+    refused.errors.length === 0,
+    refused.errors.join("; ").slice(0, 160) || "none",
+  ]);
+  console.log(`  refusal path: ${refused.elapsedS.toFixed(1)} s — ${refused.summary.slice(0, 110)}`);
 
   console.log("");
   for (const [label, ok, detail] of checks) console.log(`  ${ok ? "✓" : "✗"} ${label.padEnd(42)} ${detail}`);
   const allOk = checks.every(([, ok]) => ok);
-  console.log(allOk ? "\nPASS — the DEPLOYED site works, on both paths." : "\nFAIL");
+  console.log(allOk ? "\nPASS — the DEPLOYED site reads on the server, and refuses to read anywhere else." : "\nFAIL");
   process.exit(allOk ? 0 : 1);
 }
 

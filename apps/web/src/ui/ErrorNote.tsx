@@ -16,7 +16,15 @@ import { TR } from "./strings";
 function lead(error: AppError): string {
   if (error.kind === "no-staves") return TR.errors.noStaves;
   if (error.kind === "read-failed") return TR.errors.readFailed;
+  if (error.kind === "server-unavailable") return TR.errors.serverUnavailable;
   return error.text;
+}
+
+/** The tips under the lead, for the two kinds where a person can act on something. */
+function tips(error: AppError): readonly string[] | null {
+  if (error.kind === "no-staves") return TR.errors.noStavesTips;
+  if (error.kind === "server-unavailable") return TR.errors.serverUnavailableTips;
+  return null;
 }
 
 export function ErrorNote({ error }: { error: AppError | null }) {
@@ -28,9 +36,9 @@ export function ErrorNote({ error }: { error: AppError | null }) {
         {TR.errors.lead} {lead(error)}
       </strong>
 
-      {error.kind === "no-staves" && (
+      {tips(error) && (
         <ul className="kv-error__tips">
-          {TR.errors.noStavesTips.map((t) => (
+          {tips(error)!.map((t) => (
             <li key={t}>{t}</li>
           ))}
         </ul>

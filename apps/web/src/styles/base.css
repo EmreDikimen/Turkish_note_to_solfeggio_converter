@@ -29,6 +29,13 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading);
   -webkit-font-smoothing: antialiased;
+  /* ⚠ iOS Safari INFLATES text on its own when a phone is turned to landscape — its "text
+     autosizing", which guesses that a narrow column wants bigger type and re-sizes paragraphs by a
+     factor of its own choosing. On this page that means the transport's captions and the score
+     header change size when the phone rotates, and nothing in the app asked them to. 100% is not a
+     size, it is "leave it alone". */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 h1,

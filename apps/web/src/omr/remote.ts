@@ -5,16 +5,21 @@
  * the in-browser path does, POST the finished 409×583 PNGs, get tokens back. The seam and why it
  * sits after preprocessing rather than before are written up in `./pixels`.
  *
- * **The fallback is the load-bearing part of this file, not a nicety.** Cloud Run scales to zero
- * and a ~1 GB container costs 10–30 s to wake; a friend who cannot debug anything must never see
- * "the app is broken" because a free-tier container was asleep or a deploy was mid-flight. So any
- * failure — offline, 5xx, 429, timeout, malformed reply — routes to `decodeStrips` and the user is
- * told their own machine is doing it this time. That is also why `docs/mvp/deploy.md` forbids
- * deleting the in-browser path: it is the reference the server is checked against AND the live
- * fallback.
+ * ⛔ **THE FALLBACK IS OFF WHERE A SERVER IS CONFIGURED (owner, 2026-09-04): "ne olursa olsun
+ * kullanıcının bilgisayarında okunmasını istemiyorum."** A configured server that does not answer
+ * now produces an honest error, not a silent 211 MB download and a decode on someone's phone.
+ * That download was the reason: on a laptop it is a slow read, on mobile data it is the worst
+ * outcome the system can produce, and it lands on whoever the app most wanted to impress.
  *
- * Consequence worth stating: the weights are fetched **lazily, only if the fallback fires**. On
- * the normal path the browser never downloads the ~211 MB.
+ * ⚠ **The in-browser path is NOT deleted and must not be** — `gate:browser`, `parity:armb`,
+ * `parity:arma`, `smoke:page` and the W3 browser-vs-gold result all decode through it, and it is
+ * the ONLY path in a build with no `VITE_DECODE_URL`. What changed is one decision: whether a
+ * SERVER failure may quietly become a local read. It may not, unless `localDecodeAllowed()` says
+ * so — which is a deliberate opt-in nothing in a deploy sets.
+ *
+ * Consequence worth stating twice, because it is the point: on the deployed app the browser never
+ * downloads the ~211 MB of graphs at all. `getMeta()`'s ~12 KB `model.json` is still fetched on
+ * every path, so the Hub copy stays load-bearing even with local decode off.
  */
 import { decodeStrips, type DecodedStripResult, type DecodeOptions, type StripInput } from "./pipeline";
 import { preprocessToCanvas } from "./preprocess";
@@ -50,11 +55,19 @@ const TIMEOUT_MS = 180_000;
  * which is precisely the outcome the server exists to prevent. Measured, not theorised:
  * `docs/METRICS.md`, and it is why `smoke:live` failed its first run that day.
  *
- * Waiting is nearly free: the budget above already allows 180 s, and the cold start is ~10 s of it.
- * The wait is bounded anyway, because a container that never becomes ready must not strand a user
- * who could have read the page locally in a minute.
+ * Waiting is nearly free: the budget above already allows 180 s. The wait is still bounded, because
+ * a container that never becomes ready must not leave someone staring at a spinner forever.
+ *
+ * ⚠ **40 s until 2026-09-04, and that was 2 seconds from breaking.** A cold start measured
+ * **`loadMs` 38,178 ms** on the revision deployed that day — against the ~9.5 s this file was
+ * written for, and the 25.9 s seen on 2026-08-06. All three are FIRST pulls of a freshly pushed
+ * image, whose layers Cloud Run streams lazily, so a bad cold start is not the exception: it is
+ * exactly the state the service is in right after a deploy, which is also when a link gets shared.
+ * ⭐ Waiting longer used to be a nicety because the fallback caught the overrun; with local decode
+ * off it is the ONLY good outcome, so the budget buys what it is now worth (owner, 2026-09-04:
+ * *"server coldsa da sadece warning çıkması gerekmez mi"* — and it does, `wakingServer`).
  */
-const WARMUP_WAIT_MS = 40_000;
+const WARMUP_WAIT_MS = 120_000;
 
 /** How often to ask a warming server whether it is ready yet. `/health` is cheap by contract. */
 const WARMUP_POLL_MS = 1_000;
@@ -70,6 +83,43 @@ export function decodeUrl(): string {
   const stored = typeof localStorage !== "undefined" ? localStorage.getItem("omrDecodeUrl") : null;
   const url = (stored ?? import.meta.env.VITE_DECODE_URL ?? "") as string;
   return url.trim().replace(/\/$/, "");
+}
+
+/**
+ * May this machine run the model when a server was configured and did not answer?
+ *
+ * The default is NO (owner, 2026-09-04). Three things follow, and the third is why this is a
+ * function rather than a deleted branch:
+ *
+ *  - A build with no `VITE_DECODE_URL` never reaches this question. There the browser is not a
+ *    fallback, it IS the pipeline — `dev:web`, `gate:browser`, `smoke:page` and the parity checks
+ *    all live there and are untouched.
+ *  - A deploy sets neither flag, so a dead or cold server is an error the user can act on.
+ *  - `smoke:build` still has to prove the BUILT bundle can decode locally — that is what catches
+ *    the inlined-worker-glue class of bug — so it opts in explicitly.
+ *
+ * `localStorage` mirrors `omrDecodeUrl` above: a runtime override, so a harness (or we) can turn
+ * it on against an already-deployed build without a rebuild.
+ */
+export function localDecodeAllowed(): boolean {
+  const stored =
+    typeof localStorage !== "undefined" ? localStorage.getItem("omrAllowLocalDecode") : null;
+  const flag = (stored ?? import.meta.env.VITE_ALLOW_LOCAL_DECODE ?? "") as string;
+  return flag.trim() === "1";
+}
+
+/**
+ * The server was configured, it did not serve, and reading on this machine is not allowed.
+ *
+ * A distinct type because it is a distinct FACT: not "the read failed" but "the read was refused
+ * on purpose". `ui/errors.ts` maps it to its own `data-error-kind`, so a check can tell the policy
+ * holding from the model breaking — and `.cause` keeps what the server actually did.
+ */
+export class LocalDecodeRefusedError extends Error {
+  constructor(readonly because: string) {
+    super(`decode server unavailable and local decode is off: ${because}`);
+    this.name = "LocalDecodeRefusedError";
+  }
 }
 
 /**
@@ -206,11 +256,13 @@ async function postStrips(
 }
 
 /**
- * Decode a page's strips wherever they can be decoded: server first when one is configured, this
- * machine otherwise — or when the server does not answer.
+ * Decode a page's strips: on the server when one is configured, on this machine when one is not.
  *
- * A user's own abort is NOT a fallback trigger. If someone picks a different file mid-decode,
- * starting a 25-second local decode of the file they abandoned would be the opposite of helpful.
+ * ⚠ Those are the only two normal outcomes. A configured server that fails throws
+ * `LocalDecodeRefusedError` rather than quietly becoming the third — see `localDecodeAllowed()`.
+ *
+ * A user's own abort is NOT a failure. If someone picks a different file mid-decode, neither an
+ * error about the file they abandoned nor a local decode of it would be of any help.
  */
 export async function decodeStripsRouted(
   strips: readonly StripInput[],
@@ -241,6 +293,9 @@ export async function decodeStripsRouted(
     } catch (err) {
       if (opts.signal?.aborted) throw err;
       fellBackBecause = err instanceof Error ? err.message : String(err);
+      // The policy, not a failure path: a configured server that misses is an error the user is
+      // told about, unless someone has deliberately asked for the local read.
+      if (!localDecodeAllowed()) throw new LocalDecodeRefusedError(fellBackBecause);
       console.warn("decode server unavailable, falling back to this browser:", err);
     }
   }

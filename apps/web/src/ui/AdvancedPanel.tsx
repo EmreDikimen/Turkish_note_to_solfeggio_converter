@@ -104,15 +104,30 @@ export function AdvancedPanel({
             </label>
           )}
 
-          <label className="kv-field">
-            <span>{TR.advanced.loadJson}</span>
-            <input type="file" accept="application/json,.json" onChange={onLoadJson} />
+          {/* ⚠ The <input> stays real and is hidden with the CLIP pattern, never `display: none`
+              — tools/browser/app-smoke.ts calls setInputFiles on `#strips-input`, and `display:
+              none` would also drop it from the accessibility tree. The label around it carries the
+              button's look, which is the only thing that changed: the browser's own file control
+              renders "Choose File | No file chosen" in system chrome, in English, next to a page
+              that is neither. Same trick UploadHero already plays on `#page-input`. */}
+          <label className={`kv-btn${omrBusy ? " is-disabled" : ""}`}>
+            {TR.advanced.loadJson}
+            <input
+              className="kv-visually-hidden"
+              type="file"
+              accept="application/json,.json"
+              onChange={onLoadJson}
+            />
           </label>
 
-          <label className="kv-field" title={TR.advanced.readStripsTitle}>
-            <span>{TR.advanced.readStrips}</span>
+          <label
+            className={`kv-btn${omrBusy ? " is-disabled" : ""}`}
+            title={TR.advanced.readStripsTitle}
+          >
+            {TR.advanced.readStrips}
             <input
               id="strips-input"
+              className="kv-visually-hidden"
               type="file"
               accept="image/*"
               multiple
@@ -133,12 +148,10 @@ export function AdvancedPanel({
             settings. `accidentalMode` is still read here — the strip exporter below shows the mode
             it will label with, and can switch it. */}
         <div className="kv-advanced__row">
-          <label
-            className={`kv-field${showLyrics ? "" : " is-disabled"}`}
-            title={TR.advanced.hyphensTitle}
-          >
+          <label className="kv-toggle" title={TR.advanced.hyphensTitle}>
             <input
               type="checkbox"
+              className="kv-toggle__input"
               checked={lyricHyphens}
               disabled={!showLyrics}
               onChange={(e) => onLyricHyphens(e.target.checked)}
@@ -146,9 +159,10 @@ export function AdvancedPanel({
             <span>{TR.advanced.hyphens}</span>
           </label>
 
-          <label className="kv-field" title={TR.advanced.repeatsTitle}>
+          <label className="kv-toggle" title={TR.advanced.repeatsTitle}>
             <input
               type="checkbox"
+              className="kv-toggle__input"
               checked={showRepeats}
               onChange={(e) => onShowRepeats(e.target.checked)}
             />
@@ -158,10 +172,11 @@ export function AdvancedPanel({
           {/* Only a decoded page has repeat signs of its own to fold, so the box appears only when
               there is something to write out — a dead control says the app cannot do it. */}
           {canWriteOut && (
-            <label className="kv-field" title={TR.advanced.writeOutTitle}>
+            <label className="kv-toggle" title={TR.advanced.writeOutTitle}>
               <input
                 id="write-out"
                 type="checkbox"
+                className="kv-toggle__input"
                 checked={writeOut}
                 onChange={(e) => onWriteOut(e.target.checked)}
               />

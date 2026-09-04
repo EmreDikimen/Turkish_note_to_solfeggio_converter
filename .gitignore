@@ -155,3 +155,7 @@ apps/web/public/ort/
 /clarinet-editor.html
 /klarnet-duzenleyici.html
 /klarnet-parmak-tablosu.html
+
+# phone-probe screenshots (tools/browser/phone-probe.ts, npm run smoke:phone)
+# a look, not a record — four viewports x four views, rebuilt on every run
+/tmp/

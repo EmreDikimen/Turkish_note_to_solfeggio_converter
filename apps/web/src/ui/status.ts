@@ -33,6 +33,11 @@ export type OmrPhase = "model" | "slice" | "decode" | "stitch";
  * Where the model actually ran. `local-fallback` is deliberately distinct from `local`: it means
  * a server was configured and did not answer, which is a different fact from having no server at
  * all, and the deploy checks assert on the difference.
+ *
+ * ⚠ **`local-fallback` is unreachable in a deploy since 2026-09-04** — a configured server that
+ * misses now raises `server-unavailable` instead of reading on the visitor's machine
+ * (`omr/remote.ts`). It survives here because the opt-in still produces it, and `smoke:build`
+ * still asserts it on the arm that opts in.
  */
 export type OmrWhere = "server" | "local" | "local-fallback";
 

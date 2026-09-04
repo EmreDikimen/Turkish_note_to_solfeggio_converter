@@ -95,6 +95,13 @@
   --space-7: 48px;
   --space-8: 64px;
 
+  /* One height for every control that can stand beside another one — a button, a toggle, a select,
+     a number box. Their intrinsic heights disagree (a <select> is not a <button> and neither is a
+     styled <label>), and a row of controls that miss each other's baselines by two pixels is the
+     thing that reads as "assembled" rather than "designed". Anything deliberately smaller — the
+     tempo's ⟲, the toolbox's tools — opts out by name. */
+  --control-h: 30px;
+
   --radius-sm: 3px;
   --radius: 6px;
   --radius-lg: 10px;

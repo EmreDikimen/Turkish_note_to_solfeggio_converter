@@ -367,6 +367,7 @@ export function EditPalette({
       {/* Folded is folded: the tools are UNMOUNTED, not hidden, so nothing under a folded toolbox
           can be clicked by accident and no check can arm a tool it cannot see. */}
       {!folded && (
+      <>
       <div className="kv-toolbox__body">
       {/* Çal starts at the last edited bar (the top of the piece before any edit), and pressing it
           again while playing replays that same bar. Pause/resume is not duplicated here — the
@@ -474,7 +475,15 @@ export function EditPalette({
           {textSign("fine", TR.palette.fine, TR.palette.fineTitle)}
         </div>
       </div>
+      </div>
 
+      {/* ⚠ OUTSIDE the scrolling body, and that is not layout tidiness (2026-09-03). The body
+          scrolls when the tools do not fit a short window, and these two were the last things in
+          it — so on a 900px-tall screen the only way OUT of an armed tool, and the only place a
+          refusal is ever explained, were both below the fold of a box 136px wide. A user who
+          cannot see why a sign was refused is being told nothing. They are now a fixed foot: the
+          tools scroll, the escape and the message do not. */}
+      <div className="kv-toolbox__foot">
       <button
         id="palette-select"
         type="button"
@@ -515,6 +524,7 @@ export function EditPalette({
                   : TR.palette.hintTupletStart}
       </p>
       </div>
+      </>
       )}
     </aside>
   );

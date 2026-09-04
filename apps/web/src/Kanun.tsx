@@ -287,10 +287,11 @@ export function Kanun({
       data-note-state="idle"
     >
       <div className="kv-kanun__controls">
-        <label className="kv-field" title={TR.kanun.zoomTitle}>
+        <label className="kv-toggle" title={TR.kanun.zoomTitle}>
           <input
             id="kanun-zoom"
             type="checkbox"
+            className="kv-toggle__input"
             checked={zoom}
             onChange={(e) => setZoom(e.target.checked)}
           />

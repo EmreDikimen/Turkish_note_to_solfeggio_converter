@@ -75,7 +75,7 @@ import { TR } from "./ui/strings";
  * the same rule.
  */
 const DOT_R = 5.5;
-const LABEL_SIZE = 8;
+const LABEL_SIZE = 10;
 
 /** One line of the fixed chart: where it falls, what it is, and which finger plays it. */
 interface PositionLine {
@@ -230,20 +230,22 @@ export function Fingerboard({
           </label>
         )}
 
-        <label className="kv-field" title={TR.fingerboard.linesTitle}>
+        <label className="kv-toggle" title={TR.fingerboard.linesTitle}>
           <input
             id="fingerboard-lines"
             type="checkbox"
+            className="kv-toggle__input"
             checked={showLines}
             onChange={(e) => setShowLines(e.target.checked)}
           />
           <span>{TR.fingerboard.lines}</span>
         </label>
 
-        <label className="kv-field" title={TR.fingerboard.zoomTitle}>
+        <label className="kv-toggle" title={TR.fingerboard.zoomTitle}>
           <input
             id="fingerboard-zoom"
             type="checkbox"
+            className="kv-toggle__input"
             checked={zoom}
             onChange={(e) => setZoom(e.target.checked)}
           />

@@ -29,15 +29,28 @@
 .kv-brand {
   font-size: var(--text-3xl);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
 }
 
+/* ⚠ A SMuFL glyph HAS NO USABLE TEXT BASELINE, and aligning one on the wordmark's is what made the
+   mark look like a rendering fault (fixed 2026-09-03). Bravura sets an accidental's origin on the
+   MIDDLE STAFF LINE, so on a shared baseline half the glyph hangs below the letters — and
+   `line-height: 1` then cut the top of its stem off, because Bravura's ascent is far larger than
+   its em. The fix is to stop sharing: the mark gets its own box, sized in `em` of the wordmark, the
+   glyph is centred inside it by the flex centring rather than by any baseline, and the box is
+   centred against the word. Nothing here may be given a `line-height` that clips. */
 .kv-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 0.5em;
+  height: 0.78em;
   font-family: var(--font-music);
+  font-size: 0.78em;
+  line-height: 0;
   color: var(--accent);
-  font-size: 0.8em;
-  line-height: 1;
 }
 
 .kv-tagline {
@@ -58,6 +71,13 @@
   border-top: 1px solid var(--rule);
   color: var(--ink-soft);
   font-size: var(--text-xs);
+}
+
+/* ⚠ The measure belongs to the TEXT, not to the footer (fixed 2026-09-03). `max-width` on the
+   footer itself shortened its `border-top` with it, so the page ended on a rule that stopped
+   two-thirds of the way across and read as a broken divider. The rule spans the page; the prose
+   still stops at 66ch, which is all the measure was ever for. */
+.kv-footer p {
   max-width: var(--measure);
 }
 
@@ -119,6 +139,130 @@
   font-weight: 600;
 }
 
+/* ── Toggle ─────────────────────────────────────────────────────────────────────────────────
+ *
+ * An immediate on/off, in the shape the rest of this app already speaks: a button that stays
+ * pressed, the same `--accent-soft` fill the Düzenle toggle uses.
+ *
+ * ⚠ THERE IS STILL A REAL `<input type="checkbox">` INSIDE — this is a restyle, not a replacement.
+ * Three things ride on it. Screen readers get a genuine checkbox with a genuine label. The keyboard
+ * gets Space and Tab for free. And `tools/browser/editor-smoke.ts` drives eight of these with
+ * Playwright's `.check()` / `.uncheck()` / `.isChecked()`, which work on an `<input>` and on nothing
+ * else — so the whole conversion cost the checks zero lines.
+ *
+ * ⚠ AND IT IS A TRANSPARENT OVERLAY, NOT `.kv-visually-hidden` — that was the first attempt and it
+ * FAILED `smoke:editor`. The clip pattern leaves a 1×1 box in the label's corner, so `.check()`
+ * scrolled to it, aimed at it, and hit the label instead: *"<label class=kv-toggle …> intercepts
+ * pointer events"*, then *"element is outside of the viewport"*, 30 s, dead. Clip is right for a
+ * file input (`setInputFiles` needs no visibility at all) and wrong for anything a test CLICKS.
+ * Stretched over the label at `opacity: 0` the input is the real click target for pointer, keyboard
+ * and Playwright alike, and there is no second element to keep in step with it.
+ *
+ * Why buttons at all: a checkbox means "a value in a form you fill in and submit", and every one of
+ * these acts the moment it is clicked. The app had eleven of them next to fully custom `.kv-btn`
+ * and `.kv-seg` — half the controls speaking the design system's language and half speaking
+ * macOS's, which reads as unfinished more than any single control does.
+ *
+ * ⚠ The LED dot is not decoration. `--accent-soft` against `--paper-raised` is a quiet difference,
+ * and a pressed-button toggle with no state mark leaves "is this on?" genuinely ambiguous at a
+ * glance; the dot answers it without a word, which matters in an app whose labels are already long.
+ * ⚠ Labels stay WORDS, not icons (owner's users are musicians, not software people): "Usul vuruşu"
+ * and "Porte değişmesin" have no conventional icon, and guessing between a metronome and a darbuka
+ * glyph is not a thing to ask of a reader. */
+.kv-toggle {
+  position: relative; /* the clipped input is absolute; keep it inside this box */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+/* The state light. Off is a hairline-grey dot, on is the accent. */
+/* ⚠ `appearance: none` so the box model is honoured — a native checkbox otherwise keeps its own
+   intrinsic size in Safari and the overlay would not cover the label. */
+.kv-toggle__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.kv-toggle::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rule-strong);
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.kv-toggle:hover:not(:has(input:disabled)) {
+  background: var(--paper-sunken);
+  border-color: var(--ink-faint);
+}
+
+/* ON. Deliberately the same language as `.kv-btn.is-on` (Düzenle → ✓ Düzenleniyor): one app, one
+   way of saying "this is switched on". */
+/* ⚠ NO `font-weight` CHANGE, unlike `.kv-btn.is-on`. Bolding the label on the ON state widens it,
+   and these sit in a row: switching Metronom on shifted everything to its right by 7px, so the bar
+   twitched every time it was clicked. The dot, the fill and the accent colour already say ON three
+   times over — the fourth was the one that cost something. (`.kv-btn.is-on` keeps its bold because
+   Düzenle changes its own label anyway, so it moves regardless.) */
+.kv-toggle:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-hover);
+}
+.kv-toggle:has(input:checked)::before {
+  background: var(--accent);
+}
+.kv-toggle:has(input:checked):hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-hover);
+}
+
+/* ⚠ Driven off the input's OWN `disabled`, not off a class the caller has to remember to pass. The
+   eleven labels this replaced each carried an `is-disabled` class computed from the same condition
+   as the input's `disabled` attribute, written out twice — two places to keep in step, for nothing. */
+.kv-toggle:has(input:disabled) {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The input is clipped, so its focus ring has nowhere to draw. Put it on the box the eye can see. */
+.kv-toggle:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A <label class="kv-btn"> wrapping a clipped file input. It is not a <button>, so it needs the
+   inline-block and the greyed state spelled out. */
+label.kv-btn {
+  display: inline-block;
+}
+label.kv-btn.is-disabled {
+  color: var(--ink-faint);
+  border-color: var(--rule);
+  cursor: default;
+  opacity: 0.7;
+}
+
 .kv-btn--tiny {
   font-size: var(--text-xs);
   padding: 1px var(--space-1);
@@ -144,10 +288,27 @@
   font: inherit;
   font-size: var(--text-sm);
   color: var(--ink);
-  background: var(--paper-raised);
+  background-color: var(--paper-raised);
   border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   padding: var(--space-1) var(--space-2);
+}
+
+/* ⚠ `appearance: none` DROPS THE OS CHROME AND KEEPS THE NATIVE POPUP, which is the whole point of
+   not writing a custom dropdown. The element stays a real `<select>`: it is keyboard-navigable, it
+   is in the accessibility tree, and on a phone it still opens the system picker — no custom listbox
+   matches that, and a custom listbox is where the accessibility bugs live. Only the closed box is
+   ours.
+   ⚠ The chevron's colour is hardcoded because a `data:` URI cannot read a custom property. It is
+   `--ink-faint` (#74827e); if that token moves, this moves with it by hand. */
+.kv-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: calc(var(--space-2) + 14px);
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2374827e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
+  background-size: 10px 6px;
 }
 .kv-field input[type="number"] {
   width: 4.25rem;
@@ -168,6 +329,29 @@
 .kv-field:has(input[type="checkbox"]),
 .kv-field:has(input[type="radio"]) {
   cursor: pointer;
+}
+
+/* ⚠ ONE HEIGHT for anything that stands beside anything else. A `<button>`, a styled `<label>`, a
+   `<select>` and a number box compute four different intrinsic heights from the same font, and a
+   row where they miss each other by two pixels is exactly what makes a control bar read as
+   assembled rather than designed. Scoped to the three places controls actually sit in a row, so it
+   cannot reach the toolbox's 34px tools or the tempo's ⟲. */
+.kv-transport .kv-btn,
+.kv-transport .kv-toggle,
+.kv-transport .kv-seg__btn,
+.kv-transport .kv-field select,
+.kv-transport .kv-field input[type="number"],
+.kv-card__head .kv-btn,
+.kv-card__head .kv-toggle,
+.kv-card__head .kv-seg__btn,
+.kv-advanced__row .kv-btn,
+.kv-advanced__row .kv-toggle,
+.kv-advanced__row .kv-seg__btn,
+.kv-advanced__row .kv-field select {
+  min-height: var(--control-h);
+}
+.kv-transport .kv-btn--tiny {
+  min-height: 0;
 }
 
 /* Segmented control (Nota / Piyano rulosu). */
@@ -265,6 +449,16 @@
   font-size: var(--text-base);
   flex: 0 0 auto;
 }
+/* The strip runs the width of the page because the whole thing is the drop target, and at rest it
+   holds two short pieces of text — so left-packed it was a label, a caption, and two-thirds of a
+   page of empty grey, which reads as an element that failed to load. Pushing the hint to the far
+   end gives the bar an anchor at each end and nothing to explain in the middle.
+   ⚠ `margin-left: auto` and not `justify-content`, so it cannot touch the reading state: mid-read
+   this strip holds the phase text and a progress bar that takes the rest of the line itself. */
+.kv-hero.is-compact .kv-drop__hint {
+  margin-left: auto;
+  text-align: right;
+}
 /* Mid-read the bar takes whatever the phase text leaves, so it reads as one line, not two blocks. */
 .kv-hero.is-compact .kv-progress {
   flex: 1 1 auto;
@@ -354,15 +548,52 @@
 
 /* ── Transport ──────────────────────────────────────────────────────────── */
 
+/* Three named ROWS — Çalma, Ritim, Perde — not one wrapping line of twelve controls, which is what
+   this was until 2026-09-03. The old bar let the browser decide where to break, so the break landed
+   wherever a select happened to be widest: line one ran flush into the right edge, line two carried
+   two controls and half a page of gap, and nothing on screen said which control belonged with
+   which. Rows fix both — the grouping is stated, and a narrow window costs ONE group a second line
+   instead of reshuffling everything.
+   ⚠ The separator is HORIZONTAL and belongs to the row. A vertical rule between clusters was tried
+   and removed once already: on a wrapped line it was left dangling at the end and read as a
+   mistake. A row rule spans the bar and cannot dangle. */
 .kv-transport {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--space-5);
+}
+
+.kv-transport__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+.kv-transport__row + .kv-transport__row {
+  border-top: 1px solid var(--rule);
+}
+
+/* The row's name. A heading for a group of controls, so it is quiet — nobody should read it twice.
+   ⚠ The fixed basis is what puts all three rows' controls on ONE left edge; sized to the caption,
+   each row would start somewhere else and the column would be gone. */
+.kv-transport__caption {
+  flex: 0 0 4.5rem;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.kv-transport__items {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3) var(--space-4);
-  padding: var(--space-3) 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--space-5);
 }
 
 .kv-transport__group {
@@ -371,11 +602,18 @@
   gap: var(--space-2);
 }
 
-/* The reading cluster (transposition, keep-the-staff, accidental mode) stays together when the bar
-   wraps, instead of interleaving with the listening controls. */
-.kv-transport__group--reading {
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-4);
+/* One width band for every picker in the bar. Left to size themselves the selects ran from 130px
+   (Darbuka) to 300px (Transpozisyon, sized by its longest OPTION, which is not even on screen), so
+   no two rows lined up. The cap truncates a long option in the closed box only — the open list is
+   the browser's own and still shows it in full. */
+.kv-transport .kv-field select {
+  min-width: 8.5rem;
+  max-width: 13rem;
+}
+/* The tempo box holds two or three digits and should not jump width as they change. */
+.kv-transport #bpm {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ⚠ FIXED, and it exists only while the transport above has scrolled off the screen (owner,
@@ -426,6 +664,28 @@
   margin-right: auto;
   min-width: 0;
 }
+/* One wrapping unit, so the head breaks as title / controls and never leaves a single button
+   stranded on a line of its own — which is what "Yinele" did the moment edit mode added a sixth
+   child to the head. */
+.kv-card__tools {
+  /* Right-aligned, and it stays right-aligned on the line it wraps onto: without the auto margin a
+     wrapped group packs to the LEFT edge of its own line, so the head's controls jumped from the
+     right of one line to the left of the next as edit mode added buttons. */
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Undo and redo are one control in two halves: they wrap together or not at all. */
+.kv-card__undo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .kv-card__meta {
   display: block;
   font-family: var(--font-ui);
@@ -583,11 +843,29 @@
   white-space: nowrap;
 }
 
+/* Seçim and the hint, held OUT of the scroll (2026-09-03). The body above scrolls once the tools
+   outgrow a short window, and these two used to be the last things inside it — so on a 900px screen
+   the only way to disarm a tool, and the only place a refused sign is ever explained, both sat
+   below the fold of a 136px box. `flex: 0 0 auto` is what keeps them: the toolbox is a column with
+   a fixed bar, a scrolling body, and this. */
+.kv-toolbox__foot {
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-top: 1px solid var(--rule);
+  background: var(--paper-raised);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
 .kv-toolbox__hint {
-  margin: var(--space-3) 0 0;
+  margin: var(--space-2) 0 0;
   font-size: var(--text-xs);
   line-height: 1.35;
   color: var(--ink-faint);
+}
+/* A refusal is not a hint — it is the answer to a click that did nothing, and it has to be findable
+   in a box the eye is not on. Same brick as every other error on the page. */
+.kv-toolbox__hint[data-refused] {
+  color: var(--danger);
 }
 
 /* ⚠ The pointer-transparent glyph below is load-bearing, not polish. A Bravura note glyph is ~4
@@ -796,6 +1074,26 @@
   padding: 0 var(--space-4) var(--space-4);
 }
 
+/* Edit mode's rules, folded away under the lead sentence. The summary reads as a control, not as
+   more grey text — it is the one thing here anybody is meant to click. */
+.kv-hint__more {
+  margin-top: var(--space-2);
+}
+.kv-hint__more > summary {
+  cursor: pointer;
+  color: var(--ink-soft);
+  width: fit-content;
+}
+.kv-hint__more > summary:hover {
+  color: var(--accent);
+}
+.kv-hint__more ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+}
+
 /* Bravura glyphs shown in UI chrome (legends, the accidental picker) — one definition. */
 .kv-glyph {
   font-family: var(--font-music);
@@ -860,10 +1158,17 @@
 
 /* ── Gelişmiş (the developer panel) ─────────────────────────────────────── */
 
+/* ⚠ NO FILL until it is opened. Closed, this had the same sunken grey and the same full width as
+   the dropzone above it, so the developer drawer and the one thing the page is FOR carried equal
+   visual weight — on the landing screen they read as two halves of a menu. An outline at rest, a
+   surface once open. */
 .kv-advanced {
   margin-top: var(--space-6);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
+  background: transparent;
+}
+.kv-advanced[open] {
   background: var(--paper-sunken);
 }
 
@@ -907,10 +1212,10 @@
   gap: var(--space-3) var(--space-4);
 }
 
-.kv-advanced input[type="file"] {
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-  max-width: 15rem;
+/* A row whose items are different heights — the strip list next to its detail — hangs from the top
+   rather than centring on it. */
+.kv-advanced__row--top {
+  align-items: flex-start;
 }
 
 /* ── Strip panel (the training-strip exporter's preview) ────────────────── */
@@ -920,10 +1225,20 @@
   gap: var(--space-2);
   font-size: var(--text-sm);
 }
+/* ⚠ The size and the scroll were four inline `style={{…}}` props on the JSX until 2026-09-03, and
+   the height among them was a bare `maxHeight: 120` — a number that fell in the MIDDLE of the fifth
+   row of chips, so the list ended on a row sliced through its letters and read as a rendering
+   fault. The mask is the fix rather than a taller box: the chips wrap, so no fixed height can be a
+   whole number of rows for every score, and a row that fades out says "there is more" where a row
+   cut in half says "this is broken". */
 .kv-strips__list {
+  flex: 0 0 320px;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
+  max-height: 7.5rem;
+  overflow-y: auto;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
 }
 .kv-strips__chip {
   font: inherit;
@@ -942,8 +1257,13 @@
   color: var(--ink);
 }
 .kv-strips__detail {
+  flex: 1;
   min-width: 0;
   color: var(--ink-soft);
+}
+/* A serialized label is one long token with no spaces to break on. */
+.kv-strips__code {
+  word-break: break-word;
 }
 .kv-strips__label {
   color: var(--ink-faint);
@@ -1042,7 +1362,12 @@
   padding: var(--space-5);
   width: 560px;
   max-width: 100%;
+  /* ⚠ `dvh` for the phone: `vh` is the viewport with the URL bar HIDDEN, so a `vh` cap
+     overshoots the visible screen by the height of the browser chrome whenever it is showing —
+     the modal's actions then sit below the fold. The `vh` line is the fallback; on a desktop
+     the two are the same number. */
   max-height: 85vh;
+  max-height: 85dvh;
   overflow: auto;
 }
 .kv-modal__title {
@@ -1111,7 +1436,10 @@
 .kv-fingerboard__svg {
   display: block;
   margin: 0 auto;
+  /* ⚠ `dvh` — see the note on `.kv-modal__panel`. This cap exists precisely so the hint under
+     the violin survives on a phone, and `vh` measures the screen a phone does not have. */
   height: min(72vh, 760px);
+  height: min(72dvh, 760px);
   width: auto;
   max-width: 100%;
 }
@@ -1157,10 +1485,15 @@
 
 /* The names run up the pegbox above the nut, on wood rather than on paper, so they carry their own
    dark outline instead of relying on the background. */
+/* ⚠ The outline is 1px, NOT 1.8 (2026-09-03). `non-scaling-stroke` fixes the halo in SCREEN pixels
+   while the label is drawn in viewBox units and lands at about 10px on a laptop — so a 1.8px stroke
+   put 0.9px of black on each side of letter strokes barely wider than that, and ate the white it
+   was supposed to be separating. "Sol Re La Mi" over the pegbox read as four dark smudges. Any
+   future change to `LABEL_SIZE` in Fingerboard.tsx has to be weighed against this number. */
 .kv-fingerboard__labels text {
   fill: #f4f4f5;
   stroke: rgba(0, 0, 0, 0.75);
-  stroke-width: 1.8;
+  stroke-width: 1;
   paint-order: stroke;
   vector-effect: non-scaling-stroke;
 }
@@ -1198,7 +1531,9 @@
    being rejected on sight (docs/features/fingerboard.md). */
 .kv-clarinet__svg {
   display: block;
+  /* ⚠ `dvh` — same reason as the violin above. */
   height: min(74vh, 780px);
+  height: min(74dvh, 780px);
   width: auto;
   max-width: 100%;
 }
@@ -1227,7 +1562,7 @@
 
 .kv-clarinet__back-label {
   font-size: 20px;
-  fill: var(--text-2);
+  fill: var(--ink-soft);
 }
 
 /* --- the lip meter ---------------------------------------------------------------------------
@@ -1252,7 +1587,7 @@
 .kv-clarinet__label {
   font-size: 30px;
   font-weight: 600;
-  fill: var(--text-1);
+  fill: var(--ink);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1289,24 +1624,31 @@
 .kv-kanun__svg {
   display: block;
   width: 100%;
+  /* ⚠ `dvh` — same reason as the violin. 113 is still 62 times the 1100:600 shape; only the
+     unit changes, so the derivation in the comment above holds. */
   max-width: min(1100px, 113vh);
+  max-width: min(1100px, 113dvh);
 }
 
+/* ⚠ The BLOCK is centred, the TEXT is not. Eight lines of centred prose under a picture is the
+   thing that makes a page look homemade — every line starts somewhere different, so the eye has to
+   hunt for the next one — and the paragraph directly under this one (the card's own hint) is
+   left-aligned anyway, so the two disagreed on the same screen. */
 .kv-kanun__opening {
-  margin: 0;
+  margin: 0 auto;
   max-width: 62ch;
-  text-align: center;
+  text-align: left;
   font-size: var(--text-sm);
-  color: var(--fg-muted);
+  color: var(--ink-faint);
 }
 
 .kv-kanun__opening-label {
-  color: var(--fg);
+  color: var(--ink);
   font-weight: 600;
 }
 
 .kv-kanun__opening [data-omr="kanun-opening-item"] {
-  color: var(--fg);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1400,7 +1742,7 @@
    theme's own colour. The violin's white-with-a-dark-outline treatment would be wrong here: that
    exists because its string names sit on varnished wood, and these no longer do. */
 .kv-kanun__labels text {
-  fill: var(--fg-muted);
+  fill: var(--ink-faint);
 }
 
 /* ---------------------------------------------------------------------------------------------
@@ -1426,10 +1768,288 @@
   justify-content: center;
 }
 
+/* Same as `.kv-kanun__opening` above: centred block, left-aligned text. */
 .kv-instrument__hint {
   margin: 0 auto;
   max-width: 62ch;
-  text-align: center;
+  text-align: left;
   font-size: var(--text-sm);
-  color: var(--fg-muted);
+  color: var(--ink-faint);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * PHONES AND FINGERS
+ *
+ * Everything above this line was laid out for a mouse on a wide window. This block is the phone,
+ * and it is the last thing in the file on purpose: every rule here has the same specificity as the
+ * one it corrects, so ORDER is what makes it win and nothing needs `!important` to say something a
+ * component already said. (The two that DO carry it are marked; they beat an inline style, which
+ * order alone cannot.)
+ *
+ * ⚠ IT IS ALL BEHIND A MEDIA QUERY, and that is what makes it safe to add late. `smoke:editor`,
+ * `smoke:app`, `smoke:page` and `smoke:build` drive Playwright at its default 1280×720 with a mouse,
+ * so none of these rules is even parsed into effect for them: the desktop app is byte-identical.
+ * `tools/browser/phone-probe.ts` is the one that opens a phone-sized window and measures.
+ *
+ * ⚠ NOTHING HERE MAY REACH INSIDE `.kv-score svg`, and nothing here may put a transform, a zoom or
+ * a scale on `.kv-score` — the top of base.css and the `.kv-score` comment above own that rule, and
+ * "but it is only on small screens" is not an exemption: `tools/render/render.ts` cuts training
+ * strips out of that SVG by rect. The sheet gets narrow on a phone by scrolling sideways in its own
+ * box, which is what it already does, and by nothing else.
+ *
+ * Two queries, because they answer two different questions:
+ *   (pointer: coarse) — "is this being touched?" Sizes and hit areas. True on a phone AND on a
+ *                       touchscreen laptop, which is right: a finger is a finger at any width.
+ *   (max-width: 700px) — "is this narrow?" Layout. 700px because the widest thing in the app that
+ *                       cannot shrink is the Perde row's transpose group at 433px, and it needs a
+ *                       490px window to sit on one line; an iPad mini at 744px measured clean.
+ * ════════════════════════════════════════════════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  /* ⚠ THE ONE FIX WITHOUT WHICH THE REST DOES NOT MATTER: iOS Safari ZOOMS THE WHOLE PAGE IN when
+     a text or number field smaller than 16px takes focus, and it never zooms back out. Every
+     picker in the transport was 13px, so tapping the tempo box left a friend stranded at 1.4x with
+     the score off the right of the screen and no gesture that obviously undoes it — the single most
+     common "your site is broken on my phone" report there is. 16px is not a design choice here, it
+     is Safari's threshold.
+     ⚠ The selector list MIRRORS the `.kv-field` rule it corrects rather than being a blanket
+     `select, input`: a bare element selector scores 0,0,1 and would lose to the 0,2,1 rule above,
+     silently, which is exactly the sort of fix that looks applied and is not. */
+  .kv-field select,
+  .kv-field input[type="number"],
+  .kv-field input[type="text"] {
+    font-size: 16px;
+  }
+
+  /* One thumb is about 9mm across; 30px is under half of it. Apple asks 44, Google 48, and a row
+     of 30px pickers that all miss is what makes an app feel like a website someone forgot to
+     finish. The token is raised rather than each control, because `--control-h` is already the one
+     place that says "things that stand beside each other are this tall". */
+  :root {
+    --control-h: 44px;
+  }
+
+  /* ⚠ The token only reaches the three containers the `min-height` rule names — the transport, the
+     card head and the advanced row. A toggle in the fingerboard's or the kanun's own control strip
+     is in none of them, so "Mandal yakın plan" stayed a 30px target on a touchscreen while its
+     neighbours in the transport grew. One rule on the control itself, since the height is a
+     property of the control and not of the row it happens to be standing in. */
+  .kv-toggle {
+    min-height: var(--control-h);
+  }
+
+  /* A 16px-tall slider is the hardest thing on the page to grab with a finger — it is a fifth of a
+     thumb, and missing it scrolls the page instead. The TRACK stays the hairline it is drawn as;
+     what grows is the box the finger is allowed to land in. */
+  .kv-field input[type="range"] {
+    height: var(--control-h);
+  }
+
+  /* A disclosure triangle is a real control, and `<summary>` takes its height from one line of
+     text — 20px. These are the two on the page a reader is actually expected to open. */
+  .kv-advanced > summary,
+  .kv-hint__more > summary {
+    min-height: var(--control-h);
+    align-items: center;
+  }
+
+  /* Çal, Dur and Seçim inside the toolbox. They opt out of the `--control-h` rule by living outside
+     the three containers it names, and 26–29px is under the bar for the three buttons in the box
+     most likely to be pressed. HEIGHT ONLY, which is why this is safe even on a tablet still
+     holding the floating 136px version: `flex: 1 1 0` keeps the pair sharing the column and
+     `.kv-tool--wide` is full width already, so nothing here can widen the box and wrap its tools. */
+  .kv-toolbox__transport > .kv-btn,
+  .kv-tool--wide {
+    min-height: var(--control-h);
+  }
+
+  /* Hover is a lie on a touchscreen — the state sticks after a tap and the last thing touched
+     stays lit, which reads as a selection that will not clear. `@media (hover: hover)` is the
+     usual guard; these are the ones where the stuck state is actually confusing. */
+  .kv-drop:hover,
+  .kv-note-hit:hover,
+  .kv-tuplet-mark-hit:hover,
+  .kv-sign-hit:hover {
+    border-color: inherit;
+  }
+  .kv-drop:hover {
+    border-color: var(--rule-strong);
+  }
+}
+
+@media (max-width: 700px) {
+  /* 24px of side padding is 14% of a 375px screen. 16px buys a whole extra control on the row. */
+  .kv-page {
+    padding: var(--space-5) var(--space-4) var(--space-7);
+  }
+
+  /* 2.375rem of Georgia is a poster on a laptop and a headline that takes a third of the first
+     screen on a phone. The tagline follows it down so the two stay in proportion. */
+  .kv-brand {
+    font-size: var(--text-2xl);
+  }
+  .kv-tagline {
+    font-size: var(--text-base);
+  }
+
+  /* ── The transport: the caption goes ON TOP of its row ─────────────────────────────────────
+   *
+   * This is what made the page scroll sideways on every phone width measured (375, 390, 412). The
+   * row is caption + controls side by side, and the caption's `flex: 0 0 4.5rem` plus the row gap
+   * take 88px off the top before a single control is placed — then `.kv-field { white-space:
+   * nowrap }` and the select's `min-width: 8.5rem` mean the Perde group physically cannot get
+   * smaller than 433px. 433 into 254 does not go, so the row simply ran off the right edge and
+   * took the whole document's width with it: 545px of page in a 375px screen, every screen after
+   * the first tap on Çal.
+   *
+   * Stacked, the caption keeps doing its job — it still names the group — and the controls get the
+   * full width instead of two-thirds of it. The three rows and their rules are untouched; this
+   * changes where the caption sits, not what the bar is. */
+  .kv-transport__row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  .kv-transport__caption {
+    flex: 0 0 auto;
+  }
+  .kv-transport__items {
+    gap: var(--space-2) var(--space-3);
+  }
+
+  /* Stacking alone is not enough: a flex item defaults to `min-width: auto`, which means "never
+     shrink below your content", and the transpose group's content is 433px wide whatever the
+     window does. These three make the pieces actually able to give way — the group wraps its
+     segmented control onto a second line, the field wraps its select under its label, and the
+     select stops insisting on 8.5rem. */
+  .kv-transport__group {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .kv-field {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .kv-transport .kv-field select {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* The voice picker's "ses indiriliyor…" note lives INSIDE its `.kv-field` and carries the prose
+     measure — 66ch, ~500px. It is the reason the instrument tab overran by 200px while the
+     transport above it fitted. Prose gets a measure; a caption inside a control does not. */
+  .kv-field .kv-hint {
+    max-width: 100%;
+  }
+
+  /* ── The edit toolbox becomes a bottom sheet ───────────────────────────────────────────────
+   *
+   * A 136px floating box that the reader drags where they want it is right on a laptop and wrong
+   * on a phone in three separate ways, all measured: it covers a third of a 390px screen, it is
+   * TALLER THAN THE SCREEN on a 667px one (643px of tools parked at y=12, so the Seçim button and
+   * the refusal hint — the only way to disarm a tool and the only place a refused sign is ever
+   * explained — sit below the fold), and the drag it is placed with is a gesture nobody performs on
+   * a phone, on a 40px title bar.
+   *
+   * Docked to the bottom it stops being a box on the music and becomes the shelf under it: the
+   * score keeps the whole width above, and the tool rows, which already wrap, spread eight across
+   * instead of three so the sheet is SHORTER than the floating box ever was.
+   *
+   * ⚠ `!important` on the four insets, and only there. React writes `left`/`top` as an inline
+   * style from the remembered spot, and an inline declaration beats any stylesheet rule that is not
+   * `!important` — order cannot reach it. The parking logic itself is left alone on purpose: it
+   * still runs, still clamps to the screen, still remembers, and the moment the window is wide
+   * enough again the box goes back to exactly where its owner left it.
+   * ⚠ `dvh`, not `vh`. On a phone `vh` is the LARGE viewport — the height the page would have if
+   * the URL bar were hidden — so a `vh` cap is quietly too big by the height of the browser chrome
+   * whenever the chrome is showing, which is most of the time. */
+  .kv-toolbox {
+    left: var(--space-2) !important;
+    right: var(--space-2) !important;
+    top: auto !important;
+    bottom: var(--space-2) !important;
+    width: auto;
+    max-height: min(46vh, 420px);
+    max-height: min(46dvh, 420px);
+  }
+  /* There is nowhere to drag it to, so the bar stops advertising one. It stays a `<header>` with
+     its fold button; only the grip and the grab cursor go. */
+  .kv-toolbox__grip {
+    display: none;
+  }
+  .kv-toolbox__bar {
+    cursor: default;
+  }
+  /* The sheet is ~350px wide instead of 136, so a 34px tool is no longer paying for anything. */
+  .kv-tool {
+    width: 44px;
+    height: 44px;
+  }
+  /* ⚠ Put back what the rule above just took. `.kv-tool--wide` (Seçim) scores the same 0,1,0 as
+     `.kv-tool` and is declared EARLIER in the file, so a plain `.kv-tool { width }` here silently
+     wins over it and the full-width button collapses to a 44px square in the corner of the foot —
+     which is what it did, and which no measurement in the probe could see: 44×44 passes the
+     tap-target test with room to spare. It was caught by looking at the screenshot. */
+  .kv-tool--wide {
+    width: 100%;
+    height: auto;
+  }
+  /* ⚠ The fold button is 20×20, and docked at the bottom of a phone it is the control that gives
+     the music back — the one thing in the sheet that must not be missed. It is sized here and not
+     in the coarse block on purpose: on the floating 136px box a 44px button would be a third of the
+     title bar, and there is only room for it once the sheet is full width. */
+  .kv-toolbox__fold {
+    width: 44px;
+    height: 44px;
+  }
+  /* Docked, the sheet is ~350px wide, so Çal and Dur can stop shouting in 11px type. (Their
+     HEIGHT is set in the coarse block above, which a tablet gets too.) */
+  .kv-toolbox__transport > .kv-btn {
+    font-size: var(--text-sm);
+  }
+
+  /* ── The pinned Çal/Dur and the sheet want the same corner ─────────────────────────────────
+   *
+   * Both are `position: fixed` at the bottom, so on a phone in edit mode they land on top of each
+   * other. Which one gives way depends on whether the sheet is folded, because FOLDING UNMOUNTS
+   * EVERY TOOL — including the toolbox's own Çal/Dur.
+   *
+   *  - open   → the sheet already shows `#palette-play`/`#palette-stop` an inch away, so a second
+   *             pair is a duplicate control saying the same thing twice. It goes.
+   *  - folded → the sheet's transport is gone from the DOM, so the pinned pair is the ONLY way to
+   *             play. It stays, and steps up above the folded bar.
+   *
+   * `:has()` because this is a relationship between two siblings that neither component knows
+   * about — `#edit-palette` and `#sticky-transport` are rendered from different places in App and
+   * are deliberately independent. The alternative is a prop threaded through both to describe a
+   * collision that only exists under 700px, which is a worse thing to have to remember. */
+  body:has(#edit-palette[data-collapsed="0"]) .kv-mini-transport {
+    display: none;
+  }
+  body:has(#edit-palette[data-collapsed="1"]) .kv-mini-transport {
+    bottom: calc(var(--space-2) + 48px);
+  }
+
+  /* The card head packs its controls to the right so they sit under the wide window's title. On a
+     phone the title takes the whole line anyway and the buttons wrap to their own, where being
+     right-aligned makes them the one thing on the page not starting at the left margin. */
+  .kv-card__tools {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  /* The strip exporter's chip list is a fixed 320px column beside its detail — which leaves the
+     detail zero width on a 358px page. They stack. (Developer panel, so this is tidiness rather
+     than a friend's bug, but it is the same fixed-column mistake as the transport's.) */
+  .kv-strips__list {
+    flex: 1 1 100%;
+  }
+  .kv-strips__detail {
+    flex: 1 1 100%;
+  }
+  /* Same shape, same fix: a 9rem label column in a 358px page. */
+  .kv-evidence__label {
+    width: auto;
+  }
 }

@@ -198,9 +198,10 @@ async function main() {
   await browser.close();
   await server.close();
 
-  // W9 step 3: with a decode server configured, the app must actually USE it — and say so. Run
-  // the same smoke with `VITE_DECODE_URL` pointed at a dead port to exercise the other half: the
-  // fallback must produce the same score on the user's own machine, and admit that it did.
+  // W9 step 3: with a decode server configured, the app must actually USE it — and say so.
+  // ⚠ Since 2026-09-04 a dead `VITE_DECODE_URL` no longer exercises "the other half": local decode
+  // is off where a server is configured, so the app REFUSES and this smoke reads no page at all.
+  // `smoke:build` and `smoke:live` own the refusal; point this one at a server that answers.
   const decodeUrl = process.env.VITE_DECODE_URL?.trim();
   const ranOnServer = where === "server";
   const fellBack = where === "local-fallback";

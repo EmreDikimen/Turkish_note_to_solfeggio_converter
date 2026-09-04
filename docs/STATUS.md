@@ -2,9 +2,27 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-03
+updated: 2026-09-04
 
 ## Now
+
+⛔ **THE APP NEVER READS A PAGE ON THE VISITOR'S MACHINE ANY MORE (owner, 2026-09-04), AND THAT MAKES
+CLOUD RUN'S CAPACITY A RELEASE BLOCKER.** A configured server that is cold or dead used to fall back
+to the browser and pull **211 MB** of graphs over the visitor's connection; it now shows
+`server-unavailable` and reads nothing. ⚠ The in-browser path is untouched and still the only path
+where no server is configured — `gate:browser` and the parity checks are unaffected
+([../CLAUDE.md](../CLAUDE.md)). ✅ **The two timings the fallback used to absorb are both raised**
+(2026-09-04): `--max-instances` **3 → 10** on the live service (image untouched, revision
+`omr-decode-00006-7wq`) and `WARMUP_WAIT_MS` **40 s → 120 s** — ⭐ that second one on a measurement
+taken while doing the first, **`loadMs` 38,178 ms on a cold start**, two seconds inside the old
+budget. ⏭ **Still the owner's call: `--min-instances 1`**, which removes the cold start altogether
+and costs money continuously. [deploy-ops.md](mvp/deploy-ops.md) · [DECISIONS.md](DECISIONS.md).
+
+✅ **THE REPO IS LICENSED — Apache-2.0, with a scope note** (owner, 2026-09-04). `LICENSE` + `NOTICE`;
+the licence covers this project's own work and explicitly not SymbTr, the neyzen screenshot, the base
+model or the bundled audio. ⏭ **The other copyright item is still open and still the owner's**: those
+files remain in the public repo's **git history**, and clearing them needs a `filter-repo` rewrite and
+a force-push. [THIRD-PARTY.md](THIRD-PARTY.md).
 
 ⭐ **ROUND 3 IS CLOSED AND ROUND 4 IS OPEN (owner, 2026-09-03).** The exam read **51%** against a
 floor signed at 75% and a Round-2 baseline of 44%; ~15 of its +17 points was the retired `\tie`, and
@@ -35,6 +53,16 @@ select checkpoints on real-val **corrections**, not loss; beam search measured o
 ⛔ **Two things the round is NOT allowed to do**: read the exam again for an A/B, and retire
 `\tupend` or add a `\dottedbar` token — [rung3/round4.md](rung3/round4.md) "Not this round".
 
+
+⭐ **THE PHONE WORKS NOW, AND `npm run smoke:phone` IS HOW YOU LOOK AT IT** (owner, 2026-09-04). The
+app had **no width-based media query at all**: the page scrolled sideways on every phone width, every
+picker was 13px so iOS Safari zoomed in on the first tap and never back, every control was 30px
+against a 44px thumb, and the edit toolbox was taller than a 667px screen. All of it is fixed in CSS
+behind `(pointer: coarse)` and `(max-width: 700px)`, so the desktop app and every existing check are
+untouched — the toolbox now docks to the bottom as a sheet on a phone. Reasoning, the two mistakes
+worth keeping, and what is still deliberately small: [DECISIONS.md](DECISIONS.md) ·
+[log/status-log.md](log/status-log.md). ⏭ **Owner: run `npm run smoke:phone`, look at the
+screenshots, then decide about `deploy:app`** — nothing has been deployed.
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer
 fixes moved crop boundaries the same day: a closing `:|` read as two barlines (junk strip on ~1% of
@@ -224,6 +252,44 @@ the model track never touches the app.** Either can be worked on without waiting
    drives `#play`'s own state, and `smoke:editor` asserts exactly that. ⏭ **Unchecked by an eye —
    [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 29**: is that the right corner, and
    is it ever in the way? [DECISIONS.md](DECISIONS.md).
+3j. **✅ A FRONTEND CRAFT PASS — THE CONTROL BAR, AND SIX THINGS THAT LOOKED LIKE FAULTS (owner,
+   2026-09-03: *"profesyonel durmayan noktaları profesyonelleştir"*).** ⭐ **The transport is three
+   named rows — ÇALMA / RİTİM / PERDE — instead of one `flex-wrap` holding twelve controls**: the
+   browser used to pick the break, so line one ran flush into the right edge, line two carried two
+   controls and half a page of gap, and nothing said which control belonged with which. Rows also
+   fail predictably — a narrow window costs ONE group a second line. ⚠ The separator is HORIZONTAL
+   and belongs to the row; the vertical rule that was tried and removed once (it dangled at the end
+   of a wrapped line) stays removed. Six defects went with it: the wordmark's Bravura glyph hung
+   below the baseline with its stem clipped (a SMuFL accidental's origin is the middle staff line,
+   so it has no usable text baseline); the footer's `max-width` shortened its own `border-top`, so
+   the page ended on a rule two-thirds across; the edit toolbox kept **Seçim and the refusal
+   message inside its scrolling body**, which put the only way out of an armed tool and the only
+   explanation of a rejected sign below the fold on a 900 px screen; edit mode's instructions were a
+   ten-line paragraph; `Gelişmiş` carried the same fill and width as the dropzone; and the violin's
+   string names were four dark smudges (a 1.8 px `non-scaling-stroke` halo eating ~10 px letters).
+   ⭐ **Seven `var(--fg)` / `var(--text-1)` references pointed at tokens that do not exist** — dead
+   since the 2026-08-08 palette change, and silently doing nothing on the kanun's and the violin's
+   labels. `npm test`, `smoke:editor`, `smoke:app` **ALL PASS**; every `id` and `data-*` in the
+   deploy contract is unchanged. ⏭ **Not done and deferred by the owner: the phone.** A 390 px
+   window still stacks the transport into ten rows of native controls and cuts the sheet sideways
+   with no scroll affordance — the app has no breakpoint at all. Unchecked by an eye.
+   [log/status-log.md](log/status-log.md).
+3k. **✅ ONE CONTROL VOCABULARY: THE ELEVEN NATIVE CHECKBOXES ARE TOGGLE BUTTONS, AND THE `<select>`s
+   ARE THE APP'S OWN** (owner, 2026-09-03, after asking whether checkboxes were a professional
+   choice). A checkbox means "a value in a form you fill in and submit"; every one of these acted on
+   the click, which is a **toggle** — and the app already spoke that language in two places
+   (`.kv-btn.is-on`, `.kv-seg`), so half the controls were the design system's and half were macOS's.
+   ⭐ **A real `<input type="checkbox">` is still inside each one**, so screen readers, the keyboard
+   and `smoke:editor`'s eight `.check()`/`.uncheck()` calls all keep working — the conversion cost the
+   checks **zero lines**. ⚠ It is a **transparent overlay**, not `.kv-visually-hidden`: the clip
+   pattern was tried first and FAILED — clip leaves a 1×1 box in the label's corner, `.check()` aimed
+   at it and hit the label. Clip is right for a file input and wrong for anything a test clicks.
+   ⚠ `appearance: none` on the selects **keeps the native popup** (keyboard, a11y tree, the phone's
+   own picker) and replaces only the closed box. ⭐ **"Porte değişmesin" is now two segments of the
+   TRANSPOSITION**, not a checkbox beside it — **"Porte ve ses" / "Yalnızca ses"**, both answering
+   one question in one grammar after the owner rejected a first pair that did not
+   (*"pek açıklayıcı değil"*). `npm test`, `smoke:editor` (320 checks) and `smoke:app` **ALL PASS**.
+   ⏭ Unchecked by an eye. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
 3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, STILL UNCHECKED IN THE BROWSER (built 2026-08-29).**
    ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract
    (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,

@@ -47,9 +47,9 @@ export const IMAGE = {
 /**
  * The SVG viewBox: the image's own pixels, plus a left margin.
  *
- * ⚠ The margin carries three things and they must not collide — the note name at the top, the back
- * inset (thumb + register) in the middle, and the lip bar below it. The first layout put the label
- * and the inset's caption on the same line and they overprinted.
+ * ⚠ The margin carries two things and they must not collide — the note name at the top and the back
+ * inset (thumb + register) below it. The first layout put the label and the inset's caption on the
+ * same line and they overprinted. It carried a third until 2026-09-04, the lip bar; see below.
  */
 export const VIEW_X = -112;
 export const VIEW_W = IMAGE.w - VIEW_X;
@@ -138,11 +138,23 @@ export const BACK_INSET: readonly Marker[] = [
 /** Everything the view draws a state for, in one list. */
 export const MARKERS: readonly Marker[] = [...HOLES, ...KEYS, ...BACK_INSET];
 
-/**
- * Where the lip meter is drawn: a vertical bar down the left margin.
+/*
+ * ⛔ **THERE IS NO `LIP_BAR` ANY MORE, AND NOTHING MAY PUT ONE BACK HERE** (owner, 2026-09-04). The
+ * lip meter used to be a vertical bar drawn down this left margin, in these coordinates. It is now
+ * a HORIZONTAL meter ABOVE the picture, and it is plain HTML — `Clarinet.tsx` plus `.kv-clarinet__lip*`
+ * in `app.css`.
  *
- * ⚠ Vertical on purpose. The bend is a *pitch*, and every other pitch in this app runs up the page —
- * the staff, the fingerboard, the kanun's courses. A horizontal meter would be the only place in
- * the product where lower means left.
+ * Two reasons, and the second is why the file it left is this one:
+ *
+ *   1. The owner asked for horizontal and on top. The old comment here defended vertical on the
+ *      grounds that a bend is a *pitch* and every pitch in this app runs up the page. That argument
+ *      died with the meter's meaning: it no longer shows a bend, it shows how tightly the lip is
+ *      held, which is a grip and not a pitch.
+ *   2. **This SVG is far too narrow to hold a horizontal meter.** The viewBox is 356 × 1560 and the
+ *      card draws it bounded by HEIGHT, so the whole drawing is about 150 px wide on a laptop — a
+ *      horizontal scale in here would give each comma some 15 px and no room for a word. As HTML
+ *      above the picture it gets the card's width instead.
+ *
+ * ⚠ Nothing in the meter was ever measured against the photograph — unlike every other number in
+ * this file, it was only ever *placed* in the margin — so moving it out costs no calibration.
  */
-export const LIP_BAR = { x: -96, y: 430, w: 22, h: 760 } as const;

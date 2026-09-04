@@ -8,21 +8,12 @@ import {
   type NoteModelDocument,
   type Timeline,
 } from "@turkish-omr/core";
-import {
-  BACK_INSET,
-  HOLES,
-  IMAGE,
-  LIP_BAR,
-  MARKERS,
-  VIEW_H,
-  VIEW_W,
-  VIEW_X,
-} from "./ui/clarinetArt";
+import { BACK_INSET, HOLES, IMAGE, MARKERS, VIEW_H, VIEW_W, VIEW_X } from "./ui/clarinetArt";
 import { TR } from "./ui/strings";
 
 /**
- * The sol klarnet view (feature F3, third instrument) — which holes are covered, and how far the
- * lip has to relax, as the piece plays.
+ * The sol klarnet view (feature F3, third instrument) — which holes are covered, and how tightly
+ * the lip is held, as the piece plays.
  *
  * ⚠ **It is neither of the other two views with a different picture, and all three differ for
  * reasons in the instruments.** A violin position is a formula and needs a marker on an exact pixel
@@ -31,15 +22,32 @@ import { TR } from "./ui/strings";
  * so this view, like the violin's, draws the current frame from the current note and nothing else,
  * but what it draws is a *set of keys*, not a position.
  *
- * ⭐ **THE LIP BAR IS THE POINT OF THIS VIEW** (owner, 2026-08-29). A printed fingering chart holds
+ * ⭐ **THE LIP METER IS THE POINT OF THIS VIEW** (owner, 2026-08-29). A printed fingering chart holds
  * twelve notes to the octave and makam music does not live on twelve, which is why winds sat parked
  * as design for two weeks. The answer is that a clarinettist reaches a koma by **relaxing the lip**:
- * the schematic shows the nearest standard fingering, and the bar shows how far down to bend from
- * it. Neither half snaps a microtone onto the twelve-tone grid.
+ * the schematic shows the nearest standard fingering, and the meter shows the lip. Neither half
+ * snaps a microtone onto the twelve-tone grid.
+ *
+ * ⭐ **AND IT READS AS A GRIP, NOT AS A BEND** (owner, 2026-09-04: *"ne kadar gevşetmemiz gerektiğini
+ * değil ne kadar dudağımızı sıkmamız gerektiğini söylesin. normal çalarken orta derecede sıkıyoruz
+ * dudağımızı"*). So the meter is an absolute reading of how tightly the lip is held, and **normal
+ * playing sits at its MIDDLE** — where the player already is before the piece asks for anything.
+ * A comma is then a distance to the LEFT of that middle, five of them at most (`LIP_REACH_KOMA`).
+ *
+ * ⛔ **THE RIGHT HALF IS DRAWN AND NEVER FILLS, AND THAT IS DELIBERATE** (owner, same day: *"daha
+ * fazla sıkarak hiçbir komayı vermeyelim, sadece dudağı gevşeterek koma verelim"*). It is there so
+ * that "normal" can be seen to be the middle of a grip rather than the end of a scale; it carries no
+ * comma ticks, because nothing in this app is ever played by biting above normal. ⚠ Never mark it in
+ * commas to "balance" the scale: lipping a clarinet UP is worth a fraction of lipping it down, so a
+ * symmetric ±5 would teach the instrument wrong — the one thing an instrument view may not do.
+ *
+ * ⚠ **The meter is HTML above the picture, not SVG inside it**, and `ui/clarinetArt.ts` says why at
+ * the hole where `LIP_BAR` used to be: the drawing is ~150 px wide on screen, which is no width for
+ * a horizontal scale. Its pixels are `.kv-clarinet__lip*` in `app.css`.
  *
  * How it's organized:
  *   * `packages/core/src/clarinet.ts` owns the fingerings, the lip reach and the matcher.
- *   * `ui/clarinetArt.ts` owns every pixel — our own drawing, of an ALBERT-system instrument.
+ *   * `ui/clarinetArt.ts` owns every pixel OF THE PHOTOGRAPH — the holes, the keys, the back inset.
  *   * this file owns the drawing and the clock, and nothing else.
  *
  * ⚠ **ONE CLOCK.** The animation is driven by `getPositionMs()` — the audio clock the sheet's
@@ -53,8 +61,21 @@ import { TR } from "./ui/strings";
  * deltas ARE added, because those are exactly what the lip bends.
  */
 
-/** How the bar reports a bend that is not a bend at all. */
+/** How the meter reports a bend that is not a bend at all. */
 const NO_BEND = "0.00";
+
+/**
+ * Where "normal" sits on the meter, as a fraction of its width: the middle.
+ *
+ * ⚠ This is the whole of the owner's decision, in one number — see the note at the top of the file.
+ * The filled part of the meter is the lip's current grip, so an ordinary note fills exactly half of
+ * it, and each comma of relaxing takes a fifth of that half away.
+ */
+const NORMAL_AT = 0.5;
+
+/** The filled fraction of the meter for a bend of `koma` commas below the fingering. */
+const gripFraction = (koma: number): number =>
+  NORMAL_AT * (1 - Math.min(Math.max(koma, 0), LIP_REACH_KOMA) / LIP_REACH_KOMA);
 
 export function Clarinet({
   doc,
@@ -71,7 +92,7 @@ export function Clarinet({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const keyRefs = useRef(new Map<ClarinetKeyId, SVGElement>());
-  const lipRef = useRef<SVGRectElement>(null);
+  const lipRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<SVGTextElement>(null);
 
   // The whole piece is resolved once. Unlike the kanun there is no state to carry — a fingering is
@@ -108,7 +129,10 @@ export function Clarinet({
       root.setAttribute("data-note-state", state);
       root.setAttribute("data-bend", NO_BEND);
       setKeys(null);
-      lip.setAttribute("height", "0");
+      // ⚠ Parked at NORMAL, not at empty. Empty is a real reading — a fully relaxed lip — and it is
+      // not what "nothing is playing" means. The meter is HIDDEN in this state by `app.css`, which
+      // keys off the `data-note-state` set just above, so the width is only what it would reveal.
+      lip.style.width = `${(NORMAL_AT * 100).toFixed(2)}%`;
       lip.setAttribute("data-bend-koma", NO_BEND);
       label.textContent = "";
     };
@@ -136,13 +160,9 @@ export function Clarinet({
           const bend = at.bendKoma.toFixed(2);
           root.setAttribute("data-note-state", "playing");
           root.setAttribute("data-bend", bend);
-          // ⚠ The bar grows DOWNWARD from the top of its track, because relaxing the lip lowers the
-          // pitch. Every other pitch in this app runs up the page, so a bend that grew upward would
-          // read as the opposite of what it is.
-          lip.setAttribute(
-            "height",
-            ((Math.min(at.bendKoma, LIP_REACH_KOMA) / LIP_REACH_KOMA) * LIP_BAR.h).toFixed(2),
-          );
+          // ⚠ The fill SHRINKS as the bend grows — it is the grip, not the bend. Half wide is an
+          // ordinary note; empty is the loosest lip this player has.
+          lip.style.width = `${(gripFraction(at.bendKoma) * 100).toFixed(2)}%`;
           lip.setAttribute("data-bend-koma", bend);
           label.textContent = fing.label;
         } else {
@@ -174,48 +194,56 @@ export function Clarinet({
       data-note-state="idle"
       data-bend={NO_BEND}
     >
+      {/* --- the lip meter, horizontal, above the instrument ---------------------------------
+          The reading is a GRIP: how tightly the lip is held right now. `NORMAL_AT` is the middle
+          and the whole of the design; the notes at the top of this file say why, and why the right
+          half is drawn but never filled and never ticked. */}
+      <div className="kv-clarinet__lip" data-omr="clarinet-lip-meter" data-lip-reach={LIP_REACH_KOMA}>
+        <span className="kv-clarinet__lip-title">{TR.instrument.lipTitle}</span>
+        <div className="kv-clarinet__lip-track">
+          {/* The half the commas live in, tinted, so the eye can see that "normal" is the middle of
+              a grip and not the end of a scale. ⚠ Every position in this meter is `NORMAL_AT` in an
+              inline style, never a number in `app.css`, so there is nothing there to drift from it. */}
+          <div className="kv-clarinet__lip-span" style={{ width: `${(NORMAL_AT * 100).toFixed(2)}%` }} />
+          <div
+            ref={lipRef}
+            className="kv-clarinet__lip-fill"
+            data-omr="clarinet-lip"
+            data-bend-koma={NO_BEND}
+            style={{ width: `${(NORMAL_AT * 100).toFixed(2)}%` }}
+          />
+          {/* One tick per koma of reach, LEFT of normal — a comma is a distance down from the grip
+              the player is already holding. They are drawn after the fill so they stay readable
+              through it. */}
+          {Array.from({ length: LIP_REACH_KOMA }, (_, k) => (
+            <div
+              key={k}
+              className="kv-clarinet__lip-tick"
+              data-omr="clarinet-lip-tick"
+              data-koma={k + 1}
+              style={{ left: `${(gripFraction(k + 1) * 100).toFixed(2)}%` }}
+            />
+          ))}
+          {/* Where an ordinary note sits. Last, so nothing paints over it. */}
+          <div
+            className="kv-clarinet__lip-normal"
+            data-omr="clarinet-lip-normal"
+            style={{ left: `${(NORMAL_AT * 100).toFixed(2)}%` }}
+          />
+        </div>
+        <div className="kv-clarinet__lip-scale">
+          <span>{TR.instrument.lipLoose}</span>
+          <span>{TR.instrument.lipNormal}</span>
+          <span>{TR.instrument.lipTight}</span>
+        </div>
+      </div>
+
       <svg
         className="kv-clarinet__svg"
         viewBox={`${VIEW_X} 0 ${VIEW_W} ${VIEW_H}`}
         role="img"
         aria-label={TR.instrument.hintClarinetAlt}
       >
-        {/* --- the lip meter, down the left margin ------------------------------------------- */}
-        <g data-omr="clarinet-lip-track">
-          <rect
-            x={LIP_BAR.x}
-            y={LIP_BAR.y}
-            width={LIP_BAR.w}
-            height={LIP_BAR.h}
-            rx={LIP_BAR.w / 2}
-            className="kv-clarinet__lip-track"
-          />
-          <rect
-            ref={lipRef}
-            x={LIP_BAR.x}
-            y={LIP_BAR.y}
-            width={LIP_BAR.w}
-            height={0}
-            rx={LIP_BAR.w / 2}
-            className="kv-clarinet__lip-fill"
-            data-omr="clarinet-lip"
-            data-bend-koma={NO_BEND}
-          />
-          {/* One tick per koma of reach, so the bar is readable as a quantity and not just a blob. */}
-          {Array.from({ length: LIP_REACH_KOMA }, (_, k) => (
-            <line
-              key={k}
-              x1={LIP_BAR.x}
-              x2={LIP_BAR.x + LIP_BAR.w}
-              y1={LIP_BAR.y + ((k + 1) / LIP_REACH_KOMA) * LIP_BAR.h}
-              y2={LIP_BAR.y + ((k + 1) / LIP_REACH_KOMA) * LIP_BAR.h}
-              className="kv-clarinet__lip-tick"
-              data-omr="clarinet-lip-tick"
-              data-koma={k + 1}
-            />
-          ))}
-        </g>
-
         {/* --- the instrument, photographed --------------------------------------------------
             ⚠ An <image>, not an <img> beside the SVG: the markers have to sit in the same
             coordinate space as the photo or they drift the moment the card is resized. The

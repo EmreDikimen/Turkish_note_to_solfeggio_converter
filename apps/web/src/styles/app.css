@@ -1566,22 +1566,107 @@ label.kv-btn.is-disabled {
 }
 
 /* --- the lip meter ---------------------------------------------------------------------------
-   ⚠ It fills DOWNWARD, because relaxing the lip lowers the pitch and every other pitch in this app
-   runs up the page. */
+   ⭐ HORIZONTAL, ABOVE THE PICTURE, AND IT READS AS A GRIP — how tightly the lip is held, with
+   ordinary playing at the MIDDLE (owner, 2026-09-04). `Clarinet.tsx` holds the decision and the two
+   rules that come out of it; three things this file must not undo:
+     * every position in the meter arrives as an inline style computed from `NORMAL_AT`, so there is
+       no percentage written here that could drift away from it. The one exception is the centred
+       middle label below, which is only right while `NORMAL_AT` is a half.
+     * the ticks hang BELOW the track instead of crossing it. That is what lets the last one — the
+       loosest lip, at the very end of the scale — be seen instead of disappearing into the border.
+     * the fill is HIDDEN unless a note is sounding. An empty meter is a real reading (the lip fully
+       relaxed) and must not double as "nothing is playing". */
+.kv-clarinet__lip {
+  width: min(420px, 100%);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.kv-clarinet__lip-title {
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
 .kv-clarinet__lip-track {
-  fill: var(--kv-clarinet-track, #e6e3dd);
-  stroke: var(--kv-clarinet-track-edge, #b6b1a8);
-  stroke-width: 1;
+  position: relative;
+  height: 14px;
+  margin-bottom: 5px; /* the ticks hang down into this */
+  border: 1px solid var(--kv-clarinet-track-edge, #b6b1a8);
+  border-radius: var(--radius-sm);
+  background: var(--kv-clarinet-track, #e6e3dd);
+}
+
+/* The half the commas live in. The other half is the tighter direction: it is drawn, it carries no
+   ticks, and nothing ever fills it. */
+.kv-clarinet__lip-span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--kv-clarinet-span, rgba(232, 163, 63, 0.16));
 }
 
 .kv-clarinet__lip-fill {
-  fill: var(--kv-clarinet-lip, #e8a33f);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  visibility: hidden;
+  background: var(--kv-clarinet-lip, #e8a33f);
+  border-radius: 2px 0 0 2px;
+  transition: width var(--dur-fast) var(--ease);
+}
+
+.kv-clarinet[data-note-state="playing"] .kv-clarinet__lip-fill {
+  visibility: visible;
+}
+
+/* The end of the fill, as a thumb — so the reading is still visible where the fill has no width at
+   all, which is exactly the loosest lip and a real note. */
+.kv-clarinet__lip-fill::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  right: -3px;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--kv-clarinet-lip-thumb, #a8641a);
 }
 
 .kv-clarinet__lip-tick {
-  stroke: var(--kv-clarinet-track-edge, #b6b1a8);
-  stroke-width: 1;
-  opacity: 0.7;
+  position: absolute;
+  top: 100%;
+  width: 1px;
+  height: 6px;
+  background: var(--kv-clarinet-track-edge, #b6b1a8);
+}
+
+.kv-clarinet__lip-normal {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--ink-soft);
+}
+
+.kv-clarinet__lip-scale {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.kv-clarinet__lip-scale > :nth-child(2) {
+  color: var(--ink-soft);
+}
+
+.kv-clarinet__lip-scale > :last-child {
+  text-align: right;
 }
 
 .kv-clarinet__label {
@@ -1595,6 +1680,8 @@ label.kv-btn.is-disabled {
     --kv-clarinet-ring: rgba(240, 238, 234, 0.6);
     --kv-clarinet-track: #2a2a2e;
     --kv-clarinet-track-edge: #55555c;
+    --kv-clarinet-span: rgba(232, 163, 63, 0.12);
+    --kv-clarinet-lip-thumb: #f2c27a;
   }
 }
 

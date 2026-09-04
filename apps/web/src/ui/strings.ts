@@ -282,12 +282,22 @@ export const TR = {
     hintClarinet:
       "Kırmızı olan delikler ve tuşlar, o notada basılacak olanlardır — dolu daire kapalı " +
       "delik, boş daire açık deliktir. Baş parmak deliği ve register tuşu solda çizilir, " +
-      "çünkü onlar enstrümanın arkasındadır. Soldaki çubuk dudak çubuğudur: klarnette koma " +
-      "sesler dudağı bir miktar salarak verilir, çubuk da ne kadar salınacağını gösterir. " +
-      "Her çizgi bir komadır, en fazla beş koma. Çubuk boşsa nota parmağın kendi sesidir, " +
-      "dudak salınmaz. Klarnetin sesinin dışındaki notalarda hiçbir şey yanmaz.",
+      "çünkü onlar enstrümanın arkasındadır. Üstteki çubuk dudağı ne kadar sıkacağınızı " +
+      "gösterir: normal çalarken dudak orta derecede sıkılır, çubuğun tam ortası odur. Koma " +
+      "sesler dudağı oradan gevşeterek verilir; çubuk kısaldıkça dudak gevşer, ortanın " +
+      "solundaki her çizgi bir komadır, en fazla beş koma. Ortanın sağı daha sıkı yönüdür ve " +
+      "hiç dolmaz — hiçbir koma dudağı normalden fazla sıkarak verilmez. Çubuk tam ortadaysa " +
+      "nota parmağın kendi sesidir. Klarnetin sesinin dışındaki notalarda hiçbir şey yanmaz.",
     clarinetBack: "arka",
-    hintClarinetAlt: "Sol klarnet fotoğrafı — basılan delikler ve dudak çubuğu",
+    hintClarinetAlt: "Sol klarnet fotoğrafı — o notada basılan delikler ve tuşlar",
+    // The lip meter's caption and its three positions. ⚠ They name a GRIP, not an action: the meter
+    // says how tightly the lip is held, and "normal" is a PLACE on it — the middle — not a word for
+    // "no bend" (owner, 2026-09-04). Never write these as "salma" / "gevşetme miktarı" again; that
+    // is the reading the owner replaced, and Clarinet.tsx says why.
+    lipTitle: "Dudak sıkılığı",
+    lipLoose: "gevşek",
+    lipNormal: "normal",
+    lipTight: "sıkı",
   },
 
   fingerboard: {

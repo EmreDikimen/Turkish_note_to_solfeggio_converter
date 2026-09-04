@@ -1,7 +1,7 @@
 # F3 — the clarinet view
 
 purpose: the design, the artwork and the decisions behind the sol klarnet half of the instrument tab
-audience: agents and the owner working on the clarinet view, before changing the schematic, the fingering table or the lip bar
+audience: agents and the owner working on the clarinet view, before changing the schematic, the fingering table or the lip meter
 updated: 2026-08-29
 
 > This is the clarinet chapter of F3. The violin chapter is [fingerboard.md](fingerboard.md), the
@@ -9,7 +9,7 @@ updated: 2026-08-29
 > Current state is in [../STATUS.md](../STATUS.md). ⚠ Not to be confused with F1's clarinet
 > **sound**, which shipped 2026-08-14 — [audio-sources.md](audio-sources.md).
 
-Show which holes are covered, and how far the lip has to relax, as the piece plays.
+Show which holes are covered, and how tightly the lip is held, as the piece plays.
 
 ## The scope decision (owner, 2026-08-29)
 
@@ -144,7 +144,7 @@ the back and no front photograph can show them; every printed clarinet chart sol
 
 ⚠ The card is bounded by **HEIGHT, never width** — 244×1560 is a 1:6.4 sliver.
 
-## ⭐ The lip bar (owner, 2026-08-29)
+## ⭐ The lip meter (owner, 2026-08-29; how it READS was revised 2026-09-04)
 
 *"Klarnette koma sesleri vermek için dudağımızı salıyoruz bir miktar. Dudağını ne kadar salması
 gerektiğini gösteren ekstra bir bar gibi bir şey kullanabiliriz."*
@@ -166,15 +166,51 @@ seven-line chart is drawn and the dot falls *between* the lines whenever the mus
 the bar is the gap. Neither view snaps the microtone onto the twelve-tone grid, which is the whole
 reason this project can show something a Western app cannot.
 
+### ⭐ It shows the GRIP, not the bend (owner, 2026-09-04)
+
+*"Ne kadar gevşetmemiz gerektiğini değil ne kadar dudağımızı sıkmamız gerektiğini söylesin. Normal
+çalarken orta derecede sıkıyoruz dudağımızı."*
+
+The number underneath is unchanged: `fingerClarinet` still returns `bendKoma`, how far below its
+fingering the note sits. What the meter draws is no longer that number but **where the lip is**.
+
+- **The scale is tightness**, loose on the left, tight on the right.
+- **An ordinary note sits at the MIDDLE** (`NORMAL_AT = 0.5` in `Clarinet.tsx`, and every position
+  in the meter is computed from it, so no percentage is written into the CSS to drift away).
+- **A comma is a step to the left of that middle**, five of them at most.
+
+⭐ Why this beats what it replaced: the old bar read **zero** for an ordinary note, which says the
+player is holding nothing until the music asks for something. A wind player is already holding an
+embouchure. The meter now starts where he is, and a koma is a distance from there.
+
+⛔ **The right half is drawn and never fills** (owner, asked directly: *"daha fazla sıkarak hiçbir
+komayı vermeyelim, sadece dudağı gevşeterek koma verelim"*). It exists so that *normal* can be seen
+to be the middle of a grip rather than the end of a scale. It carries **no comma ticks**, and it must
+never get any: lipping a clarinet **up** is worth a fraction of lipping it down, so a symmetric ±5
+would teach the instrument wrong — the one thing an instrument view may not do.
+
+⚠ **Horizontal, above the picture, and HTML rather than SVG.** The drawing is a 356×1560 sliver
+bounded by HEIGHT, about 150 px wide on a laptop; a horizontal scale inside it would get ~15 px per
+comma and no room for a word. So the meter is `.kv-clarinet__lip*` in `app.css`, above the photo,
+`min(420px, 100%)` wide. `LIP_BAR` is **deleted** from `clarinetArt.ts` — it was the one number in
+that file never measured against the photograph, so nothing was recalibrated by moving it out.
+
+⚠ The old bar's argument for VERTICAL — a bend is a *pitch*, and every pitch in this app runs up the
+page — died with the meaning. A grip is not a pitch.
+
+⚠ **The fill is hidden while nothing is sounding.** An empty meter is a real reading (the lip fully
+relaxed, five komas down) and must not double as "no note". `app.css` keys that off the root's
+`data-note-state`.
+
 ### What has to be decided before it can be built
 
 ⚠ **None of these are guesses to make in code.** They are data or owner input, held the way
 `VIOLIN_TUNINGS` and `MANDAL_LAYOUTS` are.
 
-**1. Which direction, and therefore which fingering to pick.** Relaxing the lip lowers the pitch.
-So the chart should show the fingering **above** the target note and the bar should always read
-*downward* — otherwise it would ask for a technique that does not exist. This needs the owner's
-confirmation: whether tightening upward is used in practice, or whether it is downward only.
+**1. Which direction, and therefore which fingering to pick.** ✅ **Answered — downward only**
+(owner, 2026-09-04: *"sadece dudağı gevşeterek koma verelim"*). The chart shows the fingering
+**above** the target note and the lip only ever comes down from it. Nothing in this app is played by
+biting above normal, which is why the meter's tighter half carries no commas.
 
 **2. How far the lip can go.** This bounds the bar and decides when the view must say *change the
 fingering* instead. One koma is **22.6 cents**. Teaching sources put embouchure-only bending at

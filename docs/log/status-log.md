@@ -7,6 +7,43 @@ updated: 2026-09-04
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-04 — the clarinet's lip meter now shows the grip (product track)
+
+One owner decision, one afternoon, no model work. The sol klarnet view's lip bar was a vertical bar
+down the left margin of the photograph that grew downward by however many komas the note needed the
+lip relaxed. Two things about it were wrong and the owner named both.
+
+**It was reading the wrong quantity.** *"Ne kadar gevşetmemiz gerektiğini değil ne kadar dudağımızı
+sıkmamız gerektiğini söylesin. Normal çalarken orta derecede sıkıyoruz dudağımızı."* The bar read
+**zero** for an ordinary note — which says the player is holding nothing until the music asks for
+something, and a wind player is always holding an embouchure. It now reads the **grip**: loose on
+the left, tight on the right, an ordinary note exactly at the middle, and a koma a step to the left
+of that. The number underneath did not move: `fingerClarinet` still returns `bendKoma`.
+
+⛔ **The tighter half is drawn and never fills, and that was asked before it was built.** Given the
+options, the owner's answer was *"daha fazla sıkarak hiçbir komayı vermeyelim, sadece dudağı
+gevşeterek koma verelim"* — so the right half carries no comma ticks. Marking it in commas to make
+the scale symmetric would claim a clarinet lips **up** as far as it lips down, and it does not.
+That also closes input #1 of the four the feature doc had been carrying open since 2026-08-29.
+
+⚠ **The meter left the SVG.** Horizontal was the other half of the request, and the drawing cannot
+hold it: 356×1560 bounded by height is ~150 px wide on a laptop, so a horizontal scale would get
+~15 px a comma and no room for a word. It is HTML above the picture now (`.kv-clarinet__lip*`),
+`min(420px, 100%)` wide, which is also what makes it legible on a phone. `LIP_BAR` is deleted from
+`clarinetArt.ts` — the only number in that file that was never measured against the photograph, so
+moving it out recalibrated nothing.
+
+⚠ **Two small rules came out of the build.** The fill is hidden unless a note is sounding: an empty
+meter is a real reading (the lip fully relaxed) and must not double as "nothing is playing". And the
+comma ticks hang *below* the track rather than crossing it, so the last one — the loosest lip, at
+the very end of the scale — is visible instead of disappearing into the border.
+
+Checked by eye in the real app on `beyati-delisin.json`: idle, an ordinary note (fill to the middle),
+a 2-koma and a 3-koma note, the staged 5-koma end, and a 390 px phone viewport. `npm run typecheck`
+and `npm test` pass. ⚠ The view's DOM contract is still **unasserted by any browser check**, exactly
+as it was before this change. [../DECISIONS.md](../DECISIONS.md) ·
+[../features/clarinet-view.md](../features/clarinet-view.md)
+
 ## 2026-09-04 — the licence, and the read that never leaves the server (product track)
 
 Two owner decisions taken while deciding whether to put the app's link on LinkedIn. Neither is about

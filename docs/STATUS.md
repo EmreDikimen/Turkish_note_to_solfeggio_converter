@@ -290,10 +290,18 @@ the model track never touches the app.** Either can be worked on without waiting
    one question in one grammar after the owner rejected a first pair that did not
    (*"pek açıklayıcı değil"*). `npm test`, `smoke:editor` (320 checks) and `smoke:app` **ALL PASS**.
    ⏭ Unchecked by an eye. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
-3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, STILL UNCHECKED IN THE BROWSER (built 2026-08-29).**
+3e. **🚧 THE SOL KLARNET — DEPLOYED 2026-08-30, NOT REDEPLOYED SINCE (built 2026-08-29).**
+   ⭐ **THE LIP METER NOW SHOWS THE GRIP, NOT THE BEND** (owner, 2026-09-04): horizontal, above the
+   photograph, an ordinary note at its **middle**, a koma a step to the left, and the tighter half
+   drawn but never filled and never ticked — no koma is played by biting above normal. It is HTML
+   now, not SVG (`.kv-clarinet__lip*`), and `LIP_BAR` is gone from `clarinetArt.ts`. Looked at by
+   eye in the real app at 1280 px and at 390 px; `typecheck` + `npm test` pass. ⏭ **Not deployed**
+   — it rides the next `deploy:app`. [features/clarinet-view.md](features/clarinet-view.md) ·
+   [DECISIONS.md](DECISIONS.md).
    ⚠ **`smoke:editor` covers the clarinet VOICE, not the VIEW** — its DOM contract
    (`#clarinet[data-holes|data-keys|data-lip-reach]`, `[data-omr="clarinet-key"]`,
-   `[data-omr="clarinet-lip-tick"]`) is unasserted, unlike the kanun's and the violin's. Confirmed
+   `[data-omr="clarinet-lip-tick"]`, and now `[data-omr="clarinet-lip-meter"|"clarinet-lip-normal"]`)
+   is unasserted, unlike the kanun's and the violin's. Confirmed
    pre-deploy by hand only: 6 holes, 18 keys, 5 lip ticks, photo loaded, no page errors.
    ⭐ **THE TABLE IS NOW THE OWNER'S OWN** (2026-08-30), placed note by note in
    `tools/core/clarinet-editor.ts`: **six of nineteen changed, every one a KEY; no hole, no note.**

@@ -83,6 +83,16 @@ export const TR = {
       "(çalgı başına 10–35 MB); inene kadar varsayılan sesle çalar.",
     voiceLoading: (done: number, total: number) => `ses indiriliyor… ${done}/${total}`,
     voiceFailed: "ses indirilemedi — varsayılan sesle çalıyor",
+    // ⚠ These four say what is SOUNDING, not what the picker shows — during a switch made while a
+    // piece is playing the two are different on purpose, and that difference is the whole point of
+    // the message (`VoiceStatus.sounding`). `heldLabel` is the voice still being heard.
+    voiceFailedHeld: (heldLabel: string) =>
+      `ses indirilemedi — ${heldLabel} sesiyle devam ediyor`,
+    voiceSwitchTitle: (toLabel: string) => `${toLabel} sesine geçiliyor`,
+    voiceSwitchHeld: (done: number, total: number, heldLabel: string) =>
+      `${total} dosyadan ${done} tanesi indi — şimdilik ${heldLabel} sesiyle çalıyor`,
+    voiceSwitchReady: (toLabel: string) => `${toLabel} sesi hazır`,
+    voiceSwitchDismiss: "kapat",
     usul: "Usul",
     usulTitle: "Metronomun vuruş kalıbı. Okuma yanılabilir; buradan düzeltebilirsiniz.",
     makam: "Makam",

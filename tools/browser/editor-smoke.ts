@@ -523,7 +523,7 @@ async function main() {
   // reports which path each note actually took, and `sampled`/`synth` is the only evidence the
   // feature does anything at all.
   const voiceInfo = async (): Promise<{
-    voice: string; state: string; loaded: number; total: number;
+    voice: string; sounding: string; state: string; loaded: number; total: number;
     sampled: number; synth: number; truncated: number;
   }> =>
     page.evaluate(() =>
@@ -564,6 +564,18 @@ async function main() {
       `${heard.sampled} sampled / ${heard.synth} synthesised notes`,
   );
 
+  // ⚠ **The notice that explains the wait** (owner, 2026-09-04). It is `position: fixed` and lives
+  // OUTSIDE every `.kv-card`, so this also proves it was not rendered somewhere a card can clip.
+  // Attributes only — the Turkish copy is free to change (CLAUDE.md).
+  const notice = page.locator("#voice-notice");
+  check("a download says so on screen", await notice.count(), 1);
+  check("...naming the instrument being switched TO",
+    await notice.getAttribute("data-voice-to"), "clarinet");
+  // From the built-in tone there is nothing to bridge, so this is `sine` — the interesting case is
+  // the opt-in arm below, where a real recording is held across the switch.
+  check("...and the one actually sounding meanwhile",
+    await notice.getAttribute("data-voice-sounding"), (await voiceInfo()).sounding);
+
   if (VOICES_URL) {
     // The opt-in arm: real files, from the real host.
     await page.waitForFunction(
@@ -577,6 +589,48 @@ async function main() {
     check("every sample of the voice decoded", real.loaded, real.total);
     check("...and the notes were sounded by recordings", real.sampled > 0 && real.synth === 0, true);
     check("...with none outlasting its recording", real.truncated, 0);
+    check("...and the notice took itself away once the voice arrived",
+      await page.locator("#voice-notice[data-voice-state=\"loading\"]").count(), 0);
+
+    // ── the bridged switch (owner, 2026-09-04) ────────────────────────────────────────────────
+    //
+    // ⚠ **THE ONE ASSERTION THAT CAN SEE THIS FEATURE AT ALL.** Switching instruments mid-playback
+    // used to drop the music to the synthesised tone for the length of a 10–35 MB download; it now
+    // keeps the loaded recording sounding until the new one lands. From the DOM the two are
+    // identical — same notes, same playhead, same picker — so `data-voice-sounding` disagreeing
+    // with `data-voice-to` IS the evidence, exactly as `sampled`/`synth` is the evidence that any
+    // recording plays at all. Without this, removing the bridge passes every other check here.
+    check("the piece is still playing before the switch",
+      await page.locator("#play").getAttribute("data-play-state"), "playing");
+    await picker.selectOption("violin");
+    await page.waitForFunction(
+      () => (window as unknown as { __omrVoice: () => { state: string } }).__omrVoice().state === "loading",
+      undefined,
+      { timeout: 10000 },
+    );
+    const bridged = await voiceInfo();
+    console.log(`  mid-playback switch: picker "${bridged.voice}", still sounding "${bridged.sounding}"`);
+    check("switching mid-playback asks for the new voice", bridged.voice, "violin");
+    check("...while the OLD recording keeps sounding", bridged.sounding, "clarinet");
+    check("...not the synthesised tone", bridged.sounding === "sine", false);
+    check("...and the picker admits the difference",
+      await picker.getAttribute("data-voice-sounding"), "clarinet");
+    check("...and the notice names both sides",
+      `${await notice.getAttribute("data-voice-to")}→${await notice.getAttribute("data-voice-sounding")}`,
+      "violin→clarinet");
+
+    // ⚠ The other half of the memory bargain: two decoded voices (~45–80 MB) may coexist only while
+    // a piece is playing. Stop, and the held one must go — `webAudioBackend.stop()`. A leak here is
+    // invisible in every other way, which is why it is checked rather than trusted.
+    await page.locator("#palette-stop").click();
+    await page.waitForTimeout(200);
+    check("stopping releases the bridged voice", (await voiceInfo()).sounding, "sine");
+    await picker.selectOption("clarinet");
+    await page.waitForFunction(
+      () => (window as unknown as { __omrVoice: () => { state: string } }).__omrVoice().state === "ready",
+      undefined,
+      { timeout: 120000 },
+    );
   } else {
     // ⚠ The default arm, and the property that matters most: with no host configured every voice
     // load FAILS, and the app must keep playing anyway. A voice that will not download is a reason

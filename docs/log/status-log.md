@@ -7,6 +7,62 @@ updated: 2026-09-04
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-04 — switching instruments no longer drops to the default tone (product track)
+
+The owner heard it and asked the right question first: *"nota çalarken enstrüman sesini
+değiştirdiğimizde birkaç saniyeliğine varsayılan sese dönüyor ve sonra istediğimiz sese dönüyor.
+Bunu anlık yapmanın bir yolu var mı?"*
+
+**No, and the answer stayed no.** Picking an instrument starts a download — 11 files / 20.2 MB for
+the clarinet, 15 / 35.4 MB for the violin, 36 / 9.9 MB for the kanun — fetched one at a time and
+decoded as they arrive. A first pick cannot be instant on any connection, and a re-pick still has to
+re-decode even though Cache Storage saves the bytes. So the wait is not what was fixed.
+
+**What was actually wrong was the GAP, and it was a deliberate line of code.** `ensureVoice` nulled
+`voiceBuffers` at the *start* of the load, with the comment *"drop it before the new one arrives, so
+two voices are never decoded at once"* — a memory rule (a decoded violin is ~47 MB of Float32).
+Correct about memory, and it meant every note in between fell to the synthesised oscillator. The
+listener heard three sounds where they had asked for two.
+
+It now **holds** the loaded voice and swaps at the moment the new set resolves, so the change lands
+on a note boundary and one instrument simply becomes another. The per-note voice decision in
+`scheduleNote` already made that free — nothing re-schedules.
+
+⚠ **The memory rule was amended, not deleted, and the owner picked the bound.** Offered three
+options; chosen: **held only while a piece is playing.** A switch made while stopped still drops at
+once (nothing is sounding, so there is no gap to bridge), and `stop()` releases a held voice. The
+double-hold (~45–80 MB) therefore lasts exactly as long as one playback. Keeping every downloaded
+voice resident — ~110 MB for all three, and instant switching after the first visit — was offered
+and **declined for the phone**.
+
+⚠ **One trap, found by reading rather than by testing.** `applyPlayback` re-plays on every settings
+change, and a change of instrument is one of them: `play()` begins by stopping, so the release in
+`stop()` would have thrown away the very voice the same click had just asked to keep. `stop()` is
+now a thin wrapper over `silence(releaseVoice)`; `play()` calls `silence(false)`. The natural end
+still releases, because there the music really is over. `this.state = "playing"` also had to move
+*above* the `ensureVoice` call, since that call decides by asking whether a piece is playing.
+
+⚠ **`state === "failed"` stopped meaning "the default tone is playing".** A failed load now keeps
+the old recording when there was one to keep, so `VoiceStatus` gained **`sounding`** — what the next
+note will actually be sounded by — and all four hints in the transport and the instrument page read
+that instead of `state`. The old flat "varsayılan sesle çalıyor" was true before today and is now
+only true when nothing was held.
+
+**The notice** (the owner's own second suggestion, and it earned its place): `#voice-notice`, a fixed
+toast at the top of the viewport reading *"Keman sesine geçiliyor / 15 dosyadan 3 tanesi indi —
+şimdilik Klarnet sesiyle çalıyor"*, taking itself away a few seconds after the outcome. Two
+placement facts: it is **click-through except its ✕**, because a fixed toast over a scrolling page
+has no position that never covers a control (parked at the top it lands on the score card's tabs;
+the bottom corners are taken by the pinned transport and the phone's docked toolbox), and it is
+outside `#omr-status`, whose distinct-text count is how `page-smoke` proves read progress moved.
+
+**Checked.** `smoke:editor` gained the assertion that can see this at all: after the clarinet is
+decoded and playing, selecting the violin must leave `data-voice-sounding="clarinet"` while
+`data-voice-to="violin"` — from the DOM the bridged and the un-bridged versions are otherwise
+identical, the same blind spot `sampled`/`synth` exists for. Plus the other half of the bargain:
+Dur must release the held voice. Both live in the opt-in `--voices-url` arm, since the default arm
+has no host and so never has a voice to hold. Full run green; `npm test` green.
+
 ## 2026-09-04 — the clarinet's lip meter now shows the grip (product track)
 
 One owner decision, one afternoon, no model work. The sol klarnet view's lip bar was a vertical bar

@@ -638,6 +638,104 @@ label.kv-btn.is-disabled {
   box-shadow: var(--shadow-card);
 }
 
+/* ⚠ FIXED at the TOP-CENTRE, and the position is the whole of the reasoning (owner, 2026-09-04).
+   The bottom of the viewport is taken twice over — by `.kv-mini-transport` in the right corner and,
+   under 700px, by the docked edit toolbox across the full width — so a notice down there either
+   covers a control or fights one for the same pixels. The top is empty on every screen size, which
+   is also why this needs no phone rule of its own beyond a width cap.
+   ⚠ `z-index: 41`, one ABOVE the toolbox: it is transient and it is the answer to a click the
+   reader just made, so for the few seconds it exists it outranks a box they parked earlier.
+   ⚠ **`pointer-events: none` on the box, `auto` on its ✕ alone.** It is a toast at a fixed point
+   while the page scrolls under it, so there is no placement that never lands on a control — parked
+   here it can cover the score card's own tabs, and the bottom corners are taken by the pinned
+   transport and, under 700px, the docked toolbox. Passing clicks through is what makes the overlap
+   cosmetic and momentary rather than a control that stops working for three seconds.
+   ⚠ Positioned with left/transform is deliberate here (unlike the toolbox, whose position is state
+   in viewport pixels): nothing measures this box. */
+.kv-voice-notice {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 41;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: min(30rem, calc(100vw - 2 * var(--space-3)));
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+  animation: kv-voice-notice-in 160ms ease-out;
+  pointer-events: none;
+}
+
+/* A failed download is the one state that is not progress, so it changes the edge and nothing else
+   — `--danger` is muted on purpose (tokens.css) and a whole red box would out-shout the score. */
+.kv-voice-notice.is-failed {
+  border-left-color: var(--danger);
+}
+
+.kv-voice-notice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kv-voice-notice__text > strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Tabular figures: the count ticks once per decoded file, and proportional digits make the whole
+   line twitch sideways under a reader who is trying to read it. */
+.kv-voice-notice__text > small {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.kv-voice-notice__close {
+  pointer-events: auto; /* the one part of the toast that is a target — see the block comment above */
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kv-voice-notice__close:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+
+/* ⚠ Slides from ABOVE the box's own resting place, so the transform the animation ends on is the
+   same `translateX(-50%)` the rule above sets. Ending anywhere else would snap the box sideways by
+   half its width on the last frame. `base.css` already turns every animation off under
+   `prefers-reduced-motion`, so this needs no guard of its own. */
+@keyframes kv-voice-notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ── Score card ─────────────────────────────────────────────────────────── */
 
 .kv-card {
@@ -1961,6 +2059,15 @@ label.kv-btn.is-disabled {
   }
   .kv-drop:hover {
     border-color: var(--rule-strong);
+  }
+
+  /* The voice notice's ✕ is 22px on a mouse, which is a fifth of a thumb. It grows into the box's
+     padding rather than the box growing around it — the notice sits at the top of the viewport over
+     the score, so it must not get taller than the two lines it carries. */
+  .kv-voice-notice__close {
+    width: var(--control-h);
+    height: var(--control-h);
+    margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0;
   }
 }
 

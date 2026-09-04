@@ -5,9 +5,14 @@ import {
 import { Fingerboard } from "./Fingerboard";
 import { Kanun } from "./Kanun";
 import { Clarinet } from "./Clarinet";
-import type { VoiceId } from "./audio/instruments";
+import { VOICES, type VoiceId } from "./audio/instruments";
 import type { VoiceStatus } from "./webAudioBackend";
 import { TR } from "./ui/strings";
+
+/** The picker's own name for a voice — the hints have to name the one that is actually sounding. */
+function voiceLabel(id: VoiceId): string {
+  return VOICES.find((v) => v.id === id)?.label ?? id;
+}
 
 /**
  * "Enstrüman üzerinde" — the one page that shows where the music falls on a real instrument
@@ -105,13 +110,27 @@ export function InstrumentView({
             ))}
           </select>
         </label>
+        {/* ⚠ Both lines say what is SOUNDING, not what this picker shows. Since 2026-09-04 a switch
+            made while the piece plays keeps the previous recording going until the new one lands
+            (`webAudioBackend.ensureVoice`), so during a download — and after a FAILED one — the two
+            are different, and only `sounding` is true about what the listener hears. */}
         {loadingThis && voiceStatus.state === "loading" && (
           <small className="kv-hint">
-            {TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total)}
+            {voiceStatus.sounding === "sine"
+              ? TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total)
+              : TR.transport.voiceSwitchHeld(
+                  voiceStatus.loaded,
+                  voiceStatus.total,
+                  voiceLabel(voiceStatus.sounding),
+                )}
           </small>
         )}
         {loadingThis && voiceStatus.state === "failed" && (
-          <small className="kv-hint">{TR.transport.voiceFailed}</small>
+          <small className="kv-hint">
+            {voiceStatus.sounding === "sine"
+              ? TR.transport.voiceFailed
+              : TR.transport.voiceFailedHeld(voiceLabel(voiceStatus.sounding))}
+          </small>
         )}
       </div>
 

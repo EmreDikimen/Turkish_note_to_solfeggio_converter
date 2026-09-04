@@ -128,6 +128,16 @@ export type VoiceState = "idle" | "loading" | "ready" | "failed";
 export interface VoiceStatus {
   voice: VoiceId;
   state: VoiceState;
+  /**
+   * Which voice would sound the NEXT note — not necessarily the one the picker shows.
+   *
+   * ⚠ They differ for the whole of a switch made mid-playback: `voice` is what the listener asked
+   * for and `sounding` is what they are still hearing while it downloads (see `ensureVoice`). It is
+   * `"sine"` whenever no recording is loaded, which is also what a failed load leaves behind when
+   * there was nothing to keep. The UI must say THIS one, or a notice about the switch describes a
+   * sound nobody is hearing.
+   */
+  sounding: VoiceId;
   /** Samples decoded so far, out of the voice's total. Both 0 for the synthesised voice. */
   loaded: number;
   total: number;
@@ -239,9 +249,12 @@ export class WebAudioBackend implements AudioBackend {
   private rr: Record<Stroke, number> = { dum: 0, tek: 0, ka: 0 };
   /**
    * The loaded instrument voice, cached with the same lifetime as `strokeBuffers` and for the same
-   * reason. ⚠ Exactly ONE voice at a time: a decoded violin is ~47 MB of Float32, so `ensureVoice`
-   * drops the previous one rather than keeping both. Cache Storage is what makes switching back
-   * cheap (`loadInstrument.ts`).
+   * reason. ⚠ **At most ONE voice at rest, and exactly two only while a switch is playing**: a
+   * decoded violin is ~47 MB of Float32, so `ensureVoice` normally drops the previous one rather
+   * than keeping both. The one exception is a switch made mid-playback, where the old voice is held
+   * until the new one lands so the music does not drop to the synthesised tone for the length of a
+   * 10–35 MB download (owner, 2026-09-04) — `releaseBridgedVoice` is what closes that window again.
+   * Cache Storage is what makes switching back cheap (`loadInstrument.ts`).
    */
   private voiceBuffers: VoiceBuffer[] | null = null;
   private voiceDef: Voice | null = null;
@@ -347,7 +360,7 @@ export class WebAudioBackend implements AudioBackend {
    * look-ahead scheduler. `opts.speed` scales playback tempo; `opts.clicks` adds a click track.
    */
   async play(timeline: Timeline, fromMs = 0, opts: PlayOptions = {}): Promise<void> {
-    this.stop();
+    this.silence(false); // ⚠ NOT `stop()`: a re-schedule must not drop a bridged voice — see there.
     this.timeline = timeline;
     this.speed = opts.speed && opts.speed > 0 ? opts.speed : 1;
 
@@ -373,12 +386,16 @@ export class WebAudioBackend implements AudioBackend {
     // the first stroke; a voice has a picker that shows its own progress, and 20–35 MB is not
     // something the Play button may ever block on. The download normally started when the user
     // chose the instrument; whatever has arrived by each note is what that note uses.
-    void this.ensureVoice(opts.voice ?? DEFAULT_VOICE);
-
-    // ⚠ Before scheduleFrom, not after: its first tick can legitimately reach the end of the piece
-    // (seek past the last note) and call stop(), and a later assignment here would overwrite that
-    // back to "playing" with nothing scheduled.
+    // ⚠ **Before `ensureVoice`, and before `scheduleFrom`** — two separate reasons, both paid for.
+    // `ensureVoice` decides whether to HOLD the currently loaded voice by asking whether a piece is
+    // playing, and this call is a re-schedule as often as it is a first start (`applyPlayback`
+    // re-plays on every settings change, an instrument change included); read a moment too early it
+    // would drop the voice that same change had just asked it to keep. And it must not move after
+    // `scheduleFrom`, whose first tick can legitimately reach the end of the piece (seek past the
+    // last note) and call `stop()`, which a later assignment here would overwrite back to "playing"
+    // with nothing scheduled.
     this.state = "playing";
+    void this.ensureVoice(opts.voice ?? DEFAULT_VOICE);
     this.scheduleFrom(Math.max(0, fromMs), opts);
   }
 
@@ -472,7 +489,7 @@ export class WebAudioBackend implements AudioBackend {
       // ⚠ Only the NATURAL end waits. A listener pressing stop calls `stop()` directly and means now.
       if (this.ctx && this.ctx.currentTime < this.ringUntil) return;
       const cb = this.onEndedCb;
-      this.stop();
+      this.stop(); // the natural end: the music is over, so a bridged voice is released with it
       cb?.();
     }
   }
@@ -766,6 +783,25 @@ export class WebAudioBackend implements AudioBackend {
    * ⚠ A failure is **reported**, not swallowed the way a kit's is. Nobody asked for the darbuka
    * specifically — it is the default — but a voice is something the user went and chose, so silence
    * about it would read as the app ignoring them.
+   *
+   * ⭐ **A SWITCH MADE WHILE THE PIECE IS PLAYING KEEPS THE OLD VOICE UNTIL THE NEW ONE LANDS**
+   * (owner, 2026-09-04). Before this, the loaded voice was dropped at the START of the download, so
+   * choosing the clarinet mid-phrase dropped the music to the synthesised tone for the whole of a
+   * 10–35 MB fetch and only then swapped. Nothing can make that download instant — 11 files for the
+   * clarinet, 15 for the violin, 36 for the kanun, fetched one at a time — so what is fixed is the
+   * GAP, not the wait: the old recording keeps sounding, and a notice says a switch is under way
+   * (`sounding` in `VoiceStatus`, `VoiceSwitchNotice` in the UI).
+   *
+   * ⚠ **Only while playing, which is the whole of the memory bargain.** Two decoded voices are
+   * ~45–80 MB, and the file header's "at most one at rest" rule is what keeps a phone out of
+   * trouble. Held here, that window lasts exactly as long as a playback: `stop()` calls
+   * `releaseBridgedVoice`, and a switch made while STOPPED still drops at once, because nothing is
+   * sounding and there is no gap to bridge. A PAUSE holds on — the notes sound again on Devam, and
+   * dropping at the pause would put the gap back on the resume.
+   *
+   * ⚠ **A failed load now keeps the old voice too**, where it used to leave the synthesised tone.
+   * That makes `state === "failed"` no longer imply the default tone is sounding — read `sounding`,
+   * never `state`, to say what a listener is hearing.
    */
   async ensureVoice(id: VoiceId): Promise<void> {
     const ctx = this.ctx ?? (this.ctx = new AudioContext());
@@ -785,12 +821,23 @@ export class WebAudioBackend implements AudioBackend {
       return;
     }
 
-    if (this.voiceDef?.id === id && this.voiceBuffers?.length) return; // already here
+    if (this.voiceDef?.id === id && this.voiceBuffers?.length) {
+      // Already here — including the case where it is here because a switch AWAY from it is still
+      // in flight and the listener changed their mind back. `voiceWanted` above has already told
+      // that load to discard itself, so all this owes is a state that no longer says "loading".
+      this.voiceState = "ready";
+      this.voiceLoaded = this.voiceTotal = def.samples.length;
+      this.emitVoice();
+      return;
+    }
 
-    // Anything loaded belongs to the other instrument. Drop it before the new one arrives rather
-    // than after, so two voices are never decoded at once.
-    this.voiceBuffers = null;
-    this.voiceDef = null;
+    // Anything loaded belongs to the other instrument. Drop it before the new one arrives — EXCEPT
+    // mid-playback, where it is what the listener is hearing and keeping it is the point (see the
+    // doc comment). Held, it is replaced by the assignment below and never leaks past `stop()`.
+    if (this.state === "stopped") {
+      this.voiceBuffers = null;
+      this.voiceDef = null;
+    }
     this.voiceLoaded = 0;
     this.voiceTotal = def.samples.length;
     this.voiceState = "loading";
@@ -804,15 +851,33 @@ export class WebAudioBackend implements AudioBackend {
         this.emitVoice();
       });
       // The same out-of-order guard `strokeKitWanted` is: a slow load for voice A must not install
-      // itself after the user has moved to voice B.
+      // itself after the user has moved to voice B. This assignment is also the swap point — the
+      // held voice stops sounding here, at the next note, and not one note earlier.
       if (this.voiceWanted !== id) return;
       this.voiceBuffers = bufs;
       this.voiceDef = def;
       this.voiceState = "ready";
     } catch {
       if (this.voiceWanted !== id) return;
+      // ⚠ Deliberately does NOT drop `voiceBuffers`: a voice that failed to download is a reason to
+      // keep hearing the one that did, not a reason to fall back to the synthesised tone mid-phrase.
+      // With nothing held (the usual case, switching from `sine`) this is the old behaviour exactly.
       this.voiceState = "failed";
     }
+    this.emitVoice();
+  }
+
+  /**
+   * Drop a voice that is only still in memory because it was bridging a mid-playback switch.
+   *
+   * Called from `stop()`. The test is "the loaded voice is not the one the picker shows" — which is
+   * true only during a switch, since every completed load makes the two agree. A no-op the rest of
+   * the time, and specifically a no-op for the ordinary case of one voice loaded and playing.
+   */
+  private releaseBridgedVoice(): void {
+    if (!this.voiceDef || this.voiceDef.id === this.voice) return;
+    this.voiceBuffers = null;
+    this.voiceDef = null;
     this.emitVoice();
   }
 
@@ -835,6 +900,9 @@ export class WebAudioBackend implements AudioBackend {
   voiceInfo(): VoiceStatus {
     return {
       voice: this.voice,
+      // ⚠ Read off the DECODED set, never off `voice` or `voiceState`: during a mid-playback switch
+      // the two disagree on purpose, and this is the one that matches what comes out of the speaker.
+      sounding: this.voiceDef?.id ?? "sine",
       state: this.voiceState,
       loaded: this.voiceLoaded,
       total: this.voiceTotal,
@@ -1018,6 +1086,22 @@ export class WebAudioBackend implements AudioBackend {
    * even if nothing is playing.
    */
   stop(): void {
+    // The public stop always means "playback is over", so a voice held only to bridge a switch has
+    // no listener left to protect. `play()` goes through `silence(false)` instead — see there.
+    this.silence(true);
+  }
+
+  /**
+   * The body of `stop()`, with the one decision `play()` needs to make differently.
+   *
+   * ⚠ **`releaseVoice` exists because `play()` is a RE-schedule as often as it is a first start.**
+   * Every settings change while a piece is playing runs `applyPlayback` → `play()` → this, and a
+   * change of INSTRUMENT is one of them: releasing there would throw away the old voice that the
+   * very same change had just asked `ensureVoice` to hold, putting the synthesised-tone gap back
+   * for the whole download. So the release belongs to the public stop and to the natural end, both
+   * of which mean the music has actually finished.
+   */
+  private silence(releaseVoice: boolean): void {
     if (this.ticker) {
       clearInterval(this.ticker);
       this.ticker = null;
@@ -1048,5 +1132,8 @@ export class WebAudioBackend implements AudioBackend {
     this.pending = [];
     this.cursor = 0;
     this.state = "stopped";
+    // Nothing is sounding any more, so a voice held only to bridge a switch gives its ~20–47 MB
+    // back. See `ensureVoice` for the bargain this closes.
+    if (releaseVoice) this.releaseBridgedVoice();
   }
 }

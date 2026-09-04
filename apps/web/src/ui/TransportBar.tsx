@@ -35,6 +35,11 @@ import type { AccidentalMode } from "../SheetView";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
 
+/** The picker's own name for a voice, for the hints that have to say which one is sounding. */
+function voiceLabel(id: VoiceId): string {
+  return VOICES.find((v) => v.id === id)?.label ?? id;
+}
+
 export function TransportBar({
   canPlay,
   playState,
@@ -188,6 +193,11 @@ export function TransportBar({
               id="instrument"
               data-instrument={voice}
               data-voice-state={voiceStatus.state}
+              // ⚠ What is actually coming out of the speaker, which is NOT `voice` for the whole of
+              // a switch made mid-playback (`webAudioBackend.ensureVoice`). It is the only way a
+              // headless check can tell "the old voice bridged the download" from "the new one
+              // arrived instantly" — both leave the picker reading the new instrument.
+              data-voice-sounding={voiceStatus.sounding}
               value={voice}
               disabled={!canPlay}
               onChange={(e) => onVoice(e.target.value as VoiceId)}
@@ -200,10 +210,25 @@ export function TransportBar({
             </select>
             {voiceStatus.state === "loading" && (
               <small className="kv-hint">
-                {TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total)}
+                {voiceStatus.sounding === "sine"
+                  ? TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total)
+                  : TR.transport.voiceSwitchHeld(
+                      voiceStatus.loaded,
+                      voiceStatus.total,
+                      voiceLabel(voiceStatus.sounding),
+                    )}
               </small>
             )}
-            {voiceStatus.state === "failed" && <small className="kv-hint">{TR.transport.voiceFailed}</small>}
+            {/* ⚠ `sounding`, not `state`, picks the sentence. A failed load leaves the OLD recording
+                playing when a switch was bridging one, so the flat "varsayılan sesle çalıyor" was
+                true before 2026-09-04 and is now only true when nothing was held. */}
+            {voiceStatus.state === "failed" && (
+              <small className="kv-hint">
+                {voiceStatus.sounding === "sine"
+                  ? TR.transport.voiceFailed
+                  : TR.transport.voiceFailedHeld(voiceLabel(voiceStatus.sounding))}
+              </small>
+            )}
           </label>
         </div>
       </div>

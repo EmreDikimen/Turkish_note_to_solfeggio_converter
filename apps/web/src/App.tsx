@@ -58,6 +58,7 @@ import { UploadHero } from "./ui/UploadHero";
 import { TransportBar } from "./ui/TransportBar";
 import { ScoreCard } from "./ui/ScoreCard";
 import { EditPalette, type Tool } from "./ui/EditPalette";
+import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
@@ -1720,6 +1721,13 @@ export function App() {
           )}
         </>
       )}
+
+      {/* ⚠ Fixed, and rendered here for the same reason the toolbox above is: out of every
+          `.kv-card`, which sets `overflow: hidden` and would clip it the moment the card gained a
+          transform. Outside the `{doc && …}` block too — a switch started on one score must keep
+          reporting itself if the reader loads another mid-download. Its own state decides whether
+          it draws anything at all. */}
+      <VoiceSwitchNotice status={voiceStatus} />
 
       <AdvancedPanel
         doc={doc}

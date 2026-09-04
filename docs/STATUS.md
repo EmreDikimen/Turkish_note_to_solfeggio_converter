@@ -19,24 +19,22 @@ budget. ⏭ **Still the owner's call: `--min-instances 1`**, which removes the c
 and costs money continuously. [deploy-ops.md](mvp/deploy-ops.md) · [DECISIONS.md](DECISIONS.md).
 
 ✅ **THE REPO IS LICENSED — Apache-2.0, with a scope note** (owner, 2026-09-04). `LICENSE` + `NOTICE`;
-the licence covers this project's own work and explicitly not SymbTr, the neyzen screenshot, the base
-model or the bundled audio. ⏭ **The other copyright item is still open and still the owner's**: those
-files remain in the public repo's **git history**, and clearing them needs a `filter-repo` rewrite and
-a force-push. [THIRD-PARTY.md](THIRD-PARTY.md).
+it covers this project's own work and explicitly not SymbTr, the neyzen screenshot, the base model or
+the bundled audio. ⏭ **The other copyright item is still open and still the owner's**: those files
+remain in the public repo's **git history**, and clearing them needs a `filter-repo` rewrite and a
+force-push. [THIRD-PARTY.md](THIRD-PARTY.md).
 
-⭐ **ROUND 3 IS CLOSED AND ROUND 4 IS OPEN (owner, 2026-09-03).** The exam read **51%** against a
-floor signed at 75% and a Round-2 baseline of 44%; ~15 of its +17 points was the retired `\tie`, and
-every class the three render flags targeted came out flat or slightly worse. Runs A and B were nulls
-on real-val, and the checkpoint selector picked wrong in all three runs. Every number, once:
-[METRICS-EXAMSET.md](METRICS-EXAMSET.md) · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) ·
-[METRICS.md](METRICS.md). **The plan, its evidence and the owner's decisions: [rung3/round4.md](rung3/round4.md)**;
+⭐ **ROUND 3 IS CLOSED AND ROUND 4 IS OPEN (owner, 2026-09-03).** The exam read **51%** against a floor
+signed at 75% and a Round-2 baseline of 44%; ~15 of its +17 points was the retired `\tie`, and every
+class the three render flags targeted came out flat or slightly worse. Runs A and B were nulls on
+real-val, and the checkpoint selector picked wrong in all three runs. Every number, once:
+[METRICS-EXAMSET.md](METRICS-EXAMSET.md) · [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) · [METRICS.md](METRICS.md). **The plan, its evidence and the owner's decisions: [rung3/round4.md](rung3/round4.md)**;
 plain English: [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
 
 ⭐ **THE OWNER'S HAND TEST OUTRANKS THE PAIRED READS FOR THE SHIP CALL, AND IT SAYS RUN A `best-real`
 IS VISIBLY BETTER than both `r3-final-stage2-last` and Round 2** (owner, 2026-09-03: *"exam ve
-evaluationlar o kadar fazla şey söylemiyor"*). ⚠ Not a contradiction: real-val's ~±0.13 edits/strip
-hides any gain under ~5%, and the exam drops **41%** of its candidates — the wide and dense strips a
-whole page in the app shows. ⏭ **Owner's call, recommended: stage and publish Run A `best-real`**
+evaluationlar o kadar fazla şey söylemiyor"*). ⚠ Not a contradiction: real-val's ~±0.13 edits/strip hides
+any gain under ~5%, and the exam drops **41%** of its candidates — the wide, dense strips a page shows. ⏭ **Owner's call, recommended: stage and publish Run A `best-real`**
 through the usual chain (ONNX → int8 → parity → `gate:browser`, where **27/28 is the ceiling for any
 tie-free model** → `deploy:app` + server). Nothing is published; the live site is still Round 2, backed
 up at `apps/web/public/models/_round2_backup/`; the Round-3 model is staged locally from the
@@ -55,14 +53,23 @@ select checkpoints on real-val **corrections**, not loss; beam search measured o
 
 
 ⭐ **THE PHONE WORKS NOW, AND `npm run smoke:phone` IS HOW YOU LOOK AT IT** (owner, 2026-09-04). The
-app had **no width-based media query at all**: the page scrolled sideways on every phone width, every
-picker was 13px so iOS Safari zoomed in on the first tap and never back, every control was 30px
-against a 44px thumb, and the edit toolbox was taller than a 667px screen. All of it is fixed in CSS
-behind `(pointer: coarse)` and `(max-width: 700px)`, so the desktop app and every existing check are
-untouched — the toolbox now docks to the bottom as a sheet on a phone. Reasoning, the two mistakes
-worth keeping, and what is still deliberately small: [DECISIONS.md](DECISIONS.md) ·
-[log/status-log.md](log/status-log.md). ⏭ **Owner: run `npm run smoke:phone`, look at the
-screenshots, then decide about `deploy:app`** — nothing has been deployed.
+app had **no width-based media query at all**: the page scrolled sideways at every phone width, every
+picker was 13px so iOS Safari zoomed in on the first tap and never back, every control was 30px against
+a 44px thumb, and the edit toolbox was taller than a 667px screen. All fixed in CSS behind
+`(pointer: coarse)` and `(max-width: 700px)`, so the desktop app and every existing check are untouched
+— the toolbox now docks to the bottom as a sheet on a phone. Reasoning, the two mistakes worth keeping,
+and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
+⏭ **Owner: run `npm run smoke:phone`, look at the screenshots, then decide about `deploy:app`** —
+nothing has been deployed.
+
+✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04).
+The old recording keeps sounding until the new one downloads; a toast (`#voice-notice`) names both.
+⛔ **Instant was asked for and is not available** (9.9–35.4 MB over 11–36 files), so the gap was fixed,
+not the wait. ⚠ The "one decoded voice at a time" rule is amended, bounded by the owner's choice:
+**held only while a piece plays**, released by Dur. ⚠ `state === "failed"` no longer implies the
+default tone; read `VoiceStatus.sounding`. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
+⏭ **Owner: the bridge is only covered by `npm run smoke:editor -- --voices-url <hub>`** — the default
+arm has no host, so it never has a voice to hold.
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer
 fixes moved crop boundaries the same day: a closing `:|` read as two barlines (junk strip on ~1% of
@@ -72,17 +79,16 @@ emit re-decodes; nothing is owed today. [METRICS-SLICER-FRAME.md](METRICS-SLICER
 
 ⏭ **THE NEXT ACTION (agent, no GPU, no labelling), in order:** (1) the synthetic-vs-real id-length
 distributions under the scheme-H tokenizer, and how the 7 rare pitches segment — the only thing that
-could reopen the render question; (2) the selector change in `train.py` (+ EMA, label smoothing);
-(3) the signature-vote disagreement list ([BACKLOG.md](BACKLOG.md) item 9). **Owner:** confirm
-scheme H, decide on publishing Run A, pick the hand-test pages.
+could reopen the render question; (2) the selector change in `train.py` (+ EMA, label smoothing); (3)
+the signature-vote disagreement list ([BACKLOG.md](BACKLOG.md) item 9). **Owner:** confirm scheme H,
+decide on publishing Run A, pick the hand-test pages.
 
-⏭ Settled Round-3 findings that used to sit here — the selector's three picks, the `\tie`
-accounting, the short-strip lead, run B's incomparable pool, the exam-leak removal, the examv3
-promotion and the 75%-vs-62% question — are in their homes: [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md),
-[METRICS.md](METRICS.md), [METRICS-EXAMSET.md](METRICS-EXAMSET.md), [DECISIONS.md](DECISIONS.md),
-[log/status-log.md](log/status-log.md). ⚠ One of them is still a rule: **the ship call is a human
-judgement taken after reading an error classification** (`error_taxonomy.py`, built and run
-2026-09-01), never the numeric floor alone.
+⏭ Settled Round-3 findings that used to sit here — the selector's three picks, the `\tie` accounting,
+the short-strip lead, run B's incomparable pool, the exam-leak removal, the examv3 promotion and the
+75%-vs-62% question — are in [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md), [METRICS.md](METRICS.md),
+[METRICS-EXAMSET.md](METRICS-EXAMSET.md), [DECISIONS.md](DECISIONS.md) and [log/status-log.md](log/status-log.md).
+⚠ One is still a rule: **the ship call is a human judgement taken after reading an error
+classification** (`error_taxonomy.py`, run 2026-09-01), never the numeric floor alone.
 
 ⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES. THE FIX IS MEASURED, SPECIFIED,
 AND DEFERRED TO ROUND 4 (owner, 2026-08-23) — which is what RELEASES THE EXAM.** The browser slicer

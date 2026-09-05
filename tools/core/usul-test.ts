@@ -10,6 +10,10 @@
  *  3. **Against `buildMetronomeTrack`** — both tracks are built from the same bars, so a stroke and
  *     a click that share a position in the cycle must land on the SAME millisecond. That is what
  *     stops the two builders drifting apart if one of them is ever rewritten.
+ *  4. **Which DOCUMENT they are built over** — the performance (`unfoldDoc`), never the written
+ *     page. Both builders walk bars, so a repeat left the usul stopping partway through the piece
+ *     and never coming back (2026-09-05). That is an app-level wiring rule, pinned here because
+ *     nothing in either builder can defend itself against being handed the wrong document.
  *
  * Run: npx --yes tsx tools/core/usul-test.ts
  */
@@ -17,8 +21,10 @@
 import {
   buildMetronomeTrack,
   buildPercussionTrack,
+  buildTimeline,
   findUsul,
   groupMeasures,
+  unfoldDoc,
   USULS,
   type NoteEvent,
   type NoteModelDocument,
@@ -117,6 +123,44 @@ check("...and there are strokes off the beat too, or this would prove nothing",
 check("every accented click is a düm",
   clicks.filter((c) => c.accent).every((c) =>
     hits.some((h) => Math.abs(h.ms - c.ms) < 1e-6 && h.stroke === "dum")), true);
+
+// ---------------------------------------------------------------------------------------------
+console.log("\nthe tracks cover the PERFORMANCE — the 2026-09-05 bug");
+{
+  // ⛔ The app built both tracks from the WRITTEN document while the timeline came from
+  // `unfoldDoc`. A repeat makes the performance longer than the page, and both builders walk BARS
+  // — so the strokes ran out at the written total and the rest of the piece played with no usul.
+  // Nothing threw: the tail is simply silent, which is why only the owner's ear caught it
+  // ("usul vuruşu bazen kesiliyor ve geri gelmiyor"). The same shape as the makam-delta bug of the
+  // same day, from the same cause — the unfold moved the clock and these two were left behind.
+  const written = doc(4);
+  const played = unfoldDoc(written, [1, 2, 1, 2, 3, 4]); // ‖: bars 1–2 :‖
+  const totalMs = buildTimeline(played.doc).totalMs;
+  check("the repeat makes the performance longer than the page", totalMs > 4000, true);
+
+  const fromWritten = buildPercussionTrack(written, sofyan, 1000);
+  const fromPerf = buildPercussionTrack(played.doc, sofyan, 1000);
+
+  // A stroke track "covers" the piece when its last düm is inside the final bar.
+  const lastDum = (t: { ms: number; stroke: string }[]) =>
+    t.filter((h) => h.stroke === "dum").at(-1)!.ms;
+  check("⛔ built from the WRITTEN score the usul stops early", lastDum(fromWritten), 3000);
+  check("…leaving the last bars of the playback silent", totalMs - lastDum(fromWritten), 3000);
+  check("⭐ built from the PERFORMANCE it plays to the end", lastDum(fromPerf), totalMs - 1000);
+  check("…one cycle per SOUNDING bar", fromPerf.length, sofyan.strokes!.length * 6);
+
+  // The metronome is built the same way off the same bars, so it carries the identical bug.
+  check("⭐ the metronome covers the performance too",
+    buildMetronomeTrack(played.doc, sofyan, 1000).filter((c) => c.accent).length, 6);
+
+  // ⚠ An unfolded page must be untouched by the change: `unfoldDoc` over the identity order is a
+  // re-ordering that re-orders nothing, and `groupMeasures` skips `meta` on both sides — so a page
+  // that plays as it is written gets byte-identical tracks either way.
+  const flat = unfoldDoc(written, null);
+  check("a page with no repeat is unchanged by going through the unfold",
+    JSON.stringify(buildPercussionTrack(flat.doc, sofyan, 1000)),
+    JSON.stringify(buildPercussionTrack(written, sofyan, 1000)));
+}
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURE(S)`);
 process.exit(failures === 0 ? 0 : 1);

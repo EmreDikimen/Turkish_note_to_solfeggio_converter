@@ -6,7 +6,7 @@ updated: 2026-09-05
 
 ## Now
 
-✅ **DEPLOYED 2026-09-05** (owner asked) — <https://komavision.netlify.app>, everything below this line included: the phone CSS, the measure card, the stored-pages list, the voice bridge and the makam picker's new line. **The MODEL is untouched and still Round 2**: weights come from `VITE_WEIGHTS_URL` on the Hub, so a `deploy:app` cannot publish the locally staged Round-3 arm. `npm run smoke:live` **PASSES** — the site read a page on Cloud Run (9 porte → 24 şerit → 229 nota, 45.6 s) and **refused** to read anywhere else when pointed at a dead server. ⚠ That refusal arm had never run against a real deployment before and it exposed a bug **in the check, not the app**: a refusal UNMOUNTS `#omr-status`, and all three page smokes asked it for `data-state` before looking at `#omr-error`, so they timed out on a detached locator while the app was behaving correctly in 5.1 s. Fixed in `live-smoke.ts` / `build-smoke.ts` / `page-smoke.ts`. ⏭ Look at the phone itself with `npm run smoke:phone`.
+✅ **DEPLOYED 2026-09-05** (owner asked) — <https://komavision.netlify.app>, everything below this line included: the phone CSS, the measure card, the stored-pages list, the voice bridge, the makam picker's new line and the usul fix below. **The MODEL is untouched and still Round 2**: weights come from `VITE_WEIGHTS_URL` on the Hub, so a `deploy:app` cannot publish the locally staged Round-3 arm. `npm run smoke:live` **PASSES** — the site read a page on Cloud Run (9 porte → 24 şerit → 229 nota, 45.6 s) and **refused** to read anywhere else when pointed at a dead server. ⚠ That refusal arm had never run against a real deployment before and it exposed a bug **in the check, not the app**: a refusal UNMOUNTS `#omr-status`, and all three page smokes asked it for `data-state` before looking at `#omr-error`, so they timed out on a detached locator while the app was behaving correctly in 5.1 s. Fixed in `live-smoke.ts` / `build-smoke.ts` / `page-smoke.ts`. ⏭ Look at the phone itself with `npm run smoke:phone`.
 
 ⛔ **THE APP NEVER READS A PAGE ON THE VISITOR'S MACHINE ANY MORE (owner, 2026-09-04), AND THAT MAKES
 CLOUD RUN'S CAPACITY A RELEASE BLOCKER.** A configured server that is cold or dead used to fall back
@@ -67,19 +67,31 @@ and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-l
 
 ⭐ **THE MAKAM PICKER NOW SAYS WHICH NOTES IT PLAYS DIFFERENTLY** (owner, 2026-09-05): beside the dropdown, one line per rule — the **written** perde (Si with its koma-bemol drawn as the real sign), how far the note is really played from it (*1,5 koma pes*), and **how many notes of the page on screen** that reaches, counted off the document itself. ⭐ A rule that matches nothing says so — hüzzam's hisar on `gamzedeyim-deva` reads *bu eserde yok* — and a makam that bends nothing gets ONE plain sentence, *"Bu makam yazıldığı gibi çalınıyor."* (owner cut a first version that wrote two; the finding-vs-silence difference stays in the table). The post-decode prompt renders the same block, unfolded. Sound only, as before. ⛔ **AND IT FOUND A SHIPPED BUG, WHICH IS FIXED** (owner heard it the same day: *"bazen la farklı çalıyor, bazen re, bazen mi"*): the deltas are keyed by the WRITTEN document, `unfoldDoc` renumbers every event, and the app applied them to the performance — so the bend landed on the wrong note, silently, since 2026-08-30. `gamzedeyim-deva` under uşşak bent **19 wrong notes out of 22**; `remapKomaDeltas` re-keys them and `tools/core/makam-test.ts` pins it. ✅ **A second suspect was raised and CLOSED the same day** (owner): a segah spelled `b2` takes no bend — but only SymbTr exports spell one, a decode cannot (the vocabulary is the 8 AEU signs), so the product path is already exact. Kept in [BACKLOG.md](BACKLOG.md) because the fixtures make the wrong version easy to re-derive. ✅ **Live since 2026-09-05.** [mvp/makam.md](mvp/makam.md).
 
+⛔ **THE USUL STOPPED PARTWAY THROUGH A PAGE WITH A REPEAT AND NEVER CAME BACK — FIXED AND LIVE**
+(owner heard it, 2026-09-05: *"usul vuruşu bazen kesiliyor ve geri gelmiyor"*). The
+metronome clicks and the usul's düm/tek/ke were built from the WRITTEN score, while the timeline
+they play against has come from `unfoldDoc` — the performance — since 2026-08-30. Both builders walk
+bars, so a repeat left the strokes running out at the written total, and misaligned before that.
+⚠ **The second symptom of one mistake**, hours after the makam deltas: the unfold introduced a
+second document and the clock-aligned inputs were left keyed to the first ([DECISIONS.md](DECISIONS.md)).
+⚠ **No automated check can see this class of bug** — the browser smokes load a SymbTr sample, which
+is flat in the data and never folds; `tools/core/usul-test.ts` pins the rule instead. ✅ **Deployed
+2026-09-05**, `npm run smoke:live` passing on the live site.
+
 ✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04).
 The old recording keeps sounding until the new one downloads; a toast (`#voice-notice`) names both.
 ⛔ **Instant was asked for and is not available** (9.9–35.4 MB over 11–36 files), so the gap was fixed,
 not the wait. ⚠ The "one decoded voice at a time" rule is amended, bounded by the owner's choice:
 **held only while a piece plays**, released by Dur. ⚠ `state === "failed"` no longer implies the
-default tone; read `VoiceStatus.sounding`. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
-⏭ **Owner: the bridge is only covered by `npm run smoke:editor -- --voices-url <hub>`** — the default arm has no host, so it never has a voice to hold.
+default tone; read `VoiceStatus.sounding`. ⏭ **Owner: the bridge is only covered by `npm run
+smoke:editor -- --voices-url <hub>`** — the default arm has no host, so it never has a voice to
+hold. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
 
-⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer
-fixes moved crop boundaries the same day: a closing `:|` read as two barlines (junk strip on ~1% of
-rows, `OMR_TAIL_SPAN=0` restores) and **a note stem taken for a barline** (`END_BLOBS`, below,
-`OMR_END_BLOBS=0` restores; the `end_blobs` geometry key tells the two apart under one rev). The next
-emit re-decodes; nothing is owed today. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) · [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
+⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03), because two
+slicer fixes moved crop boundaries the same day — a closing `:|` read as two barlines
+(`OMR_TAIL_SPAN=0` restores) and a note stem taken for a barline (`OMR_END_BLOBS=0` restores; the
+`end_blobs` geometry key tells the two apart under one rev). The next emit re-decodes; nothing is
+owed today. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) · [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
 
 ⏭ **THE NEXT ACTION (agent, no GPU, no labelling), in order:** (1) the synthetic-vs-real id-length
 distributions under the scheme-H tokenizer, and how the 7 rare pitches segment — the only thing that
@@ -87,54 +99,42 @@ could reopen the render question; (2) the selector change in `train.py` (+ EMA, 
 the signature-vote disagreement list ([BACKLOG.md](BACKLOG.md) item 9). **Owner:** confirm scheme H,
 decide on publishing Run A, pick the hand-test pages.
 
-⏭ Settled Round-3 findings that used to sit here — the selector's three picks, the `\tie` accounting,
-the short-strip lead, run B's incomparable pool, the exam-leak removal, the examv3 promotion and the
-75%-vs-62% question — are in [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md), [METRICS.md](METRICS.md),
-[METRICS-EXAMSET.md](METRICS-EXAMSET.md), [DECISIONS.md](DECISIONS.md) and [log/status-log.md](log/status-log.md).
-⚠ One is still a rule: **the ship call is a human judgement taken after reading an error
-classification** (`error_taxonomy.py`, run 2026-09-01), never the numeric floor alone.
+⏭ Settled Round-3 findings that used to sit here are in [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md),
+[METRICS.md](METRICS.md), [METRICS-EXAMSET.md](METRICS-EXAMSET.md), [DECISIONS.md](DECISIONS.md) and
+[log/status-log.md](log/status-log.md). ⚠ One is still a rule: **the ship call is a human judgement
+taken after reading an error classification** (`error_taxonomy.py`), never the numeric floor alone.
 
 ⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES. THE FIX IS MEASURED, SPECIFIED,
 AND DEFERRED TO ROUND 4 (owner, 2026-08-23) — which is what RELEASES THE EXAM.** The browser slicer
 has **no label-budget rail**: at training an over-budget strip is dropped, at inference there is
-none, so the model emits `</s>` early and **confidently** — `hitCap` catches **7 of 4,012 (0.2%)**,
-and **998 of 1,689 pages (59.1%)** carry such a strip. ✅ Browser-vs-Python parity is **CLOSED**
-(132 pages). ⛔ **The rail ALONE is a wash** (under-fill 15.7% → 16.6%, p = 0.57). ⚠ But that tested
-INFERENCE on a model never trained under the rail: a split strip *fits the 59-id emitter gate and
-therefore enters training*, and today **4,012 over-budget strips are dropped**. ⭐ **Dense music
-already reads twice as badly even in a 1-measure strip (9.9% vs 4.8%, p = 0.013)** — a training gap,
+none, so the model emits `</s>` early and **confidently**, and `hitCap` catches almost none of it.
+⛔ **The rail ALONE is a wash** — but that tested INFERENCE on a model never trained under the rail,
+and dense music already reads twice as badly even in a 1-measure strip, so it is a training gap and
 not a cutting one. ⏭ The settling experiment is the **pair** — re-emit with the rail → train →
 measure — at **b = 57, not 50**. ⭐ Deferring it is what keeps the shipping slicer still, so
-`examv3` stays valid. [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [BACKLOG.md](BACKLOG.md) item 0.
+`examv3` stays valid. Every number: [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) ·
+[BACKLOG.md](BACKLOG.md) item 0.
 
 ⭐ **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF
-UNTIL YOU SAY OTHERWISE.** The horizontal opening's kernel is **one pixel tall**, so a staff line
-that wanders across rows is **erased, not weakened**; a lost row is not a bad crop, it is **NO
-crop**, so no accuracy metric has ever shown it. ⛔ Every global knob was measured and rejected. ✅
-What ships is a **second pass** re-detecting only in the bands the page's own staff pitch says are
-empty: all **6,440** scored rows identical, **+320 rows on 227 of 1,592 pages**, `parity:slicer`
-passes with the flag ON. ⚠ Its benefit is **unscoreable, not merely unmeasured**; the evidence is
-visual, 14 of 14 rows on 4 pages. ⚠ `STAFF_RESCUE` must move together in Python and `constants.ts`,
-and turning it on bumps `GEOMETRY_REV`. [METRICS-SLICER.md](METRICS-SLICER.md).
+UNTIL YOU SAY OTHERWISE.** A lost row is not a bad crop, it is **NO crop**, so no accuracy metric
+has ever shown it; every global knob was measured and rejected, and what ships is a **second pass**
+re-detecting only in the bands the page's own staff pitch says are empty. ⚠ Its benefit is
+**unscoreable, not merely unmeasured** — the evidence is visual. The mechanism and the two rules
+that ride with it are in [../CLAUDE.md](../CLAUDE.md); the numbers are in
+[METRICS-SLICER.md](METRICS-SLICER.md).
 
-⛔ **THE ROW-LEVEL SLICER INSTRUMENTS ARE BLIND TO STAFF-COUNT CHANGES.** Both pair a row to its
-cached truth by **system index**, so inserting a staff shifts every later index and reports a large
-regression that is pure artifact. `score_slicer.py` gained `--pair-by-position`; ⛔ **`score_barlines.py`
-has the same coupling and NO fix** — `bozukNihavendLonga` read **30 marked before a staff change and
-3 after**. It is also why the rescue's 320 rows can never be scored there. [METRICS-SLICER.md](METRICS-SLICER.md).
+⛔ **THE ROW-LEVEL SLICER INSTRUMENTS ARE BLIND TO STAFF-COUNT CHANGES** — both pair a row to its
+cached truth by **system index**, so an inserted staff reports a large regression that is pure
+artifact. `score_slicer.py` gained `--pair-by-position`; **`score_barlines.py` has the same coupling
+and NO fix**, which is why the rescue's new rows can never be scored there. [METRICS-SLICER.md](METRICS-SLICER.md).
 
-⚠ **THE 2026-08-26 SLICER FREEZE WAS LIFTED TWICE ON 2026-09-03, BOTH TIMES AT THE OWNER'S REQUEST**
-— for the trailing-`:|` fix above, and for **a stem taken for a barline** (`nihavendLongaDuzgun`'s
-last row cut between a sharp and its note): a stroke with wide ink at BOTH ends is now a stem
-(`END_BLOBS`), with width counted beyond the stroke's own thickness so winged repeat bars survive.
-⭐ **Priced on two full 6,440-row runs the same day: 3,762 → 4,133 exact (+371), BETTER 502 / WORSE
-122; 200 pages lose 388 bars, gain none; parity exact.** Nothing owed on it. [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
-The freeze (owner, 2026-08-26) followed three fixes landing and two being rejected — the
-browser/Python staff divergence, the over-wide staff span, and
-`OMR_BLOB_FILL` 0.3 (measured and **REJECTED**, with the lesson that the faded-page table has now
-mispredicted the full run three times); those two shipped fixes were what took `GEOMETRY_REV` to
-20260826. ⏭ **Treat the slicer as frozen again unless the owner says otherwise.**
-[METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
+⏭ **THE SLICER IS FROZEN AGAIN — treat it as frozen unless the owner says otherwise.** The
+2026-08-26 freeze was lifted twice on 2026-09-03, both times at the owner's request (the trailing
+`:|` above, and **a stem taken for a barline** — `END_BLOBS`), both priced on full 6,440-row runs
+and both a clear gain with parity exact; nothing is owed on either. The freeze's own history — the
+three fixes that landed, the two that were rejected, and the lesson that the faded-page table has
+now mispredicted a full run three times — is in [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md),
+[METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) and [DECISIONS.md](DECISIONS.md).
 
 ⏭ **COLLECTION IS NARROWED TO TWO TARGETS, not broadened.** 2,486 unlabelled page PNGs already sit
 on disk, so volume relieves nothing. What it cannot substitute for: pages drawing the **concave

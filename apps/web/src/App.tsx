@@ -893,6 +893,21 @@ export function App() {
   // is the chosen BPM over the natural BPM; the clicks are the selected usul's beat pattern and the
   // strokes are its düm/tek/ke pattern (both built in core, in musical ms, off the same whole-note
   // length), so they stay aligned to the bars at any tempo.
+  //
+  // ⛔ **BOTH TRACKS ARE BUILT OVER `perf.doc` — THE PERFORMANCE — AND NEVER OVER THE WRITTEN
+  // SCORE** (fixed 2026-09-05, after the owner heard the usul stop: *"usul vuruşu bazen kesiliyor
+  // ve geri gelmiyor"*). The same class of bug as the makam deltas above, and it arrived the same
+  // way: `unfoldDoc` landed on 2026-08-30 and moved the timeline onto the performance, while these
+  // two builders were left reading `doc`. A repeat makes the performance LONGER than the written
+  // page, and both builders walk bars — so the strokes ran out at the written total and the rest of
+  // the piece played with no usul at all. Nothing threw; the tail is simply silent, which is why
+  // only an ear caught it. On a 4-bar page with `‖: 1–2 :‖` that is the last 38% of the playback.
+  // ⚠ It is also an ALIGNMENT fix, not only a length one: after the first jump the written bars and
+  // the sounding bars are different bars, so the strokes were landing off the barline wherever the
+  // repeated block's bar lengths were not uniform. ⚠ Unfolded pages are untouched — `unfoldDoc`
+  // over the identity order returns the same bars with the same start times (`groupMeasures` skips
+  // `meta` on both sides), so this changes nothing for a page that plays as it is written.
+  // `tools/core/usul-test.ts` pins it.
   const buildPlayOptions = useCallback(
     (
       targetBpm: number,
@@ -903,8 +918,9 @@ export function App() {
       v: VoiceId = voice,
     ): PlayOptions => {
       const u = findUsul(uName);
-      const clicks = metro && doc && u ? buildMetronomeTrack(doc, u, beatMs * 4) : undefined;
-      const strokes = perc && doc && u ? buildPercussionTrack(doc, u, beatMs * 4) : undefined;
+      const played = perf?.doc ?? null;
+      const clicks = metro && played && u ? buildMetronomeTrack(played, u, beatMs * 4) : undefined;
+      const strokes = perc && played && u ? buildPercussionTrack(played, u, beatMs * 4) : undefined;
       return {
         speed: naturalBpm > 0 ? targetBpm / naturalBpm : 1,
         clicks,
@@ -914,7 +930,7 @@ export function App() {
         voice: v,
       };
     },
-    [doc, naturalBpm, beatMs, percussionVolume, percussionKit, voice],
+    [perf, naturalBpm, beatMs, percussionVolume, percussionKit, voice],
   );
 
   // The picker's handler. `ensureVoice` FIRST and outside `applyPlayback`, so choosing an instrument

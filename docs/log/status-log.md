@@ -7,6 +7,24 @@ updated: 2026-09-05
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-05 — the makam picker's empty answer is one sentence, not two (product track)
+
+Owner, on the version deployed an hour earlier: *"Farklı çalınmayan makamlarda sadece bu makam
+yazıldığı gibi çalınıyor yaz. karmaşık bir şey yapmışsın."* Both empty-rule sentences collapse to
+**"Bu makam yazıldığı gibi çalınıyor."**, `makamIntonationRecorded` is deleted rather than left
+dead, and `smoke:editor`'s assertion flips from *these two must differ* to *these two must match*.
+
+⭐ **Worth recording because the distinction was correct and the placement was not.** Hüseyni's `[]`
+in `MAKAM_INTONATION` is a finding — the sources say it does NOT take the uşşak lowering — and an
+unlisted makam is silence. That is real, it is why the empty arrays must never be tidied away, and
+it is still written down in the table and in [../mvp/makam.md](../mvp/makam.md). What it is not is
+something a reader owes attention to while choosing a makam: they are asking one question, *will
+this piece sound as it looks*, and the answer is yes either way. Two sentences answered a question
+nobody had asked and made a control bar read like a footnote.
+
+⚠ The rule for this line, going forward: **the bar carries what changes the sound; the table
+carries how confident we are about it.**
+
 ## 2026-09-05 — deployed, and the refusal arm's first live run found a bug in the check (product track)
 
 The owner asked for it after the makam work: *"Tamamdır o zaman artık deploy eder misin uygulamayı"*.

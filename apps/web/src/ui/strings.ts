@@ -534,8 +534,10 @@ export const TR = {
 
   // The line beside the makam picker — see apps/web/src/ui/MakamIntonation.tsx. It names the
   // WRITTEN perde and says where the note is really played, then how many notes of this score that
-  // reaches. ⚠ `noDeviation` and `untabled` are DIFFERENT answers and must not be merged: the first
-  // is a finding (sources say this makam does not deviate), the second is silence (nobody looked).
+  // reaches. ⚠ **ONE sentence when nothing bends** (owner, 2026-09-05, cutting a first version that
+  // split "the sources report no deviation" from "this makam is not in our table"): the reader is
+  // choosing a makam, and the only thing that answers their question is whether the piece will
+  // sound as it looks. Where that certainty comes from is a note for the table, not for the bar.
   makamHint: {
     lead: "farklı çalınan perdeler:",
     // Turkish for "lower" / "higher" in pitch. The number is already written with a comma.
@@ -545,10 +547,7 @@ export const TR = {
     countNone: "bu eserde yok",
     why: "neden?",
     perdeTitle: (accidental: string) => `yazılışı: ${accidental}`,
-    noDeviation:
-      "Kaynaklar bu makamda bir icra farkı bildirmiyor — perdeler yazıldığı gibi çalınıyor.",
-    untabled:
-      "Bu makamın icrası tablomuzda yok; perdeler yazıldığı gibi çalınıyor. Farkı ölçülmüş demek değil.",
+    asWritten: "Bu makam yazıldığı gibi çalınıyor.",
   },
 
   makamModal: {

@@ -22,7 +22,6 @@
 import {
   assignBars,
   makamIntonation,
-  makamIntonationRecorded,
   makamKomaDeltas,
   makamRuleUsage,
   remapKomaDeltas,
@@ -160,10 +159,14 @@ console.log("\nwhat the picker reports");
   check("…and says plainly that one reaches nothing here", huzzam.find((u) => u.rule.letter === "E")!.count, 0);
   check("the counts add up to the notes that bend", huzzam.reduce((n, u) => n + u.count, 0), makamKomaDeltas(doc, "huzzam").size);
 
-  // ⚠ Two different empty answers. Merging them would dress an unmeasured makam as a measured one.
-  check("hüseyni is RECORDED as not deviating", makamIntonationRecorded("huseyni") && makamIntonation("huseyni").length === 0, true);
-  check("…while hicaz is simply not in the table", makamIntonationRecorded("hicaz"), false);
-  check("'none' is not a measured makam either", makamIntonationRecorded(""), false);
+  // ⚠ The empty arrays in MAKAM_INTONATION are a FINDING and must not be tidied away, even though
+  // the picker now says the same "plays as written" for them as for a makam nobody has studied
+  // (owner, 2026-09-05). Hüseyni is the documented counter-example to uşşak; deleting its `[]`
+  // would invite someone to "complete" the table by symmetry and bend a perde nobody plays bent.
+  check("hüseyni is in the table, recorded as NOT deviating", makamIntonation("huseyni").length, 0);
+  check("…and so is muhayyer", makamIntonation("muhayyer").length, 0);
+  check("an unstudied makam is empty too, and that is fine", makamIntonation("hicaz").length, 0);
+  check("'none' bends nothing", makamIntonation("").length, 0);
 }
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURE(S)`);

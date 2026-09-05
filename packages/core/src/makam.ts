@@ -174,6 +174,12 @@ const USSAK_SEGAH: IntonationRule = {
  * record that it does NOT deviate — hüseyni and muhayyer are the documented counter-example to
  * uşşak, and writing that down is what stops someone "completing" the table by symmetry later.
  * Every other makam is absent, selectable, and plays as written.
+ *
+ * ⚠ **An empty array and an absent makam are different things HERE and the same thing on screen**
+ * (owner, 2026-09-05). The first is a finding, the second is silence, and that is why the empty
+ * arrays must never be deleted as clutter. The picker still says only "this makam plays as
+ * written" for both: a reader choosing a makam is asking whether the piece will sound as it looks,
+ * and where the certainty comes from is a note for this table, not for the transport bar.
  */
 export const MAKAM_INTONATION: Record<string, IntonationRule[]> = {
   // --- the uşşak family: one lowered segah, nothing else claimed ---
@@ -239,19 +245,6 @@ export function makamIntonation(slug: string): IntonationRule[] {
 /** Does selecting this makam actually bend anything? Drives the ♪ marker in the dropdown. */
 export function makamHasIntonation(slug: string): boolean {
   return makamIntonation(slug).length > 0;
-}
-
-/**
- * Does the table SAY anything about this makam — including "it does not deviate"?
- *
- * ⚠ Two different answers come back as an empty rule list and the UI must not merge them.
- * Hüseyni's `[]` is a finding: sources report it does NOT take the uşşak lowering. An absent
- * makam is silence: nobody has looked, and it may well deviate. Saying "no deviation" for the
- * second would dress an unmeasured makam as a measured one.
- */
-export function makamIntonationRecorded(slug: string): boolean {
-  const k = resolveMakam(slug) || normMakam(slug);
-  return MAKAM_INTONATION[k] !== undefined;
 }
 
 // ---------------------------------------------------------------------------------------------

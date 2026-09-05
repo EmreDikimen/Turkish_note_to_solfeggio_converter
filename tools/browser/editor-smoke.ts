@@ -2187,9 +2187,10 @@ async function main() {
   //  2. **Zero is shown.** Hüzzam's second rule (the hisar) matches nothing on this page, and a hint
   //     that hid that would promise a bend nobody hears.
   //
-  // The empty-rule sentences are compared to EACH OTHER rather than matched: "the sources say this
-  // makam does not deviate" and "this makam is not in the table" are different answers, and the
-  // check that they stay different needs no copy.
+  // A makam that bends nothing gets ONE sentence for every reason it might bend nothing (owner,
+  // 2026-09-05) — a documented non-deviator and a makam nobody has studied read the same. The
+  // distinction survives in `MAKAM_INTONATION`, which `tools/core/makam-test.ts` pins; here the
+  // assertion is that both render the hint with no rules in it.
   console.log("\nwhat the makam plays differently");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
@@ -2238,14 +2239,14 @@ async function main() {
   check("the page writes no hisar", await notesSpelled("Mi", -4), 0);
   check("⭐ …and the hint says so instead of hiding the rule", await hisar.getAttribute("data-notes"), "0");
 
-  // Two ways of having no rules, and they must not collapse into one sentence.
+  // Two ways of having no rules, one sentence.
   await setMakam("huseyni");
   check("hüseyni's hint has no rules", await hint.getAttribute("data-rules"), "0");
+  check("…and no rule chips are drawn", await rule.count(), 0);
   const recorded = await hint.innerText();
   await setMakam("hicaz");
   check("nor has a makam the table never covered", await hint.getAttribute("data-rules"), "0");
-  const untabled = await hint.innerText();
-  check("⭐ 'no deviation' and 'not measured' stay different answers", recorded !== untabled, true);
+  check("⭐ …and both say the same plain thing", (await hint.innerText()) === recorded, true);
 
   await setMakam("");
   check("no makam, no hint", await hint.count(), 0);

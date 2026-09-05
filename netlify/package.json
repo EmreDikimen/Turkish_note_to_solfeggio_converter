@@ -1,0 +1,17 @@
+{
+  "name": "@turkish-omr/netlify",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Netlify Functions for the deployed site — the anonymous visit counter, and nothing else.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -65,6 +65,7 @@ import {
 import { MakamModal } from "./MakamModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
+import { noteVisit } from "./analytics/visits";
 import type { RawDecode } from "./ui/DecodePanel";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
@@ -579,6 +580,9 @@ export function App() {
     // ~10 s from ready, and picking a file takes longer than that. Costs one cheap GET and cannot
     // fail visibly (omr/remote.ts).
     warmDecodeServer();
+    // Somebody opened the app. Anonymous, and it counts nothing on a dev server, under Playwright
+    // or on a device that has opted out — analytics/visits.ts.
+    noteVisit("open");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1755,6 +1759,7 @@ export function App() {
         loadDoc(result.doc, detected, result.structure);
         // A page was READ: open a record for it. The write itself is the effect above — see `saved`.
         setSaved({ id: newPageId(), name: pageName, createdAt: Date.now() });
+        noteVisit("read"); // the one event that means a person really read music (analytics/visits.ts)
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
@@ -1844,6 +1849,7 @@ export function App() {
         loadDoc(result.doc, detected, result.structure);
         // A page was READ: open a record for it. The write itself is the effect above — see `saved`.
         setSaved({ id: newPageId(), name: stem, createdAt: Date.now() });
+        noteVisit("read"); // the one event that means a person really read music (analytics/visits.ts)
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
@@ -2157,6 +2163,7 @@ export function App() {
           first-time visitor needs most, and that is exactly the empty state. */}
       <footer className="kv-footer" id="legal">
         <p>{TR.footer.privacy}</p>
+        <p>{TR.footer.counting}</p>
         <p>{TR.footer.rights}</p>
         <p>
           {TR.footer.contactLabel}{" "}

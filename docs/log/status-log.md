@@ -7,6 +7,56 @@ updated: 2026-09-05
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-05 — the site counts its own visitors now, anonymously (product track)
+
+The owner asked for a UI showing how many people visit the site and who they are. Three questions
+went back, and the answers narrowed it sharply: **no names** (invite links and a login were both
+declined), **Netlify Functions + Blobs** rather than a new service, **no IP stored**, and — the one
+that shaped the whole build — *"kullanıcılar asla görmemeli bunu, sadece ben görmeliyim"*.
+
+**Why it was worth building at all.** The question was already being asked and answered badly.
+[../METRICS-USAGE.md](../METRICS-USAGE.md) is a long argument with Cloud Run's request log, which
+became an accidental visit counter because the app pings `/health` on open. Robots dominate it; it
+has no session and no client id, so its standing answer to "how many strangers" was literally
+**"≥1, ≤2, the log cannot say which"**, and every sharpening of it came from the owner supplying by
+hand what the log could not — that nobody in this circle runs Linux, that one of the phones was his.
+
+**The privacy design, which is the actual content of this work.** The IP is mixed with a secret and
+**the current date**, hashed, and thrown away; 16 hex characters are kept. Because the date is
+inside the hash the id expires nightly, so no row can be matched to an address the next day. No
+cookie, no `localStorage`, no fingerprint. Referrers keep their host and lose their path. Rows are
+deleted after 180 days by a sweep that runs on every dashboard read, so the retention period is code
+rather than a promise. ⛔ **An unset `STATS_SALT` records nothing** — the tempting fallback (hash
+without a salt) would keep the numbers flowing while quietly making the id permanent, which is the
+one thing the design exists to prevent; the dashboard says so in a yellow box instead.
+
+**Two independent locks, because hiding a page is not security.** `admin-stats.html` is not a build
+entry — vite builds `index.html` and nothing else — so no route, bundle or file in `dist/` comes from
+it; verified by building and grepping the output. Separately, `stats.mts` demands a bearer token
+wherever it is asked from, and answers **503 rather than 200** when no token is configured.
+
+**Two things carried over from the old log-reading, as tests rather than comments.** The browser
+version is kept because it is the only evidence in this data that two visits are two machines — that
+is how METRICS-USAGE.md established "at least one real stranger" (Chrome/150 against Chrome/151, and
+browsers never downgrade). And an `X11; Linux x86_64` user-agent is **not** a Linux machine, it is
+Chrome for Android under "Request desktop site"; that confusion already cost one wrong entry there,
+so `tools/analytics/visits-test.ts` pins it, along with Edge and Opera not reading as Chrome.
+
+**Who is deliberately not counted:** the dev server, anything under `navigator.webdriver` (⚠
+load-bearing — `smoke:live` and `smoke:build` drive the real site and would otherwise be most of the
+traffic), `localhost`, and any device that opened `?nostats=1`. ⭐ That last one is the fix for a
+measured mistake: three page reads were once recorded as visitors and one turned out to be the
+owner's own phone, subtracted by hand afterwards.
+
+**Also changed:** `deploy:app` now passes `--functions netlify/functions` (without it the site
+deploys fine and the counter is simply absent), `netlify/` became a fourth workspace so its
+TypeScript is covered by `npm run typecheck`, and the footer gained a fourth line — *"Ziyaretler
+anonim sayılır: çerez yok, IP adresi saklanmaz."* — on the same statement-of-fact contract as the
+three beside it.
+
+⏭ **Nothing is counting yet.** `STATS_SALT` and `STATS_TOKEN` are unset on the site; until the owner
+sets them and redeploys, `visit.mts` records nothing. [../features/visit-stats.md](../features/visit-stats.md)
+
 ## 2026-09-05 — deployed, and the refusal arm's first live run found a bug in the check (product track)
 
 The owner asked for it after the makam work: *"Tamamdır o zaman artık deploy eder misin uygulamayı"*.

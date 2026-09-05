@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>KomaVision — ziyaret sayacı</title>
+    <!--
+      The owner's private dashboard for the visit counter.
+
+      ⚠ **THIS PAGE IS NEVER PUBLISHED, AND THAT IS THE WHOLE SECURITY MODEL FOR ITS LAYOUT.** Vite
+      builds `index.html` and nothing else, so no bundle, no route and no file in `dist/` ever comes
+      from here — it exists on the dev server and on the owner's disk. The DATA is protected
+      separately and does not depend on that: `netlify/functions/stats.mts` demands the bearer token
+      wherever it is asked from. Two independent locks, on purpose.
+
+      ⚠ Do not add this file to `build.rollupOptions.input`, and do not move its logic under a path
+      `index.html` can reach. Either one publishes the dashboard.
+
+      Open it with `npm run stats:ui` → http://localhost:5173/admin-stats.html
+      What the numbers mean, and what they cannot mean: docs/features/visit-stats.md
+    -->
+    <style>
+      /* The app's own tokens (apps/web/src/styles/tokens.css), copied rather than imported: this
+         page must stand alone if the design system moves, and it is the only file in the repo that
+         is allowed to hold a second copy of them — nothing here is shipped. The two series colours
+         are NOT from that palette, which has exactly one accent by decision; they are the validated
+         categorical slots 1 and 2, checked against both surfaces below. */
+      :root {
+        color-scheme: light;
+        --paper: #f6f8f7;
+        --paper-raised: #ffffff;
+        --paper-sunken: #e9edeb;
+        --ink: #13201e;
+        --ink-soft: #3d4a47;
+        --ink-faint: #74827e;
+        --rule: #d7dedb;
+        --rule-strong: #b6c2be;
+        --accent: #0f766e;
+        --danger: #a33a2a;
+        --warn: #9a6a17;
+        --series-open: #2a78d6;
+        --series-read: #eb6834;
+        --grid: #e2e8e6;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --paper: #101917;
+          --paper-raised: #16211f;
+          --paper-sunken: #0c1413;
+          --ink: #edf3f1;
+          --ink-soft: #b6c4c0;
+          --ink-faint: #7d8d89;
+          --rule: #24322f;
+          --rule-strong: #384a46;
+          --accent: #4db6ac;
+          --danger: #e28273;
+          --warn: #d6a44a;
+          --series-open: #3987e5;
+          --series-read: #d95926;
+          --grid: #22302d;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 28px 20px 64px;
+        background: var(--paper);
+        color: var(--ink);
+        font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .wrap { max-width: 1040px; margin: 0 auto; }
+      h1 { font-size: 20px; margin: 0 0 2px; font-weight: 650; letter-spacing: -0.01em; }
+      h2 { font-size: 13px; margin: 0 0 10px; font-weight: 650; color: var(--ink-soft);
+           text-transform: uppercase; letter-spacing: 0.06em; }
+      p.sub { margin: 0 0 22px; color: var(--ink-faint); max-width: 78ch; }
+      a { color: var(--accent); }
+
+      .card {
+        background: var(--paper-raised);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+      }
+
+      /* ── Controls ───────────────────────────────────────────────────── */
+      .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      .field label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase;
+                     letter-spacing: 0.05em; }
+      input, select, button {
+        font: inherit;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 7px;
+        border: 1px solid var(--rule-strong);
+        background: var(--paper-raised);
+        color: var(--ink);
+      }
+      input:focus-visible, select:focus-visible, button:focus-visible {
+        outline: 2px solid var(--accent); outline-offset: 1px;
+      }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #f2fbf9;
+                       cursor: pointer; font-weight: 600; padding: 0 16px; }
+      button.primary:disabled { opacity: 0.55; cursor: default; }
+      .check { display: flex; align-items: center; gap: 6px; height: 34px; color: var(--ink-soft); }
+      .check input { height: auto; }
+
+      /* ── Stat tiles ─────────────────────────────────────────────────── */
+      .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
+               margin-bottom: 16px; }
+      .tile { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 10px;
+              padding: 14px 16px; }
+      .tile .n { font-size: 30px; font-weight: 640; letter-spacing: -0.02em; line-height: 1.1;
+                 font-variant-numeric: tabular-nums; }
+      .tile .k { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+      .tile .k b { color: var(--ink-soft); font-weight: 600; }
+
+      /* ── Chart ──────────────────────────────────────────────────────── */
+      .legend { display: flex; gap: 16px; margin: 0 0 8px; font-size: 12px; color: var(--ink-soft); }
+      .legend span { display: inline-flex; align-items: center; gap: 6px; }
+      .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+      #chart { position: relative; }
+      #chart svg { display: block; width: 100%; }
+      .tip {
+        position: absolute; pointer-events: none; opacity: 0; transition: opacity 90ms;
+        background: var(--ink); color: var(--paper-raised); border-radius: 6px;
+        padding: 6px 9px; font-size: 12px; line-height: 1.4; white-space: nowrap;
+        transform: translate(-50%, -100%); z-index: 5;
+      }
+      .tip b { font-weight: 640; }
+
+      /* ── Breakdowns ─────────────────────────────────────────────────── */
+      .breaks { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+      .brow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+              margin-bottom: 7px; font-size: 13px; }
+      .brow .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .brow .n { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+      .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--paper-sunken); }
+      .bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+
+      /* ── Table ──────────────────────────────────────────────────────── */
+      .scroll { overflow-x: auto; }
+      table { border-collapse: collapse; width: 100%; font-size: 13px; }
+      th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule);
+               white-space: nowrap; }
+      th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint);
+           font-weight: 600; }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      td.id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-faint); }
+      tr.bot td { color: var(--ink-faint); }
+
+      .note { font-size: 12px; color: var(--ink-faint); margin: 10px 0 0; }
+      .msg { border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; }
+      .msg.err { background: color-mix(in srgb, var(--danger) 12%, var(--paper-raised));
+                 border: 1px solid var(--danger); color: var(--ink); }
+      .msg.warn { background: color-mix(in srgb, var(--warn) 14%, var(--paper-raised));
+                  border: 1px solid var(--warn); color: var(--ink); }
+      .msg code { background: var(--paper-sunken); padding: 1px 5px; border-radius: 4px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>KomaVision — ziyaret sayacı</h1>
+      <p class="sub">
+        Siteye kaç kez girildiğini ve kaç nota sayfası okunduğunu gösterir. Kimlik yoktur: her cihaz
+        <em>o güne özel</em> anonim bir numarayla sayılır, ertesi gün aynı cihaz başka bir numara
+        olur. Bu sayfa yayınlanmaz — sadece geliştirme sunucusunda açılır.
+      </p>
+
+      <div class="card">
+        <div class="controls">
+          <div class="field">
+            <label for="endpoint">Site adresi</label>
+            <input id="endpoint" type="url" size="34" placeholder="https://komavision.netlify.app" />
+          </div>
+          <div class="field">
+            <label for="token">Okuma anahtarı (STATS_TOKEN)</label>
+            <input id="token" type="password" size="30" placeholder="netlify env:get STATS_TOKEN" />
+          </div>
+          <div class="field">
+            <label for="days">Aralık</label>
+            <select id="days">
+              <option value="7">Son 7 gün</option>
+              <option value="30" selected>Son 30 gün</option>
+              <option value="90">Son 90 gün</option>
+              <option value="180">Son 180 gün</option>
+            </select>
+          </div>
+          <button id="load" class="primary" type="button">Getir</button>
+          <div class="check">
+            <input id="bots" type="checkbox" />
+            <label for="bots" style="text-transform: none; font-size: 13px; letter-spacing: 0">
+              Robotları da say
+            </label>
+          </div>
+        </div>
+        <p class="note" id="freshness"></p>
+      </div>
+
+      <div id="messages"></div>
+
+      <div id="report" hidden>
+        <div class="tiles" id="tiles"></div>
+
+        <div class="card">
+          <h2>Günlük</h2>
+          <div class="legend">
+            <span><i class="swatch" style="background: var(--series-open)"></i> Açılış</span>
+            <span><i class="swatch" style="background: var(--series-read)"></i> Okunan sayfa</span>
+          </div>
+          <div id="chart"><div class="tip" id="tip"></div></div>
+        </div>
+
+        <div class="card">
+          <h2>Nereden, neyle</h2>
+          <div class="breaks" id="breaks"></div>
+          <p class="note">
+            Cihaz ve tarayıcı, tarayıcının kendi söylediğidir. ⚠ Android telefonda “masaüstü
+            sitesini iste” açıkken telefon kendini <code>Linux</code> masaüstü olarak tanıtır — bu
+            karışıklık daha önce bir kez yanlış kayda yol açtı.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Ziyaretler</h2>
+          <div class="scroll"><table id="rows"></table></div>
+          <p class="note" id="rowsNote"></p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/admin/statsPage.ts"></script>
+  </body>
+</html>

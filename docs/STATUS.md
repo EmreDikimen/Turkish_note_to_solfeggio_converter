@@ -8,6 +8,9 @@ updated: 2026-09-05
 
 ✅ **DEPLOYED 2026-09-05** (owner asked) — <https://komavision.netlify.app>, everything below this line included: the phone CSS, the measure card, the stored-pages list, the voice bridge and the makam picker's new line. **The MODEL is untouched and still Round 2**: weights come from `VITE_WEIGHTS_URL` on the Hub, so a `deploy:app` cannot publish the locally staged Round-3 arm. `npm run smoke:live` **PASSES** — the site read a page on Cloud Run (9 porte → 24 şerit → 229 nota, 45.6 s) and **refused** to read anywhere else when pointed at a dead server. ⚠ That refusal arm had never run against a real deployment before and it exposed a bug **in the check, not the app**: a refusal UNMOUNTS `#omr-status`, and all three page smokes asked it for `data-state` before looking at `#omr-error`, so they timed out on a detached locator while the app was behaving correctly in 5.1 s. Fixed in `live-smoke.ts` / `build-smoke.ts` / `page-smoke.ts`. ⏭ Look at the phone itself with `npm run smoke:phone`.
 
+⭐ **THE SITE COUNTS ITS OWN VISITORS NOW, AND ONLY THE OWNER CAN SEE THE COUNT** (owner, 2026-09-05): openings, nota sayfaları actually read, distinct devices, country and browser, robots in their own column. ⛔ **No names** — invite links, a login and storing the IP were all offered and declined; the address is hashed with a secret **and the date**, so an id expires nightly. ⚠ **Two locks**: the dashboard is never built into `dist/`, and `stats.mts` demands a bearer token wherever it is asked.
+⏭ **NOTHING IS COUNTING YET — owner:** set `STATS_SALT` and `STATS_TOKEN` (commands in the feature doc), `npm run deploy:app`, read it with `npm run stats:ui`, and open the site once as `?nostats=1` on your own devices — a past count already had to have the owner's own phone subtracted by hand. [features/visit-stats.md](features/visit-stats.md)
+
 ⛔ **THE APP NEVER READS A PAGE ON THE VISITOR'S MACHINE ANY MORE (owner, 2026-09-04), AND THAT MAKES
 CLOUD RUN'S CAPACITY A RELEASE BLOCKER.** A configured server that is cold or dead used to fall back
 to the browser and pull **211 MB** of graphs over the visitor's connection; it now shows
@@ -53,13 +56,10 @@ select checkpoints on real-val **corrections**, not loss; beam search measured o
 ⛔ **Two things the round is NOT allowed to do**: read the exam again for an A/B, and retire
 `\tupend` or add a `\dottedbar` token — [rung3/round4.md](rung3/round4.md) "Not this round".
 
-⭐ **THE PHONE WORKS NOW, AND `npm run smoke:phone` IS HOW YOU LOOK AT IT** (owner, 2026-09-04). The
-app had **no width-based media query at all**: the page scrolled sideways at every phone width, every
-picker was 13px so iOS Safari zoomed in on the first tap and never back, every control was 30px against
-a 44px thumb, and the edit toolbox was taller than a 667px screen. All fixed in CSS behind
-`(pointer: coarse)` and `(max-width: 700px)`, so the desktop app and every existing check are untouched
-— the toolbox now docks to the bottom as a sheet on a phone. Reasoning, the two mistakes worth keeping,
-and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
+⭐ **THE PHONE WORKS NOW, AND `npm run smoke:phone` IS HOW YOU LOOK AT IT** (owner, 2026-09-04). The app
+had **no width-based media query at all**; all of it is fixed in CSS behind `(pointer: coarse)` and
+`(max-width: 700px)`, so the desktop app and every existing check are untouched. What was wrong, the two
+mistakes worth keeping, and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
 
 ⭐ **THE INSTRUMENT TAB SHOWS THE BAR IT IS PLAYING, AND EDITS IT THERE** (owner, 2026-09-04, revised 2026-09-05): instrument left, sounding bar right, ‹ ›, **Ölçüyü çal** (that bar only — 4.6 s of a 123 s piece) and **Ölçüyü düzenle**, the usual toolbox **without leaving the tab**. ⭐ The card IS `SheetView` mounted again (`onlyMeasure`) — one editor, one document, one undo stack. ✅ **Live since 2026-09-05.** [features/measure-card.md](features/measure-card.md).
 
@@ -67,12 +67,10 @@ and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-l
 
 ⭐ **THE MAKAM PICKER NOW SAYS WHICH NOTES IT PLAYS DIFFERENTLY** (owner, 2026-09-05): beside the dropdown, one line per rule — the **written** perde (Si with its koma-bemol drawn as the real sign), how far the note is really played from it (*1,5 koma pes*), and **how many notes of the page on screen** that reaches, counted off the document itself. ⭐ A rule that matches nothing says so — hüzzam's hisar on `gamzedeyim-deva` reads *bu eserde yok* — and "the sources report no deviation" (hüseyni) stays a different sentence from "this makam is not in the table" (hicaz). The post-decode prompt renders the same block, unfolded. Sound only, as before. ⛔ **AND IT FOUND A SHIPPED BUG, WHICH IS FIXED** (owner heard it the same day: *"bazen la farklı çalıyor, bazen re, bazen mi"*): the deltas are keyed by the WRITTEN document, `unfoldDoc` renumbers every event, and the app applied them to the performance — so the bend landed on the wrong note, silently, since 2026-08-30. `gamzedeyim-deva` under uşşak bent **19 wrong notes out of 22**; `remapKomaDeltas` re-keys them and `tools/core/makam-test.ts` pins it. ✅ **A second suspect was raised and CLOSED the same day** (owner): a segah spelled `b2` takes no bend — but only SymbTr exports spell one, a decode cannot (the vocabulary is the 8 AEU signs), so the product path is already exact. Kept in [BACKLOG.md](BACKLOG.md) because the fixtures make the wrong version easy to re-derive. ✅ **Live since 2026-09-05.** [mvp/makam.md](mvp/makam.md).
 
-✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04).
-The old recording keeps sounding until the new one downloads; a toast (`#voice-notice`) names both.
-⛔ **Instant was asked for and is not available** (9.9–35.4 MB over 11–36 files), so the gap was fixed,
-not the wait. ⚠ The "one decoded voice at a time" rule is amended, bounded by the owner's choice:
-**held only while a piece plays**, released by Dur. ⚠ `state === "failed"` no longer implies the
-default tone; read `VoiceStatus.sounding`. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
+✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04). The
+old recording keeps sounding until the new one downloads; a toast (`#voice-notice`) names both. ⛔ Instant
+was asked for and is not available. ⚠ `state === "failed"` no longer implies the default tone; read
+`VoiceStatus.sounding`. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
 ⏭ **Owner: the bridge is only covered by `npm run smoke:editor -- --voices-url <hub>`** — the default arm has no host, so it never has a voice to hold.
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer

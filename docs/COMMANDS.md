@@ -90,6 +90,27 @@ npm run smoke:phone                  # opens the app at four PHONE sizes and MEA
 npm run smoke:live                   # drives the DEPLOYED site — server path, then the refusal
 ```
 
+### The visit counter (F6)
+
+```bash
+npm run stats:ui                     # the owner's dashboard → http://localhost:5173/admin-stats.html
+netlify env:set STATS_SALT  "$(openssl rand -hex 32)"   # without this NOTHING is counted, by design
+netlify env:set STATS_TOKEN "$(openssl rand -hex 24)"   # what the dashboard asks for; no token, no data
+npx tsx tools/analytics/visits-test.ts                  # the arithmetic (also inside `npm test`)
+```
+
+⚠ **`deploy:app` carries `--functions netlify/functions` — without that flag the site deploys fine and
+the counter is simply absent.** The dashboard reports it as a 404 in plain Turkish rather than drawing
+an empty chart, which is the failure mode that would otherwise be easy to read as "nobody came".
+⚠ **The dashboard is NOT on the deployed site and must never be.** Vite builds `index.html` and nothing
+else, so `admin-stats.html` exists on the dev server only; the token on `stats.mts` is the lock that
+actually protects the data. ⚠ **Rotating `STATS_SALT` is not housekeeping** — yesterday's device ids and
+today's stop matching, so a device active across the change is counted twice.
+⭐ **Open the real site once as `?nostats=1` on your own phone and laptop.** It stops counting you, and
+a past count already had to have the owner's own phone subtracted by hand
+([METRICS-USAGE.md](METRICS-USAGE.md)). `?nostats=0` undoes it.
+Full design and its limits: [features/visit-stats.md](features/visit-stats.md).
+
 ⚠ **`smoke:phone` is a PROBE, not a gate — it prints findings and always exits 0.** Read it, do not
 grep it for a word. Two of its lines are expected and are not bugs: `div#sheet-surface` reported wide
 is the engraved sheet scrolling sideways **inside its own box**, which is the design; and the footer's

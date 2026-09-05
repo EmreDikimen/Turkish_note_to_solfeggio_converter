@@ -6,7 +6,8 @@
   "description": "Classical Turkish Music OMR \u2014 shared TS core + web test harness (mobile is the product)",
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "netlify"
   ],
   "scripts": {
     "typecheck": "npm run -ws --if-present typecheck",
@@ -16,8 +17,8 @@
     "dev:voices": "VITE_VOICES_URL=https://huggingface.co/datasets/Beyaban/omr-voices/resolve/main npm run -w @turkish-omr/web dev",
     "serve:voices": "npx tsx tools/audio/serve-voices.ts",
     "dev:voices:local": "VITE_VOICES_URL=http://localhost:8788 npm run -w @turkish-omr/web dev",
-    "deploy:app": "VITE_DECODE_URL=https://omr-decode-706571981988.europe-west3.run.app VITE_WEIGHTS_URL=https://huggingface.co/Beyaban/omr-weights/resolve/main VITE_VOICES_URL=https://huggingface.co/datasets/Beyaban/omr-voices/resolve/main npm run -w @turkish-omr/web build && npx netlify-cli deploy --dir \"$PWD/apps/web/dist\" --prod --site f16514d1-b17b-4dcd-8fc9-2f93816b1d64 --no-build --filter @turkish-omr/web",
-    "test": "npx tsx tools/render/stitch-test.ts && npx tsx tools/core/structure-test.ts && npx tsx tools/render/structure-edit-test.ts && npx tsx tools/core/edits-test.ts && npx tsx tools/core/usul-test.ts && npx tsx tools/core/makam-test.ts && npx tsx tools/core/fingering-test.ts && npx tsx tools/core/kanun-test.ts && npx tsx tools/core/clarinet-test.ts && npx tsx tools/audio/voices-test.ts && npx tsx tools/vision/binarize-test.ts",
+    "deploy:app": "VITE_DECODE_URL=https://omr-decode-706571981988.europe-west3.run.app VITE_WEIGHTS_URL=https://huggingface.co/Beyaban/omr-weights/resolve/main VITE_VOICES_URL=https://huggingface.co/datasets/Beyaban/omr-voices/resolve/main npm run -w @turkish-omr/web build && npx netlify-cli deploy --dir \"$PWD/apps/web/dist\" --functions \"$PWD/netlify/functions\" --prod --site f16514d1-b17b-4dcd-8fc9-2f93816b1d64 --no-build --filter @turkish-omr/web",
+    "test": "npx tsx tools/render/stitch-test.ts && npx tsx tools/core/structure-test.ts && npx tsx tools/render/structure-edit-test.ts && npx tsx tools/core/edits-test.ts && npx tsx tools/core/usul-test.ts && npx tsx tools/core/makam-test.ts && npx tsx tools/core/fingering-test.ts && npx tsx tools/core/kanun-test.ts && npx tsx tools/core/clarinet-test.ts && npx tsx tools/audio/voices-test.ts && npx tsx tools/vision/binarize-test.ts && npx tsx tools/analytics/visits-test.ts",
     "gate:browser": "npx tsx tools/browser/run-page.ts omr-gate.html __gateResult --timeout 600000 --expect 27/28",
     "probe:cv": "npx tsx tools/browser/run-page.ts cv-probe.html __cvProbe",
     "check:logprobs": "npx tsx tools/browser/run-page.ts logprob-check.html __logprobCheck --timeout 600000",
@@ -27,6 +28,7 @@
     "smoke:page": "npx tsx tools/browser/page-smoke.ts",
     "smoke:build": "npx tsx tools/browser/build-smoke.ts",
     "smoke:phone": "npx tsx tools/browser/phone-probe.ts",
+    "stats:ui": "echo '-> http://localhost:5173/admin-stats.html' && npm run -w @turkish-omr/web dev",
     "check:coldstart": "npx tsx tools/browser/coldstart-smoke.ts",
     "smoke:live": "npx tsx tools/browser/live-smoke.ts",
     "build:app": "npm run -w @turkish-omr/web build",

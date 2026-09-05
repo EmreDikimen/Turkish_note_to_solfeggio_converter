@@ -14,16 +14,21 @@ export const TR = {
   tagline:
     "Notanın fotoğrafını yükleyin: perdeler okunur, nota dizilir ve 53 komalı sesiyle çalınır.",
 
-  // The legal footer (added 2026-08-08, the copyright pass). Three separate promises, and each one
+  // The legal footer (added 2026-08-08, the copyright pass). Four separate promises, and each one
   // is a statement of fact about the code, not a disclaimer:
   //   - uploads are not stored: apps/server/src/index.ts never writes an image to disk;
+  //   - visits are counted anonymously: netlify/functions/visit.mts stores a salted hash that
+  //     expires daily, never an IP and never a cookie (added 2026-09-05 with the counter itself);
   //   - the user owns what they upload: the app bundles no score of its own any more;
   //   - there is a way to reach a human: the repo's issue tracker, so no personal address is
   //     published (owner's choice, 2026-08-08).
   // ⚠ If the server ever starts persisting an upload, the first line becomes false — change it
-  // there and here in the same commit.
+  // there and here in the same commit. ⚠ The `counting` line has the same contract: it is true only
+  // while the counter stores no raw address, so netlify/shared/visits.ts and this string move
+  // together. Deleting it is one line here and one in App.tsx's footer.
   footer: {
     privacy: "Yüklediğiniz görüntüler sunucuda saklanmaz; okunur ve silinir.",
+    counting: "Ziyaretler anonim sayılır: çerez yok, IP adresi saklanmaz.",
     rights:
       "Yüklediğiniz notanın haklarından siz sorumlusunuz. Uygulama kendi içinde hiçbir eser barındırmaz.",
     contactLabel: "Hak sahibiyseniz ve itirazınız varsa:",

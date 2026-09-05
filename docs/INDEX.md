@@ -98,6 +98,7 @@ wrong — fix by deleting, not by syncing.
 | The sol klarnet view (F3): the CC0 layered schematic, the rejected photos, the lip bar | [features/clarinet-view.md](features/clarinet-view.md) |
 | The bar beside the instrument (F3): one measure drawn on its own, play-this-bar, the hand-over to the editor | [features/measure-card.md](features/measure-card.md) |
 | The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |
+| The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

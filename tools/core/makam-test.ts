@@ -26,6 +26,7 @@ import {
   makamKomaDeltas,
   makamRuleUsage,
   remapKomaDeltas,
+  toAeuAlter,
   unfoldDoc,
   withKomaDeltas,
   type NoteEvent,
@@ -67,7 +68,7 @@ function score(): NoteModelDocument {
   push("note", "Re5", 62, 1, 2);        // nevâ — must never move
   push("note", "Si4b1", 48, 2, 1);      // segah, as AEU spells it — the ONE note uşşak bends
   push("note", "Mi5", 71, 2, 2);        // hüseynî — must never move
-  push("note", "Si4b2", 47, 3, 1);      // a segah spelled 2 komas flat: the rule does NOT claim it
+  push("note", "Si4b2", 47, 3, 1);      // a segah spelled 2 komas flat — SymbTr's spelling, see below
   push("note", "La4", 40, 3, 2);
 
   return assignBars({
@@ -102,6 +103,14 @@ console.log("the table names one note, and one note bends");
   check("…and neither does 'none'", makamKomaDeltas(doc, "").size, 0);
   // The alias must not be a second, quieter table.
   check("an alias bends what its target bends", makamKomaDeltas(doc, "bayati").size, 1);
+
+  // ⛔ The fixture's `Si4b2` DRAWS as the same koma-bemol (`toAeuAlter(-2) === -1`) and is still not
+  // matched. That is deliberate and was confirmed by the owner on 2026-09-05: only a SymbTr export
+  // spells a 2-koma alteration, a decode cannot — `ADDED_TOKENS` is the 8 AEU signs plus a natural,
+  // so a read page carries ±1/±4/±5/±8 and nothing else. Snapping the match to fix the fixtures
+  // would make the editor's deliberate ±2/±3 stop meaning what they say. docs/BACKLOG.md.
+  check("a 2-koma si draws as the same sign…", toAeuAlter(-2), -1);
+  check("…and is deliberately NOT bent", [...makamKomaDeltas(doc, "ussak").keys()].join(), "4");
 }
 
 console.log("\nthe deltas survive the unfold — the 2026-09-05 bug");

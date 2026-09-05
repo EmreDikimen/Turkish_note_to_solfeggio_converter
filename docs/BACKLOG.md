@@ -307,26 +307,27 @@ responds to being filled, a domain gap does not** ([METRICS-UNSEEN.md](METRICS-U
 ⚠ **Not "the slicer is good enough, stop".** The 2026-08-26 fixes were about a third thing — rows
 lost ENTIRELY, which is neither class.
 
-### ⏭ A segah spelled `b2` takes no makam bend, and the same drawn sign then sounds at two heights (owner's call, opened 2026-09-05)
+### ✅ CLOSED the day it was opened — a segah spelled `b2` is a SymbTr artefact, not a page (owner, 2026-09-05)
 
-`MAKAM_INTONATION` matches a note by its **exact** written alteration, but the staff DRAWS the
-nearest AEU sign (`toAeuAlter`) — so a `Si4b2` and a `Si4b1` are the same koma-bemol on the page and
-only the second is bent. Counted on the bundled scores: `gamzedeyim-deva` **22 `b1` against 54
-`b2`**, `beyati-delisin` **0 against 40** — selecting Beyâtî there therefore changes nothing at all,
-on a piece that is full of segahs. Found while building the picker's *farklı çalınan perdeler* line,
-which is what made the gap visible: it reports 22 where a reader counts 76.
+Kept because the wrong version of this is easy to re-derive from the fixtures. `MAKAM_INTONATION`
+matches a note by its **exact** written alteration, and the staff draws the **nearest** AEU sign
+(`toAeuAlter`) — so on the bundled SymbTr exports a `Si4b2` and a `Si4b1` are the same koma-bemol on
+screen and only the second is bent. `gamzedeyim-deva` is **22 `b1` against 54 `b2`**;
+`beyati-delisin` is **0 against 40**, so choosing Beyâtî there changes nothing at all. That looks
+like a hole in the table and is not one.
 
-⚠ **Not obviously a bug.** SymbTr's `b2` already sits **7 commas** above dügâh against AEU's 8, so it
-is most of the way to uşşak's performed 6.5 and a full −1.5 would overshoot to 5.5. The cost of
-leaving it is that one drawn sign sounds at 6.5 and at 7 — about **11 cents** apart — inside one
-piece.
+⛔ **A real page cannot spell a `b2`.** The model's vocabulary is the **8 AEU accidentals** plus a
+natural (`ADDED_TOKENS`, `src/vision/data.py`) — there is no 2- or 3-koma token, so a decode only
+ever produces ±1 / ±4 / ±5 / ±8, and printed Turkish editions only ever print those four signs
+either way (owner: *"beyati delisini zaten biz SymbTr'den aldık, orada b2 b3 var ama normal
+fotoğraflarda yok öyle bir şey"*). `decoded.json`, the one bundled score that came from a photograph,
+reads **2 `b1` / 0 `b2`**. The product path — photo → decode → play — is therefore already exact.
 
-⏭ Two options, and it is a musical decision, not a code one. **(a) Leave it**: the table is written
-against the AEU sign and `b2` is already a performed spelling. **(b) Make the rule name a PERDE
-rather than a delta** — every si that draws as a koma-bemol sounds 6.5 commas above dügâh, whatever
-the stored alteration — which makes the drawn sign and the sound agree at the price of a table
-change and a re-check by ear (check 14 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md)).
-[mvp/makam.md](mvp/makam.md).
+⚠ **Two residues, both small and both worth knowing.** (1) The **editor** offers ±2/±3 on purpose
+(`ACCIDENTAL_VALUES`), so a hand-placed 2-koma si draws as a koma-bemol and takes no bend; that is
+one user, one note, and snapping the match would make the editor's exact alterations stop meaning
+what they say. (2) On a SymbTr fixture the picker's count reads low by design — 22 where a reader
+counts 76 drawn koma-bemols on `gamzedeyim-deva`. Do not debug that as a counting bug.
 
 ### Further out, deferred past this round → [BACKLOG-LATER.md](BACKLOG-LATER.md)
 

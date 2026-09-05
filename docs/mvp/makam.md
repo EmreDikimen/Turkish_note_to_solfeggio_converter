@@ -109,14 +109,15 @@ and a 2-koma si taking the segah's lowering, while three landed right by luck. T
 kanun course is looked up by an exact **written** koma — a fractional one misses it. The bend
 belongs to the timeline and to nothing else.
 
-⚠ **Open, and the owner's call: a segah spelled `b2` is not matched.** The rules key on the exact
-written alteration, but the staff DRAWS the nearest AEU sign (`toAeuAlter`), so a `Si4b2` and a
-`Si4b1` are the same koma-bemol on the page and only the second is bent. Counted on the bundled
-scores: `gamzedeyim-deva` **22 `b1` against 54 `b2`**, `beyati-delisin` **0 against 40** — so
-selecting Beyâtî there bends nothing at all. It is not obviously wrong: `b2` already sits 7 commas
-above dügâh against AEU's 8, so it is most of the way to the performed 6.5 and a full −1.5 would
-overshoot. But the same drawn sign then sounds at two heights (6.5 and 7, ~11 cents apart).
-[../BACKLOG.md](../BACKLOG.md).
+⚠ **A segah spelled `b2` is not matched, and that is correct — it is a SymbTr artefact** (owner,
+2026-09-05). The rules key on the exact written alteration while the staff draws the nearest AEU
+sign, so on the bundled SymbTr exports a `Si4b2` and a `Si4b1` are one koma-bemol on screen and only
+the second bends: `gamzedeyim-deva` **22 against 54**, `beyati-delisin` **0 against 40**. ⛔ **A real
+page cannot spell one.** The model's vocabulary is the 8 AEU accidentals plus a natural
+(`ADDED_TOKENS`), and a printed edition prints only those four signs, so a decode yields ±1/±4/±5/±8
+— `decoded.json`, the one bundled score that came from a photograph, reads 2 `b1` / 0 `b2`. Do not
+"fix" the matcher by snapping: it would make the editor's deliberate ±2/±3 stop meaning what they
+say, for one hand-placed note. Full reasoning and the two residues: [../BACKLOG.md](../BACKLOG.md).
 
 ## Guessing the makam from a decoded page
 

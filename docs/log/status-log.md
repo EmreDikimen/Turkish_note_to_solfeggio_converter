@@ -80,14 +80,25 @@ to the speaker; the browser smokes drive the picker and never listen. `tools/cor
 new and closes that: it builds a fixture with a `meta` event and a repeat, and asserts BOTH that the
 old keying bends `Mi5` and that the re-keyed one bends only the segah, in every copy.
 
-⏭ **One thing this opened and did not settle, because it is a musical decision** (owner's call,
-[../BACKLOG.md](../BACKLOG.md)): the rules match an **exact** written alteration, but the staff draws
-the nearest AEU sign, so a segah spelled `Si4b2` is drawn as the same koma-bemol as `Si4b1` and is
-**not** bent. `gamzedeyim-deva` is 22 `b1` against **54** `b2`; `beyati-delisin` is **0 against 40**,
-so choosing Beyâtî there changes nothing at all. Not obviously wrong — `b2` already sits 7 commas
-above dügâh against AEU's 8, most of the way to the performed 6.5 — but one drawn sign then sounds
-at two heights ~11 cents apart. The picker's count is what made it visible: it reports 22 where a
-reader counts 76.
+**A second suspect was raised the same hour and closed by the owner in one sentence, which is worth
+recording as a method note.** The rules match an **exact** written alteration while the staff draws
+the nearest AEU sign, so a segah spelled `Si4b2` is the same koma-bemol on screen as a `Si4b1` and
+is not bent. The fixtures make that look serious: `gamzedeyim-deva` is 22 `b1` against **54** `b2`,
+and `beyati-delisin` is **0 against 40** — Beyâtî changes nothing there, on a piece full of segahs.
+The picker's new count is what made it visible at all, reporting 22 where a reader counts 76.
+
+⛔ **It is a corpus artefact, and the owner knew immediately why**: *"beyati delisini zaten biz
+SymbTr'den aldık, orada b2 b3 var ama normal fotoğraflarda yok öyle bir şey."* Confirmed in the
+code rather than taken on trust — `ADDED_TOKENS` (`src/vision/data.py`) is the **8 AEU accidentals
+plus a natural**, with no 2- or 3-koma token, so a decode can only ever produce ±1/±4/±5/±8; and
+`decoded.json`, the one bundled score that came from a photograph, reads **2 `b1` / 0 `b2`**. The
+product path — photo → decode → play — was already exact.
+
+⚠ **The lesson is about the fixtures, not the makam.** Every score on this machine except one is a
+SymbTr export, and SymbTr stores exact komas while a printed page prints one of four signs. A
+measurement taken across those files can describe a corpus and be read as describing the app. Two
+small residues survive and are recorded in [../BACKLOG.md](../BACKLOG.md): the editor deliberately
+offers ±2/±3, and the picker's count reads low on a SymbTr fixture by design.
 
 Checked: `npm test` (with the new `makam-test.ts`), `npm run typecheck`, `npm run smoke:editor`
 (18 new assertions, ALL PASS) and `npm run smoke:phone` — no sideways scroll at 375 / 390 / 412 /

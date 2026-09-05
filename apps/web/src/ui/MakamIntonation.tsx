@@ -12,10 +12,12 @@
  * nobody will hear. It comes from `makamRuleUsage`, which walks the same matcher `makamKomaDeltas`
  * walks, so the number and the pitches playback actually bends cannot drift apart.
  *
- * ⚠ **An empty rule list is two different answers** (`makamIntonationRecorded`). Hüseyni's is a
- * finding — the sources say it does NOT take the uşşak lowering. An unlisted makam's is silence:
- * nobody has looked. They get different sentences, because dressing the second as the first would
- * be claiming a measurement that does not exist.
+ * ⚠ **A makam that bends nothing gets ONE sentence** (owner, 2026-09-05, cutting a first version
+ * that wrote two). Hüseyni's empty rule list is a finding — the sources say it does NOT take the
+ * uşşak lowering — and an unlisted makam's is silence. That distinction is real and it stays where
+ * it belongs, in `MAKAM_INTONATION` and docs/mvp/makam.md; a reader picking a makam is asking one
+ * question, whether the piece will sound as it looks, and two sentences answered a question they
+ * had not asked.
  *
  * ⚠ The written staff never moves; this describes the SOUND only. Same component in the transport
  * bar and in the post-decode prompt, so the two can never explain the same makam differently —
@@ -29,7 +31,6 @@
 import {
   accidentalLabel,
   makamIntonation,
-  makamIntonationRecorded,
   solfegeLetter,
   type IntonationRule,
   type MakamRuleUse,
@@ -90,7 +91,7 @@ export function MakamIntonation({
         data-rules={0}
         data-notes={0}
       >
-        {makamIntonationRecorded(slug) ? TR.makamHint.noDeviation : TR.makamHint.untabled}
+        {TR.makamHint.asWritten}
       </p>
     );
   }

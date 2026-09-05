@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-09-03
+updated: 2026-09-05
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -15,30 +15,58 @@ commands used every session; this one holds the **full reference**. Nothing was 
 
 Python lives in `.venv-ml` (training/data only, never shipped). Node workspaces at the root.
 
+### Every session
+
 ```bash
 npm run dev:web                      # harness → http://localhost:5173 (decode on YOUR machine)
 npm run dev:cloud                    # the same harness, but decode runs on Cloud Run — see below
 npm run typecheck                    # all workspaces
 npm test                             # stitcher + label round-trip + edit primitives + usul strokes + voice manifest
-                                     # …plus violin fingering (the 53-TET position formula + string choice)
+                                     # …plus violin fingering (the 53-TET position formula + string choice),
+                                     # …the kanun's mandals, and the sol klarnet's fingerings + lip bound
+                                     # …plus the makam intonation table AND the two 2026-09-05 ear-found bugs:
+                                     # ⚠ WHICH DOCUMENT the koma deltas and the usul tracks are built over
                                      # …plus the written-score → performance maps (tools/core/structure-test.ts)
 npm run check:fold                   # every cached page decode: does keeping the repeat SIGNS change the sound?
                                      # …expect 1720 pages, 0 changed. Needs data/real/strips_v2 (this machine only)
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
-npx tsx tools/core/clarinet-chart.ts out.html   # sol klarnet: all 33 fingerings as one HTML page, for a player to audit
-npx tsx tools/core/clarinet-editor.ts out.html  # …and the editor that produced the table: click points per note, copy the JSON back
                                      # …plus the instrument voices; add --voices-url <hub> for the REAL samples
                                      # …and note-box geometry on a GRACE-NOTE score (see the rule below)
                                      # …and the fingerboard tab: the marker lands on a string and MOVES
+```
+
+### Hearing the instrument voices (they do NOT ship with the app)
+
+```bash
+npm run dev:voices                   # dev:web with VITE_VOICES_URL on the Hub — the ONLY way to hear the real
+                                     # ⚠ clarinet/violin/kanun; plain dev:web has no host and plays the synth
+npm run serve:voices                 # serve data/audio_voices/ on :8788, to hear a voice BEFORE it is uploaded…
+npm run dev:voices:local             # …and point the app at it. ⚠ `python -m http.server` will NOT do: the dev
+                                     # server sets COEP require-corp, so a static server sending no CORS/CORP
+                                     # header gets the file BLOCKED — and the app reports the voice as FAILED
+                                     # while it plainly serves fine in a browser tab
+npx tsx tools/core/clarinet-chart.ts out.html   # sol klarnet: all 33 fingerings as one HTML page, for a player to audit
+npx tsx tools/core/clarinet-editor.ts out.html  # …and the editor that produced it: click points per note, copy the JSON back
+```
+
+### The browser decode — gates and parity
+
+```bash
 npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
 npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
 npm run smoke:page -- --ref ref.json # real app: a PAGE image in → playable score out (MVP W7)
 npm run check:deskew                 # the skew sweep's fast path is EXACT vs the morphology (W7)
+npm run check:edge                   # does the browser decode path fail GRACEFULLY on images that are not
+                                     # ⚠ strips (W2)? The bar is "does not throw", never "reads them correctly"
 npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/W3)
 npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED (MVP W6)
 npm run parity:slicer -- --ref ref.json                # ported slicer vs local python (MVP W4-W6)
+npm run decode:pool -- --pool <dir> --out f.json       # decode a flat strip pool IN THE BROWSER and dump the
+                                     # token streams, for scripts/score_browser_gold.py to score against GOLD (W3)
+                                     # ⚠ `--server <url>` decodes the same pool on the SERVER instead (W9):
+                                     # agreement cannot say which side is RIGHT, and only gold can
 ```
 
 ### The decode server and the deployable app (W9 — SHIPPED)

@@ -80,9 +80,12 @@ Three things it does deliberately:
   on screen and the pitches playback bends cannot drift apart.
 - **Zero is shown, not hidden.** Hüzzam's hisar matches nothing on `gamzedeyim-deva`, and the line
   says *bu eserde yok* rather than promising a bend nobody will hear.
-- **An empty rule list is two different answers** (`makamIntonationRecorded`). Hüseyni's `[]` is a
-  finding; an unlisted makam is silence. Dressing the second as the first would claim a measurement
-  that does not exist, so they get different sentences.
+- **A makam that bends nothing gets one sentence** — *"Bu makam yazıldığı gibi çalınıyor."* — for
+  every reason it might bend nothing (owner, 2026-09-05, cutting a first version that split "the
+  sources report no deviation" from "not in our table"). ⚠ The difference is real and it lives
+  **here and in the table**: hüseyni's `[]` is a finding, an unlisted makam is silence, and the
+  empty arrays must never be deleted as clutter. It is just not a difference the transport bar owes
+  a reader who is asking whether the piece will sound as it looks.
 
 Contract for the checks: `[data-omr="makam-intonation"]` carries `data-makam` / `data-rules` /
 `data-notes`, and each `[data-omr="makam-rule"]` carries `data-letter` / `data-alter` / `data-delta`

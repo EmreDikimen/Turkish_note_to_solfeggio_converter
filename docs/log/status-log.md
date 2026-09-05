@@ -57,6 +57,91 @@ three beside it.
 ⏭ **Nothing is counting yet.** `STATS_SALT` and `STATS_TOKEN` are unset on the site; until the owner
 sets them and redeploys, `visit.mts` records nothing. [../features/visit-stats.md](../features/visit-stats.md)
 
+## 2026-09-05 — the DOM contract moves out of CLAUDE.md (docs)
+
+CLAUDE.md crossed its 400-line cap for the second time. The block that pushed it over was **not**
+the rule added that day — it was the **DOM contract**, 49 lines listing every attribute the browser
+checks may assert on, which had grown by a paragraph with every feature since 2026-08-07 and was
+still sitting in the orientation file.
+
+**Split by genre, the same way [COMMANDS.md](../COMMANDS.md) was split out on 2026-08-23.** The list
+is a *reference* — you open it while writing a check — and CLAUDE.md is what an agent must not miss
+before touching anything. The new file is [../DOM-CONTRACT.md](../DOM-CONTRACT.md), reachable from
+CLAUDE.md and [../INDEX.md](../INDEX.md).
+
+⚠ **CLAUDE.md keeps the rule, not the list**: attributes never text, `strings.ts` owns every visible
+string, plus the four traps that cost time most often — `data-edit-mode` living on four elements, a
+refusal unmounting `#omr-status`, `data-ready` being absent on a bare visit, and `#save-json` being
+gone. 403 → 368 lines, so the next feature has room.
+
+**Checked, not assumed**: every `data-*`, `#id`, `.class`, `__omr*` hook and `tools/…` path in the
+old block — **120 identifiers** — was diffed against the new pair, and none was dropped.
+
+⚠ **Two things found in the same pass and fixed.** COMMANDS.md called itself the full reference and
+was missing five scripts (`dev:voices`, `serve:voices`, `dev:voices:local`, `check:edge`,
+`decode:pool`) — each documented in a track doc, none in the reference — and its opening command
+block had grown into a 40-line wall that `check_docs.py` flagged; it is now three blocks under
+headings. ⚠ The two parity entries were first written from their names and were **wrong**: the
+source headers say `check:edge` asks whether the decode fails *gracefully* on images that are not
+strips, and `decode:pool` produces the browser's side for scoring against **gold**, because
+agreement cannot say which side is right.
+
+## 2026-09-05 — the usul stopped halfway and never came back (product track)
+
+Owner, by ear again, hours after the makam bend: *"usul vuruşu bazen kesiliyor ve geri gelmiyor."*
+
+**What it was.** `buildPlayOptions` in `App.tsx` built the metronome clicks and the usul strokes
+from `doc` — the WRITTEN score. The timeline it plays them against has come from `unfoldDoc` — the
+PERFORMANCE — since the repeat signs landed on 2026-08-30. Both builders walk bars, so on a page
+that takes a repeat the strokes simply ran out at the written total and the remaining playback had
+no usul at all. Measured on a 4-bar fixture with `‖: 1–2 :‖`: the performance is 6,000 ms, the last
+düm the written track produced fell at 3,750 ms, so **38% of the piece played silent**. It is also
+an alignment bug — past the first jump the written bars and the sounding bars are different bars, so
+a stroke lands off the barline wherever the repeated block's bars are not all the same length.
+
+**Why nothing caught it.** Nothing throws; a track that ends early just ends early. And no automated
+check can reach it: `smoke:editor` loads a `?score=` SymbTr sample, and a SymbTr sample is flat in
+the data, so it never folds. Only a decoded page has a `structure`, and only the owner's ear was
+listening to one.
+
+⚠ **This is the second instance of one mistake, found the same day.** The makam deltas were keyed to
+the written document and applied to the performance; these two tracks were built from the written
+document and played against the performance. Both date from the unfold, and both are the same
+oversight: the unfold introduced a SECOND document, and the inputs that have to line up with the
+clock were left pointing at the first. The general rule is now written into
+[../DECISIONS.md](../DECISIONS.md) — anything the app hands the backend in musical ms belongs to the
+performance; `doc` is what a person reads and edits.
+
+✅ **Deployed the same day** (owner: *"deploy et"*) — `npm run deploy:app` → **Deploy is live!**,
+then `npm run smoke:live` **PASSED** on the deployed site: the server path read the acem page in
+46.4 s (9 porte → 24 şerit → 229 nota, 23 ölçü) and the refusal arm confirmed nothing runs on the
+visitor's machine when the server is unreachable. ⚠ The model did not move and could not have —
+weights come from `VITE_WEIGHTS_URL`, so the live site is still Round 2.
+
+**The fix** is `perf.doc` in place of `doc`, one line, with the `useCallback` dependency moved to
+match. `tools/core/usul-test.ts` gains a block that pins it: the written track stops early (the ⛔
+half, so the bug cannot come back unnamed), the performance track reaches the last bar, and — the
+load-bearing one — a page with **no** repeat produces a byte-identical track either way, which is
+what says the fix costs nothing on the pages that were already right.
+
+## 2026-09-05 — the makam picker's empty answer is one sentence, not two (product track)
+
+Owner, on the version deployed an hour earlier: *"Farklı çalınmayan makamlarda sadece bu makam
+yazıldığı gibi çalınıyor yaz. karmaşık bir şey yapmışsın."* Both empty-rule sentences collapse to
+**"Bu makam yazıldığı gibi çalınıyor."**, `makamIntonationRecorded` is deleted rather than left
+dead, and `smoke:editor`'s assertion flips from *these two must differ* to *these two must match*.
+
+⭐ **Worth recording because the distinction was correct and the placement was not.** Hüseyni's `[]`
+in `MAKAM_INTONATION` is a finding — the sources say it does NOT take the uşşak lowering — and an
+unlisted makam is silence. That is real, it is why the empty arrays must never be tidied away, and
+it is still written down in the table and in [../mvp/makam.md](../mvp/makam.md). What it is not is
+something a reader owes attention to while choosing a makam: they are asking one question, *will
+this piece sound as it looks*, and the answer is yes either way. Two sentences answered a question
+nobody had asked and made a control bar read like a footnote.
+
+⚠ The rule for this line, going forward: **the bar carries what changes the sound; the table
+carries how confident we are about it.**
+
 ## 2026-09-05 — deployed, and the refusal arm's first live run found a bug in the check (product track)
 
 The owner asked for it after the makam work: *"Tamamdır o zaman artık deploy eder misin uygulamayı"*.

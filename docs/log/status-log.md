@@ -7,6 +7,39 @@ updated: 2026-09-05
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-05 — the link went public, ahead of the gate (product track)
+
+Owner: *"linkedinde paylaştım her şeyi, normal bir şekilde devam edebiliriz."* The live app's link
+went out on LinkedIn.
+
+**Every plan in this repo said this waited on the exam.** The `public` rung in
+[../mvp/README.md](../mvp/README.md) read *gated on Round 3's exam result*, and CLAUDE.md's header
+said the same. Round 3 read **51%** against a 75% floor and missed, Round 4 is open, and the link
+went out anyway. That is the owner's call to make; the point of this entry is that the repo was
+still asserting the opposite in three places, and an agent reading them would have planned around a
+gate that no longer exists. Fixed in STATUS, DECISIONS, CLAUDE.md and the ladder.
+
+⚠ **What actually changed is tense, not fact.** All three risks below were already written down as
+things that would matter *when* the app went public. They now matter:
+
+- **No fallback + a cold server.** Since 2026-09-04 nothing is read on the visitor's machine, so a
+  cold or dead container shows `server-unavailable`. A cold start measured **38.2 s**;
+  `--max-instances` is 10 at concurrency 1 and an over-capacity request **queues**.
+  `--min-instances 1` removes the cold start and costs money continuously — still the owner's call.
+- **Strangers are reading with Round 3 Run A `best-real`** — ⚠ this entry first said *Round 2* and
+  the owner corrected it the same day. The mistake is worth keeping because of its shape: the claim
+  reasoned about `VITE_WEIGHTS_URL`, which governs the BROWSER's weights, and the browser has read
+  nothing since 2026-09-04. The model a visitor meets is the one the Dockerfile bakes into the Cloud
+  Run image out of `apps/web/public/models` — staged 2026-09-03 13:22, image built 13:38, revision
+  `omr-decode-00006-7wq` at 100% of traffic, and the staged graph hashes equal to
+  `r3a-stage2-best-real-onnx/encoder_model_int8.onnx`. ⚠ Run A was published on the owner's **hand
+  test**, not an exam pass, so the dense-page failure is still silent.
+- **The phone is unlooked-at.** The CSS shipped 2026-09-04 behind two media queries; its only
+  coverage is `smoke:phone`, a probe that never exits nonzero. LinkedIn traffic skews phone.
+
+⛔ **Nothing was acted on, at the owner's instruction** (*"bir şey yapmana gerek yok"*). This is a
+record, not a queue.
+
 ## 2026-09-05 — the site counts its own visitors now, anonymously (product track)
 
 The owner asked for a UI showing how many people visit the site and who they are. Three questions

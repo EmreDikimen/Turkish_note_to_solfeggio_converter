@@ -7,7 +7,7 @@ a server is configured — the in-browser `onnxruntime-web` path is no longer a 
 
 **TWO TRACKS RUN IN PARALLEL (owner, 2026-08-05).** The product track is building a decode server
 (W9) for a release to **two friends** who will be asked about the **interface, not the model**; the
-model track is **Round 4 (opened 2026-09-03; Round 3 read 51% against 75% and missed)** — it draws nothing new: it re-spells labels for the tokenizer, re-emits the dense half of every real page, fixes the model-voted signature and the checkpoint pick ([docs/rung3/round4.md](docs/rung3/round4.md)). Neither blocks the other. The public launch is gated on the exam result of the round in progress.
+model track is **Round 4 (opened 2026-09-03; Round 3 read 51% against 75% and missed)** — it draws nothing new: it re-spells labels for the tokenizer, re-emits the dense half of every real page, fixes the model-voted signature and the checkpoint pick ([docs/rung3/round4.md](docs/rung3/round4.md)). Neither blocks the other. ⚠ **The public launch was gated on the round in progress and that gate was OVERTAKEN: the owner put the live link on LinkedIn on 2026-09-05** — strangers are reading pages with the Round-2 model, on a server with no fallback. What that changes is in [docs/STATUS.md](docs/STATUS.md).
 Ladder and state: [docs/mvp/README.md](docs/mvp/README.md). Synthetic accuracy is solved (99.9%);
 the remaining model work is about real printed pages.
 
@@ -365,8 +365,10 @@ data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training po
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
                       re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
 data/synthetic/       rendered strips — ROUND 3 TRAINED ON strips_v7_final (3 flags, 0 \tie) and ROUND 4 REUSES IT UNCHANGED (no render, owner 2026-09-03); older sets kept
-data/checkpoints/     round2-stage2-best (+ -onnx int8, THE LIVE RUNTIME — round1-best is the
-                      superseded one), the r3-* Round-3 arms, and rung3-labeler: a July tooling
+data/checkpoints/     r3a-stage2-best-real (+ -onnx int8, THE LIVE RUNTIME since 2026-09-03 —
+                      published on the owner's HAND TEST, not an exam pass; round2-stage2-best and
+                      r3-final-stage2-last are the superseded ones, kept under apps/web/public/models/
+                      _round2_backup/ and _r3final_backup/), the r3-* Round-3 arms, and rung3-labeler: a July tooling
                       checkpoint, NEVER shipped, that only feeds the emitter and decode_page.py
 data/split.json       piece-level train/val split (strips_v4 uses data/split_v4.json, v3 split_v3)
                       — ALWAYS split by piece, never by strip: strips of one piece are near-duplicates

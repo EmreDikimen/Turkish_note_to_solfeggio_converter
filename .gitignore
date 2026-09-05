@@ -145,6 +145,11 @@ apps/web/public/probe/
 apps/server/models/
 apps/server/dist/
 
+# netlify-cli's local state, written by `npm run deploy:app` (it holds the site id and a build
+# cache). Machine-local bookkeeping, not source — and this repo is PUBLIC, so anything the CLI
+# drops in the tree gets ignored rather than left for the next `git add -A` to sweep up.
+.netlify/
+
 # ORT runtime copied in at build time by apps/web/tools/copy-ort.mjs
 apps/web/public/ort/
 

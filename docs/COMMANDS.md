@@ -127,6 +127,23 @@ netlify env:set STATS_TOKEN "$(openssl rand -hex 24)"   # what the dashboard ask
 npx tsx tools/analytics/visits-test.ts                  # the arithmetic (also inside `npm test`)
 ```
 
+**Is it actually live? One request tells you, and the status code names the fault:**
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://komavision.netlify.app/.netlify/functions/stats
+```
+
+| Code | What it means | Fix |
+|---|---|---|
+| **401** | the counter is deployed and `STATS_TOKEN` is set — it just refused an empty token. **This is the healthy answer** | nothing; open the dashboard |
+| **503** | deployed, but no `STATS_TOKEN` on the site | `netlify env:set STATS_TOKEN …`, then redeploy |
+| **404** | the site deployed WITHOUT its functions | redeploy with `npm run deploy:app` (it carries `--functions`) |
+
+⚠ **`stats:ui` pins port 5173 (`--strictPort`) and that is deliberate**: the dashboard reads a
+deployed site from `localhost`, and only the ports in `DEV_ORIGINS` (`netlify/functions/stats.mts`)
+are allowed to. Letting vite drift to 5174 when 5173 is busy would turn a busy port into a CORS
+error that reads like a broken token. It now refuses to start instead, which is the legible failure.
+
 ⚠ **`deploy:app` carries `--functions netlify/functions` — without that flag the site deploys fine and
 the counter is simply absent.** The dashboard reports it as a 404 in plain Turkish rather than drawing
 an empty chart, which is the failure mode that would otherwise be easy to read as "nobody came".

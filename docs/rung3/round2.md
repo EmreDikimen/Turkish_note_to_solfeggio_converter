@@ -48,7 +48,10 @@ So Round 3 is a **pitch-and-duration** round, opening with the crop-shape fix (n
 and a corpus-vs-real distribution measurement before anything is rendered. The signature-glyph
 fidelity work stays owed but drops below both, being a 13%-of-edits problem.
 
-### Ship (2026-07-27) — `round2-stage2-best` int8 is the live runtime
+### Ship (2026-07-27) — `round2-stage2-best` int8 became the live runtime
+
+⚠ **It is no longer the live runtime**: Round 3 Run A `best-real` replaced it on 2026-09-03. Current
+state is [../STATUS.md](../STATUS.md)'s job, not this file's.
 
 The re-scoring reopened the ship decision and the owner took it: same disposition as Round 1, an
 **improvement ship, not a pass** — the macro floor is still failed, and that is written down rather

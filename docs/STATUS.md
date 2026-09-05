@@ -17,10 +17,16 @@ has acted on any of them yet:
    A cold start measured **38.2 s**, `--max-instances` is **10** at concurrency 1, and an
    over-capacity request QUEUES rather than failing fast. ⏭ **`--min-instances 1` is still the
    owner's open call**: it removes the cold start and costs money continuously.
-2. ⚠ **Visitors are reading with the ROUND 2 model.** Weights come from `VITE_WEIGHTS_URL`, the
-   Round-3 arm is only staged locally, and Round 3 read **51%** on the exam against a 75% floor. The
-   pages a stranger uploads are being read by the older model, and the dense-page failure below is
-   silent — wrong notes, no warning.
+2. ⚠ **Visitors are reading with ROUND 3 RUN A `best-real`** (owner, corrected 2026-09-05 —
+   ⛔ **this file said "still Round 2" and that was wrong**). **Verified by hash, not by memory**:
+   `apps/web/public/models/encoder_model.onnx` is byte-identical to
+   `data/checkpoints/r3a-stage2-best-real-onnx/encoder_model_int8.onnx`, it was staged **2026-09-03
+   13:22**, the live image was built **13:38** the same day, and revision **`omr-decode-00006-7wq`**
+   takes **100%** of traffic. ⚠ **The wrong claim came from reasoning about the wrong path**: it is
+   true that `VITE_WEIGHTS_URL` keeps a `deploy:app` from publishing a model — but the browser path
+   reads nothing since 2026-09-04, so the model a visitor meets is the one **baked into the Cloud Run
+   image**, which the Dockerfile copies out of `apps/web/public/models`. ⚠ Run A was the **hand-test**
+   pick, not an exam pass; the exam floor is unmet and the dense-page failure below is still silent.
 3. ⚠ **Nobody has looked at the phone with their own eyes.** The phone CSS shipped 2026-09-04 and is
    covered only by `npm run smoke:phone`, a probe that never exits nonzero. LinkedIn traffic is
    phone-heavy. ⏭ `npm run smoke:phone`.
@@ -61,9 +67,10 @@ IS VISIBLY BETTER than both `r3-final-stage2-last` and Round 2** (owner, 2026-09
 evaluationlar o kadar fazla şey söylemiyor"*). ⚠ Not a contradiction: real-val's ~±0.13 edits/strip hides
 any gain under ~5%, and the exam drops **41%** of its candidates — the wide, dense strips a page shows. ⏭ **Owner's call, recommended: stage and publish Run A `best-real`**
 through the usual chain (ONNX → int8 → parity → `gate:browser`, where **27/28 is the ceiling for any
-tie-free model** → `deploy:app` + server). Nothing is published; the live site is still Round 2, backed
-up at `apps/web/public/models/_round2_backup/`; the Round-3 model is staged locally from the
-2026-09-01 test. ⏭ Recommended, not decided: a fixed **10–15 page hand-test set** outside the exam,
+tie-free model** → `deploy:app` + server). ✅ **DONE — Run A `best-real` IS what the live server runs**
+(staged 2026-09-03 13:22, image built 13:38, revision `omr-decode-00006-7wq` at 100%; confirmed by
+hashing the staged graph against the checkpoint). Both predecessors are kept beside it:
+`_r3final_backup/` is `r3-final-stage2-last` and `_round2_backup/` is `round2-stage2-best`. ⏭ Recommended, not decided: a fixed **10–15 page hand-test set** outside the exam,
 corrections counted per page per model — the page-level instrument this project lacks.
 
 **Round 4 in one line (owner's decisions, 2026-09-03):** **no new render**, **`\tupend` stays**,
@@ -332,8 +339,9 @@ the voices should be louder the order is per-voice `gain` → a `Çalgı sesi` s
 ### Track B — the model (Round 4, OPEN 2026-09-03)
 
 Still the **public-launch gate**, and it shares no file with the feature track. Plan, evidence, the
-owner's decisions and the order of work: **[rung3/round4.md](rung3/round4.md)**. `round2-stage2-best`
-is the live runtime until the owner publishes a better one (Run A `best-real` is the hand-test pick).
+owner's decisions and the order of work: **[rung3/round4.md](rung3/round4.md)**. ⚠ **The live runtime
+is Round 3 Run A `best-real`** since 2026-09-03 — published on the owner's hand test, not on an exam
+pass, so Round 4's job is unchanged.
 
 | role | pool | state |
 |---|---|---|

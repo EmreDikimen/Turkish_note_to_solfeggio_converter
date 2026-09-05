@@ -26,8 +26,14 @@ things that would matter *when* the app went public. They now matter:
   cold or dead container shows `server-unavailable`. A cold start measured **38.2 s**;
   `--max-instances` is 10 at concurrency 1 and an over-capacity request **queues**.
   `--min-instances 1` removes the cold start and costs money continuously — still the owner's call.
-- **Strangers are reading with Round 2.** Weights come from `VITE_WEIGHTS_URL`; the Round-3 arm is
-  staged locally only. The dense-page failure is silent, so a wrong page looks like a right one.
+- **Strangers are reading with Round 3 Run A `best-real`** — ⚠ this entry first said *Round 2* and
+  the owner corrected it the same day. The mistake is worth keeping because of its shape: the claim
+  reasoned about `VITE_WEIGHTS_URL`, which governs the BROWSER's weights, and the browser has read
+  nothing since 2026-09-04. The model a visitor meets is the one the Dockerfile bakes into the Cloud
+  Run image out of `apps/web/public/models` — staged 2026-09-03 13:22, image built 13:38, revision
+  `omr-decode-00006-7wq` at 100% of traffic, and the staged graph hashes equal to
+  `r3a-stage2-best-real-onnx/encoder_model_int8.onnx`. ⚠ Run A was published on the owner's **hand
+  test**, not an exam pass, so the dense-page failure is still silent.
 - **The phone is unlooked-at.** The CSS shipped 2026-09-04 behind two media queries; its only
   coverage is `smoke:phone`, a probe that never exits nonzero. LinkedIn traffic skews phone.
 

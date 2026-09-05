@@ -6,6 +6,29 @@ updated: 2026-09-05
 
 ## Now
 
+⭐ **THE PUBLIC LAUNCH HAPPENED ON 2026-09-05: THE OWNER PUT THE LIVE APP'S LINK ON LINKEDIN.**
+This **overturns the standing gate** — every plan in this repo said the public launch waited on the
+exam result of the round in progress, and it did not. Nothing is wrong with that; it was the owner's
+call to make. But three things that were written as *future* risks are now *live* ones, and no one
+has acted on any of them yet:
+
+1. ⛔ **Cloud Run capacity is no longer hypothetical.** Since 2026-09-04 the app reads **nothing** on
+   the visitor's machine — a cold or dead server shows `server-unavailable` instead of falling back.
+   A cold start measured **38.2 s**, `--max-instances` is **10** at concurrency 1, and an
+   over-capacity request QUEUES rather than failing fast. ⏭ **`--min-instances 1` is still the
+   owner's open call**: it removes the cold start and costs money continuously.
+2. ⚠ **Visitors are reading with the ROUND 2 model.** Weights come from `VITE_WEIGHTS_URL`, the
+   Round-3 arm is only staged locally, and Round 3 read **51%** on the exam against a 75% floor. The
+   pages a stranger uploads are being read by the older model, and the dense-page failure below is
+   silent — wrong notes, no warning.
+3. ⚠ **Nobody has looked at the phone with their own eyes.** The phone CSS shipped 2026-09-04 and is
+   covered only by `npm run smoke:phone`, a probe that never exits nonzero. LinkedIn traffic is
+   phone-heavy. ⏭ `npm run smoke:phone`.
+
+⚠ **This entry records the fact, not a plan.** The owner asked on 2026-09-05 for the state to be
+written down and for nothing to be acted on. [DECISIONS.md](DECISIONS.md) ·
+[mvp/README.md](mvp/README.md).
+
 ✅ **DEPLOYED 2026-09-05** (owner asked) — <https://komavision.netlify.app>, everything below this line included: the phone CSS, the measure card, the stored-pages list, the voice bridge, the makam picker's new line and the usul fix below. **The MODEL is untouched and still Round 2**: weights come from `VITE_WEIGHTS_URL` on the Hub, so a `deploy:app` cannot publish the locally staged Round-3 arm. `npm run smoke:live` **PASSES** — the site read a page on Cloud Run (9 porte → 24 şerit → 229 nota, 45.6 s) and **refused** to read anywhere else when pointed at a dead server. ⚠ That refusal arm had never run against a real deployment before and it exposed a bug **in the check, not the app**: a refusal UNMOUNTS `#omr-status`, and all three page smokes asked it for `data-state` before looking at `#omr-error`, so they timed out on a detached locator while the app was behaving correctly in 5.1 s. Fixed in `live-smoke.ts` / `build-smoke.ts` / `page-smoke.ts`. ⏭ Look at the phone itself with `npm run smoke:phone`.
 
 ⛔ **THE APP NEVER READS A PAGE ON THE VISITOR'S MACHINE ANY MORE (owner, 2026-09-04), AND THAT MAKES
@@ -53,39 +76,21 @@ select checkpoints on real-val **corrections**, not loss; beam search measured o
 ⛔ **Two things the round is NOT allowed to do**: read the exam again for an A/B, and retire
 `\tupend` or add a `\dottedbar` token — [rung3/round4.md](rung3/round4.md) "Not this round".
 
-⭐ **THE PHONE WORKS NOW, AND `npm run smoke:phone` IS HOW YOU LOOK AT IT** (owner, 2026-09-04). The
-app had **no width-based media query at all**: the page scrolled sideways at every phone width, every
-picker was 13px so iOS Safari zoomed in on the first tap and never back, every control was 30px against
-a 44px thumb, and the edit toolbox was taller than a 667px screen. All fixed in CSS behind
-`(pointer: coarse)` and `(max-width: 700px)`, so the desktop app and every existing check are untouched
-— the toolbox now docks to the bottom as a sheet on a phone. Reasoning, the two mistakes worth keeping,
-and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
-
-⭐ **THE INSTRUMENT TAB SHOWS THE BAR IT IS PLAYING, AND EDITS IT THERE** (owner, 2026-09-04, revised 2026-09-05): instrument left, sounding bar right, ‹ ›, **Ölçüyü çal** (that bar only — 4.6 s of a 123 s piece) and **Ölçüyü düzenle**, the usual toolbox **without leaving the tab**. ⭐ The card IS `SheetView` mounted again (`onlyMeasure`) — one editor, one document, one undo stack. ✅ **Live since 2026-09-05.** [features/measure-card.md](features/measure-card.md).
-
-⭐ **THE APP REMEMBERS THE PAGES IT HAS READ, IN THE READER'S OWN BROWSER** (owner, 2026-09-05): a decoded page and every later edit go to IndexedDB and come back by name after a refresh — **30 pages**, least recently opened dropped, ✕ or *Hepsini sil* to forget, no server and no bill. ⭐ **Renameable** — the page on screen (✎ beside its heading) and any older one — with the **makam drawn beside the name**, re-read from the score so it survives both a rename and a later makam change. ⚠ A **cache, not a save**: notes only (the photograph is never stored), and it does not travel to another device. ✅ **Live since 2026-09-05.** [features/recent-pages.md](features/recent-pages.md).
-
-⭐ **THE MAKAM PICKER NOW SAYS WHICH NOTES IT PLAYS DIFFERENTLY** (owner, 2026-09-05): beside the dropdown, one line per rule — the **written** perde (Si with its koma-bemol drawn as the real sign), how far the note is really played from it (*1,5 koma pes*), and **how many notes of the page on screen** that reaches, counted off the document itself. ⭐ A rule that matches nothing says so — hüzzam's hisar on `gamzedeyim-deva` reads *bu eserde yok* — and a makam that bends nothing gets ONE plain sentence, *"Bu makam yazıldığı gibi çalınıyor."* (owner cut a first version that wrote two; the finding-vs-silence difference stays in the table). The post-decode prompt renders the same block, unfolded. Sound only, as before. ⛔ **AND IT FOUND A SHIPPED BUG, WHICH IS FIXED** (owner heard it the same day: *"bazen la farklı çalıyor, bazen re, bazen mi"*): the deltas are keyed by the WRITTEN document, `unfoldDoc` renumbers every event, and the app applied them to the performance — so the bend landed on the wrong note, silently, since 2026-08-30. `gamzedeyim-deva` under uşşak bent **19 wrong notes out of 22**; `remapKomaDeltas` re-keys them and `tools/core/makam-test.ts` pins it. ✅ **A second suspect was raised and CLOSED the same day** (owner): a segah spelled `b2` takes no bend — but only SymbTr exports spell one, a decode cannot (the vocabulary is the 8 AEU signs), so the product path is already exact. Kept in [BACKLOG.md](BACKLOG.md) because the fixtures make the wrong version easy to re-derive. ✅ **Live since 2026-09-05.** [mvp/makam.md](mvp/makam.md).
+⭐ **FOUR FEATURES SHIPPED 2026-09-04/05 AND ARE LIVE.** Each has a doc that owns its design, its traps and its numbers; this file keeps one line each plus the warning that outlives the build. **The phone works** (2026-09-04) — the app had **no width-based media query at all**, now fixed behind `(pointer: coarse)` and `(max-width: 700px)` at the END of `app.css` so order wins, which is what leaves the desktop app and every existing check untouched; ⚠ **`npm run smoke:phone` is a probe, not a gate — it never exits nonzero**, so nothing about the phone is proven by CI ([DECISIONS.md](DECISIONS.md)). **The instrument tab shows the bar it is playing, and edits it there** (2026-09-04, revised 2026-09-05) — ⭐ the card IS `SheetView` mounted again (`onlyMeasure`), so one editor, one document, one undo stack ([features/measure-card.md](features/measure-card.md)). **The app remembers the pages it has read** (2026-09-05) in the reader's own IndexedDB, 30 pages, renameable, makam beside the name; ⚠ a **cache, not a save** — notes only, the photograph is never stored, and it does not travel to another device ([features/recent-pages.md](features/recent-pages.md)). **The makam picker says which notes it plays differently** (2026-09-05): per rule, the written perde, the shift in commas, and how many notes of THIS page it reaches — ⛔ **and it found a shipped bug**, the deltas keyed by the written document while `unfoldDoc` renumbers, so `gamzedeyim-deva` under uşşak bent **19 wrong notes out of 22**, silently, since 2026-08-30; `remapKomaDeltas` re-keys them ([mvp/makam.md](mvp/makam.md)).
 
 ⛔ **THE USUL STOPPED PARTWAY THROUGH A PAGE WITH A REPEAT AND NEVER CAME BACK — FIXED AND LIVE**
-(owner heard it, 2026-09-05: *"usul vuruşu bazen kesiliyor ve geri gelmiyor"*). The
-metronome clicks and the usul's düm/tek/ke were built from the WRITTEN score, while the timeline
-they play against has come from `unfoldDoc` — the performance — since 2026-08-30. Both builders walk
-bars, so a repeat left the strokes running out at the written total, and misaligned before that.
-⚠ **The second symptom of one mistake**, hours after the makam deltas: the unfold introduced a
-second document and the clock-aligned inputs were left keyed to the first ([DECISIONS.md](DECISIONS.md)).
-⚠ **No automated check can see this class of bug** — the browser smokes load a SymbTr sample, which
-is flat in the data and never folds; `tools/core/usul-test.ts` pins the rule instead. ✅ **Deployed
-2026-09-05**, `npm run smoke:live` passing on the live site.
+(owner heard it, 2026-09-05). The metronome and stroke tracks were built from the WRITTEN score
+while the timeline has run on the performance since 2026-08-30 — the second symptom of one mistake,
+hours after the makam deltas. ⚠ **No automated check can see this class of bug** (the smokes load a
+SymbTr sample, which never folds); `tools/core/usul-test.ts` pins the rule instead. The rule that
+came out of it is now in [../CLAUDE.md](../CLAUDE.md). [DECISIONS.md](DECISIONS.md) ·
+[log/status-log.md](log/status-log.md).
 
-✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04).
-The old recording keeps sounding until the new one downloads; a toast (`#voice-notice`) names both.
-⛔ **Instant was asked for and is not available** (9.9–35.4 MB over 11–36 files), so the gap was fixed,
-not the wait. ⚠ The "one decoded voice at a time" rule is amended, bounded by the owner's choice:
-**held only while a piece plays**, released by Dur. ⚠ `state === "failed"` no longer implies the
-default tone; read `VoiceStatus.sounding`. ⏭ **Owner: the bridge is only covered by `npm run
-smoke:editor -- --voices-url <hub>`** — the default arm has no host, so it never has a voice to
-hold. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
+✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04) —
+the old recording keeps sounding until the new one downloads. ⚠ `state === "failed"` no longer
+implies the default tone; read `VoiceStatus.sounding`. ⏭ **Owner: only covered by `npm run
+smoke:editor -- --voices-url <hub>`**, since the default arm has no host and so never holds a voice.
+[DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03), because two
 slicer fixes moved crop boundaries the same day — a closing `:|` read as two barlines
@@ -115,26 +120,7 @@ measure — at **b = 57, not 50**. ⭐ Deferring it is what keeps the shipping s
 `examv3` stays valid. Every number: [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) ·
 [BACKLOG.md](BACKLOG.md) item 0.
 
-⭐ **A WHOLE STAFF ROW GOES MISSING ON 14% OF PAGES, AND `STAFF_RESCUE` IS THE FIX — SHIPPING OFF
-UNTIL YOU SAY OTHERWISE.** A lost row is not a bad crop, it is **NO crop**, so no accuracy metric
-has ever shown it; every global knob was measured and rejected, and what ships is a **second pass**
-re-detecting only in the bands the page's own staff pitch says are empty. ⚠ Its benefit is
-**unscoreable, not merely unmeasured** — the evidence is visual. The mechanism and the two rules
-that ride with it are in [../CLAUDE.md](../CLAUDE.md); the numbers are in
-[METRICS-SLICER.md](METRICS-SLICER.md).
-
-⛔ **THE ROW-LEVEL SLICER INSTRUMENTS ARE BLIND TO STAFF-COUNT CHANGES** — both pair a row to its
-cached truth by **system index**, so an inserted staff reports a large regression that is pure
-artifact. `score_slicer.py` gained `--pair-by-position`; **`score_barlines.py` has the same coupling
-and NO fix**, which is why the rescue's new rows can never be scored there. [METRICS-SLICER.md](METRICS-SLICER.md).
-
-⏭ **THE SLICER IS FROZEN AGAIN — treat it as frozen unless the owner says otherwise.** The
-2026-08-26 freeze was lifted twice on 2026-09-03, both times at the owner's request (the trailing
-`:|` above, and **a stem taken for a barline** — `END_BLOBS`), both priced on full 6,440-row runs
-and both a clear gain with parity exact; nothing is owed on either. The freeze's own history — the
-three fixes that landed, the two that were rejected, and the lesson that the faded-page table has
-now mispredicted a full run three times — is in [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md),
-[METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) and [DECISIONS.md](DECISIONS.md).
+⏭ **THE SLICER IS FROZEN — treat it as frozen unless the owner says otherwise**, and three settled findings ride with it. ⭐ **A whole staff row goes missing on 14% of pages and `STAFF_RESCUE` is the fix, SHIPPING OFF until you say otherwise**: a lost row is not a bad crop, it is **NO crop**, so no accuracy metric has ever shown it; every global knob was measured and rejected, and what ships is a second pass re-detecting only in the bands the page's own staff pitch says are empty — ⚠ its benefit is **unscoreable, not merely unmeasured**, the evidence being visual. ⛔ **The row-level instruments are blind to staff-count changes**: both pair a row to its cached truth by **system index**, so an inserted staff reports a large regression that is pure artifact — `score_slicer.py` gained `--pair-by-position`, **`score_barlines.py` has the same coupling and NO fix**, which is why the rescue's new rows can never be scored there. ⚠ **The 2026-08-26 freeze was lifted twice on 2026-09-03**, both at the owner's request (the trailing `:|`, and a stem taken for a barline — `END_BLOBS`), both priced on full 6,440-row runs, both a clear gain with parity exact; nothing is owed on either. Mechanism and rules: [../CLAUDE.md](../CLAUDE.md). Numbers and the freeze's own history — including the lesson that the faded-page table has now mispredicted a full run three times: [METRICS-SLICER.md](METRICS-SLICER.md) · [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md) · [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) · [DECISIONS.md](DECISIONS.md).
 
 ⏭ **COLLECTION IS NARROWED TO TWO TARGETS, not broadened.** 2,486 unlabelled page PNGs already sit
 on disk, so volume relieves nothing. What it cannot substitute for: pages drawing the **concave
@@ -143,10 +129,11 @@ tuplet mark** (unscoreable — no labelled real strip carries it) and **tuplet-d
 pages. ⚠ **A THIRD target, DEFERRED not dismissed**: every page we own is from **two websites**,
 exam included ([BACKLOG.md](BACKLOG.md) item 10).
 
-✅ **ROUND 3 HAS A SIGNED ACCEPTANCE BAR, and it is also the public-launch gate** (owner,
-2026-08-15): **≥75% of exam pages needing ≤5 corrections**, against 57% today, with the accidental
-measures as no-regression clauses. Written before any Round-3 training and **not re-opened after the
-read** — a miss is a miss and the launch waits for Round 4. ⚠ Report the primary **with its
+✅ **ROUND 3 HAS A SIGNED ACCEPTANCE BAR** (owner, 2026-08-15): **≥75% of exam pages needing ≤5
+corrections**, with the accidental measures as no-regression clauses. Written before any Round-3
+training and **not re-opened after the read** — a miss is a miss. ⚠ **It is no longer the
+public-launch gate**: it was written as one, and the launch went ahead of it on 2026-09-05 (top of
+this file). It still governs what may be PUBLISHED as a model. ⚠ Report the primary **with its
 interval**: at 67 pages the 95% half-width is ~±10.4 pp. [rung3/round3-criteria.md](rung3/round3-criteria.md).
 
 ✅ **`\tie` IS RETIRED AND BOTH SIDES ARE DONE** (owner, 2026-08-22) — rule and numbers in

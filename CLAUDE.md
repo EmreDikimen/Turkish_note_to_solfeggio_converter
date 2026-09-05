@@ -7,7 +7,7 @@ a server is configured — the in-browser `onnxruntime-web` path is no longer a 
 
 **TWO TRACKS RUN IN PARALLEL (owner, 2026-08-05).** The product track is building a decode server
 (W9) for a release to **two friends** who will be asked about the **interface, not the model**; the
-model track is **Round 4 (opened 2026-09-03; Round 3 read 51% against 75% and missed)** — it draws nothing new: it re-spells labels for the tokenizer, re-emits the dense half of every real page, fixes the model-voted signature and the checkpoint pick ([docs/rung3/round4.md](docs/rung3/round4.md)). Neither blocks the other. The public launch is gated on the exam result of the round in progress.
+model track is **Round 4 (opened 2026-09-03; Round 3 read 51% against 75% and missed)** — it draws nothing new: it re-spells labels for the tokenizer, re-emits the dense half of every real page, fixes the model-voted signature and the checkpoint pick ([docs/rung3/round4.md](docs/rung3/round4.md)). Neither blocks the other. ⚠ **The public launch was gated on the round in progress and that gate was OVERTAKEN: the owner put the live link on LinkedIn on 2026-09-05** — strangers are reading pages with the Round-2 model, on a server with no fallback. What that changes is in [docs/STATUS.md](docs/STATUS.md).
 Ladder and state: [docs/mvp/README.md](docs/mvp/README.md). Synthetic accuracy is solved (99.9%);
 the remaining model work is about real printed pages.
 

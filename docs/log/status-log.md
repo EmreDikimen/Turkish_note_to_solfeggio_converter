@@ -7,6 +7,33 @@ updated: 2026-09-05
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-05 — the link went public, ahead of the gate (product track)
+
+Owner: *"linkedinde paylaştım her şeyi, normal bir şekilde devam edebiliriz."* The live app's link
+went out on LinkedIn.
+
+**Every plan in this repo said this waited on the exam.** The `public` rung in
+[../mvp/README.md](../mvp/README.md) read *gated on Round 3's exam result*, and CLAUDE.md's header
+said the same. Round 3 read **51%** against a 75% floor and missed, Round 4 is open, and the link
+went out anyway. That is the owner's call to make; the point of this entry is that the repo was
+still asserting the opposite in three places, and an agent reading them would have planned around a
+gate that no longer exists. Fixed in STATUS, DECISIONS, CLAUDE.md and the ladder.
+
+⚠ **What actually changed is tense, not fact.** All three risks below were already written down as
+things that would matter *when* the app went public. They now matter:
+
+- **No fallback + a cold server.** Since 2026-09-04 nothing is read on the visitor's machine, so a
+  cold or dead container shows `server-unavailable`. A cold start measured **38.2 s**;
+  `--max-instances` is 10 at concurrency 1 and an over-capacity request **queues**.
+  `--min-instances 1` removes the cold start and costs money continuously — still the owner's call.
+- **Strangers are reading with Round 2.** Weights come from `VITE_WEIGHTS_URL`; the Round-3 arm is
+  staged locally only. The dense-page failure is silent, so a wrong page looks like a right one.
+- **The phone is unlooked-at.** The CSS shipped 2026-09-04 behind two media queries; its only
+  coverage is `smoke:phone`, a probe that never exits nonzero. LinkedIn traffic skews phone.
+
+⛔ **Nothing was acted on, at the owner's instruction** (*"bir şey yapmana gerek yok"*). This is a
+record, not a queue.
+
 ## 2026-09-05 — the DOM contract moves out of CLAUDE.md (docs)
 
 CLAUDE.md crossed its 400-line cap for the second time. The block that pushed it over was **not**

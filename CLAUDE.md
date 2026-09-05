@@ -172,7 +172,15 @@ a successful build is not a deploy.
   (`bars` + `playBars`), core's **`unfoldDoc`** expands it, `buildTimeline` runs on that — the audio side still
   gets a plain flat document. ⚠ **Never make the app expand again** to "fix" something downstream; unfold at
   that point instead. ⚠ **`buildTimeline` must never be given the WRITTEN doc** when a structure exists — it
-  would play the repeat once with the cursor still right, the silent version of this bug. ⚠ The playhead follows
+  would play the repeat once with the cursor still right, the silent version of this bug.
+  ⛔ **AND NEITHER MAY ANYTHING ELSE THE APP HANDS THE BACKEND IN MUSICAL MS**: the app's two other
+  clock-aligned inputs were both keyed to the written page and both shipped broken from the unfold until
+  **2026-09-05** — the makam's koma deltas landed on the wrong notes (rule below), and the metronome and usul
+  builders ran out of bars, so **the usul stopped partway through a repeat and never came back** (`perf.doc` in
+  `buildPlayOptions`). ⚠ **Neither threw and no browser check can reach either** — the smokes load a SymbTr
+  sample, which is flat in the data and never folds, so the owner's EAR found both; `makam-test.ts` and
+  `usul-test.ts` pin them. `doc` is what a person reads and edits, and nothing that must line up with a clock
+  may be built from it. ⚠ The playhead follows
   a **play plan** (`PlayStep[]`: one step per sounding event, naming the WRITTEN note drawn for it) and SheetView
   indexes drawn positions **by event index**; breaking that link desynchronises picture from sound silently.
   ⭐ **THE FIRST 𝄋 MARKS A SECTION; EVERY LATER 𝄋 PLAYS IT AGAIN AND COMES BACK** (owner, 2026-08-30) — a saz
@@ -224,54 +232,20 @@ a successful build is not a deploy.
   is no second resampler to hold in parity either.
 
 - **The deploy checks read DOM state, never the words on the page** (2026-08-07, the style pass).
-  `apps/web/src/ui/status.ts` is the single producer of the contract — `#omr-status` carries `data-state`, `data-kind`, `data-where` and the counts; `#omr-error` carries `data-error-kind`; `#play` carries `data-play-state`; `#app` carries `data-ready`. The sheet adds `#follow-playhead[data-follow]` **and** `#sheet-surface[data-follow]` (the follow setting on the control AND on the thing that moves — a checked box only proves it was clicked).
-  The editor adds `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`, `[data-omr-note]` / `[data-selected]` per note, `#note-delete` / `#undo` / `#redo`, and the palette's `#edit-palette[data-armed]` + `[data-tool]` per tool, its transport `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`, its
-  toolbox shell `#edit-palette[data-collapsed]` + `#palette-fold[data-collapsed]` (⚠ **a FLOATING, draggable, foldable toolbox since 2026-09-03** — `fixed`, rendered from `App` OUTSIDE
-  `.kv-card`, taking no width from the score row; folding UNMOUNTS every tool, so unfold before arming one), the
-  insert preview `[data-omr="insert-ghost"][data-insert-pitch]`, the tuplet tool's
-  `#sheet-surface[data-tuplet-anchor]` + `[data-tuplet="start|member|anchor|end|blocked"]` per note,
-  the SIGN tools `[data-tool="sign:repStart|repEnd|volta|segno|coda|dc|fine"]`, their delete targets `[data-omr="sign-hit"][data-bar][data-sign]`, the unfinished `‖:` `[data-omr="open-repeat"][data-bar]` and a refusal's `.kv-toolbox__hint[data-refused]`,
-  the drawn mark's own target `[data-omr="tuplet-mark-hit"][data-tuplet-group][data-tuplet-mark="closed|broken"]`
-  (⚠ **the SIGN selects a tuplet; its notes are `pointer-events: none`** — owner, 2026-08-30), a HELD
-  mark's `#sheet-surface[data-tuplet-selected]` + `[data-tuplet-held]` per member +
-  `[data-tuplet-landing="start|end|both"]` (plus `[data-tuplet-fix]` where the move would COMPLETE a
-  broken mark) + `[data-omr="tuplet-handle"][data-edge]` + `[data-omr="tuplet-frame"]` + `#tuplet-remove`,
-  and the off-meter mark `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`
-  (⚠ **`data-edit-mode` is on FOUR elements — see the measure card below — and `data-play-state` on TWO** — `#play` and `#palette-play`; select the one you mean by id). The stored-page list adds `#recent[data-omr="recent"][data-count][data-open][data-current]` with one `[data-omr="recent-item"][data-page-id]` per row (`[data-omr="recent-open"]` / `"recent-remove"` inside), plus `#recent-toggle`, `#recent-clear`, the row's `[data-omr="recent-rename"]`, the heading's `#score-rename` + `[data-omr="score-name"]`, and the shared box `[data-omr="rename-input"][data-page-id]` — ⚠ **`data-count` is the load-bearing one**, it is the only proof a page was stored, `#recent` renders NOTHING when the store is empty so its absence is an assertion too, and **`data-page-name` / `data-page-makam` are what a rename and the makam are asserted on**: a page name is user DATA, not copy, so an attribute is the standing rule there rather than an exception to it. The instrument picker adds `#instrument[data-instrument][data-voice-state]` **plus `data-voice-sounding`** — ⚠ **the last one is the only proof of the 2026-09-04 bridge**: a voice switch made while a piece plays keeps the OLD recording sounding until the new one downloads, and from the DOM that is the same notes, the same playhead and the same picker, so `data-voice-sounding` disagreeing with `data-instrument` IS the evidence (the same blind spot `sampled`/`synth` exists for). Its toast is `#voice-notice[data-omr="voice-switch"][data-voice-to][data-voice-sounding][data-voice-state][data-voice-loaded][data-voice-total]` — ⚠ rendered from `App`, `position: fixed`, **click-through except its ✕**, and deliberately NOT inside `#omr-status`, because its counter ticks. The makam picker adds `[data-omr="makam-intonation"][data-makam][data-rules][data-notes]` plus one `[data-omr="makam-rule"][data-letter][data-alter][data-delta][data-notes]` per bent perde — ⚠ **`data-notes` is only worth anything RE-DERIVED**: it counts this score's matching notes, so a check that reads it back off the element proves nothing, and `smoke:editor` counts them off `window.__omrDoc` instead. ⚠ It renders NOTHING with no makam chosen, so its absence is an assertion too, and a rule matching no note reads **0** rather than vanishing. The transport adds `#bpm` and `#transport-pinned` — ⚠ **the ÇALMA row is pinned to the TOP of the page since 2026-09-05 (`position: sticky`) and the other two rows are not**, which takes TWO measurements to assert: `#transport-pinned`'s box sits at `top ≈ 0` after a scroll to the bottom, AND `#transport-pinned + .kv-transport` (Ritim + Perde) is gone off the top — a whole bar made sticky passes the first and fails the second. ⚠ There is ONE Çal button again: it replaced a corner-parked second pair (`#sticky-transport` / `#play-sticky` / `#stop-sticky`), which is DELETED, so a check presses `#play` itself from wherever it has scrolled to. The fingerboard tab (F3) adds `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings][data-lines][data-zoom]`,
-  `[data-omr="finger-marker"]` carrying `data-string` / `data-ratio` / `data-finger-state="idle|open|stopped|rest|out-of-range"`,
-  and `[data-omr="fingerboard-tick"]` per line of the position chart, carrying `data-commas` /
-  `data-ratio` / `data-finger` — so a check reads WHERE the finger is, never a label. ⚠ The tick is a
-  line ACROSS the neck, not a notch on one string, and the chart is **fixed** (the seven standard
-  first-position notes, identical on every score) — assert it by comparing the whole chart across two
-  pieces, never by counting. `#fingerboard-lines` hides them: assert the marks AND `data-lines`,
-  because the checkbox alone can be unchecked while the lines are still drawn.
-  ⚠ Same for `#fingerboard-zoom`: the **viewBox** is the zoom, so read that — `data-zoom` alone would
-  pass on a control wired to nothing. ⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the
-  position formula and the string-choice rule. **The kanun tab (F3's second instrument) adds**
-  `#kanun[data-omr="kanun"][data-courses][data-mandals][data-zoom="full|mandal"][data-note-state="idle|playing|rest|out-of-range"]`,
-  312 `[data-omr="kanun-mandal"]` carrying `data-course` / `data-mandal` / `data-offset` /
-  `data-mandal-state="up|down"` / `data-changed="to|from"`, 26 `[data-omr="kanun-course"]` **groups** carrying
-  `data-perde` / `data-course-state="idle|playing"`, each holding **three `<line>`s** because a perde
-  is three strings sharing one lever (78 in total, and `smoke:editor` asserts the total — 26 would
-  still pass if the view went back to one line each), and one `[data-omr="kanun-opening-item"]` per
-  course the makam sets before playing. ⚠ **`data-mandal-state` is the load-bearing one: exactly ONE
-  lever per course is `up` at every moment**, and `smoke:editor` asserts that at every sample across
-  a whole playback — a mandal is a lever that STAYS WHERE IT IS PUT, so a leak in the replay shows up
-  there and nowhere else. ⚠ `data-changed` **fades**: it marks an event, not a state, so never assert
-  it without driving the clock to a change — and it is drawn as a red **frame**, never a fill,
-  because the fill is what carries `data-mandal-state`. ⚠ Its arithmetic is `tools/core/kanun-test.ts`. **The bar beside the instrument (2026-09-04) adds** `#measure-card[data-omr="measure-card"][data-measure][data-total][data-notes][data-follow][data-edit-mode]`, its own `#measure-surface` + `[data-omr="measure-svg"]`, and `#measure-prev` / `#measure-next` / `#measure-play` / `#measure-edit` / `#measure-follow`. ⚠ **`data-follow` is the load-bearing one** — a pinned card and a following card are otherwise the same DOM. ⚠ **`Ölçüyü çal` is asserted by TIME**, stopped again in seconds on a two-minute piece, because only the cut timeline makes that true. ⚠ **The card has NO editing markers of its own**: it mounts `SheetView`, so its notes, ✕, ghost, handles and playhead are the page's own `[data-omr-note]` / `#note-delete` / `[data-omr="playhead"]` — an edit made there is asserted on **`window.__omrDoc`** and then on the Nota page, because a card with its own overlay could pass "a note is selected" and still be a second document. ⚠ **`data-edit-mode` is on FOUR elements** (`#edit-toggle`, `#sheet-surface`, `#measure-surface`, `#measure-card`): name the one you mean. The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot
-  prove playback began there. A tuplet is **not stored** anywhere, so no attribute can prove one was
-  made: `smoke:editor` counts the marks the engraver drew, in **both** styles (`.vf-tuplet` and the
-  curved arc's italic "3" — the style is a per-piece coin). ⚠ **There is no `#save-json` any more** (owner, 2026-08-30): a check that needs the
-  note model reads **`window.__omrDoc`**, and `window.__omrStructure` carries a decoded page's signs
-  and playing order — both beside the older `__omrStrips` / `__omrMeta` / `__omrConfig` hooks. The six
-  `tools/browser/*-smoke.ts`
-  assert on those, so **all user-facing copy is free to change** — that is what let the UI become
-  Turkish. Never reintroduce a text/regex matcher for a status message or a button label. Every
-  user-visible string lives in `apps/web/src/ui/strings.ts`. ⚠ Two traps: nothing that ticks on a
-  timer may render inside `#omr-status` (`page-smoke` counts distinct texts to prove progress
-  moved), and `#strips-input` lives inside the collapsed `<details id="advanced">`, so `app-smoke`
-  opens it first and the file inputs use the clip pattern, never `display:none`.
+  `apps/web/src/ui/status.ts` is the single producer of the contract, and the six
+  `tools/browser/*-smoke.ts` assert on attributes — which is what leaves **all user-facing copy free
+  to change**, and is how the UI became Turkish. ⛔ **Never reintroduce a text or regex matcher** for
+  a status message or a button label; every user-visible string lives in `apps/web/src/ui/strings.ts`.
+  ⚠ **THE FULL ATTRIBUTE LIST, PER FEATURE, AND THE TRAP IN EACH: [docs/DOM-CONTRACT.md](docs/DOM-CONTRACT.md)**
+  — split out of this file 2026-09-05 at the 400-line cap, because it grows with every feature. Read it
+  before writing a check or changing a component one watches. The four most often got wrong:
+  **`data-edit-mode` is on FOUR elements** (`#edit-toggle`, `#sheet-surface`, `#measure-surface`,
+  `#measure-card`) and `data-play-state` on TWO (`#play`, `#palette-play`) — name the one you mean;
+  **a refusal UNMOUNTS `#omr-status`**, so read `#omr-error` first or the locator detaches;
+  **`data-ready` never appears on a bare visit** (it means a score is installed, and none ships);
+  and **there is no `#save-json`** (owner, 2026-08-30) — read `window.__omrDoc`, with
+  `window.__omrStructure` for a decoded page's signs and playing order, beside the older
+  `__omrStrips` / `__omrMeta` / `__omrConfig`.
 - **THE APP PUBLISHES NO SCORE, AND NOTHING MAY PUT ONE BACK** (owner decision 2026-08-08). Every
   score this project has is a SymbTr export, and SymbTr is **CC BY-NC-SA 4.0** — serving one binds
   the app to **NonCommercial forever**, and two were compositions still in copyright under FSEK 5846.

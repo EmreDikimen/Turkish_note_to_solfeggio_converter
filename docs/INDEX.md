@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-09-03
+updated: 2026-09-05
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -13,6 +13,7 @@ wrong — fix by deleting, not by syncing.
 |---|---|
 | What is this project, how do I run it, what may I not do? | [../CLAUDE.md](../CLAUDE.md) |
 | What is the command for X, and how does it fail silently? | [COMMANDS.md](COMMANDS.md) |
+| **What may a browser check assert on?** The DOM attributes, per feature, and the trap in each | [DOM-CONTRACT.md](DOM-CONTRACT.md) |
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
 | What is owed but is NOT next, and why is it deferred? | [BACKLOG.md](BACKLOG.md) |
 | Work deferred PAST this round — density levers, exam v3's owed items, the sharp-glyph measurement | [BACKLOG-LATER.md](BACKLOG-LATER.md) |

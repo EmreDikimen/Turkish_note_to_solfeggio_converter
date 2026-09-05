@@ -2,10 +2,386 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-04
+updated: 2026-09-05
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-05 — the makam picker says what it plays differently, and finds a wrong-note bug (product track)
+
+The owner's ask, in one sentence: *"Makamları seçtiğimiz dropdownın yanına o an seçtiğimiz makamın
+görünenden nasıl farklı çalındığını, hangi notaları daha farklı çaldığını da yazar mısın"*.
+
+**What it was before.** The dropdown put a **♪** next to every makam that bends something, and
+stopped there. That is a flag, not an answer: it says *something moves* without saying which note,
+in which direction, or by how much — and the bend is the entire reason the control exists. The
+information was not missing from the project, only from the place where the choice is made: the
+post-decode prompt has shown the rules and their sources since 2026-08-07, and a reader meets that
+popup once, before they have any reason to care.
+
+**What it is now.** `apps/web/src/ui/MakamIntonation.tsx`, beside the picker: one chip per rule
+carrying the **written** perde — "Si" plus its koma-bemol drawn as the real Bravura sign, because
+"Si♭" and "Si koma-bemol" are different notes and only the sign says which — then the shift as a
+player hears it ("1,5 koma pes"), then how many notes of the page on screen it reaches. `neden?`
+unfolds the rule's own `why`, which is the sourced sentence the table already carried.
+
+**Three calls inside it, and each is the reason the line is worth trusting.**
+
+1. **The count comes from THIS score.** `makamRuleUsage` in core walks `eachRuleMatch` — the same
+   matcher `makamKomaDeltas` walks to produce the deltas playback actually applies — so the number
+   printed and the pitches bent cannot drift apart. A hint quoting a constant would have passed
+   every attribute check and still been a lie, which is why `smoke:editor` re-derives the count from
+   `window.__omrDoc` rather than reading it back off the element.
+2. **A rule that matches nothing shows 0.** Hüzzam bends its hisar, and `gamzedeyim-deva` never
+   writes one; the chip reads *bu eserde yok*. Hiding it would have promised a change nobody hears.
+3. **An empty rule list is two different answers.** Hüseyni's `[]` in `MAKAM_INTONATION` is a
+   *finding* — the sources say it does not take the uşşak lowering, and that entry is what stops
+   anyone completing the table by symmetry. An unlisted makam is *silence*: nobody has looked.
+   `makamIntonationRecorded` splits them and they get different sentences, because dressing the
+   second as the first would claim a measurement that does not exist.
+
+**The prompt renders the same component**, unfolded (`open`). That is not tidiness: two renderings
+of one table are two places to describe a makam, and `TR.makamModal.rule` / `.noDeviation` are
+deleted rather than left in parallel. The prompt gained the document as a prop so its counts are
+this page's too — the makam is chosen inside it, so nothing outside can precompute them.
+
+**Nothing about the sound changed.** The deltas, the table, `withKomaDeltas` and the written staff
+are untouched; this is a sentence about a mechanism that has worked since August. ⚠ One small core
+addition rides along: `solfegeLetter` in `notation.ts`, because `spellNote` always writes an octave
+and a rule matches a pitch CLASS — printing "Si4" would have claimed an octave the rule does not
+have.
+
+**Then the owner played it, and the line had already earned its place.** *"Uşşak makamını
+seçtiğimde bir miktar bozulma yaşıyorum bazı notalarda. Bazen la farklı çalıyor, bazen re, bazen mi.
+Ama bazen de doğru çalınıyor."* Uşşak bends exactly one note — the written koma-bemol si — so a La
+or a Re moving is not a mistuned rule, it is the bend landing on the wrong note.
+
+**The cause, and it had been shipping since 2026-08-30.** `makamKomaDeltas` returns a map keyed by
+`NoteEvent.index` **of the written score**. The app applies it to the PERFORMANCE, and `unfoldDoc`
+renumbers every event to a fresh 1..N. Nothing throws when those two disagree, because every index
+still exists — the delta simply lands on whatever note now holds that number. Measured on
+`gamzedeyim-deva` under uşşak: **19 of the 22 bent notes were the wrong ones**, and three were right
+by luck, which is exactly the *"bazen de doğru çalınıyor"*.
+
+⚠ **A repeat is not the only thing that renumbers, and that is the part worth keeping.** The obvious
+reading is "this only breaks on a folded page". It is not: `groupMeasures` skips `meta` events, so
+the unfolder drops them and every later index shifts down. `gamzedeyim-deva` has **28** of them and
+no fold was needed to break it. Anyone reasoning about `srcOf` should assume it is never the
+identity.
+
+**The fix is a re-key, not an earlier bend.** `remapKomaDeltas(deltas, played.srcOf)` walks the
+performance→written map, so each copy of a repeated note gets the delta too. ⚠ Bending the document
+*before* unfolding would have been shorter and wrong: `perf.doc` is what the instrument views read,
+and a kanun course is looked up by an exact **written** koma — a fractional one misses it. The bend
+belongs to the timeline and to nothing else.
+
+**Why no check caught it.** Every makam assertion in the tree tested the table, not the path from it
+to the speaker; the browser smokes drive the picker and never listen. `tools/core/makam-test.ts` is
+new and closes that: it builds a fixture with a `meta` event and a repeat, and asserts BOTH that the
+old keying bends `Mi5` and that the re-keyed one bends only the segah, in every copy.
+
+⏭ **One thing this opened and did not settle, because it is a musical decision** (owner's call,
+[../BACKLOG.md](../BACKLOG.md)): the rules match an **exact** written alteration, but the staff draws
+the nearest AEU sign, so a segah spelled `Si4b2` is drawn as the same koma-bemol as `Si4b1` and is
+**not** bent. `gamzedeyim-deva` is 22 `b1` against **54** `b2`; `beyati-delisin` is **0 against 40**,
+so choosing Beyâtî there changes nothing at all. Not obviously wrong — `b2` already sits 7 commas
+above dügâh against AEU's 8, most of the way to the performed 6.5 — but one drawn sign then sounds
+at two heights ~11 cents apart. The picker's count is what made it visible: it reports 22 where a
+reader counts 76.
+
+Checked: `npm test` (with the new `makam-test.ts`), `npm run typecheck`, `npm run smoke:editor`
+(18 new assertions, ALL PASS) and `npm run smoke:phone` — no sideways scroll at 375 / 390 / 412 /
+744, with the line wrapping under the picker rather than pushing the row. Seen at 1280 and at 375.
+Not deployed. [../mvp/makam.md](../mvp/makam.md) · [../DECISIONS.md](../DECISIONS.md)
+
+## 2026-09-05 — the Çalma row is pinned to the top, and the corner pair is gone (product track)
+
+One message from the owner, with a screenshot of the transport: *"Çalma kısmındaki Çal, dur,
+metronom seviyesi, çalgı sesi olan row ben aşağı kaydırdıkça kaybolmasın, sayfanın üstünde
+sabitlensin ve aşağı kaydırınca sağ altta çıkan Çal Dur barını da sil"*.
+
+**It overturns the 2026-09-03 answer to the same complaint, two days old.** That one kept Çal and
+Dur reachable by drawing a SECOND copy of them in the bottom-right corner once the real pair
+scrolled off, and it explicitly rejected pinning the bar. Half of that reasoning survives and half
+does not. What survives: **Ritim and Perde stay in the flow** — tempo, usul, makam and the
+accidental mode are set once, before playing, and pinning all three rows would hold a third of a
+laptop window over the music. What does not: the reader wanted **the row they were looking at**, at
+the top of the page, not a duplicate of two of its buttons in a corner. The corner pair, its CSS and
+the two `:has()` phone rules that kept it clear of the docked toolbox are deleted; `data-play-state`
+is back to naming two buttons instead of three.
+
+**The mechanism forced the bar into two boxes, and that is the part worth remembering.**
+`position: sticky` is bounded by the element's own PARENT, so a row pinned inside the three-row bar
+could only ever travel that bar's ~190px and would scroll away with it — it would look like the
+feature working for one screenful. The pinned row is therefore its own `.kv-transport`, a direct
+child of `.kv-page`, which is the whole document. Both boxes keep the `kv-transport` class on
+purpose: every control-height, select-width and phone rule in `app.css` is scoped to it, and a bare
+wrapper would have dropped all of them silently. ⚠ `.kv-page` must never gain an `overflow` or a
+`transform` — either one turns this off with no error.
+
+**Two things it displaced, both found by looking rather than by reasoning.** The voice toast is
+`fixed` at the top-centre and its own comment said "the top is empty on every screen size" — it is
+not any more, so it is offset by `--pinned-h`, the row's measured height (a `ResizeObserver`,
+because the row wraps: 64px wide, 122px on a phone). And the playhead follow treated the top of the
+WINDOW as the top of the readable area, so a row the music jumped to could park behind the bar; it
+now clears `#transport-pinned`'s live box, which is the right number both stuck (the bar's height)
+and unstuck (wherever it sits, with the score below it lower still).
+
+**The one measured mistake.** The bar was first given `margin: 0 calc(var(--space-5) * -1)` with
+matching padding, so its background would cover the page's own gutters. `smoke:phone` read **8px of
+sideways scroll on all four viewports**: the phone rule cuts `.kv-page`'s padding to 16px while the
+token stays 24px, so the box grew past the screen on both sides. Dropped — the gutter is empty page
+background in the same colour, and everything that scrolls under the bar is inside the column
+anyway. ⚠ This is the second time that probe has caught a rule that measured fine on a laptop.
+
+**On a phone the pinned row drops its caption** and the other two keep theirs. Stacked, "ÇALMA"
+costs a whole line above a button that already says "▶ Çal", and this row is the one line of the bar
+that is on screen at all times: 149px → 122px of a 667px screen.
+
+**Checks.** `npm test` ALL PASS, `smoke:editor` ALL PASS with a rewritten section — the row at
+`top ≈ 0` after a scroll to the bottom AND the other two rows gone off the top, because a whole bar
+made sticky passes the first and fails the second — `smoke:phone` clean at 375/390/412/744. ⏭
+Unchecked by an eye: [../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md) check 29, rewritten
+for the new shape — is a bar across the top worth the music it covers?
+
+## 2026-09-05 — the app remembers the pages it has read (product track)
+
+One question from the owner, and it carried its own constraint: *"kullanıcının daha önce decode
+ettirmiş olduğu sayfaları tarayıcı hafızasında falan tutabilir miyiz. Yani database bağlamak
+maliyetli olabilir ama tarayıcıda tutabiliriz"* — could the browser hold them, since a database
+would cost money.
+
+**Why it was worth building the same day.** A read costs **35–55 s** and, since 2026-09-04, a round
+trip to Cloud Run with no local fallback. A refresh spent all of it again — and took every
+correction made in the editor with it. Nothing else in the app throws away that much of the
+reader's time on an accident as ordinary as a reload.
+
+**The four questions the owner settled before anything was written**, because each of them changes
+what gets built: notes only or the photograph too (**notes only** — a phone photograph is 2–5 MB
+against the ~60–125 KB of the score it produced, measured on this repo's own score files: 60,477 B →
+3,205 B gzipped for `decoded.json`, 122,582 B for the largest bundled score); the raw decode or the
+edited state (**the edited state**); a page count or a byte budget (**30 pages**, revised up from the
+20 first proposed); and whether a download button rode along (**no** — offered, declined).
+
+**IndexedDB rather than `localStorage`, and size was not the argument.** Thirty scores is ~3.6 MB
+and `localStorage` would have held them. Two other things ruled: *the edited state* means writing on
+every edit, and `localStorage` is **synchronous**, so a ~100 KB write blocks the main thread while
+someone is dragging a note; and its ~5 MB is **one budget shared** with the three settings the app
+already keeps there, so filling it would break those rather than this.
+
+**The shape that made it small.** Two object stores — `pageMeta` for what the list draws, `pageBody`
+for the score as a JSON string — so listing 30 pages reads ~3 KB and not ~3.6 MB, because IndexedDB
+cannot read half a record. And **one save path with no explicit save call**: a decode opens a record,
+an effect writes whatever document is on screen back to it two seconds after it last changed. The
+first write and the thousandth edit are the same line, undo/redo are remembered for free, and no
+future load path can install a page the store never hears about.
+
+**The bug that was measured, and it is the useful part of this entry.** `Date.now()` is not enough
+to order records. Two written in the same millisecond share an `updatedAt`, and `sort` then falls
+back to whatever `getAll` returned — IndexedDB **key order**, i.e. alphabetical by id. A check that
+stored 30 pages in a loop kept `page-30 … page-4` instead of `page-31 … page-2`: the list was in the
+wrong order and eviction dropped the wrong page. Real use never writes twice in a millisecond (the
+save is debounced by two seconds), so this would have shipped and surfaced months later on somebody
+else's bulk write. A counter that forces the stamp to move removes the class.
+
+**Two smaller things caught the same way.** A fixture of four hand-written events **crashed the app**
+on restore — `loadDoc` runs `assignBars`, `estimateBpm`, `deriveTimeSignature` and `groupMeasures`,
+and a thin document satisfies none of them; the lesson is that anything written to this store must
+come from `history.doc` and never from a fetched file, which is also why a stored page's bar count is
+real (8 bars, not 0). And a restored page must hand `loadDoc` **no fresh makam guess**, or the modal
+comes up a second time for a page the reader has already answered for — and its backdrop then blocks
+every click.
+
+**What it is not.** A **cache, not a save**, and `TR.recent.note` says so on screen: Safari clears a
+site untouched for seven days, every engine clears under disk pressure, a private window keeps
+nothing, and the store belongs to one browser on one device. ⚠ The footer's `privacy` line is
+untouched and still literally true — it speaks about the server — but the reason there is nothing to
+qualify is the notes-only decision.
+
+**Renaming, and the makam, asked for the same afternoon.** A page arrives named after the
+photograph's file stem — `IMG_20260905_142233` — which says nothing about which piece it is, so the
+owner asked for a rename (*"hem current olanı hem de eskileri"*) and then for the makam to be part of
+what you see (*"makamı da isme dahil olsun"*).
+
+⚠ **The rename does not go through the document, and that is the whole design.** `doc.name` seeds a
+per-piece hash that decides whether `SheetView` draws a tuplet as a VexFlow bracket or as a curved
+arc — so renaming a page through its score would silently re-engrave the triplets. The record carries
+the label, the document keeps its identity, and the score card's heading reads the stored name so the
+two cannot drift. Two places, one box (`ui/RenameField.tsx`): a ✎ per row, and `#score-rename` beside
+the heading for the page on screen.
+
+⚠ **The makam is a separate field, re-read on every save, not part of the name string.** It would go
+stale three ways otherwise — the decode guesses it, the modal confirms it, the transport can change
+it later — and a rename would delete it. Beside the name it survives all four; the check drives a
+makam change and watches the row follow.
+
+**Two more bugs, both the kind that ship.** A rename has to move App's `saved` as well as the store,
+or the save effect writes the old name back two seconds after the reader's next keystroke — so the
+check is deliberately *rename → edit → wait past the debounce → re-read*, because everything asserted
+before that edit passes either way. And **a grid item's `min-width` is `auto`**: the row refused to
+shrink below its longest page name and pushed the document to **623 px inside a 390 px phone**, name
+running off the right edge, no ellipsis anywhere — `min-width: 0` on `.kv-recent__item` is what makes
+every truncation under it fire. ⚠ `smoke:phone` could not see it: that probe loads its fixture through
+`?score=`, so it never draws this list. A screenshot did.
+
+**Checks.** `npm test`, `smoke:editor` and `smoke:phone` all pass unchanged. `smoke:app` gained the
+only arm that can see the feature — decode, reload the browser, assert the page is listed, reopens
+with the same note count, is marked `data-current` and raises no makam modal — because the store is
+written for a decode and for nothing else, which is also what keeps `?score=` fixtures out of a
+reader's list. The store itself was driven end to end in a real browser against a real IndexedDB
+(cap, round trip, reload, open, edit-write-back, the fold, the makam and its following a makam
+change, rename from the list, rename from the heading, rename-survives-an-edit, Esc-cancels, ✕,
+clear): 17 of 17.
+
+[../features/recent-pages.md](../features/recent-pages.md) · [../DECISIONS.md](../DECISIONS.md)
+
+## 2026-09-04 — opening the instrument tab now switches the sound too (product track)
+
+One sentence from the owner: *"nota dan enstrüman üzerinde tab ına geçtiğimizde çalgı sesi
+değişiminin tetiklenmesini sağlar mısın. O an enstrüman üzerinde dropdownında hangi enstrüman varsa
+o enstrümanın sesine geçilsin."*
+
+**What it reverses, and why that matters more than the code.** Since the 2026-08-29 merge the
+instrument page's dropdown set the picture *and* the sound — but only when it was **changed**. Merely
+opening the tab set nothing, deliberately: a sampled voice is a 20–35 MB download from the Hub, and
+F1's *load only on selection* is a requirement rather than an optimisation. The price of that rule
+was visible every first visit: the page drew a violin while the default tone played, and the only
+cure was touching a control the reader had never been told existed. The owner priced *seeing one
+instrument and hearing another* as the worse half of the bargain, so the download is now the cost of
+arriving on the page.
+
+**What was built** is small and lives in one place. `App.applyViewMode` replaced the bare
+`setViewMode` behind the tab control: on a switch to `instrument` it asks for
+`voiceForInstrument(instrument)` — **whatever the picker already shows**, not a fixed instrument, so
+the picture and the sound agree the moment the page appears. `InstrumentView` was not given the job
+and still only reports what it is handed; the loading hint it already drew for a picker change covers
+this one unchanged.
+
+**Two things it deliberately does not do.** Leaving the tab changes nothing — the voice stays, as it
+does when it is chosen in the transport, so this is a one-way trigger and not the live two-way
+binding `instrumentForVoice` is still not. And it is guarded on the current voice: `applyVoice` calls
+`applyPlayback`, which re-schedules a playing piece, so re-entering the tab on the voice already
+sounding must be a no-op. `ensureVoice` alone would have been one; the re-schedule would not.
+
+**It does not make the sound instant, and nothing here pretends to.** The samples still take a
+download, so the first bars after opening the tab sound with the previous voice (held by the
+2026-09-04 bridge) or with the default tone, and the hint says which.
+
+**Checked:** `npm run typecheck` and `npm run smoke:editor` (ALL PASS). The new assertion reads the
+**transport's** `#instrument[data-instrument]` after the tab click, with the *before* value asserted
+as `sine` in front of it — the instrument page's own attribute says `violin` either way, which is
+exactly the wiring bug being guarded. [../DECISIONS.md](../DECISIONS.md).
+
+## 2026-09-05 — the instrument tab edits its own bar, with the page's editor (product track)
+
+One day after the measure card shipped, the owner reversed its edit path: *"Enstrüman üzerinde
+tabındaki ölçü düzenlemesi için ayrı bir editör yapar mısın, nota tabına atmasın. Normal edit tool
+çantası çıksın yine ve kullanıcı oradan editleyebilsin ölçüsünü. Edit tabi nota tabına da yansısın
+ikisi ayrı olmasın."*
+
+**Yesterday's reasoning was right and its conclusion was wrong.** The card handed over to the Nota
+page because there must be exactly ONE editor — a second overlay beside a second engraver is ~700
+lines of duplicated rules over one document, and the first thing to drift would be which click means
+what. What that argument does not say is that one editor has to live in one PLACE.
+
+**So the card now mounts `SheetView` itself, a second time, with `onlyMeasure` set.** The note
+targets, the pitch drag, the insert ghost, the tuplet handles, the sign targets, the off-meter badge,
+the playhead and the undo stack are not equivalent to the page's — they are the page's.
+`MeasureCard.tsx` lost its engraving code entirely and now owns three things: which bar is on
+screen, how wide the drawing may be, and the card around it.
+
+**The design decision inside the decision: `onlyMeasure` FILTERS the drawn bars and never renumbers
+them.** The obvious alternative was handing the view a one-bar document. Bar numbers are the currency
+between the view and App — `repeatSpans`, `navMarks`, `signTargets`, `openRepeat`, `repeatAnchor` and
+the insert tool's `measureIndex` are all bar-indexed — so slicing would have meant six mappings
+shifting on the way in and unshifting on the way out, all of which must agree, in the one place where
+being wrong means an edit lands on another bar. Filtering keeps bar 7 called seven on both sides and
+App passes its own memoized props through untouched.
+
+**Six props were added to `SheetView`, and every default is the page's own behaviour** —
+`onlyMeasure`, `contentWidth`, `justify`, `chrome`, `surfaceId`, `svgMarker`. A caller that passes
+none gets byte-identical output, which is what leaves the render harness, the strip exporter and
+every existing check alone.
+
+**One thing yesterday's version had is now gone, and it is an improvement.** The card used to scale
+its SVG with a viewBox, which needed a written exemption from the no-transform rule. It now resizes
+the ENGRAVING to its column instead (a `ResizeObserver` feeds `contentWidth`, `justify` fills the
+row), so every coordinate in the shared overlay stays 1:1 with the notes — a scaled surface would
+have needed the hit-testing to divide by a factor for one of its two callers. `.kv-score` gains no
+exception and `CLAUDE.md` lost the one it had been given.
+
+**Smaller things that followed.** `EditPalette` is no longer gated on the view. Düzenle became one
+switch with two faces (`#edit-toggle`, `#measure-edit`) over one mode, so the head's toggle and the
+undo pair moved out of the sheet-only block. The card hides the page furniture — the engraved title
+block and the accidental legend, which listed every sign the PIECE uses under a single bar and
+doubled the card's height.
+
+**Checked:** `npm test`, `npm run typecheck`, `smoke:app`, `check:fold` (1,720 pages, 0 changed) and
+a rewritten `smoke:editor` section. Its three load-bearing assertions are the ones a screenshot
+cannot make: a pinned card stays on its bar while the music leaves it (asserted by waiting for the
+card's playhead to clear — the only signal a pinned card gives), an edit made in the card reaches
+`window.__omrDoc` and shows on the Nota page, and **one undo taken from the Nota page walks the
+card's delete back**. A card with its own overlay could pass "a note is selected" and still be a
+second document. [../features/measure-card.md](../features/measure-card.md).
+
+## 2026-09-04 — the instrument tab now shows the bar it is playing (product track)
+
+The owner asked for it in one sentence: *"track a da enstrüman üzerinde gösterim böyle duruyor…
+şimdi bunun yanına o an çalan ölçünün notasını da göstermeni istiyorum. Sol tarafta enstrüman sağ
+tarafta nota ölçüsü gibi."* Plus arrows beside the bar, a play-this-bar button above it, and a way
+to edit it.
+
+**Why it was missing, stated plainly:** all three instrument views answer *where do I put my fingers
+now*. None of them answers *what am I playing now*. A player watching the clarinet had to carry the
+music in their head, or keep switching to the Nota tab and losing the fingering — and the page
+already knew the answer.
+
+**What was built.** `apps/web/src/MeasureCard.tsx` — one bar on its own stave with its clef, the
+makam signature and the meter, plus ‹ ›, **Ölçüyü çal**, **Ölçüyü düzenle** and **Çalınanı izle**.
+Two columns on the instrument tab, the drawing left and the card right.
+
+**The decision that shaped the file: it is a second VIEW of the score, not a second engraver.**
+Everything that decides what ink appears — the accidental, the "3", the beams, a long value's split
+— is imported from `SheetView.tsx`. Six helpers were exported for it (`buildStaveNotes`,
+`drawSignature`, `drawTimeSignature`, `drawTupletArc`, `tupletAbove`, and a new `tupletCurvedFor`
+extracted from an inline hash) and nothing was copied. A bar that spelled itself differently in the
+card than on the page would read as a different piece of music.
+
+**The one thing that took real thought was `Ölçüyü çal`.** The obvious version plays from the bar
+and polls the clock to stop at its end — and it is wrong, because a poll always overshoots by a
+frame and one frame of the next bar is an audible blip. What ships **cuts the timeline**: the bar's
+notes with their PIECE times untouched and `totalMs` at the barline. Nothing past the bar is ever
+scheduled, the existing natural-end path fires by itself (tails and all), and `getPositionMs()`
+still reports piece ms — which the three instrument drawings, the card's cursor and the sheet's
+playhead all read. Playing a slice from zero would have moved every one of them to the top of the
+score while the seventh bar sounded. Measured: **4.6 s of a 123 s piece**.
+
+**`Ölçüyü düzenle` hands over rather than duplicating.** The owner picked this over editing in
+place: the card draws a bar, the sheet changes one. The note is selected by event index and the
+index is checked against the stored score first, because a `writeOut` copy has indices `doc` never
+saw — then it opens edit mode with nothing selected rather than guessing a bar.
+
+**Three smaller calls, all the owner's, all made while looking at it.** The card is **white, the
+same white as the score card** (it was `--paper` and read as a box within a box). The two columns
+are **vertically centred on each other** — a ~200px card pinned to the top of a 74dvh clarinet reads
+as a caption hanging off it. And the **kanun stacks** instead of splitting the row, which is an
+instrument rule rather than a screen rule: it is sized by width, so half a row is half an
+instrument. Stacked, the card goes first, because the kanun fills 62dvh and an instrument-first
+order puts the notation off the bottom of the window. The phone stacks the same way for the same
+reason.
+
+**Two things are allowed here that are forbidden on the sheet, and both are safe for one reason.**
+The SVG is scaled, and it scrolls sideways below a 340px floor width rather than shrinking a 40px
+staff to 17px on a phone. `.kv-score` may do neither because `render.ts` crops training strips out
+of it by rect; nothing screenshots this one — it carries `data-omr="measure-svg"`, and the card only
+ever mounts on the instrument tab.
+
+**Checked:** `npm test`, `npm run typecheck`, `npm run smoke:app`, and a new `smoke:editor` section,
+*"the bar beside the instrument (F3)"*, whose load-bearing assertions are the ones a screenshot
+cannot make — that the bar moves with the music, that an arrow stops it moving, that the bar-play
+is stopped again in seconds on a two-minute piece, and that Düzenle lands in the sheet's editor with
+a note **of that bar** selected. Design and the five decisions:
+[../features/measure-card.md](../features/measure-card.md).
 
 ## 2026-09-04 — switching instruments no longer drops to the default tone (product track)
 

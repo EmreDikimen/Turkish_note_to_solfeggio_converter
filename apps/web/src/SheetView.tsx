@@ -37,11 +37,17 @@ import { mulberry32 } from "../../../tools/render/rng";
 
 // --- layout constants -------------------------------------------------------
 const LEFT = 10;
+/** The side margin between the SVG's edge and the staff, exported so a caller sizing the drawing to
+ *  its own box (the measure card) can ask for the right `contentWidth` instead of guessing 20. */
+export const SHEET_SIDE_MARGIN = LEFT;
 const CONTENT_WIDTH = 1000; // staff content area (rows wrap within this)
 const ROW_HEIGHT = 130; // vertical pitch of each staff system
 const STAVE_TOP_PAD = 40; // headroom above each stave for high notes / beams
 const CLEF_W = 50; // extra width the leading clef costs on the first stave of a row
-const SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
+// ⚠ Kept as the DEFAULT only. The drawing's real size is `svgW` inside the component, derived from
+// the `contentWidth` prop — the measure card fits the engraving to its column. Nothing else reads
+// this, and a caller that passes no width still gets exactly these numbers.
+const DEFAULT_SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
 const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
 
 // --- following the playhead (owner, 2026-09-03) -----------------------------
@@ -67,7 +73,17 @@ const FOLLOW_AIM = 0.35; // after a scroll the cursor's row sits this far down t
 // Below this the box counts as fitting; above it (a narrow window, a phone) the cursor really can
 // be off to the right, which is the case this axis exists for.
 const FOLLOW_SIDE_MIN = 48;
-const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
+// The Çalma row is pinned to the top of the window (owner, 2026-09-05), so the top of the screen is
+// not the top of the READABLE area: a row parked at y = 40 is on screen and behind the bar. Its
+// live box is read rather than its height, and that is what makes the same number right in both
+// states — stuck, `bottom` is the bar's height; unstuck, it is wherever the bar sits down the page,
+// and the score below it is lower still, so nothing is triggered that was not triggered before.
+// Returns 0 where there is no bar at all (the render harness mounts this view on its own).
+function pinnedBottom(): number {
+  const el = typeof document === "undefined" ? null : document.getElementById("transport-pinned");
+  return el ? Math.max(0, el.getBoundingClientRect().bottom) : 0;
+}
+export const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
 // Baseline of the lyric line below the bottom staff line. MUST stay inside the strip crop, which
 // ends 106 px below the stave top = 26 px below the bottom staff line (stripExport's PAD_TOP +
 // STAFF_H). At the old value of 30 the baseline fell 4 px BELOW the crop, so training strips
@@ -182,7 +198,7 @@ const GRACE_VEX_DURATION = "8";
  *  - grace events become GraceNotes attached to the NEXT real note (dangling measure-final
  *    graces are dropped, matching the serializer).
  */
-function buildStaveNotes(
+export function buildStaveNotes(
   measure: Measure,
   mode: AccidentalMode,
   signatureMap: Map<string, number>,
@@ -378,7 +394,7 @@ function attachTitles(notes: StaveNote[], evs: NoteEvent[]) {
  * appended as Bravura <text> nodes (the same approach the per-note titles use) at the staff line
  * for each letter. `startX` is where the signature begins (just after the clef).
  */
-function drawSignature(
+export function drawSignature(
   svg: SVGSVGElement,
   stave: Stave,
   signature: { letter: string; alterCommas: number }[],
@@ -401,11 +417,24 @@ function drawSignature(
 }
 
 /**
+ * Which style this piece engraves its triplet marks in: the curved arc + "3" of most printed
+ * Turkish scores, or VexFlow's square bracket. A per-piece coin (hashed on the score name), because
+ * a real edition engraves them ONE way — see the long note at its call site in the draw effect.
+ *
+ * ⚠ Exported so the single-measure card beside the instrument (`MeasureCard.tsx`) draws the same
+ * mark as the page does. One rulebook: a bar that changed style when you looked at it in the other
+ * view would read as two different pieces of music.
+ */
+export function tupletCurvedFor(doc: NoteModelDocument): boolean {
+  return Array.from(doc.name ?? "").reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10 < 9;
+}
+
+/**
  * Which side a tuplet sign goes: the NOTEHEAD side, opposite the stems/beam — the placement the
  * printed Turkish engravings use (stems up → sign below the noteheads; stems down or stemless →
  * above). Rests count as stem-up (VexFlow's default).
  */
-function tupletAbove(group: StaveNote[]): boolean {
+export function tupletAbove(group: StaveNote[]): boolean {
   let up = 0;
   let down = 0;
   for (const n of group) {
@@ -509,7 +538,7 @@ const TUPLET_MARK_CONCAVE = {
  * arm whenever the highest note is an outer one. The visual asymmetry of a printed mark comes from the
  * arms' SLOPES, not from where the "3" sits.
  */
-function drawTupletArc(svg: SVGElement, group: StaveNote[], above: boolean) {
+export function drawTupletArc(svg: SVGElement, group: StaveNote[], above: boolean) {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const S = STAFF_SPACE;
   const sign = above ? -1 : 1; // -1 = the mark is above the noteheads, so "outward" is up
@@ -1218,7 +1247,7 @@ const timeSigGlyphs = (n: number): string =>
  * upper half of the staff, denominator in the lower half. Drawn ourselves (not via VexFlow's
  * `addTimeSignature`, which always sits right after the clef) so it can follow the key signature.
  */
-function drawTimeSignature(svg: SVGSVGElement, stave: Stave, centerX: number, ts: { num: number; den: number }) {
+export function drawTimeSignature(svg: SVGSVGElement, stave: Stave, centerX: number, ts: { num: number; den: number }) {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const space = stave.getYForLine(1) - stave.getYForLine(0); // px per staff space
   // Center the stack on the middle line, nudged up slightly: Bravura's digit baseline renders a
@@ -1512,9 +1541,11 @@ function followCursorIntoView(cursor: HTMLElement): void {
   const behavior: ScrollBehavior =
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
-  if (box.top < FOLLOW_MARGIN || box.bottom > window.innerHeight - FOLLOW_MARGIN) {
+  const topEdge = pinnedBottom() + FOLLOW_MARGIN;
+  if (box.top < topEdge || box.bottom > window.innerHeight - FOLLOW_MARGIN) {
     // Park the row a third of the way down the window, so there is music AHEAD of the cursor and
-    // not only behind it. The browser clamps this at both ends of the document.
+    // not only behind it. The browser clamps this at both ends of the document. ⚠ 35% of the window
+    // is well below the pinned bar, so the landing spot needs no correction of its own.
     window.scrollTo({ top: Math.max(0, window.scrollY + box.top - window.innerHeight * FOLLOW_AIM), behavior });
   }
 
@@ -1580,6 +1611,12 @@ export function SheetView({
   legacyTupletMark,
   concaveTuplet,
   signatureOverride,
+  contentWidth,
+  justify = false,
+  chrome = true,
+  surfaceId = "sheet-surface",
+  svgMarker = "sheet-svg",
+  onlyMeasure,
 }: {
   doc: NoteModelDocument;
   editMode: boolean;
@@ -1593,6 +1630,59 @@ export function SheetView({
    *  silently change what the corpus draws. The strip labels must be built with the SAME value
    *  (`buildStrips`' `sigTolerant`) or pixels stop equalling labels. See `SIG_TOLERANT` in App.tsx. */
   sigTolerant: boolean;
+  /**
+   * ⭐ **THE SIX PROPS BELOW EXIST SO THIS COMPONENT CAN BE THE MEASURE CARD TOO** (owner,
+   * 2026-09-04: the instrument tab's bar is edited in place, with the same toolbox, and the edit
+   * has to be the same edit). ⚠ **Every default reproduces the page's score exactly**, so the
+   * render harness, the strip exporter and every existing check are untouched — a caller that
+   * passes none of them gets byte-identical output.
+   *
+   * ⚠ **The alternative was rebuilding the overlay** — the note targets, the pitch drag, the insert
+   * ghost, the tuplet handles and the sign targets — beside a second engraver. That is ~700 lines
+   * of duplicated rules over one document, and the first thing to drift would be which click means
+   * what. Mounting this view twice is what makes "ikisi ayrı olmasın" literally true.
+   */
+  /** Staff content width in SVG units — the box rows wrap inside. Default {@link CONTENT_WIDTH}.
+   *  ⚠ The SVG is sized from it, so the card resizes the ENGRAVING to its column rather than
+   *  scaling the finished drawing: everything in the overlay stays 1:1 with the notes, which is
+   *  what lets one hit-testing implementation serve both mountings. */
+  contentWidth?: number;
+  /** Justify the LAST row to the full width too. Off for the page (a short final system is normal
+   *  engraving, and stretching a near-empty one blows its spacing apart); on for the card, where
+   *  the one row IS the last row and a bar drawn at its natural width would leave the card ragged. */
+  justify?: boolean;
+  /**
+   * Draw the PAGE FURNITURE around the staff: the engraved title block above (makam / form / usul /
+   * composer / tempo) and the accidental legend below.
+   *
+   * Off for the measure card. Both are about the whole score — the card's own head already names
+   * the bar, and a legend of every sign the PIECE uses under a single measure doubles the card's
+   * height to explain signs that bar may not even contain. The page keeps both.
+   */
+  chrome?: boolean;
+  /** `id` of the positioned surface, and the `data-omr` marker on the SVG. ⚠ Both are overridden by
+   *  the card rather than shared: two elements answering to one id is exactly what the DOM-state
+   *  contract in CLAUDE.md exists to keep out, and `sheet-svg` must keep meaning THE PAGE'S SCORE —
+   *  `render.ts` and `verify-labels.ts` take the first match. */
+  surfaceId?: string;
+  svgMarker?: string;
+  /**
+   * Draw ONLY this bar (1-based `Measure.index`); everything else is dropped before the rows are
+   * packed. Undefined → the whole score, as always.
+   *
+   * ⚠ **It filters, it does NOT re-number**, and that is the entire reason this prop exists instead
+   * of the caller handing in a one-bar document. Bar numbers are the currency between this view and
+   * App: the repeat spans, the nav marks, the sign targets, the pending `‖:`, the repeat anchor and
+   * the insert tool's `measureIndex` are all bar-indexed. Slice the document and every one of them
+   * needs shifting on the way in and unshifting on the way out — six mappings that must agree, in
+   * a place where being wrong means an edit lands on another bar. Filtering here keeps bar 7 called
+   * seven on both sides, and the card passes App's own memoized props through untouched.
+   *
+   * ⚠ Consequence worth knowing: the drawn bar is `firstInRow` of row 0, so it carries the clef,
+   * the key signature AND the meter — which the page draws once at the top. That is right for a
+   * card: a bar shown out of context has no earlier bar on screen to have carried the usul.
+   */
+  onlyMeasure?: number;
   /** CONVENTIONAL printed-signature override (drawn-order entries). When set, replaces the
    *  content-derived `deriveKeySignature` for BOTH the drawn glyphs and the mode's accidental
    *  decisions, so the makam's real PRINTED signature is engraved. Must be the SAME entries the
@@ -1821,6 +1911,12 @@ export function SheetView({
   // The usul meter (e.g. 9/8 for aksak), printed once at the start of the first staff.
   const timeSig = useMemo(() => deriveTimeSignature(doc), [doc]);
 
+  // The drawing's own size. Defaults ARE the page's constants, so nothing that does not ask for a
+  // width can notice these exist. Both are engrave dependencies — changing the column width
+  // re-engraves, which is the point: the card fits the music to its box instead of scaling it.
+  const contentW = contentWidth ?? CONTENT_WIDTH;
+  const svgW = contentWidth == null ? DEFAULT_SVG_WIDTH : LEFT * 2 + contentW;
+
   /**
    * Edit mode, the tuplet armed: what a click on each note would do (editor step 7).
    *
@@ -2016,8 +2112,7 @@ export function SheetView({
     // VexFlow's square bracket. The label token is identical either way — the style variety
     // is free training realism. 70% until 2026-08-12; the owner reads arcs as more dominant than
     // that in real editions, and 10% keeps the bracket represented, since real print does use it.
-    const tupletCurved =
-      Array.from(doc.name ?? "").reduce((s, ch) => s + ch.charCodeAt(0), 0) % 10 < 9;
+    const tupletCurved = tupletCurvedFor(doc);
     // A SECOND coin inside the curved style (2026-08-19): the continuous arc with the "3" inside its
     // concavity, which the owner found on two real scanned editions. Hashed on a DIFFERENT salt than
     // `tupletCurved` so the two styles are independent — reusing the same sum would tie "is it
@@ -2031,7 +2126,10 @@ export function SheetView({
 
     // Pack measures into rows (greedy wrap). The first stave of each row pays for the clef;
     // the very first measure additionally pays for the one-time time signature.
-    const measures = groupMeasures(doc);
+    const all = groupMeasures(doc);
+    // ⚠ FILTERED, never re-numbered — see `onlyMeasure`'s own note. `Measure.index` stays the bar's
+    // number in the whole score, so everything bar-indexed on both sides still means the same bar.
+    const measures = onlyMeasure != null ? all.filter((m) => m.index === onlyMeasure) : all;
     type Cell = { m: Measure; width: number; firstInRow: boolean };
     const rows: Cell[][] = [];
     let cur: Cell[] = [];
@@ -2042,7 +2140,7 @@ export function SheetView({
       const base = Math.max(130, Math.min(420, m.events.length * 28 + 24));
       const isFirst = cur.length === 0;
       const width = base + (isFirst ? leadWidth : 0) + extra;
-      if (!isFirst && used + width > CONTENT_WIDTH) {
+      if (!isFirst && used + width > contentW) {
         rows.push(cur);
         cur = [{ m, width: base + leadWidth, firstInRow: true }];
         used = base + leadWidth;
@@ -2060,14 +2158,18 @@ export function SheetView({
     // LAST row is left natural: short final systems are normal, and justifying a near-empty last
     // line would blow its spacing apart. Uniform rows matter for Phase-2 synthetic data realism.
     rows.forEach((cells, r) => {
-      if (r === rows.length - 1) return; // final system stays ragged, as in real engraving
+      // ⚠ `justify` is what the measure card turns on. On the page the final system stays ragged —
+      // that is real engraving, and stretching a near-empty last line blows its spacing apart — but
+      // a card's ONE row is always the last row, and a bar drawn at its natural width would sit in
+      // a box it does not fill.
+      if (!justify && r === rows.length - 1) return;
       const sum = cells.reduce((s, c) => s + c.width, 0);
-      if (sum > 0) for (const c of cells) c.width *= CONTENT_WIDTH / sum;
+      if (sum > 0) for (const c of cells) c.width *= contentW / sum;
     });
 
     const height = rows.length * ROW_HEIGHT + 20;
     const renderer = new Renderer(host, Renderer.Backends.SVG);
-    renderer.resize(SVG_WIDTH, height);
+    renderer.resize(svgW, height);
     const ctx = renderer.getContext();
     // The SVG backend's group API, used to wrap a VexFlow-drawn triplet bracket so it can be
     // measured. Typed narrowly and optional rather than cast to SVGContext: the backend is fixed
@@ -2076,7 +2178,7 @@ export function SheetView({
       | { openGroup(cls?: string, id?: string): SVGGElement; closeGroup(): void }
       | undefined;
     const svg = host.querySelector("svg") as SVGSVGElement | null;
-    svg?.setAttribute("data-omr", "sheet-svg"); // stable selector for the Playwright strip exporter
+    svg?.setAttribute("data-omr", svgMarker); // stable selector for the Playwright strip exporter
 
     const collected: MeasureBox[] = [];
     const positions: NotePos[] = [];
@@ -2356,7 +2458,7 @@ export function SheetView({
     if (textNoise && svg) {
       for (const it of buildTextNoise(textNoise.seed, rows.length, showLyrics)) {
         const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        el.setAttribute("x", String(LEFT + it.fx * CONTENT_WIDTH));
+        el.setAttribute("x", String(LEFT + it.fx * contentW));
         el.setAttribute("y", String(STAVE_TOP_PAD + it.row * ROW_HEIGHT + it.dy));
         el.setAttribute("font-size", String(it.size));
         el.setAttribute("font-family", it.serif ? "Georgia, 'Times New Roman', serif" : "Helvetica, Arial, sans-serif");
@@ -2395,7 +2497,7 @@ export function SheetView({
     for (const p of positions) if (!posByEvRef.current.has(p.evIndex)) posByEvRef.current.set(p.evIndex, p);
     onLayout?.({
       boxes: collected.map((b) => ({ index: b.index, x: b.x, y: b.y, width: b.width })),
-      svgWidth: SVG_WIDTH,
+      svgWidth: svgW,
       svgHeight: height,
       rowHeight: ROW_HEIGHT,
     });
@@ -2403,7 +2505,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet, contentW, svgW, justify, svgMarker, onlyMeasure]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style
@@ -2683,7 +2785,10 @@ export function SheetView({
     // No frame of its own: this sits inside the score card (.kv-score), which supplies the paper,
     // the border and the horizontal scroll. A second border here would double-frame the sheet.
     <div>
-      {/* Engraved-style header: the makam/form/usul/composer/tempo extracted from the score. */}
+      {/* Engraved-style header: the makam/form/usul/composer/tempo extracted from the score.
+          ⚠ Off in the measure card — the card's own head already names the bar, and a
+          makam/usul/composer line over a single measure is the PAGE's furniture, not the bar's. */}
+      {chrome && (
       <div
         style={{
           display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 16px 4px",
@@ -2701,12 +2806,13 @@ export function SheetView({
           {header.composer && <>Beste: {header.composer}</>}
         </div>
       </div>
+      )}
       <div
         ref={containerRef}
         // The deploy checks read state, never copy: edit mode and the selection are attributes.
         // The id matters — `#edit-toggle` also carries `data-edit-mode`, so a check that wants the
         // SHEET's state has to name this element rather than match the attribute alone.
-        id="sheet-surface"
+        id={surfaceId}
         data-edit-mode={editMode ? "on" : "off"}
         data-selected-note={editMode && selectedNote != null ? selectedNote : undefined}
         data-tuplet-anchor={editMode && tupletAnchor != null ? tupletAnchor : undefined}
@@ -2715,7 +2821,7 @@ export function SheetView({
         // Whether the page chases the playhead. On the SHEET as well as on the checkbox, because
         // the checkbox only proves the control was clicked — this says what the sheet will do.
         data-follow={followPlayhead ? "on" : "off"}
-        style={{ position: "relative", width: SVG_WIDTH, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
+        style={{ position: "relative", width: svgW, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
         onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}
         onMouseLeave={editMode ? undefined : () => setHover(null)}
@@ -3246,7 +3352,7 @@ export function SheetView({
         )}
       </div>
 
-      <Legend used={usedAccidentals} />
+      {chrome && <Legend used={usedAccidentals} />}
     </div>
   );
 }

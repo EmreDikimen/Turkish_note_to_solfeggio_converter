@@ -307,6 +307,27 @@ responds to being filled, a domain gap does not** ([METRICS-UNSEEN.md](METRICS-U
 ⚠ **Not "the slicer is good enough, stop".** The 2026-08-26 fixes were about a third thing — rows
 lost ENTIRELY, which is neither class.
 
+### ⏭ A segah spelled `b2` takes no makam bend, and the same drawn sign then sounds at two heights (owner's call, opened 2026-09-05)
+
+`MAKAM_INTONATION` matches a note by its **exact** written alteration, but the staff DRAWS the
+nearest AEU sign (`toAeuAlter`) — so a `Si4b2` and a `Si4b1` are the same koma-bemol on the page and
+only the second is bent. Counted on the bundled scores: `gamzedeyim-deva` **22 `b1` against 54
+`b2`**, `beyati-delisin` **0 against 40** — selecting Beyâtî there therefore changes nothing at all,
+on a piece that is full of segahs. Found while building the picker's *farklı çalınan perdeler* line,
+which is what made the gap visible: it reports 22 where a reader counts 76.
+
+⚠ **Not obviously a bug.** SymbTr's `b2` already sits **7 commas** above dügâh against AEU's 8, so it
+is most of the way to uşşak's performed 6.5 and a full −1.5 would overshoot to 5.5. The cost of
+leaving it is that one drawn sign sounds at 6.5 and at 7 — about **11 cents** apart — inside one
+piece.
+
+⏭ Two options, and it is a musical decision, not a code one. **(a) Leave it**: the table is written
+against the AEU sign and `b2` is already a performed spelling. **(b) Make the rule name a PERDE
+rather than a delta** — every si that draws as a koma-bemol sounds 6.5 commas above dügâh, whatever
+the stored alteration — which makes the drawn sign and the sound agree at the price of a table
+change and a re-check by ear (check 14 in [MANUAL_CHECKS.md](MANUAL_CHECKS.md)).
+[mvp/makam.md](mvp/makam.md).
+
 ### Further out, deferred past this round → [BACKLOG-LATER.md](BACKLOG-LATER.md)
 
 The density levers, exam v3's owed items, the error-localisation UI, the signature-packed sharp

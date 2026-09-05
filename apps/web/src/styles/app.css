@@ -30,23 +30,36 @@
   font-size: var(--text-3xl);
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  /* The koma sign sits IN the K's lower-left corner (owner, 2026-09-04), so the two nearly touch:
+     0.02em is a hair of air, not a word space. `--space-2` here read as a separate glyph standing
+     next to the word. */
+  gap: 0.02em;
 }
 
 /* ⚠ A SMuFL glyph HAS NO USABLE TEXT BASELINE, and aligning one on the wordmark's is what made the
    mark look like a rendering fault (fixed 2026-09-03). Bravura sets an accidental's origin on the
    MIDDLE STAFF LINE, so on a shared baseline half the glyph hangs below the letters — and
    `line-height: 1` then cut the top of its stem off, because Bravura's ascent is far larger than
-   its em. The fix is to stop sharing: the mark gets its own box, sized in `em` of the wordmark, the
-   glyph is centred inside it by the flex centring rather than by any baseline, and the box is
-   centred against the word. Nothing here may be given a `line-height` that clips. */
+   its em. The fix is to stop sharing: the mark gets its own box, sized in `em` of the wordmark, and
+   the glyph is centred inside it by the flex centring rather than by any baseline. Nothing here may
+   be given a `line-height` that clips.
+
+   ⚠ WHERE that box sits is therefore also set by hand: `flex-end` drops it to the bottom of the
+   line box, which is BELOW the wordmark's baseline by the font's descender, and `margin-bottom`
+   lifts it back towards it. The number is in the mark's OWN em (0.78 of the wordmark's), and the
+   descender it is fighting is 0.322 of it — so `0.254em` leaves the glyph's ink resting 1.3px under
+   the K's baseline at 2.375rem, which is the corner. Raise it towards 0.322em to sit the mark ON
+   the baseline, lower it towards 0.19em to let it hang further; change `font-size` and it must move
+   with it. Measured with a screenshot, not derived. */
 .kv-brand__mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  align-self: flex-end;
   width: 0.5em;
   height: 0.78em;
+  margin-bottom: 0.254em;
   font-family: var(--font-music);
   font-size: 0.78em;
   line-height: 0;
@@ -471,6 +484,212 @@ label.kv-btn.is-disabled {
   white-space: nowrap;
 }
 
+/* ── Daha önce okuduklarınız ─────────────────────────────────────────────────────────────────
+ *
+ * The pages this browser has already read (2026-09-05). It sits between the upload box and the
+ * score, and it is deliberately QUIET: a hairline rule, no card, no shadow. It is a way back to
+ * work already done, not a second thing competing with the one gesture the app is for — which is
+ * also why it renders nothing at all when the store is empty (ui/RecentPages.tsx).
+ *
+ * ⚠ Every row is a real <button>, not a clickable <li>: it is reached by Tab and fired by Enter
+ * for free, which a div with an onClick is not.
+ */
+
+.kv-recent {
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  padding: var(--space-3) var(--space-4);
+}
+
+.kv-recent__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.kv-recent__title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 400;
+}
+
+.kv-recent__count {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin-right: auto;
+}
+
+.kv-recent__list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px; /* the hairline between rows is the gap over the rule colour below */
+  background: var(--rule);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.kv-recent__item {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  background: var(--paper);
+  /* ⚠ LOAD-BEARING, and it was measured: a GRID item's `min-width` is `auto`, so this row refused
+     to shrink below its longest page name and pushed the whole page wider — 623px of document in a
+     390px phone, with the name running off the right edge and no ellipsis anywhere. Every
+     truncation below (`.kv-recent__stem`) is dead without it, because nothing upstream was ever
+     narrow enough to make it fire. */
+  min-width: 0;
+}
+/* The page on screen. Same accent the editor's selection uses, at the weight a list can carry. */
+.kv-recent__item[data-current="1"] {
+  background: var(--accent-soft);
+}
+
+.kv-recent__open {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font: inherit;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+.kv-recent__open:hover:not(:disabled) {
+  background: var(--paper-sunken);
+}
+.kv-recent__open:disabled {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+/* One line, cut with an ellipsis: page stems are long and a wrapped name turns the list into
+   paragraphs. `min-width: 0` on the button above is what lets this shrink at all inside a flex row. */
+.kv-recent__name {
+  display: flex;
+  align-items: baseline;
+  font-size: var(--text-base);
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.kv-recent__meta {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+/* The name, with the makam in front of it. ⚠ Two elements and not one string: the makam is
+   re-read from the score on every save, so it survives a rename and follows the reader changing
+   the makam later — merged into the name it would go stale, and a rename would delete it. */
+.kv-recent__makam {
+  color: var(--accent);
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  margin-right: var(--space-2);
+  flex: 0 0 auto;
+}
+/* Only the STEM is allowed to be cut. Truncating the pair would eat the makam first, which is the
+   half a reader is scanning for. */
+.kv-recent__stem {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ✎ and ✕, the two icon buttons at the end of a row. ⚠ A step larger than the row's small print
+   on purpose: at `--text-sm` the pencil is a thin diagonal that reads as a smudge beside the ✕. */
+.kv-recent__icon {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  padding: 0 var(--space-3);
+  cursor: pointer;
+}
+.kv-recent__icon:hover {
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.kv-recent__remove:hover {
+  color: var(--danger);
+}
+
+/* A row being renamed: the box takes the whole row, so nothing beside it can be clicked by
+   accident while someone is typing a name. */
+.kv-recent__editing {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* The rename box (ui/RenameField.tsx), in both places it is used. ⚠ It is `width: 100%` of
+   whatever holds it rather than a fixed size: in a row that is the row, in the card's heading that
+   is the space the title had. */
+.kv-rename {
+  font: inherit;
+  font-size: var(--text-base);
+  width: 100%;
+  max-width: 32rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+.kv-rename:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* The ✎ beside the score card's heading. Smaller than a `.kv-btn` on purpose — it belongs to the
+   title, not to the row of controls opposite it. */
+.kv-card__rename {
+  font: inherit;
+  font-size: var(--text-sm);
+  line-height: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  padding: 0 var(--space-2);
+  cursor: pointer;
+}
+.kv-card__rename:hover {
+  color: var(--accent);
+}
+
+.kv-recent__foot {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+/* Pushed to the right edge rather than left where the note stops: the note is capped at
+   `--measure`, so without this the destructive button lands in the middle of the row. */
+.kv-recent__foot .kv-btn {
+  margin-left: auto;
+}
+
+.kv-recent__note {
+  flex: 1 1 auto;
+  max-width: var(--measure);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  line-height: var(--leading);
+}
+
 /* ── Progress ───────────────────────────────────────────────────────────── */
 
 .kv-progress {
@@ -565,6 +784,39 @@ label.kv-btn.is-disabled {
   margin-bottom: var(--space-5);
 }
 
+/* ⚠ ÇALMA IS PINNED TO THE TOP OF THE WINDOW AND RİTİM/PERDE ARE NOT (owner, 2026-09-05:
+   *"aşağı kaydırdıkça kaybolmasın, sayfanın üstünde sabitlensin"*). Two things carry it:
+
+    - **Two boxes, not one.** `position: sticky` is bounded by the element's own parent, so a row
+      pinned inside a three-row bar could only ever travel that bar's ~190px and would scroll away
+      with it. The pinned row is its own `.kv-transport`, a direct child of `.kv-page` — which is
+      the whole document — so it rides the entire score. ⚠ `.kv-page` must therefore never gain an
+      `overflow` or a `transform`: either one turns this off, silently.
+    - **Only this row.** Tempo, usul, makam and the accidental mode are set once, before playing;
+      pinning all three rows would hold a third of the window over the music. Çal and Dur are what
+      a reader presses all the way down a page — this replaced a corner-parked copy of the pair
+      (`.kv-mini-transport`, deleted 2026-09-05), which showed the same two buttons twice.
+
+   ⚠ It must be OPAQUE (`--paper` is the body's own ground) — the score scrolls underneath it. ⛔ And
+   it is NOT full-bleed: a `margin: 0 calc(var(--space-5) * -1)` with matching padding, to cover the
+   page's own gutters, was tried and MEASURED as 8px of sideways scroll on every phone
+   (`smoke:phone`) — the phone rule cuts `.kv-page`'s padding to 16px while the token stays 24px, so
+   the box grew past the screen on both sides. It costs nothing to leave: the gutter is empty page
+   background in the same colour, and everything that scrolls under this is inside the column.
+   ⚠ `z-index` below the floating toolbox (40) and the voice toast (41): those two are things the
+   reader just put there, this one is furniture. */
+.kv-transport--pinned {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--paper);
+}
+/* The pinned box's own bottom rule already separates the two, so the second box must not draw a
+   second one 1px under it. */
+.kv-transport--pinned + .kv-transport {
+  border-top: none;
+}
+
 .kv-transport__row {
   display: flex;
   align-items: baseline;
@@ -602,6 +854,102 @@ label.kv-btn.is-disabled {
   gap: var(--space-2);
 }
 
+/* ── The makam's footnote ────────────────────────────────────────────────────────────────────
+ *
+ * Which written perdes the chosen makam plays somewhere else, beside the picker that chose it.
+ * ⚠ It is PROSE in a row of fixed-width controls, so it is the item that gives way: it wraps
+ * internally (`flex-wrap`), it drops `white-space: nowrap` — which `.kv-field` sets and this is not
+ * inside one — and it takes a measure so a two-rule makam cannot stretch the row to the window.
+ * Everything else on the Perde row keeps its size and its place.
+ * ⚠ Quiet by default and only the chips carry ink: the row's job is the controls, and a footnote
+ * that competed with them for attention would be read once and then resented. */
+.kv-makam {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+  max-width: 34rem;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  white-space: normal;
+}
+/* The "no deviation" / "not in the table" sentence: one line of prose, no chips. */
+.kv-makam--flat {
+  display: block;
+  margin: 0;
+  max-width: var(--measure);
+}
+.kv-makam__lead {
+  white-space: nowrap;
+}
+
+/* One rule. Bordered so the perde, the shift and the count read as one fact rather than as three
+   words in a sentence — a makam with two rules shows two of these and they must not run together. */
+.kv-makam__rule {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 1px var(--space-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+/* The written perde — the one thing here a reader looks for, so it is the one thing in full ink.
+   Its accidental is the real Bravura glyph (`.kv-glyph`), because "Si♭" and "Si koma-bemol" are
+   different notes and only the sign says which. */
+.kv-makam__perde {
+  color: var(--ink);
+  font-weight: 600;
+}
+/* ⚠ Bigger than the text and lifted off the baseline. A Bravura accidental is drawn against a
+   STAFF, not a line of prose: its ink runs from 0.44em above the baseline to 0.18em below (the
+   measured table in `EditPalette.tsx`), so at text size it reads as a small mark hanging under the
+   word. At 1.4em, raised, it sits inside the cap height like a letter. */
+.kv-makam__perde .kv-glyph {
+  margin-left: 3px;
+  font-size: 1.4em;
+  position: relative;
+  top: -0.06em;
+}
+.kv-makam__count {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sources' own reasoning, folded. Same pattern as `.kv-hint__more`: the summary is the one
+   thing here meant to be clicked, so it reads as a control. */
+.kv-makam__why > summary {
+  cursor: pointer;
+  color: var(--ink-faint);
+  text-decoration: underline dotted;
+}
+.kv-makam__why > summary:hover {
+  color: var(--accent);
+}
+/* The perde and its shift, again, as the heading of a reason. `inline-flex` for the gap alone: a
+   plain space is not enough beside a Bravura glyph, whose right sidebearing is nearly nothing. */
+.kv-makam__whead {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.kv-makam__why ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  max-width: var(--measure);
+  color: var(--ink-soft);
+  line-height: var(--leading);
+}
+/* Open, the reasoning is a paragraph and must not sit half-way along the row. */
+.kv-makam__why[open] {
+  flex: 1 0 100%;
+}
+
 /* One width band for every picker in the bar. Left to size themselves the selects ran from 130px
    (Darbuka) to 300px (Transpozisyon, sized by its longest OPTION, which is not even on screen), so
    no two rows lined up. The cap truncates a long option in the closed box only — the open list is
@@ -616,33 +964,13 @@ label.kv-btn.is-disabled {
   font-variant-numeric: tabular-nums;
 }
 
-/* ⚠ FIXED, and it exists only while the transport above has scrolled off the screen (owner,
-   2026-09-03: the Çal/Dur pair must not disappear when you scroll). Parked in the BOTTOM-RIGHT
-   corner and never moved: the same bargain the edit toolbox makes — a floating box can cover
-   music, so it sits in a corner the score does not use. It is one step BELOW the toolbox in
-   z-order, because the toolbox is the one the reader can drag on top of things.
-   ⚠ Positioned with right/bottom and never with a transform: a transformed ancestor turns `fixed`
-   into "fixed to that box", and this one lives inside `.kv-page`, which must stay untransformed. */
-.kv-mini-transport {
-  position: fixed;
-  right: var(--space-4);
-  bottom: var(--space-4);
-  z-index: 39;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
-  background: var(--paper-raised);
-  box-shadow: var(--shadow-card);
-}
-
 /* ⚠ FIXED at the TOP-CENTRE, and the position is the whole of the reasoning (owner, 2026-09-04).
-   The bottom of the viewport is taken twice over — by `.kv-mini-transport` in the right corner and,
-   under 700px, by the docked edit toolbox across the full width — so a notice down there either
-   covers a control or fights one for the same pixels. The top is empty on every screen size, which
-   is also why this needs no phone rule of its own beyond a width cap.
+   The bottom of the viewport is taken, under 700px, by the docked edit toolbox across the full
+   width — so a notice down there either covers a control or fights one for the same pixels. The
+   top is free at every screen size, which is also why this needs no phone rule of its own beyond
+   a width cap. ⚠ Since 2026-09-05 the pinned Çalma row is up here too, so the toast is pushed
+   below whatever height that row has (`--pinned-h`, measured and written by `TransportBar`); at the top of
+   the page, where the row is not yet stuck, that only lowers a transient box by ~70px.
    ⚠ `z-index: 41`, one ABOVE the toolbox: it is transient and it is the answer to a click the
    reader just made, so for the few seconds it exists it outranks a box they parked earlier.
    ⚠ **`pointer-events: none` on the box, `auto` on its ✕ alone.** It is a toast at a fixed point
@@ -654,7 +982,7 @@ label.kv-btn.is-disabled {
    in viewport pixels): nothing measures this box. */
 .kv-voice-notice {
   position: fixed;
-  top: var(--space-3);
+  top: calc(var(--pinned-h, 0px) + var(--space-3));
   left: 50%;
   transform: translateX(-50%);
   z-index: 41;
@@ -1962,6 +2290,167 @@ label.kv-btn.is-disabled {
   color: var(--ink-faint);
 }
 
+/* ── The instrument and the bar it is playing, side by side (owner, 2026-09-04) ─────────────────
+
+   ⭐ Two columns: the drawing says WHERE to put your fingers, the card says WHAT you are playing.
+   Neither answer is worth much without the other, and a player at arm's length cannot scroll.
+
+   ⚠ `minmax(0, …)` on BOTH tracks, not `1fr` alone. A grid track's automatic minimum is its
+   content's min-content width, and the mini stave inside the card is an <svg> with a `max-width` in
+   pixels — so a plain `1fr 1fr` would refuse to go below that and push the whole row wider than the
+   card, which is the classic way a grid overflows and nobody can see why.
+
+   ⚠ THE KANUN STACKS, and that is an instrument rule rather than a screen-size one. A kanun is a
+   wide trapezoid sized by WIDTH (`.kv-kanun__svg`); half a row is half an instrument. The violin
+   and the clarinet are tall slivers sized by HEIGHT and lose nothing to a narrower column. */
+/* ⚠ `align-items: center`, not `start` (owner, 2026-09-04): the card sits on the instrument's own
+   middle. The two columns are wildly different heights — a clarinet is 74dvh of sliver and the card
+   is about 200px — and a card pinned to the top of that row reads as a caption hanging off the
+   instrument rather than as the other half of one answer. Centred, the eye moves sideways between
+   them instead of diagonally. ⚠ It is a no-op in the two STACKED cases (the kanun and the phone),
+   where each child owns its own grid row. */
+.kv-instrument__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+
+/* ⚠ Stacked, the CARD GOES FIRST. A kanun fills 62dvh of screen, so an instrument-first order puts
+   the notation off the bottom of the window — you would be scrolling away from the fingering to
+   read the bar it fingers. Same reasoning as the phone block at the end of this file. */
+.kv-instrument[data-instrument="kanun"] .kv-instrument__pair {
+  grid-template-columns: minmax(0, 1fr);
+}
+.kv-instrument[data-instrument="kanun"] .kv-instrument__stage {
+  order: 2;
+}
+.kv-instrument[data-instrument="kanun"] .kv-measure {
+  order: 1;
+}
+
+/* The column the instrument drawing lives in. It carries no styling of its own on purpose — each
+   instrument already centres and bounds itself — only the min-width that lets the column shrink. */
+.kv-instrument__stage {
+  min-width: 0;
+}
+
+/* ── The single-measure card ────────────────────────────────────────────────────────────────────
+
+   ⚠ **WHITE, the same white as the score card it sits in** (owner, 2026-09-04). It was `--paper`
+   with the staff raised on white inside it, which read as a box within a box: two nested rounded
+   rectangles around six notes. One surface, one hairline, and the staff simply sits on it — which
+   is also the tokens' own rule, that nothing on the page is lighter than the notation. */
+.kv-measure {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+}
+
+.kv-measure__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kv-measure__title {
+  margin: 0 auto 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* One wrapping unit, like `.kv-card__tools` — the two buttons move to the next line together or
+   not at all, so Çal is never stranded alone above the staff. */
+.kv-measure__tools {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ⚠ `auto minmax(0, 1fr) auto`: the arrows take their own width and the staff takes what is left,
+   INCLUDING the right to be narrower than its SVG's max-width. With `1fr` the staff would set the
+   floor and the arrows would be pushed off the card on a narrow window. */
+.kv-measure__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* No border and no fill of its own — see the ⚠ on `.kv-measure`. It gives the staff breathing room
+   and, when the column is too narrow to draw the bar legibly, it SCROLLS instead of shrinking it
+   further (`MIN_DRAWN_W` in MeasureCard.tsx). Same bargain the sheet already makes.
+   ⚠ `overflow-y: clip`, for the reason `.kv-score` carries at length: `overflow-x` alone computes
+   the other axis to `auto`, and a Bravura glyph's font metrics can then invent scroll height inside
+   a box where every bounding rect fits.
+   ⚠ NOT a flex row. The SVG centres itself with `margin: 0 auto` — a centred flex child that
+   overflows a scroller hides half the overflow on the unreachable side. */
+.kv-measure__sheet {
+  min-width: 0;
+  padding: var(--space-2) 0;
+  overflow-x: auto;
+  overflow-y: clip;
+}
+
+/* The step-back / step-forward buttons. Taller than a control and narrower than one: they belong to
+   the staff between them, not to the row of buttons above it, and reading as a pair of page edges
+   is what makes that legible without a label. */
+.kv-measure__arrow {
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  width: 34px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.kv-measure__arrow:hover:not(:disabled) {
+  background: var(--paper-sunken);
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+.kv-measure__arrow:disabled {
+  color: var(--rule-strong);
+  border-color: var(--rule);
+  cursor: default;
+}
+
+.kv-measure__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kv-measure__empty {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+/* ⚠ There is no cursor rule here, and that is the point: the bar is drawn by `SheetView`, so the
+   playhead inside the card IS the sheet's own `[data-omr="playhead"]`, with its own inline style.
+   A second cursor would be a second thing to keep in step with the clock. */
+
 /* ══════════════════════════════════════════════════════════════════════════════════════════════
  * PHONES AND FINGERS
  *
@@ -2002,7 +2491,11 @@ label.kv-btn.is-disabled {
      silently, which is exactly the sort of fix that looks applied and is not. */
   .kv-field select,
   .kv-field input[type="number"],
-  .kv-field input[type="text"] {
+  .kv-field input[type="text"],
+  /* ⚠ The rename box is a text field like any other and needs the same 16px, or renaming a page on
+     an iPhone zooms the whole app in and leaves it there. It is listed here rather than given its
+     own rule so the reason stays attached to it. */
+  .kv-rename {
     font-size: 16px;
   }
 
@@ -2048,6 +2541,22 @@ label.kv-btn.is-disabled {
     min-height: var(--control-h);
   }
 
+  /* The measure card's step arrows. 34px wide is comfortable under a mouse and under half a thumb,
+     and these two sit at the very edges of the card where a miss scrolls the page sideways instead.
+     Only the WIDTH grows — they are already 52px tall, deliberately taller than a control, because
+     they belong to the staff between them. */
+  .kv-measure__arrow {
+    width: var(--control-h);
+  }
+
+  /* «Çalınanı izle». It is a `--tiny` button because it is secondary to the two above it, and
+     `--tiny` opts out of the `--control-h` rule the way the tempo's ⟲ and the toolbox's tools do —
+     which left it 21px tall, caught by `npm run smoke:phone`. It is not in any of the three
+     containers the height rule names, so it says so itself. HEIGHT only: it sits on its own line. */
+  .kv-measure__foot > .kv-btn {
+    min-height: var(--control-h);
+  }
+
   /* Hover is a lie on a touchscreen — the state sticks after a tap and the last thing touched
      stays lit, which reads as a selection that will not clear. `@media (hover: hover)` is the
      usual guard; these are the ones where the stuck state is actually confusing. */
@@ -2068,6 +2577,13 @@ label.kv-btn.is-disabled {
     width: var(--control-h);
     height: var(--control-h);
     margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0;
+  }
+
+  /* Same problem on the stored-page rows: the ✕ is as TALL as its row already (it stretches), but
+     only about 24px wide. Widening it is enough — and it must not get taller, or it would drag the
+     row's height with it. */
+  .kv-recent__icon {
+    min-width: var(--control-h);
   }
 }
 
@@ -2107,6 +2623,13 @@ label.kv-btn.is-disabled {
   .kv-transport__caption {
     flex: 0 0 auto;
   }
+  /* ⚠ The PINNED row loses its name here and the other two keep theirs (2026-09-05). Stacked, the
+     caption costs a whole line — and this row is the one line of the bar that is on screen at all
+     times, so on a 667px phone it was holding 149px, a fifth of the screen, to say "ÇALMA" over a
+     button that already says "▶ Çal". The rows that scroll away can afford the word. */
+  .kv-transport--pinned .kv-transport__caption {
+    display: none;
+  }
   .kv-transport__items {
     gap: var(--space-2) var(--space-3);
   }
@@ -2134,6 +2657,13 @@ label.kv-btn.is-disabled {
      measure — 66ch, ~500px. It is the reason the instrument tab overran by 200px while the
      transport above it fitted. Prose gets a measure; a caption inside a control does not. */
   .kv-field .kv-hint {
+    max-width: 100%;
+  }
+  /* Same reasoning for the makam's footnote: 34rem and 66ch are both wider than a phone, and a
+     `max-width` bigger than the screen is what makes a flex item refuse to shrink. */
+  .kv-makam,
+  .kv-makam--flat,
+  .kv-makam__why ul {
     max-width: 100%;
   }
 
@@ -2203,28 +2733,6 @@ label.kv-btn.is-disabled {
     font-size: var(--text-sm);
   }
 
-  /* ── The pinned Çal/Dur and the sheet want the same corner ─────────────────────────────────
-   *
-   * Both are `position: fixed` at the bottom, so on a phone in edit mode they land on top of each
-   * other. Which one gives way depends on whether the sheet is folded, because FOLDING UNMOUNTS
-   * EVERY TOOL — including the toolbox's own Çal/Dur.
-   *
-   *  - open   → the sheet already shows `#palette-play`/`#palette-stop` an inch away, so a second
-   *             pair is a duplicate control saying the same thing twice. It goes.
-   *  - folded → the sheet's transport is gone from the DOM, so the pinned pair is the ONLY way to
-   *             play. It stays, and steps up above the folded bar.
-   *
-   * `:has()` because this is a relationship between two siblings that neither component knows
-   * about — `#edit-palette` and `#sticky-transport` are rendered from different places in App and
-   * are deliberately independent. The alternative is a prop threaded through both to describe a
-   * collision that only exists under 700px, which is a worse thing to have to remember. */
-  body:has(#edit-palette[data-collapsed="0"]) .kv-mini-transport {
-    display: none;
-  }
-  body:has(#edit-palette[data-collapsed="1"]) .kv-mini-transport {
-    bottom: calc(var(--space-2) + 48px);
-  }
-
   /* The card head packs its controls to the right so they sit under the wide window's title. On a
      phone the title takes the whole line anyway and the buttons wrap to their own, where being
      right-aligned makes them the one thing on the page not starting at the left margin. */
@@ -2245,5 +2753,62 @@ label.kv-btn.is-disabled {
   /* Same shape, same fix: a 9rem label column in a 358px page. */
   .kv-evidence__label {
     width: auto;
+  }
+
+  /* The instrument and its measure card stop being two columns. ⚠ The CARD GOES FIRST, above the
+     instrument, and that order is the point rather than a tidy-up: the drawings are capped at
+     72–74dvh, so on a phone an instrument-first order puts the notation entirely below the fold —
+     you would have to scroll away from the fingering to read the bar it is fingering. The reading
+     order on a narrow screen is what you need first. */
+  .kv-instrument__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kv-instrument__stage {
+    order: 2;
+  }
+  .kv-measure {
+    order: 1;
+  }
+
+  /* Under a wide window the title and the two buttons share a line. At 358px they cannot, and a
+     head that wraps with `margin-left: auto` still on the tools leaves them adrift on the right of
+     their own line — the same mistake `.kv-card__tools` above already corrects. */
+  .kv-measure__tools {
+    margin-left: 0;
+  }
+
+  /* ⚠ The card must not sit UNDER the docked toolbox. `Ölçüyü düzenle` calls `scrollIntoView` with
+     `block: "nearest"`, and this margin is what tells the browser how much of the bottom is already
+     spoken for — the docked sheet's own `max-height` plus a gap. Without it the card scrolls to
+     "visible" and lands behind the tools it just opened.
+     ⚠ It lives HERE and not in the component: on a wide window there is no docked sheet, the margin
+     is zero, and the same call then scrolls nothing at all. */
+  .kv-measure {
+    scroll-margin-bottom: calc(min(46dvh, 420px) + var(--space-5));
+  }
+
+  /* ── The stored-page list ──────────────────────────────────────────────────────────────────
+   *
+   * Its foot is a paragraph beside a button, and at 375px the paragraph has nowhere to go: the
+   * button holds its own width (`.kv-btn` sets `white-space: nowrap`) and the note is squeezed into
+   * a column three words wide. Stacked, the note gets the width and reads.
+   * ⚠ The button's `margin-left: auto` still applies down here, and in a COLUMN that means it keeps
+   * its own width and sits at the right edge instead of stretching across. That is deliberate:
+   * "Hepsini sil" is the one thing in the app that cannot be undone, and a full-width destructive
+   * button under a paragraph of small print is a mis-tap waiting to happen. */
+  .kv-recent__foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* The head is title + count + a toggle. The count is the one that can go: it repeats what the
+     list underneath already shows, and dropping it keeps the toggle on the first line. ⚠ The `auto`
+     margin that pushes the toggle to the right edge is ON the count, so it has to move to the title
+     with it — otherwise hiding the count leaves the toggle stuck against the heading. */
+  .kv-recent__count {
+    display: none;
+  }
+  .kv-recent__title {
+    margin-right: auto;
   }
 }

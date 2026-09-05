@@ -204,6 +204,83 @@ async function main() {
   )) ?? { schemaVersion: 0, events: [] };
   const notes = doc.events.filter((e) => e.kind === "note").length;
 
+  // ---------------------------------------------------------------------------------------------
+  // The page survives a refresh (2026-09-05).
+  //
+  // A decode costs 35–55 s, so losing it to a reload is the one failure a reader cannot work
+  // around. The score is written to the browser's own IndexedDB store a couple of seconds after
+  // the last edit (apps/web/src/recentPages.ts) and offered back by name.
+  //
+  // ⚠ This is the ONLY check that can see the feature at all: the store is written for a DECODE and
+  // for nothing else, so `smoke:editor`, which loads its fixture through `?score=`, is blind to it
+  // by design — and that design is what stops the checks' own fixtures filling a reader's list.
+  // ⚠ Reading `data-count` on the FIRST visit would prove nothing: the point is what is there after
+  // the app has been thrown away and rebuilt, so the assertion is made after `page.reload()`.
+  // ⚠ The write is DEBOUNCED (SAVE_DEBOUNCE_MS in App.tsx), so wait for the list to appear instead
+  // of reading it straight after the decode — a bare read here would be a race the check loses on
+  // a fast machine and wins on a slow one, which is the worst kind of test.
+  const beforeList = page.locator('#recent[data-omr="recent"]');
+  const savedBefore = await beforeList
+    .waitFor({ timeout: 20000 })
+    .then(async () => Number((await beforeList.getAttribute("data-count")) ?? 0))
+    .catch(() => 0);
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#page-input", { timeout: 60000 });
+  // The list is read from the store in an effect, so it appears a tick after the app boots.
+  const restored = page.locator('#recent[data-omr="recent"]');
+  const listed = await restored
+    .waitFor({ timeout: 15000 })
+    .then(async () => Number((await restored.getAttribute("data-count")) ?? 0))
+    .catch(() => 0);
+
+  // Open the stored page and check the same score comes back — the note count is the fact, not the
+  // name on the row, because a row that opened the WRONG record would still show a name.
+  let reopenedNotes = 0;
+  let markedCurrent = false;
+  let renamed = "";
+  let modalUp = false;
+  if (listed > 0) {
+    await page.locator('[data-omr="recent-open"]').first().click();
+    await page.waitForSelector("#app[data-ready='1']", { timeout: 30000 });
+    reopenedNotes = await page.evaluate(
+      () =>
+        (window as unknown as { __omrDoc?: { events: { kind: string }[] } }).__omrDoc?.events.filter(
+          (e) => e.kind === "note",
+        ).length ?? 0,
+    );
+    // `#recent[data-current]` is the store id of the page on screen: the only proof the app knows
+    // the score it is showing IS the stored one, and therefore that further edits go back to it.
+    const current = await restored.getAttribute("data-current");
+    const rowId = await page
+      .locator('[data-omr="recent-item"]')
+      .first()
+      .getAttribute("data-page-id");
+    markedCurrent = !!current && current === rowId;
+    // A restored page must NOT raise the makam modal a second time — the makam was answered for
+    // when it was read, and `loadDoc` wrote it into the document. A modal here would also block
+    // every later click, so this is an assertion and not a courtesy.
+    await page.waitForTimeout(300);
+    // ⚠ Read HERE, not after the block: the rename below reloads the browser again, and on a fresh
+    // app with no score installed there is no modal to find — the assertion would pass by being
+    // asked at a moment when it cannot fail.
+    modalUp = (await page.locator("#makam-modal").count()) > 0;
+
+    // Renaming the page ON SCREEN, from the score card's heading (owner, 2026-09-05). ⚠ The name is
+    // read off `data-page-name`, not from the row's text: a page name is user DATA, so an attribute
+    // is the right place to assert it, the same rule that keeps these checks off the copy.
+    await page.locator("#score-rename").click();
+    const box = page.locator('[data-omr="rename-input"]');
+    await box.fill("yeniden adlandırıldı");
+    await box.press("Enter");
+    // ⭐ Reload again. A rename that reached only React state, or only the store, would pass every
+    // assertion made before this line — which is exactly how it could have shipped reverting itself
+    // on the reader's next keystroke (App's save effect writes `saved.name` back).
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector('#recent[data-omr="recent"]', { timeout: 15000 });
+    renamed =
+      (await page.locator('[data-omr="recent-item"]').first().getAttribute("data-page-name")) ?? "";
+  }
   await browser.close();
   await server.close();
 
@@ -229,6 +306,16 @@ async function main() {
       !foldedPage || wentBack,
       foldedPage ? (wentBack ? `yes, after ${samples} samples` : `NO — ${samples} samples, never moved back`) : "n/a",
     ],
+    ["⭐ the read page is stored", savedBefore > 0, `${savedBefore} page(s) in the store`],
+    ["…and survives a reload", listed > 0, `${listed} listed after refresh`],
+    [
+      "…and reopens the same score",
+      reopenedNotes === notes && notes > 0,
+      `${reopenedNotes} notes back, ${notes} read`,
+    ],
+    ["…marked as the page on screen", markedCurrent, String(markedCurrent)],
+    ["…without asking the makam again", !modalUp, modalUp ? "MODAL UP" : "no modal"],
+    ["…and can be renamed, for good", renamed === "yeniden adlandırıldı", renamed || "(not renamed)"],
     ["no uncaught page errors", pageErrors.length === 0, pageErrors.join("; ") || "none"],
   ];
   console.log("");

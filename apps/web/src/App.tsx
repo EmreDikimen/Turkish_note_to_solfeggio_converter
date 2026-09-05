@@ -17,6 +17,8 @@ import {
   makamDisplay,
   makamKomaDeltas,
   makamOptions,
+  makamRuleUsage,
+  remapKomaDeltas,
   measureOfEvent,
   nudgePitch,
   resolveMakam,
@@ -33,11 +35,23 @@ import {
   withKomaDeltas,
   withPitch,
   type MakamDetection,
+  type Measure,
   type NoteEvent,
   type NoteModelDocument,
+  type Timeline,
 } from "@turkish-omr/core";
 import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
+import {
+  clearPages,
+  deletePage,
+  listPages,
+  newPageId,
+  readPage,
+  renamePage,
+  savePage,
+  type RecentMeta,
+} from "./recentPages";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
@@ -55,6 +69,7 @@ import type { RawDecode } from "./ui/DecodePanel";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
 import { UploadHero } from "./ui/UploadHero";
+import { RecentPages } from "./ui/RecentPages";
 import { TransportBar } from "./ui/TransportBar";
 import { ScoreCard } from "./ui/ScoreCard";
 import { EditPalette, type Tool } from "./ui/EditPalette";
@@ -143,6 +158,15 @@ const SAMPLES: { label: string; file: string }[] = [];
 // Read once at load (each render job is a fresh page); all absent in interactive use.
 const RENDER_PARAMS = new URLSearchParams(window.location.search);
 const URL_SCORE = RENDER_PARAMS.get("score"); // path under apps/web/public/
+
+/**
+ * How long after the last edit the score is written back to the browser's store.
+ *
+ * ⚠ It is a debounce, not an interval: dragging a note emits dozens of documents a second and each
+ * one would otherwise be a ~100 KB serialise-and-store. Two seconds is long enough that a gesture
+ * costs one write and short enough that nobody reloads inside it.
+ */
+const SAVE_DEBOUNCE_MS = 2000;
 const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" | "keysig" | "measure"
 const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
 const URL_FOLLOW = RENDER_PARAMS.get("follow"); // "1" | "0" — see `readFollow` below
@@ -392,6 +416,22 @@ export function App() {
   // Developer view only: ui/DecodePanel.tsx, inside Gelişmiş. Cleared when a score arrives from
   // anywhere else, because it would then describe a different piece than the one on screen.
   const [rawDecode, setRawDecode] = useState<RawDecode | null>(null);
+  // ── The pages this browser has already read (owner, 2026-09-05) ─────────────────────────────
+  // A decode costs 35–55 s and a round trip to Cloud Run, and a page refresh used to throw it away.
+  // The store, its limits and why it is a CACHE and not a save: apps/web/src/recentPages.ts.
+  const [recent, setRecent] = useState<RecentMeta[]>([]);
+  // Which stored record the score on screen IS, or null when it came from anywhere else.
+  //
+  // ⚠ **ONLY A DECODE OPENS A RECORD.** A `?score=` page, a bundled sample and a hand-loaded JSON
+  // all set this to null, so nothing that was not read from a photograph is ever written — the list
+  // is "pages you have read", not "scores you have opened". That is also why the browser checks
+  // load their fixtures through `?score=` without filling a reader's list.
+  // `createdAt` rides along because an edit REWRITES the record and must not move its birthday.
+  const [saved, setSaved] = useState<{ id: string; name: string; createdAt: number } | null>(null);
+  // Whether the list is unfolded. Open on arrival — the app opens with no score and the list is
+  // then the only thing on the page worth reading — and folded away by `loadDoc`, because once a
+  // score is installed the list is a way back, not the destination.
+  const [recentOpen, setRecentOpen] = useState(true);
   // Playback tempo (quarter-note BPM; defaults to the piece's natural tempo) and metronome.
   const [bpm, setBpm] = useState(120);
   const [metronome, setMetronome] = useState(false);
@@ -490,6 +530,8 @@ export function App() {
     setSelectedTuplet(null); // and so does a selected one
     setLastEditMeasure(null); // nothing edited yet → the palette's Çal starts at the top
     setWriteOut(false);
+    // The list is a way back, not the destination: once there is a score on screen it folds away.
+    setRecentOpen(false);
     // ⚠ The signs go in with the document, in ONE `reset`. Only a decoded page brings a structure;
     // every other source plays exactly as it is written, so this CLEARS as often as it sets — a
     // leftover from the previous page would fold the next score along bar numbers that mean
@@ -515,6 +557,7 @@ export function App() {
       .then((d: NoteModelDocument) => {
         loadDoc(d);
         setRawDecode(null); // a bundled/URL score, not a model read
+        setSaved(null); // …and so it is not remembered: the list is pages READ, not scores opened
         setSampleFile(file);
         setError(null);
       })
@@ -539,6 +582,108 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ── Remembering the page (owner, 2026-09-05) ───────────────────────────────────────────────
+   *
+   * Three moving parts and nothing else: the list is read once on arrival, the score on screen is
+   * written back a moment after the edits stop, and opening a row installs it. The store, its
+   * limits, and why every call here can be treated as "there is nothing": recentPages.ts.
+   */
+
+  // The list, on arrival. Metas only (~100 bytes a page) — the scores stay in the store until one
+  // is opened, which is the whole reason there are two object stores.
+  useEffect(() => {
+    void listPages().then(setRecent);
+  }, []);
+
+  /**
+   * Write the score on screen back to its record, a moment after the edits stop.
+   *
+   * ⚠ **THIS IS THE ONLY SAVE PATH** — there is deliberately no explicit save call after a decode.
+   * Holding a record (`saved`) with a document in hand IS what a stored page is, so the first write
+   * falls out of the same effect as the thousandth edit and no future load path can install a page
+   * the store never hears about. It is also why undo/redo are remembered for free: `history.doc` is
+   * a new object per edit, and this effect sees exactly those.
+   */
+  useEffect(() => {
+    if (!saved || !doc) return;
+    const t = setTimeout(() => {
+      // ⚠ The makam is re-read HERE rather than stamped when the record was opened (owner,
+      // 2026-09-05: *"makamı da isme dahil olsun"*). A decode guesses it, the modal confirms it and
+      // the transport can change it afterwards — so the only version that is never stale is the one
+      // taken at the moment of writing. It is stored BESIDE the name, never inside it: baked into
+      // the name string it would go stale on any of those three, and a rename would delete it.
+      const makam = makamSlug ? makamDisplay(makamSlug) : "";
+      void savePage({ ...saved, makam, doc, structure, bpm }).then(setRecent);
+    }, SAVE_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [saved, doc, structure, bpm, makamSlug]);
+
+  /**
+   * Install a stored page.
+   *
+   * ⚠ No `detected` makam is handed to `loadDoc`. The makam was decided when the page was first
+   * read and `loadDoc` wrote it into the document, so `resolveMakam` recovers it here; guessing
+   * again would silently overrule the answer the reader gave the modal — and raise the modal a
+   * second time for a page they have already answered for.
+   */
+  function openRecent(id: string) {
+    void readPage(id).then((p) => {
+      if (!p) {
+        // It was evicted or cleared in another tab. The list is the answer, not an error.
+        void listPages().then(setRecent);
+        return;
+      }
+      onStop();
+      loadDoc(p.doc, undefined, p.structure ?? undefined);
+      // ⚠ The model's own tokens are NOT stored (recentPages.ts). Clearing this is what stops the
+      // decode inspector showing the PREVIOUS page's tokens underneath this page's notes.
+      setRawDecode(null);
+      setSampleFile("");
+      setError(null);
+      setOmrStatus(null);
+      setSaved({ id: p.id, name: p.name, createdAt: p.createdAt });
+      // After `loadDoc`, which sets the piece's own estimate: a tempo the reader chose wins over it.
+      if (p.bpm > 0) setBpm(p.bpm);
+      // `readPage` touched the record, so the order has changed.
+      void listPages().then(setRecent);
+    });
+  }
+
+  /**
+   * Forget one page.
+   *
+   * ⚠ The score STAYS ON SCREEN when it is the one being removed. The ✕ says "drop this from the
+   * list"; closing someone's open page because they tidied a list is not that. Dropping `saved` is
+   * what makes it stick — from here on the edits are not written anywhere.
+   */
+  function removeRecent(id: string) {
+    if (saved?.id === id) setSaved(null);
+    void deletePage(id).then(setRecent);
+  }
+
+  /**
+   * Rename a stored page — the one on screen or any other (owner, 2026-09-05).
+   *
+   * ⚠ **`saved` must move with the store, and that is not tidiness.** The save effect above writes
+   * `saved.name` back on the next edit, so a rename that updated only the store would be silently
+   * REVERTED two seconds after the reader's next keystroke. One rename, both places.
+   *
+   * ⚠ The document is deliberately untouched: `doc.name` seeds the per-piece tuplet-style hash in
+   * `SheetView`, so renaming through it would re-engrave the triplets. The card's heading reads the
+   * stored name instead (`pageName`), which is what keeps the two from drifting.
+   */
+  function renameRecent(id: string, name: string) {
+    const clean = name.trim();
+    if (!clean) return;
+    setSaved((s) => (s && s.id === id ? { ...s, name: clean } : s));
+    void renamePage(id, clean).then(setRecent);
+  }
+
+  function clearRecent() {
+    setSaved(null);
+    void clearPages().then(setRecent);
+  }
+
   // What the views draw: the stored score, optionally rewritten by the transpose — unless we're
   // keeping the sheet as-is (transposing-instrument case). Never mutates `doc`.
   const displayDoc = useMemo(() => {
@@ -555,6 +700,11 @@ export function App() {
   // every note from its koma, so by then the letters they key on are gone. Keyed by event index
   // so the result survives a transpose and can be applied on the far side of it.
   const makamDeltas = useMemo(() => makamKomaDeltas(doc, makamSlug), [doc, makamSlug]);
+
+  // The same answer, per RULE rather than per note, for the line beside the picker: which written
+  // perde the makam moves, and how many of this score's notes that reaches. One matcher feeds both
+  // (`eachRuleMatch` in core), so the number on screen cannot drift from the pitches that bend.
+  const makamUsage = useMemo(() => makamRuleUsage(doc, makamSlug), [doc, makamSlug]);
 
   // The playable timeline. The SOUND shifts by `transpose` in BOTH modes: when the staff is
   // rewritten, displayDoc already carries the shifted komas; when keeping the sheet, we instead
@@ -573,7 +723,16 @@ export function App() {
         : displayDoc;
     if (!base) return null;
     const played = unfoldDoc(base, structure?.playBars);
-    const timeline = buildTimeline(withKomaDeltas(played.doc, makamDeltas));
+    // ⛔ **`makamDeltas` is keyed by the WRITTEN document and `unfoldDoc` renumbers**, so it has to be
+    // re-keyed onto the performance or the bend lands on the wrong note — silently, because every
+    // index still exists. It is not only a repeat that moves them: the unfolder drops `meta` events,
+    // which shifts every later index on an ordinary page. Fixed 2026-09-05, after the owner heard it
+    // ("bazen la farklı çalıyor, bazen re, bazen mi"); it was 19 wrong notes out of 22 on
+    // `gamzedeyim-deva` under uşşak. ⚠ The bend goes ONLY into the timeline — `perf.doc` below stays
+    // the written performance, because the kanun view looks a course up by an exact written koma.
+    const timeline = buildTimeline(
+      withKomaDeltas(played.doc, remapKomaDeltas(makamDeltas, played.srcOf)),
+    );
     // One step per sounding event, each naming the WRITTEN note the sheet drew for it. This is the
     // whole of "sound and picture match": on the second pass the steps name the first pass's notes
     // again, so the cursor walks back to the `‖:` by itself.
@@ -592,6 +751,11 @@ export function App() {
       // drawn order IS the playing order): then the playhead's own drawn positions are correct and
       // nothing has to be mapped.
       playPlan: played.folded && !writeOut ? playPlan : undefined,
+      // ⚠ The SAME steps, always defined. The measure card draws ONE bar as a slice, and a slice's
+      // own clock starts at zero — so "which note is sounding" can only be answered against the
+      // performance and mapped back, folded or not. The sheet can do without it because it draws
+      // the whole page in order; the card cannot.
+      steps: playPlan,
       firstStartMs: played.firstStartMs,
     };
   }, [doc, displayDoc, keepSheet, transpose, makamDeltas, structure, writeOut]);
@@ -764,15 +928,37 @@ export function App() {
   /**
    * The instrument page's picker: it changes the PICTURE and the SOUND together (owner,
    * 2026-08-29: *"ses de ona göre otomatik ayarlanacak"*).
-   *
-   * ⚠ Only on an explicit change, never on merely opening the tab — a sampled voice is a 20–35 MB
-   * download and "load only on selection" is F1's requirement, not an optimisation. So a first
-   * visit can show a violin while the default tone still plays; touching this resolves it, and the
-   * picker says so while the samples arrive.
    */
   function applyInstrument(id: InstrumentId) {
     setInstrument(id);
     applyVoice(voiceForInstrument(id));
+  }
+
+  /**
+   * The tab switch — and **opening "Enstrüman üzerinde" now picks its sound too** (owner,
+   * 2026-09-04: *"nota dan enstrüman üzerinde tab ına geçtiğimizde çalgı sesi değişiminin
+   * tetiklenmesini sağlar mısın"*).
+   *
+   * ⚠ **This reverses the "only on an explicit change" rule this handler used to carry.** The old
+   * reason was real and has not gone away: a sampled voice is a 20–35 MB download from the Hub, so
+   * the tab used to draw a violin while the default tone still played, and only touching the picker
+   * resolved it. The owner priced that split — you see one instrument and hear another until you
+   * find a control you were not told about — as the worse of the two, so the download is now the
+   * cost of opening the page.
+   *
+   * ⚠ The voice comes from **whatever the picker already shows**, not from a fixed instrument: the
+   * page and the sound agree the moment the page appears. Leaving the tab changes nothing — the
+   * chosen voice stays, exactly as it does when it is chosen from the transport.
+   *
+   * ⚠ Guarded on `voice`, so re-entering the tab does not re-schedule playback (`applyVoice` calls
+   * `applyPlayback`) for a voice that is already the one sounding. `ensureVoice` would be a no-op
+   * on its own; the re-schedule would not.
+   */
+  function applyViewMode(v: ViewMode) {
+    setViewMode(v);
+    if (v !== "instrument") return;
+    const want = voiceForInstrument(instrument);
+    if (want !== voice) applyVoice(want);
   }
 
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
@@ -1315,6 +1501,150 @@ export function App() {
     onSeekMs(editStartMs);
   }
 
+  /**
+   * The instrument page's **Ölçüyü çal**: play ONE bar and stop at its barline (owner, 2026-09-04).
+   *
+   * ⭐ **It is done by CUTTING THE TIMELINE, not by watching the clock and calling stop.** The bar's
+   * notes go to the backend with their PIECE times untouched and `totalMs` set to the barline, and
+   * three things follow from that:
+   *   * nothing past the bar is ever scheduled. A poll would always overshoot by a frame, and one
+   *     frame of the next bar is an audible blip, not a rounding error.
+   *   * the natural end fires by itself (`tick` → `setOnEnded` → `stopped`), including the wait for
+   *     a plucked voice still ringing, so there is no second stop path to keep in step with it.
+   *   * `getPositionMs()` still reports PIECE ms — which is what the instrument drawings, the
+   *     measure card's cursor and the sheet's playhead all read. Playing a slice from zero would
+   *     have moved every one of them to the top of the score while the seventh bar sounded.
+   * ⚠ The clicks and the usul strokes are passed whole; they stop with the playback, at the same
+   * `totalMs`, so nothing has to filter them either.
+   */
+  function onPlayMeasure(m: Measure) {
+    if (!timeline) return;
+    const startMs = playStartMs(m);
+    const durMs = m.events.reduce((sum, ev) => sum + ev.durationMs, 0);
+    if (!(durMs > 0)) return;
+    const endMs = startMs + durMs;
+    const EPS = 1e-6;
+    const bar: Timeline = {
+      notes: timeline.notes.filter((n) => n.startMs >= startMs - EPS && n.startMs < endMs - EPS),
+      totalMs: endMs,
+    };
+    void backend.play(bar, startMs, buildPlayOptions(bpm, metronome, usulName, percussion));
+    setPlayState("playing");
+  }
+
+  /**
+   * The instrument page's **Ölçüyü düzenle**: turn edit mode on, ON THE INSTRUMENT TAB.
+   *
+   * ⭐ **It does not leave the tab** (owner, 2026-09-04, revising the first version the same day:
+   * *"nota tabına atmasın. Normal edit tool çantası çıksın yine … Edit tabi nota tabına da yansısın
+   * ikisi ayrı olmasın"*). There is still exactly ONE editor — the card mounts `SheetView`, the
+   * toolbox is the same `EditPalette`, and every edit goes through the callbacks below onto the
+   * same document and the same undo stack. What changed is only WHERE the one editor is shown.
+   *
+   * ⚠ It sets `lastEditMeasure` from the bar itself, so the toolbox's Çal plays the bar you are
+   * looking at before you have edited anything — on the page that pointer only ever came from an
+   * actual edit, because the page had no "which bar am I on".
+   */
+  function onEditMeasure(m: Measure, on: boolean) {
+    setEditMode(on);
+    setSelectedTuplet(null);
+    armTool(null);
+    if (!on) {
+      setSelectedNote(null);
+      return;
+    }
+    // Written out long, the drawn bars are COPIES whose indices the stored score has never heard
+    // of, so the pointer would name another bar. Edit mode turns `writeOut` off anyway; this is the
+    // same honesty the sheet's own `markEdited` keeps — an index we cannot place leaves the pointer
+    // where it was rather than guessing.
+    setWriteOut(false);
+    const first = m.events[0]?.index ?? null;
+    const bar = first != null && doc ? measureOfEvent(doc, first) : null;
+    if (bar != null) setLastEditMeasure(bar);
+  }
+
+  /**
+   * Draw ONE bar for the instrument tab's measure card — **with `SheetView`, the page's own view**.
+   *
+   * ⭐ **This is what "ikisi ayrı olmasın" means in code** (owner, 2026-09-04). The card is not a
+   * second engraver with a second overlay: it mounts the same component, with `onlyMeasure` set, and
+   * hands it the same document and the same callbacks. So the note targets, the pitch drag, the
+   * insert ghost, the tuplet handles, the sign targets, the off-meter badge and the undo stack are
+   * not *equivalent to* the page's — they ARE the page's.
+   *
+   * ⚠ **Everything bar-indexed goes in untouched, and that is `onlyMeasure`'s whole point**: it
+   * filters the drawn bars without renumbering them, so `repeatSpans`, `navMarks`, `signTargets`,
+   * `openRepeat`, `repeatAnchor` and the insert's `measureIndex` still mean the same bar on both
+   * sides. Handing in a one-bar document instead would have needed six mappings that must agree,
+   * in the one place where being wrong means an edit lands on another bar.
+   *
+   * ⚠ **Every prop here must be the SAME REFERENCE the sheet gets**, not a fresh array: `SheetView`
+   * re-engraves when `repeatSpans`, `navMarks`, `signature` or `onLayout` change identity, and an
+   * engrave in the middle of a pointer drag would drop the note being dragged. That is why nothing
+   * is filtered or rebuilt in this function.
+   *
+   * ⚠ `playing` is not the transport's — it is "the playhead belongs to the bar on screen". The card
+   * decides that (it knows which bar is sounding) and passes it in as `showCursor`; a pinned bar two
+   * systems away must not show a cursor frozen on its last note.
+   */
+  function renderBar(m: Measure, opts: { contentWidth: number; showCursor: boolean }) {
+    if (!drawnDoc) return null;
+    return (
+      <SheetView
+        doc={drawnDoc}
+        onlyMeasure={m.index}
+        contentWidth={opts.contentWidth}
+        justify
+        chrome={false}
+        // ⚠ Its OWN id and marker. `#sheet-surface` and `data-omr="sheet-svg"` must keep meaning
+        // the page's score — `render.ts` and `verify-labels.ts` take the first match, and two
+        // elements answering to one id is what the DOM-state contract exists to keep out.
+        surfaceId="measure-surface"
+        svgMarker="measure-svg"
+        editMode={editMode}
+        accidentalMode={accidentalMode}
+        signatureOverride={SIG_OVERRIDE}
+        sigTolerant={SIG_TOLERANT}
+        showLyrics={showLyrics}
+        lyricHyphens={lyricHyphens}
+        playing={opts.showCursor}
+        getPositionMs={getPositionMs}
+        // ⚠ ALWAYS the steps, folded or not: one drawn bar has no drawn order to read a clock
+        // against, so the cursor can only be found by asking which WRITTEN note is sounding.
+        playPlan={perf?.steps}
+        onSeekToMeasure={(mm) => onSeekMs(playStartMs(mm))}
+        selectedNote={selectedNote}
+        onSelectNote={onSelectNote}
+        onDeleteNote={onDeleteNote}
+        onNudgePitch={onNudgePitch}
+        armedTool={armed?.kind ?? null}
+        armedRest={armed?.kind === "duration" && armed.rest === true}
+        armedSign={armed?.kind === "structure" ? armed.mark : null}
+        signTargets={signTargets}
+        openRepeat={openRepeat}
+        repeatAnchor={repeatAnchor}
+        onPlaceMark={(bar) => {
+          if (armed?.kind === "structure" && armed.mark !== "repeat") onPlaceMark(bar, armed.mark);
+        }}
+        onRepeatEdge={onRepeatEdge}
+        onRepeatCancel={() => setRepeatAnchor(null)}
+        onRemoveMark={onRemoveMark}
+        onApplyTool={onApplyTool}
+        onInsertNote={onInsertNote}
+        tupletAnchor={tupletAnchor}
+        onTupletPick={onTupletPick}
+        selectedTuplet={selectedTuplet}
+        onTupletEdge={onTupletEdge}
+        onTupletRemove={onTupletRemove}
+        repeatSpans={repeatSpans}
+        navMarks={navMarks}
+        thinSharps={URL_THIN_SHARPS}
+        legacyTupletMark={URL_LEGACY_TUPLET}
+        concaveTuplet={URL_CONCAVE_TUPLET}
+      />
+    );
+  }
+
   // Apply a tempo / metronome / percussion / usul change. If something is playing or paused,
   // re-schedule from the current position so the change is heard immediately (position is musical
   // ms, so it's tempo-independent); otherwise it just takes effect on the next Play.
@@ -1358,6 +1688,7 @@ export function App() {
         onStop();
         loadDoc(parsed);
         setRawDecode(null); // this score did not come from the model — see the state's comment
+        setSaved(null); // nor is it a page this browser read — see `saved`
         setSampleFile(""); // a user-picked file isn't one of the bundled samples
         setError(null);
       })
@@ -1422,6 +1753,8 @@ export function App() {
         const detected = detectMakam(result.doc);
         onStop();
         loadDoc(result.doc, detected, result.structure);
+        // A page was READ: open a record for it. The write itself is the effect above — see `saved`.
+        setSaved({ id: newPageId(), name: pageName, createdAt: Date.now() });
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
@@ -1509,6 +1842,8 @@ export function App() {
         const detected = detectMakam(result.doc);
         onStop();
         loadDoc(result.doc, detected, result.structure);
+        // A page was READ: open a record for it. The write itself is the effect above — see `saved`.
+        setSaved({ id: newPageId(), name: stem, createdAt: Date.now() });
         setMakamPrompt(detected);
         setSampleFile("");
         setOmrStatus(
@@ -1568,6 +1903,24 @@ export function App() {
         onFile={readPageFile}
       />
 
+      {/* ⚠ Between the upload box and the score, and it draws NOTHING when the store is empty —
+          so a first-time visitor sees exactly what they saw before this existed. It sits above the
+          score rather than below it because it is a way IN: on arrival there is no score, and this
+          is then the only thing on the page a returning reader wants. */}
+      <RecentPages
+        items={recent}
+        currentId={saved?.id ?? null}
+        // A read in flight owns the document; opening a stored page under it would race the decode
+        // that is about to call `loadDoc`.
+        busy={omrBusy}
+        open={recentOpen}
+        onToggle={() => setRecentOpen((v) => !v)}
+        onOpen={openRecent}
+        onRemove={removeRecent}
+        onRename={renameRecent}
+        onClear={clearRecent}
+      />
+
       {doc && (
         <>
           <TransportBar
@@ -1594,6 +1947,7 @@ export function App() {
             makamSlug={makamSlug}
             onMakam={applyMakam}
             makamOptions={MAKAM_OPTIONS}
+            makamUsage={makamUsage}
             transpose={transpose}
             transposeOptions={TRANSPOSE_OPTIONS}
             onTranspose={(v) => applyTranspose(v, keepSheet)}
@@ -1605,9 +1959,16 @@ export function App() {
 
           <ScoreCard
             doc={doc}
+            // The heading shows the name the reader gave this page, and offers to change it. Null
+            // for anything that is not a stored page, which then reads the document as it always did.
+            pageId={saved?.id ?? null}
+            pageName={saved?.name ?? null}
+            onRename={renameRecent}
             totalMs={timeline?.totalMs ?? null}
             viewMode={viewMode}
-            onViewMode={setViewMode}
+            // ⚠ NOT the bare setter: opening the instrument tab also switches the SOUND to the
+            // instrument the page draws (owner, 2026-09-04). See `applyViewMode`.
+            onViewMode={applyViewMode}
             showLyrics={showLyrics}
             onShowLyrics={setShowLyrics}
             followPlayhead={followPlayhead}
@@ -1630,16 +1991,27 @@ export function App() {
               // kanun takes the document, because a course is a WRITTEN note. `makamDeltas` rides
               // along for the kanun, which is the one bend a mandal can express. Neither view ever
               // calls `buildTimeline` itself. Full reasoning in the two files' headers.
-              timeline && perf && (
+              timeline && perf && drawnDoc && (
                 <InstrumentView
                   doc={perf.doc}
+                  // ⚠ The WRITTEN score, for the measure card only — the same document the sheet
+                  // draws, so a bar inside a repeat is ONE bar there however often it sounds. The
+                  // performance above is what the three instrument drawings read. Swapping the two
+                  // would draw the right notes on the wrong side of every repeat.
+                  sheetDoc={drawnDoc}
                   timeline={timeline}
+                  playPlan={perf.steps}
                   makamDeltas={makamDeltas}
                   playing={playState !== "stopped"}
                   getPositionMs={getPositionMs}
                   instrument={instrument}
                   onInstrument={applyInstrument}
                   voiceStatus={voiceStatus}
+                  canPlay={!!timeline}
+                  editMode={editMode}
+                  onPlayMeasure={onPlayMeasure}
+                  onEditMeasure={onEditMeasure}
+                  renderBar={renderBar}
                 />
               )
             ) : (
@@ -1705,7 +2077,12 @@ export function App() {
               and a card that gained a transform or a filter would become the containing block for
               anything fixed inside it. Out here nothing can. The armed tool still lives in App's
               state, which is why the props are unchanged. */}
-          {editMode && viewMode === "sheet" && (
+          {/* ⚠ **Both views, one toolbox** (owner, 2026-09-04). It used to be sheet-only; the
+              instrument tab now edits its bar in place with the SAME palette over the SAME
+              document, so gating it on the view would have meant a second one. Nothing about the
+              palette knows which view is under it — it arms a tool, and whichever `SheetView` is
+              mounted reads the armed tool from App. */}
+          {editMode && (
             <EditPalette
               armed={armed}
               onArm={armTool}
@@ -1766,6 +2143,7 @@ export function App() {
       {makamPrompt && (
         <MakamModal
           detection={makamPrompt}
+          doc={doc}
           onConfirm={(slug) => {
             applyMakam(slug);
             setMakamPrompt(null);

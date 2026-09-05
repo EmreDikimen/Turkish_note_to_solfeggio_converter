@@ -19,20 +19,30 @@
  * opposite. What stays down there is genuinely for the project: sample/JSON loading, the strip
  * exporter, the repeat preview.
  *
+ * ⚠ **Çalma is PINNED TO THE TOP OF THE PAGE and the other two are not** (owner, 2026-09-05:
+ * *"aşağı kaydırdıkça kaybolmasın, sayfanın üstünde sabitlensin"*). That is why the bar is TWO
+ * boxes in the DOM and not one: `position: sticky` is bounded by the element's own parent, so a
+ * row inside a three-row box can only travel that box's ~190px. The pinned row is therefore its
+ * own `.kv-transport`, a direct child of `.kv-page`, which spans the whole document — so it rides
+ * the entire score. ⚠ Both boxes keep the `kv-transport` class: every control size, select width
+ * and phone rule in `app.css` is scoped to it, and a bare wrapper would drop them all.
+ * ⚠ Ritim and Perde deliberately stay in the flow. They are set once, before playing; pinning all
+ * three would hold a third of the window over the music this is meant to keep you reading.
+ *
  * `#play` carries `data-play-state` and `#stop` its id because the deploy checks drive them; the
  * LABELS are copy and are free to change. See apps/web/src/ui/status.ts for the reasoning.
- * ⚠ `#play-sticky` / `#stop-sticky` are the SAME transport pinned to the corner once this bar has
- * scrolled off (see `StickyTransport` at the bottom), so `data-play-state` now names two buttons
- * here as well as `#palette-play` in the editor's toolbox — a check must say which one it means.
+ * `data-play-state` also names `#palette-play` in the editor's toolbox — a check must say which
+ * one it means.
  */
 
-import { useEffect, useRef, useState } from "react";
-import { findUsul, USULS, type MakamOption } from "@turkish-omr/core";
+import { useEffect, useRef } from "react";
+import { findUsul, USULS, type MakamOption, type MakamRuleUse } from "@turkish-omr/core";
 import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
 import type { VoiceStatus } from "../webAudioBackend";
 import type { AccidentalMode } from "../SheetView";
 import { Segmented } from "./Segmented";
+import { MakamIntonation } from "./MakamIntonation";
 import { TR } from "./strings";
 
 /** The picker's own name for a voice, for the hints that have to say which one is sounding. */
@@ -64,6 +74,7 @@ export function TransportBar({
   makamSlug,
   onMakam,
   makamOptions,
+  makamUsage,
   transpose,
   transposeOptions,
   onTranspose,
@@ -101,6 +112,8 @@ export function TransportBar({
   makamSlug: string;
   onMakam: (slug: string) => void;
   makamOptions: readonly MakamOption[];
+  /** The chosen makam's rules against THIS score, for the line beside the picker. */
+  makamUsage: readonly MakamRuleUse[];
   /** Transposition in commas. 0 is the score as written. */
   transpose: number;
   transposeOptions: readonly (readonly [number, string])[];
@@ -115,20 +128,36 @@ export function TransportBar({
   // (packages/core/src/usul.ts) — the checkbox says so instead of silently playing nothing, and
   // `data-usul-strokes` is how a headless check reads that without matching the sentence.
   const strokeCount = findUsul(usulName)?.strokes?.length ?? 0;
-  // The real Çal button, watched by the pinned pair below so it only appears once this one is gone.
-  const playRef = useRef<HTMLButtonElement>(null);
+  // How tall the pinned row is, published to CSS as `--pinned-h`. Only one thing reads it — the
+  // voice toast, which is `fixed` at the top-centre and would otherwise land on Çal and Dur. It is
+  // measured rather than guessed because the row wraps: one line on a wide window, three on a
+  // phone. ⚠ A ResizeObserver, not a scroll listener — this changes when the WINDOW changes, not
+  // when the reader scrolls.
+  const pinnedRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = pinnedRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const write = () =>
+      document.documentElement.style.setProperty("--pinned-h", `${Math.round(el.offsetHeight)}px`);
+    write();
+    const ro = new ResizeObserver(write);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--pinned-h");
+    };
+  }, []);
 
   return (
     <>
-    <div className="kv-transport">
-      {/* ── Çalma ─────────────────────────────────────────────────────────────────────────── */}
+    {/* ── Çalma — PINNED (see the note at the top of this file) ─────────────────────────────── */}
+    <div className="kv-transport kv-transport--pinned" id="transport-pinned" ref={pinnedRef}>
       <div className="kv-transport__row">
         <span className="kv-transport__caption">{TR.transport.groupPlay}</span>
         <div className="kv-transport__items">
           <div className="kv-transport__group">
             <button
               id="play"
-              ref={playRef}
               type="button"
               data-play-state={playState}
               className="kv-btn kv-btn--primary"
@@ -232,7 +261,9 @@ export function TransportBar({
           </label>
         </div>
       </div>
+    </div>
 
+    <div className="kv-transport">
       {/* ── Ritim ─────────────────────────────────────────────────────────────────────────── */}
       {/* The usul heads this row rather than the makam's: it is what the metronome and the strokes
           below it are counting, so the two drum controls are its consequences, not its neighbours. */}
@@ -330,23 +361,31 @@ export function TransportBar({
       <div className="kv-transport__row">
         <span className="kv-transport__caption">{TR.transport.groupPitch}</span>
         <div className="kv-transport__items">
-          <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.makamTitle}>
-            <span>{TR.transport.makam}</span>
-            <select
-              id="makam-select"
-              value={makamSlug}
-              onChange={(e) => onMakam(e.target.value)}
-              disabled={!canPlay}
-            >
-              <option value="">{TR.transport.makamNone}</option>
-              {makamOptions.map((m) => (
-                <option key={m.slug} value={m.slug}>
-                  {m.label}
-                  {m.hasIntonation ? " ♪" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* ⚠ The picker and its footnote are ONE group, like the transposition below: the ♪ in
+              the list says something moves without saying what, and the answer to that is only an
+              answer while it is beside the control that raised the question. It also has to be
+              able to WRAP away from the row (`.kv-makam`) — it is prose, and the row's other items
+              are fixed-width controls that cannot give way for it. */}
+          <div className="kv-transport__group">
+            <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.makamTitle}>
+              <span>{TR.transport.makam}</span>
+              <select
+                id="makam-select"
+                value={makamSlug}
+                onChange={(e) => onMakam(e.target.value)}
+                disabled={!canPlay}
+              >
+                <option value="">{TR.transport.makamNone}</option>
+                {makamOptions.map((m) => (
+                  <option key={m.slug} value={m.slug}>
+                    {m.label}
+                    {m.hasIntonation ? " ♪" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <MakamIntonation slug={makamSlug} usage={makamUsage} />
+          </div>
 
           {/* The interval and its mode are ONE control, so they sit in a group with the group's
               tighter gap — 8px against the row's 16px. Without it the mode segmented reads as a
@@ -394,89 +433,6 @@ export function TransportBar({
         </div>
       </div>
     </div>
-
-    {/* The same two buttons, pinned to the corner while the real ones are off screen. */}
-    <StickyTransport
-      anchor={playRef}
-      canPlay={canPlay}
-      playState={playState}
-      onPlayPause={onPlayPause}
-      onStop={onStop}
-    />
     </>
-  );
-}
-
-/**
- * ▶ Çal and ■ Dur, pinned to the bottom-right corner once the transport itself has scrolled away
- * (owner, 2026-09-03: *"Çal ve dur tuşu sayfaya yapışık olsun, biz scrolladığımızda kaybolmasın"*).
- *
- * Three decisions worth keeping:
- *
- *  - **Only these two.** Making the whole transport `sticky` was the obvious move and is wrong: it
- *    wraps to two or three rows on a laptop, so it would pin a third of the window and hide the
- *    music it is meant to keep you reading. Tempo, usul and makam are set once, before playing.
- *  - **Only when the real pair is off screen**, watched with an `IntersectionObserver` on the real
- *    `#play` — not a scroll listener (no work per frame), and not a fixed scroll threshold (the
- *    transport's own height changes with the window). With both on screen a second pair would just
- *    be a duplicate control saying the same thing twice.
- *  - **Bottom-right, and it never moves.** The same corner-parking bargain the edit toolbox makes:
- *    a floating box can cover music, and the answer is that it sits in a corner the score does not
- *    use. It is BELOW the toolbox in z-order, because the toolbox is the one you can drag.
- *
- * ⚠ Its state comes from the same props as the real buttons — there is one transport, shown twice.
- * `#play-sticky` carries `data-play-state` like `#play`, so a check must name the one it means.
- */
-function StickyTransport({
-  anchor,
-  canPlay,
-  playState,
-  onPlayPause,
-  onStop,
-}: {
-  anchor: React.RefObject<HTMLButtonElement | null>;
-  canPlay: boolean;
-  playState: "stopped" | "playing" | "paused";
-  onPlayPause: () => void;
-  onStop: () => void;
-}) {
-  const [away, setAway] = useState(false);
-  useEffect(() => {
-    const el = anchor.current;
-    // ⚠ Both guards are real: the harness renders this view in environments without an observer,
-    // and without one the honest answer is "never show it" — a pinned pair that cannot tell whether
-    // the real one is visible would sit over the score forever.
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([entry]) => setAway(!!entry && !entry.isIntersecting));
-    io.observe(el);
-    return () => io.disconnect();
-  }, [anchor]);
-
-  if (!away || !canPlay) return null;
-  return (
-    <div className="kv-mini-transport" id="sticky-transport">
-      <button
-        id="play-sticky"
-        type="button"
-        data-play-state={playState}
-        className="kv-btn kv-btn--primary"
-        onClick={onPlayPause}
-      >
-        {playState === "playing"
-          ? TR.transport.pause
-          : playState === "paused"
-            ? TR.transport.resume
-            : TR.transport.play}
-      </button>
-      <button
-        id="stop-sticky"
-        type="button"
-        className="kv-btn"
-        onClick={onStop}
-        disabled={playState === "stopped"}
-      >
-        {TR.transport.stop}
-      </button>
-    </div>
   );
 }

@@ -20,8 +20,10 @@
  * 3. **It is `position: fixed` and rendered from `App`**, for the reason the edit toolbox is: a
  *    `.kv-card` ancestor sets `overflow: hidden`, and one that ever gained a transform or a filter
  *    would become the containing block for anything fixed inside it and clip the notice to the
- *    paper. It sits at the TOP of the viewport because the bottom is taken twice over — by the
- *    pinned transport (`.kv-mini-transport`) and, on a phone, by the docked toolbox.
+ *    paper. It sits at the TOP of the viewport because the bottom is taken, on a phone, by the
+ *    docked toolbox. ⚠ Since 2026-09-05 the pinned Çalma row is at the top too, so the notice is
+ *    offset below it by `--pinned-h` — it must never cover Çal and Dur, which is what the corner
+ *    it used to avoid was for.
  *
  * The DOM contract, as everywhere else in this app, is attributes rather than the Turkish copy:
  * `#voice-notice[data-omr="voice-switch"]` carries `data-voice-to`, `data-voice-sounding`,

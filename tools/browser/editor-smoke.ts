@@ -1467,12 +1467,22 @@ async function main() {
   // TRANSPORT's voice, because that is the whole reason the merge is worth more than tidiness —
   // you see and hear the same instrument without knowing two controls existed. A check that only
   // read this page's own attribute would pass on a picker wired to nothing but itself.
+  // ⚠ Read BEFORE the tab is opened, and it is half of the next-but-one assertion: without it,
+  // "the sound is a violin here" could just as well be a page that was already on a violin.
+  check("the sound starts on the built-in tone",
+    await page.getAttribute("#instrument", "data-instrument"), "sine");
   await page.locator("#view-instrument").click();
   await page.waitForSelector("#instrument-view", { timeout: 10000 });
   check("the piano roll tab is gone", await page.locator("#view-roll").count(), 0);
   check("…and so are the two separate instrument tabs", await page.locator("#view-fingerboard, #view-kanun").count(), 0);
   check("one instrument page holds both", await page.locator("#instrument-pick").count(), 1);
   check("it opens on the violin", await page.getAttribute("#instrument-view", "data-instrument"), "violin");
+  // ⭐ **OPENING THE TAB IS ITSELF A VOICE CHANGE** (owner, 2026-09-04). The page used to draw a
+  // violin while the default tone still played, until the picker was touched; arriving now asks for
+  // the voice the picker already shows. The transport's own attribute is the assertion — this
+  // page's `data-instrument` would say "violin" either way, which is exactly the bug being guarded.
+  check("⭐ …and opening it moved the SOUND to that instrument, with nothing touched",
+    await page.getAttribute("#instrument", "data-instrument"), "violin");
   check("…drawing a violin and no kanun", await page.locator("#fingerboard").count() + await page.locator("#kanun").count() * 10, 1);
 
   await page.locator("#instrument-pick").selectOption("kanun");
@@ -1698,6 +1708,136 @@ async function main() {
   console.log(`  opening: ${beyatiOpening.join(" ")}`);
   check("another piece sets its own mandals", beyatiOpening, ["Segâh-2"]);
   check("one lever up per course here too", await upCount(), 26);
+
+  // --- the bar beside the instrument, and editing it in place (owner, 2026-09-04) --------------
+  //
+  // The instrument views say WHERE to put your fingers; this card says WHAT you are playing, and
+  // since the same day it is also where you EDIT that bar. Five properties, and four of them cannot
+  // be asked of the picture:
+  //   - it FOLLOWS. `data-measure` moving while the music runs is the feature, and an attribute
+  //     naming a bar cannot prove the clock is driving it — the same reason the violin's marker is
+  //     asserted by movement and the sheet's playhead by position.
+  //   - an arrow PINS. A card that ignored the pin and kept following passes every assertion above
+  //     it, and would take the page off the bar under the reader's eyes.
+  //   - `Ölçüyü çal` stops at the barline. Asserted as "stopped again, in seconds, on a two-minute
+  //     piece" — only the cut timeline makes that true.
+  //   - ⭐ **THE EDITOR IS THE SHEET'S OWN, NOT A COPY** (owner: *"ikisi ayrı olmasın"*). The card
+  //     mounts `SheetView` with `onlyMeasure`, so the assertions that matter are that the SAME
+  //     toolbox arms, that an edit made here reaches `window.__omrDoc`, and that the Nota page then
+  //     shows it with the same undo stack. A card with its own overlay could pass "a note is
+  //     selected" and still be a second document.
+  //   - it does NOT leak the page's markers: `#sheet-surface` and `data-omr="sheet-svg"` must keep
+  //     meaning THE PAGE'S score, because `render.ts` and `verify-labels.ts` take the first match.
+  console.log("\nthe bar beside the instrument (F3)");
+  await page.goto(`${base}/?score=/beyati-delisin.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#view-instrument").click();
+  await page.waitForSelector("#measure-card", { timeout: 10000 });
+
+  const cardAttr = (name: string) => page.getAttribute("#measure-card", name);
+  check("the card is drawn beside the instrument", await page.locator('[data-omr="measure-svg"]').count(), 1);
+  check("…by the SHEET's own view", await page.locator("#measure-surface").count(), 1);
+  check("⭐ …without claiming the page's markers", 
+    (await page.locator('[data-omr="sheet-svg"]').count()) + (await page.locator("#sheet-surface").count()), 0);
+  check("…on the first bar", await cardAttr("data-measure"), "1");
+  check("…following by default", await cardAttr("data-follow"), "1");
+  check("…knowing how many bars there are", Number(await cardAttr("data-total")) > 1, true);
+  // The staff is REDRAWN per bar, not relabelled: a card that only changed its heading would pass
+  // every `data-measure` assertion below. Two different bars, two different pictures.
+  const inkOf = () => page.locator('[data-omr="measure-svg"]').innerHTML();
+  const ink1 = await inkOf();
+  await page.locator("#measure-next").click();
+  check("the arrow steps to the next bar", await cardAttr("data-measure"), "2");
+  check("⭐ …and an arrow PINS the card", await cardAttr("data-follow"), "0");
+  check("…and the staff is actually redrawn", (await inkOf()) !== ink1, true);
+  await page.locator("#measure-prev").click();
+  check("…and back", await cardAttr("data-measure"), "1");
+  check("the first bar cannot step back past itself", await page.locator("#measure-prev").isDisabled(), true);
+
+  // Pinned, with the piece playing from the top: the card must NOT move.
+  await page.locator("#measure-next").click();
+  await page.locator("#play").click();
+  // ⚠ NOT `waitForPlayhead` — that one waits on the SHEET, which is not mounted on this tab. The
+  // card's `SheetView` draws its own `[data-omr="playhead"]`, and its `display` is the only thing
+  // that says the clock reached it: `data-play-state` alone would pass on a card wired to nothing.
+  const cardCursor = '#measure-surface [data-omr="playhead"]';
+  await page.waitForFunction(
+    (sel) => (document.querySelector(sel) as HTMLElement | null)?.style.display === "block",
+    cardCursor,
+    { timeout: 20000 },
+  );
+  check("playback is up, and the card's own playhead is on a note", await page.getAttribute("#play", "data-play-state"), "playing");
+  // ⚠ The wait above returned the moment the music REACHED bar 2 — the pinned one — so the pin has
+  // not been tested yet. Waiting for the playhead to clear is what says the music has left the bar;
+  // a cursor frozen on the last note of a bar nobody is playing is the silent version of this bug,
+  // and it is also the only signal available while the card is pinned and therefore silent.
+  await page.waitForFunction(
+    (sel) => (document.querySelector(sel) as HTMLElement | null)?.style.display === "none",
+    cardCursor,
+    { timeout: 20000 },
+  );
+  check("⭐ …and the pinned card stayed on its bar while the music left it", await cardAttr("data-measure"), "2");
+  await page.locator("#measure-follow").click();
+  check("«Çalınanı izle» gives the follow back", await cardAttr("data-follow"), "1");
+  const followed: string[] = [];
+  for (let i = 0; i < 40 && followed.length < 2; i++) {
+    await page.waitForTimeout(200);
+    const m = (await cardAttr("data-measure"))!;
+    if (m !== followed[followed.length - 1]) followed.push(m);
+  }
+  console.log(`  followed: ${followed.join(" → ") || "never moved"}`);
+  check("⭐ …and the card then follows the music", followed.length >= 2, true);
+  await page.locator("#stop").click();
+
+  // `Ölçüyü çal`: one bar, then silence. The piece is 2:03 long, so "stopped within 20 s" is only
+  // reachable by a playback that ended at the barline.
+  await page.locator("#measure-play").click();
+  check("playing this bar pins it", await cardAttr("data-follow"), "0");
+  check("…and playback is up", await page.getAttribute("#play", "data-play-state"), "playing");
+  const t0 = Date.now();
+  await page.waitForFunction(
+    () => document.querySelector("#play")?.getAttribute("data-play-state") === "stopped",
+    null,
+    { timeout: 25000 },
+  );
+  const barMs = Date.now() - t0;
+  console.log(`  the bar played for ${(barMs / 1000).toFixed(1)}s (the piece is 123s)`);
+  check("⭐ …and it stopped at the barline, not at the end of the piece", barMs > 400 && barMs < 20000, true);
+
+  // ── editing the bar, here, with the page's own editor ─────────────────────────────────────────
+  const shownBar = Number(await cardAttr("data-measure"));
+  await page.locator("#measure-edit").click();
+  await page.waitForTimeout(200);
+  check("⭐ Ölçüyü düzenle does NOT leave the tab", await page.locator("#measure-card").count(), 1);
+  check("…it turns the ONE edit mode on", await page.getAttribute("#edit-toggle", "data-edit-mode"), "on");
+  check("…and the same toolbox comes out", await page.locator("#edit-palette").count(), 1);
+  check("…over the bar's own notes", (await page.locator("[data-omr-note]").count()) > 0, true);
+
+  const events = () => page.evaluate(() => (window as unknown as { __omrDoc?: Doc }).__omrDoc!.events.length);
+  const cardBefore = await events();
+  await page.locator("[data-omr-note]").nth(1).click();
+  const selEv = Number(await page.getAttribute("#measure-surface", "data-selected-note"));
+  const selBar = await page.evaluate((ev: number) => {
+    const d = (window as unknown as { __omrDoc?: { events: { index: number; bar?: number }[] } }).__omrDoc;
+    return d?.events.find((x) => x.index === ev)?.bar ?? null;
+  }, selEv);
+  check("a note in the card selects", Number.isFinite(selEv), true);
+  check("…and it is a note of the bar on screen", String(selBar), String(shownBar));
+  await page.locator("#note-delete").click();
+  await page.waitForTimeout(250);
+  const after = await events();
+  console.log(`  events ${cardBefore} → ${after}`);
+  check("⭐ …and deleting it changes THE document", after, cardBefore - 1);
+
+  // The Nota page must be looking at the same score, in the same mode, with the same undo stack.
+  await page.locator("#view-sheet").click();
+  await page.waitForSelector("#sheet-surface", { timeout: 10000 });
+  check("the Nota page is in the same edit mode", await page.getAttribute("#sheet-surface", "data-edit-mode"), "on");
+  check("⭐ …looking at the edited document", await events(), cardBefore - 1);
+  await page.locator("#undo").click();
+  await page.waitForTimeout(250);
+  check("⭐ …and ONE undo stack: the card's delete undoes from here", await events(), cardBefore);
+  await page.locator("#edit-toggle").click();
 
   // --- the structure signs (owner, 2026-09-03) --------------------------------------------------
   //
@@ -2025,45 +2165,130 @@ async function main() {
   await page.locator("#stop").click();
   await page.setViewportSize({ width: 1280, height: 720 });
 
-  // --- Çal and Dur stay reachable wherever you have scrolled to (owner, 2026-09-03) --------------
+  // --- Çal and Dur stay reachable wherever you have scrolled to (owner, 2026-09-05) --------------
   //
-  // The transport is a wrapping bar at the top of the page, so on a long score it is gone by the
-  // time you are reading the third system. The same two buttons are pinned to the bottom-right
-  // corner while it is off screen.
+  // The Çalma row is PINNED to the top of the window; Ritim and Perde are not. Until 2026-09-05
+  // this was a second copy of the pair parked in the bottom-right corner (`#sticky-transport`),
+  // which the owner replaced — so its absence is asserted here too.
   //
-  // ⚠ The load-bearing assertion is the last pair: the pinned Çal must drive the REAL transport,
-  // not a second one of its own. A check that only read the pinned button's own attribute would
-  // pass on a control wired to nothing. ⚠ Following is turned OFF here on purpose — pressing Çal
-  // would otherwise scroll the page to the playhead and bring the real transport back, which is
-  // fine in the app and would make this check race itself.
-  console.log("\nÇal and Dur stay reachable");
+  // ⚠ Two assertions carry this, and neither alone would. The row still being ON SCREEN after a
+  // scroll to the very bottom is the feature; the OTHER two rows being GONE is what proves it is a
+  // pinned row and not a whole bar held over the music. A `position: sticky` bounded by the wrong
+  // parent passes neither. ⚠ Following is turned OFF here on purpose — pressing Çal would
+  // otherwise scroll the page to the playhead, which would make this check race itself.
+  // ── What the makam plays differently ───────────────────────────────────────────────────────
+  //
+  // The line beside the picker (`.kv-makam`, `apps/web/src/ui/MakamIntonation.tsx`). Two things are
+  // worth a check and neither is the wording:
+  //
+  //  1. **The count is the score's, not a constant.** It is re-derived here from `window.__omrDoc`
+  //     — the notes the rule matches, counted independently — because a hint that says "22 nota"
+  //     off a hard-coded number would pass every attribute assertion and still be a lie.
+  //  2. **Zero is shown.** Hüzzam's second rule (the hisar) matches nothing on this page, and a hint
+  //     that hid that would promise a bend nobody hears.
+  //
+  // The empty-rule sentences are compared to EACH OTHER rather than matched: "the sources say this
+  // makam does not deviate" and "this makam is not in the table" are different answers, and the
+  // check that they stay different needs no copy.
+  console.log("\nwhat the makam plays differently");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+
+  const hint = page.locator('[data-omr="makam-intonation"]');
+  const rule = page.locator('[data-omr="makam-rule"]');
+  const setMakam = async (slug: string) => {
+    await page.locator("#makam-select").selectOption(slug);
+    await page.waitForTimeout(150);
+  };
+
+  /** The written notes a rule matches, counted off the document itself. */
+  const notesSpelled = (letter: string, alter: number) =>
+    page.evaluate(
+      ([l, a]) => {
+        const doc = (window as unknown as { __omrDoc?: { events: { kind: string; noteName: string }[] } }).__omrDoc;
+        // "Si4b1" / "Fa5#5" — `#` and `b` are not regex metacharacters, so the suffix goes in bare.
+        const suffix = (a as number) < 0 ? `b${-(a as number)}` : (a as number) > 0 ? `#${a}` : "";
+        const re = new RegExp(`^${l}-?\\d+${suffix}$`);
+        return (doc?.events ?? []).filter(
+          (e) => (e.kind === "note" || e.kind === "grace") && re.test(e.noteName),
+        ).length;
+      },
+      [letter, alter] as [string, number],
+    );
+
+  await setMakam("ussak");
+  check("the picker's makam carries a hint", await hint.count(), 1);
+  check("…for the makam that is chosen", await hint.getAttribute("data-makam"), "ussak");
+  check("…with uşşak's one rule", await hint.getAttribute("data-rules"), "1");
+  check("…naming the written perde", await rule.first().getAttribute("data-letter"), "B");
+  check("…and its written accidental", await rule.first().getAttribute("data-alter"), "-1");
+  check("…and how far the note really sits from it", await rule.first().getAttribute("data-delta"), "-1.5");
+  // Solfège on screen, Western in the data: the label must be the same note the rule matches.
+  check("…spelled Si for the reader", (await rule.first().innerText()).startsWith("Si"), true);
+
+  const siKoma = await notesSpelled("Si", -1);
+  check("the score really has such notes", siKoma > 0, true);
+  check("⭐ the count is THIS score's, re-derived from the document", await hint.getAttribute("data-notes"), String(siKoma));
+
+  await setMakam("huzzam");
+  check("hüzzam bends two perdes", await hint.getAttribute("data-rules"), "2");
+  const hisar = rule.nth(1);
+  check("…the second being its hisar", await hisar.getAttribute("data-letter"), "E");
+  check("…played above the written bakiye-bemol", await hisar.getAttribute("data-delta"), "1");
+  check("the page writes no hisar", await notesSpelled("Mi", -4), 0);
+  check("⭐ …and the hint says so instead of hiding the rule", await hisar.getAttribute("data-notes"), "0");
+
+  // Two ways of having no rules, and they must not collapse into one sentence.
+  await setMakam("huseyni");
+  check("hüseyni's hint has no rules", await hint.getAttribute("data-rules"), "0");
+  const recorded = await hint.innerText();
+  await setMakam("hicaz");
+  check("nor has a makam the table never covered", await hint.getAttribute("data-rules"), "0");
+  const untabled = await hint.innerText();
+  check("⭐ 'no deviation' and 'not measured' stay different answers", recorded !== untabled, true);
+
+  await setMakam("");
+  check("no makam, no hint", await hint.count(), 0);
+
+  console.log("\nÇalma stays pinned to the top of the page");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json&follow=0`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
 
-  const pinned = page.locator("#sticky-transport");
-  check("nothing is pinned while the real transport is on screen", await pinned.count(), 0);
+  const boxOf = (sel: string) =>
+    page.evaluate((s) => {
+      const el = document.querySelector(s);
+      return el ? el.getBoundingClientRect().toJSON() : null;
+    }, sel);
+
+  check("the corner pair is gone", await page.locator("#sticky-transport").count(), 0);
+  const restedTop = (await boxOf("#transport-pinned")).top;
+  check("the pinned row starts where it was drawn", restedTop > 100, true);
+
   await page.evaluate(
     () => window.scrollTo(0, document.documentElement.scrollHeight - window.innerHeight),
   );
-  await pinned.waitFor({ timeout: 5000 });
-  check("scrolling away pins the pair", await pinned.count(), 1);
-  check("…carrying the transport's state", await page.getAttribute("#play-sticky", "data-play-state"), "stopped");
-  check("…and Dur is disabled while stopped", await page.locator("#stop-sticky").isDisabled(), true);
+  await page.waitForTimeout(300);
+  const pinnedBox = await boxOf("#transport-pinned");
+  console.log(`  Çalma rested at y=${Math.round(restedTop)}, pinned at y=${Math.round(pinnedBox.top)}`);
+  check("⭐ scrolling to the bottom leaves Çalma at the top of the window", pinnedBox.top < 2, true);
+  check("…with Çal itself on screen", (await boxOf("#play")).bottom < pinnedBox.bottom + 1, true);
+  // The rest of the bar is the box that follows it, and it must have gone with the page.
+  const restBox = await boxOf("#transport-pinned + .kv-transport");
+  check("⭐ …and Ritim and Perde scrolled away with the page", restBox.bottom < 0, true);
+  check("the pinned row is not half the window", pinnedBox.height < 120, true);
 
-  await page.locator("#play-sticky").click();
+  // It is the real transport, not a picture of one: press it from down here.
+  await page.locator("#play").click();
   await page.waitForTimeout(600);
-  // Read the REAL button without clicking it — Playwright scrolls what it clicks into view, which
-  // would put the transport back on screen and unpin the pair mid-check.
-  const realState = async () => page.evaluate(() => document.getElementById("play")?.getAttribute("data-play-state"));
-  check("⭐ the pinned Çal drives the real transport", await realState(), "playing");
-  check("…and both say so", await page.getAttribute("#play-sticky", "data-play-state"), "playing");
-  await page.locator("#stop-sticky").click();
+  check("Çal works from the pinned row", await page.getAttribute("#play", "data-play-state"), "playing");
+  check("…and the page did not jump back to the top", await page.evaluate(() => window.scrollY) > 200, true);
+  await page.locator("#stop").click();
   await page.waitForTimeout(400);
-  check("the pinned Dur stops it too", await realState(), "stopped");
+  check("Dur works from there too", await page.getAttribute("#play", "data-play-state"), "stopped");
 
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(600);
-  check("scrolling back to the transport unpins the pair", await pinned.count(), 0);
+  await page.waitForTimeout(400);
+  check("scrolling back puts the row where it was drawn", Math.abs((await boxOf("#transport-pinned")).top - restedTop) < 2, true);
 
   check("no uncaught page errors", pageErrors.length ? pageErrors.join("; ") : "none", "none");
 

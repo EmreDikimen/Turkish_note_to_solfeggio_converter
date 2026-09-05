@@ -9,8 +9,9 @@
  * training-strip exporter screenshots that SVG by rect. See styles/app.css.
  */
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { NoteModelDocument } from "@turkish-omr/core";
+import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
 
@@ -23,6 +24,9 @@ function duration(totalMs: number): string {
 
 export function ScoreCard({
   doc,
+  pageId,
+  pageName,
+  onRename,
   totalMs,
   viewMode,
   onViewMode,
@@ -39,6 +43,19 @@ export function ScoreCard({
   children,
 }: {
   doc: NoteModelDocument;
+  /**
+   * The stored record this score IS, when it is one, and the name the reader gave it.
+   *
+   * ⚠ **The heading shows this in preference to `doc.name`, and that is what stops a rename
+   * drifting** (owner, 2026-09-05): renaming through the DOCUMENT was the other option and is a
+   * trap — `doc.name` seeds a per-piece hash that decides whether `SheetView` draws a tuplet as a
+   * bracket or as a curved arc, so a rename would silently re-engrave the triplets. Null for every
+   * score that is not a stored page (a `?score=` fixture, a hand-loaded JSON), which then falls
+   * back to the document exactly as before.
+   */
+  pageId: string | null;
+  pageName: string | null;
+  onRename: (id: string, name: string) => void;
   totalMs: number | null;
   viewMode: ViewMode;
   onViewMode: (v: ViewMode) => void;
@@ -58,6 +75,9 @@ export function ScoreCard({
   children: ReactNode;
 }) {
   const notes = doc.events.filter((e) => e.kind === "note").length;
+  // Renaming the page ON SCREEN. The same box the list uses (`RenameField`), because there is one
+  // rename and it should behave the same in both places.
+  const [renaming, setRenaming] = useState(false);
   return (
     // ⚠ No edit-mode variant of this class any more (owner, 2026-09-03). The palette used to be a
     // column inside this card, so the card — and the page — had to grow while editing. It is now a
@@ -66,7 +86,35 @@ export function ScoreCard({
     <section className="kv-card">
       <header className="kv-card__head">
         <h2 className="kv-card__title">
-          {doc.title || doc.name}
+          {pageId && renaming ? (
+            <RenameField
+              id={pageId}
+              value={pageName ?? doc.name}
+              onCommit={(name) => {
+                setRenaming(false);
+                onRename(pageId, name);
+              }}
+              onCancel={() => setRenaming(false)}
+            />
+          ) : (
+            <>
+              <span data-omr="score-name">{pageName || doc.title || doc.name}</span>
+              {/* ⚠ Only a STORED page can be renamed, so the pencil is absent — not disabled — on
+                  anything else. A disabled control invites a click that can never work. */}
+              {pageId && (
+                <button
+                  id="score-rename"
+                  type="button"
+                  className="kv-card__rename"
+                  title={TR.recent.renameTitle(pageName ?? doc.name)}
+                  aria-label={TR.recent.renameTitle(pageName ?? doc.name)}
+                  onClick={() => setRenaming(true)}
+                >
+                  {TR.recent.rename}
+                </button>
+              )}
+            </>
+          )}
           <span className="kv-card__meta">
             {TR.card.meta(
               doc.makam,
@@ -100,6 +148,11 @@ export function ScoreCard({
           ]}
         />
 
+        {/* ⚠ Güfte and İmleci takip et are about the SHEET on screen — the page's lyrics, the
+            page's scrolling — so they stay sheet-only. Düzenle and its undo pair do NOT: since
+            2026-09-04 the instrument tab edits its own bar in place with the same toolbox over the
+            same document, and a second toggle for the same mode is exactly the split the owner
+            asked to remove (*"ikisi ayrı olmasın"*). One switch, both views. */}
         {viewMode === "sheet" && (
           <>
             <label className="kv-toggle" title={TR.card.lyricsTitle}>
@@ -122,42 +175,43 @@ export function ScoreCard({
               />
               <span>{TR.card.follow}</span>
             </label>
-            <button
-              id="edit-toggle"
-              data-edit-mode={editMode ? "on" : "off"}
-              type="button"
-              className={`kv-btn${editMode ? " is-on" : ""}`}
-              onClick={() => onEditMode(!editMode)}
-            >
-              {editMode ? TR.card.editing : TR.card.edit}
-            </button>
-            {/* Undo/redo ship WITH direct editing, not after it: clicking a note and pressing ✕
-                with no way back is worse than the modal this replaces, which had Cancel. */}
-            {editMode && (
-              <div className="kv-card__undo">
-                <button
-                  id="undo"
-                  type="button"
-                  className="kv-btn kv-btn--ghost"
-                  onClick={onUndo}
-                  disabled={!canUndo}
-                  title={TR.card.undoTitle}
-                >
-                  {TR.card.undo}
-                </button>
-                <button
-                  id="redo"
-                  type="button"
-                  className="kv-btn kv-btn--ghost"
-                  onClick={onRedo}
-                  disabled={!canRedo}
-                  title={TR.card.redoTitle}
-                >
-                  {TR.card.redo}
-                </button>
-              </div>
-            )}
           </>
+        )}
+
+        <button
+          id="edit-toggle"
+          data-edit-mode={editMode ? "on" : "off"}
+          type="button"
+          className={`kv-btn${editMode ? " is-on" : ""}`}
+          onClick={() => onEditMode(!editMode)}
+        >
+          {editMode ? TR.card.editing : TR.card.edit}
+        </button>
+        {/* Undo/redo ship WITH direct editing, not after it: clicking a note and pressing ✕ with
+            no way back is worse than the modal this replaces, which had Cancel. */}
+        {editMode && (
+          <div className="kv-card__undo">
+            <button
+              id="undo"
+              type="button"
+              className="kv-btn kv-btn--ghost"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title={TR.card.undoTitle}
+            >
+              {TR.card.undo}
+            </button>
+            <button
+              id="redo"
+              type="button"
+              className="kv-btn kv-btn--ghost"
+              onClick={onRedo}
+              disabled={!canRedo}
+              title={TR.card.redoTitle}
+            >
+              {TR.card.redo}
+            </button>
+          </div>
         )}
         </div>
 
@@ -172,9 +226,9 @@ export function ScoreCard({
           they used to be (2026-09-03). Six rules run together under the score is the shape nobody
           reads — the one thing a first-time editor needs, "click a note", was in the middle of it.
           Nothing was dropped; the rest is one click away. */}
-      {viewMode === "sheet" && editMode ? (
+      {editMode ? (
         <div className="kv-hint">
-          <p>{TR.card.hintSheetEditing}</p>
+          <p>{viewMode === "sheet" ? TR.card.hintSheetEditing : TR.card.hintMeasureEditing}</p>
           <details className="kv-hint__more">
             <summary>{TR.card.hintSheetEditingMore}</summary>
             <ul>

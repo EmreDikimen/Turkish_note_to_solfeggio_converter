@@ -241,6 +241,19 @@ export function makamHasIntonation(slug: string): boolean {
   return makamIntonation(slug).length > 0;
 }
 
+/**
+ * Does the table SAY anything about this makam — including "it does not deviate"?
+ *
+ * ⚠ Two different answers come back as an empty rule list and the UI must not merge them.
+ * Hüseyni's `[]` is a finding: sources report it does NOT take the uşşak lowering. An absent
+ * makam is silence: nobody has looked, and it may well deviate. Saying "no deviation" for the
+ * second would dress an unmeasured makam as a measured one.
+ */
+export function makamIntonationRecorded(slug: string): boolean {
+  const k = resolveMakam(slug) || normMakam(slug);
+  return MAKAM_INTONATION[k] !== undefined;
+}
+
 // ---------------------------------------------------------------------------------------------
 // The dropdown list.
 // ---------------------------------------------------------------------------------------------
@@ -365,19 +378,101 @@ export function detectMakam(doc: NoteModelDocument): MakamDetection {
  * Read from the doc's OWN written spelling, which is why this takes the base doc and not the
  * transposed one: `transposeDoc` respells every note from its koma, so by then the letters the
  * rules match on are gone. Index-keyed so the result stays valid across a transpose.
+ *
+ * ⚠ The keys are the WRITTEN document's indices. A transpose keeps them; **`unfoldDoc` does not** —
+ * put the result through `remapKomaDeltas` before applying it to a performance.
  */
 export function makamKomaDeltas(doc: NoteModelDocument | null, slug: string): Map<number, number> {
   const deltas = new Map<number, number>();
   const rules = makamIntonation(slug);
-  if (!doc || rules.length === 0) return deltas;
+  eachRuleMatch(doc, rules, (ri, index) => deltas.set(index, rules[ri]!.deltaCommas));
+  return deltas;
+}
+
+/**
+ * One pass over a document's written notes, handing every match to its rule.
+ *
+ * ⚠ Shared by `makamKomaDeltas` (which wants the deltas) and `makamRuleUsage` (which wants the
+ * counts) so the two can never disagree about which notes a makam touches — the count shown beside
+ * the picker is a promise about the pitches playback will actually bend, and a second loop is how
+ * that promise quietly stops being true. A rule with a zero delta is skipped in both: it moves
+ * nothing, so it is not a deviation.
+ */
+function eachRuleMatch(
+  doc: NoteModelDocument | null,
+  rules: readonly IntonationRule[],
+  visit: (ruleIndex: number, eventIndex: number) => void,
+): void {
+  if (!doc || rules.length === 0) return;
   for (const ev of doc.events) {
     if (ev.kind !== "note" && ev.kind !== "grace") continue;
     const p = parseNoteName(ev.noteName);
     if (!p) continue;
-    const rule = rules.find((r) => r.letter === p.letter && r.alterCommas === p.alterCommas);
-    if (rule && rule.deltaCommas !== 0) deltas.set(ev.index, rule.deltaCommas);
+    const ri = rules.findIndex(
+      (r) => r.letter === p.letter && r.alterCommas === p.alterCommas && r.deltaCommas !== 0,
+    );
+    if (ri >= 0) visit(ri, ev.index);
   }
-  return deltas;
+}
+
+/** A rule, and how many of THIS score's notes it reaches. */
+export interface MakamRuleUse {
+  rule: IntonationRule;
+  /** Matching notes in the document. 0 is a real answer: the rule bends nothing here. */
+  count: number;
+}
+
+/**
+ * The makam's rules against one score — what the picker's hint shows.
+ *
+ * The count is the honest half. A makam's rule is a claim about a perde, not about this piece:
+ * hüzzam bends its hisar, and a hüzzam page that never writes one sounds exactly as printed. So
+ * the hint states both, and `count: 0` says so rather than implying a change nobody will hear.
+ * Read from the BASE doc, for the same reason `makamKomaDeltas` is — a transpose respells every
+ * note and the letters these rules key on are gone by then.
+ */
+export function makamRuleUsage(doc: NoteModelDocument | null, slug: string): MakamRuleUse[] {
+  const rules = makamIntonation(slug);
+  const counts = rules.map(() => 0);
+  eachRuleMatch(doc, rules, (ri) => {
+    counts[ri]! += 1;
+  });
+  return rules
+    .map((rule, i) => ({ rule, count: counts[i]! }))
+    .filter((u) => u.rule.deltaCommas !== 0);
+}
+
+/**
+ * Move the deltas from the WRITTEN document onto the PERFORMANCE — the step that must not be skipped.
+ *
+ * ⛔ **`unfoldDoc` renumbers every event**, so a delta map keyed by written indices is WRONG against
+ * its output, and wrong in the worst way: the numbers still all exist, so nothing throws — the bend
+ * simply lands on some other note. Two things renumber even a page with no repeat at all: the
+ * unfolder drops `meta` events (`groupMeasures` skips them, which shifts every later index down),
+ * and a repeated bar appears more than once. Measured on `gamzedeyim-deva` under uşşak before this
+ * existed: **19 of 22 bent notes were the wrong ones** — a Re, a La, a Do and a 2-koma si taking the
+ * lowering meant for the segah, while three landed right by luck. That is exactly what it sounds
+ * like (owner, 2026-09-05: *"bazen la farklı çalıyor, bazen re, bazen mi… bazen de doğru"*).
+ *
+ * `srcOf` is `UnfoldedScore.srcOf` — performance index → the written event it came from. A repeated
+ * bar has several performance indices pointing at one written note, and each copy gets the delta,
+ * which is what makes the second pass of a repeat sound like the first.
+ *
+ * ⚠ Re-key rather than bending the doc BEFORE unfolding: `perf.doc` is handed to the instrument
+ * views, and a course on the kanun is looked up by an exact WRITTEN koma — a fractional one misses.
+ * The bend belongs to the timeline and to nothing else.
+ */
+export function remapKomaDeltas(
+  deltas: ReadonlyMap<number, number>,
+  srcOf: ReadonlyMap<number, number>,
+): Map<number, number> {
+  const out = new Map<number, number>();
+  if (deltas.size === 0) return out;
+  for (const [playedIndex, writtenIndex] of srcOf) {
+    const d = deltas.get(writtenIndex);
+    if (d !== undefined) out.set(playedIndex, d);
+  }
+  return out;
 }
 
 /**

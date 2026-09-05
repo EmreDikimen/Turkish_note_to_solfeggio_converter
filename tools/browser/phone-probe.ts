@@ -83,8 +83,21 @@ async function measure(page: import("playwright").Page, label: string, vw: numbe
           // the design and is load-bearing (no transform may ever be put on that container; it is
           // what training strips are cut from). Reported as a finding it is noise that never goes
           // away, and noise that never goes away is how a reader learns to skip the list.
-          const ps = getComputedStyle(par);
-          if (ps.overflowX === "auto" || ps.overflowX === "scroll") continue;
+          // ⚠ **ANY ancestor, not just the parent** (2026-09-05). `SheetView` wraps its surface in
+          // a plain <div>, so the scroller is the GRANDparent — which is why `div#sheet-surface`
+          // was reported on every run despite this skip existing, and why the measure card's
+          // `#measure-surface` joined it. A box the page cannot scroll to is not off the screen.
+          let anc: HTMLElement | null = par;
+          let clipped = false;
+          while (anc && anc !== de) {
+            const as = getComputedStyle(anc);
+            if (as.overflowX === "auto" || as.overflowX === "scroll" || as.overflowX === "hidden") {
+              clipped = true;
+              break;
+            }
+            anc = anc.parentElement;
+          }
+          if (clipped) continue;
         }
         over.push({
           sel: el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""),

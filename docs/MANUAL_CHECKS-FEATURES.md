@@ -1,8 +1,8 @@
 # Manual checks — the feature track (F0–F3)
 
-purpose: the see-it-yourself checks that need EARS or EYES, for the audio and instrument features
+purpose: the see-it-yourself checks that need EARS or EYES, for the audio, instrument and app features
 audience: the owner, verifying a feature before it ships
-updated: 2026-08-16
+updated: 2026-09-05
 
 Split out of [../MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-16, when that file hit its
 400-line cap. The split is by genre, per [../MAINTAINING.md](MAINTAINING.md): everything here is
@@ -169,8 +169,12 @@ checks reads the same geometry the drawing does.
 npm run dev:cloud       # NOT dev:web — keeps the decode off this Mac
 ```
 
-1. Open a score (`?score=/gamzedeyim-deva.json`), pick **Keman** under **Çalgı sesi**, then the
-   **Enstrüman üzerinde** tab beside Nota, and pick **Keman** from the dropdown. ⚠ Picking it also switches the SOUND to the violin (owner, 2026-08-29), so what you hear should change too — if it does not, that is a finding on its own. Press ▶ Çal and watch.
+1. Open a score (`?score=/gamzedeyim-deva.json`), leave **Çalgı sesi** on the default tone, and press
+   the **Enstrüman üzerinde** tab beside Nota. It opens on **Keman**. ⚠ **Opening the tab is itself
+   the sound change** (owner, 2026-09-04, reversing 2026-08-29's "only on an explicit pick"): the
+   violin starts downloading on arrival, **Çalgı sesi** should move to Keman by itself, and what you
+   hear should be a violin once the samples land — if the picture is a violin and the sound is not,
+   that is a finding on its own. Press ▶ Çal and watch.
 2. **The question this check exists for: does the dot sit where your finger would?** Open strings are
    the free calibration — when an open Sol/Re/La/Mi sounds, the dot must be **at the nut**, not near
    it. After that, judge first position by eye: the first finger should land about a tenth of the way
@@ -216,7 +220,7 @@ and 20 browser checks hold the state machine's invariant across a whole playback
 ([features/kanun-view.md](features/kanun-view.md)). None of that can say whether the picture reads
 as a kanun, or whether the mandal plan is one a player would actually set. Only a musician can.
 
-**How.** `npm run dev:web`, open `?score=/beyati-delisin.json`, then the **Enstrüman üzerinde** tab, and pick **Kanun** from the dropdown. ⚠ That also switches the sound to the kanun; check that it does.
+**How.** `npm run dev:web`, open `?score=/beyati-delisin.json`, then the **Enstrüman üzerinde** tab, and pick **Kanun** from the dropdown. ⚠ That also switches the sound to the kanun; check that it does. ⚠ Since 2026-09-04 the tab arrives on **Keman** and has *already* started that voice, so what you are watching here is a second switch, from violin to kanun.
 
 1. **Before pressing anything, read the line above the instrument.** It says which mandals to set
    before playing — the makam's setting. On `beyati-delisin` it says **Segâh −2**. Judge that as a
@@ -318,20 +322,79 @@ somewhere else. ⚠ On a narrow window the sideways slide is also once per row, 
 wide row leaves the box until the row ends; if that is annoying in real use, say so — it is the
 accepted price of the row rule, not an oversight.
 
-## Check 29 — are Çal and Dur where your hand expects them? (2026-09-03)
+## Check 29 — is the pinned Çalma row the right size? (2026-09-05)
 
-Goal: the transport is a bar at the top of the page, so on a long score it is gone by the third
-system. The same two buttons are now pinned to the bottom-right corner while it is off screen. What
-no check can judge is whether that corner is the right one and whether the pair is in the way.
+Goal: the Çalma row — ▶ Çal, ■ Dur, the tempo, the instrument — is stuck to the top of the window, so
+it is there wherever you have scrolled to. Ritim and Perde are not. What no check can judge is whether
+a bar across the top is worth the music it covers. `npm run dev:cloud`, open a long score, scroll down.
 
-`npm run dev:cloud`, open a long score, scroll down until the transport disappears.
+1. **It stays, and only it stays.** The ÇALMA row must sit at the top all the way down the page, with
+   the two rows under it gone. All three staying is a bug.
+2. **Does it cost too much?** ~64px of a laptop window, 122px of a phone. Read a few systems with it
+   there. If it holds music you want, say so — the fallback is a smaller pinned thing with fewer
+   controls on it.
+3. **They work from there.** After scrolling to the bottom, ▶ Çal must start and ■ Dur must stop —
+   there is only ONE pair now, so this is the real transport.
+4. **Editing under it.** In **Düzenle**, a note right at the top of the window is under the bar and
+   cannot be clicked until you scroll. Judge whether that is annoying in real use.
+5. **The phone.** The row drops its "ÇALMA" caption there to save a line: tidier, or a missing label?
+6. **While it plays.** With **İmleci takip et** on, no row the music jumps to may land behind it.
 
-1. **They appear.** A small box with ▶ Çal and ■ Dur must be in the bottom-right corner, and it must
-   go away again when you scroll back up to the real transport. Two identical pairs on screen at
-   once would be a bug.
-2. **They work from there.** Press ▶ Çal in the corner: the piece must start, and the real button up
-   the page must agree when you scroll back to it. Press ■ Dur in the corner: it must stop.
-3. **Does it cover music?** It sits over the paper. Judge the corner — with the score, the toolbox
-   (open **Düzenle** as well) and, on a narrow window, the sideways scrollbar all on screen at once.
-4. **The phone.** Open it on a phone if you can. Bottom-right is the thumb corner, which is why it
-   was chosen; say if it lands under your palm instead.
+## Check 30 — is the bar beside the instrument the right size and the right bar? (2026-09-04)
+
+Goal: the instrument tab now carries the sounding measure beside the drawing. Everything a machine
+can check is checked (`smoke:editor`, section *the bar beside the instrument*); what it cannot judge
+is whether the bar is **big enough to read while you are looking at the instrument**, and whether
+"one bar" is the right amount of music to show at all.
+
+`npm run dev:cloud`, open a score, press **Enstrüman üzerinde**.
+
+1. **Can you read it from where you sit?** Play the piece. You should be able to take in the
+   fingering and the notes without leaning in. If the bar is too small, say so — the card can be
+   given more of the row.
+2. **Is one bar enough?** Watch a few bars go by. A bar at a time is what was asked for; if you find
+   yourself wanting the previous or next bar visible at the same time, that is a real finding and
+   the layout can hold three.
+3. **The arrows.** Press **›** a few times. The card must stop following the music and stay where
+   you put it. Press **Çalınanı izle** — it must jump back onto whatever is sounding.
+4. **Ölçüyü çal.** Press it. Only that bar must sound, and it must stop at the barline — not run on
+   into the next bar, and not cut the last note short enough to click.
+5. **Ölçüyü düzenle.** Press it. ⚠ It must NOT take you to the Nota page: the alet çantası opens
+   where you are, and the bar on the right becomes editable — click a note in it, drag it up and
+   down, press ✕, insert with a note value armed. Then switch to **Nota** and check the same change
+   is there, and that **Geri al** undoes it from either page. That last part is the whole point:
+   one score, one undo list, two places to look at it.
+6. **The three instruments.** Switch the picker. The violin and the clarinet put the card beside
+   them; the **kanun puts it above itself**, because a kanun is too wide to share a row. Say if that
+   reads as inconsistent rather than as the right call.
+7. **The phone.** On a phone the card sits above the instrument and the bar scrolls sideways instead
+   of shrinking. Judge whether scrolling a single bar is acceptable there, or whether you would
+   rather it shrank and stayed whole. In düzenleme mode the toolbox docks to the bottom of a phone
+   screen — check it does not cover the bar you are editing.
+8. **Is one bar enough to edit in?** This is the question only you can answer. The tools that work
+   across bars — the two-click **Tekrar**, and dragging a üçleme's end onto a note in the next bar —
+   need you to step with the arrows in between. Try one and say whether it is workable or whether
+   those belong on the Nota page only.
+
+## Check 31 — does the app give you your page back? (2026-09-05)
+
+Goal: a decoded page and its edits are kept in your own browser and offered back after a refresh
+([features/recent-pages.md](features/recent-pages.md)). `smoke:app` proves the notes come back; it
+cannot judge whether the list is **useful to a person**. Read two or three pages first.
+
+1. **It comes back.** Refresh (⌘R): the list must be under the upload box, unfolded, your page on top; click it and the same score returns, edits included.
+2. **Can you tell them apart?** A row shows the **makam**, the name, the counts and when you last
+   touched it. Rename one with ✎ — and the page you are ON from the ✎ beside its title. ⚠ The makam is
+   beside the name, not in it: rename a page, change its makam in the transport, and the row must
+   follow. Say if you wanted it inside the name instead.
+3. **Your edits, not the raw read.** Delete a note, wait two seconds, refresh, reopen: still gone. ⚠
+   Refreshing **immediately** can lose the last edit — the deliberate delay; say if that reads as loss.
+4. **Deleting.** ✕ drops a row; if it is the page you are on, the score must **stay on screen**.
+   **Hepsini sil** asks first, then empties the list.
+5. **Is the wording honest enough?** The small print: one browser on one device, the browser may clear
+   it itself, only the last 30 kept. ⚠ **Would any surprise you later?** If yes it is wrong — the risk
+   here is trusting this as a save. And is **30** right: annoying before it is useful, or the reverse?
+6. **The phone.** Long names are cut with "…": can you still tell pages apart, and are ✎ and ✕ easy to
+   hit without opening the page by mistake?
+7. **The photograph is NOT kept** (fifty times the size of the score), so a restored page cannot be
+   read again. Say if you expected the picture back; that trade can be revisited.

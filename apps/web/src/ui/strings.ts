@@ -52,6 +52,33 @@ export const TR = {
     hintPaste: "Sürükleyin, yapıştırın (⌘/Ctrl+V) ya da seçin",
   },
 
+  // The list of pages this browser has already read (2026-09-05). ⚠ `note` is not filler: the
+  // store is a CACHE and the reader has to be told, because "kaydedildi" is a promise no browser
+  // storage can keep — see apps/web/src/recentPages.ts. It says the two things that actually
+  // surprise people: the browser may clear it, and it does not travel to another device.
+  recent: {
+    title: "Daha önce okuduklarınız",
+    count: (n: number) => `${n} sayfa`,
+    show: "Göster",
+    hide: "Gizle",
+    // The one line under a row: what came out of the read, and when it was last touched.
+    summary: (notes: number, measures: number) => `${notes} nota · ${measures} ölçü`,
+    openTitle: (name: string) => `${name} sayfasını aç`,
+    remove: "✕",
+    removeTitle: (name: string) => `${name} sayfasını listeden sil`,
+    rename: "✎",
+    renameTitle: (name: string) => `${name} sayfasını yeniden adlandır`,
+    // ⚠ The makam is drawn BESIDE the name, never inside it — it is re-read from the score on every
+    // save, so it survives a rename and follows the reader changing the makam later.
+    noMakam: "makamsız",
+    clearAll: "Hepsini sil",
+    clearConfirm: "Kayıtlı sayfaların hepsi silinecek. Emin misiniz?",
+    note:
+      "Bu liste yalnızca bu tarayıcıda, bu cihazda tutulur — başka bir cihazda görünmez. " +
+      "Tarayıcı yeriniz dolduğunda ya da uzun süre girmediğinizde kendiliğinden silebilir. " +
+      "En son okuduğunuz 30 sayfa saklanır; sınıra gelince en eskisi düşer.",
+  },
+
   transport: {
     // The three row captions. They exist because the bar is a panel of twelve controls and a
     // reader needs to know which ones belong together — see the row comment in app.css. Named for
@@ -99,7 +126,7 @@ export const TR = {
     makamNone: "yok (yazıldığı gibi)",
     makamTitle:
       "Eserin nasıl ÇALINDIĞI. ♪ işaretli makamlarda bazı perdeler yazıldığı yerden farklı " +
-      "seslenir; portedeki notalar değişmez.",
+      "seslenir; portedeki notalar değişmez. Hangi perdeler olduğu yanında yazar.",
     transpose: "Transpozisyon",
     transposeTitle: "Eserin tamamını seçtiğiniz kadar tizleştirir ya da pesleştirir",
     // ⚠ Two SEGMENTS of the transposition control, not a loose checkbox beside it (2026-09-03).
@@ -153,6 +180,12 @@ export const TR = {
     hintSheetEditing:
       "Düzenleme açık — bir notaya tıklayın: seçilir, ✕ ile silinir, yukarı/aşağı sürükleyince " +
       "perdesi değişir.",
+    // ⚠ Same mode, same toolbox, same document — the sentence only has to say what is different
+    // here: you are looking at one bar, and the change is not local to this page.
+    hintMeasureEditing:
+      "Düzenleme açık — sağdaki ölçüde bir notaya tıklayın: seçilir, ✕ ile silinir, " +
+      "yukarı/aşağı sürükleyince perdesi değişir. Oklarla başka bir ölçüye geçebilirsiniz. " +
+      "Yaptığınız her değişiklik Nota sayfasında da görünür; geri alma listesi ortaktır.",
     hintSheetEditingMore: "Alet çantasıyla neler yapılır?",
     hintSheetEditingSteps: [
       "Alet çantasından bir süre ya da değiştirme işareti seçip notaya tıklarsanız o nota değişir.",
@@ -270,6 +303,35 @@ export const TR = {
   bar: {
     over: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden uzun (${beats})`,
     under: (beats: string, meter: string) => `Bu ölçü ${meter} usulünden kısa (${beats})`,
+  },
+
+  /**
+   * The single-measure card beside the instrument (owner, 2026-09-04): the bar that is sounding
+   * right now, engraved on its own, with its own transport.
+   *
+   * ⚠ "Ölçüyü çal" says what it does and not more: it plays THAT bar and stops at its barline. The
+   * label is deliberately not "Buradan çal" — the sheet's click-to-seek already means that, and the
+   * two would be confusable side by side.
+   */
+  measure: {
+    title: (n: number, total: number) => `Ölçü ${n} / ${total}`,
+    play: "Ölçüyü çal",
+    playTitle: "Sadece bu ölçüyü çalar, sonunda durur. Çalan bir şey varsa durdurulur.",
+    edit: "Ölçüyü düzenle",
+    editing: "Düzenleniyor",
+    editTitle: "Düzenleme kipini burada açar — alet kutusu çıkar, notaya dokunmadan bu ölçüyü düzenlersiniz",
+    prev: "Önceki ölçü",
+    next: "Sonraki ölçü",
+    follow: "Çalınanı izle",
+    followTitle: "Açıkken gösterilen ölçü, çalınan ölçüyle birlikte ilerler",
+    empty: "Bu eserde gösterilecek ölçü yok.",
+    hint:
+      "Sağda, o an çalınan ölçünün notası tek başına yazılıdır. Oklarla bir önceki ve bir " +
+      "sonraki ölçüye geçebilirsiniz; ok kullandığınızda ölçü olduğu yerde sabitlenir, " +
+      "«Çalınanı izle» ile yeniden çalınan ölçüyü takip eder. «Ölçüyü çal» sadece o ölçüyü " +
+      "çalar ve ölçü bitince durur. «Ölçüyü düzenle» alet kutusunu açar: ölçüyü buradan " +
+      "düzenlersiniz, yaptığınız değişiklik doğrudan Nota sayfasında da görünür — tek bir " +
+      "nota, tek bir geri alma listesi.",
   },
 
   instrument: {
@@ -470,6 +532,25 @@ export const TR = {
     couldNotLoad: (f: string) => `${f} yüklenemedi.`,
   },
 
+  // The line beside the makam picker — see apps/web/src/ui/MakamIntonation.tsx. It names the
+  // WRITTEN perde and says where the note is really played, then how many notes of this score that
+  // reaches. ⚠ `noDeviation` and `untabled` are DIFFERENT answers and must not be merged: the first
+  // is a finding (sources say this makam does not deviate), the second is silence (nobody looked).
+  makamHint: {
+    lead: "farklı çalınan perdeler:",
+    // Turkish for "lower" / "higher" in pitch. The number is already written with a comma.
+    down: (koma: string) => `${koma} koma pes`,
+    up: (koma: string) => `${koma} koma tiz`,
+    count: (n: number) => `bu eserde ${n} nota`,
+    countNone: "bu eserde yok",
+    why: "neden?",
+    perdeTitle: (accidental: string) => `yazılışı: ${accidental}`,
+    noDeviation:
+      "Kaynaklar bu makamda bir icra farkı bildirmiyor — perdeler yazıldığı gibi çalınıyor.",
+    untabled:
+      "Bu makamın icrası tablomuzda yok; perdeler yazıldığı gibi çalınıyor. Farkı ölçülmüş demek değil.",
+  },
+
   makamModal: {
     titleGuess: (name: string) => `Bu eser ${name} gibi görünüyor`,
     titleUnknown: "Hangi makam?",
@@ -486,10 +567,7 @@ export const TR = {
     alternatives: "aynı donanım",
     makam: "Makam:",
     none: "yok — tam yazıldığı gibi çal",
-    noDeviation: "Bu makam için kayıtlı bir icra sapması yok — yazıldığı gibi çalınır.",
     asWritten: "Notalar sayfada yazıldığı gibi seslendirilecek.",
-    rule: (delta: string, letter: string, alter: string) =>
-      `yazılı ${letter}${alter} perdesinde ${delta} koma`,
     playAsWritten: "Yazıldığı gibi çal",
     useThis: "Bunu kullan",
   },

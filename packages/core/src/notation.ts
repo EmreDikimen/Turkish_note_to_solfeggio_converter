@@ -89,6 +89,17 @@ export function komaOf(letter: string, octave: number, alterCommas: number): num
 }
 
 /**
+ * Western letter → its Turkish solfège name, with no octave and no accidental ("B" → "Si").
+ *
+ * `spellNote` is the full speller and always writes an octave; the UI sometimes needs the bare
+ * name of a pitch CLASS — a makam's intonation rule matches "si koma-bemol at every octave", and
+ * printing "Si4" there would claim an octave the rule does not have.
+ */
+export function solfegeLetter(letter: string): string {
+  return LETTER_TO_SOLFEGE[letter] ?? letter;
+}
+
+/**
  * Build a note name from an explicit spelling (letter + octave + comma alteration).
  * Unlike `komaToName`, this preserves exactly the spelling the user chose (so picking
  * "Fa5" + "+5 commas" yields "Fa5#5", never the enharmonic "Sol5b4").

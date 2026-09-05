@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-09-03
+updated: 2026-09-05
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -366,8 +366,7 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    ⚠ **Do not report the high positions as a fault.** Near the nut one koma is about 7 screen pixels,
    and less further up — that is the resolution of the photo we shipped, not a mistake in the
    arithmetic. A sharper picture of a violin neck fixes it with no change to the program.
-   ⚠ **If your look does find something, the fix now needs its own upload to the website.** That is
-   the cost of having put it out before looking; it is small.
+   ⚠ **If your look does find something, the fix now needs its own upload to the website.** That is the cost of having put it out before looking; it is small.
 13b. ⏭ **NEXT ON THE APP SIDE, AND IT IS TEN MINUTES OF YOUR TIME: look at the violin neck.** Open
    the site (or run it on your own machine with `npm run dev:cloud`), load a piece, choose **Keman**
    and press play. Two questions only a person can answer:
@@ -376,6 +375,7 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    arithmetic underneath is right.
    **(2) Do the little ticks help, or are they clutter?** Say so either way; it is a drawing choice,
    not a measurement, and yours is the only opinion that settles it.
+15. ~~Stop a page refresh from throwing away a read.~~ ✅ **Done 5 September, the day you asked.** Reading a page takes 35–55 seconds, and until now closing the tab or refreshing the page lost all of it — plus every correction you had made in the editor. The app now keeps the **notes** of every page it has read **inside your own browser**, and offers them back by name in a list under the upload box. It keeps the **last 30**; the 31st pushes out the one you have not opened for longest. You can **rename** any of them — the one you are looking at, from the ✎ next to its title, and the older ones from the ✎ on their row — because a page arrives named after your photograph's file name (`IMG_20260905_142233`), which tells you nothing. The **makam** is shown next to the name, and it is not part of the name: it is re-read from the score every time, so it stays right after you rename a page and follows you if you change the makam later. You can delete one with ✕, or all of them at once. ⚠ **Two things to know, because they surprise people.** It is a **memory, not a save**: the browser is allowed to clear it on its own (Safari does this after about a week of not visiting), so it is a convenience and not a place to keep something important. And it lives in **one browser on one device** — a page you read on your phone is not there on your computer, because there is no server and no account, which is exactly what makes it cost nothing. ⚠ **The photograph itself is not kept**, only the notes: a phone photo is 2–5 MB against about 60–125 KB for the score, fifty times the space for a picture you already have.
 14. **Open it to everyone — but only when a round's exam result is good.** Round 3's was not (51% against 75%), so this waits for Round 4 — [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
 
 ### The model work → [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md)

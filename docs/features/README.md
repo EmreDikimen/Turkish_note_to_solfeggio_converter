@@ -26,7 +26,10 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
 | **F3** | Instrument tab — where to put your finger / where the mandals stand / how far the lip relaxes, in time | medium | no | calibration + a string-choice rule (violin); an instrument data table (kanun); a fingering table + the lip-bend bound (clarinet) | ✅ **VIOLIN DONE 2026-08-16**, ✅ **KANUN DONE 2026-08-29**; neither has been **seen by a person** yet. 🚧 **SOL KLARNET started 2026-08-29** — artwork landed, view not built |
+| **F5** | Remember the pages this browser has already read | **small** | no | none — it is browser storage, not a database | ✅ **DONE 2026-09-05** — a decoded page and its edits survive a refresh; 30 pages, oldest dropped |
 | **F4** | Listening mirror — a live microtonal tuner drawn on F3's fingerboard | medium | no | pitch-tracker steadiness at 22.6 cents/koma, unmeasured | ⏸ **PARKED 2026-08-25** (owner) — after the public launch; **not** audio-to-score. Reasoning and what was ruled out: [../BACKLOG.md](../BACKLOG.md) |
+
+⚠ **F5 is out of order and that is not an oversight** — the owner raised it on 2026-09-05, after F3, and it is the first feature on this track that is not about sound or drawing. It answers a cost the reader pays and nobody had counted: a page read is 35–55 s, and a refresh used to spend it again.
 
 Order: **F0 → F2 → F1 → F3**. All four are built. F0, F2 and F1 are deployed and **accepted by ear** —
 F1 finished 2026-08-14 and the friends who asked for it liked the result. F2 came first among the
@@ -156,6 +159,9 @@ estimated**: VSCO 2's clarinet `susLong` is 33 files averaging ~1.8 MB, so one v
 Rules:
 
 - Load **only on selection** — at ~20 MB an instrument this is a requirement, not an optimisation.
+  ⚠ **Amended 2026-09-04**: opening the *Enstrüman üzerinde* tab now counts as a selection and starts
+  the download for the instrument its picker shows ([DECISIONS.md](../DECISIONS.md)). Nothing else
+  changed — no voice loads on a bare visit, and the Nota tab still loads none.
 - Serve from a **Hugging Face Hub repo** behind **`VITE_VOICES_URL`** — its own variable, *not* the
   drums' `VITE_AUDIO_URL` (owner, 2026-08-12: percussion is essential and stays on the app, and one
   base for both would 404 the drums). **Not committed to git**: ~50 MB of binaries in a public repo
@@ -263,7 +269,7 @@ the same reasoning that put `usul.ts` there.
 
 ---
 
-## F3 — the instrument tab → [fingerboard.md](fingerboard.md) · [kanun-view.md](kanun-view.md) · [clarinet-view.md](clarinet-view.md)
+## F3 — the instrument tab → [fingerboard.md](fingerboard.md) · [kanun-view.md](kanun-view.md) · [clarinet-view.md](clarinet-view.md) · [measure-card.md](measure-card.md)
 
 Show the instrument, and show what the player does on it as the piece plays. **Three instruments,
 three chapters**, because each turned out to be a different problem — behind **one tab**.
@@ -287,6 +293,14 @@ the CC0 layered schematic and why no photograph was taken, and ⭐ the **lip bar
 answer to the thing that blocked winds all along, that a koma on a clarinet is made by relaxing the
 lip and not by a fingering. Four inputs are still owed before it can be built; they are listed there.
 
+**The bar being played** (built 2026-09-04, edit path revised 2026-09-05) →
+**[measure-card.md](measure-card.md)**: the fourth chapter, and the one that is not an instrument.
+Every instrument view answers *where do I put my fingers*; none of them answers *what am I playing*.
+So the tab carries the sounding bar beside the drawing, with arrows, a play-this-bar button, and the
+usual toolbox for editing it **without leaving the tab**. ⭐ **The card IS `SheetView`, mounted a
+second time with `onlyMeasure`** — same component, same document, same undo stack, so there is still
+exactly ONE editor and it is now in two places rather than one.
+
 ⚠ **The 2026-08-15 "violin only" scope was reopened by the owner on 2026-08-29**, after the violin
 view stood up. That is a scope change, not an overturned argument: the reasoning that made the
 violin first still holds, and the kanun and the clarinet qualified on the same ground — each is
@@ -298,6 +312,25 @@ violin position is a fact about one note; a kanun mandal is a lever that stays w
 its view is a state machine over the whole piece. Anyone adding a third instrument should ask which
 of the two kinds it is **before** writing anything.
 
+
+---
+
+---
+
+## F5 — the pages this browser has already read → [recent-pages.md](recent-pages.md)
+
+✅ **DONE 2026-09-05, the day it was asked for.** A decoded page — and every edit made to it
+afterwards — is written to the reader's own browser store and offered back by name after a refresh.
+**No server, no account, no bill**, which is the constraint the owner set in the asking: *"database
+bağlamak maliyetli olabilir ama tarayıcıda tutabiliriz"*.
+
+Four decisions, all the owner's: **notes only** (the uploaded photograph is never stored — 2–5 MB
+against the ~60–125 KB of the score it produced), **the edited state** rather than the raw decode,
+**30 pages** with the least recently opened dropped, and **no download button** (offered, declined).
+
+⛔ **It is a CACHE and not a save, and the interface says so.** No browser storage can promise
+otherwise, and it belongs to one browser on one device. The full design, the six traps and the DOM
+contract: **[recent-pages.md](recent-pages.md)**.
 
 ---
 

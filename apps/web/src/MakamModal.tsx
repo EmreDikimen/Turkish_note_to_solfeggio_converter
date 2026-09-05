@@ -15,23 +15,34 @@
  * transport — keep those ids if this file is restyled.
  */
 
-import { useState } from "react";
-import { makamDisplay, makamIntonation, makamOptions, type MakamDetection } from "@turkish-omr/core";
+import { useMemo, useState } from "react";
+import {
+  makamDisplay,
+  makamOptions,
+  makamRuleUsage,
+  type MakamDetection,
+  type NoteModelDocument,
+} from "@turkish-omr/core";
+import { MakamIntonation } from "./ui/MakamIntonation";
 import { TR } from "./ui/strings";
 
 export function MakamModal({
   detection,
+  doc,
   onConfirm,
   onDismiss,
 }: {
   detection: MakamDetection;
+  /** The page just read, so the prompt can say how many of ITS notes each rule reaches. The makam
+   *  is chosen here, so this cannot be precomputed outside — it changes with the dropdown. */
+  doc: NoteModelDocument | null;
   /** Apply this makam (empty string = none, play as written). */
   onConfirm: (slug: string) => void;
   /** Close without changing the current selection. */
   onDismiss: () => void;
 }) {
   const [slug, setSlug] = useState(detection.slug ?? "");
-  const rules = makamIntonation(slug);
+  const usage = useMemo(() => makamRuleUsage(doc, slug), [doc, slug]);
   const options = makamOptions();
 
   return (
@@ -101,35 +112,18 @@ export function MakamModal({
           </select>
         </label>
 
-        <div
-          style={{
-            minHeight: 54,
-            marginTop: "var(--space-3)",
-            fontSize: "var(--text-sm)",
-            color: "var(--ink-soft)",
-          }}
-        >
-          {rules.length > 0 ? (
-            <ul style={{ margin: 0, paddingLeft: "var(--space-4)" }}>
-              {rules.map((r) => (
-                <li key={`${r.letter}${r.alterCommas}`}>
-                  <strong>
-                    {TR.makamModal.rule(
-                      // Turkish writes 1,5 — and these deltas are fractional on purpose.
-                      `${r.deltaCommas > 0 ? "+" : "−"}${String(Math.abs(r.deltaCommas)).replace(".", ",")}`,
-                      r.letter,
-                      r.alterCommas === 0
-                        ? ""
-                        : ` (${r.alterCommas > 0 ? "+" : "−"}${Math.abs(r.alterCommas)})`
-                    )}
-                  </strong>{" "}
-                  — {r.why}
-                </li>
-              ))}
-            </ul>
+        {/* ⚠ The SAME component the transport bar shows beside the picker, so the prompt and the
+            control can never describe one makam two ways — only the reasoning is unfolded here,
+            where there is room for it. `minHeight` keeps the buttons still as the answer changes
+            length. */}
+        <div style={{ minHeight: 54, marginTop: "var(--space-3)" }}>
+          {slug ? (
+            <MakamIntonation slug={slug} usage={usage} open />
           ) : (
-            <span style={{ color: "var(--ink-faint)" }}>
-              {slug ? TR.makamModal.noDeviation : TR.makamModal.asWritten}
+            <span
+              style={{ fontSize: "var(--text-sm)", color: "var(--ink-faint)" }}
+            >
+              {TR.makamModal.asWritten}
             </span>
           )}
         </div>

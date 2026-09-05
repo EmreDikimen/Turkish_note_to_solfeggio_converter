@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-04
+updated: 2026-09-05
 
 ## Now
 
@@ -51,7 +51,6 @@ select checkpoints on real-val **corrections**, not loss; beam search measured o
 ⛔ **Two things the round is NOT allowed to do**: read the exam again for an A/B, and retire
 `\tupend` or add a `\dottedbar` token — [rung3/round4.md](rung3/round4.md) "Not this round".
 
-
 ⭐ **THE PHONE WORKS NOW, AND `npm run smoke:phone` IS HOW YOU LOOK AT IT** (owner, 2026-09-04). The
 app had **no width-based media query at all**: the page scrolled sideways at every phone width, every
 picker was 13px so iOS Safari zoomed in on the first tap and never back, every control was 30px against
@@ -62,14 +61,19 @@ and what stays deliberately small: [DECISIONS.md](DECISIONS.md) · [log/status-l
 ⏭ **Owner: run `npm run smoke:phone`, look at the screenshots, then decide about `deploy:app`** —
 nothing has been deployed.
 
+⭐ **THE INSTRUMENT TAB SHOWS THE BAR IT IS PLAYING, AND EDITS IT THERE** (owner, 2026-09-04, revised 2026-09-05): instrument left, sounding bar right, ‹ ›, **Ölçüyü çal** (that bar only — 4.6 s of a 123 s piece) and **Ölçüyü düzenle**, the usual toolbox **without leaving the tab**. ⭐ The card IS `SheetView` mounted again (`onlyMeasure`) — one editor, one document, one undo stack. ⏭ **Owner: look at it** — nothing is deployed. [features/measure-card.md](features/measure-card.md).
+
+⭐ **THE APP REMEMBERS THE PAGES IT HAS READ, IN THE READER'S OWN BROWSER** (owner, 2026-09-05): a decoded page and every later edit go to IndexedDB and come back by name after a refresh — **30 pages**, least recently opened dropped, ✕ or *Hepsini sil* to forget, no server and no bill. ⭐ **Renameable** — the page on screen (✎ beside its heading) and any older one — with the **makam drawn beside the name**, re-read from the score so it survives both a rename and a later makam change. ⚠ A **cache, not a save**: notes only (the photograph is never stored), and it does not travel to another device. ⏭ **Owner: look at it** — nothing is deployed. [features/recent-pages.md](features/recent-pages.md).
+
+⭐ **THE MAKAM PICKER NOW SAYS WHICH NOTES IT PLAYS DIFFERENTLY** (owner, 2026-09-05): beside the dropdown, one line per rule — the **written** perde (Si with its koma-bemol drawn as the real sign), how far the note is really played from it (*1,5 koma pes*), and **how many notes of the page on screen** that reaches, counted off the document itself. ⭐ A rule that matches nothing says so — hüzzam's hisar on `gamzedeyim-deva` reads *bu eserde yok* — and "the sources report no deviation" (hüseyni) stays a different sentence from "this makam is not in the table" (hicaz). The post-decode prompt renders the same block, unfolded. Sound only, as before. ⛔ **AND IT FOUND A SHIPPED BUG, WHICH IS FIXED** (owner heard it the same day: *"bazen la farklı çalıyor, bazen re, bazen mi"*): the deltas are keyed by the WRITTEN document, `unfoldDoc` renumbers every event, and the app applied them to the performance — so the bend landed on the wrong note, silently, since 2026-08-30. `gamzedeyim-deva` under uşşak bent **19 wrong notes out of 22**; `remapKomaDeltas` re-keys them and `tools/core/makam-test.ts` pins it. ⏭ **Owner's call, opened by the same work: a segah spelled `b2` takes no bend** — `gamzedeyim-deva` is 22 `b1` against 54 `b2`, `beyati-delisin` **0 against 40**, so Beyâtî changes nothing there. Musical decision, two options in [BACKLOG.md](BACKLOG.md). ⏭ **Owner: look at it and listen** — nothing is deployed. [mvp/makam.md](mvp/makam.md).
+
 ✅ **CHANGING THE INSTRUMENT MID-PLAYBACK NO LONGER DROPS TO THE DEFAULT TONE** (owner, 2026-09-04).
 The old recording keeps sounding until the new one downloads; a toast (`#voice-notice`) names both.
 ⛔ **Instant was asked for and is not available** (9.9–35.4 MB over 11–36 files), so the gap was fixed,
 not the wait. ⚠ The "one decoded voice at a time" rule is amended, bounded by the owner's choice:
 **held only while a piece plays**, released by Dur. ⚠ `state === "failed"` no longer implies the
 default tone; read `VoiceStatus.sounding`. [DECISIONS.md](DECISIONS.md) · [log/status-log.md](log/status-log.md).
-⏭ **Owner: the bridge is only covered by `npm run smoke:editor -- --voices-url <hub>`** — the default
-arm has no host, so it never has a voice to hold.
+⏭ **Owner: the bridge is only covered by `npm run smoke:editor -- --voices-url <hub>`** — the default arm has no host, so it never has a voice to hold.
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS NOW REFUSED** (2026-09-03). Two slicer
 fixes moved crop boundaries the same day: a closing `:|` read as two barlines (junk strip on ~1% of
@@ -159,10 +163,6 @@ outlives F1: voices ride **`VITE_VOICES_URL`**, the drums ship with the app, and
 `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis — silently.
 [features/README.md](features/README.md) · [log/status-log.md](log/status-log.md).
 
-⚠ **Two copyright items remain open and are both the owner's call**: the samples and the neyzen.com
-screenshot are out of HEAD but remain in the **public** repo's git history (clearing them needs a
-`filter-repo` rewrite and a force-push), and there is still **no LICENSE file**. [THIRD-PARTY.md](THIRD-PARTY.md).
-
 **The two tracks run in parallel, as re-scoped 2026-08-05:** the product track never trains, the model track never touches the app, and neither waits for the other. [mvp/README.md](mvp/README.md).
 
 ## Previously — the settled context
@@ -195,10 +195,10 @@ the model track never touches the app.** Either can be worked on without waiting
    put** — a state machine over the piece, which buys the **opening mandal plan**. [features/kanun-view.md](features/kanun-view.md) · [DECISIONS.md](DECISIONS.md).
 3d. **✅ ONE INSTRUMENT PAGE, AND THE PIANO ROLL IS GONE (2026-08-29)**, the owner's call after
    seeing the kanun. Keman and Kanun share one **Enstrüman üzerinde** tab whose dropdown ⭐ sets the
-   sound as well as the picture; `PianoRoll.tsx` is deleted. ⚠ Opening the tab does **not** load a
-   voice — a sampled one is a 20–35 MB Hub download, so a first visit draws a violin while the
-   default tone plays. **Deployed 2026-08-30.** [features/README.md](features/README.md) ·
-   [DECISIONS.md](DECISIONS.md).
+   sound as well as the picture; `PianoRoll.tsx` is deleted. ⭐ **Since 2026-09-04 merely OPENING the
+   tab loads that voice** — reversing the rule that let a first visit draw a violin while the default
+   tone played, at the price of a 20–35 MB Hub download on arrival. **Deployed 2026-08-30**; that
+   reversal is NOT deployed. [features/README.md](features/README.md) · [DECISIONS.md](DECISIONS.md).
 
    ⏭ **THE NEXT PRODUCT ACTION, and the only one that needs a person, is
    [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) checks 25 AND 26 — the violin view and the
@@ -251,13 +251,14 @@ the model track never touches the app.** Either can be worked on without waiting
    `npm test` + `smoke:editor` **ALL PASS**. ⏭ **Unchecked by an eye —
    [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 28**, which is the only thing that can
    say whether the jump lands where a reader wants to be looking. [DECISIONS.md](DECISIONS.md).
-3i. **✅ ÇAL AND DUR NO LONGER SCROLL AWAY (owner, 2026-09-03).** The transport is a wrapping bar at
-   the top of the page, so it is gone by the third system. The same two buttons are now pinned to the
-   bottom-right corner while it is off screen — ⛔ **not the whole bar made `sticky`**, which would
-   hold a third of a laptop window and hide the music. One transport, shown twice: the pinned Çal
-   drives `#play`'s own state, and `smoke:editor` asserts exactly that. ⏭ **Unchecked by an eye —
-   [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 29**: is that the right corner, and
-   is it ever in the way? [DECISIONS.md](DECISIONS.md).
+3i. **✅ THE ÇALMA ROW IS PINNED TO THE TOP OF THE PAGE (owner, 2026-09-05).** ▶ Çal, ■ Dur, the tempo
+   and the instrument stay at the top of the window wherever you scroll; **Ritim and Perde scroll away**
+   — set once before playing, and pinning all three would hold a third of a laptop window over the
+   music. ⚠ It **replaced the 2026-09-03 answer to the same complaint**, a second Çal/Dur in the
+   bottom-right corner: that pair, its CSS and its two `:has()` phone rules are **deleted**. ⚠ `sticky`
+   cannot leave its own parent, so the bar is **two boxes** now, the pinned row being its own
+   `.kv-transport` under `.kv-page`; the voice toast and the playhead follow both clear it. `smoke:editor` asserts both halves (row at `top ≈ 0` AND the other two
+   gone). ⏭ **Unchecked by an eye — [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) check 29.** [DECISIONS.md](DECISIONS.md).
 3j. **✅ A FRONTEND CRAFT PASS — THE CONTROL BAR, AND SIX THINGS THAT LOOKED LIKE FAULTS (owner,
    2026-09-03: *"profesyonel durmayan noktaları profesyonelleştir"*).** ⭐ **The transport is three
    named rows — ÇALMA / RİTİM / PERDE — instead of one `flex-wrap` holding twelve controls**: the
@@ -364,7 +365,6 @@ probe → re-emit → the owner reads the audit sample and every `\sig` row → 
 vocabulary control vs H), stage 2 at 4,000 steps, EMA + label smoothing → real-val paired → `examv3`
 once. ⚠ Beam search is measured offline on the current model first and reaches the user path only
 if it pays.
-
 
 ### Owed but not next → [BACKLOG.md](BACKLOG.md)
 

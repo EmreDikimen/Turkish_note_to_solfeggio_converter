@@ -1,10 +1,13 @@
 import {
+  type Measure,
   type NoteModelDocument,
   type Timeline,
 } from "@turkish-omr/core";
 import { Fingerboard } from "./Fingerboard";
 import { Kanun } from "./Kanun";
 import { Clarinet } from "./Clarinet";
+import { MeasureCard } from "./MeasureCard";
+import type { PlayStep } from "./SheetView";
 import { VOICES, type VoiceId } from "./audio/instruments";
 import type { VoiceStatus } from "./webAudioBackend";
 import { TR } from "./ui/strings";
@@ -30,12 +33,18 @@ function voiceLabel(id: VoiceId): string {
  * ayarlanacak"*), which is the reason the merge is worth more than tidiness: you now see and hear
  * the same instrument without having to know that two different controls existed.
  *
- * ⚠ **It does NOT set the voice merely by being opened, and that is deliberate.** A sampled voice
- * is a 20–35 MB download from the Hub ([docs/features/README.md](../../docs/features/README.md), F1),
- * and "load only on selection" is a requirement there rather than an optimisation. So opening this
- * tab draws an instrument without fetching one; the download starts when the picker is *changed*.
- * The consequence to expect: on a first visit the picture can be a violin while the sound is still
- * the default tone. Touching the picker resolves it, and the loading note below says so.
+ * ⭐ **OPENING THE TAB SETS THE VOICE TOO, SINCE 2026-09-04** (owner), reversing the rule that used
+ * to stand here. It said the download must wait for an explicit pick, because a sampled voice is a
+ * 20–35 MB fetch from the Hub ([docs/features/README.md](../../docs/features/README.md), F1) and
+ * "load only on selection" is a requirement there. The price it charged was a page that drew a
+ * violin while the default tone played, resolved only by touching a control nobody had been told
+ * about; the owner judged that the worse half of the bargain. So arriving here now starts the
+ * download for whatever this picker already shows, and `App`'s `applyViewMode` owns it — not this
+ * file, which still only reports what it is handed.
+ *
+ * ⚠ The consequence to expect is the one the loading note below describes: the samples take a
+ * moment, so the first bars after opening the tab can still sound with the previous voice (or the
+ * default tone), and the note says which.
  */
 
 /** The instruments this view can draw, and the voice each one selects. */
@@ -66,22 +75,43 @@ export function instrumentForVoice(voice: VoiceId): InstrumentId | null {
 
 export function InstrumentView({
   doc,
+  sheetDoc,
   timeline,
+  playPlan,
   makamDeltas,
   playing,
   getPositionMs,
   instrument,
   onInstrument,
   voiceStatus,
+  canPlay,
+  editMode,
+  onPlayMeasure,
+  onEditMeasure,
+  renderBar,
 }: {
+  /** The PERFORMANCE document — what the three instrument drawings read. See the ⚠ at the call
+   *  site in App: on a folded score the written page has no event under a second-pass index. */
   doc: NoteModelDocument;
+  /** The WRITTEN score, for the measure card beside the instrument. ⚠ NOT the same document as
+   *  `doc` above, and the two must not be swapped: a bar inside a repeat is drawn once. */
+  sheetDoc: NoteModelDocument;
   timeline: Timeline;
+  /** One step per sounding event, naming the written note it belongs to. ⚠ Always passed, folded
+   *  score or not — the card draws a slice whose own clock starts at zero. See `MeasureCard`. */
+  playPlan: readonly PlayStep[];
   makamDeltas: ReadonlyMap<number, number>;
   playing: boolean;
   getPositionMs: () => number | null;
   instrument: InstrumentId;
   onInstrument: (id: InstrumentId) => void;
   voiceStatus: VoiceStatus;
+  canPlay: boolean;
+  editMode: boolean;
+  onPlayMeasure: (m: Measure) => void;
+  onEditMeasure: (m: Measure, on: boolean) => void;
+  /** Draws the bar — a `SheetView`, supplied by App. See the ⭐ at the top of `MeasureCard.tsx`. */
+  renderBar: React.ComponentProps<typeof MeasureCard>["renderBar"];
 }) {
   // ⚠ The load note is shown only for the instrument actually chosen here. `voiceStatus` reports
   // whatever the transport last asked for, so without this a clarinet download would appear to be
@@ -134,28 +164,54 @@ export function InstrumentView({
         )}
       </div>
 
-      {instrument === "clarinet" ? (
-        <Clarinet
-          doc={doc}
+      {/* ⭐ **The instrument on the left, the bar being played on the right** (owner, 2026-09-04).
+          Two columns, because the two halves answer the two halves of one question — the drawing
+          says WHERE to put your fingers and the card says WHAT you are playing — and a player
+          reading one has to be able to glance at the other without scrolling.
+          ⚠ **The kanun stacks instead, and that is not a phone rule.** A kanun is a wide trapezoid
+          sized by WIDTH (`.kv-kanun__svg`), so half a row is half an instrument; the violin and the
+          clarinet are tall slivers sized by height and lose nothing. The switch is in `app.css`,
+          keyed off this container's own `data-instrument`. */}
+      <div className="kv-instrument__pair">
+        <div className="kv-instrument__stage">
+          {instrument === "clarinet" ? (
+            <Clarinet
+              doc={doc}
+              timeline={timeline}
+              makamDeltas={makamDeltas}
+              playing={playing}
+              getPositionMs={getPositionMs}
+            />
+          ) : instrument === "kanun" ? (
+            <Kanun
+              doc={doc}
+              timeline={timeline}
+              makamDeltas={makamDeltas}
+              playing={playing}
+              getPositionMs={getPositionMs}
+            />
+          ) : (
+            // ⚠ The violin takes the TIMELINE and the kanun takes the DOCUMENT, and that
+            // asymmetry is correct rather than an oversight: a fingerboard cares only what a note
+            // sounds, while a kanun course is a written note. Both files say why in their headers.
+            <Fingerboard timeline={timeline} playing={playing} getPositionMs={getPositionMs} />
+          )}
+        </div>
+
+        {/* ⚠ The WRITTEN score goes in, never `doc` — see the two props' comments above. */}
+        <MeasureCard
+          doc={sheetDoc}
           timeline={timeline}
-          makamDeltas={makamDeltas}
+          playPlan={playPlan}
           playing={playing}
           getPositionMs={getPositionMs}
+          canPlay={canPlay}
+          editMode={editMode}
+          onPlayMeasure={onPlayMeasure}
+          onEditMeasure={onEditMeasure}
+          renderBar={renderBar}
         />
-      ) : instrument === "kanun" ? (
-        <Kanun
-          doc={doc}
-          timeline={timeline}
-          makamDeltas={makamDeltas}
-          playing={playing}
-          getPositionMs={getPositionMs}
-        />
-      ) : (
-        // ⚠ The violin takes the TIMELINE and the kanun takes the DOCUMENT, and that asymmetry is
-        // correct rather than an oversight: a fingerboard cares only what a note sounds, while a
-        // kanun course is a written note. Both files say why in their own headers.
-        <Fingerboard timeline={timeline} playing={playing} getPositionMs={getPositionMs} />
-      )}
+      </div>
 
       <p className="kv-instrument__hint">
         {instrument === "clarinet"

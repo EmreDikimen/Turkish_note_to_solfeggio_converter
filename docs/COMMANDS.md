@@ -65,6 +65,11 @@ prompt, which once let the recipe build cleanly and publish **nothing**. `--filt
 is in the script for that reason; read the output for `Deploy is live!` rather than trusting exit 0.
 ⚠ `smoke:live` does not check the audio — spot-check `/audio/<kit>/<stroke>-rr1.wav` for 200 after a
 deploy that touches it.
+⚠ **A refusal UNMOUNTS `#omr-status`** (`App.tsx` renders the status line or the error box, never
+both), so anything waiting on a read must count `#omr-error` **before** it asks the status line for
+`data-state`, and must read the status line non-throwingly. Getting that order wrong costs a 30 s
+timeout on a detached locator and reports the CHECK's bug as the app's — it did, on 2026-09-05,
+while the site was refusing correctly in 5.1 s. Fixed in all three page smokes.
 
 ```bash
 node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs

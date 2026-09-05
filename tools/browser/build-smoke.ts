@@ -155,12 +155,20 @@ async function readOnePage(
   const deadline = Date.now() + 900000;
   let summary = "";
   while (Date.now() < deadline) {
+    // ⚠ **The error box is read FIRST, and every read of `#omr-status` is non-throwing.** A refused
+    // read UNMOUNTS the status line — `App.tsx` renders the status or the error, never both — so
+    // `status.getAttribute` sits waiting 30 s for a detached element and THROWS, and `||` never
+    // reaches the error check on its right. It cost a live run on 2026-09-05: the app refused
+    // correctly in 5.1 s and the check reported a timeout on a locator instead. It survived until
+    // then because the second arm used to be the FALLBACK, where the status line stays and reaches
+    // `done`; the refusal path is the first one that takes the element away.
+    if (await page.locator("#omr-error").count()) break;
     summary = (await status.textContent({ timeout: 15000 }).catch(() => null))?.trim() ?? "";
-    if ((await status.getAttribute("data-state")) === "done" || (await page.locator("#omr-error").count()))
-      break;
+    if ((await status.getAttribute("data-state").catch(() => null)) === "done") break;
     await page.waitForTimeout(500);
   }
-  const done = (await status.getAttribute("data-state")) === "done";
+  // Same reason: on a refusal there is no element left to ask, and "not done" is the right answer.
+  const done = (await status.getAttribute("data-state").catch(() => null)) === "done";
   const where = done ? await status.getAttribute("data-where") : null;
   const counts = done
     ? await Promise.all(

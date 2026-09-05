@@ -170,7 +170,10 @@ async function main() {
   console.log(`  slowest reply from the page: ${maxGapMs} ms`);
 
   const num = async (attr: string) => Number(await status.getAttribute(attr));
-  const done = (await status.getAttribute("data-state")) === "done";
+  // ⚠ Non-throwing: an error UNMOUNTS the status line (`App.tsx` renders the status or the error,
+  // never both), so asking a detached element waits 30 s and throws — a timeout on a locator where
+  // the honest answer is "not done". Same shape as the loop above; see live-smoke.ts.
+  const done = (await status.getAttribute("data-state").catch(() => null)) === "done";
   const nStrips = done ? await num("data-strips") : 0;
   const nStaves = done ? await num("data-staves") : 0;
   const nNotes = done ? await num("data-notes") : 0;

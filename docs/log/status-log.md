@@ -7,6 +7,44 @@ updated: 2026-09-05
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-05 — deployed, and the refusal arm's first live run found a bug in the check (product track)
+
+The owner asked for it after the makam work: *"Tamamdır o zaman artık deploy eder misin uygulamayı"*.
+`npm run deploy:app` → **Deploy is live!**, <https://komavision.netlify.app>. It carries everything
+that had piled up unpublished since 2026-09-03: the phone CSS, the measure card, the stored-pages
+list with rename, the voice-switch bridge, the pinned Çalma row and the makam picker's new line.
+
+⚠ **The MODEL did not move and could not have.** Weights are fetched from `VITE_WEIGHTS_URL` on the
+Hub and `build:app` fails if any leak into `dist/`, so the locally staged Round-3 arm stayed local
+and the live site is still Round 2. That is worth stating because "deploy the app" and "publish the
+model" read like one action and are two.
+
+Checked before pressing: `netlify-cli status` (logged in — the script pins the site id, so the
+workspace is not linked and does not need to be), and the decode service answered `/health` with
+`ready:true` after a **10.6 s** cold start. That last one matters more than it used to: with the
+local fallback off, a deploy pointing at a dead server would leave visitors with nothing.
+
+**Then `smoke:live` failed, and the app was innocent.** The check timed out waiting for
+`#omr-status`. Driving the same page by hand showed the deployed site doing exactly the right thing:
+the server arm read 9 porte → 24 şerit → 229 nota in 45.6 s, and the refusal arm — a dead decode URL
+— raised `#omr-error[data-error-kind="server-unavailable"]` in **5.1 seconds**.
+
+⭐ **The bug was the ORDER of two reads.** `App.tsx` renders the status line **or** the error box,
+never both, so a refusal takes `#omr-status` out of the DOM. The wait loop asked it for
+`data-state` first and only then counted `#omr-error` — and `||` evaluates left to right, so
+Playwright sat 30 s waiting for a detached locator and threw before the error check on its right
+ever ran. The fix is to look at the error box first and make every read of the status line
+non-throwing (`.catch(() => null)`), including the `done` read after the loop.
+
+⚠ **Why it survived until today.** Before 2026-09-04 the second arm was the *fallback*, where the
+status line stays put and reaches `done`; the refusal is the first path that removes the element,
+and this was its first run against a real deployment. The same three lines were latent in
+`build-smoke.ts` and `page-smoke.ts` — any error path unmounts the status line — so all three are
+fixed together. `textContent` on that same line already had a `.catch`, which says the author saw
+the element could go away and missed its neighbour.
+
+Re-run: **PASS** — the deployed site reads on the server and refuses to read anywhere else.
+
 ## 2026-09-05 — the makam picker says what it plays differently, and finds a wrong-note bug (product track)
 
 The owner's ask, in one sentence: *"Makamları seçtiğimiz dropdownın yanına o an seçtiğimiz makamın

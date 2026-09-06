@@ -133,7 +133,9 @@ sizes: median 76 ids, p90 127, max 344.
 only the id count, but `emit_responses.json` keeps **the label of every strip the emitter built,
 including the dropped ones** — 15,758 rows, of which exactly the 4,012 over-budget ones re-cost
 directly. See the rescue column in the scheme table above. Under **H the whole pool's over-budget
-count falls 4,012 → 502**; under B, 4,012 → 1,602.
+count falls 4,012 → 504**; under B, 4,012 → 1,602. ⚠ **504, not the 502 this line first carried** —
+that was the 2026-08-27 estimate; the 2026-09-06 probe measures 504 with the real tokenizer, and
+gets the same 504 whether H is built at 116 ids or the superseded 118.
 
 For scale: `b8` **accepted 2,330** strips. B more than doubles that pool; H roughly triples it.
 
@@ -173,9 +175,10 @@ wrong pitched notes ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)); th
 
 Run: `.venv-ml/bin/python scripts/rung3/token_scheme_probe.py`. No GPU, no model, nothing
 re-decoded, ~2 minutes. Pools: `strips_v7_final` (40,795 labels), `strips_b8`'s 3,929 accepted rows,
-and the 4,012 `over_budget` labels `emit_responses.json` kept. ⚠ The re-emit will re-cut those
-windows under the rail at b = 57, so this is the closest proxy available, not the pool that will
-exist.
+and the 4,012 `over_budget` labels `emit_responses.json` kept. ⭐ **Since 2026-09-06 this is no
+longer a proxy for most of the pool**: the owner scoped the re-cut to the strips that are STILL over
+the gate under H, so the other 3,508 keep the crops measured here
+([../DECISIONS.md](../DECISIONS.md)).
 
 **H is 16 new ids and vocabulary 116 — `''` and `'''` are NOT among them.** Building H as "B + the
 14 fused pairs" gives 118 and two dead tokens: over 450,456 notes both are used **zero** times,
@@ -193,6 +196,36 @@ force `'</w>`), and under both B and H that falls to **0.003%** (13 notes, bare 
 
 **Yield reproduces exactly.** Rescued of the 4,012 `over_budget` drops: today 0, B **2,410 (60.1%)**,
 H **3,508 (87.4%)**. Projected real training pool 3,929 → 6,339 (B) → **7,437 (H)**.
+
+### ⭐ Only 504 strips need a new crop — the tokenizer does the rest (2026-09-06)
+
+Raised by the owner: *"round 4'te token mantığını değiştirdiğimiz için zaten overbudget olanların
+toplam id'si düşecek"*. It is right, and it re-scopes the re-emit.
+
+| | strips |
+|---|---|
+| dropped `over_budget` today | 4,012 |
+| under the 59 gate on the **tokenizer change alone**, no new crop | **3,508** |
+| still over 59 under H — the only ones needing a cut | **504** |
+
+⭐ **No id threshold is needed.** The owner proposed re-cutting strips of ≥85 old ids; that catches
+all 504 but re-cuts **954** strips H already rescues. Measuring the H length directly re-cuts 504
+with zero waste — every still-over strip is **≥94 old ids**, and no strip below 94 is still over.
+
+| trigger | strips re-cut | needlessly re-cut |
+|---|---|---|
+| old ids ≥ 85 | 1,458 | 954 |
+| old ids ≥ 94 | 1,101 | 597 |
+| **H length > 59** | **504** | **0** |
+
+⭐ **And H changes the tokenization, not the label TEXT** — an accepted strip's label is
+character-identical before and after, so the owner's 995 human reads and 576 `fix` verdicts on
+`strips_b8` stay valid rather than becoming suggestions to re-confirm. The pool is
+`3,929 kept + 3,508 rescued + the split of 504`.
+
+⚠ **Independent of all this, some crops move anyway**: the 2026-09-03 slicer fixes bumped
+`GEOMETRY_REV`, on an unmeasured number of pages ([../METRICS-SLICER-FRAME.md](../METRICS-SLICER-FRAME.md) ·
+[../METRICS-SLICER-STEMS.md](../METRICS-SLICER-STEMS.md)).
 
 ### ⛔ The render question — asked, answered, and the answer is still "no render"
 

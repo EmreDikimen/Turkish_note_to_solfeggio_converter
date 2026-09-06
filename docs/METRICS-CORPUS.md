@@ -251,35 +251,23 @@ Three things then compound:
    before the label-vs-decode comparison, deliberately, because signature reading is noisy. A wrong
    signature is invisible to the one check that catches wrong labels.
 
-**How far it reaches** (counted from each pool's `emit_report.json`):
-
-| pool | pieces | signature OVERWRITTEN by the model | split-vote (sent to review) |
-|---|---|---|---|
-| exam v3 | 45 | **24 (53%)** | 12 |
-| `strips_nota` | 938 | **406 (43%)** | 384 |
-| `strips_tup` | 293 | **98 (33%)** | 37 |
-| `strips_r1` | 65 | **26 (40%)** | 25 |
-
-**Checked against our own makam table** (`data/makam_signatures.json`, built from real sources): of
-the 36 exam pieces whose labels carry a signature, **8 (22%) disagree with the table's majority
-variant** — and several are *missing* entries the table says are near-universal:
-
-| makam | the label says | the table's majority | weight |
-|---|---|---|---|
-| huseyni | `\komaFlat b` | `\komaFlat b \bakiyeSharp f` | 100% |
-| nikriz | `\bakiyeFlat b` | `\bakiyeFlat b \bakiyeSharp f \bakiyeSharp c` | 94% |
-| segah | `\komaFlat e \bakiyeSharp f` | `\komaFlat b \komaFlat e \bakiyeSharp f` | 93% |
-| mahur | `\komaSharp f` | `\kucukSharp f` | 67% |
+**How far it reaches, and what each override actually changed**, pool by pool, with the
+disagreement list and the two candidate review rules → **[METRICS-SIGVOTE.md](METRICS-SIGVOTE.md)**
+(audited 2026-09-06). The headline from that audit: the vote overwrote the signature on **67% of
+`strips_b8`'s aligned pieces**, **47% of overrides change nothing but the drawn order**, and the
+largest content change is not a wrong accidental but a **deleted** one.
 
 ⭐ **There is a loop in it.** The model misreads küçük as koma → that becomes the label → the model
 trains on that label → it becomes more koma-biased. This is a plausible partial cause of the 9:1
 imbalance above, on the accidental class the exam headline is most fragile about.
 
 ⚠ **What is NOT claimed.** n = 7, on 2 pieces, in 1 makam — a strong signal, not a measured error
-rate for the override. The override exists to fix a real defect and many of those 24 / 406 / 98 are
-probably right. The table is a **guide, not truth**: mahur genuinely prints both ways in our own
+rate for the override. The override exists to fix a real defect and many of the overrides counted in
+[METRICS-SIGVOTE.md](METRICS-SIGVOTE.md) are probably right. The table is a **guide, not truth**: mahur genuinely prints both ways in our own
 sources (küçük n=35, koma n=17), so it agrees with the owner's reading rather than proving it.
-⏭ The cheap next measurement, and the proposed rule change, are [BACKLOG.md](BACKLOG.md) item 9.
+⏭ The measurement item 9 asked for is DONE (2026-09-06) —
+[METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). The rule change is still owed:
+[BACKLOG.md](BACKLOG.md) item 9.
 
 ### The carry pixels-vs-labels defect (found 2026-07-26, fixed at source)
 

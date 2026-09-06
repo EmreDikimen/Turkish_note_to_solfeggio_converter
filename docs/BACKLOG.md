@@ -242,8 +242,14 @@ starting. Abandoned plans are a different thing again and live in
    the mechanism survived the re-emit; it does not size it.
    ⚠ **Not yet an error rate.** n=7 corrections in 1 makam; many overrides are probably right, and the
    table is a guide — mahur genuinely prints both ways (küçük 35, koma 17).
-   ⏭ **SCHEDULED for Round 4** — the disagreement list, then the review-instead-of-override rule; the
-   owner reads the rows ([rung3/round4.md](rung3/round4.md) step 3).
+   ✅ **THE MEASUREMENT IS DONE (2026-09-06)** — `scripts/rung3/sig_vote_audit.py`, all five pools,
+   in [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). It confirmed the mechanism and moved the target: the
+   **largest** content change is not a wrong accidental but a **deleted** one (410 overrides drop an
+   entry against 156 that alter one; 106 of the missing entries were in the derivation), and **47%
+   of overrides change only the drawn order**, which no earlier count separated. ⏭ **Still owed: the
+   rule**, and it now needs an owner decision, because a table-disagreement trigger (145 pieces)
+   cannot see the dropped-entry class while a content-change trigger (690) can
+   ([rung3/round4.md](rung3/round4.md) step 3).
 
 10. **NEW 2026-08-22 — EVERY PAGE THIS PROJECT OWNS COMES FROM TWO WEBSITES, AND SO DOES THE EXAM.**
    Raised by the owner (*"is there any strip from other note sheet resources like trt, divanmakam,

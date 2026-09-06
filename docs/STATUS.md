@@ -50,8 +50,9 @@ Plan and evidence: **[rung3/round4.md](rung3/round4.md)**; plain English:
 
 **Round 4 in one line:** **no new render**, **`\tupend` stays**, **stage 2 at 4,000 steps**; re-emit
 the real pools under **scheme H** note-spelling tokens (✅ confirmed by the owner 2026-09-06 at **16
-new ids, vocabulary 116**) + the label-budget rail at **b = 57** + a balanced packer, which returns
-3,508 of the 4,012 over-budget strips; stop the signature vote overwriting silently; select
+new ids, vocabulary 116**), which returns 3,508 of the 4,012 over-budget strips **with no new crop**
+— the rail at **b = 57** and the balanced packer apply only to the **504** still over the gate
+(owner, 2026-09-06); stop the signature vote overwriting silently; select
 checkpoints on real-val **corrections**, not loss; beam search measured offline first and **never on
 the user path unless it pays**; a 20–40 page **third-source probe** before any crawl. ⛔ **Three
 things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or add a
@@ -166,7 +167,7 @@ Still the gate on what may be **published as a model**. Plan, evidence and the o
 
 | role | pool | state |
 |---|---|---|
-| real training | `strips_b8` (3,929) **re-emitted under scheme H + the rail at b = 57 + a balanced packer** — the 4,012 over-budget drops are the target (3,508 return under H, so the pool becomes **7,437**) | ⏭ not run; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
+| real training | `strips_b8` (3,929) **re-emitted under scheme H**; the 4,012 over-budget drops are the target — **3,508 return on the tokenizer change alone, keeping their crops**, and only **504** are re-cut under the rail at b = 57 + the balanced packer (owner, 2026-09-06). Pool becomes **7,437+**. ⭐ H changes the tokenization, not the label text, so the 995 human reads and 576 fixes on b8 stay valid | ⏭ not run; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
 | synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
 | selection | `_realval_v2` (+ `_tupletval`), **on free-running corrections, not loss**, beside the owner's hand-test pages | ⏭ selector change owed |
 | grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
@@ -177,10 +178,27 @@ re-emit.
 
 ⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
 stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
-2026-09-06, nothing trained**) → **NEXT: the signature-vote rule** ([BACKLOG.md](BACKLOG.md) item 9)
-→ the third-source probe → re-emit → the owner reads the audit sample and every `\sig` row → two
+2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
+→ **NEXT: the third-source probe** → re-emit → the owner reads the audit sample and every `\sig` row → two
 arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
 once.
+
+✅ **STEP 3 IS DONE (2026-09-06) — the signature vote is measured AND its rule is built.** `sig_vote_audit.py` read all five
+pools; every number is in [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). ⭐ **It is a DELETION problem, not
+only a koma/küçük one**: 410 overrides delete an accidental against 156 that alter one, and 106 of
+the deleted entries were in the SymbTr derivation — the model did not see the sign, and its silence
+overwrote a correct entry. ⚠ **47% of overrides change only the drawn ORDER** and no earlier count
+separated them, so "the override fired on N pieces" always overstated the damage; the real
+content-change count is 690. ⚠ `strips_b8`, the real training pool, is the worst at **826 of 1,236
+aligned pieces (67%)**. ✅ **RULE D IS IN `emit_strip_labels.py`** (owner, 2026-09-06): a vote that
+**deletes or changes** an accidental and does not land on the makam table's **majority** spelling
+(or whose makam is absent from the table) **no longer overwrites anything** — the label keeps the
+SymbTr derivation and the piece's row-start strips go to review under the new reason
+`sig_table_conflict`. A vote that only **adds** or **re-orders** still applies, adding being the case
+the override was built for. ⚠ **Majority, not "any listed variant"**: mahur prints both spellings
+(küçük 35 / koma 17), so the looser form would have vouched for the vote on **31 mahur pieces** in
+exactly the direction the owner corrected 10 times out of 10. Cost: **224 pieces** to read
+(~1,198 row-start strips; 84 in `strips_b8`). Unit-tested; **no pool re-emitted yet**.
 
 ⏭ **THE HAND-TEST SET EXISTS AND IS WAITING ON THE OWNER'S EYES.** The owner supplied 20 pages on
 2026-09-06 (gitignored `exam_pages/`, outside the frozen exam); they are decoded with the live model

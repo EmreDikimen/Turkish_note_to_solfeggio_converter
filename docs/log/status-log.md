@@ -7,6 +7,77 @@ updated: 2026-09-06
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-06 (latest) — Round 4 step 3: the signature vote, measured — and it is a DELETION problem (model)
+
+**A script, no GPU, no decode, no labelling.** `scripts/rung3/sig_vote_audit.py` joins every pool's
+`emit_report.json` (did the override fire?), its `emit_requests.json` (what signature was written),
+each piece's own `labels.json` (what SymbTr derived) and `data/makam_signatures.json` (what the
+makam usually prints). Every number is in [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
+
+⭐ **The finding is not the one item 9 predicted.** The defect was found through koma/küçük
+confusion, so the expected story was "the vote chooses the wrong accidental". It does — 156
+overrides alter one, and `\kucukSharp` → `\komaSharp` is the top direction at 30, which is exactly
+the direction the owner corrected 10 times out of 10 by hand. But **410 overrides DELETE an entry
+instead** (463 entries), and of the 131 letter-level entries missing against the makam table, **106
+were present in the SymbTr derivation**. So the common shape is the model *not seeing* an accidental
+and its silence overwriting a correct one — and the `nd` gate is blind to `\sig` blocks, so nothing
+downstream could ever have caught it.
+
+⚠ **Two counts that were quietly wrong, both now corrected.**
+
+1. **47% of overrides change nothing but the drawn ORDER.** The emitter compares vote to derivation
+   as an ordered tuple, so it fires on a re-ordering that changes no pitch: 602 of 1,292. Every
+   earlier "the override fired on N pieces" number included those. The real content-change count is
+   690.
+2. **METRICS-CORPUS's split-vote column (384 / 37 / 25) counted pieces that never aligned** — a
+   report row simply lacks `sig_majority_ok` when the piece never reached a vote. The genuine counts
+   are **224 / 21 / 23**. The exam's 12 was right because all 45 of its pieces aligned.
+
+⚠ **`strips_b8` is worse than any pool counted before**: 826 of 1,236 aligned pieces (67%) had their
+signature decided by the model, and that is the real training pool. Also measured: 14 makam names in
+the corpus have no entry in the 65-key table, so **30 pieces cannot be judged by the table at all**.
+
+### The rule the owner chose, and the hole that testing found
+
+**Rule D, built the same day.** `emit_strip_labels.py` sends a piece to review — the label keeping
+the SymbTr derivation, its row-start strips carrying the new reason `sig_table_conflict` — when the
+vote **deletes or changes** an accidental **and** the result is not the makam table's **majority**
+spelling, or the makam is absent from the table. A vote that only **adds** or only **re-orders**
+still applies: adding is the case the override was built for, and a re-order changes no pitch.
+`review_ui.py` needed no change — it builds its reason filter from the rows.
+
+⭐ **The first version of rule D was blind exactly where the defect was found, and the unit test is
+what showed it.** As the owner first specified it, any spelling the table LISTS vouched for the
+vote. Mahur lists both (küçük n=35, koma n=17), so a vote reading küçük as koma passed unreviewed —
+**31 mahur pieces**, in the direction the owner had corrected by hand 10 times out of 10. Tightened
+to the **majority** spelling on the owner's second call: 224 pieces to read instead of 142.
+
+### The re-emit was scoped wrong, and the owner's question caught it
+
+Mid-session the owner asked for two things: *"review-ui'da olmayan hiçbir strip girmesin traininge"*
+and then *"elimizde 4000'den fazla labellanmış strip var … üstüne 3500 tane daha eklenmeyecek mi
+sadece"*. Measuring the first answered the second. **3,928 of b8's 3,929 training rows are already
+in the `b8-full` queue** — but only **995 carry a human verdict**; 2,933 are machine `agree` drafts,
+1,139 of them `\sig`-bearing.
+
+⛔ **And the plan's re-emit would have thrown the human half away.** Round 4 step 5 said "re-emit
+under H **+ the rail + a balanced packer**", and METRICS-SLICER-WINDOWS already said in as many words
+that a balanced packer *"moves crop boundaries, so it stales every labelled pool"*. It is not
+`3,929 + 3,508`: a re-packed row re-cuts all of its strips, and the owner's 995 reads and 576 fixes
+would have returned as `carry_old_fixes.py` suggestions to re-confirm.
+
+⭐ **The owner then supplied the fix**: *"round 4'te token mantığını değiştirdiğimiz için zaten
+overbudget olanların toplam id'si düşecek. Belki sadece 85 ve üstü budgete sahip olanlara
+uygulayabilirsin"*. Measured, and right: of the 4,012 over-budget strips, **3,508 fall under the
+59-id gate on the tokenizer change alone** and need no new crop; only **504** are still over.
+The proposed ≥85 threshold catches all 504 but needlessly re-cuts **954**; measuring the H length
+directly re-cuts **504 with zero waste** (every still-over strip is ≥94 old ids, none below 94 is
+still over). ⭐ And H changes the tokenization, not the label TEXT — an accepted strip's label is
+character-identical, so its verdict survives. Pool = `3,929 kept + 3,508 rescued + the split of 504`.
+
+⚠ **Not implemented — this lands with step 5.** ⚠ **Unmeasured and owed regardless**: the 2026-09-03
+slicer fixes bumped `GEOMETRY_REV` and move some crops on an unknown number of pages.
+
 ## 2026-09-06 (later) — Round 4 step 2: the selector picks on corrections, and a spacing scare that wasn't (model)
 
 **Built and smoke-tested, nothing trained.** `train.py` gained `--select-dir`: a FIXED pool that is

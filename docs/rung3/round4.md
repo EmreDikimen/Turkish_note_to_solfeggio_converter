@@ -143,19 +143,43 @@ to revisit the no-render decision; otherwise it stands.
      what it meant) and `--ema-decay` (logs the average's own corrections, saves `ema-best` /
      `ema-last`). Both **off by default**: they are paired arms, not defaults.
    ⚠ **Built, not measured.** No arm has trained with it yet.
-3. **The signature vote** — [../BACKLOG.md](../BACKLOG.md) item 9's script: where the vote disagrees
-   with `data/makam_signatures.json`, send the rows to review instead of overwriting. The owner reads
-   those rows.
+3. 🔶 **The signature vote — MEASURED 2026-09-06, the rule change still owed.**
+   `scripts/rung3/sig_vote_audit.py`, minutes, nothing re-decoded. Every number is in
+   [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md); three things change the plan:
+   - **The vote overwrote the signature on 67% of `strips_b8`'s aligned pieces** (826 of 1,236) —
+     higher than any pool counted before, and `strips_b8` is the real training pool.
+   - **47% of overrides change nothing but the drawn ORDER.** The emitter compares vote to
+     derivation as an ordered tuple, so it fires on a re-ordering that changes no pitch. Those 602
+     pieces need no review at all, and no earlier count separated them.
+   - ⭐ **The biggest content change is a DELETED entry, not a wrong one.** 410 overrides drop at
+     least one accidental (463 entries), against 156 that alter one. Of the 131 letter-level
+     entries missing against the makam table, **106 were in the SymbTr derivation and the vote
+     deleted them** — the model did not see an accidental, and its silence overwrote a correct
+     entry. The koma/küçük confusion is real (`\kucukSharp` → `\komaSharp` is the top direction at
+     30) but it is the second story, not the first.
+   ⏭ **Owner decision owed before the rule is written**: item 9 proposed sending a piece to review
+   where the vote disagrees with the makam table (**145 pieces**, ~765 row-start strips). That rule
+   cannot see the dropped-entry class, and 30 pieces have no table entry at all. The wider rule —
+   review wherever the vote changes the derivation's CONTENT — is **690 pieces**, ~4,668 strips.
+   Volumes and the middle options: [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
 4. **The third-source probe** — 20–40 pages from two new sites, ~200 hand-labelled strips, Run A
    scored on them. Candidate sites and the licence rule: [../DECISIONS.md](../DECISIONS.md)
    2026-08-20. Free labels only where `match_symbtr.py` finds the piece; sahaney.com filters by makam
    and form, which is how the tuplet-dense sirto/longa/saz semaisi pages come in — collect them
    **with** the vocabulary change or the same gate drops them.
-5. **Re-emit the real pools** under scheme H + the label-budget rail at **b = 57** + a balanced
-   packer ([../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)). Needs a Colab decode: every
-   cache is refused since `GEOMETRY_REV` 20260903. Then `verify-labels`, then the owner reads the
-   audit sample and every `\sig` row — expect ~450 fixes in ~3,500 rescued strips at the measured
-   12.9%.
+5. **Re-emit the real pools** under scheme H, **re-cutting only the 504 strips that are still over
+   the 59-id gate under H** (owner, 2026-09-06 — [../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the
+   whole pool with a balanced packer, as this step first said**: that moves crop boundaries, which
+   [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) says stales every labelled pool —
+   and it is unnecessary, because **3,508 of the 4,012 over-budget strips fall under the gate on the
+   tokenizer change alone**, keeping their crops ([tokenization.md](tokenization.md)). The rail at
+   b = 57 and the balanced packer apply **where a crop is being cut anyway**, i.e. on those 504.
+   ⭐ H changes the tokenization and not the label TEXT, so an accepted strip's label is
+   character-identical and its human verdict stays valid; the pool is `3,929 kept + 3,508 rescued +
+   the split of 504`. Needs a Colab decode: every cache is refused since `GEOMETRY_REV` 20260903 —
+   ⚠ those 2026-09-03 slicer fixes move some crops regardless, on an **unmeasured** number of pages.
+   Then `verify-labels`, then the owner reads the audit sample and every `\sig` row — expect ~450
+   fixes in ~3,500 rescued strips at the measured 12.9%.
 6. **Two arms from base, one variable**: old vocabulary (control) vs scheme H, same pools, same
    steps, stage 2 at 4,000. ~3.5 h each on an L4. Everything else in this round changes together and
    is unattributable; the vocabulary gets its own paired answer.

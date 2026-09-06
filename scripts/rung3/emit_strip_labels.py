@@ -79,6 +79,60 @@ ACC_COMMAS = {"\\komaSharp": 1, "\\bakiyeSharp": 4, "\\kucukSharp": 5, "\\buyukS
               "\\komaFlat": -1, "\\bakiyeFlat": -4, "\\kucukFlat": -5, "\\buyukFlat": -8}
 
 
+MAKAM_SIGNATURES = REPO / "data/makam_signatures.json"
+
+
+def load_makam_table() -> dict[str, dict[str, int]]:
+    """makam name (every spelling the table knows) -> its MAJORITY printed variant, as
+    {letter: commas}. Used only to decide whether a vote that DELETES or CHANGES an accidental
+    should be reviewed instead of applied — never to write a signature.
+
+    ⚠ **Majority, not "any listed variant"** (owner, 2026-09-06). Mahur genuinely prints both
+    spellings in our own sources (`\\kucukSharp` n=35, `\\komaSharp` n=17), so accepting any listed
+    variant would vouch for the vote on **31 mahur pieces** in exactly the direction the owner
+    corrected by hand 10 times out of 10 — the rule would be blind where the defect was found.
+    A minority-spelled edition therefore reaches review and is confirmed by eye.
+    docs/METRICS-SIGVOTE.md."""
+    raw = json.loads(MAKAM_SIGNATURES.read_text())
+    out: dict[str, dict[str, int]] = {}
+    for key, entry in raw.items():
+        best = max(entry["variants"], key=lambda v: (v.get("n", 0), v.get("weight", 0)))
+        majority = {letter: ACC_COMMAS[acc] for acc, letter in SIG_ENTRY_RE.findall(best["sig"])}
+        for name in [key, *entry.get("names", [])]:
+            out[name.replace("_", "").lower()] = majority
+    return out
+
+
+def sig_needs_review(derived: tuple, voted: tuple, makam: str,
+                     table: dict[str, dict[str, int]]) -> bool:
+    """Rule D (owner, 2026-09-06) — should this piece's signature go to a human instead of
+    letting the model's vote overwrite the derivation?
+
+    YES when the vote DELETES an accidental the derivation had, or CHANGES one on a letter both
+    carry, AND the voted signature is not `data/makam_signatures.json`'s MAJORITY spelling for the
+    makam (or the makam is not in the table at all, so nothing can vouch for it).
+
+    NO for a vote that only ADDS an accidental or only re-orders. Adding is the case the override
+    was built for — a real edition prints the makam's conventional signature, which routinely
+    carries signs SymbTr's content-derivation lacks — and a re-order changes no pitch.
+
+    Why deletion is the trigger: audited 2026-09-06 over five pools, 410 overrides delete an entry
+    against 156 that alter one, and 106 of the deleted entries were in the derivation. The model
+    did not SEE the accidental, and its silence overwrote a correct one — invisible downstream,
+    because the `nd` gate strips `\\sig` blocks from both sides. docs/METRICS-SIGVOTE.md.
+    """
+    d = {letter: ACC_COMMAS[acc] for acc, letter in derived}
+    v = {letter: ACC_COMMAS[acc] for acc, letter in voted}
+    drops = [k for k in d if k not in v]
+    alters = [k for k in d if k in v and d[k] != v[k]]
+    if not (drops or alters):
+        return False
+    majority = table.get(makam.replace("_", "").lower())
+    if majority is None:
+        return True                       # unjudgeable — 14 corpus makams have no table entry
+    return majority != v
+
+
 def decoded_sig_entries(tokens: str) -> tuple | None:
     """The signature the model read off a row-start strip, as ((acc_token, letter), ...) in
     drawn order — None when no \\sig block was decoded at all."""
@@ -630,6 +684,7 @@ def main() -> int:
     # ---- pass 1: decode + fold + row assignment ------------------------------------------
     piece_results: list[dict] = []
     requests: list[dict] = []
+    makam_table = load_makam_table()  # rule D's referee — read, never written to a label
     strip_ctx: dict[str, dict] = {}   # strip id -> context for gating
     drops: list[dict] = []
     review: list[dict] = []
@@ -681,12 +736,20 @@ def main() -> int:
         derived_sig = tuple(SIG_ENTRY_RE.findall(piece.sig_label)) if piece.sig_label else ()
         sig_override = None
         sig_majority_ok = True
+        sig_table_conflict = False
         if sig_votes:
             (top, cnt), total = sig_votes.most_common(1)[0], sum(sig_votes.values())
             if cnt * 2 > total:
                 if top != derived_sig:
-                    sig_override = [{"letter": letter.upper(), "alterCommas": ACC_COMMAS[acc]}
-                                    for acc, letter in top]
+                    # RULE D (owner, 2026-09-06): a vote that DELETES or CHANGES an accidental and
+                    # cannot be vouched for by the makam table does not overwrite anything — the
+                    # label keeps the SymbTr derivation and the piece's row-start strips go to a
+                    # human. A model's silence is not evidence. docs/METRICS-SIGVOTE.md.
+                    if sig_needs_review(derived_sig, top, piece.makam, makam_table):
+                        sig_table_conflict = True
+                    else:
+                        sig_override = [{"letter": letter.upper(), "alterCommas": ACC_COMMAS[acc]}
+                                        for acc, letter in top]
             else:
                 sig_majority_ok = False  # split vote — no printed truth to trust
 
@@ -704,6 +767,7 @@ def main() -> int:
             "rows_recovered_dn": n_rec_dn, "rows_unaligned": n_un,
             "sig_majority_ok": sig_majority_ok,
             "sig_override": bool(sig_override),
+            "sig_table_conflict": sig_table_conflict,
         })
 
         # Very low coverage = the match itself is suspect (wrong piece / wrong edition) ->
@@ -741,6 +805,7 @@ def main() -> int:
                 elif nav_measures & set(flat):
                     ctx["nav"] = "nav_measure"       # covers a segno/Son/jump measure
                 ctx["sig_suspect"] = not sig_majority_ok
+                ctx["sig_conflict"] = sig_table_conflict
                 piece_req["strips"].append({
                     "id": sid, "measures": flat,
                     "rowStart": bool(s["is_row_start"]),
@@ -800,11 +865,17 @@ def main() -> int:
             # noise; the label is still right). dn-recovered rows are NOT forced to review:
             # a strip with a wrong measure window can't clear the nd gate unless the windows'
             # content is identical — and then the label is identical too.
+            # `sig_table_conflict` (rule D) routes the same way and for the same reason, under
+            # its OWN reason string so the two are filterable apart in review_ui: a split vote is
+            # the model disagreeing with itself, a table conflict is the model deleting or
+            # changing a sign nothing else vouches for.
             sig_mismatch = bool(s["is_row_start"]) and ctx.get("sig_suspect", False)
-            to_review = ctx["piece_to_review"] or ctx.get("nav") or sig_mismatch
+            sig_conflict = bool(s["is_row_start"]) and ctx.get("sig_conflict", False)
+            to_review = ctx["piece_to_review"] or ctx.get("nav") or sig_mismatch or sig_conflict
             if to_review:
                 reason = ("low_coverage" if ctx["piece_to_review"]
-                          else ctx.get("nav") or "sig_mismatch")
+                          else ctx.get("nav")
+                          or ("sig_mismatch" if sig_mismatch else "sig_table_conflict"))
                 review.append({**base, "reason": reason})
             elif nd <= args.accept_nd and al.acc_disagreement(label, s["tokens"]):
                 review.append({**base, "reason": "acc_disagreement"})

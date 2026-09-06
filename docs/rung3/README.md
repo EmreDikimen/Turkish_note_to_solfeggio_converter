@@ -43,6 +43,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
 | [staccato-arm.md](staccato-arm.md) | **Round 3's arm 2** — the staccato distractor: the hole, the draw, the signed pre-registration, the result (**it passes**) and the open disposition | new 2026-08-20 |
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |
+| [third-source.md](third-source.md) | **Round 4's step 4** — the third-engraver probe: the three sites, what was collected, and the provenance traps found while collecting (a re-hosted page, a folk notation, a stem collision that lost a piece) | new 2026-09-06 |
 | [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **picked up by Round 4** | new 2026-08-27 |
 | [round4.md](round4.md) | **Round 4**: the root causes with their homes, the owner's five decisions of 2026-09-03 (no render, `\tupend` stays, stage 2 at 4,000, beam search never on the user path unless it pays, scheme H recommended), the octave count, and the order of work | new 2026-09-03 |
 | [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |

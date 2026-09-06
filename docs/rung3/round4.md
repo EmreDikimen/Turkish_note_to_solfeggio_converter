@@ -162,11 +162,21 @@ to revisit the no-render decision; otherwise it stands.
    cannot see the dropped-entry class, and 30 pieces have no table entry at all. The wider rule —
    review wherever the vote changes the derivation's CONTENT — is **690 pieces**, ~4,668 strips.
    Volumes and the middle options: [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
-4. **The third-source probe** — 20–40 pages from two new sites, ~200 hand-labelled strips, Run A
-   scored on them. Candidate sites and the licence rule: [../DECISIONS.md](../DECISIONS.md)
-   2026-08-20. Free labels only where `match_symbtr.py` finds the piece; sahaney.com filters by makam
-   and form, which is how the tuplet-dense sirto/longa/saz semaisi pages come in — collect them
-   **with** the vocabulary change or the same gate drops them.
+4. 🔶 **The third-source probe — COLLECTED 2026-09-06, nothing decoded yet.**
+   `scripts/rung3/collect_thirdsource.py`; the design, the sources and the traps are in
+   **[third-source.md](third-source.md)**. **36 pieces / 53 pages / 1,108 strips** from three sites,
+   all under `data/real/rung3/_thirdsource/` and deliberately outside `manifest.csv` and `matched/`.
+   ⭐ **The slicer found staves on all 53 pages — zero failures.** 27 exam pieces were refused and
+   every chosen piece is unseen by `strips_b8`. Free labels come from SymbTr metadata matching:
+   sahaney 496 accepts of 2,213, erdincbal 75 of 685, **blogspot zero** (its titles are lyric
+   incipits with no makam column). ⛔ **nota.trt.net.tr is out** — its library is behind a login;
+   **divanmakam.com is out** — a forum, so mixed and unrecorded provenance.
+   ⚠ **The blogspot column is not a clean third source**: one of its eight pages is watermarked
+   `www.erdincbal.com`, i.e. re-hosted from another column of this same probe, and one is **THM
+   folk notation**, which this project's tokens do not cover. Both should be dropped before any
+   number is quoted from it.
+   ⏭ Owed: decide the scoring path (free labels vs a page-level correction count), then decode with
+   Run A `best-real` and read the three columns **separately** — never merged into `examv3`.
 5. **Re-emit the real pools** under scheme H, **re-cutting only the 504 strips that are still over
    the 59-id gate under H** (owner, 2026-09-06 — [../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the
    whole pool with a balanced packer, as this step first said**: that moves crop boundaries, which

@@ -179,7 +179,7 @@ re-emit.
 ⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
 stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
 2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
-→ **NEXT: the third-source probe** → re-emit → the owner reads the audit sample and every `\sig` row → two
+→ 🔶 the third-source probe **collected 2026-09-06, nothing decoded** → re-emit → the owner reads the audit sample and every `\sig` row → two
 arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
 once.
 
@@ -199,6 +199,18 @@ the override was built for. ⚠ **Majority, not "any listed variant"**: mahur pr
 (küçük 35 / koma 17), so the looser form would have vouched for the vote on **31 mahur pieces** in
 exactly the direction the owner corrected 10 times out of 10. Cost: **224 pieces** to read
 (~1,198 row-start strips; 84 in `strips_b8`). Unit-tested; **no pool re-emitted yet**.
+
+🔶 **THE THIRD-SOURCE PROBE IS COLLECTED AND NOT YET DECODED (2026-09-06).** **36 pieces / 53
+pages / 1,108 strips** from three engraving houses none of our numbers has ever seen: **sahaney.com**
+(born-digital vector out of **Mus2 2.1.2**), **erdincbal.com** (TRT-edition scans, indexed by form, so
+the tuplet-dense sirto/longa/peşrev/saz semaisi come in) and **sarkilarnotalar.blogspot.com** (old
+prints and photocopies, the owner's pick). ⭐ **The slicer found staves on all 53 pages — zero
+failures.** 27 exam pieces were refused; every chosen piece is unseen by `strips_b8`. ⛔ **It is a
+probe and must not become a corpus** — it lives in `data/real/rung3/_thirdsource/`, outside
+`manifest.csv` and `matched/`. ⚠ **The blogspot column is not clean**: one of its 8 pages is
+watermarked `www.erdincbal.com` (re-hosted from another column of this same probe) and one is **THM
+folk notation**, which this project's tokens do not cover. ⏭ **Owed before a number exists**: the
+scoring path, then a decode with Run A `best-real`. [rung3/third-source.md](rung3/third-source.md).
 
 ⏭ **THE HAND-TEST SET EXISTS AND IS WAITING ON THE OWNER'S EYES.** The owner supplied 20 pages on
 2026-09-06 (gitignored `exam_pages/`, outside the frozen exam); they are decoded with the live model

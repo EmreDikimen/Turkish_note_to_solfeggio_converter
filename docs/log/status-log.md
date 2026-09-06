@@ -7,6 +7,49 @@ updated: 2026-09-06
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-06 (latest+1) — Round 4 step 4: a third engraver collected, and three traps paid for (model)
+
+**36 pieces / 53 pages / 1,108 strips, nothing decoded.** `collect_thirdsource.py` censuses,
+matches, selects and downloads from three sites none of this project's numbers has ever seen. Design
+and the full tables: [../rung3/third-source.md](../rung3/third-source.md).
+
+⭐ **The engraving is different, and that was CHECKED rather than assumed** — on the PDF producer.
+sahaney.com is born-digital vector out of **Mus2 2.1.2**, a Turkish makam notation program neither of
+our sources uses; erdincbal.com is scans of TRT Müzik Dairesi editions plus the owner's own
+engravings; our corpus is `Adobe Acrobat Image Conversion` (neyzen) and `GPL Ghostscript` / `doPDF`
+(notaarsivleri). ⭐ **The slicer found staves on all 53 pages, zero failures**, photocopies included.
+
+⛔ **Two candidate sources were dropped on inspection**: nota.trt.net.tr redirects its note library
+to a login (no account was created), and divanmakam.com is a forum — its notes are user attachments
+of mixed, unrecorded provenance, which is the opposite of a controlled third engraver.
+
+### Three traps, each caught and each now a guard in the producer
+
+1. ⛔ **Two different pieces shared a page stem and the second OVERWROTE the first.** erdincbal titles
+   a piece by makam and form alone, so Rauf Yekta's and Gazi Giray's `MÂHUR PEŞREVİ` produced one
+   stem. It had already happened when it was found — two pieces silently lost, nothing on screen to
+   say so. `_unique_stems` disambiguates on the composer and hard-fails if a collision survives.
+2. ⛔ **Ten downloaded "pages" were the blog's banner.** The first blogspot pass kept any image whose
+   filename matched `nota`; every post's banner is called `notalar.jpg`. Selection is on **size**
+   now, with a post-download minimum, so a wrong pick cannot pass silently.
+3. ⚠ **216 of erdincbal's 685 rows never reached a candidate pool** because SymbTr writes a makam as
+   one word while these sites hyphenate and apostrophise it (`EVC-ÂRÂ`, `GÜL'İZÂR`). Stripping the
+   separators took erdincbal's SymbTr accepts from 53 to 75.
+
+### ⚠ The owner's own pick has a provenance problem
+
+The blogspot was requested by name. Reading its 8 collected pages by eye: one is watermarked
+**`www.erdincbal.com`** — i.e. re-hosted from another column of this same probe — and one is **THM
+(folk) notation**, whose numbered bemol-2/3 signs this project's tokens deliberately do not cover.
+So the blogspot is a mixed re-poster, not an independent third source; those two pages should be
+dropped before any number is quoted from it. The other six are old prints of unknown publisher and
+are genuinely unlike anything we train on.
+
+⏭ **No number exists yet.** Owed: the scoring path (free SymbTr labels vs a page-level correction
+count — the blogspot has **zero** SymbTr accepts, its titles being lyric incipits with no makam
+column), then a decode with Run A `best-real`, read as **three separate columns** and never merged
+into `examv3`.
+
 ## 2026-09-06 (latest) — Round 4 step 3: the signature vote, measured — and it is a DELETION problem (model)
 
 **A script, no GPU, no decode, no labelling.** `scripts/rung3/sig_vote_audit.py` joins every pool's

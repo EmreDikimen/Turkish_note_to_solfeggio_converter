@@ -16,6 +16,7 @@ stays on the developer's disk, where local use is not distribution.
 |---|---|---|
 | **SymbTr** (score corpus) | **CC BY-NC-SA 4.0** | Train and test locally. **Publish nothing derived from it** — see below |
 | neyzen.com / notaarsivleri.com page images | all rights reserved | Read locally. Never redistribute, never commit |
+| **sahaney.com / erdincbal.com / sarkilarnotalar.blogspot.com page images** (the 2026-09-06 third-source probe) | all rights reserved; ⚠ **erdincbal republishes TRT Müzik Dairesi Başkanlığı editions**, so that material carries TRT's rights and not erdincbal's | Same rule as the two above: read locally, never redistribute, never commit. ⛔ The probe lands under `data/real/rung3/_thirdsource/`, is gitignored, and is deliberately kept out of `data/real/manifest.csv` and `matched/` so no training or exam flow can pick it up |
 | `Flova/omr_transformer` (base model) | Apache-2.0 | Fine-tune and publish the result **with attribution + licence** |
 | Bravura (font) | SIL OFL 1.1 | Ship it, with `OFL.txt` beside it — which we do |
 | React, VexFlow, ONNX Runtime | MIT | Ship, with the copyright notice |

@@ -363,7 +363,6 @@ new ML.
 > - decisions and what overturned them → [docs/DECISIONS.md](docs/DECISIONS.md)
 > - the dated history that used to be here → [docs/log/status-log.md](docs/log/status-log.md)
 > - plans abandoned along the way (do not act on them) → [docs/log/superseded.md](docs/log/superseded.md)
-> - the pre-split text, verbatim → [docs/archive/pre-refactor/ROADMAP.md](docs/archive/pre-refactor/ROADMAP.md)
 >
 > Sections 0–6 above are the evergreen plan: they describe intent and architecture, not progress.
 
@@ -375,4 +374,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-26. This file holds the evergreen plan only — architecture, phases, risks. Current state, numbers and history live in `docs/STATUS.md`, `docs/METRICS.md` and `docs/log/status-log.md` (see §7). The long dated log that used to end this file is preserved verbatim in `docs/archive/pre-refactor/ROADMAP.md`._
+_Last updated: 2026-07-26. This file holds the evergreen plan only — architecture, phases, risks. Current state, numbers and history live in `docs/STATUS.md`, `docs/METRICS.md` and `docs/log/status-log.md` (see §7). The long dated log that used to end this file was folded into `docs/log/status-log.md`; its verbatim pre-refactor copy was deleted on 2026-09-06._

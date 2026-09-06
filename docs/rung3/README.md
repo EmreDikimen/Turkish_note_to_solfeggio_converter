@@ -27,11 +27,11 @@ so correcting is "glance and confirm", not "repair everything".
 | [labeling.md](labeling.md) | The label **conventions** — what is a token and what is label-free ink (the retired `\tie`, the arc) | live rules |
 | [labeling-collection.md](labeling-collection.md) | Collection and free labels: neyzen match, the Round-0.5 labeler, the notaarsivleri run, targeted tuplet collection | §1a, §1a.5, §1b, §1c |
 | [exam.md](exam.md) | Freezing the exam, the emitter's calibration, exam v1 → v2 → v2.1 | Steps 2+3, Step 2, Step 3 |
-| [ship-criteria.md](ship-criteria.md) | The pre-registered Round-1 floors and decision rule (Round 2 was judged against these too) | Step 4.0 |
+| [ship-criteria.md](../archive/rounds/ship-criteria.md) | The pre-registered Round-1 floors and decision rule (Round 2 was judged against these too) | Step 4.0 |
 | [round3-criteria.md](round3-criteria.md) | Round 3's floors + the public-launch gate (**signed 2026-08-15**), and the tuplet A/B protocol with its result | new 2026-08-13 |
-| [rerender.md](rerender.md) | The carry-dominant `strips_v3` re-render + accidental-distribution findings | Step 4.1 |
-| [round1.md](round1.md) | Round-1 plan, init A/B, the one-shot exam read, the ship decision, plan-review addenda | Step 4, 4.2, 4.3, 4.4, 4.4a |
-| [round2.md](round2.md) | Entry plan, photo axis, the microtonal-sharp fix, what is still open | Step 4.4 (Round-2 part), Step 4.5 |
+| [rerender.md](../archive/rounds/rerender.md) | The carry-dominant `strips_v3` re-render + accidental-distribution findings | Step 4.1 |
+| [round1.md](../archive/rounds/round1.md) | Round-1 plan, init A/B, the one-shot exam read, the ship decision, plan-review addenda | Step 4, 4.2, 4.3, 4.4, 4.4a |
+| [round2.md](../archive/rounds/round2.md) | Entry plan, photo axis, the microtonal-sharp fix, what is still open | Step 4.4 (Round-2 part), Step 4.5 |
 | [round3.md](round3.md) | Round 3: why it targets note heights and note lengths, and the four checks to run before rendering | new 2026-07-27 |
 | [../../names_of_bad_cropped_images.md](../../names_of_bad_cropped_images.md) | Unusable crops noticed by eye during the batch3 labelling pass (the UI's `bad` verdict stays authoritative) | new 2026-08-19 |
 | [../../some_problems_seen_while_labeling.md](../../some_problems_seen_while_labeling.md) | MODEL failures noticed by eye during the same pass — the pattern behind the corrections, which the CSV cannot show. Its first entry (the dotted barline read as `\repstart`) was measured and is now [BACKLOG.md](../BACKLOG.md) item 5 | new 2026-08-20 |
@@ -46,7 +46,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **picked up by Round 4** | new 2026-08-27 |
 | [round4.md](round4.md) | **Round 4**: the root causes with their homes, the owner's five decisions of 2026-09-03 (no render, `\tupend` stays, stage 2 at 4,000, beam search never on the user path unless it pays, scheme H recommended), the octave count, and the order of work | new 2026-09-03 |
 | [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
-| [followups.md](followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
+| [followups.md](../archive/rounds/followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
 
 ## State of the six steps
 

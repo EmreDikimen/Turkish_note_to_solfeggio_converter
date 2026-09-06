@@ -152,6 +152,6 @@ These were deliberately set aside and may return; they are *not* cancelled:
   train; mine them per-class only if an error taxonomy gives a reason.
 - 126 nota-full pending disputes (pitch/accidental content) — post-Round-1 re-audit territory.
 - Decode-repair heuristics + adaptive window re-split on cap-hit — see
-  [../rung3/followups.md](../rung3/followups.md).
+  [../rung3/followups.md](../archive/rounds/followups.md).
 - Sub-measure fragments for dense contiguous tuplet runs.
 - In-browser stages 2–7 (the slicer/decode currently run in Python) and stage-9 header OCR.

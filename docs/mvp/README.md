@@ -74,14 +74,14 @@ W1 → W2 → W3 ─────────┴─→ W7 ──────→ W
 
 | Rung | Goal | State |
 |---|---|---|
-| **W0** | opencv.js primitives match OpenCV-Python | ✅ **DONE 2026-08-02** — [rungs.md](rungs.md) |
-| **W1** | Decode module extracted from `omrGate.ts`, logprobs added, gate still 27/28 | ✅ **DONE 2026-08-02** — [rungs.md](rungs.md) |
-| **W2** | Strips → editor end to end (no slicer); produces the W3 control arm | ✅ **DONE 2026-08-02** — [rungs.md](rungs.md) |
-| **W3** | Parity harness, the arm-B **ceiling**, and browser-vs-gold quality | ✅ **DONE 2026-08-03** — [rungs.md](rungs.md) |
-| **W4** | Slicer: staves + row normalization | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
-| **W5** | Slicer: barlines (the riskiest file) | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
-| **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](rungs.md) |
-| **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](rungs.md) |
+| **W0** | opencv.js primitives match OpenCV-Python | ✅ **DONE 2026-08-02** — [rungs.md](../archive/phases/rungs.md) |
+| **W1** | Decode module extracted from `omrGate.ts`, logprobs added, gate still 27/28 | ✅ **DONE 2026-08-02** — [rungs.md](../archive/phases/rungs.md) |
+| **W2** | Strips → editor end to end (no slicer); produces the W3 control arm | ✅ **DONE 2026-08-02** — [rungs.md](../archive/phases/rungs.md) |
+| **W3** | Parity harness, the arm-B **ceiling**, and browser-vs-gold quality | ✅ **DONE 2026-08-03** — [rungs.md](../archive/phases/rungs.md) |
+| **W4** | Slicer: staves + row normalization | ✅ **DONE 2026-08-04** — [rungs.md](../archive/phases/rungs.md) |
+| **W5** | Slicer: barlines (the riskiest file) | ✅ **DONE 2026-08-04** — [rungs.md](../archive/phases/rungs.md) |
+| **W6** | Slicer: windowing + driver; **paired** parity vs arm B | ✅ **DONE 2026-08-04** — [rungs.md](../archive/phases/rungs.md) |
+| **W7** | Upload a page in the app | ✅ **DONE 2026-08-05** — [rungs.md](../archive/phases/rungs.md) |
 | **W8** | Confidence highlighting | ⛔ **DROPPED 2026-08-05** — the pre-registered bar was NOT met (best at a 10% budget is 26.3% against ≥60%) and the owner dropped it rather than moving the bar. Half of the 2026-07-27 goal stays unbuilt, stated out loud. Nothing deleted; may return if a friend asks. [../DECISIONS.md](../DECISIONS.md) |
 | **W9** | **Server-side decode** + hosting — Cloud Run, Node + `onnxruntime-node` reusing `decode.ts`, in-browser fallback | ✅ **DEPLOYED 2026-08-06** — live at `omr-decode…europe-west3.run.app`, reads what the browser reads (93.8% ids, gold a paired wash), cold start 10.6 s, ~40 vCPU-s/page. ⚠ Slower than the owner's own browser, as predicted. Gold quality is a paired wash (McNemar p = 0.727). Safety checklist complete ($5 budget alert set, `--max-instances 3`). ✅ **Hosting DONE the same day** — app on Netlify at **<https://komavision.netlify.app>**, weights on the Hub (`Beyaban/omr-weights`), origin lock + 413 fix + `--cpu-boost` deployed. Cloudflare Pages was ruled out on its 25 MiB per-asset cap against our 25.58 MiB wasm. [hosting-setup.md](hosting-setup.md) · [deploy.md](deploy.md) |
 | **W9.5** | **Makam selection + performed intonation** (pipeline stage 9's makam half) — guess the makam from the decoded signature + karar, confirm it in a prompt, bend the SOUNDING komas to that makam's real intonation | ✅ **DONE 2026-08-07** — audibly correct on **204/213** bundled scores; sound only, the staff never moves. Not a planned rung: added before W10 alongside the style pass, because playing uşşak as AEU spells it is wrong in a way a friend WILL hear. [makam.md](makam.md) |
@@ -92,7 +92,7 @@ W1 → W2 → W3 ─────────┴─→ W7 ──────→ W
 
 ## What each rung established
 
-The finished write-ups live in **[rungs.md](rungs.md)** — moved there on 2026-08-04 (this file crossed the
+The finished write-ups live in **[rungs.md](../archive/phases/rungs.md)** — moved there on 2026-08-04 (this file crossed the
 400-line cap). They carry what each rung measured, what passed, and — more useful — the
 hypotheses that died: the resampler theory the arm-B ceiling killed, the confidence bar that was
 NOT met, the `prepPage` no-op that was not a no-op, and the two acceptance criteria that had to

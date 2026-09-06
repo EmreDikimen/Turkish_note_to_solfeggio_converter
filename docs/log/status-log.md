@@ -2,10 +2,127 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-05
+updated: 2026-09-06
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-06 — the docs were cut and re-shelved (docs)
+
+Owner: *"we are using [CLAUDE.md, STATUS.md] everytime for everything, they should not have redundant
+info."* Live docs went **21,453 → 18,510 lines** and **91 → 80 files**; nothing was rewritten from
+memory and the structure checker is green.
+
+**Two real errors were found by reading, not by a check.** STATUS.md said *"The MODEL is untouched
+and still Round 2"* eleven lines below its own correction to Round 3 Run A, and its Track A list
+still carried *"Public launch — a later rung, gated on Round 3's exam result"* three weeks after the
+launch. Both are gone. ⚠ The lesson is the genre rule doing its job late: both lines survived because
+they sat inside a **✅ done** entry that nobody re-read.
+
+**STATUS.md 399 → 190.** Eleven ✅-done Track A items (the toolbox, the editable signs, the playhead
+follow, the pinned Çalma row, the craft pass, the toggle buttons, the clarinet lip meter …) were
+duplicated from `log/status-log.md`, which carries each one with its traps — verified entry by entry
+before deleting. What is left is *now* and *next*, plus a five-row table of the manual checks 25–29
+that no eye has judged. The "Where the detail is" table was dropped as a second copy of INDEX.md.
+
+**CLAUDE.md 385 → 351, and `docs/APP-RULES.md` is new (166 lines).** The hard rules were one flat
+40-bullet list; they are now three groups (the exam/labels/tokens, the slicer/caches/scorers, what
+ships) plus **group 4: the six app rules that can be broken from anywhere**. The app's own rules —
+playback, the editor, the DOM, the stylesheet — moved to APP-RULES.md on the DOM-CONTRACT.md
+precedent, because CLAUDE.md had absorbed per-component detail (`.kv-recent__item`'s `min-width`,
+`stamp()`, `rollupOptions.input`) that its feature docs already owned and only someone editing that
+component would ever need. ⚠ **The cut was checked mechanically, not by feel**: 271 backticked
+identifiers and 47 numbers were extracted before the rewrite and `comm`-diffed after. Eleven
+identifiers left CLAUDE.md; three were false positives (a bare name replaced by its full path) and
+the other eight were each confirmed present in the doc that owns them. Zero numbers were lost.
+
+**Deleted: `docs/archive/pre-refactor/` (12 files, 4,954 lines) and the `--facts` check with it.**
+That baseline existed to prove the 2026-07-26 refactor lost nothing. It did that job — 10 catches on
+its first run, and it **passed on its last, run deliberately after the CLAUDE.md and STATUS.md
+rewrites above**. ⛔ Do not re-add `--facts` without re-creating a baseline: a fact check with nothing
+to compare against passes silently, which is worse than no check ([../MAINTAINING.md](../MAINTAINING.md)).
+
+**Deleted: four plain-English histories** — `OVERVIEW-JULY.md`, `OVERVIEW-AUGUST.md`,
+`OVERVIEW-ROUND3.md`, `OVERVIEW-MODEL.md` (1,012 lines). ⚠ These were not pure duplicates: OVERVIEW.md
+had *offloaded* content into JULY and MODEL when it hit its own size cap, and said so in five places.
+Each of those five passages was rewritten to stand alone and point at the file that owns the fact
+(METRICS-*, DECISIONS.md, the archived round docs) rather than at a dead link. `OVERVIEW.md` also lost
+its own stale line — item 14 still said the public launch waited on a good exam result.
+
+**Deleted: `docs/RUNG3.md`**, the 35-line stub that routed `docs/RUNG3.md §…` citations. Nothing in
+the repo cites it any more, and the verbatim pre-split file it pointed at went with the archive.
+
+**Moved, not deleted, because the reasoning is the valuable part** (owner's call): the five Round-1/2
+docs → `archive/rounds/`, and `PHASE2.md` + the two mvp rung ladders → `archive/phases/`.
+`mvp/slicer-port.md` deliberately stayed live — 8 source files cite it as reference for code that
+still runs. ⚠ 13 markdown files and **11 source files** (including `omrGate.ts`, `train.py`,
+`data.py`, three notebooks) carried `docs/…` citations that the checker verifies, so every one was
+repointed; `npm run typecheck` and `npm test` pass.
+
+⚠ **`docs/log/` was NOT rewritten.** Two dead pointers in `status-log.md` were de-linked to plain
+backticks and not one word of the surrounding account was touched — the file is append-only history,
+and the record of what was true on a date outranks a tidy link.
+
+## 2026-09-06 — the disk was 69 GB; it is 29 GB (housekeeping, both tracks)
+
+Owner: the project folder had grown past the machine. Nothing about the model or the app changed —
+this entry exists so that a folder someone remembers being there and now is not reads as a decision
+rather than a loss.
+
+**40 GB deleted, in five groups.** Each was checked before, not after.
+
+- **13 × `trainer_state.pt`, 13.9 GB.** Optimizer + scheduler + scaler state. `train.py` reads it in
+  exactly one place — under `--resume`, from `<out_dir>/last/` — and every Colab notebook here
+  already copied checkpoints with `rsync --exclude trainer_state.pt`. Every run that wrote one is
+  finished. The weights (`model.safetensors`) are untouched.
+- **Full-size ONNX in 8 superseded `*-onnx` folders, ~9.5 GB** (including the
+  `decoder_model_merged.onnx` nothing in this repo ever loaded). Only `*_int8.onnx` is read — by the
+  live site, by the Cloud Run image and by `decode_page.py --suffix _int8`. `r3a-stage2-best-real-onnx`
+  was left **complete**, so the live model can be re-quantized without an export. The other eight
+  re-export from their kept `model.safetensors` with the same `optimum-cli export onnx
+  --task image-to-text-with-past` every entry in MODEL_EVAL.md used.
+- **14 Colab upload zips, 8.2 GB.** Rebuildable by `scripts/make_*_colab_zip.sh`. Round 4 needs a new
+  one regardless: new tokenizer, re-emitted pools. The `.txt` result logs beside them stay.
+- **9 superseded synthetic renders (v2 … v6), 6.5 GB.** `strips_v7_final` stays and Round 4 reuses it
+  unchanged (owner, 2026-09-03). ⚠ **This is the one group that is expensive to undo** — a re-render
+  is a long, hot run on a fanless M4 — so it was the owner's explicit call, and CLAUDE.md's data
+  layout now says v7 is the only full set on disk.
+- **`rung2-smoke`, `rung2-sanity`, `overfit10`(+`-onnx`), 2.8 GB**, and **4 staged-runtime backup
+  folders, 1.0 GB**. The first three were smoke / sanity / deliberate-overfit debugging runs, not
+  baselines: `round1-best`, `round2-stage2-best` and every `r3-*` arm stay. The backups were proven
+  redundant with `cmp` **before** deletion — all 12 `.onnx`, all 3 `gate.json` and all 100
+  `pixels.bin`/`.png` were byte-identical to files that remain. Revert paths therefore survive and
+  are rewritten in place: stage `data/checkpoints/<name>-onnx/*_int8.onnx`.
+
+⛔ **What was deliberately NOT deleted**, and why, since each looks like an easy 1–9 GB:
+`data/real/strips` (4.1 GB) and `data/real/strips_v2` (4.5 GB) are both live crop roots — the exam
+and the training pools **hardlink** out of the first, b8 was cut from the second, and Round 4 step 5
+re-emits against them; `data/real/images` + `pdfs` (2.7 GB) are the original source pages, not
+derivable from anything; `data/real/debug` (0.6 GB) and the synthetic `_pilot_*` / `_flagcheck_*`
+probe outputs (0.2 GB) were offered and the owner kept them.
+
+⚠ **None of this was recoverable from git** — every path is gitignored — which is why every group
+was either proven duplicate (`cmp`), proven unread (grep over `apps/`, `tools/`, `scripts/`,
+`src/vision/`, `packages/`, `netlify/`), or explicitly chosen by the owner.
+
+**Later the same day — the build outputs that had settled in the working tree (5.8 MB).** The two sol
+klarnet audit pages (`klarnet-duzenleyici.html`, `klarnet-parmak-tablosu.html`, 1.3 MB) are
+**generated** by `tools/core/clarinet-editor.ts` and `clarinet-chart.ts`, and `.gitignore` already
+said so in a comment — *"they inline a 460 KB photo, so they are rebuilt rather than committed"* — so
+deleting them restored the intended state rather than changing it. ⚠ **Checked before deleting, in
+this order**: the fingering table lives in `CLARINET_FINGERINGS` (`packages/core/src/clarinet.ts`) and
+the chart *"draws from it, never from its own copy of anything"*; the editor's only extra state is a
+`localStorage` draft under `klarnet-parmak-v3`, which is per-origin and so survives regenerating the
+file at the same path; and both pages were regenerated to a scratch directory and `cmp`'d
+**byte-identical** to the copies on disk before either was removed. Also deleted: all of `/tmp/` (4.5
+MB) — `smoke:phone` and measure-card screenshots, plus `tmp/brand`, the one-off wordmark A/B from the
+2026-09-04 craft pass. Every one is rebuilt by the command that made it.
+
+⛔ **Offered and KEPT, at the owner's call**: the 9 root PNGs (four are the only way to reproduce a
+documented slicer finding, five are unreferenced but cheap), the 14 closed-experiment probe and
+arm-scoring scripts in `scripts/rung3/`, and all 13 Colab notebooks. ⚠ Nothing under `scripts/` or
+`tools/` turned out to be orphaned — every file there is cited by `COMMANDS.md` at minimum, which is
+the check that would have found a dead one.
 
 ## 2026-09-05 — the link went public, ahead of the gate (product track)
 
@@ -3819,9 +3936,9 @@ recipe items are owed before a LilyPond corpus could stand beside `strips_v4` at
 
 ⚠ **Doc structure changed too.** `STATUS.md` was rewritten (399 → 308 lines) and `OVERVIEW.md` was
 **split by genre** rather than shaved: the model plan in plain words is now
-[../OVERVIEW-ROUND3.md](../OVERVIEW-ROUND3.md), and the closed narratives (the triplet mark, the
+`OVERVIEW-ROUND3.md`, and the closed narratives (the triplet mark, the
 classical-forms lead, the second printer's limits) moved to
-[../OVERVIEW-MODEL.md](../OVERVIEW-MODEL.md). The first attempt at this was trimming to fit, which is
+`OVERVIEW-MODEL.md`. The first attempt at this was trimming to fit, which is
 the thing [../MAINTAINING.md](../MAINTAINING.md) explicitly forbids; the owner caught it.
 
 ## 2026-08-18 — F3 deployed to the live site, ahead of its own manual gate
@@ -7581,7 +7698,7 @@ the respell. Signature coverage comes from the 23 added pieces instead.
 
 ## 2026-07-26 — Microtonal sharps: it was our renderer, fixed at source
 
-Diagnosed in three steps, cheapest first ([../rung3/round2.md](../rung3/round2.md)):
+Diagnosed in three steps, cheapest first ([../rung3/round2.md](../archive/rounds/round2.md)):
 - **Resolution ruled out.** `scripts/rung3/sharp_width_test.py` regroups already-scored strips by
   the encoder's effective scale (Donut thumbnails a 336×579–2472 strip into 409×583, scale
   1.22→0.24). Recall does not fall with scale on either dataset; `\bakiyeSharp` holds 84–94% in
@@ -7665,7 +7782,7 @@ miss and the komaSharp↔kucukSharp confusion. Logged in `MODEL_EVAL.md` as "car
     contaminated pieces.
   - *Item 3* — canonical real-val split shipped as `data.is_real_val_piece` (byte-identical to
     Round 1); both Round-2 consumers must reuse it.
-- **Plan-review addenda adopted** — see [../rung3/round1.md](../rung3/round1.md) for all nine, and
+- **Plan-review addenda adopted** — see [../rung3/round1.md](../archive/rounds/round1.md) for all nine, and
   [../DECISIONS.md](../DECISIONS.md) for the two that were dropped.
 
 ## 2026-07-22 — Round 1 trained, then examined: FAIL on five floors

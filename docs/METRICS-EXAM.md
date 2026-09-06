@@ -264,5 +264,5 @@ Round 2 clears one floor Round 1 missed (`\komaFlat` precision), misses four, an
 floor except the two headlines — a per-class mean that `\komaSharp` collapsed. Ties carry **no
 floor** on purpose (~38% structurally noisy gold); the arc-triggered false-`\tup3` rate replaces
 them, over 85 tie-but-no-tup3 and 229 neither-token strips. Full reasoning:
-[rung3/ship-criteria.md](rung3/ship-criteria.md).
+[rung3/ship-criteria.md](archive/rounds/ship-criteria.md).
 

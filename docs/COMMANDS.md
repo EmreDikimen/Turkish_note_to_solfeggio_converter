@@ -373,7 +373,7 @@ npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --o
 npx --yes tsx tools/render/verify-labels-ly.ts --strips data/synthetic/<set>   # that arm's OWN gate
 .venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
 .venv-ml/bin/python scripts/prepare_voices.py [--analyse|--manifest]  # F1's voices: fetch VSCO 2, measure, stage for the Hub
-.venv-ml/bin/python scripts/check_docs.py [--facts]       # doc structure + no-info-loss check
+.venv-ml/bin/python scripts/check_docs.py                 # doc structure check (--facts is GONE, 2026-09-06)
 ```
 
 Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finished work.

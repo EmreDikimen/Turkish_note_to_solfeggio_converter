@@ -75,7 +75,7 @@ mistakes so review can be about content.
 
 ## What the checker enforces
 
-`scripts/check_docs.py` (`--facts` adds the last one):
+`scripts/check_docs.py`:
 
 | Check | Fails when |
 |---|---|
@@ -85,12 +85,14 @@ mistakes so review can be about content.
 | links | a relative markdown link doesn't resolve |
 | code refs | source code cites a doc path that doesn't exist |
 | orphans | a doc isn't reachable from INDEX.md, CLAUDE.md, or a track index |
-| `--facts` | a number or path in `archive/pre-refactor/` appears nowhere in the live docs |
 
-The `--facts` check exists for one job: proving the 2026-07-26 rewrite lost nothing. It caught 10
-dropped facts on its first run. Keep `archive/pre-refactor/` as it is — it is the baseline. If you
-drop a fact **on purpose**, the check will flag it; add it to `ignore_num` / `moved_paths` in the
-script with a comment saying why.
+⚠ **There was a 7th check, `--facts`, and it is GONE (owner, 2026-09-06).** It diffed every number
+and path in `archive/pre-refactor/` against the live tree, to prove the 2026-07-26 rewrite lost
+nothing — it caught 10 dropped facts on its first run and passed on its last. The owner deleted that
+4,954-line baseline in the doc sweep, so the check went with it. **Do not re-add the flag without
+re-creating a baseline**: a fact check with nothing to compare against passes silently, which is
+worse than no check. What replaced it for a big edit is doing the diff by hand — extract the
+identifiers before and after and `comm` the two sets, which is how CLAUDE.md was cut that day.
 
 ## Adding a new track
 

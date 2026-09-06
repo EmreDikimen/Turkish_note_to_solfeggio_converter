@@ -106,7 +106,7 @@ this wrong doesn't error — it just quietly halves accuracy.
 **5. Barline detection → measure boxes.** Barlines = near-vertical dark runs that span exactly
 the 5 staff lines (tolerances for thickness/repeat-dots). This substitutes for what training had
 for free (SheetView's per-measure layout rectangles). Three gates (hardened 2026-07-19 against
-the real-corpus false positives — full postmortem in [rung3/followups.md](rung3/followups.md)):
+the real-corpus false positives — full postmortem in [rung3/followups.md](archive/rounds/followups.md)):
 (1) CONTINUITY — an unbroken vertical run spanning the staff, touching both outer lines;
 (2) THINNESS — no notehead-fat blob at the stroke inside the staff band; (3) TERMINATION —
 walking the connected ink past the outer lines, a stroke extending beyond BOTH lines is a
@@ -191,7 +191,7 @@ than 3.
 > photos of the exam pieces, sliced with the new photo front-end (stage 2) and **hand-labelled at
 > the strip level (284 strips)**. They are **EXAM-ONLY, never training** — they photograph exam
 > pieces, so training on them would leak the exam. Camera photos for *training* must come from
-> different pieces ([rung3/round2.md](rung3/round2.md)).
+> different pieces ([rung3/round2.md](archive/rounds/round2.md)).
 
 > **Status (2026-07-10): collection AUTOMATED + DONE for the engraved-PDF majority.**
 > `scripts/collect_notalar.py` replaced hand-screenshotting: it crawls neyzen.com's freely-published

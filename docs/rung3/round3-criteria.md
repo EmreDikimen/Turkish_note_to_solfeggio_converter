@@ -8,7 +8,7 @@ updated: 2026-08-20
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
 > [../METRICS-EXAM.md](../METRICS-EXAM.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
 >
-> Round 1's pre-registration is [ship-criteria.md](ship-criteria.md), kept verbatim; this file is the
+> Round 1's pre-registration is [ship-criteria.md](../archive/rounds/ship-criteria.md), kept verbatim; this file is the
 > same instrument for Round 3 and follows its shape deliberately. Round 2 was read against Round 1's
 > floors without re-registering them, which is why that comparison stayed honest — and why this file
 > exists rather than a third set of numbers invented after a result.
@@ -64,7 +64,7 @@ in Round 1 and −4 pp on a 14-gold class in Round 2, which is what micro and ma
 beside it to absorb.
 
 **Per-class floors.** Round 1's five ≥20-gold classes keep their floors verbatim from
-[ship-criteria.md](ship-criteria.md) (recall ≥75%, precision ≥70% each). They are reported, and a
+[ship-criteria.md](../archive/rounds/ship-criteria.md) (recall ≥75%, precision ≥70% each). They are reported, and a
 miss is written up as a miss, but the pass/fail decision for Round 3 is made on the table above.
 
 ## 2. The public-launch gate
@@ -295,7 +295,7 @@ accepts on the record. It is stated so the result is quoted with it.
 3. **A miss is not re-rolled on the same exam.** Diagnose on real-val; any further exam read is
    labelled in `MODEL_EVAL.md` as a second look with its leakage acknowledged.
 4. **A partial pass is written up as partial**, never rounded up — and it does not open the launch.
-5. **Power criterion (standing, from [round1.md](round1.md)):** a tuning sweep only runs if its
+5. **Power criterion (standing, from [round1.md](../archive/rounds/round1.md)):** a tuning sweep only runs if its
    minimum interesting effect exceeds the measured movement of the selection metric under the
    largest prior intervention (0.5 pp). The tuplet A/B clears this — the effect at stake is the
    ~9 pp `\tup3` recall drop, an order of magnitude larger.

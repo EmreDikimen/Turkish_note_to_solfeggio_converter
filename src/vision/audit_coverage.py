@@ -45,7 +45,7 @@ RHYTHM = ["\\tup3", "\\grace"]  # \tupend counts == \tup3, no separate floor
 # render from now on. Its id stays in ADDED_TOKENS (append-only) — nothing emits it.
 MAX_IDS = 59  # incl. EOS; decoder max_length is 60 (one slot for the decoder-start id)
 
-# DoD thresholds (docs/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
+# DoD thresholds (docs/archive/phases/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
 # injected at a deliberately low rate (see tools/render/respell.ts — user decision 2026-07-05).
 MIN_TRAIN_PER_CLASS = 200
 MIN_VAL_PER_CLASS = 25

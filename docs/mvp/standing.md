@@ -93,7 +93,7 @@ The signal is real (flagged strips average **8.60 token edits vs 2.69**) but "fl
 catch ≥60% of errors" is **NOT MET** — best at a 10% budget is **26.3%**, and a usable soft point
 existed and was **not** taken. **The bar was not moved to fit the result.** That leaves half of the
 2026-07-27 goal unbuilt, and saying so is the point of this paragraph. Nothing is deleted; it is a
-strong candidate to return if a friend asks. Detail: [rungs.md](rungs.md).
+strong candidate to return if a friend asks. Detail: [rungs.md](../archive/phases/rungs.md).
 
 ---
 
@@ -104,13 +104,13 @@ saveable score — nothing stubbed. `smoke:page`: **7 staves → 16 strips → 3
 strip count matching local Python. The 35-second freeze was fixed by making `estimate_skew` a
 **generator with two drivers**, with **no arithmetic change** (deskew angle identical 20/20). ⚠ A
 hang at 0% CPU was Vite's dep optimizer full-reloading the tab mid-slice, not the port.
-Detail: [rungs.md](rungs.md).
+Detail: [rungs.md](../archive/phases/rungs.md).
 
 **✅ W0–W6 PASSED (2026-08-02/04) — the slicer port is done and the browser is not worse than
 Python.** opencv.js bit-identical on all five primitives; the browser scored against the SAME
 hand-verified gold as Python (**SER 0.0821 → 0.0818**, exact-match 60.2% both); the ported slicer
 checked over 1,781 pages / 33,805 strips with the decode arm **paired** (McNemar p = 0.077).
-Write-ups and the four hypotheses that died: [rungs.md](rungs.md). Numbers:
+Write-ups and the four hypotheses that died: [rungs.md](../archive/phases/rungs.md). Numbers:
 [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
 
 ⚠ Three things still bind: **agreement with an artifact is not correctness** (the `strips_v2`

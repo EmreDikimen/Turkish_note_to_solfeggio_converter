@@ -2,7 +2,7 @@
 
 purpose: the settled context behind the model track — what is already known, so STATUS can hold only "now" and "next"
 audience: agents and the owner working the real-page track
-updated: 2026-08-17
+updated: 2026-09-06
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-07, when that file crossed its 400-line
 > limit. Nothing here is a next action; it is the background a next action rests on. Current state
@@ -145,8 +145,9 @@ pages and photos of them.
   84.8%**, micro F1 85.0 → 84.8% — flat-to-better, on top of SER 0.059 → 0.052 and 9 of 11 floors.
 - **Live model is `round2-stage2-best` int8** (shipped 2026-07-27) — ship chain all green: parity
   14/14 fp32 + 14/14 int8, browser gate 27/28 with the product (canvas) path clean 14/14. Runtime in
-  `apps/web/public/models/`; Round 1 is backed up at
-  `data/checkpoints/_public_models_backup_round1/` (revert = re-stage it).
+  `apps/web/public/models/`; Round 1's runtime was backed up at
+  `data/checkpoints/_public_models_backup_round1/` until the 2026-09-06 space sweep deleted it as a
+  byte-identical duplicate — revert = re-stage `data/checkpoints/round1-best-onnx/*_int8.onnx`.
 - **Every eval now reports MICRO and MACRO≥30 beside the macro mean**; past runs back-fill with
   `scripts/rung3/rescore_headline.py`. The macro mean stays the pre-registered bar — micro was
   computed after the fact and flatters us, so promoting it now would move the goalposts.
@@ -174,4 +175,4 @@ pages and photos of them.
   PASS. It is sound data; the corpus is not what failed.
 
 Numbers for all of the above: [METRICS.md](../METRICS.md). Why things were decided this way:
-[DECISIONS.md](../DECISIONS.md). Round 2 in full: [rung3/round2.md](round2.md).
+[DECISIONS.md](../DECISIONS.md). Round 2 in full: [rung3/round2.md](../archive/rounds/round2.md).

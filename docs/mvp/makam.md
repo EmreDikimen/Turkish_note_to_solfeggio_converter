@@ -76,8 +76,8 @@ score** the rule reaches; `neden?` unfolds the rule's own `why`.
 Three things it does deliberately:
 
 - **The count is the score's, not the table's.** A rule is a claim about a perde, not about the page
-  in front of you. `makamRuleUsage` walks the same matcher `makamKomaDeltas` walks, so the number
-  on screen and the pitches playback bends cannot drift apart.
+  in front of you. `makamRuleUsage` walks the same matcher `makamKomaDeltas` walks — both over
+  `eachRuleMatch` — so the number on screen and the pitches playback bends cannot drift apart.
 - **Zero is shown, not hidden.** Hüzzam's hisar matches nothing on `gamzedeyim-deva`, and the line
   says *bu eserde yok* rather than promising a bend nobody will hear.
 - **A makam that bends nothing gets one sentence** — *"Bu makam yazıldığı gibi çalınıyor."* — for

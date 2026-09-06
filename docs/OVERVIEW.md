@@ -59,17 +59,17 @@ We counted every correction a user would have to make on the exam and sorted the
 fixing. The answer changed the plan: **the note itself is 40% of the work and its length 28%, while
 the microtonal marks — which two whole rounds went into — are only 13%.** The old score could only
 see that 13%, which is why it looked like the whole problem. The full count, and what we already
-know about note heights and note lengths, moved to **[OVERVIEW-JULY.md](OVERVIEW-JULY.md)**.
+know about note heights and note lengths, is counted in
+[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md).
 
 ## What happened on 28 July 2026 — we tested four ideas and three were wrong
 
-That test day is written up on its own page, in the same plain words:
-**[OVERVIEW-JULY.md](OVERVIEW-JULY.md)**. Short version: before spending money on training we
-checked four hunches about *why* the model makes mistakes. Three did not survive the check. It is
-kept because the reasoning stops us re-proposing them — the short do-not-repeat list is near the
-bottom of this page.
+Before spending money on training we checked four hunches about *why* the model makes mistakes.
+Three did not survive the check. The reasoning is what stops us re-proposing them — the short
+do-not-repeat list is near the bottom of this page, and the measurements are in
+[METRICS.md](METRICS.md) and [DECISIONS.md](DECISIONS.md).
 
-## The "can the model even see the page?" idea → [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md)
+## The "can the model even see the page?" idea
 
 Tested 15 August, **closed 17 August**. Short version: making a strip artificially wider (so the model
 shrinks it more) genuinely does cost accuracy — but we then found we cannot buy the reverse, because
@@ -204,10 +204,9 @@ test fair. ⚠ One thing to say out loud when you quote the score: it describes 
 6,440 — but it is not zero.
 
 
-### The features that shipped in early August → [OVERVIEW-AUGUST.md](OVERVIEW-AUGUST.md)
+### The features that shipped in early August
 
-Moved there on 15 August 2026, when this page grew past its size limit — the same move July's account
-got. **Nothing was dropped.** In one line each: the **violin, clarinet and kanun** play real
+In one line each: the **violin, clarinet and kanun** play real
 recordings and are live (13 August, and you signed them off after four rounds of listening); your
 **two friends** liked the app and asked for exactly those instrument sounds (11 August); the **usul
 plays on a real darbuka and bendir** and all ten patterns passed your ear (11 August); the **example
@@ -243,16 +242,16 @@ to build. None of it has changed; it is background rather than news.
 
 ### Before that — the model work
 
-**Rounds 1 and 2, the phone-photo test and the sharps, in the same plain words, moved to
-[OVERVIEW-MODEL.md](OVERVIEW-MODEL.md)** on 9 August (this page hit its length limit). Nothing was
-dropped. The one-line version: Round 2 is the model in the app, it is a small improvement once the
-score is counted fairly, and the weakness that remains is telling the koma and küçük sharps apart
-**inside the key signature**.
+**Rounds 1 and 2, the phone-photo test and the sharps.** The one-line version: Round 2 was the model
+in the app until 3 September, it was a small improvement once the score was counted fairly, and the
+weakness that remains is telling the koma and küçük sharps apart **inside the key signature**.
+Numbers: [METRICS-EXAM.md](METRICS-EXAM.md). Reasoning:
+[archive/rounds/round1.md](archive/rounds/round1.md), [archive/rounds/round2.md](archive/rounds/round2.md).
 
 ---
 
 *(The one old problem we decided **not** to fix — the cut-off signature, and why your 284 photo
-labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 August.)*
+labels stay a test only — is recorded in [DECISIONS.md](DECISIONS.md).)*
 
 ## What we do next
 
@@ -376,13 +375,14 @@ labels stay a test only — moved to [OVERVIEW-JULY.md](OVERVIEW-JULY.md) on 7 A
    **(2) Do the little ticks help, or are they clutter?** Say so either way; it is a drawing choice,
    not a measurement, and yours is the only opinion that settles it.
 15. ~~Stop a page refresh from throwing away a read.~~ ✅ **Done 5 September, the day you asked.** Reading a page takes 35–55 seconds, and until now closing the tab or refreshing the page lost all of it — plus every correction you had made in the editor. The app now keeps the **notes** of every page it has read **inside your own browser**, and offers them back by name in a list under the upload box. It keeps the **last 30**; the 31st pushes out the one you have not opened for longest. You can **rename** any of them — the one you are looking at, from the ✎ next to its title, and the older ones from the ✎ on their row — because a page arrives named after your photograph's file name (`IMG_20260905_142233`), which tells you nothing. The **makam** is shown next to the name, and it is not part of the name: it is re-read from the score every time, so it stays right after you rename a page and follows you if you change the makam later. You can delete one with ✕, or all of them at once. ⚠ **Two things to know, because they surprise people.** It is a **memory, not a save**: the browser is allowed to clear it on its own (Safari does this after about a week of not visiting), so it is a convenience and not a place to keep something important. And it lives in **one browser on one device** — a page you read on your phone is not there on your computer, because there is no server and no account, which is exactly what makes it cost nothing. ⚠ **The photograph itself is not kept**, only the notes: a phone photo is 2–5 MB against about 60–125 KB for the score, fifty times the space for a picture you already have.
-14. **Open it to everyone — but only when a round's exam result is good.** Round 3's was not (51% against 75%), so this waits for Round 4 — [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
+14. ~~Open it to everyone — but only when a round's exam result is good.~~ ✅ **Done 5 September — you put the link on LinkedIn.** This item said to wait for a good exam result; Round 3's was not good (51% against 75%) and you opened it anyway, which was yours to decide. What it changes is in [STATUS.md](STATUS.md): strangers now read pages on a server with no fallback, and the model they meet is Round 3 Run A.
 
-### The model work → [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md)
+### The model work → [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md)
 
-Round 3 is finished and it missed; **what we do next is [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md)** (3 September).
-The Round 3 story — the triplet work, the scanned-pages decision, the three trainings and what the
-one-shot exam decided — stays in OVERVIEW-ROUND3, moved out of this page on 19 August at its size limit.
+Round 3 is finished and it missed; **what we do next is [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md)** (3
+September). The Round 3 story — the triplet work, the scanned-pages decision, the three trainings and
+what the one-shot exam decided — is in [rung3/round3.md](rung3/round3.md), numbers in
+[METRICS-EXAMSET.md](METRICS-EXAMSET.md).
 
 ## Small glossary (only the words used above)
 

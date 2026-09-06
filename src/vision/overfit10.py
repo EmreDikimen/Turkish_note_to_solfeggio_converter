@@ -15,7 +15,7 @@ NOTE on coverage: only the accidentals present in the current sample scores appe
 mechanism (add_tokens → resized embeddings → softmax), so proving one proves the path. Full
 8-accidental coverage is a Rung-2 entry requirement (more scores + chromatic transpositions).
 
-Decision rule (docs/PHASE2.md §5): 10/10 exact match → GO (keep omr_transformer, next is the
+Decision rule (docs/archive/phases/PHASE2.md §5): 10/10 exact match → GO (keep omr_transformer, next is the
 Rung-1.5 ONNX/browser gate); anything less after debugging → NO-GO (pivot to CRNN+CTC).
 
 Run:

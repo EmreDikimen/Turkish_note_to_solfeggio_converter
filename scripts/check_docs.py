@@ -14,12 +14,15 @@ WHAT IT CHECKS (all cheap, no network, no deps):
   4. links          every relative markdown link resolves
   5. code refs      every docs/... path cited in source code exists
   6. orphans        every doc is reachable from docs/INDEX.md (or is deliberately unlisted)
-  7. --facts        every number/path in docs/archive/pre-refactor/ still appears somewhere in
-                    the live tree (the no-information-loss check for the refactor itself)
+
+⚠ THERE WAS A 7th CHECK, `--facts`, AND IT IS GONE (2026-09-06). It diffed every number and path in
+docs/archive/pre-refactor/ against the live tree, to prove the 2026-07-26 refactor lost nothing. It
+did that job — it caught 10 dropped facts on its first run and passed on its last — and the owner
+deleted the 4,954-line baseline it compared against in the doc sweep. Do not re-add the flag without
+re-creating a baseline; a fact check with nothing to check against silently passes.
 
 USAGE
   .venv-ml/bin/python scripts/check_docs.py            # structure checks (exit 1 on failure)
-  .venv-ml/bin/python scripts/check_docs.py --facts    # + the archive fact diff (slow-ish)
 """
 from __future__ import annotations
 
@@ -30,7 +33,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 DOCS = REPO / "docs"
-ARCHIVE = DOCS / "archive" / "pre-refactor"
 
 MAX_LINES = 400          # soft cap; logs are allowed to be longer, see LONG_OK
 MAX_PARA_CHARS = 2500    # a paragraph longer than this is unreadable and un-greppable
@@ -169,53 +171,10 @@ NUM_RE = re.compile(r"\b\d[\d,]*\.?\d*%?\b")
 PATH_RE = re.compile(r"\b[A-Za-z0-9_/]+\.(?:py|ts|tsx|json|md|png|csv|sh|ipynb)\b")
 
 
-def check_facts(fail) -> None:
-    """No-information-loss check: facts in the pre-refactor archive must still exist somewhere.
-
-    Deliberately crude — it compares the SET of numbers and file paths, not sentences. Its job is
-    to catch a whole paragraph going missing in a rewrite, not to police wording.
-    """
-    if not ARCHIVE.exists():
-        fail("docs/archive/pre-refactor/ missing — the refactor baseline is gone")
-        return
-    live = "\n".join(p.read_text() for p in live_docs()
-                     if not rel(p).startswith(EXEMPT_PREFIXES))
-    live_nums = set(NUM_RE.findall(live))
-    live_paths = set(PATH_RE.findall(live))
-    # Numbers that are pure noise (years, list indices, single digits) or intentionally dropped.
-    ignore_num = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "2026", "12", "20", "60"}
-    # Deliberate moves: the archive cites the pre-refactor path; the content still exists.
-    # ⚠ Dropped ON PURPOSE, per docs/MAINTAINING.md: record the reason rather than the path.
-    #   PianoRoll.tsx — DELETED 2026-08-29 (owner) when Keman and Kanun became one
-    #   "Enstrüman üzerinde" tab; `PitchRangeNote` outlived it and is unrelated.
-    moved_paths = {"docs/HISTORY.md", "docs/RUNG3.md", "apps/web/src/PianoRoll.tsx"}
-    missing_nums: dict[str, set[str]] = {}
-    missing_paths: dict[str, set[str]] = {}
-    for a in sorted(ARCHIVE.glob("*.md")):
-        text = a.read_text()
-        nums = {n for n in NUM_RE.findall(text) if n not in ignore_num and len(n) > 2}
-        paths = set(PATH_RE.findall(text))
-        gone_n = {n for n in nums if n not in live_nums}
-        gone_p = {p for p in paths
-                  if p not in live_paths and not (REPO / p).exists() and p not in moved_paths}
-        if gone_n:
-            missing_nums[a.name] = gone_n
-        if gone_p:
-            missing_paths[a.name] = gone_p
-    for name, vals in missing_nums.items():
-        fail(f"facts: {len(vals)} numbers from archive/{name} appear nowhere live: "
-             f"{', '.join(sorted(vals)[:12])}{' …' if len(vals) > 12 else ''}")
-    for name, vals in missing_paths.items():
-        fail(f"facts: {len(vals)} paths from archive/{name} appear nowhere live: "
-             f"{', '.join(sorted(vals)[:8])}{' …' if len(vals) > 8 else ''}")
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--facts", action="store_true",
-                    help="also diff numbers/paths against docs/archive/pre-refactor/")
-    args = ap.parse_args()
+    ap.parse_args()
 
     problems: list[str] = []
     fail = problems.append
@@ -227,16 +186,13 @@ def main() -> int:
     check_links(docs, fail)
     check_code_refs(fail)
     check_orphans(docs, fail)
-    if args.facts:
-        check_facts(fail)
 
     if problems:
         print(f"✗ {len(problems)} problem(s):\n")
         for p in problems:
             print(f"  - {p}")
         return 1
-    print(f"✓ docs OK ({len(docs)} markdown files checked"
-          f"{', including the archive fact diff' if args.facts else ''})")
+    print(f"✓ docs OK ({len(docs)} markdown files checked)")
     return 0
 
 

@@ -33,7 +33,7 @@ it, and --sweep answers the real question with data we already have.
 
 EXAM DISCIPLINE. The `found` arm includes 4 exam strips, read through `round2-stage2-best`, whose
 exam turn is already spent. Re-reading a spent exam with a frozen model is the manoeuvre
-docs/rung3/ship-criteria.md used to backfill the arc-\tup3 baseline: same frozen model, same frozen
+docs/archive/rounds/ship-criteria.md used to backfill the arc-\tup3 baseline: same frozen model, same frozen
 exam, zero selection leakage. The `cut` arm is sourced from NON-exam pools only, so the powered
 half of the result never touches exam pixels.
 

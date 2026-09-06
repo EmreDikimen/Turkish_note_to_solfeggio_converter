@@ -13,18 +13,15 @@ wrong — fix by deleting, not by syncing.
 |---|---|
 | What is this project, how do I run it, what may I not do? | [../CLAUDE.md](../CLAUDE.md) |
 | What is the command for X, and how does it fail silently? | [COMMANDS.md](COMMANDS.md) |
+| **Changing the web app?** The rules for playback, the editor, the DOM and the stylesheet | [APP-RULES.md](APP-RULES.md) |
 | **What may a browser check assert on?** The DOM attributes, per feature, and the trap in each | [DOM-CONTRACT.md](DOM-CONTRACT.md) |
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
 | What is owed but is NOT next, and why is it deferred? | [BACKLOG.md](BACKLOG.md) |
 | Work deferred PAST this round — density levers, exam v3's owed items, the sharp-glyph measurement | [BACKLOG-LATER.md](BACKLOG-LATER.md) |
 | What is measured but fragile, and what do we NOT claim? | [RISKS.md](RISKS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
-| The 28 July test day, in plain English (history) | [OVERVIEW-JULY.md](OVERVIEW-JULY.md) |
-| The features that shipped in early August, in plain English (history) | [OVERVIEW-AUGUST.md](OVERVIEW-AUGUST.md) |
 | Can I publish this? In plain English | [OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md) |
 | Why is there a server, where does the app live, what does it cost? In plain English | [OVERVIEW-SERVER.md](OVERVIEW-SERVER.md) |
-| The model story so far, in plain English (Rounds 1–2 + backlog) | [OVERVIEW-MODEL.md](OVERVIEW-MODEL.md) |
-| The Round 3 plan in plain English — the four trainings, when we train, what the exam decides | [OVERVIEW-ROUND3.md](OVERVIEW-ROUND3.md) |
 | **Round 4 in plain English — what Round 3 taught, what changes and what does not, what you will be asked to do** | [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md) |
 | I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
 
@@ -64,8 +61,8 @@ wrong — fix by deleting, not by syncing.
 |---|---|
 | The MVP track: in-browser pipeline → release to friends | [mvp/README.md](mvp/README.md) |
 | The product track's settled findings (moved out of STATUS) | [mvp/standing.md](mvp/standing.md) |
-| What each MVP rung established: the slicer rungs W4–W7 | [mvp/rungs.md](mvp/rungs.md) |
-| The earlier rungs W0–W3 (opencv.js parity, decode module, browser-vs-Python) | [mvp/rungs-w0-w3.md](mvp/rungs-w0-w3.md) |
+| What each MVP rung established: the slicer rungs W4–W7 | [mvp/rungs.md](archive/phases/rungs.md) |
+| The earlier rungs W0–W3 (opencv.js parity, decode module, browser-vs-Python) | [mvp/rungs-w0-w3.md](archive/phases/rungs-w0-w3.md) |
 | How to port the slicer to TypeScript (W4–W6) | [mvp/slicer-port.md](mvp/slicer-port.md) |
 | How the app gets hosted, what it costs, and the server question (W9–W10) | [mvp/deploy.md](mvp/deploy.md) |
 | Running and redeploying the decode server — the actual commands | [mvp/deploy-ops.md](mvp/deploy-ops.md) |
@@ -81,15 +78,15 @@ wrong — fix by deleting, not by syncing.
 | The two review queues that were run (realval-hard, reslice-all) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
 | The real-page track's settled findings (moved out of STATUS) | [rung3/standing.md](rung3/standing.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |
-| Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](rung3/round1.md) |
-| Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](rung3/round2.md) |
+| Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](archive/rounds/round1.md) |
+| Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](archive/rounds/round2.md) |
 | Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
 | Round 3's floors, the launch gate, and the tuplet A/B protocol | [rung3/round3-criteria.md](rung3/round3-criteria.md) |
 | **Round 4: the dense half, the signature answer key, the selector — evidence, the owner's decisions, the order** | [rung3/round4.md](rung3/round4.md) |
 | What each Round-3 work item B0–B9 is, and what it still owes | [rung3/worklist.md](rung3/worklist.md) |
 | The remaining model levers, ranked, and what to measure first | [rung3/levers.md](rung3/levers.md) |
 | **How a label is spelled, and what re-spelling notes would buy** | [rung3/tokenization.md](rung3/tokenization.md) |
-| Parked ideas, watch-items, data folder layout | [rung3/followups.md](rung3/followups.md) |
+| Parked ideas, watch-items, data folder layout | [rung3/followups.md](archive/rounds/followups.md) |
 | **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
 | Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
 | Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
@@ -114,7 +111,7 @@ wrong — fix by deleting, not by syncing.
 | …and the feature track — the checks that need EARS or EYES (usul strokes, voices, fingerboard) | [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) |
 | How do I train on Colab? | [COLAB.md](COLAB.md) |
 | How does the synthetic renderer work? | [../tools/render/README.md](../tools/render/README.md) |
-| The synthetic track (Rungs 0–2.2b) — CLOSED | [PHASE2.md](PHASE2.md) |
+| The synthetic track (Rungs 0–2.2b) — CLOSED | [PHASE2.md](archive/phases/PHASE2.md) |
 
 ## History (append-only — do not act on it)
 
@@ -123,4 +120,3 @@ wrong — fix by deleting, not by syncing.
 | What was built in Phases 0–1, in detail | [log/HISTORY.md](log/HISTORY.md) |
 | Dated log of every session's status entries | [log/status-log.md](log/status-log.md) |
 | Plans that were abandoned or reversed | [log/superseded.md](log/superseded.md) |
-| The docs exactly as they were before the 2026-07-26 refactor | [archive/pre-refactor/](archive/pre-refactor/) |

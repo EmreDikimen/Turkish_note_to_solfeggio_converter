@@ -164,3 +164,8 @@ apps/web/public/ort/
 # phone-probe screenshots (tools/browser/phone-probe.ts, npm run smoke:phone)
 # a look, not a record — four viewports x four views, rebuilt on every run
 /tmp/
+
+# the owner's hand-test pages (docs/STATUS.md, review_ui queue `handtest`): 20 real sheet-music
+# screenshots supplied 2026-09-06. They are someone else's engraving and this repo is PUBLIC, so the
+# pictures stay on disk and only the decodes/verdicts under data/ (also ignored) are project data.
+/exam_pages/

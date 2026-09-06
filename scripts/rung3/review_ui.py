@@ -124,6 +124,22 @@ QUEUES = {
     # ⛔ Rows the owner read by hand were NEVER considered (`by == agree` only), `corrected_label` is
     # empty, and the file name is not one `promote_labels.py` reads — act on a row in `b8-full`.
     # ⚠ `reason` carries the missing token, so the per-reason dropdown separates them.
+    # ⛔ THE OWNER'S HAND-TEST PAGES (2026-09-06) — 20 pages outside the frozen exam, decoded once
+    # with `r3a-stage2-best-real` (the model serving the live site). This is the page-level
+    # instrument docs/BACKLOG.md item 6 asks for: corrections per page, same pages for every model.
+    # ⚠ THE VERDICTS ARE A CORRECTION COUNT, not a label pass:
+    #     ok  = the model read this strip correctly   fix = the model got it wrong
+    #     bad = the CROP is unusable (the slicer's fault, not the model's)
+    #   Corrections per page = the rows that are not `ok`.
+    # ⛔ NOT GOLD AND NOT THE EXAM, by the same two guarantees `r3-exam-errors` carries: `label` is
+    # EMPTY on every row so a stray `ok` has nothing to promote (and the client clears
+    # `corrected_label` on `ok` anyway), and the filename is neither `emit_review.csv` nor
+    # `full_audit.csv`, the only two `promote_labels.py` reads. ⚠ Do NOT rename it to either — the
+    # `decoded` column is a graded model's own output, which is the circularity CLAUDE.md forbids.
+    # ⚠ `reason` carries the structural tell (sig-differs / midrow-sig / sig-unclosed /
+    # low-confidence / near-empty) so the dropdown goes straight to the suspicious rows.
+    # Built by scripts/rung3/build_handtest_queue.py.
+    "handtest": "data/real/rung3/_handtest/handtest_review.csv",
     "b8-nav": "data/real/rung3/_navsuggest/nav_suggest.csv",
     "r3-exam-errors": "data/real/rung3/final/r3_exam_errors.csv",
     "examv3": "data/real/rung3/strips_exam_v3/emit_review.csv",
@@ -267,6 +283,8 @@ QUEUE_IMG_ROOTS = {
     # be rewritten in place. ⚠ Do not point these at data/real/strips — the same filenames exist
     # there with the retired slicer's pixels.
     # same crops as examv3 — this queue is a view over the exam, not a new cut.
+    # the hand-test pages were sliced into their own root by decode_page.py, page-per-dir.
+    "handtest": ["data/real/rung3/_handtest"],
     "b8-nav": ["data/real/strips_v2"],   # b8's crops — the CURRENT slicer
     "r3-exam-errors": ["data/real/strips_examv3"],
     "examv3": ["data/real/strips_examv3"],

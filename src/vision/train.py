@@ -31,7 +31,7 @@ import math
 import random
 import sys
 import time
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from functools import partial
 from pathlib import Path
 
@@ -39,7 +39,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from data import StripDataset, check_token_drift, collate, is_real_val_piece
+from data import StripDataset, check_token_drift, collate, is_real_val_piece, strip_special
 from modeling import MODEL_ID, load_model_and_processor, save_model
 
 
@@ -90,6 +90,79 @@ def lr_lambda(step: int, warmup: int, total: int) -> float:
         return (step + 1) / max(1, warmup)
     t = (step - warmup) / max(1, total - warmup)
     return 0.5 * (1.0 + math.cos(math.pi * min(t, 1.0)))
+
+
+class Ema:
+    """Exponential moving average of the weights — free smoothing over the last ~1/(1-decay) steps.
+
+    ⚠ **UNMEASURED IN THIS PROJECT** ([rung3/levers.md](../../docs/rung3/levers.md) Lever 5). It is
+    OFF unless `--ema-decay` is given, and it must be read as a paired arm against a run without it —
+    switching it on mid-round makes the arms incomparable, which is exactly what
+    [BACKLOG.md](../../docs/BACKLOG.md) item 3 says about the selector.
+
+    Costs one extra fp32 copy of the weights (~570 MB for this model) plus one more while swapped in.
+    """
+
+    def __init__(self, model, decay: float) -> None:
+        self.decay = decay
+        self.shadow = {k: v.detach().clone().float()
+                       for k, v in model.state_dict().items() if v.is_floating_point()}
+
+    def update(self, model) -> None:
+        d = self.decay
+        for k, v in model.state_dict().items():
+            sh = self.shadow.get(k)
+            if sh is not None:
+                sh.mul_(d).add_(v.detach().float(), alpha=1.0 - d)
+
+    @contextmanager
+    def applied(self, model):
+        """Swap the averaged weights in for the block, then put the live ones back."""
+        msd = model.state_dict()
+        backup = {k: msd[k].detach().clone() for k in self.shadow}
+        for k, sh in self.shadow.items():
+            msd[k].copy_(sh.to(msd[k].dtype))
+        try:
+            yield
+        finally:
+            for k, v in backup.items():
+                msd[k].copy_(v)
+
+
+def selection_edits(model, processor, tok, ds, device, batch_size: int, max_length: int) -> tuple[int, int]:
+    """Free-running corrections on a FIXED pool — `(edits, exact)`.
+
+    ⭐ WHY GENERATION AND NOT VAL LOSS. The checkpoint selector picked the wrong copy **three times
+    out of three** in Round 3, and each time loss moved one way while corrections moved the other
+    ([BACKLOG.md](../../docs/BACKLOG.md) item 3): `best` landed at step 500 and step 250 while real
+    val kept falling, and on Run B the wrong pick was `best-real` itself. Teacher-forced loss cannot
+    see an early `</s>`, which is the failure this round is about. This counts what a user would
+    actually have to fix.
+
+    ⚠ Deliberately IDENTICAL to `scripts/rung3/paired_arm_score.py`'s `decode_pool` — same
+    `align`, same `strip_special`, same no-`\tie`-filter convention — because that is the tool the
+    arms are judged with. Two implementations of "how many edits" would drift.
+    """
+    import torch
+
+    from eval_omr import align
+
+    model.eval()
+    edits = exact = 0
+    with torch.no_grad():
+        for at in range(0, len(ds), batch_size):
+            batch = [ds[i] for i in range(at, min(at + batch_size, len(ds)))]
+            pv = processor(images=[im for im, _ in batch], return_tensors="pt").pixel_values
+            gen = model.generate(pv.to(device), max_length=max_length)
+            for (_, label), got in zip(batch, gen.tolist()):
+                if got and got[0] == model.config.decoder_start_token_id:
+                    got = got[1:]
+                hyp = strip_special(got, tok)
+                ref = strip_special(tok(label, add_special_tokens=True).input_ids, tok)
+                edits += sum(1 for op, _, _ in align(ref, hyp) if op != "match")
+                exact += hyp == ref
+    model.train()
+    return edits, exact
 
 
 def evaluate(model, loader, device, autocast_ctx) -> float:
@@ -157,8 +230,30 @@ def main() -> int:
                     help="override augment.SCAN_SHARE (default 0.0 = no scan profile). The Round-3 "
                          "Lever-7 arm is --photo-share 0.20 --scan-share 0.25; leaving both unset "
                          "reproduces the control's augmentation exactly")
+    ap.add_argument("--select-dir", action="append", default=[], metavar="DIR",
+                    help="FIXED pool(s) used to pick the checkpoint by free-running CORRECTIONS "
+                         "instead of val loss — e.g. data/real/rung3/_realval_v2. Repeatable. "
+                         "Adds a `best-edits` checkpoint; leaves `best` and `best-real` untouched so "
+                         "every earlier run stays comparable. ⚠ REFUSES to start if any of its "
+                         "pieces is on the TRAIN side: at --real-val-frac 0.05 seventeen of "
+                         "_realval_v2's 69 pieces would be trained on (measured 2026-09-06), which "
+                         "would contaminate the selector silently.")
+    ap.add_argument("--select-batch", type=int, default=None,
+                    help="batch size for the free-running selection pass (default: --batch-size)")
+    ap.add_argument("--select-max-length", type=int, default=60,
+                    help="decoder budget for the selection pass; matches eval_omr's default")
+    ap.add_argument("--label-smoothing", type=float, default=0.0,
+                    help="cross-entropy label smoothing on the TRAIN loss only (val loss stays "
+                         "unsmoothed, so its numbers keep meaning the same thing). UNMEASURED here "
+                         "— run it as a paired arm, never as a mid-round switch.")
+    ap.add_argument("--ema-decay", type=float, default=0.0,
+                    help="keep an exponential moving average of the weights (0 = off, typical "
+                         "0.999). Logs the EMA's own corrections and saves `ema-best` / `ema-last`. "
+                         "UNMEASURED here — a paired arm, like --label-smoothing.")
     ap.add_argument("--limit-train", type=int, default=None, help="smoke tests only")
     ap.add_argument("--limit-val", type=int, default=None)
+    ap.add_argument("--limit-select", type=int, default=None,
+                    help="smoke tests only — the selection pass generates, so a full pool is slow on a Mac")
     ap.add_argument("--device", default=None, help="cuda | mps | cpu (default: best available)")
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
@@ -281,8 +376,38 @@ def main() -> int:
         # its control. Printing it here is what makes a finished run say which arm it was.
         mix = (f" (screenshot {1 - augment.photo_share - augment.scan_share:.2f} / "
                f"photo {augment.photo_share:.2f} / scan {augment.scan_share:.2f})")
-    print(f"== data: {len(train_items)} train / {len(val_items)} synth-val / {len(real_val_items)} real-val strips; "
-          f"augment={'on' + mix if augment else 'OFF'}; device={device}")
+    # ---- the selection pool: what picks the checkpoint (Round 4, docs/rung3/round4.md step 2) --
+    # ⭐ This is a FIXED pool, not a slice of the training pools. `best-real` reads whatever ~10% of
+    # each --real-dir the piece hash held out, so ADDING a real pool silently changes what it means:
+    # on Round-3 Run B that set was 560 strips, 170 of them retired-crop, and `best-real` was the
+    # WRONG pick (docs/BACKLOG.md item 3). A named pool cannot drift like that.
+    select_ds = None
+    if args.select_dir:
+        train_pieces = {s_.piece or s_.image_path.name.split("_")[0] for s_, _ in train_items}
+        select_strips = []
+        for d in args.select_dir:
+            # ⚠ NO `check_token_drift` here, deliberately. It is a regex guard for pools the TS
+            # serializer writes; a hand-corrected val pool spells 19.1% of its rows with no space
+            # after a token (`\repstarte''8`), and the tokenizer's added-token matcher reads those
+            # IDENTICALLY to the spaced form — measured 2026-09-06 on all 51 such rows in
+            # `_realval_v2` (docs/METRICS-UNSEEN.md). Running it here fails a pool that is fine.
+            select_strips += StripDataset(d).strips
+        leaked = sorted({s_.piece for s_ in select_strips if s_.piece in train_pieces})
+        if leaked:
+            # ⛔ Not a warning. A selector scored on pieces the model trained on picks the most
+            # over-fitted checkpoint, and nothing downstream would ever show it.
+            raise SystemExit(
+                f"⛔ {len(leaked)} selection piece(s) are in TRAINING — the selector would be "
+                f"contaminated: {leaked[:5]}{' ...' if len(leaked) > 5 else ''}\n"
+                f"   `_realval_v2` is built from val-side pieces at --real-val-frac 0.10; at 0.05 "
+                f"seventeen of its 69 pieces cross over. Raise --real-val-frac or drop the pool."
+            )
+        select_ds = StripDataset(args.select_dir[0])
+        select_ds.strips = select_strips[: args.limit_select] if args.limit_select else select_strips
+
+    sel_note = f" / {len(select_ds.strips)} SELECTION (free-running edits)" if select_ds else ""
+    print(f"== data: {len(train_items)} train / {len(val_items)} synth-val / {len(real_val_items)} real-val strips"
+          f"{sel_note}; augment={'on' + mix if augment else 'OFF'}; device={device}")
 
     # ---- model (resume = reload our own last checkpoint, weights already extended) ------------
     source = str(out_dir / "last") if args.resume else args.model
@@ -291,6 +416,16 @@ def main() -> int:
     tok = processor.tokenizer
     print(f"   vocab: +{added} tokens -> {len(tok)} ids")
     model.to(device).train()
+
+    # Both OFF by default and both unmeasured in this project — they are paired arms, not defaults.
+    ema = Ema(model, args.ema_decay) if args.ema_decay > 0 else None
+    # Label smoothing rides on our own criterion because the model's built-in loss is plain CE.
+    # ⚠ TRAIN ONLY: `evaluate` keeps the unsmoothed loss, so `val_loss` keeps meaning what it has
+    # meant in every earlier run and `best` stays comparable.
+    smooth_ce = (torch.nn.CrossEntropyLoss(ignore_index=-100, label_smoothing=args.label_smoothing)
+                 if args.label_smoothing > 0 else None)
+    if ema or smooth_ce:
+        print(f"   arms: ema_decay={args.ema_decay or 'off'}  label_smoothing={args.label_smoothing or 'off'}")
 
     collate_fn = partial(collate, processor=processor, tokenizer=tok)
     train_loader = DataLoader(
@@ -327,6 +462,11 @@ def main() -> int:
     # with every earlier one. It only ADDS `best-real`, so a long run cannot silently discard its
     # best real-page checkpoint between two evals. Costs one extra checkpoint write per improvement.
     best_real = float("inf")
+    # ⭐ ROUND 4: the criterion the round is actually graded on — corrections on a FIXED pool, read
+    # by generating, not by teacher-forced loss. Adds `best-edits`; `best` and `best-real` keep
+    # their old meanings so this run is still comparable with every earlier one, which is the same
+    # rule the 2026-09-01 `best-real` addition followed.
+    best_edits = best_ema_edits = 1 << 30
     state_path = out_dir / "last" / "trainer_state.pt"
     if args.resume:
         state = torch.load(state_path, map_location="cpu", weights_only=False)
@@ -335,6 +475,12 @@ def main() -> int:
         scaler.load_state_dict(state["scaler"])
         step, best_val = state["step"], state["best_val"]
         best_real = state.get("best_real", float("inf"))
+        best_edits = state.get("best_edits", 1 << 30)
+        best_ema_edits = state.get("best_ema_edits", 1 << 30)
+        if ema is not None and state.get("ema"):
+            ema.shadow = {k: v.to(ema.shadow[k].device) for k, v in state["ema"].items() if k in ema.shadow}
+        elif ema is not None:
+            print("   ⚠ resumed WITHOUT an EMA in the state — the average restarts from here")
         print(f"== resumed at step {step} (best val {best_val:.4f})")
 
     metrics_path = out_dir / "metrics.jsonl"
@@ -343,15 +489,22 @@ def main() -> int:
         with metrics_path.open("a") as f:
             f.write(json.dumps(row) + "\n")
 
-    def save(tag: str) -> None:
+    def save(tag: str, use_ema: bool = False) -> None:
         d = out_dir / tag
-        save_model(d, model, processor)
-        torch.save(
-            {"step": step, "best_val": best_val, "best_real": best_real,
-             "optimizer": optim.state_dict(),
-             "scheduler": sched.state_dict(), "scaler": scaler.state_dict()},
-            d / "trainer_state.pt",
-        )
+        if use_ema and ema is not None:
+            with ema.applied(model):
+                save_model(d, model, processor)
+        else:
+            save_model(d, model, processor)
+        state = {"step": step, "best_val": best_val, "best_real": best_real,
+                 "best_edits": best_edits, "best_ema_edits": best_ema_edits,
+                 "optimizer": optim.state_dict(),
+                 "scheduler": sched.state_dict(), "scaler": scaler.state_dict()}
+        # The EMA shadow is another full copy of the weights, so it rides ONLY on the resume point.
+        # Every other tag is a model to read, not a run to continue.
+        if ema is not None and tag == "last":
+            state["ema"] = {k: v.cpu() for k, v in ema.shadow.items()}
+        torch.save(state, d / "trainer_state.pt")
 
     # ---- train loop ---------------------------------------------------------------------------
     print(f"== training to step {args.max_steps} (batch {args.batch_size} x accum {args.grad_accum}, lr {args.lr})")
@@ -366,8 +519,11 @@ def main() -> int:
             except StopIteration:
                 data_iter = iter(train_loader)
                 pixel_values, labels = next(data_iter)
+            pv, lb = pixel_values.to(device), labels.to(device)
             with autocast_ctx():
-                loss = model(pixel_values=pixel_values.to(device), labels=labels.to(device)).loss
+                out = model(pixel_values=pv, labels=lb)
+                loss = out.loss if smooth_ce is None else smooth_ce(
+                    out.logits.reshape(-1, out.logits.size(-1)).float(), lb.reshape(-1))
             loss_acc += loss.item() / args.grad_accum
             scaler.scale(loss / args.grad_accum).backward()
         scaler.unscale_(optim)
@@ -375,6 +531,8 @@ def main() -> int:
         scaler.step(optim)
         scaler.update()
         sched.step()
+        if ema is not None:
+            ema.update(model)
         step += 1
 
         if step == 1 or step % args.log_every == 0:
@@ -401,21 +559,61 @@ def main() -> int:
             if real_improved:
                 best_real = row["val_real"]
                 row["best_real"] = True
+            # ⭐ The Round-4 criterion. Loss is kept and logged — it is what `best` has always
+            # meant — but what stamps `best-edits` is how many corrections a user would make.
+            edits_improved = ema_improved = False
+            if select_ds is not None:
+                sel_bs = args.select_batch or args.batch_size
+                ed, ex = selection_edits(model, processor, tok, select_ds, device,
+                                         sel_bs, args.select_max_length)
+                row["edits"], row["edits_exact"] = ed, ex
+                edits_improved = ed < best_edits
+                if edits_improved:
+                    best_edits = ed
+                    row["best_edits"] = True
+                if ema is not None:
+                    with ema.applied(model):
+                        ed_e, ex_e = selection_edits(model, processor, tok, select_ds, device,
+                                                     sel_bs, args.select_max_length)
+                    row["edits_ema"], row["edits_ema_exact"] = ed_e, ex_e
+                    ema_improved = ed_e < best_ema_edits
+                    if ema_improved:
+                        best_ema_edits = ed_e
+                        row["best_ema"] = True
+
             extra = f"  real {row['val_real']:.4f}  mix {row['val_mix']:.4f}" if "val_real" in row else ""
-            tags = ("  (new best)" if improved else "") + ("  (new best-real)" if real_improved else "")
+            if "edits" in row:
+                extra += f"  EDITS {row['edits']}/{len(select_ds.strips)} strips (exact {row['edits_exact']})"
+                if "edits_ema" in row:
+                    extra += f"  ema {row['edits_ema']}"
+            tags = (("  (new best)" if improved else "") + ("  (new best-real)" if real_improved else "")
+                    + ("  (new best-edits)" if edits_improved else "") + ("  (new ema-best)" if ema_improved else ""))
             print(f"   step {step:5d}  VAL loss {val_loss:.4f}{extra}{tags}")
             log(row)
             if improved:
                 save("best")
             if real_improved:
                 save("best-real")
+            if edits_improved:
+                save("best-edits")
+            if ema_improved:
+                save("ema-best", use_ema=True)
 
         if step % args.save_every == 0 or step == args.max_steps:
             save("last")
 
-    print(f"\n== done: {step} steps, best val loss {best_val:.4f}, best REAL val {best_real:.4f}")
+    if ema is not None:
+        save("ema-last", use_ema=True)
+    print(f"\n== done: {step} steps, best val loss {best_val:.4f}, best REAL val {best_real:.4f}"
+          + (f", fewest EDITS {best_edits}" if select_ds is not None else ""))
     print(f"   checkpoints: {out_dir}/best (lowest blended val loss — ~92% synthetic), "
           f"{out_dir}/best-real (lowest REAL val loss), {out_dir}/last (resume point)")
+    if select_ds is not None:
+        print(f"   {out_dir}/best-edits — fewest free-running corrections on "
+              f"{len(select_ds.strips)} fixed strips. ⭐ This is the Round-4 pick; the two loss "
+              f"tags above are kept only so the run stays comparable with earlier ones.")
+    if ema is not None:
+        print(f"   {out_dir}/ema-best, {out_dir}/ema-last — the weight average (decay {args.ema_decay})")
     print("   ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.")
     print(f"   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint {out_dir}/best")
     return 0

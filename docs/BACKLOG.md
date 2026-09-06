@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-09-03
+updated: 2026-09-06
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -72,8 +72,14 @@ starting. Abandoned plans are a different thing again and live in
    pool it reads**, and adding a real pool silently changes that pool. Three runs, three wrong picks,
    in three different places (steps 500, 250, and `best-real` at 1,250).
    [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md).
-   ⏭ **SCHEDULED for Round 4** — select on free-running real-val corrections, plus EMA and label
-   smoothing ([rung3/round4.md](rung3/round4.md) step 2).
+   ✅ **BUILT 2026-09-06** — `train.py --select-dir` decodes a FIXED pool free-running at every eval
+   and stamps `best-edits` on corrections, not loss; `--ema-decay` and `--label-smoothing` are in as
+   off-by-default arms ([rung3/round4.md](rung3/round4.md) step 2). ⚠ **Built, not measured**: no arm
+   has trained with it, so "the selector now picks right" is a design claim, not a result.
+   ⭐ The boundary this item kept hitting is now a hard guard — the selection pool may not share a
+   piece with training, and the run REFUSES rather than warns. `_realval_v2` shares 40 of its 69
+   pieces with `strips_b8`; all 40 are val-side at `--real-val-frac 0.10`, but 17 cross over at
+   0.05.
 
 4. ✅ **DONE 2026-08-21 — the re-emit RAN** (`data/real/rung3/strips_b8`, 3,955 accepted against
    2,330; result and carry table in [METRICS-CORPUS.md](METRICS-CORPUS.md), queues in

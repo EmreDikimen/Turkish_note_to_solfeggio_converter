@@ -3,7 +3,7 @@
 purpose: the single home for defects whose cause is a HOLE — a printed symbol the renderer never drew and the label language cannot name — and what happened when one was filled
 audience: agents and the owner, before proposing a fix for a symbol the model reads as something else
 
-updated: 2026-08-31
+updated: 2026-09-06
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-20 when that file crossed
 the 400-line cap. The split is by **genre, and the genre turned out to matter**: everything here has
@@ -73,10 +73,24 @@ false repeat sign**. ⚠ n=10 for the ratio; treat 40% as an order of magnitude,
 the largest error class in that audit ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
 
 ⚠ **A second thing is visible in that row and is not this finding**: the seeded label spells
-`\bakiyeSharpf''8` and `\repstarte''8` with no space, while the correction spells them apart. Spacing
-is id-identical for `32` **only** ([DECISIONS.md](DECISIONS.md)), so for `8` these are different token
-sequences. That is the decode's raw output, not a gold defect — but it means a decode-seeded row can
-differ from its own correction in more than the symbol under discussion.
+`\bakiyeSharpf''8` and `\repstarte''8` with no space, while the correction spells them apart.
+
+⛔ **CORRECTED 2026-09-06 — this paragraph used to say those were different token sequences, and they
+are not.** Two different spacing cases were conflated:
+
+| case | example | ids |
+|---|---|---|
+| no space **after** a `\token` — what these rows have | `\repstarte''8` vs `\repstart e''8` | **identical** |
+| a space **inside** a note — what [DECISIONS.md](DECISIONS.md) 2026-08-31 is about | `f'' 8` vs `f''8` | **differ** (`'</w>` against `'`) |
+
+The `32`-only rule belongs to the second row of that table, not the first: `f'' 32` *is* id-identical
+while `f'' 8` and `d'' 16` are not. The added-token matcher consumes the boundary itself, so a token
+glued to the next word still tokenizes as the token. Measured against the live tokenizer on all
+**51 unspaced rows in `_realval_v2` (19.1% of 267)**: every one tokenizes exactly as its spaced form.
+⭐ So this is cosmetic, no `_realval_v2` number is affected, and **the gold must not be "repaired"** —
+`strips_b8` has 0 such rows, so nothing in training is touched either. ⚠ What it does break is
+`check_token_drift`, which is a *regex* guard and stricter than the tokenizer: run it on a
+hand-corrected val pool and it fails a pool that is fine (`train.py` deliberately does not).
 
 ### Staccato read as an augmentation dot (2026-08-15) — measured with a paired control
 

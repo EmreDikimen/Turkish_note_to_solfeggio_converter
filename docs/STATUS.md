@@ -49,12 +49,24 @@ Plan and evidence: **[rung3/round4.md](rung3/round4.md)**; plain English:
 [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
 
 **Round 4 in one line:** **no new render**, **`\tupend` stays**, **stage 2 at 4,000 steps**; re-emit
-the real pools under **scheme H** note-spelling tokens (16 ids — recommended, **owner to confirm**) +
-the label-budget rail at **b = 57** + a balanced packer, which returns 3,508 of the 4,012 over-budget
-strips; stop the signature vote overwriting silently; select checkpoints on real-val **corrections**,
-not loss; beam search measured offline first and **never on the user path unless it pays**; a 20–40
-page **third-source probe** before any crawl. ⛔ **Two things the round may NOT do**: read the exam
-again for an A/B, and retire `\tupend` or add a `\dottedbar` token.
+the real pools under **scheme H** note-spelling tokens (✅ confirmed by the owner 2026-09-06 at **16
+new ids, vocabulary 116**) + the label-budget rail at **b = 57** + a balanced packer, which returns
+3,508 of the 4,012 over-budget strips; stop the signature vote overwriting silently; select
+checkpoints on real-val **corrections**, not loss; beam search measured offline first and **never on
+the user path unless it pays**; a 20–40 page **third-source probe** before any crawl. ⛔ **Three
+things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or add a
+`\dottedbar` token, and **re-pack the synthetic strips** — that was proposed, approved and withdrawn
+on 2026-09-06 when the measurement showed it fills the label range by making crops wider, which
+[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) prices as costing edits.
+
+✅ **STEP 1 IS DONE (2026-09-06) and it changed two things.** `scripts/rung3/token_scheme_probe.py`,
+~2 minutes, nothing re-decoded. Scheme H is **116 ids, not 118** — `''` and `'''` are used zero times
+over 450,456 notes, and ids are append-only, so that was the last cheap moment to catch it. The
+rare-pitch segmentation trap does **not** fire, and split evidence improves (1.277% of notes in a
+minority id form today → 0.003%). ⚠ **The one risk H carries is real and is now watched, not fixed**:
+synthetic labels stop at 44 ids while real ones reach 59, so 887 real strips (11.9%) are longer than
+anything synthetic. Long-strip errors become their own column when the H arm is read.
+[rung3/tokenization.md](rung3/tokenization.md).
 
 ⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES.** The browser slicer has **no
 label-budget rail**: at training an over-budget strip is dropped, at inference there is none, so the
@@ -154,7 +166,7 @@ Still the gate on what may be **published as a model**. Plan, evidence and the o
 
 | role | pool | state |
 |---|---|---|
-| real training | `strips_b8` (3,929) **re-emitted under scheme H + the rail at b = 57 + a balanced packer** — the 4,012 over-budget drops are the target (3,508 return under H, measured) | ⏭ not run; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
+| real training | `strips_b8` (3,929) **re-emitted under scheme H + the rail at b = 57 + a balanced packer** — the 4,012 over-budget drops are the target (3,508 return under H, so the pool becomes **7,437**) | ⏭ not run; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
 | synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
 | selection | `_realval_v2` (+ `_tupletval`), **on free-running corrections, not loss**, beside the owner's hand-test pages | ⏭ selector change owed |
 | grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
@@ -163,12 +175,22 @@ Still the gate on what may be **published as a model**. Plan, evidence and the o
 `batch3` / `reslice-all`'s hand corrections become usable only through the rail, which is part of the
 re-emit.
 
-⏭ **In order:** the length-distribution and rare-pitch segmentation check under H (no GPU, minutes —
-the only thing that could reopen the render question) → `train.py` selector, + EMA and label smoothing
-→ the signature-vote rule ([BACKLOG.md](BACKLOG.md) item 9) → the third-source probe → re-emit → the
-owner reads the audit sample and every `\sig` row → two arms from base (old-vocabulary control vs H),
-stage 2 at 4,000 steps → real-val paired → `examv3` once.
-**Owner:** confirm scheme H, pick the hand-test pages.
+⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
+stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
+2026-09-06, nothing trained**) → **NEXT: the signature-vote rule** ([BACKLOG.md](BACKLOG.md) item 9)
+→ the third-source probe → re-emit → the owner reads the audit sample and every `\sig` row → two
+arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
+once.
+
+⏭ **THE HAND-TEST SET EXISTS AND IS WAITING ON THE OWNER'S EYES.** The owner supplied 20 pages on
+2026-09-06 (gitignored `exam_pages/`, outside the frozen exam); they are decoded with the live model
+and loaded in `review_ui.py` as queue **`handtest`**, where `ok` / `fix` / `bad` count **corrections
+per page** rather than pass labels — the page-level instrument [BACKLOG.md](BACKLOG.md) item 6 asks
+for. ⛔ **Not gold and not the exam**, by two guarantees, because its `decoded` column is the live
+model's own output. ⚠ **No accuracy number exists yet** — nobody has read a row.
+Everything measured, and the five things it may not be used to claim:
+[METRICS-HANDTEST.md](METRICS-HANDTEST.md).
+⏭ **Owner:** press through the queue; the `reason` filter goes straight to the 62 suspicious rows.
 
 ⏭ **Recommended, not decided:** a fixed **10–15 page hand-test set** outside the exam, every model on
 the same pages, corrections counted per page — the page-level instrument this project has never had

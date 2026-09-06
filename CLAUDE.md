@@ -328,6 +328,11 @@ data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training po
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
                       re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
+data/real/rung3/_handtest/  the OWNER'S 20 HAND-TEST PAGES, decoded (2026-09-06). ⛔ NOT gold, NOT the
+                      exam: review_ui queue `handtest` counts CORRECTIONS per page, `label` is empty on
+                      every row and promote_labels.py cannot read the file — its `decoded` hint is the
+                      LIVE model's own output. The pictures live in /exam_pages/, gitignored (someone
+                      else's engraving; this repo is public). docs/METRICS-HANDTEST.md
 data/synthetic/       rendered strips — ROUND 3 TRAINED ON strips_v7_final (3 flags, 0 \tie) and ROUND 4 REUSES IT
                       UNCHANGED (no render, owner 2026-09-03). ⚠ IT IS NOW THE ONLY FULL SET ON DISK: the nine
                       superseded ones (v2..v6) were DELETED 2026-09-06 for space — re-render from

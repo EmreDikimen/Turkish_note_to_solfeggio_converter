@@ -273,8 +273,23 @@ npx tsx tools/vision/parity/rescue-check.ts
     # which budget? No decoding: it re-windows ONE stage-1 geometry at every candidate and reports
     # windows recovered into the trainable set against the near-empty crops over-splitting makes.
     # Answer (2026-08-23): b=57. Recovery is flat b=40..59, so the value rides on cost alone.
+.venv-ml/bin/python scripts/rung3/token_scheme_probe.py [--checkpoint <ckpt>] [--json-out f.json]
+    # what a note-spelling scheme costs, BEFORE any training. No GPU, no model, no decode; ~2 min.
+    # Encodes every label in strips_v7_final + strips_b8 + the over_budget labels emit_responses.json
+    # kept, under three vocabularies (today / B / H), and reports lengths per pool, strips rescued,
+    # whether synthetic still covers the real length range, and how each pitch segments.
+    # ⚠ Run it before adding ANY token: ids are append-only, and this is what caught `''` and `'''`
+    # being used zero times under H (2026-09-06). Results: docs/rung3/tokenization.md.
 .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
 .venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
+.venv-ml/bin/python scripts/rung3/build_handtest_queue.py --mapping <pages.tsv>
+    # the OWNER'S HAND-TEST pages as a review queue (queue id `handtest`): decode them first with
+    # decode_page.py --out data/real/rung3/_handtest, then build. ⚠ NOT gold and NOT the exam —
+    # `label` is empty on every row and the filename is neither emit_review.csv nor full_audit.csv,
+    # so promote_labels.py cannot read it. Verdicts are a CORRECTION COUNT: ok = the model read it
+    # right, fix = the model was wrong, bad = the crop is unusable. Corrections per page = rows that
+    # are not `ok`. Re-running carries verdicts across by strip name — but NOT across a re-slice,
+    # because the crop moves and the verdict was given against pixels.
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
 .venv-ml/bin/python scripts/rung3/carry_old_fixes.py [--apply]
     # Finds the RETIRED pools' 1,479 hand corrections again inside strips_b8 and marks them with

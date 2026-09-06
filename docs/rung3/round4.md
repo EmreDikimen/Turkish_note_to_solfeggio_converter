@@ -2,7 +2,7 @@
 
 purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
 audience: agents and the owner working the real-page track
-updated: 2026-09-03
+updated: 2026-09-06
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
@@ -56,7 +56,13 @@ checkpoint is chosen*, and it checks whether a two-website corpus generalises.
 - **Beam search may not slow the user path unless it is measured to pay.** Where only our time is
   spent (the emitter), it is allowed.
 - **The vocabulary question is answered: both kinds of token, by the ≥1,000-examples rule (scheme H).**
-  ⚠ Recommended by the agent when asked; the owner has not confirmed the scheme itself.
+  ✅ **CONFIRMED by the owner 2026-09-06**, at **16 new ids / vocabulary 116** — the measurement that
+  day removed `''` and `'''` from the set as dead tokens ([tokenization.md](tokenization.md)).
+- ⛔ **No re-pack of the synthetic strips either (owner, 2026-09-06).** Proposed and approved that
+  morning as the way to close the length gap H opens, then withdrawn the same session when the
+  mechanism was measured: it fills the band by making crops wider, and wider is the direction that
+  costs edits. The alternative that would work — tighter engraving — is named, uncosted, and not
+  this round.
 
 ## The vocabulary: scheme H, and why "fused or compositional?" is answered with "both"
 
@@ -69,14 +75,20 @@ model. **Examples per token** is.
   the visual unit and the decoder takes one step fewer. The best-performing kern encoding in the
   literature (bekern) does the same: pitch one unit, duration separate.
 - **Keep the 7 rare pitches compositional** (`a` `b` `g` `c'` `a'''` `d'''` `e'''`): `a'''` occurs
-  **once**, `e'''` 23 times, `c'` 364. Spelled `a` + `'''`, each half has thousands of examples.
+  **once**, `e'''` 23 times, `c'` 364, so each half has thousands of examples. ⚠ **Measured
+  2026-09-06, and not the halves this line first predicted**: `d'''` comes out `d''` + `'`, not
+  `d` + `'''` — the fused token wins the match. Consistent at every duration, which is what
+  mattered.
 - The rule is frozen once: a pitch rare today stays compositional forever, because ids are
   append-only.
-- Also added: `'`, `''`, `'''`, `16`, `32`; the dot stays its own token (owner, 2026-08-27).
-  Vocabulary 100 → 116. Warm-start the new rows from the old `'` and digit embeddings.
-- ⚠ **Trap to verify with the real tokenizer before training**: how the 7 rare pitches segment.
-  `a'''8` must come out the same way every time (`a` `'''` `8`, not sometimes `a''` `'` `8`).
-  [tokenization.md](tokenization.md) verified this for scheme B only.
+- Also added: `'`, `16`, `32`; the dot stays its own token (owner, 2026-08-27).
+  Vocabulary 100 → **116**. Warm-start the new rows from the old `'` and digit embeddings.
+  ⛔ **`''` and `'''` are NOT added** — measured 2026-09-06 as used zero times over 450,456 notes,
+  because the fused set covers all seven letters at `''`. Ids are append-only, so adding a dead
+  token is permanent.
+- ✅ **Trap verified with the real tokenizer, 2026-09-06** — it does not fire. All seven
+  compositional pitches segment identically at every duration they appear with, and split evidence
+  gets *better* than today's: 1.277% of notes take a minority id form now, 0.003% under H.
 - ⚠ Two files carry `ADDED_TOKENS` by hand — `src/vision/data.py` and `tools/render/lilypond.ts` —
   and `check_token_drift` must pass. `audit_coverage.MAX_IDS` stays 59.
 
@@ -102,11 +114,35 @@ to revisit the no-render decision; otherwise it stands.
 
 ## The order
 
-1. **Length distributions + rare-pitch segmentation under H** — no GPU. Decides whether the render
-   question reopens.
-2. **The selector** — select on free-running corrections on `_realval_v2` (or weight real val loss
-   deliberately); keep `best` / `best-real` / `last`; add EMA and label smoothing, both unmeasured here
-   and paired for that reason.
+1. ✅ **DONE 2026-09-06 — length distributions + rare-pitch segmentation under H.**
+   `scripts/rung3/token_scheme_probe.py`, ~2 minutes, nothing re-decoded. Three results, all in
+   [tokenization.md](tokenization.md): **H is 16 new ids and vocabulary 116** (`''` and `'''` are
+   used zero times and are NOT added — ids are append-only, so that was worth catching before the
+   freeze); the rare-pitch trap **does not fire** and split evidence gets *better* (1.277% of notes
+   in a minority id form today → 0.003%); and the yield reproduces (**3,508 of 4,012** rescued, real
+   pool 3,929 → **7,437**).
+   ⛔ **The render question is answered "no render", and now for a measured reason.** The real length
+   tail IS absent from synthetic under H (synthetic max 44 ids, real 59; 887 real strips — 11.9% —
+   longer than anything synthetic). But re-packing synthetic to fill that band would make its crops
+   ~2,580 px wide against the slicer's 1,450 px cap, which is the direction
+   [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) measured as costing edits. ⏭ Replaced by
+   **watching the band**: long-strip errors get their own column when the H arm is read.
+2. ✅ **BUILT 2026-09-06 — the selector, EMA and label smoothing** (`src/vision/train.py`,
+   smoke-tested end to end including resume; nothing trained yet).
+   - `--select-dir` names a **fixed** pool (`_realval_v2`) and, at every eval, decodes it
+     **free-running** and counts corrections with `eval_omr.align` — the same function
+     `paired_arm_score.py` uses, so there is one definition of "an edit". It stamps a **new**
+     `best-edits` tag; `best` and `best-real` keep their old meanings, the same rule the
+     2026-09-01 `best-real` addition followed, so a run stays comparable with earlier ones.
+   - ⛔ **It REFUSES to start if a selection piece is on the train side.** `best-real` reads whatever
+     ~10% of each `--real-dir` the piece hash held out, which is why adding a pool silently broke it
+     on Run B. Measured while building this: `_realval_v2` shares **40 of its 69 pieces** with
+     `strips_b8`, and all 40 are val-side at the default `--real-val-frac 0.10` — but at **0.05
+     seventeen cross over** and would be trained on with nothing to show it.
+   - `--label-smoothing` (train loss only — `evaluate` stays unsmoothed, so `val_loss` keeps meaning
+     what it meant) and `--ema-decay` (logs the average's own corrections, saves `ema-best` /
+     `ema-last`). Both **off by default**: they are paired arms, not defaults.
+   ⚠ **Built, not measured.** No arm has trained with it yet.
 3. **The signature vote** — [../BACKLOG.md](../BACKLOG.md) item 9's script: where the vote disagrees
    with `data/makam_signatures.json`, send the rows to review instead of overwriting. The owner reads
    those rows.

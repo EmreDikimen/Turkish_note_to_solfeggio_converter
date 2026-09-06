@@ -4,13 +4,13 @@ purpose: the measured case for giving octaves and durations their own tokens, th
 chose, the traps in implementing it, and what has to be measured before it is worth a retrain
 audience: agents and the owner picking up the Round-4 density work
 
-updated: 2026-09-03
+updated: 2026-09-06
 
 > Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). ⏭ **PICKED UP FOR
 > ROUND 4 (2026-09-03)** — the plan, the order and the owner's decisions are in [round4.md](round4.md).
-> Scheme **H** is the recommendation (owner to confirm); **no re-render this round** (owner), so
-> `noteToLily`'s packing estimate is left as is and the synthetic strips stay as cut; **`\tupend`
-> stays** (owner). Acting on it re-cuts nothing but does invalidate every checkpoint's vocabulary.
+> Scheme **H** is CONFIRMED (owner, 2026-09-06) at **16 new ids, vocabulary 116**; **no re-render**,
+> re-confirmed the same day against the measured alternative, so `noteToLily`'s packing estimate is
+> left as is and the synthetic strips stay as cut; **`\tupend` stays** (owner). Acting on it re-cuts nothing but does invalidate every checkpoint's vocabulary.
 
 ## The finding first
 
@@ -169,6 +169,59 @@ size is not the balance to strike — 16 tokens are 0.01% of the model — examp
 ⚠ The 2026-09-03 octave count says a fused token fixes no height misread — 1 octave jump in 69
 wrong pitched notes ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)); the case is yield.
 
+## ⭐ Round 4 step 1 — measured with the real tokenizer, 2026-09-06
+
+Run: `.venv-ml/bin/python scripts/rung3/token_scheme_probe.py`. No GPU, no model, nothing
+re-decoded, ~2 minutes. Pools: `strips_v7_final` (40,795 labels), `strips_b8`'s 3,929 accepted rows,
+and the 4,012 `over_budget` labels `emit_responses.json` kept. ⚠ The re-emit will re-cut those
+windows under the rail at b = 57, so this is the closest proxy available, not the pool that will
+exist.
+
+**H is 16 new ids and vocabulary 116 — `''` and `'''` are NOT among them.** Building H as "B + the
+14 fused pairs" gives 118 and two dead tokens: over 450,456 notes both are used **zero** times,
+because the fused set covers all seven letters at `''`, and `d'''` matches as `d''` + `'`. Dropping
+them changes no length by any digit (mean 25.131 ids either way, max 192). ⚠ Ids are append-only, so
+this is permanent: H adds `'` (already in the base vocab, promoted so a letter cannot take two id
+forms), `16`, `32`, and the 14 fused pairs.
+
+**The rare-pitch trap does not fire, and the spelling is not the one this file predicted.** All seven
+compositional pitches segment the same way at every duration they appear with. But `d'''` is
+`d''` + `'` (1,102 notes), not `d` + `'''` — the fused token wins the trie match, which is why `'''`
+is dead; `c'` is `c` + `'` at all six of its durations (367 notes). ⭐ **Split evidence gets BETTER,
+not worse**: today **1.277%** of notes take a minority id form (5,751 of 450,456 — the `32` durations
+force `'</w>`), and under both B and H that falls to **0.003%** (13 notes, bare `a` and `b`).
+
+**Yield reproduces exactly.** Rescued of the 4,012 `over_budget` drops: today 0, B **2,410 (60.1%)**,
+H **3,508 (87.4%)**. Projected real training pool 3,929 → 6,339 (B) → **7,437 (H)**.
+
+### ⛔ The render question — asked, answered, and the answer is still "no render"
+
+The condition this file set was: if the real length tail is absent from synthetic, revisit the
+render. **It is absent.** Under H synthetic tops out at **44** ids (p99 38) while the real projected
+pool reaches **59**; **887 real strips (11.9%)** are longer than any synthetic strip and 1,703
+(22.9%) longer than synthetic's p99. Under today's spelling only 111 (2.8%) exceed synthetic's max,
+and under B only 189 (3.0%).
+
+⛔ **But re-packing synthetic to fill that band is the wrong fix — measured, not reasoned** (the
+owner re-confirmed no render on this basis, 2026-09-06). The long labels come only from the rescued
+dense strips: the *accepted* real strips are shorter than synthetic at every measure span (real
+1-measure max 36 ids against synthetic's 44), so this is not about measures per strip. Ink density is
+near-identical in the two pools — **21.7** ids per 1,000 px synthetic against **21.1** real (n=1,200
+each) — so a synthetic strip carrying 56 ids would be about **2,580 px** wide. The slicer caps every
+real crop at `MAX_STRIP_W = 1450` px and real strips top out at 1,440, and
+[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) already measured that a strip wider than ~479 px is
+throwing resolution away inside the fixed 409×583 encoder frame. So the re-pack would buy label
+length by pushing crops further into the shape that costs edits — and 17.5% of synthetic strips are
+already wider than any real strip can be.
+
+⏭ The one lever that would fill the band honestly is **tighter engraving** — the per-measure width
+is `events.length * 28 + 24` clamped to 130–420 px in
+[`SheetView.tsx`](../../apps/web/src/SheetView.tsx), and the row is then justified to full width,
+which un-compresses a dense bar. Real editions fit more bars per row instead. Not costed, not this
+round.
+⏭ What replaces it: **watch the band**. Long-strip errors get their own column when the H arm is
+read, so an early `</s>` on a 45–59 id label is caught with a number instead of assumed.
+
 ## Retiring `\tupend` — proposed 2026-08-27 (owner), ⛔ DECLINED for Round 4 (owner, 2026-09-03)
 
 > *"tupend i şimdilik tutabiliriz fena okumuyor aslında model şuanda tupletleri."* The analysis below
@@ -233,7 +286,8 @@ worth its own round.
    [`tools/render/lilypond.ts`](../../tools/render/lilypond.ts) and every label on disk are all
    **untouched**. The change is `ADDED_TOKENS` alone — ⚠ duplicated by hand in `src/vision/data.py`
    and `tools/render/lilypond.ts`, so both, or `check_token_drift` fails. ⚠ `noteToLily`'s packing
-   estimate does need updating, or the renderer will keep packing to the old cost.
+   estimate would need updating **only if the corpus is re-rendered**, and Round 4 does not
+   render — the render section above says why re-packing is the wrong fix (2026-09-06).
 2. **Re-emit, do not convert in place.** A converter over existing manifests proves the spelling
    round-trips, but the point is the strips that were never emitted, and only a re-run of
    `emit_strip_labels.py` produces those.

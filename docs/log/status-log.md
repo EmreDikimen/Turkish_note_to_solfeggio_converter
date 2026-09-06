@@ -7,6 +7,118 @@ updated: 2026-09-06
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-06 (later) — Round 4 step 2: the selector picks on corrections, and a spacing scare that wasn't (model)
+
+**Built and smoke-tested, nothing trained.** `train.py` gained `--select-dir`: a FIXED pool that is
+decoded **free-running** at every eval, whose corrections are counted with `eval_omr.align` — the
+same function `paired_arm_score.py` uses, so the project keeps one definition of "an edit". It stamps
+a NEW `best-edits` tag and leaves `best` / `best-real` alone, the same comparability rule the
+2026-09-01 `best-real` addition followed. `--label-smoothing` (train loss only) and `--ema-decay`
+(saves `ema-best` / `ema-last`) went in as off-by-default arms. Resume was tested too: step,
+`best_edits` and the EMA shadow all come back.
+
+⭐ **The guard is the part worth keeping.** A selection pool must not share a piece with training,
+and the run now REFUSES rather than warns. Measured while building it: `_realval_v2` shares **40 of
+its 69 pieces** with `strips_b8`. All 40 are val-side at the default `--real-val-frac 0.10` — so
+nothing was ever contaminated — but at **0.05, seventeen cross over**, and nothing downstream would
+have shown it. The negative test fires correctly (511 pieces named, refused).
+
+### The spacing scare: I nearly "repaired" 51 rows of gold that were fine
+
+`check_token_drift` failed the selection pool, reporting 45 malformed tokens like `\repstarte''8`
+and `\sigendr2`. **51 of `_realval_v2`'s 267 rows (19.1%)** spell a token with no space after it,
+and [METRICS-UNSEEN.md](../METRICS-UNSEEN.md) said spacing was id-identical "for `32` only", which
+implied those rows tokenized differently from their corrected form. That would have made 19% of the
+pool's gold wrong — in the pool about to become the checkpoint selector.
+
+⛔ **It is not true, and the doc line was wrong.** Measured against the live tokenizer: all 51 rows
+tokenize **exactly** as their spaced form. The added-token matcher consumes the boundary, so a token
+glued to the next word is still that token. Two cases had been conflated, and the file now carries
+the table: no space **after** a `\token` is id-identical; a space **inside** a note is not
+(`f'' 8` differs from `f''8`, while `f'' 32` does not — which is what the 2026-08-31 decision
+actually said). ⭐ So the gold stays untouched, no `_realval_v2` number moves, and `train.py`
+deliberately does not run `check_token_drift` on a selection pool — it is a regex guard for pools the
+TS serializer writes, and it is stricter than the tokenizer it is protecting.
+
+⚠ The near-miss is the lesson: the first instinct was to write a repair pass over gold on the
+strength of a doc sentence. The measurement cost two minutes.
+
+### The owner's 20 hand-test pages decoded
+
+The owner added `exam_pages/` — 20 screenshots, a mix of clean born-digital typesets, TRT archive
+scans and instrumentals (peşrev). Decoded with the SHIPPED runtime (`r3a-stage2-best-real`, int8
+ONNX) at `OMR_ORT_THREADS=2`: **20/20 pages, 182 staff rows, 515 strips, 211 s total** — ~10 s a
+page, no failures, `hitCap` 0. Crops and decodes in `data/real/rung3/_handtest/`.
+
+⚠ **This is not a score.** There is no gold for these pages, so corrections per page can only be
+counted by a person; that is the owner's judgement and the whole point of a hand-test set. What the
+run does give is where to look first, from structural tells that need no gold:
+
+| tell | count |
+|---|---|
+| pages whose rows disagree on the key signature (every row of a page should carry the same one) | **6 of 20** |
+| mid-row strips that invented a `\sig` block | 7 |
+| strips opening a `\sig` that never closes | 4 |
+| low-confidence strips (min log-prob < −1) | 30 of 515 |
+
+⭐ The worst page is the faded 4892 archive scan: **6 different signatures across its 9 rows** and 13
+low-confidence strips. That the signature is the largest error class is Round 4 root cause #2, and
+this is the same finding arriving from a third direction.
+
+## 2026-09-06 — Round 4 step 1: the vocabulary is measured, frozen at 116, and the render stays off (model)
+
+The first item in [../rung3/round4.md](../rung3/round4.md)'s order is done —
+`scripts/rung3/token_scheme_probe.py`, ~2 minutes, no GPU, no model, nothing re-decoded. It was run
+before any token was added on purpose: **ids are append-only**, so a vocabulary is a permanent
+decision and this is the last cheap moment to be wrong about it.
+
+**Two tokens were about to be added that nothing would ever use.** Building scheme H as "B + the 14
+fused pairs" gives vocabulary 118. Over **450,456 notes** the tokens `''` and `'''` are used
+**zero** times — the fused set covers all seven letters at `''`, and `d'''` matches as `d''` + `'`
+because the added-token trie takes the longest match. Dropping them changes no length by any digit
+(mean 25.131 ids, max 192, either way). H is **16 new ids, vocabulary 116** — which is what
+[../rung3/tokenization.md](../rung3/tokenization.md)'s own table said all along; the 118 came from
+reading "H = B + fused" literally. ⚠ Kept because it is the *reason* to run a probe before a freeze,
+not because the table was wrong.
+
+**The rare-pitch trap does not fire, and today's spelling is the worse one.** All seven compositional
+pitches segment identically at every duration they appear with. `d'''` is `d''` + `'` rather than the
+`d` + `'''` this project predicted — consistent, which is the only property that mattered. And the
+split-evidence problem the trap was about is **already here and H halves it away**: today **1.277%**
+of notes take a minority id form (5,751 of 450,456; the `32` durations force `'</w>`), against
+**0.003%** under B and H.
+
+**Yield reproduces**: 3,508 of 4,012 `over_budget` strips return (87.4%), real training pool
+3,929 → **7,437**.
+
+### The render question was answered twice in one session, and the second answer is the real one
+
+round4.md set a condition: if the real length tail is absent from synthetic under H, the no-render
+decision reopens. **It is absent** — synthetic tops out at **44** ids, the real projected pool reaches
+**59**, and **887 real strips (11.9%)** are longer than anything synthetic (111, or 2.8%, under
+today's spelling). So the owner was asked, and approved re-packing the synthetic corpus to fill the
+band.
+
+⛔ **Then the mechanism was measured and it does not work.** Three numbers killed it. The long labels
+come only from the rescued dense strips — *accepted* real strips are shorter than synthetic at every
+measure span (real 1-measure max 36 ids against synthetic's 44) — so this was never about measures
+per strip. Ink density is near-identical in the two pools, **21.7** ids per 1,000 px synthetic
+against **21.1** real (n=1,200 each), so a synthetic strip carrying 56 ids would be about **2,580 px**
+wide. And the slicer caps every real crop at `MAX_STRIP_W = 1450` px.
+[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) had already measured that direction as costing
+edits — past ~479 px the fixed 409×583 encoder frame is throwing resolution away — and 17.5% of
+synthetic strips are *already* wider than any real strip can be. So the re-pack buys label length by
+making the domain gap worse. The owner withdrew it the same session; the 2026-09-03 no-render
+decision stands, now with a measured reason rather than a preference.
+
+⏭ **What replaces it.** The lever that would fill the band honestly is **tighter engraving** — the
+per-measure width is `events.length * 28 + 24` clamped to 130–420 px in `SheetView.tsx`, then the row
+is justified to full width, which un-compresses a dense bar; real editions fit more bars per row
+instead. Uncosted, not this round. Instead the band gets **watched**: long-strip errors become their
+own column when the H arm is read, so an early `</s>` on a 45–59 id label shows up as a number.
+
+⚠ **Nothing was rendered, trained or re-emitted.** The only code added is the probe.
+
 ## 2026-09-06 — the docs were cut and re-shelved (docs)
 
 Owner: *"we are using [CLAUDE.md, STATUS.md] everytime for everything, they should not have redundant

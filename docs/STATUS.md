@@ -179,7 +179,7 @@ re-emit.
 ⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
 stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
 2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
-→ 🔶 the third-source probe **collected 2026-09-06, nothing decoded** → re-emit → the owner reads the audit sample and every `\sig` row → two
+→ ✅ the third-source probe **read 2026-09-06 — a NULL** → re-emit → the owner reads the audit sample and every `\sig` row → two
 arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
 once.
 
@@ -200,17 +200,21 @@ the override was built for. ⚠ **Majority, not "any listed variant"**: mahur pr
 exactly the direction the owner corrected 10 times out of 10. Cost: **224 pieces** to read
 (~1,198 row-start strips; 84 in `strips_b8`). Unit-tested; **no pool re-emitted yet**.
 
-🔶 **THE THIRD-SOURCE PROBE IS COLLECTED AND NOT YET DECODED (2026-09-06).** **36 pieces / 53
-pages / 1,108 strips** from three engraving houses none of our numbers has ever seen: **sahaney.com**
-(born-digital vector out of **Mus2 2.1.2**), **erdincbal.com** (TRT-edition scans, indexed by form, so
-the tuplet-dense sirto/longa/peşrev/saz semaisi come in) and **sarkilarnotalar.blogspot.com** (old
-prints and photocopies, the owner's pick). ⭐ **The slicer found staves on all 53 pages — zero
-failures.** 27 exam pieces were refused; every chosen piece is unseen by `strips_b8`. ⛔ **It is a
-probe and must not become a corpus** — it lives in `data/real/rung3/_thirdsource/`, outside
-`manifest.csv` and `matched/`. ⚠ **The blogspot column is not clean**: one of its 8 pages is
-watermarked `www.erdincbal.com` (re-hosted from another column of this same probe) and one is **THM
-folk notation**, which this project's tokens do not cover. ⏭ **Owed before a number exists**: the
-scoring path, then a decode with Run A `best-real`. [rung3/third-source.md](rung3/third-source.md).
+✅ **THE THIRD-SOURCE PROBE IS DONE AND IT IS A NULL (2026-09-06).** **36 pieces / 53 pages /
+1,108 strips** from engraving houses none of our numbers has ever seen: **sahaney.com** (born-digital
+vector out of **Mus2 2.1.2**), **erdincbal.com** (TRT-edition scans, indexed by form so the
+tuplet-dense sirto/longa/peşrev/saz semaisi come in) and **sarkilarnotalar.blogspot.com** (old prints,
+the owner's pick). ⭐ **The pipeline does not jam**: the slicer found staves on all 53 pages, and rows
+fail to align **less** often than on our own two sites (28.6% against 33.2% and 36.9%). ⛔ **But the
+accuracy question is unanswered.** Raw edits/strip looked like degradation (sahaney 0.86 against our
+held-out 0.13) and **the length control killed it** — sahaney's strips carry 40.6 gold ids against
+our 33.5, and under 40 ids it reads 0.20 with every interval overlapping. At n = 34 and n = 10 the
+probe could not have separated anything under ~3×. ⭐ **One finding that is NOT a null**: a different
+engraving house packs **more music into a staff row**, which lands on the label-budget rail the round
+is already changing. ⏭ **Growing it is the only route to a verdict** — more erdincbal pages need no
+hand labelling (75 SymbTr accepts exist, 14 used). ⚠ The blogspot column produced **no** gold: its
+titles are lyric incipits with no makam, one of its 8 pages is re-hosted from erdincbal and one is
+THM folk notation. [rung3/third-source.md](rung3/third-source.md).
 
 ⏭ **THE HAND-TEST SET EXISTS AND IS WAITING ON THE OWNER'S EYES.** The owner supplied 20 pages on
 2026-09-06 (gitignored `exam_pages/`, outside the frozen exam); they are decoded with the live model

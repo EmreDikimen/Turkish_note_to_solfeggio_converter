@@ -175,8 +175,16 @@ to revisit the no-render decision; otherwise it stands.
    `www.erdincbal.com`, i.e. re-hosted from another column of this same probe, and one is **THM
    folk notation**, which this project's tokens do not cover. Both should be dropped before any
    number is quoted from it.
-   ⏭ Owed: decide the scoring path (free labels vs a page-level correction count), then decode with
-   Run A `best-real` and read the three columns **separately** — never merged into `examv3`.
+   ✅ **READ THE SAME DAY, AND IT IS A NULL.** Labels from `round2-stage2-best`, graded on Run A
+   `r3a-stage2-best-real` — the label writer is not the model scored. **Yield holds**: rows fail to
+   align on 28.6% of the probe against 33.2% (`strips_b8`) and 36.9% (`strips_nota`), so the pipeline
+   does not jam on unfamiliar printing. **Accuracy is unanswered**: raw edits/strip read 0.37
+   (erdincbal) and 0.86 (sahaney) against our held-out 0.13, but sahaney's strips carry **40.6 gold
+   ids against 33.5**, and restricted to strips under 40 ids it falls to 0.20 with every 95% interval
+   overlapping. At n = 34 and n = 10 nothing under ~3× was separable. ⭐ **The one non-null finding**:
+   a different engraving house packs more music into a staff row, which lands on this round's own
+   label-budget rail. ⏭ Growing the probe is the only route to a verdict; more erdincbal pages cost
+   no hand labelling (75 SymbTr accepts exist, 14 used).
 5. **Re-emit the real pools** under scheme H, **re-cutting only the 504 strips that are still over
    the 59-id gate under H** (owner, 2026-09-06 — [../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the
    whole pool with a balanced packer, as this step first said**: that moves crop boundaries, which

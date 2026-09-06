@@ -462,9 +462,59 @@ def _dl_post(s, row, pdf_dir, img_dir, stem) -> list[str]:
     return out
 
 
+# ------------------------------------------------------------------------------------- export
+def do_export(args) -> None:
+    """SymbTr -> score.json + labels.json, in the shape `emit_strip_labels.py` consumes.
+
+    ⛔ It writes to `_thirdsource/matched/`, NOT to `data/real/rung3/matched/`. The emitter takes
+    `--matched`, `--strips-root` and `--out`, so the probe runs the real pipeline end to end
+    without any of it landing where a training pool or the exam would pick it up.
+    """
+    sys.path.insert(0, str(REPO / "src"))
+    from symbtr.parser import parse_file           # noqa: E402
+    from symbtr.export_json import export_file     # noqa: E402
+    import subprocess
+
+    by_stem = {p.stem: p for p in sorted(args.symbtr_dir.glob("*.txt"))}
+    exported: list[Path] = []
+    for src in args.sources:
+        state_p = OUT / f"downloads_{src}.json"
+        if not state_p.exists():
+            continue
+        for row_id, dl in json.loads(state_p.read_text()).items():
+            sym = by_stem.get(dl.get("symbtr", ""))
+            # A probe piece with no confident SymbTr match has no free label. That is a fact about
+            # the source (the blogspot's titles are lyric incipits with no makam), not an error —
+            # it is reported and skipped, never guessed at.
+            if sym is None or dl.get("tier") != "accept":
+                continue
+            makam = slug(dl["makam"]) or "x"
+            piece_dir = OUT / "matched" / makam / dl["stem"]
+            piece_dir.mkdir(parents=True, exist_ok=True)
+            score_json = piece_dir / "score.json"
+            export_file(parse_file(sym), score_json)
+            exported.append(score_json)
+            sp = SymbTrPiece.from_path(sym)
+            (piece_dir / "match.json").write_text(json.dumps({
+                src: {"stem": dl["stem"], "makam": makam,
+                      "pages": dl["pages"], "url": dl["url"],
+                      "catalog": {k: dl.get(k, "") for k in
+                                  ("title", "makam", "composer", "form", "usul", "engraver")}},
+                "symbtr": {"file": sym.name, "makam": sp.makam, "form": sp.form,
+                           "usul": sp.usul, "title": sp.title, "composer": sp.composer},
+                "score": float(dl["score"]), "source": src,
+            }, ensure_ascii=False, indent=1) + "\n")
+    print(f"exported {len(exported)} note models under {OUT / 'matched'}")
+    for i in range(0, len(exported), 150):
+        chunk = exported[i: i + 150]
+        subprocess.run(["npx", "--yes", "tsx", "tools/render/labels-cli.ts", *map(str, chunk)],
+                       cwd=REPO, check=True, stdout=subprocess.DEVNULL)
+        print(f"  labels {i + len(chunk)}/{len(exported)}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["census", "match", "select", "download"])
+    ap.add_argument("cmd", choices=["census", "match", "select", "download", "export"])
     ap.add_argument("--source", default="all")
     ap.add_argument("--symbtr-dir", type=Path,
                     default=Path.home() / "Downloads" / "SymbTr-2.0.0" / "txt")
@@ -481,7 +531,7 @@ def main() -> None:
     args = ap.parse_args()
     args.sources = list(SOURCES) if args.source == "all" else [args.source]
     {"census": do_census, "match": do_match, "select": do_select,
-     "download": do_download}[args.cmd](args)
+     "download": do_download, "export": do_export}[args.cmd](args)
 
 
 if __name__ == "__main__":

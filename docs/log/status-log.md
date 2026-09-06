@@ -45,10 +45,38 @@ So the blogspot is a mixed re-poster, not an independent third source; those two
 dropped before any number is quoted from it. The other six are old prints of unknown publisher and
 are genuinely unlike anything we train on.
 
-⏭ **No number exists yet.** Owed: the scoring path (free SymbTr labels vs a page-level correction
-count — the blogspot has **zero** SymbTr accepts, its titles being lyric incipits with no makam
-column), then a decode with Run A `best-real`, read as **three separate columns** and never merged
-into `examv3`.
+### The read, the same day — and it is a NULL
+
+Labels produced by `round2-stage2-best`, graded on Run A `r3a-stage2-best-real`, so the model that
+writes the answer key is not the model scored. Every number: [../rung3/third-source.md](../rung3/third-source.md).
+
+⭐ **The pipeline does not jam on an unfamiliar engraver.** Rows fail to align on **28.6%** of the
+probe against **33.2%** (`strips_b8`) and **36.9%** (`strips_nota`), and 82.1% of its pieces come
+through whole against 70.5%. Yield is 7.9%, between our two pools. That reading needs no gold: the
+emitter accepts a strip only when the decode aligns with the SymbTr label, so a model that cannot
+read the printing shows up as a collapsed accept rate. It did not collapse.
+
+⛔ **The accuracy question is NOT answered, and the first table said otherwise.** Raw edits/strip:
+b8 val-side (held out from Run A) **0.13**, erdincbal **0.37**, sahaney **0.86** — which reads as a
+6.6× cost. ⚠ **It is mostly strip LENGTH.** Sahaney's strips carry **40.6 gold ids against 33.5**
+everywhere else, and long strips were already measured to read worse. Restricted to strips under 40
+gold ids: b8-val **0.08** [0.04, 0.13], erdincbal **0.24** [0.06, 0.47], sahaney **0.20**
+[0.00, 0.50] — 0.86 → 0.20, and all three intervals overlap. At n = 34 and n = 10 nothing under
+about 3× could have been separated. **A null, not a pass.**
+
+⚠ **Two traps avoided while reading it.** The first comparison used a random `strips_b8` sample and
+got 0.04 edits/strip — that pool is Run A's own **training data**, so it measured memorisation; the
+fair column is the 390 val-side strips the piece hash held out. And every column is
+agreement-selected (a strip is accepted because a model already agreed with its label), so the
+absolute levels are a floor and only the across-column comparison means anything.
+
+⭐ **One finding that is not a null, and it is useful**: a different engraving house packs **more
+music into a staff row**. That lands directly on the label-budget rail Round 4 is already changing —
+the budget was chosen against two engravers' density.
+
+⏭ **The honest disposition**: the probe cost a day and bought a bound rather than an answer. Growing
+it is the only route to a verdict, and the cheap direction is more erdincbal pages — 75 SymbTr
+accepts exist and 14 were used, so no hand labelling is owed.
 
 ## 2026-09-06 (latest) — Round 4 step 3: the signature vote, measured — and it is a DELETION problem (model)
 

@@ -97,9 +97,67 @@ whose filename matched `nota`, and every post's banner is called `notalar.jpg` �
 "pages" were a 1020×250 banner. Selection is on **size** now, with a post-download minimum, so a
 wrong pick cannot pass silently.
 
+## The read (2026-09-06) — a NULL, and the probe is not powered to be more
+
+Decoded with `round2-stage2-best` producing the labels and **Run A `r3a-stage2-best-real`** graded
+on them, so the model that writes the answer key is not the model being scored
+([`score_thirdsource.py`](../../scripts/rung3/score_thirdsource.py)).
+
+### 1. Yield — label-free, and it holds
+
+The emitter keeps a strip only when the model's decode aligns with the SymbTr-derived label. On a
+source the model cannot read, alignment fails and the accepted share craters. It did not.
+
+| pool | accepted / total | yield | rows that failed to align | pieces `ok` |
+|---|---|---|---|---|
+| `strips_b8` (our two sites) | 3,955 / 33,530 | 11.8% | 33.2% | 70.5% |
+| `strips_nota` (one of them) | 1,262 / 16,152 | 7.8% | 36.9% | 46.9% |
+| **the probe** (sahaney + erdincbal) | **74 / 931** | **7.9%** | **28.6%** | **82.1%** |
+
+⭐ **Row alignment fails LESS often on the new engravers than on our own two sites**, and more of
+their pieces come through whole. The pipeline does not jam on unfamiliar printing.
+
+### 2. Edits per strip — the raw table says degradation, the length control says otherwise
+
+Same agreement-selected kind of row in every column, so the selection bias is matched. ⚠ `b8` is Run
+A's own training pool, so the **val-side** row is the only fair one — the train-side row is printed
+only to show what memorisation looks like.
+
+| pool | n | edits/strip | 95% CI | mean gold ids |
+|---|---|---|---|---|
+| `strips_b8` train-side (**memorised, not a comparison**) | 400 | 0.04 | — | 35.1 |
+| **`strips_b8` val-side** — our two sites, held out from Run A | 390 | **0.13** | [0.08, 0.19] | 33.5 |
+| **erdincbal** — TRT-edition scans | 46 | 0.37 | [0.11, 0.67] | 33.4 |
+| **sahaney** — Mus2 vector | 28 | 0.86 | [0.36, 1.46] | **40.6** |
+
+⛔ **Sahaney's 0.86 is mostly STRIP LENGTH, not the engraver.** Its strips carry 40.6 gold ids
+against 33.4–33.5 everywhere else, and long strips are already measured to read worse
+([../METRICS.md](../METRICS.md)). Restricted to strips under 40 gold ids:
+
+| pool | n | edits/strip | 95% CI |
+|---|---|---|---|
+| `strips_b8` val-side | 265 | 0.08 | [0.04, 0.13] |
+| erdincbal | 34 | 0.24 | [0.06, 0.47] |
+| sahaney | **10** | 0.20 | [0.00, 0.50] |
+
+⭐ **0.86 → 0.20 once length is controlled, and all three intervals overlap.** So the probe shows
+**no separable degradation on a third engraving house** — and at n = 34 and n = 10 it could not have
+shown one smaller than about 3×. **This is a null, not a pass.**
+
+⭐ **One side finding that is not a null and matters to Round 4**: a different engraving house packs
+**more music into a staff row** — sahaney's strips run 40.6 gold ids against our 33.5. That lands
+directly on the label-budget rail ([../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)):
+the budget was chosen against our two engravers' density.
+
 ## What is NOT claimed
 
-- **Nothing is measured yet.** No page has been decoded. This file records collection only.
+- ⛔ **The probe did not answer its question.** It is a **null**: no degradation was separable, and
+  it is not powered to separate one under ~3×. It cost a day and it bought a bound, not an answer.
+  Growing it is the only way to a verdict — the cheapest path is more erdincbal pages, which need
+  no hand labelling (75 SymbTr accepts exist, 14 were used).
+- **The edits/strip columns are a FLOOR, not an error rate.** Every row in them was accepted because
+  a model already agreed with the label. The comparison across columns is fair because the bias is
+  identical in each; the absolute levels are not the accuracy of anything.
 - **36 pieces is a probe, not a corpus.** It cannot support a per-class accuracy table; it can
   answer "does this collapse".
 - **The blogspot column is not a clean third source** (trap 1), and two of its eight pages should be

@@ -1694,12 +1694,19 @@ class Window:
     m_from: int
     m_to: int
     split_wide: bool = False
+    # Round 4's label-budget rail: the window's index in the ORIGINAL packing, set only when
+    # `oversize` split it. ⚠ A split RENUMBERS every later window in the row, so a strip filename
+    # from before the split can name different pixels after it — the standing trap. Pools are
+    # joined by measure span (`carry_old_fixes.py`), never by name, and this field is what lets a
+    # reader see that a row was re-cut at all.
+    split_from: int | None = None
     est_tokens: float = 0.0    # estimated decoded length; > 59 means the emitter will drop it
 
 
 def window_measures(bars: list[int], row: np.ndarray | None = None,
                     top_y: int = TOP_LINE_Y,
-                    binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink) -> list[Window]:
+                    binarize: Callable[[np.ndarray], np.ndarray] = binarize_ink,
+                    oversize: Callable[[int, int], bool] | None = None) -> list[Window]:
     """Group consecutive measures (bar-to-bar spans) into windows that fit the LABEL BUDGET.
 
     The first window of a row keeps the left prefix (clef + key signature -> the \\sig carrier).
@@ -1715,6 +1722,23 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
 
     Every window records `est_tokens`, so a measure that cannot fit the budget even ALONE (8.9% of
     single measures) is visible in the manifest instead of silently dying in the emitter.
+
+    `oversize(m_from, m_to)` is Round 4's label-budget rail (owner, 2026-09-06). It is a CALLBACK
+    and not a knob because only the caller can answer it: the true id count of a measure range
+    comes from the SymbTr-derived label, which the slicer does not have — `est_tokens` is a
+    character-count estimate with a residual sd of ~30 ids, so gating on it re-cuts rows that did
+    not need it. When supplied, a packed window whose range the caller calls oversize is split at
+    MEASURE boundaries until each part fits.
+
+    ⛔ **It splits ONLY the windows that fail, and never re-packs the row** (owner, 2026-09-06:
+    *"over-budgetlara da dokunma"*). Re-packing a row moves every crop boundary in it, which
+    docs/METRICS-SLICER-WINDOWS.md prices as staling every labelled pool — the owner's 995 hand
+    reads and 576 `fix` verdicts on `strips_b8` would come back as suggestions to re-confirm.
+    Measured 2026-09-06: under scheme H only **504** of the 4,012 over-budget strips are still over
+    the gate, so this fires on 504 windows and leaves 3,508 crops byte-identical.
+
+    ⚠ A SINGLE measure that is still oversize cannot be split further and is returned as it is —
+    the emitter drops it, exactly as today. That is the 8.9% the constants block describes.
 
     A leading span holding no notehead past the clef zone (a repeat/barline printed right
     after the clef+signature) is a PREFIX, not a measure: it stays in the first window's
@@ -1801,11 +1825,66 @@ def window_measures(bars: list[int], row: np.ndarray | None = None,
             windows.append(Window(x0, x1, i, j - 1,
                                   est_tokens=round(cost(x0, x1, first), 1)))
         i = j
+    if oversize is not None:
+        windows = _split_oversize(windows, win_x0, win_x1, cost, oversize)
     return windows
 
 
+def _split_oversize(windows: list[Window], win_x0, win_x1, cost,
+                    oversize: Callable[[int, int], bool]) -> list[Window]:
+    """Halve every window the caller calls oversize, at measure boundaries, until each part fits.
+
+    ⚠ **Only the failing window is touched.** Its neighbours in the row keep their exact x-spans,
+    so their crops stay byte-identical and their labels and human verdicts survive the re-emit —
+    which is the whole point of the owner's 2026-09-06 rule.
+
+    ⚠ A `split_wide` window is left alone: its boundaries are GUTTER cuts inside one measure, not
+    measure boundaries, so there is nothing here to split it on. It is already the pathological
+    case the width rail handles.
+    """
+    out: list[Window] = []
+    for wi, w in enumerate(windows):
+        stack = [w]
+        while stack:
+            cur = stack.pop(0)
+            if (cur.split_wide or cur.m_to <= cur.m_from
+                    or not oversize(cur.m_from, cur.m_to)):
+                out.append(cur)
+                continue
+            # ⭐ BALANCED, not halved. The window's OUTER boundaries are fixed — that is what
+            # leaves its neighbours byte-identical — but the cut inside it is free, so pick the
+            # one that minimises the larger part. Cutting at the measure midpoint instead
+            # produced a 266 px runt beside a 1,080 px strip on the first real page it ran on,
+            # and a runt is the very defect docs/METRICS-SLICER-WINDOWS.md blames the greedy
+            # packer for. This is the balanced packer's benefit, taken ONLY where a crop is
+            # being cut anyway (owner, 2026-09-06).
+            origin = cur.split_from if cur.split_from is not None else wi
+            best, best_score = cur.m_from, None
+            for k in range(cur.m_from, cur.m_to):
+                left, right = cost(win_x0(cur.m_from), win_x1(k), cur.m_from == 0), \
+                    cost(win_x0(k + 1), win_x1(cur.m_to), False)
+                if left == 0 and right == 0:          # no row image: balance on WIDTH instead
+                    left = win_x1(k) - win_x0(cur.m_from)
+                    right = win_x1(cur.m_to) - win_x0(k + 1)
+                score = max(left, right)
+                if best_score is None or score < best_score:
+                    best, best_score = k, score
+            for a, b in ((cur.m_from, best), (best + 1, cur.m_to)):
+                x0, x1 = win_x0(a), win_x1(b)
+                stack.insert(0 if a == cur.m_from else 1,
+                             Window(x0, x1, a, b, split_from=origin,
+                                    est_tokens=round(cost(x0, x1, a == 0), 1)))
+            stack.sort(key=lambda z: z.m_from)
+    out.sort(key=lambda z: (z.m_from, z.x0))
+    return out
+
+
 # ----------------------------------------------------------------------------------- driver
-def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = False) -> list[dict]:
+def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = False,
+                   oversize: Callable[[int, int, int], bool] | None = None) -> list[dict]:
+    """Slice one page into strips. `oversize(system, m_from, m_to)` is Round 4's label-budget rail
+    — see `window_measures`; it takes the ROW index too, because a measure range only identifies a
+    window within its own staff row. Default None means the slice is byte-identical to before."""
     page = load_gray(page_path)
     # perspective-rectify an obliquely-shot page + deskew residual rotation; no-op on clean scans,
     # and the crop is auto-discarded when it doesn't improve staff detectability (see prep_page)
@@ -1834,7 +1913,9 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
         dbg_info: dict | None = {} if debug else None
         bars = detect_barlines(row, staff, scale, debug_info=dbg_info, top_y=top_y,
                                binarize=binz)
-        windows = window_measures(bars, row, top_y=top_y, binarize=binz)
+        windows = window_measures(bars, row, top_y=top_y, binarize=binz,
+                                  oversize=(None if oversize is None
+                                            else lambda a, b, _si=si: oversize(_si, a, b)))
         # total measures the row's windows cover (a trimmed clef+sig prefix span is no measure)
         row_measures = max(w.m_to for w in windows) + 1 if windows else 0
         bar_set = set(bars)
@@ -1884,6 +1965,10 @@ def page_to_strips(page_path: str | Path, out_dir: str | Path, debug: bool = Fal
                 "est_tokens": w.est_tokens,
                 "budget_risk": w.est_tokens > 59,
             }
+            if w.split_from is not None:
+                # ⚠ this row was re-cut by the label-budget rail, so the `_wNN` numbering past
+                # this point differs from the pre-split slice of the same page
+                entry["split_from"] = w.split_from
             if wi == 0:
                 entry["row_bars"] = [int(b) for b in bars]  # audit/debug: raw barline x-positions
             manifest.append(entry)

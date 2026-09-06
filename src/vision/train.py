@@ -188,6 +188,11 @@ def main() -> int:
     ap.add_argument("--out-dir", required=True, help="checkpoints + metrics.jsonl (Drive on Colab)")
     ap.add_argument("--model", default=MODEL_ID, help="base weights (Rung 2 default: the ORIGINAL pretrained)")
     ap.add_argument("--resume", action="store_true", help="continue from <out-dir>/last")
+    ap.add_argument("--vocab", choices=["old", "h"], default="old",
+                    help="token vocabulary (data.vocabulary). `old` = every checkpoint through "
+                         "Round 3; `h` appends Round 4's fused note spelling (+16 ids). ⚠ It is "
+                         "ONE variable of Round 4's step-6 A/B, so the control arm must run at "
+                         "`old` — the default — and only the H arm passes `h`.")
     ap.add_argument("--max-steps", type=int, default=6000)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--grad-accum", type=int, default=1)
@@ -216,7 +221,7 @@ def main() -> int:
                          "Re-weights every-vs-carry WITHIN the synthetic pool via a per-epoch "
                          "WeightedRandomSampler, holding the synthetic:real ratio fixed. "
                          "Rationale: 'every' mode carries 4.22 inline accidentals/strip vs real's "
-                         "0.32, so at its as-rendered 26.7% it supplies ~81%% of all inline "
+                         "0.32, so at its as-rendered 26.7%% it supplies ~81%% of all inline "
                          "accidentals (4.4x the real rate) — a suspected driver of the "
                          "komaSharp/komaFlat hallucination. Negative value = OFF (corpus as-is).")
     ap.add_argument("--oversample-tup", type=int, default=1,
@@ -412,9 +417,16 @@ def main() -> int:
     # ---- model (resume = reload our own last checkpoint, weights already extended) ------------
     source = str(out_dir / "last") if args.resume else args.model
     print(f"== loading {source} ...")
-    model, processor, added = load_model_and_processor(source)
+    model, processor, added = load_model_and_processor(source, scheme=args.vocab)
     tok = processor.tokenizer
-    print(f"   vocab: +{added} tokens -> {len(tok)} ids")
+    print(f"   vocab: {args.vocab} (+{added} tokens -> {len(tok)} ids)")
+    # ⚠ Resuming must not change the vocabulary underneath a half-trained run: `last` already
+    # carries whatever scheme it was started with, so a resume that adds ids would resize the
+    # embedding matrix mid-run and every id past the old end would be freshly random.
+    if args.resume and added:
+        raise SystemExit(f"--resume from {source} wants +{added} tokens under --vocab {args.vocab}: "
+                         f"that checkpoint was trained on a different vocabulary. Resume with the "
+                         f"scheme the run started with, or start a new run.")
     model.to(device).train()
 
     # Both OFF by default and both unmeasured in this project — they are paired arms, not defaults.

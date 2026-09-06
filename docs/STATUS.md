@@ -179,7 +179,7 @@ re-emit.
 ⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
 stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
 2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
-→ ✅ the third-source probe **read 2026-09-06 — a NULL** → re-emit → the owner reads the audit sample and every `\sig` row → two
+→ ✅ the third-source probe **read 2026-09-06 — a NULL** → 🔶 **the step-5 CODE is built (vocabulary + the rail), the re-emit is NOT run** → re-emit → the owner reads the audit sample and every `\sig` row → two
 arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
 once.
 

@@ -47,6 +47,42 @@ ADDED_TOKENS: list[str] = [
     "\\tup3", "\\tupend", "\\tie", "\\grace",
 ]
 
+# Round 4’s note spelling, "scheme H" — see the matching block in tools/render/lilypond.ts.
+# The 14 pitches with >=1,000 notes are FUSED (a notehead’s height IS letter+octave together,
+# so one token matches the visual unit and the decoder takes one step fewer); the 7 rare ones
+# stay compositional (`a'''` occurs ONCE in the corpus) and that split is FROZEN, ids being
+# append-only. `'` is promoted so a letter cannot take two id forms depending on what follows
+# it; `16` and `32` join `3` as durations the base vocabulary lacks. 16 new ids, 100 -> 116.
+# ⛔ `''` and `'''` are deliberately NOT here — measured 2026-09-06 as used ZERO times over
+# 450,456 notes, because the fused set covers all seven letters at `''` and `d'''` matches as
+# `d''` + `'`. An id spent on a dead token is spent forever. docs/rung3/tokenization.md
+SCHEME_H_TOKENS: list[str] = [
+    "'", "16", "32",
+    "a'", "a''", "b'", "b''", "c''", "c'''", "d'", "d''",
+    "e'", "e''", "f'", "f''", "g'", "g''",
+]
+
+
+def vocabulary(scheme: str = "old") -> list[str]:
+    """The token list for ONE vocabulary. `old` is what every checkpoint through Round 3 was
+    trained with; `h` appends Round 4’s note spelling, so H’s ids start after the last old one
+    and nothing earlier moves (verified 2026-09-06: 0 existing ids moved).
+
+    ⛔ **H IS A SEPARATE LIST AND `ADDED_TOKENS` STAYS AT 25 ON PURPOSE.** Folding H into
+    `ADDED_TOKENS` was tried on 2026-09-06 and reverted the same hour: every checkpoint this
+    project owns was trained at vocabulary 100, so `load_model_and_processor` then reported 17
+    new tokens for each of them and `paired_arm_score.decode_pool` refused them all as "the base
+    model" — including `r3a-stage2-best-real`, which is what the live site runs. Round 4’s own
+    step 6 is an A/B of the OLD vocabulary against H, so the two must load side by side: the
+    vocabulary is a parameter, not a constant.
+    """
+    if scheme == "old":
+        return list(ADDED_TOKENS)
+    if scheme == "h":
+        return [*ADDED_TOKENS, *SCHEME_H_TOKENS]
+    raise ValueError(f"unknown vocabulary scheme {scheme!r} (expected 'old' or 'h')")
+
+
 # Digits included: \volta1 / \volta2 are single tokens — a letters-only pattern would extract
 # them as a bogus "\volta" and fail the drift check against ADDED_TOKENS.
 _BACKSLASH_TOKEN = re.compile(r"\\[A-Za-z0-9]+")

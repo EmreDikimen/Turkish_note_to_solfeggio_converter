@@ -17,19 +17,26 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from data import ADDED_TOKENS
+from data import vocabulary
 
 MODEL_ID = "Flova/omr_transformer"
 
 
-def load_model_and_processor(source: str = MODEL_ID):
+def load_model_and_processor(source: str = MODEL_ID, scheme: str = "old"):
     """
     Load model + processor from the HF hub id or a checkpoint dir, extend the tokenizer with
     the project's tokens, and fix the generation config.
 
-    Returns (model, processor, added): `added` is how many tokens were new — len(ADDED_TOKENS)
-    when `source` is the pretrained base, 0 when it is an already-extended checkpoint (the
-    embedding resize is skipped, so a checkpoint's trained embeddings are never touched).
+    Returns (model, processor, added): `added` is how many tokens were new — the whole vocabulary
+    when `source` is the pretrained base, 0 when it is an already-extended checkpoint at the SAME
+    scheme (the embedding resize is skipped, so a checkpoint's trained embeddings are never
+    touched).
+
+    ⚠ `scheme` picks the vocabulary (`data.vocabulary`): `old` is every checkpoint through Round 3,
+    `h` appends Round 4's note spelling. It defaults to `old` so that every existing caller — and
+    every existing checkpoint — keeps loading with `added == 0`; only the Round-4 H arm passes `h`,
+    and for it `added` is 16 on a Round-3 checkpoint, which is a real resize and not the "this is
+    the base model" signal that `paired_arm_score` checks for.
     """
     from transformers import AutoProcessor, VisionEncoderDecoderModel
 
@@ -37,7 +44,7 @@ def load_model_and_processor(source: str = MODEL_ID):
     model = VisionEncoderDecoderModel.from_pretrained(source)
     tok = processor.tokenizer
 
-    added = tok.add_tokens(ADDED_TOKENS)
+    added = tok.add_tokens(vocabulary(scheme))
     if added:
         model.decoder.resize_token_embeddings(len(tok))
 

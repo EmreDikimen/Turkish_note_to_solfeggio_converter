@@ -136,6 +136,40 @@ export const ADDED_TOKENS: string[] = [
 ];
 
 /**
+ * Round 4’s note spelling, "scheme H" — a SEPARATE list, appended after `ADDED_TOKENS`
+ * wherever the H vocabulary is wanted, so H’s ids start after the last old one and nothing
+ * earlier moves.
+ *
+ * Two halves, and which pitch is in which half is FROZEN FOREVER because ids are append-only:
+ *   - the 14 letter+octave pairs with >=1,000 notes in the corpus are FUSED, because a
+ *     notehead’s height IS letter+octave together — one token matches the visual unit and the
+ *     decoder takes one step fewer;
+ *   - the 7 rare pitches (a, b, g, c', a''', d''', e''') stay compositional — `a'''` occurs
+ *     ONCE in the whole corpus, so a token for it would have one example to learn from.
+ *
+ * `'` is promoted so a letter cannot take two id forms depending on what follows it, and
+ * `16`/`32` join `3` as durations the base vocabulary lacks. 16 new ids, 100 -> 116.
+ *
+ * ⛔ `''` and `'''` are deliberately NOT here: measured 2026-09-06 as used ZERO times over
+ * 450,456 notes, because the fused set covers all seven letters at `''` and `d'''` matches as
+ * `d''` + `'`. An id spent on a dead token is spent forever.
+ *
+ * ⛔ It is NOT folded into `ADDED_TOKENS`: every checkpoint this project owns was trained at
+ * vocabulary 100, and Round 4’s step 6 is an A/B of the old vocabulary against H, so both must
+ * be loadable side by side. The reason, and what broke when it was tried, is in
+ * src/vision/data.py `vocabulary()`.
+ *
+ * docs/rung3/tokenization.md
+ */
+export const SCHEME_H_TOKENS: string[] = [
+  "'",
+  "16",
+  "32",
+  "a'", "a''", "b'", "b''", "c''", "c'''", "d'", "d''",
+  "e'", "e''", "f'", "f''", "g'", "g''",
+];
+
+/**
  * The signature in effect for the rendered image: pitch letter (upper-case "C".."B") → AEU-snapped
  * alteration in commas. `null`/`undefined` = "every" render mode (no signature drawn; every
  * alteration is inline). Matches SheetView's `signatureMap` so label decisions equal draw decisions.

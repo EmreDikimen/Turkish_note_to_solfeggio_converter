@@ -7,6 +7,58 @@ updated: 2026-09-06
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-07 — Round 4 step 5: the vocabulary and the rail are BUILT, nothing re-emitted (model)
+
+Two pieces of code, both verified, neither run over a pool.
+
+### The vocabulary — and the trap that made it a separate list
+
+`SCHEME_H_TOKENS`, 17 entries and **16 new ids** (100 → 116; `'` was already in the base
+vocabulary, which is the whole of that discrepancy), mirrored by hand in `src/vision/data.py` and
+`tools/render/lilypond.ts` as the project requires. `data.vocabulary(scheme)` composes it,
+`load_model_and_processor(..., scheme=)` applies it, and `train.py --vocab {old,h}` selects it.
+
+⛔ **Folding H into `ADDED_TOKENS` was tried first and reverted within the hour.** Every checkpoint
+this project owns was trained at vocabulary 100, so `add_tokens` then reported **17 new tokens for
+each of them** — and `paired_arm_score.decode_pool` refuses any checkpoint with `added > 0` as
+"the base model, not a trained checkpoint". That refusal would have covered
+**`r3a-stage2-best-real`, the model the live site runs**. It was caught by loading Run A after the
+edit rather than by reasoning about it. Round 4's own step 6 is an A/B of the old vocabulary against
+H, so the two must load side by side: the vocabulary is a **parameter**, not a constant.
+
+✅ Verified: **0 existing ids move** under H, the `ADDED_TOKENS[:8]` AEU slice a dozen scripts take
+is intact, `npm test` and `npm run typecheck` pass. ⚠ `train.py --resume` now refuses when the
+scheme would resize the embedding mid-run — that would leave every id past the old end freshly
+random inside a half-trained model.
+
+⚠ **A pre-existing bug found on the way**: `train.py --help` has been crashing on an unescaped `%`
+in the `--scan-share` help text. Fixed; unrelated to this round.
+
+### The rail — split only what fails, and balance the cut
+
+`window_measures(..., oversize=(m_from, m_to) -> bool)`, plumbed through `page_to_strips` and
+`decode_page`. It is a **callback** rather than a knob because only the emitter can answer it: the
+true id count of a measure range comes from the SymbTr-derived label, while the slicer has only
+`est_tokens`, a character-count estimate with a residual sd of ~30 ids.
+
+⭐ **It splits the failing window and nothing else** — the owner's rule. Neighbours keep their exact
+x-spans, so their crops stay byte-identical and their labels and human verdicts survive.
+
+⭐ **The cut inside the window is BALANCED, not halved.** The window's outer boundaries are fixed,
+so the split point is free — and halving produced a **266 px runt beside a 1,080 px strip** on the
+first real page it ran on, which is the very defect the greedy packer is blamed for. Balancing on
+estimated tokens gives 808/538 instead. This is the balanced packer's benefit taken only where a
+crop is being cut anyway.
+
+✅ **`oversize=None` reproduces the slice byte-for-byte** — 21 of 21 crops and an identical manifest
+on a real page — so **no `GEOMETRY_REV` bump is owed**: the change is inert until the emitter
+supplies the callback. ⚠ A split **renumbers** every later `_wNN` in its row (two consumers parse
+that name and both need it numeric), so the manifest records `split_from`; pools join by measure
+span, never by filename.
+
+⏭ **Owed**: the emitter must supply `oversize` from the H-tokenized label, and then the re-emit
+itself needs a Colab decode — every cache is refused since `GEOMETRY_REV` 20260903.
+
 ## 2026-09-06 (latest+1) — Round 4 step 4: a third engraver collected, and three traps paid for (model)
 
 **36 pieces / 53 pages / 1,108 strips, nothing decoded.** `collect_thirdsource.py` censuses,

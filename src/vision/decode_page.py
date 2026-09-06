@@ -87,10 +87,15 @@ def decode_page(
     out_root: str | Path = "data/real/strips",
     debug: bool = True,
     verbose: bool = True,
+    oversize=None,
 ) -> dict:
-    """Slice one page and decode every strip; write and return the `<page>_decode.json` dict."""
+    """Slice one page and decode every strip; write and return the `<page>_decode.json` dict.
+
+    `oversize(system, m_from, m_to)` is Round 4's label-budget rail, passed straight through to
+    `page_to_strips`. Only the emitter supplies it, because only it knows a measure range's TRUE
+    id count; None (the default) leaves the slice byte-identical."""
     strip_dir = Path(out_root) / Path(page).stem
-    manifest = page_to_strips(page, strip_dir, debug=debug)
+    manifest = page_to_strips(page, strip_dir, debug=debug, oversize=oversize)
     if not manifest:
         raise RuntimeError(f"{page}: no strips produced — staff detection found nothing.")
 

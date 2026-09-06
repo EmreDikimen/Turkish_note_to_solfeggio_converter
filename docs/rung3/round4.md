@@ -185,19 +185,42 @@ to revisit the no-render decision; otherwise it stands.
    a different engraving house packs more music into a staff row, which lands on this round's own
    label-budget rail. ⏭ Growing the probe is the only route to a verdict; more erdincbal pages cost
    no hand labelling (75 SymbTr accepts exist, 14 used).
-5. **Re-emit the real pools** under scheme H, **re-cutting only the 504 strips that are still over
-   the 59-id gate under H** (owner, 2026-09-06 — [../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the
-   whole pool with a balanced packer, as this step first said**: that moves crop boundaries, which
+5. 🔶 **Re-emit the real pools — THE CODE IS BUILT (2026-09-06), the re-emit is NOT run.**
+   Under scheme H, **re-cutting only the strips still over the 59-id gate under H** (owner —
+   [../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the whole pool with a balanced packer, as this step
+   first said**: that moves crop boundaries, which
    [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) says stales every labelled pool —
-   and it is unnecessary, because **3,508 of the 4,012 over-budget strips fall under the gate on the
-   tokenizer change alone**, keeping their crops ([tokenization.md](tokenization.md)). The rail at
-   b = 57 and the balanced packer apply **where a crop is being cut anyway**, i.e. on those 504.
+   and it is unnecessary, because **3,508 of the 4,012 over-budget strips fall under the gate on
+   the tokenizer change alone**, keeping their crops. Only **504** need a new one.
    ⭐ H changes the tokenization and not the label TEXT, so an accepted strip's label is
    character-identical and its human verdict stays valid; the pool is `3,929 kept + 3,508 rescued +
-   the split of 504`. Needs a Colab decode: every cache is refused since `GEOMETRY_REV` 20260903 —
-   ⚠ those 2026-09-03 slicer fixes move some crops regardless, on an **unmeasured** number of pages.
-   Then `verify-labels`, then the owner reads the audit sample and every `\sig` row — expect ~450
-   fixes in ~3,500 rescued strips at the measured 12.9%.
+   the split of 504`.
+
+   **What is built:**
+   - **The vocabulary.** `SCHEME_H_TOKENS` (17 entries, **16 new ids**, 100 → 116) beside the
+     frozen 25 of `ADDED_TOKENS`, mirrored in `src/vision/data.py` and `tools/render/lilypond.ts`,
+     with `data.vocabulary(scheme)` composing them and `train.py --vocab {old,h}` selecting one.
+     ⛔ **H is a SEPARATE list on purpose** — folding it into `ADDED_TOKENS` was tried and reverted
+     the same hour: every checkpoint was trained at vocabulary 100, so `load_model_and_processor`
+     reported 17 new tokens for each and `paired_arm_score` refused them all as "the base model",
+     `r3a-stage2-best-real` (the live model) included. Step 6 is an A/B of old against H, so both
+     must load side by side. Verified: **0 existing ids move** under H.
+   - **The rail.** `window_measures(..., oversize=...)` — a CALLBACK, because only the emitter
+     knows a measure range's true id count (`est_tokens` has a residual sd of ~30). It splits
+     **only** the failing window, at a **balanced** point inside it rather than at the midpoint
+     (halving produced a 266 px runt beside a 1,080 px strip on the first real page). Neighbours
+     keep their exact x-spans, so their crops stay byte-identical. Verified on a real page:
+     `oversize=None` reproduces **21 of 21 crops byte-for-byte** and an identical manifest, so
+     **no `GEOMETRY_REV` bump is owed** — the change is inert until the emitter supplies it.
+     ⚠ A split **renumbers** every later `_wNN` in its row, so the manifest records `split_from`;
+     pools are joined by measure span (`carry_old_fixes.py`), never by filename.
+
+   ⏭ **Still owed**: the emitter must supply `oversize` from the H-tokenized label, then the run
+   itself — a Colab decode, since every cache is refused since `GEOMETRY_REV` 20260903. ⚠ Those
+   2026-09-03 slicer fixes move some crops regardless, on an **unmeasured** number of pages. Then
+   `verify-labels`, then the owner reads the audit sample and every `\sig` row — expect ~450 fixes
+   in ~3,500 rescued strips at the measured 12.9%.
+
 6. **Two arms from base, one variable**: old vocabulary (control) vs scheme H, same pools, same
    steps, stage 2 at 4,000. ~3.5 h each on an L4. Everything else in this round changes together and
    is unattributable; the vocabulary gets its own paired answer.

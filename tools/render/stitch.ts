@@ -191,6 +191,20 @@ interface MeasureRec extends StructureMarks {
   events: WrittenEvent[];
 }
 
+/**
+ * What `expandRepeats` worked out, for the caller to write back with `applyEndingRepairs`.
+ *
+ * `order` is the playing order; `endings` the first endings it resolved. The other two are the
+ * MARKS it had to repair to get there: `inferred` = bars that become a "1." because a second ending
+ * follows the `:‖`, `relabel` = bars whose "1." lands past a `:‖` and is therefore a "2.".
+ */
+interface EndingRepairs {
+  order: number[];
+  endings: [number, number][];
+  inferred: number[];
+  relabel: number[];
+}
+
 // ---------------------------------------------------------------------------------------------
 // Small exact-fraction helpers (same spirit as rhythm.ts — floats can't tell 1/12 sums apart)
 
@@ -602,6 +616,30 @@ export const WARN_UNMATCHED_REPSTART = "unmatched \\repstart — played once";
  * single bar carrying the "1." was skipped, so a two-bar first ending played its tail again on the
  * repeat: **37.9% of real first endings** were affected.
  *
+ * ⭐ **A "2." IMPLIES A "1.", EVEN WHEN THE MODEL DID NOT READ ONE** (owner, 2026-09-07: *"volta 1
+ * sadece ilk tekrarda çalınacak"*). A second ending is only ever printed opposite a first one, so a
+ * `\volta2` on the bar after the `:‖` is enough on its own: with no "1." anywhere in the span, the
+ * `:‖` bar itself becomes a one-bar first ending — the modal real length (62.1%, see
+ * `MAX_FIRST_ENDING`) — and `inferred` names it so the caller can set the mark, which is what keeps
+ * the bracket that is DRAWN and the bar that is SKIPPED one decision. Without it the whole span
+ * replayed and the first ending sounded again before the "2.": **156 of the 1,208 `:‖` that carry a
+ * written second ending** over the 1,720 decoded pages ([docs/METRICS.md](../../docs/METRICS.md)).
+ * ⚠ Two refusals: a span whose "1." was read but sits too far keeps the ignore-and-warn above rather
+ * than gaining a second bracket, and a ONE-BAR span is left alone — inferring there would erase the
+ * repeat instead of shortening it, since the second pass would have nothing left to play.
+ *
+ * ⭐ **AND A "1." ON THE BAR AFTER THE `:‖` IS A SECOND ENDING** (owner, 2026-09-07, on the same
+ * playback). It is not a judgement call about ink: a first ending lies INSIDE the repeat by
+ * definition, so a bracket past the closing barline can only be the "2." — the model either read the
+ * glyph on the wrong side of the line or misread its number. `relabel` names that bar and the caller
+ * rewrites the mark, which both corrects the drawing and feeds the rule above. Measured over the
+ * 1,720 decoded pages: **58 spans**, in two halves that corroborate each other — **29** where it is
+ * the only volta ink on the span (so the first ending was never skipped), and **29** where a correct
+ * "1." sits on the `:‖` bar AND a second "1." is printed on the bar after it, which is a bar that is
+ * a second ending by construction. ⚠ **0 of the 58 open a new repeat and 0 already carry a "2."** —
+ * and a bar that does carry a `‖:` is left alone anyway, since a span's own first bar is the one
+ * place a "1." past a barline could mean something else.
+ *
  * Unmatched `:‖` repeats from the start of the piece (or the previous span's end) — the engraving
  * convention. Where a span carries more than one "1." (26 spans do, all noise), the LAST one wins:
  * it is the one nearest its `:‖`.
@@ -609,11 +647,15 @@ export const WARN_UNMATCHED_REPSTART = "unmatched \\repstart — played once";
 function expandRepeats(
   measures: readonly StructureMarks[],
   warnings: string[],
-): { order: number[]; endings: [number, number][] } {
+): EndingRepairs {
   const out: number[] = [];
   /** First endings as inclusive measure-index ranges — what the second pass, and the da-capo pass
    *  below, must skip. Resolved HERE and nowhere else, so drawing and playback cannot disagree. */
   const endings: [number, number][] = [];
+  /** Measures the "2." above says are a first ending, though no "1." was read on them. */
+  const inferred: number[] = [];
+  /** Measures carrying a "1." that lands past a `:‖`, which makes it a "2.". */
+  const relabel: number[] = [];
   let passStart = 0; // where an unmatched `:‖` would jump back to
   let openStart: number | null = null;
   for (let i = 0; i < measures.length; i++) {
@@ -627,11 +669,20 @@ function expandRepeats(
       const start = openStart ?? passStart;
       let v1: number | null = null;
       for (let k = start; k <= i; k++) if (measures[k]!.volta1) v1 = k;
+      // The bar past the `:‖` is the SECOND ending whichever number is printed on it — a first
+      // ending lies inside the repeat. A `‖:` there is the one shape left alone (see above), and a
+      // one-bar span is out because nothing may be skipped in it at all.
+      const next = measures[i + 1];
+      const misnumbered = start < i && next?.volta1 === true && next.repStart !== true;
+      if (misnumbered) relabel.push(i + 1);
       if (v1 != null && i - v1 + 1 > MAX_FIRST_ENDING) {
         warnings.push(
           `\\volta1 opens ${i - v1 + 1} bars before its :‖ — too long for a first ending, ignored`,
         );
         v1 = null;
+      } else if (v1 == null && start < i && (next?.volta2 === true || misnumbered)) {
+        v1 = i; // the second ending after the barline says this bar is the first one — see above
+        inferred.push(i);
       }
       if (v1 != null) endings.push([v1, i]);
       // Second pass: the span up to the first ending, which is skipped whole — the "2." that
@@ -642,7 +693,21 @@ function expandRepeats(
     }
   }
   if (openStart != null) warnings.push(WARN_UNMATCHED_REPSTART);
-  return { order: out, endings };
+  return { order: out, endings, inferred, relabel };
+}
+
+/**
+ * Write `expandRepeats`'s two mark repairs back onto the bars, BEFORE anything reads the marks
+ * again — the 𝄋 pass re-runs `expandRepeats` over its section and `structureOf` draws from these,
+ * so the bracket that is drawn and the bar that is skipped stay one decision. Same idiom as the
+ * editor's `restampSegnoEdges`: what a sign MEANS is re-derived, never remembered.
+ */
+function applyEndingRepairs(marks: StructureMarks[], repairs: EndingRepairs): void {
+  for (const i of repairs.relabel) {
+    delete marks[i]!.volta1;
+    marks[i]!.volta2 = true;
+  }
+  for (const i of repairs.inferred) marks[i]!.volta1 = true;
 }
 
 /**
@@ -917,6 +982,7 @@ export function resolveStructure(
   // Same order as `stitchTokenRows`: repeats are local, then the 𝄋 → 𝄋 returns that replay a whole
   // section, then the "D.C." at the very end, which reads the order the other two made.
   const repeats = expandRepeats(marks, warnings);
+  applyEndingRepairs(marks, repeats);
   const withSegno = expandSegnoJumps(marks, repeats.order, warnings);
   const played = expandDaCapo(marks, withSegno, repeats.endings, warnings);
 
@@ -944,6 +1010,7 @@ export function stitchTokenRows(rows: readonly string[], opts: StitchOptions = {
   // the written score on the page and follows `structure.playBars` at playback time instead, so
   // the same expansion (and the same warnings about malformed signs) has to run either way.
   const repeats = expandRepeats(measures, warnings);
+  applyEndingRepairs(measures, repeats);
   // Order matters: repeats first (they are local), then the 𝄋 → 𝄋 returns that play a whole
   // section again, then the "D.C." at the very end, which reads the order the other two made.
   const withSegno = expandSegnoJumps(measures, repeats.order, warnings);

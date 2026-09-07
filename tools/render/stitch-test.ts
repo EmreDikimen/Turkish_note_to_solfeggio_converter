@@ -307,6 +307,87 @@ console.log("structure unit tests:");
     check("the 1. is drawn where the ending STARTS, not on the :‖ bar", drawn, "1:‖: 2:1. 3::‖ 4:2.");
   }
 
+  // --- a "2." implies a "1." the model did not read (owner, 2026-09-07) -----------------------
+  //
+  // "Volta 1 sadece ilk tekrarda çalınacak." A second ending is only printed opposite a first one,
+  // so a `\volta2` after the `:‖` is enough on its own: the `:‖` bar becomes a one-bar first ending
+  // even with no "1." decoded. Before this the whole span replayed and the first ending sounded
+  // again — 156 of the 1,208 `:‖` that carry a written "2." over the 1,720 decoded real pages.
+  {
+    const noV1 = ["\\repstart c''4 | d''4 \\repend \\volta2 e''4 | f''4"];
+    const res = stitchTokenRows(noV1, { expand: false });
+    check("a \\volta2 with no \\volta1 still skips its first ending", res.structure.playBars.join("-"), "1-2-1-3-4");
+    check("…the inferred ending is the :‖ bar", res.structure.firstEndings.map((e) => `${e.from}-${e.to}`).join(" "), "2-2");
+    check(
+      "…and the 1. is DRAWN there, so the page shows what it plays",
+      String(res.structure.bars.find((b) => b.bar === 2)?.volta1 === true),
+      "true",
+    );
+    check("…it is silent about it: nothing drawn-but-unsounded to warn on", res.warnings.join(";"), "");
+    check(
+      "…that is what sounds: pass 2 goes c → e, never through d again",
+      t(noV1),
+      "Do5:1/4 | Re5:1/4 | Do5:1/4 | Mi5:1/4 | Fa5:1/4",
+    );
+    // ⚠ Refused where it would erase the repeat instead of shortening it: with one bar between the
+    // `‖:` and the `:‖` the second pass would have nothing left to play.
+    check(
+      "a one-bar span is NOT re-read as a first ending",
+      stitchTokenRows(["\\repstart c''4 \\repend \\volta2 d''4"], { expand: false }).structure.playBars.join("-"),
+      "1-1-2",
+    );
+    // A "1." that WAS read but sits too far keeps the ignore-and-warn rule — the inference must not
+    // draw a second bracket on the same span.
+    const farWithV2 = ["\\repstart \\volta1 c''4 | d''4 | e''4 | f''4 | g''4 \\repend \\volta2 a''4"];
+    check(
+      "a far \\volta1 still wins the span (no second bracket invented)",
+      stitchTokenRows(farWithV2, { expand: false }).structure.firstEndings.length.toString(),
+      "0",
+    );
+  }
+
+  // --- a "1." PAST the `:‖` is a "2." (owner, 2026-09-07) --------------------------------------
+  //
+  // Not a judgement about ink: a first ending lies INSIDE the repeat by definition, so a bracket
+  // after the closing barline can only be the second ending — the glyph was read on the wrong side
+  // of the line, or its number was misread. 58 spans on the decoded real pages, in two halves: 29
+  // where it is the only volta ink (the ending was never skipped) and 29 where a correct "1." sits
+  // on the `:‖` bar and a SECOND "1." is printed on the bar after it.
+  {
+    const misplaced = ["\\repstart c''4 | d''4 \\repend \\volta1 e''4 | f''4"];
+    const res = stitchTokenRows(misplaced, { expand: false });
+    check("a \\volta1 after the :‖ is read as the 2.", marksOf(misplaced), "1:repStart 2:repEnd,volta1 3:volta2");
+    check("…so the first ending is skipped on the repeat", res.structure.playBars.join("-"), "1-2-1-3-4");
+    check(
+      "…and that is what sounds: pass 2 goes c → e, never through d again",
+      t(misplaced),
+      "Do5:1/4 | Re5:1/4 | Do5:1/4 | Mi5:1/4 | Fa5:1/4",
+    );
+    // The other half: the ending is already right, and only the DRAWING was wrong. Playing order
+    // must not move — the bar after the `:‖` was always the second ending.
+    const stray = ["\\repstart c''4 | \\volta1 d''4 \\repend \\volta1 e''4 | f''4"];
+    check("a stray 1. beside a correct one becomes the 2.", marksOf(stray), "1:repStart 2:volta1,repEnd 3:volta2");
+    check("…and the playing order is the one it already had", playOf(stray), "1-2-1-3-4");
+    check(
+      "a bar carrying BOTH after the :‖ keeps only the 2.",
+      marksOf(["\\repstart c''4 | d''4 \\repend \\volta1 \\volta2 e''4 | f''4"]),
+      "1:repStart 2:repEnd,volta1 3:volta2",
+    );
+    // ⚠ Two shapes left alone. A ONE-BAR span can skip nothing at all, and a bar carrying a `‖:` is
+    // the one place past a barline where a "1." could still mean its own span's first ending.
+    check(
+      "a one-bar span keeps its 1. and its full repeat",
+      marksOf(["\\repstart c''4 \\repend \\volta1 d''4"]) + " → " +
+        playOf(["\\repstart c''4 \\repend \\volta1 d''4"]),
+      "1:repStart,repEnd 2:volta1 → 1-1-2",
+    );
+    check(
+      "a 1. on a bar that OPENS a repeat is left alone",
+      marksOf(["\\repstart c''4 | d''4 \\repend \\repstart \\volta1 e''4 | f''4 \\repend"]),
+      "1:repStart 2:repEnd 3:repStart,volta1 4:repEnd",
+    );
+  }
+
   // ⭐ THE SAFETY CLAIM OF THE WHOLE FOLD: unfolding the written score along `playBars` gives back
   // exactly what the old flattening produced. Same notes, same order, same durations — so keeping
   // the signs on the page cannot change a single sound. Checked on every structural case above.
@@ -315,6 +396,8 @@ console.log("structure unit tests:");
     ["\\repstart c''4 | d''4 \\repend e''4"],
     ["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"],
     ["\\repstart c''4 | \\volta1 d''4 | e''4 \\repend \\volta2 f''4 | g''4"],
+    ["\\repstart c''4 | d''4 \\repend \\volta2 e''4 | f''4"],
+    ["\\repstart c''4 | d''4 \\repend \\volta1 e''4 | f''4"],
     ["c''4 | d''4 \\repend e''4"],
     ["c''4 \\fine | d''4 \\dc"],
     ["c''4 \\coda | d''4 | \\coda e''4 | f''4 \\dc"],

@@ -41,8 +41,14 @@ updated: 2026-09-06
   of its bar, and a 𝄋 lands on the bar it is DRAWN on (`segnoAt`). ⚠ **A FIRST ENDING IS A RUN, NOT ONE
   BAR** — from the "1." to the `:‖`, skipped whole, capped at `MAX_FIRST_ENDING = 4`, and resolved
   **once** in `expandRepeats` → `ScoreStructure.firstEndings`; the drawn "1." reads that answer or the
-  ink and the music drift apart (they did, on 37.9% of real first endings). Rules and counts:
-  [docs/DECISIONS.md](DECISIONS.md).
+  ink and the music drift apart (they did, on 37.9% of real first endings). ⚠ **A "2." IMPLIES A
+  "1."** (2026-09-07): with a `\volta2` after the `:‖` and no "1." read anywhere in the span, the
+  `:‖` bar becomes a one-bar first ending and the mark is WRITTEN onto it, so the bracket draws where
+  the music is skipped — 12.9% of written second endings replayed their first ending without it.
+  ⚠ **AND A "1." PAST THE `:‖` IS A "2."** — a first ending lies inside the repeat by definition, so a
+  bracket after the closing barline is relabelled (58 spans), which corrects the drawing and feeds the
+  rule above. ⚠ **The two repairs are ORDERED**: relabel, then infer. ⚠ Both leave a bar carrying a
+  `‖:` and a one-bar span alone. Rules and counts: [docs/DECISIONS.md](DECISIONS.md).
 - ⚠ **DECODED PAGES ONLY** — a SymbTr sample is flat in the data, so folding one means guessing from
   duplicate bars; `Tekrarlar` still only DRAWS there and the renderer path (`?repseed=`/`?navseed=`) is
   untouched, so the training corpus is byte-identical. ⚠ `Tekrarları açık yaz` is **view-only and

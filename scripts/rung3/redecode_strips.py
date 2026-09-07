@@ -50,14 +50,20 @@ from page_to_strips import window_cache_ok, window_signature  # noqa: E402
 DECODE_FIELDS = ("tokens", "n_ids", "hit_cap", "min_logprob", "mean_logprob")
 
 
-def redecode_page(dj: Path, rt, strip_dir: Path) -> tuple[dict, int]:
+def redecode_page(dj: Path, rt, strip_dir: Path, frozen: bool = False) -> tuple[dict, int]:
     d = json.loads(dj.read_text())
     # ⚠ The stored window signature is COPIED through below, so it MUST already describe today's
     # slicer. If it does not, these crops are not what `page_to_strips` now produces: writing a
     # decode that claims otherwise would hand the next `emit_strip_labels.py` run a cache it
     # believes, or -- worse, if it disbelieves it -- send it through `decode_page()`, which slices
     # before it decodes and would re-cut the frozen exam. Refuse instead of guessing.
-    if not window_cache_ok(d):
+    # ⭐ `frozen` (--frozen-crops) accepts a cache cut by an OLDER slicer, and it is safe for the
+    # same reason this whole tool is: it never slices, so nothing here can put new pixels under an
+    # old decode. What it writes back is the stored signature UNCHANGED, so the cache keeps saying
+    # which CV code cut its crops and the emitter must also be run with --frozen-crops to use it.
+    # ⛔ It is NOT for the exam, whose gold describes pixels a re-cut would move — there the refusal
+    # below is the point. Round 4 step 5 route C+: docs/rung3/round4.md.
+    if not window_cache_ok(d, frozen_crops=frozen):
         raise SystemExit(
             f"{dj}: stored window signature does not match the current slicer.\n"
             f"  stored : { {k: d.get(k) for k in window_signature()} }\n"
@@ -98,6 +104,11 @@ def main() -> None:
     ap.add_argument("--tag", default="prev", help="backup suffix: <page>_decode.json.bak-<tag>")
     ap.add_argument("--limit", type=int, default=0, help="stop after N pages (a pilot)")
     ap.add_argument("--pages", default="", help="comma-separated page stems; default = all")
+    ap.add_argument("--frozen-crops", action="store_true",
+                    help="accept crops cut by an older slicer revision: this tool re-cuts nothing, "
+                         "so the decode it writes still describes the pixels on disk. The stored "
+                         "window signature is copied through unchanged, so the emitter reading the "
+                         "cache afterwards needs --frozen-crops too.")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -125,7 +136,7 @@ def main() -> None:
     total_changed = 0
     for i, dj in enumerate(jobs, 1):
         stem = dj.parent.name
-        d, changed = redecode_page(dj, rt, dj.parent)
+        d, changed = redecode_page(dj, rt, dj.parent, args.frozen_crops)
         shutil.copy2(dj, dj.parent / f"{dj.name}.bak-{args.tag}")
         dj.write_text(json.dumps(d, indent=1))
         done_strips += len(d.get("strips", []))

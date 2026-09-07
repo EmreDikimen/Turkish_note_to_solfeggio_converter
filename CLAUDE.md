@@ -168,6 +168,14 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   column IS the retired pipeline's cache. ⚠ And `score_slicer.py --sample` has no default: **the
   instrument is 6,440 rows**, every score quoted before 2026-08-25 evening is a 124-row sample, and a
   full run reversed one call made on the sample.
+  ⭐ **THE ONE EXCEPTION IS `--frozen-crops`, AND IT IS SAFE ONLY BECAUSE IT SLICES NOTHING** (owner,
+  2026-09-07). The rule guards a PAIR — new pixels under an old decode. A run that re-cuts no page
+  never forms that pair: the crops on disk are the ones the cache describes. So
+  `emit_strip_labels.py --frozen-crops` and `redecode_strips.py --frozen-crops` accept a legacy
+  cache, and the emitter's flag **refuses `--rail` and `--redecode`** and DROPS a piece whose page
+  has no cache rather than cutting one. ⛔ Never widen it to a path that can slice, and never to the
+  exam. Why it exists: a full re-emit moves the pixels under labels a human already read — measured
+  on 30 pages, 20 cut differently and **15% of the labelled strips on them changed bytes**.
   [docs/METRICS-SLICER-BARLINES.md](docs/METRICS-SLICER-BARLINES.md).
 - **A CHANGE THAT ADDS OR REMOVES A STAFF CANNOT BE PRICED BY THE ROW-LEVEL SCORERS AS THEY STAND**
   (2026-08-25). Both pair a row to its cached truth **by system index**, so an inserted staff shifts

@@ -239,20 +239,51 @@ to revisit the no-render decision; otherwise it stands.
      28 → 40 on one piece), the rail clears the rest (over-budget 18 → 0, accepted → 54), and the
      owner's rule holds — of the 19 measure spans a railed page shares with its unrailed cut,
      **19 are byte-identical**, while 8 of them carry a different `_wNN` name.
-   ⏭ **Still owed**: the run itself — a Colab decode, since every cache is refused since
-   `GEOMETRY_REV` 20260903. ⚠ Those 2026-09-03 slicer fixes move some crops regardless, on an
-   **unmeasured** number of pages. Then `verify-labels`, then the owner reads the audit sample and
-   every `\sig` row — expect ~450 fixes in ~3,500 rescued strips at the measured 12.9%.
+   ✅ **RUN 2026-09-07 — and it took ROUTE C+, which needed no GPU at all.** The Colab decode this
+   step assumed was avoided by measuring what it would cost first: on 30 pages re-cut with today's
+   slicer, **20 cut differently and 15.3% of the strips carrying a LABEL changed pixels**. A verdict
+   is given against pixels, so a full re-cut meant ~600 re-reads. The owner's call — *"o stripler
+   hala kullanılabilir halde, atmayalım"* — and the way out was that the yield comes from the
+   TOKENIZER, not from a new cut: `--frozen-crops` re-uses the crops and the 1,720 legacy caches and
+   slices nothing ([../DECISIONS.md](../DECISIONS.md), [../../CLAUDE.md](../../CLAUDE.md)).
+
+   **What came out: `data/real/rung3/strips_h1`, 4,460 rows** (4,425 frozen + 35 from the rail),
+   against b8's 3,929. The full table is in
+   [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md); three findings change this plan:
+
+   - ⛔ **"3,508 rescued → a pool of 7,437" WAS WRONG, and the reason is a second gate.** The budget
+     class collapsed exactly as forecast (`over_budget` 4,012 → **141**), but of the ~3,871 strips
+     that came back only **+588 reached training**: ~1,739 went to review and ~1,648 dropped as
+     `nd_high`. An over-budget strip is a DENSE strip, and `nd` asks the referee to read exactly the
+     material this round opened *because the model reads it badly*. **The binding gate is no longer
+     the budget; it is the referee.**
+   - ⛔ **A better referee does not fix that** — pilot on 12 pieces / 597 strips with
+     `r3a-stage2-best-real` (fair here: those strips were never trained on): it read **38.2%** of
+     them differently and moved acceptance **33 → 32**. Saved a ~1,720-page inference pass.
+   - ⚠ **The rail's own yield is +35 strips (+0.8%)**, not the ~282 its 141 windows allowed: 282 of
+     its 356 accepted rows were re-groupings of music the pool already had, and 39 were refused
+     because the two crop roots disagree on the page's staff-row count. Merged by
+     `merge_rail_strips.py` under one rule — a row may only come from **inside a window the pool
+     dropped as `over_budget`**.
+
+   ⭐ **The gain is aimed where it was meant to be**: the 588 new accepted strips carry a median of
+   **18 label tokens against 11** for the rows b8 already had, and the rail's 35 carry 20.
+   ⏭ **Still owed**: the owner reads the seeded 100-row sample of the 571 unread rescued strips
+   (queue `h1-full`, filter `new_dense_sample`) — b8's escaped-bad rate was 12.9% and nothing
+   measures it for this material yet.
 
 6. **Two arms from base, one variable**: old vocabulary (control) vs scheme H, same pools, same
    steps, stage 2 at 4,000. ~3.5 h each on an L4. Everything else in this round changes together and
    is unattributable; the vocabulary gets its own paired answer.
-   ⚠ **"SAME POOLS" IS NOT ACHIEVABLE AS WRITTEN, measured 2026-09-07.** Of the 15,610 strips a
-   budget of 80 admits under H, **769 (4.93%) cost more than 100 ids under the old vocabulary** — the
-   control arm cannot hold them, because `collate` truncates at 99 and would teach it to stop early.
-   ⏭ **Decide before running it**: drop those 769 from both arms (a clean pair over a slightly
-   smaller pool), or accept that the control is Round 3's own 59-gated pool and read the arms as
-   "the whole intervention" rather than "the vocabulary alone".
+   ✅ **"SAME POOLS" IS ACHIEVABLE AFTER ALL — the real pool costs 4 rows, not 769** (measured
+   2026-09-07 on `strips_h1`'s promoted labels, where the earlier 769 was an estimate over a
+   15,610-strip pool that the `nd` gate never let exist). Of 4,425 labels, **4 cost more than 99 ids
+   under the old vocabulary** — `collate`'s truncation cliff — so the owner's call (drop them from
+   BOTH arms) makes the pair clean at negligible cost. ⚠ Longest H label is **51 ids**, so the 80
+   budget binds nothing in this pool; the growth is the **549** labels costing more than b8's 59.
+   ⚠ **Run at `--real-val-frac 0.10`, the default**: `_realval_v2` shares **44 pieces** with the
+   training pool and at 0.10 all 44 sit val-side, but at 0.05 **17 cross into training** and the
+   selector reads pieces it trained on — the Run-B defect, now checked before the run.
 7. **Beam search, offline, on the current model first** — paired on `_realval_v2`. The decoder is
    20–25% of a strip's time (encoder 74–81%), so beam 3 costs roughly +40–60% page time, not ×3;
    Transcoda's gain at beam 3 was small. Ships to the user path only if it pays; otherwise the emitter

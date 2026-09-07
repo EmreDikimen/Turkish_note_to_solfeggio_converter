@@ -7,6 +7,62 @@ updated: 2026-09-07
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-07 — the Round-4 re-emit ran without a GPU, and the yield claim it was built on died
+
+**Route C+.** The plan said: re-emit `strips_b8` under scheme H, which needs a Colab decode because
+`GEOMETRY_REV` 20260903 refuses every cache on disk. Before booking that, the cost of re-cutting was
+measured: 30 b8 pages re-sliced with today's CV and compared byte-for-byte against `strips_v2` —
+**20 of 30 pages cut differently**, 71% of crops byte-identical, and **of the strips carrying a
+LABEL, 15.3% changed pixels**. A verdict is given against pixels, so a full re-cut meant ~600
+re-reads. The owner: *"o stripler hala kullanılabilir halde, atmayalım... 600 stripi güncellemek
+3-4 saatimi alır."*
+
+The way out was already in the round's own argument: the yield comes from the TOKENIZER, and scheme H
+shortens a label without touching a crop. So `--frozen-crops` was added to `emit_strip_labels.py`
+(and to `redecode_strips.py`, which refuses legacy caches for the same reason and never slices
+either). It is the one exception to "a cache without `geometry_rev` is refused", and it holds only
+because nothing slices: the flag refuses `--rail`/`--redecode` and drops a piece whose page has no
+cache rather than cutting one. **No GPU, no Colab, ~40 minutes on the laptop.**
+
+**What came out.** `strips_h1`, **4,460 rows** (4,425 frozen + 35 from the rail) against b8's 3,929.
+b8's verdicts carried across by `carry_verdicts.py` under a per-row proof — same inode (or same
+hash) AND character-identical label: **3,864 of 3,956 carried, 980 of them human reads, 0 refused**.
+The 91 that did not carry went to review, 54 of them as `sig_table_conflict`, where rule D kept the
+SymbTr derivation and the label legitimately changed.
+
+**And the round's headline number was wrong.** `over_budget` collapsed as forecast (4,012 → **141**),
+but of ~3,871 strips that returned only **+588 reached training**: ~1,739 to review, ~1,648 dropped
+as `nd_high`. The budget was never the only gate — behind it stands `nd`, the emitter's disagreement
+check against the referee's own reading, and an over-budget strip is a dense strip, which is exactly
+what the referee reads badly. The forecast "3,508 rescued → 7,437" priced the first gate alone.
+
+**The obvious repair was tested and is a null.** `r3a-stage2-best-real` is a fair referee on this
+material for a provable reason — those strips were never in training, so it cannot have memorised
+them — and `redecode_strips.py --frozen-crops` applies it without slicing. On 12 pieces / 597 strips
+it read **38.2% of them differently** and moved acceptance **33 → 32**. That closed a ~1,720-page
+inference pass for the cost of a 4-minute pilot. ⚠ n = 12 pieces: it rules out an effect at rescue
+scale, not a small one.
+
+**The rail (Faz 2) bought +35 strips, +0.8%.** 141 windows, 107 pages, re-cut into their own root so
+`strips_v2` stayed frozen; of the 356 rows that emit accepted, 282 were re-groupings of music the
+pool already had and 39 were refused because the two roots disagree on the page's staff-row count.
+`merge_rail_strips.py` takes a row only if it comes from **inside a window the pool dropped as
+`over_budget`**, matches by the slicer's own `(page, system, meas_from, meas_to)`, and renames every
+added crop to its span because a split renumbers `_wNN`.
+
+**Two things step 6 no longer has to argue about.** Of 4,425 promoted labels, **4** cost more than 99
+old ids (the `collate` truncation cliff) — not the 769 estimated over a pool that never existed — so
+the owner's "drop them from both arms" makes the A/B clean. And `_realval_v2` shares **44 pieces**
+with the training pool: at `--real-val-frac 0.10` all 44 are val-side, at 0.05 **17 cross into
+training**, which is the Run-B defect. Run at the default.
+
+**A mistake worth recording.** `carry_verdicts.py` first wrote the review queue in place and raised
+mid-write on a missing column, truncating `emit_review.csv` at **185 of 6,434 rows**. No human work
+was lost — the file was minutes old and unread — but the emit had to be re-run to rebuild it (it
+reproduced byte-identically, which is at least a proof the emit is deterministic). Both halves are
+fixed: the header is widened before writing, and every queue write now goes to a temp file and gets
+renamed. ⛔ Never `open(path, "w")` on a file that holds work.
+
 ## 2026-09-07 — the label budget is 80 under scheme H, and 59 was never a model limit
 
 The owner asked the question that re-opened it, from the app rather than from a table: *"budgetımız

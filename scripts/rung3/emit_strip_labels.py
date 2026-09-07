@@ -344,14 +344,26 @@ class Rail:
 
 
 # ------------------------------------------------------------------------------ page decodes
+class FrozenCacheMissing(RuntimeError):
+    """`--frozen-crops` met a page with no usable decode cache. It may not cut one, so the piece
+    drops — with its own reason, because "missing_pages" would read as a missing IMAGE."""
+
+
 def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool,
-                rail: Rail | None = None) -> list[dict] | None:
+                rail: Rail | None = None, frozen: bool = False) -> list[dict] | None:
     """Per page (in order): the `<page>_decode.json` dict — reused when it already carries the
     slicer geometry and came from the same checkpoint, else re-decoded.
 
     ⚠ A CACHE IS ONLY VALID FOR THE WINDOWING THAT CUT ITS CROPS, and the rail is part of that
     windowing: a page the plan names is ALWAYS re-decoded (its crops are about to move), and a
     cache carrying `split_from` — i.e. cut by some rail — is refused by a run with no plan for it.
+
+    ⛔ `frozen` (the `--frozen-crops` mode) inverts the fallback: it accepts a cache whose CV
+    revision is older than today's — the crops on disk are the ones it describes, and this mode
+    slices nothing — but a page WITHOUT a usable cache drops its piece instead of being decoded.
+    Slicing one page would re-cut every crop on it under today's CV, which is what the mode exists
+    to prevent (the measured cost: 15% of the labelled strips on a page change pixels, and a
+    verdict was given against pixels). docs/rung3/round4.md step 5.
     """
     from decode_page import decode_page
     from page_to_strips import window_cache_ok
@@ -369,13 +381,15 @@ def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool,
             d = json.loads(dj.read_text())
             strips = d.get("strips", [])
             if (d.get("checkpoint") != rt.checkpoint or d.get("suffix") != rt.suffix
-                    or not window_cache_ok(d)
+                    or not window_cache_ok(d, frozen_crops=frozen)
                     or not strips or strips[0].get("meas_from") is None
                     or strips[0].get("min_logprob") is None):
                 d = None  # old format / other model / other window size — refresh
             elif any(s.get("split_from") is not None for s in strips):
                 d = None  # cut by a rail this run knows nothing about — refresh
         if d is None:
+            if frozen:
+                raise FrozenCacheMissing(stem)  # this mode may not cut a new one
             try:
                 d = decode_page(page_path, rt, strips_root, debug=True, verbose=False,
                                 oversize=over)
@@ -687,6 +701,15 @@ def main() -> int:
                          "emit_rail.json (no re-slice, no re-decode: it is a plan, not a cut)")
     ap.add_argument("--rail", help="emit_rail.json from a --rail-plan run: split the windows it "
                                    "names. ⚠ every page it names is RE-DECODED (its crops move)")
+    # ⭐ Round 4 step 5's C+ route (owner, 2026-09-07): the yield this round wants comes from the
+    # TOKENIZER, not from a new cut — 3,508 of the 4,012 over-budget strips fall under the gate with
+    # their crops untouched. Re-slicing to get them would move pixels under labels a human already
+    # read: measured on 30 pages, 20 cut differently and 15% of the labelled strips on them changed
+    # bytes. This mode reuses the crops and the decodes exactly as they sit on disk.
+    ap.add_argument("--frozen-crops", action="store_true",
+                    help="re-use the existing crops and their decode caches even when the CV "
+                         "revision has moved on: slice NOTHING, and drop a piece whose page has no "
+                         "usable cache rather than cutting a new one. ⛔ refuses --rail/--redecode.")
     ap.add_argument("--max-ids", type=int, default=None,
                     help=f"label budget in ids incl. EOS (default: by --vocab, {MAX_IDS_BY_VOCAB}). "
                          "⛔ NEVER above 100 — data.collate truncates at 99 and the model would be "
@@ -700,6 +723,15 @@ def main() -> int:
         ap.error(f"--max-ids {max_ids} is above the decoder's real ceiling of 100 "
                  "(apps/web/src/omr/decode.ts MAX_TOKENS, data.collate max_len): a longer label is "
                  "TRUNCATED at 99 in training, which teaches the model to stop early.")
+
+    # ⛔ The whole safety of --frozen-crops is that it never slices. Every flag that would make it
+    # slice is refused here rather than trusted to a code path.
+    if args.frozen_crops:
+        if args.rail:
+            ap.error("--frozen-crops slices nothing and --rail re-cuts the windows it names: "
+                     "run the rail as its own pass, into its own --strips-root.")
+        if args.redecode:
+            ap.error("--frozen-crops and --redecode are opposites: --redecode re-slices every page.")
 
     from decode_page import load_runtime
 
@@ -721,7 +753,8 @@ def main() -> int:
         ids = budget_tok(label).input_ids
         return len(ids) + (0 if ids and ids[-1] == budget_tok.eos_token_id else 1)
 
-    print(f"vocabulary: {args.vocab}   label budget: {max_ids} ids (incl. EOS)")
+    print(f"vocabulary: {args.vocab}   label budget: {max_ids} ids (incl. EOS)"
+          + ("   crops FROZEN (no slice, no decode)" if args.frozen_crops else ""))
     rail = None
     if args.rail:
         # ⛔ THE EXAM IS FROZEN AND THE RAIL MOVES CROPS. `--exam` slices the graded pages, and its
@@ -815,7 +848,12 @@ def main() -> int:
                       "strip": strip["strip"] if strip else "", "reason": reason, "detail": detail})
 
     for pi, piece in enumerate(pieces):
-        decodes = get_decodes(piece, rt, strips_root, args.redecode, rail)
+        try:
+            decodes = get_decodes(piece, rt, strips_root, args.redecode, rail, args.frozen_crops)
+        except FrozenCacheMissing as e:
+            drop(piece, "no_frozen_cache", page=str(e))
+            piece_results.append({"piece": piece.stem, "status": "no_frozen_cache"})
+            continue
         if decodes is None:
             drop(piece, "missing_pages")
             piece_results.append({"piece": piece.stem, "status": "missing_pages"})
@@ -1116,6 +1154,7 @@ def main() -> int:
                    ("accept_nd", "review_nd", "row_nd", "margin", "audit_frac", "seed",
                     "checkpoint", "suffix", "exam", "report_only", "vocab", "rail")},
         "max_ids": max_ids,
+        "frozen_crops": args.frozen_crops,
         "rail": {"plan_written": bool(args.rail_plan and over_budget),
                  "over_budget_windows": len(over_budget),
                  "split_strips": sum(1 for r in manifest_rows if "split_from" in r)},

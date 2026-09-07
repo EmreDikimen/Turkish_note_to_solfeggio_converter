@@ -153,8 +153,14 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--apply", action="store_true",
-                    help="write the hint columns into the b8 queues (default: report only)")
+                    help="write the hint columns into the pool's queues (default: report only)")
     ap.add_argument("--repo", default=str(REPO))
+    # ⚠ The pool moved once already: Round 4's `strips_h1` is b8 re-emitted under scheme H with
+    # --frozen-crops, i.e. THE SAME CROPS out of NEW_ROOT, so the span match below is valid for it
+    # unchanged. Any pool cut from another root must not be passed here.
+    ap.add_argument("--dir", default=B8,
+                    help="pool whose queues get the hint columns (default: strips_b8). It MUST be "
+                         "cut from NEW_ROOT — the span index is built from that root's manifests")
     args = ap.parse_args()
     repo = Path(args.repo)
 
@@ -171,7 +177,7 @@ def main() -> None:
         for s, k in d["by"].items():
             newkey[(pg,) + k].append(s)
 
-    b8 = repo / B8
+    b8 = repo / args.dir
     accepted = {json.loads(l)["image"] for l in (b8 / "manifest.jsonl").open() if l.strip()}
     with (b8 / "emit_review.csv").open() as f:
         review = {r["strip"] for r in csv.DictReader(f)}

@@ -50,9 +50,10 @@ Plan and evidence: **[rung3/round4.md](rung3/round4.md)**; plain English:
 
 **Round 4 in one line:** **no new render**, **`\tupend` stays**, **stage 2 at 4,000 steps**; re-emit
 the real pools under **scheme H** note-spelling tokens (✅ confirmed by the owner 2026-09-06 at **16
-new ids, vocabulary 116**), which returns most of the 4,012 over-budget strips **with no new crop**
-— ⭐ **the gate itself is now 80 ids, not 59** (owner, 2026-09-07), so the rail re-cuts **148**
-windows and 356 dense strips train whole; stop the signature vote overwriting silently; select
+new ids, vocabulary 116**) at a gate of **80 ids, not 59** (owner, 2026-09-07) — ✅ **DONE
+2026-09-07 and it moved less than planned: the pool is 4,460 rows, not the 7,437 forecast**, because
+the binding gate turned out to be the referee, not the budget (below); stop the signature vote
+overwriting silently; select
 checkpoints on real-val **corrections**, not loss; beam search measured offline first and **never on
 the user path unless it pays**; a 20–40 page **third-source probe** before any crawl. ⛔ **Three
 things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or add a
@@ -83,8 +84,10 @@ rail asks the emitter instead. ⭐ Deferring it is what keeps the shipping slice
 
 ⚠ **`GEOMETRY_REV` → 20260903: EVERY DECODE CACHE ON DISK IS REFUSED**, because two slicer fixes moved
 crop boundaries the same day — a closing `:|` read as two barlines (`OMR_TAIL_SPAN=0` restores) and a
-note stem taken for a barline (`OMR_END_BLOBS=0` restores). The next emit re-decodes; nothing is owed
-today. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) ·
+note stem taken for a barline (`OMR_END_BLOBS=0` restores). ⭐ **`--frozen-crops` is the one way past
+that refusal and it does not cheat**: it re-uses the crops as well as the cache, so no re-cut can put
+new pixels under an old decode, and it drops a piece whose page has no cache rather than slicing one.
+Round 4's pool was emitted that way; nothing is owed today. [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) ·
 [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
 
 ⏭ **THE SLICER IS FROZEN — treat it as frozen unless the owner says otherwise.** ⭐ **A whole staff row
@@ -174,7 +177,7 @@ Still the gate on what may be **published as a model**. Plan, evidence and the o
 
 | role | pool | state |
 |---|---|---|
-| real training | `strips_b8` (3,929) **re-emitted under scheme H at a budget of 80 ids** (owner, 2026-09-07 — 59 was the emitter's gate, never a model limit); the 4,012 over-budget drops are the target — most return on the tokenizer change alone, keeping their crops, and only **148** are re-cut by the rail, with **356 dense strips training whole**. ⭐ H changes the tokenization, not the label text, so the 995 human reads and 576 fixes on b8 stay valid | ⏭ **code complete 2026-09-07, not run**; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
+| real training | ✅ **`strips_h1` — 4,460 rows**, b8 re-emitted under scheme H at a budget of 80 with `--frozen-crops`: not one page re-sliced, so b8's 980 human reads carried in under a per-row inode+label proof. `over_budget` 4,012 → 141, but only +588 of the returning strips reached training (the `nd` referee gate is what now drops them) and the rail added 35 | ✅ **RUN 2026-09-07**. ⏭ owner reads the 100-row `new_dense_sample` |
 | synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
 | selection | `_realval_v2` (+ `_tupletval`), **on free-running corrections, not loss**, beside the owner's hand-test pages | ⏭ selector change owed |
 | grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
@@ -186,11 +189,11 @@ re-emit.
 ⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
 stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
 2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
-→ ✅ the third-source probe **read 2026-09-06 — a NULL** → ✅ **the step-5 CODE is COMPLETE
-(2026-09-07): vocabulary, the slicer's rail AND the emitter that feeds it** → ⏭ **the re-emit
-itself, which needs a GPU** → the owner reads the audit sample and every `\sig` row → two
-arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
-once.
+→ ✅ the third-source probe **read 2026-09-06 — a NULL** → ✅ **the re-emit is DONE
+(2026-09-07): `strips_h1`, no GPU, no re-cut, and the yield claim corrected** → ⏭ **the owner reads
+the 100-row sample** → two arms from base (old-vocabulary control vs H — the control now loses only
+**4** rows to the 99-id cliff, not 769; run at the default `--real-val-frac 0.10`, since 17 selection
+pieces cross into training at 0.05), stage 2 at 4,000 steps → real-val paired → `examv3` once.
 
 ⭐ **THE LABEL BUDGET IS 80 IDS UNDER SCHEME H, DECIDED 2026-09-07** (owner, from three `examv3`
 strips they had hand-corrected: *"85-90 id den oluşan striplere kadar model doğru bir şekilde tahmin
@@ -201,25 +204,38 @@ median 42 → **24** ids under H, and over the gate **504 (3.20%) at 59 against 
 **356 dense strips train whole**. On the 579 labels the owner hand-typed into `examv3` the longest H
 label is **67 ids**. ⚠ **Four files hold that gate and must stay in step** — the emitter,
 `audit_coverage.py`, `promote_labels.py --vocab` and `train.py --select-max-length`. ⚠ It widens the
-one risk this round already watches: synthetic labels stop at **44** H ids. ⚠ And it complicates step
-6 — **769 of the admitted strips (4.93%) exceed 100 ids under the OLD vocabulary**, so the control
-arm cannot hold them and "same pools, one variable" needs re-stating before that A/B runs.
+one risk this round already watches: synthetic labels stop at **44** H ids. ⛔ **BOTH FORECASTS ABOVE
+WERE OVERTAKEN BY THE RE-EMIT (2026-09-07)**: the 504-vs-148 split and the 769 strips the control arm
+could not hold were priced over a 15,610-strip pool the `nd` gate never let exist. In the pool that
+actually came out, the rail re-cut **141** windows, the longest H label is **51 ids** (so the 80 gate
+binds nothing), and **4** rows — not 769 — exceed 99 under the old vocabulary.
 [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
 
-✅ **STEP 5'S CODE IS FINISHED (2026-09-07) AND NOTHING HAS BEEN RE-EMITTED.** `emit_strip_labels.py`
-now supplies the rail the slicer asked for, in **two runs on purpose**: `--rail-plan` prices every
-candidate sub-range of every over-budget window and writes `emit_rail.json` **without cutting
-anything**, and `--rail <plan>` replays those measured counts as the slicer's `oversize` callback.
-`--vocab {old,h}` picks the tokenizer the 59-id gate counts with — ⛔ **the gate only**: alignment
-keeps the decode model's own tokenizer, because adding H's ids to it would re-segment the DECODED
-text and every `nd` number in that script lives in the model's id space. ⚠ A range the plan never
-priced answers **"leave it alone"**, never a guess, which is what confines the split to the windows
-that failed. Read on one piece (`nikriz_sirto_refik_fersan`, 3 pages, scratch root, no pool
-touched): over-budget windows **18 under the old vocabulary → 0 under H**, accepted strips 28 → 40,
-and with the plan applied 54; slicing that page twice, the **19 measure spans the two cuts share are
-byte-identical, 19 of 19**, while 8 of them carry a different `_wNN` name. ⚠ **n = 1 piece — it
-verifies the mechanism, it prices nothing.** [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) ·
-[rung3/round4.md](rung3/round4.md).
+⭐ **STEP 5 IS RUN, AND IT NEEDED NO GPU — THE RE-EMIT RE-CUT NOTHING** (owner, 2026-09-07:
+*"o stripler hala kullanılabilir halde, atmayalım"*). The planned Colab decode was priced first: on
+30 pages re-cut with today's slicer **20 cut differently and 15.3% of the strips carrying a LABEL
+changed pixels**, i.e. ~600 of the owner's reads invalidated, because a verdict is given against
+pixels. ⭐ **The yield comes from the TOKENIZER, not a new cut**, so `--frozen-crops` re-uses the
+crops and the 1,720 legacy caches and slices nothing — the one exception to the refuse-a-legacy-cache
+rule, safe only because nothing slices ([../CLAUDE.md](../CLAUDE.md)).
+
+**The pool is `data/real/rung3/strips_h1`, 4,460 rows** (b8: 3,929). b8's verdicts carried in under a
+per-row inode+label proof: **3,864 of 3,956, 980 of them human reads, 0 refused**.
+
+⛔ **THE ROUND'S HEADLINE YIELD CLAIM IS DEAD, AND WHAT KILLED IT IS A SECOND GATE.** `over_budget`
+collapsed as forecast (4,012 → **141**), but of the ~3,871 strips that returned only **+588 reached
+training**: ~1,739 went to review, ~1,648 dropped as `nd_high`. A strip over the budget is a DENSE
+strip, and `nd` asks the referee to read exactly the material this round opened *because the model
+reads it badly*. ⛔ **A better referee does not fix it**: `r3a-stage2-best-real` — fair here, those
+strips were never trained on — read **38.2%** of a 12-piece pilot differently and moved acceptance
+**33 → 32**. ⚠ **The rail's own yield is +35 strips (+0.8%)**, not the ~282 its 141 windows allowed.
+⭐ What did land is aimed right: the new rows carry a median **18 label tokens against 11**.
+[METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [rung3/round4.md](rung3/round4.md).
+
+⏭ **Owner:** read the seeded **100-row sample** of the 571 unread rescued strips — `review_ui.py`,
+queue **`h1-full`**, filter **`new_dense_sample`**. b8's escaped-bad rate was 12.9% and nothing
+measures it for this material; without that number a step-6 arm cannot separate "H helped" from
+"the new labels are dirty".
 
 ✅ **STEP 3 IS DONE (2026-09-06) — the signature vote is measured AND its rule is built.** `sig_vote_audit.py` read all five
 pools; every number is in [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). ⭐ **It is a DELETION problem, not

@@ -166,6 +166,24 @@ QUEUES = {
     # referee was trained on these very labels at 9x oversampling, so its agreement is partly
     # memory rather than judgement. 201 rows, the emitter's seeded 5% sample. exam v2 read 2 of 63
     # and a later full read found 51% wrong.
+    # ROUND 4's POOL (2026-09-07) — strips_b8 re-emitted under scheme H at a budget of 80, with
+    # --frozen-crops: not one page was re-sliced, so every crop is the SAME FILE b8 hardlinks and
+    # b8's 980 human verdicts were carried in by carry_verdicts.py under a per-row inode + label
+    # proof. ⭐ WHAT NEEDS READING HERE IS THE UNVERDICTED 571 — the strips the old 59-id gate
+    # dropped as over-budget and H let back in. They are the pool's new material, they are DENSER
+    # than the rest (median 18 tokens against 11), and no human has seen one. b8's own escaped-bad
+    # rate on read rows was 12.9%; nothing measures it for these yet, and without that number a
+    # step-6 arm result cannot separate "H helped" from "the new labels are dirty".
+    # ⚠ The rest of h1-full is CARRIED, not fresh: re-reading a row already read in b8 is wasted
+    # work — filter to the unverdicted ones.
+    # ⚠ h1-rail is the ONLY queue in this file whose crops come from another root — the 35 strips
+    # the rail split out of over-budget windows, cut by TODAY's CV into data/real/strips_v2_rail
+    # while the rest of h1 stayed frozen on the 2026-07-29 crops. It has its own IMG root below for
+    # exactly that reason. Every row is unread by construction; the pool marks them `rail_split`.
+    "h1-rail": "data/real/rung3/strips_h1/rail_added.csv",
+    "h1-audit": "data/real/rung3/strips_h1/emit_audit.csv",
+    "h1-full": "data/real/rung3/strips_h1/full_audit.csv",
+    "h1-review": "data/real/rung3/strips_h1/emit_review.csv",
     "b8-audit": "data/real/rung3/strips_b8/emit_audit.csv",
     "b8-full": "data/real/rung3/strips_b8/full_audit.csv",
     "b8-review": "data/real/rung3/strips_b8/emit_review.csv",
@@ -260,6 +278,10 @@ FULL_AUDITS = {
     # rung3-labeler decode — so the default would seed the edit box from a decode of a different
     # crop by a different model, with nothing on screen to say so.
     "b8-full": ("data/real/rung3/strips_b8", "b8-audit", "data/real/strips_v2"),
+    # ⚠ h1 names strips_v2 for the same reason b8 does — and its full_audit.csv is written by
+    # carry_verdicts.py, not here: build_full_audit skips a file that exists, which is what keeps
+    # the carried verdicts from being rebuilt away.
+    "h1-full": ("data/real/rung3/strips_h1", "h1-audit", "data/real/strips_v2"),
     "r1-full": ("data/real/rung3/strips_r1", "r1-audit"),
     "nota-full": ("data/real/rung3/strips_nota", "nota-audit"),
     "examv2-full": ("data/real/rung3/strips_exam_v2", "examv2-audit"),
@@ -300,6 +322,10 @@ QUEUE_IMG_ROOTS = {
     "b8-audit": ["data/real/strips_v2"],
     "b8-full": ["data/real/strips_v2"],
     "b8-review": ["data/real/strips_v2"],
+    "h1-rail": ["data/real/strips_v2_rail"],   # ⛔ NOT strips_v2 — these crops were re-cut
+    "h1-audit": ["data/real/strips_v2"],   # the same crops as b8, by construction
+    "h1-full": ["data/real/strips_v2"],
+    "h1-review": ["data/real/strips_v2"],
 }
 # Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
 # on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is

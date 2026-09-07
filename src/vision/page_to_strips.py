@@ -1569,8 +1569,17 @@ def window_signature() -> dict:
                          "staff_width_consensus": STAFF_WIDTH_CONSENSUS}}
 
 
-def window_cache_ok(prev: dict) -> bool:
+def window_cache_ok(prev: dict, *, frozen_crops: bool = False) -> bool:
     """True if a cached decode's crops match the CURRENT windowing settings.
+
+    ⛔ `frozen_crops=True` DROPS THE TWO GEOMETRY CHECKS and is legal for ONE kind of caller: one
+    that re-slices NOTHING. The geometry gate exists because a cache describes crops some older CV
+    code cut, and re-slicing today would put new pixels under an old decode (CLAUDE.md). A
+    caller that never calls `page_to_strips` has no such pair: the crops on disk ARE the ones this
+    cache describes, and the windowing knobs — which is all the other checks read — still match.
+    ⚠ It stays a per-call opt-in and never a default: a caller that might slice must not have it.
+    Round 4 step 5's `emit_strip_labels.py --frozen-crops` is the only user, and that flag refuses
+    `--rail`, `--redecode` and any page whose cache is missing rather than slicing one.
 
     Caches used to be keyed on `measures_per_strip` alone, which a packing-rule change would slip
     straight past — and mixing two slicers inside one comparison is exactly how the earlier n_ids
@@ -1596,10 +1605,11 @@ def window_cache_ok(prev: dict) -> bool:
     # August that move crop boundaries, and a cache written on 31 July still passed. A cache with no
     # `geometry_rev` was written before the field existed, so nothing in it says which CV code cut
     # those crops; it cannot be proven current and is refused rather than assumed.
-    if prev.get("geometry_rev") != GEOMETRY_REV:
-        return False
-    if prev.get("geometry") != window_signature()["geometry"]:
-        return False
+    if not frozen_crops:
+        if prev.get("geometry_rev") != GEOMETRY_REV:
+            return False
+        if prev.get("geometry") != window_signature()["geometry"]:
+            return False
     # the token budget only moves a crop boundary in budget mode
     return WINDOW_MODE != "budget" or float(prev.get("token_budget", -1)) == TOKEN_BUDGET
 

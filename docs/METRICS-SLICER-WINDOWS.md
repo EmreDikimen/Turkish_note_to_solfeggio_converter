@@ -306,6 +306,74 @@ split into 18, and the page went 28 → 37 strips. ⚠ **8 of those 19 identical
 its pixels do not, so pools join by measure span (`carry_old_fixes.py`), never by name. The manifest
 marks a re-cut strip with `split_from`.
 
+## THE POOL-LEVEL READ: scheme H at a budget of 80, on frozen crops (2026-09-07)
+
+Round 4 step 5, run for real — `strips_b8` re-emitted as **`strips_h1`** with `--vocab h
+--frozen-crops`, the same 1,720 decode caches and **not one page re-sliced**. Compare against b8's
+own emit, which is the same corpus under the old vocabulary at 59.
+
+| | b8 (old, 59) | h1 (H, 80, frozen) |
+|---|---|---|
+| accepted | 3,955 | **4,435** |
+| review | 4,738 | 6,434 |
+| **dropped `over_budget`** | **4,012** | **141** |
+| dropped `nd_high` | 3,053 | **4,701** |
+| dropped `split_wide` / `row_unaligned` | 10,226 / 7,446 | 10,161 / 7,423 |
+
+⭐ **THE BUDGET STOPPED BEING THE BINDING GATE, AND THE REFEREE BECAME IT.** The over-budget class
+collapsed as predicted (4,012 → 141, against the 148 the token probe forecast). But of the ~3,871
+strips that came back, only **+588 reached training**: ~1,739 went to review and ~1,648 were dropped
+as `nd_high` instead. ⛔ **So the round's standing "3,508 rescued → pool 7,437" is WRONG as a yield
+claim** — it priced the budget gate alone. A strip over the budget is a DENSE strip, and the
+disagreement gate asks the referee (`round2-stage2-best`) to read exactly the material this round
+opened because the model reads it badly. After promotion the pool is **4,425 rows** against b8's
+3,929: **+12.6%**, not +89%.
+
+⚠ **The gain is aimed where it was meant to be, which the yield number alone hides**: the 588 new
+accepted strips carry a median of **18 label tokens against 11** for the rows b8 already had.
+
+⛔ **A BETTER REFEREE DOES NOT FIX IT — MEASURED, AND IT IS A NULL.** The obvious move is to swap
+the referee for `r3a-stage2-best-real` (the live model, the owner's hand-test pick), which is fair
+on this material for a provable reason: the over-budget strips were never in training, so it cannot
+have memorised them. `redecode_strips.py --frozen-crops` re-reads the existing crops with another
+checkpoint and slices nothing. Pilot on **12 pieces / 597 strips**, the pages carrying the most
+rescued-then-dropped strips:
+
+| pilot | accepted | `nd_high` | `row_unaligned` |
+|---|---|---|---|
+| referee `round2-stage2-best` | 33 | 241 | 103 |
+| referee `r3a-stage2-best-real` | **32** | **234** | 109 |
+
+r3a read **228 of the 597 strips differently (38.2%)** and moved acceptance by one strip. ⚠ n = 12
+pieces: this rules out an effect at the scale the rescue needs, not a small one. The cost it saves
+is real — a full referee swap is ~1,720 pages of inference.
+
+### What the budget is actually worth in this pool
+
+Measured over h1's 4,425 promoted labels with both tokenizers:
+
+| | scheme H | old vocabulary |
+|---|---|---|
+| median ids | 22 | 38 |
+| longest label | **51** | 105 |
+| over the 80 gate | **0** | — |
+| over 99 (`collate`'s truncation cliff) | — | **4** |
+| over 59 (b8's gate) | — | 549 |
+
+⭐ **The 80-id budget binds nothing here** — the longest H label is 51. The pool's growth is the 549
+labels that cost more than 59 old ids, and the ceiling that matters for step 6's control arm is
+**4 rows**, not the 769 the pre-emit estimate gave: dropping them from both arms makes the A/B clean
+at negligible cost.
+
+### Why the crops were frozen, in one number
+
+A full re-emit would have re-sliced every page under the 2026-09-03 CV fixes. Measured on **30 b8
+pages** re-cut and compared byte-for-byte against `strips_v2`: **20 of 30 pages cut differently**,
+451 of 632 crops (71%) byte-identical, and **of the strips carrying a LABEL, 138 of 163 (84.7%)
+survived — 15.3% changed pixels**. A verdict is given against pixels, so that is ~600 reads
+invalidated across the pool. The owner's call (2026-09-07): keep them, they were cut and read
+correctly. Hence `--frozen-crops` and route C+ in [rung3/round4.md](rung3/round4.md).
+
 ## The 2026-07-29 retune and the crop frame moved out (2026-08-22)
 
 Everything about **which constants were swept and why none of them moved** — the

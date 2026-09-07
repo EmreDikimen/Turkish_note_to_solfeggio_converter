@@ -72,6 +72,24 @@ sys.path.insert(0, str(REPO / "src" / "vision"))
 
 NAV_TOKENS = ("\\segno", "\\coda", "\\dc", "\\fine")
 
+# The label budget, in TOKEN IDS including the training-time EOS. ⚠ IT IS NOT A MODEL LIMIT — the
+# model's real ceiling is 100, in two places at once: `MAX_TOKENS` in apps/web/src/omr/decode.ts and
+# `collate(max_len=100)` in src/vision/data.py, which TRUNCATES a longer label at 99 and would teach
+# the model to stop early. This is the emitter's QUALITY gate, and it is a choice.
+#
+# ⭐ **80 UNDER SCHEME H (owner, 2026-09-07)**, where every earlier pool used 59. The owner had
+# watched the live model read strips of 85-90 ids correctly — in the OLD id space, so the finding is
+# that the DECODER walks 85-90 steps, and H buys real headroom on top of it. Measured the same day
+# over b8's 15,758 serialized labels: at 59 the rail re-cuts 504 windows (3.20%), at 80 only 148
+# (0.94%), and 356 dense strips train WHOLE that would otherwise be halved. 80 leaves 20 ids of
+# margin under the hard ceiling. ⛔ Do not raise it to 100: that is the truncation cliff itself.
+# docs/METRICS-SLICER-WINDOWS.md
+#
+# ⚠ IT MOVES WITH THE VOCABULARY, and must: an H label is ~40% shorter than the same music under the
+# old vocabulary, so one number cannot serve both. The pairing is here so a pool cannot be emitted
+# under H at the old pool's gate, or vice versa, by forgetting a flag.
+MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}   # `old` is what every pool before 2026-09-07 used
+
 # Decoded-signature parsing (the detokenized decode glues tokens: "\\sig\\bakiyeFlata ...").
 SIG_BLOCK_RE = re.compile(r"\\sig(.*?)\\sigend", re.S)
 SIG_ENTRY_RE = re.compile(r"(\\(?:koma|bakiye|kucuk|buyuk)(?:Sharp|Flat))\s*([a-g])")
@@ -284,10 +302,57 @@ def load_piece(piece_dir: Path) -> PieceGT | None:
     )
 
 
+# ------------------------------------------------------------- the label-budget rail (Round 4)
+class Rail:
+    """Round 4's label-budget rail, as the `oversize(system, m_from, m_to)` the slicer asks for.
+
+    The slicer cannot answer that question itself: a measure range's TRUE id count comes from the
+    SymbTr-derived label, and `est_tokens` is a character-count estimate with a residual sd of ~30
+    ids. So the emitter prices the ranges in an earlier run (`--rail-plan` writes `emit_rail.json`,
+    one id count per candidate range of every over-budget window) and this replays those numbers.
+
+    ⛔ A range this plan never priced answers False — the packer must split ONLY the windows that
+    failed, leaving every neighbouring crop byte-identical (owner, 2026-09-06). An unknown range is
+    therefore a "leave it alone", never a guess.
+    """
+
+    def __init__(self, plan: dict, vocab: str, max_ids: int):
+        if plan.get("vocab") != vocab:
+            raise SystemExit(
+                f"--rail plan was priced under vocabulary {plan.get('vocab')!r} but this run is "
+                f"--vocab {vocab!r}: the two disagree about which windows are over budget.")
+        if plan.get("max_ids") != max_ids:
+            # a plan priced at 59 replayed under a gate of 80 would split windows that now fit —
+            # crops moved for nothing, and 3,508 of them are the ones H was supposed to keep
+            raise SystemExit(
+                f"--rail plan was priced at a budget of {plan.get('max_ids')} ids but this run "
+                f"gates at {max_ids}: re-run --rail-plan at the budget you mean to emit.")
+        self.max_ids: int = max_ids
+        self.pages: dict = plan["pages"]
+
+    def page(self, stem: str):
+        """The callback for one page, or None when the plan has nothing to split there."""
+        rows = self.pages.get(stem)
+        if not rows:
+            return None
+
+        def over(system: int, m_from: int, m_to: int) -> bool:
+            ids = rows.get(str(system), {}).get(f"{m_from}:{m_to}")
+            return ids is not None and ids > self.max_ids
+
+        return over
+
+
 # ------------------------------------------------------------------------------ page decodes
-def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool) -> list[dict] | None:
+def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool,
+                rail: Rail | None = None) -> list[dict] | None:
     """Per page (in order): the `<page>_decode.json` dict — reused when it already carries the
-    slicer geometry and came from the same checkpoint, else re-decoded."""
+    slicer geometry and came from the same checkpoint, else re-decoded.
+
+    ⚠ A CACHE IS ONLY VALID FOR THE WINDOWING THAT CUT ITS CROPS, and the rail is part of that
+    windowing: a page the plan names is ALWAYS re-decoded (its crops are about to move), and a
+    cache carrying `split_from` — i.e. cut by some rail — is refused by a run with no plan for it.
+    """
     from decode_page import decode_page
     from page_to_strips import window_cache_ok
 
@@ -297,9 +362,10 @@ def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool) -> list[d
         if not page_path.exists():
             return None
         stem = page_path.stem
+        over = rail.page(stem) if rail is not None else None
         dj = strips_root / stem / f"{stem}_decode.json"
         d = None
-        if dj.exists() and not redecode:
+        if dj.exists() and not redecode and over is None:
             d = json.loads(dj.read_text())
             strips = d.get("strips", [])
             if (d.get("checkpoint") != rt.checkpoint or d.get("suffix") != rt.suffix
@@ -307,9 +373,12 @@ def get_decodes(piece: PieceGT, rt, strips_root: Path, redecode: bool) -> list[d
                     or not strips or strips[0].get("meas_from") is None
                     or strips[0].get("min_logprob") is None):
                 d = None  # old format / other model / other window size — refresh
+            elif any(s.get("split_from") is not None for s in strips):
+                d = None  # cut by a rail this run knows nothing about — refresh
         if d is None:
             try:
-                d = decode_page(page_path, rt, strips_root, debug=True, verbose=False)
+                d = decode_page(page_path, rt, strips_root, debug=True, verbose=False,
+                                oversize=over)
             except RuntimeError:
                 return None  # staff detection found nothing — an unusable page (cover/odd scan)
         out.append(d)
@@ -605,12 +674,64 @@ def main() -> int:
     ap.add_argument("--split", default="data/split_v4.json",
                     help="synthetic split whose val_pieces are forced to the real-val side")
     ap.add_argument("--redecode", action="store_true", help="ignore existing *_decode.json")
+    # Round 4's two label-budget flags. `--vocab h` only changes what a label COSTS in ids (scheme
+    # H fuses the 14 common pitches), so 3,508 of the 4,012 over-budget strips fall under the gate
+    # with their crops untouched; `--rail-plan` / `--rail` are the second, cutting half for the
+    # ~504 that are still over. docs/rung3/round4.md step 5.
+    ap.add_argument("--vocab", choices=["old", "h"], default="old",
+                    help="tokenizer the 59-id budget gate counts with (h = Round 4's scheme H). "
+                         "⚠ ALIGNMENT still uses the decode model's own tokenizer — this is the "
+                         "budget gate alone.")
+    ap.add_argument("--rail-plan", action="store_true",
+                    help="price every candidate sub-range of every over-budget window and write "
+                         "emit_rail.json (no re-slice, no re-decode: it is a plan, not a cut)")
+    ap.add_argument("--rail", help="emit_rail.json from a --rail-plan run: split the windows it "
+                                   "names. ⚠ every page it names is RE-DECODED (its crops move)")
+    ap.add_argument("--max-ids", type=int, default=None,
+                    help=f"label budget in ids incl. EOS (default: by --vocab, {MAX_IDS_BY_VOCAB}). "
+                         "⛔ NEVER above 100 — data.collate truncates at 99 and the model would be "
+                         "taught to stop early, which is the failure this budget exists to prevent.")
     args = ap.parse_args()
+
+    # ⚠ The gate and the vocabulary move together (see MAX_IDS_BY_VOCAB) unless the caller is
+    # explicit; a run that mixes an H pool with the old pool's 59 is a silent-wrong-number machine.
+    max_ids = args.max_ids if args.max_ids is not None else MAX_IDS_BY_VOCAB[args.vocab]
+    if max_ids > 100:
+        ap.error(f"--max-ids {max_ids} is above the decoder's real ceiling of 100 "
+                 "(apps/web/src/omr/decode.ts MAX_TOKENS, data.collate max_len): a longer label is "
+                 "TRUNCATED at 99 in training, which teaches the model to stop early.")
 
     from decode_page import load_runtime
 
     rt = load_runtime(args.checkpoint, args.onnx_dir, args.suffix)
     al = Aligner(rt.tok)
+    # ⚠ A SECOND TOKENIZER, never rt.tok mutated in place: adding scheme H's ids to the decode
+    # model's own tokenizer would re-segment the DECODED text too, and every nd/alignment number
+    # in this script is measured in that model's id space.
+    budget_tok = rt.tok
+    if args.vocab != "old":
+        from data import vocabulary
+        from transformers import AutoProcessor
+        budget_tok = AutoProcessor.from_pretrained(args.checkpoint).tokenizer
+        budget_tok.add_tokens(vocabulary(args.vocab))   # idempotent for the ids already there
+
+    def budget_ids(label: str) -> int:
+        """Ids a label costs under --vocab, counting the training-time EOS the tokenizer does not
+        auto-append (audit_coverage.py's exact rule)."""
+        ids = budget_tok(label).input_ids
+        return len(ids) + (0 if ids and ids[-1] == budget_tok.eos_token_id else 1)
+
+    print(f"vocabulary: {args.vocab}   label budget: {max_ids} ids (incl. EOS)")
+    rail = None
+    if args.rail:
+        # ⛔ THE EXAM IS FROZEN AND THE RAIL MOVES CROPS. `--exam` slices the graded pages, and its
+        # crops are what the exam's gold describes — re-cutting them would silently change the
+        # pixels every published exam number was read on. `--rail-plan` stays allowed there: it
+        # writes a file and cuts nothing.
+        if args.exam:
+            ap.error("--rail re-cuts crops and --exam slices the FROZEN exam pages: "
+                     "the gold describes those pixels. Use build_exam_v3_queue.py for the exam.")
+        rail = Rail(json.loads(Path(args.rail).read_text()), args.vocab, max_ids)
     rng = random.Random(args.seed)
     strips_root = Path(args.strips_root)
     out_dir = Path(args.out)
@@ -694,7 +815,7 @@ def main() -> int:
                       "strip": strip["strip"] if strip else "", "reason": reason, "detail": detail})
 
     for pi, piece in enumerate(pieces):
-        decodes = get_decodes(piece, rt, strips_root, args.redecode)
+        decodes = get_decodes(piece, rt, strips_root, args.redecode, rail)
         if decodes is None:
             drop(piece, "missing_pages")
             piece_results.append({"piece": piece.stem, "status": "missing_pages"})
@@ -806,12 +927,18 @@ def main() -> int:
                     ctx["nav"] = "nav_measure"       # covers a segno/Son/jump measure
                 ctx["sig_suspect"] = not sig_majority_ok
                 ctx["sig_conflict"] = sig_table_conflict
-                piece_req["strips"].append({
+                req_strip = {
                     "id": sid, "measures": flat,
                     "rowStart": bool(s["is_row_start"]),
                     "spans": [{k: v for k, v in vars(sp).items() if v is not None} for sp in adj],
-                })
+                }
+                piece_req["strips"].append(req_strip)
                 ctx["flat"] = flat
+                # the rail plan re-prices sub-ranges of this window, and a sub-range's label is
+                # only the same label when it is asked for with the same score, signature and spans
+                ctx["req"] = req_strip
+                ctx["score"] = str(piece.score_json)
+                ctx["signature"] = sig_override
                 strip_ctx[sid] = ctx
         if piece_req["strips"]:
             requests.append(piece_req)
@@ -823,17 +950,21 @@ def main() -> int:
     audit: list[dict] = []
     nd_hist = Counter()
     token_counts = Counter()
+    over_budget: list[tuple[str, int]] = []   # (strip id, ids under --vocab) — the rail's input
 
-    if requests:
-        req_p = out_dir / "emit_requests.json"
-        resp_p = out_dir / "emit_responses.json"
-        req_p.write_text(json.dumps(requests, indent=1))
+    def serialize(reqs: list[dict], req_p: Path, resp_p: Path) -> dict[str, dict]:
+        """One labels-cli --ranges process for a whole batch (tsx startup is slow)."""
+        req_p.write_text(json.dumps(reqs, indent=1))
         r = subprocess.run(["npx", "--yes", "tsx", "tools/render/labels-cli.ts",
                             "--ranges", str(req_p), "--out", str(resp_p)],
                            cwd=REPO, capture_output=True, text=True)
         if r.returncode not in (0, 1) or not resp_p.exists():  # 1 = "some strips errored", still usable
             sys.exit(f"labels-cli --ranges failed:\n{r.stdout}\n{r.stderr}")
-        responses = {resp["id"]: resp for resp in json.loads(resp_p.read_text())}
+        return {resp["id"]: resp for resp in json.loads(resp_p.read_text())}
+
+    if requests:
+        responses = serialize(requests, out_dir / "emit_requests.json",
+                              out_dir / "emit_responses.json")
 
         for sid, ctx in strip_ctx.items():
             piece, s = ctx["piece"], ctx["strip"]
@@ -846,12 +977,10 @@ def main() -> int:
             if resp["check"]["errors"]:
                 drop(piece, "roundtrip_fail", s, ctx["page"], detail="; ".join(resp["check"]["errors"]))
                 continue
-            ids = al.tok(label).input_ids
-            # audit_coverage.py's exact rule (MAX_IDS=59): count the training-time EOS the
-            # tokenizer doesn't auto-append; decoder max_length is 60.
-            n_ids = len(ids) + (0 if ids and ids[-1] == al.tok.eos_token_id else 1)
-            if n_ids > 59:
+            n_ids = budget_ids(label)
+            if n_ids > max_ids:
                 drop(piece, "over_budget", s, ctx["page"], detail=f"{n_ids} ids")
+                over_budget.append((sid, n_ids))
                 continue
             nd = al.nd(label, s["tokens"])
             nd_hist[min(int(nd / 0.02), 49)] += 1
@@ -884,18 +1013,73 @@ def main() -> int:
                     if t.startswith("\\") or t == "|":
                         token_counts[t] += 1
                 flat = ctx["flat"]
-                manifest_rows.append({
+                row = {
                     "image": sid, "label": label, "mode": "measure",
                     "piece": piece.symbtr_stem, "makam": piece.makam, "source": piece.source,
                     "from": flat[0], "to": flat[-1], "page": ctx["page"],
                     "nd": round(nd, 4), "min_logprob": s["min_logprob"],
-                })
+                }
+                if s.get("split_from") is not None:
+                    # ⚠ this strip's row was re-cut by the rail, so its `_wNN` names different
+                    # pixels than the same name did before: pools join by measure span, not name
+                    row["split_from"] = s["split_from"]
+                manifest_rows.append(row)
                 if rng.random() < args.audit_frac:
                     audit.append({**base, "verdict": ""})
             elif nd <= args.review_nd or args.exam:
                 review.append({**base, "reason": "nd_review" if nd <= args.review_nd else "nd_high"})
             else:
                 drop(piece, "nd_high", s, ctx["page"], detail=f"nd={nd:.3f}")
+
+    # ---- pass 3: the label-budget rail's plan (--rail-plan) ---------------------------------
+    # Prices EVERY candidate sub-range of every over-budget window, so a later --rail run can
+    # answer `oversize(system, m_from, m_to)` from measured id counts instead of an estimate.
+    # ⛔ It cuts nothing and re-decodes nothing: the plan is a file the owner can read first.
+    rail_plan = {"vocab": args.vocab, "max_ids": max_ids, "checkpoint": args.checkpoint,
+                 "pages": {}, "windows": 0, "unsplittable": 0}
+    if args.rail_plan and over_budget:
+        sub_reqs: dict[str, dict] = {}
+        want: list[tuple[str, str, int, int, int]] = []   # rid, page, system, m_from, m_to
+        for sid, n_ids in over_budget:
+            ctx = strip_ctx[sid]
+            st, flat = ctx["strip"], ctx["flat"]
+            mf, mt = st["meas_from"], st["meas_to"]
+            page_rows = rail_plan["pages"].setdefault(ctx["page"], {})
+            page_rows.setdefault(str(st["system"]), {})[f"{mf}:{mt}"] = n_ids
+            rail_plan["windows"] += 1
+            if mt <= mf:
+                # a SINGLE measure over the budget cannot be split at a measure boundary — the
+                # slicer returns it as it is and this emitter drops it, exactly as today
+                rail_plan["unsplittable"] += 1
+                continue
+            req = sub_reqs.setdefault(ctx["piece"].stem,
+                                      {"score": ctx["score"], "strips": []})
+            if ctx["signature"]:
+                req["signature"] = ctx["signature"]
+            for a in range(mf, mt + 1):
+                for b in range(a, mt + 1):
+                    if (a, b) == (mf, mt):
+                        continue                       # already priced by pass 2
+                    rid = f"{sid}#{a}:{b}"
+                    req["strips"].append({"id": rid, "measures": flat[a - mf: b - mf + 1],
+                                          # a row's FIRST window carries the \sig prefix, and
+                                          # after a split that is still the half starting at 0
+                                          "rowStart": a == 0,
+                                          "spans": ctx["req"]["spans"]})
+                    want.append((rid, ctx["page"], st["system"], a, b))
+        if want:
+            sub_resp = serialize(list(sub_reqs.values()), out_dir / "emit_rail_requests.json",
+                                 out_dir / "emit_rail_responses.json")
+            for rid, page, system, a, b in want:
+                resp = sub_resp.get(rid)
+                if resp is None or "error" in resp or resp["check"]["errors"]:
+                    continue        # unpriceable range: the plan leaves it alone (answers False)
+                rail_plan["pages"][page].setdefault(str(system), {})[f"{a}:{b}"] = \
+                    budget_ids(resp["label"])
+        (out_dir / "emit_rail.json").write_text(json.dumps(rail_plan, indent=1))
+        print(f"rail plan: {rail_plan['windows']} over-budget windows on "
+              f"{len(rail_plan['pages'])} pages ({rail_plan['unsplittable']} single measures that "
+              f"cannot be split) -> {out_dir / 'emit_rail.json'}")
 
     # ---- outputs ---------------------------------------------------------------------------
     def write_csv(path: Path, rows: list[dict], fields: list[str]):
@@ -930,7 +1114,11 @@ def main() -> int:
     report = {
         "params": {k: getattr(args, k) for k in
                    ("accept_nd", "review_nd", "row_nd", "margin", "audit_frac", "seed",
-                    "checkpoint", "suffix", "exam", "report_only")},
+                    "checkpoint", "suffix", "exam", "report_only", "vocab", "rail")},
+        "max_ids": max_ids,
+        "rail": {"plan_written": bool(args.rail_plan and over_budget),
+                 "over_budget_windows": len(over_budget),
+                 "split_strips": sum(1 for r in manifest_rows if "split_from" in r)},
         "pieces": piece_results,
         "piece_statuses": dict(statuses),
         "rows": {"ok": sum(p.get("rows_ok", 0) for p in piece_results),

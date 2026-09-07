@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-06
+updated: 2026-09-07
 
 ## Now
 
@@ -50,9 +50,9 @@ Plan and evidence: **[rung3/round4.md](rung3/round4.md)**; plain English:
 
 **Round 4 in one line:** **no new render**, **`\tupend` stays**, **stage 2 at 4,000 steps**; re-emit
 the real pools under **scheme H** note-spelling tokens (✅ confirmed by the owner 2026-09-06 at **16
-new ids, vocabulary 116**), which returns 3,508 of the 4,012 over-budget strips **with no new crop**
-— the rail at **b = 57** and the balanced packer apply only to the **504** still over the gate
-(owner, 2026-09-06); stop the signature vote overwriting silently; select
+new ids, vocabulary 116**), which returns most of the 4,012 over-budget strips **with no new crop**
+— ⭐ **the gate itself is now 80 ids, not 59** (owner, 2026-09-07), so the rail re-cuts **148**
+windows and 356 dense strips train whole; stop the signature vote overwriting silently; select
 checkpoints on real-val **corrections**, not loss; beam search measured offline first and **never on
 the user path unless it pays**; a 20–40 page **third-source probe** before any crawl. ⛔ **Three
 things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or add a
@@ -74,8 +74,10 @@ label-budget rail**: at training an over-budget strip is dropped, at inference t
 model emits `</s>` early and **confidently**, and `hitCap` catches almost none of it. ⛔ **The rail
 ALONE is a wash** — but that tested inference on a model never trained under the rail, and dense
 music already reads twice as badly even in a 1-measure strip, so it is a training gap, not a cutting
-one. The settling experiment is the **pair** (re-emit with the rail → train → measure) at **b = 57,
-not 50**, and it is part of Round 4. ⭐ Deferring it is what keeps the shipping slicer still, so
+one. The settling experiment is the **pair** (re-emit with the rail → train → measure), and it is
+part of Round 4. ⚠ **The rail gates on the label's TRUE id count, not on an estimate** — the earlier
+plan's "b = 57" was the packer's character-count estimate, whose residual sd is ~30 ids; the shipped
+rail asks the emitter instead. ⭐ Deferring it is what keeps the shipping slicer still, so
 `examv3` stays valid. [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) ·
 [BACKLOG.md](BACKLOG.md) item 0.
 
@@ -136,8 +138,13 @@ shipped photo's known limit, and a higher-resolution bare-neck image fixes it wi
 ⚠ If a look finds something, the fix needs its own deploy (`deploy:app`, then `smoke:live`).
 ⚠ `smoke:live` checks neither images nor audio — spot-check both by hand after any deploy touching them.
 
-🚧 **One thing is built but NOT deployed: the sol klarnet's lip meter** (2026-09-04) — it rides the
-next `deploy:app`. ⏭ Then the **altissimo**, Re♭6–Sol6, seven fingerings the owner is filling in.
+🚧 **TWO things are built but NOT deployed, and both ride the next `deploy:app`.** (a) **The first
+ending now sounds once, on two repairs to what the model read** (2026-09-07, owner heard it on the
+app): a `\volta2` after the `:‖` is proof of a first ending even with no "1." decoded, and a "1."
+printed PAST the `:‖` is a "2." — a first ending lies inside the repeat by definition. Together:
+first endings resolved **1,052 → 1,225**, played bars **64,859 → 64,672**, and the live site still
+replays them ([DECISIONS.md](DECISIONS.md), [METRICS.md](METRICS.md)). (b) **the sol klarnet's lip
+meter** (2026-09-04). ⏭ Then the **altissimo**, Re♭6–Sol6, seven fingerings the owner is filling in.
 ⚠ `smoke:editor` covers the clarinet VOICE, not the VIEW; its DOM contract is unasserted, unlike the
 kanun's and the violin's. [features/clarinet-view.md](features/clarinet-view.md).
 
@@ -167,7 +174,7 @@ Still the gate on what may be **published as a model**. Plan, evidence and the o
 
 | role | pool | state |
 |---|---|---|
-| real training | `strips_b8` (3,929) **re-emitted under scheme H**; the 4,012 over-budget drops are the target — **3,508 return on the tokenizer change alone, keeping their crops**, and only **504** are re-cut under the rail at b = 57 + the balanced packer (owner, 2026-09-06). Pool becomes **7,437+**. ⭐ H changes the tokenization, not the label text, so the 995 human reads and 576 fixes on b8 stay valid | ⏭ not run; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
+| real training | `strips_b8` (3,929) **re-emitted under scheme H at a budget of 80 ids** (owner, 2026-09-07 — 59 was the emitter's gate, never a model limit); the 4,012 over-budget drops are the target — most return on the tokenizer change alone, keeping their crops, and only **148** are re-cut by the rail, with **356 dense strips training whole**. ⭐ H changes the tokenization, not the label text, so the 995 human reads and 576 fixes on b8 stay valid | ⏭ **code complete 2026-09-07, not run**; needs a Colab decode, every cache refused since `GEOMETRY_REV` 20260903 |
 | synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
 | selection | `_realval_v2` (+ `_tupletval`), **on free-running corrections, not loss**, beside the owner's hand-test pages | ⏭ selector change owed |
 | grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
@@ -179,9 +186,40 @@ re-emit.
 ⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
 stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
 2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
-→ ✅ the third-source probe **read 2026-09-06 — a NULL** → 🔶 **the step-5 CODE is built (vocabulary + the rail), the re-emit is NOT run** → re-emit → the owner reads the audit sample and every `\sig` row → two
+→ ✅ the third-source probe **read 2026-09-06 — a NULL** → ✅ **the step-5 CODE is COMPLETE
+(2026-09-07): vocabulary, the slicer's rail AND the emitter that feeds it** → ⏭ **the re-emit
+itself, which needs a GPU** → the owner reads the audit sample and every `\sig` row → two
 arms from base (old-vocabulary control vs H), stage 2 at 4,000 steps → real-val paired → `examv3`
 once.
+
+⭐ **THE LABEL BUDGET IS 80 IDS UNDER SCHEME H, DECIDED 2026-09-07** (owner, from three `examv3`
+strips they had hand-corrected: *"85-90 id den oluşan striplere kadar model doğru bir şekilde tahmin
+edebiliyordu"*). ⚠ **59 was never a model limit** — it is the emitter's quality gate; the real
+ceiling is **100**, in `decode.ts`'s `MAX_TOKENS` and in `collate(max_len=100)`, which TRUNCATES a
+longer label at 99 and teaches the model to stop early. Measured over b8's 15,758 serialized labels:
+median 42 → **24** ids under H, and over the gate **504 (3.20%) at 59 against 148 (0.94%) at 80**, so
+**356 dense strips train whole**. On the 579 labels the owner hand-typed into `examv3` the longest H
+label is **67 ids**. ⚠ **Four files hold that gate and must stay in step** — the emitter,
+`audit_coverage.py`, `promote_labels.py --vocab` and `train.py --select-max-length`. ⚠ It widens the
+one risk this round already watches: synthetic labels stop at **44** H ids. ⚠ And it complicates step
+6 — **769 of the admitted strips (4.93%) exceed 100 ids under the OLD vocabulary**, so the control
+arm cannot hold them and "same pools, one variable" needs re-stating before that A/B runs.
+[METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
+
+✅ **STEP 5'S CODE IS FINISHED (2026-09-07) AND NOTHING HAS BEEN RE-EMITTED.** `emit_strip_labels.py`
+now supplies the rail the slicer asked for, in **two runs on purpose**: `--rail-plan` prices every
+candidate sub-range of every over-budget window and writes `emit_rail.json` **without cutting
+anything**, and `--rail <plan>` replays those measured counts as the slicer's `oversize` callback.
+`--vocab {old,h}` picks the tokenizer the 59-id gate counts with — ⛔ **the gate only**: alignment
+keeps the decode model's own tokenizer, because adding H's ids to it would re-segment the DECODED
+text and every `nd` number in that script lives in the model's id space. ⚠ A range the plan never
+priced answers **"leave it alone"**, never a guess, which is what confines the split to the windows
+that failed. Read on one piece (`nikriz_sirto_refik_fersan`, 3 pages, scratch root, no pool
+touched): over-budget windows **18 under the old vocabulary → 0 under H**, accepted strips 28 → 40,
+and with the plan applied 54; slicing that page twice, the **19 measure spans the two cuts share are
+byte-identical, 19 of 19**, while 8 of them carry a different `_wNN` name. ⚠ **n = 1 piece — it
+verifies the mechanism, it prices nothing.** [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) ·
+[rung3/round4.md](rung3/round4.md).
 
 ✅ **STEP 3 IS DONE (2026-09-06) — the signature vote is measured AND its rule is built.** `sig_vote_audit.py` read all five
 pools; every number is in [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). ⭐ **It is a DELETION problem, not

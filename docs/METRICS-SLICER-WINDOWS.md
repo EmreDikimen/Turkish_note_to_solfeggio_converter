@@ -3,7 +3,7 @@
 purpose: the single home for the LABEL BUDGET — the rail that decides whether the model can express a strip at all, why the shipped app has none, and what the `?dense=` experiment measures
 audience: agents and the owner, before changing the windowing constants or the strip frame
 
-updated: 2026-08-25
+updated: 2026-09-07
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-17 when that file crossed the 400-line
 cap, and split again on 2026-08-22 — [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) took the
@@ -133,158 +133,13 @@ residue that the row pixel-sum drift has always reported as never zero. Design a
 ⚠ **Parity is not accuracy.** It says the browser does what Python does. Whether the rail produces
 *better notes* is the measure-fill read below, and it is a separate question.
 
-## `?dense=50` IS A WASH ON THE THING IT WAS BUILT FOR (2026-08-22)
+## The `?dense=` experiment moved out (2026-09-07)
 
-⛔ **The rail does not produce better-filled strips.** Measured with the parity gap closed, so this
-is the browser's own behaviour and not an approximation of it.
-
-### The instrument: measure fill, which needs no labelling
-
-The slicer cuts on **barlines**, so the manifest already knows how many measures a crop holds, and
-music is metrical — a decode that drops notes comes up short against `n_measures x the page's
-meter`. An early `</s>` under-fills, and nothing else in the pipeline produces that signature at
-scale. The meter is derived **per page** from the page's own decodes (the modal beats-per-measure),
-so no piece match, no usul table and no hand labelling is involved; a page whose decodes disagree
-about a meter is reported unscorable rather than guessed at. `scripts/rung3/measure_fill_score.py`.
-
-⚠ **It has a floor, and the floor is measured, not assumed.** Run over hand-verified gold
-(`_realval_v2`, n=211 scorable rows) the same scorer flags **10.0%** — **7.6% under**, 2.4% over.
-Every one of those is the proxy's own false alarm. Excluding first/last windows of a row drops the
-floor to 5.1% but discards 72% of the sample, which is a bad trade, so the floor stays and the arms
-are compared against each other rather than against zero.
-
-⚠ **It cannot see a wrong pitch, a wrong accidental, or two errors that cancel.** It is a floor on
-the error rate, never the rate. It is nevertheless the right instrument for *this* claim, because
-the failure `?dense=` targets — the model emitting `</s>` early — is exactly what it detects.
-
-### The read: 117 shared pages, `round2-stage2-best` int8 both arms
-
-Arm A is the cached corpus decode under the shipped rule; arm B is the same pages re-decoded under
-the rail (`scripts/rung3/decode_budget_arm.py`, 120 pages, 21 min on the laptop).
-
-| | shipped rule | rail, b=50 | Fisher |
-|---|---|---|---|
-| **under-fill, ALL scored strips** | **155/990 = 15.7%** | **209/1260 = 16.6%** | **p = 0.57** |
-| under-fill, `est_tokens > 59` | 32/119 = 26.9% | 5/43 = 11.6% | p = 0.055 |
-| under-fill, `est_tokens <= 59` | 123/871 = 14.1% | 204/1217 = 16.8% | p = 0.11 |
-| strips over budget at all | 119 | **43** | — |
-| strips emitted | 2,255 | 2,462 (**+9.2%**) | — |
-
-**The rail works mechanically and the work does not reach the page.** Over-budget strips fall by
-64% and under-filling among them roughly halves — but the music lands in more, shorter strips that
-under-fill at least as often, so the total does not move.
-
-**The obvious confound was checked and runs the other way.** More strips means more first/last
-windows of a row, where the gold floor is higher (8.6% vs 5.1%) — but arm B's edge share is *lower*
-(67.4% vs 76.5%), so if anything it was flattered. On interior windows alone the picture is
-unchanged: **14.2% -> 16.5%**.
-
-⚠ **Do not read the per-`n_measures` split as a regression.** It shows 2-measure strips at
-24.5% -> 39.6% (p = 0.0006), and that cell is **selection, not effect**: the rail splits the easy
-2-measure windows into single measures, so what remains under that label in arm B is different
-music from arm A's. The arms cut different crops, which is why **only the page-level total is an
-honest comparison** and why nothing here is strip-paired.
-
-⚠ **Not measured**: wall-clock cost. Arm A's `total_ms` was recorded in an earlier batch under
-different thread settings, so the 113-vs-403 ms/strip gap is the machine, not the rule. **+9.2%
-strips** is the machine-independent cost. Also unmeasured: any budget other than 50, any model other
-than `round2-stage2-best`, and whether pitch accuracy moved.
-
-### Asked again the two ways that could have rescued it (2026-08-22)
-
-Both were fair objections to the headline, and both were tested on the data already in hand.
-
-**1. "The representative sample dilutes it — only dense pages matter."** Restricting to the 37
-pages the shipped rule leaves with at least one over-budget strip:
-
-| | shipped rule | rail, b=50 | Fisher |
-|---|---|---|---|
-| under-fill, DENSE pages | 116/604 = 19.2% | 125/696 = 18.0% | p = 0.57 |
-| under-fill, non-dense pages | 39/386 = 10.1% | 84/564 = 14.9% | **p = 0.031** |
-
-No improvement where it was supposed to act, and a **significant regression where it was not** —
-which is a second, independent reason not to make it a default.
-
-**2. "Under-fill per STRIP is unfair — the rail emits more strips."** So score the page instead:
-per page, the music the decode actually spells over the music its crops cover. That number is
-composition-free.
-
-| | shipped rule | rail, b=50 |
-|---|---|---|
-| median page completeness, all pages (n=66) | 0.955 | 0.955 |
-| median page completeness, dense pages (n=35) | 0.900 | 0.909 |
-| pages better / worse under the rail (dense) | — | **10 better, 12 worse** |
-
-⚠ **Roughly as many pages get worse as better.** Three readings — per strip, dense-only, and
-page completeness — and none of them moves.
-
-### The gradient that DOES exist, and it is not the token budget
-
-⭐ Under-filling tracks **how much music is crammed into one crop**, steeply (shipped rule):
-
-| measures in the strip | under-fill |
-|---|---|
-| 1 | **7.5%** (51/679) |
-| 2 | 24.5% (57/233) |
-| 3 | **60.3%** (47/78) |
-
-⚠ **But cutting the crop smaller does not collect that gradient** — that is exactly what the rail
-does, and all three readings above are flat. So the constraint is not "too much music per crop" in
-a form that re-cutting solves.
-
-⚠ **And the decoder was never out of room.** `MAX_TOKENS` is **100** in both `decode.ts` and
-`onnx_parity.py`, and `hit_cap` fired on **0 of 202** misfilled strips here — the model stops on its
-own, well short of the cap. The 59-id figure is the **emitter's training-data gate**
-(`audit_coverage.MAX_IDS`), not an inference limit: the model has only ever been *trained* on labels
-that fit in 59, so it has learned that labels end by then. That points the remaining lever at the
-training gate ([BACKLOG.md](BACKLOG.md) item 7 / B9), not at the slicer.
-
-### The budget VALUE was never chosen, and 50 was the wrong one (2026-08-23)
-
-⚠ The read above tested **b=50** because that is the number `?dense=` documents — it was never
-selected against anything. Choosing it properly costs no decoding at all: re-window the same stage-1
-geometry at every candidate and count what enters the corpus against what it costs.
-`scripts/rung3/budget_sweep.py`, 200 pages / 3,876 legacy windows:
-
-| b | windows | over the 59-id gate | near-empty (≤20) | healthy 21–59 | recovered |
-|---|---|---|---|---|---|
-| shipped rule | 3,876 | 15.1% | 7.8% | 77.1% | — |
-| 40 | 4,503 | 6.5% | **10.8%** | 82.7% | +291 |
-| 50 | 4,286 | 6.8% | 8.4% | 84.8% | +293 |
-| 55 | 4,172 | 7.0% | 7.9% | 85.1% | +292 |
-| **57** | **4,124** | 7.2% | **7.5%** | **85.3%** | +290 |
-| 59 | 4,086 | 7.2% | 7.6% | 85.2% | +290 |
-| 62 | 4,036 | 9.3% | 7.7% | 83.0% | **+211** |
-
-⭐ **Recovery is FLAT from b=40 to b=59 (~+291).** Cutting harder buys nothing — the windows that
-splitting can rescue are rescued at any of these budgets. So the budget should be chosen entirely on
-what over-splitting *costs*, and that cost falls as b rises: near-empty crops go 10.8% → 7.5%,
-which at b=57 is **below the shipped rule's own 7.8%**. On this instrument b=57 recovers 290 windows
-into the trainable corpus at no measured cost.
-
-⛔ **b=62 is a cliff** — recovery collapses to +211, because windows estimated between 59 and 62 are
-allowed to stand and then blow the gate they were supposed to fit.
-
-⛔ **So b=50 over-splits: 162 unnecessary extra windows against b=57, and a worse near-empty rate,
-for the same recovery.** That is the most likely explanation of the **non-dense-page regression**
-measured above (10.1% → 14.9%) — at 50 the rail cuts pages that never needed cutting. The gate is
-59 and the estimator's residual sd is ~30 ids; stopping at 50 pays that margin twice.
-
-⚠ Estimated ids, not decoded (sd ~30) — every arm shares one estimator, so the ordering holds where
-the absolute levels do not. This is the same caveat, and the same "healthy band" instrument, as the
-July sweep in [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md), so the two are comparable.
-
-⚠ **This ranks the budget; it does not show the rail works.** The paired decode read above is still
-a wash, and nothing here changes that — what it changes is which value a *paired* experiment
-(re-emit → train → measure) should use.
-
-### What this leaves
-
-The dense-page bug is **real and unchanged** — 59.1% of pages carry an over-budget strip and
-`hit_cap` still fires on essentially none of them (0 of 202 misfilled strips in arm A here). What is
-now measured is that **this particular fix is not the answer**: cutting on the estimate moves the
-failure rather than removing it. Splitting *and* something that helps a short strip decode
-correctly would be a different experiment.
+Everything about **`?dense=50`, its wash, and the two ways it was asked again** — the
+measure-fill instrument, the 117-page read, the gradient that DOES exist and is not the token
+budget, and the budget VALUE that was never chosen — now lives in
+[METRICS-DENSE.md](METRICS-DENSE.md). That is the product-side question: what a rail does for a
+reader's page. This file keeps the training-side budget.
 
 ## HOW FAR over budget, and what 59 actually costs (2026-08-25)
 
@@ -347,6 +202,109 @@ remaining one:
 ⚠ **Narrow crops do cost, and here is the size of it.** Over the 455 human verdicts on `examv3`,
 crops under 600 px are marked `bad` (the crop itself unusable) **19% of the time against 8% overall**
 and 4–9% in every other width band. n=54, so it is a signal, not a rate.
+
+## HOW LONG LABELS REALLY ARE, AND WHY THE BUDGET IS 80 UNDER H (2026-09-07)
+
+`budget_tail_probe.py`, free — it tokenizes labels that already exist and counts ids. It reads
+`emit_responses.json` and NOT the manifest, because the manifest holds only the strips that passed
+and the whole question is about the ones the budget threw away.
+
+⚠ **59 was never a model limit.** It is `audit_coverage.MAX_IDS`, the emitter's quality gate. The
+model's real ceiling is **100**, in two places at once: `MAX_TOKENS` in `apps/web/src/omr/decode.ts`
+and `collate(max_len=100)` in `data.py` — which **truncates a longer label at 99**, teaching the
+model to stop early, which is the failure this round exists to remove.
+
+`strips_b8`, all **15,758** serialized labels (the 4,012 the gate dropped included):
+
+| | old | scheme H |
+|---|---|---|
+| median ids | 42 | **24** |
+| p95 | 105 | 53 |
+| max | 344 | **192** |
+| > 59 ids | 4,012 (25.5%) | **504 (3.20%)** |
+| > 80 ids | 1,674 (10.6%) | **148 (0.94%)** |
+| > 85 ids | 1,407 (8.9%) | 106 (0.67%) |
+| > 100 ids | 917 (5.8%) | 45 (0.29%) |
+
+⭐ **The tail is real music, not an alignment artefact**: `MEASURES_PER_STRIP` is 3, and all 148
+strips over 80 cover three measures or fewer. ⭐ **On the 579 labels the owner hand-typed into
+`examv3`'s review queue the longest H label is 67 ids** — nothing there reaches even 70, and only 2
+rows (0.35%) pass 59. Those are the hardest crops in the project by construction, which is what
+makes a budget of 80 safe rather than optimistic. Three of them, the ones the owner named:
+
+| strip | old ids | H ids |
+|---|---|---|
+| `Kurdilihicazkar_sirto_kemani_sebuh_ney_p1_s03_w01` | 92 | **57** |
+| `..._p1_s05_w00` | 99 | **61** |
+| `..._p1_s06_w00` | 131 | **67** |
+
+⭐ **The budget is 80 under H** (owner, 2026-09-07 — [DECISIONS.md](DECISIONS.md)): it admits 15,610
+of 15,758 (99.06%), leaves the rail **148** windows instead of 504, trains **356 dense strips whole**
+that would otherwise be halved, and keeps 20 ids of margin under the truncation cliff.
+
+⚠ **One number step 6 has to answer for**: of those 15,610 strips, **769 (4.93%) cost more than 100
+ids under the OLD vocabulary**. The control arm cannot hold them at all, so the planned A/B's "same
+pools, one variable" is not achievable as written.
+
+## WHAT THE RAIL DOES WHERE THERE IS NO GOLD — nothing, and that is the design (2026-09-07)
+
+The owner's question: a strip with no gold label has no known id count, so how is it decided to be
+over budget? **It is not.** The plan prices only windows whose label exists, and `Rail.page()`
+answers **False** for a range it never priced — an unknown range is "leave it alone", never a guess.
+That is what confines a re-cut to windows measured to need one.
+
+**Who has no gold, in the b8 emit** (33,530 crops over 1,704 pages):
+
+| | strips | why it has no label |
+|---|---|---|
+| labelled | **15,758** | the piece matched SymbTr and its row aligned |
+| `split_wide` | 10,226 | cut at a whitespace gutter INSIDE one measure — it carries no whole measure, so no label can be derived for it |
+| `row_unaligned` | 7,446 | the row's decode did not match the SymbTr reference |
+| `empty_range` / `missing_pages` | 100 | — |
+
+⭐ **None of them is training data either way**, so the rail declining to touch them costs nothing.
+
+⚠ **But every number on this page describes the LABELLED population**, so it is worth asking whether
+the unlabelled half is denser — if it were, the over-budget rate would be understated. Checked on the
+model's own decode length: `row_unaligned` reads **median 40 / mean 41.5 / p90 68** ids against the
+labelled strips' **40 / 41.9 / 66**, and `split_wide` is shorter still (36). No visible difference.
+⚠ The proxy is itself biased short — an over-budget strip is exactly where the model stops early —
+so this is "no evidence of a denser tail", not "there is none".
+
+### The place where it really bites is the APP, and no signal there is good enough
+
+At inference there is no SymbTr, no label, no gold — which is why the shipped slicer has **no rail at
+all** ([BACKLOG.md](BACKLOG.md) item 0). Two gold-free signals exist and both were priced:
+
+- **`est_tokens`, the slicer's own ink estimate.** Measured 2026-09-07 over 40 pages re-sliced and
+  paired to their gold **by measure span** (453 strips): correlation with the true H id count is
+  **0.67**, and it is biased **+16 ids** (median 37 against a true H median of 21) — it was fitted on
+  decode lengths in the OLD id space, so under scheme H it over-predicts by construction. ⛔ It cannot
+  gate as it stands; it would have to be refitted against H labels first.
+- **`hit_cap`, the model's decode reaching its ceiling.** It fires on **0.05%** of labelled strips.
+  The failure mode is the model stopping EARLY and confidently, not running long, so this signal is
+  looking for the opposite of the bug.
+
+## The rail's emitter half, verified on a real page (2026-09-07)
+
+Round 4's rail is now end to end: the emitter prices the ranges (`--rail-plan` → `emit_rail.json`)
+and replays them as the slicer's `oversize` callback (`--rail`). Read on **one** piece —
+`nikriz_sirto_refik_fersan`, 3 pages, 63 strips, crops written to a scratch root so no pool was
+touched. ⚠ **n = 1 piece. It verifies the MECHANISM; it prices nothing.** The pool-level numbers
+stay the ones the b8 emit and the token probe measured.
+
+| arm | over-budget windows | accepted strips |
+|---|---|---|
+| `--vocab old` (today's gate) | 18 | 28 |
+| `--vocab h` (scheme H, no re-cut) | **0** | 40 |
+| `--vocab old --rail` (the plan applied) | **0** | 54 |
+
+⭐ **The owner's rule holds where it matters.** Slicing that page twice — once plain, once with the
+plan — the two cuts share **19 measure spans, and all 19 crops are byte-identical**; 9 windows were
+split into 18, and the page went 28 → 37 strips. ⚠ **8 of those 19 identical crops carry a different
+`_wNN` name**, which is the renumbering trap in one number: a strip filename survives a re-cut and
+its pixels do not, so pools join by measure span (`carry_old_fixes.py`), never by name. The manifest
+marks a re-cut strip with `split_from`.
 
 ## The 2026-07-29 retune and the crop frame moved out (2026-08-22)
 

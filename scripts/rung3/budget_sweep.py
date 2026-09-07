@@ -48,7 +48,10 @@ from vision.page_to_strips import (  # noqa: E402
 
 STRIPS = Path("data/real/strips_v2")
 IMAGES = Path("data/real/images")
-GATE = 59      # audit_coverage.MAX_IDS — what actually drops a strip from training
+GATE = 59      # audit_coverage.MAX_IDS — what actually drops a strip from training.
+               # ⚠ THE H POOLS ARE EMITTED AT 80 (owner, 2026-09-07): every number this
+               # script has recorded was read at 59, so it is kept to keep them
+               # reproducible. docs/METRICS-SLICER-WINDOWS.md
 NEAR_EMPTY = 20
 
 

@@ -2,7 +2,7 @@
 
 purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
 audience: agents and the owner working the real-page track
-updated: 2026-09-06
+updated: 2026-09-07
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
@@ -185,9 +185,10 @@ to revisit the no-render decision; otherwise it stands.
    a different engraving house packs more music into a staff row, which lands on this round's own
    label-budget rail. ⏭ Growing the probe is the only route to a verdict; more erdincbal pages cost
    no hand labelling (75 SymbTr accepts exist, 14 used).
-5. 🔶 **Re-emit the real pools — THE CODE IS BUILT (2026-09-06), the re-emit is NOT run.**
-   Under scheme H, **re-cutting only the strips still over the 59-id gate under H** (owner —
-   [../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the whole pool with a balanced packer, as this step
+5. 🔶 **Re-emit the real pools — THE CODE IS COMPLETE (2026-09-07), the re-emit is NOT run.**
+   Under scheme H, **re-cutting only the strips still over the gate under H** — and ⭐ **that gate is
+   80 ids, not 59** (owner, 2026-09-07), which takes the re-cut from 504 windows to **148** and lets
+   356 dense strips train whole ([../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the whole pool with a balanced packer, as this step
    first said**: that moves crop boundaries, which
    [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) says stales every labelled pool —
    and it is unnecessary, because **3,508 of the 4,012 over-budget strips fall under the gate on
@@ -215,15 +216,43 @@ to revisit the no-render decision; otherwise it stands.
      ⚠ A split **renumbers** every later `_wNN` in its row, so the manifest records `split_from`;
      pools are joined by measure span (`carry_old_fixes.py`), never by filename.
 
-   ⏭ **Still owed**: the emitter must supply `oversize` from the H-tokenized label, then the run
-   itself — a Colab decode, since every cache is refused since `GEOMETRY_REV` 20260903. ⚠ Those
-   2026-09-03 slicer fixes move some crops regardless, on an **unmeasured** number of pages. Then
-   `verify-labels`, then the owner reads the audit sample and every `\sig` row — expect ~450 fixes
-   in ~3,500 rescued strips at the measured 12.9%.
+   - **The emitter's half (2026-09-07).** `emit_strip_labels.py` gained two flags, and they are
+     deliberately **two runs, not one**: the rail is a FILE the owner can read before any crop
+     moves.
+     - `--vocab {old,h}` picks the tokenizer the 59-id gate counts with — **the budget gate only**.
+       ⛔ Alignment keeps the decode model's own tokenizer: adding H's ids to it would re-segment
+       the DECODED text too, and every `nd` number in the script lives in that model's id space.
+       `MAX_IDS` (59) is a property of the trained model and does not move with the vocabulary.
+     - `--rail-plan` prices **every candidate sub-range** of every over-budget window with a second
+       `labels-cli --ranges` batch and writes `emit_rail.json` (`pages → system → "m_from:m_to" →
+       ids`). It cuts nothing and re-decodes nothing.
+     - `--rail <plan>` replays those measured counts as the slicer's `oversize` callback. A range
+       the plan never priced answers **False** — an unknown range is "leave it alone", never a
+       guess, which is what keeps the split confined to the windows that failed. It refuses a plan
+       priced under a different `--vocab`, and every page the plan names is **re-decoded** (its
+       crops are about to move); a cache carrying `split_from` is refused by a run with no plan for
+       it, the same rule `GEOMETRY_REV` enforces for the CV path. ⛔ It also **refuses `--exam`**:
+       that mode slices the frozen exam pages, whose crops the gold describes.
+   - ✅ **Verified on a real page, 2026-09-07** (`nikriz_sirto_refik_fersan`, 3 pages, no pool
+     touched — numbers in [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)): the gate
+     is vocabulary-sensitive (18 over-budget windows under `old`, **0** under H, accepted strips
+     28 → 40 on one piece), the rail clears the rest (over-budget 18 → 0, accepted → 54), and the
+     owner's rule holds — of the 19 measure spans a railed page shares with its unrailed cut,
+     **19 are byte-identical**, while 8 of them carry a different `_wNN` name.
+   ⏭ **Still owed**: the run itself — a Colab decode, since every cache is refused since
+   `GEOMETRY_REV` 20260903. ⚠ Those 2026-09-03 slicer fixes move some crops regardless, on an
+   **unmeasured** number of pages. Then `verify-labels`, then the owner reads the audit sample and
+   every `\sig` row — expect ~450 fixes in ~3,500 rescued strips at the measured 12.9%.
 
 6. **Two arms from base, one variable**: old vocabulary (control) vs scheme H, same pools, same
    steps, stage 2 at 4,000. ~3.5 h each on an L4. Everything else in this round changes together and
    is unattributable; the vocabulary gets its own paired answer.
+   ⚠ **"SAME POOLS" IS NOT ACHIEVABLE AS WRITTEN, measured 2026-09-07.** Of the 15,610 strips a
+   budget of 80 admits under H, **769 (4.93%) cost more than 100 ids under the old vocabulary** — the
+   control arm cannot hold them, because `collate` truncates at 99 and would teach it to stop early.
+   ⏭ **Decide before running it**: drop those 769 from both arms (a clean pair over a slightly
+   smaller pool), or accept that the control is Round 3's own 59-gated pool and read the arms as
+   "the whole intervention" rather than "the vocabulary alone".
 7. **Beam search, offline, on the current model first** — paired on `_realval_v2`. The decoder is
    20–25% of a strip's time (encoder 74–81%), so beam 3 costs roughly +40–60% page time, not ×3;
    Transcoda's gain at beam 3 was small. Ships to the user path only if it pays; otherwise the emitter
@@ -239,7 +268,11 @@ to revisit the no-render decision; otherwise it stands.
 - Training on the exam, or re-reading it for an A/B.
 - Any realism arm, and the render-side holes — signature-only strips, segno at a bar's end
   ([../BACKLOG.md](../BACKLOG.md) item 11) — they wait for a round that renders.
-- Raising the 59-id budget: the decoder's real ceiling is 100 and 0.03% of strips reach it.
+- ~~Raising the 59-id budget~~ — ⭐ **DECIDED THE OTHER WAY 2026-09-07 (owner): the budget is 80
+  under scheme H.** 59 was never a model limit, only the emitter's gate; the ceiling is 100 and a
+  longer label is TRUNCATED at 99 in training. At 80 the rail re-cuts **148** windows instead of
+  504 and **356 dense strips train whole**. [../DECISIONS.md](../DECISIONS.md) ·
+  [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md).
 - Retiring `\tupend`; a `\dottedbar` token (every real gold label would become silently wrong).
 
 ## Outside evidence, named so it is not re-searched

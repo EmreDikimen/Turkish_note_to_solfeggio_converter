@@ -26,7 +26,7 @@ updated: 2026-09-06
 
 | the cause | the number |
 |---|---|
-| **We throw away the dense half of every real page before training.** A strip whose label is longer than 59 ids (an id is one piece the model writes) is dropped. | 2,330 strips kept, **4,012 dropped** |
+| **We throw away the dense half of every real page before training.** A strip whose label is longer than the budget (an id is one piece the model writes) is dropped. | 2,330 strips kept, **4,012 dropped** — see the budget section below, which is where this one is fixed |
 | **The key signature is the biggest single mistake, and part of its answer key was written by the model itself.** | 17.5% of corrections; 24 of 45 exam pieces had the signature overwritten by a model vote |
 | **The checkpoint picker looks at the wrong number.** | wrong 3 times out of 3 |
 | **Every page we own comes from two websites.** | 1,055 + 1,000 pages, nothing else |
@@ -44,7 +44,7 @@ token per note per octave, or one per octave and combine?" The answer is **both*
 at least 1,000 times gets its own token; a rare one (`a'''` appears once in the whole corpus) stays
 as letter + octave, so nothing is learned from one example. This does not make octave reading
 better by itself. We counted: of 69 wrong notes, only **1** was an octave jump; most were one line
-off. What it buys is that **3,508 of the 4,012 dropped strips come back**, about three times more
+off. What it buys is that **almost all of the 4,012 dropped strips come back**, about three times more
 real training data.
 
 **We keep `\tupend`** (the triplet closing mark). You judged the triplets read well enough.
@@ -84,14 +84,43 @@ learn it twice. It does not happen: every rare note is cut the same way every ti
 spelling *does* have that problem in a small way — **1.277%** of all notes are written in a second,
 different form. After the change that drops to **0.003%**.
 
-**The gain is confirmed: 3,508 of the 4,012 thrown-away strips come back.** The real training set
-goes from 3,929 strips to **7,437** — nearly double.
+**The gain is confirmed: 3,508 of the 4,012 thrown-away strips come back** on the spelling change
+alone, and the budget decision below brings back most of the rest. The real training set goes from
+3,929 strips to **7,437+** — nearly double.
+
+### The budget: it was 59, and it is now 80 (your call, 7 September)
+
+A "budget" here is how long a label is allowed to be before we drop the strip. It was 59 ids. You
+pointed at three strips on a page you had corrected by hand and said the model reads strips of 85–90
+ids correctly, so 59 looked too tight. **You were right, and for a stronger reason than expected.**
+
+- **59 was never a limit of the model.** It was a rule we wrote for ourselves, to keep bad labels out
+  of training. The model's real limit is **100**, and it is in two places: the reader in the browser
+  stops after 100 pieces, and the training code cuts a longer label off at 99. Cutting a label off is
+  the worst thing that can happen here — it teaches the model to stop early, which is exactly the
+  mistake we are trying to remove.
+- **Your 85–90 was in the OLD spelling.** The new spelling writes the same music ~40% shorter. So
+  what you saw was the model walking 85–90 steps correctly, and the new spelling gives those steps
+  more music each. Your observation supports the change more strongly than it first looked.
+- **Your three strips**, measured: 92 → **57** ids, 99 → **61**, 131 → **67**. And over the 579
+  labels you have typed by hand, the longest one under the new spelling is **67**. Nothing you have
+  ever corrected comes near 85.
+
+**So the budget is 80.** Out of every 100 strips, 99 now fit. The re-cutting tool only has to touch
+**148** windows instead of 504, and **356 dense strips are trained whole** instead of being sawn in
+two. 20 ids of room are left under the hard limit of 100.
+
+⚠ **Two costs, said out loud.** Our practice pictures stop at 44 ids, so raising the real budget to
+80 makes the gap between practice and real pages about twice as wide as it was. And the planned
+side-by-side test of old spelling against new cannot use exactly the same strips any more: 769 of
+them are too long for the old spelling to hold at all. Neither is a blocker; both are decisions to
+take before those steps run.
 
 ### One real risk, and why we are not fixing it by re-drawing
 
 The new spelling makes labels shorter. Our practice pictures then stop at 44 ids, while real pages
-reach 59. So **887 real strips (12 out of every 100)** are longer than anything the model practises
-on. We asked whether to re-draw the practice pictures to make them longer, and you said yes — then
+reach 59 — and 80 after the budget decision above. So **887 real strips (12 out of every 100)**, and
+now more, are longer than anything the model practises on. We asked whether to re-draw the practice pictures to make them longer, and you said yes — then
 we measured how, and it does not work.
 
 To carry 56 ids, a practice picture would have to be about **2,580 pixels** wide. Real page cuts are

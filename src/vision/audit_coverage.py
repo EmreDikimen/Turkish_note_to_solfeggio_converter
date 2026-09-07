@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from data import ADDED_TOKENS, StripDataset, check_token_drift
+from data import ADDED_TOKENS, StripDataset, check_token_drift, vocabulary
 
 AEU = ADDED_TOKENS[:8]
 STRUCT = ["\\natural", "\\sig", "\\repstart", "\\repend", "\\volta1", "\\volta2",
@@ -43,7 +43,14 @@ RHYTHM = ["\\tup3", "\\grace"]  # \tupend counts == \tup3, no separate floor
 # ⛔ \\tie was here until 2026-08-22 and was REMOVED, not lowered: the token is retired, a tied
 # pair labels as two plain notes, and the arc is label-free ink. A floor on it would fail every
 # render from now on. Its id stays in ADDED_TOKENS (append-only) — nothing emits it.
-MAX_IDS = 59  # incl. EOS; decoder max_length is 60 (one slot for the decoder-start id)
+# The label budget in ids incl. EOS. ⚠ NOT a model limit: the decoder's real ceiling is 100
+# (decode.ts MAX_TOKENS, data.collate max_len), and a longer label is TRUNCATED at 99, which teaches
+# the model to stop early. This is the corpus QUALITY gate, and it moves with the vocabulary — an H
+# label is ~40% shorter than the same music under the old one. ⭐ 80 under scheme H (owner,
+# 2026-09-07): docs/METRICS-SLICER-WINDOWS.md. Keep this table and the emitter's
+# MAX_IDS_BY_VOCAB in step — they gate the same corpus from two sides.
+MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}
+MAX_IDS = MAX_IDS_BY_VOCAB["old"]   # every pool before 2026-09-07
 
 # DoD thresholds (docs/archive/phases/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
 # injected at a deliberately low rate (see tools/render/respell.ts — user decision 2026-07-05).
@@ -98,6 +105,9 @@ def main() -> int:
     ap.add_argument("--strips", default="data/synthetic/strips_v2_2")
     ap.add_argument("--split", default=None)
     ap.add_argument("--tokenizer", default=None, help="HF checkpoint dir for the real-id length gate")
+    ap.add_argument("--vocab", choices=["old", "h"], default="old",
+                    help="vocabulary the length gate measures with, and the budget it applies "
+                         f"({MAX_IDS_BY_VOCAB}) — an H pool audited as `old` fails on its own labels")
     args = ap.parse_args()
 
     strips_dir = Path(args.strips)
@@ -184,7 +194,8 @@ def main() -> int:
         # Measure with the TRAINING-TIME vocabulary: modeling.py adds ADDED_TOKENS before every
         # run, so a checkpoint tokenizer predating a token (e.g. the nav marks vs. overfit10)
         # would split it into ~5 ids and fail good labels. add_tokens is idempotent.
-        tok.add_tokens(ADDED_TOKENS)
+        tok.add_tokens(vocabulary(args.vocab))
+        max_ids = MAX_IDS_BY_VOCAB[args.vocab]
         eos = tok.eos_token_id
         too_long = 0
         longest = 0
@@ -192,13 +203,13 @@ def main() -> int:
             ids = tok(r["label"]).input_ids
             n_ids = len(ids) + (0 if ids and ids[-1] == eos else 1)  # + manually-appended EOS
             longest = max(longest, n_ids)
-            if n_ids > MAX_IDS:
+            if n_ids > max_ids:
                 too_long += 1
                 if too_long <= 5:
                     print(f"  TOO LONG ({n_ids} ids): {r['image']}")
-        print(f"real-tokenizer length: longest {longest} ids (cap {MAX_IDS}), {too_long} over")
+        print(f"real-tokenizer length ({args.vocab}): longest {longest} ids (cap {max_ids}), {too_long} over")
         if too_long:
-            failures.append(f"{too_long} labels exceed {MAX_IDS} tokenizer ids")
+            failures.append(f"{too_long} labels exceed {max_ids} tokenizer ids")
 
     print()
     if failures:

@@ -12,7 +12,8 @@ wrong — fix by deleting, not by syncing.
 | Question | File |
 |---|---|
 | What is this project, how do I run it, what may I not do? | [../CLAUDE.md](../CLAUDE.md) |
-| What is the command for X, and how does it fail silently? | [COMMANDS.md](COMMANDS.md) |
+| What is the command for X, and how does it fail silently? — the APP (dev servers, gates, deploy) | [COMMANDS.md](COMMANDS.md) |
+| …and the same for PYTHON — the slicer, the emitter, the queues, the scorers, every `OMR_*` knob | [COMMANDS-PYTHON.md](COMMANDS-PYTHON.md) |
 | **Changing the web app?** The rules for playback, the editor, the DOM and the stylesheet | [APP-RULES.md](APP-RULES.md) |
 | **What may a browser check assert on?** The DOM attributes, per feature, and the trap in each | [DOM-CONTRACT.md](DOM-CONTRACT.md) |
 | What ships today? What is the next action? | [STATUS.md](STATUS.md) |
@@ -46,7 +47,8 @@ wrong — fix by deleting, not by syncing.
 | The second engraver (LilyPond) — feasibility, its own gate, the null domain-gap read | [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md) |
 | Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |
 | How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |
-| The LABEL BUDGET — the rail the shipped app has none of, and the `?dense=` experiment | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
+| The LABEL BUDGET — how long labels really are, where the gate sits, and Round 4's emitter rail | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
+| `?dense=` — the rail the SHIPPED app has none of, and what the experiment measured | [METRICS-DENSE.md](METRICS-DENSE.md) |
 | The windowing retune and the crop frame — settled: which constants were swept, and why none moved | [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) |
 | Barlines — the gates, the hand-marked truth, and what crop quality even means | [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md) |
 | A STEM taken for a barline — the both-ends gate (2026-09-03), what it costs, and the variant that was dropped | [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md) |

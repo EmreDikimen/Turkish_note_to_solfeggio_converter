@@ -14,7 +14,8 @@ duration, an over-budget label the decoder literally cannot emit within max_leng
 
 Every incoming label re-passes the emitter's real gates (emit_strip_labels.py pass 2) first:
 
-  budget      <= 59 token ids incl. EOS (audit_coverage.py's rule; decoder max_length is 60),
+  budget      <= --max-ids token ids incl. EOS (59 under the old vocabulary, 80 under scheme
+              H — owner 2026-09-07; NOT a model limit, the decoder's ceiling is 100),
               counted with the real training tokenizer.
   round-trip  labels-cli --check: token-class audit + decodeLabel(carry) note/rest count match
               — the SAME check every --ranges label passes, now applied to human-edited text
@@ -142,7 +143,14 @@ def main() -> int:
     ap.add_argument("--strips-root", default="data/real/strips")
     ap.add_argument("--checkpoint", default="data/checkpoints/rung22-stemfix-best",
                     help="tokenizer source for the id-budget gate (no model loaded)")
-    ap.add_argument("--max-ids", type=int, default=59)
+    # ⚠ THE BUDGET AND THE VOCABULARY MOVE TOGETHER. An H pool promoted under the old vocabulary
+    # tokenizes ~40% longer and is mass-rejected as over budget — and an `audit_fix` rejected here
+    # REMOVES its manifest row, which is how six of the owner's own corrections were once nearly
+    # deleted from training. Defaults mirror emit_strip_labels.MAX_IDS_BY_VOCAB (owner, 2026-09-07).
+    ap.add_argument("--vocab", choices=["old", "h"], default="old",
+                    help="vocabulary the id-budget gate measures with; also picks its default cap")
+    ap.add_argument("--max-ids", type=int, default=None,
+                    help="label budget in ids incl. EOS (default: 59 under --vocab old, 80 under h)")
     ap.add_argument("--exam", action="store_true",
                     help="promote exam-queue rows (exam=1) into the EXAM manifest of --dir "
                          "(exam growth); without this flag exam rows are skipped and only "
@@ -161,7 +169,11 @@ def main() -> int:
         raise SystemExit(f"{manifest_p} not found")
 
     from transformers import AutoTokenizer
+    sys.path.insert(0, str(REPO / "src" / "vision"))
+    from data import vocabulary
     tok = AutoTokenizer.from_pretrained(args.checkpoint)
+    tok.add_tokens(vocabulary(args.vocab))    # idempotent for the ids the checkpoint already has
+    max_ids = args.max_ids if args.max_ids is not None else {"old": 59, "h": 80}[args.vocab]
 
     def n_ids(label: str) -> int:
         ids = tok(label).input_ids
@@ -225,7 +237,7 @@ def main() -> int:
             reject(kind, r, "not_in_manifest")
             continue
         n = n_ids(label)
-        if n > args.max_ids:
+        if n > max_ids:
             reject(kind, r, "over_budget", f"{n} ids")
             if kind == "audit_fix":       # correction unusable, old label known-wrong -> out
                 bad_fix_images.add(image)
@@ -327,7 +339,7 @@ def main() -> int:
     # ---- outputs ----------------------------------------------------------------------------
     report = {
         "params": {"dir": str(out_dir), "checkpoint": args.checkpoint,
-                   "max_ids": args.max_ids, "dry_run": args.dry_run},
+                   "max_ids": max_ids, "vocab": args.vocab, "dry_run": args.dry_run},
         "counts": dict(counts),
         "rejects": len(rejects),
         "reject_reasons": dict(Counter(x["reason"] for x in rejects)),

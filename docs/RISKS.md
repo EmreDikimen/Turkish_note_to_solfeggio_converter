@@ -21,10 +21,14 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
   dense strips a whole page shows. ⚠ Do not quote "Run A is better" as measured, and do not quote the
   null as "Run A is no better". The instrument that could settle it — a fixed hand-test page set —
   does not exist yet ([rung3/round4.md](rung3/round4.md)).
-- **NEW (2026-09-03): under the Round-4 tokenizer, synthetic labels are SHORT and real ones are
-  not.** No render this round (owner), so synthetic strips stay packed to 57 old ids (~33 new) while
-  re-emitted real strips fill 59 new ids. Long, dense labels would then exist only in the real pool.
-  Unmeasured; the first Round-4 measurement is the two length distributions.
+- **NEW (2026-09-03, MEASURED 2026-09-06 and WIDER since 2026-09-07): under the Round-4 tokenizer,
+  synthetic labels are SHORT and real ones are not.** No render this round (owner), so synthetic
+  labels stop at **44** H ids while real ones were to reach 59 — 887 real strips (11.9%) already
+  longer than anything synthetic. ⚠ **The budget then moved to 80** (owner, 2026-09-07), so the band
+  that exists only in the real pool is now roughly twice as wide. Long, dense labels are the material
+  this round is FOR, and they will be trained on with no synthetic company at all. ⛔ Re-packing
+  synthetic to fill the band was measured and rejected — it widens crops, which costs edits. What
+  replaces it is watching: long-strip errors get their own column when the H arm is read.
 - **NEW (2026-08-21): every `\sig` block in a real-page label is UNVERIFIED.** The key signature is
   the only part of a label not derived from SymbTr — the model reads it off each row-start strip and
   the **majority read overwrites the derivation**. The voter is the weak `rung3-labeler`, whose

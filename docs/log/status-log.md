@@ -2,10 +2,153 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-06
+updated: 2026-09-07
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-07 — the label budget is 80 under scheme H, and 59 was never a model limit
+
+The owner asked the question that re-opened it, from the app rather than from a table: *"budgetımız
+59 id evet ama 85-90 id den oluşan striplere kadar model doğru bir şekilde tahmin edebiliyordu"* —
+and named three `examv3` strips whose gold they had hand-corrected, as the edge cases.
+
+**What the three said.** Under the old vocabulary they cost 92, 99 and 131 ids. Under scheme H:
+**57, 61 and 67** — 38–49% shorter, and the first one falls under today's gate without its crop being
+touched at all.
+
+**What 59 actually is.** Not a model limit. It is `audit_coverage.MAX_IDS`, the emitter's quality
+gate, and it had been copied into four files as if it were a fact about the decoder. The decoder's
+real ceiling is **100**, in two places at once: `MAX_TOKENS` in `apps/web/src/omr/decode.ts` and
+`collate(max_len=100)` in `data.py` — which **truncates** a longer label at 99, teaching the model to
+stop early, the exact failure this round exists to remove. ⭐ And the owner's observation is about
+DECODER STEPS: 85–90 correct steps were watched in the OLD id space, while an H label is ~40%
+shorter for the same music, so H spends none of that headroom.
+
+**The measurement** (`scripts/rung3/budget_tail_probe.py`, free — it tokenizes labels that already
+exist). Over b8's **15,758** serialized labels, the dropped ones included: median 42 → **24** ids,
+max 344 → **192**. Over the gate: **504 (3.20%) at 59, 148 (0.94%) at 80**, 106 at 85, 45 past 100.
+On the **579** labels the owner hand-typed into `examv3`'s review queue the longest H label is **67**,
+and only two rows pass 59 at all. ⭐ The tail is real music, not an alignment artefact: every strip in
+it covers three measures or fewer, which is `MEASURES_PER_STRIP`.
+
+⭐ **The owner set the budget at 80.** It admits 15,610 of 15,758 (99.06%), leaves the rail 148
+windows instead of 504, lets **356 dense strips train whole** that would otherwise be halved, and
+keeps 20 ids of margin under the truncation cliff. ⛔ Not 100: that IS the cliff.
+
+**The gate now moves with the vocabulary, in four files, because it is one decision:**
+`emit_strip_labels.MAX_IDS_BY_VOCAB` (`--max-ids` overrides, and refuses anything above 100),
+`audit_coverage.py --vocab`, `promote_labels.py --vocab` (⚠ an `audit_fix` rejected as over-budget
+REMOVES its manifest row — that is how six of the owner's own corrections were once nearly deleted),
+and `train.py --select-max-length` (⚠ 60 would truncate the selection decode and count corrections
+the model never made, on exactly the dense strips this is about). The rail plan records the budget it
+was priced at and a `--rail` run refuses a plan priced at a different one. `budget_sweep.py` and
+`token_scheme_probe.py` keep their `GATE = 59` so their published numbers reproduce, with a comment
+saying why.
+
+⚠ **Two costs, both stated rather than discovered later.** Synthetic labels stop at **44** H ids, so
+raising the real gate to 80 doubles the length band that exists only in the real pool — the risk
+STATUS already watches, now larger. And of the 15,610 strips admitted, **769 (4.93%) cost more than
+100 ids under the OLD vocabulary**, so step 6's control arm cannot hold them: *"same pools, one
+variable"* has to be re-stated before that A/B runs.
+
+## 2026-09-07 — Round 4 step 5: the emitter now feeds the rail, and nothing has been re-emitted
+
+The slicer's half of Round 4's label-budget rail was built on 2026-09-06 and left inert: `oversize`
+is a **callback**, and only the emitter can answer it, because a measure range's true id count comes
+from the SymbTr-derived label. That half is now written.
+
+**Two runs, not one, and that is the design.** A single-pass version would have to re-slice a page
+while it was still deciding which windows to cut, so the plan is a **file**:
+
+- `--rail-plan` prices every candidate sub-range of every over-budget window with a second
+  `labels-cli --ranges` batch and writes `emit_rail.json` (`pages → system → "m_from:m_to" → ids`).
+  It cuts nothing and re-decodes nothing, so the owner can read the plan before a crop moves.
+- `--rail <plan>` replays those measured counts as the callback. ⚠ **A range the plan never priced
+  answers False** — "leave it alone", never a guess. That is what confines the split to the windows
+  that failed, which is the owner's 2026-09-06 rule (*"over-budgetlara da dokunma"*).
+- `--vocab {old,h}` chooses the tokenizer the 59-id gate counts with. ⛔ **The gate only.** A first
+  version reached for `rt.tok` — the decode model's own tokenizer — and adding scheme H's ids to it
+  would have re-segmented the DECODED text as well, so every `nd`, every alignment distance and
+  every review threshold in that script would have quietly changed meaning. `MAX_IDS` (59) is a
+  property of the trained model, and it does not move with the vocabulary.
+
+⛔ **`--rail` refuses `--exam` outright.** That mode slices the FROZEN exam pages, and their crops
+are what the gold describes; a rail run there would change the pixels every published exam number
+was read on. `--rail-plan` stays allowed, writing a file and cutting nothing.
+
+**Two cache rules came with it**, both the same lesson `GEOMETRY_REV` teaches for the CV path: a page
+the plan names is **always re-decoded** (its crops are about to move), and a cached decode carrying
+`split_from` is **refused** by a run that has no plan for it. A manifest row for a re-cut strip now
+carries `split_from` too, because a strip filename survives a re-cut and its pixels do not.
+
+**Read on one piece** — `nikriz_sirto_refik_fersan`, 3 pages, 63 strips, crops written to a scratch
+root so no pool was touched. Over-budget windows: **18** under the old vocabulary, **0** under H
+(accepted strips 28 → 40); with the plan applied instead, over-budget **0** and accepted **54**.
+Slicing page 1 twice, plain against railed: the two cuts share **19 measure spans and all 19 crops
+are byte-identical**, 9 windows became 18, and **8 of those identical crops carry a different `_wNN`
+name** — the renumbering trap in one number. ⚠ **n = 1 piece: it verifies the mechanism and prices
+nothing.** [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md).
+
+⏭ **Nothing is re-emitted.** Step 5's remaining half is the run itself, and it needs a GPU: every
+decode cache on disk has been refused since `GEOMETRY_REV` 20260903.
+
+## 2026-09-07 — the first ending sounded twice when the model missed its "1." (product)
+
+The owner heard it on the app: *"app bazen volta 2 yi çalmadan önce volta 1 i de çalıyor"* — on the
+repeat, the bars under the "1." bracket played again before the "2.".
+
+**What was wrong.** `expandRepeats` skips the first ending on the second pass only when a `\volta1`
+was decoded inside the repeat span. The rule itself was right (2026-08-30: the ending is a RUN, from
+the "1." to the `:‖`); the input often is not. Measured over the 1,720 cached page decodes in
+`strips_v2`: of the **1,208** `:‖` that carry a `\volta2` on the next bar, **156 (12.9%)** had no
+usable "1." — **153** with no `\volta1` anywhere in the span, **3** with one farther than
+`MAX_FIRST_ENDING`. Those spans replayed whole, so the first ending sounded a second time.
+
+**The fix, and why it is safe to guess here.** A second ending is only ever printed opposite a first
+one, so the `\volta2` after the barline is evidence in its own right: with no "1." in the span, the
+`:‖` bar becomes a **one-bar** first ending — the modal real length (62.1% of the 1,128 marks
+measured on 2026-08-30). The inferred mark is **written onto the bar**, not just into the playing
+order, so the bracket draws where the music is skipped and the 𝄋 / D.C. passes read the same marks.
+`expandRepeats` returns the bars it inferred; both callers (`stitchTokenRows`, `resolveStructure`)
+set them before the later expanders run — one rulebook, as before.
+
+**Two refusals kept on purpose.** A **one-bar span** is left alone: inferring there would erase the
+repeat rather than shorten it (5 spans on the corpus). And a span whose "1." WAS read but sits too
+far keeps the existing ignore-and-warn (3 spans) — obeying a stray mark deletes real music, and
+inferring alongside it would draw a second bracket on the same span. No warning is emitted for the
+inference itself: the marks and the sound agree afterwards, and `structure-edit.ts` treats every
+warning as a refusal, so one here would block placements the editor should accept.
+
+**Effect.** Spans resolving a first ending **1,052 → 1,200**; played bars over the corpus
+**64,859 → 64,695 (−164)** — the music that was being replayed.
+
+### Then the second half: a "1." past the `:‖` is a "2."
+
+The first pass left **29** spans carrying a "1." on the bar AFTER their `:‖`, with no "2." anywhere,
+and that was written down here as a known gap: moving the bracket deletes a bar from the second pass
+on a guess about which side of a barline the glyph belongs to. The owner asked for it (*"o son
+dediğini de düzeltir misin"*), and looking at the 29 turned the guess into a definition.
+
+**It is not a judgement about ink.** A first ending lies INSIDE the repeat, so a bracket printed past
+the closing barline can only be the second ending — either the glyph was read on the wrong side of
+the line or its number was misread. The corpus says the same thing twice: besides those 29, another
+**29** spans carry a CORRECT "1." on the `:‖` bar *and* a second "1." on the bar after it, which is a
+second-ending bar by construction. So the model does misprint "1." at exactly that position. Of all
+58: **0 open a new repeat**, **0 already carry a "2."**.
+
+The mark is REWRITTEN, not ignored — the page then draws "1." `:‖` "2." as the print does — and the
+relabel feeds the earlier rule, which is why the two repairs are ordered (relabel, then infer) and
+why `applyEndingRepairs` writes both back in that order. **Two shapes left alone**: a bar that
+carries a `‖:` (a span's own first bar is the one place a "1." past a barline could still mean
+something else — 1 span), and the one-bar span.
+
+**Effect of both repairs together.** First endings resolved **1,052 → 1,225**, played bars
+**64,859 → 64,672 (−187)**. What remains is refusals, by design: **11** spans with a second ending
+and no first one (5 one-bar spans, 6 with a "1." beyond `MAX_FIRST_ENDING`) and **1** stray "1." on a
+bar that opens a repeat. `npm run check:fold` still reports **0 pages whose sound moved**; `npm test`
+(644 checks, 14 new stitcher cases), `npm run typecheck` and `npm run smoke:editor` all pass.
+⚠ **Not deployed** — both ride the next `deploy:app`, so the live site still replays those endings.
 
 ## 2026-09-07 — Round 4 step 5: the vocabulary and the rail are BUILT, nothing re-emitted (model)
 

@@ -60,8 +60,10 @@ engineer.** The owner reads English as a second language and asked for this to b
 
 ## Commands
 
-**⚠ The FULL command reference, with the traps that matter, is [docs/COMMANDS.md](docs/COMMANDS.md)
-— read it before running anything not in this box.** Python lives in `.venv-ml` (training/data only,
+**⚠ The FULL command reference, with the traps that matter, is in TWO files — read the right one
+before running anything not in this box: [docs/COMMANDS.md](docs/COMMANDS.md) for the app, and
+[docs/COMMANDS-PYTHON.md](docs/COMMANDS-PYTHON.md) for the slicer, the emitter, the queues and the
+scorers.** Python lives in `.venv-ml` (training/data only,
 never shipped). Node workspaces at the root.
 
 ```bash
@@ -188,6 +190,8 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   inference an over-budget strip cannot be dropped, so the model emits `</s>` early and confidently;
   `hitCap` catches only 0.2%. **`?dense=<ids>` is an OPT-IN experiment**, not a default — parity
   unverified, no gold measurement, do not quote it.
+  [docs/METRICS-DENSE.md](docs/METRICS-DENSE.md); the training-side budget, and why its gate is
+  **80 ids under scheme H** where every pool before 2026-09-07 used 59, is in
   [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
 - **NOTHING under `src/vision/` ever becomes shippable** — the Python-decode-service question was
   closed 2026-08-05 by the Node stack in group 5.

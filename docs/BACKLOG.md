@@ -188,7 +188,7 @@ starting. Abandoned plans are a different thing again and live in
    today on 46 pages at ±12 points ([rung3/levers.md](rung3/levers.md) Lever 3). ~150 corrected pages
    would triple the exam. If it returns, it returns for that reason.
 
-7. **NEW 2026-08-20 — MEASURE THE 59-id DECODER BUDGET. It is a setting, not an architectural
+7. ✅ **RESOLVED 2026-09-07 — MEASURE THE 59-id DECODER BUDGET. It is a setting, not an architectural
    limit, and it is the only item on this list that pays THREE times.** `MAX_IDS = 59` in
    `src/vision/audit_coverage.py` exists because the base weights' `generation_config.max_length` is
    **60**; `src/vision/data.py` truncates training targets to it and every emitter drops a strip that
@@ -202,12 +202,16 @@ starting. Abandoned plans are a different thing again and live in
      and 92.9% of 3-measure windows — which is *why* sirto/longa/saz semaisi are unmeasured
      ([rung3/labeling-collection.md](rung3/labeling-collection.md) §1c, [rung3/round3-criteria.md](rung3/round3-criteria.md) §5)
    - **training data**: 2,108 over-budget drops plus the `split_wide` pile
-   ⏭ **The step to take is a measurement, not a change**: run the real tokenizer over the existing
-   drop lists and report how many fit at **90** and at **120** ids. One script, no GPU, no render.
-   ⚠ **Do not raise it as part of the final render.** The cost side is unpriced — longer targets mean
-   more decode steps per strip in the browser *and* on Cloud Run, and more training memory — and it
-   would change every pool, every manifest and the shipped latency at once. It is a **Round-4**
-   change that a Round-3 measurement can justify.
+   ✅ **DONE 2026-09-07 — the measurement was run and the owner raised it to 80 under scheme H.**
+   `scripts/rung3/budget_tail_probe.py` did exactly what this item asked (the real tokenizer over the
+   existing drop lists, one script, no GPU): over b8's 15,758 serialized labels the over-gate count is
+   **504 (3.20%) at 59 and 148 (0.94%) at 80**, and the longest label the owner has ever hand-typed
+   is **67** ids. ⚠ **This item's premise needed one correction**: the ceiling is not 60 but **100** —
+   `data.collate(max_len=100)` and `MAX_TOKENS` in `decode.ts` — so 59 was never the model's limit,
+   only the emitter's gate. ⚠ The cost side this item flagged is still unpriced and still real:
+   longer targets mean more decode steps per strip, in the browser and on Cloud Run. Nothing about
+   the SHIPPED latency changed, because the budget gates the training pool and not the runtime.
+   [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
 
 8. **NEW 2026-08-20 — audit 100 crops from the CURRENT slicer before pouring more hours into
    labelling.** The evidence that the slicer's throw-away rate is the bottleneck is scattered across

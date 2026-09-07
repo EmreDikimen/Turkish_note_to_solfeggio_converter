@@ -43,7 +43,10 @@ from vision.data import ADDED_TOKENS  # noqa: E402
 
 SYNTH = ROOT / "data/synthetic/strips_v7_final/manifest.jsonl"
 B8 = ROOT / "data/real/rung3/strips_b8"
-GATE = 59          # audit_coverage.MAX_IDS — what drops a strip from training
+GATE = 59          # audit_coverage.MAX_IDS — what drops a strip from training.
+                   # ⚠ THE H POOLS ARE EMITTED AT 80 (owner, 2026-09-07); this stays 59
+                   # so the numbers already recorded here reproduce.
+                   # docs/METRICS-SLICER-WINDOWS.md
 RAIL = 57          # the Round-4 label-budget rail
 
 # Scheme B: the four genuinely missing pieces, plus `'` promoted so a pitch letter cannot take two

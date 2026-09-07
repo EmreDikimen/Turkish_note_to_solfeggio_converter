@@ -245,8 +245,15 @@ def main() -> int:
                          "would contaminate the selector silently.")
     ap.add_argument("--select-batch", type=int, default=None,
                     help="batch size for the free-running selection pass (default: --batch-size)")
-    ap.add_argument("--select-max-length", type=int, default=60,
-                    help="decoder budget for the selection pass; matches eval_omr's default")
+    ap.add_argument("--select-max-length", type=int, default=None,
+                    help="decoder budget for the selection pass (default: 60 under --vocab old — "
+                         "the value every Round-3 run used; 81 under --vocab h; the scorers "
+                         "eval_omr.py and paired_arm_score.py already decode at 100). ⚠ IT MUST "
+                         "CLEAR THE POOL'S LABEL "
+                         "BUDGET — the H pools are emitted at 80 ids (owner, 2026-09-07), and a "
+                         "selection decode capped below that truncates the longest strips and "
+                         "counts corrections they never needed, on exactly the dense material this "
+                         "round exists to fix. Never above 100: the model's real ceiling.")
     ap.add_argument("--label-smoothing", type=float, default=0.0,
                     help="cross-entropy label smoothing on the TRAIN loss only (val loss stays "
                          "unsmoothed, so its numbers keep meaning the same thing). UNMEASURED here "
@@ -262,6 +269,14 @@ def main() -> int:
     ap.add_argument("--device", default=None, help="cuda | mps | cpu (default: best available)")
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
+
+    # ⚠ The selection decode must be able to SPELL the pool's longest label, or it reports
+    # corrections that are its own truncation. The H pools are emitted at a budget of 80 ids
+    # (scripts/rung3/emit_strip_labels.MAX_IDS_BY_VOCAB, owner 2026-09-07), so the cap follows the
+    # vocabulary unless the caller is explicit. 100 is the model's real ceiling either way.
+    if args.select_max_length is None:
+        args.select_max_length = {"old": 60, "h": 81}[args.vocab]
+    print(f"   selection decode budget: {args.select_max_length} ids")
 
     import torch
     from torch.utils.data import DataLoader, WeightedRandomSampler

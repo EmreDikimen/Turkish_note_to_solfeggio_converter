@@ -37,6 +37,13 @@ from pathlib import Path
 # APPEND new tokens at the END only: several scripts slice ADDED_TOKENS[:8] for the AEU set, and
 # add_tokens assigns ids in list order — appending keeps every earlier token's id stable across
 # checkpoints.
+# ⚠ MEASURED 2026-09-07, because this comment used to imply more than it can carry: the rule's real
+# target is INSERTION IN THE MIDDLE. **Deleting** a dead token does NOT break an existing
+# checkpoint — a checkpoint carries its own saved tokenizer and this list only ADDS what is
+# missing, so loading `r3a-stage2-best-real` with a `\tie`-free list gives added=0 and `\tie`
+# keeps id 98. From the BASE model, deleting `\tie` shifts exactly one id (`\grace` 99 -> 98).
+# So retiring the dead tokens is cheap and safe; it is deferred for a reason that is not id
+# stability — see docs/BACKLOG.md.
 ADDED_TOKENS: list[str] = [
     "\\komaSharp", "\\bakiyeSharp", "\\kucukSharp", "\\buyukSharp",
     "\\komaFlat", "\\bakiyeFlat", "\\kucukFlat", "\\buyukFlat",

@@ -251,6 +251,29 @@ starting. Abandoned plans are a different thing again and live in
    cannot see the dropped-entry class while a content-change trigger (690) can
    ([rung3/round4.md](rung3/round4.md) step 3).
 
+12. **NEW 2026-09-07 — RETIRE THE DEAD TOKENS, IN A LATER ROUND (owner: *"bir sonrakinde
+   tutarız"*).** Raised by the owner asking the sharp version of the question: *"eski tokenları neden
+   silmedik — bu training'i direkt Flova OMR'ı base alarak yapmıyor muyuz?"* The premise is right —
+   `train.py --model` defaults to `Flova/omr_transformer` and [rung3/round4.md](rung3/round4.md)
+   step 6 is explicitly "from base", so a new model's ids are assigned fresh from `ADDED_TOKENS`
+   and the old vocabulary is not inherited.
+   ⭐ **What the measurement showed, and it corrects the code comment**: deleting a dead token does
+   **NOT** break an existing checkpoint. A checkpoint carries its own saved tokenizer, and
+   `ADDED_TOKENS` only *adds* what is missing — loading `r3a-stage2-best-real` or
+   `round2-stage2-best` with a `\tie`-free list gives **added = 0** and `\tie` keeps id 98. From
+   the base, deleting `\tie` shifts exactly **one** id (`\grace` 99 → 98). The append-only rule's
+   real target is insertion in the MIDDLE, not deletion.
+   ⏭ **Deferred for two reasons that are not id stability.** (a) Round 4 step 6's control arm is
+   *defined* as "the old vocabulary"; deleting tokens in the same round makes the A/B two variables
+   where the round's whole point is that the vocabulary gets its own paired answer. (b) One of the
+   14 `gate:browser` strips carries `\tie` in its gold
+   (`rast--sarki--curcuna--icime_hep`), and `gate.json` bakes its own id map — a model that cannot
+   represent `\tie` can never match that strip. ⚠ **Not verified by running the gate**, only by
+   reading its gold.
+   ⚠ **The gain is near zero** — one row of 116 in the embedding, against the 0.01%-of-the-model
+   price [rung3/round4.md](rung3/round4.md) already puts on 16 tokens. This is tidiness, not
+   performance, which is why it waits for a round that is not measuring a vocabulary.
+
 10. **NEW 2026-08-22 — EVERY PAGE THIS PROJECT OWNS COMES FROM TWO WEBSITES, AND SO DOES THE EXAM.**
    Raised by the owner (*"is there any strip from other note sheet resources like trt, divanmakam,
    şarkı notaları"*) and measured: `data/real/manifest.csv` is **1,055 neyzen.com + 1,000

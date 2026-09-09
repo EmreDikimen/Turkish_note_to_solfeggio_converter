@@ -40,6 +40,7 @@ wrong — fix by deleting, not by syncing.
 | What did the model-voted key signature actually change in the labels? | [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md) |
 | Did Round 3's two follow-up runs (longer stage 2, retired-crop strips) buy anything? | [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
+| Which source an error came from — the SymbTr label or the model — and what the `nd` gate is really catching | [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md) |
 | A symbol the model reads as something else — staccato, the dotted usul barline | [METRICS-UNSEEN.md](METRICS-UNSEEN.md) |
 | What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |
 | The koma/küçük sharp glyph — what real print does, what we drew, where sharps appear | [METRICS-SHARPS.md](METRICS-SHARPS.md) |

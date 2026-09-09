@@ -40,6 +40,37 @@ yet, and promoting from it needs the same rules as any other queue.
 Run: `review_ui.py` → queue **`reslice-all`** (the default tab); its rows load on first open, too
 big (16 MB) to ship with every `/api/state`.
 
+## The `ndhigh` queue (2026-09-09) — 40 dense strips the referee threw away
+
+**What it settles.** Round 4's re-emit brought the over-budget strips back and then lost most of
+them to the SECOND gate, `nd` — the emitter's disagreement check against `round2-stage2-best`'s
+reading. The strips that made both journeys (`over_budget` in `strips_b8`, `nd_high` in
+`strips_h1`) are **1,678 rows** and they are genuinely dense: median **49** ids of music in the
+crop against **37** for an accepted strip. Nobody has ever read one.
+
+⚠ **`nd` cannot say WHY it is high** — "the model misread a dense strip" and "the label is the
+wrong measures" look identical to it, which is why the emitter drops rather than guesses. On EXAM
+pieces, where `nd_high` goes to review instead, 75 hand-read rows say it is overwhelmingly the
+label. ⛔ But the general `nd_high` population is **not** dense, so that reading does not transfer
+to this subset ([../METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md)).
+
+**What a verdict means.** The `realval-hard-v2` contract: no trustworthy SymbTr label, so the row is
+seeded with the model's decode and the verdict is against the **picture**. `ok` = "I looked and the
+decode is right", `fix` = type what the page says, `bad` = the crop is unusable.
+
+- ⚠ **RANDOM, not worst-first.** Every other queue here is ordered worst-first to spend the human
+  where the errors are; that is right for harvesting labels and wrong here, because this queue is
+  read for a **rate**. 40 rows gives roughly ±15 pp at a 50% split.
+- ⭐ **`label` is EMPTY** — a dropped strip has no stored label, and re-deriving one means running
+  the emitter again. So the edit box is seeded with the decode alone, which leaves exactly **one**
+  anchor instead of the usual label-sig + decode-content hybrid.
+- **How to read the result:** a high `fix` rate means the model really is weak on dense material and
+  these strips are worth hand-labelling; a low one means the high `nd` came from the label side.
+- ⛔ **Not gold.** The filename is neither `emit_review.csv` nor `full_audit.csv`. Verified clean
+  against the 45-piece frozen exam by SymbTr id *and* by page stem.
+
+Run: `review_ui.py` → queue **`ndhigh`**. Built by `scripts/rung3/build_ndhigh_queue.py`.
+
 ## The labelling BATCHES (2026-08-18) — a page-complete cut of `reslice-all`
 
 **Why they exist.** `reslice-all` is a browsing tool, not a labelling target: 33,804 hand checks is

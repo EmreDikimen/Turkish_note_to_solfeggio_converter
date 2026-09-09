@@ -232,6 +232,15 @@ strips were never trained on — read **38.2%** of a 12-piece pilot differently 
 ⭐ What did land is aimed right: the new rows carry a median **18 label tokens against 11**.
 [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [rung3/round4.md](rung3/round4.md).
 
+⏭ **Owner:** a 40-row random sample of the **1,678** strips `b8` dropped as `over_budget` and `h1`
+drops as `nd_high` is staged as queue **`ndhigh`**. They are the dense material this round reopened
+(median **49** ids of music in the crop against **37** accepted) and **nobody has read one**. ⚠ `nd`
+cannot say whether a high value means the model misread a dense strip or the label names the wrong
+measures; on EXAM pieces 75 hand-read rows say it is overwhelmingly the label, but the general
+`nd_high` population is **not** dense, so that does not transfer. A high `fix` rate here means dense
+material is a training gap worth hand-labelling; a low one means the label was the problem.
+[METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
+
 ⏭ **Owner:** read the seeded **100-row sample** of the 571 unread rescued strips — `review_ui.py`,
 queue **`h1-full`**, filter **`new_dense_sample`**. b8's escaped-bad rate was 12.9% and nothing
 measures it for this material; without that number a step-6 arm cannot separate "H helped" from

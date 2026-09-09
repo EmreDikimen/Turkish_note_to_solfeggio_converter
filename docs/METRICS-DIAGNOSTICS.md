@@ -341,3 +341,9 @@ Bravura's sharp bars were **22% too thick** and küçük's were packed too close
 fused into a two-bar koma after the encoder shrink. Measured against two real printed editions,
 fixed by `--thin-sharps`, and the "resolution was ruled out" line that came out of it carries a
 scope caveat. All of it → **[METRICS-SHARPS.md](METRICS-SHARPS.md)**.
+
+## Where an error COMES FROM — moved out (2026-09-09)
+
+Attribution (was it the SymbTr label or the model that was wrong, and about what?) and the `nd`
+gate's own diagnosis are a different genre from the ranking and geometry counts this file keeps, and
+they crossed the 400-line cap on arrival: **[METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md)**.

@@ -2,10 +2,59 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-07
+updated: 2026-09-09
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-09 — the pool that picks the checkpoint had old labels with new pixels under them
+
+**What was asked for, and what it turned into.** The job was BACKLOG item 2: de-duplicate the 5
+repeated manifest rows in `_realval_v2`, 4 of which score one PNG against two unrelated gold
+strings. That item's own last line — *"check whether any other pool built by the same path shares
+it"* — turned out to be the whole story. The duplicates were a symptom.
+
+**The defect.** `build_realval_v2.py --build` carries rows out of the previous `_realval` pool and
+then copies `strip_root / page / image` under every row it writes. `strip_root` defaults to
+`strips_v2`, the 2026-07-29 re-slice — but the old pool is entirely on the **retired** root:
+**271 of its 271 PNGs are byte-identical to `data/real/strips/`**. A strip filename survives a
+re-slice and its pixels do not, so 157 carried rows got a current crop placed under a label read
+against a retired one, with nothing comparing the two. This is the trap `QUEUE_IMG_ROOTS` exists
+for, arriving through the *builder* rather than through a queue — the reviewer's pictures were
+bound to the right root and the builder's were not.
+
+**Why the evidence is trustworthy, and why it cost no compute.** Both crop roots hold a
+`round2-stage2-best` decode cache, so a label can be scored against each root's decode in ID space
+with `eval_omr.align`. The referee is a model, so it is never asked whether a label is RIGHT — only
+which of two pictures it describes. The control is the 110 `hard` rows, hand-read against the
+current crop: they separate **50:5** toward `strips_v2` where the carried rows separate **41:22**
+toward the retired root, and on crops the re-slice widened by ≥10% the split is total — carried
+**15:0** retired, hard **0:31** current. Confirmed by eye on the worst case, whose label spells four
+note events against a 1,139 px crop holding about ten.
+
+**What the repair costs**, classified by measure span rather than by the decode, since an unchanged
+span holds the same music however the pixels shifted: 243 rows keep their label, 5 duplicate twins
+drop, 3 re-home onto the `strips_v2` strip covering the same span, and **10 of 262 distinct images
+(3.8%) need a human**. Six of those ten are there because the two roots disagree on the page's staff
+count, which makes a `system` index incomparable — the same coupling that forces `score_slicer.py
+--pair-by-position`. A seventh finding fell out on the way: 6 rows still carry a RETIRED crop
+outright, because `strips_v2` has no file for them and the builder silently fell back.
+
+**Why it mattered enough to fix mid-round.** A paired result survives this untouched — both arms
+read the same wrong labels and the difference cancels. What does not survive is Round 4's new
+`train.py --select-dir`, which picks a checkpoint on **absolute** corrections against exactly these
+labels, on a pool whose CI already hides any gain under ~5%.
+
+**Shipped:** `scripts/rung3/repair_realval_v2.py` (`--report` / `--queue` / `--build`), the
+`realval-repair` queue in `review_ui.py` bound to `strips_v2`, and a build path smoke-tested end to
+end with invented verdicts so the owner does not discover a broken `--build` after reading. The
+queue's rows carry **no `label`** on purpose — the carried label is the string under suspicion — and
+its `decoded` hint reuses `merge_redecode_into_queue.drop_ties`, because the cache predates the
+`\tie` retirement and an `ok` would have carried a retired token back into the pool.
+
+**Not done, and deliberately not done quietly:** the builder itself. `build_realval_v2.py --build`
+will repeat this the next time it runs, and whether `_tupletval` came through the same carry-and-copy
+path is unchecked. Both are written down in [BACKLOG.md](../BACKLOG.md) item 2.
 
 ## 2026-09-07 — the Round-4 re-emit ran without a GPU, and the yield claim it was built on died
 

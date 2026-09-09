@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-07
+updated: 2026-09-09
 
 ## Now
 
@@ -179,7 +179,7 @@ Still the gate on what may be **published as a model**. Plan, evidence and the o
 |---|---|---|
 | real training | ✅ **`strips_h1` — 4,460 rows**, b8 re-emitted under scheme H at a budget of 80 with `--frozen-crops`: not one page re-sliced, so b8's 980 human reads carried in under a per-row inode+label proof. `over_budget` 4,012 → 141, but only +588 of the returning strips reached training (the `nd` referee gate is what now drops them) and the rail added 35 | ✅ **RUN 2026-09-07**. ⏭ owner reads the 100-row `new_dense_sample` |
 | synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
-| selection | `_realval_v2` (+ `_tupletval`), **on free-running corrections, not loss**, beside the owner's hand-test pages | ⏭ selector change owed |
+| selection | ⛔ **`_realval_v2` IS BROKEN AND IS BEING REPAIRED** — 10 of its 262 images carry a label about music that is not in their picture (`build_realval_v2.py` put current crops under labels read against retired ones). The repaired pool is **`_realval_v2r`**; (+ `_tupletval`), on free-running corrections, not loss, beside the owner's hand-test pages | ⏭ **owner reads the 10-row `realval-repair` queue**, then `repair_realval_v2.py --build` |
 | grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
 
 ⛔ **Out:** `b8-review`; `strips_oldhuman` (Run B answered it — nothing measurable); the raw old pools.
@@ -269,6 +269,21 @@ is already changing. ⏭ **Growing it is the only route to a verdict** — more 
 hand labelling (75 SymbTr accepts exist, 14 used). ⚠ The blogspot column produced **no** gold: its
 titles are lyric incipits with no makam, one of its 8 pages is re-hosted from erdincbal and one is
 THM folk notation. [rung3/third-source.md](rung3/third-source.md).
+
+⛔ **THE POOL THAT PICKS THE CHECKPOINT HAD OLD LABELS WITH NEW PIXELS UNDER THEM (2026-09-09).**
+`build_realval_v2.py --build` carries rows out of the previous `_realval` pool — which is entirely on
+the **retired** crop root, 271 of 271 PNGs — and copies the `strips_v2` crop under them without
+comparing the measure span. **10 of `_realval_v2`'s 262 distinct images (3.8%) carry a label about
+music that is not in their picture**; the 5 duplicate manifest rows open since 2026-08-16 were the
+symptom. ⚠ **Paired results survive** (both arms read the same wrong labels), but Round 4 gave this
+pool a third job — `train.py --select-dir` picks a checkpoint on **absolute** corrections. ⭐ The
+referee cost no compute: both roots hold a `round2-stage2-best` decode cache, and the hand-read
+`hard` tier is the control that separates the other way. ✅ Repair built: 243 rows keep their label,
+5 duplicate twins drop, 3 re-home by measure span. ⏭ **Owner: read the 10-row `realval-repair`
+queue**, then `repair_realval_v2.py --build` writes **`_realval_v2r`**. ⛔ `_realval_v2` stays intact —
+every Round-3 number was measured on it. ⏭ **The BUILDER is not fixed and will repeat this**
+([BACKLOG.md](BACKLOG.md) item 2). [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md) ·
+[rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md).
 
 ⏭ **THE HAND-TEST SET EXISTS AND IS WAITING ON THE OWNER'S EYES.** The owner supplied 20 pages on
 2026-09-06 (gitignored `exam_pages/`, outside the frozen exam); they are decoded with the live model

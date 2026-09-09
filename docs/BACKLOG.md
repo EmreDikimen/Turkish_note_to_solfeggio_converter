@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-09-06
+updated: 2026-09-09
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -28,6 +28,24 @@ starting. Abandoned plans are a different thing again and live in
    arm and cancel in a delta), which is why the geometry probe's holdout stands. Owed: de-duplicate,
    re-derive, and check whether any other pool built by the same path shares it.
    [METRICS-CORPUS.md](METRICS-CORPUS.md).
+   ⭐ **DIAGNOSED 2026-09-09, AND THE DUPLICATES WERE THE SYMPTOM, NOT THE DISEASE.** The last line
+   above — "check whether any other pool built by the same path shares it" — was the right question.
+   `build_realval_v2.py --build` carries rows out of the previous `_realval` pool and copies
+   `strip_root`'s crop under them; that pool is **entirely on the retired crop root** (271 of 271
+   PNGs), so 157 carried rows got a `strips_v2` crop under a label read against a `strips` crop,
+   with no measure-span check. **10 of 262 distinct images carry a label about music that is not in
+   their picture** — the 4 contradictory pairs are 4 of the visible ones. Evidence, control and
+   volumes: [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md).
+   ✅ **The pool repair is running** — `repair_realval_v2.py`, queue `realval-repair`
+   ([rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md)); the owner chose the full repair over
+   dropping the rows, 2026-09-09 ([DECISIONS.md](DECISIONS.md)).
+   ⏭ **WHAT IS STILL OWED IS THE BUILDER.** `build_realval_v2.py --build` will repeat this the next
+   time it runs: it needs to refuse a carried row whose measure span does not match on the root it
+   is about to copy from, instead of carrying it silently. Deferred only because no `--build` is
+   scheduled; ⛔ do not run one until it is fixed.
+   ⏭ Also unchecked: whether `_tupletval` was assembled by the same carry-and-copy path. The 2026-08-16
+   line above says it is clean of DUPLICATES, which is a different question from whether its labels
+   and pixels come from one root.
 
 3. **NEW 2026-08-20 — `best` is chosen 94.6% on SYNTHETIC val loss. Re-weight the selector, or
    select on a real metric.** Raised by the owner asking what the every-500-steps evaluation actually

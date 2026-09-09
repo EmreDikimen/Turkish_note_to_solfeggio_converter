@@ -79,7 +79,8 @@ wrong — fix by deleting, not by syncing.
 | The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | The rules a real-page label obeys (what is a token, what is ink) | [rung3/labeling.md](rung3/labeling.md) |
 | How real pages were collected and matched to SymbTr (§1a–§1c) | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
-| The two review queues that were run (realval-hard, reslice-all) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
+| The review queues feeding the training pools and the exam (reslice-all, the batches, b8, examv3) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
+| The review queues feeding REAL-VAL (realval-hard, and the 2026-09-09 repair) | [rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md) |
 | The real-page track's settled findings (moved out of STATUS) | [rung3/standing.md](rung3/standing.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |
 | Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](archive/rounds/round1.md) |

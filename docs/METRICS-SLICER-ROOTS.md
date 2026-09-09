@@ -2,7 +2,7 @@
 
 purpose: crop PROVENANCE — which root came from which slicer, what re-cutting costs in labels, and how to measure a queue's staleness before labelling it
 audience: anyone about to label a queue, re-slice a pool, or re-cut the exam
-updated: 2026-08-25
+updated: 2026-09-09
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-25 when that file crossed the
 400-line cap. That file keeps **what the page-cutter does**; this one keeps **where a crop on disk
@@ -134,3 +134,52 @@ is the population most likely to move under a re-slice. `--pages-from <batch>_pa
 re-slices **exactly the batch's pages** instead of a random sample — the difference between "the
 root is mostly current" and "the work I am about to do will survive". Pages of the batch with no dir
 under the root are reported, not skipped silently. Usage: [rung3/labeling-queues.md](rung3/labeling-queues.md).
+
+## `_realval_v2` had OLD labels with NEW pixels under them (2026-09-09)
+
+⭐ **The fourth time crop staleness cost something, and the first time it reached a metric pool.**
+`build_realval_v2.py --build` carries rows out of the previous `_realval` pool and then copies
+`strip_root / page / image` under every row it writes. `strip_root` defaults to `strips_v2` — but
+the old pool is entirely on the retired root: **271 of its 271 PNGs are byte-identical to
+`data/real/strips/`**. So 157 carried rows got a current crop placed under a label read against the
+retired one, with no span check between them. The 5 duplicate manifest rows
+([BACKLOG.md](BACKLOG.md) item 2, open since 2026-08-16) were the visible tip of this, not a
+separate defect.
+
+**The referee, and why it is trustworthy.** Both roots carry a `round2-stage2-best` decode cache, so
+each label can be scored against both roots' decodes in ID space with `eval_omr.align`. A model is
+never asked whether a label is RIGHT, only which of two pictures it describes. The control is the
+110 `hard` rows, which were hand-read against the current crop:
+
+| group | closer to retired | closer to v2 | tie | no cache |
+|---|---|---|---|---|
+| `hard` (hand-read against v2) — **CONTROL** | 5 | **50** | 3 | 52 |
+| `carried` (from the old pool) | **41** | 22 | 3 | 91 |
+| ↳ restricted to crops the re-slice widened by ≥10%: `hard` | 0 | **31** | 1 | — |
+| ↳ same restriction, `carried` | **15** | **0** | 0 | — |
+
+The control separates the other way, and on the ≥10% cut the separation is total.
+
+**What the repair costs**, classified by measure span — the deciding evidence, since an unchanged
+span holds the same music however the pixels shifted (`repair_realval_v2.py --report`):
+
+| | rows |
+|---|---|
+| keep — label and crop agree | 243 |
+| DROP — carried twin of a duplicate image | 5 |
+| RE-HOME — label moves to the v2 strip covering the same span | 3 |
+| **REVIEW — label is for other measures, needs a human** | **10** |
+| flagged — the pool still holds a RETIRED crop (`strips_v2` has no such file) | 6 |
+
+So **10 of 262 distinct images (3.8%)** carry a label about music that is not in their picture.
+⚠ **A span is only comparable across roots when the page's staff COUNT matches in both** — `system`
+is an index, the same coupling that forces `score_slicer.py --pair-by-position`. 6 of the 10 review
+rows are there because the two roots disagree on staff count, so no re-home was attempted.
+
+⚠ **This does not invalidate a PAIRED result** — both arms read the same wrong labels and the
+difference survives. It matters because Round 4 gave this pool a third job: `train.py --select-dir`
+picks a checkpoint on **absolute** corrections against these labels
+([rung3/round4.md](rung3/round4.md) step 2).
+
+⛔ **The defect is in the builder, so a future `build_realval_v2.py --build` repeats it.** Not fixed
+— [BACKLOG.md](BACKLOG.md).

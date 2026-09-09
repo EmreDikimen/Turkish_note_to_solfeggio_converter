@@ -244,6 +244,16 @@ QUEUES = {
     # with the CURRENT model's decode and the verdict is against the PICTURE. ok = "I looked and
     # the decode is right". Images resolve under data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
     "realval-hard-v2": "data/real/rung3/_realval_hard_v2/realval_hard_v2.csv",
+    # REALVAL-REPAIR (2026-09-09) — the 10 `_realval_v2` rows whose LABEL and PIXELS describe
+    # different measures. `build_realval_v2.py` carried them out of the old `_realval` pool, which
+    # is entirely on the RETIRED crop root, and copied the strips_v2 crop under them without
+    # checking the measure span; the re-slice had moved it. Built and classified by
+    # scripts/rung3/repair_realval_v2.py. Rows carry NO `label` on purpose — the carried label is
+    # the thing under suspicion, so showing it as gold would anchor the read to the string this
+    # repair exists to retire. The verdict is against the PICTURE; `decoded` is the current root's
+    # round2-stage2-best decode with the retired `\tie` stripped. Images resolve under
+    # data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
+    "realval-repair": "data/real/rung3/_realval_v2_repair/realval_repair.csv",
     # v1 (2026-07-28) — SUPERSEDED, kept as the record of the first round's 130 verdicts
     # (65 ok / 22 fix / 43 bad). Its crops predate the 2026-07-29 slicer, so none of these
     # verdicts transfer: no crop survives a re-slice unchanged. Do not label here.
@@ -318,6 +328,10 @@ QUEUE_IMG_ROOTS = {
     "examv3-full": ["data/real/strips_examv3"],
     "examv3-audit": ["data/real/strips_examv3"],
     "realval-hard-v2": ["data/real/strips_v2"],
+    # ⛔ NOT data/real/strips. The whole defect this queue repairs is that the same filenames exist
+    # there with the retired slicer's pixels — resolving against that root would show the reader
+    # exactly the wrong crop, which is the mistake being corrected.
+    "realval-repair": ["data/real/strips_v2"],
     "reslice-all": ["data/real/strips_v2"],
     "batch1": ["data/real/strips_v2"],
     "batch2": ["data/real/strips_v2"],

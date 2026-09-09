@@ -124,6 +124,16 @@ npx tsx tools/vision/parity/rescue-check.ts
     # are not `ok`. Re-running carries verdicts across by strip name — but NOT across a re-slice,
     # because the crop moves and the verdict was given against pixels.
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+    # ⚠ THE EDIT-BOX LINT PRICES IDS UNDER THE QUEUE'S OWN VOCABULARY, and it says which one
+    # on screen (`= 42/80 ids (vocab h)`). The h1-* queues are scheme H, everything else is
+    # the old alphabet; the list and the budget are IMPORTED from src/vision (data.py,
+    # audit_coverage.MAX_IDS_BY_VOCAB), never copied into the UI. A new H pool needs its queue
+    # id adding to QUEUE_VOCAB or the lint will price it with the wrong alphabet.
+    # ⛔ THE RETIRED `\tie` IS DROPPED FROM THE `decoded` HINT ON THE WAY TO THE BROWSER, so a
+    # reviewer cannot read it, diff against it, or store it with `✓ accept` (which saves the
+    # decode verbatim). The CSV keeps it: `load_queue(clean=True)` is asked for by the two READ
+    # paths only, never by save_verdict, so no file is laundered a verdict at a time. The
+    # Round-2 exam queues (exam-fix, examv2-*) are EXEMPT — their ties are the record.
 .venv-ml/bin/python scripts/rung3/carry_old_fixes.py [--apply]
     # Finds the RETIRED pools' 1,479 hand corrections again inside strips_b8 and marks them with
     # oldfix / oldfix_kind / oldfix_src, which the review UI's `⭐ old human fix` filter reads.

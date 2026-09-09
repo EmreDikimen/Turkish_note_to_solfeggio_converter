@@ -58,6 +58,7 @@ import csv
 import json
 import os
 import re
+import sys
 import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -65,18 +66,22 @@ from urllib.parse import parse_qs, unquote
 
 REPO = Path(__file__).resolve().parents[2]
 
-# Mirrors ADDED_TOKENS in src/vision/data.py — used only for the client-side token
-# diff + lint; the authoritative gates re-run at promote time.
-ADDED_TOKENS = [
-    "\\komaSharp", "\\bakiyeSharp", "\\kucukSharp", "\\buyukSharp",
-    "\\komaFlat", "\\bakiyeFlat", "\\kucukFlat", "\\buyukFlat",
-    "\\natural", "\\sig", "\\sigend",
-    "\\repstart", "\\repend", "\\volta1", "\\volta2",
-    "\\segno", "\\coda", "\\dc", "\\fine",
-    "|", "3",
-    "\\tup3", "\\tupend", "\\tie", "\\grace",
-]
+# ⚠ IMPORTED, NEVER MIRRORED (2026-09-09). This file used to hold its OWN copy of ADDED_TOKENS and
+# its own hard-coded `59`, and Round 4 made both silently wrong: scheme H fuses a notehead into one
+# token and raises the budget to 80, so the lint priced every h1 label under the old vocabulary and
+# warned against a gate the emitter no longer applies. Both modules are stdlib-only at import time
+# (data.py imports torch inside a function), so reading them here costs nothing.
+sys.path.insert(0, str(REPO / "src/vision"))
+from audit_coverage import MAX_IDS_BY_VOCAB   # noqa: E402  the label budget, per vocabulary
+from data import ADDED_TOKENS, vocabulary     # noqa: E402
+
 ACCIDENTALS = set(ADDED_TOKENS[:9])
+
+# The vocabulary a queue's labels were EMITTED under. The lint prices ids with it and applies that
+# vocabulary's budget, so an H label is not measured with the old alphabet. Round 4's h1-* pools are
+# scheme H (16 fused note tokens; budget 80 ids); everything else is what every pool before
+# 2026-09-07 used. docs/rung3/tokenization.md
+QUEUE_VOCAB = {"h1-rail": "h", "h1-audit": "h", "h1-full": "h", "h1-review": "h"}
 
 QUEUES = {
     # EXAM v3 (2026-08-21) — THE WHOLE EXAM, RE-CUT. 663 rows over 64 of the 67 exam pages, and the
@@ -334,7 +339,34 @@ EAGER_MAX = 5000
 VERDICTS = {"", "ok", "fix", "bad"}
 
 
-def load_queue(root: Path, qid: str) -> tuple[list[str], list[dict]]:
+# ⛔ `\tie` IS RETIRED (owner, 2026-08-22): an arc is label-free ink and two tied notes are two
+# plain notes. It survives ONLY in the `decoded` HINT column, because the model that wrote those
+# decodes was trained before the retirement. Measured 2026-09-09: 3,080 occurrences over the four
+# h1 queues and ZERO in any h1 label, corrected_label or oldfix.
+# It is dropped HERE, at the one point every queue reaches the browser, so a reviewer cannot read
+# it, diff against it, or STORE it — `✓ accept` beside the decode block saves that text verbatim,
+# which is the path that could have put a retired token into the pool.
+# ⚠ THE CSV ON DISK IS NOT REWRITTEN, and `clean` defaults to False for exactly that reason:
+# save_verdict() re-writes the whole file through this same loader, so a cleaning default would
+# quietly rewrite the record one verdict at a time. Only the two READ paths ask for it — which is
+# also why a re-emit or a full_audit rebuild cannot bring the token back into the UI.
+# ⛔ NEVER IN THE ROUND-2 EXAM QUEUES. exam-fix and examv2-* carry `\tie` in their LABELS (127 and
+# 24) as the record of what Round 2 was graded on — CLAUDE.md keeps `strips_exam_v2*` for that
+# reason, and rewriting a record is not cleaning.
+TIE_RECORD_QUEUES = {"exam-fix", "examv2-audit", "examv2-full", "examv2-review"}
+
+
+def drop_ties(text: str) -> str:
+    r"""Remove the retired `\tie`. The decoder writes it GLUED to the note it ties into
+    (`\tiee''8` — 98% of them), so this matches the four characters and closes the gap."""
+    if "\\tie" not in text:
+        return text
+    return re.sub(r"\s+", " ", text.replace("\\tie", "")).strip()
+
+
+def load_queue(root: Path, qid: str, clean: bool = False) -> tuple[list[str], list[dict]]:
+    """`clean` strips retired tokens from the HINT column. ⚠ Off by default — a writer must see
+    the file as it is (see TIE_RECORD_QUEUES above)."""
     path = root / QUEUES[qid]
     if not path.exists():
         return [], []
@@ -347,6 +379,10 @@ def load_queue(root: Path, qid: str) -> tuple[list[str], list[dict]]:
             fields.append(col)
         for r in rows:
             r.setdefault(col, "")
+    if clean and qid not in TIE_RECORD_QUEUES:
+        for r in rows:
+            if r.get("decoded"):
+                r["decoded"] = drop_ties(r["decoded"])
     return fields, rows
 
 
@@ -420,10 +456,14 @@ def state(root: Path) -> dict:
     """Queue list with counts. `rows` is present for the small queues and OMITTED for anything
     over EAGER_MAX, which the client then pulls from /api/rows — `n`/`done` are always there so
     the tabs and the progress bar read the same either way."""
-    out = {"queues": [], "vocab": ADDED_TOKENS, "accidentals": sorted(ACCIDENTALS)}
+    out = {"queues": [], "vocab": ADDED_TOKENS, "accidentals": sorted(ACCIDENTALS),
+           # every vocabulary the lint may need, and its budget — the client picks by queue
+           "vocabs": {v: vocabulary(v) for v in ("old", "h")},
+           "budgets": MAX_IDS_BY_VOCAB}
     for qid in QUEUES:
-        _, rows = load_queue(root, qid)
-        q = {"id": qid, "n": len(rows), "done": sum(1 for r in rows if r["verdict"])}
+        _, rows = load_queue(root, qid, clean=True)
+        q = {"id": qid, "n": len(rows), "done": sum(1 for r in rows if r["verdict"]),
+             "vocab": QUEUE_VOCAB.get(qid, "old")}
         if len(rows) <= EAGER_MAX:
             q["rows"] = rows
         out["queues"].append(q)
@@ -460,7 +500,7 @@ class Handler(BaseHTTPRequestHandler):
             if qid not in QUEUES:
                 self._json({"error": "unknown queue"}, 404)
                 return
-            _, rows = load_queue(self.root, qid)
+            _, rows = load_queue(self.root, qid, clean=True)
             self._json({"id": qid, "rows": rows})
         elif path == "/font":
             # Bravura (SMuFL) from the web app — the token reference shows real AEU glyphs
@@ -505,7 +545,12 @@ PAGE = r"""<!doctype html>
 <style>
   :root{--bg:#f6f7f9;--card:#fff;--ink:#1a2030;--mut:#68738a;--line:#e3e6ee;
         --ok:#177245;--okbg:#e5f4ec;--bad:#b3261e;--badbg:#fbe9e7;
-        --fix:#8a5a00;--fixbg:#fdf3dc;--acc:#3b5bdb;--accbg:#e8edfd;--hl:#ffd9d4;--hl2:#ffefc2}
+        --fix:#8a5a00;--fixbg:#fdf3dc;--acc:#3b5bdb;--accbg:#e8edfd;--hl:#ffd9d4;--hl2:#ffefc2;
+        --editbg:#fbfcff;--gap1:#f1f2f6;--gap2:#fff;--toastbg:#1a2030;--toastink:#fff}
+  /* ⚠ WITHOUT THIS THE NATIVE WIDGETS STAY LIGHT. A page that never declares `color-scheme` gets
+     the UA's light form controls whatever the system is set to, so the checkbox, the select popup,
+     the caret and the scrollbars were drawn for a white page on a black one. */
+  :root{color-scheme:light dark}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
        font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -516,6 +561,10 @@ PAGE = r"""<!doctype html>
   .tab{border:1px solid var(--line);background:var(--bg);border-radius:8px;
        padding:5px 10px;cursor:pointer;font-size:13px}
   .tab.active{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}
+  /* an empty queue's tab is `disabled`, and the UA's own disabled grey is unreadable on a dark
+     card — say the colour so a 0/0 queue reads as dimmed rather than as a blank chip */
+  .tab:disabled{color:var(--mut);opacity:.75;cursor:default}
+  .tab:disabled .n{color:var(--mut)}
   .tab .n{color:var(--mut);font-size:12px;margin-left:4px}
   select,label.chk{font-size:13px;color:var(--ink)}
   select{padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
@@ -539,7 +588,8 @@ PAGE = r"""<!doctype html>
   .tok.diff{background:var(--hl);outline:1px solid #f2b8b5}
   .tok.diff2{background:var(--hl2);outline:1px solid #e8ce8e}
   .tok.accid{font-weight:700}
-  .tok.gap{color:var(--mut);background:repeating-linear-gradient(45deg,#f1f2f6 0 4px,#fff 4px 8px)}
+  .tok.gap{color:var(--mut);
+           background:repeating-linear-gradient(45deg,var(--gap1) 0 4px,var(--gap2) 4px 8px)}
   .agree{color:var(--ok);font-size:13px}
   /* per-block actions: a two-button stack to the LEFT of each token row, so "accept" names the
      exact text beside it instead of the reviewer having to remember what the bottom row acts on */
@@ -563,11 +613,17 @@ PAGE = r"""<!doctype html>
   .mini.edt{color:var(--fix);border-color:#ecd9a8;background:var(--fixbg)}
   #editbox{display:none;margin-top:10px}
   #editbox textarea{width:100%;min-height:84px;font:13.5px/1.6 ui-monospace,Menlo,monospace;
-        padding:10px;border:1px solid var(--acc);border-radius:8px;background:#fbfcff}
+        padding:10px;border:1px solid var(--acc);border-radius:8px;
+        background:var(--editbg);color:var(--ink)}
   #lint{font-size:12.5px;margin-top:4px;min-height:18px}
   #lint .warn{color:var(--bad)} #lint .fine{color:var(--ok)}
   .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
-  button{border:1px solid var(--line);border-radius:8px;background:var(--card);
+  /* ⚠ `color` IS LOAD-BEARING HERE (2026-09-09). A <button> does not inherit the body's colour —
+     with none of its own it takes the UA's `buttontext`, measured as PURE BLACK on the dark tab
+     background, so every queue tab, `saved log`, `tokens`, the three "start from" buttons, cancel,
+     clear, the arrows and `next pending` were black-on-black. The verdict buttons only escaped
+     because each names its own colour. Say it once, here, for all of them. */
+  button{border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);
          padding:7px 14px;font-size:13.5px;cursor:pointer;font-weight:600}
   button:hover{filter:brightness(.97)}
   .k{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;
@@ -589,13 +645,24 @@ PAGE = r"""<!doctype html>
           cursor:pointer;font-size:13px}
   .logrow:hover{background:var(--bg)}
   .logrow .mono{font:12.5px ui-monospace,Menlo,monospace}
-  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);
-         color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s}
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--toastbg);
+         color:var(--toastink);padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;
+         transition:opacity .25s}
   #help{font-size:13px;color:var(--mut)} #help b{color:var(--ink)}
   #empty{color:var(--mut);text-align:center;padding:60px 0;font-size:15px}
   @media (prefers-color-scheme: dark){
+    /* ⚠ THE FOREGROUNDS MOVE TOO. Until 2026-09-09 this block redefined only the backgrounds, so
+       --ok/--bad/--fix/--acc stayed the DARK inks picked for a white card and every verdict button,
+       badge and lint line was dark-on-dark: "✓ ok" and "✗ bad" were barely legible and the reason
+       badge (--fix on --fixbg) worse. A colour needs its partner redefined in the same block. */
     :root{--bg:#14161c;--card:#1d2027;--ink:#e8eaf1;--mut:#98a0b3;--line:#31353f;
-          --okbg:#173226;--badbg:#3a1f1c;--fixbg:#332a12;--accbg:#1e2740;--hl:#5a2d28;--hl2:#4d3d14}
+          --ok:#5ddb96;--okbg:#173226;--bad:#ff9a8f;--badbg:#3a1f1c;
+          --fix:#e8bd52;--fixbg:#332a12;--acc:#8fa8ff;--accbg:#1e2740;--hl:#5a2d28;--hl2:#4d3d14;
+          --editbg:#171b24;--gap1:#3c4354;--gap2:#242935;--toastbg:#e8eaf1;--toastink:#14161c}
+    /* the pastel borders were picked against white; on a dark card they shout louder than the fill */
+    .mini.acc,#b-ok{border-color:#2f6a4b} .mini.edt,#b-edit{border-color:#6b551f}
+    #b-bad{border-color:#7a3a33}
+    .tok.diff{outline-color:#8c4b45} .tok.diff2{outline-color:#7a6428}
     #imgwrap{background:#fff} /* strips are black-on-white scans; keep them readable */
   }
 </style></head><body>
@@ -891,8 +958,31 @@ function oldfixHtml(r){
   }
   return `<div class="lblrow">${acts}${head}<div class="toks">${toks}</div></div>`;
 }
+// The id cost of a label under ONE vocabulary, and it is EXACT, not an estimate: HF's added-token
+// trie splits the LONGEST listed token it can find at each position and the base tokenizer spells
+// what is left one id per character. Verified 2026-09-09 against the real tokenizer on 14,859
+// labels (10,904 h1 under scheme H, 3,955 b8 under the old one): 0 disagreed.
+// ⚠ WHICH VOCABULARY IS THE WHOLE POINT — under the old one `d''16` costs 5 ids, under scheme H
+// it costs 2 (`d''` + `16`), so an H label priced with the old alphabet reads ~40% too expensive.
+// +1 everywhere for the training-time EOS the tokenizer does not append itself.
+function idCost(toks, added){
+  const plain=added.filter(t=>!t.startsWith('\\')&&t!=='|');
+  let n=1;
+  for(const t of toks){
+    if(t.startsWith('\\')||t==='|'){n++;continue}
+    for(let i=0;i<t.length;){
+      let m=0;
+      for(const a of plain)if(a.length>m&&t.startsWith(a,i))m=a.length;
+      n++; i+=m||1;
+    }
+  }
+  return n;
+}
 function lint(txt){
-  const toks=tokenize(txt), bad=[], known=new Set([...CMDS,'|']);
+  const scheme=(q()||{}).vocab||'old';
+  const added=(S.vocabs&&S.vocabs[scheme])||S.vocab;
+  const toks=tokenize(txt), bad=[];
+  const known=new Set([...added.filter(t=>t.startsWith('\\')),'|']);
   let sig=0;
   for(const t of toks){
     if(t.startsWith('\\')&&!known.has(t))bad.push(t);
@@ -904,20 +994,21 @@ function lint(txt){
   for(const t of toks)
     if(!t.startsWith('\\')&&t!=='|'&&t!=='3'&&!/^r?[a-g]?[',]*\d{0,2}\.{0,2}$/.test(t)&&!/^[a-gr][',]*\d+\.?$/.test(t))
       {msgs.push(`odd token: ${t}`);break}
-  // real-tokenizer id cost: char-level except added tokens — \commands and | are 1 id, a note is
-  // 1 id per character (d''16 = 5); +1 for EOS. The 59 is the TRAINING promote gate; a TEST set
-  // (photo-gold) must keep dense measures (the model's hard cases) — there the only hard limit is
-  // the 100-token decode cap (a longer label the model literally can't emit).
-  const ids=toks.reduce((s,t)=>s+((t.startsWith('\\')||t==='|')?1:t.length),0)+1;
+  // The budget is the TRAINING promote gate and it moves with the vocabulary (59 old, 80 under H —
+  // one table, audit_coverage.MAX_IDS_BY_VOCAB, served by /api/state). A TEST set (photo-gold) must
+  // keep dense measures (the model's hard cases), so there the only hard limit is the 100-token
+  // decode cap — a longer label the model literally cannot emit.
+  const ids=idCost(toks, added);
   const testSet = TEST_QUEUES.has(qid);
-  const cap = testSet ? 100 : 59;
+  const cap = testSet ? 100 : ((S.budgets||{})[scheme] || 59);
   if(ids>cap)
     msgs.push(testSet
       ? `exceeds the 100-token decode cap (${ids}) — the model can't emit this; verdict bad`
-      : `OVER BUDGET: ${ids} ids > 59 — promote will reject (unwinnable strip: verdict bad)`);
-  return {warn:msgs, n:toks.length, ids, cap};
+      : `OVER BUDGET: ${ids} ids > ${cap} (vocab ${scheme}) — promote will reject `
+        + `(unwinnable strip: verdict bad)`);
+  return {warn:msgs, n:toks.length, ids, cap, scheme};
 }
-// queues that are TEST sets (label the truth, keep dense measures) vs TRAINING (≤59 promote gate)
+// queues that are TEST sets (label the truth, keep dense measures) vs TRAINING (promote gate)
 const TEST_QUEUES=new Set(['photo-gold']);
 
 function q(id){ return S.queues.find(x=>x.id===(id||qid)); }
@@ -1144,9 +1235,10 @@ function editFrom(mode){
   setBase(mode);
 }
 function lintNow(){
-  const{warn,n,ids,cap}=lint(letterText($('edit').value));
+  const{warn,n,ids,cap,scheme}=lint(letterText($('edit').value));
   $('lint').innerHTML=warn.length?warn.map(w=>`<span class="warn">⚠ ${esc(w)}</span>`).join(' · ')
-    :`<span class="fine">✓ ${n} tokens ≈ ${ids}/${cap} ids, looks well-formed</span>`;
+    :`<span class="fine">✓ ${n} tokens = ${ids}/${cap} ids (vocab ${scheme}), `
+     +`looks well-formed</span>`;
 }
 async function saveEdit(){
   const r=cur();if(!r)return;
@@ -1198,7 +1290,9 @@ $('b-ref').onclick=()=>{const c=$('refcard');c.style.display=c.style.display==='
 $('edit').addEventListener('input',lintNow);
 
 fetch('/api/state').then(r=>r.json()).then(async s=>{
-  S=s;CMDS=[...s.vocab].filter(t=>t.startsWith('\\')).sort((a,b)=>b.length-a.length);
+  // every scheme's commands, so the tokenizer splits a label the same way whichever pool it is in
+  S=s;CMDS=[...new Set([].concat(...Object.values(s.vocabs||{old:s.vocab})))]
+        .filter(t=>t.startsWith('\\')).sort((a,b)=>b.length-a.length);
   ACC=new Set(s.accidentals);
   const pend=s.queues.find(Q=>{const[d,t]=counts(Q);return t&&d<t;});
   qid=(pend||s.queues[0]).id;

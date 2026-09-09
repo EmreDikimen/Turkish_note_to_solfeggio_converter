@@ -254,6 +254,15 @@ QUEUES = {
     # round2-stage2-best decode with the retired `\tie` stripped. Images resolve under
     # data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
     "realval-repair": "data/real/rung3/_realval_v2_repair/realval_repair.csv",
+    # ND-HIGH DENSE SAMPLE (2026-09-09) — 40 rows drawn at random from the 1,678 strips that
+    # strips_b8 dropped as `over_budget` and strips_h1 now drops as `nd_high`. They are the dense
+    # material Round 4 reopened (median 49 ids of music in the crop against 37 for an accepted
+    # strip), and nobody has ever looked at why their `nd` is high. ⚠ RANDOM, not worst-first,
+    # because this queue is read for a RATE — see scripts/rung3/build_ndhigh_queue.py.
+    # `label` is EMPTY (a dropped strip has no stored label), so the edit box is seeded with the
+    # decode alone and `ok` means "I looked and the decode is right", as in realval-hard-v2.
+    # ⛔ NOT gold: the filename is neither emit_review.csv nor full_audit.csv.
+    "ndhigh": "data/real/rung3/_ndhigh/ndhigh_sample.csv",
     # v1 (2026-07-28) — SUPERSEDED, kept as the record of the first round's 130 verdicts
     # (65 ok / 22 fix / 43 bad). Its crops predate the 2026-07-29 slicer, so none of these
     # verdicts transfer: no crop survives a re-slice unchanged. Do not label here.
@@ -332,6 +341,7 @@ QUEUE_IMG_ROOTS = {
     # there with the retired slicer's pixels — resolving against that root would show the reader
     # exactly the wrong crop, which is the mistake being corrected.
     "realval-repair": ["data/real/strips_v2"],
+    "ndhigh": ["data/real/strips_v2"],
     "reslice-all": ["data/real/strips_v2"],
     "batch1": ["data/real/strips_v2"],
     "batch2": ["data/real/strips_v2"],

@@ -71,6 +71,24 @@ _SPLIT_RE = re.compile(r"(\\(?:" + "|".join(_BACKSLASH) + r")|\|)")
 # a duration standing on its own — never a legal label token, and the shape the space-tic makes
 _BARE_NUM = re.compile(r"\d+\.?")
 
+# ⛔ HOLD BACK A ROW WHOSE \sig BLOCK SPELLS A koma OR kucuk SHARP (owner, 2026-09-10).
+# Agreement is evidence only where the two sides are INDEPENDENT, and on the signature they are
+# not: `emit_strip_labels.py` overwrites the derived signature with a majority vote over the
+# model's own row-start decodes, so a label's `\sig` block can BE the decode. The koma/kucuk pair
+# is where that costs something — it is the model's top sign substitution and every human
+# correction has gone koma -> kucuk, 10:0 (docs/METRICS-ATTRIBUTION.md).
+# ⭐ Back-tested on the 3,065 agreeing rows already read by hand: the rule holds back 56 of them
+# (1.8%) and those 56 carry 7 of the 16 known errors — 12.50% wrong against 0.30% in what it lets
+# through. 1.8% of the volume for 44% of the mistakes.
+# ⚠ INSIDE THE BLOCK ONLY. An inline koma/kucuk sharp after `\sigend` is an ordinary accidental
+# read off the staff, independent of the vote, and is not held back.
+_SIG_BLOCK = re.compile(r"\\sig(.*?)\\sigend", re.S)
+SIG_HOLD = ("\\komaSharp", "\\kucukSharp")
+
+
+def sig_holds_back(text: str) -> bool:
+    return any(any(t in block for t in SIG_HOLD) for block in _SIG_BLOCK.findall(text or ""))
+
 
 def toks(s: str) -> list[str]:
     """Token list with `\tie` dropped — the token is retired and carries no meaning."""
@@ -103,8 +121,15 @@ def carry_map(path: Path) -> dict[str, dict]:
         return {r["strip"]: r for r in csv.DictReader(f) if r.get("verdict")}
 
 
-def apply(rows: list[dict], carry: dict[str, dict]) -> Counter:
-    """Fill still-pending rows in place. Carry wins over the draft on the same strip."""
+def apply(rows: list[dict], carry: dict[str, dict], skip_reasons: set[str] | None = None,
+          sig_guard: bool = True) -> Counter:
+    """Fill still-pending rows in place. Carry wins over the draft on the same strip.
+
+    `skip_reasons` leaves a row pending however well it agrees — for a queue's MEASUREMENT rows.
+    ⛔ `new_dense_sample` is the case this exists for: those 100 rows are a random sample staged to
+    estimate how dirty the rescued strips are, and auto-accepting the agreeing half would leave a
+    remainder biased toward disagreement, so the rate it exists to produce would be meaningless.
+    `sig_guard` applies `sig_holds_back` — see its comment."""
     stats = Counter()
     for r in rows:
         for col in ("verdict", "corrected_label", "by"):
@@ -117,6 +142,10 @@ def apply(rows: list[dict], carry: dict[str, dict]) -> Counter:
             r["verdict"], r["corrected_label"] = src["verdict"], src.get("corrected_label", "")
             r["by"] = src.get("by", "")
             stats["carried from audit: " + src["verdict"]] += 1
+        elif skip_reasons and r.get("reason", "") in skip_reasons:
+            stats[f"left pending (reason={r.get('reason')})"] += 1
+        elif sig_guard and agrees(r) and sig_holds_back(r.get("label", "")):
+            stats["left pending (koma/kucuk in the sig block)"] += 1
         elif (kind := agrees(r)):
             r["verdict"], r["corrected_label"], r["by"] = "ok", "", kind
             stats[f"auto-accepted ({kind})"] += 1
@@ -132,13 +161,25 @@ def main() -> None:
     ap.add_argument("--carry-from", type=Path, default=CARRY_PATH,
                     help="queue whose HUMAN verdicts are copied onto the same strip first "
                          "(pass an empty string to skip)")
+    ap.add_argument("--skip-reason", action="append", default=[], metavar="REASON",
+                    help="leave rows carrying this `reason` pending however well they agree. Use it "
+                         "for a queue's measurement sample (e.g. new_dense_sample) — auto-accepting "
+                         "the agreeing half of a random sample destroys the rate it was staged for.")
+    ap.add_argument("--no-sig-guard", action="store_true",
+                    help="⛔ switch OFF the koma/kucuk signature hold-back. It costs 1.8%% of the "
+                         "volume and catches 44%% of the known errors; do not pass this without a "
+                         "reason on the record.")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    carry = carry_map(args.carry_from) if str(args.carry_from) else {}
+    # `--carry-from ""` means no carry pool. Path("") is Path("."), so test the raw
+    # argument rather than the Path — otherwise it tries to open the repo root.
+    carry = carry_map(args.carry_from) if args.carry_from and str(args.carry_from) != "." else {}
+    skip = set(args.skip_reason)
+    guard = not args.no_sig_guard
     with open(args.csv, newline="") as f:
         rows = list(csv.DictReader(f))
-    stats = apply(rows, carry)
+    stats = apply(rows, carry, skip, guard)
     print(f"{args.csv} — {len(rows)} rows, carry pool {len(carry)}")
     for k, v in stats.most_common():
         print(f"  {k:34s} {v}")
@@ -160,7 +201,7 @@ def main() -> None:
     for col in ("verdict", "corrected_label", "by"):
         if col not in fields:
             fields.append(col)
-    apply(rows, carry)
+    apply(rows, carry, skip, guard)
     fd, tmp = tempfile.mkstemp(dir=args.csv.parent, suffix=".csv.tmp")
     try:
         with os.fdopen(fd, "w", newline="") as f:

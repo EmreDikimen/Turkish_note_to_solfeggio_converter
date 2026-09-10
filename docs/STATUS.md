@@ -260,8 +260,19 @@ measures; on EXAM pieces 75 hand-read rows say it is overwhelmingly the label, b
 material is a training gap worth hand-labelling; a low one means the label was the problem.
 [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
 
-⏭ **Owner:** read the seeded **100-row sample** of the 571 unread rescued strips — `review_ui.py`,
-queue **`h1-full`**, filter **`new_dense_sample`**. b8's escaped-bad rate was 12.9% and nothing
+⭐ **AUTO-ACCEPT CLEARED THE ROWS WHERE BOTH SOURCES AGREE (2026-09-10).** Measured on every h1 row a
+human had read (n = 3,864): where the label and the decode agree the pair is right **99.5%** of the
+time (3,065 rows, 16 wrong), where they differ **31.4%**. ⛔ Two guards, both owner's: the 100
+`new_dense_sample` rows are **excluded** — auto-accepting the agreeing half of a measurement sample
+destroys the rate it exists to produce — and a row whose `\sig` block spells a **koma or küçük
+sharp** is held back, because there the label IS the model's own vote. That rule costs **1.8%** of
+the volume and catches **44%** of the known errors (12.50% wrong against 0.30%).
+**Reading left: `h1-full` 571 → 309, `h1-audit` 202 → 49**, marked `by="agree"` so they stay
+reversible. ⚠ **Quote real corrections, not `fix` counts**: 23 of h1-audit's 27 `fix` verdicts change
+nothing, which read as 93% wrong and is really 13.8%. [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md).
+
+⏭ **Owner:** read the seeded **100-row sample** — `review_ui.py`, queue **`h1-full`**, filter
+**`new_dense_sample`**. b8's escaped-bad rate was 12.9% and nothing
 measures it for this material; without that number a step-6 arm cannot separate "H helped" from
 "the new labels are dirty".
 

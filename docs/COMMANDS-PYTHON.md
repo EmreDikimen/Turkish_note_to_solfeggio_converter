@@ -124,6 +124,10 @@ npx tsx tools/vision/parity/rescue-check.ts
     # are not `ok`. Re-running carries verdicts across by strip name — but NOT across a re-slice,
     # because the crop moves and the verdict was given against pixels.
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+    # ⚠ THE HINT COLUMN IS NORMALISED ON READ, NEVER ON DISK: the retired \tie is dropped and a
+    # spaced `32` is re-glued (2,914 rows over 25 queues, every one verified id-identical in both
+    # vocabularies). The model writes `f'' 32` because the base alphabet has no digit 3 — scheme H
+    # removes the cause. ⛔ 32 ONLY: 16 and 8 DO differ in id space. docs/rung3/tokenization.md
     # ⚠ THE EDIT-BOX LINT PRICES IDS UNDER THE QUEUE'S OWN VOCABULARY, and it says which one
     # on screen (`= 42/80 ids (vocab h)`). The h1-* queues are scheme H, everything else is
     # the old alphabet; the list and the budget are IMPORTED from src/vision (data.py,

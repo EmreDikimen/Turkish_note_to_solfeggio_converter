@@ -380,6 +380,12 @@ VERDICTS = {"", "ok", "fix", "bad"}
 TIE_RECORD_QUEUES = {"exam-fix", "examv2-audit", "examv2-full", "examv2-review"}
 
 
+# ⚠ Same rule and same regex as promote_labels.SPACED_32_RE / error_taxonomy.SPACED_32_RE,
+# duplicated deliberately rather than imported: both of those modules run argument parsing at
+# import. Change all three together. Measured lossless for `32` ONLY — see load_queue.
+SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")
+
+
 def drop_ties(text: str) -> str:
     r"""Remove the retired `\tie`. The decoder writes it GLUED to the note it ties into
     (`\tiee''8` — 98% of them), so this matches the four characters and closes the gap."""
@@ -389,8 +395,8 @@ def drop_ties(text: str) -> str:
 
 
 def load_queue(root: Path, qid: str, clean: bool = False) -> tuple[list[str], list[dict]]:
-    """`clean` strips retired tokens from the HINT column. ⚠ Off by default — a writer must see
-    the file as it is (see TIE_RECORD_QUEUES above)."""
+    """`clean` normalises the HINT column: the retired `\tie` goes, and a spaced `32` is re-glued.
+    ⚠ Off by default — a writer must see the file as it is (see TIE_RECORD_QUEUES above)."""
     path = root / QUEUES[qid]
     if not path.exists():
         return [], []
@@ -407,6 +413,22 @@ def load_queue(root: Path, qid: str, clean: bool = False) -> tuple[list[str], li
         for r in rows:
             if r.get("decoded"):
                 r["decoded"] = drop_ties(r["decoded"])
+    if clean:
+        # ⭐ The model writes `f'' 32`, and it is NOT choosing to. The base alphabet has no digit
+        # `3` (nor `5` or `7`), so `3` is one of OUR added tokens — and an added token is a word
+        # boundary, which puts the preceding `'` into its end-of-word form and therefore a space
+        # after it. `f''16` has no such break and comes back glued. Measured 2026-09-10: 9,900
+        # occurrences across every queue, and `32` is the ONLY duration this ever happens to.
+        # ⛔ NEVER widen the pattern past 32: `f''16` and `f'' 16` DO differ in id space, so
+        # gluing those would change the label. 32 is lossless in BOTH vocabularies (old and h).
+        # ⚠ No TIE_RECORD_QUEUES exemption is needed. That guard protects the round-2 exam record,
+        # which lives in the `label` column; this touches only the hint, and re-gluing changes no
+        # id, so there is no record to preserve.
+        # ⭐ Scheme H removes the cause at the source (`f''` and `32` are each one token, so the
+        # decode comes back glued); this is what makes the OLD-vocabulary queues read the same.
+        for r in rows:
+            if r.get("decoded"):
+                r["decoded"] = SPACED_32_RE.sub("32", r["decoded"])
     return fields, rows
 
 

@@ -336,3 +336,41 @@ append-only so nothing breaks, but a model trained on `c ' ' ' 1 6` cannot read 
 retrain, and it should ride along with the Round-4 rail work
 ([../BACKLOG-LATER.md](../BACKLOG-LATER.md) item 0) rather than be its own round — both re-emit the
 pools, and doing them separately pays that cost twice.
+
+## Why the model writes `f'' 32`, and why scheme H stops it (2026-09-10)
+
+⭐ **The model is not choosing to put a space there.** The base model's alphabet is **75 tokens**,
+and its digits are `0 1 2 4 6 8 9` — **`3`, `5` and `7` are missing**. That is why `3` is one of
+`ADDED_TOKENS`. An added token is a word boundary to the tokenizer, so the `'` in front of it takes
+its end-of-word form, and end-of-word means "a space follows":
+
+| written | tokens | decodes back as |
+|---|---|---|
+| `f''32` (old vocabulary) | `f` `'` `'</w>` `3` `2</w>` | **`f'' 32`** |
+| `f''16` (old vocabulary) | `f` `'` `'` `1` `6</w>` | `f''16` |
+| `f''32` (**scheme H**) | `f''` `32` | **`f''32`** |
+
+So the space is a mechanical side-effect of a missing digit, it happens to **`32` only**, and
+⭐ **scheme H removes the cause**: under H both `f''` and `32` are single tokens, so the decode comes
+back glued. ⚠ The other direction — a dropped space *after* an added token, `\bakiyeSharp c''4` →
+`\bakiyeSharpc''4` — is a different mechanism and H does **not** fix it.
+
+**Measured 2026-09-10 across every queue CSV and every real and synthetic manifest** (216,200 text
+fields): spaced `32` appears **9,900** times and **no other duration is ever spaced** — not one `8`,
+`16` or `4`. There are also zero double spaces, zero detached dots and zero leading/trailing spaces.
+⛔ `32` is also the only one it would be SAFE to glue: `f''16`/`f'' 16` and `f''8`/`f'' 8` differ in
+id space under the old vocabulary. **Never widen the pattern.**
+
+⚠ **No manifest carries it** — `promote_labels.norm_label` re-glues at the promote gate, and that
+guard is load-bearing: an audit `fix` that fails the round-trip gate *removes* its manifest row, and
+6 of b8's 576 corrections were saved by it (2026-08-31).
+
+✅ **`review_ui.load_queue(clean=True)` now re-glues it in the hint column** (2026-09-10), beside the
+`\tie` removal and for the same reason — it is dropped at the one point every queue reaches the
+browser, so a reviewer cannot read it, diff against it, or store it through `accept`. **2,914 rows
+across 25 queues**, every one verified id-identical in **both** vocabularies. ⛔ The CSV on disk is
+NOT rewritten: `save_verdict` re-writes the whole file through the same loader, so a cleaning
+default would quietly rewrite the record one verdict at a time. Verified by round-trip — saving a
+verdict leaves the file's spaced hints exactly as they were.
+⚠ This does **not** reverse the 2026-09-06 decision that cosmetic spacing leaves the gold alone: the
+gold is untouched, only what a reader is shown.

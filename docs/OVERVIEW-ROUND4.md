@@ -2,7 +2,7 @@
 
 purpose: the plain-English version of the Round 4 plan — what we learned, what we change, what we do not change, and what you will be asked to do
 audience: the project owner (basic English, same as OVERVIEW.md)
-updated: 2026-09-06
+updated: 2026-09-10
 
 > The full plan with its evidence is [rung3/round4.md](rung3/round4.md). This page restates numbers
 > on purpose so it reads on its own; if it ever disagrees with [METRICS.md](METRICS.md), METRICS.md
@@ -134,17 +134,68 @@ column. If the model does stop too early on them, we will see it as a number ins
 The honest fix, if it is ever needed, is to draw the notes closer together — not wider pictures.
 That is written down and not costed.
 
+## What happened 7–10 September
+
+**The re-emit ran, and it cost no GPU time.** The plan was to cut every page again on a rented
+graphics card. We priced that first: on 30 pages re-cut with today's cutter, 20 came out different
+and **15 in every 100** labelled strips ended up with different pixels underneath. A verdict is
+given against a picture, so that would have thrown away about 600 of your readings. You said keep
+them. The way out was that the gain comes from the **spelling**, not from a new cut — so we re-used
+the existing cuts and changed nothing but how the answer is written.
+
+**What came out: 4,460 strips**, against 3,929 before. ⛔ **Not the 7,437 we forecast**, and the
+reason matters. The old size limit did collapse as predicted — strips rejected for being too long
+fell from 4,012 to 141. But most of the returning strips were then rejected by a **second** check
+we had not been counting: the emitter asks an older model to read each strip, and throws it away if
+that reading disagrees with the answer too much. Only 588 extra strips made it through.
+
+**Then we looked at what that second check is really catching, and it is not what we assumed.** In
+exam mode those strips are shown to a person instead of thrown away, so 75 of them already carry
+your own typed answer. Compared against both sources, your answer sits about **20 corrections away
+from the database answer and 0 away from the model's reading**. In other words: the model read
+those strips fine, and the *database answer* was describing different music. They are also not
+denser than ordinary strips. ⭐ **One group is** — the 1,678 that came back from the size limit —
+and nobody has read a single one. That is now a 40-strip queue for you.
+
+**We also asked what your corrections have been saying all along.** Every reviewed row holds three
+texts: the database answer, the model's reading, and yours. Splitting them apart:
+
+- On the hard strips the emitter refuses, **both sources are wrong 85 times out of 100**. Neither
+  can be trusted alone there — which is exactly why a better referee model did not rescue them.
+- The database answer's single biggest failure is the **key signature** (the sharps and flats at the
+  start of the line): **93 of every 100** cases where only the database was wrong. That is
+  independent support for the rule you approved on 6 September.
+- The model's weaknesses are different ones: triplets, note lengths, note heights, repeat marks. Its
+  most common sign mix-up is writing a *koma* sharp where the page prints a *küçük* sharp — the same
+  direction you corrected 10 times out of 10.
+
+**A defect in the practice-test pool.** The pool that picks which saved copy of the model is "best"
+had 10 strips (out of 262) whose written answer describes music that is not in their picture. A
+builder had put new pictures under old answers. It is being repaired; 10 rows need your eyes.
+
+**And a small mystery solved.** The model writes `f'' 32` with a space, and you asked why. The
+starter model's alphabet has no digit `3` at all, so we had to add one — and an added letter acts as
+a word break, which puts a space in front of it. It happens to `32` and nothing else. The new
+spelling removes the cause by itself. Meanwhile the review screen now hides the space, on 2,914
+rows, checked one by one to be certain nothing else changed.
+
 ## What you will be asked to do
 
-1. ✅ **Done 6 September** — you confirmed the 16-token spelling (scheme H), and you confirmed we do
-   not re-draw the practice pictures.
-2. ✅ **Already done** — Run A is what visitors read today.
-3. ⏭ **This is the one thing waiting on you.** Pick 10–15 pages outside the exam as your fixed
-   hand-test set. They must not be exam pieces, and once chosen they stay the same, so every model is
-   read on the same pages and the counts can be compared. Send me the page names or files and I will
-   set up the counting.
-4. Read the signature rows the vote disagrees on, and later the audit sample of the re-emitted
-   strips: roughly 450 fixes out of 3,500 new strips.
+Four reading jobs are staged. None of them needs a decision — only your eyes.
 
-Everything else (the tokenizer check, the picker, the re-emit, the two trainings) needs no decision
-from you and no labelling.
+| queue in the review tool | rows | what it settles |
+|---|---|---|
+| `h1-full`, filter `new_dense_sample` | 100 | how dirty the newly rescued strips are. Without this number, a good result from the next training cannot be told apart from bad answers |
+| `ndhigh` | 40 | are the dense strips the referee threw away worth rescuing? Many corrections = the model really is weak there; few = the database answer was the problem |
+| `realval-repair` | 10 | the practice-pool strips whose answer describes other music |
+| `handtest` | 458 left of 515 | corrections per page — the only page-level measure this project has |
+
+✅ Already settled, no action: the 16-token spelling, no re-drawing, the size limit of 80, the
+signature rule, and your fixed hand-test pages (you supplied 20 on 6 September).
+
+⏭ One open question you may want to answer later, not now: should a brand-new token start from a
+related one the starter model already knows, instead of from a random value? It is free, it is
+plausible, and it is unmeasured — so it would run as its own separate comparison.
+
+Everything else (the trainings, the beam-search check, the final reads) needs no decision from you
+and no labelling.

@@ -2,10 +2,58 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-09
+updated: 2026-09-10
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-10 — why the model writes `f'' 32`, and what the base alphabet actually contains
+
+**Two owner questions, both answerable by looking rather than reasoning.**
+
+**Why the spaced `32`.** The base model's alphabet is **75 tokens** and its digits are
+`0 1 2 4 6 8 9` — **`3`, `5` and `7` are missing**, which is why `3` is one of `ADDED_TOKENS` in the
+first place. An added token is a word boundary to the tokenizer, so the `'` in front of it takes its
+end-of-word form and end-of-word means "a space follows": `f''32` becomes `f` `'` `'</w>` `3`
+`2</w>` and decodes back as `f'' 32`. `f''16` has no such break and comes back glued. So the model
+is not choosing to write a space; it is a mechanical consequence of a missing digit.
+⭐ **Scheme H removes the cause** — under H `f''` and `32` are each one token and the decode is
+glued. ⚠ The other direction (`\bakiyeSharp c''4` → `\bakiyeSharpc''4`) is a different mechanism
+and H does not fix it.
+
+**Scope, measured before touching anything.** 216,200 text fields across every queue CSV and every
+real and synthetic manifest: spaced `32` **9,900** times and **no other duration is ever spaced** —
+not one `8`, `16` or `4`. Zero double spaces, zero detached dots, zero leading/trailing whitespace.
+⛔ That mattered, because `32` is also the only one it would be safe to glue: `f''16`/`f'' 16` and
+`f''8`/`f'' 8` differ in id space under the old vocabulary. The owner's "only spacing changes, so
+nothing changes" turned out true for the two patterns the data actually contains — but it is false
+in general, and the pattern must never be widened.
+
+**Shipped:** `review_ui.load_queue(clean=True)` re-glues it in the hint column, beside the `\tie`
+removal and at the same single point where every queue reaches the browser. **2,914 rows over 25
+queues, every one verified id-identical in BOTH vocabularies, zero mismatches.** ⛔ The CSV on disk
+is not rewritten — `save_verdict` re-writes the whole file through the same loader, so a cleaning
+default would rewrite the record one verdict at a time; proved by round-trip that saving a verdict
+leaves the stored hints untouched. ⚠ This does not reverse the 2026-09-06 decision that cosmetic
+spacing leaves the gold alone: the gold is untouched, only what a reader is shown.
+⭐ Side benefit: the edit box is now seeded glued, so a hand-typed correction arrives in the form
+`promote_labels.norm_label` used to have to repair — the guard that saved 6 of b8's 576 corrections
+from being deleted.
+
+**What the base alphabet contains, since it was never written down.** 75 tokens: single characters
+(note letters, digits, `'`, `.`, `\`, `<`, `=`, `>`), their end-of-word variants, the four specials,
+and **18 whole-word tokens** — `\repeat `, `volta `, `\key `, `\minor `, `\major `, `\tempo `,
+four `4=NN ` tempos and seven dynamics. ⭐ **So the owner was right that `\repeat ` and `volta `
+are already there.** They are still unusable, for reasons that are now concrete rather than
+asserted: `{` and `}` are **not in the alphabet** so `\repeat volta 2 { … }` cannot be spelled at
+all; `\segno`, `\coda`, `\fine`, `\bar` are absent; a strip is a fragment whose repeat usually
+opens on another strip, so a wrapper construct cannot describe one; and `resolveStructure` in
+`stitch.ts` must stay the only thing that says what a repeat DOES.
+⏭ **The salvageable half is the embedding, and it is unbuilt.** A token id is an index and transfers
+nothing, but `modeling.py` calls `resize_token_embeddings` and nothing else, so every new token
+starts from a distribution-matched random vector. `rung3/tokenization.md` step 3 already prescribes
+warm-starting from a related token and it was never implemented —
+[BACKLOG.md](../BACKLOG.md) item 13.
 
 ## 2026-09-09 — the pool that picks the checkpoint had old labels with new pixels under them
 
@@ -51,6 +99,26 @@ end with invented verdicts so the owner does not discover a broken `--build` aft
 queue's rows carry **no `label`** on purpose — the carried label is the string under suspicion — and
 its `decoded` hint reuses `merge_redecode_into_queue.drop_ties`, because the cache predates the
 `\tie` retirement and an `ok` would have carried a retired token back into the pool.
+
+**Later the same day — what the owner's verdicts actually say.** "How many corrections" does not
+name the source that was wrong, so `verdict_attribution.py` splits every human-read row three ways
+(SymbTr label / model decode / the owner's answer) and categorises the difference with
+`error_taxonomy`'s own tokenisation. ⚠ Two controls decided the result and both were found by the
+numbers looking wrong: the decode caches predate the `\tie` retirement, and left in, that one dead
+token was **70% of the `other` column** and the largest apparent model mistake; and the edit box is
+seeded with the label's `\sig` plus the decode's content, so a passive accept makes the answer equal
+the seed by construction — only **7% / 12% / 28%** of rows were actually re-typed.
+⭐ On refused material **both sources are wrong 85.4% of the time**, which is what the emitter's
+refusal is for and why a better referee did not rescue those strips. The label's dominant failure is
+the **signature** (93.3% of pure-label errors in `h1`, replicated at 49.5% on `nota`), and the
+seeding works *against* finding that, so it is understated. The model's profile is different —
+tuplets, duration, pitch, repeat marks — with `\komaSharp` → `\kucukSharp` its top sign
+substitution, the direction the owner has corrected 10:0. Numbers:
+[METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
+⏭ And `nd_high` was diagnosed: on the 75 exam rows a human read, the owner's answer sits a median of
+**20** label-token edits from the label and **0** from the decode, and `nd_high` strips are not
+denser than accepted ones — except the **1,678** that came back from `over_budget`, which are, and
+which nobody has read. `build_ndhigh_queue.py` stages 40 of them at random as queue `ndhigh`.
 
 **Not done, and deliberately not done quietly:** the builder itself. `build_realval_v2.py --build`
 will repeat this the next time it runs, and whether `_tupletval` came through the same carry-and-copy

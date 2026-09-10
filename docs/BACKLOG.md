@@ -3,7 +3,7 @@
 purpose: work that is real and justified but is not the next action; kept out of STATUS so that file can hold only current state and the next move
 audience: agents picking up the project with spare capacity, or looking for what was deferred and why
 
-updated: 2026-09-09
+updated: 2026-09-10
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. Genre
 split: STATUS states **current state and the next action**; this file holds **everything owed that is
@@ -28,24 +28,18 @@ starting. Abandoned plans are a different thing again and live in
    arm and cancel in a delta), which is why the geometry probe's holdout stands. Owed: de-duplicate,
    re-derive, and check whether any other pool built by the same path shares it.
    [METRICS-CORPUS.md](METRICS-CORPUS.md).
-   ⭐ **DIAGNOSED 2026-09-09, AND THE DUPLICATES WERE THE SYMPTOM, NOT THE DISEASE.** The last line
-   above — "check whether any other pool built by the same path shares it" — was the right question.
-   `build_realval_v2.py --build` carries rows out of the previous `_realval` pool and copies
-   `strip_root`'s crop under them; that pool is **entirely on the retired crop root** (271 of 271
-   PNGs), so 157 carried rows got a `strips_v2` crop under a label read against a `strips` crop,
-   with no measure-span check. **10 of 262 distinct images carry a label about music that is not in
-   their picture** — the 4 contradictory pairs are 4 of the visible ones. Evidence, control and
-   volumes: [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md).
-   ✅ **The pool repair is running** — `repair_realval_v2.py`, queue `realval-repair`
-   ([rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md)); the owner chose the full repair over
-   dropping the rows, 2026-09-09 ([DECISIONS.md](DECISIONS.md)).
-   ⏭ **WHAT IS STILL OWED IS THE BUILDER.** `build_realval_v2.py --build` will repeat this the next
-   time it runs: it needs to refuse a carried row whose measure span does not match on the root it
-   is about to copy from, instead of carrying it silently. Deferred only because no `--build` is
-   scheduled; ⛔ do not run one until it is fixed.
-   ⏭ Also unchecked: whether `_tupletval` was assembled by the same carry-and-copy path. The 2026-08-16
-   line above says it is clean of DUPLICATES, which is a different question from whether its labels
-   and pixels come from one root.
+   ⭐ **DIAGNOSED 2026-09-09 — the duplicates were the SYMPTOM.** `build_realval_v2.py --build`
+   carries rows out of the old `_realval` pool, which is entirely on the retired crop root, and
+   copies the `strips_v2` crop under them with no measure-span check: **10 of 262 distinct images
+   carry a label about music that is not in their picture**. Evidence, control and volumes:
+   [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md). ✅ The pool repair is staged
+   (`repair_realval_v2.py`, queue `realval-repair`); the owner chose the full repair
+   ([DECISIONS.md](DECISIONS.md)).
+   ⏭ **STILL OWED — THE BUILDER.** `build_realval_v2.py --build` repeats this the next time it
+   runs: it must refuse a carried row whose measure span does not match on the root it is about to
+   copy from. ⛔ Do not run a `--build` until it does.
+   ⏭ **Also unchecked:** whether `_tupletval` came through the same carry-and-copy path. "Clean of
+   duplicates" (2026-08-16, above) is a different question from "labels and pixels from one root".
 
 3. **NEW 2026-08-20 — `best` is chosen 94.6% on SYNTHETIC val loss. Re-weight the selector, or
    select on a real metric.** Raised by the owner asking what the every-500-steps evaluation actually
@@ -273,29 +267,6 @@ starting. Abandoned plans are a different thing again and live in
    cannot see the dropped-entry class while a content-change trigger (690) can
    ([rung3/round4.md](rung3/round4.md) step 3).
 
-12. **NEW 2026-09-07 — RETIRE THE DEAD TOKENS, IN A LATER ROUND (owner: *"bir sonrakinde
-   tutarız"*).** Raised by the owner asking the sharp version of the question: *"eski tokenları neden
-   silmedik — bu training'i direkt Flova OMR'ı base alarak yapmıyor muyuz?"* The premise is right —
-   `train.py --model` defaults to `Flova/omr_transformer` and [rung3/round4.md](rung3/round4.md)
-   step 6 is explicitly "from base", so a new model's ids are assigned fresh from `ADDED_TOKENS`
-   and the old vocabulary is not inherited.
-   ⭐ **What the measurement showed, and it corrects the code comment**: deleting a dead token does
-   **NOT** break an existing checkpoint. A checkpoint carries its own saved tokenizer, and
-   `ADDED_TOKENS` only *adds* what is missing — loading `r3a-stage2-best-real` or
-   `round2-stage2-best` with a `\tie`-free list gives **added = 0** and `\tie` keeps id 98. From
-   the base, deleting `\tie` shifts exactly **one** id (`\grace` 99 → 98). The append-only rule's
-   real target is insertion in the MIDDLE, not deletion.
-   ⏭ **Deferred for two reasons that are not id stability.** (a) Round 4 step 6's control arm is
-   *defined* as "the old vocabulary"; deleting tokens in the same round makes the A/B two variables
-   where the round's whole point is that the vocabulary gets its own paired answer. (b) One of the
-   14 `gate:browser` strips carries `\tie` in its gold
-   (`rast--sarki--curcuna--icime_hep`), and `gate.json` bakes its own id map — a model that cannot
-   represent `\tie` can never match that strip. ⚠ **Not verified by running the gate**, only by
-   reading its gold.
-   ⚠ **The gain is near zero** — one row of 116 in the embedding, against the 0.01%-of-the-model
-   price [rung3/round4.md](rung3/round4.md) already puts on 16 tokens. This is tidiness, not
-   performance, which is why it waits for a round that is not measuring a vocabulary.
-
 10. **NEW 2026-08-22 — EVERY PAGE THIS PROJECT OWNS COMES FROM TWO WEBSITES, AND SO DOES THE EXAM.**
    Raised by the owner (*"is there any strip from other note sheet resources like trt, divanmakam,
    şarkı notaları"*) and measured: `data/real/manifest.csv` is **1,055 neyzen.com + 1,000
@@ -333,6 +304,26 @@ starting. Abandoned plans are a different thing again and live in
    every rendered piece, which is exactly the `--print-noise` failure mode, and Round 3's render is
    already specified. ⏸ **Not in Round 4 either — no render this round (owner, 2026-09-03)**; it
    waits for a round that renders ([rung3/round4.md](rung3/round4.md) "Not this round").
+
+13. **NEW 2026-09-10 — WARM-START A NEW TOKEN'S EMBEDDING INSTEAD OF DRAWING IT AT RANDOM** (owner's
+    question: *"eğer bunlar zaten base modelin vocabinde varsa ... hazırda olanları kullanmamız daha
+    iyi olmaz mı"*). ⭐ **The premise is half right and the useful half is unimplemented.** Measured
+    2026-09-10: the base model's alphabet is **75 tokens** and it does contain `'\repeat '` and
+    `'volta '` as whole words — but `\segno`, `\coda`, `\fine`, `\bar` are absent, `{` and `}` are
+    absent (so `\repeat volta 2 { … }` cannot be spelled at all), and the digits `3`, `5`, `7` are
+    missing. Reusing those ids is therefore impossible *and* pointless: an id is an index, and a
+    strip is a fragment whose repeat usually opens on another strip, which is why the drawn-symbol
+    tokens exist ([rung3/tokenization.md](rung3/tokenization.md)).
+    ⏭ **What IS worth doing is the embedding.** `modeling.py` calls `resize_token_embeddings` and
+    nothing else, so on transformers 4.57.6 every new token starts from a multivariate normal
+    matching the old embeddings' mean and covariance — statistically plausible, musically empty.
+    [rung3/tokenization.md](rung3/tokenization.md) step 3 already prescribes warm-starting and it
+    was never built: `\repstart`/`\repend` from the base's own `\repeat `, `\volta1`/`\volta2`
+    from `volta `, H's `16`/`32` from the digit rows, H's fused pitches from their parts.
+    ⚠ **A PAIRED ARM, not a default** — it changes training, so folding it into the H arm would
+    make that A/B two variables. Unmeasured; the gain is a question, not a claim.
+    ⚠ The base model's knowledge of what a repeat barline *looks like* lives in the ENCODER and is
+    kept by fine-tuning either way; this is only about what the decoder writes.
 
 ### ⏭ `carry_labels()` should carry a verdict when the crop is BYTE-IDENTICAL (owner, 2026-08-26)
 

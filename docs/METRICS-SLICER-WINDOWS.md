@@ -326,7 +326,7 @@ strips that came back, only **+588 reached training**: ~1,739 went to review and
 as `nd_high` instead. ⛔ **So the round's standing "3,508 rescued → pool 7,437" is WRONG as a yield
 claim** — it priced the budget gate alone. A strip over the budget is a DENSE strip, and the
 disagreement gate asks the referee (`round2-stage2-best`) to read exactly the material this round
-opened because the model reads it badly. After promotion the pool is **4,425 rows** against b8's
+opened because the model reads it badly. ⚠ **That reading was corrected 2026-09-09** — on the 75 `nd_high` rows a human read, the answer is a median of 20 label-token edits from the LABEL and 0 from the decode ([METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md)). After promotion the pool is **4,425 rows** against b8's
 3,929: **+12.6%**, not +89%.
 
 ⚠ **The gain is aimed where it was meant to be, which the yield number alone hides**: the 588 new

@@ -2,7 +2,7 @@
 
 purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
 audience: agents and the owner working the real-page track
-updated: 2026-09-07
+updated: 2026-09-10
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
@@ -257,6 +257,14 @@ to revisit the no-render decision; otherwise it stands.
      `nd_high`. An over-budget strip is a DENSE strip, and `nd` asks the referee to read exactly the
      material this round opened *because the model reads it badly*. **The binding gate is no longer
      the budget; it is the referee.**
+     ⚠ **THE SECOND HALF OF THAT SENTENCE WAS CORRECTED 2026-09-09.** `nd_high` is measurably not
+     "the model could not read it": exam mode reviews those strips instead of dropping them, and on
+     the 75 a human read the owner's answer sits a median of **20** label-token edits from the label
+     and **0** from the decode — the model read them, the LABEL named other music. They are also not
+     denser than accepted strips (37 ids against 37). ⭐ The one subset that IS dense is the
+     **1,678** the budget returned (median **49**), and none has been read; `build_ndhigh_queue.py`
+     stages 40 at random as queue `ndhigh`.
+     [../METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
    - ⛔ **A better referee does not fix that** — pilot on 12 pieces / 597 strips with
      `r3a-stage2-best-real` (fair here: those strips were never trained on): it read **38.2%** of
      them differently and moved acceptance **33 → 32**. Saved a ~1,720-page inference pass.

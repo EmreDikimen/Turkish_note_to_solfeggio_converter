@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-09
+updated: 2026-09-10
 
 ## Now
 
@@ -222,11 +222,30 @@ rule, safe only because nothing slices ([../CLAUDE.md](../CLAUDE.md)).
 **The pool is `data/real/rung3/strips_h1`, 4,460 rows** (b8: 3,929). b8's verdicts carried in under a
 per-row inode+label proof: **3,864 of 3,956, 980 of them human reads, 0 refused**.
 
+⭐ **WHAT THE OWNER'S VERDICTS SAY, ONCE ATTRIBUTED TO A SOURCE (2026-09-09).** A correction count
+does not name which of the two sources was wrong; `verdict_attribution.py` splits every human-read
+row into label-error and model-error and categorises both. ⚠ Two controls decide the result: the
+decode caches predate the `\tie` retirement (that dead token was **70%** of the `other` column), and
+the edit box is seeded with the label's `\sig` plus the decode's content, so only the **7–28%** of
+rows actually re-typed can be read. ⛔ **On refused material BOTH sources are wrong 85.4% of the
+time** — which is what the emitter's refusal is for, and why recovering those strips needs a human
+rather than a better referee. ⭐ **The label's dominant failure is the SIGNATURE**: 93.3% of the
+cases where only the label was wrong in `h1`, replicated at 49.5% on `nota` — and the seeding works
+*against* finding it, so it is understated. That is independent support for rule D. The model's
+profile is different (tuplets, duration, pitch, repeat marks; top sign substitution
+`\komaSharp` → `\kucukSharp`). [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md).
+
 ⛔ **THE ROUND'S HEADLINE YIELD CLAIM IS DEAD, AND WHAT KILLED IT IS A SECOND GATE.** `over_budget`
 collapsed as forecast (4,012 → **141**), but of the ~3,871 strips that returned only **+588 reached
-training**: ~1,739 went to review, ~1,648 dropped as `nd_high`. A strip over the budget is a DENSE
-strip, and `nd` asks the referee to read exactly the material this round opened *because the model
-reads it badly*. ⛔ **A better referee does not fix it**: `r3a-stage2-best-real` — fair here, those
+training**: ~1,739 went to review, ~1,648 dropped as `nd_high`. ⚠ **THE READING OF *WHY* WAS
+CORRECTED 2026-09-09** — this entry used to say `nd` asks the referee to read the material *because
+the model reads it badly*, and that is measurably not what `nd_high` is. On the 75 exam rows a human
+read (exam mode reviews `nd_high` instead of dropping it) the owner's answer sits a median of **20**
+label-token edits from the SymbTr label and **0** from the decode: the model read them, the LABEL
+named other music. `nd_high` strips are also **not denser** than accepted ones (37 ids against 37).
+⭐ **The one subset that IS dense** — the **1,678** the budget returned — carries a median of **49**,
+and **nobody has read one**; queue `ndhigh` stages 40. [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md).
+⛔ **A better referee does not fix it**: `r3a-stage2-best-real` — fair here, those
 strips were never trained on — read **38.2%** of a 12-piece pilot differently and moved acceptance
 **33 → 32**. ⚠ **The rail's own yield is +35 strips (+0.8%)**, not the ~282 its 141 windows allowed.
 ⭐ What did land is aimed right: the new rows carry a median **18 label tokens against 11**.

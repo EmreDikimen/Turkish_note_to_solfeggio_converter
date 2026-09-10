@@ -138,6 +138,27 @@ npx tsx tools/vision/parity/rescue-check.ts
     # decode verbatim). The CSV keeps it: `load_queue(clean=True)` is asked for by the two READ
     # paths only, never by save_verdict, so no file is laundered a verdict at a time. The
     # Round-2 exam queues (exam-fix, examv2-*) are EXEMPT — their ties are the record.
+.venv-ml/bin/python scripts/rung3/repair_realval_v2.py --report | --queue | --build
+    # `_realval_v2` carries 157 rows out of the OLD pool with the CURRENT crop under them —
+    # build_realval_v2.py copies strip_root's PNG for every carried row and never compares the
+    # measure span. --report classifies (keep / drop-duplicate / re-home-by-span / needs-a-human),
+    # --queue writes the 10-row `realval-repair` queue, --build assembles `_realval_v2r`.
+    # ⛔ --build REFUSES while any review row is unverdicted. ⚠ `_realval_v2` is left intact:
+    # every Round-3 number was measured on it. docs/METRICS-SLICER-ROOTS.md
+.venv-ml/bin/python scripts/rung3/verdict_attribution.py [--active-only] [--retired]
+    # Splits the owner's verdicts into "the LABEL was wrong" vs "the MODEL was wrong", by error
+    # kind, from data already on disk — no model runs. ⚠ --active-only is the ANCHORING CONTROL and
+    # is usually the number you want: the edit box is seeded with the label's \sig plus the
+    # decode's notes, so on a passive row `truth` equals the seed by construction and the
+    # attribution restates the seeding. Only 7-28% of rows were actively re-typed.
+    # ⛔ Counts are in LABEL-TOKEN space (error_taxonomy.relabel), never eval_omr edit counts.
+    # docs/METRICS-ATTRIBUTION.md
+.venv-ml/bin/python scripts/rung3/build_ndhigh_queue.py [--n 40]
+    # Stages a RANDOM sample of the 1,678 dense strips b8 dropped as over_budget and h1 drops as
+    # nd_high, as review_ui queue `ndhigh`. ⚠ Random, NOT worst-first — every other queue here is
+    # worst-first to harvest labels; this one is read for a RATE, so ordering would bias it.
+    # `label` is empty (a dropped strip has no stored label), so it settles one question: does the
+    # model read dense material correctly. ⛔ Not gold; refuses to overwrite an existing file.
 .venv-ml/bin/python scripts/rung3/carry_old_fixes.py [--apply]
     # Finds the RETIRED pools' 1,479 hand corrections again inside strips_b8 and marks them with
     # oldfix / oldfix_kind / oldfix_src, which the review UI's `⭐ old human fix` filter reads.

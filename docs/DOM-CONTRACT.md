@@ -206,6 +206,32 @@ handles and playhead are the page's own `[data-omr-note]` / `#note-delete` /
 Nota page, because a card with its own overlay could pass "a note is selected" and still be a second
 document. [features/measure-card.md](features/measure-card.md)
 
+## The phone layout (2026-09-11)
+
+⚠ **None of this exists on a wide window.** The bottom tab bar renders only when
+`(max-width: 700px)` matches AND a score is installed, so every check that runs at 1280×720 with a
+mouse — which is all of them but `smoke:phone` — selects none of it.
+
+| Element | Carries |
+|---|---|
+| `#app` | `data-mtab` = `nota` \| `cal` \| `duzenle` \| `pages`, and `data-fullscreen` |
+| `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
+| `#fullscreen-on` | the way in, on the Çal tab |
+| `#fullscreen-bar` | `#fs-play[data-play-state]`, `#fs-stop`, `#fs-exit` |
+| `#transport-settings` | the Ritim + Perde box, so the tab rules can hide it apart from `#transport-pinned` |
+| `#voice-field` | the voice select, hidden over the music and kept on the Çal tab |
+
+⚠ **`data-play-state` now names THREE buttons** — `#play`, `#palette-play` and `#fs-play`. A check
+must say which one it means; it was already true of the first two.
+
+⚠ **The Düzenle tab IS edit mode.** `#edit-toggle[data-edit-mode]` stays the fact, and the tab moves
+with it in both directions (`applyEditMode` in `App.tsx`). ⛔ `#edit-toggle` may not be hidden on
+that tab even though the tab says the same thing: `smoke:phone` clicks it at 375px.
+
+⚠ **`data-fullscreen` is NOT gated on the phone breakpoint**, deliberately — a phone turned sideways
+is 844px wide, past the 700px line, and full screen has to survive the rotation. Its stylesheet
+block therefore lives outside the phone media query and hides the sections itself.
+
 ## Two traps
 
 1. **Nothing that ticks on a timer may render inside `#omr-status`** — `page-smoke` counts distinct

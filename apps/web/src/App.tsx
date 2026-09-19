@@ -55,7 +55,7 @@ import {
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
-import { SheetView, SHEET_SIDE_MARGIN, type AccidentalMode } from "./SheetView";
+import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
 import {
   InstrumentView,
   instrumentForVoice,
@@ -78,7 +78,7 @@ import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
 import { FullScreenBar, FullScreenRow } from "./ui/FullScreen";
-import { useIsPhone } from "./usePhone";
+import { useViewport } from "./usePhone";
 import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
 import {
@@ -341,9 +341,10 @@ export function App() {
   // where the harness opened on the roll. (Render automation always wanted sheet anyway.)
   const [viewMode, setViewMode] = useState<ViewMode>("sheet");
   // Watches `(max-width: 700px)`, the same line `app.css` draws the phone layout at.
-  const isPhone = useIsPhone();
-  /** Full screen only: the `contentWidth` the sheet is re-engraved at, or null for the default. */
-  const [fsContentW, setFsContentW] = useState<number | null>(null);
+  const { isPhone, phoneShaped } = useViewport();
+  /** The `contentWidth` the sheet is re-engraved at, or null for the default 1000px.
+   *  Set on every PHONE and in full screen at any width — see the effect below. */
+  const [fitContentW, setFitContentW] = useState<number | null>(null);
   // ⚠ PHONE ONLY — which of the four bottom tabs is showing. On a wide window `isPhone` is
   // false, `MobileTabs` never renders and `data-mtab` selects nothing, so the desktop layout is
   // untouched by every line this state reaches. See ui/MobileTabs.tsx and usePhone.ts.
@@ -1058,21 +1059,44 @@ export function App() {
   }
 
   /**
-   * Fit the engraving to the screen while full screen is on.
+   * Fit the engraving to the screen: on every PHONE, and in full screen at any width.
+   *
+   * ⚠ **THIS IS A RE-ENGRAVE, NOT A ZOOM** — fewer bars per system at the same note size.
+   * `.kv-score` may never be scaled: that SVG is the training-strip source and `tools/render/
+   * render.ts` cuts strips out of it by rect (docs/APP-RULES.md).
+   *
+   * ⚠ **The phone arm is the whole point** (2026-09-19). Before it, only full screen fitted, so the
+   * default phone screen engraved a 1000px page inside a ~343px box and the reader dragged the
+   * sheet sideways with one hand while it played. Full screen read well and was hidden behind a
+   * button — the right answer was in the code and was not the default.
    *
    * ⚠ Measured off the REAL box, never off `window.innerWidth`: the card's padding and
    * `.kv-score`'s own both come off the top, and a guess there leaves the sheet wider than the
-   * screen — a sideways drag in the one mode built to remove it.
+   * screen — a sideways drag in the very mode built to remove it.
    *
    * ⚠ A ResizeObserver is also why turning the phone sideways needs no orientation code of its own:
    * landscape is just a new box width, and the page is re-engraved at it.
    *
+   * ⚠ **Quantised to 8px.** A re-engrave is a full VexFlow re-layout of a 500-note page, and on a
+   * phone the box width twitches constantly — the URL bar sliding, the keyboard opening, a
+   * scrollbar appearing. Rounding to the nearest 8px keeps the layout stable through the twitch
+   * and still tracks a rotation, which moves it by hundreds.
+   *
+   * ⚠ `hasDoc` is in the deps and is load-bearing: `.kv-score` does not exist until a score is
+   * installed, so without it the observer would never attach on a phone that arrives empty — which
+   * is every first visit.
+   *
    * ⚠ No feedback loop: `.kv-score` takes its width from the page, not from the SVG inside it, so
    * a wider drawing never widens the box that decided the drawing's width.
    */
+  const hasDoc = !!doc;
   useEffect(() => {
-    if (!fullScreen) {
-      setFsContentW(null);
+    // ⚠ `phoneShaped`, NOT `isPhone`. A phone turned sideways is 844px wide and `isPhone` is false
+    // there, so a fit gated on it switched off in landscape — measured at 844×390: the sheet hid
+    // **242px** while portrait fitted exactly. Fitting is a question about the DEVICE, not about
+    // how wide the window happens to be. Full screen keeps its own arm at any width and any device.
+    if (!hasDoc || (!phoneShaped && !fullScreen)) {
+      setFitContentW(null);
       return;
     }
     const el = document.querySelector(".kv-score");
@@ -1083,11 +1107,17 @@ export function App() {
       const w = e.contentBoxSize?.[0]?.inlineSize ?? e.contentRect.width;
       // The floor keeps a pathological box (a phone mid-rotation reports 0) from engraving a
       // one-note-wide page that then has to be re-laid out a frame later.
-      if (w > 0) setFsContentW(Math.max(240, Math.round(w) - SHEET_SIDE_MARGIN * 2));
+      if (w > 0) {
+        const fit = Math.max(240, Math.round(w) - SHEET_SIDE_MARGIN * 2);
+        // ⚠ Only ever NARROWER than the default. A short-but-wide window (a 1280×600 desktop) is
+        // `phoneShaped` by the short side and has nothing to fit — re-engraving it at 1050 instead
+        // of 1000 would change a wide window's drawing for no gain. `null` = the default.
+        setFitContentW(fit >= SHEET_CONTENT_WIDTH ? null : Math.round(fit / 8) * 8);
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [fullScreen]);
+  }, [hasDoc, phoneShaped, fullScreen]);
 
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
   function applyPercussionVolume(v: number) {
@@ -2162,7 +2192,7 @@ export function App() {
                 // bars per system at the same note size. `.kv-score` may never be scaled — that
                 // SVG is the training-strip source (docs/APP-RULES.md). `undefined` = the default
                 // 1000px content area, which is every case but full screen.
-                contentWidth={fsContentW ?? undefined}
+                contentWidth={fitContentW ?? undefined}
                 editMode={editMode}
                 accidentalMode={accidentalMode}
                 signatureOverride={SIG_OVERRIDE}

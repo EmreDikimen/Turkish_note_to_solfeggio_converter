@@ -21,34 +21,21 @@ import { ErrorNote } from "./ErrorNote";
 import type { OmrStatus } from "./status";
 import type { AppError } from "./errors";
 import { TR } from "./strings";
+import { useViewport } from "../usePhone";
 
 /**
- * Is this being touched rather than pointed at?
+ * ⚠ The touch copy is decided by `useViewport().coarse`, NOT by the width.
  *
  * The three ways in are not three ways in on a phone: there is nothing to drag a file from, and no
  * ⌘/Ctrl to paste with. Saying so anyway is not merely noise — it is an instruction a friend cannot
- * follow, printed under the one button that works. So the copy asks the pointer.
+ * follow, printed under the one button that works. So the copy asks the pointer, which is also true
+ * of a touchscreen laptop at full width.
  *
- * ⚠ It starts `false` and flips in an effect, so the first paint is the desktop wording everywhere.
- * That is the right way round: a mouse reading "çekin veya seçin" for one frame has lost nothing,
- * where a phone rendered server-side into the drag-and-drop wording would keep it.
+ * ⚠ It used to be a SECOND hook living in this file; it moved to `usePhone.ts` on 2026-09-19 so the
+ * app has one answer to "is a finger on this?" rather than two that could drift.
  * ⚠ It changes COPY and nothing else. No `data-*` attribute moves with it, so every deploy check is
- * blind to which wording is up — which is the standing rule for user-facing strings (status.ts).
+ * blind to which wording is up — the standing rule for user-facing strings (status.ts).
  */
-function useCoarsePointer(): boolean {
-  const [coarse, setCoarse] = useState(false);
-  useEffect(() => {
-    if (typeof matchMedia !== "function") return;
-    const mq = matchMedia("(pointer: coarse)");
-    const read = () => setCoarse(mq.matches);
-    read();
-    // A tablet with a keyboard folio attached and detached changes the answer while the page is open.
-    mq.addEventListener("change", read);
-    return () => mq.removeEventListener("change", read);
-  }, []);
-  return coarse;
-}
-
 export function UploadHero({
   compact,
   busy,
@@ -66,7 +53,7 @@ export function UploadHero({
   onFile: (file: File) => void;
 }) {
   const [dragging, setDragging] = useState(false);
-  const touch = useCoarsePointer();
+  const { coarse: touch } = useViewport();
 
   // Paste is a window-level gesture: a friend hits ⌘V without focusing anything first.
   useEffect(() => {

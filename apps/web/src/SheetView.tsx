@@ -40,7 +40,12 @@ const LEFT = 10;
 /** The side margin between the SVG's edge and the staff, exported so a caller sizing the drawing to
  *  its own box (the measure card) can ask for the right `contentWidth` instead of guessing 20. */
 export const SHEET_SIDE_MARGIN = LEFT;
-const CONTENT_WIDTH = 1000; // staff content area (rows wrap within this)
+/** The default staff content area — rows wrap inside this. Exported so a caller that fits the
+ *  engraving to a box can tell whether its box is NARROWER than the default and therefore worth
+ *  fitting at all; widening past it would re-engrave every wide window for no gain. */
+export const SHEET_CONTENT_WIDTH = 1000;
+const NARROW_HEADER_W = 520; // under this the engraved header stacks — see `narrowHeader`
+const CONTENT_WIDTH = SHEET_CONTENT_WIDTH; // staff content area (rows wrap within this)
 const ROW_HEIGHT = 130; // vertical pitch of each staff system
 const STAVE_TOP_PAD = 40; // headroom above each stave for high notes / beams
 const CLEF_W = 50; // extra width the leading clef costs on the first stave of a row
@@ -82,6 +87,35 @@ const FOLLOW_SIDE_MIN = 48;
 function pinnedBottom(): number {
   const el = typeof document === "undefined" ? null : document.getElementById("transport-pinned");
   return el ? Math.max(0, el.getBoundingClientRect().bottom) : 0;
+}
+
+/**
+ * The top of whatever is fixed across the BOTTOM of the window, or the window's own floor.
+ *
+ * ⚠ The mirror of `pinnedBottom()`, and it exists for the same reason (2026-09-19): the readable
+ * band is the window MINUS its furniture, at both ends. On a phone a bar is fixed to the bottom —
+ * 56px of tab bar plus the home indicator — so a cursor "on screen" by `window.innerHeight` can be
+ * completely behind it, and the follow would decline to scroll a row the reader cannot see.
+ *
+ * ⚠ Measured off the real box, never from a constant: the bar's height changes with the safe-area
+ * inset, and the height of a thing is the thing's business. Ids rather than a class so the phone
+ * shell can replace the bar without the follow noticing; an id that is absent contributes nothing.
+ */
+const BOTTOM_BARS = ["mobile-tabs", "phone-bar"];
+
+function fixedBottomTop(): number {
+  const floor = typeof window === "undefined" ? 0 : window.innerHeight;
+  if (typeof document === "undefined") return floor;
+  let top = floor;
+  for (const id of BOTTOM_BARS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const box = el.getBoundingClientRect();
+    // Only a bar that is actually ON the floor counts. A hidden one reports a zero-height box, and
+    // one scrolled out of the way is not an obstruction.
+    if (box.height > 0 && box.bottom >= floor - 1) top = Math.min(top, box.top);
+  }
+  return top;
 }
 export const SIG_GLYPH_ADVANCE = 13; // horizontal space each key-signature accidental occupies
 // Baseline of the lyric line below the bottom staff line. MUST stay inside the strip crop, which
@@ -1542,10 +1576,14 @@ function followCursorIntoView(cursor: HTMLElement): void {
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
   const topEdge = pinnedBottom() + FOLLOW_MARGIN;
-  if (box.top < topEdge || box.bottom > window.innerHeight - FOLLOW_MARGIN) {
+  // ⚠ The floor is the bottom BAR, not the window — see `fixedBottomTop`. On a phone the two differ
+  // by the height of the tab bar, and a row hidden behind it used to count as "already on screen".
+  const bottomEdge = fixedBottomTop() - FOLLOW_MARGIN;
+  if (box.top < topEdge || box.bottom > bottomEdge) {
     // Park the row a third of the way down the window, so there is music AHEAD of the cursor and
     // not only behind it. The browser clamps this at both ends of the document. ⚠ 35% of the window
-    // is well below the pinned bar, so the landing spot needs no correction of its own.
+    // is well below the pinned bar and well above the bottom one, so the landing spot needs no
+    // correction of its own at either end.
     window.scrollTo({ top: Math.max(0, window.scrollY + box.top - window.innerHeight * FOLLOW_AIM), behavior });
   }
 
@@ -1915,6 +1953,11 @@ export function SheetView({
   // width can notice these exist. Both are engrave dependencies — changing the column width
   // re-engraves, which is the point: the card fits the music to its box instead of scaling it.
   const contentW = contentWidth ?? CONTENT_WIDTH;
+  // ⚠ Below this the engraved header stacks instead of running three columns across — see the
+  // header's own comment. 520 is where "Sofyan ♩ = 80" and "Beste: <a real Turkish name>" stop
+  // fitting either side of a centred title; every phone and every landscape phone is under it, and
+  // no default (1000) or measure card is anywhere near it.
+  const narrowHeader = contentW < NARROW_HEADER_W;
   const svgW = contentWidth == null ? DEFAULT_SVG_WIDTH : LEFT * 2 + contentW;
 
   /**
@@ -2788,25 +2831,63 @@ export function SheetView({
       {/* Engraved-style header: the makam/form/usul/composer/tempo extracted from the score.
           ⚠ Off in the measure card — the card's own head already names the bar, and a
           makam/usul/composer line over a single measure is the PAGE's furniture, not the bar's. */}
-      {chrome && (
+      {chrome && (narrowHeader ? (
+        /* ⚠ THE NARROW HEADER (2026-09-19). Three columns do not go into a phone's ~340px: with
+           `whiteSpace: nowrap` they overflowed the sheet's box, and letting them ellipsis instead
+           truncated "Sofyan ♩ = 80" to "Sofyan …" — the tempo is information, and clipping it is
+           not a fix. Stacked, everything fits and nothing is lost: the title keeps its own two
+           lines, and the usul, the tempo and the composer join one small line that may WRAP.
+           ⚠ Decided from `contentW`, the prop that already fits the engraving to its box, so this
+           needs no media query and no selector reaching inside `.kv-score`. */
+        <div
+          style={{
+            padding: "10px 16px 4px", fontFamily: "var(--font-display)", color: "var(--ink)",
+            textAlign: "center", lineHeight: 1.3,
+          }}
+        >
+          <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{header.makamForm}</div>
+          {header.title && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.title}</div>}
+          <div style={{ fontSize: 12, fontStyle: "italic", marginTop: 2 }}>
+            {header.usul} &nbsp;♩ = {headerBpm}
+            {header.composer && <> · Beste: {header.composer}</>}
+          </div>
+        </div>
+      ) : (
       <div
         style={{
           display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 16px 4px",
           fontFamily: "var(--font-display)", color: "var(--ink)",
         }}
       >
-        <div style={{ flex: "1 1 0", fontSize: 13, fontStyle: "italic", whiteSpace: "nowrap" }}>
+        {/* ⚠ `minWidth: 0` on all three, and an ellipsis on the two `nowrap` ones (2026-09-19). A
+            flex item's `min-width` is `auto` — "never shrink below your content" — so with
+            `whiteSpace: nowrap` these columns held their full text width whatever the box did, and
+            on a 375px phone "Beste: Tatyos Efendi" hung **11px past the sheet's own box**: the
+            staves fitted exactly and the header was the only thing still overflowing. Same mistake
+            `.kv-recent__item` paid for once (390px of phone pushed to 623px). Below `NARROW_HEADER`
+            the stacked form above takes over instead, because an ellipsis here loses the tempo. */}
+        <div
+          style={{
+            flex: "1 1 0", minWidth: 0, fontSize: 13, fontStyle: "italic",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}
+        >
           {header.usul} &nbsp;♩ = {headerBpm}
         </div>
-        <div style={{ flex: "2 1 0", textAlign: "center", lineHeight: 1.3 }}>
+        <div style={{ flex: "2 1 0", minWidth: 0, textAlign: "center", lineHeight: 1.3 }}>
           <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{header.makamForm}</div>
           {header.title && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.title}</div>}
         </div>
-        <div style={{ flex: "1 1 0", fontSize: 13, textAlign: "right", whiteSpace: "nowrap" }}>
+        <div
+          style={{
+            flex: "1 1 0", minWidth: 0, fontSize: 13, textAlign: "right",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}
+        >
           {header.composer && <>Beste: {header.composer}</>}
         </div>
       </div>
-      )}
+      ))}
       <div
         ref={containerRef}
         // The deploy checks read state, never copy: edit mode and the selection are attributes.

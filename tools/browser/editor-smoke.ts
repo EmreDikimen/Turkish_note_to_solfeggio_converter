@@ -2120,13 +2120,21 @@ async function main() {
   await page.locator("#follow-playhead").check();
   check("…and can be turned back on", await page.getAttribute("#sheet-surface", "data-follow"), "on");
 
-  // The SIDEWAYS axis, which exists only on a window too narrow for the 1020 px sheet — a phone,
-  // and the reason it is worth checking at all: there the cursor spends most of a row off the right
-  // edge. ⚠ It has a threshold of its own (`FOLLOW_SIDE_MIN` in SheetView.tsx), so this arm has to
-  // make the overflow REAL rather than the handful of padding pixels a wide window overflows by;
-  // that is what `setViewportSize` is doing here. ⚠ And the scroller is the SHEET's own box, not the
-  // window — two axes, two different scrolling objects, and this one is also once per row.
-  await page.setViewportSize({ width: 640, height: 720 });
+  // The SIDEWAYS axis, which exists only on a window too narrow for the 1020 px sheet: there the
+  // cursor spends most of a row off the right edge. ⚠ It has a threshold of its own
+  // (`FOLLOW_SIDE_MIN` in SheetView.tsx), so this arm has to make the overflow REAL rather than the
+  // handful of padding pixels a wide window overflows by; that is what `setViewportSize` does here.
+  // ⚠ And the scroller is the SHEET's own box, not the window — two axes, two different scrolling
+  // objects, and this one is also once per row.
+  //
+  // ⚠ **820, NOT 640, AND THE REASON IS A BEHAVIOUR CHANGE, NOT A TEST TWEAK** (2026-09-19). This
+  // arm used to say "a phone, and that is why it is worth checking". It is no longer a phone: under
+  // 700px the app re-engraves the page to the box (`fitContentW` in App.tsx), so the sheet FITS and
+  // there is no sideways axis left to follow — at 640px this section was asserting the absence of
+  // the very thing the phone fix removed. What still overflows is a narrow DESKTOP window and a
+  // tablet: an iPad at 744px keeps the desktop layout by decision, and a 1020px sheet in its ~700px
+  // box is exactly this case. So the width moved above the phone line, where the code is still live.
+  await page.setViewportSize({ width: 820, height: 720 });
   await page.waitForTimeout(400);
   const sideBox = async () =>
     page.evaluate(() => {

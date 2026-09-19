@@ -14,6 +14,13 @@
   max-width: var(--page-max);
   margin: 0 auto;
   padding: var(--space-7) var(--space-5) var(--space-8);
+  /* ⚠ The side insets live HERE, outside every media query, because the case that needs them is a
+     phone turned SIDEWAYS — 844px wide, past the 700px line, with the notch eating a whole margin
+     on one side. `max()` so this only ever grows the padding: on a desktop, and on a phone held
+     upright, `env()` is 0 and the token wins unchanged. Added with `viewport-fit=cover`
+     (index.html), which is what makes these resolve to anything at all. */
+  padding-left: max(var(--space-5), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--space-5), env(safe-area-inset-right, 0px));
 }
 
 /* ⚠ THE PAGE WIDTH DOES NOT CHANGE IN EDIT MODE ANY MORE (owner, 2026-09-03). It used to grow by
@@ -2591,6 +2598,8 @@ label.kv-btn.is-disabled {
   /* 24px of side padding is 14% of a 375px screen. 16px buys a whole extra control on the row. */
   .kv-page {
     padding: var(--space-5) var(--space-4) var(--space-7);
+    padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
   }
 
   /* 2.375rem of Georgia is a poster on a laptop and a headline that takes a third of the first
@@ -3034,8 +3043,11 @@ label.kv-btn.is-disabled {
 }
 .kv-page[data-fullscreen="1"] {
   /* The floor clears the floating transport in the corner, so the last system can be scrolled out
-     from under it. 44px of button plus a gap either side. */
-  padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 72px);
+     from under it. 44px of button plus a gap either side.
+     ⚠ The sides are the notch, and full screen is the mode most likely to be read in LANDSCAPE —
+     where the notch is on a side rather than the top. 0 on every other device. */
+  padding: 0 env(safe-area-inset-right, 0px) calc(env(safe-area-inset-bottom, 0px) + 72px)
+    env(safe-area-inset-left, 0px);
 }
 /* The card stops being a card: its border, radius and shadow are what say "this is a panel on a
    page", and in full screen there is no page around it to be a panel on. */

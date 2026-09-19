@@ -2,7 +2,12 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- ⚠ `viewport-fit=cover` is load-bearing, not a flourish (2026-09-19). Without it iOS keeps
+         the layout viewport inside the notch and the home indicator, and EVERY `env(safe-area-inset-*)`
+         in the stylesheet resolves to 0px — the six written for the phone bottom bar on 2026-09-11 all
+         did. With it the page owns the whole screen and the insets become real numbers, so anything
+         fixed to an edge has to ask for them: `.kv-page` pads by them, and so do the bottom bars. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>KomaVision — nota fotoğrafını sese çevirir</title>
     <meta
       name="description"

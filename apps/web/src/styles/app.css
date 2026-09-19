@@ -2811,4 +2811,270 @@ label.kv-btn.is-disabled {
   .kv-recent__title {
     margin-right: auto;
   }
+
+  /* ── The bottom tab bar, and the four sections it switches (2026-09-11) ─────────────────────
+   *
+   * WHY IT EXISTS. At 375px the desktop layout simply stacks, so the whole first screen was the
+   * upload box plus the playback and rhythm settings and the music — what the app is for — started
+   * below the fold. And edit mode's floating toolbox is `position: fixed`: it held 307px of a
+   * 667px screen, COVERING the notes it is there to edit. One section on screen at a time answers
+   * both. The bar itself is drawn by `ui/MobileTabs.tsx`; these rules decide what is under it.
+   *
+   * ⚠ The attribute exists ONLY on a phone WITH a score installed (`App.tsx`: `isPhone && doc`).
+   * So the first-visit upload page keeps its single-column reading order, and every wide window —
+   * which is where `smoke:editor`, `smoke:app`, `smoke:page` and the gate all run — selects none
+   * of this.
+   *
+   * ⚠ Sections are HIDDEN, not unmounted. Tapping a tab must not re-engrave the score (a VexFlow
+   * re-layout on every tap), must not drop the selection, and must not throw away the sheet's
+   * sideways scroll position.
+   *
+   * ⚠ Every rule below only ever ADDS `display: none`; nothing here restores one. `display:
+   * revert` would hand a section the UA default and silently drop whatever this stylesheet gave it
+   * further up — a bug that would look like a layout regression with no rule to blame.
+   *
+   * ⚠ And nothing here gives a tab its own scroll box. `.kv-score` is `overflow-y: clip` and the
+   * PAGE is the only vertical scroller — the playhead follow depends on that (docs/APP-RULES.md).
+   * An inner scroller per tab would break following the music while it plays, silently. */
+  :root {
+    /* The bar's height. Named because three other things have to clear it: the page's bottom
+       padding, the docked toolbox's inset, and the measure card's scroll margin. */
+    --mtab-h: 56px;
+  }
+
+  .kv-mtabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Above the toolbox's 40. The way OUT of a section must never sit under the section's tools. */
+    z-index: 45;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--paper-raised);
+    border-top: 1px solid var(--rule-strong);
+    /* The home indicator on a gesture-navigation phone. 0px on everything else, so the bar is 56px
+       tall on an SE and 56 + 34 on a 14 — the buttons keep their size either way. */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .kv-mtabs__tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    /* 56px, not the 44px minimum: this bar holds an icon over a word, and 44 makes the pair touch. */
+    min-height: var(--mtab-h);
+    padding: var(--space-2) 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: var(--text-xs);
+    color: var(--ink-faint);
+    cursor: pointer;
+    /* The grey flash Android paints on tap is wrong under an icon this size; the active colour
+       below is the feedback. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kv-mtabs__tab.is-active {
+    color: var(--accent);
+  }
+
+  /* The page has to end above the bar, or its last row is unreachable. */
+  .kv-page[data-mtab] {
+    padding-bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+
+  /* ── What each tab hides ───────────────────────────────────────────────────────────────────
+   *
+   * Read these as four lists of "not here". `#transport-pinned` (Çal / Dur / tempo) is deliberately
+   * absent from the first three: the owner asked for it to stay on screen while scrolling
+   * (2026-09-05), and that reason holds tab by tab — you play from the music, not from a settings
+   * screen. `#transport-settings` (Ritim + Perde) is the Çal tab's whole content. */
+
+  /* Nota — the music, full width. The brand goes too: on a 667px screen the title and tagline are
+     140px that say nothing you do not already know by the time a score is loaded. */
+  .kv-page[data-mtab="nota"] #voice-field,
+  .kv-page[data-mtab="nota"] > .kv-fsrow,
+  .kv-page[data-mtab="nota"] > .kv-header,
+  .kv-page[data-mtab="nota"] > .kv-hero,
+  .kv-page[data-mtab="nota"] > .kv-recent,
+  .kv-page[data-mtab="nota"] > #transport-settings,
+  .kv-page[data-mtab="nota"] > .kv-toolbox,
+  .kv-page[data-mtab="nota"] > .kv-footer {
+    display: none;
+  }
+
+  /* Çal — the sound settings. */
+  .kv-page[data-mtab="cal"] > .kv-hero,
+  .kv-page[data-mtab="cal"] > .kv-recent,
+  .kv-page[data-mtab="cal"] > .kv-card,
+  .kv-page[data-mtab="cal"] > .kv-toolbox,
+  .kv-page[data-mtab="cal"] > .kv-footer {
+    display: none;
+  }
+
+  /* Düzenle — the music AND its tools, sharing the screen instead of one covering the other.
+     ⚠ `#transport-pinned` goes here and nowhere else: the toolbox has its OWN Çal / Dur (the DİNLE
+     block, `#palette-play` / `#palette-stop`), so keeping the page's would be two transports on a
+     667px screen — 122px of duplicate for no second thing to press.
+     ⚠ `.kv-card__meta` goes too. Makam, usul, composer and length are what you read BEFORE you
+     start editing; while editing they are a line of 40px that pushes the music under the tools.
+     ⚠ So do the page name and the two sheet toggles (Güfte, İmleci takip et). Both are things you
+     decide while READING, on the Nota tab, and both survive the switch — this hides the controls,
+     not the settings. What stays is what editing actually needs: the view switch (the instrument
+     tab edits its own bar), `#edit-toggle`, and the undo pair.
+     ⛔ `#edit-toggle` may NOT be hidden here even though the tab now says the same thing:
+     `smoke:phone` clicks it at 375px, and a probe that throws is a probe that stops reporting. */
+  .kv-page[data-mtab="duzenle"] > .kv-fsrow,
+  .kv-page[data-mtab="duzenle"] > #transport-pinned,
+  .kv-page[data-mtab="duzenle"] .kv-card__meta,
+  .kv-page[data-mtab="duzenle"] .kv-card__title,
+  .kv-page[data-mtab="duzenle"] .kv-card__tools .kv-toggle,
+  .kv-page[data-mtab="duzenle"] > .kv-header,
+  .kv-page[data-mtab="duzenle"] > .kv-hero,
+  .kv-page[data-mtab="duzenle"] > .kv-recent,
+  .kv-page[data-mtab="duzenle"] > #transport-settings,
+  .kv-page[data-mtab="duzenle"] > .kv-footer {
+    display: none;
+  }
+
+  /* Sayfalar — the way in: upload, the stored pages, and the legal footer that has to stay
+     reachable.
+     ⚠ `.kv-advanced` is hidden on EVERY tab, this one included (owner, 2026-09-11: *"Gelişmiş
+     kısmını kullanıcıya gizle"*). It is the developer panel — sample/JSON loading, the strip
+     exporter, the repeat preview — and it says so in its own summary; on a phone it is the last
+     thing on the one screen a visitor lands on. It is hidden, NOT removed: a wide window still
+     has it, which is where it is used. */
+  .kv-page[data-mtab="pages"] > .kv-fsrow,
+  .kv-page[data-mtab] > .kv-advanced,
+  .kv-page[data-mtab="pages"] > #transport-pinned,
+  .kv-page[data-mtab="pages"] > #transport-settings,
+  .kv-page[data-mtab="pages"] > .kv-card,
+  .kv-page[data-mtab="pages"] > .kv-toolbox {
+    display: none;
+  }
+
+  /* ── The docked toolbox, on its own tab ────────────────────────────────────────────────────
+   *
+   * ⚠ It has to clear the tab bar. It beats `.kv-toolbox`'s own `!important` insets by specificity,
+   * which is why the inset is repeated here rather than the bar being given a margin: the toolbox
+   * is `fixed` and knows nothing about what is under it.
+   *
+   * ⚠ AND IT HAS TO GET SHORTER. `min(46dvh, 420px)` was chosen when the toolbox was the only thing
+   * competing with the music; measured on a 375×667 phone it took 307px, and with the page's own
+   * transport and card head above it the answer was a screen with NO music on it at all. 34dvh is
+   * 227px there, which leaves the score about 380px — two systems. The tools that no longer fit
+   * scroll INSIDE the toolbox, which is what its `overflow` was always for.
+   *
+   * ⚠ The page's own bottom padding repeats the same number. It is the toolbox's MAX height, not
+   * its current one, so a folded toolbox leaves a little extra space at the end of the score —
+   * the alternative is measuring a `fixed` box in JS and pushing it into a style, and a wrong
+   * answer there hides the last system behind the tools. */
+  .kv-page[data-mtab="duzenle"] .kv-toolbox {
+    bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + var(--space-2)) !important;
+    max-height: min(34vh, 260px);
+    max-height: var(--kv-toolbox-h, min(34dvh, 260px));
+  }
+  .kv-page[data-mtab="duzenle"] {
+    padding-bottom: calc(
+      var(--kv-toolbox-h, min(34dvh, 260px)) + var(--mtab-h) + env(safe-area-inset-bottom, 0px) +
+        var(--space-5)
+    );
+  }
+
+  /* ── The way into full screen: a row of its own on the Çal tab ─────────────────────────────
+   *
+   * A row, not a control inside the transport, so `TransportBar` is untouched — that component is
+   * shared with every wide window, where there is no full screen to offer. */
+  .kv-fsrow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) 0 0;
+  }
+  .kv-fsrow__btn {
+    width: 100%;
+  }
+  .kv-fsrow__hint {
+    margin: 0;
+  }
+
+  /* ⚠ The title bar DRAGS THE HEIGHT here (owner, 2026-09-11), so the browser must not read the
+     same gesture as a page scroll — without `touch-action: none` a finger on the bar scrolls the
+     score behind it and the box never moves. `--kv-toolbox-h` is published by `EditPalette`, which
+     is also what makes the padding above follow the height the reader chose. */
+  .kv-toolbox__bar {
+    touch-action: none;
+  }
+}
+
+/* ── Full screen: the score alone, at any width ───────────────────────────────────────────────
+ *
+ * Owner, 2026-09-11. The way in is a button on the phone's Çal tab; what it does is hide every
+ * piece of the app's own furniture and let App re-engrave the page to the box that is left.
+ *
+ * ⚠ **OUTSIDE the phone media query, deliberately.** A phone turned sideways is 844px wide — past
+ * the 700px line — so rules written in there would switch themselves off at exactly the moment
+ * the owner asked full screen to keep working (*"yan çevirmesi de dahil"*). `data-fullscreen` is
+ * set by React whenever the mode is on, at any width, and these rules answer it.
+ *
+ * ⚠ Which is also why this block hides the sections ITSELF instead of leaning on the `[data-mtab]`
+ * lists above: up in landscape those rules are not applying at all.
+ *
+ * ⚠ The `:not()` blanket is right here and nowhere else. Full screen means "nothing but the music",
+ * and an enumerated list would quietly stop being true the day a section is added — the failure
+ * being a stray panel over the score, on the one screen with no room for it.
+ *
+ * ⚠ Nothing here scales `.kv-score` and nothing here gives it a scroller. The fit comes from
+ * `SheetView`'s `contentWidth`, a re-engrave (docs/APP-RULES.md); the page stays the only vertical
+ * scroller, which is what the playhead follow rides on. */
+.kv-page[data-fullscreen="1"] > *:not(.kv-card):not(#fullscreen-bar) {
+  display: none;
+}
+.kv-page[data-fullscreen="1"] {
+  /* The floor clears the floating transport in the corner, so the last system can be scrolled out
+     from under it. 44px of button plus a gap either side. */
+  padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 72px);
+}
+/* The card stops being a card: its border, radius and shadow are what say "this is a panel on a
+   page", and in full screen there is no page around it to be a panel on. */
+.kv-page[data-fullscreen="1"] .kv-card {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+/* The head carries the page name, the view switch and the toggles — all of them decisions made
+   before you start reading. The hint below the score is edit mode's, and edit mode has its own tab. */
+.kv-page[data-fullscreen="1"] .kv-card__head,
+.kv-page[data-fullscreen="1"] .kv-hint {
+  display: none;
+}
+/* 16px each side is 9% of a 375px screen. Half that is still a margin and buys a wider system. */
+.kv-page[data-fullscreen="1"] .kv-score {
+  padding: var(--space-2);
+}
+
+/* The floating transport: Çal, Dur, Çık. Bottom right, thumb-sized, out of the music's way.
+   ⚠ 44px is the tap-target floor the `(pointer: coarse)` block sets for every other control; these
+   three are round and captionless, so they may not be the exception to it. */
+.kv-fsbar {
+  position: fixed;
+  right: calc(env(safe-area-inset-right, 0px) + var(--space-3));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-3));
+  z-index: 50;
+  display: flex;
+  gap: var(--space-2);
+}
+.kv-fsbar__btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  font-size: var(--text-base);
+  line-height: 1;
+}
+.kv-fsbar__btn--exit {
+  background: var(--paper-raised);
 }

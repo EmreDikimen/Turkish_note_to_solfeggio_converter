@@ -37,6 +37,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { ACCIDENTAL_VALUES, accidentalCp, accidentalLongLabel } from "./accidentals";
 import type { RefusalReason, SignTool } from "../../../../tools/render/structure-edit";
 import { TR } from "./strings";
+import { useIsPhone } from "../usePhone";
 
 /** What a click on a note does while this tool is armed.
  *
@@ -146,7 +147,27 @@ const DEFAULT_TOP = 88;
 /** One key holds the spot and the folded state together — they are one "how I left my toolbox". */
 const STORE_KEY = "kv.toolbox";
 
-type Stored = { x: number; y: number; folded: boolean };
+type Stored = { x: number; y: number; folded: boolean; phoneH?: number };
+
+/** How tall the docked toolbox may be dragged on a phone, in px.
+ *
+ * ⚠ The MAX is a share of the window, not a number: on a 667px screen 400px of tools leaves 267px
+ * for everything else, which is the bug this tab layout exists to fix. The floor is the title bar
+ * plus one row of tools — below that the box says nothing and cannot be grabbed back open. */
+const PHONE_H_MIN = 120;
+const phoneHMax = () => Math.round(window.innerHeight * 0.6);
+
+/** The variable `app.css` reads for the docked toolbox's height AND for the page's bottom padding.
+ *
+ * ⚠ Two boxes have to agree on one number: the toolbox is `fixed`, so the page does not reserve
+ * space for it — the padding does, by hand. Publishing the height as a custom property is what
+ * keeps the second from being a stale copy of the first. Unset (`null`) means "use the CSS
+ * default", which is what the stylesheet's `var(…, min(34dvh, 260px))` fallback is for. */
+function publishPhoneHeight(px: number | null): void {
+  const de = document.documentElement;
+  if (px == null) de.style.removeProperty("--kv-toolbox-h");
+  else de.style.setProperty("--kv-toolbox-h", `${px}px`);
+}
 
 /** ⚠ Both of these swallow everything. `localStorage` is not merely empty in a private window or
  *  after cleared site data — the accessor itself throws — and a toolbox that fails to open because
@@ -224,6 +245,21 @@ export function EditPalette({
   // the toolbox is never painted at 0,0 before jumping to where it belongs.
   const [spot, setSpot] = useState<Spot | null>(null);
   const [folded, setFolded] = useState(() => readStored().folded === true);
+  const isPhone = useIsPhone();
+  /** Phone only: how tall the reader has dragged the docked toolbox. `null` = never dragged. */
+  const [phoneH, setPhoneH] = useState<number | null>(() => {
+    const v = readStored().phoneH;
+    return typeof v === "number" ? v : null;
+  });
+
+  // ⚠ Publish while docked, and CLEAR on the way out — an unmounted toolbox that left the variable
+  // behind would keep the page padded for tools that are no longer there, and a window dragged
+  // wide would carry a phone's height into the desktop layout.
+  useEffect(() => {
+    if (!isPhone) return;
+    publishPhoneHeight(phoneH);
+    return () => publishPhoneHeight(null);
+  }, [isPhone, phoneH]);
 
   // Esc disarms. Bound while the palette is mounted, i.e. only in edit mode.
   useEffect(() => {
@@ -265,26 +301,50 @@ export function EditPalette({
   }, []);
 
   useEffect(() => {
-    if (spot) writeStored({ x: spot.x, y: spot.y, folded });
-  }, [spot, folded]);
+    if (spot) writeStored({ x: spot.x, y: spot.y, folded, ...(phoneH != null ? { phoneH } : {}) });
+  }, [spot, folded, phoneH]);
 
-  // Dragging by the title bar. Pointer CAPTURE is what makes this survive a fast drag: without it
-  // the pointer leaves the bar between two frames and the box is dropped mid-move.
-  const grab = useRef<{ dx: number; dy: number } | null>(null);
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLElement>) => {
-    // The fold button lives in the bar; a click on it is a click, not the start of a drag.
-    if ((e.target as HTMLElement).closest("button")) return;
-    const el = boxRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    grab.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-    e.currentTarget.setPointerCapture(e.pointerId);
-    e.preventDefault(); // no text selection while dragging
-  }, []);
+  // ── The title bar's drag, and the TWO different things it does ────────────────────────────
+  //
+  // On a wide window it MOVES the toolbox: it floats, and the reader parks it where it covers no
+  // music. On a phone there is nowhere to park — the box is docked across the bottom — so the same
+  // grab RESIZES it instead (owner, 2026-09-11). That is not two gestures to learn: on each screen
+  // the bar drags the one dimension that screen is short of.
+  //
+  // ⚠ One bar, so the phone's version must not move the box: `spot` stays untouched there, and the
+  // `!important` insets in `app.css` would beat it anyway.
+  //
+  // Pointer CAPTURE is what makes either survive a fast drag: without it the pointer leaves the bar
+  // between two frames and the box is dropped mid-gesture.
+  const grab = useRef<
+    { kind: "move"; dx: number; dy: number } | { kind: "resize"; y: number; h: number } | null
+  >(null);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      // The fold button lives in the bar; a click on it is a click, not the start of a drag.
+      if ((e.target as HTMLElement).closest("button")) return;
+      const el = boxRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      grab.current = isPhone
+        ? { kind: "resize", y: e.clientY, h: r.height }
+        : { kind: "move", dx: e.clientX - r.left, dy: e.clientY - r.top };
+      e.currentTarget.setPointerCapture(e.pointerId);
+      e.preventDefault(); // no text selection while dragging
+    },
+    [isPhone],
+  );
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLElement>) => {
     const g = grab.current;
     const el = boxRef.current;
     if (!g || !el) return;
+    if (g.kind === "resize") {
+      // The box grows UPWARDS — it is anchored to the bottom — so dragging the bar up (a smaller
+      // clientY) must make it taller. Hence `g.y - e.clientY`, not the other way round.
+      const next = g.h + (g.y - e.clientY);
+      setPhoneH(Math.round(Math.min(Math.max(next, PHONE_H_MIN), phoneHMax())));
+      return;
+    }
     setSpot(onScreen({ x: e.clientX - g.dx, y: e.clientY - g.dy }, el));
   }, []);
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLElement>) => {

@@ -57,6 +57,29 @@ export const TR = {
     hintPaste: "Sürükleyin, yapıştırın (⌘/Ctrl+V) ya da seçin",
   },
 
+  // The phone's bottom tab bar (2026-09-11). ⚠ Four labels, each ONE word: at 375px a tab is about
+  // 90px wide, and a label that wraps to two lines makes the bar taller than the 44px a thumb
+  // needs. If a longer word is ever wanted, the bar's height has to be reconsidered with it.
+  // ⚠ "Sayfalar" is the way IN — upload plus the stored pages — not a list of the current score's
+  // pages; the app reads one page at a time.
+  mobile: {
+    navLabel: "Bölümler",
+    tabs: {
+      nota: "Nota",
+      cal: "Çal",
+      duzenle: "Düzenle",
+      pages: "Sayfalar",
+    },
+    // Full screen (owner, 2026-09-11). ⚠ The hint says the two things that are NOT obvious from a
+    // button called "Tam ekran": the music is re-engraved to the screen's width, so nothing has to
+    // be dragged sideways any more, and tapping a bar still starts playback there — which is the
+    // only way to choose where to play from once the transport bar is gone.
+    fullscreen: "Tam ekran",
+    fullscreenHint: "Nota ekranın genişliğine dizilir. Bir ölçüye dokununca oradan çalar.",
+    fullscreenExit: "Çık",
+    fullscreenExitTitle: "Tam ekrandan çık",
+  },
+
   // The list of pages this browser has already read (2026-09-05). ⚠ `note` is not filler: the
   // store is a CACHE and the reader has to be told, because "kaydedildi" is a promise no browser
   // storage can keep — see apps/web/src/recentPages.ts. It says the two things that actually

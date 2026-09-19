@@ -55,7 +55,7 @@ import {
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
-import { SheetView, type AccidentalMode } from "./SheetView";
+import { SheetView, SHEET_SIDE_MARGIN, type AccidentalMode } from "./SheetView";
 import {
   InstrumentView,
   instrumentForVoice,
@@ -76,6 +76,9 @@ import { ScoreCard } from "./ui/ScoreCard";
 import { EditPalette, type Tool } from "./ui/EditPalette";
 import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
+import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
+import { FullScreenBar, FullScreenRow } from "./ui/FullScreen";
+import { useIsPhone } from "./usePhone";
 import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
 import {
@@ -337,6 +340,16 @@ export function App() {
   // The engraved sheet is the product; the piano-roll is a diagnostic. Sheet by default now,
   // where the harness opened on the roll. (Render automation always wanted sheet anyway.)
   const [viewMode, setViewMode] = useState<ViewMode>("sheet");
+  // Watches `(max-width: 700px)`, the same line `app.css` draws the phone layout at.
+  const isPhone = useIsPhone();
+  /** Full screen only: the `contentWidth` the sheet is re-engraved at, or null for the default. */
+  const [fsContentW, setFsContentW] = useState<number | null>(null);
+  // ⚠ PHONE ONLY — which of the four bottom tabs is showing. On a wide window `isPhone` is
+  // false, `MobileTabs` never renders and `data-mtab` selects nothing, so the desktop layout is
+  // untouched by every line this state reaches. See ui/MobileTabs.tsx and usePhone.ts.
+  const [mobileTab, setMobileTab] = useState<MobileTab>("nota");
+  // ⚠ PHONE ONLY — the score alone, re-engraved to the screen's width. See ui/FullScreen.tsx.
+  const [fullScreen, setFullScreen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
@@ -533,6 +546,13 @@ export function App() {
     setWriteOut(false);
     // The list is a way back, not the destination: once there is a score on screen it folds away.
     setRecentOpen(false);
+    // ⚠ PHONE ONLY, and a wide window sees none of it: a new score arrives on the READING tab.
+    // The editing tab's armed tool and selection point at a document that has just been replaced,
+    // and on a phone the tab bar is the only thing that says which section you are looking at.
+    if (isPhone) {
+      setMobileTab("nota");
+      if (editMode) applyEditMode(false);
+    }
     // ⚠ The signs go in with the document, in ONE `reset`. Only a decoded page brings a structure;
     // every other source plays exactly as it is written, so this CLEARS as often as it sets — a
     // leftover from the previous page would fold the next score along bar numbers that mean
@@ -980,6 +1000,94 @@ export function App() {
     const want = voiceForInstrument(instrument);
     if (want !== voice) applyVoice(want);
   }
+
+  /**
+   * Turn edit mode on or off — the ONE place that does, so the phone's tab cannot drift from it.
+   *
+   * Entering folds the score back to what is WRITTEN (`writeOut` off): you edit the one bar the
+   * page carries and the repeat follows it. Leaving drops everything that names a note in a score
+   * you are no longer editing — the selection, a half-finished tuplet, the armed tool.
+   *
+   * ⚠ On a phone this is the same fact as "the Düzenle tab is open", so the two move together.
+   * Written as a functional update because `onMobileTab` below may have queued a tab change in the
+   * same click: it must not be overwritten by a stale read of `mobileTab`.
+   */
+  function applyEditMode(v: boolean) {
+    setEditMode(v);
+    if (v) setWriteOut(false);
+    if (!v) {
+      setSelectedNote(null);
+      setSelectedTuplet(null);
+      armTool(null);
+    }
+    if (isPhone) setMobileTab((cur) => (v ? "duzenle" : cur === "duzenle" ? "nota" : cur));
+  }
+
+  /**
+   * The phone's bottom tab bar changed tab.
+   *
+   * ⚠ Düzenle IS edit mode here — there is no second switch to leave behind. The card's own
+   * `#edit-toggle` still works and still exists (`smoke:phone` clicks it, and hiding a control a
+   * check drives is how a probe starts throwing); it simply routes through `applyEditMode`, which
+   * moves the tab. Both roads, one state.
+   */
+  function onMobileTab(next: MobileTab) {
+    setMobileTab(next);
+    if (next === "duzenle") {
+      if (!editMode) applyEditMode(true);
+    } else if (editMode) {
+      applyEditMode(false);
+    }
+  }
+
+  /**
+   * Enter / leave full screen (phone only).
+   *
+   * ⚠ Entering also moves to the Nota tab. BOTH attributes sit on `#app` and both hide sections:
+   * arriving from the Çal tab, `[data-mtab="cal"]` would still be hiding `.kv-card` and full screen
+   * would be a blank screen.
+   */
+  function applyFullScreen(v: boolean) {
+    setFullScreen(v);
+    if (v) setMobileTab("nota");
+    // ⚠ Both directions, and it is not a nicety. Either way the page is RE-ENGRAVED at a different
+    // width, so its height changes by thousands of pixels and the scroll offset it kept points at
+    // a different bar than the one that was on screen. Entering from the Çal tab it landed halfway
+    // down the piece. The top is the one position that means the same thing in both layouts.
+    window.scrollTo(0, 0);
+  }
+
+  /**
+   * Fit the engraving to the screen while full screen is on.
+   *
+   * ⚠ Measured off the REAL box, never off `window.innerWidth`: the card's padding and
+   * `.kv-score`'s own both come off the top, and a guess there leaves the sheet wider than the
+   * screen — a sideways drag in the one mode built to remove it.
+   *
+   * ⚠ A ResizeObserver is also why turning the phone sideways needs no orientation code of its own:
+   * landscape is just a new box width, and the page is re-engraved at it.
+   *
+   * ⚠ No feedback loop: `.kv-score` takes its width from the page, not from the SVG inside it, so
+   * a wider drawing never widens the box that decided the drawing's width.
+   */
+  useEffect(() => {
+    if (!fullScreen) {
+      setFsContentW(null);
+      return;
+    }
+    const el = document.querySelector(".kv-score");
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const e = entries[0];
+      if (!e) return;
+      const w = e.contentBoxSize?.[0]?.inlineSize ?? e.contentRect.width;
+      // The floor keeps a pathological box (a phone mid-rotation reports 0) from engraving a
+      // one-note-wide page that then has to be re-laid out a frame later.
+      if (w > 0) setFsContentW(Math.max(240, Math.round(w) - SHEET_SIDE_MARGIN * 2));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fullScreen]);
 
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
   function applyPercussionVolume(v: number) {
@@ -1901,6 +2009,16 @@ export function App() {
       // `data-ready` is what the deploy checks wait for instead of matching the page's title text
       // — the title is copy and will change; "a score is installed" is the fact they need.
       data-ready={doc ? "1" : undefined}
+      // ⚠ PHONE ONLY — the attribute the `(max-width: 700px)` block reads to decide which sections
+      // are on screen. Absent on a wide window and before a score is installed, which is why the
+      // desktop layout and the first-visit upload page are untouched by the tab rules.
+      data-mtab={isPhone && doc ? mobileTab : undefined}
+      // ⚠ NOT gated on `isPhone`, and that is the whole landscape story. A phone turned sideways is
+      // 844px wide — past the 700px line — so a full screen that asked `isPhone` would switch
+      // itself off mid-read, at exactly the moment the owner asked it to keep working. Full screen
+      // is a MODE, not a width: its rules live outside the phone media query and hide every
+      // section themselves rather than leaning on the tab rules, which do disappear up there.
+      data-fullscreen={doc && fullScreen ? "1" : undefined}
     >
       <header className="kv-header">
         <h1 className="kv-brand">
@@ -1998,9 +2116,9 @@ export function App() {
             // clicking still gets the answer they chose next time.
             onFollowPlayhead={(v) => { setFollowPlayhead(v); writeFollow(v); }}
             editMode={editMode}
-            // Entering edit mode folds the score back to what is written: you edit the one bar the
-            // page carries, and the repeat follows it. See `writeOut`.
-            onEditMode={(v) => { setEditMode(v); if (v) setWriteOut(false); if (!v) { setSelectedNote(null); setSelectedTuplet(null); armTool(null); } }}
+            // ⚠ The ONLY way in and out of edit mode — see `applyEditMode`, which also carries the
+            // phone's Düzenle tab. A second inline handler here would let the two drift apart.
+            onEditMode={applyEditMode}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}
@@ -2040,6 +2158,11 @@ export function App() {
               drawnDoc && (
               <SheetView
                 doc={drawnDoc}
+                // ⚠ The ONLY way the drawing is resized, and it is a re-engrave, not a zoom: fewer
+                // bars per system at the same note size. `.kv-score` may never be scaled — that
+                // SVG is the training-strip source (docs/APP-RULES.md). `undefined` = the default
+                // 1000px content area, which is every case but full screen.
+                contentWidth={fsContentW ?? undefined}
                 editMode={editMode}
                 accidentalMode={accidentalMode}
                 signatureOverride={SIG_OVERRIDE}
@@ -2161,6 +2284,23 @@ export function App() {
         selectedStripId={selectedStripId}
         onSelectStrip={setSelectedStripId}
       />
+
+      {/* ⚠ PHONE ONLY, and fixed to the bottom of the viewport — so like the edit toolbox above it
+          is rendered OUT of every `.kv-card`, which sets `overflow: hidden` and would clip it. It
+          draws only once a score is installed: with nothing loaded the page is the upload prompt
+          plus the stored-page list, which is one screen and needs no sections. */}
+      {isPhone && doc && !fullScreen && <FullScreenRow onEnter={() => applyFullScreen(true)} />}
+      {doc && fullScreen && (
+        <FullScreenBar
+          playState={playState}
+          canPlay={!!timeline}
+          onPlayPause={onPlayPause}
+          onStop={onStop}
+          onExit={() => applyFullScreen(false)}
+        />
+      )}
+      {isPhone && doc && !fullScreen && <MobileTabs tab={mobileTab} onTab={onMobileTab} />}
+
 
       {makamPrompt && (
         <MakamModal

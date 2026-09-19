@@ -216,7 +216,13 @@ export function TransportBar({
               hiding the one choice that always works. `data-voice-state` is how a headless check
               reads the load without matching Turkish copy — and how it can tell a working fallback
               from a broken feature. */}
-          <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.voiceTitle}>
+          {/* ⚠ The id is the phone layout's handle on it: the voice is set ONCE before playing, so
+              on a phone it belongs to the Çal tab and not over the music. Nothing else reads it. */}
+          <label
+            id="voice-field"
+            className={`kv-field${canPlay ? "" : " is-disabled"}`}
+            title={TR.transport.voiceTitle}
+          >
             <span>{TR.transport.voice}</span>
             <select
               id="instrument"
@@ -263,7 +269,11 @@ export function TransportBar({
       </div>
     </div>
 
-    <div className="kv-transport">
+    {/* ⚠ The id is what the phone's tab layout hides — Ritim and Perde are the Çal tab, while the
+        PINNED box above stays on screen in every tab that can play (`app.css`, the `[data-mtab]`
+        rules). A structural `.kv-transport--pinned + .kv-transport` selector would have done the
+        same job and broken silently the day a third box appeared. */}
+    <div className="kv-transport" id="transport-settings">
       {/* ── Ritim ─────────────────────────────────────────────────────────────────────────── */}
       {/* The usul heads this row rather than the makam's: it is what the metronome and the strokes
           below it are counting, so the two drum controls are its consequences, not its neighbours. */}

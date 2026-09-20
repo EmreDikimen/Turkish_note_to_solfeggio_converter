@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-09-05
+updated: 2026-09-16
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -39,6 +39,7 @@ wrong — fix by deleting, not by syncing.
 | The B8 re-emit: its yield, and the 1,479 human fixes it did not carry | [METRICS-B8.md](METRICS-B8.md) |
 | What did the model-voted key signature actually change in the labels? | [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md) |
 | Did Round 3's two follow-up runs (longer stage 2, retired-crop strips) buy anything? | [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) |
+| Round 4's vocabulary A/B — why both arms are scored in OLD ids, what the kit trains and selects on, and its results | [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md) |
 | Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
 | Which source an error came from — the SymbTr label or the model — and what the `nd` gate is really catching | [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md) |
 | A symbol the model reads as something else — staccato, the dotted usul barline | [METRICS-UNSEEN.md](METRICS-UNSEEN.md) |

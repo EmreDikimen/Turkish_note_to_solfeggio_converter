@@ -2,7 +2,7 @@
 
 purpose: the rules for anyone touching the web app; split out of CLAUDE.md at its 400-line cap, on the DOM-CONTRACT.md precedent
 audience: agents and the owner working on apps/web, tools/render or tools/core
-updated: 2026-09-06
+updated: 2026-09-20
 
 > **These are hard rules, not background.** Each was paid for once by a live bug. CLAUDE.md keeps a
 > one-line headline for the six that can be broken from anywhere in the repo and points here for the
@@ -157,9 +157,9 @@ updated: 2026-09-06
   edit overlay 1:1 with the notes. ⚠ It takes its own `surfaceId` / `svgMarker`; `#sheet-surface` and
   `sheet-svg` must keep meaning THE PAGE'S score, since `render.ts` and `verify-labels.ts` take the
   first match. [docs/features/measure-card.md](features/measure-card.md).
-- **THE PHONE IS FIXED IN CSS ONLY, IN TWO MEDIA QUERIES AT THE END OF `app.css`** (owner, 2026-09-04;
-  there was no width-based media query at all before it). ⚠ **They answer different questions, never
-  merge them**: `(pointer: coarse)` owns sizes — **16px on every form field**, the threshold under
+- **THE PHONE'S LAYOUT IS FIXED IN CSS, IN TWO MEDIA QUERIES AT THE END OF `app.css`** (owner,
+  2026-09-04; there was no width-based media query at all before it). ⚠ **They answer different
+  questions, never merge them**: `(pointer: coarse)` owns sizes — **16px on every form field**, the threshold under
   which iOS Safari zooms the page in on focus and never back, plus `--control-h: 44px`; `(max-width:
   700px)` owns layout (measured: the transpose group cannot shrink below 433px). ⚠ **At the END so
   ORDER wins**; the only `!important` is the docked toolbox's insets, which beat an inline style.
@@ -169,4 +169,16 @@ updated: 2026-09-06
   resizes the viewport without restoring touch emulation, so fixed things report as broken.
   ⚠ A grid row needs `min-width: 0` or it will not ellipsis — `.kv-recent__item` pushed a 390 px phone
   to 623 px, and `smoke:phone` cannot see that list at all.
+- ⚠ **IT IS NO LONGER CSS ALONE, AND THERE ARE THREE QUESTIONS NOT TWO** (2026-09-19). `usePhone.ts`'s
+  `useViewport` adds **`phoneShaped`** — *"is the SHORT side phone-sized?"* — and that is the one the
+  **score's fit** asks. ⛔ **Never merge it with `isPhone`**: a phone turned sideways is **844×390**,
+  past the 700px line, so a fit gated on width alone switches off in landscape (measured: **242px** of
+  the sheet hidden). Layout must keep asking *"is this narrow?"*, because a bottom tab bar over 390px
+  of height would be most of the screen — and `phoneShaped` deliberately excludes a tablet (iPad mini
+  744×1133, short side over the line). ⚠ **The fit is a RE-ENGRAVE** (`SheetView`'s `contentWidth`),
+  never a scale — no exemption from the `.kv-score` rule above. Which is also why the engraved header
+  **stacks under 520px** instead of ellipsing: three flex columns with `white-space: nowrap` are held
+  at their text width by `min-width: auto`, and an ellipsis lost the tempo. ⚠ **`index.html` carries
+  `viewport-fit=cover`** — without it every `env(safe-area-inset-*)` in this file resolves to **0px**,
+  which is how six of them sat dead for eight days. [DECISIONS.md](DECISIONS.md), 2026-09-19.
 

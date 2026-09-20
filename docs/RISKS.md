@@ -3,7 +3,7 @@
 purpose: the standing caveats — what is measured but fragile, what is NOT claimed, and the traps that survive the work that found them
 audience: anyone about to quote a number, believe a green check, or act on a result
 
-updated: 2026-09-03
+updated: 2026-09-19
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. The split
 is by genre: STATUS holds **current state and the next action** and nothing else; this file holds
@@ -14,13 +14,31 @@ Rule that produced most of this file: a number without its caveat gets quoted la
 solid. That has already happened once, when a 3-gold class swung a headline ~11 points.
 
 
+- **NEW (2026-09-19): AN EDIT COUNT IS ONLY COMPARABLE INSIDE ONE VOCABULARY, AND INSIDE ONE POOL.**
+  Scheme H spells a note in fewer ids, so in its own ids the same mistake costs an H model ~1.1 fewer
+  edits per strip — the training logs read 280 for H against 396 for the control on the same strips
+  where a shared ruler shows no difference. ⛔ Never set two vocabularies' `EDITS` side by side;
+  `paired_arm_score.py --score-vocab old` is the only comparison, and `eval_omr.py` has no such mode
+  yet. ⚠ **And absolute rates travel no better between pools**: 0.16–0.41 edits/strip on
+  `_denseval_h1*` against 1.45–1.57 on `_realval_v2r` is label provenance and the `nd` acceptance
+  gate, not difficulty. Only paired differences within one pool mean anything.
+  [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md).
+- **NEW (2026-09-19): "scheme H is a null" is measured on strips, and H's own case is about PAGES.**
+  H did not help on any pool, dense ones included. What is not measured is the class no gold pool
+  contains: **5.91%** of all real candidate strips exceed the decoder's 99-id ceiling under the old
+  vocabulary against **0.30%** under H, and on those the app stops early and shows wrong notes
+  silently. ⚠ Do not quote the null as "H buys nothing", and do not quote the 5.91% as an accuracy
+  gain — it is a length distribution, and the app-side rail is a competing fix
+  ([BACKLOG.md](BACKLOG.md) item 0).
 - **NEW (2026-09-03): the owner's hand test and the paired reads DISAGREE on Run A, and neither is
   wrong.** The owner reads Run A `best-real` as visibly better than `r3-final-stage2-last` and
   Round 2 in the app; on `_realval_v2` it is a null (15 better / 15 worse). Real-val's CI half-width
   is ~±0.13 edits/strip, so a gain under ~5% hides, and the exam drops 41% of its candidates — the
   dense strips a whole page shows. ⚠ Do not quote "Run A is better" as measured, and do not quote the
-  null as "Run A is no better". The instrument that could settle it — a fixed hand-test page set —
-  does not exist yet ([rung3/round4.md](rung3/round4.md)).
+  null as "Run A is no better". ⚠ **UPDATE 2026-09-06/19: the instrument now EXISTS and is unread** —
+  20 owner-supplied pages, decoded and staged as queue `handtest`, 457 of 515 rows still to read. It
+  is also the only instrument that could price scheme H's remaining claim, which is about whole dense
+  pages ([METRICS-HANDTEST.md](METRICS-HANDTEST.md) · [rung3/round4.md](rung3/round4.md)).
 - **NEW (2026-09-03, MEASURED 2026-09-06 and WIDER since 2026-09-07): under the Round-4 tokenizer,
   synthetic labels are SHORT and real ones are not.** No render this round (owner), so synthetic
   labels stop at **44** H ids while real ones were to reach 59 — 887 real strips (11.9%) already

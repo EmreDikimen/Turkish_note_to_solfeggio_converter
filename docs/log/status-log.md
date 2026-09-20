@@ -2,10 +2,187 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-10
+updated: 2026-09-20
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-19 — the score now fits the phone, in both orientations
+
+**The re-engrave that made full screen readable is the default screen now.** The look earlier the
+same day found the Nota tab engraving a 1000px page inside a ~341px box, while full screen read
+beautifully — so the fix was not to write a fit, it was to stop gating the one already in
+`SheetView` (`contentWidth`). ⭐ **Measured hidden width at 375×667: 659px → 11px. At 390×844: 0.
+Sideways at 844×390: 242px → 0.**
+
+**Three things it needed, and only the first was expected.**
+⭐ **`phoneShaped`, a THIRD viewport question.** A phone turned sideways is **844×390** — past the
+700px line — so `isPhone` goes false and a fit gated on it switched off at exactly the moment the
+owner had asked it to keep working (*"yan çevirmesi de dahil"*). The new query asks whether the
+**short** side is phone-sized. ⚠ It does **not** replace `isPhone`: layout still asks "is this
+narrow?", because a bottom tab bar over 390px of height would be most of the screen. ⚠ It excludes a
+tablet on purpose — an iPad mini is 744×1133, short side over the line.
+⚠ **The engraved header could not shrink.** Its three columns are flex items with `white-space:
+nowrap`, so `min-width: auto` held them at their text width and the composer hung **11px** past the
+box. Under `NARROW_HEADER_W` (520px) they stack into one line that keeps the tempo — an ellipsis
+there lost it.
+⛔ **`viewport-fit=cover` was missing from `index.html`**, the silent bug the morning's look found:
+without it all six `env(safe-area-inset-*)` calls written on 2026-09-11 resolve to **0px**. `.kv-page`
+now pads by the side insets, which is the landscape notch.
+
+**Two tidy-ups ride with it.** The playhead follow measures the bottom tab bar the way it already
+measured the pinned transport, so a row behind the bar no longer counts as on screen. And
+`UploadHero`'s private `useCoarsePointer` folded into `useViewport` — the app had two hooks answering
+"is a finger on this?" that never agreed on a tablet and could be changed apart.
+
+⚠ **One check moved, and it is not a weakening**: `smoke:editor`'s sideways-follow arm goes
+**640 → 820**. Under 700 the sheet now fits, so at 640 it was asserting the absence of exactly what
+the fix removed; what still overflows is a narrow desktop window and a tablet.
+Committed as `695651f`, with the 09-11 tab bar's DOM contract as `fdb9573`.
+⏭ **Not deployed**, and this closes only half of what the look found — the Düzenle toolbox still
+shows no editing tool, which is the phone tree's job ([../DECISIONS.md](../DECISIONS.md), 2026-09-19).
+
+## 2026-09-19 — somebody finally looked at the phone, and the tab bar is not the answer
+
+**The open risk was true and it was cheap to close.** STATUS had carried *"nobody has looked at the
+phone with their own eyes"* since the 2026-09-05 launch. The 375×667 screenshots from 2026-09-11 were
+sitting in `tmp/tab-shots/` unread; reading them took minutes and settled the direction.
+⭐ **Nota tab:** the music starts **~47% down the screen** — the pinned transport ~95px, then the card
+head ~190px (title, a two-line meta, the view segmented, Güfte, İmleci takip et, Düzenle) — and the
+single system left over is **cut off at the right**, because the page is engraved at 1000px inside a
+343px box.
+⭐ **Düzenle tab:** the docked toolbox's entire 227px is *DİNLE / Çal / Dur / Seçim*. **Not one tool is
+visible.** All six groups are below the fold of the sheet's own scroller, so the screen built for
+editing cannot edit.
+⭐ **And full screen reads beautifully** — four systems, nothing clipped, because `contentWidth`
+re-engraves the page to the screen. **The right answer was already in the code and was not the
+default**: it was hidden behind a button on the Çal tab.
+
+**Two causes, neither reachable from CSS.** The phone layout is made by SUBTRACTION — ~30
+hand-enumerated `display:none` selectors across four tabs, so a new section leaks onto all four
+(the full-screen block already does this correctly with one `:not()`). And the edit palette is a
+136px vertical desktop column; no media query turns that into a horizontal tool strip.
+⚠ **A silent bug found on the way:** `apps/web/index.html` has no `viewport-fit=cover`, so all six
+`env(safe-area-inset-*)` calls written on 2026-09-11 resolve to **0px** — the bottom bar sits under
+the home indicator on every notched iPhone.
+
+**Committed first, rebuilt second.** The 2026-09-11 tab bar and full screen had never been committed
+and had no DECISIONS or log row; `npm run typecheck`, `npm test` and `npm run smoke:editor` (ALL PASS)
+proved the desktop was byte-identical, `npm run smoke:phone` showed no sideways scroll at 375/390/412
+and only the footer's in-sentence links under 32px, and it went in as `be11142`. ⚠ The iPad still
+carries the floating 136×1011 toolbox — known, and deliberately out of scope.
+The rebuild's four owner choices and the plan they drive are in
+[../DECISIONS.md](../DECISIONS.md) (2026-09-19).
+
+## 2026-09-19 — the dense read: H is a null where it was supposed to win
+
+**Four paired reads, on the Mac, in about two minutes.** The owner downloaded the three Round-4
+checkpoints from Drive (Google zips them as `best-edits`/`last`, so they were identified by decoder
+vocabulary — 100 against 116 — not by name). On the dense pool H needs **42** edits against the
+control's **35** (p = 0.549) and over all 442 held-out strips **76 against 69** (p = 1.000); split by
+length it is **level at 34 vs 34** on the 325 short and medium strips and 7 worse on the dense ones.
+⭐ **Round 4's control against the LIVE model goes the other way and lands where the round aimed**:
+−13 edits on the dense rows, +4 on the rest (dense −0.111/strip, CI [−0.291, −0.009], 6 better /
+1 worse — suggestive, not proven).
+⭐ **The remaining case for H is the decoder ceiling**: 5.91% of all 15,711 candidate strips exceed 99
+old ids against 0.30% under H — a ~20× cut in the class that makes the app return silently wrong
+notes on dense pages — and **no gold pool can show it**, because the emitter dropped exactly those
+strips. The app-side rail is the other candidate fix and needs no new vocabulary.
+⚠ A cost estimate was wrong by an order of magnitude: a paired read is ~0.25 s per strip per model on
+this Mac, not minutes. [METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+
+## 2026-09-18 — the round's own question had not been asked yet
+
+**The owner caught the hole**: *"our purpose in this round is to gain the overbudget strips. We do not
+measure them."* Counted with the old tokenizer, `_realval_v2r` — the pool under all three paired
+reads — carries **15 of 260 strips (5.8%)** over the old 59-id gate, where a real page runs at
+**14.5%**. So "H is a null" was measured almost entirely on material H was not built for.
+**Built instead** (`build_denseval.py`): `_denseval_h1`, the **442** held-out strips of `strips_h1`,
+and `_denseval_h1_dense`, the **117** over 49 old ids of which **64 clear the old gate** — ten times
+the concentration. Checked before building: **0** of its 61 pieces sit on `strips_b8`'s train side, so
+the live model is as blind to them as the two arms; **0** exam pieces; neither arm's `best-edits` was
+picked here; **68** of the strips do not exist in b8 at all. One label costs ≥100 old ids, which an
+old-vocabulary model cannot emit at `max_length` 100 — counted apart, never inside a headline.
+Four paired reads are staged in the notebook and none has been run.
+[METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+
+## 2026-09-17 — the vocabulary A/B is a null
+
+**Both arms trained on Colab and the paired read came back flat.** The control (old vocabulary, from
+Round 3's stage 1) and the H arm (its own stage 1, stage 2 from stage-1 `best`) trained on the same
+data line for line — 4,011 × 4 real, 441 held out, 259 picking strips. Stage-1 H looked like early
+overfitting and was learning-rate noise: validation dipped to .0174, rose to .0217, and settled at
+.0179 as the rate fell, while training loss stayed flat. Read in OLD ids on `_realval_v2r` (260):
+control 377 edits / 73.8% exact, H 397 / 71.9%; **+0.077/strip, 95% CI [−0.069, +0.231]**, 18 better /
+21 worse / 221 tied. The long strips H was meant to help read 29 vs 27 perfect of 43.
+⭐ **The ruler fix mattered**: in their own ids the training logs showed H at 280 corrections against the
+control's 396 — the shape of a large win — on exactly the strips where the shared scale shows none.
+Two practical traps met on the way: the runtime's disk and variables vanish on a disconnect (the read
+cell now says so and stops), and the owner's pasted notebook still carried the `(25, 41)` check.
+**The same day, the control against the live model**: 377 vs 409 edits, 95% CI [−0.235, −0.023],
+21 better / 9 worse — the first paired interval since Round 2 to clear zero. It is not yet trusted:
+the arm's `best-edits` was chosen on this very pool, and its own log puts that optimism at roughly
+14 of the 32 edits. `last` against the live model is the check — **and it came back a null**: 392 vs
+409, 95% CI [−0.169, +0.038], 21 better / 10 worse. The estimate held almost exactly (15 edits of
+pick-luck against ~14 predicted). Round 4 leans better on every reading and proves nothing on real-val.
+[METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+
+## 2026-09-16 — `h1-full` is read, the pool is corrected, and the A/B nearly measured the ruler
+
+**The owner finished `h1-full`.** Every one of its 4,435 rows carries a verdict. Two things had
+happened off the record first: on 2026-09-11 a session released the 100-row dense sample to
+auto-accept at the owner's request (37 rows, `by="agree"`) and wrote no doc, and the owner then read
+every row left. Found by tracing a `.bak-20260911-210834` no repo script writes back to that
+session's transcript. ⚠ That session had advised quoting only the 31 rows read before the release;
+it was unnecessary once every disagreeing row was read — the population splits cleanly into a
+hand-read stratum and an agreeing one with a measured 0.30% rate, so the rate is quoted over all.
+
+**What the reading says: the rescued strips were twice as dirty, and now they are clean.** Over all
+571 rows scheme H let back in, **150 were wrong (26.3%, 95% 22.8–30.0%)** against b8-audit's 12.9%
+(9.0–18.3%); the seeded sample alone reads 26.0%. All 150 sat where label and decode disagree.
+`h1-audit` closes at 36 of 227 (15.9%) and the rail's 35 strips at 14 (40%, n=35).
+Promoted the same day: **185 labels replaced, 4 rows removed, 0 rejects → 4,456 rows**. ⚠ The rail's
+verdicts had no way in: `merge_rail_strips.py` keeps its rows out of `full_audit.csv` on purpose, and
+`promote_labels.py` read only that file — hence `--audit-csv`. Numbers:
+[METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
+
+**Building step 6's kit found three defects, each of which would have cost a GPU run or its read.**
+
+1. ⛔ **The paired read would have measured the vocabulary, not the model.** Edits are counted in
+   token ids, and H spells a note in fewer: injecting the same mistake into 267 real labels, H came
+   out **1.139 edits/strip cheaper** in its own ids — ~9× real-val's noise band. The obvious repair,
+   decode to text and re-encode with one tokenizer, fails on **11,071 of 23,048** labels because H's
+   decoder glues notes (`g''16a''16`, `r 16`, `c '8`). `data.canonical_label` restores one spacing
+   (0 failures, 0 gold labels moved, +0.000 on the same mistake), wired into
+   `paired_arm_score.py --score-vocab old` — which now refuses two vocabularies without it — and
+   into `error_taxonomy.py`, whose length buckets had the same bias. `score_vocab_check.py` keeps it
+   honest. ⚠ `eval_omr.py`, the exam scorer, is NOT fixed: it warns, and the exam waits on it.
+2. ⛔ **Every stage-2 run would have refused to start.** `train.py`'s selection guard counted the
+   SYNTHETIC train split as training, and 5 songs — 29 of the 295 selection strips — are in it. The
+   2026-09-06 smoke test passed only because `--limit-train` had cut the synthetic set. Owner's call:
+   leave those strips out of the pick (266 left), keep refusing on real-pool overlap.
+3. ⚠ **`error_taxonomy.py` would have compared a model with itself.** Its cache key and report used
+   the checkpoint folder's last name, and both arms' picks are called `best-edits`.
+
+Two rules applied on the way, not decided: `strips_h1:4` (30.8% real, the repeat closest to Run A's
+~33%) and a selection decode cap of 100 for both arms (under old ids 17 of 295 selection labels need
+60+ steps; the control's default of 60 would have cut them off). And one owner decision: the control
+reuses Round 3's stage 1, so only the H arm trains one (~2.5 h saved).
+
+**Shipped:** `scripts/make_round4_colab_zip.sh` (one zip for both arms; drops the 4 labels over 99
+old ids inside the zip only; writes the byte count into the notebook) and
+`notebooks/round4_vocab_ab_colab.ipynb`. Not built into a zip yet — it refuses until `_realval_v2r`
+exists, which waits on the owner's 10-row `realval-repair` read. Verified by running `train.py`'s
+data section to the model load for both vocabularies. [METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+
+**Later the same day — the selection pool is repaired and the upload is built.** The owner read the
+10-row `realval-repair` queue against the picture, old labels hidden: 2 `bad`, 8 `fix`, and **none of
+the 8 answers matched the carried label** — the 2026-09-09 diagnosis was right on every readable
+row. One row shows the staff-count cause in the flesh: `nicin_bulbul…_s03_w00` carried the music of
+`s05_w00`, two staff rows down. `repair_realval_v2.py --build` wrote `_realval_v2r` (260 rows, 260
+distinct images); `train.py`'s data section still starts for both vocabularies on it, and the pick
+reads 259 strips. `make_round4_colab_zip.sh` then built the upload in 25 s: 815 MB, 45,578 files,
+4,452 real rows, 260 selection rows, integrity-tested, byte count written into the notebook.
 
 ## 2026-09-10 — why the model writes `f'' 32`, and what the base alphabet actually contains
 

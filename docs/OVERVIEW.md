@@ -2,7 +2,7 @@
 
 purpose: plain-English summary of the current state and the plan — no jargon, no music theory needed
 audience: the project owner (this page is deliberately written in basic English)
-updated: 2026-09-05
+updated: 2026-09-20
 
 > A short, plain-language page about the **current state and the plan going forward**. No music
 > knowledge needed. It does not cover the full history — for that see [rung3/](rung3/README.md)
@@ -225,8 +225,8 @@ August you changed it: now both happen at the same time.** Here is the whole pla
 | **The model** | **Round 3 starts now**, in parallel. It does not wait for the friends, because what they say about features will not change how we train it |
 | **Which model the friends get** | **Whatever is best at the time.** Because the model now runs on a server, swapping it is something you do on your side — the friends download nothing and notice nothing |
 | **How you collect feedback** | **You talk to them.** With two people, a conversation tells you more than any button inside the app, and costs nothing to build |
-| **Phones** | **Later.** Web first, finish it, then think about phones |
-| **Opening it to everyone** | **Only after Round 3's exam result is good.** If it is not good, do Round 4, then look again |
+| **Phones** | ⚠ **CHANGED 19 September 2026: the phone is now the next thing on the app side.** The plan said *"web first, phones later"*. Then we looked at the app on a 375-pixel-wide phone screen for the first time, and it was bad: the music only started **halfway down the screen**, the one line of music that fit was **cut off on the right** (the page was being drawn 1000 pixels wide inside a box of about 341), and on the edit screen **not one editing tool was visible**. ✅ **The cut-off is fixed.** The app already knew how to redraw a page to fit — that is what the full-screen button did — and it now does that on every phone, held upright or sideways: the part hidden off the right edge went from **659 pixels to 11** on a 375×667 screen, and to **0** sideways. ⛔ **But nobody has it yet — it is in the code, not on the website**; the next upload (`npm run deploy:app`) is what puts it there. ⏭ **The toolbox still has to be rebuilt**, and you decided to build the phone screen from scratch as its own thing (*"mobil yapıyı sıfırdan kuralım… asıl kullanıcı kitlemiz orada olacak"*). Tablets stay out of it on purpose — an iPad keeps the desktop screen. Details: [STATUS.md](STATUS.md) |
+| **Opening it to everyone** | ⚠ **OVERTAKEN BY EVENTS: you opened it on 5 September 2026**, before any exam result. The plan said to wait for Round 3's exam and it did not wait — that was your call, and what it changed is in [STATUS.md](STATUS.md) |
 
 ⚠ **One honest cost of swapping the model whenever it improves:** if a friend says "it read this
 page badly", we will not know for certain which model did it. That is acceptable *because* you are

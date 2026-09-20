@@ -2,7 +2,7 @@
 
 purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
 audience: agents and the owner working the real-page track
-updated: 2026-09-10
+updated: 2026-09-16
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
@@ -82,7 +82,9 @@ model. **Examples per token** is.
 - The rule is frozen once: a pitch rare today stays compositional forever, because ids are
   append-only.
 - Also added: `'`, `16`, `32`; the dot stays its own token (owner, 2026-08-27).
-  Vocabulary 100 → **116**. Warm-start the new rows from the old `'` and digit embeddings.
+  Vocabulary 100 → **116**. ~~Warm-start the new rows from the old `'` and digit embeddings.~~
+  ⚠ **Not in the step-6 H arm**: never built, and [../BACKLOG.md](../BACKLOG.md) item 13
+  (2026-09-10) makes it a paired arm of its own — folded in, the A/B would have two variables.
   ⛔ **`''` and `'''` are NOT added** — measured 2026-09-06 as used zero times over 450,456 notes,
   because the fused set covers all seven letters at `''`. Ids are append-only, so adding a dead
   token is permanent.
@@ -247,7 +249,7 @@ to revisit the no-render decision; otherwise it stands.
    TOKENIZER, not from a new cut: `--frozen-crops` re-uses the crops and the 1,720 legacy caches and
    slices nothing ([../DECISIONS.md](../DECISIONS.md), [../../CLAUDE.md](../../CLAUDE.md)).
 
-   **What came out: `data/real/rung3/strips_h1`, 4,460 rows** (4,425 frozen + 35 from the rail),
+   **What came out: `data/real/rung3/strips_h1`, 4,460 rows** (4,425 frozen + 35 from the rail; **4,456 after the owner's verdicts were promoted on 2026-09-16** — 185 labels replaced, 4 rows removed),
    against b8's 3,929. The full table is in
    [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md); three findings change this plan:
 
@@ -276,9 +278,12 @@ to revisit the no-render decision; otherwise it stands.
 
    ⭐ **The gain is aimed where it was meant to be**: the 588 new accepted strips carry a median of
    **18 label tokens against 11** for the rows b8 already had, and the rail's 35 carry 20.
-   ⏭ **Still owed**: the owner reads the seeded 100-row sample of the 571 unread rescued strips
-   (queue `h1-full`, filter `new_dense_sample`) — b8's escaped-bad rate was 12.9% and nothing
-   measures it for this material yet.
+   ✅ **READ, MEASURED AND PROMOTED 2026-09-16.** The owner finished `h1-full`: all 571 rescued
+   rows carry a verdict, and **26.3% of them were wrong** (150; 95% 22.8–30.0%) against b8's 12.9% —
+   twice as dirty, and it separates. Every error sat where label and decode disagree, and all of them
+   are now corrected in the pool: **185** labels replaced (the rail's 25 via the new
+   `promote_labels.py --audit-csv`), 4 rows removed, 0 rejects, **4,456** rows.
+   [../METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
 
 6. **Two arms from base, one variable**: old vocabulary (control) vs scheme H, same pools, same
    steps, stage 2 at 4,000. ~3.5 h each on an L4. Everything else in this round changes together and
@@ -292,14 +297,48 @@ to revisit the no-render decision; otherwise it stands.
    ⚠ **Run at `--real-val-frac 0.10`, the default**: `_realval_v2` shares **44 pieces** with the
    training pool and at 0.10 all 44 sit val-side, but at 0.05 **17 cross into training** and the
    selector reads pieces it trained on — the Run-B defect, now checked before the run.
-7. **Beam search, offline, on the current model first** — paired on `_realval_v2`. The decoder is
+
+   ✅ **THE KIT IS BUILT (2026-09-16), NOT RUN**: `scripts/make_round4_colab_zip.sh` (one zip for both
+   arms) and `notebooks/round4_vocab_ab_colab.ipynb`. What it fixes, all measured in
+   [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md):
+   - **Stage 1**: the control **reuses Round 3's `r3-final-stage1/best`**; only the H arm trains
+     one (owner). GPU ≈ 2.5 h + 2 × ~1.7 h.
+   - **`strips_h1:4`** (30.8% real; `:5` would be 35.8%) and a selection decode cap of **100** for
+     both arms — under old ids 17 of the 295 selection labels need 60+ steps.
+   - **The selector leaves out a song that is in the synthetic TRAIN split** (owner): 29 strips of 5
+     songs, so it reads 266. The guard as built on 2026-09-06 REFUSED on them, which would have
+     stopped every run at start-up; its smoke test had cut the synthetic set with `--limit-train`.
+   - ⛔ **Both arms are scored in OLD ids** (`paired_arm_score.py --score-vocab old`). Counted in its
+     own ids, the same mistake costs H **1.139 fewer edits per strip** — ~9× real-val's noise band.
+   ⛔ **RUN, AND THE ANSWER IS A NULL — ON EVERY POOL, INCLUDING THE DENSE ONE (2026-09-17/19).**
+   H − control is +0.077 edits/strip on `_realval_v2r` (18 better / 21 worse, p = 0.749), **+0.060 on
+   the dense 117** (4 / 7, p = 0.549) and +0.016 over all 442 held-out strips (12 / 13, p = 1.000) —
+   level at 34 vs 34 edits on the 325 short and medium strips and 7 worse on the dense ones. The
+   round's own hypothesis therefore fails where it was aimed.
+   ⭐ **What DID move is the data, not the vocabulary**: Round 4's control against the live model is
+   −13 edits on the dense strips and +4 on the rest (dense −0.111/strip, CI [−0.291, −0.009], but
+   6 better / 1 worse, p = 0.125 — suggestive, not proven).
+   ⭐ **H's surviving case is the decoder ceiling**: 5.91% of all 15,711 candidate strips exceed 99
+   old ids against 0.30% under H, and no gold pool contains that class.
+   [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+   ✅ **(was) READY TO RUN (2026-09-16)**: the owner read `realval-repair`, `_realval_v2r` is built (260
+   strips; the pick reads 259), and `data/colab/tnc_round4_colab.zip` is built (815 MB, 45,578
+   files, integrity-tested; the notebook carries its byte count). ✅ Uploaded and run 2026-09-16/17.
+7. **Beam search, offline, on the current model first — NOT STARTED** — paired on `_realval_v2r`
+   (⚠ `_realval_v2` is superseded; the repaired pool is what every Round-4 read uses). The decoder is
    20–25% of a strip's time (encoder 74–81%), so beam 3 costs roughly +40–60% page time, not ×3;
    Transcoda's gain at beam 3 was small. Ships to the user path only if it pays; otherwise the emitter
    keeps it.
 8. **Read**: the owner's hand-test pages, real-val paired, then `examv3` once as the comparable
-   column. A dense extension (the strips H rescues on exam pages) and the third-source set are
+   column. ⛔ **AND THE DENSE POOL FIRST (owner, 2026-09-18)**: `_realval_v2r` carries 5.8%
+   over-budget strips, so nothing read on it answers this round's own question.
+   `_denseval_h1_dense` (117 held-out strips, 54.7% over the old gate) is what does
+   ([../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md)). A dense extension (the strips H rescues on exam pages) and the third-source set are
    **separate columns**, never merged into `examv3`. Decide before the read that the primary reads
    lower on denser material.
+   ⛔ **`eval_omr.py` needs an old-id scoring mode before `examv3` is read on an H model** — it counts
+   in the checkpoint's own ids, so an H model's edits per page would come out lower for the same work
+   and its share of pages under 5 corrections would not compare with Round 3's 51%.
 
 ## Not this round
 

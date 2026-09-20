@@ -113,6 +113,9 @@ span moved between the two roots — the ones no re-home could rescue. 243 rows 
   exception — real-val **selects** and does not grade ([../../CLAUDE.md](../../CLAUDE.md)).
 - ⚠ **No tail-accept here.** Ten rows is the whole queue; `--build` refuses while any is unverdicted.
 
+✅ **READ AND BUILT 2026-09-16** — 2 `bad`, 8 `fix`, and no answer matched its old label;
+`_realval_v2r` holds 260 strips ([../METRICS-SLICER-ROOTS.md](../METRICS-SLICER-ROOTS.md)).
+
 Run: `review_ui.py` → queue **`realval-repair`**, then
 `repair_realval_v2.py --build` to assemble `_realval_v2r`. ⚠ `_realval_v2` is left **intact** —
 every Round-3 number was measured on it.

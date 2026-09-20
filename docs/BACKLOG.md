@@ -32,9 +32,9 @@ starting. Abandoned plans are a different thing again and live in
    carries rows out of the old `_realval` pool, which is entirely on the retired crop root, and
    copies the `strips_v2` crop under them with no measure-span check: **10 of 262 distinct images
    carry a label about music that is not in their picture**. Evidence, control and volumes:
-   [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md). ✅ The pool repair is staged
-   (`repair_realval_v2.py`, queue `realval-repair`); the owner chose the full repair
-   ([DECISIONS.md](DECISIONS.md)).
+   [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md). ✅ **The POOL is repaired (2026-09-16)**:
+   `_realval_v2r`, 260 strips, after the owner read the 10-row `realval-repair` queue
+   ([DECISIONS.md](DECISIONS.md) records the choice of the full repair).
    ⏭ **STILL OWED — THE BUILDER.** `build_realval_v2.py --build` repeats this the next time it
    runs: it must refuse a carried row whose measure span does not match on the root it is about to
    copy from. ⛔ Do not run a `--build` until it does.
@@ -51,6 +51,13 @@ starting. Abandoned plans are a different thing again and live in
    count; raise `--real-val-frac` so the real pool is not 271 strips; or select on a **free-running**
    real metric (edits/strip) rather than teacher-forced loss, which is Lever 5's own preferred answer
    and the only one that measures what the round is graded on.
+   ✅ **BUILT AND USED IN ROUND 4 (`train.py --select-dir`, 2026-09-06; ran 2026-09-16/17).** It
+   decodes a FIXED pool free-running at every eval and stamps `best-edits`. ⚠ **What it bought is not
+   yet visible**: in both arms `best-edits` and `last` are a tie (control 396 against 410 corrections
+   on the selection pool, H 280 against 282), and on `_realval_v2r` the picked copy read **15 edits
+   better than `last` — which was pick-luck, not quality**: against the live model the bias-free
+   `last` fell back to a null ([METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md)). ⏭ Still owed: a run
+   where the three tags disagree enough to price the selector itself.
    ⚠ **Deferred, not ignored, for one reason: changing the selector mid-round makes the arms
    incomparable.** `r3-tupnew-stage2-best` was selected under the current blend, so every arm scored
    against it must be too. This lands **after** the staccato arm is read, and it is a Round-4 recipe
@@ -324,6 +331,11 @@ starting. Abandoned plans are a different thing again and live in
     make that A/B two variables. Unmeasured; the gain is a question, not a claim.
     ⚠ The base model's knowledge of what a repeat barline *looks like* lives in the ENCODER and is
     kept by fine-tuning either way; this is only about what the decoder writes.
+    ⭐ **NEW EVIDENCE, 2026-09-19 — a random start is measurably slower.** Scheme H's stage 1 began
+    from 42 random rows and read **2.5× Round 3's val loss at step 1,000** (.0676 against .0269),
+    against the ~1.75× its shorter labels explain; by step 2,000 it had closed to ~1.4×. ⚠ A LEAD:
+    the two runs differ in vocabulary as well, so the gap is not cleanly attributable, and the H arm
+    ended level on accuracy anyway ([../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md)).
 
 ### ⏭ `carry_labels()` should carry a verdict when the crop is BYTE-IDENTICAL (owner, 2026-08-26)
 

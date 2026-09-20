@@ -3,7 +3,7 @@
 purpose: the full reference for every `.venv-ml/bin/python` command — the slicer, the emitter, the review queues, the scorers and the probes — with the ⚠ traps that make one fail silently
 audience: anyone about to run anything on the model or the corpus; the app's own commands are next door
 
-updated: 2026-09-07
+updated: 2026-09-16
 
 Split out of [COMMANDS.md](COMMANDS.md) on 2026-09-07 when that file crossed the 400-line cap. Genre
 split: that file keeps the **app** — the dev servers, the browser gates, the deploy, the visit
@@ -123,6 +123,39 @@ npx tsx tools/vision/parity/rescue-check.ts
     # right, fix = the model was wrong, bad = the crop is unusable. Corrections per page = rows that
     # are not `ok`. Re-running carries verdicts across by strip name — but NOT across a re-slice,
     # because the crop moves and the verdict was given against pixels.
+.venv-ml/bin/python scripts/rung3/build_denseval.py [--apply] [--min-ids 49] [--out DIR]
+    # the DENSE evaluation pool: strips_h1's HELD-OUT side, filtered by label length in OLD ids.
+    # Report-only without --apply. Built because every Round-4 read landed on `_realval_v2r`, which
+    # is 5.8% over-budget material against the real-page 14.5% — docs/METRICS-ROUND4-AB.md.
+    # ⚠ OLD ids for every model: a pool cut with H's tokenizer would hold different strips per arm.
+    # ⚠ --real-val-frac must match the training run (0.10), or the held-out set is a different one.
+    # ⛔ It refuses to build if an exam piece is on the held-out side. NOT the exam: not page-complete,
+    # not one-shot; quote it as a strip pool, like real-val.
+.venv-ml/bin/python scripts/rung3/build_model_compare.py [--pool DIR ...] [--limit N]
+    # Decodes every strip of one or more pools with THREE checkpoints (live / Round-4 control /
+    # scheme H) and writes strip + gold + all three decodes to data/real/rung3/_compare/models.json.
+    # ~0.25 s per strip per model on the M4's GPU; the default two pools are 465 strips ≈ 10-14 min,
+    # so run it with `nohup nice -n 19` and read the log at the end (stdout is BUFFERED to a file).
+    # ⚠ Edits AND agreement are on the OLD-id scale (canonical_label + the old vocabulary), the same
+    # rule as paired_arm_score.py --score-vocab old — so H is not flattered by spelling a note in
+    # fewer ids, and its glued decode (`b''32a''32`) is not counted as a disagreement.
+    # ⚠ The control column is `r4-ctl-stage2-last`, the UNBIASED pick. Swapping it for `best-edits`
+    # makes the edit column incomparable with the published dense numbers — say so if you do.
+    # ⚠ A pool with no manifest.jsonl (a bare page's crops) is accepted and has NO gold: those rows
+    # are model-against-model only. ⛔ Never point it at the exam.
+.venv-ml/bin/python scripts/rung3/compare_ui.py [--data F] [--port 8378]
+    # Reads that file → localhost:8378. Strip picture, gold, and all three decodes side by side,
+    # with the tokens that differ from gold painted red. Filters: agreement (all three / exactly two
+    # with the odd one named / none), which model is the odd one out, gold present, label length,
+    # `nd`, and a piece/file search. ⛔ READ-ONLY — it writes nothing, which is why it is a separate
+    # tool from review_ui.py rather than a queue in it.
+    # ⚠ NOTE NAMES (do re mi fa sol la si) are ON by default, `n` toggles them — the same display
+    # rule review_ui.py and apps/web/src/omr/solfege.ts apply, so a strip reads the same way in all
+    # three. The alignment still runs on the LilyPond LETTERS, so toggling cannot move which token
+    # is painted red, and nothing on disk is rewritten.
+    # ⛔ IT IS NOT A MEASUREMENT. It shows rows in the order you ask for; quoting "H looked worse"
+    # off it repeats the mistake the round already paid for. A number needs paired_arm_score.py,
+    # with its interval, on a pool chosen before looking. docs/METRICS-ROUND4-AB.md
 .venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
     # ⚠ THE HINT COLUMN IS NORMALISED ON READ, NEVER ON DISK: the retired \tie is dropped and a
     # spaced `32` is re-glued (2,914 rows over 25 queues, every one verified id-identical in both
@@ -218,6 +251,27 @@ npx tsx tools/vision/parity/rescue-check.ts
     # claimed one). \repend is reported beside it, never gated with it: different glyph, different
     # place in the bar, different cause. ⚠ Prices the model's RESPONSE to the mark, not the realism
     # of USUL_BAR_RATE, which is still chosen not measured (docs/BACKLOG.md item 5).
+.venv-ml/bin/python scripts/rung3/promote_labels.py --dir data/real/rung3/strips_h1 \
+    --strips-root data/real/strips_v2 --vocab h --audit-csv full_audit.csv --audit-csv rail_added.csv
+    # Round 4's promote as RUN 2026-09-16 (185 replaced, 4 removed, 0 rejects). ⚠ --vocab h is not
+    # optional for an H pool: under the old vocabulary its labels are ~40% longer, get rejected as
+    # over budget, and a rejected audit `fix` REMOVES its row. ⚠ --audit-csv REPLACES the default,
+    # so name full_audit.csv too; rail_added.csv is the only way the rail's verdicts reach training.
+    # ⚠ --strips-root data/real/strips_v2: the default is the RETIRED root. Add --dry-run first.
+.venv-ml/bin/python scripts/rung3/paired_arm_score.py --score-vocab old \
+    --ctl <control ckpt> --arm <H ckpt> --pool data/real/rung3/_realval_v2r --out <file.json>
+    # two checkpoints, one pool, paired per strip. ⛔ --score-vocab old is REQUIRED when the two
+    # vocabularies differ, and the script refuses without it: counted in its own ids the same
+    # mistake costs an H model 1.139 fewer edits per strip. Omit it only for two old-vocabulary
+    # checkpoints, which is what every number before 2026-09-16 was. docs/METRICS-ROUND4-AB.md
+.venv-ml/bin/python scripts/rung3/score_vocab_check.py
+    # ~10 s, no model: proves the old-id scale is lossless and neutral. Must print PASS again after
+    # any change to data.canonical_label, ADDED_TOKENS or SCHEME_H_TOKENS.
+sh scripts/make_round4_colab_zip.sh
+    # Round 4 step 6's ONE upload for BOTH arms -> data/colab/tnc_round4_colab.zip, and it writes the
+    # zip's byte count into notebooks/round4_vocab_ab_colab.ipynb. ⛔ Refuses until _realval_v2r
+    # exists (repair_realval_v2.py --build). Drops the strips_h1 labels over 99 OLD ids inside the
+    # zip only — the Mac's pool is never edited. ⚠ Re-run it after ANY pool change, then re-upload.
 sh scripts/make_round3_colab_zip.sh final
     # the FINAL run's upload package: corpus strips_v7_final (3 flags) + strips_b8 as the ONLY real
     # pool. ⚠ The four ARMS keep the retired pools on purpose — that is what they trained on — so the

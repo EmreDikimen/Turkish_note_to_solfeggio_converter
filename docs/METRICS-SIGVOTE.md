@@ -46,7 +46,8 @@ pieces whose override actually reached a label — 88 fired but kept no strip, s
 | `strips_tup` | 293 | 277 | **98 (35%)** | 21 | 90 | 0 | 45 | 31 | 20 |
 | `strips_r1` | 65 | 63 | **26 (41%)** | 23 | 23 | 0 | 21 | 12 | 6 |
 
-⚠ **`strips_b8` is the pool that matters** — it is the real training pool, and two thirds of its
+⚠ **`strips_b8` is the pool that matters** — it was Round 3's real training pool and Round 4 trains
+on `strips_h1`, its re-emit, so these pieces carry over; two thirds of its
 aligned pieces had their signature decided by the model.
 
 ⚠ **Each pool was voted by a DIFFERENT checkpoint**, so the pools are not one measurement:

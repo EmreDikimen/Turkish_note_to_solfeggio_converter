@@ -181,5 +181,17 @@ difference survives. It matters because Round 4 gave this pool a third job: `tra
 picks a checkpoint on **absolute** corrections against these labels
 ([rung3/round4.md](rung3/round4.md) step 2).
 
+**The human read confirmed it (2026-09-16).** The owner read the 10 rows against the picture, with
+the old label hidden: **2 `bad`** (crop unusable) and **8 `fix`**. ⭐ **Not one of the 8 answers
+matches the old label** — every carried label described other music. One shows the staff-count
+cause directly: `nicin_bulbul_figan_eyler…_p1_s03_w00`'s old label is the music the owner read in
+**`s05_w00`**, two staff rows down. The `round2-stage2-best` decode was right on 6 of the 8 (spacing
+only); the other 2 needed content the model missed (two `\tup3` groups; a fourth signature
+accidental).
+
+**`_realval_v2r`, built the same day: 260 rows, 260 distinct images** — 249 kept (the 243 above
+plus the 6 flagged retired-crop rows, whose label matches the crop they carry), 3 re-homed, 8
+re-read, 5 duplicate twins and 2 unusable crops dropped.
+
 ⛔ **The defect is in the builder, so a future `build_realval_v2.py --build` repeats it.** Not fixed
 — [BACKLOG.md](BACKLOG.md).

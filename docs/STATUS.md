@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-10
+updated: 2026-09-20
 
 ## Now
 
@@ -26,9 +26,17 @@ owner's call; the point of this entry is that three risks written as *future* ar
    2026-09-04. The model a visitor meets is the one the Dockerfile bakes into the Cloud Run image out
    of `apps/web/public/models`. ⚠ Run A was the **hand-test** pick, not an exam pass; the exam floor
    is unmet and the dense-page failure below is still silent.
-3. ⚠ **Nobody has looked at the phone with their own eyes.** The phone CSS shipped 2026-09-04 and its
-   only coverage is `npm run smoke:phone`, a probe that **never exits nonzero**. LinkedIn traffic is
-   phone-heavy. ⏭ `npm run smoke:phone`.
+3. ⛔ **The phone HAS been looked at now (2026-09-19), and a visitor still meets the unfixed one.**
+   On the 375×667 screenshots the music started **~47% down the Nota screen** and the one system left
+   was cut off at the right (the page engraved at 1000px inside a 343px box); on the Düzenle screen
+   the docked toolbox's whole 227px is *Çal / Dur / Seçim* and **not one editing tool is visible**.
+   ⭐ **Half of that is fixed in the repo**: full screen's `contentWidth` re-engrave is now the
+   default on every phone-shaped screen, in both orientations — hidden width **659px → 11px** at
+   375×667 and **242px → 0** sideways (`695651f`), plus the missing `viewport-fit=cover`.
+   ⛔ **The toolbox is untouched**, and ⛔ **nothing of this is deployed**, so **LinkedIn's phone-heavy
+   traffic** still meets the 2026-09-05 build — which keeps this the live risk with the most readers.
+   ⏭ The phone layout is being rebuilt as its own component tree ([DECISIONS.md](DECISIONS.md),
+   2026-09-19); deploying what is already committed comes first.
 
 ⏭ **NOTHING IS COUNTING YET, AND THE LINK IS LIVE.** The site can count its own visitors
 anonymously — openings vs pages actually read, distinct devices, country, browser, robots apart — but
@@ -48,27 +56,20 @@ drops **41%** of its candidates, the wide and dense strips a whole page shows.
 Plan and evidence: **[rung3/round4.md](rung3/round4.md)**; plain English:
 [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md).
 
-**Round 4 in one line:** **no new render**, **`\tupend` stays**, **stage 2 at 4,000 steps**; re-emit
-the real pools under **scheme H** note-spelling tokens (✅ confirmed by the owner 2026-09-06 at **16
-new ids, vocabulary 116**) at a gate of **80 ids, not 59** (owner, 2026-09-07) — ✅ **DONE
-2026-09-07 and it moved less than planned: the pool is 4,460 rows, not the 7,437 forecast**, because
-the binding gate turned out to be the referee, not the budget (below); stop the signature vote
-overwriting silently; select
-checkpoints on real-val **corrections**, not loss; beam search measured offline first and **never on
-the user path unless it pays**; a 20–40 page **third-source probe** before any crawl. ⛔ **Three
-things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or add a
-`\dottedbar` token, and **re-pack the synthetic strips** — that was proposed, approved and withdrawn
-on 2026-09-06 when the measurement showed it fills the label range by making crops wider, which
-[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) prices as costing edits.
+**Round 4's levers, and where each one ended:** no new render and `\tupend` stays (owner);
+re-emit the real pools under **scheme H** at a gate of **80 ids** ✅ done 2026-09-07 — ⛔ **and the
+vocabulary itself bought nothing, on any pool (2026-09-19, below)**; stop the signature vote
+overwriting silently ✅ rule D built; select checkpoints on real-val **corrections** ✅ used, and it
+tied with `last` in both arms; beam search offline ⏭ not started; a third-source probe ✅ read, a
+null. ⛔ **Three things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or
+add a `\dottedbar` token, and **re-pack the synthetic strips** — proposed, approved and withdrawn on
+2026-09-06 when the measurement showed it fills the label range by making crops wider, which
+[METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) prices as costing edits. Step-by-step history:
+[rung3/round4.md](rung3/round4.md) · [log/status-log.md](log/status-log.md).
 
-✅ **STEP 1 IS DONE (2026-09-06) and it changed two things.** `scripts/rung3/token_scheme_probe.py`,
-~2 minutes, nothing re-decoded. Scheme H is **116 ids, not 118** — `''` and `'''` are used zero times
-over 450,456 notes, and ids are append-only, so that was the last cheap moment to catch it. The
-rare-pitch segmentation trap does **not** fire, and split evidence improves (1.277% of notes in a
-minority id form today → 0.003%). ⚠ **The one risk H carries is real and is now watched, not fixed**:
-synthetic labels stop at 44 ids while real ones reach 59, so 887 real strips (11.9%) are longer than
-anything synthetic. Long-strip errors become their own column when the H arm is read.
-[rung3/tokenization.md](rung3/tokenization.md).
+⚠ **The one risk scheme H carried is still live for the pool, whatever the owner picks**: synthetic
+labels stop at **44** H ids while the real pool reaches 51, so the long band exists only in real
+material ([RISKS.md](RISKS.md), [rung3/tokenization.md](rung3/tokenization.md)).
 
 ⛔ **THE SHIPPED APP RETURNS SILENTLY WRONG NOTES ON DENSE PAGES.** The browser slicer has **no
 label-budget rail**: at training an over-budget strip is dropped, at inference there is none, so the
@@ -124,9 +125,17 @@ track never touches the app, and neither waits for the other. [mvp/README.md](mv
 
 ### Track A — the product
 
-⏭ **The next product action, and the only one needing a person, is
-[MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) checks 25–29** — five shipped things no eye has
-judged. Run them via `npm run dev:cloud`, then deploy if they pass.
+⏭ **The next product action is the PHONE REBUILD** (owner, 2026-09-19: *"mobil yapıyı sıfırdan
+kuralım… asıl kullanıcı kitlemiz orada olacak"*). Phase 0 is done and it grew: the tab bar
+(`be11142`, with `typecheck` / `test` / `smoke:editor` all passing), its DOM contract (`fdb9573`) and
+the score's fit in both orientations (`695651f`) are committed. ⏭ **The next step is `deploy:app`** —
+none of it has reached a reader — and then `apps/web/src/phone/`. The four owner choices, the causes
+and the new gate are in [DECISIONS.md](DECISIONS.md) (2026-09-19) and
+[log/status-log.md](log/status-log.md).
+
+⏭ **Still open, and needing a person's eyes:** [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md)
+checks 25–29 — five shipped things no eye has judged. Run them via `npm run dev:cloud`, then deploy
+if they pass.
 
 | # | Check | The question it answers |
 |---|---|---|
@@ -172,171 +181,57 @@ work down**; if the voices should be louder the order is per-voice `gain` → a 
 
 ### Track B — the model (Round 4, open 2026-09-03)
 
-Still the gate on what may be **published as a model**. Plan, evidence and the owner's decisions:
-**[rung3/round4.md](rung3/round4.md)**.
+Still the gate on what may be **published as a model**. Plan, levers and the owner's decisions:
+**[rung3/round4.md](rung3/round4.md)**. Every Round-4 number:
+[METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md). Why each step went the way it did, day by day:
+[log/status-log.md](log/status-log.md).
 
 | role | pool | state |
 |---|---|---|
-| real training | ✅ **`strips_h1` — 4,460 rows**, b8 re-emitted under scheme H at a budget of 80 with `--frozen-crops`: not one page re-sliced, so b8's 980 human reads carried in under a per-row inode+label proof. `over_budget` 4,012 → 141, but only +588 of the returning strips reached training (the `nd` referee gate is what now drops them) and the rail added 35 | ✅ **RUN 2026-09-07**. ⏭ owner reads the 100-row `new_dense_sample` |
-| synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ on disk |
-| selection | ⛔ **`_realval_v2` IS BROKEN AND IS BEING REPAIRED** — 10 of its 262 images carry a label about music that is not in their picture (`build_realval_v2.py` put current crops under labels read against retired ones). The repaired pool is **`_realval_v2r`**; (+ `_tupletval`), on free-running corrections, not loss, beside the owner's hand-test pages | ⏭ **owner reads the 10-row `realval-repair` queue**, then `repair_realval_v2.py --build` |
-| grading | `examv3` as the comparable column; a dense extension and a third-source set as **separate** columns | ⏭ decide before the read |
+| real training | **`strips_h1` — 4,456 rows** (b8 re-emitted under scheme H at a budget of 80, `--frozen-crops`, plus the rail's 35). Every row read or auto-accepted; the owner's corrections promoted 2026-09-16 (185 labels replaced, 4 rows removed, 0 rejects) | ✅ |
+| synthetic training | **`strips_v7_final`, unchanged** — no render this round (owner) | ✅ |
+| selection | **`_realval_v2r` — 260 strips** (+ `_tupletval`); the pick leaves out the 29 strips whose song is in the synthetic train split, so it reads **259** | ✅ |
+| dense reading | **`_denseval_h1` (442 held-out strips) / `_denseval_h1_dense` (117, 54.7% over the old gate)**, built 2026-09-18 — no piece on the live model's train side, no exam piece | ✅ |
+| grading | `examv3`, read **once**, on the model the owner picks; a dense extension and the third-source set stay **separate** columns | ⏭ blocked on that pick |
 
-⛔ **Out:** `b8-review`; `strips_oldhuman` (Run B answered it — nothing measurable); the raw old pools.
-`batch3` / `reslice-all`'s hand corrections become usable only through the rail, which is part of the
-re-emit.
+⛔ **Out:** `b8-review`; `strips_oldhuman` (Run B answered it); the raw old pools; `_realval_v2` for
+anything but reproducing Round-3 numbers.
 
-⏭ **In order:** ✅ the length/segmentation check under H (**done 2026-09-06**, render question
-stays closed) → ✅ the `train.py` selector, EMA and label smoothing (**built and smoke-tested
-2026-09-06, nothing trained**) → ✅ the signature vote **measured and rule D built 2026-09-06**
-→ ✅ the third-source probe **read 2026-09-06 — a NULL** → ✅ **the re-emit is DONE
-(2026-09-07): `strips_h1`, no GPU, no re-cut, and the yield claim corrected** → ⏭ **the owner reads
-the 100-row sample** → two arms from base (old-vocabulary control vs H — the control now loses only
-**4** rows to the 99-id cliff, not 769; run at the default `--real-val-frac 0.10`, since 17 selection
-pieces cross into training at 0.05), stage 2 at 4,000 steps → real-val paired → `examv3` once.
+⭐ **WHERE ROUND 4 STANDS (2026-09-19).** Both arms trained on Colab 2026-09-16/17 — control from
+Round 3's stage 1, H from its own — and **four paired reads plus two live-model reads are done**, all
+counted in old ids. Three results:
 
-⭐ **THE LABEL BUDGET IS 80 IDS UNDER SCHEME H, DECIDED 2026-09-07** (owner, from three `examv3`
-strips they had hand-corrected: *"85-90 id den oluşan striplere kadar model doğru bir şekilde tahmin
-edebiliyordu"*). ⚠ **59 was never a model limit** — it is the emitter's quality gate; the real
-ceiling is **100**, in `decode.ts`'s `MAX_TOKENS` and in `collate(max_len=100)`, which TRUNCATES a
-longer label at 99 and teaches the model to stop early. Measured over b8's 15,758 serialized labels:
-median 42 → **24** ids under H, and over the gate **504 (3.20%) at 59 against 148 (0.94%) at 80**, so
-**356 dense strips train whole**. On the 579 labels the owner hand-typed into `examv3` the longest H
-label is **67 ids**. ⚠ **Four files hold that gate and must stay in step** — the emitter,
-`audit_coverage.py`, `promote_labels.py --vocab` and `train.py --select-max-length`. ⚠ It widens the
-one risk this round already watches: synthetic labels stop at **44** H ids. ⛔ **BOTH FORECASTS ABOVE
-WERE OVERTAKEN BY THE RE-EMIT (2026-09-07)**: the 504-vs-148 split and the 769 strips the control arm
-could not hold were priced over a 15,610-strip pool the `nd` gate never let exist. In the pool that
-actually came out, the rail re-cut **141** windows, the longest H label is **51 ids** (so the 80 gate
-binds nothing), and **4** rows — not 769 — exceed 99 under the old vocabulary.
-[METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [DECISIONS.md](DECISIONS.md).
+1. ⛔ **The vocabulary is a NULL, including where it was meant to win.** H − control is +0.077/strip
+   on `_realval_v2r` (p = 0.749), **+0.060 on the dense 117** (p = 0.549) and +0.016 over all 442
+   (p = 1.000) — level at 34 vs 34 edits on the 325 short and medium strips, 7 worse on the dense ones.
+2. ⭐ **Round 4's control beats the LIVE model, and the whole gain is dense.** Over 442: −0.020/strip
+   (null). On the dense 117: **−0.111/strip, CI [−0.291, −0.009]** — −13 edits there against +4 on the
+   rest. ⚠ 6 strips better / 1 worse, p = 0.125: **suggestive, not proven**.
+3. ⭐ **H's remaining case is the decoder ceiling, not accuracy.** **5.91%** of all 15,711 candidate
+   strips exceed 99 old ids — past `decode.ts`'s `MAX_TOKENS`, where the model stops early and returns
+   silently wrong notes — against **0.30%** under H. ⛔ No gold pool can show it: the emitter dropped
+   exactly those strips. ⚠ The app-side label-budget rail is the other candidate fix and needs no new
+   vocabulary ([BACKLOG.md](BACKLOG.md) item 0). [METRICS-DENSE.md](METRICS-DENSE.md).
 
-⭐ **STEP 5 IS RUN, AND IT NEEDED NO GPU — THE RE-EMIT RE-CUT NOTHING** (owner, 2026-09-07:
-*"o stripler hala kullanılabilir halde, atmayalım"*). The planned Colab decode was priced first: on
-30 pages re-cut with today's slicer **20 cut differently and 15.3% of the strips carrying a LABEL
-changed pixels**, i.e. ~600 of the owner's reads invalidated, because a verdict is given against
-pixels. ⭐ **The yield comes from the TOKENIZER, not a new cut**, so `--frozen-crops` re-uses the
-crops and the 1,720 legacy caches and slices nothing — the one exception to the refuse-a-legacy-cache
-rule, safe only because nothing slices ([../CLAUDE.md](../CLAUDE.md)).
+⏭ **TWO OWNER DECISIONS, AND THE ROUND WAITS ON BOTH.**
+**(a) Which model is read on the exam** — recommendation on the evidence above: the **control**
+(`r4-ctl-stage2`, old vocabulary), which is equal or better everywhere measured and changes nothing in
+the shipped app. ⛔ **An H model cannot be read on the exam at all until `eval_omr.py` gains the
+old-id mode** ([../CLAUDE.md](../CLAUDE.md)). **(b) Whether the dense-page claim gets a page-level
+test** — H against the app-side rail, counted per page, which is the only instrument that can see it.
+⚠ The exam is **one-shot per round** and the signed bar (≥75% of pages needing ≤5 corrections) is what
+it grades.
 
-**The pool is `data/real/rung3/strips_h1`, 4,460 rows** (b8: 3,929). b8's verdicts carried in under a
-per-row inode+label proof: **3,864 of 3,956, 980 of them human reads, 0 refused**.
+⏭ **Two owner reading queues, both still unread**, neither blocking the exam:
+**`ndhigh`** — 40 random rows of the 1,678 dense strips `b8` dropped as `over_budget` and `h1` drops
+as `nd_high` (median **49** ids against **37** accepted, and nobody has read one); and **`handtest`** —
+**457 of 515 rows** over the owner's 20 pages, the page-level instrument
+([BACKLOG.md](BACKLOG.md) item 6). ⛔ Neither is gold and neither may become exam material
+([METRICS-HANDTEST.md](METRICS-HANDTEST.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md)).
 
-⭐ **WHAT THE OWNER'S VERDICTS SAY, ONCE ATTRIBUTED TO A SOURCE (2026-09-09).** A correction count
-does not name which of the two sources was wrong; `verdict_attribution.py` splits every human-read
-row into label-error and model-error and categorises both. ⚠ Two controls decide the result: the
-decode caches predate the `\tie` retirement (that dead token was **70%** of the `other` column), and
-the edit box is seeded with the label's `\sig` plus the decode's content, so only the **7–28%** of
-rows actually re-typed can be read. ⛔ **On refused material BOTH sources are wrong 85.4% of the
-time** — which is what the emitter's refusal is for, and why recovering those strips needs a human
-rather than a better referee. ⭐ **The label's dominant failure is the SIGNATURE**: 93.3% of the
-cases where only the label was wrong in `h1`, replicated at 49.5% on `nota` — and the seeding works
-*against* finding it, so it is understated. That is independent support for rule D. The model's
-profile is different (tuplets, duration, pitch, repeat marks; top sign substitution
-`\komaSharp` → `\kucukSharp`). [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md).
-
-⛔ **THE ROUND'S HEADLINE YIELD CLAIM IS DEAD, AND WHAT KILLED IT IS A SECOND GATE.** `over_budget`
-collapsed as forecast (4,012 → **141**), but of the ~3,871 strips that returned only **+588 reached
-training**: ~1,739 went to review, ~1,648 dropped as `nd_high`. ⚠ **THE READING OF *WHY* WAS
-CORRECTED 2026-09-09** — this entry used to say `nd` asks the referee to read the material *because
-the model reads it badly*, and that is measurably not what `nd_high` is. On the 75 exam rows a human
-read (exam mode reviews `nd_high` instead of dropping it) the owner's answer sits a median of **20**
-label-token edits from the SymbTr label and **0** from the decode: the model read them, the LABEL
-named other music. `nd_high` strips are also **not denser** than accepted ones (37 ids against 37).
-⭐ **The one subset that IS dense** — the **1,678** the budget returned — carries a median of **49**,
-and **nobody has read one**; queue `ndhigh` stages 40. [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md).
-⛔ **A better referee does not fix it**: `r3a-stage2-best-real` — fair here, those
-strips were never trained on — read **38.2%** of a 12-piece pilot differently and moved acceptance
-**33 → 32**. ⚠ **The rail's own yield is +35 strips (+0.8%)**, not the ~282 its 141 windows allowed.
-⭐ What did land is aimed right: the new rows carry a median **18 label tokens against 11**.
-[METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) · [rung3/round4.md](rung3/round4.md).
-
-⏭ **Owner:** a 40-row random sample of the **1,678** strips `b8` dropped as `over_budget` and `h1`
-drops as `nd_high` is staged as queue **`ndhigh`**. They are the dense material this round reopened
-(median **49** ids of music in the crop against **37** accepted) and **nobody has read one**. ⚠ `nd`
-cannot say whether a high value means the model misread a dense strip or the label names the wrong
-measures; on EXAM pieces 75 hand-read rows say it is overwhelmingly the label, but the general
-`nd_high` population is **not** dense, so that does not transfer. A high `fix` rate here means dense
-material is a training gap worth hand-labelling; a low one means the label was the problem.
-[METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md).
-
-⭐ **AUTO-ACCEPT CLEARED THE ROWS WHERE BOTH SOURCES AGREE (2026-09-10).** Measured on every h1 row a
-human had read (n = 3,864): where the label and the decode agree the pair is right **99.5%** of the
-time (3,065 rows, 16 wrong), where they differ **31.4%**. ⛔ Two guards, both owner's: the 100
-`new_dense_sample` rows are **excluded** — auto-accepting the agreeing half of a measurement sample
-destroys the rate it exists to produce — and a row whose `\sig` block spells a **koma or küçük
-sharp** is held back, because there the label IS the model's own vote. That rule costs **1.8%** of
-the volume and catches **44%** of the known errors (12.50% wrong against 0.30%).
-**Reading left: `h1-full` 571 → 309, `h1-audit` 202 → 49**, marked `by="agree"` so they stay
-reversible. ⚠ **Quote real corrections, not `fix` counts**: 23 of h1-audit's 27 `fix` verdicts change
-nothing, which read as 93% wrong and is really 13.8%. [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md).
-
-⏭ **Owner:** read the seeded **100-row sample** — `review_ui.py`, queue **`h1-full`**, filter
-**`new_dense_sample`**. b8's escaped-bad rate was 12.9% and nothing
-measures it for this material; without that number a step-6 arm cannot separate "H helped" from
-"the new labels are dirty".
-
-✅ **STEP 3 IS DONE (2026-09-06) — the signature vote is measured AND its rule is built.** `sig_vote_audit.py` read all five
-pools; every number is in [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). ⭐ **It is a DELETION problem, not
-only a koma/küçük one**: 410 overrides delete an accidental against 156 that alter one, and 106 of
-the deleted entries were in the SymbTr derivation — the model did not see the sign, and its silence
-overwrote a correct entry. ⚠ **47% of overrides change only the drawn ORDER** and no earlier count
-separated them, so "the override fired on N pieces" always overstated the damage; the real
-content-change count is 690. ⚠ `strips_b8`, the real training pool, is the worst at **826 of 1,236
-aligned pieces (67%)**. ✅ **RULE D IS IN `emit_strip_labels.py`** (owner, 2026-09-06): a vote that
-**deletes or changes** an accidental and does not land on the makam table's **majority** spelling
-(or whose makam is absent from the table) **no longer overwrites anything** — the label keeps the
-SymbTr derivation and the piece's row-start strips go to review under the new reason
-`sig_table_conflict`. A vote that only **adds** or **re-orders** still applies, adding being the case
-the override was built for. ⚠ **Majority, not "any listed variant"**: mahur prints both spellings
-(küçük 35 / koma 17), so the looser form would have vouched for the vote on **31 mahur pieces** in
-exactly the direction the owner corrected 10 times out of 10. Cost: **224 pieces** to read
-(~1,198 row-start strips; 84 in `strips_b8`). Unit-tested; **no pool re-emitted yet**.
-
-✅ **THE THIRD-SOURCE PROBE IS DONE AND IT IS A NULL (2026-09-06).** **36 pieces / 53 pages /
-1,108 strips** from engraving houses none of our numbers has ever seen: **sahaney.com** (born-digital
-vector out of **Mus2 2.1.2**), **erdincbal.com** (TRT-edition scans, indexed by form so the
-tuplet-dense sirto/longa/peşrev/saz semaisi come in) and **sarkilarnotalar.blogspot.com** (old prints,
-the owner's pick). ⭐ **The pipeline does not jam**: the slicer found staves on all 53 pages, and rows
-fail to align **less** often than on our own two sites (28.6% against 33.2% and 36.9%). ⛔ **But the
-accuracy question is unanswered.** Raw edits/strip looked like degradation (sahaney 0.86 against our
-held-out 0.13) and **the length control killed it** — sahaney's strips carry 40.6 gold ids against
-our 33.5, and under 40 ids it reads 0.20 with every interval overlapping. At n = 34 and n = 10 the
-probe could not have separated anything under ~3×. ⭐ **One finding that is NOT a null**: a different
-engraving house packs **more music into a staff row**, which lands on the label-budget rail the round
-is already changing. ⏭ **Growing it is the only route to a verdict** — more erdincbal pages need no
-hand labelling (75 SymbTr accepts exist, 14 used). ⚠ The blogspot column produced **no** gold: its
-titles are lyric incipits with no makam, one of its 8 pages is re-hosted from erdincbal and one is
-THM folk notation. [rung3/third-source.md](rung3/third-source.md).
-
-⛔ **THE POOL THAT PICKS THE CHECKPOINT HAD OLD LABELS WITH NEW PIXELS UNDER THEM (2026-09-09).**
-`build_realval_v2.py --build` carries rows out of the previous `_realval` pool — which is entirely on
-the **retired** crop root, 271 of 271 PNGs — and copies the `strips_v2` crop under them without
-comparing the measure span. **10 of `_realval_v2`'s 262 distinct images (3.8%) carry a label about
-music that is not in their picture**; the 5 duplicate manifest rows open since 2026-08-16 were the
-symptom. ⚠ **Paired results survive** (both arms read the same wrong labels), but Round 4 gave this
-pool a third job — `train.py --select-dir` picks a checkpoint on **absolute** corrections. ⭐ The
-referee cost no compute: both roots hold a `round2-stage2-best` decode cache, and the hand-read
-`hard` tier is the control that separates the other way. ✅ Repair built: 243 rows keep their label,
-5 duplicate twins drop, 3 re-home by measure span. ⏭ **Owner: read the 10-row `realval-repair`
-queue**, then `repair_realval_v2.py --build` writes **`_realval_v2r`**. ⛔ `_realval_v2` stays intact —
-every Round-3 number was measured on it. ⏭ **The BUILDER is not fixed and will repeat this**
-([BACKLOG.md](BACKLOG.md) item 2). [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md) ·
-[rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md).
-
-⏭ **THE HAND-TEST SET EXISTS AND IS WAITING ON THE OWNER'S EYES.** The owner supplied 20 pages on
-2026-09-06 (gitignored `exam_pages/`, outside the frozen exam); they are decoded with the live model
-and loaded in `review_ui.py` as queue **`handtest`**, where `ok` / `fix` / `bad` count **corrections
-per page** rather than pass labels — the page-level instrument [BACKLOG.md](BACKLOG.md) item 6 asks
-for. ⛔ **Not gold and not the exam**, by two guarantees, because its `decoded` column is the live
-model's own output. ⚠ **No accuracy number exists yet** — nobody has read a row.
-Everything measured, and the five things it may not be used to claim:
-[METRICS-HANDTEST.md](METRICS-HANDTEST.md).
-⏭ **Owner:** press through the queue; the `reason` filter goes straight to the 62 suspicious rows.
-
-⏭ **Recommended, not decided:** a fixed **10–15 page hand-test set** outside the exam, every model on
-the same pages, corrections counted per page — the page-level instrument this project has never had
-([BACKLOG.md](BACKLOG.md) item 6).
+⏭ **Owed inside the round, not started:** beam search measured offline (step 7), and the third-source
+probe's only route to a verdict — more erdincbal pages, which need no hand labelling
+([rung3/third-source.md](rung3/third-source.md)).
 
 ## Where the rest lives
 

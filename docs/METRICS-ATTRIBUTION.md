@@ -3,7 +3,7 @@
 purpose: verdicts attributed to the SymbTr label or to the model, by error kind, and what the `nd` gate is actually catching
 audience: anyone deciding whether a refused strip is worth recovering, or reading a correction count
 
-updated: 2026-09-09
+updated: 2026-09-16
 
 > Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-09-09 at the 400-line cap.
 > That file keeps ranking, geometry and window counts; this one keeps **which source was wrong**.
@@ -123,6 +123,9 @@ queue fell **571 → 309**. ⛔ **The 100 `new_dense_sample` rows were excluded*
 sample staged to estimate how dirty the rescued strips are, and auto-accepting the agreeing half
 would leave a remainder biased toward disagreement, destroying the rate they exist to produce.
 Verified after the write: no human verdict was overwritten.
+⚠ **SUPERSEDED 2026-09-11 (recorded 2026-09-16):** after 31 hand reads the owner released the sample,
+and **37** of its rows were auto-accepted. The rate survived because every row left was then read by
+hand — see the next section.
 
 ## ⚠ A `fix` verdict does not always fix anything (2026-09-10)
 
@@ -148,3 +151,41 @@ correction — the same picture as h1-full's 0.30%.
 back by the koma/küçük signature rule, leaving **49** to read. ⚠ The sample stays usable because the
 strata are marked: `by="agree"` rows carry the measured 0.30% error rate and the hand-read rows carry
 what they carry, so an escaped-bad rate is still a weighted estimate rather than a lost one.
+
+## ⭐ The rescued strips were twice as dirty — measured on all 571, not a sample (2026-09-16)
+
+The 571 `h1-full` rows no human had read before 2026-09-10 are the strips scheme H let back in. All
+571 now carry a verdict, in two strata: the rows where label and decode **disagree** were all read by
+hand, and the rows where they **agree** were read by hand (25) or auto-accepted (298). Errors are
+real corrections plus `bad`, with no-op `fix` verdicts not counted, as above.
+
+| population | n | read by hand | auto-accepted (agree) | errors | rate | 95% (Wilson) |
+|---|---|---|---|---|---|---|
+| **all rescued rows** | **571** | 273 | 298 | **150** (146 fix + 4 bad) | **26.3%** | **22.8–30.0%** |
+| the seeded random sample | 100 | 63 | 37 | 26 | 26.0% | 18.4–35.4% |
+| `b8-audit` — the comparison | 201 | 201 | 0 | 26 | 12.9% | 9.0–18.3% |
+
+- ⭐ **It separates**: the rescued rows' lower bound (22.8%) sits above b8's upper bound (18.3%).
+  The new material came in about **twice as dirty** as b8's machine-accepted rows.
+- ⭐ **Every one of the 150 errors sits where label and decode disagree.** The 25 agreeing rows read
+  by hand carry **0** real corrections (14 are no-op `fix`), in line with the 0.30% measured on 3,009.
+  So the 298 auto-accepted rows are expected to hide about **1** wrong label.
+- ⚠ **Measured AND fixed.** Each of the 150 was corrected or removed and promoted into
+  `strips_h1/manifest.jsonl` the same day, so the pool trains on corrected labels; the rate says how
+  dirty the material *was*, not how dirty the pool *is*.
+- ⚠ The sample and the whole population agree (26.0% / 26.3%), which is the check that the
+  2026-09-11 release did not bias the read.
+
+**The rest of the pool, now fully read:**
+
+| queue | n | errors | rate | 95% | note |
+|---|---|---|---|---|---|
+| `h1-audit` (the emitter's 5% sample of everything it accepted) | 227 | 36 (34 fix + 2 bad) | 15.9% | 11.7–21.2% | 149 rows auto-accepted; overlaps b8's 12.9%, and it includes rescued rows |
+| `h1-rail` (the 35 strips the rail split out) | 35 | 14 | 40.0% | 25.6–56.4% | n = 35: a lead, not a rate to plan on |
+
+**Promoted 2026-09-16** (`promote_labels.py --vocab h --audit-csv full_audit.csv --audit-csv
+rail_added.csv`): **185** labels replaced (160 `h1-full` + 25 rail, no-ops included), **4** rows
+removed, **0** rejects; the pool is **4,456** rows. The rail file needed the new `--audit-csv` flag —
+`merge_rail_strips.py` keeps those rows out of `full_audit.csv` on purpose, so their 14 real
+corrections had no way into training before it.
+

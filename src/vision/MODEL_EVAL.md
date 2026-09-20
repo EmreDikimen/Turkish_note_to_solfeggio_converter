@@ -1471,3 +1471,126 @@ is specific and worth keeping**: B's real-val pool is **30% retired-crop strips*
 that is supposed to track real pages was partly steered by pictures the shipped slicer does not
 produce. Three runs, three wrong picks
 ([../../docs/BACKLOG.md](../../docs/BACKLOG.md) item 3).
+
+## Round 4 — the vocabulary A/B (Colab, 2026-09-16/17): both arms trained; the paired read is a NULL
+
+Raw logs: [../../round4_control_logs.md](../../round4_control_logs.md) ·
+[../../round4_h_logs.md](../../round4_h_logs.md). Kit: `notebooks/round4_vocab_ab_colab.ipynb`. Why both arms
+are scored in old ids: [../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md). L4, batch 16.
+
+### Control — stage 2 (old vocabulary, from `r3-final-stage1/best`, `strips_h1:4`, 4,000 steps @ lr 1e-5)
+
+Startup: `real pool data/real/rung3/strips_h1: 4011 train x4 / 441 val strips`,
+`selection: left out 29 of 288 strips` → **259**, `vocab: old (+0 tokens -> 100 ids)`. ~1.77 s/step.
+
+| step | synth val | real val (441) | mix | **EDITS / 259** | exact | tags |
+|---|---|---|---|---|---|---|
+| 250 | .0114 | .0307 | .0131 | 532 | 165 | |
+| 500 | .0102 | .0255 | .0115 | 461 | 183 | |
+| 750 | .0106 | .0230 | .0116 | 447 | 181 | |
+| 1000 | .0120 | .0192 | .0126 | 466 | 183 | |
+| 1500 | .0103 | .0202 | .0111 | 434 | 190 | `best` (mix) |
+| 2000 | .0107 | .0192 | .0115 | 415 | 191 | |
+| 2250 | .0109 | **.0187** | .0116 | 421 | 188 | `best-real` |
+| **2750** | .0116 | .0191 | .0122 | **396** | 193 | ⭐ `best-edits` |
+| 3000–4000 | ~.0113 | .0187–.0189 | ~.0120 | 405–410 | 190–196 | `last` = 410 / 195 |
+
+- **Corrections fell 532 → 396 (−26%) and were flat at 405–410 for the last 1,250 steps.** Perfect
+  strips 165 → 193–196 of 259. The same shape as Run A: the gain is spent by ~2,000–2,750.
+- **The three tags disagree again** — mix at 1500, real loss at 2250, corrections at 2750.
+- ⚠ **`best-edits` over `last` is a tie, not a win**: 14 edits on 259 strips (0.054/strip), inside
+  real-val's ~±0.13, and 396 is the minimum of 16 readings of the very pool it is picked on, so it is
+  optimistic. `last` reads more perfect strips (195 against 193).
+- ⛔ **Not comparable with Round 3**: the 441-strip real val holds the rescued dense strips (b8's held
+  390), and the 259 selection strips are the repaired pool minus 29 — Run A's 656 edits were on 262
+  unrepaired strips. The fair question "did Round 4's data beat the live model?" is a paired read of
+  this checkpoint against `r3a-stage2-best-real` on `_realval_v2r` (same vocabulary, so own ids hold).
+
+### H arm — stage 1 (scheme H, from BASE, synthetic only, 6,000 steps @ lr 3e-5)
+
+Startup: `vocab: h (+42 tokens -> 116 ids)`, `36032 train / 4763 synth-val`. ~1.66 s/step. Round 3's
+final stage 1 (old vocabulary, the control's start) beside it for SHAPE only:
+
+| step | 250 | 500 | 1000 | 1500 | 2000 | 2500 | **2750** | 3000 | 3500 | 4000 | 4500 | 5000 | 5500 | 6000 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| H val loss | 1.728 | .2715 | .0676 | .0309 | .0248 | .0252 | **.0174** | .0205 | .0205 | .0217 | .0200 | .0176 | .0179 | .0179 |
+| R3 final stage 1 | .2797 | .0914 | .0269 | .0173 | .0180 | .0122 | — | .0109 | .0107 | .0097 | **.0091** | .0091 | .0092 | .0093 |
+
+- ⭐ **NOT overfitting.** Validation dipped to .0174 at 2750, rose to .0205–.0217 while the learning rate
+  was still high (1.6e-5 → 1.0e-5), and came back to .0176–.0179 as it fell. Over steps 4,001–6,000
+  the logged training loss was flat (mean .0086 → .0087) while validation *improved* — memorisation
+  does not undo itself as the learning rate drops; weight noise does. `last` is within 3% of `best`.
+- ⚠ **`best` is one low reading**: its neighbours are .0252 and .0205, and it sits mid-schedule.
+- ⚠ **The loss is per H token and cannot be set beside the old column.** H labels are 57% as long
+  ([../../docs/rung3/tokenization.md](../../docs/rung3/tokenization.md)), so the same total loss spread
+  over fewer tokens reads ~1.75× higher: Round 3's .0091–.0093 × 1.75 ≈ .016, against H's .0179. A
+  rough scale check, not a quality measure.
+- ⏭ **Lead, not a finding: H starts slower.** At step 1,000 it is 2.5× Round 3 (.0676 against .0269),
+  above the ~1.75 scale. The 42 new token rows start random and under H nearly every note is a new
+  token — which is what [../../docs/BACKLOG.md](../../docs/BACKLOG.md) item 13's warm start would test.
+
+✅ **H stage 2 starts from `best` (step 2,750), as the notebook was written** (owner, 2026-09-16).
+`last` was recommended as a tie-break and the run had already passed step 250 when that was read; it
+was kept, because the two differ by 3% of a loss already shown not to predict corrections, `best`
+is the rule the control followed too, and a restart into the same out-dir appends a second run's
+lines to `metrics.jsonl`.
+
+### H arm — stage 2 (scheme H, from its stage-1 `best`, `strips_h1:4`, 4,000 steps @ lr 1e-5) — 2026-09-17
+
+Startup identical to the control's, line for line: `4011 train x4 / 441 val`, `600 real pieces`,
+`real=16044`, `left out 29 of 288` → **259**; `vocab: h (+0 tokens -> 116 ids)`. ~1.78 s/step.
+(600, not the 601 measured on the Mac: one song's only strip is among the 4 labels the zip removes.)
+
+| step | synth val | real val (441) | mix | EDITS / 259 (**H ids**) | exact | tags | control's exact |
+|---|---|---|---|---|---|---|---|
+| 250 | .0219 | .0541 | .0246 | 350 | 167 | | 165 |
+| 500 | .0179 | .0443 | .0201 | 322 | 184 | | 183 |
+| 1000 | .0203 | .0327 | .0214 | 305 | 187 | | 183 |
+| 1500 | .0178 | .0319 | **.0190** | 288 | 191 | `best` (mix) | 190 |
+| 2000 | .0195 | **.0293** | .0203 | 286 | 192 | `best-real` | 191 |
+| 2500 | .0210 | .0302 | .0218 | 288 | 192 | | 187 |
+| 3000 | .0191 | .0294 | .0199 | 285 | 188 | | 190 |
+| **3250** | .0197 | .0301 | .0206 | **280** | 190 | ⭐ `best-edits` | 194 |
+| 3500–4000 | ~.0197 | .0300–.0302 | ~.0205 | 282–283 | 188 | `last` = 282 / 188 | 195–196 |
+
+- **Healthy, and the same shape as the control**: corrections 350 → 280 (−20%, in H ids), flat at
+  280–293 from step 2,000; `best-edits` over `last` is 2 edits, a tie. The three tags disagree once
+  more (1500 / 2000 / 3250).
+- ⭐ **Perfect strips ARE comparable across the arms** — a strip read exactly is the same text in either
+  vocabulary, so the count carries no ruler bias. **They show no clear difference**: from step 2,000 the
+  control ranges 187–196 and H 188–192; at the picks, 193 (control, step 2,750) against 190 (H, step
+  3,250); at `last`, 195 against 188. The last three readings lean to the control by 7–8 strips, less
+  than the control's own swing over the same stretch (9). A lead at most.
+- ⛔ **EDITS 280 against the control's 396 is the ruler, not the model** — H counts in shorter ids.
+  Only `paired_arm_score.py --score-vocab old` compares them.
+- ⚠ **A rough loss hint, not a result**: H labels are ~57% as long, so equal per-strip loss would read
+  ~1.75× higher per H token. On synthetic val the ratio ends at **1.73** (equal); on real val it starts
+  at **1.76** (step 250) and settles at **1.53–1.66** from step 1,250, i.e. roughly 5–13% lower per-strip
+  real loss for H. Real loss fell 44.5% over stage 2 for H against 38.4% for the control. Round 3's
+  Run A showed a 6% loss gain worth zero corrections, so this predicts nothing on its own.
+
+### The paired read (2026-09-17): ⛔ NULL
+
+`_realval_v2r`, 260 strips, both `best-edits`, counted in OLD ids: control **377** edits / 73.8% exact,
+H **397** / 71.9%; H − control **+0.077/strip, 95% CI [−0.069, +0.231]**, 18 better / 21 worse / 221 tied,
+sign test p = 0.749. Long strips (≥50 old ids, 43): exact 29 control / 27 H. Every table and caveat:
+[../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md).
+
+### Against the live model (2026-09-17)
+
+`r4-ctl-stage2-best-edits` against `r3-r3a-stage2-best-real` on `_realval_v2r` (260): **377 vs 409**
+edits, −0.123/strip, 95% CI [−0.235, −0.023], 21 better / 9 worse / 230 tied, p = 0.043. ⚠ The arm's
+pick was made on 241 of these strips; the unbiased check is its `last`.
+[../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md).
+⛔ **Bias removed, it is a null**: `r4-ctl-stage2-last` against the live model, 392 vs 409, −0.065/strip,
+95% CI [−0.169, +0.038], 21 better / 10 worse, p = 0.071. `best-edits`' extra 15 edits were the pick.
+
+### The dense read (2026-09-19): H is a null there too; Round 4's gain is all in the dense strips
+
+`_denseval_h1_dense` (117) and `_denseval_h1` (442), old ids, on the Mac (~2 min for four decodes of
+117). H − control **+0.060/strip** dense (p = 0.549) and **+0.016** over 442 (p = 1.000), level at
+34 vs 34 edits on the 325 short/mid strips. Round 4 `last` − live: **−0.111/strip** dense
+(CI [−0.291, −0.009], 6 better / 1 worse) and −0.020 over 442; −13 edits on the dense rows against
++4 on the rest. Every table and caveat:
+[../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md).
+

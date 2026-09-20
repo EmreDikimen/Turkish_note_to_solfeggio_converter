@@ -40,58 +40,29 @@ low-n caveats — is in [METRICS-EXAM.md](METRICS-EXAM.md). Nothing about the ex
   **Composition dominates; edition familiarity is small** (clean tiers agree within 2pp). This is
   the measurement the real-val rebuild acts on — see [rung3/labeling.md](rung3/labeling.md).
 
-### Round 3's checkpoint choice and its real-val position (2026-09-01)
+### Round 3's checkpoint choice and its real-val position (2026-09-01) → [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md)
 
-Both read with `paired_arm_score.py` on `_realval_v2`, **262 unique strips** (267 rows, 5 duplicates
-collapse on filename — [BACKLOG.md](BACKLOG.md) item 2; identical in both arms, so a paired result is
-unaffected). ⚠ Real-val **selects**, it does not predict the exam — Round 1 it was out by 28 points.
-
-| comparison | edits | edits/strip | exact | paired |
-|---|---|---|---|---|
-| `r3-final-stage2-best` (step 500) | 784 | 2.99 | 63.4% | — |
-| **`r3-final-stage2-last` (step 2000)** | **667** | **2.55** | **68.3%** | **−0.447/strip, CI [−0.847, −0.172]; 39 better / 6 worse, sign p = 0.000** |
-| `round2-stage2-best` (baseline) | 720 | 2.75 | 54.6% | — |
-| **`r3-final-stage2-last` vs Round 2** | 667 | 2.55 | **68.3%** | **−0.202/strip, CI [−0.405, +0.008] = NULL; 72 better / 22 worse, sign p = 0.000** |
-
-⭐ **`last` beats `best` on every column** — the checkpoint selector picked the worse model
-([BACKLOG.md](BACKLOG.md) item 3, confirmed not predicted). **Use `last`.**
-
-⛔ **Against Round 2 the two statistics disagree, and both are pre-registered by the tool.** The sign
-test (does it win more often?) is decisive at 72 : 22; **the bootstrap CI on mean edits/strip spans
-zero and is reported as a NULL**. Exact-match moves **54.6% → 68.3% (+13.7 pp)**: 46 strips Round 2
-got wrong are now perfect, against **10** Round 2 had perfect and Round 3 broke.
-
-⚠ **The mean is null because the damage is concentrated**: the 22 regressions add +73 edits, of which
-the **worst 6 strips carry +43 (59%)**. Two pages hold 5 of the 22 (`aman_ey_suh_i_nazende_2_nota_p1`
-lost all 3 of its strips, +13 edits); the other 17 are one-per-page.
-
-⭐ **THE ONE PATTERN THAT SURVIVES ITS CONTROL — Round 3's gain is confined to SHORT strips.**
-
-| gold length | n | regressed | improved | improve : regress | net edits |
-|---|---|---|---|---|---|
-| < 30 tokens | 100 | 6.0% | 27.0% | 4.5 : 1 | |
-| 30–49 | 118 | 6.8% | 29.7% | 4.4 : 1 | **−60 (short+mid)** |
-| **≥ 50** | **44** | **18.2%** | **22.7%** | **1.25 : 1** | **+7 — slightly WORSE** |
-
-The control matters: a long strip has more tokens to get wrong, so it should move more in *both*
-directions. It does not — the improve:regress **ratio collapses 4.4 → 1.25**, and long strips are the
-only bucket where Round 3 is net negative. Fisher one-sided **p = 0.0171**.
-⚠ **Treat as a LEAD, not a finding**: n = 44, and this is one of four groupings inspected (source,
-makam, mode, length), so it does not clear a multiple-comparison correction. It is quoted because it
-matches a mechanism already on record — the 59-id emitter gate drops **4,012 over-budget strips** from
-training, so the pool is systematically depleted of exactly this material, and dense music was already
-measured to read twice as badly ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)).
-⚠ Consequence for the exam, worth holding before the read: the exam **drops 41% of candidates as
-`split_wide`/`over_budget`**, so it grades each page on its shorter material and may **flatter** this
-model relative to real use. Raw table: `data/real/rung3/final/r3last_vs_r2_realval_v2.json`.
+⭐ **`last` beat `best` on every column — the selector picked the worse model** (667 edits against 784,
+exact 68.3% against 63.4% on `_realval_v2`'s 262 strips), and against Round 2 the sign test is decisive
+at 72 : 22 while the mean-edits CI spans zero. ⭐ **Round 3's gain was confined to SHORT strips**
+(improve:regress 4.4 : 1 under 50 tokens against **1.25 : 1** at ≥ 50) — the lead Round 4 was opened on.
+Tables, the concentration of the damage, and the exam caveat are in that file.
 
 ### Round 3's two follow-up runs (A and B) → [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md)
 
-⛔ **Both are NULLS and Round 3's shipped choice stands.** A longer stage 2 (Run A) and every
-hand-verified real strip including the retired crops (Run B) each land inside the noise of
-`r3-final-stage2-last` on the same 262 strips — exact-match 68.3% / 69.1% / 69.5%, every CI spanning
-zero. ⭐ Run A is also the project's cleanest demonstration that a **6% better val loss can be worth
-zero edits**. Full tables, the training curves and the selector's third wrong pick are in that file.
+⛔ **Both are NULLS and Round 3's shipped choice stands** — exact-match 68.3% / 69.1% / 69.5% on the
+same 262 strips, every CI spanning zero. ⭐ Run A is the project's cleanest demonstration that a **6%
+better val loss can be worth zero edits**.
+
+### Round 4 — the vocabulary A/B, the dense read, the live model → [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md)
+
+⛔ **Scheme H is a NULL everywhere it was measured**, including the dense strips it was built for:
+H − control is 42 vs **35** edits on `_denseval_h1_dense` (117, p = 0.549), 76 vs **69** over all 442
+held-out strips (p = 1.000) and 397 vs **377** on `_realval_v2r` (260, p = 0.749). ⭐ **Round 4's
+control beats the LIVE model on dense strips** — **−0.111 edits/strip, CI [−0.291, −0.009]**, 6 better
+/ 1 worse — while being a null overall (−0.020/strip over 442). ⭐ **H's remaining case is the decoder
+ceiling**: **5.91%** of all 15,711 candidate strips exceed 99 old ids against **0.30%** under H.
+⚠ **An edit count is comparable only inside one vocabulary** — `paired_arm_score.py --score-vocab old`.
 
 ### The exported runtime (ONNX / int8) → [METRICS-ONNX.md](METRICS-ONNX.md)
 

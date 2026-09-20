@@ -2,7 +2,7 @@
 
 purpose: the plain-English version of the Round 4 plan — what we learned, what we change, what we do not change, and what you will be asked to do
 audience: the project owner (basic English, same as OVERVIEW.md)
-updated: 2026-09-10
+updated: 2026-09-19
 
 > The full plan with its evidence is [rung3/round4.md](rung3/round4.md). This page restates numbers
 > on purpose so it reads on its own; if it ever disagrees with [METRICS.md](METRICS.md), METRICS.md
@@ -143,7 +143,7 @@ given against a picture, so that would have thrown away about 600 of your readin
 them. The way out was that the gain comes from the **spelling**, not from a new cut — so we re-used
 the existing cuts and changed nothing but how the answer is written.
 
-**What came out: 4,460 strips**, against 3,929 before. ⛔ **Not the 7,437 we forecast**, and the
+**What came out: 4,460 strips**, against 3,929 before (**4,456** once your corrections were applied on 16 September). ⛔ **Not the 7,437 we forecast**, and the
 reason matters. The old size limit did collapse as predicted — strips rejected for being too long
 fell from 4,012 to 141. But most of the returning strips were then rejected by a **second** check
 we had not been counting: the emitter asks an older model to read each strip, and throws it away if
@@ -179,16 +179,89 @@ a word break, which puts a space in front of it. It happens to `32` and nothing 
 spelling removes the cause by itself. Meanwhile the review screen now hides the space, on 2,914
 rows, checked one by one to be certain nothing else changed.
 
+## What happened on 16 September
+
+**You finished reading `h1-full`.** Every strip in it now has a verdict. Your reading answered the
+question it was staged for. The strips the new spelling let back in were **about twice as dirty**:
+**150 of 571 had a wrong answer (26%)**, against **13%** in the older pool. Every one of those 150
+was a strip where the database answer and the model's reading disagreed, and every one is now
+corrected in the training pool (4,456 strips). So when the next training finishes, a result cannot
+be explained away as "the new answers were bad".
+
+**The training kit for the next step is built** (one upload file and one notebook for both models).
+Building it found two mistakes before they could cost a GPU run:
+
+- **The ruler was different for the two models.** We count corrections in tokens (small pieces of
+  text). The new spelling uses fewer tokens per note, so the same mistake would have looked
+  **about 1.1 corrections per strip cheaper** for the new model. That is much larger than the real
+  differences we try to measure. Now both models are counted with the same old tokens, and the
+  scoring script refuses to compare them any other way. ⚠ The exam scorer does not have this fix
+  yet, so the exam must wait for it.
+- **The training would have stopped at the start.** The practice pool that picks the best saved copy
+  contains 5 songs that are also in the computer-drawn training set. A safety check refused to run
+  because of them. You chose to leave those 29 strips out of the pick.
+
+You also chose that the control model reuses Round 3's first stage, so only the new model trains
+one. That saves about 2.5 hours of GPU.
+
+## What happened 16-19 September: both models trained, and the answer is no
+
+**Both models finished training.** The control uses the old spelling; the other uses the new one
+(H). They trained on exactly the same data, and the whole point was to see if the new spelling reads
+real pages better.
+
+**It does not.** Counted with the same ruler for both:
+
+| where we compared them | control | H | verdict |
+|---|---|---|---|
+| the practice pool (260 strips) | **377** corrections | 397 | no real difference |
+| the dense strips (117) | **35** | 42 | no real difference |
+| all held-out strips (442) | **69** | 76 | no real difference |
+
+On short and medium strips the two are exactly level (34 corrections each). On the dense strips the
+new spelling is slightly worse. So on the material it was built for, it did not help.
+
+**⚠ We almost measured the wrong thing.** The first comparisons used a pool that holds only **5.8%**
+dense strips, while a real page holds **14.5%**. You caught that. A new pool was built from strips no
+model had trained on, with **54.7%** dense material, and the answer came out the same.
+
+**⭐ What did help was the data work.** Round 4's control against the model running on the live site:
+it needs **13 fewer** corrections on the dense strips and 4 more on the rest. The gain sits exactly
+where the round aimed. ⚠ Only 7 strips differ, so this is a good sign, not proof.
+
+**⭐ The new spelling still has one real argument, and it is about whole pages, not strips.** The
+model can only write 100 tokens before it stops. Counting every strip a real page produces:
+
+| strips too long for the model to finish | old spelling | new spelling |
+|---|---|---|
+| share | **5.91%** (about 1 in 17) | **0.30%** (about 1 in 333) |
+
+On those strips the app shows wrong notes with no warning. The new spelling would almost remove that
+class. ⚠ We cannot test it with our answer files, because those very strips were thrown out when the
+answers were made. And there is a second way to fix the same thing that needs no new spelling: cut
+dense pictures into smaller pieces in the app.
+
 ## What you will be asked to do
 
-Four reading jobs are staged. None of them needs a decision — only your eyes.
+⭐ **Two decisions, and the round waits on them.**
+
+1. **Which model is read on the exam.** The recommendation is the **control** (old spelling): it is
+   equal or better everywhere we measured, and it changes nothing in the app. ⚠ The exam is read
+   **once**, so it is read on your choice only. ⚠ An H model cannot be read on the exam at all until
+   the exam scorer learns the shared ruler.
+2. **Whether the dense-page claim gets a real test.** That test is page-level: read dense pages with
+   each model and count corrections per page, with "cut the picture smaller" as the competing fix.
+   Your 20 hand-test pages are the natural place for it.
+
+Nothing else is blocked on you.
 
 | queue in the review tool | rows | what it settles |
 |---|---|---|
-| `h1-full`, filter `new_dense_sample` | 100 | how dirty the newly rescued strips are. Without this number, a good result from the next training cannot be told apart from bad answers |
+| ~~`realval-repair`~~ | ✅ done | the practice-pool strips whose answer described other music. **None** of the 8 readable ones had a right answer; the pool is repaired (260 strips) and the upload file is built |
 | `ndhigh` | 40 | are the dense strips the referee threw away worth rescuing? Many corrections = the model really is weak there; few = the database answer was the problem |
-| `realval-repair` | 10 | the practice-pool strips whose answer describes other music |
-| `handtest` | 458 left of 515 | corrections per page — the only page-level measure this project has |
+| `handtest` | 457 left of 515 | corrections per page — the only page-level measure this project has |
+| ~~`h1-full`, filter `new_dense_sample`~~ | ✅ done | how dirty the rescued strips were — 26%, now corrected |
+| ~~the two trainings~~ | ✅ done | the new spelling does not read better; the data work does |
 
 ✅ Already settled, no action: the 16-token spelling, no re-drawing, the size limit of 80, the
 signature rule, and your fixed hand-test pages (you supplied 20 on 6 September).

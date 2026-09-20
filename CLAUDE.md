@@ -135,6 +135,11 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
   stable across checkpoints.
+- **AN EDIT COUNT IS ONLY COMPARABLE INSIDE ONE VOCABULARY** (2026-09-16). Scheme H spells a note in
+  fewer ids, so in its own ids the same mistake costs an H model **~1.1 fewer edits per strip**.
+  Compare two vocabularies with `paired_arm_score.py --score-vocab old` (it refuses otherwise).
+  ⛔ `eval_omr.py` has no such mode yet: no exam read on an H model until it does.
+  [docs/METRICS-ROUND4-AB.md](docs/METRICS-ROUND4-AB.md).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **Pixels and labels must be produced by the same code path.** The renderer and the label serializer
@@ -330,7 +335,9 @@ Full statements, with the bug each one cost, in **[docs/APP-RULES.md](docs/APP-R
 
 ```
 data/real/            real pages: pdfs/ images/ rung3/ (matched, strips, photos_exam, testset.json)
-data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training pool. ⚠ The ban on the
+data/real/rung3/      the label POOLS. strips_h1 (4,456) is ROUND 4's real training pool — b8 re-emitted
+                      under scheme H, every row read, corrections promoted 2026-09-16; strips_b8
+                      (3,929) was Round 3's. ⚠ The ban on the
                       retired pools was LIFTED for run B on 2026-09-01: strips_oldhuman (1,408) holds
                       every HAND-VERIFIED strip from strips_nota/_r1/_tup. ⛔ MEASURED 2026-09-02 AND
                       IT BOUGHT NOTHING: run B is a NULL (645 vs 667 edits, p = 0.736) —
@@ -340,6 +347,10 @@ data/real/rung3/      the label POOLS. strips_b8 (3,929) is the real training po
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
                       and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
                       re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
+data/real/rung3/_denseval_h1{,_dense}/  the DENSE read (2026-09-18): strips_h1's 442 HELD-OUT strips,
+                      and the 117 over 49 old ids (54.7% over the old 59 gate). Fair to the live model
+                      too — 0 of its 61 pieces are on strips_b8's train side, 0 are exam pieces.
+                      ⛔ NOT the exam. Built by scripts/rung3/build_denseval.py
 data/real/rung3/_handtest/  the OWNER'S 20 HAND-TEST PAGES, decoded (2026-09-06). ⛔ NOT gold, NOT the
                       exam: review_ui queue `handtest` counts CORRECTIONS per page, `label` is empty on
                       every row and promote_labels.py cannot read the file — its `decoded` hint is the

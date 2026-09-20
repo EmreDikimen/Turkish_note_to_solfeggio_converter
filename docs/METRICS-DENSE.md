@@ -165,3 +165,11 @@ The dense-page bug is **real and unchanged** — 59.1% of pages carry an over-bu
 now measured is that **this particular fix is not the answer**: cutting on the estimate moves the
 failure rather than removing it. Splitting *and* something that helps a short strip decode
 correctly would be a different experiment.
+
+## How often the decoder ceiling is actually hit (2026-09-19)
+
+Measured over all 15,711 candidate strips the emitter priced on real pages: **5.91% carry more than
+99 ids** under the shipped vocabulary — past `MAX_TOKENS` — against **0.30%** under scheme H. That is
+the size of the class this page's failure lives in, and the numbers, with what they do and do not
+license, are in [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md).
+

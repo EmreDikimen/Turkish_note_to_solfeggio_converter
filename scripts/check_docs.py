@@ -46,6 +46,8 @@ LONG_OK = {              # append-only records: size is inherent, structure is w
     "round3_final_logs.md",
     "round3_runa_logs.md",
     "round3_runb_logs.md",
+    "round4_control_logs.md",
+    "round4_h_logs.md",
 }
 # Docs that need no header block / index entry (archived verbatim copies, external READMEs).
 # `hf/` is the model card uploaded verbatim to the Hugging Face Hub as the weights repo's README —

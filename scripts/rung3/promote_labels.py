@@ -7,6 +7,10 @@ duration, an over-budget label the decoder literally cannot emit within max_leng
 
   full_audit.csv    verdicts over ALREADY-ACCEPTED strips. `fix` replaces the manifest row's
                     label with corrected_label; `bad` REMOVES the row; `ok` is a no-op.
+                    `--audit-csv` names more files with the same meaning — Round 4's
+                    `rail_added.csv` is one: its 35 rows are already in strips_h1's manifest, and
+                    merge_rail_strips.py deliberately keeps them OUT of full_audit.csv (another
+                    crop root), so without the flag their verdicts had no way into training.
   emit_review.csv   the review queue. `ok` / `fix` rows are PROMOTED into the manifest
                     (label / corrected_label respectively); `bad` rows are skipped for good;
                     unverdicted rows just wait for a later run. exam=1 rows never promote —
@@ -159,6 +163,10 @@ def main() -> int:
                     help="frozen exam pieces. In TRAINING mode (no --exam) any manifest row whose "
                          "SymbTr piece is an exam piece is DROPPED and counted — the fail-closed "
                          "backstop for a second engraving of an exam score. Pass '' to disable.")
+    ap.add_argument("--audit-csv", action="append", default=None, metavar="NAME",
+                    help="verdict file(s) inside --dir read with full_audit.csv's meaning "
+                         "(fix replaces, bad removes). Repeatable; default: full_audit.csv alone. "
+                         "⚠ Passing it REPLACES the default, so name full_audit.csv too.")
     ap.add_argument("--dry-run", action="store_true",
                     help="run every gate and print the report; write no manifest/PNGs/CSVs")
     args = ap.parse_args()
@@ -189,14 +197,18 @@ def main() -> int:
     actions: list[tuple[str, str, str, dict]] = []
     counts = Counter()
 
-    for r in read_csv(out_dir / "full_audit.csv"):
-        v = r.get("verdict", "").strip()
-        if v == "fix":
-            actions.append(("audit_fix", r["strip"], norm_label(r.get("corrected_label", "")), r))
-        elif v == "bad":
-            actions.append(("audit_bad", r["strip"], "", r))
-        else:
-            counts["audit_ok" if v == "ok" else "audit_unverdicted"] += 1
+    audit_csvs = args.audit_csv or ["full_audit.csv"]
+    for name in audit_csvs:
+        if not (out_dir / name).exists():
+            raise SystemExit(f"{out_dir / name} not found")
+        for r in read_csv(out_dir / name):
+            v = r.get("verdict", "").strip()
+            if v == "fix":
+                actions.append(("audit_fix", r["strip"], norm_label(r.get("corrected_label", "")), r))
+            elif v == "bad":
+                actions.append(("audit_bad", r["strip"], "", r))
+            else:
+                counts["audit_ok" if v == "ok" else "audit_unverdicted"] += 1
 
     for r in read_csv(out_dir / "emit_review.csv"):
         v = r.get("verdict", "").strip()
@@ -339,7 +351,8 @@ def main() -> int:
     # ---- outputs ----------------------------------------------------------------------------
     report = {
         "params": {"dir": str(out_dir), "checkpoint": args.checkpoint,
-                   "max_ids": max_ids, "vocab": args.vocab, "dry_run": args.dry_run},
+                   "max_ids": max_ids, "vocab": args.vocab, "audit_csvs": audit_csvs,
+                   "dry_run": args.dry_run},
         "counts": dict(counts),
         "rejects": len(rejects),
         "reject_reasons": dict(Counter(x["reason"] for x in rejects)),

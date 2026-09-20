@@ -292,6 +292,7 @@ def main() -> int:
     split = json.loads(Path(args.split).read_text())
     train_ds = StripDataset(args.strips_dir, pieces=set(split["train_pieces"]))
     val_ds = StripDataset(args.strips_dir, pieces=set(split["val_pieces"]))
+    synth_train_pieces = {s.piece for s in train_ds.strips}   # before --limit-train: the whole split
     check_token_drift(train_ds)
     if args.limit_train:
         train_ds.strips = train_ds.strips[: args.limit_train]
@@ -403,7 +404,9 @@ def main() -> int:
     # WRONG pick (docs/BACKLOG.md item 3). A named pool cannot drift like that.
     select_ds = None
     if args.select_dir:
-        train_pieces = {s_.piece or s_.image_path.name.split("_")[0] for s_, _ in train_items}
+        synth_ids = {id(s_) for s_ in train_ds.strips}
+        train_pieces = {s_.piece or s_.image_path.name.split("_")[0]
+                        for s_, _ in train_items if id(s_) not in synth_ids}   # the REAL pools
         select_strips = []
         for d in args.select_dir:
             # ⚠ NO `check_token_drift` here, deliberately. It is a regex guard for pools the TS
@@ -412,6 +415,19 @@ def main() -> int:
             # IDENTICALLY to the spaced form — measured 2026-09-06 on all 51 such rows in
             # `_realval_v2` (docs/METRICS-UNSEEN.md). Running it here fails a pool that is fine.
             select_strips += StripDataset(d).strips
+        # ⚠ A SONG IN THE SYNTHETIC TRAIN SPLIT IS LEFT OUT, NOT REFUSED (owner, 2026-09-16). The
+        # model never saw that printed page, but it learned the same melody from rendered strips, so
+        # a checkpoint that memorised synthetic music would earn extra credit on it. Measured
+        # 2026-09-16: 19 of `_realval_v2`'s 267 strips (5 pieces) and 10 of `_tupletval`'s 28 (1
+        # piece). Every Round 1-3 real-val number carried that overlap; the 2026-09-06 smoke test
+        # missed it because --limit-train had cut the synthetic set. The paired read afterwards
+        # still uses whole pools — both arms trained on the same synthetic split, so it cancels there.
+        seen_synthetic = sorted({s_.piece for s_ in select_strips if s_.piece in synth_train_pieces})
+        if seen_synthetic:
+            before = len(select_strips)
+            select_strips = [s_ for s_ in select_strips if s_.piece not in synth_train_pieces]
+            print(f"   selection: left out {before - len(select_strips)} of {before} strips "
+                  f"({len(seen_synthetic)} pieces whose song is in the synthetic TRAIN split)")
         leaked = sorted({s_.piece for s_ in select_strips if s_.piece in train_pieces})
         if leaked:
             # ⛔ Not a warning. A selector scored on pieces the model trained on picks the most

@@ -26,6 +26,14 @@ is defined on the 46-page exam ([docs/rung3/scan-profile.md](../../docs/rung3/sc
 "does the arm win on more strips than it loses on?" — it is insensitive to a single catastrophic
 strip. The bootstrap CI on the mean difference asks "how much total correction does a user save?" —
 that one *is* moved by a single bad strip, which is why the median difference is printed beside it.
+
+⛔ **TWO VOCABULARIES NEED `--score-vocab old`, AND THE SCRIPT REFUSES WITHOUT IT** (2026-09-16). An
+edit is counted in token ids, and Round 4's scheme H spells a note in fewer ids than the old
+vocabulary, so the same misread costs the H arm fewer edits — each checkpoint counted in its OWN ids
+tilts the A/B toward H by construction. `--score-vocab old` decodes each checkpoint to text, puts
+back one spacing with `data.canonical_label` (H's decode glues notes, and re-encoding the glued text
+changed the ids of 51% of real labels), and counts BOTH arms in the old vocabulary's ids — the scale
+every Round 1-3 number was measured on. ⚠ `own` stays the default so every recorded number reproduces.
 """
 from __future__ import annotations
 
@@ -39,10 +47,38 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src/vision"))
 
 
-def decode_pool(ckpt: str, pool: str, batch_size: int, max_length: int, device: str | None):
-    """{image -> (edits, exact, n_gold_tokens)} for one checkpoint, using eval_omr's own pieces."""
+def score_tokenizer(scheme: str):
+    """The tokenizer edits are counted in: None = each checkpoint's own, else base + `scheme`."""
+    if scheme == "own":
+        return None
+    from transformers import AutoTokenizer
+    from data import vocabulary
+    from modeling import MODEL_ID
+    tok = AutoTokenizer.from_pretrained(MODEL_ID)
+    tok.add_tokens(vocabulary(scheme))
+    return tok
+
+
+def model_name(ckpt: str) -> str:
+    """`r4-h-stage2-best-edits`, not `best-edits`: both arms' picks carry the same TAG folder name."""
+    p = Path(ckpt)
+    tags = {"best", "best-real", "best-edits", "last", "ema-best", "ema-last"}
+    return f"{p.parent.name}-{p.name}" if p.name in tags else p.name
+
+
+def vocab_size(ckpt: str) -> int:
+    from transformers import AutoTokenizer
+    return len(AutoTokenizer.from_pretrained(ckpt))
+
+
+def decode_pool(ckpt: str, pool: str, batch_size: int, max_length: int, device: str | None,
+                score_tok=None):
+    """{image -> (edits, exact, n_gold_tokens)} for one checkpoint, using eval_omr's own pieces.
+
+    `score_tok` None counts in the checkpoint's own ids (every number before 2026-09-16); a
+    tokenizer re-encodes the canonical TEXT of gold and decode with it — see the header."""
     import torch
-    from data import StripDataset
+    from data import StripDataset, canonical_label
     from eval_omr import align, strip_special
     from modeling import load_model_and_processor
 
@@ -66,6 +102,12 @@ def decode_pool(ckpt: str, pool: str, batch_size: int, max_length: int, device: 
                     got = got[1:]
                 hyp = strip_special(got, tok)
                 ref = strip_special(tok(label, add_special_tokens=True).input_ids, tok)
+                if score_tok is not None:
+                    # special ids are already gone, so a generated <unk> survives as text and
+                    # still counts as a mismatch
+                    text = tok.decode(hyp, skip_special_tokens=False)
+                    hyp = strip_special(score_tok(canonical_label(text)).input_ids, score_tok)
+                    ref = strip_special(score_tok(canonical_label(label)).input_ids, score_tok)
                 edits = sum(1 for op, _, _ in align(ref, hyp) if op != "match")
                 out[ds.strips[at + k].image_path.name] = (edits, hyp == ref, len(ref))
     return out, ds
@@ -101,10 +143,23 @@ def main() -> int:
     ap.add_argument("--bootstrap", type=int, default=20000)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--out", default=None, help="write the per-strip table as JSON")
+    ap.add_argument("--score-vocab", choices=["own", "old"], default="own",
+                    help="the ids edits are counted in: `own` = each checkpoint's (every number "
+                         "before 2026-09-16), `old` = both arms re-encoded in the old vocabulary. "
+                         "⛔ REQUIRED as `old` when the two checkpoints' vocabularies differ "
+                         "(Round 4's control vs H) — see the header.")
     args = ap.parse_args()
 
-    ctl, ds = decode_pool(args.ctl, args.pool, args.batch_size, args.max_length, args.device)
-    arm, _ = decode_pool(args.arm, args.pool, args.batch_size, args.max_length, args.device)
+    sizes = (vocab_size(args.ctl), vocab_size(args.arm))
+    if sizes[0] != sizes[1] and args.score_vocab == "own":
+        raise SystemExit(f"⛔ the two checkpoints have different vocabularies ({sizes[0]} vs "
+                         f"{sizes[1]} tokens), so their edits are not the same size in their own "
+                         f"ids. Re-run with --score-vocab old.")
+    score_tok = score_tokenizer(args.score_vocab)
+    print(f"   edits counted in: {args.score_vocab} ids (vocabularies {sizes[0]} / {sizes[1]})")
+
+    ctl, ds = decode_pool(args.ctl, args.pool, args.batch_size, args.max_length, args.device, score_tok)
+    arm, _ = decode_pool(args.arm, args.pool, args.batch_size, args.max_length, args.device, score_tok)
     names = sorted(set(ctl) & set(arm))
     if len(names) != len(ctl) or len(names) != len(arm):
         raise SystemExit("the two decodes cover different strips — same pool?")
@@ -121,9 +176,9 @@ def main() -> int:
 
     pool_name = Path(args.pool).name
     print(f"\n== {pool_name}: {len(names)} strips, paired")
-    print(f"   control  {Path(args.ctl).name:28s} {ctl_tot:5d} edits   "
+    print(f"   control  {model_name(args.ctl):28s} {ctl_tot:5d} edits   "
           f"{ctl_tot / len(names):5.2f}/strip   exact {ctl_ex}/{len(names)} = {ctl_ex / len(names):.1%}")
-    print(f"   arm      {Path(args.arm).name:28s} {arm_tot:5d} edits   "
+    print(f"   arm      {model_name(args.arm):28s} {arm_tot:5d} edits   "
           f"{arm_tot / len(names):5.2f}/strip   exact {arm_ex}/{len(names)} = {arm_ex / len(names):.1%}")
     print(f"\n   mean difference (arm − control)  {(arm_tot - ctl_tot) / len(names):+.3f} edits/strip"
           f"   95% CI [{lo:+.3f}, {hi:+.3f}]")
@@ -139,6 +194,7 @@ def main() -> int:
         p.write_text(json.dumps({
             "generatedBy": "scripts/rung3/paired_arm_score.py",
             "pool": args.pool, "control": args.ctl, "arm": args.arm, "n": len(names),
+            "scoreVocab": args.score_vocab,
             "controlEdits": ctl_tot, "armEdits": arm_tot,
             "controlExact": ctl_ex, "armExact": arm_ex,
             "meanDiffPerStrip": (arm_tot - ctl_tot) / len(names),

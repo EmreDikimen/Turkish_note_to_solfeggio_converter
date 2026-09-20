@@ -71,7 +71,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "src" / "vision"))
 
 
-from data import ADDED_TOKENS  # noqa: E402  (path is set above)
+from data import ADDED_TOKENS, canonical_label  # noqa: E402  (path is set above)
 
 # ⛔ '3' excluded, longest-first — see the header's trap list.
 _SPLIT_ORDER = sorted([t for t in ADDED_TOKENS if t != "3"], key=len, reverse=True)
@@ -79,8 +79,11 @@ SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")   # promote_labels.norm_label's rul
 
 
 def relabel(text: str) -> list[str]:
-    """Model/gold text -> LABEL tokens, repairing the tokenizer's dropped spaces. See the header."""
-    text = SPACED_32_RE.sub("32", text)
+    """Model/gold text -> LABEL tokens, repairing the tokenizer's dropped spaces. See the header.
+
+    ⚠ `canonical_label` first (2026-09-16): a scheme-H checkpoint glues whole NOTES (`g''16a''16`),
+    which the command split below cannot separate, so every glued pair would be one wrong token."""
+    text = canonical_label(SPACED_32_RE.sub("32", text))
     out, buf, i, n = [], "", 0, len(text)
     while i < n:
         if text[i].isspace():
@@ -197,11 +200,15 @@ def decode_pool(ckpt: str, pool: str, batch_size: int, max_length: int, device: 
     """{image -> (gold_text, decoded_text, n_gold_ids)}. Decoding is expensive, so it is cached.
 
     ⚠ `n_gold_ids` is measured exactly as `eval_omr` / `paired_arm_score` measure `goldTokens`, in
-    ID space, because that is what the length buckets are defined on."""
+    ID space, because that is what the length buckets are defined on.
+    ⚠ ALWAYS IN THE OLD VOCABULARY'S ids (2026-09-16): the buckets were defined there, and a scheme-H
+    checkpoint's own tokenizer is ~40% shorter on the same music, so its strips would slide into
+    shorter buckets and the long-strip column — the one Round 4 watches — would not compare."""
     import torch
-    from data import StripDataset
+    from transformers import AutoTokenizer
+    from data import StripDataset, vocabulary
     from eval_omr import strip_special
-    from modeling import load_model_and_processor
+    from modeling import MODEL_ID, load_model_and_processor
 
     dev = device or ("cuda" if torch.cuda.is_available()
                      else "mps" if torch.backends.mps.is_available() else "cpu")
@@ -210,6 +217,8 @@ def decode_pool(ckpt: str, pool: str, batch_size: int, max_length: int, device: 
         raise SystemExit(f"{ckpt} is missing {added} project tokens — that is the base model, "
                          f"not a trained checkpoint")
     model.to(dev).eval()
+    old_tok = AutoTokenizer.from_pretrained(MODEL_ID)
+    old_tok.add_tokens(vocabulary("old"))
     ds = StripDataset(pool)
     out: dict[str, tuple[str, str, int]] = {}
     with torch.no_grad():
@@ -220,21 +229,36 @@ def decode_pool(ckpt: str, pool: str, batch_size: int, max_length: int, device: 
             for k, ((_, label), got) in enumerate(zip(batch, gen.tolist())):
                 tk = processor.tokenizer
                 text = tk.decode(got, skip_special_tokens=True)
-                n_ids = len(strip_special(tk(label, add_special_tokens=True).input_ids, tk))
+                n_ids = len(strip_special(
+                    old_tok(canonical_label(label), add_special_tokens=True).input_ids, old_tok))
                 out[ds.strips[at + k].image_path.name] = (label, text, n_ids)
             print(f"\r   decoded {min(at + batch_size, len(ds))}/{len(ds)}", end="", file=sys.stderr)
     print("", file=sys.stderr)
     return out
 
 
+# train.py's checkpoint TAGS — the same folder name under every run's out-dir.
+GENERIC_TAGS = {"best", "best-real", "best-edits", "last", "ema-best", "ema-last"}
+
+
+def model_name(ckpt: str) -> str:
+    """A checkpoint's name for the cache key and the report. ⛔ Not the bare folder name when that
+    is a TAG (2026-09-16): Round 4 compares `r4-ctl-stage2/best-edits` with `r4-h-stage2/best-edits`,
+    and keyed on `best-edits` alone the second model silently loaded the first one's cached decode
+    and overwrote its table. Downloaded checkpoints (`r3a-stage2-best-real`) keep their exact name,
+    so every cache already on disk still hits."""
+    p = Path(ckpt)
+    return f"{p.parent.name}-{p.name}" if p.name in GENERIC_TAGS else p.name
+
+
 def cached_decode(ckpt: str, pool: str, cache_dir: Path, args) -> dict[str, tuple[str, str, int]]:
     cache_dir.mkdir(parents=True, exist_ok=True)
-    key = f"{Path(ckpt).name}__{Path(pool).name}.json"
+    key = f"{model_name(ckpt)}__{Path(pool).name}.json"
     p = cache_dir / key
     if p.exists() and not args.refresh:
         print(f"   cache hit: {p}", file=sys.stderr)
         return {k: tuple(v) for k, v in json.loads(p.read_text()).items()}
-    print(f"   decoding {Path(ckpt).name} over {Path(pool).name} ...", file=sys.stderr)
+    print(f"   decoding {model_name(ckpt)} over {Path(pool).name} ...", file=sys.stderr)
     out = decode_pool(ckpt, pool, args.batch_size, args.max_length, args.device)
     p.write_text(json.dumps({k: list(v) for k, v in out.items()}, indent=1))
     return out
@@ -340,8 +364,8 @@ def main() -> int:
     for ckpt in [args.checkpoint] + ([args.compare] if args.compare else []):
         dec = cached_decode(ckpt, args.pool, cache, args)
         cats, stats, examples = tally(dec)
-        report(cats, stats, examples, Path(ckpt).name, args.examples)
-        result["models"][Path(ckpt).name] = {
+        report(cats, stats, examples, model_name(ckpt), args.examples)
+        result["models"][model_name(ckpt)] = {
             "categories": {b: dict(c) for b, c in cats.items()},
             "stats": {b: dict(s) for b, s in stats.items()},
             "examples": {b: {c: v for c, v in e.items()} for b, e in examples.items()},

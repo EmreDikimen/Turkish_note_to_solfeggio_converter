@@ -227,6 +227,32 @@ def strip_special(ids, tokenizer) -> list[int]:
     return [i for i in ids if i not in drop]
 
 
+# ⛔ AN EDIT IN ID SPACE IS NOT THE SAME SIZE UNDER TWO VOCABULARIES (2026-09-16). Scheme H spells a
+# note in fewer ids, so the same misread costs the H arm fewer edits than the control — counting
+# each checkpoint in its own ids tilts Round 4's A/B toward H. And the decoded TEXT cannot simply
+# be re-encoded with one tokenizer: H's decode GLUES notes (`g''16a''16`, `r 16`, `c '8`), which
+# the old tokenizer reads as different ids — measured on 5,411 real labels, a plain text round-trip
+# under H changed the ids of 2,745 (51%). This restores one spacing: every command, barline, note,
+# rest and stray duration is one space-separated unit. Measured 2026-09-16 on 23,115 distinct real
+# and synthetic labels: 0 whose old ids it changes, and 0 whose H or old decode round-trip it fails
+# to repair; on 10,767 distinct stored old-model decodes it moves the old ids of 2, both malformed
+# (`b ''8`, `r''2`). ⚠ The glue applies only where a label NEVER has a space — before `'` or a digit
+# that follows a letter, `r`, `'` or `,` — plus the spaced `32` (promote_labels.SPACED_32_RE).
+_LABEL_UNIT_RE = re.compile(
+    "|".join(re.escape(t) for t in sorted((t for t in ADDED_TOKENS if t.startswith("\\")),
+                                          key=len, reverse=True))
+    + r"|\||[a-g][',]*(?:\d+\.*)?|r\d+\.*|\d+\.*|\S")
+_LABEL_GLUE_RE = re.compile(r"(?<=[a-gr',])\s+(?=['\d])")
+_LABEL_SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")
+
+
+def canonical_label(text: str) -> str:
+    """One space between label units, whatever the decoder glued. Use it before re-encoding a
+    decode with a tokenizer OTHER than the model's own — see the comment above."""
+    text = _LABEL_GLUE_RE.sub("", _LABEL_SPACED_32_RE.sub("32", text or ""))
+    return " ".join(_LABEL_UNIT_RE.findall(text))
+
+
 def collate(batch, processor, tokenizer, max_len: int = 100):
     """
     Batch of (PIL image, label string) → model inputs.

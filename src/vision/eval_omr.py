@@ -103,6 +103,12 @@ def main() -> int:
         # a Rung-2 checkpoint must already contain the extended vocab — freshly-added ids
         # would have UNTRAINED embeddings and every score would be garbage
         print(f"WARNING: {added} project tokens were missing from {args.checkpoint} — is this the base model?")
+    if len(tok) != 100:
+        # ⛔ 2026-09-16: every edit count below is in THIS checkpoint's ids. A scheme-H model spells a
+        # note in fewer ids, so the same misread counts ~1.1 fewer edits per real strip — never set
+        # this report beside an old-vocabulary one. Paired reads: paired_arm_score.py --score-vocab old.
+        print(f"WARNING: vocabulary is {len(tok)} tokens, not 100 — edits here are NOT comparable with an "
+              f"old-vocabulary checkpoint's; compare with paired_arm_score.py --score-vocab old")
     model.to(device).eval()
 
     if args.split == "none":

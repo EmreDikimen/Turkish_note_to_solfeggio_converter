@@ -85,6 +85,39 @@ the service is cold past its wait or down, the read silently moves to this machi
 of weights. The status line says which happened (`sunucuda okundu` vs `kendi cihazınızda okundu`) —
 believe it, not the elapsed time.
 
+⭐ **LOOKING AT IT ON A REAL PHONE: EXPOSE THE DEV SERVER, THEN ADD ITS ORIGIN TO CLOUD RUN.** The
+phone has to reach the Mac and the Mac's origin has to be on the decode server's allowlist — and
+missing the second step produces an error that names the wrong cause.
+
+```bash
+ipconfig getifaddr en0                                   # the Mac's address on the network
+VITE_DECODE_URL=https://omr-decode-706571981988.europe-west3.run.app \
+  npm run -w @turkish-omr/web dev -- --host 0.0.0.0 --port 5173 --strictPort
+# then, ONCE per address (this creates a new revision, so warm it afterwards):
+gcloud run services update omr-decode --region europe-west3 \
+  --update-env-vars '^@^ALLOWED_ORIGINS=https://komavision.netlify.app,http://localhost:5173,http://localhost:4173,http://<ADDRESS>:5173'
+curl -s -o /dev/null -w '%{http_code}\n' https://omr-decode-706571981988.europe-west3.run.app/health
+```
+
+⛔ **`npm run dev:cloud -- --host` DOES NOT WORK** — that script ends in `npm run -w … dev`, so npm
+eats the flag as its own instead of passing it to vite. Run the workspace's `dev` directly, as above.
+
+⚠ **AN ORIGIN THE SERVER REFUSES IS REPORTED AS `server-unavailable`, WHICH READS AS "THE SERVER IS
+ASLEEP"** (2026-09-20). The preflight comes back **204 with no `access-control-allow-origin` header**,
+the browser drops the request, and the app cannot tell a CORS refusal from a dead container — so the
+error offers *"sunucu uykudaysa uyanması yarım dakika sürebilir"* about a server answering `/health`
+in 0.16 s. Waiting never fixes it. **Test the preflight, do not trust the message:**
+
+```bash
+curl -s -i -X OPTIONS https://omr-decode-706571981988.europe-west3.run.app/decode \
+  -H 'Origin: http://<ADDRESS>:5173' -H 'Access-Control-Request-Method: POST' \
+  | grep -i 'access-control-allow-origin'          # no line = the origin is not on the list
+```
+
+⚠ **The address is DHCP and will change**, and the day it does this fails again with the same
+misleading message. ⚠ Deployed visitors cannot hit this — the site's own origin is on the list — so
+it is a dev trap, not a user-facing bug.
+
 `npm run deploy:app` is the one-command version of the two-command recipe in `hosting-setup.md`
 (build with both URLs baked in, then `netlify-cli deploy --prod` to the pinned site id). It publishes
 to the real site, so run it deliberately; `npm run smoke:live` after. ⚠ **A successful build is not a

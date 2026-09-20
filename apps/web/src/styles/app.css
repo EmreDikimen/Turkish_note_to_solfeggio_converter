@@ -2793,7 +2793,16 @@ label.kv-btn.is-disabled {
      ⚠ It lives HERE and not in the component: on a wide window there is no docked sheet, the margin
      is zero, and the same call then scrolls nothing at all. */
   .kv-measure {
-    scroll-margin-bottom: calc(min(46dvh, 420px) + var(--space-5));
+    /* ⚠ It reads the toolbox's OWN variable now, with the same fallback (2026-09-20). It used to
+       hardcode `min(46dvh, 420px)`, a third copy of a number the toolbox had already moved away
+       from — and once the default grew to 51dvh that copy UNDER-reserved: on a 375×667 phone it
+       would have held back 307px for a 340px sheet, so `Ölçüyü düzenle` scrolls the card to
+       "visible" and lands it behind the tools it just opened. Reading the variable also means a
+       reader who drags the toolbox taller gets the margin that goes with it, which the constant
+       never did. */
+    scroll-margin-bottom: calc(
+      var(--kv-toolbox-h, min(51dvh, 390px)) + var(--mtab-h, 0px) + var(--space-5)
+    );
   }
 
   /* ── The stored-page list ──────────────────────────────────────────────────────────────────
@@ -2970,11 +2979,23 @@ label.kv-btn.is-disabled {
    * which is why the inset is repeated here rather than the bar being given a margin: the toolbox
    * is `fixed` and knows nothing about what is under it.
    *
-   * ⚠ AND IT HAS TO GET SHORTER. `min(46dvh, 420px)` was chosen when the toolbox was the only thing
-   * competing with the music; measured on a 375×667 phone it took 307px, and with the page's own
-   * transport and card head above it the answer was a screen with NO music on it at all. 34dvh is
-   * 227px there, which leaves the score about 380px — two systems. The tools that no longer fit
-   * scroll INSIDE the toolbox, which is what its `overflow` was always for.
+   * ⚠ AND IT HAS TO GET SHORTER THAN THE UNDOCKED ONE. `min(46dvh, 420px)` was chosen when the
+   * toolbox was the only thing competing with the music; measured on a 375×667 phone it took 307px,
+   * and with the page's own transport and card head above it the answer was a screen with NO music
+   * on it at all. The tools that do not fit scroll INSIDE the toolbox, which is what its `overflow`
+   * was always for.
+   *
+   * ⭐ **HALF AS TALL AGAIN, 34dvh → 51dvh (owner, 2026-09-20: *"alet çantasını ilk açtığımızdaki
+   * default uzunluğu şuankinin 1.5 katı olsun telefonda"*).** 34dvh was 227px on a 375×667 phone and
+   * the whole of it was the DİNLE block and Seçim — a reader opening the toolbox saw Çal, Dur and
+   * Seçim and not one editing tool, with every group below the fold of its own scroller. 51dvh is
+   * 340px there, which is the price: the music band on that screen drops by ~113px. The owner asked
+   * for the tools to be visible and that is the trade this makes.
+   * ⚠ It still sits under `phoneHMax()` in `EditPalette.tsx` — 0.6 of the window, 400px on that
+   * phone — so the default is inside the range the title bar can drag to, in BOTH directions. If
+   * that share ever drops below 0.51 the default would open already clamped.
+   * ⚠ A reader who has ALREADY dragged it keeps their own height: `--kv-toolbox-h` is remembered in
+   * `localStorage` and wins over this fallback. This number is the first-open default, nothing more.
    *
    * ⚠ The page's own bottom padding repeats the same number. It is the toolbox's MAX height, not
    * its current one, so a folded toolbox leaves a little extra space at the end of the score —
@@ -2982,12 +3003,12 @@ label.kv-btn.is-disabled {
    * answer there hides the last system behind the tools. */
   .kv-page[data-mtab="duzenle"] .kv-toolbox {
     bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + var(--space-2)) !important;
-    max-height: min(34vh, 260px);
-    max-height: var(--kv-toolbox-h, min(34dvh, 260px));
+    max-height: min(51vh, 390px);
+    max-height: var(--kv-toolbox-h, min(51dvh, 390px));
   }
   .kv-page[data-mtab="duzenle"] {
     padding-bottom: calc(
-      var(--kv-toolbox-h, min(34dvh, 260px)) + var(--mtab-h) + env(safe-area-inset-bottom, 0px) +
+      var(--kv-toolbox-h, min(51dvh, 390px)) + var(--mtab-h) + env(safe-area-inset-bottom, 0px) +
         var(--space-5)
     );
   }

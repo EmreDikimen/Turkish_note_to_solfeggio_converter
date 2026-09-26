@@ -2885,6 +2885,14 @@ label.kv-btn.is-disabled {
     margin-left: 0;
     justify-content: flex-start;
     gap: var(--space-2);
+    /* ⚠ **THE ROW HAS TO CLAIM THE HEAD'S WIDTH, OR ITS CHILDREN'S `100%` MEANS NOTHING.**
+       `.kv-card__tools` is itself a flex ITEM of `.kv-card__head`, so without a basis it is sized by
+       its own content — and `flex: 1 1 100%` on the segmented below then resolves 100% against that
+       content width, which is circular and simply keeps it. Measured: switching to the instrument
+       view drops the follow toggle, the content gets narrower, and the whole row shrank **327px →
+       207px** with "Enstrüman üzerinde" wrapping to two lines (46 → 58px tall). With the basis the
+       row is the head's width in both views and the segmented halves stay put. */
+    flex: 1 1 100%;
   }
   .kv-card__tools > .kv-seg {
     flex: 1 1 100%;

@@ -2201,13 +2201,21 @@ export function SheetView({
     // LAST row is left natural: short final systems are normal, and justifying a near-empty last
     // line would blow its spacing apart. Uniform rows matter for Phase-2 synthetic data realism.
     rows.forEach((cells, r) => {
+      const sum = cells.reduce((s, c) => s + c.width, 0);
+      if (sum <= 0) return;
       // ⚠ `justify` is what the measure card turns on. On the page the final system stays ragged —
       // that is real engraving, and stretching a near-empty last line blows its spacing apart — but
       // a card's ONE row is always the last row, and a bar drawn at its natural width would sit in
       // a box it does not fill.
-      if (!justify && r === rows.length - 1) return;
-      const sum = cells.reduce((s, c) => s + c.width, 0);
-      if (sum > 0) for (const c of cells) c.width *= contentW / sum;
+      //
+      // ⚠ **RAGGED MEANS SHORTER THAN THE PAGE, NEVER WIDER** (2026-09-26). Skipping the last row
+      // outright let it keep a natural width that can EXCEED the content area, and then it is not
+      // ragged, it is off the page: measured on a phone at 393px, `meltem_notes`'s final system was
+      // **470px of stave inside a 324px drawing**, its notes running 139px past the edge and
+      // clipped, because the SVG is only as wide as the content area. The skip now applies only
+      // while the row actually fits; past that it is scaled down like any other.
+      if (!justify && r === rows.length - 1 && sum <= contentW) return;
+      for (const c of cells) c.width *= contentW / sum;
     });
 
     const height = rows.length * ROW_HEIGHT + 20;

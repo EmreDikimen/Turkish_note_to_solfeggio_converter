@@ -131,7 +131,20 @@ matching no note reads **0** rather than vanishing. [mvp/makam.md](mvp/makam.md)
 
 ## The transport
 
-`#bpm` and `#transport-pinned`.
+`#bpm`, its `−`/`+` pair `#bpm-down` / `#bpm-up`, and `#transport-pinned`.
+
+⚠ **The ± pair exists at every width** (2026-09-26), and the OS spinner is hidden so there is one
+set of arrows rather than two. ⭐ **They commit on RELEASE, not per step.** Held, they repeat about
+nine times a second and move only the number on screen; the tempo that plays changes when the
+pointer comes up — because `WebAudioBackend.play()` re-schedules the whole timeline and builds fresh
+gain nodes on every call, so committing per tick would re-schedule playback nine times a second. A
+check that steps and then reads `#bpm` has to let the pointer up first. Each button disables itself
+at its end of the 20–400 range, so `#bpm-up` is `disabled` at 400.
+
+⚠ **`#bpm` holds a DRAFT while it is being typed.** It is a controlled box that now accepts
+half-typed values — `""`, `1`, `1802` — and commits only what is in range, so reading it mid-edit
+can return something that is not the tempo. Blur drops the draft. Before 2026-09-26 it refused every
+out-of-range keystroke and snapped back, which made it impossible to type in on a phone.
 
 ⚠ **The ÇALMA row is pinned to the top of the page since 2026-09-05 (`position: sticky`) and the
 other two rows are not**, which takes TWO measurements to assert:

@@ -332,6 +332,33 @@ label.kv-btn.is-disabled {
 }
 .kv-field input[type="number"] {
   width: 4.25rem;
+  /* ⚠ ONE SET OF ARROWS, NOT TWO (2026-09-26). The tempo box has its own ± buttons beside it, and
+     leaving the OS spinner in place would put two ways to step the same number on one control —
+     the same "half of this speaks macOS" split the 2026-09-03 control pass removed. The element
+     stays a real `<input type="number">`: the numeric keypad on a phone, the arrow keys on a
+     desktop and the min/max validation are all untouched; only the tiny grey chevrons go. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.kv-field input[type="number"]::-webkit-outer-spin-button,
+.kv-field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* The tempo's − and +. Square, so they read as a pair rather than as two words, and as wide as
+   every other control is tall — which is 30px under a mouse and 44px under a finger, because
+   `--control-h` is what the `(pointer: coarse)` block raises.
+   ⚠ `touch-action: none` is load-bearing: without it a finger resting on + to repeat is also a
+   finger starting a page scroll, and the browser takes the gesture away mid-hold. */
+.kv-step {
+  width: var(--control-h);
+  min-width: var(--control-h);
+  padding-left: 0;
+  padding-right: 0;
+  font-size: var(--text-base);
+  line-height: 1;
+  touch-action: none;
 }
 .kv-field input[type="checkbox"] {
   accent-color: var(--accent);

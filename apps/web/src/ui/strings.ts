@@ -123,6 +123,10 @@ export const TR = {
     resume: "▶ Devam",
     stop: "■ Dur",
     tempo: "♩ =",
+    // The ± pair beside the tempo box. Titles, not visible labels — the buttons show − and +, which
+    // is the one place a glyph beats a word, and the title is what a screen reader reads.
+    tempoDown: "Tempoyu azalt (basılı tutarsanız hızlanır)",
+    tempoUp: "Tempoyu artır (basılı tutarsanız hızlanır)",
     tempoTitle: (n: number) => `doğal tempo ≈ ${n} BPM`,
     tempoReset: "⟲",
     tempoResetTitle: (n: number) => `doğal tempoya dön (${n} BPM)`,

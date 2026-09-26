@@ -35,7 +35,7 @@
  * one it means.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { findUsul, USULS, type MakamOption, type MakamRuleUse } from "@turkish-omr/core";
 import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
@@ -50,6 +50,93 @@ import { TR } from "./strings";
  *  that rejects what it advertises. */
 const BPM_MIN = 20;
 const BPM_MAX = 400;
+
+/** How long a finger must rest on ± before it starts repeating, and how fast it then repeats. */
+const STEP_HOLD_MS = 450;
+const STEP_REPEAT_MS = 110;
+
+/**
+ * One of the tempo box's ± buttons. Steps once on a tap and keeps stepping while held.
+ *
+ * ⚠ **IT REPORTS THE STEPS AND NOT THE VALUE, AND THE PARENT COMMITS ON RELEASE** — because
+ * `WebAudioBackend.play()` re-schedules the WHOLE timeline and builds fresh gain nodes every call,
+ * so committing on each repeat tick would re-schedule playback nine times a second. The number
+ * under the finger moves on every tick (it is the draft); the SOUND changes once, when the finger
+ * lifts. A tap lifts immediately, so a tap still feels instant.
+ *
+ * ⚠ `onPointerDown`, not `onClick`: a hold has to start before the finger comes up. Pointer capture
+ * is what guarantees the matching up event even if the finger slides off the button — without it a
+ * slide would leave the interval running forever.
+ *
+ * ⚠ `onStep`/`onEnd` are read through a ref. They close over the current tempo and are rebuilt
+ * every render, and an interval captures whatever it was given ONCE — so calling the prop directly
+ * would keep adding to the tempo as it was when the finger landed, i.e. the value would move by one
+ * and then stick.
+ */
+function StepButton({
+  id,
+  dir,
+  label,
+  title,
+  disabled,
+  onStep,
+  onEnd,
+}: {
+  id: string;
+  dir: 1 | -1;
+  label: string;
+  title: string;
+  disabled: boolean;
+  onStep: (dir: number) => void;
+  onEnd: () => void;
+}) {
+  const live = useRef({ onStep, onEnd });
+  live.current = { onStep, onEnd };
+  const timers = useRef<{ hold?: number; repeat?: number }>({});
+
+  const stop = useCallback(() => {
+    const t = timers.current;
+    if (t.hold != null) window.clearTimeout(t.hold);
+    if (t.repeat != null) window.clearInterval(t.repeat);
+    timers.current = {};
+  }, []);
+
+  // ⚠ A button can be unmounted mid-hold — `canPlay` flips when a score is replaced — and an
+  // interval outliving its button would go on stepping a tempo nobody is touching.
+  useEffect(() => stop, [stop]);
+
+  const end = useCallback(() => {
+    stop();
+    live.current.onEnd();
+  }, [stop]);
+
+  return (
+    <button
+      id={id}
+      type="button"
+      className="kv-btn kv-step"
+      data-step={dir > 0 ? "up" : "down"}
+      title={title}
+      disabled={disabled}
+      aria-label={title}
+      onPointerDown={(e) => {
+        if (disabled) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        // No focus steal, no text selection, and no scroll started from the button.
+        e.preventDefault();
+        live.current.onStep(dir);
+        timers.current.hold = window.setTimeout(() => {
+          timers.current.repeat = window.setInterval(() => live.current.onStep(dir), STEP_REPEAT_MS);
+        }, STEP_HOLD_MS);
+      }}
+      onPointerUp={end}
+      onPointerCancel={end}
+      onLostPointerCapture={end}
+    >
+      {label}
+    </button>
+  );
+}
 
 /** The picker's own name for a voice, for the hints that have to say which one is sounding. */
 function voiceLabel(id: VoiceId): string {
@@ -145,6 +232,35 @@ export function TransportBar({
    *  blur, which is also what makes the ⟲ reset button and a newly loaded score show through: both
    *  move focus or replace the document, and neither leaves a draft behind. */
   const [bpmDraft, setBpmDraft] = useState<string | null>(null);
+  /** ⚠ The same draft, readable without a re-render. The ± buttons step from the value ALREADY on
+   *  screen and commit it when the finger lifts, and both run from a pointer handler that would
+   *  otherwise read whatever the draft was when the hold began. */
+  const draftRef = useRef<string | null>(null);
+  const setDraft = useCallback((v: string | null) => {
+    draftRef.current = v;
+    setBpmDraft(v);
+  }, []);
+
+  /** The tempo the ± buttons count from: what is on screen if it is usable, else what is playing. */
+  const shownBpm = useCallback(() => {
+    const d = Math.round(Number(draftRef.current));
+    return draftRef.current != null && Number.isFinite(d) ? d : bpm;
+  }, [bpm]);
+
+  const stepBpm = useCallback(
+    (dir: number) => {
+      const next = Math.min(BPM_MAX, Math.max(BPM_MIN, shownBpm() + dir));
+      setDraft(String(next));
+    },
+    [shownBpm, setDraft],
+  );
+
+  /** The finger lifted: the number on screen becomes the tempo that plays. */
+  const commitStep = useCallback(() => {
+    const v = Math.round(Number(draftRef.current));
+    setDraft(null);
+    if (Number.isFinite(v) && v >= BPM_MIN && v <= BPM_MAX && v !== bpm) onBpm(v);
+  }, [bpm, onBpm, setDraft]);
 
   const pinnedRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -214,6 +330,23 @@ export function TransportBar({
                 commits as it is typed (so the tempo still follows the box live), an invalid one is
                 simply not committed, and BLUR drops the draft so the box goes back to showing the
                 tempo that is actually set — no silent half-edit left on screen. */}
+            {/* ⚠ FLANKING the box, not stacked beside it (owner, 2026-09-26: *"yanına artırıp
+                azaltabileceğim oklar da ekle"*). − left, + right, reading order, each a full
+                `--control-h` square so it is a 44px target under a finger. They replace the OS
+                spinner rather than joining it — see the stylesheet: two sets of arrows on one box
+                is the "half the controls speak macOS" problem the 2026-09-03 control pass removed.
+                ⚠ A `<button>` inside a `<label>` is interactive content, so the label does NOT
+                forward the tap to the input — holding + does not pop the keyboard. Same reason the
+                ⟲ below has always been safe here. */}
+            <StepButton
+              id="bpm-down"
+              dir={-1}
+              label="−"
+              title={TR.transport.tempoDown}
+              disabled={!canPlay || shownBpm() <= BPM_MIN}
+              onStep={stepBpm}
+              onEnd={commitStep}
+            />
             <input
               id="bpm"
               type="number"
@@ -225,11 +358,20 @@ export function TransportBar({
               disabled={!canPlay}
               onChange={(e) => {
                 const raw = e.target.value;
-                setBpmDraft(raw);
+                setDraft(raw);
                 const v = Math.round(Number(raw));
                 if (raw.trim() !== "" && Number.isFinite(v) && v >= BPM_MIN && v <= BPM_MAX) onBpm(v);
               }}
-              onBlur={() => setBpmDraft(null)}
+              onBlur={() => setDraft(null)}
+            />
+            <StepButton
+              id="bpm-up"
+              dir={1}
+              label="+"
+              title={TR.transport.tempoUp}
+              disabled={!canPlay || shownBpm() >= BPM_MAX}
+              onStep={stepBpm}
+              onEnd={commitStep}
             />
             {naturalBpm > 0 && bpm !== naturalBpm && (
               <button

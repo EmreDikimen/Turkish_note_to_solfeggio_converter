@@ -2145,6 +2145,15 @@ export function App() {
             onKeepSheet={(v) => applyTranspose(transpose, v)}
             accidentalMode={accidentalMode}
             onAccidentalMode={setAccidentalMode}
+            // ⚠ The fold exists on the PHONE'S NOTA TAB and nowhere else. The Çal tab's whole
+            // content is these settings, and a wide window has room for them — passing `undefined`
+            // there is what keeps both rendering exactly as they did.
+            pitchOpen={isPhone && !fullScreen && mobileTab === "nota" && !editMode ? pitchOpen : undefined}
+            onPitch={
+              isPhone && !fullScreen && mobileTab === "nota" && !editMode
+                ? () => setPitchOpen((v) => !v)
+                : undefined
+            }
           />
 
           <ScoreCard
@@ -2173,10 +2182,6 @@ export function App() {
             // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
             // nothing new for any check at 1280×720.
             onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
-            // ⚠ Phone only. The button both opens and closes the sheet, which is why it takes the
-            // state as well as the handler — there is no backdrop to tap.
-            pitchOpen={isPhone && !fullScreen ? pitchOpen : undefined}
-            onPitch={isPhone && !fullScreen ? () => setPitchOpen((v) => !v) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}

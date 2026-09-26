@@ -174,6 +174,8 @@ export function TransportBar({
   keepSheet,
   onKeepSheet,
   accidentalMode,
+  pitchOpen,
+  onPitch,
   onAccidentalMode,
 }: {
   canPlay: boolean;
@@ -215,6 +217,10 @@ export function TransportBar({
   keepSheet: boolean;
   onKeepSheet: (v: boolean) => void;
   accidentalMode: AccidentalMode;
+  /** Phone, Nota tab only: is the Perde section expanded? Undefined everywhere else. */
+  pitchOpen?: boolean;
+  /** Phone, Nota tab only: expand/collapse it. Undefined means the section is not foldable. */
+  onPitch?: () => void;
   onAccidentalMode: (m: AccidentalMode) => void;
 }) {
   // How many strokes the SELECTED usul has. 0 means its pattern has not been written yet
@@ -464,6 +470,30 @@ export function TransportBar({
         PINNED box above stays on screen in every tab that can play (`app.css`, the `[data-mtab]`
         rules). A structural `.kv-transport--pinned + .kv-transport` selector would have done the
         same job and broken silently the day a third box appeared. */}
+    {/* ⚠ **THE FOLD SITS DIRECTLY UNDER ÇAL / DUR / TEMPO** (owner, 2026-09-26: *"Çal/Dur ve
+        metronom hızının olduğu yerin hemen altı genişletilebilir olsun"*, replacing a floating
+        sheet that was tried first). What it opens is the Perde row below — makam, transposition
+        and the accidental mode — which the owner asked to have beside the score.
+        ⛔ They are NOT shown open: measured at 393px that row is 314px — makam 104, the
+        transposition group 98, the accidental field 44, each of them wrapping on a phone — and on
+        an 800px screen it left 32px of music. Folded, the cost is this one row.
+        ⚠ Rendered only where it is needed: `App` passes the handler on a phone's Nota tab and
+        nowhere else, so the Çal tab (whose whole content this is) and every wide window show the
+        settings open, exactly as before. */}
+    {onPitch && (
+      <button
+        id="pitch-toggle"
+        type="button"
+        className="kv-transport__more"
+        aria-expanded={!!pitchOpen}
+        aria-controls="transport-settings"
+        onClick={onPitch}
+      >
+        <span>{TR.transport.groupPitch}</span>
+        <span aria-hidden="true">{pitchOpen ? "▴" : "▾"}</span>
+      </button>
+    )}
+
     <div className="kv-transport" id="transport-settings">
       {/* ── Ritim ─────────────────────────────────────────────────────────────────────────── */}
       {/* The usul heads this row rather than the makam's: it is what the metronome and the strokes

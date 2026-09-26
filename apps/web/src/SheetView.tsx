@@ -1914,6 +1914,16 @@ export function SheetView({
    *  22px wider than the SVG inside it — a sideways scrollbar on a page that visibly fits — and
    *  as much slack again under the last system. */
   const [fitScale, setFitScale] = useState(1);
+  /** ⚠ The playhead's frame loop reads the scale from HERE, not from the state.
+   *
+   *  `positionsRef` holds VexFlow's LOGICAL coordinates — it is the one thing the cursor is placed
+   *  from, and the per-note click targets come from a different array measured off the rendered
+   *  ink, which is why they kept landing correctly while the cursor did not. Once a dense page is
+   *  drawn smaller than its layout, a logical x is not where the note is: at 87% a note 300px along
+   *  a row is drawn at 262, and the cursor stood 38px to its right and a row's worth too low.
+   *  A ref rather than a dependency: the loop must not be torn down and rebuilt by a re-render. */
+  const fitScaleRef = useRef(1);
+  fitScaleRef.current = fitScale;
   const [hover, setHover] = useState<number | null>(null);
   // The insert preview: a ghost notehead at the staff position an empty click would use. Moved by
   // mutating the element directly (like the playhead above), never through state — a preview that
@@ -2682,8 +2692,11 @@ export function SheetView({
       }
       if (active) {
         cursor.style.display = "block";
-        cursor.style.height = `${active.height}px`;
-        cursor.style.transform = `translate(${active.x - 2}px, ${active.top}px)`;
+        // ⚠ Logical → rendered. See `fitScaleRef`. The 2px nudge is a SCREEN pixel, so it is
+        // subtracted after the scale, not multiplied by it.
+        const fs = fitScaleRef.current;
+        cursor.style.height = `${active.height * fs}px`;
+        cursor.style.transform = `translate(${active.x * fs - 2}px, ${active.top * fs}px)`;
         // ⚠ AFTER the transform, never before: the box is read from the DOM, so it has to be the
         // position this frame just wrote. And only when the ROW changed — see the FOLLOW_* block.
         if (followPlayhead && active.top !== followRowRef.current) {

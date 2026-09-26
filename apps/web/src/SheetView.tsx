@@ -1907,6 +1907,13 @@ export function SheetView({
   // `noteBoxes`, because the overlay renders from them and they change only on a re-engrave.
   const [tupletMarks, setTupletMarks] = useState<TupletMarkBox[]>([]);
   const [svgHeight, setSvgHeight] = useState(ROW_HEIGHT + 20);
+  /** The scale the drawing ended up at, 1 when it was not shrunk.
+   *
+   *  ⚠ `#sheet-surface` is the overlay's coordinate box and it is sized in the SAME units the SVG
+   *  is DISPLAYED in, not the ones it was laid out in. Left at the logical size it made the box
+   *  22px wider than the SVG inside it — a sideways scrollbar on a page that visibly fits — and
+   *  as much slack again under the last system. */
+  const [fitScale, setFitScale] = useState(1);
   const [hover, setHover] = useState<number | null>(null);
   // The insert preview: a ghost notehead at the staff position an empty click would use. Moved by
   // mutating the element directly (like the playhead above), never through state — a preview that
@@ -1956,12 +1963,35 @@ export function SheetView({
   // The drawing's own size. Defaults ARE the page's constants, so nothing that does not ask for a
   // width can notice these exist. Both are engrave dependencies — changing the column width
   // re-engraves, which is the point: the card fits the music to its box instead of scaling it.
-  const contentW = contentWidth ?? CONTENT_WIDTH;
+  // ── Fitting a dense page into a narrow box: WIDEN THE LAYOUT, THEN SHRINK THE DRAWING ────────
+  //
+  // ⚠ **SCALING ALONE DOES NOT WORK, AND THAT WAS THE FIRST ATTEMPT** (2026-09-26). A row's width
+  // is packed from an ESTIMATE — `events.length * 28 + 24` — that knows nothing about accidentals,
+  // dots, beams or tuplet marks, and VexFlow draws a measure at its own minimum spacing whatever
+  // stave width it is handed. So the notes overrun THEIR OWN STAVE, and shrinking the finished
+  // picture shrinks the overrun with everything else: measured on `meltem_notes` at 393px, the
+  // stave ended 49px short of the box and its notes still hung 22px past the barline.
+  //
+  // ⭐ So the layout is widened first — `fitExtra` is how much more room the drawing asked for than
+  // it was given — and only then is the whole thing scaled down to the box. Wider staves mean the
+  // notes are INSIDE them; the scale then makes the stave span the box exactly.
+  //
+  // ⚠ It settles in one extra pass: draw, measure what was really drawn, widen by the difference,
+  // draw again. The key resets the measurement whenever the document or the box changes, so a
+  // stale widening cannot survive into a different page — and the widening is capped at the box's
+  // own width, which is the loop's bound.
+  const boxContentW = contentWidth ?? CONTENT_WIDTH;
+  const fitKey = `${contentWidth ?? "d"}|${doc.name ?? ""}|${doc.events.length}|${onlyMeasure ?? -1}`;
+  const [fit, setFit] = useState<{ key: string; extra: number }>({ key: fitKey, extra: 0 });
+  const fitExtra = fit.key === fitKey ? fit.extra : 0;
+  const contentW = boxContentW + (contentWidth != null ? fitExtra : 0);
+  /** The width the drawing has to END UP at — the box, not the widened layout. */
+  const fitBoxW = contentWidth != null ? LEFT * 2 + contentWidth : null;
   // ⚠ Below this the engraved header stacks instead of running three columns across — see the
   // header's own comment. 520 is where "Sofyan ♩ = 80" and "Beste: <a real Turkish name>" stop
   // fitting either side of a centred title; every phone and every landscape phone is under it, and
   // no default (1000) or measure card is anywhere near it.
-  const narrowHeader = contentW < NARROW_HEADER_W;
+  const narrowHeader = boxContentW < NARROW_HEADER_W;
   const svgW = contentWidth == null ? DEFAULT_SVG_WIDTH : LEFT * 2 + contentW;
 
   /**
@@ -2542,38 +2572,30 @@ export function SheetView({
       const b = markBoxOf(slot.el);
       if (b) markRects.push({ evIndex: slot.evIndex, closes: slot.closes, ...b });
     }
-    // ── Fit what was actually drawn into the box it was drawn for ──────────────────────────────
+    // ── Did the drawing need more room than it was given? ──────────────────────────────────────
     //
-    // ⭐ **THE ROW ESTIMATE CAN UNDER-ALLOCATE, AND THE ONLY HONEST WIDTH IS THE DRAWN ONE**
-    // (owner, 2026-09-26, with photos of notes running off a phone screen). Rows are packed from
-    // `m.events.length * 28 + 24`, a guess that knows nothing about accidentals, dots, beams or
-    // tuplet marks, and VexFlow draws a measure's notes at their own minimum spacing whatever
-    // width the stave was given. On a phone that difference has nowhere to go: at 393px a row
-    // already holds ONE measure, so there is nothing left to move to the next line. Measured over
-    // the six scores on disk at 393px: `meltem_notes` ran 38px past the edge, `beyati-delisin`
-    // 40px, and both were CLIPPED, because the SVG is exactly as wide as the content area.
+    // ⚠ `getBBox()` is the union of what was DRAWN, in user units — the one number that knows about
+    // every glyph the row estimate did not. It is 0 in a hidden box (a tab that is not on screen),
+    // and a measurement taken from that would be nonsense, so a zero is left alone.
     //
-    // ⭐ **So the drawing is measured and then fitted — the pocket-score answer** (owner's choice
-    // over letting it scroll): a page that needs more width is engraved smaller until it fits,
-    // exactly as a printed pocket edition shrinks the staff rather than cropping the music.
-    // Measured after: beyati-delisin 89%, meltem_notes 87%, the other four untouched at 100%.
+    // Two outcomes. If the drawing overran the layout, WIDEN the layout by exactly the overrun and
+    // let the effect run again — that is the pass which puts the notes inside their own staves.
+    // Once it fits, scale the finished picture down so the stave spans the box.
     //
-    // ⚠ **A `viewBox`, NOT a CSS transform, and NEVER on `.kv-score`.** That container is the
+    // ⚠ **The size goes on the inline STYLE, not only the attributes.** VexFlow's own `resize()`
+    // writes `style="width: …; height: …"`, an attribute cannot beat it, and the mismatch is not
+    // silent: the viewBox scaled the content while the box kept its old height, so
+    // `preserveAspectRatio` centred a 1040px drawing inside a 1190px box and left 75px of blank
+    // above the first stave — the gap the owner photographed.
+    //
+    // ⚠ **A viewBox, NEVER a CSS transform, and never on `.kv-score`.** That container is the
     // training-strip source and `tools/render/render.ts` crops it by rect (docs/APP-RULES.md).
-    // This scales the SVG's own coordinate system, which every `getBoundingClientRect()` already
-    // accounts for — so the edit overlay's ink-measured hit boxes and the playhead keep landing
-    // where they look. Verified at 87%: five notes tapped, five selected.
+    // Scaling the SVG's own coordinate system is accounted for by every `getBoundingClientRect()`,
+    // so the edit overlay's ink-measured hit boxes and the playhead keep landing where they look.
     //
-    // ⚠ **Gated on `contentWidth`, so the corpus path is provably untouched.** `render.ts` draws at
-    // the default width, where nothing overflows and this branch never runs — measured 100% on all
-    // six scores at 1280px.
-    //
-    // ⚠ Past `MIN_FIT_SCALE` it stops shrinking and lets the SVG be wider than its box instead —
-    // `.kv-score` scrolls sideways there. Unreadably small is worse than a drag.
-    if (contentWidth != null && svg) {
-      // ⚠ `getBBox()` is the union of what was DRAWN, in user units — the one number that knows
-      // about every glyph the estimate did not. It is 0 in a hidden box (a tab that is not on
-      // screen), and a scale computed from that would be nonsense, so a zero is left alone.
+    // ⚠ Gated on `contentWidth`, so the corpus path never reaches any of this: `render.ts` draws at
+    // the default width, where nothing overruns.
+    if (fitBoxW != null && svg) {
       let drawnRight = 0;
       try {
         const bb = svg.getBBox();
@@ -2581,13 +2603,24 @@ export function SheetView({
       } catch {
         drawnRight = 0;
       }
-      if (drawnRight > svgW + 1) {
-        const scale = Math.max(MIN_FIT_SCALE, svgW / drawnRight);
-        svg.setAttribute("viewBox", `0 0 ${drawnRight} ${height}`);
-        // At the floor this is WIDER than the box on purpose — that is the scroll arm.
-        svg.setAttribute("width", String(Math.round(drawnRight * scale)));
-        svg.setAttribute("height", String(Math.round(height * scale)));
+      const need = drawnRight > 0 ? Math.ceil(drawnRight - svgW) : 0;
+      if (need > 1 && fitExtra + need <= boxContentW) {
+        // ⚠ The cap is the loop's bound: the layout may at most double before we stop asking.
+        setFit({ key: fitKey, extra: fitExtra + need });
+      } else {
+        // ⚠ Past `MIN_FIT_SCALE` it stops shrinking and leaves the SVG wider than its box, so that
+        // page scrolls sideways instead. Unreadably small is worse than a drag.
+        const scale = Math.min(1, Math.max(MIN_FIT_SCALE, fitBoxW / svgW));
+        if (scale < 1) {
+          svg.setAttribute("viewBox", `0 0 ${svgW} ${height}`);
+          svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+          svg.style.width = `${Math.round(svgW * scale)}px`;
+          svg.style.height = `${Math.round(height * scale)}px`;
+        }
+        setFitScale(scale);
       }
+    } else {
+      setFitScale(1);
     }
 
     setTupletMarks(markRects);
@@ -2608,7 +2641,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet, contentW, contentWidth, svgW, justify, svgMarker, onlyMeasure]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet, contentW, contentWidth, svgW, justify, svgMarker, onlyMeasure, fitBoxW, fitExtra, fitKey, boxContentW]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style
@@ -2962,7 +2995,7 @@ export function SheetView({
         // Whether the page chases the playhead. On the SHEET as well as on the checkbox, because
         // the checkbox only proves the control was clicked — this says what the sheet will do.
         data-follow={followPlayhead ? "on" : "off"}
-        style={{ position: "relative", width: svgW, height: svgHeight, cursor: editMode ? "default" : "pointer" }}
+        style={{ position: "relative", width: svgW * fitScale, height: svgHeight * fitScale, cursor: editMode ? "default" : "pointer" }}
         onClick={editMode ? undefined : (e) => { const m = measureAt(e); if (m) onSeekToMeasure(m.measure); }}
         onMouseMove={editMode ? undefined : (e) => setHover(measureAt(e)?.index ?? null)}
         onMouseLeave={editMode ? undefined : () => setHover(null)}

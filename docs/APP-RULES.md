@@ -153,10 +153,17 @@ updated: 2026-09-20
   marks, and VexFlow draws a measure at its own minimum spacing whatever stave width it is handed. On a
   phone a row already holds ONE measure, so that difference has nowhere to go and the notes were
   CLIPPED: measured at 393px, `meltem_notes` ran 38px past the edge and `beyati-delisin` 40px. It is
-  fixed in two places — a ragged last system is now clamped to the content area (it was skipped
-  entirely, and kept a 470px stave inside a 324px drawing), and `SheetView` then measures the drawn
-  `getBBox()` and shrinks the SVG's own coordinate system until it fits. The pocket-score answer: 89%
-  and 87% on those two scores, 100% on the other four. ⛔ **This is NOT a licence to scale `.kv-score`** —
+  fixed in three places — a ragged last system is clamped to the content area (it was skipped
+  entirely, and kept a 470px stave inside a 324px drawing); the LAYOUT is then WIDENED by whatever
+  the drawing overran, so the notes sit inside their own staves; and only then is the finished
+  picture scaled down to the box. ⛔ **Scaling alone does not work and was the first attempt** —
+  it shrinks the overrun along with everything else, so the stave ended 49px short of the box and
+  its notes still hung 22px past the barline. ⚠ Two things must follow the scale or it shows: the
+  size goes on the SVG's inline STYLE (VexFlow's own `resize()` writes one, and an attribute
+  cannot beat it — the mismatch left `preserveAspectRatio` centring the drawing and 75px of blank
+  above the first stave), and `#sheet-surface` is sized in DISPLAYED units (left logical it made
+  the box 22px wider than the SVG inside it). The pocket-score answer: 89% and 87% on those two
+  scores, 100% on the other four, staves filling 97% of the box everywhere. ⛔ **This is NOT a licence to scale `.kv-score`** —
   the rule above stands unchanged, a CSS transform still destroys the rects `render.ts` crops by, and
   this branch is gated on `contentWidth`, so the corpus path never reaches it (measured 100% on all six
   scores at 1280px). ⚠ Hit-testing survives because it is measured off real ink with

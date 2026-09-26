@@ -468,7 +468,9 @@ export function TransportBar({
       {/* ── Ritim ─────────────────────────────────────────────────────────────────────────── */}
       {/* The usul heads this row rather than the makam's: it is what the metronome and the strokes
           below it are counting, so the two drum controls are its consequences, not its neighbours. */}
-      <div className="kv-transport__row">
+      {/* ⚠ The two rows carry ids so the phone can show them on DIFFERENT tabs (2026-09-26). Ritim
+          is a sound setting and stays on Çal; Perde below is on Çal AND on Nota — see the id. */}
+      <div className="kv-transport__row" id="row-rhythm">
         <span className="kv-transport__caption">{TR.transport.groupRhythm}</span>
         <div className="kv-transport__items">
           <label className={`kv-field${canPlay ? "" : " is-disabled"}`} title={TR.transport.usulTitle}>
@@ -559,7 +561,14 @@ export function TransportBar({
       {/* Everything that decides which pitch is heard or drawn, in the order a reader meets it:
           the makam bends the sound, the transposition moves it, and the accidental mode says how
           the staff prints what is left. The three used to be split across two clusters. */}
-      <div className="kv-transport__row">
+      {/* ⚠ **PERDE IS ON THE NOTA TAB TOO** (owner, 2026-09-26, asking for the accidental dropdown,
+          then transposition, then makam — which is this whole row). All three decide what the page
+          you are looking at SAYS and SOUNDS: the makam bends its perdes, the transposition moves
+          it, and the accidental mode is pure notation — how the staff is written. You choose them
+          with the score in front of you, not on a settings screen.
+          ⚠ ONE element shown on two tabs, never a copy: the tab rules hide and show, so nothing is
+          duplicated and there is no second control to keep in step. */}
+      <div className="kv-transport__row" id="row-pitch">
         <span className="kv-transport__caption">{TR.transport.groupPitch}</span>
         <div className="kv-transport__items">
           {/* ⚠ The picker and its footnote are ONE group, like the transposition below: the ♪ in

@@ -239,7 +239,8 @@ mouse — which is all of them but `smoke:phone` — selects none of it.
 | `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
 | `#fullscreen-on` | the way in — a button in the score card's own tools (`.kv-card__tools`) since 2026-09-26, beside Güfte / İmleci takip et / Düzenle. ⚠ It used to be a row of its own at the END of the page, shown only on the Çal tab; on the Nota tab that row sits under sixty staff systems. ⚠ Phone only and only while full screen is OFF — `App` passes the handler, so the card renders no such button at 1280×720. ⚠ Entering LEAVES EDIT MODE (`applyFullScreen`), or exiting would land on the Nota tab in edit mode with the toolbox hidden |
 | `#fullscreen-bar` | `#fs-play[data-play-state]`, `#fs-stop`, `#fs-exit` |
-| `#transport-settings` | the Ritim + Perde box, so the tab rules can hide it apart from `#transport-pinned` |
+| `#transport-settings` | the Ritim + Perde box, so the tab rules can hide it apart from `#transport-pinned`. ⭐ **On the Nota tab it is a SHEET** (2026-09-26): `#app[data-pitch="open"]` lifts this same element into a fixed panel holding the Perde row alone, opened by `#pitch-toggle[aria-expanded]` in the card's tools. ⚠ ONE element, two presentations — the Çal tab still shows it inline, so there is no second `#makam-select` and no second `[data-omr="makam-intonation"]`; a check must say which tab it is on. ⚠ `data-pitch` is DERIVED (Nota tab, not editing, phone, a score installed), so it cannot be left open behind another screen |
+| `#row-rhythm` / `#row-pitch` | the two rows of that box, so the phone can put them on different tabs |
 | `#voice-field` | the voice select, hidden over the music and kept on the Çal tab |
 
 ⚠ **`data-play-state` now names THREE buttons** — `#play`, `#palette-play` and `#fs-play`. A check

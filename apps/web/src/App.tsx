@@ -351,6 +351,11 @@ export function App() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("nota");
   // ⚠ PHONE ONLY — the score alone, re-engraved to the screen's width. See ui/FullScreen.tsx.
   const [fullScreen, setFullScreen] = useState(false);
+  // ⚠ PHONE ONLY — is the Perde sheet open over the Nota tab? Makam, transposition and the
+  // accidental mode decide what the page says and sounds, so the owner asked for them beside the
+  // score (2026-09-26). Inline they cost 314px of a 800px screen and left 32px of music, measured;
+  // as a sheet they cost the 44px of the button that opens them.
+  const [pitchOpen, setPitchOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
@@ -1034,6 +1039,8 @@ export function App() {
    */
   function onMobileTab(next: MobileTab) {
     setMobileTab(next);
+    // A sheet belongs to the screen it was opened on.
+    setPitchOpen(false);
     if (next === "duzenle") {
       if (!editMode) applyEditMode(true);
     } else if (editMode) {
@@ -1050,6 +1057,7 @@ export function App() {
    */
   function applyFullScreen(v: boolean) {
     setFullScreen(v);
+    if (v) setPitchOpen(false);
     // ⚠ Entering LEAVES EDIT MODE, and that is not tidiness (2026-09-26). The way in moved to the
     // card's own tools, which are on screen while editing too — and full screen hides the toolbox
     // without clearing `editMode`, so coming back out landed on the Nota tab in edit mode with no
@@ -2055,6 +2063,12 @@ export function App() {
       // is a MODE, not a width: its rules live outside the phone media query and hide every
       // section themselves rather than leaning on the tab rules, which do disappear up there.
       data-fullscreen={doc && fullScreen ? "1" : undefined}
+      // ⚠ Phone only, and only on the Nota tab — `app.css` turns `#transport-settings` into a
+      // bottom sheet there. Everywhere else the settings box is an ordinary part of the page.
+      // ⚠ DERIVED, not just stored: the sheet belongs to the Nota tab while READING, and deriving
+      // that here means it cannot be left open behind edit mode or another tab by a path that
+      // forgot to close it. `onMobileTab` still clears the intent so it does not spring back.
+      data-pitch={isPhone && doc && pitchOpen && mobileTab === "nota" && !editMode ? "open" : undefined}
     >
       <header className="kv-header">
         <h1 className="kv-brand">
@@ -2159,6 +2173,10 @@ export function App() {
             // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
             // nothing new for any check at 1280×720.
             onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
+            // ⚠ Phone only. The button both opens and closes the sheet, which is why it takes the
+            // state as well as the handler — there is no backdrop to tap.
+            pitchOpen={isPhone && !fullScreen ? pitchOpen : undefined}
+            onPitch={isPhone && !fullScreen ? () => setPitchOpen((v) => !v) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}

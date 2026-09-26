@@ -3034,6 +3034,42 @@ label.kv-btn.is-disabled {
     display: none;
   }
 
+  /* ── The Perde sheet, over the Nota tab (2026-09-26) ───────────────────────────────────────
+   *
+   * ⭐ Makam, transposition and the accidental mode, beside the score instead of on a settings
+   * screen (owner). ⛔ NOT inline: measured at 393px the Perde row is 314px tall — makam 104, the
+   * transposition group 98, the accidental field 44, because every one of them wraps on a phone —
+   * and on an 800px screen that left **32px of music**. So it is the same element, lifted into a
+   * sheet and shown only while `#pitch-toggle` says so.
+   *
+   * ⚠ ONE element, two presentations. This is `#transport-settings`, exactly what the Çal tab
+   * shows inline; there is no second makam picker to keep in step, and no second `[data-omr=
+   * "makam-intonation"]` for a check to match by accident.
+   *
+   * ⚠ Ritim is not in it. That row is tempo and drums — a sound setting, and the Çal tab's. */
+  .kv-page[data-mtab="nota"][data-pitch="open"] > #transport-settings {
+    display: block;
+    position: fixed;
+    left: var(--space-2);
+    right: var(--space-2);
+    /* Above the tab bar, never over it: the way out must not sit under the thing it opened. */
+    bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+    /* Under the tab bar's 45 and over the score. */
+    z-index: 44;
+    max-height: min(70vh, 520px);
+    max-height: min(70dvh, 520px);
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-card);
+  }
+  .kv-page[data-mtab="nota"][data-pitch="open"] #row-rhythm {
+    display: none;
+  }
+
   /* ── The docked toolbox, on its own tab ────────────────────────────────────────────────────
    *
    * ⚠ It has to clear the tab bar. It beats `.kv-toolbox`'s own `!important` insets by specificity,

@@ -37,6 +37,8 @@ export function ScoreCard({
   editMode,
   onEditMode,
   onFullScreen,
+  pitchOpen,
+  onPitch,
   onUndo,
   onRedo,
   canUndo,
@@ -71,6 +73,10 @@ export function ScoreCard({
   onEditMode: (v: boolean) => void;
   /** Phone only: enter full screen. Undefined on a wide window and while full screen is on. */
   onFullScreen?: () => void;
+  /** Phone only: is the Perde sheet open? */
+  pitchOpen?: boolean;
+  /** Phone only: open/close the Perde sheet. Undefined on a wide window. */
+  onPitch?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -189,6 +195,28 @@ export function ScoreCard({
             on, beside Güfte and İmleci takip et, and it is on screen without scrolling.
             ⚠ Phone only, and App decides — the prop is undefined on a wide window and while full
             screen is already on, so nothing new renders for any check that runs at 1280×720. */}
+        {/* ⚠ **MAKAM, TRANSPOSITION AND THE ACCIDENTAL MODE OPEN FROM HERE** (owner, 2026-09-26,
+            asking for each of the three in turn). They are the Perde row of the transport, and they
+            belong beside the score because all three decide what the page in front of you says and
+            sounds. ⛔ They are NOT inlined: measured at 393px the row is 314px — makam 104, the
+            transposition group 98, the accidental field 44 — which on an 800px screen left **32px
+            of music**. As a sheet the cost is this button.
+            ⚠ It toggles; there is no backdrop to tap, and `aria-expanded` is the state a check
+            reads. The sheet itself is `#transport-settings`, the same element the Çal tab shows
+            inline — one control, two presentations, never a copy. */}
+        {onPitch && (
+          <button
+            id="pitch-toggle"
+            type="button"
+            className={`kv-btn${pitchOpen ? " is-on" : ""}`}
+            aria-expanded={pitchOpen}
+            title={TR.transport.makamTitle}
+            onClick={onPitch}
+          >
+            {TR.transport.groupPitch}
+          </button>
+        )}
+
         {onFullScreen && (
           <button
             id="fullscreen-on"

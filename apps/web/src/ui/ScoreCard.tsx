@@ -30,8 +30,6 @@ export function ScoreCard({
   totalMs,
   viewMode,
   onViewMode,
-  showLyrics,
-  onShowLyrics,
   followPlayhead,
   onFollowPlayhead,
   editMode,
@@ -60,8 +58,6 @@ export function ScoreCard({
   totalMs: number | null;
   viewMode: ViewMode;
   onViewMode: (v: ViewMode) => void;
-  showLyrics: boolean;
-  onShowLyrics: (v: boolean) => void;
   /** Scroll the page to the playhead when it leaves the screen. Lives here, beside Güfte, because
    *  it is a question about the SHEET on screen — where the eye is — and not about the sound; the
    *  transport above owns everything that changes what is played. */
@@ -156,17 +152,15 @@ export function ScoreCard({
             2026-09-04 the instrument tab edits its own bar in place with the same toolbox over the
             same document, and a second toggle for the same mode is exactly the split the owner
             asked to remove (*"ikisi ayrı olmasın"*). One switch, both views. */}
+        {/* ⚠ **GÜFTE IS GONE FROM THE UI, NOT FROM THE APP** (owner, 2026-09-26: *"şimdilik güfte
+            seçeneğini kaldırabiliriz, OCR yapmadık onun için"*). The model does not read lyrics off
+            a page, so on a decoded score the toggle switches on something that is never there — a
+            control whose only honest state is off. Everything behind it stays: `SheetView` still
+            draws güfte, `?lyrics=1` still turns it on, and `tools/render/render.ts` still renders a
+            third of the corpus with it. ⚠ `showLyrics` therefore had to stop defaulting to TRUE
+            (`App.tsx`) — without the switch, that default would have pinned it on. */}
         {viewMode === "sheet" && (
           <>
-            <label className="kv-toggle" title={TR.card.lyricsTitle}>
-              <input
-                type="checkbox"
-                className="kv-toggle__input"
-                checked={showLyrics}
-                onChange={(e) => onShowLyrics(e.target.checked)}
-              />
-              <span>{TR.card.lyrics}</span>
-            </label>
             <label className="kv-toggle" title={TR.card.followTitle}>
               <input
                 id="follow-playhead"

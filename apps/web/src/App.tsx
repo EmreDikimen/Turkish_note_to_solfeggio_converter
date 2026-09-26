@@ -360,7 +360,12 @@ export function App() {
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
   // Sheet: draw lyric syllables under the notes (vocal scores). Off → instrumental-style sheet.
-  const [showLyrics, setShowLyrics] = useState(URL_LYRICS != null ? URL_LYRICS === "1" : true);
+  // ⚠ **FALSE is the human default now** (owner, 2026-09-26). It was `true`, which only worked
+  // while a switch existed to turn it off; the switch is gone because the model does not read
+  // lyrics off a page yet, so a decoded score has none to draw. ⛔ The render automation is
+  // untouched: `?lyrics=` still wins, and `tools/render/render.ts` ALWAYS passes it (`"1"` or
+  // `"0"`), so no corpus render has ever depended on this fallback.
+  const [showLyrics, setShowLyrics] = useState(URL_LYRICS != null ? URL_LYRICS === "1" : false);
   // Draw a hyphen between a word's syllables ("Gam-ze-de"). Most sheets omit these → default off.
   const [lyricHyphens, setLyricHyphens] = useState(false);
   // Sheet: follow the playhead down the page while it plays (see `readFollow` above for the
@@ -2168,8 +2173,6 @@ export function App() {
             // ⚠ NOT the bare setter: opening the instrument tab also switches the SOUND to the
             // instrument the page draws (owner, 2026-09-04). See `applyViewMode`.
             onViewMode={applyViewMode}
-            showLyrics={showLyrics}
-            onShowLyrics={setShowLyrics}
             followPlayhead={followPlayhead}
             // Remembered as it is set, not on unload: a reader who closes the tab straight after
             // clicking still gets the answer they chose next time.

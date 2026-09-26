@@ -1914,16 +1914,6 @@ export function SheetView({
    *  22px wider than the SVG inside it — a sideways scrollbar on a page that visibly fits — and
    *  as much slack again under the last system. */
   const [fitScale, setFitScale] = useState(1);
-  /** ⚠ The playhead's frame loop reads the scale from HERE, not from the state.
-   *
-   *  `positionsRef` holds VexFlow's LOGICAL coordinates — it is the one thing the cursor is placed
-   *  from, and the per-note click targets come from a different array measured off the rendered
-   *  ink, which is why they kept landing correctly while the cursor did not. Once a dense page is
-   *  drawn smaller than its layout, a logical x is not where the note is: at 87% a note 300px along
-   *  a row is drawn at 262, and the cursor stood 38px to its right and a row's worth too low.
-   *  A ref rather than a dependency: the loop must not be torn down and rebuilt by a re-render. */
-  const fitScaleRef = useRef(1);
-  fitScaleRef.current = fitScale;
   const [hover, setHover] = useState<number | null>(null);
   // The insert preview: a ghost notehead at the staff position an empty click would use. Moved by
   // mutating the element directly (like the playhead above), never through state — a preview that
@@ -2605,6 +2595,7 @@ export function SheetView({
     //
     // ⚠ Gated on `contentWidth`, so the corpus path never reaches any of this: `render.ts` draws at
     // the default width, where nothing overruns.
+    let applied = 1;
     if (fitBoxW != null && svg) {
       let drawnRight = 0;
       try {
@@ -2627,10 +2618,51 @@ export function SheetView({
           svg.style.width = `${Math.round(svgW * scale)}px`;
           svg.style.height = `${Math.round(height * scale)}px`;
         }
+        applied = scale;
         setFitScale(scale);
       }
     } else {
       setFitScale(1);
+    }
+
+    // ── ONE PLACE WHERE LOGICAL BECOMES RENDERED ───────────────────────────────────────────────
+    //
+    // ⭐ **EVERYTHING THE DRAW PUBLISHES IS IN RENDERED UNITS FROM HERE ON.** VexFlow works in the
+    // layout's coordinates, and once a dense page is drawn smaller than its layout those are not
+    // where the ink is. The overlay is built from these four arrays and nothing else, so this is
+    // the only conversion — and it exists as one block on purpose: the same drift was fixed twice
+    // in two days, once for the playhead and once for the note targets, because each consumer was
+    // scaled where it was read instead of where it was made. A fifth consumer added later inherits
+    // the fix by doing nothing.
+    //
+    // ⚠ Measured before it, at 393px on `meltem_notes` (87%): the click targets sat an average of
+    // **55px** from their own noteheads and the worst **159px**, so tapping a note selected one up
+    // and to the left of it. At scale 1 — every wide window, and `render.ts` — this loop does not
+    // run at all.
+    if (applied !== 1) {
+      for (const b of collected) {
+        b.x *= applied;
+        b.y *= applied;
+        b.width *= applied;
+        b.topLineY *= applied;
+      }
+      for (const r of noteRects) {
+        r.x *= applied;
+        r.y *= applied;
+        r.width *= applied;
+        r.height *= applied;
+      }
+      for (const r of markRects) {
+        r.x *= applied;
+        r.y *= applied;
+        r.width *= applied;
+        r.height *= applied;
+      }
+      for (const q of positions) {
+        q.x *= applied;
+        q.top *= applied;
+        q.height *= applied;
+      }
     }
 
     setTupletMarks(markRects);
@@ -2643,8 +2675,10 @@ export function SheetView({
     for (const p of positions) if (!posByEvRef.current.has(p.evIndex)) posByEvRef.current.set(p.evIndex, p);
     onLayout?.({
       boxes: collected.map((b) => ({ index: b.index, x: b.x, y: b.y, width: b.width })),
-      svgWidth: svgW,
-      svgHeight: height,
+      // ⚠ The boxes above are in rendered units, so these are too — at scale 1 (the strip
+      // exporter's only case) both are the logical numbers they always were.
+      svgWidth: svgW * applied,
+      svgHeight: height * applied,
       rowHeight: ROW_HEIGHT,
     });
 
@@ -2692,11 +2726,9 @@ export function SheetView({
       }
       if (active) {
         cursor.style.display = "block";
-        // ⚠ Logical → rendered. See `fitScaleRef`. The 2px nudge is a SCREEN pixel, so it is
-        // subtracted after the scale, not multiplied by it.
-        const fs = fitScaleRef.current;
-        cursor.style.height = `${active.height * fs}px`;
-        cursor.style.transform = `translate(${active.x * fs - 2}px, ${active.top * fs}px)`;
+        // ⚠ Already RENDERED units — the draw converts every array it publishes in one place.
+        cursor.style.height = `${active.height}px`;
+        cursor.style.transform = `translate(${active.x - 2}px, ${active.top}px)`;
         // ⚠ AFTER the transform, never before: the box is read from the DOM, so it has to be the
         // position this frame just wrote. And only when the ROW changed — see the FOLLOW_* block.
         if (followPlayhead && active.top !== followRowRef.current) {

@@ -313,7 +313,12 @@ Full statements, with the bug each one cost, in **[docs/APP-RULES.md](docs/APP-R
   write a second rulebook in the editor.
 - **No selector under `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that
   container** — that SVG is the training-strip source, and `render.ts` screenshots it by rect. This
-  binds every CSS change, the phone's media queries included.
+  binds every CSS change, the phone's media queries included. ⚠ **The one scale that IS allowed is a
+  `viewBox` on the SVG itself, and only when `contentWidth` is set** (2026-09-26) — a page too dense
+  for a phone is engraved smaller rather than clipped. It is gated so `render.ts` never reaches it,
+  and it is NOT a licence to scale the container. ⚠ Everything the draw then publishes — measure
+  boxes, click targets, tuplet marks, playhead positions — is in RENDERED units, converted in one
+  place; never scale a consumer where it is read. [docs/APP-RULES.md](docs/APP-RULES.md).
 - **Never reintroduce a text or regex matcher** in a browser check. Checks read DOM attributes, which
   is what leaves all user-facing copy free to change; every string lives in `strings.ts`.
 - **Token ids are append-only, and pixels and labels come from one code path** — see group 1; the app

@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-20
+updated: 2026-09-26
 
 ## Now
 
@@ -26,17 +26,14 @@ owner's call; the point of this entry is that three risks written as *future* ar
    2026-09-04. The model a visitor meets is the one the Dockerfile bakes into the Cloud Run image out
    of `apps/web/public/models`. ⚠ Run A was the **hand-test** pick, not an exam pass; the exam floor
    is unmet and the dense-page failure below is still silent.
-3. ⛔ **The phone HAS been looked at now (2026-09-19), and a visitor still meets the unfixed one.**
-   On the 375×667 screenshots the music started **~47% down the Nota screen** and the one system left
-   was cut off at the right (the page engraved at 1000px inside a 343px box); on the Düzenle screen
-   the docked toolbox's whole 227px is *Çal / Dur / Seçim* and **not one editing tool is visible**.
-   ⭐ **Half of that is fixed in the repo**: full screen's `contentWidth` re-engrave is now the
-   default on every phone-shaped screen, in both orientations — hidden width **659px → 11px** at
-   375×667 and **242px → 0** sideways (`695651f`), plus the missing `viewport-fit=cover`.
-   ⛔ **The toolbox is untouched**, and ⛔ **nothing of this is deployed**, so **LinkedIn's phone-heavy
-   traffic** still meets the 2026-09-05 build — which keeps this the live risk with the most readers.
-   ⏭ The phone layout is being rebuilt as its own component tree ([DECISIONS.md](DECISIONS.md),
-   2026-09-19); deploying what is already committed comes first.
+3. ⛔ **The phone's reading screen is REBUILT but NOT DEPLOYED.** Live still carries the 2026-09-11
+   tab bar from the 2026-09-20 deploy, so strangers arriving from LinkedIn meet the screen the owner
+   spent 2026-09-26 correcting: a score that does not fit, a tempo box that cannot be typed in, and
+   an edit toolbox showing no tools. Everything below is committed and measured at 393px and rides
+   the next `deploy:app`: the score fits in both orientations, a dense page is engraved smaller
+   rather than clipped, the Çal tab is closed and its contents fold out under Çal/Dur, the tempo box
+   takes typing and has ± buttons, Geri al is in the toolbox, and the Güfte switch is gone.
+   ⏭ **The owner's call: deploy it.** [log/status-log.md](log/status-log.md), 2026-09-26.
 
 ⏭ **NOTHING IS COUNTING YET, AND THE LINK IS LIVE.** The site can count its own visitors
 anonymously — openings vs pages actually read, distinct devices, country, browser, robots apart — but
@@ -125,13 +122,14 @@ track never touches the app, and neither waits for the other. [mvp/README.md](mv
 
 ### Track A — the product
 
-⏭ **The next product action is the PHONE REBUILD** (owner, 2026-09-19: *"mobil yapıyı sıfırdan
-kuralım… asıl kullanıcı kitlemiz orada olacak"*). Phase 0 is done and it grew: the tab bar
-(`be11142`, with `typecheck` / `test` / `smoke:editor` all passing), its DOM contract (`fdb9573`) and
-the score's fit in both orientations (`695651f`) are committed. ⏭ **The next step is `deploy:app`** —
-none of it has reached a reader — and then `apps/web/src/phone/`. The four owner choices, the causes
-and the new gate are in [DECISIONS.md](DECISIONS.md) (2026-09-19) and
-[log/status-log.md](log/status-log.md).
+⏭ **The next product action is to DEPLOY the phone rebuild**, then keep going on it. Phases 0 and 1
+of the plan are done and phase 2 — the `apps/web/src/phone/` shell — is partly built in place: the
+Çal tab is gone, the settings fold, and the score card's head is down to two rows. What is still
+owed from the plan: the phone's own component tree, the `data-phone` / `phone.css` split, the
+category-switching tool strip (the toolbox still scrolls its six groups), and
+**`tools/browser/phone-smoke.ts` — the gate with the nine asserts, which does not exist yet**.
+⚠ `npm run smoke:phone` is still only a probe, and `npm run smoke:app` is red for a reason that
+predates this work (verified against `a52ce28`).
 
 ⏭ **Still open, and needing a person's eyes:** [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md)
 checks 25–29 — five shipped things no eye has judged. Run them via `npm run dev:cloud`, then deploy

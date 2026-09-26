@@ -2,10 +2,58 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-20
+updated: 2026-09-26
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-26 — the phone's reading screen, rebuilt live against the owner's own device
+
+**Eleven changes in one session, every number measured with a Playwright probe at 393px.** The owner
+was reading a real page on a real phone and reporting what was wrong; each fix below answers one of
+those reports, and three of them were faults this rebuild had introduced itself.
+
+**The screen.** ⭐ **The Çal tab is closed.** It was a settings SCREEN — usul, metronome, drums,
+makam, transposition, the accidental mode, the voice — reached by leaving the music, and all of it
+is now a fold under Çal/Dur on the Nota tab. Three tabs. The Perde controls were **inlined first and
+floated as a sheet second**, and both were measured wrong: inline the row is **314px** and left
+**32px of music** on an 800px screen; as a sheet it covered the page it was meant to be read beside.
+Folded, the cost is one 44px handle, and the handle sits under Çal/Dur when shut and **under the
+settings when open** — closing is the last thing you do after reading down a 515px stack. The fold
+animates on a grid row (0fr → 1fr, the one height transition CSS can do blind) and is
+`visibility: hidden` when shut so a Tab key cannot reach it. ⭐ Full screen moved to the score card's
+tools; the card's tools are two rows now (view switch alone, the rest split evenly, head 249 →
+189px); **Düzenle left the Nota tab** because the bottom bar's tab already is edit mode; and the
+**Güfte switch is gone** — the model does not read lyrics, so its only honest state was off.
+
+**The controls.** ⭐ **The tempo box could not be typed in at all.** It committed straight from the
+change event against a controlled value, so every keystroke passing through an out-of-range number
+was refused and the box snapped back: from 80 you could not reach 120, because the first keystroke
+is "1". ⚠ It looked like a touch bug and was not — a desktop spinner only ever produces in-range
+values, so the field worked there by accident. It holds a draft now, and has **± buttons** that
+repeat while held and commit on RELEASE (`WebAudioBackend.play()` re-schedules the whole timeline per
+call). ⭐ The ⟲ reset **keeps its place**: mounted only when the tempo differed, it grew the group at
+the moment the tempo was touched and dropped it onto a second line. ⭐ **Geri al moved into the
+toolbox's fixed foot** — the stack was never the problem (four deletes undo to the original count,
+`MAX_PAST` is 100), the button was in the card's head, off the top of the screen while the toolbox
+owns the bottom 340px. That toolbox opens **half as tall again** (34dvh → 51dvh): at 227px the whole
+of it was Çal / Dur / Seçim and **not one editing tool** was visible; at 340px, 13 of 33 are.
+
+**Three faults this rebuild had introduced, all from fitting a dense page into a narrow box.**
+⛔ **Scaling the finished picture does not put a note back inside its own stave** — it shrinks the
+overrun with everything else: the stave ended 49px short of the box and its notes still hung 22px
+past the barline. The layout is **widened first** by exactly what the drawing overran, and only then
+scaled. ⛔ The SVG's size was written as attributes while VexFlow writes an inline style, so the box
+kept its old height and `preserveAspectRatio` centred the drawing — the **75px of blank** above the
+first stave the owner photographed. ⛔ And the draw published VexFlow's LOGICAL coordinates to four
+consumers, so on a scaled page the playhead sat off its staff and **tapping a note selected one up
+and to the left** (average **55px** out, worst **159px**). They are converted once now, where they
+are made; a fifth consumer inherits the fix by doing nothing.
+
+⚠ **None of this is deployed.** Live still carries the 2026-09-11 tab bar from the 2026-09-20 deploy.
+⚠ `npm run smoke:app` fails on the stored-page row — checked against `a52ce28`, it fails there too,
+so it predates this work. [../DECISIONS.md](../DECISIONS.md) · [../DOM-CONTRACT.md](../DOM-CONTRACT.md)
+· [../APP-RULES.md](../APP-RULES.md).
 
 ## 2026-09-19 — the score now fits the phone, in both orientations
 

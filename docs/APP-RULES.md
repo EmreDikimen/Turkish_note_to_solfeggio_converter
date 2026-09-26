@@ -170,6 +170,15 @@ updated: 2026-09-20
   `getBoundingClientRect()`, which already accounts for a viewBox — five notes tapped at 87%, five
   selected. ⚠ Past `MIN_FIT_SCALE` (0.65) it stops shrinking and lets the SVG be wider than its box, so
   that row scrolls instead: unreadably small is worse than a drag.
+- ⭐ **EVERY GEOMETRY THE DRAW PUBLISHES IS IN RENDERED UNITS, CONVERTED IN ONE PLACE** (2026-09-26).
+  VexFlow works in the layout's coordinates, and once a dense page is drawn smaller than its layout
+  those are not where the ink is. `SheetView` publishes four — measure boxes, per-note click targets,
+  tuplet marks and playhead positions — and all four are multiplied by the applied scale at the end
+  of the draw, where they are MADE. ⛔ **Never scale a consumer where it is read.** That was the first
+  shape and it cost the same bug twice in two days: the playhead was fixed alone, the click targets
+  were still logical, and tapping a note selected one up and to the left of it — measured at 393px,
+  an average of **55px** out and a worst of **159px**. A fifth consumer inherits the fix by doing
+  nothing. ⚠ At scale 1 — every wide window, and `render.ts` — the conversion does not run.
 - ⭐ **THE MEASURE CARD IS THIS SAME `SheetView`, MOUNTED A SECOND TIME WITH `onlyMeasure`** (owner,
   2026-09-05: *"ikisi ayrı olmasın"*) — same component, same document, same callbacks, same undo stack,
   so the instrument tab edits its bar with the page's own editor and not a copy. ⚠ **`onlyMeasure`
@@ -204,4 +213,21 @@ updated: 2026-09-20
   at their text width by `min-width: auto`, and an ellipsis lost the tempo. ⚠ **`index.html` carries
   `viewport-fit=cover`** — without it every `env(safe-area-inset-*)` in this file resolves to **0px**,
   which is how six of them sat dead for eight days. [DECISIONS.md](DECISIONS.md), 2026-09-19.
+  ⭐ **AND THE FIT IS TWO STAGES, NOT ONE** (2026-09-26). Scaling the finished picture cannot put a
+  note back inside its own stave — it shrinks the overrun too, and measured on `meltem_notes` the
+  stave ended 49px short of the box while its notes still hung 22px past the barline. The layout is
+  **widened by exactly what the drawing overran** (`getBBox`, one extra pass, capped at double) and
+  only then scaled. ⚠ The size goes on the SVG's inline **style**: VexFlow's `resize()` writes one and
+  an attribute cannot beat it, which left `preserveAspectRatio` centring the drawing and **75px of
+  blank** above the first stave. ⚠ `#sheet-surface` is sized in DISPLAYED units, or it is 22px wider
+  than the SVG inside it.
+- ⭐ **THREE TABS, AND THE SETTINGS FOLD** (2026-09-26). The Çal tab is CLOSED: usul, drums, makam,
+  transposition, the accidental mode and the voice open under Çal/Dur on the Nota tab instead, so the
+  score stays on screen behind them. ⛔ They are not inline — measured, that row is **314px** and left
+  **32px of music** on an 800px screen. ⚠ The fold animates a grid row 0fr → 1fr and needs
+  `.kv-transport__body` (`display: contents` everywhere else) because two siblings cannot collapse
+  together; collapsed it is `visibility: hidden`, or a Tab key reaches controls nobody can see. ⚠ The
+  handle moves with it — under Çal/Dur when shut, under the settings when open — as two mount points
+  of ONE button, never two. ⚠ `#edit-toggle` is hidden on the NOTA tab only: the Düzenle tab is edit
+  mode, and `smoke:phone` now takes the tab where one exists.
 

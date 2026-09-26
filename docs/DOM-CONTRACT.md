@@ -227,24 +227,35 @@ handles and playhead are the page's own `[data-omr-note]` / `#note-delete` /
 Nota page, because a card with its own overlay could pass "a note is selected" and still be a second
 document. [features/measure-card.md](features/measure-card.md)
 
-## The phone layout (2026-09-11)
+## The phone layout (2026-09-11, rebuilt through 2026-09-26)
 
 ⚠ **None of this exists on a wide window.** The bottom tab bar renders only when
 `(max-width: 700px)` matches AND a score is installed, so every check that runs at 1280×720 with a
 mouse — which is all of them but `smoke:phone` — selects none of it.
 
+⭐ **THREE TABS, NOT FOUR.** `Çal` was closed on 2026-09-26 and everything it held moved into a fold
+on the Nota tab. ⛔ `data-mtab="cal"` no longer exists; a check that waits for it waits forever.
+
 | Element | Carries |
 |---|---|
-| `#app` | `data-mtab` = `nota` \| `cal` \| `duzenle` \| `pages`, and `data-fullscreen` |
+| `#app` | `data-mtab` = `nota` \| `duzenle` \| `pages`, plus `data-fullscreen` and `data-pitch` |
 | `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
-| `#fullscreen-on` | the way in — a button in the score card's own tools (`.kv-card__tools`) since 2026-09-26, beside Güfte / İmleci takip et / Düzenle. ⚠ It used to be a row of its own at the END of the page, shown only on the Çal tab; on the Nota tab that row sits under sixty staff systems. ⚠ Phone only and only while full screen is OFF — `App` passes the handler, so the card renders no such button at 1280×720. ⚠ Entering LEAVES EDIT MODE (`applyFullScreen`), or exiting would land on the Nota tab in edit mode with the toolbox hidden |
+| `#pitch-toggle` | `aria-expanded` — the fold under `#transport-pinned` that holds everything the Çal tab used to be. Phone, Nota tab, not editing; `App` passes no handler anywhere else, so no wide window renders it |
+| `#transport-settings` | the Ritim + Perde box. ⭐ On the Nota tab it is the FOLD: `#app[data-pitch="open"]` runs its grid row 0fr → 1fr. ⚠ ONE element, two presentations — a wide window shows it open and inline, so there is never a second `#makam-select` or `[data-omr="makam-intonation"]`; a check must say which it means. ⚠ Collapsed, its `.kv-transport__body` is `visibility: hidden` — the controls inside are not merely invisible, they are unreachable, and a check must open the fold first |
+| `#row-rhythm` / `#row-pitch` | the two rows inside it |
+| `#voice-field` | the voice select. It lives in the PINNED box, so the fold cannot contain it; it is shown and hidden WITH the fold instead |
+| `#bpm` | ⚠ holds a DRAFT while being typed (`""`, `1`, `1802` are all legal mid-edit), so reading it mid-edit can return something that is not the tempo. Blur drops the draft |
+| `#bpm-down` / `#bpm-up` | the tempo's ± pair, at every width. ⭐ They commit on RELEASE, not per step — held, they repeat ~9×/s and move only the number on screen. A check that steps then reads `#bpm` must let the pointer up first. Each disables itself at its end of 20–400 |
+| `#fullscreen-on` | a button in the score card's tools (`.kv-card__tools`). ⚠ Phone only and only while full screen is OFF. ⚠ Entering LEAVES EDIT MODE (`applyFullScreen`), or exiting would land on the Nota tab in edit mode with the toolbox hidden |
 | `#fullscreen-bar` | `#fs-play[data-play-state]`, `#fs-stop`, `#fs-exit` |
-| `#transport-settings` | the Ritim + Perde box, so the tab rules can hide it apart from `#transport-pinned`. ⭐ **On the Nota tab it is a SHEET** (2026-09-26): `#app[data-pitch="open"]` lifts this same element into a fixed panel holding the Perde row alone, opened by `#pitch-toggle[aria-expanded]` in the card's tools. ⚠ ONE element, two presentations — the Çal tab still shows it inline, so there is no second `#makam-select` and no second `[data-omr="makam-intonation"]`; a check must say which tab it is on. ⚠ `data-pitch` is DERIVED (Nota tab, not editing, phone, a score installed), so it cannot be left open behind another screen |
-| `#row-rhythm` / `#row-pitch` | the two rows of that box, so the phone can put them on different tabs |
-| `#voice-field` | the voice select, hidden over the music and kept on the Çal tab |
+| `#palette-undo` / `#palette-redo` | the toolbox's own undo pair, in its FIXED foot beside `#palette-select`. One stack with the card's `#undo` / `#redo`. ⚠ On the Düzenle tab the card's pair is hidden (`.kv-card__undo`) but keeps its ids, and that is what every check at 1280px drives |
 
-⚠ **`data-play-state` now names THREE buttons** — `#play`, `#palette-play` and `#fs-play`. A check
-must say which one it means; it was already true of the first two.
+⛔ **THE GÜFTE TOGGLE IS GONE** (2026-09-26) — the model does not read lyrics off a page. The feature
+is not: `?lyrics=1` still draws them and `render.ts` still renders a third of the corpus with them.
+A check that wants lyrics asks for them in the URL.
+
+⚠ **`data-play-state` names THREE buttons** — `#play`, `#palette-play` and `#fs-play`. A check must
+say which one it means.
 
 ⚠ **The Düzenle tab IS edit mode.** `#edit-toggle[data-edit-mode]` stays the fact, and the tab moves
 with it in both directions (`applyEditMode` in `App.tsx`). ⛔ `#edit-toggle` may not be hidden on
@@ -253,6 +264,15 @@ that tab even though the tab says the same thing: `smoke:phone` clicks it at 375
 ⚠ **`data-fullscreen` is NOT gated on the phone breakpoint**, deliberately — a phone turned sideways
 is 844px wide, past the 700px line, and full screen has to survive the rotation. Its stylesheet
 block therefore lives outside the phone media query and hides the sections itself.
+
+⚠ **`data-pitch` is DERIVED** from (phone, score installed, Nota tab, not editing) rather than only
+stored, so no path can leave the fold open behind another screen.
+
+⚠ **A DENSE PAGE IS DRAWN SMALLER THAN ITS LAYOUT, AND EVERY GEOMETRY THE DRAW PUBLISHES IS IN
+RENDERED UNITS** (2026-09-26). `SheetView` measures what it drew and shrinks the SVG's coordinate
+system until it fits the box; the measure boxes, note targets, tuplet marks and playhead positions
+are all converted once, where they are made. ⚠ A check that compares a `data-omr-note` box against
+anything must not assume the numbers are VexFlow's. At 1280px the scale is 1 and nothing converts.
 
 ## Two traps
 

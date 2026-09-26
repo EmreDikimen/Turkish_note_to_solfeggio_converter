@@ -131,6 +131,21 @@ npx tsx tools/vision/parity/rescue-check.ts
     # ⚠ --real-val-frac must match the training run (0.10), or the held-out set is a different one.
     # ⛔ It refuses to build if an exam piece is on the held-out side. NOT the exam: not page-complete,
     # not one-shot; quote it as a strip pool, like real-val.
+.venv-ml/bin/python scripts/rung3/decode_page_arms.py <page.png> [--prefix NAME] [--int8]
+    # ONE page, sliced ONCE, decoded by the live model / Round 4 control / scheme H (+ --int8 for
+    # the live ONNX a visitor actually gets), each stitched to apps/web/public/scores/<prefix>_<arm>.json
+    # and printed as a `?score=` link. Run `npm run dev:web` and open them side by side.
+    # ⭐ The single slice is the whole point: if each arm re-sliced, a page difference could be the
+    # SLICER — docs/METRICS-SLICER-ROOTS.md prices how often a re-cut moves pixels.
+    # ⛔ canonical_label is applied for every arm on the way to the stitcher: stitch.ts cannot split
+    # scheme H's glued decode, and without it an H page collapses to a few empty measures. For the
+    # old-vocabulary arms the re-spaced stitch is byte-identical to the raw one (verified on meltem1).
+    # ⛔ Scores land in public/scores/ — gitignored AND on prune-dist.mjs's DROP list, so they cannot
+    # reach a build; a .json at the dist ROOT fails the build by design (third-party engravings).
+    # ⚠ It does NOT rename the documents: doc.name seeds the tuplet bracket-or-arc hash, so renaming
+    # the arms would re-engrave their triplets and the pages would differ for a non-model reason.
+    # ⚠ NO GOLD — pictures to look at, never a number. It warns (does not refuse) when a word in the
+    # filename also appears in testset.json; check the piece by hand. ⛔ Never point it at the exam.
 .venv-ml/bin/python scripts/rung3/build_model_compare.py [--pool DIR ...] [--limit N]
     # Decodes every strip of one or more pools with THREE checkpoints (live / Round-4 control /
     # scheme H) and writes strip + gold + all three decodes to data/real/rung3/_compare/models.json.

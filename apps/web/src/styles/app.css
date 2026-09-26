@@ -3139,6 +3139,70 @@ label.kv-btn.is-disabled {
     display: none;
   }
 
+  /* ── Inside the fold: one label column, one control column ─────────────────────────────────
+   *
+   * ⭐ **BOTH EDGES WERE RAGGED AND THAT IS WHY IT LOOKED UNFINISHED** (owner, 2026-09-26: *"böyle
+   * çirkin duruyor"*). Every label is a different length — Usul, Çalgı sesi, Vurmalı çalgı, Makam,
+   * Transpozisyon, Arıza işaretleri — and `.kv-field` is an inline row, so each control began
+   * wherever its own label ended and stopped wherever its own content did. Measured in a 359px
+   * panel: controls STARTED at 68, 102, 111 and 207, and ENDED at 195, 231, 295, 318 and 337.
+   * Nothing lined up with anything, and most rows left a wide empty margin on the right.
+   *
+   * The fix is a form, not a paragraph: the label takes a fixed column, the control takes the rest
+   * and ends at the panel's edge. One left edge, one right edge, every control the same width.
+   *
+   * ⚠ Each setting also gets its own ROW. A `<select>` beside a toggle (Usul + Metronom) and a
+   * toggle beside a slider (Usul vuruşu + Vuruş sesi) put two different shapes and two different
+   * heights on one line, which is the other half of the mess.
+   *
+   * ⚠ Scoped to the fold. On a wide window these rows are a horizontal bar with room to spare, and
+   * this would turn it into a tall column for no reason. */
+  .kv-page[data-mtab] #transport-settings .kv-transport__items,
+  .kv-page[data-mtab] #transport-settings .kv-transport__group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  .kv-page[data-mtab] #transport-settings .kv-field {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: var(--space-2);
+  }
+  /* ⚠ The label may WRAP inside its column — "Arıza işaretleri" is the longest and would otherwise
+     push the column wider than the one width they all share. */
+  .kv-page[data-mtab] #transport-settings .kv-field > span:first-child {
+    flex: 0 0 6.5rem;
+    min-width: 0;
+    white-space: normal;
+  }
+  .kv-page[data-mtab] #transport-settings .kv-field select,
+  .kv-page[data-mtab] #transport-settings .kv-field input[type="range"] {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+  /* A toggle is its own row and says so by filling it, with the dot and the word at the left. */
+  .kv-page[data-mtab] #transport-settings .kv-toggle {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  /* The transposition's two segments share their row the way the card's view switch does. */
+  .kv-page[data-mtab] #transport-settings .kv-seg {
+    display: flex;
+    width: 100%;
+  }
+  .kv-page[data-mtab] #transport-settings .kv-seg > .kv-seg__btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  /* The makam footnote is prose, not a control: it spans the panel rather than a column. */
+  .kv-page[data-mtab] #transport-settings .kv-makam,
+  .kv-page[data-mtab] #transport-settings .kv-makam--flat {
+    width: 100%;
+  }
+
   /* ── The Perde fold, under Çal / Dur / tempo (2026-09-26) ──────────────────────────────────
    *
    * ⭐ Makam, transposition and the accidental mode, beside the score instead of on a settings

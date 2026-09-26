@@ -83,6 +83,13 @@ the height. That needs a single child, so `.kv-transport__body` wraps the rows a
 delay: without it a Tab key reaches controls nobody can see. `prefers-reduced-motion` gets the same
 fold instantly.
 
+⚠ **Inside the fold it is a FORM, not a bar.** Every label takes one fixed column and every
+control takes the rest, ending at the panel's edge; each setting has its own row, so a `<select>`
+never shares a line with a toggle or a slider. ⛔ Before it, both edges were ragged and that is what
+read as unfinished: in a 359px panel the controls STARTED at 68, 102, 111 and 207 and ENDED at 195,
+231, 295, 318 and 337. Now every one starts at **128** and ends at **377**. The price is height —
+the panel is **713px** open, against 515px when the toggles still shared lines.
+
 ⚠ **The voice picker is in the fold, not the pinned row.** It is set once before playing, and the
 pinned row is sticky — it used to follow the reader down the page.
 

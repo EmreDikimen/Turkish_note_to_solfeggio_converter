@@ -70,12 +70,15 @@ export const TR = {
       duzenle: "Düzenle",
       pages: "Sayfalar",
     },
-    // Full screen (owner, 2026-09-11). ⚠ The hint says the two things that are NOT obvious from a
-    // button called "Tam ekran": the music is re-engraved to the screen's width, so nothing has to
-    // be dragged sideways any more, and tapping a bar still starts playback there — which is the
-    // only way to choose where to play from once the transport bar is gone.
+    // Full screen (owner, 2026-09-11; moved into the card's tools 2026-09-26).
+    // ⚠ **THE HINT IS GONE BECAUSE IT WENT STALE, not to save room.** It read *"Nota ekranın
+    // genişliğine dizilir. Bir ölçüye dokununca oradan çalar."* — and since the score is fitted to
+    // the box on EVERY phone screen (2026-09-19), the first sentence no longer describes anything
+    // full screen does, and the second is already on the card's own hint (`card.hintSheet`). What
+    // is left that a button called "Tam ekran" does not say is only "and nothing else on screen",
+    // which is what the title carries.
     fullscreen: "Tam ekran",
-    fullscreenHint: "Nota ekranın genişliğine dizilir. Bir ölçüye dokununca oradan çalar.",
+    fullscreenTitle: "Notayı tek başına göster — diğer her şey gizlenir",
     fullscreenExit: "Çık",
     fullscreenExitTitle: "Tam ekrandan çık",
   },

@@ -36,6 +36,7 @@ export function ScoreCard({
   onFollowPlayhead,
   editMode,
   onEditMode,
+  onFullScreen,
   onUndo,
   onRedo,
   canUndo,
@@ -68,6 +69,8 @@ export function ScoreCard({
   onFollowPlayhead: (v: boolean) => void;
   editMode: boolean;
   onEditMode: (v: boolean) => void;
+  /** Phone only: enter full screen. Undefined on a wide window and while full screen is on. */
+  onFullScreen?: () => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -176,6 +179,26 @@ export function ScoreCard({
               <span>{TR.card.follow}</span>
             </label>
           </>
+        )}
+
+        {/* ⚠ FULL SCREEN LIVES WITH THE VIEW CONTROLS, NOT ON THE ÇAL TAB (owner, 2026-09-26:
+            *"tam ekran özelliğinin Çal tabına değil de Nota tabına gelmesi daha doğru olmaz mı,
+            sonuç olarak notalar orada oynatılıyor"*). It shipped 2026-09-11 as a row of its own at
+            the END of the page, which only worked because the Çal tab is short: on the Nota tab
+            that same row sits under sixty staff systems. Here it is a control of the thing it acts
+            on, beside Güfte and İmleci takip et, and it is on screen without scrolling.
+            ⚠ Phone only, and App decides — the prop is undefined on a wide window and while full
+            screen is already on, so nothing new renders for any check that runs at 1280×720. */}
+        {onFullScreen && (
+          <button
+            id="fullscreen-on"
+            type="button"
+            className="kv-btn"
+            title={TR.mobile.fullscreenTitle}
+            onClick={onFullScreen}
+          >
+            {TR.mobile.fullscreen}
+          </button>
         )}
 
         <button

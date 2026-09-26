@@ -2913,7 +2913,6 @@ label.kv-btn.is-disabled {
   /* Nota — the music, full width. The brand goes too: on a 667px screen the title and tagline are
      140px that say nothing you do not already know by the time a score is loaded. */
   .kv-page[data-mtab="nota"] #voice-field,
-  .kv-page[data-mtab="nota"] > .kv-fsrow,
   .kv-page[data-mtab="nota"] > .kv-header,
   .kv-page[data-mtab="nota"] > .kv-hero,
   .kv-page[data-mtab="nota"] > .kv-recent,
@@ -2944,7 +2943,6 @@ label.kv-btn.is-disabled {
      tab edits its own bar), `#edit-toggle`, and the undo pair.
      ⛔ `#edit-toggle` may NOT be hidden here even though the tab now says the same thing:
      `smoke:phone` clicks it at 375px, and a probe that throws is a probe that stops reporting. */
-  .kv-page[data-mtab="duzenle"] > .kv-fsrow,
   .kv-page[data-mtab="duzenle"] > #transport-pinned,
   .kv-page[data-mtab="duzenle"] .kv-card__meta,
   .kv-page[data-mtab="duzenle"] .kv-card__title,
@@ -2964,7 +2962,6 @@ label.kv-btn.is-disabled {
      exporter, the repeat preview — and it says so in its own summary; on a phone it is the last
      thing on the one screen a visitor lands on. It is hidden, NOT removed: a wide window still
      has it, which is where it is used. */
-  .kv-page[data-mtab="pages"] > .kv-fsrow,
   .kv-page[data-mtab] > .kv-advanced,
   .kv-page[data-mtab="pages"] > #transport-pinned,
   .kv-page[data-mtab="pages"] > #transport-settings,
@@ -3011,23 +3008,6 @@ label.kv-btn.is-disabled {
       var(--kv-toolbox-h, min(51dvh, 390px)) + var(--mtab-h) + env(safe-area-inset-bottom, 0px) +
         var(--space-5)
     );
-  }
-
-  /* ── The way into full screen: a row of its own on the Çal tab ─────────────────────────────
-   *
-   * A row, not a control inside the transport, so `TransportBar` is untouched — that component is
-   * shared with every wide window, where there is no full screen to offer. */
-  .kv-fsrow {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4) 0 0;
-  }
-  .kv-fsrow__btn {
-    width: 100%;
-  }
-  .kv-fsrow__hint {
-    margin: 0;
   }
 
   /* ⚠ The title bar DRAGS THE HEIGHT here (owner, 2026-09-11), so the browser must not read the

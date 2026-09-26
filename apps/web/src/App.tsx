@@ -77,7 +77,7 @@ import { EditPalette, type Tool } from "./ui/EditPalette";
 import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
-import { FullScreenBar, FullScreenRow } from "./ui/FullScreen";
+import { FullScreenBar } from "./ui/FullScreen";
 import { useViewport } from "./usePhone";
 import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
@@ -1050,6 +1050,12 @@ export function App() {
    */
   function applyFullScreen(v: boolean) {
     setFullScreen(v);
+    // ⚠ Entering LEAVES EDIT MODE, and that is not tidiness (2026-09-26). The way in moved to the
+    // card's own tools, which are on screen while editing too — and full screen hides the toolbox
+    // without clearing `editMode`, so coming back out landed on the Nota tab in edit mode with no
+    // tools and a button reading "Düzenleniyor". Reading is reading. `applyEditMode(false)` also
+    // moves the tab off Düzenle, which is where the line below would have put it anyway.
+    if (v && editMode) applyEditMode(false);
     if (v) setMobileTab("nota");
     // ⚠ Both directions, and it is not a nicety. Either way the page is RE-ENGRAVED at a different
     // width, so its height changes by thousands of pixels and the scroll offset it kept points at
@@ -2149,6 +2155,10 @@ export function App() {
             // ⚠ The ONLY way in and out of edit mode — see `applyEditMode`, which also carries the
             // phone's Düzenle tab. A second inline handler here would let the two drift apart.
             onEditMode={applyEditMode}
+            // ⚠ Phone only, and only when full screen is OFF — the button is the way IN, and the
+            // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
+            // nothing new for any check at 1280×720.
+            onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}
@@ -2319,7 +2329,6 @@ export function App() {
           is rendered OUT of every `.kv-card`, which sets `overflow: hidden` and would clip it. It
           draws only once a score is installed: with nothing loaded the page is the upload prompt
           plus the stored-page list, which is one screen and needs no sections. */}
-      {isPhone && doc && !fullScreen && <FullScreenRow onEnter={() => applyFullScreen(true)} />}
       {doc && fullScreen && (
         <FullScreenBar
           playState={playState}

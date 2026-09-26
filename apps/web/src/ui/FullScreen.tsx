@@ -21,28 +21,16 @@
  * follow depends on that (docs/APP-RULES.md), and following the music is most of the point of
  * reading full screen.
  *
- * The contract: `#fullscreen-on`, and in the bar `#fs-play[data-play-state]`, `#fs-stop`,
- * `#fs-exit`. ⚠ `#play` / `#stop` keep meaning the PAGE's transport — a check must say which
+ * ⚠ **The way IN is not here.** `#fullscreen-on` is a button in the score card's own tools
+ * (`ui/ScoreCard.tsx`), moved there 2026-09-26: it used to be a row at the end of the page, which
+ * only worked while it was shown on the short Çal tab. This file is the way OUT and the transport
+ * that replaces the hidden one.
+ *
+ * The contract: `#fullscreen-on` (in the card), and in the bar `#fs-play[data-play-state]`,
+ * `#fs-stop`, `#fs-exit`. ⚠ `#play` / `#stop` keep meaning the PAGE's transport — a check must say which
  * pair it means, exactly as it already must for `#palette-play` (docs/DOM-CONTRACT.md).
  */
 import { TR } from "./strings";
-
-/** The way IN: a row of its own, shown only on the Çal tab (`app.css`). */
-export function FullScreenRow({ onEnter }: { onEnter: () => void }) {
-  return (
-    <div className="kv-fsrow">
-      <button
-        id="fullscreen-on"
-        type="button"
-        className="kv-btn kv-btn--primary kv-fsrow__btn"
-        onClick={onEnter}
-      >
-        {TR.mobile.fullscreen}
-      </button>
-      <small className="kv-hint kv-fsrow__hint">{TR.mobile.fullscreenHint}</small>
-    </div>
-  );
-}
 
 /**
  * The way OUT, and the transport that replaces the hidden one: Çal / Dur / Çık, bottom right.

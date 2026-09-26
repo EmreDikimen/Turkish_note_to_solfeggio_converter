@@ -856,6 +856,34 @@ label.kv-btn.is-disabled {
    mistake. A row rule spans the bar and cannot dangle. */
 /* ⚠ Invisible to layout: the rows stay flex items of `.kv-transport`. Only the phone's fold gives
    this element a box, because a grid row cannot collapse two siblings at once. */
+/* The expand mark in the score card's top-right corner (phone only — it is not rendered anywhere
+   else). Out of the flow on purpose: the title and the tools below lay out as if it were not there,
+   so it costs no row on the screen with the least room. `--control-h` square, which is 44px under a
+   finger. */
+.kv-card__head {
+  position: relative;
+}
+.kv-card__fs {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.kv-card__fs:hover {
+  color: var(--ink);
+}
+
 .kv-transport__body {
   display: contents;
 }
@@ -2866,6 +2894,16 @@ label.kv-btn.is-disabled {
     flex: 1 1 0;
     min-width: 0;
     justify-content: center;
+  }
+  /* ⚠ The two segments share the row EVENLY (owner, 2026-09-26). `.kv-seg` is `inline-flex` and
+     its buttons are sized by their labels, so "Nota" took a third of what "Enstrüman üzerinde" did
+     and the rest of the row was empty — a full-width box with the control huddled in its left. */
+  .kv-card__tools > .kv-seg {
+    display: flex;
+  }
+  .kv-card__tools > .kv-seg > .kv-seg__btn {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   /* ⛔ **DÜZENLE IS NOT IN THE CARD ON THE NOTA TAB** (owner, 2026-09-26: *"Düzenle kısmını Nota

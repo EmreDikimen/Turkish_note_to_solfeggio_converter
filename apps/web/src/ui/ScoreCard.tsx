@@ -84,6 +84,42 @@ export function ScoreCard({
     // full width whether you are editing or not.
     <section className="kv-card">
       <header className="kv-card__head">
+        {/* ⚠ **THE CLASSIC EXPAND MARK, IN THE TOP-RIGHT CORNER** (owner, 2026-09-26: *"tam ekranı
+            da buton şeklinde değil de sağ üst köşede birbirinin zıttını gösteren 2 ok şeklinde
+            yap"*). Two arrows pointing away from each other is what every video player and every
+            phone gallery uses for this, so it needs no label and costs no row — which is the point,
+            on the screen with the least room. It is positioned out of the flow (`app.css`), so the
+            title and the tools below lay out as if it were not there.
+            ⚠ Phone only and only while full screen is OFF — `App` passes no handler otherwise, so
+            no wide window renders it. ⚠ Entering LEAVES EDIT MODE (`applyFullScreen`). */}
+        {onFullScreen && (
+          <button
+            id="fullscreen-on"
+            type="button"
+            className="kv-card__fs"
+            title={TR.mobile.fullscreen}
+            aria-label={TR.mobile.fullscreen}
+            onClick={onFullScreen}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M14 4h6v6" />
+              <path d="M20 4l-7 7" />
+              <path d="M10 20H4v-6" />
+              <path d="M4 20l7-7" />
+            </svg>
+          </button>
+        )}
         <h2 className="kv-card__title">
           {pageId && renaming ? (
             <RenameField
@@ -183,18 +219,6 @@ export function ScoreCard({
             on, beside Güfte and İmleci takip et, and it is on screen without scrolling.
             ⚠ Phone only, and App decides — the prop is undefined on a wide window and while full
             screen is already on, so nothing new renders for any check that runs at 1280×720. */}
-        {onFullScreen && (
-          <button
-            id="fullscreen-on"
-            type="button"
-            className="kv-btn"
-            title={TR.mobile.fullscreenTitle}
-            onClick={onFullScreen}
-          >
-            {TR.mobile.fullscreen}
-          </button>
-        )}
-
         <button
           id="edit-toggle"
           data-edit-mode={editMode ? "on" : "off"}

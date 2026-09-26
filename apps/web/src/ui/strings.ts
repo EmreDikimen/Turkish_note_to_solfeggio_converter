@@ -118,6 +118,7 @@ export const TR = {
     // what the row DOES, never for the first control in it: "Usul" is a control, "Ritim" is the
     // row it lives in.
     groupPlay: "Çalma",
+    groupSound: "Ses",
     groupRhythm: "Ritim",
     groupPitch: "Perde",
     play: "▶ Çal",

@@ -449,6 +449,43 @@ export function TransportBar({
               hiding the one choice that always works. `data-voice-state` is how a headless check
               reads the load without matching Turkish copy — and how it can tell a working fallback
               from a broken feature. */}
+        </div>
+      </div>
+    </div>
+
+    {/* ⚠ The id is what the phone's tab layout hides — Ritim and Perde are the Çal tab, while the
+        PINNED box above stays on screen in every tab that can play (`app.css`, the `[data-mtab]`
+        rules). A structural `.kv-transport--pinned + .kv-transport` selector would have done the
+        same job and broken silently the day a third box appeared. */}
+    {/* ⚠ **THE HANDLE SITS UNDER ÇAL / DUR / TEMPO WHEN SHUT, AND UNDER THE SETTINGS WHEN OPEN**
+        (owner, 2026-09-26: *"Çal/Dur ve metronom hızının olduğu yerin hemen altı genişletilebilir
+        olsun"*, then *"tıkladığımızda ayarları gizle kısmı altta kalmalı"*). What it opens is
+        everything the Çal tab used to be. Closing it is the last thing you do after reading down a
+        515px stack, so the way out waits at the bottom where the thumb already is — rather than
+        making you scroll back up past what you just set.
+        ⚠ Two mount points, never two buttons: one is rendered at a time, so `#pitch-toggle` stays a
+        single id and there is no state to keep in step.
+        ⛔ The settings are NOT shown open: measured at 393px that is 515px of controls, and on an
+        800px screen it leaves no music at all. Folded, the cost is this one row.
+        ⚠ Rendered only where it is needed — `App` passes the handler on a phone's Nota tab and
+        nowhere else, so every wide window shows the settings open exactly as before. */}
+    {onPitch && !pitchOpen && foldHandle}
+
+    <div className="kv-transport" id="transport-settings">
+      {/* ⚠ A wrapper that is `display: contents` everywhere but the phone's fold, so it changes no
+          layout: the rows stay flex items of `.kv-transport`. The fold animates ONE grid row from
+          0fr to 1fr, and two siblings cannot collapse together without something to hold them. */}
+      <div className="kv-transport__body">
+      {/* ⚠ **THE VOICE LIVES HERE, NOT IN THE PINNED ROW** (owner, 2026-09-26: *"Çalgı sesi kısmı
+          ben aşağı kaydırdıkça gelmesin, o daha fazla ayar kısmında durabilir"*). It is set ONCE
+          before playing, so it has no business in the row that stays on screen while you read —
+          and on a phone that row is sticky, so it followed the reader down the page. In here it is
+          part of the fold, with the other things you choose and then stop thinking about.
+          ⚠ Its own row rather than joined to Ritim: a `Çalgı sesi` under a caption reading RİTİM
+          would be a lie about what the group is. */}
+      <div className="kv-transport__row" id="row-sound">
+        <span className="kv-transport__caption">{TR.transport.groupSound}</span>
+        <div className="kv-transport__items">
           {/* ⚠ The id is the phone layout's handle on it: the voice is set ONCE before playing, so
               on a phone it belongs to the Çal tab and not over the music. Nothing else reads it. */}
           <label
@@ -500,31 +537,7 @@ export function TransportBar({
           </label>
         </div>
       </div>
-    </div>
 
-    {/* ⚠ The id is what the phone's tab layout hides — Ritim and Perde are the Çal tab, while the
-        PINNED box above stays on screen in every tab that can play (`app.css`, the `[data-mtab]`
-        rules). A structural `.kv-transport--pinned + .kv-transport` selector would have done the
-        same job and broken silently the day a third box appeared. */}
-    {/* ⚠ **THE HANDLE SITS UNDER ÇAL / DUR / TEMPO WHEN SHUT, AND UNDER THE SETTINGS WHEN OPEN**
-        (owner, 2026-09-26: *"Çal/Dur ve metronom hızının olduğu yerin hemen altı genişletilebilir
-        olsun"*, then *"tıkladığımızda ayarları gizle kısmı altta kalmalı"*). What it opens is
-        everything the Çal tab used to be. Closing it is the last thing you do after reading down a
-        515px stack, so the way out waits at the bottom where the thumb already is — rather than
-        making you scroll back up past what you just set.
-        ⚠ Two mount points, never two buttons: one is rendered at a time, so `#pitch-toggle` stays a
-        single id and there is no state to keep in step.
-        ⛔ The settings are NOT shown open: measured at 393px that is 515px of controls, and on an
-        800px screen it leaves no music at all. Folded, the cost is this one row.
-        ⚠ Rendered only where it is needed — `App` passes the handler on a phone's Nota tab and
-        nowhere else, so every wide window shows the settings open exactly as before. */}
-    {onPitch && !pitchOpen && foldHandle}
-
-    <div className="kv-transport" id="transport-settings">
-      {/* ⚠ A wrapper that is `display: contents` everywhere but the phone's fold, so it changes no
-          layout: the rows stay flex items of `.kv-transport`. The fold animates ONE grid row from
-          0fr to 1fr, and two siblings cannot collapse together without something to hold them. */}
-      <div className="kv-transport__body">
       {/* ── Ritim ─────────────────────────────────────────────────────────────────────────── */}
       {/* The usul heads this row rather than the makam's: it is what the metronome and the strokes
           below it are counting, so the two drum controls are its consequences, not its neighbours. */}

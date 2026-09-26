@@ -147,6 +147,22 @@ updated: 2026-09-20
   metrics gave the box 17 px of phantom height. ⚠ Consequence: the sheet scrolls SIDEWAYS in its own
   box and up and down **not at all** — the page is the only vertical scroller, which the playhead
   follow depends on.
+- ⭐ **THE ONE SCALE THAT IS ALLOWED IS A `viewBox` ON THE SVG, AND ONLY WHEN `contentWidth` IS SET**
+  (owner, 2026-09-26, with photos of notes running off a phone screen). A row's width is packed from an
+  ESTIMATE — `events.length * 28 + 24` — which knows nothing about accidentals, dots, beams or tuplet
+  marks, and VexFlow draws a measure at its own minimum spacing whatever stave width it is handed. On a
+  phone a row already holds ONE measure, so that difference has nowhere to go and the notes were
+  CLIPPED: measured at 393px, `meltem_notes` ran 38px past the edge and `beyati-delisin` 40px. It is
+  fixed in two places — a ragged last system is now clamped to the content area (it was skipped
+  entirely, and kept a 470px stave inside a 324px drawing), and `SheetView` then measures the drawn
+  `getBBox()` and shrinks the SVG's own coordinate system until it fits. The pocket-score answer: 89%
+  and 87% on those two scores, 100% on the other four. ⛔ **This is NOT a licence to scale `.kv-score`** —
+  the rule above stands unchanged, a CSS transform still destroys the rects `render.ts` crops by, and
+  this branch is gated on `contentWidth`, so the corpus path never reaches it (measured 100% on all six
+  scores at 1280px). ⚠ Hit-testing survives because it is measured off real ink with
+  `getBoundingClientRect()`, which already accounts for a viewBox — five notes tapped at 87%, five
+  selected. ⚠ Past `MIN_FIT_SCALE` (0.65) it stops shrinking and lets the SVG be wider than its box, so
+  that row scrolls instead: unreadably small is worse than a drag.
 - ⭐ **THE MEASURE CARD IS THIS SAME `SheetView`, MOUNTED A SECOND TIME WITH `onlyMeasure`** (owner,
   2026-09-05: *"ikisi ayrı olmasın"*) — same component, same document, same callbacks, same undo stack,
   so the instrument tab edits its bar with the page's own editor and not a copy. ⚠ **`onlyMeasure`

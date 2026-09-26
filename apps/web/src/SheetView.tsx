@@ -45,6 +45,10 @@ export const SHEET_SIDE_MARGIN = LEFT;
  *  fitting at all; widening past it would re-engrave every wide window for no gain. */
 export const SHEET_CONTENT_WIDTH = 1000;
 const NARROW_HEADER_W = 520; // under this the engraved header stacks — see `narrowHeader`
+/** How far the fit-to-box scale may shrink the engraving before it gives up and lets the row
+ *  scroll instead. 0.65 is where a koma accidental stops being separable from a bakiye at arm's
+ *  length; past that a "fitted" page is one nobody can read. */
+const MIN_FIT_SCALE = 0.65;
 const CONTENT_WIDTH = SHEET_CONTENT_WIDTH; // staff content area (rows wrap within this)
 const ROW_HEIGHT = 130; // vertical pitch of each staff system
 const STAVE_TOP_PAD = 40; // headroom above each stave for high notes / beams
@@ -2538,6 +2542,54 @@ export function SheetView({
       const b = markBoxOf(slot.el);
       if (b) markRects.push({ evIndex: slot.evIndex, closes: slot.closes, ...b });
     }
+    // ── Fit what was actually drawn into the box it was drawn for ──────────────────────────────
+    //
+    // ⭐ **THE ROW ESTIMATE CAN UNDER-ALLOCATE, AND THE ONLY HONEST WIDTH IS THE DRAWN ONE**
+    // (owner, 2026-09-26, with photos of notes running off a phone screen). Rows are packed from
+    // `m.events.length * 28 + 24`, a guess that knows nothing about accidentals, dots, beams or
+    // tuplet marks, and VexFlow draws a measure's notes at their own minimum spacing whatever
+    // width the stave was given. On a phone that difference has nowhere to go: at 393px a row
+    // already holds ONE measure, so there is nothing left to move to the next line. Measured over
+    // the six scores on disk at 393px: `meltem_notes` ran 38px past the edge, `beyati-delisin`
+    // 40px, and both were CLIPPED, because the SVG is exactly as wide as the content area.
+    //
+    // ⭐ **So the drawing is measured and then fitted — the pocket-score answer** (owner's choice
+    // over letting it scroll): a page that needs more width is engraved smaller until it fits,
+    // exactly as a printed pocket edition shrinks the staff rather than cropping the music.
+    // Measured after: beyati-delisin 89%, meltem_notes 87%, the other four untouched at 100%.
+    //
+    // ⚠ **A `viewBox`, NOT a CSS transform, and NEVER on `.kv-score`.** That container is the
+    // training-strip source and `tools/render/render.ts` crops it by rect (docs/APP-RULES.md).
+    // This scales the SVG's own coordinate system, which every `getBoundingClientRect()` already
+    // accounts for — so the edit overlay's ink-measured hit boxes and the playhead keep landing
+    // where they look. Verified at 87%: five notes tapped, five selected.
+    //
+    // ⚠ **Gated on `contentWidth`, so the corpus path is provably untouched.** `render.ts` draws at
+    // the default width, where nothing overflows and this branch never runs — measured 100% on all
+    // six scores at 1280px.
+    //
+    // ⚠ Past `MIN_FIT_SCALE` it stops shrinking and lets the SVG be wider than its box instead —
+    // `.kv-score` scrolls sideways there. Unreadably small is worse than a drag.
+    if (contentWidth != null && svg) {
+      // ⚠ `getBBox()` is the union of what was DRAWN, in user units — the one number that knows
+      // about every glyph the estimate did not. It is 0 in a hidden box (a tab that is not on
+      // screen), and a scale computed from that would be nonsense, so a zero is left alone.
+      let drawnRight = 0;
+      try {
+        const bb = svg.getBBox();
+        drawnRight = bb.x + bb.width;
+      } catch {
+        drawnRight = 0;
+      }
+      if (drawnRight > svgW + 1) {
+        const scale = Math.max(MIN_FIT_SCALE, svgW / drawnRight);
+        svg.setAttribute("viewBox", `0 0 ${drawnRight} ${height}`);
+        // At the floor this is WIDER than the box on purpose — that is the scroll arm.
+        svg.setAttribute("width", String(Math.round(drawnRight * scale)));
+        svg.setAttribute("height", String(Math.round(height * scale)));
+      }
+    }
+
     setTupletMarks(markRects);
     positionsRef.current = positions;
     // Drawn position BY EVENT, for the folded score's playhead: it follows the performance, so it
@@ -2556,7 +2608,7 @@ export function SheetView({
     return () => {
       host.innerHTML = "";
     };
-  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet, contentW, svgW, justify, svgMarker, onlyMeasure]);
+  }, [doc, accidentalMode, sigTolerant, showLyrics, lyricHyphens, signature, signatureMap, timeSig, onLayout, repeatSpans, navMarks, textNoise, slurNoise, staccatoNoise, usulBarNoise, thinSharps, printNoise, legacyTupletMark, concaveTuplet, contentW, contentWidth, svgW, justify, svgMarker, onlyMeasure]);
 
   // Drive the playhead: while playing, each animation frame reads the audio clock, finds the
   // currently-sounding event, and moves the cursor bar onto it. We mutate the cursor's style

@@ -363,24 +363,36 @@ label.kv-btn.is-disabled {
 /* The Perde fold's handle, a full-width strip under the pinned transport (phone, Nota tab). It is
    a row rather than a chip so the thing it opens reads as being UNDER it, and `--control-h` tall so
    a finger has the same target every other control gives it. */
+/* The fold's handle: a centred label with the chevron under it, and no box around either (owner,
+   2026-09-26). It is not a button-looking button on purpose — it opens part of the page rather than
+   doing something, so it reads as a seam in the bar, not a control sitting on it. */
 .kv-transport__more {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  gap: 2px;
   width: 100%;
   min-height: var(--control-h);
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
+  border: 0;
   background: none;
   font: inherit;
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
+.kv-transport__more:hover,
 .kv-transport__more[aria-expanded="true"] {
-  color: var(--ink);
-  border-color: var(--rule-strong);
+  color: var(--ink-soft);
+}
+.kv-transport__more-chev {
+  display: block;
+  line-height: 1;
+  transition: transform 220ms ease;
+}
+.kv-transport__more[aria-expanded="true"] .kv-transport__more-chev {
+  transform: rotate(180deg);
 }
 
 .kv-step {
@@ -842,6 +854,12 @@ label.kv-btn.is-disabled {
    ⚠ The separator is HORIZONTAL and belongs to the row. A vertical rule between clusters was tried
    and removed once already: on a wrapped line it was left dangling at the end and read as a
    mistake. A row rule spans the bar and cannot dangle. */
+/* ⚠ Invisible to layout: the rows stay flex items of `.kv-transport`. Only the phone's fold gives
+   this element a box, because a grid row cannot collapse two siblings at once. */
+.kv-transport__body {
+  display: contents;
+}
+
 .kv-transport {
   display: flex;
   flex-direction: column;
@@ -2950,7 +2968,7 @@ label.kv-btn.is-disabled {
     /* Above the toolbox's 40. The way OUT of a section must never sit under the section's tools. */
     z-index: 45;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     background: var(--paper-raised);
     border-top: 1px solid var(--rule-strong);
     /* The home indicator on a gesture-navigation phone. 0px on everything else, so the bar is 56px
@@ -3001,15 +3019,6 @@ label.kv-btn.is-disabled {
   .kv-page[data-mtab="nota"] > #transport-settings,
   .kv-page[data-mtab="nota"] > .kv-toolbox,
   .kv-page[data-mtab="nota"] > .kv-footer {
-    display: none;
-  }
-
-  /* Çal — the sound settings. */
-  .kv-page[data-mtab="cal"] > .kv-hero,
-  .kv-page[data-mtab="cal"] > .kv-recent,
-  .kv-page[data-mtab="cal"] > .kv-card,
-  .kv-page[data-mtab="cal"] > .kv-toolbox,
-  .kv-page[data-mtab="cal"] > .kv-footer {
     display: none;
   }
 
@@ -3071,11 +3080,52 @@ label.kv-btn.is-disabled {
    * `[data-omr="makam-intonation"]` for a check to match by accident.
    *
    * ⚠ Ritim is not in it. That row is tempo and drums — a sound setting, and the Çal tab's. */
-  .kv-page[data-mtab="nota"][data-pitch="open"] > #transport-settings {
-    display: block;
+  .kv-page[data-mtab="nota"] > #transport-settings {
+    /* ⚠ Not `display: none` any more — a hidden box cannot animate. The grid row carries the whole
+       open/close: 0fr to 1fr is the one height transition CSS can do without knowing the height. */
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 240ms ease;
+    /* The borders belong to a box that is standing open; collapsed there is nothing to frame. */
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    margin-bottom: 0;
   }
-  .kv-page[data-mtab="nota"][data-pitch="open"] #row-rhythm {
-    display: none;
+  .kv-page[data-mtab="nota"] > #transport-settings > .kv-transport__body {
+    /* ⚠ The child does the clipping — that is what makes 0fr look like a closed drawer. */
+    display: block;
+    overflow: hidden;
+    min-height: 0;
+    /* ⚠ Collapsed it is not merely invisible, it is unreachable: without this a finger swipe or a
+       Tab key lands inside controls nobody can see. The delay hides it only once it has finished
+       closing, and removes the delay on the way out so it is there for the first frame of opening. */
+    visibility: hidden;
+    transition: visibility 0s linear 240ms;
+  }
+  .kv-page[data-mtab="nota"][data-pitch="open"] > #transport-settings {
+    grid-template-rows: 1fr;
+    border-top-color: var(--rule);
+    border-bottom-color: var(--rule);
+    margin-bottom: var(--space-5);
+  }
+  .kv-page[data-mtab="nota"][data-pitch="open"] > #transport-settings > .kv-transport__body {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  /* ⚠ The voice picker lives in the PINNED box, not in the settings box, so the fold cannot contain
+     it — but it is a Çal-tab setting and the Çal tab is gone. It appears with the fold instead: the
+     two boxes are adjacent, so it reads as the top of what just opened, and the pinned row stays
+     three controls tall while the fold is shut. */
+  .kv-page[data-mtab="nota"][data-pitch="open"] #voice-field {
+    display: inline-flex;
+  }
+
+  /* Someone who asked their phone to stop animating gets the same fold, instantly. */
+  @media (prefers-reduced-motion: reduce) {
+    .kv-page[data-mtab="nota"] > #transport-settings,
+    .kv-transport__more-chev {
+      transition: none;
+    }
   }
 
   /* ── The docked toolbox, on its own tab ────────────────────────────────────────────────────

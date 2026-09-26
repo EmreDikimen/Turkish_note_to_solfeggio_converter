@@ -66,7 +66,6 @@ export const TR = {
     navLabel: "Bölümler",
     tabs: {
       nota: "Nota",
-      cal: "Çal",
       duzenle: "Düzenle",
       pages: "Sayfalar",
     },
@@ -77,6 +76,9 @@ export const TR = {
     // full screen does, and the second is already on the card's own hint (`card.hintSheet`). What
     // is left that a button called "Tam ekran" does not say is only "and nothing else on screen",
     // which is what the title carries.
+    // The fold under Çal/Dur that holds everything the Çal tab used to be.
+    settingsMore: "Daha fazla ayar",
+    settingsLess: "Ayarları gizle",
     fullscreen: "Tam ekran",
     fullscreenTitle: "Notayı tek başına göster — diğer her şey gizlenir",
     fullscreenExit: "Çık",

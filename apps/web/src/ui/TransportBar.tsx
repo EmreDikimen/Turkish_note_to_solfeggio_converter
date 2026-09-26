@@ -489,12 +489,22 @@ export function TransportBar({
         aria-controls="transport-settings"
         onClick={onPitch}
       >
-        <span>{TR.transport.groupPitch}</span>
-        <span aria-hidden="true">{pitchOpen ? "▴" : "▾"}</span>
+        <span className="kv-transport__more-label">
+          {pitchOpen ? TR.mobile.settingsLess : TR.mobile.settingsMore}
+        </span>
+        {/* One chevron that TURNS, rather than two glyphs swapped: the rotation is the animation
+            that says the section below is moving, and it costs no second character to line up. */}
+        <span className="kv-transport__more-chev" aria-hidden="true">
+          ▾
+        </span>
       </button>
     )}
 
     <div className="kv-transport" id="transport-settings">
+      {/* ⚠ A wrapper that is `display: contents` everywhere but the phone's fold, so it changes no
+          layout: the rows stay flex items of `.kv-transport`. The fold animates ONE grid row from
+          0fr to 1fr, and two siblings cannot collapse together without something to hold them. */}
+      <div className="kv-transport__body">
       {/* ── Ritim ─────────────────────────────────────────────────────────────────────────── */}
       {/* The usul heads this row rather than the makam's: it is what the metronome and the strokes
           below it are counting, so the two drum controls are its consequences, not its neighbours. */}
@@ -671,6 +681,7 @@ export function TransportBar({
             </select>
           </label>
         </div>
+      </div>
       </div>
     </div>
     </>

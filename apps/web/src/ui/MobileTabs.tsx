@@ -26,10 +26,14 @@
  */
 import { TR } from "./strings";
 
-export type MobileTab = "nota" | "cal" | "duzenle" | "pages";
+/** ⚠ **THERE IS NO ÇAL TAB** (owner, 2026-09-26: *"Çal tabını direkt kapatalım ve oradaki her şeyi
+ *  Nota tabındaki daha fazla göster kısmında gösterelim"*). It was a settings SCREEN — usul, drums,
+ *  makam, transposition, the accidental mode, the voice — reached by leaving the music. All of it
+ *  is now the fold under Çal/Dur on the Nota tab, where the score is still on screen behind it. */
+export type MobileTab = "nota" | "duzenle" | "pages";
 
 /** The tabs, in the order they are drawn. */
-export const MOBILE_TABS: MobileTab[] = ["nota", "cal", "duzenle", "pages"];
+export const MOBILE_TABS: MobileTab[] = ["nota", "duzenle", "pages"];
 
 function Icon({ tab }: { tab: MobileTab }) {
   // 24×24, 1.6px strokes, `currentColor` — so the active/inactive colour is decided by CSS and the
@@ -52,14 +56,6 @@ function Icon({ tab }: { tab: MobileTab }) {
         <circle cx="8" cy="17.5" r="3" />
         <path d="M11 17.5V5l6 2.2" />
         <path d="M11 9.5l6 2.2" />
-      </svg>
-    );
-  if (tab === "cal")
-    // A play triangle inside a ring: the sound settings live behind the thing that makes sound.
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="12" r="8.5" />
-        <path d="M10.2 8.8l5.2 3.2-5.2 3.2z" />
       </svg>
     );
   if (tab === "duzenle")

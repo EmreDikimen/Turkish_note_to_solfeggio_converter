@@ -221,6 +221,10 @@ export function EditPalette({
   refused,
   onPlay,
   onStop,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: {
   armed: Tool | null;
   onArm: (t: Tool | null) => void;
@@ -239,6 +243,10 @@ export function EditPalette({
   refused: RefusalReason | null;
   onPlay: () => void;
   onStop: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }) {
   const boxRef = useRef<HTMLElement | null>(null);
   // `null` means "not placed yet" — the first layout pass measures the box and picks the spot, so
@@ -544,6 +552,41 @@ export function EditPalette({
           cannot see why a sign was refused is being told nothing. They are now a fixed foot: the
           tools scroll, the escape and the message do not. */}
       <div className="kv-toolbox__foot">
+      {/* ⚠ **GERİ AL BELONGS WITH THE TOOLS, AND IN THE FIXED FOOT** (owner, 2026-09-26: *"alet
+          çantasına geri al butonu eklemelisin ve tek seferlik değil, ilk haline kadar geri
+          alabilmeli"*). The pair already existed in the CARD's head — and the stack behind it was
+          never the problem: measured, four deletes undo to the original note count and the button
+          then disables itself. What was wrong is WHERE it is. On a phone the toolbox owns the
+          bottom 340px, so the card's head is off the top of the screen while you edit: undoing
+          meant scrolling up, and scrolling back down for the next edit, which reads as an undo that
+          only works once.
+          ⚠ In the FIXED foot, beside Seçim, for the same reason Seçim is there — the tools scroll,
+          the way out does not. An undo below the fold is an undo that is not there.
+          ⚠ `#palette-undo` / `#palette-redo`, not `#undo` / `#redo`: the card's pair keeps those ids
+          and both are on screen on a wide window, exactly as `#palette-play` sits beside `#play`. */}
+      <div className="kv-toolbox__undo">
+        <button
+          id="palette-undo"
+          type="button"
+          className="kv-btn kv-btn--ghost"
+          title={TR.card.undoTitle}
+          disabled={!canUndo}
+          onClick={onUndo}
+        >
+          {TR.card.undo}
+        </button>
+        <button
+          id="palette-redo"
+          type="button"
+          className="kv-btn kv-btn--ghost"
+          title={TR.card.redoTitle}
+          disabled={!canRedo}
+          onClick={onRedo}
+        >
+          {TR.card.redo}
+        </button>
+      </div>
+
       <button
         id="palette-select"
         type="button"

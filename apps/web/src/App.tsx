@@ -2279,6 +2279,13 @@ export function App() {
               refused={refused}
               onPlay={onPlayFromEdit}
               onStop={onStop}
+              // ⚠ The SAME handlers the card's pair uses, so both roads share one stack — App's
+              // `onUndo` also stops playback and clears the selection, which an undo must do
+              // wherever it is pressed (a held index can name a different note after a delete).
+              onUndo={onUndo}
+              onRedo={onRedo}
+              canUndo={history.canUndo}
+              canRedo={history.canRedo}
             />
           )}
         </>

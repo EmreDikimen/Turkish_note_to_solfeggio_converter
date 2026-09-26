@@ -52,6 +52,12 @@ playback actually began there.
 - `[data-omr-note]` / `[data-selected]` per note; `#note-delete` / `#undo` / `#redo`
 - the palette: `#edit-palette[data-armed]` + `[data-tool]` per tool
 - its transport: `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`
+- its undo pair: `#palette-undo` / `#palette-redo`, in the toolbox's FIXED foot beside
+  `#palette-select` (2026-09-26). ⚠ **They share one stack with the card's `#undo` / `#redo`** and
+  the same App handlers, so either road stops playback and clears the selection. ⚠ On the phone's
+  Düzenle tab the CARD's pair is hidden (`.kv-card__undo`) — the toolbox carries them there — but
+  it keeps its ids and is what every check at 1280px drives. ⚠ Folding the toolbox unmounts these
+  along with the tools.
 - its toolbox shell: `#edit-palette[data-collapsed]` + `#palette-fold[data-collapsed]`
 - the insert preview: `[data-omr="insert-ghost"][data-insert-pitch]`
 - the off-meter mark: `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`

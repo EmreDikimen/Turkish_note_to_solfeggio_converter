@@ -1325,6 +1325,19 @@ label.kv-btn.is-disabled {
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
+/* Geri al / Yinele, in the toolbox's fixed foot above Seçim. The pair shares the row evenly so
+   neither is the one you miss; they are `--ghost` because they undo an action rather than being
+   one, the same weight the card's pair carries. */
+.kv-toolbox__undo {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.kv-toolbox__undo > .kv-btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .kv-toolbox__hint {
   margin: var(--space-2) 0 0;
   font-size: var(--text-xs);
@@ -2580,6 +2593,7 @@ label.kv-btn.is-disabled {
      holding the floating 136px version: `flex: 1 1 0` keeps the pair sharing the column and
      `.kv-tool--wide` is full width already, so nothing here can widen the box and wrap its tools. */
   .kv-toolbox__transport > .kv-btn,
+  .kv-toolbox__undo > .kv-btn,
   .kv-tool--wide {
     min-height: var(--control-h);
   }
@@ -2992,6 +3006,11 @@ label.kv-btn.is-disabled {
   .kv-page[data-mtab="duzenle"] .kv-card__meta,
   .kv-page[data-mtab="duzenle"] .kv-card__title,
   .kv-page[data-mtab="duzenle"] .kv-card__tools .kv-toggle,
+  /* ⚠ The card's Geri al / Yinele go here because the TOOLBOX carries them now (2026-09-26) — two
+     undo pairs on a 667px screen is a duplicate costing a whole 44px row of the card's head, on the
+     one screen with the least room. ⛔ Only on this tab, and only on a phone: the card's pair keeps
+     its ids and `smoke:editor` drives them at 1280px. */
+  .kv-page[data-mtab="duzenle"] .kv-card__undo,
   .kv-page[data-mtab="duzenle"] > .kv-header,
   .kv-page[data-mtab="duzenle"] > .kv-hero,
   .kv-page[data-mtab="duzenle"] > .kv-recent,

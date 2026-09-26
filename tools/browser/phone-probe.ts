@@ -204,7 +204,12 @@ async function main() {
     await page.screenshot({ path: `${SHOTS}/${size.name}-2-score.png`, fullPage: false });
 
     // 3. Edit mode — the floating toolbox is the thing most likely to be off the screen.
-    await page.locator("#edit-toggle").click();
+    // ⚠ The Düzenle TAB is the way in on a phone (2026-09-26): `#edit-toggle` was removed from the
+    // card on the Nota tab, where it said the same thing as the tab. The button is still there on a
+    // tablet, which gets the touch sizes and no tab bar — hence the fallback rather than a swap.
+    const editTab = page.locator('[data-tab-id="duzenle"]');
+    if (await editTab.count()) await editTab.click();
+    else await page.locator("#edit-toggle").click();
     await page.waitForTimeout(400);
     const tb = await page.locator("#edit-palette").boundingBox();
     console.log(`    toolbox box     : ${tb ? `x=${Math.round(tb.x)} y=${Math.round(tb.y)} ${Math.round(tb.width)}×${Math.round(tb.height)}${tb.x + tb.width > size.width ? "  ← OFF THE RIGHT EDGE" : ""}${tb.y + tb.height > size.height ? "  ← BELOW THE SCREEN" : ""}` : "not found"}`);

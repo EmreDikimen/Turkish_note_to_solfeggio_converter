@@ -2845,9 +2845,36 @@ label.kv-btn.is-disabled {
   /* The card head packs its controls to the right so they sit under the wide window's title. On a
      phone the title takes the whole line anyway and the buttons wrap to their own, where being
      right-aligned makes them the one thing on the page not starting at the left margin. */
+  /* ── The card's tools, on a phone ──────────────────────────────────────────────────────────
+   *
+   * ⭐ The view switch takes a row of its OWN and the rest share the next one evenly (owner,
+   * 2026-09-26). Packed together they wrapped wherever they happened to run out of width, so the
+   * head's shape changed with the label lengths and with edit mode — three ragged lines that read
+   * as leftovers rather than as a row of controls.
+   * ⚠ `margin-left: 0` because the wide window's right-alignment leaves a wrapped group adrift on
+   * the left of its own line down here. */
   .kv-card__tools {
     margin-left: 0;
     justify-content: flex-start;
+    gap: var(--space-2);
+  }
+  .kv-card__tools > .kv-seg {
+    flex: 1 1 100%;
+  }
+  .kv-card__tools > .kv-toggle,
+  .kv-card__tools > .kv-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  /* ⛔ **DÜZENLE IS NOT IN THE CARD ON THE NOTA TAB** (owner, 2026-09-26: *"Düzenle kısmını Nota
+     tabından kaldırabiliriz… alttaki tabda düzenle dursun"*). The bottom bar's Düzenle tab IS edit
+     mode (`applyEditMode`), so a second switch in the head was the same fact stated twice on the
+     screen with the least room. ⚠ It stays on the DÜZENLE tab, where it is the only thing that says
+     the mode is on, and on every wide window, where there is no tab bar to say it. */
+  .kv-page[data-mtab="nota"] #edit-toggle {
+    display: none;
   }
 
   /* The strip exporter's chip list is a fixed 320px column beside its detail — which leaves the

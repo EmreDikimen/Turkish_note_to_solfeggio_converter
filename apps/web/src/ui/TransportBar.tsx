@@ -283,6 +283,42 @@ export function TransportBar({
     };
   }, []);
 
+  /** The fold's handle. Built once and mounted either above or below the settings — see there. */
+  const foldHandle = (
+    <button
+      id="pitch-toggle"
+      type="button"
+      className="kv-transport__more"
+      aria-expanded={!!pitchOpen}
+      aria-controls="transport-settings"
+      onClick={onPitch}
+    >
+      <span className="kv-transport__more-label">
+        {pitchOpen ? TR.mobile.settingsLess : TR.mobile.settingsMore}
+      </span>
+      {/* ⚠ A drawn chevron, not the "▾" character: a glyph is whatever the reader's font decides —
+          weight, size and baseline all move — where a 2px stroke with round caps is the same mark
+          on every phone, and `currentColor` makes it follow the label. Inline SVG for the reason
+          the tab bar's icons are (`ui/MobileTabs.tsx`): borrowing Bravura would tie this to the
+          score's font rules. It TURNS rather than being swapped for a second glyph. */}
+      <svg
+        className="kv-transport__more-chev"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M6 9.5l6 6 6-6" />
+      </svg>
+    </button>
+  );
+
   return (
     <>
     {/* ── Çalma — PINNED (see the note at the top of this file) ─────────────────────────────── */}
@@ -470,35 +506,19 @@ export function TransportBar({
         PINNED box above stays on screen in every tab that can play (`app.css`, the `[data-mtab]`
         rules). A structural `.kv-transport--pinned + .kv-transport` selector would have done the
         same job and broken silently the day a third box appeared. */}
-    {/* ⚠ **THE FOLD SITS DIRECTLY UNDER ÇAL / DUR / TEMPO** (owner, 2026-09-26: *"Çal/Dur ve
-        metronom hızının olduğu yerin hemen altı genişletilebilir olsun"*, replacing a floating
-        sheet that was tried first). What it opens is the Perde row below — makam, transposition
-        and the accidental mode — which the owner asked to have beside the score.
-        ⛔ They are NOT shown open: measured at 393px that row is 314px — makam 104, the
-        transposition group 98, the accidental field 44, each of them wrapping on a phone — and on
-        an 800px screen it left 32px of music. Folded, the cost is this one row.
-        ⚠ Rendered only where it is needed: `App` passes the handler on a phone's Nota tab and
-        nowhere else, so the Çal tab (whose whole content this is) and every wide window show the
-        settings open, exactly as before. */}
-    {onPitch && (
-      <button
-        id="pitch-toggle"
-        type="button"
-        className="kv-transport__more"
-        aria-expanded={!!pitchOpen}
-        aria-controls="transport-settings"
-        onClick={onPitch}
-      >
-        <span className="kv-transport__more-label">
-          {pitchOpen ? TR.mobile.settingsLess : TR.mobile.settingsMore}
-        </span>
-        {/* One chevron that TURNS, rather than two glyphs swapped: the rotation is the animation
-            that says the section below is moving, and it costs no second character to line up. */}
-        <span className="kv-transport__more-chev" aria-hidden="true">
-          ▾
-        </span>
-      </button>
-    )}
+    {/* ⚠ **THE HANDLE SITS UNDER ÇAL / DUR / TEMPO WHEN SHUT, AND UNDER THE SETTINGS WHEN OPEN**
+        (owner, 2026-09-26: *"Çal/Dur ve metronom hızının olduğu yerin hemen altı genişletilebilir
+        olsun"*, then *"tıkladığımızda ayarları gizle kısmı altta kalmalı"*). What it opens is
+        everything the Çal tab used to be. Closing it is the last thing you do after reading down a
+        515px stack, so the way out waits at the bottom where the thumb already is — rather than
+        making you scroll back up past what you just set.
+        ⚠ Two mount points, never two buttons: one is rendered at a time, so `#pitch-toggle` stays a
+        single id and there is no state to keep in step.
+        ⛔ The settings are NOT shown open: measured at 393px that is 515px of controls, and on an
+        800px screen it leaves no music at all. Folded, the cost is this one row.
+        ⚠ Rendered only where it is needed — `App` passes the handler on a phone's Nota tab and
+        nowhere else, so every wide window shows the settings open exactly as before. */}
+    {onPitch && !pitchOpen && foldHandle}
 
     <div className="kv-transport" id="transport-settings">
       {/* ⚠ A wrapper that is `display: contents` everywhere but the phone's fold, so it changes no
@@ -684,6 +704,8 @@ export function TransportBar({
       </div>
       </div>
     </div>
+
+    {onPitch && pitchOpen && foldHandle}
     </>
   );
 }

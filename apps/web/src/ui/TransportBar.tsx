@@ -35,7 +35,7 @@
  * one it means.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { findUsul, USULS, type MakamOption, type MakamRuleUse } from "@turkish-omr/core";
 import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
@@ -44,6 +44,12 @@ import type { AccidentalMode } from "../SheetView";
 import { Segmented } from "./Segmented";
 import { MakamIntonation } from "./MakamIntonation";
 import { TR } from "./strings";
+
+/** The tempo box's range. ⚠ ONE pair of numbers for the `min`/`max` attributes AND the commit
+ *  guard below — they were written twice and a guard that disagrees with the attribute is a box
+ *  that rejects what it advertises. */
+const BPM_MIN = 20;
+const BPM_MAX = 400;
 
 /** The picker's own name for a voice, for the hints that have to say which one is sounding. */
 function voiceLabel(id: VoiceId): string {
@@ -133,6 +139,13 @@ export function TransportBar({
   // measured rather than guessed because the row wraps: one line on a wide window, three on a
   // phone. ⚠ A ResizeObserver, not a scroll listener — this changes when the WINDOW changes, not
   // when the reader scrolls.
+  /** What the reader is TYPING in the tempo box, or null to show the tempo that is set.
+   *
+   *  ⚠ It exists so half-typed values survive a render — see the box's own comment. Cleared on
+   *  blur, which is also what makes the ⟲ reset button and a newly loaded score show through: both
+   *  move focus or replace the document, and neither leaves a draft behind. */
+  const [bpmDraft, setBpmDraft] = useState<string | null>(null);
+
   const pinnedRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = pinnedRef.current;
@@ -186,17 +199,37 @@ export function TransportBar({
             title={naturalBpm ? TR.transport.tempoTitle(naturalBpm) : undefined}
           >
             <span>{TR.transport.tempo}</span>
+            {/* ⚠ **A CONTROLLED NUMBER BOX MUST ACCEPT THE HALF-TYPED STATES, OR IT CANNOT BE
+                TYPED IN AT ALL** (owner, 2026-09-26: *"telefonda parça hızını değiştiremiyorum,
+                input kutusuna bir şey yazamıyorum"*). This used to commit straight from the event
+                and render `value={bpm}`, so every keystroke that passed through an out-of-range
+                value was refused and the box snapped back: from 80 you could not reach 120,
+                because the first keystroke is "1"; you could not clear it, because "" is 0; and
+                once it held 180 you could not add a digit, because 1802 is over 400. Measured with
+                a probe at 375×667 — "1" gave 180, then "2" and "0" changed nothing.
+                ⚠ It looked like a TOUCH bug and was not. A desktop number input has spinner
+                arrows, which only ever produce in-range values, so the box worked there by
+                accident; a phone has no arrows, so the same field is read-only in practice.
+                ⭐ The draft is what the reader is typing; `bpm` is what plays. A valid draft
+                commits as it is typed (so the tempo still follows the box live), an invalid one is
+                simply not committed, and BLUR drops the draft so the box goes back to showing the
+                tempo that is actually set — no silent half-edit left on screen. */}
             <input
               id="bpm"
               type="number"
-              min={20}
-              max={400}
-              value={bpm}
+              // The plain digit pad on a phone, rather than the full numeric keyboard.
+              inputMode="numeric"
+              min={BPM_MIN}
+              max={BPM_MAX}
+              value={bpmDraft ?? String(bpm)}
               disabled={!canPlay}
               onChange={(e) => {
-                const v = Math.round(Number(e.target.value));
-                if (Number.isFinite(v) && v >= 20 && v <= 400) onBpm(v);
+                const raw = e.target.value;
+                setBpmDraft(raw);
+                const v = Math.round(Number(raw));
+                if (raw.trim() !== "" && Number.isFinite(v) && v >= BPM_MIN && v <= BPM_MAX) onBpm(v);
               }}
+              onBlur={() => setBpmDraft(null)}
             />
             {naturalBpm > 0 && bpm !== naturalBpm && (
               <button

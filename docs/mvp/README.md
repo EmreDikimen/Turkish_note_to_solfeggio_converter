@@ -38,7 +38,7 @@ The original framing was "freeze the model, release, then train Round 3 against 
 | **Round 3** | **Runs in parallel**, unpaused. It is not aimed by this feedback, so it does not wait for it |
 | **The model in the friends build** | **Swaps to a better one as soon as one lands** — a server redeploy, no client download. ⚠ Cost: decode-quality comments cannot be attributed to a version. They are anecdotes; the exam still judges models |
 | **How feedback returns** | **By talking to them.** No in-app button, no telemetry — at n=2 a conversation returns better information and costs nothing |
-| **Phones** | **Out of scope** until the web app is done |
+| **Phones** | ⚠ **OVERTURNED 2026-09-19** — the phone is the product's main screen and was rebuilt on 2026-09-26. This row said *"out of scope until the web app is done"*; it was written before anyone had looked at one. [../features/phone.md](../features/phone.md) |
 | **Public launch** | A later rung, gated on **Round 3's exam result**. Good → open it up; not good → Round 4, and so on |
 
 Full rows and reasoning: [../DECISIONS.md](../DECISIONS.md).

@@ -48,6 +48,7 @@ engineer.** The owner reads English as a second language and asked for this to b
 | Why something was decided (and what overturned it) | [docs/DECISIONS.md](docs/DECISIONS.md) |
 | **Touching apps/web, tools/render or tools/core?** Playback, the editor, the DOM, the stylesheet | **[docs/APP-RULES.md](docs/APP-RULES.md)** |
 | **What a browser check may assert on** — the DOM attributes, per feature | **[docs/DOM-CONTRACT.md](docs/DOM-CONTRACT.md)** |
+| **The PHONE — the screen the product is used on: what it looks like, why, every number** | **[docs/features/phone.md](docs/features/phone.md)** |
 | **What we may publish** — licences, attribution, why no score ships | **[docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)** |
 | The full doc map | [docs/INDEX.md](docs/INDEX.md) |
 | **MVP track (in-browser pipeline → friends release)** | **[docs/mvp/README.md](docs/mvp/README.md)** |

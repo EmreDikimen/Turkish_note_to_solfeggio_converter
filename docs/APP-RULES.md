@@ -189,45 +189,19 @@ updated: 2026-09-20
   edit overlay 1:1 with the notes. ⚠ It takes its own `surfaceId` / `svgMarker`; `#sheet-surface` and
   `sheet-svg` must keep meaning THE PAGE'S score, since `render.ts` and `verify-labels.ts` take the
   first match. [docs/features/measure-card.md](features/measure-card.md).
-- **THE PHONE'S LAYOUT IS FIXED IN CSS, IN TWO MEDIA QUERIES AT THE END OF `app.css`** (owner,
-  2026-09-04; there was no width-based media query at all before it). ⚠ **They answer different
-  questions, never merge them**: `(pointer: coarse)` owns sizes — **16px on every form field**, the threshold under
-  which iOS Safari zooms the page in on focus and never back, plus `--control-h: 44px`; `(max-width:
-  700px)` owns layout (measured: the transpose group cannot shrink below 433px). ⚠ **At the END so
-  ORDER wins**; the only `!important` is the docked toolbox's insets, which beat an inline style.
-  ⚠ **That placement is what keeps every existing check valid** — they run at 1280×720 with a mouse.
-  ⚠ No exemption from the `.kv-score` rule above, "only on small screens" included. ⚠ Height caps use
-  `dvh`. Look with **`npm run smoke:phone`**, and ⛔ **never give that probe `fullPage: true`** — it
-  resizes the viewport without restoring touch emulation, so fixed things report as broken.
-  ⚠ A grid row needs `min-width: 0` or it will not ellipsis — `.kv-recent__item` pushed a 390 px phone
-  to 623 px, and `smoke:phone` cannot see that list at all.
-- ⚠ **IT IS NO LONGER CSS ALONE, AND THERE ARE THREE QUESTIONS NOT TWO** (2026-09-19). `usePhone.ts`'s
-  `useViewport` adds **`phoneShaped`** — *"is the SHORT side phone-sized?"* — and that is the one the
-  **score's fit** asks. ⛔ **Never merge it with `isPhone`**: a phone turned sideways is **844×390**,
-  past the 700px line, so a fit gated on width alone switches off in landscape (measured: **242px** of
-  the sheet hidden). Layout must keep asking *"is this narrow?"*, because a bottom tab bar over 390px
-  of height would be most of the screen — and `phoneShaped` deliberately excludes a tablet (iPad mini
-  744×1133, short side over the line). ⚠ **The fit is a RE-ENGRAVE** (`SheetView`'s `contentWidth`),
-  never a scale — no exemption from the `.kv-score` rule above. Which is also why the engraved header
-  **stacks under 520px** instead of ellipsing: three flex columns with `white-space: nowrap` are held
-  at their text width by `min-width: auto`, and an ellipsis lost the tempo. ⚠ **`index.html` carries
-  `viewport-fit=cover`** — without it every `env(safe-area-inset-*)` in this file resolves to **0px**,
-  which is how six of them sat dead for eight days. [DECISIONS.md](DECISIONS.md), 2026-09-19.
-  ⭐ **AND THE FIT IS TWO STAGES, NOT ONE** (2026-09-26). Scaling the finished picture cannot put a
-  note back inside its own stave — it shrinks the overrun too, and measured on `meltem_notes` the
-  stave ended 49px short of the box while its notes still hung 22px past the barline. The layout is
-  **widened by exactly what the drawing overran** (`getBBox`, one extra pass, capped at double) and
-  only then scaled. ⚠ The size goes on the SVG's inline **style**: VexFlow's `resize()` writes one and
-  an attribute cannot beat it, which left `preserveAspectRatio` centring the drawing and **75px of
-  blank** above the first stave. ⚠ `#sheet-surface` is sized in DISPLAYED units, or it is 22px wider
-  than the SVG inside it.
-- ⭐ **THREE TABS, AND THE SETTINGS FOLD** (2026-09-26). The Çal tab is CLOSED: usul, drums, makam,
-  transposition, the accidental mode and the voice open under Çal/Dur on the Nota tab instead, so the
-  score stays on screen behind them. ⛔ They are not inline — measured, that row is **314px** and left
-  **32px of music** on an 800px screen. ⚠ The fold animates a grid row 0fr → 1fr and needs
-  `.kv-transport__body` (`display: contents` everywhere else) because two siblings cannot collapse
-  together; collapsed it is `visibility: hidden`, or a Tab key reaches controls nobody can see. ⚠ The
-  handle moves with it — under Çal/Dur when shut, under the settings when open — as two mount points
-  of ONE button, never two. ⚠ `#edit-toggle` is hidden on the NOTA tab only: the Düzenle tab is edit
-  mode, and `smoke:phone` now takes the tab where one exists.
-
+- **THE PHONE ASKS THREE VIEWPORT QUESTIONS AND NEVER MERGES THEM.** `usePhone.ts` is the only place
+  any of them is asked: **`isPhone`** (`max-width: 700px`) owns LAYOUT, **`coarse`**
+  (`pointer: coarse`) owns SIZES at any width, and **`phoneShaped`** (either side ≤ 700px) owns the
+  SCORE'S FIT. ⛔ Merging them breaks something measurable each time: a phone turned sideways is
+  **844×390**, so a fit gated on width alone switched off in landscape (242px of the sheet hidden),
+  while a tab bar gated on `phoneShaped` would take most of a 390px-tall screen. ⚠ 700px is measured
+  — the transpose group is 433px and cannot shrink. ⚠ `index.html` carries `viewport-fit=cover`, or
+  every `env(safe-area-inset-*)` resolves to 0. Everything else about the phone, and every number
+  behind it, is [features/phone.md](features/phone.md).
+- **A SCORE TOO DENSE FOR THE BOX IS ENGRAVED SMALLER, AND THAT IS TWO STAGES.** ⛔ Scaling the
+  finished drawing does not put a note back inside its own stave — it shrinks the overrun too, and
+  measured, the stave ended 49px short of the box while its notes hung 22px past the barline. The
+  layout is **widened by exactly what the drawing overran**, and only then scaled. ⚠ The size goes on
+  the SVG's inline **style** (VexFlow's `resize()` writes one and an attribute cannot beat it), and
+  `#sheet-surface` is sized in DISPLAYED units. ⚠ A ragged last system may be shorter than the page,
+  never wider. Numbers: [features/phone.md](features/phone.md).

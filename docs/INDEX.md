@@ -104,6 +104,7 @@ wrong — fix by deleting, not by syncing.
 | The bar beside the instrument (F3): one measure drawn on its own, play-this-bar, the hand-over to the editor | [features/measure-card.md](features/measure-card.md) |
 | The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |
 | The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
+| **The PHONE: the three viewport questions, fitting a score, the fold, the editor, every measured number** | **[features/phone.md](features/phone.md)** |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

@@ -331,7 +331,11 @@ label.kv-btn.is-disabled {
   background-size: 10px 6px;
 }
 .kv-field input[type="number"] {
-  width: 4.25rem;
+  /* ⚠ 3.25rem, down from 4.25 (2026-09-26). The box held room for the OS spinner's chevrons, and
+     they are gone — "400" in `--text-sm` needs about 27px, so 52px is the three digits plus its own
+     padding and border with room to spare. The 16px this gives back is what keeps the tempo group
+     beside Çal/Dur on a phone once the ⟲ reserves its place. */
+  width: 3.25rem;
   /* ⚠ ONE SET OF ARROWS, NOT TWO (2026-09-26). The tempo box has its own ± buttons beside it, and
      leaving the OS spinner in place would put two ways to step the same number on one control —
      the same "half of this speaks macOS" split the 2026-09-03 control pass removed. The element
@@ -351,6 +355,11 @@ label.kv-btn.is-disabled {
    `--control-h` is what the `(pointer: coarse)` block raises.
    ⚠ `touch-action: none` is load-bearing: without it a finger resting on + to repeat is also a
    finger starting a page scroll, and the browser takes the gesture away mid-hold. */
+/* ⚠ It is still laid out — that is the point. See the button's comment in `TransportBar.tsx`. */
+.kv-tempo-reset[data-idle] {
+  visibility: hidden;
+}
+
 .kv-step {
   width: var(--control-h);
   min-width: var(--control-h);
@@ -2667,7 +2676,16 @@ label.kv-btn.is-disabled {
     display: none;
   }
   .kv-transport__items {
-    gap: var(--space-2) var(--space-3);
+    gap: var(--space-2) var(--space-2);
+  }
+
+  /* ⚠ The tempo group is the one row of the bar that is on screen at ALL times, and it carries six
+     things — the ♩ caption, −, the box, +, and the ⟲ holding its place. Measured at 393px: it
+     needed 373px of a 361px line and wrapped under Çal/Dur. 4px gaps instead of 8 give back 16 of
+     those, the narrower box gives 16 more, and the row's own gap 4. Only this field: the usul and
+     makam rows below have room and read better loose. */
+  .kv-field--tempo {
+    gap: var(--space-1);
   }
 
   /* Stacking alone is not enough: a flex item defaults to `min-width: auto`, which means "never

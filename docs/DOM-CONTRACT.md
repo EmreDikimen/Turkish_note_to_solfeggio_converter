@@ -141,6 +141,8 @@ gain nodes on every call, so committing per tick would re-schedule playback nine
 check that steps and then reads `#bpm` has to let the pointer up first. Each button disables itself
 at its end of the 20–400 range, so `#bpm-up` is `disabled` at 400.
 
+⚠ **The ⟲ reset button is ALWAYS in the DOM** once the score has a natural tempo, and carries `data-idle="1"` plus `disabled` while there is nothing to reset — it is hidden with `visibility`, not unmounted, because giving its width back moved the whole tempo group onto a second line the moment the tempo was changed. A check must read `data-idle`, not presence.
+
 ⚠ **`#bpm` holds a DRAFT while it is being typed.** It is a controlled box that now accepts
 half-typed values — `""`, `1`, `1802` — and commits only what is in range, so reading it mid-edit
 can return something that is not the tempo. Blur drops the draft. Before 2026-09-26 it refused every

@@ -311,7 +311,7 @@ export function TransportBar({
           </div>
 
           <label
-            className={`kv-field${canPlay ? "" : " is-disabled"}`}
+            className={`kv-field kv-field--tempo${canPlay ? "" : " is-disabled"}`}
             title={naturalBpm ? TR.transport.tempoTitle(naturalBpm) : undefined}
           >
             <span>{TR.transport.tempo}</span>
@@ -373,12 +373,28 @@ export function TransportBar({
               onStep={stepBpm}
               onEnd={commitStep}
             />
-            {naturalBpm > 0 && bpm !== naturalBpm && (
+            {/* ⚠ **IT KEEPS ITS PLACE WHEN IT HAS NOTHING TO DO** (owner, 2026-09-26: *"metronom
+                120 olduğunda Çal/Duraklat kısmının sağında oluyor ama değiştirdiğimde alta iniyor…
+                hep sağında kalsın"*). It used to be mounted only when the tempo differed from the
+                written one, so the tempo group grew by this button's 18px plus a gap AT THE MOMENT
+                the tempo was changed — and on a 393px phone that pushed the whole group onto a
+                second line, under Çal/Dur, exactly while the reader was looking at it. Reserving
+                the space is what makes the row a fixed width: the jump cannot happen if nothing
+                appears. The shrinking beside it (`app.css`) is what then makes that fixed width
+                fit on one line.
+                ⚠ Hidden with `visibility`, not `display`, because `display: none` gives the space
+                back and brings the jump with it. `disabled` + `aria-hidden` + `tabIndex={-1}` keep
+                it out of the tab order and off a screen reader while it is not a control. */}
+            {naturalBpm > 0 && (
               <button
                 type="button"
-                className="kv-btn kv-btn--tiny"
+                className="kv-btn kv-btn--tiny kv-tempo-reset"
                 title={TR.transport.tempoResetTitle(naturalBpm)}
                 onClick={() => onBpm(naturalBpm)}
+                disabled={bpm === naturalBpm}
+                aria-hidden={bpm === naturalBpm}
+                tabIndex={bpm === naturalBpm ? -1 : undefined}
+                data-idle={bpm === naturalBpm ? "1" : undefined}
               >
                 {TR.transport.tempoReset}
               </button>

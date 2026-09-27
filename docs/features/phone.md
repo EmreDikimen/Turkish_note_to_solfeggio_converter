@@ -126,6 +126,16 @@ mounts and blocks. Measured after: the placeholder is on screen at **65 ms**, th
 playhead's follow would scroll the window to an off-screen element during playback in the instrument
 view.
 
+⚠ **THE MEASURE CARD'S ARROWS SIT BESIDE THE BAR NUMBER, NOT THE STAFF.** Measured at 393px: the
+card is 327 wide, its row 301, and two 44px arrows with their gaps left the staff **197** — while
+the engraving asks for **340** (`MIN_CONTENT_W` 320 plus its margins), so **143px** of the bar was
+behind a scrollbar. ⛔ Making them borderless and pushing them outward does not reach it: even at
+zero gap the row gives about 295. They move to the title row, which was carrying one short line and
+nothing else, the staff row becomes one column, and both it and the card reach past their padding —
+**325, then 341, hidden 0**. ⛔ `MIN_CONTENT_W` is not lowered: under it the staff draws about 17px
+tall and koma stops being tellable from küçük. ⚠ On a wide window the arrows stay flanking the
+staff, where there is room.
+
 ## Fitting a score into a phone
 
 ⭐ **The fit is a RE-ENGRAVE, not a zoom** — fewer bars per system at the same note size, through

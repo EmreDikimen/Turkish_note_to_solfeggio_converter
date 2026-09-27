@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { groupMeasures, type Measure, type NoteModelDocument, type Timeline } from "@turkish-omr/core";
 import { SHEET_SIDE_MARGIN, type PlayStep } from "./SheetView";
 import { TR } from "./ui/strings";
+import { useIsPhone } from "./usePhone";
 
 /**
  * One bar of the score, engraved on its own, beside the instrument (owner, 2026-09-04:
@@ -132,6 +133,7 @@ export function MeasureCard({
   // ⚠ The card FITS THE ENGRAVING to its column; it does not scale a finished drawing. That is what
   // keeps every coordinate in `SheetView`'s overlay 1:1 with the notes — a scaled surface would
   // need the hit-testing to divide by a factor, in the shared code, for one of its two callers.
+  const isPhone = useIsPhone();
   const frameRef = useRef<HTMLDivElement>(null);
   const [boxW, setBoxW] = useState(0);
   useEffect(() => {
@@ -205,6 +207,21 @@ export function MeasureCard({
     setFollow(false);
   };
 
+  /** One step button. Defined once and placed by width — see the head. */
+  const arrow = (dir: -1 | 1) => (
+    <button
+      id={dir < 0 ? "measure-prev" : "measure-next"}
+      type="button"
+      className="kv-measure__arrow"
+      title={dir < 0 ? TR.measure.prev : TR.measure.next}
+      aria-label={dir < 0 ? TR.measure.prev : TR.measure.next}
+      disabled={!measure || (dir < 0 ? shown <= 1 : shown >= total)}
+      onClick={() => step(dir)}
+    >
+      <span aria-hidden="true">{dir < 0 ? "‹" : "›"}</span>
+    </button>
+  );
+
   return (
     <section
       id="measure-card"
@@ -218,7 +235,20 @@ export function MeasureCard({
       data-edit-mode={editMode ? "on" : "off"}
     >
       <header className="kv-measure__head">
+        {/* ⭐ **ON A PHONE THE ARROWS FLANK THE NUMBER, NOT THE STAFF** (owner, 2026-09-27: *"bir
+            sonraki ve bir önceki ölçüye geçmek için olan butonların borderını kaldırabiliriz, biraz
+            daha kenarlara itebiliriz ve bu alanı ölçüyü çizmek için kullanabiliriz"*). Measured at
+            393px: the card is 327 wide, the row 301, and two 44px arrows with their gaps leave the
+            staff **197** — while the engraving asks for **340** (`MIN_CONTENT_W` 320 plus its
+            margins), so 143px of the bar was hidden behind a scrollbar. ⛔ Making them borderless
+            and pushing them to the edges was the owner's first idea and the arithmetic refuses it:
+            even at zero gap the row gives about 295, still short of 340. Out of the staff's row is
+            the only way, and the title row was carrying one short line and nothing else.
+            ⚠ They stay beside the staff on a wide window, where there is room and where reading as
+            a pair of page edges is the better picture. */}
+        {isPhone && arrow(-1)}
         <h3 className="kv-measure__title">{TR.measure.title(measure ? shown : 0, total)}</h3>
+        {isPhone && arrow(1)}
         <div className="kv-measure__tools">
           <button
             id="measure-play"
@@ -261,31 +291,11 @@ export function MeasureCard({
       </header>
 
       <div className="kv-measure__row">
-        <button
-          id="measure-prev"
-          type="button"
-          className="kv-measure__arrow"
-          title={TR.measure.prev}
-          aria-label={TR.measure.prev}
-          disabled={!measure || shown <= 1}
-          onClick={() => step(-1)}
-        >
-          <span aria-hidden="true">‹</span>
-        </button>
+        {!isPhone && arrow(-1)}
         <div className="kv-measure__sheet" ref={frameRef}>
           {measure && renderBar(measure, { contentWidth, showCursor: playing && live === shown })}
         </div>
-        <button
-          id="measure-next"
-          type="button"
-          className="kv-measure__arrow"
-          title={TR.measure.next}
-          aria-label={TR.measure.next}
-          disabled={!measure || shown >= total}
-          onClick={() => step(1)}
-        >
-          <span aria-hidden="true">›</span>
-        </button>
+        {!isPhone && arrow(1)}
       </div>
 
       <footer className="kv-measure__foot">

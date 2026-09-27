@@ -2776,6 +2776,12 @@ label.kv-btn.is-disabled {
   /* Hover is a lie on a touchscreen — the state sticks after a tap and the last thing touched
      stays lit, which reads as a selection that will not clear. `@media (hover: hover)` is the
      usual guard; these are the ones where the stuck state is actually confusing. */
+  /* The bar stepper keeps no pressed look either: up beside the number it is a chevron, and a grey
+     box left behind under the last finger reads as a disabled control. */
+  .kv-measure__head .kv-measure__arrow:hover:not(:disabled) {
+    background: none;
+    border-color: transparent;
+  }
   .kv-drop:hover,
   .kv-note-hit:hover,
   .kv-tuplet-mark-hit:hover,
@@ -3227,6 +3233,37 @@ label.kv-btn.is-disabled {
   .kv-page[data-mtab="pages"] > .kv-card,
   .kv-page[data-mtab="pages"] > .kv-toolbox {
     display: none;
+  }
+
+  /* ── The measure card: the bar gets the whole width ────────────────────────────────────────
+   *
+   * ⭐ Measured at 393px before this: the staff column was **197px** while the engraving asks for
+   * **340** (`MIN_CONTENT_W` 320 plus its side margins), so 143px of the bar sat behind a
+   * scrollbar. The arrows move up beside the bar NUMBER (`MeasureCard.tsx`), the row becomes one
+   * column, and it reaches past the card's padding to the page's — which is what finally clears
+   * 340. ⛔ `MIN_CONTENT_W` is not lowered: below it the staff draws about 17px tall and koma stops
+   * being tellable from küçük, which is the one thing this app exists to show. */
+  /* ⚠ The card reaches out too, by the last few pixels the bar is short of. 325 against the 340 it
+     asks for is still a scrollbar; the two negative margins together clear it. */
+  .kv-measure {
+    margin-inline: calc(var(--space-2) * -1);
+  }
+  .kv-measure__row {
+    grid-template-columns: minmax(0, 1fr);
+    margin-inline: calc(var(--space-3) * -1);
+  }
+  /* Borderless up there — a chevron beside a number is a stepper, not a pair of page edges. */
+  .kv-measure__head .kv-measure__arrow {
+    width: var(--control-h);
+    height: var(--control-h);
+    border: 0;
+    background: none;
+  }
+  /* ⚠ The title takes the middle so the two chevrons sit at the row's ends, where a thumb reaches
+     them, rather than huddling around the text. */
+  .kv-measure__head .kv-measure__title {
+    flex: 1 1 auto;
+    text-align: center;
   }
 
   /* ── The instrument view's head stays clear of the pinned transport ────────────────────────

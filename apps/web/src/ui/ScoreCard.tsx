@@ -14,7 +14,6 @@ import type { NoteModelDocument } from "@turkish-omr/core";
 import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
-import { exportScorePng, exportScorePdf } from "../exportScore";
 
 export type ViewMode = "sheet" | "instrument";
 
@@ -36,6 +35,7 @@ export function ScoreCard({
   editMode,
   onEditMode,
   onFullScreen,
+  onExport,
   onUndo,
   onRedo,
   canUndo,
@@ -68,6 +68,8 @@ export function ScoreCard({
   onEditMode: (v: boolean) => void;
   /** Phone only: enter full screen. Undefined on a wide window and while full screen is on. */
   onFullScreen?: () => void;
+  /** Save the score. `App` owns it, because the export reads a stage only `App` can mount. */
+  onExport: (kind: "png" | "pdf") => Promise<void>;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -106,7 +108,7 @@ export function ScoreCard({
     setSaveError(false);
     setSaving(true);
     try {
-      await exportScorePng(pageName || doc.title || doc.name || "nota");
+      await onExport("png");
     } catch {
       // ⚠ Reported, never swallowed: a save button that does nothing and says nothing is worse
       // than one that fails out loud.
@@ -185,7 +187,7 @@ export function ScoreCard({
                 role="menuitem"
                 onClick={() => {
                   setSaveOpen(false);
-                  exportScorePdf();
+                  void onExport("pdf");
                 }}
               >
                 {TR.card.savePdf}

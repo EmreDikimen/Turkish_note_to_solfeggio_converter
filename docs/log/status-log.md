@@ -27,6 +27,20 @@ its previous sibling now, with a four-line guard. ⛔ **The canvas scale is chos
 budget**, because iOS Safari returns a BLANK image past its limit rather than an error — and a long
 score is the normal case here.
 
+**Then the owner photographed the output and both halves were wrong.** ⛔ The export was a
+photograph of the SCREEN, so on a phone it was a **324×7820 ribbon** — two bars to a system, tall and
+blurry, nothing like a sheet of music — and the PDF **cut staves in half at every page break**. Both
+are fixed by not exporting the screen: `App` mounts a hidden stage where the same document is
+engraved at the **default width**, four bars to a system, and both exports read that. The PDF is then
+built as **one `<svg>` per staff system**, each windowed by a `viewBox` onto that drawing inside a
+`break-inside: avoid` block — a single tall SVG gives the browser nothing to break BETWEEN, so it
+slices through staves, which is exactly what the photograph showed. Measured on the same page: the
+PNG **648×15808 → 2136×5588**, the PDF **8 pages → 3**, and page 1 carries eight complete systems
+with nothing cut. ⚠ The stage is parked off screen and NOT `display: none`: a hidden element has no
+layout and VexFlow measures every box it draws as zero. ⚠ The caption is recomposed from the wide
+header's three COLUMNS, because reading it in DOM order opened the export with *"Sofyan ♩ = 80"* as
+its headline.
+
 ⚠ One real bug found on the way and fixed: the card's corner controls had lost
 `.kv-card__head { position: relative }` in an earlier rewrite, so they were absolute against the
 PAGE and sat on the sticky transport at the top of the window. `.kv-card` also gained a

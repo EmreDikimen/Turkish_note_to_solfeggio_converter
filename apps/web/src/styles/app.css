@@ -3461,58 +3461,88 @@ label.kv-btn.is-disabled {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════════
- * PRINT — and therefore PDF
+ * SAVING A SCORE — the hidden stage, and the print sheet that becomes the PDF
  *
- * ⭐ **THIS IS THE PDF EXPORT** (owner, 2026-09-27). `exportScorePdf()` is one line — `window.print()`
- * — and everything that makes the output good lives here: the browser turns the DOM it is showing
- * into a VECTOR, correctly paginated PDF with the real font, which no library bundled into this app
- * would match. It costs the deployable build 0 bytes.
+ * ⭐ **NEITHER EXPORT IS A PHOTOGRAPH OF THE SCREEN** (owner, 2026-09-27). On a 393px phone the
+ * score is engraved 324px wide with two bars to a system; saving that gives a 324×7820 ribbon. Both
+ * exports read `#export-stage` instead, where the same document is drawn at the engraver's default
+ * width — four bars to a system, the look a printed edition has.
  *
- * ⚠ **Only the music survives.** A `:not()` blanket rather than a list, for the reason the
- * full-screen block uses one: an enumerated list quietly stops being true the day a section is
- * added, and the failure is a transport bar printed across someone's sheet music.
- *
- * ⚠ **The drawing is RELEASED from the width it was fitted to.** On a phone a dense page carries an
- * inline `width`/`height` in CSS pixels and a viewBox that shrank it to the screen
- * (docs/features/phone.md); on paper the page is wider than a phone, so those are cleared and the
- * viewBox scales the music up to the paper instead.
- *
- * ⚠ `.kv-score` drops its `overflow`. It is `overflow-x: auto` on screen, and an overflow box prints
- * only what is scrolled into view — the rest of the system would simply be missing.
+ * ⚠ **OFF SCREEN, NOT `display: none`.** A hidden element has no layout, and VexFlow measures every
+ * box it draws — a `display: none` stage engraves a page of zero-width staves. It is parked far to
+ * the left instead, where it is laid out and measurable and nobody sees it.
  * ════════════════════════════════════════════════════════════════════════════════════════════ */
 
+#export-stage {
+  position: absolute;
+  left: -20000px;
+  top: 0;
+  width: 1100px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* The print sheet exists only while the browser's dialog is open, and only on paper. */
+#print-sheet {
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * PRINT — and therefore PDF
+ *
+ * ⭐ **THIS IS THE PDF EXPORT.** `exportScorePdf()` builds the sheet and calls `window.print()`;
+ * everything that makes the output good is here. The browser turns this DOM into a VECTOR,
+ * correctly paginated PDF with the real font, which no library bundled into the app would match,
+ * and it costs the deployable build **0 bytes**.
+ *
+ * ⭐ **ONE ELEMENT PER STAFF SYSTEM IS WHY A SYSTEM IS NO LONGER CUT IN HALF.** Printing the score's
+ * single tall `<svg>` gives the browser nothing to break BETWEEN, so it slices wherever the page
+ * ends — through staves, which is what the owner photographed. Each system is its own `<svg>`
+ * windowed onto the same drawing, and `break-inside: avoid` then puts the break in the gap between
+ * two of them.
+ *
+ * ⚠ Everything else is hidden by a `:not()` blanket rather than a list, for the reason the
+ * full-screen block uses one: an enumerated list quietly stops being true the day a section is
+ * added, and the failure is a transport bar printed across someone's sheet music.
+ * ════════════════════════════════════════════════════════════════════════════════════════════ */
+
+@page {
+  margin: 14mm;
+}
+
 @media print {
-  .kv-page > *:not(.kv-card) {
+  body > *:not(#print-sheet) {
     display: none !important;
   }
-  .kv-card__head,
-  .kv-card .kv-hint,
-  .kv-toolbox,
-  .kv-fsbar,
-  .kv-mtabs {
-    display: none !important;
+  #print-sheet {
+    display: block;
   }
-  .kv-page,
-  .kv-card {
-    max-width: none;
+  .kv-print__head {
+    margin: 0 0 10mm;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    color: #000;
+  }
+  .kv-print__head h1 {
     margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: #fff;
+    font-size: 15pt;
+    font-style: italic;
   }
-  .kv-score {
-    overflow: visible;
-    padding: 0;
+  .kv-print__head p {
+    margin: 2mm 0 0;
+    font-size: 11pt;
+    font-style: italic;
   }
-  .kv-score svg {
-    width: 100% !important;
-    height: auto !important;
+  /* ⚠ Both properties: `break-inside` is the current name and `page-break-inside` is the one older
+     print engines still read. A system split across two sheets is the bug this exists for. */
+  .kv-print__row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 4mm;
   }
-  /* The overlay is for fingers, not for paper: hit boxes, the playhead and the edit chrome are
-     invisible on screen and would print as stray rectangles. */
-  #sheet-surface > *:not(svg):not(:first-child) {
-    display: none !important;
+  .kv-print__row svg {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 }

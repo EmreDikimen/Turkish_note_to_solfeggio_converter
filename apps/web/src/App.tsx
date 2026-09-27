@@ -55,6 +55,7 @@ import {
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
+import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./exportScore";
 import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
 import {
   InstrumentView,
@@ -356,6 +357,18 @@ export function App() {
   // score (2026-09-26). Inline they cost 314px of a 800px screen and left 32px of music, measured;
   // as a sheet they cost the 44px of the button that opens them.
   const [pitchOpen, setPitchOpen] = useState(false);
+  /**
+   * Which export is in flight, and the flag that mounts the hidden PAPER-WIDTH engraving.
+   *
+   * ⚠ **The export must not be a photograph of the phone** (owner, 2026-09-27: *"genişlik normal
+   * nota kağıdı genişliğinde olmalı… dikeylemesine çok uzun ve bulanık"*). On a 393px screen the
+   * score is engraved 324px wide with two bars to a system, so saving what is on screen gives a
+   * 324×7820 ribbon: right for a thumb, wrong for a sheet of paper. The stage below draws the SAME
+   * document at the engraver's own default width — four bars to a system, the desktop look, which
+   * is what sheet music looks like — and the export reads that instead.
+   * ⚠ Hidden, never shown: the reader's screen must not flicker through a re-engrave.
+   */
+  const [exporting, setExporting] = useState<null | "png" | "pdf">(null);
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
@@ -1137,6 +1150,24 @@ export function App() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [hasDoc, phoneShaped, fullScreen]);
+
+  /**
+   * Mount the paper-width stage, wait for it to be drawn, then hand it to the exporter.
+   *
+   * ⚠ The wait is a POLL, not a timeout: the engraving is a VexFlow layout of a few hundred notes
+   * and how long it takes is the reader's machine's business, not a number guessed here. It gives
+   * up after two seconds so a failure is reported rather than hung.
+   */
+  async function runExport(kind: "png" | "pdf"): Promise<void> {
+    setExporting(kind);
+    try {
+      const stage = await waitForStage();
+      if (kind === "png") await exportScorePng(stage, saved?.name || doc?.title || doc?.name || "nota");
+      else await exportScorePdf(stage);
+    } finally {
+      setExporting(null);
+    }
+  }
 
   // The slider's handler. Straight to the backend, deliberately not through `applyPlayback`.
   function applyPercussionVolume(v: number) {
@@ -2185,6 +2216,7 @@ export function App() {
             // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
             // nothing new for any check at 1280×720.
             onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
+            onExport={runExport}
             onUndo={onUndo}
             onRedo={onRedo}
             canUndo={history.canUndo}
@@ -2315,6 +2347,32 @@ export function App() {
             />
           )}
         </>
+      )}
+
+      {/* ⚠ **THE EXPORT STAGE.** The same document, engraved at the default width — see `exporting`.
+          It is mounted only while a save is running and is never visible; `app.css` parks it off
+          screen rather than hiding it, because a `display: none` element has no layout and VexFlow
+          would measure every box as zero. */}
+      {exporting && drawnDoc && (
+        <div id={EXPORT_STAGE_ID} aria-hidden="true">
+          <SheetView
+            doc={drawnDoc}
+            accidentalMode={accidentalMode}
+            signatureOverride={SIG_OVERRIDE}
+            sigTolerant={SIG_TOLERANT}
+            showLyrics={showLyrics}
+            lyricHyphens={lyricHyphens}
+            repeatSpans={repeatSpans}
+            navMarks={navMarks}
+            svgMarker="export-svg"
+            // ⚠ Inert: the stage is a drawing, never a surface anyone touches. No edit overlay, no
+            // clock, and no seek — it exists for the length of one save.
+            editMode={false}
+            playing={false}
+            getPositionMs={getPositionMs}
+            onSeekToMeasure={() => {}}
+          />
+        </div>
       )}
 
       {/* ⚠ Fixed, and rendered here for the same reason the toolbox above is: out of every

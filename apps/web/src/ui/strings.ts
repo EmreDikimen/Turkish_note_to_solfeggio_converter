@@ -580,6 +580,15 @@ export const TR = {
     asWritten: "Bu makam yazıldığı gibi çalınıyor.",
   },
 
+  // The question asked before a recorded voice is downloaded (owner, 2026-09-27). Short on purpose:
+  // the same owner had just cut every long explanation in the app.
+  voiceModal: {
+    title: (label: string) => `${label} sesi indirilsin mi?`,
+    lead: "Gerçek enstrüman kaydı bir kez indirilir — yaklaşık 10–35 MB. Mobil veride dikkat.",
+    cancel: "Vazgeç",
+    confirm: "İndir",
+  },
+
   makamModal: {
     titleGuess: (name: string) => `Bu eser ${name} gibi görünüyor`,
     titleUnknown: "Hangi makam?",

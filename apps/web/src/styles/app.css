@@ -3383,9 +3383,19 @@ label.kv-btn.is-disabled {
   }
   .kv-page[data-mtab] #transport-settings .kv-field {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     width: 100%;
     gap: var(--space-2);
+  }
+  /* ⭐ A field's status line goes UNDER its control, never beside it (owner, 2026-09-27, with a
+     photo). It used to be a third item on a `nowrap` row, and the select — `min-width: 0` so it may
+     shrink — gave up its whole width to "ses indirilemedi — varsayılan sesle çalıyor": the Çalgı
+     sesi picker collapsed to its arrow. Wrapping alone would still let the line sit beside a short
+     select, so it takes a full line, indented to start where the controls start. */
+  .kv-page[data-mtab] #transport-settings .kv-field > .kv-hint {
+    flex: 1 0 100%;
+    padding-left: calc(6.5rem + var(--space-2));
+    white-space: normal; /* a full line of its own may still be longer than the panel */
   }
   /* ⚠ The label may WRAP inside its column — "Arıza işaretleri" is the longest and would otherwise
      push the column wider than the one width they all share. */

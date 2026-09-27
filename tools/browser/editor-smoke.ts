@@ -22,6 +22,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { groupMeasures, measureOfEvent, type NoteModelDocument } from "@turkish-omr/core";
 import { tupletRunFrom } from "../render/rhythm";
+import { answerVoicePrompt } from "./voicePrompt";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,7 +71,11 @@ const VOICES_URL = (() => {
 async function openInstrument(page: import("playwright").Page, id: "violin" | "kanun") {
   await page.locator("#view-instrument").click();
   await page.waitForSelector("#instrument-view", { timeout: 10000 });
+  // ⚠ Opening the tab and picking may EACH ask before downloading (2026-09-27) — say yes, because
+  // the sound following the picture is what this page exists for.
+  await answerVoicePrompt(page, "confirm");
   await page.locator("#instrument-pick").selectOption(id);
+  await answerVoicePrompt(page, "confirm");
   await page.waitForSelector(id === "kanun" ? "#kanun" : "#fingerboard", { timeout: 10000 });
 }
 
@@ -540,7 +545,14 @@ async function main() {
   await page.waitForTimeout(100);
   check("...and still offered with the usul's strokes off", await picker.isDisabled(), false);
 
+  // ⭐ A recorded voice is a 10–35 MB download, so choosing one ASKS first (owner, 2026-09-27). A
+  // "no" must leave the sound exactly where it was — the picker is controlled, so it falls back.
   await picker.selectOption("clarinet");
+  check("⭐ choosing a recorded voice asks before downloading", await answerVoicePrompt(page, "cancel"), "clarinet");
+  check("…and a no leaves the picker where it was", await picker.getAttribute("data-instrument"), "sine");
+  check("…and the backend too", (await voiceInfo()).voice, "sine");
+  await picker.selectOption("clarinet");
+  check("…and a yes goes ahead", await answerVoicePrompt(page, "confirm"), "clarinet");
   await page.waitForTimeout(300);
   check("choosing an instrument is mirrored as state", await picker.getAttribute("data-instrument"), "clarinet");
   check("...and the backend agrees", (await voiceInfo()).voice, "clarinet");
@@ -603,6 +615,7 @@ async function main() {
     check("the piece is still playing before the switch",
       await page.locator("#play").getAttribute("data-play-state"), "playing");
     await picker.selectOption("violin");
+    await answerVoicePrompt(page, "confirm");
     await page.waitForFunction(
       () => (window as unknown as { __omrVoice: () => { state: string } }).__omrVoice().state === "loading",
       undefined,
@@ -1473,6 +1486,9 @@ async function main() {
     await page.getAttribute("#instrument", "data-instrument"), "sine");
   await page.locator("#view-instrument").click();
   await page.waitForSelector("#instrument-view", { timeout: 10000 });
+  // ⚠ Since 2026-09-27 opening the tab ASKS before its voice downloads; "yes" is the path whose
+  // result the assertions below read.
+  check("⭐ opening the tab asks before downloading its voice", await answerVoicePrompt(page, "confirm"), "violin");
   check("the piano roll tab is gone", await page.locator("#view-roll").count(), 0);
   check("…and so are the two separate instrument tabs", await page.locator("#view-fingerboard, #view-kanun").count(), 0);
   check("one instrument page holds both", await page.locator("#instrument-pick").count(), 1);
@@ -1486,11 +1502,13 @@ async function main() {
   check("…drawing a violin and no kanun", await page.locator("#fingerboard").count() + await page.locator("#kanun").count() * 10, 1);
 
   await page.locator("#instrument-pick").selectOption("kanun");
+  check("picking another instrument asks for ITS voice", await answerVoicePrompt(page, "confirm"), "kanun");
   await page.waitForSelector("#kanun", { timeout: 10000 });
   check("picking Kanun swaps the drawing", await page.getAttribute("#instrument-view", "data-instrument"), "kanun");
   check("…and the violin goes away", await page.locator("#fingerboard").count(), 0);
   check("⭐ …and the SOUND follows it", await page.getAttribute("#instrument", "data-instrument"), "kanun");
   await page.locator("#instrument-pick").selectOption("violin");
+  check("…but a voice already said yes to is not asked about twice", await answerVoicePrompt(page, "confirm"), null);
   check("switching back moves the sound back", await page.getAttribute("#instrument", "data-instrument"), "violin");
 
   await openInstrument(page, "violin");
@@ -1732,6 +1750,9 @@ async function main() {
   await page.goto(`${base}/?score=/beyati-delisin.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
   await page.locator("#view-instrument").click();
+  // Nothing in this section needs a sound, so the download question gets a "no" — which also proves
+  // the page is fully usable without one.
+  await answerVoicePrompt(page, "cancel");
   await page.waitForSelector("#measure-card", { timeout: 10000 });
 
   const cardAttr = (name: string) => page.getAttribute("#measure-card", name);

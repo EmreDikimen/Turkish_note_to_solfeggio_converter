@@ -12,6 +12,7 @@ import { createServer } from "vite";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
+import { answerVoicePrompt } from "./voicePrompt";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const WEB_ROOT = path.join(ROOT, "apps/web");
@@ -219,7 +220,9 @@ async function main() {
     // 4. The instrument tab (the kanun is the widest drawing in the app).
     await page.locator("#view-instrument").click();
     await page.waitForSelector("#instrument-view", { timeout: 10000 });
+    await answerVoicePrompt(page, "cancel"); // the probe measures layout, not sound
     await page.locator("#instrument-pick").selectOption("kanun");
+    await answerVoicePrompt(page, "cancel");
     await page.waitForSelector("#kanun", { timeout: 10000 });
     await page.waitForTimeout(400);
     await measure(page, "kanun", size.width);

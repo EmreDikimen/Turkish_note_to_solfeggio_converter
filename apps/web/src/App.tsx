@@ -55,7 +55,7 @@ import {
   type RecentMeta,
 } from "./recentPages";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
-import { DEFAULT_VOICE, type VoiceId } from "./audio/instruments";
+import { DEFAULT_VOICE, findVoice, type VoiceId } from "./audio/instruments";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
 import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./exportScore";
 import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
@@ -66,6 +66,7 @@ import {
   type InstrumentId,
 } from "./InstrumentView";
 import { MakamModal } from "./MakamModal";
+import { VoiceDownloadModal } from "./VoiceDownloadModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
 import { noteVisit } from "./analytics/visits";
@@ -529,6 +530,19 @@ export function App() {
    * scordatura baked in would come back wrong on a normal violin.
    */
   const [tuning, setTuning] = useState<ViolinTuning>(DEFAULT_VIOLIN_TUNING);
+  /**
+   * The download question that is on screen, if any (owner, 2026-09-27: ask before downloading a
+   * voice). `go` is what a "yes" does; `no` is what a "no" does besides closing.
+   */
+  const [voiceAsk, setVoiceAsk] = useState<null | { voice: VoiceId; go: () => void; no?: () => void }>(
+    null,
+  );
+  /** Voices the reader said yes to in THIS visit — asked once each, not on every switch back.
+   *  ⚠ Per visit on purpose: a later visit may really download again, so it asks again. */
+  const voicesApproved = useRef(new Set<VoiceId>());
+  /** Voices the reader said no to when merely OPENING the instrument tab — so going back and forth
+   *  between the tabs does not ask again every time. An explicit pick from a list always asks. */
+  const voicesDeclinedOnOpen = useRef(new Set<VoiceId>());
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>(() => backend.voiceInfo());
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
@@ -1015,8 +1029,29 @@ export function App() {
   // starts its download immediately — including while stopped, which is when someone browsing the
   // list is most likely to be. `applyPlayback` then re-schedules if something is already playing.
   function applyVoice(v: VoiceId) {
-    void backend.ensureVoice(v);
-    applyPlayback(bpm, metronome, usulName, percussion, percussionKit, v);
+    requestVoice(v, () => {
+      void backend.ensureVoice(v);
+      applyPlayback(bpm, metronome, usulName, percussion, percussionKit, v);
+    });
+  }
+
+  /**
+   * ⭐ THE ONE PLACE THAT DECIDES WHETHER A VOICE CHANGE MAY DOWNLOAD (owner, 2026-09-27: *"sesi
+   * indirmeden önce bir modalla kullanıcıya emin olup olmadığını sorsun"*). Every path that can
+   * start a download goes through here: the transport's picker, the instrument page's picker, and
+   * opening that page. The synthesised tone downloads nothing and is never asked about; a voice the
+   * reader already said yes to in this visit is not asked about twice.
+   *
+   * ⚠ A "no" changes NOTHING about the sound — the controlled pickers fall back to `voice` on their
+   * own, because `voice` never moved.
+   */
+  function requestVoice(v: VoiceId, go: () => void, no?: () => void) {
+    const def = findVoice(v);
+    if (!def || !def.samples.length || voicesApproved.current.has(v)) {
+      go();
+      return;
+    }
+    setVoiceAsk({ voice: v, go, no });
   }
 
   /**
@@ -1071,7 +1106,17 @@ export function App() {
     requestAnimationFrame(() => requestAnimationFrame(() => setViewSwapping(false)));
     if (v !== "instrument") return;
     const want = voiceForInstrument(instrument);
-    if (want !== voice) applyVoice(want);
+    // ⚠ A "no" given on OPENING the tab is remembered, or every trip Nota → Enstrüman would ask
+    // again. The picker on the page still asks, because picking is asking.
+    if (want === voice || voicesDeclinedOnOpen.current.has(want)) return;
+    requestVoice(
+      want,
+      () => {
+        void backend.ensureVoice(want);
+        applyPlayback(bpm, metronome, usulName, percussion, percussionKit, want);
+      },
+      () => voicesDeclinedOnOpen.current.add(want),
+    );
   }
 
   /**
@@ -2501,6 +2546,23 @@ export function App() {
           }}
           // Dismissed without choosing: the detected makam is already applied, so this keeps it.
           onDismiss={() => setMakamPrompt(null)}
+        />
+      )}
+
+      {voiceAsk && (
+        <VoiceDownloadModal
+          voice={voiceAsk.voice}
+          label={findVoice(voiceAsk.voice)?.label ?? voiceAsk.voice}
+          onConfirm={() => {
+            voicesApproved.current.add(voiceAsk.voice);
+            voicesDeclinedOnOpen.current.delete(voiceAsk.voice);
+            setVoiceAsk(null);
+            voiceAsk.go();
+          }}
+          onCancel={() => {
+            setVoiceAsk(null);
+            voiceAsk.no?.();
+          }}
         />
       )}
 

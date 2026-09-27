@@ -103,6 +103,16 @@ where it is the only thing that says the mode is on.
 was off. The feature is untouched: `?lyrics=1` draws them, and `render.ts` renders about a third of
 the corpus with them.
 
+⚠ **THE INSTRUMENT VIEW'S HEAD STICKS BELOW THE PINNED ROW, AND THAT IS A BUG FIX.** The Çalma row
+is sticky, so anything scrolled up goes under it — including the card head, which carries the only
+way back to the score. Measured at 393px in the instrument view: at a scroll of 240 the Nota
+button's centre sat at y=6 under a bar ending at 70, and `elementFromPoint` there returned
+**`stop`** — the tap was landing on Dur. You could see the button, pressing it did nothing, and so
+you pressed again. ⛔ Only in that view: on the Nota tab the head is 189px and pinning it would cost
+more music than the bug costs taps. ⚠ It works only because `.kv-card` clips with `overflow: clip`
+and not `hidden` — `hidden` makes the card a scroll container and a sticky child then silently does
+not stick.
+
 ## Fitting a score into a phone
 
 ⭐ **The fit is a RE-ENGRAVE, not a zoom** — fewer bars per system at the same note size, through

@@ -2105,6 +2105,9 @@ export function App() {
       // that here means it cannot be left open behind edit mode or another tab by a path that
       // forgot to close it. `onMobileTab` still clears the intent so it does not spring back.
       data-pitch={isPhone && doc && pitchOpen && mobileTab === "nota" && !editMode ? "open" : undefined}
+      // ⚠ Which view the card is showing, so the stylesheet can treat the instrument page
+      // differently from the score page — see the sticky head in the phone block.
+      data-view={doc ? viewMode : undefined}
     >
       <header className="kv-header">
         <h1 className="kv-brand">

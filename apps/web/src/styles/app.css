@@ -1256,7 +1256,12 @@ label.kv-btn.is-disabled {
   border: 1px solid var(--rule);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  overflow: hidden;
+  /* ⚠ **`clip`, NOT `hidden`, and the difference is load-bearing** (2026-09-27). Both clip the same
+     way, but `hidden` makes this a SCROLL CONTAINER — and a `position: sticky` descendant then
+     sticks to this box, which never scrolls, so it does not stick at all. The instrument view's
+     head has to stay clear of the pinned transport (see the phone block), and `clip` is what lets
+     it. Same reasoning as `.kv-score`'s own `overflow-y: clip`. */
+  overflow: clip;
 }
 
 .kv-card__head {
@@ -3210,6 +3215,31 @@ label.kv-btn.is-disabled {
   .kv-page[data-mtab="pages"] > .kv-card,
   .kv-page[data-mtab="pages"] > .kv-toolbox {
     display: none;
+  }
+
+  /* ── The instrument view's head stays clear of the pinned transport ────────────────────────
+   *
+   * ⭐ **THE BUG THIS FIXES** (owner, 2026-09-27: *"enstrüman üzerinden nota tabına geçmek için
+   * birkaç kez basmam gerekiyor"*). The Çalma row is STICKY, so anything scrolled up goes under it
+   * — including the card's own head, which carries the only way back to the score. Measured at
+   * 393px in the instrument view: at a scroll of 240 the Nota button's centre sits at y=6 under a
+   * bar whose bottom is at 70, and `elementFromPoint` there returns **`stop`**. The tap was landing
+   * on Dur. You could SEE the button and pressing it did nothing, which is the worst shape a bug
+   * can take — so the reader pressed again, and again, until they had scrolled far enough.
+   *
+   * ⚠ Sticking the head below the bar removes the dead zone entirely. ⛔ Only in the INSTRUMENT
+   * view: on the Nota tab this head is 189px and pinning it would cost more music than the bug
+   * costs taps — there the switch is at the top of the page, where you already are.
+   *
+   * ⚠ It works only because `.kv-card` clips with `overflow: clip` rather than `hidden`; `hidden`
+   * would make the card a scroll container and this would silently not stick. */
+  .kv-page[data-mtab][data-view="instrument"] .kv-card__head {
+    position: sticky;
+    /* Directly under the transport, never beneath it. `--pinned-h` is published by `TransportBar`. */
+    top: var(--pinned-h, 0px);
+    /* Under the transport's 30, over the score. */
+    z-index: 29;
+    background: var(--paper);
   }
 
   /* ── Inside the fold: one label column, one control column ─────────────────────────────────

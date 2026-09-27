@@ -244,7 +244,7 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 
 | Element | Carries |
 |---|---|
-| `#app` | `data-mtab` = `nota` \| `duzenle` \| `pages`, plus `data-fullscreen` and `data-pitch` |
+| `#app` | `data-mtab` = `nota` \| `duzenle` \| `pages`, plus `data-fullscreen`, `data-pitch` and `data-view` (`sheet` \| `instrument`) |
 | `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
 | `#pitch-toggle` | `aria-expanded` — the settings fold under `#transport-pinned` |
 | `#transport-settings` | the fold's content: `#row-sound`, `#row-rhythm`, `#row-pitch` |

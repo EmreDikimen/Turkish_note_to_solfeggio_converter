@@ -856,17 +856,33 @@ label.kv-btn.is-disabled {
    mistake. A row rule spans the bar and cannot dangle. */
 /* ⚠ Invisible to layout: the rows stay flex items of `.kv-transport`. Only the phone's fold gives
    this element a box, because a grid row cannot collapse two siblings at once. */
-/* The expand mark in the score card's top-right corner (phone only — it is not rendered anywhere
-   else). Out of the flow on purpose: the title and the tools below lay out as if it were not there,
-   so it costs no row on the screen with the least room. `--control-h` square, which is 44px under a
-   finger. */
+/* The score card's corner controls: save, and (on a phone) the expand mark. Out of the flow on
+   purpose — the title and the tools below lay out as if they were not there, so they cost no row on
+   the screen with the least room. `--control-h` square, which is 44px under a finger. */
+/* ⚠ **The corner group's containing block.** Without it `.kv-card__corner` is absolute against the
+   page and lands on the sticky transport at the top of the WINDOW rather than the top of the card —
+   which is exactly what happened when these styles were rewritten and this line was dropped. */
 .kv-card__head {
   position: relative;
 }
-.kv-card__fs {
+
+/* ⚠ The Çalma row is STICKY, so anything scrolled to the top of the window lands underneath it —
+   including this card's own corner controls, which sit at its very top. `--pinned-h` is published
+   from `TransportBar` for exactly this; the same trap `.kv-measure`'s scroll-margin already pays
+   for at the other end of the screen. */
+.kv-card {
+  scroll-margin-top: calc(var(--pinned-h, 0px) + var(--space-2));
+}
+
+.kv-card__corner {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.kv-card__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -880,8 +896,65 @@ label.kv-btn.is-disabled {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.kv-card__fs:hover {
+.kv-card__icon:hover {
   color: var(--ink);
+}
+.kv-card__icon[aria-expanded="true"] {
+  color: var(--accent);
+}
+.kv-card__icon:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.kv-card__save {
+  position: relative;
+}
+/* ⚠ Anchored to the RIGHT edge, or a menu wider than its button runs off a 393px screen. */
+.kv-card__menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 15rem;
+  max-width: min(20rem, calc(100vw - var(--space-6)));
+  padding: var(--space-1);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+.kv-card__menu > button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--control-h);
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.kv-card__menu > button:hover {
+  background: var(--accent-soft);
+}
+.kv-card__menu small {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  white-space: normal;
+}
+.kv-card__saving {
+  margin-left: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
 }
 
 .kv-transport__body {
@@ -3385,4 +3458,61 @@ label.kv-btn.is-disabled {
 }
 .kv-fsbar__btn--exit {
   background: var(--paper-raised);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * PRINT — and therefore PDF
+ *
+ * ⭐ **THIS IS THE PDF EXPORT** (owner, 2026-09-27). `exportScorePdf()` is one line — `window.print()`
+ * — and everything that makes the output good lives here: the browser turns the DOM it is showing
+ * into a VECTOR, correctly paginated PDF with the real font, which no library bundled into this app
+ * would match. It costs the deployable build 0 bytes.
+ *
+ * ⚠ **Only the music survives.** A `:not()` blanket rather than a list, for the reason the
+ * full-screen block uses one: an enumerated list quietly stops being true the day a section is
+ * added, and the failure is a transport bar printed across someone's sheet music.
+ *
+ * ⚠ **The drawing is RELEASED from the width it was fitted to.** On a phone a dense page carries an
+ * inline `width`/`height` in CSS pixels and a viewBox that shrank it to the screen
+ * (docs/features/phone.md); on paper the page is wider than a phone, so those are cleared and the
+ * viewBox scales the music up to the paper instead.
+ *
+ * ⚠ `.kv-score` drops its `overflow`. It is `overflow-x: auto` on screen, and an overflow box prints
+ * only what is scrolled into view — the rest of the system would simply be missing.
+ * ════════════════════════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  .kv-page > *:not(.kv-card) {
+    display: none !important;
+  }
+  .kv-card__head,
+  .kv-card .kv-hint,
+  .kv-toolbox,
+  .kv-fsbar,
+  .kv-mtabs {
+    display: none !important;
+  }
+  .kv-page,
+  .kv-card {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #fff;
+  }
+  .kv-score {
+    overflow: visible;
+    padding: 0;
+  }
+  .kv-score svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+  /* The overlay is for fingers, not for paper: hit boxes, the playhead and the edit chrome are
+     invisible on screen and would print as stray rectangles. */
+  #sheet-surface > *:not(svg):not(:first-child) {
+    display: none !important;
+  }
 }

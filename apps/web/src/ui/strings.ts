@@ -201,6 +201,15 @@ export const TR = {
     followTitle:
       "Çalarken imleç ekrandan çıkarsa sayfa kendiliğinden imlece kayar. Kapatırsanız sayfa " +
       "olduğu yerde kalır; seçiminiz bu tarayıcıda hatırlanır.",
+    // Saving the score that is on screen. ⚠ The PDF line says two taps out loud, because the
+    // browser's print sheet is what makes the PDF and pretending otherwise is a broken promise.
+    save: "İndir",
+    saveTitle: "Notayı kaydet",
+    savePng: "PNG — resim olarak indir",
+    savePdf: "PDF — yazdır veya kaydet",
+    savePdfNote: "Yazdırma ekranı açılır; oradan “PDF olarak kaydet”i seçin.",
+    saveBusy: "hazırlanıyor…",
+    saveFailed: "Kaydedilemedi. Sayfa açıkken tekrar deneyin.",
     edit: "✎ Düzenle",
     editing: "✓ Düzenleniyor",
     undo: "↶ Geri al",

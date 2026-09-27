@@ -2,10 +2,35 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-26
+updated: 2026-09-27
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-09-27 — the score can be saved, as a picture or as paper
+
+**One button in the card's corner, two ways out** (owner). The PNG is drawn by the app and
+downloads; the PDF is the browser's, printed from the DOM behind a `@media print` block. ⭐ That
+split is the whole design: the browser makes a **vector, paginated PDF with embedded fonts** and it
+costs the build **0 bytes** — measured on a 60-system page, **8 A4 pages / 308 KB**, against
+**1,047 KB** for the same page as a PNG. A library rasterising the page was offered with its price
+(~350 KB of bundle, blurry, one page) and declined. ⚠ The second tap is named on screen rather than
+hidden: printing opens the OS sheet.
+
+**Three traps the PNG paid for, each found by measurement and not by reading.** ⛔ **Bravura has to
+travel with the markup** — an SVG inside an `<img>` is its own document and cannot fetch a font, so
+the first export came out as a column of empty boxes; it is embedded as a base64 `@font-face`.
+⛔ **The caption element is found from the SVG backwards**: `.kv-score`'s first child is a wrapper
+around the whole score, and reading its text handed back **744 lines** of Bravura codepoints, which
+the canvas drew as 744 rows of boxes and 16,386px of height. It is `closest("[id]")` → the surface →
+its previous sibling now, with a four-line guard. ⛔ **The canvas scale is chosen against a pixel
+budget**, because iOS Safari returns a BLANK image past its limit rather than an error — and a long
+score is the normal case here.
+
+⚠ One real bug found on the way and fixed: the card's corner controls had lost
+`.kv-card__head { position: relative }` in an earlier rewrite, so they were absolute against the
+PAGE and sat on the sticky transport at the top of the window. `.kv-card` also gained a
+`scroll-margin-top` of `--pinned-h`, the same trap `.kv-measure` already pays at the other end.
 
 ## 2026-09-26 — the phone's reading screen, rebuilt live against the owner's own device
 

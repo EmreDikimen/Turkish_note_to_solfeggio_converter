@@ -9,11 +9,12 @@
  * training-strip exporter screenshots that SVG by rect. See styles/app.css.
  */
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { NoteModelDocument } from "@turkish-omr/core";
 import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
+import { exportScorePng, exportScorePdf } from "../exportScore";
 
 export type ViewMode = "sheet" | "instrument";
 
@@ -76,6 +77,45 @@ export function ScoreCard({
   const notes = doc.events.filter((e) => e.kind === "note").length;
   // Renaming the page ON SCREEN. The same box the list uses (`RenameField`), because there is one
   // rename and it should behave the same in both places.
+  /** The save menu: one button, two ways out. Closed by choosing, by Esc, or by tapping elsewhere. */
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const saveRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!saveOpen) return;
+    // ⚠ `pointerdown`, not `click`: a menu that closes on click never sees the tap that opened a
+    // control underneath it, and on a touchscreen the delay is visible.
+    const away = (e: PointerEvent) => {
+      if (!saveRef.current?.contains(e.target as Node)) setSaveOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSaveOpen(false);
+    };
+    document.addEventListener("pointerdown", away);
+    window.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [saveOpen]);
+
+  async function savePng() {
+    setSaveOpen(false);
+    setSaveError(false);
+    setSaving(true);
+    try {
+      await exportScorePng(pageName || doc.title || doc.name || "nota");
+    } catch {
+      // ⚠ Reported, never swallowed: a save button that does nothing and says nothing is worse
+      // than one that fails out loud.
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const [renaming, setRenaming] = useState(false);
   return (
     // ⚠ No edit-mode variant of this class any more (owner, 2026-09-03). The palette used to be a
@@ -92,11 +132,74 @@ export function ScoreCard({
             title and the tools below lay out as if it were not there.
             ⚠ Phone only and only while full screen is OFF — `App` passes no handler otherwise, so
             no wide window renders it. ⚠ Entering LEAVES EDIT MODE (`applyFullScreen`). */}
+        {/* Both corner controls in one group, so neither has to know whether the other is there —
+            the expand mark is phone-only and the save button is not. */}
+        <div className="kv-card__corner">
+        {/* ⭐ **ONE SAVE BUTTON, TWO WAYS OUT** (owner, 2026-09-27: *"tek indirme butonu olsun, ona
+            tıkladığımızda 2 seçenek belirsin png ve pdf diye"*). It sits in the head's corner beside
+            the expand mark, at every width — saving a page is not a phone-only wish.
+            ⚠ The two are not the same mechanism and the menu says so: the PNG is drawn by the app
+            and downloads, the PDF is the BROWSER's, printed from the DOM — vector, paginated, and
+            0 bytes added to the build, against ~350 KB for a blurry one-page raster. Printing opens
+            the OS sheet, so the PDF line names the second tap rather than promising one. */}
+        <div className="kv-card__save" ref={saveRef}>
+          <button
+            id="export-toggle"
+            type="button"
+            className="kv-card__icon"
+            aria-expanded={saveOpen}
+            aria-haspopup="menu"
+            title={TR.card.saveTitle}
+            aria-label={TR.card.saveTitle}
+            disabled={saving}
+            onClick={() => {
+              setSaveError(false);
+              setSaveOpen((v) => !v);
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 3v12" />
+              <path d="M7 11l5 5 5-5" />
+              <path d="M4 20h16" />
+            </svg>
+          </button>
+          {saveOpen && (
+            <div className="kv-card__menu" role="menu" data-omr="save-menu">
+              <button id="export-png" type="button" role="menuitem" onClick={savePng}>
+                {TR.card.savePng}
+              </button>
+              <button
+                id="export-pdf"
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setSaveOpen(false);
+                  exportScorePdf();
+                }}
+              >
+                {TR.card.savePdf}
+                <small>{TR.card.savePdfNote}</small>
+              </button>
+            </div>
+          )}
+        </div>
+
         {onFullScreen && (
           <button
             id="fullscreen-on"
             type="button"
-            className="kv-card__fs"
+            className="kv-card__icon"
             title={TR.mobile.fullscreen}
             aria-label={TR.mobile.fullscreen}
             onClick={onFullScreen}
@@ -120,6 +223,7 @@ export function ScoreCard({
             </svg>
           </button>
         )}
+        </div>
         <h2 className="kv-card__title">
           {pageId && renaming ? (
             <RenameField
@@ -149,6 +253,12 @@ export function ScoreCard({
                 </button>
               )}
             </>
+          )}
+          {saving && <span className="kv-card__saving">{TR.card.saveBusy}</span>}
+          {saveError && (
+            <span className="kv-card__saving" role="alert" data-omr="save-error">
+              {TR.card.saveFailed}
+            </span>
           )}
           <span className="kv-card__meta">
             {TR.card.meta(

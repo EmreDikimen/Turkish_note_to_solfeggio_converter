@@ -70,6 +70,14 @@ before arming one.
 `#measure-card`) and **`data-play-state` on TWO** (`#play`, `#palette-play`). Select the one you
 mean by id.
 
+⭐ **SAVING THE SCORE (2026-09-27).** `#export-toggle[aria-expanded][aria-haspopup]` in the card
+head's corner opens `[data-omr="save-menu"]`, which holds `#export-png` and `#export-pdf`. ⚠ The two
+are different mechanisms: PNG is drawn by the app and DOWNLOADS, PDF calls `window.print()` and the
+browser makes it — so a check can assert the download for one and only the call for the other.
+⚠ A failure shows `[data-omr="save-error"]` in the card head; the button is `disabled` while saving.
+⛔ **Neither reads or writes `doc`** — export is a picture, and the note model's seam is still
+`window.__omrDoc`.
+
 ⚠ **There is no `#save-json` any more** (owner, 2026-08-30). A check that needs the note model reads
 **`window.__omrDoc`**; **`window.__omrStructure`** carries a decoded page's signs and playing order.
 Both sit beside the older `__omrStrips` / `__omrMeta` / `__omrConfig` hooks.

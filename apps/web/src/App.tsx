@@ -369,6 +369,8 @@ export function App() {
    * ⚠ Hidden, never shown: the reader's screen must not flicker through a re-engrave.
    */
   const [exporting, setExporting] = useState<null | "png" | "pdf">(null);
+  /** True for the one frame between a view switch being asked for and the new view being mounted. */
+  const [viewSwapping, setViewSwapping] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
   const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
@@ -1018,8 +1020,27 @@ export function App() {
    * `applyPlayback`) for a voice that is already the one sounding. `ensureVoice` would be a no-op
    * on its own; the re-schedule would not.
    */
+  /**
+   * Switch between the score and the instrument page.
+   *
+   * ⭐ **THE SWAP PAINTS A PLACEHOLDER FIRST, AND THAT IS NOT A NICETY** (owner, 2026-09-27:
+   * *"enstrüman üzerinden nota tabına geçmek için birkaç kez basmam gerekiyor"*). `SheetView` draws
+   * in a `useLayoutEffect`, which runs BEFORE the browser paints — deliberately, so an edit never
+   * flashes an empty stave. The cost is that mounting the score blocks the frame for the whole
+   * engraving: measured at 6× CPU throttling, **246 ms** on an 83-note page, **606 ms** on 511
+   * notes and **931 ms** on the largest here, and longer on a real phone. For that whole time
+   * NOTHING on screen changes — not even the segmented control's own highlight, because the commit
+   * that would move it is the commit that blocks. A tap that changes nothing reads as a tap that
+   * was missed, so the reader taps again.
+   *
+   * ⚠ So the view is swapped in TWO commits: the first paints the switch and a line saying the page
+   * is being drawn, the second mounts it and blocks. `requestAnimationFrame` twice, because one
+   * frame only guarantees the layout, not that it reached the screen.
+   */
   function applyViewMode(v: ViewMode) {
     setViewMode(v);
+    setViewSwapping(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setViewSwapping(false)));
     if (v !== "instrument") return;
     const want = voiceForInstrument(instrument);
     if (want !== voice) applyVoice(want);
@@ -2225,7 +2246,12 @@ export function App() {
             canUndo={history.canUndo}
             canRedo={history.canRedo}
           >
-            {viewMode === "instrument" ? (
+            {viewSwapping ? (
+              // ⚠ Same box, so the swap does not jump: it is the SCORE AREA that is being replaced.
+              <div className="kv-swap" role="status">
+                {TR.card.swapping}
+              </div>
+            ) : viewMode === "instrument" ? (
               // ⚠ Both the document AND the timeline go in, and each view uses the one it needs:
               // the violin takes `timeline`, because a fingerboard cares only what a note SOUNDS and
               // that is the one place the makam bend and the transpose are already in `freqHz`; the

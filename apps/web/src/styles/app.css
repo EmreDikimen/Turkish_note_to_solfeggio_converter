@@ -874,6 +874,18 @@ label.kv-btn.is-disabled {
   scroll-margin-top: calc(var(--pinned-h, 0px) + var(--space-2));
 }
 
+/* The line that stands in for the score for one frame while it is being engraved — see
+   `applyViewMode`. Tall enough that the swap does not collapse the card and jump the page. */
+.kv-swap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: var(--space-6);
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+}
+
 .kv-card__corner {
   position: absolute;
   top: var(--space-2);

@@ -203,6 +203,9 @@ export const TR = {
       "olduğu yerde kalır; seçiminiz bu tarayıcıda hatırlanır.",
     // Saving the score that is on screen. ⚠ The PDF line says two taps out loud, because the
     // browser's print sheet is what makes the PDF and pretending otherwise is a broken promise.
+    // Shown for the frame between asking for a view and the engraving appearing. ⚠ It says what is
+    // happening, not "loading": the page is being DRAWN, and on a long score that takes a moment.
+    swapping: "nota diziliyor…",
     save: "İndir",
     saveTitle: "Notayı kaydet",
     savePng: "PNG — resim olarak indir",

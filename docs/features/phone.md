@@ -113,6 +113,19 @@ more music than the bug costs taps. ⚠ It works only because `.kv-card` clips w
 and not `hidden` — `hidden` makes the card a scroll container and a sticky child then silently does
 not stick.
 
+⚠ **SWITCHING VIEWS PAINTS A PLACEHOLDER FIRST.** `SheetView` draws in a `useLayoutEffect`, which
+runs BEFORE the browser paints — deliberately, so an edit never flashes an empty stave. The cost is
+that mounting the score blocks the frame for the whole engraving: measured at 6× CPU throttling,
+**246 ms** on an 83-note page, **606 ms** on 511 notes, **931 ms** on the largest score here, and
+longer on a real phone. For that whole time nothing on screen changes — **not even the segmented
+control's own highlight**, because the commit that would move it is the commit that blocks. A tap
+that changes nothing reads as a tap that was missed, and the owner reported having to press several
+times. The swap is two commits now: the first paints the switch and *"nota diziliyor…"*, the second
+mounts and blocks. Measured after: the placeholder is on screen at **65 ms**, the music at 963 ms.
+⛔ Keeping the score mounted and hidden would make the switch truly instant and was NOT done: the
+playhead's follow would scroll the window to an off-screen element during playback in the instrument
+view.
+
 ## Fitting a score into a phone
 
 ⭐ **The fit is a RE-ENGRAVE, not a zoom** — fewer bars per system at the same note size, through

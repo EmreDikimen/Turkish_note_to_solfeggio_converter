@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-26
+updated: 2026-09-27
 
 ## Now
 
@@ -33,7 +33,13 @@ owner's call; the point of this entry is that three risks written as *future* ar
    the next `deploy:app`: the score fits in both orientations, a dense page is engraved smaller
    rather than clipped, the Çal tab is closed and its contents fold out under Çal/Dur, the tempo box
    takes typing and has ± buttons, Geri al is in the toolbox, and the Güfte switch is gone.
-   ⏭ **The owner's call: deploy it.** [log/status-log.md](log/status-log.md), 2026-09-26.
+   **2026-09-27 added four more, all committed and all still only local**: the score can be **saved**
+   as a PNG or a PDF from one button in the card's corner; the violin's **four strings can be
+   retuned** by note name; the staff prints an accidental **once per measure by default** instead of
+   on every note; and a **covering bug** was fixed where that new save button sat on top of the
+   *"Enstrüman üzerinde"* half of the view switch on the Düzenle tab, so a tap meant for the
+   instrument view opened the save menu instead.
+   ⏭ **The owner's call: deploy it.** [log/status-log.md](log/status-log.md), 2026-09-26 and -27.
 
 ⏭ **NOTHING IS COUNTING YET, AND THE LINK IS LIVE.** The site can count its own visitors
 anonymously — openings vs pages actually read, distinct devices, country, browser, robots apart — but

@@ -7,6 +7,69 @@ updated: 2026-09-27
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-27 — the violin's pegs, and the accidental a printed page would not print
+
+**The four strings can be retuned, one dropdown each** (owner: *"let the tuning of the strings be
+changeable — a button called Tel akordunu değiştir, and a modal opens"*). ⭐ The interesting part is
+what it did to a question that had been open since **2026-08-16**. That decision shipped a tuning
+picker **hidden**, because only one tuning existed and inventing a second would have been a
+repertoire claim about what Turkish violinists actually use — a claim this project had no business
+making. Letting a person turn one peg needs no claim at all, so the seam that decision deliberately
+left open became a button, and the blocked question simply stopped being in the way.
+
+**The owner narrowed it twice, and both narrowings are the design.** ⛔ *"The user should only be
+able to change that string's note with a dropdown"* — so no Hz box, no ± nudge, no dragging a peg.
+⛔ *"There is no need for a match between a koma and a note — let it be tunable to the twelve tones
+of Western music"*, because *"tuning by koma is much too advanced a feature, beginners will use this
+app"*. That second one is the load-bearing one: this app's whole reason to exist is the 53-comma
+grid, and it would have been easy to offer all 53 here. But a violinist tuning a string holds a
+**chromatic tuner**, and the thing they are doing is naming a note, not naming an interval. The
+commas stay in `fingering.ts` and the person sees nine names.
+
+**Why it cost no geometry.** ⭐ The four strings that already shipped — Sol 265, Re 296, La 327,
+Mi 358 — turn out to be four points of the very twelve-tone table the picker offers, once that table
+is written on THIS project's grid (Do4 = concert comma 287, derived from La4 = 327 = 440 Hz by
+definition). So tuning a string away and back reaches the **shipped object**, `data-tuning` says
+`standard` again — which `editor-smoke` asserts — and an open string still lands at ratio 0
+*exactly*. Everything downstream already took the strings as data, so `retuneString` is the whole
+feature: `assignFingering`, the photo geometry and the moving dot changed nothing.
+
+**Three details that would each have been a silent bug.** ⚠ **A retuned string is relabelled** — the
+photo writes that label beside the peg, and a string still called Sol while sounding Fa is the one
+mistake here nothing downstream would catch. ⚠ **The state lives in `App`**: the instrument page
+unmounts on every trip to the Nota tab, so pegs held down there reset themselves on a tab switch,
+silently and with the picture redrawing correctly for the wrong tuning. Measured after a round trip —
+it holds. ⚠ **The modal is portalled to `document.body`**, because `Fingerboard` renders inside
+`.kv-score`, the container `render.ts` screenshots BY RECT to cut training strips and which carries
+`overflow-y: clip`. A fixed full-page box does not belong in that subtree at any price.
+
+**Range is four semitones either way, nine names.** It reaches every scordatura in use — the Sol
+string down to Fa, the Mi string down to Re — and a fifty-name list is not a choice anyone makes.
+⛔ Koma-altered open strings must never be added to it; that is the feature the owner declined.
+
+**Then: the accidental default** (owner, same message: *"make the accidental dropdown's default
+option Standart (ölçü boyunca)"*). `every` prints a sign the page would not have, on every
+repetition of a note; carrying it to the end of the bar is what a printed edition does. ⚠ `?mode=`
+still wins and that is what makes this safe: a renderer-driven page is **exactly** one that passes
+it, and `render.ts` sets it on every job and re-checks it against each cache entry. So the corpus,
+the gates and every checkpoint see nothing — this changes what a human reads.
+
+**And a covering bug the phone probe walked into.** ⛔ On the **Düzenle** tab the card's title and
+meta rows are hidden, so the view switch rides up into the band the corner group is absolutely
+positioned in. Measured at 375×667: the segmented control ran x=187..341 y=38..82 under a group at
+x=258..350 y=33..77, and `elementFromPoint` at the centre of *"Enstrüman üzerinde"* returned
+`#export-toggle`. **A finger aimed at the instrument view opened the save menu.** The corner group is
+now hidden on that tab — the same call the two sheet toggles already got, since saving and going full
+screen are things you decide while READING and the Nota tab is one tap away. The alternative was
+padding the head down by a 44px row on the screen with the least room to give. ⚠ It is worth naming
+how it survived: the corner group was added on **2026-09-26**, the Düzenle hide-list was written
+before it, and nothing re-read that list. `smoke:phone` is a probe with no asserts, and it caught
+this only because it **could not click** — the click itself was the check.
+
+**Checks:** `npm test` all passed (including 18 new retuning asserts in `fingering-test.ts`),
+`typecheck` clean, `smoke:editor` ALL PASS, `smoke:phone` now runs all four sizes through with no
+sideways scroll on any of them. ⛔ Still not deployed — the live site carries the 2026-09-11 tab bar.
+
 ## 2026-09-27 — the score can be saved, as a picture or as paper
 
 **One button in the card's corner, two ways out** (owner). The PNG is drawn by the app and

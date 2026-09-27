@@ -94,11 +94,20 @@ still a small pure function with unit tests rather than a smoke check; that part
 
 ### ✅ The open strings — ANSWERED 2026-08-16, and the table stays open
 
-**Standard Sol–Re–La–Mi** (owner). It was the one input the code could not default, so it was asked
-rather than guessed: Turkish violinists do not universally use the Western tuning, and that is a
-repertoire question. The four frequencies live in `VIOLIN_TUNINGS` as **data**, so a Turkish
-scordatura is a row and touches no geometry — the picker is written and hides itself while there is
-only one entry. [../DECISIONS.md](../DECISIONS.md)
+**Standard Sol–Re–La–Mi** (owner) is what it OPENS on. It was the one input the code could not
+default, so it was asked rather than guessed: Turkish violinists do not universally use the Western
+tuning, and that is a repertoire question. The four frequencies live in `VIOLIN_TUNINGS` as **data**,
+so a tuning is a row and touches no geometry. [../DECISIONS.md](../DECISIONS.md)
+
+⭐ **AND SINCE 2026-09-27 THE PLAYER TURNS THE PEGS THEMSELVES**, which is what made the repertoire
+question stop blocking anything: `#tuning-open` → a modal with one dropdown per string. Nobody has to
+name a scordatura for a person to play in one. ⚠ **The dropdown offers the twelve WESTERN note
+names, not the fifty-three commas** (owner: *"tuning by koma is much too advanced a feature,
+beginners will use this app"*) — a chromatic tuner is what a learner has in their hand. The four
+standard strings are four points of that same twelve-tone table, so tuning back lands on ratio 0
+exactly. `tuningChoices` and `retuneString` in `fingering.ts` own every comma; nothing in the UI does
+pitch arithmetic. ⛔ **Do not add koma-altered open strings to that list** — that is the advanced
+feature the owner declined.
 
 ⚠ **They are on this project's 53-TET grid, not on a tuner's.** A fifth here is 31 commas =
 701.89 cents, so open Sol is 195.571 Hz against twelve-tone's 196.00. Four cents is a fifth of a

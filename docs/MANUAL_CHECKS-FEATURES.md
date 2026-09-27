@@ -194,8 +194,8 @@ npm run dev:cloud       # NOT dev:web — keeps the decode off this Mac
 4. **Watch for the dot vanishing.** That is `out-of-range` and it is **expected on low pieces**, not a
    bug: Turkish notation transposes down a fourth, so a written G3 sounds D3, below a standard
    violin's open Sol. The finding worth reporting is if it disappears on notes that a violin clearly
-   *can* play. If it vanishes often on ordinary repertoire, that is evidence for adding a lower
-   Turkish tuning — one row in `VIOLIN_TUNINGS` ([features/fingerboard.md](features/fingerboard.md)).
+   *can* play. If it vanishes often, **tune the Sol string down** — that is what `Tel akordunu
+   değiştir` is for (2026-09-27); report whether it rescues those notes.
 5. **On a phone**, since that is what every human who has opened the deployed app has used. Since
    2026-08-27 the violin stands upright and is sized by **height** (72% of the screen, capped), so
    the whole instrument — scroll to mid-body — should fit above the hint text without sideways

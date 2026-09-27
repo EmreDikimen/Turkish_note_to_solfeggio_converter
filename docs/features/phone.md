@@ -94,10 +94,21 @@ the panel is **713px** open, against 515px when the toggles still shared lines.
 pinned row is sticky — it used to follow the reader down the page.
 
 **The card head** is two rows plus the title: the view switch alone (two equal halves), then
-İmleci takip et centred. Full screen is the classic two-arrows-apart mark in the **top-right
-corner**, out of the flow, so it costs no row. ⛔ Düzenle is not there on the Nota tab — the bottom
-bar's tab IS edit mode, and a second switch was the same fact twice. It stays on the Düzenle tab,
-where it is the only thing that says the mode is on.
+İmleci takip et centred. Full screen and Notayı kaydet are marks in the **top-right corner**, out of
+the flow, so they cost no row. ⛔ Düzenle is not there on the Nota tab — the bottom bar's tab IS edit
+mode, and a second switch was the same fact twice. It stays on the Düzenle tab, where it is the only
+thing that says the mode is on.
+
+⛔ **THE CORNER PAIR IS HIDDEN ON THE DÜZENLE TAB, AND IT IS A COVERING BUG THAT PUT IT THERE**
+(2026-09-27). That tab hides the title and meta rows, so the view switch rides up into the band the
+corner group is absolutely positioned in. Measured at 375×667: the switch ran x=187..341 y=38..82
+under a group at x=258..350 y=33..77, and `elementFromPoint` at the centre of *"Enstrüman üzerinde"*
+returned `#export-toggle` — **a tap meant for the instrument view opened the save menu**. Hiding the
+pair is the same call the two sheet toggles already got: saving and going full screen are decided
+while READING, and the Nota tab is one tap away with both still there. ⚠ How it survived a day is
+worth more than the fix: the corner group was added on 2026-09-26, the Düzenle hide-list was written
+before it, and nothing re-read that list. `smoke:phone` asserts nothing — it caught this only because
+it **could not click**.
 
 ⛔ **There is no Güfte switch.** The model does not read lyrics off a page, so its only honest state
 was off. The feature is untouched: `?lyrics=1` draws them, and `render.ts` renders about a third of

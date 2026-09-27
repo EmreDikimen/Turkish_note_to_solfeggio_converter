@@ -189,6 +189,19 @@ chart across two pieces, never by counting.
 ⚠ `#fingerboard-lines` hides them: assert the marks **AND** `data-lines`, because the checkbox alone
 can be unchecked while the lines are still drawn.
 
+⭐ **RETUNING (2026-09-27).** `#tuning-open` opens `#tuning-modal[data-tuning]`, which holds one
+`#tuning-<stringId>` select per string (`g`, `d`, `a`, `e`) carrying `data-string` and `data-koma`,
+plus `#tuning-reset` and `#tuning-done`. The options are the **twelve Western note names**, four
+semitones either side of standard — never a koma.
+
+⚠ **`data-tuning` is `standard` until the four pitches differ, then `custom`, and there is no third
+value.** Tuning a string away and back reaches the shipped object again, so a check may assert
+`standard` after a round trip. `[data-omr="tuning-label"]` exists ONLY while it is custom.
+
+⚠ **The modal is portalled to `document.body`**, so it is NOT inside `#fingerboard` — find it by id.
+Its backdrop covers the page: close it with `#tuning-done` before touching anything underneath, the
+way `#makam-confirm` dismisses the makam prompt.
+
 ⚠ Same for `#fingerboard-zoom`: the **viewBox** is the zoom, so read that — `data-zoom` alone would
 pass on a control wired to nothing.
 
@@ -251,7 +264,8 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 | `#voice-field` | the voice select, inside `#row-sound` |
 | `#bpm` | the tempo box |
 | `#bpm-down` / `#bpm-up` | its ± pair, at every width |
-| `#fullscreen-on` | the expand mark in the card head's top-right corner |
+| `#fullscreen-on` | the expand mark in the card head's top-right corner — ⚠ **not on `duzenle`** |
+| `#export-toggle` | the save menu's button, same corner — ⚠ **not on `duzenle`** |
 | `#fullscreen-bar` | `#fs-play[data-play-state]`, `#fs-stop`, `#fs-exit` |
 | `#palette-undo` / `#palette-redo` | the toolbox's undo pair, in its fixed foot |
 

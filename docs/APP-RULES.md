@@ -205,3 +205,14 @@ updated: 2026-09-20
   the SVG's inline **style** (VexFlow's `resize()` writes one and an attribute cannot beat it), and
   `#sheet-surface` is sized in DISPLAYED units. ⚠ A ragged last system may be shorter than the page,
   never wider. Numbers: [features/phone.md](features/phone.md).
+- **A `display: none` LIST AND AN `absolute` OVERLAY ARE ONE LAYOUT, AND NOTHING CHECKS THAT THEY
+  AGREE.** The per-tab blocks in the `(max-width: 700px)` section hide whole ROWS of the card head;
+  the corner group is positioned against that head. Hide the rows and the controls below them rise
+  into the corner's band — measured 2026-09-27 at 375×667, `#export-toggle` sat over the CENTRE of
+  `#view-instrument`, so a tap meant for the instrument view opened the save menu.
+  ⚠ **Whenever you add something `position: absolute` to a shared container, re-read every hide-list
+  that touches it** — the corner group was added one day and the Düzenle list was written before it,
+  so nothing re-read that list. ⚠ **No assertion can catch this class**: the element is visible, has
+  its size, and passes every attribute check. `elementFromPoint` at a control's centre is the only
+  test that sees it, and `smoke:phone` found this one only because Playwright **refused to click**.
+  [features/phone.md](features/phone.md).

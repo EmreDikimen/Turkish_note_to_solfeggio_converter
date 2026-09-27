@@ -66,6 +66,17 @@ how it survived: the corner group was added on **2026-09-26**, the Düzenle hide
 before it, and nothing re-read that list. `smoke:phone` is a probe with no asserts, and it caught
 this only because it **could not click** — the click itself was the check.
 
+**The doc sweep hit the size cap twice, and one file was split.** `OVERVIEW.md` sat at 399 of its
+400 lines, so **List A — the app** (all fifteen items, ~123 lines) moved to
+[../OVERVIEW-APP.md](../OVERVIEW-APP.md), the same way `OVERVIEW-SERVER.md` was split out on
+2026-08-11 and with the same "nothing changed in the move" note. ⭐ It is the right boundary to have
+found: the app list is the part that GROWS — it took four new entries today alone — while the rest of
+OVERVIEW is a plan that changes slowly. `MANUAL_CHECKS-FEATURES.md` was also at 399; it got the
+retuning step inside **Check 25** rather than a Check 32, paid for by tightening three blocks, so it
+did not have to split. ⚠ The 2026-08-16 decision row is marked **partly** superseded, not overturned:
+standard Sol–Re–La–Mi is still what the app opens on and the table is still data — only its
+*hidden-picker* consequence is gone.
+
 **Checks:** `npm test` all passed (including 18 new retuning asserts in `fingering-test.ts`),
 `typecheck` clean, `smoke:editor` ALL PASS, `smoke:phone` now runs all four sizes through with no
 sideways scroll on any of them. ⛔ Still not deployed — the live site carries the 2026-09-11 tab bar.

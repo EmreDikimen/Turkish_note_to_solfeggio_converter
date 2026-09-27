@@ -22,6 +22,7 @@ wrong — fix by deleting, not by syncing.
 | What is measured but fragile, and what do we NOT claim? | [RISKS.md](RISKS.md) |
 | Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
 | Can I publish this? In plain English | [OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md) |
+| **Everything built on the APP side, in plain English — all fifteen items, what each cost and what is left** | [OVERVIEW-APP.md](OVERVIEW-APP.md) |
 | Why is there a server, where does the app live, what does it cost? In plain English | [OVERVIEW-SERVER.md](OVERVIEW-SERVER.md) |
 | **Round 4 in plain English — what Round 3 taught, what changes and what does not, what you will be asked to do** | [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md) |
 | I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |

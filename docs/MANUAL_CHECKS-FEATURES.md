@@ -152,11 +152,9 @@ glyphs are drawn, so omitting it can show different signs than the strip's PNG).
 
 ## Check 25 — does the fingerboard put the finger where a violinist would? (feature track F3, 2026-08-16; steps 3 and 5 rewritten 2026-08-27)
 
-⚠ **Half of this check has now been done, and it changed the view.** On 2026-08-27 the owner looked
-at the deployed tab and rejected the *look*: the violin now stands upright with half its body in
-frame, and the per-string notches became lines across the neck that can be hidden. The rest of the
-check — **is the dot in the right place** — is still owed, and it is the part no automated check can
-answer.
+⚠ **Half of this check has been done, and it changed the view.** On 2026-08-27 the owner rejected
+the *look*: the violin now stands upright and the per-string notches became hideable lines across
+the neck. **Is the dot in the right place** is still owed — the part no automated check can answer.
 
 Goal: the first check here that needs your **eyes** rather than your ears, and the only thing
 standing between F3 and a claim nobody has verified. Everything automatable already passes —
@@ -182,20 +180,23 @@ npm run dev:cloud       # NOT dev:web — keeps the decode off this Mac
    thing is now worth watching: the dot should mostly stay in the top third of the neck and cross
    between strings, not ride one string upwards. A note placed high on the Sol string that your hand
    would play on La or Mi is a finding.
-3. **Look at the position lines, and decide whether they help.** Since 2026-08-27 each one is a
-   coloured line laid **across all four strings**, like tape on a learner's violin, and the seven of
-   them are a **fixed chart** — the standard first-position notes, the same on every piece. The
-   colour is the finger that plays the line. Two things to judge, and only your eyes can:
-   ⚠ **the dot is not supposed to sit on a line** — it keeps its exact position, so a koma-altered
-   note lands between two, and that gap is the whole point; and **an unaltered note should land
-   exactly on its line** (that is what putting the chart on the 53-TET grid buys, so a natural note
-   sitting visibly off its line IS a finding). If the lines read as clutter, untick
-   **Perde çizgileri** — and say so.
+3. **Look at the position lines, and decide whether they help.** Each is a coloured line across all
+   four strings, like tape on a learner's violin; the seven are a **fixed chart** — the standard
+   first-position notes, the same on every piece — and the colour is the finger that plays it. Two
+   things only your eyes can judge: ⚠ **the dot is not supposed to sit on a line** — it keeps its
+   exact position, so a koma-altered note lands between two and that gap is the whole point; and
+   **an unaltered note must land exactly on its line** (a natural sitting visibly off it IS a
+   finding). If the lines read as clutter, untick **Perde çizgileri** — and say so.
 4. **Watch for the dot vanishing.** That is `out-of-range` and it is **expected on low pieces**, not a
    bug: Turkish notation transposes down a fourth, so a written G3 sounds D3, below a standard
    violin's open Sol. The finding worth reporting is if it disappears on notes that a violin clearly
    *can* play. If it vanishes often, **tune the Sol string down** — that is what `Tel akordunu
    değiştir` is for (2026-09-27); report whether it rescues those notes.
+4b. **Retune a string and check the dot follows** (2026-09-27). Press **Tel akordunu değiştir** and
+   set the 4th string to **Fa3**. The name beside that string on the photo must change to **Fa**, and
+   a note that was played open on Sol must now be **stopped** — the dot leaves the nut. ⚠ Judge one
+   thing only your ears can: does the piece still play in tune? The app retunes the DRAWING, not the
+   sound, so this is a picture of a violin you have physically retuned. Say if that is confusing.
 5. **On a phone**, since that is what every human who has opened the deployed app has used. Since
    2026-08-27 the violin stands upright and is sized by **height** (72% of the screen, capped), so
    the whole instrument — scroll to mid-body — should fit above the hint text without sideways
@@ -207,10 +208,9 @@ npm run dev:cloud       # NOT dev:web — keeps the decode off this Mac
    source photo, so magnifying it magnifies real pixels. What must stay sharp is the vector work —
    the dot, the lines and the names.
 
-⚠ **The known limit, stated so it is not reported as a discovery**: the shipped photo gives about
-**7 px per koma near the nut and less further up**, so the high positions are thin. A higher-resolution
-bare-neck photo is the fix and costs no code — the calibration is data. What *would* be a finding is
-the dot being wrong in **first** position, where there is plenty of resolution.
+⚠ **The known limit, so it is not reported as a discovery**: the shipped photo gives about **7 px per
+koma near the nut and less further up**, so high positions are thin. A sharper bare-neck photo fixes
+it with no code — the calibration is data. A wrong dot in **first** position WOULD be a finding.
 
 ## Check 26 — does the kanun view show a mandal plan a kanuncu would recognise? (feature track F3, 2026-08-29)
 

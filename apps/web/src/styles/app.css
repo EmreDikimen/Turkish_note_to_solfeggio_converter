@@ -3264,6 +3264,20 @@ label.kv-btn.is-disabled {
      one screen with the least room. ⛔ Only on this tab, and only on a phone: the card's pair keeps
      its ids and `smoke:editor` drives them at 1280px. */
   .kv-page[data-mtab="duzenle"] .kv-card__undo,
+  /* ⭐ THE CORNER GROUP — Notayı kaydet and Tam ekran — AND IT IS A COVERING BUG, NOT A TIDY-UP
+     (measured 2026-09-27, 375×667). The group is `position: absolute` against `.kv-card__head`, and
+     the two rows that normally hold it apart from the view switch (`__title`, `__meta`) are hidden
+     three selectors up. So on THIS tab the switch rides up into the corner's band: the seg ran
+     x=187..341 y=38..82 under a group at x=258..350 y=33..77, which puts `#export-toggle` under the
+     CENTRE of "Enstrüman üzerinde" — `document.elementFromPoint` named it, and a finger aimed at the
+     instrument view opened the save menu instead. `smoke:phone` could not get past it either.
+     ⚠ Hiding it is the same call the two sheet toggles above got, for the same reason: saving the
+     score and going full screen are things you decide while READING, and the Nota tab is one tap
+     away with both still there. The alternative was padding the head down by a 44px row, on the one
+     screen the comment above says has the least room to give.
+     ⛔ Phone only, and this tab only: no check drives these two ids, so nothing would catch it if a
+     future rule widened this selector. */
+  .kv-page[data-mtab="duzenle"] .kv-card__corner,
   .kv-page[data-mtab="duzenle"] > .kv-header,
   .kv-page[data-mtab="duzenle"] > .kv-hero,
   .kv-page[data-mtab="duzenle"] > .kv-recent,

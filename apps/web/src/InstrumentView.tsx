@@ -2,6 +2,7 @@ import {
   type Measure,
   type NoteModelDocument,
   type Timeline,
+  type ViolinTuning,
 } from "@turkish-omr/core";
 import { Fingerboard } from "./Fingerboard";
 import { Kanun } from "./Kanun";
@@ -89,6 +90,8 @@ export function InstrumentView({
   onPlayMeasure,
   onEditMeasure,
   renderBar,
+  tuning,
+  onTuning,
 }: {
   /** The PERFORMANCE document — what the three instrument drawings read. See the ⚠ at the call
    *  site in App: on a folded score the written page has no event under a second-pass index. */
@@ -112,6 +115,11 @@ export function InstrumentView({
   onEditMeasure: (m: Measure, on: boolean) => void;
   /** Draws the bar — a `SheetView`, supplied by App. See the ⭐ at the top of `MeasureCard.tsx`. */
   renderBar: React.ComponentProps<typeof MeasureCard>["renderBar"];
+  /** The violin's open strings. ⚠ Held by App, not by `Fingerboard`: this whole subtree unmounts
+   *  whenever the person goes back to the Nota tab, and a tuning that resets itself on a tab
+   *  switch would look like a bug rather than a default. */
+  tuning: ViolinTuning;
+  onTuning: (t: ViolinTuning) => void;
 }) {
   // ⚠ The load note is shown only for the instrument actually chosen here. `voiceStatus` reports
   // whatever the transport last asked for, so without this a clarinet download would appear to be
@@ -194,7 +202,13 @@ export function InstrumentView({
             // ⚠ The violin takes the TIMELINE and the kanun takes the DOCUMENT, and that
             // asymmetry is correct rather than an oversight: a fingerboard cares only what a note
             // sounds, while a kanun course is a written note. Both files say why in their headers.
-            <Fingerboard timeline={timeline} playing={playing} getPositionMs={getPositionMs} />
+            <Fingerboard
+              timeline={timeline}
+              playing={playing}
+              getPositionMs={getPositionMs}
+              tuning={tuning}
+              onTuning={onTuning}
+            />
           )}
         </div>
 

@@ -423,8 +423,19 @@ export const TR = {
   },
 
   fingerboard: {
-    // The tuning picker only appears once there is more than one tuning to pick — see Fingerboard.tsx.
     tuning: "Akort",
+    retune: "Tel akordunu değiştir",
+    retuneTitle:
+      "Kemanın dört telini istediğiniz notaya kurabilirsiniz. Parmak yerleri yeni akorda göre " +
+      "yeniden hesaplanır.",
+    tuningTitle: "Tel akordunu değiştir",
+    tuningLead:
+      "Her tel için bir nota seçin. Listede batı müziğinin on iki sesi vardır — akort aletinizde " +
+      "gördüğünüz notaların aynısı. Seçtiğiniz anda klavyedeki parmak yerleri güncellenir.",
+    tuningString: (n: number, standard: string) => `${n}. tel (normalde ${standard})`,
+    tuningReset: "Standart akorda dön",
+    tuningDone: "Tamam",
+    tuningCustom: (label: string) => `Akort: ${label}`,
     alt: "Keman klavyesi — çalınan sesin parmak yeri",
     lines: "Perde çizgileri",
     linesTitle:

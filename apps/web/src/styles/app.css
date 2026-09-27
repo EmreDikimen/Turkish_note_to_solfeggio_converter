@@ -2047,6 +2047,49 @@ label.kv-btn.is-disabled {
   color: var(--ink-faint);
 }
 
+/* The violin tuning prompt — one row per string.
+   ⚠ Label in a FIXED column, control across the rest: the layout the owner chose for the phone's
+   settings fold (2026-09-26), reused here so two lists of controls in one app do not line up two
+   different ways. The Hz caption is `tabular-nums` so four numbers of different widths do not make
+   the column jitter as the person tries each note. */
+.kv-tuning {
+  display: grid;
+  gap: var(--space-2);
+}
+.kv-tuning__row {
+  display: grid;
+  grid-template-columns: 10rem 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper-sunken);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.kv-tuning__name {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+/* ⚠ `min-width: 0` — a grid item will not shrink below its content without it, and a select whose
+   widest option is "Sol♯3" pushed the Hz caption off a 375px screen (docs/DECISIONS.md). */
+.kv-tuning__select {
+  width: 100%;
+  min-width: 0;
+}
+.kv-tuning__hz {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  min-width: 5rem;
+  text-align: right;
+}
+
+/* Said only when the tuning is not standard — see Fingerboard.tsx. */
+.kv-fingerboard__tuning {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
 
 /* ── The fingerboard tab (F3) ───────────────────────────────────────────── */
 
@@ -2810,6 +2853,15 @@ label.kv-btn.is-disabled {
 }
 
 @media (max-width: 700px) {
+  /* Three columns need ~320px of control before the padding; a 375px phone has 343px of panel.
+     So the string's name takes its own line and the select keeps the full width under it. */
+  .kv-tuning__row {
+    grid-template-columns: 1fr auto;
+  }
+  .kv-tuning__name {
+    grid-column: 1 / -1;
+  }
+
   /* 24px of side padding is 14% of a 375px screen. 16px buys a whole extra control on the row. */
   .kv-page {
     padding: var(--space-5) var(--space-4) var(--space-7);

@@ -76,6 +76,157 @@ export const VIOLIN_TUNINGS: readonly ViolinTuning[] = [
 
 export const DEFAULT_VIOLIN_TUNING = VIOLIN_TUNINGS[0]!;
 
+/**
+ * The twelve Western note names, as commas above Do on this project's 53-TET grid.
+ *
+ * ⭐ WHY TWELVE AND NOT FIFTY-THREE (owner, 2026-09-27): *"there is no need for a match between a
+ * koma and a note — let it be tunable to the twelve tones of Western music"*, because *"tuning by
+ * koma is much too advanced a feature, beginners will use this app"*. A violinist retunes a string
+ * to a NOTE — Fa, Sol♯ — and a chromatic tuner is what they have in their hand. So the choices a
+ * person sees are twelve names, and every comma in this file stays behind them. The 53-comma grid
+ * is what the music is PLAYED on; it is not what a string is tuned by.
+ *
+ * ⚠ These are the 53-TET positions of those twelve names, not twelve-tone equal temperament: a
+ * fifth here is 31 commas, so Do sits ~5 cents under a tuner's C. That is deliberate and it is the
+ * same grid the standard tuning was already written on — Sol 265, Re 296, La 327 and Mi 358 are
+ * four of these very points — so retuning can never knock an open string off ratio 0.
+ *
+ * ⚠ Sharps and flats are the SAME twelve steps a piano has, deliberately: this list is a tuner,
+ * not a makam. A koma-altered open string is not offered and must not be added here — that is the
+ * advanced feature the owner declined.
+ */
+const CHROMATIC: readonly { label: string; ascii: string; commasAboveDo: number }[] = [
+  { label: "Do", ascii: "do", commasAboveDo: 0 },
+  { label: "Do♯", ascii: "do-sharp", commasAboveDo: 5 },
+  { label: "Re", ascii: "re", commasAboveDo: 9 },
+  { label: "Mi♭", ascii: "mi-flat", commasAboveDo: 13 },
+  { label: "Mi", ascii: "mi", commasAboveDo: 18 },
+  { label: "Fa", ascii: "fa", commasAboveDo: 22 },
+  { label: "Fa♯", ascii: "fa-sharp", commasAboveDo: 27 },
+  { label: "Sol", ascii: "sol", commasAboveDo: 31 },
+  { label: "Sol♯", ascii: "sol-sharp", commasAboveDo: 36 },
+  { label: "La", ascii: "la", commasAboveDo: 40 },
+  { label: "Si♭", ascii: "si-flat", commasAboveDo: 44 },
+  { label: "Si", ascii: "si", commasAboveDo: 49 },
+];
+
+/**
+ * The concert comma of Do4, derived rather than measured: concert La4 is comma 327 by definition
+ * (`tuning.ts`), and La is 40 commas above Do, so Do4 is 287. Pinned by `fingering-test.ts`, which
+ * also checks that the four standard strings fall on this table exactly.
+ *
+ * ⚠ CONCERT, not written. `komaToName` in `notation.ts` names a WRITTEN koma, and Turkish notation
+ * transposes down a fourth, so the two spaces are 22 commas apart and their names disagree by a
+ * fourth. Nothing in this file may borrow that function: a string is named by what it SOUNDS.
+ */
+const DO4_CONCERT_KOMA = 287;
+
+const SEMITONES_PER_OCTAVE = 12;
+const COMMAS_PER_OCTAVE = 53;
+
+/** One choice in the tuning picker: a Western twelve-tone pitch, placed on this project's grid. */
+export interface TuningChoice {
+  /** Stable, ASCII, safe in a `data-` attribute and a `<select value>`: `"sol-sharp3"`. */
+  id: string;
+  /** What the person reads in the list, octave included: `"Sol♯3"`. */
+  label: string;
+  /** The same name WITHOUT the octave: what the fingerboard writes beside the string. */
+  noteLabel: string;
+  concertKoma: number;
+  openHz: number;
+}
+
+/** Semitone number of a comma on the twelve-tone ladder, 0 = Do4. `null` off the ladder. */
+function semitoneOf(concertKoma: number): number | null {
+  const rel = concertKoma - DO4_CONCERT_KOMA;
+  const octave = Math.floor(rel / COMMAS_PER_OCTAVE);
+  const within = rel - octave * COMMAS_PER_OCTAVE;
+  const pc = CHROMATIC.findIndex((c) => c.commasAboveDo === within);
+  return pc < 0 ? null : octave * SEMITONES_PER_OCTAVE + pc;
+}
+
+/** The choice at a semitone number, 0 = Do4. Negative numbers go below it. */
+function choiceAt(semitone: number): TuningChoice {
+  const octave = Math.floor(semitone / SEMITONES_PER_OCTAVE);
+  const step = CHROMATIC[semitone - octave * SEMITONES_PER_OCTAVE]!;
+  const concertKoma = DO4_CONCERT_KOMA + octave * COMMAS_PER_OCTAVE + step.commasAboveDo;
+  const octaveNumber = 4 + octave;
+  return {
+    id: `${step.ascii}${octaveNumber}`,
+    label: `${step.label}${octaveNumber}`,
+    noteLabel: step.label,
+    concertKoma,
+    openHz: koma53ToFreq(concertKoma),
+  };
+}
+
+/**
+ * How far either way a string may be retuned, in Western semitones. A fourth: it covers every
+ * scordatura a Turkish violinist actually uses (the Sol string down to Fa, the Mi string down to
+ * Re) with room left over, and it keeps the list at nine names instead of the fifty a whole octave
+ * would give — a list nobody scrolls is not a choice.
+ */
+export const TUNING_SPAN_SEMITONES = 4;
+
+/**
+ * The notes one string may be tuned to: `TUNING_SPAN_SEMITONES` semitones either side of where the
+ * STANDARD tuning puts it, lowest first. Anchored to the standard rather than to the string's
+ * current pitch on purpose — a list that slides as you use it can walk a string anywhere, and the
+ * person loses the one landmark they had.
+ *
+ * Returns the standard pitch alone if that pitch is not on the twelve-tone ladder, which cannot
+ * happen for a shipped tuning and is checked by `fingering-test.ts`.
+ */
+export function tuningChoices(stringId: string): readonly TuningChoice[] {
+  const std = DEFAULT_VIOLIN_TUNING.strings.find((s) => s.id === stringId);
+  if (!std) return [];
+  const centre = semitoneOf(std.concertKoma);
+  if (centre == null) return [choiceAt(0)];
+  const out: TuningChoice[] = [];
+  for (let s = centre - TUNING_SPAN_SEMITONES; s <= centre + TUNING_SPAN_SEMITONES; s++) {
+    out.push(choiceAt(s));
+  }
+  return out;
+}
+
+/** The choice a string is currently sitting on, or `null` if it is off the twelve-tone ladder. */
+export function choiceOfString(s: OpenString): TuningChoice | null {
+  const semi = semitoneOf(s.concertKoma);
+  return semi == null ? null : choiceAt(semi);
+}
+
+/**
+ * `tuning` with one string moved to `choiceId`. Everything downstream — `assignFingering`, the
+ * geometry, the dot — takes the strings as data, so this is the whole of retuning.
+ *
+ * ⚠ IT RETURNS THE SHIPPED `DEFAULT_VIOLIN_TUNING` OBJECT, id `"standard"`, WHENEVER THE FOUR
+ * PITCHES ARE BACK WHERE THEY STARTED. `#fingerboard[data-tuning]` is read by
+ * `tools/browser/editor-smoke.ts`, and a tuning that says `"custom"` while sounding standard would
+ * be a lie in the DOM as well as a failed check. Any other set of pitches is `"custom"`.
+ *
+ * ⚠ The string's `label` moves with its pitch. A string still labelled "Sol" while sounding Fa is
+ * the one mistake this feature can make that nothing else would catch — the fingerboard writes
+ * that label next to the peg the person just turned.
+ */
+export function retuneString(
+  tuning: ViolinTuning,
+  stringId: string,
+  choiceId: string,
+): ViolinTuning {
+  const choice = tuningChoices(stringId).find((c) => c.id === choiceId);
+  if (!choice) return tuning;
+  const strings = tuning.strings.map((s) =>
+    s.id === stringId
+      ? { ...s, label: choice.noteLabel, concertKoma: choice.concertKoma, openHz: choice.openHz }
+      : s,
+  );
+  const standard = strings.every(
+    (s, i) => s.concertKoma === DEFAULT_VIOLIN_TUNING.strings[i]!.concertKoma,
+  );
+  if (standard) return DEFAULT_VIOLIN_TUNING;
+  return { id: "custom", label: strings.map((s) => s.label).join("–"), strings };
+}
+
 /** Where the hand is: which string, and how far along it (0 = open, 0.5 = the octave). */
 export interface FingerPos {
   stringIndex: number;

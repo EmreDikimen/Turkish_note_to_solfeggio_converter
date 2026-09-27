@@ -5,8 +5,9 @@ import {
   firstPositionFinger,
   DEFAULT_VIOLIN_TUNING,
   FIRST_POSITION_NOTES,
-  VIOLIN_TUNINGS,
+  retuneString,
   type Timeline,
+  type ViolinTuning,
 } from "@turkish-omr/core";
 import {
   FULL_WINDOW,
@@ -19,6 +20,7 @@ import {
   VIOLIN_IMAGE,
   pointOnString,
 } from "./ui/fingerboardGeometry";
+import { TuningModal } from "./TuningModal";
 import { TR } from "./ui/strings";
 
 /**
@@ -102,13 +104,19 @@ export function Fingerboard({
   timeline,
   playing,
   getPositionMs,
+  tuning,
+  onTuning,
 }: {
   timeline: Timeline;
   playing: boolean;
   getPositionMs: () => number | null;
+  /** The open strings. ⚠ Lives in `App` so a trip to the Nota tab and back does not silently put
+   *  the pegs back — this component unmounts on every view switch. */
+  tuning: ViolinTuning;
+  onTuning: (t: ViolinTuning) => void;
 }) {
   const dotRef = useRef<SVGCircleElement>(null);
-  const tuning = DEFAULT_VIOLIN_TUNING;
+  const [tuningOpen, setTuningOpen] = useState(false);
   // The lines are a reference the player may not want: on a piece that uses many positions they
   // crowd the neck, and a violin has no lines on it. Shown by default because a first look with
   // nothing on the ebony explains nothing (owner, 2026-08-27).
@@ -213,21 +221,26 @@ export function Fingerboard({
       data-zoom={zoom ? "neck" : "full"}
     >
       <div className="kv-fingerboard__controls">
-        {/* The picker is built but hidden while only one tuning exists: the seam, the data table and
-            the attribute are all real, so adding a Turkish scordatura is a row in VIOLIN_TUNINGS —
-            but a select with one option is dead UI, and inventing a second tuning to fill it is a
-            repertoire claim this project has not made (docs/features/fingerboard.md). */}
-        {VIOLIN_TUNINGS.length > 1 && (
-          <label className="kv-field" htmlFor="fingerboard-tuning">
-            <span>{TR.fingerboard.tuning}</span>
-            <select id="fingerboard-tuning" data-tuning={tuning.id} defaultValue={tuning.id}>
-              {VIOLIN_TUNINGS.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
+        {/* ⚠ THIS REPLACED A LIST OF WHOLE NAMED TUNINGS (owner, 2026-09-27). That list shipped
+            hidden, because only one tuning existed and inventing a second would have been a
+            repertoire claim this project has not made. Turning one peg needs no such claim, so the
+            seam the 2026-08-16 decision left open is now a button. What the person picks is a note
+            NAME out of the twelve Western ones — see `TuningModal.tsx` for why not fifty-three. */}
+        <button
+          id="tuning-open"
+          type="button"
+          className="kv-btn"
+          title={TR.fingerboard.retuneTitle}
+          onClick={() => setTuningOpen(true)}
+        >
+          {TR.fingerboard.retune}
+        </button>
+        {/* Said out loud only when it is not standard: four familiar letters in their familiar
+            order are not news, and a line that is always there stops being read. */}
+        {tuning.id !== "standard" && (
+          <span className="kv-fingerboard__tuning" data-omr="tuning-label">
+            {TR.fingerboard.tuningCustom(tuning.label)}
+          </span>
         )}
 
         <label className="kv-toggle" title={TR.fingerboard.linesTitle}>
@@ -344,6 +357,15 @@ export function Fingerboard({
           style={{ display: "none" }}
         />
       </svg>
+
+      {tuningOpen && (
+        <TuningModal
+          tuning={tuning}
+          onRetune={(stringId, choiceId) => onTuning(retuneString(tuning, stringId, choiceId))}
+          onReset={() => onTuning(DEFAULT_VIOLIN_TUNING)}
+          onClose={() => setTuningOpen(false)}
+        />
+      )}
     </div>
   );
 }

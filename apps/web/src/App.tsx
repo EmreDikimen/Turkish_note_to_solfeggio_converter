@@ -39,6 +39,8 @@ import {
   type NoteEvent,
   type NoteModelDocument,
   type Timeline,
+  DEFAULT_VIOLIN_TUNING,
+  type ViolinTuning,
 } from "@turkish-omr/core";
 import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
@@ -501,6 +503,19 @@ export function App() {
   const [instrument, setInstrument] = useState<InstrumentId>(
     () => instrumentForVoice(DEFAULT_VOICE) ?? "violin",
   );
+  /**
+   * The violin's open strings (owner, 2026-09-27: *"let the tuning of the strings be changeable"*).
+   *
+   * ⚠ IT LIVES HERE AND NOT IN `Fingerboard`, WHICH IS WHERE IT IS USED. The instrument page
+   * unmounts every time the person goes back to the Nota tab, so state held down there would put
+   * the pegs back on a tab switch — and silently, with the picture redrawing correctly for the
+   * wrong tuning. The same reasoning that keeps `instrument` up here.
+   *
+   * ⚠ It is NOT part of `doc` and must never be written into one: an accord is a property of the
+   * player's instrument, not of the page they are reading, and a score saved with someone's
+   * scordatura baked in would come back wrong on a normal violin.
+   */
+  const [tuning, setTuning] = useState<ViolinTuning>(DEFAULT_VIOLIN_TUNING);
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>(() => backend.voiceInfo());
   // Which usul drives the metronome pattern (name key; defaults to the loaded piece's usul).
   const [usulName, setUsulName] = useState<string>(USULS[0]!.name);
@@ -2279,6 +2294,8 @@ export function App() {
                   onPlayMeasure={onPlayMeasure}
                   onEditMeasure={onEditMeasure}
                   renderBar={renderBar}
+                  tuning={tuning}
+                  onTuning={setTuning}
                 />
               )
             ) : (

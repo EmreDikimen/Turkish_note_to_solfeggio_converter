@@ -26,6 +26,10 @@ import {
   DEFAULT_VIOLIN_TUNING,
   FINGERBOARD_END_RATIO,
   VIOLIN_TUNINGS,
+  choiceOfString,
+  retuneString,
+  tuningChoices,
+  TUNING_SPAN_SEMITONES,
   type FingerPos,
 } from "@turkish-omr/core";
 
@@ -73,6 +77,61 @@ for (const s of STRINGS) {
 // fifth-stack shows up here rather than as a uniformly wrong-but-plausible fingerboard.
 near("La is concert A 440", A.openHz, 440, 1e-9);
 check("strings are a fifth (31 commas) apart", STRINGS.map((s) => s.concertKoma - 327), [-62, -31, 0, 31]);
+
+// ---------------------------------------------------------------------------------------------
+// 1b. Retuning (owner, 2026-09-27) — TWELVE Western note names, not fifty-three commas, because
+//     "tuning by koma is much too advanced a feature, beginners will use this app".
+// ---------------------------------------------------------------------------------------------
+console.log("\nretuning");
+
+// The load-bearing claim of the whole feature: the four pitches that already ship ARE four points
+// of the twelve-tone table, so a string tuned back to standard lands on ratio 0 exactly and the
+// picker can open on the right name. If this fails, every dropdown opens blank.
+for (const s of STRINGS) {
+  check(`${s.label} is on the twelve-tone ladder`, choiceOfString(s)?.label, {
+    g: "Sol3",
+    d: "Re4",
+    a: "La4",
+    e: "Mi5",
+  }[s.id]);
+}
+check(
+  "a string's list is centred on its STANDARD note, not its current one",
+  tuningChoices("g").map((c) => c.label),
+  ["Mi♭3", "Mi3", "Fa3", "Fa♯3", "Sol3", "Sol♯3", "La3", "Si♭3", "Si3"],
+);
+check("the list is 2·span + 1 long", tuningChoices("e").length, 2 * TUNING_SPAN_SEMITONES + 1);
+check(
+  "every choice ascends",
+  tuningChoices("a").every((c, i, l) => i === 0 || c.concertKoma > l[i - 1]!.concertKoma),
+  true,
+);
+check("an unknown string has no list", tuningChoices("nope"), []);
+
+// A retuned string is RELABELLED. A string still called Sol while sounding Fa is the one mistake
+// here that nothing downstream would catch — the photo writes that label next to the peg.
+const lowFa = retuneString(DEFAULT_VIOLIN_TUNING, "g", "fa3");
+check("retuning relabels the string", lowFa.strings.map((s) => s.label), ["Fa", "Re", "La", "Mi"]);
+check("…and only that string moves", lowFa.strings.map((s) => s.concertKoma), [256, 296, 327, 358]);
+check("…and the tuning is no longer standard", lowFa.id, "custom");
+check("…and says what it is", lowFa.label, "Fa–Re–La–Mi");
+near("…and Fa3 is a tuner's 174.6 Hz, on this grid", lowFa.strings[0]!.openHz, 174.6, 1.0);
+check("openHz follows the comma", lowFa.strings[0]!.openHz, koma53ToFreq(256));
+
+// ⚠ `#fingerboard[data-tuning]` is asserted to be "standard" by tools/browser/editor-smoke.ts, so
+// the way back has to reach the SHIPPED object and not a look-alike.
+const back = retuneString(lowFa, "g", "sol3");
+check("tuning back reaches the shipped standard object", back === DEFAULT_VIOLIN_TUNING, true);
+check("an unknown choice changes nothing", retuneString(lowFa, "g", "nope") === lowFa, true);
+
+// The fingering maths takes the strings as data, which is the whole reason retuning needs no
+// geometry: the same written note gets a different position once the string under it moves.
+// ⚠ `G.openHz`, not a tuner's 196.00 — the check three lines above exists because those are not the
+// same number on this grid, and 196 Hz is a few cents ABOVE the open string, so it is stopped.
+const onStd = assignFingering([G.openHz], STRINGS)[0];
+const onFa = assignFingering([G.openHz], lowFa.strings)[0];
+check("an open Sol is open on the standard tuning", onStd?.ratio === 0, true);
+check("…and stopped once that string is tuned down to Fa", (onFa?.ratio ?? 0) > 0, true);
 // ⚠ Not twelve-tone: a 53-TET fifth is 701.89 cents, so Sol sits ~3.8 cents under a tuner's G3.
 near("Sol is close to, and NOT equal to, 12-TET G3 196.00", G.openHz, 196.0, 0.5);
 

@@ -30,7 +30,8 @@ owner's call; the point of this entry is that three risks written as *future* ar
    tab bar from the 2026-09-20 deploy, so strangers arriving from LinkedIn meet the screen the owner
    spent 2026-09-26 correcting: a score that does not fit, a tempo box that cannot be typed in, and
    an edit toolbox showing no tools. Everything below is committed and measured at 393px and rides
-   the next `deploy:app`: the score fits in both orientations, a dense page is engraved smaller
+   the next `deploy:app` — including, since late 2026-09-27, **a yes/no before any 10–35 MB voice
+   download** and the fixed Çalgı sesi picker: the score fits in both orientations, a dense page is engraved smaller
    rather than clipped, the Çal tab is closed and its contents fold out under Çal/Dur, the tempo box
    takes typing and has ± buttons, Geri al is in the toolbox, and the Güfte switch is gone.
    **2026-09-27 added four more, all committed and all still only local**: the score can be **saved**

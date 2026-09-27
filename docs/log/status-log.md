@@ -85,6 +85,20 @@ at 390px**. Four more went the same way (`card.hintInstrument`, `card.hintMeasur
 browser may clear** — CLAUDE.md forbids copy that promises a save. Tooltips (`title=`) were left
 alone: they cost no screen. What was cut is not lost — the reasoning lives in the feature docs.
 
+**And two fixes from the owner's phone, on the voice picker.** ⛔ **The Çalgı sesi select
+collapsed to its arrow** whenever a download failed. The status line (*"ses indirilemedi —
+varsayılan sesle çalıyor"*) was a third item on the fold's `nowrap` field row, and the select —
+`min-width: 0` so it may shrink — gave it its whole width. The line now takes its own row under the
+control and wraps; measured at 390px, the select is **246px** again and the line sits **8px under
+it**, two lines tall. ⭐ **A recorded voice now downloads only after a yes** (owner). On disk the
+three are **19 MB** (clarinet), **9.9 MB** (kanun) and **34 MB** (violin), and since 2026-09-04
+merely opening the instrument tab started one. One function, `App.requestVoice`, gates all three
+paths. A yes is remembered for the visit; a no given on merely opening the tab is remembered too,
+or each Nota → Enstrüman trip would ask again. Measured on a phone-sized page: pick → asked, sound
+unchanged; no → still `sine`; yes → goes ahead; decline on opening, then back and forth → **not**
+asked again; a pick from the list → asked. `smoke:editor` gained six checks and answers the
+question through `tools/browser/voicePrompt.ts`.
+
 **Checks:** `npm test` all passed (including 18 new retuning asserts in `fingering-test.ts`),
 `typecheck` clean, `smoke:editor` ALL PASS, `smoke:phone` now runs all four sizes through with no
 sideways scroll on any of them. ⛔ Still not deployed — the live site carries the 2026-09-11 tab bar.

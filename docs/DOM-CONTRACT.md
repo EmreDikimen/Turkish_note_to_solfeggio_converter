@@ -189,6 +189,13 @@ chart across two pieces, never by counting.
 ⚠ `#fingerboard-lines` hides them: assert the marks **AND** `data-lines`, because the checkbox alone
 can be unchecked while the lines are still drawn.
 
+⭐ **THE DOWNLOAD QUESTION (2026-09-27).** `#voice-modal[data-voice]` with `#voice-confirm` / `#voice-cancel`,
+raised before any recorded voice downloads — a pick in `#instrument`, a pick in `#instrument-pick`,
+or opening `#view-instrument`. Its backdrop blocks every click: answer it with
+`tools/browser/voicePrompt.ts` (`answerVoicePrompt(page, "confirm" | "cancel")`), a no-op when
+nothing is asked. ⚠ A voice said yes to is not asked about again in the same page load, so a check
+that expects the question must start from a fresh `page.goto`.
+
 ⭐ **RETUNING (2026-09-27).** `#tuning-open` opens `#tuning-modal[data-tuning]`, which holds one
 `#tuning-<stringId>` select per string (`g`, `d`, `a`, `e`) carrying `data-string` and `data-koma`,
 plus `#tuning-reset` and `#tuning-done`. The options are the **twelve Western note names**, four
@@ -261,7 +268,7 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 | `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
 | `#pitch-toggle` | `aria-expanded` — the settings fold under `#transport-pinned` |
 | `#transport-settings` | the fold's content: `#row-sound`, `#row-rhythm`, `#row-pitch` |
-| `#voice-field` | the voice select, inside `#row-sound` |
+| `#voice-field` | the voice select, inside `#row-sound`; its `.kv-hint` status line sits on its own line UNDER the select |
 | `#bpm` | the tempo box |
 | `#bpm-down` / `#bpm-up` | its ± pair, at every width |
 | `#fullscreen-on` | the expand mark in the card head's top-right corner — ⚠ **not on `duzenle`** |

@@ -374,8 +374,21 @@ export function App() {
   /** True for the one frame between a view switch being asked for and the new view being mounted. */
   const [viewSwapping, setViewSwapping] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  // Sheet: draw the score's accidentals once per row (key signature) instead of on every note.
-  const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "every");
+  /**
+   * Which accidentals the staff prints: on every note, once at the row start, or once per measure
+   * and carried to the end of it.
+   *
+   * ⚠ **`"measure"` IS THE HUMAN DEFAULT** (owner, 2026-09-27: *"make the accidental dropdown's
+   * default option Standart (ölçü boyunca)"*). It is what a printed edition does and therefore what
+   * a person expects to read; `"every"` was the old default and it prints an accidental the page
+   * would not have, on every repetition of a note.
+   *
+   * ⚠ `URL_MODE` STILL WINS, AND THAT IS LOAD-BEARING. A renderer-driven page is exactly one that
+   * passes `?mode=`, `tools/render/render.ts` sets it on every job and re-checks it against each
+   * cache entry, so the corpus never sees this default. Changing it therefore changes what a human
+   * reads and nothing about pixels-equal-labels.
+   */
+  const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>(URL_MODE ?? "measure");
   // Sheet: draw lyric syllables under the notes (vocal scores). Off → instrumental-style sheet.
   // ⚠ **FALSE is the human default now** (owner, 2026-09-26). It was `true`, which only worked
   // while a switch existed to turn it off; the switch is gone because the model does not read

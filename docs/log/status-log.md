@@ -77,6 +77,14 @@ did not have to split. ⚠ The 2026-08-16 decision row is marked **partly** supe
 standard Sol–Re–La–Mi is still what the app opens on and the table is still data — only its
 *hidden-picker* consequence is gone.
 
+**Then the explanations were cut** (owner: *"remove the unnecessary explanations everywhere — the
+instruments carry more than they need"*). The three paragraphs under the violin, kanun and clarinet
+ran **370–560 characters** each, 7–9 lines on a phone; each is now one or two short sentences, **40px
+at 390px**. Four more went the same way (`card.hintInstrument`, `card.hintMeasureEditing`,
+`fingerboard.tuningLead`, `recent.note`). ⚠ `recent.note` still says the list is a **cache the
+browser may clear** — CLAUDE.md forbids copy that promises a save. Tooltips (`title=`) were left
+alone: they cost no screen. What was cut is not lost — the reasoning lives in the feature docs.
+
 **Checks:** `npm test` all passed (including 18 new retuning asserts in `fingering-test.ts`),
 `typecheck` clean, `smoke:editor` ALL PASS, `smoke:phone` now runs all four sizes through with no
 sideways scroll on any of them. ⛔ Still not deployed — the live site carries the 2026-09-11 tab bar.

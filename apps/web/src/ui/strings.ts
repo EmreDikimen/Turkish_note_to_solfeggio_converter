@@ -106,10 +106,7 @@ export const TR = {
     noMakam: "makamsız",
     clearAll: "Hepsini sil",
     clearConfirm: "Kayıtlı sayfaların hepsi silinecek. Emin misiniz?",
-    note:
-      "Bu liste yalnızca bu tarayıcıda, bu cihazda tutulur — başka bir cihazda görünmez. " +
-      "Tarayıcı yeriniz dolduğunda ya da uzun süre girmediğinizde kendiliğinden silebilir. " +
-      "En son okuduğunuz 30 sayfa saklanır; sınıra gelince en eskisi düşer.",
+    note: "Yalnızca bu tarayıcıda tutulur ve tarayıcı silebilir — önemli bir sayfayı ayrıca kaydedin.",
   },
 
   transport: {
@@ -232,10 +229,7 @@ export const TR = {
       "perdesi değişir.",
     // ⚠ Same mode, same toolbox, same document — the sentence only has to say what is different
     // here: you are looking at one bar, and the change is not local to this page.
-    hintMeasureEditing:
-      "Düzenleme açık — sağdaki ölçüde bir notaya tıklayın: seçilir, ✕ ile silinir, " +
-      "yukarı/aşağı sürükleyince perdesi değişir. Oklarla başka bir ölçüye geçebilirsiniz. " +
-      "Yaptığınız her değişiklik Nota sayfasında da görünür; geri alma listesi ortaktır.",
+    hintMeasureEditing: "Düzenleme açık — sağdaki ölçüde bir notaya dokunun.",
     hintSheetEditingMore: "Alet çantasıyla neler yapılır?",
     hintSheetEditingSteps: [
       "Alet çantasından bir süre ya da değiştirme işareti seçip notaya tıklarsanız o nota değişir.",
@@ -248,9 +242,7 @@ export const TR = {
       "Alet çantasını başlığından tutup istediğiniz yere sürükleyebilir, sağ üstteki düğmeyle " +
         "küçültüp büyütebilirsiniz.",
     ],
-    hintInstrument:
-      "Çalın: eserin o anda çaldığı yer, seçtiğiniz enstrümanın üzerinde gösterilir. Enstrümanı " +
-      "yukarıdaki listeden değiştirebilirsiniz — ses de ona göre ayarlanır.",
+    hintInstrument: "Çalınan yer enstrümanın üzerinde gösterilir.",
   },
 
   sheet: {
@@ -386,30 +378,9 @@ export const TR = {
 
   instrument: {
     pick: "Enstrüman",
-    hintViolin:
-      "Nokta, parmağın kemanda basacağı yeri gösterir. Renkli çizgiler standart keman " +
-      "notalarıdır — birinci pozisyonda dört parmağın normalde bastığı yedi yer, her eserde " +
-      "aynı; renk, o çizgiyi hangi parmağın bastığını gösterir. Kemanda perde yoktur: koma " +
-      "sesler iki çizginin arasına düşer, koma farkı da buradan görülür. Çizgileri " +
-      "kapatabilirsiniz. Açık Sol telinin altına düşen sesler kemanda çıkmaz; o notada nokta " +
-      "görünmez.",
-    hintKanun:
-      "Kırmızı olan perde, o an çalınan perdedir — üç teli birden yanar, çünkü kanunda bir " +
-      "perde üç teldir. Soldaki kutucuklar mandallardır: her perde için 12 tane, her biri bir " +
-      "koma. Açık renk olan kalkık mandaldır, koyu olanlar inik; sarı kesik çerçeve natürelin " +
-      "yeridir. Bir mandal yeni değiştiyse çerçevesi kırmızı yanar ve sonra söner — kutucuğun " +
-      "rengi değişmez, çünkü renk mandalın durumunu taşır. Eserin başında kurulacak mandallar " +
-      "yukarıda yazılıdır: kanuncu çalmaya başlamadan önce onları kurar. Kanunun sesinin " +
-      "dışındaki notalarda hiçbir perde yanmaz.",
-    hintClarinet:
-      "Kırmızı olan delikler ve tuşlar, o notada basılacak olanlardır — dolu daire kapalı " +
-      "delik, boş daire açık deliktir. Baş parmak deliği ve register tuşu solda çizilir, " +
-      "çünkü onlar enstrümanın arkasındadır. Üstteki çubuk dudağı ne kadar sıkacağınızı " +
-      "gösterir: normal çalarken dudak orta derecede sıkılır, çubuğun tam ortası odur. Koma " +
-      "sesler dudağı oradan gevşeterek verilir; çubuk kısaldıkça dudak gevşer, ortanın " +
-      "solundaki her çizgi bir komadır, en fazla beş koma. Ortanın sağı daha sıkı yönüdür ve " +
-      "hiç dolmaz — hiçbir koma dudağı normalden fazla sıkarak verilmez. Çubuk tam ortadaysa " +
-      "nota parmağın kendi sesidir. Klarnetin sesinin dışındaki notalarda hiçbir şey yanmaz.",
+    hintViolin: "Nokta, parmağın basacağı yeri gösterir. Koma sesler iki çizginin arasına düşer.",
+    hintKanun: "Kırmızı perde o an çalınandır. Soldaki kutucuklar mandallardır; açık renk olan kalkıktır.",
+    hintClarinet: "Kırmızı delikler ve tuşlar basılır. Üstteki çubuk dudağın ne kadar sıkılacağını gösterir.",
     clarinetBack: "arka",
     hintClarinetAlt: "Sol klarnet fotoğrafı — o notada basılan delikler ve tuşlar",
     // The lip meter's caption and its three positions. ⚠ They name a GRIP, not an action: the meter
@@ -429,9 +400,7 @@ export const TR = {
       "Kemanın dört telini istediğiniz notaya kurabilirsiniz. Parmak yerleri yeni akorda göre " +
       "yeniden hesaplanır.",
     tuningTitle: "Tel akordunu değiştir",
-    tuningLead:
-      "Her tel için bir nota seçin. Listede batı müziğinin on iki sesi vardır — akort aletinizde " +
-      "gördüğünüz notaların aynısı. Seçtiğiniz anda klavyedeki parmak yerleri güncellenir.",
+    tuningLead: "Her tel için bir nota seçin.",
     tuningString: (n: number, standard: string) => `${n}. tel (normalde ${standard})`,
     tuningReset: "Standart akorda dön",
     tuningDone: "Tamam",

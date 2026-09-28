@@ -63,7 +63,9 @@ stripe itself, which slides out of its clipped track by design.)
 **The toolbox's fold button is gone on a phone** (owner: the grab bar already takes it down). ⚠ The
 fold state is remembered in `localStorage`, so the phone reads its own `shut` flag and ignores a
 stored fold — tested by pre-loading `folded: true`: no button, `data-collapsed="0"`, all 34 tools
-mounted. The wide window keeps the button and the remembered state. Not yet deployed.
+mounted. The wide window keeps the button and the remembered state. **Deployed the same day**
+(`Deploy is live!`, `smoke:live` PASS) and checked ON the live site at 390px after a real server
+read (33 strips): no fold button, the grab bar present, `data-collapsed="0"`.
 
 **Deployed, and installable** (owner: *"deploy edip pwa yı hazırlayabilir misin"*). ⭐ The site is a
 PWA: `manifest.webmanifest` plus four icons generated from the favicon's koma diyezi

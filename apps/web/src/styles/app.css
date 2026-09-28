@@ -3551,6 +3551,23 @@ label.kv-btn.is-disabled {
      is also what makes the padding above follow the height the reader chose. */
   .kv-toolbox__bar {
     touch-action: none;
+    /* Room above the title for the handle, which sits in the bar's top edge. */
+    position: relative;
+    padding-top: 16px;
+  }
+  /* ⭐ The resize handle (owner chose it, 2026-09-28): a bottom sheet's grab bar. `pointer-events:
+     none` because it is a picture of the affordance, not a second target — the bar under it is. */
+  .kv-toolbox__handle {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 40px;
+    height: 5px;
+    margin-left: -20px;
+    border-radius: 999px;
+    background: var(--ink-faint);
+    opacity: 0.55;
+    pointer-events: none;
   }
 }
 

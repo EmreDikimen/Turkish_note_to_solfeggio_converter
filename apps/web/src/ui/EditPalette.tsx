@@ -428,6 +428,11 @@ export function EditPalette({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        {/* ⭐ THE PHONE'S HANDLE (owner, 2026-09-28: *"user bunu anlamayabilir"* — the bar resized
+            the box and nothing on it said so). The short rounded bar every bottom sheet on a phone
+            carries, so it is read without words. Phone only: on a wide window the bar MOVES the box
+            and the ⠿ grip already says that. Decoration — the whole bar is still the drag target. */}
+        {isPhone && <span className="kv-toolbox__handle" aria-hidden="true" />}
         <span className="kv-toolbox__grip" aria-hidden="true">⠿</span>
         <span className="kv-toolbox__title">{TR.palette.title}</span>
         <button

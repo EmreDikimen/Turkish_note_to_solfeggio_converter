@@ -216,6 +216,8 @@ editing tool** was visible, with every group below the fold of its own scroller.
 
 ⚠ The reader can drag the title bar to resize it, between `PHONE_H_MIN` (120px) and 0.6 of the
 window; the height is remembered and published to CSS as `--kv-toolbox-h`, which three rules read.
+⭐ **A grab bar says so** (owner, 2026-09-28): the 40×5px rounded bar in the title bar's top edge, the
+mark every phone bottom sheet carries. Phone only, decoration only — the bar under it is the target.
 
 ⚠ **Geri al / Yinele are in the toolbox's FIXED foot**, beside Seçim, for the reason Seçim is there:
 the tools scroll, the way out does not. The stack was never the problem — four deletes undo to the

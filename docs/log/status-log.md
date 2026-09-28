@@ -45,6 +45,12 @@ reports as `notDottable` rather than doing nothing silently. `edits-test.ts` gai
 `smoke:editor` 6, including a refused triplet member on `gamzedeyim-deva`. The glyph is Bravura's own
 `augmentationDot`, drawn at 48px so it reads as a button at all.
 
+**The toolbox shows that it can be resized** (owner: *"user bunu anlamayabilir"* — asked to be
+offered options first; chose the grab bar over a first-time hint, ⌃/⌄ buttons and snap sizes). On a
+phone the title bar resizes the docked toolbox, and nothing on it said so. It now carries the short
+rounded bar every phone bottom sheet has — **40×5px**, centred to the pixel, drawn only when
+`isPhone`; the bar under it is still the drag target, and the desktop's ⠿ move grip is untouched.
+
 ## 2026-09-27 — the violin's pegs, and the accidental a printed page would not print
 
 **The four strings can be retuned, one dropdown each** (owner: *"let the tuning of the strings be

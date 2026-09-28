@@ -14,7 +14,11 @@ etkili değil"*). On a phone the finger covers the notehead it is dragging. One 
 step through the same `onNudgePitch` the drag uses, so a step still has one definition; the drag
 stays. Drawn with inline SVG, because nothing under `.kv-score` may set a font; 32px under a finger,
 22px under a mouse; the ▲ steps left when it would land on the ✕, which sits on the same box's
-corner. `smoke:editor` checks that ▲ moves exactly ONE staff step and ▼ brings it back.
+corner. `smoke:editor` checks that ▲ moves exactly ONE staff step and ▼ brings it back. ⚠ **Same
+day, from the owner's photo: the pair looked crooked** — the ▲ had stepped left to dodge the ✕. Both
+now sit on one vertical line through the note, **20px** off its box above and below (`STEP_GAP`), and
+that gap is what clears the ✕: it reaches only 16px above the box. Measured on five notes at 390px:
+**0.0px** between the two arrows' centres and the note's, no overlap with the ✕.
 
 **Then the bigger fix, asked mid-build** (owner: *"aşağı kaydırırken editleyebiliyoruz
 yanlışlıkla"*). Every note target acted on `pointerdown` and carried `touch-action: none`, so a

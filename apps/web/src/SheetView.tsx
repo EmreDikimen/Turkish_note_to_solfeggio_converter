@@ -63,6 +63,10 @@ const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff 
  *  smallest round target that a thumb hits without also hitting the notehead it sits beside. */
 const STEP_BTN = 22;
 const STEP_BTN_TOUCH = 32;
+/** How far each arrow stands off the note's box — the same above and below, so the pair is
+ *  symmetric. ⚠ Must stay above 16: that is how far the ✕ reaches above the box, and the ▲ clears
+ *  it by height rather than by stepping sideways. */
+const STEP_GAP = 20;
 
 // --- following the playhead (owner, 2026-09-03) -----------------------------
 //
@@ -3621,8 +3625,8 @@ export function SheetView({
                 so there is still one rule for what a step is. The drag stays; these only help.
                 ⚠ Only for a NOTE (a rest has no pitch to move) and only with nothing armed, which is
                 also when the drag works.
-                ⚠ Placed off the note's measured box — never `getBBox()` (APP-RULES) — and the ▲ steps
-                left if it would land on the ✕, which sits on the same box's top-right corner.
+                ⚠ Placed off the note's measured box — never `getBBox()` (APP-RULES) — both on one
+                vertical line, `STEP_GAP` clear of it, which also keeps the ▲ above the ✕.
                 ⚠ Drawn with inline SVG, not a text glyph: nothing under `.kv-score` may set a font. */}
             {(() => {
               if (selectedNote == null || !onNudgePitch || armedTool != null) return null;
@@ -3634,12 +3638,12 @@ export function SheetView({
               const cx = nb.x + nb.width / 2;
               const boxTop = nb.y - NOTE_HIT_PAD;
               const boxBottom = nb.y + nb.height + NOTE_HIT_PAD;
-              // The ✕'s box, as positioned just above — kept clear of the ▲.
-              const delLeft = nb.x + nb.width + NOTE_HIT_PAD - 2;
-              const delBottom = nb.y - NOTE_HIT_PAD + 4;
-              const upTop = boxTop - S - 2;
-              let upLeft = cx - S / 2;
-              if (onDeleteNote && upTop < delBottom && upLeft + S > delLeft - 2) upLeft = delLeft - 2 - S;
+              // ⚠ Both arrows sit on ONE vertical line through the note (owner, 2026-09-28, with a
+              // photo: the ▲ used to step left to dodge the ✕ and the pair looked crooked). They are
+              // held `STEP_GAP` off the box instead, and that gap is chosen LARGER than the ✕'s reach
+              // above the box (its top is 16px above it), so the ▲ clears the ✕ by height alone.
+              const upTop = boxTop - STEP_GAP - S;
+              const upLeft = cx - S / 2;
               const arrow = (dir: 1 | -1) => (
                 <button
                   key={dir}
@@ -3654,7 +3658,7 @@ export function SheetView({
                   style={{
                     position: "absolute",
                     left: dir === 1 ? upLeft : cx - S / 2,
-                    top: dir === 1 ? upTop : boxBottom + 2,
+                    top: dir === 1 ? upTop : boxBottom + STEP_GAP,
                     width: S,
                     height: S,
                     padding: 0,

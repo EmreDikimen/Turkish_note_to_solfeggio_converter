@@ -31,6 +31,20 @@ unselected note moved the page **230px** and left the selection alone; a 30px dr
 note moved it **30px** and the page **0**. ⚠ A mouse keeps the press path, so `smoke:editor` — every
 click in it a mouse — passed unchanged.
 
+**İmleci takip et moved into the pinned row on a phone** (owner, with a photo). In the card head it
+scrolled off with the first system. Now it rides under Çal / Dur / tempo in the sticky bar, sheet
+view only. Measured at 393px: pinned **70 → 130px**, card head **189 → 137px**. React draws it in
+exactly one place, so the id stays single; the desktop keeps it in the card head, and
+`smoke:editor` (all at wide widths) passed unchanged.
+
+**And the editor finally has a dot** (owner: *"edite nokta koymayı eklemedik"*). `[data-tool="dot"]`
+beside the note values: tap a note or rest to add one dot, tap again to remove it. Core's
+`toggleDot` is the whole rule — plain `1/2^k` ↔ dotted `3/2^(k+1)`, reduced first, and **null** for
+anything with no single dot (triplet member, double dot, tie-split), which the palette's hint line
+reports as `notDottable` rather than doing nothing silently. `edits-test.ts` gained 10 checks and
+`smoke:editor` 6, including a refused triplet member on `gamzedeyim-deva`. The glyph is Bravura's own
+`augmentationDot`, drawn at 48px so it reads as a button at all.
+
 ## 2026-09-27 — the violin's pegs, and the accidental a printed page would not print
 
 **The four strings can be retuned, one dropdown each** (owner: *"let the tuning of the strings be

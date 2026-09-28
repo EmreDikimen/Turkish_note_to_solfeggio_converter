@@ -41,7 +41,9 @@ failure on 2026-09-05.
 ## The sheet and the follow
 
 `#follow-playhead[data-follow]` **and** `#sheet-surface[data-follow]` — the setting on the control
-AND on the thing that moves. ⚠ A checked box only proves it was clicked.
+AND on the thing that moves. ⚠ A checked box only proves it was clicked. ⚠ **Where it lives depends
+on the width** (2026-09-28): inside `#transport-pinned` on a phone, in the card head on a wide
+window — never both. Find it by id, never by its container.
 
 The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot prove
 playback actually began there.
@@ -54,7 +56,8 @@ playback actually began there.
   each, present only while a NOTE (not a rest) is selected and nothing is armed. ⚠ Under a TOUCH
   pointer a note acts on `click`, not `pointerdown`, and only the selected note starts a drag — a
   check driving touch must tap, then press.
-- the palette: `#edit-palette[data-armed]` + `[data-tool]` per tool
+- the palette: `#edit-palette[data-armed]` + `[data-tool]` per tool — `[data-tool="dot"]` is the
+  augmentation dot (2026-09-28); a value it cannot dot sets `.kv-toolbox__hint[data-refused="notDottable"]`
 - its transport: `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`
 - its undo pair: `#palette-undo` / `#palette-redo`, in the toolbox's FIXED foot beside
   `#palette-select` (2026-09-26). ⚠ **They share one stack with the card's `#undo` / `#redo`** and

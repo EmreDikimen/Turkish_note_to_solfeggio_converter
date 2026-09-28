@@ -50,15 +50,15 @@ Three tabs: **Nota · Düzenle · Sayfalar**. ⛔ There is no Çal tab; it was c
 
 ```
 ┌─────────────────────────────────┐
-│  ▶ Çal   ■ Dur   ♩= − 80 + ⟲    │  pinned, 70px
+│  ▶ Çal   ■ Dur   ♩= − 80 + ⟲    │  pinned, 130px
+│  [      İmleci takip et    ]    │  (sheet view only)
 ├─────────────────────────────────┤
 │         Daha fazla ayar         │  44px — the fold's handle
 │                ⌄                │
 ├─────────────────────────────────┤
-│  eser adı ✎              ⤢      │  the card head, 189px
+│  eser adı ✎            ⤓  ⤢     │  the card head, 137px
 │  makam · usul · besteci · nota  │
 │  [   Nota   |  Enstrüman  ]     │
-│  [      İmleci takip et    ]    │
 ├─────────────────────────────────┤
 │                                 │
 │   the score, fitted to width    │  ~330px
@@ -93,9 +93,13 @@ the panel is **713px** open, against 515px when the toggles still shared lines.
 ⚠ **The voice picker is in the fold, not the pinned row.** It is set once before playing, and the
 pinned row is sticky — it used to follow the reader down the page.
 
-**The card head** is two rows plus the title: the view switch alone (two equal halves), then
-İmleci takip et centred. Full screen and Notayı kaydet are marks in the **top-right corner**, out of
-the flow, so they cost no row. ⛔ Düzenle is not there on the Nota tab — the bottom bar's tab IS edit
+**The card head** is the title and the view switch alone (two equal halves). Full screen and
+Notayı kaydet are marks in the **top-right corner**, out of the flow, so they cost no row.
+⭐ **İmleci takip et is in the PINNED row** (owner, 2026-09-28: *"ekranda kalmasını istiyorum aşağı
+kaysa bile"*): in the card head it scrolled away with the first system — exactly when you reach for
+it. Measured at 393px: the pinned row **70 → 130px**, the card head **189 → 137px**. ⚠ One element:
+`TransportBar` draws it on a phone (`follow`), `ScoreCard` everywhere else (`followInPinned`), and
+App passes both from one condition, so `#follow-playhead` is never two nodes. Sheet view only. ⛔ Düzenle is not there on the Nota tab — the bottom bar's tab IS edit
 mode, and a second switch was the same fact twice. It stays on the Düzenle tab, where it is the only
 thing that says the mode is on.
 

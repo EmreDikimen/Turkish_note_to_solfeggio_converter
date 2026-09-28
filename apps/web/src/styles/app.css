@@ -2853,6 +2853,35 @@ label.kv-btn.is-disabled {
 }
 
 @media (max-width: 700px) {
+  /* ⭐ THE READING CARD, stacked (owner, 2026-09-28, with a photo). Mid-read the compact strip is one
+     row: the phase text, then the progress bar and the clock. On a phone the phase text alone
+     ("32 şerit sunucuda okunuyor…") takes nearly the whole width, so the bar was squeezed to ZERO
+     — it was not on screen at all — and the `nowrap` clock ran off the right edge. Stacked, each
+     gets the full width: what is happening, a bar that visibly moves, how long it has taken.
+     ⚠ Only while busy (`.is-busy`): the strip at rest keeps its one-row layout. */
+  .kv-hero.is-compact .kv-drop.is-busy {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+  .kv-drop.is-busy .kv-drop__lead {
+    flex: 0 0 auto;
+    white-space: normal;
+  }
+  .kv-drop.is-busy .kv-progress {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .kv-drop.is-busy .kv-progress__track {
+    height: 6px;
+  }
+  .kv-drop.is-busy .kv-progress__elapsed {
+    white-space: normal;
+    text-align: left;
+  }
+
   /* Three columns need ~320px of control before the padding; a 375px phone has 343px of panel.
      So the string's name takes its own line and the select keeps the full width under it. */
   .kv-tuning__row {

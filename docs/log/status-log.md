@@ -51,6 +51,15 @@ phone the title bar resizes the docked toolbox, and nothing on it said so. It no
 rounded bar every phone bottom sheet has — **40×5px**, centred to the pixel, drawn only when
 `isPhone`; the bar under it is still the drag target, and the desktop's ⠿ move grip is untouched.
 
+**The reading card stacks on a phone** (owner, with a photo: the bar ran off the screen mid-read).
+While a page reads, the upload strip is one row — phase text, then progress bar and clock. On a
+phone the phase text (*"32 şerit sunucuda okunuyor…"*) took nearly the whole width, so the bar was
+squeezed to **0px** — not on screen at all — and the `nowrap` clock ran off the right edge. Now,
+phone only and only while busy, the three stack: text, a full-width bar (**324px** at 390px), the
+clock, and after 15 s the cold-start line, each wrapping. Measured on a real server read of
+`hicaz_saz_semai_phone.png`: page overflow **0**. (The one box past the edge is the indeterminate
+stripe itself, which slides out of its clipped track by design.)
+
 ## 2026-09-27 — the violin's pegs, and the accidental a printed page would not print
 
 **The four strings can be retuned, one dropdown each** (owner: *"let the tuning of the strings be

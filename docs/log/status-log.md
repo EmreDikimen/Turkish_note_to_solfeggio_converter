@@ -7,6 +7,26 @@ updated: 2026-09-27
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-28 — a note is stepped with arrows, and a scroll no longer edits
+
+**▲ and ▼ on the selected note** (owner: *"sürükleyerek nota değerini değiştirme mantığı mobilde pek
+etkili değil"*). On a phone the finger covers the notehead it is dragging. One press is one staff
+step through the same `onNudgePitch` the drag uses, so a step still has one definition; the drag
+stays. Drawn with inline SVG, because nothing under `.kv-score` may set a font; 32px under a finger,
+22px under a mouse; the ▲ steps left when it would land on the ✕, which sits on the same box's
+corner. `smoke:editor` checks that ▲ moves exactly ONE staff step and ▼ brings it back.
+
+**Then the bigger fix, asked mid-build** (owner: *"aşağı kaydırırken editleyebiliyoruz
+yanlışlıkla"*). Every note target acted on `pointerdown` and carried `touch-action: none`, so a
+finger that started a scroll on a note selected it, dragged its pitch, and applied whatever tool
+was armed — before the browser could know a scroll was meant. ⭐ Now a TOUCH decides on the `click`
+(`onNoteTap`), which a scroll never fires; the only thing a touch may start on press is the drag,
+and only on the note already selected, which is the only target that still blocks panning. First
+tap selects, next press moves. Measured with emulated touch at 390px: a scroll begun on an
+unselected note moved the page **230px** and left the selection alone; a 30px drag on the selected
+note moved it **30px** and the page **0**. ⚠ A mouse keeps the press path, so `smoke:editor` — every
+click in it a mouse — passed unchanged.
+
 ## 2026-09-27 — the violin's pegs, and the accidental a printed page would not print
 
 **The four strings can be retuned, one dropdown each** (owner: *"let the tuning of the strings be

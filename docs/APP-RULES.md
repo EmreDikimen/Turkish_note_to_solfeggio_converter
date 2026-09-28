@@ -205,6 +205,11 @@ updated: 2026-09-20
   the SVG's inline **style** (VexFlow's `resize()` writes one and an attribute cannot beat it), and
   `#sheet-surface` is sized in DISPLAYED units. ⚠ A ragged last system may be shorter than the page,
   never wider. Numbers: [features/phone.md](features/phone.md).
+- **A FINGER ACTS ON THE TAP, A MOUSE ON THE PRESS** (2026-09-28). On a phone the finger that
+  scrolls lands on notes constantly, so anything that EDITS on `pointerdown` edits by accident. A
+  note target decides a touch in `onNoteTap` (a `click`, which a scroll never fires) and blocks
+  panning only on the note already selected. ⚠ **Any new edit target must follow the same split**,
+  and give it `touch-action: manipulation` unless it is the one thing a finger may drag.
 - **A `display: none` LIST AND AN `absolute` OVERLAY ARE ONE LAYOUT, AND NOTHING CHECKS THAT THEY
   AGREE.** The per-tab blocks in the `(max-width: 700px)` section hide whole ROWS of the card head;
   the corner group is positioned against that head. Hide the rows and the controls below them rise

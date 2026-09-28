@@ -50,6 +50,10 @@ playback actually began there.
 
 - `#edit-toggle[data-edit-mode]`, `#sheet-surface[data-edit-mode]` + `[data-selected-note]`
 - `[data-omr-note]` / `[data-selected]` per note; `#note-delete` / `#undo` / `#redo`
+- `#note-step-up` / `#note-step-down` (`[data-omr="note-step"][data-dir]`, 2026-09-28): one staff step
+  each, present only while a NOTE (not a rest) is selected and nothing is armed. ⚠ Under a TOUCH
+  pointer a note acts on `click`, not `pointerdown`, and only the selected note starts a drag — a
+  check driving touch must tap, then press.
 - the palette: `#edit-palette[data-armed]` + `[data-tool]` per tool
 - its transport: `#edit-palette[data-play-from]` + `#palette-play[data-play-state]` / `#palette-stop`
 - its undo pair: `#palette-undo` / `#palette-redo`, in the toolbox's FIXED foot beside

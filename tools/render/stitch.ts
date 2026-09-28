@@ -154,8 +154,13 @@ interface WrittenEvent {
   /** Upper-case letter C..B (notes/graces only). */
   letter?: string;
   octave?: number;
-  /** Resolved comma alteration (signature applied; explicit token overrides). */
+  /** Resolved comma alteration (signature applied; explicit token overrides). Filled in by
+   *  `resolveAccidentals` AFTER the measure grid is final — see `regularizeMeasures`. */
   alter?: number;
+  /** The accidental token written on this note (`\natural` = 0), or null for a bare note. */
+  explicit?: number | null;
+  /** The row signature in force where the note was read (maps are replaced, never mutated). */
+  sig?: ReadonlyMap<string, number>;
   num: number;
   den: number;
 }
@@ -256,14 +261,24 @@ function boundaryHasBarline(prevLast: string | undefined, nextFirst: string | un
   return prevLast === REP_END_TOKEN || nextFirst === REP_START_TOKEN || nextFirst === REP_END_TOKEN;
 }
 
+/**
+ * The barline a CROP BOUNDARY stands for — never a model token, only `joinChunks` writes it.
+ *
+ * It parses exactly like `|`, but it is a weaker claim: the slicer cuts at barlines when it finds
+ * them and at whitespace gutters inside an over-wide measure when it does not, so this line may not
+ * be on the page at all. Keeping it distinct from the `|` the model READ is what lets
+ * `regularizeMeasures` join the two halves of a cut measure — and leave every read barline alone.
+ */
+export const CROP_BAR = "¦";
+
 /** Join adjacent token chunks (strips within a row, then rows) with the barline their shared
- *  crop boundary represents. Empty chunks (a strip that decoded to nothing) are dropped. */
+ *  crop boundary represents (`CROP_BAR`). Empty chunks (a strip that decoded to nothing) are dropped. */
 export function joinChunks(chunks: string[]): string {
   const parts: string[] = [];
   for (const chunk of chunks) {
     const toks = normalizeTokens(chunk).split(/\s+/).filter(Boolean);
     if (toks.length === 0) continue;
-    if (parts.length > 0 && !boundaryHasBarline(parts[parts.length - 1], toks[0])) parts.push("|");
+    if (parts.length > 0 && !boundaryHasBarline(parts[parts.length - 1], toks[0])) parts.push(CROP_BAR);
     parts.push(...toks);
   }
   return parts.join(" ");
@@ -286,25 +301,38 @@ export function stripsToRows(strips: readonly DecodedStrip[]): string[] {
 // ---------------------------------------------------------------------------------------------
 // 2. Token streams → written measures (signature resolution + rhythm-sign fold-back)
 
-/** Parse the per-row token streams into written measures with structure marks. */
-function parseRows(rows: readonly string[], warnings: string[], carryMode = false): MeasureRec[] {
+/** How a parsed measure ENDS — kept beside the measures, never on them (`structureOf` spreads a
+ *  `MeasureRec`'s fields into the bar marks). `crop` is the only boundary `regularizeMeasures` may
+ *  remove: it is a `CROP_BAR`, which the slicer drew and the model did not read. */
+interface MeasureMeta {
+  row: number;
+  endBy: "bar" | "crop" | "row";
+}
+
+/** Parse the per-row token streams into written measures with structure marks. Accidentals are
+ *  RECORDED here (`explicit`, `sig`) and resolved later by `resolveAccidentals`, because the
+ *  measure-scoped carry depends on where the barlines are — which is not final yet. */
+function parseRows(
+  rows: readonly string[],
+  warnings: string[],
+): { measures: MeasureRec[]; meta: MeasureMeta[] } {
   const measures: MeasureRec[] = [];
+  const meta: MeasureMeta[] = [];
   let cur: MeasureRec = { events: [] };
   let codaCount = 0;
+  let rowIdx = 0;
 
   // Row signature state: letter → default alteration. Persists across rows until a NON-EMPTY
   // `\sig` block replaces it — an empty `\sig \sigend` on a later row is the known empty-signature
   // ambiguity (see MODEL_EVAL.md), so it never clears an established signature.
   let sig = new Map<string, number>();
   let sawNonEmptySig = false;
-  // "carry" mode: staff position ("B4") → alteration in effect within the CURRENT measure
-  // (set by explicit accidentals, cleared at every measure boundary — see StitchOptions).
-  const active = new Map<string, number>();
 
-  const flushMeasure = () => {
-    active.clear(); // every flush is a measure boundary (barline / repeat barline / row end)
-    if (cur.events.length > 0) measures.push(cur);
-    else if (cur.repStart || cur.volta1 || cur.volta2 || cur.segno) {
+  const flushMeasure = (endBy: MeasureMeta["endBy"]) => {
+    if (cur.events.length > 0) {
+      measures.push(cur);
+      meta.push({ row: rowIdx, endBy });
+    } else if (cur.repStart || cur.volta1 || cur.volta2 || cur.segno) {
       // Marks decoded onto an empty measure (consecutive barlines = model noise): carry them
       // forward so a `‖:` right after a spurious `|` still opens its repeat.
       warnings.push("empty measure with structure marks — marks carried to the next measure");
@@ -314,7 +342,8 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
     cur = { events: [] };
   };
 
-  for (const [rowIdx, row] of rows.entries()) {
+  for (const [r, row] of rows.entries()) {
+    rowIdx = r;
     const raw = normalizeTokens(row).split(/\s+/).filter(Boolean);
     // Re-glue split durations: `3` is an ADDED token (the base vocab can't spell "32"), so the
     // tokenizer's decode can emit `f'' 32` as two tokens — merge a bare pitch with the bare
@@ -338,16 +367,6 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
     let rowSig: Map<string, number> | null = null; // block being read
     let i = -1;
 
-    // The shared bare-note/explicit-accidental resolution (see StitchOptions.accidentals).
-    // Grace accidentals print but never bind the measure — mirroring the serializer.
-    const resolveAlter = (letter: string, octave: number): number => {
-      if (pendingAlter !== null) {
-        if (carryMode && !pendingGrace) active.set(`${letter}${octave}`, pendingAlter);
-        return pendingAlter;
-      }
-      if (carryMode && active.has(`${letter}${octave}`)) return active.get(`${letter}${octave}`)!;
-      return sig.get(letter) ?? 0;
-    };
 
     for (const tok of toks) {
       i++;
@@ -392,13 +411,14 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
       }
 
       // --- barlines + structure marks ------------------------------------------------------
-      if (tok === "|") {
-        if (cur.events.length === 0 && measures.length > 0) warnings.push(`row ${rowIdx}: empty measure skipped`);
+      if (tok === "|" || tok === CROP_BAR) {
+        // A crop boundary right after a read `|` is the same barline twice, not an empty measure.
+        if (cur.events.length === 0 && measures.length > 0 && tok === "|") warnings.push(`row ${rowIdx}: empty measure skipped`);
         if (tiePending) warnings.push(`row ${rowIdx}: dangling \\tie at a barline dropped`);
         if (inTuplet) warnings.push(`row ${rowIdx}: unclosed \\tup3 at a barline closed`);
         tiePending = false;
         inTuplet = false;
-        flushMeasure();
+        flushMeasure(tok === CROP_BAR ? "crop" : "bar");
         continue;
       }
       if (tok === REP_START_TOKEN) {
@@ -406,7 +426,7 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
         // opened by another start-edge mark at the same barline (`\segno \repstart` — the head of
         // a teslim), and flushing that would report a spurious empty measure. Same rule as the
         // volta brackets below.
-        if (cur.events.length > 0) flushMeasure();
+        if (cur.events.length > 0) flushMeasure("bar");
         cur.repStart = true;
         continue;
       }
@@ -414,7 +434,7 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
         // `:‖` marks the measure BEFORE this boundary; it also closes the measure like a `|`.
         if (cur.events.length > 0) {
           cur.repEnd = true;
-          flushMeasure();
+          flushMeasure("bar");
         } else if (measures.length > 0) {
           measures[measures.length - 1]!.repEnd = true;
         } else {
@@ -424,7 +444,7 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
       }
       if (tok === VOLTA1_TOKEN || tok === VOLTA2_TOKEN) {
         // Volta brackets precede their measure's notes (serializer order: barline, volta, notes).
-        if (cur.events.length > 0) flushMeasure();
+        if (cur.events.length > 0) flushMeasure("bar");
         if (tok === VOLTA1_TOKEN) cur.volta1 = true;
         else cur.volta2 = true;
         continue;
@@ -532,8 +552,7 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
           warnings.push(
             `row ${rowIdx}: \\tie pitch mismatch (${last.letter}${last.octave} → ${letter}${octave}) — kept as separate notes`,
           );
-          const alter = resolveAlter(letter, octave);
-          cur.events.push({ kind: "note", letter, octave, alter, num, den: denom });
+          cur.events.push({ kind: "note", letter, octave, explicit: pendingAlter, sig, num, den: denom });
         } else {
           [last.num, last.den] = addFrac(last.num, last.den, num, denom);
         }
@@ -542,12 +561,12 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
         continue;
       }
 
-      const alter = resolveAlter(letter, octave);
       cur.events.push({
         kind: pendingGrace ? "grace" : "note",
         letter,
         octave,
-        alter,
+        explicit: pendingAlter,
+        sig,
         num: pendingGrace ? 0 : num,
         den: pendingGrace ? 1 : denom,
       });
@@ -558,9 +577,9 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
     // Row end = a barline on the page.
     if (tiePending) warnings.push(`row ${rowIdx}: dangling \\tie at row end dropped`);
     if (inTuplet) warnings.push(`row ${rowIdx}: unclosed \\tup3 at row end closed`);
-    flushMeasure();
+    flushMeasure("row");
   }
-  flushMeasure();
+  flushMeasure("row");
   // A mark decoded AFTER the page's last barline has no measure of its own to open, and
   // `flushMeasure` carries it forward to a measure that never comes. The saz semâî's last 𝄋 — the
   // one at the end of the final hâne — is exactly this, so the marks are folded back onto the last
@@ -577,7 +596,258 @@ function parseRows(rows: readonly string[], warnings: string[], carryMode = fals
     if (cur.fine) last.fine = true;
     if (cur.codaOrder != null && last.codaOrder == null) last.codaOrder = cur.codaOrder;
   }
-  return measures;
+  return { measures, meta };
+}
+
+// ---------------------------------------------------------------------------------------------
+// 2b. The measure grid — putting back together a measure the slicer cut in two
+
+type Frac = [number, number];
+
+const lenOf = (m: MeasureRec): Frac =>
+  m.events.reduce<Frac>((s, e) => addFrac(s[0], s[1], e.num, e.den), [0, 1]);
+/** Sign of a − b for two fractions (denominators are positive). */
+const cmpFrac = (a: Frac, b: Frac): number => a[0] * b[1] - b[0] * a[1];
+const fracKey = ([n, d]: Frac): string => `${n}/${d}`;
+
+/** Marks that sit on a bar's LEFT edge — a bar carrying one really does start there. */
+const hasStartMark = (m: StructureMarks): boolean =>
+  !!(m.repStart || m.volta1 || m.volta2 || (m.segno && m.segnoAt !== "end") || m.codaOrder != null);
+/** Marks that sit on a bar's RIGHT edge — a bar carrying one really does end there. (⊕ is on
+ *  both lists: which edge it is drawn on is decided by reading order, not by the parse.) */
+const hasEndMark = (m: StructureMarks): boolean =>
+  !!(m.repEnd || m.dc || m.fine || (m.segno && m.segnoAt === "end") || m.codaOrder != null);
+
+/**
+ * A meter must be SEEN whole this many times, and explain this many bars' worth of music, before
+ * it is believed. One or two bars of one length is what a stray decode looks like.
+ */
+const MIN_METER_BARS = 3;
+
+/**
+ * Join the pieces of a measure the SLICER cut in two, and cut a measure in which a barline was
+ * missed — from the lengths of the measures around it (owner, 2026-09-27).
+ *
+ * ⭐ **Why it matters for the SOUND, not only the look.** An accidental binds its staff position to
+ * the next barline (`accidentals: "carry"`). When the slicer cuts an over-wide measure at a gutter,
+ * the join used to insert a real barline there — so on the Hicâz saz semâî's teslim, `\natural f''4`
+ * ended up alone in a bar and the seven bare f''s after it went back to the signature's F♯, although
+ * the model had read every one of them correctly.
+ *
+ * **The rule.** Most measures on a page are right, because the slicer finds most barlines. So:
+ *   1. the METER is read off the page: the measure length that, after joining, accounts for the most
+ *      music, row by row (a saz semâî changes from 10/8 to 3/4 in its fourth hâne, so one length for
+ *      the whole page would be wrong). A row no meter explains borrows its neighbour's;
+ *   2. **joining** happens ONLY across a crop boundary (`CROP_BAR`), never across a `|` the model
+ *      read, and only when the pieces add up to the row's meter EXACTLY, each piece shorter than it;
+ *   3. **cutting** happens only to a measure exactly k × the meter long (k ≥ 2), at the points where
+ *      the notes add up to whole measures — so a barline is never put through a note;
+ *   4. a boundary carrying a repeat, volta, 𝄋, ⊕, D.C. or "Son" is never removed;
+ *   5. ⚠ **the changed measures must stay a MINORITY of the page.** If more than half would change,
+ *      the meter guess is the thing that is wrong, and nothing is touched.
+ *
+ * ⚠ It runs only on a stream that HAS crop boundaries — the page path (`stitchStrips`). A caller
+ * handing in pre-joined rows (`stitchTokenRows`, every label round-trip) gets its bars as written.
+ */
+function regularizeMeasures(
+  measures: MeasureRec[],
+  meta: readonly MeasureMeta[],
+  warnings: string[],
+): MeasureRec[] {
+  if (!meta.some((m) => m.endBy === "crop")) return measures;
+  const lens = measures.map(lenOf);
+  const zero = (f: Frac) => f[0] === 0;
+
+  const rows = new Map<number, number[]>();
+  measures.forEach((_, i) => {
+    const r = meta[i]!.row;
+    rows.set(r, [...(rows.get(r) ?? []), i]);
+  });
+  const canJoin = (a: number, b: number): boolean =>
+    meta[a]!.endBy === "crop" && !hasEndMark(measures[a]!) && !hasStartMark(measures[b]!);
+
+  /** Greedy, left to right: from each measure absorb the next ones across crop boundaries while
+   *  the running length is short of L, and keep the run only if it lands on L exactly. */
+  const mergeRuns = (idx: readonly number[], L: Frac): number[][] => {
+    const groups: number[][] = [];
+    let k = 0;
+    while (k < idx.length) {
+      let sum = lens[idx[k]!]!;
+      let j = k;
+      while (cmpFrac(sum, L) < 0 && j + 1 < idx.length && canJoin(idx[j]!, idx[j + 1]!)) {
+        j++;
+        sum = addFrac(sum[0], sum[1], ...lens[idx[j]!]!);
+      }
+      if (j > k && cmpFrac(sum, L) === 0) {
+        groups.push(idx.slice(k, j + 1));
+        k = j + 1;
+      } else {
+        groups.push([idx[k]!]);
+        k++;
+      }
+    }
+    return groups;
+  };
+  const total = (g: readonly number[]): Frac =>
+    g.reduce<Frac>((s, i) => addFrac(s[0], s[1], ...lens[i]!), [0, 1]);
+  /** Music (in whole notes) that sits in bars exactly L long once the row is joined for L. */
+  const cover = (idx: readonly number[], L: Frac): number =>
+    mergeRuns(idx, L).reduce((s, g) => {
+      const t = total(g);
+      return cmpFrac(t, L) === 0 ? s + t[0] / t[1] : s;
+    }, 0);
+  const rowLen = (idx: readonly number[]): number => {
+    const t = total(idx);
+    return t[0] / t[1];
+  };
+
+  // 1. Candidate meters: a length the page shows WHOLE — as an unjoined measure — at least
+  //    MIN_METER_BARS times. ⚠ Never a length that only exists as a sum of pieces: on a manuscript
+  //    with no barlines at all (every "measure" is a crop) that let a 19/8 meter be assembled out
+  //    of crop fragments and joined into bars the page never had.
+  const seen = new Map<string, { L: Frac; n: number }>();
+  for (const l of lens) {
+    if (zero(l)) continue;
+    const c = seen.get(fracKey(l)) ?? { L: l, n: 0 };
+    c.n++;
+    seen.set(fracKey(l), c);
+  }
+  const cands = [...seen.values()].filter((c) => c.n >= MIN_METER_BARS).map((c) => c.L);
+
+  // 2. Pick meters: the one that explains (≥ half of) the most music in the rows still open, then
+  //    again for the rows it left. Ties go to the LONGER meter — pieces that are exact halves of a
+  //    bar must not out-vote the bar they came from.
+  const meterOf = new Map<number, Frac>();
+  const open = new Set([...rows.keys()].filter((r) => rowLen(rows.get(r)!) > 0));
+  for (;;) {
+    let best: { L: Frac; score: number; rows: number[] } | null = null;
+    for (const L of cands) {
+      const explained: number[] = [];
+      let score = 0;
+      for (const r of open) {
+        const c = cover(rows.get(r)!, L);
+        if (c * 2 >= rowLen(rows.get(r)!)) {
+          explained.push(r);
+          score += c;
+        }
+      }
+      if (score / (L[0] / L[1]) < MIN_METER_BARS) continue;
+      if (!best || score > best.score + 1e-9 || (Math.abs(score - best.score) <= 1e-9 && cmpFrac(L, best.L) > 0))
+        best = { L, score, rows: explained };
+    }
+    if (!best) break;
+    for (const r of best.rows) {
+      meterOf.set(r, best.L);
+      open.delete(r);
+    }
+  }
+  if (meterOf.size === 0) return measures;
+  // A row no meter explains (a badly read row) takes its neighbour's — joins still need an exact sum.
+  const sorted = [...rows.keys()].sort((a, b) => a - b);
+  for (const [k, r] of sorted.entries()) {
+    if (meterOf.has(r)) continue;
+    const prev = sorted.slice(0, k).reverse().find((q) => meterOf.has(q));
+    const next = sorted.slice(k + 1).find((q) => meterOf.has(q));
+    const from = prev ?? next;
+    if (from != null && meterOf.has(from)) meterOf.set(r, meterOf.get(from)!);
+  }
+
+  // 3. Apply.
+  const out: MeasureRec[] = [];
+  let touched = 0;
+  let joined = 0;
+  let cut = 0;
+  for (const r of sorted) {
+    const idx = rows.get(r)!;
+    const L = meterOf.get(r);
+    const groups = L ? mergeRuns(idx, L) : idx.map((i) => [i]);
+    for (const g of groups) {
+      if (g.length > 1) {
+        const merged: MeasureRec = { events: [] };
+        for (const i of g) {
+          const { events, ...marks } = measures[i]!;
+          Object.assign(merged, marks);
+          merged.events.push(...events);
+        }
+        out.push(merged);
+        touched += g.length;
+        joined++;
+        continue;
+      }
+      const m = measures[g[0]!]!;
+      const parts = L ? splitMeasure(m, lens[g[0]!]!, L) : null;
+      if (parts) {
+        out.push(...parts);
+        touched++;
+        cut++;
+      } else out.push(m);
+    }
+  }
+  if (touched === 0) return measures;
+  const meters = [...new Set([...meterOf.values()].map(fracKey))].join(", ");
+  if (touched * 2 >= measures.length) {
+    warnings.push(
+      `measure grid (meter ${meters}): ${touched} of ${measures.length} measures would change — more than half, so the meter guess is doubted and nothing was changed`,
+    );
+    return measures;
+  }
+  warnings.push(
+    `measure grid (meter ${meters}): joined ${joined} measure(s) the slicer cut, split ${cut} with a missed barline (${touched} of ${measures.length} measures touched)`,
+  );
+  return out;
+}
+
+/** Cut a measure exactly k × L long (k ≥ 2) at the points where its notes add up to whole bars.
+ *  Null when it is not such a measure, or a cut point falls inside a note. */
+function splitMeasure(m: MeasureRec, len: Frac, L: Frac): MeasureRec[] | null {
+  if (m.codaOrder != null) return null; // which edge the ⊕ is on is unknowable here
+  const k = (len[0] * L[1]) / (len[1] * L[0]);
+  if (!Number.isInteger(k) || k < 2) return null;
+  const parts: MeasureRec[] = [{ events: [] }];
+  let cum: Frac = [0, 1];
+  let barEnd: Frac = L;
+  for (const e of m.events) {
+    parts[parts.length - 1]!.events.push(e);
+    cum = addFrac(cum[0], cum[1], e.num, e.den);
+    const c = cmpFrac(cum, barEnd);
+    if (c > 0) return null; // a note straddles the barline
+    if (c === 0 && parts.length < k) {
+      parts.push({ events: [] });
+      barEnd = addFrac(barEnd[0], barEnd[1], ...L);
+    }
+  }
+  if (parts.length !== k) return null;
+  const first = parts[0]!;
+  const last = parts[parts.length - 1]!;
+  if (m.repStart) first.repStart = true;
+  if (m.volta1) first.volta1 = true;
+  if (m.volta2) first.volta2 = true;
+  if (m.repEnd) last.repEnd = true;
+  if (m.dc) last.dc = true;
+  if (m.fine) last.fine = true;
+  if (m.segno) Object.assign(m.segnoAt === "end" ? last : first, { segno: true, segnoAt: m.segnoAt });
+  return parts;
+}
+
+/**
+ * Give every note its sounding alteration, once the barlines are final (see `StitchOptions`).
+ * `"keysig"`: bare = the signature. `"carry"`: an explicit accidental binds its staff position until
+ * the barline; a grace's accidental prints but never binds — mirroring the serializer.
+ */
+function resolveAccidentals(measures: readonly MeasureRec[], carry: boolean): void {
+  for (const m of measures) {
+    const active = new Map<string, number>();
+    for (const e of m.events) {
+      if (e.kind === "rest") continue;
+      const key = `${e.letter}${e.octave}`;
+      if (e.explicit != null) {
+        e.alter = e.explicit;
+        if (carry && e.kind !== "grace") active.set(key, e.explicit);
+      } else {
+        e.alter = carry && active.has(key) ? active.get(key)! : (e.sig?.get(e.letter!) ?? 0);
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1004,7 +1274,9 @@ export function resolveStructure(
 /** Stitch pre-joined per-row token streams (top-to-bottom) into a note model. */
 export function stitchTokenRows(rows: readonly string[], opts: StitchOptions = {}): StitchResult {
   const warnings: string[] = [];
-  const measures = parseRows(rows, warnings, opts.accidentals === "carry");
+  const parsed = parseRows(rows, warnings);
+  const measures = regularizeMeasures(parsed.measures, parsed.meta, warnings);
+  resolveAccidentals(measures, opts.accidentals === "carry");
   const written = measures.map((_, i) => i);
   // The playing order is resolved WHATEVER `expand` says: with `expand: false` the caller keeps
   // the written score on the page and follows `structure.playBars` at playback time instead, so

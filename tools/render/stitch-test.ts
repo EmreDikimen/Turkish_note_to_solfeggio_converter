@@ -47,7 +47,7 @@ import {
 } from "./lilypond";
 import { tupletGroupsIn, tieSplitBeats } from "./rhythm";
 import { repeatMarksAt } from "./repeats";
-import { stitchTokenRows } from "./stitch";
+import { stitchStrips, stitchTokenRows, type DecodedStrip } from "./stitch";
 import { navMarksFromStructure, repeatSpansFromStructure } from "./structure-view";
 
 let failures = 0;
@@ -465,6 +465,71 @@ console.log("structure unit tests:");
     "default (keysig) mode is unchanged: bare always means the signature pitch",
     t(["\\sig \\komaFlat b \\sigend b'4 \\natural b'4 b'4"]),
     "Si4b1:1/4 Si4:1/4 Si4b1:1/4",
+  );
+  // --- the measure grid: a measure the SLICER cut in two is joined back (2026-09-27) ----------
+  // One row per string, strips split on " ¦ "; every crop boundary is a CROP_BAR, not a read `|`.
+  const page = (rows: string[]): DecodedStrip[] =>
+    rows.flatMap((row, system) => row.split(" ¦ ").map((tokens, window) => ({ system, window, tokens })));
+  const g = (rows: string[]) => {
+    const res = stitchStrips(page(rows), { accidentals: "carry", expand: false });
+    return { bars: compact(res.doc), grid: res.warnings.find((w) => w.startsWith("measure grid")) ?? "" };
+  };
+  const sig = "\\sig \\bakiyeSharp f \\sigend ";
+  const bars3 = "c''4 d''4 e''4 | d''4 d''4 d''4 | e''4 e''4 e''4";
+
+  // The Hicâz saz semâî's teslim: `\natural f''4` cut off from the rest of its bar. Before the fix
+  // the bare f'' after the cut went back to the signature's F♯.
+  check(
+    "grid: a cut measure is joined, and its \\natural reaches past the cut",
+    g([sig + bars3, sig + "\\natural f''4 ¦ f''4 e''4", sig + bars3]).bars.split(" | ")[3]!,
+    "Fa5:1/4 Fa5:1/4 Mi5:1/4",
+  );
+  check(
+    "grid: a `|` the MODEL read is never removed, even when the pieces add up",
+    g([sig + bars3, sig + "\\natural f''4 | f''4 e''4", sig + bars3]).bars.split(" | ")[3]!,
+    "Fa5:1/4",
+  );
+  check(
+    "grid: pieces that do not add up to the meter are left alone",
+    g([sig + bars3, sig + "f''4 ¦ e''4", sig + bars3]).bars.split(" | ").length.toString(),
+    "8",
+  );
+  check(
+    "grid: a measure exactly twice the meter is cut where the notes add up",
+    g([sig + "c''4 d''4 e''4 ¦ d''4 d''4 d''4 | e''4 e''4 e''4", "c''4 d''4 e''4 f''4 g''4 a''4", sig + bars3]).bars.split(" | ").slice(3, 5).join(" | "),
+    "Do5:1/4 Re5:1/4 Mi5:1/4 | Fa5#4:1/4 Sol5:1/4 La5:1/4",
+  );
+  check(
+    "grid: a boundary carrying a repeat sign is never joined across",
+    g([sig + bars3, sig + "c''4 \\repend ¦ d''4 e''4", sig + bars3]).bars.split(" | ").length.toString(),
+    "8",
+  );
+  check(
+    // A saz semâî: 10/8 hâneler, then 3/4 in the fourth — one meter per region, not per page.
+    "grid: each row takes its own meter (5/4 rows and 3/4 rows on one page)",
+    g([
+      "c''4 d''4 e''4 f''4 g''4 | c''2 d''2 e''4 | c''4. d''8 e''2 f''4",
+      "c''4 ¦ d''4 e''4 f''4 g''4",
+      bars3,
+      "c''4 ¦ d''4 e''4 | c''2.",
+    ]).grid.replace(/\(\d+ of.*$/, ""),
+    "measure grid (meter 5/4, 3/4): joined 2 measure(s) the slicer cut, split 0 with a missed barline ",
+  );
+  check(
+    // Only a length the page shows WHOLE can be the meter — never one assembled from pieces.
+    "grid: no length seen whole three times → no meter → nothing changes",
+    g(["c''4 ¦ d''8 e''8 ¦ f''4.", "c''8 ¦ d''4 e''2 ¦ f''4"]).grid,
+    "",
+  );
+  check(
+    "grid: if more than half the measures would change, nothing is changed",
+    g([bars3 + " | f''2.", "c''4 ¦ d''2 | e''4 ¦ f''2 | g''4 ¦ a''2 | b''4 ¦ c''2"]).bars.split(" | ").length.toString(),
+    "12",
+  );
+  check(
+    "grid: pre-joined rows (`stitchTokenRows`, every label round-trip) are never regridded",
+    t(["c''4 d''4 e''4 | d''4 d''4 d''4 | e''4 e''4 e''4 | f''4 | g''2"]).split(" | ").length.toString(),
+    "5",
   );
 }
 

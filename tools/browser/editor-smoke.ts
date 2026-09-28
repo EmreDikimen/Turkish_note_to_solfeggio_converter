@@ -371,6 +371,46 @@ async function main() {
   await page.keyboard.press("Escape");
   check("Esc disarms", await palette.getAttribute("data-armed"), null);
 
+  // --- ⭐ THE DOT (owner, 2026-09-28: "edite nokta koymayı eklemedik"). One tap adds a dot — the
+  // value becomes half as long again — and a second tap takes it away. The arithmetic is core's
+  // `toggleDot` (pinned in edits-test.ts); this proves the palette, the click and the undo reach it.
+  {
+    const pow2 = (n: number) => n > 0 && (n & (n - 1)) === 0;
+    const dotTarget = before.events.find(
+      (e) => onSheet.has(e.index) && e.durationBeats.num === 1 && pow2(e.durationBeats.den) && e.durationBeats.den <= 16,
+    )!;
+    check("found a plain note value to dot", dotTarget != null, true);
+    const { num: n0, den: d0 } = dotTarget.durationBeats;
+    await arm("dot");
+    await clickNote(dotTarget.index);
+    const dotted = (await save()).events.find((e) => e.index === dotTarget.index)!;
+    console.log(`  dot on ${dotTarget.index}: ${n0}/${d0} → ${dotted.durationBeats.num}/${dotted.durationBeats.den}`);
+    check("⭐ the dot makes the value half as long again", `${dotted.durationBeats.num}/${dotted.durationBeats.den}`, `3/${d0 * 2}`);
+    check("…and durationMs followed the beats", Math.abs(dotted.durationMs / dotTarget.durationMs - 1.5) < 0.05, true);
+    await clickNote(dotTarget.index);
+    const undotted = (await save()).events.find((e) => e.index === dotTarget.index)!;
+    check("a second tap takes the dot away", `${undotted.durationBeats.num}/${undotted.durationBeats.den}`, `${n0}/${d0}`);
+
+    // A triplet member has no single dot to add: the click must change nothing and SAY so.
+    const tupMember = before.events.find((e) => onSheet.has(e.index) && e.durationBeats.den % 3 === 0);
+    if (tupMember) {
+      await clickNote(tupMember.index);
+      check("a triplet member is refused, in the hint line",
+        await page.getAttribute(".kv-toolbox__hint", "data-refused"), "notDottable");
+      check("…and its value is untouched",
+        JSON.stringify((await save()).events.find((e) => e.index === tupMember.index)!.durationBeats),
+        JSON.stringify(tupMember.durationBeats));
+    } else {
+      console.log("  (no triplet member on this page — the refusal is pinned in edits-test.ts instead)");
+    }
+    await page.locator("#undo").click();
+    await page.waitForTimeout(200);
+    await page.locator("#undo").click();
+    await page.waitForTimeout(250);
+    check("two undos put the dotted note back", JSON.stringify((await save()).events.find((e) => e.index === dotTarget.index)), JSON.stringify(dotTarget));
+    await page.keyboard.press("Escape");
+  }
+
   // The accidental tool, on a note that carries NO alteration, so the change is unambiguous.
   const accTarget = before.events.find(
     (e) => e.kind === "note" && onSheet.has(e.index) && suffix(e.noteName) === "",

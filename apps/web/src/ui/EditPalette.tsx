@@ -51,13 +51,21 @@ export type Tool =
   /** A structure SIGN (`‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son"). Armed, a click anywhere in a bar puts
    *  the sign on that bar — the sign belongs to the BAR, not to a note, so unlike every other tool
    *  here it never needs a target under the pointer. */
-  | { kind: "structure"; mark: SignTool };
+  | { kind: "structure"; mark: SignTool }
+  /** The augmentation dot (owner, 2026-09-28): armed, a click on a note or rest adds one dot, or
+   *  takes it away if it has one. `toggleDot` in core owns the arithmetic and the refusals. */
+  | { kind: "dot" };
+
+/** Everything the hint line can refuse with: a structure sign's reasons, plus the dot's own — a
+ *  value that has no single dot to add or remove (a triplet member, a double dot, a tie-split). */
+export type PaletteRefusal = RefusalReason | "notDottable";
 
 /** The tool's stable id — what `data-tool` carries and what the smoke check arms by name. */
 export function toolId(t: Tool): string {
   if (t.kind === "duration") return `${t.rest ? "rest" : "dur"}:${t.num}/${t.den}`;
   if (t.kind === "accidental") return `acc:${t.alter}`;
   if (t.kind === "structure") return `sign:${t.mark}`;
+  if (t.kind === "dot") return "dot";
   return "tuplet";
 }
 
@@ -70,6 +78,9 @@ const TUPLET_CP = 0xe883;
  *  `NAV_TEXT` in SheetView), and the volta is a drawn bracket — those three buttons carry the same
  *  thing the sheet draws rather than a glyph that does not exist. */
 const SIGN_CP = { repeat: 0xe042, segno: 0xe047, coda: 0xe048 } as const;
+
+/** SMuFL `augmentationDot` — the very dot the engraver puts after a dotted note. */
+const DOT_CP = 0xe1e7;
 
 /**
  * Note values, longest → shortest, with the SMuFL codepoint each is drawn with (Bravura's
@@ -240,7 +251,7 @@ export function EditPalette({
   repeatAnchor: number | null;
   /** Why the LAST sign placement was rejected, or null. Owned by App, because the rejection comes
    *  from re-resolving the page and this component knows nothing about structure. */
-  refused: RefusalReason | null;
+  refused: PaletteRefusal | null;
   onPlay: () => void;
   onStop: () => void;
   onUndo: () => void;
@@ -473,6 +484,9 @@ export function EditPalette({
           {DURATIONS.map((d) =>
             tool({ kind: "duration", num: d.num, den: d.den }, d.cp, TR.palette.durationTitle(`${d.num}/${d.den}`), 26),
           )}
+          {/* ⭐ The dot sits WITH the note values — it is a change of duration, the last thing a
+              note value can be asked for (owner, 2026-09-28: *"edite nokta koymayı eklemedik"*). */}
+          {tool({ kind: "dot" }, DOT_CP, TR.palette.dotTitle, 48)}
         </div>
       </div>
 
@@ -607,13 +621,15 @@ export function EditPalette({
           user just clicked. It clears the moment another tool is armed (see `App.armTool`). */}
       <p className="kv-toolbox__hint" data-refused={refused ?? undefined}>
         {refused
-          ? (TR.palette.refused as Record<RefusalReason, string>)[refused]
+          ? (TR.palette.refused as Record<PaletteRefusal, string>)[refused]
           : armed == null
           ? TR.palette.hintIdle
           : armed.kind === "duration"
             ? armed.rest
               ? TR.palette.hintArmedRest
               : TR.palette.hintArmedDuration
+            : armed.kind === "dot"
+              ? TR.palette.hintArmedDot
             : armed.kind === "accidental"
               ? TR.palette.hintArmedAccidental
               : armed.kind === "structure"

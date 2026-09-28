@@ -33,6 +33,7 @@ import {
   toRest,
   withAlter,
   withDurationBeats,
+  toggleDot,
   withKoma,
   withPitch,
   type NoteEvent,
@@ -175,6 +176,21 @@ console.log("\ndeleteEvent");
 
 // ---------------------------------------------------------------------------------------------
 // 4. Duration
+
+console.log("\ntoggleDot (the palette's dot tool)");
+{
+  const j = (d: { num: number; den: number } | null) => (d ? `${d.num}/${d.den}` : "null");
+  check("a quarter gains a dot: 1/4 → 3/8", j(toggleDot({ num: 1, den: 4 })), "3/8");
+  check("an eighth gains a dot: 1/8 → 3/16", j(toggleDot({ num: 1, den: 8 })), "3/16");
+  check("a whole gains a dot: 1/1 → 3/2", j(toggleDot({ num: 1, den: 1 })), "3/2");
+  check("a dotted quarter loses it: 3/8 → 1/4", j(toggleDot({ num: 3, den: 8 })), "1/4");
+  check("a dotted whole loses it: 3/2 → 1/1", j(toggleDot({ num: 3, den: 2 })), "1/1");
+  check("an unreduced quarter (2/8) still dots like one", j(toggleDot({ num: 2, den: 8 })), "3/8");
+  check("a triplet member (1/12) is refused", j(toggleDot({ num: 1, den: 12 })), "null");
+  check("a double-dotted note (7/16) is refused", j(toggleDot({ num: 7, den: 16 })), "null");
+  check("a tie-split value (5/8) is refused", j(toggleDot({ num: 5, den: 8 })), "null");
+  check("dotting twice gets back where it started", j(toggleDot(toggleDot({ num: 1, den: 16 })!)), "1/16");
+}
 
 console.log("\nwithDurationBeats");
 

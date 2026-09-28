@@ -31,6 +31,7 @@ import {
   USULS,
   withAlter,
   withDurationBeats,
+  toggleDot,
   withKoma,
   withKomaDeltas,
   withPitch,
@@ -77,7 +78,7 @@ import { UploadHero } from "./ui/UploadHero";
 import { RecentPages } from "./ui/RecentPages";
 import { TransportBar } from "./ui/TransportBar";
 import { ScoreCard } from "./ui/ScoreCard";
-import { EditPalette, type Tool } from "./ui/EditPalette";
+import { EditPalette, type PaletteRefusal, type Tool } from "./ui/EditPalette";
 import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
@@ -429,7 +430,7 @@ export function App() {
   // Why the last SIGN placement was rejected, or null. A refusal has nowhere else to show itself —
   // the sheet cannot draw a sign that was not placed — so it takes over the palette's hint line
   // until the next click or the next armed tool. See `structure-edit.ts` for what refuses.
-  const [refused, setRefused] = useState<RefusalReason | null>(null);
+  const [refused, setRefused] = useState<PaletteRefusal | null>(null);
   // The repeat tool's first click: the bar its `‖:` will open on, with the closing barline still
   // awaited. ⚠ It is NOT in the document — nothing is committed until the second click, which is
   // the whole reason the tool asks for both ends (owner, 2026-09-03). Cleared by Esc, by arming
@@ -1392,6 +1393,29 @@ export function App() {
     // The tuplet has its own two-click gesture (`onTupletPick`), and a SIGN belongs to a bar
     // rather than to a note (`onPlaceMark`) — neither comes through here.
     if (!armed || armed.kind === "tuplet" || armed.kind === "structure" || !doc) return;
+    // ⭐ The DOT (owner, 2026-09-28). Decided before anything moves, because a refusal is the one
+    // outcome that must say WHY in the hint line — a triplet member or a double-dotted note has no
+    // single dot to add or remove, and a click that silently did nothing would teach nothing.
+    // Works on a rest too: a dotted rest is as ordinary as a dotted note.
+    if (armed.kind === "dot") {
+      const ev = doc.events.find((e) => e.index === index);
+      const dotted = ev ? toggleDot(ev.durationBeats) : null;
+      if (!dotted) {
+        setRefused("notDottable");
+        return;
+      }
+      setRefused(null);
+      onStop();
+      markEdited(index);
+      history.apply((prev) => {
+        const at = prev.events.findIndex((e) => e.index === index);
+        if (at < 0) return prev;
+        const events = [...prev.events];
+        events[at] = withDurationBeats(prev.events[at]!, dotted, prev);
+        return { ...prev, events };
+      });
+      return;
+    }
     onStop();
     markEdited(index);
     const shift = !keepSheet && transpose !== 0 ? transpose : 0;
@@ -2287,6 +2311,13 @@ export function App() {
                 ? () => setPitchOpen((v) => !v)
                 : undefined
             }
+            // ⚠ The same condition as the card's `followInPinned` below — one of the two draws the
+            // toggle, never both, never neither (in the sheet view).
+            follow={
+              isPhone && viewMode === "sheet"
+                ? { on: followPlayhead, onChange: (v) => { setFollowPlayhead(v); writeFollow(v); } }
+                : undefined
+            }
           />
 
           <ScoreCard
@@ -2305,6 +2336,7 @@ export function App() {
             // Remembered as it is set, not on unload: a reader who closes the tab straight after
             // clicking still gets the answer they chose next time.
             onFollowPlayhead={(v) => { setFollowPlayhead(v); writeFollow(v); }}
+            followInPinned={isPhone}
             editMode={editMode}
             // ⚠ The ONLY way in and out of edit mode — see `applyEditMode`, which also carries the
             // phone's Düzenle tab. A second inline handler here would let the two drift apart.

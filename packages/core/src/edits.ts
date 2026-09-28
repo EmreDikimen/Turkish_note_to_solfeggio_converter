@@ -93,6 +93,34 @@ export function withKoma(ev: NoteEvent, koma: number, tuning: TuningParams): Not
 
 /** Set an event's note-value, keeping `durationMs` (playback) and `durationBeats` (engraving)
  *  in step. The piece's own tempo supplies the conversion. */
+/**
+ * Add or remove ONE augmentation dot — the palette's dot tool (owner, 2026-09-28).
+ *
+ * A value is a fraction of a whole note, so a dot is arithmetic: a plain `1/2^k` becomes
+ * `3/2^(k+1)` (a quarter 1/4 → a dotted quarter 3/8), and a dotted `3/2^k` goes back to
+ * `1/2^(k-1)`. Returns null for anything else, and that refusal is load-bearing: a triplet member
+ * (1/12), a double-dotted note (7/16) or a tie-split value (5/8) has no single dot to add or take
+ * away, and the engraver could not draw the result as one note with one dot.
+ *
+ * ⚠ Reduced first — a value stored as 2/8 is a quarter, and must dot like one.
+ * ⚠ Stops at 1/64: a dotted 1/64 would be 3/128, shorter than anything the engraver draws.
+ */
+export function toggleDot(d: DurationBeats): DurationBeats | null {
+  const g = gcdInt(Math.abs(d.num), Math.abs(d.den)) || 1;
+  const num = d.num / g;
+  const den = d.den / g;
+  const pow2 = (n: number) => Number.isInteger(n) && n > 0 && (n & (n - 1)) === 0;
+  if (!pow2(den)) return null;
+  if (num === 1) return den <= 64 ? { num: 3, den: den * 2 } : null;
+  if (num === 3 && den >= 2) return { num: 1, den: den / 2 };
+  return null;
+}
+
+function gcdInt(a: number, b: number): number {
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+
 export function withDurationBeats(ev: NoteEvent, d: DurationBeats, doc: NoteModelDocument): NoteEvent {
   return { ...ev, durationBeats: { num: d.num, den: d.den }, durationMs: beatsToMs(d.num, d.den, doc) };
 }

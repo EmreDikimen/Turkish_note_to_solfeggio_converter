@@ -177,6 +177,7 @@ export function TransportBar({
   pitchOpen,
   onPitch,
   onAccidentalMode,
+  follow,
 }: {
   canPlay: boolean;
   playState: "stopped" | "playing" | "paused";
@@ -222,6 +223,12 @@ export function TransportBar({
   /** Phone, Nota tab only: expand/collapse it. Undefined means the section is not foldable. */
   onPitch?: () => void;
   onAccidentalMode: (m: AccidentalMode) => void;
+  /**
+   * Phone, sheet view only: İmleci takip et, drawn INSIDE the pinned row so it stays on screen
+   * however far the reader scrolls (owner, 2026-09-28). Undefined everywhere else — the score card
+   * draws it then, and exactly one of the two ever does, so `#follow-playhead` stays one element.
+   */
+  follow?: { on: boolean; onChange: (v: boolean) => void };
 }) {
   // How many strokes the SELECTED usul has. 0 means its pattern has not been written yet
   // (packages/core/src/usul.ts) — the checkbox says so instead of silently playing nothing, and
@@ -451,6 +458,25 @@ export function TransportBar({
               from a broken feature. */}
         </div>
       </div>
+      {/* ⭐ İMLECİ TAKİP ET RIDES IN THE PINNED ROW ON A PHONE (owner, 2026-09-28: *"ekranda kalmasını
+          istiyorum aşağı kaysa bile"*). In the card head it scrolled away with the first system,
+          which is exactly when you want it — mid-piece, the page chasing the cursor or not. It costs
+          the pinned row one line, and the card head gets that line back. */}
+      {follow && (
+        <div className="kv-transport__follow">
+          <label className="kv-toggle" title={TR.card.followTitle}>
+            <input
+              id="follow-playhead"
+              type="checkbox"
+              className="kv-toggle__input"
+              data-follow={follow.on ? "on" : "off"}
+              checked={follow.on}
+              onChange={(e) => follow.onChange(e.target.checked)}
+            />
+            <span>{TR.card.follow}</span>
+          </label>
+        </div>
+      )}
     </div>
 
     {/* ⚠ The id is what the phone's tab layout hides — Ritim and Perde are the Çal tab, while the

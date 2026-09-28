@@ -3051,6 +3051,18 @@ label.kv-btn.is-disabled {
     min-width: 0;
     justify-content: center;
   }
+  /* İmleci takip et in the PINNED row (2026-09-28) — the same full-width, centred pill it was in the
+     card head, one line under Çal / Dur / tempo, so it never scrolls away. */
+  .kv-transport__follow {
+    display: flex;
+    margin-top: var(--space-2);
+    padding-bottom: var(--space-2); /* off the pinned bar's own bottom edge */
+  }
+  .kv-transport__follow > .kv-toggle {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: center;
+  }
   /* ⚠ The two segments share the row EVENLY (owner, 2026-09-26). `.kv-seg` is `inline-flex` and
      its buttons are sized by their labels, so "Nota" took a third of what "Enstrüman üzerinde" did
      and the rest of the row was empty — a full-width box with the control huddled in its left. */

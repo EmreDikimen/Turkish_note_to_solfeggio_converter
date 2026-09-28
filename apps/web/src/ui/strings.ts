@@ -324,6 +324,7 @@ export const TR = {
         "yakın bir ölçüye tıklayın.",
       voltaLast: "\"2.\" için :‖ işaretinden sonra ölçü kalmıyor.",
       codaFull: "Zaten iki ⊕ var: biri atlama, biri varış. Üçüncüsü bir şey ifade etmez.",
+      notDottable: "Bu notaya nokta konamaz (üçleme notası ya da çift noktalı).",
       conflict:
         "Bu işaret buraya konursa çizildiği gibi çalmaz. Örneğin: açık bir tekrarın içine ikinci " +
         "bir ‖:, bölümünün nerede bittiği belli olmayan bir 𝄋, ya da eserin ortasında bir D.C.",
@@ -338,6 +339,8 @@ export const TR = {
     hintArmedRest:
       "Boşluğa tıklayın: oraya es girer. Bir notaya tıklarsanız o nota es olur. Bırakmak için Esc.",
     hintArmedAccidental: "Şimdi bir notaya tıklayın. Bırakmak için Esc.",
+    hintArmedDot: "Bir notaya dokunun: nokta eklenir, noktalıysa kaldırılır.",
+    dotTitle: "Nokta — notayı yarısı kadar uzatır; noktalı notada noktayı kaldırır",
     hintTupletStart:
       "Üçlemenin ilk notasına tıklayın. Soluk notalar üçleme yapamaz. Var olan bir üçlemenin " +
       "notasına tıklarsanız üçleme kalkar. Bırakmak için Esc.",

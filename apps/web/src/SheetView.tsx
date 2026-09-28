@@ -1775,7 +1775,7 @@ export function SheetView({
    *  gesture (`onTupletPick`). The kind also decides what EMPTY space does: a note value inserts
    *  there (step 6), while an accidental or the tuplet has nothing to attach to and does nothing —
    *  opening the measure modal on an armed click would be a surprise. */
-  armedTool?: "duration" | "accidental" | "tuplet" | "structure" | null;
+  armedTool?: "duration" | "accidental" | "tuplet" | "structure" | "dot" | null;
   /** True when the armed note value is a REST tool. Only the preview cares: a rest has no pitch, so
    *  the ghost parks mid-staff and stops naming one. The insert/apply paths are the same. */
   armedRest?: boolean;

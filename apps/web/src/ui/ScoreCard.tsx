@@ -32,6 +32,7 @@ export function ScoreCard({
   onViewMode,
   followPlayhead,
   onFollowPlayhead,
+  followInPinned,
   editMode,
   onEditMode,
   onFullScreen,
@@ -64,6 +65,8 @@ export function ScoreCard({
    *  transport above owns everything that changes what is played. */
   followPlayhead: boolean;
   onFollowPlayhead: (v: boolean) => void;
+  /** True on a phone: the pinned transport row draws İmleci takip et instead of this card. */
+  followInPinned?: boolean;
   editMode: boolean;
   onEditMode: (v: boolean) => void;
   /** Phone only: enter full screen. Undefined on a wide window and while full screen is on. */
@@ -307,7 +310,10 @@ export function ScoreCard({
             draws güfte, `?lyrics=1` still turns it on, and `tools/render/render.ts` still renders a
             third of the corpus with it. ⚠ `showLyrics` therefore had to stop defaulting to TRUE
             (`App.tsx`) — without the switch, that default would have pinned it on. */}
-        {viewMode === "sheet" && (
+        {/* ⚠ Not on a phone: there it lives in the PINNED row so it stays on screen (2026-09-28,
+            `TransportBar`'s `follow`). App passes `followInPinned` and exactly one of the two
+            draws, so `#follow-playhead` is never two elements. */}
+        {viewMode === "sheet" && !followInPinned && (
           <>
             <label className="kv-toggle" title={TR.card.followTitle}>
               <input

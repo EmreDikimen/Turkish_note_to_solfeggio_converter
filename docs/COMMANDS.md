@@ -155,6 +155,7 @@ npm run smoke:live                   # drives the DEPLOYED site — server path,
 
 ```bash
 npm run stats:ui                     # the owner's dashboard → http://localhost:5173/admin-stats.html
+npx tsx tools/browser/make-icons.ts   # re-draws the PWA icons (apps/web/public/icons/) from the favicon's sign
 netlify env:set STATS_SALT  "$(openssl rand -hex 32)"   # without this NOTHING is counted, by design
 netlify env:set STATS_TOKEN "$(openssl rand -hex 24)"   # what the dashboard asks for; no token, no data
 npx tsx tools/analytics/visits-test.ts                  # the arithmetic (also inside `npm test`)

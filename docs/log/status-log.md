@@ -60,6 +60,29 @@ clock, and after 15 s the cold-start line, each wrapping. Measured on a real ser
 `hicaz_saz_semai_phone.png`: page overflow **0**. (The one box past the edge is the indeterminate
 stripe itself, which slides out of its clipped track by design.)
 
+**Deployed, and installable** (owner: *"deploy edip pwa yı hazırlayabilir misin"*). ⭐ The site is a
+PWA: `manifest.webmanifest` plus four icons generated from the favicon's koma diyezi
+(`tools/browser/make-icons.ts` — 192, 512, a maskable 512 whose sign stays inside the safe circle,
+and iOS's 180), linked from `index.html` with the `apple-*` tags. **No service worker**, deliberately:
+Chrome no longer requires one to install, and a caching worker keeps serving the old bundle after a
+deploy. ⚠ Named `.webmanifest` because `prune-dist.mjs` refuses any `.json` at the dist root; its
+`Content-Type` is set in `_headers`, since the dev server served it as `text/html`.
+**The deploy carried everything since 2026-09-20** — the whole phone rebuild — plus the owner's own
+stitcher changes, which were uncommitted and asked about first; they were committed separately
+(`1000d72`) so the live build has a trace. Measured on `https://komavision.netlify.app`: `Deploy is
+live!`; manifest and icons **200** with the right types; Chrome's `Page.getInstallabilityErrors`
+**0**; `smoke:live` **PASS** (server read, and the refusal); drum samples **200**. ⚠ `smoke:build`
+was NOT run: it needs a local decode server, i.e. the model on this fanless Mac. ⚠ `STATS_SALT` is
+still unset, so the visitors this deploy reaches are still not counted.
+
+**The Play Store talk, for the record.** The owner will ship to Play first and use "Ana Ekrana Ekle" on
+iOS. A new personal Play account must run a closed test — **12 testers, opted in 14 days** — before
+production (Google's help page, read that day). The owner expected 5–6 people; the plan is the school
+music club, with test-exchange groups (r/AndroidClosedTesting, r/TestersCommunity) as the fallback
+for the count. The owner also worried a PWA would read as malware: an APK sideload triggers those
+warnings; a PWA is installed by Chrome and asks for no "unknown sources" permission — a custom domain
+is the biggest trust lever left.
+
 ## 2026-09-27 — the violin's pegs, and the accidental a printed page would not print
 
 **The four strings can be retuned, one dropdown each** (owner: *"let the tuning of the strings be

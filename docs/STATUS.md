@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-27
+updated: 2026-09-28
 
 ## Now
 
@@ -26,21 +26,20 @@ owner's call; the point of this entry is that three risks written as *future* ar
    2026-09-04. The model a visitor meets is the one the Dockerfile bakes into the Cloud Run image out
    of `apps/web/public/models`. ⚠ Run A was the **hand-test** pick, not an exam pass; the exam floor
    is unmet and the dense-page failure below is still silent.
-3. ⛔ **The phone's reading screen is REBUILT but NOT DEPLOYED.** Live still carries the 2026-09-11
-   tab bar from the 2026-09-20 deploy, so strangers arriving from LinkedIn meet the screen the owner
-   spent 2026-09-26 correcting: a score that does not fit, a tempo box that cannot be typed in, and
-   an edit toolbox showing no tools. Everything below is committed and measured at 393px and rides
-   the next `deploy:app` — including, since late 2026-09-27, **a yes/no before any 10–35 MB voice
-   download** and the fixed Çalgı sesi picker: the score fits in both orientations, a dense page is engraved smaller
-   rather than clipped, the Çal tab is closed and its contents fold out under Çal/Dur, the tempo box
-   takes typing and has ± buttons, Geri al is in the toolbox, and the Güfte switch is gone.
-   **2026-09-27 added four more, all committed and all still only local**: the score can be **saved**
-   as a PNG or a PDF from one button in the card's corner; the violin's **four strings can be
-   retuned** by note name; the staff prints an accidental **once per measure by default** instead of
-   on every note; and a **covering bug** was fixed where that new save button sat on top of the
-   *"Enstrüman üzerinde"* half of the view switch on the Düzenle tab, so a tap meant for the
-   instrument view opened the save menu instead.
-   ⏭ **The owner's call: deploy it.** [log/status-log.md](log/status-log.md), 2026-09-26 and -27.
+3. ✅ **THE PHONE REBUILD IS LIVE, AND THE APP IS INSTALLABLE** (deployed 2026-09-28, `Deploy is
+   live!`, `smoke:live` PASS). Everything built 2026-09-26..28 is on the site: the score fits the
+   phone, the Çal tab folds under Çal/Dur, tempo takes typing, PNG/PDF saving, violin retuning, the
+   per-measure accidental default, a yes/no before any voice download, ▲/▼ note steps and
+   tap-not-press on touch, the dot tool, İmleci takip et pinned, the stacked reading card — and the
+   owner's own stitcher changes (commit `1000d72`, included at the owner's call). ⭐ **It is a PWA now**: a
+   manifest and icons, so Android Chrome offers "Uygulamayı yükle" and iOS "Ana Ekrana Ekle"; Chrome's
+   own check reports **0 installability errors** on the live site. ⚠ The icon is a PLACEHOLDER drawn
+   from the favicon until there is a logo (`tools/browser/make-icons.ts`). ⚠ **No service worker, on
+   purpose** (DECISIONS 2026-09-28). ⚠ Never opened on a real iPhone.
+   ⏭ **Play Store is the owner's next step, and it is a PEOPLE problem, not a code one**: a new
+   personal account needs a closed test of **12 testers for 14 days** before production; the plan is
+   the owner's school music club. The TWA package (Bubblewrap) and `/.well-known/assetlinks.json` are
+   owed once the account exists. [log/status-log.md](log/status-log.md), 2026-09-28.
 
 ⏭ **NOTHING IS COUNTING YET, AND THE LINK IS LIVE.** The site can count its own visitors
 anonymously — openings vs pages actually read, distinct devices, country, browser, robots apart — but
@@ -129,7 +128,8 @@ track never touches the app, and neither waits for the other. [mvp/README.md](mv
 
 ### Track A — the product
 
-⏭ **The next product action is to DEPLOY the phone rebuild**, then keep going on it. Phases 0 and 1
+⏭ **The phone rebuild is DEPLOYED (2026-09-28); the next product actions are the Play Store closed
+test and `STATS_SALT`** (Now, item 3 and below). The rebuild itself keeps going: phases 0 and 1
 of the plan are done and phase 2 — the `apps/web/src/phone/` shell — is partly built in place: the
 Çal tab is gone, the settings fold, and the score card's head is down to two rows. What is still
 owed from the plan: the phone's own component tree, the `data-phone` / `phone.css` split, the

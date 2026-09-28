@@ -217,6 +217,24 @@ async function main() {
   while (!(await rewind.isDisabled())) { await rewind.click(); await page.waitForTimeout(120); }
   check("rewound to the original before the delete checks", JSON.stringify(await save()) === JSON.stringify(before), true);
   await page.locator(`[data-omr-note="${evIndex}"]`).first().click({ force: true });
+
+  // --- ⭐ THE ▲/▼ STEP ARROWS (owner, 2026-09-28: a drag is hard under a finger). One press is ONE
+  // drag step — the same `onNudgePitch` — so the assertion is the drag's own, at 1 instead of 3.
+  // Clicked, not forced: an arrow another target sits on would fail here, which is the point.
+  check("the step arrows appear on the selected note", await page.locator('[data-omr="note-step"]').count(), 2);
+  await page.locator("#note-step-up").click();
+  await page.waitForTimeout(300);
+  check("…and the note stays selected after a step",
+    await page.locator("#sheet-surface").getAttribute("data-selected-note"), String(evIndex));
+  const stepped = (await save()).events.find((e) => e.index === evIndex)!;
+  check("▲ moves the note exactly ONE staff step",
+    letterOf(stepped.noteName), LETTERS[(LETTERS.indexOf(letterOf(orig.noteName)) + 1) % 7]);
+  await page.locator(`[data-omr-note="${evIndex}"]`).first().click({ force: true });
+  await page.locator("#note-step-down").click();
+  await page.waitForTimeout(300);
+  check("▼ brings it back", (await save()).events.find((e) => e.index === evIndex)!.koma53, orig.koma53);
+  while (!(await rewind.isDisabled())) { await rewind.click(); await page.waitForTimeout(120); }
+  await page.locator(`[data-omr-note="${evIndex}"]`).first().click({ force: true });
   await dragSteps(3);
 
   // --- delete it

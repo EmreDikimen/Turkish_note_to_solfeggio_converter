@@ -33,6 +33,7 @@ import {
 } from "../../../tools/render/rhythm";
 import { buildTextNoise } from "./textNoise";
 import { TR } from "./ui/strings";
+import { useViewport } from "./usePhone";
 import { mulberry32 } from "../../../tools/render/rng";
 
 // --- layout constants -------------------------------------------------------
@@ -58,6 +59,10 @@ const CLEF_W = 50; // extra width the leading clef costs on the first stave of a
 // this, and a caller that passes no width still gets exactly these numbers.
 const DEFAULT_SVG_WIDTH = LEFT * 2 + CONTENT_WIDTH;
 const CURSOR_MARGIN = 8; // playhead bar extends this far above/below the staff lines
+/** The ▲/▼ that step a selected note's pitch — see the render. Bigger under a finger: 32px is the
+ *  smallest round target that a thumb hits without also hitting the notehead it sits beside. */
+const STEP_BTN = 22;
+const STEP_BTN_TOUCH = 32;
 
 // --- following the playhead (owner, 2026-09-03) -----------------------------
 //
@@ -2744,6 +2749,11 @@ export function SheetView({
     return () => cancelAnimationFrame(raf);
   }, [playing, getPositionMs, playPlan, followPlayhead]);
 
+  // A finger or a mouse — sizes only, never layout (APP-RULES: the three viewport questions). Read
+  // by the ▲/▼ step arrows, which a thumb needs bigger than a cursor does.
+  const { coarse } = useViewport();
+  /** What pressed the note last — a finger's press is decided on RELEASE, a mouse's on press. */
+  const lastPointerRef = useRef<string>("mouse");
 
   // Drag a note up and down to change its pitch (owner, 2026-08-07 — this replaces an earlier
   // scroll-wheel version, which fought the page's own scrolling and moved the note in jumps).
@@ -2757,6 +2767,24 @@ export function SheetView({
   //  - `applied` remembers how far the note has already moved, and only the difference is sent,
   //    because `onNudgePitch` is relative.
   function onPitchDragStart(e: React.PointerEvent<HTMLDivElement>, index: number) {
+    lastPointerRef.current = e.pointerType;
+    // ⭐ A FINGER IS NOT A MOUSE (owner, 2026-09-28: *"aşağı kaydırırken editleyebiliyoruz
+    // yanlışlıkla"*). On a phone the finger that scrolls the page lands on notes all the time, and
+    // this press used to select, drag and even apply the armed tool before the browser knew a
+    // scroll was meant. So a touch decides nothing here: selecting, applying a tool and picking a
+    // tuplet happen on the TAP (`onNoteTap`), which a scroll never produces. The one thing a touch
+    // may start on press is the drag — and only on the note that is ALREADY selected, which is the
+    // only note whose target blocks panning (`touchAction` below). First tap selects, the next
+    // press moves it. ⚠ A mouse keeps the old press-to-act path unchanged: desktop and every
+    // `smoke:editor` click go through it.
+    if (e.pointerType !== "mouse") {
+      e.stopPropagation();
+      if (index !== selectedNote || armed || !onNudgePitch) return; // `armed` covers the tuplet tool too
+      e.preventDefault();
+      dragRef.current = { index, startY: e.clientY, applied: 0 };
+      e.currentTarget.setPointerCapture(e.pointerId);
+      return;
+    }
     e.stopPropagation();
     e.preventDefault(); // no text selection, no native image drag
     // The tuplet is a two-click gesture and its own path: it never selects, because the selection
@@ -2779,6 +2807,22 @@ export function SheetView({
     if (!onNudgePitch) return;
     dragRef.current = { index, startY: e.clientY, applied: 0 };
     e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  /**
+   * A finger's tap on a note — the touch half of `onPitchDragStart`. A `click` only fires for a
+   * press that did not become a scroll, which is the whole point. Same order as the mouse path:
+   * the tuplet tool has its own gesture, otherwise select, then apply what is armed.
+   */
+  function onNoteTap(e: React.MouseEvent<HTMLDivElement>, index: number) {
+    e.stopPropagation(); // the measure box underneath must not see it
+    if (lastPointerRef.current === "mouse") return; // already handled on press
+    if (armedTool === "tuplet") {
+      onTupletPick?.(index);
+      return;
+    }
+    onSelectNote?.(index);
+    if (armed) onApplyTool?.(index, armedTool === "duration" ? pitchAtNote(e, index) : undefined);
   }
 
   function onPitchDragMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -2921,7 +2965,7 @@ export function SheetView({
   /** The staff position a click on an existing note is pointing at — the rest→note case. Needs the
    *  note's own bar, because the origin (`topLineY`) is per row. Null when the event is not on a
    *  laid-out bar, which a stale click can be. */
-  function pitchAtNote(e: React.PointerEvent, index: number) {
+  function pitchAtNote(e: React.MouseEvent, index: number) {
     const at = localXY(e);
     const b = boxes.find((bx) => bx.measure.events.some((ev) => ev.index === index));
     if (!at || !b) return undefined;
@@ -3247,8 +3291,8 @@ export function SheetView({
                   onPointerMove={onPitchDragMove}
                   onPointerUp={onPitchDragEnd}
                   onPointerCancel={onPitchDragEnd}
-                  // The measure box underneath opens the modal; a click on a note must not.
-                  onClick={(e) => e.stopPropagation()}
+                  // A mouse acted on press; a finger acts here, on the tap (see `onNoteTap`).
+                  onClick={(e) => onNoteTap(e, nb.evIndex)}
                   style={{
                     position: "absolute",
                     left: nb.x - NOTE_HIT_PAD,
@@ -3259,7 +3303,10 @@ export function SheetView({
                     // through to the measure box below, which with a tool armed does nothing.
                     pointerEvents: dead ? "none" : "auto",
                     cursor: armed ? "copy" : "grab",
-                    touchAction: "none", // or the browser pans the page instead of dragging
+                    // ⚠ Only the SELECTED note blocks panning — it is the only one a finger may drag
+                    // (2026-09-28). Every other note lets the page scroll under the finger, and
+                    // `manipulation` also drops the double-tap zoom between two quick taps.
+                    touchAction: on && !armed ? "none" : "manipulation",
                   }}
                 />
               );
@@ -3565,6 +3612,82 @@ export function SheetView({
                 >
                   ✕
                 </button>
+              );
+            })()}
+            {/* ⭐ THE STEP ARROWS (owner, 2026-09-28: *"sürükleyerek nota değerini değiştirme mantığı
+                mobilde pek etkili değil"*). A drag moves a note by `DRAG_PX_PER_STEP` of finger
+                travel, and on a phone the finger covers the very notehead it is moving. One tap on ▲
+                or ▼ is ONE step — exactly what one drag step does, through the same `onNudgePitch`,
+                so there is still one rule for what a step is. The drag stays; these only help.
+                ⚠ Only for a NOTE (a rest has no pitch to move) and only with nothing armed, which is
+                also when the drag works.
+                ⚠ Placed off the note's measured box — never `getBBox()` (APP-RULES) — and the ▲ steps
+                left if it would land on the ✕, which sits on the same box's top-right corner.
+                ⚠ Drawn with inline SVG, not a text glyph: nothing under `.kv-score` may set a font. */}
+            {(() => {
+              if (selectedNote == null || !onNudgePitch || armedTool != null) return null;
+              const ev = doc.events.find((e) => e.index === selectedNote);
+              if (!ev || ev.kind !== "note") return null;
+              const nb = noteBoxes.find((b) => b.evIndex === selectedNote);
+              if (!nb) return null;
+              const S = coarse ? STEP_BTN_TOUCH : STEP_BTN;
+              const cx = nb.x + nb.width / 2;
+              const boxTop = nb.y - NOTE_HIT_PAD;
+              const boxBottom = nb.y + nb.height + NOTE_HIT_PAD;
+              // The ✕'s box, as positioned just above — kept clear of the ▲.
+              const delLeft = nb.x + nb.width + NOTE_HIT_PAD - 2;
+              const delBottom = nb.y - NOTE_HIT_PAD + 4;
+              const upTop = boxTop - S - 2;
+              let upLeft = cx - S / 2;
+              if (onDeleteNote && upTop < delBottom && upLeft + S > delLeft - 2) upLeft = delLeft - 2 - S;
+              const arrow = (dir: 1 | -1) => (
+                <button
+                  key={dir}
+                  id={dir === 1 ? "note-step-up" : "note-step-down"}
+                  type="button"
+                  data-omr="note-step"
+                  data-dir={dir === 1 ? "up" : "down"}
+                  title={dir === 1 ? TR.sheet.stepUp : TR.sheet.stepDown}
+                  aria-label={dir === 1 ? TR.sheet.stepUp : TR.sheet.stepDown}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); onNudgePitch(selectedNote, dir); }}
+                  style={{
+                    position: "absolute",
+                    left: dir === 1 ? upLeft : cx - S / 2,
+                    top: dir === 1 ? upTop : boxBottom + 2,
+                    width: S,
+                    height: S,
+                    padding: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    pointerEvents: "auto",
+                    cursor: "pointer",
+                    borderRadius: "50%",
+                    border: "1px solid #0f766e",
+                    background: "#fff",
+                    color: "#0f766e",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.18)",
+                    touchAction: "manipulation", // no double-tap zoom between two quick taps
+                  }}
+                >
+                  <svg width={S * 0.5} height={S * 0.5} viewBox="0 0 10 10" aria-hidden="true">
+                    <path
+                      d={dir === 1 ? "M1.5 7 L5 3 L8.5 7" : "M1.5 3 L5 7 L8.5 3"}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              );
+              return (
+                <>
+                  {arrow(1)}
+                  {arrow(-1)}
+                </>
               );
             })()}
           </div>

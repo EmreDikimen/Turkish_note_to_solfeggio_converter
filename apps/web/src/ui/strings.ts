@@ -247,6 +247,8 @@ export const TR = {
 
   sheet: {
     deleteNote: "Notayı sil",
+    stepUp: "Bir perde yukarı",
+    stepDown: "Bir perde aşağı",
     pickTuplet: "Üçleme işareti — tıklayın, üçleme seçilir",
     pickBrokenTuplet:
       "Eksik üçleme işareti — üç notayı kapsamıyor, model yanlış okumuş olabilir. " +

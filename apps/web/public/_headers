@@ -13,3 +13,8 @@
 /*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
+
+# The install manifest (2026-09-28). Named `.webmanifest` so `prune-dist.mjs`'s "no .json at the
+# dist root" rule cannot catch it; its type is said out loud rather than left to the host's guess.
+/manifest.webmanifest
+  Content-Type: application/manifest+json

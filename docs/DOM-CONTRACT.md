@@ -65,7 +65,7 @@ playback actually began there.
   Düzenle tab the CARD's pair is hidden (`.kv-card__undo`) — the toolbox carries them there — but
   it keeps its ids and is what every check at 1280px drives. ⚠ Folding the toolbox unmounts these
   along with the tools.
-- its toolbox shell: `#edit-palette[data-collapsed]` + `#palette-fold[data-collapsed]`
+- its toolbox shell: `#edit-palette[data-collapsed]` + `#palette-fold[data-collapsed]` — ⚠ **`#palette-fold` does not exist on a phone** (2026-09-28), and there `data-collapsed` is always `0`
 - the insert preview: `[data-omr="insert-ghost"][data-insert-pitch]`
 - the off-meter mark: `[data-omr="bar-warning"]` + `[data-bar]` + `[data-bar-fill="over|under"]`
 

@@ -373,6 +373,12 @@ export function EditPalette({
   }, []);
 
   const armedId = armed ? toolId(armed) : null;
+  // ⭐ ON A PHONE THERE IS NO FOLD (owner, 2026-09-28: *"sağ üstteki açıp kapatan şeyi kaldırır mısın,
+  // zaten kullanıcı yüksekliği ayarlayabiliyor"*). The grab bar drags the box down to `PHONE_H_MIN`,
+  // which is the same job. ⚠ `folded` is REMEMBERED in localStorage, so a reader who folded it
+  // before this change would otherwise be left with a shut toolbox and no button to open it — the
+  // phone therefore reads `shut`, never `folded`. The stored choice is kept for a wide window.
+  const shut = folded && !isPhone;
 
   /** The shell every tool button shares — `data-tool` + `aria-pressed` are what the deploy checks
    *  read, so a glyph button and a drawn one are indistinguishable to them. */
@@ -412,8 +418,8 @@ export function EditPalette({
       id="edit-palette"
       data-armed={armedId ?? undefined}
       data-play-from={fromMeasure ?? undefined}
-      data-collapsed={folded ? "1" : "0"}
-      className={`kv-toolbox${folded ? " is-folded" : ""}`}
+      data-collapsed={shut ? "1" : "0"}
+      className={`kv-toolbox${shut ? " is-folded" : ""}`}
       // ⚠ Left/top, never a transform: the box floats over the score card, and a transformed
       // ancestor would turn `position: fixed` inside it into "fixed to this box" for anything
       // that ever lands here. `visibility` (not `display`) hides the unplaced first frame, so the
@@ -435,6 +441,7 @@ export function EditPalette({
         {isPhone && <span className="kv-toolbox__handle" aria-hidden="true" />}
         <span className="kv-toolbox__grip" aria-hidden="true">⠿</span>
         <span className="kv-toolbox__title">{TR.palette.title}</span>
+        {!isPhone && (
         <button
           id="palette-fold"
           type="button"
@@ -446,11 +453,12 @@ export function EditPalette({
         >
           {folded ? "▢" : "—"}
         </button>
+        )}
       </header>
 
       {/* Folded is folded: the tools are UNMOUNTED, not hidden, so nothing under a folded toolbox
           can be clicked by accident and no check can arm a tool it cannot see. */}
-      {!folded && (
+      {!shut && (
       <>
       <div className="kv-toolbox__body">
       {/* Çal starts at the last edited bar (the top of the piece before any edit), and pressing it

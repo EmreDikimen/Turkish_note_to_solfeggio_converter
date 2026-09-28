@@ -60,6 +60,11 @@ clock, and after 15 s the cold-start line, each wrapping. Measured on a real ser
 `hicaz_saz_semai_phone.png`: page overflow **0**. (The one box past the edge is the indeterminate
 stripe itself, which slides out of its clipped track by design.)
 
+**The toolbox's fold button is gone on a phone** (owner: the grab bar already takes it down). ⚠ The
+fold state is remembered in `localStorage`, so the phone reads its own `shut` flag and ignores a
+stored fold — tested by pre-loading `folded: true`: no button, `data-collapsed="0"`, all 34 tools
+mounted. The wide window keeps the button and the remembered state. Not yet deployed.
+
 **Deployed, and installable** (owner: *"deploy edip pwa yı hazırlayabilir misin"*). ⭐ The site is a
 PWA: `manifest.webmanifest` plus four icons generated from the favicon's koma diyezi
 (`tools/browser/make-icons.ts` — 192, 512, a maskable 512 whose sign stays inside the safe circle,

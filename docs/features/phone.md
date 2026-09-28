@@ -216,6 +216,9 @@ editing tool** was visible, with every group below the fold of its own scroller.
 
 ⚠ The reader can drag the title bar to resize it, between `PHONE_H_MIN` (120px) and 0.6 of the
 window; the height is remembered and published to CSS as `--kv-toolbox-h`, which three rules read.
+⭐ **No fold button on a phone** (owner, 2026-09-28): dragging the grab bar down does the same job.
+⚠ A fold remembered in `localStorage` from before is IGNORED there — otherwise a reader who had
+folded it would be left with a shut toolbox and no way to open it. The wide window keeps both.
 ⭐ **A grab bar says so** (owner, 2026-09-28): the 40×5px rounded bar in the title bar's top edge, the
 mark every phone bottom sheet carries. Phone only, decoration only — the bar under it is the target.
 

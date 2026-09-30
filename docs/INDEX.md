@@ -106,6 +106,7 @@ wrong — fix by deleting, not by syncing.
 | The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |
 | The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
 | **The PHONE: the three viewport questions, fitting a score, the fold, the editor, every measured number** | **[features/phone.md](features/phone.md)** |
+| **The LOOK: the Tezhip palette, dark mode, the CSS layers, the render pin that keeps a restyle off the strips** | **[features/look.md](features/look.md)** |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work

@@ -2,7 +2,7 @@
 
 purpose: the rules for anyone touching the web app; split out of CLAUDE.md at its 400-line cap, on the DOM-CONTRACT.md precedent
 audience: agents and the owner working on apps/web, tools/render or tools/core
-updated: 2026-09-20
+updated: 2026-09-30
 
 > **These are hard rules, not background.** Each was paid for once by a live bug. CLAUDE.md keeps a
 > one-line headline for the six that can be broken from anywhere in the repo and points here for the
@@ -141,8 +141,13 @@ updated: 2026-09-20
 - **The score's SVG is also the training-strip source, so CSS must not reach it.** No selector under
   `.kv-score` may set a font, and no `transform`/`zoom`/`scale` may touch that container —
   `tools/render/render.ts` screenshots the VexFlow SVG by rect to cut strips, and rects do not survive
-  a transform. The design system is `apps/web/src/styles/` (`tokens.css` → `base.css` → `app.css`);
-  classes are `.kv-*`. ⚠ **`.kv-score` keeps `overflow-y: clip`, load-bearing** (owner, 2026-09-03: ONE
+  a transform. The design system is `apps/web/src/styles/` in CSS LAYERS since the 2026-09-30 Tezhip
+  restyle (Tailwind v4 without preflight, a `components` kit under `app.css`, and an UNLAYERED
+  `contract.css` that no utility can beat); classes are `.kv-*`. ⚠ **A render job is a pinned page**:
+  `#app[data-render="1"]` (URL carries `mode`) hides all chrome and fixes the sheet's position in
+  literal px, because a font change above the score had changed the antialiasing of 147 of 302 strips.
+  ⛔ No `dark:` utility — the score is a light island in a dark page. All of it:
+  [features/look.md](features/look.md). ⚠ **`.kv-score` keeps `overflow-y: clip`, load-bearing** (owner, 2026-09-03: ONE
   scrollbar, not two) — `overflow-x` alone computes the other axis to `auto`, and Bravura's font
   metrics gave the box 17 px of phantom height. ⚠ Consequence: the sheet scrolls SIDEWAYS in its own
   box and up and down **not at all** — the page is the only vertical scroller, which the playhead

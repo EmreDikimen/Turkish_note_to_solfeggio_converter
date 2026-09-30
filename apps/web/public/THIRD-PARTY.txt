@@ -4,7 +4,7 @@ KomaVision — üçüncü taraf bileşenler / third-party notices
 Bu sayfa, uygulamanın kullandığı açık kaynak bileşenleri ve lisanslarını listeler.
 This file lists the third-party components KomaVision ships, and their licenses.
 
-Son güncelleme / last updated: 2026-08-15
+Son güncelleme / last updated: 2026-09-30
 
 
 ESERLER HAKKINDA / ABOUT MUSICAL WORKS
@@ -27,6 +27,19 @@ Bravura (SMuFL music font)
   © Steinberg Media Technologies GmbH
   SIL Open Font License 1.1 — tam metin: /fonts/OFL.txt
   https://github.com/steinbergmedia/bravura
+
+Inter
+  © The Inter Project Authors (Rasmus Andersson)
+  SIL Open Font License 1.1 — https://openfontlicense.org
+  https://github.com/rsms/inter
+
+EB Garamond
+  © The EB Garamond Project Authors (Georg Duffner, Octavio Pardo)
+  SIL Open Font License 1.1 — https://openfontlicense.org
+  https://github.com/octaviopardo/EBGaramond12
+
+  Bu iki yazı tipi @fontsource paketleriyle (MIT) uygulamanın içinde dağıtılır.
+  Both are bundled with the app through the @fontsource packages (MIT).
 
 
 MODEL
@@ -163,6 +176,17 @@ VexFlow 5.0.0  —  MIT
 ONNX Runtime Web 1.27.0, ONNX Runtime Common 1.27.0  —  MIT
   © Microsoft Corporation
   https://github.com/microsoft/onnxruntime
+
+Base UI (@base-ui/react) 1.8  —  MIT
+  © MUI and contributors
+  https://github.com/mui/base-ui
+
+Tailwind CSS 4.3  —  MIT (yalnızca üretilen CSS dağıtılır / only its generated CSS ships)
+  © Tailwind Labs, Inc.
+  https://github.com/tailwindlabs/tailwindcss
+
+@fontsource-variable/inter, @fontsource-variable/eb-garamond 5.3  —  MIT (paket / packaging)
+  https://github.com/fontsource/fontsource
 
 @techstark/opencv-js 5.0.0  —  Apache License 2.0
   OpenCV © OpenCV team; JS build © techstark

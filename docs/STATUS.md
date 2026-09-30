@@ -128,6 +128,11 @@ track never touches the app, and neither waits for the other. [mvp/README.md](mv
 
 ### Track A — the product
 
+⭐ **THE TEZHİP RESTYLE IS BUILT ON `main`, NOT DEPLOYED (2026-09-30)** — new palette, dark mode,
+self-hosted fonts, Base UI dialogs, and a render job that is now a pinned page so a restyle cannot
+move a strip. ⏭ The owner's next ask: **a from-scratch UI on its own branch**.
+[features/look.md](features/look.md).
+
 ⏭ **The phone rebuild is DEPLOYED (2026-09-28); the next product actions are the Play Store closed
 test and `STATS_SALT`** (Now, item 3 and below). The rebuild itself keeps going: phases 0 and 1
 of the plan are done and phase 2 — the `apps/web/src/phone/` shell — is partly built in place: the

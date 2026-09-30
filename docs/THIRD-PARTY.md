@@ -20,6 +20,8 @@ stays on the developer's disk, where local use is not distribution.
 | `Flova/omr_transformer` (base model) | Apache-2.0 | Fine-tune and publish the result **with attribution + licence** |
 | Bravura (font) | SIL OFL 1.1 | Ship it, with `OFL.txt` beside it — which we do |
 | React, VexFlow, ONNX Runtime | MIT | Ship, with the copyright notice |
+| Base UI (`@base-ui/react`), Tailwind CSS (build tool; only its generated CSS ships) | MIT | Ship, with the copyright notice |
+| **Inter** and **EB Garamond** (fonts, via `@fontsource`, bundled into `dist/assets/`) | SIL OFL 1.1 | Ship them, with the notice — the Tezhip restyle, 2026-09-30 ([features/look.md](features/look.md)) |
 | `@techstark/opencv-js` | Apache-2.0 | Ship, with the notice |
 | Turkish makam theory, AEU, 53-TET, usul names | not copyrightable | Free — facts and systems, not expression |
 | **VCSL** and **VSCO 2 Community Edition** (sample libraries) | **CC0 1.0** | Serve the sample files, commercially, forever. No duty at all — a credit line is courtesy |

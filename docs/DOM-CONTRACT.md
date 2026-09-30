@@ -2,7 +2,7 @@
 
 purpose: the full list of DOM attributes the automated checks read, and the ⚠ traps in each
 audience: anyone writing a browser check, or changing a component a check watches
-updated: 2026-09-05
+updated: 2026-09-30
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows
@@ -28,11 +28,16 @@ string lives in `apps/web/src/ui/strings.ts`.
 | `#omr-status` | `data-state`, `data-kind`, `data-where` and the counts |
 | `#omr-error` | `data-error-kind` |
 | `#play` | `data-play-state` |
-| `#app` | `data-ready` |
+| `#app` | `data-ready`; `data-render="1"` on a render job (the URL carries `mode`) |
 
 ⚠ **`data-ready` never appears on a bare visit** — it means *a score is installed*, and none is
 (no score ships; see [THIRD-PARTY.md](THIRD-PARTY.md)). Ask for `?score=` if you need one, or wait
 on `#page-input` if you are uploading.
+
+⚠ **`data-render="1"` HIDES EVERY PIECE OF CHROME** (2026-09-30) — only `.kv-card > .kv-score` is laid
+out, at a position pinned in px, so a restyle can never move a training strip
+([features/look.md](features/look.md)). A check that needs the transport or the upload box must
+not put `mode` in its URL.
 
 ⚠ **A refusal UNMOUNTS `#omr-status`.** Look at `#omr-error` first, or the locator detaches and the
 check times out while the app is behaving correctly — that cost the three page smokes a false
@@ -82,6 +87,8 @@ head's corner opens `[data-omr="save-menu"]`, which holds `#export-png` and `#ex
 are different mechanisms: PNG is drawn by the app and DOWNLOADS, PDF calls `window.print()` and the
 browser makes it — so a check can assert the download for one and only the call for the other.
 ⚠ A failure shows `[data-omr="save-error"]` in the card head; the button is `disabled` while saving.
+⚠ **Base UI's Menu since 2026-09-30**: the popup is PORTALLED to `<body>` (not inside the card head),
+the items carry `role="menuitem"` and `data-highlighted`, and Esc or a tap outside closes it.
 ⛔ **Neither reads or writes `doc`** — export is a picture, and the note model's seam is still
 `window.__omrDoc`.
 
@@ -198,7 +205,9 @@ can be unchecked while the lines are still drawn.
 
 ⭐ **THE DOWNLOAD QUESTION (2026-09-27).** `#voice-modal[data-voice]` with `#voice-confirm` / `#voice-cancel`,
 raised before any recorded voice downloads — a pick in `#instrument`, a pick in `#instrument-pick`,
-or opening `#view-instrument`. Its backdrop blocks every click: answer it with
+or opening `#view-instrument`. ⚠ Since 2026-09-30 all three prompts (`#makam-modal`, `#voice-modal`,
+`#tuning-modal`) are Base UI Dialogs: the id and `data-*` sit on the `role="dialog"` popup, which is
+portalled to `<body>`, and Esc or a backdrop click means cancel. Its backdrop blocks every click: answer it with
 `tools/browser/voicePrompt.ts` (`answerVoicePrompt(page, "confirm" | "cancel")`), a no-op when
 nothing is asked. ⚠ A voice said yes to is not asked about again in the same page load, so a check
 that expects the question must start from a fresh `page.goto`.

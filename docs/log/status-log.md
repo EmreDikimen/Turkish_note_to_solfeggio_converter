@@ -7,6 +7,37 @@ updated: 2026-09-27
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-09-30 — the Tezhip restyle, and why a render job is now a pinned page
+
+**The owner asked for the whole frontend to feel like classical Turkish music**, phone and desktop,
+with any library. Chosen from options: the **Tezhip** palette (ivory, lapis, gold), dark mode from
+the system, **Tailwind + Base UI**, subtle ornament. Built on `main` in seven commits; not deployed.
+Everything is in [../features/look.md](../features/look.md); the parts worth remembering are the
+ones that went wrong.
+
+- **A font change moved training strips.** The palette commit re-rendered 2 pieces (302 strips)
+  with 0 label changes and **0 byte-identical PNGs**: the new display font changed the height of the
+  chrome above the score, so the sheet landed on another fraction of a pixel — 155 strips shifted by
+  1–2 device pixels, 147 with different antialiasing. Owner's call: decouple. `#app[data-render]`
+  hides the chrome on every render job; proof: enlarging the header on purpose afterwards left
+  **302/302 identical**. `strips_v7_final` on disk is untouched.
+- **An unlayered token beat a layered override.** With `tokens.css` outside the cascade layers, the
+  coarse-pointer `--control-h: 44px` in `app.css` lost and every phone control measured 30px — caught
+  because the first visual diff was supposed to be empty and was not on the phone.
+- **The control kit had to be a CSS layer, not utility classes.** A utility sits above every legacy
+  rule whatever its specificity, so it would have undone the 30+ contextual sizes `app.css` applies
+  to `.kv-btn`, `.kv-toggle`, `.kv-field` and `.kv-seg`.
+- ⛔ **The inverted night sheet (light ink on dark paper) was the owner's idea and was dropped after
+  a look**: harder to read. Three variants were screenshotted side by side; the ivory sheet won.
+- **Fixed on the way:** the save mark sat on top of the last head button on a wide window (it was
+  in the baseline screenshots too).
+- **Not done, on purpose:** the transport, toolbox, instrument views and tab bar were repainted
+  through the tokens, not rewritten — the owner then asked for a from-scratch UI on a branch.
+
+Checks at the end: `typecheck`, `npm test` (with the new `css-contract-test.ts`), `smoke:editor`
+ALL PASS, `smoke:build` PASS, `smoke:app` red at the same pre-existing `recent-item` step as the
+baseline, `verify-labels` 302/302 exact on the pinned renders.
+
 ## 2026-09-28 — a note is stepped with arrows, and a scroll no longer edits
 
 **▲ and ▼ on the selected note** (owner: *"sürükleyerek nota değerini değiştirme mantığı mobilde pek

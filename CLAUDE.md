@@ -49,6 +49,7 @@ engineer.** The owner reads English as a second language and asked for this to b
 | **Touching apps/web, tools/render or tools/core?** Playback, the editor, the DOM, the stylesheet | **[docs/APP-RULES.md](docs/APP-RULES.md)** |
 | **What a browser check may assert on** — the DOM attributes, per feature | **[docs/DOM-CONTRACT.md](docs/DOM-CONTRACT.md)** |
 | **The PHONE — the screen the product is used on: what it looks like, why, every number** | **[docs/features/phone.md](docs/features/phone.md)** |
+| **The LOOK — palette, dark mode, CSS layers, and the render pin (a restyle must not move a strip)** | **[docs/features/look.md](docs/features/look.md)** |
 | **What we may publish** — licences, attribution, why no score ships | **[docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)** |
 | The full doc map | [docs/INDEX.md](docs/INDEX.md) |
 | **MVP track (in-browser pipeline → friends release)** | **[docs/mvp/README.md](docs/mvp/README.md)** |
@@ -320,6 +321,8 @@ Full statements, with the bug each one cost, in **[docs/APP-RULES.md](docs/APP-R
   and it is NOT a licence to scale the container. ⚠ Everything the draw then publishes — measure
   boxes, click targets, tuplet marks, playhead positions — is in RENDERED units, converted in one
   place; never scale a consumer where it is read. [docs/APP-RULES.md](docs/APP-RULES.md).
+  ⚠ **A render job is a PINNED page** (2026-09-30): `#app[data-render="1"]` hides all chrome so a
+  restyle cannot move a strip by a sub-pixel — never weaken it. [docs/features/look.md](docs/features/look.md).
 - **Never reintroduce a text or regex matcher** in a browser check. Checks read DOM attributes, which
   is what leaves all user-facing copy free to change; every string lives in `strings.ts`.
 - **Token ids are append-only, and pixels and labels come from one code path** — see group 1; the app

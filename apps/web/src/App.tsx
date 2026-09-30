@@ -2470,12 +2470,6 @@ export function App() {
         // is a MODE, not a width: its rules live outside the phone media query and hide every
         // section themselves rather than leaning on the tab rules, which do disappear up there.
         data-fullscreen={doc && fullScreen ? "1" : undefined}
-        // ⚠ Phone only, and only on the Nota tab — `app.css` turns `#transport-settings` into a
-        // bottom sheet there. Everywhere else the settings box is an ordinary part of the page.
-        // ⚠ DERIVED, not just stored: the sheet belongs to the Nota tab while READING, and deriving
-        // that here means it cannot be left open behind edit mode or another tab by a path that
-        // forgot to close it. `onMobileTab` still clears the intent so it does not spring back.
-        data-pitch={isPhone && doc && pitchOpen && mobileTab === "nota" && !editMode ? "open" : undefined}
         // ⚠ Which view the card is showing, so the stylesheet can treat the instrument page
         // differently from the score page — see the sticky head in the phone block.
         data-view={doc ? viewMode : undefined}
@@ -2510,12 +2504,6 @@ export function App() {
       // is a MODE, not a width: its rules live outside the phone media query and hide every
       // section themselves rather than leaning on the tab rules, which do disappear up there.
       data-fullscreen={doc && fullScreen ? "1" : undefined}
-      // ⚠ Phone only, and only on the Nota tab — `app.css` turns `#transport-settings` into a
-      // bottom sheet there. Everywhere else the settings box is an ordinary part of the page.
-      // ⚠ DERIVED, not just stored: the sheet belongs to the Nota tab while READING, and deriving
-      // that here means it cannot be left open behind edit mode or another tab by a path that
-      // forgot to close it. `onMobileTab` still clears the intent so it does not spring back.
-      data-pitch={isPhone && doc && pitchOpen && mobileTab === "nota" && !editMode ? "open" : undefined}
       // ⚠ Which view the card is showing, so the stylesheet can treat the instrument page
       // differently from the score page — see the sticky head in the phone block.
       data-view={doc ? viewMode : undefined}

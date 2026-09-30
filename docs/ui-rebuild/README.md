@@ -39,8 +39,24 @@ updated: 2026-09-30
 
 ## Milestones
 
-1. **Shell** — `src/shell/`: the grid, the sidebar/tab bar, the score header. Old components inside.
-2. **Player bar + settings panel** replace `TransportBar` (same control ids).
-3. **Editor** — the toolbox restyled for the new frame.
-4. **Instrument view, full screen, the empty state.**
-5. **Checks rewritten, `app.css` pruned, docs.**
+| # | What | State (2026-09-30) |
+|---|---|---|
+| 1 | **Shell** — `src/shell/`: the grid, the sidebar, the tab bar (`NavBar`), `Chrome` (brand, welcome, footer) | ✅ done |
+| 2 | **Player bar + settings panel** (`PlayerBar`, `TempoControl`, `SettingsPanel` on Base UI's Drawer) replace `TransportBar`, which is deleted | ✅ done |
+| 3 | **Editor** — the toolbox opens over the sidebar on a wide window and docks above the tab bar on a phone | ✅ placed; its own look is still the old one |
+| 4 | **Instrument view, full screen, the empty state** | ✅ working in the shell; not restyled beyond the tokens |
+| 5 | **Checks, `app.css` pruning, docs** | ✅ checks green; ⏭ `app.css` still carries the dead phone state machine (`.kv-page[data-mtab]` rules select nothing now) |
+
+## Where the checks stand (2026-09-30, commit `ab17e68`)
+
+`typecheck`, `npm test`, `smoke:editor` ALL PASS, **`smoke:app` PASS** (red on `main` since before
+the rebuild — two causes, both fixed here: the library folded itself away when a stored page was
+opened, and the rename step raced its own IndexedDB write), `build:app` + `smoke:build` PASS,
+`smoke:phone` no sideways scroll at any of its four sizes. Strips: `render.ts` on 2 pieces,
+**302/302 byte-identical** to the pinned baseline. Not run: `smoke:page` (minutes of in-browser
+slicing and decode — heats the Mac), `gate:browser`.
+
+What the checks now know: the settings panel is mounted only while open
+(`tools/browser/settingsPanel.ts`); the voice is readable off `#transport-pinned[data-instrument]`;
+the player-bar test replaced the sticky-row test; and the narrow-window test asserts the sheet is
+RE-ENGRAVED to its column instead of scrolled sideways, because the shell fits it at every width.

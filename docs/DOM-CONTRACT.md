@@ -2,7 +2,7 @@
 
 purpose: the full list of DOM attributes the automated checks read, and the ⚠ traps in each
 audience: anyone writing a browser check, or changing a component a check watches
-updated: 2026-09-30
+updated: 2026-09-30 (ui-rebuild branch)
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows
@@ -46,9 +46,9 @@ failure on 2026-09-05.
 ## The sheet and the follow
 
 `#follow-playhead[data-follow]` **and** `#sheet-surface[data-follow]` — the setting on the control
-AND on the thing that moves. ⚠ A checked box only proves it was clicked. ⚠ **Where it lives depends
-on the width** (2026-09-28): inside `#transport-pinned` on a phone, in the card head on a wide
-window — never both. Find it by id, never by its container.
+AND on the thing that moves. ⚠ A checked box only proves it was clicked. ⚠ **It lives in the player
+bar (`#transport-pinned`) at every width** since the UI rebuild (2026-09-30), and only while the
+sheet view is up. Find it by id, never by its container.
 
 The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot prove
 playback actually began there.
@@ -157,36 +157,38 @@ check that reads it back off the element proves nothing — `smoke:editor` count
 ⚠ It renders NOTHING with no makam chosen, so its **absence is an assertion too**, and a rule
 matching no note reads **0** rather than vanishing. [mvp/makam.md](mvp/makam.md)
 
-## The transport
+## The transport — the player bar and the settings panel (UI rebuild, 2026-09-30)
 
-`#bpm`, its `−`/`+` pair `#bpm-down` / `#bpm-up`, and `#transport-pinned`.
+| Element | Carries |
+|---|---|
+| `#transport-pinned` | the PLAYER BAR, fixed to the bottom of the window (above the tab bar on a phone); `data-instrument` and `data-voice-state` MIRROR the voice that plays |
+| `#play` / `#stop` | in the bar; `#play[data-play-state]` |
+| `#bpm`, `#bpm-down`, `#bpm-up` | the tempo, in the bar at every width; the ⟲ is `.kv-tempo-reset[data-idle]` (not on a phone) |
+| `#follow-playhead[data-follow]` | in the bar, sheet view only |
+| `#settings-open[aria-expanded]` | opens the settings panel; `#settings-close` shuts it |
+| `#transport-settings` | the panel's content: `#row-sound`, `#row-rhythm`, `#row-pitch`, with `#voice-field`, `#instrument`, `#percussion`, `#percussion-volume`, `#percussion-kit`, `#makam-select`, `[data-omr="makam-intonation"]` |
 
-⚠ **The ± pair exists at every width** (2026-09-26), and the OS spinner is hidden so there is one
-set of arrows rather than two. ⭐ **They commit on RELEASE, not per step.** Held, they repeat about
-nine times a second and move only the number on screen; the tempo that plays changes when the
-pointer comes up — because `WebAudioBackend.play()` re-schedules the whole timeline and builds fresh
-gain nodes on every call, so committing per tick would re-schedule playback nine times a second. A
-check that steps and then reads `#bpm` has to let the pointer up first. Each button disables itself
-at its end of the 20–400 range, so `#bpm-up` is `disabled` at 400.
+⚠ **THE SETTINGS PANEL IS NOT MOUNTED WHILE CLOSED.** Open it with `tools/browser/settingsPanel.ts`
+(`openSettings` / `closeSettings`) before touching anything in it — and close it before clicking the
+score on a wide window, where it covers the right-hand 380px. To READ the voice without opening it,
+use `#transport-pinned[data-instrument]`.
+⚠ On a wide window the panel is non-modal and **a click outside does NOT close it** (you adjust while
+it plays); on a phone it is a modal bottom sheet.
+⛔ **Gone with the old bar:** `#pitch-toggle` and its fold, the sticky ÇALMA row, and
+`#transport-pinned + .kv-transport`.
 
-⚠ **The ⟲ reset button is ALWAYS in the DOM** once the score has a natural tempo, and carries `data-idle="1"` plus `disabled` while there is nothing to reset — it is hidden with `visibility`, not unmounted, because giving its width back moved the whole tempo group onto a second line the moment the tempo was changed. A check must read `data-idle`, not presence.
+⚠ **The ± pair commits on RELEASE, not per step.** Held, they repeat about nine times a second and
+move only the number on screen; the tempo that plays changes when the pointer comes up — because
+`WebAudioBackend.play()` re-schedules the whole timeline on every call. A check that steps and then
+reads `#bpm` has to let the pointer up first. Each button disables itself at its end of the 20–400
+range.
 
-⚠ **`#bpm` holds a DRAFT while it is being typed.** It is a controlled box that now accepts
-half-typed values — `""`, `1`, `1802` — and commits only what is in range, so reading it mid-edit
-can return something that is not the tempo. Blur drops the draft. Before 2026-09-26 it refused every
-out-of-range keystroke and snapped back, which made it impossible to type in on a phone.
+⚠ **`#bpm` holds a DRAFT while it is being typed** (`""`, `1`, `1802` are all legal mid-edit) and
+commits only what is in range; blur drops the draft.
 
-⚠ **The ÇALMA row is pinned to the top of the page since 2026-09-05 (`position: sticky`) and the
-other two rows are not**, which takes TWO measurements to assert:
-
-1. `#transport-pinned`'s box sits at `top ≈ 0` after a scroll to the bottom, **and**
-2. `#transport-pinned + .kv-transport` (Ritim + Perde) is gone off the top.
-
-A whole bar made sticky passes the first and fails the second.
-
-⚠ **There is ONE Çal button again.** It replaced a corner-parked second pair (`#sticky-transport` /
-`#play-sticky` / `#stop-sticky`), which is DELETED — so a check presses `#play` itself from wherever
-it has scrolled to.
+⚠ **The ⟲ reset button is ALWAYS in the DOM** once the score has a natural tempo (wide window), with
+`data-idle="1"` plus `disabled` while there is nothing to reset — hidden with `visibility`, never
+unmounted. A check must read `data-idle`, not presence.
 
 ## The fingerboard tab (F3, violin)
 
@@ -280,13 +282,10 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 
 | Element | Carries |
 |---|---|
-| `#app` | `data-mtab` = `nota` \| `duzenle` \| `pages`, plus `data-fullscreen`, `data-pitch` and `data-view` (`sheet` \| `instrument`) |
+| `#app` | `data-mtab` = `pages` \| `nota` \| `duzenle` (drawn in that order), plus `data-fullscreen` and `data-view` (`sheet` \| `instrument`) |
 | `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
-| `#pitch-toggle` | `aria-expanded` — the settings fold under `#transport-pinned` |
-| `#transport-settings` | the fold's content: `#row-sound`, `#row-rhythm`, `#row-pitch` |
-| `#voice-field` | the voice select, inside `#row-sound`; its `.kv-hint` status line sits on its own line UNDER the select |
-| `#bpm` | the tempo box |
-| `#bpm-down` / `#bpm-up` | its ± pair, at every width |
+| `#transport-pinned` | the player bar, above the tab bar — ⚠ **not drawn while editing** (the toolbox has its own Çal / Dur) |
+| `#transport-settings` | the settings, in a bottom sheet opened by `#settings-open` |
 | `#fullscreen-on` | the expand mark in the card head's top-right corner — ⚠ **not on `duzenle`** |
 | `#export-toggle` | the save menu's button, same corner — ⚠ **not on `duzenle`** |
 | `#fullscreen-bar` | `#fs-play[data-play-state]`, `#fs-stop`, `#fs-exit` |
@@ -296,23 +295,21 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 
 1. ⛔ **`data-mtab="cal"` does not exist.** The Çal tab was closed 2026-09-26; a check waiting for it
    waits forever.
-2. ⚠ **The fold's content is `visibility: hidden` when shut** — not merely invisible, unreachable.
-   Open `#pitch-toggle` before touching `#makam-select`, `#instrument` or anything else in there.
-3. ⚠ **ONE element, two presentations.** `#transport-settings` is the fold on a phone and an ordinary
-   open box on a wide window, so there is never a second `#makam-select` or
-   `[data-omr="makam-intonation"]` — a check must say which it means.
+2. ⚠ **The settings are not in the DOM until `#settings-open` is pressed** — use
+   `tools/browser/settingsPanel.ts`.
+3. ⚠ **ONE element, two presentations.** `#transport-settings` is a bottom sheet on a phone and a side
+   panel on a wide window, so there is never a second `#makam-select`.
 4. ⚠ **`#bpm` holds a DRAFT while it is being typed** (`""`, `1`, `1802` are all legal mid-edit), and
    **`#bpm-down` / `#bpm-up` commit on RELEASE** — held they repeat and move only the number on
    screen. A check that steps and then reads `#bpm` must let the pointer up first.
-5. ⚠ **`#edit-toggle` is hidden on the NOTA tab** — the Düzenle tab is edit mode. It is still there on
-   the Düzenle tab and on every wide window, and `smoke:phone` takes the tab where one exists.
+5. ⚠ **`#edit-toggle` is not drawn on a phone** (the Düzenle tab is edit mode; the button stays in
+   the DOM). It is visible on every wide window, and `smoke:phone` takes the tab where one exists.
 6. ⚠ **Published geometry is in RENDERED units.** A dense page is drawn smaller than its layout, and
    the measure boxes, `[data-omr-note]` targets, tuplet marks and playhead positions are all
    converted; none of them is a VexFlow number. At 1280px the scale is 1.
 
 ⚠ **`data-play-state` names THREE buttons** — `#play`, `#palette-play`, `#fs-play`.
 ⚠ **`data-fullscreen` is NOT gated on the breakpoint** — a phone turned sideways is 844px.
-⚠ **`data-pitch` is DERIVED** from (phone, score, Nota tab, not editing), so it cannot be stale.
 ⛔ **There is no Güfte toggle** — ask for lyrics with `?lyrics=1`.
 
 ## Two traps

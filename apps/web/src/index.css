@@ -7,6 +7,8 @@
                  some of them (`--control-h` → 44px under a coarse pointer), and an unlayered token
                  would beat that redefinition — measured, every phone control shrank to 30px
      base      — element defaults and the Bravura @font-face
+     components — the control kit (components.css): .kv-btn, .kv-toggle, .kv-field, .kv-seg. BELOW
+                 legacy on purpose, so app.css's contextual sizing still wins — see its header
      legacy    — the hand-written .kv-* sheets (layout.css: the phone/fullscreen state machine;
                  app.css: components not yet moved to utilities)
      utilities — Tailwind classes written on the components
@@ -18,12 +20,13 @@
    training-strip source, and restyle every component at once. base.css is our reset.
    ⚠ `source(none)` + the two @source lines: Tailwind scans only the app's code, never `public/`
    (hundreds of MB of models and scores). */
-@layer theme, tokens, base, legacy, utilities;
+@layer theme, tokens, base, components, legacy, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "./styles/theme.css";
 @import "./styles/tokens.css" layer(tokens);
 @import "./styles/base.css" layer(base);
+@import "./styles/components.css" layer(components);
 @import "./styles/app.css" layer(legacy);
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 @import "./styles/contract.css";

@@ -1,7 +1,8 @@
 /**
  * The PWA's icons — generated, never hand-drawn (2026-09-28).
  *
- * What: the favicon's koma diyezi (two red uprights, two black slants, on the app's paper) drawn at
+ * What: the favicon's koma diyezi (two gold uprights, two ivory slants, on lapis — the Tezhip
+ * palette since 2026-09-30; it was red and black on cream) drawn at
  * the sizes an install needs: 192 and 512 (`purpose: any`), a 512 MASKABLE one whose sign sits
  * inside the central safe circle so Android's round/squircle mask never cuts it, and iOS's 180px
  * `apple-touch-icon`, full-bleed because iOS rounds the corners itself.
@@ -16,9 +17,9 @@ import { chromium } from "playwright";
 import path from "node:path";
 
 const OUT = path.resolve(__dirname, "../../apps/web/public/icons");
-const PAPER = "#fbf7f0";
-const RED = "#b4472c";
-const INK = "#1a1614";
+const PAPER = "#1f3a6b"; // lapis — the ground (the name is kept from the cream era)
+const RED = "#d4af5f"; // gold — the uprights
+const INK = "#f7f4ec"; // ivory — the slants
 
 /** The sign, in the favicon's own 32-unit coordinates (x 7–25, y 6–26). */
 const SIGN = `

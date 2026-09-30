@@ -186,7 +186,7 @@ export async function exportScorePng(stage: HTMLElement, pageName: string): Prom
   ctx.fillRect(0, 0, pageW, pageH);
 
   if (lines.length) {
-    ctx.fillStyle = "#1a1614";
+    ctx.fillStyle = "#1b1f2e"; // tokens.css --ink (Tezhip)
     ctx.textAlign = "center";
     lines.forEach((line, i) => {
       ctx.font = `${i === 0 ? "bold " : ""}italic ${i === 0 ? 22 : 17}px Georgia, "Times New Roman", serif`;

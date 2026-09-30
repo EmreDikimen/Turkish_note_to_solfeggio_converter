@@ -21,3 +21,37 @@
 @custom-variant wide (@media (min-width: 701px));
 @custom-variant coarse (@media (pointer: coarse));
 @custom-variant fine (@media (pointer: fine));
+
+/* Colour names a utility may use — each is the token, so it follows dark mode and the island. */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-raised: var(--paper-raised);
+  --color-sunken: var(--paper-sunken);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-on: var(--accent-on);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-ink: var(--gold-ink);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-serif: var(--font-display);
+  --font-sans: var(--font-ui);
+
+  /* ⚠ No shadow mapping: `--shadow-card: var(--shadow-card)` would be circular. Write
+     `shadow-(--shadow-card)` instead. */
+}

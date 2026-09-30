@@ -1,77 +1,94 @@
 /**
  * Design tokens — the whole visual vocabulary of KomaVision, in one place.
  *
- * The direction is İZNİK: the white ground and turquoise of Turkish çini, as paper and one accent.
- * Cool ivory rather than screen-white, ink rather than grey, and nothing else coloured. The
- * reasoning is that the engraved score IS the product, so the chrome around it should sit BELOW it
- * in visual weight — hairline rules instead of shadows, small control text, colour spent only where
- * it means something.
+ * The direction is TEZHİP (owner, 2026-09-30): the illuminated page of an Ottoman manuscript —
+ * ivory paper, lapis-lazuli blue, matte gold, with turquoise and Turkish red as the two pigments
+ * used sparingly beside them. The engraved score is still the product, so the chrome sits BELOW
+ * it: hairline rules rather than heavy shadows, gold spent on ornament and never on text, and one
+ * working colour (lapis) for everything a person presses.
  *
- * It replaced a warm cream-and-terracotta palette on 2026-08-08 (owner: it read as somebody else's
- * website). Two things the turquoise buys beyond not being that: it belongs to the repertoire the
- * app is for, and the editor's overlays — selection, hover, the playhead, the insert ghost — were
- * ALREADY teal, so the accent now agrees with them instead of arguing. Those overlays stay their
- * brighter `#14b8a6`: they are drawn over black notation and have to out-shout it, which a token
- * meant for buttons on paper cannot do.
+ * History: İznik turquoise (2026-08-08) replaced a cream-and-terracotta palette the owner said
+ * read as somebody else's website; Tezhip replaced İznik here, keeping the ivory ground but moving
+ * the accent to lapis and adding gold. The editor's overlays (selection, hover, playhead, insert
+ * ghost) keep their bright `#14b8a6` teal — they are drawn over black notation on white paper and
+ * have to out-shout it, and turquoise is still one of this palette's pigments.
  *
- * Nothing here is a component. Only `:root` custom properties, so the diagnostic pages
- * (slices.html, omr-gate.html, …) can adopt the palette later by importing this file alone.
+ * ⚠ CONTRAST, computed for every pair that carries text (WCAG AA = 4.5:1):
+ *   light  ink on paper 14.9 · ink-soft 8.9 · ink-faint 4.6 · white on accent 11.2 ·
+ *          danger on white 7.4 · teal on paper 5.3 · gold-ink on white 5.0
+ *   dark   ink on paper 13.9 · ink-soft 8.3 · ink-faint 5.0 · accent-on on accent 8.0 ·
+ *          accent (as link text) on paper 8.4 · danger 5.6
+ * ⚠ `--gold` itself is 2.9:1 on the paper — DECORATION ONLY (rules, ornaments, a border). Text,
+ *   a focus ring or a state that must be read uses `--gold-ink` or the accent.
+ *
+ * ⚠ DARK MODE follows the system (owner, 2026-09-30 — no toggle). The score does NOT go dark:
+ * `.kv-paper` (on `.kv-score`) re-declares the light values, so the sheet is black ink on white
+ * paper in both modes, exactly the pixels the training strips are cut from.
+ *
+ * Nothing here is a component. `:root` custom properties and the one island class only.
  */
 
 :root {
+  color-scheme: light dark;
+
   /* ── Paper ──────────────────────────────────────────────────────────────
-     Three surfaces, all faintly cool — çini's white ground, not screen white.
-     `raised` is where the score lives and IS pure white, so the notation reads
-     as the sheet it is and nothing on the page is lighter than the music;
-     `sunken` is for wells and the collapsed developer panel — things that
-     recede. */
-  --paper: #f6f8f7;
+     The ground is ivory — the colour of an aged, burnished manuscript page, not
+     cream. `raised` is pure white: panels and the score's own sheet, so nothing
+     on the page is lighter than the music. `sunken` is for wells and the
+     collapsed developer panel — things that recede. */
+  --paper: #f7f4ec;
   --paper-raised: #ffffff;
-  --paper-sunken: #e9edeb;
+  --paper-sunken: #eee9dc;
 
   /* ── Ink ────────────────────────────────────────────────────────────────
-     Near-black with a trace of the accent's green in it, never #000: pure
-     black against a tinted ground reads as a hole. `soft` is body copy,
-     `faint` is for captions and disabled text. */
-  --ink: #13201e;
-  --ink-soft: #3d4a47;
-  --ink-faint: #74827e;
+     Near-black with lapis in it, never #000. `soft` is body copy, `faint` is
+     captions and disabled text. */
+  --ink: #1b1f2e;
+  --ink-soft: #3e4354;
+  --ink-faint: #6b6f7c;
 
   /* ── Rules ──────────────────────────────────────────────────────────────
-     Grouping is done with hairlines, not shadows. `strong` is for a border
-     that has to be seen (inputs, the dropzone at rest). */
-  --rule: #d7dedb;
-  --rule-strong: #b6c2be;
+     Grouping is done with hairlines. Warm, so they belong to the paper. */
+  --rule: #e2dccd;
+  --rule-strong: #c9c0ab;
 
-  /* ── The one accent ─────────────────────────────────────────────────────
-     İznik turquoise. Used ONLY on: the primary button, focus rings, the active
-     segment of a toggle. Everywhere else is ink on paper. If a third thing
-     wants to be turquoise, the answer is that it does not.
-     ⚠ Dark enough to carry white text (≈4.8:1) — the primary button is the one
-     place this palette has to pass a contrast bar, so do not lighten it. */
-  --accent: #0f766e;
-  --accent-hover: #0b5d57;
-  --accent-soft: #d9ebe8;
-  --accent-on: #f2fbf9;
+  /* ── Lapis — the working colour ─────────────────────────────────────────
+     Used on: the primary button, focus rings, the active segment of a toggle,
+     links. Everywhere else is ink on paper. */
+  --accent: #1f3a6b;
+  --accent-hover: #162c54;
+  --accent-soft: #e4eaf4;
+  --accent-on: #ffffff;
 
-  /* ── Semantic ───────────────────────────────────────────────────────────
-     Muted on purpose, so a warning never out-shouts the accent. `--danger` is
-     brick rather than crimson for the same reason, and it is the one warm
-     thing on the page — which is exactly why an error is impossible to miss. */
+  /* ── Gold, turquoise — the illuminator's pigments ───────────────────────
+     Gold is ornament: the header's rule, a divider's knot, a card's hairline.
+     `--gold-ink` is the only gold a reader is ever asked to read. Turquoise is
+     the secondary: a quiet "on" state, never a button. */
+  --gold: #b08a3e;
+  --gold-soft: #efe4cb;
+  --gold-ink: #8c6a2a;
+  --teal: #276e69;
+  --teal-soft: #dcece9;
+
+  /* ── Semantic ─────────────────────────────────────────────────────────── */
   --ok: #3f6f52;
-  --warn: #9a6a17;
-  --danger: #a33a2a;
+  --warn: #8a5e12;
+  --danger: #9e2b25;
+  --danger-soft: #f6e3e0;
   --highlight: #e8c97a; /* the selected strip's crop box on the sheet */
 
   /* ── Type ───────────────────────────────────────────────────────────────
-     `--font-display` deliberately matches the serif SheetView already engraves
-     its score header in, so the page and the notation are one object rather
-     than two typefaces arguing. Self-hosting a display serif is a one-line
-     change here (a webfont CDN is not an option — COEP: require-corp blocks
-     it, see vite.config.ts). */
-  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+     EB Garamond for display — a Garamond revival, the book face of the age the
+     manuscripts this palette borrows from, with every Turkish letter (ğ ı İ ş
+     are in its latin-ext subset). Inter for the interface. Both SELF-HOSTED
+     through @fontsource (main.tsx): a webfont CDN is not an option under
+     COEP: require-corp (vite.config.ts). ⚠ The score's own header keeps
+     Georgia — `.kv-paper` puts it back — because it is engraved to match the
+     notation's serif. */
+  --font-display: "EB Garamond Variable", "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-score: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --font-ui: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-music: "Bravura";
 
@@ -99,22 +116,96 @@
      a number box. Their intrinsic heights disagree (a <select> is not a <button> and neither is a
      styled <label>), and a row of controls that miss each other's baselines by two pixels is the
      thing that reads as "assembled" rather than "designed". Anything deliberately smaller — the
-     tempo's ⟲, the toolbox's tools — opts out by name. */
+     tempo's ⟲, the toolbox's tools — opts out by name.
+     ⚠ phone-probe and visual-snap wait on this token as "the stylesheet is in"; keep its name. */
   --control-h: 30px;
 
-  --radius-sm: 3px;
-  --radius: 6px;
-  --radius-lg: 10px;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
 
-  /* Shadows are tinted with the ink, not with black — a neutral grey shadow on
-     a tinted ground is the thing that makes a palette look printed-on. */
-  --shadow-card: 0 1px 2px rgba(16, 42, 39, 0.06), 0 8px 24px rgba(16, 42, 39, 0.08);
-  --shadow-modal: 0 12px 48px rgba(10, 30, 28, 0.3);
-  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.3);
+  /* Shadows tinted with the ink, not black. */
+  --shadow-card: 0 1px 2px rgba(27, 31, 46, 0.05), 0 10px 30px -12px rgba(27, 31, 46, 0.14);
+  --shadow-modal: 0 18px 60px rgba(15, 20, 35, 0.32);
+  --focus-ring: 0 0 0 3px rgba(31, 58, 107, 0.28);
+  --backdrop: rgba(15, 20, 35, 0.45);
 
   --page-max: 1100px; /* unchanged from the harness — the sheet is engraved to fit it */
   --measure: 66ch; /* prose never wider than this */
 
   --dur-fast: 120ms;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* ── Night: the same manuscript read by lamplight ───────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #12151f;
+    --paper-raised: #1a1f2c;
+    --paper-sunken: #0d1017;
+
+    --ink: #e6e1d3;
+    --ink-soft: #c2bcab;
+    --ink-faint: #8f8b7f;
+
+    --rule: #2a3142;
+    --rule-strong: #3d4659;
+
+    /* Lapis cannot carry text on a dark ground, so at night the accent is the
+       pale lapis of the pigment's highlights and the button text goes dark. */
+    --accent: #93b1e6;
+    --accent-hover: #b3c8ef;
+    --accent-soft: #1f2b45;
+    --accent-on: #0f1a33;
+
+    --gold: #c9a55a;
+    --gold-soft: #3a3120;
+    --gold-ink: #d8b872;
+    --teal: #5fb3ac;
+    --teal-soft: #173634;
+
+    --ok: #7dbf95;
+    --warn: #e0b25c;
+    --danger: #e0706a;
+    --danger-soft: #3a1c1b;
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+    --shadow-modal: 0 18px 60px rgba(0, 0, 0, 0.6);
+    --focus-ring: 0 0 0 3px rgba(147, 177, 230, 0.35);
+    --backdrop: rgba(5, 7, 12, 0.6);
+  }
+}
+
+/* ── The paper island ─────────────────────────────────────────────────────
+   On `.kv-score`: the engraved sheet and everything drawn beside it (its
+   header, the accidental legend, the instrument views) is ALWAYS light — black
+   ink on white paper in both modes — because that is what the training strips
+   are cut from and what a printed page looks like. The class only re-declares
+   tokens and paints the white the card used to paint behind it; it sets no
+   colour or font on any element inside (css-contract-test.ts). */
+.kv-paper {
+  color-scheme: light;
+  background: #ffffff;
+  --paper: #f7f4ec;
+  --paper-raised: #ffffff;
+  --paper-sunken: #eee9dc;
+  --ink: #1b1f2e;
+  --ink-soft: #3e4354;
+  --ink-faint: #6b6f7c;
+  --rule: #e2dccd;
+  --rule-strong: #c9c0ab;
+  --accent: #1f3a6b;
+  --accent-hover: #162c54;
+  --accent-soft: #e4eaf4;
+  --accent-on: #ffffff;
+  --gold: #b08a3e;
+  --gold-soft: #efe4cb;
+  --gold-ink: #8c6a2a;
+  --teal: #276e69;
+  --teal-soft: #dcece9;
+  --ok: #3f6f52;
+  --warn: #8a5e12;
+  --danger: #9e2b25;
+  --danger-soft: #f6e3e0;
+  --font-display: var(--font-score);
 }

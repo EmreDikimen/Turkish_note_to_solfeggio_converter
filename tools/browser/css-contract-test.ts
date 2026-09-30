@@ -54,7 +54,7 @@ const phoneTs = read(path.join(SRC, "usePhone.ts"));
 const phoneMax = Number(/PHONE_MAX_WIDTH\s*=\s*(\d+)/.exec(phoneTs)?.[1]);
 const variant = /@custom-variant\s+phone\s*\(\s*@media\s*\(\s*max-width:\s*(\d+)px/.exec(read(path.join(STYLES, "theme.css")));
 check("phone variant == PHONE_MAX_WIDTH", !!variant && Number(variant[1]) === phoneMax, `${variant?.[1]} vs ${phoneMax}`);
-const mqs = all.flatMap(({ css }) => [...css.matchAll(/max-width:\s*(\d+)px/g)].map((m) => Number(m[1])));
+const mqs = all.flatMap(({ css }) => [...css.matchAll(/@media[^{]*?max-width:\s*(\d+)px/g)].map((m) => Number(m[1])));
 check("every max-width media query in the sheets is the phone's", mqs.every((n) => n === phoneMax || n < 600), mqs.filter((n) => n !== phoneMax).join(",") || "all 700");
 
 // 3

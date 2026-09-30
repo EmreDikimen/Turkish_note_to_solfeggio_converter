@@ -378,8 +378,10 @@ export function ScoreCard({
 
       {/* ⚠ Nothing may nest inside `.kv-score`: that container is screenshotted by rect for
           training strips, so nothing may set a font in it or transform it. The edit toolbox is
-          not here at all — it floats over the page from App. */}
-      <div className="kv-score">{children}</div>
+          not here at all — it floats over the page from App.
+          `kv-paper` keeps it black-on-white in dark mode too (tokens.css): it re-declares the
+          light tokens and paints the white, and sets nothing on the elements inside. */}
+      <div className="kv-score kv-paper">{children}</div>
 
       {/* ⚠ Edit mode's instructions are a LEAD plus a closed list, never the ten-line paragraph
           they used to be (2026-09-03). Six rules run together under the score is the shape nobody

@@ -2339,15 +2339,8 @@ label.kv-btn.is-disabled {
   fill: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  .kv-clarinet {
-    --kv-clarinet-ring: rgba(240, 238, 234, 0.6);
-    --kv-clarinet-track: #2a2a2e;
-    --kv-clarinet-track-edge: #55555c;
-    --kv-clarinet-span: rgba(232, 163, 63, 0.12);
-    --kv-clarinet-lip-thumb: #f2c27a;
-  }
-}
+/* (No dark variant: the clarinet is drawn inside `.kv-score`, the paper island, which stays light
+   in dark mode — tokens.css.) */
 
 .kv-kanun {
   display: grid;

@@ -2226,6 +2226,12 @@ export function App() {
       // ⚠ Which view the card is showing, so the stylesheet can treat the instrument page
       // differently from the score page — see the sticky head in the phone block.
       data-view={doc ? viewMode : undefined}
+      // ⚠ A RENDER JOB (the URL carries `mode`, the same test as SIG_TOLERANT). contract.css then
+      // hides every piece of chrome and pins the score's position on the page in fixed pixels, so
+      // the strips render.ts cuts are independent of the app's design: a new font above the score
+      // used to move the sheet by a fraction of a pixel and change every strip's antialiasing
+      // (measured 2026-09-30: 147 of 302 strips). Owner decision the same day.
+      data-render={SIG_TOLERANT ? "1" : undefined}
     >
       <header className="kv-header">
         <h1 className="kv-brand">

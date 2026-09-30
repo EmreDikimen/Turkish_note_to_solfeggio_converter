@@ -45,6 +45,7 @@ import {
 } from "@turkish-omr/core";
 import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
+import { GoldRule } from "./ui/ornament/GoldRule";
 import {
   clearPages,
   deletePage,
@@ -2241,6 +2242,8 @@ export function App() {
           {TR.brand}
         </h1>
         <p className="kv-tagline">{TR.tagline}</p>
+        {/* The illuminator's ruled line under the title — the one ornament every screen carries. */}
+        <GoldRule align="start" className="kv-header__rule mt-5" />
       </header>
 
       <UploadHero
@@ -2607,6 +2610,7 @@ export function App() {
       {/* Always rendered, score or no score — the upload promise and the takedown route are what a
           first-time visitor needs most, and that is exactly the empty state. */}
       <footer className="kv-footer" id="legal">
+        <GoldRule className="kv-footer__rule mb-5" />
         <p>{TR.footer.privacy}</p>
         <p>{TR.footer.counting}</p>
         <p>{TR.footer.rights}</p>

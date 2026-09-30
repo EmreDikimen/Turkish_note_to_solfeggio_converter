@@ -35,6 +35,8 @@
 
 .kv-brand {
   font-size: var(--text-3xl);
+  font-weight: 600;
+  letter-spacing: -0.005em;
   display: flex;
   align-items: center;
   /* The koma sign sits IN the K's lower-left corner (owner, 2026-09-04), so the two nearly touch:
@@ -70,13 +72,17 @@
   font-family: var(--font-music);
   font-size: 0.78em;
   line-height: 0;
-  color: var(--accent);
+  /* Gold: the brand's one piece of illumination. Decoration beside a word, so gold's low
+     contrast costs nothing — the word is the name. */
+  color: var(--gold);
 }
 
 .kv-tagline {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: var(--text-lg);
+  /* EB Garamond's x-height is small; at the Georgia size it read a step quieter than the UI. */
+  font-size: 1.1875rem;
+  line-height: 1.45;
   color: var(--ink-soft);
   max-width: var(--measure);
   margin-top: var(--space-2);
@@ -87,9 +93,8 @@
    cannot violate the rule that no selector under the score may set a font or a transform. */
 .kv-footer {
   margin-top: var(--space-8);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--rule);
-  color: var(--ink-soft);
+  /* The top edge is the GoldRule (App.tsx), not a border. */
+  color: var(--ink-faint);
   font-size: var(--text-xs);
 }
 
@@ -191,42 +196,57 @@
 }
 
 .kv-hero__title {
-  font-size: var(--text-xl);
-  margin-bottom: var(--space-3);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-4);
 }
 
+/* The upload box is framed like an illuminated panel: a gold rule, a hair of paper, and a second
+   gold rule inside it (the "cetvel" an illuminator rules around a text block), over a faint tiled
+   ground (TezhipPattern). The dashed border it replaced said "drop here" in software's language;
+   the whole box is still the drop target and still lights up lapis under a dragged file. */
 .kv-drop {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-7) var(--space-5);
-  background: var(--paper-sunken);
-  border: 1.5px dashed var(--rule-strong);
+  background: var(--paper-raised);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
   border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 5px var(--paper-raised),
+    inset 0 0 0 6px color-mix(in srgb, var(--gold) 35%, transparent), var(--shadow-card);
   text-align: center;
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
+/* Content above the tiled ground. (The file input is absolute via contract.css, which wins.) */
+.kv-drop > :not(svg) {
+  position: relative;
+}
 .kv-drop:hover {
-  border-color: var(--accent);
+  border-color: var(--gold);
 }
 .kv-drop.is-dragover {
   border-color: var(--accent);
-  border-style: solid;
   background: var(--accent-soft);
 }
 .kv-drop.is-busy {
   cursor: default;
-  border-style: solid;
 }
 .kv-drop.is-busy:hover {
-  border-color: var(--rule-strong);
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+}
+
+.kv-drop__star {
+  margin-bottom: calc(-1 * var(--space-1));
 }
 
 .kv-drop__lead {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   color: var(--ink);
 }
 .kv-drop__hint {
@@ -239,6 +259,9 @@
   display: none;
 }
 .kv-hero.is-compact .kv-drop {
+  background: var(--paper-sunken);
+  border-color: var(--rule);
+  box-shadow: none;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
@@ -287,7 +310,7 @@
   margin-bottom: var(--space-6);
   border: 1px solid var(--rule);
   border-radius: var(--radius-lg);
-  background: var(--paper);
+  background: var(--paper-raised);
   padding: var(--space-3) var(--space-4);
 }
 
@@ -299,8 +322,8 @@
 
 .kv-recent__title {
   font-family: var(--font-display);
-  font-size: var(--text-base);
-  font-weight: 400;
+  font-size: var(--text-lg);
+  font-weight: 500;
 }
 
 .kv-recent__count {
@@ -324,7 +347,7 @@
   display: flex;
   align-items: stretch;
   gap: 1px;
-  background: var(--paper);
+  background: var(--paper-raised);
   /* ⚠ LOAD-BEARING, and it was measured: a GRID item's `min-width` is `auto`, so this row refused
      to shrink below its longest page name and pushed the whole page wider — 623px of document in a
      390px phone, with the name running off the right edge and no ellipsis anywhere. Every
@@ -378,8 +401,9 @@
 /* The name, with the makam in front of it. ⚠ Two elements and not one string: the makam is
    re-read from the score on every save, so it survives a rename and follows the reader changing
    the makam later — merged into the name it would go stale, and a rename would delete it. */
+/* Gold ink, small caps: the way a rubricator marks a heading word in a manuscript. */
 .kv-recent__makam {
-  color: var(--accent);
+  color: var(--gold-ink);
   font-variant: small-caps;
   letter-spacing: 0.02em;
   margin-right: var(--space-2);
@@ -494,7 +518,7 @@
 }
 .kv-progress__bar {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent) 70%, var(--gold));
   border-radius: inherit;
   transition: width var(--dur-fast) var(--ease);
 }

@@ -22,6 +22,8 @@ import type { OmrStatus } from "./status";
 import type { AppError } from "./errors";
 import { TR } from "./strings";
 import { useViewport } from "../usePhone";
+import { TezhipPattern } from "./ornament/TezhipPattern";
+import { Star } from "./ornament/Star";
 
 /**
  * ⚠ The touch copy is decided by `useViewport().coarse`, NOT by the width.
@@ -104,6 +106,9 @@ export function UploadHero({
             if (file) onFile(file);
           }}
         />
+        {/* The tiled ground — only on the full-size box, never on the slim strip a read leaves. */}
+        {!compact && <TezhipPattern className="text-gold opacity-[0.09]" />}
+        {!compact && !busy && <Star size={22} className="kv-drop__star text-gold" />}
 
         {busy && status ? (
           <>

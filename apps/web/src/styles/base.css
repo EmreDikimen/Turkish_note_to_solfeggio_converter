@@ -74,21 +74,6 @@ a:hover {
   border-radius: var(--radius-sm);
 }
 
-/* Present to assistive tech and to Playwright's setInputFiles, invisible to everyone else.
-   ⚠ Never swap this for `display: none` on a real <input>: that drops it from the
-   accessibility tree, and the deploy checks drive `#page-input` / `#strips-input` directly. */
-.kv-visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,

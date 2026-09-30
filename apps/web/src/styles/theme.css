@@ -1,0 +1,23 @@
+/**
+ * Tailwind's side of the design tokens: what the utility classes are allowed to say.
+ *
+ * The VALUES live in tokens.css as plain custom properties (they flip for dark mode and for the
+ * score's paper island); this file only maps them to Tailwind names with `inline`, so a class like
+ * `bg-paper` compiles to `var(--paper)` and follows every flip. ⚠ Never write a `dark:` utility in
+ * a component — the island (a light card inside a dark page) only works because every colour is a
+ * token that the card redeclares.
+ *
+ * Tailwind's own palette and its min-width breakpoints are switched off: a colour or a breakpoint
+ * that is not ours cannot be typed by accident.
+ */
+@theme {
+  --color-*: initial;
+  --breakpoint-*: initial;
+}
+
+/* The app's four viewport questions. ⚠ 700 must equal PHONE_MAX_WIDTH in usePhone.ts —
+   css-contract-test.ts checks it. */
+@custom-variant phone (@media (max-width: 700px));
+@custom-variant wide (@media (min-width: 701px));
+@custom-variant coarse (@media (pointer: coarse));
+@custom-variant fine (@media (pointer: fine));

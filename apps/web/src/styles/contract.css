@@ -1,0 +1,58 @@
+/**
+ * The CONTRACT rules — the few declarations that tests, the training-strip renderer or the phone's
+ * sticky layout depend on, pulled out of the component stylesheet on 2026-09-30.
+ *
+ * ⚠ This file is imported UNLAYERED, after every @layer in index.css, and that is the point of it:
+ * an unlayered rule beats any layered one whatever its specificity, so no Tailwind utility on a
+ * component (an `overflow-hidden` on the card, say) can ever silently undo one of these. Only the
+ * declarations that must never move live here; everything else about these elements is styled in
+ * the layered sheets. `tools/browser/css-contract-test.ts` checks this file.
+ */
+
+/* ── The score card ─────────────────────────────────────────────────────── */
+.kv-card {
+  /* ⚠ **`clip`, NOT `hidden`, and the difference is load-bearing** (2026-09-27). Both clip the same
+     way, but `hidden` makes this a SCROLL CONTAINER — and a `position: sticky` descendant then
+     sticks to this box, which never scrolls, so it does not stick at all. The instrument view's
+     head has to stay clear of the pinned transport (see the phone block), and `clip` is what lets
+     it. Same reasoning as `.kv-score`'s own `overflow-y: clip`. */
+  overflow: clip;
+}
+
+/* ── The engraved score ─────────────────────────────────────────────────── */
+/* The engraved score itself. Wide sheets scroll INSIDE here sideways; the page never does.
+   ⚠ No transform/zoom/scale may ever be set on this element — tools/render/render.ts crops
+   training strips by rect from the SVG inside it, and rects do not survive a transform.
+
+   ⚠ `overflow-y: clip` IS LOAD-BEARING, and it is not tidiness (owner, 2026-09-03: "there are two
+   scrollbars, the sheet must not have one"). Setting `overflow-x` alone makes the browser compute
+   `overflow-y: visible` to `auto`, and this box then measured 17px TALLER than it is — so the sheet
+   grew its own vertical scrollbar beside the page's, with a thumb nearly the full height because
+   there was nothing to scroll to. The 17px is not content: the accidental legend under the staff
+   sets Bravura on its glyph spans, and an inline box's LAYOUT overflow is taken from the font's
+   ascent/descent, not from its line-height or its ink — Bravura's are enormous, so the legend
+   reported 105px of scroll height inside a 72px box while every bounding rect fitted. Measured on
+   beyati-delisin: 2421 vs 2404 before, 2404 vs 2404 after, and nothing on screen moved.
+   `clip` computes to `hidden` next to an `auto` axis, which is exactly what is wanted: no
+   scrollbar, no scrolling, and the sideways scroll on the other axis still works. */
+.kv-score {
+  overflow-x: auto;
+  overflow-y: clip;
+}
+
+/* ── Hidden but present ─────────────────────────────────────────────────── */
+/* Present to assistive tech and to Playwright's setInputFiles, invisible to everyone else.
+   ⚠ Never swap this for `display: none` on a real <input>: that drops it from the
+   accessibility tree, and the deploy checks drive `#page-input` / `#strips-input` directly. */
+.kv-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

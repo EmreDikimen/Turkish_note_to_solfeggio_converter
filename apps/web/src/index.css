@@ -1,8 +1,32 @@
-/* The app's stylesheet, in three layers. Vite inlines these @imports at build time, so this is
-   one file to the browser — no extra request, and the order below is the cascade order.
-     tokens — the vocabulary (colour, type, space); no selectors but :root
-     base   — element defaults and the Bravura @font-face
-     app    — the .kv-* components */
-@import "./styles/tokens.css";
-@import "./styles/base.css";
-@import "./styles/app.css";
+/* The app's stylesheet. Vite inlines these @imports at build time, so this is one file to the
+   browser — no extra request.
+
+   ⚠ CASCADE LAYERS decide who wins, not file order (2026-09-30, the Tezhip restyle):
+     theme     — Tailwind's variables (only the ones a utility uses are emitted)
+     tokens    — our colour/type vocabulary (tokens.css). ⚠ LAYERED ON PURPOSE: app.css redefines
+                 some of them (`--control-h` → 44px under a coarse pointer), and an unlayered token
+                 would beat that redefinition — measured, every phone control shrank to 30px
+     base      — element defaults and the Bravura @font-face
+     legacy    — the hand-written .kv-* sheets (layout.css: the phone/fullscreen state machine;
+                 app.css: components not yet moved to utilities)
+     utilities — Tailwind classes written on the components
+   then, UNLAYERED and therefore above every layer: contract.css (the rules checks and the strip
+   renderer depend on — see its header).
+
+   ⚠ NO PREFLIGHT. Tailwind's reset is deliberately not imported: it sets `svg { display: block }`,
+   zeroes every margin and resets headings — it would move the engraved score, which is the
+   training-strip source, and restyle every component at once. base.css is our reset.
+   ⚠ `source(none)` + the two @source lines: Tailwind scans only the app's code, never `public/`
+   (hundreds of MB of models and scores). */
+@layer theme, tokens, base, legacy, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "./styles/theme.css";
+@import "./styles/tokens.css" layer(tokens);
+@import "./styles/base.css" layer(base);
+@import "./styles/app.css" layer(legacy);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@import "./styles/contract.css";
+
+@source "./";
+@source "../index.html";

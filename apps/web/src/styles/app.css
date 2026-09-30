@@ -1268,12 +1268,12 @@ label.kv-btn.is-disabled {
   border: 1px solid var(--rule);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  /* ⚠ **`clip`, NOT `hidden`, and the difference is load-bearing** (2026-09-27). Both clip the same
-     way, but `hidden` makes this a SCROLL CONTAINER — and a `position: sticky` descendant then
-     sticks to this box, which never scrolls, so it does not stick at all. The instrument view's
-     head has to stay clear of the pinned transport (see the phone block), and `clip` is what lets
-     it. Same reasoning as `.kv-score`'s own `overflow-y: clip`. */
-  overflow: clip;
+}
+
+/* The engraved score's box. Its overflow pair is in contract.css (unlayered, so no utility can
+   override it); the padding stays here because full screen narrows it. */
+.kv-score {
+  padding: var(--space-4);
 }
 
 .kv-card__head {
@@ -1323,26 +1323,6 @@ label.kv-btn.is-disabled {
   margin-top: 2px;
 }
 
-/* The engraved score itself. Wide sheets scroll INSIDE here sideways; the page never does.
-   ⚠ No transform/zoom/scale may ever be set on this element — tools/render/render.ts crops
-   training strips by rect from the SVG inside it, and rects do not survive a transform.
-
-   ⚠ `overflow-y: clip` IS LOAD-BEARING, and it is not tidiness (owner, 2026-09-03: "there are two
-   scrollbars, the sheet must not have one"). Setting `overflow-x` alone makes the browser compute
-   `overflow-y: visible` to `auto`, and this box then measured 17px TALLER than it is — so the sheet
-   grew its own vertical scrollbar beside the page's, with a thumb nearly the full height because
-   there was nothing to scroll to. The 17px is not content: the accidental legend under the staff
-   sets Bravura on its glyph spans, and an inline box's LAYOUT overflow is taken from the font's
-   ascent/descent, not from its line-height or its ink — Bravura's are enormous, so the legend
-   reported 105px of scroll height inside a 72px box while every bounding rect fitted. Measured on
-   beyati-delisin: 2421 vs 2404 before, 2404 vs 2404 after, and nothing on screen moved.
-   `clip` computes to `hidden` next to an `auto` axis, which is exactly what is wanted: no
-   scrollbar, no scrolling, and the sideways scroll on the other axis still works. */
-.kv-score {
-  overflow-x: auto;
-  overflow-y: clip;
-  padding: var(--space-4);
-}
 
 /* ── The edit toolbox (armed tools) ─────────────────────────────────────── */
 

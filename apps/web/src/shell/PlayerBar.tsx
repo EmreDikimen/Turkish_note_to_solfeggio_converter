@@ -35,7 +35,13 @@ export function PlayerBar({
   settingsOpen,
   onSettings,
   phone,
+  voice,
+  voiceState,
 }: {
+  /** The voice that plays, mirrored here because the picker lives in the (unmounted) settings
+   *  panel — a check reads `#transport-pinned[data-instrument]`. */
+  voice: string;
+  voiceState: string;
   title: string;
   meta: string;
   canPlay: boolean;
@@ -79,6 +85,8 @@ export function PlayerBar({
     <div
       ref={ref}
       id="transport-pinned"
+      data-instrument={voice}
+      data-voice-state={voiceState}
       role="region"
       aria-label={TR.player.label}
       className={
@@ -158,7 +166,7 @@ export function PlayerBar({
           >
             <SlidersHorizontal size={18} aria-hidden="true" />
             {!phone && <span>{TR.player.settings}</span>}
-            {phone && <span className="sr-only">{TR.player.settings}</span>}
+            {phone && <span className="kv-visually-hidden">{TR.player.settings}</span>}
           </button>
         </div>
       </div>

@@ -273,6 +273,14 @@ async function main() {
     const box = page.locator('[data-omr="rename-input"]');
     await box.fill("yeniden adlandırıldı");
     await box.press("Enter");
+    // ⚠ The rename is written to IndexedDB ASYNCHRONOUSLY, and the list re-reads the store when the
+    // write resolves — so wait for the ROW to carry the new name before reloading. Reloading on the
+    // same tick as Enter raced the write and failed on a fast machine (2026-09-30, the first run
+    // that ever reached this step). The reload below still proves it was written for good.
+    await page
+      .locator('[data-omr="recent-item"][data-page-name="yeniden adlandırıldı"]')
+      .waitFor({ state: "attached", timeout: 10000 })
+      .catch(() => {});
     // ⭐ Reload again. A rename that reached only React state, or only the store, would pass every
     // assertion made before this line — which is exactly how it could have shipped reverting itself
     // on the reader's next keystroke (App's save effect writes `saved.name` back).

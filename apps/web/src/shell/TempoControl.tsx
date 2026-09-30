@@ -141,7 +141,7 @@ export function TempoControl({
         onStep={stepBpm}
         onEnd={commitStep}
       />
-      <label className="sr-only" htmlFor="bpm">
+      <label className="kv-visually-hidden" htmlFor="bpm">
         {TR.player.tempoLabel}
       </label>
       <input

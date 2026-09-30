@@ -251,6 +251,10 @@ export function SettingsPanel({
       onOpenChange={onOpenChange}
       swipeDirection={phone ? "down" : "right"}
       modal={phone}
+      // ⚠ On a wide window the panel stays open while you press Çal, drag the tempo or click the
+      // score — adjusting the sound while listening is the point of a non-modal panel. It closes by
+      // ✕, Esc or the Ayarlar button. (A phone's modal sheet closes on a tap outside as usual.)
+      disablePointerDismissal={!phone}
     >
       <Drawer.Portal>
         {phone && (

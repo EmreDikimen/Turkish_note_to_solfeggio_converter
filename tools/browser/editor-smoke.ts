@@ -23,6 +23,7 @@ import { createServer } from "vite";
 import { groupMeasures, measureOfEvent, type NoteModelDocument } from "@turkish-omr/core";
 import { tupletRunFrom } from "../render/rhythm";
 import { answerVoicePrompt } from "./voicePrompt";
+import { closeSettings, openSettings } from "./settingsPanel";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -524,6 +525,8 @@ async function main() {
   // must make it bigger by exactly the strokes the usul contributes — which is the only way from
   // here to prove `buildPercussionTrack` ran and its hits were handed to the backend. (Whether they
   // SOUND like a düm is an ears question: docs/MANUAL_CHECKS.md.)
+  // ⚠ UI rebuild: the sound / rhythm controls live in the settings panel, mounted only while open.
+  await openSettings(page);
   const perc = page.locator("#percussion");
   const strokesInUsul = Number(await perc.getAttribute("data-usul-strokes"));
   check("the selected usul has a drafted stroke pattern", strokesInUsul > 0, true);
@@ -742,6 +745,7 @@ async function main() {
   await page.locator("#percussion-kit").selectOption("darbuka");
   await perc.uncheck(); // leave the transport as the rest of this run expects it
   await page.waitForTimeout(200);
+  await closeSettings(page); // it covers the right of the score, and the next steps click notes
 
   // Now edit a note in the LAST system, so "it started at the edited bar" and "it started at the
   // top" cannot look the same. Skip notes already valued 1/8 — those apply as a no-op, which would
@@ -1541,7 +1545,7 @@ async function main() {
   // ⚠ Read BEFORE the tab is opened, and it is half of the next-but-one assertion: without it,
   // "the sound is a violin here" could just as well be a page that was already on a violin.
   check("the sound starts on the built-in tone",
-    await page.getAttribute("#instrument", "data-instrument"), "sine");
+    await page.getAttribute("#transport-pinned", "data-instrument"), "sine");
   await page.locator("#view-instrument").click();
   await page.waitForSelector("#instrument-view", { timeout: 10000 });
   // ⚠ Since 2026-09-27 opening the tab ASKS before its voice downloads; "yes" is the path whose
@@ -1556,7 +1560,7 @@ async function main() {
   // the voice the picker already shows. The transport's own attribute is the assertion — this
   // page's `data-instrument` would say "violin" either way, which is exactly the bug being guarded.
   check("⭐ …and opening it moved the SOUND to that instrument, with nothing touched",
-    await page.getAttribute("#instrument", "data-instrument"), "violin");
+    await page.getAttribute("#transport-pinned", "data-instrument"), "violin");
   check("…drawing a violin and no kanun", await page.locator("#fingerboard").count() + await page.locator("#kanun").count() * 10, 1);
 
   await page.locator("#instrument-pick").selectOption("kanun");
@@ -1564,10 +1568,10 @@ async function main() {
   await page.waitForSelector("#kanun", { timeout: 10000 });
   check("picking Kanun swaps the drawing", await page.getAttribute("#instrument-view", "data-instrument"), "kanun");
   check("…and the violin goes away", await page.locator("#fingerboard").count(), 0);
-  check("⭐ …and the SOUND follows it", await page.getAttribute("#instrument", "data-instrument"), "kanun");
+  check("⭐ …and the SOUND follows it", await page.getAttribute("#transport-pinned", "data-instrument"), "kanun");
   await page.locator("#instrument-pick").selectOption("violin");
   check("…but a voice already said yes to is not asked about twice", await answerVoicePrompt(page, "confirm"), null);
-  check("switching back moves the sound back", await page.getAttribute("#instrument", "data-instrument"), "violin");
+  check("switching back moves the sound back", await page.getAttribute("#transport-pinned", "data-instrument"), "violin");
 
   await openInstrument(page, "violin");
 
@@ -2228,28 +2232,14 @@ async function main() {
       const r = ph.getBoundingClientRect(), b = el.getBoundingClientRect();
       return r.right > b.left && r.left < b.right;
     });
-  check("a narrow window really does hide part of the sheet", (await sideBox()).max > 200, true);
-
-  await page.fill("#bpm", "200");
-  await page.locator("#play").click();
-  check("playback is up on the narrow window", (await waitForPlayhead()) != null, true);
-  // Park the sheet at its far right: the cursor is at the START of a row, so it is now off to the
-  // left of the box — the sideways version of the parking above.
-  await page.evaluate(() => {
-    const el = document.querySelector<HTMLElement>(".kv-score")!;
-    el.scrollLeft = el.scrollWidth;
-  });
-  await page.waitForTimeout(150);
-  const parkedRight = (await sideBox()).left;
-  check("the sheet is parked away from the cursor", parkedRight > 200, true);
-  const fromRow = await phRow();
-  for (let i = 0; i < 200 && (await phRow()) === fromRow; i++) await page.waitForTimeout(100);
-  await page.waitForTimeout(900);
-  const cameBack = (await sideBox()).left;
-  console.log(`  parked sideways at ${parkedRight}, followed back to ${cameBack}`);
-  check("the sheet slid back to the cursor", await playheadInBox(), true);
-  check("…by scrolling, not by staying put", cameBack < parkedRight - 100, true);
-  await page.locator("#stop").click();
+  // ⭐ UI REBUILD (2026-09-30): the score now shares the row with the library, so it is
+  // re-engraved to its column at EVERY width (`fitContentW` in App.tsx) — the sideways axis this arm
+  // used to follow no longer exists outside a render job. What is asserted instead is the reason:
+  // a narrow window gets a narrower engraving, not a hidden right-hand side.
+  const narrow = await sideBox();
+  console.log(`  at 820px the sheet overflows its box by ${narrow.max}px`);
+  check("⭐ a narrow window re-engraves the sheet instead of hiding part of it", narrow.max < 24, true);
+  check("…and the playhead helper still finds the box", typeof (await playheadInBox()), "boolean");
   await page.setViewportSize({ width: 1280, height: 720 });
 
   // --- Çal and Dur stay reachable wherever you have scrolled to (owner, 2026-09-05) --------------
@@ -2282,6 +2272,7 @@ async function main() {
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
 
+  await openSettings(page); // the makam picker and its hint live in the settings panel
   const hint = page.locator('[data-omr="makam-intonation"]');
   const rule = page.locator('[data-omr="makam-rule"]');
   const setMakam = async (slug: string) => {
@@ -2338,7 +2329,9 @@ async function main() {
   await setMakam("");
   check("no makam, no hint", await hint.count(), 0);
 
-  console.log("\nÇalma stays pinned to the top of the page");
+  // ⭐ UI rebuild (2026-09-30): the transport is a PLAYER BAR fixed to the bottom of the window,
+  // the way a music app's "now playing" bar is — it replaced the Çalma row that stuck to the top.
+  console.log("\nthe player bar stays on screen");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json&follow=0`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
 
@@ -2347,36 +2340,35 @@ async function main() {
       const el = document.querySelector(s);
       return el ? el.getBoundingClientRect().toJSON() : null;
     }, sel);
+  const vh = await page.evaluate(() => window.innerHeight);
 
-  check("the corner pair is gone", await page.locator("#sticky-transport").count(), 0);
-  const restedTop = (await boxOf("#transport-pinned")).top;
-  check("the pinned row starts where it was drawn", restedTop > 100, true);
+  const restBar = await boxOf("#transport-pinned");
+  check("the player bar sits on the bottom edge", Math.abs(restBar.bottom - vh) < 2, true);
+  check("…and is a bar, not half the window", restBar.height < 120, true);
+  check("the settings are not on the page until asked for", await page.locator("#transport-settings").count(), 0);
 
   await page.evaluate(
     () => window.scrollTo(0, document.documentElement.scrollHeight - window.innerHeight),
   );
   await page.waitForTimeout(300);
-  const pinnedBox = await boxOf("#transport-pinned");
-  console.log(`  Çalma rested at y=${Math.round(restedTop)}, pinned at y=${Math.round(pinnedBox.top)}`);
-  check("⭐ scrolling to the bottom leaves Çalma at the top of the window", pinnedBox.top < 2, true);
-  check("…with Çal itself on screen", (await boxOf("#play")).bottom < pinnedBox.bottom + 1, true);
-  // The rest of the bar is the box that follows it, and it must have gone with the page.
-  const restBox = await boxOf("#transport-pinned + .kv-transport");
-  check("⭐ …and Ritim and Perde scrolled away with the page", restBox.bottom < 0, true);
-  check("the pinned row is not half the window", pinnedBox.height < 120, true);
+  const scrolledBar = await boxOf("#transport-pinned");
+  check("⭐ scrolled to the end, the bar has not moved", Math.abs(scrolledBar.top - restBar.top) < 2, true);
+  check("…with Çal itself on screen", (await boxOf("#play")).bottom <= vh, true);
+  // The last system must be reachable: the page leaves room for the bar under the score.
+  const cardBottom = (await boxOf(".kv-card")).bottom;
+  check("⭐ …and the end of the score is above it, not under it", cardBottom <= scrolledBar.top + 1, true);
 
-  // It is the real transport, not a picture of one: press it from down here.
   await page.locator("#play").click();
   await page.waitForTimeout(600);
-  check("Çal works from the pinned row", await page.getAttribute("#play", "data-play-state"), "playing");
+  check("Çal works from the bar", await page.getAttribute("#play", "data-play-state"), "playing");
   check("…and the page did not jump back to the top", await page.evaluate(() => window.scrollY) > 200, true);
+  await openSettings(page);
+  check("the settings open beside the music while it plays", await page.getAttribute("#play", "data-play-state"), "playing");
   await page.locator("#stop").click();
   await page.waitForTimeout(400);
-  check("Dur works from there too", await page.getAttribute("#play", "data-play-state"), "stopped");
-
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(400);
-  check("scrolling back puts the row where it was drawn", Math.abs((await boxOf("#transport-pinned")).top - restedTop) < 2, true);
+  check("Dur works with the panel open", await page.getAttribute("#play", "data-play-state"), "stopped");
+  check("…and a click on the bar did not close the panel", await page.locator("#transport-settings").count(), 1);
+  await closeSettings(page);
 
   check("no uncaught page errors", pageErrors.length ? pageErrors.join("; ") : "none", "none");
 

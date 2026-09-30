@@ -619,8 +619,9 @@ export function App() {
     setSelectedTuplet(null); // and so does a selected one
     setLastEditMeasure(null); // nothing edited yet → the palette's Çal starts at the top
     setWriteOut(false);
-    // The list is a way back, not the destination: once there is a score on screen it folds away.
-    setRecentOpen(false);
+    // (UI rebuild: the list no longer folds away when a score arrives. It used to, because it sat
+    // ABOVE the score on one long page; in the shell it is the library — its own sidebar or tab —
+    // and a music app's library does not close itself when you press play.)
     // ⚠ PHONE ONLY, and a wide window sees none of it: a new score arrives on the READING tab.
     // The editing tab's armed tool and selection point at a document that has just been replaced,
     // and on a phone the tab bar is the only thing that says which section you are looking at.
@@ -2549,7 +2550,7 @@ export function App() {
         </main>
       ) : (
         // ── Wide window: the library beside the score, the player along the bottom ──
-        <div className="kv-desk grid min-h-dvh grid-cols-[300px_minmax(0,1fr)]">
+        <div className="kv-desk grid min-h-dvh grid-cols-[300px_minmax(0,1fr)] max-[1100px]:grid-cols-[260px_minmax(0,1fr)]">
           <aside
             className="kv-sidebar sticky top-0 flex h-dvh flex-col gap-5 overflow-y-auto border-r border-rule bg-raised/60 px-5 pt-6"
             style={{ paddingBottom: doc ? "calc(var(--player-h, 0px) + 20px)" : 20 }}
@@ -2598,6 +2599,8 @@ export function App() {
           settingsOpen={settingsOpen}
           onSettings={() => setSettingsOpen((v) => !v)}
           phone={isPhone}
+          voice={voice}
+          voiceState={voiceStatus.state}
         />
       )}
       {doc && (

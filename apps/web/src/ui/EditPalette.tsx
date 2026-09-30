@@ -204,8 +204,10 @@ function writeStored(v: Stored): void {
  *  folding makes it shorter, and a box parked against the bottom would otherwise leave a gap, but
  *  UNfolding makes it taller, which is the case that would push its tools off the screen. */
 function onScreen(p: Spot, el: HTMLElement): Spot {
+  // The shell's player bar is fixed along the bottom (UI rebuild): the box must stop above it.
+  const reserve = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--player-h")) || 0;
   const maxX = Math.max(EDGE, window.innerWidth - el.offsetWidth - EDGE);
-  const maxY = Math.max(EDGE, window.innerHeight - el.offsetHeight - EDGE);
+  const maxY = Math.max(EDGE, window.innerHeight - reserve - el.offsetHeight - EDGE);
   return {
     x: Math.min(Math.max(p.x, EDGE), maxX),
     y: Math.min(Math.max(p.y, EDGE), maxY),
@@ -214,8 +216,15 @@ function onScreen(p: Spot, el: HTMLElement): Spot {
 
 /** Where it opens the first time: in the margin to the LEFT of the score card, so it covers no
  *  music on a wide window. On a narrow one there is no margin to hide in and `onScreen` pins it to
- *  the left edge, where it overlaps the card's padding and the clef — never a notehead. */
+ *  the left edge, where it overlaps the card's padding and the clef — never a notehead.
+ *  ⚠ UI rebuild: where the shell has a library sidebar, the toolbox opens OVER it — the library is
+ *  the one thing on screen nobody needs while editing, and it covers no music. */
 function defaultSpot(el: HTMLElement): Spot {
+  const side = document.querySelector(".kv-sidebar");
+  if (side) {
+    const r = side.getBoundingClientRect();
+    return onScreen({ x: r.left + EDGE * 2, y: EDGE * 2 }, el);
+  }
   const card = document.querySelector(".kv-card");
   const left = card ? card.getBoundingClientRect().left : window.innerWidth;
   return onScreen({ x: left - el.offsetWidth - EDGE, y: DEFAULT_TOP }, el);

@@ -7,11 +7,13 @@
  * still loses to a utility.
  */
 
-/* ── The upload box as the sidebar's first item ─────────────────────────── */
-.kv-sidebar .kv-hero {
+/* ── The upload box as the library's first item (sidebar, and the phone's Kütüphane tab) ── */
+.kv-sidebar .kv-hero,
+.kv-phone .kv-hero {
   margin: 0;
 }
-.kv-sidebar .kv-hero.is-compact .kv-drop {
+.kv-sidebar .kv-hero.is-compact .kv-drop,
+.kv-phone .kv-hero.is-compact .kv-drop {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-1);
@@ -20,23 +22,28 @@
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   box-shadow: var(--shadow-card);
 }
-.kv-sidebar .kv-hero.is-compact .kv-drop:hover {
+.kv-sidebar .kv-hero.is-compact .kv-drop:hover,
+.kv-phone .kv-hero.is-compact .kv-drop:hover {
   border-color: var(--gold);
 }
-.kv-sidebar .kv-hero.is-compact .kv-drop__lead {
+.kv-sidebar .kv-hero.is-compact .kv-drop__lead,
+.kv-phone .kv-hero.is-compact .kv-drop__lead {
   font-size: var(--text-lg);
   font-weight: 600;
 }
-.kv-sidebar .kv-hero.is-compact .kv-drop__lead::before {
+.kv-sidebar .kv-hero.is-compact .kv-drop__lead::before,
+.kv-phone .kv-hero.is-compact .kv-drop__lead::before {
   content: "+ ";
   color: var(--gold);
 }
-.kv-sidebar .kv-hero.is-compact .kv-drop__hint {
+.kv-sidebar .kv-hero.is-compact .kv-drop__hint,
+.kv-phone .kv-hero.is-compact .kv-drop__hint {
   margin-left: 0;
   text-align: left;
   font-size: var(--text-xs);
 }
-.kv-sidebar .kv-hero.is-compact .kv-progress {
+.kv-sidebar .kv-hero.is-compact .kv-progress,
+.kv-phone .kv-hero.is-compact .kv-progress {
   width: 100%;
 }
 
@@ -57,7 +64,9 @@
   display: none;
 }
 .kv-phone .kv-card__tools {
+  flex: 1 1 100%;
   width: 100%;
+  margin-left: 0;
 }
 .kv-phone .kv-card__tools > .kv-seg {
   flex: 1 1 auto;
@@ -81,4 +90,29 @@
 .kv-fullscreen .kv-score {
   padding: var(--space-2);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+}
+
+/* ── The edit toolbox in the shell ───────────────────────────────────────── */
+/* Phone, Düzenle tab: docked above the TAB BAR (the player bar is not drawn while editing on a
+   phone — the toolbox carries its own Çal / Dur). The old rule keyed on `.kv-page[data-mtab]`;
+   `--tabs-h` is published by shell/NavBar.tsx. The `!important` matches the one it replaces: it has
+   to beat `.kv-toolbox`'s own four `!important` insets, and does by specificity. */
+#app[data-mtab="duzenle"] .kv-toolbox {
+  bottom: calc(var(--tabs-h, 56px) + var(--space-2)) !important;
+  max-height: min(51vh, 390px);
+  max-height: var(--kv-toolbox-h, min(51dvh, 390px));
+}
+#app[data-mtab="duzenle"] .kv-phone {
+  padding-bottom: calc(var(--kv-toolbox-h, min(51dvh, 390px)) + var(--tabs-h, 56px) + var(--space-5));
+}
+/* Wide window: never under the player bar. */
+#app:not([data-mtab]) .kv-toolbox {
+  max-height: calc(100vh - var(--player-h, 0px) - 24px);
+  max-height: calc(100dvh - var(--player-h, 0px) - 24px);
+}
+/* On a phone, Düzenle is a tab and undo / redo live in the toolbox's foot — the card head's copies
+   would say the same thing twice on the screen with the least room. Both stay in the DOM. */
+.kv-phone #edit-toggle,
+.kv-phone .kv-card__undo {
+  display: none;
 }

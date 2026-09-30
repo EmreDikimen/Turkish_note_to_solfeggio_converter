@@ -2538,7 +2538,10 @@ export function App() {
               </div>
             ) : null}
             {doc ? uploadHero : <Welcome>{uploadHero}</Welcome>}
-            {recentPages}
+            <div>
+              <SideHeading>{TR.library.title}</SideHeading>
+              {recent.length ? recentPages : <p className="px-1 text-(length:--text-sm) text-ink-faint">{TR.library.empty}</p>}
+            </div>
             {advancedPanel}
             <LegalFooter className="mt-4" />
           </div>
@@ -2574,7 +2577,9 @@ export function App() {
         </div>
       )}
 
-      {doc && !fullScreen && (
+      {/* ⚠ Not on a phone while editing: the docked toolbox has its own Çal / Dur, and two bars
+          stacked over the tab bar would leave no music on the screen. */}
+      {doc && !fullScreen && !(isPhone && editMode) && (
         <PlayerBar
           title={playerTitle}
           meta={playerMeta}

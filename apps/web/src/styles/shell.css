@@ -1,0 +1,84 @@
+/**
+ * The older components, placed in the music-player shell (UI rebuild, 2026-09-30).
+ *
+ * The shell itself is written in utilities on its own elements (src/shell/). This file is only for
+ * the components that predate it — the upload box, the score card's head, the recent list — where
+ * the shell changes how they must sit. Layered `legacy`, after app.css, so it wins over app.css and
+ * still loses to a utility.
+ */
+
+/* ── The upload box as the sidebar's first item ─────────────────────────── */
+.kv-sidebar .kv-hero {
+  margin: 0;
+}
+.kv-sidebar .kv-hero.is-compact .kv-drop {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper-raised);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow: var(--shadow-card);
+}
+.kv-sidebar .kv-hero.is-compact .kv-drop:hover {
+  border-color: var(--gold);
+}
+.kv-sidebar .kv-hero.is-compact .kv-drop__lead {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.kv-sidebar .kv-hero.is-compact .kv-drop__lead::before {
+  content: "+ ";
+  color: var(--gold);
+}
+.kv-sidebar .kv-hero.is-compact .kv-drop__hint {
+  margin-left: 0;
+  text-align: left;
+  font-size: var(--text-xs);
+}
+.kv-sidebar .kv-hero.is-compact .kv-progress {
+  width: 100%;
+}
+
+/* ── The recent list without its own frame inside the sidebar ──────────── */
+.kv-sidebar .kv-recent {
+  margin: 0;
+}
+
+/* ── The score card on a phone ───────────────────────────────────────────── */
+/* The head's corner group (save, full screen) sits out of the flow; keep the title and the meta
+   line clear of it. */
+.kv-phone .kv-card__head {
+  padding-right: calc(2 * var(--control-h) + var(--space-4));
+}
+/* Düzenle is a TAB on a phone, so the card's own toggle is not drawn on the Nota tab. It stays in
+   the DOM (the tab routes through the same `applyEditMode`). */
+#app[data-mtab="nota"] #edit-toggle {
+  display: none;
+}
+.kv-phone .kv-card__tools {
+  width: 100%;
+}
+.kv-phone .kv-card__tools > .kv-seg {
+  flex: 1 1 auto;
+  width: 100%;
+}
+.kv-phone .kv-card__tools > .kv-seg > .kv-seg__btn {
+  flex: 1 1 0;
+  white-space: nowrap;
+}
+
+/* ── Full screen: the card is the page ──────────────────────────────────── */
+.kv-fullscreen .kv-card {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.kv-fullscreen .kv-card__head,
+.kv-fullscreen .kv-hint {
+  display: none;
+}
+.kv-fullscreen .kv-score {
+  padding: var(--space-2);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+}

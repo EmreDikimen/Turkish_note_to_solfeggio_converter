@@ -44,6 +44,7 @@ async function measure(page: Page) {
     score: ".kv-score",
     card: ".kv-card",
     pinned: "#transport-pinned",
+    sidebar: ".kv-sidebar",
     settings: "#transport-settings",
     pitchToggle: "#pitch-toggle",
     tabs: "#mobile-tabs",
@@ -97,6 +98,11 @@ async function main() {
       await page.locator(".kv-card").scrollIntoViewIfNeeded();
       await shot(page, `desk-${scheme}-3-card`);
 
+      await page.locator("#settings-open").click();
+      await page.waitForTimeout(500);
+      await shot(page, `desk-${scheme}-3b-settings`);
+      await page.locator("#settings-close").click();
+      await page.waitForTimeout(400);
       await page.locator("#edit-toggle").click();
       await shot(page, `desk-${scheme}-4-edit`);
       await page.locator("#edit-toggle").click();
@@ -134,10 +140,10 @@ async function main() {
       }
       await shot(page, `phone-${scheme}-2-score`);
 
-      await page.locator("#pitch-toggle").click();
+      await page.locator("#settings-open").click();
       await page.waitForTimeout(500);
       await shot(page, `phone-${scheme}-3-fold`);
-      await page.locator("#pitch-toggle").click();
+      await page.locator("#settings-close").click();
       await page.waitForTimeout(500);
 
       await page.locator('[data-tab-id="duzenle"]').click();

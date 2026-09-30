@@ -28,6 +28,7 @@
 @import "./styles/base.css" layer(base);
 @import "./styles/components.css" layer(components);
 @import "./styles/app.css" layer(legacy);
+@import "./styles/shell.css" layer(legacy);
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 @import "./styles/contract.css";
 

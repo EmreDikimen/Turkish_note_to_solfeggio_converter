@@ -67,7 +67,7 @@ export const TR = {
     tabs: {
       nota: "Nota",
       duzenle: "Düzenle",
-      pages: "Sayfalar",
+      pages: "Kütüphane",
     },
     // Full screen (owner, 2026-09-11; moved into the card's tools 2026-09-26).
     // ⚠ **THE HINT IS GONE BECAUSE IT WENT STALE, not to save room.** It read *"Nota ekranın
@@ -83,6 +83,25 @@ export const TR = {
     fullscreenTitle: "Notayı tek başına göster — diğer her şey gizlenir",
     fullscreenExit: "Çık",
     fullscreenExitTitle: "Tam ekrandan çık",
+  },
+
+  // The music-player shell (the ui-rebuild branch, 2026-09-30): the bar that is always on screen,
+  // the settings it opens, and the library beside the score.
+  player: {
+    label: "Çalma denetimleri",
+    tempoLabel: "Tempo (vuruş/dakika)",
+    settings: "Ayarlar",
+    settingsTitle: "Ses, ritim ve perde ayarları",
+    settingsLead: "Çalgı sesi, usul, makam ve transpozisyon — değişiklikler hemen uygulanır.",
+    close: "Kapat",
+    follow: "Takip",
+    nothing: "Nota yok",
+  },
+  library: {
+    title: "Kütüphane",
+    lead: "Okuduğunuz sayfalar burada durur.",
+    upload: "Yeni sayfa oku",
+    empty: "Henüz okunmuş bir sayfa yok. İlk notanızı yükleyin.",
   },
 
   // The list of pages this browser has already read (2026-09-05). ⚠ `note` is not filler: the

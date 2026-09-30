@@ -46,6 +46,10 @@ import {
 import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
 import { GoldRule } from "./ui/ornament/GoldRule";
+import { PlayerBar } from "./shell/PlayerBar";
+import { SettingsPanel } from "./shell/SettingsPanel";
+import { NavBar } from "./shell/NavBar";
+import { Brand, LegalFooter, SideHeading, Welcome } from "./shell/Chrome";
 import {
   clearPages,
   deletePage,
@@ -77,12 +81,11 @@ import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline
 import { loadImage } from "./omr/preprocess";
 import { UploadHero } from "./ui/UploadHero";
 import { RecentPages } from "./ui/RecentPages";
-import { TransportBar } from "./ui/TransportBar";
 import { ScoreCard } from "./ui/ScoreCard";
 import { EditPalette, type PaletteRefusal, type Tool } from "./ui/EditPalette";
 import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
-import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
+import type { MobileTab } from "./ui/MobileTabs";
 import { FullScreenBar } from "./ui/FullScreen";
 import { useViewport } from "./usePhone";
 import { TR } from "./ui/strings";
@@ -362,6 +365,8 @@ export function App() {
   // score (2026-09-26). Inline they cost 314px of a 800px screen and left 32px of music, measured;
   // as a sheet they cost the 44px of the button that opens them.
   const [pitchOpen, setPitchOpen] = useState(false);
+  // The player bar's settings panel (UI rebuild): a bottom sheet on a phone, a side panel elsewhere.
+  const [settingsOpen, setSettingsOpen] = useState(false);
   /**
    * Which export is in flight, and the flag that mounts the hidden PAPER-WIDTH engraving.
    *
@@ -1155,6 +1160,7 @@ export function App() {
     setMobileTab(next);
     // A sheet belongs to the screen it was opened on.
     setPitchOpen(false);
+    setSettingsOpen(false);
     if (next === "duzenle") {
       if (!editMode) applyEditMode(true);
     } else if (editMode) {
@@ -1223,7 +1229,11 @@ export function App() {
     // there, so a fit gated on it switched off in landscape — measured at 844×390: the sheet hid
     // **242px** while portrait fitted exactly. Fitting is a question about the DEVICE, not about
     // how wide the window happens to be. Full screen keeps its own arm at any width and any device.
-    if (!hasDoc || (!phoneShaped && !fullScreen)) {
+    // ⚠ UI rebuild (2026-09-30): the wide window fits too now — the score shares the row with the
+    // library, so its column is narrower than the default 1000px page at most desktop widths.
+    // ⚠ NEVER on a render job: its page is pinned at the default width (contract.css) and a strip
+    // must be engraved exactly as every corpus was.
+    if (!hasDoc || SIG_TOLERANT) {
       setFitContentW(null);
       return;
     }
@@ -2201,10 +2211,291 @@ export function App() {
     })();
   }
 
+  const modals = (
+    <>
+    {makamPrompt && (
+        <MakamModal
+          detection={makamPrompt}
+          doc={doc}
+          onConfirm={(slug) => {
+            applyMakam(slug);
+            setMakamPrompt(null);
+          }}
+          // Dismissed without choosing: the detected makam is already applied, so this keeps it.
+          onDismiss={() => setMakamPrompt(null)}
+        />
+      )}
+  
+      {voiceAsk && (
+        <VoiceDownloadModal
+          voice={voiceAsk.voice}
+          label={findVoice(voiceAsk.voice)?.label ?? voiceAsk.voice}
+          onConfirm={() => {
+            voicesApproved.current.add(voiceAsk.voice);
+            voicesDeclinedOnOpen.current.delete(voiceAsk.voice);
+            setVoiceAsk(null);
+            voiceAsk.go();
+          }}
+          onCancel={() => {
+            setVoiceAsk(null);
+            voiceAsk.no?.();
+          }}
+        />
+      )}
+    </>
+  );
+  // ── The shell (UI rebuild, 2026-09-30) ──────────────────────────────────────────────────────
+  // Every piece below is built ONCE and placed by the layout that follows, so no element with a
+  // contract id (`#omr-status`, `#page-input`, `.kv-card`, …) can ever be mounted twice.
+  const uploadHero = (
+    <UploadHero
+      // The hero shrinks once a score is on screen. ⚠ This used to read `sampleFile === ""`,
+      // which meant the same thing only while a bundled sample auto-loaded: with SAMPLES empty
+      // `sampleFile` is ALWAYS "", so that test would open the app in the compact state with
+      // nothing on screen — the opposite of what a first-time visitor needs. `doc` is the fact.
+      compact={omrBusy || !!doc}
+      busy={omrBusy}
+      status={omrStatus}
+      error={error}
+      startedAt={readStartedAt}
+      onFile={readPageFile}
+    />
+  );
+  const recentPages = (
+    <RecentPages
+      items={recent}
+      currentId={saved?.id ?? null}
+      // A read in flight owns the document; opening a stored page under it would race the decode
+      // that is about to call `loadDoc`.
+      busy={omrBusy}
+      open={recentOpen}
+      onToggle={() => setRecentOpen((v) => !v)}
+      onOpen={openRecent}
+      onRemove={removeRecent}
+      onRename={renameRecent}
+      onClear={clearRecent}
+    />
+  );
+  const advancedPanel = (
+    <AdvancedPanel
+      doc={doc}
+      samples={SAMPLES}
+      sampleFile={sampleFile}
+      onSample={loadSample}
+      onLoadJson={onFile}
+      onStrips={onStrips}
+      omrBusy={omrBusy}
+      rawDecode={rawDecode}
+      accidentalMode={accidentalMode}
+      onAccidentalMode={setAccidentalMode}
+      showLyrics={showLyrics}
+      lyricHyphens={lyricHyphens}
+      onLyricHyphens={setLyricHyphens}
+      showRepeats={showRepeats}
+      onShowRepeats={setShowRepeats}
+      canWriteOut={structure != null}
+      writeOut={writeOut}
+      // Writing the score out long makes every repeated bar a COPY, and an edit aimed at a copy
+      // would land on the wrong note — so the view and edit mode are mutually exclusive.
+      onWriteOut={(v) => {
+        setWriteOut(v);
+        if (v) {
+          setEditMode(false);
+          setSelectedNote(null);
+          armTool(null);
+        }
+      }}
+      sheetView={viewMode === "sheet"}
+      strips={strips}
+      selectedStripId={selectedStripId}
+      onSelectStrip={setSelectedStripId}
+    />
+  );
+  const scoreCard = doc ? (
+    <ScoreCard
+      doc={doc}
+      // The heading shows the name the reader gave this page, and offers to change it. Null
+      // for anything that is not a stored page, which then reads the document as it always did.
+      pageId={saved?.id ?? null}
+      pageName={saved?.name ?? null}
+      onRename={renameRecent}
+      totalMs={timeline?.totalMs ?? null}
+      viewMode={viewMode}
+      // ⚠ NOT the bare setter: opening the instrument tab also switches the SOUND to the
+      // instrument the page draws (owner, 2026-09-04). See `applyViewMode`.
+      onViewMode={applyViewMode}
+      followPlayhead={followPlayhead}
+      // Remembered as it is set, not on unload: a reader who closes the tab straight after
+      // clicking still gets the answer they chose next time.
+      onFollowPlayhead={(v) => { setFollowPlayhead(v); writeFollow(v); }}
+      followInPinned
+      editMode={editMode}
+      // ⚠ The ONLY way in and out of edit mode — see `applyEditMode`, which also carries the
+      // phone's Düzenle tab. A second inline handler here would let the two drift apart.
+      onEditMode={applyEditMode}
+      // ⚠ Phone only, and only when full screen is OFF — the button is the way IN, and the
+      // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
+      // nothing new for any check at 1280×720.
+      onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
+      onExport={runExport}
+      onUndo={onUndo}
+      onRedo={onRedo}
+      canUndo={history.canUndo}
+      canRedo={history.canRedo}
+    >
+      {viewSwapping ? (
+        // ⚠ Same box, so the swap does not jump: it is the SCORE AREA that is being replaced.
+        <div className="kv-swap" role="status">
+          {TR.card.swapping}
+        </div>
+      ) : viewMode === "instrument" ? (
+        // ⚠ Both the document AND the timeline go in, and each view uses the one it needs:
+        // the violin takes `timeline`, because a fingerboard cares only what a note SOUNDS and
+        // that is the one place the makam bend and the transpose are already in `freqHz`; the
+        // kanun takes the document, because a course is a WRITTEN note. `makamDeltas` rides
+        // along for the kanun, which is the one bend a mandal can express. Neither view ever
+        // calls `buildTimeline` itself. Full reasoning in the two files' headers.
+        timeline && perf && drawnDoc && (
+          <InstrumentView
+            doc={perf.doc}
+            // ⚠ The WRITTEN score, for the measure card only — the same document the sheet
+            // draws, so a bar inside a repeat is ONE bar there however often it sounds. The
+            // performance above is what the three instrument drawings read. Swapping the two
+            // would draw the right notes on the wrong side of every repeat.
+            sheetDoc={drawnDoc}
+            timeline={timeline}
+            playPlan={perf.steps}
+            makamDeltas={makamDeltas}
+            playing={playState !== "stopped"}
+            getPositionMs={getPositionMs}
+            instrument={instrument}
+            onInstrument={applyInstrument}
+            voiceStatus={voiceStatus}
+            canPlay={!!timeline}
+            editMode={editMode}
+            onPlayMeasure={onPlayMeasure}
+            onEditMeasure={onEditMeasure}
+            renderBar={renderBar}
+            tuning={tuning}
+            onTuning={setTuning}
+          />
+        )
+      ) : (
+        drawnDoc && (
+        <SheetView
+          doc={drawnDoc}
+          // ⚠ The ONLY way the drawing is resized, and it is a re-engrave, not a zoom: fewer
+          // bars per system at the same note size. `.kv-score` may never be scaled — that
+          // SVG is the training-strip source (docs/APP-RULES.md). `undefined` = the default
+          // 1000px content area, which is every case but full screen.
+          contentWidth={fitContentW ?? undefined}
+          editMode={editMode}
+          accidentalMode={accidentalMode}
+          signatureOverride={SIG_OVERRIDE}
+          sigTolerant={SIG_TOLERANT}
+          showLyrics={showLyrics}
+          lyricHyphens={lyricHyphens}
+          playing={playState !== "stopped"}
+          getPositionMs={getPositionMs}
+          playPlan={perf?.playPlan}
+          followPlayhead={followPlayhead}
+          onSeekToMeasure={(m) => onSeekMs(playStartMs(m))}
+          selectedNote={selectedNote}
+          onSelectNote={onSelectNote}
+          onDeleteNote={onDeleteNote}
+          onNudgePitch={onNudgePitch}
+          armedTool={armed?.kind ?? null}
+          signTargets={signTargets}
+          openRepeat={openRepeat}
+          armedSign={armed?.kind === "structure" ? armed.mark : null}
+          repeatAnchor={repeatAnchor}
+          // A repeat is drawn on the BARLINES and has its own two-click path; every other
+          // sign belongs to a bar and lands wherever in it the click fell.
+          onPlaceMark={(bar) => {
+            if (armed?.kind === "structure" && armed.mark !== "repeat") onPlaceMark(bar, armed.mark);
+          }}
+          onRepeatEdge={onRepeatEdge}
+          onRepeatCancel={() => setRepeatAnchor(null)}
+          onRemoveMark={onRemoveMark}
+          armedRest={armed?.kind === "duration" && armed.rest === true}
+          onApplyTool={onApplyTool}
+          onInsertNote={onInsertNote}
+          tupletAnchor={tupletAnchor}
+          onTupletPick={onTupletPick}
+          selectedTuplet={selectedTuplet}
+          onTupletEdge={onTupletEdge}
+          onTupletRemove={onTupletRemove}
+          onLayout={onLayout}
+          highlightRect={selectedStrip?.rect ?? null}
+          repeatSpans={repeatSpans}
+          navMarks={navMarks}
+          textNoise={TEXT_NOISE}
+          slurNoise={SLUR_NOISE}
+          staccatoNoise={STACCATO_NOISE}
+          usulBarNoise={USUL_BAR_NOISE}
+          thinSharps={URL_THIN_SHARPS}
+          printNoise={PRINT_NOISE}
+          legacyTupletMark={URL_LEGACY_TUPLET}
+          concaveTuplet={URL_CONCAVE_TUPLET}
+        />
+        )
+      )}
+    </ScoreCard>
+  ) : null;
+  // What the player bar says is open: the name the reader gave the page, and its makam and usul.
+  const playerTitle = doc ? saved?.name || doc.title || doc.name : TR.player.nothing;
+  const playerMeta = doc
+    ? [makamSlug ? makamDisplay(makamSlug) : null, findUsul(usulName)?.label ?? null].filter(Boolean).join(" · ")
+    : "";
+
+  // ⚠ A RENDER JOB IS THE SCORE CARD AND NOTHING ELSE (docs/features/look.md). contract.css pins
+  // `#app[data-render="1"] > .kv-card` in literal px; no shell, no chrome, no player — so no
+  // design change can move a training strip.
+  if (SIG_TOLERANT) {
+    return (
+      <div
+        id="app"
+        className="kv-app min-h-dvh"
+        // `data-ready` is what the deploy checks wait for instead of matching the page's title text
+        // — the title is copy and will change; "a score is installed" is the fact they need.
+        data-ready={doc ? "1" : undefined}
+        // ⚠ PHONE ONLY — the attribute the `(max-width: 700px)` block reads to decide which sections
+        // are on screen. Absent on a wide window and before a score is installed, which is why the
+        // desktop layout and the first-visit upload page are untouched by the tab rules.
+        data-mtab={isPhone && doc ? mobileTab : undefined}
+        // ⚠ NOT gated on `isPhone`, and that is the whole landscape story. A phone turned sideways is
+        // 844px wide — past the 700px line — so a full screen that asked `isPhone` would switch
+        // itself off mid-read, at exactly the moment the owner asked it to keep working. Full screen
+        // is a MODE, not a width: its rules live outside the phone media query and hide every
+        // section themselves rather than leaning on the tab rules, which do disappear up there.
+        data-fullscreen={doc && fullScreen ? "1" : undefined}
+        // ⚠ Phone only, and only on the Nota tab — `app.css` turns `#transport-settings` into a
+        // bottom sheet there. Everywhere else the settings box is an ordinary part of the page.
+        // ⚠ DERIVED, not just stored: the sheet belongs to the Nota tab while READING, and deriving
+        // that here means it cannot be left open behind edit mode or another tab by a path that
+        // forgot to close it. `onMobileTab` still clears the intent so it does not spring back.
+        data-pitch={isPhone && doc && pitchOpen && mobileTab === "nota" && !editMode ? "open" : undefined}
+        // ⚠ Which view the card is showing, so the stylesheet can treat the instrument page
+        // differently from the score page — see the sticky head in the phone block.
+        data-view={doc ? viewMode : undefined}
+        // ⚠ A RENDER JOB (the URL carries `mode`, the same test as SIG_TOLERANT). contract.css then
+        // hides every piece of chrome and pins the score's position on the page in fixed pixels, so
+        // the strips render.ts cuts are independent of the app's design: a new font above the score
+        // used to move the sheet by a fraction of a pixel and change every strip's antialiasing
+        // (measured 2026-09-30: 147 of 302 strips). Owner decision the same day.
+        data-render={SIG_TOLERANT ? "1" : undefined}
+      >
+        {scoreCard}
+        {modals}
+      </div>
+    );
+  }
+
+
   return (
     <div
       id="app"
-      className="kv-page"
+      className="kv-app min-h-dvh"
       // `data-ready` is what the deploy checks wait for instead of matching the page's title text
       // — the title is copy and will change; "a score is installed" is the fact they need.
       data-ready={doc ? "1" : undefined}
@@ -2234,270 +2525,132 @@ export function App() {
       // (measured 2026-09-30: 147 of 302 strips). Owner decision the same day.
       data-render={SIG_TOLERANT ? "1" : undefined}
     >
-      <header className="kv-header">
-        <h1 className="kv-brand">
-          <span className="kv-brand__mark" aria-hidden="true">
-            &#xE282;
-          </span>
-          {TR.brand}
-        </h1>
-        <p className="kv-tagline">{TR.tagline}</p>
-        {/* The illuminator's ruled line under the title — the one ornament every screen carries. */}
-        <GoldRule align="start" className="kv-header__rule mt-5" />
-      </header>
-
-      <UploadHero
-        // The hero shrinks once a score is on screen. ⚠ This used to read `sampleFile === ""`,
-        // which meant the same thing only while a bundled sample auto-loaded: with SAMPLES empty
-        // `sampleFile` is ALWAYS "", so that test would open the app in the compact state with
-        // nothing on screen — the opposite of what a first-time visitor needs. `doc` is the fact.
-        compact={omrBusy || !!doc}
-        busy={omrBusy}
-        status={omrStatus}
-        error={error}
-        startedAt={readStartedAt}
-        onFile={readPageFile}
-      />
-
-      {/* ⚠ Between the upload box and the score, and it draws NOTHING when the store is empty —
-          so a first-time visitor sees exactly what they saw before this existed. It sits above the
-          score rather than below it because it is a way IN: on arrival there is no score, and this
-          is then the only thing on the page a returning reader wants. */}
-      <RecentPages
-        items={recent}
-        currentId={saved?.id ?? null}
-        // A read in flight owns the document; opening a stored page under it would race the decode
-        // that is about to call `loadDoc`.
-        busy={omrBusy}
-        open={recentOpen}
-        onToggle={() => setRecentOpen((v) => !v)}
-        onOpen={openRecent}
-        onRemove={removeRecent}
-        onRename={renameRecent}
-        onClear={clearRecent}
-      />
-
-      {doc && (
-        <>
-          <TransportBar
-            canPlay={!!timeline}
-            playState={playState}
-            onPlayPause={onPlayPause}
-            onStop={onStop}
-            bpm={bpm}
-            naturalBpm={naturalBpm}
-            onBpm={(v) => applyPlayback(v, metronome, usulName, percussion)}
-            metronome={metronome}
-            onMetronome={(v) => applyPlayback(bpm, v, usulName, percussion)}
-            percussion={percussion}
-            onPercussion={(v) => applyPlayback(bpm, metronome, usulName, v)}
-            percussionVolume={percussionVolume}
-            onPercussionVolume={applyPercussionVolume}
-            percussionKit={percussionKit}
-            onPercussionKit={(v) => applyPlayback(bpm, metronome, usulName, percussion, v)}
-            voice={voice}
-            onVoice={applyVoice}
-            voiceStatus={voiceStatus}
-            usulName={usulName}
-            onUsul={(v) => applyPlayback(bpm, metronome, v, percussion)}
-            makamSlug={makamSlug}
-            onMakam={applyMakam}
-            makamOptions={MAKAM_OPTIONS}
-            makamUsage={makamUsage}
-            transpose={transpose}
-            transposeOptions={TRANSPOSE_OPTIONS}
-            onTranspose={(v) => applyTranspose(v, keepSheet)}
-            keepSheet={keepSheet}
-            onKeepSheet={(v) => applyTranspose(transpose, v)}
-            accidentalMode={accidentalMode}
-            onAccidentalMode={setAccidentalMode}
-            // ⚠ The fold exists on the PHONE'S NOTA TAB and nowhere else. The Çal tab's whole
-            // content is these settings, and a wide window has room for them — passing `undefined`
-            // there is what keeps both rendering exactly as they did.
-            pitchOpen={isPhone && !fullScreen && mobileTab === "nota" && !editMode ? pitchOpen : undefined}
-            onPitch={
-              isPhone && !fullScreen && mobileTab === "nota" && !editMode
-                ? () => setPitchOpen((v) => !v)
-                : undefined
-            }
-            // ⚠ The same condition as the card's `followInPinned` below — one of the two draws the
-            // toggle, never both, never neither (in the sheet view).
-            follow={
-              isPhone && viewMode === "sheet"
-                ? { on: followPlayhead, onChange: (v) => { setFollowPlayhead(v); writeFollow(v); } }
-                : undefined
-            }
-          />
-
-          <ScoreCard
-            doc={doc}
-            // The heading shows the name the reader gave this page, and offers to change it. Null
-            // for anything that is not a stored page, which then reads the document as it always did.
-            pageId={saved?.id ?? null}
-            pageName={saved?.name ?? null}
-            onRename={renameRecent}
-            totalMs={timeline?.totalMs ?? null}
-            viewMode={viewMode}
-            // ⚠ NOT the bare setter: opening the instrument tab also switches the SOUND to the
-            // instrument the page draws (owner, 2026-09-04). See `applyViewMode`.
-            onViewMode={applyViewMode}
-            followPlayhead={followPlayhead}
-            // Remembered as it is set, not on unload: a reader who closes the tab straight after
-            // clicking still gets the answer they chose next time.
-            onFollowPlayhead={(v) => { setFollowPlayhead(v); writeFollow(v); }}
-            followInPinned={isPhone}
-            editMode={editMode}
-            // ⚠ The ONLY way in and out of edit mode — see `applyEditMode`, which also carries the
-            // phone's Düzenle tab. A second inline handler here would let the two drift apart.
-            onEditMode={applyEditMode}
-            // ⚠ Phone only, and only when full screen is OFF — the button is the way IN, and the
-            // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
-            // nothing new for any check at 1280×720.
-            onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
-            onExport={runExport}
-            onUndo={onUndo}
-            onRedo={onRedo}
-            canUndo={history.canUndo}
-            canRedo={history.canRedo}
-          >
-            {viewSwapping ? (
-              // ⚠ Same box, so the swap does not jump: it is the SCORE AREA that is being replaced.
-              <div className="kv-swap" role="status">
-                {TR.card.swapping}
+      {fullScreen && doc ? (
+        // Full screen: the score and the floating Çal / Dur / Çık, nothing else.
+        <main className="kv-fullscreen min-h-dvh bg-raised">{scoreCard}</main>
+      ) : isPhone ? (
+        // ── Phone: one column, three places, the player above the tab bar ──
+        <main className="kv-phone mx-auto max-w-2xl px-3 pt-3 pb-[calc(var(--player-h,0px)+var(--tabs-h,0px)+16px)]">
+          <div className={doc && mobileTab !== "pages" ? "hidden" : "flex flex-col gap-5"}>
+            {doc ? (
+              <div className="flex items-center justify-between px-1 pt-1">
+                <Brand />
               </div>
-            ) : viewMode === "instrument" ? (
-              // ⚠ Both the document AND the timeline go in, and each view uses the one it needs:
-              // the violin takes `timeline`, because a fingerboard cares only what a note SOUNDS and
-              // that is the one place the makam bend and the transpose are already in `freqHz`; the
-              // kanun takes the document, because a course is a WRITTEN note. `makamDeltas` rides
-              // along for the kanun, which is the one bend a mandal can express. Neither view ever
-              // calls `buildTimeline` itself. Full reasoning in the two files' headers.
-              timeline && perf && drawnDoc && (
-                <InstrumentView
-                  doc={perf.doc}
-                  // ⚠ The WRITTEN score, for the measure card only — the same document the sheet
-                  // draws, so a bar inside a repeat is ONE bar there however often it sounds. The
-                  // performance above is what the three instrument drawings read. Swapping the two
-                  // would draw the right notes on the wrong side of every repeat.
-                  sheetDoc={drawnDoc}
-                  timeline={timeline}
-                  playPlan={perf.steps}
-                  makamDeltas={makamDeltas}
-                  playing={playState !== "stopped"}
-                  getPositionMs={getPositionMs}
-                  instrument={instrument}
-                  onInstrument={applyInstrument}
-                  voiceStatus={voiceStatus}
-                  canPlay={!!timeline}
-                  editMode={editMode}
-                  onPlayMeasure={onPlayMeasure}
-                  onEditMeasure={onEditMeasure}
-                  renderBar={renderBar}
-                  tuning={tuning}
-                  onTuning={setTuning}
-                />
-              )
-            ) : (
-              drawnDoc && (
-              <SheetView
-                doc={drawnDoc}
-                // ⚠ The ONLY way the drawing is resized, and it is a re-engrave, not a zoom: fewer
-                // bars per system at the same note size. `.kv-score` may never be scaled — that
-                // SVG is the training-strip source (docs/APP-RULES.md). `undefined` = the default
-                // 1000px content area, which is every case but full screen.
-                contentWidth={fitContentW ?? undefined}
-                editMode={editMode}
-                accidentalMode={accidentalMode}
-                signatureOverride={SIG_OVERRIDE}
-                sigTolerant={SIG_TOLERANT}
-                showLyrics={showLyrics}
-                lyricHyphens={lyricHyphens}
-                playing={playState !== "stopped"}
-                getPositionMs={getPositionMs}
-                playPlan={perf?.playPlan}
-                followPlayhead={followPlayhead}
-                onSeekToMeasure={(m) => onSeekMs(playStartMs(m))}
-                selectedNote={selectedNote}
-                onSelectNote={onSelectNote}
-                onDeleteNote={onDeleteNote}
-                onNudgePitch={onNudgePitch}
-                armedTool={armed?.kind ?? null}
-                signTargets={signTargets}
-                openRepeat={openRepeat}
-                armedSign={armed?.kind === "structure" ? armed.mark : null}
-                repeatAnchor={repeatAnchor}
-                // A repeat is drawn on the BARLINES and has its own two-click path; every other
-                // sign belongs to a bar and lands wherever in it the click fell.
-                onPlaceMark={(bar) => {
-                  if (armed?.kind === "structure" && armed.mark !== "repeat") onPlaceMark(bar, armed.mark);
-                }}
-                onRepeatEdge={onRepeatEdge}
-                onRepeatCancel={() => setRepeatAnchor(null)}
-                onRemoveMark={onRemoveMark}
-                armedRest={armed?.kind === "duration" && armed.rest === true}
-                onApplyTool={onApplyTool}
-                onInsertNote={onInsertNote}
-                tupletAnchor={tupletAnchor}
-                onTupletPick={onTupletPick}
-                selectedTuplet={selectedTuplet}
-                onTupletEdge={onTupletEdge}
-                onTupletRemove={onTupletRemove}
-                onLayout={onLayout}
-                highlightRect={selectedStrip?.rect ?? null}
-                repeatSpans={repeatSpans}
-                navMarks={navMarks}
-                textNoise={TEXT_NOISE}
-                slurNoise={SLUR_NOISE}
-                staccatoNoise={STACCATO_NOISE}
-                usulBarNoise={USUL_BAR_NOISE}
-                thinSharps={URL_THIN_SHARPS}
-                printNoise={PRINT_NOISE}
-                legacyTupletMark={URL_LEGACY_TUPLET}
-                concaveTuplet={URL_CONCAVE_TUPLET}
-              />
-              )
-            )}
-          </ScoreCard>
-
-          {/* ⚠ The edit toolbox is rendered HERE, outside the score card, not inside it (owner,
-              2026-09-03). It is `position: fixed` and floats over the page, so where it sits in
-              the DOM is only about what could ever clip it: `.kv-card` sets `overflow: hidden`,
-              and a card that gained a transform or a filter would become the containing block for
-              anything fixed inside it. Out here nothing can. The armed tool still lives in App's
-              state, which is why the props are unchanged. */}
-          {/* ⚠ **Both views, one toolbox** (owner, 2026-09-04). It used to be sheet-only; the
-              instrument tab now edits its bar in place with the SAME palette over the SAME
-              document, so gating it on the view would have meant a second one. Nothing about the
-              palette knows which view is under it — it arms a tool, and whichever `SheetView` is
-              mounted reads the armed tool from App. */}
-          {editMode && (
-            <EditPalette
-              armed={armed}
-              onArm={armTool}
-              canPlay={!!timeline}
-              playState={playState}
-              fromMeasure={lastEditMeasure}
-              anchored={tupletAnchor != null}
-              repeatAnchor={repeatAnchor}
-              refused={refused}
-              onPlay={onPlayFromEdit}
-              onStop={onStop}
-              // ⚠ The SAME handlers the card's pair uses, so both roads share one stack — App's
-              // `onUndo` also stops playback and clears the selection, which an undo must do
-              // wherever it is pressed (a held index can name a different note after a delete).
-              onUndo={onUndo}
-              onRedo={onRedo}
-              canUndo={history.canUndo}
-              canRedo={history.canRedo}
-            />
-          )}
-        </>
+            ) : null}
+            {doc ? uploadHero : <Welcome>{uploadHero}</Welcome>}
+            {recentPages}
+            {advancedPanel}
+            <LegalFooter className="mt-4" />
+          </div>
+          {doc && <div className={mobileTab === "pages" ? "hidden" : ""}>{scoreCard}</div>}
+        </main>
+      ) : (
+        // ── Wide window: the library beside the score, the player along the bottom ──
+        <div className="kv-desk grid min-h-dvh grid-cols-[300px_minmax(0,1fr)]">
+          <aside
+            className="kv-sidebar sticky top-0 flex h-dvh flex-col gap-5 overflow-y-auto border-r border-rule bg-raised/60 px-5 pt-6"
+            style={{ paddingBottom: doc ? "calc(var(--player-h, 0px) + 20px)" : 20 }}
+          >
+            <div className="px-1">
+              <Brand />
+              <GoldRule align="start" className="mt-3" />
+            </div>
+            {doc && uploadHero}
+            <div>
+              <SideHeading>{TR.library.title}</SideHeading>
+              {recent.length ? recentPages : <p className="px-1 text-(length:--text-sm) text-ink-faint">{TR.library.empty}</p>}
+            </div>
+            <div className="mt-auto flex flex-col gap-4">
+              {advancedPanel}
+              <LegalFooter />
+            </div>
+          </aside>
+          <main
+            className="kv-main min-w-0 px-8 pt-8"
+            style={{ paddingBottom: doc ? "calc(var(--player-h, 0px) + 32px)" : 32 }}
+          >
+            {doc ? scoreCard : <Welcome>{uploadHero}</Welcome>}
+          </main>
+        </div>
       )}
 
-      {/* ⚠ **THE EXPORT STAGE.** The same document, engraved at the default width — see `exporting`.
-          It is mounted only while a save is running and is never visible; `app.css` parks it off
-          screen rather than hiding it, because a `display: none` element has no layout and VexFlow
-          would measure every box as zero. */}
+      {doc && !fullScreen && (
+        <PlayerBar
+          title={playerTitle}
+          meta={playerMeta}
+          canPlay={!!timeline}
+          playState={playState}
+          onPlayPause={onPlayPause}
+          onStop={onStop}
+          bpm={bpm}
+          naturalBpm={naturalBpm}
+          onBpm={(v) => applyPlayback(v, metronome, usulName, percussion)}
+          follow={viewMode === "sheet" ? followPlayhead : undefined}
+          onFollow={(v) => {
+            setFollowPlayhead(v);
+            writeFollow(v);
+          }}
+          settingsOpen={settingsOpen}
+          onSettings={() => setSettingsOpen((v) => !v)}
+          phone={isPhone}
+        />
+      )}
+      {doc && (
+        <SettingsPanel
+          open={settingsOpen && !fullScreen}
+          onOpenChange={setSettingsOpen}
+          phone={isPhone}
+          canPlay={!!timeline}
+          voice={voice}
+          onVoice={applyVoice}
+          voiceStatus={voiceStatus}
+          usulName={usulName}
+          onUsul={(v) => applyPlayback(bpm, metronome, v, percussion)}
+          metronome={metronome}
+          onMetronome={(v) => applyPlayback(bpm, v, usulName, percussion)}
+          percussion={percussion}
+          onPercussion={(v) => applyPlayback(bpm, metronome, usulName, v)}
+          percussionVolume={percussionVolume}
+          onPercussionVolume={applyPercussionVolume}
+          percussionKit={percussionKit}
+          onPercussionKit={(v) => applyPlayback(bpm, metronome, usulName, percussion, v)}
+          makamSlug={makamSlug}
+          onMakam={applyMakam}
+          makamOptions={MAKAM_OPTIONS}
+          makamUsage={makamUsage}
+          transpose={transpose}
+          transposeOptions={TRANSPOSE_OPTIONS}
+          onTranspose={(v) => applyTranspose(v, keepSheet)}
+          keepSheet={keepSheet}
+          onKeepSheet={(v) => applyTranspose(transpose, v)}
+          accidentalMode={accidentalMode}
+          onAccidentalMode={setAccidentalMode}
+        />
+      )}
+      {isPhone && doc && !fullScreen && <NavBar tab={mobileTab} onTab={onMobileTab} />}
+
+      {doc && editMode && (
+        <EditPalette
+          armed={armed}
+          onArm={armTool}
+          canPlay={!!timeline}
+          playState={playState}
+          fromMeasure={lastEditMeasure}
+          anchored={tupletAnchor != null}
+          repeatAnchor={repeatAnchor}
+          refused={refused}
+          onPlay={onPlayFromEdit}
+          onStop={onStop}
+          // ⚠ The SAME handlers the card's pair uses, so both roads share one stack — App's
+          // `onUndo` also stops playback and clears the selection, which an undo must do
+          // wherever it is pressed (a held index can name a different note after a delete).
+          onUndo={onUndo}
+          onRedo={onRedo}
+          canUndo={history.canUndo}
+          canRedo={history.canRedo}
+        />
+      )}
+
       {exporting && drawnDoc && (
         <div id={EXPORT_STAGE_ID} aria-hidden="true">
           <SheetView
@@ -2520,51 +2673,8 @@ export function App() {
         </div>
       )}
 
-      {/* ⚠ Fixed, and rendered here for the same reason the toolbox above is: out of every
-          `.kv-card`, which sets `overflow: hidden` and would clip it the moment the card gained a
-          transform. Outside the `{doc && …}` block too — a switch started on one score must keep
-          reporting itself if the reader loads another mid-download. Its own state decides whether
-          it draws anything at all. */}
       <VoiceSwitchNotice status={voiceStatus} />
 
-      <AdvancedPanel
-        doc={doc}
-        samples={SAMPLES}
-        sampleFile={sampleFile}
-        onSample={loadSample}
-        onLoadJson={onFile}
-        onStrips={onStrips}
-        omrBusy={omrBusy}
-        rawDecode={rawDecode}
-        accidentalMode={accidentalMode}
-        onAccidentalMode={setAccidentalMode}
-        showLyrics={showLyrics}
-        lyricHyphens={lyricHyphens}
-        onLyricHyphens={setLyricHyphens}
-        showRepeats={showRepeats}
-        onShowRepeats={setShowRepeats}
-        canWriteOut={structure != null}
-        writeOut={writeOut}
-        // Writing the score out long makes every repeated bar a COPY, and an edit aimed at a copy
-        // would land on the wrong note — so the view and edit mode are mutually exclusive.
-        onWriteOut={(v) => {
-          setWriteOut(v);
-          if (v) {
-            setEditMode(false);
-            setSelectedNote(null);
-            armTool(null);
-          }
-        }}
-        sheetView={viewMode === "sheet"}
-        strips={strips}
-        selectedStripId={selectedStripId}
-        onSelectStrip={setSelectedStripId}
-      />
-
-      {/* ⚠ PHONE ONLY, and fixed to the bottom of the viewport — so like the edit toolbox above it
-          is rendered OUT of every `.kv-card`, which sets `overflow: hidden` and would clip it. It
-          draws only once a score is installed: with nothing loaded the page is the upload prompt
-          plus the stored-page list, which is one screen and needs no sections. */}
       {doc && fullScreen && (
         <FullScreenBar
           playState={playState}
@@ -2574,57 +2684,8 @@ export function App() {
           onExit={() => applyFullScreen(false)}
         />
       )}
-      {isPhone && doc && !fullScreen && <MobileTabs tab={mobileTab} onTab={onMobileTab} />}
 
-
-      {makamPrompt && (
-        <MakamModal
-          detection={makamPrompt}
-          doc={doc}
-          onConfirm={(slug) => {
-            applyMakam(slug);
-            setMakamPrompt(null);
-          }}
-          // Dismissed without choosing: the detected makam is already applied, so this keeps it.
-          onDismiss={() => setMakamPrompt(null)}
-        />
-      )}
-
-      {voiceAsk && (
-        <VoiceDownloadModal
-          voice={voiceAsk.voice}
-          label={findVoice(voiceAsk.voice)?.label ?? voiceAsk.voice}
-          onConfirm={() => {
-            voicesApproved.current.add(voiceAsk.voice);
-            voicesDeclinedOnOpen.current.delete(voiceAsk.voice);
-            setVoiceAsk(null);
-            voiceAsk.go();
-          }}
-          onCancel={() => {
-            setVoiceAsk(null);
-            voiceAsk.no?.();
-          }}
-        />
-      )}
-
-      {/* Always rendered, score or no score — the upload promise and the takedown route are what a
-          first-time visitor needs most, and that is exactly the empty state. */}
-      <footer className="kv-footer" id="legal">
-        <GoldRule className="kv-footer__rule mb-5" />
-        <p>{TR.footer.privacy}</p>
-        <p>{TR.footer.counting}</p>
-        <p>{TR.footer.rights}</p>
-        <p>
-          {TR.footer.contactLabel}{" "}
-          <a href={TR.footer.contactHref} target="_blank" rel="noreferrer noopener">
-            {TR.footer.contactText}
-          </a>
-          {" · "}
-          <a href={TR.footer.noticesHref} target="_blank" rel="noreferrer noopener">
-            {TR.footer.noticesText}
-          </a>
-        </p>
-      </footer>
+      {modals}
     </div>
   );
 }

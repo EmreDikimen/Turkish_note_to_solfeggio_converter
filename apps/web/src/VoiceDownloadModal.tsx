@@ -12,7 +12,7 @@
  * would drift the first time a sample set changes.
  *
  * ⚠ The decision lives in `App.requestVoice`, not here — this file only asks. Clicking the backdrop
- * is a "no", the same as `#voice-cancel`.
+ * or pressing Esc is a "no", the same as `#voice-cancel`.
  *
  * ⚠ The backdrop covers the page, so a browser check must answer it before clicking anything else:
  * `tools/browser/voicePrompt.ts`, the way `makamPrompt.ts` does for the makam prompt.
@@ -20,6 +20,7 @@
 
 import type { VoiceId } from "./audio/instruments";
 import { TR } from "./ui/strings";
+import { Modal } from "./ui/kit/Modal";
 
 export function VoiceDownloadModal({
   voice,
@@ -33,24 +34,22 @@ export function VoiceDownloadModal({
   onCancel: () => void;
 }) {
   return (
-    <div id="voice-modal" data-voice={voice} onClick={onCancel} className="kv-modal">
-      <div onClick={(e) => e.stopPropagation()} className="kv-modal__panel" role="dialog">
-        <h3 className="kv-modal__title">{TR.voiceModal.title(label)}</h3>
-        <p className="kv-modal__lead">{TR.voiceModal.lead}</p>
-        <div className="kv-modal__actions">
+    <Modal
+      id="voice-modal"
+      data={{ "data-voice": voice }}
+      onDismiss={onCancel}
+      title={TR.voiceModal.title(label)}
+      lead={TR.voiceModal.lead}
+      actions={
+        <>
           <button id="voice-cancel" type="button" className="kv-btn" onClick={onCancel}>
             {TR.voiceModal.cancel}
           </button>
-          <button
-            id="voice-confirm"
-            type="button"
-            className="kv-btn kv-btn--primary"
-            onClick={onConfirm}
-          >
+          <button id="voice-confirm" type="button" className="kv-btn kv-btn--primary" onClick={onConfirm}>
             {TR.voiceModal.confirm}
           </button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

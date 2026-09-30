@@ -653,15 +653,9 @@
   cursor: default;
 }
 
-.kv-card__save {
-  position: relative;
-}
-/* ⚠ Anchored to the RIGHT edge, or a menu wider than its button runs off a 393px screen. */
+/* The save menu's popup (Base UI Menu, portalled to <body> and placed by its Positioner — so no
+   `position` here: the old right-edge anchoring is the Positioner's `align="end"` now). */
 .kv-card__menu {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  right: 0;
-  z-index: 20;
   display: flex;
   flex-direction: column;
   min-width: 15rem;
@@ -670,9 +664,10 @@
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
   background: var(--paper-raised);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-modal);
+  outline: none;
 }
-.kv-card__menu > button {
+.kv-card__menuitem {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -681,18 +676,20 @@
   min-height: var(--control-h);
   padding: var(--space-2);
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: none;
   font: inherit;
   font-size: var(--text-sm);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
+  outline: none;
 }
-.kv-card__menu > button:hover {
+/* Base UI marks the item under the pointer or the arrow keys with `data-highlighted`. */
+.kv-card__menuitem[data-highlighted] {
   background: var(--accent-soft);
 }
-.kv-card__menu small {
+.kv-card__menuitem small {
   font-size: var(--text-xs);
   color: var(--ink-faint);
   white-space: normal;
@@ -1018,6 +1015,15 @@
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--rule);
   background: var(--paper);
+}
+
+/* On a wide window the head's tools row runs to the right edge, where the corner group sits out of
+   the flow — so the save mark was drawn on top of the last button (Düzenle / Yinele). Reserve the
+   corner's width. (The phone lays the head out differently; its own block owns that.) */
+@media (min-width: 701px) {
+  .kv-card__head {
+    padding-right: calc(var(--control-h) + var(--space-4));
+  }
 }
 
 .kv-card__title {
@@ -1698,51 +1704,8 @@
 
 /* ── Modals ─────────────────────────────────────────────────────────────── */
 
-.kv-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-  background: rgba(12, 30, 28, 0.42); /* the ink, dimmed — not neutral black */
-}
-
-.kv-modal__panel {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-modal);
-  padding: var(--space-5);
-  width: 560px;
-  max-width: 100%;
-  /* ⚠ `dvh` for the phone: `vh` is the viewport with the URL bar HIDDEN, so a `vh` cap
-     overshoots the visible screen by the height of the browser chrome whenever it is showing —
-     the modal's actions then sit below the fold. The `vh` line is the fallback; on a desktop
-     the two are the same number. */
-  max-height: 85vh;
-  max-height: 85dvh;
-  overflow: auto;
-}
-.kv-modal__title {
-  font-size: var(--text-xl);
-  margin-bottom: var(--space-2);
-}
-
-.kv-modal__lead {
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-  margin-bottom: var(--space-4);
-  max-width: var(--measure);
-}
-
-.kv-modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-5);
-}
+/* The window itself (backdrop, panel, title, lead, actions) is `ui/kit/Modal.tsx`, on Base UI's
+   Dialog, styled with utilities. What stays here is the content two of the prompts put inside it. */
 
 /* The makam prompt's evidence block — why the app thinks what it thinks. */
 .kv-evidence {
@@ -1834,7 +1797,7 @@
 .kv-fingerboard__svg {
   display: block;
   margin: 0 auto;
-  /* ⚠ `dvh` — see the note on `.kv-modal__panel`. This cap exists precisely so the hint under
+  /* ⚠ `dvh` — see the note in `ui/kit/Modal.tsx`. This cap exists precisely so the hint under
      the violin survives on a phone, and `vh` measures the screen a phone does not have. */
   height: min(72vh, 760px);
   height: min(72dvh, 760px);

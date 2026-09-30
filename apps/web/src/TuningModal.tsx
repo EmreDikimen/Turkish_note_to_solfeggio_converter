@@ -27,7 +27,8 @@
  * `#tuning-done` before touching anything underneath, the way the makam prompt is dismissed via
  * `#makam-confirm`.
  *
- * ⚠ IT IS PORTALLED TO `document.body`, AND THAT IS NOT A STYLE CHOICE. `Fingerboard` renders
+ * ⚠ IT IS PORTALLED TO `document.body` (Base UI's Dialog.Portal, ui/kit/Modal.tsx), AND THAT IS NOT
+ * A STYLE CHOICE. `Fingerboard` renders
  * inside `.kv-score` — the container `tools/render/render.ts` screenshots BY RECT to cut training
  * strips, and which carries `overflow-y: clip` (docs/APP-RULES.md). A modal left in that subtree
  * puts a fixed, full-page box inside the one element in the app that must stay a plain rectangle of
@@ -35,7 +36,6 @@
  * the props above still flow normally.
  */
 
-import { createPortal } from "react-dom";
 import {
   DEFAULT_VIOLIN_TUNING,
   choiceOfString,
@@ -43,6 +43,7 @@ import {
   type ViolinTuning,
 } from "@turkish-omr/core";
 import { TR } from "./ui/strings";
+import { Modal } from "./ui/kit/Modal";
 
 export function TuningModal({
   tuning,
@@ -56,12 +57,30 @@ export function TuningModal({
   onReset: () => void;
   onClose: () => void;
 }) {
-  return createPortal(
-    <div id="tuning-modal" onClick={onClose} className="kv-modal" data-tuning={tuning.id}>
-      <div onClick={(e) => e.stopPropagation()} className="kv-modal__panel" role="dialog">
-        <h3 className="kv-modal__title">{TR.fingerboard.tuningTitle}</h3>
-        <p className="kv-modal__lead">{TR.fingerboard.tuningLead}</p>
-
+  return (
+    <Modal
+      id="tuning-modal"
+      data={{ "data-tuning": tuning.id }}
+      onDismiss={onClose}
+      title={TR.fingerboard.tuningTitle}
+      lead={TR.fingerboard.tuningLead}
+      actions={
+        <>
+          <button
+            id="tuning-reset"
+            type="button"
+            className="kv-btn"
+            disabled={tuning.id === "standard"}
+            onClick={onReset}
+          >
+            {TR.fingerboard.tuningReset}
+          </button>
+          <button id="tuning-done" type="button" className="kv-btn kv-btn--primary" onClick={onClose}>
+            {TR.fingerboard.tuningDone}
+          </button>
+        </>
+      }
+    >
         <div className="kv-tuning">
           {tuning.strings.map((s, i) => {
             const standard = DEFAULT_VIOLIN_TUNING.strings[i]!;
@@ -97,27 +116,6 @@ export function TuningModal({
           })}
         </div>
 
-        <div className="kv-modal__actions">
-          <button
-            id="tuning-reset"
-            type="button"
-            className="kv-btn"
-            disabled={tuning.id === "standard"}
-            onClick={onReset}
-          >
-            {TR.fingerboard.tuningReset}
-          </button>
-          <button
-            id="tuning-done"
-            type="button"
-            className="kv-btn kv-btn--primary"
-            onClick={onClose}
-          >
-            {TR.fingerboard.tuningDone}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

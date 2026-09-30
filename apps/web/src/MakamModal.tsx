@@ -10,7 +10,7 @@
  * Shows its own reasoning on purpose (the signature it matched, the karar it used), because
  * "Hüzzam" with no evidence behind it is not something a user can sanity-check.
  *
- * ⚠ The backdrop covers the page, so Playwright cannot click through it. `tools/browser/
+ * ⚠ The window is modal (ui/kit/Modal.tsx), so Playwright cannot click past it. `tools/browser/
  * app-smoke.ts` and `page-smoke.ts` dismiss it via `#makam-confirm` before touching the
  * transport — keep those ids if this file is restyled.
  */
@@ -25,6 +25,7 @@ import {
 } from "@turkish-omr/core";
 import { MakamIntonation } from "./ui/MakamIntonation";
 import { TR } from "./ui/strings";
+import { Modal } from "./ui/kit/Modal";
 
 export function MakamModal({
   detection,
@@ -46,18 +47,27 @@ export function MakamModal({
   const options = makamOptions();
 
   return (
-    <div id="makam-modal" onClick={onDismiss} className="kv-modal">
-      <div onClick={(e) => e.stopPropagation()} className="kv-modal__panel" role="dialog">
-        <h3 className="kv-modal__title">
-          {detection.slug
-            ? TR.makamModal.titleGuess(makamDisplay(detection.slug))
-            : TR.makamModal.titleUnknown}
-        </h3>
-
-        <p className="kv-modal__lead">
-          {detection.slug ? TR.makamModal.leadGuess : TR.makamModal.leadUnknown}
-        </p>
-
+    <Modal
+      id="makam-modal"
+      onDismiss={onDismiss}
+      title={detection.slug ? TR.makamModal.titleGuess(makamDisplay(detection.slug)) : TR.makamModal.titleUnknown}
+      lead={detection.slug ? TR.makamModal.leadGuess : TR.makamModal.leadUnknown}
+      actions={
+        <>
+          <button type="button" className="kv-btn" onClick={() => onConfirm("")}>
+            {TR.makamModal.playAsWritten}
+          </button>
+          <button
+            id="makam-confirm"
+            type="button"
+            className="kv-btn kv-btn--primary"
+            onClick={() => onConfirm(slug)}
+          >
+            {TR.makamModal.useThis}
+          </button>
+        </>
+      }
+    >
         {/* The evidence. Without it "Hüzzam" is just an assertion. */}
         <div className="kv-evidence">
           <div>
@@ -128,20 +138,6 @@ export function MakamModal({
           )}
         </div>
 
-        <div className="kv-modal__actions">
-          <button type="button" className="kv-btn" onClick={() => onConfirm("")}>
-            {TR.makamModal.playAsWritten}
-          </button>
-          <button
-            id="makam-confirm"
-            type="button"
-            className="kv-btn kv-btn--primary"
-            onClick={() => onConfirm(slug)}
-          >
-            {TR.makamModal.useThis}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

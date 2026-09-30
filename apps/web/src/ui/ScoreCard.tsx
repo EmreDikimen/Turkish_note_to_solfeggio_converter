@@ -9,7 +9,8 @@
  * training-strip exporter screenshots that SVG by rect. See styles/app.css.
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { Menu } from "@base-ui/react/menu";
 import type { NoteModelDocument } from "@turkish-omr/core";
 import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
@@ -86,28 +87,7 @@ export function ScoreCard({
   const [saveOpen, setSaveOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
-  const saveRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!saveOpen) return;
-    // ⚠ `pointerdown`, not `click`: a menu that closes on click never sees the tap that opened a
-    // control underneath it, and on a touchscreen the delay is visible.
-    const away = (e: PointerEvent) => {
-      if (!saveRef.current?.contains(e.target as Node)) setSaveOpen(false);
-    };
-    const esc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSaveOpen(false);
-    };
-    document.addEventListener("pointerdown", away);
-    window.addEventListener("keydown", esc);
-    return () => {
-      document.removeEventListener("pointerdown", away);
-      window.removeEventListener("keydown", esc);
-    };
-  }, [saveOpen]);
-
   async function savePng() {
-    setSaveOpen(false);
     setSaveError(false);
     setSaving(true);
     try {
@@ -147,20 +127,17 @@ export function ScoreCard({
             and downloads, the PDF is the BROWSER's, printed from the DOM — vector, paginated, and
             0 bytes added to the build, against ~350 KB for a blurry one-page raster. Printing opens
             the OS sheet, so the PDF line names the second tap rather than promising one. */}
-        <div className="kv-card__save" ref={saveRef}>
-          <button
+        {/* Base UI's Menu (2026-09-30): arrow keys, Esc, a tap outside, focus return and edge-aware
+            placement are its job now — the hand-written pointerdown/Esc listeners are gone. The
+            popup is portalled, so the corner group's box no longer clips it on a phone. */}
+        <Menu.Root open={saveOpen} onOpenChange={setSaveOpen}>
+          <Menu.Trigger
             id="export-toggle"
-            type="button"
             className="kv-card__icon"
-            aria-expanded={saveOpen}
-            aria-haspopup="menu"
             title={TR.card.saveTitle}
             aria-label={TR.card.saveTitle}
             disabled={saving}
-            onClick={() => {
-              setSaveError(false);
-              setSaveOpen((v) => !v);
-            }}
+            onClick={() => setSaveError(false)}
           >
             <svg
               width="20"
@@ -178,27 +155,21 @@ export function ScoreCard({
               <path d="M7 11l5 5 5-5" />
               <path d="M4 20h16" />
             </svg>
-          </button>
-          {saveOpen && (
-            <div className="kv-card__menu" role="menu" data-omr="save-menu">
-              <button id="export-png" type="button" role="menuitem" onClick={savePng}>
-                {TR.card.savePng}
-              </button>
-              <button
-                id="export-pdf"
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setSaveOpen(false);
-                  void onExport("pdf");
-                }}
-              >
-                {TR.card.savePdf}
-                <small>{TR.card.savePdfNote}</small>
-              </button>
-            </div>
-          )}
-        </div>
+          </Menu.Trigger>
+          <Menu.Portal>
+            <Menu.Positioner side="bottom" align="end" sideOffset={4} className="z-[60]">
+              <Menu.Popup className="kv-card__menu" data-omr="save-menu">
+                <Menu.Item id="export-png" className="kv-card__menuitem" onClick={savePng}>
+                  {TR.card.savePng}
+                </Menu.Item>
+                <Menu.Item id="export-pdf" className="kv-card__menuitem" onClick={() => void onExport("pdf")}>
+                  {TR.card.savePdf}
+                  <small>{TR.card.savePdfNote}</small>
+                </Menu.Item>
+              </Menu.Popup>
+            </Menu.Positioner>
+          </Menu.Portal>
+        </Menu.Root>
 
         {onFullScreen && (
           <button

@@ -84,28 +84,19 @@
   padding: 16px;
 }
 
-/* ── Night reading: the sheet turns dark, the ink turns light ─────────────
-   Owner, 2026-09-30: in dark mode the score should read like a book in a reader's night mode —
-   dark paper, light marks. The engraving itself is NOT recoloured (every colour in it is a
-   presentation attribute, and VexFlow's black is training-strip ink); the whole paper island is
-   turned over optically instead: `invert` flips light and dark, `hue-rotate(180deg)` puts the
-   hues back (the teal selection stays teal, the red warnings stay red), and 0.9 rather than 1 stops
-   at a soft charcoal and a soft ivory instead of pure black and white.
-   ⚠ THREE GUARDS, each load-bearing:
-     1. `:not([data-render="1"])` — a render job is always a light page, so no training strip can
-        ever be cut from an inverted sheet, whatever the machine's colour scheme.
-     2. `:not([data-view="instrument"])` — the kanun's wood, the violin's fingers and the clarinet
-        are pictures of real objects; inverted they turn into negatives. They stay on light paper.
-     3. A `filter` does not move a rect (unlike the transforms banned on this box), so every
-        measured position — note targets, playhead, strip rects — is unchanged. It WOULD make this
-        box the containing block of a `position: fixed` descendant; there is none, and there must
-        not be one (the toolbox, modals and toasts all live outside the card).
-   The image export paints its own white page (exportScore.ts) and is unaffected. */
+/* ── Night reading: an ivory sheet on the dark page ──────────────────────
+   Owner, 2026-09-30. The first night mode turned the sheet over (`filter: invert`): dark paper,
+   light marks. The owner found it HARDER to read, and the reasons are known ones — staff lines and
+   stems are hairlines, and thin light strokes on a dark ground bloom (halation) and look thinner
+   after antialiasing, at a near-maximal contrast. Of the two alternatives shown side by side the
+   owner chose this one: keep black ink, and take the glare out of the paper by painting it the
+   exact complement of the night page (#12151f → #edeae0). A printed page under a lamp, not a
+   light-box. A background only — nothing inside the sheet is recoloured or filtered.
+   ⚠ `:not([data-render="1"])`: a render job is always a light page, so no training strip is ever
+   cut from this paper, whatever the machine's colour scheme. The image export paints its own
+   white page (exportScore.ts) and is unaffected. */
 @media (prefers-color-scheme: dark) {
-  .kv-page:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper {
-    filter: invert(0.9) hue-rotate(180deg);
-    /* A cool white that the flip turns into the night page's slate, not a neutral grey. Dark mode
-       only, so a render job (always light) never sees it. */
-    background: #e9edf5;
+  .kv-page:not([data-render="1"]) .kv-score.kv-paper {
+    background: #edeae0;
   }
 }

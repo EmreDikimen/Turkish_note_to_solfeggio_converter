@@ -2378,6 +2378,27 @@ async function main() {
   await page.waitForTimeout(400);
   check("scrolling back puts the row where it was drawn", Math.abs((await boxOf("#transport-pinned")).top - restedTop) < 2, true);
 
+  // --- the light / dark switch (owner, 2026-10-01) ------------------------------------------------
+  // `<html data-theme>` is the ONE thing the stylesheet reads. The switch must move it, the choice
+  // must survive a reload (it is decided by index.html's inline script before the first paint), and
+  // a render job must be light whatever is stored — strips are cut from the light page.
+  console.log("\nthe light / dark switch");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  const htmlTheme = () => page.evaluate(() => document.documentElement.dataset.theme ?? "");
+  check("the page starts on the system's theme", await htmlTheme(), "light");
+  await page.locator("#theme-switch").check();
+  check("⭐ the switch turns the page dark", await htmlTheme(), "dark");
+  check("…and says so on itself", await page.getAttribute("#theme-switch", "data-theme"), "dark");
+  await page.reload({ waitUntil: "domcontentloaded" });
+  check("⭐ the choice survives a reload, before React runs", await htmlTheme(), "dark");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json&mode=measure`, { waitUntil: "domcontentloaded" });
+  check("⭐ a render job is light whatever is stored", await htmlTheme(), "light");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#theme-switch").uncheck();
+  check("…and it switches back", await htmlTheme(), "light");
+
   check("no uncaught page errors", pageErrors.length ? pageErrors.join("; ") : "none", "none");
 
   await browser.close();

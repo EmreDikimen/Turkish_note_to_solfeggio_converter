@@ -14,9 +14,25 @@
       content="Türk müziği notasının fotoğrafını okur, notaya dizer ve 53 komalı sesiyle çalar."
     />
     <!-- The browser chrome takes the page's ground: ivory by day, the night page's slate in dark mode
-         (tokens.css --paper). -->
+         (tokens.css --paper). src/theme.ts rewrites both once the reader flips the switch. -->
     <meta name="theme-color" content="#f7f4ec" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#12151f" media="(prefers-color-scheme: dark)" />
+    <!-- ⚠ THE THEME IS DECIDED HERE, BEFORE THE FIRST PAINT (2026-10-01). Deciding it in React would
+         flash the light page on every dark visit. The rule is src/theme.ts's `resolveTheme` and the
+         two must agree: a render job (`?mode=`) is always light; otherwise the reader's stored
+         choice (`kv.theme`), else the system. Storage can THROW (private windows) — hence the try. -->
+    <script>
+      (function () {
+        var t = "light";
+        try {
+          if (!new URLSearchParams(location.search).has("mode")) {
+            var v = localStorage.getItem("kv.theme");
+            t = v === "light" || v === "dark" ? v : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+        } catch (e) {}
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
     <!-- ⭐ INSTALLABLE (2026-09-28): the manifest is what lets Android Chrome offer "Uygulamayı yükle"
          and what a Play Store TWA is built from later; the apple-* tags are iOS's own "Ana Ekrana
          Ekle". ⚠ `.webmanifest`, NOT `manifest.json`: `tools/prune-dist.mjs` fails the build on any

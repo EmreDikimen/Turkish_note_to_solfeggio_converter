@@ -85,6 +85,13 @@ export const TR = {
     fullscreenExitTitle: "Tam ekrandan çık",
   },
 
+  // The light / dark switch (2026-10-01).
+  theme: {
+    label: "Gece modu",
+    toDark: "Koyu temaya geç",
+    toLight: "Açık temaya geç",
+  },
+
   // The list of pages this browser has already read (2026-09-05). ⚠ `note` is not filler: the
   // store is a CACHE and the reader has to be told, because "kaydedildi" is a promise no browser
   // storage can keep — see apps/web/src/recentPages.ts. It says the two things that actually

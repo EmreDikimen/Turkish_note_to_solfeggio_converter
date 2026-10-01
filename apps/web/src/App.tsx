@@ -46,6 +46,8 @@ import {
 import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
 import { useDocHistory } from "./useDocHistory";
 import { GoldRule } from "./ui/ornament/GoldRule";
+import { ThemeSwitch } from "./ui/ThemeSwitch";
+import { useTheme } from "./theme";
 import {
   clearPages,
   deletePage,
@@ -362,6 +364,9 @@ export function App() {
   // score (2026-09-26). Inline they cost 314px of a 800px screen and left 32px of music, measured;
   // as a sheet they cost the 44px of the button that opens them.
   const [pitchOpen, setPitchOpen] = useState(false);
+  // Light / dark (owner, 2026-10-01). Held HERE, not in the switch, so the page keeps following the
+  // system while no switch is on screen (full screen, a phone's Nota tab).
+  const [theme, setTheme] = useTheme();
   /**
    * Which export is in flight, and the flag that mounts the hidden PAPER-WIDTH engraving.
    *
@@ -2234,7 +2239,10 @@ export function App() {
       // (measured 2026-09-30: 147 of 302 strips). Owner decision the same day.
       data-render={SIG_TOLERANT ? "1" : undefined}
     >
-      <header className="kv-header">
+      <header className="kv-header relative">
+        <div className="absolute top-2 right-0">
+          <ThemeSwitch theme={theme} onTheme={setTheme} />
+        </div>
         <h1 className="kv-brand">
           <span className="kv-brand__mark" aria-hidden="true">
             &#xE282;

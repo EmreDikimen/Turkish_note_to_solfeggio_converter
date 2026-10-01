@@ -95,8 +95,6 @@
    ⚠ `:not([data-render="1"])`: a render job is always a light page, so no training strip is ever
    cut from this paper, whatever the machine's colour scheme. The image export paints its own
    white page (exportScore.ts) and is unaffected. */
-@media (prefers-color-scheme: dark) {
-  .kv-page:not([data-render="1"]) .kv-score.kv-paper {
-    background: #edeae0;
-  }
+:root[data-theme="dark"] .kv-page:not([data-render="1"]) .kv-score.kv-paper {
+  background: #edeae0;
 }

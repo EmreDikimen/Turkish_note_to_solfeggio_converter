@@ -88,6 +88,10 @@ const tsx: string[] = [];
 const darkUses = tsx.filter((p) => /(["'`\s])dark:[a-z]/.test(read(p))).map((p) => path.relative(SRC, p));
 check("no dark: utility in the app", darkUses.length === 0, darkUses.join(","));
 
+// 5b — one source of truth for light/dark: `:root[data-theme]`, set by src/theme.ts.
+const mediaDark = all.filter(({ css }) => /prefers-color-scheme/.test(css)).map(({ f }) => f);
+check("no prefers-color-scheme query in the sheets (the theme is data-theme)", mediaDark.length === 0, mediaDark.join(","));
+
 // 6
 const scoreLeaks: string[] = [];
 for (const { f, css } of all) {

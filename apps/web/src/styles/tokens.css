@@ -21,7 +21,10 @@
  * ⚠ `--gold` itself is 2.9:1 on the paper — DECORATION ONLY (rules, ornaments, a border). Text,
  *   a focus ring or a state that must be read uses `--gold-ink` or the accent.
  *
- * ⚠ DARK MODE follows the system (owner, 2026-09-30 — no toggle). The score does NOT go dark:
+ * ⚠ DARK MODE is `:root[data-theme="dark"]`, set by `src/theme.ts` (and, for the first paint, by
+ * the inline script in index.html): the system's choice until the reader flips the switch
+ * (owner, 2026-10-01 — it was system-only, with no switch, from 2026-09-30). ⛔ No
+ * `prefers-color-scheme` query in any sheet — one source of truth (css-contract-test.ts). The score does NOT go dark:
  * `.kv-paper` (on `.kv-score`) re-declares the light values, so the sheet is black ink on white
  * paper in both modes, exactly the pixels the training strips are cut from.
  *
@@ -29,7 +32,7 @@
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* ── Paper ──────────────────────────────────────────────────────────────
      The ground is ivory — the colour of an aged, burnished manuscript page, not
@@ -138,8 +141,8 @@
 }
 
 /* ── Night: the same manuscript read by lamplight ───────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme="dark"] {
+    color-scheme: dark;
     --paper: #12151f;
     --paper-raised: #1a1f2c;
     --paper-sunken: #0d1017;
@@ -173,7 +176,6 @@
     --shadow-modal: 0 18px 60px rgba(0, 0, 0, 0.6);
     --focus-ring: 0 0 0 3px rgba(147, 177, 230, 0.35);
     --backdrop: rgba(5, 7, 12, 0.6);
-  }
 }
 
 /* ── The paper island ─────────────────────────────────────────────────────

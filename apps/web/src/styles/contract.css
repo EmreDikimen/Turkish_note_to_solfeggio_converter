@@ -105,20 +105,18 @@
      - A `filter` moves no rect (unlike the transforms banned on this box), so every measured
        position — note targets, playhead, strip rects — is unchanged.
    The image export paints its own white page (exportScore.ts) and is unaffected. */
-@media (prefers-color-scheme: dark) {
-  #app:not([data-render="1"]) .kv-score.kv-paper {
-    background: #edeae0;
-  }
-  #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper {
-    color-scheme: dark;
-    background: #1c2130;
-    --ink: #e6e0d2;
-    --ink-soft: #bdb7a8;
-    --ink-faint: #918c80;
-    --rule: #2f3648;
-    --rule-strong: #414a5f;
-  }
-  #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper svg {
-    filter: invert(1) hue-rotate(180deg) sepia(0.16) brightness(0.88);
-  }
+:root[data-theme="dark"] #app:not([data-render="1"]) .kv-score.kv-paper {
+  background: #edeae0;
+}
+:root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper {
+  color-scheme: dark;
+  background: #1c2130;
+  --ink: #e6e0d2;
+  --ink-soft: #bdb7a8;
+  --ink-faint: #918c80;
+  --rule: #2f3648;
+  --rule-strong: #414a5f;
+}
+:root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper svg {
+  filter: invert(1) hue-rotate(180deg) sepia(0.16) brightness(0.88);
 }

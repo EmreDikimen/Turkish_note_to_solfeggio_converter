@@ -29,6 +29,7 @@ string lives in `apps/web/src/ui/strings.ts`.
 | `#omr-error` | `data-error-kind` |
 | `#play` | `data-play-state` |
 | `#app` | `data-ready`; `data-render="1"` on a render job (the URL carries `mode`) |
+| `<html>` | `data-theme` = `light` \| `dark` — the light/dark switch is `#theme-switch[data-theme]`, a real checkbox (checked = dark). ⚠ Always `light` on a render job |
 
 ⚠ **`data-ready` never appears on a bare visit** — it means *a score is installed*, and none is
 (no score ships; see [THIRD-PARTY.md](THIRD-PARTY.md)). Ask for `?score=` if you need one, or wait

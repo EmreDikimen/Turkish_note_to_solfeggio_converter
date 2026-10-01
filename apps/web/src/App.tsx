@@ -50,6 +50,8 @@ import { PlayerBar } from "./shell/PlayerBar";
 import { SettingsPanel } from "./shell/SettingsPanel";
 import { NavBar } from "./shell/NavBar";
 import { Brand, LegalFooter, SideHeading, Welcome } from "./shell/Chrome";
+import { ThemeSwitch } from "./ui/ThemeSwitch";
+import { useTheme } from "./theme";
 import {
   clearPages,
   deletePage,
@@ -367,6 +369,9 @@ export function App() {
   const [pitchOpen, setPitchOpen] = useState(false);
   // The player bar's settings panel (UI rebuild): a bottom sheet on a phone, a side panel elsewhere.
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Light / dark (owner, 2026-10-01). Held HERE, not in the switch, so the page keeps following the
+  // system while no switch is on screen (full screen, a phone's Nota tab).
+  const [theme, setTheme] = useTheme();
   /**
    * Which export is in flight, and the flag that mounts the hidden PAPER-WIDTH engraving.
    *
@@ -2521,11 +2526,11 @@ export function App() {
         // ── Phone: one column, three places, the player above the tab bar ──
         <main className="kv-phone mx-auto max-w-2xl px-3 pt-3 pb-[calc(var(--player-h,0px)+var(--tabs-h,0px)+16px)]">
           <div className={doc && mobileTab !== "pages" ? "hidden" : "flex flex-col gap-5"}>
-            {doc ? (
-              <div className="flex items-center justify-between px-1 pt-1">
-                <Brand />
-              </div>
-            ) : null}
+            {/* The brand (once a page is open — the welcome draws its own) and the light/dark switch. */}
+            <div className="flex items-center justify-between gap-3 px-1 pt-1">
+              {doc ? <Brand /> : <span />}
+              <ThemeSwitch theme={theme} onTheme={setTheme} />
+            </div>
             {doc ? uploadHero : <Welcome>{uploadHero}</Welcome>}
             <div>
               <SideHeading>{TR.library.title}</SideHeading>
@@ -2546,6 +2551,7 @@ export function App() {
             <div className="px-1">
               <Brand />
               <GoldRule align="start" className="mt-3" />
+              <ThemeSwitch theme={theme} onTheme={setTheme} className="mt-3" />
             </div>
             {doc && uploadHero}
             <div>

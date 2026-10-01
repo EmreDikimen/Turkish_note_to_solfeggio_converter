@@ -34,7 +34,13 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
 
 ## Dark mode
 
-- **Follows the system; there is no toggle** (owner, 2026-09-30).
+- **A switch, defaulting to the system** (owner, 2026-10-01; it was system-only the day before).
+  `#theme-switch` in the header sets `<html data-theme>`, the ONE thing the CSS reads — no sheet may
+  contain a `prefers-color-scheme` query (css-contract-test.ts). The choice is stored as `kv.theme`
+  and applied by an inline script in `index.html` BEFORE the first paint, so a dark visit never
+  flashes light; `src/theme.ts` holds the same rule for React. ⚠ A render job (`?mode=`) is always
+  light, whatever is stored. On a phone with a score open the header (and the switch) is on the
+  Sayfalar tab.
 - The page goes to a night slate (`--paper #12151f`). **The score does not go dark**: `.kv-paper`
   on `.kv-score` re-declares the light tokens, so the sheet and everything drawn in it (header,
   legend, instrument views) keep their light colours.

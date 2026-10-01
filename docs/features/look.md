@@ -39,16 +39,20 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
   contain a `prefers-color-scheme` query (css-contract-test.ts). The choice is stored as `kv.theme`
   and applied by an inline script in `index.html` BEFORE the first paint, so a dark visit never
   flashes light; `src/theme.ts` holds the same rule for React. ⚠ A render job (`?mode=`) is always
-  light, whatever is stored. On a phone with a score open the header (and the switch) is on the
-  Sayfalar tab.
-- The page goes to a night slate (`--paper #12151f`). **The score does not go dark**: `.kv-paper`
-  on `.kv-score` re-declares the light tokens, so the sheet and everything drawn in it (header,
-  legend, instrument views) keep their light colours.
-- **At night the sheet is ivory `#edeae0`** — the exact complement of the night page — with black
-  ink. ⛔ **An inverted sheet (light marks on dark paper) was built and REJECTED the same day**: the
-  owner found it harder to read. Staff lines and stems are hairlines, and thin light strokes on a
-  dark ground bloom and thin out; a softened invert was also tried and looked grey. The owner chose
-  the ivory sheet from three side-by-side screenshots.
+  light, whatever is stored. On a phone the switch is also in the score card's corner, so it is on
+  the Nota tab and not only on Sayfalar.
+- The page goes to a night slate (`--paper #12151f`), and **at night the SHEET is dark too**
+  (owner, 2026-10-01): slate paper `#1c2130`, and only the engraving's SVGs are recoloured — to ONE
+  soft neutral grey, rgb(200,200,200), through `#kv-night-ink`, an `feColorMatrix` in `index.html`.
+  The header and legend follow through the island's tokens; the editor's overlays are HTML and keep
+  their colours; the instrument view keeps an ivory sheet (inverted instruments are negatives).
+- How it got there, all on the owner's eye in two days: ⛔ inverting the whole `.kv-score` (too
+  harsh, and it flipped the header and the selection); ⛔ an ivory `#edeae0` sheet with black ink
+  ("nota kağıdı hala beyaz"); ink brightness 0.88 "hala çok sert", 0.62 "ruhsuz"; ⛔ a warm yellow
+  tint at three strengths, then dropped ("sarı tonunu tamamen kaldır"). ⚠ **A matrix, not a CSS
+  `invert() sepia()` chain**: sepia tints a GREY mark far more than a black one, so the grey-drawn
+  time signature came out much yellower than the notes. The matrix gives every mark the same colour,
+  scaled only by how dark it was drawn.
 - ⛔ **Never write a `dark:` utility.** The island only works because every colour is a token the
   card re-declares; `css-contract-test.ts` fails on one.
 

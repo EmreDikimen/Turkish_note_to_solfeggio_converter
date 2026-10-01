@@ -2975,6 +2975,14 @@
      one screen with the least room. ⛔ Only on this tab, and only on a phone: the card's pair keeps
      its ids and `smoke:editor` drives them at 1280px. */
   .kv-page[data-mtab="duzenle"] .kv-card__undo,
+  /* ⭐ ROOM FOR THE CORNER GROUP on the Nota tab (2026-10-01). The group is out of the flow, so the
+     title and the meta line ran UNDER it — the save mark sat on "511 nota" — and the light / dark
+     switch made it three controls wide. Reserve its width beside the TITLE block only (switch 52 +
+     two marks + gaps) — the view switch below keeps the full row. */
+  .kv-page[data-mtab="nota"] .kv-card__title {
+    padding-right: calc(52px + 2 * var(--control-h) + var(--space-4));
+  }
+
   /* ⭐ THE CORNER GROUP — Notayı kaydet and Tam ekran — AND IT IS A COVERING BUG, NOT A TIDY-UP
      (measured 2026-09-27, 375×667). The group is `position: absolute` against `.kv-card__head`, and
      the two rows that normally hold it apart from the view switch (`__title`, `__meta`) are hidden

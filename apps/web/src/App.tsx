@@ -2362,6 +2362,9 @@ export function App() {
             // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
             // nothing new for any check at 1280×720.
             onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
+            // The light / dark switch on the Nota tab too — on a phone the page header (where the
+            // switch lives on a wide window) is only on the Sayfalar tab.
+            cornerExtra={isPhone ? <ThemeSwitch theme={theme} onTheme={setTheme} /> : undefined}
             onExport={runExport}
             onUndo={onUndo}
             onRedo={onRedo}

@@ -84,17 +84,44 @@
   padding: 16px;
 }
 
-/* ── Night reading: an ivory sheet on the dark page ──────────────────────
-   Owner, 2026-09-30. The first night mode turned the sheet over (`filter: invert`): dark paper,
-   light marks. The owner found it HARDER to read, and the reasons are known ones — staff lines and
-   stems are hairlines, and thin light strokes on a dark ground bloom (halation) and look thinner
-   after antialiasing, at a near-maximal contrast. Of the two alternatives shown side by side the
-   owner chose this one: keep black ink, and take the glare out of the paper by painting it the
-   exact complement of the night page (#12151f → #edeae0). A printed page under a lamp, not a
-   light-box. A background only — nothing inside the sheet is recoloured or filtered.
-   ⚠ `:not([data-render="1"])`: a render job is always a light page, so no training strip is ever
-   cut from this paper, whatever the machine's colour scheme. The image export paints its own
-   white page (exportScore.ts) and is unaffected. */
-:root[data-theme="dark"] .kv-page:not([data-render="1"]) .kv-score.kv-paper {
+/* ── Night reading: a dark sheet with soft ink ───────────────────────────
+   Owner, 2026-09-30 → 2026-10-01: in dark mode the SHEET goes dark too, like a book in a reader's
+   night mode. History, because it is the third design and the first two taught something:
+     1. `filter: invert` on the whole `.kv-score` — dark paper, near-white marks. The owner found it
+        HARDER to read: a near-maximal contrast, and it also inverted the header, the selection and
+        the warnings.
+     2. An ivory sheet (#edeae0) with black ink, chosen from three screenshots — then rejected the
+        next day: "nota kağıdı hala beyaz".
+     3. THIS: the paper is a dark slate a step lighter than the page, and ONLY the engraving's SVGs
+        are turned light — not to white but to a soft NEUTRAL grey, rgb(200,200,200), through
+        `#kv-night-ink` (an feColorMatrix in index.html). The owner tuned it by eye: brightness 0.88
+        was "hala çok sert", 0.62 "ruhsuz"; a warm yellow tint was tried at three strengths and
+        dropped entirely ("sarı tonunu tamamen kaldır, güzel durmuyor"). ⚠ A matrix, not a CSS
+        `invert() sepia()` chain: sepia tints GREY far more than black, so the grey-drawn time
+        signature came out much yellower than the notes ("signature'lar aşırı sarı").
+        The HTML around the music (the header, the legend) is re-coloured through the island's
+        tokens rather than filtered, and the editor's overlays (selection, playhead, warnings) are
+        HTML too, so they keep their own colours.
+   ⚠ GUARDS, each load-bearing:
+     - `:not([data-render="1"])` — a render job is always the light page (src/theme.ts forces it),
+       so no training strip is ever cut from a dark sheet.
+     - `:not([data-view="instrument"])` — the kanun's wood, the violin and the clarinet are pictures
+       of real objects; inverted they are negatives. That view keeps an ivory sheet.
+     - A `filter` moves no rect (unlike the transforms banned on this box), so every measured
+       position — note targets, playhead, strip rects — is unchanged.
+   The image export paints its own white page (exportScore.ts) and is unaffected. */
+:root[data-theme="dark"] #app:not([data-render="1"]) .kv-score.kv-paper {
   background: #edeae0;
+}
+:root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper {
+  color-scheme: dark;
+  background: #1c2130;
+  --ink: #c8c8c8;
+  --ink-soft: #a7a7a7;
+  --ink-faint: #868686;
+  --rule: #2f3648;
+  --rule-strong: #414a5f;
+}
+:root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper svg {
+  filter: url(#kv-night-ink);
 }

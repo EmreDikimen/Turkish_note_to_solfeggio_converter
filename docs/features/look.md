@@ -45,7 +45,9 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
   (owner, 2026-10-01): slate paper `#1c2130`, and only the engraving's SVGs are recoloured — to ONE
   soft neutral grey, rgb(200,200,200), through `#kv-night-ink`, an `feColorMatrix` in `index.html`.
   The header and legend follow through the island's tokens; the editor's overlays are HTML and keep
-  their colours; the instrument view keeps an ivory sheet (inverted instruments are negatives).
+  their colours. The INSTRUMENT VIEW is dark too (2026-10-01): its controls take the page's night
+  palette and only its measure card's engraving (`measure-svg`) takes the ink — the kanun, violin
+  and clarinet pictures are never recoloured (recoloured they read as negatives).
 - How it got there, all on the owner's eye in two days: ⛔ inverting the whole `.kv-score` (too
   harsh, and it flipped the header and the selection); ⛔ an ivory `#edeae0` sheet with black ink
   ("nota kağıdı hala beyaz"); ink brightness 0.88 "hala çok sert", 0.62 "ruhsuz"; ⛔ a warm yellow

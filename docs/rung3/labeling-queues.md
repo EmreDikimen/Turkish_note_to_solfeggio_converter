@@ -2,7 +2,7 @@
 
 purpose: the dated review queues, why each exists and what it produced
 audience: agents and the owner working the real-page track
-updated: 2026-09-09
+updated: 2026-09-29
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -70,6 +70,27 @@ decode is right", `fix` = type what the page says, `bad` = the crop is unusable.
   against the 45-piece frozen exam by SymbTr id *and* by page stem.
 
 Run: `review_ui.py` → queue **`ndhigh`**. Built by `scripts/rung3/build_ndhigh_queue.py`.
+
+## `r4-ctl-errors` / `r4-live-errors` (2026-09-29) — the strips behind the Round-4 taxonomy
+
+Owner: *"signature için 46 hata olduğunu nereden biliyoruz … goldu ve token çıktısını gösteren bir
+queue"*. Every `_realval_v2r` strip a model got wrong, gold on top and the decode below, both in
+**label tokens** (`c''8`, `\sig`), re-spaced so the diff on screen is the diff that was counted.
+`r4-ctl-errors` is `r4-ctl-stage2-best-edits`, the checkpoint behind the taxonomy in
+[../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md); `r4-live-errors` is `r4-ctl-stage2-last`, the
+site's model since 2026-09-28. Counts are in the script's printout, not here.
+
+- ⚠ **A category count is TOKENS, not strips.** `signature` 46 reproduces exactly on the Mac, and
+  it sits on **20** strips — one wrong `\sig` block raises one count per wrong token inside it.
+- ⚠ The Mac's MPS decode is not bit-identical to Colab's CUDA decode: 189 exact strips here against
+  the published 192, so the other categories move by 1–2.
+- ⛔ **Diagnostic, never promotable** — `corrected_label` empty, a file name `promote_labels.py`
+  never reads. Triage as in `r3-exam-errors`: `ok` = gold wrong, `fix` = model wrong, `bad` = crop.
+- Filter `reason` = `<short+mid|long> | <main category>`; the badge beside it lists every category.
+  Crops are the pool's own flat PNGs (`QUEUE_FLAT_ROOTS`) — 6 of the 260 exist nowhere else.
+
+Run: `scripts/rung3/build_exam_error_queue.py --pool data/real/rung3/_realval_v2r --out
+data/real/rung3/_errors --out-name r4_ctl_errors.csv --checkpoint <ckpt>`, ~75 s per model on the M4.
 
 ## The labelling BATCHES (2026-08-18) — a page-complete cut of `reslice-all`
 

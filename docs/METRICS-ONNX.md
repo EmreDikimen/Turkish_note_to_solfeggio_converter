@@ -70,6 +70,29 @@ next regardless of Round 3. Regenerating that one gold tie-free would read **Rou
 **Round 2 25/28** — the honest ordering, since Round 2 is now the stale model. ⚠ Not done: changing a
 shipped check's expected value is an owner call.
 
+### The two models measured on the SAME golds (2026-09-28)
+
+Run while staging Round 4's control for the live site — both read through `npm run gate:browser`,
+the July `gate.json` golds untouched in between, so the two numbers are comparable:
+
+| model | checks | failing strips |
+|---|---|---|
+| `r3a-stage2-best-real` — the model that WAS live | **22/28** | `rast…icime_hep` (the `\tie` gold), `kurdilihicazkar…bunca_cevrinle`, `hicaz…yalan_degil` |
+| `r4-ctl-stage2-last` — deployed 2026-09-28 | **24/28** | `rast…icime_hep` (the `\tie` gold), `kurdilihicazkar…bunca_cevrinle` |
+
+- ⭐ **Round 4's control is two checks BETTER than the model it replaced**, on the gate the project
+  already had. That is not an accuracy finding — 14 synthetic strips decide it — but it is the one
+  check that was run on both and it does not contradict the deploy.
+- ⛔ **Neither reaches the documented 27/28, and `r3a` has been failing it since it was staged on
+  2026-09-03.** Nobody ran the gate at that staging. The expectation is stale for the reason this
+  section already gives, and `--expect 27/28` in `package.json` is still an owner call to change.
+- `r4-ctl`'s surviving new failure is the same `\tup3` drop the row above records: gold
+  `\tup3 e''16 d''16 e''16 \tupend`, decode `e''16 d''16 e''16 \tupend` — an unbalanced tuplet, the
+  class the owner accepted on 2026-09-03 because the stitcher brackets an unclosed run.
+- ⚠ **A staging trap, paid for once:** `make_browser_gate.py` REWRITES `gate.json` — golds included —
+  when it is given a different `--strips-dir`. Staging a new model must copy the three graphs and
+  leave `gate.json` alone, or the gate stops being comparable with every earlier reading.
+
 ⚠ A second apparent difference on that strip, `d''32` rendered as `d'' 32`, is **not** a difference:
 the two forms tokenize to identical ids `[17, 1, 37, 95, 35]`. `d''16` vs `d'' 16` genuinely differs,
 which is why `promote_labels.norm_label`'s rule is **32 only**.

@@ -19,13 +19,21 @@ owner's call; the point of this entry is that three risks written as *future* ar
    `WARMUP_WAIT_MS` was raised 40 s → **120 s** to cover it. ⏭ **`--min-instances 1` is the owner's
    open call** — it removes the cold start and costs money continuously.
    [mvp/deploy-ops.md](mvp/deploy-ops.md).
-2. ⚠ **Visitors read with ROUND 3 RUN A `best-real`**, staged 2026-09-03, revision
-   `omr-decode-00006-7wq` at 100% of traffic. **Verified by hash, not memory.** ⛔ **This file and
-   CLAUDE.md both said "still Round 2" and both were wrong** — the claim reasoned about
-   `VITE_WEIGHTS_URL`, which governs the BROWSER's weights, and the browser has read nothing since
-   2026-09-04. The model a visitor meets is the one the Dockerfile bakes into the Cloud Run image out
-   of `apps/web/public/models`. ⚠ Run A was the **hand-test** pick, not an exam pass; the exam floor
-   is unmet and the dense-page failure below is still silent.
+2. ⚠ **Visitors read with ROUND 4 CONTROL `r4-ctl-stage2-last`** (owner, 2026-09-28), staged that
+   day, revision **`omr-decode-00008-hx7`** at 100% of traffic, and the Hub weights
+   (`VITE_WEIGHTS_URL`) carry the same int8 graphs — **downloaded back and hash-matched on all three
+   graphs plus `model.json`**, not assumed from a successful-looking upload: the first `hf upload`
+   died on a `ReadTimeout` while still printing progress, and the Hub sat on the 2026-09-03 weights.
+   **Verified by hash at every local hop and by
+   `smoke:page` against the live URL** (159 notes / 27 measures, server-side, no page errors) — not
+   from memory. It replaced Round 3 Run A `best-real`. ⚠ **It is NOT an exam pass either**: Round 4's
+   exam has not been read, and `r4-ctl` beat the live model only as a *lead* — every paired interval
+   spans zero once clustered by piece ([METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md)). What it does
+   have is the browser gate: **24/28 against the outgoing model's 22/28 on the same golds**. ⭐ **To
+   revert**: re-stage `data/checkpoints/r3a-stage2-best-real-onnx/*_int8.onnx` into
+   `apps/web/public/models`, rebuild and redeploy ([../CLAUDE.md](../CLAUDE.md)).
+   ⛔ **`gate:browser`'s documented "expect 27/28" IS STALE — neither model reaches it**, and it has
+   been failing unnoticed since at least the 2026-09-03 staging ([METRICS-ONNX.md](METRICS-ONNX.md)).
 3. ✅ **THE PHONE REBUILD IS LIVE, AND THE APP IS INSTALLABLE** (deployed 2026-09-28, `Deploy is
    live!`, `smoke:live` PASS). Everything built 2026-09-26..28 is on the site: the score fits the
    phone, the Çal tab folds under Çal/Dur, tempo takes typing, PNG/PDF saving, violin retuning, the

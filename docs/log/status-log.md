@@ -38,6 +38,45 @@ Checks at the end: `typecheck`, `npm test` (with the new `css-contract-test.ts`)
 ALL PASS, `smoke:build` PASS, `smoke:app` red at the same pre-existing `recent-item` step as the
 baseline, `verify-labels` 302/302 exact on the pinned renders.
 
+## 2026-09-28 — Round 4's control goes live everywhere, and scheme H gets a localhost to be judged on
+
+**The owner's call** (*"round 4 controlü her yerde canlıya taşıyıp round 4 H ı ölçebileceğim bir
+localhost verir misin"*). Both halves done; the reasoning that matters is why each was safe.
+
+**Live.** `r4-ctl-stage2-last` exported with `optimum-cli`, quantized to int8, staged into
+`apps/web/public/models`, built in Cloud Build and deployed as revision `omr-decode-00008-hx7`;
+the Hub weights behind `VITE_WEIGHTS_URL` re-uploaded from the same bytes so the server and the
+fallback cannot drift. ⚠ **The first `hf upload` FAILED on a `ReadTimeout` after printing progress
+the whole way**, and the Hub was left on the 2026-09-03 weights; a retry resumed and finished. The
+only reason that was caught is that the Hub files were **downloaded back and hash-matched** — three
+graphs and `model.json` — instead of trusting the upload's own output. Do that every time. Verified by hash at every local hop, then end to end with `smoke:page`
+against the live URL — 159 notes / 27 measures, decoded server-side, no page errors.
+
+⚠ **It is still not an exam pass**, and the paired reads are a lead rather than a win. What was run
+before shipping was the gate the project already had, on both models and on the SAME golds:
+**`r4-ctl` 24/28 against the outgoing `r3a` 22/28**. Two findings came out of that:
+the documented "expect 27/28" is stale for any post-`\tie` model (already recorded), and **`r3a` has
+been failing it unnoticed since it was staged on 2026-09-03** — nobody ran the gate that day.
+
+⛔ **A trap paid for once:** `make_browser_gate.py` REWRITES `gate.json`, golds included, when given
+a different `--strips-dir`. It did, it was caught by diffing against a copy taken first, and the
+July golds were restored. Staging a model for the live site copies the three graphs and nothing else.
+
+**Localhost H.** Scheme H cannot reach the app at all as things stand: `stitch.ts`'s
+`normalizeTokens` splits backslash commands only, and H's decoder glues note runs (`b''32a''32`).
+Measured in the real app rather than argued — `smoke:page` straight at the H server FAILS with
+**0 svg and no score**; through the new re-spacing proxy it PASSES with **159 notes / 27 measures**,
+the same count the live model gives on that page. ⛔ The owner chose the **localhost-only** fix, so
+`tools/vision/h-respace-proxy.mts` sits between the server and the app and rewrites
+`strips[].tokens` only — `ids`, `logprobs` and `hitCap` pass through untouched. Its rule mirrors
+`data.canonical_label` and was checked against it on **123 of 123** real decodes, identical.
+No shipping file was touched; the real fix, if H is ever adopted, is one splitter in
+`normalizeTokens`.
+
+⚠ Two environment traps found the hard way and now in COMMANDS.md: `MODEL_DIR` resolves against
+`apps/server`, so a relative path 503s; and `npm run dev:web -- --port 5173` runs `vite 5173`, which
+vite reads as the root directory — every page 404s while the log still says "ready".
+
 ## 2026-09-28 — a note is stepped with arrows, and a scroll no longer edits
 
 **▲ and ▼ on the selected note** (owner: *"sürükleyerek nota değerini değiştirme mantığı mobilde pek

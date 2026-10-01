@@ -147,6 +147,21 @@ QUEUES = {
     "handtest": "data/real/rung3/_handtest/handtest_review.csv",
     "b8-nav": "data/real/rung3/_navsuggest/nav_suggest.csv",
     "r3-exam-errors": "data/real/rung3/final/r3_exam_errors.csv",
+    # ⛔ DIAGNOSTIC, NEVER PROMOTABLE (2026-09-29, owner: "goldu ve token çıktısını gösteren bir
+    # queue"). The strips of `_realval_v2r` — the 260-strip pool every Round-4 paired read and the
+    # taxonomy in docs/METRICS-ROUND4-AB.md used — that a model got wrong, gold on top and its decode
+    # below, both RE-SPACED into label tokens so the diff on screen is the diff that was counted.
+    #   r4-ctl-errors  = `r4-ctl-stage2-best-edits`, the checkpoint behind the published taxonomy
+    #                    (signature 46, …) — filter `short+mid | …` to see those rows
+    #   r4-live-errors = `r4-ctl-stage2-last`, the model on the site since 2026-09-28
+    # Same guarantees and the same triage as `r3-exam-errors`: corrected_label EMPTY, a file name
+    # promote_labels.py never reads; ok = the GOLD is wrong · fix = the MODEL is wrong · bad = crop.
+    # ⚠ real-val is a SELECTION pool, not the exam — but `best-edits` was picked on 241 of these 260
+    # strips, so r4-ctl-errors shows a slightly flattered model. `reason` is `<bucket> | <main
+    # category>`; every category the strip raised is in the `detail` badge.
+    # Cut by scripts/rung3/build_exam_error_queue.py --out-name.
+    "r4-ctl-errors": "data/real/rung3/_errors/r4_ctl_errors.csv",
+    "r4-live-errors": "data/real/rung3/_errors/r4_live_errors.csv",
     "examv3": "data/real/rung3/strips_exam_v3/emit_review.csv",
     # the 139 strips the emitter labelled BY ITSELF across the whole re-cut exam (43 of them agree
     # token-for-token with the frozen exam's gold; 96 have no human check at all). They enter the exam
@@ -356,6 +371,13 @@ QUEUE_IMG_ROOTS = {
     "h1-full": ["data/real/strips_v2"],
     "h1-review": ["data/real/strips_v2"],
 }
+# ⚠ Queues whose crops are the FLAT PNGs inside a strips pool (`<pool>/<strip>.png`, no page folder).
+# `_realval_v2r` is scored from its own folder, and 6 of its 260 crops exist nowhere else — so these
+# queues show the very pixels the model was scored on, not a same-named crop from a slice root.
+QUEUE_FLAT_ROOTS = {
+    "r4-ctl-errors": ["data/real/rung3/_realval_v2r"],
+    "r4-live-errors": ["data/real/rung3/_realval_v2r"],
+}
 # Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
 # on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is
 # re-fetched every time the verdict log is opened.
@@ -560,9 +582,11 @@ class Handler(BaseHTTPRequestHandler):
             if qid not in QUEUES or not re.fullmatch(r"[\w.\-]+/[\w.\-]+\.png", rel):
                 self._json({"error": "bad path"}, 400)
                 return
-            for base in QUEUE_IMG_ROOTS.get(qid, IMG_ROOTS):
+            flat = [(b, rel.rpartition("/")[2]) for b in QUEUE_FLAT_ROOTS.get(qid, [])]
+            nested = [(b, rel) for b in ([] if flat else QUEUE_IMG_ROOTS.get(qid, IMG_ROOTS))]
+            for base, sub in flat + nested:
                 root_dir = (self.root / base).resolve()
-                img = (root_dir / rel).resolve()
+                img = (root_dir / sub).resolve()
                 if str(img).startswith(str(root_dir)) and img.exists():
                     self._send(200, img.read_bytes(), "image/png")
                     return
@@ -1133,7 +1157,8 @@ function render(){
     `${v} ${r.reason?`<span class="badge b-reason">${esc(r.reason)}</span>`:''}
      <span><b>${esc(r.strip)}</b></span>
      ${r.nd?`<span>nd <b>${r.nd}</b></span>`:''}
-     ${r.min_logprob?`<span>min&nbsp;logp <b>${r.min_logprob}</b></span>`:''}`;
+     ${r.min_logprob?`<span>min&nbsp;logp <b>${r.min_logprob}</b></span>`:''}
+     ${r.detail?`<span class="badge b-reason" data-detail>${esc(r.detail)}</span>`:''}`;
   $('strip').src='/img/'+encodeURIComponent(qid)+'/'+encodeURIComponent(r.page)
                 +'/'+encodeURIComponent(r.strip);
   $('labels').innerHTML=diffHtml(r.label,r.decoded)+oldfixHtml(r)+

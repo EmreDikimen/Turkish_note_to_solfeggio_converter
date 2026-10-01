@@ -135,6 +135,24 @@ while the site was refusing correctly in 5.1 s. Fixed in all three page smokes.
 ```bash
 node apps/server/tools/prepare-models.mjs   # assemble apps/server/models from the browser's graphs
 npm run dev:server                   # the decode server on :8080 — needs the line above once
+    # ⚠ MODEL_DIR must be ABSOLUTE — it resolves against apps/server, not the repo root, so a
+    # relative path silently 503s with "model failed to load".
+    # ⚠ `npm run dev:web -- --port 5173` MANGLES the args: the inner script runs `vite 5173`, which
+    # vite reads as the ROOT DIRECTORY, and every page 404s while the log still says "ready".
+    # Run `npm run dev:web` bare (5173 is the default anyway).
+
+# TRYING A SECOND MODEL SIDE BY SIDE — e.g. scheme H, which the shipped stitcher cannot parse:
+.venv-ml/bin/python src/vision/make_browser_gate.py --checkpoint data/checkpoints/<ck> \
+    --onnx-dir data/checkpoints/<ck>-onnx --out data/checkpoints/_stage --n 3
+    # ⛔ It REWRITES gate.json, golds included, when --strips-dir differs from the staged model's.
+    # Stage a model for the LIVE site by copying the three graphs only, and leave gate.json alone —
+    # otherwise `gate:browser` stops being comparable with every earlier reading. docs/METRICS-ONNX.md
+node apps/server/tools/prepare-models.mjs --from data/checkpoints/_stage --out apps/server/models-h
+MODEL_DIR=$PWD/apps/server/models-h PORT=8081 npm run dev:server
+npx tsx tools/vision/h-respace-proxy.mts --upstream http://localhost:8081 --port 8082
+VITE_DECODE_URL=http://localhost:8082 npm run dev:web
+    # ⛔ The proxy is NOT optional for scheme H: straight at :8081 the app produces 0 svg and no
+    # score; through :8082 it reads the page normally. docs/CODE_TOUR.md
 npm run parity:server -- --pages 6 --fixture f.json   # server vs browser; --replay f.json skips the browser
 npm run bench:server -- --fixture f.json              # vCPU-seconds per page, payload bytes
 npm run check:limits                 # the deploy safety checklist, against a running server

@@ -162,6 +162,22 @@ Wikimedia Commons, "Yamaha Clarinet YCL-457II-22"
   photograph rests on Wikimedia VRT permission ticket 2017012510009331, from
   Yamaha Music Europe. It is not a user's bare claim over a manufacturer's photo.
 
+Sayfa arka planı — İstanbul tabloları / page backdrop — Istanbul paintings:
+
+Ivan Aivazovsky (1817–1900), "View of Constantinople and the Bosphorus" (1856)  —  kamu malı / public domain
+  https://commons.wikimedia.org/wiki/File:Aivazovsky_-_View_of_Constantinople_and_the_Bosphorus.jpg
+  /backdrop/day.webp, /backdrop/day-soft.webp
+
+Ivan Aivazovsky (1817–1900), "A View of the Bosporus with the Hagia Sophia and the Maiden's Tower in the Moonlight"  —  kamu malı / public domain
+  https://commons.wikimedia.org/wiki/File:Ivan_Konstantinovich_Aivazovsky_-_A_View_of_the_Bosporus_with_the_Hagia_Sophia_and_the_Maiden's_Tower_in_the_Moonlight.jpg
+  /backdrop/night.webp, /backdrop/night-soft.webp
+
+  Ressam 1900'de öldü; eserler her yerde kamu malıdır. Renkleri yumuşatıldı,
+  küçültüldü ve bulanıklaştırıldı (scripts/prepare_backdrop.py).
+
+  The painter died in 1900; the works are public domain everywhere. Colours
+  calmed, scaled and blurred (scripts/prepare_backdrop.py).
+
 KÜTÜPHANELER / LIBRARIES
 ------------------------
 

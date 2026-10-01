@@ -9,15 +9,16 @@
  *
  * History: İznik turquoise (2026-08-08) replaced a cream-and-terracotta palette the owner said
  * read as somebody else's website; Tezhip replaced İznik here, keeping the ivory ground but moving
- * the accent to lapis and adding gold. The editor's overlays (selection, hover, playhead, insert
- * ghost) keep their bright `#14b8a6` teal — they are drawn over black notation on white paper and
- * have to out-shout it, and turquoise is still one of this palette's pigments.
+ * the accent to lapis and adding gold. The live marks over the music took İznik's two tile
+ * pigments on 2026-10-01 (owner: more of Istanbul): the playhead and a selected note in İznik
+ * red, a pointed-at measure or note in cobalt (`--iznik-*` below). The edit tools' other overlays
+ * (insert ghost, tuplet anchor and landings) keep their bright `#14b8a6` teal.
  *
  * ⚠ CONTRAST, computed for every pair that carries text (WCAG AA = 4.5:1):
  *   light  ink on paper 14.9 · ink-soft 8.9 · ink-faint 4.6 · white on accent 11.2 ·
  *          danger on white 7.4 · teal on paper 5.3 · gold-ink on white 5.0
- *   dark   ink on paper 13.9 · ink-soft 8.3 · ink-faint 5.0 · accent-on on accent 8.0 ·
- *          accent (as link text) on paper 8.4 · danger 5.6
+ *   dark   ink on paper 14.5 · ink-soft 10.1 · ink-faint 5.5 · accent-on on accent 9.4 ·
+ *          accent (as link text) on paper 9.4 · danger 5.9
  * ⚠ `--gold` itself is 2.9:1 on the paper — DECORATION ONLY (rules, ornaments, a border). Text,
  *   a focus ring or a state that must be read uses `--gold-ink` or the accent.
  *
@@ -72,6 +73,14 @@
   --gold-ink: #8c6a2a;
   --teal: #276e69;
   --teal-soft: #dcece9;
+
+  /* ── İznik — the tile painter's two pigments (owner, 2026-10-01) ───────────
+     For SMALL live marks over the music only: the playhead and the instrument's
+     moving finger (red), a pointed-at measure or note (cobalt), a selected note
+     (red). Never a button, never text. Not on `.kv-paper`: at night the sheet is
+     dark, so these follow the page's night values below. */
+  --iznik-red: #c0392b;
+  --iznik-cobalt: #1f4fa8;
 
   /* ── Semantic ─────────────────────────────────────────────────────────── */
   --ok: #3f6f52;
@@ -128,6 +137,12 @@
   --radius-lg: 12px;
 
   /* Shadows tinted with the ink, not black. */
+  /* The halo: a wide glow of the page's own paper around the page's big blocks, so the Istanbul
+     backdrop (app.css `.kv-backdrop`) is faint right beside the content and clearer the further
+     away it is (owner, 2026-10-01). Re-resolved at night because `--paper` is. ⚠ Only ever on a
+     NON-POSITIONED block: a positioned element's shadow paints over its neighbours' text. */
+  --halo-fill: color-mix(in srgb, var(--paper) 72%, transparent);
+  --halo: 0 0 64px 56px var(--halo-fill);
   --shadow-card: 0 1px 2px rgba(27, 31, 46, 0.05), 0 10px 30px -12px rgba(27, 31, 46, 0.14);
   --shadow-modal: 0 18px 60px rgba(15, 20, 35, 0.32);
   --focus-ring: 0 0 0 3px rgba(31, 58, 107, 0.28);
@@ -140,7 +155,12 @@
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
-/* ── Night: the same manuscript read by lamplight ───────────────────────── */
+/* ── Night: the Bosphorus after dark (owner, 2026-10-01) ─────────────────────
+   Navy-black ground, ivory ink, and GOLD as the working colour — the lamplit
+   gilding of a manuscript at night. It was a neutral slate with a pale-lapis
+   accent until 2026-10-01. Contrast on the night paper #0c1426: ink 14.5 ·
+   ink-soft 10.1 · ink-faint 5.5 (5.0 on raised) · accent as link text 9.4 ·
+   accent-on on accent 9.4 · danger 5.9. */
 /* ⚠ The second selector is the INSTRUMENT VIEW's paper at night (owner, 2026-10-01: "enstrüman
    üzerinde kısmı dark mode'a geçmiyor"). That view is a panel of controls around a picture, not a
    sheet, so it takes the page's whole night palette — it out-specifies `.kv-paper` below. Its
@@ -148,29 +168,32 @@
 :root[data-theme="dark"],
 :root[data-theme="dark"] #app:not([data-render="1"])[data-view="instrument"] .kv-score.kv-paper {
     color-scheme: dark;
-    --paper: #12151f;
-    --paper-raised: #1a1f2c;
-    --paper-sunken: #0d1017;
+    --paper: #0c1426;
+    --paper-raised: #131d35;
+    --paper-sunken: #080e1b;
 
-    --ink: #e6e1d3;
-    --ink-soft: #c2bcab;
-    --ink-faint: #8f8b7f;
+    --ink: #ece4d0;
+    --ink-soft: #c9bfa8;
+    --ink-faint: #958c78;
 
-    --rule: #2a3142;
-    --rule-strong: #3d4659;
+    --rule: #23304d;
+    --rule-strong: #34446a;
 
-    /* Lapis cannot carry text on a dark ground, so at night the accent is the
-       pale lapis of the pigment's highlights and the button text goes dark. */
-    --accent: #93b1e6;
-    --accent-hover: #b3c8ef;
-    --accent-soft: #1f2b45;
-    --accent-on: #0f1a33;
+    /* Lapis cannot carry text on a navy ground, so at night the gold the day spends on ornament
+       becomes the colour a person presses, with dark text on it. */
+    --accent: #d9b56a;
+    --accent-hover: #e6c784;
+    --accent-soft: #2a2416;
+    --accent-on: #1a1407;
 
     --gold: #c9a55a;
-    --gold-soft: #3a3120;
-    --gold-ink: #d8b872;
+    --gold-soft: #33291a;
+    --gold-ink: #e2c27c;
     --teal: #5fb3ac;
     --teal-soft: #173634;
+
+    --iznik-red: #f07467;
+    --iznik-cobalt: #86a8f0;
 
     --ok: #7dbf95;
     --warn: #e0b25c;
@@ -179,8 +202,8 @@
 
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
     --shadow-modal: 0 18px 60px rgba(0, 0, 0, 0.6);
-    --focus-ring: 0 0 0 3px rgba(147, 177, 230, 0.35);
-    --backdrop: rgba(5, 7, 12, 0.6);
+    --focus-ring: 0 0 0 3px rgba(217, 181, 106, 0.4);
+    --backdrop: rgba(4, 8, 18, 0.6);
 }
 
 /* ── The paper island ─────────────────────────────────────────────────────

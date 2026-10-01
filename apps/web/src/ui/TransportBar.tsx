@@ -44,6 +44,7 @@ import type { AccidentalMode } from "../SheetView";
 import { Segmented } from "./Segmented";
 import { MakamIntonation } from "./MakamIntonation";
 import { TR } from "./strings";
+import { PauseIcon, PlayIcon, StopIcon } from "./PlayIcons";
 
 /** The tempo box's range. ⚠ ONE pair of numbers for the `min`/`max` attributes AND the commit
  *  guard below — they were written twice and a guard that disagrees with the attribute is a box
@@ -290,6 +291,30 @@ export function TransportBar({
     };
   }, []);
 
+  // `data-stuck` while the row is pinned to the window's top edge (owner, 2026-10-01): it is
+  // transparent over the Istanbul backdrop at rest, and needs a ground only once the music scrolls
+  // under it (app.css). Written straight onto the element — a re-render per scroll frame buys nothing.
+  useEffect(() => {
+    const el = pinnedRef.current;
+    if (!el) return;
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const stuck = window.scrollY > 0 && el.getBoundingClientRect().top <= 0.5;
+      if (stuck) el.dataset.stuck = "1";
+      else delete el.dataset.stuck;
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
   /** The fold's handle. Built once and mounted either above or below the settings — see there. */
   const foldHandle = (
     <button
@@ -342,6 +367,7 @@ export function TransportBar({
               onClick={onPlayPause}
               disabled={!canPlay}
             >
+              {playState === "playing" ? <PauseIcon /> : <PlayIcon />}
               {playState === "playing"
                 ? TR.transport.pause
                 : playState === "paused"
@@ -355,6 +381,7 @@ export function TransportBar({
               onClick={onStop}
               disabled={playState === "stopped"}
             >
+              <StopIcon />
               {TR.transport.stop}
             </button>
           </div>

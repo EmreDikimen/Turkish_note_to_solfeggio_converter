@@ -2,7 +2,7 @@
 
 purpose: the one home for how the app is styled since the 2026-09-30 Tezhip restyle — the palette, dark mode, the CSS layer order, and the rule that keeps a restyle from touching training strips
 audience: agents and the owner, before changing any colour, font, stylesheet or UI library
-updated: 2026-09-30
+updated: 2026-10-01
 
 > Current state and what is deployed: [../STATUS.md](../STATUS.md). The rules that bind code
 > anywhere: [../APP-RULES.md](../APP-RULES.md). What a check may READ:
@@ -20,6 +20,18 @@ updated: 2026-09-30
   box's double frame, a toggle's "on" dot. ⚠ It is 2.9:1 on the paper, so it never carries text;
   `--gold-ink #8c6a2a` is the only gold a reader is asked to read (the makam name in the recent list).
 - **Turquoise** and **Turkish red** are the secondary pigments (`--teal`, `--danger`).
+- **İznik red and cobalt** (`--iznik-red`, `--iznik-cobalt`, owner 2026-10-01) are for the small
+  live marks over the music only: the playhead and the instrument's moving finger (red), a
+  pointed-at measure or note (cobalt), a selected note (red). Never a button, never text.
+- **An Istanbul painting behind the page** (owner, 2026-10-01): Aivazovsky by day, Aivazovsky by
+  moonlight at night (`ui/ornament/Backdrop.tsx`, `scripts/prepare_backdrop.py`). It sits under a
+  veil of the page's own paper, blurred behind the content column and sharper toward the window's
+  edges, and every big block wears `--halo` — a paper glow, so the picture is faintest right beside
+  the content. ⚠ The halo goes only on NON-POSITIONED blocks: on the positioned upload box it
+  painted over the title above it. The pinned Çalma bar is frosted (`backdrop-filter`) rather than
+  solid paper, so it does not read as a box cut out of the picture. A render job hides it all.
+- ⛔ **No ebru band, no Cormorant wordmark** — both tried 2026-10-01 and reverted the same day
+  on the owner's eye.
 - **EB Garamond** for display, **Inter** for the interface — both self-hosted through `@fontsource`
   (`main.tsx`), because COEP `require-corp` blocks every font CDN. ⚠ The score's own header keeps
   **Georgia** (`--font-score`): it is engraved to match the notation.
@@ -41,8 +53,10 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
   flashes light; `src/theme.ts` holds the same rule for React. ⚠ A render job (`?mode=`) is always
   light, whatever is stored. On a phone the switch is also in the score card's corner, so it is on
   the Nota tab and not only on Sayfalar.
-- The page goes to a night slate (`--paper #12151f`), and **at night the SHEET is dark too**
-  (owner, 2026-10-01): slate paper `#1c2130`, and only the engraving's SVGs are recoloured — to ONE
+- The page goes to **navy-black with ivory ink, and GOLD becomes the working colour** (owner,
+  2026-10-01: "the Bosphorus at night"; it was a neutral slate with a pale-lapis accent):
+  `--paper #0c1426`, `--accent #d9b56a`. **At night the SHEET is dark too**
+  (owner, 2026-10-01): navy paper `#172038`, and only the engraving's SVGs are recoloured — to ONE
   soft neutral grey, rgb(200,200,200), through `#kv-night-ink`, an `feColorMatrix` in `index.html`.
   The header and legend follow through the island's tokens; the editor's overlays are HTML and keep
   their colours. The INSTRUMENT VIEW is dark too (2026-10-01): its controls take the page's night

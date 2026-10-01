@@ -19,7 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
 export const THEME_KEY = "kv.theme";
-const BROWSER_BAR = { light: "#f7f4ec", dark: "#12151f" } as const; // tokens.css --paper
+const BROWSER_BAR = { light: "#f7f4ec", dark: "#0c1426" } as const; // tokens.css --paper
 
 function stored(): Theme | null {
   try {

@@ -3128,13 +3128,13 @@ export function SheetView({
                   pointerEvents: "none",
                   boxSizing: "border-box",
                   borderRadius: 4,
-                  background: "rgba(20,184,166,0.07)",
-                  border: "1px solid rgba(20,184,166,0.5)",
+                  background: "color-mix(in srgb, var(--iznik-cobalt) 7%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--iznik-cobalt) 50%, transparent)",
                 }}
               />
             );
           })()}
-        {/* Playhead: a teal bar that tracks the currently-playing note (positioned via transform).
+        {/* Playhead: an İznik-red bar that tracks the currently-playing note (positioned via transform).
             `data-omr` so a check can read WHERE playback started — an attribute saying which bar
             Çal aims at cannot prove the audio actually began there. */}
         <div
@@ -3146,9 +3146,9 @@ export function SheetView({
             left: 0,
             width: 2.5,
             height: 0, // set per-row during playback (see the rAF loop)
-            background: "#14b8a6",
+            background: "var(--iznik-red)",
             borderRadius: 2,
-            boxShadow: "0 0 3px rgba(20,184,166,0.7)",
+            boxShadow: "0 0 3px color-mix(in srgb, var(--iznik-red) 70%, transparent)",
             pointerEvents: "none",
             display: "none",
             willChange: "transform",

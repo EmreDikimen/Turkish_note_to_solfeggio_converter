@@ -167,6 +167,15 @@ and it carries a duty**, which was the stated trigger for closing that asymmetry
 now, not a note to repeat a third time. A guard here would also have to check that an
 attribution-licensed file still has its credit in `THIRD-PARTY.txt`.
 
+### The Istanbul backdrop — two paintings, public domain (2026-10-01)
+
+`apps/web/public/backdrop/{day,night}{,-soft}.webp`, made by `scripts/prepare_backdrop.py` from two
+**Ivan Aivazovsky** paintings on Wikimedia Commons — the Bosphorus in morning light (1856) and the
+Bosphorus with Hagia Sophia and the Maiden's Tower by moonlight. The painter died in 1900, so both
+are **public domain**, with no duty; they are credited in `THIRD-PARTY.txt` anyway, like the violin.
+⛔ His Golden Horn by moonlight was the first night picture and was swapped the same day (owner: its
+yellow moonlight "felt like a day picture"). ⚠ Never hand-edit an output: change the script and re-run it.
+
 ## The weights
 
 `Beyaban/omr-weights` on the Hub is fine-tuned from `Flova/omr_transformer`, which is

@@ -81,8 +81,10 @@ export function UploadHero({
 
   return (
     <section className={`kv-hero${compact ? " is-compact" : ""}`}>
-      {!compact && !busy && <h2 className="kv-hero__title">{TR.hero.title}</h2>}
-
+      {/* No title over the box (owner, 2026-10-01): the box already says what to do.
+          ⚠ ONE BUTTON, AND IT IS THE GALLERY (owner, 2026-10-01). A camera button (`capture`) sat
+          beside it for a day; it went because the model still reads camera photos poorly, and
+          because one button cannot offer both on newer Android pickers — the phone decides. */}
       <label
         htmlFor="page-input"
         className={`kv-drop${dragging ? " is-dragover" : ""}${busy ? " is-busy" : ""}`}

@@ -48,6 +48,7 @@ import { useDocHistory } from "./useDocHistory";
 import { GoldRule } from "./ui/ornament/GoldRule";
 import { ThemeSwitch } from "./ui/ThemeSwitch";
 import { BrandMark } from "./ui/BrandMark";
+import { Backdrop } from "./ui/ornament/Backdrop";
 import { useTheme } from "./theme";
 import {
   clearPages,
@@ -350,7 +351,7 @@ export function App() {
   // where the harness opened on the roll. (Render automation always wanted sheet anyway.)
   const [viewMode, setViewMode] = useState<ViewMode>("sheet");
   // Watches `(max-width: 700px)`, the same line `app.css` draws the phone layout at.
-  const { isPhone, phoneShaped } = useViewport();
+  const { isPhone, phoneShaped, coarse } = useViewport();
   /** The `contentWidth` the sheet is re-engraved at, or null for the default 1000px.
    *  Set on every PHONE and in full screen at any width — see the effect below. */
   const [fitContentW, setFitContentW] = useState<number | null>(null);
@@ -2240,6 +2241,7 @@ export function App() {
       // (measured 2026-09-30: 147 of 302 strips). Owner decision the same day.
       data-render={SIG_TOLERANT ? "1" : undefined}
     >
+      <Backdrop />
       <header className="kv-header relative">
         <div className="absolute top-2 right-0">
           <ThemeSwitch theme={theme} onTheme={setTheme} />
@@ -2360,7 +2362,11 @@ export function App() {
             // ⚠ Phone only, and only when full screen is OFF — the button is the way IN, and the
             // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
             // nothing new for any check at 1280×720.
-            onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
+            // ⚠ A phone turned SIDEWAYS counts (owner, 2026-10-01: the button vanished in
+            // landscape): it is 844px wide, so `isPhone` is false there. `phoneShaped && coarse`
+            // catches it — a short handset screen under a finger — without offering the button to
+            // a laptop whose window happens to be under 700px tall.
+            onFullScreen={(isPhone || (phoneShaped && coarse)) && !fullScreen ? () => applyFullScreen(true) : undefined}
             // The light / dark switch on the Nota tab too — on a phone the page header (where the
             // switch lives on a wide window) is only on the Sayfalar tab.
             cornerExtra={isPhone ? <ThemeSwitch theme={theme} onTheme={setTheme} /> : undefined}
@@ -2623,7 +2629,6 @@ export function App() {
         <GoldRule className="kv-footer__rule mb-5" />
         <p>{TR.footer.privacy}</p>
         <p>{TR.footer.counting}</p>
-        <p>{TR.footer.rights}</p>
         <p>
           {TR.footer.contactLabel}{" "}
           <a href={TR.footer.contactHref} target="_blank" rel="noreferrer noopener">

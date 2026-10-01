@@ -31,6 +31,7 @@
  * pair it means, exactly as it already must for `#palette-play` (docs/DOM-CONTRACT.md).
  */
 import { TR } from "./strings";
+import { PauseIcon, PlayIcon, StopIcon } from "./PlayIcons";
 
 /**
  * The way OUT, and the transport that replaces the hidden one: Çal / Dur / Çık, bottom right.
@@ -64,7 +65,7 @@ export function FullScreenBar({
         onClick={onPlayPause}
         title={playState === "playing" ? TR.transport.pause : TR.transport.play}
       >
-        {playState === "playing" ? "⏸" : "▶"}
+        {playState === "playing" ? <PauseIcon /> : <PlayIcon />}
       </button>
       <button
         id="fs-stop"
@@ -74,7 +75,7 @@ export function FullScreenBar({
         onClick={onStop}
         title={TR.transport.stop}
       >
-        ■
+        <StopIcon />
       </button>
       <button
         id="fs-exit"

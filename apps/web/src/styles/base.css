@@ -36,6 +36,11 @@ body {
      size, it is "leave it alone". */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* ⚠ No tap flash ANYWHERE (owner, 2026-10-01: "app içindeki bu tarz her şeyi sil"). Android paints
+     a blue box over whatever a finger presses — a square behind the round full-screen buttons, the
+     whole sheet on a measure tap. Inherited, so this one line covers every element; each control's
+     own :active / pressed style is the feedback. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1,

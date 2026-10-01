@@ -11,15 +11,19 @@
 
 export const TR = {
   brand: "KomaVision",
+  // Said to a stranger, not a musician (owner, 2026-10-01): what they bring, and the two things
+  // they get back — the piece on the page and the piece on an instrument.
   tagline:
-    "Notanın fotoğrafını yükleyin: perdeler okunur, nota dizilir ve 53 komalı sesiyle çalınır.",
+    "Bir eserin nota sayfasını yükleyin; eseri hem notanın üzerinde hem de bir enstrümanın " +
+    "üzerinde, bütün komalarıyla çalarken dinleyin ve izleyin.",
 
-  // The legal footer (added 2026-08-08, the copyright pass). Four separate promises, and each one
+  // The legal footer (added 2026-08-08, the copyright pass). Separate promises, and each one
   // is a statement of fact about the code, not a disclaimer:
   //   - uploads are not stored: apps/server/src/index.ts never writes an image to disk;
   //   - visits are counted anonymously: netlify/functions/visit.mts stores a salted hash that
   //     expires daily, never an IP and never a cookie (added 2026-09-05 with the counter itself);
-  //   - the user owns what they upload: the app bundles no score of its own any more;
+  //   (a fourth line — "the rights to your upload are yours to answer for" — was dropped on
+  //   2026-10-01, owner: it put a stranger on guard for nothing. The app still bundles no score.)
   //   - there is a way to reach a human: the repo's issue tracker, so no personal address is
   //     published (owner's choice, 2026-08-08).
   // ⚠ If the server ever starts persisting an upload, the first line becomes false — change it
@@ -29,8 +33,6 @@ export const TR = {
   footer: {
     privacy: "Yüklediğiniz görüntüler sunucuda saklanmaz; okunur ve silinir.",
     counting: "Ziyaretler anonim sayılır: çerez yok, IP adresi saklanmaz.",
-    rights:
-      "Yüklediğiniz notanın haklarından siz sorumlusunuz. Uygulama kendi içinde hiçbir eser barındırmaz.",
     contactLabel: "Hak sahibiyseniz ve itirazınız varsa:",
     contactText: "bildirin",
     contactHref: "https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues",
@@ -39,17 +41,15 @@ export const TR = {
   },
 
   hero: {
-    title: "Nota sayfasını yükleyin",
     lead: "Notanın fotoğrafını buraya sürükleyin",
     leadCompact: "Yeni nota yükle",
     pick: "Dosya seç",
     // ⚠ The touch wording is not a nicety, it is the desktop wording being FALSE on a phone: there
-    // is nothing to drag a file from and no ⌘/Ctrl to press. It also names the gesture that is
-    // actually best here — the input is `accept="image/*"`, so iOS and Android both open a sheet
-    // with the camera at the top of it, and photographing the sheet music in front of you is the
-    // whole product. Which pair is shown is decided by `(pointer: coarse)` in UploadHero.
-    leadTouch: "Notanın fotoğrafını çekin veya seçin",
-    pickTouch: "Fotoğraf çek veya seç",
+    // is nothing to drag a file from and no ⌘/Ctrl to press. Which pair is shown is decided by
+    // `(pointer: coarse)` in UploadHero. ⚠ It does not invite the camera (owner, 2026-10-01): the
+    // model still reads camera photos poorly, and a one-day camera button was removed.
+    leadTouch: "Notanın fotoğrafını yükleyin",
+    pickTouch: "Fotoğraf yükle",
     // ⚠ Keep this in step with `status.expectServer` below — they are the same promise, said twice
     // (before the upload and during it). 35–55 sn is the measured range for a page, docs/METRICS.md;
     // the "20 saniye" this replaced on 2026-08-08 was never measured and undersold it by half.
@@ -125,10 +125,11 @@ export const TR = {
     groupSound: "Ses",
     groupRhythm: "Ritim",
     groupPitch: "Perde",
-    play: "▶ Çal",
-    pause: "⏸ Duraklat",
-    resume: "▶ Devam",
-    stop: "■ Dur",
+    // ⚠ Words only: the ▶ ⏸ ■ are drawn icons (ui/PlayIcons.tsx) — Android turns ⏸ into an emoji.
+    play: "Çal",
+    pause: "Duraklat",
+    resume: "Devam",
+    stop: "Dur",
     tempo: "♩ =",
     // The ± pair beside the tempo box. Titles, not visible labels — the buttons show − and +, which
     // is the one place a glyph beats a word, and the title is what a screen reader reads.
@@ -225,7 +226,10 @@ export const TR = {
     redoTitle: "Geri alınan değişikliği yinele (Ctrl/⌘+Shift+Z)",
     meta: (makam: string, usul: string, composer: string | undefined, notes: number, dur: string) =>
       `makam ${makam} · usul ${usul}${composer ? ` · ${composer}` : ""} · ${notes} nota · ${dur}`,
-    hintSheet: "Bir ölçüye tıklayın, eser oradan çalar.",
+    // Above the sheet, so it is the first line a reader meets (owner, 2026-10-01). The touch
+    // wording says "dokunun" — there is no click on a phone.
+    hintSheet: "Çalmaya başlamak istediğiniz ölçüye tıklayın — eser oradan çalar.",
+    hintSheetTouch: "Çalmaya başlamak istediğiniz ölçüye dokunun — eser oradan çalar.",
     // ⚠ ONE sentence, then a closed list (2026-09-03). This used to be a single ten-line paragraph
     // under the score, which is the shape nobody reads: the one thing a first-time editor needs —
     // click a note — was buried in the middle of six other rules. The list below says exactly the
@@ -278,8 +282,8 @@ export const TR = {
     collapse: "Küçült",
     expand: "Büyüt",
     playback: "Dinle",
-    play: "▶ Çal",
-    stop: "■ Dur",
+    play: "Çal",
+    stop: "Dur",
     playFromTitle: (measure: number) =>
       `Son düzenlenen ölçüden (${measure}. ölçü) çal — düzeltmeyi duymak için`,
     playFromTopTitle: "Baştan çal — henüz bir düzenleme yapılmadı",

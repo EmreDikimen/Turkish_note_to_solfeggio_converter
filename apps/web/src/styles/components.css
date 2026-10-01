@@ -31,6 +31,12 @@
   transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
     color var(--dur-fast) var(--ease);
 }
+/* A drawn icon before a button's word (ui/PlayIcons.tsx), sat on the text's baseline. */
+.kv-btn .kv-icon {
+  display: inline-block;
+  vertical-align: -0.08em;
+  margin-right: 0.4em;
+}
 .kv-btn:hover:not(:disabled) {
   background: var(--paper-sunken);
   border-color: var(--ink-faint);

@@ -114,16 +114,16 @@
        position — note targets, playhead, strip rects — is unchanged.
    The image export paints its own white page (exportScore.ts) and is unaffected. */
 :root[data-theme="dark"] #app:not([data-render="1"]) .kv-score.kv-paper {
-  background: #1c2130;
+  background: #172038;
 }
 :root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper {
   color-scheme: dark;
-  background: #1c2130;
+  background: #172038;
   --ink: #c8c8c8;
   --ink-soft: #a7a7a7;
   --ink-faint: #868686;
-  --rule: #2f3648;
-  --rule-strong: #414a5f;
+  --rule: #2a3654;
+  --rule-strong: #3c4a6c;
 }
 :root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper svg,
 :root[data-theme="dark"] #app:not([data-render="1"])[data-view="instrument"] [data-omr="measure-svg"] {

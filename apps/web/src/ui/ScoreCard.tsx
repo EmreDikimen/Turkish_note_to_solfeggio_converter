@@ -15,6 +15,7 @@ import type { NoteModelDocument } from "@turkish-omr/core";
 import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
+import { useViewport } from "../usePhone";
 
 export type ViewMode = "sheet" | "instrument";
 
@@ -88,6 +89,7 @@ export function ScoreCard({
   // Renaming the page ON SCREEN. The same box the list uses (`RenameField`), because there is one
   // rename and it should behave the same in both places.
   /** The save menu: one button, two ways out. Closed by choosing, by Esc, or by tapping elsewhere. */
+  const { coarse: touch } = useViewport();
   const [saveOpen, setSaveOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -357,6 +359,12 @@ export function ScoreCard({
           not here at all — it floats over the page from App.
           `kv-paper` keeps it black-on-white in dark mode too (tokens.css): it re-declares the
           light tokens and paints the white, and sets nothing on the elements inside. */}
+      {/* ⚠ The reading hint sits ABOVE the sheet (owner, 2026-10-01): under it, it was sixty staff
+          systems down, where nobody reads it. A render job hides it with every other card child
+          (contract.css), so it cannot move a training strip. */}
+      {!editMode && viewMode === "sheet" && (
+        <p className="kv-hint kv-hint--lead">{touch ? TR.card.hintSheetTouch : TR.card.hintSheet}</p>
+      )}
       <div className="kv-score kv-paper">{children}</div>
 
       {/* ⚠ Edit mode's instructions are a LEAD plus a closed list, never the ten-line paragraph
@@ -376,9 +384,7 @@ export function ScoreCard({
           </details>
         </div>
       ) : (
-        <p className="kv-hint">
-          {viewMode === "sheet" ? TR.card.hintSheet : TR.card.hintInstrument}
-        </p>
+        viewMode === "instrument" && <p className="kv-hint">{TR.card.hintInstrument}</p>
       )}
     </section>
   );

@@ -37,6 +37,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { ACCIDENTAL_VALUES, accidentalCp, accidentalLongLabel } from "./accidentals";
 import type { RefusalReason, SignTool } from "../../../../tools/render/structure-edit";
 import { TR } from "./strings";
+import { PlayIcon, StopIcon } from "./PlayIcons";
 import { useIsPhone } from "../usePhone";
 
 /** What a click on a note does while this tool is armed.
@@ -476,6 +477,7 @@ export function EditPalette({
             disabled={!canPlay}
             title={fromMeasure == null ? TR.palette.playFromTopTitle : TR.palette.playFromTitle(fromMeasure)}
           >
+            <PlayIcon />
             {TR.palette.play}
           </button>
           <button
@@ -486,6 +488,7 @@ export function EditPalette({
             disabled={playState === "stopped"}
             title={TR.palette.stopTitle}
           >
+            <StopIcon />
             {TR.palette.stop}
           </button>
         </div>

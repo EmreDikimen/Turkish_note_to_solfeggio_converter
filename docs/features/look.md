@@ -38,11 +38,16 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
 - The page goes to a night slate (`--paper #12151f`). **The score does not go dark**: `.kv-paper`
   on `.kv-score` re-declares the light tokens, so the sheet and everything drawn in it (header,
   legend, instrument views) keep their light colours.
-- **At night the sheet is ivory `#edeae0`** — the exact complement of the night page — with black
-  ink. ⛔ **An inverted sheet (light marks on dark paper) was built and REJECTED the same day**: the
-  owner found it harder to read. Staff lines and stems are hairlines, and thin light strokes on a
-  dark ground bloom and thin out; a softened invert was also tried and looked grey. The owner chose
-  the ivory sheet from three side-by-side screenshots.
+- **At night the sheet is DARK** (owner, 2026-10-01: *"nota kağıdı hala beyaz, ona da dark mode
+  getir"*): slate paper `#1c2130`, and only the engraving's SVGs are turned light — to a soft ivory,
+  not white (`filter: invert(1) hue-rotate(180deg) sepia(0.16) brightness(0.88)`). The header and
+  legend follow through the island's tokens; the editor's overlays are HTML and keep their colours.
+  The instrument view keeps an ivory sheet (inverted pictures of real instruments are negatives).
+  Render jobs are always light, so strips are untouched (re-checked: 302/302 byte-identical).
+- It is the THIRD design. ⛔ (1) inverting the whole `.kv-score` read harder — near-maximal
+  contrast, and it flipped the header and the selection too; ⛔ (2) an ivory `#edeae0` sheet with
+  black ink was chosen from screenshots and then rejected the next day: the owner wants the sheet
+  itself dark. The soft ink is what answers (1).
 - ⛔ **Never write a `dark:` utility.** The island only works because every colour is a token the
   card re-declares; `css-contract-test.ts` fails on one.
 

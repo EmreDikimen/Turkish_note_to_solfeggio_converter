@@ -55,8 +55,10 @@
 /* ── The score card on a phone ───────────────────────────────────────────── */
 /* The head's corner group (save, full screen) sits out of the flow; keep the title and the meta
    line clear of it. */
-.kv-phone .kv-card__head {
-  padding-right: calc(2 * var(--control-h) + var(--space-4));
+.kv-phone .kv-card__title {
+  /* switch (52) + save + full screen + gaps; beside the title block only, so the view switch below
+     keeps the full row */
+  padding-right: calc(52px + 2 * var(--control-h) + var(--space-4));
 }
 /* Düzenle is a TAB on a phone, so the card's own toggle is not drawn on the Nota tab. It stays in
    the DOM (the tab routes through the same `applyEditMode`). */

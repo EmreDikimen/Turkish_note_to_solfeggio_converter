@@ -2343,6 +2343,9 @@ export function App() {
       // way OUT is `#fs-exit` on the floating bar. Undefined elsewhere, so the card renders
       // nothing new for any check at 1280×720.
       onFullScreen={isPhone && !fullScreen ? () => applyFullScreen(true) : undefined}
+      // The light / dark switch on the Nota tab too — on a phone the library tab (where the
+      // switch sits beside the brand) is not on screen while reading.
+      cornerExtra={isPhone ? <ThemeSwitch theme={theme} onTheme={setTheme} /> : undefined}
       onExport={runExport}
       onUndo={onUndo}
       onRedo={onRedo}

@@ -54,6 +54,15 @@
     />
   </head>
   <body>
+    <!-- The night sheet's ink (2026-10-01; styles/contract.css). ONE colour for every mark however it
+         was drawn: black ink, a grey time signature and an antialiased hairline all come out as the
+         same soft neutral grey rgb(200,200,200), scaled by how dark they were — a CSS `sepia()` chain
+         had tinted the grey glyphs far yellower than the black ones, and the owner wants no tint. Unused until dark mode. -->
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style="position: absolute">
+      <filter id="kv-night-ink" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="-0.1667 -0.5609 -0.0566 0 0.7843  -0.1667 -0.5609 -0.0566 0 0.7843  -0.1667 -0.5609 -0.0566 0 0.7843  0 0 0 1 0" />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

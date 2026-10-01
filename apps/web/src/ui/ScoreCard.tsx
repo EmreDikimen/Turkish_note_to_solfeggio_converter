@@ -37,6 +37,7 @@ export function ScoreCard({
   editMode,
   onEditMode,
   onFullScreen,
+  cornerExtra,
   onExport,
   onUndo,
   onRedo,
@@ -72,6 +73,9 @@ export function ScoreCard({
   onEditMode: (v: boolean) => void;
   /** Phone only: enter full screen. Undefined on a wide window and while full screen is on. */
   onFullScreen?: () => void;
+  /** Drawn first in the head's corner — the phone's light / dark switch (2026-10-01), so it is on
+   *  the Nota tab too and not only on the page list. */
+  cornerExtra?: ReactNode;
   /** Save the score. `App` owns it, because the export reads a stage only `App` can mount. */
   onExport: (kind: "png" | "pdf") => Promise<void>;
   onUndo: () => void;
@@ -120,6 +124,7 @@ export function ScoreCard({
         {/* Both corner controls in one group, so neither has to know whether the other is there —
             the expand mark is phone-only and the save button is not. */}
         <div className="kv-card__corner">
+        {cornerExtra}
         {/* ⭐ **ONE SAVE BUTTON, TWO WAYS OUT** (owner, 2026-09-27: *"tek indirme butonu olsun, ona
             tıkladığımızda 2 seçenek belirsin png ve pdf diye"*). It sits in the head's corner beside
             the expand mark, at every width — saving a page is not a phone-only wish.

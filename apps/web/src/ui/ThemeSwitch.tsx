@@ -36,7 +36,7 @@ export function ThemeSwitch({
         data-theme={theme}
         checked={dark}
         onChange={(e) => setTheme(e.target.checked ? "dark" : "light")}
-        className="peer absolute inset-0 m-0 h-full w-full cursor-pointer appearance-none opacity-0"
+        className="peer absolute inset-0 z-10 m-0 h-full w-full cursor-pointer appearance-none opacity-0"
       />
       <span
         aria-hidden="true"

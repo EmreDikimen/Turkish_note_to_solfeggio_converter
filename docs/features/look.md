@@ -46,7 +46,7 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
   legend, instrument views) keep their light colours.
 - **At night the sheet is DARK** (owner, 2026-10-01: *"nota kağıdı hala beyaz, ona da dark mode
   getir"*): slate paper `#1c2130`, and only the engraving's SVGs are turned light — to a soft ivory,
-  not white (`filter: invert(1) hue-rotate(180deg) sepia(0.16) brightness(0.88)`). The header and
+  not white (`filter: invert(1) hue-rotate(180deg) sepia(0.22) brightness(0.72)` — softened from 0.88 the same day: *"hala çok sert"*). The header and
   legend follow through the island's tokens; the editor's overlays are HTML and keep their colours.
   The instrument view keeps an ivory sheet (inverted pictures of real instruments are negatives).
   Render jobs are always light, so strips are untouched (re-checked: 302/302 byte-identical).

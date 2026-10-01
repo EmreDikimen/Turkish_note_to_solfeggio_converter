@@ -93,8 +93,9 @@
      2. An ivory sheet (#edeae0) with black ink, chosen from three screenshots — then rejected the
         next day: "nota kağıdı hala beyaz".
      3. THIS: the paper is a dark slate a step lighter than the page, and ONLY the engraving's SVGs
-        are turned light — not to white but to a soft ivory, which takes the glare out that made (1)
-        hard to read. The HTML around the music (the header, the legend) is re-coloured through the
+        are turned light — not to white but to a soft, warm grey-ivory (`brightness(0.72)`, softened
+        again on 2026-10-01 after the owner found 0.88 "hala çok sert"), which takes the glare out
+        that made (1) hard to read. The HTML around the music (the header, the legend) is re-coloured through the
         island's tokens rather than filtered, and the editor's overlays (selection, playhead,
         warnings) are HTML too, so they keep their own colours.
    ⚠ GUARDS, each load-bearing:
@@ -111,12 +112,12 @@
 :root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper {
   color-scheme: dark;
   background: #1c2130;
-  --ink: #e6e0d2;
-  --ink-soft: #bdb7a8;
-  --ink-faint: #918c80;
+  --ink: #c9c2b3;
+  --ink-soft: #a8a294;
+  --ink-faint: #868175;
   --rule: #2f3648;
   --rule-strong: #414a5f;
 }
 :root[data-theme="dark"] #app:not([data-render="1"]):not([data-view="instrument"]) .kv-score.kv-paper svg {
-  filter: invert(1) hue-rotate(180deg) sepia(0.16) brightness(0.88);
+  filter: invert(1) hue-rotate(180deg) sepia(0.22) brightness(0.72);
 }

@@ -41,8 +41,9 @@ owner's call; the point of this entry is that three risks written as *future* ar
    tap-not-press on touch, the dot tool, İmleci takip et pinned, the stacked reading card — and the
    owner's own stitcher changes (commit `1000d72`, included at the owner's call). ⭐ **It is a PWA now**: a
    manifest and icons, so Android Chrome offers "Uygulamayı yükle" and iOS "Ana Ekrana Ekle"; Chrome's
-   own check reports **0 installability errors** on the live site. ⚠ The icon is a PLACEHOLDER drawn
-   from the favicon until there is a logo (`tools/browser/make-icons.ts`). ⚠ **No service worker, on
+   own check reports **0 installability errors** on the live site. ⭐ The icon is the owner's LOGO since
+   2026-10-01 (koma bemolü, koma diyezi and an 8'lik on ivory; generated with the favicon by
+   `tools/browser/make-icons.ts`) — **not yet deployed**. ⚠ **No service worker, on
    purpose** (DECISIONS 2026-09-28). ⚠ Never opened on a real iPhone.
    ⏭ **Play Store is the owner's next step, and it is a PEOPLE problem, not a code one**: a new
    personal account needs a closed test of **12 testers for 14 days** before production; the plan is

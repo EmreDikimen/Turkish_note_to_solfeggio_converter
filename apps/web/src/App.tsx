@@ -47,6 +47,7 @@ import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEd
 import { useDocHistory } from "./useDocHistory";
 import { GoldRule } from "./ui/ornament/GoldRule";
 import { ThemeSwitch } from "./ui/ThemeSwitch";
+import { BrandMark } from "./ui/BrandMark";
 import { useTheme } from "./theme";
 import {
   clearPages,
@@ -2244,9 +2245,7 @@ export function App() {
           <ThemeSwitch theme={theme} onTheme={setTheme} />
         </div>
         <h1 className="kv-brand">
-          <span className="kv-brand__mark" aria-hidden="true">
-            &#xE282;
-          </span>
+          <BrandMark />
           {TR.brand}
         </h1>
         <p className="kv-tagline">{TR.tagline}</p>

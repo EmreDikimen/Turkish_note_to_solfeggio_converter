@@ -1,6 +1,8 @@
 /**
- * The light / dark switch (owner, 2026-10-01). A sun-and-moon track with the words beside it —
- * the owner's rule is that a toggle says what it does in WORDS (labels stay words, not icons).
+ * The light / dark switch (owner, 2026-10-01). A sun-and-moon track, and NO visible words — the
+ * owner asked for the caption to go: the sun and the moon say it. (The general rule that a toggle
+ * speaks in words stands for the playback toggles; this one is the owner's exception.) The words
+ * are kept for screen readers.
  *
  * ⚠ A REAL `<input type="checkbox">` laid over the whole label at opacity 0, the same pattern as
  * `.kv-toggle`: Playwright's `.check()` and a screen reader both get a genuine checkbox.
@@ -51,7 +53,9 @@ export function ThemeSwitch({
           {dark ? <Moon size={13} /> : <Sun size={13} />}
         </span>
       </span>
-      <span>{TR.theme.label}</span>
+      {/* The track says it all (owner, 2026-10-01: "işaret belirtiyor zaten") — the words stay for a
+          screen reader only. */}
+      <span className="kv-visually-hidden">{TR.theme.label}</span>
     </label>
   );
 }

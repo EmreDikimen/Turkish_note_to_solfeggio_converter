@@ -141,7 +141,12 @@
 }
 
 /* ── Night: the same manuscript read by lamplight ───────────────────────── */
-:root[data-theme="dark"] {
+/* ⚠ The second selector is the INSTRUMENT VIEW's paper at night (owner, 2026-10-01: "enstrüman
+   üzerinde kısmı dark mode'a geçmiyor"). That view is a panel of controls around a picture, not a
+   sheet, so it takes the page's whole night palette — it out-specifies `.kv-paper` below. Its
+   pictures (kanun, violin, clarinet) are drawn with their own colours and are never recoloured. */
+:root[data-theme="dark"],
+:root[data-theme="dark"] #app:not([data-render="1"])[data-view="instrument"] .kv-score.kv-paper {
     color-scheme: dark;
     --paper: #12151f;
     --paper-raised: #1a1f2c;

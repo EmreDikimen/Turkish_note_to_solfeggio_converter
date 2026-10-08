@@ -39,6 +39,16 @@ Signing), so after the first upload, copy the fingerprint from Play Console → 
 App integrity → App signing key certificate* into the same list and deploy. Until then, an app
 installed **from Play** shows a thin browser bar at the top — it still works.
 
+## The system bars follow the PHONE, not the in-app switch
+
+`twa-manifest.json` sets the status and navigation bars to the page's own ground — `#faf1e1` by day,
+`#0c1426` at night (`theme.ts` `BROWSER_BAR`, tokens.css `--paper`) — and Android picks the pair
+from the **system** dark mode. The app's own sun/moon switch cannot reach them: a reader who forces
+dark inside a light phone gets an ivory navigation bar under a dark page. Accepted; the app's default
+is the system setting anyway. ⚠ The browser-installed PWA (Add to Home screen) colours its
+navigation bar from the manifest instead, which has no dark variant — it showed ivory under the dark
+page on the owner's phone (2026-10-08). Not fixed there; the Play app replaces it.
+
 ## Rebuild
 
 ```bash

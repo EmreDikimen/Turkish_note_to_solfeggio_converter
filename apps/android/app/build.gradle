@@ -26,12 +26,12 @@ def twaManifest = [
     launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
     name: 'KomaVision', // The application name.
     launcherName: 'KomaVision', // The name shown on the Android Launcher.
-    themeColor: '#1F3A6B', // The color used for the status bar.
-    themeColorDark: '#1F3A6B', // The color used for the dark status bar.
-    navigationColor: '#1F3A6B', // The color used for the navigation bar.
-    navigationColorDark: '#1F3A6B', // The color used for the dark navbar.
-    navigationDividerColor: '#1F3A6B', // The navbar divider color.
-    navigationDividerColorDark: '#1F3A6B', // The dark navbar divider color.
+    themeColor: '#FAF1E1', // The color used for the status bar.
+    themeColorDark: '#0C1426', // The color used for the dark status bar.
+    navigationColor: '#FAF1E1', // The color used for the navigation bar.
+    navigationColorDark: '#0C1426', // The color used for the dark navbar.
+    navigationDividerColor: '#FAF1E1', // The navbar divider color.
+    navigationDividerColorDark: '#0C1426', // The dark navbar divider color.
     backgroundColor: '#FAF1E1', // The color used for the splash screen background.
     enableNotifications: false, // Set to true to enable notification delegation.
     // Every shortcut must include the following fields:

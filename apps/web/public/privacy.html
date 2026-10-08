@@ -1,0 +1,86 @@
+<!doctype html>
+<!--
+  The privacy policy Google Play requires a URL for (added 2026-10-05, the Play Store release).
+  ⚠ Every sentence here is a statement of fact about the code, on the SAME contract as the footer
+  lines in apps/web/src/ui/strings.ts: if the server ever stores an upload, or the visit counter
+  ever keeps a raw address, this page becomes false — change it in the same commit.
+-->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KomaVision — Gizlilik</title>
+<style>
+  :root { --bg: #faf1e1; --ink: #1f2430; --muted: #5a6070; --accent: #1f3a6b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #141821; --ink: #e8e4da; --muted: #a8adb8; --accent: #9db7e8; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { color: var(--accent); font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.1rem; margin: 28px 0 6px; }
+  p, li { margin: 6px 0; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  a { color: var(--accent); }
+  hr { border: 0; border-top: 1px solid var(--muted); opacity: .3; margin: 40px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>KomaVision gizlilik politikası</h1>
+<p class="muted">Son güncelleme: 5 Ekim 2026</p>
+
+<p>KomaVision, Türk müziği notasının fotoğrafını okuyup notaya dizen ve çalan bir uygulamadır.
+Hesap açmanız gerekmez, reklam yoktur, çerez kullanılmaz.</p>
+
+<h2>Yüklediğiniz görüntüler</h2>
+<p>Bir sayfa okuttuğunuzda, sayfanın satır parçaları okunmak üzere sunucumuza (Google Cloud Run,
+Avrupa) gönderilir. Sunucu görüntüyü okur ve <strong>saklamaz</strong>; görüntü diske yazılmaz.</p>
+
+<h2>Cihazınızda kalanlar</h2>
+<p>Okunan sayfaların <strong>notaları</strong> ve sizin düzenlemeleriniz, son 30 sayfaya kadar,
+yalnızca kendi cihazınızın tarayıcı depolamasında tutulur. Görüntünün kendisi hiçbir yerde
+saklanmaz. Bu veriler bize gönderilmez; uygulamanın verisini silerek kaldırabilirsiniz.</p>
+
+<h2>Ziyaret sayımı</h2>
+<p>Uygulamanın kaç kişi tarafından kullanıldığını anlamak için ziyaretler anonim olarak sayılır.
+IP adresiniz <strong>kaydedilmez</strong>: yalnızca her gün değişen, geri çevrilemeyen bir özet
+(hash) tutulur, bu yüzden aynı cihaz ertesi gün tanınamaz. Bu kayıtla birlikte ülke, cihaz türü
+(telefon/tablet/bilgisayar), tarayıcı ve işletim sistemi adı ile sizi yönlendiren sitenin adı
+saklanır. Kayıtlar en fazla 180 gün tutulur ve kimseyle paylaşılmaz.</p>
+
+<h2>Üçüncü taraflar</h2>
+<ul>
+  <li><strong>Netlify</strong> uygulamanın sayfalarını sunar.</li>
+  <li><strong>Google Cloud</strong> okuma sunucusunu çalıştırır.</li>
+  <li><strong>Hugging Face</strong>, siz bir enstrüman sesi seçtiğinizde ses dosyalarını sunar.</li>
+</ul>
+<p>Bu hizmetler, her web sitesinin yaptığı gibi, bağlantı için IP adresinizi görebilir ve kendi
+politikalarına göre kısa süreli teknik kayıt tutabilir.</p>
+
+<h2>Çocuklar</h2>
+<p>Uygulama çocuklara yönelik değildir ve kimseden kişisel bilgi istemez.</p>
+
+<h2>İletişim</h2>
+<p>Soru ve talepleriniz için:
+<a href="https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues">GitHub üzerinden bildirin</a>.</p>
+
+<hr>
+
+<h1>Privacy policy (English)</h1>
+<p>KomaVision reads a photo of Turkish makam sheet music, turns it into notes and plays it. No
+account, no ads, no cookies.</p>
+<ul>
+  <li><strong>Uploads:</strong> strips of the page are sent to our server (Google Cloud Run, Europe)
+    to be read. The server does not store them; no image is written to disk.</li>
+  <li><strong>On your device:</strong> the notes of up to 30 read pages and your edits stay in your
+    own browser storage. No image is kept anywhere. Nothing of this is sent to us.</li>
+  <li><strong>Visit counting:</strong> visits are counted anonymously. Your IP address is never
+    stored — only a one-way hash that changes daily — together with country, device type, browser,
+    operating system and referring site name. Kept at most 180 days, never shared.</li>
+  <li><strong>Third parties:</strong> Netlify (hosting), Google Cloud (reading server), Hugging Face
+    (instrument sounds, when you pick one). Like any website, they can see your IP address to connect.</li>
+  <li><strong>Contact:</strong>
+    <a href="https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues">GitHub issues</a>.</li>
+</ul>
+</main>
+</body>
+</html>

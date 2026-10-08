@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-09-28
+updated: 2026-10-05
 
 ## Now
 
@@ -45,10 +45,14 @@ owner's call; the point of this entry is that three risks written as *future* ar
    2026-10-01 (koma bemolü, koma diyezi and an 8'lik on ivory; generated with the favicon by
    `tools/browser/make-icons.ts`) — **not yet deployed**. ⚠ **No service worker, on
    purpose** (DECISIONS 2026-09-28). ⚠ Never opened on a real iPhone.
-   ⏭ **Play Store is the owner's next step, and it is a PEOPLE problem, not a code one**: a new
-   personal account needs a closed test of **12 testers for 14 days** before production; the plan is
-   the owner's school music club. The TWA package (Bubblewrap) and `/.well-known/assetlinks.json` are
-   owed once the account exists. [log/status-log.md](log/status-log.md), 2026-09-28.
+   ⏭ **PLAY STORE IS THE OWNER'S PRIORITY (2026-10-05): testers are easy to reach the week of
+   2026-10-12 and hard after.** ✅ Done 2026-10-05: the TWA package `com.komavision.app` (permanent)
+   is built and signed (`~/Desktop/KomaVision-1.0.0.aab`), `/.well-known/assetlinks.json` is LIVE,
+   and the site was redeployed with the new logo (`Deploy is live!`, `smoke:live` PASS). ⏭ Owner:
+   open the Play Console account today (identity check can take days), create the app, upload the
+   `.aab` to a **closed test**, and opt in **15–20** testers next week — 12 must stay opted in for
+   14 consecutive days. ⚠ `privacy.html` is drafted, **not deployed** until the owner reads it.
+   [features/play-store.md](features/play-store.md).
 
 ⏭ **NOTHING IS COUNTING YET, AND THE LINK IS LIVE.** The site can count its own visitors
 anonymously — openings vs pages actually read, distinct devices, country, browser, robots apart — but
@@ -72,7 +76,8 @@ Plan and evidence: **[rung3/round4.md](rung3/round4.md)**; plain English:
 re-emit the real pools under **scheme H** at a gate of **80 ids** ✅ done 2026-09-07 — ⛔ **and the
 vocabulary itself bought nothing, on any pool (2026-09-19, below)**; stop the signature vote
 overwriting silently ✅ rule D built; select checkpoints on real-val **corrections** ✅ used, and it
-tied with `last` in both arms; beam search offline ⏭ not started; a third-source probe ✅ read, a
+tied with `last` in both arms; beam search ⛔ **dropped from every plan (owner, 2026-10-04)** — it
+slows the page, which defeats the app; a third-source probe ✅ read, a
 null. ⛔ **Three things the round may NOT do**: read the exam again for an A/B, retire `\tupend` or
 add a `\dottedbar` token, and **re-pack the synthetic strips** — proposed, approved and withdrawn on
 2026-09-06 when the measurement showed it fills the label range by making crops wider, which
@@ -158,7 +163,7 @@ if they pass.
 
 | # | Check | The question it answers |
 |---|---|---|
-| 25 | the violin view | Does the dot sit where your finger would? Open strings are the free calibration — the dot must be **at** the nut. Do the position lines read as information or as clutter? |
+| 25 | the violin view | Does the dot sit where your finger would? Open strings are the free calibration — the dot must be **at** the nut. Do the position lines read as information or as clutter? Is the **finger number** in the dot the one you would use (added 2026-10-01)? |
 | 26 | the kanun view | Is the opening mandal plan one you would actually set? Does the flash last long enough to catch? Is the close-up needed every time (if so its default should flip)? |
 | 27 | the editable signs | Does marking a page up FEEL like marking a page up? |
 | 28 | the playhead follow | Does the jump land where a reader wants to be looking? |
@@ -248,7 +253,7 @@ as `nd_high` (median **49** ids against **37** accepted, and nobody has read one
 ([BACKLOG.md](BACKLOG.md) item 6). ⛔ Neither is gold and neither may become exam material
 ([METRICS-HANDTEST.md](METRICS-HANDTEST.md) · [rung3/labeling-queues.md](rung3/labeling-queues.md)).
 
-⏭ **Owed inside the round, not started:** beam search measured offline (step 7), and the third-source
+⏭ **Owed inside the round, not started:** the third-source
 probe's only route to a verdict — more erdincbal pages, which need no hand labelling
 ([rung3/third-source.md](rung3/third-source.md)).
 

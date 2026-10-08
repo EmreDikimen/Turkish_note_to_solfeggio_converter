@@ -143,6 +143,8 @@ apps/web/public/probe/
 
 # W9 decode server (MVP): assembled model dir + bundle
 apps/server/models/
+# staged alternatives beside it (r3a revert target, the scheme-H arm): 211 MB each, never committed
+apps/server/models-*/
 apps/server/dist/
 
 # netlify-cli's local state, written by `npm run deploy:app` (it holds the site id and a build

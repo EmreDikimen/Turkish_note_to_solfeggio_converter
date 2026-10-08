@@ -99,6 +99,7 @@ wrong — fix by deleting, not by syncing.
 | Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
 | Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
 | How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
+| **The Play Store app** — TWA build, the permanent package name, where the signing key lives, the closed test | [features/play-store.md](features/play-store.md) |
 | The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
 | The kanun view (F3): the 26 courses, the mandal state machine, why it is drawn and not photographed | [features/kanun-view.md](features/kanun-view.md) |
 | The sol klarnet view (F3): the CC0 layered schematic, the rejected photos, the lip bar | [features/clarinet-view.md](features/clarinet-view.md) |

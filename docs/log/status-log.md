@@ -2,10 +2,52 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-09-27
+updated: 2026-10-05
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-05 — the Play Store package is built, and the site redeployed
+
+**The owner set the Play Store as the priority**: testers are reachable the week of 2026-10-12 and
+hard to find after, and there is no time for more labelling. Done the same day: JDK 17, the Android
+command-line tools and Bubblewrap installed; an upload key made at `~/.komavision/` (outside the
+public repo); `apps/android/` generated from `twa-manifest.json` and built into a signed 1.4 MB
+`.aab` (target SDK 36); `/.well-known/assetlinks.json` added with the upload key's fingerprint.
+Before deploying, `typecheck`, `npm test`, `smoke:editor` and `smoke:build` all passed (smoke:build
+used the owner's decode server already listening on :8080); `deploy:app` printed `Deploy is live!`,
+the assetlinks file answers 200 as `application/json`, and `smoke:live` passed. The deploy also
+shipped the pending logo, the Istanbul backdrop and the violin finger numbers. A `privacy.html` was
+drafted for the Play listing and held back for the owner to read. Traps hit are in
+[../features/play-store.md](../features/play-store.md).
+
+## 2026-10-04 — beam search dropped from every plan
+
+**The owner removed beam search from the plans**, after a literature survey listed it as the cheapest
+untried lever: it lengthens every read, and speed is the app's point. It had never been started
+(Round 4 step 7). Removed from STATUS, `rung3/round4.md`, `rung3/levers.md` (which also loses the
+bar-duration re-rank that rode on it) and `OVERVIEW-ROUND4.md`; the reasoning moved to
+[superseded.md](superseded.md), and the 2026-09-03 decision row is marked superseded.
+
+Same day: **CLAUDE.md named the wrong live model** — Run A `best-real`, two models stale. Checked
+rather than recalled: Cloud Run serves `omr-decode-00008-hx7` at 100%, and the encoder in
+`apps/server/models/` and `apps/web/public/models/` hashes to the same bytes as
+`r4-ctl-stage2-last-onnx/encoder_model_int8.onnx` (`a90037a5…`; r3a's is `f7f26e00…`). Both
+CLAUDE.md lines (the public-app warning and the `data/checkpoints/` row) now say `r4-ctl-stage2-last`.
+
+## 2026-10-01 — the violin dot now says which finger
+
+**The owner asked for finger numbers (1, 2, 3…) on the violin view.** Research first: this is an
+old problem — rule-based dynamic programming, HMMs, and since 2021 neural models trained on
+fingered Western parts. None of the learned ones fit (no fingered makam data). The walk we already
+had carries a hand position, so the finger is read off it: `FingerPos.finger` (0–4), drawn as a digit
+in the dot and published as `data-finger`. Bands match the chart's line colours in first position,
+pinned comma by comma. `npm test`, `typecheck` and `smoke:editor` pass. Not deployed. Open guesses
+(koma fingering, open vs. 4, repeated 1 after a shift) are in
+[../features/fingerboard.md](../features/fingerboard.md). Same day: the dot was too small to read
+(~9 CSS px on a phone) → `DOT_R` 10, digit 13, checked by screenshot on phone and desktop. Step 2, a
+whole-piece (Viterbi) walk, was written down as a **deferred TODO** in that file and NOT built: nobody
+here can judge a violin fingering, and it would move the string of every note in every piece.
 
 ## 2026-09-30 — the Tezhip restyle, and why a render job is now a pinned page
 

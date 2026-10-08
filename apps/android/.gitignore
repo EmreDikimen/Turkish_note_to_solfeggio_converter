@@ -1,0 +1,11 @@
+# Build outputs — rebuilt by `bubblewrap build`, uploaded by hand to Play Console.
+.gradle/
+build/
+app/build/
+*.aab
+*.apk
+*.idsig
+local.properties
+# The signing key NEVER lives in this repo (it is public): ~/.komavision/upload.keystore
+*.keystore
+*.jks

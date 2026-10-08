@@ -18,3 +18,10 @@
 # dist root" rule cannot catch it; its type is said out loud rather than left to the host's guess.
 /manifest.webmanifest
   Content-Type: application/manifest+json
+
+# The Play Store app's proof of ownership (2026-10-05): Android fetches this to let the TWA open the
+# site without a browser bar. It lives in a SUBDIRECTORY, so prune-dist's root-.json rule allows it.
+# The fingerprint list holds the UPLOAD key now; Play App Signing's key is added once Play shows it.
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *

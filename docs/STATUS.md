@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-10-05
+updated: 2026-10-08
 
 ## Now
 
@@ -51,7 +51,9 @@ owner's call; the point of this entry is that three risks written as *future* ar
    and the site was redeployed with the new logo (`Deploy is live!`, `smoke:live` PASS). ⏭ Owner:
    open the Play Console account today (identity check can take days), create the app, upload the
    `.aab` to a **closed test**, and opt in **15–20** testers next week — 12 must stay opted in for
-   14 consecutive days. ⚠ `privacy.html` is drafted, **not deployed** until the owner reads it.
+   14 consecutive days. ✅ 2026-10-08: the Play Console account is opened
+   (**identity check pending**), and `privacy.html` is LIVE, approved by the owner. Testers will come
+   from a classical-Turkish-music community and the owner's friends.
    [features/play-store.md](features/play-store.md).
 
 ⏭ **NOTHING IS COUNTING YET, AND THE LINK IS LIVE.** The site can count its own visitors

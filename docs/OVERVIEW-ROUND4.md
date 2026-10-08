@@ -2,7 +2,7 @@
 
 purpose: the plain-English version of the Round 4 plan — what we learned, what we change, what we do not change, and what you will be asked to do
 audience: the project owner (basic English, same as OVERVIEW.md)
-updated: 2026-09-19
+updated: 2026-10-04
 
 > The full plan with its evidence is [rung3/round4.md](rung3/round4.md). This page restates numbers
 > on purpose so it reads on its own; if it ever disagrees with [METRICS.md](METRICS.md), METRICS.md
@@ -62,8 +62,8 @@ current model scored on them. If it falls apart there, new sites become the prio
 they are only more of the same.
 
 **Beam search** (letting the model keep several candidate readings open instead of committing to
-one at each step) is tested only on our side first. It would make a page about half again slower
-for the user, not three times; it reaches the app only if it clearly helps.
+one at each step) is **no longer planned** (your call, 4 October 2026). It makes every page slower,
+and a fast read is the point of the app.
 
 
 ## What the first check found (6 September 2026)
@@ -270,5 +270,5 @@ signature rule, and your fixed hand-test pages (you supplied 20 on 6 September).
 related one the starter model already knows, instead of from a random value? It is free, it is
 plausible, and it is unmeasured — so it would run as its own separate comparison.
 
-Everything else (the trainings, the beam-search check, the final reads) needs no decision from you
+Everything else (the trainings, the final reads) needs no decision from you
 and no labelling.

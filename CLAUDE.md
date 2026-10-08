@@ -11,9 +11,10 @@ Round 3 read 51% against a 75% floor ([docs/rung3/round4.md](docs/rung3/round4.m
 
 ⚠ **THE APP IS PUBLIC** — the owner put the live link on LinkedIn on 2026-09-05, ahead of the exam
 gate every plan here assumed. Strangers are reading pages on a server with **no fallback**, with
-**Round 3 Run A `best-real`** (⛔ not Round 2 — this file said so and was wrong; the browser has read
-nothing since 2026-09-04, so the live model is the one baked into the Cloud Run image). What that
-changes: [docs/STATUS.md](docs/STATUS.md).
+**Round 4 control `r4-ctl-stage2-last`** since 2026-09-28 (revision `omr-decode-00008-hx7`; ⛔ this
+line said Run A `best-real` until 2026-10-04, two models stale — the browser has read nothing since
+2026-09-04, so the live model is the one baked into the Cloud Run image; verify by hash, never from
+this line). Not an exam pass. What that changes: [docs/STATUS.md](docs/STATUS.md).
 
 > **Current state + the next action → [docs/STATUS.md](docs/STATUS.md). Never answer "what's next"
 > from this file or from ROADMAP.** Plain-English version for the project owner:
@@ -369,15 +370,18 @@ data/synthetic/       rendered strips — ROUND 3 TRAINED ON strips_v7_final (3 
                       UNCHANGED (no render, owner 2026-09-03). ⚠ IT IS NOW THE ONLY FULL SET ON DISK: the nine
                       superseded ones (v2..v6) were DELETED 2026-09-06 for space — re-render from
                       data/pieces_v4.json with the arm's flags if a comparison ever needs one
-data/checkpoints/     r3a-stage2-best-real (+ -onnx int8, THE LIVE RUNTIME since 2026-09-03 —
-                      published on the owner's HAND TEST, not an exam pass; round2-stage2-best and
-                      r3-final-stage2-last are the superseded ones), the r3-* Round-3 arms, and
+data/checkpoints/     r4-ctl-stage2-last (+ -onnx int8, THE LIVE RUNTIME since 2026-09-28 — a
+                      LEAD over r3a, not an exam pass; apps/server/models/ holds the same bytes),
+                      r3a-stage2-best-real (the predecessor and the REVERT target, staged in
+                      apps/server/models-r3a/; round2-stage2-best and r3-final-stage2-last are
+                      older), the r3-* / r4-* arms, and
                       rung3-labeler: a July tooling checkpoint, NEVER shipped, that only feeds the
                       emitter and decode_page.py. ⚠ SPACE SWEEP 2026-09-06 — a checkpoint folder is
                       now THINNER than it was: every trainer_state.pt is gone (resume-only, and
                       every notebook already rsync'd --exclude'd it), the four staged-runtime backup
                       folders are gone (byte-identical to the int8 beside them), and outside
-                      r3a-stage2-best-real-onnx the *-onnx folders keep ONLY *_int8.onnx.
+                      r3a-stage2-best-real-onnx (and r4-ctl-stage2-last-onnx, exported later)
+                      the *-onnx folders keep ONLY *_int8.onnx.
                       ⚠ To revert the live site to a predecessor, stage its *_int8.onnx from
                       data/checkpoints/<name>-onnx/ — that is what _round2_backup/ and
                       _r3final_backup/ held. Re-export fp32 with optimum-cli from model.safetensors.

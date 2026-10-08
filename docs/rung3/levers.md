@@ -4,7 +4,7 @@ purpose: the menu of remaining model-quality levers, why they are ordered this w
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
 
-updated: 2026-09-03
+updated: 2026-10-04
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
@@ -70,26 +70,23 @@ needs no mechanism.
 ## Lever 2 — decoding: we have never used anything but greedy
 
 Every decode in this project is greedy — `eval_omr.py`, `onnx_greedy_decode`, the browser and the
-server all take the argmax at each step. Three standard upgrades sit on top of the model we already
-have, need **no training and no labels**, and are measurable today on `_realval_v2`:
+server all take the argmax at each step. Three standard upgrades were listed here; **only the second
+survives** (owner, 2026-10-04 dropped beam search, which took the third with it). It needs **no
+training and no labels**, and costs nothing at decode time beyond a mask:
 
-1. **Beam search.** The current comparison work in the field runs beam widths around 3–5 and reports
-   the gain as material. Cost is linear in the beam.
+1. ~~**Beam search.**~~ ⛔ **DROPPED (owner, 2026-10-04)** — it lengthens every read, and a fast read
+   is the app's point. Do not re-propose it; reasoning in [../log/superseded.md](../log/superseded.md).
 2. **Grammar-constrained decoding** — mask tokens that cannot legally come next. Our label language
    is small and rigid: `\sig … \sigend`, `\tup3 … \tupend`, `\grace` precedes a note, two accidentals
    never adjoin, a pitch is followed by a duration. Illegal sequences the model already emits (a
    doubled `\volta2`, an unterminated block) become impossible rather than merely unlikely.
-3. **A bar-duration checksum over the beam.** The editor already computes whether a bar's contents
-   fill the derived meter (`data-bar-fill="over|under"`, [../CODE_TOUR.md](../CODE_TOUR.md)). Using
-   it to re-rank candidate decodes aims straight at duration errors, the second-largest slice of the
-   edit budget — and unlike everything else on this list, it is a *musical* constraint rather than a
-   pixel one.
+3. ⛔ **A bar-duration checksum over the beam — DROPPED with the beam (2026-10-04)**: re-ranking needs
+   several candidates, and greedy makes one. The editor already *flags* a bar that does not fill its
+   meter (`data-bar-fill="over|under"`, [../CODE_TOUR.md](../CODE_TOUR.md)); that stays.
 
 ⚠ This lever moves the shipped runtime, not the corpus, so it is scored against the same real-val
 pool and carries the same rule as any other change: pre-register what counts as a win before
-running it. ⚠ **Cost corrected 2026-09-03**: the decoder is 20–25% of a strip's time (encoder
-74–81%), so beam 3 costs roughly +40–60% of page time, not ×3 — and the owner's rule is that it may
-not slow the user path unless measured to pay; the emitter may use it freely ([round4.md](round4.md)). ⚠ It also changes the browser/server decode path, so `gate:browser` and
+running it. ⚠ It also changes the browser/server decode path, so `gate:browser` and
 `parity:server` are part of its cost.
 
 ## Lever 3 — real data: clean it before growing it

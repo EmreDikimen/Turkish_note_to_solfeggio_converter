@@ -2,7 +2,7 @@
 
 purpose: index and one-page plan for the real-page track; routes to the six detail files
 audience: agents and the owner working on real data
-updated: 2026-09-03
+updated: 2026-10-04
 
 > This track's **current state and next action are NOT here** — they live in
 > [../STATUS.md](../STATUS.md). This file describes the plan and where each part is written up.
@@ -47,7 +47,7 @@ so correcting is "glance and confirm", not "repair everything".
 | [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |
 | [third-source.md](third-source.md) | **Round 4's step 4** — the third-engraver probe: the three sites, what was collected, and the provenance traps found while collecting (a re-hosted page, a folk notation, a stem collision that lost a piece) | new 2026-09-06 |
 | [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **picked up by Round 4** | new 2026-08-27 |
-| [round4.md](round4.md) | **Round 4**: the root causes with their homes, the owner's five decisions of 2026-09-03 (no render, `\tupend` stays, stage 2 at 4,000, beam search never on the user path unless it pays, scheme H recommended), the octave count, and the order of work | new 2026-09-03 |
+| [round4.md](round4.md) | **Round 4**: the root causes with their homes, the owner's five decisions of 2026-09-03 (no render, `\tupend` stays, stage 2 at 4,000, beam search — dropped entirely 2026-10-04, scheme H recommended), the octave count, and the order of work | new 2026-09-03 |
 | [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
 | [followups.md](../archive/rounds/followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
 

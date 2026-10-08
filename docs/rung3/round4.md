@@ -2,7 +2,7 @@
 
 purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
 audience: agents and the owner working the real-page track
-updated: 2026-09-16
+updated: 2026-10-04
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
@@ -41,7 +41,7 @@ checkpoint is chosen*, and it checks whether a two-website corpus generalises.
 | 4 | **Two websites, exam included.** | 1,055 neyzen + 1,000 notaarsivleri, nothing else | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) · [../BACKLOG.md](../BACKLOG.md) item 10 |
 | 5 | **Realism renders do nothing; holes respond.** | three realism arms null; staccato hole 72.7% → 0.0% | [levers.md](levers.md) |
 | 6 | **Labels are noisy and the pitch/duration axis was never audited.** | b8 auto-accepts 12.9% wrong when read; signature rows worse | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) |
-| 7 | **The recipe has never used beam search, weight averaging (EMA) or label smoothing.** | — | [levers.md](levers.md) Levers 2 and 5 |
+| 7 | **The recipe has never used weight averaging (EMA) or label smoothing.** (Beam search sat on this row; ⛔ dropped by the owner 2026-10-04.) | — | [levers.md](levers.md) Levers 2 and 5 |
 
 ## What the owner decided on 2026-09-03
 
@@ -53,8 +53,10 @@ checkpoint is chosen*, and it checks whether a two-website corpus generalises.
 - **No new synthetic render.** *"sentetik tarafta yeni rendere ihtiyaç olduğunu düşünmüyorum."*
   `strips_v7_final` is reused unchanged. Labels never change; only the tokenizer's segmentation does.
 - **Stage 2 stays at 4,000 steps** — Run A's recipe. More only if the pool grows enough to need it.
-- **Beam search may not slow the user path unless it is measured to pay.** Where only our time is
-  spent (the emitter), it is allowed.
+- ~~**Beam search may not slow the user path unless it is measured to pay.** Where only our time is
+  spent (the emitter), it is allowed.~~ ⛔ **SUPERSEDED 2026-10-04 (owner): beam search is out of
+  every plan**, the emitter included — it lengthens the read, and speed is the app's point.
+  [../DECISIONS.md](../DECISIONS.md).
 - **The vocabulary question is answered: both kinds of token, by the ≥1,000-examples rule (scheme H).**
   ✅ **CONFIRMED by the owner 2026-09-06**, at **16 new ids / vocabulary 116** — the measurement that
   day removed `''` and `'''` from the set as dead tokens ([tokenization.md](tokenization.md)).
@@ -324,11 +326,9 @@ to revisit the no-render decision; otherwise it stands.
    ✅ **(was) READY TO RUN (2026-09-16)**: the owner read `realval-repair`, `_realval_v2r` is built (260
    strips; the pick reads 259), and `data/colab/tnc_round4_colab.zip` is built (815 MB, 45,578
    files, integrity-tested; the notebook carries its byte count). ✅ Uploaded and run 2026-09-16/17.
-7. **Beam search, offline, on the current model first — NOT STARTED** — paired on `_realval_v2r`
-   (⚠ `_realval_v2` is superseded; the repaired pool is what every Round-4 read uses). The decoder is
-   20–25% of a strip's time (encoder 74–81%), so beam 3 costs roughly +40–60% page time, not ×3;
-   Transcoda's gain at beam 3 was small. Ships to the user path only if it pays; otherwise the emitter
-   keeps it.
+7. ⛔ **Beam search — DROPPED from the plan (owner, 2026-10-04).** Never started. It lengthens the
+   read, and a fast read is what the app is for; the reasoning is in
+   [../log/superseded.md](../log/superseded.md).
 8. **Read**: the owner's hand-test pages, real-val paired, then `examv3` once as the comparable
    column. ⛔ **AND THE DENSE POOL FIRST (owner, 2026-09-18)**: `_realval_v2r` carries 5.8%
    over-budget strips, so nothing read on it answers this round's own question.

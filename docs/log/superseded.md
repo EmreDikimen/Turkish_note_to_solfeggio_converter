@@ -2,7 +2,7 @@
 
 purpose: keep the reasoning behind dead plans so nobody re-proposes them, without leaving them where they read as instructions
 audience: agents about to propose a direction change
-updated: 2026-08-17
+updated: 2026-10-04
 
 > ⛔ **DO NOT ACT ON ANYTHING IN THIS FILE.** Every item here was cancelled, overturned, or has
 > already been carried out. It is kept because the *reasoning* is what stops the same idea coming
@@ -144,6 +144,20 @@ sources ([../DECISIONS.md](../DECISIONS.md), 2026-08-17) stands on its own reaso
 - **Exam v1 (20 pieces, 33 strips, 83.3% AEU)** — superseded by exam v2 (2026-07-15) and v2.1
   (2026-07-19). The 83.3% number is LOW-N and must not be quoted as a baseline; the reference is the
   352-strip v2.1 read.
+
+## Beam search (planned 2026-08-17 as Lever 2, narrowed 2026-09-03, DROPPED 2026-10-04)
+
+The plan: keep 3–5 candidate readings open at each decoder step instead of the single greedy one,
+measured offline on real-val first, shipped only if it paid, and kept in the emitter otherwise. A
+bar-duration checksum would then pick between the candidates.
+
+**Why it died (owner, 2026-10-04):** it makes every read longer, and a fast read is what the app is
+for. The agent's own cost estimate was about **+40–60% page time at beam 3** (the decoder is 20–25%
+of a strip's time, the encoder the rest), and the literature's gain at that width was small
+(Transcoda: OMR-NED 18.71% → 18.46%). It was never run, so no number of ours exists. The owner closed
+the emitter route too, so there is no offline-only version left to propose. Grammar-constrained
+decoding is a different thing — it works on the greedy path — and is still on the menu
+([../rung3/levers.md](../rung3/levers.md)).
 
 ## Parked, not dead
 

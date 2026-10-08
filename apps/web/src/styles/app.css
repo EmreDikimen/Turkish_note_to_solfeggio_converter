@@ -165,9 +165,7 @@
 .kv-footer {
   margin-top: var(--space-8);
   /* The top edge is the GoldRule (App.tsx), not a border. */
-  /* A step darker than --ink-faint (2026-10-01): ink-faint is only 4.6:1 on bare paper, and over
-     the Istanbul backdrop it measured 3.8–4.1 by day. */
-  color: color-mix(in srgb, var(--ink-faint) 60%, var(--ink-soft));
+  color: var(--ink-on-picture);
   font-size: var(--text-xs);
 }
 
@@ -1653,7 +1651,7 @@
   transform: rotate(90deg);
 }
 .kv-advanced__note {
-  color: var(--ink-faint);
+  color: var(--ink-on-picture);
   font-size: var(--text-xs);
 }
 
@@ -1965,6 +1963,13 @@
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--iznik-red) 85%, transparent));
+}
+
+/* The finger number inside the dot (2026-10-01). White on the İznik red, like a printed part's
+   digit. ⚠ Size and weight are ATTRIBUTES in Fingerboard.tsx, not CSS — no font rule here. */
+.kv-fingerboard__finger {
+  fill: #fdf6f4;
+  pointer-events: none;
 }
 
 /* ---------------------------------------------------------------------------------------------

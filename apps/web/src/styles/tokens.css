@@ -15,8 +15,8 @@
  * (insert ghost, tuplet anchor and landings) keep their bright `#14b8a6` teal.
  *
  * ⚠ CONTRAST, computed for every pair that carries text (WCAG AA = 4.5:1):
- *   light  ink on paper 14.9 · ink-soft 8.9 · ink-faint 4.6 · white on accent 11.2 ·
- *          danger on white 7.4 · teal on paper 5.3 · gold-ink on white 5.0
+ *   light  ink on paper 14.6 · ink-soft 8.8 · ink-faint 5.0 (4.55 on sunken) · white on accent 11.2 ·
+ *          danger on white 7.4 · teal on paper 5.3 · gold-ink on white 5.0  (2026-10-02 warm paper)
  *   dark   ink on paper 14.5 · ink-soft 10.1 · ink-faint 5.5 · accent-on on accent 9.4 ·
  *          accent (as link text) on paper 9.4 · danger 5.9
  * ⚠ `--gold` itself is 2.9:1 on the paper — DECORATION ONLY (rules, ornaments, a border). Text,
@@ -40,16 +40,24 @@
      cream. `raised` is pure white: panels and the score's own sheet, so nothing
      on the page is lighter than the music. `sunken` is for wells and the
      collapsed developer panel — things that recede. */
-  --paper: #f7f4ec;
-  --paper-raised: #ffffff;
-  --paper-sunken: #eee9dc;
+  /* Warmed toward the Istanbul painting's light (owner, 2026-10-02). Same hue as before (~88°,
+     yellowish) but more of it: the painting's light areas measured chroma 17–20 (CIELAB), the old
+     paper 4.2 and the cards 0 (pure white) — they read cold beside it. Now paper 9, raised 4,
+     sunken 11. Was #f7f4ec / #ffffff / #eee9dc. ⚠ `.kv-paper` (the score) keeps the old values. */
+  --paper: #faf1e1;
+  --paper-raised: #fffcf4;
+  --paper-sunken: #f0e6d2;
 
   /* ── Ink ────────────────────────────────────────────────────────────────
      Near-black with lapis in it, never #000. `soft` is body copy, `faint` is
      captions and disabled text. */
   --ink: #1b1f2e;
   --ink-soft: #3e4354;
-  --ink-faint: #6b6f7c;
+  --ink-faint: #636774; /* was #6b6f7c; darkened with the warmer paper to stay ≥ 4.5 on it */
+  /* Faint text that sits on the Istanbul backdrop rather than on a card (2026-10-02). ink-faint is
+     4.6:1 on bare paper only; over the painting by day it measured 3.8–4.1. This one stays ≥ 4.5
+     there (measured on the footer and the Gelişmiş note, 1280 and 393px). */
+  --ink-on-picture: color-mix(in srgb, var(--ink-faint) 40%, var(--ink-soft));
 
   /* ── Rules ──────────────────────────────────────────────────────────────
      Grouping is done with hairlines. Warm, so they belong to the paper. */
@@ -141,7 +149,8 @@
      backdrop (app.css `.kv-backdrop`) is faint right beside the content and clearer the further
      away it is (owner, 2026-10-01). Re-resolved at night because `--paper` is. ⚠ Only ever on a
      NON-POSITIONED block: a positioned element's shadow paints over its neighbours' text. */
-  --halo-fill: color-mix(in srgb, var(--paper) 72%, transparent);
+  /* 50% by day so the painting shows closer to the content (owner, 2026-10-02); night keeps 72%. */
+  --halo-fill: color-mix(in srgb, var(--paper) 50%, transparent);
   --halo: 0 0 64px 56px var(--halo-fill);
   --shadow-card: 0 1px 2px rgba(27, 31, 46, 0.05), 0 10px 30px -12px rgba(27, 31, 46, 0.14);
   --shadow-modal: 0 18px 60px rgba(15, 20, 35, 0.32);
@@ -191,6 +200,8 @@
     --gold-ink: #e2c27c;
     --teal: #5fb3ac;
     --teal-soft: #173634;
+
+    --halo-fill: color-mix(in srgb, var(--paper) 72%, transparent);
 
     --iznik-red: #f07467;
     --iznik-cobalt: #86a8f0;

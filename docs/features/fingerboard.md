@@ -2,7 +2,7 @@
 
 purpose: the design, the calibration and the decisions behind the violin fingerboard view
 audience: agents and the owner working on F3, before changing the artwork, the geometry or the marks
-updated: 2026-08-29
+updated: 2026-10-01
 
 > This is the F3 chapter of the feature track — [README.md](README.md) is the track index, and
 > current state is in [../STATUS.md](../STATUS.md). It was split out on 2026-08-27, when the track
@@ -283,3 +283,62 @@ can bring the climbing back — all three price climbing *higher*, not lower.
 not by the suite. Section 4b of `tools/core/fingering-test.ts` now pins the climb, the forced-low
 start that trapped the old rule, and the opposite failure — a note above first position on the Mi
 string, where there is nothing to cross to, must still shift.
+
+### The finger number in the dot (owner, 2026-10-01)
+
+The owner asked for the dot to say **which finger**, not only where — the 0–4 a printed violin part
+writes over a note. **0 is the open string, 1 the index finger, 4 the little finger.**
+
+**It costs no new model.** The string-choice walk above already carries a hand: the place of the
+first finger, in commas above the open string. The finger is how far the note is from that place
+(`fingerInHand` in `packages/core/src/fingering.ts`), and it rides out on `FingerPos.finger`. So the
+number cannot disagree with the string and place chosen beside it.
+
+The bands, measured from the first finger: up to 2 commas above it (and the reach back below it) is
+**1**, the next 9 commas **2**, the next 8 **3**, past that **4**. ⚠ They are chosen so that with the
+hand in first position the number is **exactly** the colour of the line under the dot — pinned comma
+by comma in `tools/core/fingering-test.ts`, section 6, with the textbook `0 1 2 3 4` climb on every
+string.
+
+⚠ **What is a guess, stated rather than hidden:**
+
+- **A koma note gets the finger of its band** — the same finger, a comma higher or lower. That is
+  how a Western part would finger it. Whether makam violinists always do so is **not checked**
+  against a teacher or a method book.
+- **Open string vs. fourth finger** is decided by the string rule, not the finger rule: in the
+  tested La-string octave the Mi comes out as **4 on La**, not open Mi, because changing string has
+  a small cost. Both are ordinary violin choices.
+- After a shift DOWN the first finger lands on the low note, so two notes a whole tone apart can both
+  read **1**. A player might use 1–2 there. The greedy walk cannot see ahead to prefer it — the same
+  limit as above, and the reason a Viterbi (whole-piece) walk is the named next step.
+
+**Size (owner, same day):** the first dot was ~9 CSS px on a phone and the digit could not be read.
+`DOT_R` 5.5 → **10**, `FINGER_SIZE` **13** — about 16 px on a phone. At full zoom the dot is now wider
+than the string spacing near the nut; accepted, because its **centre** is what sits on the string.
+
+### TODO — step 2: a whole-piece (Viterbi) walk — DEFERRED, not started (owner, 2026-10-01)
+
+**What.** Replace the greedy walk in `assignFingering` with one that plans the whole piece: dynamic
+programming over states *(string, hand place, finger)*, the same three costs (shift, string change,
+pull to the nut), cheapest **total** path kept — the standard method in the literature (rule costs +
+Viterbi; e.g. github.com/Tsung-Ping/Violin-Fingering-Generation). It would let the walk choose a
+crossing several notes ahead, and fix the "1 then 1 again after a shift down" case above.
+
+**Why it is deferred and not built.** Not because it is hard (the code is a day). Because **nobody
+on this project can judge the result**: the owner does not play the violin, and no fingered
+reference exists to score against. It would change which string **every** note of **every** piece
+is shown on, and the last change of that size was caught only by eye, against shipped pieces. A
+whole-piece optimiser with the same costs could also trade differently — e.g. take a shift to save
+two string changes — and nothing here would notice. Green tests are not enough: the old rule passed
+every test too.
+
+**What would restart it** — any one of:
+
+- a violinist willing to look at a few pieces and say which fingering is wrong;
+- a fingered reference (a printed violin method, or a part with fingerings) to score both walks on;
+- a visible fault in the greedy walk that a player reports.
+
+**How to do it when it restarts.** Keep `FingerPos` and the bands unchanged, so nothing downstream
+moves. Section 4b and 6 of `tools/core/fingering-test.ts` must still pass. Re-measure the four-piece
+table above (above the octave, past first position, string changes) for both walks and show the
+differences to the reviewer **before** shipping.

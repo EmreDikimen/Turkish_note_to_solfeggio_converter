@@ -1644,8 +1644,12 @@ async function main() {
     const m = await page.evaluate(() => {
       const d = document.querySelector('[data-omr="finger-marker"]');
       const state = d?.getAttribute("data-finger-state");
+      // The finger number rides along (2026-10-01): `data-finger` on the marker, and the digit
+      // drawn in it — read as `#<attr>/<drawn>` so a check can hold the two to each other.
+      const num = document.querySelector('[data-omr="finger-number"]');
       return state === "open" || state === "stopped"
-        ? `${d!.getAttribute("data-string")}@${d!.getAttribute("data-ratio")}`
+        ? `${d!.getAttribute("data-string")}@${d!.getAttribute("data-ratio")}` +
+            `#${d!.getAttribute("data-finger")}/${num?.textContent ?? ""}`
         : null;
     });
     if (m && m !== fingerMarks[fingerMarks.length - 1]) fingerMarks.push(m);
@@ -1665,8 +1669,22 @@ async function main() {
   check(
     "…at a position ON the string",
     fingerMarks.every((m) => {
-      const r = Number(m.split("@")[1]);
+      const r = Number(m.split("@")[1]!.split("#")[0]);
       return Number.isFinite(r) && r >= 0 && r < 1;
+    }),
+    true,
+  );
+
+  // Which finger, not only where. 0 is the open string and nothing else is; 1–4 are the fingers;
+  // and the digit the player sees is the attribute, not a second guess of it.
+  check(
+    "…naming a finger 0–4, 0 exactly on an open string",
+    fingerMarks.every((m) => {
+      const [, rest] = m.split("@");
+      const [ratio, fing] = rest!.split("#");
+      const [attr, drawn] = fing!.split("/");
+      const f = Number(attr);
+      return [0, 1, 2, 3, 4].includes(f) && (f === 0) === (Number(ratio) === 0) && drawn === attr;
     }),
     true,
   );

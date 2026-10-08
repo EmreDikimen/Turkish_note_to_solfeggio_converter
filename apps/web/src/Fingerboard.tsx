@@ -76,8 +76,13 @@ import { TR } from "./ui/strings";
  * same job with `vector-effect: non-scaling-stroke` in the stylesheet, which is the CSS spelling of
  * the same rule.
  */
-const DOT_R = 5.5;
+// ⚠ 5.5 → 10 (owner, 2026-10-01): with a digit inside, the old dot was ~9 CSS px on a phone and the
+// number could not be read. It is now wider than the string spacing near the nut at full zoom —
+// accepted: the dot's CENTRE is still on its string, and that is what it points with.
+const DOT_R = 10;
 const LABEL_SIZE = 10;
+/** The finger number written inside the dot — sized so one digit fits inside `DOT_R`. */
+const FINGER_SIZE = 13;
 
 /** One line of the fixed chart: where it falls, what it is, and which finger plays it. */
 interface PositionLine {
@@ -116,6 +121,9 @@ export function Fingerboard({
   onTuning: (t: ViolinTuning) => void;
 }) {
   const dotRef = useRef<SVGCircleElement>(null);
+  // The finger number drawn in the dot (2026-10-01): where the finger goes was always shown; WHICH
+  // finger was not. It follows the dot from the same rAF tick, so it cannot lag it.
+  const fingerRef = useRef<SVGTextElement>(null);
   const [tuningOpen, setTuningOpen] = useState(false);
   // The lines are a reference the player may not want: on a piece that uses many positions they
   // crowd the neck, and a violin has no lines on it. Shown by default because a first look with
@@ -150,10 +158,17 @@ export function Fingerboard({
 
   useEffect(() => {
     const dot = dotRef.current;
-    if (!dot) return;
+    const num = fingerRef.current;
+    if (!dot || !num) return;
+
+    const hide = () => {
+      dot.style.display = "none";
+      num.style.display = "none";
+      dot.removeAttribute("data-finger");
+    };
 
     const idle = () => {
-      dot.style.display = "none";
+      hide();
       dot.setAttribute("data-finger-state", "idle");
       dot.removeAttribute("data-string");
       dot.removeAttribute("data-ratio");
@@ -183,12 +198,19 @@ export function Fingerboard({
           dot.setAttribute("data-finger-state", at.ratio === 0 ? "open" : "stopped");
           dot.setAttribute("data-string", tuning.strings[at.stringIndex]!.id);
           dot.setAttribute("data-ratio", at.ratio.toFixed(4));
+          dot.setAttribute("data-finger", String(at.finger));
+          // 0 for an open string is how a printed violin part writes it, so it is shown too.
+          num.setAttribute("x", d.x.toFixed(2));
+          num.setAttribute("y", d.y.toFixed(2));
+          const label = String(at.finger);
+          if (num.textContent !== label) num.textContent = label;
+          num.style.display = "block";
         } else {
           // Nothing is drawn, and the reason is stated rather than guessed at: a rest is silence,
           // but an unreachable note is a real note this violin cannot play. ⚠ The second is not
           // rare here — Turkish notation transposes down a fourth, so a low written passage sounds
           // under the open Sol string. Faking a position for it would be a lie about the music.
-          dot.style.display = "none";
+          hide();
           dot.setAttribute("data-finger-state", notes[i]!.isRest ? "rest" : "out-of-range");
           dot.removeAttribute("data-string");
           dot.removeAttribute("data-ratio");
@@ -354,6 +376,19 @@ export function Fingerboard({
           r={DOT_R * k}
           cx={0}
           cy={0}
+          style={{ display: "none" }}
+        />
+        {/* ⚠ `fontSize` is an ATTRIBUTE, like the string names', and it is scaled by `k` for the
+            same reason the dot's radius is: the digit keeps its size on screen under the zoom.
+            `pointer-events: none` lives in the stylesheet so the number never eats a tap. */}
+        <text
+          ref={fingerRef}
+          className="kv-fingerboard__finger"
+          data-omr="finger-number"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={FINGER_SIZE * k}
+          fontWeight={700}
           style={{ display: "none" }}
         />
       </svg>

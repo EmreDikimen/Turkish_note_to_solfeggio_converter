@@ -192,8 +192,10 @@ it has scrolled to.
 ## The fingerboard tab (F3, violin)
 
 `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings][data-lines][data-zoom]`,
-`[data-omr="finger-marker"]` carrying `data-string` / `data-ratio` /
-`data-finger-state="idle|open|stopped|rest|out-of-range"`, and `[data-omr="fingerboard-tick"]` per
+`[data-omr="finger-marker"]` carrying `data-string` / `data-ratio` / `data-finger="0|1|2|3|4"` (only
+while open or stopped; 0 = open string) /
+`data-finger-state="idle|open|stopped|rest|out-of-range"`, `[data-omr="finger-number"]` — the digit
+drawn in the dot, whose text must equal the marker's `data-finger` — and `[data-omr="fingerboard-tick"]` per
 line of the position chart, carrying `data-commas` / `data-ratio` / `data-finger` — so a check reads
 WHERE the finger is, never a label.
 
@@ -230,7 +232,7 @@ way `#makam-confirm` dismisses the makam prompt.
 pass on a control wired to nothing.
 
 ⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the position
-formula and the string-choice rule. [features/fingerboard.md](features/fingerboard.md)
+formula, the string-choice rule and the finger number. [features/fingerboard.md](features/fingerboard.md)
 
 ## The kanun tab (F3's second instrument)
 

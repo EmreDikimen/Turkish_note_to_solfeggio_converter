@@ -6,9 +6,11 @@ Both are Ivan Aivazovsky (1817–1900), public domain, from Wikimedia Commons; c
 apps/web/public/THIRD-PARTY.txt and docs/THIRD-PARTY.md. They were picked as a PAIR (owner,
 2026-10-01) for their light — morning sun, and a blue moonlit night with the Maiden's Tower.
 
-For each painting this writes two WebP files into apps/web/public/backdrop/:
+For each painting this writes into apps/web/public/backdrop/:
   <name>.webp       the painting, calmed: saturation down, pulled toward the theme's ground
   <name>-soft.webp  the same, small and blurred — the layer behind the content column
+  <name>.png, <name>-soft.png   the same two, lossless (owner, 2026-10-02). ⚠ The page loads only
+                    the WebP; the PNGs ship in dist/ but no visitor downloads them.
 The FADE itself (how faint, how blurred where) is CSS (`.kv-backdrop` in app.css), so it can be
 tuned without re-running this. ⚠ Never hand-edit an output; change a number here and re-run.
 
@@ -68,9 +70,12 @@ def main() -> None:
         if im.width > WIDTH:
             im = im.resize((WIDTH, round(im.height * WIDTH / im.width)), Image.LANCZOS)
         im.save(OUT / f"{name}.webp", quality=60, method=6)
+        im.save(OUT / f"{name}.png", optimize=True)
         soft = im.resize((SOFT_WIDTH, round(im.height * SOFT_WIDTH / im.width)), Image.LANCZOS)
-        soft.filter(ImageFilter.GaussianBlur(SOFT_BLUR)).save(OUT / f"{name}-soft.webp", quality=60, method=6)
-        for f in (f"{name}.webp", f"{name}-soft.webp"):
+        soft = soft.filter(ImageFilter.GaussianBlur(SOFT_BLUR))
+        soft.save(OUT / f"{name}-soft.webp", quality=60, method=6)
+        soft.save(OUT / f"{name}-soft.png", optimize=True)
+        for f in (f"{name}.webp", f"{name}.png", f"{name}-soft.webp", f"{name}-soft.png"):
             print(f"{f:18} {(OUT / f).stat().st_size / 1024:6.0f} KB  {Image.open(OUT / f).size}")
 
 

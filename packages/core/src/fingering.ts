@@ -13,7 +13,7 @@
  *   * `VIOLIN_TUNINGS` — the open strings, as DATA. Swapping in a Turkish scordatura is a row
  *     here and touches no geometry (docs/DECISIONS.md, 2026-08-15).
  *   * `positionOnString` — the formula above, for one string.
- *   * `assignFingering` — the greedy "stay near where the hand just was" rule, run once over a
+ *   * `assignFingering` — the greedy hand-on-the-neck walk (string, place AND finger), run once over a
  *     whole piece.
  *
  * This is pure data + maths, so it lives in core and ports to mobile unchanged — the same
@@ -227,10 +227,19 @@ export function retuneString(
   return { id: "custom", label: strings.map((s) => s.label).join("–"), strings };
 }
 
-/** Where the hand is: which string, and how far along it (0 = open, 0.5 = the octave). */
+/** A violinist's finger number: 0 is the open string, 1 the index finger, 4 the little finger. */
+export type FingerNumber = 0 | 1 | 2 | 3 | 4;
+
+/** Where the hand is: which string, how far along it (0 = open, 0.5 = the octave), which finger. */
 export interface FingerPos {
   stringIndex: number;
   ratio: number;
+  /**
+   * Which finger stops the string here — the number a printed violin part writes over a note.
+   * Read off the hand `assignFingering` is already carrying (`fingerInHand`), so it can never
+   * disagree with the string and the place chosen beside it.
+   */
+  finger: FingerNumber;
 }
 
 /**
@@ -332,7 +341,29 @@ function handFor(commas: number, hand: number | null): number {
 }
 
 /**
- * Choose a string and a position for every note of a piece, in one pass.
+ * Which finger plays a note `commas` above the open string, with the first finger at `hand`.
+ *
+ * The bands are `firstPositionFinger`'s, measured from the first finger instead of from the open
+ * string: finger 1 owns up to 2 commas above itself (and the low reach back below it), finger 2 the
+ * next 9, finger 3 the next 8, and finger 4 the stretch past that. ⚠ They are written so that with
+ * the hand in first position (`hand` = 9) this returns EXACTLY the finger the chart's lines are
+ * coloured with — the number in the dot and the colour of the line under it may not disagree.
+ * `fingering-test.ts` pins that, comma by comma.
+ *
+ * A koma-altered note gets the finger of the band it falls in, which is the plain reading — the
+ * same finger, placed a little higher or lower. ⚠ Whether makam violinists always finger it that
+ * way is NOT checked against a teacher or a method book; it is the rule a Western part follows.
+ */
+function fingerInHand(commas: number, hand: number): 1 | 2 | 3 | 4 {
+  const d = commas - hand;
+  if (d < 2) return 1;
+  if (d < 11) return 2;
+  if (d < 19) return 3;
+  return 4;
+}
+
+/**
+ * Choose a string, a position and a finger for every note of a piece, in one pass.
  *
  * `freqsHz` is one sounding frequency per note, in order, with `NaN` for rests (which is exactly
  * what `Timeline.notes[].freqHz` gives). The result is aligned 1:1 with it; an entry is `null`
@@ -386,7 +417,10 @@ export function assignFingering(
 
       if (cost < bestCost) {
         bestCost = cost;
-        best = { stringIndex: i, ratio };
+        // ⚠ An open string is finger 0 even before the hand is placed — `moved` is null then.
+        const finger: FingerNumber =
+          open || moved === null ? 0 : fingerInHand(ratioToCommas(ratio), moved);
+        best = { stringIndex: i, ratio, finger };
         bestHand = moved;
       }
     }

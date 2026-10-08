@@ -183,7 +183,7 @@ const at = (r: (FingerPos | null)[], i: number) => r[i];
 check(
   "an open-string pitch, cold, is played open",
   at(assignFingering([A.openHz], STRINGS), 0),
-  { stringIndex: 2, ratio: 0 },
+  { stringIndex: 2, ratio: 0, finger: 0 },
 );
 check(
   "the lowest note has only one home",
@@ -215,7 +215,7 @@ check(
   new Set(scaleFing.map((f) => f!.stringIndex)).size <= 2,
   true,
 );
-check("…starting open on La", scaleFing[0], { stringIndex: 2, ratio: 0 });
+check("…starting open on La", scaleFing[0], { stringIndex: 2, ratio: 0, finger: 0 });
 check(
   "…and ascending along the piece",
   scaleFing.every((f, i) => i === 0 || f!.stringIndex > scaleFing[i - 1]!.stringIndex || f!.ratio >= scaleFing[i - 1]!.ratio - 1e-9),
@@ -370,6 +370,45 @@ near("…by about one comma of string", (majorThird - segah) * 487.5, 4, 2);
 // The feature's own claim, restated in the language the lines are drawn in: a koma sharp and a
 // küçük sharp are NOT the same line, so colouring by band must not quietly merge them.
 check("a koma and a küçük above the same degree stay apart", upG(18) === upG(17), false);
+
+// ---------------------------------------------------------------------------------------------
+// 6. The finger number (2026-10-01) — what a printed violin part writes over a note
+// ---------------------------------------------------------------------------------------------
+//
+// Read off the hand the walk already carries, so it is checked against the two things it may not
+// contradict: the chart's line colours in first position, and the textbook fingering of a scale.
+console.log("\nthe finger number");
+
+// Every comma a cold first-position hand can stop on the Sol string (the Re string's open note is
+// 31, so nothing below it has a second home). The dot's number must equal the line's colour there.
+// From 3, not 2: comma 2 is the bands' edge and reads back as 1.9999 through the log.
+const coldG = Array.from({ length: 28 }, (_, i) => i + 3);
+check(
+  "in first position the finger is the chart's finger, comma by comma",
+  coldG.map((c) => assignFingering([koma53ToFreq(265 + c)], STRINGS)[0]!.finger),
+  coldG.map((c) => firstPositionFinger(upG(c))),
+);
+check("an open string is finger 0", assignFingering([D.openHz], STRINGS)[0]!.finger, 0);
+// ⚠ The Mi is the fourth finger on La, not the open Mi string: the walk prices a string change
+// above zero, and "4 instead of open" is an ordinary violin choice. The string rule decides that,
+// not the finger rule — this only pins that the numbers follow it.
+check(
+  "an octave from the open La is fingered 0 1 2 3 4 1 2 3",
+  scaleFing.map((f) => f!.finger),
+  [0, 1, 2, 3, 4, 1, 2, 3],
+);
+check(
+  "the two-octave climb is the textbook 0 1 2 3 4 on every string",
+  climb.map((f) => f!.finger),
+  [0, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2],
+);
+// A koma is the SAME finger placed a comma lower — a different place, never a different finger.
+const komaPair = assignFingering([koma53ToFreq(265 + 17), koma53ToFreq(265 + 18)], STRINGS);
+check("a koma-flat third and a major third share finger 2", komaPair.map((f) => f!.finger), [2, 2]);
+check("…but not a place", komaPair[0]!.ratio !== komaPair[1]!.ratio, true);
+// Past first position the number still comes from the hand, never from the open-string bands
+// (which return null up there): the lone high Mi-string note is under a stretched fourth finger.
+check("a note high up the Mi string still gets a finger", tooHigh[0]!.finger, 4);
 
 check("length is preserved", assignFingering([440, NaN, 880, 1], STRINGS).length, 4);
 check("an empty piece is empty", assignFingering([], STRINGS), []);

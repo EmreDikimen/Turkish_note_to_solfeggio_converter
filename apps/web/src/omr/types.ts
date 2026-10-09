@@ -14,7 +14,7 @@
  * That second rule came due at W9, and this is where it was paid. The types below name
  * `onnxruntime-common` — the package both `onnxruntime-web` and `onnxruntime-node` re-export — so
  * `decode.ts` compiles against neither runtime in particular, and the DECODE SERVER runs the
- * browser's own module instead of a second implementation to hold in parity (docs/mvp/deploy.md).
+ * browser's own module instead of a second implementation to hold in parity (docs/app/deploy.md).
  */
 import type * as ort from "onnxruntime-common";
 

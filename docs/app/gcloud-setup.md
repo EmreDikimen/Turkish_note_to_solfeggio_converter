@@ -1,9 +1,9 @@
 # Setting up Google Cloud — step by step, in plain words
 
 purpose: the owner's walkthrough for getting from "gcloud is installed" to "the decode server is running", written for someone who has never rented a server
-audience: the project owner (basic English, same style as OVERVIEW.md)
+audience: the project owner (basic English)
 
-updated: 2026-08-06
+updated: 2026-10-08
 
 > This page is **how to do it**. What we chose and why is [deploy.md](deploy.md); the exact deploy
 > commands live there too and are repeated at the end here. Current state:
@@ -156,7 +156,7 @@ So the real protection is three cheap things, and they are already in place:
 
 | Protection | Where it comes from |
 |---|---|
-| `--max-instances 3` | the deploy command — Google will never run more than 3 copies |
+| `--max-instances 10` | the deploy setting — Google will never run more than 10 copies (it was 3 until 2026-09-04) |
 | 20 uploads per minute per person | built into the server (`npm run check:limits` proves it) |
 | The free tier itself | your expected use is roughly 15% of it |
 
@@ -187,6 +187,11 @@ gcloud run deploy omr-decode --image $IMAGE --region $REGION \
   --set-env-vars OMR_ORT_THREADS=1 \
   --allow-unauthenticated
 ```
+
+⚠ **Historical command (2026-08-06).** Since 2026-09-04 the live service runs `--max-instances 10`,
+and `ALLOWED_ORIGINS` carries the localhost dev origins too. Do NOT re-run this block against the
+live service — it would overwrite both. To ship a new image, use the image-only command in
+[deploy-ops.md](deploy-ops.md).
 
 The build takes a few minutes and uploads about 213 MB. **This was run for real on 2026-08-06**: the
 build succeeded first time in **1 m 27 s**, and the *deploy* failed once — the container exited

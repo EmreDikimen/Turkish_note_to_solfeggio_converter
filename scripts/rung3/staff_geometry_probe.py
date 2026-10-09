@@ -1,6 +1,6 @@
 r"""Round-3 Check B — are the off-by-one pitch errors actually caused by staff geometry?
 
-THE CLAIM UNDER TEST (docs/rung3/round3.md §1). When the model gets a note's height wrong it is
+THE CLAIM UNDER TEST (docs/archive/rounds/round3.md §1). When the model gets a note's height wrong it is
 off by only one or two staff positions 74% of the time. Our training strips are unnaturally steady
 — spacing SD 0.03 px raw, 0.76 px augmented — against 0.72-1.11 px in the real pools, and a
 vertical-placement p5-p95 spread of 2.0 px raw against 6-21 px real. round3.md calls the link

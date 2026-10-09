@@ -17,8 +17,8 @@ line said Run A `best-real` until 2026-10-04, two models stale — the browser h
 this line). Not an exam pass. What that changes: [docs/STATUS.md](docs/STATUS.md).
 
 > **Current state + the next action → [docs/STATUS.md](docs/STATUS.md). Never answer "what's next"
-> from this file or from ROADMAP.** Plain-English version for the project owner:
-> [docs/OVERVIEW.md](docs/OVERVIEW.md).
+> from this file or from ROADMAP.** ⛔ There is no separate plain-English doc set any more — the
+> `OVERVIEW*.md` files were deleted 2026-10-08 (owner); explain things in the reply instead.
 >
 > 📝 **Asked to "sync the docs", "update the docs", or writing anything down after a piece of
 > work? READ [docs/MAINTAINING.md](docs/MAINTAINING.md) FIRST and follow it** — it says which file
@@ -53,8 +53,9 @@ engineer.** The owner reads English as a second language and asked for this to b
 | **The LOOK — palette, dark mode, CSS layers, and the render pin (a restyle must not move a strip)** | **[docs/features/look.md](docs/features/look.md)** |
 | **What we may publish** — licences, attribution, why no score ships | **[docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)** |
 | The full doc map | [docs/INDEX.md](docs/INDEX.md) |
-| **MVP track (in-browser pipeline → friends release)** | **[docs/mvp/README.md](docs/mvp/README.md)** |
-| Real-page track (collect → label → exam → rounds) | [docs/rung3/](docs/rung3/) |
+| **The app's own docs — server, hosting, model swap/revert, editor, makam** (the MVP ladder that built it is CLOSED: [docs/archive/phases/mvp.md](docs/archive/phases/mvp.md)) | **[docs/app/README.md](docs/app/README.md)** |
+| Feature track (voices, instrument views, stored pages, visit counter, Play Store) | [docs/features/README.md](docs/features/README.md) |
+| Real-page (model) track (collect → label → exam → rounds) | [docs/rung3/](docs/rung3/) |
 | Code map / reading order | [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |
 | Page → strips → decode → stitch design | [docs/PIPELINE.md](docs/PIPELINE.md) |
 | See a feature with your own eyes | [docs/MANUAL_CHECKS.md](docs/MANUAL_CHECKS.md) |
@@ -76,7 +77,7 @@ npm run typecheck     # all workspaces
 npm test              # stitcher + labels + edits + usul + makam intonation + voices + violin fingering
 npm run check:fold    # repeat SIGNS vs sound? 1720 pages, 0 changed. Render flags: COMMANDS.md
 npm run smoke:editor  # real app: select, drag, delete, undo/redo, palette, rests, tuplets, voices
-npm run gate:browser  # in-browser ONNX gate, headless — expect 27/28
+npm run gate:browser  # in-browser ONNX gate, headless — expect 26/28 (since 2026-10-08)
 npm run smoke:phone   # the app at four PHONE sizes, MEASURED — a probe, not a gate; never exits nonzero
 npm run stats:ui      # the OWNER'S visit dashboard, dev server only — never built into dist/
 .venv-ml/bin/python scripts/check_docs.py   # headers, size cap, links, code refs, orphans
@@ -124,16 +125,21 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   `emit_strip_labels.py` takes a majority vote over the row-start decodes and **overwrites** the
   derivation with it, and the `nd` gate is blind to `\sig` blocks by design. It fired on 24 of 45 exam
   pieces and 43% of `strips_nota` pieces, and the weak voter's systematic koma/küçük confusion wins
-  that vote unanimously. ⚠ **Treat any `\sig` block in a real-page label as unverified** until
-  [docs/BACKLOG.md](docs/BACKLOG.md) item 9 is done. [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md).
+  that vote unanimously. ✅ **Rule D (owner, 2026-09-06) stops the silent half**: a vote that DELETES
+  or CHANGES an accidental, landing off the makam table's majority spelling, now sends the piece to
+  review with the derivation kept (`sig_table_conflict`) — applied in the `strips_h1` emit (54 rows,
+  all read). ⚠ **Every `\sig` block in the exam and in every pool before `strips_h1` still carries
+  the old override — treat those as unverified**, and a vote that only adds or re-orders still
+  applies everywhere. [docs/METRICS-SIGVOTE.md](docs/METRICS-SIGVOTE.md).
 - **`\tie` IS RETIRED — AN ARC IS LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Never write it,
   never emit it: two tied notes are two plain notes (`la'2 la'8`), same pitches and same total
   duration, so bar arithmetic and the stitcher are untouched. Reason: **65–78% of every `\tie` in the
   review queues joined two DIFFERENT pitches**, which is a slur. ⚠ **It stays in `ADDED_TOKENS` at its
   current position** — ids are append-only — as a token nothing emits; `strips_exam_v2*` keeps its ties
-  as the record of what Round 2 was graded on. ⛔ **A TIE-FREE MODEL FAILS `gate:browser`**: one gate
-  gold still contains `\tie`, so 27/28 is unreachable
-  ([docs/METRICS-ONNX.md](docs/METRICS-ONNX.md)), and it inflates any comparison against a
+  as the record of what Round 2 was graded on. ⚠ **The browser gate's one `\tie` gold was rewritten
+  tie-free on 2026-10-08** and the gate now pins **26/28** — but `gate.json` is gitignored and
+  `make_browser_gate.py` regenerates it, so re-check it after any re-staging
+  ([docs/METRICS-ONNX.md](docs/METRICS-ONNX.md)). The retirement inflates any comparison against a
   pre-retirement model — **~15 of 17 points** on the exam.
   [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
@@ -220,7 +226,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   else stays local** — audio, the editor, and the W4–W6 slicer port. **Do not delete the in-browser
   decode path**: `gate:browser`, `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold
   result all rest on it, and it is the ONLY path in a build with no `VITE_DECODE_URL`.
-  [docs/mvp/deploy.md](docs/mvp/deploy.md).
+  [docs/app/deploy.md](docs/app/deploy.md).
   ⛔ **BUT IT IS NO LONGER A FALLBACK: NOTHING IS READ ON THE VISITOR'S MACHINE WHERE A SERVER IS
   CONFIGURED** (owner, 2026-09-04) — a dead or cold container raises `server-unavailable` instead,
   because the `onnxruntime-web` fallback's real cost is the **211 MB of graphs** it pulls, worst of all
@@ -354,9 +360,10 @@ data/real/rung3/      the label POOLS. strips_h1 (4,456) is ROUND 4's real train
                       docs/METRICS-ROUND3-RUNS.md. ⛔ Never pass the raw old pools: 922 of
                       strips_nota's rows are machine-verdicted. b8-review is out (METRICS-B8.md)
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
-                      its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen exam
-                      and the real TRAINING pools hardlink from here), strips_v2/ (2026-07-29
-                      re-slice; real-val), strips_examv3/ (2026-08-21, the REBUILT exam)
+                      its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen
+                      v2 exam and strips_oldhuman hardlink from here), strips_v2/ (2026-07-29
+                      re-slice; real-val AND the live training pools strips_b8 / strips_h1 —
+                      inode-checked 2026-10-08), strips_examv3/ (2026-08-21, the REBUILT exam)
 data/real/rung3/_denseval_h1{,_dense}/  the DENSE read (2026-09-18): strips_h1's 442 HELD-OUT strips,
                       and the 117 over 49 old ids (54.7% over the old 59 gate). Fair to the live model
                       too — 0 of its 61 pieces are on strips_b8's train side, 0 are exam pieces.
@@ -385,6 +392,8 @@ data/checkpoints/     r4-ctl-stage2-last (+ -onnx int8, THE LIVE RUNTIME since 2
                       ⚠ To revert the live site to a predecessor, stage its *_int8.onnx from
                       data/checkpoints/<name>-onnx/ — that is what _round2_backup/ and
                       _r3final_backup/ held. Re-export fp32 with optimum-cli from model.safetensors.
+                      ⛔ A swap is the graphs AND `CACHE_NAME` in omr/session.ts (missed at the
+                      2026-09-28 swap). Every hop, in order: docs/app/deploy-ops.md
 data/split.json       piece-level train/val split (strips_v4 uses data/split_v4.json, v3 split_v3)
                       — ALWAYS split by piece, never by strip: strips of one piece are near-duplicates
 ```

@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-09-16
+updated: 2026-10-08
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -20,11 +20,6 @@ wrong — fix by deleting, not by syncing.
 | What is owed but is NOT next, and why is it deferred? | [BACKLOG.md](BACKLOG.md) |
 | Work deferred PAST this round — density levers, exam v3's owed items, the sharp-glyph measurement | [BACKLOG-LATER.md](BACKLOG-LATER.md) |
 | What is measured but fragile, and what do we NOT claim? | [RISKS.md](RISKS.md) |
-| Explain it to me in plain English (no jargon) | [OVERVIEW.md](OVERVIEW.md) |
-| Can I publish this? In plain English | [OVERVIEW-COPYRIGHT.md](OVERVIEW-COPYRIGHT.md) |
-| **Everything built on the APP side, in plain English — all fifteen items, what each cost and what is left** | [OVERVIEW-APP.md](OVERVIEW-APP.md) |
-| Why is there a server, where does the app live, what does it cost? In plain English | [OVERVIEW-SERVER.md](OVERVIEW-SERVER.md) |
-| **Round 4 in plain English — what Round 3 taught, what changes and what does not, what you will be asked to do** | [OVERVIEW-ROUND4.md](OVERVIEW-ROUND4.md) |
 | I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
 
 ## Facts and decisions
@@ -66,48 +61,39 @@ wrong — fix by deleting, not by syncing.
 
 | Question | File |
 |---|---|
-| The MVP track: in-browser pipeline → release to friends | [mvp/README.md](mvp/README.md) |
-| The product track's settled findings (moved out of STATUS) | [mvp/standing.md](mvp/standing.md) |
-| What each MVP rung established: the slicer rungs W4–W7 | [mvp/rungs.md](archive/phases/rungs.md) |
-| The earlier rungs W0–W3 (opencv.js parity, decode module, browser-vs-Python) | [mvp/rungs-w0-w3.md](archive/phases/rungs-w0-w3.md) |
-| How to port the slicer to TypeScript (W4–W6) | [mvp/slicer-port.md](mvp/slicer-port.md) |
-| How the app gets hosted, what it costs, and the server question (W9–W10) | [mvp/deploy.md](mvp/deploy.md) |
-| Running and redeploying the decode server — the actual commands | [mvp/deploy-ops.md](mvp/deploy-ops.md) |
-| **Setting up Google Cloud from scratch, step by step** (owner walkthrough) | [mvp/gcloud-setup.md](mvp/gcloud-setup.md) |
-| **Putting the app and the weights online, step by step** (owner walkthrough) | [mvp/hosting-setup.md](mvp/hosting-setup.md) |
-| How to make a page faster, and what each option costs | [mvp/latency.md](mvp/latency.md) |
-| **The makam intonation table, its sources, and how a page's makam is guessed** | [mvp/makam.md](mvp/makam.md) |
-| **Reworking note editing into a direct, MuseScore/Mus2-style editor** | [mvp/editor.md](mvp/editor.md) |
-| What each editor step BUILT, and the traps it found | [mvp/editor-built.md](mvp/editor-built.md) |
-| The real-page track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
+| **The app's own docs — the server, hosting, the editor, the makam table, speed** (index) | [app/README.md](app/README.md) |
+| The app's settled findings (moved out of STATUS) | [app/standing.md](app/standing.md) |
+| How the app gets hosted, what it costs, and the server question | [app/deploy.md](app/deploy.md) |
+| Running and redeploying the decode server — the actual commands | [app/deploy-ops.md](app/deploy-ops.md) |
+| **Setting up Google Cloud from scratch, step by step** (owner walkthrough) | [app/gcloud-setup.md](app/gcloud-setup.md) |
+| **Putting the app and the weights online, step by step** (owner walkthrough) | [app/hosting-setup.md](app/hosting-setup.md) |
+| How to make a page faster, and what each option costs | [app/latency.md](app/latency.md) |
+| **The makam intonation table, its sources, and how a page's makam is guessed** | [app/makam.md](app/makam.md) |
+| **The direct, MuseScore/Mus2-style editor — the brief** | [app/editor.md](app/editor.md) |
+| What each editor step BUILT, and the traps it found | [app/editor-built.md](app/editor-built.md) |
+| **The feature track: voices, usul percussion, the instrument views, stored pages, the visit counter** | [features/README.md](features/README.md) |
+| Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
+| Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
+| How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
+| The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
+| The kanun view (F3): the 26 courses, the mandal state machine, why it is drawn and not photographed | [features/kanun-view.md](features/kanun-view.md) |
+| The sol klarnet view (F3): the photograph, the fingering table, the lip meter | [features/clarinet-view.md](features/clarinet-view.md) |
+| The bar beside the instrument (F3): one measure drawn on its own, play-this-bar, editing in place | [features/measure-card.md](features/measure-card.md) |
+| The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |
+| The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
+| **The PHONE: the three viewport questions, fitting a score, the fold, the editor, every measured number** | **[features/phone.md](features/phone.md)** |
+| **The LOOK: the Tezhip palette, dark mode, the CSS layers, the render pin that keeps a restyle off the strips** | **[features/look.md](features/look.md)** |
+| **The Play Store app** — TWA build, the permanent package name, where the signing key lives, the closed test | [features/play-store.md](features/play-store.md) |
+| The real-page (model) track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
+| **Round 4: the dense half, the signature answer key, the selector — evidence, the owner's decisions, the order** | [rung3/round4.md](rung3/round4.md) |
+| **How a label is spelled, and what re-spelling notes bought** | [rung3/tokenization.md](rung3/tokenization.md) |
 | The rules a real-page label obeys (what is a token, what is ink) | [rung3/labeling.md](rung3/labeling.md) |
 | How real pages were collected and matched to SymbTr (§1a–§1c) | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
 | The review queues feeding the training pools and the exam (reslice-all, the batches, b8, examv3) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
 | The review queues feeding REAL-VAL (realval-hard, and the 2026-09-09 repair) | [rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md) |
 | The real-page track's settled findings (moved out of STATUS) | [rung3/standing.md](rung3/standing.md) |
 | Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |
-| Round 1: criteria, A/B, exam result, disposition | [rung3/round1.md](archive/rounds/round1.md) |
-| Round 2: photo axis, the sharp fidelity fix, what is open | [rung3/round2.md](archive/rounds/round2.md) |
-| Round 3: note heights + note lengths, and the checks to run first | [rung3/round3.md](rung3/round3.md) |
-| Round 3's floors, the launch gate, and the tuplet A/B protocol | [rung3/round3-criteria.md](rung3/round3-criteria.md) |
-| **Round 4: the dense half, the signature answer key, the selector — evidence, the owner's decisions, the order** | [rung3/round4.md](rung3/round4.md) |
-| What each Round-3 work item B0–B9 is, and what it still owes | [rung3/worklist.md](rung3/worklist.md) |
-| The remaining model levers, ranked, and what to measure first | [rung3/levers.md](rung3/levers.md) |
-| **How a label is spelled, and what re-spelling notes would buy** | [rung3/tokenization.md](rung3/tokenization.md) |
-| Parked ideas, watch-items, data folder layout | [rung3/followups.md](archive/rounds/followups.md) |
-| **Post-beta features: instrument voices, usul percussion, the fingerboard tab** | [features/README.md](features/README.md) |
-| Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
-| Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
-| How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
-| **The Play Store app** — TWA build, the permanent package name, where the signing key lives, the closed test | [features/play-store.md](features/play-store.md) |
-| The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
-| The kanun view (F3): the 26 courses, the mandal state machine, why it is drawn and not photographed | [features/kanun-view.md](features/kanun-view.md) |
-| The sol klarnet view (F3): the CC0 layered schematic, the rejected photos, the lip bar | [features/clarinet-view.md](features/clarinet-view.md) |
-| The bar beside the instrument (F3): one measure drawn on its own, play-this-bar, the hand-over to the editor | [features/measure-card.md](features/measure-card.md) |
-| The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |
-| The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
-| **The PHONE: the three viewport questions, fitting a score, the fold, the editor, every measured number** | **[features/phone.md](features/phone.md)** |
-| **The LOOK: the Tezhip palette, dark mode, the CSS layers, the render pin that keeps a restyle off the strips** | **[features/look.md](features/look.md)** |
+| The third-engraver probe (Round 4 step 4) | [rung3/third-source.md](rung3/third-source.md) |
 | Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
 
 ## How things work
@@ -122,12 +108,18 @@ wrong — fix by deleting, not by syncing.
 | …and the feature track — the checks that need EARS or EYES (usul strokes, voices, fingerboard) | [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) |
 | How do I train on Colab? | [COLAB.md](COLAB.md) |
 | How does the synthetic renderer work? | [../tools/render/README.md](../tools/render/README.md) |
-| The synthetic track (Rungs 0–2.2b) — CLOSED | [PHASE2.md](archive/phases/PHASE2.md) |
 
-## History (append-only — do not act on it)
+## History and closed tracks (do not act on it)
 
 | Question | File |
 |---|---|
 | What was built in Phases 0–1, in detail | [log/HISTORY.md](log/HISTORY.md) |
 | Dated log of every session's status entries | [log/status-log.md](log/status-log.md) |
 | Plans that were abandoned or reversed | [log/superseded.md](log/superseded.md) |
+| The synthetic track (Rungs 0–2.2b) — CLOSED | [archive/phases/PHASE2.md](archive/phases/PHASE2.md) |
+| The MVP ladder W0–W10 (in-browser pipeline → friends release → public) — CLOSED 2026-10-08 | [archive/phases/mvp.md](archive/phases/mvp.md) |
+| What each MVP rung established: W0–W3, then the slicer rungs W4–W7, and the port plan | [archive/phases/rungs-w0-w3.md](archive/phases/rungs-w0-w3.md) · [archive/phases/rungs.md](archive/phases/rungs.md) · [archive/phases/slicer-port.md](archive/phases/slicer-port.md) |
+| Rounds 1 and 2: criteria, A/B, exam result, disposition; the re-render; the Round-1 floors | [archive/rounds/round1.md](archive/rounds/round1.md) · [archive/rounds/round2.md](archive/rounds/round2.md) · [archive/rounds/rerender.md](archive/rounds/rerender.md) · [archive/rounds/ship-criteria.md](archive/rounds/ship-criteria.md) |
+| Round 3 (CLOSED 2026-09-03): the plan, the signed floors, the work items, the levers, the two arms, the tuplet mark | [archive/rounds/round3.md](archive/rounds/round3.md) · [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) · [archive/rounds/worklist.md](archive/rounds/worklist.md) · [archive/rounds/levers.md](archive/rounds/levers.md) · [archive/rounds/scan-profile.md](archive/rounds/scan-profile.md) · [archive/rounds/staccato-arm.md](archive/rounds/staccato-arm.md) · [archive/rounds/tuplets.md](archive/rounds/tuplets.md) |
+| Parked ideas, watch-items, the old data folder layout | [archive/rounds/followups.md](archive/rounds/followups.md) |
+| Raw training consoles (Round 3 arms, final, runs A/B; Round 4 control and H) and the owner's labelling notes, verbatim | [log/raw/](log/raw/round3_final_logs.md) |

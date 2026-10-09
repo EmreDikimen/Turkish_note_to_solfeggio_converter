@@ -89,7 +89,7 @@ are not a paired delta — read the new pair as the current state, not as a chan
 
 ## BARLINE GROUND TRUTH EXISTS NOW, AND THE SLICER FINDS 28% OF THEM (2026-08-25)
 
-The owner hand-marked **every printed barline** on 38 staff rows over the 4 most faded pages of his
+The owner hand-marked **every printed barline** on 38 staff rows over the 4 most faded pages of the owner's
 bad-crop list (`bozukNihavendLonga`, `gafil_ne_bilir…`, `aman_saki…`, `meclis_imeyde…`) —
 **129 marks**, of which 93 are interior and 36 are row ends. Tools:
 `build_barline_truth.py` → `mark.html` → `score_barlines.py`. Truth file:

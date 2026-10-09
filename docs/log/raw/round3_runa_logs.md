@@ -6,7 +6,7 @@ updated: 2026-09-01
 
 Raw paste, unedited below this line. ⚠ Stage 1 is absent on purpose — run A reuses Round 3's
 `r3-final-stage1/best`, which is what keeps stage-2 length the only variable. The reading of these
-curves is in [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md); do not re-derive it here.
+curves is in [src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md); do not re-derive it here.
 
 ---
 

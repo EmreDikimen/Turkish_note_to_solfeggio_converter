@@ -285,7 +285,7 @@ current three weeks later. It is not. Verified on disk 2026-08-11:
 doc: the **"0 two-member groups" claim no longer holds** (the current manifest has four groups with
 ≠3 noteheads, two of them legitimate), and **a triplet is not always three noteheads** — the "3"
 counts units of time. The member-count rule stays a review *gate* and must never become an
-auto-repair. Why, and what the remaining tuplet weakness actually is: **[tuplets.md](tuplets.md)**.
+auto-repair. Why, and what the remaining tuplet weakness actually is: **[tuplets.md](../archive/rounds/tuplets.md)**.
 
 **Is this enough tuplet data? (assessed 2026-07-18)**
 

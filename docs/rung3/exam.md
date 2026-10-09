@@ -66,7 +66,7 @@ Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIO
 
 **Decision: label the 21 exam pages we already own and stop there. 46 → 67 graded pages.** Owner,
 2026-08-20, after asking how much more exam labelling was worth doing. This is
-[levers.md](levers.md)'s power-note **option 1** (grow the exam before the read, which keeps the
+[levers.md](../archive/rounds/levers.md)'s power-note **option 1** (grow the exam before the read, which keeps the
 one-shot rule intact) taken in a bounded form, with **option 2 applied on top of it** (report the
 interval beside the result). The census, the drop table and the sizing arithmetic are in
 [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md) and are not restated here.
@@ -121,7 +121,7 @@ since a signature is identical on every row of a piece. [../METRICS-CORPUS.md](.
 model quality and the primary ("pages needing ≤5 corrections") will read lower. Fairness is not
 affected — the `round2-stage2-best` re-score puts both models on the same set — but **what a 75%
 floor means does change**, and that is the owner's to settle before the read, not after it
-([round3-criteria.md](round3-criteria.md) §3b, §4).
+([round3-criteria.md](../archive/rounds/round3-criteria.md) §3b, §4).
 
 ⛔ **THE EXAM IS NOT EMITTED AGAIN, AND ITS DECODE IS NOT UPGRADED** (owner, 2026-08-21). The
 training pools answered this the other way — they are re-emitted entirely on `round2-stage2-best`

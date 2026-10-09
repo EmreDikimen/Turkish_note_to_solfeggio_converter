@@ -7,8 +7,8 @@ audience: agents and the owner working Lever 4 or deciding whether a second engr
 updated: 2026-08-18
 
 > Part of the real-page track — index: [rung3/README.md](rung3/README.md). The lever's verdict and
-> what happens next live in [rung3/levers.md](rung3/levers.md); current state is
-> [STATUS.md](STATUS.md). Nothing here changes [rung3/round3-criteria.md](rung3/round3-criteria.md).
+> what happens next live in [archive/rounds/levers.md](archive/rounds/levers.md); current state is
+> [STATUS.md](STATUS.md). Nothing here changes [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md).
 
 ## What was built (2026-08-18)
 

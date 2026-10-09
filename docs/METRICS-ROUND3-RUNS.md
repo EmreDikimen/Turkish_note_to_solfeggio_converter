@@ -77,7 +77,7 @@ model relative to real use. Raw table: `data/real/rung3/final/r3last_vs_r2_realv
 
 ## Run A — a longer stage 2 (4,000 steps against Round 3's 2,000)
 
-One variable, starting from Round 3's OWN stage-1 checkpoint. Raw log: `round3_runa_logs.md`.
+One variable, starting from Round 3's OWN stage-1 checkpoint. Raw log: `docs/log/raw/round3_runa_logs.md`.
 
 - Real val **0.0182 → 0.0171 (−6.0%)**, minimum moving step 1750 → **2500**, then flat and drifting
   slightly UP over the last 1,500 steps. ⚠ Step 2,500 **of a 4,000-step cosine** — not a transferable
@@ -90,7 +90,7 @@ One variable, starting from Round 3's OWN stage-1 checkpoint. Raw log: `round3_r
 
 `strips_b8` (3,929) **plus `strips_oldhuman`** (1,408), both at `:4` — 4,777 combined train-side
 strips against 36,032 synthetic = **34.7%** of stage-2 batches, against Round 3's recipe at 32.9%.
-5,000 steps. Raw log: `round3_runb_logs.md`.
+5,000 steps. Raw log: `docs/log/raw/round3_runb_logs.md`.
 
 - ⛔ **Run B's `real` val column is NOT comparable with Run A's.** `train.py` holds out ~10% of the
   pieces of every real pool it is given, so B's real-val set is **560 strips** (390 b8 + **170
@@ -120,7 +120,7 @@ shipped slicer does not produce. [BACKLOG.md](BACKLOG.md) item 3.
 ## What this closes
 
 ⛔ **The retired pools' second cut is answered: it bought nothing measurable** (row 2, and row 3 for
-the direct pair). That was [rung3/worklist.md](rung3/worklist.md) B10 and the owner's 2026-09-01
+the direct pair). That was [archive/rounds/worklist.md](archive/rounds/worklist.md) B10 and the owner's 2026-09-01
 lead. ⚠ **It is a null, not a refutation of the idea** — 262 strips give a CI half-width of ~±0.13
 edits/strip, so a small real gain could hide inside it. What it does rule out is the size of gain
 that would have justified re-opening the exam.

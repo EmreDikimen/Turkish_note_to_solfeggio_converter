@@ -66,7 +66,7 @@ row is total data loss while a wrong measure count is a recoverable indexing err
 ## One page, one staff SIZE — the spacing was being read 30% low (2026-08-25)
 
 Owner-reported: `bozukNihavendLonga` "is not cut at the bars", plus a list of exam-queue strips too
-zoomed-in to read (`names_of_bad_cropped_images.md`). Both are the same bug, and it is upstream of
+zoomed-in to read (`docs/log/raw/names_of_bad_cropped_images.md`). Both are the same bug, and it is upstream of
 every barline gate.
 
 On a faded photocopy the horizontal opening does not lose whole staff lines so much as **chop**

@@ -18,7 +18,7 @@ has no legal way to say the right thing.
 experiments were all nulls (tuplet mark p = 0.688, the second engraver, the scan profile); the
 staccato arm — a symbol the model had **never seen** — took its primary from 72.7% to **0.0%**.
 **A hole responds; a domain gap does not.** That is the reason to read the dotted-barline entry below
-as owed work rather than as a curiosity. Round 3's arm: [rung3/staccato-arm.md](rung3/staccato-arm.md).
+as owed work rather than as a curiosity. Round 3's arm: [archive/rounds/staccato-arm.md](archive/rounds/staccato-arm.md).
 
 ### The DOTTED (usul) BARLINE read as `\repstart` (owner-found 2026-08-20, while labelling)
 
@@ -138,7 +138,7 @@ label-vs-decode disagreement ([METRICS-CORPUS.md](METRICS-CORPUS.md)). "The dots
 strips where the model disagrees with the label most" is a restatement, not an explanation, so the
 **tier** concentration is the only claim the data supports here. ⚠ This matters beyond wording: it is
 the stated basis for Lever 6 clause 2 excluding hard tier in advance — flagged in
-[rung3/levers.md](rung3/levers.md), decision owed to the owner ([STATUS.md](STATUS.md)).
+[archive/rounds/levers.md](archive/rounds/levers.md), decision owed to the owner ([STATUS.md](STATUS.md)).
 
 ### The arm's result: 72.7% → 0.0%, and the marks became invisible (2026-08-20)
 

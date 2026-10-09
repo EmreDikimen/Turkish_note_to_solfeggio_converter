@@ -40,7 +40,7 @@ the exam that does not take a piece away from the model.
 | **dropped total** (`emit_drops.csv`, over 33 distinct piece+page) | **282** |
 
 ⚠ **The drops are the wide and the dense strips, so the exam grades each page on its easier
-material.** [rung3/round3-criteria.md](rung3/round3-criteria.md) §5 says this about tuplets only
+material.** [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) §5 says this about tuplets only
 ("dense contiguous-triplet instrumentals remain unmeasured"); 282 against 326 makes it general. It
 is a bias in the *matched upper bound* direction, i.e. it points the same way as the exam's other
 known optimism, not against it.
@@ -165,7 +165,7 @@ A page measured on more of its own material collects more edits, so **the primar
 corrections") will read lower on the new instrument than on the old one at equal model quality**.
 The signed 75% floor was set against the old, easier instrument. This does not affect *fairness* —
 the baseline re-score puts both models on the same set — but it does change what the floor means,
-and that is the owner's to settle ([rung3/round3-criteria.md](rung3/round3-criteria.md) §3b).
+and that is the owner's to settle ([archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) §3b).
 
 **What it cost, page level vs label level** (`check_crop_staleness.py --root data/real/strips`, all
 46 graded pages, measured before the rebuild was decided): 0 identical, **1** size-only, 8 measures
@@ -263,7 +263,7 @@ concave tuplet mark never had one and now has no general movement to claim eithe
 
 `eval_omr.py --checkpoint data/checkpoints/round2-stage2-best --strips-dir data/real/rung3/strips_exam_v3
 --split none`, 660 strips, ~5 min on the laptop. **This is the baseline column of every floor pair in
-[rung3/round3-criteria.md](rung3/round3-criteria.md) §1**, and it was measured *before* any Round-3
+[archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) §1**, and it was measured *before* any Round-3
 model exists, which is what keeps §3c's choice legal.
 
 | | frozen v2 (Round 2) | **rebuilt v3 (same model)** |

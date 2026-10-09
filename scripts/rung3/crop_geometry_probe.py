@@ -57,7 +57,7 @@ USAGE
 ⚠ NOT AN EXAM READ. The default mode re-reads a decode that was already spent (2026-07-27) and
 re-aligns it; no model runs. The padded mode is a diagnostic on exam crops and, like every probe in
 this directory, must be reported as a second look at a spent read — the Round-3 exam is still the
-one-shot read on the final model (docs/rung3/round3-criteria.md).
+one-shot read on the final model (docs/archive/rounds/round3-criteria.md).
 """
 
 from __future__ import annotations
@@ -265,7 +265,7 @@ def _edits_by_strip(dump: Path) -> dict[str, int]:
 def compare(root: Path, src_dir: Path, reps: int = 10000, seed: int = 0) -> None:
     """Read the sweep's `eval_<tag>.txt` dumps and print the dose curve + a PAIRED bootstrap CI.
 
-    WHY A BOOTSTRAP. The pre-registration (docs/rung3/levers.md) reads "monotone rise -> causal,
+    WHY A BOOTSTRAP. The pre-registration (docs/archive/rounds/levers.md) reads "monotone rise -> causal,
     flat within noise -> confound" but never says what the noise IS. Greedy decode is deterministic,
     so there is no run-to-run noise at all — the only sampling error is over WHICH strips are in the
     pool. Padding does not change a strip's filename, so every factor is measured on the same 326

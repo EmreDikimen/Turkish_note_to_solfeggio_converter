@@ -4,9 +4,9 @@ purpose: everything needed to transliterate `page_to_strips.py` into the browser
 audience: whoever picks up rung W4, W5 or W6 of the MVP ladder
 updated: 2026-08-04
 
-> Track index and current rung state: [README.md](README.md). Project state: [../STATUS.md](../STATUS.md).
-> What the slicer does and why: [../PIPELINE.md](../PIPELINE.md) §1 and
-> [../METRICS-SLICER.md](../METRICS-SLICER.md).
+> Track index and current rung state: [README.md](mvp.md). Project state: [../STATUS.md](../../STATUS.md).
+> What the slicer does and why: [../PIPELINE.md](../../PIPELINE.md) §1 and
+> [../METRICS-SLICER.md](../../METRICS-SLICER.md).
 
 ⚠ **Do not patch `page_to_strips.py` from reading it, and do not "improve" it while porting.** Two
 fixes written that way were reverted on 2026-07-28, and the 2026-07-29 windowing retune overturned
@@ -15,7 +15,7 @@ decision with their own measurement.
 
 ## What is being ported
 
-Screenshots and clean scans only (owner decision, [../DECISIONS.md](../DECISIONS.md)). The chain:
+Screenshots and clean scans only (owner decision, [../DECISIONS.md](../../DECISIONS.md)). The chain:
 
 ```
 load_gray → prep_page → binarize_ink → connectedComponents → detect_staves
@@ -47,7 +47,7 @@ the port: a faster estimator is a behaviour change and needs its own measurement
 ⚠ **`budget` mode CAME BACK, and this section used to say it never would** (2026-08-22). It was
 dropped as a measured wash — but the wash was measured for **labelling yield**, and at INFERENCE the
 trade inverts: an over-budget strip cannot be dropped, so it returns a short, confident, wrong read
-([../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)). `row_cost_features` (L706),
+([../METRICS-SLICER-WINDOWS.md](../../METRICS-SLICER-WINDOWS.md)). `row_cost_features` (L706),
 `estimate_tokens` (L737), `est_tokens` and `window_measures`' `cost()` threading are therefore all
 ported now, behind the opt-in `tokenBudget` parameter that only `?dense=` sets. **In legacy mode the
 features are never computed**, so a normal visit pays nothing and `est_tokens` is `null` rather than
@@ -68,7 +68,7 @@ difference cannot create or destroy, while an inked *column* is one pixel's wort
 freely at the Otsu threshold. So a difference under half a stem proves the stem counts are identical
 and the rest is the same residue the row pixel-sum drift line has always reported as never zero.
 Exact agreement is reported beside it, ungated — the shape `bar x exact` already has next to
-`bar x within 1 px`. Result: [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md).
+`bar x within 1 px`. Result: [../METRICS-SLICER-WINDOWS.md](../../METRICS-SLICER-WINDOWS.md).
 
 ## File layout
 
@@ -107,7 +107,7 @@ which take arbitrary floats and can land on `.5` for some staff spacings.
 converts afterwards. OpenCV's own two paths already differ by ±1 on 7.4% of a colour page's pixels,
 and 18% of corpus pages are truly colour. **Settled by measurement, not tolerance:** re-running the
 whole slicer under that perturbation left all 119 strips across the 6 most colour-shifted pages
-bit-identical. Numbers in [../METRICS-SLICER.md](../METRICS-SLICER.md). Decode with
+bit-identical. Numbers in [../METRICS-SLICER.md](../../METRICS-SLICER.md). Decode with
 `createImageBitmap(blob, {colorSpaceConversion: "none", premultiplyAlpha: "none"})`.
 
 opencv.js itself is **exact** against OpenCV-Python on the five primitives when fed identical bytes
@@ -180,7 +180,7 @@ The `_debug.png` overlays are already on disk and colour-code rejected barline c
 (`gate2_fat` orange, `gate3_clef` purple, `gate3_blob` yellow, `xrange` grey). That is a free
 debugger for W5 — use it before theorising.
 
-**W4 — staves + row normalization** ✅ **PASSED**; numbers in [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md)
+**W4 — staves + row normalization** ✅ **PASSED**; numbers in [../METRICS-SLICER-PORT.md](../../METRICS-SLICER-PORT.md)
 Measured over the **whole corpus** (1,781 pages / 12,123 systems), not a sample:
 - staff count exact on **≥99.5%** of eligible pages — got **1,704/1,704**
 - the manifest-zero pages match Python — **77/77**. ⚠ The bar was written as "yield zero staves";
@@ -192,7 +192,7 @@ Measured over the **whole corpus** (1,781 pages / 12,123 systems), not a sample:
 - ⚠ the corpus run used `--inject-skew`, so the **estimator** is validated on 132 pages (132/132),
   not the corpus
 
-**W5 — barlines** ✅ **PASSED**; numbers in [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+**W5 — barlines** ✅ **PASSED**; numbers in [../METRICS-SLICER-PORT.md](../../METRICS-SLICER-PORT.md).
 Measured over the **whole corpus** (1,781 pages / 12,123 rows / 51,019 bars), against **local
 Python's** bar list — `slicer_ref.py` now records it (and the reject list) beside the staves. The
 manifest's `row_bars` is the weaker second reference and sits at 96.61% for Python itself
@@ -211,7 +211,7 @@ manifest's `row_bars` is the weaker second reference and sits at 96.61% for Pyth
 - ⚠ `hasNotehead` is ported but **not exercised** — its only caller is `window_measures`. W6 covers it
 
 **W6 — windowing, driver, and the parity verdict** ✅ **PASSED**; numbers in
-[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md). Whole corpus, 1,781 pages / 33,805 strips:
+[../METRICS-SLICER-PORT.md](../../METRICS-SLICER-PORT.md). Whole corpus, 1,781 pages / 33,805 strips:
 - strip count per page exact on **≥99.5%** of pages — got **1,697/1,697 (100%)**
 - `system`, `window`, `is_row_start`, `split_wide` exact — got **33,783/33,783 (100%)**;
   `row_x0`/`row_x1` within **2 px** on ≥99.9% — got **33,781/33,783 (99.99%)**

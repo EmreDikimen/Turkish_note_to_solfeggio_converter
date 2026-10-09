@@ -1,6 +1,6 @@
 r"""Round-3 Check A — does the model invent music when a crop has no notes in it?
 
-THE CLAIM UNDER TEST (docs/rung3/round3.md §3). `stripExport` always builds a strip out of whole
+THE CLAIM UNDER TEST (docs/archive/rounds/round3.md §3). `stripExport` always builds a strip out of whole
 measures, so a "clef + key signature, no notes" picture cannot occur in training: 0 of 40,826
 strips. The slicer DOES produce them from real pages, and on one such exam strip the model emitted
 19 edits against 8 gold tokens. Twelve short strips carry 21% of all exam edits. If that

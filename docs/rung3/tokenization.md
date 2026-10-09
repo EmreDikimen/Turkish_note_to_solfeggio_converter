@@ -156,7 +156,7 @@ for rows with no 16ths, **44.3** at 50–75%, **45.3** at 75–100%.
 
 ⛔ **Shorter labels are not known to decode more accurately.** Fewer autoregressive steps means fewer
 chances to slip, which is a real but unquantified effect. It adds no pixels: a crowded crop stays
-crowded, and that is [levers.md](levers.md) Lever 1's territory, which is closed.
+crowded, and that is [levers.md](../archive/rounds/levers.md) Lever 1's territory, which is closed.
 
 ### Fused or compositional? Both — the ≥1,000-examples rule (2026-09-03)
 
@@ -329,7 +329,7 @@ worth its own round.
    retrain from base.
 4. **Then price it.** The measurement that decides this is corpus yield — how many `over_budget`
    drops actually return — not a val loss. Accuracy is a second question and needs a paired arm
-   against [round3-criteria.md](round3-criteria.md)-style floors.
+   against [round3-criteria.md](../archive/rounds/round3-criteria.md)-style floors.
 
 ⚠ **Every existing checkpoint keeps working and none of them understands the new spelling.** Ids are
 append-only so nothing breaks, but a model trained on `c ' ' ' 1 6` cannot read `c ''' 16`. This is a

@@ -157,7 +157,7 @@ of a strip's time, the encoder the rest), and the literature's gain at that widt
 (Transcoda: OMR-NED 18.71% → 18.46%). It was never run, so no number of ours exists. The owner closed
 the emitter route too, so there is no offline-only version left to propose. Grammar-constrained
 decoding is a different thing — it works on the greedy path — and is still on the menu
-([../rung3/levers.md](../rung3/levers.md)).
+([../rung3/levers.md](../archive/rounds/levers.md)).
 
 ## Parked, not dead
 

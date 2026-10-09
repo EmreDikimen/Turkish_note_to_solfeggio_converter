@@ -6,10 +6,15 @@ audience: agents and the owner working the model track, starting a session on Ro
 
 updated: 2026-10-04
 
-> Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
-> here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
-> [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md). Decisions:
-> [../DECISIONS.md](../DECISIONS.md). Round 3's binding floors are
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
+> Part of the real-page track — index: [README.md](../../rung3/README.md). Current state and next action are NOT
+> here: see [../STATUS.md](../../STATUS.md). Numbers: [../METRICS.md](../../METRICS.md) and
+> [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md). Decisions:
+> [../DECISIONS.md](../../DECISIONS.md). Round 3's binding floors are
 > [round3-criteria.md](round3-criteria.md) and **nothing here changes them**.
 
 ## Why this file exists
@@ -27,7 +32,7 @@ Round 3's four pre-render checks, plus the tuplet A/B, produced this run of resu
 
 Every one of those asked the same kind of question — *do we DRAW something wrong?* — and the answer
 kept coming back no. Meanwhile the thing Round 3 exists to fix has not moved: pitch and duration are
-**68% of what a user corrects** ([../METRICS-EXAM.md](../METRICS-EXAM.md)).
+**68% of what a user corrects** ([../METRICS-EXAM.md](../../METRICS-EXAM.md)).
 
 The reading this file takes: **the "make the synthetic pixels more realistic" axis is at diminishing
 returns**, and the remaining levers are on four other axes — what the model is allowed to SEE, how it
@@ -43,13 +48,13 @@ The pilot then showed **we cannot buy the reverse**: that probe's own baseline w
 **+31.8% worse**. The pre-registered short-crop stop rule fired at **5.4×** the control.
 
 **The full case, the numbers, the pre-registration as signed, and the two claims in it that turned out
-to be wrong** → **[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md)**.
+to be wrong** → **[../METRICS-GEOMETRY.md](../../METRICS-GEOMETRY.md)**.
 
 ⛔ **The one thing that survived — one measure per strip — is DROPPED too (owner, 2026-08-19).** The
 slicer **already** splits over-wide real crops at gutters (`_split_wide`, ~25% of crops), and what
 drops a strip is the **59-id label budget**, not width: 8.9% of *single*-measure windows blow it
 alone, which no measure rail can fix. That left a *training* match on the 32% of synthetic strips
-spanning 2+ measures, on the axis of three consecutive nulls. [../DECISIONS.md](../DECISIONS.md).
+spanning 2+ measures, on the axis of three consecutive nulls. [../DECISIONS.md](../../DECISIONS.md).
 ⚠ **The short-crop hole is now the blocking item on this axis**, promoted from side condition.
 
 ## Lever 1b — musical form: ⛔ DEAD 2026-08-17, and the premise itself is withdrawn
@@ -57,15 +62,15 @@ spanning 2+ measures, on the axis of three consecutive nulls. [../DECISIONS.md](
 Proposed and retracted the same day, then killed outright when the **owner retested the app**:
 classical pages read no worse than songs (*"it is not read it well but it cannot read the songs as
 well"*). There is no form axis. The measured ranking that started it survives as a number in
-[../METRICS-EXAM.md](../METRICS-EXAM.md); the full reasoning, the supply ceiling, and the process
-lesson are in [../log/superseded.md](../log/superseded.md). ⚠ **The "it is really scan quality"
+[../METRICS-EXAM.md](../../METRICS-EXAM.md); the full reasoning, the supply ceiling, and the process
+lesson are in [../log/superseded.md](../../log/superseded.md). ⚠ **The "it is really scan quality"
 explanation is ALSO withdrawn (2026-08-18)** — it rested on `nd`, which is `lev(label, decode)/
 len(label)`, not degradation, so it restated the finding instead of explaining it
-([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). What killed the lead is the owner's retest, which
+([../METRICS-CORPUS.md](../../METRICS-CORPUS.md)). What killed the lead is the owner's retest, which
 needs no mechanism.
 
 ⚠ **Do not re-propose collecting repertoire by form.** ⚠ The separate decision to collect real pages
-**broadly** is unaffected and still stands ([../DECISIONS.md](../DECISIONS.md)).
+**broadly** is unaffected and still stands ([../DECISIONS.md](../../DECISIONS.md)).
 
 ## Lever 2 — decoding: we have never used anything but greedy
 
@@ -75,14 +80,14 @@ survives** (owner, 2026-10-04 dropped beam search, which took the third with it)
 training and no labels**, and costs nothing at decode time beyond a mask:
 
 1. ~~**Beam search.**~~ ⛔ **DROPPED (owner, 2026-10-04)** — it lengthens every read, and a fast read
-   is the app's point. Do not re-propose it; reasoning in [../log/superseded.md](../log/superseded.md).
+   is the app's point. Do not re-propose it; reasoning in [../log/superseded.md](../../log/superseded.md).
 2. **Grammar-constrained decoding** — mask tokens that cannot legally come next. Our label language
    is small and rigid: `\sig … \sigend`, `\tup3 … \tupend`, `\grace` precedes a note, two accidentals
    never adjoin, a pitch is followed by a duration. Illegal sequences the model already emits (a
    doubled `\volta2`, an unterminated block) become impossible rather than merely unlikely.
 3. ⛔ **A bar-duration checksum over the beam — DROPPED with the beam (2026-10-04)**: re-ranking needs
    several candidates, and greedy makes one. The editor already *flags* a bar that does not fill its
-   meter (`data-bar-fill="over|under"`, [../CODE_TOUR.md](../CODE_TOUR.md)); that stays.
+   meter (`data-bar-fill="over|under"`, [../CODE_TOUR.md](../../CODE_TOUR.md)); that stays.
 
 ⚠ This lever moves the shipped runtime, not the corpus, so it is scored against the same real-val
 pool and carries the same rule as any other change: pre-register what counts as a win before
@@ -93,19 +98,19 @@ running it. ⚠ It also changes the browser/server decode path, so `gate:browser
 
 > ⏭ **RE-AIMED 2026-08-19 (owner): clean the SCANNED pages, not the born-digital ones.** The cleaning
 > argument below is unchanged and is now the live work; what moved is *which tier* it runs in. Two
-> measurements decided it ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)): **93% of exam pages are
+> measurements decided it ([../METRICS-CORPUS.md](../../METRICS-CORPUS.md)): **93% of exam pages are
 > scans** (62 of 67), so `batch2` was cut from the tier supplying 7% of the graded medium; and its
 > own verdicts read a **~12% fix rate** against **30%** in the scanned nota pool. A batch row is
 > seeded with the decode, so an `ok` changes the training data by nothing — the yield of a batch is
 > its *fix* rate. The plan is a `batch3` on the scanned tier, **not** unparking `batch1` (it is the
 > most-damaged pages corpus-wide, so it concentrates the deferred handwriting, and 10 of its 52 pages
-> are born-digital anyway). [../DECISIONS.md](../DECISIONS.md) ·
-> [labeling-queues.md](labeling-queues.md).
+> are born-digital anyway). [../DECISIONS.md](../../DECISIONS.md) ·
+> [labeling-queues.md](../../rung3/labeling-queues.md).
 
 > ⚠ **PARTLY OVERRULED 2026-08-17 (owner): collect broadly from more sources now**, beyond
 > neyzen.com and notaarsivleri.com. The cleaning argument below is unchanged and still owed — what the
 > owner rejected is the *sequencing*, i.e. "clean first, then grow". Both halves are on the record in
-> [../DECISIONS.md](../DECISIONS.md), including the cost: 2,486 real page PNGs already sit on disk
+> [../DECISIONS.md](../../DECISIONS.md), including the cost: 2,486 real page PNGs already sit on disk
 > unlabelled, so a wider funnel does not relieve the bottleneck this section names. Two rules do not
 > bend with it — read a new source's licence before redistributing anything, and any flow that feeds
 > training must keep **refusing exam pieces**.
@@ -115,15 +120,15 @@ running it. ⚠ It also changes the browser/server decode path, so `gate:browser
 > (unscoreable today: no labelled real strip carries it) and **tuplet-dense instrumentals**
 > (sirto/longa/saz semaisi, excluded from training *and* the exam by the 59-id budget, not by taste).
 > ⚠ Collecting the second **does not fix it** — the same budget drops the new pages too, so it is
-> paired with the ceiling measurement in [../BACKLOG.md](../BACKLOG.md) or it buys drops. Candidate
-> sources are listed once, in [../DECISIONS.md](../DECISIONS.md), so they are not re-searched.
+> paired with the ceiling measurement in [../BACKLOG.md](../../BACKLOG.md) or it buys drops. Candidate
+> sources are listed once, in [../DECISIONS.md](../../DECISIONS.md), so they are not re-searched.
 
-The owner has offered to label more real pages ([../STATUS.md](../STATUS.md)). The evidence says the
+The owner has offered to label more real pages ([../STATUS.md](../../STATUS.md)). The evidence says the
 first move is not more rows:
 
 - **Label noise is measured and it lands on the metric Round 3 targets.** The nota pool's audited
   pitch-level error rate, and the finding that ~78% of labels were wrong wherever label and decode
-  disagreed, are in [../METRICS-CORPUS.md](../METRICS-CORPUS.md). Pitch is 40% of user corrections;
+  disagreed, are in [../METRICS-CORPUS.md](../../METRICS-CORPUS.md). Pitch is 40% of user corrections;
   training pitch against noisy pitch labels sets a ceiling no amount of new data raises.
 - **Audit the axis we have never audited.** Every audit so far was aimed at accidentals, because the
   headline was accidentals. A pitch/duration-focused re-audit of a random sample is the missing one.
@@ -131,14 +136,14 @@ first move is not more rows:
   pages; see the power note below. More pages is the only thing that makes that number mean
   something.
 - **Then nota over neyzen.** The scanned TRT-era prints run ~5× the SER of the neyzen scans
-  ([../METRICS.md](../METRICS.md)) and dominate the hard tier. That is where a labelled row buys the
+  ([../METRICS.md](../../METRICS.md)) and dominate the hard tier. That is where a labelled row buys the
   most. ⚠ This line used to call neyzen "clean vector PDFs"; a 2026-08-18 census found **none** of
-  them born-digital ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). The ranking is unchanged — it
+  them born-digital ([../METRICS-CORPUS.md](../../METRICS-CORPUS.md)). The ranking is unchanged — it
   rests on the SER split, not on the file format. ⚠ **Nota is not one tier either**: 88 nota pieces
   ARE born-digital, and the owner's 2026-08-18 call is to label those first
-  ([../DECISIONS.md](../DECISIONS.md)).
+  ([../DECISIONS.md](../../DECISIONS.md)).
 - **The raw material is already on disk** — 1,259 + 1,227 real page PNGs
-  ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). Collection is not the bottleneck; labelling
+  ([../METRICS-CORPUS.md](../../METRICS-CORPUS.md)). Collection is not the bottleneck; labelling
   throughput is.
 - **The fastest labelling tool we have is the app.** Correcting a decode in the editor is far
   cheaper per page than labelling from scratch, and it produces exactly the page-level gold the
@@ -157,7 +162,7 @@ first move is not more rows:
 > its `makam.ly` draws all eight AEU accidentals under the same comma→glyph convention we use, and
 > a full corpus would cost ~76 min. Every number, and the two limits the null result carries — the
 > measurement is blind to most of what an engraver changes, and the staff geometry was **pinned on
-> purpose** — are in [../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md).
+> purpose** — are in [../METRICS-ENGRAVER.md](../../METRICS-ENGRAVER.md).
 > ⏭ **The decision this leaves open is whether a mixed corpus earns a trained arm.** Nothing below
 > this line is evidence for it; the pilot bought feasibility and a gate, not an accuracy claim.
 > ⚠ **The "one spacing" third of the premise is still untouched**: varying document scale per strip
@@ -165,13 +170,13 @@ first move is not more rows:
 > SD-zero number. It is a separate change and it is not made.
 > ⚠ **Four things are owed before this arm could stand beside `strips_v4`** rather than beside a
 > control: slur distractors, repeat/volta/nav marks, lyrics and text, and the `every`-mode transposed
-> share. Listed with the reasons in [../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md).
+> share. Listed with the reasons in [../METRICS-ENGRAVER.md](../../METRICS-ENGRAVER.md).
 
 > ⏭ **PROMOTED 2026-08-17 (owner): this runs AFTER Lever 1 and BEFORE the content work**, re-ordering
 > the 2026-07-27 decision that made the note-value mix Round 3's content change. The content work is
 > not cancelled — it moves behind a second engraver, because the *make-our-pixels-more-realistic* axis
 > is at diminishing returns while the engraving itself has never been varied at all.
-> [../DECISIONS.md](../DECISIONS.md).
+> [../DECISIONS.md](../../DECISIONS.md).
 >
 > **A candidate arrived with it, from the owner's eye rather than a probe.** A real page sets the
 > triplet "3" **between the curve and the noteheads** — inside the arc's concavity — which is neither
@@ -196,15 +201,15 @@ profile at all** — see Lever 7.
 The cheapest second domain is one we half-own: `tools/render/lilypond.ts` already emits the label
 language, so rendering the same pieces through real LilyPond would give a genuinely different
 engraver at no labelling cost. ⚠ The hard rule that pixels and labels come from one code path
-([../../CLAUDE.md](../../CLAUDE.md)) is the thing to design around here, and `verify-labels.ts` is
+([../../CLAUDE.md](../../../CLAUDE.md)) is the thing to design around here, and `verify-labels.ts` is
 the gate any second renderer has to pass before a corpus built with it is trainable.
 
 ## Lever 5 — the training recipe: cheap, standard, none of it done
 
 - **`best` is selected on teacher-forced val loss, and the weighting is now measured: 94.6%
   SYNTHETIC / 5.4% real** — 4,769 val strips against 271, blended by strip count every 500 steps
-  ([../../src/vision/train.py](../../src/vision/train.py), numbers in
-  [../METRICS-CORPUS.md](../METRICS-CORPUS.md)). Round 2 selected its final step and
+  ([../../src/vision/train.py](../../../src/vision/train.py), numbers in
+  [../METRICS-CORPUS.md](../../METRICS-CORPUS.md)). Round 2 selected its final step and
   `best == last` while real-val loss had already turned — the selector cannot see the metric we
   care about. Selecting on a **free-running** real-val number (edits/page) is the fix.
 - **No label smoothing, no weight EMA, one seed.** All three are standard for a seq2seq of this size
@@ -234,7 +239,7 @@ more realistic pixels; this one showed it a symbol it had **never seen**. A **ho
 **Moved out of this file 2026-08-20** — the hole, the draw and its three rejected placements, the
 signed pre-registration, the result and the open disposition are in
 **[staccato-arm.md](staccato-arm.md)**, the way arm 1's live in
-[scan-profile.md](scan-profile.md). Numbers: [../METRICS-UNSEEN.md](../METRICS-UNSEEN.md).
+[scan-profile.md](scan-profile.md). Numbers: [../METRICS-UNSEEN.md](../../METRICS-UNSEEN.md).
 
 ## Lever 7 — the medium hole: we have never simulated a SCAN
 
@@ -245,11 +250,11 @@ signed pre-registration, the result and the open disposition are in
 > better than a **~5% reduction**, so this is an informative null, not an underpowered one. The
 > profile, the ops, the signed pre-registration and the disposition are in
 > **[scan-profile.md](scan-profile.md)**; the numbers in
-> [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+> [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 `src/vision/augment.py` had exactly two profiles — `screenshot` (0.65) and `photo` (0.35,
 `PHOTO_SHARE`) — and **93% of the exam is scans** (62 of 67 pages,
-[../METRICS-CORPUS.md](../METRICS-CORPUS.md)). A flatbed or office scan of a TRT-era print is
+[../METRICS-CORPUS.md](../../METRICS-CORPUS.md)). A flatbed or office scan of a TRT-era print is
 neither: **flat lighting and no perspective**, so the photo pipeline's most expensive ops model
 nothing that is there, while it *does* have speckle and dust, broken thin lines, ink spread,
 bleed-through, small skew and threshold damage — none of which either profile drew. ⚠ `augment.py`'s
@@ -262,14 +267,14 @@ Every other item on this list costs a corpus render or human labelling.
 ⚠ **The trade, on the record before the arm ran.** `PHOTO_SHARE` came from the owner's report that
 real uploads are mostly web screenshots, and the constant explicitly warns against pushing the mix
 for "harder training". Aiming augmentation at scans optimises **the exam**, which may not be what
-the app's users upload (n=2 — [../METRICS-USAGE.md](../METRICS-USAGE.md)). The profile is added
+the app's users upload (n=2 — [../METRICS-USAGE.md](../../METRICS-USAGE.md)). The profile is added
 **beside** the two, never substituted, and the no-regression clause on born-digital pages is that
 trade made checkable.
 
 ⚠ **The signed instrument is the MEDIUM split, not the difficulty tier this file first drafted** —
 the hard tier's gold is 110 rows seeded with a model decode and then confirmed, which flatters that
 model's descendants, and it scores *better* than mid as a result. The reasoning and the numbers are
-in [scan-profile.md](scan-profile.md) and [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+in [scan-profile.md](scan-profile.md) and [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 ## The ordering, and the content work
 
@@ -342,7 +347,7 @@ scanned labels, so the human and compute tracks run in parallel.
 
 ⚠ **Lever 4 gets no arm.** A LilyPond corpus is not rendered: the pilot returned null on the domain
 gap, and four recipe items are owed before that arm could stand beside `strips_v4` at all
-([../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md)).
+([../METRICS-ENGRAVER.md](../../METRICS-ENGRAVER.md)).
 
 ## ⚠ A power note on the primary criterion — the owner's call, not an agent's
 
@@ -353,7 +358,7 @@ at 72% can read 78%, and one truly at 78% can read 72%.
 
 There are exactly two honest responses, and both have to be chosen **before** the exam is read:
 
-1. Grow the exam (v3 is already owed — [exam.md](exam.md)) so the gate can resolve what it is
+1. Grow the exam (v3 is already owed — [exam.md](../../rung3/exam.md)) so the gate can resolve what it is
    asking, keeping the one-shot rule intact by doing it before the read; or
 2. Read it as signed and report the interval beside the result, accepting that a near-miss and a
    near-pass are not distinguishable at this n.
@@ -366,13 +371,13 @@ already exam-only — and then stops; the interval is reported beside the result
 number that decided the bound is not the error bar but what it takes to DEMONSTRATE a pass**: against
 a 75% floor a model must *measure* ~86% at 46 pages and still ~81% at 200, so no affordable exam
 makes a near-boundary call crisp, and buying pages is the wrong purchase. Plan, cost and the binding
-side condition (re-score the Round-2 baseline on the grown exam): [exam.md](exam.md). Census, drop
-table and sizing arithmetic: [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md). Decision row:
-[../DECISIONS.md](../DECISIONS.md).
+side condition (re-score the Round-2 baseline on the grown exam): [exam.md](../../rung3/exam.md). Census, drop
+table and sizing arithmetic: [../METRICS-EXAMSET.md](../../METRICS-EXAMSET.md). Decision row:
+[../DECISIONS.md](../../DECISIONS.md).
 ⭐ **A second finding came with it and it is not about size at all**: the exam grades **326 of 608**
 candidate strips on its own pages — 282 are dropped, and they are the **wide and dense** ones. So the
 exam reads each page on its easier material, which is a further reason the ceiling measurement in
-[../BACKLOG.md](../BACKLOG.md) pays here and not only on training data.
+[../BACKLOG.md](../../BACKLOG.md) pays here and not only on training data.
 
 ## Where the outside evidence comes from
 
@@ -387,4 +392,4 @@ Named here so the next session does not re-derive it. Nothing below is a measure
 - Full-page end-to-end OMR with curriculum pretraining (SMT / SMT++) —
   <https://arxiv.org/abs/2402.07596>.
 - Round 4's additions — LEGATO, the SMT encoding study (bekern), Transcoda's beam numbers, the
-  authentic-fine-tune scan paper — are listed once in [round4.md](round4.md).
+  authentic-fine-tune scan paper — are listed once in [round4.md](../../rung3/round4.md).

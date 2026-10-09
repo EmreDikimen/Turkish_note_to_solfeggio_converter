@@ -5,19 +5,24 @@ audience: agents and the owner reading or extending Round 3's arm 2
 
 updated: 2026-08-20
 
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
 > ✅ **RESULT, 2026-08-20: the arm PASSES its primary and both other clauses.** The
 > staccato-triggered false-dot rate goes **72.7% → 0.0%** (0 of 110 marked strips), paired **60–0**
 > against its training control `r3-tupnew-stage2-best` (exact McNemar p = 1.7e-18) and **80–0**
 > against the live model (p = 1.7e-24). Clause 2 **passes**: 65/71 real dots kept on easy+mid against
 > the control's 66/71, one discordant strip, p = 1. Clause 3 shows **no price** — every AEU and F1
 > cell level or slightly up. Every number:
-> [../METRICS-UNSEEN.md](../METRICS-UNSEEN.md); the training run itself:
-> [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) and the raw console log
-> [../../round_3_staccato_logs.md](../../round_3_staccato_logs.md). The disposition is at the bottom
+> [../METRICS-UNSEEN.md](../../METRICS-UNSEEN.md); the training run itself:
+> [../../src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md) and the raw console log
+> [log/raw/round_3_staccato_logs.md](../../log/raw/round_3_staccato_logs.md). The disposition is at the bottom
 > of this file.
 >
-> Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
-> here: see [../STATUS.md](../STATUS.md). The lever this serves is [levers.md](levers.md) Lever 6;
+> Part of the real-page track — index: [README.md](../../rung3/README.md). Current state and next action are NOT
+> here: see [../STATUS.md](../../STATUS.md). The lever this serves is [levers.md](levers.md) Lever 6;
 > Round 3's binding floors are [round3-criteria.md](round3-criteria.md) and **nothing here changes
 > them**.
 
@@ -32,7 +37,7 @@ duration dot".
 
 **A hole is not a domain gap, and it does not respond to the same medicine.** That is the rule this
 result establishes, and it is why the `\repstart`-for-dotted-barline finding
-([../METRICS-UNSEEN.md](../METRICS-UNSEEN.md)) is worth pursuing while a fourth realism arm is not.
+([../METRICS-UNSEEN.md](../../METRICS-UNSEEN.md)) is worth pursuing while a fourth realism arm is not.
 
 ## The hole, and what was drawn
 
@@ -45,7 +50,7 @@ result establishes, and it is why the `\repstart`-for-dotted-barline finding
 - **The renderer draws no staccato**, so 0 of 40,826 strips contain one. The same shape of hole as
   the signature-only crop, and as the bare phrase slur before it was fixed.
 
-**Measured, with a paired control** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)): on 110
+**Measured, with a paired control** ([../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md)): on 110
 pilot strips carrying a staccato whose gold has no dotted duration, the model decodes a dot it has
 no gold for **72.7% of the time** — against **0.0% on the identical music without the marks**, which
 it reads 110/110 exactly. That is as clean as a causal attribution gets here.
@@ -82,10 +87,10 @@ the notehead's ink there at *any* clearance — so they get the space beyond it.
    > meaningless, so the gate does not move a point. It survives on two reasons that hold: hard tier
    > carries **~12 real-dot instances in total**, too few to gate on in either direction, and its
    > gold is the least reliable pool we own. Hard tier stays reported, never gated on — as written.
-   > [../DECISIONS.md](../DECISIONS.md).
+   > [../DECISIONS.md](../../DECISIONS.md).
    > ⚠ **CORRECTED 2026-08-20, after the arm was scored — the FIRST of those two reasons is wrong.**
    > `_realval_v2_hard` carries **64** gold dotted-duration instances, comparable to easy+mid's 71
-   > combined ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)). The "~12" is the Round-2
+   > combined ([../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md)). The "~12" is the Round-2
    > **exam's** dropped-dot count (0/5/7 by tier) — a different pool and a different quantity. ⛔ The
    > exclusion is **not** reopened: it is signed, it survives on the second reason, and the gate
    > passed on easy+mid regardless — hard tier was reported, as written. Recorded because this
@@ -102,8 +107,8 @@ needs gold annotation and an engraver change.
 ## The result
 
 Full tables — the primary, clause 2 and clause 3 — live in
-[../METRICS-UNSEEN.md](../METRICS-UNSEEN.md). The training run, its loss curves and the
-`best == last` note are in [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md)
+[../METRICS-UNSEEN.md](../../METRICS-UNSEEN.md). The training run, its loss curves and the
+`best == last` note are in [../../src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md)
 ("Round 3 — arm 2").
 
 **The strongest line in it is not the 0.0%.** The arm reads the **marked** pool exactly as well as
@@ -125,7 +130,7 @@ by roughly a quarter of its effect.
 ⚠ **The primary is measured on our own rendered staccato.** It shows the model no longer maps *the
 dot this renderer draws* onto a duration dot. It does **not** show it reads a real printed staccato,
 because **no labelled real strip in any pool carries one**. This is the identical blind spot to the
-concave tuplet mark ([../METRICS-TUPLETS.md](../METRICS-TUPLETS.md)) and it has the identical fix:
+concave tuplet mark ([../METRICS-TUPLETS.md](../../METRICS-TUPLETS.md)) and it has the identical fix:
 collect real pages that use the mark. Until then the claim is about our renderer, not about the world.
 
 ⚠ **`STACCATO_RATE` is still chosen, not measured.** Nobody has counted staccato frequency in real
@@ -152,4 +157,4 @@ Round 3 has already been made unattributable twice, which is the whole reason th
 variable at a time.
 
 ⛔ **Whatever is decided, it is decided BEFORE the render** — not after seeing the exam.
-[../DECISIONS.md](../DECISIONS.md).
+[../DECISIONS.md](../../DECISIONS.md).

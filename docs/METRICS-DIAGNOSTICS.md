@@ -79,7 +79,7 @@ harder pictures.
   unaffected; the absolute totals are not comparable to `eval_omr`'s 202-row figures.
 - ✅ **The conclusion does not hinge on the checkpoint choice**, which is the one thing that could
   have muddied it: stage 2 saved `best` at step **500** on a mix loss that peaked early while
-  real-val loss kept falling to step 1,500 — [levers.md](rung3/levers.md) Lever 5's selector problem
+  real-val loss kept falling to step 1,500 — [levers.md](archive/rounds/levers.md) Lever 5's selector problem
   showing up live. **Both** checkpoints were therefore read, and both are null on the primary. The
   step-500 model is slightly the worse of the two on scanned pages (+0.071 vs +0.010), which is the
   direction under-training predicts.
@@ -111,7 +111,7 @@ Two findings, and the second changed a pre-registration before it was signed:
   and easy carry emitter-derived labels and no such rows. This is the mechanism behind "its gold is
   the least reliable pool we own" ([DECISIONS.md](DECISIONS.md), the Lever-6 clause-2 settlement) —
   and it is why Lever 7's primary was moved from the tier to the medium
-  ([rung3/scan-profile.md](rung3/scan-profile.md)).
+  ([archive/rounds/scan-profile.md](archive/rounds/scan-profile.md)).
 
 ⚠ **Non-claim:** none of these pools is page-complete (2.1–5.0 strips a page), so their `edits/page`
 is edits per *page fragment*. `share_le5` is not quoted from them at all — that number is defined on
@@ -149,7 +149,7 @@ leaned on this mark to find errors. Run with `npx tsx tools/vision/page-structur
 
 Median share per page **40%**; only **7.2%** of pages come out clean.
 
-⚠ **This tempers, without contradicting, the claim in [mvp/editor.md](mvp/editor.md)** that the mark
+⚠ **This tempers, without contradicting, the claim in [app/editor.md](app/editor.md)** that the mark
 "is silent on correct music and lights up where the model misread a duration". That was measured on
 **one** decoded page (8 of 28 bars) against three clean scores, and the file says in its own words not
 to over-read it. At corpus scale the mark flags **2 bars in 5**, so it narrows a duration hunt by
@@ -178,7 +178,7 @@ Sorting worst-`mean_logprob`-first, share of the 869 label/decode disagreements 
 | worst 50% | 43% | 0.87× |
 
 **Every budget is worse than random.** Consistent with W8 being dropped — the same signal caught
-26.3% of errors at a 10% budget against a ≥60% bar ([mvp/standing.md](mvp/standing.md)). ⚠ Note what
+26.3% of errors at a 10% budget against a ≥60% bar ([app/standing.md](app/standing.md)). ⚠ Note what
 the target here is: a label/decode **disagreement**, and ~78% of those are the *label* being wrong
 (below), so this measures ranking-for-review, not ranking-for-decode-error. Both readings say the
 same thing — do not build a review queue on logprobs.
@@ -295,7 +295,7 @@ Owner-labelled, all 130 rows: **65 ok / 22 fix / 43 bad**.
 ### Crop shape and beam weight (2026-07-28) — costs confirmed, both mechanisms disproved
 
 Whole-exam decode, 326 strips, 562 edits. Per-bucket detail in
-[rung3/round3.md](rung3/round3.md); source `scripts/rung3/empty_crop_probe.py`,
+[archive/rounds/round3.md](archive/rounds/round3.md); source `scripts/rung3/empty_crop_probe.py`,
 `width_split_probe.py`, `beam_weight_probe.py`.
 
 | finding | number |

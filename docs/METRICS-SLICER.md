@@ -52,7 +52,7 @@ retried. Recorded, not acted on.
 
 ## The slicer is insensitive to ±1 grayscale noise (2026-08-02)
 
-Measured for the browser port ([mvp/README.md](mvp/README.md) W0), and it is the number that makes
+Measured for the browser port ([archive/phases/mvp.md](archive/phases/mvp.md) W0), and it is the number that makes
 the port possible at all.
 
 `cv2.imread(IMREAD_GRAYSCALE)` converts RGB→gray **inside the PNG decoder**; a browser only ever

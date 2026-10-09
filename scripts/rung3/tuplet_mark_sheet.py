@@ -1,6 +1,6 @@
 r"""The tuplet mark, side by side: real edition vs what we drew vs what we draw now.
 
-WHY IT EXISTS (docs/rung3/tuplets.md step 2). A renderer change aimed at real print is a DOMAIN
+WHY IT EXISTS (docs/archive/rounds/tuplets.md step 2). A renderer change aimed at real print is a DOMAIN
 JUDGEMENT before it is a measurement, so the shape goes in front of the owner beside a real page
 before anything is re-rendered at scale. `tuplet_mark_probe.py` says whether we hit the numbers; this
 says whether it looks like print. It also carries the pre-registered shrink check: if the "3" fuses

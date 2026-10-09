@@ -57,7 +57,7 @@ and a page is the unit Round 3's primary floor is stated in.
 ⚠ **This is a TRAINING batch.** Exam pieces are refused twice over (here, and by the re-slice that
 produced the decodes). Nothing cut here may become exam gold: this ranking selects *the worst pages
 in the corpus*, so an exam drawn from it would not be comparable to exam v2.1's baseline or to the
-signed floor. Exam growth is a separate job with random/stratified sampling — docs/rung3/levers.md.
+signed floor. Exam growth is a separate job with random/stratified sampling — docs/archive/rounds/levers.md.
 """
 from __future__ import annotations
 

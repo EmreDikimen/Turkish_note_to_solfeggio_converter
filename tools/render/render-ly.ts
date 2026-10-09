@@ -6,7 +6,7 @@
  * LilyPond source (`ly-engrave.ts`), runs LilyPond once per piece, and screenshots each resulting
  * one-line SVG page at the corpus's own geometry. The labels come from the SAME serializer the
  * corpus uses, so this adds a second set of PIXELS and no new labelling — which is the whole point
- * of the lever ([docs/rung3/levers.md](../../docs/rung3/levers.md)).
+ * of the lever ([docs/archive/rounds/levers.md](../../docs/archive/rounds/levers.md)).
  *
  * GEOMETRY IS MATCHED ON PURPOSE. Measured on `strips_v4`: every strip is 336 px tall with its staff
  * lines exactly 30 px apart and the top line at y = 138. LilyPond's SVG viewBox is in staff-spaces

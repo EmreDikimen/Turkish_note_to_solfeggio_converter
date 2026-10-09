@@ -20,7 +20,7 @@ differently from eval_omr's; this file avoids that by not having one.)
 ⚠ **Read the per-STRIP difference as the headline.** These pools are not page-complete — 2.1–5.0
 strips a page — so their `edits/page` is edits per *page fragment*. Both are reported; only the
 first is the pre-registered statistic. And `share_le5` is never quoted from here at all: that number
-is defined on the 46-page exam ([docs/rung3/scan-profile.md](../../docs/rung3/scan-profile.md)).
+is defined on the 46-page exam ([docs/archive/rounds/scan-profile.md](../../docs/archive/rounds/scan-profile.md)).
 
 ⚠ **The two tests answer different questions and both are printed.** The exact sign test asks
 "does the arm win on more strips than it loses on?" — it is insensitive to a single catastrophic

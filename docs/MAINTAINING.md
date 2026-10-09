@@ -2,7 +2,7 @@
 
 purpose: how to update the docs after a work session, so the structure survives contact with real work
 audience: whoever (human or agent) just finished a piece of work and has something to write down
-updated: 2026-07-26
+updated: 2026-10-08
 
 **This is the file to open when the owner says "sync the docs"** (or "update the docs", or you
 finished work and need to write it down). Follow the table below rather than guessing.
@@ -20,6 +20,7 @@ mistakes so review can be about content.
 | What you did | Update | Do NOT touch |
 |---|---|---|
 | Anything at all, at end of session | [STATUS.md](STATUS.md) — rewrite "Now" and "Next" | ROADMAP, README |
+| Deployed, or staged a new model | STATUS + the `updated:` header of every doc whose "deployed / not deployed" line just changed — and for a model, `CACHE_NAME` in `apps/web/src/omr/session.ts` ([app/deploy-ops.md](app/deploy-ops.md)) | — |
 | Measured something (accuracy, yield, corpus size) | [METRICS.md](METRICS.md) row + the raw log in [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) | any other file quoting numbers |
 | Finished a chunk of work | one dated entry at the TOP of [log/status-log.md](log/status-log.md) | — |
 | Decided something, or reversed a decision | [DECISIONS.md](DECISIONS.md) row (mark the old one OVERTURNED/SUPERSEDED, don't delete it) | — |
@@ -28,7 +29,8 @@ mistakes so review can be about content.
 | Started a genuinely new track | new `docs/<track>/README.md` + index row + a STATUS line | cramming it into rung3/ |
 | Added/changed a script or module | [CODE_TOUR.md](CODE_TOUR.md) row | — |
 | Changed a command, a hard rule, or where data lives | [../CLAUDE.md](../CLAUDE.md) | — |
-| Anything the owner should understand in plain words | [OVERVIEW.md](OVERVIEW.md) | — |
+| A track or a round finished | move its files to `archive/` with a ⛔ ARCHIVED banner under the header, and list them in INDEX's history table | leaving "⏭ next" lines in a live folder |
+| Kept a raw training console or a labelling note verbatim | `log/raw/` (no header needed; LONG_OK in `check_docs.py` if over 400 lines) | the repo root |
 | Renamed or moved a doc | leave a stub with a section map; update code comments citing it | — |
 
 ## End-of-session checklist
@@ -70,8 +72,10 @@ mistakes so review can be about content.
 - Mark uncertainty explicitly (non-claims, low-n, "estimate"). A number without its caveat gets
   quoted later as if it were solid — that already happened once with a 3-gold class swinging a
   headline ~11pp.
-- [OVERVIEW.md](OVERVIEW.md) is the exception to the house style: plain English, short sentences,
-  every term explained, and it may restate numbers so it reads standalone.
+- ⛔ **There is no plain-English doc set any more.** The `OVERVIEW*.md` files restated numbers on
+  purpose and went stale faster than anything else; the owner deleted them on 2026-10-08 after a
+  check that every number and term in them lived somewhere else. Plain English belongs in the
+  REPLY to the owner ([../CLAUDE.md](../CLAUDE.md)), not in a second copy of the docs.
 
 ## What the checker enforces
 

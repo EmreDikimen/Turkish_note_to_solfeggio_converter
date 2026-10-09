@@ -5,10 +5,10 @@ audience: anyone re-reading how that arm actually trained
 updated: 2026-08-20
 
 Raw paste, unedited below this line. Kept for the same reason arm 1's is
-([round_3_scan_logs.md](round_3_scan_logs.md)): the tuplet A/B's Colab logs were deleted after its
-results table was taken, and that entry in [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md) has
+([docs/log/raw/round_3_scan_logs.md](docs/log/raw/round_3_scan_logs.md)): the tuplet A/B's Colab logs were deleted after its
+results table was taken, and that entry in [src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md) has
 to say so. What the run produced, and what it meant:
-[src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md) and [docs/rung3/levers.md](docs/rung3/levers.md)
+[src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md) and [docs/archive/rounds/levers.md](../../archive/rounds/levers.md)
 Lever 6.
 
 ⚠ Note in stage 2: **`best` and `last` are the same checkpoint** — the mix loss bottomed at

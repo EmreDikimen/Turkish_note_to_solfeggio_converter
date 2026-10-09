@@ -5,7 +5,7 @@ audience: anyone re-reading how the graded model actually trained
 updated: 2026-09-01
 
 Raw paste, unedited below this line. The reading of these curves — including the selector defect they
-exposed — is in [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md); do not re-derive it here.
+exposed — is in [src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md); do not re-derive it here.
 
 ---
 

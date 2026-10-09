@@ -5,7 +5,7 @@
  * which leaves staff lines and little else. Their row projection gives candidate line rows; rows
  * within a few pixels collapse to one line; lines closer than 2.2 spacings belong to one system.
  *
- * Transliterated line by line. Do not restructure — see docs/mvp/slicer-port.md.
+ * Transliterated line by line. Do not restructure — see docs/archive/phases/slicer-port.md.
  */
 import {
   PALE_LINE_DELTA,

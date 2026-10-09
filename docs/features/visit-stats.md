@@ -19,7 +19,7 @@ The question was already being asked, and it was being answered badly. The app p
 session, no cookie and no client id, so it cannot tell one phone visiting twice from two phones
 visiting once — the standing answer there is literally *"≥1 stranger, ≤2, the log cannot say which"*.
 Every sharpening of its numbers came from the owner supplying by hand what the log could not: that
-nobody in this circle runs Linux, that one of the phones was his own.
+nobody in this circle runs Linux, that one of the phones was the owner's own.
 
 This replaces the guessing. It counts two events, it separates robots from people, and it counts
 devices rather than requests.
@@ -29,7 +29,7 @@ devices rather than requests.
 | Question | Answer | Why |
 |---|---|---|
 | **Names?** | **No.** Anonymous counting only | Named invite links (`?k=ahmet`) and a real login were both offered and declined. There is no account system to build and no name to leak |
-| **Where?** | **Netlify Functions + Blobs** | The site is already deployed there ([deploy-ops.md](../mvp/deploy-ops.md)); no new service, no new bill, and the Cloud Run decoder stays a pure function of pixels |
+| **Where?** | **Netlify Functions + Blobs** | The site is already deployed there ([deploy-ops.md](../app/deploy-ops.md)); no new service, no new bill, and the Cloud Run decoder stays a pure function of pixels |
 | **Who may read it?** | **The owner only, and the page is never published** | See "Two locks" below |
 | **What is stored?** | **No IP, ever** — a salted hash that expires nightly | The alternative (raw IP) is personal data under KVKK/GDPR and contradicts the footer |
 

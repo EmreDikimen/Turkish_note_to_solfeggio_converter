@@ -239,7 +239,7 @@ Round-2 recall by print position (the split `eval_omr.py` now reports):
 ### Round-1 floors vs what was achieved (pre-registered 2026-07-20)
 
 ⚠ **These are Rounds 1 and 2's floors. Round 3 has its OWN, signed 2026-08-15** —
-[rung3/round3-criteria.md](rung3/round3-criteria.md), where the pass/fail number is the product one
+[archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md), where the pass/fail number is the product one
 (≥75% of pages needing ≤5 corrections) and the accidental measures below become no-regression
 clauses. Do not judge Round 3 against this table.
 
@@ -264,5 +264,5 @@ Round 2 clears one floor Round 1 missed (`\komaFlat` precision), misses four, an
 floor except the two headlines — a per-class mean that `\komaSharp` collapsed. Ties carry **no
 floor** on purpose (~38% structurally noisy gold); the arc-triggered false-`\tup3` rate replaces
 them, over 85 tie-but-no-tup3 and 229 neither-token strips. Full reasoning:
-[rung3/ship-criteria.md](archive/rounds/ship-criteria.md).
+[archive/rounds/ship-criteria.md](archive/rounds/ship-criteria.md).
 

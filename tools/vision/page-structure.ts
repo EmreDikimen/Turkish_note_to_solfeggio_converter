@@ -106,7 +106,7 @@ function structureOf(file: string): PageStructure | null {
 
   // `expand: false` — WRITTEN form. The review UI edits written measures so a doc edit maps back
   // to one token position; unfolding a repeat renders a bar twice from one token and the edit
-  // could not be attributed (docs/mvp/editor.md, "tokens are NOT the edit surface").
+  // could not be attributed (docs/app/editor.md, "tokens are NOT the edit surface").
   // `accidentals: "carry"` is what a real printed page uses (stitch-cli passes it for page decodes).
   let res;
   try {

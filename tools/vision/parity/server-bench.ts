@@ -1,5 +1,5 @@
 /**
- * What a page actually costs on the decode server — build step 1's other half (docs/mvp/deploy.md).
+ * What a page actually costs on the decode server — build step 1's other half (docs/app/deploy.md).
  *
  * deploy.md left two questions open and marked every cost figure on the page as derived from M4
  * timings rather than measured. This answers both, against a real server:

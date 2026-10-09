@@ -1,14 +1,14 @@
 # Standing findings — the product track, established and still true
 
-purpose: the settled context behind the product track — what is already built and known, so STATUS can hold only "now" and "next"
+purpose: the settled context behind the app — what is already built and known, so STATUS can hold only "now" and "next"
 audience: agents and the owner working the product side
-updated: 2026-08-11
+updated: 2026-10-08
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-08, when that file crossed its 400-line limit
 > a second time. Nothing here is a next action; it is the background a next action rests on. The
 > model track's equivalent is [../rung3/standing.md](../rung3/standing.md). Current state and what to
 > do → [../STATUS.md](../STATUS.md). Dated history → [../log/status-log.md](../log/status-log.md).
-> Every number with its source → [../METRICS.md](../METRICS.md). The ladder itself → [README.md](README.md).
+> Every number with its source → [../METRICS.md](../METRICS.md). The (closed) MVP ladder → [../archive/phases/mvp.md](../archive/phases/mvp.md).
 
 ---
 
@@ -20,9 +20,11 @@ updated: 2026-08-11
 passes on both paths against the deployed site — the shipped configuration, driven as a friend would.
 
 **The decode server (2026-08-06):** `https://omr-decode-706571981988.europe-west3.run.app` — Cloud
-Run, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3. Node + `onnxruntime-node` importing the
-browser's own `decode.ts`, so there is **one decode implementation, not a third**. The client swaps
-behind `VITE_DECODE_URL` and falls back to in-browser decode on any failure. **It reads what the
+Run, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3 at launch (**10 since 2026-09-04**). Node +
+`onnxruntime-node` importing the browser's own `decode.ts`, so there is **one decode implementation,
+not a third**. The client swaps behind `VITE_DECODE_URL`. ⛔ It fell back to in-browser decode on any
+failure until **2026-09-04**; since then a configured server that does not answer raises
+`server-unavailable` and nothing is read on the visitor's machine ([../DECISIONS.md](../DECISIONS.md)). **It reads what the
 browser reads** — 93.8% identical ids, and against gold a paired wash. The safety checklist is
 complete. Costs and the concurrency measurement: [../METRICS.md](../METRICS.md), [latency.md](latency.md).
 

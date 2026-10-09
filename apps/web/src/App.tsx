@@ -261,11 +261,11 @@ const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get(
 const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
 // The tuplet A/B's CONTROL arm: draw the pre-2026-08-12 continuous arc with the digit floating above
 // it (see SheetView's drawTupletArcLegacy). Render-automation only — absent → the measured shape the
-// app ships. docs/rung3/round3-criteria.md
+// app ships. docs/archive/rounds/round3-criteria.md
 const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
 // The THIRD printed tuplet shape — a continuous arc with the "3" inside its concavity, drawn on a
 // share of pieces (see SheetView's drawTupletArcConcave). Render-automation only, OPT-IN, absent →
-// every piece draws the broken mark exactly as before. docs/rung3/tuplets.md
+// every piece draws the broken mark exactly as before. docs/archive/rounds/tuplets.md
 const URL_CONCAVE_TUPLET = RENDER_PARAMS.get("concavetuplet") === "1";
 // Round-3 Lever 1 (crop geometry): how many measures one training strip may span. Render-automation
 // only; absent → STRIP_BUDGET.maxMeasures, i.e. every strip rendered before 2026-08-17.
@@ -273,8 +273,8 @@ const URL_CONCAVE_TUPLET = RENDER_PARAMS.get("concavetuplet") === "1";
 // ⚠ This is the RENDERER's rail and it is NOT the slicer's. The slicer cuts real pages at
 // MEASURES_PER_STRIP = 3 / MAX_STRIP_W = 1450 px (apps/web/src/omr/slicer/constants.ts); the renderer
 // packs by measures and LABEL TOKENS and has no pixel-width rail at all, which is why our strips run
-// wider than the real pools' (docs/rung3/round3.md §4). Lowering this alone narrows the synthetic
-// side only — the matching re-slice is the other half. docs/rung3/levers.md, Lever 1.
+// wider than the real pools' (docs/archive/rounds/round3.md §4). Lowering this alone narrows the synthetic
+// side only — the matching re-slice is the other half. docs/archive/rounds/levers.md, Lever 1.
 const URL_MAX_MEASURES = RENDER_PARAMS.has("maxmeasures")
   ? Number(RENDER_PARAMS.get("maxmeasures"))
   : null;

@@ -156,7 +156,7 @@ check that reads it back off the element proves nothing — `smoke:editor` count
 `window.__omrDoc` instead.
 
 ⚠ It renders NOTHING with no makam chosen, so its **absence is an assertion too**, and a rule
-matching no note reads **0** rather than vanishing. [mvp/makam.md](mvp/makam.md)
+matching no note reads **0** rather than vanishing. [app/makam.md](app/makam.md)
 
 ## The transport
 

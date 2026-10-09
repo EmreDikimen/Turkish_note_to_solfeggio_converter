@@ -1,6 +1,6 @@
 r"""Round-3 Check C — are our beams and flags the weight real print uses?
 
-THE GAP THIS FILLS (docs/rung3/round3.md §2). Note-length errors are 28% of everything a user has
+THE GAP THIS FILLS (docs/archive/rounds/round3.md §2). Note-length errors are 28% of everything a user has
 to fix, and they are lopsided: 15 of them are "the model read the note as twice as long as it is",
 i.e. it missed a beam or a flag. We proved exactly this story once before for the microtonal sharps
 — Bravura draws a 0.367 S bar where real print draws 0.300 S, and after the encoder's shrink the

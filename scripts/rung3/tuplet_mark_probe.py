@@ -1,6 +1,6 @@
 r"""Round-3 — how does REAL print draw the triplet mark, and how do we draw it?
 
-THE GAP THIS FILLS (docs/rung3/tuplets.md). `\tup3` recall is 83.8% against a >=85% floor and below
+THE GAP THIS FILLS (docs/archive/rounds/tuplets.md). `\tup3` recall is 83.8% against a >=85% floor and below
 its own 92.7% pre-work baseline: the model misses about one triplet in six. The leading hypothesis is
 that we draw the mark in a shape real print does not use — real Turkish editions BREAK the arc and set
 the "3" in the gap, while `drawTupletArc` draws one unbroken quadratic with the digit floating above
@@ -412,7 +412,7 @@ def main() -> int:
                          "a scanned page with margins needs ~0.45 (see staff_rows)")
     ap.add_argument("--concave", action="store_true",
                     help="report the CONTINUOUS-arc/digit-in-the-concavity geometry (the third style, "
-                         "docs/rung3/tuplets.md) instead of the broken-arc one")
+                         "docs/archive/rounds/tuplets.md) instead of the broken-arc one")
     ap.add_argument("--accept", default=None,
                     help="comma list of tile indices a HUMAN confirmed are tuplet marks; prints the "
                          "geometry summary over those only (same -n/--seed → same indices)")

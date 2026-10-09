@@ -3,7 +3,7 @@
  *
  * The browser decodes strip by strip because `onnxruntime-web` gives it no choice: one encoder run
  * per strip, ~0.9 s each. Here the encoder runs over a BATCH, which is the structural half of the
- * case for having a server at all (docs/mvp/deploy.md). Both graphs carry a dynamic `batch_size`
+ * case for having a server at all (docs/app/deploy.md). Both graphs carry a dynamic `batch_size`
  * axis, so this needs no re-export — verified 2026-08-05.
  *
  * Everything else is `apps/web/src/omr/decode.ts` unchanged: the greedy loop, the stopping rule,
@@ -42,7 +42,7 @@ export interface BatchTimings {
  * Encoder sub-batch size. **Defaults to 1 — batching was measured and it does not pay.**
  *
  * This is the one place where the plan's reasoning did not survive contact with a benchmark.
- * `docs/mvp/deploy.md` listed "no batching, ever" as a structural advantage of a server over
+ * `docs/app/deploy.md` listed "no batching, ever" as a structural advantage of a server over
  * `onnxruntime-web`. Measured on an M4 over 6 real pages (128 strips), batch 8 against batch 1:
  *
  *   threads 1 — 12.0 s vs 11.8 s per page | threads 2 — 8.7 s vs 8.3 s | threads 4 — 7.4 s vs 7.4 s

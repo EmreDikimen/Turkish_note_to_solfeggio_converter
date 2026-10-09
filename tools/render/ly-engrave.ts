@@ -2,7 +2,7 @@
  * Round-3 Lever 4 (renderer diversity): OUR STRIP LABEL → REAL LILYPOND SOURCE.
  *
  * WHY THIS FILE EXISTS. Every one of the 40,826 synthetic strips was engraved by VexFlow + Bravura
- * at a staff spacing whose standard deviation is zero (docs/rung3/levers.md, Lever 4). LilyPond is a
+ * at a staff spacing whose standard deviation is zero (docs/archive/rounds/levers.md, Lever 4). LilyPond is a
  * second engraver — different spacing engine, different font (Emmentaler), different beaming and
  * bracket conventions — and it ships `makam.ly`, which defines the SAME eight AEU accidentals we
  * draw, with the same comma→glyph convention (checked 2026-08-18: koma = mirrored flat / 1-stem

@@ -2,7 +2,7 @@
 
 purpose: the numbers behind what the app actually runs — export validation, quantized sizes, and how far int8 drifts from the PyTorch checkpoint
 audience: whoever is exporting a checkpoint, or wondering whether a shipped model matches the one that was measured
-updated: 2026-09-01
+updated: 2026-10-08
 
 Split out of [METRICS.md](METRICS.md) on 2026-09-01 when that file crossed the 400-line cap. Genre:
 METRICS.md holds model quality; this holds the artifact that gets served.
@@ -40,7 +40,7 @@ pool, int8 graphs vs the PyTorch checkpoint, identical token ids required:
 
 | checkpoint | 14 gate strips (synthetic) | **60 real strips** |
 |---|---|---|
-| `round2-stage2-best` — the LIVE runtime | — | **54/60 = 90.0%** |
+| `round2-stage2-best` — the live runtime on 2026-09-01 | — | **54/60 = 90.0%** |
 | `r3-final-stage2-last` | **14/14 = 100%** | **52/60 = 86.7%** |
 
 ⭐ **This is ambient int8 behaviour, not a Round-3 defect**: both models diverge, 6 vs 8 strips of 60
@@ -84,8 +84,8 @@ the July `gate.json` golds untouched in between, so the two numbers are comparab
   already had. That is not an accuracy finding — 14 synthetic strips decide it — but it is the one
   check that was run on both and it does not contradict the deploy.
 - ⛔ **Neither reaches the documented 27/28, and `r3a` has been failing it since it was staged on
-  2026-09-03.** Nobody ran the gate at that staging. The expectation is stale for the reason this
-  section already gives, and `--expect 27/28` in `package.json` is still an owner call to change.
+  2026-09-03.** Nobody ran the gate at that staging. The expectation was stale for the reason this
+  section already gives — ✅ **settled 2026-10-08, below.**
 - `r4-ctl`'s surviving new failure is the same `\tup3` drop the row above records: gold
   `\tup3 e''16 d''16 e''16 \tupend`, decode `e''16 d''16 e''16 \tupend` — an unbalanced tuplet, the
   class the owner accepted on 2026-09-03 because the stitcher brackets an unclosed run.
@@ -96,3 +96,21 @@ the July `gate.json` golds untouched in between, so the two numbers are comparab
 ⚠ A second apparent difference on that strip, `d''32` rendered as `d'' 32`, is **not** a difference:
 the two forms tokenize to identical ids `[17, 1, 37, 95, 35]`. `d''16` vs `d'' 16` genuinely differs,
 which is why `promote_labels.norm_label`'s rule is **32 only**.
+
+### ✅ The `\tie` gold is fixed and the gate is pinned at 26/28 (owner, 2026-10-08)
+
+The one gold carrying the retired `\tie` (`rast…icime_hep`) was rewritten by the retirement rule —
+`a'1 \tie a'4` → `a'1 a'4`, same pitches, same total length — and re-tokenized with the live model's
+tokenizer (`r4-ctl-stage2-last`); the other 13 golds were re-tokenized as a control and came back
+**byte-identical**, so nothing else moved. Graphs in `apps/web/public/models/` hash-matched
+`r4-ctl-stage2-last-onnx/*_int8.onnx` before the run.
+
+| model | checks | failing strips |
+|---|---|---|
+| `r4-ctl-stage2-last` (live) | **26/28** | `kurdilihicazkar…bunca_cevrinle`, both paths — the `\tup3` drop above |
+
+`npm run gate:browser` now pins **`--expect 26/28`**. ⚠ **`gate.json` is gitignored** (it lives in
+`apps/web/public/models/`, staged by `make_browser_gate.py` from the synthetic strip labels), so the
+fix exists on this Mac only. Re-staging with `make_browser_gate.py` regenerates golds from the
+synthetic labels and would bring the `\tie` back if those labels still carry it — re-apply the same
+one-line edit, or the gate reads 24/28 again for a fixture reason.

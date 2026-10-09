@@ -1,5 +1,5 @@
 /**
- * The safety limits, in one file so the checklist in docs/mvp/deploy.md can be read against code.
+ * The safety limits, in one file so the checklist in docs/app/deploy.md can be read against code.
  *
  * An open inference endpoint with usage billing is the standard way to get a surprise bill — one
  * script, or one bad crawler. Everything here is cheap and none of it is clever; the expensive

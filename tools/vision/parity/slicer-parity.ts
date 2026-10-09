@@ -13,7 +13,7 @@
  * defines the sample — this tool runs exactly the pages in it, so the two sides cannot drift apart
  * on which pages they ran. Manifest agreement is still reported, as the weaker second reference.
  *
- * W4 acceptance (docs/mvp/slicer-port.md), all against local Python:
+ * W4 acceptance (docs/archive/phases/slicer-port.md), all against local Python:
  *   - staff count exact on >= 99.5% of eligible pages
  *   - the manifest-zero pages match Python's staff count — 100% (the bar was written as "yield zero
  *     staves"; Python now finds one on one of them, so it is held against the control like the rest)
@@ -49,7 +49,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.
 const WEB_ROOT = path.join(ROOT, "apps/web");
 const IMAGES = path.join(ROOT, "data/real/images");
 
-/** W4 bars, from docs/mvp/slicer-port.md. */
+/** W4 bars, from docs/archive/phases/slicer-port.md. */
 const BAR_STAFF_COUNT = 0.995;
 const BAR_SCALE = 0.995;
 const SCALE_TOL = 0.002;

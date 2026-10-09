@@ -8,7 +8,7 @@
 WHY THIS EXISTS: Round 3's Lever-7 arm (the scan profile) is pre-registered on **edits on the HARD
 tier**, with a no-regression clause on the EASY tier — because the hard tier is where the scanned
 pages are and the easy tier is the closest thing we own to the screenshot case
-(docs/rung3/levers.md). `eval_omr.py` reads a strips directory; the pool's manifest carries no
+(docs/archive/rounds/levers.md). `eval_omr.py` reads a strips directory; the pool's manifest carries no
 `tier` field; so the tiers have to become directories, exactly as `_exam_tier_*` already are.
 
 ⚠ **`tier_of` is IMPORTED, never re-implemented.** The tier is not a property of the crop — it is

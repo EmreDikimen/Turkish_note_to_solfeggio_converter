@@ -8,7 +8,7 @@
  * attached (TERMINATION). The long docstrings on the Python functions explain why each gate is
  * shaped the way it is; they are not repeated here, only pointed at.
  *
- * Transliterated line by line. Do not restructure — see docs/mvp/slicer-port.md, which names the
+ * Transliterated line by line. Do not restructure — see docs/archive/phases/slicer-port.md, which names the
  * hazards in here specifically: `_is_thin_stroke`'s staff-row `continue` that does NOT reset the
  * run, `_terminal_overshoot`'s four-variable inner walk, the per-ROW `binarize_ink` calls that must
  * not be hoisted, and `pyRound` at every rounding site (`30 * 0.35` and `30 * 0.75` are exactly
@@ -325,7 +325,7 @@ export function clusterCols(
  *
  * ⚠ The inner walk carries four state variables with four different reset rules — `ov` updates only
  * on inked rows, `run` resets on a blank row, `gapRows > 1` breaks, and `isWide` LATCHES once set.
- * docs/mvp/slicer-port.md calls it the fiddliest 46 lines in the file, and it is what separates a
+ * docs/archive/phases/slicer-port.md calls it the fiddliest 46 lines in the file, and it is what separates a
  * barline from a G-clef.
  *
  * Returns `[ovTop, ovBot, wideBeyond]`.

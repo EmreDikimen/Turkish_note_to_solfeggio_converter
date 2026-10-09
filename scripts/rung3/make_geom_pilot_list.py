@@ -1,5 +1,5 @@
 """
-Build the piece list for Round-3 Lever 1's crop-geometry pilot (docs/rung3/levers.md, step 2).
+Build the piece list for Round-3 Lever 1's crop-geometry pilot (docs/archive/rounds/levers.md, step 2).
 
 WHY A SCRIPT AND NOT A HAND-PICKED FILE: the pilot's three arms must render the SAME music, so the
 list is the one thing every arm shares. A file assembled by hand cannot be re-derived if an arm has
@@ -86,7 +86,7 @@ def main() -> int:
     out = dict(src)
     out["pieces"] = pick
     out["note"] = (
-        f"Round-3 Lever 1 crop-geometry pilot (docs/rung3/levers.md step 2). {len(pick)} pieces, one "
+        f"Round-3 Lever 1 crop-geometry pilot (docs/archive/rounds/levers.md step 2). {len(pick)} pieces, one "
         f"per makam, {args.min_measures}-{args.max_measures} measures, seed {args.seed}, derived from "
         f"data/pieces_v4.json by scripts/rung3/make_geom_pilot_list.py. NOT a training selection: it "
         f"has no split, and nothing rendered from it should reach a training run."

@@ -24,7 +24,7 @@ because the scan profile is a pre-registered Round-3 arm rather than a general i
     trade is real and pre-registered: `photo_share` was set from the *deployment* distribution
     (uploads are mostly screenshots), so aiming augmentation at scans optimises the exam and not
     necessarily the app's users. Hence a share that is chosen and written down in advance rather
-    than tuned — docs/rung3/levers.md Lever 7.
+    than tuned — docs/archive/rounds/levers.md Lever 7.
 
 WHY on-the-fly (not baked into strips_v2): every epoch sees a fresh corruption of each strip,
 so 18k images act like far more — and the labels stay untouched because every transform here is
@@ -74,7 +74,7 @@ PHOTO_SHARE = 0.35
 # intend to serve, not from what makes the arm win: the arm runs at
 # **screenshot .55 / photo .20 / scan .25**, i.e. the scan share comes mostly out of PHOTO_SHARE,
 # whose own 0.35 was a guess from "uploads are mostly screenshots". Pre-registration:
-# docs/rung3/levers.md Lever 7.
+# docs/archive/rounds/levers.md Lever 7.
 #
 # ⚠ MEASURED WHILE BUILDING THIS, and it applies to every run this project has made: with
 # albumentations 2.0.8 the transforms seed themselves at construction from OS entropy, so

@@ -50,7 +50,7 @@ Goal: see Mus2's model working — arm a tool, click a note, the note changes. S
    gain a sideways scrollbar.
    ⚠ **Do this on a window at least ~1250 px wide.** The sheet is engraved at a fixed 1020 px and
    the palette costs 164 px, so on a narrower window the last measures of each system scroll off the
-   paper — expected, not a bug (see [mvp/editor.md](mvp/editor.md), trap 3).
+   paper — expected, not a bug (see [app/editor.md](app/editor.md), trap 3).
 3. **Click the ♪ (1/8).** It takes the accent, the hint under the palette changes, and the pointer
    over a note becomes a *copy* cursor rather than a grab hand.
 4. **Click a note that is longer than an eighth.** It re-engraves as an eighth **in place** — its
@@ -81,7 +81,7 @@ playhead, but cannot listen). This one is about the **ears**, so do it with soun
 7. **Press Geri al.** The edit reverses, but Çal still starts from that same bar — deliberate: the
    bar you were working in is still the bar you want to hear.
 8. ⚠ **An edit stops playback**, as it always has. That is expected in this step: stop, fix, press
-   Çal. Resume-in-place is written up as not built ([mvp/editor.md](mvp/editor.md)).
+   Çal. Resume-in-place is written up as not built ([app/editor.md](app/editor.md)).
 
 ## Check 18 — put a note where there wasn't one (editor step 6, 2026-08-08)
 
@@ -185,7 +185,7 @@ the notes. Scripted version: `npm run smoke:editor`.
    style, because every bundled sample draws the arc, so it is worth a look if you meet one.
 8. ⚠ The handles cannot widen a REAL triplet to four or five notes, and that is on purpose: the printed
    digit is always a "3" and the label the model reads is always `\tup3`. A wider group would draw
-   and label a rhythm nobody wrote. See [mvp/editor.md](mvp/editor.md#the-tuplet-rules).
+   and label a rhythm nobody wrote. See [app/editor.md](app/editor.md#the-tuplet-rules).
 
 ## Check 19c — the BROKEN marks: a "3" over one or two notes (2026-08-30)
 
@@ -225,4 +225,4 @@ it is also pointing at the model's mistakes.
    are legitimately short, so a triplet made in bar 1 shows nothing — that is correct, not broken.
 6. Now load a **decoded page** (upload a photo, or a saved decode). Several interior bars light up.
    Those are candidates for where the model misread a duration — worth checking by ear before
-   believing. n = 1 page measured so far ([mvp/editor.md](mvp/editor.md)).
+   believing. n = 1 page measured so far ([app/editor.md](app/editor.md)).

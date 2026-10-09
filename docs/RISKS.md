@@ -3,7 +3,7 @@
 purpose: the standing caveats — what is measured but fragile, what is NOT claimed, and the traps that survive the work that found them
 audience: anyone about to quote a number, believe a green check, or act on a result
 
-updated: 2026-09-19
+updated: 2026-10-08
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. The split
 is by genre: STATUS holds **current state and the next action** and nothing else; this file holds
@@ -13,6 +13,7 @@ history — for history see [log/status-log.md](log/status-log.md).
 Rule that produced most of this file: a number without its caveat gets quoted later as if it were
 solid. That has already happened once, when a 3-gold class swung a headline ~11 points.
 
+Resolved caveats are archived verbatim in [archive/risks-closed.md](archive/risks-closed.md) (2026-10-08).
 
 - **NEW (2026-09-19): AN EDIT COUNT IS ONLY COMPARABLE INSIDE ONE VOCABULARY, AND INSIDE ONE POOL.**
   Scheme H spells a note in fewer ids, so in its own ids the same mistake costs an H model ~1.1 fewer
@@ -30,15 +31,14 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
   silently. ⚠ Do not quote the null as "H buys nothing", and do not quote the 5.91% as an accuracy
   gain — it is a length distribution, and the app-side rail is a competing fix
   ([BACKLOG.md](BACKLOG.md) item 0).
-- **NEW (2026-09-03): the owner's hand test and the paired reads DISAGREE on Run A, and neither is
-  wrong.** The owner reads Run A `best-real` as visibly better than `r3-final-stage2-last` and
-  Round 2 in the app; on `_realval_v2` it is a null (15 better / 15 worse). Real-val's CI half-width
-  is ~±0.13 edits/strip, so a gain under ~5% hides, and the exam drops 41% of its candidates — the
-  dense strips a whole page shows. ⚠ Do not quote "Run A is better" as measured, and do not quote the
-  null as "Run A is no better". ⚠ **UPDATE 2026-09-06/19: the instrument now EXISTS and is unread** —
-  20 owner-supplied pages, decoded and staged as queue `handtest`, 457 of 515 rows still to read. It
-  is also the only instrument that could price scheme H's remaining claim, which is about whole dense
-  pages ([METRICS-HANDTEST.md](METRICS-HANDTEST.md) · [rung3/round4.md](rung3/round4.md)).
+- **NEW (2026-09-03): the owner's hand test and the paired reads DISAGREE, and neither is wrong.**
+  The owner read Run A `best-real` as visibly better in the app while `_realval_v2` called it a null;
+  `r4-ctl-stage2-last` then went live (2026-09-28) on a dense-strip LEAD, not a proven win. Real-val's
+  CI half-width is ~±0.13 edits/strip, so a gain under ~5% hides, and the exam drops 41% of its
+  candidates — the dense strips a whole page shows. ⚠ Do not quote "the live model is better" as
+  measured, and do not quote a null as "no better". ⚠ **The page-level instrument EXISTS and is
+  unread** — 20 owner-supplied pages, queue `handtest`, 457 of 515 rows still to read
+  ([METRICS-HANDTEST.md](METRICS-HANDTEST.md) · [rung3/round4.md](rung3/round4.md)).
 - **NEW (2026-09-03, MEASURED 2026-09-06 and WIDER since 2026-09-07): under the Round-4 tokenizer,
   synthetic labels are SHORT and real ones are not.** No render this round (owner), so synthetic
   labels stop at **44** H ids while real ones were to reach 59 — 887 real strips (11.9%) already
@@ -47,62 +47,29 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
   this round is FOR, and they will be trained on with no synthetic company at all. ⛔ Re-packing
   synthetic to fill the band was measured and rejected — it widens crops, which costs edits. What
   replaces it is watching: long-strip errors get their own column when the H arm is read.
-- **NEW (2026-08-21): every `\sig` block in a real-page label is UNVERIFIED.** The key signature is
-  the only part of a label not derived from SymbTr — the model reads it off each row-start strip and
-  the **majority read overwrites the derivation**. The voter is the weak `rung3-labeler`, whose
-  koma/küçük confusion is *systematic*, so the vote comes out unanimous **and** wrong; and the `nd`
-  gate strips `\sig` blocks from both sides before comparing, so nothing catches it. It fired on
-  **24 of 45 exam pieces (53%)**, **406 of 938** `strips_nota` pieces (43%), 98 of 293 `strips_tup`,
-  26 of 65 `strips_r1`; **8 of the 36 exam pieces** with a signature disagree with our own makam
-  table, several by *missing* an entry it calls near-universal. ⚠ Do not quote a per-class accidental
-  number as if signatures were clean, and do not read the 9:1 `\komaSharp`:`\kucukSharp` imbalance as
-  pure renderer defect — part of it may be this loop feeding itself. ⚠ **Not an error rate**: n = 7
-  corrections in one makam, and many overrides are probably correct
-  ([METRICS-CORPUS.md](METRICS-CORPUS.md) · [BACKLOG.md](BACKLOG.md) item 9).
-
-- **NEW (2026-08-21): the training pools are the last thing still on the RETIRED slicer.** The exam
-  was rebuilt on the current one and `_realval_v2` was already on it; `strips_nota` / `strips_r1` /
-  `strips_tup` — **2,330 real training strips** — were not. Until they are re-emitted, a Round-3 model
-  learns real-page appearance from crops the shipped slicer no longer produces, then is selected and
-  graded on crops it does. Round 3's own Lever 1 measured crop geometry as **causal**, so this is a
-  domain gap of the kind the round exists to close. Cost of fixing it is measured and low: **89% of
-  the labels carry** onto the new crops by measure span, with no new labelling
-  ([BACKLOG.md](BACKLOG.md) item 4).
-
-- **NEW (2026-08-21): 96 labels enter the rebuilt exam's gold without any human having read them.**
-  139 strips come straight from the emitter; 43 agree token-for-token with the frozen exam's hand-made
-  gold, the other 96 have no such check. The reference point is exam v2's own audit: of its 63
-  auto-accepted labels a human later corrected **32 (51%)**. They are the `examv3-full` tab, and
-  reading them is a precondition of the read
-  ([rung3/round3-criteria.md](rung3/round3-criteria.md) §3c).
-
-- **NEW (2026-08-21): the rebuilt exam is a harder instrument than the floors were signed against.**
-  ~12 candidate strips a page against 7.1, so the primary reads lower at equal model quality. The
-  baseline re-score keeps the comparison fair; what the absolute 75% *means* is an open owner
-  decision, and it must be settled before the read (§3c).
-
-- **NEW (2026-08-15): the primary Round-3 floor is measured on 46 pages, so its 95% interval is
-  roughly ±12 points.** ⚠ Superseded in its numbers by the rebuild — the exam is now 64 pages —
-  but not in its point. A model truly at 72% can read 78% and vice versa. The criteria are signed and
-  are **not re-opened**; what is still open, and is the owner's call **before** the read, is whether
-  to grow the exam first (v3 is already owed) or to read it as signed and report the interval beside
-  the result. Choosing after seeing the number is the one option that is not available.
-  Reasoning: [rung3/levers.md](rung3/levers.md).
-- **NEW (2026-08-15): the crop-geometry finding is observational.** ~40 strips a bucket, on crops cut
-  by the retired slicer, and no causal test has run yet. Nothing renders on it until the padding
-  probe reads. ⚠ The same file also records the trap in acting on it: narrow crops make the
-  **short-crop hole** the common case, and short crops are the worst thing this model reads.
-- **STILL OPEN: the cold-start fix is proven on a FAKED cold window, not on a genuinely idle
-  service.** `check:coldstart` controls the window deliberately, which is the better test of the
-  mechanism — but the real thing has still only been seen warm since the fix.
-  ⚠ **It was briefly written up as closed on 2026-08-09 and that was wrong**, which is worth keeping
-  because of *how* it was wrong. The redeploy's `smoke:live` did follow a real ~3 h idle and a real
-  11.3 s cold start — but an **automated visitor** (`HeadlessChrome/131`, referer the unique deploy
-  URL) hit the site seconds after the deploy went live and absorbed that cold start; `smoke:live`
-  opened 33 s later and got `/health` in **2 ms**. A warm run was read as a cold one because only the
-  wall clock was checked. **The bot is the standing obstacle**: it arrives right after every deploy,
-  so a post-deploy `smoke:live` can never be the cold test. Measure it on an untouched service, and
-  confirm from the request log which client caused the container start.
+- **The exam's primary is measured on 63 graded pages, so its 95% interval is roughly ±12 points.**
+  Round 3 read 51% ±12 against the signed 75%. Any Round-4 read inherits the same width: a model
+  truly at 72% can read 78% and vice versa. Report the interval beside the number, and decide what
+  counts as a pass BEFORE the read ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)).
+- **NEW (2026-08-21, narrowed 2026-09-06): `\sig` blocks in the EXAM and in every pool before
+  `strips_h1` are UNVERIFIED.** The key signature is the only part of a label not derived from SymbTr:
+  the model reads it off each row-start strip and, before rule D, the **majority read overwrote the
+  derivation**. The voter's koma/küçük confusion is *systematic*, so the vote came out unanimous
+  **and** wrong, and the `nd` gate strips `\sig` blocks before comparing. It fired on **24 of 45 exam
+  pieces (53%)** and **406 of 938** `strips_nota` pieces (43%). ✅ Rule D now routes a vote that
+  deletes or changes an accidental off the makam table's majority spelling to review — applied in the
+  `strips_h1` emit; ⚠ **the exam was not re-emitted**, so part of the exam's signature error class
+  (17.5% of Round 3's edits) may be bad gold rather than bad decoding. ⚠ Not an error rate
+  ([METRICS-SIGVOTE.md](METRICS-SIGVOTE.md) · [METRICS-CORPUS.md](METRICS-CORPUS.md)).
+- **STILL OPEN: a cold start on a genuinely idle service has only been watched, never asserted.**
+  `check:coldstart` fakes the cold window, which is the better test of the mechanism. ⚠ Since
+  2026-09-04 there is **no browser fallback**: a cold start that outlasts `WARMUP_WAIT_MS` (**120 s**)
+  shows the visitor `server-unavailable`; one cold start read **38.2 s** that day. ⚠ **The bot is the
+  standing obstacle to measuring it**: an automated visitor (`HeadlessChrome/131`, referer the deploy
+  URL) arrives seconds after every Netlify deploy and absorbs the cold start, so a post-deploy
+  `smoke:live` is never the cold test — this was mis-written up as closed on 2026-08-09 for exactly
+  that reason. Measure on an untouched service, and attribute the container start from the request
+  log.
 - **Three things now warm this service behind your back** — a demo recording (2026-08-08), a
   post-deploy crawler and the owner's own use. Any cold-start claim has to name the client that
   caused the `model ready` line, not just the elapsed time.
@@ -110,9 +77,6 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
   second request during a decode gets a **fresh container** — `uptimeS` a handful of seconds, exactly
   what scale-to-zero looks like. Never read cold-start behaviour off a single `/health`; read the
   request log and the `model ready` lines together.
-- **The in-browser fallback hides its own reasons.** Whenever the server is missed the page is still
-  read correctly, so nothing looks broken — the only evidence is `data-where` and a warm laptop. That
-  is what let the cold-start bug live from 2026-08-06 to 2026-08-08 in a fully "passing" deployment.
 - **Real-val orders candidates; it does not predict exam performance.** Measured gap: 28pp.
 - **The AEU headline is a per-class mean and is fragile to low-n classes.** A 3-gold class swung it
   ~11pp in Round 1; a 14-gold class swung it 4pp in Round 2 and was the entire reason that round
@@ -125,13 +89,6 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
   problem rather than a carry-resolution one.
 - **Round 2's three changes are not separable.** Glyph weight, label noise and corpus size all moved
   together, so nothing in that read attributes to one of them.
-- **NEW (2026-08-14): a Round-3 model will differ from `round2-stage2-best` by four things, not one** —
-  the corpus change, the **`staff_jitter` augmentation added 2026-07-29** (two days after Round 2
-  trained; ±4% scale on 80% of samples, never A/B'd), a sub-visual **rasterizer drift** that moves
-  every one of the 40,826 strips, and the training environment. This is why the tuplet A/B trains its
-  own control instead of reusing the live model, and it is a caveat on Round 3's exam read too.
-  Measurements: [METRICS-CORPUS.md](METRICS-CORPUS.md); reasoning:
-  [rung3/round3-criteria.md](rung3/round3-criteria.md).
 - **Label noise in the training pools:** ~7% pitch-level content error in nota auto-accepts, ~38%
   structurally noisy tie annotation. A 5% re-audit after Round 1 is owed.
 - **Signature-position vs note-position accuracy is now MEASURED** (2026-07-27) and the sharps live
@@ -140,18 +97,14 @@ solid. That has already happened once, when a 3-gold class swung a headline ~11 
 - **Blind spots, stated as non-claims:** `\buyukFlat` has 0 real gold; `\komaSharp`/`\buyukSharp` are
   low-n on the exam; `\tup3` is measured on the common k=1 case only; the exam is a matched
   upper bound (its pieces exist in SymbTr).
-- **The correction-loop strategy is now the plan, not a fallback** (goal change 2026-07-27). What is
-  still unmeasured is whether error localisation actually saves a user time — that needs a person
-  correcting real pages with and without the highlights, not a model metric.
-- **Superseded:** there is no pre-registered pivot trigger. Switching to a correction-loop strategy is a
-  situational call after the Round-2 exam, not an automatic rule.
-- **Every human who has used the deployed app was on a phone, and n is still 2.** That is **a
-  question, not a finding** about "web first, mobile later" — two people cannot tell you what the
-  next hundred will do. Moved here from STATUS on 2026-08-30: it is a standing non-claim, not a
-  current state. [METRICS-USAGE.md](METRICS-USAGE.md).
-- **Browser gate is 27/28** on the live model — one strip's *reference*-path decode drops a `\tup3`
-  under an ORT-web int8 numerics wobble (the canvas/product path reads all 14 strips exactly, and
-  Python-ORT int8 reads that strip exactly). Measured: the flipped token is a real 69/31 near-tie,
-  the only sub-0.99 token in that strip, so the runtime tips a coin rather than corrupting a
-  confident read. Not blocking; the strip stays in the gate list so the wobble stays measured.
-
+- **Who uses the public app is UNKNOWN.** The anonymous counter is built but records nothing until
+  `STATS_SALT` is set ([features/visit-stats.md](features/visit-stats.md)); before it, the request log
+  saw two strangers, both on phones (n = 2, [METRICS-USAGE.md](METRICS-USAGE.md)). The phone became
+  the main screen on 2026-09-19 on the owner's own use, not on this number.
+- **Browser gate is 26/28** on the live model (`r4-ctl-stage2-last`, since 2026-10-08) — one strip,
+  `kurdilihicazkar…bunca_cevrinle`, drops its `\tup3` on both the reference and the canvas path: an
+  unbalanced tuplet, the class the owner accepted on 2026-09-03 because the stitcher brackets an
+  unclosed run. ⚠ `gate.json` is gitignored and `make_browser_gate.py` regenerates it, so the
+  tie-free fix of 2026-10-08 must be re-applied after any re-staging ([METRICS-ONNX.md](METRICS-ONNX.md)).
+  ⚠ The 14 gate strips are SYNTHETIC; on real strips int8 disagrees with its own fp32 weights on
+  ~1 in 10, and no accuracy number in this project is measured on int8.

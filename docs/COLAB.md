@@ -25,13 +25,13 @@ updated: 2026-08-19
 > is `data/checkpoints/r3-tupnew-stage2-best` — already trained, same corpus, split, recipe, steps
 > and seed. **One run, not two.** Nothing downstream records the mix, so `train.py` prints it in its
 > startup line and the notebook asserts it before any long run; that log line is the only evidence of
-> which arm a checkpoint is. Protocol: [rung3/scan-profile.md](rung3/scan-profile.md).
+> which arm a checkpoint is. Protocol: [archive/rounds/scan-profile.md](archive/rounds/scan-profile.md).
 >
 > The Round-3 tuplet notebook is **run twice**, once per arm, off a single `ARM` cell — it is one
 > experiment, and the arms must not drift apart in recipe. ⚠ The two corpora have **byte-identical
 > manifests** (the tuplet mark is pixels only), so nothing downstream can tell them apart: the zip
 > script and the notebook both assert `render_config.json`, which is the only file that can.
-> Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md).
+> Protocol: [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md).
 >
 > Round 2 differs from Round 1 in three places that matter: `--strips-dir data/synthetic/strips_v4`,
 > `--split data/split_v4.json`, and the real-pool oversample **`:9` not `:8`** (synthetic grew, so

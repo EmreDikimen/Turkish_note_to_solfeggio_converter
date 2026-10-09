@@ -17,7 +17,7 @@ and how trustworthy its labels are**. Model-quality numbers stay there; nothing 
 | strips_v2_2 | 18,777 strips / 474 MB → 23,391 after the triplet expansion (190 pieces) | + rhythm tokens |
 | strips_v3 | 38,091 strips, 73.3% carry, 49 makams, 33 signature variants | budget gate PASS (57 ids, cap 59) — the Round-1 corpus |
 | **strips_v4** | **40,826 strips / 202 pieces, 75.5% carry** | the Round-2 corpus (2026-07-26): thin sharps, the carry pixels-vs-labels fix, +23 küçük-bearing pieces, −5 exam pieces. Audit PASS. `\kucukSharp` in the signature 1,210 → **1,998** tokens; inline unchanged (206 → 209 strips). Val is `split_v3`'s **verbatim** (24 pieces / 4,772 strips) so v3-vs-v4 stays matched |
-| **strips_v5_tupnew / _tupctl** | **40,826 strips / 202 pieces each** (40,841 rendered, the same 15 boundary-bleed strips excluded) | the tuplet A/B's two arms (2026-08-14), from `data/pieces_v4.json` with `--thin-sharps` and no print noise. **Row-for-row identical to `strips_v4`** — same image set, and every field including the label matches on all 40,826. The arms differ from each other in **1,691 PNGs**: 1,690 curved-style `\tup3` strips plus one 20-pixel crop-edge bleed; the 379 `\tup3` strips that are pixel-identical are exactly the 22 bracket-style pieces. Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md) |
+| **strips_v5_tupnew / _tupctl** | **40,826 strips / 202 pieces each** (40,841 rendered, the same 15 boundary-bleed strips excluded) | the tuplet A/B's two arms (2026-08-14), from `data/pieces_v4.json` with `--thin-sharps` and no print noise. **Row-for-row identical to `strips_v4`** — same image set, and every field including the label matches on all 40,826. The arms differ from each other in **1,691 PNGs**: 1,690 curved-style `\tup3` strips plus one 20-pixel crop-edge bleed; the 379 `\tup3` strips that are pixel-identical are exactly the 22 bracket-style pieces. Protocol: [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) |
 | **strips_v7_final** — ROUND 3'S CORPUS | **40,795 strips / 208 pieces** (40,813 rendered, 18 excluded) | rendered 2026-08-31 from `data/pieces_v4.json` with **three flags**: `--staccato-noise --concave-tuplet --usul-barline` (plus `--thin-sharps`). ⭐ **The first synthetic corpus with ZERO `\tie`** — 0 of 40,795, against **1,185 rows** in `strips_v4`/`v5`/`v6`, which all predate the 2026-08-22 render-side retirement. `verify-labels` (run with the same three flags, or it gates a different picture): **40,795 exact, 18 mismatched, 0 label drift, no unknown glyphs**; the 18 are accidental-count disagreements in `every`-mode strips, the same class `tupnew` had 15 of and unrelated to the flags, and they are **excluded from the manifest** (`manifest.jsonl.bak-preverify`). `stitch-test` ALL PASS (218/218 + 90/90). ⚠ The render **crashed at 207/208** on a dev-server timeout and `manifest.jsonl` is written only at the end — the per-piece shards + `.done` markers made it resumable, and the re-run left **0 orphan and 0 missing PNGs** |
 | Real training pool | 2,160 strips (1,758 nota + 418 neyzen, incl. 172 tup3) | after all promotes |
 | **`strips_h1`** — b8 re-emitted under **scheme H at a budget of 80, `--frozen-crops`** | **4,425 strips** (4,435 accepted; 550 audit fixes applied, 14 `bad` removed, 4 review rows promoted, 0 rejected) — **+12.6% on b8**, and the new rows are the DENSE ones (median 18 label tokens against 11) | 2026-09-07. Not one page re-sliced: the same crops, the same 1,720 decode caches, so b8's 980 human reads carried in under a per-row inode+label proof (`carry_verdicts.py`). ⛔ The yield is far below the token probe's forecast because the `nd` referee gate, not the budget, is what now drops the dense strips — [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
@@ -61,7 +61,7 @@ steps. At the default `--real-val-frac 0.10` that every notebook uses, against `
 | real (nota 224 + r1 26 + tup 21) | 271 | **5.4%** |
 
 **`best` is therefore chosen 94.6% on synthetic val loss**, in a round graded entirely on real pages.
-[rung3/levers.md](rung3/levers.md) Lever 5 already said "strip-weighted toward synthetic"; this is the
+[archive/rounds/levers.md](archive/rounds/levers.md) Lever 5 already said "strip-weighted toward synthetic"; this is the
 number under it. ⚠ The staleness of the real half matters **less than its weight** — fixing the crops
 without changing the blend moves 5.4% of the selector.
 
@@ -120,7 +120,7 @@ Three consequences, all of them bites that have already happened:
    (they are simpler on every countable property) is independent and stands.
 3. ⚠ **One signed pre-registration uses it this way and has been flagged, not changed** — Lever 6
    clause 2 excludes hard tier because "hard-tier dropped dots are scan degradation, `nd` up to 1.14"
-   ([rung3/levers.md](rung3/levers.md)). The exclusion may still be correct, since hard tier is
+   ([archive/rounds/levers.md](archive/rounds/levers.md)). The exclusion may still be correct, since hard tier is
    defined independently of `nd`; its written justification is not. Owner's call, owed before the
    staccato arm is scored.
 
@@ -149,7 +149,7 @@ Over all **2,055 PDFs** on disk (`scripts/rung3/build_label_batch.py::born_digit
 ⚠ **This corrects a line repeated across several docs**: neyzen was described as "clean vector PDFs"
 and it is nothing of the kind — **every neyzen page is a raster scan**. Its ~5× lower SER is real,
 but the cause is that it is a *better scan*, not a born-digital one. Fixed in [METRICS.md](METRICS.md)
-and [rung3/levers.md](rung3/levers.md); the SER numbers themselves are unaffected, only the label on
+and [archive/rounds/levers.md](archive/rounds/levers.md); the SER numbers themselves are unaffected, only the label on
 the row.
 
 Of the 88 born-digital pieces, **84 are sliced — 115 pages / 2,956 strips**, all from the nota

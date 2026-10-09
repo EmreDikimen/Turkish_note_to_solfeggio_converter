@@ -1,14 +1,15 @@
-# Rung-2 dataset & training upgrades — manual checking guide
+# Manual checks — see each feature with your own eyes
 
 purpose: see-it-yourself checks: run each feature and look at the result
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-08-30
+updated: 2026-10-08
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
 
 ```bash
-npm run dev:web        # → http://localhost:5173
+npm run dev:cloud      # → http://localhost:5173, decode on Cloud Run (keeps the Mac cool)
+npm run dev:web        # the same, decoding in YOUR browser — only for the checks that need it
 ```
 
 The harness now accepts **render-automation URL parameters** (this is how the batch renderer
@@ -257,7 +258,7 @@ The point of this one is to see the two halves agree: the page is short, the mus
 
 Goal: the only check in this file that needs your ears. A makam is not a label — picking one bends
 the sounding pitches to how the makam is actually performed, while the staff stays exactly as
-drawn. Table and sources: [mvp/makam.md](mvp/makam.md).
+drawn. Table and sources: [app/makam.md](app/makam.md).
 
 1. `npm run dev:web`, then open `http://localhost:5173/?score=/gamzedeyim-deva.json` — the app
    ships no score, so a bundled file is loaded by URL ([THIRD-PARTY.md](THIRD-PARTY.md)). **Makam**

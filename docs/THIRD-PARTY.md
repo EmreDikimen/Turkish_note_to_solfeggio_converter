@@ -137,7 +137,7 @@ removed by the user *Habitator terrae*.
 are allowed too"** (owner, 2026-08-29). The reason it had to: **there is no CC0 photograph of a
 German-system clarinet.** Every one on Commons is CC BY-SA — checked across Yamaha, Leitner+Kraus,
 Rosewood Albert and Yamaha's full-Oehler. The only duty-free option was a 1910 Selmer catalogue
-scan, and the owner chose the photograph that looks like his instrument over the one that costs
+scan, and the owner chose the photograph that looks like the owner's own instrument over the one that costs
 nothing. [features/clarinet-view.md](features/clarinet-view.md).
 
 ⚠ **What the duty actually is, since this is the first time the project has carried one.** Credit

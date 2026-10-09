@@ -6,12 +6,12 @@
  * than the width cap, never narrower than the sliver floor. The long Python docstrings explain why
  * each rail is there and what it cost to learn; they are pointed at, not repeated.
  *
- * Transliterated line by line. Do not restructure — see docs/mvp/slicer-port.md, which names the
+ * Transliterated line by line. Do not restructure — see docs/archive/phases/slicer-port.md, which names the
  * hazards in here: `_split_wide`'s `sorted(set(cuts))` collapsing two targets onto one gutter
  * (the escalation loop depends on it), Python's `min(near)` comparing TUPLES, and `binarize_ink`
  * running on the ROW again here rather than being hoisted.
  *
- * **Budget mode was not ported** (docs/mvp/slicer-port.md) — it shipped OFF as a measured wash for
+ * **Budget mode was not ported** (docs/archive/phases/slicer-port.md) — it shipped OFF as a measured wash for
  * LABELLING yield, and in legacy mode `est_tokens` never moves a crop boundary. ⚠ That reasoning
  * does not cover INFERENCE, where an over-budget strip cannot be dropped and comes back as a short,
  * confident, wrong read (docs/METRICS-SLICER-WINDOWS.md). So the `cost()` threading is now here

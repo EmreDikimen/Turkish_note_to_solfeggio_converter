@@ -15,7 +15,7 @@ WHAT IT REPORTS per arm, with no model and no labels:
   width + the encoder staff spacing that width produces
   measures per strip   is the measure rail even binding? (on the synthetic side it was NOT)
   SHORT CROPS          share under SHORT_CROP_TOKENS gold-ish tokens — the pre-registered stop rule
-                       (docs/rung3/levers.md). ⚠ Real crops here have NO gold, so this is an
+                       (docs/archive/rounds/levers.md). ⚠ Real crops here have NO gold, so this is an
                        ESTIMATE from the slicer's own `est_tokens`, not the tokenizer's count. It is
                        labelled as such everywhere it is printed, and it is the reason the stop rule
                        must finally be read on a pool that has gold.
@@ -171,7 +171,7 @@ def main() -> int:
         b = [float(x["est_tokens"]) for x in base if x.get("est_tokens") is not None]
         if b:
             b_short = sum(1 for e in b if e < SHORT_CROP_TOKENS) / len(b)
-            print(f"STOP RULE (docs/rung3/levers.md): an arm is stopped if its short-crop share more "
+            print(f"STOP RULE (docs/archive/rounds/levers.md): an arm is stopped if its short-crop share more "
                   f"than DOUBLES the control's {b_short:.1%} -> threshold {2 * b_short:.1%}")
             for name, rows, _ in results:
                 e = [float(x["est_tokens"]) for x in rows if x.get("est_tokens") is not None]

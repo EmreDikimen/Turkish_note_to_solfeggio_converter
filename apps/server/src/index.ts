@@ -2,7 +2,7 @@
  * The decode server (MVP W9) — POST a page's strips, get the tokens back.
  *
  * Node + `onnxruntime-node`, importing `apps/web/src/omr/decode.ts`: the browser's own module, so
- * there is ONE decode implementation rather than a third to hold in parity (docs/mvp/deploy.md).
+ * there is ONE decode implementation rather than a third to hold in parity (docs/app/deploy.md).
  * Slicing stays on the client, the editor and playback stay on the client, and the client keeps a
  * working in-browser decode as its fallback. What moves here is the ~19 s of neural decode that
  * was heating the user's laptop — the reason the server exists at all.

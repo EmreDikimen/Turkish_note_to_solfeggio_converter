@@ -2,7 +2,7 @@
 
 purpose: the rules for anyone touching the web app; split out of CLAUDE.md at its 400-line cap, on the DOM-CONTRACT.md precedent
 audience: agents and the owner working on apps/web, tools/render or tools/core
-updated: 2026-09-30
+updated: 2026-10-08
 
 > **These are hard rules, not background.** Each was paid for once by a live bug. CLAUDE.md keeps a
 > one-line headline for the six that can be broken from anywhere in the repo and points here for the
@@ -54,7 +54,7 @@ updated: 2026-09-30
   untouched, so the training corpus is byte-identical. ⚠ `Tekrarları açık yaz` is **view-only and
   closes edit mode**.
 - **The makam bends the SOUND ONLY** (owner decision 2026-08-06, shipped 2026-08-07). Comma deltas go
-  in on the way to `buildTimeline` — the engraving, `Save JSON` and `buildStrips` never move, and no
+  in on the way to `buildTimeline` — the engraving, the stored document and `buildStrips` never move, and no
   key signature is redrawn. The table carries **documented deviations only**; `none` is the default.
   ⛔ **THE DELTAS ARE KEYED BY THE WRITTEN DOCUMENT AND `unfoldDoc` RENUMBERS — RE-KEY THEM WITH
   `remapKomaDeltas` OR THE BEND LANDS ON THE WRONG NOTE** (fixed 2026-09-05). Nothing throws, because
@@ -66,7 +66,7 @@ updated: 2026-09-30
   ⚠ The picker's "how many notes of THIS score" count is derived by the same matcher the deltas use
   (`makamRuleUsage` / `eachRuleMatch`) — a hint quoting a constant passes every attribute check and is
   still a lie. ⛔ `MAKAM_INTONATION`'s empty arrays must not be deleted as clutter; they are what stops
-  someone completing the table by symmetry. [docs/mvp/makam.md](mvp/makam.md).
+  someone completing the table by symmetry. [docs/app/makam.md](app/makam.md).
 
 ## 2 · The editor and the drawn page
 
@@ -81,7 +81,7 @@ updated: 2026-09-30
   4/5/7-tuplet**: the digit is hardcoded `"3"` and the token `\tup3`, so it would draw AND label a
   rhythm nobody wrote — needs new tokens, deferred. ⚠ The style is a per-piece hash and all six bundled
   scores draw the arc, so the VexFlow-**bracket** branch has **no automated coverage**.
-  [docs/mvp/editor-built.md](mvp/editor-built.md).
+  [docs/app/editor-built.md](app/editor-built.md).
 - **HIT-TESTING GEOMETRY IS MEASURED OFF REAL INK, NEVER OFF A GROUP'S `getBBox()`** — three live bugs
   came from this one mistake and it will recur with any new modifier or overlay.
   (1) `StaveNote.getBoundingBox()` merges over the note's MODIFIERS, and `GraceNoteGroup` never
@@ -203,13 +203,6 @@ updated: 2026-09-30
   — the transpose group is 433px and cannot shrink. ⚠ `index.html` carries `viewport-fit=cover`, or
   every `env(safe-area-inset-*)` resolves to 0. Everything else about the phone, and every number
   behind it, is [features/phone.md](features/phone.md).
-- **A SCORE TOO DENSE FOR THE BOX IS ENGRAVED SMALLER, AND THAT IS TWO STAGES.** ⛔ Scaling the
-  finished drawing does not put a note back inside its own stave — it shrinks the overrun too, and
-  measured, the stave ended 49px short of the box while its notes hung 22px past the barline. The
-  layout is **widened by exactly what the drawing overran**, and only then scaled. ⚠ The size goes on
-  the SVG's inline **style** (VexFlow's `resize()` writes one and an attribute cannot beat it), and
-  `#sheet-surface` is sized in DISPLAYED units. ⚠ A ragged last system may be shorter than the page,
-  never wider. Numbers: [features/phone.md](features/phone.md).
 - **A FINGER ACTS ON THE TAP, A MOUSE ON THE PRESS** (2026-09-28). On a phone the finger that
   scrolls lands on notes constantly, so anything that EDITS on `pointerdown` edits by accident. A
   note target decides a touch in `onNoteTap` (a `click`, which a scroll never fires) and blocks

@@ -117,7 +117,7 @@ floor is stated in.
 ⚠ **A batch is TRAINING data and nothing else.** Exam pieces are refused twice over (here, and by
 the re-slice that produced the decodes), but the deeper reason is the ranking: it selects *the worst
 pages in its tier*, so an exam drawn from it would not be comparable to exam v2.1's baseline or to
-the signed floor. Exam growth is a separate job needing a random/stratified sample ([levers.md](levers.md)).
+the signed floor. Exam growth is a separate job needing a random/stratified sample ([levers.md](../archive/rounds/levers.md)).
 
 | Batch | Cut | Pages / strips | Sources | Evidence | State |
 |---|---|---|---|---|---|
@@ -372,6 +372,6 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
   real-val already has it, because real-val selects and does not grade.
 - ⚠ **Preconditions of the read**: finish before the model takes it, and **re-score
   `round2-stage2-best` on the rebuilt exam** — now doubly binding, since the instrument changed
-  ([exam.md](exam.md), [round3-criteria.md](round3-criteria.md) §3b).
+  ([exam.md](exam.md), [round3-criteria.md](../archive/rounds/round3-criteria.md) §3b).
 - ⏭ Promotion grows `strips_exam_v3/manifest.jsonl`. That manifest **replaces** `strips_exam_v2_clean`
   as the exam; the old one stays on disk as the record of what Round 2 was measured on.

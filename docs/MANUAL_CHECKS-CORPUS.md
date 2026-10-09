@@ -198,7 +198,7 @@ independent photo draws, since that profile varies the most).
 
 Added 2026-08-15. The model reads a printed staccato as an augmentation dot and lengthens the note;
 this check is the human gate on the mark that teaches otherwise. Numbers:
-[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md). Floors: [rung3/levers.md](rung3/levers.md) Lever 6.
+[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md). Floors: [archive/rounds/levers.md](archive/rounds/levers.md) Lever 6.
 
 Open, with a score that has dotted notes:
 

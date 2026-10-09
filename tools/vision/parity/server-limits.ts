@@ -1,7 +1,7 @@
 /**
  * The safety checklist, as a command (MVP W9, build step 4).
  *
- * `docs/mvp/deploy.md` lists four things that must be true before the URL leaves the two friends.
+ * `docs/app/deploy.md` lists four things that must be true before the URL leaves the two friends.
  * Three of them are code and are checked here against a RUNNING server; the fourth — the hard
  * billing cap and the max-instances ceiling — lives in the Cloud Run config and cannot be asserted
  * from here, so it is printed as an owed item rather than quietly counted as passing.

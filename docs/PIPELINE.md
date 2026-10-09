@@ -2,7 +2,7 @@
 
 purpose: design of the page → strips → decode → stitch → note-model pipeline (Rung 4)
 audience: anyone touching the slicer, page decode or the stitcher
-updated: 2026-08-05
+updated: 2026-10-08
 
 > Numbers quoted here are summaries — the authoritative values are in [METRICS.md](METRICS.md).
 
@@ -21,13 +21,13 @@ updated: 2026-08-05
 > existing harness — the stitched JSON loads via its file picker / `?score=` URL.
 > ⚠ **`Save JSON` was REMOVED on 2026-08-30** (owner). It went unused, and the labeling loop's real
 > path is `scripts/rung3/review_ui.py`; a browser check that needs the document reads
-> `window.__omrDoc`. [mvp/editor.md](mvp/editor.md)
+> `window.__omrDoc`. [app/editor.md](app/editor.md)
 > **Update (2026-08-05): stages 2–8 now ALSO run in the browser.** The slicer is ported to
 > TypeScript (`apps/web/src/omr/slicer/`, MVP W4–W6, verified against this Python over the whole
 > corpus) and wired into the app at W7 via `apps/web/src/omr/page.ts`, so an uploaded page becomes a
 > playable score with no Python anywhere. The Python path below is unchanged and remains the
 > reference the port is scored against. Still open: **stage 9's header OCR** — the makam table and
-> its signature+karar inference shipped 2026-08-07 ([mvp/makam.md](mvp/makam.md)); nothing yet reads
+> its signature+karar inference shipped 2026-08-07 ([app/makam.md](app/makam.md)); nothing yet reads
 > the printed header text. Also covered: the Rung-3 collection plan.
 
 ## 0. The one-line answer to "how does a page become strips?"
@@ -106,7 +106,7 @@ this wrong doesn't error — it just quietly halves accuracy.
 **5. Barline detection → measure boxes.** Barlines = near-vertical dark runs that span exactly
 the 5 staff lines (tolerances for thickness/repeat-dots). This substitutes for what training had
 for free (SheetView's per-measure layout rectangles). Three gates (hardened 2026-07-19 against
-the real-corpus false positives — full postmortem in [rung3/followups.md](archive/rounds/followups.md)):
+the real-corpus false positives — full postmortem in [archive/rounds/followups.md](archive/rounds/followups.md)):
 (1) CONTINUITY — an unbroken vertical run spanning the staff, touching both outer lines;
 (2) THINNESS — no notehead-fat blob at the stroke inside the staff band; (3) TERMINATION —
 walking the connected ink past the outer lines, a stroke extending beyond BOTH lines is a
@@ -129,9 +129,12 @@ sliding window with ~1 measure of overlap, deduplicating by aligning the overlap
 tokens. Build the barline version first.
 
 **7. Per-strip decode.** Exactly the proven Rung-1.5 stack: Donut preprocessing (JS port),
-ONNX encoder + decoder-with-past via `onnxruntime-web`, hand-rolled greedy loop — ~1.5 s/strip
-on the dev Mac, model weights from the HF Hub CDN, no server. A 9-row page ≈ 18–25 strips;
-strips are independent → sequential with a progress bar, or parallel workers.
+ONNX encoder + decoder-with-past, hand-rolled greedy loop (`apps/web/src/omr/decode.ts`). ⚠ **As
+shipped, this step runs on a Cloud Run server** (decided 2026-08-05): the browser slices and
+preprocesses, POSTs finished 409×583 PNGs, and the server runs the SAME `decode.ts` on
+`onnxruntime-node` — ~2 s/strip there, ~1.5 s/strip in the browser on the dev Mac. The browser path
+still exists for `dev:web` and the gates, but a deployed build never falls back to it (2026-09-04).
+A 9-row page ≈ 18–25 strips; strips are independent.
 
 **8. Stitching → written skeleton.** Concatenate each row's strips in order, rows in order.
 Apply the row's decoded `\sig` block (or the makam's per-degree defaults) to resolve **bare**
@@ -139,21 +142,23 @@ notes; explicit accidental/`\natural` tokens override — this is Phase 4's "wri
 layer (ROADMAP Phase 4, two resolution layers). Then expand structure: `\repstart … \repend`
 plays twice, voltas take ending 1 then 2, and the navigation marks (`\dc` `\segno` `\coda`
 `\fine`) drive the da-capo expansion — D.C. jumps to the head, ⊕→⊕ takes the coda jump, "Son"
-ends the form. Output is FLATTENED (sections written out, no signs) — what the editor and
-playback want.
+ends the form. ⚠ **This paragraph described the first build, which FLATTENED the output.** Since
+2026-08-30 the app stitches with `expand: false`: the page is kept as written (signs and all), and
+the repeat is taken at playback by core's `unfoldDoc` — see step 10 and
+[APP-RULES.md](APP-RULES.md) §1.
 
 **9. Header metadata — never through the OMR model.** Makam/usul/tempo/title come from a
 separate OCR pass over the header text (plus signature+note-distribution heuristics as
 fallback), feed the makam intonation table (written accidental → sounding koma, e.g. Uşşak's
 koma-flat si sounding lower), and stay **user-editable** with `none` = play-as-written.
 **The makam half is BUILT** (2026-08-07): the signature+karar heuristic, the intonation table and
-the user-editable dropdown all ship — [mvp/makam.md](mvp/makam.md). The **header OCR** is still
+the user-editable dropdown all ship — [app/makam.md](app/makam.md). The **header OCR** is still
 open, so the makam is inferred from the notes rather than read off the page.
 
 **10. Note model → editor → playback.** The existing Phase-1 product. The editor is the safety
 net for every residual OMR error. ⚠ It is **no longer the Rung-3 labeling tool** — that rationale
 retired with the `Save JSON` deletion (decided 2026-08-07, carried out 2026-08-30); the labelling
-loop's path is `scripts/rung3/review_ui.py`. Reasoning: [mvp/editor.md](mvp/editor.md).
+loop's path is `scripts/rung3/review_ui.py`. Reasoning: [app/editor.md](app/editor.md).
 ⚠ **Since 2026-08-30 the editor loads the page AS WRITTEN**: the stitcher's `expand: false` keeps
 `‖: … :‖` as signs and the repeat is taken at playback time (core's `unfoldDoc`), so what the editor
 shows is the printed score, not the performance. [DECISIONS.md](DECISIONS.md).
@@ -191,7 +196,7 @@ than 3.
 > photos of the exam pieces, sliced with the new photo front-end (stage 2) and **hand-labelled at
 > the strip level (284 strips)**. They are **EXAM-ONLY, never training** — they photograph exam
 > pieces, so training on them would leak the exam. Camera photos for *training* must come from
-> different pieces ([rung3/round2.md](archive/rounds/round2.md)).
+> different pieces ([archive/rounds/round2.md](archive/rounds/round2.md)).
 
 > **Status (2026-07-10): collection AUTOMATED + DONE for the engraved-PDF majority.**
 > `scripts/collect_notalar.py` replaced hand-screenshotting: it crawls neyzen.com's freely-published

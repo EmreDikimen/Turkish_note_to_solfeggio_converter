@@ -2,7 +2,7 @@
 
 purpose: the design, the artwork and the decisions behind the sol klarnet half of the instrument tab
 audience: agents and the owner working on the clarinet view, before changing the schematic, the fingering table or the lip meter
-updated: 2026-08-29
+updated: 2026-10-08
 
 > This is the clarinet chapter of F3. The violin chapter is [fingerboard.md](fingerboard.md), the
 > kanun chapter is [kanun-view.md](kanun-view.md), and the track index is [README.md](README.md).
@@ -99,7 +99,7 @@ stopped at **Do6**, where the source chart's clarion page stops. ⚠ **Above it 
 — a clarinet's third register is not a further overblowing, so each note is its own fingering and no
 arithmetic produces one. The owner filled in seven, **Re♭6 to Sol6**, through the editor.
 
-⭐ **They needed no new calibration at all.** Every point he placed landed on a position his earlier
+⭐ **They needed no new calibration at all.** Every point the owner placed landed on a position the owner's earlier
 pass had already fixed — `ALTISSIMO_FINGERINGS` uses not one key the lower registers do not, which
 is asserted rather than observed.
 
@@ -119,7 +119,7 @@ instrument. `fingeredAs` carries the relationship, and `clarinet-test.ts` pins a
 would have worked and would have been an accident. There is a test for it.
 
 ⚠ **Only Re♭6 uses the register key or the thumb** in what the owner gave, which is unusual enough
-to deserve a second look with the instrument in hand. It is recorded as his data rather than quietly
+to deserve a second look with the instrument in hand. It is recorded as the owner's data rather than quietly
 "corrected": every time this table has been argued with from theory, the theory lost.
 
 ### What is measured, and what the owner placed
@@ -181,7 +181,7 @@ fingering the note sits. What the meter draws is no longer that number but **whe
 
 ⭐ Why this beats what it replaced: the old bar read **zero** for an ordinary note, which says the
 player is holding nothing until the music asks for something. A wind player is already holding an
-embouchure. The meter now starts where he is, and a koma is a distance from there.
+embouchure. The meter now starts where the player is, and a koma is a distance from there.
 
 ⛔ **The right half is drawn and never fills** (owner, asked directly: *"daha fazla sıkarak hiçbir
 komayı vermeyelim, sadece dudağı gevşeterek koma verelim"*). It exists so that *normal* can be seen
@@ -202,7 +202,7 @@ page — died with the meaning. A grip is not a pitch.
 relaxed, five komas down) and must not double as "no note". `app.css` keys that off the root's
 `data-note-state`.
 
-### What has to be decided before it can be built
+### What had to be decided before it was built — all four are answered in code
 
 ⚠ **None of these are guesses to make in code.** They are data or owner input, held the way
 `VIOLIN_TUNINGS` and `MANDAL_LAYOUTS` are.
@@ -223,6 +223,13 @@ the better source. The physics reference, if it is ever needed, is
 **3. The out-of-reach state.** Past that bound the view must not keep growing the bar — it needs the
 violin's `out-of-range` honesty, saying plainly that this note wants a different fingering or a
 half-hole. Drawing an impossible bend would teach the wrong thing.
+
+✅ **2 answered by the owner (2026-08-29)**: `LIP_REACH_KOMA = 5` in `packages/core/src/clarinet.ts`
+— *"nothing needs to have more than 4-5 koma"*. ✅ **3 dissolves because of it**: every step in the
+table is 4 or 5 commas (pinned by `clarinet-test.ts`), so every pitch between two fingerings is
+inside one lip; `fingerClarinet` returns `null` only for a note below or above the whole table.
+✅ **4 answered**: the table is keyed to WRITTEN commas — the G instrument's fourth and Turkish
+notation's fourth cancel in practice (owner; the reasoning is the header of `clarinet.ts`).
 
 **4. The transposition.** A sol klarnet sounds a **fourth below** what is written, and Turkish
 notation is **already** written a fourth below concert pitch. Which of the two the fingering table is

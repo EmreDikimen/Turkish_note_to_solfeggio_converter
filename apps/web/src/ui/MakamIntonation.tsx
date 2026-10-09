@@ -15,7 +15,7 @@
  * ⚠ **A makam that bends nothing gets ONE sentence** (owner, 2026-09-05, cutting a first version
  * that wrote two). Hüseyni's empty rule list is a finding — the sources say it does NOT take the
  * uşşak lowering — and an unlisted makam's is silence. That distinction is real and it stays where
- * it belongs, in `MAKAM_INTONATION` and docs/mvp/makam.md; a reader picking a makam is asking one
+ * it belongs, in `MAKAM_INTONATION` and docs/app/makam.md; a reader picking a makam is asking one
  * question, whether the piece will sound as it looks, and two sentences answered a question they
  * had not asked.
  *

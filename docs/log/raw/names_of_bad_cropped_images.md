@@ -14,7 +14,7 @@ So: mark it `bad` in the UI **as well as** writing it here, or it will not reach
 
 ⚠ The bad rate is a decision input, not just bookkeeping. The scanned tail is where `realval-hard`
 lost **33%** of its crops as unusable; if this list grows fast, the call is to cap the impact score
-rather than read on ([docs/rung3/labeling-queues.md](docs/rung3/labeling-queues.md)).
+rather than read on ([docs/rung3/labeling-queues.md](../../rung3/labeling-queues.md)).
 
 ---
 

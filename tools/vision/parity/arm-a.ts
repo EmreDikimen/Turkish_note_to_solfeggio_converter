@@ -8,7 +8,7 @@
  *
  * ⚠ **The comparison is PAIRED, not a level check against 86.0%.** That was the original plan and
  * it does not work: at n=450 the standard error of the ceiling is ~1.6 pp, so a "within 1 pp" bar
- * sits inside the noise (docs/mvp/slicer-port.md). Both arms decode the SAME strips here, keyed by
+ * sits inside the noise (docs/archive/phases/slicer-port.md). Both arms decode the SAME strips here, keyed by
  * (system, window), so what is counted is the DISCORDANT pairs — strips where exactly one arm
  * matches Python. A McNemar-style sign test on those is far more sensitive and needs no extra
  * pages. A slicer that cuts the same pixels produces discordant counts that balance; a slicer that

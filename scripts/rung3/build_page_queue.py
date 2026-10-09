@@ -11,7 +11,7 @@ confidence. Two measurements say that is the wrong basis for THIS queue:
 
   1. **Confidence is a measured-weak error signal in this project.** W8 (confidence highlighting)
      was DROPPED because it caught **26.3%** of errors at a 10% budget against a pre-registered
-     ≥60% bar (docs/mvp/standing.md). Re-measured here on the 3,755 rows of `reslice_all.csv` that
+     ≥60% bar (docs/app/standing.md). Re-measured here on the 3,755 rows of `reslice_all.csv` that
      carry an INDEPENDENT emitted label (the `src=local` rows — the 30,049 colab rows are seeded
      with their own decode and cannot disagree by construction): sorting worst-confidence-first,
      the worst 10% holds **4%** of the disagreements. Lift **0.44x** — worse than random.

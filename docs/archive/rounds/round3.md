@@ -4,16 +4,21 @@ purpose: what Round 3 targets, the evidence behind it, and the checks to run BEF
 audience: agents and the owner working the real-page track
 updated: 2026-09-03
 
-> Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
-> here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).
-> Decisions: [../DECISIONS.md](../DECISIONS.md).
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
+> Part of the real-page track — index: [README.md](../../rung3/README.md). Current state and next action are NOT
+> here: see [../STATUS.md](../../STATUS.md). Numbers: [../METRICS.md](../../METRICS.md).
+> Decisions: [../DECISIONS.md](../../DECISIONS.md).
 >
 > ⛔ **THIS ROUND IS CLOSED (2026-09-03).** Read once on 2026-09-01: **51%** against the 75% floor, ~15
-> of its +17 points the retired `\tie`; runs A and B nulls. What follows is [round4.md](round4.md).
+> of its +17 points the retired `\tie`; runs A and B nulls. What follows is [round4.md](../../rung3/round4.md).
 >
 > ▶ **UNPAUSED 2026-08-05 (owner): this round runs in PARALLEL with the product work** and no longer
 > waits for the friends release. The release asks friends about the interface, so its feedback would
-> not aim this round either way. [../DECISIONS.md](../DECISIONS.md)
+> not aim this round either way. [../DECISIONS.md](../../DECISIONS.md)
 >
 > ✅ **This round's acceptance bar is WRITTEN AND SIGNED (2026-08-15) and lives in
 > [round3-criteria.md](round3-criteria.md)** — floors beside their Round-2 baselines, with **≥75% of
@@ -47,7 +52,7 @@ actually needs fixing:
 
 Two whole rounds went into that 13%. Not because it was the biggest problem — because the old score
 **only measured that**. It could not see the other 87%. Full table in
-[../METRICS.md](../METRICS.md).
+[../METRICS.md](../../METRICS.md).
 
 ## The checks were RUN (2026-07-28). Most of them said no.
 
@@ -57,7 +62,7 @@ check are kept in place below, each under its own verdict line, because the nega
 point — each one is a change we did not build on a guess.
 
 The harness is trustworthy: decoding all 326 exam strips reproduces the known **562-edit** total
-exactly ([../METRICS.md](../METRICS.md)).
+exactly ([../METRICS.md](../../METRICS.md)).
 
 | check | verdict |
 |---|---|
@@ -73,11 +78,11 @@ ink weight and staff-size matching were each tested and ruled out. On the **real
 −1.6%** (247 → 243). It is exam-specific. The cause of the mistake is worth more than the result:
 ~15 variations were run against the frozen exam and the best was written up before any holdout was
 tried. ⚠ Not fully closed — real-val is the easy pool and lacks the hard tier, so re-test after the
-rebuild. **Do not act on it.** See [../DECISIONS.md](../DECISIONS.md).
+rebuild. **Do not act on it.** See [../DECISIONS.md](../../DECISIONS.md).
 
 **Three separate diagnoses about `page_to_strips.py` were measured and disproved this session**, and
 two patches written on the first two were reverted (one was dead code, one was contradicted by the
-slicer's own manifests). Lesson recorded in [../DECISIONS.md](../DECISIONS.md): measure before
+slicer's own manifests). Lesson recorded in [../DECISIONS.md](../../DECISIONS.md): measure before
 touching that file.
 
 ## The four checks, as originally written (with what each returned)
@@ -142,7 +147,7 @@ Two things round3.md merged, now separated, because only one of them costs us ed
   −6.0%**, less than half the blunt global shrink. If the model wanted the training size, exact
   matching would have won. It did not. A further hypothesis (that `Staff.spacing`'s median-of-gaps
   disagrees with the endpoint span setting the crop height) measured **0.998** where 1.016 was
-  needed. **The cause of the −15.5% is unknown.** Numbers in [../METRICS.md](../METRICS.md).
+  needed. **The cause of the −15.5% is unknown.** Numbers in [../METRICS.md](../../METRICS.md).
 - **Size VARIANCE (unmeasured payoff).** Synthetic raw spacing has sd **0.000** — every training
   strip is identical. Real runs sd 0.70–2.10. The original text says we shake "five times less than
   reality"; the raw truth is we shake *not at all* before augmentation. The `staff_jitter` op in
@@ -262,7 +267,7 @@ flat within noise → drop the lever in writing.*
 paired bootstrap excludes zero from ×1.50 onward, and the **real-val holdout replicates steeper**.
 Both unpadded arms reproduced their recorded baselines exactly — the exam's to the individual edit,
 which is what says this is the same harness that produced the Round-2 read. The dose table, the
-CIs and every caveat: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+CIs and every caveat: [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 Two limits worth stating with the result, not after it: **×2.00 extrapolates** below the exam's
 natural width range, and the probe **lowers** resolution — showing that costs edits is not the same
@@ -281,7 +286,7 @@ content work below is behind all of it either way. Train with the recipe held fi
 
 The `nota-full` review was worked through every disagreeing strip and promoted: 54 corrected labels,
 7 `bad` strips removed. **521 of 1,740 nota strips now carry a human-corrected label**, and ~78% of
-the labels on disagreeing strips turned out to be wrong ([../METRICS.md](../METRICS.md)).
+the labels on disagreeing strips turned out to be wrong ([../METRICS.md](../../METRICS.md)).
 
 Round 2 already trained on 467 of those corrections, so only the 54 are new — but the pool Round 3
 trains on is cleaner than Round 2's, which is **one more difference between the two rounds**. Add it
@@ -312,4 +317,4 @@ pool is worth cleaning further or is ready to enlarge.
   Pre-registered rule if it is ever picked up: flagging 10% of tokens must catch ≥60% of errors.
 - **Gold octave errors.** Real — every octave disagreement found was our answer key being wrong, not
   the model — but ≈1% of corrections, and the training pools are clean (0.1–0.2% of strips). Closed
-  as a non-lever; see [../METRICS.md](../METRICS.md).
+  as a non-lever; see [../METRICS.md](../../METRICS.md).

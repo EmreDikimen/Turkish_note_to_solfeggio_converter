@@ -5,23 +5,28 @@ audience: agents and the owner running or reading Round 3's arm 1
 
 updated: 2026-08-19
 
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
 > ⛔ **RESULT, 2026-08-19: the arm is a NULL on its primary and its no-regression clause passes.**
 > On scanned pages, 197 paired strips: `best` **+0.071** edits/strip, 95% CI [−0.203, +0.335],
 > p = 0.105; `last` **+0.010**, CI [−0.198, +0.208], p = 0.488. **Both checkpoints, same answer** —
 > and the interval excludes anything better than a ~5% reduction, so this is an informative null
 > rather than an underpowered one. Every number:
-> [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md). The disposition is at the bottom of this
+> [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md). The disposition is at the bottom of this
 > file.
 >
-> Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
-> here: see [../STATUS.md](../STATUS.md). The lever this serves is [levers.md](levers.md) Lever 7;
+> Part of the real-page track — index: [README.md](../../rung3/README.md). Current state and next action are NOT
+> here: see [../STATUS.md](../../STATUS.md). The lever this serves is [levers.md](levers.md) Lever 7;
 > Round 3's binding floors are [round3-criteria.md](round3-criteria.md) and **nothing here changes
-> them**. Numbers: [../METRICS.md](../METRICS.md), [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+> them**. Numbers: [../METRICS.md](../../METRICS.md), [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 ## The hole
 
-[`src/vision/augment.py`](../../src/vision/augment.py) had exactly two profiles — `screenshot` and
-`photo` — and **93% of the exam is scans** ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). A flatbed
+[`src/vision/augment.py`](../../../src/vision/augment.py) had exactly two profiles — `screenshot` and
+`photo` — and **93% of the exam is scans** ([../METRICS-CORPUS.md](../../METRICS-CORPUS.md)). A flatbed
 or office scan of a TRT-era print is neither: **flat lighting and no perspective**, so the photo
 pipeline's most expensive ops model nothing that is there, while it *does* have speckle and dust,
 broken thin lines, ink spread on thick strokes, bleed-through from the reverse side, a small skew
@@ -32,7 +37,7 @@ been asking for this since July: *"Revisit against real usage at Rung 3."*
 owner's report that real uploads are mostly web screenshots, and the constant carries an explicit
 warning against pushing the mix for "harder training". Aiming augmentation at scans optimises **the
 exam**, and we do not know that the exam's medium is what the app's users upload (n = 2 —
-[../METRICS-USAGE.md](../METRICS-USAGE.md)). So the scan profile is added **beside** the two, never
+[../METRICS-USAGE.md](../../METRICS-USAGE.md)). So the scan profile is added **beside** the two, never
 substituted, and the mix is pre-registered rather than tuned.
 
 ## What was built
@@ -102,7 +107,7 @@ which is where the scanned pages are". It is: 97 of its 110 strips are scan-sour
 its rows are gold **seeded with a model decode and then confirmed by a person**, which flatters that
 model's descendants — and it shows: the hard tier scores *better* than the mid tier. The medium
 split has no such asymmetry, is twice the size, and separates the media by 4.5× in SER. Numbers:
-[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+[../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 ## Running it
 
@@ -173,7 +178,7 @@ that: every profile in the mix is a claim about what users upload, and `PHOTO_SH
 owner's report that real uploads are mostly web screenshots. The flag is off by default, so **doing
 nothing carries the decision** and no code moves. ⚠ The profile itself is **not** deleted: the module,
 the preview command and this write-up stand, so a later round can turn it on with one flag rather
-than rebuild it. [../DECISIONS.md](../DECISIONS.md)
+than rebuild it. [../DECISIONS.md](../../DECISIONS.md)
 
 ⚠ **This is the second trained Round-3 arm to return a null** — the tuplet-mark A/B was p = 0.688,
 this is p = 0.488 — and Lever 4's second engraver returned a third null on the domain gap without

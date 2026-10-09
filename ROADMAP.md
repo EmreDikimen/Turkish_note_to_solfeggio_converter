@@ -2,15 +2,17 @@
 
 purpose: the evergreen plan — architecture, phase breakdown, tech choices, risks (NO status)
 audience: anyone who needs the long-range picture or the reasoning behind the architecture
-updated: 2026-07-26
+updated: 2026-10-08
 
 > Current state and next action: [docs/STATUS.md](docs/STATUS.md). This file deliberately
 > contains no progress reporting — see §7.
 
-> This document is the source of truth for **what to build and why**. It was written
-> after a planning discussion to correct misconceptions in an early AI-generated draft of
-> `README.md` (the README has since been corrected to match). Where this file and
-> `README.md` disagree, **this file wins**.
+> This document is the long-range plan: **what to build and why**. It was written after a planning
+> discussion to correct an early AI-generated draft of `README.md`. ⚠ **It changes slowly and has
+> lagged reality more than once** (it said "no server" for two months after the server shipped). The
+> current status of any decision is its row in [docs/DECISIONS.md](docs/DECISIONS.md) — where this
+> file and DECISIONS disagree, **DECISIONS wins**. Updated 2026-10-08 for the server, the phone and
+> the mobile path.
 
 ---
 
@@ -37,6 +39,9 @@ page is what they upload and proofread. Two halves, and the second is worth more
    rather than proofreading every note. Without this, accuracy alone does not save anyone time:
    finding 5 unknown errors in 250 notes costs more than fixing them. The confidence signal already
    exists (`min_logprob`, used by the labeling queue); it has never been surfaced in the product.
+   ⚠ **The first attempt failed its own bar**: highlighting the 10% least-sure tokens caught 26.3% of
+   errors against a pre-registered 60%, and the feature (W8) was dropped on 2026-08-05 rather than
+   the bar lowered. This half of the goal is **unbuilt and has no current plan**.
 
 This replaces "85% on the per-class accidental mean" as the headline goal. That metric stays as a
 **diagnostic**, not a target: it is a mean over classes, so a class with 14 gold tokens weighs as
@@ -50,21 +55,24 @@ per-class mean over classes with enough gold to mean something.
 
 ## 1. Locked-in decisions
 
-> **Ship WEB FIRST, then convert to mobile.** The web app is the **first released product**; the
-> mobile app is a later conversion that reuses the same shared TS core. **There is no server** — OMR
-> inference and audio run **in-browser / on-device** (`onnxruntime-web` + Web Audio), because a hosting
-> subscription isn't affordable. Build the web product properly; the mobile phase rebuilds only the
-> UI + native adapters over the same core.
+> **One web app is the product, on every screen.** It shipped first on the web; the **phone** became
+> its main screen (rebuilt 2026-09-19..28), it installs as a **PWA**, and the Play Store app is a
+> **Trusted Web Activity** around the same site (2026-10-05) — so there is no second codebase.
+> ⚠ **There IS a server, for decode only** (2026-08-05, reversing the original "no server" plan):
+> the browser slices a page and a Cloud Run CPU server runs the model, to keep the reader's device
+> cool; since 2026-09-04 a deployed build never reads on the visitor's device. Audio, the editor and
+> the slicer stay local. A React Native app with an on-device model is **"maybe later", not the
+> plan** (owner, 2026-10-08).
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Shipped product | **Web first, then mobile** | Ship the working web app as the first release; then convert to a React Native mobile version reusing the same core. |
-| Runtime / hosting | **In-browser / on-device — NO server** | Can't afford a backend subscription; OMR runs via `onnxruntime-web` (web) / `onnxruntime-react-native` (mobile), synthesis via Web/native audio. |
+| Shipped product | **One web app — desktop, phone, PWA, and a Play Store TWA around the same site** | Ship once, update everywhere with one deploy. React Native stays "maybe later" (DECISIONS 2026-10-08). |
+| Runtime / hosting | **Static site on Netlify + decode on a scale-to-zero Cloud Run CPU server** | The original "no server" premise (unaffordable) did not survive: free tiers cover it. Decode left the device to keep it cool (2026-08-05); slicing, audio and editing stay in the browser. |
 | App stack | **React (web) + React Native (mobile) over a shared TypeScript `core`** | App logic written ONCE in the TS core; notation/audio libs (VexFlow, Tone.js) are mature in JS; mobile becomes "UI + adapters over the same core". |
 | Python's role | **Training + data ONLY** (not in the shipped app) | ML training, synthetic-data generation, and SymbTr→JSON export. The app's runtime logic lives in the TS core, so it ports to mobile. |
 | OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. **Confirmed: `omr_transformer`** — passed the Step-1 eval, the Rung-1 overfit-10 (GO, 2026-07-02) and the Rung-1.5 ONNX/browser gate (PASS, 2026-07-03) — see `src/vision/MODEL_EVAL.md`. |
 | OMR model (fallbacks) | **CRNN+CTC (PrIMuS-based)**, then **YOLOv8 glyph detection** + heuristic decoder | **RETIRED (2026-07-07)** — Rung 1.5 retired the export/size concern; the Rung-2 PASS (99.9% headline accuracy — `docs/METRICS.md`) retired the accuracy concern. Kept here for the record only. |
-| Where OMR runs | **On-device** via ONNX Runtime (onnxruntime-web for the web harness, onnxruntime-react-native for mobile) | Same exported ONNX model both places; preserves the offline goal; no production backend. |
+| Where OMR runs | **On the server** (`onnxruntime-node`), importing the browser's own `decode.ts` — one decode implementation | The browser path (`onnxruntime-web`) still exists for development and the gates; a deployed build does not fall back to it (2026-09-04). Offline use is not a current goal. |
 | ML framework | **PyTorch** → export **ONNX** | Standard OMR stack; ONNX runs in both JS runtimes. |
 | Training data source | **Synthetic, rendered from SymbTr** + augmentation, then fine-tune on real photos | SymbTr has no images; we generate them. See §3. |
 
@@ -112,8 +120,8 @@ Shared CORE (TypeScript) note model, 53-TET tuning (koma→Hz), synthesis SCHEDU
 ADAPTERS (per platform)  AudioBackend (Web Audio | native), OmrRuntime (onnxruntime-web
                          | onnxruntime-react-native), camera/file access.
         ▼
-UI SHELLS                Web (React) = first shipped product; Mobile (React Native) = later conversion.
-                         "Mobile = UI + adapters over the same core."
+UI SHELLS                Web (React) = THE product, on desktop and phone (PWA, and a TWA in the Play
+                         Store). A React Native shell over the same core stays possible — "maybe later".
 ```
 
 Rule of thumb: **anything that touches a platform API (Web Audio, DOM, camera, native
@@ -125,7 +133,9 @@ what makes "write the logic once, then just build the mobile UI" actually true.
 ml/            (today's src/ + scripts/) — Python: training, data gen, SymbTr→JSON export
 packages/core/ — shared TypeScript: note model, tuning, synth scheduling, OMR decode
 apps/web/      — React test harness (VexFlow + Web Audio adapter)
-apps/mobile/   — React Native product (native audio + onnxruntime-react-native)
+apps/server/   — the decode server (Node + onnxruntime-node, the browser's own decode.ts)
+apps/android/  — the Play Store TWA shell around the live site (no app code of its own)
+(apps/mobile/  — a React Native app was planned here; "maybe later" since 2026-10-08)
 ```
 Phase 0's `src/` (Python parser/tuning/synth) stays as the **reference implementation**
 and the training-side SymbTr tooling; its tuning + synth-scheduling logic is ported to
@@ -281,19 +291,22 @@ produce a real, demoable app with zero machine learning.
   2026-07-02: 4 faithful drawn-symbol tokens, fold-detected + randomly injected placement —
   `docs/PHASE2.md` §6.) Our pipeline then
   **flattens/expands** them when building the note model — the repeated section is shown **twice,
-  without a repeat sign** — which is what the editor and playback want.
+  without a repeat sign**. ⚠ **Overturned 2026-08-30**: the page is now kept as written (signs and
+  all) and the repeat is taken at playback ([docs/APP-RULES.md](docs/APP-RULES.md) §1).
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
 
-### Phase 5 — Mobile app (the second release, a conversion of the web product)
-- After the web product works, convert it to mobile by reusing the same core.
-- **React Native** app that **reuses `packages/core` verbatim**; build only: the mobile UI,
-  a native `AudioBackend` adapter, an `onnxruntime-react-native` `OmrRuntime` adapter, and
-  camera/file access. The web harness's core ports over; its React UI does not.
+### Phase 5 — Mobile (re-planned 2026-10-08: the web app IS the mobile app)
+- ✅ The phone layout was rebuilt as its own screen (2026-09-19..28), the app installs as a **PWA**
+  (2026-09-28), and a **Trusted Web Activity** package for the Play Store wraps the live site
+  (2026-10-05) — [docs/features/play-store.md](docs/features/play-store.md).
+- ⏸ **"Maybe later"**: a **React Native** app that reuses `packages/core` verbatim with a native
+  `AudioBackend` and an on-device model. ⚠ It would bring back the ~211 MB download the server
+  removed, which is why it is not the plan.
 - **Ahenk (transposition) selector** — a user-facing control that picks a named ahenk (Bolahenk,
   Mansur, Kız, …) for playback/display, built on the core `transpose()` from Phase 2 via the
   `name → comma-offset` table (chromatic transpose under the hood, ahenk name on top).
-- On-device synthesis + offline ONNX inference (export PyTorch → ONNX; TFLite only if needed).
-- **Milestone:** shipped offline mobile app — photograph → recognize → edit → hear.
+- **Milestone:** the Play Store closed test, then production — photograph → recognize → edit → hear
+  on a phone, with decode on the server.
 
 ---
 
@@ -305,8 +318,8 @@ produce a real, demoable app with zero machine learning.
 | Synthetic rendering | **VexFlow** (reuse the harness engraving; render staves → PNG via node-canvas / headless browser) |
 | Shared core | **TypeScript** (`packages/core`): note model, tuning, synth scheduling, OMR decode |
 | Web harness | React + VexFlow/OSMD (render) + Web Audio (`AudioBackend` adapter) |
-| Mobile product | React Native + native audio adapter + onnxruntime-react-native |
-| On-device OMR | ONNX Runtime — onnxruntime-web (harness) / onnxruntime-react-native (mobile) |
+| Mobile product | The same web app: PWA + a Bubblewrap-generated TWA (`apps/android/`) |
+| OMR runtime | ONNX Runtime — onnxruntime-node on Cloud Run (shipped) / onnxruntime-web (dev and gates) |
 | Model export | PyTorch → ONNX (TFLite only if needed) |
 
 ---
@@ -374,4 +387,4 @@ Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosme
 Web deps of note: `vexflow@5` (notation engraving; bundles the Bravura font, hence the large web
 bundle — acceptable for the web app).
 
-_Last updated: 2026-07-26. This file holds the evergreen plan only — architecture, phases, risks. Current state, numbers and history live in `docs/STATUS.md`, `docs/METRICS.md` and `docs/log/status-log.md` (see §7). The long dated log that used to end this file was folded into `docs/log/status-log.md`; its verbatim pre-refactor copy was deleted on 2026-09-06._
+_Last updated: 2026-10-08 (server, phone, mobile path; the rest is 2026-07-26). This file holds the evergreen plan only — architecture, phases, risks. Current state, numbers and history live in `docs/STATUS.md`, `docs/METRICS.md` and `docs/log/status-log.md` (see §7). The long dated log that used to end this file was folded into `docs/log/status-log.md`; its verbatim pre-refactor copy was deleted on 2026-09-06._

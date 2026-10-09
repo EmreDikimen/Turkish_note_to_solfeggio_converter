@@ -1,5 +1,5 @@
 /**
- * Build step 2 of W9: **prove the decode server matches the browser** (docs/mvp/deploy.md).
+ * Build step 2 of W9: **prove the decode server matches the browser** (docs/app/deploy.md).
  *
  * The browser is the reference, exactly as Python was the reference for the slicer port. The
  * difference is that this is a smoke test rather than a rung, and the reason is architectural:

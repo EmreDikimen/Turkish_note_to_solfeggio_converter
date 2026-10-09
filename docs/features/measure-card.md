@@ -7,7 +7,7 @@ updated: 2026-09-05
 > This is the fourth chapter of F3 — the one that is not an instrument. The three instruments are
 > [fingerboard.md](fingerboard.md), [kanun-view.md](kanun-view.md) and
 > [clarinet-view.md](clarinet-view.md); the track index is [README.md](README.md). Current state is
-> in [../STATUS.md](../STATUS.md). The editor itself is [../mvp/editor.md](../mvp/editor.md).
+> in [../STATUS.md](../STATUS.md). The editor itself is [app/editor.md](../app/editor.md).
 
 Draw the ONE bar that is sounding, beside the instrument — and let it be edited there.
 

@@ -1,7 +1,7 @@
 r"""Cut a DIAGNOSTIC review queue of the exam strips a model got wrong — gold beside its decode.
 
 WHAT IT IS FOR. The §3c ship call is a human judgement on an error classification
-(docs/rung3/round3-criteria.md). `error_taxonomy.py` gives the shape in aggregate; this puts the
+(docs/archive/rounds/round3-criteria.md). `error_taxonomy.py` gives the shape in aggregate; this puts the
 individual strips in front of a person, with the CROP, the GOLD and the MODEL'S DECODE on screen at
 once, worst-first, so "where is it weak" can be answered by looking rather than by inference.
 

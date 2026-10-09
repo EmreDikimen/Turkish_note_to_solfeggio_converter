@@ -5,7 +5,7 @@
  *
  * Environment-switchable constants in Python (`OMR_VPLACE`, `OMR_MEASURES_PER_STRIP`,
  * `OMR_EDGE_TRIM`, `OMR_WINDOW_MODE`) are frozen here at the values the decode caches on disk were
- * produced under, which is also what ships. Budget mode is NOT ported at all (docs/mvp/slicer-port.md).
+ * produced under, which is also what ships. Budget mode is NOT ported at all (docs/archive/phases/slicer-port.md).
  */
 
 // ---- target strip geometry the model was trained on (page_to_strips.py L32-37) ----------------

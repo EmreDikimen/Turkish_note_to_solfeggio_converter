@@ -5,12 +5,17 @@ audience: whoever is picking up a Round-3 item and needs its state and its traps
 
 updated: 2026-09-01
 
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
 > **This file does NOT state what is next.** The ordered table and the current next action live in
-> [../STATUS.md](../STATUS.md), which is the only file allowed to say either. This one holds the
+> [../STATUS.md](../../STATUS.md), which is the only file allowed to say either. This one holds the
 > per-item detail so that file can stay a summary.
 
-Split out of [../STATUS.md](../STATUS.md) on 2026-08-23 when it crossed the 400-line cap. The split
-is the one [../MAINTAINING.md](../MAINTAINING.md) asks for: **STATUS keeps current state and the
+Split out of [../STATUS.md](../../STATUS.md) on 2026-08-23 when it crossed the 400-line cap. The split
+is the one [../MAINTAINING.md](../../MAINTAINING.md) asks for: **STATUS keeps current state and the
 next action; work goes in the track doc it belongs to.** Nothing was dropped in the move.
 
 **B0. ✅ DONE 2026-08-31 — `examv3` IS FULLY LABELLED: 663 of 663 verdicted, all 64 pages
@@ -23,7 +28,7 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
 
    **The job as it stood:** ✅ **166 rows are read**: all 139 of `examv3-full` and all 27 `gold_conflict`.
    ✅ **UNPAUSED 2026-08-23** — it sat at 62 of 663 only because a slicer change would force a re-cut,
-   and the label-budget rail is now deferred to Round 4 ([../DECISIONS.md](../DECISIONS.md)), so the
+   and the label-budget rail is now deferred to Round 4 ([../DECISIONS.md](../../DECISIONS.md)), so the
    crops are stable and no row is spent twice. ⚠ A Round-4 re-cut will still cost something, but not
    everything: gold carries by measure span (**221 of 326** last rebuild, each a suggestion needing
    confirmation). **Label PAGE-COMPLETE** — the primary counts corrections per page, so a
@@ -34,13 +39,13 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    `over_budget`. ⚠ About **1 row in 9 is unwinnable at 59 ids** — the red OVER BUDGET line means
    `bad`, not a correction worth typing.
    ⏭ **Before the read**: re-score `round2-stage2-best` on the rebuilt exam, and settle what the 75%
-   floor means on a harder instrument. [rung3/exam.md](exam.md).
+   floor means on a harder instrument. [rung3/exam.md](../../rung3/exam.md).
 
 **B1. ✅ `batch3` IS CUT AND OPEN — 54 pages / 1,499 strips from the SCANNED tier** in `review_ui.py`
    (`batch3` tab, crop root `data/real/strips_v2`); 28 pages excluded over four rounds (11 handwritten,
    **17 stale = 24% of those checked**), 0 void. ⚠ **Training only** — the ranking selects the worst
    pages in its tier, so nothing cut here may become exam gold.
-   [rung3/labeling-queues.md](labeling-queues.md).
+   [rung3/labeling-queues.md](../../rung3/labeling-queues.md).
 
 **B2. ⏭ THE OWNER HAND-CORRECTS REAL LABELS — and the probe is IN: `batch3` pays better than any queue
    before it.** 114 of 1,499 judged, **66 fix / 39 ok / 9 bad ≈ 58% fix rate**, against ~30% in the
@@ -52,23 +57,23 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    false `\repstart`** — hand-payment for a hole the final render now closes, so expect the fix rate
    to fall once a model trained on that render reseeds the queue.
    ⚠ The 531 existing `fix` verdicts are **stranded on old crops**: they evidence bad auto-derived
-   labels, they are not corrections we can bank ([METRICS-SLICER-ROOTS.md](../METRICS-SLICER-ROOTS.md)).
+   labels, they are not corrections we can bank ([METRICS-SLICER-ROOTS.md](../../METRICS-SLICER-ROOTS.md)).
    ⚠ Only the **final** model consumes this work, so the arms never waited for it.
    ✅ **The promotion embargo is LIFTED (2026-08-20)** — both arms are read, so `promote_labels.py`
    and B8 are unblocked, and promoting *before* the final render is the point of B2.
 
 **B3. ✅ ARM 1 — THE SCAN PROFILE: RAN, NULL, DECIDED — nothing to do.** **`scan_share` stays OFF**
    (owner, 2026-08-19), which is its default. [rung3/scan-profile.md](scan-profile.md) · raw log
-   [round_3_scan_logs.md](../../round_3_scan_logs.md).
+   [log/raw/round_3_scan_logs.md](../../log/raw/round_3_scan_logs.md).
 
 **B4. ⛔ ARM 2 — ONE MEASURE PER STRIP: DROPPED, not deferred.** Reasoning in "Now", decision row in
-   [DECISIONS.md](../DECISIONS.md). ⚠ The **short-crop hole** is still the blocking item on the
-   crop-geometry axis ([METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md)).
+   [DECISIONS.md](../../DECISIONS.md). ⚠ The **short-crop hole** is still the blocking item on the
+   crop-geometry axis ([METRICS-GEOMETRY.md](../../METRICS-GEOMETRY.md)).
 
 **B5. ✅ ARM 2 — THE STACCATO DISTRACTOR: TRAINED, SCORED, IT PASSES, AND THE FLAG SHIPS** (see
    "Now"). Primary **72.7% → 0.0%** false dots, paired **60–0** (p = 1.7e-18); clause 2 passes, clause
    3 shows no price. **The first Round-3 arm to move its primary.**
-   [rung3/staccato-arm.md](staccato-arm.md) · [METRICS-UNSEEN.md](../METRICS-UNSEEN.md).
+   [rung3/staccato-arm.md](staccato-arm.md) · [METRICS-UNSEEN.md](../../METRICS-UNSEEN.md).
 
 **B6. ⏭ THE FINAL MODEL, then the exam, read ONCE. The render carries THREE flags and no more.**
    `--concave-tuplet` (a per-piece coin on print evidence, no recall claim), `--staccato-noise` (the
@@ -89,7 +94,7 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    of the three attributable instead of one.
    ⏭ **During training**: save **two** checkpoints, one under the current selector and one selected on
    a free-running real metric, and choose between them on `_realval_v2` **before** the exam
-   ([BACKLOG.md](../BACKLOG.md) item 3).
+   ([BACKLOG.md](../../BACKLOG.md) item 3).
    ⏭ **Before the read**: B0 must be done, and `round2-stage2-best` re-scored on the grown exam.
    ⏭ **At the read**: add one free column — split `\tup3` recall by first-in-strip vs later, which
    settles the tuplet position lead over the exam's 55 groups ([rung3/tuplets.md](tuplets.md)) —
@@ -104,13 +109,13 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    instrumentals** — sirto, longa, saz semaisi, the Avni Anıl page — which meet two known blind spots
    at once. ⚠ **Collecting the second does not fix it**: the same 59-id budget drops the new pages, so
    it is paired with B9 or it buys drops. Then re-run `build_tuplet_val.py`; today's pool is
-   neyzen-heavy, 24 of 28 strips. Sources are listed once, in [DECISIONS.md](../DECISIONS.md). ⚠ Read
-   each licence before redistributing ([THIRD-PARTY.md](../THIRD-PARTY.md)); keep refusing exam pieces.
+   neyzen-heavy, 24 of 28 strips. Sources are listed once, in [DECISIONS.md](../../DECISIONS.md). ⚠ Read
+   each licence before redistributing ([THIRD-PARTY.md](../../THIRD-PARTY.md)); keep refusing exam pieces.
 
 **B9. ⏭ MEASURE THE 59-id DECODER BUDGET — a script, not a change.** ⚠ Read it beside the 2026-08-23
    finding that the 59 is the **emitter's training gate, not an inference cap**: `MAX_TOKENS` is 100
    and `hit_cap` fired on 0 of 202 misfilled strips, so the model stops on its own
-   ([../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)).
+   ([../METRICS-SLICER-WINDOWS.md](../../METRICS-SLICER-WINDOWS.md)).
 
    `MAX_IDS = 59` exists because the base weights' `generation_config.max_length` is **60**: a setting,
    not an architectural limit. Run the real tokenizer over the existing drop lists and report how many
@@ -119,7 +124,7 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    and 2,108 over-budget training drops. ⛔ **The measurement is Round 3; raising the budget is Round
    4** — the cost side is unpriced (decode steps in the browser and on Cloud Run, training memory) and
    it would move every pool, every manifest and the shipped latency at once.
-   [BACKLOG.md](../BACKLOG.md) item 7.
+   [BACKLOG.md](../../BACKLOG.md) item 7.
 
 **B7. The content work in `select_pieces.py`** — the eighth/quarter-note mix and bar-line density
    (owner, 2026-07-27: these only; ties and accidentals stay out). **Not cancelled and not superseded
@@ -137,7 +142,7 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    accepted by the owner on evidence: in the random 201-row audit **41 rows had `label == decode` and
    a human read all 41 as `ok` — 0 wrong**. ⛔ **`\sig` is the measured exception** — `unaccept_sig.py`
    reverted machine verdicts on signature-bearing rows and the owner then corrected **12, all 12
-   carrying a `\sig` block** ([BACKLOG.md](../BACKLOG.md) item 9). ⭐ **The 1,442 human-fix carry
+   carrying a `\sig` block** ([BACKLOG.md](../../BACKLOG.md) item 9). ⭐ **The 1,442 human-fix carry
    turned out to be already done by hand**: of the 198 span-matched fixes disagreeing with b8's
    label, **122 the owner had fixed identically** (two independent reads agreeing 122 of 140 = 87%).
    ⏭ **`b8-review`'s 450 promotable old fixes go to ROUND 4** (owner). ✅ Promoted: **3,936 rows, 3
@@ -145,8 +150,8 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    two pieces whose OTHER printed engraving the exam grades, so the pool is **3,929** (3,539
    train-side). The emitter had excluded exam pieces by IMAGE STEM while `train.py` guards on the
    SymbTr id; both now use the SymbTr id. `data/real/rung3/excluded_exam_pieces.txt` ·
-   [../STATUS.md](../STATUS.md).
-   [METRICS-B8.md](../METRICS-B8.md).
+   [../STATUS.md](../../STATUS.md).
+   [METRICS-B8.md](../../METRICS-B8.md).
 
 **B8. ✅ THE RE-EMIT RAN (2026-08-21) — `data/real/rung3/strips_b8`.** 1,293 non-exam matched pieces,
    current crops (`strips_v2`), `round2-stage2-best` as hint AND gate, **37 minutes** on the laptop:
@@ -157,22 +162,22 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    ✅ **(a) `b8-audit` is READ — all 201 rows, 27 fix / 174 ok = 13.4% wrong.** Worth reading: the
    referee trained on these very labels, and v2 sampled 2 of 63 before a later read found 51% wrong.
    ⚠ Not a clean bill — repeat structure is the biggest class (10 of 26) and 2 signature errors are
-   [BACKLOG.md](../BACKLOG.md) item 9 inside a training pool. [METRICS-CORPUS.md](../METRICS-CORPUS.md).
+   [BACKLOG.md](../../BACKLOG.md) item 9 inside a training pool. [METRICS-CORPUS.md](../../METRICS-CORPUS.md).
    ⭐ **(b) carry the 1,442 human `fix` labels across** — they do **not** come back by themselves. 951
    are recoverable (445 land on an accepted strip covering the same measures, 506 sit in `b8-review`);
    ⛔ carry them by **measure span**, never by filename — 248 match a new strip's *name* while holding
    different music. The old pools are untouched on disk.
    ⭐ **The drop table**: `split_wide` 10,226 + `over_budget` 4,012 = **14,238** against 7,446 for
    alignment — the **budget rail is now the binding limit**, which is why step 4 moved up. Numbers and
-   the 98% self-consistency check: [METRICS-CORPUS.md](../METRICS-CORPUS.md) · [rung3/labeling-queues.md](labeling-queues.md).
-   ⛔ **The exam is not re-emitted** and keeps the neutral July decode ([DECISIONS.md](../DECISIONS.md)).
+   the 98% self-consistency check: [METRICS-CORPUS.md](../../METRICS-CORPUS.md) · [rung3/labeling-queues.md](../../rung3/labeling-queues.md).
+   ⛔ **The exam is not re-emitted** and keeps the neutral July decode ([DECISIONS.md](../../DECISIONS.md)).
 
 **B10. ⛔ RUN AND ANSWERED 2026-09-02 — IT BOUGHT NOTHING MEASURABLE.** Run B trained on
    `strips_b8` + `strips_oldhuman` at `:4` and lands **645 edits against `r3-final-stage2-last`'s 667**
    on 262 paired `_realval_v2` strips (CI [−0.218, +0.046], p = 0.736), and −0.042 against Run A
    (p = 0.860). ⚠ **A null, not a refutation**: ±0.13 edits/strip of CI half-width could hide a small
    gain. The inventory below stands as the record of what was added.
-   [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)
+   [../METRICS-ROUND3-RUNS.md](../../METRICS-ROUND3-RUNS.md)
 
    **✅ BUILT 2026-09-01 — `strips_oldhuman`, the pool of EVERY hand-verified real strip** (owner,
    2026-09-01, lifting the 2026-08-31 ban for the next run only). ⭐ **The inventory, counting human
@@ -192,7 +197,7 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    ⭐ **What the decision unlocks is the 1,435 retired-crop strips.** ⚠ The `batch*` / `reslice-all`
    rows are a **different** blocker and this decision does not touch them: they sit on strips the
    emitter dropped as `split_wide` / `over_budget` / `row_unaligned`, so making them usable IS the
-   label-budget rail ([../BACKLOG.md](../BACKLOG.md) item 0). ⚠ `b8-review`'s 4,737 rows are
+   label-budget rail ([../BACKLOG.md](../../BACKLOG.md) item 0). ⚠ `b8-review`'s 4,737 rows are
    unverdicted — out of scope until someone reads them.
 
    ⚠ **The overlap must be measured before the run, not after.** `carry_old_fixes.py` already located
@@ -212,8 +217,8 @@ next action; work goes in the track doc it belongs to.** Nothing was dropped in 
    ⚠ **The exam guard applies to every pool**: `emit_strip_labels.py`'s SymbTr-id filter (2026-08-31)
    must be re-run over the retired pools, or `promote_labels.py`'s backstop must catch them. The
    retired pools were hand-cleaned once, on 2026-07-26, by a procedure that did not fix the producer.
-   [../DECISIONS.md](../DECISIONS.md) · [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+   [../DECISIONS.md](../../DECISIONS.md) · [../METRICS-CORPUS.md](../../METRICS-CORPUS.md).
 
 ⚠ **The musical-form lead is DEAD** (owner retest, 2026-08-17) and must not be re-derived
-([log/superseded.md](../log/superseded.md)). ⚠ **A fourth realism arm does not follow from three near
-misses** — the three nulls and the one pass are the reason ([rung3/levers.md](levers.md)).
+([log/superseded.md](../../log/superseded.md)). ⚠ **A fourth realism arm does not follow from three near
+misses** — the three nulls and the one pass are the reason ([levers.md](levers.md)).

@@ -67,8 +67,8 @@ DIFFERENT, **35 of 36** really are different.
 | not produced at all | — | 151 |
 
 ⭐ **The owner had already redone most of it by hand.** Of the **198** span-matched fixes that
-disagree with b8's own label inside `b8-full`: **122 he had fixed identically**, 18 differently, 22 he
-read as `ok`, 33 were still machine drafts, 3 bad. So two independent human reads of the same music,
+disagree with b8's own label inside `b8-full`: **122 the owner had fixed identically**, 18 differently, 22 the
+owner read as `ok`, 33 were still machine drafts, 3 bad. So two independent human reads of the same music,
 on different crops months apart, agree **122 of 140 = 87%** — the strongest quality signal either
 label set has. ⛔ **A span match is the same BARS, never the same pixels**: of the 1,215 crops
 carrying a hint, **0 are byte-identical** and **77.7% changed size** (median +9 px wide; height

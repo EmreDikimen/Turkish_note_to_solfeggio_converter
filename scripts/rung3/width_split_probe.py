@@ -8,7 +8,7 @@ the per-token error rate (edits divided by gold ids, so note count is already co
                          1200+        0.082
 
 Both tails are expensive. The wide tail is the bigger one in absolute terms — 45 strips carrying
-161 of the exam's 562 edits — and nothing in docs/rung3/round3.md mentions it. The suspected cause
+161 of the exam's 562 edits — and nothing in docs/archive/rounds/round3.md mentions it. The suspected cause
 is the one `scripts/rung3/sharp_width_test.py` was written for: the encoder's input box is fixed, so
 the wider a strip is, the more it is shrunk on the way in, and thin detail merges.
 

@@ -1,12 +1,12 @@
 # Feature track — what to build after the beta
 
-purpose: the plan for the post-beta feature ideas (instrument voices, usul percussion, the fingerboard tab)
-audience: agents and the owner working the product side, once W10 is out
-updated: 2026-08-29
+purpose: the feature track — instrument voices, usul percussion, the instrument views, stored pages, the visit counter — plus the index of the other app-wide product docs in this folder (phone, look, Play Store)
+audience: agents and the owner working the product side
+updated: 2026-10-08
 
 > Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 > Decisions: [../DECISIONS.md](../DECISIONS.md). Licences: [../THIRD-PARTY.md](../THIRD-PARTY.md).
-> The MVP ladder that produced the beta: [../mvp/README.md](../mvp/README.md).
+> The MVP ladder that produced the beta: [archive/phases/mvp.md](../archive/phases/mvp.md).
 
 ## Why this track exists
 
@@ -25,10 +25,19 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 | **F0** | Look-ahead scheduler + one long-lived `AudioContext` | small | no | none — enabling refactor for F1/F2 | ✅ **DONE 2026-08-10** |
 | **F1** | Instrument voices (violin, clarinet, kanun first) | medium | no | asset measurement, not licences | ✅ **DONE 2026-08-14** — clarinet, violin and kanun; uploaded, deployed, heard |
 | **F2** | Usul percussion (darbuka, tef) | **smallest** | no | correct stroke patterns | ✅ **DONE 2026-08-11** — real CC0 darbuka and bendir, picker included, stroke tables verified by ear. Nothing open |
-| **F3** | Instrument tab — where to put your finger / where the mandals stand / how far the lip relaxes, in time | medium | no | calibration + a string-choice rule (violin); an instrument data table (kanun); a fingering table + the lip-bend bound (clarinet) | ✅ **VIOLIN DONE 2026-08-16**, ✅ **KANUN DONE 2026-08-29**; neither has been **seen by a person** yet. 🚧 **SOL KLARNET started 2026-08-29** — artwork landed, view not built |
+| **F3** | Instrument tab — where to put your finger / where the mandals stand / how far the lip relaxes, in time | medium | no | calibration + a string-choice rule (violin); an instrument data table (kanun); a fingering table + the lip-bend bound (clarinet) | ✅ **VIOLIN DONE 2026-08-16** (finger numbers 2026-10-01), ✅ **KANUN DONE 2026-08-29**, ✅ **SOL KLARNET DONE 2026-09-04** (lip meter; altissimo Re♭6–Sol6 in the table). All deployed; none has been **judged by a person's eye** yet (MANUAL_CHECKS-FEATURES checks 25–26) |
 | **F5** | Remember the pages this browser has already read | **small** | no | none — it is browser storage, not a database | ✅ **DONE 2026-09-05** — a decoded page and its edits survive a refresh; 30 pages, oldest dropped |
 | **F6** | Count the visits to the deployed site, anonymously, and show the owner a dashboard | **small** | Netlify Functions | none — no new service and no new bill; the privacy contract is the design | ✅ **BUILT 2026-09-05** — anonymous, no IP stored, dashboard never published. Needs `STATS_SALT` + `STATS_TOKEN` set on the site: [visit-stats.md](visit-stats.md) |
 | **F4** | Listening mirror — a live microtonal tuner drawn on F3's fingerboard | medium | no | pitch-tracker steadiness at 22.6 cents/koma, unmeasured | ⏸ **PARKED 2026-08-25** (owner) — after the public launch; **not** audio-to-score. Reasoning and what was ruled out: [../BACKLOG.md](../BACKLOG.md) |
+
+**The other product docs in this folder** — app-wide, not numbered features:
+
+| | Doc | State |
+|---|---|---|
+| The phone | [phone.md](phone.md) | ✅ rebuilt 2026-09-26..28 and deployed; the phone shell's own component tree is still owed ([../STATUS.md](../STATUS.md)) |
+| The look (Tezhip) | [look.md](look.md) | ✅ built 2026-09-30, deployed 2026-10-05 with the logo and the backdrop |
+| The Play Store app | [play-store.md](play-store.md) | 🚧 package built 2026-10-05; closed test not started ([../STATUS.md](../STATUS.md)) |
+| Saving the score (PNG / PDF) | [../DECISIONS.md](../DECISIONS.md) (2026-09-27) | ✅ deployed 2026-09-28 |
 
 ⚠ **F5 is out of order and that is not an oversight** — the owner raised it on 2026-09-05, after F3, and it is the first feature on this track that is not about sound or drawing. It answers a cost the reader pays and nobody had counted: a page read is 35–55 s, and a refresh used to spend it again.
 
@@ -289,10 +298,10 @@ string-choice rule, and why a position line is tape rather than a fret.
 **Kanun** (built 2026-08-29) → **[kanun-view.md](kanun-view.md)**: the 26 courses, the mandal
 research, the two-pass plan, and why the instrument is drawn rather than photographed.
 
-**Sol klarnet** (artwork landed 2026-08-29, view NOT built) → **[clarinet-view.md](clarinet-view.md)**:
-the CC0 layered schematic and why no photograph was taken, and ⭐ the **lip bar** — the owner's
-answer to the thing that blocked winds all along, that a koma on a clarinet is made by relaxing the
-lip and not by a fingering. Four inputs are still owed before it can be built; they are listed there.
+**Sol klarnet** (built 2026-08-29..09-04) → **[clarinet-view.md](clarinet-view.md)**: the licensed
+photograph of a German-system clarinet (the CC0 schematic was withdrawn the day it was taken), the
+fingering table, and ⭐ the **lip meter** — the owner's answer to the thing that blocked winds all
+along, that a koma on a clarinet is made by relaxing the lip and not by a fingering.
 
 **The bar being played** (built 2026-09-04, edit path revised 2026-09-05) →
 **[measure-card.md](measure-card.md)**: the fourth chapter, and the one that is not an instrument.

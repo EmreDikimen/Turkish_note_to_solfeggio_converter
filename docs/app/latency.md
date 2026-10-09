@@ -3,7 +3,7 @@
 purpose: the measured options for cutting the time a friend waits for a page, and the honest cost of each; owns the latency decisions the deployed server raised
 audience: whoever picks up "make it faster" — the numbers here are measured, not estimated
 
-updated: 2026-08-08
+updated: 2026-10-08
 
 > Deployment, hosting and the bill: [deploy.md](deploy.md). Every number below also lives in
 > [../METRICS.md](../METRICS.md). Current state and next action: [../STATUS.md](../STATUS.md).
@@ -94,22 +94,24 @@ now **waits out a warming container** instead of falling back on its 503 (up to 
 usually ready by the time a file has been chosen. Client-only — the server's contract did not change,
 so it needed no Cloud Run redeploy. The retry is the correctness half; the ping only hides the wait.
 ⚠ **Only a `ready: false` 503 is waited on.** A load that actually failed (`model failed to load`),
-and every other failure, still falls back at once — waiting on those would strand a user behind a
-broken container for 40 s. Both halves are pinned by `npm run check:coldstart`.
+and every other failure, fell back at once — waiting on those would strand a user behind a broken
+container. ⛔ **Since 2026-09-04 there is no fallback**: those failures raise `server-unavailable`,
+and `WARMUP_WAIT_MS` was raised 40 s → **120 s** after a cold start read 38.2 s. Both halves are pinned by `npm run check:coldstart`.
 
 ### What option 3 actually requires
 
 Listed because "just send four requests" hides all of it:
 
-- **`--max-instances` must rise** (3 → ~8). That number is currently the ceiling on a runaway bill,
+- **`--max-instances` must rise** (it was 3 when this was written; it is **10 since 2026-09-04**, for
+  a different reason — over-capacity requests queue now that nothing falls back). That number is currently the ceiling on a runaway bill,
   so raising it widens the worst case. It is still bounded, and the budget alert is set.
 - **The rate limit counts REQUESTS, not strips.** A page becoming four requests means a user hits
   the 20/min cap after five pages. It has to count strips instead, or the limit becomes a bug.
 - **Each new instance pays its own 10.6 s cold start**, so the first page after idle gains far less
   than the steady-state figure. Options 1 and 2 are what make option 3 look good in practice.
 - **Partial failure needs a policy.** One chunk failing must not produce a half-read page: either
-  retry that chunk or fall back to the browser for the whole page. Today a failure is all-or-nothing
-  and the fallback handles it.
+  retry that chunk or fail the whole page. Today a failure is all-or-nothing and, since 2026-09-04,
+  shows `server-unavailable`.
 - **The chunks must stitch back to exactly the same score.** This is the silent-breakage risk — a
   wrong reassembly does not throw, it produces subtly wrong music. Any implementation needs a check
   that a chunked page equals an unchunked one token for token, in the manner of `parity:server`.

@@ -18,7 +18,7 @@ windowing retune overturned its own premise once measured. Measure against real 
 ⚠ **The crop-geometry rails are a Round-3 lever and they are NOT shared with the renderer.**
 `MEASURES_PER_STRIP` / `MAX_STRIP_W` (both env-switchable: `OMR_MEASURES_PER_STRIP`,
 `OMR_MAX_STRIP_W`) cut real pages; the renderer packs synthetic strips by measures and label tokens
-with no width rail at all. See [rung3/levers.md](rung3/levers.md), Lever 1.
+with no width rail at all. See [archive/rounds/levers.md](archive/rounds/levers.md), Lever 1.
 
 ## The label budget is a PRODUCT bug, not a labelling one (2026-08-22)
 
@@ -128,7 +128,7 @@ is an unbroken vertical run over ~2 staff spaces and the browser's ±1 grayscale
 create or destroy one, while an inked *column* is one pixel's worth of ink and flips freely at the
 Otsu threshold. So the bar proves the **stem counts are identical** and charges nothing for the
 residue that the row pixel-sum drift has always reported as never zero. Design and its trap:
-[mvp/slicer-port.md](mvp/slicer-port.md).
+[archive/phases/slicer-port.md](archive/phases/slicer-port.md).
 
 ⚠ **Parity is not accuracy.** It says the browser does what Python does. Whether the rail produces
 *better notes* is the measure-fill read below, and it is a separate question.

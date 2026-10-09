@@ -25,7 +25,7 @@
  * yet. The app applies the deltas AFTER any user transpose, keyed by event index, so the user's
  * transpose control cannot desync the rules from the spelling they were read from.
  *
- * The numbers, their sources, and what was deliberately left out: docs/mvp/makam.md.
+ * The numbers, their sources, and what was deliberately left out: docs/app/makam.md.
  */
 
 import type { NoteModelDocument } from "./types";
@@ -148,7 +148,7 @@ export interface IntonationRule {
   /** Signed commas added to the SOUNDING koma. Fractional on purpose — audio is float. */
   deltaCommas: number;
   /** Why, in plain Turkish — this is shown in the makam prompt. The table is its own
-   *  documentation; the English rationale and the sources live in docs/mvp/makam.md. */
+   *  documentation; the English rationale and the sources live in docs/app/makam.md. */
   why: string;
 }
 

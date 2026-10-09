@@ -1,4 +1,4 @@
-r"""Group a model's mistakes by KIND, so a human can decide from them (docs/rung3/round3-criteria.md §3c).
+r"""Group a model's mistakes by KIND, so a human can decide from them (docs/archive/rounds/round3-criteria.md §3c).
 
 WHY THIS EXISTS. §3c was re-settled on 2026-08-31: the numeric floor stopped being the automatic
 ship gate, and the launch call is taken by the owner *after reading an error classification*. Without

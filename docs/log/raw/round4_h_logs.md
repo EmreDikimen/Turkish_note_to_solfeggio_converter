@@ -5,7 +5,7 @@ audience: anyone re-reading how the vocabulary A/B's H arm actually trained
 updated: 2026-09-17
 
 > Stage 1 (6,000 steps, synthetic) then stage 2 (4,000 steps, `strips_h1:4`, from stage-1 `best`). Read beside
-> [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md). ⛔ Its losses are per H token and cannot be
+> [src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md). ⛔ Its losses are per H token and cannot be
 > set beside an old-vocabulary run's.
 
 ## Stage 1

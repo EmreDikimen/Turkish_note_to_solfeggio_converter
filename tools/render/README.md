@@ -242,7 +242,7 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       notehead carrying both marks is the only example that isolates position. ⚠ `staccatoseed` is
       **not** a manifest field (like `legacyTuplet`), so the two arms' manifests stay byte-identical
       and diffable. ⚠ `STACCATO_RATE` is chosen, not measured. Floors and the account:
-      `docs/rung3/levers.md` Lever 6.
+      `docs/archive/rounds/levers.md` Lever 6.
 - [x] **A THIRD tuplet mark — `--concave-tuplet` (2026-08-19), OFF by default.** A **continuous** arc
       with the italic "3" set **inside its concavity**, between the curve and the noteheads, on a
       per-piece coin (`TUPLET_MARK_CONCAVE.share`). It exists because the owner produced two real

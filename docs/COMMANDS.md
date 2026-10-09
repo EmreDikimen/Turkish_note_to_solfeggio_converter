@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-09-05
+updated: 2026-10-08
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -52,7 +52,7 @@ npx tsx tools/core/clarinet-editor.ts out.html  # …and the editor that produce
 ### The browser decode — gates and parity
 
 ```bash
-npm run gate:browser                 # in-browser ONNX gate, headless — expect 27/28
+npm run gate:browser                 # in-browser ONNX gate, headless — expect 26/28 (docs/METRICS-ONNX.md)
 npm run probe:cv                     # opencv.js vs OpenCV-Python parity (MVP W0)
 npm run check:logprobs               # browser confidence signal vs onnx_parity.py (MVP W1)
 npm run smoke:app                    # real app: strip crops in → playable score out (MVP W2)
@@ -73,17 +73,17 @@ npm run decode:pool -- --pool <dir> --out f.json       # decode a flat strip poo
 
 **It is live**: app <https://komavision.netlify.app> (Netlify), weights `Beyaban/omr-weights`
 (Hugging Face Hub), decode on Cloud Run behind `ALLOWED_ORIGINS`. Setup recipe and its two traps:
-[mvp/hosting-setup.md](mvp/hosting-setup.md).
+[app/hosting-setup.md](app/hosting-setup.md).
 
 ⚠ **DEPLOYING IS NOT HOW YOU GET THE WORK OFF THIS MACHINE — `npm run dev:cloud` is** (owner asked
 2026-08-11, wanting a cool laptop rather than a public URL). It is `dev:web` with `VITE_DECODE_URL`
 pointed at the live Cloud Run service, which works from localhost because `:5173` and `:4173` are in
 `ALLOWED_ORIGINS`. Verified end to end: `data-where="server"`, 27.3 s of decode on Cloud Run against
 1.6 s of slicing locally. Plain `dev:web` sets no decode URL, so it decodes **in your browser** and
-heats the Mac — that is the difference between the two lines above. ⚠ The fallback still exists: if
-the service is cold past its wait or down, the read silently moves to this machine and pulls 211 MB
-of weights. The status line says which happened (`sunucuda okundu` vs `kendi cihazınızda okundu`) —
-believe it, not the elapsed time.
+heats the Mac — that is the difference between the two lines above. ⛔ There is no fallback any more
+(2026-09-04): if the service is cold past its 120 s wait or down, `dev:cloud` shows
+`server-unavailable` and reads nothing — it never quietly moves the read onto this machine. The raw
+decode inspector says where a page was read (`sunucuda okundu` / `bu bilgisayarda okundu`).
 
 ⭐ **LOOKING AT IT ON A REAL PHONE: EXPOSE THE DEV SERVER, THEN ADD ITS ORIGIN TO CLOUD RUN.** The
 phone has to reach the Mac and the Mac's origin has to be on the decode server's allowlist — and

@@ -2,13 +2,26 @@
 
 purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
 audience: agents and the owner working the real-page track
-updated: 2026-10-04
+updated: 2026-10-08
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
 > [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md), [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)
 > and [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md); decisions in [../DECISIONS.md](../DECISIONS.md).
-> Plain-English version: [../OVERVIEW-ROUND4.md](../OVERVIEW-ROUND4.md).
+
+## Where the round stands (2026-10-08)
+
+- ✅ **Steps 1–6 are done** (each step below says how it ended). Both arms trained on Colab
+  2026-09-16/17. ⛔ **Scheme H is a NULL** on every pool, the dense one included. ⭐ **The control
+  `r4-ctl-stage2-last` leads the previous live model on dense strips** (suggestive, not proven), and
+  the owner made it the **live model on 2026-09-28** — a judgement call like `r3a` before it, **not an
+  exam pass**. Numbers: [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+- ⛔ **Step 7 (beam search) is dropped.** ⏭ **Step 8 is what is left**: the `handtest` queue (457 of
+  515 rows unread), and `examv3` read **once** — on the model the owner names for the exam. ⛔ An H
+  model cannot be read on the exam until `eval_omr.py` gains the old-id mode.
+- The signed bar the exam grades is Round 3's: **≥75% of exam pages needing ≤5 corrections**
+  ([../archive/rounds/round3-criteria.md](../archive/rounds/round3-criteria.md)), reported with its
+  interval (~±12 pp at the 63 pages Round 3 was graded on).
 
 ## Why this round exists
 
@@ -23,9 +36,9 @@ visibly better than both `r3-final-stage2-last` and Round 2 in the app. Both can
 262 strips, so its CI half-width of ~±0.13 edits/strip hides any gain under ~5%; and the exam drops
 **41%** of its candidates — the wide and dense strips — which is exactly what a whole page in the app
 shows. The instruments still earned their keep: they caught the `\tie` illusion and three wrong
-checkpoint picks. ⏭ **Recommended, not decided:** make the hand test repeatable — 10–15 fixed pages
-outside the exam, every model on the same pages, corrections counted per page. That is the
-page-level instrument this project has never had ([../BACKLOG.md](../BACKLOG.md) item 6 says why).
+checkpoint picks. ✅ **The hand test is now repeatable**: the owner supplied **20 fixed pages** on
+2026-09-06, decoded into the review queue `handtest` — every model on the same pages, corrections
+counted per page ([../METRICS-HANDTEST.md](../METRICS-HANDTEST.md)). It is still unread.
 
 Round 4 therefore **draws nothing new**. It changes what the model is *allowed to learn from* (the
 dense half of every real page), what it is *graded against* (the signature answer key), *how its
@@ -39,9 +52,9 @@ checkpoint is chosen*, and it checks whether a two-website corpus generalises.
 | 2 | **The signature is the largest error class and its gold is partly the model's own vote.** | signature 53 of 270 edits (17.5%); the vote overwrote 24/45 exam and 406/938 nota pieces; every human correction went koma→küçük, 10:0 | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) · [../BACKLOG.md](../BACKLOG.md) item 9 |
 | 3 | **The checkpoint selector picked wrong 3 of 3 times.** It blends a loss that is 92% synthetic, and loss does not predict corrections. | Run A: loss −6%, corrections 0 (15 better / 15 worse) | [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md) · [../BACKLOG.md](../BACKLOG.md) item 3 |
 | 4 | **Two websites, exam included.** | 1,055 neyzen + 1,000 notaarsivleri, nothing else | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) · [../BACKLOG.md](../BACKLOG.md) item 10 |
-| 5 | **Realism renders do nothing; holes respond.** | three realism arms null; staccato hole 72.7% → 0.0% | [levers.md](levers.md) |
+| 5 | **Realism renders do nothing; holes respond.** | three realism arms null; staccato hole 72.7% → 0.0% | [levers.md](../archive/rounds/levers.md) |
 | 6 | **Labels are noisy and the pitch/duration axis was never audited.** | b8 auto-accepts 12.9% wrong when read; signature rows worse | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) |
-| 7 | **The recipe has never used weight averaging (EMA) or label smoothing.** (Beam search sat on this row; ⛔ dropped by the owner 2026-10-04.) | — | [levers.md](levers.md) Levers 2 and 5 |
+| 7 | **The recipe has never used weight averaging (EMA) or label smoothing.** (Beam search sat on this row; ⛔ dropped by the owner 2026-10-04.) | — | [levers.md](../archive/rounds/levers.md) Levers 2 and 5 |
 
 ## What the owner decided on 2026-09-03
 
@@ -94,7 +107,8 @@ model. **Examples per token** is.
   compositional pitches segment identically at every duration they appear with, and split evidence
   gets *better* than today's: 1.277% of notes take a minority id form now, 0.003% under H.
 - ⚠ Two files carry `ADDED_TOKENS` by hand — `src/vision/data.py` and `tools/render/lilypond.ts` —
-  and `check_token_drift` must pass. `audit_coverage.MAX_IDS` stays 59.
+  and `check_token_drift` must pass. The id gate moves WITH the vocabulary:
+  `MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}` in `audit_coverage.py` and the emitter (step 5).
 
 **What the change does NOT do.** The octave count below says pitch errors are one line or space
 off, not an octave off; a fused token cannot fix a height misread. The case is **yield**: 3,508 of
@@ -113,8 +127,8 @@ one happens **3 times in 262 strips**. The owner's "nadiren" is measured.
 A synthetic strip was packed to fit 57 **old** ids; under scheme H it is ~33 ids. A real strip after
 the re-emit fills up to 59 **new** ids. So the model would see long, dense labels **only in the real
 pool** and never in synthetic. ⏭ Measure both id-length distributions with the scheme-H tokenizer
-before training (no GPU, minutes). If the real tail is absent from synthetic, that is the only reason
-to revisit the no-render decision; otherwise it stands.
+before training (no GPU, minutes). ✅ **Measured in step 1**: the tail IS absent from synthetic, and
+the no-render decision stood anyway — see step 1 for why.
 
 ## The order
 
@@ -146,8 +160,10 @@ to revisit the no-render decision; otherwise it stands.
    - `--label-smoothing` (train loss only — `evaluate` stays unsmoothed, so `val_loss` keeps meaning
      what it meant) and `--ema-decay` (logs the average's own corrections, saves `ema-best` /
      `ema-last`). Both **off by default**: they are paired arms, not defaults.
-   ⚠ **Built, not measured.** No arm has trained with it yet.
-3. 🔶 **The signature vote — MEASURED 2026-09-06, the rule change still owed.**
+   ✅ **Used in step 6**: both arms picked a `best-edits` checkpoint, and in both it TIED with `last`
+   — so what the selector buys is still unpriced ([../BACKLOG.md](../BACKLOG.md) item 3). EMA and
+   label smoothing were NOT used; they stay off-by-default arms.
+3. ✅ **The signature vote — MEASURED 2026-09-06, and RULE D chosen and built the same day.**
    `scripts/rung3/sig_vote_audit.py`, minutes, nothing re-decoded. Every number is in
    [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md); three things change the plan:
    - **The vote overwrote the signature on 67% of `strips_b8`'s aligned pieces** (826 of 1,236) —
@@ -161,12 +177,14 @@ to revisit the no-render decision; otherwise it stands.
      deleted them** — the model did not see an accidental, and its silence overwrote a correct
      entry. The koma/küçük confusion is real (`\kucukSharp` → `\komaSharp` is the top direction at
      30) but it is the second story, not the first.
-   ⏭ **Owner decision owed before the rule is written**: item 9 proposed sending a piece to review
-   where the vote disagrees with the makam table (**145 pieces**, ~765 row-start strips). That rule
-   cannot see the dropped-entry class, and 30 pieces have no table entry at all. The wider rule —
-   review wherever the vote changes the derivation's CONTENT — is **690 pieces**, ~4,668 strips.
-   Volumes and the middle options: [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
-4. 🔶 **The third-source probe — COLLECTED 2026-09-06, nothing decoded yet.**
+   The owner's choice was neither the narrow rule (145 pieces) nor the wide one (690): **rule D** —
+   review a piece when the vote **deletes or changes** an accidental AND the result is not the makam
+   table's **majority** spelling (224 pieces). Built in `emit_strip_labels.py` (reason
+   `sig_table_conflict`) and **applied in the `strips_h1` emit** (step 5): 54 rows went to review and
+   were read. ⚠ The exam was not re-emitted, so its `\sig` blocks still carry the old override.
+   [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
+4. ✅ **The third-source probe — COLLECTED and READ 2026-09-06: a null.** ⏭ Only more erdincbal
+   pages can turn it into a verdict.
    `scripts/rung3/collect_thirdsource.py`; the design, the sources and the traps are in
    **[third-source.md](third-source.md)**. **36 pieces / 53 pages / 1,108 strips** from three sites,
    all under `data/real/rung3/_thirdsource/` and deliberately outside `manifest.csv` and `matched/`.
@@ -189,7 +207,7 @@ to revisit the no-render decision; otherwise it stands.
    a different engraving house packs more music into a staff row, which lands on this round's own
    label-budget rail. ⏭ Growing the probe is the only route to a verdict; more erdincbal pages cost
    no hand labelling (75 SymbTr accepts exist, 14 used).
-5. 🔶 **Re-emit the real pools — THE CODE IS COMPLETE (2026-09-07), the re-emit is NOT run.**
+5. ✅ **Re-emit the real pools — BUILT AND RUN 2026-09-07** (`strips_h1`; promoted 2026-09-16).
    Under scheme H, **re-cutting only the strips still over the gate under H** — and ⭐ **that gate is
    80 ids, not 59** (owner, 2026-09-07), which takes the re-cut from 504 windows to **148** and lets
    356 dense strips train whole ([../DECISIONS.md](../DECISIONS.md)). ⛔ **NOT the whole pool with a balanced packer, as this step
@@ -223,10 +241,12 @@ to revisit the no-render decision; otherwise it stands.
    - **The emitter's half (2026-09-07).** `emit_strip_labels.py` gained two flags, and they are
      deliberately **two runs, not one**: the rail is a FILE the owner can read before any crop
      moves.
-     - `--vocab {old,h}` picks the tokenizer the 59-id gate counts with — **the budget gate only**.
+     - `--vocab {old,h}` picks the tokenizer the budget gate counts with — **the budget gate only**
+       (59 ids under `old`, 80 under `h`: `MAX_IDS_BY_VOCAB`).
        ⛔ Alignment keeps the decode model's own tokenizer: adding H's ids to it would re-segment
        the DECODED text too, and every `nd` number in the script lives in that model's id space.
-       `MAX_IDS` (59) is a property of the trained model and does not move with the vocabulary.
+       ⚠ This line first said the 59 "does not move with the vocabulary"; the owner's 2026-09-07
+       budget call made it move (80 under H).
      - `--rail-plan` prices **every candidate sub-range** of every over-budget window with a second
        `labels-cli --ranges` batch and writes `emit_rail.json` (`pages → system → "m_from:m_to" →
        ids`). It cuts nothing and re-decodes nothing.
@@ -329,7 +349,10 @@ to revisit the no-render decision; otherwise it stands.
 7. ⛔ **Beam search — DROPPED from the plan (owner, 2026-10-04).** Never started. It lengthens the
    read, and a fast read is what the app is for; the reasoning is in
    [../log/superseded.md](../log/superseded.md).
-8. **Read**: the owner's hand-test pages, real-val paired, then `examv3` once as the comparable
+8. ⏭ **Read — THE STEP THAT IS LEFT.** ✅ Done: real-val paired and the dense pools (2026-09-17/19).
+   ⏭ Not done: the owner's hand-test pages (`handtest`, 457 of 515 rows unread), then `examv3` once
+   as the comparable column, on the model the owner names. The original plan: the owner's hand-test
+   pages, real-val paired, then `examv3` once as the comparable
    column. ⛔ **AND THE DENSE POOL FIRST (owner, 2026-09-18)**: `_realval_v2r` carries 5.8%
    over-budget strips, so nothing read on it answers this round's own question.
    `_denseval_h1_dense` (117 held-out strips, 54.7% over the old gate) is what does

@@ -9,7 +9,7 @@ cap. The split is by genre: that file keeps **what the Python page-cutter does**
 **whether the port reproduces it**. Nothing is duplicated.
 
 How to reproduce any number here — and ⚠ why the control is local Python rather than the manifests
-on disk — is [mvp/slicer-port.md](mvp/slicer-port.md). Rung state: [mvp/README.md](mvp/README.md).
+on disk — is [archive/phases/slicer-port.md](archive/phases/slicer-port.md). Rung state: [archive/phases/mvp.md](archive/phases/mvp.md).
 
 ## Both 2026-08-26 staff fixes port exactly, and both SHIP ON
 
@@ -298,7 +298,7 @@ systems; local Python finds **7**, and the port finds the same 7 with every line
 spacing identical. It was being scored as a port failure. **The port reaches the manifest ceiling
 exactly — 1,680/1,704, the same pages as Python.**
 
-Same shape as the arm-B decode ceiling ([mvp/README.md](mvp/README.md) W3): agreement with an
+Same shape as the arm-B decode ceiling ([archive/phases/mvp.md](archive/phases/mvp.md) W3): agreement with an
 artifact is not correctness.
 
 ### Deskew is NOT a no-op on this corpus (2026-08-03)

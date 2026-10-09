@@ -1,9 +1,9 @@
 # Putting the app online — step by step, in plain words
 
 purpose: the owner's walkthrough for the two accounts W9 still needs (Hugging Face for the weights, Netlify for the app), from "no account" to "a link a friend can open"
-audience: the project owner (basic English, same style as OVERVIEW.md)
+audience: the project owner (basic English)
 
-updated: 2026-08-08
+updated: 2026-10-08
 
 > ✅ **This was all done on 2026-08-06** — the app is at **<https://komavision.netlify.app>**, the
 > weights at **`Beyaban/omr-weights`**. The page is kept as the record of how, and as the recipe for
@@ -237,6 +237,11 @@ gcloud run deploy omr-decode \
   --set-env-vars OMR_ORT_THREADS=1,ALLOWED_ORIGINS=https://<your-site>.netlify.app \
   --allow-unauthenticated
 ```
+
+⚠ **Historical command (2026-08-06).** Since 2026-09-04 the live service runs `--max-instances 10`,
+and `ALLOWED_ORIGINS` carries the localhost dev origins too. Do NOT re-run this block against the
+live service — it would overwrite both. To ship a new image, use the image-only command in
+[deploy-ops.md](deploy-ops.md).
 
 ⚠ **Rebuild the image first** if the running one predates commit `0b1cb44` — see the deploy commands
 in [deploy.md](deploy.md). That commit fixes an oversized upload reporting itself as "the server is

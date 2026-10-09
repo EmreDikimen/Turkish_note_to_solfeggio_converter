@@ -1,4 +1,4 @@
-r"""Assemble `_tupletval` — the selection pool for the tuplet-mark A/B (docs/rung3/round3-criteria.md).
+r"""Assemble `_tupletval` — the selection pool for the tuplet-mark A/B (docs/archive/rounds/round3-criteria.md).
 
 WHY IT EXISTS. The A/B's one pre-registered number is free-running `\tup3` recall, and the standing
 selection pool cannot carry it: `_realval_v2` holds **35 `\tup3` groups over 19 strips**, so a 5 pp
@@ -123,7 +123,7 @@ def report(kept: dict[str, dict], dropped: Counter, collisions: list, pools: lis
     print(f"\n>>> selection statistic runs on {n} `\\tup3` gold groups over {len(rows)} strips.")
     print("    One group is worth "
           f"{100 / max(n, 1):.1f} pp of recall — quote every tuplet number with its n "
-          "(docs/rung3/round3-criteria.md).")
+          "(docs/archive/rounds/round3-criteria.md).")
 
 
 def build(kept: dict[str, dict], out_name: str) -> None:

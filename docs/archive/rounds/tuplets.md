@@ -4,12 +4,17 @@ purpose: the tuplet diagnosis, the printed-notation facts behind it, and the pla
 audience: agents and the owner working the real-page track
 updated: 2026-08-19
 
-> Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
-> here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
-> [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
+> Part of the real-page track — index: [README.md](../../rung3/README.md). Current state and next action are NOT
+> here: see [../STATUS.md](../../STATUS.md). Numbers: [../METRICS.md](../../METRICS.md) and
+> [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md). Decisions: [../DECISIONS.md](../../DECISIONS.md).
 >
 > Written 2026-08-11 after an owner report of two misread triplets on a real page. The collection
-> side of tuplets is in [labeling-collection.md](labeling-collection.md) §1c; this file is the *reading* side.
+> side of tuplets is in [labeling-collection.md](../../rung3/labeling-collection.md) §1c; this file is the *reading* side.
 
 ## The finding
 
@@ -19,7 +24,7 @@ use.**
 
 `\tup3` recall was **92.7% before any of this round's work** and is **83.8% now**, against a ≥85%
 floor it has missed twice. Precision went the other way, 15.1% → 91.2%, against a ≥70% floor. The
-numbers and their history: [../METRICS.md](../METRICS.md).
+numbers and their history: [../METRICS.md](../../METRICS.md).
 
 The model does not invent triplets any more. It **misses about one in six**.
 
@@ -27,16 +32,16 @@ The model does not invent triplets any more. It **misses about one in six**.
 
 **Not a data shortage.** The `strips_tup` queues are fully verdicted and the promote has run —
 `manifest.jsonl` holds 169 strips / 205 groups, and the pool trains at `:8` oversampling
-(`--real-dir data/real/rung3/strips_tup:8`, [round1_colab.ipynb](../../notebooks/round1_colab.ipynb)).
+(`--real-dir data/real/rung3/strips_tup:8`, [round1_colab.ipynb](../../../notebooks/round1_colab.ipynb)).
 The exam extension also happened: tup3 gold went 4 → 55 groups at the v2.1 freeze.
 
-⚠ [labeling-collection.md](labeling-collection.md) §1c described "78 accepted + a 147-row review queue" until this date.
+⚠ [labeling-collection.md](../../rung3/labeling-collection.md) §1c described "78 accepted + a 147-row review queue" until this date.
 That was the state on 2026-07-18 and it was read as current three weeks later. Corrected there.
 
 **Not the 0/39 hallucination finding.** The tup3 image pass measured that every decode-proposed NEW
 `\tup3` was a hallucination (0 of 39 real, near-always triggered by a printed slur). That was
 measured on the **pre-tuplet-collection** model and does not describe `round2-stage2-best`. It is
-kept as history in [labeling.md](labeling.md), not as a current fact about the live model.
+kept as history in [labeling.md](../../rung3/labeling.md), not as a current fact about the live model.
 
 **Not the stitcher.** Unclosed `\tup3` is closed at the barline or row end, a stray `\tupend` is
 ignored, and a mid-row `\sig` is dropped (`tools/render/stitch.ts`). The page is already repaired.
@@ -63,9 +68,9 @@ one unit split into two shorter ones. A 32nd + a 16th under one bracket is three
 noteheads, and it is normal music.
 
 Measured across all four label pools — 20,259 groups — four have ≠3 noteheads, two of them
-legitimate. Detail: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+legitimate. Detail: [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
-⚠ **"≠3 noteheads" is a review GATE, never an auto-repair.** [labeling.md](labeling.md) records the
+⚠ **"≠3 noteheads" is a review GATE, never an auto-repair.** [labeling.md](../../rung3/labeling.md) records the
 rule that such a group never auto-accepts — correct, because it sends the odd ones to a human. Wired
 up as a *fixer* it would corrupt the legitimate two-notehead groups, which live in exactly the fast
 32nd-note passages the model is already worst at.
@@ -103,14 +108,14 @@ gold, mid-round, for a saving of one token per group.
 The same benefit is available without touching a label — **constrain decoding**: forbid `\tupend`
 until the running sum is plain, force it when it is. A malformed group becomes unemittable, and
 unlike a stitch-time repair it shows up in the exam score. Decision row:
-[../DECISIONS.md](../DECISIONS.md).
+[../DECISIONS.md](../../DECISIONS.md).
 
 ## The root cause is CONFIRMED as a drawing defect (2026-08-12) — and the redraw is in
 
 `scripts/rung3/tuplet_mark_probe.py` measured the mark on real editions the way `sharp_probe` measured
 the sharps. **16 of 16 accepted marks, across ~11 editions, break the arc and set the "3" in the gap.**
 Geometry, the caveats and what our two styles do instead:
-[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+[../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 > ⛔ **CORRECTED 2026-08-19 — the second half of that sentence was wrong, and it is struck.** It read
 > *"Not one continuous arc with a floating digit exists in the real pools."* The owner produced two
@@ -126,7 +131,7 @@ Geometry, the caveats and what our two styles do instead:
 > ⚠ **Why the probe could not have found it: no labelled real strip in any pool carries this style.**
 > That is also why nothing we own can score it, and why collecting such pages is half the work — see
 > the follow-ups below. **16/16 still describes the pools we sampled**; what is refuted is the claim
-> about Turkish print in general. [../DECISIONS.md](../DECISIONS.md)
+> about Turkish print in general. [../DECISIONS.md](../../DECISIONS.md)
 
 Three things came out of doing it that reading could not have given:
 
@@ -149,7 +154,7 @@ note (the mark tilts with the contour) and the digit is regular weight. ⚠ The 
 change is where the digit sits: a descending printed mark *looks* weighted toward its high side, but
 measured it is at **0.49–0.50 of the span** — dead centre. Sliding the gap toward the high note was
 tried first and degenerates into a stub arm whenever that note is an outer one. Numbers, with their
-small n: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+small n: [../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 ## Why the shape matters — the reasoning, as written 2026-08-11
 
@@ -176,7 +181,7 @@ This is the same shape as the Bravura sharp-bar defect: a glyph we drew unlike r
 faithfully, and paid for on real pages. That diagnosis method — measure our glyph against real
 print at matched staff size — is the one that worked, and it was pointed at this mark on 2026-08-12
 (see the section above; it held). Both sets of constants:
-[../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+[../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md).
 
 ## What the surviving failures LOOK like (2026-08-15) — a lead, not a finding
 
@@ -202,7 +207,7 @@ is absent. Recall by position, both arms independently:
   (`acemasiran--sarki--senginsemai--canan_okuyor`). The position split is therefore confounded with
   that piece, and rests on ~5 groups. **This is a lead to test, not a result to act on** — the
   ±2% pre-shrink is what acting on this class of evidence costs
-  ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)).
+  ([../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md)).
 - ⚠ One of the 10 is not a tuplet failure at all: both arms misread
   `…askin_ilahi…_p1_s03_w01` end to end, reading a different passage than the gold.
 
@@ -231,7 +236,7 @@ be attributed.
    `data/real/rung3/tuplet_probe/mark_comparison.png` (`scripts/rung3/tuplet_mark_sheet.py`: real
    edition / ours before / ours now, same piece and same strip, each also as the encoder sees it; ⚠
    local viewing only, the real row is a third-party edition —
-   [../THIRD-PARTY.md](../THIRD-PARTY.md)). Two corrections came back — arms follow the notes, lighter
+   [../THIRD-PARTY.md](../../THIRD-PARTY.md)). Two corrections came back — arms follow the notes, lighter
    digit — and both are in. **This is the gate the plan put here, and it is passed.**
 3. ✅ **DONE 2026-08-15 — the A/B RAN and came back NULL. The shape stays; no recall claim is made.**
    Two arms, identical but for the mark: **88.9% vs 85.2%** `\tup3` recall on `_tupletval`, which is
@@ -241,7 +246,7 @@ be attributed.
    kept**, because it stands on the print measurement (16/16 marks, ~11 editions) rather than on
    recall, and **nothing about recall is claimed in either direction**. Precision cleared its veto
    on both arms (98.0% / 95.8%); the `_realval_v2` guard passed (mean AEU F1 83.9% vs 83.3%).
-   Numbers: [../METRICS.md](../METRICS.md); full read: [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+   Numbers: [../METRICS.md](../../METRICS.md); full read: [../../src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md).
    ⚠ **What this does NOT say**: that the shape does not help. 54 gold groups cannot resolve less
    than ~11 pp, and the effect hoped for was ~5. The experiment was run knowing that
    ([round3-criteria.md](round3-criteria.md)), which is why the number can be read honestly now.

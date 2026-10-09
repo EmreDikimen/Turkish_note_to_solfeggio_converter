@@ -7,7 +7,7 @@
  * 1%); where the staff sits inside the frame is nearly free (+0.4% per 1%), which is what lets
  * `place_band` spend the slack downward and stop clipping low beams.
  *
- * Transliterated line by line. Do not restructure — see docs/mvp/slicer-port.md.
+ * Transliterated line by line. Do not restructure — see docs/archive/phases/slicer-port.md.
  */
 import {
   BELOW_SP,

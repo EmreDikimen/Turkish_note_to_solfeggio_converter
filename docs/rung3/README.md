@@ -1,8 +1,8 @@
 # Rung 3 — teaching the model real pages
 
-purpose: index and one-page plan for the real-page track; routes to the six detail files
+purpose: index and one-page plan for the real-page (model) track; routes to the live detail files and to the archived rounds
 audience: agents and the owner working on real data
-updated: 2026-10-04
+updated: 2026-10-08
 
 > This track's **current state and next action are NOT here** — they live in
 > [../STATUS.md](../STATUS.md). This file describes the plan and where each part is written up.
@@ -16,52 +16,50 @@ metadata) gave far more, in a second engraving style — so both sources' matche
 what can be one training run). A throwaway **Round-0.5 labeler** was inserted before the nota emit
 (the 348-row review queue and its 22.6% audit fix rate showed how much labor a synthetic-only
 emitter model costs); Round 1 itself stayed one run from base weights. Before training, matched
-pieces were frozen as a never-trained-on **exam**. Only after Round 1 does hand work start:
-correcting the model's output on the unmatched pieces — by then the model has seen real engraving,
-so correcting is "glance and confirm", not "repair everything".
+pieces were frozen as a never-trained-on **exam**. Only after the rounds does hand work start on
+the unmatched pieces — by then the model has seen real engraving, so correcting is "glance and
+confirm", not "repair everything".
 
-## Where each part is written up
+## The live files
 
-| File | Covers | Old section names |
-|---|---|---|
-| [labeling.md](labeling.md) | The label **conventions** — what is a token and what is label-free ink (the retired `\tie`, the arc) | live rules |
-| [labeling-collection.md](labeling-collection.md) | Collection and free labels: neyzen match, the Round-0.5 labeler, the notaarsivleri run, targeted tuplet collection | §1a, §1a.5, §1b, §1c |
-| [exam.md](exam.md) | Freezing the exam, the emitter's calibration, exam v1 → v2 → v2.1 | Steps 2+3, Step 2, Step 3 |
-| [ship-criteria.md](../archive/rounds/ship-criteria.md) | The pre-registered Round-1 floors and decision rule (Round 2 was judged against these too) | Step 4.0 |
-| [round3-criteria.md](round3-criteria.md) | Round 3's floors + the public-launch gate (**signed 2026-08-15**), and the tuplet A/B protocol with its result | new 2026-08-13 |
-| [rerender.md](../archive/rounds/rerender.md) | The carry-dominant `strips_v3` re-render + accidental-distribution findings | Step 4.1 |
-| [round1.md](../archive/rounds/round1.md) | Round-1 plan, init A/B, the one-shot exam read, the ship decision, plan-review addenda | Step 4, 4.2, 4.3, 4.4, 4.4a |
-| [round2.md](../archive/rounds/round2.md) | Entry plan, photo axis, the microtonal-sharp fix, what is still open | Step 4.4 (Round-2 part), Step 4.5 |
-| [round3.md](round3.md) | Round 3: why it targets note heights and note lengths, and the four checks to run before rendering | new 2026-07-27 |
-| [../../names_of_bad_cropped_images.md](../../names_of_bad_cropped_images.md) | Unusable crops noticed by eye during the batch3 labelling pass (the UI's `bad` verdict stays authoritative) | new 2026-08-19 |
-| [../../some_problems_seen_while_labeling.md](../../some_problems_seen_while_labeling.md) | MODEL failures noticed by eye during the same pass — the pattern behind the corrections, which the CSV cannot show. Its first entry (the dotted barline read as `\repstart`) was measured and is now [BACKLOG.md](../BACKLOG.md) item 5 | new 2026-08-20 |
-| [../../round_3_scan_logs.md](../../round_3_scan_logs.md) | Arm 1's raw Colab training log, both stages, kept verbatim | new 2026-08-19 |
-| [../../round_3_staccato_logs.md](../../round_3_staccato_logs.md) | **Arm 2's** raw Colab training log, both stages, kept verbatim | new 2026-08-20 |
-| [../../round3_final_logs.md](../../round3_final_logs.md) | **THE FINAL MODEL's** raw Colab training log, both stages, kept verbatim. ⚠ Read it beside [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) — the curves show the checkpoint selector picking the WORSE checkpoint for real pages | new 2026-09-01 |
-| [../../round3_runa_logs.md](../../round3_runa_logs.md) | **RUN A's** raw stage-2 log (4,000 steps). ⚠ No stage 1 — it reuses Round 3's, which is what makes step count the only variable | new 2026-09-01 |
-| [../../round3_runb_logs.md](../../round3_runb_logs.md) | **RUN B's** raw stage-2 log (5,000 steps, `strips_b8` + `strips_oldhuman`). ⛔ Its `real` column is not comparable with run A's — two pools mean two held-out sets (560 strips vs 390) | new 2026-09-02 |
-| [../../round4_control_logs.md](../../round4_control_logs.md) | **Round 4's CONTROL arm** raw stage-2 log (old vocabulary, `strips_h1:4`, 4,000 steps, `best-edits` picker). ⚠ No stage 1 — it reuses Round 3's. ⛔ Its `EDITS` are in OLD ids |
-| [../../round4_h_logs.md](../../round4_h_logs.md) | **Round 4's H arm** raw logs, stage 1 (scheme H, 6,000 steps from base) and stage 2 (4,000 steps from stage-1 `best`). ⛔ Per-H-token losses and H-id `EDITS`: not comparable with any old-vocabulary run |
-| [scan-profile.md](scan-profile.md) | **Round 3's arm 1** — the scan augmentation profile: the ops, the signed pre-registration, how to run it and how to read it | new 2026-08-19 |
-| [staccato-arm.md](staccato-arm.md) | **Round 3's arm 2** — the staccato distractor: the hole, the draw, the signed pre-registration, the result (**it passes**) and the open disposition | new 2026-08-20 |
-| [levers.md](levers.md) | The levers Round 3 has NOT pulled, ranked — crop geometry, decoding, real data, renderer diversity, the recipe — and the cheap measurement that decides each | new 2026-08-15 |
-| [third-source.md](third-source.md) | **Round 4's step 4** — the third-engraver probe: the three sites, what was collected, and the provenance traps found while collecting (a re-hosted page, a folk notation, a stem collision that lost a piece) | new 2026-09-06 |
-| [tokenization.md](tokenization.md) | How a label is spelled today, what octave/duration tokens would save, and the `over_budget` case for doing it — **picked up by Round 4** | new 2026-08-27 |
-| [round4.md](round4.md) | **Round 4**: the root causes with their homes, the owner's five decisions of 2026-09-03 (no render, `\tupend` stays, stage 2 at 4,000, beam search — dropped entirely 2026-10-04, scheme H recommended), the octave count, and the order of work | new 2026-09-03 |
-| [tuplets.md](tuplets.md) | Why `\tup3` recall misses its floor: the precision/recall trade, the arc we draw wrong, and the plan | new 2026-08-11 |
-| [followups.md](../archive/rounds/followups.md) | Hand-correction loop, decode-repair heuristics, watch-items, data folder layout | Step 5, "Logged for later", folder layout, watch-items |
+| File | Covers |
+|---|---|
+| [round4.md](round4.md) | **Round 4, the open round**: the root causes with their homes, the owner's decisions, the order of work and where each step ended |
+| [tokenization.md](tokenization.md) | How a label is spelled, what scheme H changed, and why the vocabulary A/B was a null |
+| [third-source.md](third-source.md) | Round 4's step 4 — the third-engraver probe: the three sites, what was collected, and the provenance traps |
+| [labeling.md](labeling.md) | The label **conventions** — what is a token and what is label-free ink (the retired `\tie`, the arc) |
+| [labeling-collection.md](labeling-collection.md) | Collection and free labels: neyzen match, the Round-0.5 labeler, the notaarsivleri run, targeted tuplet collection |
+| [labeling-queues.md](labeling-queues.md) | The review queues feeding the training pools and the exam (reslice-all, the batches, b8, examv3, h1) |
+| [labeling-queues-realval.md](labeling-queues-realval.md) | The review queues feeding REAL-VAL (realval-hard, and the 2026-09-09 repair) |
+| [exam.md](exam.md) | Freezing the exam, the emitter's calibration, exam v1 → v2 → v2.1 → v3 |
+| [standing.md](standing.md) | Settled findings of this track — background, not next actions |
 
-## State of the six steps
+## The closed rounds — archived, do not act on them
+
+| Round | Files |
+|---|---|
+| Round 1 (2026-07-23) | [round1.md](../archive/rounds/round1.md) · [ship-criteria.md](../archive/rounds/ship-criteria.md) · [rerender.md](../archive/rounds/rerender.md) |
+| Round 2 (2026-07-27) | [round2.md](../archive/rounds/round2.md) |
+| Round 3 (closed 2026-09-03, archived 2026-10-08) | [round3.md](../archive/rounds/round3.md) · [round3-criteria.md](../archive/rounds/round3-criteria.md) (the **signed** ≥75% bar that still governs publishing a model) · [worklist.md](../archive/rounds/worklist.md) · [levers.md](../archive/rounds/levers.md) (the unpulled levers — still the menu for the next round) · [scan-profile.md](../archive/rounds/scan-profile.md) · [staccato-arm.md](../archive/rounds/staccato-arm.md) · [tuplets.md](../archive/rounds/tuplets.md) |
+| Parked ideas, watch-items, the old folder layout | [followups.md](../archive/rounds/followups.md) |
+
+**Raw records, verbatim** — every Colab training console (Round 3's arms, final model, runs A and B;
+Round 4's control and H arms) and the owner's two labelling notebooks (unusable crops, model failures
+seen while labelling) — are in [../log/raw/](../log/raw/round4_control_logs.md). ⚠ Read a console
+beside [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md); ⛔ an H arm's `EDITS` are in
+H ids and compare with nothing in the old vocabulary.
+
+## State of the steps
 
 | Step | State |
 |---|---|
 | 1 — free labels from SymbTr matches | ✅ done, both sources (+ targeted tuplet collection) |
-| 2 — freeze the exam | ✅ done; v2.1 frozen 2026-07-19; **v3 promoted 2026-08-31** (660 strips / 63 pages, Round-2 baseline re-scored on it) and read once for Round 3 — [exam.md](exam.md), [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md). ⏭ Round 4 keeps `examv3` as the comparable column and adds the rescued dense strips and any third-source pages as SEPARATE columns |
-| 3 — strip-label emitter | ✅ built and calibrated |
-| 4 — Round 1 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-23) |
-| 4 — Round 2 | ✅ trained, examined, shipped as "an improvement, not a pass" (2026-07-27) |
-| 4 — Round 4 | 🔄 **opened 2026-09-03** — [round4.md](round4.md): read the dense half (scheme H tokens + the rail at b = 57), fix the model-voted signature, select on real-val corrections, probe a third source; no render, `\tupend` stays, stage 2 at 4,000 |
-| 4 — Round 3 | ✅ **CLOSED 2026-09-03.** Read once 2026-09-01: **51%** against the 75% floor, a miss; ~15 of +17 points the retired `\tie`; runs A and B nulls on real-val; `r3-final-stage2-last` is the model on record and Run A `best-real` the owner's hand-test pick ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md), [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)). The record as it ran: floors **written and signed before training** ([round3-criteria.md](round3-criteria.md)). Arms run one variable each, never two together. **Arm 1, the scan profile — null** ([scan-profile.md](scan-profile.md)). The one-measure-per-strip arm was **dropped** and the staccato arm took its slot ([../DECISIONS.md](../DECISIONS.md)), so **arm 2, the staccato distractor — ✅ passes**: the first Round-3 arm to move its primary ([levers.md](levers.md) Lever 6). Earlier: the tuplet-mark A/B **null** ([tuplets.md](tuplets.md)), crop geometry ran and was **stopped**. ⏭ What is left is the **final model's render, then the exam read once**. ✅ **The render is fully specified (2026-08-20)** — three flags: `--concave-tuplet`, `--staccato-noise` and a **label-free dotted (usul) barline** ([../DECISIONS.md](../DECISIONS.md)). State and next action in [../STATUS.md](../STATUS.md) |
+| 2 — freeze the exam | ✅ v2.1 frozen 2026-07-19; **v3 promoted 2026-08-31** — 67 pages in the set, 64 that produce strips (3 drop every candidate on the budget), **63 pages / 660 strips graded** at the read — read once for Round 3 ([exam.md](exam.md), [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)). ⏭ Round 4 keeps `examv3` as the comparable column; dense and third-source columns stay SEPARATE |
+| 3 — strip-label emitter | ✅ built and calibrated; rule D for the key signature since 2026-09-06; the 80-id budget under scheme H since 2026-09-07 |
+| 4 — Round 1 | ✅ shipped as "an improvement, not a pass" (2026-07-23) |
+| 4 — Round 2 | ✅ shipped as "an improvement, not a pass" (2026-07-27) |
+| 4 — Round 3 | ✅ **CLOSED 2026-09-03** — exam **51%** against the signed 75% floor, a miss; ~15 of its +17 points were the retired `\tie`; runs A and B nulls ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md), [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)) |
+| 4 — Round 4 | 🔄 **open since 2026-09-03** — both arms trained 2026-09-16/17; scheme H is a NULL; the control `r4-ctl-stage2-last` leads on dense strips and has been the **live model since 2026-09-28**. The exam is **not read** for Round 4 ([round4.md](round4.md), [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md)) |
 | 5 — hand-correction loop on unmatched pieces | ⏸ not started (scheduled after the rounds) |
 
 ## Standing rules for this track

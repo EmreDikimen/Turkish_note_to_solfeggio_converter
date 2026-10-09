@@ -6,8 +6,8 @@ updated: 2026-08-19
 
 Raw paste, unedited below this line. Kept deliberately: the tuplet A/B's Colab logs were deleted
 after its results table was taken, and that entry in
-[src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md) has to say so. What the run produced, and what
-it meant: [docs/rung3/scan-profile.md](docs/rung3/scan-profile.md).
+[src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md) has to say so. What the run produced, and what
+it meant: [docs/archive/rounds/scan-profile.md](../../archive/rounds/scan-profile.md).
 
 ⚠ Note in stage 2: `best` is saved at **step 500** and `last` at step 2,000 — the mix loss peaked
 early while real val kept falling. Both were scored; both are null.

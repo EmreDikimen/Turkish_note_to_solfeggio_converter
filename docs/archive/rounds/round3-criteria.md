@@ -4,11 +4,16 @@ purpose: what Round 3 must reach (and what opens the public launch), written bef
 audience: agents and the owner working the real-page track
 updated: 2026-08-20
 
-> Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
-> here: see [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md) and
-> [../METRICS-EXAM.md](../METRICS-EXAM.md). Decisions: [../DECISIONS.md](../DECISIONS.md).
+> ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
+> ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
+> once (51% against 75%), Round 4 is the live round ([../../rung3/round4.md](../../rung3/round4.md)),
+> and current state is [../../STATUS.md](../../STATUS.md).
+
+> Part of the real-page track — index: [README.md](../../rung3/README.md). Current state and next action are NOT
+> here: see [../STATUS.md](../../STATUS.md). Numbers: [../METRICS.md](../../METRICS.md) and
+> [../METRICS-EXAM.md](../../METRICS-EXAM.md). Decisions: [../DECISIONS.md](../../DECISIONS.md).
 >
-> Round 1's pre-registration is [ship-criteria.md](../archive/rounds/ship-criteria.md), kept verbatim; this file is the
+> Round 1's pre-registration is [ship-criteria.md](ship-criteria.md), kept verbatim; this file is the
 > same instrument for Round 3 and follows its shape deliberately. Round 2 was read against Round 1's
 > floors without re-registering them, which is why that comparison stayed honest — and why this file
 > exists rather than a third set of numbers invented after a result.
@@ -27,7 +32,7 @@ protocol was pre-registered here on 2026-08-14 and it selects nothing against th
 ## 1. The floors
 
 Each floor sits beside its measured Round-2 baseline (`round2-stage2-best`, the 326-strip clean exam
-v2.1 with re-audited gold, read 2026-07-27 — [../METRICS-EXAM.md](../METRICS-EXAM.md)), so the
+v2.1 with re-audited gold, read 2026-07-27 — [../METRICS-EXAM.md](../../METRICS-EXAM.md)), so the
 demanded delta is explicit.
 
 | Criterion | Round-2 baseline | Round-3 floor |
@@ -47,7 +52,7 @@ demanded delta is explicit.
 
 **Why the primary number is the product one, not the accidental headline.** Round 3 targets pitch
 (40% of user edits) and duration (28%), which the AEU headline cannot see — accidentals are 13% of
-what a user fixes ([../METRICS-EXAM.md](../METRICS-EXAM.md)). `eval_omr.py` already computes and
+what a user fixes ([../METRICS-EXAM.md](../../METRICS-EXAM.md)). `eval_omr.py` already computes and
 persists `edits_per_page.share_le5`, so this needs no new measurement code.
 
 **Why ≥75% and not ≥90%.** ≥90% of pages at ≤5 corrections is the standing product goal
@@ -64,7 +69,7 @@ in Round 1 and −4 pp on a 14-gold class in Round 2, which is what micro and ma
 beside it to absorb.
 
 **Per-class floors.** Round 1's five ≥20-gold classes keep their floors verbatim from
-[ship-criteria.md](../archive/rounds/ship-criteria.md) (recall ≥75%, precision ≥70% each). They are reported, and a
+[ship-criteria.md](ship-criteria.md) (recall ≥75%, precision ≥70% each). They are reported, and a
 miss is written up as a miss, but the pass/fail decision for Round 3 is made on the table above.
 
 ## 2. The public-launch gate
@@ -85,7 +90,7 @@ One number, stated once, before the read. Three things follow from it:
 
 > ✅ **RUN 2026-08-15. Result: NULL** — 88.9% vs 85.2%, 2 net groups of 54, exact McNemar **p = 0.688**.
 > The null branch below applied as written: the shape is kept, no recall claim is made. The protocol
-> is left **unedited** so it stays auditable against the result. Numbers: [../METRICS.md](../METRICS.md);
+> is left **unedited** so it stays auditable against the result. Numbers: [../METRICS.md](../../METRICS.md);
 > verdict and caveats: [tuplets.md](tuplets.md).
 
 The first training under this file is not Round 3 itself but the `\tup3` shape A/B
@@ -109,7 +114,7 @@ drawing it the printed way recover `\tup3` recall, which sits at 83.8% — under
   distractors are held fixed.
 - **Print realism (`printseed`) is OFF in both arms** (owner, 2026-08-13), so the corpora match the
   shipped `strips_v4` recipe apart from the mark. It carries `USUL_BEAM_GROUPS`, which is measured
-  as unvalidated and quarantined ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)); a fresh
+  as unvalidated and quarantined ([../METRICS-DIAGNOSTICS.md](../../METRICS-DIAGNOSTICS.md)); a fresh
   render would otherwise have shipped it into ~40k strips as a side effect. It is opt-in from now on
   (`render.ts --print-noise`) and is its own later question.
 - **Not in this A/B:** the 35% slur-distractor rate, the heavier arc stroke owed jointly with
@@ -145,7 +150,7 @@ val-side strip from `strips_tup` and `_realval_v2`, val side decided by
 
 **The pool's reference point, read before the arms exist.** `round2-stage2-best` — the live model,
 held out from these strips by the same hash — reads **85.2% `\tup3` recall / 97.9% precision** on it
-([../METRICS.md](../METRICS.md)). Two things follow: the pool is **not** flattering on the class it
+([../METRICS.md](../../METRICS.md)). Two things follow: the pool is **not** flattering on the class it
 exists to measure (85.2% here against 83.8% on the exam, where real-val normally reads far higher),
 and the arms have a number to be sane against. It is context, not a selection — the A/B is decided
 between the two arms, paired.
@@ -189,8 +194,8 @@ Round-3 criteria question that is still open**, and it must be closed **before**
 
 **What changed.** The exam is not merely grown, it is **re-cut**. Every one of its 67 pages was
 re-sliced with the current `page_to_strips.py` and re-emitted, because no exam page had ever been
-re-sliced — 46 of them were measuring a slicer no user gets ([exam.md](exam.md),
-[../DECISIONS.md](../DECISIONS.md) 2026-08-21). The frozen `strips_exam_v2_clean/` is untouched and
+re-sliced — 46 of them were measuring a slicer no user gets ([exam.md](../../rung3/exam.md),
+[../DECISIONS.md](../../DECISIONS.md) 2026-08-21). The frozen `strips_exam_v2_clean/` is untouched and
 remains the record of what Round 2's numbers were measured on.
 
 ⚠ **The rebuilt exam is a HARDER instrument than the one §1's floors were signed against.** It grades
@@ -234,7 +239,7 @@ means once the instrument is harder.
 >
 > ⚠ **What is NOT changed.** The exam is still one-shot (§4). The no-regression clauses in §1 are
 > still measured and still reported. `round2-stage2-best`'s baseline on the rebuilt exam
-> (**44%**, [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)) stands as the comparison column, so
+> (**44%**, [../METRICS-EXAMSET.md](../../METRICS-EXAMSET.md)) stands as the comparison column, so
 > "better or worse than Round 2" remains a factual question with a factual answer.
 >
 > ⏭ **What this now REQUIRES that the old plan did not**: an error classification the owner can
@@ -242,7 +247,7 @@ means once the instrument is harder.
 > structure / signature), with examples, not just a rate. Without it this decision has no input.
 > `eval_omr.py --show-errors` prints per-strip errors and its payload carries the per-class table;
 > **grouping them into a readable taxonomy is not built yet** and is the thing to build before the
-> read. [../BACKLOG.md](../BACKLOG.md).
+> read. [../BACKLOG.md](../../BACKLOG.md).
 
 ⚠ **§3b's drop note is superseded in its numbers only.** The rebuilt exam drops **567 of 1,369**
 candidates (41%: `split_wide` 414, `over_budget` 153) where v2 dropped 282 of 608 (46%). The bias is
@@ -261,7 +266,7 @@ Added after signing, and it is written here rather than inside §1 so the signed
 as signed. **Nothing in §1 or §2 is edited, re-opened or re-numbered by this section.**
 
 **What changed.** The exam grows from **46 to 67 graded pages** before the one-shot read — the 21
-pages it already owns and has never labelled ([exam.md](exam.md)). This is the power note's option 1
+pages it already owns and has never labelled ([exam.md](../../rung3/exam.md)). This is the power note's option 1
 ([levers.md](levers.md)), which exists precisely so that growing *before* a read is legal; §4's rules
 are unaffected because the exam is still read **once**, on the final model.
 
@@ -282,7 +287,7 @@ before any Round-3 number was seen:
 ⚠ **A blind spot in §5 is now sized, and it is bigger than §5 implies.** §5 says dense
 contiguous-triplet instrumentals are unmeasured. The census behind this addendum shows the exam grades
 **326 of 608** candidate strips on its own pages — the other 282 are dropped as `split_wide` (203) or
-`over_budget` (78), i.e. the **wide and the dense** ones ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)).
+`over_budget` (78), i.e. the **wide and the dense** ones ([../METRICS-EXAMSET.md](../../METRICS-EXAMSET.md)).
 So the exam reads each page on its easier material. This does **not** change the floors either: the
 bias runs in the same direction as the already-declared "matched upper bound" optimism, which §2
 accepts on the record. It is stated so the result is quoted with it.
@@ -295,7 +300,7 @@ accepts on the record. It is stated so the result is quoted with it.
 3. **A miss is not re-rolled on the same exam.** Diagnose on real-val; any further exam read is
    labelled in `MODEL_EVAL.md` as a second look with its leakage acknowledged.
 4. **A partial pass is written up as partial**, never rounded up — and it does not open the launch.
-5. **Power criterion (standing, from [round1.md](../archive/rounds/round1.md)):** a tuning sweep only runs if its
+5. **Power criterion (standing, from [round1.md](round1.md)):** a tuning sweep only runs if its
    minimum interesting effect exceeds the measured movement of the selection metric under the
    largest prior intervention (0.5 pp). The tuplet A/B clears this — the effect at stake is the
    ~9 pp `\tup3` recall drop, an order of magnitude larger.

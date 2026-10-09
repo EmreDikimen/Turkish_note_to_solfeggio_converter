@@ -1,6 +1,6 @@
 """Is the BROWSER's reading worse than Python's, or only different? (MVP W3)
 
-Arm-B agreement (docs/mvp/README.md) says the two decoders disagree on ~14% of strips, concentrated
+Arm-B agreement (docs/archive/phases/mvp.md) says the two decoders disagree on ~14% of strips, concentrated
 where the model is already unsure. That measures *similarity to another decoder* and cannot say
 which one is right. Only gold can, and the release decision rests on it: if the browser reads
 meaningfully worse than Python, then friends get worse results than every number in

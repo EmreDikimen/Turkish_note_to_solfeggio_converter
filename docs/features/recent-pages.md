@@ -6,7 +6,7 @@ updated: 2026-09-05
 
 > Current state is in [../STATUS.md](../STATUS.md). The decisions are one line each in
 > [../DECISIONS.md](../DECISIONS.md); the track index is [README.md](README.md). The editor whose
-> edits this remembers is [../mvp/editor.md](../mvp/editor.md).
+> edits this remembers is [app/editor.md](../app/editor.md).
 
 Keep a decoded page on the reader's own machine, so a refresh does not throw it away.
 

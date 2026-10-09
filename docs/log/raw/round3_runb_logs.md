@@ -8,7 +8,7 @@ Raw paste, unedited below this line. ⚠ Stage 1 is absent on purpose — run B 
 `r3-final-stage1/best`, the same one run A starts from. ⛔ **Its `real` column is NOT comparable with
 run A's**: two real pools mean two held-out sets, so this run evaluates on 560 strips (170 of them
 retired-crop) against run A's 390. The reading of these curves is in
-[src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md); do not re-derive it here.
+[src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md); do not re-derive it here.
 
 ---
 

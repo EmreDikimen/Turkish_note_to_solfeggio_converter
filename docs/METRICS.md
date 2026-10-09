@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-09-02
+updated: 2026-10-08
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -103,7 +103,7 @@ deliver**, and it must not be reported as one.
 ⚠ **The middle row is the product-relevant estimate**: −7.2% edits, +4.6 pp exact.
 ⚠ **Consequence for the exam**: `examv3` gold is also tie-free (0/660), so the **44%**
 `round2-stage2-best` baseline already charges Round 2 for its ties. Round 3 will therefore beat it
-partly on this mechanism. The comparison is fair — same instrument, same pages — but the ship
+partly on this mechanism — and on 2026-09-01 it did: ~15 of its +17 points ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)). The comparison is fair — same instrument, same pages — but the ship
 judgement must not credit the gain to the render flags.
 Raw: `data/real/rung3/final/taxonomy_realval_v2.json`.
 
@@ -182,7 +182,7 @@ Both pools read with the SAME model (`round2-stage2-best`) on the same day, so t
 Every `\tup3`-bearing strip already on the VAL side of `strips_tup` + `_realval_v2`
 (`scripts/rung3/build_tuplet_val.py`): **54 gold groups over 28 strips, 11 pieces**, neyzen 24 /
 nota 4. Exam pieces refused, one decode-derived label dropped, 8 filename collisions resolved to
-the newer slicer's crop. Protocol: [rung3/round3-criteria.md](rung3/round3-criteria.md).
+the newer slicer's crop. Protocol: [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md).
 
 **THE A/B RESULT (2026-08-15) — NULL.** Both arms trained on the identical recipe; the pre-registered
 statistic is free-running `\tup3` recall on this pool, paired.
@@ -257,9 +257,9 @@ pixels-vs-labels defect and the `verify-labels.ts` verification.
 
 ## Decode server (MVP W9) — DEPLOYED 2026-08-06, measured on Cloud Run
 
-Service: `omr-decode`, europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3.
+Service: `omr-decode`, europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3 when these rows were measured (**10 since 2026-09-04**). ⛔ Every "fallback" row below is history: since 2026-09-04 a deployed build reads nothing in the browser.
 Rows marked **M4** are the dev laptop; rows marked **Cloud Run** are the deployed service.
-Plan: [mvp/deploy.md](mvp/deploy.md).
+Plan: [app/deploy.md](app/deploy.md).
 
 | Measure (Cloud Run, 1 vCPU) | Value |
 |---|---|
@@ -269,7 +269,7 @@ Plan: [mvp/deploy.md](mvp/deploy.md).
 | **⚠ It is SLOWER than the user's own browser** | 128 strips: **250 s on Cloud Run vs 166 s in the M4 browser (0.66×)**. Warm. Cold adds 10.6 s. **This is the outcome deploy.md predicted and the release was chosen on** — the win is the friend's laptop staying cool, not speed |
 | **Reads the same as the browser** | **120/128 strips (93.8%)** identical token ids — *the same rate as the local server*, and the divergences again sit on near-ties (median browser log-prob at the diverging token **−0.87, p = 0.42**) |
 | **Per strip / per page** | **~2.0 s a strip**; a 16-strip page **~35 s** warm and ~46 s cold, a 26-strip page **~55 s** warm. The encoder is **74–81%** of it, so nothing that leaves the encoder alone matters. ⚠ The same 26-strip page reads in **34 s in the owner's browser** — the server is slower, by choice |
-| **Parallelism works** (2026-08-06) | Three page requests at once finished in **35.5 s**, against ~80 s if run one after another, and **server-side time did not degrade** (23.5 / 26.4 / 22.6 s) — Cloud Run gave three machines and each kept full speed. The extra wall time on two of them is their own cold start. This is the measured basis for splitting ONE page across instances: [mvp/latency.md](mvp/latency.md) |
+| **Parallelism works** (2026-08-06) | Three page requests at once finished in **35.5 s**, against ~80 s if run one after another, and **server-side time did not degrade** (23.5 / 26.4 / 22.6 s) — Cloud Run gave three machines and each kept full speed. The extra wall time on two of them is their own cold start. This is the measured basis for splitting ONE page across instances: [app/latency.md](app/latency.md) |
 | Safety limits, live | `check:limits` **6/6** after one fix: a destroyed socket reached Cloud Run's proxy as a **503** rather than a 413, turning a client error into an apparent outage |
 | **The BUILT app against the LIVE service** (2026-08-06) | The first end-to-end run of the deployable artifact against Cloud Run rather than a local server — `smoke:build --decode-url <service>`, **PASS on both paths**. Same 26-strip page: **61.2 s reading on the server** against **33.2 s in the local fallback** on the same M4, identical score (9 staves → 26 strips → **399 notes / 26 measures**), `crossOriginIsolated` true and no page errors on either. ⚠ The server being ~1.8× slower here is the 0.66× row above seen end to end, plus this page being 26 strips rather than 16 |
 
@@ -293,8 +293,9 @@ Plan: [mvp/deploy.md](mvp/deploy.md).
 ⚠ **Still not measured:** behaviour with two friends uploading at once — though 2026-08-09 gave a
 one-sided hint of it, when a `/health` arriving mid-decode was served by a second container in ~11 s
 rather than queued. The **cost** of a cold start after real idle came off this list on 2026-08-09;
-whether the **app** survives one on a live idle service did not, and is an open risk in
-[STATUS.md](STATUS.md).
+whether the **app** survives one on a live idle service did not ([RISKS.md](RISKS.md)). Since
+2026-09-04 a cold start that outlasts `WARMUP_WAIT_MS` (120 s) shows `server-unavailable`; one cold
+start was measured at **38.2 s** that day.
 
 📊 **Who arrives at the live service — how many visitors, on what devices, and how much of it is
 robots — moved to [METRICS-USAGE.md](METRICS-USAGE.md)** on 2026-08-09. The rows above measure how
@@ -321,7 +322,7 @@ the system *performs*; that file measures who *shows up*.
 
 ## Makam detection (2026-08-07) — signature + karar, over the 213 bundled scores
 
-The table and the method: [mvp/makam.md](mvp/makam.md). Scored two ways, because the useful
+The table and the method: [app/makam.md](app/makam.md). Scored two ways, because the useful
 question is not "did it name the makam" but **"does the piece come out in tune"** — a makam with
 no intonation rules sounds identical to `none`, so a wrong *name* there costs nothing.
 
@@ -365,6 +366,7 @@ reads.
 | Page decode (Mac, int8) | ~353 ms/strip ≈ 7.4 s/page |
 | Round-1 ship gate | parity 10/10 fp32 + 10/10 int8; browser gate **19/20** — one double-dot token (`a''2..`) trips an ORT-web int8 numerics wobble, model-independent, logged not blocking |
 | Round-2 ship gate (2026-07-27, live) | parity 14/14 fp32 + 14/14 int8; browser gate **27/28** — canvas (product) path 14/14, one *reference*-path strip drops a `\tup3`; deterministic, logged not blocking. Round-1's double-dot failure did not reproduce |
+| Round-3/4 browser gate (2026-09-28 → 2026-10-08) | `r3a` **22/28**, `r4-ctl` **24/28** on the July golds; after the one `\tie` gold was rewritten tie-free (2026-10-08), `r4-ctl` (live) reads **26/28** — the pin since then. Detail: [METRICS-ONNX.md](METRICS-ONNX.md) |
 | That gate miss, measured | the flipped token is a real near-tie: `\tup3` **p=0.689** vs `e` **p=0.306** under Python-ORT int8 — the only token in the strip below 0.99 (next lowest 0.938). ORT-web wasm int8 tips it; the graph and the JS preprocessing are both exonerated |
-| Training strip geometry | H=336 px, staff spacing 30 px, top line y≈138; label cap 59 ids |
+| Training strip geometry | H=336 px, staff spacing 30 px, top line y≈138; label cap 59 ids (the real pools' emitter gate is **80 H ids** since 2026-09-07 — [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) |
 | Slicer staff-detection kernel | `STAFF_HOR_FRAC = 0.11` of page width (was `w/4`) |

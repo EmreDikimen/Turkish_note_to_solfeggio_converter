@@ -21,7 +21,9 @@ Source code: <https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter
 
 ## What is here
 
-Int8-quantized ONNX exports of a Donut-style vision-encoder-decoder (~143M parameters):
+Int8-quantized ONNX exports of a Donut-style vision-encoder-decoder (~143M parameters). The current
+graphs are the project's **Round 4 control** checkpoint (`r4-ctl-stage2-last`), live since
+2026-09-28.
 
 | File | Role |
 |---|---|
@@ -33,8 +35,9 @@ Input is a **409×583** grayscale strip — one staff line's worth of music, not
 application slices a page into strips before decoding. Output is a LilyPond-flavoured token stream
 with AEU accidental tokens.
 
-The same graphs run in two places: in the browser via `onnxruntime-web` (the offline fallback) and
-on a CPU server via `onnxruntime-node`. There is one decode implementation, shared.
+The application reads pages with these graphs on a CPU server (`onnxruntime-node`). The same decode
+code also runs in a browser via `onnxruntime-web` — used in development and tests, not by the live
+site's visitors. There is one decode implementation, shared.
 
 ## Licence and attribution
 
@@ -70,8 +73,8 @@ Known limits, stated plainly:
 - Accuracy on **clean synthetic** strips is effectively solved; accuracy on **real printed pages**
   is the open problem and is substantially lower. Treat every decode as a draft to be corrected —
   the application ships an editor for exactly that reason.
-- The microtonal accidentals are the hard part, and the koma/küçük mücennep distinction is where
-  the remaining errors concentrate.
+- On real pages the largest error groups are the key signature, note height and note length; the
+  koma / küçük mücennep sharp distinction inside the key signature is the hardest accidental case.
 - Long or dense staff lines can overrun the decoder's token budget.
 - Handwritten manuscript is out of scope.
 

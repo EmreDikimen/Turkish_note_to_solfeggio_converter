@@ -5,7 +5,7 @@
  * inert on clean input. That is TRUE of the perspective crop and FALSE of the deskew, and the
  * difference was found by measuring the port against the corpus rather than by reading the code:
  * scanned pages in `data/real/strips_v2` carry a real 0.3-1° scanner skew, and skipping the
- * rotation cost whole systems (one page went 10 staves -> 0). See docs/mvp/slicer-port.md.
+ * rotation cost whole systems (one page went 10 staves -> 0). See docs/archive/phases/slicer-port.md.
  *
  * So the deskew IS ported and the perspective crop is not:
  *
@@ -15,7 +15,7 @@
  *     more staff-line rows" gate, so an axis-aligned screenshot still passes through untouched;
  *     it just is not the corpus we validate against.
  *
- * Transliterated line by line. Do not restructure — see docs/mvp/slicer-port.md.
+ * Transliterated line by line. Do not restructure — see docs/archive/phases/slicer-port.md.
  */
 import { pyRound } from "./constants";
 import { binarizeInk, openHorizontalRowSums, resizeScale, rotate, type Gray } from "./cvOps";

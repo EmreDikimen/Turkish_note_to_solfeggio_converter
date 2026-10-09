@@ -9,7 +9,7 @@ Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-17 when
 400-line cap. The split is by genre: that file keeps **what the model gets wrong**, this one keeps
 **what the model is given** — a question about our own pipeline rather than about the model's errors.
 Nothing is duplicated. The lever these numbers serve is
-[rung3/levers.md](rung3/levers.md), Lever 1.
+[archive/rounds/levers.md](archive/rounds/levers.md), Lever 1.
 
 ⚠ **Two rails, not one, and they behave oppositely.** The slicer cuts real pages
 (`MEASURES_PER_STRIP` / `MAX_STRIP_W`, both env-switchable); the renderer packs synthetic strips by
@@ -18,7 +18,7 @@ says which side it is about.
 
 ## The three-arm pilot (2026-08-17) — the measure rail is not the lever, and the stop rule fired
 
-Lever 1 step 2, pre-registered in [rung3/levers.md](rung3/levers.md) before the arms ran. Six pieces,
+Lever 1 step 2, pre-registered in [archive/rounds/levers.md](archive/rounds/levers.md) before the arms ran. Six pieces,
 one per makam (`scripts/rung3/make_geom_pilot_list.py`); 25 non-exam real pages re-sliced per arm
 (`scripts/rung3/geom_reslice.py`). All three synthetic arms pass `verify-labels` exactly
 (433/433, 434/434, 489/489, zero label drift).
@@ -158,7 +158,7 @@ is the same 326 images), on this probe's own re-alignment:
 **Real-val holdout** (`_realval_v2`, 267 strips; ×1.00 also reproduced its recorded SER 0.079 /
 62.9% exactly): **0.079 → 0.096 → 0.127**, i.e. **+61% at ×2.00**, Δ +0.462 [+0.244, +0.691] and
 +1.187 [+0.901, +1.500]. The direction replicates and is **steeper** than the exam's — the check §1
-of [rung3/round3.md](rung3/round3.md) skipped when its 2% shrink won 15.5% on the exam and −1.6% here.
+of [archive/rounds/round3.md](archive/rounds/round3.md) skipped when its 2% shrink won 15.5% on the exam and −1.6% here.
 
 - ⚠ **×2.00 extrapolates** below the exam's natural 12.2–36.5 px range: the in-range doses carry the
   claim, the wide ones establish the shape. ⚠ **25 of 326 crops are too dense to have a quiet
@@ -171,7 +171,7 @@ of [rung3/round3.md](rung3/round3.md) skipped when its 2% shrink won 15.5% on th
 ## Step 2's pre-registration, as signed (2026-08-17, before any arm ran)
 
 Kept verbatim so the result above can be checked against what was actually promised, rather than
-against a memory of it. Moved here from [rung3/levers.md](rung3/levers.md) on 2026-08-17 when that
+against a memory of it. Moved here from [archive/rounds/levers.md](archive/rounds/levers.md) on 2026-08-17 when that
 file crossed its 400-line cap — the lever is closed, so its pre-registration is history.
 
 
@@ -197,7 +197,7 @@ in `crop_geometry_probe.tokenize()`'s units — `domain_gap.py` cannot report it
 
 **What a surviving arm must show:** strip width and tokens/strip moving *toward* the real pools'
 without overshooting them, the effective encoder spacing rising, and the strips/page cost stated so
-the render is priced before it is run ([../mvp/latency.md](mvp/latency.md)).
+the render is priced before it is run ([app/latency.md](app/latency.md)).
 
 **⚠ What this pilot may NOT claim, written here so a later reader cannot borrow it.** Nothing about
 accuracy. `domain_gap.py` measures distribution similarity; the accuracy claim belongs to a trained
@@ -208,7 +208,7 @@ bad"* from *"never saw narrow"* — so the arms are **not decoded**.
 **Costs and risks, stated up front:**
 
 - ~3× more strips per page → decode time roughly triples. The page-splitting plan in
-  [../mvp/latency.md](mvp/latency.md) exists for exactly this, and the current gate is accuracy,
+  [app/latency.md](app/latency.md) exists for exactly this, and the current gate is accuracy,
   not latency — but this is a real product cost and the owner should price it before the render.
 - ⚠ **The short-crop hole gets bigger before it gets smaller.** Crops under ~10 gold tokens are the
   worst thing this model reads, because 0 of 40,826 training strips are signature-only. Narrow
@@ -232,7 +232,7 @@ crop change; keep this in the drawer.
 The three-step plan Lever 1 carried before it was run. Steps 1 and 2 executed; step 3 is dead with
 the lever. Kept verbatim because the *reasoning* in step 1 — why the probe tiles a quiet window
 rather than replicating the last column — is the reusable part, and because a spent plan should be
-checkable against what was actually done. Moved from [rung3/levers.md](rung3/levers.md) at its cap.
+checkable against what was actually done. Moved from [archive/rounds/levers.md](archive/rounds/levers.md) at its cap.
 
 **What to run, in order:**
 
@@ -257,7 +257,7 @@ checkable against what was actually done. Moved from [rung3/levers.md](rung3/lev
 
 ## Lever 1 as it stood — the full case, kept for the record (closed 2026-08-17)
 
-Moved out of [rung3/levers.md](rung3/levers.md) on 2026-08-17 at its 400-line cap. The lever is
+Moved out of [archive/rounds/levers.md](archive/rounds/levers.md) on 2026-08-17 at its 400-line cap. The lever is
 **closed**, so its argument is history and belongs beside its numbers. Kept in full rather than
 summarised because the reasoning is what stops it being re-proposed — and because two of the claims
 in it were measured wrong and the corrections only make sense next to the originals.
@@ -287,7 +287,7 @@ resolution away on. Measured, and re-measured with the two obvious confounds pin
 
 **Why it is ranked first.** It predicts three findings this project already owns and never
 connected: crops >1200 px carrying a fifth of exam edits, synthetic beams reaching the encoder at
-6.5 px, and the one-or-two-position pitch errors that §1 of [round3.md](rung3/round3.md) chased into a
+6.5 px, and the one-or-two-position pitch errors that §1 of [round3.md](archive/rounds/round3.md) chased into a
 dead end. It needs **no new labels and no architecture change** — only the strip-cutting rails.
 
 ⚠ **CORRECTED 2026-08-17: the renderer and the slicer do NOT share those constants**, and this file
@@ -303,7 +303,7 @@ edits rather than one:
 
 Two consequences that change what the pilot has to do. **The renderer has no pixel-width rail at
 all** — a wide row is emitted at whatever width the engraving produced, which is *why* our strips run
-wider than the real pools' (§4 of [round3.md](rung3/round3.md)) rather than an accident on top of it. And
+wider than the real pools' (§4 of [round3.md](archive/rounds/round3.md)) rather than an accident on top of it. And
 the two sides already disagree by one measure, 4 against 3, which nothing had flagged.
 
 **A second argument, free with it.** An accidental carries to the end of its measure, so a
@@ -339,7 +339,7 @@ survive it and neither is a version of "narrow the crops":
   decode cost and no short-crop risk at all** — the stop rule is about the *real* side, which this
   does not touch. ⚠ Untested as an accuracy claim; it needs a trained arm like anything else.
 - **The short-crop hole is now the blocking item on this axis, not a side condition.** It was dropped
-  in July on a disproved *mechanism* (§3 of [round3.md](rung3/round3.md)) while its **cost** was confirmed,
+  in July on a disproved *mechanism* (§3 of [round3.md](archive/rounds/round3.md)) while its **cost** was confirmed,
   and it is what stops the only geometry arm that works. Any return to crop geometry goes through it
   first.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build the Colab upload package for ONE ARM of the tuplet-mark A/B (docs/rung3/round3-criteria.md).
+# Build the Colab upload package for ONE ARM of the tuplet-mark A/B (docs/archive/rounds/round3-criteria.md).
 #
 #   scripts/make_round3_colab_zip.sh tupnew   -> data/colab/tnc_round3_tupnew_colab.zip
 #   scripts/make_round3_colab_zip.sh tupctl   -> data/colab/tnc_round3_tupctl_colab.zip
@@ -59,7 +59,7 @@ case "$ARM" in
   *) echo "usage: $0 tupnew|tupctl|scan|stac|final|finalb"; exit 2 ;;
 esac
 # Defaults for the four ARMS. ⛔ No arm may carry --concave-tuplet or --usul-barline: each changes a
-# share of every piece, so an arm with one on is not comparable to one without (docs/rung3/tuplets.md).
+# share of every piece, so an arm with one on is not comparable to one without (docs/archive/rounds/tuplets.md).
 : "${WANT_CONCAVE:=false}"
 : "${WANT_USUL:=false}"
 # ⚠ THE ARMS KEEP THE RETIRED POOLS ON PURPOSE — that is what they trained on, so a rebuilt arm zip
@@ -105,7 +105,7 @@ stac = bool(c.get('staccatoNoise', False))
 conc = bool(c.get('concaveTuplet', False))
 usul = bool(c.get('usulBarline', False))
 # ⛔ No ARM may carry the concave tuplet mark or the dotted barline: each is a diversity item for the
-# FINAL model's render, and inside an arm it would be a second variable (docs/rung3/tuplets.md).
+# FINAL model's render, and inside an arm it would be a second variable (docs/archive/rounds/tuplets.md).
 # The 'final' arm is the one that wants both, which is why these are compared against the wanted
 # value rather than hardcoded to False. (No backticks in here: this is a double-quoted shell string,
 # so a backtick would be command substitution — it ran and printed 'final: command not found'.)

@@ -5,7 +5,7 @@
  * It exposes exactly what the app's "Read strips" button does, with no DOM of its own, so the
  * thing under test is the shipped code path rather than a Node lookalike. That matters more than
  * it sounds: the canvas resampler only exists in a browser, and it is the known source of
- * browser-vs-Python decode differences (docs/mvp/README.md W3).
+ * browser-vs-Python decode differences (docs/archive/phases/mvp.md W3).
  *
  * Strips arrive as data URLs so Node keeps all file I/O and we never have to open `data/real/` to
  * the dev server.

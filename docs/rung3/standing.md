@@ -2,7 +2,7 @@
 
 purpose: the settled context behind the model track — what is already known, so STATUS can hold only "now" and "next"
 audience: agents and the owner working the real-page track
-updated: 2026-09-06
+updated: 2026-10-08
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-07, when that file crossed its 400-line
 > limit. Nothing here is a next action; it is the background a next action rests on. Current state
@@ -91,10 +91,10 @@ narrower (**+31.8% edits**), thinning beams. Still standing: the content work �
 mix and bar-line density in `select_pieces.py`. ⚠ **A FIFTH check was added 2026-08-15** — the
 encoder's input geometry, the first one not about what we draw. It came back causal, its follow-up
 pilot was **stopped 2026-08-17**, and the owner then put **Lever 4 (renderer diversity)** in front of
-the content work, which stays behind all of it. Ranked menu and the live order: [levers.md](levers.md).
+the content work, which stays behind all of it. Ranked menu and the live order: [levers.md](../archive/rounds/levers.md).
 `USUL_BEAM_GROUPS` remains **unvalidated and
 quarantined** (the beam check measured thickness, not grouping) and `staff_jitter` is insurance, not
-a fix. Full detail: [rung3/round3.md](round3.md); why each was dropped:
+a fix. Full detail: [archive/rounds/round3.md](../archive/rounds/round3.md); why each was dropped:
 [DECISIONS.md](../DECISIONS.md).
 
 ## Previously (moved out of STATUS 2026-08-16 — settled, no next action here)
@@ -113,7 +113,7 @@ result; those 35 groups are a subset of these 54.
 **The mark itself (2026-08-12, retired from STATUS 2026-08-16):** measured against ~11 real printed
 editions (16/16 break the arc), redrawn to those numbers, and corrected twice by the owner's eye.
 Geometry: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md); the account, including the
-comparison sheet and its ⚠ local-viewing-only caveat: [tuplets.md](tuplets.md).
+comparison sheet and its ⚠ local-viewing-only caveat: [tuplets.md](../archive/rounds/tuplets.md).
 
 [../METRICS.md](../METRICS.md) · [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
@@ -143,8 +143,10 @@ pages and photos of them.
   AEU F1, but that average gives a 14-gold class the same weight as a 145-gold one. Re-scored on the
   same strips with low-n-robust measures: **micro recall 83.9 → 84.8%**, **macro≥30 recall 81.4 →
   84.8%**, micro F1 85.0 → 84.8% — flat-to-better, on top of SER 0.059 → 0.052 and 9 of 11 floors.
-- **Live model is `round2-stage2-best` int8** (shipped 2026-07-27) — ship chain all green: parity
-  14/14 fp32 + 14/14 int8, browser gate 27/28 with the product (canvas) path clean 14/14. Runtime in
+- **`round2-stage2-best` int8 was the live model from 2026-07-27 to 2026-09-03** (then Run A
+  `r3a-stage2-best-real`, then `r4-ctl-stage2-last` since 2026-09-28 — [../STATUS.md](../STATUS.md))
+  — its ship chain was all green: parity 14/14 fp32 + 14/14 int8, browser gate 27/28 with the
+  product (canvas) path clean 14/14. Runtime in
   `apps/web/public/models/`; Round 1's runtime was backed up at
   `data/checkpoints/_public_models_backup_round1/` until the 2026-09-06 space sweep deleted it as a
   byte-identical duplicate — revert = re-stage `data/checkpoints/round1-best-onnx/*_int8.onnx`.
@@ -175,4 +177,4 @@ pages and photos of them.
   PASS. It is sound data; the corpus is not what failed.
 
 Numbers for all of the above: [METRICS.md](../METRICS.md). Why things were decided this way:
-[DECISIONS.md](../DECISIONS.md). Round 2 in full: [rung3/round2.md](../archive/rounds/round2.md).
+[DECISIONS.md](../DECISIONS.md). Round 2 in full: [archive/rounds/round2.md](../archive/rounds/round2.md).

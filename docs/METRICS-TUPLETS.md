@@ -8,13 +8,13 @@ updated: 2026-08-19
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-19 when that file crossed
 the 400-line cap. The split is by genre: that file keeps **how the model fails**, this one keeps
 **what a triplet looks like** — in our labels, in our renderer, and on a real page. Nothing is
-duplicated. The thread these serve is [rung3/tuplets.md](rung3/tuplets.md); the A/B they informed
+duplicated. The thread these serve is [archive/rounds/tuplets.md](archive/rounds/tuplets.md); the A/B they informed
 ran and was **null** (p = 0.688).
 
 ### Tuplets — the corpus scan and the renderer constants (2026-08-11)
 
 Taken while diagnosing why `\tup3` recall misses its floor. Reading:
-[rung3/tuplets.md](rung3/tuplets.md). Scores themselves: [METRICS.md](METRICS.md).
+[archive/rounds/tuplets.md](archive/rounds/tuplets.md). Scores themselves: [METRICS.md](METRICS.md).
 
 **Noteheads per `\tup3` group**, over every label pool we own — `strips_tup`, `strips_nota`,
 `strips_exam_v2`, `strips_v4`:
@@ -64,7 +64,7 @@ why. 20 tiles read on `strips_tup` → 12 accepted; 8 read on `strips_exam_v2_cl
 > contiguous triplet runs). The sample was 16 tiles from **two pools we already own**, and the style
 > is absent from both, so the probe could not have found it. 16/16 describes those pools; Turkish
 > print at large has at least two shapes. Geometry for the third style is measured separately, on
-> those pages, before it is drawn ([rung3/tuplets.md](rung3/tuplets.md), [DECISIONS.md](DECISIONS.md)).
+> those pages, before it is drawn ([archive/rounds/tuplets.md](archive/rounds/tuplets.md), [DECISIONS.md](DECISIONS.md)).
 
 | quantity, in staff spaces | real print (n=16) | ours, curved style | ours, bracket style |
 |---|---|---|---|
@@ -160,7 +160,7 @@ comes entirely from the arms' **slopes**: ends follow the notes, digit stays at 
   Thickening only the tuplet arc would hand the model a thickness cue separating it from a phrase
   slur that real pages do not have — the same trap `AEU_SHARP_STROKE` documents. It is owed as a
   joint change with `drawSlurArc` — still owed, and still joint, now that the shape A/B has run and
-  come back null (2026-08-15, [rung3/tuplets.md](rung3/tuplets.md)).
+  come back null (2026-08-15, [archive/rounds/tuplets.md](archive/rounds/tuplets.md)).
 - **The digit's FONT changed, and the gap is why.** Bold italic Georgia (an old-style figure) measured
   **1.10 S wide** at real print's height, leaving 0.26 S of clearance instead of 0.43 — it would have
   fused with the arc ends after the shrink. Upright Times at 16 px measures 0.77 × 1.20 S. The slant

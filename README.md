@@ -4,8 +4,8 @@ Upload a photo or screenshot of Turkish sheet music. The app reads the notes —
 microtonal accidentals** (koma, bakiye, küçük mücennep, …) — draws them as a score you can correct
 by hand, and plays them back at exact **53-TET (Arel-Ezgi-Uzdilek)** pitches.
 
-**Try it: <https://komavision.netlify.app>** — nothing to install, works in a desktop browser.
-The interface is in **Turkish**.
+**Try it: <https://komavision.netlify.app>** — nothing to install; works on a phone or a desktop
+browser, and can be added to a phone's home screen. The interface is in **Turkish**.
 
 ## Why it exists
 
@@ -17,9 +17,9 @@ photo → score → sound path.
 ## What you can do with it
 
 - **Read a page.** Drag in (or paste) a single-page JPG/PNG. A page takes roughly half a minute to
-  a minute; the reading itself runs on a small server, and falls back to your own browser if that
-  server is unreachable. Screenshots and clean scans read best; phone photos of paper work but are
-  the hardest case.
+  a minute; the reading itself runs on a small server, so your device does no heavy work (if the
+  server cannot be reached, the app says so rather than reading on your device). Screenshots and
+  clean scans read best; phone photos of paper work but are the hardest case.
 - **Fix what it got wrong.** Edit mode: click a note to select it, drag up/down to change its
   pitch, ✕ to delete, and the left-hand palette to change a duration, add an accidental, insert a
   new note, mark a rest, or make a triplet. Undo/redo included. A measure that does not add up to
@@ -33,23 +33,24 @@ photo → score → sound path.
   signature / standard per-measure; transpose, with a *keep the sheet, move the sound* option for
   transposing instruments (ney ahenks); pick a **makam** to bend the *sound only* — the engraved
   notes never move.
-- **Other views.** Piano roll (vertical axis is the 53 komas), lyrics under the notes, and a
-  **violin fingerboard** tab showing where the finger lands as the piece plays.
-- **Take it with you.** ⬇ JSON downloads the corrected piece as a note-model file; the **Gelişmiş**
-  (Advanced) section loads one back in.
+- **See it on an instrument.** The *Enstrüman üzerinde* view shows the piece on a **violin** neck
+  (where the finger lands), a **kanun** (which mandals to set) or a **sol klarnet** (which holes, how
+  tight the lip), moving as the piece plays, beside the bar being played.
+- **Keep it.** The app remembers the pages your browser has read (the last 30, notes only — never
+  the image). Save the score as a **PNG** picture or a **PDF**.
 
 ### Honest limits
 
 - The reading is good, not finished. A typical page still needs a handful of corrections, and the
   app **does not yet tell you which notes it is unsure about** — that feature was tried, measured,
-  and dropped rather than shipped weak. Current accuracy: [docs/METRICS.md](docs/METRICS.md);
-  the plain-English account: [docs/OVERVIEW.md](docs/OVERVIEW.md).
+  and dropped rather than shipped weak. Current accuracy: [docs/METRICS.md](docs/METRICS.md).
 - One page at a time. PDFs are not read directly — export or screenshot the page first.
 - The app **ships no music of its own**: there are no built-in example scores, by choice — every
   score we hold is licensed so that publishing it would bind the app to NonCommercial terms
   ([docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)). You bring your own page.
 - **Your uploads are not stored.** The decode server reads the image and drops it; it never writes
-  one to disk.
+  one to disk. Any visit counting is anonymous — no IP address is kept:
+  [privacy](https://komavision.netlify.app/privacy.html).
 
 ## How it works
 
@@ -62,8 +63,9 @@ page image
   → play         Web Audio at exact 53-TET frequencies
 ```
 
-The slicing runs in your browser. The model runs on a small CPU server (Cloud Run), with the same
-model in-browser as the fallback — one decode implementation, shared by both.
+The slicing runs in your browser. The model runs on a small CPU server (Cloud Run). The same decode
+code can also run in the browser — that is how `npm run dev:web` works locally — so there is one
+decode implementation, shared by both.
 Design: [docs/PIPELINE.md](docs/PIPELINE.md).
 
 ## Running it yourself
@@ -116,6 +118,8 @@ column gives each pitch as an absolute Holdrian comma, which maps straight to a 
 packages/core/   shared TypeScript: note model, 53-TET tuning, synthesis scheduling, edits
 apps/web/        the React app — slicer, editor, playback, UI (all user-facing strings in ui/strings.ts)
 apps/server/     the decode server (Node + onnxruntime-node, importing the web app's own decoder)
+apps/android/    the Play Store app: a Trusted Web Activity shell around the live site (Bubblewrap)
+netlify/         the anonymous visit counter (Netlify Functions)
 tools/           synthetic-strip renderer, browser checks, parity harnesses
 src/, scripts/   Python: OMR training, evaluation, SymbTr parsing, the real-page labeling loop
 data/            scores, corpora, checkpoints (all gitignored)
@@ -129,9 +133,8 @@ The web app is live and in use; the model keeps improving in measured rounds aga
 
 | | |
 |---|---|
-| Plain-English summary, no jargon | [docs/OVERVIEW.md](docs/OVERVIEW.md) |
 | Every headline number | [docs/METRICS.md](docs/METRICS.md) |
 | Why something was decided | [docs/DECISIONS.md](docs/DECISIONS.md) |
 | Licences and what we may publish | [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md) |
-| Long-range plan (incl. the mobile app) | [ROADMAP.md](ROADMAP.md) |
+| Long-range plan | [ROADMAP.md](ROADMAP.md) |
 | Working on the code? Start here | [CLAUDE.md](CLAUDE.md) · [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |

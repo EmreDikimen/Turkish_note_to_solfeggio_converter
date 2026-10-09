@@ -1,6 +1,6 @@
 r"""Score the tuplet-mark A/B: `\tup3` recall per arm, PAIRED, with an exact McNemar test.
 
-Reads the pre-registered number in docs/rung3/round3-criteria.md and nothing else. Two arms decode
+Reads the pre-registered number in docs/archive/rounds/round3-criteria.md and nothing else. Two arms decode
 the SAME pool (`_tupletval`, 54 gold groups over 28 strips), each gold `\tup3` occurrence is scored
 hit/miss by the same Levenshtein alignment `eval_omr.py` uses, and the two outcome vectors are
 compared **paired** — which is the only honest test at this n. An unpaired difference of a few
@@ -14,7 +14,7 @@ is the threshold of significance; the criteria file pre-registers that as the re
 
 ⚠ Precision is a VETO, not a tiebreak (floor ≥70%), and the mean-AEU-F1 guard is read separately on
 `_realval_v2` with eval_omr.py. This script does not decide anything — the decision rule is written
-in docs/rung3/round3-criteria.md, before the result.
+in docs/archive/rounds/round3-criteria.md, before the result.
 
 Usage:
     .venv-ml/bin/python scripts/rung3/tuplet_ab_score.py \
@@ -127,7 +127,7 @@ def main() -> int:
           f"{sum(1 for x, y in zip(hn, hc) if not x and not y)} neither")
     print(f"exact McNemar p = {p:.3f}  ->  {'DIFFERENT' if p < 0.05 else 'NULL (not resolvable at this n)'}")
     print("\n⚠ Precision is a veto at 70%, not a tiebreak. The decision rule is in "
-          "docs/rung3/round3-criteria.md — read it before reading this table again.")
+          "docs/archive/rounds/round3-criteria.md — read it before reading this table again.")
 
     if args.out:
         Path(args.out).write_text(json.dumps({

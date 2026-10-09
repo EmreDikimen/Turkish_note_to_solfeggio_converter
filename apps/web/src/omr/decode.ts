@@ -54,7 +54,7 @@ export function argmaxLast(logits: Tensor): { id: number; logprob: number } {
 
 /**
  * The encoder pass. `pixelValues` may carry a BATCH of strips ([n, 3, h, w]) — both graphs were
- * exported with a dynamic `batch_size` axis (verified 2026-08-05, docs/mvp/deploy.md), so batching
+ * exported with a dynamic `batch_size` axis (verified 2026-08-05, docs/app/deploy.md), so batching
  * needs no re-export. The browser passes n = 1; the server passes a whole page.
  */
 export async function runEncoder(

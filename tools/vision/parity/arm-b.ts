@@ -1,7 +1,7 @@
 /**
  * Arm B — decode Python's own crops in the BROWSER and diff against Python's decode.
  *
- * This is the control arm the slicer port is judged against (docs/mvp/README.md W3), and it exists
+ * This is the control arm the slicer port is judged against (docs/archive/phases/mvp.md W3), and it exists
  * because browser-vs-Python token equality will never be 100% even with a byte-perfect slicer: the
  * checkpoint's `resample: 2` is PIL BILINEAR while the product path uses a canvas draw. The gate
  * already shows the symptom at 27/28.

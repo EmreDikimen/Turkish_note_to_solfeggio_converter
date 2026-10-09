@@ -67,7 +67,7 @@ MEASURES_PER_STRIP = int(os.environ.get("OMR_MEASURES_PER_STRIP", "3"))
 # target measures per window (2-4 is the training range)
 #
 # OMR_MAX_STRIP_W: the width rail, env-switchable since 2026-08-17 for Round-3 Lever 1's crop-geometry
-# pilot (docs/rung3/levers.md). It had to be monkeypatched before that — width_split_probe.py still
+# pilot (docs/archive/rounds/levers.md). It had to be monkeypatched before that — width_split_probe.py still
 # shows the pattern. ⚠ This is the SLICER's pair; the renderer packs training strips by measures and
 # LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no width rail at all, so changing
 # this alone moves the real crops and leaves the synthetic corpus where it was.

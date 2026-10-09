@@ -3,15 +3,17 @@
 purpose: the build plan for the decode server and the two-friend release; owns W9/W10 hosting and scope choices
 audience: the owner (and whoever wires the deploy), picking up W9
 
-updated: 2026-08-06
+updated: 2026-10-08
 
 > ✅ **DEPLOYED 2026-08-06** — `https://omr-decode-706571981988.europe-west3.run.app`, Cloud Run
-> europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3. All four build steps are done, the
+> europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3 (**10 since 2026-09-04**). ⛔ This
+> plan assumes the in-browser decode FALLBACK throughout; it was switched off on 2026-09-04, so read
+> every "falls back" below as history. All four build steps are done, the
 > safety checklist is complete, and the cloud-side numbers below are **measured, not extrapolated**.
 > ✅ **AND THE APP IS HOSTED (2026-08-06)** — **<https://komavision.netlify.app>** on Netlify, weights
 > on the Hub at `Beyaban/omr-weights`, service redeployed with `ALLOWED_ORIGINS` set to that host,
 > the 413 fix and `--cpu-boost`. This file does not state the next action:
-> [../STATUS.md](../STATUS.md). The ladder: [README.md](README.md). Decisions:
+> [../STATUS.md](../STATUS.md). The ladder: [README.md](../archive/phases/mvp.md). Decisions:
 > [../DECISIONS.md](../DECISIONS.md). Numbers: [../METRICS.md](../METRICS.md).
 > Never used Google Cloud? [gcloud-setup.md](gcloud-setup.md). Doing the app/weights hosting?
 > **[hosting-setup.md](hosting-setup.md)** is the same thing for Hugging Face and Netlify.
@@ -105,7 +107,7 @@ differently — but it must be re-measured there, not assumed.
 Ordered by how much they still hurt, **after** the 2026-08-05 rescoping.
 
 1. **Thermals — the owner's reason, and now the whole of the live case.** Decode is ~1.2 s/strip on
-   an M4 and a page is ~16–19 strips (both in [README.md](README.md)), so a page pegs several
+   an M4 and a page is ~16–19 strips (both in [README.md](../archive/phases/mvp.md)), so a page pegs several
    threads for ~19 s of the ~25 s it takes. Every user pays that heat on their own machine.
    ✅ **Closed by the owner 2026-08-05: the machine still gets hot at the current ~25 s page — no
    re-test needed.** An earlier version of this page asked for one, on the grounds that the original

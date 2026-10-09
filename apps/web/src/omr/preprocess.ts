@@ -11,7 +11,7 @@
  * ⚠ Known, measured gap: the checkpoint's `resample: 2` is PIL BILINEAR, while a canvas draw uses
  * the browser's own filter. That is why this path is not expected to agree with Python on 100% of
  * strips, and why the slicer parity harness (MVP W3) measures a *ceiling* from this arm before the
- * slicer is judged against it. See docs/mvp/README.md.
+ * slicer is judged against it. See docs/archive/phases/mvp.md.
  *
  * The final rescale lives in `./pixels` — DOM-free, because the decode server runs that step and
  * none of this one. That split is the W9 seam and the reasoning is written there.

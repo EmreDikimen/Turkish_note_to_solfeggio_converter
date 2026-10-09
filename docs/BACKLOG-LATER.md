@@ -3,7 +3,7 @@
 purpose: the deferred work that is NOT near-term — density levers, exam v3's owed items, the signature-packed sharp glyphs, and the rest; kept out of BACKLOG.md so that file holds only what could plausibly be picked up next
 audience: agents with spare capacity, or anyone asking "why was this deferred and what would restart it"
 
-updated: 2026-09-10
+updated: 2026-10-08
 
 Split out of [BACKLOG.md](BACKLOG.md) on 2026-08-26 at the 400-line cap. Phase split: that file
 holds **what could be picked up next**; this one holds **what is deferred past this round**. Nothing
@@ -13,7 +13,11 @@ down.** Each item carries the reason it is deferred; read it before starting. Ab
 
 ### Further out (not next, not cancelled)
 
-0. **THE DENSITY LEVERS — all deferred 2026-08-22, and all deliberately NOT in Round 3.** They came
+0. ⚠ **UPDATED 2026-10-08: two of the five levers below were spent in Round 4** — note-spelling
+   tokens (scheme H: built, trained, a NULL on strips) and the rail's TRAINING half (`strips_h1`,
+   +35 rows). What is still open from this list is the rail in the SHIPPED slicer, and it now lives
+   as [BACKLOG.md](BACKLOG.md) item 0. The bullets below are as written on 2026-08-22..09-03.
+   **THE DENSITY LEVERS — all deferred 2026-08-22, and all deliberately NOT in Round 3.** They came
    out of the "the app returns wrong notes on dense pieces" session
    ([METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)). Splitting dense windows into single
    measures fixes **44.3%** of the failure class; these four are what the rest needs, and none of them
@@ -42,8 +46,8 @@ down.** Each item carries the reason it is deferred; read it before starting. Ab
      *used*. ⚠ **Do it in the same re-emit as the rail below**, not as its own round — both re-emit
      the pools. Round 4. ⏭ **PICKED UP 2026-09-03**: scheme H recommended (owner to confirm), no
      re-render this round, `\tupend` stays — [rung3/round4.md](rung3/round4.md).
-   - **Raising the 59-id budget** — DROPPED for Round 3 (see [DECISIONS.md](DECISIONS.md)); the
-     measured benefit is kept in item 7 below.
+   - **Raising the 59-id budget** — DROPPED for Round 3, then RAISED to 80 under scheme H for Round 4
+     (2026-09-07; [DECISIONS.md](DECISIONS.md), [archive/backlog-closed.md](archive/backlog-closed.md) item 7).
    - ⭐ **THE RAIL ITSELF, AS A PAIR — the Round-4 headline** (owner, 2026-08-23). Measured and
      decided: the rail at *inference alone* is a wash (15.7% → 16.6%, p = 0.57), because it was
      tested on a model that has never been trained under it. Its real payoff is that a split strip

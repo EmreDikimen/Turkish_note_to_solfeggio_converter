@@ -151,7 +151,7 @@ async function health(url: string, signal?: AbortSignal): Promise<HealthReply | 
  *
  * Called once when the app opens: by the time a user has picked a file, a container that was asleep
  * is already loading its graphs, so the upload finds it ready and never pays the wait above. This
- * is option 1 of `docs/mvp/latency.md`, and it is a companion to the retry rather than a substitute
+ * is option 1 of `docs/app/latency.md`, and it is a companion to the retry rather than a substitute
  * — someone who drops a file in immediately still needs the retry to hold the page.
  *
  * Deliberately fire-and-forget: it must never delay first paint, and a server that is down is not

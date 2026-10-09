@@ -12,7 +12,7 @@
  *  1. **No second resampler to hold in parity.** The known gap in `preprocess.ts` is that a canvas
  *     draw is not PIL BILINEAR; resizing again on the server with `sharp` or node-canvas would add
  *     a THIRD resampler and a rung to prove it matches — the exact bill that reusing `decode.ts`
- *     was chosen to avoid (docs/mvp/deploy.md).
+ *     was chosen to avoid (docs/app/deploy.md).
  *  2. **PNG is lossless**, so what the server feeds the encoder is bit-for-bit what the browser
  *     would have fed it. The only thing left that can differ is ORT itself, which is what the
  *     server-vs-browser parity check measures.

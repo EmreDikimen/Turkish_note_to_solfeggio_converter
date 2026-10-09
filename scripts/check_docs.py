@@ -41,18 +41,19 @@ LONG_OK = {              # append-only records: size is inherent, structure is w
     "src/vision/MODEL_EVAL.md",
     # A verbatim training console log. Its length IS the artifact — trimming it would defeat the
     # reason it is kept (the tuplet A/B's equivalent was deleted and that entry has to say so).
-    "round_3_scan_logs.md",
-    "round_3_staccato_logs.md",
-    "round3_final_logs.md",
-    "round3_runa_logs.md",
-    "round3_runb_logs.md",
-    "round4_control_logs.md",
-    "round4_h_logs.md",
+    "docs/log/raw/round_3_scan_logs.md",
+    "docs/log/raw/round_3_staccato_logs.md",
+    "docs/log/raw/round3_final_logs.md",
+    "docs/log/raw/round3_runa_logs.md",
+    "docs/log/raw/round3_runb_logs.md",
+    "docs/log/raw/round4_control_logs.md",
+    "docs/log/raw/round4_h_logs.md",
 }
 # Docs that need no header block / index entry (archived verbatim copies, external READMEs).
 # `hf/` is the model card uploaded verbatim to the Hugging Face Hub as the weights repo's README —
 # a purpose:/audience:/updated: block would be published to strangers as if it were house style.
-EXEMPT_PREFIXES = ("docs/archive/", "hf/")
+# `docs/log/raw/` holds verbatim training consoles and the owner's own labelling notes, kept as written.
+EXEMPT_PREFIXES = ("docs/archive/", "docs/log/raw/", "hf/")
 
 HEADER_KEYS = ("purpose:", "audience:", "updated:")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")

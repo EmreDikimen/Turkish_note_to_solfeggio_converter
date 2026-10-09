@@ -95,7 +95,7 @@ def lr_lambda(step: int, warmup: int, total: int) -> float:
 class Ema:
     """Exponential moving average of the weights — free smoothing over the last ~1/(1-decay) steps.
 
-    ⚠ **UNMEASURED IN THIS PROJECT** ([rung3/levers.md](../../docs/rung3/levers.md) Lever 5). It is
+    ⚠ **UNMEASURED IN THIS PROJECT** ([archive/rounds/levers.md](../../docs/archive/rounds/levers.md) Lever 5). It is
     OFF unless `--ema-decay` is given, and it must be read as a paired arm against a run without it —
     switching it on mid-round makes the arms incomparable, which is exactly what
     [BACKLOG.md](../../docs/BACKLOG.md) item 3 says about the selector.

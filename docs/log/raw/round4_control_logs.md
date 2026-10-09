@@ -5,7 +5,7 @@ audience: anyone re-reading how the vocabulary A/B's control actually trained
 updated: 2026-09-16
 
 > Stage 1 is Round 3's `r3-final-stage1/best`, reused. Read beside
-> [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md). ⛔ Its `EDITS` column is in OLD ids: never
+> [src/vision/MODEL_EVAL.md](../../../src/vision/MODEL_EVAL.md). ⛔ Its `EDITS` column is in OLD ids: never
 > set it beside the H arm's.
 
 ```text

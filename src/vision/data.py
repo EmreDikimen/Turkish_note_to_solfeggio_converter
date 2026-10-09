@@ -79,7 +79,7 @@ def vocabulary(scheme: str = "old") -> list[str]:
     `ADDED_TOKENS` was tried on 2026-09-06 and reverted the same hour: every checkpoint this
     project owns was trained at vocabulary 100, so `load_model_and_processor` then reported 17
     new tokens for each of them and `paired_arm_score.decode_pool` refused them all as "the base
-    model" — including `r3a-stage2-best-real`, which is what the live site runs. Round 4’s own
+    model" — including `r3a-stage2-best-real`, which was then what the live site ran. Round 4’s own
     step 6 is an A/B of the OLD vocabulary against H, so the two must load side by side: the
     vocabulary is a parameter, not a constant.
     """

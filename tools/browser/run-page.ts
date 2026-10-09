@@ -7,15 +7,16 @@
  * difference between a regression test and a thing you remember to check.
  *
  *   npx tsx tools/browser/run-page.ts cv-probe.html __cvProbe
- *   npx tsx tools/browser/run-page.ts omr-gate.html __gateResult --expect 27/28
+ *   npx tsx tools/browser/run-page.ts omr-gate.html __gateResult --expect 26/28
  *
  * Exits non-zero when the page reports failure, errors, or times out.
  *
  * `--expect P/T` tallies the ✓/✗ marks in the page's own log and requires exactly P passing of T.
  * The OMR gate needs this: it reports a single boolean, which has been FAIL ever since the known
- * ORT-web int8 `\tup3` wobble on one strip's reference path (docs/STATUS.md). Pinning the tally at
- * 27/28 makes it a regression test — a 28th failure now breaks the build, where the boolean
- * could not tell "the known wobble" from "the refactor broke decoding".
+ * ORT-web int8 `\tup3` wobble on one strip's reference path. Pinning the tally makes it a
+ * regression test — one more failure breaks the build, where the boolean could not tell "the known
+ * miss" from "the refactor broke decoding". The pin is 26/28 since 2026-10-08 (the live model drops
+ * one strip's `\tup3` on both paths; docs/METRICS-ONNX.md) — it was 27/28 for Round 2.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";

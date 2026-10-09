@@ -34,7 +34,7 @@ re-engrave their triplets and make the pages differ for a reason that is not the
 
     .venv-ml/bin/python scripts/rung3/decode_page_arms.py exam_pages/sutaniyegah-sirto.png \
         --prefix sirto --int8
-    # then: npm run dev:web   ->   /?score=/scores/sirto_live.json
+    # then: npm run dev:web   ->   /?score=/scores/sirto_r4ctl.json
 
 ~0.25 s per strip per model on the M4's GPU, plus one slice (~2-20 s). ⛔ Never point it at the exam.
 """
@@ -52,8 +52,8 @@ sys.path.insert(0, str(REPO / "src/vision"))
 
 # same three columns as build_model_compare.py, so the app view and the strip view agree
 ARMS = [
-    ("live", "data/checkpoints/r3a-stage2-best-real"),
-    ("r4ctl", "data/checkpoints/r4-ctl-stage2-last"),
+    ("r3a", "data/checkpoints/r3a-stage2-best-real"),        # live until 2026-09-28
+    ("r4ctl", "data/checkpoints/r4-ctl-stage2-last"),      # LIVE since 2026-09-28
     ("r4h", "data/checkpoints/r4-h-stage2-best-edits"),
 ]
 SCORES = "apps/web/public/scores"
@@ -160,8 +160,9 @@ def main() -> int:
     if args.int8:
         from decode_page import load_runtime
         from onnx_parity import onnx_greedy_decode
-        ck = REPO / "data/checkpoints/r3a-stage2-best-real"
-        onx = REPO / "data/checkpoints/r3a-stage2-best-real-onnx"
+        # the int8 graphs a visitor actually gets — r4-ctl since 2026-09-28 (it was r3a before)
+        ck = REPO / "data/checkpoints/r4-ctl-stage2-last"
+        onx = REPO / "data/checkpoints/r4-ctl-stage2-last-onnx"
         if not onx.exists():
             print(f"  ⚠ {onx.name} missing — skipping int8")
         else:

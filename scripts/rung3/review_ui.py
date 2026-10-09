@@ -130,7 +130,8 @@ QUEUES = {
     # empty, and the file name is not one `promote_labels.py` reads — act on a row in `b8-full`.
     # ⚠ `reason` carries the missing token, so the per-reason dropdown separates them.
     # ⛔ THE OWNER'S HAND-TEST PAGES (2026-09-06) — 20 pages outside the frozen exam, decoded once
-    # with `r3a-stage2-best-real` (the model serving the live site). This is the page-level
+    # with `r3a-stage2-best-real` (the model serving the live site at the time; `r4-ctl-stage2-last`
+    # has served it since 2026-09-28). This is the page-level
     # instrument docs/BACKLOG.md item 6 asks for: corrections per page, same pages for every model.
     # ⚠ THE VERDICTS ARE A CORRECTION COUNT, not a label pass:
     #     ok  = the model read this strip correctly   fix = the model got it wrong
@@ -242,7 +243,7 @@ QUEUES = {
     # reading order within each page, and verdicts go back with `--merge-back` before the next cut.
     # ⚠ TRAINING ONLY, either of them. The ranking picks the WORST pages in its tier, so nothing
     # labelled here may become exam gold — exam growth needs a random/stratified sample
-    # (docs/rung3/levers.md).
+    # (docs/archive/rounds/levers.md).
     "batch1": "data/real/rung3/_pagequeue/batch1.csv",
     # RESLICE-ALL (2026-07-31) — EVERY strip the 2026-07-29 re-slice decoded: 33,804 crops over
     # 1,704 pages, 30,049 of them decoded on Colab. Built by scripts/rung3/build_reslice_queue.py;

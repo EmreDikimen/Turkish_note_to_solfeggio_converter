@@ -35,13 +35,14 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src/vision"))
 
 # The three columns. ⚠ `r4-ctl-stage2-last` is the UNBIASED control pick (chosen on nothing), which
-# is what the live-vs-Round-4 dense read used; `best-edits` was chosen on 241 of the selection
+# is what the r3a-vs-Round-4 dense read used (r3a was the live model then; r4-ctl-stage2-last
+# has been the live model since 2026-09-28); `best-edits` was chosen on 241 of the selection
 # pool's strips and reads ~15 edits better there for that reason alone
 # ([docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md)). Anyone swapping it must say so in
 # the UI, because the edit column would then not be comparable with the published dense numbers.
 MODELS = [
-    ("live", "the live model — Round 3 Run A", "data/checkpoints/r3a-stage2-best-real"),
-    ("ctl", "Round 4 control (old vocabulary)", "data/checkpoints/r4-ctl-stage2-last"),
+    ("r3a", "Round 3 Run A — the live model until 2026-09-28", "data/checkpoints/r3a-stage2-best-real"),
+    ("ctl", "Round 4 control (old vocabulary) — the LIVE model since 2026-09-28", "data/checkpoints/r4-ctl-stage2-last"),
     ("h", "Round 4 scheme H", "data/checkpoints/r4-h-stage2-best-edits"),
 ]
 

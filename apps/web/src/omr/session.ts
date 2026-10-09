@@ -47,8 +47,11 @@ const metaUrl = WEIGHTS_BASE ? `${WEIGHTS_BASE}/model.json` : "/models/gate.json
 const graphUrl = (name: string) =>
   WEIGHTS_BASE ? `${WEIGHTS_BASE}/${name}.onnx` : `/models/${name}.onnx`;
 
-/** Bump when the shipped graphs change, so a stale cached copy cannot outlive them. */
-const CACHE_NAME = "omr-weights-r3a-stage2-best-real-int8";
+/**
+ * Bump when the shipped graphs change, so a stale cached copy cannot outlive them. ⚠ Staging a model
+ * is three graphs AND this name — r4-ctl went live on 2026-09-28 with the r3a name still here.
+ */
+const CACHE_NAME = "omr-weights-r4-ctl-stage2-last-int8";
 
 let pending: Promise<LoadedModel> | null = null;
 let metaPending: Promise<ModelMeta> | null = null;
@@ -81,7 +84,7 @@ export function getMeta(): Promise<ModelMeta> {
  *
  * ⚠ Cache Storage is best-effort and treated as such: it is absent in a non-secure context, and iOS
  * evicts it for non-installed sites after roughly a week (the phone problem, parked with phones —
- * docs/mvp/deploy.md). A miss costs a re-download, never a failure.
+ * docs/app/deploy.md). A miss costs a re-download, never a failure.
  */
 async function graphBytes(url: string, onProgress?: (msg: string) => void): Promise<Uint8Array> {
   let cache: Cache | null = null;

@@ -50,7 +50,7 @@ PAGE = r"""<!doctype html>
 <meta charset="utf-8"><title>three models, one strip</title>
 <style>
  :root{--bg:#14161a;--fg:#e8e8e6;--dim:#9aa0a8;--line:#2a2e35;--card:#1b1e24;
-       --gold:#e8c46a;--live:#7fb2ff;--ctl:#7fd8a0;--h:#e29ad8;--bad:#ff6b6b;--ok:#3a4a3a}
+       --gold:#e8c46a;--r3a:#7fb2ff;--live:#7fb2ff;--ctl:#7fd8a0;--h:#e29ad8;--bad:#ff6b6b;--ok:#3a4a3a}
  *{box-sizing:border-box}
  body{margin:0;background:var(--bg);color:var(--fg);
       font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}

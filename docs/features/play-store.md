@@ -62,7 +62,7 @@ nice -19 bubblewrap build --skipPwaValidation   # → app-release-bundle.aab (up
 ⚠ Tooling traps met on 2026-10-05: Bubblewrap's `jdkPath` (in `~/.bubblewrap/config.json`) is the
 `.jdk` folder, **not** `…/Contents/Home` (it appends that itself); its SDK check wants a `tools/`
 folder, so Homebrew's `android-commandlinetools` needs `tools → cmdline-tools/latest` symlinked; and
-it builds with build-tools **36.1.0**, which must be installed with `sdkmanager`. Target SDK is 36.
+it builds with build-tools **36.1.0**, which must be installed with `sdkmanager`. Target SDK is 36; **minSdkVersion must be ≥ 24** — Play refused the first upload at Bubblewrap's default of 21 (2026-10-10).
 
 ## The closed test — the real gate
 

@@ -55,7 +55,7 @@ android {
     namespace "com.komavision.app"
     defaultConfig {
         applicationId "com.komavision.app"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 36
         versionCode 1
         versionName ""

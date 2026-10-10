@@ -35,6 +35,6 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://komavision.netlify.app/",
-  "minSdkVersion": 21,
+  "minSdkVersion": 24,
   "fingerprints": []
 }

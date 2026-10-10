@@ -1,10 +1,13 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.komavision.app",
       "sha256_cert_fingerprints": [
+        "5A:2E:A6:19:DB:92:F7:E3:8F:D0:A9:8E:DC:70:47:B8:CC:A1:EB:32:ED:E8:1E:15:70:DE:8D:45:DB:E9:84:BB",
         "0B:33:9F:FF:AF:57:EE:38:20:90:46:B8:50:5E:61:95:1C:7D:50:CA:D9:54:A3:33:31:4B:13:49:4C:F8:4F:E7"
       ]
     }

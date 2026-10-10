@@ -34,10 +34,12 @@ Android only drops the browser bar if the site lists the app's signing fingerpri
 `/.well-known/assetlinks.json` (`apps/web/public/.well-known/`, typed in `_headers`). It lives in a
 subdirectory, so `prune-dist.mjs`'s "no `.json` at the dist root" rule allows it.
 
-⚠ **It holds the UPLOAD key's SHA-256 today.** Play re-signs the app with its own key (Play App
-Signing), so after the first upload, copy the fingerprint from Play Console → *Test and release →
-App integrity → App signing key certificate* into the same list and deploy. Until then, an app
-installed **from Play** shows a thin browser bar at the top — it still works.
+✅ **It holds BOTH keys since 2026-10-10**: Play's app signing key (`5A:2E:A6…84:BB`, from Play
+Console → *Google Play ile korunanlar → Uygulama imzalama*, a copy button, the value is not printed)
+and the upload key (`0B:33:9F…4F:E7`). Play re-signs every install with ITS key, so without that
+line an app installed from Play opened as a Chrome tab with an address bar — seen on the owner's
+phone the same day. Google's own Digital Asset Links API lists both. ⚠ The console moved this page
+in 2026: *Uygulama bütünlüğü* now only points to *Google Play ile korunanlar*.
 
 ## The system bars follow the PHONE, not the in-app switch
 

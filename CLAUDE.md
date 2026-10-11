@@ -223,7 +223,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
 - **There IS a backend now, for decode only** (owner decision 2026-08-05, reversing "no backend,
   ever"): the browser slices and POSTs crops, a **Cloud Run** CPU server runs the model. Reason:
   protect the user's machine — a page burns ~19 s of multi-threaded CPU on the client. **Everything
-  else stays local** — audio, the editor, and the W4–W6 slicer port. **Do not delete the in-browser
+  else stays local** — audio, the editor, the web's slicer (the native app's `/page` is the one exception). **Do not delete the in-browser
   decode path**: `gate:browser`, `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold
   result all rest on it, and it is the ONLY path in a build with no `VITE_DECODE_URL`.
   [docs/app/deploy.md](docs/app/deploy.md).
@@ -241,9 +241,9 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   own module, so there is ONE decode implementation, not a third to hold in parity. Do not write a
   second decoder in any language. Live on Cloud Run (europe-west3, 1 vCPU) since 2026-08-06. Two rules
   follow from how it was made to work: `decode.ts` may **not** import an ORT runtime (types come from
-  `onnxruntime-common`, the `Tensor` constructor rides on `Sessions`), and **the client preprocesses**
-  — the server receives finished 409×583 PNGs and applies only the rescale, so there is no second
-  resampler to hold in parity either.
+  `onnxruntime-common`, the `Tensor` constructor rides on `Sessions`), and on `/decode` **the client
+  preprocesses**. ⚠ `/page` (native app, 2026-10-11) slices on the server with the SAME TS slicer and
+  `donut.ts`, held BYTE-EXACT to training's processor by `parity:donut` — never loosen that bar.
 - **A production build is not the dev server, and only `smoke:build` knows the difference.** ORT's
   wasm runtime must be served as real files (`/ort/`, via `copy-ort.mjs`) or the bundler inlines its
   worker glue and every session creation hangs — dev, `smoke:page` and the 27/28 gate stayed green

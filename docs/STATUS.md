@@ -87,9 +87,11 @@ the app, and neither waits for the other.
 
 1. ⏭ **The Play Store closed test** (above) — the owner's priority this week.
 1b. ⏭ **A React Native app, Android and iOS together, started in parallel (owner, 2026-10-11).**
-   🚧 M0 skeleton built on branch **`native-app`** (Expo SDK 57, `apps/mobile`, imports core).
-   ⏭ Owner: open it on the Android phone in **Expo Go**. Then two choices before M1/M2 — where a
-   phone slices a page, how the score is drawn ([mobile/plan.md](mobile/plan.md) §Open).
+   🚧 On branch **`native-app`**: the M0 skeleton (Expo SDK 57, `apps/mobile`, imports core), and
+   the server half of M1 — **`POST /page`** slices and reads a whole page on the server (owner,
+   2026-10-11; [METRICS-SERVER-PAGE.md](METRICS-SERVER-PAGE.md)). ⏭ Owner: open M0 in **Expo Go**;
+   decide when `/page` goes to Cloud Run (a deploy from a branch); and how the score is drawn
+   ([mobile/plan.md](mobile/plan.md) §Open #3).
 2. ⏭ **`STATS_SALT` + `STATS_TOKEN`** (above) — one command, and the only way to know who uses the
    public app. "Every human so far was on a phone" rests on **n = 2** ([METRICS-USAGE.md](METRICS-USAGE.md)).
 3. ⏭ **Five shipped things no eye has judged** —

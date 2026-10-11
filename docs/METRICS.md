@@ -301,6 +301,11 @@ start was measured at **38.2 s** that day.
 robots — moved to [METRICS-USAGE.md](METRICS-USAGE.md)** on 2026-08-09. The rows above measure how
 the system *performs*; that file measures who *shows up*.
 
+### The page endpoint for the native app (`POST /page`, 2026-10-11, NOT deployed) → [METRICS-SERVER-PAGE.md](METRICS-SERVER-PAGE.md)
+
+Server preprocessing byte-identical to training's processor on 1,200/1,200 strips; the TS slicer in
+Node gives the same strips as Python on 30/30 pages; a page costs 2.0 s of slicing on the M4.
+
 ### The pre-deploy laptop numbers, kept for the comparison
 
 ⚠ Every row below is the dev M4. They are what the cloud figures above should be read against.

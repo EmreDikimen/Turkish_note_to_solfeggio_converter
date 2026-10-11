@@ -7,6 +7,20 @@ updated: 2026-10-11
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-10-11 — slicing moves to the server for the native app (`POST /page`), on `native-app`
+
+The owner chose server-side slicing over a native OpenCV binding and a WebView. **Still one slicer:**
+the web's TS slicer runs in Node; only its two canvas functions moved (`slicer/domImage.ts`). The
+new code is the image reader (pure-JS JPEG/PNG + EXIF orientation) and `donut.ts`, a port of
+training's `DonutImageProcessor`. **Why byte-exact rather than "close":** the server became the
+owner of the crop → model-input step, and this was the chance to match training instead of the
+browser canvas. **The finding that cost the most:** the first run matched 4 of 116 strips, because
+training's `thumbnail` is BICUBIC — `preprocess` never passes it `resample`. Then 3 strips stayed
+±1 until Pillow's box was read as C `float`. A suspected ARM-vs-x86 cause was tested under Rosetta
+and REJECTED (both identical). Also caught by `check:bundle`, as it was built to: opencv.js reads
+`__dirname`, which an ESM bundle lacks. Not done: a Cloud Run deploy, a server-vs-browser token
+comparison, any JPEG from the corpus (there is none). [../METRICS-SERVER-PAGE.md](../METRICS-SERVER-PAGE.md)
+
 ## 2026-10-11 — the native app's M0 skeleton, on branch `native-app`
 
 `apps/mobile` was made with `create-expo-app` (blank TypeScript, **Expo SDK 57, React Native 0.86,

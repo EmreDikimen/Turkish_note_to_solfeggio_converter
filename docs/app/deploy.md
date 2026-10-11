@@ -61,6 +61,12 @@ page image
   └─ on failure/timeout ─→ in-browser decode (weights fetched lazily, first fallback only)
 ```
 
+⚠ **A second door, for the native app (2026-10-11, branch `native-app`, not deployed):**
+`POST /page` takes the whole page image and does the left column on the server — the same TS
+slicer, plus `apps/server/src/donut.ts` instead of `preprocessToCanvas`. It does not change the web
+app's path below. Why and the numbers: [../mobile/plan.md](../mobile/plan.md) §Open,
+[../METRICS-SERVER-PAGE.md](../METRICS-SERVER-PAGE.md).
+
 The seam sits after the slicer, and after preprocessing:
 
 - **Server cost.** Slicing is the cheap half (1.6 s) and stays free on the client. The server pays

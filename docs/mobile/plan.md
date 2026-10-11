@@ -16,8 +16,8 @@ Measured against the tree on 2026-10-11, not guessed:
 | Note model, tuning, makam, usul, scheduling, edits, fingering, kanun, clarinet | `packages/core` (17 files) | ✅ **reused as is** | Plain TypeScript, no DOM: the only `document`/`window` hits are the word "document" in comments. It was kept platform-free for exactly this (`AudioBackend` is already an adapter interface). |
 | Decode | Cloud Run `/decode` | ✅ **same server** | The app POSTs finished crops like the browser does. ⛔ Never a second decoder ([../../CLAUDE.md](../../CLAUDE.md) group 3). `ALLOWED_ORIGINS` only sets a CORS header (`apps/server/src/index.ts`) and refuses nothing — CORS binds browsers, so a native client is admitted as is, under the same rate limit. |
 | Server client | `apps/web/src/omr/remote.ts` | 🟡 mostly reusable | `fetch` exists in React Native; the warm-up and retry logic should carry. |
-| Crop preprocessing (resize to 409×583) | `apps/web/src/omr/preprocess.ts` | 🔴 **rewritten** — canvas API | ⚠ The server trusts the client's resampling (group 3: "no second resampler to hold in parity"). A native resampler IS a second one, so M1's acceptance is **same notes as the web app on the same photo**. |
-| Slicer (staff rows, barlines, windows) | `apps/web/src/omr/slicer/` + opencv.js (~13 MB wasm) | 🔴 **open question** | opencv.js needs a browser. See §Open. |
+| Crop preprocessing (resize to 409×583) | `apps/web/src/omr/preprocess.ts` | ✅ **on the server** — `apps/server/src/donut.ts` (2026-10-11) | A port of training's own `DonutImageProcessor`, **byte-identical** on every strip checked — closer to training than the web's canvas ever was ([../METRICS-SERVER-PAGE.md](../METRICS-SERVER-PAGE.md)). The phone does no image work at all. |
+| Slicer (staff rows, barlines, windows) | `apps/web/src/omr/slicer/` + opencv.js (~13 MB wasm) | ✅ **on the server** — the SAME TS slicer, run in Node (`apps/server/src/slicePage.ts`) | The phone POSTs the page image to **`POST /page`**. The web app keeps slicing in the browser. Not deployed yet. |
 | Score drawing | `SheetView.tsx` (3,728 lines) on VexFlow | 🔴 **open question** | VexFlow draws into a DOM SVG. ⛔ **The web SheetView stays the training-strip source** whatever the phone does — `render.ts` screenshots it; the phone's drawing must never feed training. |
 | Audio engine | `webAudioBackend.ts` (1,139 lines) | 🔴 rewritten behind core's `AudioBackend` | Web Audio is a browser API. A React Native library implementing the Web Audio interface would let much of it carry — a lead, unchecked. |
 | Screens, editor UI, instrument views, theme | `App.tsx` (2,646 lines), `Fingerboard`/`Kanun`/`Clarinet`, Tailwind | 🔴 rewritten | DOM + CSS. The *rules* in [../APP-RULES.md](../APP-RULES.md) still bind (never build a clock from the written `doc`; `resolveStructure` is the only repeat rulebook). |
@@ -45,18 +45,18 @@ Each one ends on something the owner can hold in a hand, not on code merged.
 
 Estimate, not measured: months of part-time work, the bulk in M2–M4.
 
-## ⏭ Open — choices before M1 and M2
+## ⏭ Open — choices before M1 and M2 (one left)
 
 1. ✅ **Expo or bare React Native? → Expo, run in Expo Go for M0** (owner, 2026-10-11). This Mac
    has neither Xcode nor the Android SDK, and Expo Go needs neither. Native modules (camera, scanner,
    background audio) will need a **development build** (`eas build --profile development`) from M1
    or M3 on — the code stays the same.
-2. **Where does a phone slice a page?** (a) a native OpenCV binding on the device — keeps the
-   group-3 rule that slicing stays local, but it is a second implementation of the slicer to hold in
-   parity with the Python and TS ones; (b) opencv.js inside a hidden WebView — the SAME TS slicer
-   code, slower, a 13 MB load; (c) slicing on the server — one implementation, but it **reverses**
-   the "slicer stays local" rule and sends whole pages, not strips, to the server. Owner's call;
-   none is measured.
+2. ✅ **Where does a phone slice a page? → on the server** (owner, 2026-10-11). Built the same day
+   on `native-app`: `POST /page` takes the raw JPEG/PNG (EXIF orientation honoured), slices with the
+   web's own TS slicer in Node, preprocesses with a byte-exact port of training's processor, and
+   returns `/decode`'s reply plus the geometry. The numbers, and what is still unmeasured, are in [../METRICS-SERVER-PAGE.md](../METRICS-SERVER-PAGE.md). ⏭ To
+   reach the phone it needs a Cloud Run deploy — owner's call. Rejected: a native OpenCV binding
+   (a third slicer to hold in parity) and opencv.js in a hidden WebView (13 MB on the phone).
 3. **How is the score drawn?** (a) the web SheetView inside a WebView on the score screen — fastest
    to parity, one engraving codebase; (b) a native port (react-native-svg or Skia) — smoother, but
    a second engraver of 3,728 lines. Recommended: (a) first, (b) only if (a) is measured too slow.

@@ -26,7 +26,7 @@ a document-scanner camera, playback with the screen locked, a "Share → KomaVis
 | Milestone | What it proves | State |
 |---|---|---|
 | M0 skeleton | `apps/mobile` builds and runs on one Android phone, importing `@turkish-omr/core` | 🚧 **built on branch `native-app` 2026-10-11** — Expo SDK 57, `tsc` clean, `expo-doctor` 21/21, Android bundle exports (597 modules). ⏭ Not yet opened on the owner's phone in Expo Go. iPhone deferred: no device |
-| M1 read a page | photo → strips → server decode → notes on screen, same notes as the web app on the same photo | — |
+| M1 read a page | photo → strips → server decode → notes on screen, same notes as the web app on the same photo | 🚧 **server half built 2026-10-11** on `native-app`: `POST /page` slices and decodes a whole page ([../METRICS-SERVER-PAGE.md](../METRICS-SERVER-PAGE.md)). ⏭ Not deployed; the phone client (camera/gallery → upload → notes) is not written |
 | M2 score view | the page drawn as a staff, tappable | — |
 | M3 playback | 53-koma playback with makam and usul, screen-off playback | — |
 | M4 editor | select, move, delete, undo — the web editor's vocabulary from `core/edits.ts` | — |

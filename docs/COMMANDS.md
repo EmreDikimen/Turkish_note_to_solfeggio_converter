@@ -44,6 +44,15 @@ npx tsc --noEmit                     # typecheck; `npx expo-doctor` checks depen
 npx expo install <pkg>               # ⚠ never plain `npm install <pkg>` — this picks the SDK-compatible version
 ```
 
+The server side of the native app is `POST /page` (the page is sliced on the server). Its checks:
+
+```bash
+npm run parity:donut                 # POST /page's crop → 409×583 vs training's DonutImageProcessor: expect
+                                     # …1200/1200 IDENTICAL (~30 s). ⚠ any miss is a bug, not noise
+npm run parity:serverslice -- --pages 30   # /page's slicer (TS, in Node) vs Python page_to_strips (~2 min);
+                                     # …±1/±2 grey on colour PNGs is Python's imread, not the server
+```
+
 ### Hearing the instrument voices (they do NOT ship with the app)
 
 ```bash

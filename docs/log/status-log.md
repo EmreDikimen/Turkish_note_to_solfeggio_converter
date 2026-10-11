@@ -7,6 +7,18 @@ updated: 2026-10-08
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-10-11 — a React Native app, started in parallel
+
+**The owner reversed 2026-10-08's "React Native is maybe later"**: a native app for Android and iOS
+together, built now beside the web app, on React Native (chosen over Capacitor and over two native
+codebases). Only the plan was written: `docs/mobile/README.md` and `plan.md`. Checked against the
+tree rather than assumed: `packages/core` has no browser dependency (its `document` hits are
+comments), so it carries as is; the slicer (opencv.js), the crop resampler (canvas), the score view
+(VexFlow on the DOM, 3,728 lines) and the audio engine (Web Audio, 1,139 lines) do not. The server's
+`ALLOWED_ORIGINS` only sets a CORS header, so a native client is admitted without a change. Same
+weekend, the Play side moved: account verified, app created, v1 on internal test (rebuilt at min SDK
+24 after Play refused 21), Play's signing key added to `assetlinks.json`, the app opens full screen.
+
 ## 2026-10-08 — the full doc audit: stale lines fixed, closed tracks archived, three real bugs found
 
 **The owner asked for every doc to be read for inconsistencies, with the owner deciding the

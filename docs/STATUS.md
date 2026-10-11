@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-10-08
+updated: 2026-10-11
 
 ## Now
 
@@ -31,23 +31,25 @@ from it and are live today:
    own devices ([features/visit-stats.md](features/visit-stats.md)).
 
 ⏭ **THE PLAY STORE IS THE OWNER'S PRIORITY — testers are easy to reach the week of 2026-10-12 and
-hard after.** Done: the TWA package `com.komavision.app` (permanent) is built and signed — the
-`.aab` was rebuilt on 2026-10-08 with the night-slate system bars (`~/Desktop/KomaVision-1.0.0.aab`);
-`/.well-known/assetlinks.json` and `privacy.html` are live; the Play Console account is open,
-**identity check pending**. ⏭ **Owner, in order**: create the app → upload the `.aab` to a **closed
-test** → opt in **15–20** testers (12 must stay opted in for 14 consecutive days; they come from a
-classical-Turkish-music community and friends). ⏭ **After the first upload**: copy Play's app-signing
-fingerprint into `assetlinks.json` and deploy, or the Play-installed app shows a thin browser bar.
+hard after.** ✅ Done by 2026-10-10: the Play Console account is **verified**, the app
+`com.komavision.app` is created, v1 (min SDK 24) is live on **internal test** and installed on the
+owner's phone, and Play's app-signing key is in `assetlinks.json` — the app now opens **full screen**
+(Google's Digital Asset Links API lists both keys). ⏭ **Owner, in order**: open the Google Group →
+closed test track with the group as testers → add v1 from the library → the App content forms and
+the store listing → send for review → share the group link, then the opt-in link, with **15–20**
+Android users (12 must stay opted in for 14 consecutive days). ⚠ Chrome's "Running in Chrome"
+notice appears on launch and cannot be switched off from the app.
 [features/play-store.md](features/play-store.md).
 
-**What the live site carries** (last web deploy 2026-10-05, `Deploy is live!`, `smoke:live` PASS):
+**What the live site carries** (last web deploy **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
+server read 24 strips / 229 notes in 64.6 s, refusal arm clean; `assetlinks.json`, `privacy.html`,
+the manifest and the drum wavs answer 200):
 the phone rebuild (2026-09-26..28 — the score fits the phone, the Çal tab folds under Çal/Dur, typed
 tempo, the dot tool, ▲/▼ note steps, tap-not-press), the **PWA** (installable; no service worker, on
 purpose), **PNG/PDF** saving, violin retuning and finger numbers, the per-measure accidental default,
 the first-ending repairs (2026-09-07), the clarinet's lip meter, and the **Tezhip restyle** with the
-logo and the Istanbul backdrop. ⚠ Never opened on a real iPhone. 🚧 **On `main`, not deployed**: the
-`CACHE_NAME` bump of 2026-10-08 (it matters only for an in-browser read) — it rides the next
-`deploy:app`.
+logo and the Istanbul backdrop, and (2026-10-09) the `CACHE_NAME` bump to `r4-ctl`. ⚠ Never opened
+on a real iPhone.
 
 ⭐ **ROUND 3 IS CLOSED AND ROUND 4 IS OPEN (owner, 2026-09-03).** Round 3's exam read **51%** against
 the signed 75% floor (63 graded pages, about ±12 pp); ~15 of its +17 points was the retired `\tie`.
@@ -84,6 +86,9 @@ the app, and neither waits for the other.
 ### Track A — the product
 
 1. ⏭ **The Play Store closed test** (above) — the owner's priority this week.
+1b. ⏭ **A React Native app, Android and iOS together, started in parallel (owner, 2026-10-11).**
+   Nothing is built yet: three choices are owed before the skeleton — Expo or bare, where a phone
+   slices a page, how the score is drawn ([mobile/plan.md](mobile/plan.md) §Open).
 2. ⏭ **`STATS_SALT` + `STATS_TOKEN`** (above) — one command, and the only way to know who uses the
    public app. "Every human so far was on a phone" rests on **n = 2** ([METRICS-USAGE.md](METRICS-USAGE.md)).
 3. ⏭ **Five shipped things no eye has judged** —

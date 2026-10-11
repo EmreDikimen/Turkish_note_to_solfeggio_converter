@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-10-08
+updated: 2026-10-11
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -83,6 +83,7 @@ wrong — fix by deleting, not by syncing.
 | The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
 | **The PHONE: the three viewport questions, fitting a score, the fold, the editor, every measured number** | **[features/phone.md](features/phone.md)** |
 | **The LOOK: the Tezhip palette, dark mode, the CSS layers, the render pin that keeps a restyle off the strips** | **[features/look.md](features/look.md)** |
+| **The React Native mobile app** — the plan, what is reused from `core`, the milestones, and the open choices | [mobile/README.md](mobile/README.md) |
 | **The Play Store app** — TWA build, the permanent package name, where the signing key lives, the closed test | [features/play-store.md](features/play-store.md) |
 | The real-page (model) track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
 | **Round 4: the dense half, the signature answer key, the selector — evidence, the owner's decisions, the order** | [rung3/round4.md](rung3/round4.md) |

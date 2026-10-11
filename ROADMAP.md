@@ -2,7 +2,7 @@
 
 purpose: the evergreen plan — architecture, phase breakdown, tech choices, risks (NO status)
 audience: anyone who needs the long-range picture or the reasoning behind the architecture
-updated: 2026-10-08
+updated: 2026-10-11
 
 > Current state and next action: [docs/STATUS.md](docs/STATUS.md). This file deliberately
 > contains no progress reporting — see §7.
@@ -61,12 +61,13 @@ per-class mean over classes with enough gold to mean something.
 > ⚠ **There IS a server, for decode only** (2026-08-05, reversing the original "no server" plan):
 > the browser slices a page and a Cloud Run CPU server runs the model, to keep the reader's device
 > cool; since 2026-09-04 a deployed build never reads on the visitor's device. Audio, the editor and
-> the slicer stay local. A React Native app with an on-device model is **"maybe later", not the
-> plan** (owner, 2026-10-08).
+> the slicer stay local. ⭐ **A React Native app for Android and iOS is being built in parallel since
+> 2026-10-11** (owner) — a second client of the same server, over the same `core`; the PWA and the
+> TWA ship meanwhile ([docs/mobile/README.md](docs/mobile/README.md)).
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Shipped product | **One web app — desktop, phone, PWA, and a Play Store TWA around the same site** | Ship once, update everywhere with one deploy. React Native stays "maybe later" (DECISIONS 2026-10-08). |
+| Shipped product | **One web app — desktop, phone, PWA, and a Play Store TWA around the same site** | Ship once, update everywhere with one deploy. A React Native app is being built in parallel (DECISIONS 2026-10-11) and will replace the TWA on Play. |
 | Runtime / hosting | **Static site on Netlify + decode on a scale-to-zero Cloud Run CPU server** | The original "no server" premise (unaffordable) did not survive: free tiers cover it. Decode left the device to keep it cool (2026-08-05); slicing, audio and editing stay in the browser. |
 | App stack | **React (web) + React Native (mobile) over a shared TypeScript `core`** | App logic written ONCE in the TS core; notation/audio libs (VexFlow, Tone.js) are mature in JS; mobile becomes "UI + adapters over the same core". |
 | Python's role | **Training + data ONLY** (not in the shipped app) | ML training, synthetic-data generation, and SymbTr→JSON export. The app's runtime logic lives in the TS core, so it ports to mobile. |
@@ -121,7 +122,7 @@ ADAPTERS (per platform)  AudioBackend (Web Audio | native), OmrRuntime (onnxrunt
                          | onnxruntime-react-native), camera/file access.
         ▼
 UI SHELLS                Web (React) = THE product, on desktop and phone (PWA, and a TWA in the Play
-                         Store). A React Native shell over the same core stays possible — "maybe later".
+                         Store). Mobile (React Native, 2026-10-11) = a second shell over the same core.
 ```
 
 Rule of thumb: **anything that touches a platform API (Web Audio, DOM, camera, native
@@ -135,7 +136,7 @@ packages/core/ — shared TypeScript: note model, tuning, synth scheduling, OMR 
 apps/web/      — React test harness (VexFlow + Web Audio adapter)
 apps/server/   — the decode server (Node + onnxruntime-node, the browser's own decode.ts)
 apps/android/  — the Play Store TWA shell around the live site (no app code of its own)
-(apps/mobile/  — a React Native app was planned here; "maybe later" since 2026-10-08)
+(apps/mobile/  — the React Native app, started 2026-10-11: docs/mobile/)
 ```
 Phase 0's `src/` (Python parser/tuning/synth) stays as the **reference implementation**
 and the training-side SymbTr tooling; its tuning + synth-scheduling logic is ported to
@@ -295,13 +296,14 @@ produce a real, demoable app with zero machine learning.
   all) and the repeat is taken at playback ([docs/APP-RULES.md](docs/APP-RULES.md) §1).
 - **Milestone:** photograph real sheet music → edit → hear it, all in the browser.
 
-### Phase 5 — Mobile (re-planned 2026-10-08: the web app IS the mobile app)
+### Phase 5 — Mobile (re-planned 2026-10-08, then 2026-10-11: the web app now, a React Native app in parallel)
 - ✅ The phone layout was rebuilt as its own screen (2026-09-19..28), the app installs as a **PWA**
   (2026-09-28), and a **Trusted Web Activity** package for the Play Store wraps the live site
   (2026-10-05) — [docs/features/play-store.md](docs/features/play-store.md).
-- ⏸ **"Maybe later"**: a **React Native** app that reuses `packages/core` verbatim with a native
-  `AudioBackend` and an on-device model. ⚠ It would bring back the ~211 MB download the server
-  removed, which is why it is not the plan.
+- ⏭ **A React Native app, started 2026-10-11** (owner), Android and iOS together: it reuses
+  `packages/core` verbatim with a native `AudioBackend`, and decodes on the **same server** — not
+  on-device, which would bring back the ~211 MB download the server removed. Milestones M0–M5 in
+  [docs/mobile/plan.md](docs/mobile/plan.md).
 - **Ahenk (transposition) selector** — a user-facing control that picks a named ahenk (Bolahenk,
   Mansur, Kız, …) for playback/display, built on the core `transpose()` from Phase 2 via the
   `name → comma-offset` table (chromatic transpose under the hood, ahenk name on top).

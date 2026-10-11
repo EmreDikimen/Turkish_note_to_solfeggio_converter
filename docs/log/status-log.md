@@ -2,10 +2,22 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-08
+updated: 2026-10-11
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-11 — the native app's M0 skeleton, on branch `native-app`
+
+`apps/mobile` was made with `create-expo-app` (blank TypeScript, **Expo SDK 57, React Native 0.86,
+React 19.2**) on a new branch `native-app` — the owner asked for a branch for this track. It shows
+the name and one koma → Hz value from `@turkish-omr/core`, which proves the shared import. Checked:
+`tsc` clean, `expo-doctor` 21/21, an Android bundle exports (597 modules, 1.5 MB). Not checked: it
+has not been opened on a phone yet. The template's MIT `LICENSE` and a `.claude/settings.json`
+enabling an Expo plugin were removed. **Why it is not a workspace**: React 19 next to the web's
+React 18 in one hoisted `node_modules` is the trap plan.md named; narrowing the root `workspaces` to
+`apps/web` + `apps/server` avoids it, and root `typecheck`, `npm test` and `build:app` still pass.
+`smoke:build` was not run (it needs a local decode server).
 
 ## 2026-10-11 — a React Native app, started in parallel
 

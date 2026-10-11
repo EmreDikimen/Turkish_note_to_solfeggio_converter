@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-10-08
+updated: 2026-10-11
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -33,6 +33,15 @@ npm run smoke:editor                 # real app: select, drag, delete, undo/redo
                                      # …plus the instrument voices; add --voices-url <hub> for the REAL samples
                                      # …and note-box geometry on a GRACE-NOTE score (see the rule below)
                                      # …and the fingerboard tab: the marker lands on a string and MOVES
+```
+
+### The native app (`apps/mobile`, branch `native-app`)
+
+```bash
+cd apps/mobile && npm install       # its OWN node_modules — apps/mobile is NOT a root workspace (React 19 vs 18)
+npx expo start                       # scan the QR code with Expo Go on the phone (same Expo SDK as package.json)
+npx tsc --noEmit                     # typecheck; `npx expo-doctor` checks dependency versions
+npx expo install <pkg>               # ⚠ never plain `npm install <pkg>` — this picks the SDK-compatible version
 ```
 
 ### Hearing the instrument voices (they do NOT ship with the app)

@@ -25,7 +25,7 @@ a document-scanner camera, playback with the screen locked, a "Share → KomaVis
 
 | Milestone | What it proves | State |
 |---|---|---|
-| M0 skeleton | `apps/mobile` builds and runs on one Android phone and one iPhone, importing `@turkish-omr/core` | ⏭ not started — three choices owed first ([plan.md](plan.md) §Open) |
+| M0 skeleton | `apps/mobile` builds and runs on one Android phone, importing `@turkish-omr/core` | 🚧 **built on branch `native-app` 2026-10-11** — Expo SDK 57, `tsc` clean, `expo-doctor` 21/21, Android bundle exports (597 modules). ⏭ Not yet opened on the owner's phone in Expo Go. iPhone deferred: no device |
 | M1 read a page | photo → strips → server decode → notes on screen, same notes as the web app on the same photo | — |
 | M2 score view | the page drawn as a staff, tappable | — |
 | M3 playback | 53-koma playback with makam and usul, screen-off playback | — |
@@ -34,6 +34,10 @@ a document-scanner camera, playback with the screen locked, a "Share → KomaVis
 
 ## Files
 
+Code: [../../apps/mobile/](../../apps/mobile/) — run with `cd apps/mobile && npx expo start`, then scan the QR code with **Expo Go** (it must support the same Expo SDK as `apps/mobile/package.json`).
+
+
 | File | What it holds |
 |---|---|
+| [../../apps/mobile/AGENTS.md](../../apps/mobile/AGENTS.md) | Expo's template notes for agents: use `npx expo install`, versioned docs, development builds |
 | [plan.md](plan.md) | the milestones in detail, what is reused and what is rewritten, the rules the app inherits, and the open questions |

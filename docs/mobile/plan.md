@@ -45,11 +45,12 @@ Each one ends on something the owner can hold in a hand, not on code merged.
 
 Estimate, not measured: months of part-time work, the bulk in M2–M4.
 
-## ⏭ Open — three choices before M0
+## ⏭ Open — choices before M1 and M2
 
-1. **Expo or bare React Native?** Recommended: **Expo** (with a development build). It builds both
-   platforms from one config and still allows native modules (camera, scanner, audio). Bare gives
-   full control at the cost of maintaining two native projects by hand.
+1. ✅ **Expo or bare React Native? → Expo, run in Expo Go for M0** (owner, 2026-10-11). This Mac
+   has neither Xcode nor the Android SDK, and Expo Go needs neither. Native modules (camera, scanner,
+   background audio) will need a **development build** (`eas build --profile development`) from M1
+   or M3 on — the code stays the same.
 2. **Where does a phone slice a page?** (a) a native OpenCV binding on the device — keeps the
    group-3 rule that slicing stays local, but it is a second implementation of the slicer to hold in
    parity with the Python and TS ones; (b) opencv.js inside a hidden WebView — the SAME TS slicer
@@ -60,7 +61,10 @@ Estimate, not measured: months of part-time work, the bulk in M2–M4.
    to parity, one engraving codebase; (b) a native port (react-native-svg or Skia) — smoother, but
    a second engraver of 3,728 lines. Recommended: (a) first, (b) only if (a) is measured too slow.
 
-⚠ **Workspace trap, checked before M0:** the web app is on React 18; a current React Native
-template ships a newer React. Two React majors in one npm workspace can break the web build through
-hoisting, so the mobile app may need its own `node_modules` (outside `workspaces`, or with
-no-hoist). Verify with the gates above, not by eye.
+⚠ **Workspace trap — closed at M0 (2026-10-11):** the web app is on React 18, Expo SDK 57 ships
+React 19.2. So `apps/mobile` is **NOT an npm workspace**: the root `workspaces` names `apps/web` and
+`apps/server` instead of `apps/*`, the mobile app has its own `node_modules`, and it reaches core
+through `"@turkish-omr/core": "file:../../packages/core"` plus `watchFolders` in
+`apps/mobile/metro.config.js`. ⛔ Never put `apps/*` back in the root `workspaces`. Checked after
+the change: root `typecheck`, `npm test` and `build:app` pass; the lockfile changed only in the
+workspace list.

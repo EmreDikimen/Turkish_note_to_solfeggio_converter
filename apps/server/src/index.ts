@@ -13,6 +13,11 @@
  *   POST /decode   → { strips: [{ system, window, name?, png }] } with `png` base64-encoded,
  *                    409×583 RGBA, ALREADY rotated/resized/padded by the client (see omr/pixels.ts
  *                    for why the seam is there). Returns one decoded strip per input, in order.
+ *   POST /page?name=<stem>  → the raw JPEG/PNG of a whole page as the body. The server slices it
+ *                    (the browser's own slicer, `slicePage.ts`), preprocesses each crop (`donut.ts`)
+ *                    and decodes; the reply is `/decode`'s plus the geometry. For the native app,
+ *                    which has no canvas to slice with (docs/mobile/plan.md). The web app does not
+ *                    use it.
  *
  * Stitching is NOT here. The stitcher is where a score gets its shape and the editor loads it
  * locally; sending tokens back keeps the server a pure function of pixels.
@@ -24,6 +29,8 @@ import { decodePage, maxBatch, type StripImage } from "./decodeBatch";
 import { clientIp, limits, RateLimiter } from "./limits";
 import { loadModel, type LoadedModel } from "./model";
 import { decodeRGBA, readHeader } from "./png";
+import { readPageImage } from "./image";
+import { ensureCv, slicePageForDecode } from "./slicePage";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MODEL_DIR = process.env.MODEL_DIR ?? path.resolve(HERE, "../models");
@@ -215,20 +222,106 @@ async function handleDecode(req: http.IncomingMessage, res: http.ServerResponse)
   const rssMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
 
   send(res, 200, {
-    strips: strips.map((d, i) => ({
-      system: positions[i]!.system,
-      window: positions[i]!.window,
-      name: positions[i]!.name,
-      ids: d.ids,
-      logprobs: d.logprobs,
-      tokens: d.tokens,
-      hitCap: d.hitCap,
-      minLogprob: d.minLogprob,
-      meanLogprob: d.meanLogprob,
-    })),
+    strips: strips.map((d, i) => stripReply(d, positions[i]!)),
     timings: { ...timings, queuedAndRanMs, cpuMs, rssMb },
     threads: model.threads,
   });
+}
+
+/** One decoded strip as both endpoints return it. */
+function stripReply(
+  d: Awaited<ReturnType<typeof decodePage>>["strips"][number],
+  p: StripPosition
+): Record<string, unknown> {
+  return {
+    system: p.system,
+    window: p.window,
+    name: p.name,
+    ids: d.ids,
+    logprobs: d.logprobs,
+    tokens: d.tokens,
+    hitCap: d.hitCap,
+    minLogprob: d.minLogprob,
+    meanLogprob: d.meanLogprob,
+  };
+}
+
+/**
+ * `POST /page` — slice, preprocess and decode one page image.
+ *
+ * The slicing runs inside `runExclusive` with the decode: it is CPU work on the same single core,
+ * and a second page slicing beside a decode would only slow both down and add a page of memory.
+ */
+async function handlePage(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  url: URL
+): Promise<void> {
+  const ip = clientIp(req.headers["x-forwarded-for"], req.socket.remoteAddress ?? undefined);
+  const retryAfter = limiter.check(ip);
+  if (retryAfter !== null) {
+    res.setHeader("Retry-After", String(retryAfter));
+    send(res, 429, { error: "rate limit exceeded", retryAfterS: retryAfter });
+    return;
+  }
+  if (!model) {
+    send(res, 503, { error: loadError ? `model failed to load: ${loadError}` : "model still loading" });
+    return;
+  }
+
+  const body = await readBody(req, LIMITS.maxPageBytes);
+  if (body.length === 0) throw new BadRequest("empty body — POST the page image itself");
+  const stem = (url.searchParams.get("name") ?? "page").replace(/[^\w.-]/g, "_").slice(0, 100) || "page";
+  const { width, height } = model.meta.preprocess.size;
+
+  const t0 = performance.now();
+  const cpu0 = process.cpuUsage();
+  const out = await runExclusive(async () => {
+    await ensureCv();
+    const tRead = performance.now();
+    const gray = readPageImage(body, LIMITS.maxPagePixels);
+    const readMs = performance.now() - tRead;
+    const sliced = slicePageForDecode(gray, stem, width, height);
+    if (sliced.images.length > LIMITS.maxStrips)
+      throw new BadRequest(`page cut into too many strips (${sliced.images.length} > ${LIMITS.maxStrips})`);
+    const decoded = sliced.images.length
+      ? await decodePage(model!.sessions, model!.meta, sliced.images)
+      : { strips: [], timings: { encoderMs: 0, decodeMs: 0, totalMs: 0, batches: [] } };
+    return { sliced, decoded, readMs };
+  });
+  const cpu = process.cpuUsage(cpu0);
+  const { sliced, decoded, readMs } = out;
+
+  send(res, 200, {
+    strips: decoded.strips.map((d, i) => stripReply(d, sliced.positions[i]!)),
+    geometry: sliced.geometry,
+    nStaves: sliced.nStaves,
+    skewDeg: sliced.skewDeg,
+    pageWidth: sliced.pageWidth,
+    pageHeight: sliced.pageHeight,
+    timings: {
+      ...decoded.timings,
+      readMs,
+      sliceMs: sliced.sliceMs,
+      queuedAndRanMs: performance.now() - t0,
+      cpuMs: (cpu.user + cpu.system) / 1000,
+      rssMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+    },
+    threads: model.threads,
+  });
+}
+
+/** The shared error reply for both POST endpoints. */
+function replyError(res: http.ServerResponse, err: unknown, what: string): void {
+  const status = (err as { status?: number })?.status ?? 500;
+  const message = err instanceof Error ? err.message : String(err);
+  if (status === 500) console.error(`${what} failed:`, err);
+  if (!res.headersSent) {
+    // The client may still be uploading a body we have stopped reading; closing the connection
+    // after the response is what tells it to stop, without a mid-request socket kill.
+    if (status === 413) res.setHeader("Connection", "close");
+    send(res, status, { error: message });
+  }
 }
 
 const server = http.createServer((req, res) => {
@@ -257,17 +350,12 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === "POST" && url.pathname === "/decode") {
-    handleDecode(req, res).catch((err: unknown) => {
-      const status = (err as { status?: number })?.status ?? 500;
-      const message = err instanceof Error ? err.message : String(err);
-      if (status === 500) console.error("decode failed:", err);
-      if (!res.headersSent) {
-        // The client may still be uploading a body we have stopped reading; closing the connection
-        // after the response is what tells it to stop, without a mid-request socket kill.
-        if (status === 413) res.setHeader("Connection", "close");
-        send(res, status, { error: message });
-      }
-    });
+    handleDecode(req, res).catch((err: unknown) => replyError(res, err, "decode"));
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/page") {
+    handlePage(req, res, url).catch((err: unknown) => replyError(res, err, "page"));
     return;
   }
 

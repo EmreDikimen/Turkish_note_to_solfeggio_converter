@@ -2,7 +2,7 @@
   "name": "@turkish-omr/server",
   "private": true,
   "version": "0.0.0",
-  "description": "Decode server (MVP W9) \u2014 runs the browser's own decode.ts on onnxruntime-node.",
+  "description": "Decode server (MVP W9) — runs the browser's own decode.ts on onnxruntime-node.",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -13,6 +13,8 @@
     "check:bundle": "node tools/check-bundle.mjs"
   },
   "dependencies": {
+    "@techstark/opencv-js": "^5.0.0-release.1",
+    "jpeg-js": "^0.4.4",
     "onnxruntime-node": "^1.27.0",
     "pngjs": "^7.0.0"
   },

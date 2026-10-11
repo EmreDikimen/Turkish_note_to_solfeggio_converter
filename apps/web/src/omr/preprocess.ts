@@ -9,7 +9,8 @@
  * step, and the order matters; this is a transliteration, not a resize. Do not "simplify" it.
  *
  * ⚠ Known, measured gap: the checkpoint's `resample: 2` is PIL BILINEAR, while a canvas draw uses
- * the browser's own filter. That is why this path is not expected to agree with Python on 100% of
+ * the browser's own filter. (And only the RESIZE step is bilinear: `thumbnail` is called without
+ * `resample` and runs BICUBIC — found 2026-10-11 by `apps/server/src/donut.ts`'s byte-exact port.) That is why this path is not expected to agree with Python on 100% of
  * strips, and why the slicer parity harness (MVP W3) measures a *ceiling* from this arm before the
  * slicer is judged against it. See docs/archive/phases/mvp.md.
  *

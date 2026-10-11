@@ -40,6 +40,8 @@
     "decode:pool": "npx tsx tools/vision/parity/decode-pool.ts",
     "check:deskew": "npx tsx tools/vision/parity/deskew-check.ts",
     "parity:server": "npx tsx tools/vision/parity/server-parity.ts",
+    "parity:donut": "npx tsx tools/vision/parity/donut-parity.ts",
+    "parity:serverslice": "npx tsx tools/vision/parity/server-slice-parity.ts",
     "dev:server": "npm run -w @turkish-omr/server dev",
     "bench:server": "npx tsx tools/vision/parity/server-bench.ts",
     "check:limits": "npx tsx tools/vision/parity/server-limits.ts",

@@ -4,7 +4,7 @@
  * A script rather than a long `esbuild` command line, because of the banner below — it needs quotes
  * inside quotes, and it needs an explanation more than it needs brevity.
  *
- * ⚠ **The banner is why the first Cloud Run deploy failed.** The output is ESM (the source uses
+ * ⚠ **The banner is why the first Cloud Run deploy failed** (and its second line is opencv.js's — see below). The output is ESM (the source uses
  * `import.meta.url`), but `pngjs` is CommonJS and calls `require("util")`. esbuild cannot resolve a
  * dynamic require at build time, so it emits a shim that throws *at runtime*:
  *
@@ -32,8 +32,15 @@ await build({
   // `worker_threads`.
   external: ["onnxruntime-node"],
   outfile: "dist/server.js",
+  // ⚠ The `__dirname`/`__filename` half is opencv.js's (2026-10-11, the page endpoint): its
+  // emscripten loader reads `__dirname` the moment it is evaluated, which a CommonJS module may and
+  // an ESM bundle cannot — the bundle died at import with `__dirname is not defined` while `tsx`
+  // ran fine. Same lesson as the banner's first half, caught by `check:bundle` the same way.
   banner: {
-    js: "import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);",
+    js:
+      "import{createRequire as __cr}from'node:module';const require=__cr(import.meta.url);" +
+      "import{fileURLToPath as __fu}from'node:url';import{dirname as __dn}from'node:path';" +
+      "const __filename=__fu(import.meta.url);const __dirname=__dn(__filename);",
   },
 });
 

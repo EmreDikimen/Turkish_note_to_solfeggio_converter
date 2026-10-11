@@ -11,6 +11,9 @@ export interface Limits {
   maxBodyBytes: number;
   maxStrips: number;
   maxPixelBytes: number;
+  /** `POST /page`: the raw image upload, and its pixel count read from the header before decoding */
+  maxPageBytes: number;
+  maxPagePixels: number;
   rateRequests: number;
   rateWindowMs: number;
 }
@@ -30,6 +33,10 @@ export function limits(): Limits {
     maxBodyBytes: num("MAX_BODY_BYTES", 12 * 1024 * 1024),
     maxStrips: num("MAX_STRIPS", 40),
     maxPixelBytes: num("MAX_PIXEL_BYTES", 4 * 1024 * 1024),
+    // A 12 MP phone photo is ~3–5 MB of JPEG; 48 MP sensors bin to 12 MP by default. 40 MP is a
+    // 7,300 × 5,500 page — 40 MB of gray and 160 MB of label map, inside the 2 GiB container.
+    maxPageBytes: num("MAX_PAGE_BYTES", 15 * 1024 * 1024),
+    maxPagePixels: num("MAX_PAGE_PIXELS", 40_000_000),
     rateRequests: num("RATE_REQUESTS", 20),
     rateWindowMs: num("RATE_WINDOW_S", 60) * 1000,
   };

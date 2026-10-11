@@ -13,7 +13,8 @@
  * Import it LAZILY (`await import("./omr/page")`). It pulls in opencv.js, ~13 MB of wasm nobody
  * loading a sample score should pay for.
  */
-import { decodeGray, grayToCanvas, initCv, type Gray } from "./slicer/cvOps";
+import { initCv, type Gray } from "./slicer/cvOps";
+import { decodeGray, grayToCanvas } from "./slicer/domImage";
 import { drawDebugOverlay } from "./slicer/debugOverlay";
 import { estimateSkewAsync, guardedAngle, SKEW_SWEEP_STEPS } from "./slicer/prepPage";
 import { cropStrip, sliceStage3, stripName, type Strip } from "./slicer/slicer";

@@ -6,6 +6,9 @@
  * primitives are bit-identical to OpenCV-Python when fed identical bytes (both sides OpenCV 5.0.0),
  * so any divergence found later is the port, not the library.
  *
+ * ⚠ DOM-free on purpose (2026-10-11): the decode server imports the whole slicer through this file,
+ * so anything that needs `document` or a canvas lives in `domImage.ts` instead.
+ *
  * Mats are allocated and freed inside each call. opencv.js is emscripten — a leaked Mat is leaked
  * WASM heap, and a page-sized label map is ~12 MB.
  */
@@ -51,33 +54,13 @@ function fromMat(m: any): Gray {
 }
 
 /**
- * Decode an image URL to grayscale the way the browser must: RGBA out of the PNG decoder, then
- * cvtColor.
- *
- * `cv2.imread(IMREAD_GRAYSCALE)` converts INSIDE the decoder and a browser can never do that, so
- * this differs from Python by ±1 on some pixels of a colour page — as do OpenCV's own two paths
- * (7.4% of a colour page's pixels). Settled by measurement rather than tolerance: re-running the
- * whole slicer under exactly that perturbation left all 119 strips of the 6 most colour-shifted
- * corpus pages bit-identical (docs/METRICS-SLICER.md).
- *
- * The decode options are load-bearing — they disable the browser's colour management so we get the
- * file's own bytes rather than a display-profile transform of them.
+ * Interleaved RGBA → grayscale, through OpenCV's own `cvtColor` — the step every image takes on its
+ * way into the slicer, whoever decoded it. The browser's `decodeGray` (`domImage.ts`) and the decode
+ * server's page reader (`apps/server/src/image.ts`) both end here, so the two can only differ in the
+ * RGBA their image decoders produce, never in how it becomes gray.
  */
-export async function decodeGray(url: string): Promise<Gray> {
-  const blob = await (await fetch(url)).blob();
-  const bmp = await createImageBitmap(blob, {
-    colorSpaceConversion: "none",
-    premultiplyAlpha: "none",
-  });
-  const canvas = document.createElement("canvas");
-  canvas.width = bmp.width;
-  canvas.height = bmp.height;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb" })!;
-  ctx.drawImage(bmp, 0, 0);
-  bmp.close();
-  const rgba = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-  const src = cv().matFromImageData(rgba);
+export function grayFromRGBA(rgba: ArrayLike<number>, width: number, height: number): Gray {
+  const src = cv().matFromImageData({ data: rgba, width, height });
   const gray = new (cv().Mat)();
   cv().cvtColor(src, gray, cv().COLOR_RGBA2GRAY);
   src.delete();
@@ -330,23 +313,6 @@ export function subCols(src: Gray, x0: number, x1: number): Gray {
   for (let y = 0; y < src.height; y++)
     data.set(src.data.subarray(y * src.width + x0, y * src.width + x0 + w), y * w);
   return { data, width: w, height: src.height };
-}
-
-/** A grayscale image as an RGBA canvas — the seam where slicer pixels meet the decode path. */
-export function grayToCanvas(src: Gray): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = src.width;
-  canvas.height = src.height;
-  const img = new ImageData(src.width, src.height);
-  for (let i = 0, p = 0; i < src.data.length; i++, p += 4) {
-    const v = src.data[i]!;
-    img.data[p] = v;
-    img.data[p + 1] = v;
-    img.data[p + 2] = v;
-    img.data[p + 3] = 255;
-  }
-  canvas.getContext("2d")!.putImageData(img, 0, 0);
-  return canvas;
 }
 
 /** `gray[y0:y1, :]` — a row-range view, copied. */

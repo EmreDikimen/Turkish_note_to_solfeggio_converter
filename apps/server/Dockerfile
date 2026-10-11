@@ -42,8 +42,9 @@ FROM node:22-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production MODEL_DIR=/app/models PORT=8080
 
-# Only ORT comes across as a package: pngjs is bundled into server.js by esbuild, and everything
-# else in the build stage was a build tool. Copied rather than re-installed so the runtime image
+# Only ORT comes across as a package: pngjs, jpeg-js and opencv.js (the page endpoint's slicer,
+# ~13 MB of it) are bundled into server.js by esbuild, and everything else in the build stage was
+# a build tool. Copied rather than re-installed so the runtime image
 # holds exactly the lockfile's versions and needs no network.
 COPY --from=build /build/node_modules/onnxruntime-node ./node_modules/onnxruntime-node
 COPY --from=build /build/node_modules/onnxruntime-common ./node_modules/onnxruntime-common

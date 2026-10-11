@@ -10,14 +10,13 @@
  */
 import {
   binarizeInk,
-  decodeGray,
-  grayToCanvas,
   initCv,
   openHorizontal,
   resizeScale,
   rotate,
   type Gray,
 } from "../omr/slicer/cvOps";
+import { decodeGray, grayToCanvas } from "../omr/slicer/domImage";
 import { qualifyingLineRows } from "../omr/slicer/prepPage";
 import { clusterRows } from "../omr/slicer/staves";
 import { cropStrip, sliceStage3, stripName, type Strip } from "../omr/slicer/slicer";

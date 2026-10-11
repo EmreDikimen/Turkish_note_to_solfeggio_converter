@@ -68,7 +68,7 @@ def live_docs() -> list[Path]:
     out = []
     for p in REPO.rglob("*.md"):
         rel = p.relative_to(REPO).as_posix()
-        if "node_modules" in rel or rel.startswith(".venv") or rel.startswith("data/"):
+        if "node_modules" in rel or rel.startswith(".venv") or rel.startswith("data/") or "/.expo/" in rel:
             continue
         out.append(p)
     return sorted(out)

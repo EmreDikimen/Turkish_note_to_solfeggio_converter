@@ -24,7 +24,7 @@
  * `scale` to land back on the page — `int(b / scale)` at L1163.
  */
 import { staffBottom, staffTop } from "./staves";
-import { grayToCanvas } from "./cvOps";
+import { grayToCanvas } from "./domImage";
 import type { Stage3Result } from "./slicer";
 
 /** L1170-1171 — why a candidate was thrown away, in the colour the overlay draws it. */

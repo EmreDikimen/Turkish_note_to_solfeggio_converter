@@ -6,7 +6,8 @@
   "description": "Classical Turkish Music OMR \u2014 shared TS core + web test harness (mobile is the product)",
   "workspaces": [
     "packages/*",
-    "apps/*",
+    "apps/web",
+    "apps/server",
     "netlify"
   ],
   "scripts": {

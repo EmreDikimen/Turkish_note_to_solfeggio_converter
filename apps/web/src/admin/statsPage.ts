@@ -6,18 +6,18 @@
  * behind it is locked separately, by the bearer token `netlify/functions/stats.mts` demands.
  *
  * All the arithmetic lives here rather than in the function, so a new question is a change to a
- * local file instead of a redeploy of the site. The endpoint hands over raw per-device-per-day rows;
+ * local file instead of a redeploy of the site. The endpoint hands over the stored day buckets;
  * everything below is folding them.
  *
- * ⚠ **What these numbers cannot say, and the page says so on screen.** A row is a DEVICE for a DAY,
- * not a person: one friend on a phone and a laptop is two rows, and a household behind one address
- * on two browsers is two rows as well. `reads` is the honest signal — a robot opens a page, it does
- * not upload sheet music. docs/features/visit-stats.md is the long version.
+ * ⚠ **What these numbers cannot say, and the page says so on screen.** Since 2026-10-14 a row is a
+ * BUCKET — every visit on one day from one kind of browser — so there is no device and no person in
+ * it: "how many different people" is not answerable any more, by design (netlify/shared/visits.ts).
+ * `reads` is the honest signal — a robot opens a page, it does not upload sheet music.
+ * docs/features/visit-stats.md is the long version.
  */
-import type { VisitorDay } from "../../../../netlify/shared/visits";
+import type { VisitBucket } from "../../../../netlify/shared/visits";
 
-/** A row as the endpoint returns it: the stored record plus the per-day anonymous id from its key. */
-type Row = VisitorDay & { id: string };
+type Row = VisitBucket;
 
 interface StatsReply {
   ok: true;
@@ -199,10 +199,11 @@ function bucketise(rows: Row[], days: number): Bucket[] {
   return weeks;
 }
 
-function tally(rows: Row[], of: (row: Row) => string[]): Array<[string, number]> {
+/** Weighted by VISITS (openings + reads), not rows: a bucket holds any number of them. */
+function tally(rows: Row[], of: (row: Row) => Array<[string, number]>): Array<[string, number]> {
   const counts = new Map<string, number>();
   for (const row of rows) {
-    for (const value of of(row)) counts.set(value, (counts.get(value) ?? 0) + 1);
+    for (const [value, n] of of(row)) counts.set(value, (counts.get(value) ?? 0) + n);
   }
   return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
@@ -422,16 +423,13 @@ function render(): void {
 
   const opens = rows.reduce((a, r) => a + r.opens, 0);
   const reads = rows.reduce((a, r) => a + r.reads, 0);
-  const devices = new Set(rows.map((r) => r.id)).size;
-  const readers = new Set(rows.filter((r) => r.reads > 0).map((r) => r.id)).size;
   const activeDays = new Set(rows.map((r) => r.date)).size;
+  const botVisits = botRows.reduce((a, r) => a + r.opens + r.reads, 0);
 
   els.tiles.replaceChildren(
     tile(String(opens), `uygulama açılışı · <b>${activeDays}</b> ayrı günde`),
-    tile(String(devices), `farklı cihaz-gün · aynı cihaz her gün 1 kez sayılır`),
     tile(String(reads), `okunan nota sayfası · <b>gerçek kullanım budur</b>`),
-    tile(String(readers), `sayfa okuyan cihaz · sadece bakıp geçmeyenler`),
-    tile(String(botRows.length), `robot ziyareti · ${withBots ? "sayıma dahil" : "sayımın dışında"}`)
+    tile(String(botVisits), `robot ziyareti · ${withBots ? "sayıma dahil" : "sayımın dışında"}`)
   );
 
   // ⚠ Unhide BEFORE drawing. The chart is laid out at its container's MEASURED width, and a hidden
@@ -443,12 +441,11 @@ function render(): void {
   drawChart(bucketise(rows, latest.days));
 
   els.breaks.replaceChildren(
-    breakdown("Ülke", tally(rows, (r) => [r.country === "??" ? "bilinmiyor" : r.country]), "Kayıt yok."),
-    breakdown("Cihaz", tally(rows, (r) => [`${r.device} · ${r.os}`]), "Kayıt yok."),
-    breakdown("Tarayıcı", tally(rows, (r) => [r.browser]), "Kayıt yok."),
+    breakdown("Cihaz", tally(rows, (r) => [[`${r.device} · ${r.os}`, r.opens + r.reads]]), "Kayıt yok."),
+    breakdown("Tarayıcı", tally(rows, (r) => [[r.browser, r.opens + r.reads]]), "Kayıt yok."),
     breakdown(
       "Geldiği site",
-      tally(rows, (r) => r.refs),
+      tally(rows, (r) => Object.entries(r.refs)),
       "Hiçbiri bir bağlantıdan gelmemiş — adresi doğrudan yazmışlar."
     )
   );
@@ -465,14 +462,11 @@ function drawTable(rows: Row[]): void {
   const head = document.createElement("tr");
   for (const [label, cls] of [
     ["Gün", ""],
-    ["Cihaz", "id"],
     ["Açılış", "num"],
     ["Okuma", "num"],
-    ["Ülke", ""],
     ["Tip", ""],
+    ["Sistem", ""],
     ["Tarayıcı", ""],
-    ["İlk", ""],
-    ["Son", ""],
     ["Geldiği yer", ""],
   ] as const) {
     const th = document.createElement("th");
@@ -482,23 +476,18 @@ function drawTable(rows: Row[]): void {
   }
 
   const body = document.createElement("tbody");
-  const clock = (ms: number) =>
-    new Date(ms).toLocaleTimeString("tr-TR", { timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit" });
 
   for (const row of rows.slice(0, 200)) {
     const tr = document.createElement("tr");
     if (row.bot) tr.className = "bot";
     const cells: Array<[string, string]> = [
       [row.date, ""],
-      [row.id.slice(0, 8), "id"],
       [String(row.opens), "num"],
       [String(row.reads), "num"],
-      [row.country === "??" ? "—" : row.country, ""],
       [row.bot ? `${row.device} (robot)` : row.device, ""],
+      [row.os, ""],
       [row.browser, ""],
-      [clock(row.firstMs), ""],
-      [clock(row.lastMs), ""],
-      [row.refs.join(", ") || "—", ""],
+      [Object.entries(row.refs).map(([h, n]) => (n > 1 ? `${h} ×${n}` : h)).join(", ") || "—", ""],
     ];
     for (const [text, cls] of cells) {
       const td = document.createElement("td");
@@ -512,7 +501,7 @@ function drawTable(rows: Row[]): void {
   els.rows.replaceChildren(head, body);
   els.rowsNote.textContent = rows.length
     ? `${rows.length} kayıt${rows.length > 200 ? " (ilk 200 gösteriliyor)" : ""} · ` +
-      "saatler Istanbul saatidir · cihaz numarası sadece o gün için geçerlidir"
+      "her satır bir günün, bir tür tarayıcıdan gelen ziyaretlerinin toplamıdır — kişi değil"
     : "Bu aralıkta hiç ziyaret yok.";
 }
 

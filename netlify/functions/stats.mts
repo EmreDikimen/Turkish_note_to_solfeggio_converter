@@ -2,9 +2,13 @@
  * Hand the owner his rows. The whole read side of the counter, and the only door to the data.
  *
  * `GET /.netlify/functions/stats?days=30` with `Authorization: Bearer <STATS_TOKEN>`. It returns the
- * raw per-device-per-day rows and does no arithmetic: the dashboard slices them (totals, unique
- * devices, countries, robots), and keeping the aggregation on the reading side means a new question
- * is a change to a local page rather than a redeploy of the site.
+ * stored day buckets and does no arithmetic: the dashboard slices them (totals, devices, browsers,
+ * robots), and keeping the aggregation on the reading side means a new question is a change to a
+ * local page rather than a redeploy of the site.
+ *
+ * ⚠ **It also deletes every pre-2026-10-14 `d/` row on sight** — those held a hashed per-device id and
+ * a country, both of which the counter no longer keeps (netlify/shared/visits.ts). Sweeping on a read
+ * is the same free mechanism as retention below.
  *
  * ⚠ **No token configured means no data, not open data.** An unset `STATS_TOKEN` answers 503. The
  * failure mode of the other choice — a stats endpoint that serves everyone while the owner believes
@@ -18,7 +22,7 @@
  */
 import { getStore } from "@netlify/blobs";
 import type { Context } from "@netlify/functions";
-import { dateOfKey, dayMs, RETAIN_DAYS, STORE, type VisitorDay } from "../shared/visits";
+import { dateOfKey, dayMs, KEY_PREFIX, LEGACY_PREFIX, RETAIN_DAYS, STORE, type VisitBucket } from "../shared/visits";
 
 /**
  * Where the dashboard is allowed to be read from.
@@ -35,7 +39,7 @@ const DEV_ORIGINS = [
   "http://127.0.0.1:4173",
 ];
 
-/** How many blobs to fetch at once. Small — a day is a handful of rows, and this is not a hot path. */
+/** How many blobs to fetch at once. Small — a day is a handful of buckets, and this is not a hot path. */
 const FETCH_BATCH = 24;
 
 function allowedOrigin(origin: string | null): string | null {
@@ -106,14 +110,15 @@ export default async (req: Request, _context: Context): Promise<Response> => {
   const days = Math.min(Math.max(Number(url.searchParams.get("days") ?? 30) || 30, 1), RETAIN_DAYS);
 
   const store = getStore(STORE);
-  const { blobs } = await store.list({ prefix: "d/" });
+  const { blobs } = await store.list({ prefix: KEY_PREFIX });
+  const { blobs: legacy } = await store.list({ prefix: LEGACY_PREFIX });
 
   const todayMs = dayMs(new Date().toISOString().slice(0, 10));
   const windowFrom = todayMs - (days - 1) * 86_400_000;
   const retainFrom = todayMs - RETAIN_DAYS * 86_400_000;
 
   const wanted: string[] = [];
-  const expired: string[] = [];
+  const expired: string[] = legacy.map((blob) => blob.key);
   for (const blob of blobs) {
     const date = dateOfKey(blob.key);
     if (!date) continue;
@@ -123,15 +128,10 @@ export default async (req: Request, _context: Context): Promise<Response> => {
   }
 
   const rows = (
-    await inBatches(wanted, FETCH_BATCH, async (key) => {
-      const row = (await store.get(key, { type: "json" })) as VisitorDay | null;
-      // The id is the last path segment; it is already anonymous and already per-day, and the
-      // dashboard needs it to count DEVICES rather than visits.
-      return row ? { ...row, id: key.slice(key.lastIndexOf("/") + 1) } : null;
-    })
-  ).filter((row): row is VisitorDay & { id: string } => row !== null);
+    await inBatches(wanted, FETCH_BATCH, (key) => store.get(key, { type: "json" }) as Promise<VisitBucket | null>)
+  ).filter((row): row is VisitBucket => row !== null);
 
-  rows.sort((a, b) => b.lastMs - a.lastMs);
+  rows.sort((a, b) => b.date.localeCompare(a.date) || b.opens + b.reads - (a.opens + a.reads));
 
   // Retention, enforced rather than promised (netlify/shared/visits.ts). Doing it on a read is what
   // keeps it free: the owner opens the dashboard far more often than the store needs sweeping, and
@@ -143,8 +143,8 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     generatedAt: Date.now(),
     days,
     retainDays: RETAIN_DAYS,
-    // The dashboard shows a loud warning on `false`: rows stop arriving the moment the salt goes
-    // missing, and an empty chart otherwise looks like "nobody came".
+    // The dashboard shows a loud warning on `false`: rows stop arriving the moment the on-switch
+    // (`STATS_SALT`) goes missing, and an empty chart otherwise looks like "nobody came".
     salted: Boolean(process.env.STATS_SALT),
     pruned: expired.length,
     rows,

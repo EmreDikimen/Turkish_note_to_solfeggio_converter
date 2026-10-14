@@ -2,22 +2,22 @@
  * What a "visit" is, in one place — shared by the two Netlify Functions.
  *
  * The counter exists because docs/METRICS-USAGE.md had to answer "is anyone using it?" from Cloud
- * Run's raw request log, and that log cannot do the job: it counts robots as people, it cannot tell
- * two visits by one phone from one visit by two people, and every sharpening of its numbers came
- * from the owner supplying what the log could not. This replaces the guessing with a counter built
- * for the question — and it stays anonymous, because the owner ruled on 2026-09-05 that names are
- * not wanted (docs/features/visit-stats.md).
+ * Run's raw request log, and that log cannot do the job: it counts robots as people and every
+ * sharpening of its numbers came from the owner supplying what the log could not. This replaces the
+ * guessing with a counter built for the question — and it stays anonymous, because the owner ruled
+ * on 2026-09-05 that names are not wanted (docs/features/visit-stats.md).
  *
- * ⚠ THE RAW IP IS NEVER WRITTEN DOWN. It is mixed with a secret (`STATS_SALT`) and TODAY'S DATE and
- * hashed; only the hash is stored. So the same phone is one row for one day, and tomorrow the same
- * phone hashes to something else — which is the point. Nobody, including the owner, can take a row
- * from last week and an IP from today and show they are the same person, and there is nothing in
- * the store to hand over if anyone ever asks for one.
+ * ⭐ **SINCE 2026-10-14 THERE IS NO IDENTIFIER AND NO LOCATION AT ALL** (owner: *"konum ve cihaz
+ * kimliğinin tutulmasına çok gerek yok"*). The store used to hold one row per DEVICE per day, keyed by
+ * a salted daily hash of the IP, with the visitor's country beside it. Now a row is a BUCKET: every
+ * visit that arrived on one day from one kind of browser (device type · OS · browser · robot or not),
+ * summed. Nothing in a bucket points at a person, and nothing from the request's address or location
+ * is read at all — which is what lets the Play Store's Data safety form declare app interactions
+ * only. The price, accepted: "how many different people" can no longer be answered, only "how many
+ * openings and reads". ⚠ Old `d/` rows (hash + country) are deleted by `stats.mts` on its next read.
  *
- * ⚠ NO SALT MEANS NO COUNTING. `visit.mts` refuses to record when `STATS_SALT` is unset rather than
- * falling back to something weaker: a fallback would keep the numbers flowing while quietly making
- * the identifier stable forever, which is the exact thing this design exists to prevent. The
- * dashboard says so out loud instead of letting the feature die silently.
+ * ⚠ `STATS_SALT` IS NOW ONLY AN ON-SWITCH. Its value is never used; its PRESENCE is what lets
+ * `visit.mts` record, so turning the counter off is still the one command it always was.
  */
 
 /** Where the rows live. One Netlify Blobs store, nothing else in it. */
@@ -29,25 +29,21 @@ export const STORE = "visits";
  */
 export const RETAIN_DAYS = 180;
 
-/** The visits of ONE anonymous device on ONE day. This is the whole record; there is no other. */
-export interface VisitorDay {
+/** Every visit on ONE day from ONE kind of browser, summed. This is the whole record; there is no other. */
+export interface VisitBucket {
   /** `YYYY-MM-DD` in Europe/Istanbul — the owner's day, not UTC's. */
   date: string;
   /** App openings. Robots do this constantly; a human does it once per tab. */
   opens: number;
   /** Pages actually decoded. This is the only number that means a person read music. */
   reads: number;
-  firstMs: number;
-  lastMs: number;
-  /** Two-letter country from Netlify's edge geo, or `??` when it does not know. */
-  country: string;
   device: "phone" | "tablet" | "desktop" | "?";
-  /** Family plus major version, e.g. `Chrome 151`. The version is load-bearing — see `readUA`. */
+  /** Family plus major version, e.g. `Chrome 151`. */
   browser: string;
   os: string;
   bot: boolean;
-  /** Referrer HOSTS only (never a path, which can carry a search query). At most 5. */
-  refs: string[];
+  /** Referrer HOST → how many visits came from it (never a path, which can carry a query). At most 10. */
+  refs: Record<string, number>;
 }
 
 /** What the browser sends. Everything else is derived here, from headers the browser cannot set. */
@@ -56,13 +52,19 @@ export interface VisitBody {
   ref?: string;
 }
 
-const KEY_PREFIX = "d/";
+export const KEY_PREFIX = "b/";
+/** The pre-2026-10-14 per-device rows (hashed id + country). Never written now; swept on read. */
+export const LEGACY_PREFIX = "d/";
 
-export function keyFor(date: string, id: string): string {
-  return `${KEY_PREFIX}${date}/${id}`;
+/** The coarse user-agent facts a bucket is made of — never more than these four. */
+export type UAFacts = Pick<VisitBucket, "device" | "browser" | "os" | "bot">;
+
+/** One bucket per day per kind of browser: `b/2026-10-14/phone%7CAndroid%7CChrome%20151%7C0`. */
+export function bucketKey(date: string, ua: UAFacts): string {
+  return `${KEY_PREFIX}${date}/${encodeURIComponent(`${ua.device}|${ua.os}|${ua.browser}|${ua.bot ? 1 : 0}`)}`;
 }
 
-/** `d/2026-09-05/ab12…` → `2026-09-05`. Returns null for anything that is not one of our keys. */
+/** `b/2026-09-05/…` → `2026-09-05`. Returns null for anything that is not one of our keys. */
 export function dateOfKey(key: string): string | null {
   if (!key.startsWith(KEY_PREFIX)) return null;
   const date = key.slice(KEY_PREFIX.length, KEY_PREFIX.length + 10);
@@ -88,26 +90,6 @@ export function istanbulDate(ms: number): string {
 /** `2026-09-05` → epoch ms at midnight UTC. Only ever used to compare two dates, so UTC is fine. */
 export function dayMs(date: string): number {
   return Date.parse(`${date}T00:00:00Z`);
-}
-
-/**
- * The per-day anonymous id: `sha256(salt + date + ip + user-agent)`, first 16 hex characters.
- *
- * The date is INSIDE the hash, which is what makes the id expire — see the file header. The
- * user-agent joins the IP because a household or a campus shares one address: without it, the owner
- * and his brother on the same wifi are one "device", which is exactly the confusion
- * docs/METRICS-USAGE.md had to untangle by hand.
- *
- * 16 hex characters (64 bits) is plenty: it separates a handful of visitors a day, and it is short
- * enough to read in the dashboard's table.
- */
-export async function visitorId(salt: string, date: string, ip: string, ua: string): Promise<string> {
-  const bytes = new TextEncoder().encode(`${salt} ${date} ${ip} ${ua}`);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-    .slice(0, 16);
 }
 
 /** Anything that announces itself as automated. Deliberately generous — see `readUA`. */
@@ -147,10 +129,10 @@ const BROWSERS: ReadonlyArray<readonly [string, RegExp]> = [
  * says nothing at all and lands in the human column. That is why the dashboard leads with `reads`
  * (a decoded page) and not with openings — a robot loads the page, it does not upload sheet music.
  */
-export function readUA(ua: string): Pick<VisitorDay, "device" | "browser" | "os" | "bot"> {
+export function readUA(ua: string): UAFacts {
   const bot = BOT_RE.test(ua);
 
-  const device: VisitorDay["device"] = /iPad|Tablet|PlayBook|Silk/i.test(ua)
+  const device: VisitBucket["device"] = /iPad|Tablet|PlayBook|Silk/i.test(ua)
     ? "tablet"
     : /Mobi|Android|iPhone|iPod|Windows Phone/i.test(ua)
       ? "phone"
@@ -198,33 +180,17 @@ export function refHost(ref: string | undefined): string | null {
   }
 }
 
-/** Fold one new visit into the row this device already has today (or start that row). */
+/** Fold one new visit into its day's bucket (or start that bucket). */
 export function foldVisit(
-  prev: VisitorDay | null,
-  now: number,
+  prev: VisitBucket | null,
   date: string,
   kind: VisitBody["kind"],
-  ua: Pick<VisitorDay, "device" | "browser" | "os" | "bot">,
-  country: string,
+  ua: UAFacts,
   ref: string | null
-): VisitorDay {
-  const row: VisitorDay = prev ?? {
-    date,
-    opens: 0,
-    reads: 0,
-    firstMs: now,
-    lastMs: now,
-    country,
-    ...ua,
-    refs: [],
-  };
+): VisitBucket {
+  const row: VisitBucket = prev ?? { date, opens: 0, reads: 0, ...ua, refs: {} };
   if (kind === "read") row.reads += 1;
   else row.opens += 1;
-  row.lastMs = now;
-  // A device that opened the app on mobile data and read a page on wifi keeps the country it
-  // arrived with; the later value is not more true, and letting it flip would make the country
-  // column depend on which request happened to be last.
-  if (row.country === "??" && country !== "??") row.country = country;
-  if (ref && !row.refs.includes(ref) && row.refs.length < 5) row.refs.push(ref);
+  if (ref && (ref in row.refs || Object.keys(row.refs).length < 10)) row.refs[ref] = (row.refs[ref] ?? 0) + 1;
   return row;
 }

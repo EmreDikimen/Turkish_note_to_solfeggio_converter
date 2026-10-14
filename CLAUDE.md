@@ -278,9 +278,9 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   writes no image to disk; change both together.
 - **THE SITE COUNTS ITS VISITS, ANONYMOUSLY, AND THE DASHBOARD IS NEVER PUBLISHED** (owner, 2026-09-05,
   reversing *no tracker*). ⛔ **NO NAMES** — invite links, a login and storing the raw IP were each
-  offered and DECLINED. ⚠ **THE IP IS NEVER WRITTEN DOWN**: `visit.mts` hashes it with a secret **and
-  the date**, so a device's id expires nightly. ⛔ **No salt, no counting** — an unset `STATS_SALT`
-  records NOTHING rather than falling back to a permanent id; never "fix" that with a constant.
+  offered and DECLINED. ⛔ **NO IDENTIFIER, NO LOCATION (2026-10-14)**: `visit.mts` never reads the IP
+  or the geo; a row is a day's TOTAL per kind of browser, so "how many people" is unanswerable by
+  design — the Play Data safety form depends on it. `STATS_SALT`'s presence is only the on-switch.
   ⚠ **Quote `read` (a decoded page), not `open`** — robots load pages constantly.
   ⚠ **`navigator.webdriver` is skipped, LOAD-BEARING**: `smoke:live` and `smoke:build` drive the real
   site and would otherwise be most of the traffic; the owner's devices opt out with `?nostats=1`.

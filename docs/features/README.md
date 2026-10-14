@@ -36,6 +36,7 @@ touching `apps/web/src/omr/`, `apps/server/`, or any training data.
 |---|---|---|
 | The phone | [phone.md](phone.md) | ✅ rebuilt 2026-09-26..28 and deployed; the phone shell's own component tree is still owed ([../STATUS.md](../STATUS.md)) |
 | The look (Tezhip) | [look.md](look.md) | ✅ built 2026-09-30, deployed 2026-10-05 with the logo and the backdrop |
+| Closed-test feedback: every problem found, and its state | [tester-feedback.md](tester-feedback.md) | 🚧 started 2026-10-14 — the source for Play's production questionnaire |
 | The Play Store app | [play-store.md](play-store.md) | 🚧 package built 2026-10-05; closed test not started ([../STATUS.md](../STATUS.md)) |
 | Saving the score (PNG / PDF) | [../DECISIONS.md](../DECISIONS.md) (2026-09-27) | ✅ deployed 2026-09-28 |
 

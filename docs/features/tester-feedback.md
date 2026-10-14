@@ -12,8 +12,8 @@ questionnaire asks what testers found and what changed; it does not need dates, 
 not happen is a false statement on that form. "Source" says who found it: a **tester**, the
 **owner** testing himself, or an **agent** while working.
 
-⚠ **The owner chose to ship no app updates during the 14-day test (2026-10-14).** So "fixed, not
-deployed" is a real state below, not a backlog of forgotten work.
+⚠ **Updates during the test are allowed** (owner, 2026-10-14 — an earlier line here said the
+opposite, an agent's misreading). "Fixed, not deployed" below only means not released yet.
 
 ## Open — app bugs
 
@@ -23,6 +23,13 @@ deployed" is a real state below, not a backlog of forgotten work.
 | 2 | 2026-10-14 | owner | **Kanun: lowering a mandal may need to move every mandal to its left as well** — how the instrument behaves. ⚠ The owner is not sure this is how a real kanun works. | ⏸ **confirm with a kanun player first**; a wrong "fix" is worse than none |
 | 3 | 2026-10-14 | owner | **The first volta (1. ending) is played twice.** | ⏭ not investigated. ⚠ What a repeat or a volta does is decided ONLY by `resolveStructure` in `stitch.ts` ([../APP-RULES.md](../APP-RULES.md)) — fix it there, never with a second rule in the editor |
 | 4 | 2026-10-13 | tester | **"Gelişmiş — geliştirici ayarları" is visible to everyone** (JSON load, strip reader, slice inspector, raw model output). | ⏸ owner's choice owed: hide in production behind `?dev=1`, or hide all but Hece çizgisi / Tekrarlar. `app-smoke` opens `#advanced`, so the panel must stay reachable, not be deleted |
+
+## Feature requests
+
+| # | First noted | Source | Request | State |
+|---|---|---|---|---|
+| 14 | 2026-10-14 | tester | **A progress bar while a page is read.** | ⏸ owner's choice owed: an ESTIMATED bar (client only: slicing has real counts, the server read is one request per page, so its share is filled by elapsed time against a per-strip estimate) or a REAL one (the server streams each strip as it finishes — a Cloud Run change) |
+| 15 | 2026-10-14 | owner | **Open pages read before without internet.** The notes and downloaded voices are already on the device; the app shell is not, because there is no service worker (deliberate, DECISIONS 2026-09-28: a worker can keep serving an old bundle after a deploy). | ⏭ not started — reading a NEW page offline stays impossible either way (the model is on the server) |
 
 ## Fixed
 

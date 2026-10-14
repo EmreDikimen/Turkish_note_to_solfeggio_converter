@@ -37,8 +37,9 @@ from it and are live today:
 so "Üretime başvur" opens around **2026-10-28** if the count never drops below 12 (a drop restarts
 it; the owner is recruiting a margin). Closed test v1 passed review the same day it was sent. ⏭ Before
 applying: the **Data safety** form (item 3), and the owner's own feedback log (what testers said,
-what changed). ⚠ The owner chose to ship **no updates during the test** for now; the voice-cache fix
-(2026-10-12) waits uncommitted on `main`'s working tree. ⚠ Chrome's "Running in Chrome" notice
+what changed). ⛔ There is **no** "no updates during the test" rule — an agent misread the owner and wrote one
+here; the owner corrected it 2026-10-14. The voice-cache fix (2026-10-12) waits uncommitted on
+`main`'s working tree only because it has not been released yet. ⚠ Chrome's "Running in Chrome" notice
 appears on launch and cannot be switched off from the app.
 [features/play-store.md](features/play-store.md).
 

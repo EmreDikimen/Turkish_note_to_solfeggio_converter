@@ -8,8 +8,8 @@
  *     must not read as Chrome, Samsung Internet must not disappear into it, and the browser VERSION
  *     must survive — it is the only evidence the data holds that two visits came from two machines.
  *  3. **The referrer keeps its host and loses its path**, which is where a search query would hide.
- *  4. **Folding**: openings and reads count apart, and the referrer tally neither duplicates a host
- *     nor grows without bound.
+ *  4. **Folding**: openings and reads count apart, the first time stays while the last one moves, and
+ *     the referrer tally neither duplicates a host nor grows without bound.
  *
  * Run: npx --yes tsx tools/analytics/visits-test.ts
  */
@@ -48,12 +48,12 @@ async function main(): Promise<void> {
   const UA_ANDROID =
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36";
   const facts = readUA(UA_ANDROID);
-  const bucket = foldVisit(null, "2026-10-14", "open", facts, "google.com");
+  const bucket = foldVisit(null, 1_000, "2026-10-14", "open", facts, "google.com");
 
   check(
-    "⭐ A BUCKET HOLDS EXACTLY THESE FIELDS — no id, no country, no clock time",
+    "⭐ A BUCKET HOLDS EXACTLY THESE FIELDS — no id, no country",
     Object.keys(bucket).sort(),
-    ["bot", "browser", "date", "device", "opens", "os", "reads", "refs"]
+    ["bot", "browser", "date", "device", "firstMs", "lastMs", "opens", "os", "reads", "refs"]
   );
   check(
     "the key is the date and the four facts, nothing else",
@@ -151,15 +151,16 @@ async function main(): Promise<void> {
     "2026-09-06"
   );
 
-  let row = foldVisit(null, "2026-09-05", "open", facts, "google.com");
+  let row = foldVisit(null, 1_000, "2026-09-05", "open", facts, "google.com");
   check("a first visit opens the bucket", [row.opens, row.reads, row.refs], [1, 0, { "google.com": 1 }]);
 
-  row = foldVisit(row, "2026-09-05", "read", facts, "google.com");
+  row = foldVisit(row, 2_000, "2026-09-05", "read", facts, "google.com");
   check("a read is counted apart from an opening", [row.opens, row.reads], [1, 1]);
   check("the same referrer is tallied, not listed twice", row.refs, { "google.com": 2 });
+  check("first stays, last moves", [row.firstMs, row.lastMs], [1_000, 2_000]);
 
   let many: VisitBucket | null = null;
-  for (let k = 0; k < 14; k++) many = foldVisit(many, "2026-09-05", "open", facts, `h${k}.com`);
+  for (let k = 0; k < 14; k++) many = foldVisit(many, 1_000, "2026-09-05", "open", facts, `h${k}.com`);
   check("the referrer tally is capped at ten hosts", Object.keys(many?.refs ?? {}).length, 10);
   check("…but every visit is still counted", many?.opens, 14);
   console.log(failures ? `\n${failures} FAILED` : "\nall passed");

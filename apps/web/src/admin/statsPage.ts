@@ -467,6 +467,8 @@ function drawTable(rows: Row[]): void {
     ["Tip", ""],
     ["Sistem", ""],
     ["Tarayıcı", ""],
+    ["İlk", ""],
+    ["Son", ""],
     ["Geldiği yer", ""],
   ] as const) {
     const th = document.createElement("th");
@@ -476,6 +478,11 @@ function drawTable(rows: Row[]): void {
   }
 
   const body = document.createElement("tbody");
+  // ⚠ Rows written before 2026-10-14's restore carry no times — show a dash, not "Invalid Date".
+  const clock = (ms: number | undefined) =>
+    ms
+      ? new Date(ms).toLocaleTimeString("tr-TR", { timeZone: "Europe/Istanbul", hour: "2-digit", minute: "2-digit" })
+      : "—";
 
   for (const row of rows.slice(0, 200)) {
     const tr = document.createElement("tr");
@@ -487,6 +494,8 @@ function drawTable(rows: Row[]): void {
       [row.bot ? `${row.device} (robot)` : row.device, ""],
       [row.os, ""],
       [row.browser, ""],
+      [clock(row.firstMs), ""],
+      [clock(row.lastMs), ""],
       [Object.entries(row.refs).map(([h, n]) => (n > 1 ? `${h} ×${n}` : h)).join(", ") || "—", ""],
     ];
     for (const [text, cls] of cells) {
@@ -501,7 +510,8 @@ function drawTable(rows: Row[]): void {
   els.rows.replaceChildren(head, body);
   els.rowsNote.textContent = rows.length
     ? `${rows.length} kayıt${rows.length > 200 ? " (ilk 200 gösteriliyor)" : ""} · ` +
-      "her satır bir günün, bir tür tarayıcıdan gelen ziyaretlerinin toplamıdır — kişi değil"
+      "her satır bir günün, bir tür tarayıcıdan gelen ziyaretlerinin toplamıdır — kişi değil · " +
+      "İlk/Son o satırdaki ilk ve son ziyaretin saatidir (İstanbul saati)"
     : "Bu aralıkta hiç ziyaret yok.";
 }
 

@@ -13,7 +13,7 @@
  * visit that arrived on one day from one kind of browser (device type · OS · browser · robot or not),
  * summed. Nothing in a bucket points at a person, and nothing from the request's address or location
  * is read at all — which is what lets the Play Store's Data safety form declare app interactions
- * only. The price, accepted: "how many different people" can no longer be answered, only "how many
+ * only. A bucket keeps the times of its day's first and last visit (restored the same day, owner). The price, accepted: "how many different people" can no longer be answered, only "how many
  * openings and reads". ⚠ Old `d/` rows (hash + country) are deleted by `stats.mts` on its next read.
  *
  * ⚠ `STATS_SALT` IS NOW ONLY AN ON-SWITCH. Its value is never used; its PRESENCE is what lets
@@ -37,6 +37,12 @@ export interface VisitBucket {
   opens: number;
   /** Pages actually decoded. This is the only number that means a person read music. */
   reads: number;
+  /**
+   * The bucket's first and last visit of the day, epoch ms (owner, 2026-10-14: *"ilk son saat
+   * olarak saat bilgisini geri getir"*). Two times for the BUCKET, not per person.
+   */
+  firstMs: number;
+  lastMs: number;
   device: "phone" | "tablet" | "desktop" | "?";
   /** Family plus major version, e.g. `Chrome 151`. */
   browser: string;
@@ -183,14 +189,16 @@ export function refHost(ref: string | undefined): string | null {
 /** Fold one new visit into its day's bucket (or start that bucket). */
 export function foldVisit(
   prev: VisitBucket | null,
+  now: number,
   date: string,
   kind: VisitBody["kind"],
   ua: UAFacts,
   ref: string | null
 ): VisitBucket {
-  const row: VisitBucket = prev ?? { date, opens: 0, reads: 0, ...ua, refs: {} };
+  const row: VisitBucket = prev ?? { date, opens: 0, reads: 0, firstMs: now, lastMs: now, ...ua, refs: {} };
   if (kind === "read") row.reads += 1;
   else row.opens += 1;
+  row.lastMs = now;
   if (ref && (ref in row.refs || Object.keys(row.refs).length < 10)) row.refs[ref] = (row.refs[ref] ?? 0) + 1;
   return row;
 }

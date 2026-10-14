@@ -48,13 +48,14 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     const kind = body.kind === "read" ? "read" : body.kind === "open" ? "open" : null;
     if (!kind) return NO_CONTENT();
 
-    const date = istanbulDate(Date.now());
+    const now = Date.now();
+    const date = istanbulDate(now);
     const ua = readUA(req.headers.get("user-agent") ?? "");
 
     const store = getStore(STORE);
     const key = bucketKey(date, ua);
     const prev = (await store.get(key, { type: "json" })) as VisitBucket | null;
-    await store.setJSON(key, foldVisit(prev, date, kind, ua, refHost(body.ref)));
+    await store.setJSON(key, foldVisit(prev, now, date, kind, ua, refHost(body.ref)));
   } catch {
     // Deliberately swallowed. See the header: this endpoint has no way to usefully report anything
     // to a beacon, and a counter that can raise is a counter that can take the app down with it.

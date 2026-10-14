@@ -96,8 +96,9 @@ to be the owner's own phone and had to be subtracted by hand afterwards. `?nosta
 
 ## What a row is, and what it cannot tell you
 
-One row is **one day, for one kind of browser**: `opens`, `reads`, device type, browser with its
-major version, OS, a robot flag, and up to ten referrer hosts with a count each.
+One row is **one day, for one kind of browser**: `opens`, `reads`, the first and last visit's time
+(restored the same day, owner), device type, browser with its major version, OS, a robot flag, and up
+to ten referrer hosts with a count each.
 
 ⚠ **A row is not a device and not a person.** Ten friends on the same Chrome on Android are one row.
 

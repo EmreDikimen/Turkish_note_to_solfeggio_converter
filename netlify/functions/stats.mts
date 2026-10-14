@@ -131,7 +131,7 @@ export default async (req: Request, _context: Context): Promise<Response> => {
     await inBatches(wanted, FETCH_BATCH, (key) => store.get(key, { type: "json" }) as Promise<VisitBucket | null>)
   ).filter((row): row is VisitBucket => row !== null);
 
-  rows.sort((a, b) => b.date.localeCompare(a.date) || b.opens + b.reads - (a.opens + a.reads));
+  rows.sort((a, b) => b.lastMs - a.lastMs);
 
   // Retention, enforced rather than promised (netlify/shared/visits.ts). Doing it on a read is what
   // keeps it free: the owner opens the dashboard far more often than the store needs sweeping, and

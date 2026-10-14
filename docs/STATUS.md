@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-10-11
+updated: 2026-10-14
 
 ## Now
 
@@ -25,23 +25,24 @@ from it and are live today:
    **38.2 s**; at concurrency 1 an over-capacity request **queues** behind `--max-instances 10`, and
    `WARMUP_WAIT_MS` is **120 s**. ⏭ **`--min-instances 1` is the owner's open call** — it removes the
    cold start and costs money continuously ([app/deploy-ops.md](app/deploy-ops.md)).
-3. ⏭ **NOTHING IS COUNTING.** The anonymous visit counter is built and deployed, but `STATS_SALT`
-   and `STATS_TOKEN` are unset, and an unset salt records **nothing** by design. **Owner:** set both,
-   `npm run deploy:app`, read with `npm run stats:ui`, and open the site once as `?nostats=1` on your
-   own devices ([features/visit-stats.md](features/visit-stats.md)).
+3. ✅ **THE COUNTER COUNTS — DAILY TOTALS ONLY, SINCE 2026-10-14.** `STATS_SALT` and `STATS_TOKEN`
+   are set; the redeploy that day dropped the per-device hash and the country (a row is a day's total
+   per kind of browser), with `privacy.html` rewritten in the same deploy. ⚠ The first dashboard read
+   after it **deletes every old `d/` row** — the owner was told to screenshot first. ⏭ **Owner:**
+   update the Play **Data safety** form — Photos stay; add **App activity → App interactions**
+   (collected, not shared, not ephemeral, required, Analytics); deletion question → **No** (180 days)
+   ([features/visit-stats.md](features/visit-stats.md)).
 
-⏭ **THE PLAY STORE IS THE OWNER'S PRIORITY — testers are easy to reach the week of 2026-10-12 and
-hard after.** ✅ Done by 2026-10-10: the Play Console account is **verified**, the app
-`com.komavision.app` is created, v1 (min SDK 24) is live on **internal test** and installed on the
-owner's phone, and Play's app-signing key is in `assetlinks.json` — the app now opens **full screen**
-(Google's Digital Asset Links API lists both keys). ⏭ **Owner, in order**: open the Google Group →
-closed test track with the group as testers → add v1 from the library → the App content forms and
-the store listing → send for review → share the group link, then the opt-in link, with **15–20**
-Android users (12 must stay opted in for 14 consecutive days). ⚠ Chrome's "Running in Chrome"
-notice appears on launch and cannot be switched off from the app.
+⏭ **PLAY STORE: THE 14-DAY CLOSED TEST STARTED 2026-10-14**, the day the twelfth tester opted in —
+so "Üretime başvur" opens around **2026-10-28** if the count never drops below 12 (a drop restarts
+it; the owner is recruiting a margin). Closed test v1 passed review the same day it was sent. ⏭ Before
+applying: the **Data safety** form (item 3), and the owner's own feedback log (what testers said,
+what changed). ⚠ The owner chose to ship **no updates during the test** for now; the voice-cache fix
+(2026-10-12) waits uncommitted on `main`'s working tree. ⚠ Chrome's "Running in Chrome" notice
+appears on launch and cannot be switched off from the app.
 [features/play-store.md](features/play-store.md).
 
-**What the live site carries** (last web deploy **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
+**What the live site carries** (last web deploy **2026-10-14** — the counter and `privacy.html`; before it **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
 server read 24 strips / 229 notes in 64.6 s, refusal arm clean; `assetlinks.json`, `privacy.html`,
 the manifest and the drum wavs answer 200):
 the phone rebuild (2026-09-26..28 — the score fits the phone, the Çal tab folds under Çal/Dur, typed
@@ -89,8 +90,8 @@ the app, and neither waits for the other.
 1b. ⏭ **A React Native app, Android and iOS together, started in parallel (owner, 2026-10-11).**
    Nothing is built yet: three choices are owed before the skeleton — Expo or bare, where a phone
    slices a page, how the score is drawn ([mobile/plan.md](mobile/plan.md) §Open).
-2. ⏭ **`STATS_SALT` + `STATS_TOKEN`** (above) — one command, and the only way to know who uses the
-   public app. "Every human so far was on a phone" rests on **n = 2** ([METRICS-USAGE.md](METRICS-USAGE.md)).
+2. ⏭ **The Play Data safety form** (item 3 above) — must match the counter before the production
+   application.
 3. ⏭ **Five shipped things no eye has judged** —
    [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) checks 25–29, via `npm run dev:cloud`:
 

@@ -27,7 +27,7 @@ from it and are live today:
    cold start and costs money continuously ([app/deploy-ops.md](app/deploy-ops.md)).
 3. ✅ **THE COUNTER COUNTS — DAILY TOTALS ONLY, SINCE 2026-10-14.** `STATS_SALT` and `STATS_TOKEN`
    are set; the redeploy that day dropped the per-device hash and the country (a row is a day's total
-   per kind of browser), with `privacy.html` rewritten in the same deploy. ⚠ The first dashboard read
+   per kind of browser), with `privacy.html` rewritten in the same deploy; a second deploy that day put back each row's first and last visit time, again with `privacy.html`. ⚠ The first dashboard read
    after it **deletes every old `d/` row** — the owner was told to screenshot first. ⏭ **Owner:**
    update the Play **Data safety** form — Photos stay; add **App activity → App interactions**
    (collected, not shared, not ephemeral, required, Analytics); deletion question → **No** (180 days)

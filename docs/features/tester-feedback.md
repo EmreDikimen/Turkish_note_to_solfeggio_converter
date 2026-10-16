@@ -2,7 +2,7 @@
 
 purpose: the one list of problems reported or found during the Play Store closed test, with who found each, its state, and what was done — the raw material for the production-access application
 audience: the owner (filling Play's production questionnaire) and anyone fixing app bugs
-updated: 2026-10-14
+updated: 2026-10-16
 
 > Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). How the closed test
 > itself works: [play-store.md](play-store.md).
@@ -35,11 +35,12 @@ opposite, an agent's misreading). "Fixed, not deployed" below only means not rel
 
 | # | First noted | Source | Problem | What was done | Live? |
 |---|---|---|---|---|---|
-| 5 | 2026-10-12 | owner | **"Download this voice?" was asked again on every visit**, though the files were already on the device (the yes lived in memory, the files in Cache Storage). | `voiceCached()` checks every sample; a voice fully on the device is not asked about | ⏸ **fixed, not deployed** (working tree on `main`; `smoke:editor` passes both arms) |
-| 6 | 2026-10-13 | owner | **A voice read from the device still said "ses indiriliyor"**. | the notice says "ses hazırlanıyor" when every sample is cached (`data-voice-source`) | ⏸ **fixed, not deployed** (same change as 5) |
+| 5 | 2026-10-12 | owner | **"Download this voice?" was asked again on every visit**, though the files were already on the device (the yes lived in memory, the files in Cache Storage). | `voiceCached()` checks every sample; a voice fully on the device is not asked about | ✅ live 2026-10-16 |
+| 6 | 2026-10-13 | owner | **A voice read from the device still said "ses indiriliyor"**. | the notice says "ses hazırlanıyor" when every sample is cached (`data-voice-source`) | ✅ live 2026-10-16 |
+| 16 | 2026-10-16 | owner | **Transposition had no 1,5-tone step** (la→do, 13 commas), and its labels counted intervals ("2 ses" meant ONE tone). | ±13 commas added; every step named in whole tones — "1,5 tam ses (13 koma)", "2,5 tam ses (22 koma) (yaygın: 4 ses)", "3,5 tam ses (31 koma) (yaygın: 5 ses)" | ✅ live 2026-10-16 |
 | 7 | 2026-10-08 | owner | **The Android navigation bar stayed light under the dark theme.** | the Play app's bars follow the phone: ivory by day, night slate at night ([play-store.md](play-store.md)) | ✅ in the Play package since v1 |
 | 8 | 2026-10-10 | owner | **The Play app opened with an address bar** (a Chrome tab, not full screen). | Play's app-signing key added to `assetlinks.json` | ✅ live 2026-10-10 |
-| 9 | 2026-10-12 | agent | `smoke:editor --voices-url` hung on a disabled stop button, so the real-voices arm never ran to the end. | the check clicks stop only when it is enabled | ⏸ fixed in the working tree with 5 |
+| 9 | 2026-10-12 | agent | `smoke:editor --voices-url` hung on a disabled stop button, so the real-voices arm never ran to the end. | the check clicks stop only when it is enabled | ✅ committed 2026-10-16 |
 
 ## Not app bugs — explained or not fixable
 

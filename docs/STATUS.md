@@ -39,7 +39,7 @@ it; the owner is recruiting a margin). Closed test v1 passed review the same day
 applying: the **Data safety** form (item 3), and the owner's own feedback log (what testers said,
 what changed). ⛔ There is **no** "no updates during the test" rule — an agent misread the owner and wrote one
 here; the owner corrected it 2026-10-14. Released 2026-10-16 (web deploy, `smoke:live` PASS): the voice-cache
-fix and the 1,5-tone transposition step — [features/tester-feedback.md](features/tester-feedback.md). ⚠ Chrome's "Running in Chrome" notice
+fix and the 1,5-tone transposition step; a second deploy that day: letter-keeping transposition spelling and the stale-tab reload guard — [features/tester-feedback.md](features/tester-feedback.md). ⚠ Chrome's "Running in Chrome" notice
 appears on launch and cannot be switched off from the app.
 [features/play-store.md](features/play-store.md).
 

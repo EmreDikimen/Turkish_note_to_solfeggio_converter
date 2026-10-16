@@ -63,6 +63,7 @@ import {
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, findVoice, type VoiceId } from "./audio/instruments";
 import { voiceCached } from "./audio/loadInstrument";
+import { claimReload, isStaleChunkError } from "./staleBuild";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
 import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./exportScore";
 import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
@@ -2219,6 +2220,13 @@ export function App() {
         );
         if (result.warnings.length) console.warn("stitch warnings:", result.warnings);
       } catch (err) {
+        // A tab older than the live deploy cannot fetch the slicer chunk it was built against:
+        // say so and reload once, rather than show a read error that no retry can fix (staleBuild.ts).
+        if (isStaleChunkError(err) && claimReload()) {
+          setOmrStatus(busyStatus("page", "slice", TR.status.appUpdated));
+          window.setTimeout(() => window.location.reload(), 1200);
+          return;
+        }
         setError(toAppError(err, "read-failed"));
         setOmrStatus(null);
       } finally {

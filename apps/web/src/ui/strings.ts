@@ -517,6 +517,7 @@ export const TR = {
     // its graphs on 2026-09-04, and a silent pause that long reads as a hang. ⚠ No ticking clock —
     // `page-smoke` counts DISTINCT status texts to prove progress moved, so a countdown would forge
     // that signal (ui/status.ts).
+    appUpdated: "Uygulama güncellendi — sayfa yenileniyor. Ardından fotoğrafı bir kez daha seçin.",
     wakingServer: "sunucu uyanıyor — ilk okuma yarım dakika kadar uzun sürebilir…",
     readingStrip: (i: number, n: number) => `şerit ${i} / ${n} okunuyor…`,
     stitching: "birleştiriliyor…",

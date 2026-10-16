@@ -2,7 +2,7 @@
 
 purpose: the design, the privacy contract and the limits of the anonymous visit counter, and how to read its dashboard
 audience: agents and the owner, before changing what is counted, what is stored, or who can read it
-updated: 2026-09-05
+updated: 2026-10-14
 
 > Current state is in [../STATUS.md](../STATUS.md). The decision is one line in
 > [../DECISIONS.md](../DECISIONS.md); the track index is [README.md](README.md). What the OLD
@@ -31,17 +31,20 @@ devices rather than requests.
 | **Names?** | **No.** Anonymous counting only | Named invite links (`?k=ahmet`) and a real login were both offered and declined. There is no account system to build and no name to leak |
 | **Where?** | **Netlify Functions + Blobs** | The site is already deployed there ([deploy-ops.md](../app/deploy-ops.md)); no new service, no new bill, and the Cloud Run decoder stays a pure function of pixels |
 | **Who may read it?** | **The owner only, and the page is never published** | See "Two locks" below |
-| **What is stored?** | **No IP, ever** — a salted hash that expires nightly | The alternative (raw IP) is personal data under KVKK/GDPR and contradicts the footer |
+| **What is stored?** | **Daily totals only** — no IP, no location, no identifier (since 2026-10-14; a salted daily hash and a country before) | Owner, 2026-10-14: neither was needed, and the Play Data safety form can then declare app interactions only |
 
 ## The privacy contract
 
 This is the part to read before changing anything.
 
-- **The raw address is never written down.** `visit.mts` mixes the IP with a secret (`STATS_SALT`)
-  **and the current date**, hashes it, keeps 16 hex characters, and throws the address away.
-- **The identifier expires every night.** Because the date is inside the hash, the same phone is a
-  different id tomorrow. Nobody — the owner included — can take a row from last week and an address
-  from today and prove they are the same person.
+- ⭐ **No identifier and no location, since 2026-10-14** (owner: *"konum ve cihaz kimliğinin
+  tutulmasına çok gerek yok"*). `visit.mts` never reads the request's IP or its geo. A row is a
+  **bucket** — every visit on one day from one kind of browser (device type · OS · browser · robot),
+  summed. The price, accepted: **"how many different people came" cannot be answered**, only
+  openings and reads. ⚠ The Play Store's **Data safety** form declares app interactions only, and is
+  true only while this holds — add an id or a country back and that form must change the same day.
+  Until 2026-10-14 the key was a salted, nightly-expiring hash of the IP and the row held a country;
+  `stats.mts` deletes every such `d/` row on its next read.
 - **No cookie, no `localStorage`, no fingerprint.** Nothing is written on the visitor's machine by
   the counter at all. The one exception is the owner's own opt-out flag, below.
 - **The referrer keeps its host and loses its path**, which is where a search query would hide.
@@ -49,13 +52,11 @@ This is the part to read before changing anything.
 - **Rows are deleted after `RETAIN_DAYS` (180)**, swept lazily whenever the dashboard is opened — so
   the retention period is code that runs, not a promise in a document.
 - **The visitor is told.** `TR.footer.counting` says so on the page: *"Ziyaretler anonim sayılır:
-  çerez yok, IP adresi saklanmaz."* ⚠ That line is a statement of fact about the code, exactly like
-  the three beside it — it stops being true the day this stores an address, and both move together.
+  çerez yok, IP adresi saklanmaz."*, and `privacy.html` lists exactly what a bucket holds. ⚠ Both are
+  statements of fact about the code and move with it.
 
-⛔ **No salt means no counting.** With `STATS_SALT` unset, `visit.mts` records nothing and the
-dashboard says so in a yellow box. The tempting fallback — hash without a salt, or with a fixed one —
-would keep the numbers flowing while quietly making the identifier permanent, which is the single
-thing this design exists to prevent.
+⚠ **`STATS_SALT` is only the on-switch now.** Its value is never used; with it unset `visit.mts`
+records nothing and the dashboard says so in a yellow box.
 
 ## Two locks, and why there are two
 
@@ -95,12 +96,11 @@ to be the owner's own phone and had to be subtracted by hand afterwards. `?nosta
 
 ## What a row is, and what it cannot tell you
 
-One row is **one device, for one day**: `opens`, `reads`, first and last time, country (Netlify's
-edge geo), device type, browser with its major version, OS, a robot flag, and up to five referrer
-hosts.
+One row is **one day, for one kind of browser**: `opens`, `reads`, the first and last visit's time
+(restored the same day, owner), device type, browser with its major version, OS, a robot flag, and up
+to ten referrer hosts with a count each.
 
-⚠ **A row is a device, not a person.** One friend with a phone and a laptop is two rows. Two people
-sharing a browser are one row.
+⚠ **A row is not a device and not a person.** Ten friends on the same Chrome on Android are one row.
 
 ⚠ **The browser VERSION is the only evidence here that two visits came from two machines** — it is
 how `../METRICS-USAGE.md` established "at least one real stranger" (Chrome/150 and Chrome/151, and
@@ -125,7 +125,7 @@ counter, not a ledger. If the site ever gets real traffic, that is the line to r
 Two secrets on the site, once. Any long random string works; `openssl` is just a convenient source.
 
 ```bash
-netlify env:set STATS_SALT  "$(openssl rand -hex 32)"   # rotating it resets device counting, nothing else
+netlify env:set STATS_SALT  "$(openssl rand -hex 32)"   # only its presence matters: the on-switch
 netlify env:set STATS_TOKEN "$(openssl rand -hex 24)"   # this is what the dashboard asks for
 npm run deploy:app                                      # the functions ship with the site
 npm run stats:ui                                        # → http://localhost:5173/admin-stats.html
@@ -135,8 +135,7 @@ npm run stats:ui                                        # → http://localhost:5
 deploys fine and the counter is simply not there — the dashboard reports the 404 in plain Turkish
 rather than an empty chart, which is the failure this is easiest to miss.
 
-⚠ **Rotating `STATS_SALT` is not free**: yesterday's ids and today's stop matching, so a device
-active across the change counts twice. Rotate it deliberately, not as housekeeping.
+Rotating `STATS_SALT` changes nothing since 2026-10-14 — its value is unused.
 
 ## Where the code is
 

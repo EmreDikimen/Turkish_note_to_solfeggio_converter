@@ -7,6 +7,9 @@ import "@fontsource-variable/eb-garamond/wght.css";
 import "@fontsource-variable/eb-garamond/wght-italic.css";
 import "./index.css";
 import { App } from "./App";
+import { installStaleBuildGuard } from "./staleBuild";
+
+installStaleBuildGuard();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

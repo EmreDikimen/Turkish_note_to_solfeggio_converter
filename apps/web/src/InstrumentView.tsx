@@ -155,11 +155,12 @@ export function InstrumentView({
         {loadingThis && voiceStatus.state === "loading" && (
           <small className="kv-hint">
             {voiceStatus.sounding === "sine"
-              ? TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total)
+              ? TR.transport.voiceLoading(voiceStatus.loaded, voiceStatus.total, voiceStatus.fromCache)
               : TR.transport.voiceSwitchHeld(
                   voiceStatus.loaded,
                   voiceStatus.total,
                   voiceLabel(voiceStatus.sounding),
+                  voiceStatus.fromCache,
                 )}
           </small>
         )}

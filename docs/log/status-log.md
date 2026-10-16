@@ -2,10 +2,21 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-11
+updated: 2026-10-14
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-14 — the visit counter drops its identifier and its location
+
+**The owner chose to stop keeping the per-device hash and the country** once the Play Store Data
+safety form had to declare them. `visit.mts` no longer reads the IP or the geo; a row is a day's
+total per kind of browser. The dashboard lost its devices tiles, its country breakdown and its
+per-device table columns, and now weights its breakdowns by visits. `stats.mts` deletes every old
+`d/` row on its next read. `privacy.html`, CLAUDE.md, `features/visit-stats.md` and DECISIONS move
+with it. Just before the change, the owner read the old table and asked where a visit with the
+referrer `teams.public.onecdn.static.microsoft` came from — the last question the old rows could
+answer. Same day: the closed test reached **12 testers**, so the 14-day count started.
 
 ## 2026-10-11 — slicing moves to the server for the native app (`POST /page`), on `native-app`
 

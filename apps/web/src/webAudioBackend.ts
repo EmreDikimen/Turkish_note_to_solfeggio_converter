@@ -29,7 +29,7 @@
 import type { AudioBackend, PercussionHit, Stroke, Timeline } from "@turkish-omr/core";
 import { loadStrokeKit, type StrokeBuffers } from "./audio/loadStrokeKit";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
-import { loadInstrument, type VoiceBuffer } from "./audio/loadInstrument";
+import { loadInstrument, voiceCached, type VoiceBuffer } from "./audio/loadInstrument";
 import {
   DEFAULT_VOICE,
   findVoice,
@@ -140,6 +140,13 @@ export interface VoiceStatus {
   sounding: VoiceId;
   /** Samples decoded so far, out of the voice's total. Both 0 for the synthesised voice. */
   loaded: number;
+  /**
+   * The load in progress reads EVERY sample from Cache Storage — nothing is downloaded, only decoded
+   * (2026-10-12). Starts false and turns true a moment into the load, once `voiceCached` answers, so
+   * a real download never says "hazırlanıyor"; the cost is a few milliseconds of "indiriliyor" on a
+   * cached one.
+   */
+  fromCache: boolean;
   total: number;
   /** Notes scheduled this playback, by which path sounded them. */
   sampled: number;
@@ -264,6 +271,7 @@ export class WebAudioBackend implements AudioBackend {
   private voiceState: VoiceState = "idle";
   private voiceLoaded = 0;
   private voiceTotal = 0;
+  private voiceFromCache = false;
   private onVoiceCb: ((s: VoiceStatus) => void) | null = null;
   /** Per-playback counters, reset in `scheduleFrom`. See `VoiceStatus`. */
   private sampledNotes = 0;
@@ -841,7 +849,15 @@ export class WebAudioBackend implements AudioBackend {
     this.voiceLoaded = 0;
     this.voiceTotal = def.samples.length;
     this.voiceState = "loading";
+    this.voiceFromCache = false;
     this.emitVoice();
+    // Not awaited: the load must not wait on the answer, and the guard keeps a late answer for
+    // voice A off a load that has since moved to voice B.
+    void voiceCached(id).then((cached) => {
+      if (!cached || this.voiceWanted !== id || this.voiceState !== "loading") return;
+      this.voiceFromCache = true;
+      this.emitVoice();
+    });
 
     try {
       const bufs = await loadInstrument(ctx, id, (done, total) => {
@@ -906,6 +922,7 @@ export class WebAudioBackend implements AudioBackend {
       state: this.voiceState,
       loaded: this.voiceLoaded,
       total: this.voiceTotal,
+      fromCache: this.voiceFromCache,
       sampled: this.sampledNotes,
       synth: this.synthNotes,
       truncated: this.truncatedNotes,

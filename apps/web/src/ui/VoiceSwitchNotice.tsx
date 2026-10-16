@@ -56,7 +56,7 @@ export function VoiceSwitchNotice({ status }: { status: VoiceStatus }) {
   /** Set when the reader closes the notice, so the same load cannot put it back on the next tick. */
   const dismissed = useRef<VoiceId | null>(null);
 
-  const { voice, sounding, state, loaded, total } = status;
+  const { voice, sounding, state, loaded, total, fromCache } = status;
 
   useEffect(() => {
     if (state === "loading") {
@@ -107,6 +107,7 @@ export function VoiceSwitchNotice({ status }: { status: VoiceStatus }) {
       data-voice-state={state}
       data-voice-loaded={loaded}
       data-voice-total={total}
+      data-voice-source={fromCache ? "cache" : "network"}
       // `polite`, not `assertive`: it is progress, and a screen reader must not be interrupted by a
       // counter. The counts live in attributes, so only the two sentences are ever announced.
       role="status"
@@ -121,8 +122,8 @@ export function VoiceSwitchNotice({ status }: { status: VoiceStatus }) {
                   the ordinary first pick, and "şimdilik varsayılan sesle çalıyor" there would be
                   telling a reader that nothing changed — which is the opposite of the news. */}
               {sounding === "sine"
-                ? TR.transport.voiceLoading(loaded, total)
-                : TR.transport.voiceSwitchHeld(loaded, total, labelOf(sounding))}
+                ? TR.transport.voiceLoading(loaded, total, fromCache)
+                : TR.transport.voiceSwitchHeld(loaded, total, labelOf(sounding), fromCache)}
             </small>
           </>
         ) : (

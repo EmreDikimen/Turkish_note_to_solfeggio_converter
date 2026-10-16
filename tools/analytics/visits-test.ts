@@ -1,29 +1,28 @@
 /**
  * The visit counter's arithmetic, pinned (Node-only) for `netlify/shared/visits.ts`. Four parts:
  *
- *  1. **The anonymous id really is anonymous, and it really does expire.** The same device on two
- *     days must hash to two different ids, and a different secret must give a different id again.
- *     This is the whole privacy claim of the feature, so it is a test and not a comment.
+ *  1. **A bucket holds no identifier and no location** (2026-10-14). Its key and its record are made
+ *     of the date and four coarse user-agent facts, and nothing else — so two phones of the same
+ *     kind share one bucket. This is the whole privacy claim of the feature, so it is a test.
  *  2. **The user-agent lessons docs/METRICS-USAGE.md paid for in wrong entries.** Edge and Opera
  *     must not read as Chrome, Samsung Internet must not disappear into it, and the browser VERSION
  *     must survive — it is the only evidence the data holds that two visits came from two machines.
  *  3. **The referrer keeps its host and loses its path**, which is where a search query would hide.
- *  4. **Folding**, including the two rules that are easy to get backwards: a country already known
- *     is never overwritten, and the referrer list neither duplicates nor grows without bound.
+ *  4. **Folding**: openings and reads count apart, the first time stays while the last one moves, and
+ *     the referrer tally neither duplicates a host nor grows without bound.
  *
  * Run: npx --yes tsx tools/analytics/visits-test.ts
  */
 
 import {
+  bucketKey,
   dateOfKey,
   dayMs,
   foldVisit,
   istanbulDate,
-  keyFor,
   readUA,
   refHost,
-  visitorId,
-  type VisitorDay,
+  type VisitBucket,
 } from "../../netlify/shared/visits";
 
 let failures = 0;
@@ -42,29 +41,31 @@ function check(name: string, got: unknown, want: unknown) {
 
 async function main(): Promise<void> {
   // ---------------------------------------------------------------------------------------------
-  // 1. The id: anonymous, and it expires
+  // 1. No identifier, no location
   // ---------------------------------------------------------------------------------------------
-  console.log("the anonymous per-day id");
+  console.log("no identifier, no location");
 
-  const IP = "88.240.41.208";
   const UA_ANDROID =
     "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36";
+  const facts = readUA(UA_ANDROID);
+  const bucket = foldVisit(null, 1_000, "2026-10-14", "open", facts, "google.com");
 
-  const idToday = await visitorId("secret", "2026-09-05", IP, UA_ANDROID);
-  const idTomorrow = await visitorId("secret", "2026-09-06", IP, UA_ANDROID);
-  const idOtherSalt = await visitorId("other", "2026-09-05", IP, UA_ANDROID);
-  const idAgain = await visitorId("secret", "2026-09-05", IP, UA_ANDROID);
-
-  check("16 hex characters", /^[0-9a-f]{16}$/.test(idToday), true);
-  check("the same device, the same day, the same id", idAgain, idToday);
-  check("⭐ THE SAME DEVICE TOMORROW IS A DIFFERENT ID", idTomorrow === idToday, false);
-  check("a different secret is a different id", idOtherSalt === idToday, false);
   check(
-    "two browsers behind ONE address are two devices (the household case)",
-    (await visitorId("secret", "2026-09-05", IP, "Mozilla/5.0 (Macintosh) Firefox/143.0")) === idToday,
-    false
+    "⭐ A BUCKET HOLDS EXACTLY THESE FIELDS — no id, no country",
+    Object.keys(bucket).sort(),
+    ["bot", "browser", "date", "device", "firstMs", "lastMs", "opens", "os", "reads", "refs"]
   );
-  check("the id contains nothing of the address", idToday.includes("88"), false);
+  check(
+    "the key is the date and the four facts, nothing else",
+    decodeURIComponent(bucketKey("2026-10-14", facts)),
+    "b/2026-10-14/phone|Android|Chrome 151|0"
+  );
+  check(
+    "two phones of the same kind share one bucket — that is the point",
+    bucketKey("2026-10-14", readUA(UA_ANDROID)) === bucketKey("2026-10-14", facts),
+    true
+  );
+  check("…and the next day is another bucket", bucketKey("2026-10-15", facts) === bucketKey("2026-10-14", facts), false);
 
   // ---------------------------------------------------------------------------------------------
   // 2. Reading a user-agent — every case here is one METRICS-USAGE.md had to reason about by hand
@@ -141,7 +142,7 @@ async function main(): Promise<void> {
   // ---------------------------------------------------------------------------------------------
   console.log("\nkeys and folding");
 
-  check("a key carries its date", dateOfKey(keyFor("2026-09-05", idToday)), "2026-09-05");
+  check("a key carries its date", dateOfKey(bucketKey("2026-09-05", facts)), "2026-09-05");
   check("anything else is not one of ours", dateOfKey("visits/whatever"), null);
   check("days compare", dayMs("2026-09-06") - dayMs("2026-09-05"), 86_400_000);
   check(
@@ -150,32 +151,18 @@ async function main(): Promise<void> {
     "2026-09-06"
   );
 
-  const UA = readUA(UA_ANDROID);
-  let row = foldVisit(null, 1_000, "2026-09-05", "open", UA, "TR", "google.com");
-  check("a first visit opens the row", [row.opens, row.reads, row.refs], [1, 0, ["google.com"]]);
+  let row = foldVisit(null, 1_000, "2026-09-05", "open", facts, "google.com");
+  check("a first visit opens the bucket", [row.opens, row.reads, row.refs], [1, 0, { "google.com": 1 }]);
 
-  row = foldVisit(row, 2_000, "2026-09-05", "read", UA, "TR", "google.com");
+  row = foldVisit(row, 2_000, "2026-09-05", "read", facts, "google.com");
   check("a read is counted apart from an opening", [row.opens, row.reads], [1, 1]);
-  check("the same referrer is not listed twice", row.refs, ["google.com"]);
-  check("first and last move independently", [row.firstMs, row.lastMs], [1_000, 2_000]);
+  check("the same referrer is tallied, not listed twice", row.refs, { "google.com": 2 });
+  check("first stays, last moves", [row.firstMs, row.lastMs], [1_000, 2_000]);
 
-  let unknown = foldVisit(null, 1_000, "2026-09-05", "open", UA, "??", null);
-  unknown = foldVisit(unknown, 2_000, "2026-09-05", "open", UA, "TR", null);
-  check("a country learned later fills an unknown", unknown.country, "TR");
-
-  let known = foldVisit(null, 1_000, "2026-09-05", "open", UA, "TR", null);
-  known = foldVisit(known, 2_000, "2026-09-05", "open", UA, "DE", null);
-  check(
-    "⚠ but a country already known is NEVER overwritten — else the column depends on request order",
-    known.country,
-    "TR"
-  );
-
-  let many: VisitorDay | null = null;
-  for (const host of ["a.com", "b.com", "c.com", "d.com", "e.com", "f.com", "g.com"]) {
-    many = foldVisit(many, 1_000, "2026-09-05", "open", UA, "TR", host);
-  }
-  check("the referrer list is capped at five", many?.refs.length, 5);
+  let many: VisitBucket | null = null;
+  for (let k = 0; k < 14; k++) many = foldVisit(many, 1_000, "2026-09-05", "open", facts, `h${k}.com`);
+  check("the referrer tally is capped at ten hosts", Object.keys(many?.refs ?? {}).length, 10);
+  check("…but every visit is still counted", many?.opens, 14);
   console.log(failures ? `\n${failures} FAILED` : "\nall passed");
   process.exit(failures ? 1 : 0);
 }

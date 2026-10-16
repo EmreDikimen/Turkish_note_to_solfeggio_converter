@@ -2,7 +2,7 @@
 
 purpose: the full list of DOM attributes the automated checks read, and the ⚠ traps in each
 audience: anyone writing a browser check, or changing a component a check watches
-updated: 2026-09-30
+updated: 2026-10-12
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows
@@ -142,9 +142,12 @@ the same notes, the same playhead and the same picker. `data-voice-sounding` dis
 `data-instrument` **is** the evidence. (The same blind spot exists for `sampled` / `synth`.)
 
 Its toast:
-`#voice-notice[data-omr="voice-switch"][data-voice-to][data-voice-sounding][data-voice-state][data-voice-loaded][data-voice-total]`
+`#voice-notice[data-omr="voice-switch"][data-voice-to][data-voice-sounding][data-voice-state][data-voice-loaded][data-voice-total][data-voice-source]`
 — ⚠ rendered from `App`, `position: fixed`, **click-through except its ✕**, and deliberately NOT
-inside `#omr-status`, because its counter ticks.
+inside `#omr-status`, because its counter ticks. ⭐ `data-voice-source="cache|network"`
+(2026-10-12) is what picks "hazırlanıyor" over "indiriliyor": `cache` only once `voiceCached` has
+found EVERY sample on the device, so it starts as `network` for a moment on a cached voice — wait
+for it, never read it once.
 
 ## The makam picker
 
@@ -213,7 +216,9 @@ or opening `#view-instrument`. ⚠ Since 2026-09-30 all three prompts (`#makam-m
 portalled to `<body>`, and Esc or a backdrop click means cancel. Its backdrop blocks every click: answer it with
 `tools/browser/voicePrompt.ts` (`answerVoicePrompt(page, "confirm" | "cancel")`), a no-op when
 nothing is asked. ⚠ A voice said yes to is not asked about again in the same page load, so a check
-that expects the question must start from a fresh `page.goto`.
+that expects the question must start from a fresh `page.goto` — ⚠ **and, since 2026-10-12, from an
+empty voice cache**: a voice whose every file is already in Cache Storage (`omr-voices-*`) is never
+asked about, in any visit (`voiceCached` in `audio/loadInstrument.ts`).
 
 ⭐ **RETUNING (2026-09-27).** `#tuning-open` opens `#tuning-modal[data-tuning]`, which holds one
 `#tuning-<stringId>` select per string (`g`, `d`, `a`, `e`) carrying `data-string` and `data-koma`,

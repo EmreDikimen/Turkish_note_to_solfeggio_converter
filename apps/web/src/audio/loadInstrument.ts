@@ -92,6 +92,32 @@ async function sampleBytes(url: string): Promise<ArrayBuffer> {
 }
 
 /**
+ * Is EVERY sample of this voice already in Cache Storage — would loading it spend no data at all?
+ *
+ * ⭐ WHY (owner, 2026-10-12): the download question in `App.requestVoice` used to be asked again on
+ * every visit, because the "yes" lives in memory while the files live on in the cache. A reader
+ * told "violin, 34 MB — download?" for files already on the phone may well say no.
+ *
+ * ⚠ ALL samples, not any: a load interrupted halfway leaves a partial set, and finishing it is a
+ * real download that must still be asked about. Any error reads as "not cached", which only ever
+ * means one question too many — never a download nobody agreed to.
+ */
+export async function voiceCached(id: VoiceId): Promise<boolean> {
+  const voice = findVoice(id);
+  if (!voice || !voice.samples.length || !VOICES_BASE) return false;
+  try {
+    if (typeof caches === "undefined") return false;
+    const cache = await caches.open(CACHE_NAME);
+    for (const s of voice.samples) {
+      if (!(await cache.match(voiceUrl(s.rel)))) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Load every sample of one voice. Concurrent callers share one load; a failure resets, so one bad
  * attempt does not poison every later one.
  *

@@ -151,7 +151,10 @@ export const TR = {
     voiceTitle:
       "Notaların hangi çalgıyla seslendirileceği. Gerçek kayıtlar ilk seçtiğinizde indirilir " +
       "(çalgı başına 10–35 MB); inene kadar varsayılan sesle çalar.",
-    voiceLoading: (done: number, total: number) => `ses indiriliyor… ${done}/${total}`,
+    // ⚠ `fromCache` (2026-10-12, owner): a voice already on the device is decoded, not downloaded —
+    // saying "indiriliyor" there made a reader think 34 MB was coming down again.
+    voiceLoading: (done: number, total: number, fromCache = false) =>
+      `ses ${fromCache ? "hazırlanıyor" : "indiriliyor"}… ${done}/${total}`,
     voiceFailed: "ses indirilemedi — varsayılan sesle çalıyor",
     // ⚠ These four say what is SOUNDING, not what the picker shows — during a switch made while a
     // piece is playing the two are different on purpose, and that difference is the whole point of
@@ -159,8 +162,8 @@ export const TR = {
     voiceFailedHeld: (heldLabel: string) =>
       `ses indirilemedi — ${heldLabel} sesiyle devam ediyor`,
     voiceSwitchTitle: (toLabel: string) => `${toLabel} sesine geçiliyor`,
-    voiceSwitchHeld: (done: number, total: number, heldLabel: string) =>
-      `${total} dosyadan ${done} tanesi indi — şimdilik ${heldLabel} sesiyle çalıyor`,
+    voiceSwitchHeld: (done: number, total: number, heldLabel: string, fromCache = false) =>
+      `${total} dosyadan ${done} tanesi ${fromCache ? "hazır" : "indi"} — şimdilik ${heldLabel} sesiyle çalıyor`,
     voiceSwitchReady: (toLabel: string) => `${toLabel} sesi hazır`,
     voiceSwitchDismiss: "kapat",
     usul: "Usul",

@@ -641,6 +641,10 @@ async function main() {
   check("a download says so on screen", await notice.count(), 1);
   check("...naming the instrument being switched TO",
     await notice.getAttribute("data-voice-to"), "clarinet");
+  // A voice never fetched before is a real download, so the notice must say "indiriliyor" — read
+  // off the attribute that picks the wording, never the Turkish copy.
+  check("...as a download, since nothing is on the device yet",
+    await notice.getAttribute("data-voice-source"), "network");
   // From the built-in tone there is nothing to bridge, so this is `sine` — the interesting case is
   // the opt-in arm below, where a real recording is held across the switch.
   check("...and the one actually sounding meanwhile",
@@ -726,7 +730,11 @@ async function main() {
   // (`VITE_AUDIO_URL`, deliberately unset) while the voices resolve from `VITE_VOICES_URL` — this is
   // the check that the two bases stayed separate. Merging them would 404 the percussion in
   // production and silently regress it to the synthesis the owner rejected by ear.
-  await page.locator("#palette-stop").click();
+  // ⚠ Only the default arm is still playing here; the opt-in arm stopped for its bridged-voice
+  // check, and a stop button with nothing to stop is DISABLED — clicking it hung the whole
+  // `--voices-url` run until 2026-10-12.
+  const stopBtn = page.locator("#palette-stop");
+  if (await stopBtn.isEnabled()) await stopBtn.click();
   await perc.check();
   await page.locator("#palette-play").click();
   await page.waitForTimeout(600);
@@ -1528,6 +1536,32 @@ async function main() {
   //     is the same reason the sheet's playhead is asserted by position and not by existence.
   // The string-choice rule itself is NOT checked here: it is a pure function and a browser is the
   // wrong place to check arithmetic — see tools/core/fingering-test.ts.
+  // ⭐ A VOICE ALREADY ON THE DEVICE IS NOT ASKED ABOUT AGAIN, IN A NEW VISIT (owner, 2026-10-12).
+  // The "yes" lives in memory and dies with the page; the files live on in Cache Storage. Only the
+  // opt-in arm has real files to cache — the clarinet finished downloading above — so only it can
+  // see this. A fresh `page.goto` is the "new visit"; the answer must be NO question at all.
+  if (VOICES_URL) {
+    console.log("\nvoice already on the device");
+    await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+    await page.locator("#instrument").selectOption("clarinet");
+    check("⭐ a voice cached in an earlier visit is not asked about", await answerVoicePrompt(page, "confirm"), null);
+    await page.waitForTimeout(300);
+    check("…and it is chosen all the same", await page.getAttribute("#instrument", "data-instrument"), "clarinet");
+    // …and while it decodes, the notice says "hazırlanıyor", not "indiriliyor" (owner, 2026-10-12).
+    // The flag turns true a moment into the load, so wait for it rather than read once.
+    const fromCache = await page
+      .waitForSelector('#voice-notice[data-voice-source="cache"]', { timeout: 5000 })
+      .then(() => "cache", () => "never");
+    check("…and its notice says it is preparing, not downloading", fromCache, "cache");
+    // The checks below need a FIRST download to ask about; empty the voices' cache so they start
+    // from a device that has never fetched one. Prefix, not the exact name, so a CACHE_NAME bump in
+    // loadInstrument.ts does not silently turn this into a no-op.
+    await page.evaluate(async () => {
+      for (const k of await caches.keys()) if (k.startsWith("omr-voices")) await caches.delete(k);
+    });
+  }
+
   console.log("\nfingerboard tab (F3)");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });

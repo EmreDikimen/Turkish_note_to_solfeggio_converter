@@ -62,6 +62,7 @@ import {
 } from "./recentPages";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, findVoice, type VoiceId } from "./audio/instruments";
+import { voiceCached } from "./audio/loadInstrument";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
 import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./exportScore";
 import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
@@ -297,13 +298,16 @@ const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
  *
  * The unit is the KOMA, because that is what the app is about and what the number in the URL
  * parameter means. Small steps are named in commas alone (an accidental's worth of movement: koma
- * 1, bakiye 4, küçük mücennep 5, büyük mücennep 8). Anything that lands on a scale degree is named
- * as the degree FIRST, with the comma count after it — "4 ses (22 koma)" — because a player thinks
- * "up a fourth", not "up twenty-two commas", and the comma count is what the app then does.
+ * 1, bakiye 4, küçük mücennep 5, büyük mücennep 8). Anything larger is named in WHOLE TONES first
+ * (owner, 2026-10-16: *"1 tam ses, 1,5 tam ses şeklinde yaz"*), the comma count after it, and for the
+ * fourth and the fifth the everyday name too — "2,5 tam ses (22 koma) (yaygın: 4 ses)" — because
+ * players say "4 ses" for a fourth. Until then the list was named by interval ("2 ses (9 koma)" for
+ * ONE tone), which read as twice the distance to anyone counting tones.
  *
- * The degrees are the çargâh (major) scale in AEU, which is where these comma counts come from:
- * 9 + 9 + 4 + 9 + 9 + 9 + 4 = 53. So 2 ses = 9, 3 ses = 18, 4 ses = 22, 5 ses = 31, 6 ses = 40,
- * 7 ses = 49, 8 ses (the octave) = 53.
+ * The counts are the çargâh (major) scale in AEU, 9 + 9 + 4 + 9 + 9 + 9 + 4 = 53, plus the minor
+ * third 9 + 4 = 13 (la→do), added the same day because some pieces are played 1,5 tones away and
+ * the list had no step for it: 1 tam ses = 9, 1,5 = 13, 2 = 18, 2,5 = 22, 3,5 = 31, 4,5 = 40,
+ * 5,5 = 49, 6 (the octave) = 53.
  *
  * ⚠ The labels are copy and free to change; the NUMBERS are the contract (`transposeDoc` takes
  * commas, and `?transpose=` in the render automation is the same unit).
@@ -311,9 +315,10 @@ const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
 const TRANSPOSE_STEPS: ReadonlyArray<readonly [number, string]> = (() => {
   const steps: [number, string][] = [
     [1, "1 koma"], [4, "4 koma"], [5, "5 koma"], [8, "8 koma"],
-    [9, "2 ses (9 koma)"], [18, "3 ses (18 koma)"], [22, "4 ses (22 koma)"],
-    [31, "5 ses (31 koma)"], [40, "6 ses (40 koma)"], [49, "7 ses (49 koma)"],
-    [53, "8 ses — sekizli (53 koma)"],
+    [9, "1 tam ses (9 koma)"], [13, "1,5 tam ses (13 koma)"], [18, "2 tam ses (18 koma)"],
+    [22, "2,5 tam ses (22 koma) (yaygın: 4 ses)"], [31, "3,5 tam ses (31 koma) (yaygın: 5 ses)"],
+    [40, "4,5 tam ses (40 koma)"], [49, "5,5 tam ses (49 koma)"],
+    [53, "6 tam ses — sekizli (53 koma)"],
   ];
   return [
     ...[...steps].reverse().map(([n, label]) => [-n, `−${label}`] as const),
@@ -1049,7 +1054,9 @@ export function App() {
    * indirmeden önce bir modalla kullanıcıya emin olup olmadığını sorsun"*). Every path that can
    * start a download goes through here: the transport's picker, the instrument page's picker, and
    * opening that page. The synthesised tone downloads nothing and is never asked about; a voice the
-   * reader already said yes to in this visit is not asked about twice.
+   * reader already said yes to in this visit is not asked about twice; and (2026-10-12) neither is
+   * one whose every file is already on the device from an earlier visit (`voiceCached`), because
+   * loading it spends no data.
    *
    * ⚠ A "no" changes NOTHING about the sound — the controlled pickers fall back to `voice` on their
    * own, because `voice` never moved.
@@ -1060,7 +1067,14 @@ export function App() {
       go();
       return;
     }
-    setVoiceAsk({ voice: v, go, no });
+    void voiceCached(v).then((cached) => {
+      if (cached) {
+        voicesApproved.current.add(v);
+        go();
+      } else {
+        setVoiceAsk({ voice: v, go, no });
+      }
+    });
   }
 
   /**

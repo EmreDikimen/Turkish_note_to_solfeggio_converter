@@ -234,6 +234,13 @@ const SIG_OVERRIDE = URL_SIG ? parseSignatureBody(URL_SIG) : undefined;
 // applies in measure mode — so no existing corpus job or replay changes.
 const SIG_TOLERANT = URL_MODE != null;
 const URL_TRANSPOSE = Number(RENDER_PARAMS.get("transpose") ?? 0) || 0; // commas
+/**
+ * How a transposed note is spelled (core `transpose`). A person gets "letters" — every note moves
+ * by the same number of letters, so si–do a tone down reads la–si♭ (owner, 2026-10-16). A RENDER job
+ * (`?mode=`) keeps "nearest", the spelling every synthetic corpus was rendered with: the product
+ * track does not change what the model track generates.
+ */
+const TRANSPOSE_SPELLING = URL_MODE ? "nearest" : "letters";
 const URL_REPSEED = RENDER_PARAMS.has("repseed") ? Number(RENDER_PARAMS.get("repseed")) : null;
 const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("navseed")) : null;
 const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
@@ -793,7 +800,7 @@ export function App() {
   // What the views draw: the stored score, optionally rewritten by the transpose — unless we're
   // keeping the sheet as-is (transposing-instrument case). Never mutates `doc`.
   const displayDoc = useMemo(() => {
-    let d = doc && !keepSheet && transpose !== 0 ? transposeDoc(doc, transpose) : doc;
+    let d = doc && !keepSheet && transpose !== 0 ? transposeDoc(doc, transpose, TRANSPOSE_SPELLING) : doc;
     // Render automation: seeded AEU-enharmonic respell so the rare büyük glyphs appear at all in
     // training (a decoder can't emit a token it never saw). Deliberately low-rate — common signs
     // keep their natural distribution; see tools/render/respell.ts for the full rationale.
@@ -1458,17 +1465,17 @@ export function App() {
           // DISPLAY space, so the finished event is mapped back like every other spelling here.
           if (!pitchAt) return prev;
           const shown = toNote(stored, pitchAt, value, prev);
-          next = shift ? transposeDoc({ ...prev, events: [shown] }, -shift).events[0]! : shown;
+          next = shift ? transposeDoc({ ...prev, events: [shown] }, -shift, TRANSPOSE_SPELLING).events[0]! : shown;
         } else {
           next = withDurationBeats(stored, value, prev);
         }
       } else {
         if (stored.kind === "rest") return prev; // a rest takes no accidental
         // Alter in the space the user is looking at, then map the single event back.
-        const shown = shift ? transposeDoc({ ...prev, events: [stored] }, shift).events[0]! : stored;
+        const shown = shift ? transposeDoc({ ...prev, events: [stored] }, shift, TRANSPOSE_SPELLING).events[0]! : stored;
         const altered = withAlter(shown, armed.alter, prev.tuning);
         if (altered === shown) return prev; // already that accidental — not an undo entry
-        next = shift ? transposeDoc({ ...prev, events: [altered] }, -shift).events[0]! : altered;
+        next = shift ? transposeDoc({ ...prev, events: [altered] }, -shift, TRANSPOSE_SPELLING).events[0]! : altered;
       }
       if (next === stored) return prev;
       const events = [...prev.events];
@@ -1516,7 +1523,7 @@ export function App() {
         ? toRest(blank, value, prev)
         : withPitch(withDurationBeats(blank, value, prev), at, prev.tuning);
       // Map the single event back to the stored score before splicing it in.
-      const stored = !rest && shift ? transposeDoc({ ...prev, events: [shown] }, -shift).events[0]! : shown;
+      const stored = !rest && shift ? transposeDoc({ ...prev, events: [shown] }, -shift, TRANSPOSE_SPELLING).events[0]! : shown;
       const next = insertInMeasure(prev, stored, at.measureIndex, at.beforeEventIndex);
       if (next === prev) return prev;
       // Select what was just inserted, so the ✕ and the accidental tools land on it without

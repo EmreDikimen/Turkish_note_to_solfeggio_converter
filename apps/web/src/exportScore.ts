@@ -23,6 +23,7 @@
  * its own seam (`window.__omrDoc`) and the app publishes no score file (docs/DECISIONS.md).
  */
 
+import { prepareCanvasDrawing, type CanvasDrawing } from "./exportCanvas";
 import { outlineGlyphs } from "./exportOutline";
 
 /** The hidden paper-width engraving both exports read. Mounted by `App` only while one is running. */
@@ -249,6 +250,48 @@ function download(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(href), 10_000);
 }
 
+/**
+ * How the drawing reaches a canvas. ⭐ Normally shape by shape (`exportCanvas.ts`), because that is
+ * the only route that came out right on the Samsung tester's phone. ⚠ The SVG-image route is kept
+ * as the FALLBACK for a drawing with an element the replayer does not know — a picture that may be
+ * faded on some browser beats a silently missing symbol on every browser.
+ */
+interface Renderer {
+  route: "canvas" | "image";
+  /** Paint the drawing's window `[y0, y0 + h)` into the canvas rect (`x`, `y`, `outW` × `outH`). */
+  paint(ctx: CanvasRenderingContext2D, x: number, y: number, outW: number, outH: number, y0: number, h: number): Promise<void>;
+}
+
+async function renderer(svg: SVGSVGElement, boxW: number): Promise<Renderer> {
+  const drawing: CanvasDrawing = await prepareCanvasDrawing(svg);
+  const hook = window as unknown as { __omrExportLeft?: number; __omrExportRoute?: string };
+  if (drawing.unsupported.length === 0) {
+    hook.__omrExportLeft = drawing.unoutlined;
+    hook.__omrExportRoute = "canvas";
+    return {
+      route: "canvas",
+      async paint(ctx, x, y, outW, outH, y0, h) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, outW, outH);
+        ctx.clip();
+        const k = { x: outW / boxW, y: outH / h };
+        drawing.draw(ctx, new DOMMatrix([k.x, 0, 0, k.y, x, y - y0 * k.y]));
+        ctx.restore();
+      },
+    };
+  }
+  console.warn("export: falling back to the image route for", drawing.unsupported);
+  const clone = await portableClone(svg);
+  hook.__omrExportRoute = "image";
+  return {
+    route: "image",
+    async paint(ctx, x, y, outW, outH, y0, h) {
+      ctx.drawImage(await rasterWindow(clone, boxW, y0, h, outW, outH), x, y, outW, outH);
+    },
+  };
+}
+
 /** Draw the paper-width engraving to a PNG and hand it to the browser to save. */
 export async function exportScorePng(stage: HTMLElement, pageName: string): Promise<void> {
   const svg = stage.querySelector("svg");
@@ -265,14 +308,13 @@ export async function exportScorePng(stage: HTMLElement, pageName: string): Prom
     Math.min(2, Math.sqrt(MAX_CANVAS_PX / (pageW * pageH)), MAX_CANVAS_SIDE / pageW, MAX_CANVAS_SIDE / pageH)
   );
 
-  const clone = await portableClone(svg);
+  const draw = await renderer(svg, box.w);
   const outW = Math.round(box.pxW * scale);
   const outH = Math.round(box.pxH * scale);
-  const img = await rasterWindow(clone, box.w, 0, box.h, outW, outH);
 
   const { canvas, ctx } = paper(Math.round(pageW * scale), Math.round(pageH * scale));
   if (lines.length) drawHeader(ctx, lines, canvas.width / 2, pad * scale, scale);
-  ctx.drawImage(img, Math.round(pad * scale), Math.round((pad + headH) * scale), outW, outH);
+  await draw.paint(ctx, Math.round(pad * scale), Math.round((pad + headH) * scale), outW, outH, 0, box.h);
 
   const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/png"));
   if (!blob) throw new Error("the image could not be saved");
@@ -329,7 +371,7 @@ export async function exportScorePdf(stage: HTMLElement, pageName: string): Prom
 
   const bands = systemBands(svg);
   const pages = paginate(bands.length ? bands : [{ y: 0, h: box.h }], availFirst, avail);
-  const clone = await portableClone(svg);
+  const draw = await renderer(svg, box.w);
 
   const images: PdfImage[] = [];
   for (const [i, pg] of pages.entries()) {
@@ -337,7 +379,6 @@ export async function exportScorePdf(stage: HTMLElement, pageName: string): Prom
     const fit = Math.min(1, room / pg.h); // only an oversize system is shrunk
     const outW = Math.round(contentW * fit);
     const outH = Math.max(1, Math.round(pg.h * k * fit));
-    const img = await rasterWindow(clone, box.w, pg.y, pg.h, outW, outH);
 
     const { canvas, ctx } = paper(pagePx.w, pagePx.h);
     let top = margin;
@@ -345,7 +386,7 @@ export async function exportScorePdf(stage: HTMLElement, pageName: string): Prom
       drawHeader(ctx, lines, pagePx.w / 2, margin, k);
       top += headPx;
     }
-    ctx.drawImage(img, margin + Math.round((contentW - outW) / 2), Math.round(top), outW, outH);
+    await draw.paint(ctx, margin + Math.round((contentW - outW) / 2), Math.round(top), outW, outH, pg.y, pg.h);
     images.push(await pageImage(canvas));
   }
   download(pdfFile(images, pageName), `${safeName(pageName)}.pdf`);

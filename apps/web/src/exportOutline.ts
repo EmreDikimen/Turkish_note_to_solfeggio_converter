@@ -48,58 +48,88 @@ function block(n: number): Promise<Block | null> {
 
 const codePoints = (s: string) => Array.from(s, (c) => c.codePointAt(0)!);
 
+/** One music glyph as a path: `d` in font units (y UP), placed at (`x`, `y`) and scaled by `s`. */
+export interface GlyphPath {
+  d: string;
+  x: number;
+  y: number;
+  s: number;
+}
+
+/** True when this live `<text>` is drawn in the music font. */
+export function isMusicText(el: SVGTextElement): boolean {
+  return MUSIC_FONT.test(getComputedStyle(el).fontFamily) && Boolean(el.textContent);
+}
+
+/**
+ * The outlines of these live music-font `<text>` elements, in each element's OWN user space —
+ * positions measured off the drawing (see the header). A text missing from the result could not be
+ * outlined (a block failed to load, or the glyph is not in it).
+ */
+export async function glyphRuns(texts: SVGTextElement[]): Promise<Map<SVGTextElement, GlyphPath[]>> {
+  const needed = new Set<number>();
+  for (const el of texts) for (const cp of codePoints(el.textContent!)) needed.add(cp >> 8);
+  const loaded = new Map<number, Block | null>();
+  await Promise.all([...needed].map(async (n) => loaded.set(n, await block(n))));
+
+  const out = new Map<SVGTextElement, GlyphPath[]>();
+  for (const el of texts) {
+    const cs = getComputedStyle(el);
+    const cps = codePoints(el.textContent!);
+    const glyphs = cps.map((cp) => loaded.get(cp >> 8)?.g[cp.toString(16)]);
+    const upm = loaded.get(cps[0]! >> 8)?.upm;
+    const size = parseFloat(cs.fontSize);
+    if (!upm || !Number.isFinite(size) || glyphs.some((g) => !g)) continue;
+
+    const first = (l: SVGAnimatedLengthList) => (l.baseVal.numberOfItems ? l.baseVal.getItem(0).value : 0);
+    const [dx, dy] = alignmentShift(el, cs);
+    const x0 = first(el.x) + first(el.dx) + dx;
+    const y0 = first(el.y) + first(el.dy) + dy;
+    const s = size / upm;
+    let pen = 0;
+    const run: GlyphPath[] = [];
+    for (const [advance, d] of glyphs as [number, string][]) {
+      run.push({ d, x: x0 + pen, y: y0, s });
+      pen += advance * s;
+    }
+    out.set(el, run);
+  }
+  return out;
+}
+
 /**
  * Outline `clone` in place, measuring each glyph off `live` — the drawn SVG `clone` was deep-cloned
  * from, so their `<text>` elements correspond one to one, in order. Returns how many music-font
- * `<text>` elements are LEFT (0 when every glyph was outlined).
+ * `<text>` elements are LEFT (0 when every glyph was outlined). Used only by the image fallback in
+ * `exportScore.ts`; the normal path draws `glyphRuns` straight onto a canvas.
  */
 export async function outlineGlyphs(live: SVGSVGElement, clone: SVGSVGElement): Promise<number> {
   const liveTexts = [...live.querySelectorAll<SVGTextElement>("text")];
   const cloneTexts = [...clone.querySelectorAll<SVGTextElement>("text")];
   if (liveTexts.length !== cloneTexts.length) return liveTexts.length; // not a clone of `live`
-
-  const music = liveTexts
-    .map((el, i) => ({ el, copy: cloneTexts[i]!, cs: getComputedStyle(el) }))
-    .filter((t) => MUSIC_FONT.test(t.cs.fontFamily) && t.el.textContent);
-
-  const needed = new Set<number>();
-  for (const t of music) for (const cp of codePoints(t.el.textContent!)) needed.add(cp >> 8);
-  const loaded = new Map<number, Block | null>();
-  await Promise.all([...needed].map(async (n) => loaded.set(n, await block(n))));
+  const music = liveTexts.map((el, i) => ({ el, copy: cloneTexts[i]! })).filter((t) => isMusicText(t.el));
+  const runs = await glyphRuns(music.map((t) => t.el));
 
   let left = 0;
-  for (const { el, copy, cs } of music) {
-    const cps = codePoints(el.textContent!);
-    const glyphs = cps.map((cp) => loaded.get(cp >> 8)?.g[cp.toString(16)]);
-    const upm = loaded.get(cps[0]! >> 8)?.upm;
-    const size = parseFloat(cs.fontSize);
-    if (!upm || !Number.isFinite(size) || glyphs.some((g) => !g)) {
+  for (const { el, copy } of music) {
+    const run = runs.get(el);
+    if (!run) {
       left++;
       continue;
     }
-
-    const xs = el.x.baseVal;
-    const ys = el.y.baseVal;
-    const x0 = (xs.numberOfItems ? xs.getItem(0).value : 0) + (el.dx.baseVal.numberOfItems ? el.dx.baseVal.getItem(0).value : 0);
-    const y0 = (ys.numberOfItems ? ys.getItem(0).value : 0) + (el.dy.baseVal.numberOfItems ? el.dy.baseVal.getItem(0).value : 0);
-    const [dx, dy] = alignmentShift(el, cs);
-
+    const cs = getComputedStyle(el);
     const g = document.createElementNS(NS, "g");
     const transform = copy.getAttribute("transform");
     if (transform) g.setAttribute("transform", transform);
     g.setAttribute("fill", cs.fill && cs.fill !== "none" ? cs.fill : "#000");
     if (cs.opacity && cs.opacity !== "1") g.setAttribute("opacity", cs.opacity);
     if (cs.fillOpacity && cs.fillOpacity !== "1") g.setAttribute("fill-opacity", cs.fillOpacity);
-
-    const s = size / upm;
-    let pen = 0;
-    for (const [advance, d] of glyphs as [number, string][]) {
+    for (const p of run) {
       const path = document.createElementNS(NS, "path");
-      path.setAttribute("d", d);
+      path.setAttribute("d", p.d);
       // font units are y-UP; the baseline is the glyph's origin
-      path.setAttribute("transform", `translate(${x0 + dx + pen} ${y0 + dy}) scale(${s} ${-s})`);
+      path.setAttribute("transform", `translate(${p.x} ${p.y}) scale(${p.s} ${-p.s})`);
       g.appendChild(path);
-      pen += advance * s;
     }
     copy.replaceWith(g);
   }

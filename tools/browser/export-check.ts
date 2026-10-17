@@ -33,6 +33,8 @@ const arg = (f: string, d: string) => {
 };
 const SCORE = arg("--score", "/beyati-delisin.json");
 const OUT = path.resolve(arg("--out", path.join(ROOT, "tmp-export-check")));
+/** The theme the app follows. `dark` is what found the faded export on 2026-10-17. */
+const SCHEME = arg("--scheme", "light") as "light" | "dark";
 
 /** Share of pixels darker than mid-grey: "is there music on this page" as one number. */
 function inkShare(grey: Uint8Array | Buffer, stride = 1): number {
@@ -83,7 +85,7 @@ async function main() {
   for (const [name, type] of engines) {
     console.log(`\n${name}`);
     const browser = await type.launch();
-    const page = await browser.newPage({ acceptDownloads: true });
+    const page = await browser.newPage({ acceptDownloads: true, colorScheme: SCHEME });
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(`${base}/?score=${SCORE}`, { waitUntil: "domcontentloaded" });
@@ -100,6 +102,8 @@ async function main() {
       const buf = (await import("node:fs")).readFileSync(file);
       const left = await page.evaluate(() => (window as unknown as { __omrExportLeft?: number }).__omrExportLeft);
       check(`${kind}: every music glyph outlined`, left === 0, `${left} left`);
+      const route = await page.evaluate(() => (window as unknown as { __omrExportRoute?: string }).__omrExportRoute);
+      check(`${kind}: drawn on the canvas, not through an SVG image`, route === "canvas", String(route));
 
       if (kind === "png") {
         const png = PNG.sync.read(buf);

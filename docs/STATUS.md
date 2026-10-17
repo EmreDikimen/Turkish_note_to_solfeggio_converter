@@ -48,7 +48,9 @@ on the browser** — a tester's Samsung phone saved a blank PDF and a PNG withou
 now outlines every music glyph and writes the PDF itself
 ([features/tester-feedback.md](features/tester-feedback.md) #19). Checked in three engines, not yet
 on the tester's phone. The tester's new PDF had everything but was **faded**; round 2 (canvas replay,
-no SVG image) is built on `main`, **not deployed**. ⏭ Owner: deploy, then ask the tester again.
+no SVG image) is **deployed 2026-10-17** (`smoke:live` PASS). The owner reproduced the faded PDF on
+his own phone by installing Samsung Internet from Play — no tester needed to check it. ⏭ Owner:
+re-save on that phone.
 
 **What the live site carries** (last web deploy **2026-10-14** — the counter and `privacy.html`; before it **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
 server read 24 strips / 229 notes in 64.6 s, refusal arm clean; `assetlinks.json`, `privacy.html`,

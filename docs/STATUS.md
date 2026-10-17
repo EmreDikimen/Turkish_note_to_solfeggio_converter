@@ -43,11 +43,11 @@ fix and the 1,5-tone transposition step; a second deploy that day: letter-keepin
 appears on launch and cannot be switched off from the app.
 [features/play-store.md](features/play-store.md).
 
-🚧 **On `main`, not deployed (2026-10-17): saving a score no longer depends on the browser** — a
-tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app now outlines every
-music glyph and writes the PDF itself ([features/tester-feedback.md](features/tester-feedback.md)
-#19). Checked in three engines, not on the tester's phone. ⏭ Owner: deploy, then ask the tester to
-save again.
+✅ **Deployed 2026-10-17 (`Deploy is live!`, `smoke:live` PASS): saving a score no longer depends
+on the browser** — a tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app
+now outlines every music glyph and writes the PDF itself
+([features/tester-feedback.md](features/tester-feedback.md) #19). Checked in three engines, not yet
+on the tester's phone. ⏭ Owner: ask the tester to save a PNG and a PDF again.
 
 **What the live site carries** (last web deploy **2026-10-14** — the counter and `privacy.html`; before it **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
 server read 24 strips / 229 notes in 64.6 s, refusal arm clean; `assetlinks.json`, `privacy.html`,

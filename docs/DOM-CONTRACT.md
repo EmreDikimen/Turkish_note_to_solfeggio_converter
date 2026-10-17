@@ -2,7 +2,7 @@
 
 purpose: the full list of DOM attributes the automated checks read, and the ⚠ traps in each
 audience: anyone writing a browser check, or changing a component a check watches
-updated: 2026-10-12
+updated: 2026-10-17
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows
@@ -85,8 +85,9 @@ mean by id.
 
 ⭐ **SAVING THE SCORE (2026-09-27).** `#export-toggle[aria-expanded][aria-haspopup]` in the card
 head's corner opens `[data-omr="save-menu"]`, which holds `#export-png` and `#export-pdf`. ⚠ The two
-are different mechanisms: PNG is drawn by the app and DOWNLOADS, PDF calls `window.print()` and the
-browser makes it — so a check can assert the download for one and only the call for the other.
+both DOWNLOAD a file the app drew (since 2026-10-17 the PDF no longer calls `window.print()`), so a
+check asserts a download for each; `window.__omrExportLeft` (0 = every music glyph outlined) says
+the file needs no font. `npm run check:export` does both in three engines.
 ⚠ A failure shows `[data-omr="save-error"]` in the card head; the button is `disabled` while saving.
 ⚠ **Base UI's Menu since 2026-09-30**: the popup is PORTALLED to `<body>` (not inside the card head),
 the items carry `role="menuitem"` and `data-highlighted`, and Esc or a tap outside closes it.

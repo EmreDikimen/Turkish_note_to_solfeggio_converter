@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-10-08
+updated: 2026-10-17
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -350,6 +350,7 @@ reads.
 | Measure | Value |
 |---|---|
 | Model | `Flova/omr_transformer`, ~143M params |
+| **Saving a score, three engines** (2026-10-17, `npm run check:export`, `beyati-delisin.json`) | Chromium, Firefox, WebKit: **0 music glyphs left as font text** in every export. PNG **2136×4756**, ink **8.53 / 8.54 / 8.55%**. PDF **2 A4 pages**, **207 / 201 / 218 KB**, ink per page average **6.18 / 6.12 / 5.83%**, no blank page. Outlines: **3,650 glyphs in 23 files, 2,287 KB** raw, fetched per block only when saving. ⚠ Not run on Samsung Internet — the tester's phone is the check that matters |
 | **The DEPLOYED site after the 2026-08-13 F1 redeploy** (`npm run smoke:live`) | **PASS on both paths**, warm: server **49.9 s** (45.8 s reading), **fallback 64.6 s** from the Hub, same score both ways (9 staves → 26 strips → **399 notes / 26 measures**), isolated, no page errors. Within noise of every read since 2026-08-06 — F1 added no decode code, and the numbers say so. Spot-checked live afterwards, because `smoke:live` does **not** cover audio: the voices URL is baked into the shipped bundle (`index-C7uR4vG3.js`), the drum wavs still answer **200** from `/audio/` (the check that the split base held in production), and `sample.json` still answers **404** |
 | **F1's instrument voices** (2026-08-13) | **26 files, 55.6 MB** in `Beyaban/omr-voices`, byte-identical to VSCO 2 CE (sha256-checked): clarinet `susLong` v2, 11 pitches, 20.2 MB; solo violin `Arco Vib` f, 15 pitches, 35.4 MB. **None of it enters `dist/`** — the build is still **23 files, 43.4 MB** and `MAX_AUDIO_MB` is untouched at 1. Playback level is a per-voice gain (3.775 / 3.156) clamped so `gain × peak ≤ 0.98`, i.e. never above the synthesised note it replaces. Pitch through the resampler: **1,841 sampled pitches × the makam deltas, worst 9.9e-5 cents** — 1/229,000 of a koma. ⚠ Non-claim: the violin's vibrato swings **0.9–1.2 komas**, so its centre is exact but it cannot demonstrate a koma-sized interval; the clarinet is steady to 0.1 |
 | **The DEPLOYED site after the 2026-08-11 FEATURE redeploy** (`npm run smoke:live`) | **PASS on both paths**, warm: server **47.5 s** (44.3 s reading), **fallback 62.9 s** from the Hub, same score both ways (9 staves → 26 strips → **399 notes / 26 measures**), isolated, no page errors. Within noise of every read since 2026-08-06 — this deploy added F0, F2 and 660 KB of audio and moved no decode code, and the numbers say so. Shipped: **23 files, 43.4 MB**, 17 changed files uploaded. Spot-checked live afterwards: all six `/audio/…-rr1.wav` answer **200** (45–62 KB, `audio/x-wav`), `/THIRD-PARTY.txt` carries the VCSL attribution, and `sample.json` still answers **404** — the copyright guard holds across the new deploy |

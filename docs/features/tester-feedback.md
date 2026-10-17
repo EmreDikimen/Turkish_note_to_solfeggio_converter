@@ -2,7 +2,7 @@
 
 purpose: the one list of problems reported or found during the Play Store closed test, with who found each, its state, and what was done — the raw material for the production-access application
 audience: the owner (filling Play's production questionnaire) and anyone fixing app bugs
-updated: 2026-10-16
+updated: 2026-10-17
 
 > Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). How the closed test
 > itself works: [play-store.md](play-store.md).
@@ -35,6 +35,7 @@ opposite, an agent's misreading). "Fixed, not deployed" below only means not rel
 
 | # | First noted | Source | Problem | What was done | Live? |
 |---|---|---|---|---|---|
+| 19 | 2026-10-17 | tester | **Saving on a Samsung phone (Samsung Internet 30, Play app): the PDF was a blank page, the PNG had staves but no noteheads.** | Cause: the PDF was the browser's print engine, and the PNG relied on a web font inside an image — both things a browser may skip. Now every music glyph is drawn as a path and the app writes the PDF itself (A4 pages, 200 dpi). Checked in Chromium, Firefox and WebKit (`check:export`); ⚠ not yet on the tester's phone. [../DECISIONS.md](../DECISIONS.md) 2026-10-17 | ⏭ not deployed |
 | 5 | 2026-10-12 | owner | **"Download this voice?" was asked again on every visit**, though the files were already on the device (the yes lived in memory, the files in Cache Storage). | `voiceCached()` checks every sample; a voice fully on the device is not asked about | ✅ live 2026-10-16 |
 | 6 | 2026-10-13 | owner | **A voice read from the device still said "ses indiriliyor"**. | the notice says "ses hazırlanıyor" when every sample is cached (`data-voice-source`) | ✅ live 2026-10-16 |
 | 17 | 2026-10-16 | owner | **A transposition spelled two different notes as one letter with an accidental** — si–do a tone down read la–la#, sol + 1,5 tones read la#. | core `transpose` gains a "letters" spelling: every note moves by the same number of letters (si–do → la–si♭), the sound unchanged; a note whose new accidental the staff cannot draw falls back to the old spelling. The app uses it; render jobs (`?mode=`) keep the old one so no training corpus moves. Pinned by `tools/core/transpose-test.ts` | ✅ live 2026-10-16 |

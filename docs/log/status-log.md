@@ -2,10 +2,22 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-14
+updated: 2026-10-17
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-17 — saving a score no longer depends on the browser's font or print engine
+
+A tester's Samsung phone (Samsung Internet 30, in the Play app) saved a **blank PDF** and a **PNG
+with staves but no noteheads**. Read from the code, not reproduced: VexFlow 5 draws every music
+symbol as text in the music font, and the PNG drew the SVG into an image with that font embedded —
+which a browser may ignore; the PDF was `window.print()`, the browser's own engine. The owner asked
+for a fix that holds on any browser, not a Samsung patch, and chose a raster PDF over a vector
+library. So: glyphs are outlined into paths from a generated table, positions measured off the live
+drawing (two `SheetView` glyphs use `text-anchor`/`dominant-baseline`); the PDF is written by the
+app, one grey image per A4 page; the print stylesheet is gone (it also blanked a manual Ctrl+P).
+Checked in three engines and by eye. Not checked: the tester's phone. Not deployed.
 
 ## 2026-10-14 — the visit counter drops its identifier and its location
 

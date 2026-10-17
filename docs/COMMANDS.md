@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-10-08
+updated: 2026-10-17
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -167,6 +167,14 @@ npm run smoke:phone                  # opens the app at four PHONE sizes and MEA
                                      # tap targets under 32px, iOS zoom-on-tap fields, where the toolbox lands
                                      # …screenshots → tmp/phone-shots/ (PHONE_SHOTS=<dir> to move them)
 npm run smoke:live                   # drives the DEPLOYED site — server path, then the refusal
+```
+
+### Saving a score (PNG / PDF)
+
+```bash
+npm run check:export                 # SAVE a score as PNG and PDF in Chromium, Firefox AND WebKit (~1 min);
+                                     # …every glyph outlined, no blank page, engines agree. ⚠ needs
+                                     # …`npx playwright install firefox webkit` once. Files land in tmp-export-check/
 ```
 
 ### The visit counter (F6)

@@ -172,7 +172,7 @@ npm run smoke:live                   # drives the DEPLOYED site — server path,
 ### Saving a score (PNG / PDF)
 
 ```bash
-npm run check:export                 # SAVE a score as PNG and PDF in Chromium, Firefox AND WebKit (~1 min);
+npm run check:export                 # SAVE a score as PNG and PDF in Chromium, Firefox AND WebKit (~1 min); --scheme dark too;
                                      # …every glyph outlined, no blank page, engines agree. ⚠ needs
                                      # …`npx playwright install firefox webkit` once. Files land in tmp-export-check/
 ```

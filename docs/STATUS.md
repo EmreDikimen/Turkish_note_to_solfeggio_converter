@@ -47,7 +47,8 @@ appears on launch and cannot be switched off from the app.
 on the browser** — a tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app
 now outlines every music glyph and writes the PDF itself
 ([features/tester-feedback.md](features/tester-feedback.md) #19). Checked in three engines, not yet
-on the tester's phone. ⏭ Owner: ask the tester to save a PNG and a PDF again.
+on the tester's phone. The tester's new PDF had everything but was **faded**; round 2 (canvas replay,
+no SVG image) is built on `main`, **not deployed**. ⏭ Owner: deploy, then ask the tester again.
 
 **What the live site carries** (last web deploy **2026-10-14** — the counter and `privacy.html`; before it **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
 server read 24 strips / 229 notes in 64.6 s, refusal arm clean; `assetlinks.json`, `privacy.html`,

@@ -17,7 +17,12 @@ for a fix that holds on any browser, not a Samsung patch, and chose a raster PDF
 library. So: glyphs are outlined into paths from a generated table, positions measured off the live
 drawing (two `SheetView` glyphs use `text-anchor`/`dominant-baseline`); the PDF is written by the
 app, one grey image per A4 page; the print stylesheet is gone (it also blanked a manual Ctrl+P).
-Checked in three engines and by eye. Not checked: the tester's phone. Not deployed.
+Checked in three engines and by eye. Deployed the same day. **Then round 2:** the tester's new PDF
+was complete but faded grey, and only what passed through the SVG image was faded — the caption,
+drawn on the canvas directly, was dark. Our own engines never showed it (dark theme included), so the
+cause is unproven (a browser dark mode recolouring images is the lead). The fix removes the image:
+`exportCanvas.ts` replays every shape onto the canvas with its computed on-screen colour; same
+picture as round 1 to 0.005% of pixels. Not deployed.
 
 ## 2026-10-14 — the visit counter drops its identifier and its location
 

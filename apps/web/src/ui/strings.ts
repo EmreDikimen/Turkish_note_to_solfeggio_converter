@@ -209,16 +209,15 @@ export const TR = {
     followTitle:
       "Çalarken imleç ekrandan çıkarsa sayfa kendiliğinden imlece kayar. Kapatırsanız sayfa " +
       "olduğu yerde kalır; seçiminiz bu tarayıcıda hatırlanır.",
-    // Saving the score that is on screen. ⚠ The PDF line says two taps out loud, because the
-    // browser's print sheet is what makes the PDF and pretending otherwise is a broken promise.
+    // Saving the score that is on screen. Both are drawn by the app and download directly (the PDF
+    // stopped going through the print sheet on 2026-10-17 — it printed blank on a Samsung phone).
     // Shown for the frame between asking for a view and the engraving appearing. ⚠ It says what is
     // happening, not "loading": the page is being DRAWN, and on a long score that takes a moment.
     swapping: "nota diziliyor…",
     save: "İndir",
     saveTitle: "Notayı kaydet",
     savePng: "PNG — resim olarak indir",
-    savePdf: "PDF — yazdır veya kaydet",
-    savePdfNote: "Yazdırma ekranı açılır; oradan “PDF olarak kaydet”i seçin.",
+    savePdf: "PDF — A4 sayfalar olarak indir",
     saveBusy: "hazırlanıyor…",
     saveFailed: "Kaydedilemedi. Sayfa açıkken tekrar deneyin.",
     edit: "✎ Düzenle",

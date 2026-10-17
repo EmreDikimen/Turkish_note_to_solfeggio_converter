@@ -1287,8 +1287,9 @@ export function App() {
     setExporting(kind);
     try {
       const stage = await waitForStage();
-      if (kind === "png") await exportScorePng(stage, saved?.name || doc?.title || doc?.name || "nota");
-      else await exportScorePdf(stage);
+      const name = saved?.name || doc?.title || doc?.name || "nota";
+      if (kind === "png") await exportScorePng(stage, name);
+      else await exportScorePdf(stage, name);
     } finally {
       setExporting(null);
     }

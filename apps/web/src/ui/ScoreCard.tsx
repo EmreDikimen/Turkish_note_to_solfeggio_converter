@@ -93,11 +93,11 @@ export function ScoreCard({
   const [saveOpen, setSaveOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
-  async function savePng() {
+  async function save(kind: "png" | "pdf") {
     setSaveError(false);
     setSaving(true);
     try {
-      await onExport("png");
+      await onExport(kind);
     } catch {
       // ⚠ Reported, never swallowed: a save button that does nothing and says nothing is worse
       // than one that fails out loud.
@@ -166,12 +166,11 @@ export function ScoreCard({
           <Menu.Portal>
             <Menu.Positioner side="bottom" align="end" sideOffset={4} className="z-[60]">
               <Menu.Popup className="kv-card__menu" data-omr="save-menu">
-                <Menu.Item id="export-png" className="kv-card__menuitem" onClick={savePng}>
+                <Menu.Item id="export-png" className="kv-card__menuitem" onClick={() => void save("png")}>
                   {TR.card.savePng}
                 </Menu.Item>
-                <Menu.Item id="export-pdf" className="kv-card__menuitem" onClick={() => void onExport("pdf")}>
+                <Menu.Item id="export-pdf" className="kv-card__menuitem" onClick={() => void save("pdf")}>
                   {TR.card.savePdf}
-                  <small>{TR.card.savePdfNote}</small>
                 </Menu.Item>
               </Menu.Popup>
             </Menu.Positioner>

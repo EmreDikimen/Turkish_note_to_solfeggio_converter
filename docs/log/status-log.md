@@ -22,7 +22,11 @@ was complete but faded grey, and only what passed through the SVG image was fade
 drawn on the canvas directly, was dark. Our own engines never showed it (dark theme included), so the
 cause is unproven (a browser dark mode recolouring images is the lead). The fix removes the image:
 `exportCanvas.ts` replays every shape onto the canvas with its computed on-screen colour; same
-picture as round 1 to 0.005% of pixels. Not deployed.
+picture as round 1 to 0.005% of pixels. **Reproduced and deployed:** the owner installed Samsung
+Internet from Play on his own Android phone and got the same faded PDF from the live site — so this
+class of bug no longer needs a tester. Its first page read sat on "model hazırlanıyor" for a long
+time: that status covers the lazy 14.8 MB slicer chunk (opencv.js) on a browser with an empty cache,
+not the server, which was warm. Round 2 deployed the same day, `smoke:live` PASS.
 
 ## 2026-10-14 — the visit counter drops its identifier and its location
 

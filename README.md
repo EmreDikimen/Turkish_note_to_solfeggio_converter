@@ -41,13 +41,13 @@ photo → score → sound path.
 
 ### Honest limits
 
-- The reading is good, not finished. A typical page still needs a handful of corrections, and the
-  app **does not yet tell you which notes it is unsure about** — that feature was tried, measured,
-  and dropped rather than shipped weak. Current accuracy: [docs/METRICS.md](docs/METRICS.md).
+- The reading is good, not finished. A typical page still needs a handful of corrections — most
+  often a pitch one step off, a wrong note length, or a misread key signature — and the app **does
+  not yet tell you which notes it is unsure about**. Dense pages with many short notes are the
+  hardest.
 - One page at a time. PDFs are not read directly — export or screenshot the page first.
-- The app **ships no music of its own**: there are no built-in example scores, by choice — every
-  score we hold is licensed so that publishing it would bind the app to NonCommercial terms
-  ([docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)). You bring your own page.
+- The app **ships no music of its own**: there are no built-in example scores, because the scores we
+  hold come with licences that would restrict the whole app. You bring your own page.
 - **Your uploads are not stored.** The decode server reads the image and drops it; it never writes
   one to disk. Any visit counting is anonymous — no IP address is kept:
   [privacy](https://komavision.netlify.app/privacy.html).
@@ -56,17 +56,17 @@ photo → score → sound path.
 
 ```
 page image
-  → slice        find the staves, cut the page into 2–3 measure strips
-  → read         a fine-tuned OMR model turns each strip into a token sequence
-  → stitch       tokens → notes {53-TET pitch, duration, …} → one score
-  → edit         VexFlow engraving; every note correctable by hand
-  → play         Web Audio at exact 53-TET frequencies
+  → slice        find the staff lines and cut the page into short strips of 2–3 measures
+  → read         a machine-learning model reads each strip and writes down its notes
+  → stitch       the strips are joined back into one score, with exact 53-TET pitches
+  → edit         the score is drawn as sheet music; every note can be corrected by hand
+  → play         the browser plays it at exact 53-TET frequencies
 ```
 
-The slicing runs in your browser. The model runs on a small CPU server (Cloud Run). The same decode
-code can also run in the browser — that is how `npm run dev:web` works locally — so there is one
-decode implementation, shared by both.
-Design: [docs/PIPELINE.md](docs/PIPELINE.md).
+Cutting the page happens in your browser. Reading the strips happens on a small server, so a phone
+does not heat up. The model is a vision-to-text network (an image encoder and a text decoder, the
+"Donut" design), first trained on Western scores and then taught Turkish notation — mostly with
+strips the project draws itself from known scores, plus real printed pages checked by hand.
 
 ## Running it yourself
 
@@ -126,15 +126,20 @@ data/            scores, corpora, checkpoints (all gitignored)
 docs/            the written record — start at docs/INDEX.md
 ```
 
-## Project state and further reading
+## Where the project is
 
-The web app is live and in use; the model keeps improving in measured rounds against a frozen exam.
-**Current state and next action: [docs/STATUS.md](docs/STATUS.md)** — the only file that states it.
+The app is live and used by real readers, and an Android app is going through Google Play's testing.
+The model is improved in rounds: each round is trained, then graded once on a fixed set of real
+pages it has never seen, so progress is measured rather than guessed. Most of the remaining errors
+are in key signatures and in very dense passages, and that is where the current work goes.
 
-| | |
-|---|---|
-| Every headline number | [docs/METRICS.md](docs/METRICS.md) |
-| Why something was decided | [docs/DECISIONS.md](docs/DECISIONS.md) |
-| Licences and what we may publish | [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md) |
-| Long-range plan | [ROADMAP.md](ROADMAP.md) |
-| Working on the code? Start here | [CLAUDE.md](CLAUDE.md) · [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |
+## Feedback and contact
+
+Found a page it reads badly, a sound that is wrong, or an idea? Please
+**[open an issue](https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter/issues)** —
+a screenshot of the page and what you expected is the most useful thing you can send.
+
+## For developers
+
+Code map and reading order: [docs/CODE_TOUR.md](docs/CODE_TOUR.md). Every command, including the
+ones whose failure looks like success: [docs/COMMANDS.md](docs/COMMANDS.md).

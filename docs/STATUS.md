@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-10-17
+updated: 2026-10-24
 
 ## Now
 
@@ -41,7 +41,7 @@ what changed). ⛔ There is **no** "no updates during the test" rule — an agen
 here; the owner corrected it 2026-10-14. Released 2026-10-16 (web deploy, `smoke:live` PASS): the voice-cache
 fix and the 1,5-tone transposition step; a second deploy that day: letter-keeping transposition spelling and the stale-tab reload guard — [features/tester-feedback.md](features/tester-feedback.md). ⚠ Chrome's "Running in Chrome" notice
 appears on launch and cannot be switched off from the app.
-[features/play-store.md](features/play-store.md).
+⭐ **Renamed MakamVision 2026-10-24** (site deployed the same day; the package and the address keep `komavision`): the Play title and a v2 upload (`~/Desktop/MakamVision-1.0.1.aab`) are the owner's. [features/play-store.md](features/play-store.md).
 
 ✅ **Deployed 2026-10-17 (`Deploy is live!`, `smoke:live` PASS): saving a score no longer depends
 on the browser** — a tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app

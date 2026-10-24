@@ -29,7 +29,7 @@ from PIL import Image, ImageEnhance, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "apps/web/public/backdrop"
-UA = "KomaVision/0.1 (https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter)"
+UA = "MakamVision/0.1 (https://github.com/EmreDikimen/Turkish_note_to_solfeggio_converter)"
 
 # name, Commons file, saturation kept, tint colour, tint share
 PAINTINGS = [

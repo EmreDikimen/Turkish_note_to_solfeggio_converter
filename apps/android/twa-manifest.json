@@ -1,8 +1,8 @@
 {
   "packageId": "com.komavision.app",
   "host": "komavision.netlify.app",
-  "name": "KomaVision",
-  "launcherName": "KomaVision",
+  "name": "MakamVision",
+  "launcherName": "MakamVision",
   "display": "standalone",
   "orientation": "default",
   "themeColor": "#faf1e1",
@@ -21,8 +21,7 @@
     "path": "/Users/emredikimen/.komavision/upload.keystore",
     "alias": "komavision"
   },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://komavision.netlify.app/manifest.webmanifest",
@@ -36,5 +35,6 @@
   "isMetaQuest": false,
   "fullScopeUrl": "https://komavision.netlify.app/",
   "minSdkVersion": 24,
-  "fingerprints": []
+  "fingerprints": [],
+  "appVersion": "1.0.1"
 }

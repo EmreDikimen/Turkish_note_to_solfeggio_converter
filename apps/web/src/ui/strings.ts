@@ -10,7 +10,7 @@
  */
 
 export const TR = {
-  brand: "KomaVision",
+  brand: "MakamVision",
   // Said to a stranger, not a musician (owner, 2026-10-01): what they bring, and the two things
   // they get back — the piece on the page and the piece on an instrument.
   tagline:

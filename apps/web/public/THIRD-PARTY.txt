@@ -1,8 +1,8 @@
-KomaVision — üçüncü taraf bileşenler / third-party notices
+MakamVision — üçüncü taraf bileşenler / third-party notices
 ==========================================================
 
 Bu sayfa, uygulamanın kullandığı açık kaynak bileşenleri ve lisanslarını listeler.
-This file lists the third-party components KomaVision ships, and their licenses.
+This file lists the third-party components MakamVision ships, and their licenses.
 
 Son güncelleme / last updated: 2026-09-30
 
@@ -10,10 +10,10 @@ Son güncelleme / last updated: 2026-09-30
 ESERLER HAKKINDA / ABOUT MUSICAL WORKS
 --------------------------------------
 
-KomaVision hiçbir nota veya eser barındırmaz ve dağıtmaz. Uygulama yalnızca
+MakamVision hiçbir nota veya eser barındırmaz ve dağıtmaz. Uygulama yalnızca
 kullanıcının kendi yüklediği görüntüyü işler; görüntüler sunucuda saklanmaz.
 
-KomaVision bundles and distributes NO musical scores of any kind. It only
+MakamVision bundles and distributes NO musical scores of any kind. It only
 processes the image a user uploads, and uploaded images are not stored.
 
 Hak sahibiyseniz ve bir itirazınız varsa / rights holders may object at:
@@ -47,8 +47,8 @@ MODEL
 
 Flova/omr_transformer  —  Apache License 2.0
   https://huggingface.co/Flova/omr_transformer
-  KomaVision'ın modeli bu önceden eğitilmiş modelden ince ayarlanmıştır.
-  KomaVision's model is fine-tuned from this pretrained checkpoint.
+  MakamVision'ın modeli bu önceden eğitilmiş modelden ince ayarlanmıştır.
+  MakamVision's model is fine-tuned from this pretrained checkpoint.
   Türetilen ağırlıklar / the derived weights, also Apache-2.0:
   https://huggingface.co/Beyaban/omr-weights
 

@@ -1,4 +1,4 @@
-# KomaVision — Classical Turkish (makam) sheet music → editable, playable score
+# MakamVision — Classical Turkish (makam) sheet music → editable, playable score
 
 Upload a photo or screenshot of Turkish sheet music. The app reads the notes — **including the
 microtonal accidentals** (koma, bakiye, küçük mücennep, …) — draws them as a score you can correct

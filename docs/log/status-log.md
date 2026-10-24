@@ -2,10 +2,21 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-17
+updated: 2026-10-24
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-24 — KomaVision becomes MakamVision
+
+**The owner renamed the app.** Every live mention changed: the page title and the home-screen name,
+the manifest, the header (`TR.brand`), the PDF producer field, `privacy.html`, `THIRD-PARTY.txt`,
+`NOTICE`, the README, the two Hugging Face README copies, the dashboard, and the Android package
+(versionCode 2, `1.0.1`, launcher name MakamVision — the first build came out with an empty version
+name because Bubblewrap reads `appVersion`, not `appVersionName`). Left as they were, on purpose: the
+package `com.komavision.app`, the address `komavision.netlify.app`, and history in `docs/log/`,
+`docs/archive/` and the dated style-pass note in `app/standing.md`. Searches found nothing by the new
+name on the web or on Google Play; that is not a trademark search.
 
 ## 2026-10-17 — saving a score no longer depends on the browser's font or print engine
 

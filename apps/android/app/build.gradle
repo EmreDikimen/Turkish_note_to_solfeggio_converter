@@ -24,8 +24,8 @@ def twaManifest = [
     applicationId: 'com.komavision.app',
     hostName: 'komavision.netlify.app', // The domain being opened in the TWA.
     launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
-    name: 'KomaVision', // The application name.
-    launcherName: 'KomaVision', // The name shown on the Android Launcher.
+    name: 'MakamVision', // The application name.
+    launcherName: 'MakamVision', // The name shown on the Android Launcher.
     themeColor: '#FAF1E1', // The color used for the status bar.
     themeColorDark: '#0C1426', // The color used for the dark status bar.
     navigationColor: '#FAF1E1', // The color used for the navigation bar.
@@ -57,8 +57,8 @@ android {
         applicationId "com.komavision.app"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 1
-        versionName ""
+        versionCode 2
+        versionName "1.0.1"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name

@@ -18,7 +18,7 @@ the same `/decode`, not a second decoder. The web app keeps shipping meanwhile; 
 the same package name** — Play allows that, since the upload key (`~/.komavision/`) is ours.
 
 Why native and not only the TWA: the App Store (Apple's guideline 4.2 rejects website wrappers),
-a document-scanner camera, playback with the screen locked, a "Share → KomaVision" target, and no
+a document-scanner camera, playback with the screen locked, a "Share → MakamVision" target, and no
 "Running in Chrome" notice. None of these changes reading accuracy; the model is the same model.
 
 ## State

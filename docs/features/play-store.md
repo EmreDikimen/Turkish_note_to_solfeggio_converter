@@ -2,7 +2,7 @@
 
 purpose: how the Android app is built, signed and released, the one-way doors in it, and the closed-test rule that gates production
 audience: whoever rebuilds the Android package, uploads a release, or touches the site's /.well-known/
-updated: 2026-10-05
+updated: 2026-10-24
 
 > Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). The decision to
 > ship as a PWA wrapped in a TWA is in [../DECISIONS.md](../DECISIONS.md) (2026-09-28, 2026-10-05).
@@ -50,6 +50,20 @@ dark inside a light phone gets an ivory navigation bar under a dark page. Accept
 is the system setting anyway. ⚠ The browser-installed PWA (Add to Home screen) colours its
 navigation bar from the manifest instead, which has no dark variant — it showed ivory under the dark
 page on the owner's phone (2026-10-08). Not fixed there; the Play app replaces it.
+
+## Versions and the name
+
+| versionCode | appVersion | What changed |
+|---|---|---|
+| 1 | — | first package (2026-10-05; rebuilt at min SDK 24 on 2026-10-10) — launcher name **KomaVision** |
+| 2 | 1.0.1 | **renamed MakamVision** (owner, 2026-10-24) — launcher name, nothing else |
+
+⚠ **The app is called MakamVision since 2026-10-24, but the package (`com.komavision.app`) and the
+site address (`komavision.netlify.app`) keep the old word on purpose**: the package can never
+change, and the address is what `assetlinks.json`, the TWA's `host` and the LinkedIn post all point
+at. A move to an own domain is possible later, as one planned step.
+⚠ **Bubblewrap reads the version NAME from `appVersion`, not `appVersionName`** — a manifest with
+only the latter builds with `versionName ""` (found 2026-10-24).
 
 ## Rebuild
 

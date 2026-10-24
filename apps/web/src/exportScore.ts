@@ -451,7 +451,7 @@ function pdfFile(images: PdfImage[], title: string): Blob {
   const pageNums = images.map((_, i) => 4 + i * 3);
   obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
   obj(2, `<< /Type /Pages /Kids [${pageNums.map((n) => `${n} 0 R`).join(" ")}] /Count ${images.length} >>`);
-  obj(3, `<< /Title ${pdfText(title || "nota")} /Producer (KomaVision) >>`);
+  obj(3, `<< /Title ${pdfText(title || "nota")} /Producer (MakamVision) >>`);
   const W = A4_PT.w.toFixed(2);
   const H = A4_PT.h.toFixed(2);
   images.forEach((im, i) => {

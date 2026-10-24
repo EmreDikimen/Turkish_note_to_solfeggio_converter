@@ -1,5 +1,5 @@
 /**
- * KomaVision's components. Flat `.kv-*` classes, state via `is-*` or data attributes.
+ * MakamVision's components. Flat `.kv-*` classes, state via `is-*` or data attributes.
  *
  * The prefix exists because the diagnostic pages (slices.html, omr-gate.html, …) share this
  * origin and may adopt tokens.css later; nothing here should collide with theirs.

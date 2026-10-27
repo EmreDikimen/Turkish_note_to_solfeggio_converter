@@ -2,7 +2,7 @@
 
 purpose: the full list of DOM attributes the automated checks read, and the ⚠ traps in each
 audience: anyone writing a browser check, or changing a component a check watches
-updated: 2026-10-17
+updated: 2026-10-27
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows
@@ -193,6 +193,16 @@ A whole bar made sticky passes the first and fails the second.
 `#play-sticky` / `#stop-sticky`), which is DELETED — so a check presses `#play` itself from wherever
 it has scrolled to.
 
+⭐ **TRANSPOSITION, STAFF AND SOUND (2026-10-27).** `#transpose[data-linked="1|0"]` moves both
+together; `#transpose-advanced` opens `#transpose-modal[data-sheet][data-sound]` (commas), with
+`#transpose-sheet` / `#transpose-sound` / `#transpose-reset` / `#transpose-done`. While the two are
+apart the picker's value is a disabled `custom` option and `data-linked="0"`; picking an interval
+links them again. It replaced the "Porte ve ses / Yalnızca ses" segments.
+
+⚠ **`#advanced` (the "Gelişmiş — geliştirici ayarları" panel) exists only in dev mode** since
+2026-10-27 — the dev server, or a device that opened the site with `?dev=1` (`devMode.ts`). A check
+against a built or deployed app must not expect it.
+
 ## The fingerboard tab (F3, violin)
 
 `#fingerboard[data-omr="fingerboard"][data-tuning][data-strings][data-lines][data-zoom]`,
@@ -244,7 +254,7 @@ formula, the string-choice rule and the finger number. [features/fingerboard.md]
 
 `#kanun[data-omr="kanun"][data-courses][data-mandals][data-zoom="full|mandal"][data-note-state="idle|playing|rest|out-of-range"]`,
 312 `[data-omr="kanun-mandal"]` carrying `data-course` / `data-mandal` / `data-offset` /
-`data-mandal-state="up|down"` / `data-changed="to|from"`, 26 `[data-omr="kanun-course"]` **groups**
+`data-mandal-state="up|down"` / `data-mandal-active="1"` (one per course) / `data-changed="to|from"`, 26 `[data-omr="kanun-course"]` **groups**
 carrying `data-perde` / `data-course-state="idle|playing"`, and one
 `[data-omr="kanun-opening-item"]` per course the makam sets before playing.
 
@@ -252,9 +262,12 @@ Each course group holds **three `<line>`s**, because a perde is three strings sh
 78 in total, and `smoke:editor` asserts the total, since 26 would still pass if the view went back
 to one line each.
 
-⚠ **`data-mandal-state` is the load-bearing one: exactly ONE lever per course is `up` at every
+⚠ **`data-mandal-active` is the load-bearing one: exactly ONE lever per course is active at every
 moment**, and `smoke:editor` asserts that at every sample across a whole playback. A mandal is a
 lever that STAYS WHERE IT IS PUT, so a leak in the replay shows up there and nowhere else.
+⭐ **Since 2026-10-27 the levers are drawn CONTIGUOUS** (owner, a kanun player's rule): the active
+lever and every lever to its right are `up`, every one to its left `down` — so `up` is no longer one
+per course; count `data-mandal-active`, and `smoke:editor` checks the contiguity too.
 
 ⚠ **`data-changed` fades**: it marks an event, not a state, so never assert it without driving the
 clock to a change — and it is drawn as a red **frame**, never a fill, because the fill is what

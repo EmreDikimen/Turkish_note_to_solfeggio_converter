@@ -64,6 +64,7 @@ import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, findVoice, type VoiceId } from "./audio/instruments";
 import { voiceCached } from "./audio/loadInstrument";
 import { claimReload, isStaleChunkError } from "./staleBuild";
+import { devMode } from "./devMode";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
 import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./exportScore";
 import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
@@ -74,6 +75,7 @@ import {
   type InstrumentId,
 } from "./InstrumentView";
 import { MakamModal } from "./MakamModal";
+import { TransposeModal } from "./TransposeModal";
 import { VoiceDownloadModal } from "./VoiceDownloadModal";
 import { buildStrips, type ExportStrip } from "./stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
@@ -118,6 +120,9 @@ import {
 import type { ScoreStructure } from "../../../tools/render/stitch";
 import { respellAeu } from "../../../tools/render/respell";
 import { parseSignatureBody } from "../../../tools/render/lilypond";
+
+/** The "Gelişmiş" developer panel: dev server, or a device that opted in with `?dev=1` (devMode.ts). */
+const SHOW_DEV_PANEL = devMode();
 
 type ViewMode = "sheet" | "instrument";
 // SheetView's per-engrave layout payload (measure rectangles + svg size), used by the strip exporter.
@@ -578,10 +583,12 @@ export function App() {
   // Currently-applied chromatic transposition, in commas (0 = original). A test control for the
   // core `transpose`; later this becomes the ahenk selector (each ahenk is a fixed comma offset).
   const [transpose, setTranspose] = useState(0);
-  // When true, the transpose shifts only the SOUND and leaves the notation as written — the
-  // transposing-instrument case (kız/mansur ney read the same sheet but sound transposed). When
-  // false, the staff is rewritten too. Either way the stored score (`doc`) is never mutated.
-  const [keepSheet, setKeepSheet] = useState(false);
+  // ⭐ The SOUND's shift, apart from the staff's `transpose` (owner, 2026-10-27). Equal to it
+  // unless a player set them apart in the "Gelişmiş" dialog — a transposing instrument (a "4 ses"
+  // ney, kız or mansur ney) reads one note and sounds another. Sound-only, the old `keepSheet`, is
+  // the case `transpose === 0`. The stored score (`doc`) is never mutated by either.
+  const [soundTranspose, setSoundTranspose] = useState(0);
+  const [transposeOpen, setTransposeOpen] = useState(false);
   // Step-2c strip export: SheetView reports its measure geometry here; the panel previews one strip.
   const [layout, setLayout] = useState<SheetLayout | null>(null);
   const [selectedStripId, setSelectedStripId] = useState<string | null>(null);
@@ -629,6 +636,7 @@ export function App() {
     const slug = detected ? detected.slug ?? "" : resolveMakam(d.makam);
     setMakamSlug(slug);
     setTranspose(0); // a freshly loaded score starts untransposed
+    setSoundTranspose(0);
     setSelectedNote(null);
     setTupletAnchor(null); // a half-finished tuplet names a note in the score being replaced
     setSelectedTuplet(null); // and so does a selected one
@@ -683,7 +691,10 @@ export function App() {
   useEffect(() => {
     if (URL_SCORE) {
       loadSample(URL_SCORE).then(() => {
-        if (URL_TRANSPOSE !== 0) setTranspose(URL_TRANSPOSE);
+        if (URL_TRANSPOSE !== 0) {
+          setTranspose(URL_TRANSPOSE);
+          setSoundTranspose(URL_TRANSPOSE);
+        }
       });
     }
     // Start the decode server waking while the user is still choosing a file: a cold container is
@@ -801,13 +812,13 @@ export function App() {
   // What the views draw: the stored score, optionally rewritten by the transpose — unless we're
   // keeping the sheet as-is (transposing-instrument case). Never mutates `doc`.
   const displayDoc = useMemo(() => {
-    let d = doc && !keepSheet && transpose !== 0 ? transposeDoc(doc, transpose, TRANSPOSE_SPELLING) : doc;
+    let d = doc && transpose !== 0 ? transposeDoc(doc, transpose, TRANSPOSE_SPELLING) : doc;
     // Render automation: seeded AEU-enharmonic respell so the rare büyük glyphs appear at all in
     // training (a decoder can't emit a token it never saw). Deliberately low-rate — common signs
     // keep their natural distribution; see tools/render/respell.ts for the full rationale.
     if (d && URL_RESPELLSEED != null) d = respellAeu(d, URL_RESPELLSEED);
     return d;
-  }, [doc, transpose, keepSheet]);
+  }, [doc, transpose]);
 
   // Which notes the selected makam bends, and by how many commas. Read from the BASE doc's
   // written spelling — the rules match a written letter+accidental, and `transposeDoc` respells
@@ -831,9 +842,12 @@ export function App() {
   // audio side sees is therefore an ordinary flat document, exactly as before the signs existed.
   const perf = useMemo(() => {
     if (!doc) return null;
+    // The staff's shift is already in `displayDoc`'s komas; whatever the SOUND moves beyond it goes
+    // on the tuning anchor, so only the frequencies move (sound-only is the case transpose = 0).
+    const soundOnly = soundTranspose - transpose;
     const base =
-      keepSheet && transpose !== 0
-        ? { ...doc, tuning: { ...doc.tuning, refKoma: doc.tuning.refKoma - transpose } }
+      soundOnly !== 0 && displayDoc
+        ? { ...displayDoc, tuning: { ...displayDoc.tuning, refKoma: displayDoc.tuning.refKoma - soundOnly } }
         : displayDoc;
     if (!base) return null;
     const played = unfoldDoc(base, structure?.playBars);
@@ -872,7 +886,7 @@ export function App() {
       steps: playPlan,
       firstStartMs: played.firstStartMs,
     };
-  }, [doc, displayDoc, keepSheet, transpose, makamDeltas, structure, writeOut]);
+  }, [doc, displayDoc, soundTranspose, transpose, makamDeltas, structure, writeOut]);
   const timeline = perf?.timeline ?? null;
 
   // What the sheet DRAWS. Normally the written score itself; with the escape hatch on, the
@@ -1366,7 +1380,7 @@ export function App() {
     markEdited(index);
     // Edits arrive in the DISPLAYED pitch space. When the staff is rewritten by the transpose,
     // map the dragged pitch back to the stored (base) score before applying.
-    const shift = !keepSheet && transpose !== 0 ? transpose : 0;
+    const shift = transpose;
     // One drag = one undo entry: a pointer-move emits an edit per frame, and
     // stepping back through forty of them is not undo.
     history.apply(
@@ -1449,7 +1463,7 @@ export function App() {
     }
     onStop();
     markEdited(index);
-    const shift = !keepSheet && transpose !== 0 ? transpose : 0;
+    const shift = transpose;
     history.apply((prev) => {
       const at = prev.events.findIndex((ev) => ev.index === index);
       if (at < 0) return prev;
@@ -1512,7 +1526,7 @@ export function App() {
     if (!armed || armed.kind !== "duration" || !doc) return;
     onStop();
     setLastEditMeasure(at.measureIndex); // the sheet names the bar outright
-    const shift = !keepSheet && transpose !== 0 ? transpose : 0;
+    const shift = transpose;
     const value = { num: armed.num, den: armed.den };
     const rest = armed.rest === true;
     history.apply((prev) => {
@@ -1787,14 +1801,14 @@ export function App() {
     if (t != null && t.kind !== "tuplet") setSelectedTuplet(null);
   }
 
-  // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`keepSheet` are applied
+  // Apply a transposition. The stored `doc` is NOT mutated — `transpose`/`soundTranspose` are applied
   // when deriving `displayDoc` (what's drawn) and the playback timeline. We recompute the
   // piano-roll range from the displayed notes and stop playback so the new pitch takes effect.
-  function applyTranspose(target: number, keep: boolean) {
+  function applyTranspose(sheet: number, sound: number) {
     if (!doc) return;
     onStop();
-    setTranspose(target);
-    setKeepSheet(keep);
+    setTranspose(sheet);
+    setSoundTranspose(sound);
   }
 
   // The single Play/Pause/Resume control. From stopped it starts from the top; while playing
@@ -2345,9 +2359,9 @@ export function App() {
             makamUsage={makamUsage}
             transpose={transpose}
             transposeOptions={TRANSPOSE_OPTIONS}
-            onTranspose={(v) => applyTranspose(v, keepSheet)}
-            keepSheet={keepSheet}
-            onKeepSheet={(v) => applyTranspose(transpose, v)}
+            onTranspose={(v) => applyTranspose(v, v)}
+            transposeLinked={transpose === soundTranspose}
+            onTransposeAdvanced={() => setTransposeOpen(true)}
             accidentalMode={accidentalMode}
             onAccidentalMode={setAccidentalMode}
             // ⚠ The fold exists on the PHONE'S NOTA TAB and nowhere else. The Çal tab's whole
@@ -2573,6 +2587,7 @@ export function App() {
           it draws anything at all. */}
       <VoiceSwitchNotice status={voiceStatus} />
 
+      {SHOW_DEV_PANEL && (
       <AdvancedPanel
         doc={doc}
         samples={SAMPLES}
@@ -2606,6 +2621,7 @@ export function App() {
         selectedStripId={selectedStripId}
         onSelectStrip={setSelectedStripId}
       />
+      )}
 
       {/* ⚠ PHONE ONLY, and fixed to the bottom of the viewport — so like the edit toolbox above it
           is rendered OUT of every `.kv-card`, which sets `overflow: hidden` and would clip it. It
@@ -2622,6 +2638,16 @@ export function App() {
       )}
       {isPhone && doc && !fullScreen && <MobileTabs tab={mobileTab} onTab={onMobileTab} />}
 
+
+      {transposeOpen && (
+        <TransposeModal
+          sheet={transpose}
+          sound={soundTranspose}
+          options={TRANSPOSE_OPTIONS}
+          onChange={applyTranspose}
+          onClose={() => setTransposeOpen(false)}
+        />
+      )}
 
       {makamPrompt && (
         <MakamModal

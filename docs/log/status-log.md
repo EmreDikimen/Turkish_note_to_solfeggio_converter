@@ -2,10 +2,22 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-24
+updated: 2026-10-28
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-28 — closed test over, production access applied for
+
+The 14 days ended and the owner applied for production access, with answers drafted here and
+corrected by the owner where they overstated (an agent first wrote that testers opened the app every
+day; the counter only shows a daily TOTAL, and many testers never opened it). Before the application
+the day's three changes went live — developer panel hidden, separate staff/sound transposition,
+contiguous kanun levers — after `smoke:build` and with `smoke:live` passing. ⚠ `smoke:editor` could
+not be used as the gate that day: its playback-timing checks failed identically on the code from
+BEFORE the changes, with VS Code's renderers at ~75% CPU, so the failures were the machine, not the
+change; one earlier run with the changes had passed those same checks. The Samsung save fix (#19) was
+confirmed on the reporter's own phone.
 
 ## 2026-10-24 — KomaVision becomes MakamVision
 

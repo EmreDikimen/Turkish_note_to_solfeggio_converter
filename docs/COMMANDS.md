@@ -45,6 +45,9 @@ npx expo start                       # scan the QR code with Expo Go on the phon
                                      # …EXPO_PUBLIC_DECODE_URL=<a server WITH /page — today only the `pagetest` tag>
 npx tsc --noEmit                     # typecheck; `npx expo-doctor` checks dependency versions
 npx expo install <pkg>               # ⚠ never plain `npm install <pkg>` — this picks the SDK-compatible version
+npm run -w @turkish-omr/web build:score-view   # the phone's score view → apps/mobile/src/generated/ (gitignored)
+                                     # …⚠ RUN IT ONCE after cloning and after ANY engraver change, or the
+                                     # …app fails to bundle (missing file) or draws with the old engraver
 ```
 
 The server side of the native app is `POST /page` (the page is sliced on the server). Its checks:

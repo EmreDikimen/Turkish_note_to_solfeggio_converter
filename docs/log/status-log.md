@@ -30,6 +30,17 @@ package `com.komavision.app`, the address `komavision.netlify.app`, and history 
 `docs/archive/` and the dated style-pass note in `app/standing.md`. Searches found nothing by the new
 name on the web or on Google Play; that is not a trademark search.
 
+## 2026-10-29 — M2: the phone draws the staff with the web's engraver
+
+The owner chose plan.md §Open #3 (a) with (b) kept for later. `score-view.html` mounts the web's
+`SheetView`; `build:score-view` inlines it into one 2.25 MB HTML the app embeds. Two bugs were
+found by measuring at 390 px before the phone saw it: the first fit used the window width, so every
+staff ran 14 px past the right edge (the web fits the `.kv-score` CONTENT box, inside its 16 px
+padding); and `onSeekToMeasure` hands over the whole Measure object, which would have posted every
+note of the bar across the bridge. `react-native-webview` 14.0.1's typings resolve to `never`
+against React 19.3 — a types-only cast, noted in the file. Same day the owner renamed the app's
+visible name to MakamVision in the mobile files (DECISIONS 2026-10-24; ids unchanged).
+
 ## 2026-10-29 — the native app reads a photo (M1), through a test revision on Cloud Run
 
 M0 was confirmed in Expo Go on the owner's phone. The owner chose to let the agent run the cloud

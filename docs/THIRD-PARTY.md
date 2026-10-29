@@ -21,7 +21,7 @@ stays on the developer's disk, where local use is not distribution.
 | Bravura (font) | SIL OFL 1.1 | Ship it, with `OFL.txt` beside it — which we do. ⚠ Since 2026-10-17 its outlines ALSO ship as JSON (`public/fonts/glyph-outlines/`, for saving scores): font data in another format is a modified version under the OFL, so it sits beside the same `OFL.txt` and is **not named "Bravura"** (the Reserved Font Name) |
 | React, VexFlow, ONNX Runtime | MIT | Ship, with the copyright notice |
 | Base UI (`@base-ui/react`), Tailwind CSS (build tool; only its generated CSS ships) | MIT | Ship, with the copyright notice |
-| **Inter** and **EB Garamond** (fonts, via `@fontsource`, bundled into `dist/assets/`) | SIL OFL 1.1 | Ship them, with the notice — the Tezhip restyle, 2026-09-30 ([features/look.md](features/look.md)) |
+| **Inter** and **EB Garamond** (fonts, via `@fontsource`, bundled into `dist/assets/`; since 2026-10-29 also into the native app via `@expo-google-fonts`, same OFL fonts) | SIL OFL 1.1 | Ship them, with the notice — the Tezhip restyle, 2026-09-30 ([features/look.md](features/look.md)) |
 | `@techstark/opencv-js` | Apache-2.0 | Ship, with the notice |
 | Turkish makam theory, AEU, 53-TET, usul names | not copyrightable | Free — facts and systems, not expression |
 | **VCSL** and **VSCO 2 Community Edition** (sample libraries) | **CC0 1.0** | Serve the sample files, commercially, forever. No duty at all — a credit line is courtesy |

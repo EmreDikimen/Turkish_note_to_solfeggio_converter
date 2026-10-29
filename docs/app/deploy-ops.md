@@ -2,7 +2,7 @@
 
 purpose: the operational half of the server work — how to run it locally, what each check proves, and how it reaches Cloud Run
 audience: whoever runs or redeploys the decode server
-updated: 2026-10-08
+updated: 2026-10-29
 
 > Split out of [deploy.md](deploy.md) on 2026-08-07 at the 400-line cap. **This page is HOW.**
 > What was chosen and why is [deploy.md](deploy.md); the account-by-account walkthrough for the
@@ -57,7 +57,8 @@ gcloud run deploy omr-decode --image $IMAGE --region $REGION \
 ```
 
 ⛔ **That is the FIRST-TIME command. To ship a new image to the existing service, pass the image
-and nothing else** — `gcloud run deploy omr-decode --image $IMAGE --region $REGION`. Every flag you
+and nothing else** — `gcloud run deploy omr-decode --image $IMAGE --region $REGION`, then move the
+traffic yourself (see "TRAFFIC IS PINNED" below — since 2026-10-29 a deploy alone serves nobody). Every flag you
 leave out is kept from the live revision; every flag you pass overwrites it, and `--set-env-vars`
 replaces the WHOLE env list. Read off the live service on 2026-10-08 (`gcloud run services describe
 omr-decode --region europe-west3`): revision `omr-decode-00008-hx7`, **`maxScale` 10**, and
@@ -87,6 +88,37 @@ visibly help (below).
 ignore file gcloud derives the upload list from `.gitignore` and ships a context with **no weights
 in it**.
 
+## ⭐ Who runs the cloud commands, and how carefully (owner, 2026-10-29)
+
+**The agent runs them, and runs them cautiously.** The owner's words: he understands this less than
+the agent does, so his own chance of a mistake is higher — but every command must still avoid
+anything that can break the live service. In practice:
+
+- **A narrow allow-list, not "all of gcloud".** `.claude/settings.local.json` (personal, never
+  committed) allows exactly: `gcloud run services update-traffic omr-decode`, `gcloud builds submit`,
+  `gcloud run deploy omr-decode`, and the read-only `gcloud run services describe omr-decode` /
+  `gcloud run revisions list`. Anything else — deleting, IAM, env changes on their own, billing — is
+  still asked for, one command at a time.
+- ⛔ **Never move live traffic without asking the owner first**, even inside the allow-list. A new
+  revision goes out with `--no-traffic --tag <name>` and is tested on its own tagged URL; shifting
+  traffic to it is a separate step the owner approves.
+- **Read the state before and after every step** (`services describe … --format="yaml(status.traffic)"`),
+  and never assume the output of the previous step.
+- **Test images get their own tag** (e.g. `decode:page-test`), never `:latest`, so a test build
+  cannot be mistaken for the live one.
+- **`npm run check:bundle` before every `builds submit`** — a bundle that does not boot is the
+  failure mode that broke the first deploy, and it costs ~15 s to rule out.
+- **`.gcloudignore`, not `.gitignore`, decides what is uploaded.** Since 2026-10-29 it excludes
+  documents at the repo root — the owner keeps personal files there, and they would otherwise travel
+  with every build.
+
+⚠ **TRAFFIC IS PINNED BY NAME since 2026-10-29.** It used to follow "the latest revision", so any
+deploy went live at once. It now says `100% omr-decode-00008-hx7` (set before the first tagged test
+revision, so that revision could not take traffic by accident). Consequence: **a plain `gcloud run
+deploy` now creates a revision that serves nobody.** To go live, after testing it:
+`gcloud run services update-traffic omr-decode --region europe-west3 --to-revisions <new>=100`.
+To undo: the same command with the previous revision's name. One command each way.
+
 ## Swapping or reverting the model — every hop, in order
 
 Pieced together from the 2026-09-28 swap to `r4-ctl-stage2-last` ([../log/status-log.md](../log/status-log.md)).
@@ -104,7 +136,9 @@ visitor reads.
    land elsewhere — record it in [../METRICS-ONNX.md](../METRICS-ONNX.md) before changing the pin).
 4. **Build and ship the image**: `gcloud builds submit --config apps/server/cloudbuild.yaml
    --substitutions _IMAGE=$IMAGE .`, then `gcloud run deploy omr-decode --image $IMAGE --region
-   europe-west3` — image only, as above. Note the new revision name.
+   europe-west3 --no-traffic --tag swap` — image only, as above. Note the new revision name, test the
+   tagged URL, then **move the traffic** (`update-traffic … --to-revisions <new>=100`) — with traffic
+   pinned (above) the deploy alone changes nothing a visitor reads.
 5. **Upload the same graphs and `model.json` to the Hub** (`Beyaban/omr-weights`), then **download
    them back and hash-match all four**. ⚠ On 2026-09-28 the first `hf upload` died on a `ReadTimeout`
    while still printing progress, and the Hub sat on the old weights.

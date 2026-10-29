@@ -81,7 +81,7 @@ export default function App() {
     <SafeAreaView style={s.screen}>
       <ScrollView contentContainerStyle={s.content}>
         <View style={s.header}>
-          <Text style={s.title}>KomaVision</Text>
+          <Text style={s.title}>MakamVision</Text>
           <Text style={s.subtitle}>Türk müziği notalarını fotoğraftan okur</Text>
           <View style={s.ornament}>
             <View style={s.ornamentLine} />

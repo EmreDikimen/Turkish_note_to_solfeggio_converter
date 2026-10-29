@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { groupMeasures } from '@turkish-omr/core';
 import { readPage, ReadError, warmServer, type PageRead } from './src/readPage';
+import { ScoreWebView } from './src/ScoreWebView';
 import { fonts, useTheme, type Theme } from './src/theme';
 
 /**
@@ -16,7 +17,8 @@ import { fonts, useTheme, type Theme } from './src/theme';
  */
 const DECODE_URL = (process.env.EXPO_PUBLIC_DECODE_URL ?? '').replace(/\/$/, '');
 
-// M1: photo → server → notes on screen, in the web app's Tezhip look. No staff drawing yet (M2).
+// M1 + M2: photo → server → the page drawn as a staff (the web's engraver in a WebView), in the
+// web app's Tezhip look. The bar-by-bar note list stays behind a toggle — it is how M1 was checked.
 export default function App() {
   const [fontsReady] = useFonts({
     EBGaramond_500Medium,
@@ -33,6 +35,8 @@ export default function App() {
   const [result, setResult] = useState<PageRead | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reading = useRef(false);
+  const [showList, setShowList] = useState(false);
+  const [tapped, setTapped] = useState<number | null>(null);
 
   useEffect(() => {
     if (DECODE_URL) warmServer(DECODE_URL);
@@ -57,6 +61,8 @@ export default function App() {
 
     reading.current = true;
     setResult(null);
+    setShowList(false);
+    setTapped(null);
     setBusySince(Date.now());
     setNow(Date.now());
     try {
@@ -76,6 +82,51 @@ export default function App() {
 
   // Hold the first paint until the fonts are in, so the page never flashes the system font.
   if (!fontsReady) return <View style={s.screen} />;
+
+  // The score screen: a slim bar on top, the staff filling the rest.
+  if (result) {
+    return (
+      <SafeAreaView style={s.screen}>
+        <View style={s.topBar}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.topTitle} numberOfLines={1}>{result.doc.title || result.doc.name || 'Okunan sayfa'}</Text>
+            <Text style={s.topMeta}>
+              {result.staves} porte · {result.notes} nota · {result.measures} ölçü
+              {tapped != null ? ` · ${tapped}. ölçü seçildi` : ''}
+            </Text>
+          </View>
+          <Pressable style={({ pressed }) => [s.smallButton, pressed && s.pressed]} onPress={() => setShowList((v) => !v)}>
+            <Text style={s.smallButtonText}>{showList ? 'Porte' : 'Liste'}</Text>
+          </Pressable>
+          <Pressable style={({ pressed }) => [s.smallButton, s.smallButtonPrimary, pressed && s.pressed]} onPress={() => setResult(null)}>
+            <Text style={[s.smallButtonText, s.buttonTextPrimary]}>Yeni sayfa</Text>
+          </Pressable>
+        </View>
+        {showList ? (
+          <ScrollView contentContainerStyle={[s.content, { paddingTop: 16 }]}>
+            <View style={s.score}>
+              {measures.map((m, i) => (
+                <View key={i} style={s.measure}>
+                  <Text style={s.bar}>{i + 1}</Text>
+                  <Text style={s.notes}>
+                    {m.events
+                      .filter((e) => e.kind === 'note' || e.kind === 'rest')
+                      .map((e) => (e.kind === 'rest' ? 'Es' : e.noteName))
+                      .join('  ')}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={[s.sheet, { backgroundColor: t.scorePaper }]}>
+            <ScoreWebView doc={result.doc} structure={result.structure} background={t.scorePaper} onMeasure={setTapped} />
+          </View>
+        )}
+        <StatusBar style={t.dark ? 'light' : 'dark'} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.screen}>
@@ -119,26 +170,6 @@ export default function App() {
           {error && <Text style={s.error}>{error}</Text>}
         </View>
 
-        {result && (
-          <View style={s.score}>
-            <Text style={s.scoreTitle}>{result.doc.title || result.doc.name || 'Okunan sayfa'}</Text>
-            <Text style={s.scoreMeta}>
-              {result.staves} porte · {result.notes} nota · {result.measures} ölçü · {Math.round(result.totalMs / 1000)} sn
-            </Text>
-            <View style={s.scoreRule} />
-            {measures.map((m, i) => (
-              <View key={i} style={s.measure}>
-                <Text style={s.bar}>{i + 1}</Text>
-                <Text style={s.notes}>
-                  {m.events
-                    .filter((e) => e.kind === 'note' || e.kind === 'rest')
-                    .map((e) => (e.kind === 'rest' ? 'Es' : e.noteName))
-                    .join('  ')}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
       </ScrollView>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
     </SafeAreaView>
@@ -179,6 +210,23 @@ function makeStyles(t: Theme) {
     error: { fontFamily: fonts.uiMedium, fontSize: 15, color: t.danger },
     // The score's paper: light in both themes, as on the web.
     score: { backgroundColor: t.scorePaper, borderRadius: 12, padding: 16, gap: 6 },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingTop: 44,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: t.rule,
+      backgroundColor: t.paperRaised,
+    },
+    topTitle: { fontFamily: fonts.displayItalic, fontSize: 20, color: t.ink },
+    topMeta: { fontFamily: fonts.ui, fontSize: 12, color: t.inkFaint },
+    smallButton: { minHeight: 40, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: t.accent, justifyContent: 'center' },
+    smallButtonPrimary: { backgroundColor: t.accent },
+    smallButtonText: { fontFamily: fonts.uiSemiBold, fontSize: 14, color: t.accent },
+    sheet: { flex: 1 },
     scoreTitle: { fontFamily: fonts.displayItalic, fontSize: 22, color: t.scoreInk, textAlign: 'center' },
     scoreMeta: { fontFamily: fonts.ui, fontSize: 13, color: t.scoreInkFaint, textAlign: 'center' },
     scoreRule: { height: 1, backgroundColor: '#c9c0ab', marginVertical: 8 },

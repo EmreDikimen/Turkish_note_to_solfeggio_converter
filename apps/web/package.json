@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "node tools/copy-ort.mjs && tsc --noEmit && vite build && node tools/prune-dist.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:score-view": "node tools/build-score-view.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

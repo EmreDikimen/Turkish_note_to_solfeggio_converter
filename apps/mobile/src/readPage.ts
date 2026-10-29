@@ -13,7 +13,7 @@
  */
 import { fetch } from "expo/fetch";
 import type { NoteModelDocument } from "@turkish-omr/core";
-import { stitchStrips, type DecodedStrip } from "../../../tools/render/stitch";
+import { stitchStrips, type DecodedStrip, type ScoreStructure } from "../../../tools/render/stitch";
 
 /** The whole request, as long as the web client allows a decode to take. */
 const TIMEOUT_MS = 180_000;
@@ -31,6 +31,8 @@ export class ReadError extends Error {
 
 export interface PageRead {
   doc: NoteModelDocument;
+  /** the repeat and navigation signs the page carries — what the score view draws them from */
+  structure: ScoreStructure;
   staves: number;
   strips: number;
   notes: number;
@@ -117,6 +119,7 @@ export async function readPage(base: string, jpegBase64: string, name: string): 
   const result = stitchStrips(forStitch, { name, accidentals: "carry", expand: false });
   return {
     doc: result.doc,
+    structure: result.structure,
     staves: reply.nStaves,
     strips: reply.strips.length,
     notes: result.doc.events.filter((e) => e.kind === "note").length,

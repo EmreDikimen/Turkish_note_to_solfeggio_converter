@@ -174,3 +174,6 @@ apps/web/public/ort/
 
 # check:export writes the saved PNG/PDF here for a person to look at
 tmp-export-check/
+
+# build-score-view.mjs scratch output (deleted after each run)
+/apps/web/dist-score-view/

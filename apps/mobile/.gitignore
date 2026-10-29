@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# The score view HTML, built from apps/web by `npm run -w @turkish-omr/web build:score-view`
+src/generated/

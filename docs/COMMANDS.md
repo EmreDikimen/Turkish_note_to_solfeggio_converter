@@ -40,6 +40,9 @@ npm run smoke:editor                 # real app: select, drag, delete, undo/redo
 ```bash
 cd apps/mobile && npm install       # its OWN node_modules — apps/mobile is NOT a root workspace (React 19 vs 18)
 npx expo start                       # scan the QR code with Expo Go on the phone (same Expo SDK as package.json)
+                                     # …⚠ campus Wi-Fi often blocks phone↔Mac: use `npx expo start --tunnel`
+                                     # …the server URL comes from apps/mobile/.env.local (gitignored):
+                                     # …EXPO_PUBLIC_DECODE_URL=<a server WITH /page — today only the `pagetest` tag>
 npx tsc --noEmit                     # typecheck; `npx expo-doctor` checks dependency versions
 npx expo install <pkg>               # ⚠ never plain `npm install <pkg>` — this picks the SDK-compatible version
 ```

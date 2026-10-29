@@ -6,7 +6,8 @@ updated: 2026-10-11
 
 > Index row: [METRICS.md](METRICS.md). Why the path exists: [DECISIONS.md](DECISIONS.md) (2026-10-11,
 > "SLICING FOR THE NATIVE APP RUNS ON THE SERVER"). Current state: [STATUS.md](STATUS.md).
-> Built on branch `native-app`; **not deployed** — the live Cloud Run has no `/page` yet.
+> Built on branch `native-app`. **On Cloud Run since 2026-10-29 as a TAGGED, NO-TRAFFIC revision only**
+> (`omr-decode-00010-key`, tag `pagetest`); the revision visitors use has no `/page`.
 
 ## Preprocessing — the server's crop → 409×583 step against training's own processor
 
@@ -59,9 +60,17 @@ does): all 8 came back upright at 1654×2339, mean \|Δ\| **0.24–0.41** grey a
 | **One page through the BUNDLED server** (orientation-6 JPEG, 2 ORT threads) | **10.0 s**: read 0.14 s + slice 2.1 s + decode 7.7 s; 9 staves → 19 strips, `hitCap` 0, RSS **996 MB** |
 | `server.js` bundle | **18.0 MB** (opencv.js inlined) |
 
-⚠ **Not measured on Cloud Run.** The deployed 1 vCPU is ~3.5× slower than an M4 core
-([METRICS.md](METRICS.md) §Decode server), so slicing there is a guess of ~5–7 s a page on top of
-the decode; and the image grows by opencv.js, so the cold start may too.
+**On Cloud Run (2026-10-29, the tagged test revision, 1 vCPU), the same orientation-6 JPEG:**
+
+| Measure | Value |
+|---|---|
+| Whole request, as `curl` saw it (warm) | **77.2 s** — read 0.9 s, **slice 12.3 s**, decode 52.5 s; **67.0 vCPU-s**, RSS **927 MB** |
+| Same file through the bundled server on the M4 | slice **2.1 s** — so slicing is **~6× slower** on the cloud vCPU, worse than the ~3.5× the decode shows; the earlier guess of 5–7 s was low |
+| Cloud vs M4 output | **19/19 strips, identical tokens, identical geometry** |
+| Cold start of the new image | `loadMs` **23,178 ms** (n = 1, a freshly pushed image — the lazy-layer effect METRICS.md describes) |
+
+⚠ So a `/page` read costs roughly **a quarter more CPU** than the web path's decode alone (the
+slicing the browser used to pay), which lowers the free-tier page count by the same share. n = 1.
 
 **Limits (`limits.ts`), checked against the bundled server:** a non-image body → **400**, a 16 MB
 body → **413**, a 9000×9000 PNG (a small file) → **413 before decoding**.

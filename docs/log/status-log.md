@@ -30,6 +30,18 @@ package `com.komavision.app`, the address `komavision.netlify.app`, and history 
 `docs/archive/` and the dated style-pass note in `app/standing.md`. Searches found nothing by the new
 name on the web or on Google Play; that is not a trademark search.
 
+## 2026-10-29 — the native app reads a photo (M1), through a test revision on Cloud Run
+
+M0 was confirmed in Expo Go on the owner's phone. The owner chose to let the agent run the cloud
+commands, cautiously, through a narrow allow-list (rules: `app/deploy-ops.md`). Live traffic was
+pinned BY NAME to `omr-decode-00008-hx7` first, so the new revision could not take visitors by
+accident; the `:page-test` image went out as `omr-decode-00010-key`, `--no-traffic --tag pagetest`.
+On it, one page read identical to the M4 (19/19 strips), and slicing was ~6× slower than on the Mac.
+Two upload mistakes were caught on the way: the build context would have carried the owner's
+personal documents at the repo root, and two spare model folders (700 MB of context) — both now in
+`.gcloudignore`. The phone client reuses the web stitcher unchanged. Not done: the owner's own test
+on the phone, and the "same notes as the web app" comparison.
+
 ## 2026-10-17 — saving a score no longer depends on the browser's font or print engine
 
 A tester's Samsung phone (Samsung Internet 30, in the Play app) saved a **blank PDF** and a **PNG

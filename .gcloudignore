@@ -41,6 +41,9 @@ node_modules/
 /apps/web/dist/
 /apps/server/dist/
 /apps/server/models/
+# Other staged models beside it (models-h, models-r3a: ~211 MB each). The Dockerfile reads only
+# apps/web/public/models, so these were dead weight in the upload (704.8 MiB on 2026-10-29).
+/apps/server/models-*/
 *.log
 
 # Browser-only assets: the server never serves a page. `ort/` is 26 MB of wasm for the web build,

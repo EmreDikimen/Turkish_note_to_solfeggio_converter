@@ -101,7 +101,7 @@ the app, and neither waits for the other.
    the server half of M1 — **`POST /page`** slices and reads a whole page on the server (owner,
    2026-10-11; [METRICS-SERVER-PAGE.md](METRICS-SERVER-PAGE.md)). ✅ M0 confirmed on the owner's phone in Expo Go (2026-10-29). M1 built the same day: `/page` is on
    Cloud Run as a TAGGED NO-TRAFFIC revision (live traffic now pinned by name — app/deploy-ops.md),
-   and the phone reads a photo through it. ⏭ Owner: try M1 on the phone; decide how the score is drawn
+   and the phone reads a photo through it — ✅ the owner did, notes listed. ⏭ decide how the score is drawn
    ([mobile/plan.md](mobile/plan.md) §Open #3).
 2. ⏭ **The Play Data safety form** (item 3 above) — must match the counter before the production
    application.

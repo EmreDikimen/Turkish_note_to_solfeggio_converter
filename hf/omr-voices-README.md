@@ -4,12 +4,12 @@ tags:
   - audio
   - music
   - samples
-pretty_name: KomaVision instrument voices
+pretty_name: MakamVision instrument voices
 ---
 
-# KomaVision instrument voices
+# MakamVision instrument voices
 
-The sampled instruments [KomaVision](https://komavision.netlify.app) plays scores with. Fetched by
+The sampled instruments [MakamVision](https://komavision.netlify.app) plays scores with. Fetched by
 the app at runtime, only when someone picks that instrument.
 
 Everything here is **CC0 1.0**. Playback level is applied in the app, not baked into a file.

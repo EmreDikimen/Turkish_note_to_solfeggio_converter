@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-10-16
+updated: 2026-10-28
 
 ## Now
 
@@ -33,15 +33,23 @@ from it and are live today:
    (collected, not shared, not ephemeral, required, Analytics); deletion question → **No** (180 days)
    ([features/visit-stats.md](features/visit-stats.md)).
 
-⏭ **PLAY STORE: THE 14-DAY CLOSED TEST STARTED 2026-10-14**, the day the twelfth tester opted in —
-so "Üretime başvur" opens around **2026-10-28** if the count never drops below 12 (a drop restarts
-it; the owner is recruiting a margin). Closed test v1 passed review the same day it was sent. ⏭ Before
-applying: the **Data safety** form (item 3), and the owner's own feedback log (what testers said,
-what changed). ⛔ There is **no** "no updates during the test" rule — an agent misread the owner and wrote one
-here; the owner corrected it 2026-10-14. Released 2026-10-16 (web deploy, `smoke:live` PASS): the voice-cache
-fix and the 1,5-tone transposition step; a second deploy that day: letter-keeping transposition spelling and the stale-tab reload guard — [features/tester-feedback.md](features/tester-feedback.md). ⚠ Chrome's "Running in Chrome" notice
-appears on launch and cannot be switched off from the app.
-[features/play-store.md](features/play-store.md).
+⏭ **PLAY STORE: THE CLOSED TEST ENDED AND PRODUCTION ACCESS WAS APPLIED FOR ON 2026-10-28** — Google
+says up to ~7 days. The answers were written to match the facts, including that many testers
+installed and rarely or never opened the app (the counter only shows a daily total). If it is
+refused, Google names the reason; extend the test and re-apply. Released the same day, before the
+application: the developer panel hidden (`?dev=1` shows it), staff and sound transposed apart, kanun
+levers drawn contiguous. ⏭ After access: a production release (v2 `MakamVision-1.0.1.aab` from the
+library), countries, review. ⏳ The volta bug (#3) waits for an example page from the owner.
+[features/play-store.md](features/play-store.md) · [features/tester-feedback.md](features/tester-feedback.md).
+
+✅ **Deployed 2026-10-17 (`Deploy is live!`, `smoke:live` PASS): saving a score no longer depends
+on the browser** — a tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app
+now outlines every music glyph and writes the PDF itself
+([features/tester-feedback.md](features/tester-feedback.md) #19). Checked in three engines, not yet
+on the tester's phone. The tester's new PDF had everything but was **faded**; round 2 (canvas replay,
+no SVG image) is **deployed 2026-10-17** (`smoke:live` PASS). The owner reproduced the faded PDF on
+his own phone by installing Samsung Internet from Play — no tester needed to check it. ⏭ Owner:
+re-save on that phone.
 
 **What the live site carries** (last web deploy **2026-10-14** — the counter and `privacy.html`; before it **2026-10-09**, `Deploy is live!`, `smoke:live` PASS —
 server read 24 strips / 229 notes in 64.6 s, refusal arm clean; `assetlinks.json`, `privacy.html`,

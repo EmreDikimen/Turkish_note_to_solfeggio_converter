@@ -41,7 +41,6 @@ import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
 import type { VoiceStatus } from "../webAudioBackend";
 import type { AccidentalMode } from "../SheetView";
-import { Segmented } from "./Segmented";
 import { MakamIntonation } from "./MakamIntonation";
 import { TR } from "./strings";
 import { PauseIcon, PlayIcon, StopIcon } from "./PlayIcons";
@@ -172,8 +171,8 @@ export function TransportBar({
   transpose,
   transposeOptions,
   onTranspose,
-  keepSheet,
-  onKeepSheet,
+  transposeLinked,
+  onTransposeAdvanced,
   accidentalMode,
   pitchOpen,
   onPitch,
@@ -211,13 +210,15 @@ export function TransportBar({
   makamOptions: readonly MakamOption[];
   /** The chosen makam's rules against THIS score, for the line beside the picker. */
   makamUsage: readonly MakamRuleUse[];
-  /** Transposition in commas. 0 is the score as written. */
+  /** Transposition in commas — staff and sound together. 0 is the score as written. */
   transpose: number;
   transposeOptions: readonly (readonly [number, string])[];
+  /** Moves the staff AND the sound by `commas`. */
   onTranspose: (commas: number) => void;
-  /** Transposing instruments: move the SOUND, leave the staff where it is. */
-  keepSheet: boolean;
-  onKeepSheet: (v: boolean) => void;
+  /** False when the staff and the sound were set apart in the "Gelişmiş" dialog. */
+  transposeLinked: boolean;
+  /** Open that dialog (`TransposeModal`, owned by App). */
+  onTransposeAdvanced: () => void;
   accidentalMode: AccidentalMode;
   /** Phone, Nota tab only: is the Perde section expanded? Undefined everywhere else. */
   pitchOpen?: boolean;
@@ -638,7 +639,7 @@ export function TransportBar({
             <span>{TR.transport.percussion}</span>
           </label>
 
-          {/* ⚠ NOT disabled when percussion is off, for the same reason `keepSheet` isn't disabled at
+          {/* ⚠ NOT disabled when percussion is off, for the same reason the transpose controls are not disabled at
               transpose 0: people set a level and THEN turn the thing on. Dragging it does NOT
               re-schedule playback — it rides a gain node, so it is smooth mid-piece. */}
           <label
@@ -724,13 +725,25 @@ export function TransportBar({
             <MakamIntonation slug={makamSlug} usage={makamUsage} />
           </div>
 
-          {/* The interval and its mode are ONE control, so they sit in a group with the group's
-              tighter gap — 8px against the row's 16px. Without it the mode segmented reads as a
-              third, unrelated thing on the row, which is the mistake the checkbox made. */}
+          {/* The interval and its "Gelişmiş" door are ONE control, in one group with the group's
+              tighter gap. ⭐ Since 2026-10-27 the picker moves the staff AND the sound together (the
+              default); setting them apart is the dialog's job (owner: *"defaultu hala sesin ve
+              notanın aynı transpozisyona sahip olması olsun"*). While they are apart the picker shows
+              a disabled "Özel" entry rather than a number that is only half true. */}
           <div className="kv-transport__group">
             <label className="kv-field" title={TR.transport.transposeTitle}>
               <span>{TR.transport.transpose}</span>
-              <select value={transpose} onChange={(e) => onTranspose(Number(e.target.value))}>
+              <select
+                id="transpose"
+                data-linked={transposeLinked ? "1" : "0"}
+                value={transposeLinked ? transpose : "custom"}
+                onChange={(e) => onTranspose(Number(e.target.value))}
+              >
+                {!transposeLinked && (
+                  <option value="custom" disabled>
+                    {TR.transport.transposeCustom}
+                  </option>
+                )}
                 {transposeOptions.map(([commas, label]) => (
                   <option key={commas} value={commas}>
                     {label}
@@ -738,22 +751,15 @@ export function TransportBar({
                 ))}
               </select>
             </label>
-
-          {/* ⚠ TWO SEGMENTS OF THE TRANSPOSITION, not a loose toggle beside it. "Keep the staff"
-              is a MODE of transposing and means nothing on its own — a notation program asks the
-              same question inside its transpose dialog (sounding pitch vs written pitch), and as a
-              checkbox sitting next to the interval it read as an unrelated option.
-              ⚠ Still NOT disabled at transpose 0, though it does nothing there: a player picks
-              "yalnızca ses" and THEN picks the interval, and a control that only wakes up
-              afterwards makes that order impossible. */}
-          <Segmented
-            value={keepSheet ? "keep" : "move"}
-            onChange={(v) => onKeepSheet(v === "keep")}
-            items={[
-              { value: "move", label: TR.transport.keepSheetMove, title: TR.transport.keepSheetMoveTitle },
-              { value: "keep", label: TR.transport.keepSheetKeep, title: TR.transport.keepSheetKeepTitle },
-            ]}
-          />
+            <button
+              id="transpose-advanced"
+              type="button"
+              className="kv-btn"
+              title={TR.transport.transposeAdvancedButtonTitle}
+              onClick={onTransposeAdvanced}
+            >
+              {TR.transport.transposeAdvanced}
+            </button>
           </div>
 
           <label className="kv-field" title={TR.transport.accidentalsTitle}>

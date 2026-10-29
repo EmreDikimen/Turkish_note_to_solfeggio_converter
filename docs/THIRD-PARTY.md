@@ -2,7 +2,7 @@
 
 purpose: the licence of every third-party thing this project touches, and the rule each one imposes on publishing
 audience: whoever is about to ship, deploy, push weights, or add a file to `apps/web/public/`
-updated: 2026-08-09
+updated: 2026-10-17
 
 This file owns the **licensing facts**. Nothing else should restate them — link here.
 
@@ -18,7 +18,7 @@ stays on the developer's disk, where local use is not distribution.
 | neyzen.com / notaarsivleri.com page images | all rights reserved | Read locally. Never redistribute, never commit |
 | **sahaney.com / erdincbal.com / sarkilarnotalar.blogspot.com page images** (the 2026-09-06 third-source probe) | all rights reserved; ⚠ **erdincbal republishes TRT Müzik Dairesi Başkanlığı editions**, so that material carries TRT's rights and not erdincbal's | Same rule as the two above: read locally, never redistribute, never commit. ⛔ The probe lands under `data/real/rung3/_thirdsource/`, is gitignored, and is deliberately kept out of `data/real/manifest.csv` and `matched/` so no training or exam flow can pick it up |
 | `Flova/omr_transformer` (base model) | Apache-2.0 | Fine-tune and publish the result **with attribution + licence** |
-| Bravura (font) | SIL OFL 1.1 | Ship it, with `OFL.txt` beside it — which we do |
+| Bravura (font) | SIL OFL 1.1 | Ship it, with `OFL.txt` beside it — which we do. ⚠ Since 2026-10-17 its outlines ALSO ship as JSON (`public/fonts/glyph-outlines/`, for saving scores): font data in another format is a modified version under the OFL, so it sits beside the same `OFL.txt` and is **not named "Bravura"** (the Reserved Font Name) |
 | React, VexFlow, ONNX Runtime | MIT | Ship, with the copyright notice |
 | Base UI (`@base-ui/react`), Tailwind CSS (build tool; only its generated CSS ships) | MIT | Ship, with the copyright notice |
 | **Inter** and **EB Garamond** (fonts, via `@fontsource`, bundled into `dist/assets/`) | SIL OFL 1.1 | Ship them, with the notice — the Tezhip restyle, 2026-09-30 ([features/look.md](features/look.md)) |

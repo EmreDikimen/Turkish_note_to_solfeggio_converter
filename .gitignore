@@ -171,3 +171,6 @@ apps/web/public/ort/
 # screenshots supplied 2026-09-06. They are someone else's engraving and this repo is PUBLIC, so the
 # pictures stay on disk and only the decodes/verdicts under data/ (also ignored) are project data.
 /exam_pages/
+
+# check:export writes the saved PNG/PDF here for a person to look at
+tmp-export-check/

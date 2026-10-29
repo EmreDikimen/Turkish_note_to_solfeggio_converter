@@ -2,10 +2,54 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-14
+updated: 2026-10-28
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-10-28 — closed test over, production access applied for
+
+The 14 days ended and the owner applied for production access, with answers drafted here and
+corrected by the owner where they overstated (an agent first wrote that testers opened the app every
+day; the counter only shows a daily TOTAL, and many testers never opened it). Before the application
+the day's three changes went live — developer panel hidden, separate staff/sound transposition,
+contiguous kanun levers — after `smoke:build` and with `smoke:live` passing. ⚠ `smoke:editor` could
+not be used as the gate that day: its playback-timing checks failed identically on the code from
+BEFORE the changes, with VS Code's renderers at ~75% CPU, so the failures were the machine, not the
+change; one earlier run with the changes had passed those same checks. The Samsung save fix (#19) was
+confirmed on the reporter's own phone.
+
+## 2026-10-24 — KomaVision becomes MakamVision
+
+**The owner renamed the app.** Every live mention changed: the page title and the home-screen name,
+the manifest, the header (`TR.brand`), the PDF producer field, `privacy.html`, `THIRD-PARTY.txt`,
+`NOTICE`, the README, the two Hugging Face README copies, the dashboard, and the Android package
+(versionCode 2, `1.0.1`, launcher name MakamVision — the first build came out with an empty version
+name because Bubblewrap reads `appVersion`, not `appVersionName`). Left as they were, on purpose: the
+package `com.komavision.app`, the address `komavision.netlify.app`, and history in `docs/log/`,
+`docs/archive/` and the dated style-pass note in `app/standing.md`. Searches found nothing by the new
+name on the web or on Google Play; that is not a trademark search.
+
+## 2026-10-17 — saving a score no longer depends on the browser's font or print engine
+
+A tester's Samsung phone (Samsung Internet 30, in the Play app) saved a **blank PDF** and a **PNG
+with staves but no noteheads**. Read from the code, not reproduced: VexFlow 5 draws every music
+symbol as text in the music font, and the PNG drew the SVG into an image with that font embedded —
+which a browser may ignore; the PDF was `window.print()`, the browser's own engine. The owner asked
+for a fix that holds on any browser, not a Samsung patch, and chose a raster PDF over a vector
+library. So: glyphs are outlined into paths from a generated table, positions measured off the live
+drawing (two `SheetView` glyphs use `text-anchor`/`dominant-baseline`); the PDF is written by the
+app, one grey image per A4 page; the print stylesheet is gone (it also blanked a manual Ctrl+P).
+Checked in three engines and by eye. Deployed the same day. **Then round 2:** the tester's new PDF
+was complete but faded grey, and only what passed through the SVG image was faded — the caption,
+drawn on the canvas directly, was dark. Our own engines never showed it (dark theme included), so the
+cause is unproven (a browser dark mode recolouring images is the lead). The fix removes the image:
+`exportCanvas.ts` replays every shape onto the canvas with its computed on-screen colour; same
+picture as round 1 to 0.005% of pixels. **Reproduced and deployed:** the owner installed Samsung
+Internet from Play on his own Android phone and got the same faded PDF from the live site — so this
+class of bug no longer needs a tester. Its first page read sat on "model hazırlanıyor" for a long
+time: that status covers the lazy 14.8 MB slicer chunk (opencv.js) on a browser with an empty cache,
+not the server, which was warm. Round 2 deployed the same day, `smoke:live` PASS.
 
 ## 2026-10-14 — the visit counter drops its identifier and its location
 

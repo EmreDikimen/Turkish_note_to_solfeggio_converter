@@ -1562,6 +1562,31 @@ async function main() {
     });
   }
 
+  // ⭐ STAFF AND SOUND TRANSPOSED APART (owner, 2026-10-27). The one picker still moves both — the
+  // default — and the "Gelişmiş" dialog sets them apart for a transposing instrument. Read off the
+  // picker's `data-linked` and the dialog's own `data-sheet` / `data-sound`, never its copy.
+  console.log("\ntransposition, staff and sound apart");
+  await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
+  await page.locator("#transpose").selectOption("22");
+  check("the picker moves both, by default", await page.getAttribute("#transpose", "data-linked"), "1");
+  await page.locator("#transpose-advanced").click();
+  await page.waitForSelector("#transpose-modal", { timeout: 5000 });
+  check("⭐ the dialog opens on the picker's value, both sides", [
+    await page.getAttribute("#transpose-modal", "data-sheet"),
+    await page.getAttribute("#transpose-modal", "data-sound"),
+  ], ["22", "22"]);
+  await page.locator("#transpose-sheet").selectOption("0");
+  check("…the staff can stay while the sound moves (the old 'yalnızca ses')", [
+    await page.getAttribute("#transpose-modal", "data-sheet"),
+    await page.getAttribute("#transpose-modal", "data-sound"),
+  ], ["0", "22"]);
+  await page.locator("#transpose-done").click();
+  await page.waitForSelector("#transpose-modal", { state: "detached", timeout: 5000 });
+  check("…and the picker then admits they are apart", await page.getAttribute("#transpose", "data-linked"), "0");
+  await page.locator("#transpose").selectOption("9");
+  check("picking an interval again moves both together", await page.getAttribute("#transpose", "data-linked"), "1");
+
   console.log("\nfingerboard tab (F3)");
   await page.goto(`${base}/?score=/gamzedeyim-deva.json`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('#app[data-ready="1"]', { timeout: 60000 });
@@ -1750,8 +1775,29 @@ async function main() {
   // to one line each — which 26 would still satisfy.
   check("…drawn as three strings", await page.locator('[data-omr="kanun-course"] line').count(), 78);
 
-  const upCount = () => page.locator('[data-omr="kanun-mandal"][data-mandal-state="up"]').count();
-  check("exactly one lever up per course", await upCount(), 26);
+  // ⭐ ONE ACTIVE lever per course — the one that sets the pitch. Since 2026-10-27 the levers are
+  // drawn contiguous (the active one and everything to its right are up), so the leak this guards
+  // against is counted on `data-mandal-active`, not on `up`.
+  const upCount = () => page.locator('[data-omr="kanun-mandal"][data-mandal-active="1"]').count();
+  check("exactly one active lever per course", await upCount(), 26);
+  // …and the drawing obeys the kanun player's rule: on every course, the up levers are exactly the
+  // active one and every lever to its right (owner: "mandallar birbirine bitişiktir").
+  const contiguous = await page.locator('[data-omr="kanun-mandal"]').evaluateAll((els) => {
+    const byCourse = new Map<string, { m: number; up: boolean; active: boolean }[]>();
+    for (const e of els) {
+      const c = e.getAttribute("data-course")!;
+      const list = byCourse.get(c) ?? [];
+      list.push({ m: Number(e.getAttribute("data-mandal")), up: e.getAttribute("data-mandal-state") === "up", active: e.getAttribute("data-mandal-active") === "1" });
+      byCourse.set(c, list);
+    }
+    let bad = 0;
+    for (const list of byCourse.values()) {
+      const a = list.find((x) => x.active)?.m;
+      if (a == null || list.some((x) => x.up !== x.m >= a)) bad++;
+    }
+    return bad;
+  });
+  check("⭐ every course's up levers are the active one and all to its right", contiguous, 0);
   check("nothing is sounding yet", await page.getAttribute("#kanun", "data-note-state"), "idle");
 
   // The opening setting is the makam's mandals, which a player prepares before the first note. It
@@ -1819,7 +1865,7 @@ async function main() {
   check("…and the lit course moves with the music", litCourses.length >= 2, true);
   // ⚠ THE INVARIANT. One lever up per course, at every single sample taken across the playback —
   // this is what says the replay moves the mandals rather than accumulating them.
-  check("one lever up per course throughout", [...upCounts], [26]);
+  check("one active lever per course throughout", [...upCounts], [26]);
   check("the view says a note is sounding", noteStates.has("playing"), true);
   // The change flash, asserted by WHICH course and WHICH comma — a count would pass on a flash
   // fired at the wrong lever. Hüseynî is course 15, moving to one koma flat.
@@ -1835,7 +1881,7 @@ async function main() {
   const beyatiOpening = await openingOf();
   console.log(`  opening: ${beyatiOpening.join(" ")}`);
   check("another piece sets its own mandals", beyatiOpening, ["Segâh-2"]);
-  check("one lever up per course here too", await upCount(), 26);
+  check("one active lever per course here too", await upCount(), 26);
 
   // --- the bar beside the instrument, and editing it in place (owner, 2026-09-04) --------------
   //

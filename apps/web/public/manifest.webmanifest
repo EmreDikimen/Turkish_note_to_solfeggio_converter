@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "KomaVision",
-  "short_name": "KomaVision",
+  "name": "MakamVision",
+  "short_name": "MakamVision",
   "description": "Türk müziği notasının fotoğrafını okur, notaya dizer ve 53 komalı sesiyle çalar.",
   "lang": "tr",
   "dir": "ltr",

@@ -12,7 +12,7 @@ library_name: onnx
 
 # omr-weights — Turkish (makam) optical music recognition
 
-ONNX graphs for [KomaVision](https://komavision.netlify.app), an optical music recognition model
+ONNX graphs for [MakamVision](https://komavision.netlify.app), an optical music recognition model
 for **Classical Turkish (makam) music**: a photo or screenshot of sheet music in, notes out —
 including the microtonal accidentals (koma, küçük mücennep, bakiye, büyük mücennep) that Western
 OMR models have no vocabulary for.

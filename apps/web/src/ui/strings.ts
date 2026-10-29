@@ -10,7 +10,7 @@
  */
 
 export const TR = {
-  brand: "KomaVision",
+  brand: "MakamVision",
   // Said to a stranger, not a musician (owner, 2026-10-01): what they bring, and the two things
   // they get back — the piece on the page and the piece on an instrument.
   tagline:
@@ -175,24 +175,21 @@ export const TR = {
       "seslenir; portedeki notalar değişmez. Hangi perdeler olduğu yanında yazar.",
     transpose: "Transpozisyon",
     transposeTitle: "Eserin tamamını seçtiğiniz kadar tizleştirir ya da pesleştirir",
-    // ⚠ Two SEGMENTS of the transposition control, not a loose checkbox beside it (2026-09-03).
-    // "Keep the staff" is not an independent setting — it is a MODE of transposing, and it means
-    // nothing on its own; notation programs put the same choice inside their transpose dialog
-    // (sounding pitch vs written pitch). As a checkbox next to the interval it read as unrelated.
-    //
-    // ⚠ BOTH LABELS ANSWER ONE QUESTION — "transpozisyon neyi kaydırıyor?" — and they answer it in
-    // the same grammar, so the pair can be read as a pair (owner, 2026-09-03: the first attempt,
-    // "Porte de kaysın" / "Yalnızca ses", was not explanatory: the two halves were not even the
-    // same kind of phrase, so nothing said they were alternatives to each other). `porte` is the
-    // word this app already uses for the staff; see the terminology note at the top of this file.
-    keepSheetMove: "Porte ve ses",
-    keepSheetKeep: "Yalnızca ses",
-    keepSheetMoveTitle:
-      "Eser olduğu gibi göçer: portedeki notalar da yeni yerine yazılır, ses de oradan çalar. " +
-      "Olağan durum.",
-    keepSheetKeepTitle:
-      "Göçürücü sazlar için — kız ney ile mansur ney aynı notayı okur, farklı seslendirir. " +
-      "Yalnızca ses kayar; portede yazan hiçbir şey değişmez.",
+    // ⚠ The one picker moves the staff AND the sound together — the ordinary case and the default.
+    // Setting them apart (a transposing instrument: a "4 ses" ney, kız or mansur ney) lives in the
+    // "Gelişmiş" dialog beside it (owner, 2026-10-27). It replaced the "Porte ve ses / Yalnızca
+    // ses" segments of 2026-09-03; "Yalnızca ses" is the dialog with the staff at 0.
+    transposeAdvanced: "Gelişmiş",
+    transposeAdvancedButtonTitle: "Notayı ve sesi farklı miktarlarda kaydırın (göçürücü sazlar için)",
+    transposeCustom: "Özel — nota ve ses ayrı",
+    transposeAdvancedTitle: "Transpozisyon — gelişmiş",
+    transposeAdvancedLead:
+      "Göçürücü sazlar notayı bir perdeden okur, başka bir perdeden seslendirir — örneğin 4 ses ney. " +
+      "Portedeki notaların ve duyduğunuz sesin ne kadar kayacağını ayrı ayrı seçin.",
+    transposeSheet: "Nota (porte)",
+    transposeSound: "Ses",
+    transposeAdvancedReset: "Sıfırla",
+    transposeAdvancedDone: "Tamam",
     accidentals: "Arıza işaretleri",
     accidentalsTitle: "Arıza işaretlerinin portede nasıl gösterileceği",
     accidentalsEvery: "Her notada",
@@ -209,16 +206,15 @@ export const TR = {
     followTitle:
       "Çalarken imleç ekrandan çıkarsa sayfa kendiliğinden imlece kayar. Kapatırsanız sayfa " +
       "olduğu yerde kalır; seçiminiz bu tarayıcıda hatırlanır.",
-    // Saving the score that is on screen. ⚠ The PDF line says two taps out loud, because the
-    // browser's print sheet is what makes the PDF and pretending otherwise is a broken promise.
+    // Saving the score that is on screen. Both are drawn by the app and download directly (the PDF
+    // stopped going through the print sheet on 2026-10-17 — it printed blank on a Samsung phone).
     // Shown for the frame between asking for a view and the engraving appearing. ⚠ It says what is
     // happening, not "loading": the page is being DRAWN, and on a long score that takes a moment.
     swapping: "nota diziliyor…",
     save: "İndir",
     saveTitle: "Notayı kaydet",
     savePng: "PNG — resim olarak indir",
-    savePdf: "PDF — yazdır veya kaydet",
-    savePdfNote: "Yazdırma ekranı açılır; oradan “PDF olarak kaydet”i seçin.",
+    savePdf: "PDF — A4 sayfalar olarak indir",
     saveBusy: "hazırlanıyor…",
     saveFailed: "Kaydedilemedi. Sayfa açıkken tekrar deneyin.",
     edit: "✎ Düzenle",

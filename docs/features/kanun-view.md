@@ -2,7 +2,7 @@
 
 purpose: the design, the instrument data and the decisions behind the kanun half of the fingerboard tab
 audience: agents and the owner working on the kanun view, before changing the courses, the mandals or the drawing
-updated: 2026-08-29
+updated: 2026-10-27
 
 > This is the kanun chapter of F3; the violin chapter is [fingerboard.md](fingerboard.md) and the
 > track index is [README.md](README.md). ⚠ Since 2026-08-29 the two share **one tab**, *Enstrüman
@@ -37,6 +37,11 @@ Two things follow that the violin has no version of at all:
 1. **There is something to show before a note is played.** A kanun player sets the makam's mandals
    *before* starting, the way a violinist tunes. That opening setting is the picture this view
    starts on, and it is also listed in words above the instrument.
+⭐ **The levers on a course are CONTIGUOUS** (owner, 2026-10-27, confirmed with a kanun player):
+raising a mandal raises every one to its right, lowering one lowers every one to its left. So the
+view draws the active lever and everything to its right up, the rest down; one lever per course still
+carries `data-mandal-active`. Until then a single box per course was drawn up.
+
 2. **A mandal change is an EVENT.** Which lever is up is already readable from the picture, so red
    is spent on *something just moved* rather than on *this is the state*.
 

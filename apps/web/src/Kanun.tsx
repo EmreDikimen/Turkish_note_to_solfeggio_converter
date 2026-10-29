@@ -167,15 +167,29 @@ export function Kanun({
 
     const p = planRef.current;
 
-    /** Draw the opening setting: exactly one filled box per course, and nothing lit. */
+    /**
+     * Set one course's levers to `active`. ⭐ **The levers are contiguous** (owner, 2026-10-27, a
+     * kanun player's rule: *"bir mandalı kaldırdığımızda sağındaki tüm mandallar kalkar ve
+     * indirdiğimizde solundaki tüm mandallar iner, mandallar birbirine bitişiktir"*): the active one
+     * and every lever to its RIGHT (higher index, toward the nut) are up, every one to its left is
+     * down. Until then exactly one box per course was drawn up. `data-mandal-active` still marks the
+     * ONE lever that sets the pitch, which is what the checks count.
+     */
+    const paintCourse = (c: number, active: number) => {
+      for (let m = 0; m < mandalCount; m++) {
+        const b = box(c, m);
+        if (!b) continue;
+        b.setAttribute("data-mandal-state", m >= active ? "up" : "down");
+        if (m === active) b.setAttribute("data-mandal-active", "1");
+        else b.removeAttribute("data-mandal-active");
+      }
+    };
+
+    /** Draw the opening setting: each course at its opening lever, and nothing lit. */
     const reset = () => {
       for (let c = 0; c < courses.length; c++) {
-        for (let m = 0; m < mandalCount; m++) {
-          const b = box(c, m);
-          if (!b) continue;
-          b.setAttribute("data-mandal-state", m === p.opening[c] ? "up" : "down");
-          b.removeAttribute("data-changed");
-        }
+        paintCourse(c, p.opening[c]!);
+        for (let m = 0; m < mandalCount; m++) box(c, m)?.removeAttribute("data-changed");
         line(c)?.setAttribute("data-course-state", "idle");
       }
     };
@@ -221,12 +235,11 @@ export function Kanun({
       }
       lastNote = i;
 
-      // Advance the mandals to where they stand at this note. Only the boxes that actually move
-      // are touched — repainting 312 rects every frame would be the one expensive thing here.
+      // Advance the mandals to where they stand at this note. Only a course that actually moves is
+      // repainted (12 boxes) — repainting 312 rects every frame would be the one expensive thing here.
       while (applied < plan.changes.length && plan.changes[applied]!.noteIndex <= i) {
         const ch = plan.changes[applied]!;
-        box(ch.courseIndex, ch.from)?.setAttribute("data-mandal-state", "down");
-        box(ch.courseIndex, ch.to)?.setAttribute("data-mandal-state", "up");
+        paintCourse(ch.courseIndex, ch.to);
         applied++;
       }
 

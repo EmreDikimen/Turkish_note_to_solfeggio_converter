@@ -97,7 +97,7 @@ the app, and neither waits for the other.
 
 1. ⏭ **The Play Store closed test** (above) — the owner's priority this week.
 1b. ⏭ **A React Native app, Android and iOS together, started in parallel (owner, 2026-10-11).**
-   🚧 On branch **`native-app`**: the M0 skeleton (Expo SDK 57, `apps/mobile`, imports core), and
+   🚧 On branch **`native-app`**: the M0 skeleton (Expo SDK 58 since 2026-10-29, `apps/mobile`, imports core), and
    the server half of M1 — **`POST /page`** slices and reads a whole page on the server (owner,
    2026-10-11; [METRICS-SERVER-PAGE.md](METRICS-SERVER-PAGE.md)). ✅ M0 confirmed on the owner's phone in Expo Go (2026-10-29). M1 built the same day: `/page` is on
    Cloud Run as a TAGGED NO-TRAFFIC revision (live traffic now pinned by name — app/deploy-ops.md),

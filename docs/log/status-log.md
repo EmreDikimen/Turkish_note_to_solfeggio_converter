@@ -40,7 +40,10 @@ On it, one page read identical to the M4 (19/19 strips), and slicing was ~6× sl
 Two upload mistakes were caught on the way: the build context would have carried the owner's
 personal documents at the repo root, and two spare model folders (700 MB of context) — both now in
 `.gcloudignore`. The phone client reuses the web stitcher unchanged. Not done: the owner's own test
-on the phone, and the "same notes as the web app" comparison.
+on the phone, and the "same notes as the web app" comparison. Same evening: Expo Go auto-updated to
+SDK 58 and refused the SDK 57 project, so `apps/mobile` moved to **Expo 58.0.21, React Native 0.88.1,
+React 19.3** (`npx expo install expo@^58` + `--fix`; `tsc` clean, `expo-doctor` 20/20). ⚠ Expo Go
+follows the newest SDK only, so this will recur with every SDK release until a development build.
 
 ## 2026-10-17 — saving a score no longer depends on the browser's font or print engine
 

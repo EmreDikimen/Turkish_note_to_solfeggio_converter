@@ -25,7 +25,7 @@ a document-scanner camera, playback with the screen locked, a "Share → MakamVi
 
 | Milestone | What it proves | State |
 |---|---|---|
-| M0 skeleton | `apps/mobile` builds and runs on one Android phone, importing `@turkish-omr/core` | ✅ **DONE** — built on branch `native-app` 2026-10-11 (Expo SDK 57, `tsc` clean, `expo-doctor` 21/21, Android bundle exports, 597 modules); **opened on the owner's Android phone in Expo Go and confirmed working (2026-10-29)**. iPhone deferred: no device |
+| M0 skeleton | `apps/mobile` builds and runs on one Android phone, importing `@turkish-omr/core` | ✅ **DONE** — built on branch `native-app` 2026-10-11 (Expo SDK 57 — **upgraded to SDK 58 on 2026-10-29**, when Expo Go updated itself and refused 57; `tsc` clean, `expo-doctor` 21/21, Android bundle exports, 597 modules); **opened on the owner's Android phone in Expo Go and confirmed working (2026-10-29)**. iPhone deferred: no device |
 | M1 read a page | photo → strips → server decode → notes on screen, same notes as the web app on the same photo | 🚧 **both halves built**: `POST /page` (2026-10-11) is on Cloud Run as a **tagged, no-traffic test revision** since 2026-10-29 ([../METRICS-SERVER-PAGE.md](../METRICS-SERVER-PAGE.md)); the phone client (2026-10-29) picks or takes a photo, POSTs it, stitches with the web's own `tools/render/stitch.ts` and lists the notes bar by bar. ⏭ Owner: try it on the phone; the "same notes as the web app" check is still owed |
 | M2 score view | the page drawn as a staff, tappable | — |
 | M3 playback | 53-koma playback with makam and usul, screen-off playback | — |

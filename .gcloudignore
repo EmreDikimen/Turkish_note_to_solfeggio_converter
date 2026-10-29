@@ -30,6 +30,12 @@ node_modules/
 /archive/
 /tools/
 
+# Personal documents at the repo root (2026-10-29): untracked, but .gitignore does not apply here,
+# so without this a build would upload them to Cloud Build. Root-only, and the repo keeps none.
+/*.pdf
+/*.pptx
+/*.docx
+
 # Build outputs and local state.
 /dist/
 /apps/web/dist/

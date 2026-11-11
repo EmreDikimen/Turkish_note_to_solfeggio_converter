@@ -57,6 +57,7 @@ page on the owner's phone (2026-10-08). Not fixed there; the Play app replaces i
 |---|---|---|
 | 1 | — | first package (2026-10-05; rebuilt at min SDK 24 on 2026-10-10) — launcher name **KomaVision** |
 | 2 | 1.0.1 | **renamed MakamVision** (owner, 2026-10-24) — launcher name, nothing else |
+| 3 | 1.0.2 | the second closed test's update (2026-11-11) — no shell change; the embedded web manifest now says MakamVision. Shipped beside the site's iPhone install strip |
 
 ⚠ **The app is called MakamVision since 2026-10-24, but the package (`com.komavision.app`) and the
 site address (`komavision.netlify.app`) keep the old word on purpose**: the package can never

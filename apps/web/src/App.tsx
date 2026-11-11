@@ -89,6 +89,7 @@ import { TransportBar } from "./ui/TransportBar";
 import { ScoreCard } from "./ui/ScoreCard";
 import { EditPalette, type PaletteRefusal, type Tool } from "./ui/EditPalette";
 import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
+import { IosInstallHint } from "./ui/IosInstallHint";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
 import { FullScreenBar } from "./ui/FullScreen";
@@ -2586,6 +2587,7 @@ export function App() {
           reporting itself if the reader loads another mid-download. Its own state decides whether
           it draws anything at all. */}
       <VoiceSwitchNotice status={voiceStatus} />
+      <IosInstallHint />
 
       {SHOW_DEV_PANEL && (
       <AdvancedPanel

@@ -337,6 +337,12 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 ⚠ **`data-pitch` is DERIVED** from (phone, score, Nota tab, not editing), so it cannot be stale.
 ⛔ **There is no Güfte toggle** — ask for lyrics with `?lyrics=1`.
 
+**The iPhone install strip (2026-11-06)** — `#ios-install-hint[data-omr="ios-install"]`, closed by
+`#ios-install-hint-close`. ⚠ **Keyed on the USER AGENT, not the width**: it renders only for an iOS
+UA that is not standalone and not an in-app browser, and never once closed (`omrIosHintClosed`).
+Every check at the default desktop UA sees none of it; a check that wants it sets an iPhone
+`userAgent` on its context. CSS hides it on `data-mtab="duzenle"`.
+
 ## Two traps
 
 1. **Nothing that ticks on a timer may render inside `#omr-status`** — `page-smoke` counts distinct

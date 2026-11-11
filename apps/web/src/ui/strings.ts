@@ -83,6 +83,17 @@ export const TR = {
     fullscreenTitle: "Notayı tek başına göster — diğer her şey gizlenir",
     fullscreenExit: "Çık",
     fullscreenExitTitle: "Tam ekrandan çık",
+    // iPhone's "Ana Ekrana Ekle" (owner, 2026-11-06). Android Chrome offers the install itself;
+    // iOS never does, so this strip names the two taps. ⚠ The share icon sits between the two
+    // sentences in the strip, so `iosHintLead` ends where the icon goes.
+    iosHintLead: "Uygulama gibi kullanmak için:",
+    iosHintShare: "Paylaş",
+    iosHintAdd: "→ ⌄ → Ana Ekrana Ekle",
+    // ⚠ Two hidden steps, both seen on an iOS 27 simulator (owner, 2026-11-06): newer Safari keeps
+    // Paylaş in its ≡ / ⋯ menu rather than on the bar, and the share sheet hides Ana Ekrana Ekle
+    // until its ⌄ button expands the list — a tester's "there is no such option" was that.
+    iosHintMenu: "Paylaş yoksa ≡ ya da ⋯ menüsüne bakın. Ana Ekrana Ekle, ⌄ ile açılan listede.",
+    iosHintDismiss: "Kapat",
   },
 
   // The light / dark switch (2026-10-01).

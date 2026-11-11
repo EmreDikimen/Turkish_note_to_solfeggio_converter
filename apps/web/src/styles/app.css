@@ -1006,6 +1006,74 @@
   pointer-events: none;
 }
 
+/* iPhone's "Ana Ekrana Ekle" strip (IosInstallHint.tsx, 2026-11-06). Fixed to the bottom, above the
+   home indicator; the phone block below lifts it over the tab bar and hides it in Düzenle, where
+   the docked toolbox owns the bottom. Below the tab bar's 45 so it can never cover the way out. */
+.kv-ios-hint {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-3));
+  z-index: 42;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 auto;
+  max-width: 30rem;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+.kv-ios-hint__text {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.kv-ios-hint__text strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.kv-ios-hint__step {
+  white-space: nowrap;
+}
+.kv-ios-hint__menu {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.kv-ios-hint__share {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 2px;
+  color: var(--accent);
+}
+.kv-ios-hint__close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* While the strip is up, the page ends above it — else it sits on the footer's last line. */
+.kv-page:has(.kv-ios-hint) {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+}
+
 /* A failed download is the one state that is not progress, so it changes the edge and nothing else
    — `--danger` is muted on purpose (tokens.css) and a whole red box would out-shout the score. */
 .kv-voice-notice.is-failed {
@@ -3031,6 +3099,17 @@
   }
   .kv-mtabs__tab.is-active {
     color: var(--accent);
+  }
+
+  /* The iPhone install strip rides above the bar, and stays out of Düzenle (IosInstallHint.tsx). */
+  .kv-page[data-mtab] .kv-ios-hint {
+    bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+  }
+  .kv-page[data-mtab="duzenle"] .kv-ios-hint {
+    display: none;
+  }
+  .kv-page[data-mtab]:not([data-mtab="duzenle"]):has(.kv-ios-hint) {
+    padding-bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + 88px);
   }
 
   /* The page has to end above the bar, or its last row is unreachable. */

@@ -112,6 +112,12 @@ export function mandalBlockWidth(mandalCount: number): number {
  * speaking length, the sharpest nearest it — so "further right" means "higher", which is the same
  * direction the courses themselves rise in. Reversing one of the two would be a picture that
  * contradicts itself.
+ *
+ * ⚠ **`mandal` here is a POSITION (slot), not a lever index, and `mandalCount` is the number of
+ * positions on the widest course** (2026-11-11). The courses no longer carry the same number of
+ * levers: a course with a gap simply leaves some positions empty, and its levers sit where their
+ * pitch is — which is how the instrument looks. The block is the same width on every course, so
+ * the body's left edge keeps the slope the owner asked for.
  */
 export function mandalRect(
   courseIndex: number,
@@ -173,8 +179,8 @@ export const FULL_WINDOW: Window = { x: 0, y: 0, w: VIEW_W, h: VIEW_H };
 /**
  * The mandals close up: the band of levers, cropped to the courses this piece actually touches.
  *
- * ⚠ **This is not a nicety, it is what makes the feature usable on a phone.** 26 courses × 12
- * mandals is 312 boxes; at full width each is about four screen pixels across on a handset, which
+ * ⚠ **This is not a nicety, it is what makes the feature usable on a phone.** 26 courses carry
+ * 212 levers; at full width each is about four screen pixels across on a handset, which
  * is a texture rather than a control you can read. Cropping BOTH ways — the long string tails go,
  * and so do the courses the piece never plays — is what buys the size back. A typical piece uses a
  * dozen or so courses, so it is usually a 3-4× magnification.

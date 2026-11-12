@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-10-28
+updated: 2026-11-12
 
 ## Now
 
@@ -41,6 +41,21 @@ application: the developer panel hidden (`?dev=1` shows it), staff and sound tra
 levers drawn contiguous. ⏭ After access: a production release (v2 `MakamVision-1.0.1.aab` from the
 library), countries, review. ⏳ The volta bug (#3) waits for an example page from the owner.
 [features/play-store.md](features/play-store.md) · [features/tester-feedback.md](features/tester-feedback.md).
+
+✅ **Deployed 2026-11-12 (`Deploy is live!`, `smoke:live` PASS) — the kanun's mandal counts were replaced by the owner's own count
+on a real instrument**: Sol 9 and La 8 (were 10 and 9), far fewer levers on the top six courses and
+on the lowest one, 212 in all (was 252). ⚠ The split into up/down on the end courses is a guess,
+and the 2nd and 3rd courses from the bottom are still drawn regular because no count exists for
+them ([features/kanun-mandal-count.md](features/kanun-mandal-count.md)). `npm test` and the full
+`smoke:editor` (409 ok) pass.
+
+✅ **Deployed 2026-11-12 (`Deploy is live!`, `smoke:live` PASS) — the kanun's mandals were rebuilt on 2026-11-11** from a paper that measured nine
+makers' instruments: the count differs by course (252 levers, was 312), a mandal is 16.67 cents
+rather than a koma, and the levers nearest the nut are the ones up — which reverses the direction
+released on 2026-10-28. Only the drawing changes; the sound does not. `npm test` passes and so does
+the kanun block of `smoke:editor`. ⏭ **Owner:** look at it on the live site (manual check 26)
+and say whether your own kanun matches the paper's counts
+([features/kanun-view.md](features/kanun-view.md)).
 
 ✅ **Deployed 2026-10-17 (`Deploy is live!`, `smoke:live` PASS): saving a score no longer depends
 on the browser** — a tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app

@@ -2,7 +2,7 @@
 
 purpose: the see-it-yourself checks that need EARS or EYES, for the audio, instrument and app features
 audience: the owner, verifying a feature before it ships
-updated: 2026-09-05
+updated: 2026-11-12
 
 Split out of [../MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-16, when that file hit its
 400-line cap. The split is by genre, per [../MAINTAINING.md](MAINTAINING.md): everything here is
@@ -223,7 +223,7 @@ as a kanun, or whether the mandal plan is one a player would actually set. Only 
 **How.** `npm run dev:web`, open `?score=/beyati-delisin.json`, then the **Enstrüman üzerinde** tab, and pick **Kanun** from the dropdown. ⚠ That also switches the sound to the kanun; check that it does. ⚠ Since 2026-09-04 the tab arrives on **Keman** and has *already* started that voice, so what you are watching here is a second switch, from violin to kanun.
 
 1. **Before pressing anything, read the line above the instrument.** It says which mandals to set
-   before playing — the makam's setting. On `beyati-delisin` it says **Segâh −2**. Judge that as a
+   before playing, in **mandals from the natural**. On `beyati-delisin` it says **Segâh −3**. Judge that as a
    kanuncu: *is that the mandal you would set for this piece?* ⚠ Expect it to disagree with the
    staff by a koma on some notes, and that is **not a bug** — the engraver prints the nearest
    standard AEU sign while the file stores the exact comma, so a note drawn with a koma-bemol can be
@@ -239,7 +239,7 @@ as a kanun, or whether the mandal plan is one a player would actually set. Only 
    +3). Two things only an eye can judge: **did you catch it**, and **was 700 ms long enough**? If
    the flash is missable, say so — the rejected alternative (everything away from the opening
    setting stays red) is written down and can be brought back.
-4. **Tick "Mandallara yaklaş".** This is the close-up, and it is the answer to 312 levers being four
+4. **Tick "Mandallara yaklaş".** This is the close-up, and it is the answer to 212 levers being four
    pixels wide. The frame is fitted to the piece, so **no row should be cut through the middle** — if
    one is, that is a real finding.
 5. **On a phone.** ⚠ Stated so it is not reported as a discovery: **the full view is a texture on a

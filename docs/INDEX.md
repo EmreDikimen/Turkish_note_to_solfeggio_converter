@@ -2,7 +2,7 @@
 
 purpose: route a reader (human or agent) to the one file that owns an answer
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-10-11
+updated: 2026-11-12
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
@@ -77,6 +77,7 @@ wrong — fix by deleting, not by syncing.
 | How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
 | The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
 | The kanun view (F3): the 26 courses, the mandal state machine, why it is drawn and not photographed | [features/kanun-view.md](features/kanun-view.md) |
+| Mandals counted on a real kanun by the owner, 2026-11-12 — data, not yet applied | [features/kanun-mandal-count.md](features/kanun-mandal-count.md) |
 | The sol klarnet view (F3): the photograph, the fingering table, the lip meter | [features/clarinet-view.md](features/clarinet-view.md) |
 | The bar beside the instrument (F3): one measure drawn on its own, play-this-bar, editing in place | [features/measure-card.md](features/measure-card.md) |
 | The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |

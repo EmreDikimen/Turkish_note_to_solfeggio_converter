@@ -2304,8 +2304,8 @@
    reads as absence rather than as a state, and on brown wood a faint outline is nearly invisible at
    the size these are drawn. Both states are now solid and sit on OPPOSITE sides of the wood's
    lightness — ivory for a raised lever, near-black for a lowered one — so they are told apart at a
-   glance and at any zoom. Exactly one per course is ivory; see the comment in Kanun.tsx for why
-   that is the truthful drawing rather than a simplification. */
+   glance and at any zoom. The levers up are the ones nearest the nut (since 2026-11-11), so the
+   ivory run on a course ends at the lever that sets its pitch. */
 .kv-kanun__mandals rect {
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
@@ -2321,7 +2321,7 @@
   stroke: #6b4a2c;
 }
 
-/* Where the natural sits, so the eye can read "two komas flat" straight off the picture without
+/* Where the natural sits, so the eye can read "two mandals flat" straight off the picture without
    counting from the end. ⚠ A stroke, never a fill — a fill would claim the lever is raised. Amber
    rather than white so it shows on both of the two fills above, and so it cannot be confused with
    the red change frame below. */

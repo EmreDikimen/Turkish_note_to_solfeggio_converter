@@ -2,7 +2,7 @@
 
 purpose: the full list of DOM attributes the automated checks read, and the ⚠ traps in each
 audience: anyone writing a browser check, or changing a component a check watches
-updated: 2026-10-27
+updated: 2026-11-12
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows
@@ -252,24 +252,31 @@ formula, the string-choice rule and the finger number. [features/fingerboard.md]
 
 ## The kanun tab (F3's second instrument)
 
-`#kanun[data-omr="kanun"][data-courses][data-mandals][data-zoom="full|mandal"][data-note-state="idle|playing|rest|out-of-range"]`,
-312 `[data-omr="kanun-mandal"]` carrying `data-course` / `data-mandal` / `data-offset` /
-`data-mandal-state="up|down"` / `data-mandal-active="1"` (one per course) / `data-changed="to|from"`, 26 `[data-omr="kanun-course"]` **groups**
+`#kanun[data-omr="kanun"][data-courses][data-mandals][data-zoom="full|mandal"][data-note-state="idle|playing|rest|out-of-range"]`
+(`data-mandals` is the TOTAL, 212), 26 `[data-omr="kanun-mandal-row"]` **groups** carrying
+`data-course` / `data-levers` / `data-raised`, holding 212 `[data-omr="kanun-mandal"]` in all —
+⚠ **not the same number per row** (12 / 9 / 8 by note name in the middle, fewer at both ends, since 2026-11-12; a row's untouched `data-raised` is 6 on a regular course and the course's own number on an end course) — each carrying
+`data-course` / `data-mandal` / `data-step` / `data-offset` / `data-mandal-state="up|down"` /
+`data-mandal-active="1"` / `data-changed="to|from"`; 26 `[data-omr="kanun-course"]` **groups**
 carrying `data-perde` / `data-course-state="idle|playing"`, and one
-`[data-omr="kanun-opening-item"]` per course the makam sets before playing.
+`[data-omr="kanun-opening-item"]` (`data-offset` in mandals, `data-step` in pitch steps) per course
+the makam sets before playing.
 
 Each course group holds **three `<line>`s**, because a perde is three strings sharing one lever —
 78 in total, and `smoke:editor` asserts the total, since 26 would still pass if the view went back
 to one line each.
 
-⚠ **`data-mandal-active` is the load-bearing one: exactly ONE lever per course is active at every
-moment**, and `smoke:editor` asserts that at every sample across a whole playback. A mandal is a
-lever that STAYS WHERE IT IS PUT, so a leak in the replay shows up there and nowhere else.
-⭐ **Since 2026-10-27 the levers are drawn CONTIGUOUS** (owner, a kanun player's rule): the active
-lever and every lever to its right are `up`, every one to its left `down` — so `up` is no longer one
-per course; count `data-mandal-active`, and `smoke:editor` checks the contiguity too.
+⚠ **`data-raised` on the row is the load-bearing one: every course has exactly ONE setting at every
+moment**, and its levers must agree with it — the first `data-raised` are `up`, every later one
+`down`, and the last one up carries `data-mandal-active`. `smoke:editor` asserts that at every
+sample across a whole playback. A mandal is a lever that STAYS WHERE IT IS PUT, so a leak in the
+replay shows up there and nowhere else.
+⚠ **Do not count `data-mandal-active` and expect 26** (the rule until 2026-11-11): `data-raised="0"`
+is the open string, a real setting with NO active lever, and `meltem_notes` opens five courses there.
+⭐ **The levers rise from the NUT side** (owner, 2026-11-11, reversing the 2026-10-27 direction).
 
-⚠ **`data-changed` fades**: it marks an event, not a state, so never assert it without driving the
+⚠ **`data-changed` fades**: it marks an event, not a state — on EVERY lever one move moved, `to` for
+the ones that rose and `from` for the ones that fell — so never assert it without driving the
 clock to a change — and it is drawn as a red **frame**, never a fill, because the fill is what
 carries `data-mandal-state`.
 

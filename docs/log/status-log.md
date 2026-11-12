@@ -2,10 +2,55 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-10-28
+updated: 2026-11-12
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-11-12 — the mandal counts become the owner's own instrument
+
+The owner put two photos of real kanuns beside the app. The second (12000×9000) was sharp enough to
+count levers on: the agent read Sol 9 and La 8 where the paper's majority has 10 and 9, and far
+fewer levers at both ends. The owner then counted the instrument by eye and the two agreed on
+fourteen courses in a row; one off-by-one at the bass end was settled by asking which course is the
+first with 12 levers (the 7th). Applied: `MandalLayout` gained per-course rows (`courses`), the
+helpers take a course instead of a letter, 212 levers (was 252). The four scores plan exactly as
+before. ⚠ Guesses, all listed in [../features/kanun-mandal-count.md](../features/kanun-mandal-count.md):
+the up/down split on every end course, three top courses the owner did not count, and Mi3/Fa3 left
+regular. `npm test` and the full `smoke:editor` (409 ok) pass. Deployed the same day: `Deploy is
+live!`, `smoke:live` PASS, the counter answers 401.
+
+## 2026-11-12 — the kanun's new mandals are live
+
+The owner asked for the deploy the day after the rebuild below. `typecheck` and `npm test` pass;
+`npm run deploy:app` printed `Deploy is live!`; `smoke:live` PASS (server path read 229 notes in
+64.2 s, refusal path refused); the visit counter answers 401, the healthy code. ⚠ The full
+`smoke:editor` was NOT re-run after its one stale expected value (`Segâh-2` → `Segâh-3`) was
+corrected — the run before that correction read 407 ok and that 1 fail. Nothing is committed yet.
+
+## 2026-11-11 — the kanun's mandals: counted per course, 16.67 cents each, up from the nut
+
+The owner said the mandals were wrong (*"hepsini 9 mandalmış gibi alıyoruz"* — the code had 12 on
+every course, one koma each) and asked for a web search. The web pages gave only ranges ("9–12 per
+whole tone"). **One paper had measurements**: Günalçin 2013 (Rast Müzikoloji Dergisi I/2), nine
+makers' instruments, a per-course table and a figure. Three things came out of it, each put to the
+owner as a choice and each taken from the paper:
+
+- **The count differs by note name** — Do/Fa 12, Sol 10, Re/La 9, Mi/Si 8 (252 levers, was 312) —
+  and the short courses have a **gap**: their extra levers are the top of the sharp semitone.
+- **A mandal is a 72nd of an octave**, so 4 komas are 5 mandals and 5 komas are 6.
+- **The levers nearest the nut are the ones up.** This reverses the 2026-10-27 direction.
+
+Code: `MANDAL_LAYOUTS` became per-letter step lists, `MandalPos` carries `raised` / `step` /
+`offset`, `place` searches the nearest lever within one step, and the view draws one `<g>` row per
+course because the levers are no longer a rectangle. ⚠ **Why `data-raised` moved to the row**: none
+up is a real setting (the open string) and has no active lever, so "one active lever per course"
+stopped being true — `meltem_notes` opens five courses there.
+
+Measured on the four scores on disk: 0 unreachable, 0 respelled of 1,875 notes
+([../features/kanun-view.md](../features/kanun-view.md)). `npm test` and the kanun block of
+`smoke:editor` pass. ⚠ **Not deployed.** ⚠ The PDF was unreadable to the fetch tool and to the
+machine (no poppler); it was read with PyMuPDF from `.venv-ml`, and the figure by rendering the page.
 
 ## 2026-10-28 — closed test over, production access applied for
 

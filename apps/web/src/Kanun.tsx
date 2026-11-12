@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   KANUN_COURSES,
   DEFAULT_MANDAL_LAYOUT,
+  mandalSteps,
+  naturalRaisedOf,
   openingMandals,
   planMandals,
   naturalKoma,
@@ -44,6 +46,10 @@ import { TR } from "./ui/strings";
  * 2. **A change is an EVENT, not a state**, so it is drawn as a flash that fades (owner,
  *    2026-08-29). Which mandal is up is already readable from the filled box; red is reserved for
  *    *something just moved*.
+ *
+ * ⚠ **THE COURSES DO NOT ALL CARRY THE SAME NUMBER OF MANDALS** (2026-11-11): Do and Fa have 12,
+ * the others 8 to 10 with a gap, so the levers are NOT a rectangular grid. Each course is its own
+ * `<g>` row and a lever is addressed as `row.children[i]` — never as `course * count + i`.
  *
  * How it's organized:
  *   * `packages/core/src/kanun.ts` owns the courses, the mandals and the plan.
@@ -88,6 +94,21 @@ export function Kanun({
 
   const courses = KANUN_COURSES;
   const layout = DEFAULT_MANDAL_LAYOUT;
+
+  // The steps each course's levers give, nut side first — one array per course, of differing
+  // length. `slots` is how many lever POSITIONS the widest course has (12); a lever is drawn at the
+  // position of its step, which is what leaves the gap on a course that has one.
+  const { steps, slots, leverTotal } = useMemo(() => {
+    const steps = courses.map((c) => mandalSteps(c, layout));
+    const top = Math.max(...steps.map((s) => s[s.length - 1] ?? 0));
+    return {
+      steps,
+      slots: layout.naturalRaised + top,
+      leverTotal: steps.reduce((a, s) => a + s.length, 0),
+    };
+  }, [courses, layout]);
+  /** Which position a lever giving `step` is drawn at, 0 = nearest the nut. */
+  const slotOf = (step: number) => step + layout.naturalRaised - 1;
 
   // The whole piece is planned once. It cannot be done per frame in any case — the mandal state at
   // a given note depends on every note before it.
@@ -142,7 +163,7 @@ export function Kanun({
     return { plan, opening: openingMandals(plan, courses, layout), flashes, lo, hi };
   }, [doc, timeline, makamDeltas, courses, layout]);
 
-  // The close-up the owner will need on a phone: 26 courses x 12 mandals is 312 boxes, and at full
+  // The close-up the owner will need on a phone: 26 courses carry 212 levers, and at full
   // width each is about four screen pixels across on a handset. Off by default, because the whole
   // instrument is what tells you which instrument this is — the same reasoning as the violin's
   // neck zoom.
@@ -161,27 +182,41 @@ export function Kanun({
     const root = rootRef.current;
     if (!grid || !lines || !root) return;
 
-    const mandalCount = layout.count;
-    const box = (c: number, m: number) => grid.children[c * mandalCount + m] as SVGRectElement | undefined;
+    const row = (c: number) => grid.children[c] as SVGGElement | undefined;
+    const box = (c: number, m: number) => row(c)?.children[m] as SVGRectElement | undefined;
     const line = (c: number) => lines.children[c] as SVGGElement | undefined;
 
     const p = planRef.current;
 
     /**
-     * Set one course's levers to `active`. ⭐ **The levers are contiguous** (owner, 2026-10-27, a
-     * kanun player's rule: *"bir mandalı kaldırdığımızda sağındaki tüm mandallar kalkar ve
-     * indirdiğimizde solundaki tüm mandallar iner, mandallar birbirine bitişiktir"*): the active one
-     * and every lever to its RIGHT (higher index, toward the nut) are up, every one to its left is
-     * down. Until then exactly one box per course was drawn up. `data-mandal-active` still marks the
-     * ONE lever that sets the pitch, which is what the checks count.
+     * Set one course to `raised` mandals up. ⭐ **The levers are contiguous, and they rise from the
+     * NUT side** (owner, 2026-11-11, from Günalçin 2013 — "sol taraftaki altı adedi kalkık"): the
+     * first `raised` levers are up and every one after them is down, so at the natural the six
+     * nearest the nut stand and the sharps lie flat. ⚠ This REVERSES the 2026-10-27 drawing, which
+     * raised the active lever and everything to its right. `data-mandal-active` marks the ONE lever
+     * that sets the pitch — the last one up — and ⚠ **there is none when `raised` is 0**: every
+     * lever down is the open string, a real setting. So the row carries `data-raised`, and that is
+     * what a check reads.
      */
-    const paintCourse = (c: number, active: number) => {
-      for (let m = 0; m < mandalCount; m++) {
-        const b = box(c, m);
-        if (!b) continue;
-        b.setAttribute("data-mandal-state", m >= active ? "up" : "down");
-        if (m === active) b.setAttribute("data-mandal-active", "1");
+    const paintCourse = (c: number, raised: number) => {
+      const r = row(c);
+      if (!r) return;
+      r.setAttribute("data-raised", String(raised));
+      for (let m = 0; m < r.children.length; m++) {
+        const b = r.children[m]!;
+        b.setAttribute("data-mandal-state", m < raised ? "up" : "down");
+        if (m === raised - 1) b.setAttribute("data-mandal-active", "1");
         else b.removeAttribute("data-mandal-active");
+      }
+    };
+
+    /** Light, or unlight, every lever one move actually moved. */
+    const markChange = (c: number, from: number, to: number, on: boolean) => {
+      // Going up, the levers `from..to-1` rose; going down, `to..from-1` fell.
+      const kind = to > from ? "to" : "from";
+      for (let m = Math.min(from, to); m < Math.max(from, to); m++) {
+        if (on) box(c, m)?.setAttribute("data-changed", kind);
+        else box(c, m)?.removeAttribute("data-changed");
       }
     };
 
@@ -189,7 +224,8 @@ export function Kanun({
     const reset = () => {
       for (let c = 0; c < courses.length; c++) {
         paintCourse(c, p.opening[c]!);
-        for (let m = 0; m < mandalCount; m++) box(c, m)?.removeAttribute("data-changed");
+        const n = row(c)?.children.length ?? 0;
+        for (let m = 0; m < n; m++) box(c, m)?.removeAttribute("data-changed");
         line(c)?.setAttribute("data-course-state", "idle");
       }
     };
@@ -236,7 +272,7 @@ export function Kanun({
       lastNote = i;
 
       // Advance the mandals to where they stand at this note. Only a course that actually moves is
-      // repainted (12 boxes) — repainting 312 rects every frame would be the one expensive thing here.
+      // repainted (a dozen boxes) — repainting 212 rects every frame would be the one expensive thing here.
       while (applied < plan.changes.length && plan.changes[applied]!.noteIndex <= i) {
         const ch = plan.changes[applied]!;
         paintCourse(ch.courseIndex, ch.to);
@@ -250,15 +286,9 @@ export function Kanun({
         const f = flashes[k]!;
         const on = pos >= f.fromMs && pos <= f.toMs;
         if (on === flashed.has(k)) continue;
-        if (on) {
-          flashed.add(k);
-          box(f.courseIndex, f.to)?.setAttribute("data-changed", "to");
-          box(f.courseIndex, f.from)?.setAttribute("data-changed", "from");
-        } else {
-          flashed.delete(k);
-          box(f.courseIndex, f.to)?.removeAttribute("data-changed");
-          box(f.courseIndex, f.from)?.removeAttribute("data-changed");
-        }
+        if (on) flashed.add(k);
+        else flashed.delete(k);
+        markChange(f.courseIndex, f.from, f.to, on);
       }
 
       // The sounding course.
@@ -283,7 +313,7 @@ export function Kanun({
     return () => cancelAnimationFrame(raf);
   }, [playing, getPositionMs, courses, layout, plan]);
 
-  const win = zoom ? mandalWindow(lo, hi, courses.length, layout.count) : FULL_WINDOW;
+  const win = zoom ? mandalWindow(lo, hi, courses.length, slots) : FULL_WINDOW;
   // How much bigger everything in the window is drawn than at full zoom. Multiplying a size by
   // this holds it steady on screen, the same trick `Fingerboard.tsx` uses.
   const k = win.h / VIEW_H;
@@ -295,7 +325,7 @@ export function Kanun({
       ref={rootRef}
       data-omr="kanun"
       data-courses={courses.length}
-      data-mandals={layout.count}
+      data-mandals={leverTotal}
       data-zoom={zoom ? "mandal" : "full"}
       data-note-state="idle"
     >
@@ -328,6 +358,7 @@ export function Kanun({
               data-course={o.course.index}
               data-perde={o.course.perde}
               data-offset={o.offset}
+              data-step={o.step}
             >
               {n > 0 ? ", " : ""}
               {o.course.perde} {o.offset > 0 ? `+${o.offset}` : o.offset}
@@ -344,7 +375,7 @@ export function Kanun({
       >
         {/* The soundboard. ⚠ Schematic: the taper is a chosen ratio, not one derived from the
             tuning — see the header of kanunGeometry.ts for why deriving it would be wrong. */}
-        <polygon className="kv-kanun__body" points={bodyOutline(courses.length, layout.count)} />
+        <polygon className="kv-kanun__body" points={bodyOutline(courses.length, slots)} />
 
         <line
           className="kv-kanun__bridge"
@@ -381,36 +412,44 @@ export function Kanun({
         </g>
 
         {/* The mandals: one row of levers per course, laid along the diagonal exactly as they sit
-            on the instrument. ⚠ **Exactly one box per course is filled** — the lever that is
-            actually setting the pitch. On a real kanun several levers can be physically raised at
-            once and only the one nearest the bridge counts, so drawing the effective one is the
-            truthful summary rather than a simplification of the sound. ⚠ Box 0 means every lever
-            down, which is the course at its flattest, not "no setting".
-            ⚠ The order of these children IS the index the animation frame addresses them by
-            (`course * mandalCount + mandal`). Do not reorder or filter them. */}
+            on the instrument, nut side first. ⚠ **The rows are NOT the same length** — Do and Fa
+            carry 12 levers, the rest 8 or 9, and the two ends of the instrument far fewer — and a lever is drawn at the position of the STEP it
+            gives, so a course with missing steps shows the same gap the instrument has.
+            ⚠ Several levers are up at once; the one that sets the pitch is the LAST one up (nearest
+            the bridge), and it alone carries `data-mandal-active`.
+            ⚠ The order of these children IS how the animation frame addresses them
+            (`rows[course].children[lever]`). Do not reorder or filter them. */}
         <g className="kv-kanun__mandals" ref={gridRef}>
-          {courses.flatMap((c) =>
-            Array.from({ length: layout.count }, (_, m) => {
-              const r = mandalRect(c.index, m, courses.length, layout.count);
-              const offset = m - layout.naturalIndex;
-              return (
-                <rect
-                  key={`${c.index}:${m}`}
-                  data-omr="kanun-mandal"
-                  data-course={c.index}
-                  data-mandal={m}
-                  data-offset={offset}
-                  data-natural={offset === 0 ? "1" : undefined}
-                  data-mandal-state="down"
-                  x={r.x}
-                  y={r.y}
-                  width={r.w}
-                  height={r.h}
-                  rx={2}
-                />
-              );
-            }),
-          )}
+          {courses.map((c) => (
+            <g
+              key={c.index}
+              data-omr="kanun-mandal-row"
+              data-course={c.index}
+              data-levers={steps[c.index]!.length}
+              data-raised={naturalRaisedOf(c, layout)}
+            >
+              {steps[c.index]!.map((step, m) => {
+                const r = mandalRect(c.index, slotOf(step), courses.length, slots);
+                return (
+                  <rect
+                    key={m}
+                    data-omr="kanun-mandal"
+                    data-course={c.index}
+                    data-mandal={m}
+                    data-step={step}
+                    data-offset={m + 1 - naturalRaisedOf(c, layout)}
+                    data-natural={step === 0 ? "1" : undefined}
+                    data-mandal-state="down"
+                    x={r.x}
+                    y={r.y}
+                    width={r.w}
+                    height={r.h}
+                    rx={2}
+                  />
+                );
+              })}
+            </g>
+          ))}
         </g>
 
         {/* Perde names, ⚠ **OUTSIDE the soundboard** (owner, 2026-08-29). Keeping them off the wood
@@ -424,7 +463,7 @@ export function Kanun({
           {courses.map((c) => (
             <text
               key={c.index}
-              x={labelX(c.index, courses.length, layout.count)}
+              x={labelX(c.index, courses.length, slots)}
               y={courseY(c.index, courses.length)}
               textAnchor="end"
               dominantBaseline="middle"

@@ -2,7 +2,7 @@
 
 purpose: the one list of problems reported or found during the Play Store closed test, with who found each, its state, and what was done — the raw material for the production-access application
 audience: the owner (filling Play's production questionnaire) and anyone fixing app bugs
-updated: 2026-10-29
+updated: 2026-11-12
 
 > Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). How the closed test
 > itself works: [play-store.md](play-store.md).
@@ -20,7 +20,7 @@ opposite, an agent's misreading). "Fixed, not deployed" below only means not rel
 | # | First noted | Source | Problem | State |
 |---|---|---|---|---|
 | 1 | 2026-10-14 | owner | **Grace notes are drawn but not played.** | ⏭ not investigated |
-| 2 | 2026-10-14 | owner | **Kanun: lowering a mandal may need to move every mandal to its left as well** — how the instrument behaves. ⚠ The owner is not sure this is how a real kanun works. | ✅ live 2026-10-28 (owner confirmed the rule with a kanun player): levers drawn contiguous, `data-mandal-active` one per course |
+| 2 | 2026-10-14 | owner | **Kanun: lowering a mandal may need to move every mandal to its left as well** — how the instrument behaves. ⚠ The owner is not sure this is how a real kanun works. | ✅ contiguous since 2026-10-28. ⚠ **Direction REVERSED 2026-11-11, deployed 2026-11-12**: a paper measuring nine makers' kanuns says the levers nearest the nut are the ones up, so lowering one lowers every lever to its RIGHT ([kanun-view.md](kanun-view.md)) |
 | 3 | 2026-10-14 | owner | **The first volta (1. ending) is played twice.** | ⏭ not investigated. ⚠ What a repeat or a volta does is decided ONLY by `resolveStructure` in `stitch.ts` ([../APP-RULES.md](../APP-RULES.md)) — fix it there, never with a second rule in the editor |
 | 4 | 2026-10-13 | tester | **"Gelişmiş — geliştirici ayarları" is visible to everyone** (JSON load, strip reader, slice inspector, raw model output). | ✅ live 2026-10-28: hidden in production, shown on the dev server and with `?dev=1` (`devMode.ts`) |
 

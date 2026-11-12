@@ -2,7 +2,7 @@
 
 purpose: the design, the instrument data and the decisions behind the kanun half of the fingerboard tab
 audience: agents and the owner working on the kanun view, before changing the courses, the mandals or the drawing
-updated: 2026-10-27
+updated: 2026-11-12
 
 > This is the kanun chapter of F3; the violin chapter is [fingerboard.md](fingerboard.md) and the
 > track index is [README.md](README.md). ⚠ Since 2026-08-29 the two share **one tab**, *Enstrüman
@@ -28,7 +28,7 @@ leaves. Every note is an independent lookup, which is why `Fingerboard.tsx` can 
 frame from the current note and nothing else.
 
 **A mandal is a fact about the whole piece.** It is a small lever under one course; raising it
-shortens the strings by one koma, and it **stays where it is put** until somebody moves it. So the
+shortens the strings by one mandal step (16.67 cents, not a koma — below), and it **stays where it is put** until somebody moves it. So the
 picture of a kanun "right now" is not a function of the note being played — it is a function of
 every mandal move made since the piece began. The view is a small **state machine**, not a lookup.
 
@@ -37,36 +37,82 @@ Two things follow that the violin has no version of at all:
 1. **There is something to show before a note is played.** A kanun player sets the makam's mandals
    *before* starting, the way a violinist tunes. That opening setting is the picture this view
    starts on, and it is also listed in words above the instrument.
-⭐ **The levers on a course are CONTIGUOUS** (owner, 2026-10-27, confirmed with a kanun player):
-raising a mandal raises every one to its right, lowering one lowers every one to its left. So the
-view draws the active lever and everything to its right up, the rest down; one lever per course still
-carries `data-mandal-active`. Until then a single box per course was drawn up.
+⭐ **The levers on a course are CONTIGUOUS, and they rise from the NUT side** (owner, 2026-11-11,
+from Günalçin 2013: *"sol taraftaki altı adedi kalkık, diğer mandalların tamamı yatık"*). The first
+`raised` levers are up and every later one is down; the **last one up** sets the pitch and carries
+`data-mandal-active`. ⚠ This REVERSES the 2026-10-27 drawing (the active lever and everything to its
+*right* up), which had been confirmed by word of mouth and could not describe a working instrument:
+the raised lever nearest the bridge is the one that stops the string, so levers up on the bridge side
+would always win.
 
 2. **A mandal change is an EVENT.** Which lever is up is already readable from the picture, so red
    is spent on *something just moved* rather than on *this is the state*.
 
-## How many mandals? The research, and why it is DATA
+## How many mandals? It differs BY COURSE (2026-11-11, re-counted 2026-11-12)
 
-The owner asked for this to be checked rather than assumed, and it was worth checking.
+⭐ **WHAT SHIPS SINCE 2026-11-12 IS THE OWNER'S COUNT ON A REAL INSTRUMENT, NOT THE PAPER'S TABLE**
+— [kanun-mandal-count.md](kanun-mandal-count.md) has every course. It differs from the table below
+in three places: **Sol is 9 (6 + 3) and La is 8 (6 + 2)**; the **top six courses** carry fewer
+levers, falling to 2 on Tiz Muhayyer; and the **lowest course** carries 3. The total is **212**.
+Everything else on this page — the 72-step grid, six up at the natural, the gap, the direction —
+is the paper's and stands. ⚠ On the end courses only a TOTAL was counted; how it splits into up and
+down is a guess from a photo, and three of the top six were not counted by the owner at all.
+`MandalLayout.courses` holds those rows; a regular course is still looked up by its letter.
 
-| Claim | Source |
-|---|---|
-| A professional kanun has **26 perde (courses)**, 3 strings each = 78 strings; 24–27 on other instruments | [Vikipedi](https://tr.wikipedia.org/wiki/Kanun_(%C3%A7alg%C4%B1)) |
-| **Each mandal raises the pitch by one koma** | [kanun yapımcılığı derlemesi](https://dergipark.org.tr/en/download/article-file/927049) |
-| Mandal count **varies by maker**: 5, 6, 7, 8 or 9 are all found; a modern professional instrument carries **9–12 per whole tone** | same |
-| "commonly around a dozen per course", each worth about one koma; an Arabic qanun uses 3–6 per course in quarter-tone steps instead | [Sala Muzik](https://salamuzik.com/blogs/news/kanun-mandal-system-microtone-levers-explained) |
-| The largest **bemol** written in makam music is 5 komas, so five mandals below the natural is enough | [kanun yapımcılığı derlemesi](https://dergipark.org.tr/en/download/article-file/927049) |
 
-⚠ **There is no single right number, which is exactly why it is data.** The owner's first guess was
-nine — not arbitrary, since **a whole tone is nine komas**, so nine mandals span one exactly. What
-ships is **12 mandals with the natural sixth from the bottom** (5 flats + natural + 6 sharps), the
-owner's own instrument. `MANDAL_LAYOUTS` in `packages/core/src/kanun.ts` holds it the way
-`VIOLIN_TUNINGS` holds the open strings: changing it is one row and touches no drawing code.
+Until 2026-11-11 every course carried 12 mandals of one koma each. The owner said that was wrong and
+asked for a search. One paper answers it with measurements: **Günalçin, *Kanunda Ses Sistemi
+Sorunları Üzerine Bir Araştırma*, Rast Müzikoloji Dergisi I/2 (2013), s. 75–106**
+([PDF](https://dergipark.org.tr/tr/download/article-file/115256)), which counted the levers on the
+instruments of **nine Turkish makers** (Tablo 1; the text says ten, the table has nine rows).
 
-⭐ **The asymmetry pays for itself.** Five below reaches every written bemol; six above reaches every
-written diyez that a course has to carry on its own. Anything wider — an 8-koma sharp, say — is
-played on the **neighbouring** course, which is what a kanun player does too, and the code says so
-with a `respelled` flag rather than silently.
+| Course (every octave) | Up at the natural | Down at the natural | Total | Kind |
+|---|---|---|---|---|
+| Do, Fa | 6 | 6 | **12** | *bitişik* — no gap |
+| Sol | 6 | 4 | **10** | *ayrık* — a gap |
+| Re, La | 6 | 3 | **9** | *ayrık* |
+| Mi, Si | 6 | 2 | **8** | *ayrık* |
+
+- **The "up" half is 6 on all nine instruments, on every course.** Lowering them one at a time
+  flattens the course a step at a time; all six down is the open string.
+- **Do and Fa are 6 + 6 on all nine.** Sol is 6 + 4 on all nine. The other four vary by **one**
+  lever between makers; the row above is the majority, and it is the one the paper itself adopts
+  for its own sums (*"Neva ve Dügâh için üç, Hüseynî Aşîran ve Bûselik için iki, Rast için dört"*).
+- ⭐ **On an *ayrık* course the extra levers are the TOP of the sharp semitone**, behind a gap
+  (Şekil 1). Tablo 7 confirms it by pitch: Yegâh's two sharps measure **83.34** and **100** cents,
+  which are steps 5 and 6, not 1 and 2. So Re has no lever at 1–3 steps sharp at all.
+
+### A mandal is 16.67 cents, not a koma
+
+*"Altı mandal 100 cent'lik bir aralık bandında 16,66 centlik aralıklarla yerleştirilmektedir… kanunun
+72 eşit aralıklı tampere sisteme sahip bir çalgı olduğunu ortaya koymaktadır."* A second source says
+the same from the bench — the maker Ümit Bolu: *"16,66 cent'e geliyor benim 1 mandal büyüklüğüm"*
+([kanun yapımcılığı derlemesi](https://dergipark.org.tr/en/download/article-file/927049)).
+
+So the instrument counts in 72nds of an octave under a notation that counts in 53rds:
+
+| Written | Wants (steps) | Played on | Error (paper, Tablo 7) |
+|---|---|---|---|
+| 1 koma (fazla) | 1.36 | mandal **1** | 6.8 cents |
+| 4 komas (bakiye) | 5.43 | mandal **5** | 6.9 cents |
+| 5 komas (küçük mücenneb) | 6.79 | mandal **6**, the full semitone | 13.7 cents |
+
+`MANDAL_STEP_KOMA` (53/72) is that conversion and `MANDAL_LAYOUTS` holds the table above, both in
+`packages/core/src/kanun.ts`. Another maker's instrument is another row; nothing counts levers on
+its own.
+
+⚠ **Three things the paper does not settle, stated rather than guessed:**
+- **The highest courses.** It says the values differ *"mandal tahtasının daraldığı tiz bölge"* (Tiz
+  Nevâ – Tiz Muhayyer) and gives no numbers. ✅ Counted on the owner's instrument 2026-11-12.
+- **Whether the owner's own kanun matches.** ✅ Checked 2026-11-12: it matches on Do, Re, Mi, Fa, Si
+  and differs on Sol and La by one lever each — against the paper's *"Sol is 6 + 4 on all nine"*.
+- **Older sources quoting "one mandal = one koma"** (the earlier research here) are describing the
+  *use* — one koma is one lever — not the spacing.
+
+⚠ **A note can now be unplayable in the MIDDLE of the range.** One koma sharp on Re wants 1.36
+steps and Re's next lever is at 4, and no neighbour reaches either. `place` returns `null` and the
+view says `out-of-range` — it does not round onto the natural. The limit is `REACH_STEPS` = one
+step, read off the instrument: half a step would refuse the 5-koma flat every kanun plays.
 
 ## The courses: 26 perde, and two checks that were run
 
@@ -105,32 +151,33 @@ search, no cost function and no thrashing to guard against — the trap that cos
 string-choice rule a rewrite ([fingerboard.md](fingerboard.md)) cannot arise. The only search left
 is the fallback for a note the written course genuinely cannot reach.
 
-Measured over the four scores on disk, with the shipped 12/5 layout:
+Measured over the four scores on disk with the 2026-11-11 layout — and **unchanged under the
+2026-11-12 one** (same four rows, re-run) — on the written events (no makam
+deltas, repeats not unfolded):
 
-| piece | notes | placed | unreachable | respelled | courses used | mandal changes |
-|---|---|---|---|---|---|---|
-| `meltem_notes` | 85 | 83 | 0 | 0 | 12 | 1 |
-| `beyati-delisin` | 426 | 415 | 0 | 0 | 12 | 37 |
-| `safalar-getirdiniz` | 839 | 816 | 0 | 0 | 11 | 32 |
-| `gamzedeyim-deva` | 513 | 511 | 0 | 0 | 10 | 40 |
+| piece | notes | unreachable | respelled | courses used | mandal changes |
+|---|---|---|---|---|---|
+| `meltem_notes` | 83 | 0 | 0 | 12 | 1 |
+| `beyati-delisin` | 429 | 0 | 0 | 12 | 39 |
+| `safalar-getirdiniz` | 824 | 0 | 0 | 11 | 32 |
+| `gamzedeyim-deva` | 539 | 0 | 0 | 10 | 40 |
 
-(The gap between *notes* and *placed* is rests.) ⚠ **Zero respellings across 1,825 notes** says the
-written-course rule is not a heuristic being papered over — the notation really does answer the
-question every time on this repertoire. ⚠ And **10–12 courses of 26** is what makes the close-up
-worth building: more than half the instrument is idle in any one piece.
+⚠ **Zero unreachable and zero respelled across 1,875 notes** says two things: the written-course
+rule still answers every time, and the gaps on the *ayrık* courses cost this repertoire nothing —
+which is presumably why makers leave them. ⚠ Four pieces is a small sample; a makam that writes a
+small sharp on Re, Mi, La or Si would show it. ⚠ And **10–12 courses of 26** is what makes the
+close-up worth building: more than half the instrument is idle in any one piece.
 
-## The half koma a kanun cannot play
+## What a kanun cannot play exactly
 
-A makam deviation is a real interval, not a whole koma: `makam.ts` carries entries like **−1.5**
-(uşşak's segâh). A mandal is a whole koma, so the instrument physically cannot produce it. The
-nearest mandal is taken and the leftover is reported as `residual` rather than hidden — claiming
-otherwise would be claiming the instrument can do something it cannot.
+Almost nothing but a natural lands exactly, because of the 72-against-53 mismatch above. The
+nearest lever is taken and the leftover is reported as `residual` (in komas) rather than hidden —
+the largest on the four scores is **0.58 of a koma**, the 5-koma flat on the full semitone.
 
-⚠ **`Math.round` is the wrong rounding here and was replaced.** It breaks a tie towards +∞, so an
-exact half-koma would round *down* when written as a flat and *up* when written as a sharp: an
-instrument that leans sharp in one makam and flat in another for no reason but the sign of a number.
-`roundToMandal` leans towards the **natural** instead — symmetric, conservative, and the same
-tie-break the opening setting uses. Found by a test, not by eye.
+⚠ **An exact tie between two levers leans towards the NATURAL.** `Math.round` breaks a tie towards
++∞, so the same interval would lean one way written as a flat and the other way written as a sharp.
+Found by a test, not by eye. (Until 2026-11-11 this mattered for uşşak's −1.5 komas; on the 72 grid
+that is −2.04 steps and no longer a tie, but the rule stays.)
 
 ## ⭐ The view is more precise than the page it came from
 
@@ -140,8 +187,8 @@ octave. The two genuinely disagree in the shipped scores, and it is not a bug in
 **nearest standard AEU sign**, because that is what a Turkish edition prints. `beyati-delisin` has
 **36 notes drawn with a koma-bemol and stored two komas flat**; `gamzedeyim-deva` has 54.
 
-A mandal makes a *sound*, and a kanun has a lever at −2, so this view follows the stored comma and
-shows `Segâh −2` where the staff shows a one-koma sign. **More precise than the page, not
+A mandal makes a *sound*, so this view follows the stored comma: two komas flat want 2.72 steps, and
+it shows `Segâh −3` (three mandals down) where the staff shows a one-koma sign. **More precise than the page, not
 inconsistent with it** — and worth knowing before someone "fixes" it.
 
 ## The drawing (owner, 2026-08-29: SVG, not a photograph)
@@ -180,10 +227,12 @@ Drawing decisions worth keeping — the last four are the owner's, from seeing t
   a slanted edge those strips move the edge sideways too. The first attempt joined the corners and
   the result was visible: the top courses' names landed **on the wood** and the bottom courses'
   levers **stuck out past the body**.
-- **Exactly one box per course is the raised one** — the lever actually setting the pitch. On a real
-  instrument several levers can be physically raised and only the one nearest the bridge counts, so
-  drawing the effective one is the truthful summary rather than a simplification. ⚠ Box 0 means
-  *every lever down*, which is the course at its flattest, not "no setting".
+- **A lever is drawn where its PITCH is, so a course with a gap shows the gap** (2026-11-11). Every
+  course's block is 12 positions wide; Re fills positions 1–6 and 10–12. That keeps the left edge's
+  slope and is what the instrument looks like (Günalçin, Şekil 1).
+- **Several levers are up at once and the last one up is the active one.** ⚠ **None up is a real
+  setting** — the open string, a semitone flat — so a course can have NO active lever; the row's
+  `data-raised` is the state.
 - ⚠ **TWO COLOURS, NOT FILLED-VERSUS-EMPTY** (owner, 2026-08-29: *"açık mandallar bir renkte,
   kapalı mandallar farklı bir renkte olsun... birbirinden ayrı ayırabilelim"*). The first version
   drew a raised lever filled and a lowered one as a faint outline. An empty box reads as **absence**
@@ -194,7 +243,7 @@ Drawing decisions worth keeping — the last four are the owner's, from seeing t
 
 ### The close-up, and the trap that made it necessary
 
-26 courses × 12 mandals is **312 boxes**; at full width each is about **four screen pixels** on a
+26 courses carry **212 levers**; at full width each is about **four screen pixels** on a
 phone — a texture, not something you can read. **Mandallara yaklaş** (`#kanun-zoom`) crops both ways
 — the long string tails go, and so do the courses the piece never plays.
 
@@ -226,7 +275,9 @@ flash turns out to be missable in use.
 
 ## The opening list (owner, 2026-08-29)
 
-Above the instrument, in words: *Çalmadan önce kurulacak mandallar: Segâh −2*. The planner produces
+Above the instrument, in words: *Çalmadan önce kurulacak mandallar: Segâh −3*. ⚠ The number is
+**mandals from the natural setting** — how many to lower or raise — not komas and not steps: on Re,
+`+2` is two more levers up and five steps sharp. The planner produces
 it anyway, and it is the one part of this view that is useful **without playing anything** — it is
 the mandal plan for the piece, which is a thing a kanun student would want on its own.
 
@@ -237,9 +288,8 @@ the mandal plan for the piece, which is a thing a kanun student would want on it
   [../MANUAL_CHECKS-FEATURES.md](../MANUAL_CHECKS-FEATURES.md).
 - ⚠ **A change is drawn at the note that needs it.** A real player moves the lever slightly *before*
   that note, with the free hand. Nothing here models the anticipation.
-- ⚠ **The mandal count is one instrument's.** 12/5 is the owner's; a kanun with 7 is a row in
-  `MANDAL_LAYOUTS`, and there is no picker because there is only one entry — the same reasoning that
-  hides the violin's tuning picker.
+- ⚠ **The layout is the majority of nine makers, not any one instrument**, and the highest courses
+  are unmeasured (above). There is no picker because there is only one row.
 - ⚠ **On a phone the full view is still a texture.** The close-up is the answer and it is one click
   away, but it is off by default. If the owner finds himself always turning it on, the default
   should flip.
@@ -247,12 +297,13 @@ the mandal plan for the piece, which is a thing a kanun student would want on it
 ## What the checks assert
 
 - `tools/core/kanun-test.ts` (in `npm test`) — the arithmetic: the course table re-derived from its
-  own perde names, the span against the recording, the mandal reach, **the written spelling beating
-  the arithmetically-nearer course**, the rounding tie, and the plan's opening/changes behaviour.
-- `tools/browser/editor-smoke.ts` — the DOM: 312 levers, **78 strings** (26 courses of three — a
-  total rather than a per-course count, because the failure worth catching is the view quietly going
-  back to one line each, which 26 would still satisfy), **one up per course at every sample taken
-  across a whole playback** (the state machine's invariant), the opening setting **by value**, the
-  close-up as geometry, a course lighting and moving, and a change flashing **on the right course at
-  the right comma**. ⚠ It also asserts the opening setting **differs between two pieces** — the
-  deliberate opposite of the violin's check that its chart does *not* move.
+  own perde names, the span against the recording, **the lever count per course and the gap**, the
+  koma → mandal table, **the written spelling beating the nearer course**, a note the gap makes
+  unplayable, the tie, and the plan's opening/changes behaviour.
+- `tools/browser/editor-smoke.ts` — the DOM: 212 levers **and all 26 per-course counts by value**,
+  **78 strings** (26 courses of three — a total, because the failure worth catching is the view
+  going back to one line each), **every row consistent with its own `data-raised` at every sample
+  taken across a whole playback** (the state machine's invariant), the opening setting **by
+  value**, the close-up as geometry, a course lighting and moving, and a change flashing **on the
+  right course at the right mandal**. ⚠ It also asserts the opening setting **differs between two
+  pieces** — the deliberate opposite of the violin's check that its chart does *not* move.

@@ -1753,12 +1753,13 @@ async function main() {
   // ⚠ **The properties here are not the violin's, and the difference is the point.** A violin
   // position is a fact about one note; a mandal is a lever that STAYS WHERE IT IS PUT, so what this
   // has to prove is a state machine, not a lookup:
-  //   - exactly ONE mandal per course is up, at every moment — the invariant the whole replay rests
-  //     on, and the one a leak in the animation frame would break first;
+  //   - every course has ONE setting at every moment, and its levers are up from the nut side up
+  //     to that setting and down after it — the invariant the whole replay rests on, and the one
+  //     a leak in the animation frame would break first;
   //   - the opening setting is read off THIS score (the violin's chart is fixed on purpose; this
   //     one must differ between pieces, which is the opposite assertion);
   //   - a course lights while it sounds, and the lit course moves;
-  //   - a mandal change actually flashes, on the right course and at the right comma.
+  //   - a mandal change actually flashes, on the right course and at the right mandal.
   // The planning arithmetic is NOT checked here — it is a pure function, and a browser is the wrong
   // place for arithmetic. See tools/core/kanun-test.ts.
   console.log("\nkanun tab (F3)");
@@ -1767,37 +1768,61 @@ async function main() {
   await openInstrument(page, "kanun");
 
   check("twenty-six courses", await page.getAttribute("#kanun", "data-courses"), "26");
-  check("twelve mandals a course", await page.getAttribute("#kanun", "data-mandals"), "12");
-  check("…so 312 levers are drawn", await page.locator('[data-omr="kanun-mandal"]').count(), 312);
+  // ⚠ The courses do NOT carry the same number of mandals. Since 2026-11-12 the counts are the
+  // owner's, off a real instrument: Do and Fa 12, Re and Sol 9, Mi, La and Si 8 in the middle, and
+  // far fewer at the two ends. So the total is 212, and every course is asserted by value — a
+  // rectangular grid would pass a total picked to match it.
+  check("212 levers in all", await page.getAttribute("#kanun", "data-mandals"), "212");
+  check("…and that many are drawn", await page.locator('[data-omr="kanun-mandal"]').count(), 212);
+  check(
+    "…per course, lowest first: the middle by note name, the two ends on their own",
+    await page
+      .locator('[data-omr="kanun-mandal-row"]')
+      .evaluateAll((els) => els.map((e) => e.children.length)),
+    [3, 8, 12, 9, 8, 8, 12, 9, 8, 12, 9, 8, 8, 12, 9, 8, 12, 9, 8, 8, 9, 6, 5, 6, 4, 2],
+  );
   check("one course each", await page.locator('[data-omr="kanun-course"]').count(), 26);
   // ⚠ A perde is **three strings in unison** (owner, 2026-08-29), sharing one lever. Asserted as a
   // total rather than per course, because the failure worth catching is the view quietly going back
   // to one line each — which 26 would still satisfy.
   check("…drawn as three strings", await page.locator('[data-omr="kanun-course"] line').count(), 78);
 
-  // ⭐ ONE ACTIVE lever per course — the one that sets the pitch. Since 2026-10-27 the levers are
-  // drawn contiguous (the active one and everything to its right are up), so the leak this guards
-  // against is counted on `data-mandal-active`, not on `up`.
-  const upCount = () => page.locator('[data-omr="kanun-mandal"][data-mandal-active="1"]').count();
-  check("exactly one active lever per course", await upCount(), 26);
-  // …and the drawing obeys the kanun player's rule: on every course, the up levers are exactly the
-  // active one and every lever to its right (owner: "mandallar birbirine bitişiktir").
-  const contiguous = await page.locator('[data-omr="kanun-mandal"]').evaluateAll((els) => {
-    const byCourse = new Map<string, { m: number; up: boolean; active: boolean }[]>();
-    for (const e of els) {
-      const c = e.getAttribute("data-course")!;
-      const list = byCourse.get(c) ?? [];
-      list.push({ m: Number(e.getAttribute("data-mandal")), up: e.getAttribute("data-mandal-state") === "up", active: e.getAttribute("data-mandal-active") === "1" });
-      byCourse.set(c, list);
-    }
-    let bad = 0;
-    for (const list of byCourse.values()) {
-      const a = list.find((x) => x.active)?.m;
-      if (a == null || list.some((x) => x.up !== x.m >= a)) bad++;
-    }
-    return bad;
-  });
-  check("⭐ every course's up levers are the active one and all to its right", contiguous, 0);
+  // ⭐ ONE SETTING per course, and the levers agree with it. Since 2026-11-11 the levers rise from
+  // the NUT side: the first `data-raised` are up and every later one is down, and the last one up
+  // is the active one. ⚠ `data-raised="0"` is a real setting (the open string) and has NO active
+  // lever, so the invariant is counted on the row, not on `data-mandal-active`.
+  const badRows = () =>
+    page.locator('[data-omr="kanun-mandal-row"]').evaluateAll((rows) => {
+      let bad = 0;
+      for (const row of rows) {
+        const raised = Number(row.getAttribute("data-raised"));
+        const levers = Array.from(row.children);
+        if (!Number.isInteger(raised) || raised < 0 || raised > levers.length) {
+          bad++;
+          continue;
+        }
+        const ok = levers.every(
+          (e, m) =>
+            (e.getAttribute("data-mandal-state") === "up") === m < raised &&
+            (e.getAttribute("data-mandal-active") === "1") === (m === raised - 1),
+        );
+        if (!ok) bad++;
+      }
+      return rows.length === 26 ? bad : -1;
+    });
+  check("⭐ every course's levers are up from the nut to its setting, and down after", await badRows(), 0);
+  // The courses nothing plays stand at the natural: six up on a regular course, and the course's
+  // own number where it has fewer levers (the lowest has two up).
+  check(
+    "an untouched regular course has six up",
+    await page.getAttribute('[data-omr="kanun-mandal-row"][data-course="1"]', "data-raised"),
+    "6",
+  );
+  check(
+    "…and the lowest course, which has three levers, has two",
+    await page.getAttribute('[data-omr="kanun-mandal-row"][data-course="0"]', "data-raised"),
+    "2",
+  );
   check("nothing is sounding yet", await page.getAttribute("#kanun", "data-note-state"), "idle");
 
   // The opening setting is the makam's mandals, which a player prepares before the first note. It
@@ -1812,7 +1837,7 @@ async function main() {
   check(
     "the makam's opening mandals, off this score",
     meltemOpening,
-    ["Dügâh-5", "Segâh-5", "Hüseynî-5", "Muhayyer-5", "Tiz Segâh-5"],
+    ["Dügâh-6", "Segâh-6", "Hüseynî-6", "Muhayyer-6", "Tiz Segâh-6"],
   );
 
   // The close-up. Read as geometry like the violin's, and with one extra property this view needs:
@@ -1834,24 +1859,27 @@ async function main() {
   await page.locator("#kanun-zoom").uncheck();
   check("…and the whole kanun comes back", await page.getAttribute(".kv-kanun__svg", "viewBox"), kFull);
 
-  // Playing. meltem is eleven seconds long and moves a mandal at 5.3 s (Hüseynî, five komas flat →
-  // one), which is why it is the piece used here rather than a long one.
+  // Playing. meltem is eleven seconds long and moves a course at 5.3 s (Hüseynî, five komas flat →
+  // one: from every mandal down to five up), which is why it is the piece used here.
   await page.locator("#play").click();
   const litCourses: string[] = [];
   const noteStates = new Set<string>();
-  const upCounts = new Set<number>();
+  const badCounts = new Set<number>();
   const flashed: string[] = [];
   for (let i = 0; i < 80 && flashed.length === 0; i++) {
     await page.waitForTimeout(120);
     noteStates.add((await page.getAttribute("#kanun", "data-note-state")) ?? "?");
-    upCounts.add(await upCount());
+    badCounts.add(await badRows());
     const c = await page.evaluate(() => {
       const el = document.querySelector('[data-omr="kanun-course"][data-course-state="playing"]');
       return el ? el.getAttribute("data-perde") : null;
     });
     if (c && c !== litCourses[litCourses.length - 1]) litCourses.push(c);
     const f = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('[data-omr="kanun-mandal"][data-changed="to"]')).map(
+      // Several levers rise in one move; the ACTIVE one among them is where the course ended up.
+      Array.from(
+        document.querySelectorAll('[data-omr="kanun-mandal"][data-changed="to"][data-mandal-active="1"]'),
+      ).map(
         (e) => `${e.getAttribute("data-course")}@${e.getAttribute("data-offset")}`,
       ),
     );
@@ -1863,14 +1891,14 @@ async function main() {
 
   check("a course lights while it sounds", litCourses.length > 0, true);
   check("…and the lit course moves with the music", litCourses.length >= 2, true);
-  // ⚠ THE INVARIANT. One lever up per course, at every single sample taken across the playback —
-  // this is what says the replay moves the mandals rather than accumulating them.
-  check("one active lever per course throughout", [...upCounts], [26]);
+  // ⚠ THE INVARIANT. Every row consistent with its own setting, at every single sample taken
+  // across the playback — this is what says the replay moves the mandals rather than accumulating.
+  check("every course consistent throughout", [...badCounts], [0]);
   check("the view says a note is sounding", noteStates.has("playing"), true);
-  // The change flash, asserted by WHICH course and WHICH comma — a count would pass on a flash
-  // fired at the wrong lever. Hüseynî is course 15, moving to one koma flat.
+  // The change flash, asserted by WHICH course and WHICH mandal — a count would pass on a flash
+  // fired at the wrong lever. Hüseynî is course 15, ending one mandal below its natural.
   check("a mandal change flashes", flashed.length > 0, true);
-  check("…on the course and comma the music asks for", flashed[0], "15@-1");
+  check("…on the course and mandal the music asks for", flashed[0], "15@-1");
 
   // A different piece must produce a DIFFERENT opening setting. ⚠ This is the exact opposite of
   // the violin check above, and deliberately so: the violin's chart is a fixed reference and must
@@ -1880,8 +1908,8 @@ async function main() {
   await openInstrument(page, "kanun");
   const beyatiOpening = await openingOf();
   console.log(`  opening: ${beyatiOpening.join(" ")}`);
-  check("another piece sets its own mandals", beyatiOpening, ["Segâh-2"]);
-  check("one active lever per course here too", await upCount(), 26);
+  check("another piece sets its own mandals", beyatiOpening, ["Segâh-3"]);
+  check("every course consistent here too", await badRows(), 0);
 
   // --- the bar beside the instrument, and editing it in place (owner, 2026-09-04) --------------
   //

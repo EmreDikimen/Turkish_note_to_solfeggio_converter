@@ -8,10 +8,11 @@
  *  2. **The top of the range against the RECORDING.** F1's kanun take tops out at 1325 Hz; the
  *     table's Tiz Muhayyer must land within half a koma of it. Two independent sources agreeing is
  *     what makes the span evidence rather than a guess.
- *  3. **The mandal arithmetic** — the natural, the five flats, the six sharps, and the two ways a
- *     course can fail to reach.
+ *  3. **The mandal layout** — the count PER COURSE (12 / 10 / 9 / 8, from Günalçin 2013), the six
+ *     up at the natural, the gap on the "ayrık" courses, and the koma → mandal table the paper
+ *     measured (1 koma = 1 mandal, 4 = 5, 5 = 6).
  *  4. **The written spelling picks the course.** A Si♭ is the Si course lowered, NOT the La course
- *     raised, even at 5 komas where the raised La is arithmetically nearer. This is the claim the
+ *     raised, even where the raised La would land nearer the true pitch. This is the claim the
  *     whole module rests on, so it is a test and not a comment.
  *  5. **The plan** — the opening setting comes from the majority and not the first note, a
  *     modulation shows up as a change, a repeated accidental does not, and rests are skipped.
@@ -23,13 +24,15 @@ import {
   DEFAULT_MANDAL_LAYOUT,
   KANUN_COURSES,
   MANDAL_LAYOUTS,
+  MANDAL_STEP_KOMA,
   freqToKoma53,
   koma53ToFreq,
-  mandalForOffset,
-  mandalOffset,
+  mandalSteps,
   naturalKoma,
   openingMandals,
   planMandals,
+  raisedForStep,
+  stepForRaised,
   type KanunNoteInput,
 } from "@turkish-omr/core";
 
@@ -122,17 +125,48 @@ near(
 console.log("\nmandals");
 
 check("one layout ships", MANDAL_LAYOUTS.length, 1);
-check("twelve mandals a course", L.count, 12);
-check("the natural is the sixth from the bottom", L.naturalIndex, 5);
-check("the natural stands at zero", mandalOffset(L.naturalIndex, L), 0);
-check("five mandals below the natural", mandalOffset(0, L), -5);
-check("six above", mandalOffset(L.count - 1, L), 6);
+check("six mandals are up at the natural", L.naturalRaised, 6);
 
-// The largest flat written in makam music is 5 komas, which is exactly what the layout reaches.
-check("a 5-koma bemol is reachable", mandalForOffset(-5, L), 0);
-check("a 6-koma bemol is not", mandalForOffset(-6, L), null);
-check("a 6-koma diyez is reachable", mandalForOffset(6, L), 11);
-check("a 7-koma diyez is not", mandalForOffset(7, L), null);
+// The owner's count on a real instrument, 2026-11-12 (docs/features/kanun-mandal-count.md).
+check(
+  "the regular count, by note name: Do 12, Re 9, Mi 8, Fa 12, Sol 9, La 8, Si 8",
+  ["C", "D", "E", "F", "G", "A", "B"].map((l) => mandalSteps(l, L).length),
+  [12, 9, 8, 12, 9, 8, 8],
+);
+check(
+  "every course, lowest first — the two ends are their own rows",
+  KANUN_COURSES.map((c) => mandalSteps(c, L).length),
+  [3, 8, 12, 9, 8, 8, 12, 9, 8, 12, 9, 8, 8, 12, 9, 8, 12, 9, 8, 8, 9, 6, 5, 6, 4, 2],
+);
+check(
+  "…which is 212 levers on the 26 courses",
+  KANUN_COURSES.reduce((a, c) => a + mandalSteps(c, L).length, 0),
+  212,
+);
+{
+  const top = KANUN_COURSES[KANUN_COURSES.length - 1]!;
+  check("the top course has two levers: one up at the natural, one down", mandalSteps(top, L), [0, 6]);
+  check("…so its open string is ONE step flat, not six", stepForRaised(0, top, L), -1);
+  check("…and a bare letter still answers for the regular octaves", mandalSteps(top.letter, L).length, 8);
+  check(
+    "every course has a lever at its natural",
+    KANUN_COURSES.every((c) => mandalSteps(c, L).includes(0)),
+    true,
+  );
+}
+check("a bitişik course has every step", mandalSteps("F", L), [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6]);
+check("an ayrık course has a GAP after the natural", mandalSteps("D", L), [-5, -4, -3, -2, -1, 0, 4, 5, 6]);
+
+check("six up is the natural", stepForRaised(6, "D", L), 0);
+check("none up is the open string, a semitone flat", stepForRaised(0, "D", L), -6);
+check("…so a course of 9 has 10 settings", stepForRaised(9, "D", L), 6);
+check("…and no eleventh", stepForRaised(10, "D", L), null);
+check("the seventh mandal on Re jumps the gap", stepForRaised(7, "D", L), 4);
+check("Re has no mandal one step sharp", raisedForStep(1, "D", L), null);
+check("Fa has", raisedForStep(1, "F", L), 7);
+
+// One step is 16.67 cents — a sixth of a tempered semitone — and NOT a koma (22.64 cents).
+near("a mandal step is 16.67 cents", (MANDAL_STEP_KOMA * 1200) / 53, 100 / 6, 1e-9);
 
 // ---------------------------------------------------------------------------------------------
 // 4. The written spelling picks the course
@@ -152,19 +186,44 @@ function one(courseKoma: number | null, soundingKoma: number): KanunNoteInput {
 }
 
 {
-  // A Si 5 komas flat. Arithmetically the Dügâh course RAISED 4 is nearer its own natural than the
-  // Segâh course LOWERED 5 — so a rule that only looked at the pitch would put it on Dügâh. A
-  // kanun player does not: they read Si and lower the Si course.
+  // A Si 5 komas flat. The Dügâh course RAISED lands nearer the true pitch than the Segâh course
+  // LOWERED — so a rule that only looked at the pitch would put it on Dügâh. A kanun player does
+  // not: they read Si and lower the Si course.
   const p = planMandals([one(B4, B4 - 5)]).perNote[0]!;
-  check("Si♭5 is the Segâh course lowered", [p.courseIndex, p.offset], [SEGAH, -5]);
+  check("Si♭5 is the Segâh course, every mandal down", [p.courseIndex, p.raised, p.step], [SEGAH, 0, -6]);
   check("…and it is not a respelling", p.respelled, false);
-  check("…even though Dügâh raised 4 is arithmetically nearer", Math.abs(A4 + 4 - (B4 - 5)), 0);
+  // ⚠ The instrument's own error, the one the paper measures as 13.7 cents: 5 komas want 6.79
+  // steps and the course stops at 6.
+  near("…0.58 of a koma sharp of true, which a kanun cannot help", p.residual, -5 + 6 * MANDAL_STEP_KOMA, 1e-9);
 }
 
 {
-  // A koma-flat Segâh, which is what uşşak actually writes. Same course, one mandal down.
+  // The koma → mandal table (Günalçin 2013, Tablo 7), on Fa because Fa has every step.
+  const F4 = naturalKoma("F", 4);
+  const steps = [-5, -4, -1, 1, 4, 5].map((k) => planMandals([one(F4, F4 + k)]).perNote[0]!.step);
+  check("1 koma is 1 mandal, 4 komas are 5, 5 komas are 6", steps, [-6, -5, -1, 1, 5, 6]);
+}
+
+{
+  // A koma-flat Segâh. Same course, one mandal down.
   const p = planMandals([one(B4, B4 - 1)]).perNote[0]!;
-  check("Si♭1 is the Segâh course down one", [p.courseIndex, p.offset], [SEGAH, -1]);
+  check("Si♭1 is the Segâh course down one", [p.courseIndex, p.offset, p.step], [SEGAH, -1, -1]);
+}
+
+{
+  // A bakiye sharp on Re: 4 komas want step 5, which on Re is the EIGHTH mandal — two more than
+  // the natural's six, across the gap. `offset` counts mandals, `step` counts pitch.
+  const D5 = naturalKoma("D", 5);
+  const p = planMandals([one(D5, D5 + 4)]).perNote[0]!;
+  check("Re♯4 is two more mandals up, five steps sharp", [p.courseIndex, p.raised, p.offset, p.step], [NEVA, 8, 2, 5]);
+}
+
+{
+  // ⚠ THE GAP IS REAL. One koma sharp on Re wants 1.36 steps and Re's next mandal is at 4, so no
+  // course can play it: the natural is 1.36 steps away and Mi's open string is far above. It must
+  // be reported as unplayable, not rounded onto the natural.
+  const D5 = naturalKoma("D", 5);
+  check("Re one koma sharp is not on this kanun", planMandals([one(D5, D5 + 1)]).perNote[0], null);
 }
 
 {
@@ -173,7 +232,7 @@ function one(courseKoma: number | null, soundingKoma: number): KanunNoteInput {
   const p = planMandals([one(A4, A4 + 8)]).perNote[0]!;
   check("a 8-koma diyez moves to the next course", p.courseIndex, SEGAH);
   check("…and says it was respelled", p.respelled, true);
-  check("…standing one koma below that course's natural", p.offset, -1);
+  check("…standing one mandal below that course's natural", p.step, -1);
 }
 
 {
@@ -184,25 +243,18 @@ function one(courseKoma: number | null, soundingKoma: number): KanunNoteInput {
 }
 
 {
-  // A makam deviation is a real interval, not a whole koma. The mandal takes the nearest comma and
-  // the leftover is reported — a kanun genuinely cannot play the half.
-  const down = planMandals([one(B4, B4 - 1.4)]).perNote[0]!;
-  check("a −1.4 koma bend rounds down to the nearest mandal", down.offset, -1);
-  near("…and reports what it cannot play", down.residual, -0.4, 1e-9);
+  // A makam deviation is a real interval. The nearest mandal is taken and the leftover reported.
+  // −1.4 komas want −1.90 steps, so that is the second mandal down, not the first.
+  const p = planMandals([one(B4, B4 - 1.4)]).perNote[0]!;
+  check("a −1.4 koma bend is two mandals down", p.step, -2);
+  near("…and reports what it cannot play", p.residual, -1.4 + 2 * MANDAL_STEP_KOMA, 1e-9);
 
-  const up = planMandals([one(B4, B4 - 1.6)]).perNote[0]!;
-  check("a −1.6 koma bend rounds the other way", up.offset, -2);
-  near("…and reports the leftover with the other sign", up.residual, 0.4, 1e-9);
-
-  // ⚠ uşşak's segâh is EXACTLY −1.5 (makam.ts), which is a real tie between two mandals. The rule
-  // is "lean towards the natural", so it must go to −1 — and it must do so whichever sign the
-  // interval is written with, which is what `Math.round` would have got wrong.
-  const tie = planMandals([one(B4, B4 - 1.5)]).perNote[0]!;
-  check("an exact half-koma tie leans towards the natural", tie.offset, -1);
-  near("…leaving half a koma the instrument cannot play", Math.abs(tie.residual), 0.5, 1e-9);
-
-  const tieUp = planMandals([one(B4, B4 + 1.5)]).perNote[0]!;
-  check("…and it leans the same way for a sharp", tieUp.offset, 1);
+  // ⚠ An exact tie between two mandals leans towards the NATURAL, whichever sign it is written
+  // with — `Math.round` would lean flat for one and sharp for the other.
+  const half = MANDAL_STEP_KOMA / 2;
+  check("an exact tie leans towards the natural", planMandals([one(B4, B4 - 3 * half)]).perNote[0]!.step, -1);
+  const F4 = naturalKoma("F", 4);
+  check("…and the same way for a sharp", planMandals([one(F4, F4 + 3 * half)]).perNote[0]!.step, 1);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -215,9 +267,9 @@ console.log("\nthe plan");
   // set before playing, and it must cost no change at all once the piece starts.
   const notes = [one(B4, B4 - 1), one(A4, A4), one(B4, B4 - 1), one(B4, B4 - 1)];
   const plan = planMandals(notes);
-  check("the Segâh course opens flat", mandalOffset(plan.opening[SEGAH]!, L), -1);
+  check("the Segâh course opens flat", plan.opening[SEGAH]! - L.naturalRaised, -1);
   check("…so nothing has to move", plan.changes.length, 0);
-  check("Dügâh opens natural", mandalOffset(plan.opening[DUGAH]!, L), 0);
+  check("Dügâh opens natural", plan.opening[DUGAH]! - L.naturalRaised, 0);
 
   const open = openingMandals(plan);
   check("one course is listed as set before playing", open.length, 1);
@@ -230,7 +282,7 @@ console.log("\nthe plan");
   // mistaken for the piece's makam and every later note would read as a change.
   const notes = [one(B4, B4), one(B4, B4 - 1), one(B4, B4 - 1), one(B4, B4 - 1)];
   const plan = planMandals(notes);
-  check("one natural at the start does not set the makam", mandalOffset(plan.opening[SEGAH]!, L), -1);
+  check("one natural at the start does not set the makam", plan.opening[SEGAH]! - L.naturalRaised, -1);
   check("it is the natural that becomes a change", plan.changes.length, 2);
   check("…at the first note", plan.changes[0]!.noteIndex, 0);
   check("…and back again at the second", plan.changes[1]!.noteIndex, 1);
@@ -242,7 +294,7 @@ console.log("\nthe plan");
   const flat = [one(B4, B4 - 1), one(B4, B4 - 1), one(B4, B4 - 1)];
   const nat = [one(B4, B4), one(B4, B4), one(B4, B4)];
   const plan = planMandals([...flat, ...nat, ...nat]);
-  check("the majority half sets the opening", mandalOffset(plan.opening[SEGAH]!, L), 0);
+  check("the majority half sets the opening", plan.opening[SEGAH]! - L.naturalRaised, 0);
   check("the modulation is one move", plan.changes.length, 2);
   check("…the first at note 0", plan.changes[0]!.noteIndex, 0);
   check("…the second where the makam turns", plan.changes[1]!.noteIndex, 3);
@@ -271,7 +323,7 @@ console.log("\nthe plan");
     one(D5, D5),
     one(G4, G4 + 4),
   ]);
-  check("Rast opens natural", mandalOffset(plan.opening[RAST]!, L), 0);
+  check("Rast opens natural", plan.opening[RAST]! - L.naturalRaised, 0);
   check("Rast moves once", plan.changes.filter((c) => c.courseIndex === RAST).length, 1);
   check("…at the note that needs it", plan.changes.find((c) => c.courseIndex === RAST)!.noteIndex, 4);
   check("Nevâ never moves", plan.changes.filter((c) => c.courseIndex === NEVA).length, 0);

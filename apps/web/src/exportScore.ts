@@ -113,6 +113,27 @@ function headerLines(svg: SVGSVGElement): string[] {
 }
 
 /**
+ * The caption the saved file opens with: the name the reader gave the page on top, then the
+ * engraved header (owner, 2026-11-14 — "fotoğraf olarak kaydettiğimizde üstünde başlık olarak notaya
+ * bizim verdiğimiz isim yazılsın").
+ *
+ * ⚠ The name is the one the score card shows (`saved.name`, else the score's own title), passed in
+ * by `runExport` — never `doc.name` alone, which a rename leaves untouched on purpose. A header line
+ * that already says the same thing is dropped, so a score whose title IS its name is not captioned
+ * twice.
+ */
+function captionLines(svg: SVGSVGElement, pageName: string): string[] {
+  const lines = headerLines(svg);
+  const title = pageName.trim();
+  if (!title) return lines;
+  // Compared without case, in Turkish (İ/i, I/ı): a stored name is often the file name in lower
+  // case while the engraved title is capitalised — "delisin deli" over "Delisin Deli", seen on
+  // the first try.
+  const key = (s: string) => s.toLocaleLowerCase("tr");
+  return [title, ...lines.filter((l) => key(l) !== key(title))];
+}
+
+/**
  * Where each staff system starts and ends, in the SVG's own units.
  *
  * ⚠ **Measured off the drawn staves, never from `ROW_HEIGHT`.** The row pitch is the engraver's
@@ -298,7 +319,7 @@ export async function exportScorePng(stage: HTMLElement, pageName: string): Prom
   if (!svg) throw new Error("no score to save");
 
   const box = userBox(svg);
-  const lines = headerLines(svg);
+  const lines = captionLines(svg, pageName);
   const headH = headerHeight(lines);
   const pad = 24;
   const pageW = box.pxW + pad * 2;
@@ -360,7 +381,7 @@ export async function exportScorePdf(stage: HTMLElement, pageName: string): Prom
   if (!svg) throw new Error("no score to save");
 
   const box = userBox(svg);
-  const lines = headerLines(svg);
+  const lines = captionLines(svg, pageName);
   const pagePx = { w: Math.round((A4_PT.w / 72) * DPI), h: Math.round((A4_PT.h / 72) * DPI) };
   const margin = Math.round((MARGIN_MM / 25.4) * DPI);
   const contentW = pagePx.w - 2 * margin;

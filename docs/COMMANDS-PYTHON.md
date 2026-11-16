@@ -3,7 +3,7 @@
 purpose: the full reference for every `.venv-ml/bin/python` command — the slicer, the emitter, the review queues, the scorers and the probes — with the ⚠ traps that make one fail silently
 audience: anyone about to run anything on the model or the corpus; the app's own commands are next door
 
-updated: 2026-09-16
+updated: 2026-11-15
 
 Split out of [COMMANDS.md](COMMANDS.md) on 2026-09-07 when that file crossed the 400-line cap. Genre
 split: that file keeps the **app** — the dev servers, the browser gates, the deploy, the visit
@@ -17,6 +17,9 @@ counter; this one keeps **Python, which never ships**. Nothing was changed in th
 
 ```bash
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
+.venv-ml/bin/python scripts/frame_whiten_ref.py   # `whiten_frame` on six synthetic pages -> sha256.
+    # ⚠ Run after ANY change to the screenshot-frame rule and paste the hashes into
+    # tools/vision/frame-test.ts, or `npm test` fails: that test holds the browser port to these bytes.
     # ⚠ `--token-budget N` runs the SAME arm under the LABEL-BUDGET rail. The reference fixes the
     # packing rule as well as the sample, and `parity:slicer` refuses a ref that mixes the two.
 .venv-ml/bin/python src/vision/page_to_strips.py <page.png> --out <dir> --debug

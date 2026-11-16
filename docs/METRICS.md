@@ -2,7 +2,7 @@
 
 purpose: the single home for measured numbers; other docs link here instead of restating
 audience: agents and the owner, whenever a number is needed
-updated: 2026-10-17
+updated: 2026-11-15
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -371,3 +371,4 @@ reads.
 | That gate miss, measured | the flipped token is a real near-tie: `\tup3` **p=0.689** vs `e` **p=0.306** under Python-ORT int8 — the only token in the strip below 0.99 (next lowest 0.938). ORT-web wasm int8 tips it; the graph and the JS preprocessing are both exonerated |
 | Training strip geometry | H=336 px, staff spacing 30 px, top line y≈138; label cap 59 ids (the real pools' emitter gate is **80 H ids** since 2026-09-07 — [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) |
 | Slicer staff-detection kernel | `STAFF_HOR_FRAC = 0.11` of page width (was `w/4`) |
+| Slicer, a screenshot's dark viewer frame (2026-11-15) | painted white before binarization; what it fixes and the pages it does not touch are in [METRICS-SLICER.md](METRICS-SLICER.md) |

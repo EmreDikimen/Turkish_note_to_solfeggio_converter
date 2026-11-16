@@ -3,7 +3,7 @@
 purpose: the full command reference, including the ⚠ traps that cost real time to learn
 audience: anyone about to run anything; `../CLAUDE.md` keeps the everyday few and points here
 
-updated: 2026-10-17
+updated: 2026-11-15
 
 > ⚠ **Read the ⚠ lines, not just the command.** Several of these have a failure mode that looks like
 > success — a build that publishes nothing, a render that silently produces an uncovered corpus, a
@@ -24,6 +24,7 @@ npm run typecheck                    # all workspaces
 npm test                             # stitcher + label round-trip + edit primitives + usul strokes + voice manifest
                                      # …plus violin fingering (the 53-TET position formula + string choice),
                                      # …the kanun's mandals, and the sol klarnet's fingerings + lip bound
+                                     # …and the slicer's screenshot-frame step against Python's bytes (frame-test.ts)
                                      # …plus the makam intonation table AND the two 2026-09-05 ear-found bugs:
                                      # ⚠ WHICH DOCUMENT the koma deltas and the usul tracks are built over
                                      # …plus the written-score → performance maps (tools/core/structure-test.ts)

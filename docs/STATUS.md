@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-11-12
+updated: 2026-11-16
 
 ## Now
 
@@ -93,7 +93,14 @@ goes missing on 14% of pages and `STAFF_RESCUE` is the fix, **shipping OFF**; a 
 so no accuracy metric shows it. ⛔ The row-level scorers are blind to staff-count changes
 (`score_slicer.py --pair-by-position` exists; `score_barlines.py` has no fix). ⚠ Whether the TRAINING
 pools are ever re-cut with the rescue ON is undecided ([METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md)).
-`GEOMETRY_REV` is 20260903; `--frozen-crops` is the one safe way past it. Rules:
+`GEOMETRY_REV` is 20260903; `--frozen-crops` is the one safe way past it.
+✅ **ONE FIX WENT IN ON 2026-11-15, AT THE OWNER'S REQUEST, AND IT IS LIVE SINCE THE SAME DAY**: a screenshot's
+dark viewer frame is painted white before binarization (`whiten_frame`, Python and TS together) —
+it was stretching every staff to the image edge and cost one page a whole staff
+([METRICS-SLICER.md](METRICS-SLICER.md)). ⚠ **`GEOMETRY_REV` was deliberately NOT bumped for it**
+(owner, 2026-11-16): the step moves no corpus crop, and a bump would refuse every decode cache on
+disk for nothing ([DECISIONS.md](DECISIONS.md)). ⚠ The native app's `/page`
+path (branch `native-app`) gets the fix only when `main` is merged into it. Rules:
 [../CLAUDE.md](../CLAUDE.md) · [METRICS-SLICER.md](METRICS-SLICER.md) ·
 [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md).
 

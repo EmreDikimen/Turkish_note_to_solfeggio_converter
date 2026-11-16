@@ -2,7 +2,7 @@
 
 purpose: the single home for how a real page is READ INTO AN INK MASK — binarization, grayscale fidelity, opencv.js parity, and which slicer the labelled pools came from
 audience: agents and the owner, before changing the slicer or re-slicing a pool
-updated: 2026-09-03
+updated: 2026-11-16
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-07-29 when that file crossed
 the 400-line cap: that file keeps **what the model gets wrong**, this one **what the page-cutter
@@ -114,6 +114,54 @@ all in [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md). Split out 2026-
 400-line cap; this file keeps the STAFF and the ink mask, that one keeps the CUT. That file reached
 the cap in turn, so the 2026-09-03 stem gate (`END_BLOBS` — a stroke with wide ink at BOTH ends is
 a stem) lives in [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md).
+
+## A screenshot's dark viewer frame: Otsu calls it ink (2026-11-15)
+
+The owner uploaded a phone screenshot of a PDF viewer: 1080×1998 JPEG, two pages, the viewer's flat
+gray (level **53**) down both sides and between the pages, **14** staves. The slicer found **13**
+staves and cut **38** strips, and every row's last strip ended in a black block. Two mechanisms, one
+cause — global Otsu puts the frame on the ink side:
+
+- `_emit_staff` takes a column as staff when most line rows carry ink there. The frame's columns
+  qualify, the 48 px of paper between staff end and frame is under `STAFF_GAP_BRIDGE_SP`, so every
+  staff's `x1` ran to the image edge (**1079** where the staff ends at **1011**).
+- The frame is a third brightness class. Otsu read **155** with it and **158** without; the page's
+  1 px anti-aliased staff lines sit at **157–159**, and the last staff kept 2 of its 5 lines.
+
+`whiten_frame` (Python) / `whitenFrame` (TS) paints the frame white after the deskew and before
+binarization. Page coordinates do not move. After it: **14 of 14** staves, **36** strips, extents on
+the staff.
+
+| Where it was run | Result |
+|---|---|
+| Corpus pages (`data/real/images`) that it touches | **0 of 2,987** — the function returns the same array |
+| Exam photos (`data/real/photos_exam`) it touches | **0 of 39** (14 of 39 before the straight-edge test) |
+| Owner's hand-test screenshots (`exam_pages/`) it touches | **3 of 20** — see below |
+| Python vs the TS port in Node, 12 pages (the screenshot, 4 framed variants, 1 clean, 6 corpus) | page bytes, staves and strips identical on **12 / 12** |
+| The screenshot JPEG and the 3 hand-test pages in real headless **Chromium and WebKit** | same staves, strips and x-extents as Python on **4 / 4**, both engines |
+| `parity:slicer --inject-skew`, 22 corpus pages | **420 / 420** strips exact, W4 W5 W6 PASS |
+| Cost in the browser path | **≤ 22 ms** a page (Node, opencv.js), **1–3 ms** when it does nothing |
+
+Framed variants, cut the way the browser cuts (no perspective crop), staves found before → after of 8:
+black bars above and below **0 → 8**, black all round **0 → 8**, gray 53 all round **6 → 8**, gray
+on the left only **6 → 8**. n = 1 page each, synthetic frames around one real page.
+
+⚠ **The 3 hand-test pages are the same defect, not a false alarm.** A desktop screenshot carries a
+1 px dark window-edge line down one side; on those pages every staff had `x0` or `x1` on the image
+edge (e.g. `x1` 1157 on a 1158 px page, now 1110–1122). Their strip counts move 27 → 25, 17 → 16 and
+27 → 27. ⚠ So a hand-test correction count taken before 2026-11-15 on those three pages was taken
+on different crops.
+
+⚠ **Not measured:** whether the model reads the re-cut strips better — no page here was decoded.
+⚠ **Left alone on purpose:** two pages of different widths in one screenshot (the edge is not
+straight, so the page is refused and cut as before), a frame lighter than Otsu's level (it was
+never ink), and a toolbar with icons (only its flat part is a frame). The staff lines at 157–159
+against a threshold of 158 are still marginal: the frame was one cause of the lost row, the page's
+low resolution (10.5 px line spacing) is the other, and nothing here fixes that.
+
+⚠ `GEOMETRY_REV` was **not** bumped, by the owner's decision — [DECISIONS.md](DECISIONS.md), 2026-11-15 row. The six synthetic cases in
+`tools/vision/frame-test.ts` (inside `npm test`) pin the TS port to Python's bytes;
+`scripts/frame_whiten_ref.py` prints the hashes to paste after any change to the rule.
 
 ## Which crop root a pool came from: measured in its own file
 

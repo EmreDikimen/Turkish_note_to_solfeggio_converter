@@ -2,10 +2,46 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-11-12
+updated: 2026-11-16
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-11-15 — the screenshot-frame fix is live
+
+The owner asked for the deploy the same day. `npm run deploy:app` printed `Deploy is live!`;
+`smoke:live` PASS — the server path read `acem_p_kalfaoglu_p1` as 9 staves → 24 strips → 229
+notes in 53.5 s (the same 229 the 2026-11-12 deploy read), the refusal path refused; the visit
+counter answers 401, the healthy code. ⚠ `smoke:live`'s page has no frame, so it shows the deploy
+did not break an ordinary page — it does not exercise the new step. On 2026-11-16 the owner
+decided `GEOMETRY_REV` is not bumped for this step, and the work was committed.
+
+## 2026-11-15 — a screenshot's dark viewer frame stops being read as ink
+
+The owner uploaded a phone screenshot of a PDF viewer and said it was cut badly, then asked for the
+slicer to be reviewed end to end and fixed for pictures like it — which opens the frozen slicer for
+this change. Traced on the page before touching code: Otsu put the viewer's flat gray on the ink
+side, so every staff's right end ran to the image edge and the frame shifted the threshold by 3
+levels, enough to lose the last staff (13 of 14). **Fix:** `whiten_frame` / `whitenFrame`, called at
+the end of `prep_page` / `prepPage`, paints the frame white. Numbers:
+[../METRICS-SLICER.md](../METRICS-SLICER.md).
+
+Why it is shaped the way it is, in the order the shape was found:
+
+- The first version took the frame colour from the outer ring's mode and fired on **14 of 39** exam
+  photos (a dark desk). A straight-edge test took that to 0.
+- A frame on one side only was then missed, because the ring's mode was the white paper. Taking
+  the mode on the ink side of Otsu fixed it — and made it fire on 3 of the owner's 20 hand-test
+  screenshots. Reading those showed the SAME defect from a 1 px window-edge line, plus up to
+  1,677 px of real content at the top edge being painted. So a side now counts only when half its
+  rows start with frame colour, and anything else at an edge is left alone.
+- An edge-to-edge frame row is painted whole only in a block 12 px thick. Not seen failing; written
+  because a black staff line reaching both edges between black bars is exactly such a row.
+
+⚠ Not done: no page was decoded, so "the model reads these strips better" is unmeasured. Not
+deployed at the time of writing (see the entry above). `GEOMETRY_REV` not bumped — put to the owner. `npm test`, `typecheck` and
+`parity:slicer` (22 pages) pass; `smoke:editor`, `gate:browser` and `smoke:page` were not run (none
+of them reaches this code path with a framed page). Nothing is committed yet.
 
 ## 2026-11-12 — the mandal counts become the owner's own instrument
 

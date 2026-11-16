@@ -414,8 +414,134 @@ def deskew(gray: np.ndarray, est: tuple[float, int, int] | None = None) -> tuple
     return rot, ang
 
 
+# ------------------------------------------------------------- the viewer frame of a screenshot
+# A phone screenshot of a PDF viewer is a white page on a FLAT DARK background (owner, 2026-11-15:
+# a 1080x1998 Chrome screenshot, two pages, viewer gray 53). Otsu puts that background on the INK
+# side, and everything downstream then reads it as music:
+#   * `_emit_staff` takes a column as "staff" when most line rows carry ink there, so the frame's
+#     columns qualify, the 48 px of paper between the staff's end and the frame is under
+#     STAFF_GAP_BRIDGE_SP, and every staff's x1 ran out to the image edge — the last strip of all
+#     13 rows carried a black block the model has never seen;
+#   * the frame is a third brightness class, which moves Otsu's threshold (155 with it, 158
+#     without); the page's 1 px anti-aliased staff lines sit at 157-159, and the last staff of the
+#     page was LOST at 155 — 13 staves found of 14.
+# The fix paints the frame white BEFORE binarization. Painting, not cropping: page coordinates do
+# not move, so nothing downstream (the app's geometry, the debug overlay) needs to know.
+#
+# ⚠ WHY IT IS SHAPED TO DO NOTHING ELSEWHERE. A frame is recognised by three things at once, and a
+# page that fails any of them is returned as the SAME array, untouched:
+#   1. that level is one Otsu calls ink — a light frame was never the problem;
+#   2. a real share of the image's outer 1 px ring is that ONE level (FRAME_MIN_RING of it within
+#      +-FRAME_BAND);
+#   3. the frame's inner edge is STRAIGHT on every side that has one (FRAME_STRAIGHT of the
+#      per-row/per-column run lengths within FRAME_SLACK_PX of their median). This is what
+#      separates a screenshot from a PHOTO on a dark desk, whose page edge is slanted: measured
+#      2026-11-15, tests 1+2 alone fired on 14 of 39 exam photos, and with test 3 on 0 of 39 — and
+#      on **0 of 2,987** corpus pages either way. So no crop in any training pool moves.
+# ⚠ It DOES fire on 3 of the owner's 20 hand-test screenshots (`exam_pages/`), and that is the same
+# defect, not a false alarm: a desktop screenshot carries a 1 px dark window-edge line down one
+# side, and every staff on those pages had its x0 or x1 stretched to the image edge.
+# Only runs that START at an image edge are painted, each capped at its side's median + slack, so
+# a black staff line touching a black frame cannot be followed into the music. A row or column
+# that is frame from edge to edge (the gap between two pages) is painted whole.
+FRAME_WHITEN = os.environ.get("OMR_FRAME_WHITEN", "1") not in ("0", "false", "False")
+FRAME_BAND = 12         # +- gray levels around the ring's mode that count as "the frame colour"
+FRAME_MIN_RING = 0.25   # share of the outer ring that must be that colour
+FRAME_STRAIGHT = 0.9    # share of a side's partial runs that must sit at the side's median
+FRAME_SLACK_PX = 2      # ... within this many px (JPEG ringing moves an edge by one or two)
+FRAME_GROW_PX = 4       # painted past the frame's edge: its anti-aliased rim is not frame-coloured
+FRAME_SIDE_MIN = 0.5    # a side has a frame only if this share of its rows starts with frame colour
+FRAME_MIN_FULL_PX = 12  # an edge-to-edge frame row counts only in a block this thick (not a staff line)
+
+
+def _edge_runs(band: np.ndarray) -> np.ndarray:
+    """Per row, how many pixels from the LEFT edge are frame-coloured before the first that is not."""
+    other = ~band
+    runs = other.argmax(axis=1)
+    runs[~other.any(axis=1)] = band.shape[1]
+    return runs
+
+
+def _frame_side(runs: np.ndarray, full: int) -> np.ndarray | None:
+    """One side's edge runs -> how far to paint on each row. None = this is not a screenshot.
+
+    Three decisions, each for a failure that was seen or is one step away:
+      * a side with ink at the edge on under FRAME_SIDE_MIN of its rows has NO frame — that is
+        music or a title the picture's edge cut through, so it is left alone (zeros), not painted
+        and not a veto. On the owner's hand-test screenshots this was 104-1,677 px of real content;
+      * a side that does have a frame must have a STRAIGHT one, or the whole page is refused;
+      * a row that is frame-coloured from edge to edge is painted whole only inside a block of
+        FRAME_MIN_FULL_PX such rows (the gap between two pages). A single such row can be a black
+        staff line that reaches both edges of a full-bleed page between black bars.
+    """
+    n = len(runs)
+    if int((runs > 0).sum()) < FRAME_SIDE_MIN * n:
+        return np.zeros(n, dtype=np.int64)
+    is_full = runs >= full
+    thick = np.zeros(n, dtype=bool)
+    i = 0
+    while i < n:
+        if not is_full[i]:
+            i += 1
+            continue
+        j = i
+        while j < n and is_full[j]:
+            j += 1
+        if j - i >= FRAME_MIN_FULL_PX:
+            thick[i:j] = True
+        i = j
+    part = np.sort(runs[(runs > 0) & (runs < full)])
+    if len(part) == 0:
+        return np.where(thick, full, 0)
+    med = int(part[len(part) // 2])
+    if int((np.abs(part - med) <= FRAME_SLACK_PX).sum()) < FRAME_STRAIGHT * len(part):
+        return None
+    return np.where(thick, full, np.minimum(runs, med + FRAME_SLACK_PX))
+
+
+def whiten_frame(gray: np.ndarray) -> np.ndarray:
+    """Paint a screenshot's flat dark viewer frame white — see the block above. Returns `gray`
+    ITSELF (same object) whenever there is no such frame, which is every scan and every photo."""
+    h, w = gray.shape
+    if not FRAME_WHITEN or h < 3 or w < 3:
+        return gray
+    ring = np.concatenate([gray[0], gray[-1], gray[1:-1, 0], gray[1:-1, -1]])
+    hist = np.bincount(ring, minlength=256)
+    # The frame colour is the ring's commonest level ON THE INK SIDE of Otsu — not its commonest
+    # level outright. A frame on one side only (or black bars above and below a wide page) covers
+    # under half the ring, so the outright mode is the white paper and the frame was never seen.
+    # A light frame is paper to Otsu already and is skipped by the same line.
+    otsu, _ = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    dark = hist[:int(otsu) + 1]
+    if dark.sum() == 0:
+        return gray
+    mode = int(dark.argmax())
+    lo, hi = max(0, mode - FRAME_BAND), min(255, mode + FRAME_BAND)
+    if hist[lo:hi + 1].sum() < FRAME_MIN_RING * ring.size:
+        return gray
+    band = (gray >= lo) & (gray <= hi)
+    sides = [_frame_side(_edge_runs(band), w), _frame_side(_edge_runs(band[:, ::-1]), w),
+             _frame_side(_edge_runs(band.T), h), _frame_side(_edge_runs(band.T[:, ::-1]), h)]
+    if any(s is None for s in sides):
+        return gray                       # a slanted edge: a photo on a desk, not a screenshot
+    left, right, top, bottom = sides
+    xs, ys = np.arange(w)[None, :], np.arange(h)[:, None]
+    mask = ((xs < left[:, None]) | (xs >= w - right[:, None])
+            | (ys < top[None, :]) | (ys >= h - bottom[None, :]))
+    if not mask.any():
+        return gray
+    k = 2 * FRAME_GROW_PX + 1
+    grown = cv2.dilate(mask.astype(np.uint8) * 255,
+                       cv2.getStructuringElement(cv2.MORPH_RECT, (k, k)))
+    out = gray.copy()
+    out[grown > 0] = 255
+    return out
+
+
 def prep_page(gray: np.ndarray) -> tuple[np.ndarray, bool, float]:
     """Perspective-rectify then deskew a page for slicing. Returns (page, cropped, skew_angle).
+    Last of all, a screenshot's dark viewer frame is painted white (`whiten_frame`) — after the
+    deskew on purpose: a rotated page is padded with white and so can never read as framed.
     The crop is KEPT only if it improves staff-line detectability (qualifying-row count at the best
     rotation): a sheet shot on a contrasting desk rectifies cleanly, but a sheet on a white-paper
     stack has a low-contrast edge the quad detector can misread — there the crop is discarded so it
@@ -430,7 +556,7 @@ def prep_page(gray: np.ndarray) -> tuple[np.ndarray, bool, float]:
     else:
         est = estimate_skew(cropped)
     page, ang = deskew(cropped, est)
-    return page, did_crop, ang
+    return whiten_frame(page), did_crop, ang
 
 
 # ---------------------------------------------------------------------------- staff detection
@@ -1543,6 +1669,9 @@ def estimate_tokens(cum_stems: np.ndarray, cum_ink: np.ndarray,
 # ⚠ 20260903 covers TWO same-day changes — the trailing-span trim (TAIL_SPAN_MAX_SP) and the
 # both-ends stem gate (END_BLOBS). The second is told apart by the `end_blobs` key in `geometry`,
 # which `window_cache_ok` compares as well; no cache on disk carried 20260903 when it landed.
+# ⚠ `whiten_frame` (2026-11-15) changed the CV path and did NOT bump this, by the owner's decision
+# (2026-11-16): it returns every one of the 2,987 corpus pages and 39 exam photos untouched, so no
+# cache on disk describes a crop that moved. If that rule is ever loosened, the bump is owed.
 GEOMETRY_REV = 20260903
 
 

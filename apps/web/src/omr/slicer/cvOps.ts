@@ -203,6 +203,34 @@ export function dilateVertical(ink: Gray, len: number): Gray {
 }
 
 /**
+ * The LEVEL Otsu picks for a page — `cv2.threshold(..., THRESH_OTSU)`'s first return value.
+ *
+ * `whitenFrame` asks it one question: is the viewer frame's colour on the ink side? OpenCV's own
+ * routine, not a re-derivation, so the answer cannot differ from Python's by a rounding step.
+ */
+export function otsuLevel(gray: Gray): number {
+  const src = toMat(gray);
+  const dst = new (cv().Mat)();
+  const level = cv().threshold(src, dst, 0, 255, cv().THRESH_BINARY_INV + cv().THRESH_OTSU);
+  src.delete();
+  dst.delete();
+  return level;
+}
+
+/** `cv2.dilate(mask, getStructuringElement(MORPH_RECT, (k, k)))` — `whiten_frame`'s grow step. */
+export function dilateSquare(mask: Gray, k: number): Gray {
+  const src = toMat(mask);
+  const dst = new (cv().Mat)();
+  const kernel = cv().getStructuringElement(cv().MORPH_RECT, new (cv().Size)(k, k));
+  cv().dilate(src, dst, kernel);
+  kernel.delete();
+  src.delete();
+  const out = fromMat(dst);
+  dst.delete();
+  return out;
+}
+
+/**
  * Per-row ink counts of `openHorizontal(ink, len)`, WITHOUT running the morphology.
  *
  * The kernel is `len × 1`, so the opening is purely per-row, and a 1-D opening has a closed form:

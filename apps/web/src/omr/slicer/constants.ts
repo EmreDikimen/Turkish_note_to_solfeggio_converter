@@ -241,6 +241,31 @@ export const STAFF_GROUP_BY_SPAN = true;
  * else — the broad regrouping that measured −545 exact rows and was thrown away. */
 export const STAFF_GROUP_SPAN_TOL = 0.15;
 
+// ---- the viewer frame of a screenshot — `whiten_frame` (Python: OMR_FRAME_WHITEN) --------------
+/**
+ * Paint a screenshot's flat dark viewer frame white before binarization.
+ *
+ * A phone screenshot of a PDF viewer is a white page on a flat dark background, and Otsu puts that
+ * background on the INK side: every staff's right end ran out to the image edge (a black block in
+ * the last strip of each row) and the frame moved Otsu's level enough to lose a pale staff outright
+ * — 13 staves of 14 on the page this was built for (owner, 2026-11-15).
+ *
+ * ⚠ Shaped to do NOTHING on any other page: it needs one dark colour (on the ink side of Otsu)
+ * covering a real share of the outer ring, with a STRAIGHT inner edge on every side — the test
+ * that tells a screenshot from a photo on a dark desk. The measured firing counts are beside the
+ * Python original.
+ * ⚠ Must move together with the Python constants or `parity:slicer` breaks. The full reasoning is
+ * beside `whiten_frame` in `src/vision/page_to_strips.py`.
+ */
+export const FRAME_WHITEN = true;
+export const FRAME_BAND = 12; // +- gray levels around the ring's mode that count as the frame
+export const FRAME_MIN_RING = 0.25; // share of the outer ring that must be that colour
+export const FRAME_STRAIGHT = 0.9; // share of a side's partial runs that must sit at its median
+export const FRAME_SLACK_PX = 2; // ... within this many px
+export const FRAME_GROW_PX = 4; // painted past the frame's edge: its anti-aliased rim
+export const FRAME_SIDE_MIN = 0.5; // a side has a frame only if this share of its rows starts with it
+export const FRAME_MIN_FULL_PX = 12; // an edge-to-edge frame row counts only in a block this thick
+
 // ---- the staff RESCUE second pass — `STAFF_RESCUE` (Python: OMR_STAFF_RESCUE) -----------------
 /**
  * Re-detect a staff only in the bands where the page's own rhythm says a row is MISSING.

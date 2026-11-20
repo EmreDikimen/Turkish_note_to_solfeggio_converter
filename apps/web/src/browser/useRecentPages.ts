@@ -4,7 +4,15 @@
  * App.tsx on 2026-11-20; the statements are unchanged.
  */
 import { useState, useEffect, type SetStateAction } from "react";
-import { type RecentMeta, listPages, savePage, readPage, deletePage, renamePage, clearPages } from "./recentPages";
+import {
+  type RecentMeta,
+  listPages,
+  savePage,
+  readPage,
+  deletePage,
+  renamePage,
+  clearPages,
+} from "./recentPages";
 import { makamDisplay, type NoteModelDocument, type MakamDetection } from "@turkish-omr/core";
 import { SAVE_DEBOUNCE_MS } from "./urlParams";
 import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";

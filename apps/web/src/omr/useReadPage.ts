@@ -5,7 +5,14 @@
  */
 import { type NoteModelDocument, detectMakam, type MakamDetection } from "@turkish-omr/core";
 import { toAppError, ReadError, type AppError } from "../ui/errors";
-import { busy as busyStatus, readingStatus, stripsSummary, whereOf, pageSummary, type OmrStatus } from "../ui/status";
+import {
+  busy as busyStatus,
+  readingStatus,
+  stripsSummary,
+  whereOf,
+  pageSummary,
+  type OmrStatus,
+} from "../ui/status";
 import { TR } from "../ui/strings";
 import { type StripInput, positionFromName, stitchDecoded } from "./pipeline";
 import { loadImage } from "./preprocess";

@@ -7,7 +7,7 @@ import "@fontsource-variable/eb-garamond/wght.css";
 import "@fontsource-variable/eb-garamond/wght-italic.css";
 import "./index.css";
 import { App } from "./App";
-import { installStaleBuildGuard } from "./lib/staleBuild";
+import { installStaleBuildGuard } from "./browser/staleBuild";
 
 installStaleBuildGuard();
 

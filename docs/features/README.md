@@ -373,7 +373,7 @@ would not. That is the whole shape of the feature. **No server, no account, no b
 
 Three files:
 
-* `apps/web/src/lib/recentPages.ts` — the store. Two IndexedDB object stores, the limits, the eviction.
+* `apps/web/src/browser/recentPages.ts` — the store. Two IndexedDB object stores, the limits, the eviction.
 * `apps/web/src/ui/RecentPages.tsx` — `#recent`, the list between the upload box and the score.
 * `App.tsx` — three moving parts: read the list on arrival, write the score back after the edits
   stop, install a row when it is clicked.
@@ -660,6 +660,6 @@ Rotating `STATS_SALT` changes nothing since 2026-10-14 — its value is unused.
 | What a visit is; the hash, the user-agent reading, the folding | `netlify/shared/visits.ts` |
 | Write side — one event in, one row out | `netlify/functions/visit.mts` |
 | Read side — the token, the window, the retention sweep | `netlify/functions/stats.mts` |
-| The browser's beacon, and everyone it refuses to count | `apps/web/src/lib/visits.ts` |
+| The browser's beacon, and everyone it refuses to count | `apps/web/src/browser/visits.ts` |
 | The dashboard (never published) | `apps/web/admin-stats.html` · `apps/web/src/admin/statsPage.ts` |
 | The arithmetic, pinned | `tools/tests/visits-test.ts` (`npm test`) |

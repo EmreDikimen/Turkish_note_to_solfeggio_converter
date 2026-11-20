@@ -79,7 +79,7 @@ import {
   USUL_BAR_NOISE,
   readFollow,
   writeFollow,
-} from "./lib/urlParams";
+} from "./browser/urlParams";
 import {
   EXPORT_STAGE_ID,
   exportScorePdf,
@@ -119,7 +119,7 @@ import {
   readPage,
   renamePage,
   savePage,
-} from "./lib/recentPages";
+} from "./browser/recentPages";
 import { RecentPages } from "./ui/RecentPages";
 import { type RepeatSpan, detectRepeats, injectRepeats } from "@turkish-omr/core/labels/repeats";
 import { SHEET_CONTENT_WIDTH, SHEET_SIDE_MARGIN } from "./score/layout";
@@ -143,9 +143,9 @@ import { TransposeModal } from "./ui/modals/TransposeModal";
 import { UploadHero } from "./ui/UploadHero";
 import { VoiceDownloadModal } from "./ui/modals/VoiceDownloadModal";
 import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
-import { claimReload, isStaleChunkError } from "./lib/staleBuild";
+import { claimReload, isStaleChunkError } from "./browser/staleBuild";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
-import { devMode } from "./lib/devMode";
+import { devMode } from "./browser/devMode";
 import {
   drawnTupletAt,
   memberPositions,
@@ -154,7 +154,7 @@ import {
 } from "@turkish-omr/core/labels/rhythm";
 import { loadImage } from "./omr/preprocess";
 import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
-import { noteVisit } from "./lib/visits";
+import { noteVisit } from "./browser/visits";
 import { respellAeu } from "@turkish-omr/core/labels/respell";
 import {
   useCallback,
@@ -164,8 +164,8 @@ import {
   useState,
 } from "react";
 import { useDocHistory } from "./score/useDocHistory";
-import { useTheme } from "./lib/theme";
-import { useViewport } from "./lib/usePhone";
+import { useTheme } from "./browser/theme";
+import { useViewport } from "./browser/usePhone";
 import { voiceCached } from "./audio/loadInstrument";
 
 
@@ -416,7 +416,7 @@ export function App() {
   const [rawDecode, setRawDecode] = useState<RawDecode | null>(null);
   // ── The pages this browser has already read (owner, 2026-09-05) ─────────────────────────────
   // A decode costs 35–55 s and a round trip to Cloud Run, and a page refresh used to throw it away.
-  // The store, its limits and why it is a CACHE and not a save: apps/web/src/lib/recentPages.ts.
+  // The store, its limits and why it is a CACHE and not a save: apps/web/src/browser/recentPages.ts.
   const [recent, setRecent] = useState<RecentMeta[]>([]);
   // Which stored record the score on screen IS, or null when it came from anywhere else.
   //

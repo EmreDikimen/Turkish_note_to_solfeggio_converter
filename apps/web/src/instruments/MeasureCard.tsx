@@ -3,7 +3,7 @@ import { groupMeasures, type Measure, type NoteModelDocument, type Timeline } fr
 import { SHEET_SIDE_MARGIN } from "../score/layout";
 import { type PlayStep } from "../score/hitTest";
 import { TR } from "../ui/strings";
-import { useIsPhone } from "../lib/usePhone";
+import { useIsPhone } from "../browser/usePhone";
 
 /**
  * One bar of the score, engraved on its own, beside the instrument (owner, 2026-09-04:

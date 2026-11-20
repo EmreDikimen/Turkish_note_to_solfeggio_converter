@@ -3,7 +3,7 @@
  *
  * The list a reader lands on when they come back: one row per stored page, click to open, ✕ to
  * forget. What is behind it, and why it is a cache rather than a save, is written up in
- * `apps/web/src/lib/recentPages.ts`; this file only draws it.
+ * `apps/web/src/browser/recentPages.ts`; this file only draws it.
  *
  * ⚠ It renders NOTHING when the store is empty — no heading, no empty state. A first-time visitor
  * has one thing to do (upload a page) and an empty box above the fold competes with it for no gain;
@@ -20,7 +20,7 @@
  */
 
 import { useState } from "react";
-import type { RecentMeta } from "../lib/recentPages";
+import type { RecentMeta } from "../browser/recentPages";
 import { RenameField } from "./RenameField";
 import { TR } from "./strings";
 

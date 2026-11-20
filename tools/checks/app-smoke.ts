@@ -211,7 +211,7 @@ async function main() {
   //
   // A decode costs 35–55 s, so losing it to a reload is the one failure a reader cannot work
   // around. The score is written to the browser's own IndexedDB store a couple of seconds after
-  // the last edit (apps/web/src/lib/recentPages.ts) and offered back by name.
+  // the last edit (apps/web/src/browser/recentPages.ts) and offered back by name.
   //
   // ⚠ This is the ONLY check that can see the feature at all: the store is written for a DECODE and
   // for nothing else, so `smoke:editor`, which loads its fixture through `?score=`, is blind to it

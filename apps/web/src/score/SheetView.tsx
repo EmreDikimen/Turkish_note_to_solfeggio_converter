@@ -117,7 +117,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useViewport } from "../lib/usePhone";
+import { useViewport } from "../browser/usePhone";
 
 
 /**

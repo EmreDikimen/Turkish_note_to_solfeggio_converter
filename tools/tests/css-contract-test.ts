@@ -50,7 +50,7 @@ console.log("css contract");
 check("--control-h is defined in tokens.css", /--control-h\s*:/.test(stripComments(read(path.join(STYLES, "tokens.css")))));
 
 // 2
-const phoneTs = read(path.join(SRC, "lib", "usePhone.ts"));
+const phoneTs = read(path.join(SRC, "browser", "usePhone.ts"));
 const phoneMax = Number(/PHONE_MAX_WIDTH\s*=\s*(\d+)/.exec(phoneTs)?.[1]);
 const variant = /@custom-variant\s+phone\s*\(\s*@media\s*\(\s*max-width:\s*(\d+)px/.exec(read(path.join(STYLES, "theme.css")));
 check("phone variant == PHONE_MAX_WIDTH", !!variant && Number(variant[1]) === phoneMax, `${variant?.[1]} vs ${phoneMax}`);

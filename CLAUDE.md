@@ -157,7 +157,7 @@ short list of what can be broken from anywhere.
   duplicated (the carry/`sigTolerant` decision lives in both `SheetView.tsx` and `lilypond.ts`), a
   corpus is not trainable until `tools/render/verify-labels.ts` passes on it: that duplication
   silently cost Round 1 (docs/METRICS.md). ⚠ `sigTolerant` is a **flag on both sides**, fed by
-  `SIG_TOLERANT` in `apps/web/src/lib/urlParams.ts` — **on** for renderer-driven pages (a synthetic page imitates a real
+  `SIG_TOLERANT` in `apps/web/src/browser/urlParams.ts` — **on** for renderer-driven pages (a synthetic page imitates a real
   printed edition, which writes a same-direction refinement bare) and **off** for a human, because the
   app's staff must say what it plays (owner, 2026-08-09). It is ONE flag for the draw path and the
   label path, so pixels == labels either way; `?mode=` in the URL is what makes a page
@@ -292,7 +292,7 @@ short list of what can be broken from anywhere.
   [docs/features/README.md](docs/features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard).
 - **THE APP REMEMBERS THE PAGES IT HAS READ, AND IT STORES NOTES AND NEVER AN IMAGE** (owner,
   2026-09-05). A decoded page and every later edit go to the reader's own **IndexedDB**
-  (`apps/web/src/lib/recentPages.ts`); **30 pages**, least recently opened dropped. ⛔ **No image, ever** —
+  (`apps/web/src/browser/recentPages.ts`); **30 pages**, least recently opened dropped. ⛔ **No image, ever** —
   the footer's `privacy` line has nothing to qualify only because of that choice. ⚠ **IndexedDB, not
   `localStorage`** — the edited state is written on every edit (debounced 2 s) and `localStorage` is
   SYNCHRONOUS, so a ~100 KB write blocks the main thread mid-drag. ⚠ **ONE save path and no explicit

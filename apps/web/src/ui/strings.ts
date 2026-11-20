@@ -105,7 +105,7 @@ export const TR = {
 
   // The list of pages this browser has already read (2026-09-05). ⚠ `note` is not filler: the
   // store is a CACHE and the reader has to be told, because "kaydedildi" is a promise no browser
-  // storage can keep — see apps/web/src/lib/recentPages.ts. It says the two things that actually
+  // storage can keep — see apps/web/src/browser/recentPages.ts. It says the two things that actually
   // surprise people: the browser may clear it, and it does not travel to another device.
   recent: {
     title: "Daha önce okuduklarınız",

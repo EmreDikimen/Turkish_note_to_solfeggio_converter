@@ -174,3 +174,7 @@ apps/web/public/ort/
 
 # check:export writes the saved PNG/PDF here for a person to look at
 tmp-export-check/
+
+# documents never belong in the repo
+*.pdf
+*.pptx

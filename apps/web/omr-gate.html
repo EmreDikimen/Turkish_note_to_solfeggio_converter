@@ -2,14 +2,14 @@
 <!--
   ONNX / browser gate — introduced at Rung 1.5 (docs/PHASE2.md §5), carried through every retrain.
   Current runtime: Round 2 (`round2-stage2-best`, int8), shipped 2026-07-27
-  (src/vision/MODEL_EVAL.md). Re-stage assets with `make_browser_gate.py` after any new ship.
+  (ml/omr/MODEL_EVAL.md). Re-stage assets with `make_browser_gate.py` after any new ship.
 
   Decodes gate strips with onnxruntime-web using a hand-rolled greedy loop (the JS port of
-  src/vision/onnx_parity.py) and compares the token ids against the ground-truth labels.
+  ml/omr/onnx_parity.py) and compares the token ids against the ground-truth labels.
   Each strip is decoded twice: from Python's exact preprocessed tensor (isolates "is ORT-in-
   the-browser correct?") and from canvas-preprocessed pixels (the real product path).
 
-  Assets are staged by `src/vision/make_browser_gate.py` into public/models/ (gitignored);
+  Assets are staged by `ml/omr/make_browser_gate.py` into public/models/ (gitignored);
   the ORT wasm runtime is copied to public/ort/. Everything is same-origin — no CDN — because
   the product premise is offline, no-server inference.
 

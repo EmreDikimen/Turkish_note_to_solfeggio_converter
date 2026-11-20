@@ -1,7 +1,7 @@
 /**
  * The status of a read, as structured state rather than a sentence.
  *
- * Why this exists: five Playwright tools (tools/browser/{app,page,build,live}-smoke.ts) need to
+ * Why this exists: five Playwright tools (tools/checks/{app,page,build,live}-smoke.ts) need to
  * know what a read did — did it finish, did it run on the server, how many strips came back. They
  * used to learn it by regex-matching the status SENTENCE, which made the user-facing copy
  * load-bearing: rewording "read a page:" broke the deploy checks, and translating the UI broke all

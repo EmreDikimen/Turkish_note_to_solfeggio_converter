@@ -17,7 +17,7 @@
  * an assumption about the runtimes. Measuring threshold agreement measures the thing W8 depends on.
  *
  * Both sides decode the gate's `.pixels.bin` reference tensors, so the image pipeline is out of the
- * picture and the runtime gap is isolated. Reference: `scripts/logprob_ref.py` →
+ * picture and the runtime gap is isolated. Reference: `ml/prep/logprob_ref.py` →
  * `onnx_parity.onnx_greedy_decode(..., return_logprobs=True)`.
  *
  * ⚠ Exactly one strip is expected to decode differently: `bunca_cevrinle` (the known `\tup3`

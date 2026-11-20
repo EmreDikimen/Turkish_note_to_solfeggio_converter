@@ -9,7 +9,7 @@
  * line for line, 7 staves against the manifest's 5. Same lesson as the arm-B ceiling at W3:
  * agreement with an artifact is not correctness, so measure against the thing you are porting.
  *
- * So `scripts/slicer_ref.py` runs the Python slicer and writes the reference, and THAT file also
+ * So `ml/prep/slicer_ref.py` runs the Python slicer and writes the reference, and THAT file also
  * defines the sample — this tool runs exactly the pages in it, so the two sides cannot drift apart
  * on which pages they ran. Manifest agreement is still reported, as the weaker second reference.
  *
@@ -36,7 +36,7 @@
  * previous one's known residue, exactly the way W4's "zero-staff pages yield zero staves" bar
  * failed a port that agreed with Python. Restated 2026-08-04, with both numbers reported.
  *
- *   .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json
+ *   .venv-ml/bin/python ml/prep/slicer_ref.py --pages 120 --out ref.json
  *   npx tsx tools/checks/parity/slicer-parity.ts --ref ref.json
  */
 import { chromium } from "playwright";
@@ -103,7 +103,7 @@ interface RefStrip {
   est_tokens?: number;
 }
 
-/** One system as `scripts/slicer_ref.py` records it. */
+/** One system as `ml/prep/slicer_ref.py` records it. */
 interface RefStaff {
   system: number;
   lines: number[];
@@ -347,7 +347,7 @@ async function main() {
   if (!refFile || !existsSync(refFile)) {
     console.error(
       "--ref <file> is required. Build it first:\n" +
-        "  .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json"
+        "  .venv-ml/bin/python ml/prep/slicer_ref.py --pages 120 --out ref.json"
     );
     process.exit(2);
   }

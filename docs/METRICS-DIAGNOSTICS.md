@@ -48,7 +48,7 @@ Per-octave error rate — a note substituted or dropped, over the gold notes at 
 
 The arm ran on Colab (L4, 12 vCPU, ~2.6 h; stage 1 6,000 steps then stage 2 2,000, batch 16, mix
 **screenshot .55 / photo .20 / scan .25** printed in both stages' startup line). Scored **paired**
-against `r3-tupnew-stage2-best` with `scripts/rung3/paired_arm_score.py`, which reuses
+against `r3-tupnew-stage2-best` with `ml/labels/paired_arm_score.py`, which reuses
 `eval_omr.align`, so an edit here is an edit there.
 
 | pool | arm ckpt | n | control | arm | mean difference (arm − control) | sign test |
@@ -86,7 +86,7 @@ harder pictures.
 
 ### `_realval_v2` split five ways, and the "hard" tier is not the hard one (2026-08-19)
 
-Measured while building Lever 7's scoring instrument (`scripts/rung3/split_realval_tiers.py`), on
+Measured while building Lever 7's scoring instrument (`ml/labels/split_realval_tiers.py`), on
 **`r3-tupnew-stage2-best`** — the checkpoint that is also the arm's control. Both splits partition
 the 267-strip pool exactly: the tiers and the media each re-sum to the whole pool's 153 exact matches
 and S=267 D=340 I=236 over N=9461.
@@ -208,7 +208,7 @@ Per-strip staff-line spacing, measured on the strips as they reach the model. Th
 | real-val | 30.197 | 1.032 | 29.75 | 30.50 | +0.66% |
 | real nota | 30.122 | 0.701 | 29.50 | 30.75 | +0.41% |
 
-Correcting the size at inference (`scripts/rung3/staff_geometry_probe.py`, frozen
+Correcting the size at inference (`ml/labels/staff_geometry_probe.py`, frozen
 `round2-stage2-best` on the frozen 326-strip exam; rung 0 reproduces the 562-edit total exactly):
 
 | scale applied | exam edits | vs baseline |
@@ -253,7 +253,7 @@ Correcting the size at inference (`scripts/rung3/staff_geometry_probe.py`, froze
   simply wanted the training spacing, exact per-strip matching would have won. It did not.
 - ⚠ The estimator hypothesis is also disproved: `Staff.spacing` (median of gaps) vs the endpoint
   span that actually sets the crop height measures **span/median = 0.998** over 357 staves,
-  predicting 29.95 px — not the 30.5 observed (`scripts/rung3/spacing_estimator_probe.py`).
+  predicting 29.95 px — not the 30.5 observed (`ml/labels/spacing_estimator_probe.py`).
 - Current slicer output spacing is **30.353** against the old code's 30.494, so the bias narrowed
   but persists. Synthetic is exactly 30.000 (sd 0.000).
 - **Do not act on this until the mechanism is known.** Untested candidates: ink weight, stroke
@@ -295,7 +295,7 @@ Owner-labelled, all 130 rows: **65 ok / 22 fix / 43 bad**.
 ### Crop shape and beam weight (2026-07-28) — costs confirmed, both mechanisms disproved
 
 Whole-exam decode, 326 strips, 562 edits. Per-bucket detail in
-[archive/rounds.md](archive/rounds.md#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are); source `scripts/rung3/empty_crop_probe.py`,
+[archive/rounds.md](archive/rounds.md#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are); source `ml/labels/empty_crop_probe.py`,
 `width_split_probe.py`, `beam_weight_probe.py`.
 
 | finding | number |
@@ -367,7 +367,7 @@ they crossed the 400-line cap on arrival: **[METRICS-DIAGNOSTICS.md](#where-an-e
 
 ### Verdicts attributed to the LABEL or to the MODEL, by kind (2026-09-09)
 
-`scripts/rung3/verdict_attribution.py`, no model run. Every review row carries three texts — the
+`ml/labels/verdict_attribution.py`, no model run. Every review row carries three texts — the
 SymbTr-derived `label`, a model's `decoded`, and the owner's `truth` — so each row prices the label
 and the model **independently**. ⛔ The three populations are selected differently and may never be
 pooled. ⚠ Counts are in LABEL-TOKEN space (`error_taxonomy.relabel`), so they are **not**
@@ -647,7 +647,7 @@ the leading hypothesis for the recall deficit.
 
 #### The printed triplet mark, MEASURED (2026-08-12) — the owner's report holds, 16/16
 
-`scripts/rung3/tuplet_mark_probe.py`. The script locates digit-like components that have arc-like ink
+`ml/labels/tuplet_mark_probe.py`. The script locates digit-like components that have arc-like ink
 beside them and writes matched-staff-size tiles (a 4× zoom with a one-staff-space ruler, and the same
 window after the 409×583 Donut resize); **a human accepts or rejects each tile** and the geometry is
 then taken by scanning outward from the digit along its own row band. It deliberately builds no mark

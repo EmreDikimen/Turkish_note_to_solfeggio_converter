@@ -5,7 +5,7 @@
  *
  *  1. **The manifest is DATA produced by a script and pasted by hand**, so these are transcription
  *     checks — a mistyped digit in an `hz`, samples out of order, a duplicated path, a `gain` that
- *     would clip. `scripts/prepare_voices.py` asserts the same properties against the actual audio;
+ *     would clip. `ml/prep/prepare_voices.py` asserts the same properties against the actual audio;
  *     this asserts them against what landed in the repo, which is the half that can rot.
  *  2. **`pickSample` is the 53-TET adapter.** A sampler for twelve pitches per octave is trivial; the
  *     whole reason this function exists is that the project has 53, so every note is a stretch of
@@ -138,7 +138,7 @@ for (const v of sampled) {
     `shortest is ${shortest.toFixed(1)} s`,
   );
 
-  // ⚠ A plucked voice here comes out of a SPLITTER (scripts/prepare_voices.py cuts one take at its
+  // ⚠ A plucked voice here comes out of a SPLITTER (ml/prep/prepare_voices.py cuts one take at its
   // onsets), and a splitter fails in a way a download cannot: it can miss an onset or cut one note
   // in two, and every individual sample still looks perfectly fine. The source take is a chromatic
   // run, so neighbouring pitches are the evidence — this is the repo-side half of the check the

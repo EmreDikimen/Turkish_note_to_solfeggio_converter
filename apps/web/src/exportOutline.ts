@@ -9,7 +9,7 @@
  * so after this step the exported SVG depends on nothing but the browser's ability to fill a path.
  *
  * The outlines are `public/fonts/glyph-outlines/<hh>.json`, written by
- * `scripts/prepare_glyph_outlines.py` from the same font file — one file per 256 code points, fetched
+ * `ml/prep/prepare_glyph_outlines.py` from the same font file — one file per 256 code points, fetched
  * only for the blocks a score actually uses, and only when someone saves.
  *
  * ⚠ **Positions are MEASURED off the live drawing, not re-derived.** `x`/`y` give the pen position of

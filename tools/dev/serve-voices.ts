@@ -45,7 +45,7 @@ const CORS = {
 if (!existsSync(VOICES)) {
   console.error(
     `✗ ${path.relative(ROOT, VOICES)} does not exist.\n` +
-      `  Stage the voices first:  .venv-ml/bin/python scripts/prepare_voices.py`,
+      `  Stage the voices first:  .venv-ml/bin/python ml/prep/prepare_voices.py`,
   );
   process.exit(1);
 }

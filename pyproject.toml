@@ -1,0 +1,14 @@
+# The Python side (training, data, the real-page label tools) as one installable package, so every
+# script imports `ml.omr.data` etc. instead of editing sys.path. Never shipped — the app is TypeScript.
+#   .venv-ml/bin/pip install -e .        # once; then run any script as  .venv-ml/bin/python ml/<part>/<script>.py
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turkish-omr-ml"
+version = "0.0.0"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["ml", "ml.*"]

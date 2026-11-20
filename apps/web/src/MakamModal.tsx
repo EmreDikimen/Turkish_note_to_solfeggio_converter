@@ -10,7 +10,7 @@
  * Shows its own reasoning on purpose (the signature it matched, the karar it used), because
  * "Hüzzam" with no evidence behind it is not something a user can sanity-check.
  *
- * ⚠ The window is modal (ui/kit/Modal.tsx), so Playwright cannot click past it. `tools/browser/
+ * ⚠ The window is modal (ui/kit/Modal.tsx), so Playwright cannot click past it. `tools/checks/
  * app-smoke.ts` and `page-smoke.ts` dismiss it via `#makam-confirm` before touching the
  * transport — keep those ids if this file is restyled.
  */

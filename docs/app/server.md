@@ -203,7 +203,7 @@ A/B and a McNemar test. A Python decode service would open that bill again. Reus
 "the server matches the browser" is true by construction.
 
 It also means **`CLAUDE.md`'s "Python is training/data only and never ships" rule stands unchanged**
-— the open question that rule flagged is closed, and nothing under `src/vision/` becomes shippable.
+— the open question that rule flagged is closed, and nothing under `ml/omr/` becomes shippable.
 
 ✅ **Batching was verified, not assumed** (2026-08-05): both graphs carry a dynamic `batch_size` axis
 (`encoder_model.onnx` → `pixel_values ['batch_size', …]`, `decoder_model.onnx` → the same), so

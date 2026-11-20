@@ -1,6 +1,6 @@
 /**
  * Note-model types — the data contract produced by the Python exporter
- * (`src/symbtr/export_json.py`, schemaVersion 1) and consumed across the app.
+ * (`ml/symbtr/export_json.py`, schemaVersion 1) and consumed across the app.
  *
  * Keep these in sync with the Python exporter. The web harness and the mobile
  * product both read this same shape.

@@ -98,7 +98,7 @@ not near-misses — e.g. `bakma_sakin_benden_yana_nota_p1_s02_w01.png` is scored
 ## ⚠ What `nd` actually is — it is NOT scan degradation (corrected 2026-08-18)
 
 Several docs read `nd` as a scan-quality or degradation measure. It is not, and there is exactly one
-`nd` in this repo. [`scripts/rung3/emit_strip_labels.py`](../scripts/rung3/emit_strip_labels.py)
+`nd` in this repo. [`ml/labels/emit_strip_labels.py`](../ml/labels/emit_strip_labels.py)
 defines it as
 
 ```
@@ -138,7 +138,7 @@ the two cannot be confused, and no model, threshold or eyeball is involved. That
 other difficulty signal this project has is either circular (`nd`, above) or measured worse than
 random (decode confidence, [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)).
 
-Over all **2,055 PDFs** on disk (`scripts/rung3/build_label_batch.py::born_digital_stems`, cached to
+Over all **2,055 PDFs** on disk (`ml/labels/build_label_batch.py::born_digital_stems`, cached to
 `data/real/rung3/_pagequeue/born_digital.json`):
 
 | Source | PDFs | Born-digital | Scanned |
@@ -234,7 +234,7 @@ labels were wrong; none was corrected the other way. ⭐ **Reading the 27 `gold_
 day added 3 more of the identical correction** — **10 now, still 10–0 in one direction**, over two
 queues cut differently ([METRICS-EXAM.md](METRICS-EXAM.md#metrics--the-exam-as-an-instrument)).
 
-**The mechanism** ([../scripts/rung3/emit_strip_labels.py](../scripts/rung3/emit_strip_labels.py),
+**The mechanism** ([../ml/labels/emit_strip_labels.py](../ml/labels/emit_strip_labels.py),
 the `sig_votes` block). Everything else in a label comes from SymbTr. The signature does not: the
 model reads it off every row-start strip, the **majority read wins**, and when that majority differs
 from the SymbTr derivation the model's read **overwrites** it. The reason is legitimate and recorded
@@ -354,7 +354,7 @@ The mechanism, how it was found, and why it is dangerous are in
 [METRICS-CORPUS.md](METRICS-CORPUS.md); the proposed rule change is
 [BACKLOG.md](BACKLOG.md) item 9 and [rung3/round4.md](rung3/round4.md) step 3. This file holds only
 the measurement, taken 2026-09-06 by
-[../scripts/rung3/sig_vote_audit.py](../scripts/rung3/sig_vote_audit.py) — no GPU, no decode, no
+[../ml/labels/sig_vote_audit.py](../ml/labels/sig_vote_audit.py) — no GPU, no decode, no
 labelling. It reads each pool's `emit_report.json` (did the override fire?), its
 `emit_requests.json` (what signature was written), the piece's own `labels.json` (what SymbTr
 derived) and `data/makam_signatures.json` (what the makam usually prints).

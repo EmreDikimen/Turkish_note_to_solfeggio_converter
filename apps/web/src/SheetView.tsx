@@ -145,7 +145,7 @@ const SIG_LINE: Record<string, number> = { C: 1.5, D: 1, E: 0.5, F: 0, G: 3, A: 
 //
 // Real printed staff lines are FATTER relative to the staff than ours, and their weight varies
 // between editions and scans. Measured on strips normalised to a 30 px staff space
-// (scripts/rung3/domain_gap.py): thickness/spacing was 0.100 for every synthetic strip (SD 0.02 —
+// (ml/labels/domain_gap.py): thickness/spacing was 0.100 for every synthetic strip (SD 0.02 —
 // literally constant) against 0.128-0.159 across the three real pools. VexFlow strokes staff
 // lines at lineWidth 1 on a 10 px staff space; this range straddles the real mean and gives the
 // per-render variation the corpus had none of.
@@ -500,7 +500,7 @@ export function tupletAbove(group: StaveNote[]): boolean {
 /**
  * The printed triplet mark, in STAFF SPACES — MEASURED on real editions, not designed.
  *
- * `scripts/rung3/tuplet_mark_probe.py` read 16 marks across ~11 Turkish editions (`strips_tup` and
+ * `ml/labels/tuplet_mark_probe.py` read 16 marks across ~11 Turkish editions (`strips_tup` and
  * `strips_exam_v2_clean`, tiles accepted by eye at matched staff size). **All 16 break the arc and set
  * the "3" inside the gap.** Until 2026-08-12 we drew one unbroken quadratic with the digit floating
  * 1.27 S OUTSIDE it, which left a triplet separated from a plain phrase slur (`drawSlurArc`) by a
@@ -813,7 +813,7 @@ const AEU_SHARP_STROKE = {
  * A 0.12 S gap is ~1–2px once the encoder has shrunk the strip, so a küçük's three bars merge and
  * it decodes as a 2-bar koma. That is the measured failure: gold küçük read as koma, the single
  * most common error on BOTH the clean exam and the photo strips, and one-directional
- * (`scripts/rung3/sharp_width_test.py`).
+ * (`ml/labels/sharp_width_test.py`).
  *
  * **The küçük's 0.65 S pitch is deliberately wider than the 0.55 S measured in real print** — a
  * domain-expert call, chosen off `data/real/rung3/sharp_probe/kucuk_pitch_options.png`: it is the

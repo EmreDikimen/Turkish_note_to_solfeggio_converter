@@ -31,7 +31,7 @@ Earlier drafts justified the rework as *"the editor is the Rung-3 labeling loop'
 per correction is labelling throughput."* **With `Save JSON` gone that is no longer true**, and the
 claim must not survive in the docs.
 
-It is a defensible deletion: the labelling loop's **primary** path is `scripts/rung3/review_ui.py`
+It is a defensible deletion: the labelling loop's **primary** path is `ml/labels/review_ui.py`
 (per-strip verdicts, its own queues), not the web app. What goes is the unused *page-level* export.
 
 So the honest rationale is now simply: **a friend whose page has a wrong note should be able to fix

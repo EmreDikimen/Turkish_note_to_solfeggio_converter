@@ -5,7 +5,7 @@ audience: agents and the owner, whenever a number is needed
 updated: 2026-11-20
 
 Raw run logs (settings, error dumps, export details) live in
-[../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
+[../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md). This file is the summary index.
 
 **AEU headline** = mean per-class recall over the 8 Turkish accidentals. It is **recall-only**, so
 mean **AEU F1** is reported beside it since Round 1. Both are *per-class means*, which makes them
@@ -180,7 +180,7 @@ Both pools read with the SAME model (`round2-stage2-best`) on the same day, so t
 ### `_tupletval` — the tuplet A/B's selection pool (built 2026-08-13)
 
 Every `\tup3`-bearing strip already on the VAL side of `strips_tup` + `_realval_v2`
-(`scripts/rung3/build_tuplet_val.py`): **54 gold groups over 28 strips, 11 pieces**, neyzen 24 /
+(`ml/labels/build_tuplet_val.py`): **54 gold groups over 28 strips, 11 pieces**, neyzen 24 /
 nota 4. Exam pieces refused, one decode-derived label dropped, 8 filename collisions resolved to
 the newer slicer's crop. Protocol: [archive/rounds.md](archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol).
 
@@ -196,7 +196,7 @@ statistic is free-running `\tup3` recall on this pool, paired.
 pre-registered threshold was ~6 discordant groups one way (~11 pp), so this is a null and is reported
 as one. Guard on `_realval_v2`: mean AEU F1 **83.9% vs 83.3%** (the ≤1 pp clause passes), everything
 else a wash. ⚠ **`\tup3` on `_realval_v2` reads 91.4% vs 80.0% — not a second result**: those 35
-groups are a SUBSET of these 54. Full read: [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md).
+groups are a SUBSET of these 54. Full read: [../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md).
 
 ⚠ **The control scored 85.2% — exactly what `round2-stage2-best` scores below.** The `staff_jitter`
 augmentation, the rasterizer drift and a new training environment together moved this class by zero.
@@ -672,7 +672,7 @@ cannot be diffed directly. The observed differences are the known tie/rest conve
 
 #### ⭐ Carried, measured, and largely redundant — the 2026-08-31 read
 
-`scripts/rung3/carry_old_fixes.py` located every retired-pool correction again and marked it in the
+`ml/labels/carry_old_fixes.py` located every retired-pool correction again and marked it in the
 b8 queues. The key is the measure span **the slicer itself recorded** —
 `(page, system, meas_from, meas_to)` out of each crop root's `<page>_manifest.json` — never the
 filename. ⚠ Those indices are ROW-LOCAL, so `system` is part of the key and a page whose two slicers

@@ -11,8 +11,8 @@ dist
 apps/server/models
 apps/web/public/models/*.png
 apps/web/public/models/*.bin
-scripts
-src/vision
+ml
+pyproject.toml
 tools/render/out
 *.log
 

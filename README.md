@@ -101,9 +101,10 @@ of the app:
 python3 -m venv .venv-ml
 source .venv-ml/bin/activate
 pip install -r requirements.txt
+pip install -e .          # makes ml/ importable as `ml.omr`, `ml.labels`, … (once)
 
 # a SymbTr score to a note-model JSON the web app can open
-python3 scripts/symbtr_to_json.py data/raw/<score>.txt -o out.json
+python3 ml/prep/symbtr_to_json.py data/raw/<score>.txt -o out.json
 ```
 
 Data: **SymbTr-2.0.0** (Karaosmanoğlu, 2012) — 2,200 machine-readable makam scores. Not

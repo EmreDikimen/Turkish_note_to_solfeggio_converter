@@ -4,7 +4,7 @@
  * real full-score render, and writes image+label pairs plus a manifest.
  *
  * Job derivation is fully deterministic from `data/pieces.json` (written by
- * scripts/select_pieces.py; scores exported by scripts/export_scores.py):
+ * ml/prep/select_pieces.py; scores exported by ml/prep/export_scores.py):
  *   - lyrics drawn ⟺ transpose 0 and the piece has lyrics (≈ a third of renders);
  *   - repeat signs injected on a seeded ~50% of renders (seed = hash("slug:t"));
  *   - navigation marks (segno/coda/D.C./Son) injected on an independent seeded ~50%
@@ -164,7 +164,7 @@ if (MAX_MEASURES != null && (!Number.isInteger(MAX_MEASURES) || MAX_MEASURES < 1
 }
 
 // Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
-// scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
+// ml/prep/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
 // renders wear the makam's real printed signature (not SymbTr's content-derived one): we sample a
 // variant per pass (seeded, weighted by real frequency) and hand its body string to the harness as
 // ?sig=, which feeds BOTH the drawn glyphs and the label (faithful scheme).

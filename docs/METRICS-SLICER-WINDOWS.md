@@ -458,7 +458,7 @@ under both slicers — the fix removed the catastrophic crops, not the mediocre 
 
 The retune above was measured to its conclusion. **Neither `MEASURES_PER_STRIP` nor `MAX_STRIP_W`
 is worth moving**, and the sweep that suggested lowering the first was scored on the wrong quantity.
-Two genuine BUGS were found underneath it and fixed. Source: `src/vision/page_to_strips.py`.
+Two genuine BUGS were found underneath it and fixed. Source: `ml/omr/page_to_strips.py`.
 
 **1. Measure count is a poor proxy for the budget that actually drops strips.** Over the 31,968
 decoded old-pool strips:
@@ -795,7 +795,7 @@ music is metrical — a decode that drops notes comes up short against `n_measur
 meter`. An early `</s>` under-fills, and nothing else in the pipeline produces that signature at
 scale. The meter is derived **per page** from the page's own decodes (the modal beats-per-measure),
 so no piece match, no usul table and no hand labelling is involved; a page whose decodes disagree
-about a meter is reported unscorable rather than guessed at. `scripts/rung3/measure_fill_score.py`.
+about a meter is reported unscorable rather than guessed at. `ml/labels/measure_fill_score.py`.
 
 ⚠ **It has a floor, and the floor is measured, not assumed.** Run over hand-verified gold
 (`_realval_v2`, n=211 scorable rows) the same scorer flags **10.0%** — **7.6% under**, 2.4% over.
@@ -810,7 +810,7 @@ the failure `?dense=` targets — the model emitting `</s>` early — is exactly
 #### The read: 117 shared pages, `round2-stage2-best` int8 both arms
 
 Arm A is the cached corpus decode under the shipped rule; arm B is the same pages re-decoded under
-the rail (`scripts/rung3/decode_budget_arm.py`, 120 pages, 21 min on the laptop).
+the rail (`ml/labels/decode_budget_arm.py`, 120 pages, 21 min on the laptop).
 
 | | shipped rule | rail, b=50 | Fisher |
 |---|---|---|---|
@@ -894,7 +894,7 @@ training gate ([BACKLOG.md](BACKLOG.md) item 7 / B9), not at the slicer.
 ⚠ The read above tested **b=50** because that is the number `?dense=` documents — it was never
 selected against anything. Choosing it properly costs no decoding at all: re-window the same stage-1
 geometry at every candidate and count what enters the corpus against what it costs.
-`scripts/rung3/budget_sweep.py`, 200 pages / 3,876 legacy windows:
+`ml/labels/budget_sweep.py`, 200 pages / 3,876 legacy windows:
 
 | b | windows | over the 59-id gate | near-empty (≤20) | healthy 21–59 | recovered |
 |---|---|---|---|---|---|

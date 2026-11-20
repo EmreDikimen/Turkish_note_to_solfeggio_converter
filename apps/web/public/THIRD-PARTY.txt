@@ -66,11 +66,11 @@ VCSL (Versilian Community Sample Library)  —  CC0 1.0 (kamu malı / public dom
 
   /audio/ altındaki dosyalar bu kayıtlardan türetilmiştir: tek kanala indirildi,
   sessizlikleri kırpıldı, 700 ms'de kısa bir sönümle kesildi ve düm/tek/ke için
-  sabit seviyelere getirildi (scripts/prepare_strokes.py).
+  sabit seviyelere getirildi (ml/prep/prepare_strokes.py).
 
   The files under /audio/ are derived from those recordings: downmixed to mono,
   silence trimmed, tails cut at 700 ms with a short fade, and levelled to fixed
-  düm/tek/ke targets (scripts/prepare_strokes.py). CC0 permits this; it is noted
+  düm/tek/ke targets (ml/prep/prepare_strokes.py). CC0 permits this; it is noted
   so the files are not mistaken for the untouched originals.
 
 
@@ -173,10 +173,10 @@ Ivan Aivazovsky (1817–1900), "A View of the Bosporus with the Hagia Sophia and
   /backdrop/night.webp, /backdrop/night-soft.webp
 
   Ressam 1900'de öldü; eserler her yerde kamu malıdır. Renkleri yumuşatıldı,
-  küçültüldü ve bulanıklaştırıldı (scripts/prepare_backdrop.py).
+  küçültüldü ve bulanıklaştırıldı (ml/prep/prepare_backdrop.py).
 
   The painter died in 1900; the works are public domain everywhere. Colours
-  calmed, scaled and blurred (scripts/prepare_backdrop.py).
+  calmed, scaled and blurred (ml/prep/prepare_backdrop.py).
 
 KÜTÜPHANELER / LIBRARIES
 ------------------------

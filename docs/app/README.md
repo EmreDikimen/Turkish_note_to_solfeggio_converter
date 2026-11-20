@@ -437,7 +437,7 @@ Accuracy, and the caveat that it is measured on clean scores rather than decoded
 |---|---|
 | Table, karar, detection, deltas | `packages/core/src/makam.ts` |
 | Signature table (GENERATED — do not hand-edit) | `packages/core/src/makamSignatures.ts` |
-| Its generator (`--ts-out` / `--from-json`) | `scripts/build_makam_signatures.py` |
+| Its generator (`--ts-out` / `--from-json`) | `ml/prep/build_makam_signatures.py` |
 | The prompt | `apps/web/src/MakamModal.tsx` |
 | The line beside the picker, shared with the prompt | `apps/web/src/ui/MakamIntonation.tsx` |
 | The rules, the deltas, the re-key and the picker's counts | `tools/tests/makam-test.ts` (in `npm test`) |

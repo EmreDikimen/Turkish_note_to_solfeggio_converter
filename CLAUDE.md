@@ -59,16 +59,17 @@ engineer.** The owner reads English as a second language and asked for this to b
 | Code map / reading order | [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |
 | Page → strips → decode → stitch design | [docs/CODE_TOUR.md](docs/CODE_TOUR.md#inference-pipeline--from-a-full-uploaded-image-to-editable-notes) |
 | See a feature with your own eyes | [docs/MANUAL_CHECKS.md](docs/MANUAL_CHECKS.md) |
-| Training runs, raw results | [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md) |
+| Training runs, raw results | [ml/omr/MODEL_EVAL.md](ml/omr/MODEL_EVAL.md) |
 | Long-range plan (evergreen, no status) | [ROADMAP.md](ROADMAP.md) |
 
 ## Commands
 
-**⚠ The FULL command reference, with the traps that matter, is in TWO files — read the right one
-before running anything not in this box: [docs/COMMANDS.md](docs/COMMANDS.md) for the app, and
-[docs/COMMANDS.md](docs/COMMANDS.md#commands--python-training-the-corpus-and-the-slicer) for the slicer, the emitter, the queues and the
-scorers.** Python lives in `.venv-ml` (training/data only,
-never shipped). Node workspaces at the root.
+**⚠ The FULL command reference, with the traps that matter, is [docs/COMMANDS.md](docs/COMMANDS.md)
+— read it before running anything not in this box** (its Python section covers the slicer, the
+emitter, the queues and the scorers). All Python is the `ml/` package (`ml/omr` training + slicer,
+`ml/labels` the real-page label tools, `ml/prep` corpus and asset prep, `ml/symbtr` the parser),
+installed into `.venv-ml` with `pip install -e .` once — scripts import `ml.omr.data` etc., and
+**never edit `sys.path`**. Training/data only, never shipped. Node workspaces at the root.
 
 ```bash
 npm run dev:web       # harness → http://localhost:5173 — decode runs in YOUR browser, heats the Mac
@@ -80,7 +81,7 @@ npm run smoke:editor  # real app: select, drag, delete, undo/redo, palette, rest
 npm run gate:browser  # in-browser ONNX gate, headless — expect 26/28 (since 2026-10-08)
 npm run smoke:phone   # the app at four PHONE sizes, MEASURED — a probe, not a gate; never exits nonzero
 npm run stats:ui      # the OWNER'S visit dashboard, dev server only — never built into dist/
-.venv-ml/bin/python scripts/check_docs.py   # headers, size cap, links, code refs, orphans
+.venv-ml/bin/python tools/dev/check_docs.py   # headers, size cap, links, code refs, orphans
 ```
 
 ⚠ **Deploying is NOT how you get work off this machine — `npm run dev:cloud` is** (owner, 2026-08-11).
@@ -115,7 +116,7 @@ short list of what can be broken from anywhere.
   `examv3`'s edit-box `decoded` column comes from **`round2-stage2-best`** — a bad hint *causes*
   reader errors, so the old rule priced the model's bias and the human's at zero (`redecoded=1`
   double-report: [docs/DECISIONS.md](docs/DECISIONS.md)). ⚠ **Re-decode with
-  `scripts/rung3/redecode_strips.py`, NEVER `decode_page()`** — it slices before it decodes and would
+  `ml/labels/redecode_strips.py`, NEVER `decode_page()`** — it slices before it decodes and would
   re-cut the frozen exam crops. ⚠ `_realval_v2` keeps its `round2-stage2-best` seed because real-val
   **selects** and does not grade. ⚠ The training pools go the other way — one model,
   `round2-stage2-best`, for the whole re-emit: the gate model also aligns rows, and the weak referees
@@ -215,7 +216,7 @@ short list of what can be broken from anywhere.
   [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md#the-dense-experiment--the-apps-missing-label-rail-measured); the training-side budget, and why its gate is
   **80 ids under scheme H** where every pool before 2026-09-07 used 59, is in
   [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
-- **NOTHING under `src/vision/` ever becomes shippable** — the Python-decode-service question was
+- **NOTHING under `ml/omr/` ever becomes shippable** — the Python-decode-service question was
   closed 2026-08-05 by the Node stack in group 5.
 
 ## 3 · What ships, and what may never ship
@@ -263,14 +264,14 @@ short list of what can be broken from anywhere.
   660 KB, under `public/audio/`. `prune-dist.mjs` fails the build on any audio file outside `audio/` or
   over **1 MB total** — a **permanent guard on the drums**, a decision point and not a dial. Provenance
   is in `apps/web/src/audio/strokeKits.ts` and `/THIRD-PARTY.txt`; the wavs are **generated** by
-  `scripts/prepare_strokes.py` — never hand-edit one.
+  `ml/prep/prepare_strokes.py` — never hand-edit one.
   ⚠ **THE INSTRUMENT VOICES DO NOT SHIP AND THE DRUMS DO** (owner, 2026-08-12). F1's clarinet and
   violin are 20–35 MB each, live in a Hugging Face **dataset** repo, and are fetched from
   **`VITE_VOICES_URL`** — a *separate* variable from the drums' `VITE_AUDIO_URL`, which must stay
   **unset in every deploy**: `VITE_AUDIO_URL` is one base for the whole `audio/` tree, so pointing it
   at the voices repo takes the drum kits with it, 404s them, and drops percussion back to the
   synthesised strokes the owner rejected by ear — silently, because the fallback still makes a sound.
-  Voice files are never committed, trimmed or re-encoded; `scripts/prepare_voices.py` copies them and
+  Voice files are never committed, trimmed or re-encoded; `ml/prep/prepare_voices.py` copies them and
   checks sha256, and every number in `apps/web/src/audio/instruments.ts` is emitted by that script —
   **never read a pitch off a filename**, VSCO's clarinet labels are an octave low.
   Full map: [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md).
@@ -345,7 +346,7 @@ Full statements, with the bug each one cost, in **[docs/APP-RULES.md](docs/APP-R
    act on anything found there.
 4. New work goes in the track doc it belongs to (`docs/rung3/*`), not into STATUS.
 5. Prefer fewer files: grow a file by topic, keep it under ~1,000 lines, and split by phase only past that (owner, 2026-11-20).
-6. Run `.venv-ml/bin/python scripts/check_docs.py` after doc edits.
+6. Run `.venv-ml/bin/python tools/dev/check_docs.py` after doc edits.
 
 ## Data layout (all gitignored)
 
@@ -367,7 +368,7 @@ data/real/rung3/      the label POOLS. strips_h1 (4,456) is ROUND 4's real train
 data/real/rung3/_denseval_h1{,_dense}/  the DENSE read (2026-09-18): strips_h1's 442 HELD-OUT strips,
                       and the 117 over 49 old ids (54.7% over the old 59 gate). Fair to the live model
                       too — 0 of its 61 pieces are on strips_b8's train side, 0 are exam pieces.
-                      ⛔ NOT the exam. Built by scripts/rung3/build_denseval.py
+                      ⛔ NOT the exam. Built by ml/labels/build_denseval.py
 data/real/rung3/_handtest/  the OWNER'S 20 HAND-TEST PAGES, decoded (2026-09-06). ⛔ NOT gold, NOT the
                       exam: review_ui queue `handtest` counts CORRECTIONS per page, `label` is empty on
                       every row and promote_labels.py cannot read the file — its `decoded` hint is the

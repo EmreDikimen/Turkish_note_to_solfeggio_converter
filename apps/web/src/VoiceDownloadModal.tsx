@@ -8,7 +8,7 @@
  * nobody agreed to.
  *
  * ⚠ The size is a RANGE, not a per-voice number. Every number in `audio/instruments.ts` is emitted
- * by `scripts/prepare_voices.py` and none of them is a byte count; a per-voice figure typed here
+ * by `ml/prep/prepare_voices.py` and none of them is a byte count; a per-voice figure typed here
  * would drift the first time a sample set changes.
  *
  * ⚠ The decision lives in `App.requestVoice`, not here — this file only asks. Clicking the backdrop

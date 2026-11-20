@@ -35,7 +35,7 @@ served at `/THIRD-PARTY.txt` and linked from the app footer.
 
 ## Why the app bundles no scores
 
-Every score this project ever had is a SymbTr export (`scripts/symbtr_to_json.py`). SymbTr is
+Every score this project ever had is a SymbTr export (`ml/prep/symbtr_to_json.py`). SymbTr is
 **CC BY-NC-SA 4.0**, which attaches three duties to *publishing* one:
 
 - **BY** — attribute the dataset.
@@ -76,7 +76,7 @@ Three independent places, because one of them is a person remembering:
 ⚠ The files stay on disk on purpose. `npm test`'s round-trip corpus, `smoke:editor`'s grace-note
 geometry section and [MANUAL_CHECKS.md](MANUAL_CHECKS.md#manual-checks--the-synthetic-corpus-and-the-renderer) all read them through
 `?score=…`, which still works against a dev server. Regenerate them with
-`scripts/export_scores.py` if a fresh checkout needs them.
+`ml/prep/export_scores.py` if a fresh checkout needs them.
 
 ## Audio assets — chosen, not yet shipped
 
@@ -169,7 +169,7 @@ attribution-licensed file still has its credit in `THIRD-PARTY.txt`.
 
 ### The Istanbul backdrop — two paintings, public domain (2026-10-01)
 
-`apps/web/public/backdrop/{day,night}{,-soft}.webp`, made by `scripts/prepare_backdrop.py` from two
+`apps/web/public/backdrop/{day,night}{,-soft}.webp`, made by `ml/prep/prepare_backdrop.py` from two
 **Ivan Aivazovsky** paintings on Wikimedia Commons — the Bosphorus in morning light (1856) and the
 Bosphorus with Hagia Sophia and the Maiden's Tower by moonlight. The painter died in 1900, so both
 are **public domain**, with no duty; they are credited in `THIRD-PARTY.txt` anyway, like the violin.
@@ -426,7 +426,7 @@ not get the same benefit. Downloading needs a free Freesound account — a manua
 
 ### What F2 actually took, and how the düm was identified ✅ 2026-08-11
 
-Produced by **`scripts/prepare_strokes.py`** (`--analyse` to see the measurements without writing).
+Produced by **`ml/prep/prepare_strokes.py`** (`--analyse` to see the measurements without writing).
 Never edit a file under `apps/web/public/audio/` by hand — re-run the script.
 
 | Kit | düm | tek | ka |
@@ -491,7 +491,7 @@ called one.
 
 ### What F1 actually took — 2026-08-13
 
-Produced by **`scripts/prepare_voices.py`** (`--analyse` to measure without writing, `--manifest` to
+Produced by **`ml/prep/prepare_voices.py`** (`--analyse` to measure without writing, `--manifest` to
 print the TypeScript block for `apps/web/src/audio/instruments.ts`). ⚠ Unlike the drums, these files
 are **copied, not prepared**: no trim, no fade, no downmix, no resample, no re-level. `write()` is a
 byte copy followed by a **sha256 comparison against the source**, and a mismatch is a hard failure —
@@ -629,9 +629,9 @@ decoded, 11 sampled notes and 0 synthesised.
 The recipe, for the next instrument:
 
 ```bash
-.venv-ml/bin/python scripts/prepare_voices.py --analyse   # measure, print, write nothing
-.venv-ml/bin/python scripts/prepare_voices.py             # stage data/audio_voices/ (55.6 MB)
-.venv-ml/bin/python scripts/prepare_voices.py --manifest  # the TS block + the sha256 table
+.venv-ml/bin/python ml/prep/prepare_voices.py --analyse   # measure, print, write nothing
+.venv-ml/bin/python ml/prep/prepare_voices.py             # stage data/audio_voices/ (55.6 MB)
+.venv-ml/bin/python ml/prep/prepare_voices.py --manifest  # the TS block + the sha256 table
 
 .venv-ml/bin/hf auth login                                 # already done for the weights
 .venv-ml/bin/hf repo create omr-voices --repo-type dataset # public: do NOT pass --private

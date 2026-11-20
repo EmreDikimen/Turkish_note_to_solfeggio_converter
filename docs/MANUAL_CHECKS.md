@@ -48,9 +48,9 @@ One-time prep (skip what's already done — after the Rung-2 export these all ex
 .venv-ml/bin/optimum-cli export onnx --model data/checkpoints/rung2-best \
     --task image-to-text-with-past data/checkpoints/rung2-best-onnx
 # 2. quantize to int8 (830 MB fp32 → 221 MB)
-.venv-ml/bin/python src/vision/quantize_onnx.py --onnx-dir data/checkpoints/rung2-best-onnx
+.venv-ml/bin/python ml/omr/quantize_onnx.py --onnx-dir data/checkpoints/rung2-best-onnx
 # 3. stage the gate assets into apps/web/public/models/ (gitignored)
-.venv-ml/bin/python src/vision/make_browser_gate.py --checkpoint data/checkpoints/rung2-best \
+.venv-ml/bin/python ml/omr/make_browser_gate.py --checkpoint data/checkpoints/rung2-best \
     --onnx-dir data/checkpoints/rung2-best-onnx --strips-dir data/synthetic/strips_v2_1 --n 5
 ```
 
@@ -97,7 +97,7 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
 
 1. Decode a page (slicer + int8 ONNX; writes strips + `<page>_decode.json`):
    ```
-   .venv-ml/bin/python src/vision/decode_page.py data/real/images/hicaz/ben_bir_garip_kusum_p1.png \
+   .venv-ml/bin/python ml/omr/decode_page.py data/real/images/hicaz/ben_bir_garip_kusum_p1.png \
        --checkpoint data/checkpoints/rung22-stemfix-best \
        --onnx-dir data/checkpoints/rung22-stemfix-best-onnx --suffix _int8
    ```
@@ -114,7 +114,7 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    engraved, playable, and **editable** (✎ Edit → click a measure). Compare against the source
    PNG side by side and fix a wrong note. ⚠ **`⬇ Save JSON` was removed on 2026-08-30**: to read the
    corrected document, open the console and type `__omrDoc`. The labelling loop's real path is
-   `scripts/rung3/review_ui.py` (`docs/CODE_TOUR.md` §3.2).
+   `ml/labels/review_ui.py` (`docs/CODE_TOUR.md` §3.2).
 4. Stitcher regression suite (structure unit tests + label round-trip on all bundled scores):
    ```
    npx --yes tsx tools/tests/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
@@ -309,7 +309,7 @@ a playable score out. This is Check 10's journey with every stage running in the
    in ~19 s. Then switch to **Sheet**, press **▶ Play**, and edit a measure (✎ Edit → click one).
 5. The same thing, headless and asserted, including a strip-count check against Python:
    ```
-   .venv-ml/bin/python scripts/slicer_ref.py --pages 8 --out ref.json
+   .venv-ml/bin/python ml/prep/slicer_ref.py --pages 8 --out ref.json
    npm run smoke:page -- --ref ref.json
    ```
 
@@ -589,7 +589,7 @@ it is also pointing at the model's mistakes.
 > ⚠ **The `?score=…` URLs below still work, but only against a dev server.** Since 2026-08-08 the
 > app bundles no score and the deployed build has none — the files are on disk and gitignored
 > ([THIRD-PARTY.md](THIRD-PARTY.md)). A fresh checkout regenerates them with
-> `scripts/export_scores.py`. There is no Sample dropdown any more, so `?score=` is the only way in.
+> `ml/prep/export_scores.py`. There is no Sample dropdown any more, so `?score=` is the only way in.
 
 ---
 
@@ -708,7 +708,7 @@ Open:
 ### Check 5 — piece selection & coverage projection *(after step 5 exists)*
 
 ```bash
-.venv-ml/bin/python scripts/select_pieces.py --n 150
+.venv-ml/bin/python ml/prep/select_pieces.py --n 150
 ```
 
 - **Look for:** the printed per-class projection table — each of the 8 AEU accidental classes
@@ -736,7 +736,7 @@ open data/synthetic/strips_v2_1/index.html
 ```bash
 # split-by-piece is already committed at data/split.json — only re-run make_split.py if the
 # piece list itself changes
-.venv-ml/bin/python src/vision/audit_coverage.py --strips data/synthetic/strips_v2_1 \
+.venv-ml/bin/python ml/omr/audit_coverage.py --strips data/synthetic/strips_v2_1 \
     --split data/split.json --tokenizer data/checkpoints/overfit10
 ```
 
@@ -748,7 +748,7 @@ open data/synthetic/strips_v2_1/index.html
 ### Check 8 — augmentation preview grid (training kit)
 
 ```bash
-.venv-ml/bin/python src/vision/augment.py --n 6 --out data/synthetic/aug_preview.png
+.venv-ml/bin/python ml/omr/augment.py --n 6 --out data/synthetic/aug_preview.png
 open data/synthetic/aug_preview.png
 ```
 

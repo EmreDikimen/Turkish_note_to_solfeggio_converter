@@ -24,8 +24,8 @@ node_modules/
 # Training and research material — none of it ships (CLAUDE.md: Python is training/data only).
 /data/
 /.venv-ml/
-/src/
-/scripts/
+/ml/
+/pyproject.toml
 /docs/
 /archive/
 /tools/

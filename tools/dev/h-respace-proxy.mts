@@ -15,7 +15,7 @@
  * H is ever adopted, is one splitter inside `normalizeTokens` — deliberately NOT done here, because
  * that is shipping code and the owner asked for a localhost-only answer.
  *
- * ⚠ **THE RULE IS A MIRROR OF `src/vision/data.canonical_label`** — the same function
+ * ⚠ **THE RULE IS A MIRROR OF `ml/omr/data.canonical_label`** — the same function
  * `paired_arm_score.py --score-vocab old` uses, so what the app receives here is what the A/B
  * scored. If that function changes, this must change with it. It is a mirror and not an import
  * because it sits on the Node side of the project; the three regexes below are the whole rule.

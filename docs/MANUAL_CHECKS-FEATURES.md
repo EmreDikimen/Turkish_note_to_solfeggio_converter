@@ -103,7 +103,7 @@ once it sounds right. Then:
    are slurred by design** — they start mid-sustain, so no tonguing and no re-bowing. Two dials, both
    free to re-tune because the trim is a playback window and not a cut: `MAX_ATTACK_SHARE` in
    `webAudioBackend.ts` decides how long a note must be to keep its attack, and `TONE_DROP` in
-   `scripts/prepare_voices.py` decides where the breath is judged to end. **No re-upload either way.**
+   `ml/prep/prepare_voices.py` decides where the breath is judged to end. **No re-upload either way.**
 4. **Play a piece that goes low, and one that goes high.** The clarinet's layer spans **13 dB**
    between its quietest and loudest file, so its bottom register is the most likely thing to
    disappoint, and one global gain cannot fix a spread. Listen also for notes that sound *thin* or

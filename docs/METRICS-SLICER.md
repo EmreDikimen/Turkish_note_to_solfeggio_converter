@@ -16,7 +16,7 @@ first; the probes below are the pattern.
 
 ## Pale staff lines: Otsu erases them, and the guard that fixes it (2026-08-17)
 
-`scripts/rung3/pale_line_probe.py`, over all **2,987** corpus pages. `binarize_ink` is global Otsu, a
+`ml/labels/pale_line_probe.py`, over all **2,987** corpus pages. `binarize_ink` is global Otsu, a
 **two**-class split; a page with black noteheads and pale staff lines has **three** classes. On the
 1056 px re-scanned photocopy that started this: paper **253**, lines **219**, noteheads **27**, Otsu
 threshold **156** — the lines land on the paper side and vanish (0 staves, 0 strips) while the notes
@@ -161,7 +161,7 @@ low resolution (10.5 px line spacing) is the other, and nothing here fixes that.
 
 ⚠ `GEOMETRY_REV` was **not** bumped, by the owner's decision — [DECISIONS.md](DECISIONS.md), 2026-11-15 row. The six synthetic cases in
 `tools/tests/frame-test.ts` (inside `npm test`) pin the TS port to Python's bytes;
-`scripts/frame_whiten_ref.py` prints the hashes to paste after any change to the rule.
+`ml/prep/frame_whiten_ref.py` prints the hashes to paste after any change to the rule.
 
 ## Which crop root a pool came from: measured in its own file
 
@@ -283,7 +283,7 @@ sliver class, not every bad crop — matching the owner's observation exactly.
 
 ### Which crop root is still current — measured, not remembered (2026-08-17)
 
-`scripts/rung3/check_crop_staleness.py` re-slices sampled pages with **today's** code and compares
+`ml/labels/check_crop_staleness.py` re-slices sampled pages with **today's** code and compares
 crop-for-crop. It exists because the owner asked the right question before committing a week of
 labelling — *are these crops even what the slicer makes now?* — and the answer differs by root, which
 nothing recorded.
@@ -544,7 +544,7 @@ cache — **pairwise on the same (system, window)**.
 - Arm B landing on exactly its recorded **86.00%** ceiling is a free control on the harness.
 
 ⚠ **This is a difference, not a level.** Agreement with Python is not quality (W3); if a future
-change makes arm A look worse, the decisive test is `scripts/score_browser_gold.py` against gold.
+change makes arm A look worse, the decisive test is `ml/prep/score_browser_gold.py` against gold.
 ⚠ **Do not compare arm A to the 86.0% number directly** — at n=450 its standard error is ~1.6 pp,
 which is why the plan's original "within 1 pp of the ceiling" bar was replaced by this paired test.
 
@@ -625,7 +625,7 @@ manifests would read 96.55% against a 99% bar and look like a failure.
 ### The TypeScript port reproduces stage 1 exactly (2026-08-04, MVP W4)
 
 Port vs **local Python** over the **whole corpus — 1,781 pages / 12,123 systems**. Reference built
-by `scripts/slicer_ref.py`, scored by `npm run parity:slicer`.
+by `ml/prep/slicer_ref.py`, scored by `npm run parity:slicer`.
 
 | check | full corpus | W4 bar |
 |---|---|---|

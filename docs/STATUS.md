@@ -138,7 +138,7 @@ the app, and neither waits for the other.
    the photo's resolution). ⚠ A fix needs its own deploy, then `smoke:live`, which checks neither
    images nor audio — spot-check both by hand.
 4. 🚧 **The phone rebuild's owed half**: the phone's own component tree, the `data-phone` /
-   `phone.css` split, a category-switching tool strip, and **`tools/browser/phone-smoke.ts` — the gate
+   `phone.css` split, a category-switching tool strip, and **`tools/checks/phone-smoke.ts` — the gate
    with the nine asserts, which does not exist yet**. ⚠ `npm run smoke:phone` is a probe, never a
    gate; `npm run smoke:app` is red for a reason that predates this work (verified against `a52ce28`).
    [features/phone.md](features/phone.md).

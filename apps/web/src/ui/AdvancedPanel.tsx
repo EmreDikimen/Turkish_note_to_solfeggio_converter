@@ -13,7 +13,7 @@
  * It is a plain <details>, collapsed by default. Verbose props on purpose: App owns every piece
  * of state, and this panel holds none of it.
  *
- * ⚠ `#strips-input` is inside here, and a closed <details> hides its subtree — tools/browser/
+ * ⚠ `#strips-input` is inside here, and a closed <details> hides its subtree — tools/checks/
  * app-smoke.ts opens `#advanced` before setting files on it.
  */
 

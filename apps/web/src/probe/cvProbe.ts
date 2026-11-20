@@ -1,7 +1,7 @@
 /**
  * W0 — opencv.js primitive parity probe (plan W0). THROWAWAY: deleted at W6.
  *
- * The slicer port (W4-W6) transliterates `src/vision/page_to_strips.py`. That is only worth doing
+ * The slicer port (W4-W6) transliterates `ml/omr/page_to_strips.py`. That is only worth doing
  * if the primitives underneath behave identically, so this checks the four it rests on —
  * Otsu threshold, MORPH_OPEN row projection, connectedComponents, INTER_AREA resize — plus the
  * PNG->grayscale decode that feeds all of them.

@@ -64,7 +64,7 @@ function readOptOutFlag(): void {
  * Who is NOT counted, and why each one is on the list.
  *
  * - the dev server: there is no function behind it, and a developer is not a visitor;
- * - `navigator.webdriver`: every browser check in tools/browser/ runs under Playwright, which sets
+ * - `navigator.webdriver`: every browser check in tools/checks/ runs under Playwright, which sets
  *   this. ⚠ **Load-bearing.** `smoke:live` and `smoke:build` drive the REAL deployed site, several
  *   page reads at a time, so without this line the friends-release numbers would be mostly our own
  *   test runs — the same contamination the owner's phone caused once already;

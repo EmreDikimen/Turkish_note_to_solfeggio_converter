@@ -1,7 +1,7 @@
 /**
  * Rung 1.5 — ONNX/browser gate (docs/archive/phases.md §5). See omr-gate.html for the why.
  *
- * This is the JS port of `src/vision/onnx_parity.py`: encoder once → first-step decoder
+ * This is the JS port of `ml/omr/onnx_parity.py`: encoder once → first-step decoder
  * (builds the encoder cross-attention K/V cache) → decoder-with-past loop, greedy argmax,
  * stop on </s>. Comparisons happen in token-ID space, exactly like the Python side.
  *

@@ -125,7 +125,7 @@ today staying compositional forever is the correct behaviour, not a limitation.
 ## What the change actually buys
 
 ⭐ **`over_budget` is the case for doing it.** The emitter drops any strip whose label exceeds 59 ids
-([`emit_strip_labels.py`](../../scripts/rung3/emit_strip_labels.py)). In the `b8` emit that is
+([`emit_strip_labels.py`](../../ml/labels/emit_strip_labels.py)). In the `b8` emit that is
 **4,012 strips discarded against 2,330 accepted** — more real page data thrown away than kept. Their
 sizes: median 76 ids, p90 127, max 344.
 
@@ -173,7 +173,7 @@ wrong pitched notes ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)); th
 
 ## ⭐ Round 4 step 1 — measured with the real tokenizer, 2026-09-06
 
-Run: `.venv-ml/bin/python scripts/rung3/token_scheme_probe.py`. No GPU, no model, nothing
+Run: `.venv-ml/bin/python ml/labels/token_scheme_probe.py`. No GPU, no model, nothing
 re-decoded, ~2 minutes. Pools: `strips_v7_final` (40,795 labels), `strips_b8`'s 3,929 accepted rows,
 and the 4,012 `over_budget` labels `emit_responses.json` kept. ⭐ **Since 2026-09-06 this is no
 longer a proxy for most of the pool**: the owner scoped the re-cut to the strips that are STILL over
@@ -317,7 +317,7 @@ worth its own round.
    changes. Verified by adding the tokens and re-encoding. So `NOTE_RE` in
    [`packages/core/src/labels/stitch.ts`](../../packages/core/src/labels/stitch.ts), `noteToLily` in
    [`packages/core/src/labels/lilypond.ts`](../../packages/core/src/labels/lilypond.ts) and every label on disk are all
-   **untouched**. The change is `ADDED_TOKENS` alone — ⚠ duplicated by hand in `src/vision/data.py`
+   **untouched**. The change is `ADDED_TOKENS` alone — ⚠ duplicated by hand in `ml/omr/data.py`
    and `packages/core/src/labels/lilypond.ts`, so both, or `check_token_drift` fails. ⚠ `noteToLily`'s packing
    estimate would need updating **only if the corpus is re-rendered**, and Round 4 does not
    render — the render section above says why re-packing is the wrong fix (2026-09-06).

@@ -29,8 +29,8 @@ says which side it is about.
 ### The three-arm pilot (2026-08-17) — the measure rail is not the lever, and the stop rule fired
 
 Lever 1 step 2, pre-registered in [archive/rounds.md](archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) before the arms ran. Six pieces,
-one per makam (`scripts/rung3/make_geom_pilot_list.py`); 25 non-exam real pages re-sliced per arm
-(`scripts/rung3/geom_reslice.py`). All three synthetic arms pass `verify-labels` exactly
+one per makam (`ml/labels/make_geom_pilot_list.py`); 25 non-exam real pages re-sliced per arm
+(`ml/labels/geom_reslice.py`). All three synthetic arms pass `verify-labels` exactly
 (433/433, 434/434, 489/489, zero label drift).
 
 **Synthetic side** — `render.ts --max-measures`, against the two pools that matter:
@@ -91,7 +91,7 @@ and the exam is what Round 3 is graded on.
 
 #### The encoder's input box (2026-08-15) — 61% of it is padding, and edits track what is left
 
-`scripts/rung3/crop_geometry_probe.py`. The arithmetic first, because it had never been written
+`ml/labels/crop_geometry_probe.py`. The arithmetic first, because it had never been written
 down: `preprocess.ts` rotates a strip 90° and fits it into a fixed **409×583** frame, so the net
 scale is `min(583/W, 409/H)` with H = 336 for every strip we cut.
 
@@ -247,7 +247,7 @@ checkable against what was actually done. Moved from [archive/rounds.md](archive
 **What to run, in order:**
 
 1. **The causal probe, half a day, no GPU.**
-   `scripts/rung3/crop_geometry_probe.py --make-padded …` widens exam crops with **more of their own
+   `ml/labels/crop_geometry_probe.py --make-padded …` widens exam crops with **more of their own
    empty staff**, which lowers resolution while leaving content and gold identical; decode each pad
    factor with `eval_omr.py` and read the dose-response. ⚠ The obvious implementation — extend the
    last column — was measured and **rejected before use**: the last column of an exam crop is 36% ink
@@ -306,7 +306,7 @@ edits rather than one:
 
 | | slicer (real pages) | renderer (synthetic strips) |
 |---|---|---|
-| where | `src/vision/page_to_strips.py` → `apps/web/src/omr/slicer/windows.ts` | `STRIP_BUDGET` in `packages/core/src/labels/lilypond.ts` → `apps/web/src/stripExport.ts` |
+| where | `ml/omr/page_to_strips.py` → `apps/web/src/omr/slicer/windows.ts` | `STRIP_BUDGET` in `packages/core/src/labels/lilypond.ts` → `apps/web/src/stripExport.ts` |
 | measure rail | `MEASURES_PER_STRIP = 3` | `maxMeasures = 4` |
 | second rail | `MAX_STRIP_W = 1450` **px** | `maxTokens = 56` **label tokens** |
 | knob | `OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W` | `--max-measures` on `render.ts` |
@@ -461,7 +461,7 @@ hand-corrected val pool and it fails a pool that is fine (`train.py` deliberatel
 
 > ✅ **CLOSED BY A TRAINED ARM — 2026-08-20. The rate is 0.0%.** Everything below is the *baseline*
 > and how it was found; the arm that fixed it and all three of its clauses are in
-> [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) ("Round 3 — arm 2"). The short version
+> [../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md) ("Round 3 — arm 2"). The short version
 > is in the result table at the end of this section.
 
 Owner-reported, then measured. `ADDED_TOKENS` has **no articulation token** (all 25 are accidentals,
@@ -475,7 +475,7 @@ one: every dot the model has ever seen meant *longer*. A 1,215-strip pilot rende
 | control (no marks) | **110/110 = 100%** | 0.000 | **0 / 110 = 0.0%** |
 | staccato | 30/110 = 27.3% | 0.058 | **80 / 110 = 72.7%** |
 
-⚠ **Re-measured 2026-08-20 and reproduced exactly** by `scripts/rung3/staccato_falsedot_score.py` —
+⚠ **Re-measured 2026-08-20 and reproduced exactly** by `ml/labels/staccato_falsedot_score.py` —
 80/110, exact 27.3%, SER 0.0578 — from a script written off the definition above. The original
 measurement was ad hoc and never committed; the metric is now re-runnable, which is what let the
 same instrument score the arm. The checkpoint behind these two rows is **`round2-stage2-best`**, the
@@ -533,7 +533,7 @@ tuplet mark ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md#tuplets--the-corpus
 
 #### The real-dot no-regression read, easy+mid (2026-08-20)
 
-`scripts/rung3/staccato_realdot_score.py`. The augmentation dot is a suffix inside a duration token,
+`ml/labels/staccato_realdot_score.py`. The augmentation dot is a suffix inside a duration token,
 not a token, so `eval_omr.py` has no per-class row for it; counted per strip in both directions.
 Gold dot instances: easy 18, mid 53, hard 64.
 
@@ -610,7 +610,7 @@ hole from the one `--usul-barline` fills**.
 ⏭ **What follows is the owner's call**, and both counts are on the record before any Round-3 model
 exists: drawing dashed rules inside bars is not aimed at the error being paid for by hand. The
 instrument to price it either way already exists —
-`scripts/rung3/usul_falserep_score.py` — and its pilot pools cost two ~40-minute renders.
+`ml/labels/usul_falserep_score.py` — and its pilot pools cost two ~40-minute renders.
 
 
 ## Metrics — the second engraver (Round 3, Lever 4)

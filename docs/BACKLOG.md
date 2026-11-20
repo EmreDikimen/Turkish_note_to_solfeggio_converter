@@ -102,7 +102,7 @@ starting. Abandoned plans are a different thing again and live in
    ✅ **What survives and is on disk, documented and re-runnable** — the ranking half, which is
    independently useful if page gold is ever wanted: `tools/dev/page-structure.ts` (per-page stitch
    stats, reusing the shipped stitcher and core so the meter rule is not duplicated) and
-   `scripts/rung3/build_page_queue.py` (ranks pages by structural error evidence, refuses exam
+   `ml/labels/build_page_queue.py` (ranks pages by structural error evidence, refuses exam
    pieces, caps per makam). A 150-page queue is built at
    `data/real/rung3/_pagequeue/page_queue.json`.
    ✅ **Update, same day: the ranking IS consumed now** — `build_label_batch.py` reuses its scorer to
@@ -192,7 +192,7 @@ starting. Abandoned plans are a different thing again and live in
     from 42 random rows and read **2.5× Round 3's val loss at step 1,000** (.0676 against .0269),
     against the ~1.75× its shorter labels explain; by step 2,000 it had closed to ~1.4×. ⚠ A LEAD:
     the two runs differ in vocabulary as well, so the gap is not cleanly attributable, and the H arm
-    ended level on accuracy anyway ([../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md)).
+    ended level on accuracy anyway ([../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md)).
 
 ### ⏭ `carry_labels()` should carry a verdict when the crop is BYTE-IDENTICAL (owner, 2026-08-26)
 

@@ -1,5 +1,5 @@
 /**
- * Greedy ONNX decode in the browser — the JS port of `src/vision/onnx_parity.py`.
+ * Greedy ONNX decode in the browser — the JS port of `ml/omr/onnx_parity.py`.
  *
  * encoder once → first-step decoder (which also builds the encoder cross-attention K/V cache) →
  * decoder-with-past loop, greedy argmax, stop on `</s>`. Comparisons against Python happen in

@@ -40,7 +40,7 @@ to live, so an old path can still be traced.
 | [METRICS-SLICER.md](METRICS-SLICER.md) | Page → ink mask (binarization, opencv.js parity); crop roots and re-slice cost; the TypeScript port vs the Python |
 | [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) | Finding staffs (fixes, the row rescue, rejected knobs); barline gates and hand-marked truth; the stem-vs-barline gate |
 | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) | The label budget and its rail; the windowing retune and crop frame; the opt-in `?dense=` experiment |
-| [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) | The raw log of every training run, gate and export |
+| [../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md) | The raw log of every training run, gate and export |
 
 ## Tracks
 
@@ -81,7 +81,7 @@ Two rules cover 90% of it:
 1. **Write the fact once, in the file that owns it.** Everything else links.
 2. **Never append to a live file.** Live files (STATUS) get *rewritten*; history goes to `log/`.
 
-Run `.venv-ml/bin/python scripts/check_docs.py` when you are done. It catches the mechanical
+Run `.venv-ml/bin/python tools/dev/check_docs.py` when you are done. It catches the mechanical
 mistakes so review can be about content.
 
 ### I just did X — what do I update?
@@ -90,7 +90,7 @@ mistakes so review can be about content.
 |---|---|---|
 | Anything at all, at end of session | [STATUS.md](STATUS.md) — rewrite "Now" and "Next" | ROADMAP, README |
 | Deployed, or staged a new model | STATUS + the `updated:` header of every doc whose "deployed / not deployed" line just changed — and for a model, `CACHE_NAME` in `apps/web/src/omr/session.ts` ([app/server.md](app/server.md#running-and-deploying-the-decode-server--the-commands)) | — |
-| Measured something (accuracy, yield, corpus size) | the matching `METRICS*.md` (table above) + the raw log in [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) | any other file quoting numbers |
+| Measured something (accuracy, yield, corpus size) | the matching `METRICS*.md` (table above) + the raw log in [../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md) | any other file quoting numbers |
 | Finished a chunk of work | one dated entry at the TOP of [log/status-log.md](log/status-log.md) | — |
 | Decided something, or reversed a decision | [DECISIONS.md](DECISIONS.md) row (mark the old one OVERTURNED/SUPERSEDED, don't delete it) | — |
 | Cancelled or abandoned a plan | move its reasoning to [log/superseded.md](log/superseded.md) | leaving it in a live file "for context" |
@@ -110,7 +110,7 @@ mistakes so review can be about content.
 3. **A decision changed?** DECISIONS.md, with the date and what overturned it.
 4. **Write the log entry** while you still remember *why*, not just *what*. The "why" is the part
    that is expensive to reconstruct six weeks later.
-5. `.venv-ml/bin/python scripts/check_docs.py` → fix anything it reports.
+5. `.venv-ml/bin/python tools/dev/check_docs.py` → fix anything it reports.
 6. Commit docs separately from code when you can; it keeps both diffs readable.
 
 ### The rules, and why they exist
@@ -149,7 +149,7 @@ mistakes so review can be about content.
 
 ### What the checker enforces
 
-`scripts/check_docs.py`:
+`tools/dev/check_docs.py`:
 
 | Check | Fails when |
 |---|---|

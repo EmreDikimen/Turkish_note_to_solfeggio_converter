@@ -1007,7 +1007,7 @@ export class WebAudioBackend implements AudioBackend {
    * perceptually the quietest. The body now starts higher and a ~400 Hz click carries the hit on a
    * small speaker; on headphones the low end still does the work. Raising the gain alone would not
    * have fixed this, which is worth remembering before reaching for a level to solve a balance.
-   * ⚠ It is also the bar the RECORDINGS had to pass, which is why `scripts/prepare_strokes.py`
+   * ⚠ It is also the bar the RECORDINGS had to pass, which is why `ml/prep/prepare_strokes.py`
    * chooses articulations by measured low-band energy and decay rather than by file name, and
    * levels the three strokes to fixed targets instead of inheriting VCSL's session levels.
    */

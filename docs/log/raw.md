@@ -30,7 +30,7 @@ audience: anyone re-reading how the graded model actually trained
 updated: 2026-09-01
 
 Raw paste, unedited below this line. The reading of these curves — including the selector defect they
-exposed — is in [src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md); do not re-derive it here.
+exposed — is in [ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md); do not re-derive it here.
 
 ---
 
@@ -349,7 +349,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.27s/it]
 
 == done: 6000 steps, best val loss 0.0091
    checkpoints: /content/drive/MyDrive/tnc/r3-final-stage1/best (lowest val loss), /content/drive/MyDrive/tnc/r3-final-stage1/last (resume point)
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-final-stage1/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-final-stage1/best
 
 
 
@@ -464,7 +464,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.23s/it]
 
 == done: 2000 steps, best val loss 0.0115
    checkpoints: /content/drive/MyDrive/tnc/r3-final-stage2/best (lowest val loss), /content/drive/MyDrive/tnc/r3-final-stage2/last (resume point)
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-final-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-final-stage2/best
 
 
 ## round3_runa_logs
@@ -479,7 +479,7 @@ updated: 2026-09-01
 
 Raw paste, unedited below this line. ⚠ Stage 1 is absent on purpose — run A reuses Round 3's
 `r3-final-stage1/best`, which is what keeps stage-2 length the only variable. The reading of these
-curves is in [src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md); do not re-derive it here.
+curves is in [ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md); do not re-derive it here.
 
 ---
 
@@ -689,7 +689,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.19s/it]
 == done: 4000 steps, best val loss 0.0115, best REAL val 0.0171
    checkpoints: /content/drive/MyDrive/tnc/r3-r3a-stage2/best (lowest blended val loss — ~92% synthetic), /content/drive/MyDrive/tnc/r3-r3a-stage2/best-real (lowest REAL val loss), /content/drive/MyDrive/tnc/r3-r3a-stage2/last (resume point)
    ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-r3a-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-r3a-stage2/best
 
 
 ## round3_runb_logs
@@ -706,7 +706,7 @@ Raw paste, unedited below this line. ⚠ Stage 1 is absent on purpose — run B 
 `r3-final-stage1/best`, the same one run A starts from. ⛔ **Its `real` column is NOT comparable with
 run A's**: two real pools mean two held-out sets, so this run evaluates on 560 strips (170 of them
 retired-crop) against run A's 390. The reading of these curves is in
-[src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md); do not re-derive it here.
+[ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md); do not re-derive it here.
 
 ---
 
@@ -978,7 +978,7 @@ Writing model shards: 100% 1/1 [00:02<00:00,  2.28s/it]
 == done: 5000 steps, best val loss 0.0087, best REAL val 0.0343
    checkpoints: /content/drive/MyDrive/tnc/r3-r3b-stage2/best (lowest blended val loss — ~92% synthetic), /content/drive/MyDrive/tnc/r3-r3b-stage2/best-real (lowest REAL val loss), /content/drive/MyDrive/tnc/r3-r3b-stage2/last (resume point)
    ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-r3b-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-r3b-stage2/best
 
 
 ## round_3_scan_logs
@@ -993,7 +993,7 @@ updated: 2026-08-19
 
 Raw paste, unedited below this line. Kept deliberately: the tuplet A/B's Colab logs were deleted
 after its results table was taken, and that entry in
-[src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) has to say so. What the run produced, and what
+[ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md) has to say so. What the run produced, and what
 it meant: [docs/archive/rounds.md](../archive/rounds.md#the-scan-profile--round-3s-first-trained-arm-lever-7--null).
 
 ⚠ Note in stage 2: `best` is saved at **step 500** and `last` at step 2,000 — the mix loss peaked
@@ -1287,7 +1287,7 @@ Writing model shards: 100% 1/1 [00:04<00:00,  4.75s/it]
 
 == done: 6000 steps, best val loss 0.0104
    checkpoints: /content/drive/MyDrive/tnc/r3-scan-stage1/best (lowest val loss), /content/drive/MyDrive/tnc/r3-scan-stage1/last (resume point)
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-scan-stage1/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-scan-stage1/best
 
 
 
@@ -1395,7 +1395,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.22s/it]
 
 == done: 2000 steps, best val loss 0.0116
    checkpoints: /content/drive/MyDrive/tnc/r3-scan-stage2/best (lowest val loss), /content/drive/MyDrive/tnc/r3-scan-stage2/last (resume point)
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-scan-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-scan-stage2/best
 
 
 ## round_3_staccato_logs
@@ -1410,9 +1410,9 @@ updated: 2026-08-20
 
 Raw paste, unedited below this line. Kept for the same reason arm 1's is
 ([docs/log/raw.md](raw/docs/log/raw.md)): the tuplet A/B's Colab logs were deleted after its
-results table was taken, and that entry in [src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) has
+results table was taken, and that entry in [ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md) has
 to say so. What the run produced, and what it meant:
-[src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) and [docs/archive/rounds.md](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first)
+[ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md) and [docs/archive/rounds.md](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first)
 Lever 6.
 
 ⚠ Note in stage 2: **`best` and `last` are the same checkpoint** — the mix loss bottomed at
@@ -1708,7 +1708,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.27s/it]
 
 == done: 6000 steps, best val loss 0.0090
    checkpoints: /content/drive/MyDrive/tnc/r3-stac-stage1/best (lowest val loss), /content/drive/MyDrive/tnc/r3-stac-stage1/last (resume point)
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-stac-stage1/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-stac-stage1/best
 
 
    /content/tnc
@@ -1816,7 +1816,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.69s/it]
 
 == done: 2000 steps, best val loss 0.0108
    checkpoints: /content/drive/MyDrive/tnc/r3-stac-stage2/best (lowest val loss), /content/drive/MyDrive/tnc/r3-stac-stage2/last (resume point)
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-stac-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r3-stac-stage2/best
 
 
 ## round4_control_logs
@@ -1830,7 +1830,7 @@ audience: anyone re-reading how the vocabulary A/B's control actually trained
 updated: 2026-09-16
 
 > Stage 1 is Round 3's `r3-final-stage1/best`, reused. Read beside
-> [src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md). ⛔ Its `EDITS` column is in OLD ids: never
+> [ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md). ⛔ Its `EDITS` column is in OLD ids: never
 > set it beside the H arm's.
 
 ```text
@@ -2059,7 +2059,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.34s/it]
    checkpoints: /content/drive/MyDrive/tnc/r4-ctl-stage2/best (lowest blended val loss — ~92% synthetic), /content/drive/MyDrive/tnc/r4-ctl-stage2/best-real (lowest REAL val loss), /content/drive/MyDrive/tnc/r4-ctl-stage2/last (resume point)
    /content/drive/MyDrive/tnc/r4-ctl-stage2/best-edits — fewest free-running corrections on 259 fixed strips. ⭐ This is the Round-4 pick; the two loss tags above are kept only so the run stays comparable with earlier ones.
    ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r4-ctl-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r4-ctl-stage2/best
 ```
 
 
@@ -2074,7 +2074,7 @@ audience: anyone re-reading how the vocabulary A/B's H arm actually trained
 updated: 2026-09-17
 
 > Stage 1 (6,000 steps, synthetic) then stage 2 (4,000 steps, `strips_h1:4`, from stage-1 `best`). Read beside
-> [src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md). ⛔ Its losses are per H token and cannot be
+> [ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md). ⛔ Its losses are per H token and cannot be
 > set beside an old-vocabulary run's.
 
 ## Stage 1
@@ -2414,7 +2414,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.19s/it]
 == done: 6000 steps, best val loss 0.0174, best REAL val inf
    checkpoints: /content/drive/MyDrive/tnc/r4-h-stage1/best (lowest blended val loss — ~92% synthetic), /content/drive/MyDrive/tnc/r4-h-stage1/best-real (lowest REAL val loss), /content/drive/MyDrive/tnc/r4-h-stage1/last (resume point)
    ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r4-h-stage1/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r4-h-stage1/best
 ```
 
 ## Stage 2
@@ -2649,7 +2649,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.00s/it]
    checkpoints: /content/drive/MyDrive/tnc/r4-h-stage2/best (lowest blended val loss — ~92% synthetic), /content/drive/MyDrive/tnc/r4-h-stage2/best-real (lowest REAL val loss), /content/drive/MyDrive/tnc/r4-h-stage2/last (resume point)
    /content/drive/MyDrive/tnc/r4-h-stage2/best-edits — fewest free-running corrections on 259 fixed strips. ⭐ This is the Round-4 pick; the two loss tags above are kept only so the run stays comparable with earlier ones.
    ⚠ Choose between them on _realval_v2 with paired_arm_score.py — never on these losses.
-   next: .venv-ml/bin/python src/vision/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r4-h-stage2/best
+   next: .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint /content/drive/MyDrive/tnc/r4-h-stage2/best
 ```
 
 

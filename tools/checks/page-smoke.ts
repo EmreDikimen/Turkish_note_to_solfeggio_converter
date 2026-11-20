@@ -7,7 +7,7 @@
  *
  * What it asserts, beyond "a score came out":
  *   - the strip count matches what LOCAL PYTHON cuts for the same page, so a slicer that silently
- *     drops a system inside the app cannot pass. The reference is `scripts/slicer_ref.py`'s output,
+ *     drops a system inside the app cannot pass. The reference is `ml/prep/slicer_ref.py`'s output,
  *     NOT the `_manifest.json` on disk: 1,578 of the 1,781 page dirs were sliced on Colab and the
  *     current Python reproduces only ~98.6% of them, so a manifest check would fail W7's wiring for
  *     a W4 reason. Same lesson W4 paid for — agreement with an artifact is not correctness. The
@@ -16,7 +16,7 @@
  *     unbroken block; a page that cannot answer JS for 35 s is not shippable, so the run polls the
  *     status text and requires the page to keep replying while the slice is in flight.
  *
- *   .venv-ml/bin/python scripts/slicer_ref.py --pages 8 --out ref.json
+ *   .venv-ml/bin/python ml/prep/slicer_ref.py --pages 8 --out ref.json
  *   npx tsx tools/checks/page-smoke.ts --ref ref.json [--page <stem>]
  *
  * Without `--ref` the strip-count bar cannot be scored and is skipped, loudly: the run still
@@ -59,7 +59,7 @@ function indexImages(): Map<string, string> {
 /** The `_manifest.json` on disk: a bare list of strip rows. Context only — see the header. */
 type Manifest = { system: number; window: number }[];
 
-/** `scripts/slicer_ref.py`'s output, keyed by page stem. `strips` is local Python's own cut. */
+/** `ml/prep/slicer_ref.py`'s output, keyed by page stem. `strips` is local Python's own cut. */
 interface Ref {
   [stem: string]: { strips: unknown[]; n_staves: number; kind: string };
 }

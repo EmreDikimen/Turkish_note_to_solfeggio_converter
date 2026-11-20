@@ -65,7 +65,7 @@ npm run parity:armb -- --pages 20    # browser-vs-Python decode ceiling (MVP W2/
 npm run parity:arma -- --pages 20    # ported slicer's crops vs Python's, PAIRED (MVP W6)
 npm run parity:slicer -- --ref ref.json                # ported slicer vs local python (MVP W4-W6)
 npm run decode:pool -- --pool <dir> --out f.json       # decode a flat strip pool IN THE BROWSER and dump the
-                                     # token streams, for scripts/score_browser_gold.py to score against GOLD (W3)
+                                     # token streams, for ml/prep/score_browser_gold.py to score against GOLD (W3)
                                      # ⚠ `--server <url>` decodes the same pool on the SERVER instead (W9):
                                      # agreement cannot say which side is RIGHT, and only gold can
 ```
@@ -143,7 +143,7 @@ npm run dev:server                   # the decode server on :8080 — needs the 
     # Run `npm run dev:web` bare (5173 is the default anyway).
 
 # TRYING A SECOND MODEL SIDE BY SIDE — e.g. scheme H, which the shipped stitcher cannot parse:
-.venv-ml/bin/python src/vision/make_browser_gate.py --checkpoint data/checkpoints/<ck> \
+.venv-ml/bin/python ml/omr/make_browser_gate.py --checkpoint data/checkpoints/<ck> \
     --onnx-dir data/checkpoints/<ck>-onnx --out data/checkpoints/_stage --n 3
     # ⛔ It REWRITES gate.json, golds included, when --strips-dir differs from the staged model's.
     # Stage a model for the LIVE site by copying the three graphs only, and leave gate.json alone —
@@ -276,20 +276,20 @@ counter; this one keeps **Python, which never ships**. Nothing was changed in th
 #### Python (training and data only — never shipped)
 
 ```bash
-.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
-.venv-ml/bin/python scripts/frame_whiten_ref.py   # `whiten_frame` on six synthetic pages -> sha256.
+.venv-ml/bin/python ml/prep/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
+.venv-ml/bin/python ml/prep/frame_whiten_ref.py   # `whiten_frame` on six synthetic pages -> sha256.
     # ⚠ Run after ANY change to the screenshot-frame rule and paste the hashes into
     # tools/tests/frame-test.ts, or `npm test` fails: that test holds the browser port to these bytes.
     # ⚠ `--token-budget N` runs the SAME arm under the LABEL-BUDGET rail. The reference fixes the
     # packing rule as well as the sample, and `parity:slicer` refuses a ref that mixes the two.
-.venv-ml/bin/python src/vision/page_to_strips.py <page.png> --out <dir> --debug
+.venv-ml/bin/python ml/omr/page_to_strips.py <page.png> --out <dir> --debug
     # slice ONE page and write the overlay. `<page>_debug.png` legend: GREEN = detected staff lines,
     # BLUE = an accepted barline, RED box = a strip crop, and the rejects colour-coded by WHY —
     # ORANGE gate2_fat, AMBER gate2_ends, YELLOW gate3_blob, PURPLE gate3_clef, GREY xrange. ⚠ A row with NO blue line
     # found no barline at all and is being cut by WIDTH, straight through the music.
-.venv-ml/bin/python scripts/rung3/score_slicer.py --sample 25   # ⚠ a 124-row SAMPLE, see below
-.venv-ml/bin/python scripts/rung3/score_slicer.py              # the real instrument: 6,440 rows, ~30 min
-.venv-ml/bin/python scripts/rung3/score_slicer.py --pair-by-position
+.venv-ml/bin/python ml/labels/score_slicer.py --sample 25   # ⚠ a 124-row SAMPLE, see below
+.venv-ml/bin/python ml/labels/score_slicer.py              # the real instrument: 6,440 rows, ~30 min
+.venv-ml/bin/python ml/labels/score_slicer.py --pair-by-position
     # ⚠ REQUIRED for any change that adds or removes a STAFF. Both row-level scorers pair a row to
     # its cached truth by SYSTEM INDEX, so a pass that inserts a staff shifts every later index and
     # scores each row against another row's answer — a large FALSE regression, not an error. This
@@ -306,7 +306,7 @@ counter; this one keeps **Python, which never ships**. Nothing was changed in th
     # separable from noise, and the full run reversed one such call (BAR_FADE). PRICE A GATE CHANGE
     # ON THE FULL RUN. ⚠ It does NOT call `window_cache_ok`, deliberately: its `old_*` column IS the
     # retired pipeline's cache, so the geometry guard does not blind it.
-.venv-ml/bin/python scripts/rung3/build_barline_truth.py && open data/real/rung3/_barline_truth/mark.html
+.venv-ml/bin/python ml/labels/build_barline_truth.py && open data/real/rung3/_barline_truth/mark.html
     # cut the hand-marking sheets, then click every printed barline
     # (n/p = row, f = fit to window, c = clear the row, s = save)
     # ⚠ The row list is INLINED into mark.html on purpose — a browser refuses `fetch` from a file://
@@ -315,7 +315,7 @@ counter; this one keeps **Python, which never ships**. Nothing was changed in th
     # the missed ones, or precision cannot be scored. ⚠ Do NOT mark where a staff starts and stops —
     # the slicer always emits those two boundaries itself, so they test nothing and are dropped. ⚠ The sheets deliberately show NOTHING the
     # slicer found — a marker shown the answer anchors to it, the same rule the exam gold lives by.
-.venv-ml/bin/python scripts/rung3/score_barlines.py
+.venv-ml/bin/python ml/labels/score_barlines.py
     # what the measure count cannot say: RECALL, PRECISION, and for every miss WHICH GATE rejected
     # it — or `never_a_candidate`, meaning gate 1 (continuity + touching both staff lines). Honours
     # the slicer's env flags, so it A/Bs a gate change directly. The gate-3 ones:
@@ -346,39 +346,39 @@ npx tsx tools/checks/parity/rescue-check.ts
     # and prints staff counts per page with the rescue off and on. It exists because `STAFF_RESCUE`
     # is a compile-time constant flipped through a setter, so no Python run can test it — and
     # because a `parity:slicer` pass with a flag OFF executes none of the flagged code.
-.venv-ml/bin/python scripts/rung3/measure_fill_score.py --decode-root data/real/strips_v2
+.venv-ml/bin/python ml/labels/measure_fill_score.py --decode-root data/real/strips_v2
     # the LABEL-FREE accuracy proxy: a strip covers n measures, so its decode must fill n x the
     # page's meter, and an early `</s>` comes up short. ⚠ ALWAYS read it beside
     # `--calibrate <gold manifest.jsonl> --meter-from data/real/strips_v2` — that is the same
     # scorer over hand-verified labels, and everything it flags there is the PROXY's own false
     # alarm (7.6% under-fill). `--compare <root>` pairs two decode roots ON PAGES, never on
     # strips: two packing rules cut different crops, so no strip-to-strip pairing exists.
-.venv-ml/bin/python scripts/rung3/decode_budget_arm.py --pages 120 --budget 57
+.venv-ml/bin/python ml/labels/decode_budget_arm.py --pages 120 --budget 57
     # arm B for the line above. Arm A is FREE — `strips_v2` already holds every page decoded under
     # the shipped rule with `round2-stage2-best` int8 — so only the rail's crops need decoding.
     # ~21 min for 120 pages on the laptop. Resumable; refuses a page whose arm-A cache used
     # another checkpoint.
-.venv-ml/bin/python scripts/rung3/budget_sweep.py --pages 200
+.venv-ml/bin/python ml/labels/budget_sweep.py --pages 200
     # which budget? No decoding: it re-windows ONE stage-1 geometry at every candidate and reports
     # windows recovered into the trainable set against the near-empty crops over-splitting makes.
     # Answer (2026-08-23): b=57. Recovery is flat b=40..59, so the value rides on cost alone.
-.venv-ml/bin/python scripts/rung3/budget_tail_probe.py
+.venv-ml/bin/python ml/labels/budget_tail_probe.py
     # where should the label budget SIT? Free — tokenizes labels that already exist. Reads
     # emit_responses.json, NOT the manifest: the question is about the strips the gate threw away.
     # Answer (owner, 2026-09-07): 80 under scheme H, where every earlier pool used 59. 59 was never
     # a model limit — the ceiling is 100 (decode.ts MAX_TOKENS, data.collate), and past it a label
     # is TRUNCATED at 99. ⚠ The gate lives in FOUR files and they move together: the emitter,
     # audit_coverage.py, promote_labels.py --vocab, train.py --select-max-length.
-.venv-ml/bin/python scripts/rung3/token_scheme_probe.py [--checkpoint <ckpt>] [--json-out f.json]
+.venv-ml/bin/python ml/labels/token_scheme_probe.py [--checkpoint <ckpt>] [--json-out f.json]
     # what a note-spelling scheme costs, BEFORE any training. No GPU, no model, no decode; ~2 min.
     # Encodes every label in strips_v7_final + strips_b8 + the over_budget labels emit_responses.json
     # kept, under three vocabularies (today / B / H), and reports lengths per pool, strips rescued,
     # whether synthetic still covers the real length range, and how each pitch segments.
     # ⚠ Run it before adding ANY token: ids are append-only, and this is what caught `''` and `'''`
     # being used zero times under H (2026-09-06). Results: docs/rung3/tokenization.md.
-.venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
-.venv-ml/bin/python src/vision/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
-.venv-ml/bin/python scripts/rung3/build_handtest_queue.py --mapping <pages.tsv>
+.venv-ml/bin/python ml/omr/eval_omr.py --checkpoint data/checkpoints/<ckpt> [--strips-dir …]
+.venv-ml/bin/python ml/omr/decode_page.py <page.png> --checkpoint <ckpt> --onnx-dir <dir> --suffix _int8
+.venv-ml/bin/python ml/labels/build_handtest_queue.py --mapping <pages.tsv>
     # the OWNER'S HAND-TEST pages as a review queue (queue id `handtest`): decode them first with
     # decode_page.py --out data/real/rung3/_handtest, then build. ⚠ NOT gold and NOT the exam —
     # `label` is empty on every row and the filename is neither emit_review.csv nor full_audit.csv,
@@ -386,7 +386,7 @@ npx tsx tools/checks/parity/rescue-check.ts
     # right, fix = the model was wrong, bad = the crop is unusable. Corrections per page = rows that
     # are not `ok`. Re-running carries verdicts across by strip name — but NOT across a re-slice,
     # because the crop moves and the verdict was given against pixels.
-.venv-ml/bin/python scripts/rung3/build_denseval.py [--apply] [--min-ids 49] [--out DIR]
+.venv-ml/bin/python ml/labels/build_denseval.py [--apply] [--min-ids 49] [--out DIR]
     # the DENSE evaluation pool: strips_h1's HELD-OUT side, filtered by label length in OLD ids.
     # Report-only without --apply. Built because every Round-4 read landed on `_realval_v2r`, which
     # is 5.8% over-budget material against the real-page 14.5% — docs/METRICS-EXAM.md.
@@ -394,7 +394,7 @@ npx tsx tools/checks/parity/rescue-check.ts
     # ⚠ --real-val-frac must match the training run (0.10), or the held-out set is a different one.
     # ⛔ It refuses to build if an exam piece is on the held-out side. NOT the exam: not page-complete,
     # not one-shot; quote it as a strip pool, like real-val.
-.venv-ml/bin/python scripts/rung3/decode_page_arms.py <page.png> [--prefix NAME] [--int8]
+.venv-ml/bin/python ml/labels/decode_page_arms.py <page.png> [--prefix NAME] [--int8]
     # ONE page, sliced ONCE, decoded by the live model / Round 4 control / scheme H (+ --int8 for
     # the live ONNX a visitor actually gets), each stitched to apps/web/public/scores/<prefix>_<arm>.json
     # and printed as a `?score=` link. Run `npm run dev:web` and open them side by side.
@@ -409,7 +409,7 @@ npx tsx tools/checks/parity/rescue-check.ts
     # the arms would re-engrave their triplets and the pages would differ for a non-model reason.
     # ⚠ NO GOLD — pictures to look at, never a number. It warns (does not refuse) when a word in the
     # filename also appears in testset.json; check the piece by hand. ⛔ Never point it at the exam.
-.venv-ml/bin/python scripts/rung3/build_model_compare.py [--pool DIR ...] [--limit N]
+.venv-ml/bin/python ml/labels/build_model_compare.py [--pool DIR ...] [--limit N]
     # Decodes every strip of one or more pools with THREE checkpoints (live / Round-4 control /
     # scheme H) and writes strip + gold + all three decodes to data/real/rung3/_compare/models.json.
     # ~0.25 s per strip per model on the M4's GPU; the default two pools are 465 strips ≈ 10-14 min,
@@ -421,7 +421,7 @@ npx tsx tools/checks/parity/rescue-check.ts
     # makes the edit column incomparable with the published dense numbers — say so if you do.
     # ⚠ A pool with no manifest.jsonl (a bare page's crops) is accepted and has NO gold: those rows
     # are model-against-model only. ⛔ Never point it at the exam.
-.venv-ml/bin/python scripts/rung3/compare_ui.py [--data F] [--port 8378]
+.venv-ml/bin/python ml/labels/compare_ui.py [--data F] [--port 8378]
     # Reads that file → localhost:8378. Strip picture, gold, and all three decodes side by side,
     # with the tokens that differ from gold painted red. Filters: agreement (all three / exactly two
     # with the odd one named / none), which model is the odd one out, gold present, label length,
@@ -434,14 +434,14 @@ npx tsx tools/checks/parity/rescue-check.ts
     # ⛔ IT IS NOT A MEASUREMENT. It shows rows in the order you ask for; quoting "H looked worse"
     # off it repeats the mistake the round already paid for. A number needs paired_arm_score.py,
     # with its interval, on a pool chosen before looking. docs/METRICS-EXAM.md
-.venv-ml/bin/python scripts/rung3/review_ui.py            # labeling/verdict UI → localhost:8377
+.venv-ml/bin/python ml/labels/review_ui.py            # labeling/verdict UI → localhost:8377
     # ⚠ THE HINT COLUMN IS NORMALISED ON READ, NEVER ON DISK: the retired \tie is dropped and a
     # spaced `32` is re-glued (2,914 rows over 25 queues, every one verified id-identical in both
     # vocabularies). The model writes `f'' 32` because the base alphabet has no digit 3 — scheme H
     # removes the cause. ⛔ 32 ONLY: 16 and 8 DO differ in id space. docs/rung3/tokenization.md
     # ⚠ THE EDIT-BOX LINT PRICES IDS UNDER THE QUEUE'S OWN VOCABULARY, and it says which one
     # on screen (`= 42/80 ids (vocab h)`). The h1-* queues are scheme H, everything else is
-    # the old alphabet; the list and the budget are IMPORTED from src/vision (data.py,
+    # the old alphabet; the list and the budget are IMPORTED from ml/omr (data.py,
     # audit_coverage.MAX_IDS_BY_VOCAB), never copied into the UI. A new H pool needs its queue
     # id adding to QUEUE_VOCAB or the lint will price it with the wrong alphabet.
     # ⛔ THE RETIRED `\tie` IS DROPPED FROM THE `decoded` HINT ON THE WAY TO THE BROWSER, so a
@@ -449,14 +449,14 @@ npx tsx tools/checks/parity/rescue-check.ts
     # decode verbatim). The CSV keeps it: `load_queue(clean=True)` is asked for by the two READ
     # paths only, never by save_verdict, so no file is laundered a verdict at a time. The
     # Round-2 exam queues (exam-fix, examv2-*) are EXEMPT — their ties are the record.
-.venv-ml/bin/python scripts/rung3/repair_realval_v2.py --report | --queue | --build
+.venv-ml/bin/python ml/labels/repair_realval_v2.py --report | --queue | --build
     # `_realval_v2` carries 157 rows out of the OLD pool with the CURRENT crop under them —
     # build_realval_v2.py copies strip_root's PNG for every carried row and never compares the
     # measure span. --report classifies (keep / drop-duplicate / re-home-by-span / needs-a-human),
     # --queue writes the 10-row `realval-repair` queue, --build assembles `_realval_v2r`.
     # ⛔ --build REFUSES while any review row is unverdicted. ⚠ `_realval_v2` is left intact:
     # every Round-3 number was measured on it. docs/METRICS-SLICER.md
-.venv-ml/bin/python scripts/rung3/verdict_attribution.py [--active-only] [--retired]
+.venv-ml/bin/python ml/labels/verdict_attribution.py [--active-only] [--retired]
     # Splits the owner's verdicts into "the LABEL was wrong" vs "the MODEL was wrong", by error
     # kind, from data already on disk — no model runs. ⚠ --active-only is the ANCHORING CONTROL and
     # is usually the number you want: the edit box is seeded with the label's \sig plus the
@@ -464,13 +464,13 @@ npx tsx tools/checks/parity/rescue-check.ts
     # attribution restates the seeding. Only 7-28% of rows were actively re-typed.
     # ⛔ Counts are in LABEL-TOKEN space (error_taxonomy.relabel), never eval_omr edit counts.
     # docs/METRICS-DIAGNOSTICS.md
-.venv-ml/bin/python scripts/rung3/build_ndhigh_queue.py [--n 40]
+.venv-ml/bin/python ml/labels/build_ndhigh_queue.py [--n 40]
     # Stages a RANDOM sample of the 1,678 dense strips b8 dropped as over_budget and h1 drops as
     # nd_high, as review_ui queue `ndhigh`. ⚠ Random, NOT worst-first — every other queue here is
     # worst-first to harvest labels; this one is read for a RATE, so ordering would bias it.
     # `label` is empty (a dropped strip has no stored label), so it settles one question: does the
     # model read dense material correctly. ⛔ Not gold; refuses to overwrite an existing file.
-.venv-ml/bin/python scripts/rung3/carry_old_fixes.py [--apply]
+.venv-ml/bin/python ml/labels/carry_old_fixes.py [--apply]
     # Finds the RETIRED pools' 1,479 hand corrections again inside strips_b8 and marks them with
     # oldfix / oldfix_kind / oldfix_src, which the review UI's `⭐ old human fix` filter reads.
     # ⛔ Matches on the MEASURE SPAN the slicer recorded — (page, system, meas_from, meas_to) from
@@ -479,14 +479,14 @@ npx tsx tools/checks/parity/rescue-check.ts
     # ⚠ A carried fix is a SUGGESTION, never a verdict: a span match is the same BARS and never the
     # same pixels (0 of 1,215 crops byte-identical). Writes no verdict; --apply is idempotent, backs
     # up to .bak-oldfix, and is safe with the review UI open. Report only without --apply.
-.venv-ml/bin/python scripts/rung3/auto_accept_agree.py [--dry-run]
+.venv-ml/bin/python ml/labels/auto_accept_agree.py [--dry-run]
     # b8-full: draft `ok` (by=agree) on every pending row whose LABEL and model DECODE are the same
     # token-for-token, and carry the 201 hand-read b8-audit verdicts in first. 2,896 drafted / 842
     # left pending (2026-08-27). ⚠ A DRAFT IS NOT A READ — agreement was right on 94% of the rows a
     # human has read and the misses clump on one page, so spot-check in the UI's
     # `🤖 auto-accepted (agree)` filter, which lists them LEAST CONFIDENT FIRST. Undo = restore
     # full_audit.csv.bak-agree. Only still-pending rows are written, so a live UI session is safe.
-.venv-ml/bin/python scripts/rung3/emit_strip_labels.py --strips-root data/real/strips_v2 \
+.venv-ml/bin/python ml/labels/emit_strip_labels.py --strips-root data/real/strips_v2 \
     --checkpoint data/checkpoints/round2-stage2-best --onnx-dir data/checkpoints/round2-stage2-best-onnx \
     --testset data/real/rung3/testset.json --out data/real/rung3/strips_b8
     # the B8 re-emit as it was RUN 2026-08-21 (37 min, laptop). ⚠ `--strips-root data/real/strips_v2`
@@ -494,37 +494,37 @@ npx tsx tools/checks/parity/rescue-check.ts
     # caches, which is why no GPU is needed; `--redecode` would throw that away. Its output is NOT
     # training data until `b8-audit` is read and the old pools' human fixes are carried BY MEASURE
     # SPAN (docs/METRICS-CORPUS.md).
-.venv-ml/bin/python scripts/rung3/emit_strip_labels.py ... --vocab h --rail-plan
+.venv-ml/bin/python ml/labels/emit_strip_labels.py ... --vocab h --rail-plan
     # …then the SAME command with --rail <out>/emit_rail.json instead: Round 4's label-budget rail
     # in its two runs (docs/rung3/round4.md step 5) — run 1 PRICES every candidate sub-range of
     # every over-budget window and cuts nothing, run 2 splits only the windows that failed.
     # ⚠ `--vocab` must MATCH across the two, and every page the plan names is RE-DECODED (the GPU).
-.venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --rebuild
+.venv-ml/bin/python ml/labels/build_exam_v3_queue.py --rebuild
     # the exam, RE-CUT on today's slicer (owner, 2026-08-21). `--plan` prints the emit command; that
     # emit must write to --strips-root data/real/strips_examv3 and NEVER to data/real/strips, which
     # the frozen exam hardlinks from — re-slicing there rewrites the pixels its gold describes.
-.venv-ml/bin/python scripts/rung3/promote_labels.py --dir data/real/rung3/strips_h1 \
+.venv-ml/bin/python ml/labels/promote_labels.py --dir data/real/rung3/strips_h1 \
     --strips-root data/real/strips_v2 --vocab h --audit-csv full_audit.csv --audit-csv rail_added.csv
     # Round 4's promote as RUN 2026-09-16 (185 replaced, 4 removed, 0 rejects). ⚠ --vocab h is not
     # optional for an H pool: under the old vocabulary its labels are ~40% longer, get rejected as
     # over budget, and a rejected audit `fix` REMOVES its row. ⚠ --audit-csv REPLACES the default,
     # so name full_audit.csv too; rail_added.csv is the only way the rail's verdicts reach training.
     # ⚠ --strips-root data/real/strips_v2: the default is the RETIRED root. Add --dry-run first.
-.venv-ml/bin/python scripts/rung3/paired_arm_score.py --score-vocab old \
+.venv-ml/bin/python ml/labels/paired_arm_score.py --score-vocab old \
     --ctl <control ckpt> --arm <H ckpt> --pool data/real/rung3/_realval_v2r --out <file.json>
     # two checkpoints, one pool, paired per strip. ⛔ --score-vocab old is REQUIRED when the two
     # vocabularies differ, and the script refuses without it: counted in its own ids the same
     # mistake costs an H model 1.139 fewer edits per strip. Omit it only for two old-vocabulary
     # checkpoints, which is what every number before 2026-09-16 was. docs/METRICS-EXAM.md
-.venv-ml/bin/python scripts/rung3/score_vocab_check.py
+.venv-ml/bin/python ml/labels/score_vocab_check.py
     # ~10 s, no model: proves the old-id scale is lossless and neutral. Must print PASS again after
     # any change to data.canonical_label, ADDED_TOKENS or SCHEME_H_TOKENS.
-sh scripts/make_round4_colab_zip.sh
+sh ml/prep/make_round4_colab_zip.sh
     # Round 4 step 6's ONE upload for BOTH arms -> data/colab/tnc_round4_colab.zip, and it writes the
-    # zip's byte count into notebooks/round4_vocab_ab_colab.ipynb. ⛔ Refuses until _realval_v2r
+    # zip's byte count into ml/notebooks/round4_vocab_ab_colab.ipynb. ⛔ Refuses until _realval_v2r
     # exists (repair_realval_v2.py --build). Drops the strips_h1 labels over 99 OLD ids inside the
     # zip only — the Mac's pool is never edited. ⚠ Re-run it after ANY pool change, then re-upload.
-.venv-ml/bin/python scripts/build_makam_signatures.py \
+.venv-ml/bin/python ml/prep/build_makam_signatures.py \
     --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts  # TS copy only
 npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/synthetic/<set> [--thin-sharps]
     # ⚠ --pieces data/pieces_v4.json, NOT data/pieces.json — the latter is the stale 2026-07-08
@@ -558,9 +558,9 @@ npx --yes tsx tools/render/render-ly.ts --pieces data/pieces_geom_pilot.json --o
     # `brew install lilypond` (2.26), decides nothing itself, and draws no lyrics/repeats/nav
     # marks/slur distractors, so it is a pilot arm and not a corpus. Result: docs/METRICS-INPUT.md
 npx --yes tsx tools/render/verify-labels-ly.ts --strips data/synthetic/<set>   # that arm's OWN gate
-.venv-ml/bin/python scripts/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
-.venv-ml/bin/python scripts/prepare_voices.py [--analyse|--manifest]  # F1's voices: fetch VSCO 2, measure, stage for the Hub
-.venv-ml/bin/python scripts/check_docs.py                 # doc structure check (--facts is GONE, 2026-09-06)
+.venv-ml/bin/python ml/prep/prepare_strokes.py [--analyse]  # F2's drum samples: fetch VCSL, measure, write
+.venv-ml/bin/python ml/prep/prepare_voices.py [--analyse|--manifest]  # F1's voices: fetch VSCO 2, measure, stage for the Hub
+.venv-ml/bin/python tools/dev/check_docs.py                 # doc structure check (--facts is GONE, 2026-09-06)
 ```
 
 Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finished work.
@@ -570,17 +570,17 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 
 *Was `docs/COMMANDS.md` (last updated 2026-08-19).*
 
-> How to run the scaled fine-tune (`src/vision/train.py`) on Colab, written for someone who has
-> never used Colab. This doc is the context around the notebooks: what Colab is, which plan to buy,
+> How to run the scaled fine-tune (`ml/omr/train.py`) on Colab, written for someone who has
+> never used Colab. This doc is the context around the ml/notebooks: what Colab is, which plan to buy,
 > how not to lose a run, and what "done" looks like.
 >
-> The notebooks of Rounds 1–3 and Rung 2 were deleted on 2026-11-20 (git keeps them; their
+> The ml/notebooks of Rounds 1–3 and Rung 2 were deleted on 2026-11-20 (git keeps them; their
 > protocols are in [archive/rounds.md](archive/rounds.md)). **One notebook per round — never re-point an old one.** Each carries its round's corpus paths,
 > recipe and caveats in its own cells, so a stale path can't silently train on the wrong data:
 >
 > | Round | Notebook | Zip | Corpus |
 > |---|---|---|---|
-> | **Round 4 — the vocabulary A/B (both arms)** | **`notebooks/round4_vocab_ab_colab.ipynb`** | `tnc_round4_colab.zip` (`scripts/make_round4_colab_zip.sh`) | `strips_v7_final` + `strips_h1` |
+> | **Round 4 — the vocabulary A/B (both arms)** | **`ml/notebooks/round4_vocab_ab_colab.ipynb`** | `tnc_round4_colab.zip` (`ml/prep/make_round4_colab_zip.sh`) | `strips_v7_final` + `strips_h1` |
 >
 > ⚠ **The scan arm ships no corpus of its own, and that is the design.** Its only variable is the
 > augmentation mix (`--photo-share 0.20 --scan-share 0.25`), chosen at training time, so its control
@@ -600,20 +600,20 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 > `:8` would drop real from ~34% to 31.9% of batches). It runs ONE recipe, not an A/B.
 >
 > **Outcome: Rung 2 PASSED on the first full run (2026-07-07, batch 16, lr 3e-5, 6000 steps ≈
-> 110 min)** — full result in `src/vision/MODEL_EVAL.md`; checkpoint copied local to
+> 110 min)** — full result in `ml/omr/MODEL_EVAL.md`; checkpoint copied local to
 > `data/checkpoints/rung2-best/`. This guide stays as the recipe for future Colab runs
 > (e.g. the Rung-3 fine-tune on real photos).
 >
 > ### GPU decode offload — a different genre, same rules
 >
-> These notebooks train nothing; they run the emitter's expensive half (slice + decode every page)
+> These ml/notebooks train nothing; they run the emitter's expensive half (slice + decode every page)
 > and bring back the `<page>_decode.json` caches so the laptop only does the cheap alignment.
 >
 > | Job | Notebook | Zip | Model | Window | Out |
 > |---|---|---|---|---|---|
 > | tuplet pass (2026-07-18) | `rung3_decode_colab.ipynb` | `tnc_rung3_decode_colab.zip` | `rung3-labeler` | `--measures-per-strip 1` | `data/real/strips` |
 >
-> Build the package with `scripts/rung3/make_decode_zip.sh <pages-list> <zip-name>`; both
+> Build the package with `ml/labels/make_decode_zip.sh <pages-list> <zip-name>`; both
 > arguments are optional and the pages list keeps its own filename inside the zip.
 >
 > ⚠ **Two flags decide whether the trip was worth anything.** `--cache-checkpoint` is the string
@@ -662,15 +662,15 @@ Suggested path: do the free-tier shakeout first (§4), buy Pro the same day the 
 
 1. **Build the upload package** (on the Mac):
    ```bash
-   sh scripts/make_round4_colab_zip.sh   # → data/colab/tnc_round4_colab.zip
+   sh ml/prep/make_round4_colab_zip.sh   # → data/colab/tnc_round4_colab.zip
    ```
-   One zip, mirroring the repo layout: the `src/vision` training kit, the split, the corpus and the
+   One zip, mirroring the repo layout: the `ml/omr` training kit, the split, the corpus and the
    real pools. Nothing else is needed on the Colab side — no git.
 2. **Upload it to Drive**: go to [drive.google.com](https://drive.google.com), create a folder
    **`tnc`** in My Drive, drag the zip into it. (~5–15 min on a home connection;
    one-time — later sessions reuse it.)
 3. **Open the notebook**: go to [colab.research.google.com](https://colab.research.google.com) →
-   `Upload` → pick `notebooks/round4_vocab_ab_colab.ipynb` from this repo.
+   `Upload` → pick `ml/notebooks/round4_vocab_ab_colab.ipynb` from this repo.
 4. **Pick a GPU**: menu `Runtime → Change runtime type → Hardware accelerator`. Free tier: T4.
    Pro: L4 (best value) or A100 (fastest).
 

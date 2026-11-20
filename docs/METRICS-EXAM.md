@@ -8,7 +8,7 @@ updated: 2026-11-20
 Split out of [METRICS.md](METRICS.md) on 2026-08-11, when that file reached its 400-line cap — this
 section was 188 of its 399 lines. **Nothing here changed in the move.** Every other measured number
 still lives in [METRICS.md](METRICS.md); raw run logs are in
-[../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md).
+[../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md).
 
 ⚠ **The exam is one-shot**: `data/real/rung3/testset.json` pieces are never trained on, and the exam
 is read once per round on the final model. All iteration happens on real-val, which
@@ -169,7 +169,7 @@ decode 187:14. But the scale is small and the pools are clean:
 
 ### Re-scored under low-n-robust headlines (2026-07-27) — the regression was a metric artifact
 
-Recomputed from the stored `per_class` blocks by `scripts/rung3/rescore_headline.py`; no model was
+Recomputed from the stored `per_class` blocks by `ml/labels/rescore_headline.py`; no model was
 re-run, and no exam was re-read. **MICRO** pools tokens instead of classes (Σhit/Σgold), so one rare
 class cannot swing it. **MACRO≥30** is the same per-class mean restricted to classes with ≥30 gold.
 
@@ -735,7 +735,7 @@ Every scorer in this project counts edits in **token ids**. Scheme H spells a no
 the same misread costs an H checkpoint fewer edits than an old one. Found while writing the step-6
 notebook's read; nothing had been scored with it yet.
 
-`scripts/rung3/score_vocab_check.py` (no model, ~10 s):
+`ml/labels/score_vocab_check.py` (no model, ~10 s):
 
 | check | result |
 |---|---|
@@ -876,7 +876,7 @@ So the A/B that decided "H is a null" was read on a pool that is almost free of 
 for, and the same is true of both live-model comparisons. **A null on 5.8% dense material is not an
 answer about dense material.**
 
-#### The pools built for it (`scripts/rung3/build_denseval.py`, 2026-09-18)
+#### The pools built for it (`ml/labels/build_denseval.py`, 2026-09-18)
 
 - **`_denseval_h1`** — all **442** held-out strips of `strips_h1`: 139 under 30 old ids, 186 at 30–49,
   53 at 50–59, 63 at 60–99, **1 at ≥100**.

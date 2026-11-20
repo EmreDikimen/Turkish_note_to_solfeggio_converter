@@ -110,9 +110,9 @@ int8 parity → browser gate) before it becomes the runtime in `apps/web/public/
 
 #### Step 4.2 — Round-1 init A/B RESULT (2026-07-22): Arm A (two-stage) WINS
 
-Full numbers + caveats: `src/vision/MODEL_EVAL.md`. Both arms from BASE on `strips_v3` at the
+Full numbers + caveats: `ml/omr/MODEL_EVAL.md`. Both arms from BASE on `strips_v3` at the
 pre-registered `--every-share 0.15`; judged on the ONE pre-registered number, free-running real-val
-mean AEU F1 over the merged 271-strip real-val pool (`src/vision/make_realval_pool.py`).
+mean AEU F1 over the merged 271-strip real-val pool (`ml/omr/make_realval_pool.py`).
 
 - **Arm A — two-stage: MEAN AEU F1 89.2%** (stage 1 synthetic-only 6k steps → stage 2 from stage-1
   `best`, 2k steps @ lr 1e-5, real oversampled `:8` → 33.3% of the pool). WINNER.
@@ -182,7 +182,7 @@ movement of the selection metric under the largest prior intervention (currently
 
 **Replacement diagnostic (pre-registered here; free, no training run) — the degraded-strip
 probe:** run the EXISTING Arm-A checkpoint on real-val strips deliberately degraded
-(blur/fade, `src/vision/augment.py` transforms) and compare accidental emission rate +
+(blur/fade, `ml/omr/augment.py` transforms) and compare accidental emission rate +
 per-class precision against the clean read. The original hypothesis predicts hallucination
 returns under ambiguity; if it does, that is evidence the mechanism is distributional —
 admissible for Round-2 design as a proxy claim (real-val only), at minutes of cost instead of
@@ -200,7 +200,7 @@ could not have de-risked it either (real-val cannot see the class).
 > **UPDATE 2026-07-25 — gold re-audited, exam re-scored.** A full hand-audit of the 327 clean exam
 > strips (the gold was already ~82% reviewed via `examv2-review`; only **13 new label errors** found —
 > the gold over-sizes sharps, e.g. `\buyukSharp`/`\komaSharp`→`\bakiyeSharp`). After correcting them
-> (`scripts/rung3/apply_exam_fix.py`; backup `manifest.jsonl.bak-precorrect`), the re-score is **AEU
+> (`ml/labels/apply_exam_fix.py`; backup `manifest.jsonl.bak-precorrect`), the re-score is **AEU
 > recall 66.3→78.5%, F1 66.5→78.0%** — BUT ~11 of the 12pp is a **metric artifact**: `\buyukSharp`
 > (n=3, 0% recall) corrected to n=0 drops out of the per-class mean; token-level barely moved (SER
 > 0.060→0.059, exact 49.2→50.0%). Lessons: the per-class-mean headline is fragile to low-n classes
@@ -271,7 +271,7 @@ entry plan. They reorder nothing expensive — every early item is free or near-
 them gate the design of the expensive steps, so they run first.
 
 > **Status (2026-07-23): items 1–4 EXECUTED, 5/7/9 retained as commitments, 6 & 8 DROPPED by the
-> user.** Item-1 findings + item-4 probe: `src/vision/MODEL_EVAL.md` "Round-2 run-first
+> user.** Item-1 findings + item-4 probe: `ml/omr/MODEL_EVAL.md` "Round-2 run-first
 > diagnostics". Item 2 (guard) shipped in `train.py` + `data.py`; item 3 (canonical split)
 > shipped as `data.is_real_val_piece`. **⚠ The item-1 result partly re-opens dropped item 6 —**
 > see item 6's note.
@@ -299,7 +299,7 @@ them gate the design of the expensive steps, so they run first.
    recovery; a strip may serve exactly one. Fix the split rule (e.g. piece-hash, like the existing
    real-val split) before the rebuild or the recovery emit touches the pool — this is the same
    failure shape as the exam contamination, one level down.
-4. **Run the degraded-strip probe BEFORE the real-val rebuild.** `src/vision/degrade_probe.py`
+4. **Run the degraded-strip probe BEFORE the real-val rebuild.** `ml/omr/degrade_probe.py`
    (built, not yet run) is defined over the current 271-strip `_realval`; rebuilding first orphans
    its L0 clean control. No training involved — build the ladder, 5 evals, report.
 
@@ -403,7 +403,7 @@ Chain, all green: ONNX export → int8 (221 MB) → `onnx_parity.py` **14/14 fp3
 `make_browser_gate.py` → browser gate **27/28**, with the product (canvas) path a clean 14/14. The
 gate list was rebuilt from `strips_v4` **val** pieces because the Colab checkpoint arrived without
 one. Export details, the gate-strip method and the one failing strip: [../METRICS.md](METRICS.md)
-and `../../src/vision/MODEL_EVAL.md`.
+and `../../ml/omr/MODEL_EVAL.md`.
 
 **Carried forward, not fixed:** the browser miss is an ORT-web wasm int8 numerics wobble (Python-ORT
 int8 reads the same strip exactly). It is now the second instance — Round 1's was a double dot, this
@@ -448,7 +448,7 @@ Numbers: [../METRICS.md](METRICS.md). Decisions: [../DECISIONS.md](DECISIONS.md)
   FIDELITY bug, not resolution and not teaching volume.** `\komaSharp` F1 ~50% and `\kucukSharp`
   recall 48% at **100% precision** — the model UNDER-fires the small sharps, so it was failing to
   *see* the difference, not failing to be careful. Diagnosis, in order:
-  - **Resolution RULED OUT.** `scripts/rung3/sharp_width_test.py` regroups the already-scored strips
+  - **Resolution RULED OUT.** `ml/labels/sharp_width_test.py` regroups the already-scored strips
     by the encoder's effective scale (DonutImageProcessor `align_long_axis → thumbnail → pad` into
     409×583; strips are 336px tall and 579–2472 wide, so the scale runs 1.22 → 0.24). If shrinking
     were the cause, recall would fall with scale. It does not, on EITHER dataset: clean-exam
@@ -540,7 +540,7 @@ whole model approach (only if another round barely moves the number).
 > tolerate ~1.5° handheld skew. Fixed with a guarded photo front-end (all no-ops on clean scans):
 > **auto-deskew + crop-to-quad/perspective de-warp + a narrower `STAFF_HOR_FRAC=0.11` detection kernel**
 > (the old `w/4` had been silently dropping faint/bottom systems on clean renders too). **Yield 28% →
-> 97% of pages / 106 → 690 strips.** Photo AEU ≈ **61% recall / 75% F1** (`scripts/rung3/
+> 97% of pages / 106 → 690 strips.** Photo AEU ≈ **61% recall / 75% F1** (`ml/labels/
 > decode_photos_exam.py` + `score_photos_exam.py`; 690 strips decoded on the M4 in ~6 min — Colab
 > unneeded), first scored by fitting the curated gold onto the photo decode (an estimate). **Then the
 > expert HAND-LABELLED 284 photo strips directly** (review_ui `photo-gold`; stopped there — enough to
@@ -647,7 +647,7 @@ Round-1 data scope is therefore **FROZEN**: fresh synthetic re-render + the prom
 ##### Per-makam conventional PRINTED signatures (`data/makam_signatures.json`)
 
 Real editions print the makam's conventional signature (donanım), which routinely differs from
-SymbTr's content-derived one (`deriveKeySignature`). Built by `scripts/build_makam_signatures.py`
+SymbTr's content-derived one (`deriveKeySignature`). Built by `ml/prep/build_makam_signatures.py`
 from the **adjudication-confirmed `\sig…\sigend` blocks in the promoted real labels** (source of
 truth), with AEU theory only as fallback for the ~12 makams with no real sig strips.
 **Variant count is UNCAPPED** — several makams genuinely print 3–4 spellings (hicaz 4, şehnaz 4,
@@ -667,7 +667,7 @@ measure so a barline crop never bisects one — over a seeded ~35% of non-tuplet
 88/88 labels byte-identical to the pre-slur render.
 
 Already in place, no change needed: realistic triplets (`drawTupletArc` + the rung2.2b stem-fix),
-blur/fade (`src/vision/augment.py`, train-time), the empty-`\sig` fix (serializer).
+blur/fade (`ml/omr/augment.py`, train-time), the empty-`\sig` fix (serializer).
 
 ##### The corpus: `data/synthetic/strips_v3` (2026-07-21)
 
@@ -1021,7 +1021,7 @@ The averages match well — the slicer's scale normalisation works. But **real p
 twice as much**. And one note position is only about **15 px**, so drift of that size is exactly
 what produces one-position errors.
 
-Now compare that against what we teach the model to expect. `src/vision/augment.py` shakes each
+Now compare that against what we teach the model to expect. `ml/omr/augment.py` shakes each
 training picture, but only this much:
 
 ```python
@@ -1034,7 +1034,7 @@ moves.**
 
 #### ⚠ §1 RESULT (2026-07-28) — the variance story is not supported, and neither is the size story
 
-Measured with `scripts/rung3/staff_geometry_probe.py`: perturb exam strips along the same axis the
+Measured with `ml/labels/staff_geometry_probe.py`: perturb exam strips along the same axis the
 augmenter jitters, decode, and watch the error respond. A brittleness effect climbs with dose. This
 one did the opposite — perturbing made the model **better**, and doubling the perturbation changed
 nothing:
@@ -1064,7 +1064,7 @@ Two things round3.md merged, now separated, because only one of them costs us ed
 - **Size VARIANCE (unmeasured payoff).** Synthetic raw spacing has sd **0.000** — every training
   strip is identical. Real runs sd 0.70–2.10. The original text says we shake "five times less than
   reality"; the raw truth is we shake *not at all* before augmentation. The `staff_jitter` op in
-  `src/vision/augment.py` addresses this and stays as **insurance, not a fix** — the ladder says
+  `ml/omr/augment.py` addresses this and stays as **insurance, not a fix** — the ladder says
   variance is not what is costing edits.
 
 - **Non-claim:** measured on the exam only, and the cause is unknown, so nothing ships on it yet.
@@ -1096,7 +1096,7 @@ the flags or the dots.**
 
 #### ⛔ §2 RESULT (2026-07-28) — DISPROVED. Our beams are not too heavy; real print is heavier
 
-Measured with `scripts/rung3/beam_weight_probe.py` (the `sharp_probe` method, applied to beam
+Measured with `ml/labels/beam_weight_probe.py` (the `sharp_probe` method, applied to beam
 thickness in staff spaces). Median thickness: synthetic **0.500 S** — exactly the engraving
 standard — against real **0.567 S** (nota) and **0.765 S** (exam). The v4 and v5 pilots are
 identical, confirming the beam-grouping change does not touch weight.
@@ -1129,7 +1129,7 @@ invented a whole bar of notes — **19 corrections against 8 correct tokens**. T
 
 #### ⛔ §3 RESULT (2026-07-28) — cost CONFIRMED, mechanism DISPROVED, change DROPPED
 
-Measured with `scripts/rung3/empty_crop_probe.py`.
+Measured with `ml/labels/empty_crop_probe.py`.
 
 **The cost is real.** Decoding the whole exam and bucketing by content: crops with **≤3 notes are
 5.5% of strips but 20.8% of all corrections**, at 0.5–1.06 edits per gold token against a 0.03–0.05
@@ -1153,7 +1153,7 @@ already removing is backwards, and it would cost a full re-render.
 splitting them at a zero-ink gutter — scored against identical gold — made things **worse, +31.8%
 (132 → 174 edits)**, worse on 15 strips and better on 5. And **19 of the 45 have no internal
 bar-line at all**, so a measure-aligned split is impossible. `MAX_STRIP_W` is not a lever.
-(`scripts/rung3/width_split_probe.py`.)
+(`ml/labels/width_split_probe.py`.)
 
 #### 4. How crowded are the strips?
 
@@ -1171,7 +1171,7 @@ double-motivated — see the encoder-shrink note in §2.
 
 #### ✅ §5 RESULT (2026-08-15) — CAUSAL, and it replicates on the holdout
 
-Measured with `scripts/rung3/crop_geometry_probe.py --make-padded`, which widens each exam crop with
+Measured with `ml/labels/crop_geometry_probe.py --make-padded`, which widens each exam crop with
 more of **its own quietest columns** — content and gold untouched, only the resolution the encoder
 sees goes down. Pre-registered before the run in [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first): *monotone rise → causal;
 flat within noise → drop the lever in writing.*
@@ -1362,7 +1362,7 @@ things, not one.
 | difference | size |
 |---|---|
 | the tuplet mark | what we want to measure |
-| **`staff_jitter`, a NEW augmentation** — `src/vision/augment.py`, added 2026-07-29, **two days after** `round2-stage2-best` trained | ±4% scale, ±2% vertical shift, on **80% of every training sample**, both profiles. Never A/B'd, and aimed at exactly the geometry axis a triplet lives on |
+| **`staff_jitter`, a NEW augmentation** — `ml/omr/augment.py`, added 2026-07-29, **two days after** `round2-stage2-best` trained | ±4% scale, ±2% vertical shift, on **80% of every training sample**, both profiles. Never A/B'd, and aimed at exactly the geometry axis a triplet lives on |
 | sub-visual **pixel drift** across the corpus | **all 40,826** strips differ between `strips_v4` and today's render, not only tuplet ones: mean abs delta 0.3–4.8 grey levels, no integer shift, ink fraction equal to 4 decimals, indistinguishable by eye. It is a rasterizer/Chromium change since 2026-07-26, **not** a drawing change of ours — `--thin-sharps` was already in v4 and print realism is off in both arms |
 | the training environment | July Colab vs today's, plus ordinary run-to-run variance |
 
@@ -1377,9 +1377,9 @@ deliberately. Rounds 1 and 2 both ended with "the changes are not separable"; sa
 than attributing a movement to the corpus alone.
 
 **The selection statistic — ONE number.** Free-running `\tup3` **recall** on the tuplet val slice
-`data/real/rung3/_tupletval` (built by `scripts/rung3/build_tuplet_val.py`: every `\tup3`-bearing
+`data/real/rung3/_tupletval` (built by `ml/labels/build_tuplet_val.py`: every `\tup3`-bearing
 val-side strip from `strips_tup` and `_realval_v2`, val side decided by
-`src/vision/data.py::is_real_val_piece`, exam pieces refused).
+`ml/omr/data.py::is_real_val_piece`, exam pieces refused).
 
 **The pool's reference point, read before the arms exist.** `round2-stage2-best` — the live model,
 held out from these strips by the same hash — reads **85.2% `\tup3` recall / 97.9% precision** on it
@@ -1399,7 +1399,7 @@ worth 1.9 pp of recall**, and significance — an exact **McNemar** test on the 
 hit/miss across the arms — needs about **6 discordant groups all pointing one way** (b=6, c=0 gives
 p = 0.031; 5 and 0 gives 0.063). The **minimum resolvable effect is therefore ~11 pp**, not the 5 pp
 the redraw is hoped to buy. The whole read is one command,
-`scripts/rung3/tuplet_ab_score.py --new <ckpt> --ctl <ckpt>`, which decodes both arms over the pool,
+`ml/labels/tuplet_ab_score.py --new <ckpt> --ctl <ckpt>`, which decodes both arms over the pool,
 pairs the outcomes by gold occurrence and prints the exact p. Two consequences, both accepted before the run rather than discovered after it:
 
 - A win has to be **large** to be called a win. Anything smaller is reported as null, in the
@@ -1985,7 +1985,7 @@ the gate any second renderer has to pass before a corpus built with it is traina
 
 - **`best` is selected on teacher-forced val loss, and the weighting is now measured: 94.6%
   SYNTHETIC / 5.4% real** — 4,769 val strips against 271, blended by strip count every 500 steps
-  ([../../src/vision/train.py](../../src/vision/train.py), numbers in
+  ([../../ml/omr/train.py](../../ml/omr/train.py), numbers in
   [../METRICS-CORPUS.md](../METRICS-CORPUS.md)). Round 2 selected its final step and
   `best == last` while real-val loss had already turned — the selector cannot see the metric we
   care about. Selecting on a **free-running** real-val number (edits/page) is the fix.
@@ -2029,7 +2029,7 @@ signed pre-registration, the result and the open disposition are in
 > **[rounds.md § The scan profile — Round 3's first trained arm (Lever 7): ⛔ NULL](#the-scan-profile--round-3s-first-trained-arm-lever-7--null)**; the numbers in
 > [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
-`src/vision/augment.py` had exactly two profiles — `screenshot` (0.65) and `photo` (0.35,
+`ml/omr/augment.py` had exactly two profiles — `screenshot` (0.65) and `photo` (0.35,
 `PHOTO_SHARE`) — and **93% of the exam is scans** (62 of 67 pages,
 [../METRICS-CORPUS.md](../METRICS-CORPUS.md)). A flatbed or office scan of a TRT-era print is
 neither: **flat lighting and no perspective**, so the photo pipeline's most expensive ops model
@@ -2196,7 +2196,7 @@ Named here so the next session does not re-derive it. Nothing below is a measure
 
 ### The hole
 
-[`src/vision/augment.py`](../../src/vision/augment.py) had exactly two profiles — `screenshot` and
+[`ml/omr/augment.py`](../../ml/omr/augment.py) had exactly two profiles — `screenshot` and
 `photo` — and **93% of the exam is scans** ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)). A flatbed
 or office scan of a TRT-era print is neither: **flat lighting and no perspective**, so the photo
 pipeline's most expensive ops model nothing that is there, while it *does* have speckle and dust,
@@ -2284,23 +2284,23 @@ split has no such asymmetry, is twice the size, and separates the media by 4.5×
 
 ```bash
 # 1. look at what the profile does, at a size a person can actually read
-.venv-ml/bin/python src/vision/augment.py --strips-dir data/synthetic/strips_v5_tupnew \
+.venv-ml/bin/python ml/omr/augment.py --strips-dir data/synthetic/strips_v5_tupnew \
     --n 3 --profiles scan,scan,scan --stack --out data/synthetic/aug_preview_scan.png
 
 # 2. the scoring pools (idempotent)
-.venv-ml/bin/python scripts/rung3/split_realval_tiers.py --force
+.venv-ml/bin/python ml/labels/split_realval_tiers.py --force
 
 # 3. the Colab package — ships strips_v5_tupnew, NOT a scan-specific corpus
 sh scripts/make_round3_colab_zip.sh scan       # -> data/colab/tnc_round3_scan_colab.zip (688 MB)
 
-# 4. notebooks/round3_scan_profile_colab.ipynb, run top to bottom (the owner drives this)
+# 4. ml/notebooks/round3_scan_profile_colab.ipynb, run top to bottom (the owner drives this)
 #    stage 1: 6000 steps @ lr 3e-5, batch 16, from BASE
 #    stage 2: 2000 steps @ lr 1e-5, the three real pools at :9
 #    both stages carry --photo-share 0.20 --scan-share 0.25
 
 # 5. read it, arm and control, on the same pools
 for p in _scan _borndigital _hard _mid _easy ""; do
-  .venv-ml/bin/python src/vision/eval_omr.py --checkpoint data/checkpoints/<ckpt> \
+  .venv-ml/bin/python ml/omr/eval_omr.py --checkpoint data/checkpoints/<ckpt> \
       --strips-dir data/real/rung3/_realval_v2$p --split none --show-errors 0
 done
 ```
@@ -2375,7 +2375,7 @@ on what gets built after arms 2 and 3.
 > the control's 66/71, one discordant strip, p = 1. Clause 3 shows **no price** — every AEU and F1
 > cell level or slightly up. Every number:
 > [METRICS-INPUT.md § Diagnostics — the symbols the model has never been shown](../METRICS-INPUT.md#diagnostics--the-symbols-the-model-has-never-been-shown); the training run itself:
-> [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md) and the raw console log
+> [../../ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md) and the raw console log
 > [log/raw.md](../log/raw.md#round_3_staccato_logs). The disposition is at the bottom
 > of this file.
 >
@@ -2466,7 +2466,7 @@ needs gold annotation and an engraver change.
 
 Full tables — the primary, clause 2 and clause 3 — live in
 [METRICS-INPUT.md § Diagnostics — the symbols the model has never been shown](../METRICS-INPUT.md#diagnostics--the-symbols-the-model-has-never-been-shown). The training run, its loss curves and the
-`best == last` note are in [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md)
+`best == last` note are in [../../ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md)
 ("Round 3 — arm 2").
 
 **The strongest line in it is not the 0.0%.** The arm reads the **marked** pool exactly as well as
@@ -2476,7 +2476,7 @@ tolerable; they stopped carrying information about duration at all. That is what
 lesson looks like when it lands, and it is why the draw sought out already-dotted noteheads.
 
 ⚠ **The metric had no committed scorer until now.** The 2026-08-15 baseline was measured ad hoc, so
-`scripts/rung3/staccato_falsedot_score.py` was written from the definition and its **first job was to
+`ml/labels/staccato_falsedot_score.py` was written from the definition and its **first job was to
 reproduce that baseline** — which it does to the digit (80/110, exact 27.3%, SER 0.0578) before being
 trusted on the arm. `staccato_realdot_score.py` reads clause 2. ⚠ Doing that exposed something the
 published number hid: the **training control sits at 54.5%, not 72.7%**. The defect's severity is not
@@ -2550,7 +2550,7 @@ The model does not invent triplets any more. It **misses about one in six**.
 
 **Not a data shortage.** The `strips_tup` queues are fully verdicted and the promote has run —
 `manifest.jsonl` holds 169 strips / 205 groups, and the pool trains at `:8` oversampling
-(`--real-dir data/real/rung3/strips_tup:8`, [round1_colab.ipynb](../../notebooks/round1_colab.ipynb)).
+(`--real-dir data/real/rung3/strips_tup:8`, [round1_colab.ipynb](../../ml/ml/notebooks/round1_colab.ipynb)).
 The exam extension also happened: tup3 gold went 4 → 55 groups at the v2.1 freeze.
 
 ⚠ [labeling.md § Labeling, Step 1 — collecting real pages and matching them to SymbTr](../rung3/labeling.md#labeling-step-1--collecting-real-pages-and-matching-them-to-symbtr) §1c described "78 accepted + a 147-row review queue" until this date.
@@ -2630,7 +2630,7 @@ unlike a stitch-time repair it shows up in the exam score. Decision row:
 
 ### The root cause is CONFIRMED as a drawing defect (2026-08-12) — and the redraw is in
 
-`scripts/rung3/tuplet_mark_probe.py` measured the mark on real editions the way `sharp_probe` measured
+`ml/labels/tuplet_mark_probe.py` measured the mark on real editions the way `sharp_probe` measured
 the sharps. **16 of 16 accepted marks, across ~11 editions, break the arc and set the "3" in the gap.**
 Geometry, the caveats and what our two styles do instead:
 [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
@@ -2751,7 +2751,7 @@ be attributed.
    Checks: `npm test`, `smoke:editor` and `verify-labels` on the pilot all pass unchanged (309/309
    exact), which is how we know the label path did not move.
 2. ✅ **DONE 2026-08-12 — the owner looked at the shape** on
-   `data/real/rung3/tuplet_probe/mark_comparison.png` (`scripts/rung3/tuplet_mark_sheet.py`: real
+   `data/real/rung3/tuplet_probe/mark_comparison.png` (`ml/labels/tuplet_mark_sheet.py`: real
    edition / ours before / ours now, same piece and same strip, each also as the encoder sees it; ⚠
    local viewing only, the real row is a third-party edition —
    [../THIRD-PARTY.md](../THIRD-PARTY.md)). Two corrections came back — arms follow the notes, lighter
@@ -2764,7 +2764,7 @@ be attributed.
    kept**, because it stands on the print measurement (16/16 marks, ~11 editions) rather than on
    recall, and **nothing about recall is claimed in either direction**. Precision cleared its veto
    on both arms (98.0% / 95.8%); the `_realval_v2` guard passed (mean AEU F1 83.9% vs 83.3%).
-   Numbers: [../METRICS.md](../METRICS.md); full read: [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+   Numbers: [../METRICS.md](../METRICS.md); full read: [../../ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md).
    ⚠ **What this does NOT say**: that the shape does not help. 54 gold groups cannot resolve less
    than ~11 pp, and the effect hoped for was ~5. The experiment was run knowing that
    ([rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol)), which is why the number can be read honestly now.
@@ -2897,7 +2897,7 @@ data/real/
 - **Slicer vs. TRT-style scans** (step 1b): the biggest unknown of the combined Round 1 —
   sample-check with `--debug` overlays before bulk download; timeboxed with a neyzen-only
   fallback. **Now measurable, not just eyeball-able (2026-07-19): the slicer hardening above
-  ships with `scripts/rung3/score_slicer.py` — run it after any slicer change / on any new
+  ships with `ml/labels/score_slicer.py` — run it after any slicer change / on any new
   source's decode caches to get old-vs-new row-measure-count accuracy against SymbTr
   alignment (caveat: its truth is biased toward the CACHED slicer's counts).**
 - **Alignment bugs poison labels silently** (step 3) — the round-trip + eyeball gate is
@@ -2913,7 +2913,7 @@ data/real/
   the init decision: strips_v2_2 = 17,133 every + 6,258 keysig + **0 carry** strips, so
   rung22-stemfix never saw a carry label — that is the format mismatch, and why Round 1
   trains from BASE.
-- **Review-queue adjudication** — the review UI is BUILT (`scripts/rung3/review_ui.py`,
+- **Review-queue adjudication** — the review UI is BUILT (`ml/labels/review_ui.py`,
   stdlib HTTP server on :8377, 2026-07-12): queue tabs (sampled audit / full 84-strip audit /
   r1-review / exam-review), one-keystroke verdicts ok|fix|bad written atomically into the
   CSVs (`verdict` / `corrected_label` / `by` columns; `by` marks non-human verdicts, a human
@@ -2923,7 +2923,7 @@ data/real/
   accept gate; exam-review (443) is scheduled after the two-source freeze —
   see Step 2 "Grow the exam by adjudication" (accidental-bearing rows first, then re-take
   the baseline on the grown exam).
-- **Promote script — BUILT + APPLIED (2026-07-14):** `scripts/rung3/promote_labels.py` folds
+- **Promote script — BUILT + APPLIED (2026-07-14):** `ml/labels/promote_labels.py` folds
   the verdicts into `manifest.jsonl`: full_audit `fix` rows replace labels in place (`bad`
   would remove), review `ok`/`fix` rows are promoted as new manifest rows (SymbTr-stem piece
   metadata recovered from `matched/`; PNGs hardlinked; provenance columns
@@ -3023,7 +3023,7 @@ data/real/
     field; `row_x0/row_x1/width` now describe the padded crop).
   - *Tooling*: `--debug` overlay now color-codes REJECTED candidates (orange=fat blob,
     purple=clef-like, yellow=blob-past-line, gray=x-range); NEW
-    `scripts/rung3/score_slicer.py` scores old-vs-new `row_measures` against the
+    `ml/labels/score_slicer.py` scores old-vs-new `row_measures` against the
     emitter's SymbTr row alignment using the existing decode caches (CPU-only, no model)
     and `--eyeball` writes contact sheets (docs' 3 bad w00 pages + worst regressions +
     random w00s) to `data/real/rung3/slicer_eyeball/index.html`.

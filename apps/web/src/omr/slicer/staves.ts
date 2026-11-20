@@ -151,7 +151,7 @@ export function binarizePaperRelative(gray: Gray): Gray {
  * Otsu exposes almost no staff line at all — 93 pages of the same 2,987 — and is BELIEVED on **37**,
  * every one already at 0 staves: 37 recovered, 0 regressions, and 0-stave pages fall 144 → 107.
  * ⚠ Those are two different counts; this comment used to give 93 as the number that fired.
- * Re-measure with `scripts/rung3/pale_line_probe.py` (docs/METRICS-SLICER.md).
+ * Re-measure with `ml/labels/pale_line_probe.py` (docs/METRICS-SLICER.md).
  *
  * ⚠ The shape check is not optional either. Most pages that reach it are LYRICS pages with no staff
  * at all, and the more sensitive threshold cheerfully groups their text baselines into "staves" —

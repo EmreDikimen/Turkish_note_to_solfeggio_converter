@@ -35,7 +35,7 @@
 
 /* ── The Istanbul backdrop (`ui/ornament/Backdrop.tsx`, owner 2026-10-01) ──────────────────────
    Day: Aivazovsky's Bosphorus in morning light. Night: his Golden Horn by moonlight. The files are
-   made by scripts/prepare_backdrop.py; everything about the FADE is here.
+   made by ml/prep/prepare_backdrop.py; everything about the FADE is here.
    - `--bd-col` is half the content column plus a margin; inside it the blurred copy shows and the
      veil is thickest, so text never sits on a sharp picture. Outside it both thin out.
    - Each theme names only its own two files, so a visitor downloads one pair, not four.

@@ -8,7 +8,7 @@
  *     that no scan and no photo can move), a photo-like slanted edge must be refused, and music
  *     the picture's edge cut through must not be painted.
  *   - PARITY. Every expected sha256 below is the Python `whiten_frame`'s output for the same
- *     bytes, printed by `scripts/frame_whiten_ref.py`, which builds these six pages the same way.
+ *     bytes, printed by `ml/prep/frame_whiten_ref.py`, which builds these six pages the same way.
  *     If the two sides drift, the app cuts a framed screenshot differently from the Python slicer.
  *
  * Synthetic pages on purpose: the screenshot the rule was built for is someone else's engraving,
@@ -54,7 +54,7 @@ interface Case {
   build: () => Uint8Array;
   /** must `whitenFrame` return the input object itself? */
   same: boolean;
-  /** sha256 of Python's output — scripts/frame_whiten_ref.py */
+  /** sha256 of Python's output — ml/prep/frame_whiten_ref.py */
   sha: string;
   /** [y, x, expected value] spot checks, so a failure says WHAT moved and not only that a hash did */
   probes: Array<[number, number, number]>;

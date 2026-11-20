@@ -3,7 +3,7 @@
  *
  * Built to answer the one question arm-B agreement cannot: **is the browser WORSE than Python, or
  * only different?** Agreement measures similarity to another decoder; only gold measures quality.
- * This produces the browser's side; `scripts/score_browser_gold.py` scores it and Python's cached
+ * This produces the browser's side; `ml/prep/score_browser_gold.py` scores it and Python's cached
  * decode against the same hand-verified labels with the same scorer.
  *
  *   npx tsx tools/checks/parity/decode-pool.ts \

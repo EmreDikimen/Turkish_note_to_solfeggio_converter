@@ -251,7 +251,7 @@ all low body, and audition on the built-in speaker rather than headphones.
 
 Not a rewrite; the seam held. What landed, in the order it was planned:
 
-1. **`scripts/prepare_strokes.py`** downloads the VCSL originals, **measures** them to pick which
+1. **`ml/prep/prepare_strokes.py`** downloads the VCSL originals, **measures** them to pick which
    articulation is a düm, then trims, mono-downmixes and levels them into `public/audio/<kit>/`.
    Freesound's bendir take was **not** needed and stays deferred — VCSL is on GitHub, so no account
    and no manual step. See [THIRD-PARTY.md § Audio sources — the verified files, and what each one still needs](../THIRD-PARTY.md#audio-sources--the-verified-files-and-what-each-one-still-needs).

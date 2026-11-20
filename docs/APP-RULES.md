@@ -6,7 +6,7 @@ updated: 2026-11-20
 
 > **These are hard rules, not background.** Each was paid for once by a live bug. CLAUDE.md keeps a
 > one-line headline for the six that can be broken from anywhere in the repo and points here for the
-> rest — read this file before changing anything under `apps/web/`, `tools/render/` or `tools/core/`.
+> rest — read this file before changing anything under `apps/web/`, `packages/core/` or `tools/`.
 > Current state and next action are NOT here: [STATUS.md](STATUS.md). The per-feature attribute list
 > is its own file: [APP-RULES.md](#the-dom-contract--what-the-browser-checks-are-allowed-to-assert-on).
 
@@ -126,7 +126,7 @@ updated: 2026-11-20
 
 - **The deploy checks read DOM state, never the words on the page** (2026-08-07, the style pass).
   `apps/web/src/ui/status.ts` is the single producer of the contract, and the six
-  `tools/browser/*-smoke.ts` assert on attributes — which is what leaves **all user-facing copy free to
+  `tools/checks/*-smoke.ts` assert on attributes — which is what leaves **all user-facing copy free to
   change**, and is how the UI became Turkish. ⛔ **Never reintroduce a text or regex matcher** for a
   status message or a button label; every user-visible string lives in `apps/web/src/ui/strings.ts`.
   ⚠ **THE FULL ATTRIBUTE LIST, PER FEATURE, AND THE TRAP IN EACH:
@@ -240,7 +240,7 @@ dropped in the move; CLAUDE.md keeps the rule and points here for the list.
 ### Why the rule exists
 
 `apps/web/src/ui/status.ts` is the single producer of the contract. Because the six
-`tools/browser/*-smoke.ts` assert on attributes and never on text, **all user-facing copy is free to
+`tools/checks/*-smoke.ts` assert on attributes and never on text, **all user-facing copy is free to
 change** — that is what let the UI become Turkish without touching a check. Every user-visible
 string lives in `apps/web/src/ui/strings.ts`.
 

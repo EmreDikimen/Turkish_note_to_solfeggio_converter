@@ -164,7 +164,7 @@ map is unchanged:
 
 #### 1a. neyzen ✅ DONE (2026-07-11)
 
-`scripts/rung3/match_symbtr.py` matches the 798 downloaded pdfs against the 2,186 SymbTr pieces
+`ml/labels/match_symbtr.py` matches the 798 downloaded pdfs against the 2,186 SymbTr pieces
 by name. Makam must agree (spelling-alias table: nihavend↔nihavent, suznak↔suzinak, family
 fallbacks like hicaz_humayun→hicaz); songs match on the lyric-incipit title, instrumentals on
 composer + form abbreviation (p/ss/longa/…). First run: **85 auto-accepts** (spot-checked
@@ -219,7 +219,7 @@ drew slurs — the model's most systematic real-page error).
 - **Exam pieces excluded from train AND val** — val is a piece-held-out slice of the real
   strips; selecting a checkpoint on the exam would leak it.
 - Short run, small LR; export only what the emitter needs: ONNX int8
-  (`src/vision/quantize_onnx.py`) + parity (`onnx_parity.py`).
+  (`ml/omr/quantize_onnx.py`) + parity (`onnx_parity.py`).
 - **Prerequisite: the promote script** (train only on corrected labels). Natural batch-mate:
   the `MEASURES_PER_STRIP=2` re-slice (~233 recoverable strips = more labeler training data).
 - **Round 1 is unchanged**: ONE from-base run on synthetic + all matched real. The 2026-07-11
@@ -227,9 +227,9 @@ drew slurs — the model's most systematic real-page error).
 
 **Run kit — BUILT 2026-07-14, wiring smoke-tested locally (2 steps, mps):**
 `data/real/rung3/strips_r1/split.json` (make_split.py: 40 train / 8 val pieces, 56/418
-strips, AEU-coverage-aware), `scripts/rung3/make_labeler_zip.sh` (10 MB upload:
-src/vision + strips_r1; start weights come from Drive `tnc/rung22-stemfix/best`, left there
-by the 2.2b run), `notebooks/rung3_labeler_colab.ipynb` (baseline-eval cell → shakeout →
+strips, AEU-coverage-aware), `ml/labels/make_labeler_zip.sh` (10 MB upload:
+ml/omr + strips_r1; start weights come from Drive `tnc/rung22-stemfix/best`, left there
+by the 2.2b run), `ml/notebooks/rung3_labeler_colab.ipynb` (baseline-eval cell → shakeout →
 train `--lr 1e-5 --max-steps 1200 --warmup-steps 50`, T4 ~30–40 min → post-eval; after-notes
 cover the ONNX-int8-only export + pointing emit_strip_labels.py at the labeler).
 Re-run promote → make_split → make_labeler_zip after any new adjudication (the 3 typo fixes).
@@ -238,8 +238,8 @@ Re-run promote → make_split → make_labeler_zip after any new adjudication (t
 
 > **Full run (2026-07-15), after the calibration probe below:** all **964** matched pieces
 > downloaded (`nota_downloads.json`; 966 accepts minus 2 dead links), **1,227 pages
-> GPU-decoded on Colab** (`scripts/rung3/decode_pages_gpu.py` + `make_decode_zip.sh` +
-> `notebooks/rung3_decode_colab.ipynb` — the labeler decode offloaded per the fanless-Mac
+> GPU-decoded on Colab** (`ml/labels/decode_pages_gpu.py` + `make_decode_zip.sh` +
+> `ml/notebooks/rung3_decode_colab.ipynb` — the labeler decode offloaded per the fanless-Mac
 > rule; page-cached, resumable, results rsynced back into `data/real/strips/`). Fold-search
 > 2^n blow-up on many-repeat pieces fixed (`SPAN_SUBSET_CAP=12` + hill-climb fallback in
 > `emit_strip_labels.py`). **Emit over 938 pieces: 440 ok / 338 low_coverage / 160
@@ -287,7 +287,7 @@ Re-run promote → make_split → make_labeler_zip after any new adjudication (t
 > strips**; gold (sig-inclusive): bakiyeSharp 117, bakiyeFlat 59, kucukFlat 53, natural 48,
 > komaFlat 38, kucukSharp 29, komaSharp 18, tie 127, \tup3 still 4. FREEZE COMMITTED
 > (37ee690). **nota-full rule drafts (same day):** after the user hand-verdicted 125
-> nota-full rows (79 fix / 46 ok), `scripts/rung3/rule_fix_notafull.py` learned the
+> nota-full rows (79 fix / 46 ok), `ml/labels/rule_fix_notafull.py` learned the
 > adjudication pattern (human sides with the DECODE on ties / duration respells /
 > repeat marks; with the LABEL or a third reading on pitch, sig, tuplet, grace) and
 > DRAFT-verdicted the mechanical tail: **325 rows filled** (by=rule 174 at
@@ -319,7 +319,7 @@ Re-run promote → make_split → make_labeler_zip after any new adjudication (t
 
 Calibration probe (2026-07-15, superseded by the full run above):
 
-> **Status:** `scripts/rung3/collect_nota.py` (census / match / download / export, all
+> **Status:** `ml/labels/collect_nota.py` (census / match / download / export, all
 > resumable). Census: **20,833 TSM pieces** off the paginated catalog (211 requests, title/
 > makam/composer/lyricist/form/usul per row; ISO-8859-9; robots.txt absent — 302 to an error
 > page, checked again today). Metadata match vs SymbTr: **966 accept** / 1,939 review /
@@ -365,14 +365,14 @@ resumable, census-first) like `collect_notalar.py`; everything stays under gitig
 The exam froze with 4 `\tup3` gold and the manifest holds ~14 tup3 rows; the user called for
 collecting tuplet repertoire directly. Two new scripts:
 
-- **`scripts/rung3/find_tuplet_pieces.py`** — scans all 2,200 SymbTr txts for tuplet events
+- **`ml/labels/find_tuplet_pieces.py`** — scans all 2,200 SymbTr txts for tuplet events
   (same rule as `packages/core/src/labels/rhythm.ts`: sounding event whose reduced Pay/Payda denominator
   is divisible by 3) and crosses them with both sources' match state →
   `data/real/rung3/tuplet_pieces.csv`. **459 tuplet-bearing pieces; 267 already collected**
   (the 28% figure), 36 nota review-tier candidates uncollected, and — the big find — the
   neyzen census still held ~7.6k never-downloaded PDFs (the 798-pdf round was makam-weighted,
   not exhaustive).
-- **`scripts/rung3/collect_tuplets.py`** (match / download / export) — promotes the 36 nota
+- **`ml/labels/collect_tuplets.py`** (match / download / export) — promotes the 36 nota
   review rows to accept in `nota_matches.csv` (wrong matches cost yield only — emit content
   alignment rejects them, never poisons labels), and name-scores the undownloaded neyzen
   census against the FULL SymbTr makam pools, keeping rows whose best match is
@@ -442,7 +442,7 @@ pool that SELECTS a checkpoint rather than grading one. They moved to
 
 **What it is.** One queue over **all 33,804 crops / 1,704 pages** in `data/real/strips_v2` (30,049
 decoded on Colab), so any strip in the re-slice can be pulled up instead of only the 165-row
-hard-tier sample. `scripts/rung3/build_reslice_queue.py` builds it **worst-first** (`--order page`
+hard-tier sample. `ml/labels/build_reslice_queue.py` builds it **worst-first** (`--order page`
 groups by page instead); re-running merges the verdicts already there and carries the 165 hand-read
 `realval-hard-v2` rows across — same crops, same slicer.
 
@@ -488,7 +488,7 @@ decode is right", `fix` = type what the page says, `bad` = the crop is unusable.
 - ⛔ **Not gold.** The filename is neither `emit_review.csv` nor `full_audit.csv`. Verified clean
   against the 45-piece frozen exam by SymbTr id *and* by page stem.
 
-Run: `review_ui.py` → queue **`ndhigh`**. Built by `scripts/rung3/build_ndhigh_queue.py`.
+Run: `review_ui.py` → queue **`ndhigh`**. Built by `ml/labels/build_ndhigh_queue.py`.
 
 ### `r4-ctl-errors` / `r4-live-errors` (2026-09-29) — the strips behind the Round-4 taxonomy
 
@@ -508,7 +508,7 @@ site's model since 2026-09-28. Counts are in the script's printout, not here.
 - Filter `reason` = `<short+mid|long> | <main category>`; the badge beside it lists every category.
   Crops are the pool's own flat PNGs (`QUEUE_FLAT_ROOTS`) — 6 of the 260 exist nowhere else.
 
-Run: `scripts/rung3/build_exam_error_queue.py --pool data/real/rung3/_realval_v2r --out
+Run: `ml/labels/build_exam_error_queue.py --pool data/real/rung3/_realval_v2r --out
 data/real/rung3/_errors --out-name r4_ctl_errors.csv --checkpoint <ckpt>`, ~75 s per model on the M4.
 
 ### The labelling BATCHES (2026-08-18) — a page-complete cut of `reslice-all`
@@ -517,7 +517,7 @@ data/real/rung3/_errors --out-name r4_ctl_errors.csv --checkpoint <ckpt>`, ~75 s
 not a plan, and the UI sorts nothing. Worse, the queue ships **worst-confidence-first**, an ordering
 since measured at **0.44× lift** on this very pool ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)),
 so taking its first 1,500 rows is close to labelling 1,500 random strips. A batch is therefore cut
-outside the UI by `scripts/rung3/build_label_batch.py` and handed to it as its own queue.
+outside the UI by `ml/labels/build_label_batch.py` and handed to it as its own queue.
 
 **What it ranks on, and what it refuses to rank on.** Per-page **structural evidence** — off-meter
 bars, stitch warnings, truncated (`hit_cap`) strips, slicer-flagged crops — reusing
@@ -630,16 +630,16 @@ accidentals because the old headline measured them, and that axis has never been
 
 ```bash
 npx tsx tools/dev/page-structure.ts                                    # 1. stitch stats (once)
-.venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 2   # 2. LAST batch home
-.venv-ml/bin/python scripts/rung3/build_label_batch.py --scanned --batch 3 \
+.venv-ml/bin/python ml/labels/build_label_batch.py --merge-back --batch 2   # 2. LAST batch home
+.venv-ml/bin/python ml/labels/build_label_batch.py --scanned --batch 3 \
     --exclude-pages data/real/rung3/_pagequeue/handwritten_pages.json     # 3. cut it
-.venv-ml/bin/python scripts/rung3/check_crop_staleness.py --root data/real/strips_v2 \
+.venv-ml/bin/python ml/labels/check_crop_staleness.py --root data/real/strips_v2 \
     --pages-from data/real/rung3/_pagequeue/batch3_pages.json \
     --out data/real/rung3/_pagequeue/batch3_staleness.json                # 4. will the work survive?
 #    -> add every `wouldLoseLabels` page to the exclude list, re-cut, re-check the NEWCOMERS
-.venv-ml/bin/python scripts/rung3/review_ui.py                            # 5. label the `batch3` tab
-.venv-ml/bin/python scripts/rung3/build_label_batch.py --stats --batch 3  # 6. what is it yielding?
-.venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 3   # 7. verdicts home
+.venv-ml/bin/python ml/labels/review_ui.py                            # 5. label the `batch3` tab
+.venv-ml/bin/python ml/labels/build_label_batch.py --stats --batch 3  # 6. what is it yielding?
+.venv-ml/bin/python ml/labels/build_label_batch.py --merge-back --batch 3   # 7. verdicts home
 ```
 
 - ⚠ **Step 2 is not optional.** A verdict is only worth what its crop is worth, and a strip filename
@@ -684,7 +684,7 @@ root and stored flat. Yield and carry numbers: [../METRICS-CORPUS.md](../METRICS
   caveats: [../METRICS-CORPUS.md](../METRICS-CORPUS.md). ⚠ **13% wrong is the pool as it stands**, not
   a clean bill: the biggest class is repeat structure (`\repstart` / `\volta`), not pitch.
 - ⭐ **`b8-full` IS AUTO-ACCEPTED WHERE THE LABEL AND THE DECODE AGREE (2026-08-27).**
-  `scripts/rung3/auto_accept_agree.py` drafts `ok` with `by=agree` on every pending row whose label
+  `ml/labels/auto_accept_agree.py` drafts `ok` with `by=agree` on every pending row whose label
   and model decode are the same token-for-token — **2,896 rows**, leaving **842** disagreements for
   a human, and it first carries the 201 hand-read `b8-audit` verdicts across (the build-time
   carry-over predated them). The evidence for the rule and its two caveats are in
@@ -729,11 +729,11 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
 (the 214-row growth queue, before the owner chose a rebuild).
 
 ```bash
-.venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --plan      # prints the emit command
+.venv-ml/bin/python ml/labels/build_exam_v3_queue.py --plan      # prints the emit command
 #   … run it: re-slices + decodes all 67 pages into data/real/strips_examv3 …
-.venv-ml/bin/python scripts/rung3/build_exam_v3_queue.py --rebuild   # -> the examv3 queue
-.venv-ml/bin/python scripts/rung3/review_ui.py                       # label the `examv3` tab
-.venv-ml/bin/python scripts/rung3/promote_labels.py \
+.venv-ml/bin/python ml/labels/build_exam_v3_queue.py --rebuild   # -> the examv3 queue
+.venv-ml/bin/python ml/labels/review_ui.py                       # label the `examv3` tab
+.venv-ml/bin/python ml/labels/promote_labels.py \
     --dir data/real/rung3/strips_exam_v3 --exam \
     --strips-root data/real/strips_examv3                            # verdicts -> exam gold
 ```
@@ -819,7 +819,7 @@ one-shot. Rebuilding it is item 1 in [../STATUS.md](../STATUS.md).
 (6,168 in the nota pool alone, 13,975 across all pools). The exam has 145 hard strips only because
 they were recovered and hand-labelled one at a time. There is no pile to draw from.
 
-**The queue.** `scripts/rung3/build_realval_v2.py --queue N` selects candidates that are on the
+**The queue.** `ml/labels/build_realval_v2.py --queue N` selects candidates that are on the
 val side (`data.is_real_val_piece`, the same rule `train.py` uses) and never exam pieces, mirrors
 the exam's own 107:38 `row_unaligned`:`nd_high` balance, caps 3 strips per piece so the tier is not
 five bad scans repeated, and seeds each row with the **current** model's decode.
@@ -880,7 +880,7 @@ reviewer does not need to.
 - ⚠ **An unverdicted row must never enter the metric pool** — that would reintroduce exactly the
   flattery the rebuild exists to remove.
 
-Run: `.venv-ml/bin/python scripts/rung3/review_ui.py` → queue **`realval-hard-v2`**. Images resolve
+Run: `.venv-ml/bin/python ml/labels/review_ui.py` → queue **`realval-hard-v2`**. Images resolve
 from `data/real/strips_v2/<page>/<strip>`. Progress and the target mix:
 `build_realval_v2.py --report`.
 
@@ -897,7 +897,7 @@ proves it: [METRICS-SLICER.md § Crop roots — which slicer cut which pool, and
 than through a queue — `QUEUE_IMG_ROOTS` binds a *reviewer's* pictures to the right root, and
 nothing bound the *builder's*.
 
-**The queue.** `scripts/rung3/repair_realval_v2.py --queue` writes the **10 rows** whose measure
+**The queue.** `ml/labels/repair_realval_v2.py --queue` writes the **10 rows** whose measure
 span moved between the two roots — the ones no re-home could rescue. 243 rows keep their label,
 5 duplicate twins are dropped, 3 are re-homed onto the `strips_v2` strip carrying the same span.
 

@@ -2,10 +2,10 @@
 opencv-python-headless>=4.8.0
 albumentations>=1.3.1
 Pillow>=10.0.0
-pymupdf>=1.24.0  # PDF -> PNG rasterize for the Rung-3 corpus collector (scripts/collect_notalar.py)
+pymupdf>=1.24.0  # PDF -> PNG rasterize for the Rung-3 corpus collector (ml/prep/collect_notalar.py)
 
 # Deep Learning Framework
-transformers>=4.57.0  # omr_transformer fine-tuning (src/vision/)
+transformers>=4.57.0  # omr_transformer fine-tuning (ml/omr/)
 torch>=2.1.0
 torchvision>=0.16.0
 torchaudio>=2.1.0

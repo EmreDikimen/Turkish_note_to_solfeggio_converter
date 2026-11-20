@@ -1,5 +1,5 @@
 /**
- * Per-page STRUCTURE stats for the review-UI-2 page queue (`scripts/rung3/build_page_queue.py`).
+ * Per-page STRUCTURE stats for the review-UI-2 page queue (`ml/labels/build_page_queue.py`).
  *
  * Why this is TypeScript and not part of the Python ranker: every number here comes from the
  * SHIPPED stitcher and the SHIPPED core helpers — `stitchStrips`, `deriveTimeSignature`,

@@ -33,7 +33,7 @@ updated: 2026-11-20
 
 Symbolic → microtonal audio pipeline works with no ML.
 - SymbTr dataset lives at `~/Downloads/SymbTr-2.0.0/` (txt, MusicXML, midi, mu2; 2200 pieces).
-- `src/symbtr/parser.py` — parses SymbTr `.txt` → `Score`/`Event` model. Verified on all 2200 files.
+- `ml/symbtr/parser.py` — parses SymbTr `.txt` → `Score`/`Event` model. Verified on all 2200 files.
 - `src/audio/tuning.py` — `koma53_to_freq()`; 53-TET, concert anchor 440 Hz at comma 327 (written
   pitch sounds a fourth below — Turkish transposing convention). Validated
   against 12-TET (E5 → 659.97 Hz).
@@ -44,8 +44,8 @@ Symbolic → microtonal audio pipeline works with no ML.
 ### Phase 1: DONE (2026-06-22; polish through 2026-06-28)
 
 Shared TS core + web harness; load → view → edit → playback all working.
-- ✅ Python `SymbTr → note-model JSON` exporter — `src/symbtr/export_json.py` +
-  `scripts/symbtr_to_json.py` (schemaVersion 1; notes/rests/meta tagged; carries tuning params).
+- ✅ Python `SymbTr → note-model JSON` exporter — `ml/symbtr/export_json.py` +
+  `ml/prep/symbtr_to_json.py` (schemaVersion 1; notes/rests/meta tagged; carries tuning params).
 - ✅ npm-workspaces monorepo: root `package.json` (workspaces `packages/*`, `apps/*`).
 - ✅ `packages/core` (TypeScript): `types.ts` (note model), `tuning.ts` (`koma53ToFreq`,
   verified parity with Python to 4e-5 Hz), `scheduling.ts` (`buildTimeline` + `AudioBackend`
@@ -190,12 +190,12 @@ SymbTr → note-model → (TS) render staff PNG ─► (Python) fine-tune (image
   ⚠️ **This decides success more than the model architecture** — and it must match what users
   actually upload: **mostly WEB SCREENSHOTS** (scores viewed in a browser/PDF — clean geometry,
   flat white, only resampling/JPEG damage); camera photos of printed pages are the minority
-  (user, 2026-07-06). So `src/vision/augment.py` mixes two profiles at `PHOTO_SHARE = 0.35`:
+  (user, 2026-07-06). So `ml/omr/augment.py` mixes two profiles at `PHOTO_SHARE = 0.35`:
   **screenshot** (65%: down-up rescale softness, JPEG, tiny brightness/contrast, light noise;
   a slice passes nearly clean) and **photo** (35%: rotation, perspective warp, staff curvature,
   ink bleed/fade, paper texture, soft shadows, lighting gradients, blur, sensor noise, JPEG).
   Revisit the ratio at Rung 3 against real usage. Preview grid (the human gate on strength):
-  `python src/vision/augment.py --out data/synthetic/aug_preview.png`.
+  `python ml/omr/augment.py --out data/synthetic/aug_preview.png`.
 
 ### 4. Step 1 — evaluate the candidate model FIRST (the gate)
 Before building any pipeline, download `omr_transformer` and check the things that decide everything
@@ -205,7 +205,7 @@ downstream:
 - How do we **extend its tokenizer/vocabulary** with the microtonal accidental tokens?
 - **Model size** — viable to export to ONNX and (eventually) run on mobile?
 
-Record findings in `src/vision/MODEL_EVAL.md`. If it fails the gate, evaluate the CRNN/PrIMuS fallback
+Record findings in `ml/omr/MODEL_EVAL.md`. If it fails the gate, evaluate the CRNN/PrIMuS fallback
 before committing. **The accidentals are the only new thing we teach it** — the AEU signs
 (koma/bakiye/küçük·büyük mücennep) as new output tokens. The **exact koma is NOT a token**; the
 **decoder (Phase 4)** turns (AEU sign + makam) back into the precise koma.
@@ -248,7 +248,7 @@ in the repertoire), so clef-less mid-row crops are fine.
   **HuggingFace Hub CDN** — free; the browser downloads and caches them. No server needed.)
 - **Rung 2 — scale (Colab Pro)** ✅ **PASS (2026-07-07, first try — headline 99.9% mean per-class
   AEU accuracy, SER 0.001, exact-match 96.8% on the held-out pieces; full log in
-  `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired):** (the Mac is fine for overfit-10,
+  `ml/omr/MODEL_EVAL.md`; the CRNN fallback is retired):** (the Mac is fine for overfit-10,
   not for thousands of images through 143M params) thousands of augmented strips, training
   **from the original pretrained weights**;
   **full fine-tune at a small LR** (AdamW, ~1e-5–5e-5) — freezing the encoder is a **memory/compute
@@ -386,7 +386,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   **Makam stays out of the OMR model.**
 
 ### 7. Before scaling Phase 2 (checklist)
-- [x] **Step 1 model gate** — `omr_transformer` evaluated (`src/vision/MODEL_EVAL.md`): passed
+- [x] **Step 1 model gate** — `omr_transformer` evaluated (`ml/omr/MODEL_EVAL.md`): passed
       (reads notes, LilyPond output, vocab extendable, ~143M params). Final go/no-go = overfit-10.
 - [x] Confirm green typecheck (`npx tsc` core + web — clean as of 2026-07-02).
 - [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
@@ -394,7 +394,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
       all sample scores. Re-render DONE (2026-07-05): `data/synthetic/strips_v2/` carries the
       repeat-sign tokens + multi-measure coverage — audit PASS (`docs/log/status-log.md`).
 - [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
-      `src/vision/` has the eval script, the dataset wiring (`data.py`), the overfit-10 gate
+      `ml/omr/` has the eval script, the dataset wiring (`data.py`), the overfit-10 gate
       (`overfit10.py`), the ONNX-gate scripts, and the coverage audit (`audit_coverage.py`).
 - [x] **Rung-2 training kit (2026-07-06):** `augment.py` (two-profile screenshot/photo
       augmentation, §3), `modeling.py` (shared model/tokenizer setup — the overfit-10-proven
@@ -405,11 +405,11 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
 ### 8. Next action
 
 > **Canonical status + next action: [STATUS.md](phases/STATUS.md).** Gate results (full settings, bug
-> notes, export details) are logged in [../src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md);
+> notes, export details) are logged in [../ml/omr/MODEL_EVAL.md](ml/omr/MODEL_EVAL.md);
 > the headline numbers are collected in [METRICS.md](phases/METRICS.md).
 
 Short form: Rungs 0–1.5 are all **done** (model gate passed; overfit-10 **GO** 2026-07-02 — the
-two decode-wiring fixes live in `src/vision/data.py`/`overfit10.py` and carry forward; ONNX/browser
+two decode-wiring fixes live in `ml/omr/data.py`/`overfit10.py` and carry forward; ONNX/browser
 gate **PASS** 2026-07-03 — see the ✅ markers in §5), the **Rung-2 dataset upgrades are DONE**
 (now **`data/synthetic/strips_v2_1/`**, coverage audit PASS 2026-07-06 — carries the
 navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — `docs/log/status-log.md`), and the
@@ -418,9 +418,9 @@ navigation-mark tokens (§6) and the centered-rest fix; supersedes v2 — `docs/
 (2026-07-07, first Colab Pro run)** — headline **99.9% mean per-class AEU accidental accuracy**
 (8/8 classes), SER 0.001, exact-match 96.8% on the 20 held-out pieces; checkpoint local at
 `data/checkpoints/rung2-best/` (Drive `MyDrive/tnc/rung2/best` is the backup); full log + error
-taxonomy in `src/vision/MODEL_EVAL.md`; the CRNN fallback is retired. **Rung-2 ONNX export:
+taxonomy in `ml/omr/MODEL_EVAL.md`; the CRNN fallback is retired. **Rung-2 ONNX export:
 PASS (2026-07-07, same day)** — the Rung-1.5 pipeline rerun on `rung2-best`: export → int8
-(now committed: `src/vision/quantize_onnx.py`; 221 MB) → Python parity 5/5 (fp32 + int8) →
+(now committed: `ml/omr/quantize_onnx.py`; 221 MB) → Python parity 5/5 (fp32 + int8) →
 browser gate 10/10 exact on held-out-piece strips with real Turkish accidentals, ~1.0 s/strip
 (`MODEL_EVAL.md`; watch it yourself: `docs/MANUAL_CHECKS.md` Check 9). **The rhythm-sign
 dataset upgrade (§6) is DONE (2026-07-08)** — triplets + ties + grace notes, 4 new tokens
@@ -455,7 +455,7 @@ pipeline): the live track is **[RUNG3.md](phases/RUNG3.md)** (detail), **[CODE_T
 
 Before transliterating 1,000 lines, prove the primitives underneath behave identically. Run it with
 `npm run probe:cv`; regenerate the reference with
-`.venv-ml/bin/python scripts/cv_probe_ref.py <page.png>`.
+`.venv-ml/bin/python ml/prep/cv_probe_ref.py <page.png>`.
 
 **Both sides are OpenCV 5.0.0** (`cv2` 5.0.0, `@techstark/opencv-js` 5.0.0-release.1) — the
 versions were checked, not assumed.
@@ -520,7 +520,7 @@ the validated `min_logprob < -1.0` threshold as Python?** Measured over 576 toke
 confident reads (every min above −0.15), so this fixture is too easy to test the boundary. The
 threshold gets a real test at W3 on real-page strips, and that is owed.
 
-Run it with `npm run check:logprobs` (reference: `.venv-ml/bin/python scripts/logprob_ref.py`).
+Run it with `npm run check:logprobs` (reference: `.venv-ml/bin/python ml/prep/logprob_ref.py`).
 
 ### W2 — an image reaches the editor ✅ DONE (2026-08-02)
 
@@ -614,7 +614,7 @@ Per class the two are within a point everywhere, and the two largest moves cance
 (`\bakiyeSharp` −0.8 pp, `\komaFlat` +1.5 pp). **Verdict: the ~14% disagreement is two ORT builds
 splitting near-ties, at no cost in quality.** Reproduce with `npm run decode:pool -- --pool
 data/real/rung3/_realval_v2 --out b.json` then
-`.venv-ml/bin/python scripts/score_browser_gold.py --browser b.json`.
+`.venv-ml/bin/python ml/prep/score_browser_gold.py --browser b.json`.
 
 ⚠ **Scope of the claim:** this is real-val, which orders candidates and does not predict exam
 performance (a 28 pp gap is on record). It is a *paired* comparison on identical strips, so the
@@ -706,7 +706,7 @@ browser** (41 rotations, each with a page-wide `MORPH_OPEN`) against ~1.9 s for 
 **2. The manifests on disk cannot be the acceptance bar.** Scored against them the port read
 **86.7%**, and one page it failed matched local Python line for line (7 staves against the
 manifest's 5). The current `page_to_strips.py` reproduces only **1,680/1,704 (98.59%)** of those manifests —
-below W4's own bar — because 1,578 of the 1,781 page dirs were sliced on Colab. `scripts/slicer_ref.py`
+below W4's own bar — because 1,578 of the 1,781 page dirs were sliced on Colab. `ml/prep/slicer_ref.py`
 now builds a local-Python reference that is both the control and the sample definition; the port
 reaches the manifest ceiling exactly, 1,680/1,704 on the same pages as Python. **Same lesson W3 already
 recorded about arm-B agreement: agreement with an artifact is not correctness.**
@@ -841,7 +841,7 @@ it would mean threading yields through the transliteration, which is not worth i
    re-verified against a **cold** `.vite` cache, not a warm one.
 2. **The strip-count bar was pointed at the wrong reference.** It first scored against the page
    dir's `_manifest.json` and would have failed W7 for a W4 reason — local Python reproduces only
-   ~98.6% of those manifests. It now scores against `scripts/slicer_ref.py`, with the manifest count
+   ~98.6% of those manifests. It now scores against `ml/prep/slicer_ref.py`, with the manifest count
    printed beside it as context. Third time this project has had to relearn that agreement with an
    artifact is not correctness.
 
@@ -937,7 +937,7 @@ Exact agreement is reported beside it, ungated — the shape `bar x exact` alrea
 | `apps/web/src/omr/slicer/windows.ts` | `spanCap` L776, `splitWide` L786, `windowMeasures` L867 |
 | `apps/web/src/omr/slicer/slicer.ts` | the driver (L961–1011, minus filesystem and debug); `sliceStage1` is the W4 half |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry the parity tool drives; returns geometry only, never pixels |
-| `scripts/slicer_ref.py` | the Python control arm; also defines the sample |
+| `ml/prep/slicer_ref.py` | the Python control arm; also defines the sample |
 | `tools/checks/parity/slicer-parity.ts` | `npm run parity:slicer` |
 
 ### Trap 1 — `Math.round` is not Python's `round`. Verified, twice, in load-bearing places.
@@ -1009,7 +1009,7 @@ the manifest's 5.
 So the flow is:
 
 ```bash
-.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control, ~1.9 s/page
+.venv-ml/bin/python ml/prep/slicer_ref.py --pages 120 --out ref.json   # the control, ~1.9 s/page
 npx tsx tools/checks/parity/slicer-parity.ts --ref ref.json            # ~36 s/page
 ```
 
@@ -1100,7 +1100,7 @@ Remember what the ceiling is and is not. **Agreement is not quality** — W3 est
 browser scores the same as Python against hand-verified gold (SER 0.0818 vs 0.0821), so a strip
 where the two decoders differ is usually a near-tie, not an error. If arm A's crops look suspect,
 the decisive test is the same one W3 used: score against gold with
-`scripts/score_browser_gold.py`, not against Python's tokens.
+`ml/prep/score_browser_gold.py`, not against Python's tokens.
 
 **Result (2026-08-04):** 12 A-only against 4 B-only on 450 paired strips, p = 0.077 — no detectable
 difference. The design paid for itself twice over: all 16 discordant strips have **identical crop
@@ -1111,12 +1111,12 @@ originally asked for would have read "87.78% vs 86.00%" and said nothing at all.
 
 ```bash
 npm run probe:cv                      # opencv.js still matches OpenCV-Python
-.venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control arm, ~4.2 s/page
+.venv-ml/bin/python ml/prep/slicer_ref.py --pages 120 --out ref.json   # the control arm, ~4.2 s/page
 npm run parity:slicer -- --ref ref.json [--inject-skew] [--dump d.json] [--page <stem>]
 npm run parity:armb -- --pages 20     # the ceiling
 npm run parity:arma -- --pages 20     # arm A vs arm B, paired (~80 s/page: real deskew + 2 decodes)
 npm run decode:pool -- --pool <dir> --out b.json   # browser decode of a strip pool
-.venv-ml/bin/python scripts/score_browser_gold.py --browser b.json
+.venv-ml/bin/python ml/prep/score_browser_gold.py --browser b.json
 npm run typecheck && npm test && npm run gate:browser
 ```
 
@@ -1177,7 +1177,7 @@ The gap turned out to be narrower than it looked. Decode, Donut preprocessing, d
 stitching, the editor and playback all already existed in browser-safe form; the decode helpers in
 `apps/web/src/omrGate.ts` were simply never exported, and `packages/core/src/labels/stitch.ts` is confirmed
 free of node imports. The only genuinely missing piece was the page→strips slicer
-(`src/vision/page_to_strips.py`, 1,077 lines of numpy/OpenCV) — **ported and verified over the whole
+(`ml/omr/page_to_strips.py`, 1,077 lines of numpy/OpenCV) — **ported and verified over the whole
 corpus at W6 (2026-08-04)**, so the browser now runs page → staves → rows → barlines → windows →
 crops — and **wired into the app at W7 (2026-08-05)**, so an uploaded page becomes a playable score.
 
@@ -1242,7 +1242,7 @@ instead and the script pins **`--expect 27/28`**. Measured baseline before any W
 ~0.9 s encoder + ~0.2 s decode per strip.
 
 The W0 probe (`apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts`,
-`scripts/cv_probe_ref.py`) was written as throwaway, to be deleted at W6. **It was kept**: it is the
+`ml/prep/cv_probe_ref.py`) was written as throwaway, to be deleted at W6. **It was kept**: it is the
 only check that would catch an opencv.js version bump changing a primitive under the port, and it
 costs one command ([../DECISIONS.md](../DECISIONS.md)).
 
@@ -1252,12 +1252,12 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 |---|---|
 | `tools/checks/run-page.ts` | headless runner for any harness page (permanent) |
 | `apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts` | W0 probe (kept, not deleted — see above) |
-| `scripts/cv_probe_ref.py` | W0 Python reference (kept) |
+| `ml/prep/cv_probe_ref.py` | W0 Python reference (kept) |
 | `apps/web/src/omr/` | decode, preprocess, session, pipeline, weights (W1, W2, W9) |
-| `apps/web/logprob-check.html`, `apps/web/src/checks/logprobCheck.ts`, `scripts/logprob_ref.py` | W1 confidence-signal check (permanent — W8 depends on it) |
+| `apps/web/logprob-check.html`, `apps/web/src/checks/logprobCheck.ts`, `ml/prep/logprob_ref.py` | W1 confidence-signal check (permanent — W8 depends on it) |
 | `apps/web/strips-harness.html`, `apps/web/src/checks/stripsHarness.ts` | headless entry to the shipped decode path, driven by Playwright |
 | `tools/checks/parity/arm-b.ts` | the ceiling measurement (W3) |
-| `tools/checks/parity/decode-pool.ts` + `scripts/score_browser_gold.py` | browser vs Python **against gold** — the release-gating quality check |
+| `tools/checks/parity/decode-pool.ts` + `ml/prep/score_browser_gold.py` | browser vs Python **against gold** — the release-gating quality check |
 | `tools/checks/parity/edge-cases.ts` | non-strip images must not throw |
 | `tools/checks/app-smoke.ts` | the real app: strips in → playable score out |
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
@@ -1267,7 +1267,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | `apps/web/slices.html`, `apps/web/src/slices/slicesView.ts` | slice inspector — see the crops a page is cut into, no model loaded (owner request, W7) |
 | `tools/checks/parity/arm-a.ts` | the port's crops decoded and compared to arm B, **paired** (W6) |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
-| `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |
+| `ml/prep/slicer_ref.py` | the Python control arm for the port, and the sample definition |
 | `tools/checks/parity/slicer-parity.ts` | slicer parity harness, `npm run parity:slicer` (W4–W6) |
 | `tools/checks/parity/deskew-check.ts` | the exactness gate behind the 126× skew-sweep speedup (W7) |
 | `apps/server/` | the decode server: `index.ts` (HTTP), `decodeBatch.ts` (imports the browser's `decode.ts`), `model.ts` (the only ORT-runtime-specific file), `limits.ts`, `png.ts`, `Dockerfile`, `cloudbuild.yaml` (W9) |
@@ -1297,11 +1297,11 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 | Non-strip images don't throw | `npm run check:edge` |
 | Arm-B ceiling | `npm run parity:armb -- --pages 20` |
 | Arm A vs arm B, paired on the same strips | `npm run parity:arma -- --pages 20` |
-| Slicer port vs local Python | `scripts/slicer_ref.py --pages 120 --out ref.json` then `npm run parity:slicer -- --ref ref.json` |
+| Slicer port vs local Python | `ml/prep/slicer_ref.py --pages 120 --out ref.json` then `npm run parity:slicer -- --ref ref.json` |
 | Skew sweep's fast path is EXACT | `npm run check:deskew -- --pages 8` |
-| Browser quality vs Python, against gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --out b.json` then `scripts/score_browser_gold.py --browser b.json` |
+| Browser quality vs Python, against gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --out b.json` then `ml/prep/score_browser_gold.py --browser b.json` |
 | Server matches the browser | `npm run dev:server` then `npm run parity:server -- --pages 6 --fixture f.json` (`--replay f.json` re-runs the server half with no browser) |
-| Server quality vs gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --server http://localhost:8080 --out s.json` then `scripts/score_browser_gold.py --browser s.json --score-out data/checkpoints/server_gold_score.json` |
+| Server quality vs gold | `npm run decode:pool -- --pool data/real/rung3/_realval_v2 --server http://localhost:8080 --out s.json` then `ml/prep/score_browser_gold.py --browser s.json --score-out data/checkpoints/server_gold_score.json` |
 | Server cost per page, payload bytes | `npm run bench:server -- --fixture f.json` |
 | The safety checklist | `npm run check:limits` |
 | The app, through the server (and through the fallback) | `VITE_DECODE_URL=http://localhost:8080 npm run smoke:page` · point it at a dead port for the fallback |
@@ -1331,7 +1331,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
    at **step 500**, where real val was **0.0234 — 22% worse than `last`** at step 1750–2000. The
    round's own mitigation (bring `last` home too, and compare on `_realval_v2`) is what saves the run;
    without it the graded checkpoint would have been the worse one on real pages, silently.
-   Raw curve: [../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md), log `docs/log/raw.md`.
+   Raw curve: [../ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md), log `docs/log/raw.md`.
 
    ⛔ **CONFIRMED A SECOND TIME, AND WORSE, BY RUN A (2026-09-01).** At 4,000 stage-2 steps the blend
    stamped `best` at **step 250** — the first evaluation — and no later mix ever beat it, while real
@@ -1448,8 +1448,8 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 
 7. ✅ **RESOLVED 2026-09-07 — MEASURE THE 59-id DECODER BUDGET. It is a setting, not an architectural
    limit, and it is the only item on this list that pays THREE times.** `MAX_IDS = 59` in
-   `src/vision/audit_coverage.py` exists because the base weights' `generation_config.max_length` is
-   **60**; `src/vision/data.py` truncates training targets to it and every emitter drops a strip that
+   `ml/omr/audit_coverage.py` exists because the base weights' `generation_config.max_length` is
+   **60**; `ml/omr/data.py` truncates training targets to it and every emitter drops a strip that
    exceeds it. The comment beside it — *"cannot be raised without breaking training"* — is true of
    **existing checkpoints**, which is not the same as true of a model trained from base, and the final
    render trains from base anyway. What raising it would buy, all three already measured:
@@ -1461,7 +1461,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
      ([rung3/labeling.md](../rung3/labeling.md#labeling-step-1--collecting-real-pages-and-matching-them-to-symbtr) §1c, [rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol) §5)
    - **training data**: 2,108 over-budget drops plus the `split_wide` pile
    ✅ **DONE 2026-09-07 — the measurement was run and the owner raised it to 80 under scheme H.**
-   `scripts/rung3/budget_tail_probe.py` did exactly what this item asked (the real tokenizer over the
+   `ml/labels/budget_tail_probe.py` did exactly what this item asked (the real tokenizer over the
    existing drop lists, one script, no GPU): over b8's 15,758 serialized labels the over-gate count is
    **504 (3.20%) at 59 and 148 (0.94%) at 80**, and the longest label the owner has ever hand-typed
    is **67** ids. ⚠ **This item's premise needed one correction**: the ceiling is not 60 but **100** —
@@ -1497,7 +1497,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
    the mechanism survived the re-emit; it does not size it.
    ⚠ **Not yet an error rate.** n=7 corrections in 1 makam; many overrides are probably right, and the
    table is a guide — mahur genuinely prints both ways (küçük 35, koma 17).
-   ✅ **THE MEASUREMENT IS DONE (2026-09-06)** — `scripts/rung3/sig_vote_audit.py`, all five pools,
+   ✅ **THE MEASUREMENT IS DONE (2026-09-06)** — `ml/labels/sig_vote_audit.py`, all five pools,
    in [METRICS-CORPUS.md](../METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited). It confirmed the mechanism and moved the target: the
    **largest** content change is not a wrong accidental but a **deleted** one (410 overrides drop an
    entry against 156 that alter one; 106 of the missing entries were in the derivation), and **47%
@@ -1519,7 +1519,7 @@ screen and only the second is bent. `gamzedeyim-deva` is **22 `b1` against 54 `b
 like a hole in the table and is not one.
 
 ⛔ **A real page cannot spell a `b2`.** The model's vocabulary is the **8 AEU accidentals** plus a
-natural (`ADDED_TOKENS`, `src/vision/data.py`) — there is no 2- or 3-koma token, so a decode only
+natural (`ADDED_TOKENS`, `ml/omr/data.py`) — there is no 2- or 3-koma token, so a decode only
 ever produces ±1 / ±4 / ±5 / ±8, and printed Turkish editions only ever print those four signs
 either way (owner: *"beyati delisini zaten biz SymbTr'den aldık, orada b2 b3 var ama normal
 fotoğraflarda yok öyle bir şey"*). `decoded.json`, the one bundled score that came from a photograph,

@@ -47,7 +47,7 @@ only what is **physically drawn**:
 
 **New tokens to add to the model's tokenizer** (`ADDED_TOKENS` in `lilypond.ts`): the 8 accidental
 tokens, **`\natural`**, **`\sig`** / **`\sigend`**, `|`, the digit **`3`** — the base vocab lacks
-`3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`) — the 4 repeat-sign
+`3`, so it cannot spell "32" for 32nd notes (see `ml/omr/MODEL_EVAL.md`) — the 4 repeat-sign
 tokens `\repstart` `\repend` `\volta1` `\volta2` (faithful drawn symbols; the base vocab's structural
 `\repeat `/`volta ` can't label a crop showing only one end of a repeat), the 4 navigation-mark
 tokens `\segno` `\coda` `\dc` `\fine` (segno 𝄋 / coda ⊕ / "D.C." / "Son" — same faithful-drawn-symbol
@@ -76,7 +76,7 @@ d''8 \kucukFlat e''8 e''8 | f''8 f''16 f''16 f''8 f''16 f''16 f''8
 
 `docToStrips(doc)` packs notes into **short, self-contained strips** (default ≤ 4 measures and
 ≤ 56 estimated tokens — `STRIP_BUDGET` in `lilypond.ts`, the ONE place the cap lives: the browser
-exporter's `buildStrips` shares it, and `src/vision/audit_coverage.py --tokenizer` is the hard
+exporter's `buildStrips` shares it, and `ml/omr/audit_coverage.py --tokenizer` is the hard
 backstop, failing any label over 59 real ids under the decoder's 60-id cap), inserting `|` at
 measure boundaries. Note-level packing means even a single dense 16th-note measure can't overrun
 the cap (the browser exporter instead DROPS an over-budget single measure — crops must fall on
@@ -107,8 +107,8 @@ npm run dev:web                       # start the harness (note the port, e.g. 5
 OMR_URL=http://localhost:5174 npx --yes tsx tools/render/render.ts \
     --pieces data/pieces.json --out data/synthetic/strips_v2_1 [--from 0 --to 25] [--clean] [--finalize]
 ```
-Jobs are derived deterministically from `data/pieces.json` (written by `scripts/select_pieces.py`;
-scores exported by `scripts/export_scores.py`): every transpose × both modes, lyrics only at t=0,
+Jobs are derived deterministically from `data/pieces.json` (written by `ml/prep/select_pieces.py`;
+scores exported by `ml/prep/export_scores.py`): every transpose × both modes, lyrics only at t=0,
 seeded repeat injection on ~half of renders, seeded nav-mark injection on ~70%, distractor text +
 the low-rate büyük respell always on (all seeds hashed from `slug:transpose`, so any strip is
 reproducible — `docs/MANUAL_CHECKS.md`). Output → the `--out` dir (gitignored; `strips_v3` is the
@@ -144,7 +144,7 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
   either rule, re-run it, and check the report's mismatch deltas rather than only the pass count.
 - `labels-cli.ts` — the Rung-3 emitter's TS half: serves, for a real page's decoded measure ranges,
   the carry-mode label of each range (`mode: "measure"` bodies joined by `|`) so a name-matched
-  SymbTr score becomes ground truth for real strips (`scripts/rung3/emit_strip_labels.py`).
+  SymbTr score becomes ground truth for real strips (`ml/labels/emit_strip_labels.py`).
 - `repeats.ts` — `detectRepeats` (fold detection of flattened duplicate runs) + `injectRepeats`
   (seeded random spans for token coverage) + `repeatMarksAt` (per-measure drawn marks).
 - `navmarks.ts` — seeded navigation-mark injection (segno / coda / D.C. / Son; 4–6 marks on ~70%
@@ -196,13 +196,13 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 - [x] **Rung-2 re-render DONE (2026-07-05):** `data/synthetic/strips_v2/` — 18,624 strips from the
       150 selected pieces (`data/pieces.json`), with repeat-sign tokens, multi-measure coverage,
       transposes, distractor text, and the büyük respell; coverage audit PASS
-      (`src/vision/audit_coverage.py`). Supersedes the 2026-07-02 `data/synthetic/strips/` set.
+      (`ml/omr/audit_coverage.py`). Supersedes the 2026-07-02 `data/synthetic/strips/` set.
 - [x] **strips_v2_1 re-render (2026-07-06):** 18,627 strips — adds the 4 navigation-mark tokens
       (`navmarks.ts`, all audit floors cleared) and the centered-rest engraving fix (`alignRests`
       off in SheetView); audit PASS. **Supersedes v2 for training** (v2 stays on disk). This is the
       set Rung 2 trained on (PASS 2026-07-07 — `docs/METRICS.md`).
 - [x] OpenCV augmentation — deliberately NOT baked into the rendered files; applied on-the-fly in
-      the Rung-2 training loader (`src/vision/augment.py`, screenshot-dominant two-profile mix).
+      the Rung-2 training loader (`ml/omr/augment.py`, screenshot-dominant two-profile mix).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
 - [x] Repeat-sign tokens emitted (2026-07-02): `detectRepeats` (`repeats.ts`) finds the flattened
       duplicate runs (detection only — the doc/layout/playback are untouched); the harness Repeats

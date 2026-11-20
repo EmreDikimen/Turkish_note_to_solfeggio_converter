@@ -2,7 +2,7 @@
  * Per-makam conventional PRINTED key signatures — GENERATED, do not edit by hand.
  *
  * Regenerate with:
- *   .venv-ml/bin/python scripts/build_makam_signatures.py \
+ *   .venv-ml/bin/python ml/prep/build_makam_signatures.py \
  *       --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts
  *
  * Same table as `data/makam_signatures.json`, transcoded because the app ships without `data/`

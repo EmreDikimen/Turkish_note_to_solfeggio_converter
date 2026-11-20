@@ -15,7 +15,7 @@
  * cuts worse produces a one-sided pile.
  *
  * Two things this deliberately does NOT claim. Agreement with Python is not quality — W3 settled
- * that, and the decisive test if arm A looks suspect is `scripts/score_browser_gold.py` against
+ * that, and the decisive test if arm A looks suspect is `ml/prep/score_browser_gold.py` against
  * gold. And a strip arm A emits that Python never emitted cannot be scored at all; those are
  * reported as unmatched, because a windowing difference shows up there first.
  *

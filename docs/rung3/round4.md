@@ -106,7 +106,7 @@ model. **Examples per token** is.
 - ✅ **Trap verified with the real tokenizer, 2026-09-06** — it does not fire. All seven
   compositional pitches segment identically at every duration they appear with, and split evidence
   gets *better* than today's: 1.277% of notes take a minority id form now, 0.003% under H.
-- ⚠ Two files carry `ADDED_TOKENS` by hand — `src/vision/data.py` and `packages/core/src/labels/lilypond.ts` —
+- ⚠ Two files carry `ADDED_TOKENS` by hand — `ml/omr/data.py` and `packages/core/src/labels/lilypond.ts` —
   and `check_token_drift` must pass. The id gate moves WITH the vocabulary:
   `MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}` in `audit_coverage.py` and the emitter (step 5).
 
@@ -133,7 +133,7 @@ the no-render decision stood anyway — see step 1 for why.
 ## The order
 
 1. ✅ **DONE 2026-09-06 — length distributions + rare-pitch segmentation under H.**
-   `scripts/rung3/token_scheme_probe.py`, ~2 minutes, nothing re-decoded. Three results, all in
+   `ml/labels/token_scheme_probe.py`, ~2 minutes, nothing re-decoded. Three results, all in
    [tokenization.md](tokenization.md): **H is 16 new ids and vocabulary 116** (`''` and `'''` are
    used zero times and are NOT added — ids are append-only, so that was worth catching before the
    freeze); the rare-pitch trap **does not fire** and split evidence gets *better* (1.277% of notes
@@ -145,7 +145,7 @@ the no-render decision stood anyway — see step 1 for why.
    ~2,580 px wide against the slicer's 1,450 px cap, which is the direction
    [METRICS-INPUT.md § Crop geometry — what the encoder is actually GIVEN](../METRICS-INPUT.md#crop-geometry--what-the-encoder-is-actually-given) measured as costing edits. ⏭ Replaced by
    **watching the band**: long-strip errors get their own column when the H arm is read.
-2. ✅ **BUILT 2026-09-06 — the selector, EMA and label smoothing** (`src/vision/train.py`,
+2. ✅ **BUILT 2026-09-06 — the selector, EMA and label smoothing** (`ml/omr/train.py`,
    smoke-tested end to end including resume; nothing trained yet).
    - `--select-dir` names a **fixed** pool (`_realval_v2`) and, at every eval, decodes it
      **free-running** and counts corrections with `eval_omr.align` — the same function
@@ -164,7 +164,7 @@ the no-render decision stood anyway — see step 1 for why.
    — so what the selector buys is still unpriced ([../BACKLOG.md](../BACKLOG.md) item 3). EMA and
    label smoothing were NOT used; they stay off-by-default arms.
 3. ✅ **The signature vote — MEASURED 2026-09-06, and RULE D chosen and built the same day.**
-   `scripts/rung3/sig_vote_audit.py`, minutes, nothing re-decoded. Every number is in
+   `ml/labels/sig_vote_audit.py`, minutes, nothing re-decoded. Every number is in
    [METRICS-CORPUS.md § Metrics — the model-voted key signature, audited](../METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited); three things change the plan:
    - **The vote overwrote the signature on 67% of `strips_b8`'s aligned pieces** (826 of 1,236) —
      higher than any pool counted before, and `strips_b8` is the real training pool.
@@ -185,7 +185,7 @@ the no-render decision stood anyway — see step 1 for why.
    [METRICS-CORPUS.md § Metrics — the model-voted key signature, audited](../METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited).
 4. ✅ **The third-source probe — COLLECTED and READ 2026-09-06: a null.** ⏭ Only more erdincbal
    pages can turn it into a verdict.
-   `scripts/rung3/collect_thirdsource.py`; the design, the sources and the traps are in
+   `ml/labels/collect_thirdsource.py`; the design, the sources and the traps are in
    **[round4.md § Third-source probe — does the model hold up on an engraving house…](#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen)**. **36 pieces / 53 pages / 1,108 strips** from three sites,
    all under `data/real/rung3/_thirdsource/` and deliberately outside `manifest.csv` and `matched/`.
    ⭐ **The slicer found staves on all 53 pages — zero failures.** 27 exam pieces were refused and
@@ -221,7 +221,7 @@ the no-render decision stood anyway — see step 1 for why.
 
    **What is built:**
    - **The vocabulary.** `SCHEME_H_TOKENS` (17 entries, **16 new ids**, 100 → 116) beside the
-     frozen 25 of `ADDED_TOKENS`, mirrored in `src/vision/data.py` and `packages/core/src/labels/lilypond.ts`,
+     frozen 25 of `ADDED_TOKENS`, mirrored in `ml/omr/data.py` and `packages/core/src/labels/lilypond.ts`,
      with `data.vocabulary(scheme)` composing them and `train.py --vocab {old,h}` selecting one.
      ⛔ **H is a SEPARATE list on purpose** — folding it into `ADDED_TOKENS` was tried and reverted
      the same hour: every checkpoint was trained at vocabulary 100, so `load_model_and_processor`
@@ -320,8 +320,8 @@ the no-render decision stood anyway — see step 1 for why.
    training pool and at 0.10 all 44 sit val-side, but at 0.05 **17 cross into training** and the
    selector reads pieces it trained on — the Run-B defect, now checked before the run.
 
-   ✅ **THE KIT IS BUILT (2026-09-16), NOT RUN**: `scripts/make_round4_colab_zip.sh` (one zip for both
-   arms) and `notebooks/round4_vocab_ab_colab.ipynb`. What it fixes, all measured in
+   ✅ **THE KIT IS BUILT (2026-09-16), NOT RUN**: `ml/prep/make_round4_colab_zip.sh` (one zip for both
+   arms) and `ml/notebooks/round4_vocab_ab_colab.ipynb`. What it fixes, all measured in
    [METRICS-EXAM.md § Round 4's vocabulary A/B — how it is scored, and what the kit…](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran):
    - **Stage 1**: the control **reuses Round 3's `r3-final-stage1/best`**; only the H arm trains
      one (owner). GPU ≈ 2.5 h + 2 × ~1.7 h.
@@ -415,7 +415,7 @@ Round-3 read comparable to nothing.
 
 ### The sources, and why these three
 
-Collected by [`collect_thirdsource.py`](../../scripts/rung3/collect_thirdsource.py) on 2026-09-06.
+Collected by [`collect_thirdsource.py`](../../ml/labels/collect_thirdsource.py) on 2026-09-06.
 None of the three serves a `robots.txt`; the collector holds a 1.5 s floor between requests anyway.
 Licence: [../THIRD-PARTY.md](../THIRD-PARTY.md) — read locally, never redistributed, exactly as the
 two existing sources are.
@@ -494,7 +494,7 @@ wrong pick cannot pass silently.
 
 Decoded with `round2-stage2-best` producing the labels and **Run A `r3a-stage2-best-real`** graded
 on them, so the model that writes the answer key is not the model being scored
-([`score_thirdsource.py`](../../scripts/rung3/score_thirdsource.py)).
+([`score_thirdsource.py`](../../ml/labels/score_thirdsource.py)).
 
 #### 1. Yield — label-free, and it holds
 

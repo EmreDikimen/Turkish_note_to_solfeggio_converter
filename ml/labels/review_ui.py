@@ -1,0 +1,1395 @@
+#!/usr/bin/env python3
+"""Temporary one-keystroke review UI for the Rung-3 verdict queues (docs/rung3/README.md).
+
+Serves a single-page app over the four verdict CSVs and writes verdicts straight back
+into them (adding `verdict` / `corrected_label` columns on first write):
+
+  r1-audit     strips_r1/emit_audit.csv    seeded sample of ACCEPTED training strips.
+                                           ok/bad -> the <2% escaped-bad-label gate.
+  r1-full      strips_r1/full_audit.csv    EVERY accepted training strip (generated once
+                                           from manifest.jsonl + page decode caches; the
+                                           manifest itself is never written).
+  r1-review    strips_r1/emit_review.csv   rejected-from-auto-accept pool. ok/fix promote
+                                           a strip into Round-1 training; bad drops it.
+  exam-audit   strips_exam/emit_audit.csv  (empty unless --audit-frac was set on the exam run)
+  exam-review  strips_exam/emit_review.csv same, but promotes into the real-page EXAM.
+                                           Rows with an empty label (row_unaligned etc.)
+                                           must be labeled by hand — edit starts from the
+                                           model's decode; fix what the model misread.
+
+Exam growth (2026-08-20, docs/rung3/README.md — the queue that blocks the Round-3 read):
+  examv3        strips_exam_v3/emit_review.csv  663 rows — the WHOLE exam, re-cut on the current
+                                                slicer (2026-08-21). EXAM GOLD, never training.
+                                                Crops come from data/real/strips_examv3.
+  examv3-full   strips_exam_v3/full_audit.csv   the 139 strips the emitter labelled by itself, 43 of
+                                                them agreeing with the frozen exam's own gold.
+
+Two-source stage queues (2026-07-15; strips_exam ones above are SUPERSEDED by v2):
+  nota-audit    strips_nota/emit_audit.csv     69-strip sample of the 1,262 nota accepts —
+                                               the trust gate on the labeler-based emitter.
+  nota-review   strips_nota/emit_review.csv    2,671-row nota review pool (promotes into
+                                               Round-1 training).
+  examv2-audit  strips_exam_v2/emit_audit.csv  sample of the v2 exam accepts.
+  examv2-review strips_exam_v2/emit_review.csv 287-row growth queue for the re-frozen exam.
+
+Targeted tuplet queues (2026-07-18, docs/rung3/labeling.md §1c; tup3-only, 1-measure windows):
+  tup-full      strips_tup/full_audit.csv      all 78 accepted tup3 strips (114 groups) —
+                                               sidecar built on first run, manifest untouched.
+  tup-review    strips_tup/emit_review.csv     147 tup3 review rows / 205 groups (the
+                                               promote pool that ~triples real triplet data).
+
+Verdicts (written to the CSV, blank = not reviewed yet):
+  ok   label matches the printed strip exactly
+  fix  label corrected by hand (correction saved in `corrected_label`)
+  bad  unusable — wrong music under the label, illegible strip, out-of-scope marks
+
+Keys: <-/-> navigate | n next pending | a=ok x=bad e=edit u=clear | z zoom
+      in edit: Cmd/Ctrl+Enter save-as-fix, Esc cancel
+
+Run:  python3 ml/labels/review_ui.py            # http://127.0.0.1:8377
+Only stdlib; CSV writes are atomic (temp file + rename). Verdict consumption
+(promotion into manifest/exam through the real budget+round-trip gates) is a
+follow-up script — this tool only records human judgment.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import os
+import re
+import sys
+import tempfile
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, unquote
+
+REPO = Path(__file__).resolve().parents[2]
+
+# ⚠ IMPORTED, NEVER MIRRORED (2026-09-09). This file used to hold its OWN copy of ADDED_TOKENS and
+# its own hard-coded `59`, and Round 4 made both silently wrong: scheme H fuses a notehead into one
+# token and raises the budget to 80, so the lint priced every h1 label under the old vocabulary and
+# warned against a gate the emitter no longer applies. Both modules are stdlib-only at import time
+# (data.py imports torch inside a function), so reading them here costs nothing.
+from ml.omr.audit_coverage import MAX_IDS_BY_VOCAB   # noqa: E402  the label budget, per vocabulary
+from ml.omr.data import ADDED_TOKENS, vocabulary     # noqa: E402
+
+ACCIDENTALS = set(ADDED_TOKENS[:9])
+
+# The vocabulary a queue's labels were EMITTED under. The lint prices ids with it and applies that
+# vocabulary's budget, so an H label is not measured with the old alphabet. Round 4's h1-* pools are
+# scheme H (16 fused note tokens; budget 80 ids); everything else is what every pool before
+# 2026-09-07 used. docs/rung3/tokenization.md
+QUEUE_VOCAB = {"h1-rail": "h", "h1-audit": "h", "h1-full": "h", "h1-review": "h"}
+
+QUEUES = {
+    # EXAM v3 (2026-08-21) — THE WHOLE EXAM, RE-CUT. 663 rows over 64 of the 67 exam pages, and the
+    # only labelling that BLOCKS the Round-3 read. The owner chose to rebuild rather than grow
+    # ("I can make it from scratch, it is okey. Just exam need to be okey") once it was measured that
+    # the exam had NEVER been re-sliced: every one of its crops was 2026-07-15..17 output, four weeks
+    # after page_to_strips.py was overhauled. Cut by ml/labels/build_exam_v3_queue.py --rebuild.
+    # ⚠ EXAM GOLD, NOT TRAINING. Every row carries exam=1 and promotes only through
+    # `promote_labels.py --dir data/real/rung3/strips_exam_v3 --exam --strips-root
+    # data/real/strips_examv3` — the default strips root holds these very filenames with the RETIRED
+    # slicer's pixels.
+    # ⚠ 185 rows arrive with a PENDING SUGGESTION in corrected_label: the frozen exam's own gold,
+    # moved onto the crop holding the same music (gold_carry.csv), or a correction typed against the
+    # superseded first cut (carried_from_oldgeom.csv). A suggestion is not a verdict — press `e` and
+    # it is already in the box, to confirm against the new picture.
+    # ⚠ `gold_conflict` (27 rows) means the re-emitted label DIFFERS from the frozen gold on the same
+    # music. Those are where a hand correction and a fresh SymbTr derivation disagree; read them.
+    # ⚠ Most rows carry NO label (row_unaligned, 329 of 663) — the edit box starts from the model's
+    # decode and the verdict is against the PICTURE, exactly like the realval/batch queues.
+    # ⚠ 3 of the 67 pages produce nothing at all: every candidate on them drops as split_wide or
+    # over_budget, so the exam tops out at 64 pages until the 59-id budget is measured
+    # (docs/BACKLOG.md item 7).
+    # ⛔ DIAGNOSTIC, NEVER PROMOTABLE (2026-09-01). The exam strips `r3-final-stage2-last` got wrong,
+    # gold beside the model's decode, worst-first — the input to §3c's manual ship judgement, which
+    # is a human reading of an error classification rather than a comparison to a number.
+    # ⛔ It CANNOT feed a manifest, by two independent guarantees: `corrected_label` is written EMPTY
+    # on every row (so a stray `ok` cannot store the decode — CLAUDE.md: never seed exam gold from a
+    # model that will be graded on that exam), and the filename is neither `emit_review.csv` nor
+    # `full_audit.csv`, the only two `promote_labels.py` reads. ⚠ Do NOT rename it to either.
+    # ⚠ THE VERDICTS MEAN SOMETHING DIFFERENT HERE — this is a triage of three possible causes:
+    #     ok  = the MODEL is right and the GOLD is wrong  (an exam-gold defect, worth its own record)
+    #     fix = the MODEL is wrong                        (a real model error — the normal case)
+    #     bad = the CROP is unusable                      (neither is at fault)
+    # Acting on an `ok` means correcting `examv3` by hand FROM THE PICTURE, never by copying this
+    # decode. Cut by ml/labels/build_exam_error_queue.py.
+    # ⛔ SUGGESTIONS ONLY, MACHINE-ACCEPTED ROWS ONLY (2026-09-01). b8 strips that `auto_accept_agree`
+    # marked `ok` where the OLD pools' hand-read label for the SAME BARS carries a navigation token
+    # the b8 label lacks. The worry it tests: `\segno` recall is 43.5% and `\coda` 42.9%, so where
+    # the model is blind, "label agrees with decode" is agreement on an ABSENCE.
+    # ⭐ The scan came back nearly empty — 3 rows over 965 span-matched pairs, and ZERO missing
+    # `\segno` — which is itself the finding: navigation is DERIVED from SymbTr, so it is not subject
+    # to the circularity that makes `\sig` untrustworthy (`\sig` is the one field the emitter
+    # overwrites with a MODEL vote). ⚠ It could only look at 965 of 2,884 machine-ok rows; the rest
+    # have no old strip covering the same bars, so this is silence over a third of the population.
+    # ⛔ Rows the owner read by hand were NEVER considered (`by == agree` only), `corrected_label` is
+    # empty, and the file name is not one `promote_labels.py` reads — act on a row in `b8-full`.
+    # ⚠ `reason` carries the missing token, so the per-reason dropdown separates them.
+    # ⛔ THE OWNER'S HAND-TEST PAGES (2026-09-06) — 20 pages outside the frozen exam, decoded once
+    # with `r3a-stage2-best-real` (the model serving the live site at the time; `r4-ctl-stage2-last`
+    # has served it since 2026-09-28). This is the page-level
+    # instrument docs/BACKLOG.md item 6 asks for: corrections per page, same pages for every model.
+    # ⚠ THE VERDICTS ARE A CORRECTION COUNT, not a label pass:
+    #     ok  = the model read this strip correctly   fix = the model got it wrong
+    #     bad = the CROP is unusable (the slicer's fault, not the model's)
+    #   Corrections per page = the rows that are not `ok`.
+    # ⛔ NOT GOLD AND NOT THE EXAM, by the same two guarantees `r3-exam-errors` carries: `label` is
+    # EMPTY on every row so a stray `ok` has nothing to promote (and the client clears
+    # `corrected_label` on `ok` anyway), and the filename is neither `emit_review.csv` nor
+    # `full_audit.csv`, the only two `promote_labels.py` reads. ⚠ Do NOT rename it to either — the
+    # `decoded` column is a graded model's own output, which is the circularity CLAUDE.md forbids.
+    # ⚠ `reason` carries the structural tell (sig-differs / midrow-sig / sig-unclosed /
+    # low-confidence / near-empty) so the dropdown goes straight to the suspicious rows.
+    # Built by ml/labels/build_handtest_queue.py.
+    "handtest": "data/real/rung3/_handtest/handtest_review.csv",
+    "b8-nav": "data/real/rung3/_navsuggest/nav_suggest.csv",
+    "r3-exam-errors": "data/real/rung3/final/r3_exam_errors.csv",
+    # ⛔ DIAGNOSTIC, NEVER PROMOTABLE (2026-09-29, owner: "goldu ve token çıktısını gösteren bir
+    # queue"). The strips of `_realval_v2r` — the 260-strip pool every Round-4 paired read and the
+    # taxonomy in docs/METRICS-EXAM.md used — that a model got wrong, gold on top and its decode
+    # below, both RE-SPACED into label tokens so the diff on screen is the diff that was counted.
+    #   r4-ctl-errors  = `r4-ctl-stage2-best-edits`, the checkpoint behind the published taxonomy
+    #                    (signature 46, …) — filter `short+mid | …` to see those rows
+    #   r4-live-errors = `r4-ctl-stage2-last`, the model on the site since 2026-09-28
+    # Same guarantees and the same triage as `r3-exam-errors`: corrected_label EMPTY, a file name
+    # promote_labels.py never reads; ok = the GOLD is wrong · fix = the MODEL is wrong · bad = crop.
+    # ⚠ real-val is a SELECTION pool, not the exam — but `best-edits` was picked on 241 of these 260
+    # strips, so r4-ctl-errors shows a slightly flattered model. `reason` is `<bucket> | <main
+    # category>`; every category the strip raised is in the `detail` badge.
+    # Cut by ml/labels/build_exam_error_queue.py --out-name.
+    "r4-ctl-errors": "data/real/rung3/_errors/r4_ctl_errors.csv",
+    "r4-live-errors": "data/real/rung3/_errors/r4_live_errors.csv",
+    "examv3": "data/real/rung3/strips_exam_v3/emit_review.csv",
+    # the 139 strips the emitter labelled BY ITSELF across the whole re-cut exam (43 of them agree
+    # token-for-token with the frozen exam's gold; 96 have no human check at all). They enter the exam
+    # without a human unless someone reads them — v2 sampled 2 of 63, and a later audit corrected 32
+    # of its 63 auto-accepts (51%) — so the sidecar puts every one in
+    # front of you. Generated on first run from strips_exam_v3/manifest.jsonl; the manifest is
+    # never written by this tool.
+    "examv3-full": "data/real/rung3/strips_exam_v3/full_audit.csv",
+    "examv3-audit": "data/real/rung3/strips_exam_v3/emit_audit.csv",
+    # B8 RE-EMIT (2026-08-21) — the three training pools re-emitted onto the CURRENT crops
+    # (data/real/strips_v2) with `round2-stage2-best` doing BOTH emitter jobs, hint and gate
+    # (docs/DECISIONS.md — the morning's "split gate from hint" was cancelled the same day).
+    # 3,955 accepted strips against the old pools' 2,330, 4,738 in review, 24,837 dropped.
+    # ⚠ It is a SEPARATE dataset, not a replacement. strips_nota / strips_r1 / strips_tup are
+    # untouched on disk, and the 1,442 human `fix` labels inside them do NOT come back by
+    # themselves: 445 land on a new strip covering the same measures (and the fresh machine label
+    # disagrees with the human on 404 of them — the tie/rest conventions a person already fixed
+    # once), 506 land in b8-review, 223 drop on width/budget, 20 are not produced at all.
+    # ⚠ CARRY THEM BY MEASURE SPAN (page, from, to), NEVER BY FILENAME: 248 of those fixes match a
+    # new strip's NAME while covering different music — the standing re-slice trap.
+    # ⚠ b8-audit is the guard that decides whether any of this is usable, and it must be READ: the
+    # referee was trained on these very labels at 9x oversampling, so its agreement is partly
+    # memory rather than judgement. 201 rows, the emitter's seeded 5% sample. exam v2 read 2 of 63
+    # and a later full read found 51% wrong.
+    # ROUND 4's POOL (2026-09-07) — strips_b8 re-emitted under scheme H at a budget of 80, with
+    # --frozen-crops: not one page was re-sliced, so every crop is the SAME FILE b8 hardlinks and
+    # b8's 980 human verdicts were carried in by carry_verdicts.py under a per-row inode + label
+    # proof. ⭐ WHAT NEEDS READING HERE IS THE UNVERDICTED 571 — the strips the old 59-id gate
+    # dropped as over-budget and H let back in. They are the pool's new material, they are DENSER
+    # than the rest (median 18 tokens against 11), and no human has seen one. b8's own escaped-bad
+    # rate on read rows was 12.9%; nothing measures it for these yet, and without that number a
+    # step-6 arm result cannot separate "H helped" from "the new labels are dirty".
+    # ⚠ The rest of h1-full is CARRIED, not fresh: re-reading a row already read in b8 is wasted
+    # work — filter to the unverdicted ones.
+    # ⚠ h1-rail is the ONLY queue in this file whose crops come from another root — the 35 strips
+    # the rail split out of over-budget windows, cut by TODAY's CV into data/real/strips_v2_rail
+    # while the rest of h1 stayed frozen on the 2026-07-29 crops. It has its own IMG root below for
+    # exactly that reason. Every row is unread by construction; the pool marks them `rail_split`.
+    "h1-rail": "data/real/rung3/strips_h1/rail_added.csv",
+    "h1-audit": "data/real/rung3/strips_h1/emit_audit.csv",
+    "h1-full": "data/real/rung3/strips_h1/full_audit.csv",
+    "h1-review": "data/real/rung3/strips_h1/emit_review.csv",
+    "b8-audit": "data/real/rung3/strips_b8/emit_audit.csv",
+    "b8-full": "data/real/rung3/strips_b8/full_audit.csv",
+    "b8-review": "data/real/rung3/strips_b8/emit_review.csv",
+    # BATCH 3 (2026-08-19) — THE LIVE ONE. 54 pages / 1,499 strips from the SCANNED tier: the exact
+    # inverse of batch 2's `--clean`, over the same born-digital set, so the tier stays a file-format
+    # fact. Two measurements moved the labelling here (docs/METRICS-CORPUS.md): 93% of exam pages are
+    # scans (62 of 67), so batch 2 was cut from the tier supplying 7% of the medium Round 3 is graded
+    # on; and batch 2's own FIX rate came in at ~12% against ~30% in the scanned nota pool. A row is
+    # seeded with the decode, so an `ok` changes the training data by nothing — the yield of a batch
+    # is its fix rate.
+    # ⚠ 11 pages were dropped by hand as HANDWRITTEN before this was cut
+    # (data/real/rung3/_pagequeue/handwritten_pages.json, which carries the rule used). Handwriting
+    # is a DEFERRED category (owner, 2026-08-17); the scanned tier contains it and the born-digital
+    # tier could not.
+    # ⚠ Attend to PITCH AND DURATION, not accidentals — every audit so far chased accidentals
+    # because the old headline measured them, and that axis has never been audited (docs/STATUS.md).
+    "batch3": "data/real/rung3/_pagequeue/batch3.csv",
+    # BATCH 2 (2026-08-18) — ⛔ STOOD DOWN at 68 verdicts, merged back 2026-08-19. 52 pages / 1,497
+    # strips drawn ONLY from BORN-DIGITAL pages (the PDF embeds no raster image and is drawn with
+    # vector operators — a file-format fact, so no scan and no handwriting can enter). 84 of the
+    # corpus's 88 born-digital pieces are sliced, 115 pages / 2,956 strips, ALL from the nota
+    # source. Ranked by the same structural evidence inside that tier, 30.2 units/page against the
+    # tier's own median of 16.0. Owner's call 2026-08-18: teach the clean modern sheets first —
+    # reversed a day later, see batch 3 above. Its 68 verdicts live in reslice_all.csv now; the file
+    # is kept as the record of what a born-digital batch yields.
+    # ⚠ It aimed at the OPEN "publish for clean pages first" question, NOT at the signed Round-3
+    # floor — that exam is 41 nota / 26 neyzen pages and 81% mid+hard tier (docs/DECISIONS.md).
+    "batch2": "data/real/rung3/_pagequeue/batch2.csv",
+    # BATCH 1 (2026-08-18) — ⛔ PARKED, NOT LABELLED. Same builder without --clean, so it ranked
+    # the whole corpus and the ranking selected exactly what it is built to select: the most
+    # damaged pages, which turn out to be old scans and real handwritten manuscript. Handwriting
+    # is a DEFERRED category (owner, 2026-08-17) and must not enter a printed-page pool. Kept on
+    # disk as the record of what the unfiltered ranking returns.
+    # Both batches are page-complete subsets of reslice-all, cut by
+    # ml/labels/build_label_batch.py: same schema, same crops (data/real/strips_v2), rows in
+    # reading order within each page, and verdicts go back with `--merge-back` before the next cut.
+    # ⚠ TRAINING ONLY, either of them. The ranking picks the WORST pages in its tier, so nothing
+    # labelled here may become exam gold — exam growth needs a random/stratified sample
+    # (docs/archive/rounds.md).
+    "batch1": "data/real/rung3/_pagequeue/batch1.csv",
+    # RESLICE-ALL (2026-07-31) — EVERY strip the 2026-07-29 re-slice decoded: 33,804 crops over
+    # 1,704 pages, 30,049 of them decoded on Colab. Built by ml/labels/build_reslice_queue.py;
+    # rows are ordered WORST-FIRST and seeded with the page cache's decode (`round2-stage2-best`
+    # int8), except the 392 val-side strips that carry a real emitted label. The verdict is against
+    # the PICTURE. The 165 hand-read realval-hard-v2 verdicts are carried in — same crops.
+    # This queue is LAZY-LOADED (see EAGER_MAX): at 16 MB of rows it is not shipped with /api/state.
+    # Images resolve under data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
+    "reslice-all": "data/real/rung3/_reslice_v2/reslice_all.csv",
+    # REALVAL-HARD v2 (2026-07-29) — THE LIVE ONE. Rebuilt on the 2026-07-29 re-slice; rows are
+    # ordered WORST-FIRST (least confident at the top), so the corrections come early and the run
+    # can stop on the sampled check in docs/rung3/labeling.md. Strips were DROPPED by the emitter
+    # for row_unaligned / nd_high, so they carry no trustworthy SymbTr label: each row is seeded
+    # with the CURRENT model's decode and the verdict is against the PICTURE. ok = "I looked and
+    # the decode is right". Images resolve under data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
+    "realval-hard-v2": "data/real/rung3/_realval_hard_v2/realval_hard_v2.csv",
+    # REALVAL-REPAIR (2026-09-09) — the 10 `_realval_v2` rows whose LABEL and PIXELS describe
+    # different measures. `build_realval_v2.py` carried them out of the old `_realval` pool, which
+    # is entirely on the RETIRED crop root, and copied the strips_v2 crop under them without
+    # checking the measure span; the re-slice had moved it. Built and classified by
+    # ml/labels/repair_realval_v2.py. Rows carry NO `label` on purpose — the carried label is
+    # the thing under suspicion, so showing it as gold would anchor the read to the string this
+    # repair exists to retire. The verdict is against the PICTURE; `decoded` is the current root's
+    # round2-stage2-best decode with the retired `\tie` stripped. Images resolve under
+    # data/real/strips_v2/ — see QUEUE_IMG_ROOTS.
+    "realval-repair": "data/real/rung3/_realval_v2_repair/realval_repair.csv",
+    # ND-HIGH DENSE SAMPLE (2026-09-09) — 40 rows drawn at random from the 1,678 strips that
+    # strips_b8 dropped as `over_budget` and strips_h1 now drops as `nd_high`. They are the dense
+    # material Round 4 reopened (median 49 ids of music in the crop against 37 for an accepted
+    # strip), and nobody has ever looked at why their `nd` is high. ⚠ RANDOM, not worst-first,
+    # because this queue is read for a RATE — see ml/labels/build_ndhigh_queue.py.
+    # `label` is EMPTY (a dropped strip has no stored label), so the edit box is seeded with the
+    # decode alone and `ok` means "I looked and the decode is right", as in realval-hard-v2.
+    # ⛔ NOT gold: the filename is neither emit_review.csv nor full_audit.csv.
+    "ndhigh": "data/real/rung3/_ndhigh/ndhigh_sample.csv",
+    # v1 (2026-07-28) — SUPERSEDED, kept as the record of the first round's 130 verdicts
+    # (65 ok / 22 fix / 43 bad). Its crops predate the 2026-07-29 slicer, so none of these
+    # verdicts transfer: no crop survives a re-slice unchanged. Do not label here.
+    "realval-hard": "data/real/rung3/_realval_hard/realval_hard.csv",
+    # PHOTO-GOLD (2026-07-25) — hand-label the phone-photo strips directly = a per-strip photo test
+    # set. Every photo strip seeded with the model decode; ok=confirm, fix=correct against the photo.
+    # reason=accid flags AEU-relevant strips. Images under data/real/rung3/photos_exam_strips/.
+    "photo-gold": "data/real/rung3/photos_exam_strips/photo_gold.csv",
+    # exam gold-label FIX (2026-07-24) — every frozen CLEAN exam gold strip, for correcting the
+    # komaSharp/kucukSharp gold errors. Superseded for photo scoring by photo-gold above, but still
+    # useful for the clean exam. Images under data/real/strips/<page>/<strip>.
+    "exam-fix": "data/real/rung3/strips_exam_v2_clean/exam_fix.csv",
+    # targeted tuplet run (2026-07-18, docs/rung3/labeling.md §1c) — tup3-only, k=1 windows
+    "tup-audit": "data/real/rung3/strips_tup/emit_audit.csv",
+    "tup-full": "data/real/rung3/strips_tup/full_audit.csv",
+    "tup-review": "data/real/rung3/strips_tup/emit_review.csv",
+    # two-source stage (2026-07-15) — the live queues
+    "nota-audit": "data/real/rung3/strips_nota/emit_audit.csv",
+    "nota-full": "data/real/rung3/strips_nota/full_audit.csv",
+    "nota-review": "data/real/rung3/strips_nota/emit_review.csv",
+    "examv2-audit": "data/real/rung3/strips_exam_v2/emit_audit.csv",
+    "examv2-full": "data/real/rung3/strips_exam_v2/full_audit.csv",
+    "examv2-review": "data/real/rung3/strips_exam_v2/emit_review.csv",
+    # neyzen round (2026-07-12..14) — fully adjudicated, kept for reference;
+    # the old strips_exam queues are SUPERSEDED by the v2 exam re-freeze.
+    "r1-audit": "data/real/rung3/strips_r1/emit_audit.csv",
+    "r1-full": "data/real/rung3/strips_r1/full_audit.csv",
+    "r1-review": "data/real/rung3/strips_r1/emit_review.csv",
+}
+
+# full-queue id -> (manifest dir, sampled-audit queue whose verdicts are carried over
+# [, strip root whose *_decode.json seeds the `decoded` column — defaults to STRIPS])
+FULL_AUDITS = {
+    "examv3-full": ("data/real/rung3/strips_exam_v3", "examv3-audit"),
+    # ⚠ b8 MUST name its strip root. Its crops are the 2026-07-29 re-slice, and the identical page
+    # stems also exist under data/real/strips with the retired slicer's pixels AND a July
+    # rung3-labeler decode — so the default would seed the edit box from a decode of a different
+    # crop by a different model, with nothing on screen to say so.
+    "b8-full": ("data/real/rung3/strips_b8", "b8-audit", "data/real/strips_v2"),
+    # ⚠ h1 names strips_v2 for the same reason b8 does — and its full_audit.csv is written by
+    # carry_verdicts.py, not here: build_full_audit skips a file that exists, which is what keeps
+    # the carried verdicts from being rebuilt away.
+    "h1-full": ("data/real/rung3/strips_h1", "h1-audit", "data/real/strips_v2"),
+    "r1-full": ("data/real/rung3/strips_r1", "r1-audit"),
+    "nota-full": ("data/real/rung3/strips_nota", "nota-audit"),
+    "examv2-full": ("data/real/rung3/strips_exam_v2", "examv2-audit"),
+    "tup-full": ("data/real/rung3/strips_tup", "tup-audit"),
+}
+STRIPS = "data/real/strips"
+# roots the /img/<qid>/<page>/<strip> handler searches, in order — lets a queue reference strips
+# that live outside the main slice dir (e.g. the phone-photo strips for the photo-gold queue).
+IMG_ROOTS = ["data/real/strips",
+             "data/real/rung3/photos_exam_strips",
+             "data/real/rung3/clean_pages_strips"]
+
+# ⚠ Per-queue overrides, and the reason image lookup is keyed by queue at all. Strip filenames are
+# stable across a re-slice but the pixels are not, and the SAME page exists under several strip
+# roots. With one global search order, a queue built from the 2026-07-29 re-slice would silently
+# render the OLD crops from data/real/strips — every row, not just the colliding ones — because
+# that root is searched first. A queue must resolve against the crops it was actually built from.
+QUEUE_IMG_ROOTS = {
+    # exam v3 has its OWN root: the 21 pages were re-sliced with today's slicer on 2026-08-20, into
+    # a root of their own so the FROZEN exam's crops (hardlinked out of data/real/strips) could not
+    # be rewritten in place. ⚠ Do not point these at data/real/strips — the same filenames exist
+    # there with the retired slicer's pixels.
+    # same crops as examv3 — this queue is a view over the exam, not a new cut.
+    # the hand-test pages were sliced into their own root by decode_page.py, page-per-dir.
+    "handtest": ["data/real/rung3/_handtest"],
+    "b8-nav": ["data/real/strips_v2"],   # b8's crops — the CURRENT slicer
+    "r3-exam-errors": ["data/real/strips_examv3"],
+    "examv3": ["data/real/strips_examv3"],
+    "examv3-full": ["data/real/strips_examv3"],
+    "examv3-audit": ["data/real/strips_examv3"],
+    "realval-hard-v2": ["data/real/strips_v2"],
+    # ⛔ NOT data/real/strips. The whole defect this queue repairs is that the same filenames exist
+    # there with the retired slicer's pixels — resolving against that root would show the reader
+    # exactly the wrong crop, which is the mistake being corrected.
+    "realval-repair": ["data/real/strips_v2"],
+    "ndhigh": ["data/real/strips_v2"],
+    "reslice-all": ["data/real/strips_v2"],
+    "batch1": ["data/real/strips_v2"],
+    "batch2": ["data/real/strips_v2"],
+    "batch3": ["data/real/strips_v2"],
+    # b8 hardlinks its accepted PNGs out of the re-slice root and stores them FLAT, so the
+    # /img/<qid>/<page>/<strip> handler has to resolve against the page dirs it came from.
+    "b8-audit": ["data/real/strips_v2"],
+    "b8-full": ["data/real/strips_v2"],
+    "b8-review": ["data/real/strips_v2"],
+    "h1-rail": ["data/real/strips_v2_rail"],   # ⛔ NOT strips_v2 — these crops were re-cut
+    "h1-audit": ["data/real/strips_v2"],   # the same crops as b8, by construction
+    "h1-full": ["data/real/strips_v2"],
+    "h1-review": ["data/real/strips_v2"],
+}
+# ⚠ Queues whose crops are the FLAT PNGs inside a strips pool (`<pool>/<strip>.png`, no page folder).
+# `_realval_v2r` is scored from its own folder, and 6 of its 260 crops exist nowhere else — so these
+# queues show the very pixels the model was scored on, not a same-named crop from a slice root.
+QUEUE_FLAT_ROOTS = {
+    "r4-ctl-errors": ["data/real/rung3/_realval_v2r"],
+    "r4-live-errors": ["data/real/rung3/_realval_v2r"],
+}
+# Queues bigger than this are not shipped inside /api/state — the client asks for their rows once,
+# on /api/rows, when the tab is opened. reslice-all alone is 16 MB of JSON, and /api/state is
+# re-fetched every time the verdict log is opened.
+EAGER_MAX = 5000
+VERDICTS = {"", "ok", "fix", "bad"}
+
+
+# ⛔ `\tie` IS RETIRED (owner, 2026-08-22): an arc is label-free ink and two tied notes are two
+# plain notes. It survives ONLY in the `decoded` HINT column, because the model that wrote those
+# decodes was trained before the retirement. Measured 2026-09-09: 3,080 occurrences over the four
+# h1 queues and ZERO in any h1 label, corrected_label or oldfix.
+# It is dropped HERE, at the one point every queue reaches the browser, so a reviewer cannot read
+# it, diff against it, or STORE it — `✓ accept` beside the decode block saves that text verbatim,
+# which is the path that could have put a retired token into the pool.
+# ⚠ THE CSV ON DISK IS NOT REWRITTEN, and `clean` defaults to False for exactly that reason:
+# save_verdict() re-writes the whole file through this same loader, so a cleaning default would
+# quietly rewrite the record one verdict at a time. Only the two READ paths ask for it — which is
+# also why a re-emit or a full_audit rebuild cannot bring the token back into the UI.
+# ⛔ NEVER IN THE ROUND-2 EXAM QUEUES. exam-fix and examv2-* carry `\tie` in their LABELS (127 and
+# 24) as the record of what Round 2 was graded on — CLAUDE.md keeps `strips_exam_v2*` for that
+# reason, and rewriting a record is not cleaning.
+TIE_RECORD_QUEUES = {"exam-fix", "examv2-audit", "examv2-full", "examv2-review"}
+
+
+# ⚠ Same rule and same regex as promote_labels.SPACED_32_RE / error_taxonomy.SPACED_32_RE,
+# duplicated deliberately rather than imported: both of those modules run argument parsing at
+# import. Change all three together. Measured lossless for `32` ONLY — see load_queue.
+SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")
+
+
+def drop_ties(text: str) -> str:
+    r"""Remove the retired `\tie`. The decoder writes it GLUED to the note it ties into
+    (`\tiee''8` — 98% of them), so this matches the four characters and closes the gap."""
+    if "\\tie" not in text:
+        return text
+    return re.sub(r"\s+", " ", text.replace("\\tie", "")).strip()
+
+
+def load_queue(root: Path, qid: str, clean: bool = False) -> tuple[list[str], list[dict]]:
+    """`clean` normalises the HINT column: the retired `\tie` goes, and a spaced `32` is re-glued.
+    ⚠ Off by default — a writer must see the file as it is (see TIE_RECORD_QUEUES above)."""
+    path = root / QUEUES[qid]
+    if not path.exists():
+        return [], []
+    with open(path, newline="") as f:
+        reader = csv.DictReader(f)
+        fields = list(reader.fieldnames or [])
+        rows = list(reader)
+    for col in ("verdict", "corrected_label", "by"):
+        if col not in fields:
+            fields.append(col)
+        for r in rows:
+            r.setdefault(col, "")
+    if clean and qid not in TIE_RECORD_QUEUES:
+        for r in rows:
+            if r.get("decoded"):
+                r["decoded"] = drop_ties(r["decoded"])
+    if clean:
+        # ⭐ The model writes `f'' 32`, and it is NOT choosing to. The base alphabet has no digit
+        # `3` (nor `5` or `7`), so `3` is one of OUR added tokens — and an added token is a word
+        # boundary, which puts the preceding `'` into its end-of-word form and therefore a space
+        # after it. `f''16` has no such break and comes back glued. Measured 2026-09-10: 9,900
+        # occurrences across every queue, and `32` is the ONLY duration this ever happens to.
+        # ⛔ NEVER widen the pattern past 32: `f''16` and `f'' 16` DO differ in id space, so
+        # gluing those would change the label. 32 is lossless in BOTH vocabularies (old and h).
+        # ⚠ No TIE_RECORD_QUEUES exemption is needed. That guard protects the round-2 exam record,
+        # which lives in the `label` column; this touches only the hint, and re-gluing changes no
+        # id, so there is no record to preserve.
+        # ⭐ Scheme H removes the cause at the source (`f''` and `32` are each one token, so the
+        # decode comes back glued); this is what makes the OLD-vocabulary queues read the same.
+        for r in rows:
+            if r.get("decoded"):
+                r["decoded"] = SPACED_32_RE.sub("32", r["decoded"])
+    return fields, rows
+
+
+def save_verdict(root: Path, qid: str, strip: str, verdict: str, corrected: str,
+                 by: str = "") -> dict:
+    """`by` marks non-human verdicts (e.g. "claude") so trust accounting can tell them
+    apart; the UI posts no `by`, so a human (re-)verdict always clears the marker."""
+    if verdict not in VERDICTS:
+        raise ValueError(f"bad verdict {verdict!r}")
+    path = root / QUEUES[qid]
+    fields, rows = load_queue(root, qid)
+    hits = [r for r in rows if r["strip"] == strip]
+    if len(hits) != 1:
+        raise ValueError(f"{strip}: {len(hits)} rows matched in {qid}")
+    hits[0]["verdict"] = verdict
+    hits[0]["corrected_label"] = corrected
+    hits[0]["by"] = by
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".csv.tmp")
+    try:
+        with os.fdopen(fd, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=fields)
+            w.writeheader()
+            w.writerows(rows)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return hits[0]
+
+
+def build_full_audit(root: Path) -> None:
+    """Sidecar queues over EVERY accepted training strip (manifest.jsonl), so the whole
+    training set can be eyeballed, not just the seeded audit sample. Verdicts live in
+    full_audit.csv only — the manifest is never touched; the sampled-audit verdicts are
+    carried over so that work isn't repeated. Generated once per dataset in FULL_AUDITS;
+    delete a CSV to rebuild it (re-carrying the sample verdicts made since)."""
+    for full_qid, spec in FULL_AUDITS.items():
+        dirpath, audit_qid = spec[0], spec[1]
+        strips_root = spec[2] if len(spec) > 2 else STRIPS
+        path = root / QUEUES[full_qid]
+        mani = root / dirpath / "manifest.jsonl"
+        if path.exists() or not mani.exists():
+            continue
+        _, audit_rows = load_queue(root, audit_qid)
+        prior = {r["strip"]: (r["verdict"], r["corrected_label"]) for r in audit_rows}
+        decodes: dict[str, dict] = {}
+        rows = []
+        with open(mani) as f:
+            for line in f:
+                m = json.loads(line)
+                strip, page = Path(m["image"]).name, m["page"]
+                if page not in decodes:
+                    dj = root / strips_root / page / f"{page}_decode.json"
+                    decodes[page] = ({s["strip"]: s["tokens"]
+                                      for s in json.load(open(dj))["strips"]}
+                                     if dj.exists() else {})
+                v, c = prior.get(strip, ("", ""))
+                rows.append({"piece": m["piece"], "page": page, "strip": strip,
+                             "nd": m.get("nd", ""), "min_logprob": m.get("min_logprob", ""),
+                             "verdict": v, "label": m["label"],
+                             "decoded": decodes[page].get(strip, ""), "corrected_label": c})
+        with open(path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["piece", "page", "strip", "nd", "min_logprob",
+                                              "verdict", "label", "decoded", "corrected_label"])
+            w.writeheader()
+            w.writerows(rows)
+
+
+def state(root: Path) -> dict:
+    """Queue list with counts. `rows` is present for the small queues and OMITTED for anything
+    over EAGER_MAX, which the client then pulls from /api/rows — `n`/`done` are always there so
+    the tabs and the progress bar read the same either way."""
+    out = {"queues": [], "vocab": ADDED_TOKENS, "accidentals": sorted(ACCIDENTALS),
+           # every vocabulary the lint may need, and its budget — the client picks by queue
+           "vocabs": {v: vocabulary(v) for v in ("old", "h")},
+           "budgets": MAX_IDS_BY_VOCAB}
+    for qid in QUEUES:
+        _, rows = load_queue(root, qid, clean=True)
+        q = {"id": qid, "n": len(rows), "done": sum(1 for r in rows if r["verdict"]),
+             "vocab": QUEUE_VOCAB.get(qid, "old")}
+        if len(rows) <= EAGER_MAX:
+            q["rows"] = rows
+        out["queues"].append(q)
+    return out
+
+
+class Handler(BaseHTTPRequestHandler):
+    root: Path = REPO
+
+    def log_message(self, *a):  # keep the terminal quiet
+        pass
+
+    def _send(self, code: int, body: bytes, ctype: str):
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _json(self, obj, code=200):
+        self._send(code, json.dumps(obj).encode(), "application/json")
+
+    def do_GET(self):
+        raw = self.path.split("?", 1)
+        path = unquote(raw[0])
+        query = raw[1] if len(raw) > 1 else ""
+        if path == "/":
+            self._send(200, PAGE.encode(), "text/html; charset=utf-8")
+        elif path == "/api/state":
+            self._json(state(self.root))
+        elif path == "/api/rows":
+            qid = unquote(parse_qs(query).get("queue", [""])[0])
+            if qid not in QUEUES:
+                self._json({"error": "unknown queue"}, 404)
+                return
+            _, rows = load_queue(self.root, qid, clean=True)
+            self._json({"id": qid, "rows": rows})
+        elif path == "/font":
+            # Bravura (SMuFL) from the web app — the token reference shows real AEU glyphs
+            font = self.root / "apps/web/public/fonts/Bravura.woff2"
+            if font.exists():
+                self._send(200, font.read_bytes(), "font/woff2")
+            else:
+                self._json({"error": "font not found"}, 404)
+        elif path.startswith("/img/"):
+            qid, _, rel = path[len("/img/"):].partition("/")
+            if qid not in QUEUES or not re.fullmatch(r"[\w.\-]+/[\w.\-]+\.png", rel):
+                self._json({"error": "bad path"}, 400)
+                return
+            flat = [(b, rel.rpartition("/")[2]) for b in QUEUE_FLAT_ROOTS.get(qid, [])]
+            nested = [(b, rel) for b in ([] if flat else QUEUE_IMG_ROOTS.get(qid, IMG_ROOTS))]
+            for base, sub in flat + nested:
+                root_dir = (self.root / base).resolve()
+                img = (root_dir / sub).resolve()
+                if str(img).startswith(str(root_dir)) and img.exists():
+                    self._send(200, img.read_bytes(), "image/png")
+                    return
+            self._json({"error": "not found"}, 404)
+        else:
+            self._json({"error": "not found"}, 404)
+
+    def do_POST(self):
+        if self.path != "/api/verdict":
+            self._json({"error": "not found"}, 404)
+            return
+        try:
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            row = save_verdict(self.root, body["queue"], body["strip"],
+                               body.get("verdict", ""), body.get("corrected", ""),
+                               body.get("by", ""))
+            self._json({"ok": True, "row": row})
+        except Exception as e:  # surface the reason in the UI toast
+            self._json({"ok": False, "error": str(e)}, 400)
+
+
+PAGE = r"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rung-3 strip review</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1a2030;--mut:#68738a;--line:#e3e6ee;
+        --ok:#177245;--okbg:#e5f4ec;--bad:#b3261e;--badbg:#fbe9e7;
+        --fix:#8a5a00;--fixbg:#fdf3dc;--acc:#3b5bdb;--accbg:#e8edfd;--hl:#ffd9d4;--hl2:#ffefc2;
+        --editbg:#fbfcff;--gap1:#f1f2f6;--gap2:#fff;--toastbg:#1a2030;--toastink:#fff}
+  /* ⚠ WITHOUT THIS THE NATIVE WIDGETS STAY LIGHT. A page that never declares `color-scheme` gets
+     the UA's light form controls whatever the system is set to, so the checkbox, the select popup,
+     the caret and the scrollbars were drawn for a white page on a black one. */
+  :root{color-scheme:light dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+         padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);
+         position:sticky;top:0;z-index:5}
+  header h1{font-size:15px;margin:0 8px 0 0;font-weight:650}
+  .tab{border:1px solid var(--line);background:var(--bg);border-radius:8px;
+       padding:5px 10px;cursor:pointer;font-size:13px}
+  .tab.active{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:600}
+  /* an empty queue's tab is `disabled`, and the UA's own disabled grey is unreadable on a dark
+     card — say the colour so a 0/0 queue reads as dimmed rather than as a blank chip */
+  .tab:disabled{color:var(--mut);opacity:.75;cursor:default}
+  .tab:disabled .n{color:var(--mut)}
+  .tab .n{color:var(--mut);font-size:12px;margin-left:4px}
+  select,label.chk{font-size:13px;color:var(--ink)}
+  select{padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+  #bar{height:5px;background:var(--line)} #barfill{height:100%;width:0;background:var(--ok);transition:width .2s}
+  main{max-width:1200px;margin:14px auto;padding:0 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:14px 16px;margin-bottom:12px}
+  #meta{display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;font-size:13px;color:var(--mut)}
+  #meta b{color:var(--ink);font-weight:600}
+  .badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600}
+  .b-reason{background:var(--fixbg);color:var(--fix)}
+  .b-ok{background:var(--okbg);color:var(--ok)} .b-bad{background:var(--badbg);color:var(--bad)}
+  .b-fix{background:var(--fixbg);color:var(--fix)} .b-pend{background:var(--bg);color:var(--mut)}
+  #imgwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:8px;
+           padding:10px;text-align:center;cursor:zoom-in}
+  #imgwrap img{max-width:100%;image-rendering:auto}
+  #imgwrap.zoom{cursor:zoom-out} #imgwrap.zoom img{max-width:none}
+  .lblhead{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:10px 0 4px}
+  .toks{font:13.5px/2.15 ui-monospace,SFMono-Regular,Menlo,monospace;word-spacing:2px}
+  .tok{padding:2px 4px;border-radius:5px;margin-right:3px;white-space:nowrap}
+  .tok.diff{background:var(--hl);outline:1px solid #f2b8b5}
+  .tok.diff2{background:var(--hl2);outline:1px solid #e8ce8e}
+  .tok.accid{font-weight:700}
+  .tok.gap{color:var(--mut);
+           background:repeating-linear-gradient(45deg,var(--gap1) 0 4px,var(--gap2) 4px 8px)}
+  .agree{color:var(--ok);font-size:13px}
+  /* per-block actions: a two-button stack to the LEFT of each token row, so "accept" names the
+     exact text beside it instead of the reviewer having to remember what the bottom row acts on */
+  /* The actions hang in the page margin OUTSIDE the card, so the label and decode text keeps the
+     x it has always had — a token row that shifts sideways when a button appears is harder to
+     compare against the picture above it. Each block gets ONE horizontal pair. */
+  .lblrow{position:relative;margin-top:10px}
+  .lblrow .lblhead{margin-top:0}
+  /* `top` drops the pair off the heading line and onto the TOKEN row it acts on — the tokens are
+     what you accept, so the button should sit beside them, not beside the caption. */
+  .lblacts{position:absolute;right:calc(100% + 20px);top:21px;display:flex;gap:5px;white-space:nowrap}
+  /* The card is 1200px, so the margin only holds the pair on a wide window. Below this the pair
+     drops above its own block rather than overflow off-screen — still one row, still left-aligned,
+     and the token row still does not move. Measured: it stops fitting just under 1440px. */
+  @media (max-width:1440px){
+    .lblacts{position:static;margin-bottom:5px}
+  }
+  .mini{padding:3px 7px;font-size:11.5px;font-weight:600;border-radius:6px;
+        line-height:1.35;white-space:nowrap}
+  .mini.acc{color:var(--ok);border-color:#bfe3cf;background:var(--okbg)}
+  .mini.edt{color:var(--fix);border-color:#ecd9a8;background:var(--fixbg)}
+  #editbox{display:none;margin-top:10px}
+  #editbox textarea{width:100%;min-height:84px;font:13.5px/1.6 ui-monospace,Menlo,monospace;
+        padding:10px;border:1px solid var(--acc);border-radius:8px;
+        background:var(--editbg);color:var(--ink)}
+  #lint{font-size:12.5px;margin-top:4px;min-height:18px}
+  #lint .warn{color:var(--bad)} #lint .fine{color:var(--ok)}
+  .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  /* ⚠ `color` IS LOAD-BEARING HERE (2026-09-09). A <button> does not inherit the body's colour —
+     with none of its own it takes the UA's `buttontext`, measured as PURE BLACK on the dark tab
+     background, so every queue tab, `saved log`, `tokens`, the three "start from" buttons, cancel,
+     clear, the arrows and `next pending` were black-on-black. The verdict buttons only escaped
+     because each names its own colour. Say it once, here, for all of them. */
+  button{border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);
+         padding:7px 14px;font-size:13.5px;cursor:pointer;font-weight:600}
+  button:hover{filter:brightness(.97)}
+  .k{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;
+     padding:0 5px;font:11.5px ui-monospace,Menlo,monospace;color:var(--mut);margin-left:6px}
+  #b-ok{color:var(--ok);border-color:#bfe3cf;background:var(--okbg)}
+  #b-bad{color:var(--bad);border-color:#f2c4c0;background:var(--badbg)}
+  #b-edit{color:var(--fix);border-color:#ecd9a8;background:var(--fixbg)}
+  @font-face{font-family:'Bravura';src:url('/font') format('woff2')}
+  .glyph{font-family:'Bravura';font-size:24px;line-height:1;display:inline-block;
+         min-width:30px;text-align:center;transform:translateY(6px)}
+  #refcard table{border-collapse:collapse;font-size:13px;width:100%}
+  #refcard td,#refcard th{padding:4px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  #refcard th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+  #refcard code{font:12.5px ui-monospace,Menlo,monospace;background:var(--bg);
+                padding:1px 5px;border-radius:4px}
+  .refcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:6px 28px}
+  .refnote{font-size:12.5px;color:var(--mut);margin-top:8px}
+  .logrow{display:flex;gap:10px;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line);
+          cursor:pointer;font-size:13px}
+  .logrow:hover{background:var(--bg)}
+  .logrow .mono{font:12.5px ui-monospace,Menlo,monospace}
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--toastbg);
+         color:var(--toastink);padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;
+         transition:opacity .25s}
+  #help{font-size:13px;color:var(--mut)} #help b{color:var(--ink)}
+  #empty{color:var(--mut);text-align:center;padding:60px 0;font-size:15px}
+  @media (prefers-color-scheme: dark){
+    /* ⚠ THE FOREGROUNDS MOVE TOO. Until 2026-09-09 this block redefined only the backgrounds, so
+       --ok/--bad/--fix/--acc stayed the DARK inks picked for a white card and every verdict button,
+       badge and lint line was dark-on-dark: "✓ ok" and "✗ bad" were barely legible and the reason
+       badge (--fix on --fixbg) worse. A colour needs its partner redefined in the same block. */
+    :root{--bg:#14161c;--card:#1d2027;--ink:#e8eaf1;--mut:#98a0b3;--line:#31353f;
+          --ok:#5ddb96;--okbg:#173226;--bad:#ff9a8f;--badbg:#3a1f1c;
+          --fix:#e8bd52;--fixbg:#332a12;--acc:#8fa8ff;--accbg:#1e2740;--hl:#5a2d28;--hl2:#4d3d14;
+          --editbg:#171b24;--gap1:#3c4354;--gap2:#242935;--toastbg:#e8eaf1;--toastink:#14161c}
+    /* the pastel borders were picked against white; on a dark card they shout louder than the fill */
+    .mini.acc,#b-ok{border-color:#2f6a4b} .mini.edt,#b-edit{border-color:#6b551f}
+    #b-bad{border-color:#7a3a33}
+    .tok.diff{outline-color:#8c4b45} .tok.diff2{outline-color:#7a6428}
+    #imgwrap{background:#fff} /* strips are black-on-white scans; keep them readable */
+  }
+</style></head><body>
+<header>
+  <h1>Rung-3 strip review</h1>
+  <span id="tabs"></span>
+  <select id="freason"><option value="">all reasons</option></select>
+  <select id="fshow">
+    <option value="pending" selected>pending only</option>
+    <option value="reviewed">reviewed only</option>
+    <option value="bad">bad only</option>
+    <option value="agree">🤖 auto-accepted (agree)</option>
+    <option value="oldfix">⭐ old human fix</option>
+    <option value="claude">🤖 claude verdicts</option>
+    <option value="rule">🤖 rule drafts</option>
+    <option value="all">all strips</option>
+  </select>
+  <button class="tab" id="b-log">🗂 saved log</button>
+  <button class="tab" id="b-ref">📖 tokens</button>
+  <span id="pos" style="margin-left:auto;font-size:13px;color:var(--mut)"></span>
+</header>
+<div id="bar"><div id="barfill"></div></div>
+<main>
+  <div class="card" id="viewer" style="display:none">
+    <div id="meta"></div>
+    <div id="imgwrap" title="click to zoom"><img id="strip" alt="strip"></div>
+    <div id="labels"></div>
+    <div id="editbox">
+      <div class="lblhead">corrected label (saving marks the strip <b>fix</b>) — start from:
+        <button class="tab" id="base-h">sig from label + notes from model</button>
+        <button class="tab" id="base-l">label</button>
+        <button class="tab" id="base-d">model decode</button>
+        <label style="margin-left:10px;font-weight:400;white-space:nowrap">
+          <input type="checkbox" id="striptup"> drop decode \tup3 (slur-hallucination guard)
+        </label></div>
+      <textarea id="edit" spellcheck="false"></textarea>
+      <div id="lint"></div>
+      <div class="btns" style="margin-top:8px">
+        <button id="b-save" style="color:var(--ok);border-color:#bfe3cf;background:var(--okbg)">
+          ✓ save fix<span class="k">⌘⏎</span></button>
+        <button id="b-cancel">cancel<span class="k">esc</span></button>
+      </div>
+    </div>
+    <div class="btns">
+      <button id="b-ok">✓ ok<span class="k">a</span></button>
+      <button id="b-edit">✎ edit / fix<span class="k">e</span></button>
+      <button id="b-bad">✗ bad<span class="k">x</span></button>
+      <button id="b-clear">clear<span class="k">u</span></button>
+      <span style="flex:1"></span>
+      <button id="b-prev">←</button>
+      <button id="b-next">→</button>
+      <button id="b-pend">next pending<span class="k">n</span></button>
+    </div>
+  </div>
+  <div class="card" id="empty" style="display:none">queue clear — nothing matches the filter 🎉</div>
+  <div class="card" id="refcard" style="display:none">
+    <div class="lblhead">token reference — glyphs as engraved (Bravura, same font as the app)</div>
+    <div class="refcols">
+      <table><tr><th>sharp</th><th>commas</th><th>token</th></tr>
+        <tr><td><span class="glyph">&#xE444;</span> koma diyezi</td><td>1</td><td><code>\komaSharp</code></td></tr>
+        <tr><td><span class="glyph">&#xE445;</span> bakiye diyezi</td><td>4</td><td><code>\bakiyeSharp</code></td></tr>
+        <tr><td><span class="glyph">&#xE446;</span> küçük mücennep diyezi</td><td>5</td><td><code>\kucukSharp</code></td></tr>
+        <tr><td><span class="glyph">&#xE447;</span> büyük mücennep diyezi</td><td>8</td><td><code>\buyukSharp</code></td></tr>
+        <tr><td><span class="glyph">&#xE261;</span> natural</td><td>0</td><td><code>\natural</code></td></tr>
+      </table>
+      <table><tr><th>flat</th><th>commas</th><th>token</th></tr>
+        <tr><td><span class="glyph">&#xE443;</span> koma bemolü</td><td>1</td><td><code>\komaFlat</code></td></tr>
+        <tr><td><span class="glyph">&#xE442;</span> bakiye bemolü</td><td>4</td><td><code>\bakiyeFlat</code></td></tr>
+        <tr><td><span class="glyph">&#xE441;</span> küçük mücennep bemolü</td><td>5</td><td><code>\kucukFlat</code></td></tr>
+        <tr><td><span class="glyph">&#xE440;</span> büyük mücennep bemolü</td><td>8</td><td><code>\buyukFlat</code></td></tr>
+      </table>
+      <table><tr><th>notes &amp; rhythm</th><th>meaning</th></tr>
+        <tr><td><code>do''4.</code></td><td>pitch (do re mi fa sol la si) + octave marks + duration.
+          <code>'</code>≈staff bottom half, <code>''</code>≈upper, <code>'''</code>=ledger lines above.
+          durations 1 2 4 8 16 32; dot = ×1.5</td></tr>
+        <tr><td><code>r4</code> <code>r8</code></td><td>rest (never takes octave marks)</td></tr>
+        <tr><td><code>|</code></td><td>barline — also resets carried accidentals</td></tr>
+        <tr><td><code>\tie</code></td><td><b>RETIRED &mdash; do not type it</b> (owner, 2026-08-22).
+          Round 3 labels no ARC at all: a tie and a slur are both label-free ink, so two tied notes
+          are written as two plain notes (<code>la'2 la'8</code>) &mdash; same pitches, same total
+          length, no arc token. The id stays reserved so Round 4 can bring it back.</td></tr>
+        <tr><td><code>\tup3 … \tupend</code></td><td>triplet bracket around the 3 notes</td></tr>
+        <tr><td><code>\grace</code></td><td>prefixes a small slashed grace note's own spelling</td></tr>
+      </table>
+      <table><tr><th>structure</th><th>meaning</th></tr>
+        <tr><td><code>\sig … \sigend</code></td><td>row-start key signature: accidental + BARE note name,
+          in printed order — e.g. <code>\sig \bakiyeFlat si \bakiyeSharp fa \sigend</code></td></tr>
+        <tr><td><code>\repstart \repend</code></td><td>repeat barlines <code>|:</code> <code>:|</code></td></tr>
+        <tr><td><code>\volta1 \volta2</code></td><td>1st / 2nd ending brackets</td></tr>
+        <tr><td><code>\segno \coda \dc \fine</code></td><td>navigation marks (segno, coda, D.C./D.S., Son/Fine)
+          — strips showing these usually go <b>bad</b></td></tr>
+      </table>
+    </div>
+    <div class="refnote">
+      Conventions: <b>carry mode</b> — an accidental holds for the rest of the measure until the barline;
+      a note already altered by the signature is written <b>bare</b> (label = what's printed, not what sounds);
+      slurs, lyrics and ornament text are never labeled. Label only what is physically inked on the strip.
+    </div>
+  </div>
+  <div class="card" id="logcard" style="display:none">
+    <div class="lblhead">saved verdicts — re-read from the CSV on disk<span id="logn"></span></div>
+    <div id="loglist"></div>
+  </div>
+  <div class="card" id="help">
+    <b>ok</b> label matches the printed strip exactly · <b>fix</b> you corrected the label
+    (edit starts from the label, or from the model decode when no label exists) ·
+    <b>bad</b> unusable strip (wrong music, illegible, marks we don't model).
+    Beside each block: <b>✓ accept</b> saves that exact text (accepting the decode is stored as a
+    <b>fix</b>), <b>✎ edit from it</b> opens the editor with only that text as the draft.
+    Notes shown as solfège (do''4 = c''4; saved CSV stays in letters — hover a token for the raw form).
+    Red tokens = label/decode disagreement — check those pixels first; bold = accidental.
+    Keys: <b>a</b>/<b>x</b>/<b>e</b>/<b>u</b>, <b>←→</b> move, <b>n</b> next pending, <b>z</b> zoom.
+    <b>🤖 auto-accepted (agree)</b> lists the rows a script marked <b>ok</b> because the label and
+    the model decode say the same thing — <b>least confident first</b>, so the riskiest one is on
+    top. It is a spot-check list, not a queue to clear: agreement was right on 159 of 169 rows a
+    human has read, and the misses clump on a page where label and decode are wrong the same way.
+    It also holds the <b>agree-ws</b> rows, where the two sides differ only by a space the decoder
+    put inside a note (<code>f'' 32</code> for <code>f''32</code>) and the label was kept as-is.
+    Any verdict you give clears the 🤖 marker.
+    <b>⭐ old human fix</b> lists the rows where a person already corrected this same music in the
+    RETIRED pools (strips_nota / strips_r1 / strips_tup), which the b8 re-emit did not carry over:
+    <b>1,048</b> matched by measure span (<code>span</code>) and <b>165</b> by filename alone
+    (<code>name</code>, shown with a warning — that is where the re-slice trap lives).
+    <b>Ranked by what the row is worth</b>: the fixes that DISAGREE with the label b8 wrote come
+    first (<b>198</b> in b8-full, <b>441</b> in b8-review), then the ones the re-emit reproduced
+    by itself, which buy nothing. It is a HINT written against a DIFFERENT crop of the same bars, so it has its own
+    <b>✓ accept</b> / <b>✎ edit</b> beside it and plain <b>ok</b> never stores it.
+  </div>
+</main>
+<div id="toast"></div>
+<script>
+let S=null, qid=null, idx=0, editing=false;
+const $=id=>document.getElementById(id);
+
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// show notes as solfège (c''4 -> do''4); CSV keeps lilypond letters (the tokenizer's alphabet)
+const SOLF={c:'do',d:'re',e:'mi',f:'fa',g:'sol',a:'la',b:'si'};
+const SOLF_REV={do:'c',re:'d',mi:'e',fa:'f',sol:'g',la:'a',si:'b'};
+const toSolf=t=>t.startsWith('\\')?t:t.replace(/^([a-g])(?=[',\d.]|$)/,m=>SOLF[m]);
+const fromSolf=t=>t.startsWith('\\')?t:t.replace(/^(sol|do|re|mi|fa|la|si)(?=[',\d.]|$)/,m=>SOLF_REV[m]);
+const solfText=s=>tokenize(s).map(toSolf).join(' ');
+const letterText=s=>tokenize(s).map(fromSolf).join(' ');
+let CMDS=[], ACC=new Set();
+function tokenize(s){
+  const out=[]; let i=0; s=s.trim();
+  while(i<s.length){
+    const c=s[i];
+    if(/\s/.test(c)){i++;continue}
+    if(c==='|'){out.push('|');i++;continue}
+    if(c==='\\'){
+      const cmd=CMDS.find(t=>s.startsWith(t,i));
+      if(cmd){out.push(cmd);i+=cmd.length;continue}
+      const m=s.slice(i).match(/^\\[A-Za-z0-9]+/); out.push(m?m[0]:c); i+=(m?m[0].length:1); continue;
+    }
+    const m=s.slice(i).match(/^[^\s|\\]+/); out.push(m[0]); i+=m[0].length;
+  }
+  return out;
+}
+// LCS alignment -> [op, aTok|null, bTok|null]
+function align(a,b){
+  const n=a.length,m=b.length,d=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=1;i<=n;i++)for(let j=1;j<=m;j++)
+    d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]+1:Math.max(d[i-1][j],d[i][j-1]);
+  const ops=[];let i=n,j=m;
+  while(i>0||j>0){
+    if(i>0&&j>0&&a[i-1]===b[j-1]){ops.push(['=',a[--i],b[--j]]);}
+    else if(j>0&&(i===0||d[i][j-1]>=d[i-1][j])){ops.push(['+',null,b[--j]]);}
+    else{ops.push(['-',a[--i],null]);}
+  }
+  return ops.reverse();
+}
+function tokHtml(t,cls){
+  const a=ACC.has(t)?' accid':'';
+  return `<span class="tok ${cls}${a}" title="${esc(t)}">${esc(toSolf(t))}</span>`;
+}
+// Each of the two blocks gets its own accept/edit pair, wired by delegation in render(). The
+// point is that "accept" sits BESIDE the text it saves: the bottom row's `ok` always meant "the
+// label is right", which is invisible when the decode is the block you are reading. `acc-decode`
+// saves the decode VERBATIM — deliberately not through baseText(), whose \tup3 guard lives on a
+// checkbox inside the (closed) edit box, and an unseen checkbox must never change what is stored.
+function actsHtml(kind){
+  const what=kind==='label'?'label':'model decode';
+  return `<div class="lblacts">
+    <button class="mini acc" data-act="acc-${kind}" title="save this ${what} as the verdict, exactly as shown">✓ accept</button>
+    <button class="mini edt" data-act="edit-${kind}" title="open the editor with this ${what} as the draft">✎ edit</button>
+  </div>`;
+}
+const blockHtml=(kind,head,toks)=>
+  `<div class="lblrow">${actsHtml(kind)}
+     <div class="lblhead">${head}</div><div class="toks">${toks}</div></div>`;
+function diffHtml(label,decoded){
+  if(!label.trim()){
+    return blockHtml('decode','no aligned label — model decode (starting point for a fix)',
+                     tokenize(decoded).map(t=>tokHtml(t,'diff2')).join(''));
+  }
+  if(!decoded.trim()){
+    return blockHtml('label','label (no cached model decode — compare against the image)',
+                     tokenize(label).map(t=>tokHtml(t,'')).join(''));
+  }
+  const ops=align(tokenize(label),tokenize(decoded));
+  const same=ops.every(o=>o[0]==='=');
+  let top='',bot='';
+  for(const[op,at,bt]of ops){
+    if(op==='='){top+=tokHtml(at,'');bot+=tokHtml(bt,'');}
+    else if(op==='-'){top+=tokHtml(at,'diff');bot+='<span class="tok gap">·</span>';}
+    else{top+='<span class="tok gap">·</span>';bot+=tokHtml(bt,'diff2');}
+  }
+  return blockHtml('label','label (proposed ground truth)',top)
+        +blockHtml('decode',`model decode ${same?'<span class="agree">— agrees exactly</span>':''}`,bot);
+}
+// third block: the FINAL version of every verdicted row. A real fix is diffed against the
+// original label (removed tokens = red gaps, new tokens = green); an untouched label
+// (verdict ok, or a fix identical to the label) still shows its full token row so the
+// reviewer sees exactly what was accepted.
+function corrHtml(label,corrected,by,verdict){
+  const who=by?`🤖 ${esc(by)}`:'you';
+  const fin=(corrected&&corrected.trim())?corrected:label;
+  if(tokenize(fin).join(' ')===tokenize(label).join(' '))
+    return `<div class="lblhead" style="color:var(--fix)">final version (${verdict} by ${who}) — label accepted as-is</div>
+            <div class="toks">${tokenize(fin).map(t=>tokHtml(t,'')).join('')}</div>`;
+  const ops=align(tokenize(label),tokenize(fin));
+  let out='';
+  for(const[op,at,bt]of ops){
+    if(op==='=')out+=tokHtml(bt,'');
+    else if(op==='-')out+=`<span class="tok diff" title="removed: ${esc(at)}">·</span>`;
+    else out+=tokHtml(bt,'diff2');
+  }
+  return `<div class="lblhead" style="color:var(--fix)">final version (${verdict} by ${who}) — diff vs label</div>
+          <div class="toks">${out}</div>`;
+}
+// A PENDING row can carry a machine SUGGESTION in corrected_label (exam v3 carries the frozen
+// exam's gold onto the crop holding the same music). It used to be invisible while still winning
+// both `e` and — worse — `a`, so "ok" stored text nobody had seen (found by the owner, 2026-08-21).
+// It is drawn here, diffed against the label, and `ok` no longer saves it (see verdict()).
+function suggHtml(label,sugg){
+  if(!sugg||!sugg.trim())return '';
+  const base=(label&&label.trim())?label:'';
+  if(base&&tokenize(sugg).join(' ')===tokenize(base).join(' '))return '';
+  const head=`<div class="lblhead" style="color:var(--fix)">carried suggestion — NOT saved by
+    <b>ok</b>; press <b>e</b> to take it, and check it against the picture first</div>`;
+  if(!base)return head+`<div class="toks">${tokenize(sugg).map(t=>tokHtml(t,'diff2')).join('')}</div>`;
+  const ops=align(tokenize(base),tokenize(sugg));
+  let out='';
+  for(const[op,at,bt]of ops){
+    if(op==='=')out+=tokHtml(bt,'');
+    else if(op==='-')out+=`<span class="tok diff" title="not in the suggestion: ${esc(at)}">·</span>`;
+    else out+=tokHtml(bt,'diff2');
+  }
+  return head+`<div class="toks">${out}</div>`;
+}
+// ⭐ THE OLD POOLS' HUMAN CORRECTION FOR THIS MUSIC (ml/labels/carry_old_fixes.py).
+// strips_b8 re-cut the training pools onto today's crops and the ~1,479 hand-typed corrections in
+// strips_nota / strips_r1 / strips_tup did not come with them. `oldfix` is what a person once
+// typed for the same measures — a HINT, never a verdict: it was written against a DIFFERENT crop
+// of the same music, and a label written against a crop that cut a beamed group in half is a
+// reading of a truncated picture. So it gets its own accept/edit pair beside the text it saves
+// (the actsHtml rule), and `ok`/`a` never touch it.
+// oldfix_kind: `span` = both slicers agree this crop covers the same measures of the same staff
+// row (validated: where this key says SAME, the SymbTr measure span agrees on 1,002 of 1,026 =
+// 97.7%); `name` = only the filename matched, which is exactly where the 248-row re-slice trap
+// lives — those are drawn with a warning.
+const ofSame=r=>tokenize(r.oldfix||'').join(' ')===tokenize(r.label||'').join(' ');
+const ofRank=r=>(ofSame(r)?2:0)+(r.oldfix_kind==='span'?0:1);
+function oldfixHtml(r){
+  const old=(r.oldfix||'').trim(); if(!old)return '';
+  const weak=r.oldfix_kind!=='span';
+  const head=`<div class="lblhead" style="color:var(--fix)">⭐ old human fix
+      <span class="badge b-reason">${esc(r.oldfix_kind||'?')}</span>
+      <span style="color:var(--mut)">${esc(r.oldfix_src||'')}</span>
+      ${weak?'<b style="color:var(--bad)"> — FILENAME MATCH ONLY: this crop may hold different music, read the picture</b>'
+             :' — same measures on the same staff row'}</div>`;
+  if(ofSame(r))
+    return `<div class="lblrow"><div class="lblhead" style="color:var(--ok)">⭐ old human fix
+      <span class="badge b-reason">${esc(r.oldfix_kind||'?')}</span>
+      <span style="color:var(--mut)">${esc(r.oldfix_src||'')}</span>
+      — identical to the label above: a person typed this same string against the old crop, and
+      the re-emit reproduced it. Nothing to carry; <b>ok</b> saves it.</div></div>`;
+  const acts=`<div class="lblacts">
+    <button class="mini acc" data-act="acc-oldfix" title="save this old correction as the verdict, exactly as shown">✓ accept</button>
+    <button class="mini edt" data-act="edit-oldfix" title="open the editor with the old correction as the draft">✎ edit</button>
+  </div>`;
+  const base=(r.label||'').trim();
+  let toks;
+  if(!base){ toks=tokenize(old).map(t=>tokHtml(t,'diff2')).join(''); }
+  else{
+    let out='';
+    for(const[op,at,bt]of align(tokenize(base),tokenize(old))){
+      if(op==='=')out+=tokHtml(bt,'');
+      else if(op==='-')out+=`<span class="tok diff" title="in the label, not in the old fix: ${esc(at)}">·</span>`;
+      else out+=tokHtml(bt,'diff2');
+    }
+    toks=out;
+  }
+  return `<div class="lblrow">${acts}${head}<div class="toks">${toks}</div></div>`;
+}
+// The id cost of a label under ONE vocabulary, and it is EXACT, not an estimate: HF's added-token
+// trie splits the LONGEST listed token it can find at each position and the base tokenizer spells
+// what is left one id per character. Verified 2026-09-09 against the real tokenizer on 14,859
+// labels (10,904 h1 under scheme H, 3,955 b8 under the old one): 0 disagreed.
+// ⚠ WHICH VOCABULARY IS THE WHOLE POINT — under the old one `d''16` costs 5 ids, under scheme H
+// it costs 2 (`d''` + `16`), so an H label priced with the old alphabet reads ~40% too expensive.
+// +1 everywhere for the training-time EOS the tokenizer does not append itself.
+function idCost(toks, added){
+  const plain=added.filter(t=>!t.startsWith('\\')&&t!=='|');
+  let n=1;
+  for(const t of toks){
+    if(t.startsWith('\\')||t==='|'){n++;continue}
+    for(let i=0;i<t.length;){
+      let m=0;
+      for(const a of plain)if(a.length>m&&t.startsWith(a,i))m=a.length;
+      n++; i+=m||1;
+    }
+  }
+  return n;
+}
+function lint(txt){
+  const scheme=(q()||{}).vocab||'old';
+  const added=(S.vocabs&&S.vocabs[scheme])||S.vocab;
+  const toks=tokenize(txt), bad=[];
+  const known=new Set([...added.filter(t=>t.startsWith('\\')),'|']);
+  let sig=0;
+  for(const t of toks){
+    if(t.startsWith('\\')&&!known.has(t))bad.push(t);
+    if(t==='\\sig')sig++; if(t==='\\sigend')sig--;
+  }
+  const msgs=[];
+  if(bad.length)msgs.push(`unknown token(s): ${bad.join(' ')}`);
+  if(sig!==0)msgs.push('\\sig / \\sigend unbalanced');
+  for(const t of toks)
+    if(!t.startsWith('\\')&&t!=='|'&&t!=='3'&&!/^r?[a-g]?[',]*\d{0,2}\.{0,2}$/.test(t)&&!/^[a-gr][',]*\d+\.?$/.test(t))
+      {msgs.push(`odd token: ${t}`);break}
+  // The budget is the TRAINING promote gate and it moves with the vocabulary (59 old, 80 under H —
+  // one table, audit_coverage.MAX_IDS_BY_VOCAB, served by /api/state). A TEST set (photo-gold) must
+  // keep dense measures (the model's hard cases), so there the only hard limit is the 100-token
+  // decode cap — a longer label the model literally cannot emit.
+  const ids=idCost(toks, added);
+  const testSet = TEST_QUEUES.has(qid);
+  const cap = testSet ? 100 : ((S.budgets||{})[scheme] || 59);
+  if(ids>cap)
+    msgs.push(testSet
+      ? `exceeds the 100-token decode cap (${ids}) — the model can't emit this; verdict bad`
+      : `OVER BUDGET: ${ids} ids > ${cap} (vocab ${scheme}) — promote will reject `
+        + `(unwinnable strip: verdict bad)`);
+  return {warn:msgs, n:toks.length, ids, cap, scheme};
+}
+// queues that are TEST sets (label the truth, keep dense measures) vs TRAINING (promote gate)
+const TEST_QUEUES=new Set(['photo-gold']);
+
+function q(id){ return S.queues.find(x=>x.id===(id||qid)); }
+function rows(){ return q().rows||[]; }
+// Big queues (reslice-all) are not shipped with /api/state — pull them once, on first open.
+async function ensureRows(id){
+  const Q=q(id);
+  if(!Q||Q.rows)return;
+  $('pos').textContent='loading…';
+  const r=await(await fetch('/api/rows?queue='+encodeURIComponent(Q.id))).json();
+  Q.rows=r.rows||[];
+}
+// min_logprob = the LOWEST per-token log-probability in the decode: 0 is certain, more
+// negative is less sure. A row without one sorts last rather than pretending to be certain.
+const lp=r=>{const v=parseFloat(r.min_logprob);return isNaN(v)?Infinity:v};
+function visible(){
+  const re=$('freason').value, show=$('fshow').value;
+  const vis=rows().map((r,i)=>({r,i}))
+    .filter(x=>(!re||x.r.reason===re)
+      &&(show==='all'||(show==='pending'?!x.r.verdict
+        :show==='claude'?x.r.by==='claude'
+        :show==='agree'?(x.r.by||'').startsWith('agree')
+        :show==='oldfix'?!!(x.r.oldfix||'').trim()
+        :show==='rule'?(x.r.by||'').startsWith('rule')
+        :show==='bad'?x.r.verdict==='bad'
+        :!!x.r.verdict)));
+  // the auto-accept list is a SPOT-CHECK list, not a queue to clear: least-confident first, so
+  // the riskiest machine `ok` is the first thing read. Every other filter keeps CSV order,
+  // which for the worst-first queues is itself a ranking.
+  if(show==='agree')vis.sort((a,b)=>lp(a.r)-lp(b.r));
+  // old-fix list, ranked by what a row is WORTH. A fix identical to the label b8 already wrote
+  // buys nothing (the re-emit reproduced the person's correction on its own), so the ones that
+  // DISAGREE come first; within that, `span` (both slicers say this crop covers the same measures)
+  // before `name` (filename only — the re-slice trap).
+  if(show==='oldfix')vis.sort((a,b)=>ofRank(a.r)-ofRank(b.r));
+  return vis;
+}
+// counts come from the rows when they are loaded (so a verdict shows up at once) and from the
+// server's n/done when they are not — an unopened lazy queue still shows real progress.
+function counts(Q){
+  if(!Q.rows)return[Q.done||0,Q.n||0];
+  return[Q.rows.filter(r=>r.verdict).length,Q.rows.length];
+}
+
+function renderTabs(){
+  $('tabs').innerHTML=S.queues.map(Q=>{
+    const[d,t]=counts(Q);
+    return `<button class="tab${Q.id===qid?' active':''}" data-q="${Q.id}" ${t?'':'disabled'}>
+              ${Q.id}<span class="n">${d}/${t}</span></button>`;
+  }).join('');
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=async()=>{
+    qid=b.dataset.q;idx=0;await ensureRows(qid);render();});
+}
+function renderFilter(){
+  const rs=[...new Set(rows().map(r=>r.reason).filter(Boolean))].sort();
+  const cur=$('freason').value;
+  $('freason').innerHTML='<option value="">all reasons</option>'+
+    rs.map(r=>`<option${r===cur?' selected':''}>${r}</option>`).join('');
+}
+function render(){
+  renderTabs();renderFilter();
+  const vis=visible();
+  const[d,t]=counts(q());
+  $('barfill').style.width=t?100*d/t+'%':'0';
+  if(!vis.length){$('viewer').style.display='none';$('empty').style.display='block';
+    $('pos').textContent=`${d}/${t} done`;return}
+  $('empty').style.display='none';$('viewer').style.display='block';
+  idx=Math.max(0,Math.min(idx,vis.length-1));
+  const{r}= vis[idx];
+  $('pos').textContent=`${idx+1}/${vis.length} shown · ${d}/${t} done`;
+  const v=(r.verdict?`<span class="badge b-${r.verdict}">${r.verdict}</span>`
+                    :'<span class="badge b-pend">pending</span>')
+          +(r.by?`<span class="badge b-reason">🤖 ${esc(r.by)}</span>`:'')
+          +((r.oldfix||'').trim()?`<span class="badge b-reason">⭐ old fix (${esc(r.oldfix_kind||'?')})</span>`:'');
+  $('meta').innerHTML=
+    `${v} ${r.reason?`<span class="badge b-reason">${esc(r.reason)}</span>`:''}
+     <span><b>${esc(r.strip)}</b></span>
+     ${r.nd?`<span>nd <b>${r.nd}</b></span>`:''}
+     ${r.min_logprob?`<span>min&nbsp;logp <b>${r.min_logprob}</b></span>`:''}
+     ${r.detail?`<span class="badge b-reason" data-detail>${esc(r.detail)}</span>`:''}`;
+  $('strip').src='/img/'+encodeURIComponent(qid)+'/'+encodeURIComponent(r.page)
+                +'/'+encodeURIComponent(r.strip);
+  $('labels').innerHTML=diffHtml(r.label,r.decoded)+oldfixHtml(r)+
+    (r.verdict&&r.verdict!=='bad'?corrHtml(r.label,r.corrected_label,r.by,r.verdict)
+     :suggHtml(r.label,r.corrected_label));
+  editing=false;$('editbox').style.display='none';$('imgwrap').classList.remove('zoom');
+  if(logOpen)renderLog();
+}
+
+let logOpen=false;
+async function toggleLog(){
+  logOpen=!logOpen;
+  if(logOpen){ // prove it: reload verdicts from the CSVs on disk, not browser memory
+    const s=await(await fetch('/api/state')).json();
+    S.queues=s.queues;          // lazy queues come back without rows, so the active one is
+    await ensureRows(qid);      // re-pulled from disk too rather than kept from memory
+  }
+  renderLog();render();
+}
+function renderLog(){
+  $('logcard').style.display=logOpen?'block':'none';
+  if(!logOpen)return;
+  const done=rows().map((r,i)=>({r,i})).filter(x=>x.r.verdict);
+  $('logn').textContent=` · ${done.length} in ${qid}`;
+  $('loglist').innerHTML=done.length?done.map(x=>
+    `<div class="logrow" data-strip="${esc(x.r.strip)}">
+       <span class="badge b-${x.r.verdict}">${x.r.verdict}</span>${x.r.by?`<span class="badge b-reason">🤖</span>`:''}
+       <span class="mono">${esc(x.r.strip)}</span>
+       <span class="mono" style="color:var(--mut)">${esc(solfText(x.r.corrected_label||'').slice(0,60))}</span>
+     </div>`).join('')
+   :'<div style="color:var(--mut);padding:8px">nothing verdicted in this queue yet</div>';
+  document.querySelectorAll('.logrow').forEach(el=>el.onclick=()=>{
+    $('fshow').value='all';
+    const v=visible(),j=v.findIndex(x=>x.r.strip===el.dataset.strip);
+    if(j>=0){idx=j;logOpen=false;renderLog();render();window.scrollTo(0,0);}
+  });
+}
+
+async function post(strip,verdict,corrected){
+  const res=await fetch('/api/verdict',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({queue:qid,strip,verdict,corrected})});
+  const j=await res.json();
+  if(!j.ok){toast('save failed: '+j.error);return false}
+  const row=rows().find(r=>r.strip===strip);
+  row.verdict=verdict;row.corrected_label=corrected;
+  row.by='';   // human (re-)verdict clears the machine marker, mirroring the server
+  return true;
+}
+function toast(m){const t=$('toast');t.textContent=m;t.style.opacity=1;
+  clearTimeout(t._h);t._h=setTimeout(()=>t.style.opacity=0,1800);}
+function cur(){const v=visible();return v.length?v[idx].r:null}
+
+async function verdict(v){
+  const r=cur();if(!r)return;
+  if(editing){ // an open edit must never be silently discarded by a verdict click
+    const txt=letterText($('edit').value.trim());
+    const orig=tokenize(r.corrected_label||r.label||r.decoded).join(' ');
+    if(v==='ok'&&txt&&txt!==orig){saveEdit();return} // edited, then "ok" -> they mean the fix
+    editing=false;$('editbox').style.display='none';
+  }
+  // `ok` means "the label shown is right". On a PENDING row corrected_label is a machine
+  // suggestion, not a human correction (a human correction always arrives as verdict `fix`), so
+  // accepting the label must CLEAR it — otherwise ok silently stores text that was never on screen.
+  const keep=r.verdict?r.corrected_label:'';
+  const ok=await post(r.strip,v,v?keep:'');
+  if(!ok)return;
+  toast(v?`${r.strip.split('_').slice(-2).join('_')} → ${v}`:'cleared');
+  // pending / 🤖 / bad filters: the row leaves the list, so idx already points at the next strip
+  if(v&&!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
+  render();
+}
+// edit-base builder: the model reads notes well but signatures badly, so the default
+// "hybrid" takes \sig…\sigend from the (corrected) label and everything after from the decode.
+// The model hallucinates triplet brackets from slurs, so decode-derived drafts drop
+// \tup3/\tupend — but OPTIONALLY (checkbox): in the tup-* queues the decode's brackets are
+// usually real, so the guard defaults OFF there and ON everywhere else; toggling it
+// rebuilds the draft. Label drafts always keep their own tup3 tokens.
+const stripTups=s=>$('striptup').checked?s.replace(/\\tup(3|end)\s*/g,''):s;
+let lastBase='hybrid';
+function baseText(r,mode){
+  const lab=r.corrected_label||r.label, dec=stripTups(r.decoded||'');
+  if(mode==='label')return lab||dec;
+  if(mode==='decode')return dec||lab;
+  if(!lab)return dec;
+  if(!dec.trim())return lab;
+  let sig='';
+  const si=lab.indexOf('\\sig'), se=lab.indexOf('\\sigend');
+  if(si>=0&&se>si)sig=lab.slice(si,se+7);
+  let content=dec;
+  const de=dec.indexOf('\\sigend');
+  if(de>=0)content=dec.slice(de+7);
+  return (sig?sig+' ':'')+content.trim();
+}
+function setBase(mode,preferCorrected){
+  const r=cur();if(!r)return;
+  lastBase=mode;
+  $('edit').value=solfText(preferCorrected&&r.corrected_label?r.corrected_label:baseText(r,mode));
+  $('edit').focus();lintNow();
+}
+let striptupQueue=null; // per-queue default: guard OFF in tup-* queues, ON elsewhere
+function openEdit(){
+  const r=cur();if(!r)return;
+  if(striptupQueue!==qid){$('striptup').checked=!qid.startsWith('tup');striptupQueue=qid;}
+  editing=true;$('editbox').style.display='block';
+  setBase('hybrid',true); // an existing correction wins; the base buttons rebuild from scratch
+}
+// "accept model decode" = the decode is right and the label is not, which is a `fix` whose text
+// is the decode. It stores exactly the tokens drawn in that block (normalised for spacing only),
+// never baseText()'s guarded rewrite — see actsHtml().
+async function acceptDecode(){
+  const r=cur();if(!r)return;
+  const txt=letterText((r.decoded||'').trim());
+  if(!txt){toast('no model decode on this row');return}
+  if(editing){editing=false;$('editbox').style.display='none';}
+  if(!await post(r.strip,'fix',txt))return;
+  toast(`${r.strip.split('_').slice(-2).join('_')} → fix (model decode)`);
+  if(!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
+  render();
+}
+// "accept the old human fix" = a person already corrected this music once and it is right for
+// this crop too. Stored as a `fix` with exactly the tokens drawn in that block, like acceptDecode.
+async function acceptOldfix(){
+  const r=cur();if(!r)return;
+  const txt=letterText((r.oldfix||'').trim());
+  if(!txt){toast('no old human fix on this row');return}
+  if(editing){editing=false;$('editbox').style.display='none';}
+  if(!await post(r.strip,'fix',txt))return;
+  toast(`${r.strip.split('_').slice(-2).join('_')} → fix (old human label)`);
+  if(!['pending','claude','agree','rule','bad'].includes($('fshow').value))idx++;
+  render();
+}
+function editFromOldfix(){
+  const r=cur();if(!r)return;
+  const txt=(r.oldfix||'').trim();
+  if(!txt){toast('no old human fix on this row');return}
+  editing=true;$('editbox').style.display='block';
+  $('edit').value=solfText(txt);$('edit').focus();lintNow();
+}
+// "edit from X" opens the box on that one source. Unlike `e` it does NOT prefer an existing
+// corrected_label, so the button does what its name says and nothing else.
+function editFrom(mode){
+  const r=cur();if(!r)return;
+  if(striptupQueue!==qid){$('striptup').checked=!qid.startsWith('tup');striptupQueue=qid;}
+  editing=true;$('editbox').style.display='block';
+  setBase(mode);
+}
+function lintNow(){
+  const{warn,n,ids,cap,scheme}=lint(letterText($('edit').value));
+  $('lint').innerHTML=warn.length?warn.map(w=>`<span class="warn">⚠ ${esc(w)}</span>`).join(' · ')
+    :`<span class="fine">✓ ${n} tokens = ${ids}/${cap} ids (vocab ${scheme}), `
+     +`looks well-formed</span>`;
+}
+async function saveEdit(){
+  const r=cur();if(!r)return;
+  const txt=letterText($('edit').value.trim());
+  if(!txt){toast('empty label — use ✗ bad instead');return}
+  if(await post(r.strip,'fix',txt)){toast('saved as fix');idx++;render();}
+}
+
+document.addEventListener('keydown',e=>{
+  if(editing){
+    if(e.key==='Escape'){editing=false;$('editbox').style.display='none'}
+    else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();saveEdit()}
+    return;
+  }
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT')return;
+  const k=e.key.toLowerCase();
+  if(k==='arrowright'||k===' '){e.preventDefault();idx++;render()}
+  else if(k==='arrowleft'){idx--;render()}
+  else if(k==='n'){const v=visible();const j=v.findIndex((x,i)=>i>idx&&!x.r.verdict);
+                   idx=j>=0?j:v.findIndex(x=>!x.r.verdict);if(idx<0)idx=0;render()}
+  else if(k==='a')verdict('ok');
+  else if(k==='x')verdict('bad');
+  else if(k==='u')verdict('');
+  else if(k==='e')openEdit();
+  else if(k==='z')$('imgwrap').classList.toggle('zoom');
+  else if(k==='t'){const c=$('refcard');c.style.display=c.style.display==='none'?'block':'none'}
+});
+// the label/decode blocks are re-rendered on every render(), so their buttons are delegated
+$('labels').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  ({'acc-label':()=>verdict('ok'),'acc-decode':acceptDecode,
+    'edit-label':()=>editFrom('label'),'edit-decode':()=>editFrom('decode'),
+    'acc-oldfix':acceptOldfix,'edit-oldfix':editFromOldfix})[b.dataset.act]();
+});
+$('b-ok').onclick=()=>verdict('ok');$('b-bad').onclick=()=>verdict('bad');
+$('b-clear').onclick=()=>verdict('');$('b-edit').onclick=openEdit;
+$('b-prev').onclick=()=>{idx--;render()};$('b-next').onclick=()=>{idx++;render()};
+$('b-pend').onclick=()=>{const v=visible();const j=v.findIndex(x=>!x.r.verdict);if(j>=0)idx=j;render()};
+$('b-save').onclick=saveEdit;
+$('base-h').onclick=()=>setBase('hybrid');
+$('base-l').onclick=()=>setBase('label');
+$('base-d').onclick=()=>setBase('decode');
+$('striptup').onchange=()=>setBase(lastBase); // toggling rebuilds the draft from scratch
+$('b-cancel').onclick=()=>{editing=false;$('editbox').style.display='none'};
+$('imgwrap').onclick=()=>$('imgwrap').classList.toggle('zoom');
+$('freason').onchange=()=>{idx=0;render()};$('fshow').onchange=()=>{idx=0;render()};
+$('b-log').onclick=toggleLog;
+$('b-ref').onclick=()=>{const c=$('refcard');c.style.display=c.style.display==='none'?'block':'none'};
+$('edit').addEventListener('input',lintNow);
+
+fetch('/api/state').then(r=>r.json()).then(async s=>{
+  // every scheme's commands, so the tokenizer splits a label the same way whichever pool it is in
+  S=s;CMDS=[...new Set([].concat(...Object.values(s.vocabs||{old:s.vocab})))]
+        .filter(t=>t.startsWith('\\')).sort((a,b)=>b.length-a.length);
+  ACC=new Set(s.accidentals);
+  const pend=s.queues.find(Q=>{const[d,t]=counts(Q);return t&&d<t;});
+  qid=(pend||s.queues[0]).id;
+  await ensureRows(qid);
+  render();
+});
+</script></body></html>
+"""
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--port", type=int, default=8377)
+    ap.add_argument("--root", type=Path, default=REPO,
+                    help="repo root override (testing)")
+    args = ap.parse_args()
+    Handler.root = args.root.resolve()
+    build_full_audit(Handler.root)
+    srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    print(f"rung-3 review UI → http://127.0.0.1:{args.port}   (Ctrl-C to stop)")
+    for qid, rel in QUEUES.items():
+        _, rows = load_queue(Handler.root, qid)
+        done = sum(1 for r in rows if r["verdict"])
+        print(f"  {qid:12s} {done}/{len(rows)} verdicted")
+    srv.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

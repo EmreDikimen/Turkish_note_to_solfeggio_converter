@@ -246,7 +246,7 @@ Nota tab in edit mode with the toolbox hidden.
 
 ## What is still owed
 
-- **`tools/browser/phone-smoke.ts` does not exist.** `npm run smoke:phone` is a PROBE — it prints
+- **`tools/checks/phone-smoke.ts` does not exist.** `npm run smoke:phone` is a PROBE — it prints
   findings and always exits 0. Nothing gates the phone. The nine asserts the plan specifies are in
   the session plan file; the two that would have caught real bugs here are *"the score fits"* and
   *"at least six tools are visible in edit mode"*.
@@ -285,7 +285,7 @@ Nota tab in edit mode with the toolbox hidden.
   live marks over the music only: the playhead and the instrument's moving finger (red), a
   pointed-at measure or note (cobalt), a selected note (red). Never a button, never text.
 - **An Istanbul painting behind the page** (owner, 2026-10-01): Aivazovsky by day, Aivazovsky by
-  moonlight at night (`ui/ornament/Backdrop.tsx`, `scripts/prepare_backdrop.py`). It sits under a
+  moonlight at night (`ui/ornament/Backdrop.tsx`, `ml/prep/prepare_backdrop.py`). It sits under a
   veil of the page's own paper, blurred behind the content column and sharper toward the window's
   edges, and every big block wears `--halo` — a paper glow, so the picture is faintest right beside
   the content. ⚠ The halo goes only on NON-POSITIONED blocks: on the positioned upload box it

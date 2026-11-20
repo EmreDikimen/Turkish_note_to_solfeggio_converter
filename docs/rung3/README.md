@@ -44,9 +44,9 @@ confirm", not "repair everything".
 | Parked ideas, watch-items, the old folder layout | [rounds.md § Follow-ups — the correction loop, parked ideas, watch-items, data…](../archive/rounds.md#follow-ups--the-correction-loop-parked-ideas-watch-items-data-layout) |
 
 **Raw records, verbatim** — every Colab training console (Round 3's arms, final model, runs A and B;
-Round 4's control and H arms) and the owner's two labelling notebooks (unusable crops, model failures
+Round 4's control and H arms) and the owner's two labelling ml/notebooks (unusable crops, model failures
 seen while labelling) — are in [../log/raw/](../log/raw.md#round4_control_logs). ⚠ Read a console
-beside [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md); ⛔ an H arm's `EDITS` are in
+beside [../../ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md); ⛔ an H arm's `EDITS` are in
 H ids and compare with nothing in the old vocabulary.
 
 ## State of the steps
@@ -110,7 +110,7 @@ Full account: [log/status-log.md](../log/status-log.md).
   ⚠ **The 67 exam pages were deliberately excluded**
   (`data/colab/decode_pages_reslice_EXAM_EXCLUDED.txt`): the exam is frozen and its gold describes
   crops under `data/real/strips/`. Re-cutting them belongs to exam v3.
-- **All of the re-slice is now REVIEWABLE (2026-07-31).** `scripts/rung3/build_reslice_queue.py`
+- **All of the re-slice is now REVIEWABLE (2026-07-31).** `ml/labels/build_reslice_queue.py`
   writes one `reslice-all` queue over every crop the re-slice decoded, so any strip can be pulled
   up in `review_ui.py` and verdicted against its picture instead of only the hard-tier sample.
   It is a browsing tool — nothing consumes it, and it is not a labelling target. Sizes, what a row
@@ -191,7 +191,7 @@ editions (16/16 break the arc), redrawn to those numbers, and corrected twice by
 Geometry: [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md); the account, including the
 comparison sheet and its ⚠ local-viewing-only caveat: [rounds.md § Tuplets — why `\tup3` recall keeps missing its floor](../archive/rounds.md#tuplets--why-tup3-recall-keeps-missing-its-floor).
 
-[../METRICS.md](../METRICS.md) · [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
+[../METRICS.md](../METRICS.md) · [../../ml/omr/MODEL_EVAL.md](../../ml/omr/MODEL_EVAL.md).
 
 ✅ **The control also answered a question nothing else could**: it scored **85.2%, exactly
 `round2-stage2-best`'s score on the same pool** — so `staff_jitter`, the rasterizer drift and a fresh
@@ -227,7 +227,7 @@ pages and photos of them.
   `data/checkpoints/_public_models_backup_round1/` until the 2026-09-06 space sweep deleted it as a
   byte-identical duplicate — revert = re-stage `data/checkpoints/round1-best-onnx/*_int8.onnx`.
 - **Every eval now reports MICRO and MACRO≥30 beside the macro mean**; past runs back-fill with
-  `scripts/rung3/rescore_headline.py`. The macro mean stays the pre-registered bar — micro was
+  `ml/labels/rescore_headline.py`. The macro mean stays the pre-registered bar — micro was
   computed after the fact and flatters us, so promoting it now would move the goalposts.
 - **Accidentals are only 13% of what a user has to fix.** Classifying all 562 exam edits: pitch 40%,
   duration 28%, rhythm signs 13%, **accidentals 13%**, structure 5%. Two rounds went into the 13%,
@@ -265,8 +265,8 @@ Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIO
 
 ### Steps 2+3 — BUILT + CALIBRATED (2026-07-12); provisional exam frozen, first real baseline taken
 
-> Implementation status. The emitter (`scripts/rung3/emit_strip_labels.py`), the exam builder
-> (`scripts/rung3/build_testset.py`), the carry-mode label serialization, and the honest eval
+> Implementation status. The emitter (`ml/labels/emit_strip_labels.py`), the exam builder
+> (`ml/labels/build_testset.py`), the carry-mode label serialization, and the honest eval
 > are DONE and gated; the plans below remain the reference for the design. What the 85-piece
 > calibration taught us (each finding is now baked into the pipeline):
 >

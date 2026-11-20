@@ -157,7 +157,7 @@ export const ADDED_TOKENS: string[] = [
  * ⛔ It is NOT folded into `ADDED_TOKENS`: every checkpoint this project owns was trained at
  * vocabulary 100, and Round 4’s step 6 is an A/B of the old vocabulary against H, so both must
  * be loadable side by side. The reason, and what broke when it was tried, is in
- * src/vision/data.py `vocabulary()`.
+ * ml/omr/data.py `vocabulary()`.
  *
  * docs/rung3/tokenization.md
  */
@@ -296,7 +296,7 @@ export function serializeSignature(
 /** Inverse of `serializeSignature`: parse a signature body — `\komaFlat b \bakiyeSharp c`, drawn
  *  order — into key-signature entries. The `\sig`/`\sigend` wrapper is tolerated if present, so
  *  both a bare body and a full prefix parse. Used to feed a makam's CONVENTIONAL PRINTED signature
- *  (`data/makam_signatures.json`, built by `scripts/build_makam_signatures.py` from the confirmed
+ *  (`data/makam_signatures.json`, built by `ml/prep/build_makam_signatures.py` from the confirmed
  *  real-page labels) into BOTH the draw path (SheetView) and the label path (stripExport), so
  *  synthetic carry-mode strips wear the makam's real printed signature instead of the
  *  content-derived `deriveKeySignature`. Throws on a malformed body rather than silently drop. */

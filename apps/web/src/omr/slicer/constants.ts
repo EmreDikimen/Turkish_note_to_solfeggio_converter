@@ -1,5 +1,5 @@
 /**
- * Every constant the slicer port needs, transliterated from `src/vision/page_to_strips.py` with
+ * Every constant the slicer port needs, transliterated from `ml/omr/page_to_strips.py` with
  * the Python line it came from. Keep the line references — they are how a reviewer checks the port
  * against its source, and how the next rung finds the comment explaining a number.
  *
@@ -255,7 +255,7 @@ export const STAFF_GROUP_SPAN_TOL = 0.15;
  * that tells a screenshot from a photo on a dark desk. The measured firing counts are beside the
  * Python original.
  * ⚠ Must move together with the Python constants or `parity:slicer` breaks. The full reasoning is
- * beside `whiten_frame` in `src/vision/page_to_strips.py`.
+ * beside `whiten_frame` in `ml/omr/page_to_strips.py`.
  */
 export const FRAME_WHITEN = true;
 export const FRAME_BAND = 12; // +- gray levels around the ring's mode that count as the frame

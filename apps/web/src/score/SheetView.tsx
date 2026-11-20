@@ -189,7 +189,7 @@ export function SheetView({
    *  own sign whenever the alteration differs at all, so the staff matches the sound. Required, not
    *  optional: the renderer and the app want opposite answers, and a caller that forgets would
    *  silently change what the corpus draws. The strip labels must be built with the SAME value
-   *  (`buildStrips`' `sigTolerant`) or pixels stop equalling labels. See `SIG_TOLERANT` in App.tsx. */
+   *  (`buildStrips`' `sigTolerant`) or pixels stop equalling labels. See `SIG_TOLERANT` in lib/urlParams.ts. */
   sigTolerant: boolean;
   /**
    * ⭐ **THE SIX PROPS BELOW EXIST SO THIS COMPONENT CAN BE THE MEASURE CARD TOO** (owner,

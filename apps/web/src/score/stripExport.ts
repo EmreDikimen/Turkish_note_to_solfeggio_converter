@@ -69,7 +69,7 @@ export function buildStrips(
   sigOverride?: { letter: string; alterCommas: number }[],
   // "measure" mode only: does a same-direction intonation refinement go BARE under the signature
   // (the printed-page convention a synthetic page imitates) or does it print its own sign? MUST be
-  // the value SheetView draws with — this is the pixels==labels pair. See `SIG_TOLERANT` in App.tsx.
+  // the value SheetView draws with — this is the pixels==labels pair. See `SIG_TOLERANT` in lib/urlParams.ts.
   // Defaults to the printed-page convention so a caller that omits it renders the corpus as before.
   sigTolerant = true,
   { maxMeasures = STRIP_BUDGET.maxMeasures, maxTokens = STRIP_BUDGET.maxTokens }: { maxMeasures?: number; maxTokens?: number } = {},

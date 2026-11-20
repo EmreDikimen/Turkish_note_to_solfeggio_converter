@@ -1,56 +1,117 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AccidentalMode } from "./score/vexNotes";
+import { AdvancedPanel } from "./ui/AdvancedPanel";
+import { type AppError, ReadError, toAppError } from "./ui/errors";
+import { Backdrop } from "./ui/ornament/Backdrop";
+import { BrandMark } from "./ui/BrandMark";
+import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import {
-  assignBars,
-  beatMsOf,
-  buildMetronomeTrack,
-  buildPercussionTrack,
-  buildTimeline,
-  centsAboveRef,
-  deleteEvent,
-  deriveTimeSignature,
-  estimateBpm,
-  detectMakam,
-  findUsul,
-  groupMeasures,
-  insertIndexIn,
-  insertInMeasure,
-  makamDisplay,
-  makamKomaDeltas,
-  makamOptions,
-  makamRuleUsage,
-  remapKomaDeltas,
-  measureOfEvent,
-  nudgePitch,
-  resolveMakam,
-  scaleDurations,
-  spellingOf,
-  toNote,
-  toRest,
-  transpose as transposeDoc,
-  unfoldDoc,
-  USULS,
-  withAlter,
-  withDurationBeats,
-  toggleDot,
-  withKoma,
-  withKomaDeltas,
-  withPitch,
+  DEFAULT_VIOLIN_TUNING,
   type MakamDetection,
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
   type Timeline,
-  DEFAULT_VIOLIN_TUNING,
+  USULS,
   type ViolinTuning,
+  assignBars,
+  beatMsOf,
+  buildMetronomeTrack,
+  buildPercussionTrack,
+  buildTimeline,
+  deleteEvent,
+  deriveTimeSignature,
+  detectMakam,
+  estimateBpm,
+  findUsul,
+  groupMeasures,
+  insertInMeasure,
+  insertIndexIn,
+  makamDisplay,
+  makamKomaDeltas,
+  makamOptions,
+  makamRuleUsage,
+  measureOfEvent,
+  nudgePitch,
+  remapKomaDeltas,
+  resolveMakam,
+  scaleDurations,
+  spellingOf,
+  toNote,
+  toRest,
+  toggleDot,
+  transpose as transposeDoc,
+  unfoldDoc,
+  withAlter,
+  withDurationBeats,
+  withKoma,
+  withKomaDeltas,
+  withPitch,
 } from "@turkish-omr/core";
-import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "@turkish-omr/core/labels/rhythm";
-import { useDocHistory } from "./score/useDocHistory";
-import { GoldRule } from "./ui/ornament/GoldRule";
-import { ThemeSwitch } from "./ui/ThemeSwitch";
-import { BrandMark } from "./ui/BrandMark";
-import { Backdrop } from "./ui/ornament/Backdrop";
-import { useTheme } from "./lib/theme";
+import { DEFAULT_VOICE, type VoiceId, findVoice } from "./audio/instruments";
 import {
+  DENSE_BUDGET,
+  PRINT_NOISE,
+  SAVE_DEBOUNCE_MS,
+  SIG_OVERRIDE,
+  SIG_TOLERANT,
+  SLUR_NOISE,
+  STACCATO_NOISE,
+  STRIP_BUDGET_OVERRIDE,
+  TEXT_NOISE,
+  TRANSPOSE_SPELLING,
+  URL_CONCAVE_TUPLET,
+  URL_LEGACY_TUPLET,
+  URL_LYRICS,
+  URL_MAX_MEASURES,
+  URL_MODE,
+  URL_NAVSEED,
+  URL_PRINTSEED,
+  URL_REPSEED,
+  URL_RESPELLSEED,
+  URL_SCORE,
+  URL_SIG,
+  URL_SLURSEED,
+  URL_STACCATOSEED,
+  URL_TEXTSEED,
+  URL_THIN_SHARPS,
+  URL_TRANSPOSE,
+  URL_USULBARSEED,
+  USUL_BAR_NOISE,
+  readFollow,
+  writeFollow,
+} from "./lib/urlParams";
+import {
+  EXPORT_STAGE_ID,
+  exportScorePdf,
+  exportScorePng,
+  waitForStage,
+} from "./export/exportScore";
+import { EditPalette, type PaletteRefusal, type Tool } from "./ui/EditPalette";
+import { type ExportStrip, buildStrips } from "./score/stripExport";
+import { FullScreenBar } from "./ui/FullScreen";
+import { GoldRule } from "./ui/ornament/GoldRule";
+import {
+  type InstrumentId,
+  InstrumentView,
+  instrumentForVoice,
+  voiceForInstrument,
+} from "./instruments/InstrumentView";
+import { IosInstallHint } from "./ui/IosInstallHint";
+import { MakamModal } from "./ui/modals/MakamModal";
+import { type MobileTab, MobileTabs } from "./ui/MobileTabs";
+import { type NavMark, injectNavMarks } from "@turkish-omr/core/labels/navmarks";
+import {
+  type OmrStatus,
+  busy as busyStatus,
+  pageSummary,
+  readingStatus,
+  stripsSummary,
+  whereOf,
+} from "./ui/status";
+import { type PlayOptions, type VoiceStatus, WebAudioBackend } from "./audio/webAudioBackend";
+import type { RawDecode } from "./ui/DecodePanel";
+import {
+  type RecentMeta,
   clearPages,
   deletePage,
   listPages,
@@ -58,71 +119,55 @@ import {
   readPage,
   renamePage,
   savePage,
-  type RecentMeta,
 } from "./lib/recentPages";
-import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
-import { DEFAULT_VOICE, findVoice, type VoiceId } from "./audio/instruments";
-import { voiceCached } from "./audio/loadInstrument";
-import { claimReload, isStaleChunkError } from "./lib/staleBuild";
-import { devMode } from "./lib/devMode";
-import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./audio/webAudioBackend";
-import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./export/exportScore";
-import { SheetView } from "./score/SheetView";
-import { SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH } from "./score/layout";
-import { type AccidentalMode } from "./score/vexNotes";
-import {
-  InstrumentView,
-  instrumentForVoice,
-  voiceForInstrument,
-  type InstrumentId,
-} from "./instruments/InstrumentView";
-import { MakamModal } from "./ui/modals/MakamModal";
-import { TransposeModal } from "./ui/modals/TransposeModal";
-import { VoiceDownloadModal } from "./ui/modals/VoiceDownloadModal";
-import { buildStrips, type ExportStrip } from "./score/stripExport";
-import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
-import { noteVisit } from "./lib/visits";
-import type { RawDecode } from "./ui/DecodePanel";
-import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
-import { loadImage } from "./omr/preprocess";
-import { UploadHero } from "./ui/UploadHero";
 import { RecentPages } from "./ui/RecentPages";
-import { TransportBar } from "./ui/TransportBar";
+import { type RepeatSpan, detectRepeats, injectRepeats } from "@turkish-omr/core/labels/repeats";
+import { SHEET_CONTENT_WIDTH, SHEET_SIDE_MARGIN } from "./score/layout";
 import { ScoreCard } from "./ui/ScoreCard";
-import { EditPalette, type PaletteRefusal, type Tool } from "./ui/EditPalette";
-import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
-import { IosInstallHint } from "./ui/IosInstallHint";
-import { AdvancedPanel } from "./ui/AdvancedPanel";
-import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
-import { FullScreenBar } from "./ui/FullScreen";
-import { useViewport } from "./lib/usePhone";
-import { TR } from "./ui/strings";
-import { ReadError, toAppError, type AppError } from "./ui/errors";
+import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";
+import { SheetView } from "./score/SheetView";
 import {
-  busy as busyStatus,
-  makamSuffix,
-  pageSummary,
-  readingStatus,
-  stripsSummary,
-  whereOf,
-  type OmrStatus,
-} from "./ui/status";
-import { detectRepeats, injectRepeats, type RepeatSpan } from "@turkish-omr/core/labels/repeats";
-import { injectNavMarks, type NavMark } from "@turkish-omr/core/labels/navmarks";
-import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
-import {
+  type SignTool,
+  type StructureMark,
   markTargets,
   openRepeatBar,
   placeMark,
   placeRepeat,
   removeMark,
-  type RefusalReason,
-  type SignTool,
-  type StructureMark,
 } from "@turkish-omr/core/labels/structure-edit";
-import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";
+import { type StripInput, positionFromName, stitchDecoded } from "./omr/pipeline";
+import { TR } from "./ui/strings";
+import { ThemeSwitch } from "./ui/ThemeSwitch";
+import { TransportBar } from "./ui/TransportBar";
+import { TransposeModal } from "./ui/modals/TransposeModal";
+import { UploadHero } from "./ui/UploadHero";
+import { VoiceDownloadModal } from "./ui/modals/VoiceDownloadModal";
+import { VoiceSwitchNotice } from "./ui/VoiceSwitchNotice";
+import { claimReload, isStaleChunkError } from "./lib/staleBuild";
+import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
+import { devMode } from "./lib/devMode";
+import {
+  drawnTupletAt,
+  memberPositions,
+  tupletEdgeTo,
+  tupletRunFrom,
+} from "@turkish-omr/core/labels/rhythm";
+import { loadImage } from "./omr/preprocess";
+import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
+import { noteVisit } from "./lib/visits";
 import { respellAeu } from "@turkish-omr/core/labels/respell";
-import { parseSignatureBody } from "@turkish-omr/core/labels/lilypond";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useDocHistory } from "./score/useDocHistory";
+import { useTheme } from "./lib/theme";
+import { useViewport } from "./lib/usePhone";
+import { voiceCached } from "./audio/loadInstrument";
+
 
 /** The "Gelişmiş" developer panel: dev server, or a device that opted in with `?dev=1` (devMode.ts). */
 const SHOW_DEV_PANEL = devMode();
@@ -175,139 +220,6 @@ const MAKAM_OPTIONS = makamOptions();
 // dev server and is the only way in now that the dropdown is gone. Local use is not distribution;
 // re-adding an entry here would be.
 const SAMPLES: { label: string; file: string }[] = [];
-
-// Render-automation parameters: the batch renderer (tools/render/render.ts) drives the harness
-// with one page.goto per job instead of UI clicks, e.g.
-//   /?score=/scores/foo.json&mode=keysig&lyrics=0&transpose=-4&repseed=123&navseed=789&textseed=456
-// Read once at load (each render job is a fresh page); all absent in interactive use.
-const RENDER_PARAMS = new URLSearchParams(window.location.search);
-const URL_SCORE = RENDER_PARAMS.get("score"); // path under apps/web/public/
-
-/**
- * How long after the last edit the score is written back to the browser's store.
- *
- * ⚠ It is a debounce, not an interval: dragging a note emits dozens of documents a second and each
- * one would otherwise be a ~100 KB serialise-and-store. Two seconds is long enough that a gesture
- * costs one write and short enough that nobody reloads inside it.
- */
-const SAVE_DEBOUNCE_MS = 2000;
-const URL_MODE = RENDER_PARAMS.get("mode") as AccidentalMode | null; // "every" | "keysig" | "measure"
-const URL_LYRICS = RENDER_PARAMS.get("lyrics"); // "1" | "0"
-const URL_FOLLOW = RENDER_PARAMS.get("follow"); // "1" | "0" — see `readFollow` below
-
-// Does the page chase the playhead while the piece plays? (owner, 2026-09-03)
-//
-// ON by default: a score that runs past the bottom of the window and stays there is a score the
-// reader has to chase by hand, which is the opposite of reading along. It is still the reader's
-// call — the checkbox in the score card's head — so the answer is remembered per browser, and a
-// reader who turns it off never meets it again.
-//
-// ⚠ `?follow=` wins over the remembered answer and is NOT written back, so a harness can pin the
-// behaviour without changing what the next human sees. The render harness never plays a score, so
-// nothing moves under its screenshots either way, but pinning it costs one query parameter.
-const FOLLOW_KEY = "kv.followPlayhead";
-
-/** ⚠ Swallows everything: `localStorage` does not merely come back empty in a private window or
- *  with site data blocked — the accessor itself throws, and a score that refuses to open because
- *  it could not remember a scrolling preference would be a much worse bug than the preference. */
-function readFollow(): boolean {
-  if (URL_FOLLOW != null) return URL_FOLLOW === "1";
-  try {
-    return localStorage.getItem(FOLLOW_KEY) !== "0";
-  } catch {
-    return true;
-  }
-}
-function writeFollow(v: boolean): void {
-  try {
-    localStorage.setItem(FOLLOW_KEY, v ? "1" : "0");
-  } catch {
-    /* remembering the answer is a convenience, never a requirement */
-  }
-}
-// Conventional PRINTED-signature override body (drawn order, e.g. "\bakiyeFlat b \bakiyeSharp c"),
-// the makam variant render.ts sampled from data/makam_signatures.json. Parsed once; fed to BOTH the
-// draw path (SheetView) and the label path (buildStrips) so synthetic carry pages wear the real
-// printed signature. Absent in interactive use → each derives the signature from the doc.
-const URL_SIG = RENDER_PARAMS.get("sig");
-const SIG_OVERRIDE = URL_SIG ? parseSignatureBody(URL_SIG) : undefined;
-// The same-direction accidental tolerance (`sigTolerant` — see SheetView's `applyAccidental`):
-// ON for a renderer-driven page, OFF for a human (owner decision 2026-08-09). A synthetic page has
-// to imitate a real printed edition, which writes an intonation refinement BARE under the donanım;
-// the app instead has to show what it PLAYS, and it was showing a koma bemol as a küçük bemol
-// wherever the two pointed the same way (134 of the 213 bundled scores have at least one such
-// letter). Both the draw path (SheetView) and the label path (buildStrips) read this ONE flag, so
-// pixels still equal labels on either setting.
-// Why "the mode came from the URL" IS "this is a render job": every render job's URL carries
-// `mode` (render.ts `jobUrl`, and verify-labels' manifest replay), and the tolerance only ever
-// applies in measure mode — so no existing corpus job or replay changes.
-const SIG_TOLERANT = URL_MODE != null;
-const URL_TRANSPOSE = Number(RENDER_PARAMS.get("transpose") ?? 0) || 0; // commas
-/**
- * How a transposed note is spelled (core `transpose`). A person gets "letters" — every note moves
- * by the same number of letters, so si–do a tone down reads la–si♭ (owner, 2026-10-16). A RENDER job
- * (`?mode=`) keeps "nearest", the spelling every synthetic corpus was rendered with: the product
- * track does not change what the model track generates.
- */
-const TRANSPOSE_SPELLING = URL_MODE ? "nearest" : "letters";
-const URL_REPSEED = RENDER_PARAMS.has("repseed") ? Number(RENDER_PARAMS.get("repseed")) : null;
-const URL_NAVSEED = RENDER_PARAMS.has("navseed") ? Number(RENDER_PARAMS.get("navseed")) : null;
-const URL_RESPELLSEED = RENDER_PARAMS.has("respellseed") ? Number(RENDER_PARAMS.get("respellseed")) : null;
-const URL_TEXTSEED = RENDER_PARAMS.has("textseed") ? Number(RENDER_PARAMS.get("textseed")) : null;
-const URL_SLURSEED = RENDER_PARAMS.has("slurseed") ? Number(RENDER_PARAMS.get("slurseed")) : null;
-// ⚠ DENSE-PAGE EXPERIMENT — `?dense=<ids>` (try 50). Cuts a dense row into more, shorter strips
-// so the model is never handed a strip whose label needs more ids than it can emit; without it
-// such a strip comes back as confident, silently wrong notes (`hitCap` catches almost none of
-// them). Costs decode time on dense pages only — a normal page is unchanged. Absent = today's
-// behaviour. Delete with the block in `omr/slicer/windows.ts`.
-const URL_DENSE = RENDER_PARAMS.has("dense") ? Number(RENDER_PARAMS.get("dense")) : null;
-const DENSE_BUDGET = URL_DENSE != null && Number.isFinite(URL_DENSE) && URL_DENSE > 0 ? URL_DENSE : undefined;
-// Round-3 staccato distractors: label-free dots on the notehead side (see SheetView's
-// drawStaccatoDot), teaching that a dot only means "longer" BESIDE the notehead. Absent → none,
-// i.e. every strip rendered before 2026-08-15.
-const URL_STACCATOSEED = RENDER_PARAMS.has("staccatoseed") ? Number(RENDER_PARAMS.get("staccatoseed")) : null;
-// Round-3 dotted (usul) barlines: label-free dashed rules on the usul's beat-group boundaries (see
-// drawUsulBars in score/drawMarks.ts). The symbol has never been drawn, so the model reads a printed one as
-// `\repstart`. Absent → none, i.e. every strip rendered before 2026-08-30.
-const URL_USULBARSEED = RENDER_PARAMS.has("usulbarseed") ? Number(RENDER_PARAMS.get("usulbarseed")) : null;
-// Round-3 print realism: seeded staff-line weight + usul beam grouping (see SheetView's
-// STAFF_LINE_WIDTH / USUL_BEAM_GROUPS). Absent → VexFlow's defaults, i.e. every pre-Round-3 strip.
-const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get("printseed")) : null;
-// Round-2: draw the four AEU sharps with real-print bar weight (see drawThinSharps in score/drawMarks.ts).
-// Render-automation only; absent → Bravura's glyphs, as before.
-const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
-// The tuplet A/B's CONTROL arm: draw the pre-2026-08-12 continuous arc with the digit floating above
-// it (see drawTupletArcLegacy in score/drawMarks.ts). Render-automation only — absent → the measured shape the
-// app ships. docs/archive/rounds.md
-const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
-// The THIRD printed tuplet shape — a continuous arc with the "3" inside its concavity, drawn on a
-// share of pieces (see drawTupletArcConcave in score/drawMarks.ts). Render-automation only, OPT-IN, absent →
-// every piece draws the broken mark exactly as before. docs/archive/rounds.md
-const URL_CONCAVE_TUPLET = RENDER_PARAMS.get("concavetuplet") === "1";
-// Round-3 Lever 1 (crop geometry): how many measures one training strip may span. Render-automation
-// only; absent → STRIP_BUDGET.maxMeasures, i.e. every strip rendered before 2026-08-17.
-//
-// ⚠ This is the RENDERER's rail and it is NOT the slicer's. The slicer cuts real pages at
-// MEASURES_PER_STRIP = 3 / MAX_STRIP_W = 1450 px (apps/web/src/omr/slicer/constants.ts); the renderer
-// packs by measures and LABEL TOKENS and has no pixel-width rail at all, which is why our strips run
-// wider than the real pools' (docs/archive/rounds.md §4). Lowering this alone narrows the synthetic
-// side only — the matching re-slice is the other half. docs/archive/rounds.md, Lever 1.
-const URL_MAX_MEASURES = RENDER_PARAMS.has("maxmeasures")
-  ? Number(RENDER_PARAMS.get("maxmeasures"))
-  : null;
-// Passed to buildStrips as its budget override. Undefined (not a partial object) when the param is
-// absent, so the default STRIP_BUDGET destructuring applies untouched.
-const STRIP_BUDGET_OVERRIDE =
-  URL_MAX_MEASURES != null && Number.isFinite(URL_MAX_MEASURES) && URL_MAX_MEASURES > 0
-    ? { maxMeasures: URL_MAX_MEASURES }
-    : undefined;
-// Stable object identity (SheetView's engrave effect depends on it; an inline literal would
-// re-engrave on every render). Constant per page load, like all render params.
-const TEXT_NOISE = URL_TEXTSEED != null ? { seed: URL_TEXTSEED } : undefined;
-const SLUR_NOISE = URL_SLURSEED != null ? { seed: URL_SLURSEED } : undefined;
-const STACCATO_NOISE = URL_STACCATOSEED != null ? { seed: URL_STACCATOSEED } : undefined;
-const USUL_BAR_NOISE = URL_USULBARSEED != null ? { seed: URL_USULBARSEED } : undefined;
-const PRINT_NOISE = URL_PRINTSEED != null ? { seed: URL_PRINTSEED } : undefined;
 
 /**
  * What the transposition dropdown offers, and how each step is named.

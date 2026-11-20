@@ -157,7 +157,7 @@ short list of what can be broken from anywhere.
   duplicated (the carry/`sigTolerant` decision lives in both `SheetView.tsx` and `lilypond.ts`), a
   corpus is not trainable until `tools/render/verify-labels.ts` passes on it: that duplication
   silently cost Round 1 (docs/METRICS.md). ⚠ `sigTolerant` is a **flag on both sides**, fed by
-  `SIG_TOLERANT` in `App.tsx` — **on** for renderer-driven pages (a synthetic page imitates a real
+  `SIG_TOLERANT` in `apps/web/src/lib/urlParams.ts` — **on** for renderer-driven pages (a synthetic page imitates a real
   printed edition, which writes a same-direction refinement bare) and **off** for a human, because the
   app's staff must say what it plays (owner, 2026-08-09). It is ONE flag for the draw path and the
   label path, so pixels == labels either way; `?mode=` in the URL is what makes a page

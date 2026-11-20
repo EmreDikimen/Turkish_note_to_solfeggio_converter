@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { groupMeasures, type Measure, type NoteModelDocument, type Timeline } from "@turkish-omr/core";
-import { SHEET_SIDE_MARGIN, type PlayStep } from "../score/SheetView";
+import { SHEET_SIDE_MARGIN } from "../score/layout";
+import { type PlayStep } from "../score/hitTest";
 import { TR } from "../ui/strings";
 import { useIsPhone } from "../lib/usePhone";
 

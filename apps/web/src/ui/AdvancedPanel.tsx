@@ -18,7 +18,7 @@
  */
 
 import type { NoteModelDocument } from "@turkish-omr/core";
-import type { AccidentalMode } from "../score/SheetView";
+import type { AccidentalMode } from "../score/vexNotes";
 import type { ExportStrip } from "../score/stripExport";
 import { DecodePanel, type RawDecode } from "./DecodePanel";
 import { PitchRangeNote } from "./PitchRangeNote";

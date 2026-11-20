@@ -228,7 +228,7 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 - [x] **Real-print sharp weight — `--thin-sharps` (2026-07-26), OFF by default.** Bravura draws the
       AEU sharp bars too thick and packs küçük's three bars too close, so after the encoder's shrink
       they fuse into a block that IS a 2-bar koma — that, not resolution and not teaching volume, was
-      the model's microtonal-sharp weakness. `drawThinSharps` (SheetView) redraws all four sharps as
+      the model's microtonal-sharp weakness. `drawThinSharps` (score/drawMarks.ts) redraws all four sharps as
       SVG at real-print bar weight — all four, so bar COUNT stays the only difference; flats
       untouched. Off by default so an A/B against `strips_v3` stays possible.
       Diagnosis: `docs/rung3/round2.md`; the measured widths: `docs/METRICS.md`.
@@ -236,7 +236,7 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       no articulation token and the renderer drew no staccato, so 0 of 40,826 strips carried one and
       **every dot the model had ever seen meant *longer***: it reads a printed staccato as an
       augmentation dot. Measured with a paired control — **72.7%** of marked strips get a dot the gold
-      does not have, against **0.0%** unmarked. `drawStaccatoDot` (SheetView) draws it as raw SVG on
+      does not have, against **0.0%** unmarked. `drawStaccatoDot` (score/drawMarks.ts) draws it as raw SVG on
       the notehead side, and the draw deliberately seeks out **already-dotted notes**, because a
       notehead carrying both marks is the only example that isolates position. ⚠ `staccatoseed` is
       **not** a manifest field (like `legacyTuplet`), so the two arms' manifests stay byte-identical

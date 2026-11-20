@@ -86,7 +86,7 @@ updated: 2026-11-20
   came from this one mistake and it will recur with any new modifier or overlay.
   (1) `StaveNote.getBoundingBox()` merges over the note's MODIFIERS, and `GraceNoteGroup` never
   positions itself, so it reports its box at the SVG **origin**: merging that stretched a graced note's
-  click box to 949×1805 px and stole **126 of 134 clicks** on the page. `noteBoxOf` in `SheetView.tsx`
+  click box to 949×1805 px and stole **126 of 134 clicks** on the page. `noteBoxOf` in `score/hitTest.ts`
   therefore rejects any box reaching x ≤ 0 or y ≤ 0 and falls back to `getNoteHeadBounds` /
   `getStemExtents` / `getGlyphWidth`. ⚠ **The default sample has no grace notes, so `smoke:editor`
   loads `beyati-delisin.json` for its geometry section** — keep it that way.

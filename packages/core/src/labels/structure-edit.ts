@@ -352,7 +352,7 @@ export function openRepeatBar(structure: ScoreStructure | null, barCount: number
 /**
  * Every sign on the page that can be clicked away, with the edge its ink sits on.
  *
- * Edges match what SheetView draws (`drawVolta`, `drawNavMarks`, VexFlow's repeat barlines), so a
+ * Edges match what the score draws (`drawVolta`, `drawNavMarks` in score/drawMarks.ts, VexFlow's repeat barlines), so a
  * target always lands on the glyph it deletes. ⚠ Derived from the FLAGS, never from the drawn
  * spans: an unmatched `:‖` is drawn with a `‖:` at the head of its span that no flag carries, and
  * offering a delete target there would be a button that does nothing.

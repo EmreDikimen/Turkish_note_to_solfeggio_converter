@@ -67,7 +67,9 @@ import { claimReload, isStaleChunkError } from "./lib/staleBuild";
 import { devMode } from "./lib/devMode";
 import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./audio/webAudioBackend";
 import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./export/exportScore";
-import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./score/SheetView";
+import { SheetView } from "./score/SheetView";
+import { SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH } from "./score/layout";
+import { type AccidentalMode } from "./score/vexNotes";
 import {
   InstrumentView,
   instrumentForVoice,
@@ -265,21 +267,21 @@ const DENSE_BUDGET = URL_DENSE != null && Number.isFinite(URL_DENSE) && URL_DENS
 // i.e. every strip rendered before 2026-08-15.
 const URL_STACCATOSEED = RENDER_PARAMS.has("staccatoseed") ? Number(RENDER_PARAMS.get("staccatoseed")) : null;
 // Round-3 dotted (usul) barlines: label-free dashed rules on the usul's beat-group boundaries (see
-// SheetView's drawUsulBars). The symbol has never been drawn, so the model reads a printed one as
+// drawUsulBars in score/drawMarks.ts). The symbol has never been drawn, so the model reads a printed one as
 // `\repstart`. Absent → none, i.e. every strip rendered before 2026-08-30.
 const URL_USULBARSEED = RENDER_PARAMS.has("usulbarseed") ? Number(RENDER_PARAMS.get("usulbarseed")) : null;
 // Round-3 print realism: seeded staff-line weight + usul beam grouping (see SheetView's
 // STAFF_LINE_WIDTH / USUL_BEAM_GROUPS). Absent → VexFlow's defaults, i.e. every pre-Round-3 strip.
 const URL_PRINTSEED = RENDER_PARAMS.has("printseed") ? Number(RENDER_PARAMS.get("printseed")) : null;
-// Round-2: draw the four AEU sharps with real-print bar weight (see SheetView's drawThinSharps).
+// Round-2: draw the four AEU sharps with real-print bar weight (see drawThinSharps in score/drawMarks.ts).
 // Render-automation only; absent → Bravura's glyphs, as before.
 const URL_THIN_SHARPS = RENDER_PARAMS.get("thinsharps") === "1";
 // The tuplet A/B's CONTROL arm: draw the pre-2026-08-12 continuous arc with the digit floating above
-// it (see SheetView's drawTupletArcLegacy). Render-automation only — absent → the measured shape the
+// it (see drawTupletArcLegacy in score/drawMarks.ts). Render-automation only — absent → the measured shape the
 // app ships. docs/archive/rounds.md
 const URL_LEGACY_TUPLET = RENDER_PARAMS.get("legacytuplet") === "1";
 // The THIRD printed tuplet shape — a continuous arc with the "3" inside its concavity, drawn on a
-// share of pieces (see SheetView's drawTupletArcConcave). Render-automation only, OPT-IN, absent →
+// share of pieces (see drawTupletArcConcave in score/drawMarks.ts). Render-automation only, OPT-IN, absent →
 // every piece draws the broken mark exactly as before. docs/archive/rounds.md
 const URL_CONCAVE_TUPLET = RENDER_PARAMS.get("concavetuplet") === "1";
 // Round-3 Lever 1 (crop geometry): how many measures one training strip may span. Render-automation

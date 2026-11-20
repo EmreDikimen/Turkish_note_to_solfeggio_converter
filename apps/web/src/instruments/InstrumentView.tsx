@@ -8,7 +8,7 @@ import { Fingerboard } from "./Fingerboard";
 import { Kanun } from "./Kanun";
 import { Clarinet } from "./Clarinet";
 import { MeasureCard } from "./MeasureCard";
-import type { PlayStep } from "../score/SheetView";
+import type { PlayStep } from "../score/hitTest";
 import { VOICES, type VoiceId } from "../audio/instruments";
 import type { VoiceStatus } from "../audio/webAudioBackend";
 import { TR } from "../ui/strings";

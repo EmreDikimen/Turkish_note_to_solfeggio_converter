@@ -40,7 +40,7 @@ import { findUsul, USULS, type MakamOption, type MakamRuleUse } from "@turkish-o
 import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
 import type { VoiceStatus } from "../audio/webAudioBackend";
-import type { AccidentalMode } from "../score/SheetView";
+import type { AccidentalMode } from "../score/vexNotes";
 import { MakamIntonation } from "./MakamIntonation";
 import { TR } from "./strings";
 import { PauseIcon, PlayIcon, StopIcon } from "./PlayIcons";

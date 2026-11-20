@@ -80,10 +80,10 @@ interface Job {
   textseed: number;
   respellseed: number;
   slurseed: number;
-  /** Round-3 staccato distractors (SheetView's drawStaccatoDot).
+  /** Round-3 staccato distractors (drawStaccatoDot in score/drawMarks.ts).
    *  `null` unless `--staccato-noise` — see STACCATO_NOISE above. */
   staccatoseed: number | null;
-  /** Round-3 dotted (usul) barlines (SheetView's drawUsulBars). `null` unless `--usul-barline`.
+  /** Round-3 dotted (usul) barlines (drawUsulBars in score/drawMarks.ts). `null` unless `--usul-barline`.
    *  ⚠ Seeded per PIECE, never per copy or transpose: an edition either uses the convention or it
    *  does not, so every copy of one piece must make the same choice. */
   usulbarseed: number | null;
@@ -105,7 +105,7 @@ const FROM = Number(arg("from") ?? 0);
 const TO = arg("to") != null ? Number(arg("to")) : Infinity;
 // Round-2: draw the four AEU sharps at real-print bar weight instead of Bravura's heavier one,
 // which closes the white gaps between the THREE bars of a küçük/büyük mücennep so they decode as
-// their 2-bar cousins (see SheetView's drawThinSharps). Opt-in, so an A/B against the current
+// their 2-bar cousins (see drawThinSharps in score/drawMarks.ts). Opt-in, so an A/B against the current
 // corpus stays possible.
 const THIN_SHARPS = has("thin-sharps");
 // The tuplet A/B (docs/archive/rounds.md): the CONTROL arm renders the mark as it was drawn

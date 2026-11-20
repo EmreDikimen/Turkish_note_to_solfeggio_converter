@@ -181,7 +181,7 @@ export type SignatureMap = ReadonlyMap<string, number> | null | undefined;
  * currently in effect within the measure. Seeded lazily from the signature; set by each printed
  * accidental. One instance per measure (carry is measure-scoped — it resets at every barline),
  * created by `measureAtoms` and threaded through the note serializers. Mirrors the `active` map
- * in SheetView's `buildStaveNotes`.
+ * in `buildStaveNotes` in score/vexNotes.ts.
  */
 export type CarryState = Map<string, number>;
 

@@ -267,7 +267,7 @@ data. Verify on more decoded pages before promising anything.
 | **Finding a mark the arithmetic never closed** | ✅ **built 2026-08-30** | `drawnTupletAt` — the counterpart of `closedTupletAt`: *"is a bracket drawn here"*, not *"is this a real triplet"* |
 | **Scaling durations (make/remove a triplet)** | ✅ **built 2026-08-08** | `scaleDurations` in `../../packages/core/src/edits.ts` |
 | **Inserting into a bar** | ✅ **built 2026-08-08** | `insertInMeasure` / `insertIndexIn` in `../../packages/core/src/edits.ts` |
-| **Pitch from a click's height** | ✅ **built 2026-08-08** | `pitchAtHeight` + `MeasureBox.topLineY` in `SheetView.tsx`, over core's `nudgePitch` |
+| **Pitch from a click's height** | ✅ **built 2026-08-08** | `pitchAtHeight` + `MeasureBox.topLineY` in `score/hitTest.ts`, over core's `nudgePitch` |
 
 **Undo/redo shipped in the first slice, not after it.** Direct editing without undo is worse than a
 modal, which at least has Cancel.

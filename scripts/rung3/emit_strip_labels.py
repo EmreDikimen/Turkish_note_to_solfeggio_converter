@@ -7,7 +7,7 @@ token placement from the SAME TypeScript serializer that makes the synthetic lab
 (tools/render/labels-cli.ts --ranges, "measure"/carry mode = the printed-page convention).
 
 The alignment trusts the model almost nowhere, and everything uncertain is DROPPED or sent to
-human review — a wrong label is worse than no label (docs/rung3/exam.md §3):
+human review — a wrong label is worse than no label (docs/rung3/README.md §3):
 
   1. DECODE   every page once (slicer geometry + int8 ONNX decode + per-token logprobs).
   2. FOLD     SymbTr writes repeats out twice; the page draws them once. Try every fold subset
@@ -110,7 +110,7 @@ def load_makam_table() -> dict[str, dict[str, int]]:
     variant would vouch for the vote on **31 mahur pieces** in exactly the direction the owner
     corrected by hand 10 times out of 10 — the rule would be blind where the defect was found.
     A minority-spelled edition therefore reaches review and is confirmed by eye.
-    docs/METRICS-SIGVOTE.md."""
+    docs/METRICS-CORPUS.md."""
     raw = json.loads(MAKAM_SIGNATURES.read_text())
     out: dict[str, dict[str, int]] = {}
     for key, entry in raw.items():
@@ -137,7 +137,7 @@ def sig_needs_review(derived: tuple, voted: tuple, makam: str,
     Why deletion is the trigger: audited 2026-09-06 over five pools, 410 overrides delete an entry
     against 156 that alter one, and 106 of the deleted entries were in the derivation. The model
     did not SEE the accidental, and its silence overwrote a correct one — invisible downstream,
-    because the `nd` gate strips `\\sig` blocks from both sides. docs/METRICS-SIGVOTE.md.
+    because the `nd` gate strips `\\sig` blocks from both sides. docs/METRICS-CORPUS.md.
     """
     d = {letter: ACC_COMMAS[acc] for acc, letter in derived}
     v = {letter: ACC_COMMAS[acc] for acc, letter in voted}
@@ -903,7 +903,7 @@ def main() -> int:
                     # RULE D (owner, 2026-09-06): a vote that DELETES or CHANGES an accidental and
                     # cannot be vouched for by the makam table does not overwrite anything — the
                     # label keeps the SymbTr derivation and the piece's row-start strips go to a
-                    # human. A model's silence is not evidence. docs/METRICS-SIGVOTE.md.
+                    # human. A model's silence is not evidence. docs/METRICS-CORPUS.md.
                     if sig_needs_review(derived_sig, top, piece.makam, makam_table):
                         sig_table_conflict = True
                     else:

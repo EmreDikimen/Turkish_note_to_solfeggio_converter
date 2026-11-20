@@ -3,7 +3,7 @@
 The model was fine-tuned on short strips engraved at ONE fixed scale: height 336 px, a 5-line
 staff spanning 120 px (30 px line spacing), top line ~138 px down (see the measured gate strips).
 Real uploads are whole pages at arbitrary DPI, so before decoding we must reproduce that exact
-geometry. This is classical CV (staff + barline detection), NOT the model — per docs/PIPELINE.md
+geometry. This is classical CV (staff + barline detection), NOT the model — per docs/CODE_TOUR.md
 §1 and §0: staff lines give the rows, barlines give the measure boundaries, and grouping a few
 measures per window reproduces the training strip.
 
@@ -67,7 +67,7 @@ MEASURES_PER_STRIP = int(os.environ.get("OMR_MEASURES_PER_STRIP", "3"))
 # target measures per window (2-4 is the training range)
 #
 # OMR_MAX_STRIP_W: the width rail, env-switchable since 2026-08-17 for Round-3 Lever 1's crop-geometry
-# pilot (docs/archive/rounds/levers.md). It had to be monkeypatched before that — width_split_probe.py still
+# pilot (docs/archive/rounds.md). It had to be monkeypatched before that — width_split_probe.py still
 # shows the pattern. ⚠ This is the SLICER's pair; the renderer packs training strips by measures and
 # LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no width rail at all, so changing
 # this alone moves the real crops and leaves the synthetic corpus where it was.
@@ -183,7 +183,7 @@ WIDE_NEAR_SP = 1.5     # ... and only within this distance of the staff line: a 
 # staff-row test, at the same 0.4 fill, so the file keeps ONE definition of "this row is a staff
 # line". ⚠ Switchable, so it stays A/B-able against the rule it amends: `OMR_BLOB_LINE=0` restores
 # 2026-08-24 behaviour exactly. Numbers, and the rejected shape-based alternative:
-# docs/METRICS-SLICER-BARLINES.md.
+# docs/METRICS-SLICER-STAFF.md.
 BLOB_SKIP_LINE = os.environ.get("OMR_BLOB_LINE", "1") == "1"
 BLOB_LINE_FILL = float(os.environ.get("OMR_BLOB_FILL", "0.4"))   # ... "spans the staff" = this full
 # Gate 2 skips "staff rows" so the five lines cannot make every candidate look fat. It finds them by
@@ -219,7 +219,7 @@ STAFF_ROW_POS_SP = float(os.environ.get("OMR_STAFF_ROW_POS", "0.2"))
 # it (`cok_yasa_ayse_ney` s01, 2 real `:|` lost on the first full run) put a thin curve at both
 # ends — bar plus wing read as fat, bar-thickness subtracted does not, while a 2 px stem loses
 # nothing. Strictly a tightening — it can only REJECT candidates.
-# `OMR_END_BLOBS=0` restores the 2026-09-02 behaviour for A/B. docs/METRICS-SLICER-STEMS.md.
+# `OMR_END_BLOBS=0` restores the 2026-09-02 behaviour for A/B. docs/METRICS-SLICER-STAFF.md.
 END_BLOBS = os.environ.get("OMR_END_BLOBS", "1") == "1"
 END_SPAN_SP = 1.5           # how far in from an end of the run an attachment may sit: a head is
                             # 1 sp, a 16th's second beam ends ~1.25 sp in (beam, gap, beam)

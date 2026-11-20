@@ -107,7 +107,7 @@ export async function slicePage(
   const skewDeg = guardedAngle(est);
 
   // One synchronous block: ink, connected components, staves, rows, barlines, windows. ~1-2 s on a
-  // corpus page against the sweep's ~35, so it is not worth splitting — see METRICS-SLICER-PORT.md.
+  // corpus page against the sweep's ~35, so it is not worth splitting — see METRICS-SLICER.md.
   opts.onProgress?.("finding the staves");
   await paint();
   const res = sliceStage3(gray, {

@@ -1,6 +1,6 @@
 r"""Round-3 — how does REAL print draw the triplet mark, and how do we draw it?
 
-THE GAP THIS FILLS (docs/archive/rounds/tuplets.md). `\tup3` recall is 83.8% against a >=85% floor and below
+THE GAP THIS FILLS (docs/archive/rounds.md). `\tup3` recall is 83.8% against a >=85% floor and below
 its own 92.7% pre-work baseline: the model misses about one triplet in six. The leading hypothesis is
 that we draw the mark in a shape real print does not use — real Turkish editions BREAK the arc and set
 the "3" in the gap, while `drawTupletArc` draws one unbroken quadratic with the digit floating above
@@ -67,7 +67,7 @@ def staff_rows(bw: np.ndarray, thresh: float = 0.6) -> tuple[float, list[tuple[i
     """(staff spacing, staff-line row bands). Same rule as beam_weight_probe.staff_spacing.
 
     ⚠ `thresh` defaults to the 0.6 every earlier reading used — do NOT lower it for the pools, or the
-    numbers in docs/METRICS-TUPLETS.md stop being reproducible. It exists for `--images` only: a
+    numbers in docs/METRICS-DIAGNOSTICS.md stop being reproducible. It exists for `--images` only: a
     SCANNED page has margins and broken staff lines, so a full-width row rarely reaches 0.6 even
     where a staff plainly is (measured 2026-08-19: 0.57 and 0.61 maxima on the owner's two scans,
     against 0.95 on a born-digital page).
@@ -259,7 +259,7 @@ def concave_geometry(arr: np.ndarray, c: dict, destaff: bool = False) -> dict | 
     """The THIRD printed style: a CONTINUOUS arc with the digit inside its concavity.
 
     Added 2026-08-19, after the owner supplied two real editions drawing it that way — the
-    counterexample to this file's own 16/16 result (docs/METRICS-TUPLETS.md). `band_geometry` above
+    counterexample to this file's own 16/16 result (docs/METRICS-DIAGNOSTICS.md). `band_geometry` above
     cannot measure it: it scans sideways from the digit expecting to hit two arc ends, and here the
     arc is ABOVE the digit, not beside it. So the quantities are different ones —
 
@@ -412,7 +412,7 @@ def main() -> int:
                          "a scanned page with margins needs ~0.45 (see staff_rows)")
     ap.add_argument("--concave", action="store_true",
                     help="report the CONTINUOUS-arc/digit-in-the-concavity geometry (the third style, "
-                         "docs/archive/rounds/tuplets.md) instead of the broken-arc one")
+                         "docs/archive/rounds.md) instead of the broken-arc one")
     ap.add_argument("--accept", default=None,
                     help="comma list of tile indices a HUMAN confirmed are tuplet marks; prints the "
                          "geometry summary over those only (same -n/--seed → same indices)")

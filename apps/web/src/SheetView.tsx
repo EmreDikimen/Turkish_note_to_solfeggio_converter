@@ -515,7 +515,7 @@ export function tupletAbove(group: StaveNote[]): boolean {
  * vs our 0.100). Thickening only this one would hand the model a thickness cue separating a triplet
  * from a slur that real pages do not have — the trap `AEU_SHARP_STROKE` documents. Owed as a joint
  * change with the slur. The shape A/B has now run (2026-08-15) and came back null, so the stroke is
- * still owed and still joint — see docs/archive/rounds/round3-criteria.md and docs/archive/rounds/tuplets.md step 5.
+ * still owed and still joint — see docs/archive/rounds.md and docs/archive/rounds.md step 5.
  */
 const TUPLET_MARK = {
   gap: 1.63,       // S — arc-end to arc-end, the hole the digit sits in (real: 1.55–1.69, n=16)
@@ -728,7 +728,7 @@ function drawTupletArcConcave(svg: SVGElement, group: StaveNote[], above: boolea
 /**
  * The mark as it was drawn until 2026-08-12 — ONE unbroken quadratic with a bold italic "3"
  * floating above its apex. It exists for exactly one reason: it is the **control arm** of the
- * tuplet A/B pre-registered in docs/archive/rounds/round3-criteria.md, reached only through
+ * tuplet A/B pre-registered in docs/archive/rounds.md, reached only through
  * `render.ts --legacy-tuplet-mark` (URL `?legacytuplet=1`). The app itself always draws the
  * measured shape above.
  *
@@ -952,7 +952,7 @@ const USUL_BAR_DASH = [0.22, 0.30] as const;
  * `ADDED_TOKENS` has no name for one, so the nearest thing the model knows is a vertical line with
  * DOTS beside it: a repeat sign. It duly emits `\repstart`, and the owner has been deleting those
  * by hand while labelling — ~1 in 5 of `batch3`'s corrections is exactly that (docs/BACKLOG.md
- * item 5, docs/METRICS-UNSEEN.md).
+ * item 5, docs/METRICS-INPUT.md).
  *
  * ⭐ This is the same SHAPE of change as the staccato distractor, and that now means something
  * measured rather than argued: a HOLE in what the model has been shown responds to being filled
@@ -1877,14 +1877,14 @@ export function SheetView({
   printNoise?: { seed: number } | null;
   /** The tuplet A/B's CONTROL arm: draw the pre-2026-08-12 continuous arc with the digit floating
    *  above it (see drawTupletArcLegacy). Pixels only — the `\tup3` token is identical either way.
-   *  Corpus rendering only; the app never sets it. docs/archive/rounds/round3-criteria.md */
+   *  Corpus rendering only; the app never sets it. docs/archive/rounds.md */
   legacyTupletMark?: boolean;
   /** OPT-IN (2026-08-19): let a share of pieces draw the CONCAVE mark — a continuous arc with the
    *  "3" hanging inside it (see drawTupletArcConcave). Pixels only; the `\tup3` token is identical.
    *  ⚠ OFF by default and it must stay that way: it changes a share of every rendered piece, so a
    *  corpus rendered with it on is not comparable to one rendered with it off. That is precisely how
    *  `--print-noise` once shipped USUL_BEAM_GROUPS into ~40k strips by riding along unconditionally.
-   *  docs/archive/rounds/tuplets.md */
+   *  docs/archive/rounds.md */
   concaveTuplet?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);

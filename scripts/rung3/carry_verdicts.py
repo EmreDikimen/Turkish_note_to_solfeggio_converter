@@ -24,7 +24,7 @@ where a verdict would promote it back into training. `--review` carries into tha
 one extra rule: ⛔ **only rows a HUMAN verdicted (`by` empty) travel into review.** A machine draft
 says "the label matches this model's decode", and the rows that land in review are exactly the ones
 where that agreement is worthless or circular — `sig_table_conflict` above all, where the \\sig
-block being judged IS the model's own vote (docs/METRICS-SIGVOTE.md). The label-equality proof does
+block being judged IS the model's own vote (docs/METRICS-CORPUS.md). The label-equality proof does
 the rest: rule D keeps the SymbTr derivation where the vote is refused, so such a row's label
 usually differs from b8's and carries nothing at all.
 

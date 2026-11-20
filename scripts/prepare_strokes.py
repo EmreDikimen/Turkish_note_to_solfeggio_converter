@@ -4,7 +4,7 @@ Fetch the CC0 percussion recordings F2 plays, and prepare them for the web app.
 
 Why this exists: `webAudioBackend.scheduleStroke` used to SYNTHESISE the usul's düm/tek/ke, and the
 owner rejected that sound by ear on 2026-08-11 ("we need to use real sounds"). The licences were
-already cleared — docs/features/audio-sources.md — so this is a download-and-prepare job.
+already cleared — docs/THIRD-PARTY.md — so this is a download-and-prepare job.
 
 Python is correct here for the same reason as everything else under `scripts/`: it is data
 preparation, run once, and **nothing it touches ships as code**. Its OUTPUT ships (six small wavs per

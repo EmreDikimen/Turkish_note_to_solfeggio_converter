@@ -144,7 +144,7 @@ LABEL_TOLERANCE_CENTS = 50.0
 # The worst nearest-neighbour shift `pickSample` may ever have to make, over each instrument's own
 # recorded range.
 #
-# ⚠ MEASURED, and both earlier figures were wrong. docs/features/audio-sources.md said the layers sit
+# ⚠ MEASURED, and both earlier figures were wrong. docs/THIRD-PARTY.md said the layers sit
 # "a minor third apart", i.e. ±1.5 semitones; planning then said ±2 by counting F→A# as 4 semitones.
 # It is a perfect fourth: the clarinet steps D–F–A#–D, so its widest gap is **5 semitones** and the
 # worst shift is **±2.5**. The violin's widest is 4.3 (C→E, plus real intonation). Nothing downstream
@@ -282,7 +282,7 @@ INSTRUMENTS = (
     # ⚠ The one instrument here that is genuinely Turkish, and the only one that is DERIVED. Its
     # source is a single take of the whole chromatic range, from the CompMusic project's makam
     # research — which is why a Freesound upload gets the benefit of the doubt on its CC0 claim
-    # (docs/features/audio-sources.md). It is downloaded by hand: Freesound needs an account.
+    # (docs/THIRD-PARTY.md). It is downloaded by hand: Freesound needs an account.
     #
     # ⚠ `fmin=40` is not a tidy-up. A kanun's bottom course is around G1/A1 (49-55 Hz), UNDER the
     # 60 Hz floor the two VSCO instruments were fine with, and YIN cannot report a pitch below its

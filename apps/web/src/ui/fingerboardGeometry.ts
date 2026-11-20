@@ -5,7 +5,7 @@
  * guessed, the same discipline that produced the measured `hz` values in `audio/instruments.ts`.
  * Because the photo is a straight-on front view with the nut AND the bridge in frame, each string
  * is a straight line between two points, so a position is a plain lerp — no projective correction
- * (docs/features/fingerboard.md).
+ * (docs/features/instruments.md).
  *
  * How it was measured (reproducible): each string was tracked down the image as the brightness
  * peak in a ±3 px window, row by row, and a line was fitted with outlier rejection. Fit residuals
@@ -157,7 +157,7 @@ export function fingerboardLineAt(ratio: number, pad = 1.5): { x1: number; x2: n
  * ⚠ THE PHOTO IS THE LIMIT, NOT THE MATHS. The neck is only ~70 px wide in the source image, so a
  * close-up magnifies real pixels: `MIN_SPAN` stops the zoom before the wood turns to mush on a
  * first-position piece. The marks stay vector and stay sharp either way. A higher-resolution
- * bare-neck photo is the upgrade, and it is a data change (docs/features/fingerboard.md).
+ * bare-neck photo is the upgrade, and it is a data change (docs/features/instruments.md).
  */
 const NECK_TOP_Y = NUT_Y - 34; // the string names sit above the nut and must stay in frame
 const NECK_PAD_X = 11;

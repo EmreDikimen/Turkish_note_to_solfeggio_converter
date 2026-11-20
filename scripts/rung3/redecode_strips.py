@@ -20,7 +20,7 @@ window signature, so `window_cache_ok()` still passes and a later `emit_strip_la
 a VALID cache and therefore never calls the slicer either.
 
 The original is kept beside it as `<page>_decode.json.bak-<tag>`; a page whose backup already
-exists is skipped, so the run is resumable after a Ctrl-C (this Mac is fanless -- docs/COLAB.md).
+exists is skipped, so the run is resumable after a Ctrl-C (this Mac is fanless -- docs/COMMANDS.md).
 
     OMR_ORT_THREADS=2 nice -19 .venv-ml/bin/python scripts/rung3/redecode_strips.py \
         --strips-root data/real/strips_examv3 \

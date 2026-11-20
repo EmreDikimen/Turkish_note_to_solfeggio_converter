@@ -73,7 +73,7 @@ the only argument against C. The fused set is `a'` `a''` `b'` `b''` `c''` `c'''`
 Durations alone are nearly worthless (7%) because `4` and `8` are already one character. **The
 apostrophes are where the money is** — they are **37.3%** of every id in `strips_v4`
 (604,451 of 1,619,274), corroborating the 37.6% already recorded in
-[../BACKLOG-LATER.md](../BACKLOG-LATER.md).
+[BACKLOG.md § Backlog, further out — real, justified, and not this round](../BACKLOG.md#backlog-further-out--real-justified-and-not-this-round).
 
 ### Only four ids are actually new
 
@@ -156,7 +156,7 @@ for rows with no 16ths, **44.3** at 50–75%, **45.3** at 75–100%.
 
 ⛔ **Shorter labels are not known to decode more accurately.** Fewer autoregressive steps means fewer
 chances to slip, which is a real but unquantified effect. It adds no pixels: a crowded crop stays
-crowded, and that is [levers.md](../archive/rounds/levers.md) Lever 1's territory, which is closed.
+crowded, and that is [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) Lever 1's territory, which is closed.
 
 ### Fused or compositional? Both — the ≥1,000-examples rule (2026-09-03)
 
@@ -224,8 +224,8 @@ character-identical before and after, so the owner's 995 human reads and 576 `fi
 `3,929 kept + 3,508 rescued + the split of 504`.
 
 ⚠ **Independent of all this, some crops move anyway**: the 2026-09-03 slicer fixes bumped
-`GEOMETRY_REV`, on an unmeasured number of pages ([../METRICS-SLICER-FRAME.md](../METRICS-SLICER-FRAME.md) ·
-[../METRICS-SLICER-STEMS.md](../METRICS-SLICER-STEMS.md)).
+`GEOMETRY_REV`, on an unmeasured number of pages ([METRICS-SLICER-WINDOWS.md § The windowing retune and the crop frame — measured, and settled](../METRICS-SLICER-WINDOWS.md#the-windowing-retune-and-the-crop-frame--measured-and-settled) ·
+[METRICS-SLICER-STAFF.md § A stem taken for a barline — the both-ends gate](../METRICS-SLICER-STAFF.md#a-stem-taken-for-a-barline--the-both-ends-gate)).
 
 ### ⛔ The render question — asked, answered, and the answer is still "no render"
 
@@ -242,7 +242,7 @@ dense strips: the *accepted* real strips are shorter than synthetic at every mea
 near-identical in the two pools — **21.7** ids per 1,000 px synthetic against **21.1** real (n=1,200
 each) — so a synthetic strip carrying 56 ids would be about **2,580 px** wide. The slicer caps every
 real crop at `MAX_STRIP_W = 1450` px and real strips top out at 1,440, and
-[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) already measured that a strip wider than ~479 px is
+[METRICS-INPUT.md § Crop geometry — what the encoder is actually GIVEN](../METRICS-INPUT.md#crop-geometry--what-the-encoder-is-actually-given) already measured that a strip wider than ~479 px is
 throwing resolution away inside the fixed 409×583 encoder frame. So the re-pack would buy label
 length by pushing crops further into the shape that costs edits — and 17.5% of synthetic strips are
 already wider than any real strip can be.
@@ -329,12 +329,12 @@ worth its own round.
    retrain from base.
 4. **Then price it.** The measurement that decides this is corpus yield — how many `over_budget`
    drops actually return — not a val loss. Accuracy is a second question and needs a paired arm
-   against [round3-criteria.md](../archive/rounds/round3-criteria.md)-style floors.
+   against [rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](../archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol)-style floors.
 
 ⚠ **Every existing checkpoint keeps working and none of them understands the new spelling.** Ids are
 append-only so nothing breaks, but a model trained on `c ' ' ' 1 6` cannot read `c ''' 16`. This is a
 retrain, and it should ride along with the Round-4 rail work
-([../BACKLOG-LATER.md](../BACKLOG-LATER.md) item 0) rather than be its own round — both re-emit the
+([BACKLOG.md § Backlog, further out — real, justified, and not this round](../BACKLOG.md#backlog-further-out--real-justified-and-not-this-round) item 0) rather than be its own round — both re-emit the
 pools, and doing them separately pays that cost twice.
 
 ## Why the model writes `f'' 32`, and why scheme H stops it (2026-09-10)

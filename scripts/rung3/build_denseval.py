@@ -26,7 +26,7 @@ round; this is a strip pool for iteration, like real-val.
 ⚠ **Lengths are counted in OLD ids** — one scale for every model, the same rule
 `paired_arm_score.py --score-vocab old` follows. A pool built with H's tokenizer would put different
 strips in the dense bucket for the H arm than for the control, which is the bias this round already
-paid for once ([../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md)).
+paid for once ([../../docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md)).
 
     .venv-ml/bin/python scripts/rung3/build_denseval.py                    # report only
     .venv-ml/bin/python scripts/rung3/build_denseval.py --apply            # all 442 -> _denseval_h1

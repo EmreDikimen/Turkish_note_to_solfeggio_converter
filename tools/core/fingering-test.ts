@@ -4,7 +4,7 @@
  *  1. **The open-string table is DATA a human wrote**, so `openHz` is re-derived from
  *     `concertKoma` here. That is the only thing standing between a typo and a fingerboard that
  *     is silently a semitone out everywhere — the same class of bug that cost F1 four rounds of
- *     ear feedback (docs/features/audio-sources.md).
+ *     ear feedback (docs/THIRD-PARTY.md).
  *  2. **The formula** — open, the octave, the double octave, and the two ways a note can be
  *     unreachable (below the string, past the end of the fingerboard).
  *  3. **The microtones** — a koma sharp and a küçük sharp on the same degree must land on
@@ -166,7 +166,7 @@ check("all three are on the string", [rNat, rKoma, rKucuk].every((r) => r > 0 &&
 check("they are strictly ordered, not rounded together", rNat < rKoma && rKoma < rKucuk, true);
 // A koma is ~22.6 cents, so one comma is a real distance but a small one. On the shipped photo the
 // nut→bridge run is 487.5 px, which is what turns these ratios into the ~7 px/koma of
-// docs/features/fingerboard.md — the known limit of the artwork, asserted here so a future image swap
+// docs/features/instruments.md — the known limit of the artwork, asserted here so a future image swap
 // that quietly halves the resolution is visible.
 const PX = 487.5;
 near("one koma is several pixels, not a fraction of one", (rKoma - rNat) * PX, 5, 3);

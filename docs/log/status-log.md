@@ -51,7 +51,7 @@ fewer levers at both ends. The owner then counted the instrument by eye and the 
 fourteen courses in a row; one off-by-one at the bass end was settled by asking which course is the
 first with 12 levers (the 7th). Applied: `MandalLayout` gained per-course rows (`courses`), the
 helpers take a course instead of a letter, 212 levers (was 252). The four scores plan exactly as
-before. ⚠ Guesses, all listed in [../features/kanun-mandal-count.md](../features/kanun-mandal-count.md):
+before. ⚠ Guesses, all listed in [kanun.md § Kanun — mandals counted on a real instrument (2026-11-12)](../features/kanun.md#kanun--mandals-counted-on-a-real-instrument-2026-11-12):
 the up/down split on every end course, three top courses the owner did not count, and Mi3/Fa3 left
 regular. `npm test` and the full `smoke:editor` (409 ok) pass. Deployed the same day: `Deploy is
 live!`, `smoke:live` PASS, the counter answers 401.
@@ -84,7 +84,7 @@ up is a real setting (the open string) and has no active lever, so "one active l
 stopped being true — `meltem_notes` opens five courses there.
 
 Measured on the four scores on disk: 0 unreachable, 0 respelled of 1,875 notes
-([../features/kanun-view.md](../features/kanun-view.md)). `npm test` and the kanun block of
+([kanun.md § F3 — the kanun view](../features/kanun.md#f3--the-kanun-view)). `npm test` and the kanun block of
 `smoke:editor` pass. ⚠ **Not deployed.** ⚠ The PDF was unreadable to the fetch tool and to the
 machine (no poppler); it was read with PyMuPDF from `.venv-ml`, and the figure by rendering the page.
 
@@ -108,7 +108,7 @@ the manifest, the header (`TR.brand`), the PDF producer field, `privacy.html`, `
 (versionCode 2, `1.0.1`, launcher name MakamVision — the first build came out with an empty version
 name because Bubblewrap reads `appVersion`, not `appVersionName`). Left as they were, on purpose: the
 package `com.komavision.app`, the address `komavision.netlify.app`, and history in `docs/log/`,
-`docs/archive/` and the dated style-pass note in `app/standing.md`. Searches found nothing by the new
+`docs/archive/` and the dated style-pass note in `app/README.md`. Searches found nothing by the new
 name on the web or on Google Play; that is not a trademark search.
 
 ## 2026-10-17 — saving a score no longer depends on the browser's font or print engine
@@ -138,7 +138,7 @@ not the server, which was warm. Round 2 deployed the same day, `smoke:live` PASS
 safety form had to declare them. `visit.mts` no longer reads the IP or the geo; a row is a day's
 total per kind of browser. The dashboard lost its devices tiles, its country breakdown and its
 per-device table columns, and now weights its breakdowns by visits. `stats.mts` deletes every old
-`d/` row on its next read. `privacy.html`, CLAUDE.md, `features/visit-stats.md` and DECISIONS move
+`d/` row on its next read. `privacy.html`, CLAUDE.md, `features/README.md` and DECISIONS move
 with it. Just before the change, the owner read the old table and asked where a visit with the
 referrer `teams.public.onecdn.static.microsoft` came from — the last question the old rows could
 answer. Same day: the closed test reached **12 testers**, so the 14-day count started.
@@ -167,19 +167,19 @@ next run.
 **Three things were real bugs, not wording.** (1) `CACHE_NAME` in `apps/web/src/omr/session.ts`
 still named `r3a` — the 2026-09-28 swap never bumped it, so a browser that had cached the r3a graphs
 (this Mac's `dev:web`, or an opt-in local read) kept reading with them. Bumped to `r4-ctl`, and the
-swap procedure now lists it ([../app/deploy-ops.md](../app/deploy-ops.md), new "every hop" section).
+swap procedure now lists it ([server.md § Running and deploying the decode server — the commands](../app/server.md#running-and-deploying-the-decode-server--the-commands), new "every hop" section).
 (2) The documented redeploy command still said `--max-instances 3` and one `ALLOWED_ORIGINS` entry;
 the live service (read with `gcloud run services describe`) runs `maxScale` 10 and four origins, so
 re-running it would have cut capacity silently. (3) `gate:browser` expected 27/28, which no model had
 reached since 2026-09-03; the one `\tie` gold was rewritten tie-free (the other 13 golds re-tokenized
 byte-identical), the live model read **26/28**, and the pin moved there
-([../METRICS-ONNX.md](../METRICS-ONNX.md)). `scripts/rung3/decode_page_arms.py` and
+([METRICS.md § Metrics — the exported runtime (ONNX export, int8 quantization,…](../METRICS.md#metrics--the-exported-runtime-onnx-export-int8-quantization-parity)). `scripts/rung3/decode_page_arms.py` and
 `build_model_compare.py` also labelled `r3a` "live"; relabelled, and the `--int8` arm now decodes the
 graphs visitors actually get.
 
 **Structure, by the owner's call.** The five `OVERVIEW*.md` files were deleted after a check that
 every number and backticked term in them also lived elsewhere. The MVP ladder is CLOSED
-(`archive/phases/mvp.md`) and its live docs moved to `docs/app/`; Round 3's seven files went to
+(`archive/phases.md`) and its live docs moved to `docs/app/`; Round 3's seven files went to
 `archive/rounds/` with a banner; the nine root-level raw logs and labelling notes moved to
 `docs/log/raw/`; closed BACKLOG and RISKS entries were archived verbatim, BACKLOG keeping one-line
 stubs so its numbers still resolve, and a real **item 0** (the app's missing label rail) now exists
@@ -228,7 +228,7 @@ had carries a hand position, so the finger is read off it: `FingerPos.finger` (0
 in the dot and published as `data-finger`. Bands match the chart's line colours in first position,
 pinned comma by comma. `npm test`, `typecheck` and `smoke:editor` pass. Not deployed. Open guesses
 (koma fingering, open vs. 4, repeated 1 after a shift) are in
-[../features/fingerboard.md](../features/fingerboard.md). Same day: the dot was too small to read
+[instruments.md § F3 — the fingerboard tab](../features/instruments.md#f3--the-fingerboard-tab). Same day: the dot was too small to read
 (~9 CSS px on a phone) → `DOT_R` 10, digit 13, checked by screenshot on phone and desktop. Step 2, a
 whole-piece (Viterbi) walk, was written down as a **deferred TODO** in that file and NOT built: nobody
 here can judge a violin fingering, and it would move the string of every note in every piece.
@@ -238,7 +238,7 @@ here can judge a violin fingering, and it would move the string of every note in
 **The owner asked for the whole frontend to feel like classical Turkish music**, phone and desktop,
 with any library. Chosen from options: the **Tezhip** palette (ivory, lapis, gold), dark mode from
 the system, **Tailwind + Base UI**, subtle ornament. Built on `main` in seven commits; not deployed.
-Everything is in [../features/look.md](../features/look.md); the parts worth remembering are the
+Everything is in [phone.md § The look — Tezhip palette, the stylesheet's layers, and the render pin](../features/phone.md#the-look--tezhip-palette-the-stylesheets-layers-and-the-render-pin); the parts worth remembering are the
 ones that went wrong.
 
 - **A font change moved training strips.** The palette commit re-rendered 2 pieces (302 strips)
@@ -566,7 +566,7 @@ are made; a fifth consumer inherits the fix by doing nothing.
 
 ⚠ **None of this is deployed.** Live still carries the 2026-09-11 tab bar from the 2026-09-20 deploy.
 ⚠ `npm run smoke:app` fails on the stored-page row — checked against `a52ce28`, it fails there too,
-so it predates this work. [../DECISIONS.md](../DECISIONS.md) · [../DOM-CONTRACT.md](../DOM-CONTRACT.md)
+so it predates this work. [../DECISIONS.md](../DECISIONS.md) · [APP-RULES.md § The DOM contract — what the browser checks are allowed to assert on](../APP-RULES.md#the-dom-contract--what-the-browser-checks-are-allowed-to-assert-on)
 · [../APP-RULES.md](../APP-RULES.md).
 
 ## 2026-09-19 — the score now fits the phone, in both orientations
@@ -651,7 +651,7 @@ old ids against 0.30% under H — a ~20× cut in the class that makes the app re
 notes on dense pages — and **no gold pool can show it**, because the emitter dropped exactly those
 strips. The app-side rail is the other candidate fix and needs no new vocabulary.
 ⚠ A cost estimate was wrong by an order of magnitude: a paired read is ~0.25 s per strip per model on
-this Mac, not minutes. [METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+this Mac, not minutes. [METRICS-EXAM.md](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 
 ## 2026-09-18 — the round's own question had not been asked yet
 
@@ -666,7 +666,7 @@ the live model is as blind to them as the two arms; **0** exam pieces; neither a
 picked here; **68** of the strips do not exist in b8 at all. One label costs ≥100 old ids, which an
 old-vocabulary model cannot emit at `max_length` 100 — counted apart, never inside a headline.
 Four paired reads are staged in the notebook and none has been run.
-[METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+[METRICS-EXAM.md](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 
 ## 2026-09-17 — the vocabulary A/B is a null
 
@@ -687,7 +687,7 @@ the arm's `best-edits` was chosen on this very pool, and its own log puts that o
 14 of the 32 edits. `last` against the live model is the check — **and it came back a null**: 392 vs
 409, 95% CI [−0.169, +0.038], 21 better / 10 worse. The estimate held almost exactly (15 edits of
 pick-luck against ~14 predicted). Round 4 leans better on every reading and proves nothing on real-val.
-[METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+[METRICS-EXAM.md](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 
 ## 2026-09-16 — `h1-full` is read, the pool is corrected, and the A/B nearly measured the ruler
 
@@ -706,7 +706,7 @@ hand-read stratum and an agreeing one with a measured 0.30% rate, so the rate is
 Promoted the same day: **185 labels replaced, 4 rows removed, 0 rejects → 4,456 rows**. ⚠ The rail's
 verdicts had no way in: `merge_rail_strips.py` keeps its rows out of `full_audit.csv` on purpose, and
 `promote_labels.py` read only that file — hence `--audit-csv`. Numbers:
-[METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
+[METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md#where-an-error-comes-from--the-label-or-the-model).
 
 **Building step 6's kit found three defects, each of which would have cost a GPU run or its read.**
 
@@ -735,7 +735,7 @@ reuses Round 3's stage 1, so only the H arm trains one (~2.5 h saved).
 old ids inside the zip only; writes the byte count into the notebook) and
 `notebooks/round4_vocab_ab_colab.ipynb`. Not built into a zip yet — it refuses until `_realval_v2r`
 exists, which waits on the owner's 10-row `realval-repair` read. Verified by running `train.py`'s
-data section to the model load for both vocabularies. [METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+data section to the model load for both vocabularies. [METRICS-EXAM.md](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 
 **Later the same day — the selection pool is repaired and the upload is built.** The owner read the
 10-row `realval-repair` queue against the picture, old labels hidden: 2 `bad`, 8 `fix`, and **none of
@@ -853,7 +853,7 @@ the **signature** (93.3% of pure-label errors in `h1`, replicated at 49.5% on `n
 seeding works *against* finding that, so it is understated. The model's profile is different —
 tuplets, duration, pitch, repeat marks — with `\komaSharp` → `\kucukSharp` its top sign
 substitution, the direction the owner has corrected 10:0. Numbers:
-[METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
+[METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md#where-an-error-comes-from--the-label-or-the-model).
 ⏭ And `nd_high` was diagnosed: on the 75 exam rows a human read, the owner's answer sits a median of
 **20** label-token edits from the label and **0** from the decode, and `nd_high` strips are not
 denser than accepted ones — except the **1,678** that came back from `over_budget`, which are, and
@@ -1118,7 +1118,7 @@ itself needs a Colab decode — every cache is refused since `GEOMETRY_REV` 2026
 
 **36 pieces / 53 pages / 1,108 strips, nothing decoded.** `collect_thirdsource.py` censuses,
 matches, selects and downloads from three sites none of this project's numbers has ever seen. Design
-and the full tables: [../rung3/third-source.md](../rung3/third-source.md).
+and the full tables: [round4.md § Third-source probe — does the model hold up on an engraving house…](../rung3/round4.md#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen).
 
 ⭐ **The engraving is different, and that was CHECKED rather than assumed** — on the PDF producer.
 sahaney.com is born-digital vector out of **Mus2 2.1.2**, a Turkish makam notation program neither of
@@ -1155,7 +1155,7 @@ are genuinely unlike anything we train on.
 ### The read, the same day — and it is a NULL
 
 Labels produced by `round2-stage2-best`, graded on Run A `r3a-stage2-best-real`, so the model that
-writes the answer key is not the model scored. Every number: [../rung3/third-source.md](../rung3/third-source.md).
+writes the answer key is not the model scored. Every number: [round4.md § Third-source probe — does the model hold up on an engraving house…](../rung3/round4.md#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen).
 
 ⭐ **The pipeline does not jam on an unfamiliar engraver.** Rows fail to align on **28.6%** of the
 probe against **33.2%** (`strips_b8`) and **36.9%** (`strips_nota`), and 82.1% of its pieces come
@@ -1190,7 +1190,7 @@ accepts exist and 14 were used, so no hand labelling is owed.
 **A script, no GPU, no decode, no labelling.** `scripts/rung3/sig_vote_audit.py` joins every pool's
 `emit_report.json` (did the override fire?), its `emit_requests.json` (what signature was written),
 each piece's own `labels.json` (what SymbTr derived) and `data/makam_signatures.json` (what the
-makam usually prints). Every number is in [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
+makam usually prints). Every number is in [METRICS-CORPUS.md § Metrics — the model-voted key signature, audited](../METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited).
 
 ⭐ **The finding is not the one item 9 predicted.** The defect was found through koma/küçük
 confusion, so the expected story was "the vote chooses the wrong accidental". It does — 156
@@ -1276,7 +1276,7 @@ have shown it. The negative test fires correctly (511 pieces named, refused).
 
 `check_token_drift` failed the selection pool, reporting 45 malformed tokens like `\repstarte''8`
 and `\sigendr2`. **51 of `_realval_v2`'s 267 rows (19.1%)** spell a token with no space after it,
-and [METRICS-UNSEEN.md](../METRICS-UNSEEN.md) said spacing was id-identical "for `32` only", which
+and [METRICS-INPUT.md](../METRICS-INPUT.md#diagnostics--the-symbols-the-model-has-never-been-shown) said spacing was id-identical "for `32` only", which
 implied those rows tokenized differently from their corrected form. That would have made 19% of the
 pool's gold wrong — in the pool about to become the checkpoint selector.
 
@@ -1354,7 +1354,7 @@ measure span (real 1-measure max 36 ids against synthetic's 44) — so this was 
 per strip. Ink density is near-identical in the two pools, **21.7** ids per 1,000 px synthetic
 against **21.1** real (n=1,200 each), so a synthetic strip carrying 56 ids would be about **2,580 px**
 wide. And the slicer caps every real crop at `MAX_STRIP_W = 1450` px.
-[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) had already measured that direction as costing
+[METRICS-INPUT.md § Crop geometry — what the encoder is actually GIVEN](../METRICS-INPUT.md#crop-geometry--what-the-encoder-is-actually-given) had already measured that direction as costing
 edits — past ~479 px the fixed 409×583 encoder frame is throwing resolution away — and 17.5% of
 synthetic strips are *already* wider than any real strip can be. So the re-pack buys label length by
 making the domain gap worse. The owner withdrew it the same session; the 2026-09-03 no-render
@@ -1389,7 +1389,7 @@ that no eye has judged. The "Where the detail is" table was dropped as a second 
 **CLAUDE.md 385 → 351, and `docs/APP-RULES.md` is new (166 lines).** The hard rules were one flat
 40-bullet list; they are now three groups (the exam/labels/tokens, the slicer/caches/scorers, what
 ships) plus **group 4: the six app rules that can be broken from anywhere**. The app's own rules —
-playback, the editor, the DOM, the stylesheet — moved to APP-RULES.md on the DOM-CONTRACT.md
+playback, the editor, the DOM, the stylesheet — moved to APP-RULES.md on the APP-RULES.md
 precedent, because CLAUDE.md had absorbed per-component detail (`.kv-recent__item`'s `min-width`,
 `stamp()`, `rollupOptions.input`) that its feature docs already owned and only someone editing that
 component would ever need. ⚠ **The cut was checked mechanically, not by feel**: 271 backticked
@@ -1401,7 +1401,7 @@ the other eight were each confirmed present in the doc that owns them. Zero numb
 That baseline existed to prove the 2026-07-26 refactor lost nothing. It did that job — 10 catches on
 its first run, and it **passed on its last, run deliberately after the CLAUDE.md and STATUS.md
 rewrites above**. ⛔ Do not re-add `--facts` without re-creating a baseline: a fact check with nothing
-to compare against passes silently, which is worse than no check ([../MAINTAINING.md](../MAINTAINING.md)).
+to compare against passes silently, which is worse than no check ([INDEX.md § Maintaining these docs](../INDEX.md#maintaining-these-docs)).
 
 **Deleted: four plain-English histories** — `OVERVIEW-JULY.md`, `OVERVIEW-AUGUST.md`,
 `OVERVIEW-ROUND3.md`, `OVERVIEW-MODEL.md` (1,012 lines). ⚠ These were not pure duplicates: OVERVIEW.md
@@ -1414,7 +1414,7 @@ its own stale line — item 14 still said the public launch waited on a good exa
 the repo cites it any more, and the verbatim pre-split file it pointed at went with the archive.
 
 **Moved, not deleted, because the reasoning is the valuable part** (owner's call): the five Round-1/2
-docs → `archive/rounds/`, and `PHASE2.md` + the two mvp rung ladders → `archive/phases/`.
+docs → `archive/rounds/`, and `phases.md` + the two mvp rung ladders → `archive/phases/`.
 `mvp/slicer-port.md` deliberately stayed live — 8 source files cite it as reference for code that
 still runs. ⚠ 13 markdown files and **11 source files** (including `omrGate.ts`, `train.py`,
 `data.py`, three notebooks) carried `docs/…` citations that the checker verifies, so every one was
@@ -1491,7 +1491,7 @@ Owner: *"linkedinde paylaştım her şeyi, normal bir şekilde devam edebiliriz.
 went out on LinkedIn.
 
 **Every plan in this repo said this waited on the exam.** The `public` rung in
-[../mvp/README.md](../archive/phases/mvp.md) read *gated on Round 3's exam result*, and CLAUDE.md's header
+[phases.md § MVP track — the in-browser pipeline, and a release to friends (CLOSED)](../archive/phases.md#mvp-track--the-in-browser-pipeline-and-a-release-to-friends-closed) read *gated on Round 3's exam result*, and CLAUDE.md's header
 said the same. Round 3 read **51%** against a 75% floor and missed, Round 4 is open, and the link
 went out anyway. That is the owner's call to make; the point of this entry is that the repo was
 still asserting the opposite in three places, and an agent reading them would have planned around a
@@ -1526,7 +1526,7 @@ declined), **Netlify Functions + Blobs** rather than a new service, **no IP stor
 that shaped the whole build — *"kullanıcılar asla görmemeli bunu, sadece ben görmeliyim"*.
 
 **Why it was worth building at all.** The question was already being asked and answered badly.
-[../METRICS-USAGE.md](../METRICS-USAGE.md) is a long argument with Cloud Run's request log, which
+[METRICS.md § Metrics — who actually uses the deployed app](../METRICS.md#metrics--who-actually-uses-the-deployed-app) is a long argument with Cloud Run's request log, which
 became an accidental visit counter because the app pings `/health` on open. Robots dominate it; it
 has no session and no client id, so its standing answer to "how many strangers" was literally
 **"≥1, ≤2, the log cannot say which"**, and every sharpening of it came from the owner supplying by
@@ -1548,7 +1548,7 @@ wherever it is asked from, and answers **503 rather than 200** when no token is 
 
 **Two things carried over from the old log-reading, as tests rather than comments.** The browser
 version is kept because it is the only evidence in this data that two visits are two machines — that
-is how METRICS-USAGE.md established "at least one real stranger" (Chrome/150 against Chrome/151, and
+is how METRICS.md established "at least one real stranger" (Chrome/150 against Chrome/151, and
 browsers never downgrade). And an `X11; Linux x86_64` user-agent is **not** a Linux machine, it is
 Chrome for Android under "Request desktop site"; that confusion already cost one wrong entry there,
 so `tools/analytics/visits-test.ts` pins it, along with Edge and Opera not reading as Chrome.
@@ -1566,7 +1566,7 @@ anonim sayılır: çerez yok, IP adresi saklanmaz."* — on the same statement-o
 three beside it.
 
 ⏭ **Nothing is counting yet.** `STATS_SALT` and `STATS_TOKEN` are unset on the site; until the owner
-sets them and redeploys, `visit.mts` records nothing. [../features/visit-stats.md](../features/visit-stats.md)
+sets them and redeploys, `visit.mts` records nothing. [README.md § F6 — the visit counter, and the owner's private dashboard](../features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard)
 
 ## 2026-09-05 — the DOM contract moves out of CLAUDE.md (docs)
 
@@ -1577,7 +1577,7 @@ still sitting in the orientation file.
 
 **Split by genre, the same way [COMMANDS.md](../COMMANDS.md) was split out on 2026-08-23.** The list
 is a *reference* — you open it while writing a check — and CLAUDE.md is what an agent must not miss
-before touching anything. The new file is [../DOM-CONTRACT.md](../DOM-CONTRACT.md), reachable from
+before touching anything. The new file is [APP-RULES.md § The DOM contract — what the browser checks are allowed to assert on](../APP-RULES.md#the-dom-contract--what-the-browser-checks-are-allowed-to-assert-on), reachable from
 CLAUDE.md and [../INDEX.md](../INDEX.md).
 
 ⚠ **CLAUDE.md keeps the rule, not the list**: attributes never text, `strings.ts` owns every visible
@@ -1645,7 +1645,7 @@ dead, and `smoke:editor`'s assertion flips from *these two must differ* to *thes
 ⭐ **Worth recording because the distinction was correct and the placement was not.** Hüseyni's `[]`
 in `MAKAM_INTONATION` is a finding — the sources say it does NOT take the uşşak lowering — and an
 unlisted makam is silence. That is real, it is why the empty arrays must never be tidied away, and
-it is still written down in the table and in [../mvp/makam.md](../app/makam.md). What it is not is
+it is still written down in the table and in [README.md § Makam selection — the performed intonation](../app/README.md#makam-selection--the-performed-intonation). What it is not is
 something a reader owes attention to while choosing a makam: they are asking one question, *will
 this piece sound as it looks*, and the answer is yes either way. Two sentences answered a question
 nobody had asked and made a control bar read like a footnote.
@@ -1787,7 +1787,7 @@ offers ±2/±3, and the picker's count reads low on a SymbTr fixture by design.
 Checked: `npm test` (with the new `makam-test.ts`), `npm run typecheck`, `npm run smoke:editor`
 (18 new assertions, ALL PASS) and `npm run smoke:phone` — no sideways scroll at 375 / 390 / 412 /
 744, with the line wrapping under the picker rather than pushing the row. Seen at 1280 and at 375.
-Not deployed. [../mvp/makam.md](../app/makam.md) · [../DECISIONS.md](../DECISIONS.md)
+Not deployed. [README.md § Makam selection — the performed intonation](../app/README.md#makam-selection--the-performed-intonation) · [../DECISIONS.md](../DECISIONS.md)
 
 ## 2026-09-05 — the Çalma row is pinned to the top, and the corner pair is gone (product track)
 
@@ -1928,7 +1928,7 @@ reader's list. The store itself was driven end to end in a real browser against 
 change, rename from the list, rename from the heading, rename-survives-an-edit, Esc-cancels, ✕,
 clear): 17 of 17.
 
-[../features/recent-pages.md](../features/recent-pages.md) · [../DECISIONS.md](../DECISIONS.md)
+[README.md § F5 — the pages this browser has already read](../features/README.md#f5--the-pages-this-browser-has-already-read) · [../DECISIONS.md](../DECISIONS.md)
 
 ## 2026-09-04 — opening the instrument tab now switches the sound too (product track)
 
@@ -2017,7 +2017,7 @@ cannot make: a pinned card stays on its bar while the music leaves it (asserted 
 card's playhead to clear — the only signal a pinned card gives), an edit made in the card reaches
 `window.__omrDoc` and shows on the Nota page, and **one undo taken from the Nota page walks the
 card's delete back**. A card with its own overlay could pass "a note is selected" and still be a
-second document. [../features/measure-card.md](../features/measure-card.md).
+second document. [instruments.md § F3 — the bar beside the instrument](../features/instruments.md#f3--the-bar-beside-the-instrument).
 
 ## 2026-09-04 — the instrument tab now shows the bar it is playing (product track)
 
@@ -2076,7 +2076,7 @@ ever mounts on the instrument tab.
 cannot make — that the bar moves with the music, that an arrow stops it moving, that the bar-play
 is stopped again in seconds on a two-minute piece, and that Düzenle lands in the sheet's editor with
 a note **of that bar** selected. Design and the five decisions:
-[../features/measure-card.md](../features/measure-card.md).
+[instruments.md § F3 — the bar beside the instrument](../features/instruments.md#f3--the-bar-beside-the-instrument).
 
 ## 2026-09-04 — switching instruments no longer drops to the default tone (product track)
 
@@ -2169,7 +2169,7 @@ Checked by eye in the real app on `beyati-delisin.json`: idle, an ordinary note 
 a 2-koma and a 3-koma note, the staged 5-koma end, and a 390 px phone viewport. `npm run typecheck`
 and `npm test` pass. ⚠ The view's DOM contract is still **unasserted by any browser check**, exactly
 as it was before this change. [../DECISIONS.md](../DECISIONS.md) ·
-[../features/clarinet-view.md](../features/clarinet-view.md)
+[instruments.md § F3 — the clarinet view](../features/instruments.md#f3--the-clarinet-view)
 
 ## 2026-09-04 — the licence, and the read that never leaves the server (product track)
 
@@ -2521,8 +2521,8 @@ selector was wrong 3 of 3 times. Five causes with a measured mechanism remain, n
 axis: the 4,012 over-budget real strips dropped from training (Round 3 is net negative on ≥50-id
 strips); the model-voted `\sig` gold (17.5% of edits, 24/45 exam pieces overwritten, corrections
 10:0 koma→küçük); the 92%-synthetic selector; a two-website corpus; and label noise (12.9% of b8's
-auto-accepts wrong). Homes: [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md),
-[../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md), [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
+auto-accepts wrong). Homes: [METRICS-EXAM.md § Metrics — the exam as an INSTRUMENT](../METRICS-EXAM.md#metrics--the-exam-as-an-instrument),
+[METRICS-EXAM.md § Metrics — Round 3's two follow-up runs (A and B)](../METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b), [../METRICS-CORPUS.md](../METRICS-CORPUS.md).
 
 **The octave count** ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)): off the
 `_taxonomy_cache` files, no model run, no exam re-decode. Of 69 wrong pitched notes on real-val,
@@ -2673,7 +2673,7 @@ folded state in `localStorage` behind try/catch. It opens in the margin left of 
 on a wide window it covers no music; on a narrow one it is pinned to the left edge, over the card's
 padding and the clef.
 
-⚠ **This overturns the 2026-08-08 layout call** ([../mvp/editor-built.md](../app/editor-built.md)
+⚠ **This overturns the 2026-08-08 layout call** ([editor.md § The editor — what each step BUILT, and the traps it found](../app/editor.md#the-editor--what-each-step-built-and-the-traps-it-found)
 §3), which chose *beside the sheet, widen the window* over *floating it over the paper*. That call
 was reasonable and had a real cost the owner did not want: `--page-max` grew by the palette's
 **164 px** while editing, so pressing Düzenle moved the music, and `sticky` still travelled with the
@@ -2709,7 +2709,7 @@ own thickness keeps those, and a second full run (owner-approved) priced it: **4
 exact (+65), 152 better / 75 worse**, real-barline losses against the baseline 163 → 70 rows;
 200 pages −388 bars, none gained; parity exact with the gate firing. Both ship: **+371 exact rows
 over the 2026-09-02 slicer.** The slicer freeze was lifted a second time for this, at the owner's
-request. [../METRICS-SLICER-STEMS.md](../METRICS-SLICER-STEMS.md).
+request. [METRICS-SLICER-STAFF.md § A stem taken for a barline — the both-ends gate](../METRICS-SLICER-STAFF.md#a-stem-taken-for-a-barline--the-both-ends-gate).
 
 ## 2026-08-31 (moved out of STATUS 2026-09-03) — the launch files
 
@@ -2734,7 +2734,7 @@ pool counts at startup — read that line rather than trusting this one.
 pool every earlier comparison used), against `r3-final-stage2-last`'s 667 edits: Run A `best-real`
 **656**, Run B `last` **645**, and B against A **645 vs 656**. Every confidence interval spans zero;
 every sign test is a null (p = 1.000, 0.736, 0.860). Exact-match moves 68.3% → 69.1% → 69.5%, a
-spread of **3 strips**. Numbers: [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md).
+spread of **3 strips**. Numbers: [METRICS-EXAM.md § Metrics — Round 3's two follow-up runs (A and B)](../METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b).
 
 **Why this matters more than the two runs do.** Run A improved the real val loss by **6.0%** and that
 converted into **zero edits** — 15 strips better, 15 worse. The project now has a clean, paired
@@ -2807,7 +2807,7 @@ the archive. A session restart was what cleared it.
 against a 44% Round-2 baseline and a floor signed at 75%. At 63 pages the 95% half-width is ~±12 pp,
 so **+7 is inside the noise band**. ⚠ Every strip-level metric went flat or down (exact 75.2% → 74.2%,
 per-class F1 84.5% → 78.0%): the distribution tightened at the median, 6 → 5 edits/page, while the
-mean barely moved. [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md).
+mean barely moved. [METRICS-EXAM.md § Metrics — the exam as an INSTRUMENT](../METRICS-EXAM.md#metrics--the-exam-as-an-instrument).
 
 **Then the confound.** `error_taxonomy.py` (built for §3c's ship judgement) found Round 2's largest
 error class was inserting **`\tie`** — retired 2026-08-22, absent from the gold, 86 emissions over 60
@@ -2845,7 +2845,7 @@ never visible before because the gate is synthetic. ⛔ `gate:browser` read **24
 expected 27/28, and the four failures are three causes: **2 are a stale fixture** (the gold still
 contains `\tie`; the model's tie-free output IS correct), 1 is pre-existing (Round 2 byte-identical),
 and **1 is genuinely new** — a dropped `\tup3` in canvas mode, by one token. The 27/28 gate cannot
-pass any post-`\tie` model. [../METRICS-ONNX.md](../METRICS-ONNX.md).
+pass any post-`\tie` model. [METRICS.md § Metrics — the exported runtime (ONNX export, int8 quantization,…](../METRICS.md#metrics--the-exported-runtime-onnx-export-int8-quantization-parity).
 
 **The owner hand-tested it: "better but not enough to ship."** §3c's manual ship call, taken. Nothing
 published; the live site is still Round 2, backed up at `apps/web/public/models/_round2_backup/`.
@@ -2886,7 +2886,7 @@ change any in the strips I fixed"*), `corrected_label` is empty, and the queue c
 
 **Both stages ran clean.** Stage 1: 6,000 steps @ lr 3e-5, synthetic only. Stage 2: 2,000 @ lr 1e-5
 with `strips_b8:5`. `exam-disjointness OK: 568 real pieces, 0 in the 33-piece exam` — the previous
-day's fix confirming itself. Raw log kept verbatim as `docs/log/raw/round3_final_logs.md`; the reading is in
+day's fix confirming itself. Raw log kept verbatim as `docs/log/raw.md`; the reading is in
 [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
 **Stage 1 did not overfit.** Val loss 0.2797 → **0.0091 at step 4,500**, then 0.0091–0.0094 to 6,000.
@@ -3236,7 +3236,7 @@ and their labels are byte-identical; the held group is stored nowhere (one event
 every render with `closedTupletAt`), so there is no schema change either. `npm test` passes, and
 `npm run smoke:editor` passes with a new section that drags a real handle in a real browser and reads
 the result off `window.__omrDoc` and the `data-tuplet-*` attributes — never off the Turkish copy.
-Where it lives: [../mvp/editor-built.md](../app/editor-built.md#step-7b--holding-a-triplet-select-slide-remove).
+Where it lives: [editor.md § Step 7b — holding a triplet: select, slide, remove](../app/editor.md#step-7b--holding-a-triplet-select-slide-remove).
 
 ## 2026-08-30 — the page becomes a normal score: the repeat is a sign again, and the cursor goes back with it
 
@@ -3338,7 +3338,7 @@ the transport's voice. That is a look, not a regression guard.
 
 The owner asked for the clarinet next, and specifically the **sol klarnet** — the G clarinet, which
 is *the* Turkish one and carries **Albert (simple) system** keywork. Design chapter:
-[../features/clarinet-view.md](../features/clarinet-view.md). The view is **not built**; what landed
+[instruments.md § F3 — the clarinet view](../features/instruments.md#f3--the-clarinet-view). The view is **not built**; what landed
 is the artwork, the measurements and the design.
 
 ⭐ **The most useful finding is that a wind view needed a DRAWING, and the docs had predicted it
@@ -3386,7 +3386,7 @@ instruments, and a fork fingering is exactly where Boehm and Albert part company
 
 The owner reopened F3's violin-only scope after seeing the violin view stand up, and asked for the
 kanun next — drawn in SVG, with the courses and their mandals. Built, tested and screenshotted the
-same day. The design chapter is [../features/kanun-view.md](../features/kanun-view.md).
+same day. The design chapter is [kanun.md § F3 — the kanun view](../features/kanun.md#f3--the-kanun-view).
 
 ⭐ **The finding worth keeping is that it is NOT the violin view with a different picture, and
 noticing that first is what made it small.** A violin position is a fact about one note — the finger
@@ -3655,7 +3655,7 @@ answering it surfaced enough to specify a Round-4 change. Written up in
   ⭐ **the reliability case is strong — 154 of 300 tuplet-bearing decodes (51%) mismatch the pair**,
   98 missing a close and 56 with a stray one, while all 279 gold rows are balanced. Proposed, **not
   decided**; the `\tie` retirement is the procedure. [../rung3/tokenization.md](../rung3/tokenization.md)
-- **Disposition: Round 4, in the same re-emit as the label-budget rail** ([../BACKLOG-LATER.md](../BACKLOG-LATER.md)
+- **Disposition: Round 4, in the same re-emit as the label-budget rail** ([BACKLOG.md § Backlog, further out — real, justified, and not this round](../BACKLOG.md#backlog-further-out--real-justified-and-not-this-round)
   item 0). Both re-emit the pools; doing them separately pays that cost twice.
 
 ## 2026-08-26 — three slicer rules measured, two shipped, one rejected — and the pattern is now unmistakable
@@ -3848,7 +3848,7 @@ before — they enter the denominator, and a faded row is exactly the kind that 
 Debug sheets cut with the final slicer, for looking at with your own eyes:
 `data/real/debug/badcrops_2026-08-25/03-son-slicer/` — 12 flagged pages plus the owner's own report
 page. Against the 01:24 cut: interior barlines **164 → 208**, rows with no barline **17 → 10**, no
-page loses one. [../METRICS-SLICER-BARLINES.md](../METRICS-SLICER-BARLINES.md) ·
+page loses one. [METRICS-SLICER-STAFF.md § Barlines — where the cut goes](../METRICS-SLICER-STAFF.md#barlines--where-the-cut-goes) ·
 [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) · [../DECISIONS.md](../DECISIONS.md)
 
 ## 2026-08-25 — gate 2 was blind on a dense page, and only one of three bad cuts was a barline
@@ -3995,7 +3995,7 @@ product has to read.
 ## 2026-08-25 — a page is its own control: the slicer was reading staff spacing 30% low
 
 **The owner's report was two things that turned out to be one bug.** He had kept a running list of
-exam-queue strips whose crop is unusable (`docs/log/raw/names_of_bad_cropped_images.md`) — one group labelled
+exam-queue strips whose crop is unusable (`docs/log/raw.md`) — one group labelled
 *"TOO TIGHT ANY NOTE IS NOT SEEN"* — and separately said `bozukNihavendLonga` "is not cut at the
 bars, and photocopies will always look like this". All 12 pages were re-cut with the 2026-08-24
 slicer into `data/real/debug/badcrops_2026-08-25/01-eski-slicer/` so both of us could look at the
@@ -4182,8 +4182,8 @@ suggestion needing confirmation, not a free win.
 **Two files were split, both at the 400-line cap and both by the genre rule.**
 
 `docs/STATUS.md` (405 → 280) — the **B0–B9 item detail** moved to
-[../rung3/worklist.md](../archive/rounds/worklist.md). This is exactly the split
-[../MAINTAINING.md](../MAINTAINING.md) prescribes: STATUS keeps current state, the ordered table and
+[rounds.md § Round 3 — the worklist, item by item](../archive/rounds.md#round-3--the-worklist-item-by-item). This is exactly the split
+[INDEX.md § Maintaining these docs](../INDEX.md#maintaining-these-docs) prescribes: STATUS keeps current state, the ordered table and
 the next action; the track doc holds the per-item narrative. The worklist file says so at the top so
 nobody starts stating "next" in two places.
 
@@ -4300,9 +4300,9 @@ accuracy moved. Measure fill cannot see a wrong pitch — it is a floor on the e
 rate — though the failure this fix targets is exactly what it detects.
 
 Also this session: `docs/METRICS-SLICER-WINDOWS.md` crossed the 400-line cap, so the settled
-2026-07-29 windowing retune and crop-frame work moved to `docs/METRICS-SLICER-FRAME.md` and the
+2026-07-29 windowing retune and crop-frame work moved to `docs/METRICS-SLICER-WINDOWS.md` and the
 original keeps the one open question. Details: [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) ·
-[../mvp/slicer-port.md](../archive/phases/slicer-port.md).
+[phases.md § Porting the slicer to TypeScript — W4–W6](../archive/phases.md#porting-the-slicer-to-typescript--w4w6).
 
 
 ## 2026-08-22 — `b8-audit` is read whole: the re-emitted pool is 13.4% wrong, and repeat structure is the biggest class
@@ -4337,7 +4337,7 @@ That is not what anyone expected to be the dominant error in a training pool, an
 symbol the final render's dotted (usul) barline is aimed at: **4 of the 10 accepted labels that carry
 a `\repstart` were wrong**, with 2 more rows missing one. This is a *shuffled* sample, unlike the
 `batch3` count that first raised the dotted barline, so it is the first unbiased read of that failure
-— and it is on the training side, not a review queue ([../METRICS-UNSEEN.md](../METRICS-UNSEEN.md)).
+— and it is on the training side, not a review queue ([METRICS-INPUT.md § Diagnostics — the symbols the model has never been shown](../METRICS-INPUT.md#diagnostics--the-symbols-the-model-has-never-been-shown)).
 
 ⭐ **A prediction written in [../BACKLOG.md](../BACKLOG.md) item 9 came true.** Two of the three
 signature errors are `\komaSharp` → `\kucukSharp` inside `\sig`, both in the same direction as the ten
@@ -4708,11 +4708,11 @@ are probably right; and the makam table is a guide, not truth — mahur genuinel
 sources (küçük 35, koma 17), so it *agrees with* the owner's reading rather than proving it.
 
 **Recorded as**: [../METRICS-CORPUS.md](../METRICS-CORPUS.md) (mechanism + counts),
-[../METRICS-EXAMSET.md](../METRICS-EXAMSET.md) (the audit),
-[../RISKS.md](../RISKS.md) (standing caveat), [../BACKLOG.md](../BACKLOG.md) item 9 (the script and
+[METRICS-EXAM.md § Metrics — the exam as an INSTRUMENT](../METRICS-EXAM.md#metrics--the-exam-as-an-instrument) (the audit),
+[BACKLOG.md § Open risks and non-claims](../BACKLOG.md#open-risks-and-non-claims) (standing caveat), [../BACKLOG.md](../BACKLOG.md) item 9 (the script and
 the proposed rule change), [../DECISIONS.md](../DECISIONS.md) (two rows).
 ⚠ **Doc housekeeping**: `METRICS-EXAM.md` crossed its 400-line cap, so it was split by genre —
-**[../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)** now holds what the exam *is* (census, rebuild,
+**[METRICS-EXAM.md § Metrics — the exam as an INSTRUMENT](../METRICS-EXAM.md#metrics--the-exam-as-an-instrument)** now holds what the exam *is* (census, rebuild,
 `examv3-full`, gold carry, sizing) and `METRICS-EXAM.md` keeps what models *scored*.
 
 ## 2026-08-21 — two models, two jobs: the emitter's hint is upgraded, its referee is not (⛔ the split was cancelled hours later, see above)
@@ -4784,11 +4784,11 @@ model's guesses. Cheapest honest method, now recorded in B6: count them while la
 false-`\repstart` scorer, which makes two of the three flags attributable instead of one.
 
 **6. A stopping rule for the labelling.** The primary counts corrections per page, so a half-labelled
-page under-counts itself. Recorded in [labeling-queues.md](../rung3/labeling-queues.md): label
+page under-counts itself. Recorded in [labeling.md § The labelling queues — reslice-all, the batches, b8 and examv3](../rung3/labeling.md#the-labelling-queues--reslice-all-the-batches-b8-and-examv3): label
 page-complete; stopping early costs whole pages, never half ones.
 
 Also updated with the rebuild's numbers: BACKLOG item 7 (the budget now costs the exam **153 strips
-and 3 whole pages**), [../RISKS.md](../RISKS.md) (three new standing caveats) and CLAUDE.md (the three
+and 3 whole pages**), [BACKLOG.md § Open risks and non-claims](../BACKLOG.md#open-risks-and-non-claims) (three new standing caveats) and CLAUDE.md (the three
 crop roots, which are never interchangeable).
 
 ## 2026-08-21 — the exam is rebuilt from scratch on the current slicer
@@ -4906,7 +4906,7 @@ that one uncached page was sliced.
 Also carried out of the emit: **33 strips the emitter labelled by itself**. Those enter exam gold
 with no human in the loop — v2 sampled 2 of its 63 — so `examv3-full` puts every one of them in
 front of a person. Numbers: [../METRICS-EXAM.md](../METRICS-EXAM.md). How to run it:
-[../rung3/labeling-queues.md](../rung3/labeling-queues.md).
+[labeling.md § The labelling queues — reslice-all, the batches, b8 and examv3](../rung3/labeling.md#the-labelling-queues--reslice-all-the-batches-b8-and-examv3).
 
 ⚠ A `review_ui.py` left running from an earlier session does **not** see the new tabs; it reads
 `QUEUES` at import.
@@ -4984,10 +4984,10 @@ the same shape as the three-nulls-one-pass result and is the reasoning to reuse.
 
 **Files touched:** `CLAUDE.md` (the new *How to write to the owner* section), `docs/STATUS.md`
 (rewritten "Now" + Track B, with a new B0 and B9), `docs/DECISIONS.md` (six rows),
-`docs/METRICS-EXAM.md` (the census, the drop table, the sizing table), `docs/rung3/exam.md` (the
-bounded v3 plan), `docs/archive/rounds/round3-criteria.md` (§3b addendum, signed text untouched),
-`docs/archive/rounds/levers.md` (power note answered; collection narrowed), `docs/BACKLOG.md` (item 5 promoted,
-items 7 and 8 added), `docs/rung3/labeling-queues.md` (the probe result),
+`docs/METRICS-EXAM.md` (the census, the drop table, the sizing table), `docs/rung3/README.md` (the
+bounded v3 plan), `docs/archive/rounds.md` (§3b addendum, signed text untouched),
+`docs/archive/rounds.md` (power note answered; collection narrowed), `docs/BACKLOG.md` (item 5 promoted,
+items 7 and 8 added), `docs/rung3/labeling.md` (the probe result),
 `docs/rung3/README.md`, `docs/OVERVIEW-ROUND3.md` (the plain-English version, incl. the 46-vs-67
 correction).
 
@@ -5189,7 +5189,7 @@ realism arm on the grounds that these three nearly worked.
 ⏭ **One question is left open and it is the owner's**: whether `scan_share=0.25` stays on in the
 final Round-3 model. It is off by default, so doing nothing leaves it out.
 
-⚠ **Kept this time:** the full Colab console log ([../../round_3_scan_logs.md](raw/round_3_scan_logs.md)).
+⚠ **Kept this time:** the full Colab console log ([raw.md § round_3_scan_logs](raw.md#round_3_scan_logs)).
 The tuplet A/B's equivalent was deleted after its table was taken, and that entry has to say so.
 
 ## 2026-08-19 — `batch3` is cut and the scan profile is built; both arms of Track B are now waiting on a person
@@ -5300,7 +5300,7 @@ recipe items are owed before a LilyPond corpus could stand beside `strips_v4` at
 `OVERVIEW-ROUND3.md`, and the closed narratives (the triplet mark, the
 classical-forms lead, the second printer's limits) moved to
 `OVERVIEW-MODEL.md`. The first attempt at this was trimming to fit, which is
-the thing [../MAINTAINING.md](../MAINTAINING.md) explicitly forbids; the owner caught it.
+the thing [INDEX.md § Maintaining these docs](../INDEX.md#maintaining-these-docs) explicitly forbids; the owner caught it.
 
 ## 2026-08-18 — F3 deployed to the live site, ahead of its own manual gate
 
@@ -5338,7 +5338,7 @@ rule exist to prevent, so it looks alarming until the kit list is checked — re
 `render-ly.ts` (the corpus arm) and `verify-labels-ly.ts` (this arm's pixels-vs-labels gate). A
 312-strip pilot on the six `pieces_geom_pilot.json` pieces passed the gate **312/312, 501
 accidentals, 0 bar-check failures**, at **112 ms/strip** — a whole corpus would be ~76 min. Numbers:
-[../METRICS-ENGRAVER.md](../METRICS-ENGRAVER.md).
+[METRICS-INPUT.md § Metrics — the second engraver (Round 3, Lever 4)](../METRICS-INPUT.md#metrics--the-second-engraver-round-3-lever-4).
 
 **Why it was buildable at all.** LilyPond ships `ly/makam.ly`, which maps ninth-tone alterations to
 Emmentaler glyphs with the **same convention we use** — koma = mirrored flat / 1-stem-2-bar sharp,
@@ -5411,7 +5411,7 @@ one is neither, which is why it was trusted to keep handwriting out.
 1,000 nota are born-digital, and 0 of 1,055 neyzen are.** Neyzen has been described in several docs as
 "clean vector PDFs" and it is nothing of the kind — every neyzen page is a raster scan. Its ~5× lower
 SER is real; the cause is that it is a *better scan*. Fixed in [../METRICS.md](../METRICS.md),
-[../METRICS-CORPUS.md](../METRICS-CORPUS.md) and [../rung3/levers.md](../archive/rounds/levers.md); no SER
+[../METRICS-CORPUS.md](../METRICS-CORPUS.md) and [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first); no SER
 number moved, only the label on the row — and "nota over neyzen" still holds, since it rests on the
 SER split rather than on the file format.
 
@@ -5553,10 +5553,10 @@ defaulting to 1450 so every existing cache reads as the geometry it was made und
 **The pilot's design and stop rule are signed before any arm ran** — three arms (4/2/1 measures),
 each with a matching re-slice so both sides move together, the control being a *fresh* re-slice
 rather than the pools on disk, and an arm stopped if the real side's share of crops under 10 gold
-tokens more than doubles. [../rung3/levers.md](../archive/rounds/levers.md).
+tokens more than doubles. [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first).
 
 **Then it ran, and the stop rule fired — Lever 1 is spent.** Numbers:
-[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md), split out of METRICS-DIAGNOSTICS at the cap because
+[METRICS-INPUT.md § Crop geometry — what the encoder is actually GIVEN](../METRICS-INPUT.md#crop-geometry--what-the-encoder-is-actually-given), split out of METRICS-DIAGNOSTICS at the cap because
 the input-geometry thread is now three sections and a genre of its own.
 
 Four things came out of it, and only the last was the question we set out to answer:
@@ -5828,7 +5828,7 @@ pitch and duration have stayed at 68% of the edit budget. That is a signal about
 of bad luck: the "make the synthetic pixels more realistic" lever is at diminishing returns, and the
 remaining levers are elsewhere — what the model is allowed to SEE, how it DECODES, what its real data
 is worth, and how a run is selected. All five are written up ranked in
-[../rung3/levers.md](../archive/rounds/levers.md).
+[rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first).
 
 **The measurement.** Nobody had written down the arithmetic of the encoder's fixed 409×583 frame. A
 strip is rotated and *fitted* into it, so the net scale is `min(583/W, 409/H)`: the median synthetic
@@ -5968,11 +5968,11 @@ one recording combs, which the instrument cannot do), and the natural end waits 
 instead of chopping it, while an explicit Stop stays immediate. All three are `plucked`-gated, so the
 clarinet and violin are untouched. Deployed and `smoke:live` PASS the same day.
 
-Detail: [../features/kanun.md](../features/kanun.md). Deployed state: [../STATUS.md](../STATUS.md).
+Detail: [../features/kanun.md](../features/kanun.md#the-kanun--one-take-thirty-six-notes). Deployed state: [../STATUS.md](../STATUS.md).
 
 ## 2026-08-14 — Round 3 gets its bar, and the tuplet A/B is built up to the Colab handoff
 
-**The acceptance bar exists, and it is the launch gate.** [../rung3/round3-criteria.md](../archive/rounds/round3-criteria.md)
+**The acceptance bar exists, and it is the launch gate.** [rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](../archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol)
 is written before any Round-3 training: floors beside their Round-2 baselines, and one number that
 decides both the round and whether the app opens beyond the two friends — **≥75% of exam pages
 needing ≤5 corrections**, against 57% today. It is marked **PROPOSED**: the owner signs it off before
@@ -6037,7 +6037,7 @@ grey levels, no integer shift, ink fraction equal to four decimals, invisible si
 a renderer change of ours — `--thin-sharps` was already in v4); and the training environment. The two
 arms share all three nuisances, so only the mark separates them; against the live model nothing
 would. ⚠ The same four-way caveat now attaches to **Round 3's own exam read**, and is written into
-[../rung3/round3-criteria.md](../archive/rounds/round3-criteria.md) rather than left to be rediscovered.
+[rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](../archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol) rather than left to be rediscovered.
 
 **One reference number, measured before the arms exist:** `round2-stage2-best` reads **85.2% `\tup3`
 recall / 97.9% precision** on `_tupletval` ([../METRICS.md](../METRICS.md)). The pool is therefore not
@@ -6295,7 +6295,7 @@ these three should still wait on what they say next.
 
 ⚠ **Non-claim:** n=2, they are friends, and they were asked *what to add* rather than *whether it is
 good*. "They liked it" is not a usage measurement — `/decode` in the request log is
-([../METRICS-USAGE.md](../METRICS-USAGE.md)), and reading it is now possible for the first time with
+([METRICS.md § Metrics — who actually uses the deployed app](../METRICS.md#metrics--who-actually-uses-the-deployed-app)), and reading it is now possible for the first time with
 real users on the other end.
 
 **F1's shape was settled the same evening, and measuring beat estimating twice.** The owner asked for
@@ -6343,7 +6343,7 @@ sizes, `audio/x-wav`. `/THIRD-PARTY.txt` serves the VCSL attribution and `sample
 ## 2026-08-11 — tuplets: the data work was already done, and the mark is drawn wrong
 
 An owner report of two misread triplets on a real page turned into a session of reading data instead
-of docs. Nothing was built; four beliefs changed. Full write-up: [../rung3/tuplets.md](../archive/rounds/tuplets.md).
+of docs. Nothing was built; four beliefs changed. Full write-up: [rounds.md § Tuplets — why `\tup3` recall keeps missing its floor](../archive/rounds.md#tuplets--why-tup3-recall-keeps-missing-its-floor).
 
 **The tuplet labelling has been finished for weeks and nobody noticed.** Across three exchanges the
 recommendation "finish the 147-row `tup-review` queue" was given from [../rung3/labeling.md](../rung3/labeling.md),
@@ -6624,7 +6624,7 @@ folklore:
 The search the entry below asked for was run. **Every instrument the owner wants to start with is
 covered by CC0, with no NC file anywhere**: bendir, darbuka, tef and zil, clarinet, violin — and
 kanun, which was the surprise. Licences read on each source's own page, not on an aggregator.
-Per-file list, contents and the prep each one needs: [../features/audio-sources.md](../features/audio-sources.md).
+Per-file list, contents and the prep each one needs: [THIRD-PARTY.md § Audio sources — the verified files, and what each one still needs](../THIRD-PARTY.md#audio-sources--the-verified-files-and-what-each-one-still-needs).
 
 Where it came from: **VCSL** and **VSCO 2 Community Edition**, both CC0 1.0 on GitHub (Versilian
 Studios), and two **CompMusic/UPF** Freesound uploads by Barış Bozkurt — bendir *düm* and *tek*
@@ -6734,7 +6734,7 @@ feature, the style pass, the editor's whole step list. That is settled context, 
 and most of it also lived in `mvp/rungs.md` and `mvp/editor-built.md`.
 
 So the product track got the same treatment the model track got on 2026-08-07:
-**[../mvp/standing.md](../app/standing.md)**, mirroring `rung3/standing.md`. STATUS went **402 → 198
+**[README.md § Standing findings — the product track, established and still true](../app/README.md#standing-findings--the-product-track-established-and-still-true)**, mirroring `rung3/README.md`. STATUS went **402 → 198
 lines** and now holds only "now" and "next". `check_docs.py --facts` passes, so nothing was dropped —
 the facts moved, they did not evaporate.
 
@@ -6920,9 +6920,9 @@ Consequence: **a friend's first upload after any idle period is read on their ow
 close to the common case, and it undoes the one thing the server was built for (a cool laptop). The
 docs said a cold start costs "about 10 seconds extra"; that was never measured and is wrong.
 
-Corrected in [../METRICS.md](../METRICS.md), [../mvp/latency.md](../app/latency.md) (option 1 is now
+Corrected in [../METRICS.md](../METRICS.md), [server.md § Making a page faster — the options, with what each one costs](../app/server.md#making-a-page-faster--the-options-with-what-each-one-costs) (option 1 is now
 a correctness fix, and needs a client that retries a `ready: false` 503) and
-[../mvp/hosting-setup.md](../app/hosting-setup.md) (the owner will see "read on your machine" on a
+[phases.md § Putting the app online — step by step, in plain words](../archive/phases.md#putting-the-app-online--step-by-step-in-plain-words) (the owner will see "read on your machine" on a
 first upload and should know nothing is broken). **Left unbuilt on purpose** — the current behaviour
 is what `index.ts` and `remote.ts` were each deliberately designed to do, so changing the contract
 between them is an owner call, not a tidy-up. Re-run warm, `smoke:live` passes on both paths.
@@ -7059,7 +7059,7 @@ Green after the deletion: `typecheck`, `npm test` (217/217 both modes), `smoke:e
 ## 2026-08-08 — the tuplet tool, and the bar that says it does not add up
 
 **Editor steps 7 and 8 are built and green** ([../mvp/editor.md](../app/editor.md), build notes in
-[../mvp/editor-built.md](../app/editor-built.md)). They shipped together on purpose: applying a
+[editor.md § The editor — what each step BUILT, and the traps it found](../app/editor.md#the-editor--what-each-step-built-and-the-traps-it-found)). They shipped together on purpose: applying a
 triplet turns 3 × 1/8 into 3 × 1/12, so it leaves a short bar **every single time**, and step 8 is
 the only thing on screen that says so.
 
@@ -7433,7 +7433,7 @@ records a rect.
 397, against a 400 cap — every one of them one line from failing `check_docs.py`, which is a trap
 rather than a limit. Split by genre, each leaving a pointer behind:
 `STATUS.md` **404 → 279** (its three "Previously" blocks were real-page-track context, now
-[../rung3/standing.md](../rung3/standing.md)); `MANUAL_CHECKS.md` **399 → 225** (corpus/renderer
+[README.md § Standing findings — the real-page track, established and still true](../rung3/README.md#standing-findings--the-real-page-track-established-and-still-true)); `MANUAL_CHECKS.md` **399 → 225** (corpus/renderer
 checks 1–8 out); `mvp/rungs.md` **397 → 192** (W0–W3 out); `mvp/deploy.md` **399 → 340** (the
 commands out, so *why* and *how* stop sharing a page); `rung3/labeling.md` **399 → 304** (the two
 review queues out). Nothing above 384 now. ⚠ The moves needed link-depth rewriting in both
@@ -7488,7 +7488,7 @@ and makam selection together.
 ## 2026-08-07 — makam selection: the app plays the makam, not the notation
 
 _Owner request, taken before the style pass. Pipeline stage 9's makam half, designed in
-`PIPELINE.md` since June and never built. The reason it jumped the queue: playback sounded every
+`CODE_TOUR.md` since June and never built. The reason it jumped the queue: playback sounded every
 note exactly where the staff spells it, and for a Turkish listener that is audibly wrong on the most
 common makam there is — uşşak's segah is not where AEU writes it. A friend opening the link would
 hear that before noticing anything about the interface._
@@ -7502,7 +7502,7 @@ re-bemol, not 4, so **+1.5**. Hüzzam's hisar: the pentachord's augmented second
 commas, so **+1**. Segah karar: the Ottoman perde sits about a comma below the Arelian, **−1**. And
 the row that is not padding — **hüseyni and muhayyer explicitly do NOT take the uşşak lowering**,
 which is written into the table as an empty rule list so nobody "completes" it by symmetry.
-Sources are in [../mvp/makam.md](../app/makam.md); the literature disagrees on magnitudes and the
+Sources are in [README.md § Makam selection — the performed intonation](../app/README.md#makam-selection--the-performed-intonation); the literature disagrees on magnitudes and the
 table takes midpoints, saying so.
 
 **Three owner decisions, all narrowing.** Documented deviations only (every makam selectable, only
@@ -7550,7 +7550,7 @@ style pass carries anyway. Still open: the **header OCR** half of stage 9, direc
 intonation (the uşşak lowering is strongest in descent; karcığar's hicaz-on-nevâ is an *average* of
 ascending and descending), and degree-relative rules for pages written away from a makam's own
 perde.
-Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
+Phases 0–1 in full detail → [phases.md](../archive/phases.md#history--detailed-log-of-completed-phases). Run-level numbers →
 [../METRICS.md](../METRICS.md) and [../../src/vision/MODEL_EVAL.md](../../src/vision/MODEL_EVAL.md).
 
 ## 2026-08-06 (night) — W9 is finished: there is a link
@@ -7558,7 +7558,7 @@ Phases 0–1 in full detail → [HISTORY.md](HISTORY.md). Run-level numbers →
 **<https://komavision.netlify.app>** serves the app, `Beyaban/omr-weights` holds the 211 MB of
 graphs, and `omr-decode-00003-jrl` on Cloud Run reads the music with the door now locked to that one
 host. The owner made the two accounts; everything else was driven from here. Recipe and the two
-traps: [../mvp/hosting-setup.md](../app/hosting-setup.md).
+traps: [phases.md § Putting the app online — step by step, in plain words](../archive/phases.md#putting-the-app-online--step-by-step-in-plain-words).
 
 **Two things cost time, and neither was our code.**
 
@@ -7608,7 +7608,7 @@ It is doing its job — the header says it needs `dev:server` — but the failur
 product bug rather than a missing prerequisite.
 
 Everything past this point needs accounts the owner has to create, so the session ended with the
-walkthrough rather than a deploy: [../mvp/hosting-setup.md](../app/hosting-setup.md).
+walkthrough rather than a deploy: [phases.md § Putting the app online — step by step, in plain words](../archive/phases.md#putting-the-app-online--step-by-step-in-plain-words).
 
 **Closing note, written after the deploy: the last check had to be built, because the lock broke the
 existing one.** Setting `ALLOWED_ORIGINS` means a localhost preview is refused by the decode server,
@@ -7631,7 +7631,7 @@ The decode server is live on Cloud Run: `omr-decode`, europe-west3, 1 vCPU / 2 G
 max-instances 3. Google Cloud was set up from nothing in the same sitting — the owner's previous
 `gcloud` install turned out to be already deleted, leaving only credentials from a finished job in
 `~/.config/gcloud`, which a reinstall would not have cleaned. Walkthrough:
-[../mvp/gcloud-setup.md](../app/gcloud-setup.md).
+[phases.md § Setting up Google Cloud — step by step, in plain words](../archive/phases.md#setting-up-google-cloud--step-by-step-in-plain-words).
 
 **The measurements, which change the story deploy.md told.** A cloud vCPU costs **1.93 vCPU-s per
 strip** against 0.55 on an M4 core — **3.5× slower**. So a page is ~40 vCPU-s, the free tier covers
@@ -7847,7 +7847,7 @@ marked SUPERSEDED, keeping its GPU and ads reasoning, which still stands.
 ## 2026-08-05 — the backend decision is TAKEN: decode moves to a server
 
 **Owner: "I am sure about deploy the app in a server to protect computers for now."** That settles
-the question `docs/app/deploy.md` reopened the same day, and it reverses two things that were marked
+the question `docs/app/server.md` reopened the same day, and it reverses two things that were marked
 LOCKED: the 2026-07-02 "No production backend" decision and the `CLAUDE.md` hard rule "No backend,
 ever". Both are now marked OVERTURNED with this as the cause, per the rule that a reversed decision
 keeps its reasoning rather than being deleted.
@@ -7877,7 +7877,7 @@ benchmark first for that reason — it also decides Cloud Run vs Hetzner.
 
 ## 2026-08-05 — doc sync: deploy.md was written against a page that no longer exists
 
-**`docs/app/deploy.md` (the reopened backend question) was drafted BEFORE the deskew speedup landed
+**`docs/app/server.md` (the reopened backend question) was drafted BEFORE the deskew speedup landed
 the same day, and three of its load-bearing facts had gone stale.** Corrected rather than deleted,
 because the reasoning is still good and only the numbers moved:
 
@@ -8052,7 +8052,7 @@ Both candidate fixes are behaviour changes owing their own measurement; see STAT
 `cropStrip` cutting pixels only when a caller wants them. Over the whole corpus — 1,781 pages /
 33,805 strips — window fields are exact on **33,783/33,783**, strip count per page on
 **1,697/1,697**, `row_x0`/`row_x1` within 2 px on **99.99%**, invariants at Python's own **0**.
-Numbers: [../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+Numbers: [METRICS-SLICER.md § Slicer port parity — does the TypeScript reproduce the Python?](../METRICS-SLICER.md#slicer-port-parity--does-the-typescript-reproduce-the-python).
 
 **The verdict that mattered was the decode arm, and it was worth building properly.**
 `tools/vision/parity/arm-a.ts` slices a page with the port, decodes those crops, decodes Python's
@@ -8104,10 +8104,10 @@ injects Python's angle), and W7 inherits ~36 s/page of slicer latency, ~35 s of 
 them to the driver. Against local Python on **1,781 pages / 12,123 rows / 51,019 bars**: bar count
 exact **12,121/12,123 (99.98%)**, positions within 1 px **51,018/51,019 (100.00%)**, exact
 **51,013/51,019 (99.99%)** — all three W5 bars, on the corpus rather than a sample. Numbers:
-[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+[METRICS-SLICER.md § Slicer port parity — does the TypeScript reproduce the Python?](../METRICS-SLICER.md#slicer-port-parity--does-the-typescript-reproduce-the-python).
 
 **Why it passed first time is the interesting part, and it is not luck.** W4 left
-[../mvp/slicer-port.md](../archive/phases/slicer-port.md) a named list of hazards in this specific file, and
+[phases.md § Porting the slicer to TypeScript — W4–W6](../archive/phases.md#porting-the-slicer-to-typescript--w4w6) a named list of hazards in this specific file, and
 they were transliterated as written instead of rediscovered: `_is_thin_stroke`'s staff-row
 `continue` that does **not** reset the run, `_terminal_overshoot`'s four state variables with four
 different reset rules, and the three per-ROW `binarize_ink` calls that must not be hoisted into one
@@ -8171,7 +8171,7 @@ Seven systems differ by 1 px — six an *interior* staff line's cluster centre, 
 `normalize_row` reads only the outer lines and the median spacing, which are identical on all
 12,123 systems. W0 predicted this residue and its fixture was too clean to show it; this is the
 first time it has been observed reaching any output. Numbers:
-[../METRICS-SLICER-PORT.md](../METRICS-SLICER-PORT.md).
+[METRICS-SLICER.md § Slicer port parity — does the TypeScript reproduce the Python?](../METRICS-SLICER.md#slicer-port-parity--does-the-typescript-reproduce-the-python).
 
 Two scope notes recorded rather than glossed. The corpus run used `--inject-skew` (Python's angle
 fed in) to stay affordable, so the **estimator** is validated on 132 pages, 132/132, not the corpus.
@@ -8182,7 +8182,7 @@ finds the same one — the original wording failed a port that agreed with Pytho
 **The interesting part is what the plan had wrong.** Both errors were in the *plan*, both were
 found by measuring, and neither was visible by reading the code:
 
-**1. `prepPage` could not be a no-op.** [../mvp/slicer-port.md](../archive/phases/slicer-port.md) recorded that
+**1. `prepPage` could not be a no-op.** [phases.md § Porting the slicer to TypeScript — W4–W6](../archive/phases.md#porting-the-slicer-to-typescript--w4w6) recorded that
 every step of the camera path is inert on clean input, so the port started with a stub. It is true
 of the perspective crop (0% of pages take one) and false of the deskew: **15.3% of corpus pages
 (272/1,781) take a real rotation**, 17.4% on the first sample where the angles ran 0.3–1.1°. The first parity run read 86.7%, with three pages finding *zero*
@@ -8342,7 +8342,7 @@ targets pitch (40%) and duration (28%) of user edits through a synthetic content
 real lever, but two rounds have already shipped as "improvement, not pass", and a third would change
 nothing a friend would notice. Meanwhile the *product* half of the 2026-07-27 goal (show the user
 where the errors are) had never been built, and feedback is unobtainable without a pipeline. New
-track: [../mvp/README.md](../archive/phases/mvp.md), a W0–W10 ladder with per-rung acceptance checks.
+track: [phases.md § MVP track — the in-browser pipeline, and a release to friends (CLOSED)](../archive/phases.md#mvp-track--the-in-browser-pipeline-and-a-release-to-friends-closed), a W0–W10 ladder with per-rung acceptance checks.
 
 **The gap turned out to be one file, not a phase.** Exploration found decode, Donut preprocessing,
 detokenization, stitching, the editor and playback all already browser-safe — `omrGate.ts` simply
@@ -8743,7 +8743,7 @@ Also settled, so nobody re-fixes it: **`f'' 32` is not a decode error.** It toke
 New probes, each carrying its pre-registered bar and its result in the docstring:
 `scripts/rung3/empty_crop_probe.py`, `width_split_probe.py`, `beam_weight_probe.py`,
 `staff_geometry_probe.py`. Numbers: [../METRICS.md](../METRICS.md). Detail:
-[../rung3/round3.md](../archive/rounds/round3.md).
+[rounds.md § Round 3 — the notes themselves: where they sit and how long they are](../archive/rounds.md#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are).
 
 ## 2026-07-27 — Round 2 SHIPPED: `round2-stage2-best` int8 is the live runtime
 
@@ -8804,7 +8804,7 @@ which is byte-identical to today's pre-promotion manifest. Only the 54 new ones 
 
 **Consequence for Round 3:** its real pool is cleaner than Round 2's. That is one more difference
 between the rounds on top of the corpus changes, so attribution gets harder again unless it is
-chosen deliberately ([../rung3/round3.md](../archive/rounds/round3.md)).
+chosen deliberately ([rounds.md § Round 3 — the notes themselves: where they sit and how long they are](../archive/rounds.md#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are)).
 
 Also promoted-with-rejects: 24 rows rejected by the mechanical gates — 14 `over_budget` from the
 review queue (the deferred recoveries) and 10 `not_in_manifest` (corrections against strips that are
@@ -8812,7 +8812,7 @@ not in the training pool; checked, none are the exam pieces removed earlier the 
 
 ## 2026-07-27 (end of day) — Round 3 planned: note heights and note lengths
 
-Written up in [../rung3/round3.md](../archive/rounds/round3.md). Two diagnostics shaped it, both from the
+Written up in [rounds.md § Round 3 — the notes themselves: where they sit and how long they are](../archive/rounds.md#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are). Two diagnostics shaped it, both from the
 Round-2 exam read with no new decoding.
 
 **Note heights (40% of corrections) are off by ONE or TWO positions in 74% of cases** — a
@@ -9059,7 +9059,7 @@ the respell. Signature coverage comes from the 23 added pieces instead.
 
 ## 2026-07-26 — Microtonal sharps: it was our renderer, fixed at source
 
-Diagnosed in three steps, cheapest first ([../rung3/round2.md](../archive/rounds/round2.md)):
+Diagnosed in three steps, cheapest first ([rounds.md § Round 2 — photo axis, the sharp fix, and what is still open](../archive/rounds.md#round-2--photo-axis-the-sharp-fix-and-what-is-still-open)):
 - **Resolution ruled out.** `scripts/rung3/sharp_width_test.py` regroups already-scored strips by
   the encoder's effective scale (Donut thumbnails a 336×579–2472 strip into 409×583, scale
   1.22→0.24). Recall does not fall with scale on either dataset; `\bakiyeSharp` holds 84–94% in
@@ -9143,7 +9143,7 @@ miss and the komaSharp↔kucukSharp confusion. Logged in `MODEL_EVAL.md` as "car
     contaminated pieces.
   - *Item 3* — canonical real-val split shipped as `data.is_real_val_piece` (byte-identical to
     Round 1); both Round-2 consumers must reuse it.
-- **Plan-review addenda adopted** — see [../rung3/round1.md](../archive/rounds/round1.md) for all nine, and
+- **Plan-review addenda adopted** — see [rounds.md § Round 1 — the first fine-tune on real pages (Step 4)](../archive/rounds.md#round-1--the-first-fine-tune-on-real-pages-step-4) for all nine, and
   [../DECISIONS.md](../DECISIONS.md) for the two that were dropped.
 
 ## 2026-07-22 — Round 1 trained, then examined: FAIL on five floors
@@ -9383,7 +9383,7 @@ serialize byte-identical to v2_1. Rung 2.2 retrain and its ONNX export both pass
 
 ## 2026-07-07 — Rung 2 passes; the no-server premise holds on a real model
 
-- **Colab kit:** `docs/COLAB.md` + `notebooks/rung2_colab.ipynb` + `scripts/make_colab_zip.sh` (one
+- **Colab kit:** `docs/COMMANDS.md` + `notebooks/rung2_colab.ipynb` + `scripts/make_colab_zip.sh` (one
   self-contained 320 MB upload). Plan decision: **Colab Pro, not Pro+** — a full run ≈ 5–10 compute
   units, Pro's 100 covers the campaign.
 - **Rung 2 PASSED first try** on `strips_v2_1` (batch 16, lr 3e-5, 6000 steps ≈ 110 min; best val
@@ -9413,7 +9413,7 @@ serialize byte-identical to v2_1. Rung 2.2 retrain and its ONNX export both pass
   the **centered-rest fix** (`alignRests` off —
   rests had been floating near the top line, unlike printed sheets). v2 stays on disk; v2_1
   supersedes it for training.
-- **`docs/PIPELINE.md` written**: the full page-photo → strips → decode → stitch → note-model design.
+- **`docs/CODE_TOUR.md` written**: the full page-photo → strips → decode → stitch → note-model design.
 
 ## 2026-07-05 — Rung-2 dataset upgrades (`strips_v2`)
 
@@ -9450,4 +9450,4 @@ resumable. OpenCV augmentation deliberately NOT baked in.
 
 Symbolic → microtonal audio with no ML, then the shared TypeScript core + React web harness
 (piano-roll, VexFlow sheet with AEU accidentals, transport, editing, usul-aware metronome,
-transpose/ahenk, lyrics and header). Full detail: [HISTORY.md](HISTORY.md).
+transpose/ahenk, lyrics and header). Full detail: [phases.md](../archive/phases.md#history--detailed-log-of-completed-phases).

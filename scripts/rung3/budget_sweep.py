@@ -5,7 +5,7 @@ DROPPED, so dense music never reaches the model in any form. Splitting such a wi
 parts fit, which is how that music gets into the corpus at all. But cutting too eagerly has its own
 cost, and it is a measured one — `MEASURES_PER_STRIP = 1` looked monotonically better on "does it
 fit" and turned out to be harmful, because it manufactured near-empty crops that "fit" while
-carrying almost no music (docs/METRICS-SLICER-FRAME.md).
+carrying almost no music (docs/METRICS-SLICER-WINDOWS.md).
 
 So the budget is a trade between two curves, and this reports both at every candidate b:
 

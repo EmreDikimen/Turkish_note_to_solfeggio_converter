@@ -1,8 +1,8 @@
 # Metrics — every headline number, once
 
-purpose: the single home for measured numbers; other docs link here instead of restating
+purpose: the single home for measured numbers — the headline table, plus the live app's usage, the owner's hand-test set, the shipped ONNX model and the b8 re-emit
 audience: agents and the owner, whenever a number is needed
-updated: 2026-11-15
+updated: 2026-11-20
 
 Raw run logs (settings, error dumps, export details) live in
 [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md). This file is the summary index.
@@ -40,7 +40,7 @@ low-n caveats — is in [METRICS-EXAM.md](METRICS-EXAM.md). Nothing about the ex
   **Composition dominates; edition familiarity is small** (clean tiers agree within 2pp). This is
   the measurement the real-val rebuild acts on — see [rung3/labeling.md](rung3/labeling.md).
 
-### Round 3's checkpoint choice and its real-val position (2026-09-01) → [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md)
+### Round 3's checkpoint choice and its real-val position (2026-09-01) → [METRICS-EXAM.md](METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b)
 
 ⭐ **`last` beat `best` on every column — the selector picked the worse model** (667 edits against 784,
 exact 68.3% against 63.4% on `_realval_v2`'s 262 strips), and against Round 2 the sign test is decisive
@@ -48,13 +48,13 @@ at 72 : 22 while the mean-edits CI spans zero. ⭐ **Round 3's gain was confined
 (improve:regress 4.4 : 1 under 50 tokens against **1.25 : 1** at ≥ 50) — the lead Round 4 was opened on.
 Tables, the concentration of the damage, and the exam caveat are in that file.
 
-### Round 3's two follow-up runs (A and B) → [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md)
+### Round 3's two follow-up runs (A and B) → [METRICS-EXAM.md](METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b)
 
 ⛔ **Both are NULLS and Round 3's shipped choice stands** — exact-match 68.3% / 69.1% / 69.5% on the
 same 262 strips, every CI spanning zero. ⭐ Run A is the project's cleanest demonstration that a **6%
 better val loss can be worth zero edits**.
 
-### Round 4 — the vocabulary A/B, the dense read, the live model → [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md)
+### Round 4 — the vocabulary A/B, the dense read, the live model → [METRICS-EXAM.md](METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran)
 
 ⛔ **Scheme H is a NULL everywhere it was measured**, including the dense strips it was built for:
 H − control is 42 vs **35** edits on `_denseval_h1_dense` (117, p = 0.549), 76 vs **69** over all 442
@@ -64,7 +64,7 @@ control beats the LIVE model on dense strips** — **−0.111 edits/strip, CI [�
 ceiling**: **5.91%** of all 15,711 candidate strips exceed 99 old ids against **0.30%** under H.
 ⚠ **An edit count is comparable only inside one vocabulary** — `paired_arm_score.py --score-vocab old`.
 
-### The exported runtime (ONNX / int8) → [METRICS-ONNX.md](METRICS-ONNX.md)
+### The exported runtime (ONNX / int8) → [METRICS.md](#metrics--the-exported-runtime-onnx-export-int8-quantization-parity)
 
 Export validation, int8 sizes, and the parity of the quantized graphs against PyTorch — including the finding that int8 is exact on the 14 synthetic gate strips and diverges on **~10% of real ones**, in Round 2 as well as Round 3.
 
@@ -103,7 +103,7 @@ deliver**, and it must not be reported as one.
 ⚠ **The middle row is the product-relevant estimate**: −7.2% edits, +4.6 pp exact.
 ⚠ **Consequence for the exam**: `examv3` gold is also tie-free (0/660), so the **44%**
 `round2-stage2-best` baseline already charges Round 2 for its ties. Round 3 will therefore beat it
-partly on this mechanism — and on 2026-09-01 it did: ~15 of its +17 points ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)). The comparison is fair — same instrument, same pages — but the ship
+partly on this mechanism — and on 2026-09-01 it did: ~15 of its +17 points ([METRICS-EXAM.md](METRICS-EXAM.md#metrics--the-exam-as-an-instrument)). The comparison is fair — same instrument, same pages — but the ship
 judgement must not credit the gain to the render flags.
 Raw: `data/real/rung3/final/taxonomy_realval_v2.json`.
 
@@ -182,7 +182,7 @@ Both pools read with the SAME model (`round2-stage2-best`) on the same day, so t
 Every `\tup3`-bearing strip already on the VAL side of `strips_tup` + `_realval_v2`
 (`scripts/rung3/build_tuplet_val.py`): **54 gold groups over 28 strips, 11 pieces**, neyzen 24 /
 nota 4. Exam pieces refused, one decode-derived label dropped, 8 filename collisions resolved to
-the newer slicer's crop. Protocol: [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md).
+the newer slicer's crop. Protocol: [archive/rounds.md](archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol).
 
 **THE A/B RESULT (2026-08-15) — NULL.** Both arms trained on the identical recipe; the pre-registered
 statistic is free-running `\tup3` recall on this pool, paired.
@@ -242,7 +242,7 @@ cap). That file owns the microtonal-sharp defect, the crop-shape and beam-weight
 confidence calibration, the old-slicer staleness finding, and the ~2% pre-shrink that failed to
 replicate.
 
-## The second engraver (Lever 4) → [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md)
+## The second engraver (Lever 4) → [METRICS-INPUT.md](METRICS-INPUT.md#metrics--the-second-engraver-round-3-lever-4)
 
 New 2026-08-18. That file owns the LilyPond arm: the AEU glyph-mapping check, the 312-strip pilot,
 its pixels-vs-labels gate, the domain-gap read against a matched VexFlow control, and the two limits
@@ -259,7 +259,7 @@ pixels-vs-labels defect and the `verify-labels.ts` verification.
 
 Service: `omr-decode`, europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3 when these rows were measured (**10 since 2026-09-04**). ⛔ Every "fallback" row below is history: since 2026-09-04 a deployed build reads nothing in the browser.
 Rows marked **M4** are the dev laptop; rows marked **Cloud Run** are the deployed service.
-Plan: [app/deploy.md](app/deploy.md).
+Plan: [app/server.md](app/server.md#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for).
 
 | Measure (Cloud Run, 1 vCPU) | Value |
 |---|---|
@@ -269,7 +269,7 @@ Plan: [app/deploy.md](app/deploy.md).
 | **⚠ It is SLOWER than the user's own browser** | 128 strips: **250 s on Cloud Run vs 166 s in the M4 browser (0.66×)**. Warm. Cold adds 10.6 s. **This is the outcome deploy.md predicted and the release was chosen on** — the win is the friend's laptop staying cool, not speed |
 | **Reads the same as the browser** | **120/128 strips (93.8%)** identical token ids — *the same rate as the local server*, and the divergences again sit on near-ties (median browser log-prob at the diverging token **−0.87, p = 0.42**) |
 | **Per strip / per page** | **~2.0 s a strip**; a 16-strip page **~35 s** warm and ~46 s cold, a 26-strip page **~55 s** warm. The encoder is **74–81%** of it, so nothing that leaves the encoder alone matters. ⚠ The same 26-strip page reads in **34 s in the owner's browser** — the server is slower, by choice |
-| **Parallelism works** (2026-08-06) | Three page requests at once finished in **35.5 s**, against ~80 s if run one after another, and **server-side time did not degrade** (23.5 / 26.4 / 22.6 s) — Cloud Run gave three machines and each kept full speed. The extra wall time on two of them is their own cold start. This is the measured basis for splitting ONE page across instances: [app/latency.md](app/latency.md) |
+| **Parallelism works** (2026-08-06) | Three page requests at once finished in **35.5 s**, against ~80 s if run one after another, and **server-side time did not degrade** (23.5 / 26.4 / 22.6 s) — Cloud Run gave three machines and each kept full speed. The extra wall time on two of them is their own cold start. This is the measured basis for splitting ONE page across instances: [app/server.md](app/server.md#making-a-page-faster--the-options-with-what-each-one-costs) |
 | Safety limits, live | `check:limits` **6/6** after one fix: a destroyed socket reached Cloud Run's proxy as a **503** rather than a 413, turning a client error into an apparent outage |
 | **The BUILT app against the LIVE service** (2026-08-06) | The first end-to-end run of the deployable artifact against Cloud Run rather than a local server — `smoke:build --decode-url <service>`, **PASS on both paths**. Same 26-strip page: **61.2 s reading on the server** against **33.2 s in the local fallback** on the same M4, identical score (9 staves → 26 strips → **399 notes / 26 measures**), `crossOriginIsolated` true and no page errors on either. ⚠ The server being ~1.8× slower here is the 0.66× row above seen end to end, plus this page being 26 strips rather than 16 |
 
@@ -293,12 +293,12 @@ Plan: [app/deploy.md](app/deploy.md).
 ⚠ **Still not measured:** behaviour with two friends uploading at once — though 2026-08-09 gave a
 one-sided hint of it, when a `/health` arriving mid-decode was served by a second container in ~11 s
 rather than queued. The **cost** of a cold start after real idle came off this list on 2026-08-09;
-whether the **app** survives one on a live idle service did not ([RISKS.md](RISKS.md)). Since
+whether the **app** survives one on a live idle service did not ([BACKLOG.md](BACKLOG.md#open-risks-and-non-claims)). Since
 2026-09-04 a cold start that outlasts `WARMUP_WAIT_MS` (120 s) shows `server-unavailable`; one cold
 start was measured at **38.2 s** that day.
 
 📊 **Who arrives at the live service — how many visitors, on what devices, and how much of it is
-robots — moved to [METRICS-USAGE.md](METRICS-USAGE.md)** on 2026-08-09. The rows above measure how
+robots — moved to [METRICS.md](#metrics--who-actually-uses-the-deployed-app)** on 2026-08-09. The rows above measure how
 the system *performs*; that file measures who *shows up*.
 
 ### The pre-deploy laptop numbers, kept for the comparison
@@ -322,7 +322,7 @@ the system *performs*; that file measures who *shows up*.
 
 ## Makam detection (2026-08-07) — signature + karar, over the 213 bundled scores
 
-The table and the method: [app/makam.md](app/makam.md). Scored two ways, because the useful
+The table and the method: [app/README.md](app/README.md#makam-selection--the-performed-intonation). Scored two ways, because the useful
 question is not "did it name the makam" but **"does the piece come out in tune"** — a makam with
 no intonation rules sounds identical to `none`, so a wrong *name* there costs nothing.
 
@@ -363,12 +363,350 @@ reads.
 | **Decoded marks that reach the page** (2026-08-05) | Over the 1,704 decode caches: `\tup3` notes drawn at the wrong length with no bracket **1,287 → 0** (22.9% of `\tup3`-bearing pages affected → 0). Repeats: 1,262 pages carry `\repstart`/`\repend`, **1,165 (92.3%) unfold**, **97 (7.7%) have no effect** — an unmatched `\repstart`, left alone rather than guessed at |
 | **Whole page in the app, after the deskew speedup** (2026-08-05) | **~25 s** on the same 7-staff page: slice **1.6 s** + decode **19.1 s** for 16 strips. The slicer over the parity sample went **36.6 → 1.3 s/page**, i.e. faster than the Python it copies (~1.9 s stage 1). Decode is now the bottleneck |
 | **`qualifyingLineRows` row-sum stage** (2026-08-05) | **856 ms → 6.8 ms per call, 125.8× faster**, over 328 angle evaluations on 8 real pages, with **0 disagreements** against the morphology it replaces. ~34.8 s saved per 41-angle sweep |
-| **Whole page in the app** (2026-08-05, MVP W7) | **~56 s** on one 7-staff page: slice **36.4 s** (of which ~35 s is the 41-rotation skew sweep) + decode **19.1 s** for 16 strips, on a 7-staff page. Model load ~3.4 s more on a cold session. Longest single main-thread block **2.35 s** — the sweep yields between rotations. The slicer's corpus-mean cost is in [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |
+| **Whole page in the app** (2026-08-05, MVP W7) | **~56 s** on one 7-staff page: slice **36.4 s** (of which ~35 s is the 41-rotation skew sweep) + decode **19.1 s** for 16 strips, on a 7-staff page. Model load ~3.4 s more on a cold session. Longest single main-thread block **2.35 s** — the sweep yields between rotations. The slicer's corpus-mean cost is in [METRICS-SLICER.md](METRICS-SLICER.md#slicer-port-parity--does-the-typescript-reproduce-the-python) |
 | Page decode (Mac, int8) | ~353 ms/strip ≈ 7.4 s/page |
 | Round-1 ship gate | parity 10/10 fp32 + 10/10 int8; browser gate **19/20** — one double-dot token (`a''2..`) trips an ORT-web int8 numerics wobble, model-independent, logged not blocking |
 | Round-2 ship gate (2026-07-27, live) | parity 14/14 fp32 + 14/14 int8; browser gate **27/28** — canvas (product) path 14/14, one *reference*-path strip drops a `\tup3`; deterministic, logged not blocking. Round-1's double-dot failure did not reproduce |
-| Round-3/4 browser gate (2026-09-28 → 2026-10-08) | `r3a` **22/28**, `r4-ctl` **24/28** on the July golds; after the one `\tie` gold was rewritten tie-free (2026-10-08), `r4-ctl` (live) reads **26/28** — the pin since then. Detail: [METRICS-ONNX.md](METRICS-ONNX.md) |
+| Round-3/4 browser gate (2026-09-28 → 2026-10-08) | `r3a` **22/28**, `r4-ctl` **24/28** on the July golds; after the one `\tie` gold was rewritten tie-free (2026-10-08), `r4-ctl` (live) reads **26/28** — the pin since then. Detail: [METRICS.md](#metrics--the-exported-runtime-onnx-export-int8-quantization-parity) |
 | That gate miss, measured | the flipped token is a real near-tie: `\tup3` **p=0.689** vs `e` **p=0.306** under Python-ORT int8 — the only token in the strip below 0.99 (next lowest 0.938). ORT-web wasm int8 tips it; the graph and the JS preprocessing are both exonerated |
 | Training strip geometry | H=336 px, staff spacing 30 px, top line y≈138; label cap 59 ids (the real pools' emitter gate is **80 H ids** since 2026-09-07 — [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md)) |
 | Slicer staff-detection kernel | `STAFF_HOR_FRAC = 0.11` of page width (was `w/4`) |
 | Slicer, a screenshot's dark viewer frame (2026-11-15) | painted white before binarization; what it fixes and the pages it does not touch are in [METRICS-SLICER.md](METRICS-SLICER.md) |
+
+**Merged into this file on 2026-11-20:**
+
+- [Metrics — who actually uses the deployed app](#metrics--who-actually-uses-the-deployed-app) — was `docs/METRICS.md`
+- [Hand-test pages — the page-level instrument](#hand-test-pages--the-page-level-instrument) — was `docs/METRICS.md`
+- [Metrics — the exported runtime (ONNX export, int8 quantization, parity)](#metrics--the-exported-runtime-onnx-export-int8-quantization-parity) — was `docs/METRICS.md`
+- [Metrics — the B8 re-emit and the human fixes it did not carry](#metrics--the-b8-re-emit-and-the-human-fixes-it-did-not-carry) — was `docs/METRICS.md`
+
+
+## Metrics — who actually uses the deployed app
+
+*Was `docs/METRICS.md` (last updated 2026-10-08).*
+
+Split out of [METRICS.md](METRICS.md) on 2026-08-09, by genre: that file measures how the system
+*performs*, this one measures who *arrives*. Service performance (cold starts, cost, decode speed)
+stays there. Current state → [STATUS.md](STATUS.md).
+
+⭐ **EVERY NUMBER BELOW WAS READ OFF A REQUEST LOG, AND SINCE 2026-09-05 THERE IS A REAL COUNTER**
+(owner). The table on this page is the historical record of what could be inferred without one; new
+readings come from the site's own anonymous counter and its dashboard
+([features/README.md](features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard)), which separates robots from people and counts
+DEVICES rather than requests. ⚠ **The two are not comparable**: the log below counts everything that
+touched Cloud Run, the counter counts browsers that ran the app and skips its own test runs. Do not
+continue this table from the dashboard — start a dated section under it.
+
+**Where the data below comes from, and why it exists at all.** Nothing was instrumented for analytics
+at the time — the project had no tracker, and DECISIONS.md kept it that way until the row of
+2026-09-05 reversed it. But the app pings `/health` when it opens (the cold-start fix), so Cloud
+Run's ordinary request log became a visit counter as a side effect. Read it with the two limits below
+firmly in mind.
+
+⚠ **A request log can tell you how many DEVICES, never how many PEOPLE, and never who.** Every
+sharpening of the numbers below came from the owner supplying what the log could not — that nobody
+in this circle runs Linux, and that one of the phones was the owner's. Expect to have to ask.
+
+⚠ **`/health` counts openings, `/decode` counts uses.** Only the second means a human read a page.
+Robots do the first constantly.
+
+### The live service, 7 days to 2026-08-09
+
+| Measure | Value |
+|---|---|
+| **Who has actually used the deployed app** (2026-08-09, 7 days of request log) | The app pings `/health` on open, so Cloud Run's log doubles as a visit counter. Three page reads on 2026-08-08, **all from ANDROID PHONES** — but ⚠ **one of them is the OWNER'S own phone** (`144.122.137.254`, 11:35, Chrome/150, also back at 13:14 and 16:38 — owner-confirmed 2026-08-09, after an earlier version of this row miscounted all three as visitors). **That leaves two non-owner page reads:** `88.240.41.208` at 14:18 (Türk Telekom home ADSL, 2.2 MB) and `144.122.151.233` at 20:32 (2.5 MB, desktop-site mode). Everything else from outside is **`/health` with no `/decode`**, and the whois says why: **AWS** (`100.31.187.16`, the post-deploy crawler), **Ace Data Centers** (`23.27.145.210`), a **ProtonVPN** exit in Iceland (`185.159.158.61`), plus scattered foreign ISPs whose device stories do not hold — one iPhone UA from **four unrelated IPs** in two days. ⚠ `/health` is an upper bound on humans; `/decode` is the real count |
+| **⚠ Those two remaining reads are ONE OR TWO people — the log cannot say which** | Both ran **Chrome/151** on Android, six hours apart, from two different networks (home ADSL, then the owner's `144.122.x`). A phone moving between them in six hours is unremarkable, and so is two people. **No further evidence exists**: Cloud Run logs no cookie, no session id and no client hints, and the two page sizes prove only that different sheets were read. So the standing count is **≥1 stranger, ≤2**. Resolving it properly means either asking them (W10) or storing a client id — ⭐ **and that is what 2026-09-05 decided to do**, in the one form that answers the question without becoming tracking: an id that expires every night, so it separates two devices today and links nothing tomorrow ([features/README.md](features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard)) |
+| **A distinct-device proof that DOES hold** | The owner's phone ran **Chrome/150** at 13:14 and 16:38 while the 14:18 upload came from **Chrome/151**. Browsers never downgrade, so those are certainly two devices — which is how "at least one real stranger" is known rather than assumed. Chrome build number is the only device discriminator this log offers, since the Android UA is frozen to `Android 10; K` |
+| **⚠ An `X11; Linux x86_64` UA here does NOT mean a Linux machine** | It is what Chrome for Android sends under **"Request desktop site"**, and mistaking it cost one wrong entry in this file. `144.122.151.233` is the proof, all one IP and one Chrome build: `/health` on the **Android mobile** UA at 20:29:57 → `/health` on the **X11 Linux** UA at 20:30:57 → upload at 20:32. One person, one phone, one minute. Owner-confirmed context: nobody in this circle runs Linux |
+| **⚠ Real visitors are arriving on PHONES, against a "web first, mobile later" plan** | All three humans were on Android, and one switched to desktop mode within 60 s of opening — then uploaded. That is a small n, and the switch has no stated reason, so it is a **signal to ask W10's friends about, not a finding**: it is equally consistent with a cramped mobile layout or with habit. ⚠ The plan it was in tension with changed on 2026-09-19: the phone is now the main screen ([features/phone.md](features/phone.md)) |
+
+
+## Hand-test pages — the page-level instrument
+
+*Was `docs/METRICS.md` (last updated 2026-09-06).*
+
+> Current state and next action are NOT here — see [STATUS.md](STATUS.md). The plan this serves is
+> [rung3/round4.md](rung3/round4.md); the reason it exists is [BACKLOG.md](BACKLOG.md) item 6.
+
+### What it is
+
+**20 pages the owner supplied on 2026-09-06**, outside the frozen exam, decoded once and loaded into
+`review_ui.py` as queue **`handtest`**. It is the page-level instrument this project has never had:
+the exam scores strips and drops 41% of its candidates, real-val is 262 strips with a CI half-width
+that hides any gain under ~5%, and the owner's judgement of the app has so far been on whatever page
+happened to be open. Here every model reads **the same pages** and the number is **corrections per
+page** — the unit a user actually experiences.
+
+⚠ **The pictures are not in the repo.** `exam_pages/` is gitignored (2026-09-06): they are someone
+else's engraving and this repo is public. The crops and decodes live under
+`data/real/rung3/_handtest/`, also gitignored.
+
+### What the verdicts mean
+
+Different from every other queue — this is a correction count, not a label pass:
+
+| verdict | meaning |
+|---|---|
+| `ok` | the model read this strip correctly — costs the user nothing |
+| `fix` | the model got it wrong — type what the page actually says |
+| `bad` | the crop is unusable — the slicer's fault, not the model's |
+
+**Corrections per page = the rows that are not `ok`.**
+
+⛔ **It is not gold and it is not the exam.** `label` is empty on every row, the client clears
+`corrected_label` on `ok`, and the filename is neither `emit_review.csv` nor `full_audit.csv` — the
+only two `promote_labels.py` reads. Those are the same two guarantees `r3-exam-errors` carries, and
+they matter more here: the `decoded` column comes from `r3a-stage2-best-real`, the model serving the
+live site, so promoting it would be the circularity [../CLAUDE.md](../CLAUDE.md) forbids.
+
+### The first decode (2026-09-06, `r3a-stage2-best-real` int8)
+
+The shipped runtime, `OMR_ORT_THREADS=2`, on the laptop.
+
+| | |
+|---|---|
+| pages decoded | **20 of 20**, no failures |
+| staff rows found | 182 |
+| strips | **515** |
+| wall clock | 211 s — **~10.5 s a page** |
+| `hit_cap` (decode stopped at the length cap) | **0** |
+
+#### Structural tells — 62 of 515 rows
+
+Computed without gold, so they say *where to look*, never *what is wrong*. Every row-start strip of
+one page should read the **same** key signature; where they disagree at least one is misread, and a
+`\sig` block in a mid-row crop is invented outright because that crop cannot see a signature.
+
+| tell | rows |
+|---|---|
+| `sig-differs` — a row disagrees with its page's majority signature | **18** |
+| `low-confidence` — min token log-prob < −1 | 18 |
+| `near-empty` — 3 tokens or fewer | 15 |
+| `midrow-sig` — a mid-row crop emitted a `\sig` block | 7 |
+| `sig-unclosed` — opened a `\sig` that never closes | 4 |
+
+⭐ **6 of the 20 pages have rows that disagree with each other about the key signature.** The worst
+is a faded archive scan: **6 different signatures across its 9 rows**, plus 13 low-confidence strips.
+That the signature is the largest error class is Round 4's root cause #2
+([rung3/round4.md](rung3/round4.md)); this is that finding arriving from a third direction, on pages
+from a source the corpus does not contain.
+
+### What may NOT be claimed from this
+
+- ⛔ **No accuracy number.** Nothing here has been read by a person yet, so there is no
+  corrections-per-page figure for any model — only the decode and the tells above.
+- ⛔ **Not comparable to `examv3`.** Different pages, different sources, no gold, and the exam's own
+  numbers come from a strip-level scorer over a filtered candidate set.
+- ⚠ **A verdict is given against pixels.** If the slicer changes, the crops move and the verdicts do
+  not transfer; re-running `build_handtest_queue.py` carries them by strip name, which is only valid
+  while the crops are the same. Bump nothing and re-read if `GEOMETRY_REV` moves.
+- ⚠ **The set is not checked against the exam.** Three of the 20 titles were matched against
+  `testset.json` and none is an exam piece; **17 are unchecked**. It matters only if these pages ever
+  become training data — as a read-only hand test they are safe either way.
+- ⚠ **n = 20 pages.** A difference of one or two corrections per page between two models is not a
+  result at this size.
+
+
+## Metrics — the exported runtime (ONNX export, int8 quantization, parity)
+
+*Was `docs/METRICS.md` (last updated 2026-10-08).*
+
+Split out of [METRICS.md](METRICS.md) on 2026-09-01 when that file crossed the 400-line cap. Genre:
+METRICS.md holds model quality; this holds the artifact that gets served.
+
+⚠ **No accuracy number anywhere in this project is measured on int8.** Every exam, real-val and
+taxonomy figure comes from the PyTorch checkpoint. The app serves int8. That gap is what this file
+sizes.
+
+### Export (`optimum-cli export onnx --task image-to-text-with-past`)
+
+| checkpoint | date | optimum float validation |
+|---|---|---|
+| `r3-final-stage2-last` | 2026-09-01 | max diff 5e-5 – 3.3e-4 (encoder 3.3e-4, logits 6.9e-5) |
+
+The tolerance warning at 1e-5 is expected and has fired on every export this project has done; parity
+in **id space** is the check that matters, below.
+
+### int8 quantization (`quantize_onnx.py`, `quantize_dynamic`, QInt8 weights)
+
+| graph | fp32 | int8 |
+|---|---|---|
+| encoder | 311 MB | **91 MB** |
+| decoder | 276 MB | **69 MB** |
+| decoder-with-past | 242 MB | **61 MB** |
+| **total shipped** | ~830 MB | **221 MB** |
+
+### Parity: int8 vs PyTorch, in id space
+
+Found while exporting Round 3, by noticing that `onnx_parity.py` pointed at a real pool selects
+**zero** strips and prints `0/0 PASS` — it filters to `GATE_STRIPS.txt`, which is 14 SYNTHETIC
+strips. That vacuous pass is worth knowing about on its own.
+
+Same reference decoder (`onnx_parity.onnx_greedy_decode`), 60 `_realval_v2` strips spread across the
+pool, int8 graphs vs the PyTorch checkpoint, identical token ids required:
+
+| checkpoint | 14 gate strips (synthetic) | **60 real strips** |
+|---|---|---|
+| `round2-stage2-best` — the live runtime on 2026-09-01 | — | **54/60 = 90.0%** |
+| `r3-final-stage2-last` | **14/14 = 100%** | **52/60 = 86.7%** |
+
+⭐ **This is ambient int8 behaviour, not a Round-3 defect**: both models diverge, 6 vs 8 strips of 60
+is within noise at that n, and the divergences land on **largely the same strips** in both
+(`yegah_pesrev…p2_s01_w03`, `canan_okuyor…p1_s03_w01`, `beni_cun_kendine…s01_w01`,
+`cok_surmedi…p2_s00`) — a property of hard, near-boundary strips rather than of either export.
+⚠ **But it has never been visible**, because the documented gate is 14 synthetic strips where int8 is
+exact. The shipped app has always decoded real pages with a model that can disagree with its own
+fp32 weights on ~1 strip in 10, and some disagreements are large (24 and 20 ids on ~50-token strips).
+⚠ **Consequence for any hand-test or hands-on impression**: the app runs int8, and no
+accuracy number in this file was measured on int8 — they all come from the PyTorch checkpoints.
+
+
+### The browser gate is STALE for any tie-free model (2026-09-01)
+
+`npm run gate:browser` expects **27/28**. `r3-final-stage2-last` reads **24/28**, and the four failed
+checks are three different things:
+
+| # | strip | cause |
+|---|---|---|
+| 2 | `rast…icime_hep` | ⭐ **the gold still contains `\tie`**, retired 2026-08-22. The model emits `a'1 a'4`, which under the retirement rule IS the correct label. **The fixture is wrong, not the model** |
+| 1 | `kurdilihicazkar…bunca_cevrinle` (reference) | **pre-existing** — `round2-stage2-best` produces byte-identical output here; this is the known 1/28 |
+| 1 | the same strip (canvas) | ⚠ **genuinely new** — Round 3 drops `\tup3` where Round 2 kept it, by one token (56 vs 57) |
+
+⛔ **So the 27/28 gate cannot pass any post-`\tie` model**, and would have blocked whoever shipped
+next regardless of Round 3. Regenerating that one gold tie-free would read **Round 3 26/28** and
+**Round 2 25/28** — the honest ordering, since Round 2 is now the stale model. ⚠ Not done: changing a
+shipped check's expected value is an owner call.
+
+#### The two models measured on the SAME golds (2026-09-28)
+
+Run while staging Round 4's control for the live site — both read through `npm run gate:browser`,
+the July `gate.json` golds untouched in between, so the two numbers are comparable:
+
+| model | checks | failing strips |
+|---|---|---|
+| `r3a-stage2-best-real` — the model that WAS live | **22/28** | `rast…icime_hep` (the `\tie` gold), `kurdilihicazkar…bunca_cevrinle`, `hicaz…yalan_degil` |
+| `r4-ctl-stage2-last` — deployed 2026-09-28 | **24/28** | `rast…icime_hep` (the `\tie` gold), `kurdilihicazkar…bunca_cevrinle` |
+
+- ⭐ **Round 4's control is two checks BETTER than the model it replaced**, on the gate the project
+  already had. That is not an accuracy finding — 14 synthetic strips decide it — but it is the one
+  check that was run on both and it does not contradict the deploy.
+- ⛔ **Neither reaches the documented 27/28, and `r3a` has been failing it since it was staged on
+  2026-09-03.** Nobody ran the gate at that staging. The expectation was stale for the reason this
+  section already gives — ✅ **settled 2026-10-08, below.**
+- `r4-ctl`'s surviving new failure is the same `\tup3` drop the row above records: gold
+  `\tup3 e''16 d''16 e''16 \tupend`, decode `e''16 d''16 e''16 \tupend` — an unbalanced tuplet, the
+  class the owner accepted on 2026-09-03 because the stitcher brackets an unclosed run.
+- ⚠ **A staging trap, paid for once:** `make_browser_gate.py` REWRITES `gate.json` — golds included —
+  when it is given a different `--strips-dir`. Staging a new model must copy the three graphs and
+  leave `gate.json` alone, or the gate stops being comparable with every earlier reading.
+
+⚠ A second apparent difference on that strip, `d''32` rendered as `d'' 32`, is **not** a difference:
+the two forms tokenize to identical ids `[17, 1, 37, 95, 35]`. `d''16` vs `d'' 16` genuinely differs,
+which is why `promote_labels.norm_label`'s rule is **32 only**.
+
+#### ✅ The `\tie` gold is fixed and the gate is pinned at 26/28 (owner, 2026-10-08)
+
+The one gold carrying the retired `\tie` (`rast…icime_hep`) was rewritten by the retirement rule —
+`a'1 \tie a'4` → `a'1 a'4`, same pitches, same total length — and re-tokenized with the live model's
+tokenizer (`r4-ctl-stage2-last`); the other 13 golds were re-tokenized as a control and came back
+**byte-identical**, so nothing else moved. Graphs in `apps/web/public/models/` hash-matched
+`r4-ctl-stage2-last-onnx/*_int8.onnx` before the run.
+
+| model | checks | failing strips |
+|---|---|---|
+| `r4-ctl-stage2-last` (live) | **26/28** | `kurdilihicazkar…bunca_cevrinle`, both paths — the `\tup3` drop above |
+
+`npm run gate:browser` now pins **`--expect 26/28`**. ⚠ **`gate.json` is gitignored** (it lives in
+`apps/web/public/models/`, staged by `make_browser_gate.py` from the synthetic strip labels), so the
+fix exists on this Mac only. Re-staging with `make_browser_gate.py` regenerates golds from the
+synthetic labels and would bring the `\tie` back if those labels still carry it — re-apply the same
+one-line edit, or the gate reads 24/28 again for a fixture reason.
+
+
+## Metrics — the B8 re-emit and the human fixes it did not carry
+
+*Was `docs/METRICS.md` (last updated 2026-08-31).*
+
+> Split out of [METRICS-CORPUS.md](METRICS-CORPUS.md) on 2026-08-31 at the 400-line cap, by phase:
+> that file holds the standing corpus census, this one holds the re-emit. Current state and next
+> action are NOT here: see [STATUS.md](STATUS.md). Queues: [rung3/labeling.md](rung3/labeling.md#the-labelling-queues--reslice-all-the-batches-b8-and-examv3).
+
+### The re-emit: what it yielded, and what it does NOT carry (2026-08-21)
+
+`emit_strip_labels.py` over the **1,293 non-exam matched pieces**, `--strips-root
+data/real/strips_v2`, `round2-stage2-best` doing both emitter jobs, into `data/real/rung3/strips_b8`.
+**37 minutes** on the M4 at `OMR_ORT_THREADS=2 nice -19`: 1,704 page decodes were reused from the
+2026-07-29 re-slice (same checkpoint, same `window_cache_ok` signature) and only **16 pages** were
+decoded fresh, so the GPU half of the job had already been paid for.
+
+| | |
+|---|---|
+| pieces | 912 ok / 324 low_coverage / 57 missing_pages |
+| rows | 3,440 ok + 950 `recovered_dc` + 3,616 `recovered_dn`, **3,984 unaligned (33%)** |
+| strips | **accepted 3,955** · review 4,738 · dropped 24,837 · audit sample 201 |
+| drops | **split_wide 10,226** · row_unaligned 7,446 · **over_budget 4,012** · nd_high 3,053 · empty_range 43 |
+
+**Yield: 3,955 against the old pools' 2,330 (+70%)**, which is the referee argument paying out —
+the weak referees dropped 10,695 strips on row alignment alone. ⭐ **Width and budget now dominate**:
+`split_wide` + `over_budget` = **14,238 strips**, nearly twice what alignment loses, so the 59-id
+budget measurement ([BACKLOG.md](BACKLOG.md) item 7) is now the biggest single lever on real training
+volume, not a tidiness item.
+
+#### ⚠ The 1,442 human corrections do not come back by themselves
+
+Matching old rows to new by **measure span** (`page`, `from`, `to`), which is the only sound key:
+
+| old row | n | where it landed now |
+|---|---|---|
+| never touched by a human | 844 | 704 on the same measures — and **687 (98%) got an identical label** |
+| **human `fix`** | **1,442** | 445 same measures · 506 → `b8-review` · 248 same FILENAME only · 223 dropped · 20 not produced |
+| human `ok` | 44 | 16 same filename only · 10 review · 10 not produced · 8 dropped |
+
+⭐ **The 98% row is what makes the rest readable.** On rows no one edited, the emitter reproduces its
+own July output almost exactly, so it has not drifted. Which means the disagreement on the corrected
+rows — of the 445 human fixes that land on the same measures, the fresh machine label matches the
+human on only **41** — is most likely the machine repeating the error the person fixed. ⚠ **That is an
+inference, not a measurement**: the pre-correction labels were overwritten at promote time, so the two
+cannot be diffed directly. The observed differences are the known tie/rest conventions
+(`g''4. g''4` vs `g''2 \tie g''8`; `e''4 r8` vs `e''4.`).
+
+#### ⭐ Carried, measured, and largely redundant — the 2026-08-31 read
+
+`scripts/rung3/carry_old_fixes.py` located every retired-pool correction again and marked it in the
+b8 queues. The key is the measure span **the slicer itself recorded** —
+`(page, system, meas_from, meas_to)` out of each crop root's `<page>_manifest.json` — never the
+filename. ⚠ Those indices are ROW-LOCAL, so `system` is part of the key and a page whose two slicers
+disagree on staff-row count is **refused, not guessed** (654 of 1,779 shared pages).
+
+⚠ **The key was validated before it was trusted**, against the one place a real SymbTr span exists on
+both sides: where it says SAME, the SymbTr span agrees on **1,002 of 1,026 (97.7%)**; where it says
+DIFFERENT, **35 of 36** really are different.
+
+| old human fix (n = **1,479** distinct) | span-matched | filename only |
+|---|---|---|
+| lands in `b8-full` (already accepted) | 588 | 103 |
+| lands in `b8-review` | 460 | 64 |
+| lands on a strip the emitter DROPPED | 113 | — |
+| not produced at all | — | 151 |
+
+⭐ **The owner had already redone most of it by hand.** Of the **198** span-matched fixes that
+disagree with b8's own label inside `b8-full`: **122 the owner had fixed identically**, 18 differently, 22 the
+owner read as `ok`, 33 were still machine drafts, 3 bad. So two independent human reads of the same music,
+on different crops months apart, agree **122 of 140 = 87%** — the strongest quality signal either
+label set has. ⛔ **A span match is the same BARS, never the same pixels**: of the 1,215 crops
+carrying a hint, **0 are byte-identical** and **77.7% changed size** (median +9 px wide; height
+unchanged on every one). That is why the hint is a suggestion with its own accept button and plain
+`ok` never stores it.
+
+⏭ **`b8-review`'s 450 promotable old fixes are deferred to Round 4** (owner, 2026-08-31): +11% volume
+on a pool that had already grown +70%, spread over 206 pages of which 43 are new. ⚠ 197 of the 460
+carry a `\sig` block, which is unverified by standing rule.
+
+⚠ **Carry by measure span, NEVER by filename.** 248 of the 1,442 fixes match a new strip's *name*
+while covering different music — the standing re-slice trap, and here it is quantified.
+**951 of 1,442 (66%) are recoverable now** (445 accepted + 506 in review); the remaining 243 need the
+width/budget rails to move.
+
+⚠ **`\sig` blocks in this pool are unverified like every other real-page pool** — 1,622 of them, voted
+by a model rather than derived ([below](#the-key-signature-is-decided-by-the-model-not-by-symbtr-found-2026-08-21)). The voter here is
+`round2-stage2-best` rather than the weak labeler, which should help and has not been measured.

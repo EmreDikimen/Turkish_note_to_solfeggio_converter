@@ -8,14 +8,14 @@ defect is invisible to every number this project has.
 
 ⭐ **THE PAGE IS SLICED EXACTLY ONCE** and every model reads the same crops. That is the whole point
 — if each arm re-sliced, a difference between two pages could be the slicer rather than the model,
-and [docs/METRICS-SLICER-ROOTS.md](../../docs/METRICS-SLICER-ROOTS.md) prices how often a re-cut
+and [docs/METRICS-SLICER.md](../../docs/METRICS-SLICER.md) prices how often a re-cut
 moves pixels (20 of 30 pages; 15% of labelled strips change bytes).
 
 ⚠ **NO GOLD, SO NO NUMBER COMES OUT OF THIS.** It writes pictures to look at. An accuracy claim
 needs `paired_arm_score.py` on a labelled pool, with its interval.
 
 ⚠ **`--int8` reads the LIVE runtime.** Every accuracy number in this project is measured on the
-PyTorch checkpoint while the app serves int8 ([docs/METRICS-ONNX.md](../../docs/METRICS-ONNX.md)),
+PyTorch checkpoint while the app serves int8 ([docs/METRICS.md](../../docs/METRICS.md)),
 and on `meltem1` the quantization alone moved 11 tokens over 7 of 23 strips — about as much as
 replacing the model. Only checkpoints with an exported `-onnx` folder can be asked for.
 

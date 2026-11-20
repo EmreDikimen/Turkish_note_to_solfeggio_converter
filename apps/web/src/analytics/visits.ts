@@ -2,7 +2,7 @@
  * Tell the site's own counter that somebody arrived, or read a page. The entire client side.
  *
  * Two events and no more: `open` when the app mounts, `read` when a page has actually been decoded.
- * The second is the one that means a human used the product — docs/METRICS-USAGE.md is a long
+ * The second is the one that means a human used the product — docs/METRICS.md is a long
  * argument with a request log about exactly that distinction, because robots open a page constantly
  * and never upload sheet music.
  *
@@ -45,7 +45,7 @@ function setOptOut(on: boolean): void {
 /**
  * `?nostats=1` switches this browser off permanently, `?nostats=0` back on.
  *
- * ⭐ This is not a nicety, it is the fix for a measured mistake: docs/METRICS-USAGE.md recorded
+ * ⭐ This is not a nicety, it is the fix for a measured mistake: docs/METRICS.md recorded
  * three page reads as visitors and one of them turned out to be the OWNER'S OWN PHONE, which had to
  * be subtracted by hand afterwards. Run the link once on the owner's devices and the counter stops
  * counting the person reading it.

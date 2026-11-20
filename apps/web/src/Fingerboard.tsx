@@ -56,7 +56,7 @@ import { TR } from "./ui/strings";
  *
  * 1. **One clock.** The marker is driven by `getPositionMs()` — the audio clock the sheet's
  *    playhead already follows — so it cannot drift from the sound. Never add a second timing
- *    source (docs/features/fingerboard.md).
+ *    source (docs/features/instruments.md).
  * 2. **Take the timeline, never rebuild it.** `props.timeline` has the makam bend and the
  *    transpose already resolved into `freqHz`; a view that calls `buildTimeline(doc)` itself gets
  *    WRITTEN pitches, which would be wrong on exactly the makams this feature exists to show. ⚠ The

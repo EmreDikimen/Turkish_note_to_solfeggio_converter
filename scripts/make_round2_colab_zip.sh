@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build the self-contained Colab upload package for the ROUND-2 fine-tune (see docs/COLAB.md).
+# Build the self-contained Colab upload package for the ROUND-2 fine-tune (see docs/COMMANDS.md).
 #
 # Same shape as scripts/make_round1_colab_zip.sh — read that one for the per-file rationale. What
 # changes for Round 2 is the corpus:

@@ -61,7 +61,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 
 # A written label GLUES the duration to its note ("f''32"); the model emits it SPACED ("f'' 32").
 # Measured: for 32 ONLY the two forms tokenize to identical ids, so normalising is lossless
-# (docs/rung3/labeling-queues.md). ⛔ 16 and 8 DO differ in id space — NEVER widen this pattern.
+# (docs/rung3/labeling.md). ⛔ 16 and 8 DO differ in id space — NEVER widen this pattern.
 # ⚠ Same rule and same regex as build_realval_v2.py's SPACED_32_RE, duplicated deliberately rather
 # than imported (that module runs argument parsing at import); change the two together.
 SPACED_32_RE = re.compile(r"(?<=\S)\s+32\b")

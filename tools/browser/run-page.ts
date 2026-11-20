@@ -16,7 +16,7 @@
  * ORT-web int8 `\tup3` wobble on one strip's reference path. Pinning the tally makes it a
  * regression test — one more failure breaks the build, where the boolean could not tell "the known
  * miss" from "the refactor broke decoding". The pin is 26/28 since 2026-10-08 (the live model drops
- * one strip's `\tup3` on both paths; docs/METRICS-ONNX.md) — it was 27/28 for Round 2.
+ * one strip's `\tup3` on both paths; docs/METRICS.md) — it was 27/28 for Round 2.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";

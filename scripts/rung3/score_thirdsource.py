@@ -2,7 +2,7 @@
 """Round 4 step 4 — read the third-source probe, one column per engraving house.
 
 The question is not "what is the accuracy" — 36 pieces cannot support that. It is **does the model
-collapse on an engraving house it has never seen?** ([docs/rung3/third-source.md](../../docs/rung3/third-source.md)).
+collapse on an engraving house it has never seen?** ([docs/rung3/round4.md](../../docs/rung3/round4.md)).
 So two readings are printed, and the first one needs no gold at all:
 
   1. **YIELD, which is label-free.** The emitter keeps a strip only when the model's decode aligns

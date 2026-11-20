@@ -127,7 +127,7 @@ console.log("\nmandals");
 check("one layout ships", MANDAL_LAYOUTS.length, 1);
 check("six mandals are up at the natural", L.naturalRaised, 6);
 
-// The owner's count on a real instrument, 2026-11-12 (docs/features/kanun-mandal-count.md).
+// The owner's count on a real instrument, 2026-11-12 (docs/features/kanun.md).
 check(
   "the regular count, by note name: Do 12, Re 9, Mi 8, Fa 12, Sol 9, La 8, Si 8",
   ["C", "D", "E", "F", "G", "A", "B"].map((l) => mandalSteps(l, L).length),

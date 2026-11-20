@@ -24,7 +24,7 @@
  * passed through untouched — they are the model's own output, and re-spacing must not be able to
  * launder them.
  *
- * Run (three terminals, or see docs/COMMANDS-PYTHON.md):
+ * Run (three terminals, or see docs/COMMANDS.md):
  *   MODEL_DIR=apps/server/models-h PORT=8081 npm run dev:server
  *   npx tsx tools/vision/h-respace-proxy.mts --upstream http://localhost:8081 --port 8082
  *   VITE_DECODE_URL=http://localhost:8082 npm run dev:web

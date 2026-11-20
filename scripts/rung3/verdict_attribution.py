@@ -65,7 +65,7 @@ from merge_redecode_into_queue import drop_ties  # noqa: E402  the ONE tie-remov
 
 # Only pools cut by the CURRENT slicer. ⛔ strips_nota / strips_r1 / strips_tup are the retired
 # root: their verdicts were given against pixels the shipped slicer no longer produces, so their
-# error MIX is a record of a different cut and is reported apart, never merged (METRICS-SLICER-ROOTS.md).
+# error MIX is a record of a different cut and is reported apart, never merged (METRICS-SLICER.md).
 POPULATIONS = [
     ("accepted-ok  (h1, label confirmed)", "data/real/rung3/strips_h1/full_audit.csv", "ok", "label"),
     ("accepted-fix (h1, label corrected)", "data/real/rung3/strips_h1/full_audit.csv", "fix", "corrected"),

@@ -17,7 +17,7 @@ Local smoke test (Mac, MPS — shake the wiring out BEFORE paying for Colab Pro)
     .venv-ml/bin/python src/vision/train.py --out-dir data/checkpoints/rung2-smoke \\
         --limit-train 24 --limit-val 8 --max-steps 6 --eval-every 3 --batch-size 4
 
-Colab: step-by-step guide in docs/COLAB.md, ready-made notebook in
+Colab: step-by-step guide in docs/COMMANDS.md, ready-made notebook in
 notebooks/rung2_colab.ipynb, upload package built by scripts/make_colab_zip.sh.
 Data lives on the VM disk (NOT read from mounted Drive — Drive I/O is too slow for a
 dataloader); checkpoints DO go to Drive so a killed session resumes with --resume.
@@ -95,7 +95,7 @@ def lr_lambda(step: int, warmup: int, total: int) -> float:
 class Ema:
     """Exponential moving average of the weights — free smoothing over the last ~1/(1-decay) steps.
 
-    ⚠ **UNMEASURED IN THIS PROJECT** ([archive/rounds/levers.md](../../docs/archive/rounds/levers.md) Lever 5). It is
+    ⚠ **UNMEASURED IN THIS PROJECT** ([archive/rounds.md](../../docs/archive/rounds.md) Lever 5). It is
     OFF unless `--ema-decay` is given, and it must be read as a paired arm against a run without it —
     switching it on mid-round makes the arms incomparable, which is exactly what
     [BACKLOG.md](../../docs/BACKLOG.md) item 3 says about the selector.
@@ -314,7 +314,7 @@ def main() -> int:
         # pool (pieces recur across pools/engravings — a piece must never be train in one pool
         # and val in another). `is_real_val_piece` (data.py) is THE canonical assignment; the
         # Round-2 hard-tail recovery + real-val rebuild reuse it so recovered strips land on one
-        # side by construction (docs/archive/rounds/round1.md, addenda item 3).
+        # side by construction (docs/archive/rounds.md, addenda item 3).
         def is_val(piece: str) -> bool:
             return is_real_val_piece(piece, synth_val_pieces, args.real_val_frac)
         tr = [s for s in rds.strips if not is_val(s.piece)]
@@ -323,7 +323,7 @@ def main() -> int:
         real_val_items += [(s, False) for s in va]
         print(f"   real pool {path}: {len(tr)} train x{rep} / {len(va)} val strips")
 
-    # ---- exam-disjointness guard (Round-1 contamination fix, docs/archive/rounds/round1.md, addenda item 2) -----
+    # ---- exam-disjointness guard (Round-1 contamination fix, docs/archive/rounds.md, addenda item 2) -----
     # The exam is honest only if NO training piece is also an exam piece. The Round-1 exam leaked
     # 4 pieces because their OTHER engraving sat in a real pool (same SymbTr score, different image
     # stem) and the emit-time filter never re-ran after the pools grew. This is the fail-closed
@@ -413,7 +413,7 @@ def main() -> int:
             # serializer writes; a hand-corrected val pool spells 19.1% of its rows with no space
             # after a token (`\repstarte''8`), and the tokenizer's added-token matcher reads those
             # IDENTICALLY to the spaced form — measured 2026-09-06 on all 51 such rows in
-            # `_realval_v2` (docs/METRICS-UNSEEN.md). Running it here fails a pool that is fine.
+            # `_realval_v2` (docs/METRICS-INPUT.md). Running it here fails a pool that is fine.
             select_strips += StripDataset(d).strips
         # ⚠ A SONG IN THE SYNTHETIC TRAIN SPLIT IS LEFT OUT, NOT REFUSED (owner, 2026-09-16). The
         # model never saw that printed page, but it learned the same melody from rendered strips, so

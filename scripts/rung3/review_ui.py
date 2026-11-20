@@ -17,7 +17,7 @@ into them (adding `verdict` / `corrected_label` columns on first write):
                                            must be labeled by hand — edit starts from the
                                            model's decode; fix what the model misread.
 
-Exam growth (2026-08-20, docs/rung3/exam.md — the queue that blocks the Round-3 read):
+Exam growth (2026-08-20, docs/rung3/README.md — the queue that blocks the Round-3 read):
   examv3        strips_exam_v3/emit_review.csv  663 rows — the WHOLE exam, re-cut on the current
                                                 slicer (2026-08-21). EXAM GOLD, never training.
                                                 Crops come from data/real/strips_examv3.
@@ -150,7 +150,7 @@ QUEUES = {
     "r3-exam-errors": "data/real/rung3/final/r3_exam_errors.csv",
     # ⛔ DIAGNOSTIC, NEVER PROMOTABLE (2026-09-29, owner: "goldu ve token çıktısını gösteren bir
     # queue"). The strips of `_realval_v2r` — the 260-strip pool every Round-4 paired read and the
-    # taxonomy in docs/METRICS-ROUND4-AB.md used — that a model got wrong, gold on top and its decode
+    # taxonomy in docs/METRICS-EXAM.md used — that a model got wrong, gold on top and its decode
     # below, both RE-SPACED into label tokens so the diff on screen is the diff that was counted.
     #   r4-ctl-errors  = `r4-ctl-stage2-best-edits`, the checkpoint behind the published taxonomy
     #                    (signature 46, …) — filter `short+mid | …` to see those rows
@@ -243,7 +243,7 @@ QUEUES = {
     # reading order within each page, and verdicts go back with `--merge-back` before the next cut.
     # ⚠ TRAINING ONLY, either of them. The ranking picks the WORST pages in its tier, so nothing
     # labelled here may become exam gold — exam growth needs a random/stratified sample
-    # (docs/archive/rounds/levers.md).
+    # (docs/archive/rounds.md).
     "batch1": "data/real/rung3/_pagequeue/batch1.csv",
     # RESLICE-ALL (2026-07-31) — EVERY strip the 2026-07-29 re-slice decoded: 33,804 crops over
     # 1,704 pages, 30,049 of them decoded on Colab. Built by scripts/rung3/build_reslice_queue.py;

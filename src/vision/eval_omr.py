@@ -8,7 +8,7 @@ report, per tracked token (the 8 AEU accidentals first, then \\natural / \\sig /
 precision (of the predicted occurrences, how many were right), and F1, plus corpus SER
 ((S+D+I)/ref-len) and the exact-match rate.
 
-Two Step-4.0 metrics report ALONGSIDE the recall headline (docs/archive/rounds/ship-criteria.md):
+Two Step-4.0 metrics report ALONGSIDE the recall headline (docs/archive/rounds.md):
   - mean per-class AEU **F1** — the headline is recall-only and hides accidental
     hallucination (a spurious koma is a real pitch error); F1 is the honest single number.
   - **arc-triggered false-\\tup3 rate** — of strips whose gold has \\tie but no \\tup3, the
@@ -140,7 +140,7 @@ def main() -> int:
     S = D = I = N = 0
     exact = 0
     shown = 0
-    # Arc-triggered false-\tup3 metric (pre-registered, docs/archive/rounds/ship-criteria.md): the damaging
+    # Arc-triggered false-\tup3 metric (pre-registered, docs/archive/rounds.md): the damaging
     # failure is a printed slur/tie arc read as a triplet. Per STRIP (presence, not count):
     #   arc   = gold has \tie but NO \tup3 → the arc-bearing strips a \tup3 must never fire on
     #   noarc = gold has neither → the clean baseline firing rate
@@ -376,7 +376,7 @@ def main() -> int:
                                "exact": st["exact"] / max(st["n"], 1)}
     if real_eval:
         print("\nNOTE: matched-piece exam = an UPPER BOUND for real-world accuracy; unmatched/"
-              "scanned pages are harder (docs/rung3/exam.md).")
+              "scanned pages are harder (docs/rung3/README.md).")
 
     row = {"date": date.today().isoformat(), "checkpoint": str(args.checkpoint), "side": side,
            "strips_dir": str(args.strips_dir),

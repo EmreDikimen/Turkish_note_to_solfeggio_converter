@@ -1,8 +1,8 @@
 # Corpus and label quality — how good the DATA is
 
-purpose: the single home for corpus sizes, pool composition and measured label-noise rates
+purpose: corpus sizes, pool composition, label-noise rates, and what the model-voted key signature changed in the labels
 audience: agents and the owner, whenever a question is about the data rather than the model
-updated: 2026-08-22
+updated: 2026-11-20
 
 Split out of [METRICS.md](METRICS.md) on 2026-07-28 when that file crossed the 400-line cap. The
 split is by genre: METRICS.md keeps **how well the model reads**, this file keeps **what the data is
@@ -17,13 +17,13 @@ and how trustworthy its labels are**. Model-quality numbers stay there; nothing 
 | strips_v2_2 | 18,777 strips / 474 MB → 23,391 after the triplet expansion (190 pieces) | + rhythm tokens |
 | strips_v3 | 38,091 strips, 73.3% carry, 49 makams, 33 signature variants | budget gate PASS (57 ids, cap 59) — the Round-1 corpus |
 | **strips_v4** | **40,826 strips / 202 pieces, 75.5% carry** | the Round-2 corpus (2026-07-26): thin sharps, the carry pixels-vs-labels fix, +23 küçük-bearing pieces, −5 exam pieces. Audit PASS. `\kucukSharp` in the signature 1,210 → **1,998** tokens; inline unchanged (206 → 209 strips). Val is `split_v3`'s **verbatim** (24 pieces / 4,772 strips) so v3-vs-v4 stays matched |
-| **strips_v5_tupnew / _tupctl** | **40,826 strips / 202 pieces each** (40,841 rendered, the same 15 boundary-bleed strips excluded) | the tuplet A/B's two arms (2026-08-14), from `data/pieces_v4.json` with `--thin-sharps` and no print noise. **Row-for-row identical to `strips_v4`** — same image set, and every field including the label matches on all 40,826. The arms differ from each other in **1,691 PNGs**: 1,690 curved-style `\tup3` strips plus one 20-pixel crop-edge bleed; the 379 `\tup3` strips that are pixel-identical are exactly the 22 bracket-style pieces. Protocol: [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) |
+| **strips_v5_tupnew / _tupctl** | **40,826 strips / 202 pieces each** (40,841 rendered, the same 15 boundary-bleed strips excluded) | the tuplet A/B's two arms (2026-08-14), from `data/pieces_v4.json` with `--thin-sharps` and no print noise. **Row-for-row identical to `strips_v4`** — same image set, and every field including the label matches on all 40,826. The arms differ from each other in **1,691 PNGs**: 1,690 curved-style `\tup3` strips plus one 20-pixel crop-edge bleed; the 379 `\tup3` strips that are pixel-identical are exactly the 22 bracket-style pieces. Protocol: [archive/rounds.md](archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol) |
 | **strips_v7_final** — ROUND 3'S CORPUS | **40,795 strips / 208 pieces** (40,813 rendered, 18 excluded) | rendered 2026-08-31 from `data/pieces_v4.json` with **three flags**: `--staccato-noise --concave-tuplet --usul-barline` (plus `--thin-sharps`). ⭐ **The first synthetic corpus with ZERO `\tie`** — 0 of 40,795, against **1,185 rows** in `strips_v4`/`v5`/`v6`, which all predate the 2026-08-22 render-side retirement. `verify-labels` (run with the same three flags, or it gates a different picture): **40,795 exact, 18 mismatched, 0 label drift, no unknown glyphs**; the 18 are accidental-count disagreements in `every`-mode strips, the same class `tupnew` had 15 of and unrelated to the flags, and they are **excluded from the manifest** (`manifest.jsonl.bak-preverify`). `stitch-test` ALL PASS (218/218 + 90/90). ⚠ The render **crashed at 207/208** on a dev-server timeout and `manifest.jsonl` is written only at the end — the per-piece shards + `.done` markers made it resumable, and the re-run left **0 orphan and 0 missing PNGs** |
 | Real training pool | 2,160 strips (1,758 nota + 418 neyzen, incl. 172 tup3) | after all promotes |
 | **`strips_h1`** — b8 re-emitted under **scheme H at a budget of 80, `--frozen-crops`** | **4,425 strips** (4,435 accepted; 550 audit fixes applied, 14 `bad` removed, 4 review rows promoted, 0 rejected) — **+12.6% on b8**, and the new rows are the DENSE ones (median 18 label tokens against 11) | 2026-09-07. Not one page re-sliced: the same crops, the same 1,720 decode caches, so b8's 980 human reads carried in under a per-row inode+label proof (`carry_verdicts.py`). ⛔ The yield is far below the token probe's forecast because the `nd` referee gate, not the budget, is what now drops the dense strips — [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
-| **`strips_b8`** — the re-emit, **PROMOTED 2026-08-31** | **3,929 strips** (3,955 accepted; 573 audit fixes applied, 17 `bad` removed, 3 rejected as genuinely over the 59-id cap → 3,936; then **7 strips of 2 pieces removed as EXAM LEAKS**, see below); 3,539 train-side / 390 val-side under `split_v4` | 2026-08-21, the three training pools re-cut onto the CURRENT crops (`strips_v2`) with `round2-stage2-best` as hint AND gate. **A separate dataset, not a replacement** — the old pools are untouched and their human corrections do not carry themselves ([METRICS-B8.md](METRICS-B8.md)) |
+| **`strips_b8`** — the re-emit, **PROMOTED 2026-08-31** | **3,929 strips** (3,955 accepted; 573 audit fixes applied, 17 `bad` removed, 3 rejected as genuinely over the 59-id cap → 3,936; then **7 strips of 2 pieces removed as EXAM LEAKS**, see below); 3,539 train-side / 390 val-side under `split_v4` | 2026-08-21, the three training pools re-cut onto the CURRENT crops (`strips_v2`) with `round2-stage2-best` as hint AND gate. **A separate dataset, not a replacement** — the old pools are untouched and their human corrections do not carry themselves ([METRICS.md](METRICS.md#metrics--the-b8-re-emit-and-the-human-fixes-it-did-not-carry)) |
 | Exam v2.1 (frozen) | **352 strips / 45 piece entries**, tup3 gold 55 groups | `testset.json`. ⚠ Keeps its `\tie`s on purpose (83 rows, 25.5%) — it is the record of what Round 2 was graded on |
-| **`strips_exam_v3`** — THE EXAM, promoted 2026-08-31 | **660 strips / 63 pages** (10.5 strips/page vs the frozen exam's 7.1) | replaces `strips_exam_v2_clean` as the graded set. 0 `\tie`. Baseline + the promotion's traps: [METRICS-EXAMSET.md](METRICS-EXAMSET.md) |
+| **`strips_exam_v3`** — THE EXAM, promoted 2026-08-31 | **660 strips / 63 pages** (10.5 strips/page vs the frozen exam's 7.1) | replaces `strips_exam_v2_clean` as the graded set. 0 `\tie`. Baseline + the promotion's traps: [METRICS-EXAM.md](METRICS-EXAM.md#metrics--the-exam-as-an-instrument) |
 | Photo exam | 690 strips sliced, 284 hand-labelled | exam-only |
 | Real corpus on disk | 798 PDFs → 1,259 page PNGs (89 makams) + 964 nota pieces / 1,227 pages | |
 
@@ -61,7 +61,7 @@ steps. At the default `--real-val-frac 0.10` that every notebook uses, against `
 | real (nota 224 + r1 26 + tup 21) | 271 | **5.4%** |
 
 **`best` is therefore chosen 94.6% on synthetic val loss**, in a round graded entirely on real pages.
-[archive/rounds/levers.md](archive/rounds/levers.md) Lever 5 already said "strip-weighted toward synthetic"; this is the
+[archive/rounds.md](archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) Lever 5 already said "strip-weighted toward synthetic"; this is the
 number under it. ⚠ The staleness of the real half matters **less than its weight** — fixing the crops
 without changing the blend moves 5.4% of the selector.
 
@@ -70,7 +70,7 @@ crop or a synthetic-heavy selector applies identically to both and cancels in th
 which checkpoint is called `best` — which is why both `best` and `last` are read, and why arm 1's two
 checkpoints disagreed.
 
-## The B8 re-emit → [METRICS-B8.md](METRICS-B8.md)
+## The B8 re-emit → [METRICS.md](METRICS.md#metrics--the-b8-re-emit-and-the-human-fixes-it-did-not-carry)
 
 Moved 2026-08-31 at the 400-line cap. That file owns the yield table, the drop table, the
 **1,479** human corrections and where they landed, the 97.7% span-key validation, and the
@@ -120,7 +120,7 @@ Three consequences, all of them bites that have already happened:
    (they are simpler on every countable property) is independent and stands.
 3. ⚠ **One signed pre-registration uses it this way and has been flagged, not changed** — Lever 6
    clause 2 excludes hard tier because "hard-tier dropped dots are scan degradation, `nd` up to 1.14"
-   ([archive/rounds/levers.md](archive/rounds/levers.md)). The exclusion may still be correct, since hard tier is
+   ([archive/rounds.md](archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first)). The exclusion may still be correct, since hard tier is
    defined independently of `nd`; its written justification is not. Owner's call, owed before the
    staccato arm is scored.
 
@@ -149,12 +149,12 @@ Over all **2,055 PDFs** on disk (`scripts/rung3/build_label_batch.py::born_digit
 ⚠ **This corrects a line repeated across several docs**: neyzen was described as "clean vector PDFs"
 and it is nothing of the kind — **every neyzen page is a raster scan**. Its ~5× lower SER is real,
 but the cause is that it is a *better scan*, not a born-digital one. Fixed in [METRICS.md](METRICS.md)
-and [archive/rounds/levers.md](archive/rounds/levers.md); the SER numbers themselves are unaffected, only the label on
+and [archive/rounds.md](archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first); the SER numbers themselves are unaffected, only the label on
 the row.
 
 Of the 88 born-digital pieces, **84 are sliced — 115 pages / 2,956 strips**, all from the nota
 source. That tier is what `build_label_batch.py --clean` cuts a labelling batch from
-([rung3/labeling-queues.md](rung3/labeling-queues.md)).
+([rung3/labeling.md](rung3/labeling.md#the-labelling-queues--reslice-all-the-batches-b8-and-examv3)).
 
 ### ⚠ The same census run against the EXAM (2026-08-19) — 93% of it is scans
 
@@ -216,8 +216,8 @@ deferred rather than scheduled: [BACKLOG.md](BACKLOG.md) item 10.
 | tup3 auto-accepts (78 strips) | 10% | 2026-07-19 |
 | exam gold, full re-audit | 13 new label errors found (gold over-sized sharps) | 2026-07-25 |
 | **nota training pool, review of every disagreeing strip** | **521 of 1,740 strips (30%) carry a human-corrected label**; of the strips where label and decode disagreed at all, **~78% of the labels were wrong** | 2026-07-27 |
-| **✅ `strips_b8` auto-accepts (`b8-audit`, ALL 201 READ BY HAND)** | **27 fix / 174 ok = 13.4% wrong.** One `fix` re-saves an unchanged label, so **26 real corrections = 12.9%**; three more differ from their label only by the id-identical `32` spacing ([DECISIONS.md](DECISIONS.md)), which is not an error. Same level as the re-sliced exam's auto-accepts below (13.7%), against the old neyzen pool's 22.6%. ⭐ **Repeat structure is the biggest class, ahead of pitch**: `\repstart` 6 rows + `\volta` 4 = **10 of 26**, against pitch/rest 8, duration 6, grace 3, signature 3. **4 of the 10 accepted labels that carry a `\repstart` were wrong** ([METRICS-UNSEEN.md](METRICS-UNSEEN.md)), and 2 of the 3 signature errors are `\komaSharp`→`\kucukSharp` inside `\sig` — [BACKLOG.md](BACKLOG.md) items 5 and 9 reappearing inside a TRAINING pool, not new failures. ⚠ 12.9% is what the auto-accepted half carries **into training**; carrying the human fixes is a separate job | 2026-08-22 |
-⚠ **That figure is REAL corrections, not `fix` counts, and the two can differ wildly** — 23 of `h1-audit`'s 27 `fix` verdicts change nothing at all ([METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md)).
+| **✅ `strips_b8` auto-accepts (`b8-audit`, ALL 201 READ BY HAND)** | **27 fix / 174 ok = 13.4% wrong.** One `fix` re-saves an unchanged label, so **26 real corrections = 12.9%**; three more differ from their label only by the id-identical `32` spacing ([DECISIONS.md](DECISIONS.md)), which is not an error. Same level as the re-sliced exam's auto-accepts below (13.7%), against the old neyzen pool's 22.6%. ⭐ **Repeat structure is the biggest class, ahead of pitch**: `\repstart` 6 rows + `\volta` 4 = **10 of 26**, against pitch/rest 8, duration 6, grace 3, signature 3. **4 of the 10 accepted labels that carry a `\repstart` were wrong** ([METRICS-INPUT.md](METRICS-INPUT.md#diagnostics--the-symbols-the-model-has-never-been-shown)), and 2 of the 3 signature errors are `\komaSharp`→`\kucukSharp` inside `\sig` — [BACKLOG.md](BACKLOG.md) items 5 and 9 reappearing inside a TRAINING pool, not new failures. ⚠ 12.9% is what the auto-accepted half carries **into training**; carrying the human fixes is a separate job | 2026-08-22 |
+⚠ **That figure is REAL corrections, not `fix` counts, and the two can differ wildly** — 23 of `h1-audit`'s 27 `fix` verdicts change nothing at all ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md#where-an-error-comes-from--the-label-or-the-model)).
 | **AGREEMENT between label and decode, `b8-audit` + `b8-full`** | On the rows a human has read: where the proposed label and the model decode say the **same tokens**, **159 ok / 10 fix = 94% correct (n=169)**; where they differ, **20 ok / 24 fix = 45%** (`b8-audit`, n=44). This is what `auto_accept_agree.py` acts on — it drafts `ok` (`by=agree`) on the **2,896** agreeing rows of `b8-full` and leaves the **842** disagreeing ones for a human. ⚠ **94% is not 100%, and the misses CLUMP**: 5 of the 7 bad agreements sit on ONE page — when a page is misread the label and the decode tend to be wrong the *same* way, so the two agreeing is not two independent votes. ⚠ Agreement is also partly **memory**: `round2-stage2-best` was both the emitter's hint and its gate and was trained on these labels at 9× oversampling. Spot-check via the review UI's **🤖 auto-accepted (agree)** filter, least-confident first | 2026-08-27 |
 | **exam v3 auto-accepts (all 139, `examv3-full`)** | **18 fix + 1 bad = 13.7% wrong** — against exam v2's **51%** on the same queue; the drop is the re-slice ([the crop finding below](#the-key-signature-is-decided-by-the-model-not-by-symbtr-found-2026-08-21)) | 2026-08-21 |
 | **`b8-full` READ WHOLE (owner, 2026-08-31)** | 3,955 rows: **3,362 ok / 576 fix / 17 bad**; **1,016 read by hand**, 2,939 left as machine `agree` drafts. ⭐ The drafts are backed by the random audit: of its 201 rows, **41 had `label == decode` and a human read all 41 as `ok` — 0 wrong** (95% upper bound ~7% at n=41). ⛔ **One measured exception: `\sig`.** `unaccept_sig.py` sent machine-accepted signature rows back to pending and the owner then corrected **12 — all 12 carrying a `\sig` block**, i.e. the agreement rule is circular exactly where the label came from the model's own vote | 2026-08-31 |
@@ -232,7 +232,7 @@ the corrections were "mostly `\komaSharp` → `\kucukSharp`". They were **7 of t
 they belong to **2 pieces, both makam mahur**. Seven of the seven `\komaSharp` tokens in those 139
 labels were wrong; none was corrected the other way. ⭐ **Reading the 27 `gold_conflict` rows the same
 day added 3 more of the identical correction** — **10 now, still 10–0 in one direction**, over two
-queues cut differently ([METRICS-EXAMSET.md](METRICS-EXAMSET.md)).
+queues cut differently ([METRICS-EXAM.md](METRICS-EXAM.md#metrics--the-exam-as-an-instrument)).
 
 **The mechanism** ([../scripts/rung3/emit_strip_labels.py](../scripts/rung3/emit_strip_labels.py),
 the `sig_votes` block). Everything else in a label comes from SymbTr. The signature does not: the
@@ -254,7 +254,7 @@ Three things then compound:
    signature is invisible to the one check that catches wrong labels.
 
 **How far it reaches, and what each override actually changed**, pool by pool, with the
-disagreement list and the two candidate review rules → **[METRICS-SIGVOTE.md](METRICS-SIGVOTE.md)**
+disagreement list and the two candidate review rules → **[METRICS-CORPUS.md](#metrics--the-model-voted-key-signature-audited)**
 (audited 2026-09-06). The headline from that audit: the vote overwrote the signature on **67% of
 `strips_b8`'s aligned pieces**, **47% of overrides change nothing but the drawn order**, and the
 largest content change is not a wrong accidental but a **deleted** one.
@@ -265,10 +265,10 @@ imbalance above, on the accidental class the exam headline is most fragile about
 
 ⚠ **What is NOT claimed.** n = 7, on 2 pieces, in 1 makam — a strong signal, not a measured error
 rate for the override. The override exists to fix a real defect and many of the overrides counted in
-[METRICS-SIGVOTE.md](METRICS-SIGVOTE.md) are probably right. The table is a **guide, not truth**: mahur genuinely prints both ways in our own
+[METRICS-CORPUS.md](#metrics--the-model-voted-key-signature-audited) are probably right. The table is a **guide, not truth**: mahur genuinely prints both ways in our own
 sources (küçük n=35, koma n=17), so it agrees with the owner's reading rather than proving it.
 ⏭ The measurement item 9 asked for is DONE (2026-09-06) —
-[METRICS-SIGVOTE.md](METRICS-SIGVOTE.md). The rule change is still owed:
+[METRICS-CORPUS.md](#metrics--the-model-voted-key-signature-audited). The rule change is still owed:
 [BACKLOG.md](BACKLOG.md) item 9.
 
 ### The carry pixels-vs-labels defect (found 2026-07-26, fixed at source)
@@ -340,3 +340,209 @@ the cleanest slice; their error rate is unmeasured. The July figure (7.2% pitch-
 Adjudication finding: when the label and the model's decode disagreed on an accidental, the
 owner's fixes sided with the **decode 187 times vs SymbTr 14** — printed editions win accidental
 disputes.
+
+**Merged into this file on 2026-11-20:**
+
+- [Metrics — the model-voted key signature, audited](#metrics--the-model-voted-key-signature-audited) — was `docs/METRICS-CORPUS.md`
+
+
+## Metrics — the model-voted key signature, audited
+
+*Was `docs/METRICS-CORPUS.md` (last updated 2026-09-06).*
+
+The mechanism, how it was found, and why it is dangerous are in
+[METRICS-CORPUS.md](METRICS-CORPUS.md); the proposed rule change is
+[BACKLOG.md](BACKLOG.md) item 9 and [rung3/round4.md](rung3/round4.md) step 3. This file holds only
+the measurement, taken 2026-09-06 by
+[../scripts/rung3/sig_vote_audit.py](../scripts/rung3/sig_vote_audit.py) — no GPU, no decode, no
+labelling. It reads each pool's `emit_report.json` (did the override fire?), its
+`emit_requests.json` (what signature was written), the piece's own `labels.json` (what SymbTr
+derived) and `data/makam_signatures.json` (what the makam usually prints).
+
+⚠ **Read the caveats at the bottom before quoting any row.** The makam table is a guide, not gold.
+
+### The finding
+
+**Half of every override changes nothing but the drawn order, and most of the rest deletes an
+accidental the derivation had.** Over the five pools, 1,380 pieces had their signature overwritten
+by the vote and 1,292 of those wrote a label that can be compared:
+
+| what the override did | pieces | share of 1,292 |
+|---|---|---|
+| **order only** — same accidentals, different drawn order | **602** | 47% |
+| **drops** at least one entry (463 entries in all) | **410** | 32% |
+| **adds** at least one entry (294) | 251 | 19% |
+| **alters** the accidental on a letter both sides carry (160) | 156 | 12% |
+
+The last three overlap — one override can drop one entry and alter another — so they do not sum to
+690. The two clean facts are that **602 of 1,292 change no pitch at all**, and that **dropping an
+entry is the single largest content change**, ahead of the koma/küçük confusion the defect was found
+through.
+
+### Per pool
+
+`aligned` is pieces the emitter could align at all (the rest never reach the vote). `written` is
+pieces whose override actually reached a label — 88 fired but kept no strip, so nothing was written.
+
+| pool | pieces | aligned | override fired | split vote | written | order only | drops | adds | alters |
+|---|---|---|---|---|---|---|---|---|---|
+| exam v3 | 45 | 45 | **24 (53%)** | 12 | 22 | 5 | 5 | 7 | 9 |
+| `strips_b8` | 1,293 | 1,236 | **826 (67%)** | 116 | 767 | 403 | 200 | 147 | 76 |
+| `strips_nota` | 938 | 778 | **406 (52%)** | 224 | 390 | 194 | 139 | 54 | 45 |
+| `strips_tup` | 293 | 277 | **98 (35%)** | 21 | 90 | 0 | 45 | 31 | 20 |
+| `strips_r1` | 65 | 63 | **26 (41%)** | 23 | 23 | 0 | 21 | 12 | 6 |
+
+⚠ **`strips_b8` is the pool that matters** — it was Round 3's real training pool and Round 4 trains
+on `strips_h1`, its re-emit, so these pieces carry over; two thirds of its
+aligned pieces had their signature decided by the model.
+
+⚠ **Each pool was voted by a DIFFERENT checkpoint**, so the pools are not one measurement:
+`rung3-labeler` for exam v3 / `strips_nota` / `strips_tup`, `round2-stage2-best` for `strips_b8`,
+`rung22-stemfix-best` for `strips_r1` (each pool's `emit_report.json` `params.checkpoint`).
+
+### The dropped entries — the class nobody was looking for
+
+Of the 131 letter-level cases where the written signature is missing an entry the makam table calls
+majority, **106 are entries the SymbTr derivation also had and the vote deleted**; 25 are entries
+neither side had. So the common shape is not "the model chose the wrong accidental" but **"the model
+did not see an accidental, and its silence overwrote a correct entry"** — and the `nd` gate is blind
+to `\sig` blocks, so nothing downstream could catch it.
+
+### The altered accidentals — vote against derivation
+
+160 letters where both sides print an accidental and they disagree, all five pools:
+
+| derived → voted | n |
+|---|---|
+| `\kucukSharp` → `\komaSharp` | 30 |
+| `\komaFlat` → `\kucukFlat` | 29 |
+| `\kucukFlat` → `\bakiyeFlat` | 26 |
+| `\komaFlat` → `\bakiyeFlat` | 18 |
+| `\kucukFlat` → `\komaFlat` | 14 |
+| `\kucukSharp` → `\bakiyeSharp` | 8 |
+| `\bakiyeSharp` → `\komaSharp` | 8 |
+| `\bakiyeFlat` → `\kucukFlat` | 8 |
+| `\bakiyeFlat` → `\komaFlat` | 7 |
+| `\bakiyeSharp` → `\kucukSharp` | 5 |
+| the remaining 4 directions | 7 |
+
+⭐ **`\kucukSharp` → `\komaSharp` is the biggest single direction (30)** — the exact direction the
+owner corrected **10 times out of 10** by hand on the exam and the `gold_conflict` queue
+([METRICS-CORPUS.md](METRICS-CORPUS.md)). ⚠ It is not one-way overall: `\komaFlat` → `\kucukFlat`
+runs 29 the other way on the flat side. The vote is noisy in both directions, not simply koma-biased.
+
+### Against the makam table
+
+Verdicts for the 1,292 written overrides, comparing the written signature with
+`data/makam_signatures.json`'s majority variant for the piece's makam:
+
+| verdict | n | meaning |
+|---|---|---|
+| `match` | 965 | identical to the table's majority variant |
+| `match_other_variant` | 152 | not the majority, but a variant the table does list |
+| `missing` | 91 | the table has a letter the written signature does not |
+| `altered` | 51 | same letter, different accidental |
+| `extra` | 3 | the written signature prints a letter the table does not have |
+| `makam_not_in_table` | 30 | the makam is absent from the table — unjudgeable |
+
+**145 pieces disagree** (`altered` + `missing` + `extra`); the list is
+`data/real/rung3/sig_vote_audit.csv` (gitignored). The makams with the most disagreements are
+buselik (10 missing), hicazkar (9), karcigar (9 + 3 altered), kurdilihicazkar (8), suzinak (8) and
+sedaraban (7 altered).
+
+⚠ **30 pieces cannot be judged at all**: 14 makam names in the corpus have no table entry —
+`arazbar_buselik`, `askefza`, `dilkeshaveran`, `evc_huzi`, `gulizar`, `hicazasiran`,
+`huseyniasiran`, `huzi`, `mustear`, `nevruz`, `nuhuft`, `rehavi`, `seddiaraban`, `tahirbuselik`.
+(`seddiaraban` and `sedaraban` are the same makam spelled two ways — a name-alias gap, not a missing
+makam.)
+
+#### The exam's three disagreements
+
+All 45 exam pieces aligned; 24 overrides fired, 22 wrote a label, and 3 disagree with the table:
+
+| makam | voted | table majority | derived | what changed |
+|---|---|---|---|---|
+| mahur | `\bakiyeSharp f` | `\kucukSharp f` (n=35) | `\kucukSharp f` | altered f |
+| muhayyerkurdi | `\komaFlat b \bakiyeSharp f` | `\kucukFlat b` (n=35) | `\kucukFlat b` | altered b, plus an extra `\bakiyeSharp f` |
+| şehnaz | `\bakiyeFlat b \komaSharp f \bakiyeSharp c` | `\bakiyeFlat b \bakiyeSharp c` (n=9) | (empty) | extra `\komaSharp f` |
+
+⚠ **A separate, earlier count over a WIDER denominator, moved here from
+[METRICS-CORPUS.md](METRICS-CORPUS.md) 2026-09-06 so it keeps one home**: of the **36 exam pieces
+whose label carries a signature at all** (overridden or not), **8 (22%) disagree with the table's
+majority variant**, several of them *missing* an entry the table calls near-universal:
+
+| makam | the label says | the table's majority | weight |
+|---|---|---|---|
+| huseyni | `\komaFlat b` | `\komaFlat b \bakiyeSharp f` | 100% |
+| nikriz | `\bakiyeFlat b` | `\bakiyeFlat b \bakiyeSharp f \bakiyeSharp c` | 94% |
+| segah | `\komaFlat e \bakiyeSharp f` | `\komaFlat b \komaFlat e \bakiyeSharp f` | 93% |
+| mahur | `\komaSharp f` | `\kucukSharp f` | 67% |
+
+⚠ **The 3 above and this 8 are different denominators, not a changed number**. The 3 counts only the **24 pieces where the
+override fired**, and does not count a signature matching a non-majority variant the table lists (6
+more here). Both are correct about what they measure.
+
+### How much would go to review
+
+Row-start strip counts are the aligned rows of each affected piece — an upper bound, since the
+signature is a **piece-level** question and one crop per piece is enough to answer it.
+
+| rule | pieces | row-start strips | `strips_b8` alone |
+|---|---|---|---|
+| A — send only where the vote disagrees with the makam table | 145 | ~765 | 61 pieces / ~375 strips |
+| B — send wherever the vote changes the derivation's CONTENT | 690 | ~4,668 | 364 pieces / ~2,629 strips |
+
+Rule A is [BACKLOG.md](BACKLOG.md) item 9's proposal. Rule B needs no makam table, so it also covers
+the 30 unjudgeable pieces, and it is the only one that reaches the 410 dropped-entry cases.
+
+### ⭐ What the owner chose — rule D, on the MAJORITY spelling (2026-09-06)
+
+Neither A nor B. A piece goes to review when the vote **deletes or changes** an accidental **and**
+the result is not the makam table's **majority** spelling (or the makam is not in the table at all).
+A vote that only **adds** or only **re-orders** still applies. **224 pieces / ~1,198 row-start
+strips; 84 pieces in `strips_b8`.**
+
+⚠ **"Majority", not "any listed variant", and the difference is the whole point.** The first form of
+the rule accepted any spelling the table lists. That lets **395** drop/alter overrides through — 313
+onto the makam's majority spelling, which is fine, but **82 onto a minority listed variant**:
+
+| makam | pieces |
+|---|---|
+| mahur | **31** |
+| rast | 9 |
+| suzinak | 9 |
+| segah | 8 |
+| huzzam | 7 |
+| nisaburek | 6 |
+| the remaining 6 makams | 12 |
+
+⛔ **Mahur is 31 of the 82, and mahur is where the defect was found.** The table lists both spellings
+(küçük n=35, koma n=17), so the looser rule vouches for a vote that reads küçük as koma — the exact
+direction the owner corrected **10 times out of 10** by hand. Tightening to the majority spelling
+costs 82 more pieces of reading and closes it.
+
+Built in `emit_strip_labels.py` the same day (`sig_needs_review`, reason `sig_table_conflict`);
+`review_ui.py` needed no change, since it builds its reason filter from the rows. Unit-tested, **no
+pool re-emitted yet**. [DECISIONS.md](DECISIONS.md).
+
+### Caveats — what this does NOT claim
+
+- **The table is a guide, not gold.** Mahur genuinely prints both ways in our own sources (küçük
+  n=35, koma n=17). A disagreement is a row to look at, never an automatic correction.
+- **No error rate is claimed.** Nothing here was read by a human. The only hand-read signature
+  numbers remain the exam's 10 corrections and `b8-audit`'s 2 ([METRICS-CORPUS.md](METRICS-CORPUS.md)).
+- **The derivation is not gold either.** The override exists because SymbTr's content-derived
+  signature is genuinely not what a real edition prints — that is why "drops an entry" is
+  *suspicious*, not *wrong*.
+- **These are the emits as they stand**, dated July 2026 for `strips_nota` / `strips_tup` /
+  `strips_r1` and August for `strips_b8` / exam v3. Round 4's re-emit redoes them, so these are the
+  labels that were **trained on**, not the ones that will exist.
+- **The makam comes from the `matched/` folder name**, which is how the pipeline filed the piece.
+
+### A correction to an earlier count
+
+[METRICS-CORPUS.md](METRICS-CORPUS.md)'s split-vote column read 384 / 37 / 25 for `strips_nota` /
+`strips_tup` / `strips_r1`. Those counted every piece whose report row lacks a `sig_majority_ok`
+key — pieces the emitter **never aligned**, which never reached a vote — together with real split
+votes. The genuine counts are **224 / 21 / 23**. The exam's 12 was right because all 45 of its
+pieces aligned. Nothing else in that table changes.

@@ -22,7 +22,7 @@
  * is what lets one icon be right in both themes.
  *
  * The contract a check may read: `#mobile-tabs[data-tab]` and, per button, `[data-tab-id]`.
- * The labels are copy and live in `strings.ts` (docs/DOM-CONTRACT.md).
+ * The labels are copy and live in `strings.ts` (docs/APP-RULES.md).
  */
 import { TR } from "./strings";
 

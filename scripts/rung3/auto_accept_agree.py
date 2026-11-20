@@ -76,7 +76,7 @@ _BARE_NUM = re.compile(r"\d+\.?")
 # not: `emit_strip_labels.py` overwrites the derived signature with a majority vote over the
 # model's own row-start decodes, so a label's `\sig` block can BE the decode. The koma/kucuk pair
 # is where that costs something — it is the model's top sign substitution and every human
-# correction has gone koma -> kucuk, 10:0 (docs/METRICS-ATTRIBUTION.md).
+# correction has gone koma -> kucuk, 10:0 (docs/METRICS-DIAGNOSTICS.md).
 # ⭐ Back-tested on the 3,065 agreeing rows already read by hand: the rule holds back 56 of them
 # (1.8%) and those 56 carry 7 of the 16 known errors — 12.50% wrong against 0.30% in what it lets
 # through. 1.8% of the volume for 44% of the mistakes.

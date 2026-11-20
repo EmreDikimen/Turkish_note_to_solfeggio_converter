@@ -1,7 +1,7 @@
 r"""Cut a DIAGNOSTIC review queue of the exam strips a model got wrong — gold beside its decode.
 
 WHAT IT IS FOR. The §3c ship call is a human judgement on an error classification
-(docs/archive/rounds/round3-criteria.md). `error_taxonomy.py` gives the shape in aggregate; this puts the
+(docs/archive/rounds.md). `error_taxonomy.py` gives the shape in aggregate; this puts the
 individual strips in front of a person, with the CROP, the GOLD and the MODEL'S DECODE on screen at
 once, worst-first, so "where is it weak" can be answered by looking rather than by inference.
 
@@ -37,7 +37,7 @@ decode again if it is warm, so building the queue costs no extra read.
 ⭐ **IT ALSO RUNS ON A NON-EXAM POOL (2026-09-29, owner: "hangi stripleri ölçüyoruz, goldu ve token
 çıktısını gösteren bir queue")** — `--out-name` names the file, and `exam` is written 1 only when the
 pool's folder name says exam. That is how the Round-4 A/B's taxonomy (`signature` 46 for the control,
-docs/METRICS-ROUND4-AB.md) became strips a person can open: the `r4-ctl-errors` / `r4-live-errors`
+docs/METRICS-EXAM.md) became strips a person can open: the `r4-ctl-errors` / `r4-live-errors`
 tabs. The same two guarantees hold — `corrected_label` empty, a file name promote_labels.py never
 reads — and ⛔ `--out-name` refuses those two names.
 

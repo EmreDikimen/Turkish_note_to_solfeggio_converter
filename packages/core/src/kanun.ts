@@ -67,7 +67,7 @@ export const MANDAL_STEP_KOMA = 53 / MANDAL_STEPS_PER_OCTAVE;
  * paper's majority: Do 12, Re 9, Mi 8, Fa 12, **Sol 9, La 8**, Si 8 — the paper's majority has
  * Sol 10 and La 9, and its makers do differ by a lever there. The owner's counts agree with a
  * 108-megapixel photo of the same instrument on fourteen courses in a row. Numbers and sources:
- * docs/features/kanun-mandal-count.md.
+ * docs/features/kanun.md.
  *
  * ⚠ **THE TWO ENDS ARE NOT THE MIDDLE, SO THE COUNT IS PER COURSE WHERE IT HAS TO BE** (`courses`
  * below). The mandal board narrows at the top and the lowest strings carry almost nothing: the

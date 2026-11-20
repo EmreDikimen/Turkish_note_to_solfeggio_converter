@@ -108,14 +108,14 @@ const TO = arg("to") != null ? Number(arg("to")) : Infinity;
 // their 2-bar cousins (see SheetView's drawThinSharps). Opt-in, so an A/B against the current
 // corpus stays possible.
 const THIN_SHARPS = has("thin-sharps");
-// The tuplet A/B (docs/archive/rounds/round3-criteria.md): the CONTROL arm renders the mark as it was drawn
+// The tuplet A/B (docs/archive/rounds.md): the CONTROL arm renders the mark as it was drawn
 // until 2026-08-12 — one unbroken arc with the digit floating above it. Pixels only; the `\tup3`
 // token and every manifest field are identical either way, which is what makes the two arms'
 // manifests byte-comparable.
 const LEGACY_TUPLET = has("legacy-tuplet-mark");
 // The THIRD printed tuplet shape (2026-08-19): a CONTINUOUS arc with the "3" hanging inside its
 // concavity, drawn on a share of pieces as a per-piece coin. The owner found it on two real scanned
-// editions, refuting this project's own "16 of 16 marks break the arc" reading (docs/archive/rounds/tuplets.md).
+// editions, refuting this project's own "16 of 16 marks break the arc" reading (docs/archive/rounds.md).
 // OPT-IN, like --print-noise and --staccato-noise, and for the same reason: it changes a share of
 // EVERY piece, so a corpus rendered with it on is not comparable to one rendered with it off. Print
 // noise once rode along unconditionally and shipped an unvalidated change into ~40k strips.
@@ -135,7 +135,7 @@ const STACCATO_NOISE = has("staccato-noise");
 // inside a bar with a light dashed line. The renderer has never drawn one — 0 of 40,826 strips —
 // and ADDED_TOKENS has no name for one, so the nearest symbol the model knows is a vertical line
 // with dots beside it: a repeat sign. It emits `\repstart`, and the owner has been deleting those
-// by hand while labelling batch3 (docs/BACKLOG.md item 5, docs/METRICS-UNSEEN.md).
+// by hand while labelling batch3 (docs/BACKLOG.md item 5, docs/METRICS-INPUT.md).
 // ⭐ Same SHAPE as the staccato hole, which is the only Round-3 arm that moved its primary: a hole
 // in what the model has been shown responds to being filled; a domain gap does not.
 // ⚠ LABEL-FREE, on purpose. Naming it would make every real gold label on disk silently wrong (no
@@ -143,7 +143,7 @@ const STACCATO_NOISE = has("staccato-noise");
 // The `\dottedbar` token is a Round-4 question (docs/DECISIONS.md).
 // Opt-in for the same reason as the two flags above: it changes a share of every piece.
 const USUL_BARLINE = has("usul-barline");
-// Round-3 Lever 1 (docs/archive/rounds/levers.md): the crop-geometry pilot's only variable. The renderer packs
+// Round-3 Lever 1 (docs/archive/rounds.md): the crop-geometry pilot's only variable. The renderer packs
 // a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no pixel
 // width rail at all — which is why our strips run wider than the real pools' and reach the encoder
 // downscaled by half (docs/METRICS-DIAGNOSTICS.md, "The encoder's input box").
@@ -386,7 +386,7 @@ async function main() {
 
   // Provenance for the corpus on disk: which flags made it. Deliberately NOT a manifest field — the
   // tuplet A/B's two arms must have byte-identical manifests, since the mark is pixels only
-  // (docs/archive/rounds/round3-criteria.md).
+  // (docs/archive/rounds.md).
   writeFileSync(`${OUT}/render_config.json`, JSON.stringify({
     pieces: PIECES_PATH, carryPasses: CARRY_PASSES, thinSharps: THIN_SHARPS,
     legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE, staccatoNoise: STACCATO_NOISE,

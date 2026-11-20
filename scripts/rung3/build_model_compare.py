@@ -4,7 +4,7 @@ r"""Decode one or more strip pools with SEVERAL checkpoints and write the table 
 WHY THIS EXISTS (owner, 2026-09-19). `paired_arm_score.py` reports counts — 35 edits against 48 —
 and throws the decodes away, so the only way to ask *what* the models disagreed about was to
 re-decode by hand. Round 4's dense read turned out to rest on ONE strip of 117
-([docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md)), which no count could have shown.
+([docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md)), which no count could have shown.
 This writes the strip, the gold and every model's text into one file so a person can look.
 
 ⚠ **IT SCORES NOTHING NEW.** Edits are counted the way `paired_arm_score.py --score-vocab old`
@@ -38,7 +38,7 @@ sys.path.insert(0, str(REPO / "src/vision"))
 # is what the r3a-vs-Round-4 dense read used (r3a was the live model then; r4-ctl-stage2-last
 # has been the live model since 2026-09-28); `best-edits` was chosen on 241 of the selection
 # pool's strips and reads ~15 edits better there for that reason alone
-# ([docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md)). Anyone swapping it must say so in
+# ([docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md)). Anyone swapping it must say so in
 # the UI, because the edit column would then not be comparable with the published dense numbers.
 MODELS = [
     ("r3a", "Round 3 Run A — the live model until 2026-09-28", "data/checkpoints/r3a-stage2-best-real"),

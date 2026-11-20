@@ -9,7 +9,7 @@ hand-sync seven copies of a fact. These checks encode the rules that replaced th
 
 WHAT IT CHECKS (all cheap, no network, no deps):
   1. header block   every docs/*.md starts with purpose:/audience:/updated: lines
-  2. size cap       no doc over MAX_LINES (the rule that would have caught RUNG3.md at 1,407)
+  2. size cap       no doc over MAX_LINES (1,000 since 2026-11-20; RUNG3.md once reached 1,407)
   3. paragraphs     no single paragraph over MAX_PARA_CHARS (the 16k-char footer, never again)
   4. links          every relative markdown link resolves
   5. code refs      every docs/... path cited in source code exists
@@ -34,26 +34,23 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 DOCS = REPO / "docs"
 
-MAX_LINES = 400          # soft cap; logs are allowed to be longer, see LONG_OK
+MAX_LINES = 1000         # soft cap (was 400 until 2026-11-20, which split topics across 121 files)
 MAX_PARA_CHARS = 2500    # a paragraph longer than this is unreadable and un-greppable
 LONG_OK = {              # append-only records: size is inherent, structure is what matters
     "docs/log/status-log.md",
     "src/vision/MODEL_EVAL.md",
-    # A verbatim training console log. Its length IS the artifact — trimming it would defeat the
-    # reason it is kept (the tuplet A/B's equivalent was deleted and that entry has to say so).
-    "docs/log/raw/round_3_scan_logs.md",
-    "docs/log/raw/round_3_staccato_logs.md",
-    "docs/log/raw/round3_final_logs.md",
-    "docs/log/raw/round3_runa_logs.md",
-    "docs/log/raw/round3_runb_logs.md",
-    "docs/log/raw/round4_control_logs.md",
-    "docs/log/raw/round4_h_logs.md",
+    # Verbatim training consoles and labelling notes, one file since 2026-11-20. Its length IS the
+    # artifact — trimming it would defeat the reason it is kept.
+    "docs/log/raw.md",
+    # The squashed history (2026-11-20): every closed phase and round, verbatim, one file per era.
+    "docs/archive/phases.md",
+    "docs/archive/rounds.md",
 }
 # Docs that need no header block / index entry (archived verbatim copies, external READMEs).
 # `hf/` is the model card uploaded verbatim to the Hugging Face Hub as the weights repo's README —
 # a purpose:/audience:/updated: block would be published to strangers as if it were house style.
 # `docs/log/raw/` holds verbatim training consoles and the owner's own labelling notes, kept as written.
-EXEMPT_PREFIXES = ("docs/archive/", "docs/log/raw/", "hf/")
+EXEMPT_PREFIXES = ("docs/archive/", "docs/log/raw.md", "hf/")
 
 HEADER_KEYS = ("purpose:", "audience:", "updated:")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
@@ -68,7 +65,7 @@ def live_docs() -> list[Path]:
     out = []
     for p in REPO.rglob("*.md"):
         rel = p.relative_to(REPO).as_posix()
-        if "node_modules" in rel or rel.startswith(".venv") or rel.startswith("data/"):
+        if "node_modules" in rel or "/.expo/" in rel or rel.startswith(".venv") or rel.startswith("data/"):
             continue
         out.append(p)
     return sorted(out)
@@ -159,7 +156,7 @@ def check_orphans(docs: list[Path], fail) -> None:
     listed = set(LINK_RE.findall(index)) | set(LINK_RE.findall(claude))
     listed_names = {Path(t.split("#")[0]).name for t in listed}
     # Files reachable indirectly through a track index count as listed.
-    for hub in (DOCS / "rung3" / "README.md", DOCS / "RUNG3.md", DOCS / "STATUS.md"):
+    for hub in (DOCS / "rung3" / "README.md", DOCS / "STATUS.md"):
         if hub.exists():
             listed_names |= {Path(t.split("#")[0]).name for t in LINK_RE.findall(hub.read_text())}
     for p in docs:

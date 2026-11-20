@@ -7,7 +7,7 @@
  *
  * It accepts *any* frequency, so all 53 commas land exactly. That is the whole reason this
  * feature exists — a twelve-tone app cannot draw a koma position at all, because it only knows
- * twelve frets. See docs/features/fingerboard.md.
+ * twelve frets. See docs/features/instruments.md.
  *
  * How it's organized:
  *   * `VIOLIN_TUNINGS` — the open strings, as DATA. Swapping in a Turkish scordatura is a row
@@ -259,7 +259,7 @@ export function positionOnString(openHz: number, noteHz: number): number | null 
 /**
  * How far up the string the fingerboard reaches, past which nothing can be stopped.
  *
- * Measured off the shipped photo (docs/features/fingerboard.md): the ebony ends 0.838 of the way from
+ * Measured off the shipped photo (docs/features/instruments.md): the ebony ends 0.838 of the way from
  * nut to bridge, which is about two and a half octaves above the open string. It is a property of
  * a violin rather than of the picture, so it lives here with the rest of the physics.
  */

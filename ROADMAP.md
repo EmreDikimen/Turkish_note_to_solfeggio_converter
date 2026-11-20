@@ -303,7 +303,7 @@ produce a real, demoable app with zero machine learning.
 - ⏭ **A React Native app, started 2026-10-11** (owner), Android and iOS together: it reuses
   `packages/core` verbatim with a native `AudioBackend`, and decodes on the **same server** — not
   on-device, which would bring back the ~211 MB download the server removed. Milestones M0–M5 in
-  [docs/mobile/plan.md](docs/mobile/plan.md).
+  [docs/mobile/README.md](docs/mobile/README.md#mobile-plan--what-is-reused-what-is-rewritten-and-what-must-be-decided-first).
 - **Ahenk (transposition) selector** — a user-facing control that picks a named ahenk (Bolahenk,
   Mansur, Kız, …) for playback/display, built on the core `transpose()` from Phase 2 via the
   `name → comma-offset` table (chromatic transpose under the hood, ahenk name on top).

@@ -21,7 +21,7 @@ this line). Not an exam pass. What that changes: [docs/STATUS.md](docs/STATUS.md
 > `OVERVIEW*.md` files were deleted 2026-10-08 (owner); explain things in the reply instead.
 >
 > 📝 **Asked to "sync the docs", "update the docs", or writing anything down after a piece of
-> work? READ [docs/MAINTAINING.md](docs/MAINTAINING.md) FIRST and follow it** — it says which file
+> work? READ [docs/INDEX.md](docs/INDEX.md#maintaining-these-docs) FIRST and follow it** — it says which file
 > owns what, and the end-of-session checklist. Do not improvise doc updates.
 
 ## How to write to the owner (2026-08-20 — applies to EVERY reply, not just docs)
@@ -48,16 +48,16 @@ engineer.** The owner reads English as a second language and asked for this to b
 | Any headline number (accuracy, corpus size, yield) | [docs/METRICS.md](docs/METRICS.md) |
 | Why something was decided (and what overturned it) | [docs/DECISIONS.md](docs/DECISIONS.md) |
 | **Touching apps/web, tools/render or tools/core?** Playback, the editor, the DOM, the stylesheet | **[docs/APP-RULES.md](docs/APP-RULES.md)** |
-| **What a browser check may assert on** — the DOM attributes, per feature | **[docs/DOM-CONTRACT.md](docs/DOM-CONTRACT.md)** |
+| **What a browser check may assert on** — the DOM attributes, per feature | **[docs/APP-RULES.md](docs/APP-RULES.md#the-dom-contract--what-the-browser-checks-are-allowed-to-assert-on)** |
 | **The PHONE — the screen the product is used on: what it looks like, why, every number** | **[docs/features/phone.md](docs/features/phone.md)** |
-| **The LOOK — palette, dark mode, CSS layers, and the render pin (a restyle must not move a strip)** | **[docs/features/look.md](docs/features/look.md)** |
+| **The LOOK — palette, dark mode, CSS layers, and the render pin (a restyle must not move a strip)** | **[docs/features/phone.md](docs/features/phone.md#the-look--tezhip-palette-the-stylesheets-layers-and-the-render-pin)** |
 | **What we may publish** — licences, attribution, why no score ships | **[docs/THIRD-PARTY.md](docs/THIRD-PARTY.md)** |
 | The full doc map | [docs/INDEX.md](docs/INDEX.md) |
-| **The app's own docs — server, hosting, model swap/revert, editor, makam** (the MVP ladder that built it is CLOSED: [docs/archive/phases/mvp.md](docs/archive/phases/mvp.md)) | **[docs/app/README.md](docs/app/README.md)** |
+| **The app's own docs — server, hosting, model swap/revert, editor, makam** (the MVP ladder that built it is CLOSED: [docs/archive/phases.md](docs/archive/phases.md#mvp-track--the-in-browser-pipeline-and-a-release-to-friends-closed)) | **[docs/app/README.md](docs/app/README.md#the-app--server-hosting-editor-makam-speed)** |
 | Feature track (voices, instrument views, stored pages, visit counter, Play Store) | [docs/features/README.md](docs/features/README.md) |
 | Real-page (model) track (collect → label → exam → rounds) | [docs/rung3/](docs/rung3/) |
 | Code map / reading order | [docs/CODE_TOUR.md](docs/CODE_TOUR.md) |
-| Page → strips → decode → stitch design | [docs/PIPELINE.md](docs/PIPELINE.md) |
+| Page → strips → decode → stitch design | [docs/CODE_TOUR.md](docs/CODE_TOUR.md#inference-pipeline--from-a-full-uploaded-image-to-editable-notes) |
 | See a feature with your own eyes | [docs/MANUAL_CHECKS.md](docs/MANUAL_CHECKS.md) |
 | Training runs, raw results | [src/vision/MODEL_EVAL.md](src/vision/MODEL_EVAL.md) |
 | Long-range plan (evergreen, no status) | [ROADMAP.md](ROADMAP.md) |
@@ -66,7 +66,7 @@ engineer.** The owner reads English as a second language and asked for this to b
 
 **⚠ The FULL command reference, with the traps that matter, is in TWO files — read the right one
 before running anything not in this box: [docs/COMMANDS.md](docs/COMMANDS.md) for the app, and
-[docs/COMMANDS-PYTHON.md](docs/COMMANDS-PYTHON.md) for the slicer, the emitter, the queues and the
+[docs/COMMANDS.md](docs/COMMANDS.md#commands--python-training-the-corpus-and-the-slicer) for the slicer, the emitter, the queues and the
 scorers.** Python lives in `.venv-ml` (training/data only,
 never shipped). Node workspaces at the root.
 
@@ -86,7 +86,7 @@ npm run stats:ui      # the OWNER'S visit dashboard, dev server only — never b
 ⚠ **Deploying is NOT how you get work off this machine — `npm run dev:cloud` is** (owner, 2026-08-11).
 ⚠ **`npm run deploy:app` publishes to the real site**; read the output for `Deploy is live!`, because
 a successful build is not a deploy.
-⚠ **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COLAB.md`), or locally with
+⚠ **This Mac is a fanless M4.** Heavy compute goes to Colab (`docs/COMMANDS.md`, Colab section), or locally with
 `nice -19` and `OMR_ORT_THREADS=2`.
 ⚠ **Commits:** short lowercase subject, no co-author trailer.
 
@@ -94,8 +94,8 @@ a successful build is not a deploy.
 
 Three groups here. Each bullet is a lesson that was paid for once; the linked doc owns the numbers.
 ⚠ **The app's own rules — playback, the editor, the DOM, the stylesheet — are in
-[docs/APP-RULES.md](docs/APP-RULES.md)**, split out at this file's 400-line cap on the
-DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken from anywhere.
+[docs/APP-RULES.md](docs/APP-RULES.md)**, together with the DOM contract. Group 4 below is the
+short list of what can be broken from anywhere.
 
 ## 1 · The exam, the labels, the tokens
 
@@ -130,7 +130,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   review with the derivation kept (`sig_table_conflict`) — applied in the `strips_h1` emit (54 rows,
   all read). ⚠ **Every `\sig` block in the exam and in every pool before `strips_h1` still carries
   the old override — treat those as unverified**, and a vote that only adds or re-orders still
-  applies everywhere. [docs/METRICS-SIGVOTE.md](docs/METRICS-SIGVOTE.md).
+  applies everywhere. [docs/METRICS-CORPUS.md](docs/METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited).
 - **`\tie` IS RETIRED — AN ARC IS LABEL-FREE INK, LIKE A SLUR** (owner, 2026-08-22). Never write it,
   never emit it: two tied notes are two plain notes (`la'2 la'8`), same pitches and same total
   duration, so bar arithmetic and the stitcher are untouched. Reason: **65–78% of every `\tie` in the
@@ -139,7 +139,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   as the record of what Round 2 was graded on. ⚠ **The browser gate's one `\tie` gold was rewritten
   tie-free on 2026-10-08** and the gate now pins **26/28** — but `gate.json` is gitignored and
   `make_browser_gate.py` regenerates it, so re-check it after any re-staging
-  ([docs/METRICS-ONNX.md](docs/METRICS-ONNX.md)). The retirement inflates any comparison against a
+  ([docs/METRICS.md](docs/METRICS.md#metrics--the-exported-runtime-onnx-export-int8-quantization-parity)). The retirement inflates any comparison against a
   pre-retirement model — **~15 of 17 points** on the exam.
   [docs/rung3/labeling.md](docs/rung3/labeling.md).
 - **Token ids are append-only** — new tokens go at the END of `ADDED_TOKENS` so existing ids stay
@@ -148,7 +148,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   fewer ids, so in its own ids the same mistake costs an H model **~1.1 fewer edits per strip**.
   Compare two vocabularies with `paired_arm_score.py --score-vocab old` (it refuses otherwise).
   ⛔ `eval_omr.py` has no such mode yet: no exam read on an H model until it does.
-  [docs/METRICS-ROUND4-AB.md](docs/METRICS-ROUND4-AB.md).
+  [docs/METRICS-EXAM.md](docs/METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 - **No Western rehearsal data** in fine-tuning (owner decision 2026-07-03). Coverage comes from
   self-rendered Turkish strips.
 - **Pixels and labels must be produced by the same code path.** The renderer and the label serializer
@@ -190,7 +190,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   has no cache rather than cutting one. ⛔ Never widen it to a path that can slice, and never to the
   exam. Why it exists: a full re-emit moves the pixels under labels a human already read — measured
   on 30 pages, 20 cut differently and **15% of the labelled strips on them changed bytes**.
-  [docs/METRICS-SLICER-BARLINES.md](docs/METRICS-SLICER-BARLINES.md).
+  [docs/METRICS-SLICER-STAFF.md](docs/METRICS-SLICER-STAFF.md#barlines--where-the-cut-goes).
 - **A CHANGE THAT ADDS OR REMOVES A STAFF CANNOT BE PRICED BY THE ROW-LEVEL SCORERS AS THEY STAND**
   (2026-08-25). Both pair a row to its cached truth **by system index**, so an inserted staff shifts
   every later index and each row is scored against another row's answer — a large **false regression**,
@@ -212,7 +212,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   inference an over-budget strip cannot be dropped, so the model emits `</s>` early and confidently;
   `hitCap` catches only 0.2%. **`?dense=<ids>` is an OPT-IN experiment**, not a default — parity
   unverified, no gold measurement, do not quote it.
-  [docs/METRICS-DENSE.md](docs/METRICS-DENSE.md); the training-side budget, and why its gate is
+  [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md#the-dense-experiment--the-apps-missing-label-rail-measured); the training-side budget, and why its gate is
   **80 ids under scheme H** where every pool before 2026-09-07 used 59, is in
   [docs/METRICS-SLICER-WINDOWS.md](docs/METRICS-SLICER-WINDOWS.md).
 - **NOTHING under `src/vision/` ever becomes shippable** — the Python-decode-service question was
@@ -226,7 +226,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   else stays local** — audio, the editor, and the W4–W6 slicer port. **Do not delete the in-browser
   decode path**: `gate:browser`, `parity:armb`, `parity:arma`, `smoke:page` and the W3 browser-vs-gold
   result all rest on it, and it is the ONLY path in a build with no `VITE_DECODE_URL`.
-  [docs/app/deploy.md](docs/app/deploy.md).
+  [docs/app/server.md](docs/app/server.md#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for).
   ⛔ **BUT IT IS NO LONGER A FALLBACK: NOTHING IS READ ON THE VISITOR'S MACHINE WHERE A SERVER IS
   CONFIGURED** (owner, 2026-09-04) — a dead or cold container raises `server-unavailable` instead,
   because the `onnxruntime-web` fallback's real cost is the **211 MB of graphs** it pulls, worst of all
@@ -288,7 +288,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   `dist/` (⛔ never add it to `rollupOptions.input`), AND `stats.mts` demands a bearer token wherever it
   is asked, answering **503 not 200** when none is configured. ⚠ `deploy:app` carries
   `--functions netlify/functions` — without it the counter is simply absent.
-  [docs/features/visit-stats.md](docs/features/visit-stats.md).
+  [docs/features/README.md](docs/features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard).
 - **THE APP REMEMBERS THE PAGES IT HAS READ, AND IT STORES NOTES AND NEVER AN IMAGE** (owner,
   2026-09-05). A decoded page and every later edit go to the reader's own **IndexedDB**
   (`apps/web/src/recentPages.ts`); **30 pages**, least recently opened dropped. ⛔ **No image, ever** —
@@ -305,7 +305,7 @@ DOM-CONTRACT.md precedent. Group 4 below is the short list of what can be broken
   document**: `doc.name` seeds the per-piece hash that picks a tuplet's bracket-or-arc, so renaming
   through the score would silently re-engrave its triplets — the record carries the label (`pageName`),
   and the makam is a field **beside** the name, never inside it (owner: *"makamı da isme dahil
-  olsun"*). [docs/features/recent-pages.md](docs/features/recent-pages.md).
+  olsun"*). [docs/features/README.md](docs/features/README.md#f5--the-pages-this-browser-has-already-read).
 
 ## 4 · The six app rules that can be broken from anywhere
 
@@ -329,13 +329,13 @@ Full statements, with the bug each one cost, in **[docs/APP-RULES.md](docs/APP-R
   boxes, click targets, tuplet marks, playhead positions — is in RENDERED units, converted in one
   place; never scale a consumer where it is read. [docs/APP-RULES.md](docs/APP-RULES.md).
   ⚠ **A render job is a PINNED page** (2026-09-30): `#app[data-render="1"]` hides all chrome so a
-  restyle cannot move a strip by a sub-pixel — never weaken it. [docs/features/look.md](docs/features/look.md).
+  restyle cannot move a strip by a sub-pixel — never weaken it. [docs/features/phone.md](docs/features/phone.md#the-look--tezhip-palette-the-stylesheets-layers-and-the-render-pin).
 - **Never reintroduce a text or regex matcher** in a browser check. Checks read DOM attributes, which
   is what leaves all user-facing copy free to change; every string lives in `strings.ts`.
 - **Token ids are append-only, and pixels and labels come from one code path** — see group 1; the app
   is one of the two producers.
 
-## Doc conventions — full procedure in [docs/MAINTAINING.md](docs/MAINTAINING.md)
+## Doc conventions — full procedure in [docs/INDEX.md](docs/INDEX.md#maintaining-these-docs)
 
 1. `docs/STATUS.md` is the **only** file that states current state or next action. Everything else
    links to it — never restate status.
@@ -344,7 +344,7 @@ Full statements, with the bug each one cost, in **[docs/APP-RULES.md](docs/APP-R
 3. `docs/log/` is **append-only history**. `docs/log/superseded.md` holds abandoned plans — never
    act on anything found there.
 4. New work goes in the track doc it belongs to (`docs/rung3/*`), not into STATUS.
-5. Keep any doc under ~400 lines; split it instead of appending forever.
+5. Prefer fewer files: grow a file by topic, keep it under ~1,000 lines, and split by phase only past that (owner, 2026-11-20).
 6. Run `.venv-ml/bin/python scripts/check_docs.py` after doc edits.
 
 ## Data layout (all gitignored)
@@ -357,8 +357,8 @@ data/real/rung3/      the label POOLS. strips_h1 (4,456) is ROUND 4's real train
                       retired pools was LIFTED for run B on 2026-09-01: strips_oldhuman (1,408) holds
                       every HAND-VERIFIED strip from strips_nota/_r1/_tup. ⛔ MEASURED 2026-09-02 AND
                       IT BOUGHT NOTHING: run B is a NULL (645 vs 667 edits, p = 0.736) —
-                      docs/METRICS-ROUND3-RUNS.md. ⛔ Never pass the raw old pools: 922 of
-                      strips_nota's rows are machine-verdicted. b8-review is out (METRICS-B8.md)
+                      docs/METRICS-EXAM.md. ⛔ Never pass the raw old pools: 922 of
+                      strips_nota's rows are machine-verdicted. b8-review is out (METRICS.md)
                       crop roots, NEVER interchangeable — a strip filename survives a re-slice and
                       its pixels do not: strips/ (2026-07-15..17, the retired slicer; the frozen
                       v2 exam and strips_oldhuman hardlink from here), strips_v2/ (2026-07-29
@@ -372,7 +372,7 @@ data/real/rung3/_handtest/  the OWNER'S 20 HAND-TEST PAGES, decoded (2026-09-06)
                       exam: review_ui queue `handtest` counts CORRECTIONS per page, `label` is empty on
                       every row and promote_labels.py cannot read the file — its `decoded` hint is the
                       LIVE model's own output. The pictures live in /exam_pages/, gitignored (someone
-                      else's engraving; this repo is public). docs/METRICS-HANDTEST.md
+                      else's engraving; this repo is public). docs/METRICS.md
 data/synthetic/       rendered strips — ROUND 3 TRAINED ON strips_v7_final (3 flags, 0 \tie) and ROUND 4 REUSES IT
                       UNCHANGED (no render, owner 2026-09-03). ⚠ IT IS NOW THE ONLY FULL SET ON DISK: the nine
                       superseded ones (v2..v6) were DELETED 2026-09-06 for space — re-render from
@@ -393,7 +393,7 @@ data/checkpoints/     r4-ctl-stage2-last (+ -onnx int8, THE LIVE RUNTIME since 2
                       data/checkpoints/<name>-onnx/ — that is what _round2_backup/ and
                       _r3final_backup/ held. Re-export fp32 with optimum-cli from model.safetensors.
                       ⛔ A swap is the graphs AND `CACHE_NAME` in omr/session.ts (missed at the
-                      2026-09-28 swap). Every hop, in order: docs/app/deploy-ops.md
+                      2026-09-28 swap). Every hop, in order: docs/app/server.md
 data/split.json       piece-level train/val split (strips_v4 uses data/split_v4.json, v3 split_v3)
                       — ALWAYS split by piece, never by strip: strips of one piece are near-duplicates
 ```

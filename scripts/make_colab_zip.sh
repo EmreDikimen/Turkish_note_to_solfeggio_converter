@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build the self-contained Colab upload package for the Rung-2 fine-tune (see docs/COLAB.md).
+# Build the self-contained Colab upload package for the Rung-2 fine-tune (see docs/COMMANDS.md).
 #
 # One zip, mirroring the repo layout, so every command in the docs/notebook works unchanged
 # after unzipping — no git clone or repo state needed on the Colab side:
@@ -9,7 +9,7 @@
 #                                          per-piece manifests/ shards are redundant — excluded)
 #
 # Output: data/colab/tnc_rung2_colab.zip (~470 MB; PNGs don't compress, -1 keeps it fast).
-# Upload that single file to your Google Drive, then follow docs/COLAB.md.
+# Upload that single file to your Google Drive, then follow docs/COMMANDS.md.
 set -e
 cd "$(dirname "$0")/.."
 

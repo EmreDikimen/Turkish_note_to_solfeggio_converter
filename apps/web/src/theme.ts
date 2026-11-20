@@ -9,7 +9,7 @@
  * the stylesheet is applied, so deciding the theme in React would flash the light page on every
  * dark visit. That script and `resolveTheme` below must agree — same key, same rule.
  * ⚠ A RENDER JOB (the URL carries `mode`) is ALWAYS light, whatever is stored: training strips are
- * cut from the light page (docs/features/look.md).
+ * cut from the light page (docs/features/phone.md).
  * ⚠ Every storage access is wrapped: in a private window the accessor itself throws, and a page
  * that would not open because it could not remember a colour is the worse bug.
  * ⚠ The CSS reads ONLY `:root[data-theme="dark"]` — never `prefers-color-scheme` — so there is one

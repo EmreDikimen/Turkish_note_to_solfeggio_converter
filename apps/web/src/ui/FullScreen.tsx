@@ -28,7 +28,7 @@
  *
  * The contract: `#fullscreen-on` (in the card), and in the bar `#fs-play[data-play-state]`,
  * `#fs-stop`, `#fs-exit`. ⚠ `#play` / `#stop` keep meaning the PAGE's transport — a check must say which
- * pair it means, exactly as it already must for `#palette-play` (docs/DOM-CONTRACT.md).
+ * pair it means, exactly as it already must for `#palette-play` (docs/APP-RULES.md).
  */
 import { TR } from "./strings";
 import { PauseIcon, PlayIcon, StopIcon } from "./PlayIcons";

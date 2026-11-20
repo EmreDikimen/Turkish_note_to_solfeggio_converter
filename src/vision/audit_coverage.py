@@ -52,7 +52,7 @@ RHYTHM = ["\\tup3", "\\grace"]  # \tupend counts == \tup3, no separate floor
 MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}
 MAX_IDS = MAX_IDS_BY_VOCAB["old"]   # every pool before 2026-09-07
 
-# DoD thresholds (docs/archive/phases/PHASE2.md §6 + the plan). Büyük classes get a lower val floor: they are
+# DoD thresholds (docs/archive/phases.md §6 + the plan). Büyük classes get a lower val floor: they are
 # injected at a deliberately low rate (see tools/render/respell.ts — user decision 2026-07-05).
 MIN_TRAIN_PER_CLASS = 200
 MIN_VAL_PER_CLASS = 25

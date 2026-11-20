@@ -154,7 +154,7 @@ of the 20 held-out pieces (`eval_omr.py`, id-space alignment).
   passed at Rung 1.5, accuracy gate passed here).** Next (decided same day): ONNX export of
   the checkpoint (local copy: `data/checkpoints/rung2-best/`; Drive `MyDrive/tnc/rung2/best`
   is the backup) via the Rung-1.5 pipeline FIRST — it unblocks Rung-4 wiring and the Rung-3
-  labeling loop; Rung-3 photo collection (`docs/PIPELINE.md` §3) can run in parallel.
+  labeling loop; Rung-3 photo collection (`docs/CODE_TOUR.md` §3) can run in parallel.
 
 ## Rung-2 ONNX export (2026-07-07): PASS
 The Rung-1.5 pipeline rerun against the fine-tuned checkpoint (`data/checkpoints/rung2-best`
@@ -183,7 +183,7 @@ command at Rung 1.5). Manual walkthrough: `docs/MANUAL_CHECKS.md` Check 9.
   **~1.0 s/strip** (a touch faster than Rung 1.5's ~1.5 s).
 - **Verdict: PASS — the shipped-form model (int8 ONNX in a real browser) reads Turkish
   notation exactly.** Unblocks Rung-4 wiring and the Rung-3 model-assisted labeling loop
-  (`docs/PIPELINE.md`).
+  (`docs/CODE_TOUR.md`).
 
 ## Rung 2.2 — rhythm-sign retrain on Colab (2026-07-08): PASS
 Full fine-tune from the original pretrained weights on **`strips_v2_2`** (the rhythm-sign
@@ -241,7 +241,7 @@ The Rung-2 export chain rerun against the rhythm-sign checkpoint (`data/checkpoi
   returns `\tup3 \kucukFlat b''8 c'''8 \kucukFlat b''8 \tupend …` — the earlier real-image
   triplet misread (`16. 32`) is now recovered as `\tup3 … \tupend`.
 - **Verdict: PASS — the shipped-form rhythm-aware model reads triplets/ties/graces exactly in a
-  real browser.** Unblocks Rung 3 (real photos / model-assisted labeling, `docs/PIPELINE.md`).
+  real browser.** Unblocks Rung 3 (real photos / model-assisted labeling, `docs/CODE_TOUR.md`).
 
 ## Rung 2.2b — stem-fix + triplet-expansion retrain (2026-07-09): PASS
 Triggered by a real-image upload (neyzen.com nihavend) whose triplets misread as `16. 32`. Two
@@ -328,7 +328,7 @@ browser. Same invocations as Rung 2.2, only paths changed (`rung22-stemfix-best`
 - **Verdict: PASS — the shipped int8-ONNX model reads the fixed above-placement triplets
   exactly in a real browser, and the real-image regression that triggered Rung 2.2b is
   resolved.** Next: Rung 3 (real photo/screenshot collection + model-assisted labeling,
-  `docs/PIPELINE.md` §3) using this checkpoint.
+  `docs/CODE_TOUR.md` §3) using this checkpoint.
 
 ## Rung 3 — real-page exam BASELINE (2026-07-12): 83.3% AEU (the synthetic→real gap, measured)
 
@@ -1068,7 +1068,7 @@ L4, stage 1 6,000 steps at lr 3e-5 then stage 2 2,000 at lr 1e-5 with the real p
 `--every-share 0.15`, batch 16, **no mix flag** (train.py defaults: screenshot .65 / photo .35 /
 scan .00 — the notebook asserts this before spending a GPU hour).
 
-The console log is kept in full: [`docs/log/raw/round_3_staccato_logs.md`](../../docs/log/raw/round_3_staccato_logs.md).
+The console log is kept in full: [`docs/log/raw.md`](../../docs/log/raw.md#round_3_staccato_logs).
 
 | | stage 1 | stage 2 |
 |---|---|---|
@@ -1178,7 +1178,7 @@ against the two-profile .65 / .35. That is why `data/checkpoints/r3-tupnew-stage
 the control and the arm cost one GPU run rather than two. L4 (12 vCPU), ~1.25 s/step at batch 16,
 stage 1 6,000 steps at lr 3e-5 then stage 2 2,000 at lr 1e-5 with the real pools at `:9`.
 
-**The console log is kept this time**: [`docs/log/raw/round_3_scan_logs.md`](../../docs/log/raw/round_3_scan_logs.md), both
+**The console log is kept this time**: [`docs/log/raw.md`](../../docs/log/raw.md#round_3_scan_logs), both
 stages in full. ⚠ The tuplet A/B's own entry records that its Colab logs were deleted after the
 table was taken; keeping this one is the correction of that.
 
@@ -1197,7 +1197,7 @@ arm having trained on harder pictures.
 `best` +0.071 edits/strip (95% CI [−0.203, +0.335], p = 0.105), `last` +0.010 (CI [−0.198, +0.208],
 p = 0.488). Born-digital clause: −0.092 and −0.169, both spanning zero. Full table and the
 interpretation: [docs/METRICS-DIAGNOSTICS.md](../../docs/METRICS-DIAGNOSTICS.md), disposition in
-[docs/archive/rounds/scan-profile.md](../../docs/archive/rounds/scan-profile.md).
+[docs/archive/rounds.md](../../docs/archive/rounds.md#the-scan-profile--round-3s-first-trained-arm-lever-7--null).
 
 ## Round 3 — the tuplet-mark A/B (Colab, 2026-08-14/15): NULL, and the shape stays
 
@@ -1207,7 +1207,7 @@ continuous arc with the digit floating above). Both from `data/pieces_v4.json` w
 and no print noise, 40,826 strips each, **row-for-row identical to `strips_v4`** (same image set,
 every label byte-identical). Recipe held at Round 2's: stage 1 6,000 steps from BASE at lr 3e-5,
 stage 2 2,000 steps at lr 1e-5 with the real pools at `:9`, `--every-share 0.15`, batch 16.
-Pre-registration: [docs/archive/rounds/round3-criteria.md](../../docs/archive/rounds/round3-criteria.md).
+Pre-registration: [docs/archive/rounds.md](../../docs/archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol).
 
 | | tupnew | tupctl |
 |---|---|---|
@@ -1287,11 +1287,11 @@ paired.
 establishes is that a recall gain, if one exists, is smaller than 54 groups can resolve. `strips_v5_tupnew`
 is the corpus Round 3 continues from. Neither checkpoint ships — the exam is unread and neither arm
 is a Round-3 model; `round2-stage2-best` remains the runtime. Next lever, alone as always: the 35%
-slur-distractor rate ([docs/archive/rounds/tuplets.md](../../docs/archive/rounds/tuplets.md) step 5).
+slur-distractor rate ([docs/archive/rounds.md](../../docs/archive/rounds.md#tuplets--why-tup3-recall-keeps-missing-its-floor) step 5).
 
 ## Round 3 — THE FINAL MODEL (Colab, 2026-09-01): trained, curves read, exam NOT yet read
 
-Raw log: `docs/log/raw/round3_final_logs.md` (430 lines). Corpus `strips_v7_final` (3 flags) / `split_v4.json`,
+Raw log: `docs/log/raw.md` (430 lines). Corpus `strips_v7_final` (3 flags) / `split_v4.json`,
 real pool `strips_b8` at `:5`, recipe held fixed from the arms. L4-class GPU, ~0.92–1.65 s/step at
 batch 16 (the step time rises after each eval because checkpoint writes go to Drive).
 
@@ -1361,7 +1361,7 @@ Those are read on the Mac, in that order, and the exam **once**.
 
 ## Round 3 — RUN A (Colab, 2026-09-01): stage 2 at 4,000 steps. Answer: helps a little, done by 2,500
 
-Raw log: `docs/log/raw/round3_runa_logs.md`. **One variable against the Round-3 final run: stage 2 runs 4,000 steps
+Raw log: `docs/log/raw.md`. **One variable against the Round-3 final run: stage 2 runs 4,000 steps
 instead of 2,000.** Everything else is held — same corpus `strips_v7_final`, same `strips_b8:5`, same
 lr 1e-5, same warmup, same mix. ⭐ **It starts from Round 3's OWN stage-1 checkpoint**
 (`r3-final-stage1/best`) rather than recomputing one: training is not bit-deterministic, so a fresh
@@ -1413,14 +1413,14 @@ only governs `last`; `best`/`best-real` are written on improvement, driven by `-
 **656 edits vs 667**, −0.042/strip, 95% CI **[−0.160, +0.073]**, **15 strips better / 15 worse**,
 exact sign test **p = 1.000**. Exact-match 69.1% vs 68.3%. ⭐ **A NULL, and the cleanest evidence this
 project has that a teacher-forced val loss does not convert into corrections.** Table:
-`data/real/rung3/runa_bestreal_vs_r3final.json` · [../../docs/METRICS-ROUND3-RUNS.md](../../docs/METRICS-ROUND3-RUNS.md).
+`data/real/rung3/runa_bestreal_vs_r3final.json` · [../../docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b).
 
 ## Round 3, RUN B — every hand-verified real strip, retired crops included (2026-09-02)
 
 **Run:** Colab GPU, stage 1 REUSED from the Round-3 final run (`r3-final-stage1/best`), stage 2 =
 **5,000 steps** @ batch 16, lr 1e-5, warmup 100, cosine to zero. Real pools `strips_b8` **and**
 `strips_oldhuman`, both `:4` → 4,777 combined train-side strips against 36,032 synthetic = **34.7%**
-of stage-2 batches (Round 3's recipe: 32.9%). Raw console log: `docs/log/raw/round3_runb_logs.md`.
+of stage-2 batches (Round 3's recipe: 32.9%). Raw console log: `docs/log/raw.md`.
 ⚠ **Two things differ from Run A, not one** — the extra pool AND 5,000 steps against A's 4,000 (the
 step count is the owner's, 2026-09-01). So B-vs-A cannot attribute a difference to the data. It is
 moot: the comparison is a null.
@@ -1474,9 +1474,9 @@ produce. Three runs, three wrong picks
 
 ## Round 4 — the vocabulary A/B (Colab, 2026-09-16/17): both arms trained; the paired read is a NULL
 
-Raw logs: [docs/log/raw/round4_control_logs.md](../../docs/log/raw/round4_control_logs.md) ·
-[docs/log/raw/round4_h_logs.md](../../docs/log/raw/round4_h_logs.md). Kit: `notebooks/round4_vocab_ab_colab.ipynb`. Why both arms
-are scored in old ids: [../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md). L4, batch 16.
+Raw logs: [docs/log/raw.md](../../docs/log/raw.md#round4_control_logs) ·
+[docs/log/raw.md](../../docs/log/raw.md#round4_h_logs). Kit: `notebooks/round4_vocab_ab_colab.ipynb`. Why both arms
+are scored in old ids: [../../docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran). L4, batch 16.
 
 ### Control — stage 2 (old vocabulary, from `r3-final-stage1/best`, `strips_h1:4`, 4,000 steps @ lr 1e-5)
 
@@ -1574,14 +1574,14 @@ Startup identical to the control's, line for line: `4011 train x4 / 441 val`, `6
 `_realval_v2r`, 260 strips, both `best-edits`, counted in OLD ids: control **377** edits / 73.8% exact,
 H **397** / 71.9%; H − control **+0.077/strip, 95% CI [−0.069, +0.231]**, 18 better / 21 worse / 221 tied,
 sign test p = 0.749. Long strips (≥50 old ids, 43): exact 29 control / 27 H. Every table and caveat:
-[../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md).
+[../../docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 
 ### Against the live model (2026-09-17)
 
 `r4-ctl-stage2-best-edits` against `r3-r3a-stage2-best-real` on `_realval_v2r` (260): **377 vs 409**
 edits, −0.123/strip, 95% CI [−0.235, −0.023], 21 better / 9 worse / 230 tied, p = 0.043. ⚠ The arm's
 pick was made on 241 of these strips; the unbiased check is its `last`.
-[../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md).
+[../../docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 ⛔ **Bias removed, it is a null**: `r4-ctl-stage2-last` against the live model, 392 vs 409, −0.065/strip,
 95% CI [−0.169, +0.038], 21 better / 10 worse, p = 0.071. `best-edits`' extra 15 edits were the pick.
 
@@ -1592,5 +1592,5 @@ pick was made on 241 of these strips; the unbiased check is its `last`.
 34 vs 34 edits on the 325 short/mid strips. Round 4 `last` − live: **−0.111/strip** dense
 (CI [−0.291, −0.009], 6 better / 1 worse) and −0.020 over 442; −13 edits on the dense rows against
 +4 on the rest. Every table and caveat:
-[../../docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md).
+[../../docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 

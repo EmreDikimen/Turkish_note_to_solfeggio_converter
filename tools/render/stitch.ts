@@ -1,5 +1,5 @@
 /**
- * Stage-8 STITCHER (docs/PIPELINE.md §1 stage 8) — decoded strip tokens → an editable note model.
+ * Stage-8 STITCHER (docs/CODE_TOUR.md §1 stage 8) — decoded strip tokens → an editable note model.
  *
  * Input: the per-strip LilyPond-ish token streams the OMR model emits for one page (sliced by
  * `src/vision/page_to_strips.py`, decoded by `src/vision/decode_page.py` or, later, the browser).

@@ -182,7 +182,7 @@ domain costs no new labelling. It needs `brew install lilypond` and runs trainin
   this passes. Run: `npx --yes tsx tools/render/verify-labels-ly.ts --strips data/synthetic/<set>`
 
 Result of the pilot — 312/312 gate pass, and a **null** domain-gap read against a matched VexFlow
-control: [../../docs/METRICS-ENGRAVER.md](../../docs/METRICS-ENGRAVER.md).
+control: [../../docs/METRICS-INPUT.md](../../docs/METRICS-INPUT.md#metrics--the-second-engraver-round-3-lever-4).
 (Browser-side counterparts live in `apps/web/src/`: `stripExport.ts` builds crop rects + labels
 from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 
@@ -242,14 +242,14 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       notehead carrying both marks is the only example that isolates position. ⚠ `staccatoseed` is
       **not** a manifest field (like `legacyTuplet`), so the two arms' manifests stay byte-identical
       and diffable. ⚠ `STACCATO_RATE` is chosen, not measured. Floors and the account:
-      `docs/archive/rounds/levers.md` Lever 6.
+      `docs/archive/rounds.md` Lever 6.
 - [x] **A THIRD tuplet mark — `--concave-tuplet` (2026-08-19), OFF by default.** A **continuous** arc
       with the italic "3" set **inside its concavity**, between the curve and the noteheads, on a
       per-piece coin (`TUPLET_MARK_CONCAVE.share`). It exists because the owner produced two real
       scanned editions drawing it that way, refuting this project's own *"not one continuous arc
       with a floating digit exists in the real pools"* — a 16/16 probe over two pools that, it turns
       out, contain **no strip in this style at all**. Measured before drawing (n=5 marks, one page):
-      `docs/METRICS-TUPLETS.md`. The load-bearing property is that **digit and arc never touch**,
+      `docs/METRICS-DIAGNOSTICS.md`. The load-bearing property is that **digit and arc never touch**,
       unlike our own legacy mark, which welded them into one component and so read as a phrase slur.
       ⚠ **No trained arm may carry it** — it changes a share of every piece, and
       `make_round3_colab_zip.sh` refuses an arm whose `render_config.json` has it on. It belongs to

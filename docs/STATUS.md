@@ -14,24 +14,24 @@ from it and are live today:
    revision **`omr-decode-00008-hx7`**, `maxScale` **10** (both read off the service on 2026-10-08),
    and the same int8 graphs on the Hub, hash-checked after upload. **It is NOT an exam pass**: Round
    4's exam is unread, and `r4-ctl` beat the previous model only as a *lead* on dense strips
-   ([METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md)). ✅ **The browser gate pins 26/28 since
+   ([METRICS-EXAM.md](METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran)). ✅ **The browser gate pins 26/28 since
    2026-10-08**, after its one `\tie` gold was rewritten tie-free — the old "27/28" had been
-   unreachable since 2026-09-03 ([METRICS-ONNX.md](METRICS-ONNX.md)). ⭐ **To swap or revert the
-   model, follow the seven hops in [app/deploy-ops.md](app/deploy-ops.md)** — a web deploy alone does
+   unreachable since 2026-09-03 ([METRICS.md](METRICS.md#metrics--the-exported-runtime-onnx-export-int8-quantization-parity)). ⭐ **To swap or revert the
+   model, follow the seven hops in [app/server.md](app/server.md#running-and-deploying-the-decode-server--the-commands)** — a web deploy alone does
    not change what a visitor reads, and the weights' `CACHE_NAME` (missed at the 2026-09-28 swap)
    must move too.
 2. ⛔ **Cloud Run capacity is live, and nothing falls back.** Since 2026-09-04 a cold or dead server
    shows `server-unavailable` instead of reading on the visitor's device. A cold start measured
    **38.2 s**; at concurrency 1 an over-capacity request **queues** behind `--max-instances 10`, and
    `WARMUP_WAIT_MS` is **120 s**. ⏭ **`--min-instances 1` is the owner's open call** — it removes the
-   cold start and costs money continuously ([app/deploy-ops.md](app/deploy-ops.md)).
+   cold start and costs money continuously ([app/server.md](app/server.md#running-and-deploying-the-decode-server--the-commands)).
 3. ✅ **THE COUNTER COUNTS — DAILY TOTALS ONLY, SINCE 2026-10-14.** `STATS_SALT` and `STATS_TOKEN`
    are set; the redeploy that day dropped the per-device hash and the country (a row is a day's total
    per kind of browser), with `privacy.html` rewritten in the same deploy; a second deploy that day put back each row's first and last visit time, again with `privacy.html`. ⚠ The first dashboard read
    after it **deletes every old `d/` row** — the owner was told to screenshot first. ⏭ **Owner:**
    update the Play **Data safety** form — Photos stay; add **App activity → App interactions**
    (collected, not shared, not ephemeral, required, Analytics); deletion question → **No** (180 days)
-   ([features/visit-stats.md](features/visit-stats.md)).
+   ([features/README.md](features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard)).
 
 ⏭ **PLAY STORE: THE CLOSED TEST ENDED AND PRODUCTION ACCESS WAS APPLIED FOR ON 2026-10-28** — Google
 says up to ~7 days. The answers were written to match the facts, including that many testers
@@ -40,13 +40,13 @@ refused, Google names the reason; extend the test and re-apply. Released the sam
 application: the developer panel hidden (`?dev=1` shows it), staff and sound transposed apart, kanun
 levers drawn contiguous. ⏭ After access: a production release (v2 `MakamVision-1.0.1.aab` from the
 library), countries, review. ⏳ The volta bug (#3) waits for an example page from the owner.
-[features/play-store.md](features/play-store.md) · [features/tester-feedback.md](features/tester-feedback.md).
+[features/play-store.md](features/play-store.md) · [features/play-store.md](features/play-store.md#closed-test-feedback--every-problem-found-since-the-play-test-began-and-what-happened-to-it).
 
 ✅ **Deployed 2026-11-12 (`Deploy is live!`, `smoke:live` PASS) — the kanun's mandal counts were replaced by the owner's own count
 on a real instrument**: Sol 9 and La 8 (were 10 and 9), far fewer levers on the top six courses and
 on the lowest one, 212 in all (was 252). ⚠ The split into up/down on the end courses is a guess,
 and the 2nd and 3rd courses from the bottom are still drawn regular because no count exists for
-them ([features/kanun-mandal-count.md](features/kanun-mandal-count.md)). `npm test` and the full
+them ([features/kanun.md](features/kanun.md#kanun--mandals-counted-on-a-real-instrument-2026-11-12)). `npm test` and the full
 `smoke:editor` (409 ok) pass.
 
 ✅ **Deployed 2026-11-12 (`Deploy is live!`, `smoke:live` PASS) — the kanun's mandals were rebuilt on 2026-11-11** from a paper that measured nine
@@ -55,12 +55,12 @@ rather than a koma, and the levers nearest the nut are the ones up — which rev
 released on 2026-10-28. Only the drawing changes; the sound does not. `npm test` passes and so does
 the kanun block of `smoke:editor`. ⏭ **Owner:** look at it on the live site (manual check 26)
 and say whether your own kanun matches the paper's counts
-([features/kanun-view.md](features/kanun-view.md)).
+([features/kanun.md](features/kanun.md#f3--the-kanun-view)).
 
 ✅ **Deployed 2026-10-17 (`Deploy is live!`, `smoke:live` PASS): saving a score no longer depends
 on the browser** — a tester's Samsung phone saved a blank PDF and a PNG without noteheads; the app
 now outlines every music glyph and writes the PDF itself
-([features/tester-feedback.md](features/tester-feedback.md) #19). Checked in three engines, not yet
+([features/play-store.md](features/play-store.md#closed-test-feedback--every-problem-found-since-the-play-test-began-and-what-happened-to-it) #19). Checked in three engines, not yet
 on the tester's phone. The tester's new PDF had everything but was **faded**; round 2 (canvas replay,
 no SVG image) is **deployed 2026-10-17** (`smoke:live` PASS). The owner reproduced the faded PDF on
 his own phone by installing Samsung Internet from Play — no tester needed to check it. ⏭ Owner:
@@ -79,8 +79,8 @@ on a real iPhone.
 ⭐ **ROUND 3 IS CLOSED AND ROUND 4 IS OPEN (owner, 2026-09-03).** Round 3's exam read **51%** against
 the signed 75% floor (63 graded pages, about ±12 pp); ~15 of its +17 points was the retired `\tie`.
 The owner's hand test outranks the instruments for the SHIP call
-([archive/rounds/round3.md](archive/rounds/round3.md)); the signed bar still governs what may be
-**published as a model** ([archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md)) —
+([archive/rounds.md](archive/rounds.md#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are)); the signed bar still governs what may be
+**published as a model** ([archive/rounds.md](archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol)) —
 and two models have now gone live on judgement rather than on that bar.
 
 ⛔ **THE SHIPPED APP CAN RETURN SILENTLY WRONG NOTES ON DENSE PAGES.** At inference an over-long strip
@@ -92,7 +92,7 @@ exceed the decoder's ceiling in the old vocabulary. Two candidate fixes, neither
 goes missing on 14% of pages and `STAFF_RESCUE` is the fix, **shipping OFF**; a lost row is NO crop,
 so no accuracy metric shows it. ⛔ The row-level scorers are blind to staff-count changes
 (`score_slicer.py --pair-by-position` exists; `score_barlines.py` has no fix). ⚠ Whether the TRAINING
-pools are ever re-cut with the rescue ON is undecided ([METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md)).
+pools are ever re-cut with the rescue ON is undecided ([METRICS-SLICER.md](METRICS-SLICER.md#crop-roots--which-slicer-cut-which-pool-and-what-a-re-slice-costs)).
 `GEOMETRY_REV` is 20260903; `--frozen-crops` is the one safe way past it.
 ✅ **ONE FIX WENT IN ON 2026-11-15, AT THE OWNER'S REQUEST, AND IT IS LIVE SINCE THE SAME DAY**: a screenshot's
 dark viewer frame is painted white before binarization (`whiten_frame`, Python and TS together) —
@@ -120,7 +120,7 @@ the app, and neither waits for the other.
 1. ⏭ **The Play Store closed test** (above) — the owner's priority this week.
 1b. ⏭ **A React Native app, Android and iOS together, started in parallel (owner, 2026-10-11).**
    Nothing is built yet: three choices are owed before the skeleton — Expo or bare, where a phone
-   slices a page, how the score is drawn ([mobile/plan.md](mobile/plan.md) §Open).
+   slices a page, how the score is drawn ([mobile/README.md](mobile/README.md#mobile-plan--what-is-reused-what-is-rewritten-and-what-must-be-decided-first) §Open).
 2. ⏭ **The Play Data safety form** (item 3 above) — must match the counter before the production
    application.
 3. ⏭ **Five shipped things no eye has judged** —
@@ -146,21 +146,21 @@ the app, and neither waits for the other.
    `main` UI for now — do not merge it unasked.
 6. ⏸ **Speed is deferred**: a page takes **~35–55 s**; splitting a page across instances is the only
    option that touches the wait, and **the trigger to build it is a user saying the wait is
-   annoying** ([app/latency.md](app/latency.md)).
+   annoying** ([app/server.md](app/server.md#making-a-page-faster--the-options-with-what-each-one-costs)).
 
 ⚠ **Traps left behind by finished work**, now living elsewhere: `deploy:app` needs
-`--filter @turkish-omr/web` or nothing publishes ([app/hosting-setup.md](app/hosting-setup.md));
+`--filter @turkish-omr/web` or nothing publishes ([archive/phases.md](archive/phases.md#putting-the-app-online--step-by-step-in-plain-words));
 **`dev:cloud`, not deploying, keeps the Mac cool**; voices ride **`VITE_VOICES_URL`**, and setting
 `VITE_AUDIO_URL` in a deploy 404s the drums into synthesis, silently ([../CLAUDE.md](../CLAUDE.md));
 ney has **no** CC0 source and oud and tanbur stay Karplus–Strong — not a queue to work down; if the
 voices should be louder the order is per-voice `gain` → a `Çalgı sesi` slider → **never**
 `MASTER_GAIN`; ⛔ **never re-run the first-time `gcloud run deploy` block against the live service** —
-it would reset `--max-instances` and `ALLOWED_ORIGINS` ([app/deploy-ops.md](app/deploy-ops.md)).
+it would reset `--max-instances` and `ALLOWED_ORIGINS` ([app/server.md](app/server.md#running-and-deploying-the-decode-server--the-commands)).
 
 ### Track B — the model (Round 4, open since 2026-09-03)
 
 Plan, levers, the owner's decisions and where each step ended: **[rung3/round4.md](rung3/round4.md)**.
-Every Round-4 number: [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md).
+Every Round-4 number: [METRICS-EXAM.md](METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 
 | role | pool | state |
 |---|---|---|
@@ -194,13 +194,13 @@ counted per page, the only instrument that can see it.
 ⏭ **Two owner reading queues, both unread, neither blocking the exam**: **`ndhigh`** — 40 random
 rows of the 1,678 dense strips the budget used to drop (median **49** ids against **37** accepted);
 and **`handtest`** — **457 of 515 rows** over the owner's 20 pages, the page-level instrument.
-⛔ Neither is gold and neither may become exam material ([METRICS-HANDTEST.md](METRICS-HANDTEST.md) ·
-[rung3/labeling-queues.md](rung3/labeling-queues.md)).
+⛔ Neither is gold and neither may become exam material ([METRICS.md](METRICS.md#hand-test-pages--the-page-level-instrument) ·
+[rung3/labeling.md](rung3/labeling.md#the-labelling-queues--reslice-all-the-batches-b8-and-examv3)).
 
 ⚠ **Two risks the round carries whatever the owner picks**: synthetic labels stop at **44** H ids
 while the real pool reaches 51, so the long band exists only in real material; and every `\sig`
 block in the exam still carries the old model-voted override — part of the exam's signature error
-class may be bad gold ([RISKS.md](RISKS.md)).
+class may be bad gold ([BACKLOG.md](BACKLOG.md#open-risks-and-non-claims)).
 
 ## Where the rest lives
 
@@ -209,9 +209,9 @@ None of these contains a next action.
 | For | Read |
 |---|---|
 | Owed but not next, with the reason it is deferred — ⚠ several are deferred *because* acting would confound something in flight | [BACKLOG.md](BACKLOG.md) |
-| What is measured but fragile, and what we do NOT claim — ⚠ read before quoting any number or believing any green check | [RISKS.md](RISKS.md) |
-| The app's settled context (the server, the build, the shipped features) | [app/standing.md](app/standing.md) |
-| The model track's settled context (real-val v2, the re-slice, the round positions) | [rung3/standing.md](rung3/standing.md) |
+| What is measured but fragile, and what we do NOT claim — ⚠ read before quoting any number or believing any green check | [BACKLOG.md](BACKLOG.md#open-risks-and-non-claims) |
+| The app's settled context (the server, the build, the shipped features) | [app/README.md](app/README.md#standing-findings--the-product-track-established-and-still-true) |
+| The model track's settled context (real-val v2, the re-slice, the round positions) | [rung3/README.md](rung3/README.md#standing-findings--the-real-page-track-established-and-still-true) |
 | The feature track and the other product docs (phone, look, Play Store) | [features/README.md](features/README.md) |
 | What happened on any given day, and why | [log/status-log.md](log/status-log.md) |
 | Plans that were abandoned — do not act on them | [log/superseded.md](log/superseded.md) |

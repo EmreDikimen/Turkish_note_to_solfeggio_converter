@@ -19,7 +19,7 @@ What the queue is
 `testset.json` holds 45 pieces whose 67 page images are all on disk, and the frozen exam grades
 **46** of those pages (`strips_exam_v2_clean/manifest.jsonl`). The other 21 pages belong to pieces
 that are ALREADY exam-only, so labelling them costs the model no training data
-(docs/rung3/exam.md, docs/METRICS-EXAM.md).
+(docs/rung3/README.md, docs/METRICS-EXAM.md).
 
 The target pages are DERIVED here (testset pages minus graded pages), never listed by hand, so the
 queue cannot drift from the exam it grows.
@@ -44,7 +44,7 @@ beamed groups in half. Same pages, new slicer: median crop width 640 → 1031 px
 ⚠ Consequence, and it is NOT this script's to decide: the 46 graded pages are still old-slicer
 output, so the exam mixes two slicers. Re-cutting them costs **315 of the 326 gold labels**
 (measured: `check_crop_staleness.py --root data/real/strips` over the graded pages — 45 of 46 would
-lose them), 295 of which were made by hand. That decision lives in docs/rung3/exam.md.
+lose them), 295 of which were made by hand. That decision lives in docs/rung3/README.md.
 
 ⚠ TRAINING MUST NEVER TAKE THESE ROWS. Every row carries `exam=1`; `promote_labels.py` refuses to
 promote an exam row into a training manifest unless `--exam` names the exam dir explicitly.

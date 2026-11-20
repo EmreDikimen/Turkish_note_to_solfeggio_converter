@@ -21,7 +21,7 @@
  * *"sanırım sen fransız tipi sol klarneti yapıyosun. Alman tipi olmalı."*). The first version of
  * this table was transcribed from Boehm (French) diagrams and was wrong by up to a semitone on the
  * SAME fingering — `T lh123|rh1--` is Si♭ on a Boehm and **Si** on an Albert. Never mix a source
- * from the other system in, however convenient the diagram. docs/features/clarinet-view.md.
+ * from the other system in, however convenient the diagram. docs/features/instruments.md.
  *
  * ⚠ **Pitches here are WRITTEN commas, not concert.** The owner plays what is on the page with the
  * fingering of that name — the G instrument's transposition and Turkish notation's fourth cancel

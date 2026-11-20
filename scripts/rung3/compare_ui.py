@@ -7,7 +7,7 @@ comparison session can never touch a labelling queue, and the two have different
 verdict is one strip against one label, this is one strip against four columns.
 
 WHAT IT IS FOR. Round 4's dense read came out as counts (35 edits against 48) and its whole
-difference turned out to be ONE strip of 117 ([docs/METRICS-ROUND4-AB.md](../../docs/METRICS-ROUND4-AB.md)).
+difference turned out to be ONE strip of 117 ([docs/METRICS-EXAM.md](../../docs/METRICS-EXAM.md)).
 Counts cannot show that; a page of strips can. The filter that matters most is **agreement**: where
 two models say the same thing and the third does not, the odd one out is the interesting column.
 

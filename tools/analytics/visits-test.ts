@@ -4,7 +4,7 @@
  *  1. **A bucket holds no identifier and no location** (2026-10-14). Its key and its record are made
  *     of the date and four coarse user-agent facts, and nothing else — so two phones of the same
  *     kind share one bucket. This is the whole privacy claim of the feature, so it is a test.
- *  2. **The user-agent lessons docs/METRICS-USAGE.md paid for in wrong entries.** Edge and Opera
+ *  2. **The user-agent lessons docs/METRICS.md paid for in wrong entries.** Edge and Opera
  *     must not read as Chrome, Samsung Internet must not disappear into it, and the browser VERSION
  *     must survive — it is the only evidence the data holds that two visits came from two machines.
  *  3. **The referrer keeps its host and loses its path**, which is where a search query would hide.
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
   check("…and the next day is another bucket", bucketKey("2026-10-15", facts) === bucketKey("2026-10-14", facts), false);
 
   // ---------------------------------------------------------------------------------------------
-  // 2. Reading a user-agent — every case here is one METRICS-USAGE.md had to reason about by hand
+  // 2. Reading a user-agent — every case here is one METRICS.md had to reason about by hand
   // ---------------------------------------------------------------------------------------------
   console.log("\nuser-agent");
 

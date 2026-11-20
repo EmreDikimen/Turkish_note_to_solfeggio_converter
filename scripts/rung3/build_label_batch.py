@@ -16,7 +16,7 @@ Both read the same `born_digital_stems()` set and are exact inverses of each oth
 ⚠ `--scanned` is where Round 3 is graded: **93% of exam pages are scans** (62 of 67), and the
 born-digital `batch2` measured a ~12% fix rate against ~30% in the scanned nota pool. A row is seeded
 with the decode, so an `ok` changes the training data by nothing — **the yield of a batch is its FIX
-rate** (docs/METRICS-CORPUS.md, docs/rung3/labeling-queues.md).
+rate** (docs/METRICS-CORPUS.md, docs/rung3/labeling.md).
 
 ⚠ `--scanned` does NOT mean "printed". The scanned tier contains real handwritten manuscript, which
 is a DEFERRED category (owner, 2026-08-17) and must not enter a printed-page pool. Triage it at PAGE
@@ -57,7 +57,7 @@ and a page is the unit Round 3's primary floor is stated in.
 ⚠ **This is a TRAINING batch.** Exam pieces are refused twice over (here, and by the re-slice that
 produced the decodes). Nothing cut here may become exam gold: this ranking selects *the worst pages
 in the corpus*, so an exam drawn from it would not be comparable to exam v2.1's baseline or to the
-signed floor. Exam growth is a separate job with random/stratified sampling — docs/archive/rounds/levers.md.
+signed floor. Exam growth is a separate job with random/stratified sampling — docs/archive/rounds.md.
 """
 from __future__ import annotations
 
@@ -369,7 +369,7 @@ def stats(args: argparse.Namespace) -> None:
 
     ⚠ The number that matters is the **fix rate**, not the count of rows read. Every row is seeded
     with the model's own decode, so an `ok` verdict changes the training data by exactly nothing; a
-    batch whose rows are mostly `ok` bought looks and no data (docs/rung3/labeling-queues.md).
+    batch whose rows are mostly `ok` bought looks and no data (docs/rung3/labeling.md).
     `bad` is the other side of it: the ranking selects the most damaged pages, and the scanned tail
     is where `realval-hard` lost 33% of its crops as unusable.
     """
@@ -392,7 +392,7 @@ def stats(args: argparse.Namespace) -> None:
     print("  " + ", ".join(f"{v}:{c}" for v, c in counts.most_common()))
     print(f"  FIX rate  {counts['fix'] / n:6.1%}   <- the yield: an `ok` changes the data by nothing")
     print(f"  bad rate  {counts['bad'] / n:6.1%}   <- unusable crops; cap the impact score if high")
-    print("\n  for scale, already on record (docs/METRICS-CORPUS.md, docs/rung3/labeling-queues.md):")
+    print("\n  for scale, already on record (docs/METRICS-CORPUS.md, docs/rung3/labeling.md):")
     print("    ~30%   fix rate in the scanned nota pool      <- why the scanned tier was chosen")
     print("    ~12%   fix rate of batch2, born-digital       <- why it was stood down at 68 rows")
     print("     33%   crops lost as unusable in realval-hard <- the bad-rate warning")

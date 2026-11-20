@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build the self-contained Colab upload package for the ROUND-1 fine-tune (see docs/COLAB.md).
+# Build the self-contained Colab upload package for the ROUND-1 fine-tune (see docs/COMMANDS.md).
 #
 # Round 1 differs from the Rung-2 kit (scripts/make_colab_zip.sh): it ships the carry-dominant
 # synthetic corpus PLUS all three promoted REAL pools, so `train.py --real-dir` works on the Colab

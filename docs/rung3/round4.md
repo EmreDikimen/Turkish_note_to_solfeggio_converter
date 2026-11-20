@@ -390,12 +390,12 @@ the no-render decision stood anyway — see step 1 for why.
 
 **Merged into this file on 2026-11-20:**
 
-- [Third-source probe — does the model hold up on an engraving house it has never seen?](#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen) — was `docs/rung3/round4.md`
+- [Third-source probe — does the model hold up on an engraving house it has never seen?](#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen) — was `docs/rung3/third-source.md`
 
 
 ## Third-source probe — does the model hold up on an engraving house it has never seen?
 
-*Was `docs/rung3/round4.md` (last updated 2026-09-06).*
+*Was `docs/rung3/third-source.md` (last updated 2026-09-06).*
 
 > Part of the real-page track — index: [README.md](README.md). Current state and the next action are
 > NOT here: [../STATUS.md](../STATUS.md). The plan this executes is [round4.md](round4.md) step 4;

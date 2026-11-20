@@ -6,14 +6,14 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [Crop geometry — what the encoder is actually GIVEN](#crop-geometry--what-the-encoder-is-actually-given) — was `docs/METRICS-INPUT.md`
-- [Diagnostics — the symbols the model has never been shown](#diagnostics--the-symbols-the-model-has-never-been-shown) — was `docs/METRICS-INPUT.md`
-- [Metrics — the second engraver (Round 3, Lever 4)](#metrics--the-second-engraver-round-3-lever-4) — was `docs/METRICS-INPUT.md`
+- [Crop geometry — what the encoder is actually GIVEN](#crop-geometry--what-the-encoder-is-actually-given) — was `docs/METRICS-GEOMETRY.md`
+- [Diagnostics — the symbols the model has never been shown](#diagnostics--the-symbols-the-model-has-never-been-shown) — was `docs/METRICS-UNSEEN.md`
+- [Metrics — the second engraver (Round 3, Lever 4)](#metrics--the-second-engraver-round-3-lever-4) — was `docs/METRICS-ENGRAVER.md`
 
 
 ## Crop geometry — what the encoder is actually GIVEN
 
-*Was `docs/METRICS-INPUT.md` (last updated 2026-08-17).*
+*Was `docs/METRICS-GEOMETRY.md` (last updated 2026-08-17).*
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-17 when that file crossed the
 400-line cap. The split is by genre: that file keeps **what the model gets wrong**, this one keeps
@@ -368,7 +368,7 @@ against what was promised rather than against a memory of it. Moved there 2026-0
 
 ## Diagnostics — the symbols the model has never been shown
 
-*Was `docs/METRICS-INPUT.md` (last updated 2026-09-06).*
+*Was `docs/METRICS-UNSEEN.md` (last updated 2026-09-06).*
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-20 when that file crossed
 the 400-line cap. The split is by **genre, and the genre turned out to matter**: everything here has
@@ -615,7 +615,7 @@ instrument to price it either way already exists —
 
 ## Metrics — the second engraver (Round 3, Lever 4)
 
-*Was `docs/METRICS-INPUT.md`.*
+*Was `docs/METRICS-ENGRAVER.md`.*
 
 gate, the domain-gap read against the VexFlow control, and what that measurement cannot see
 audience: agents and the owner working Lever 4 or deciding whether a second engraver earns a corpus

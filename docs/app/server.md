@@ -6,14 +6,14 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [Running and deploying the decode server — the commands](#running-and-deploying-the-decode-server--the-commands) — was `docs/app/server.md`
-- [Deploying the app — the server, the host, and what the friends release is for](#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for) — was `docs/app/server.md`
-- [Making a page faster — the options, with what each one costs](#making-a-page-faster--the-options-with-what-each-one-costs) — was `docs/app/server.md`
+- [Running and deploying the decode server — the commands](#running-and-deploying-the-decode-server--the-commands) — was `docs/app/deploy-ops.md`
+- [Deploying the app — the server, the host, and what the friends release is for](#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for) — was `docs/app/deploy.md`
+- [Making a page faster — the options, with what each one costs](#making-a-page-faster--the-options-with-what-each-one-costs) — was `docs/app/latency.md`
 
 
 ## Running and deploying the decode server — the commands
 
-*Was `docs/app/server.md` (last updated 2026-10-08).*
+*Was `docs/app/deploy-ops.md` (last updated 2026-10-08).*
 
 > Split out of [server.md § Deploying the app — the server, the host, and what the friends…](#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for) on 2026-08-07 at the 400-line cap. **This page is HOW.**
 > What was chosen and why is [server.md § Deploying the app — the server, the host, and what the friends…](#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for); the account-by-account walkthrough for the
@@ -131,7 +131,7 @@ bytes, already assembled).
 
 ## Deploying the app — the server, the host, and what the friends release is for
 
-*Was `docs/app/server.md` (last updated 2026-10-08).*
+*Was `docs/app/deploy.md` (last updated 2026-10-08).*
 
 > ✅ **DEPLOYED 2026-08-06** — `https://omr-decode-706571981988.europe-west3.run.app`, Cloud Run
 > europe-west3, 1 vCPU / 2 GiB / concurrency 1 / max-instances 3 (**10 since 2026-09-04**). ⛔ This
@@ -426,7 +426,7 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
 
 ## Making a page faster — the options, with what each one costs
 
-*Was `docs/app/server.md` (last updated 2026-10-08).*
+*Was `docs/app/latency.md` (last updated 2026-10-08).*
 
 > Deployment, hosting and the bill: [server.md § Deploying the app — the server, the host, and what the friends…](#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for). Every number below also lives in
 > [../METRICS.md](../METRICS.md). Current state and next action: [../STATUS.md](../STATUS.md).

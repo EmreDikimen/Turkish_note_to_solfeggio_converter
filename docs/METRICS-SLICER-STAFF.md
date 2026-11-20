@@ -368,13 +368,13 @@ the instruments, not of the change, and it produces a large FALSE regression rat
 
 **Merged into this file on 2026-11-20:**
 
-- [Barlines — where the cut goes](#barlines--where-the-cut-goes) — was `docs/METRICS-SLICER-STAFF.md`
-- [A stem taken for a barline — the both-ends gate](#a-stem-taken-for-a-barline--the-both-ends-gate) — was `docs/METRICS-SLICER-STAFF.md`
+- [Barlines — where the cut goes](#barlines--where-the-cut-goes) — was `docs/METRICS-SLICER-BARLINES.md`
+- [A stem taken for a barline — the both-ends gate](#a-stem-taken-for-a-barline--the-both-ends-gate) — was `docs/METRICS-SLICER-STEMS.md`
 
 
 ## Barlines — where the cut goes
 
-*Was `docs/METRICS-SLICER-STAFF.md` (last updated 2026-08-26).*
+*Was `docs/METRICS-SLICER-BARLINES.md` (last updated 2026-08-26).*
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-25 at the 400-line cap. That file
 keeps the STAFF and the ink mask — binarization, staff geometry, x-extent; this one keeps the CUT.
@@ -773,7 +773,7 @@ strip**, so nothing straddled the cut and a through-the-ink test is structurally
 
 ## A stem taken for a barline — the both-ends gate
 
-*Was `docs/METRICS-SLICER-STAFF.md` (last updated 2026-09-03).*
+*Was `docs/METRICS-SLICER-STEMS.md` (last updated 2026-09-03).*
 
 Split out of [METRICS-SLICER-STAFF.md](#barlines--where-the-cut-goes), which sits at the 400-line
 cap. That file keeps gates 1–3 and the hand-marked ground truth; this one keeps the fourth gate.

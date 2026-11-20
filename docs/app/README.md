@@ -7,8 +7,8 @@ updated: 2026-11-20
 **Merged into this file on 2026-11-20:**
 
 - [The app — server, hosting, editor, makam, speed](#the-app--server-hosting-editor-makam-speed) — was `docs/app/README.md`
-- [Standing findings — the product track, established and still true](#standing-findings--the-product-track-established-and-still-true) — was `docs/app/README.md`
-- [Makam selection — the performed intonation](#makam-selection--the-performed-intonation) — was `docs/app/README.md`
+- [Standing findings — the product track, established and still true](#standing-findings--the-product-track-established-and-still-true) — was `docs/app/standing.md`
+- [Makam selection — the performed intonation](#makam-selection--the-performed-intonation) — was `docs/app/makam.md`
 
 
 ## The app — server, hosting, editor, makam, speed
@@ -40,7 +40,7 @@ owner made it public on 2026-09-05. The ladder's own record is
 
 ## Standing findings — the product track, established and still true
 
-*Was `docs/app/README.md` (last updated 2026-10-08).*
+*Was `docs/app/standing.md` (last updated 2026-10-08).*
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-08, when that file crossed its 400-line limit
 > a second time. Nothing here is a next action; it is the background a next action rests on. The
@@ -285,7 +285,7 @@ it. Walkthrough: check 22 in [MANUAL_CHECKS.md](../MANUAL_CHECKS.md).
 
 ## Makam selection — the performed intonation
 
-*Was `docs/app/README.md` (last updated 2026-09-05).*
+*Was `docs/app/makam.md` (last updated 2026-09-05).*
 
 Pipeline stage 9, the makam half. Design and the rest of the stage: [CODE_TOUR.md § Inference pipeline — from a full uploaded image to editable notes](../CODE_TOUR.md#inference-pipeline--from-a-full-uploaded-image-to-editable-notes).
 State and next action: [../STATUS.md](../STATUS.md). Numbers: [../METRICS.md](../METRICS.md).

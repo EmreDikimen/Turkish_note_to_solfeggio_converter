@@ -99,12 +99,12 @@ the tester list, opens the opt-in link, installs from Play, and keeps it install
 
 **Merged into this file on 2026-11-20:**
 
-- [Closed-test feedback — every problem found since the Play test began, and what happened to it](#closed-test-feedback--every-problem-found-since-the-play-test-began-and-what-happened-to-it) — was `docs/features/play-store.md`
+- [Closed-test feedback — every problem found since the Play test began, and what happened to it](#closed-test-feedback--every-problem-found-since-the-play-test-began-and-what-happened-to-it) — was `docs/features/tester-feedback.md`
 
 
 ## Closed-test feedback — every problem found since the Play test began, and what happened to it
 
-*Was `docs/features/play-store.md` (last updated 2026-11-12).*
+*Was `docs/features/tester-feedback.md` (last updated 2026-11-12).*
 
 > Current state and next action are NOT here — see [../STATUS.md](../STATUS.md). How the closed test
 > itself works: [play-store.md](play-store.md).

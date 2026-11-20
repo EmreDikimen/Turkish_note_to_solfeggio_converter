@@ -72,13 +72,13 @@ H ids and compare with nothing in the old vocabulary.
 
 **Merged into this file on 2026-11-20:**
 
-- [Standing findings — the real-page track, established and still true](#standing-findings--the-real-page-track-established-and-still-true) — was `docs/rung3/README.md`
-- [The exam — freezing an honest test set (Steps 2 and 3)](#the-exam--freezing-an-honest-test-set-steps-2-and-3) — was `docs/rung3/README.md`
+- [Standing findings — the real-page track, established and still true](#standing-findings--the-real-page-track-established-and-still-true) — was `docs/rung3/standing.md`
+- [The exam — freezing an honest test set (Steps 2 and 3)](#the-exam--freezing-an-honest-test-set-steps-2-and-3) — was `docs/rung3/exam.md`
 
 
 ## Standing findings — the real-page track, established and still true
 
-*Was `docs/rung3/README.md` (last updated 2026-10-08).*
+*Was `docs/rung3/standing.md` (last updated 2026-10-08).*
 
 > Moved out of [../STATUS.md](../STATUS.md) on 2026-08-07, when that file crossed its 400-line
 > limit. Nothing here is a next action; it is the background a next action rests on. Current state
@@ -258,7 +258,7 @@ Numbers for all of the above: [METRICS.md](../METRICS.md). Why things were decid
 
 ## The exam — freezing an honest test set (Steps 2 and 3)
 
-*Was `docs/rung3/README.md` (last updated 2026-08-21).*
+*Was `docs/rung3/exam.md` (last updated 2026-08-21).*
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT here: see [../STATUS.md](../STATUS.md).
 Numbers: [../METRICS.md](../METRICS.md). Decisions: [../DECISIONS.md](../DECISIONS.md).

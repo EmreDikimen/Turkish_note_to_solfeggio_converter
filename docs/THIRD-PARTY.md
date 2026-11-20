@@ -222,13 +222,13 @@ CC BY-NC-SA scores would purport to grant rights the owner does not hold. Reason
 
 **Merged into this file on 2026-11-20:**
 
-- [Audio policy — what may be used, and the rules every file obeys](#audio-policy--what-may-be-used-and-the-rules-every-file-obeys) — was `docs/THIRD-PARTY.md`
-- [Audio sources — the verified files, and what each one still needs](#audio-sources--the-verified-files-and-what-each-one-still-needs) — was `docs/THIRD-PARTY.md`
+- [Audio policy — what may be used, and the rules every file obeys](#audio-policy--what-may-be-used-and-the-rules-every-file-obeys) — was `docs/features/audio-policy.md`
+- [Audio sources — the verified files, and what each one still needs](#audio-sources--the-verified-files-and-what-each-one-still-needs) — was `docs/features/audio-sources.md`
 
 
 ## Audio policy — what may be used, and the rules every file obeys
 
-*Was `docs/THIRD-PARTY.md` (last updated 2026-08-11).*
+*Was `docs/features/audio-policy.md` (last updated 2026-08-11).*
 
 Split out of [README.md](features/README.md) on 2026-08-11 at its 400-line cap, by genre: that file carries
 the feature briefs, this one the rules. **Nothing here changed in the move.** The per-file shopping
@@ -355,7 +355,7 @@ recording tagged CC0 is still unusable.
 
 ## Audio sources — the verified files, and what each one still needs
 
-*Was `docs/THIRD-PARTY.md` (last updated 2026-08-13).*
+*Was `docs/features/audio-sources.md` (last updated 2026-08-13).*
 
 The rules these files must obey (no bundling, a `source`+`license` per file, `/THIRD-PARTY.txt` as
 each lands) are in [THIRD-PARTY.md § The swap discipline — required whatever is chosen](#the-swap-discipline--required-whatever-is-chosen). This

@@ -2,10 +2,37 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-11-16
+updated: 2026-11-20
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-11-20 — the code is reorganized; nothing it does changed
+
+The owner asked for the code to be cleaned up: fewer folders, dead parts removed, more readable.
+One commit per step, each pushed only after the same guard passed — typecheck, `npm test`, a Python
+compile, a 3-piece strip render compared **byte for byte** (464 files) against a render made before
+any change, `smoke:editor`, and `smoke:app` reaching its known failure point.
+
+- **Removed (git keeps them):** 62 files of closed-round one-offs — ~35 `rung3` probes and scorers,
+  12 Colab notebooks, 4 old zip scripts, the Phase-0 Python synth, 3 unused data files. ⚠ One was a
+  mistake and came back: `src/audio/tuning.py` is still used by the SymbTr JSON export, and now lives
+  at `ml/symbtr/tuning.py`; two re-exported scores came out identical to the old exports.
+- **Python is one package**, `ml/` (`omr`, `labels`, `prep`, `symbtr`, `notebooks`), installed with
+  `pip install -e .`; ~60 `sys.path` edits in five styles are gone. All 74 files load from outside
+  the repo; `score_vocab_check.py` PASSES. ⚠ The Round-4 notebook's `ZIP_BYTES` is stale until
+  `ml/prep/make_round4_colab_zip.sh` is re-run.
+- **The label language and the stitcher moved into core** (`packages/core/src/labels/`): the app
+  used to import them from `tools/render/` by `../../../` paths.
+- **`tools/` is four folders** — `render/`, `tests/`, `checks/`, `dev/`.
+- **`apps/web/src` is sorted** into `score/`, `instruments/`, `export/`, `lib/`, `dev/`, `ui/modals/`;
+  `SheetView.tsx` 3,728 → ~2,200 lines (its helpers moved, unchanged, into `vexNotes`, `drawMarks`,
+  `hitTest`, `layout`); `App.tsx`'s URL parameters into `lib/urlParams.ts`.
+- **Found, not fixed:** `smoke:app` fails on `main` before and after — after a stored page is
+  reopened the recent list is closed, and the check expects its row. That is app behaviour, so it
+  is the owner's call. The check's other bug (waiting on the hidden icon sprite) was fixed.
+- **Not done:** the two components themselves (`SheetView`, `App`) are still one function each;
+  splitting them into hooks changes structure, not location, and was left for the owner to decide.
 
 ## 2026-11-15 — the screenshot-frame fix is live
 

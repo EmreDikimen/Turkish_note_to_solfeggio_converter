@@ -231,13 +231,13 @@ glyphs, the synthetic-corpus exam guard and the rest moved there on 2026-08-26 a
 
 **Merged into this file on 2026-11-20:**
 
-- [Backlog, further out — real, justified, and not this round](#backlog-further-out--real-justified-and-not-this-round) — was `docs/BACKLOG.md`
-- [Open risks and non-claims](#open-risks-and-non-claims) — was `docs/BACKLOG.md`
+- [Backlog, further out — real, justified, and not this round](#backlog-further-out--real-justified-and-not-this-round) — was `docs/BACKLOG-LATER.md`
+- [Open risks and non-claims](#open-risks-and-non-claims) — was `docs/RISKS.md`
 
 
 ## Backlog, further out — real, justified, and not this round
 
-*Was `docs/BACKLOG.md` (last updated 2026-10-08).*
+*Was `docs/BACKLOG-LATER.md` (last updated 2026-10-08).*
 
 Split out of [BACKLOG.md](BACKLOG.md) on 2026-08-26 at the 400-line cap. Phase split: that file
 holds **what could be picked up next**; this one holds **what is deferred past this round**. Nothing
@@ -432,7 +432,7 @@ both reference-path only and both fine under Python-ORT int8.
 
 ## Open risks and non-claims
 
-*Was `docs/BACKLOG.md` (last updated 2026-10-08).*
+*Was `docs/RISKS.md` (last updated 2026-10-08).*
 
 Split out of [STATUS.md](STATUS.md) on 2026-08-17 when that file crossed the 400-line cap. The split
 is by genre: STATUS holds **current state and the next action** and nothing else; this file holds

@@ -350,14 +350,14 @@ they crossed the 400-line cap on arrival: **[METRICS-DIAGNOSTICS.md](#where-an-e
 
 **Merged into this file on 2026-11-20:**
 
-- [Where an error comes from — the label, or the model?](#where-an-error-comes-from--the-label-or-the-model) — was `docs/METRICS-DIAGNOSTICS.md`
-- [The microtonal-sharp defect — the glyph investigation](#the-microtonal-sharp-defect--the-glyph-investigation) — was `docs/METRICS-DIAGNOSTICS.md`
-- [Tuplets — the corpus scan, the printed mark, and what follows the notes](#tuplets--the-corpus-scan-the-printed-mark-and-what-follows-the-notes) — was `docs/METRICS-DIAGNOSTICS.md`
+- [Where an error comes from — the label, or the model?](#where-an-error-comes-from--the-label-or-the-model) — was `docs/METRICS-ATTRIBUTION.md`
+- [The microtonal-sharp defect — the glyph investigation](#the-microtonal-sharp-defect--the-glyph-investigation) — was `docs/METRICS-SHARPS.md`
+- [Tuplets — the corpus scan, the printed mark, and what follows the notes](#tuplets--the-corpus-scan-the-printed-mark-and-what-follows-the-notes) — was `docs/METRICS-TUPLETS.md`
 
 
 ## Where an error comes from — the label, or the model?
 
-*Was `docs/METRICS-DIAGNOSTICS.md` (last updated 2026-09-16).*
+*Was `docs/METRICS-ATTRIBUTION.md` (last updated 2026-09-16).*
 
 > Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-09-09 at the 400-line cap.
 > That file keeps ranking, geometry and window counts; this one keeps **which source was wrong**.
@@ -546,7 +546,7 @@ corrections had no way into training before it.
 
 ## The microtonal-sharp defect — the glyph investigation
 
-*Was `docs/METRICS-DIAGNOSTICS.md` (last updated 2026-08-19).*
+*Was `docs/METRICS-SHARPS.md` (last updated 2026-08-19).*
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-19 when that file crossed
 the 400-line cap. The split is by genre: that file keeps the **investigations into how the model
@@ -602,7 +602,7 @@ tokens on a note. The scorers count both (no stripping), so both feed the AEU he
 
 ## Tuplets — the corpus scan, the printed mark, and what follows the notes
 
-*Was `docs/METRICS-DIAGNOSTICS.md` (last updated 2026-08-19).*
+*Was `docs/METRICS-TUPLETS.md` (last updated 2026-08-19).*
 
 Split out of [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) on 2026-08-19 when that file crossed
 the 400-line cap. The split is by genre: that file keeps **how the model fails**, this one keeps

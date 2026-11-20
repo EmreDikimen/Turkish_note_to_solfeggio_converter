@@ -258,12 +258,12 @@ Nota tab in edit mode with the toolbox hidden.
 
 **Merged into this file on 2026-11-20:**
 
-- [The look — Tezhip palette, the stylesheet's layers, and the render pin](#the-look--tezhip-palette-the-stylesheets-layers-and-the-render-pin) — was `docs/features/phone.md`
+- [The look — Tezhip palette, the stylesheet's layers, and the render pin](#the-look--tezhip-palette-the-stylesheets-layers-and-the-render-pin) — was `docs/features/look.md`
 
 
 ## The look — Tezhip palette, the stylesheet's layers, and the render pin
 
-*Was `docs/features/phone.md` (last updated 2026-10-01).*
+*Was `docs/features/look.md` (last updated 2026-10-01).*
 
 > Current state and what is deployed: [../STATUS.md](../STATUS.md). The rules that bind code
 > anywhere: [../APP-RULES.md](../APP-RULES.md). What a check may READ:

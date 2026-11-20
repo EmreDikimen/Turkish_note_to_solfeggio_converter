@@ -6,14 +6,14 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [F3 — the kanun view](#f3--the-kanun-view) — was `docs/features/kanun.md`
+- [F3 — the kanun view](#f3--the-kanun-view) — was `docs/features/kanun-view.md`
 - [The kanun — one take, thirty-six notes](#the-kanun--one-take-thirty-six-notes) — was `docs/features/kanun.md`
-- [Kanun — mandals counted on a real instrument (2026-11-12)](#kanun--mandals-counted-on-a-real-instrument-2026-11-12) — was `docs/features/kanun.md`
+- [Kanun — mandals counted on a real instrument (2026-11-12)](#kanun--mandals-counted-on-a-real-instrument-2026-11-12) — was `docs/features/kanun-mandal-count.md`
 
 
 ## F3 — the kanun view
 
-*Was `docs/features/kanun.md` (last updated 2026-11-12).*
+*Was `docs/features/kanun-view.md` (last updated 2026-11-12).*
 
 > This is the kanun chapter of F3; the violin chapter is [instruments.md § F3 — the fingerboard tab](instruments.md#f3--the-fingerboard-tab) and the
 > track index is [README.md](README.md). ⚠ Since 2026-08-29 the two share **one tab**, *Enstrüman
@@ -448,7 +448,7 @@ re-plucked string goes quiet). Neither touches a file.
 
 ## Kanun — mandals counted on a real instrument (2026-11-12)
 
-*Was `docs/features/kanun.md` (last updated 2026-11-12).*
+*Was `docs/features/kanun-mandal-count.md` (last updated 2026-11-12).*
 
 > ✅ **Applied 2026-11-12** — `MANDAL_LAYOUTS` in `packages/core/src/kanun.ts` now carries these
 > counts (the "What the app draws" table below). The view's own doc is [kanun.md § F3 — the kanun view](#f3--the-kanun-view).

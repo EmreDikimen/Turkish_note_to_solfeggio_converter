@@ -385,13 +385,13 @@ one that is open.
 
 **Merged into this file on 2026-11-20:**
 
-- [The windowing retune and the crop frame — measured, and settled](#the-windowing-retune-and-the-crop-frame--measured-and-settled) — was `docs/METRICS-SLICER-WINDOWS.md`
-- [The `?dense=` experiment — the app's missing label rail, measured](#the-dense-experiment--the-apps-missing-label-rail-measured) — was `docs/METRICS-SLICER-WINDOWS.md`
+- [The windowing retune and the crop frame — measured, and settled](#the-windowing-retune-and-the-crop-frame--measured-and-settled) — was `docs/METRICS-SLICER-FRAME.md`
+- [The `?dense=` experiment — the app's missing label rail, measured](#the-dense-experiment--the-apps-missing-label-rail-measured) — was `docs/METRICS-DENSE.md`
 
 
 ## The windowing retune and the crop frame — measured, and settled
 
-*Was `docs/METRICS-SLICER-WINDOWS.md` (last updated 2026-09-03).*
+*Was `docs/METRICS-SLICER-FRAME.md` (last updated 2026-09-03).*
 
 Split out of [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) on 2026-08-22 when that file
 crossed the 400-line cap. The split is by phase, not by size: **this file is settled** — every
@@ -773,7 +773,7 @@ move together or the port splits.
 
 ## The `?dense=` experiment — the app's missing label rail, measured
 
-*Was `docs/METRICS-SLICER-WINDOWS.md` (last updated 2026-09-07).*
+*Was `docs/METRICS-DENSE.md` (last updated 2026-09-07).*
 
 Split out of [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) on 2026-09-07 when that file
 crossed the 400-line cap. Genre split: this is the **product-side** question — what the rail does

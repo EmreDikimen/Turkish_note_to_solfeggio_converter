@@ -375,15 +375,15 @@ reads.
 
 **Merged into this file on 2026-11-20:**
 
-- [Metrics — who actually uses the deployed app](#metrics--who-actually-uses-the-deployed-app) — was `docs/METRICS.md`
-- [Hand-test pages — the page-level instrument](#hand-test-pages--the-page-level-instrument) — was `docs/METRICS.md`
-- [Metrics — the exported runtime (ONNX export, int8 quantization, parity)](#metrics--the-exported-runtime-onnx-export-int8-quantization-parity) — was `docs/METRICS.md`
-- [Metrics — the B8 re-emit and the human fixes it did not carry](#metrics--the-b8-re-emit-and-the-human-fixes-it-did-not-carry) — was `docs/METRICS.md`
+- [Metrics — who actually uses the deployed app](#metrics--who-actually-uses-the-deployed-app) — was `docs/METRICS-USAGE.md`
+- [Hand-test pages — the page-level instrument](#hand-test-pages--the-page-level-instrument) — was `docs/METRICS-HANDTEST.md`
+- [Metrics — the exported runtime (ONNX export, int8 quantization, parity)](#metrics--the-exported-runtime-onnx-export-int8-quantization-parity) — was `docs/METRICS-ONNX.md`
+- [Metrics — the B8 re-emit and the human fixes it did not carry](#metrics--the-b8-re-emit-and-the-human-fixes-it-did-not-carry) — was `docs/METRICS-B8.md`
 
 
 ## Metrics — who actually uses the deployed app
 
-*Was `docs/METRICS.md` (last updated 2026-10-08).*
+*Was `docs/METRICS-USAGE.md` (last updated 2026-10-08).*
 
 Split out of [METRICS.md](METRICS.md) on 2026-08-09, by genre: that file measures how the system
 *performs*, this one measures who *arrives*. Service performance (cold starts, cost, decode speed)
@@ -423,7 +423,7 @@ Robots do the first constantly.
 
 ## Hand-test pages — the page-level instrument
 
-*Was `docs/METRICS.md` (last updated 2026-09-06).*
+*Was `docs/METRICS-HANDTEST.md` (last updated 2026-09-06).*
 
 > Current state and next action are NOT here — see [STATUS.md](STATUS.md). The plan this serves is
 > [rung3/round4.md](rung3/round4.md); the reason it exists is [BACKLOG.md](BACKLOG.md) item 6.
@@ -509,7 +509,7 @@ from a source the corpus does not contain.
 
 ## Metrics — the exported runtime (ONNX export, int8 quantization, parity)
 
-*Was `docs/METRICS.md` (last updated 2026-10-08).*
+*Was `docs/METRICS-ONNX.md` (last updated 2026-10-08).*
 
 Split out of [METRICS.md](METRICS.md) on 2026-09-01 when that file crossed the 400-line cap. Genre:
 METRICS.md holds model quality; this holds the artifact that gets served.
@@ -625,7 +625,7 @@ one-line edit, or the gate reads 24/28 again for a fixture reason.
 
 ## Metrics — the B8 re-emit and the human fixes it did not carry
 
-*Was `docs/METRICS.md` (last updated 2026-08-31).*
+*Was `docs/METRICS-B8.md` (last updated 2026-08-31).*
 
 > Split out of [METRICS-CORPUS.md](METRICS-CORPUS.md) on 2026-08-31 at the 400-line cap, by phase:
 > that file holds the standing corpus census, this one holds the re-emit. Current state and next

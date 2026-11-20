@@ -6,14 +6,14 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [F3 — the fingerboard tab](#f3--the-fingerboard-tab) — was `docs/features/instruments.md`
-- [F3 — the clarinet view](#f3--the-clarinet-view) — was `docs/features/instruments.md`
-- [F3 — the bar beside the instrument](#f3--the-bar-beside-the-instrument) — was `docs/features/instruments.md`
+- [F3 — the fingerboard tab](#f3--the-fingerboard-tab) — was `docs/features/fingerboard.md`
+- [F3 — the clarinet view](#f3--the-clarinet-view) — was `docs/features/clarinet-view.md`
+- [F3 — the bar beside the instrument](#f3--the-bar-beside-the-instrument) — was `docs/features/measure-card.md`
 
 
 ## F3 — the fingerboard tab
 
-*Was `docs/features/instruments.md` (last updated 2026-10-01).*
+*Was `docs/features/fingerboard.md` (last updated 2026-10-01).*
 
 > This is the F3 chapter of the feature track — [README.md](README.md) is the track index, and
 > current state is in [../STATUS.md](../STATUS.md). It was split out on 2026-08-27, when the track
@@ -357,7 +357,7 @@ differences to the reviewer **before** shipping.
 
 ## F3 — the clarinet view
 
-*Was `docs/features/instruments.md` (last updated 2026-10-08).*
+*Was `docs/features/clarinet-view.md` (last updated 2026-10-08).*
 
 > This is the clarinet chapter of F3. The violin chapter is [instruments.md § F3 — the fingerboard tab](#f3--the-fingerboard-tab), the
 > kanun chapter is [kanun.md § F3 — the kanun view](kanun.md#f3--the-kanun-view), and the track index is [README.md](README.md).
@@ -608,7 +608,7 @@ Unchanged from [instruments.md § F3 — the fingerboard tab](#f3--the-fingerboa
 
 ## F3 — the bar beside the instrument
 
-*Was `docs/features/instruments.md` (last updated 2026-09-05).*
+*Was `docs/features/measure-card.md` (last updated 2026-09-05).*
 
 > This is the fourth chapter of F3 — the one that is not an instrument. The three instruments are
 > [instruments.md § F3 — the fingerboard tab](#f3--the-fingerboard-tab), [kanun.md § F3 — the kanun view](kanun.md#f3--the-kanun-view) and

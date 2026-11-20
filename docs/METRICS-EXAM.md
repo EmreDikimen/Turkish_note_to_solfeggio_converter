@@ -268,14 +268,14 @@ them, over 85 tie-but-no-tup3 and 229 neither-token strips. Full reasoning:
 
 **Merged into this file on 2026-11-20:**
 
-- [Metrics — the exam as an INSTRUMENT](#metrics--the-exam-as-an-instrument) — was `docs/METRICS-EXAM.md`
-- [Metrics — Round 3's two follow-up runs (A and B)](#metrics--round-3s-two-follow-up-runs-a-and-b) — was `docs/METRICS-EXAM.md`
-- [Round 4's vocabulary A/B — how it is scored, and what the kit measured before any GPU ran](#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran) — was `docs/METRICS-EXAM.md`
+- [Metrics — the exam as an INSTRUMENT](#metrics--the-exam-as-an-instrument) — was `docs/METRICS-EXAMSET.md`
+- [Metrics — Round 3's two follow-up runs (A and B)](#metrics--round-3s-two-follow-up-runs-a-and-b) — was `docs/METRICS-ROUND3-RUNS.md`
+- [Round 4's vocabulary A/B — how it is scored, and what the kit measured before any GPU ran](#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran) — was `docs/METRICS-ROUND4-AB.md`
 
 
 ## Metrics — the exam as an INSTRUMENT
 
-*Was `docs/METRICS-EXAM.md` (last updated 2026-08-31).*
+*Was `docs/METRICS-EXAMSET.md` (last updated 2026-08-31).*
 
 Split out of [METRICS-EXAM.md](METRICS-EXAM.md) on 2026-08-21, when that file crossed its 400-line
 cap. The split is by genre: **METRICS-EXAM.md keeps what models SCORED**, this file keeps **what the
@@ -598,7 +598,7 @@ measure before the interval's lower bound clears 75%:
 
 ## Metrics — Round 3's two follow-up runs (A and B)
 
-*Was `docs/METRICS-EXAM.md` (last updated 2026-09-19).*
+*Was `docs/METRICS-ROUND3-RUNS.md` (last updated 2026-09-19).*
 
 Round 3's exam was read on 2026-09-01 for `r3-final-stage2-last` and it missed
 ([METRICS-EXAM.md](#metrics--the-exam-as-an-instrument)). The owner then ordered two more trainings — *"round 3 is
@@ -724,7 +724,7 @@ that would have justified re-opening the exam.
 
 ## Round 4's vocabulary A/B — how it is scored, and what the kit measured before any GPU ran
 
-*Was `docs/METRICS-EXAM.md` (last updated 2026-09-16).*
+*Was `docs/METRICS-ROUND4-AB.md` (last updated 2026-09-16).*
 
 > Plan and order: [rung3/round4.md](rung3/round4.md) step 6. Decisions: [DECISIONS.md](DECISIONS.md)
 > (2026-09-16 rows). Current state and next action are NOT here: [STATUS.md](STATUS.md).

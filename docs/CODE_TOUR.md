@@ -8,6 +8,32 @@ A learning-oriented map of the code. Every function also has a detailed comment 
 (what it does, why, how, what's important) — this file is the **reading order** and a
 one-line index so you know where to start and how the pieces connect.
 
+## Where everything lives (since 2026-11-20)
+
+```
+apps/web/        the shipped web app (React + VexFlow)
+  src/App.tsx      the page; lib/urlParams.ts holds what it reads from its URL
+  src/score/       the engraved, editable score: SheetView + vexNotes, drawMarks, hitTest, layout,
+                   and stripExport/textNoise (the training-strip side of the same drawing)
+  src/instruments/ violin, kanun, clarinet views and the measure card
+  src/omr/         the decode pipeline and the TypeScript slicer (the server imports these too)
+  src/audio/ src/export/ src/ui/ (src/ui/modals/) src/lib/ src/styles/
+  src/dev/         harness pages for the checks — never shown to a user
+apps/server/     the Cloud Run decode server (imports apps/web/src/omr)
+apps/android/    the Play Store TWA shell
+packages/core/   portable logic, no platform APIs; src/labels/ = the label language, the stitcher,
+                 repeats/nav marks (import as @turkish-omr/core/labels/<name>)
+netlify/         the visit counter's functions
+tools/render/    the training-strip renderer and its label verifiers
+tools/tests/     every unit test `npm test` runs
+tools/checks/    browser smokes and gates; checks/parity/ = browser-vs-Python parity
+tools/dev/       one-off developer tools (icons, voice server, check_docs.py, …)
+ml/              ALL Python, one package (`pip install -e .`): omr/ (slicer, training, eval),
+                 labels/ (real-page label tools), prep/ (corpus + asset prep), symbtr/ (parser),
+                 notebooks/ (Colab)
+docs/ data/ hf/  docs, the gitignored data, the published model cards
+```
+
 ## The big picture
 
 The project is **two halves joined by one JSON file**:
@@ -17,7 +43,7 @@ SymbTr .txt ──(Python)──► Score/Event ──► note-model JSON ──
             parse           tuning/synth     export            shared core         web harness
 ```
 
-- **Python side** (`src/`, `scripts/`) = the reference + data/training tooling. Parses the
+- **Python side** (`ml/`) = the reference + data/training tooling. Parses the
   dataset, proves the tuning/synthesis, and exports JSON. Not shipped in the app.
 - **The JSON file** = the contract. Python writes it (`export_json.py`), TypeScript reads it
   (`types.ts`). They describe the same shape on two sides of the wire.
@@ -173,12 +199,12 @@ npm install && npm run dev:web   # open the URL: ▶ Play, toggle Sheet, ✎ Edi
 
 **Merged into this file on 2026-11-20:**
 
-- [Inference pipeline — from a full uploaded image to editable notes](#inference-pipeline--from-a-full-uploaded-image-to-editable-notes) — was `docs/CODE_TOUR.md`
+- [Inference pipeline — from a full uploaded image to editable notes](#inference-pipeline--from-a-full-uploaded-image-to-editable-notes) — was `docs/PIPELINE.md`
 
 
 ## Inference pipeline — from a full uploaded image to editable notes
 
-*Was `docs/CODE_TOUR.md` (last updated 2026-10-08).*
+*Was `docs/PIPELINE.md` (last updated 2026-10-08).*
 
 > Numbers quoted here are summaries — the authoritative values are in [METRICS.md](METRICS.md).
 

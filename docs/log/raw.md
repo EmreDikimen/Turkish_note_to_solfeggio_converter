@@ -8,20 +8,20 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [round3_final_logs](#round3_final_logs) — was `docs/log/raw.md`
-- [round3_runa_logs](#round3_runa_logs) — was `docs/log/raw.md`
-- [round3_runb_logs](#round3_runb_logs) — was `docs/log/raw.md`
-- [round_3_scan_logs](#round_3_scan_logs) — was `docs/log/raw.md`
-- [round_3_staccato_logs](#round_3_staccato_logs) — was `docs/log/raw.md`
-- [round4_control_logs](#round4_control_logs) — was `docs/log/raw.md`
-- [round4_h_logs](#round4_h_logs) — was `docs/log/raw.md`
-- [names_of_bad_cropped_images](#names_of_bad_cropped_images) — was `docs/log/raw.md`
-- [some_problems_seen_while_labeling](#some_problems_seen_while_labeling) — was `docs/log/raw.md`
+- [round3_final_logs](#round3_final_logs) — was `docs/log/raw/round3_final_logs.md`
+- [round3_runa_logs](#round3_runa_logs) — was `docs/log/raw/round3_runa_logs.md`
+- [round3_runb_logs](#round3_runb_logs) — was `docs/log/raw/round3_runb_logs.md`
+- [round_3_scan_logs](#round_3_scan_logs) — was `docs/log/raw/round_3_scan_logs.md`
+- [round_3_staccato_logs](#round_3_staccato_logs) — was `docs/log/raw/round_3_staccato_logs.md`
+- [round4_control_logs](#round4_control_logs) — was `docs/log/raw/round4_control_logs.md`
+- [round4_h_logs](#round4_h_logs) — was `docs/log/raw/round4_h_logs.md`
+- [names_of_bad_cropped_images](#names_of_bad_cropped_images) — was `docs/log/raw/names_of_bad_cropped_images.md`
+- [some_problems_seen_while_labeling](#some_problems_seen_while_labeling) — was `docs/log/raw/some_problems_seen_while_labeling.md`
 
 
 ## round3_final_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round3_final_logs.md`, kept verbatim.*
 
 # Round 3 — THE FINAL MODEL's Colab training log (raw)
 
@@ -469,7 +469,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.23s/it]
 
 ## round3_runa_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round3_runa_logs.md`, kept verbatim.*
 
 # Round 3, RUN A — the 4,000-step stage-2 log (raw)
 
@@ -694,7 +694,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.19s/it]
 
 ## round3_runb_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round3_runb_logs.md`, kept verbatim.*
 
 # Round 3, RUN B — the 5,000-step stage-2 log (raw)
 
@@ -983,7 +983,7 @@ Writing model shards: 100% 1/1 [00:02<00:00,  2.28s/it]
 
 ## round_3_scan_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round_3_scan_logs.md`, kept verbatim.*
 
 # Round 3 arm 1 — the scan profile's Colab training log (raw)
 
@@ -1400,7 +1400,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.22s/it]
 
 ## round_3_staccato_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round_3_staccato_logs.md`, kept verbatim.*
 
 # Round 3 arm 2 — the staccato distractor's Colab training log (raw)
 
@@ -1821,7 +1821,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.69s/it]
 
 ## round4_control_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round4_control_logs.md`, kept verbatim.*
 
 # Round 4, CONTROL arm — the stage-2 log (raw)
 
@@ -2065,7 +2065,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.34s/it]
 
 ## round4_h_logs
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/round4_h_logs.md`, kept verbatim.*
 
 # Round 4, H arm — stage 1 and stage 2 logs (raw)
 
@@ -2655,7 +2655,7 @@ Writing model shards: 100% 1/1 [00:01<00:00,  1.00s/it]
 
 ## names_of_bad_cropped_images
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/names_of_bad_cropped_images.md`, kept verbatim.*
 
 # Bad crops seen while labelling — the owner's running list
 
@@ -2729,7 +2729,7 @@ nikriz_zeybek_cemil_bey_tanburi_no_1_p1_s07_w02.png
 
 ## some_problems_seen_while_labeling
 
-*Was `docs/log/raw.md`, kept verbatim.*
+*Was `docs/log/raw/some_problems_seen_while_labeling.md`, kept verbatim.*
 
 # Problems seen while labelling — the owner's running list
 

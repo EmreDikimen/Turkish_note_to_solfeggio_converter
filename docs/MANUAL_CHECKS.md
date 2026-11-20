@@ -343,13 +343,13 @@ feature track, while everything left here checks the pipeline and the model.
 
 **Merged into this file on 2026-11-20:**
 
-- [Manual checks — the score editor](#manual-checks--the-score-editor) — was `docs/MANUAL_CHECKS.md`
-- [Manual checks — the synthetic corpus and the renderer](#manual-checks--the-synthetic-corpus-and-the-renderer) — was `docs/MANUAL_CHECKS.md`
+- [Manual checks — the score editor](#manual-checks--the-score-editor) — was `docs/MANUAL_CHECKS-EDITOR.md`
+- [Manual checks — the synthetic corpus and the renderer](#manual-checks--the-synthetic-corpus-and-the-renderer) — was `docs/MANUAL_CHECKS-CORPUS.md`
 
 
 ## Manual checks — the score editor
 
-*Was `docs/MANUAL_CHECKS.md` (last updated 2026-08-09).*
+*Was `docs/MANUAL_CHECKS-EDITOR.md` (last updated 2026-08-09).*
 
 > Split out of [MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-09 at the 400-line cap — the second
 > such split, after the corpus half went to [MANUAL_CHECKS.md](#manual-checks--the-synthetic-corpus-and-the-renderer) on
@@ -577,7 +577,7 @@ it is also pointing at the model's mistakes.
 
 ## Manual checks — the synthetic corpus and the renderer
 
-*Was `docs/MANUAL_CHECKS.md` (last updated 2026-08-07).*
+*Was `docs/MANUAL_CHECKS-CORPUS.md` (last updated 2026-08-07).*
 
 > Split out of [MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-07 at the 400-line cap. This half is
 > **checks 1–8: the corpus we render**. The app checks (the in-browser gate, uploading a page, the

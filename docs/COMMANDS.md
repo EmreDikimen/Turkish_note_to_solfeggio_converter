@@ -250,20 +250,21 @@ Cloud Run from localhost.
 
 ### Python (training and data only — never shipped)
 
-**Moved 2026-09-07 to [COMMANDS.md](#commands--python-training-the-corpus-and-the-slicer)** — the slicer, the emitter and
-its label-budget rail, the review queues, the promoters, the scorers, the probes, and every
-`OMR_*` knob with the measurement behind it. Nothing was changed in the move; this file keeps
-the app's own commands.
+All Python is the `ml/` package — `ml/omr` (slicer, training, eval), `ml/labels` (the real-page
+label tools), `ml/prep` (corpus and asset prep), `ml/symbtr` (the SymbTr parser) — since
+2026-11-20. **Once per machine:** `.venv-ml/bin/pip install -e .` from the repo root; after that
+every script runs as `.venv-ml/bin/python ml/<part>/<script>.py` and imports `ml.omr.data` etc.
+⛔ Never add a `sys.path` line. The full Python reference is the next section.
 
 **Merged into this file on 2026-11-20:**
 
-- [Commands — Python: training, the corpus, and the slicer](#commands--python-training-the-corpus-and-the-slicer) — was `docs/COMMANDS.md`
-- [Training on Google Colab — first-timer's guide](#training-on-google-colab--first-timers-guide) — was `docs/COMMANDS.md`
+- [Commands — Python: training, the corpus, and the slicer](#commands--python-training-the-corpus-and-the-slicer) — was `docs/COMMANDS-PYTHON.md`
+- [Training on Google Colab — first-timer's guide](#training-on-google-colab--first-timers-guide) — was `docs/COLAB.md`
 
 
 ## Commands — Python: training, the corpus, and the slicer
 
-*Was `docs/COMMANDS.md` (last updated 2026-11-15).*
+*Was `docs/COMMANDS-PYTHON.md` (last updated 2026-11-15).*
 
 Split out of [COMMANDS.md](COMMANDS.md) on 2026-09-07 when that file crossed the 400-line cap. Genre
 split: that file keeps the **app** — the dev servers, the browser gates, the deploy, the visit
@@ -568,7 +569,7 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 
 ## Training on Google Colab — first-timer's guide
 
-*Was `docs/COMMANDS.md` (last updated 2026-08-19).*
+*Was `docs/COLAB.md` (last updated 2026-08-19).*
 
 > How to run the scaled fine-tune (`ml/omr/train.py`) on Colab, written for someone who has
 > never used Colab. This doc is the context around the ml/notebooks: what Colab is, which plan to buy,

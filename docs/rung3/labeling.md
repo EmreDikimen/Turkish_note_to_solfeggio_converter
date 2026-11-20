@@ -144,14 +144,14 @@ map is unchanged:
 
 **Merged into this file on 2026-11-20:**
 
-- [Labeling, Step 1 — collecting real pages and matching them to SymbTr](#labeling-step-1--collecting-real-pages-and-matching-them-to-symbtr) — was `docs/rung3/labeling.md`
-- [The labelling queues — reslice-all, the batches, b8 and examv3](#the-labelling-queues--reslice-all-the-batches-b8-and-examv3) — was `docs/rung3/labeling.md`
-- [The real-val labelling queues — realval-hard, and the 2026-09-09 repair](#the-real-val-labelling-queues--realval-hard-and-the-2026-09-09-repair) — was `docs/rung3/labeling.md`
+- [Labeling, Step 1 — collecting real pages and matching them to SymbTr](#labeling-step-1--collecting-real-pages-and-matching-them-to-symbtr) — was `docs/rung3/labeling-collection.md`
+- [The labelling queues — reslice-all, the batches, b8 and examv3](#the-labelling-queues--reslice-all-the-batches-b8-and-examv3) — was `docs/rung3/labeling-queues.md`
+- [The real-val labelling queues — realval-hard, and the 2026-09-09 repair](#the-real-val-labelling-queues--realval-hard-and-the-2026-09-09-repair) — was `docs/rung3/labeling-queues-realval.md`
 
 
 ## Labeling, Step 1 — collecting real pages and matching them to SymbTr
 
-*Was `docs/rung3/labeling.md` (last updated 2026-08-22).*
+*Was `docs/rung3/labeling-collection.md` (last updated 2026-08-22).*
 
 > Split out of [labeling.md](labeling.md) on 2026-08-22, which kept the live labelling *conventions*
 > and crossed the 400-line cap. This file is the collection **history and method**: §1a neyzen,
@@ -421,7 +421,7 @@ tuplet runs need 1-measure windows at most, and often less. Consequences:
 
 ## The labelling queues — reslice-all, the batches, b8 and examv3
 
-*Was `docs/rung3/labeling.md` (last updated 2026-09-29).*
+*Was `docs/rung3/labeling-queues.md` (last updated 2026-09-29).*
 
 > Split out of [labeling.md](labeling.md) on 2026-08-07 at the 400-line cap. That page is the
 > standing procedure (free labels from SymbTr matches); this one is the **queues that were run
@@ -798,7 +798,7 @@ on retired-slicer crops — 24% of its rows under 400 px against 4% now) and `st
 
 ## The real-val labelling queues — realval-hard, and the 2026-09-09 repair
 
-*Was `docs/rung3/labeling.md` (last updated 2026-09-09).*
+*Was `docs/rung3/labeling-queues-realval.md` (last updated 2026-09-09).*
 
 > Split out of [labeling.md § The labelling queues — reslice-all, the batches, b8 and examv3](#the-labelling-queues--reslice-all-the-batches-b8-and-examv3) on 2026-09-09 at the 400-line cap. That file
 > keeps the queues feeding the **training pools and the exam** (`reslice-all`, the batches, `b8`,

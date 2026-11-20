@@ -388,12 +388,12 @@ being transpose-safe, and a preview that cannot check the mapping it shares.
 
 **Merged into this file on 2026-11-20:**
 
-- [The editor — what each step BUILT, and the traps it found](#the-editor--what-each-step-built-and-the-traps-it-found) — was `docs/app/editor.md`
+- [The editor — what each step BUILT, and the traps it found](#the-editor--what-each-step-built-and-the-traps-it-found) — was `docs/app/editor-built.md`
 
 
 ## The editor — what each step BUILT, and the traps it found
 
-*Was `docs/app/editor.md` (last updated 2026-08-08).*
+*Was `docs/app/editor-built.md` (last updated 2026-08-08).*
 
 > The **brief** — what the editor is, what is settled, and what is still owed — is
 > [editor.md](editor.md). This file is the other half: what actually got built, and the things that

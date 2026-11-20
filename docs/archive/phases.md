@@ -8,22 +8,22 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [History — detailed log of completed phases](#history--detailed-log-of-completed-phases) — was `docs/archive/phases.md`
-- [Phase 2 — synthetic data + the fine-tune ladder (CLOSED 2026-07-09)](#phase-2--synthetic-data--the-fine-tune-ladder-closed-2026-07-09) — was `docs/archive/phases.md`
-- [W0–W3 — opencv.js parity, the decode module, and the browser-vs-Python verdict](#w0w3--opencvjs-parity-the-decode-module-and-the-browser-vs-python-verdict) — was `docs/archive/phases.md`
-- [MVP rungs — what each one established](#mvp-rungs--what-each-one-established) — was `docs/archive/phases.md`
-- [Porting the slicer to TypeScript — W4–W6](#porting-the-slicer-to-typescript--w4w6) — was `docs/archive/phases.md`
-- [MVP track — the in-browser pipeline, and a release to friends (CLOSED)](#mvp-track--the-in-browser-pipeline-and-a-release-to-friends-closed) — was `docs/archive/phases.md`
-- [Backlog — closed items, archived](#backlog--closed-items-archived) — was `docs/archive/phases.md`
-- [Risks — closed caveats, archived](#risks--closed-caveats-archived) — was `docs/archive/phases.md`
-- [Setting up Google Cloud — step by step, in plain words](#setting-up-google-cloud--step-by-step-in-plain-words) — was `docs/archive/phases.md`
-- [Putting the app online — step by step, in plain words](#putting-the-app-online--step-by-step-in-plain-words) — was `docs/archive/phases.md`
+- [History — detailed log of completed phases](#history--detailed-log-of-completed-phases) — was `docs/log/HISTORY.md`
+- [Phase 2 — synthetic data + the fine-tune ladder (CLOSED 2026-07-09)](#phase-2--synthetic-data--the-fine-tune-ladder-closed-2026-07-09) — was `docs/archive/phases/PHASE2.md`
+- [W0–W3 — opencv.js parity, the decode module, and the browser-vs-Python verdict](#w0w3--opencvjs-parity-the-decode-module-and-the-browser-vs-python-verdict) — was `docs/archive/phases/rungs-w0-w3.md`
+- [MVP rungs — what each one established](#mvp-rungs--what-each-one-established) — was `docs/archive/phases/rungs.md`
+- [Porting the slicer to TypeScript — W4–W6](#porting-the-slicer-to-typescript--w4w6) — was `docs/archive/phases/slicer-port.md`
+- [MVP track — the in-browser pipeline, and a release to friends (CLOSED)](#mvp-track--the-in-browser-pipeline-and-a-release-to-friends-closed) — was `docs/archive/phases/mvp.md`
+- [Backlog — closed items, archived](#backlog--closed-items-archived) — was `docs/archive/backlog-closed.md`
+- [Risks — closed caveats, archived](#risks--closed-caveats-archived) — was `docs/archive/risks-closed.md`
+- [Setting up Google Cloud — step by step, in plain words](#setting-up-google-cloud--step-by-step-in-plain-words) — was `docs/app/gcloud-setup.md`
+- [Putting the app online — step by step, in plain words](#putting-the-app-online--step-by-step-in-plain-words) — was `docs/app/hosting-setup.md`
 - [The friends release — plan, build order and ladder (W9/W10)](#the-friends-release--plan-build-order-and-ladder-w9w10) — moved from `docs/app/server.md` on 2026-11-20
 
 
 ## History — detailed log of completed phases
 
-*Was `docs/archive/phases.md` (last updated 2026-07-04 (content frozen; moved to docs/log/ on 2026-07-26)).*
+*Was `docs/log/HISTORY.md` (last updated 2026-07-04 (content frozen; moved to docs/log/ on 2026-07-26)).*
 
 > Extracted verbatim from ROADMAP §7 on 2026-07-04. **Current** state and next action live in
 > [../STATUS.md](../STATUS.md) — not here. Later history: [status-log.md](../log/status-log.md).
@@ -132,7 +132,7 @@ started — **[phases.md](#phase-2--synthetic-data--the-fine-tune-ladder-closed-
 
 ## Phase 2 — synthetic data + the fine-tune ladder (CLOSED 2026-07-09)
 
-*Was `docs/archive/phases.md` (last updated 2026-07-26 (content closed; live work moved to docs/rung3/)).*
+*Was `docs/archive/phases/PHASE2.md` (last updated 2026-07-26 (content closed; live work moved to docs/rung3/)).*
 
 > **This track is finished.** Rungs 0 → 2.2b all passed; reading synthetic music is a solved
 > problem. Live work is the real-page track: [rung3/README.md](phases/rung3/README.md). Current state:
@@ -443,7 +443,7 @@ pipeline): the live track is **[RUNG3.md](phases/RUNG3.md)** (detail), **[CODE_T
 
 ## W0–W3 — opencv.js parity, the decode module, and the browser-vs-Python verdict
 
-*Was `docs/archive/phases.md` (last updated 2026-08-07).*
+*Was `docs/archive/phases/rungs-w0-w3.md` (last updated 2026-08-07).*
 
 > Split out of [phases.md § MVP rungs — what each one established](#mvp-rungs--what-each-one-established) on 2026-08-07 at the 400-line cap. That page now holds the
 > **slicer** rungs (W4–W7); this one holds the four that came before. The ladder itself, with
@@ -660,7 +660,7 @@ blank crop (those score ≈ −0.84).
 
 ## MVP rungs — what each one established
 
-*Was `docs/archive/phases.md` (last updated 2026-08-07).*
+*Was `docs/archive/phases/rungs.md` (last updated 2026-08-07).*
 
 Split out of [README.md](phases/README.md) on 2026-08-04 when that file crossed the 400-line cap. The split
 is by genre: README keeps the **plan** (why the track exists, the ladder, the files, the gates),
@@ -856,7 +856,7 @@ genuinely rotate. Not folded into this rung.
 
 ## Porting the slicer to TypeScript — W4–W6
 
-*Was `docs/archive/phases.md` (last updated 2026-08-04).*
+*Was `docs/archive/phases/slicer-port.md` (last updated 2026-08-04).*
 
 > Track index and current rung state: [phases.md § MVP track — the in-browser pipeline, and a release to friends (CLOSED)](#mvp-track--the-in-browser-pipeline-and-a-release-to-friends-closed). Project state: [../STATUS.md](../STATUS.md).
 > What the slicer does and why: [CODE_TOUR.md § Inference pipeline — from a full uploaded image to editable notes](../CODE_TOUR.md#inference-pipeline--from-a-full-uploaded-image-to-editable-notes) §1 and
@@ -1123,7 +1123,7 @@ npm run typecheck && npm test && npm run gate:browser
 
 ## MVP track — the in-browser pipeline, and a release to friends (CLOSED)
 
-*Was `docs/archive/phases.md` (last updated 2026-10-08).*
+*Was `docs/archive/phases/mvp.md` (last updated 2026-10-08).*
 
 > ⛔ **CLOSED 2026-10-08 (owner), moved here from `docs/mvp/README.md`.** Every rung is done: W10's
 > two friends used the app on 2026-08-11 and the owner made it public on 2026-09-05. **Everything
@@ -1311,7 +1311,7 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 
 ## Backlog — closed items, archived
 
-*Was `docs/archive/phases.md` (last updated 2026-10-08).*
+*Was `docs/archive/backlog-closed.md` (last updated 2026-10-08).*
 
 > ⛔ **Archived 2026-10-08 from [../BACKLOG.md](../BACKLOG.md).** Item numbers are the ones BACKLOG.md
 > used; BACKLOG.md keeps a one-line stub under each number so old references still land. Every
@@ -1534,7 +1534,7 @@ counts 76 drawn koma-bemols on `gamzedeyim-deva`. Do not debug that as a countin
 
 ## Risks — closed caveats, archived
 
-*Was `docs/archive/phases.md` (last updated 2026-10-08).*
+*Was `docs/archive/risks-closed.md` (last updated 2026-10-08).*
 
 > ⛔ **Archived 2026-10-08 from [BACKLOG.md § Open risks and non-claims](../BACKLOG.md#open-risks-and-non-claims).** Why each left: the training pools moved to
 > the current slicer (`strips_b8` / `strips_h1` hardlink `strips_v2`); the exam's gold was fully read
@@ -1591,7 +1591,7 @@ counts 76 drawn koma-bemols on `gamzedeyim-deva`. Do not debug that as a countin
 
 ## Setting up Google Cloud — step by step, in plain words
 
-*Was `docs/archive/phases.md` (last updated 2026-10-08).*
+*Was `docs/app/gcloud-setup.md` (last updated 2026-10-08).*
 
 > This page is **how to do it**. What we chose and why is [server.md § Deploying the app — the server, the host, and what the friends…](../app/server.md#deploying-the-app--the-server-the-host-and-what-the-friends-release-is-for); the exact deploy
 > commands live there too and are repeated at the end here. Current state:
@@ -1836,7 +1836,7 @@ against Google's pricing page — re-read them when you set the budget.
 
 ## Putting the app online — step by step, in plain words
 
-*Was `docs/archive/phases.md` (last updated 2026-10-08).*
+*Was `docs/app/hosting-setup.md` (last updated 2026-10-08).*
 
 > ✅ **This was all done on 2026-08-06** — the app is at **<https://komavision.netlify.app>**, the
 > weights at **`Beyaban/omr-weights`**. The page is kept as the record of how, and as the recipe for

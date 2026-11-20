@@ -344,13 +344,13 @@ licence-checked photograph — not infrastructure. Budget time, not money.
 
 **Merged into this file on 2026-11-20:**
 
-- [F5 — the pages this browser has already read](#f5--the-pages-this-browser-has-already-read) — was `docs/features/README.md`
-- [F6 — the visit counter, and the owner's private dashboard](#f6--the-visit-counter-and-the-owners-private-dashboard) — was `docs/features/README.md`
+- [F5 — the pages this browser has already read](#f5--the-pages-this-browser-has-already-read) — was `docs/features/recent-pages.md`
+- [F6 — the visit counter, and the owner's private dashboard](#f6--the-visit-counter-and-the-owners-private-dashboard) — was `docs/features/visit-stats.md`
 
 
 ## F5 — the pages this browser has already read
 
-*Was `docs/features/README.md` (last updated 2026-09-05).*
+*Was `docs/features/recent-pages.md` (last updated 2026-09-05).*
 
 > Current state is in [../STATUS.md](../STATUS.md). The decisions are one line each in
 > [../DECISIONS.md](../DECISIONS.md); the track index is [README.md](README.md). The editor whose
@@ -518,7 +518,7 @@ exception to it.
 
 ## F6 — the visit counter, and the owner's private dashboard
 
-*Was `docs/features/README.md` (last updated 2026-10-14).*
+*Was `docs/features/visit-stats.md` (last updated 2026-10-14).*
 
 > Current state is in [../STATUS.md](../STATUS.md). The decision is one line in
 > [../DECISIONS.md](../DECISIONS.md); the track index is [README.md](README.md). What the OLD

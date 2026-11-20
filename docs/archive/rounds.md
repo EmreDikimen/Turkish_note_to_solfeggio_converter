@@ -8,24 +8,24 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [Round 1 — the first fine-tune on real pages (Step 4)](#round-1--the-first-fine-tune-on-real-pages-step-4) — was `docs/archive/rounds.md`
-- [Round 2 — photo axis, the sharp fix, and what is still open](#round-2--photo-axis-the-sharp-fix-and-what-is-still-open) — was `docs/archive/rounds.md`
-- [Synthetic re-render — `strips_v3` and the accidental-distribution findings (Step 4.1)](#synthetic-re-render--strips_v3-and-the-accidental-distribution-findings-step-41) — was `docs/archive/rounds.md`
-- [Round-1 ship criteria (Step 4.0) — the pre-registration, kept verbatim](#round-1-ship-criteria-step-40--the-pre-registration-kept-verbatim) — was `docs/archive/rounds.md`
-- [Round 3 — the notes themselves: where they sit and how long they are](#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are) — was `docs/archive/rounds.md`
-- [Round-3 criteria — the pre-registration, and the tuplet A/B protocol](#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol) — was `docs/archive/rounds.md`
-- [Round 3 — the worklist, item by item](#round-3--the-worklist-item-by-item) — was `docs/archive/rounds.md`
-- [The levers Round 3 has not pulled — ranked, with what to measure first](#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) — was `docs/archive/rounds.md`
-- [The scan profile — Round 3's first trained arm (Lever 7): ⛔ NULL](#the-scan-profile--round-3s-first-trained-arm-lever-7--null) — was `docs/archive/rounds.md`
-- [The staccato distractor — Round 3's arm 2 (Lever 6): ✅ PASSES](#the-staccato-distractor--round-3s-arm-2-lever-6--passes) — was `docs/archive/rounds.md`
-- [Tuplets — why `\tup3` recall keeps missing its floor](#tuplets--why-tup3-recall-keeps-missing-its-floor) — was `docs/archive/rounds.md`
-- [Follow-ups — the correction loop, parked ideas, watch-items, data layout](#follow-ups--the-correction-loop-parked-ideas-watch-items-data-layout) — was `docs/archive/rounds.md`
+- [Round 1 — the first fine-tune on real pages (Step 4)](#round-1--the-first-fine-tune-on-real-pages-step-4) — was `docs/archive/rounds/round1.md`
+- [Round 2 — photo axis, the sharp fix, and what is still open](#round-2--photo-axis-the-sharp-fix-and-what-is-still-open) — was `docs/archive/rounds/round2.md`
+- [Synthetic re-render — `strips_v3` and the accidental-distribution findings (Step 4.1)](#synthetic-re-render--strips_v3-and-the-accidental-distribution-findings-step-41) — was `docs/archive/rounds/rerender.md`
+- [Round-1 ship criteria (Step 4.0) — the pre-registration, kept verbatim](#round-1-ship-criteria-step-40--the-pre-registration-kept-verbatim) — was `docs/archive/rounds/ship-criteria.md`
+- [Round 3 — the notes themselves: where they sit and how long they are](#round-3--the-notes-themselves-where-they-sit-and-how-long-they-are) — was `docs/archive/rounds/round3.md`
+- [Round-3 criteria — the pre-registration, and the tuplet A/B protocol](#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol) — was `docs/archive/rounds/round3-criteria.md`
+- [Round 3 — the worklist, item by item](#round-3--the-worklist-item-by-item) — was `docs/archive/rounds/worklist.md`
+- [The levers Round 3 has not pulled — ranked, with what to measure first](#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) — was `docs/archive/rounds/levers.md`
+- [The scan profile — Round 3's first trained arm (Lever 7): ⛔ NULL](#the-scan-profile--round-3s-first-trained-arm-lever-7--null) — was `docs/archive/rounds/scan-profile.md`
+- [The staccato distractor — Round 3's arm 2 (Lever 6): ✅ PASSES](#the-staccato-distractor--round-3s-arm-2-lever-6--passes) — was `docs/archive/rounds/staccato-arm.md`
+- [Tuplets — why `\tup3` recall keeps missing its floor](#tuplets--why-tup3-recall-keeps-missing-its-floor) — was `docs/archive/rounds/tuplets.md`
+- [Follow-ups — the correction loop, parked ideas, watch-items, data layout](#follow-ups--the-correction-loop-parked-ideas-watch-items-data-layout) — was `docs/archive/rounds/followups.md`
 - [The tuplet review queues — finished and promoted (2026-08-11)](#the-tuplet-review-queues--finished-and-promoted-2026-08-11) — moved from `docs/rung3/labeling.md` on 2026-11-20
 
 
 ## Round 1 — the first fine-tune on real pages (Step 4)
 
-*Was `docs/archive/rounds.md` (last updated 2026-07-23).*
+*Was `docs/archive/rounds/round1.md` (last updated 2026-07-23).*
 
 > Part of the real-page track — index: [README.md](rounds/README.md). Current state and next action are NOT here: see [../STATUS.md](STATUS.md).
 Numbers: [../METRICS.md](METRICS.md). Decisions: [../DECISIONS.md](DECISIONS.md).
@@ -344,7 +344,7 @@ them gate the design of the expensive steps, so they run first.
 
 ## Round 2 — photo axis, the sharp fix, and what is still open
 
-*Was `docs/archive/rounds.md` (last updated 2026-07-27).*
+*Was `docs/archive/rounds/round2.md` (last updated 2026-07-27).*
 
 ### Result — exam read once, 2026-07-27: SHIPPED as an improvement, not a pass
 
@@ -602,7 +602,7 @@ upstream weak link, and these photos are its first real stress test).
 
 ## Synthetic re-render — `strips_v3` and the accidental-distribution findings (Step 4.1)
 
-*Was `docs/archive/rounds.md` (last updated 2026-07-21).*
+*Was `docs/archive/rounds/rerender.md` (last updated 2026-07-21).*
 
 > Part of the real-page track — index: [README.md](rounds/README.md). Current state and next action are NOT here: see [../STATUS.md](STATUS.md).
 Numbers: [../METRICS.md](METRICS.md). Decisions: [../DECISIONS.md](DECISIONS.md).
@@ -773,7 +773,7 @@ diagnose. `s` ships at the pre-registered default **0.15**; deconfounding the re
 
 ## Round-1 ship criteria (Step 4.0) — the pre-registration, kept verbatim
 
-*Was `docs/archive/rounds.md` (last updated 2026-07-20).*
+*Was `docs/archive/rounds/ship-criteria.md` (last updated 2026-07-20).*
 
 > Part of the real-page track — index: [README.md](rounds/README.md). Current state and next action are NOT here: see [../STATUS.md](STATUS.md).
 Numbers: [../METRICS.md](METRICS.md). Decisions: [../DECISIONS.md](DECISIONS.md).
@@ -915,7 +915,7 @@ the measurement is debugged before the one-shot read it gates.)
 
 ## Round 3 — the notes themselves: where they sit and how long they are
 
-*Was `docs/archive/rounds.md` (last updated 2026-09-03).*
+*Was `docs/archive/rounds/round3.md` (last updated 2026-09-03).*
 
 > ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
 > ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
@@ -1235,7 +1235,7 @@ pool is worth cleaning further or is ready to enlarge.
 
 ## Round-3 criteria — the pre-registration, and the tuplet A/B protocol
 
-*Was `docs/archive/rounds.md` (last updated 2026-08-20).*
+*Was `docs/archive/rounds/round3-criteria.md` (last updated 2026-08-20).*
 
 > ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
 > ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
@@ -1553,7 +1553,7 @@ accepts on the record. It is stated so the result is quoted with it.
 
 ## Round 3 — the worklist, item by item
 
-*Was `docs/archive/rounds.md` (last updated 2026-09-01).*
+*Was `docs/archive/rounds/worklist.md` (last updated 2026-09-01).*
 
 > ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
 > ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
@@ -1776,7 +1776,7 @@ misses** — the three nulls and the one pass are the reason ([rounds.md § The 
 
 ## The levers Round 3 has not pulled — ranked, with what to measure first
 
-*Was `docs/archive/rounds.md`.*
+*Was `docs/archive/rounds/levers.md`.*
 
 measurement that decides each one
 audience: agents and the owner working the model track, starting a session on Round 3
@@ -2174,7 +2174,7 @@ Named here so the next session does not re-derive it. Nothing below is a measure
 
 ## The scan profile — Round 3's first trained arm (Lever 7): ⛔ NULL
 
-*Was `docs/archive/rounds.md` (last updated 2026-08-19).*
+*Was `docs/archive/rounds/scan-profile.md` (last updated 2026-08-19).*
 
 > ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
 > ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
@@ -2361,7 +2361,7 @@ on what gets built after arms 2 and 3.
 
 ## The staccato distractor — Round 3's arm 2 (Lever 6): ✅ PASSES
 
-*Was `docs/archive/rounds.md` (last updated 2026-08-20).*
+*Was `docs/archive/rounds/staccato-arm.md` (last updated 2026-08-20).*
 
 > ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
 > ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
@@ -2520,7 +2520,7 @@ variable at a time.
 
 ## Tuplets — why `\tup3` recall keeps missing its floor
 
-*Was `docs/archive/rounds.md` (last updated 2026-08-19).*
+*Was `docs/archive/rounds/tuplets.md` (last updated 2026-08-19).*
 
 > ⛔ **ARCHIVED 2026-10-08 — Round 3 closed on 2026-09-03.** Moved here from `docs/rung3/`. Every
 > ⏭ / "next" / "owed" below is as of its own date and is NOT a current action: the exam was read
@@ -2826,7 +2826,7 @@ must move jointly with `drawSlurArc` or it becomes a thickness cue real pages do
 
 ## Follow-ups — the correction loop, parked ideas, watch-items, data layout
 
-*Was `docs/archive/rounds.md` (last updated 2026-07-20).*
+*Was `docs/archive/rounds/followups.md` (last updated 2026-07-20).*
 
 > Part of the real-page track — index: [README.md](rounds/README.md). Current state and next action are NOT here: see [../STATUS.md](STATUS.md).
 Numbers: [../METRICS.md](METRICS.md). Decisions: [../DECISIONS.md](DECISIONS.md).

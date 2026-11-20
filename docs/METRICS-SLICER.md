@@ -179,13 +179,13 @@ rails Round 3 is now moving — is a different genre of question and lives in
 
 **Merged into this file on 2026-11-20:**
 
-- [Crop roots — which slicer cut which pool, and what a re-slice costs](#crop-roots--which-slicer-cut-which-pool-and-what-a-re-slice-costs) — was `docs/METRICS-SLICER.md`
-- [Slicer port parity — does the TypeScript reproduce the Python?](#slicer-port-parity--does-the-typescript-reproduce-the-python) — was `docs/METRICS-SLICER.md`
+- [Crop roots — which slicer cut which pool, and what a re-slice costs](#crop-roots--which-slicer-cut-which-pool-and-what-a-re-slice-costs) — was `docs/METRICS-SLICER-ROOTS.md`
+- [Slicer port parity — does the TypeScript reproduce the Python?](#slicer-port-parity--does-the-typescript-reproduce-the-python) — was `docs/METRICS-SLICER-PORT.md`
 
 
 ## Crop roots — which slicer cut which pool, and what a re-slice costs
 
-*Was `docs/METRICS-SLICER.md` (last updated 2026-09-09).*
+*Was `docs/METRICS-SLICER-ROOTS.md` (last updated 2026-09-09).*
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-25 when that file crossed the
 400-line cap. That file keeps **what the page-cutter does**; this one keeps **where a crop on disk
@@ -382,7 +382,7 @@ re-read, 5 duplicate twins and 2 unusable crops dropped.
 
 ## Slicer port parity — does the TypeScript reproduce the Python?
 
-*Was `docs/METRICS-SLICER.md` (last updated 2026-08-05).*
+*Was `docs/METRICS-SLICER-PORT.md` (last updated 2026-08-05).*
 
 Split out of [METRICS-SLICER.md](METRICS-SLICER.md) on 2026-08-04 when that file crossed the 400-line
 cap. The split is by genre: that file keeps **what the Python page-cutter does**; this one keeps

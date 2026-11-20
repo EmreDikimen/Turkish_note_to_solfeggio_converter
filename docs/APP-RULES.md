@@ -222,12 +222,12 @@ updated: 2026-11-20
 
 **Merged into this file on 2026-11-20:**
 
-- [The DOM contract — what the browser checks are allowed to assert on](#the-dom-contract--what-the-browser-checks-are-allowed-to-assert-on) — was `docs/APP-RULES.md`
+- [The DOM contract — what the browser checks are allowed to assert on](#the-dom-contract--what-the-browser-checks-are-allowed-to-assert-on) — was `docs/DOM-CONTRACT.md`
 
 
 ## The DOM contract — what the browser checks are allowed to assert on
 
-*Was `docs/APP-RULES.md` (last updated 2026-11-12).*
+*Was `docs/DOM-CONTRACT.md` (last updated 2026-11-12).*
 
 Split out of [../CLAUDE.md](../CLAUDE.md) on 2026-09-05, when that file crossed its 400-line cap for
 the second time — the same genre split that produced [COMMANDS.md](COMMANDS.md). This block grows

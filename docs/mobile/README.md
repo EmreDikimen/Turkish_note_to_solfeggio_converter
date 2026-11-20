@@ -40,12 +40,12 @@ a document-scanner camera, playback with the screen locked, a "Share → MakamVi
 
 **Merged into this file on 2026-11-20:**
 
-- [Mobile plan — what is reused, what is rewritten, and what must be decided first](#mobile-plan--what-is-reused-what-is-rewritten-and-what-must-be-decided-first) — was `docs/mobile/README.md`
+- [Mobile plan — what is reused, what is rewritten, and what must be decided first](#mobile-plan--what-is-reused-what-is-rewritten-and-what-must-be-decided-first) — was `docs/mobile/plan.md`
 
 
 ## Mobile plan — what is reused, what is rewritten, and what must be decided first
 
-*Was `docs/mobile/README.md` (last updated 2026-10-11).*
+*Was `docs/mobile/plan.md` (last updated 2026-10-11).*
 
 > Part of the mobile track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md).

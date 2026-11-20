@@ -343,12 +343,12 @@ disputes.
 
 **Merged into this file on 2026-11-20:**
 
-- [Metrics — the model-voted key signature, audited](#metrics--the-model-voted-key-signature-audited) — was `docs/METRICS-CORPUS.md`
+- [Metrics — the model-voted key signature, audited](#metrics--the-model-voted-key-signature-audited) — was `docs/METRICS-SIGVOTE.md`
 
 
 ## Metrics — the model-voted key signature, audited
 
-*Was `docs/METRICS-CORPUS.md` (last updated 2026-09-06).*
+*Was `docs/METRICS-SIGVOTE.md` (last updated 2026-09-06).*
 
 The mechanism, how it was found, and why it is dangerous are in
 [METRICS-CORPUS.md](METRICS-CORPUS.md); the proposed rule change is

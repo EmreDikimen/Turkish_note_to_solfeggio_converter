@@ -160,7 +160,7 @@ against a threshold of 158 are still marginal: the frame was one cause of the lo
 low resolution (10.5 px line spacing) is the other, and nothing here fixes that.
 
 ⚠ `GEOMETRY_REV` was **not** bumped, by the owner's decision — [DECISIONS.md](DECISIONS.md), 2026-11-15 row. The six synthetic cases in
-`tools/vision/frame-test.ts` (inside `npm test`) pin the TS port to Python's bytes;
+`tools/tests/frame-test.ts` (inside `npm test`) pin the TS port to Python's bytes;
 `scripts/frame_whiten_ref.py` prints the hashes to paste after any change to the rule.
 
 ## Which crop root a pool came from: measured in its own file

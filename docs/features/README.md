@@ -662,4 +662,4 @@ Rotating `STATS_SALT` changes nothing since 2026-10-14 — its value is unused.
 | Read side — the token, the window, the retention sweep | `netlify/functions/stats.mts` |
 | The browser's beacon, and everyone it refuses to count | `apps/web/src/analytics/visits.ts` |
 | The dashboard (never published) | `apps/web/admin-stats.html` · `apps/web/src/admin/statsPage.ts` |
-| The arithmetic, pinned | `tools/analytics/visits-test.ts` (`npm test`) |
+| The arithmetic, pinned | `tools/tests/visits-test.ts` (`npm test`) |

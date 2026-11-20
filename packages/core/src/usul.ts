@@ -81,7 +81,7 @@ export interface Usul {
  * you dislike conflates two questions. Walkthrough: check 23 in docs/MANUAL_CHECKS.md.
  *
  * ⚠ **What that verdict is and is not.** It is one musician's ear, which is the only standard that
- * exists for this and is stronger than anything automatable — `tools/core/usul-test.ts` proves a
+ * exists for this and is stronger than anything automatable — `tools/tests/usul-test.ts` proves a
  * table is well-formed (inside the cycle, ascending, opening on a düm) and can never prove it is
  * musically right. It is **not** a citation. So: adding or editing a `strokes` array re-opens the
  * question and needs check 23 run again, and if a pattern is ever disputed, settle it with a source

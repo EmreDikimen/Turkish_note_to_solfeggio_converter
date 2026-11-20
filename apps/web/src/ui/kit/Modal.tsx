@@ -9,7 +9,7 @@
  * ⚠ ALWAYS OPEN WHILE MOUNTED. The caller decides whether a prompt exists by rendering it or not;
  * this never animates itself out. That keeps the contract the browser checks rely on: a click on
  * `#makam-confirm` / `#voice-cancel` unmounts the window IMMEDIATELY, and their helpers wait for
- * the id to be `detached` (tools/browser/makamPrompt.ts, voicePrompt.ts).
+ * the id to be `detached` (tools/checks/makamPrompt.ts, voicePrompt.ts).
  * ⚠ The `id` and the `data-*` attributes go on the POPUP — the element with `role="dialog"` — so
  * `#voice-modal[data-voice]` and `#tuning-modal[data-tuning]` still name the window a check asks.
  * ⚠ Esc and a click on the backdrop both mean `onDismiss`, as the old backdrop's click did.

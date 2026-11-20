@@ -105,7 +105,7 @@ export function AdvancedPanel({
           )}
 
           {/* ⚠ The <input> stays real and is hidden with the CLIP pattern, never `display: none`
-              — tools/browser/app-smoke.ts calls setInputFiles on `#strips-input`, and `display:
+              — tools/checks/app-smoke.ts calls setInputFiles on `#strips-input`, and `display:
               none` would also drop it from the accessibility tree. The label around it carries the
               button's look, which is the only thing that changed: the browser's own file control
               renders "Choose File | No file chosen" in system chrome, in English, next to a page

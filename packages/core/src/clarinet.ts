@@ -178,7 +178,7 @@ function clarionKoma(baseKoma: number): number {
  * THE STANDARD FINGERINGS, chalumeau and throat — the table everything else is derived from.
  *
  * ⭐ **THE OWNER'S OWN TABLE, placed by him note by note on 2026-08-30**, using the editor at
- * `tools/core/clarinet-editor.ts`. It started from the Woodwind Fingering Guide's Oehler/Albert
+ * `tools/dev/clarinet-editor.ts`. It started from the Woodwind Fingering Guide's Oehler/Albert
  * chart (https://www.wfg.woodwind.org/clarinet/ocl_bas_1.html, extracted from that page's own
  * markup rather than from a description of it), and he then corrected it against the instrument he
  * plays.
@@ -242,7 +242,7 @@ export const BASE_FINGERINGS: readonly ClarinetFingering[] = [
  *
  * ⚠ **A third register is NOT a further overblowing**, so no arithmetic produces these — each is
  * its own fingering and they had to be collected from a player. The owner filled them in through
- * `tools/core/clarinet-editor.ts`; every point snapped to a position his earlier pass had already
+ * `tools/dev/clarinet-editor.ts`; every point snapped to a position his earlier pass had already
  * established, so this range needed no new calibration at all.
  *
  * ⭐ **Sol6 and Re6 are the SAME FINGERING**, and that is the owner's own account of it: *"sol6 re6

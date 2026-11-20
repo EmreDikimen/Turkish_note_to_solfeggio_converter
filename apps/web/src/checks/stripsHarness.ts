@@ -1,5 +1,5 @@
 /**
- * Headless entry point for the browser decode path — the harness `tools/vision/parity/arm-b.ts`
+ * Headless entry point for the browser decode path — the harness `tools/checks/parity/arm-b.ts`
  * drives with Playwright.
  *
  * It exposes exactly what the app's "Read strips" button does, with no DOM of its own, so the

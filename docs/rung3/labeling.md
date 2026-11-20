@@ -629,7 +629,7 @@ accidentals because the old headline measured them, and that axis has never been
 **The loop**, and the two steps that are easy to skip:
 
 ```bash
-npx tsx tools/vision/page-structure.ts                                    # 1. stitch stats (once)
+npx tsx tools/dev/page-structure.ts                                    # 1. stitch stats (once)
 .venv-ml/bin/python scripts/rung3/build_label_batch.py --merge-back --batch 2   # 2. LAST batch home
 .venv-ml/bin/python scripts/rung3/build_label_batch.py --scanned --batch 3 \
     --exclude-pages data/real/rung3/_pagequeue/handwritten_pages.json     # 3. cut it

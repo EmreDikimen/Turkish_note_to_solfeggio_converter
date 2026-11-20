@@ -27,7 +27,7 @@ npm test                             # stitcher + label round-trip + edit primit
                                      # …and the slicer's screenshot-frame step against Python's bytes (frame-test.ts)
                                      # …plus the makam intonation table AND the two 2026-09-05 ear-found bugs:
                                      # ⚠ WHICH DOCUMENT the koma deltas and the usul tracks are built over
-                                     # …plus the written-score → performance maps (tools/core/structure-test.ts)
+                                     # …plus the written-score → performance maps (tools/tests/structure-test.ts)
 npm run check:fold                   # every cached page decode: does keeping the repeat SIGNS change the sound?
                                      # …expect 1720 pages, 0 changed. Needs data/real/strips_v2 (this machine only)
 npm run smoke:editor                 # real app: select, drag, delete, undo/redo, the palette, rests, tuplets
@@ -46,8 +46,8 @@ npm run dev:voices:local             # …and point the app at it. ⚠ `python -
                                      # server sets COEP require-corp, so a static server sending no CORS/CORP
                                      # header gets the file BLOCKED — and the app reports the voice as FAILED
                                      # while it plainly serves fine in a browser tab
-npx tsx tools/core/clarinet-chart.ts out.html   # sol klarnet: all 33 fingerings as one HTML page, for a player to audit
-npx tsx tools/core/clarinet-editor.ts out.html  # …and the editor that produced it: click points per note, copy the JSON back
+npx tsx tools/dev/clarinet-chart.ts out.html   # sol klarnet: all 33 fingerings as one HTML page, for a player to audit
+npx tsx tools/dev/clarinet-editor.ts out.html  # …and the editor that produced it: click points per note, copy the JSON back
 ```
 
 ### The browser decode — gates and parity
@@ -150,7 +150,7 @@ npm run dev:server                   # the decode server on :8080 — needs the 
     # otherwise `gate:browser` stops being comparable with every earlier reading. docs/METRICS.md
 node apps/server/tools/prepare-models.mjs --from data/checkpoints/_stage --out apps/server/models-h
 MODEL_DIR=$PWD/apps/server/models-h PORT=8081 npm run dev:server
-npx tsx tools/vision/h-respace-proxy.mts --upstream http://localhost:8081 --port 8082
+npx tsx tools/dev/h-respace-proxy.mts --upstream http://localhost:8081 --port 8082
 VITE_DECODE_URL=http://localhost:8082 npm run dev:web
     # ⛔ The proxy is NOT optional for scheme H: straight at :8081 the app produces 0 svg and no
     # score; through :8082 it reads the page normally. docs/CODE_TOUR.md
@@ -182,10 +182,10 @@ npm run check:export                 # SAVE a score as PNG and PDF in Chromium, 
 
 ```bash
 npm run stats:ui                     # the owner's dashboard → http://localhost:5173/admin-stats.html
-npx tsx tools/browser/make-icons.ts   # re-draws the logo: favicon.svg + the PWA icons (apps/web/public/icons/)
+npx tsx tools/dev/make-icons.ts   # re-draws the logo: favicon.svg + the PWA icons (apps/web/public/icons/)
 netlify env:set STATS_SALT  "$(openssl rand -hex 32)"   # without this NOTHING is counted, by design
 netlify env:set STATS_TOKEN "$(openssl rand -hex 24)"   # what the dashboard asks for; no token, no data
-npx tsx tools/analytics/visits-test.ts                  # the arithmetic (also inside `npm test`)
+npx tsx tools/tests/visits-test.ts                  # the arithmetic (also inside `npm test`)
 ```
 
 **Is it actually live? One request tells you, and the status code names the fault:**
@@ -279,7 +279,7 @@ counter; this one keeps **Python, which never ships**. Nothing was changed in th
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # slicer port control arm
 .venv-ml/bin/python scripts/frame_whiten_ref.py   # `whiten_frame` on six synthetic pages -> sha256.
     # ⚠ Run after ANY change to the screenshot-frame rule and paste the hashes into
-    # tools/vision/frame-test.ts, or `npm test` fails: that test holds the browser port to these bytes.
+    # tools/tests/frame-test.ts, or `npm test` fails: that test holds the browser port to these bytes.
     # ⚠ `--token-budget N` runs the SAME arm under the LABEL-BUDGET rail. The reference fixes the
     # packing rule as well as the sample, and `parity:slicer` refuses a ref that mixes the two.
 .venv-ml/bin/python src/vision/page_to_strips.py <page.png> --out <dir> --debug
@@ -341,7 +341,7 @@ OMR_STAFF_RESCUE=1       # re-detect a staff in the bands the page's row pitch s
                          # found leaves NO crop, so that is the one view that can show you it.
     # ⚠ Each must move together with its `apps/web/src/omr/slicer/constants.ts` twin or the app cuts
     # differently from the training data. docs/METRICS-SLICER-STAFF.md.
-npx tsx tools/vision/parity/rescue-check.ts
+npx tsx tools/checks/parity/rescue-check.ts
     # does a BROWSER-ONLY toggle actually fire? Drives the real slicer harness in headless chromium
     # and prints staff counts per page with the rescue off and on. It exists because `STAFF_RESCUE`
     # is a compile-time constant flipped through a setter, so no Python run can test it — and
@@ -549,7 +549,7 @@ npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/syn
     # Label-free: 188 strip labels over 4 scores are byte-identical with it on and off. Coined per
     # PIECE, not per bar. Off by default and it belongs to the FINAL model's render, like the two
     # flags above. Previews of all three: data/synthetic/_flag_preview/.
-npx --yes tsx tools/render/stitch-test.ts                 # expect ALL PASS, 218/218 round-trip
+npx --yes tsx tools/tests/stitch-test.ts                 # expect ALL PASS, 218/218 round-trip
 npx --yes tsx tools/render/verify-labels.ts --strips data/synthetic/<set> [--thin-sharps] [--staccato-noise] [--concave-tuplet] [--usul-barline]
     # ⚠ PASS EVERY FLAG THE CORPUS WAS RENDERED WITH. The verifier renders its own comparison
     # pixels, so a gate run without them is checking a different picture than the corpus ships.

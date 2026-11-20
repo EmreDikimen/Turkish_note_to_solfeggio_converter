@@ -15,7 +15,7 @@
  * or pressing Esc is a "no", the same as `#voice-cancel`.
  *
  * ⚠ The backdrop covers the page, so a browser check must answer it before clicking anything else:
- * `tools/browser/voicePrompt.ts`, the way `makamPrompt.ts` does for the makam prompt.
+ * `tools/checks/voicePrompt.ts`, the way `makamPrompt.ts` does for the makam prompt.
  */
 
 import type { VoiceId } from "./audio/instruments";

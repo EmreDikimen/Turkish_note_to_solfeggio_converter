@@ -95,7 +95,7 @@ export const HOLES: readonly Marker[] = [
 ];
 
 /**
- * THE KEYS — **placed by the owner**, note by note, on 2026-08-30 (`tools/core/clarinet-editor.ts`).
+ * THE KEYS — **placed by the owner**, note by note, on 2026-08-30 (`tools/dev/clarinet-editor.ts`).
  *
  * ⭐ **This replaced fifteen positions I had placed by eye, and five of the six that any fingering
  * used were on the wrong key.** The comment they replaced said the guesses were "inside the right

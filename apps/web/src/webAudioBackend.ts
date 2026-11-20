@@ -314,7 +314,7 @@ export class WebAudioBackend implements AudioBackend {
 
   /**
    * How many events have been handed to Web Audio so far, and how many this playback holds in
-   * total. Exposed for the headless checks (`tools/browser/editor-smoke.ts`), which cannot prove
+   * total. Exposed for the headless checks (`tools/checks/editor-smoke.ts`), which cannot prove
    * the scheduler is alive any other way: the playhead is driven by the AUDIO CLOCK, so it keeps
    * gliding across the sheet even if the look-ahead loop died and the page has gone silent.
    * `scheduled < total` while playing is the property F0 exists for.

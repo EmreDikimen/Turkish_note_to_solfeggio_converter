@@ -246,7 +246,7 @@ data. Verify on more decoded pages before promising anything.
 > three clean scores above stay at 0. ⚠ The second false-positive source is now quantified too —
 > where the modal bar length has <25% support the derived meter is a coin flip, which was producing
 > **2/8 and 3/8** meters that no Turkish usul uses. Numbers and the re-runnable probe
-> (`tools/vision/page-structure.ts`): [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
+> (`tools/dev/page-structure.ts`): [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
 ## What already exists
 
@@ -636,7 +636,7 @@ to a copy and `closedTupletAt` — the function that decides what gets drawn —
 group it now finds is exactly the intended one. A stray unclosed tuplet fraction sitting just before
 the window opens the run early, and `tupletGroupsIn` would then close a bracket over the *wrong*
 three notes. Asking the drawing code is the only way to be sure a handle cannot leave a bracket that
-lies; `tools/core/edits-test.ts` builds that exact bar and checks the slide is refused.
+lies; `tools/tests/edits-test.ts` builds that exact bar and checks the slide is refused.
 
 Where the code went is unchanged from step 7: **"which notes" is `tupletEdgeTo` in
 [../../packages/core/src/labels/rhythm.ts](../../packages/core/src/labels/rhythm.ts)**, beside the functions that draw the

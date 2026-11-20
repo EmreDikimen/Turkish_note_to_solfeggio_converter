@@ -1206,7 +1206,7 @@ def print_manifest(built: list[tuple[Instrument, list[Measured], int, float]]) -
             # bound applies — a pluck cannot cover a long note and must not be asked to.
             print(f"    plucked: true,")
         print(f"    gain: {gain:.3f},")
-        # Emitted so the no-clipping rule is CHECKABLE in the repo (tools/audio/voices-test.ts)
+        # Emitted so the no-clipping rule is CHECKABLE in the repo (tools/tests/voices-test.ts)
         # rather than only here, where it is checked against audio the app never sees.
         print(f"    peak: {max(m.peak for m in rows):.3f},")
         if offset:

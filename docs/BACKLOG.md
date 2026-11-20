@@ -100,7 +100,7 @@ starting. Abandoned plans are a different thing again and live in
    editor's off-meter mark flags **37.8%** of interior bars corpus-wide, so it narrows the duration
    hunt ~2.6× rather than lighting up the errors ([METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md)).
    ✅ **What survives and is on disk, documented and re-runnable** — the ranking half, which is
-   independently useful if page gold is ever wanted: `tools/vision/page-structure.ts` (per-page stitch
+   independently useful if page gold is ever wanted: `tools/dev/page-structure.ts` (per-page stitch
    stats, reusing the shipped stitcher and core so the meter rule is not duplicated) and
    `scripts/rung3/build_page_queue.py` (ranks pages by structural error evidence, refuses exam
    pieces, caps per makam). A 150-page queue is built at
@@ -367,7 +367,7 @@ small half is queued here**; the other half is written down below so it is not r
   write the UI. If it cannot, the display needs smoothing and the claim needs weakening.
 - ⚠ **The arithmetic stays out of the browser**, same house rule as F3: position formula and
   string choice live in `packages/core` and are pinned by
-  [../tools/core/fingering-test.ts](../tools/core/fingering-test.ts).
+  [../tools/tests/fingering-test.ts](../tools/tests/fingering-test.ts).
 - ⛔ **NOT THIS ITEM — blind transcription of an ensemble recording (AMT).** Four reasons, none of
   them small: TSM ensemble texture is **heterophonic** (everyone plays the same line at once with
   different ornaments), which is the worst case for onset and multi-f0 detection; ornaments —

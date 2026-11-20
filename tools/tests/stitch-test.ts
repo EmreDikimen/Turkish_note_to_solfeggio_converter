@@ -1,0 +1,748 @@
+/**
+ * Stage-8 stitcher verification (Node-only). Two parts:
+ *
+ *  1. **Structure unit tests** — hand-built token streams covering `\sig` resolution, ties,
+ *     triplets, graces, repeats, voltas, and da-capo/fine/coda expansion, each checked against
+ *     its expected flattened note sequence.
+ *  2. **Round-trip over every bundled score** — serialize each score with the SAME serializer
+ *     that makes the training labels (`docToStrips`), stitch the labels back, and compare the
+ *     resulting events with the original (kind + koma + exact duration, bar by bar).
+ *
+ * Known, accepted round-trip diffs (the serializer is deliberately lossy there):
+ *  - a long REST splits into side-by-side rests with no tie (rests are never tied), so both
+ *    sides are normalized by merging consecutive in-bar rests before comparing;
+ *  - a long NOTE now behaves the same way: `\tie` is retired (owner, 2026-08-22), so a 5/8 is
+ *    written as two plain notes and stitches back as two events. The ORIGINAL side is expanded
+ *    by `tieSplitBeats` to match — pitches and the summed duration are what must survive, and
+ *    they do. (The stitcher still MERGES a `\tie` it is given; see the legacy unit tests.);
+ *  - a measure-final dangling grace is dropped by the serializer (VexFlow can't draw a grace
+ *    without a host), so it is dropped from the original too;
+ *  - a tuplet run that never sums to a plain value keeps the legacy nearest-value duration
+ *    snap — those events compare by written (snapped) duration instead of the exact original.
+ *
+ * Run: npx --yes tsx tools/tests/stitch-test.ts
+ */
+
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import {
+  assignBars,
+  deriveKeySignature,
+  eventBeats,
+  groupMeasures,
+  komaOf,
+  MAKAM_SIGNATURES,
+  parseNoteName,
+  signatureKey,
+  unfoldDoc,
+  toAeuAlter,
+  type NoteModelDocument,
+} from "@turkish-omr/core";
+import {
+  docToStrips,
+  lilyDuration,
+  parseSignatureBody,
+  serializeMeasures,
+  serializeSignature,
+} from "@turkish-omr/core/labels/lilypond";
+import { tupletGroupsIn, tieSplitBeats } from "@turkish-omr/core/labels/rhythm";
+import { repeatMarksAt } from "@turkish-omr/core/labels/repeats";
+import { stitchStrips, stitchTokenRows, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
+import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
+
+let failures = 0;
+
+function check(name: string, got: string, want: string) {
+  if (got === want) {
+    console.log(`  ok    ${name}`);
+  } else {
+    failures++;
+    console.log(`  FAIL  ${name}\n    want: ${want}\n    got : ${got}`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// 1. Structure unit tests
+
+/** Compact form of a stitched doc: bar-grouped `name:num/den` (rests `r`, graces `g:name`). */
+function compact(doc: NoteModelDocument): string {
+  const bars = new Map<number, string[]>();
+  for (const e of doc.events) {
+    const label =
+      e.kind === "rest" ? `r:${e.durationBeats.num}/${e.durationBeats.den}`
+      : e.kind === "grace" ? `g:${e.noteName}`
+      : `${e.noteName}:${e.durationBeats.num}/${e.durationBeats.den}`;
+    const bar = bars.get(e.bar ?? 0) ?? [];
+    bar.push(label);
+    bars.set(e.bar ?? 0, bar);
+  }
+  return [...bars.keys()].sort((a, b) => a - b).map((b) => bars.get(b)!.join(" ")).join(" | ");
+}
+
+console.log("structure unit tests:");
+{
+  const t = (rows: string[], opts = {}) => compact(stitchTokenRows(rows, opts).doc);
+
+  check(
+    "signature resolution + overrides",
+    t(["\\sig \\komaFlat b \\sigend b'4 \\natural b'4 \\bakiyeSharp f''4 f''4"]),
+    "Si4b1:1/4 Si4:1/4 Fa5#4:1/4 Fa5:1/4",
+  );
+  check(
+    "signature persists to a sig-less row; empty \\sig keeps it",
+    t(["\\sig \\komaFlat b \\sigend b'4", "b'4", "\\sig \\sigend b'4"]),
+    "Si4b1:1/4 | Si4b1:1/4 | Si4b1:1/4",
+  );
+  // ⚠ LEGACY LABELS: nothing emits `\tie` since 2026-08-22, but old pools, the frozen exam v2
+  // gold and `round2-stage2-best`'s own decodes still contain it, so the stitcher must keep
+  // merging it. These two checks guard that tolerance, not the serializer.
+  check("legacy `\\tie` still merges into one event", t(["c''2 \\tie c''8"]), "Do5:5/8");
+  check(
+    "retired form: the same pair without the token is two plain notes",
+    t(["c''2 c''8"]),
+    "Do5:1/2 Do5:1/8",
+  );
+  check(
+    "triplet members sound at written × 2/3",
+    t(["\\tup3 c''8 d''8 e''8 \\tupend f''4"]),
+    "Do5:1/12 Re5:1/12 Mi5:1/12 Fa5:1/4",
+  );
+  check("grace attaches with zero duration", t(["\\grace d''8 c''4"]), "g:Re5 Do5:1/4");
+  check(
+    "plain repeat plays twice",
+    t(["\\repstart c''4 | d''4 \\repend e''4"]),
+    "Do5:1/4 | Re5:1/4 | Do5:1/4 | Re5:1/4 | Mi5:1/4",
+  );
+  check(
+    "volta: pass 2 skips the 1. ending, 2. follows",
+    t(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"]),
+    "Do5:1/4 | Re5:1/4 | Do5:1/4 | Mi5:1/4 | Fa5:1/4",
+  );
+  check(
+    "unmatched \\repend repeats from the top",
+    t(["c''4 | d''4 \\repend e''4"]),
+    "Do5:1/4 | Re5:1/4 | Do5:1/4 | Re5:1/4 | Mi5:1/4",
+  );
+  check(
+    "D.C. al Fine",
+    t(["c''4 \\fine | d''4 \\dc"]),
+    "Do5:1/4 | Re5:1/4 | Do5:1/4",
+  );
+  check(
+    "D.C. with coda jump",
+    t(["c''4 \\coda | d''4 | \\coda e''4 | f''4 \\dc"]),
+    "Do5:1/4 | Re5:1/4 | Mi5:1/4 | Fa5:1/4 | Do5:1/4 | Mi5:1/4 | Fa5:1/4",
+  );
+  check(
+    "expand: false keeps the written form",
+    t(["\\repstart c''4 | d''4 \\repend e''4"], { expand: false }),
+    "Do5:1/4 | Re5:1/4 | Mi5:1/4",
+  );
+
+  // --- the WRITTEN score + its structure (what the app draws and plays) -----------------------
+  //
+  // With `expand: false` the doc is the page as printed and the repeat lives in `structure`: which
+  // bars carry which signs, and the order those signs make the bars sound in.
+  const marksOf = (rows: string[]): string => {
+    const { bars } = stitchTokenRows(rows, { expand: false }).structure;
+    return bars
+      .map((b) =>
+        `${b.bar}:` +
+        Object.entries(b)
+          .filter(([k]) => k !== "bar")
+          .map(([k, v]) => (v === true ? k : `${k}=${v}`))
+          .join(","),
+      )
+      .join(" ");
+  };
+  const playOf = (rows: string[]): string =>
+    stitchTokenRows(rows, { expand: false }).structure.playBars.join("-");
+
+  check(
+    "structure: the repeat signs land on the bars that carry them",
+    marksOf(["\\repstart c''4 | d''4 \\repend e''4"]),
+    "1:repStart 2:repEnd",
+  );
+  check(
+    "structure: a repeat's playing order names the same bars twice",
+    playOf(["\\repstart c''4 | d''4 \\repend e''4"]),
+    "1-2-1-2-3",
+  );
+  check(
+    "structure: voltas mark their own bars, pass 2 skips the 1. ending",
+    marksOf(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"]) +
+      " → " +
+      playOf(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"]),
+    "1:repStart 2:volta1,repEnd 3:volta2 → 1-2-1-3-4",
+  );
+  check(
+    "structure: D.C. al Fine replays from the top and stops at Son",
+    marksOf(["c''4 \\fine | d''4 \\dc"]) + " → " + playOf(["c''4 \\fine | d''4 \\dc"]),
+    "1:fine 2:dc → 1-2-1",
+  );
+  check(
+    "structure: the ⊕ pair is ordered (0 = jump from, 1 = jump to)",
+    marksOf(["c''4 \\coda | d''4 | \\coda e''4 | f''4 \\dc"]),
+    "1:codaOrder=0 3:codaOrder=1 4:dc",
+  );
+  check(
+    "structure: a segno is where the D.S. pass restarts",
+    playOf(["c''4 | \\segno d''4 | e''4 \\dc"]),
+    "1-2-3-2-3",
+  );
+
+  // --- 𝄋 → 𝄋: the teslim is written once and played after every hâne (owner, 2026-08-30) -------
+  //
+  // A saz semâîsi prints the teslim ONCE, with a 𝄋 at its head and another at the end of each
+  // later hâne. The first sign marks the section; every later one plays it again and comes back.
+  // Miniature of the whole form: hâne1 | 𝄋 ‖: teslim :‖ | hâne2 𝄋 | hâne3 𝄋.
+  {
+    const semai = ["a''4 | \\segno \\repstart b''4 \\repend c''4 \\segno | d''4 \\segno"];
+    const res = stitchTokenRows(semai, { expand: false });
+    check(
+      "a 𝄋 at a bar's END belongs to that bar, not the one before it",
+      marksOf(semai),
+      "2:segno,segnoAt=start,repStart,repEnd 3:segno,segnoAt=end 4:segno,segnoAt=end",
+    );
+    check(
+      "every later 𝄋 replays the section and comes back",
+      playOf(semai),
+      "1-2-2-3-2-2-4-2-2", // hâne1 · teslim×2 · hâne2 · teslim×2 · hâne3 · teslim×2
+    );
+    check("…and no warning is needed to do it", String(res.warnings.length), "0");
+    check(
+      "…the section is replayed WITH its own repeat (owner: her seferinde iki kere)",
+      playOf(["a''4 | \\segno \\repstart b''4 \\repend c''4 \\segno"]).split("-").filter((b) => b === "2").length.toString(),
+      "4", // twice in reading order, twice again on the return
+    );
+    check(
+      "…and the returning 𝄋 is DRAWN at the barline it is read at",
+      navMarksFromStructure(res.structure)
+        .filter((m) => m.type === "segno")
+        .map((m) => `${m.measure}:${m.at}`)
+        .join(" "),
+      "2:start 3:end 4:end",
+    );
+  }
+  check(
+    'a "Son" ends the section where the page says, even with a :‖ further on',
+    playOf(["a''4 | \\segno b''4 \\fine | \\repstart c''4 \\repend d''4 \\segno"]),
+    "1-2-3-3-4-2", // the return plays bar 2 only — the teslim ends at Son
+  );
+  check(
+    "the şarkı shape: one jump, nothing after it, so the piece ends on the nakarat",
+    playOf(["a''4 | \\segno \\repstart b''4 \\repend c''4 \\segno"]),
+    "1-2-2-3-2-2",
+  );
+  {
+    // ⚠ Nothing says where the section ends → the jump is NOT guessed. Playing the page straight
+    // through is incomplete; replaying an arbitrary stretch of music is wrong.
+    const blind = ["a''4 | \\segno b''4 | c''4 \\segno"];
+    const res = stitchTokenRows(blind, { expand: false });
+    check("no Son and no :‖ → the 𝄋 jumps are ignored", playOf(blind), "1-2-3");
+    check(
+      "…and it says why",
+      String(res.warnings.some((w) => w.includes("says where the section ends"))),
+      "true",
+    );
+  }
+  check(
+    "a 𝄋 inside the section is the anchor's own glyph read twice — not a jump",
+    playOf(["\\segno \\repstart a''4 \\segno \\repend b''4"]),
+    "1-1-2",
+  );
+
+  // --- the first ending is a RUN (owner, 2026-08-30) ------------------------------------------
+  //
+  // "2. dönüşte ilk volta çalmamalı, direkt 2. voltaya geçmeli." A "1." bracket that opens BEFORE
+  // the `:‖` covers every bar up to it, and the second pass skips them all. Until 2026-08-30 only
+  // the bar carrying the mark was skipped, so a two-bar first ending played its tail twice — the
+  // shape of 37.9% of real first endings.
+  const twoBar = ["\\repstart c''4 | \\volta1 d''4 | e''4 \\repend \\volta2 f''4 | g''4"];
+  check(
+    "a TWO-bar first ending is skipped whole on the second pass",
+    playOf(twoBar),
+    "1-2-3-1-4-5",
+  );
+  check(
+    "…and that is what sounds: pass 2 goes c → f, never through d or e again",
+    t(twoBar),
+    "Do5:1/4 | Re5:1/4 | Mi5:1/4 | Do5:1/4 | Fa5:1/4 | Sol5:1/4",
+  );
+  check(
+    "…the ending is reported as the bars it covers",
+    stitchTokenRows(twoBar, { expand: false }).structure.firstEndings.map((e) => `${e.from}-${e.to}`).join(" "),
+    "2-3",
+  );
+  check(
+    "the one-bar case still reports itself, and still skips one bar",
+    stitchTokenRows(["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4"], { expand: false })
+      .structure.firstEndings.map((e) => `${e.from}-${e.to}`).join(" "),
+    "2-2",
+  );
+  {
+    // ⚠ A "1." far from its `:‖` is a stray token, not a long first ending. Obeying it would DELETE
+    // real music from the second pass; ignoring it only replays what was going to be played anyway.
+    const far = ["\\repstart \\volta1 c''4 | d''4 | e''4 | f''4 | g''4 \\repend a''4"];
+    const res = stitchTokenRows(far, { expand: false });
+    check("a \\volta1 too far from its :‖ is ignored", res.structure.firstEndings.length.toString(), "0");
+    check("…the whole span repeats instead", res.structure.playBars.join("-"), "1-2-3-4-5-1-2-3-4-5-6");
+    check("…and it says so", String(res.warnings.some((w) => w.includes("too long for a first ending"))), "true");
+  }
+
+  // The DRAWN bracket must sit on the bar the skip starts at, or the sheet and the sound disagree
+  // about where the first ending begins. `repeatSpansFromStructure` + `repeatMarksAt` are what the
+  // app and the strip labels both go through.
+  {
+    const st = stitchTokenRows(twoBar, { expand: false });
+    const spans = repeatSpansFromStructure(st.structure, groupMeasures(st.doc).length);
+    const drawn = [1, 2, 3, 4, 5]
+      .map((bar) => {
+        const m = repeatMarksAt(bar, spans);
+        const ink = [m.repStart && "‖:", m.volta1 && "1.", m.volta2 && "2.", m.repEnd && ":‖"].filter(Boolean);
+        return ink.length ? `${bar}:${ink.join("+")}` : "";
+      })
+      .filter(Boolean)
+      .join(" ");
+    check("the 1. is drawn where the ending STARTS, not on the :‖ bar", drawn, "1:‖: 2:1. 3::‖ 4:2.");
+  }
+
+  // --- a "2." implies a "1." the model did not read (owner, 2026-09-07) -----------------------
+  //
+  // "Volta 1 sadece ilk tekrarda çalınacak." A second ending is only printed opposite a first one,
+  // so a `\volta2` after the `:‖` is enough on its own: the `:‖` bar becomes a one-bar first ending
+  // even with no "1." decoded. Before this the whole span replayed and the first ending sounded
+  // again — 156 of the 1,208 `:‖` that carry a written "2." over the 1,720 decoded real pages.
+  {
+    const noV1 = ["\\repstart c''4 | d''4 \\repend \\volta2 e''4 | f''4"];
+    const res = stitchTokenRows(noV1, { expand: false });
+    check("a \\volta2 with no \\volta1 still skips its first ending", res.structure.playBars.join("-"), "1-2-1-3-4");
+    check("…the inferred ending is the :‖ bar", res.structure.firstEndings.map((e) => `${e.from}-${e.to}`).join(" "), "2-2");
+    check(
+      "…and the 1. is DRAWN there, so the page shows what it plays",
+      String(res.structure.bars.find((b) => b.bar === 2)?.volta1 === true),
+      "true",
+    );
+    check("…it is silent about it: nothing drawn-but-unsounded to warn on", res.warnings.join(";"), "");
+    check(
+      "…that is what sounds: pass 2 goes c → e, never through d again",
+      t(noV1),
+      "Do5:1/4 | Re5:1/4 | Do5:1/4 | Mi5:1/4 | Fa5:1/4",
+    );
+    // ⚠ Refused where it would erase the repeat instead of shortening it: with one bar between the
+    // `‖:` and the `:‖` the second pass would have nothing left to play.
+    check(
+      "a one-bar span is NOT re-read as a first ending",
+      stitchTokenRows(["\\repstart c''4 \\repend \\volta2 d''4"], { expand: false }).structure.playBars.join("-"),
+      "1-1-2",
+    );
+    // A "1." that WAS read but sits too far keeps the ignore-and-warn rule — the inference must not
+    // draw a second bracket on the same span.
+    const farWithV2 = ["\\repstart \\volta1 c''4 | d''4 | e''4 | f''4 | g''4 \\repend \\volta2 a''4"];
+    check(
+      "a far \\volta1 still wins the span (no second bracket invented)",
+      stitchTokenRows(farWithV2, { expand: false }).structure.firstEndings.length.toString(),
+      "0",
+    );
+  }
+
+  // --- a "1." PAST the `:‖` is a "2." (owner, 2026-09-07) --------------------------------------
+  //
+  // Not a judgement about ink: a first ending lies INSIDE the repeat by definition, so a bracket
+  // after the closing barline can only be the second ending — the glyph was read on the wrong side
+  // of the line, or its number was misread. 58 spans on the decoded real pages, in two halves: 29
+  // where it is the only volta ink (the ending was never skipped) and 29 where a correct "1." sits
+  // on the `:‖` bar and a SECOND "1." is printed on the bar after it.
+  {
+    const misplaced = ["\\repstart c''4 | d''4 \\repend \\volta1 e''4 | f''4"];
+    const res = stitchTokenRows(misplaced, { expand: false });
+    check("a \\volta1 after the :‖ is read as the 2.", marksOf(misplaced), "1:repStart 2:repEnd,volta1 3:volta2");
+    check("…so the first ending is skipped on the repeat", res.structure.playBars.join("-"), "1-2-1-3-4");
+    check(
+      "…and that is what sounds: pass 2 goes c → e, never through d again",
+      t(misplaced),
+      "Do5:1/4 | Re5:1/4 | Do5:1/4 | Mi5:1/4 | Fa5:1/4",
+    );
+    // The other half: the ending is already right, and only the DRAWING was wrong. Playing order
+    // must not move — the bar after the `:‖` was always the second ending.
+    const stray = ["\\repstart c''4 | \\volta1 d''4 \\repend \\volta1 e''4 | f''4"];
+    check("a stray 1. beside a correct one becomes the 2.", marksOf(stray), "1:repStart 2:volta1,repEnd 3:volta2");
+    check("…and the playing order is the one it already had", playOf(stray), "1-2-1-3-4");
+    check(
+      "a bar carrying BOTH after the :‖ keeps only the 2.",
+      marksOf(["\\repstart c''4 | d''4 \\repend \\volta1 \\volta2 e''4 | f''4"]),
+      "1:repStart 2:repEnd,volta1 3:volta2",
+    );
+    // ⚠ Two shapes left alone. A ONE-BAR span can skip nothing at all, and a bar carrying a `‖:` is
+    // the one place past a barline where a "1." could still mean its own span's first ending.
+    check(
+      "a one-bar span keeps its 1. and its full repeat",
+      marksOf(["\\repstart c''4 \\repend \\volta1 d''4"]) + " → " +
+        playOf(["\\repstart c''4 \\repend \\volta1 d''4"]),
+      "1:repStart,repEnd 2:volta1 → 1-1-2",
+    );
+    check(
+      "a 1. on a bar that OPENS a repeat is left alone",
+      marksOf(["\\repstart c''4 | d''4 \\repend \\repstart \\volta1 e''4 | f''4 \\repend"]),
+      "1:repStart 2:repEnd 3:repStart,volta1 4:repEnd",
+    );
+  }
+
+  // ⭐ THE SAFETY CLAIM OF THE WHOLE FOLD: unfolding the written score along `playBars` gives back
+  // exactly what the old flattening produced. Same notes, same order, same durations — so keeping
+  // the signs on the page cannot change a single sound. Checked on every structural case above.
+  console.log("  -- written + playBars == the old flattened doc:");
+  for (const rows of [
+    ["\\repstart c''4 | d''4 \\repend e''4"],
+    ["\\repstart c''4 | \\volta1 d''4 \\repend \\volta2 e''4 | f''4"],
+    ["\\repstart c''4 | \\volta1 d''4 | e''4 \\repend \\volta2 f''4 | g''4"],
+    ["\\repstart c''4 | d''4 \\repend \\volta2 e''4 | f''4"],
+    ["\\repstart c''4 | d''4 \\repend \\volta1 e''4 | f''4"],
+    ["c''4 | d''4 \\repend e''4"],
+    ["c''4 \\fine | d''4 \\dc"],
+    ["c''4 \\coda | d''4 | \\coda e''4 | f''4 \\dc"],
+    ["c''4 | \\segno d''4 | e''4 \\dc"],
+    ["\\grace d''8 c''4 \\repend e''4"],
+    ["\\tup3 c''8 d''8 e''8 \\tupend \\repend f''4"],
+  ]) {
+    const written = stitchTokenRows(rows, { expand: false });
+    const unfolded = unfoldDoc(written.doc, written.structure.playBars).doc;
+    check(rows.join(" ⏎ "), compact(unfolded), compact(stitchTokenRows(rows).doc));
+  }
+  check(
+    "hallucinated mid-piece D.C. is ignored (real pages produced one)",
+    t(["c''4 \\dc | d''4 | e''4 | f''4"]),
+    "Do5:1/4 | Re5:1/4 | Mi5:1/4 | Fa5:1/4",
+  );
+  check(
+    "raw-decode split duration re-glues (`f'' 32` → f''32)",
+    t(["g''16. f'' 32 e''4"]),
+    "Sol5:3/32 Fa5:1/32 Mi5:1/4",
+  );
+
+  // --- accidentals: "carry" (real printed pages — measure-scoped carry rule) -------------------
+  const c = (rows: string[], opts = {}) =>
+    compact(stitchTokenRows(rows, { accidentals: "carry", ...opts }).doc);
+
+  check(
+    "carry: accidental binds its position to the barline, then the signature returns",
+    c(["\\sig \\komaFlat b \\sigend \\bakiyeSharp f''4 f''4 | f''4"]),
+    "Fa5#4:1/4 Fa5#4:1/4 | Fa5:1/4",
+  );
+  check(
+    "carry: \\natural cancel also carries (keysig mode would re-flatten the third note)",
+    c(["\\sig \\komaFlat b \\sigend b'4 \\natural b'4 b'4"]),
+    "Si4b1:1/4 Si4:1/4 Si4:1/4",
+  );
+  check(
+    "carry is per staff position: a different octave is NOT carried",
+    c(["\\bakiyeSharp f''4 f'4"]),
+    "Fa5#4:1/4 Fa4:1/4",
+  );
+  check(
+    "carry: repeat barline resets like a plain barline",
+    c(["\\bakiyeSharp f''4 \\repend f''4"], { expand: false }),
+    "Fa5#4:1/4 | Fa5:1/4",
+  );
+  check(
+    "carry: a grace's accidental never binds the measure",
+    c(["\\grace \\bakiyeSharp f''8 c''4 f''4"]),
+    "g:Fa5#4 Do5:1/4 Fa5:1/4",
+  );
+  check(
+    "legacy carry through a `\\tie`: the pair is one event; a later bare note keeps the alteration",
+    c(["\\bakiyeSharp f''2 \\tie f''8 f''8"]),
+    "Fa5#4:5/8 Fa5#4:1/8",
+  );
+  check(
+    // THE safety claim of the tie retirement: the tail is spelled BARE, so its pitch comes from
+    // the measure-scoped carry. Same three sounding pitches as the legacy row above.
+    "retired form: a bare tie-tail keeps the alteration through the carry",
+    c(["\\bakiyeSharp f''2 f''8 f''8"]),
+    "Fa5#4:1/2 Fa5#4:1/8 Fa5#4:1/8",
+  );
+  check(
+    "default (keysig) mode is unchanged: bare always means the signature pitch",
+    t(["\\sig \\komaFlat b \\sigend b'4 \\natural b'4 b'4"]),
+    "Si4b1:1/4 Si4:1/4 Si4b1:1/4",
+  );
+  // --- the measure grid: a measure the SLICER cut in two is joined back (2026-09-27) ----------
+  // One row per string, strips split on " ¦ "; every crop boundary is a CROP_BAR, not a read `|`.
+  const page = (rows: string[]): DecodedStrip[] =>
+    rows.flatMap((row, system) => row.split(" ¦ ").map((tokens, window) => ({ system, window, tokens })));
+  const g = (rows: string[]) => {
+    const res = stitchStrips(page(rows), { accidentals: "carry", expand: false });
+    return { bars: compact(res.doc), grid: res.warnings.find((w) => w.startsWith("measure grid")) ?? "" };
+  };
+  const sig = "\\sig \\bakiyeSharp f \\sigend ";
+  const bars3 = "c''4 d''4 e''4 | d''4 d''4 d''4 | e''4 e''4 e''4";
+
+  // The Hicâz saz semâî's teslim: `\natural f''4` cut off from the rest of its bar. Before the fix
+  // the bare f'' after the cut went back to the signature's F♯.
+  check(
+    "grid: a cut measure is joined, and its \\natural reaches past the cut",
+    g([sig + bars3, sig + "\\natural f''4 ¦ f''4 e''4", sig + bars3]).bars.split(" | ")[3]!,
+    "Fa5:1/4 Fa5:1/4 Mi5:1/4",
+  );
+  check(
+    "grid: a `|` the MODEL read is never removed, even when the pieces add up",
+    g([sig + bars3, sig + "\\natural f''4 | f''4 e''4", sig + bars3]).bars.split(" | ")[3]!,
+    "Fa5:1/4",
+  );
+  check(
+    "grid: pieces that do not add up to the meter are left alone",
+    g([sig + bars3, sig + "f''4 ¦ e''4", sig + bars3]).bars.split(" | ").length.toString(),
+    "8",
+  );
+  check(
+    "grid: a measure exactly twice the meter is cut where the notes add up",
+    g([sig + "c''4 d''4 e''4 ¦ d''4 d''4 d''4 | e''4 e''4 e''4", "c''4 d''4 e''4 f''4 g''4 a''4", sig + bars3]).bars.split(" | ").slice(3, 5).join(" | "),
+    "Do5:1/4 Re5:1/4 Mi5:1/4 | Fa5#4:1/4 Sol5:1/4 La5:1/4",
+  );
+  check(
+    "grid: a boundary carrying a repeat sign is never joined across",
+    g([sig + bars3, sig + "c''4 \\repend ¦ d''4 e''4", sig + bars3]).bars.split(" | ").length.toString(),
+    "8",
+  );
+  check(
+    // A saz semâî: 10/8 hâneler, then 3/4 in the fourth — one meter per region, not per page.
+    "grid: each row takes its own meter (5/4 rows and 3/4 rows on one page)",
+    g([
+      "c''4 d''4 e''4 f''4 g''4 | c''2 d''2 e''4 | c''4. d''8 e''2 f''4",
+      "c''4 ¦ d''4 e''4 f''4 g''4",
+      bars3,
+      "c''4 ¦ d''4 e''4 | c''2.",
+    ]).grid.replace(/\(\d+ of.*$/, ""),
+    "measure grid (meter 5/4, 3/4): joined 2 measure(s) the slicer cut, split 0 with a missed barline ",
+  );
+  check(
+    // Only a length the page shows WHOLE can be the meter — never one assembled from pieces.
+    "grid: no length seen whole three times → no meter → nothing changes",
+    g(["c''4 ¦ d''8 e''8 ¦ f''4.", "c''8 ¦ d''4 e''2 ¦ f''4"]).grid,
+    "",
+  );
+  check(
+    "grid: if more than half the measures would change, nothing is changed",
+    g([bars3 + " | f''2.", "c''4 ¦ d''2 | e''4 ¦ f''2 | g''4 ¦ a''2 | b''4 ¦ c''2"]).bars.split(" | ").length.toString(),
+    "12",
+  );
+  check(
+    "grid: pre-joined rows (`stitchTokenRows`, every label round-trip) are never regridded",
+    t(["c''4 d''4 e''4 | d''4 d''4 d''4 | e''4 e''4 e''4 | f''4 | g''2"]).split(" | ").length.toString(),
+    "5",
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// 2. Round-trip over the bundled scores
+
+/** Normalized comparable event. */
+interface Norm {
+  kind: string;
+  koma: number;
+  beats: number; // float is fine for COMPARING — both sides derive from the same exact fractions
+  bar: number;
+}
+
+/** Original doc → normalized sounding events, mirroring the serializer's documented losses. */
+function normalizeOriginal(doc: NoteModelDocument): Norm[] {
+  const out: Norm[] = [];
+  for (const m of groupMeasures(doc)) {
+    const groups = tupletGroupsIn(m.events);
+    const events = m.events.filter(
+      (e, i) =>
+        // Serializer drops a measure-final dangling grace (no host to attach to).
+        !(e.kind === "grace" && i === m.events.length - 1),
+    );
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i]!;
+      let beats = eventBeats(e);
+      const split = e.kind === "note" || e.kind === "rest" ? tieSplitBeats(e) : null;
+      if (e.kind === "note" || e.kind === "rest") {
+        const inGroup = groups.some((g) => i >= g.from && i <= g.to);
+        // Outside a closed tuplet group and not tie-split, the label carries whatever
+        // `lilyDuration` wrote — exact for drawable values, nearest-snapped otherwise.
+        if (!inGroup && split === null) beats = snapToWritten(beats);
+      }
+      // Compare the WRITTEN pitch: the page draws the AEU-snapped sign (a 2-comma flat is
+      // engraved as a koma flat), and recovering that written form is stage 8's contract —
+      // the exact sounding koma is Phase 4's makam layer, not the stitcher's.
+      let koma = -1;
+      if (e.kind !== "rest") {
+        const p = parseNoteName(e.noteName);
+        koma = p ? komaOf(p.letter, p.octave, toAeuAlter(p.alterCommas)) : e.koma53;
+      }
+      // A tie-split long value is WRITTEN as separate notes and, since `\tie` retired, joined by
+      // nothing — so the stitched side returns one event per written part. Expand to match.
+      if (split) for (const part of split) out.push({ kind: e.kind, koma, beats: part, bar: m.index });
+      else out.push({ kind: e.kind, koma, beats, bar: m.index });
+    }
+  }
+  return mergeRests(out);
+}
+
+/** Does this event's duration spell exactly (drawable or handled by tuplet/tie machinery)? */
+function isExactlyWritable(e: { durationBeats: { num: number; den: number } }): boolean {
+  const { num, den } = e.durationBeats;
+  if (den === 0 || num === 0) return true;
+  const g = ((a: number, b: number) => {
+    while (b) [a, b] = [b, a % b];
+    return a;
+  })(num, den);
+  const d = den / g;
+  return d % 3 !== 0; // reduced denominator divisible by 3 = tuplet fraction
+}
+
+/** What `lilyDuration` writes for this value, read back as beats (the snap the label carries). */
+function snapToWritten(beats: number): number {
+  const code = lilyDuration(beats);
+  const den = parseInt(code, 10);
+  const dots = (code.match(/\.+$/)?.[0] ?? "").length;
+  return dots === 2 ? 7 / (den * 4) : dots === 1 ? 3 / (den * 2) : 1 / den;
+}
+
+/** Stitched doc → normalized events. */
+function normalizeStitched(doc: NoteModelDocument): Norm[] {
+  const out: Norm[] = doc.events.map((e) => ({
+    kind: e.kind,
+    koma: e.kind === "rest" ? -1 : e.koma53,
+    beats: eventBeats(e),
+    bar: e.bar ?? 0,
+  }));
+  return mergeRests(out);
+}
+
+/** Merge consecutive rests within a bar (the serializer splits long rests with no tie). */
+function mergeRests(events: Norm[]): Norm[] {
+  const out: Norm[] = [];
+  for (const e of events) {
+    const last = out[out.length - 1];
+    if (last && last.kind === "rest" && e.kind === "rest" && last.bar === e.bar) last.beats += e.beats;
+    else out.push({ ...e });
+  }
+  return out;
+}
+
+function fmtNorm(n: Norm): string {
+  return `${n.kind}@${n.koma}:${n.beats.toFixed(5)}`;
+}
+
+console.log("\nround-trip over bundled scores:");
+const pub = "apps/web/public";
+const files = [
+  ...["sample.json", "gamzedeyim-deva.json", "beyati-delisin.json", "safalar-getirdiniz.json"].map(
+    (f) => join(pub, f),
+  ),
+  ...readdirSync(join(pub, "scores")).filter((f) => f.endsWith(".json")).map((f) => join(pub, "scores", f)),
+];
+
+/** Compare two normalized event lists; -1 = identical, else the first differing index. */
+function firstDiffAt(a: Norm[], b: Norm[]): number {
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (!x || !y || x.kind !== y.kind || x.koma !== y.koma || Math.abs(x.beats - y.beats) > 1e-6) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function reportDiff(name: string, a: Norm[], b: Norm[], at: number, warnings: string[]): void {
+  const x = a[at];
+  const y = b[at];
+  console.log(
+    `  FAIL  ${name}: first diff at event ${at} (bar ${x?.bar ?? "?"}) — ` +
+      `original ${x ? fmtNorm(x) : "<none>"} vs stitched ${y ? fmtNorm(y) : "<none>"}` +
+      (warnings.length ? `  [warnings: ${warnings.slice(0, 3).join("; ")}]` : ""),
+  );
+}
+
+let rtPass = 0;
+let rtFail = 0;
+for (const file of files) {
+  const doc = assignBars(JSON.parse(readFileSync(file, "utf8")) as NoteModelDocument);
+  const strips = docToStrips(doc);
+  // Rebuild the page stream the way a slicer would see it: strips are consecutive crops, so the
+  // boundary is a barline — unless the SAME measure continues (a dense measure spilled).
+  const parts: string[] = [];
+  strips.forEach((s, i) => {
+    if (i > 0) parts.push(strips[i - 1]!.toMeasure === s.fromMeasure ? " " : " | ");
+    parts.push(s.label);
+  });
+  const { doc: stitched, warnings } = stitchTokenRows([parts.join("")]);
+
+  const a = normalizeOriginal(doc);
+  const b = normalizeStitched(stitched);
+  const at = firstDiffAt(a, b);
+  if (at < 0) {
+    rtPass++;
+  } else {
+    rtFail++;
+    failures++;
+    reportDiff(file.split("/").pop()!, a, b, at, warnings);
+  }
+}
+console.log(`  ${rtPass}/${rtPass + rtFail} scores round-trip exactly`);
+
+// Carry-mode round-trip: serialize every score in "measure" (carry) mode — signature prefix +
+// carry-suppressed accidentals — and stitch it back with carry resolution. Identity on the
+// written notes proves the serializer's carry decision and the parser's carry resolution are
+// exact inverses over the whole repertoire (tuplets, ties, graces included).
+console.log("\ncarry-mode round-trip over bundled scores:");
+let cPass = 0;
+let cFail = 0;
+for (const file of files) {
+  const doc = assignBars(JSON.parse(readFileSync(file, "utf8")) as NoteModelDocument);
+  const measures = groupMeasures(doc);
+  const sigEntries = deriveKeySignature(doc);
+  const sigMap = new Map(sigEntries.map((e) => [e.letter, e.alterCommas]));
+  const body = serializeMeasures(measures, sigMap, undefined, undefined, /* carry */ true);
+  const label =
+    sigEntries.length > 0 ? `${serializeSignature(sigEntries).label} ${body.label}` : body.label;
+  const { doc: stitched, warnings } = stitchTokenRows([label], { accidentals: "carry" });
+
+  const a = normalizeOriginal(doc);
+  const b = normalizeStitched(stitched);
+  const at = firstDiffAt(a, b);
+  if (at < 0) {
+    cPass++;
+  } else {
+    cFail++;
+    failures++;
+    reportDiff(file.split("/").pop()!, a, b, at, warnings);
+  }
+}
+console.log(`  ${cPass}/${cPass + cFail} scores round-trip exactly (carry mode)`);
+
+// Makam-detection signature vocabulary. `packages/core/src/makam.ts` spells signatures with its
+// own `SIG_TOKEN_BY_ALTER` rather than importing `AEU_TOKEN` from here (core must not depend on
+// tools/, and the label path is load-bearing enough not to move). That is a deliberate second
+// copy, so pin it: every signature in the generated table must survive this file's parser and
+// come back byte-identical through core's formatter. If the two vocabularies ever drift, makam
+// detection would silently stop matching anything — this fails instead.
+console.log("\nmakam signature vocabulary (core vs the label serializer):");
+let sPass = 0;
+let sFail = 0;
+for (const [slug, entry] of Object.entries(MAKAM_SIGNATURES)) {
+  for (const v of entry.variants) {
+    let back = "";
+    try {
+      back = signatureKey(parseSignatureBody(v.sig));
+    } catch (err) {
+      back = `THREW: ${String(err)}`;
+    }
+    if (back === v.sig) {
+      sPass++;
+    } else {
+      sFail++;
+      failures++;
+      console.log(`  FAIL ${slug}: "${v.sig}" -> "${back}"`);
+    }
+  }
+}
+console.log(`  ${sPass}/${sPass + sFail} signature variants round-trip exactly`);
+
+console.log(failures === 0 ? "\nALL PASS" : `\n${failures} FAILURE(S)`);
+process.exit(failures === 0 ? 0 : 1);

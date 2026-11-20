@@ -136,7 +136,7 @@ export type NoteEdit = Partial<Pick<NoteEvent, "koma53" | "durationMs">>;
 // so Play/Stop always talk to the same instance.
 const backend = new WebAudioBackend();
 
-// The look-ahead scheduler's progress, for the headless checks only (tools/browser/editor-smoke.ts),
+// The look-ahead scheduler's progress, for the headless checks only (tools/checks/editor-smoke.ts),
 // alongside the `window.__omr*` hooks further down. It has to be read from the backend rather than
 // from the screen: the playhead is driven by the audio clock, so it keeps moving even if the
 // scheduler stalled and the page fell silent — only this counter can tell those two apart.
@@ -1036,7 +1036,7 @@ export function App() {
   // repeated block's bar lengths were not uniform. ⚠ Unfolded pages are untouched — `unfoldDoc`
   // over the identity order returns the same bars with the same start times (`groupMeasures` skips
   // `meta` on both sides), so this changes nothing for a page that plays as it is written.
-  // `tools/core/usul-test.ts` pins it.
+  // `tools/tests/usul-test.ts` pins it.
   const buildPlayOptions = useCallback(
     (
       targetBpm: number,

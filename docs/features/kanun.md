@@ -307,11 +307,11 @@ the mandal plan for the piece, which is a thing a kanun student would want on it
 
 ### What the checks assert
 
-- `tools/core/kanun-test.ts` (in `npm test`) — the arithmetic: the course table re-derived from its
+- `tools/tests/kanun-test.ts` (in `npm test`) — the arithmetic: the course table re-derived from its
   own perde names, the span against the recording, **the lever count per course and the gap**, the
   koma → mandal table, **the written spelling beating the nearer course**, a note the gap makes
   unplayable, the tie, and the plan's opening/changes behaviour.
-- `tools/browser/editor-smoke.ts` — the DOM: 212 levers **and all 26 per-course counts by value**,
+- `tools/checks/editor-smoke.ts` — the DOM: 212 levers **and all 26 per-course counts by value**,
   **78 strings** (26 courses of three — a total, because the failure worth catching is the view
   going back to one line each), **every row consistent with its own `data-raised` at every sample
   taken across a whole playback** (the state machine's invariant), the opening setting **by

@@ -158,7 +158,7 @@ the neck. **Is the dot in the right place** is still owed — the part no automa
 
 Goal: the first check here that needs your **eyes** rather than your ears, and the only thing
 standing between F3 and a claim nobody has verified. Everything automatable already passes —
-`tools/core/fingering-test.ts` pins the formula and the string-choice rule, `smoke:editor` proves the
+`tools/tests/fingering-test.ts` pins the formula and the string-choice rule, `smoke:editor` proves the
 marker lands on a string and moves, and the calibration was checked against a real instrument's
 dimensions. **None of that can tell you the dot is in the right place**, because every one of those
 checks reads the same geometry the drawing does.

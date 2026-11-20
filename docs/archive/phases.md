@@ -938,7 +938,7 @@ Exact agreement is reported beside it, ungated — the shape `bar x exact` alrea
 | `apps/web/src/omr/slicer/slicer.ts` | the driver (L961–1011, minus filesystem and debug); `sliceStage1` is the W4 half |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry the parity tool drives; returns geometry only, never pixels |
 | `scripts/slicer_ref.py` | the Python control arm; also defines the sample |
-| `tools/vision/parity/slicer-parity.ts` | `npm run parity:slicer` |
+| `tools/checks/parity/slicer-parity.ts` | `npm run parity:slicer` |
 
 ### Trap 1 — `Math.round` is not Python's `round`. Verified, twice, in load-bearing places.
 
@@ -1010,7 +1010,7 @@ So the flow is:
 
 ```bash
 .venv-ml/bin/python scripts/slicer_ref.py --pages 120 --out ref.json   # the control, ~1.9 s/page
-npx tsx tools/vision/parity/slicer-parity.ts --ref ref.json            # ~36 s/page
+npx tsx tools/checks/parity/slicer-parity.ts --ref ref.json            # ~36 s/page
 ```
 
 `ref.json` also **defines the sample** — the browser side runs exactly the pages in it, so the two
@@ -1091,7 +1091,7 @@ unmatched. See the note below on why this is paired rather than compared to 86.0
 not work: at n=450 the standard error is ~1.6 pp, so a "within 1 pp" bar is inside the noise, and
 40 pages would only reach ~1.2 pp.
 
-Arm A (the ported slicer's own crops) and arm B (Python's crops, `tools/vision/parity/arm-b.ts`)
+Arm A (the ported slicer's own crops) and arm B (Python's crops, `tools/checks/parity/arm-b.ts`)
 decode the **same strips**, so compare them **pairwise**: count the strips where exactly one arm
 matches Python's tokens. A McNemar-style test on those discordant pairs is far more sensitive than
 differencing two independent proportions, and it needs no extra pages.
@@ -1230,7 +1230,7 @@ be restated because they were written before the ±1 grayscale residue was under
 
 ### What W0 built that is not throwaway
 
-`tools/browser/run-page.ts` — runs any harness page in headless Chromium and asserts on it.
+`tools/checks/run-page.ts` — runs any harness page in headless Chromium and asserts on it.
 `omrGate.ts` has exposed `window.__gateResult` since it was written and it had **never been used**;
 the gate was checked by opening a browser and looking. It is now `npm run gate:browser`.
 
@@ -1250,33 +1250,33 @@ costs one command ([../DECISIONS.md](../DECISIONS.md)).
 
 | Path | What |
 |---|---|
-| `tools/browser/run-page.ts` | headless runner for any harness page (permanent) |
+| `tools/checks/run-page.ts` | headless runner for any harness page (permanent) |
 | `apps/web/cv-probe.html`, `apps/web/src/probe/cvProbe.ts` | W0 probe (kept, not deleted — see above) |
 | `scripts/cv_probe_ref.py` | W0 Python reference (kept) |
 | `apps/web/src/omr/` | decode, preprocess, session, pipeline, weights (W1, W2, W9) |
 | `apps/web/logprob-check.html`, `apps/web/src/checks/logprobCheck.ts`, `scripts/logprob_ref.py` | W1 confidence-signal check (permanent — W8 depends on it) |
 | `apps/web/strips-harness.html`, `apps/web/src/checks/stripsHarness.ts` | headless entry to the shipped decode path, driven by Playwright |
-| `tools/vision/parity/arm-b.ts` | the ceiling measurement (W3) |
-| `tools/vision/parity/decode-pool.ts` + `scripts/score_browser_gold.py` | browser vs Python **against gold** — the release-gating quality check |
-| `tools/vision/parity/edge-cases.ts` | non-strip images must not throw |
-| `tools/browser/app-smoke.ts` | the real app: strips in → playable score out |
+| `tools/checks/parity/arm-b.ts` | the ceiling measurement (W3) |
+| `tools/checks/parity/decode-pool.ts` + `scripts/score_browser_gold.py` | browser vs Python **against gold** — the release-gating quality check |
+| `tools/checks/parity/edge-cases.ts` | non-strip images must not throw |
+| `tools/checks/app-smoke.ts` | the real app: strips in → playable score out |
 | `apps/web/src/omr/slicer/` | the TS port of `page_to_strips.py` (W4–W6) |
 | `apps/web/src/omr/page.ts` | page image → crops, the seam between the slicer and the decode path (W7) |
-| `tools/browser/page-smoke.ts` | the real app: a page image in → playable score out, plus a responsiveness bar (W7) |
-| `tools/browser/build-smoke.ts`, `live-smoke.ts` | the BUILT app (`dist/`, real headers, cross-origin weights) and the DEPLOYED site (W9) |
+| `tools/checks/page-smoke.ts` | the real app: a page image in → playable score out, plus a responsiveness bar (W7) |
+| `tools/checks/build-smoke.ts`, `live-smoke.ts` | the BUILT app (`dist/`, real headers, cross-origin weights) and the DEPLOYED site (W9) |
 | `apps/web/slices.html`, `apps/web/src/slices/slicesView.ts` | slice inspector — see the crops a page is cut into, no model loaded (owner request, W7) |
-| `tools/vision/parity/arm-a.ts` | the port's crops decoded and compared to arm B, **paired** (W6) |
+| `tools/checks/parity/arm-a.ts` | the port's crops decoded and compared to arm B, **paired** (W6) |
 | `apps/web/src/checks/slicerHarness.ts` + `apps/web/slicer-harness.html` | headless entry to the ported slicer |
 | `scripts/slicer_ref.py` | the Python control arm for the port, and the sample definition |
-| `tools/vision/parity/slicer-parity.ts` | slicer parity harness, `npm run parity:slicer` (W4–W6) |
-| `tools/vision/parity/deskew-check.ts` | the exactness gate behind the 126× skew-sweep speedup (W7) |
+| `tools/checks/parity/slicer-parity.ts` | slicer parity harness, `npm run parity:slicer` (W4–W6) |
+| `tools/checks/parity/deskew-check.ts` | the exactness gate behind the 126× skew-sweep speedup (W7) |
 | `apps/server/` | the decode server: `index.ts` (HTTP), `decodeBatch.ts` (imports the browser's `decode.ts`), `model.ts` (the only ORT-runtime-specific file), `limits.ts`, `png.ts`, `Dockerfile`, `cloudbuild.yaml` (W9) |
 | `apps/web/src/omr/pixels.ts` | the client/server seam — the rescale, DOM-free, so the server needs no resampler (W9) |
 | `apps/web/src/omr/remote.ts` | `decodeStripsRouted` — server first behind `VITE_DECODE_URL`, in-browser fallback on any failure (W9) |
 | `apps/web/src/checks/serverParityHarness.ts` + `apps/web/server-parity.html` | the client half of the contract: the PNG it would upload AND what the browser read from it (W9) |
-| `tools/vision/parity/server-parity.ts`, `server-bench.ts`, `server-limits.ts` | server vs browser, vCPU-seconds/payload, and the safety checklist as a command (W9) |
+| `tools/checks/parity/server-parity.ts`, `server-bench.ts`, `server-limits.ts` | server vs browser, vCPU-seconds/payload, and the safety checklist as a command (W9) |
 | `packages/core/src/makam.ts`, `makamSignatures.ts` (generated) | makam detection + the performed-intonation table (W9.5) — [README.md § Makam selection — the performed intonation](../app/README.md#makam-selection--the-performed-intonation) |
-| `apps/web/src/MakamModal.tsx`, `tools/browser/makamPrompt.ts` | the post-decode makam prompt, and the smoke checks' dismissal of it (W9.5) |
+| `apps/web/src/MakamModal.tsx`, `tools/checks/makamPrompt.ts` | the post-decode makam prompt, and the smoke checks' dismissal of it (W9.5) |
 | `apps/web/src/ui/` | the interface, split out of App.tsx (W9.6). **`status.ts` is the DOM contract the deploy checks assert on**; `strings.ts` is every user-visible word, in one file |
 | `apps/web/src/styles/` | `tokens.css` (the design vocabulary), `base.css`, `app.css` (the `.kv-*` components) |
 

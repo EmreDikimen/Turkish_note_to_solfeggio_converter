@@ -4,7 +4,7 @@
  * ⭐ WHY (owner, 2026-10-27, after a closed-test tester asked what that panel was). JSON load, the
  * strip reader, the slice inspector and the raw model output serve the PROJECT, not a reader, so a
  * deployed build hides them. Shown when:
- *   - the dev server is running (`import.meta.env.DEV`) — `tools/browser/app-smoke.ts` opens
+ *   - the dev server is running (`import.meta.env.DEV`) — `tools/checks/app-smoke.ts` opens
  *     `#advanced` there, and it is the panel's only coverage;
  *   - or the device opted in with `?dev=1`, remembered in `localStorage` until `?dev=0` — the same
  *     shape as the visit counter's `?nostats=1`, so the owner can reach the tools on the live site.

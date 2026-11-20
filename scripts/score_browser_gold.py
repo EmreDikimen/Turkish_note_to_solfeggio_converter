@@ -9,7 +9,7 @@ docs/METRICS.md claims, and no amount of slicer work fixes that.
 So: score both sides against the SAME hand-verified labels with the SAME scorer
 (`eval_omr.align`, the project's Levenshtein id-space alignment), on the SAME strips.
 
-    npx tsx tools/vision/parity/decode-pool.ts --pool data/real/rung3/_realval_v2 --out b.json
+    npx tsx tools/checks/parity/decode-pool.ts --pool data/real/rung3/_realval_v2 --out b.json
     .venv-ml/bin/python scripts/score_browser_gold.py --browser b.json
 """
 from __future__ import annotations

@@ -117,7 +117,7 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    `scripts/rung3/review_ui.py` (`docs/CODE_TOUR.md` §3.2).
 4. Stitcher regression suite (structure unit tests + label round-trip on all bundled scores):
    ```
-   npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
+   npx --yes tsx tools/tests/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
    ```
 
 ## Check 13 — see how a page was sliced (the slice inspector, 2026-08-05)

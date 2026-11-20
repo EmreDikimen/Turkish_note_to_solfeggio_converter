@@ -291,7 +291,7 @@ it cannot plan a crossing several notes ahead the way a player reading ahead wou
 can bring the climbing back — all three price climbing *higher*, not lower.
 
 ⚠ **The old tests passed at every setting of the old knob**, which is why this was found by eye and
-not by the suite. Section 4b of `tools/core/fingering-test.ts` now pins the climb, the forced-low
+not by the suite. Section 4b of `tools/tests/fingering-test.ts` now pins the climb, the forced-low
 start that trapped the old rule, and the opposite failure — a note above first position on the Mi
 string, where there is nothing to cross to, must still shift.
 
@@ -308,7 +308,7 @@ number cannot disagree with the string and place chosen beside it.
 The bands, measured from the first finger: up to 2 commas above it (and the reach back below it) is
 **1**, the next 9 commas **2**, the next 8 **3**, past that **4**. ⚠ They are chosen so that with the
 hand in first position the number is **exactly** the colour of the line under the dot — pinned comma
-by comma in `tools/core/fingering-test.ts`, section 6, with the textbook `0 1 2 3 4` climb on every
+by comma in `tools/tests/fingering-test.ts`, section 6, with the textbook `0 1 2 3 4` climb on every
 string.
 
 ⚠ **What is a guess, stated rather than hidden:**
@@ -350,7 +350,7 @@ every test too.
 - a visible fault in the greedy walk that a player reports.
 
 **How to do it when it restarts.** Keep `FingerPos` and the bands unchanged, so nothing downstream
-moves. Section 4b and 6 of `tools/core/fingering-test.ts` must still pass. Re-measure the four-piece
+moves. Section 4b and 6 of `tools/tests/fingering-test.ts` must still pass. Re-measure the four-piece
 table above (above the octave, past first position, string changes) for both walks and show the
 differences to the reviewer **before** shipping.
 
@@ -410,7 +410,7 @@ consequence of the instruments rather than a style choice.
 
 #### The table is the OWNER'S, placed note by note (2026-08-30)
 
-`tools/core/clarinet-editor.ts` builds a standalone page where each note's points are clicked on
+`tools/dev/clarinet-editor.ts` builds a standalone page where each note's points are clicked on
 the photograph: click empty space to add, click a point to delete, near a known position it snaps.
 The owner worked through all nineteen base fingerings and sent the JSON back.
 
@@ -599,8 +599,8 @@ Unchanged from [instruments.md § F3 — the fingerboard tab](#f3--the-fingerboa
   [../../CLAUDE.md](../../CLAUDE.md) and `apps/web/src/ui/status.ts`. No text matching.
 - **All strings in `apps/web/src/ui/strings.ts`.**
 - **One clock** — drive from `getPositionMs()`, the source the playhead and both other views use.
-- **The arithmetic is a pure function with unit tests**, like `tools/core/fingering-test.ts` and
-  `tools/core/kanun-test.ts`. The fingering table and the lip-bend maths belong in `packages/core/`,
+- **The arithmetic is a pure function with unit tests**, like `tools/tests/fingering-test.ts` and
+  `tools/tests/kanun-test.ts`. The fingering table and the lip-bend maths belong in `packages/core/`,
   not in the component.
 - **Artwork with a READ licence**, chain checked and recorded in [../THIRD-PARTY.md](../THIRD-PARTY.md)
   and `/THIRD-PARTY.txt`. ✅ Done for this file.

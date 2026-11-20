@@ -1,4 +1,4 @@
-"""The Python half of `tools/vision/frame-test.ts`: `whiten_frame` on six synthetic pages.
+"""The Python half of `tools/tests/frame-test.ts`: `whiten_frame` on six synthetic pages.
 
 Run it after ANY change to `whiten_frame` or the FRAME_* constants and paste the six sha256 values
 into the `CASES` table of the TypeScript test. That test builds the same six pages byte for byte

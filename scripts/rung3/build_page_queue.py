@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the review-UI-2 PAGE queue: the pages worth correcting first.
 
-    npx tsx tools/vision/page-structure.ts          # 1. stitch stats (the meter rule lives in core)
+    npx tsx tools/dev/page-structure.ts          # 1. stitch stats (the meter rule lives in core)
     .venv-ml/bin/python scripts/rung3/build_page_queue.py [--n 150]   # 2. this
 
 Why a page queue at all, and why ranked this way
@@ -107,7 +107,7 @@ def load_structure() -> dict[str, dict]:
     if not STRUCTURE.exists():
         raise SystemExit(
             f"missing {STRUCTURE.relative_to(ROOT)} — run:\n"
-            f"  npx tsx tools/vision/page-structure.ts"
+            f"  npx tsx tools/dev/page-structure.ts"
         )
     doc = json.loads(STRUCTURE.read_text())
     return {p["stem"]: p for p in doc["pages"]}

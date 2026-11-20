@@ -481,7 +481,7 @@ ringing drum at a non-zero sample would leave.
 correction.** Measured 2026-08-13: the clarinet steps D–F–A#–D, and F→A# is a *perfect fourth*, so
 its widest gap is **5 semitones** and the worst shift is **±2.5**. The violin's widest is 4.3
 (C→E plus real intonation). Planning had also independently guessed ±2 by miscounting the same
-interval. The real bound is now asserted in `tools/audio/voices-test.ts` rather than written in
+interval. The real bound is now asserted in `tools/tests/voices-test.ts` rather than written in
 prose. Resampling also changes *length* (~12% at ±2.5 semitones) — irrelevant for sustains that
 outlast the note anyway, and percussion one-shots are never shifted at all.
 
@@ -590,7 +590,7 @@ one and the same `freqHz`. The sampler then sets `playbackRate = freqHz / sample
 `freqHz` by construction. Swept over every koma in both instruments' ranges × the fractional deltas a
 makam applies (−1.5, −1, +1, +1.5), **1,841 sampled pitches, worst error 9.9e-5 cents** — about
 1/229,000 of a koma, after storing the ratio in the float32 AudioParam the browser actually uses.
-Pinned by `tools/audio/voices-test.ts` so it cannot regress. Pitches outside a voice's range fall
+Pinned by `tools/tests/voices-test.ts` so it cannot regress. Pitches outside a voice's range fall
 back to the synth, which is exact by definition.
 
 ⚠ **But a violin note is not a steady pitch, and that is worth knowing for this app specifically.**

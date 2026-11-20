@@ -168,7 +168,7 @@ async function portableClone(svg: SVGSVGElement): Promise<SVGSVGElement> {
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   const left = await outlineGlyphs(svg, clone);
   // A checks-only hook, like `__omrDoc`: how many music glyphs still need the font (0 = none), so
-  // `tools/browser/export-check.ts` can prove the export no longer depends on it.
+  // `tools/checks/export-check.ts` can prove the export no longer depends on it.
   (window as unknown as { __omrExportLeft?: number }).__omrExportLeft = left;
   if (left > 0) {
     const font = await fontDataUri();

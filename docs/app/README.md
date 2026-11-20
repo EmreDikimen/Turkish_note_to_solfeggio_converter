@@ -389,7 +389,7 @@ drops (`groupMeasures` skips them, shifting every later index down).
 It shipped that way from 2026-08-30 to 2026-09-05 and was found **by ear**, not by a check: on
 `gamzedeyim-deva` under uşşak, **19 of the 22 bent notes were the wrong ones** — a Re, a La, a Do
 and a 2-koma si taking the segah's lowering, while three landed right by luck. The fix is
-`remapKomaDeltas(deltas, played.srcOf)`, and `tools/core/makam-test.ts` pins it.
+`remapKomaDeltas(deltas, played.srcOf)`, and `tools/tests/makam-test.ts` pins it.
 
 ⚠ **Re-key, do not bend before unfolding.** `perf.doc` is what the instrument views read, and a
 kanun course is looked up by an exact **written** koma — a fractional one misses it. The bend
@@ -440,9 +440,9 @@ Accuracy, and the caveat that it is measured on clean scores rather than decoded
 | Its generator (`--ts-out` / `--from-json`) | `scripts/build_makam_signatures.py` |
 | The prompt | `apps/web/src/MakamModal.tsx` |
 | The line beside the picker, shared with the prompt | `apps/web/src/ui/MakamIntonation.tsx` |
-| The rules, the deltas, the re-key and the picker's counts | `tools/core/makam-test.ts` (in `npm test`) |
+| The rules, the deltas, the re-key and the picker's counts | `tools/tests/makam-test.ts` (in `npm test`) |
 | Dropdown + the audio wiring (`makamDeltas` / `makamUsage` → `timeline`) | `apps/web/src/App.tsx` |
-| Smoke-check dismissal helper | `tools/browser/makamPrompt.ts` |
+| Smoke-check dismissal helper | `tools/checks/makamPrompt.ts` |
 
 Two duplications are deliberate and both are pinned by tests:
 

@@ -381,9 +381,9 @@ new strip baseline.
 
 ### Checking a style change
 
-- `npx tsx tools/browser/visual-snap.ts --out <dir>` — 22 screenshots (desktop 1280 and phone 393,
+- `npx tsx tools/dev/visual-snap.ts --out <dir>` — 22 screenshots (desktop 1280 and phone 393,
   light and dark) plus `snap.json` with the rects that matter. Run before and after, and compare.
-- `npm test` includes `tools/browser/css-contract-test.ts`: the static rules above.
+- `npm test` includes `tools/tests/css-contract-test.ts`: the static rules above.
 - Strips: `render.ts --from 0 --to 2` against the running dev server, before and after; the PNGs
   must be byte-identical.
 - The usual gates: `typecheck`, `smoke:editor`, `smoke:phone` (read it), `build:app` + `smoke:build`.

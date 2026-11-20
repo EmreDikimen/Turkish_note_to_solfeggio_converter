@@ -416,7 +416,7 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
 - [x] Reject non-image payloads early — IHDR is parsed *before* decoding, and a PNG that is not
       409×583 8-bit is refused. That doubles as a correctness guard: a wrong-sized strip means the
       client did not preprocess it, and decoding it would silently produce a bad read instead of an
-      error. (`tools/vision/parity/edge-cases.ts` covers the client side.)
+      error. (`tools/checks/parity/edge-cases.ts` covers the client side.)
 - [x] **A billing alert plus `--max-instances`** — ✅ **done 2026-08-06**: a **$5 budget alert** in
       the owner's console, and `--max-instances 3` on the service. This is the one item that bounds
       the bill when this process is the thing being abused, and it lives in the Cloud Run / billing

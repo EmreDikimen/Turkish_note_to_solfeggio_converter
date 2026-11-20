@@ -139,7 +139,7 @@ evidence that the arm will win.
 ### The off-meter bar mark as an error localiser — 37.8% corpus-wide (2026-08-18)
 
 Measured while costing the page-level correction UI ([BACKLOG.md](BACKLOG.md)), which would have
-leaned on this mark to find errors. Run with `npx tsx tools/vision/page-structure.ts`, which uses the
+leaned on this mark to find errors. Run with `npx tsx tools/dev/page-structure.ts`, which uses the
 **shipped** stitcher and core helpers (`stitchStrips` with `expand:false`, `deriveTimeSignature`,
 `measureBeats`) so the number is the one the editor actually draws.
 

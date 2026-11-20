@@ -1,5 +1,5 @@
 /**
- * Headless entry point for the ported slicer — driven by `tools/vision/parity/slicer-parity.ts`.
+ * Headless entry point for the ported slicer — driven by `tools/checks/parity/slicer-parity.ts`.
  *
  * It runs the real port (`apps/web/src/omr/slicer/`) on a whole page and returns only what a
  * parity check needs: the per-system geometry, never the pixels. A 10-system page normalizes to
@@ -139,7 +139,7 @@ async function stage1(
 }
 
 /**
- * The same slice, returning the CROPS — what `tools/vision/parity/arm-a.ts` decodes.
+ * The same slice, returning the CROPS — what `tools/checks/parity/arm-a.ts` decodes.
  *
  * Separate from `stage1` because pixels are expensive over CDP and the geometry parity run (a
  * whole corpus of pages) never wants them.

@@ -28,7 +28,7 @@ updated: 2026-11-20
   builders ran out of bars, so **the usul stopped partway through a repeat and never came back**
   (`perf.doc` in `buildPlayOptions`). ⚠ **Neither threw and no browser check can reach either** — the
   smokes load a SymbTr sample, which is flat in the data and never folds, so the owner's EAR found
-  both; `tools/core/makam-test.ts` and `usul-test.ts` pin them. **`doc` is what a person reads and
+  both; `tools/tests/makam-test.ts` and `usul-test.ts` pin them. **`doc` is what a person reads and
   edits, and nothing that must line up with a clock may be built from it.**
 - ⚠ The playhead follows a **play plan** (`PlayStep[]`: one step per sounding event, naming the WRITTEN
   note drawn for it) and SheetView indexes drawn positions **by event index**; breaking that link
@@ -450,7 +450,7 @@ raised before any recorded voice downloads — a pick in `#instrument`, a pick i
 or opening `#view-instrument`. ⚠ Since 2026-09-30 all three prompts (`#makam-modal`, `#voice-modal`,
 `#tuning-modal`) are Base UI Dialogs: the id and `data-*` sit on the `role="dialog"` popup, which is
 portalled to `<body>`, and Esc or a backdrop click means cancel. Its backdrop blocks every click: answer it with
-`tools/browser/voicePrompt.ts` (`answerVoicePrompt(page, "confirm" | "cancel")`), a no-op when
+`tools/checks/voicePrompt.ts` (`answerVoicePrompt(page, "confirm" | "cancel")`), a no-op when
 nothing is asked. ⚠ A voice said yes to is not asked about again in the same page load, so a check
 that expects the question must start from a fresh `page.goto` — ⚠ **and, since 2026-10-12, from an
 empty voice cache**: a voice whose every file is already in Cache Storage (`omr-voices-*`) is never
@@ -472,7 +472,7 @@ way `#makam-confirm` dismisses the makam prompt.
 ⚠ Same for `#fingerboard-zoom`: the **viewBox** is the zoom, so read that — `data-zoom` alone would
 pass on a control wired to nothing.
 
-⚠ Its arithmetic is **not** a browser concern: `tools/core/fingering-test.ts` owns the position
+⚠ Its arithmetic is **not** a browser concern: `tools/tests/fingering-test.ts` owns the position
 formula, the string-choice rule and the finger number. [features/instruments.md](features/instruments.md#f3--the-fingerboard-tab)
 
 ### The kanun tab (F3's second instrument)
@@ -505,7 +505,7 @@ the ones that rose and `from` for the ones that fell — so never assert it with
 clock to a change — and it is drawn as a red **frame**, never a fill, because the fill is what
 carries `data-mandal-state`.
 
-⚠ Its arithmetic is `tools/core/kanun-test.ts`. [features/kanun.md](features/kanun.md#f3--the-kanun-view)
+⚠ Its arithmetic is `tools/tests/kanun-test.ts`. [features/kanun.md](features/kanun.md#f3--the-kanun-view)
 
 ### The bar beside the instrument (2026-09-04)
 

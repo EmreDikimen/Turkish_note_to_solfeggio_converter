@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cut a LABELLING BATCH out of `reslice-all` — a page-complete subset, ranked by error evidence.
 
-    npx tsx tools/vision/page-structure.ts                              # 1. stitch stats (once)
+    npx tsx tools/dev/page-structure.ts                              # 1. stitch stats (once)
     .venv-ml/bin/python scripts/rung3/build_label_batch.py --strips 1500   # 2. cut the batch
     .venv-ml/bin/python scripts/rung3/review_ui.py                      # 3. label the `batch1` tab
     .venv-ml/bin/python scripts/rung3/build_label_batch.py --stats --batch 1   # 3b. what is it yielding?

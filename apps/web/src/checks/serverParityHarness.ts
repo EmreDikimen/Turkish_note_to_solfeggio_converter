@@ -1,7 +1,7 @@
 /**
  * Headless entry point for the CLIENT HALF of the decode-server contract (MVP W9).
  *
- * `tools/vision/parity/server-parity.ts` drives it. For each strip it returns two things:
+ * `tools/checks/parity/server-parity.ts` drives it. For each strip it returns two things:
  *
  *   1. the exact bytes the client would POST — `preprocessToCanvas` output, PNG-encoded, which is
  *      the seam described in `omr/pixels.ts`;

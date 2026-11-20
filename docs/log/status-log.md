@@ -293,7 +293,7 @@ July golds were restored. Staging a model for the live site copies the three gra
 Measured in the real app rather than argued — `smoke:page` straight at the H server FAILS with
 **0 svg and no score**; through the new re-spacing proxy it PASSES with **159 notes / 27 measures**,
 the same count the live model gives on that page. ⛔ The owner chose the **localhost-only** fix, so
-`tools/vision/h-respace-proxy.mts` sits between the server and the app and rewrites
+`tools/dev/h-respace-proxy.mts` sits between the server and the app and rewrites
 `strips[].tokens` only — `ids`, `logprobs` and `hitCap` pass through untouched. Its rule mirrors
 `data.canonical_label` and was checked against it on **123 of 123** real decodes, identical.
 No shipping file was touched; the real fix, if H is ever adopted, is one splitter in
@@ -365,7 +365,7 @@ read (33 strips): no fold button, the grab bar present, `data-collapsed="0"`.
 
 **Deployed, and installable** (owner: *"deploy edip pwa yı hazırlayabilir misin"*). ⭐ The site is a
 PWA: `manifest.webmanifest` plus four icons generated from the favicon's koma diyezi
-(`tools/browser/make-icons.ts` — 192, 512, a maskable 512 whose sign stays inside the safe circle,
+(`tools/dev/make-icons.ts` — 192, 512, a maskable 512 whose sign stays inside the safe circle,
 and iOS's 180), linked from `index.html` with the `apple-*` tags. **No service worker**, deliberately:
 Chrome no longer requires one to install, and a caching worker keeps serving the old bundle after a
 deploy. ⚠ Named `.webmanifest` because `prune-dist.mjs` refuses any `.json` at the dist root; its
@@ -476,7 +476,7 @@ paths. A yes is remembered for the visit; a no given on merely opening the tab i
 or each Nota → Enstrüman trip would ask again. Measured on a phone-sized page: pick → asked, sound
 unchanged; no → still `sine`; yes → goes ahead; decline on opening, then back and forth → **not**
 asked again; a pick from the list → asked. `smoke:editor` gained six checks and answers the
-question through `tools/browser/voicePrompt.ts`.
+question through `tools/checks/voicePrompt.ts`.
 
 **Checks:** `npm test` all passed (including 18 new retuning asserts in `fingering-test.ts`),
 `typecheck` clean, `smoke:editor` ALL PASS, `smoke:phone` now runs all four sizes through with no
@@ -1468,7 +1468,7 @@ was either proven duplicate (`cmp`), proven unread (grep over `apps/`, `tools/`,
 
 **Later the same day — the build outputs that had settled in the working tree (5.8 MB).** The two sol
 klarnet audit pages (`klarnet-duzenleyici.html`, `klarnet-parmak-tablosu.html`, 1.3 MB) are
-**generated** by `tools/core/clarinet-editor.ts` and `clarinet-chart.ts`, and `.gitignore` already
+**generated** by `tools/dev/clarinet-editor.ts` and `clarinet-chart.ts`, and `.gitignore` already
 said so in a comment — *"they inline a 460 KB photo, so they are rebuilt rather than committed"* — so
 deleting them restored the intended state rather than changing it. ⚠ **Checked before deleting, in
 this order**: the fingering table lives in `CLARINET_FINGERINGS` (`packages/core/src/clarinet.ts`) and
@@ -1551,7 +1551,7 @@ version is kept because it is the only evidence in this data that two visits are
 is how METRICS.md established "at least one real stranger" (Chrome/150 against Chrome/151, and
 browsers never downgrade). And an `X11; Linux x86_64` user-agent is **not** a Linux machine, it is
 Chrome for Android under "Request desktop site"; that confusion already cost one wrong entry there,
-so `tools/analytics/visits-test.ts` pins it, along with Edge and Opera not reading as Chrome.
+so `tools/tests/visits-test.ts` pins it, along with Edge and Opera not reading as Chrome.
 
 **Who is deliberately not counted:** the dev server, anything under `navigator.webdriver` (⚠
 load-bearing — `smoke:live` and `smoke:build` drive the real site and would otherwise be most of the
@@ -1630,7 +1630,7 @@ visitor's machine when the server is unreachable. ⚠ The model did not move and
 weights come from `VITE_WEIGHTS_URL`, so the live site is still Round 2.
 
 **The fix** is `perf.doc` in place of `doc`, one line, with the `useCallback` dependency moved to
-match. `tools/core/usul-test.ts` gains a block that pins it: the written track stops early (the ⛔
+match. `tools/tests/usul-test.ts` gains a block that pins it: the written track stops early (the ⛔
 half, so the bug cannot come back unnamed), the performance track reaches the last bar, and — the
 load-bearing one — a page with **no** repeat produces a byte-identical track either way, which is
 what says the fix costs nothing on the pages that were already right.
@@ -1760,7 +1760,7 @@ and a kanun course is looked up by an exact **written** koma — a fractional on
 belongs to the timeline and to nothing else.
 
 **Why no check caught it.** Every makam assertion in the tree tested the table, not the path from it
-to the speaker; the browser smokes drive the picker and never listen. `tools/core/makam-test.ts` is
+to the speaker; the browser smokes drive the picker and never listen. `tools/tests/makam-test.ts` is
 new and closes that: it builds a fixture with a `meta` event and a repeat, and asserts BOTH that the
 old keying bends `Mi5` and that the re-keyed one bends only the segah, in every copy.
 
@@ -2266,7 +2266,7 @@ was laid out for a mouse on a wide window, while `package.json`'s own descriptio
 is the product"* since the first commit, and the comment on `.kv-fingerboard__svg` already records
 that *every human who has opened the deployed app so far was on a phone*.
 
-**What `tools/browser/phone-probe.ts` found**, at 375×667, 390×844, 412×915 and 744×1133:
+**What `tools/checks/phone-probe.ts` found**, at 375×667, 390×844, 412×915 and 744×1133:
 
 | Finding | Measured |
 |---|---|
@@ -3228,7 +3228,7 @@ to do in one go; splitting them means a mis-aimed click no longer rewrites three
 `closedTupletAt` — the function that decides what actually gets drawn — whether the group it now
 finds is the intended one. That is not belt-and-braces: a stray unclosed tuplet fraction sitting just
 before the window makes `tupletGroupsIn` open its run early and close a bracket over the **wrong**
-three notes, and no rule about durations can see that. `tools/core/edits-test.ts` builds that exact
+three notes, and no rule about durations can see that. `tools/tests/edits-test.ts` builds that exact
 bar and checks the slide is refused.
 
 **Nothing about the corpus moved.** `rhythm.ts` gained functions and changed none, so rendered strips
@@ -3265,7 +3265,7 @@ page — a bar inside a repeat has two.
 the unfolded written score with the old flattened document: **1,720 pages, 0 changed**. The same
 invariant is checked on hand-written token streams in `stitch-test.ts` (8 cases, repeats, voltas,
 D.C., coda and segno), and the maps that move the cursor have their own file,
-`tools/core/structure-test.ts`. Effect: **68.4% of pages fold, and the page is 29.1% shorter**
+`tools/tests/structure-test.ts`. Effect: **68.4% of pages fold, and the page is 29.1% shorter**
 ([../METRICS.md](../METRICS.md)).
 
 **Checked in the real app** (`smoke:app`, 2026-08-30): a 16-crop page reads to **28 written bars
@@ -3438,7 +3438,7 @@ function, no search and no thrashing to guard against. Measured over the four sc
   **cut through the middle**. `fitAspect` grows the window to the full view's shape, and the height
   cap in `app.css` had to be rewritten as a **max-width** for the same reason. Neither was visible
   from the code.
-- **Checks: 46 in `tools/core/kanun-test.ts` (now in `npm test`), 20 in `smoke:editor` — 207 browser
+- **Checks: 46 in `tools/tests/kanun-test.ts` (now in `npm test`), 20 in `smoke:editor` — 207 browser
   checks ALL PASS.** ⚠ The load-bearing browser assertion is **one lever up per course at every
   sample taken across a whole playback**, which is the state machine's invariant and the first thing
   a leak in the animation frame would break. ⚠ It also asserts the opening setting **differs between
@@ -5456,7 +5456,7 @@ with W8 being dropped for catching 26.3% at a 10% budget. ⚠ The first run of t
 means anything on the 3,755 rows carrying an independent label. Both the result and the trap are in
 [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md).
 
-**What is on disk and works, unconsumed:** `tools/vision/page-structure.ts` and
+**What is on disk and works, unconsumed:** `tools/dev/page-structure.ts` and
 `scripts/rung3/build_page_queue.py`, plus a built 150-page queue. Kept rather than deleted because
 this project's own rule is that a corpus claim needs a re-runnable script behind it, and the three
 numbers above are now such claims.
@@ -5514,7 +5514,7 @@ rendered together.
 **Found rather than planned.** Picking up Track B's next action (Lever 1 step 2) turned up a **third**
 uncommitted change in the tree beside F3 and the staccato distractor, which STATUS did not mention: a
 pale-staff-line binarization fallback in the slicer, ported to both sides, with a new
-`tools/vision/binarize-test.ts` already wired into `npm test` — and **no documentation anywhere**. It
+`tools/tests/binarize-test.ts` already wired into `npm test` — and **no documentation anywhere**. It
 had to be landed first, because the re-slice Lever 1 needs would otherwise have moved the binarizer
 and the geometry in the same step, which is the mistake Round 2 and the tuplet A/B were built to stop
 repeating.
@@ -5756,7 +5756,7 @@ an open string land at ratio 0 *exactly* for the note that should be played open
 **What it cost:** `packages/core/src/fingering.ts` (the maths, portable),
 `apps/web/src/ui/fingerboardGeometry.ts` (every pixel, in one place),
 `apps/web/src/Fingerboard.tsx` (drawing and the clock), 38 assertions in
-`tools/core/fingering-test.ts`, and a section in `smoke:editor`. `npm test`, `typecheck` and
+`tools/tests/fingering-test.ts`, and a section in `smoke:editor`. `npm test`, `typecheck` and
 `smoke:editor` all pass, and the built `dist/` was driven headlessly to prove the photo is served and
 the marker tracks in the production bundle — dev mode cannot prove that.
 
@@ -5955,7 +5955,7 @@ were decayed-tail noise. And the attack guard's first version measured time-to-*
 correct samples because a low pluck has a broad top. The lesson each time was the same: a measurement
 that looks principled can still be measuring the wrong quantity.
 
-**Also landed:** `tools/audio/serve-voices.ts` (`npm run serve:voices` + `dev:voices:local`), so a
+**Also landed:** `tools/dev/serve-voices.ts` (`npm run serve:voices` + `dev:voices:local`), so a
 voice can be heard before it is published — a plain static server cannot do it, because dev serves
 under COEP `require-corp`. Both kanun bugs were found this way, locally, before any upload.
 
@@ -6456,7 +6456,7 @@ noise burst — so the feature works with no download, no licence question and n
 
 ⚠ **The risk in F2 is data, and it is unresolved.** All 10 usuls have a drafted `strokes` table; six
 are the standard simple forms, four are marked `[derived]` because they are our reduction of that
-usul's beat grouping rather than a quoted pattern. The new `tools/core/usul-test.ts` checks they are
+usul's beat grouping rather than a quoted pattern. The new `tools/tests/usul-test.ts` checks they are
 **well-formed** — inside the cycle, ascending, opening on a düm, and lining up to the millisecond
 with the metronome wherever both name the same position. It cannot check they are musically right.
 A wrong Düyek is obvious to anyone who knows the repertoire and invisible to every test we have.
@@ -6935,7 +6935,7 @@ loads on startup, then safalar getirdiniz.
 
 ⚠ **`apps/web/public/sample.json` (aldanma) is still on disk, deliberately.** It is out of the UI,
 not out of the repo: `npm test`'s round-trip corpus reads it **by name**
-(`tools/render/stitch-test.ts`), and the manual checks drive it through `?score=/sample.json`.
+(`tools/tests/stitch-test.ts`), and the manual checks drive it through `?score=/sample.json`.
 Deleting the file would break the test corpus for no gain — it is gitignored anyway (SymbTr-derived,
 not redistributed).
 
@@ -7542,7 +7542,7 @@ That also keeps the fractional komas (−1.5) away from every speller.
 **And a trap in the checks.** The new prompt is a modal with a full-viewport backdrop, so
 `app-smoke` and `page-smoke` would have failed at their first click after a decode with "element
 intercepts pointer events" — a green-to-red that has nothing to do with the feature.
-`tools/browser/makamPrompt.ts` is the shared dismissal; `build-smoke`/`live-smoke` read text only
+`tools/checks/makamPrompt.ts` is the shared dismissal; `build-smoke`/`live-smoke` read text only
 and needed nothing. `smoke:app` passes end to end and reads its real page as **Uşşak**.
 
 ⚠ **Not deployed.** The live site plays as written until the next rebuild-and-redeploy, which the
@@ -7613,7 +7613,7 @@ walkthrough rather than a deploy: [phases.md § Putting the app online — step 
 **Closing note, written after the deploy: the last check had to be built, because the lock broke the
 existing one.** Setting `ALLOWED_ORIGINS` means a localhost preview is refused by the decode server,
 so `smoke:build` — the check written specifically to run the artifact that ships — could no longer
-reach the shipped configuration. `npm run smoke:live` (`tools/browser/live-smoke.ts`) drives the
+reach the shipped configuration. `npm run smoke:live` (`tools/checks/live-smoke.ts`) drives the
 deployed site instead, and it **passed on both paths**: server **49.8 s**, fallback **73.0 s** with
 the weights coming from the Hub over the real network, same score, no page errors. The localhost dev
 origins were then added back to `ALLOWED_ORIGINS` so `dev:web` still works, which is a convenience
@@ -8055,7 +8055,7 @@ Both candidate fixes are behaviour changes owing their own measurement; see STAT
 Numbers: [METRICS-SLICER.md § Slicer port parity — does the TypeScript reproduce the Python?](../METRICS-SLICER.md#slicer-port-parity--does-the-typescript-reproduce-the-python).
 
 **The verdict that mattered was the decode arm, and it was worth building properly.**
-`tools/vision/parity/arm-a.ts` slices a page with the port, decodes those crops, decodes Python's
+`tools/checks/parity/arm-a.ts` slices a page with the port, decodes those crops, decodes Python's
 crops for the same page, and compares **pairwise on (system, window)**: **12 A-only against 4 B-only
 discordant pairs on 450 strips, McNemar exact p = 0.077**, arm A 87.78% vs arm B 86.00%, **0 strips
 unmatched**. The pairing is what makes it readable — the level comparison the plan originally asked
@@ -8367,7 +8367,7 @@ pads. Sub-quantization noise does not reach the output. Numbers:
 
 **A side effect worth more than the probe: the browser OMR gate is now a command.**
 `window.__gateResult` had been exposed since the gate was written and had never once been used —
-the gate was checked by opening a browser and reading it. `tools/browser/run-page.ts` runs any
+the gate was checked by opening a browser and reading it. `tools/checks/run-page.ts` runs any
 harness page headlessly. The wrinkle: the gate reports a single boolean, and that boolean has read
 `FAIL` ever since the known ORT-web int8 `\tup3` wobble, so it cannot distinguish that from a real
 regression. The runner therefore tallies the page's own ✓/✗ marks and the script pins

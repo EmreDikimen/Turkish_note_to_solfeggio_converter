@@ -36,7 +36,7 @@ export interface OpenString {
    * Kept beside `openHz` so the derivation is checkable rather than a magic number.
    */
   concertKoma: number;
-  /** `koma53ToFreq(concertKoma)`, written out. Pinned by `tools/core/fingering-test.ts`. */
+  /** `koma53ToFreq(concertKoma)`, written out. Pinned by `tools/tests/fingering-test.ts`. */
   openHz: number;
 }
 
@@ -201,7 +201,7 @@ export function choiceOfString(s: OpenString): TuningChoice | null {
  *
  * ⚠ IT RETURNS THE SHIPPED `DEFAULT_VIOLIN_TUNING` OBJECT, id `"standard"`, WHENEVER THE FOUR
  * PITCHES ARE BACK WHERE THEY STARTED. `#fingerboard[data-tuning]` is read by
- * `tools/browser/editor-smoke.ts`, and a tuning that says `"custom"` while sounding standard would
+ * `tools/checks/editor-smoke.ts`, and a tuning that says `"custom"` while sounding standard would
  * be a lie in the DOM as well as a failed check. Any other set of pitches is `"custom"`.
  *
  * ⚠ The string's `label` moves with its pitch. A string still labelled "Sol" while sounding Fa is

@@ -38,7 +38,7 @@ import { MAKAM_SIGNATURES } from "./makamSignatures";
  *
  * Deliberate small twin of `AEU_TOKEN` in `packages/core/src/labels/lilypond.ts`: `packages/core` must not
  * import from `tools/`, and the label path is load-bearing enough that it does not move here.
- * `tools/render/stitch-test.ts` round-trips every signature in `MAKAM_SIGNATURES` through both
+ * `tools/tests/stitch-test.ts` round-trips every signature in `MAKAM_SIGNATURES` through both
  * vocabularies, so a drift between the two copies fails a test instead of silently breaking
  * detection.
  */

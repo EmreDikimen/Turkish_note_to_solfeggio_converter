@@ -188,8 +188,9 @@ async function main() {
     // The makam prompt's backdrop would swallow every click below — accept it first.
     await dismissMakamPrompt(page);
     await page.locator("#view-sheet").click();
-    await page.waitForSelector("svg", { timeout: 30000 });
-    svgCount = await page.locator("svg").count();
+    // The score's own SVG, not the first <svg> on the page (the hidden 0×0 icon sprite).
+    await page.waitForSelector(".kv-score svg", { timeout: 30000 });
+    svgCount = await page.locator(".kv-score svg").count();
     const playBtn = page.locator("#play");
     playable = await playBtn.isEnabled();
     await playBtn.click();

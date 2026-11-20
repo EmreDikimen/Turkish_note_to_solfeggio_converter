@@ -101,8 +101,10 @@ async function main() {
   // The score must actually be on screen and playable. Ids, not button LABELS — the labels are
   // user-facing copy (and are Turkish).
   await page.locator("#view-sheet").click();
-  await page.waitForSelector("svg", { timeout: 30000 });
-  const svgCount = await page.locator("svg").count();
+  // The score's own SVG, not the first <svg> on the page: that is the hidden 0×0 icon sprite,
+  // which never becomes visible and timed this check out.
+  await page.waitForSelector(".kv-score svg", { timeout: 30000 });
+  const svgCount = await page.locator(".kv-score svg").count();
 
   const playBtn = page.locator("#play");
   const playable = await playBtn.isEnabled();

@@ -128,7 +128,6 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
 - `decode-cli.ts` — CLI for the decoder. Run:
   `npx --yes tsx tools/render/decode-cli.ts [score.json | "<label string>"]`. Shows the *written* AEU
   note (snapped), so compare against the harness Sheet view, not the raw exact koma.
-- `demo.ts` — prints strips from a sample score. Run: `npx --yes tsx tools/render/demo.ts [score.json]`.
 - `render.ts` — Playwright batch renderer (drives the harness by URL; crops the live sheet → PNG +
   label + per-piece manifest shards + contact sheet; chunked + resumable). Since `strips_v3`:
   carry (`measure`) mode is dominant, conventional signatures come from `data/makam_signatures.json`

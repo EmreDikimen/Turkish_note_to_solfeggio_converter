@@ -17,8 +17,8 @@ Local smoke test (Mac, MPS — shake the wiring out BEFORE paying for Colab Pro)
     .venv-ml/bin/python src/vision/train.py --out-dir data/checkpoints/rung2-smoke \\
         --limit-train 24 --limit-val 8 --max-steps 6 --eval-every 3 --batch-size 4
 
-Colab: step-by-step guide in docs/COMMANDS.md, ready-made notebook in
-notebooks/rung2_colab.ipynb, upload package built by scripts/make_colab_zip.sh.
+Colab: step-by-step guide in docs/COMMANDS.md; the ready-made notebook is
+the round's notebook under notebooks/, upload package built by scripts/make_round4_colab_zip.sh.
 Data lives on the VM disk (NOT read from mounted Drive — Drive I/O is too slow for a
 dataloader); checkpoints DO go to Drive so a killed session resumes with --resume.
 """

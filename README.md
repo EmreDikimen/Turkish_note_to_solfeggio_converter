@@ -102,9 +102,7 @@ python3 -m venv .venv-ml
 source .venv-ml/bin/activate
 pip install -r requirements.txt
 
-# a SymbTr score straight to 53-TET audio, no machine learning involved
-python3 scripts/symbtr_to_audio.py data/raw/<score>.txt -o data/processed/out.wav --info
-# or to a note-model JSON the web app can open
+# a SymbTr score to a note-model JSON the web app can open
 python3 scripts/symbtr_to_json.py data/raw/<score>.txt -o out.json
 ```
 

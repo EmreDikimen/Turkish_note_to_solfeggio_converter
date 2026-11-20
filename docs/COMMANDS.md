@@ -479,11 +479,6 @@ npx tsx tools/vision/parity/rescue-check.ts
     # ⚠ A carried fix is a SUGGESTION, never a verdict: a span match is the same BARS and never the
     # same pixels (0 of 1,215 crops byte-identical). Writes no verdict; --apply is idempotent, backs
     # up to .bak-oldfix, and is safe with the review UI open. Report only without --apply.
-.venv-ml/bin/python scripts/rung3/unaccept_sig.py --sig-has '\komaSharp' [--dry-run]
-    # Sends MACHINE-accepted strips back to pending when the label's \sig block carries the given
-    # accidental — because there "label agrees with decode" is circular: the signature is the one
-    # part of a label the MODEL voted on. Never undoes a human read. It was run on b8-full and the
-    # owner then corrected 12 rows, all 12 carrying a \sig block (docs/BACKLOG.md item 9).
 .venv-ml/bin/python scripts/rung3/auto_accept_agree.py [--dry-run]
     # b8-full: draft `ok` (by=agree) on every pending row whose LABEL and model DECODE are the same
     # token-for-token, and carry the 201 hand-read b8-audit verdicts in first. 2,896 drafted / 842
@@ -508,27 +503,6 @@ npx tsx tools/vision/parity/rescue-check.ts
     # the exam, RE-CUT on today's slicer (owner, 2026-08-21). `--plan` prints the emit command; that
     # emit must write to --strips-root data/real/strips_examv3 and NEVER to data/real/strips, which
     # the frozen exam hardlinks from — re-slicing there rewrites the pixels its gold describes.
-.venv-ml/bin/python scripts/rung3/staccato_falsedot_score.py --checkpoint <ckpt> [--compare <ckpt>]
-    # Lever 6's PRIMARY: the staccato-triggered false-dot rate on the two paired 110-strip pools.
-    # The augmentation dot is a SUFFIX inside a duration token, not a token, so eval_omr.py has no
-    # per-class row for it and never will. Both pools' gold carries zero dotted durations by
-    # construction. --compare pairs a second checkpoint per strip with an exact McNemar.
-.venv-ml/bin/python scripts/rung3/staccato_realdot_score.py --checkpoint <ckpt> [--compare <ckpt>]
-    # the same read inverted — real dots LOST, gated on easy+mid only, hard tier printed never gated
-.venv-ml/bin/python scripts/rung3/make_usul_pools.py --plan
-    # the DOTTED (USUL) BARLINE's paired pools, built the same way the staccato ones were: two
-    # renders of one 40-piece list differing ONLY in --usul-barline. ⚠ It does NOT re-derive which
-    # pieces the coin picked — it MEASURES it, by sha256 of the two renders' PNGs, so no copy of
-    # hashStr/mulberry32/USUL_BEAM_GROUPS exists in Python to drift from the renderer. Selects
-    # strips whose gold carries ZERO \repstart, so "a repeat sign appeared at all" is the metric.
-    # `--plan` prints the two render commands; pass the OTHER two final-render flags to BOTH.
-.venv-ml/bin/python scripts/rung3/usul_falserep_score.py --checkpoint <ckpt> [--compare <ckpt>]
-    # that flag's PRIMARY: the false-`\repstart` rate on the paired pools. Exists because the final
-    # render carries THREE flags at once, so a general movement is unattributable — this makes two
-    # of the three attributable instead of one (the concave tuplet mark has no instrument and never
-    # claimed one). \repend is reported beside it, never gated with it: different glyph, different
-    # place in the bar, different cause. ⚠ Prices the model's RESPONSE to the mark, not the realism
-    # of USUL_BAR_RATE, which is still chosen not measured (docs/BACKLOG.md item 5).
 .venv-ml/bin/python scripts/rung3/promote_labels.py --dir data/real/rung3/strips_h1 \
     --strips-root data/real/strips_v2 --vocab h --audit-csv full_audit.csv --audit-csv rail_added.csv
     # Round 4's promote as RUN 2026-09-16 (185 replaced, 4 removed, 0 rejects). ⚠ --vocab h is not
@@ -550,13 +524,6 @@ sh scripts/make_round4_colab_zip.sh
     # zip's byte count into notebooks/round4_vocab_ab_colab.ipynb. ⛔ Refuses until _realval_v2r
     # exists (repair_realval_v2.py --build). Drops the strips_h1 labels over 99 OLD ids inside the
     # zip only — the Mac's pool is never edited. ⚠ Re-run it after ANY pool change, then re-upload.
-sh scripts/make_round3_colab_zip.sh final
-    # the FINAL run's upload package: corpus strips_v7_final (3 flags) + strips_b8 as the ONLY real
-    # pool. ⚠ The four ARMS keep the retired pools on purpose — that is what they trained on — so the
-    # pool set is per-arm, not global. The render_config gate now checks usulBarline and concaveTuplet
-    # against the arm's wanted value instead of refusing them outright. Notebook:
-    # notebooks/round3_final_colab.ipynb (the staccato notebook is that ARM's record — do not edit it
-    # into the final run).
 .venv-ml/bin/python scripts/build_makam_signatures.py \
     --from-json data/makam_signatures.json --ts-out packages/core/src/makamSignatures.ts  # TS copy only
 npx --yes tsx tools/render/render.ts --pieces data/pieces_v4.json --out data/synthetic/<set> [--thin-sharps]
@@ -607,17 +574,13 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 > never used Colab. This doc is the context around the notebooks: what Colab is, which plan to buy,
 > how not to lose a run, and what "done" looks like.
 >
-> **One notebook per round — never re-point an old one.** Each carries its round's corpus paths,
+> The notebooks of Rounds 1–3 and Rung 2 were deleted on 2026-11-20 (git keeps them; their
+> protocols are in [archive/rounds.md](archive/rounds.md)). **One notebook per round — never re-point an old one.** Each carries its round's corpus paths,
 > recipe and caveats in its own cells, so a stale path can't silently train on the wrong data:
 >
 > | Round | Notebook | Zip | Corpus |
 > |---|---|---|---|
-> | Rung 2 | `notebooks/rung2_colab.ipynb` | `tnc_rung2_colab.zip` | `strips_v2_2` |
-> | Round 1 | `notebooks/round1_colab.ipynb` | `tnc_round1_colab.zip` | `strips_v3` + real pools |
-> | **Round 2** | **`notebooks/round2_colab.ipynb`** | `tnc_round2_colab.zip` (`scripts/make_round2_colab_zip.sh`) | `strips_v4` + real pools |
-> | **Round 3 — the tuplet A/B** | **`notebooks/round3_tuplet_ab_colab.ipynb`** | `tnc_round3_<arm>_colab.zip` (`scripts/make_round3_colab_zip.sh tupnew\|tupctl`) | `strips_v5_tupnew` / `strips_v5_tupctl` + real pools |
-> | **Round 3 — arm 1, the scan profile** | **`notebooks/round3_scan_profile_colab.ipynb`** | `tnc_round3_scan_colab.zip` (`scripts/make_round3_colab_zip.sh scan`, 688 MB) | `strips_v5_tupnew` + real pools — **the same corpus as its control** |
-> | **Round 3 — the staccato arm** | **`notebooks/round3_staccato_colab.ipynb`** | `tnc_round3_stac_colab.zip` (`scripts/make_round3_colab_zip.sh stac`, 704 MB) | `strips_v6_stac` + real pools — tupnew re-rendered with `--staccato-noise`, **manifest matched to the control's row set** |
+> | **Round 4 — the vocabulary A/B (both arms)** | **`notebooks/round4_vocab_ab_colab.ipynb`** | `tnc_round4_colab.zip` (`scripts/make_round4_colab_zip.sh`) | `strips_v7_final` + `strips_h1` |
 >
 > ⚠ **The scan arm ships no corpus of its own, and that is the design.** Its only variable is the
 > augmentation mix (`--photo-share 0.20 --scan-share 0.25`), chosen at training time, so its control
@@ -649,7 +612,6 @@ Long jobs are chunked and resumable — Ctrl-C is safe, re-running skips finishe
 > | Job | Notebook | Zip | Model | Window | Out |
 > |---|---|---|---|---|---|
 > | tuplet pass (2026-07-18) | `rung3_decode_colab.ipynb` | `tnc_rung3_decode_colab.zip` | `rung3-labeler` | `--measures-per-strip 1` | `data/real/strips` |
-> | **2026-07-29 re-slice** | **`rung3_reslice_colab.ipynb`** | `tnc_reslice_colab.zip` + `tnc_round2_ckpt.zip` | `round2-stage2-best` | default (3) | `data/real/strips_v2` |
 >
 > Build the package with `scripts/rung3/make_decode_zip.sh <pages-list> <zip-name>`; both
 > arguments are optional and the pages list keeps its own filename inside the zip.
@@ -700,15 +662,15 @@ Suggested path: do the free-tier shakeout first (§4), buy Pro the same day the 
 
 1. **Build the upload package** (on the Mac):
    ```bash
-   sh scripts/make_colab_zip.sh        # → data/colab/tnc_rung2_colab.zip (~320 MB)
+   sh scripts/make_round4_colab_zip.sh   # → data/colab/tnc_round4_colab.zip
    ```
-   One zip, mirroring the repo layout: the `src/vision` training kit + `data/split.json` +
-   `strips_v2_2` (manifest + PNGs). Nothing else is needed on the Colab side — no git.
+   One zip, mirroring the repo layout: the `src/vision` training kit, the split, the corpus and the
+   real pools. Nothing else is needed on the Colab side — no git.
 2. **Upload it to Drive**: go to [drive.google.com](https://drive.google.com), create a folder
-   **`tnc`** in My Drive, drag `tnc_rung2_colab.zip` into it. (~5–15 min on a home connection;
+   **`tnc`** in My Drive, drag the zip into it. (~5–15 min on a home connection;
    one-time — later sessions reuse it.)
 3. **Open the notebook**: go to [colab.research.google.com](https://colab.research.google.com) →
-   `Upload` → pick `notebooks/rung2_colab.ipynb` from this repo.
+   `Upload` → pick `notebooks/round4_vocab_ab_colab.ipynb` from this repo.
 4. **Pick a GPU**: menu `Runtime → Change runtime type → Hardware accelerator`. Free tier: T4.
    Pro: L4 (best value) or A100 (fastest).
 

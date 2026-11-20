@@ -23,9 +23,9 @@ import {
   type MakamDetection,
   type NoteModelDocument,
 } from "@turkish-omr/core";
-import { MakamIntonation } from "./ui/MakamIntonation";
-import { TR } from "./ui/strings";
-import { Modal } from "./ui/kit/Modal";
+import { MakamIntonation } from "../MakamIntonation";
+import { TR } from "../strings";
+import { Modal } from "../kit/Modal";
 
 export function MakamModal({
   detection,

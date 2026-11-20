@@ -42,8 +42,8 @@ import {
   tuningChoices,
   type ViolinTuning,
 } from "@turkish-omr/core";
-import { TR } from "./ui/strings";
-import { Modal } from "./ui/kit/Modal";
+import { TR } from "../strings";
+import { Modal } from "../kit/Modal";
 
 export function TuningModal({
   tuning,

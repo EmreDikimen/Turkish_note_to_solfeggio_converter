@@ -7,7 +7,7 @@
  * which reads `window.__omrStrips`. This is a developer tool and lives in the Gelişmiş panel.
  */
 
-import type { ExportStrip } from "../stripExport";
+import type { ExportStrip } from "../score/stripExport";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
 

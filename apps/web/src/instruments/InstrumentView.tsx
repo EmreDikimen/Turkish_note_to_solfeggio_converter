@@ -8,10 +8,10 @@ import { Fingerboard } from "./Fingerboard";
 import { Kanun } from "./Kanun";
 import { Clarinet } from "./Clarinet";
 import { MeasureCard } from "./MeasureCard";
-import type { PlayStep } from "./SheetView";
-import { VOICES, type VoiceId } from "./audio/instruments";
-import type { VoiceStatus } from "./webAudioBackend";
-import { TR } from "./ui/strings";
+import type { PlayStep } from "../score/SheetView";
+import { VOICES, type VoiceId } from "../audio/instruments";
+import type { VoiceStatus } from "../audio/webAudioBackend";
+import { TR } from "../ui/strings";
 
 /** The picker's own name for a voice — the hints have to name the one that is actually sounding. */
 function voiceLabel(id: VoiceId): string {

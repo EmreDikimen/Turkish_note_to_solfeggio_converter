@@ -24,8 +24,8 @@ import {
   mandalRect,
   mandalWindow,
   nutX,
-} from "./ui/kanunGeometry";
-import { TR } from "./ui/strings";
+} from "./kanunGeometry";
+import { TR } from "../ui/strings";
 
 /**
  * The kanun tab (feature F3) — which course is plucked, and where the mandals stand, as the piece

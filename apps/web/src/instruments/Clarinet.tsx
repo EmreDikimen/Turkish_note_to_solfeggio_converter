@@ -8,8 +8,8 @@ import {
   type NoteModelDocument,
   type Timeline,
 } from "@turkish-omr/core";
-import { BACK_INSET, HOLES, IMAGE, MARKERS, VIEW_H, VIEW_W, VIEW_X } from "./ui/clarinetArt";
-import { TR } from "./ui/strings";
+import { BACK_INSET, HOLES, IMAGE, MARKERS, VIEW_H, VIEW_W, VIEW_X } from "./clarinetArt";
+import { TR } from "../ui/strings";
 
 /**
  * The sol klarnet view (feature F3, third instrument) — which holes are covered, and how tightly

@@ -18,7 +18,7 @@
  *
  * How it's organized: a viewBox-sized coordinate space, one function per thing that has a place in
  * it, and two windows (whole instrument / the mandals close up). `packages/core/src/kanun.ts` owns
- * which course and which mandal; `apps/web/src/Kanun.tsx` owns only the drawing and the clock.
+ * which course and which mandal; `apps/web/src/instruments/Kanun.tsx` owns only the drawing and the clock.
  */
 
 /** The drawing's own coordinate space. The SVG viewBox is a window onto this. */

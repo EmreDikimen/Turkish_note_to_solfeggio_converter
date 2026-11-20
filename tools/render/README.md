@@ -97,7 +97,7 @@ clef + makam key signature so it's decodable on its own.
 ## Generating the image+label pairs
 
 We **crop** strips out of the harness's real full-score render (reusing the verified engraving), so no
-note is re-drawn. The harness ([SheetView.tsx](../../apps/web/src/SheetView.tsx)) reports each measure's
+note is re-drawn. The harness ([SheetView.tsx](../../apps/web/src/score/SheetView.tsx)) reports each measure's
 geometry; the in-page **Strip panel** ([App.tsx](../../apps/web/src/App.tsx), Sheet view) lists strips,
 highlights a strip's crop rectangle, and shows its label + decoded notes for a manual check.
 `render.ts` then batches it:

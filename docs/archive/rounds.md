@@ -2746,7 +2746,7 @@ be attributed.
 1. ✅ **DONE 2026-08-12 — redraw the mark**: break the arc, put the digit in the gap, raise the arc
    share above its current 70% (owner: arcs are more dominant than that) — now 90%. **Pixels only** —
    the `\tup3` token is identical either way, so no label moves and no re-labelling is needed.
-   `TUPLET_MARK` + `drawTupletArc` in `apps/web/src/SheetView.tsx`. ⚠ That file is both the app's score
+   `TUPLET_MARK` + `drawTupletArc` in `apps/web/src/score/SheetView.tsx`. ⚠ That file is both the app's score
    view and the training-strip source, so this also fixes how the app draws triplets for a reader.
    Checks: `npm test`, `smoke:editor` and `verify-labels` on the pilot all pass unchanged (309/309
    exact), which is how we know the label path did not move.

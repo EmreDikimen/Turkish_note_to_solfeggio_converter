@@ -249,7 +249,7 @@ already wider than any real strip can be.
 
 ⏭ The one lever that would fill the band honestly is **tighter engraving** — the per-measure width
 is `events.length * 28 + 24` clamped to 130–420 px in
-[`SheetView.tsx`](../../apps/web/src/SheetView.tsx), and the row is then justified to full width,
+[`SheetView.tsx`](../../apps/web/src/score/SheetView.tsx), and the row is then justified to full width,
 which un-compresses a dense bar. Real editions fit more bars per row instead. Not costed, not this
 round.
 ⏭ What replaces it: **watch the band**. Long-strip errors get their own column when the H arm is

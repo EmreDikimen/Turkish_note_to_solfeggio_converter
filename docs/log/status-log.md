@@ -2031,7 +2031,7 @@ now*. None of them answers *what am I playing now*. A player watching the clarin
 music in their head, or keep switching to the Nota tab and losing the fingering — and the page
 already knew the answer.
 
-**What was built.** `apps/web/src/MeasureCard.tsx` — one bar on its own stave with its clef, the
+**What was built.** `apps/web/src/instruments/MeasureCard.tsx` — one bar on its own stave with its clef, the
 makam signature and the meter, plus ‹ ›, **Ölçüyü çal**, **Ölçüyü düzenle** and **Çalınanı izle**.
 Two columns on the instrument tab, the drawing left and the card right.
 
@@ -3072,7 +3072,7 @@ Of the 1,215 crops carrying a hint, **0 are byte-identical** and **77.7% changed
 +9 px wide, height unchanged). A span match means the same BARS, never the same pixels — which is
 why the hint gets its own accept button and plain `ok` never stores it.
 
-**The dotted (usul) barline is drawn** (`drawUsulBars` in `apps/web/src/SheetView.tsx`,
+**The dotted (usul) barline is drawn** (`drawUsulBars` in `apps/web/src/score/SheetView.tsx`,
 `render.ts --usul-barline`), the third and last flag the final render was specified to carry
 (2026-08-20). It rules the usul's own beat groups inside the bar — aksak 9/8 = 2+2+2+3, so three
 rules a bar — reading the groupings already in `USUL_BEAM_GROUPS`. Coined per PIECE, because an
@@ -5754,8 +5754,8 @@ difference is a fifth of a koma — the scale of thing this view exists to show 
 an open string land at ratio 0 *exactly* for the note that should be played open.
 
 **What it cost:** `packages/core/src/fingering.ts` (the maths, portable),
-`apps/web/src/ui/fingerboardGeometry.ts` (every pixel, in one place),
-`apps/web/src/Fingerboard.tsx` (drawing and the clock), 38 assertions in
+`apps/web/src/instruments/fingerboardGeometry.ts` (every pixel, in one place),
+`apps/web/src/instruments/Fingerboard.tsx` (drawing and the clock), 38 assertions in
 `tools/tests/fingering-test.ts`, and a section in `smoke:editor`. `npm test`, `typecheck` and
 `smoke:editor` all pass, and the built `dist/` was driven headlessly to prove the photo is served and
 the marker tracks in the production bundle — dev mode cannot prove that.
@@ -9075,7 +9075,7 @@ Diagnosed in three steps, cheapest first ([rounds.md § Round 2 — photo axis, 
   2-bar koma. Real print also draws küçük's outer bars stubby either side of a full-width middle
   bar; Bravura's three are near-equal, which kills the staircase a reader recognises.
 
-**Shipped opt-in:** `drawThinSharps` (`apps/web/src/SheetView.tsx`) redraws all four AEU sharps as
+**Shipped opt-in:** `drawThinSharps` (`apps/web/src/score/SheetView.tsx`) redraws all four AEU sharps as
 SVG at real-print bar weight; `?thinsharps=1` / `--thin-sharps`, off by default. Verified in-browser
 (every AEU sharp replaced, 0 left on Bravura). Artifacts: `data/real/rung3/sharp_probe/`.
 **Still owed:** the frequency imbalance (see [../METRICS.md](../METRICS.md)).

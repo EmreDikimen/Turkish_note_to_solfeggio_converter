@@ -6,7 +6,7 @@ Why this exists (2026-10-17, a tester's Samsung phone): VexFlow 5 draws every no
 accidental and time signature as TEXT in the music font. To save a PNG the app drew that SVG into an
 image, with the font embedded in it — and a browser is not obliged to use a web font inside an image.
 Chrome does; Samsung Internet did not, and the tester's PNG had staves and stems but no noteheads.
-The robust fix is to need no font at all: `apps/web/src/exportOutline.ts` replaces each glyph with
+The robust fix is to need no font at all: `apps/web/src/export/exportOutline.ts` replaces each glyph with
 its outline from the files this script writes, and every browser draws a path the same way.
 
 Python is correct here for the same reason as `prepare_strokes.py`: it is data preparation, run once,

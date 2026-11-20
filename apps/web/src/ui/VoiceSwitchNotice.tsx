@@ -32,7 +32,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { VOICES, type VoiceId } from "../audio/instruments";
-import type { VoiceStatus } from "../webAudioBackend";
+import type { VoiceStatus } from "../audio/webAudioBackend";
 import { TR } from "./strings";
 
 /** How long the "hazır" / "indirilemedi" line stays up before the notice takes itself away. */

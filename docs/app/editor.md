@@ -260,7 +260,7 @@ data. Verify on more decoded pages before promising anything.
 | Transport (play/stop/seek-to-ms) | ✅ **reused as-is 2026-08-08** — the palette's Çal is one call to `onSeekMs`, no new backend code | `webAudioBackend.ts`, `onSeekMs` in `App.tsx` |
 | **Which bar an event is in** | ✅ **built 2026-08-08** | `measureOfEvent` in `../../packages/core/src/measures.ts`, over the same `groupMeasures` the sheet and the modal use |
 | Measure-total validation | ✅ exists, needs a new role | `../../packages/core/src/measures.ts:145` |
-| **Undo/redo** | ✅ **built 2026-08-07** | `../../apps/web/src/useDocHistory.ts` |
+| **Undo/redo** | ✅ **built 2026-08-07** | `../../apps/web/src/score/useDocHistory.ts` |
 | **The armed palette** | ✅ **built 2026-08-08** | `../../apps/web/src/ui/EditPalette.tsx` + `ui/accidentals.ts` |
 | **Which notes can be a triplet** | ✅ **built 2026-08-08** | `plainTupletBase` / `tupletRunFrom` / `closedTupletAt` in `../../packages/core/src/labels/rhythm.ts`, beside the functions that DRAW the bracket |
 | **Where a held mark's handles may land** | ✅ **built 2026-08-30** | `tupletEdgeTo` in the same file — a real triplet slides, a broken one is repaired, and its last check is a simulation against `tupletGroupsIn`, not a rule |
@@ -338,7 +338,7 @@ cannot half-apply. Two notes on what was deliberately *not* changed:
    is an engrave dependency — a second, non-stable callback prop would re-engrave forever. Filled in
    the walk that already records `NotePos` for the playhead.
 2. ✅ **DONE 2026-08-07 — selection, the ✕, and drag-to-change-pitch.**
-3. ✅ **DONE 2026-08-07 — undo/redo** (`apps/web/src/useDocHistory.ts`), with same-gesture
+3. ✅ **DONE 2026-08-07 — undo/redo** (`apps/web/src/score/useDocHistory.ts`), with same-gesture
    coalescing so one drag (on the sheet or in the piano roll) is one undo entry.
 4. ✅ **DONE 2026-08-08 — the palette, armed-tool model.** `apps/web/src/ui/EditPalette.tsx`: six
    note values as Bravura glyphs (SMuFL `U+E1D2/E1D3/E1D5/E1D7/E1D9/E1DB`) and the AEU signs, armed

@@ -2,7 +2,7 @@
  * Answer the app's "download this voice?" question, for the Playwright checks.
  *
  * Why a shared helper: the question is a modal with a full-viewport backdrop
- * (`apps/web/src/VoiceDownloadModal.tsx`), raised whenever a recorded voice would start
+ * (`apps/web/src/ui/modals/VoiceDownloadModal.tsx`), raised whenever a recorded voice would start
  * downloading — picking one in the transport, picking an instrument on the instrument page, and
  * merely OPENING that page. Any click a check makes after one of those fails with "element
  * intercepts pointer events" until it is answered, and every caller must agree on the ids.

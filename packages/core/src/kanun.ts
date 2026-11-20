@@ -29,7 +29,7 @@
  *
  * This is pure data + maths, so it lives in core and ports to mobile unchanged — the same
  * reasoning that put `usul.ts` and `fingering.ts` here. Nothing about pixels or the DOM belongs in
- * this file; the drawing lives in `apps/web/src/ui/kanunGeometry.ts`.
+ * this file; the drawing lives in `apps/web/src/instruments/kanunGeometry.ts`.
  */
 
 import { naturalKoma } from "./notation";

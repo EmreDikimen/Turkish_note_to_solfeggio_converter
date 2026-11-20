@@ -18,9 +18,9 @@
  * `tools/checks/voicePrompt.ts`, the way `makamPrompt.ts` does for the makam prompt.
  */
 
-import type { VoiceId } from "./audio/instruments";
-import { TR } from "./ui/strings";
-import { Modal } from "./ui/kit/Modal";
+import type { VoiceId } from "../../audio/instruments";
+import { TR } from "../strings";
+import { Modal } from "../kit/Modal";
 
 export function VoiceDownloadModal({
   voice,

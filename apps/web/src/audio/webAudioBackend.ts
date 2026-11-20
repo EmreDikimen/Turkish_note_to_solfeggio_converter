@@ -27,9 +27,9 @@
  */
 
 import type { AudioBackend, PercussionHit, Stroke, Timeline } from "@turkish-omr/core";
-import { loadStrokeKit, type StrokeBuffers } from "./audio/loadStrokeKit";
-import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
-import { loadInstrument, voiceCached, type VoiceBuffer } from "./audio/loadInstrument";
+import { loadStrokeKit, type StrokeBuffers } from "./loadStrokeKit";
+import { DEFAULT_KIT, type KitId } from "./strokeKits";
+import { loadInstrument, voiceCached, type VoiceBuffer } from "./loadInstrument";
 import {
   DEFAULT_VOICE,
   findVoice,
@@ -37,7 +37,7 @@ import {
   type SamplePick,
   type Voice,
   type VoiceId,
-} from "./audio/instruments";
+} from "./instruments";
 
 // A gently decaying harmonic spectrum — same idea as the Python reference synth,
 // less harsh than a pure sine.

@@ -247,7 +247,7 @@ The Rung-2 export chain rerun against the rhythm-sign checkpoint (`data/checkpoi
 Triggered by a real-image upload (neyzen.com nihavend) whose triplets misread as `16. 32`. Two
 root causes, both fixed, then a from-base retrain:
 
-1. **Renderer bug** (`apps/web/src/SheetView.tsx` `flushSub`): tuplet beams were built with
+1. **Renderer bug** (`apps/web/src/score/SheetView.tsx` `flushSub`): tuplet beams were built with
    `new Beam(sub)` — VexFlow's `autoStem` defaults **false**, forcing every tuplet stem UP, so
    ALL synthetic triplets engraved with the "3" **below** (stems up). Real Turkish scores stem
    high passages DOWN → "3" **above**; the model had never seen that orientation, so it fell back

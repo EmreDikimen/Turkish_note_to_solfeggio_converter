@@ -32,8 +32,8 @@ import {
   type TupletGroup,
 } from "@turkish-omr/core/labels/rhythm";
 import { buildTextNoise } from "./textNoise";
-import { TR } from "./ui/strings";
-import { useViewport } from "./usePhone";
+import { TR } from "../ui/strings";
+import { useViewport } from "../lib/usePhone";
 import { mulberry32 } from "@turkish-omr/core/labels/rng";
 
 // --- layout constants -------------------------------------------------------

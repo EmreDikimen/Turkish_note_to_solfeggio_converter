@@ -18,7 +18,7 @@ Where a number has no date it is from 2026-09-26.
 
 ## The three viewport questions, and why they are three
 
-`apps/web/src/usePhone.ts` is the only place any of them is asked. ⛔ **Never merge them.**
+`apps/web/src/lib/usePhone.ts` is the only place any of them is asked. ⛔ **Never merge them.**
 
 | Question | Test | Owns |
 |---|---|---|

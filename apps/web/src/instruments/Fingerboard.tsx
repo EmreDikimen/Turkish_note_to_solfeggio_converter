@@ -19,9 +19,9 @@ import {
   VIEW_H,
   VIOLIN_IMAGE,
   pointOnString,
-} from "./ui/fingerboardGeometry";
-import { TuningModal } from "./TuningModal";
-import { TR } from "./ui/strings";
+} from "./fingerboardGeometry";
+import { TuningModal } from "../ui/modals/TuningModal";
+import { TR } from "../ui/strings";
 
 /**
  * The fingerboard tab (feature F3) — where the finger goes on a violin, as the piece plays.

@@ -2,7 +2,7 @@
  * Dismiss the app's post-decode makam prompt, for the Playwright smoke checks.
  *
  * Why this exists as a shared helper rather than four inline copies: the prompt is a modal with a
- * full-viewport backdrop (`apps/web/src/MakamModal.tsx`), so any click a smoke check makes after a
+ * full-viewport backdrop (`apps/web/src/ui/modals/MakamModal.tsx`), so any click a smoke check makes after a
  * decode — Sheet, Play, Save JSON — fails with "element intercepts pointer events" until it is
  * closed. Every check that decodes and then clicks needs the same two lines, and they must agree
  * on the ids; one place is how they stay agreed.

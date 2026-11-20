@@ -9,8 +9,8 @@
  * ⚠ It only edits two numbers in commas; what they do is `App.tsx`'s (`displayDoc` takes the staff
  * shift, `perf` moves the tuning anchor by the difference). Nothing here builds a timeline.
  */
-import { TR } from "./ui/strings";
-import { Modal } from "./ui/kit/Modal";
+import { TR } from "../strings";
+import { Modal } from "../kit/Modal";
 
 export function TransposeModal({
   sheet,

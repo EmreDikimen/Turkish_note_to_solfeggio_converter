@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { groupMeasures, type Measure, type NoteModelDocument, type Timeline } from "@turkish-omr/core";
-import { SHEET_SIDE_MARGIN, type PlayStep } from "./SheetView";
-import { TR } from "./ui/strings";
-import { useIsPhone } from "./usePhone";
+import { SHEET_SIDE_MARGIN, type PlayStep } from "../score/SheetView";
+import { TR } from "../ui/strings";
+import { useIsPhone } from "../lib/usePhone";
 
 /**
  * One bar of the score, engraved on its own, beside the instrument (owner, 2026-09-04:

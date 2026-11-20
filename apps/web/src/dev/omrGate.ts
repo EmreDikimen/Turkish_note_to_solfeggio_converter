@@ -17,9 +17,9 @@ import {
   detokenize,
   greedyDecode,
   stripEos,
-} from "./omr/decode";
-import { loadImage, preprocessCanvas } from "./omr/preprocess";
-import type { ModelMeta, Sessions } from "./omr/types";
+} from "../omr/decode";
+import { loadImage, preprocessCanvas } from "../omr/preprocess";
+import type { ModelMeta, Sessions } from "../omr/types";
 
 // The wasm runtime loads from the bundled package itself (served same-origin by Vite from
 // node_modules — no CDN, offline premise intact). Vite must not pre-bundle onnxruntime-web,

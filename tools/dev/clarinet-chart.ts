@@ -19,7 +19,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { CLARINET_FINGERINGS, LIP_REACH_KOMA, type ClarinetKeyId } from "@turkish-omr/core";
-import { HOLES, IMAGE, KEYS, BACK_INSET, MARKERS } from "../../apps/web/src/ui/clarinetArt";
+import { HOLES, IMAGE, KEYS, BACK_INSET, MARKERS } from "../../apps/web/src/instruments/clarinetArt";
 
 const out = process.argv[2] ?? "clarinet-chart.html";
 

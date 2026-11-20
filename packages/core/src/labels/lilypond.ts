@@ -528,7 +528,7 @@ interface FlatNote {
  * Split a score into short, self-contained strips for rendering + fine-tuning.
  *
  * Emits "every"-mode faithful labels (every drawn alteration marked, no signature) — the browser-side
- * exporter (`apps/web/src/stripExport.ts`) is the one that handles keysig-mode strips, because only
+ * exporter (`apps/web/src/score/stripExport.ts`) is the one that handles keysig-mode strips, because only
  * it knows the row layout (which crops include the signature).
  *
  * Packs note-by-note up to `maxTokens` (well under the model's ~60-token decoder cap), inserting a

@@ -3,7 +3,7 @@
  *
  * WHY: `render.ts` writes the label from the note model and the PNG from the engraving. Those are
  * two different decision paths — `noteToLily` (packages/core/src/labels/lilypond.ts) and `buildStaveNotes`
- * (apps/web/src/SheetView.tsx) — and on 2026-07-26 they were found to disagree: `sigTolerant` was
+ * (apps/web/src/score/SheetView.tsx) — and on 2026-07-26 they were found to disagree: `sigTolerant` was
  * implemented on the label side only, so 18.8% of `strips_v3`'s signature-bearing carry strips drew
  * an accidental their label omitted (2,369 of them `\kucukSharp`). Nothing caught it, because
  * nothing had ever compared what is DRAWN with what is LABELLED.

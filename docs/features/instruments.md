@@ -133,7 +133,7 @@ strongest practical argument for adding a lower Turkish tuning later.
 #### What was built, and the three things the photo corrected
 
 The maths is `packages/core/src/fingering.ts` (portable, unit-tested); every pixel is
-`apps/web/src/ui/fingerboardGeometry.ts`; `apps/web/src/Fingerboard.tsx` does only the drawing and
+`apps/web/src/instruments/fingerboardGeometry.ts`; `apps/web/src/instruments/Fingerboard.tsx` does only the drawing and
 the clock. Numbers and the account: [../log/status-log.md](../log/status-log.md).
 
 The calibration was **measured, then sanity-checked against a real instrument** — the nut→bridge run
@@ -156,8 +156,8 @@ Three things only became visible once the image was rendered rather than reasone
 
 The owner opened the deployed tab and rejected how it looked: *"I want this in vertical position
 and half of the violin's body should be visible, it looks very bad right now."* Two changes, both
-in [../../apps/web/src/ui/fingerboardGeometry.ts](../../apps/web/src/ui/fingerboardGeometry.ts) and
-[../../apps/web/src/Fingerboard.tsx](../../apps/web/src/Fingerboard.tsx):
+in [../../apps/web/src/instruments/fingerboardGeometry.ts](../../apps/web/src/instruments/fingerboardGeometry.ts) and
+[../../apps/web/src/instruments/Fingerboard.tsx](../../apps/web/src/instruments/Fingerboard.tsx):
 
 **The crop is the instrument, not the neck.** Upright, scroll to just past the bridge — 60% of the
 body. The rotation's own reasoning was about fitting a *neck* into a wide card, and it was answered
@@ -630,7 +630,7 @@ and a way to edit it.
 
 ### What it is
 
-`apps/web/src/MeasureCard.tsx`, one card on the instrument tab:
+`apps/web/src/instruments/MeasureCard.tsx`, one card on the instrument tab:
 
 * **the bar**, engraved on its own stave with its clef, the makam signature and the meter;
 * **‹ ›**, one bar back and one bar forward;

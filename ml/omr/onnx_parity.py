@@ -37,7 +37,7 @@ def onnx_greedy_decode(
     sessions, pixel_values: np.ndarray, start_id: int, eos_id: int, return_logprobs: bool = False
 ):
     """
-    The reference greedy loop (ported to JS in apps/web/src/omrGate.ts):
+    The reference greedy loop (ported to JS in apps/web/src/dev/omrGate.ts):
       1. encoder once: pixel_values → encoder_hidden_states
       2. step 0: decoder_model(input_ids=[start], encoder_hidden_states) → logits + present.*
          (present.* includes the ENCODER cross-attention K/V — computed once, reused forever)

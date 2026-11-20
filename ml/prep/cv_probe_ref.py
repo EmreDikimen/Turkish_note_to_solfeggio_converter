@@ -6,7 +6,7 @@ opencv.js: Otsu threshold, MORPH_OPEN row projection, connectedComponents, and I
 — plus the PNG->grayscale decode that feeds all of them, which is the least obvious divergence
 source (colour management, premultiplied alpha).
 
-This writes the Python side of that comparison. The browser side is apps/web/src/probe/cvProbe.ts.
+This writes the Python side of that comparison. The browser side is apps/web/src/dev/cvProbe.ts.
 Both are THROWAWAY and are deleted once the slicer reaches parity (W6).
 
     .venv-ml/bin/python ml/prep/cv_probe_ref.py <page.png> --out apps/web/public/probe

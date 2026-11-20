@@ -44,12 +44,12 @@ import {
   type ViolinTuning,
 } from "@turkish-omr/core";
 import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "@turkish-omr/core/labels/rhythm";
-import { useDocHistory } from "./useDocHistory";
+import { useDocHistory } from "./score/useDocHistory";
 import { GoldRule } from "./ui/ornament/GoldRule";
 import { ThemeSwitch } from "./ui/ThemeSwitch";
 import { BrandMark } from "./ui/BrandMark";
 import { Backdrop } from "./ui/ornament/Backdrop";
-import { useTheme } from "./theme";
+import { useTheme } from "./lib/theme";
 import {
   clearPages,
   deletePage,
@@ -59,27 +59,27 @@ import {
   renamePage,
   savePage,
   type RecentMeta,
-} from "./recentPages";
+} from "./lib/recentPages";
 import { DEFAULT_KIT, type KitId } from "./audio/strokeKits";
 import { DEFAULT_VOICE, findVoice, type VoiceId } from "./audio/instruments";
 import { voiceCached } from "./audio/loadInstrument";
-import { claimReload, isStaleChunkError } from "./staleBuild";
-import { devMode } from "./devMode";
-import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./webAudioBackend";
-import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./exportScore";
-import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./SheetView";
+import { claimReload, isStaleChunkError } from "./lib/staleBuild";
+import { devMode } from "./lib/devMode";
+import { WebAudioBackend, type PlayOptions, type VoiceStatus } from "./audio/webAudioBackend";
+import { exportScorePng, exportScorePdf, waitForStage, EXPORT_STAGE_ID } from "./export/exportScore";
+import { SheetView, SHEET_SIDE_MARGIN, SHEET_CONTENT_WIDTH, type AccidentalMode } from "./score/SheetView";
 import {
   InstrumentView,
   instrumentForVoice,
   voiceForInstrument,
   type InstrumentId,
-} from "./InstrumentView";
-import { MakamModal } from "./MakamModal";
-import { TransposeModal } from "./TransposeModal";
-import { VoiceDownloadModal } from "./VoiceDownloadModal";
-import { buildStrips, type ExportStrip } from "./stripExport";
+} from "./instruments/InstrumentView";
+import { MakamModal } from "./ui/modals/MakamModal";
+import { TransposeModal } from "./ui/modals/TransposeModal";
+import { VoiceDownloadModal } from "./ui/modals/VoiceDownloadModal";
+import { buildStrips, type ExportStrip } from "./score/stripExport";
 import { decodeStripsRouted, warmDecodeServer } from "./omr/remote";
-import { noteVisit } from "./analytics/visits";
+import { noteVisit } from "./lib/visits";
 import type { RawDecode } from "./ui/DecodePanel";
 import { positionFromName, stitchDecoded, type StripInput } from "./omr/pipeline";
 import { loadImage } from "./omr/preprocess";
@@ -93,7 +93,7 @@ import { IosInstallHint } from "./ui/IosInstallHint";
 import { AdvancedPanel } from "./ui/AdvancedPanel";
 import { MobileTabs, type MobileTab } from "./ui/MobileTabs";
 import { FullScreenBar } from "./ui/FullScreen";
-import { useViewport } from "./usePhone";
+import { useViewport } from "./lib/usePhone";
 import { TR } from "./ui/strings";
 import { ReadError, toAppError, type AppError } from "./ui/errors";
 import {
@@ -502,7 +502,7 @@ export function App() {
   const [rawDecode, setRawDecode] = useState<RawDecode | null>(null);
   // ── The pages this browser has already read (owner, 2026-09-05) ─────────────────────────────
   // A decode costs 35–55 s and a round trip to Cloud Run, and a page refresh used to throw it away.
-  // The store, its limits and why it is a CACHE and not a save: apps/web/src/recentPages.ts.
+  // The store, its limits and why it is a CACHE and not a save: apps/web/src/lib/recentPages.ts.
   const [recent, setRecent] = useState<RecentMeta[]>([]);
   // Which stored record the score on screen IS, or null when it came from anywhere else.
   //

@@ -21,7 +21,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { MAX_NAME } from "../recentPages";
+import { MAX_NAME } from "../lib/recentPages";
 import { TR } from "./strings";
 
 export function RenameField({

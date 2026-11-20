@@ -18,7 +18,7 @@
  *
  * This is pure data + maths, so it lives in core and ports to mobile unchanged — the same
  * reasoning that put `usul.ts` here. Nothing about pixels, artwork or the DOM belongs in this
- * file; the image calibration lives in `apps/web/src/ui/fingerboardGeometry.ts`.
+ * file; the image calibration lives in `apps/web/src/instruments/fingerboardGeometry.ts`.
  */
 
 import { koma53ToFreq } from "./tuning";

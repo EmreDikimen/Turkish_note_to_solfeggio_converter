@@ -33,7 +33,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { ALTISSIMO_FINGERINGS, BASE_FINGERINGS, type ClarinetKeyId } from "@turkish-omr/core";
-import { IMAGE, MARKERS } from "../../apps/web/src/ui/clarinetArt";
+import { IMAGE, MARKERS } from "../../apps/web/src/instruments/clarinetArt";
 
 const out = process.argv[2] ?? "clarinet-editor.html";
 const png = readFileSync(`apps/web/public/${IMAGE.src}`).toString("base64");

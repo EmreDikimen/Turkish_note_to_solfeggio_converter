@@ -292,7 +292,7 @@ short list of what can be broken from anywhere.
   [docs/features/README.md](docs/features/README.md#f6--the-visit-counter-and-the-owners-private-dashboard).
 - **THE APP REMEMBERS THE PAGES IT HAS READ, AND IT STORES NOTES AND NEVER AN IMAGE** (owner,
   2026-09-05). A decoded page and every later edit go to the reader's own **IndexedDB**
-  (`apps/web/src/recentPages.ts`); **30 pages**, least recently opened dropped. ⛔ **No image, ever** —
+  (`apps/web/src/lib/recentPages.ts`); **30 pages**, least recently opened dropped. ⛔ **No image, ever** —
   the footer's `privacy` line has nothing to qualify only because of that choice. ⚠ **IndexedDB, not
   `localStorage`** — the edited state is written on every edit (debounced 2 s) and `localStorage` is
   SYNCHRONOUS, so a ~100 KB write blocks the main thread mid-drag. ⚠ **ONE save path and no explicit

@@ -632,7 +632,7 @@ that cut a group.
 ⚠ **This retires "all groups are exactly 3 closed notes"** ([rung3/labeling.md](rung3/labeling.md),
 2026-07-18). It was true of the 114-group manifest and is not true of the 205-group one.
 
-**What the renderer draws**, as of this date (`apps/web/src/SheetView.tsx`):
+**What the renderer draws**, as of this date (`apps/web/src/score/SheetView.tsx`):
 
 | constant | value | where |
 |---|---|---|

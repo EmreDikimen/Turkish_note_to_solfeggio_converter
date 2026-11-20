@@ -29,7 +29,7 @@
  * exactly like `kanun.ts` and deliberately unlike `fingering.ts`.
  *
  * Pure data + maths, so it lives in core and ports to mobile unchanged. Nothing about pixels or the
- * DOM belongs here; the drawing is `apps/web/src/ui/clarinetArt.ts`.
+ * DOM belongs here; the drawing is `apps/web/src/instruments/clarinetArt.ts`.
  */
 
 import { komaToName } from "./notation";

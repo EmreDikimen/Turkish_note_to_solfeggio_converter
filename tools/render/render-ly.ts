@@ -34,8 +34,8 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { join } from "node:path";
 import { chromium, type Page } from "playwright";
 import { deriveTimeSignature, groupMeasures, type NoteModelDocument } from "@turkish-omr/core";
-import { STRIP_BUDGET, parseSignatureBody, serializeMeasure, type SignatureMap } from "./lilypond";
-import { hashStr, mulberry32 } from "./rng";
+import { STRIP_BUDGET, parseSignatureBody, serializeMeasure, type SignatureMap } from "@turkish-omr/core/labels/lilypond";
+import { hashStr, mulberry32 } from "@turkish-omr/core/labels/rng";
 import { lilyDocument, parseLabel, stripToScore } from "./ly-engrave";
 import { accidentalsInSvg, calibrate, parseLySvg, type GlyphTable } from "./ly-svg";
 

@@ -306,7 +306,7 @@ edits rather than one:
 
 | | slicer (real pages) | renderer (synthetic strips) |
 |---|---|---|
-| where | `src/vision/page_to_strips.py` → `apps/web/src/omr/slicer/windows.ts` | `STRIP_BUDGET` in `tools/render/lilypond.ts` → `apps/web/src/stripExport.ts` |
+| where | `src/vision/page_to_strips.py` → `apps/web/src/omr/slicer/windows.ts` | `STRIP_BUDGET` in `packages/core/src/labels/lilypond.ts` → `apps/web/src/stripExport.ts` |
 | measure rail | `MEASURES_PER_STRIP = 3` | `maxMeasures = 4` |
 | second rail | `MAX_STRIP_W = 1450` **px** | `maxTokens = 56` **label tokens** |
 | knob | `OMR_MEASURES_PER_STRIP`, `OMR_MAX_STRIP_W` | `--max-measures` on `render.ts` |

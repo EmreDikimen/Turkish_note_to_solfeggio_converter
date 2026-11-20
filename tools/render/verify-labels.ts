@@ -2,7 +2,7 @@
  * Pixels-vs-labels verifier for a rendered strip corpus.
  *
  * WHY: `render.ts` writes the label from the note model and the PNG from the engraving. Those are
- * two different decision paths — `noteToLily` (tools/render/lilypond.ts) and `buildStaveNotes`
+ * two different decision paths — `noteToLily` (packages/core/src/labels/lilypond.ts) and `buildStaveNotes`
  * (apps/web/src/SheetView.tsx) — and on 2026-07-26 they were found to disagree: `sigTolerant` was
  * implemented on the label side only, so 18.8% of `strips_v3`'s signature-bearing carry strips drew
  * an accidental their label omitted (2,369 of them `\kucukSharp`). Nothing caught it, because
@@ -30,7 +30,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { chromium, type Page } from "playwright";
-import { hashStr } from "./rng";
+import { hashStr } from "@turkish-omr/core/labels/rng";
 
 const URL = process.env.OMR_URL ?? "http://localhost:5173";
 

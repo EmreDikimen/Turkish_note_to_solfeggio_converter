@@ -11,7 +11,7 @@
  * domain costs no new labelling — only this translation.
  *
  * ⚠ THE HARD RULE IS PIXELS == LABELS (../../CLAUDE.md). This file does NOT re-decide what to draw:
- * it takes a label that `tools/render/lilypond.ts` already produced and renders exactly that. The
+ * it takes a label that `packages/core/src/labels/lilypond.ts` already produced and renders exactly that. The
  * label is the complete description of what must appear (that is what "faithful" means), so the
  * translation is mechanical:
  *
@@ -56,7 +56,7 @@ import {
   TUP_END_TOKEN,
   TIE_TOKEN,
   GRACE_TOKEN,
-} from "./lilypond";
+} from "@turkish-omr/core/labels/lilypond";
 
 /** Comma alteration → the `makam.ly` pitch-name suffix. `makam.ly` spells the alteration into the
  *  note name itself (c = C natural, cc = koma sharp, cb = bakiye sharp, ck = küçük, cbm = büyük,

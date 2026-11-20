@@ -14,7 +14,7 @@
  * a crop showing the mark always carries the token and one that doesn't, doesn't.
  */
 
-import { groupMeasures, type NoteModelDocument } from "@turkish-omr/core";
+import { groupMeasures, type NoteModelDocument } from "../index";
 import { mulberry32 } from "./rng";
 import type { RepeatSpan } from "./repeats";
 

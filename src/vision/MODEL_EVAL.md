@@ -283,7 +283,7 @@ extra new-vocab density, not underfit). Checkpoint: Drive `MyDrive/tnc/rung22-st
   serializer emits an *empty* `\sig \sigend` for signatures with no accidentals, which draws
   nothing, so the model correctly omits it (precision ~99% confirms it only emits `\sig` for real
   signatures). True `\sig` quality is ~99%+. TODO: skip empty `\sig … \sigend` in the label
-  serializer (`tools/render/lilypond.ts`) — needs a re-render, so batch with the next data build.
+  serializer (`packages/core/src/labels/lilypond.ts`) — needs a re-render, so batch with the next data build.
 
 - **Verdict: PASS — triplets now robustly validated (not a 9-sample smoke signal) and the
   above-placement orientation is fixed, with no regression elsewhere.** Remaining: download

@@ -15,7 +15,7 @@
  * Deterministic per seed (same `textseed` → same text at the same places).
  */
 
-import { mulberry32 } from "../../../tools/render/rng";
+import { mulberry32 } from "@turkish-omr/core/labels/rng";
 
 /** One noise string to draw. `row` is the staff-row index it belongs to; `fx` a 0..1 fraction of
  *  the content width; `dy` a vertical offset in px from that row's stave top (`box.y`). */

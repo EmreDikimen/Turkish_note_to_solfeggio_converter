@@ -368,7 +368,7 @@ def main() -> int:
     # Selection can only optimize what the repertoire can yield: the whole corpus holds ~47 notes
     # at ≥6 commas, and smallest-alteration respelling never exceeds ±5 (letter gaps are 4 or 9),
     # so the two büyük classes stay ~0 here no matter the picks. They get their coverage from the
-    # seeded AEU-enharmonic respell at render time (tools/render/respell.ts); optimizing the
+    # seeded AEU-enharmonic respell at render time (packages/core/src/labels/respell.ts); optimizing the
     # greedy min over them would just saturate the criterion at 0 and randomize the selection.
     reachable = [c for c in classes if "buyuk" not in c]
     totals: Counter = Counter({c: 0 for c in classes})

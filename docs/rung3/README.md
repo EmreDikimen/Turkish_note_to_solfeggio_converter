@@ -427,7 +427,7 @@ Per page:
 1. Slice + decode (`decode_page.py`) → strips, measure boxes, decoded tokens.
 2. Align SymbTr measures to page measures. The wrinkle is repeats: the page draws a repeat sign
    once, SymbTr writes the passage twice. The decode reads repeat/volta/nav tokens reliably
-   (Rung 2: 100%/≥96%), and `detectRepeats` (`tools/render/repeats.ts`) already finds SymbTr's
+   (Rung 2: 100%/≥96%), and `detectRepeats` (`packages/core/src/labels/repeats.ts`) already finds SymbTr's
    duplicate runs — fold them together. Where counts still disagree, token-level Levenshtein on
    `labels.json` `full.keysig` recovers the offset (the id-space alignment `eval_omr.py`
    implements).

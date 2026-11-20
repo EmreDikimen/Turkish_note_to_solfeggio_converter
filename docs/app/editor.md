@@ -129,7 +129,7 @@ for each: [editor.md § Step 5 — Çal from the last edited bar](#step-5--çal-
 ## The tuplet rules
 
 `\tup3` is **not an object — it is arithmetic.** `isTupletMember`
-(`../../tools/render/rhythm.ts:70`) is literally *"the duration's denominator is divisible by 3"*,
+(`../../packages/core/src/labels/rhythm.ts:70`) is literally *"the duration's denominator is divisible by 3"*,
 and `tupletGroupsIn` closes a group the moment a run of such notes **sums to a plain value**.
 Nothing is stored; the bracket and the italic 3 are drawn because the arithmetic says so.
 
@@ -262,7 +262,7 @@ data. Verify on more decoded pages before promising anything.
 | Measure-total validation | ✅ exists, needs a new role | `../../packages/core/src/measures.ts:145` |
 | **Undo/redo** | ✅ **built 2026-08-07** | `../../apps/web/src/useDocHistory.ts` |
 | **The armed palette** | ✅ **built 2026-08-08** | `../../apps/web/src/ui/EditPalette.tsx` + `ui/accidentals.ts` |
-| **Which notes can be a triplet** | ✅ **built 2026-08-08** | `plainTupletBase` / `tupletRunFrom` / `closedTupletAt` in `../../tools/render/rhythm.ts`, beside the functions that DRAW the bracket |
+| **Which notes can be a triplet** | ✅ **built 2026-08-08** | `plainTupletBase` / `tupletRunFrom` / `closedTupletAt` in `../../packages/core/src/labels/rhythm.ts`, beside the functions that DRAW the bracket |
 | **Where a held mark's handles may land** | ✅ **built 2026-08-30** | `tupletEdgeTo` in the same file — a real triplet slides, a broken one is repaired, and its last check is a simulation against `tupletGroupsIn`, not a rule |
 | **Finding a mark the arithmetic never closed** | ✅ **built 2026-08-30** | `drawnTupletAt` — the counterpart of `closedTupletAt`: *"is a bracket drawn here"*, not *"is this a real triplet"* |
 | **Scaling durations (make/remove a triplet)** | ✅ **built 2026-08-08** | `scaleDurations` in `../../packages/core/src/edits.ts` |
@@ -283,7 +283,7 @@ cannot half-apply. Two notes on what was deliberately *not* changed:
   sheet engraves) stale — the same bug shape. Fixing it means snapping a continuous drag to a note
   value, which is the palette's job (step 4), not the extraction's.
 - **`noteAE` is left exact, not AEU-snapped.** The Python exporter snaps it (152 of 2,297 notes in
-  the bundled scores carry e.g. `noteName "Si4b2"` beside `noteAE "B4b1"`); `tools/render/stitch.ts`
+  the bundled scores carry e.g. `noteName "Si4b2"` beside `noteAE "B4b1"`); `packages/core/src/labels/stitch.ts`
   and the modal never did. `withPitch` matches the two TS producers. Nothing reads `noteAE` but the
   piano-roll's hover label, so this is cosmetic — but it is real, and unifying it is its own call.
 
@@ -489,7 +489,7 @@ Three things it settled, each of which changes what the tool accepts:
    a group only when its sum lands on a plain value, so `2v` is plain exactly when `v` is. Three
    dotted 8ths would sum to 9/16, never close, and draw the *incomplete-group* bracket — the mark
    that exists to flag a MODEL mistake. Refusing them up front is what keeps that mark meaningful.
-   `plainTupletBase` in [../../tools/render/rhythm.ts](../../tools/render/rhythm.ts).
+   `plainTupletBase` in [../../packages/core/src/labels/rhythm.ts](../../packages/core/src/labels/rhythm.ts).
 2. **Dimming starts the moment the tool is armed**, not after the first click (owner). Notes that
    cannot begin a run are dim and `pointer-events: none` from the outset, so the page refuses them
    instead of absorbing a click that does nothing. Once a run is open, only its **anchor** and its
@@ -639,7 +639,7 @@ three notes. Asking the drawing code is the only way to be sure a handle cannot 
 lies; `tools/core/edits-test.ts` builds that exact bar and checks the slide is refused.
 
 Where the code went is unchanged from step 7: **"which notes" is `tupletEdgeTo` in
-[../../tools/render/rhythm.ts](../../tools/render/rhythm.ts)**, beside the functions that draw the
+[../../packages/core/src/labels/rhythm.ts](../../packages/core/src/labels/rhythm.ts)**, beside the functions that draw the
 bracket, and **the rewrite is `scaleDurations` twice** — ×³⁄₂ on what leaves, ×⅔ on what joins, in
 one `history.apply`, so a whole drag across four notes is **one undo entry** (`coalesce` keys on the
 edge, not on the target). Nothing new is stored: the held group is one event index, and the three

@@ -36,7 +36,7 @@ STRUCT = ["\\natural", "\\sig", "\\repstart", "\\repend", "\\volta1", "\\volta2"
           "\\segno", "\\coda", "\\dc", "\\fine", "|",
           "\\tup3", "\\tupend", "\\tie", "\\grace"]
 NAV = ["\\segno", "\\coda", "\\dc", "\\fine"]
-# strips_v2_2 rhythm signs (tools/render/rhythm.ts) — REAL data recovered from the durations
+# strips_v2_2 rhythm signs (packages/core/src/labels/rhythm.ts) — REAL data recovered from the durations
 # (34 train / 3 val pieces have triplets, 24/3 ties, 86/12 graces of the 150), never injected,
 # so the floors below are regression guards on the renderer, not injection-density tuning.
 RHYTHM = ["\\tup3", "\\grace"]  # \tupend counts == \tup3, no separate floor
@@ -53,7 +53,7 @@ MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}
 MAX_IDS = MAX_IDS_BY_VOCAB["old"]   # every pool before 2026-09-07
 
 # DoD thresholds (docs/archive/phases.md §6 + the plan). Büyük classes get a lower val floor: they are
-# injected at a deliberately low rate (see tools/render/respell.ts — user decision 2026-07-05).
+# injected at a deliberately low rate (see packages/core/src/labels/respell.ts — user decision 2026-07-05).
 MIN_TRAIN_PER_CLASS = 200
 MIN_VAL_PER_CLASS = 25
 MIN_VAL_BUYUK = 15

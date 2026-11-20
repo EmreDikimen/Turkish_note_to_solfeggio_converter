@@ -678,7 +678,7 @@ Open (a piece carrying all three — 12 triplet events, 1 tie, 14 graces):
   side-by-side rests with no arc and no token.
 - **Graces (m1, m39, …):** a small slashed 8th attached before its host note, label
   `\grace e''8` (with its own accidental token when drawn, e.g. `\grace \komaFlat b'8`).
-- **Real data, no seeds:** these come from the durations themselves (`tools/render/rhythm.ts`),
+- **Real data, no seeds:** these come from the durations themselves (`packages/core/src/labels/rhythm.ts`),
   so they sit at the same measures in EVERY render/seed/transpose of the piece.
 - **Playback unchanged:** the tie plays as ONE held note (the note model still holds the single
   5/8 event); graces are silent for now (zero duration).

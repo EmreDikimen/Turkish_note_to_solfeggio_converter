@@ -1070,7 +1070,7 @@ Two pieces of code, both verified, neither run over a pool.
 
 `SCHEME_H_TOKENS`, 17 entries and **16 new ids** (100 → 116; `'` was already in the base
 vocabulary, which is the whole of that discrepancy), mirrored by hand in `src/vision/data.py` and
-`tools/render/lilypond.ts` as the project requires. `data.vocabulary(scheme)` composes it,
+`packages/core/src/labels/lilypond.ts` as the project requires. `data.vocabulary(scheme)` composes it,
 `load_model_and_processor(..., scheme=)` applies it, and `train.py --vocab {old,h}` selects it.
 
 ⛔ **Folding H into `ADDED_TOKENS` was tried first and reverted within the hour.** Every checkpoint
@@ -3117,7 +3117,7 @@ a second 𝄋 changed nothing at all. On real decodes that is nearly every case 
 carry two or more 𝄋, and 249 of those carry no `\dc`** ([../METRICS.md](../METRICS.md)). So the
 teslim was simply not played after the later hânes, and the app ran the page top to bottom.
 
-**What it does now** (`expandSegnoJumps` in `tools/render/stitch.ts`): the first 𝄋 opens a section,
+**What it does now** (`expandSegnoJumps` in `packages/core/src/labels/stitch.ts`): the first 𝄋 opens a section,
 every later 𝄋 plays that section again and comes back to where it jumped from. The last jump has
 nothing after it, so the piece ends there — which is where the page prints "Son". One rule covers
 the şarkı form too (𝄋 at the nakarat, 𝄋 at the end of the meyan, back, stop).
@@ -3251,7 +3251,7 @@ written page; core's new `unfoldDoc` turns it into the performance for `buildTim
 everything on the audio side — metronome, usul strokes, transpose, makam deltas, the instrument
 views — still receives an ordinary flat document. Drawing needed **no new code**: the per-bar flags
 convert to the `RepeatSpan`/`NavMark` shapes SheetView has engraved since Phase 2
-(`tools/render/structure-view.ts`), so the same spans still feed the strip labels.
+(`packages/core/src/labels/structure-view.ts`), so the same spans still feed the strip labels.
 
 **The part that had to be got right is the playhead.** Drawn order is no longer playing order, so
 the cursor can no longer walk the notes it drew. It follows a **play plan** instead — one step per
@@ -4422,7 +4422,7 @@ Track B step 4, the one item with a deadline: after the final render, changing t
 of 40,826 strips. It is done. What follows is mostly the part that was not planned.
 
 **The planned half was one line.** `\tie` had exactly ONE producer in the whole codebase —
-`measureAtoms` in `tools/render/lilypond.ts`. Everything else (the stitcher, `decode.ts`,
+`measureAtoms` in `packages/core/src/labels/lilypond.ts`. Everything else (the stitcher, `decode.ts`,
 `ly-engrave.ts`) only ever READ it, and they all keep reading it, because `round2-stage2-best` still
 writes it and the frozen exam v2 gold still contains 594. **The drawing did not move**: SheetView
 draws the arc from `tieSplitBeats`, not from the label, so the pixels are identical and the arc is now
@@ -7079,7 +7079,7 @@ have quietly destroyed its meaning. The same reasoning is why only a **closed** 
 can be removed: `tupletGroupsIn` also yields the model's unclosed runs, and ×³⁄₂ on one of those
 invents a rhythm nobody read.
 
-**Where the code went, and why it is split in two.** "Which notes" lives in `tools/render/rhythm.ts`
+**Where the code went, and why it is split in two.** "Which notes" lives in `packages/core/src/labels/rhythm.ts`
 (`plainTupletBase`, `tupletRunFrom`, `closedTupletAt`), beside the functions that draw the bracket
 and write the `\tup3` label — a second copy in the app is exactly the pixels-vs-labels divergence
 the one-code-path rule exists to prevent. The rewrite is one core primitive, `scaleDurations`. Both
@@ -7526,7 +7526,7 @@ residual 5 are beyati-vs-hüseyni-shaped pairs that share both signature and kar
 only by seyir, which nothing here reads.
 
 **Two duplications were accepted on purpose, both pinned by tests.** `SIG_TOKEN_BY_ALTER` in core
-mirrors `AEU_TOKEN` in `tools/render/lilypond.ts` (core must not depend on `tools/`, and the label
+mirrors `AEU_TOKEN` in `packages/core/src/labels/lilypond.ts` (core must not depend on `tools/`, and the label
 path is load-bearing) — `npm test` now round-trips all **90 signature variants** through both
 vocabularies. And `packages/core/src/makamSignatures.ts` mirrors `data/makam_signatures.json`,
 because the app ships without `data/` and without Python; one script writes both, and `--from-json`
@@ -8347,7 +8347,7 @@ track: [phases.md § MVP track — the in-browser pipeline, and a release to fri
 **The gap turned out to be one file, not a phase.** Exploration found decode, Donut preprocessing,
 detokenization, stitching, the editor and playback all already browser-safe — `omrGate.ts` simply
 never exported its helpers (and grabs DOM nodes at import time, which is what blocks reuse), and
-`tools/render/stitch.ts` has no node imports and already typechecks under `apps/web`'s strict
+`packages/core/src/labels/stitch.ts` has no node imports and already typechecks under `apps/web`'s strict
 config. The only genuinely missing piece is a TypeScript port of `page_to_strips.py`.
 
 **W0 — opencv.js primitive parity: PASS.** Both sides are OpenCV 5.0.0 (checked, not assumed). The
@@ -8976,7 +8976,7 @@ exam's küçük gold is **1 inline vs 32 in the signature** (photo gold: 3 vs 13
 count both. So the whole class is effectively scored at the row start.
 
 It cannot be otherwise, and the reason was already in our own code: `noteToLily`'s `sigTolerant`
-branch (`tools/render/lilypond.ts`) prints a note **bare** when its alteration runs the same
+branch (`packages/core/src/labels/lilypond.ts`) prints a note **bare** when its alteration runs the same
 direction as the signature's — SymbTr stores the SOUNDING value, so eviç is a 5-comma F♯ printed
 bare under a koma-sharp-F signature, which is what real editions do. Confirmed end-to-end: a dry
 render of two küçük-heavy pieces (mahur, nisaburek) under real non-küçük signature variants produced
@@ -9345,7 +9345,7 @@ export print `\komaFlat b` like the page does.
   7 rows → 21 strips): keysig read on every row-start, repeat/volta structure captured, accidentals
   decoded. Known rough edges at the time: spurious tuplet tokens on some 16th pairs, occasional
   `\sig` inconsistency — exactly the synthetic→real gap the labeling loop trains away.
-- **Rung-4 stage 8 (stitcher + editor feed-in):** `tools/render/stitch.ts` turns decoded strip tokens
+- **Rung-4 stage 8 (stitcher + editor feed-in):** `packages/core/src/labels/stitch.ts` turns decoded strip tokens
   into a schemaVersion-1 note model — joins strips/rows re-inserting the `|` the crop boundary ate,
   resolves bare notes from the row's `\sig` block (an empty block never clears an established
   signature), folds rhythm signs back, then expands structure (repeat/volta passes, D.C. al Fine with
@@ -9370,7 +9370,7 @@ decodes `\tup3 g''8 f''8 \tupend`. One nav gate strip was fp32-exact but int8-bo
 ## 2026-07-08 — Rhythm signs (triplets, ties, grace notes)
 
 Four faithful tokens `\tup3` `\tupend` `\tie` `\grace` (96 → 100 ids, appended at the end), all
-**recovered from real SymbTr durations, never injected** (`tools/render/rhythm.ts` — pure per-measure
+**recovered from real SymbTr durations, never injected** (`packages/core/src/labels/rhythm.ts` — pure per-measure
 functions shared by SheetView and the serializer, so pixels == labels by construction). Delivered:
 parser/exporter grace kind, core `EventKind "grace"`, triplet groups from reduced exact fractions,
 tie pairs (accidental only on the first note; long rests split side-by-side with no tie), grace

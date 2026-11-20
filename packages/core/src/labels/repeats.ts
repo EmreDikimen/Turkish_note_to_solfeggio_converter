@@ -16,7 +16,7 @@
  * (Random injection for token coverage is a separate Rung-2 renderer step.)
  */
 
-import { eventBeats, groupMeasures, type Measure, type NoteModelDocument } from "@turkish-omr/core";
+import { eventBeats, groupMeasures, type Measure, type NoteModelDocument } from "../index";
 import { mulberry32 } from "./rng";
 
 /** One detected repeat span, in 1-based `Measure.index` numbering (the doc is unmodified, so

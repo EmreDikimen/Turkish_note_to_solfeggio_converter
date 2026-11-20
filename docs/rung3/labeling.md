@@ -18,7 +18,7 @@ plain notes: `la'2 \tie la'8` becomes `la'2 la'8`. Same pitches, same total leng
 
 **Why this is safe.** A tie only ever exists in our labels for a mechanical reason: SymbTr stores a
 long value like 5/8 as ONE event, and no single notehead draws 5/8, so `tieSplitBeats`
-(`tools/render/rhythm.ts`) writes a pair. Both halves are the **same pitch** and they **sum to the
+(`packages/core/src/labels/rhythm.ts`) writes a pair. Both halves are the **same pitch** and they **sum to the
 original duration**, so dropping the token loses no note, no pitch and no bar arithmetic. The only
 loss is playback: the app re-strikes where the page holds. The owner accepted that — for learning
 notes and fingering it is invisible.
@@ -52,7 +52,7 @@ would shift every later token and break every checkpoint. It is a token nothing 
 what lets Round 4 bring it back.
 
 ✅ **THE RENDER SIDE LANDED 2026-08-22** — the deadline item is done, before the final render rather
-than after it. `measureAtoms` (`tools/render/lilypond.ts`) no longer writes the token: the 1,246 ties
+than after it. `measureAtoms` (`packages/core/src/labels/lilypond.ts`) no longer writes the token: the 1,246 ties
 over 1,185 of `strips_v5_tupnew`'s 40,826 strips become plain note pairs at the next render. **The
 picture does not change** — SheetView still draws the arc from `tieSplitBeats`, so an arc is now ink
 with no token, exactly like a slur distractor.
@@ -366,7 +366,7 @@ The exam froze with 4 `\tup3` gold and the manifest holds ~14 tup3 rows; the use
 collecting tuplet repertoire directly. Two new scripts:
 
 - **`scripts/rung3/find_tuplet_pieces.py`** — scans all 2,200 SymbTr txts for tuplet events
-  (same rule as `tools/render/rhythm.ts`: sounding event whose reduced Pay/Payda denominator
+  (same rule as `packages/core/src/labels/rhythm.ts`: sounding event whose reduced Pay/Payda denominator
   is divisible by 3) and crosses them with both sources' match state →
   `data/real/rung3/tuplet_pieces.csv`. **459 tuplet-bearing pieces; 267 already collected**
   (the 28% figure), 36 nota review-tier candidates uncollected, and — the big find — the

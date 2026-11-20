@@ -106,7 +106,7 @@ model. **Examples per token** is.
 - ✅ **Trap verified with the real tokenizer, 2026-09-06** — it does not fire. All seven
   compositional pitches segment identically at every duration they appear with, and split evidence
   gets *better* than today's: 1.277% of notes take a minority id form now, 0.003% under H.
-- ⚠ Two files carry `ADDED_TOKENS` by hand — `src/vision/data.py` and `tools/render/lilypond.ts` —
+- ⚠ Two files carry `ADDED_TOKENS` by hand — `src/vision/data.py` and `packages/core/src/labels/lilypond.ts` —
   and `check_token_drift` must pass. The id gate moves WITH the vocabulary:
   `MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}` in `audit_coverage.py` and the emitter (step 5).
 
@@ -221,7 +221,7 @@ the no-render decision stood anyway — see step 1 for why.
 
    **What is built:**
    - **The vocabulary.** `SCHEME_H_TOKENS` (17 entries, **16 new ids**, 100 → 116) beside the
-     frozen 25 of `ADDED_TOKENS`, mirrored in `src/vision/data.py` and `tools/render/lilypond.ts`,
+     frozen 25 of `ADDED_TOKENS`, mirrored in `src/vision/data.py` and `packages/core/src/labels/lilypond.ts`,
      with `data.vocabulary(scheme)` composing them and `train.py --vocab {old,h}` selecting one.
      ⛔ **H is a SEPARATE list on purpose** — folding it into `ADDED_TOKENS` was tried and reverted
      the same hour: every checkpoint was trained at vocabulary 100, so `load_model_and_processor`

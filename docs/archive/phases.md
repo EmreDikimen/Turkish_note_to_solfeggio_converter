@@ -296,7 +296,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   - **Placement: duplicate-run detection + random injection.** SymbTr's flattening leaves each
     repeated passage as an adjacent duplicate measure run, so the sign positions are recoverable
     (equal runs → repeat signs; equal-but-last-measure → volta 1./2.) — verified against the printed
-    gamzedeyim score. **Implemented 2026-07-02** (`tools/render/repeats.ts` `detectRepeats` +
+    gamzedeyim score. **Implemented 2026-07-02** (`packages/core/src/labels/repeats.ts` `detectRepeats` +
     serializer support): detection ONLY — the doc/layout/playback stay untouched; the signs are
     drawn onto the same engraving and strip labels carry the matching tokens (the still-drawn
     duplicate pass is invisible to 1–3-measure strips). ✅ **Random injection DONE (2026-07-05)**:
@@ -306,7 +306,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   2026-07-06:** zero in SymbTr, but routine on real sheets (the neyzen.com engravings use the
   ⊕-jump + D.C. + Son form constantly), and without them the flatten/expand step can't finish a
   da-capo piece. **4 new faithful drawn-symbol tokens** — `\segno` `\coda` `\dc` `\fine` —
-  injected like repeats (`tools/render/navmarks.ts`: seeded 4–6 marks on ~70% of renders via
+  injected like repeats (`packages/core/src/labels/navmarks.ts`: seeded 4–6 marks on ~70% of renders via
   `navseed` — denser than a real page on purpose; at 2–4-marks/50% the rarer tokens simulated
   UNDER the audit floors — coda as an end→start ⊕ pair, D.C./Son above OR below the staff,
   never stacked on repeat/volta measures). Drawn in SheetView (Bravura glyphs + italic text), labeled at the drawn
@@ -377,7 +377,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
   (`apps/web/src/textNoise.ts`); the real engraved header is an HTML element outside the crops.
 - ✅ **Büyük-mücennep coverage via low-rate AEU-enharmonic respell (2026-07-05, user decision):**
   the whole corpus has ~47 notes at ≥6 commas and smallest-alteration respelling can't exceed ±5,
-  so `tools/render/respell.ts` flips a seeded ~8–15% of koma-sign notes to their exact büyük
+  so `packages/core/src/labels/respell.ts` flips a seeded ~8–15% of koma-sign notes to their exact büyük
   enharmonic (same pitch, other valid glyph) — enough for the decoder to LEARN the token (~1,150
   occurrences in v2), deliberately NOT rebalancing toward a sign real photos rarely show.
 - Keep audio/`koma53` untouched by rendering changes — it's the decoder's source of truth.
@@ -390,7 +390,7 @@ reads notes; (2) metrics make each fear measurable (**per-class accidental accur
       (reads notes, LilyPond output, vocab extendable, ~143M params). Final go/no-go = overfit-10.
 - [x] Confirm green typecheck (`npx tsc` core + web — clean as of 2026-07-02).
 - [x] **Label output format decided AND implemented** — LilyPond + AEU tokens, **faithful +
-      signature scheme** (§4), in `tools/render/lilypond.ts` (2026-07-02). Round-trip verified on
+      signature scheme** (§4), in `packages/core/src/labels/lilypond.ts` (2026-07-02). Round-trip verified on
       all sample scores. Re-render DONE (2026-07-05): `data/synthetic/strips_v2/` carries the
       repeat-sign tokens + multi-measure coverage — audit PASS (`docs/log/status-log.md`).
 - [x] Scaffold `tools/render/` (Playwright strip renderer — done, incl. Strip panel + decoder CLI).
@@ -425,7 +425,7 @@ browser gate 10/10 exact on held-out-piece strips with real Turkish accidentals,
 (`MODEL_EVAL.md`; watch it yourself: `docs/MANUAL_CHECKS.md` Check 9). **The rhythm-sign
 dataset upgrade (§6) is DONE (2026-07-08)** — triplets + ties + grace notes, 4 new tokens
 `\tup3` `\tupend` `\tie` `\grace` (96 → 100 ids), recovered from real durations by
-`tools/render/rhythm.ts`; **`strips_v2_2` rendered (18,777 strips) + audit PASS** (live check:
+`packages/core/src/labels/rhythm.ts`; **`strips_v2_2` rendered (18,777 strips) + audit PASS** (live check:
 `docs/MANUAL_CHECKS.md` Check 3c) — and the **Rung-2.2 retrain PASSED the same day** (Colab,
 from base weights): **headline 99.9% (8/8), SER 0.002, exact-match 96.7%** on the 2,417
 held-out val strips; `\tup3`/`\tupend` 100%, `\tie` 96.4%, `\grace` 98.0% recall
@@ -1175,7 +1175,7 @@ Full rows and reasoning: [../DECISIONS.md](../DECISIONS.md).
 
 The gap turned out to be narrower than it looked. Decode, Donut preprocessing, detokenization,
 stitching, the editor and playback all already existed in browser-safe form; the decode helpers in
-`apps/web/src/omrGate.ts` were simply never exported, and `tools/render/stitch.ts` is confirmed
+`apps/web/src/omrGate.ts` were simply never exported, and `packages/core/src/labels/stitch.ts` is confirmed
 free of node imports. The only genuinely missing piece was the page→strips slicer
 (`src/vision/page_to_strips.py`, 1,077 lines of numpy/OpenCV) — **ported and verified over the whole
 corpus at W6 (2026-08-04)**, so the browser now runs page → staves → rows → barlines → windows →

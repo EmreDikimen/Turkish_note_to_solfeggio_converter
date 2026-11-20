@@ -166,7 +166,7 @@ short list of what can be broken from anywhere.
   drop an accidental. Its gate is **`verify-labels-ly.ts`**, not `verify-labels.ts` (different engine,
   different glyph identification), and a pool it produced is not trainable until that passes.
 - Two deliberate duplications, both pinned by `npm test`: core's `SIG_TOKEN_BY_ALTER` mirrors
-  `AEU_TOKEN` in `tools/render/lilypond.ts`, and `packages/core/src/makamSignatures.ts` is
+  `AEU_TOKEN` in `packages/core/src/labels/lilypond.ts`, and `packages/core/src/makamSignatures.ts` is
   **GENERATED** from `data/makam_signatures.json` — never hand-edit it, and re-emit with `--from-json`
   so refreshing the TS copy cannot rewrite the JSON from whatever pools are on the machine.
 

@@ -33,7 +33,7 @@ Measured by encoding labels with the live tokenizer, `data/checkpoints/round2-st
 | accidental, `\|`, `\grace`, `\tup3` | 1 | our added tokens are whole words |
 
 So `c'4` = 3, `c'16` = 4, `c''16` = 5, `c'''16` = 6. The renderer's packing estimate in
-`tools/render/lilypond.ts` (`noteToLily`) already uses exactly this rule and matches the tokenizer
+`packages/core/src/labels/lilypond.ts` (`noteToLily`) already uses exactly this rule and matches the tokenizer
 exactly — the estimate is not an approximation.
 
 ### The vocabulary is mostly empty
@@ -273,7 +273,7 @@ token is redundant. **The data agrees, and the reason is stronger than "always t
 | malformed gold (`\tup3 \tup3`, a missing close) | 4 |
 
 ⚠ **"Always three" is NOT guaranteed by the generator.** `tupletGroupsIn`
-([`tools/render/rhythm.ts`](../../tools/render/rhythm.ts)) closes a run *when its duration sum lands
+([`packages/core/src/labels/rhythm.ts`](../../packages/core/src/labels/rhythm.ts)) closes a run *when its duration sum lands
 on a plain value* — a quarter-triplet plus an eighth-triplet sums to 1/4 and closes at **two**
 events. That is why the corpus contains one. ⭐ **But that same rule is the right replacement**: the
 member durations already say where the group ends, so the stitcher can re-derive the boundary with
@@ -298,7 +298,7 @@ is being **worked around** today rather than avoided.
 The `\tie` retirement is the precedent and the procedure ([labeling.md](labeling.md)): the id stays
 in `ADDED_TOKENS` (append-only), nothing emits it, and `eval_omr.py` drops it from **both** gold and
 decode so old and new checkpoints stay comparable. Beyond that: the close branch in
-[`tools/render/stitch.ts`](../../tools/render/stitch.ts) becomes duration arithmetic, and
+[`packages/core/src/labels/stitch.ts`](../../packages/core/src/labels/stitch.ts) becomes duration arithmetic, and
 `audit_coverage.py`'s `\tupend`-equals-`\tup3` expectation goes.
 
 ⚠ **The trade is real and unmeasured**: today a wrong `\tupend` moves the bracket; afterwards a
@@ -315,10 +315,10 @@ worth its own round.
    strip fills 59 new ids, so long labels would exist only in the real pool. Measure both id-length
    distributions under the new tokenizer before training; that check alone may reopen the render. `c''16` stays the string `c''16`; only how the tokenizer *segments* it
    changes. Verified by adding the tokens and re-encoding. So `NOTE_RE` in
-   [`tools/render/stitch.ts`](../../tools/render/stitch.ts), `noteToLily` in
-   [`tools/render/lilypond.ts`](../../tools/render/lilypond.ts) and every label on disk are all
+   [`packages/core/src/labels/stitch.ts`](../../packages/core/src/labels/stitch.ts), `noteToLily` in
+   [`packages/core/src/labels/lilypond.ts`](../../packages/core/src/labels/lilypond.ts) and every label on disk are all
    **untouched**. The change is `ADDED_TOKENS` alone — ⚠ duplicated by hand in `src/vision/data.py`
-   and `tools/render/lilypond.ts`, so both, or `check_token_drift` fails. ⚠ `noteToLily`'s packing
+   and `packages/core/src/labels/lilypond.ts`, so both, or `check_token_drift` fails. ⚠ `noteToLily`'s packing
    estimate would need updating **only if the corpus is re-rendered**, and Round 4 does not
    render — the render section above says why re-packing is the wrong fix (2026-09-06).
 2. **Re-emit, do not convert in place.** A converter over existing manifests proves the spelling

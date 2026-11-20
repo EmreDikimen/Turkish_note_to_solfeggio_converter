@@ -22,7 +22,7 @@ import { createServer } from "vite";
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizeTokens, stitchStrips, type DecodedStrip } from "../../render/stitch";
+import { normalizeTokens, stitchStrips, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const WEB_ROOT = path.join(ROOT, "apps/web");

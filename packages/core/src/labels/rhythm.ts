@@ -30,7 +30,7 @@
  * comparison can't tell 1/12 + 1/24 sums apart reliably.
  */
 
-import type { NoteEvent } from "@turkish-omr/core";
+import type { NoteEvent } from "../index";
 
 /** A greatest-common-divisor for the exact fraction math below. */
 function gcd(a: number, b: number): number {

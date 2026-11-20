@@ -1975,7 +1975,7 @@ itself not at all. ⚠ **"Heavily" needs one qualification, added 2026-08-19**: 
 is aimed at the *deployment* distribution (screenshots and camera photos), and there is **no scan
 profile at all** — see Lever 7.
 
-The cheapest second domain is one we half-own: `tools/render/lilypond.ts` already emits the label
+The cheapest second domain is one we half-own: `packages/core/src/labels/lilypond.ts` already emits the label
 language, so rendering the same pieces through real LilyPond would give a genuinely different
 engraver at no labelling cost. ⚠ The hard rule that pixels and labels come from one code path
 ([../../CLAUDE.md](../../CLAUDE.md)) is the thing to design around here, and `verify-labels.ts` is
@@ -2562,7 +2562,7 @@ measured on the **pre-tuplet-collection** model and does not describe `round2-st
 kept as history in [labeling.md](../rung3/labeling.md), not as a current fact about the live model.
 
 **Not the stitcher.** Unclosed `\tup3` is closed at the barline or row end, a stray `\tupend` is
-ignored, and a mid-row `\sig` is dropped (`tools/render/stitch.ts`). The page is already repaired.
+ignored, and a mid-row `\sig` is dropped (`packages/core/src/labels/stitch.ts`). The page is already repaired.
 ⚠ But the exam scores **token ids, before the stitcher**, so no stitch-time repair can move it.
 
 ### The two failure shapes, from a real page (owner, 2026-08-11)
@@ -2599,7 +2599,7 @@ none of that shape is correct, not a gap.
 ### What the durations do determine
 
 A group closes when its running sum of *sounding* durations lands on a plain power-of-two value.
-That is already the rule `tupletGroupsIn` implements (`tools/render/rhythm.ts`), and it handles
+That is already the rule `tupletGroupsIn` implements (`packages/core/src/labels/rhythm.ts`), and it handles
 two-, three- and four-notehead groups without counting anything.
 
 So the closing point is derivable, which yields a repair that only ever acts when the arithmetic

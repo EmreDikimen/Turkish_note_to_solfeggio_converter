@@ -407,7 +407,7 @@ say, for one hand-placed note. Full reasoning and the two residues: [../BACKLOG.
 
 ### Guessing the makam from a decoded page
 
-A decoded page has no metadata — `tools/render/stitch.ts` writes `makam: ""` — so `detectMakam`
+A decoded page has no metadata — `packages/core/src/labels/stitch.ts` writes `makam: ""` — so `detectMakam`
 reads it out of the notes:
 
 1. **Signature.** `deriveKeySignature(doc)` → `signatureKey` → the exact string
@@ -446,7 +446,7 @@ Accuracy, and the caveat that it is measured on clean scores rather than decoded
 
 Two duplications are deliberate and both are pinned by tests:
 
-- `SIG_TOKEN_BY_ALTER` in core mirrors `AEU_TOKEN` in `tools/render/lilypond.ts` — core must not
+- `SIG_TOKEN_BY_ALTER` in core mirrors `AEU_TOKEN` in `packages/core/src/labels/lilypond.ts` — core must not
   depend on `tools/`, and the label path is load-bearing enough not to move. `npm test` round-trips
   every signature in the generated table through both vocabularies.
 - `packages/core/src/makamSignatures.ts` mirrors `data/makam_signatures.json` — the app ships

@@ -1,5 +1,5 @@
 /**
- * Sign editing verification (Node-only) for `tools/render/structure-edit.ts`.
+ * Sign editing verification (Node-only) for `packages/core/src/labels/structure-edit.ts`.
  *
  * The editor lets a person put `‖:` `:‖` 1./2. 𝄋 ⊕ "D.C." "Son" on a page and take them off again.
  * Two things have to hold or the staff and the sound come apart:
@@ -15,8 +15,8 @@
  * Run: npx --yes tsx tools/render/structure-edit-test.ts
  */
 
-import { resolveStructure, type ScoreStructure } from "./stitch";
-import { emptyStructure, markTargets, openRepeatBar, placeMark, placeRepeat, removeMark } from "./structure-edit";
+import { resolveStructure, type ScoreStructure } from "@turkish-omr/core/labels/stitch";
+import { emptyStructure, markTargets, openRepeatBar, placeMark, placeRepeat, removeMark } from "@turkish-omr/core/labels/structure-edit";
 
 let failures = 0;
 

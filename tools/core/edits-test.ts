@@ -9,7 +9,7 @@
  *
  * Known, accepted round-trip diff (documented in edits.ts, not a bug here):
  *  - `noteAE` is AEU-SNAPPED by the Python exporter but exact in `withPitch` (matching
- *    tools/render/stitch.ts and what MeasureEditModal always wrote), so it is not compared.
+ *    packages/core/src/labels/stitch.ts and what MeasureEditModal always wrote), so it is not compared.
  *  - `durationMs` is not compared either: `beatsToMs` derives it from the piece's MEDIAN
  *    whole-note length, which is ±1 ms off SymbTr's own per-event timing.
  *
@@ -39,7 +39,7 @@ import {
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
-import { closedTupletAt, drawnTupletAt, memberPositions, plainTupletBase, tupletGroupsIn, tupletRunFrom, tupletEdgeTo } from "../render/rhythm";
+import { closedTupletAt, drawnTupletAt, memberPositions, plainTupletBase, tupletGroupsIn, tupletRunFrom, tupletEdgeTo } from "@turkish-omr/core/labels/rhythm";
 
 let failures = 0;
 
@@ -333,7 +333,7 @@ console.log("\nRests");
 // ---------------------------------------------------------------------------------------------
 // 5. The tuplet tool (editor step 7): which notes, and the arithmetic on them
 //
-// The selection rules live in tools/render/rhythm.ts, beside the functions that DRAW the bracket
+// The selection rules live in packages/core/src/labels/rhythm.ts, beside the functions that DRAW the bracket
 // and write the `\tup3` label, so the editor cannot offer a triplet the engraver would refuse.
 // They are tested here, with the edit they serve.
 

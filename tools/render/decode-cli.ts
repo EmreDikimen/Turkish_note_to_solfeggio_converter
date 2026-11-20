@@ -7,8 +7,8 @@
 
 import { readFileSync } from "node:fs";
 import type { NoteModelDocument } from "@turkish-omr/core";
-import { docToStrips } from "./lilypond";
-import { decodePretty } from "./decode";
+import { docToStrips } from "@turkish-omr/core/labels/lilypond";
+import { decodePretty } from "@turkish-omr/core/labels/decode";
 
 const arg = process.argv[2] ?? "apps/web/public/gamzedeyim-deva.json";
 

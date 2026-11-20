@@ -32,7 +32,7 @@ import {
   spellNote,
   toAeuAlter,
   type NoteModelDocument,
-} from "@turkish-omr/core";
+} from "../index";
 import { mulberry32 } from "./rng";
 
 const LETTERS = ["C", "D", "E", "F", "G", "A", "B"] as const;

@@ -31,7 +31,7 @@ import { createServer } from "vite";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizeTokens } from "../../render/stitch";
+import { normalizeTokens } from "@turkish-omr/core/labels/stitch";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const WEB_ROOT = path.join(ROOT, "apps/web");

@@ -47,7 +47,7 @@ export function spellingOf(ev: NoteEvent): Spelling | null {
  * The spelling is preserved exactly — picking Fa5 +5 commas yields "Fa5#5", never the enharmonic
  * "Sol5b4" — which is the whole reason the editor stores letter/octave/alter instead of a koma.
  *
- * ⚠ `noteAE` carries the EXACT alteration here, matching `tools/render/stitch.ts` (the producer of
+ * ⚠ `noteAE` carries the EXACT alteration here, matching `packages/core/src/labels/stitch.ts` (the producer of
  * every decoded page) and what `MeasureEditModal` always wrote. The Python exporter instead
  * AEU-SNAPS it, so a bundled SymbTr score can hold `noteName "Si4b2"` next to `noteAE "B4b1"`
  * (152 of 2,297 notes in the bundled scores, every one explained by that snap). Nothing in the app
@@ -180,7 +180,7 @@ function gcd(a: number, b: number): number {
  * summing to a plain value, and the label serializer writes `\tup3` for the same reason. So the
  * whole edit is these durations, and there is no schema change.
  *
- * Which events to name is `tupletRunFrom` / `closedTupletAt` in `tools/render/rhythm.ts` — the
+ * Which events to name is `tupletRunFrom` / `closedTupletAt` in `packages/core/src/labels/rhythm.ts` — the
  * module that draws the bracket. This function asks no questions about validity; hand it three
  * equal plain values or it will happily produce something unengravable.
  *

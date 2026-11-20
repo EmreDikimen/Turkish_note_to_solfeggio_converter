@@ -44,11 +44,11 @@ import {
   parseSignatureBody,
   serializeMeasures,
   serializeSignature,
-} from "./lilypond";
-import { tupletGroupsIn, tieSplitBeats } from "./rhythm";
-import { repeatMarksAt } from "./repeats";
-import { stitchStrips, stitchTokenRows, type DecodedStrip } from "./stitch";
-import { navMarksFromStructure, repeatSpansFromStructure } from "./structure-view";
+} from "@turkish-omr/core/labels/lilypond";
+import { tupletGroupsIn, tieSplitBeats } from "@turkish-omr/core/labels/rhythm";
+import { repeatMarksAt } from "@turkish-omr/core/labels/repeats";
+import { stitchStrips, stitchTokenRows, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
+import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
 
 let failures = 0;
 

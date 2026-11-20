@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { NoteModelDocument } from "@turkish-omr/core";
-import type { ScoreStructure } from "../../../tools/render/stitch";
+import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";
 
 /** How long after an edit a same-keyed edit still counts as part of the same gesture. One
  *  wheel-scroll or one piano-roll drag emits dozens of edits; they must undo as one. */

@@ -43,7 +43,7 @@ import {
   spellNote,
   type NoteEvent,
   type NoteModelDocument,
-} from "@turkish-omr/core";
+} from "../index";
 import {
   ADDED_TOKENS,
   AEU_TOKEN,

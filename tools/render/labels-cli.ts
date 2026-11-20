@@ -71,9 +71,9 @@ import {
   serializeMeasures,
   serializeSignature,
   type SignatureMap,
-} from "./lilypond";
-import { detectRepeats, type RepeatSpan } from "./repeats";
-import { decodeLabel } from "./decode";
+} from "@turkish-omr/core/labels/lilypond";
+import { detectRepeats, type RepeatSpan } from "@turkish-omr/core/labels/repeats";
+import { decodeLabel } from "@turkish-omr/core/labels/decode";
 
 // ---------------------------------------------------------------------------------------------
 // Shared piece loading

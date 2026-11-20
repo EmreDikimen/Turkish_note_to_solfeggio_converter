@@ -108,7 +108,7 @@ updated: 2026-11-20
   ⚠ The `WARN_UNMATCHED_REPSTART` exemption and its dashed overlay marker stay anyway — a DECODE can
   still read a stray `‖:`, and edit mode must show it to let it be deleted. ⚠ **Armed places, Seçim
   removes**, and a delete takes its whole object from EITHER end. ⚠ Signs share the undo stack with the
-  notes (`useDocHistory`'s `ScoreState`). `tools/render/structure-edit.ts` · `structure-edit-test.ts`.
+  notes (`useDocHistory`'s `ScoreState`). `packages/core/src/labels/structure-edit.ts` · `structure-edit-test.ts`.
 - **THE PAGE GOES TO THE PLAYHEAD ONCE PER ROW, AND ONLY WHEN THE ROW IS OFF THE SCREEN** (owner,
   2026-09-03). `followPlayhead` is **the reader's setting, ON by default**, remembered in
   `localStorage` behind try/catch; `?follow=0|1` overrides without being written back. ⚠ **Two axes,

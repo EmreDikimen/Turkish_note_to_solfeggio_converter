@@ -43,7 +43,7 @@ import {
   DEFAULT_VIOLIN_TUNING,
   type ViolinTuning,
 } from "@turkish-omr/core";
-import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "../../../tools/render/rhythm";
+import { closedTupletAt, drawnTupletAt, memberPositions, tupletRunFrom, tupletEdgeTo } from "@turkish-omr/core/labels/rhythm";
 import { useDocHistory } from "./useDocHistory";
 import { GoldRule } from "./ui/ornament/GoldRule";
 import { ThemeSwitch } from "./ui/ThemeSwitch";
@@ -105,9 +105,9 @@ import {
   whereOf,
   type OmrStatus,
 } from "./ui/status";
-import { detectRepeats, injectRepeats, type RepeatSpan } from "../../../tools/render/repeats";
-import { injectNavMarks, type NavMark } from "../../../tools/render/navmarks";
-import { navMarksFromStructure, repeatSpansFromStructure } from "../../../tools/render/structure-view";
+import { detectRepeats, injectRepeats, type RepeatSpan } from "@turkish-omr/core/labels/repeats";
+import { injectNavMarks, type NavMark } from "@turkish-omr/core/labels/navmarks";
+import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
 import {
   markTargets,
   openRepeatBar,
@@ -117,10 +117,10 @@ import {
   type RefusalReason,
   type SignTool,
   type StructureMark,
-} from "../../../tools/render/structure-edit";
-import type { ScoreStructure } from "../../../tools/render/stitch";
-import { respellAeu } from "../../../tools/render/respell";
-import { parseSignatureBody } from "../../../tools/render/lilypond";
+} from "@turkish-omr/core/labels/structure-edit";
+import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";
+import { respellAeu } from "@turkish-omr/core/labels/respell";
+import { parseSignatureBody } from "@turkish-omr/core/labels/lilypond";
 
 /** The "Gelişmiş" developer panel: dev server, or a device that opted in with `?dev=1` (devMode.ts). */
 const SHOW_DEV_PANEL = devMode();
@@ -816,7 +816,7 @@ export function App() {
     let d = doc && transpose !== 0 ? transposeDoc(doc, transpose, TRANSPOSE_SPELLING) : doc;
     // Render automation: seeded AEU-enharmonic respell so the rare büyük glyphs appear at all in
     // training (a decoder can't emit a token it never saw). Deliberately low-rate — common signs
-    // keep their natural distribution; see tools/render/respell.ts for the full rationale.
+    // keep their natural distribution; see packages/core/src/labels/respell.ts for the full rationale.
     if (d && URL_RESPELLSEED != null) d = respellAeu(d, URL_RESPELLSEED);
     return d;
   }, [doc, transpose]);
@@ -1579,7 +1579,7 @@ export function App() {
    * ⚠ It also used to take the triplet apart on the spot (2026-08-08 → 2026-08-30). It now selects:
    * taking it apart is the ✕ (`onTupletRemove`) and moving it is the handles (`onTupletEdge`).
    *
-   * Which notes make a legal run is `tupletRunFrom` in `tools/render/rhythm.ts` — the same module
+   * Which notes make a legal run is `tupletRunFrom` in `packages/core/src/labels/rhythm.ts` — the same module
    * that draws the bracket, so the tool cannot promise a triplet the engraver would not draw. The
    * sheet dims and un-clicks everything this would refuse, so case 3's "not the end note" is
    * unreachable through the UI; it is still handled, because a stale click must not invent one.

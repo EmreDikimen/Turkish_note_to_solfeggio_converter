@@ -20,10 +20,10 @@ import {
   serializeSignature,
   STRIP_BUDGET,
   type SignatureMap,
-} from "../../../tools/render/lilypond";
-import { decodePretty } from "../../../tools/render/decode";
-import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
-import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
+} from "@turkish-omr/core/labels/lilypond";
+import { decodePretty } from "@turkish-omr/core/labels/decode";
+import { repeatMarksAt, type RepeatSpan } from "@turkish-omr/core/labels/repeats";
+import { navMarksAt, type NavMark } from "@turkish-omr/core/labels/navmarks";
 
 /** One measure's on-screen rectangle, as reported by SheetView's `onLayout`. */
 export interface LayoutBox {

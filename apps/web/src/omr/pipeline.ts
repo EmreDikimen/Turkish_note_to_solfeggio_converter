@@ -10,7 +10,7 @@
  * measure-scoped carry), and it is what `stitch-cli.ts` passes for real decodes. Using the
  * synthetic default here would silently mis-resolve every accidental on a real page.
  */
-import { stitchStrips, type DecodedStrip, type StitchResult } from "../../../../tools/render/stitch";
+import { stitchStrips, type DecodedStrip, type StitchResult } from "@turkish-omr/core/labels/stitch";
 import { decodeStrip } from "./decode";
 import { preprocessCanvas } from "./preprocess";
 import type { ModelMeta, Sessions, StripDecode } from "./types";

@@ -11,7 +11,7 @@ same data plumbing; only the sample count and schedule differ.
 HOW the pieces map to training concepts:
   - `StripDataset`      — the (image, label-string) pairs; nothing tensor-y yet.
   - `ADDED_TOKENS`      — the new vocabulary this project teaches the model. MUST mirror
-                          `tools/render/lilypond.ts` (the TS side is the source of truth,
+                          `packages/core/src/labels/lilypond.ts` (the TS side is the source of truth,
                           because labels are generated there).
   - `check_token_drift` — scans real labels for `\\`-tokens missing from ADDED_TOKENS, so a
                           TS-side change can't silently produce untokenizable labels.
@@ -29,10 +29,10 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-# Mirrors ADDED_TOKENS in tools/render/lilypond.ts (8 AEU accidentals + natural + signature
+# Mirrors ADDED_TOKENS in packages/core/src/labels/lilypond.ts (8 AEU accidentals + natural + signature
 # delimiters + 4 repeat-sign tokens + 4 navigation-mark tokens (segno/coda/D.C./Son — see
-# tools/render/navmarks.ts) + barline + the digit `3`, which the base vocab lacks + the 4
-# strips_v2_2 rhythm-sign tokens (triplet bracket / tie / grace — see tools/render/rhythm.ts).
+# packages/core/src/labels/navmarks.ts) + barline + the digit `3`, which the base vocab lacks + the 4
+# strips_v2_2 rhythm-sign tokens (triplet bracket / tie / grace — see packages/core/src/labels/rhythm.ts).
 # Keep in sync by hand; `check_token_drift` catches a mismatch against the actual rendered labels.
 # APPEND new tokens at the END only: several scripts slice ADDED_TOKENS[:8] for the AEU set, and
 # add_tokens assigns ids in list order — appending keeps every earlier token's id stable across
@@ -54,7 +54,7 @@ ADDED_TOKENS: list[str] = [
     "\\tup3", "\\tupend", "\\tie", "\\grace",
 ]
 
-# Round 4’s note spelling, "scheme H" — see the matching block in tools/render/lilypond.ts.
+# Round 4’s note spelling, "scheme H" — see the matching block in packages/core/src/labels/lilypond.ts.
 # The 14 pitches with >=1,000 notes are FUSED (a notehead’s height IS letter+octave together,
 # so one token matches the visual unit and the decoder takes one step fewer); the 7 rare ones
 # stay compositional (`a'''` occurs ONCE in the corpus) and that split is FROZEN, ids being
@@ -207,7 +207,7 @@ def check_token_drift(dataset: StripDataset) -> None:
     if unknown:
         raise ValueError(
             f"labels contain tokens missing from ADDED_TOKENS (update src/vision/data.py "
-            f"to match tools/render/lilypond.ts): {unknown}"
+            f"to match packages/core/src/labels/lilypond.ts): {unknown}"
         )
 
 

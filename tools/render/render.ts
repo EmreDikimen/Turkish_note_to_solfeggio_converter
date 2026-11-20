@@ -43,8 +43,8 @@
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { chromium, type Page } from "playwright";
-import { decodePretty } from "./decode";
-import { hashStr, mulberry32 } from "./rng";
+import { decodePretty } from "@turkish-omr/core/labels/decode";
+import { hashStr, mulberry32 } from "@turkish-omr/core/labels/rng";
 
 const URL = process.env.OMR_URL ?? "http://localhost:5173";
 const SCALE = 3; // deviceScaleFactor — crisp beams; the model resizes to ~583×409 downstream
@@ -144,7 +144,7 @@ const STACCATO_NOISE = has("staccato-noise");
 // Opt-in for the same reason as the two flags above: it changes a share of every piece.
 const USUL_BARLINE = has("usul-barline");
 // Round-3 Lever 1 (docs/archive/rounds.md): the crop-geometry pilot's only variable. The renderer packs
-// a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no pixel
+// a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in packages/core/src/labels/lilypond.ts) and has no pixel
 // width rail at all — which is why our strips run wider than the real pools' and reach the encoder
 // downscaled by half (docs/METRICS-DIAGNOSTICS.md, "The encoder's input box").
 //

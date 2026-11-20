@@ -37,7 +37,7 @@
  * instead of ~3.6 MB, because IndexedDB has no way to read half a record.
  */
 import type { NoteModelDocument } from "@turkish-omr/core";
-import type { ScoreStructure } from "../../../tools/render/stitch";
+import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";
 
 const DB_NAME = "komavision";
 const DB_VERSION = 1;

@@ -141,7 +141,7 @@ export function decodeTokens(ids: number[], id2token: Record<string, string>): s
  * so raw tokens are unreadable; our `\…` and `|` added tokens are standalone words with no
  * marker. The added token `3` is NOT standalone — it exists only to spell 32nd durations
  * (`e''32` = … `3` `2</w>`), so it continues the current word like any un-marked subword.
- * Mirrors the label strings the serializer emits (tools/render/lilypond.ts).
+ * Mirrors the label strings the serializer emits (packages/core/src/labels/lilypond.ts).
  */
 export function detokenize(ids: number[], id2token: Record<string, string>): string {
   let out = "";

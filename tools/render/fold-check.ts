@@ -21,7 +21,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { groupMeasures, unfoldDoc } from "@turkish-omr/core";
-import { stitchStrips, type DecodedStrip } from "./stitch";
+import { stitchStrips, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
 
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
 

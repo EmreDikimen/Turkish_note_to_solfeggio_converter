@@ -22,7 +22,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { AEU_TOKEN, NATURAL_TOKEN } from "./lilypond";
+import { AEU_TOKEN, NATURAL_TOKEN } from "@turkish-omr/core/labels/lilypond";
 import { MAKAM_SUFFIX, lilyDocument } from "./ly-engrave";
 
 export interface Glyph { x: number; y: number; d: string }

@@ -20,7 +20,7 @@
  *    (mirroring the serializer).
  */
 
-import { accidentalLabel, spellNote } from "@turkish-omr/core";
+import { accidentalLabel, spellNote } from "../index";
 import {
   AEU_TOKEN,
   NATURAL_TOKEN,

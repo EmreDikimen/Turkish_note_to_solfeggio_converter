@@ -49,7 +49,7 @@ import {
   type Measure,
   type NoteEvent,
   type NoteModelDocument,
-} from "@turkish-omr/core";
+} from "../index";
 import { repeatMarksAt, type RepeatSpan } from "./repeats";
 import { navMarksAt, type NavMark } from "./navmarks";
 import { tieSplitBeats, tupletGroupsIn, tupletWrittenBeats } from "./rhythm";

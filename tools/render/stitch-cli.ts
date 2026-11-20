@@ -17,7 +17,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
-import { stitchStrips, type DecodedStrip } from "./stitch";
+import { stitchStrips, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
 
 const args = process.argv.slice(2);
 const input = args.find((a) => !a.startsWith("-"));

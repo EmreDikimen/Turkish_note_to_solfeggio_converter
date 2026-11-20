@@ -17,9 +17,9 @@ import {
   type NoteEvent,
   type NoteModelDocument,
 } from "@turkish-omr/core";
-import { repeatMarksAt, type RepeatSpan } from "../../../tools/render/repeats";
-import { navMarksAt, type NavMark } from "../../../tools/render/navmarks";
-import type { MarkTarget, SignTool, StructureMark } from "../../../tools/render/structure-edit";
+import { repeatMarksAt, type RepeatSpan } from "@turkish-omr/core/labels/repeats";
+import { navMarksAt, type NavMark } from "@turkish-omr/core/labels/navmarks";
+import type { MarkTarget, SignTool, StructureMark } from "@turkish-omr/core/labels/structure-edit";
 import {
   closedTupletAt,
   drawnTupletAt,
@@ -30,11 +30,11 @@ import {
   tupletEdgeTo,
   tupletWrittenBeats,
   type TupletGroup,
-} from "../../../tools/render/rhythm";
+} from "@turkish-omr/core/labels/rhythm";
 import { buildTextNoise } from "./textNoise";
 import { TR } from "./ui/strings";
 import { useViewport } from "./usePhone";
-import { mulberry32 } from "../../../tools/render/rng";
+import { mulberry32 } from "@turkish-omr/core/labels/rng";
 
 // --- layout constants -------------------------------------------------------
 const LEFT = 10;
@@ -301,7 +301,7 @@ export function buildStaveNotes(
       const sigAlter = signatureMap.get(parsed.letter) ?? 0;
       const effective = active.has(posKey) ? active.get(posKey)! : sigAlter;
       // `sigTolerant` ON: SAME-DIRECTION notes are drawn BARE — the rule of the same name in
-      // noteToLily (tools/render/lilypond.ts), applied here too or the page would show a sign the
+      // noteToLily (packages/core/src/labels/lilypond.ts), applied here too or the page would show a sign the
       // label doesn't carry. Real editions print the degree under its signature sign and leave the
       // makam intonation to the performer: eviç is a 5-comma F♯ printed bare under a koma-sharp-F
       // donanım, because SymbTr stores the SOUNDING value. Explicit signs mark genuine chromatic
@@ -2019,7 +2019,7 @@ export function SheetView({
    * Once a run is open only its own two ends stay live — an existing triplet elsewhere on the page
    * would otherwise silently abandon the anchor when clicked.
    *
-   * All of it comes from `tools/render/rhythm.ts`, the module that draws the bracket, so the sheet
+   * All of it comes from `packages/core/src/labels/rhythm.ts`, the module that draws the bracket, so the sheet
    * cannot offer a triplet the engraver would refuse to draw. Empty when the tool is not armed, so
    * nothing here costs anything in the other modes.
    */

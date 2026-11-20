@@ -14,7 +14,7 @@
  */
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, statSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
-import { stitchStrips, type DecodedStrip } from "../render/stitch";
+import { stitchStrips, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
 import { groupMeasures, measureBeats, deriveTimeSignature } from "@turkish-omr/core";
 
 interface PageStructure {

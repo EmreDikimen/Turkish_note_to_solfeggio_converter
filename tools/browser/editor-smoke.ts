@@ -21,7 +21,7 @@
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { groupMeasures, measureOfEvent, type NoteModelDocument } from "@turkish-omr/core";
-import { tupletRunFrom } from "../render/rhythm";
+import { tupletRunFrom } from "@turkish-omr/core/labels/rhythm";
 import { answerVoicePrompt } from "./voicePrompt";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1065,7 +1065,7 @@ async function main() {
   // --- the tuplet tool (step 7) ----------------------------------------------------------------
   //
   // One tool, both directions: click a note and the note two on to make a triplet, click any
-  // member of one to take it apart. The rules live in tools/render/rhythm.ts — the module that
+  // member of one to take it apart. The rules live in packages/core/src/labels/rhythm.ts — the module that
   // DRAWS the bracket — so this check finds its target with the same function the app uses, and
   // then asserts only on what the app produced: the `data-tuplet` states, the saved durations, and
   // the "3" the engraver actually drew.

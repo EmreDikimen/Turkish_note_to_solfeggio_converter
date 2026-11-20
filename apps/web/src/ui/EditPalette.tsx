@@ -38,7 +38,7 @@ import { ACCIDENTAL_VALUES, accidentalCp, accidentalLongLabel } from "./accident
 import type { RefusalReason, SignTool } from "@turkish-omr/core/labels/structure-edit";
 import { TR } from "./strings";
 import { PlayIcon, StopIcon } from "./PlayIcons";
-import { useIsPhone } from "../lib/usePhone";
+import { useIsPhone } from "../browser/usePhone";
 
 /** What a click on a note does while this tool is armed.
  *

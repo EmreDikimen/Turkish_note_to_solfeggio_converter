@@ -21,7 +21,7 @@ import { ErrorNote } from "./ErrorNote";
 import type { OmrStatus } from "./status";
 import type { AppError } from "./errors";
 import { TR } from "./strings";
-import { useViewport } from "../lib/usePhone";
+import { useViewport } from "../browser/usePhone";
 import { TezhipPattern } from "./ornament/TezhipPattern";
 
 /**

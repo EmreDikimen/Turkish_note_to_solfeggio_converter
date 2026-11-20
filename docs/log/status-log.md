@@ -25,9 +25,9 @@ any change, `smoke:editor`, and `smoke:app` reaching its known failure point.
 - **The label language and the stitcher moved into core** (`packages/core/src/labels/`): the app
   used to import them from `tools/render/` by `../../../` paths.
 - **`tools/` is four folders** — `render/`, `tests/`, `checks/`, `dev/`.
-- **`apps/web/src` is sorted** into `score/`, `instruments/`, `export/`, `lib/`, `dev/`, `ui/modals/`;
+- **`apps/web/src` is sorted** into `score/`, `instruments/`, `export/`, `browser/` (was `lib/` for a day — the root `.gitignore`'s `lib/` hid a new file in it), `dev/`, `ui/modals/`;
   `SheetView.tsx` 3,728 → ~2,200 lines (its helpers moved, unchanged, into `vexNotes`, `drawMarks`,
-  `hitTest`, `layout`); `App.tsx`'s URL parameters into `lib/urlParams.ts`.
+  `hitTest`, `layout`); `App.tsx`'s URL parameters into `browser/urlParams.ts`.
 - **Found, not fixed:** `smoke:app` fails on `main` before and after — after a stored page is
   reopened the recent list is closed, and the check expects its row. That is app behaviour, so it
   is the owner's call. The check's other bug (waiting on the hidden icon sprite) was fixed.

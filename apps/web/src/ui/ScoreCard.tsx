@@ -15,7 +15,7 @@ import type { NoteModelDocument } from "@turkish-omr/core";
 import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
-import { useViewport } from "../lib/usePhone";
+import { useViewport } from "../browser/usePhone";
 
 export type ViewMode = "sheet" | "instrument";
 

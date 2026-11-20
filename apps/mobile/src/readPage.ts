@@ -1,9 +1,9 @@
 /**
- * A photo of a page → the notes on it. The native app's M1 (docs/mobile/plan.md).
+ * A photo of a page → the notes on it. The native app's M1 (docs/mobile/README.md).
  *
  * The phone does no image work: it POSTs the photo's JPEG bytes to the decode server's `/page`,
  * which slices, preprocesses and reads it (`apps/server/src/slicePage.ts`), and the strips that come
- * back are stitched HERE with the web app's own stitcher — `tools/render/stitch.ts`, the same call
+ * back are stitched HERE with the web app's own stitcher — `packages/core/src/labels/stitch.ts`, the same call
  * and the same options as `stitchDecoded` in `apps/web/src/omr/pipeline.ts`. One slicer, one
  * decoder, one stitcher; the phone adds only the upload.
  *
@@ -13,7 +13,7 @@
  */
 import { fetch } from "expo/fetch";
 import type { NoteModelDocument } from "@turkish-omr/core";
-import { stitchStrips, type DecodedStrip, type ScoreStructure } from "../../../tools/render/stitch";
+import { stitchStrips, type DecodedStrip, type ScoreStructure } from "../../../packages/core/src/labels/stitch";
 
 /** The whole request, as long as the web client allows a decode to take. */
 const TIMEOUT_MS = 180_000;

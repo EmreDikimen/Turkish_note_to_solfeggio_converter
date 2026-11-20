@@ -6,14 +6,14 @@
  * LilyPond source (`ly-engrave.ts`), runs LilyPond once per piece, and screenshots each resulting
  * one-line SVG page at the corpus's own geometry. The labels come from the SAME serializer the
  * corpus uses, so this adds a second set of PIXELS and no new labelling — which is the whole point
- * of the lever ([docs/archive/rounds/levers.md](../../docs/archive/rounds/levers.md)).
+ * of the lever ([docs/archive/rounds.md](../../docs/archive/rounds.md)).
  *
  * GEOMETRY IS MATCHED ON PURPOSE. Measured on `strips_v4`: every strip is 336 px tall with its staff
  * lines exactly 30 px apart and the top line at y = 138. LilyPond's SVG viewBox is in staff-spaces
  * (consecutive staff lines are 1.0 apart), so rendering at 10 CSS px per unit with Playwright's
  * deviceScaleFactor 3 reproduces that exactly. If the engraver's own spacing were also allowed to
  * change the image SIZE, this pilot would be measuring two variables at once — and Lever 1 already
- * proved size moves the edit budget (docs/METRICS-GEOMETRY.md).
+ * proved size moves the edit budget (docs/METRICS-INPUT.md).
  *
  * ⚠ WHAT THIS ARM DELIBERATELY DOES NOT DRAW, and why the comparison must say so: lyrics, repeat
  * signs, volta brackets, navigation marks and distractor text. `render.ts` draws all of them on a
@@ -34,8 +34,8 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { join } from "node:path";
 import { chromium, type Page } from "playwright";
 import { deriveTimeSignature, groupMeasures, type NoteModelDocument } from "@turkish-omr/core";
-import { STRIP_BUDGET, parseSignatureBody, serializeMeasure, type SignatureMap } from "./lilypond";
-import { hashStr, mulberry32 } from "./rng";
+import { STRIP_BUDGET, parseSignatureBody, serializeMeasure, type SignatureMap } from "@turkish-omr/core/labels/lilypond";
+import { hashStr, mulberry32 } from "@turkish-omr/core/labels/rng";
 import { lilyDocument, parseLabel, stripToScore } from "./ly-engrave";
 import { accidentalsInSvg, calibrate, parseLySvg, type GlyphTable } from "./ly-svg";
 

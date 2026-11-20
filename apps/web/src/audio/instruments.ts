@@ -6,7 +6,7 @@
  * licence sits in the same diff as the file. Anything added here MUST arrive with its `source` and
  * `license`, and a matching line in `public/THIRD-PARTY.txt`.
  *
- * ⚠ **The numbers below are MEASURED, not typed.** `scripts/prepare_voices.py --manifest` prints
+ * ⚠ **The numbers below are MEASURED, not typed.** `ml/prep/prepare_voices.py --manifest` prints
  * this block; paste it rather than editing a field by hand. `hz` in particular is the recording's
  * own fundamental, because the filenames' pitch labels cannot be trusted across libraries — VSCO's
  * clarinet labels sit an octave below sounding pitch while its violin labels do not, so a name like
@@ -48,7 +48,7 @@ export interface VoiceSample {
    * ⚠ **On a plucked voice this is measured spectrally, and the reason is audible.** A stiff string's
    * partials are stretched sharp, so a period-based estimator reads the note sharp — up to 22 cents
    * on the kanun's bottom courses, which is a whole koma, and it made microtonal accidentals down
-   * there land on the wrong comma (owner heard it on F♯). `scripts/prepare_voices.py` therefore lets
+   * there land on the wrong comma (owner heard it on F♯). `ml/prep/prepare_voices.py` therefore lets
    * YIN choose the partial and the spectrum say where it is. ⚠ For a BOWED voice the same refinement
    * is wrong and is not applied: `Arco Vib`'s ±30-cent swing has no single peak to find.
    */
@@ -71,7 +71,7 @@ export interface VoiceSample {
    * *"we can trim less from the beginning"*, which was right — an amplitude threshold overshoots the
    * breath by waiting for full volume, and cutting that far makes everything slurred for no reason.
    *
-   * So `toneS` is measured SPECTRALLY (`scripts/prepare_voices.py`): the first moment the sound is
+   * So `toneS` is measured SPECTRALLY (`ml/prep/prepare_voices.py`): the first moment the sound is
    * no more than 10 harmonic-percentage-points below that file's own settled tonality, and stays
    * there. That is 71–404 ms for the clarinet against 111–1178 ms for the amplitude version.
    *

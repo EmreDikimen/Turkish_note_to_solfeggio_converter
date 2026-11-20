@@ -2,7 +2,7 @@
  * The decode server (MVP W9) — POST a page's strips, get the tokens back.
  *
  * Node + `onnxruntime-node`, importing `apps/web/src/omr/decode.ts`: the browser's own module, so
- * there is ONE decode implementation rather than a third to hold in parity (docs/app/deploy.md).
+ * there is ONE decode implementation rather than a third to hold in parity (docs/app/server.md).
  * Slicing stays on the client, the editor and playback stay on the client, and the client keeps a
  * working in-browser decode as its fallback. What moves here is the ~19 s of neural decode that
  * was heating the user's laptop — the reason the server exists at all.
@@ -16,7 +16,7 @@
  *   POST /page?name=<stem>  → the raw JPEG/PNG of a whole page as the body. The server slices it
  *                    (the browser's own slicer, `slicePage.ts`), preprocesses each crop (`donut.ts`)
  *                    and decodes; the reply is `/decode`'s plus the geometry. For the native app,
- *                    which has no canvas to slice with (docs/mobile/plan.md). The web app does not
+ *                    which has no canvas to slice with (docs/mobile/README.md). The web app does not
  *                    use it.
  *
  * Stitching is NOT here. The stitcher is where a score gets its shape and the editor loads it

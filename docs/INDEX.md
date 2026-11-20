@@ -1,127 +1,173 @@
 # Doc index — which file answers which question
 
-purpose: route a reader (human or agent) to the one file that owns an answer
+purpose: route a reader to the one file that owns an answer, and say how to update the docs after a session
 audience: everyone; start here if `CLAUDE.md` did not already answer it
-updated: 2026-10-11
+updated: 2026-11-20
 
 **Rule of the house:** every fact has ONE home. If two files state the same number, one of them is
 wrong — fix by deleting, not by syncing.
 
-## Start here
+The docs were consolidated on 2026-11-20 from 121 files to 43: topics that had been split only to
+stay under the old 400-line cap were merged, and every closed phase and round was squashed into
+two history files. Each merged file opens with a list of what it absorbed and where each part used
+to live, so an old path can still be traced.
 
-| Question | File |
+## Live docs
+
+| File | What it answers |
 |---|---|
-| What is this project, how do I run it, what may I not do? | [../CLAUDE.md](../CLAUDE.md) |
-| What is the command for X, and how does it fail silently? — the APP (dev servers, gates, deploy) | [COMMANDS.md](COMMANDS.md) |
-| …and the same for PYTHON — the slicer, the emitter, the queues, the scorers, every `OMR_*` knob | [COMMANDS-PYTHON.md](COMMANDS-PYTHON.md) |
-| **Changing the web app?** The rules for playback, the editor, the DOM and the stylesheet | [APP-RULES.md](APP-RULES.md) |
-| **What may a browser check assert on?** The DOM attributes, per feature, and the trap in each | [DOM-CONTRACT.md](DOM-CONTRACT.md) |
-| What ships today? What is the next action? | [STATUS.md](STATUS.md) |
-| What is owed but is NOT next, and why is it deferred? | [BACKLOG.md](BACKLOG.md) |
-| Work deferred PAST this round — density levers, exam v3's owed items, the sharp-glyph measurement | [BACKLOG-LATER.md](BACKLOG-LATER.md) |
-| What is measured but fragile, and what do we NOT claim? | [RISKS.md](RISKS.md) |
-| I finished some work — which doc do I update? | [MAINTAINING.md](MAINTAINING.md) |
+| [../CLAUDE.md](../CLAUDE.md) | What is this project, how do I run it, what may I never do? |
+| [STATUS.md](STATUS.md) | What ships today, and what is the next action? — the ONLY file that says so |
+| [COMMANDS.md](COMMANDS.md) | Every command and its silent-failure traps: the app, the Python tools (slicer, emitter, queues, scorers, `OMR_*` knobs), training on Colab |
+| [APP-RULES.md](APP-RULES.md) | The rules for touching the web app (playback, editor, DOM, stylesheet), and the DOM contract — what a browser check may assert on |
+| [DECISIONS.md](DECISIONS.md) | Why we do X this way; what was overturned |
+| [BACKLOG.md](BACKLOG.md) | Owed work that is not next (near-term, then deferred), and the standing risks and non-claims |
+| [THIRD-PARTY.md](THIRD-PARTY.md) | What we may publish: every licence, the audio licence policy, the per-file audio sources |
+| [CODE_TOUR.md](CODE_TOUR.md) | Where the code lives and the reading order; the page → strips → decode → stitch pipeline design |
+| [MANUAL_CHECKS.md](MANUAL_CHECKS.md) | See it with your own eyes: the app, the editor, the render/corpus side |
+| [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) | The checks that need ears or eyes: usul strokes, voices, the instrument views |
+| [../ROADMAP.md](../ROADMAP.md) | Long-range plan and architecture (evergreen, no status) |
 
-## Facts and decisions
+## Numbers — `METRICS*`
 
-| Question | File |
+| File | What it measures |
 |---|---|
-| What is the accuracy / yield of X? | [METRICS.md](METRICS.md) |
-| What did the one-shot real exam score, in any round? | [METRICS-EXAM.md](METRICS-EXAM.md) |
-| What is the exam MADE of, and how was it rebuilt? | [METRICS-EXAMSET.md](METRICS-EXAMSET.md) |
-| How does a model do on WHOLE PAGES, judged by eye? The 20-page hand-test set | [METRICS-HANDTEST.md](METRICS-HANDTEST.md) |
-| How big is a corpus, and how noisy are its labels? | [METRICS-CORPUS.md](METRICS-CORPUS.md) |
-| Does the SHIPPED (int8/ONNX) model match the one that was measured? | [METRICS-ONNX.md](METRICS-ONNX.md) |
-| The B8 re-emit: its yield, and the 1,479 human fixes it did not carry | [METRICS-B8.md](METRICS-B8.md) |
-| What did the model-voted key signature actually change in the labels? | [METRICS-SIGVOTE.md](METRICS-SIGVOTE.md) |
-| Did Round 3's two follow-up runs (longer stage 2, retired-crop strips) buy anything? | [METRICS-ROUND3-RUNS.md](METRICS-ROUND3-RUNS.md) |
-| Round 4's vocabulary A/B — why both arms are scored in OLD ids, what the kit trains and selects on, and its results | [METRICS-ROUND4-AB.md](METRICS-ROUND4-AB.md) |
-| Why does the model fail at X — and what was already tried? | [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) |
-| Which source an error came from — the SymbTr label or the model — and what the `nd` gate is really catching | [METRICS-ATTRIBUTION.md](METRICS-ATTRIBUTION.md) |
-| A symbol the model reads as something else — staccato, the dotted usul barline | [METRICS-UNSEEN.md](METRICS-UNSEEN.md) |
-| What the encoder is GIVEN — the 409×583 box, the padding probe, the geometry pilot | [METRICS-GEOMETRY.md](METRICS-GEOMETRY.md) |
-| The koma/küçük sharp glyph — what real print does, what we drew, where sharps appear | [METRICS-SHARPS.md](METRICS-SHARPS.md) |
-| Tuplets — the corpus scan, the printed mark, the mark's geometry | [METRICS-TUPLETS.md](METRICS-TUPLETS.md) |
-| The second engraver (LilyPond) — feasibility, its own gate, the null domain-gap read | [METRICS-ENGRAVER.md](METRICS-ENGRAVER.md) |
-| Is anyone actually using the live app? | [METRICS-USAGE.md](METRICS-USAGE.md) |
-| How a real page is read into an ink mask — binarization, grayscale fidelity, opencv.js parity | [METRICS-SLICER.md](METRICS-SLICER.md) |
-| The LABEL BUDGET — how long labels really are, where the gate sits, and Round 4's emitter rail | [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) |
-| `?dense=` — the rail the SHIPPED app has none of, and what the experiment measured | [METRICS-DENSE.md](METRICS-DENSE.md) |
-| The windowing retune and the crop frame — settled: which constants were swept, and why none moved | [METRICS-SLICER-FRAME.md](METRICS-SLICER-FRAME.md) |
-| Barlines — the gates, the hand-marked truth, and what crop quality even means | [METRICS-SLICER-BARLINES.md](METRICS-SLICER-BARLINES.md) |
-| A STEM taken for a barline — the both-ends gate (2026-09-03), what it costs, and the variant that was dropped | [METRICS-SLICER-STEMS.md](METRICS-SLICER-STEMS.md) |
-| How a STAFF is found in that mask — the faded-row fixes, the missing-row rescue, the grouping repair, and the three global knobs that were rejected | [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) |
-| Which crop ROOT a pool came from, and what re-slicing costs in labels | [METRICS-SLICER-ROOTS.md](METRICS-SLICER-ROOTS.md) |
-| Whether the TypeScript slicer port reproduces the Python, rung by rung | [METRICS-SLICER-PORT.md](METRICS-SLICER-PORT.md) |
-| Why do we do X this way? What was overturned? | [DECISIONS.md](DECISIONS.md) |
-| What may we publish? Licences, attribution, why no score ships | [THIRD-PARTY.md](THIRD-PARTY.md) |
-| Raw log of a training run or export | [../src/vision/MODEL_EVAL.md](../src/vision/MODEL_EVAL.md) |
+| [METRICS.md](METRICS.md) | The headline table; live-app usage; the owner's 20-page hand test; the shipped int8/ONNX model's drift; the b8 re-emit |
+| [METRICS-EXAM.md](METRICS-EXAM.md) | Every exam score by round; what the exam is made of; Round 3's follow-up runs A/B; Round 4's vocabulary A/B |
+| [METRICS-CORPUS.md](METRICS-CORPUS.md) | Corpus sizes, pool make-up, label noise; what the model-voted key signature changed |
+| [METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md) | Why the model fails and what was tried; label-vs-model error attribution; koma/küçük sharps; tuplets |
+| [METRICS-INPUT.md](METRICS-INPUT.md) | What the model is shown: the 409×583 box and the geometry pilot; symbols the renderer never drew (staccato, dotted usul barline); the LilyPond engraver |
+| [METRICS-SLICER.md](METRICS-SLICER.md) | Page → ink mask (binarization, opencv.js parity); crop roots and re-slice cost; the TypeScript port vs the Python |
+| [METRICS-SLICER-STAFF.md](METRICS-SLICER-STAFF.md) | Finding staffs (fixes, the row rescue, rejected knobs); barline gates and hand-marked truth; the stem-vs-barline gate |
+| [METRICS-SLICER-WINDOWS.md](METRICS-SLICER-WINDOWS.md) | The label budget and its rail; the windowing retune and crop frame; the opt-in `?dense=` experiment |
+| [../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md) | The raw log of every training run, gate and export |
 
-## The work
+## Tracks
 
-| Question | File |
+| File | What it covers |
 |---|---|
-| **The app's own docs — the server, hosting, the editor, the makam table, speed** (index) | [app/README.md](app/README.md) |
-| The app's settled findings (moved out of STATUS) | [app/standing.md](app/standing.md) |
-| How the app gets hosted, what it costs, and the server question | [app/deploy.md](app/deploy.md) |
-| Running and redeploying the decode server — the actual commands | [app/deploy-ops.md](app/deploy-ops.md) |
-| **Setting up Google Cloud from scratch, step by step** (owner walkthrough) | [app/gcloud-setup.md](app/gcloud-setup.md) |
-| **Putting the app and the weights online, step by step** (owner walkthrough) | [app/hosting-setup.md](app/hosting-setup.md) |
-| How to make a page faster, and what each option costs | [app/latency.md](app/latency.md) |
-| **The makam intonation table, its sources, and how a page's makam is guessed** | [app/makam.md](app/makam.md) |
-| **The direct, MuseScore/Mus2-style editor — the brief** | [app/editor.md](app/editor.md) |
-| What each editor step BUILT, and the traps it found | [app/editor-built.md](app/editor-built.md) |
-| **The feature track: voices, usul percussion, the instrument views, stored pages, the visit counter** | [features/README.md](features/README.md) |
-| Which audio file, from where, under what licence | [features/audio-sources.md](features/audio-sources.md) |
-| Which audio LICENCES may be used, and the rules every file obeys | [features/audio-policy.md](features/audio-policy.md) |
-| How the kanun was cut from one take, and the traps that come with that | [features/kanun.md](features/kanun.md) |
-| The violin fingerboard view (F3): artwork, calibration, why a line is tape and not a fret | [features/fingerboard.md](features/fingerboard.md) |
-| The kanun view (F3): the 26 courses, the mandal state machine, why it is drawn and not photographed | [features/kanun-view.md](features/kanun-view.md) |
-| The sol klarnet view (F3): the photograph, the fingering table, the lip meter | [features/clarinet-view.md](features/clarinet-view.md) |
-| The bar beside the instrument (F3): one measure drawn on its own, play-this-bar, editing in place | [features/measure-card.md](features/measure-card.md) |
-| The pages this browser has already read (F5): what is stored, the 30-page cap, why it is a cache | [features/recent-pages.md](features/recent-pages.md) |
-| The visit counter (F6): what is counted, the daily-expiring anonymous id, the private dashboard | [features/visit-stats.md](features/visit-stats.md) |
-| **The PHONE: the three viewport questions, fitting a score, the fold, the editor, every measured number** | **[features/phone.md](features/phone.md)** |
-| **The LOOK: the Tezhip palette, dark mode, the CSS layers, the render pin that keeps a restyle off the strips** | **[features/look.md](features/look.md)** |
-| **The React Native mobile app** — the plan, what is reused from `core`, the milestones, and the open choices | [mobile/README.md](mobile/README.md) · agent notes: [../apps/mobile/AGENTS.md](../apps/mobile/AGENTS.md) |
-| **Closed-test feedback** — every problem found since the Play test began, who found it, and its state | [features/tester-feedback.md](features/tester-feedback.md) |
-| **The Play Store app** — TWA build, the permanent package name, where the signing key lives, the closed test | [features/play-store.md](features/play-store.md) |
-| The real-page (model) track: collect → label → exam → rounds | [rung3/README.md](rung3/README.md) |
-| **Round 4: the dense half, the signature answer key, the selector — evidence, the owner's decisions, the order** | [rung3/round4.md](rung3/round4.md) |
-| **How a label is spelled, and what re-spelling notes bought** | [rung3/tokenization.md](rung3/tokenization.md) |
-| The rules a real-page label obeys (what is a token, what is ink) | [rung3/labeling.md](rung3/labeling.md) |
-| How real pages were collected and matched to SymbTr (§1a–§1c) | [rung3/labeling-collection.md](rung3/labeling-collection.md) |
-| The review queues feeding the training pools and the exam (reslice-all, the batches, b8, examv3) | [rung3/labeling-queues.md](rung3/labeling-queues.md) |
-| The review queues feeding REAL-VAL (realval-hard, and the 2026-09-09 repair) | [rung3/labeling-queues-realval.md](rung3/labeling-queues-realval.md) |
-| The real-page track's settled findings (moved out of STATUS) | [rung3/standing.md](rung3/standing.md) |
-| Exam rules, what is frozen, how gold was audited | [rung3/exam.md](rung3/exam.md) |
-| The third-engraver probe (Round 4 step 4) | [rung3/third-source.md](rung3/third-source.md) |
-| Long-range plan, architecture, risks (evergreen) | [../ROADMAP.md](../ROADMAP.md) |
+| [app/README.md](app/README.md) | The shipped app's settled facts; the makam intonation table and how a page's makam is guessed |
+| [app/server.md](app/server.md) | The decode server: the hosting plan, running/redeploying/reverting it (every hop of a model swap), latency options |
+| [app/editor.md](app/editor.md) | The editor: the armed-tool palette brief, and what each build step found |
+| [features/README.md](features/README.md) | The feature track (voices, usul, instrument views); stored pages (F5); the visit counter (F6) |
+| [features/instruments.md](features/instruments.md) | The violin fingerboard, the sol klarnet view, the single-measure card |
+| [features/kanun.md](features/kanun.md) | The kanun view and mandal state machine, how its voice was cut, the owner's real-instrument mandal count |
+| [features/phone.md](features/phone.md) | The phone screen and every number behind it; the look (palette, dark mode, CSS layers, render pin) |
+| [features/play-store.md](features/play-store.md) | The Android build, signing, release; closed-test feedback |
+| [mobile/README.md](mobile/README.md) | The React Native app: plan, reuse map, milestones, open questions · agent notes: [../apps/mobile/AGENTS.md](../apps/mobile/AGENTS.md) |
+| [rung3/README.md](rung3/README.md) | The real-page (model) track: plan, settled findings, exam rules and audits |
+| [rung3/labeling.md](rung3/labeling.md) | Label rules (token vs ink); how the corpus was collected and matched to SymbTr; every review queue incl. real-val |
+| [rung3/round4.md](rung3/round4.md) | Round 4: targets, evidence, the owner's decisions, the order of work; the third-engraver probe |
+| [rung3/tokenization.md](rung3/tokenization.md) | How a label is spelled, and what scheme H bought |
+| [../tools/render/README.md](../tools/render/README.md) | The synthetic renderer and each corpus version |
 
-## How things work
+## History — do not act on it
 
-| Question | File |
+| File | What it holds |
 |---|---|
-| Where does this code live, in what reading order? | [CODE_TOUR.md](CODE_TOUR.md) |
-| How does a page become strips, decode, and stitch back? | [PIPELINE.md](PIPELINE.md) |
-| How do I see a feature working with my own eyes? (the app) | [MANUAL_CHECKS.md](MANUAL_CHECKS.md) |
-| …and the synthetic corpus / renderer side | [MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md) |
-| …and the editor (select, palette, insert, tuplets) | [MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md) |
-| …and the feature track — the checks that need EARS or EYES (usul strokes, voices, fingerboard) | [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md) |
-| How do I train on Colab? | [COLAB.md](COLAB.md) |
-| How does the synthetic renderer work? | [../tools/render/README.md](../tools/render/README.md) |
+| [log/status-log.md](log/status-log.md) | Dated entry for every session, newest first |
+| [log/superseded.md](log/superseded.md) | Plans abandoned or reversed, with the reasoning — so they are not proposed again |
+| [archive/phases.md](archive/phases.md) | Phases 0–2, the MVP rungs W0–W10, the slicer-port plan, closed backlog and risks, the finished cloud/hosting setup walkthroughs |
+| [archive/rounds.md](archive/rounds.md) | Rounds 1–3: criteria, A/B runs, exam results, re-render, levers, tuplet mark, parked follow-ups |
+| [log/raw.md](log/raw.md) | Verbatim training consoles and the owner's labelling notes |
 
-## History and closed tracks (do not act on it)
+## Maintaining these docs
 
-| Question | File |
+**This is the section to open when the owner says "sync the docs"** (or "update the docs", or you
+finished work and need to write it down). Follow the table below rather than guessing.
+
+Two rules cover 90% of it:
+
+1. **Write the fact once, in the file that owns it.** Everything else links.
+2. **Never append to a live file.** Live files (STATUS) get *rewritten*; history goes to `log/`.
+
+Run `.venv-ml/bin/python tools/dev/check_docs.py` when you are done. It catches the mechanical
+mistakes so review can be about content.
+
+### I just did X — what do I update?
+
+| What you did | Update | Do NOT touch |
+|---|---|---|
+| Anything at all, at end of session | [STATUS.md](STATUS.md) — rewrite "Now" and "Next" | ROADMAP, README |
+| Deployed, or staged a new model | STATUS + the `updated:` header of every doc whose "deployed / not deployed" line just changed — and for a model, `CACHE_NAME` in `apps/web/src/omr/session.ts` ([app/server.md](app/server.md#running-and-deploying-the-decode-server--the-commands)) | — |
+| Measured something (accuracy, yield, corpus size) | the matching `METRICS*.md` (table above) + the raw log in [../ml/omr/MODEL_EVAL.md](../ml/omr/MODEL_EVAL.md) | any other file quoting numbers |
+| Finished a chunk of work | one dated entry at the TOP of [log/status-log.md](log/status-log.md) | — |
+| Decided something, or reversed a decision | [DECISIONS.md](DECISIONS.md) row (mark the old one OVERTURNED/SUPERSEDED, don't delete it) | — |
+| Cancelled or abandoned a plan | move its reasoning to [log/superseded.md](log/superseded.md) | leaving it in a live file "for context" |
+| Work inside the real-page track | the matching `rung3/*.md` file | STATUS (keep it a summary) |
+| Started a genuinely new track | new `docs/<track>/README.md` + index row + a STATUS line | cramming it into rung3/ |
+| Added/changed a script or module | [CODE_TOUR.md](CODE_TOUR.md) row | — |
+| Changed a command, a hard rule, or where data lives | [../CLAUDE.md](../CLAUDE.md) | — |
+| A track or a round finished | move its sections to the END of [archive/phases.md](archive/phases.md) (product/infra) or [archive/rounds.md](archive/rounds.md) (a training round), add it to that file's list at the top | leaving "⏭ next" lines in a live file; creating a new archive file |
+| Kept a raw training console or a labelling note verbatim | a new `##` section in [log/raw.md](log/raw.md) | the repo root |
+| Moved a section to another doc | fix its links and the code comments citing it (`check_docs.py` finds them) | — |
+
+### End-of-session checklist
+
+1. **STATUS.md** — is "Now" still true, and is "Next" the thing you'd actually do tomorrow?
+   Anything that is no longer *next* moves out (to `log/status-log.md` or a track file).
+2. **A number changed?** The matching METRICS file, and only that file (plus its raw log).
+3. **A decision changed?** DECISIONS.md, with the date and what overturned it.
+4. **Write the log entry** while you still remember *why*, not just *what*. The "why" is the part
+   that is expensive to reconstruct six weeks later.
+5. `.venv-ml/bin/python tools/dev/check_docs.py` → fix anything it reports.
+6. Commit docs separately from code when you can; it keeps both diffs readable.
+
+### The rules, and why they exist
+
+- **One fact, one home.** Before the 2026-07-26 refactor the same numbers lived in 4–7 files, and
+  the pointer docs sat **18 days stale** — nobody can hand-sync seven copies. If two files disagree,
+  the fix is to *delete* one, not to sync them.
+- **Live vs log.** A file that mixes "what we will do" with "what we did" eventually reads as
+  instructions to do things that were abandoned. That is the single most expensive failure mode
+  here: an agent acting on a superseded plan. Live = STATUS + track files; log = `log/` + `archive/`.
+- **Superseded plans keep their reasoning.** Delete the plan, keep the argument — otherwise the same
+  cancelled experiment gets proposed again next month.
+- **Fewer files, ≤1,000 lines each (owner, 2026-11-20).** The old 400-line cap split one topic
+  across up to nine files (121 in all). Grow a file by topic; only when it crosses 1,000 lines, split
+  it by *genre or phase* (plan / results / postmortem), never just by size. Do not create a new file
+  for something an existing file's topic covers.
+- **No wall-of-text paragraphs.** ROADMAP's status footer became a single 16,000-character
+  paragraph: impossible to skim, to grep to a section, or to edit safely. Use dated headings and
+  bullets so a reader can jump.
+- **Every doc says what it is.** The `purpose:` / `audience:` / `updated:` header means nobody has
+  to read a file to find out whether it is live, historical, or dead.
+- **Code comments cite exact doc paths.** They are checked, so a doc move can't quietly orphan them.
+
+### Writing style
+
+- Say the finding first, then the evidence. "Resolution was ruled out — recall doesn't fall with
+  scale" beats three paragraphs building to it.
+- Keep the **negative results and the caveats** — "this looked like the answer and wasn't" is often
+  the most valuable line in a log entry, and it prevents a repeat.
+- Mark uncertainty explicitly (non-claims, low-n, "estimate"). A number without its caveat gets
+  quoted later as if it were solid — that already happened once with a 3-gold class swinging a
+  headline ~11pp.
+- ⛔ **There is no plain-English doc set any more.** The `OVERVIEW*.md` files restated numbers on
+  purpose and went stale faster than anything else; the owner deleted them on 2026-10-08. Plain
+  English belongs in the REPLY to the owner ([../CLAUDE.md](../CLAUDE.md)), not in a second copy.
+
+### What the checker enforces
+
+`tools/dev/check_docs.py`:
+
+| Check | Fails when |
 |---|---|
-| What was built in Phases 0–1, in detail | [log/HISTORY.md](log/HISTORY.md) |
-| Dated log of every session's status entries | [log/status-log.md](log/status-log.md) |
-| Plans that were abandoned or reversed | [log/superseded.md](log/superseded.md) |
-| The synthetic track (Rungs 0–2.2b) — CLOSED | [archive/phases/PHASE2.md](archive/phases/PHASE2.md) |
-| The MVP ladder W0–W10 (in-browser pipeline → friends release → public) — CLOSED 2026-10-08 | [archive/phases/mvp.md](archive/phases/mvp.md) |
-| What each MVP rung established: W0–W3, then the slicer rungs W4–W7, and the port plan | [archive/phases/rungs-w0-w3.md](archive/phases/rungs-w0-w3.md) · [archive/phases/rungs.md](archive/phases/rungs.md) · [archive/phases/slicer-port.md](archive/phases/slicer-port.md) |
-| Rounds 1 and 2: criteria, A/B, exam result, disposition; the re-render; the Round-1 floors | [archive/rounds/round1.md](archive/rounds/round1.md) · [archive/rounds/round2.md](archive/rounds/round2.md) · [archive/rounds/rerender.md](archive/rounds/rerender.md) · [archive/rounds/ship-criteria.md](archive/rounds/ship-criteria.md) |
-| Round 3 (CLOSED 2026-09-03): the plan, the signed floors, the work items, the levers, the two arms, the tuplet mark | [archive/rounds/round3.md](archive/rounds/round3.md) · [archive/rounds/round3-criteria.md](archive/rounds/round3-criteria.md) · [archive/rounds/worklist.md](archive/rounds/worklist.md) · [archive/rounds/levers.md](archive/rounds/levers.md) · [archive/rounds/scan-profile.md](archive/rounds/scan-profile.md) · [archive/rounds/staccato-arm.md](archive/rounds/staccato-arm.md) · [archive/rounds/tuplets.md](archive/rounds/tuplets.md) |
-| Parked ideas, watch-items, the old data folder layout | [archive/rounds/followups.md](archive/rounds/followups.md) |
-| Raw training consoles (Round 3 arms, final, runs A/B; Round 4 control and H) and the owner's labelling notes, verbatim | [log/raw/](log/raw/round3_final_logs.md) |
+| header block | a doc lacks `purpose:` / `audience:` / `updated:` |
+| size cap | a doc exceeds 1,000 lines (history files are allow-listed in `LONG_OK`) |
+| paragraphs | a prose paragraph exceeds 2,500 characters |
+| links | a relative markdown link doesn't resolve |
+| code refs | source code cites a doc path that doesn't exist |
+| orphans | a doc isn't reachable from INDEX.md, CLAUDE.md, or a track index |
+
+⚠ **There was a 7th check, `--facts`, and it is GONE (owner, 2026-09-06).** It needed a baseline
+copy of the docs to diff against, and the owner deleted that baseline. **Do not re-add the flag
+without re-creating one**: a fact check with nothing to compare against passes silently. For a big
+edit, do the diff by hand — extract the identifiers before and after and `comm` the two sets.
+
+### Adding a new track
+
+1. `docs/<track>/README.md` — the one-paragraph plan, a state table, and the file map.
+2. Keep it in that one file until it nears 1,000 lines; then split by phase (`plan.md`, `results.md`).
+3. Add a row to the Tracks table above and, if it becomes the live work, to [../CLAUDE.md](../CLAUDE.md).
+4. Point STATUS.md at it. STATUS summarises; the track file carries the detail.

@@ -33,7 +33,7 @@ Measured by encoding labels with the live tokenizer, `data/checkpoints/round2-st
 | accidental, `\|`, `\grace`, `\tup3` | 1 | our added tokens are whole words |
 
 So `c'4` = 3, `c'16` = 4, `c''16` = 5, `c'''16` = 6. The renderer's packing estimate in
-`tools/render/lilypond.ts` (`noteToLily`) already uses exactly this rule and matches the tokenizer
+`packages/core/src/labels/lilypond.ts` (`noteToLily`) already uses exactly this rule and matches the tokenizer
 exactly — the estimate is not an approximation.
 
 ### The vocabulary is mostly empty
@@ -73,7 +73,7 @@ the only argument against C. The fused set is `a'` `a''` `b'` `b''` `c''` `c'''`
 Durations alone are nearly worthless (7%) because `4` and `8` are already one character. **The
 apostrophes are where the money is** — they are **37.3%** of every id in `strips_v4`
 (604,451 of 1,619,274), corroborating the 37.6% already recorded in
-[../BACKLOG-LATER.md](../BACKLOG-LATER.md).
+[BACKLOG.md § Backlog, further out — real, justified, and not this round](../BACKLOG.md#backlog-further-out--real-justified-and-not-this-round).
 
 ### Only four ids are actually new
 
@@ -125,7 +125,7 @@ today staying compositional forever is the correct behaviour, not a limitation.
 ## What the change actually buys
 
 ⭐ **`over_budget` is the case for doing it.** The emitter drops any strip whose label exceeds 59 ids
-([`emit_strip_labels.py`](../../scripts/rung3/emit_strip_labels.py)). In the `b8` emit that is
+([`emit_strip_labels.py`](../../ml/labels/emit_strip_labels.py)). In the `b8` emit that is
 **4,012 strips discarded against 2,330 accepted** — more real page data thrown away than kept. Their
 sizes: median 76 ids, p90 127, max 344.
 
@@ -156,7 +156,7 @@ for rows with no 16ths, **44.3** at 50–75%, **45.3** at 75–100%.
 
 ⛔ **Shorter labels are not known to decode more accurately.** Fewer autoregressive steps means fewer
 chances to slip, which is a real but unquantified effect. It adds no pixels: a crowded crop stays
-crowded, and that is [levers.md](../archive/rounds/levers.md) Lever 1's territory, which is closed.
+crowded, and that is [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) Lever 1's territory, which is closed.
 
 ### Fused or compositional? Both — the ≥1,000-examples rule (2026-09-03)
 
@@ -173,7 +173,7 @@ wrong pitched notes ([../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md)); th
 
 ## ⭐ Round 4 step 1 — measured with the real tokenizer, 2026-09-06
 
-Run: `.venv-ml/bin/python scripts/rung3/token_scheme_probe.py`. No GPU, no model, nothing
+Run: `.venv-ml/bin/python ml/labels/token_scheme_probe.py`. No GPU, no model, nothing
 re-decoded, ~2 minutes. Pools: `strips_v7_final` (40,795 labels), `strips_b8`'s 3,929 accepted rows,
 and the 4,012 `over_budget` labels `emit_responses.json` kept. ⭐ **Since 2026-09-06 this is no
 longer a proxy for most of the pool**: the owner scoped the re-cut to the strips that are STILL over
@@ -224,8 +224,8 @@ character-identical before and after, so the owner's 995 human reads and 576 `fi
 `3,929 kept + 3,508 rescued + the split of 504`.
 
 ⚠ **Independent of all this, some crops move anyway**: the 2026-09-03 slicer fixes bumped
-`GEOMETRY_REV`, on an unmeasured number of pages ([../METRICS-SLICER-FRAME.md](../METRICS-SLICER-FRAME.md) ·
-[../METRICS-SLICER-STEMS.md](../METRICS-SLICER-STEMS.md)).
+`GEOMETRY_REV`, on an unmeasured number of pages ([METRICS-SLICER-WINDOWS.md § The windowing retune and the crop frame — measured, and settled](../METRICS-SLICER-WINDOWS.md#the-windowing-retune-and-the-crop-frame--measured-and-settled) ·
+[METRICS-SLICER-STAFF.md § A stem taken for a barline — the both-ends gate](../METRICS-SLICER-STAFF.md#a-stem-taken-for-a-barline--the-both-ends-gate)).
 
 ### ⛔ The render question — asked, answered, and the answer is still "no render"
 
@@ -242,14 +242,14 @@ dense strips: the *accepted* real strips are shorter than synthetic at every mea
 near-identical in the two pools — **21.7** ids per 1,000 px synthetic against **21.1** real (n=1,200
 each) — so a synthetic strip carrying 56 ids would be about **2,580 px** wide. The slicer caps every
 real crop at `MAX_STRIP_W = 1450` px and real strips top out at 1,440, and
-[../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) already measured that a strip wider than ~479 px is
+[METRICS-INPUT.md § Crop geometry — what the encoder is actually GIVEN](../METRICS-INPUT.md#crop-geometry--what-the-encoder-is-actually-given) already measured that a strip wider than ~479 px is
 throwing resolution away inside the fixed 409×583 encoder frame. So the re-pack would buy label
 length by pushing crops further into the shape that costs edits — and 17.5% of synthetic strips are
 already wider than any real strip can be.
 
 ⏭ The one lever that would fill the band honestly is **tighter engraving** — the per-measure width
 is `events.length * 28 + 24` clamped to 130–420 px in
-[`SheetView.tsx`](../../apps/web/src/SheetView.tsx), and the row is then justified to full width,
+[`SheetView.tsx`](../../apps/web/src/score/SheetView.tsx), and the row is then justified to full width,
 which un-compresses a dense bar. Real editions fit more bars per row instead. Not costed, not this
 round.
 ⏭ What replaces it: **watch the band**. Long-strip errors get their own column when the H arm is
@@ -273,7 +273,7 @@ token is redundant. **The data agrees, and the reason is stronger than "always t
 | malformed gold (`\tup3 \tup3`, a missing close) | 4 |
 
 ⚠ **"Always three" is NOT guaranteed by the generator.** `tupletGroupsIn`
-([`tools/render/rhythm.ts`](../../tools/render/rhythm.ts)) closes a run *when its duration sum lands
+([`packages/core/src/labels/rhythm.ts`](../../packages/core/src/labels/rhythm.ts)) closes a run *when its duration sum lands
 on a plain value* — a quarter-triplet plus an eighth-triplet sums to 1/4 and closes at **two**
 events. That is why the corpus contains one. ⭐ **But that same rule is the right replacement**: the
 member durations already say where the group ends, so the stitcher can re-derive the boundary with
@@ -298,7 +298,7 @@ is being **worked around** today rather than avoided.
 The `\tie` retirement is the precedent and the procedure ([labeling.md](labeling.md)): the id stays
 in `ADDED_TOKENS` (append-only), nothing emits it, and `eval_omr.py` drops it from **both** gold and
 decode so old and new checkpoints stay comparable. Beyond that: the close branch in
-[`tools/render/stitch.ts`](../../tools/render/stitch.ts) becomes duration arithmetic, and
+[`packages/core/src/labels/stitch.ts`](../../packages/core/src/labels/stitch.ts) becomes duration arithmetic, and
 `audit_coverage.py`'s `\tupend`-equals-`\tup3` expectation goes.
 
 ⚠ **The trade is real and unmeasured**: today a wrong `\tupend` moves the bracket; afterwards a
@@ -315,10 +315,10 @@ worth its own round.
    strip fills 59 new ids, so long labels would exist only in the real pool. Measure both id-length
    distributions under the new tokenizer before training; that check alone may reopen the render. `c''16` stays the string `c''16`; only how the tokenizer *segments* it
    changes. Verified by adding the tokens and re-encoding. So `NOTE_RE` in
-   [`tools/render/stitch.ts`](../../tools/render/stitch.ts), `noteToLily` in
-   [`tools/render/lilypond.ts`](../../tools/render/lilypond.ts) and every label on disk are all
-   **untouched**. The change is `ADDED_TOKENS` alone — ⚠ duplicated by hand in `src/vision/data.py`
-   and `tools/render/lilypond.ts`, so both, or `check_token_drift` fails. ⚠ `noteToLily`'s packing
+   [`packages/core/src/labels/stitch.ts`](../../packages/core/src/labels/stitch.ts), `noteToLily` in
+   [`packages/core/src/labels/lilypond.ts`](../../packages/core/src/labels/lilypond.ts) and every label on disk are all
+   **untouched**. The change is `ADDED_TOKENS` alone — ⚠ duplicated by hand in `ml/omr/data.py`
+   and `packages/core/src/labels/lilypond.ts`, so both, or `check_token_drift` fails. ⚠ `noteToLily`'s packing
    estimate would need updating **only if the corpus is re-rendered**, and Round 4 does not
    render — the render section above says why re-packing is the wrong fix (2026-09-06).
 2. **Re-emit, do not convert in place.** A converter over existing manifests proves the spelling
@@ -329,12 +329,12 @@ worth its own round.
    retrain from base.
 4. **Then price it.** The measurement that decides this is corpus yield — how many `over_budget`
    drops actually return — not a val loss. Accuracy is a second question and needs a paired arm
-   against [round3-criteria.md](../archive/rounds/round3-criteria.md)-style floors.
+   against [rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](../archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol)-style floors.
 
 ⚠ **Every existing checkpoint keeps working and none of them understands the new spelling.** Ids are
 append-only so nothing breaks, but a model trained on `c ' ' ' 1 6` cannot read `c ''' 16`. This is a
 retrain, and it should ride along with the Round-4 rail work
-([../BACKLOG-LATER.md](../BACKLOG-LATER.md) item 0) rather than be its own round — both re-emit the
+([BACKLOG.md § Backlog, further out — real, justified, and not this round](../BACKLOG.md#backlog-further-out--real-justified-and-not-this-round) item 0) rather than be its own round — both re-emit the
 pools, and doing them separately pays that cost twice.
 
 ## Why the model writes `f'' 32`, and why scheme H stops it (2026-09-10)

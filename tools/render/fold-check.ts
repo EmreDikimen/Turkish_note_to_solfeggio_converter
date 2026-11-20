@@ -6,7 +6,7 @@
  * taken at playback time (`ScoreStructure.playBars` → core's `unfoldDoc`). That is only safe if
  * unfolding the written score reproduces the old flattened document EXACTLY — same events, same
  * order, same durations. This check proves it on real decodes rather than on hand-written streams
- * (`tools/render/stitch-test.ts` does those): every cached page decode in `data/real/strips_v2` is
+ * (`tools/tests/stitch-test.ts` does those): every cached page decode in `data/real/strips_v2` is
  * stitched both ways and compared note for note.
  *
  * It also reports how much shorter the page gets, which is the whole point of the feature.
@@ -21,7 +21,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { groupMeasures, unfoldDoc } from "@turkish-omr/core";
-import { stitchStrips, type DecodedStrip } from "./stitch";
+import { stitchStrips, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
 
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
 

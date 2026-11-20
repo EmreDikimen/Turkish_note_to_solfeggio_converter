@@ -21,7 +21,7 @@
  * *"sanırım sen fransız tipi sol klarneti yapıyosun. Alman tipi olmalı."*). The first version of
  * this table was transcribed from Boehm (French) diagrams and was wrong by up to a semitone on the
  * SAME fingering — `T lh123|rh1--` is Si♭ on a Boehm and **Si** on an Albert. Never mix a source
- * from the other system in, however convenient the diagram. docs/features/clarinet-view.md.
+ * from the other system in, however convenient the diagram. docs/features/instruments.md.
  *
  * ⚠ **Pitches here are WRITTEN commas, not concert.** The owner plays what is on the page with the
  * fingering of that name — the G instrument's transposition and Turkish notation's fourth cancel
@@ -29,7 +29,7 @@
  * exactly like `kanun.ts` and deliberately unlike `fingering.ts`.
  *
  * Pure data + maths, so it lives in core and ports to mobile unchanged. Nothing about pixels or the
- * DOM belongs here; the drawing is `apps/web/src/ui/clarinetArt.ts`.
+ * DOM belongs here; the drawing is `apps/web/src/instruments/clarinetArt.ts`.
  */
 
 import { komaToName } from "./notation";
@@ -178,7 +178,7 @@ function clarionKoma(baseKoma: number): number {
  * THE STANDARD FINGERINGS, chalumeau and throat — the table everything else is derived from.
  *
  * ⭐ **THE OWNER'S OWN TABLE, placed by him note by note on 2026-08-30**, using the editor at
- * `tools/core/clarinet-editor.ts`. It started from the Woodwind Fingering Guide's Oehler/Albert
+ * `tools/dev/clarinet-editor.ts`. It started from the Woodwind Fingering Guide's Oehler/Albert
  * chart (https://www.wfg.woodwind.org/clarinet/ocl_bas_1.html, extracted from that page's own
  * markup rather than from a description of it), and he then corrected it against the instrument he
  * plays.
@@ -242,7 +242,7 @@ export const BASE_FINGERINGS: readonly ClarinetFingering[] = [
  *
  * ⚠ **A third register is NOT a further overblowing**, so no arithmetic produces these — each is
  * its own fingering and they had to be collected from a player. The owner filled them in through
- * `tools/core/clarinet-editor.ts`; every point snapped to a position his earlier pass had already
+ * `tools/dev/clarinet-editor.ts`; every point snapped to a position his earlier pass had already
  * established, so this range needed no new calibration at all.
  *
  * ⭐ **Sol6 and Re6 are the SAME FINGERING**, and that is the owner's own account of it: *"sol6 re6

@@ -1,6 +1,6 @@
 /**
  * The native app's score, drawn by the web app's own engraver inside a WebView (M2, option (a) of
- * docs/mobile/plan.md §Open #3 — owner, 2026-10-29; a native engraver stays planned for later).
+ * docs/mobile/README.md §Open #3 — owner, 2026-10-29; a native engraver stays planned for later).
  *
  * ⭐ ONE ENGRAVER. This mounts `SheetView` — the component the web app, the strip renderer and the
  * training data all draw with — with the props `App.tsx` gives a reader's page, so the phone shows
@@ -16,9 +16,10 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { groupMeasures, type NoteModelDocument } from "@turkish-omr/core";
-import { SheetView, SHEET_CONTENT_WIDTH, SHEET_SIDE_MARGIN } from "../SheetView";
-import { navMarksFromStructure, repeatSpansFromStructure } from "../../../../tools/render/structure-view";
-import type { ScoreStructure } from "../../../../tools/render/stitch";
+import { SheetView } from "../score/SheetView";
+import { SHEET_CONTENT_WIDTH, SHEET_SIDE_MARGIN } from "../score/layout";
+import { navMarksFromStructure, repeatSpansFromStructure } from "@turkish-omr/core/labels/structure-view";
+import type { ScoreStructure } from "@turkish-omr/core/labels/stitch";
 
 interface Payload {
   doc: NoteModelDocument;

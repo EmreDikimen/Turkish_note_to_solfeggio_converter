@@ -4,7 +4,7 @@
  * Renders the sentence for the person, and the facts as data attributes for the deploy checks
  * (the contract is documented in ui/status.ts, which is the only place that produces them).
  *
- * ⚠ Nothing that ticks on a timer may render inside this element. `tools/browser/page-smoke.ts`
+ * ⚠ Nothing that ticks on a timer may render inside this element. `tools/checks/page-smoke.ts`
  * counts DISTINCT textContent values to prove the phase actually advanced during a read; an
  * elapsed-seconds counter in here would make that check pass for free. Tickers go in
  * ReadProgress, which is a sibling.

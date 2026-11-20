@@ -3,7 +3,7 @@
  *
  * W2 wired crops → editor and W6 finished the slicer port; this is the twenty lines between them,
  * plus the two things a UI needs and a parity harness does not: progress, and a main thread that
- * still paints. `tools/vision/parity/arm-a.ts` drives the same slicer through
+ * still paints. `tools/checks/parity/arm-a.ts` drives the same slicer through
  * `checks/slicerHarness.ts` and may block as long as it likes — an upload may not.
  *
  * Everything here is deliberately thin. Nothing in it may change what the slicer computes: the
@@ -108,7 +108,7 @@ export async function slicePage(
   const skewDeg = guardedAngle(est);
 
   // One synchronous block: ink, connected components, staves, rows, barlines, windows. ~1-2 s on a
-  // corpus page against the sweep's ~35, so it is not worth splitting — see METRICS-SLICER-PORT.md.
+  // corpus page against the sweep's ~35, so it is not worth splitting — see METRICS-SLICER.md.
   opts.onProgress?.("finding the staves");
   await paint();
   const res = sliceStage3(gray, {

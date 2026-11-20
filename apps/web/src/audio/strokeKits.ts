@@ -9,7 +9,7 @@
  * whatever is added here MUST arrive with its `source` and `license` filled in, and a matching line
  * in `public/THIRD-PARTY.txt`.
  *
- * The files themselves are produced by `scripts/prepare_strokes.py`, which downloads the VCSL
+ * The files themselves are produced by `ml/prep/prepare_strokes.py`, which downloads the VCSL
  * originals, picks the düm/tek/ka articulations by measurement, trims and levels them. Never edit a
  * wav under `public/audio/` by hand — re-run the script, so how it was made stays readable.
  */

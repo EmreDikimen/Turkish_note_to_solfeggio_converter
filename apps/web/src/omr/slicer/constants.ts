@@ -1,11 +1,11 @@
 /**
- * Every constant the slicer port needs, transliterated from `src/vision/page_to_strips.py` with
+ * Every constant the slicer port needs, transliterated from `ml/omr/page_to_strips.py` with
  * the Python line it came from. Keep the line references — they are how a reviewer checks the port
  * against its source, and how the next rung finds the comment explaining a number.
  *
  * Environment-switchable constants in Python (`OMR_VPLACE`, `OMR_MEASURES_PER_STRIP`,
  * `OMR_EDGE_TRIM`, `OMR_WINDOW_MODE`) are frozen here at the values the decode caches on disk were
- * produced under, which is also what ships. Budget mode is NOT ported at all (docs/archive/phases/slicer-port.md).
+ * produced under, which is also what ships. Budget mode is NOT ported at all (docs/archive/phases.md).
  */
 
 // ---- target strip geometry the model was trained on (page_to_strips.py L32-37) ----------------
@@ -76,7 +76,7 @@ export const WIDE_NEAR_SP = 1.5; // L94 — ... and only within this distance of
  * rows are very wide connected ink hanging off the stroke, so on a coarse scan every barline
  * carried a "notehead" and gate 3 rejected it. A row whose ink SPANS THE STAFF is therefore
  * neutral: not a wide attachment, and it does not break the run either, so the walk looks straight
- * through it for a real notehead. Measured in docs/METRICS-SLICER-BARLINES.md.
+ * through it for a real notehead. Measured in docs/METRICS-SLICER-STAFF.md.
  */
 export const BLOB_SKIP_LINE = true;
 export const BLOB_LINE_FILL = 0.4; // L153 — ... "spans the staff" = this full, gate 2's own test
@@ -102,7 +102,7 @@ export const STAFF_ROW_POS_SP = 0.2;
  * bare on a barline and in a beam on a stem. Gate 2b looks within END_SPAN_SP of each end of the
  * run for END_RUN_SP consecutive fat rows and rejects only when BOTH ends carry one. Staff-line
  * rows are read through a de-lined view (`lineRowBlobs`) so a head or beam straddling a line keeps
- * its height. Strictly a tightening. Measured in docs/METRICS-SLICER-STEMS.md.
+ * its height. Strictly a tightening. Measured in docs/METRICS-SLICER-STAFF.md.
  */
 export const END_BLOBS = true;
 export const END_SPAN_SP = 1.5;
@@ -127,7 +127,7 @@ export const LINE_BLOB_MARGIN = 3;
  * ⚠ The rule itself is ported and was verified against Python at 0.25 (parity 100% on all three
  * rungs, rejected candidates identical 844/844), so re-enabling it is this constant plus the Python
  * one. They must move TOGETHER or the app cuts differently from the training data.
- * docs/METRICS-SLICER-BARLINES.md.
+ * docs/METRICS-SLICER-STAFF.md.
  */
 export const BAR_FADE_SP = 0;
 export const PAD_PX = 6; // L97 — crop padding past enclosing barlines
@@ -240,6 +240,31 @@ export const STAFF_GROUP_BY_SPAN = true;
 /** How far a MERGED pair may EXCEED the page's staff height. ⛔ At 1.2 this meant something
  * else — the broad regrouping that measured −545 exact rows and was thrown away. */
 export const STAFF_GROUP_SPAN_TOL = 0.15;
+
+// ---- the viewer frame of a screenshot — `whiten_frame` (Python: OMR_FRAME_WHITEN) --------------
+/**
+ * Paint a screenshot's flat dark viewer frame white before binarization.
+ *
+ * A phone screenshot of a PDF viewer is a white page on a flat dark background, and Otsu puts that
+ * background on the INK side: every staff's right end ran out to the image edge (a black block in
+ * the last strip of each row) and the frame moved Otsu's level enough to lose a pale staff outright
+ * — 13 staves of 14 on the page this was built for (owner, 2026-11-15).
+ *
+ * ⚠ Shaped to do NOTHING on any other page: it needs one dark colour (on the ink side of Otsu)
+ * covering a real share of the outer ring, with a STRAIGHT inner edge on every side — the test
+ * that tells a screenshot from a photo on a dark desk. The measured firing counts are beside the
+ * Python original.
+ * ⚠ Must move together with the Python constants or `parity:slicer` breaks. The full reasoning is
+ * beside `whiten_frame` in `ml/omr/page_to_strips.py`.
+ */
+export const FRAME_WHITEN = true;
+export const FRAME_BAND = 12; // +- gray levels around the ring's mode that count as the frame
+export const FRAME_MIN_RING = 0.25; // share of the outer ring that must be that colour
+export const FRAME_STRAIGHT = 0.9; // share of a side's partial runs that must sit at its median
+export const FRAME_SLACK_PX = 2; // ... within this many px
+export const FRAME_GROW_PX = 4; // painted past the frame's edge: its anti-aliased rim
+export const FRAME_SIDE_MIN = 0.5; // a side has a frame only if this share of its rows starts with it
+export const FRAME_MIN_FULL_PX = 12; // an edge-to-edge frame row counts only in a block this thick
 
 // ---- the staff RESCUE second pass — `STAFF_RESCUE` (Python: OMR_STAFF_RESCUE) -----------------
 /**

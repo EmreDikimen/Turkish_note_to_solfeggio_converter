@@ -1,7 +1,7 @@
 /**
  * CLI for the stage-8 stitcher (Node-only): a page's decoded strip tokens → note-model JSON.
  *
- * Input is what `src/vision/decode_page.py` writes (`<page>_decode.json`); output is a
+ * Input is what `ml/omr/decode_page.py` writes (`<page>_decode.json`); output is a
  * schemaVersion-1 `NoteModelDocument` the web harness loads directly — via its "load JSON"
  * file picker, or by writing into `apps/web/public/` and opening `/?score=/decoded.json`.
  * This is the Rung-4 "editor feed-in": the decoded page lands in the editor, corrections
@@ -17,7 +17,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
-import { stitchStrips, type DecodedStrip } from "./stitch";
+import { stitchStrips, type DecodedStrip } from "@turkish-omr/core/labels/stitch";
 
 const args = process.argv.slice(2);
 const input = args.find((a) => !a.startsWith("-"));

@@ -35,7 +35,7 @@
 
 /* ── The Istanbul backdrop (`ui/ornament/Backdrop.tsx`, owner 2026-10-01) ──────────────────────
    Day: Aivazovsky's Bosphorus in morning light. Night: his Golden Horn by moonlight. The files are
-   made by scripts/prepare_backdrop.py; everything about the FADE is here.
+   made by ml/prep/prepare_backdrop.py; everything about the FADE is here.
    - `--bd-col` is half the content column plus a margin; inside it the blurred copy shows and the
      veil is thickest, so text never sits on a sharp picture. Outside it both thin out.
    - Each theme names only its own two files, so a visitor downloads one pair, not four.
@@ -1004,6 +1004,74 @@
   box-shadow: var(--shadow-card);
   animation: kv-voice-notice-in 160ms ease-out;
   pointer-events: none;
+}
+
+/* iPhone's "Ana Ekrana Ekle" strip (IosInstallHint.tsx, 2026-11-06). Fixed to the bottom, above the
+   home indicator; the phone block below lifts it over the tab bar and hides it in Düzenle, where
+   the docked toolbox owns the bottom. Below the tab bar's 45 so it can never cover the way out. */
+.kv-ios-hint {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-3));
+  z-index: 42;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 auto;
+  max-width: 30rem;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  border: 1px solid var(--rule-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+.kv-ios-hint__text {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.kv-ios-hint__text strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.kv-ios-hint__step {
+  white-space: nowrap;
+}
+.kv-ios-hint__menu {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.kv-ios-hint__share {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 2px;
+  color: var(--accent);
+}
+.kv-ios-hint__close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* While the strip is up, the page ends above it — else it sits on the footer's last line. */
+.kv-page:has(.kv-ios-hint) {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
 }
 
 /* A failed download is the one state that is not progress, so it changes the edge and nothing else
@@ -2236,8 +2304,8 @@
    reads as absence rather than as a state, and on brown wood a faint outline is nearly invisible at
    the size these are drawn. Both states are now solid and sit on OPPOSITE sides of the wood's
    lightness — ivory for a raised lever, near-black for a lowered one — so they are told apart at a
-   glance and at any zoom. Exactly one per course is ivory; see the comment in Kanun.tsx for why
-   that is the truthful drawing rather than a simplification. */
+   glance and at any zoom. The levers up are the ones nearest the nut (since 2026-11-11), so the
+   ivory run on a course ends at the lever that sets its pitch. */
 .kv-kanun__mandals rect {
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
@@ -2253,7 +2321,7 @@
   stroke: #6b4a2c;
 }
 
-/* Where the natural sits, so the eye can read "two komas flat" straight off the picture without
+/* Where the natural sits, so the eye can read "two mandals flat" straight off the picture without
    counting from the end. ⚠ A stroke, never a fill — a fill would claim the lever is raised. Amber
    rather than white so it shows on both of the two fills above, and so it cannot be confused with
    the red change frame below. */
@@ -2494,7 +2562,7 @@
  * ⚠ IT IS ALL BEHIND A MEDIA QUERY, and that is what makes it safe to add late. `smoke:editor`,
  * `smoke:app`, `smoke:page` and `smoke:build` drive Playwright at its default 1280×720 with a mouse,
  * so none of these rules is even parsed into effect for them: the desktop app is byte-identical.
- * `tools/browser/phone-probe.ts` is the one that opens a phone-sized window and measures.
+ * `tools/checks/phone-probe.ts` is the one that opens a phone-sized window and measures.
  *
  * ⚠ NOTHING HERE MAY REACH INSIDE `.kv-score svg`, and nothing here may put a transform, a zoom or
  * a scale on `.kv-score` — the top of base.css and the `.kv-score` comment above own that rule, and
@@ -3031,6 +3099,17 @@
   }
   .kv-mtabs__tab.is-active {
     color: var(--accent);
+  }
+
+  /* The iPhone install strip rides above the bar, and stays out of Düzenle (IosInstallHint.tsx). */
+  .kv-page[data-mtab] .kv-ios-hint {
+    bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+  }
+  .kv-page[data-mtab="duzenle"] .kv-ios-hint {
+    display: none;
+  }
+  .kv-page[data-mtab]:not([data-mtab="duzenle"]):has(.kv-ios-hint) {
+    padding-bottom: calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px) + 88px);
   }
 
   /* The page has to end above the bar, or its last row is unreachable. */

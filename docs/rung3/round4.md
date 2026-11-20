@@ -1,12 +1,12 @@
 # Round 4 — read the dense half, fix the answer key, pick the checkpoint on corrections
 
-purpose: what Round 4 targets, the evidence behind each lever, the owner's decisions of 2026-09-03, and the order of work
+purpose: Round 4: targets, evidence, the owner's decisions, the order of work, and the third-engraver probe
 audience: agents and the owner working the real-page track
-updated: 2026-10-08
+updated: 2026-11-20
 
 > Part of the real-page track — index: [README.md](README.md). Current state and next action are NOT
 > here: see [../STATUS.md](../STATUS.md). Numbers live in [../METRICS.md](../METRICS.md),
-> [../METRICS-EXAMSET.md](../METRICS-EXAMSET.md), [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)
+> [METRICS-EXAM.md § Metrics — the exam as an INSTRUMENT](../METRICS-EXAM.md#metrics--the-exam-as-an-instrument), [METRICS-EXAM.md § Metrics — Round 3's two follow-up runs (A and B)](../METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b)
 > and [../METRICS-DIAGNOSTICS.md](../METRICS-DIAGNOSTICS.md); decisions in [../DECISIONS.md](../DECISIONS.md).
 
 ## Where the round stands (2026-10-08)
@@ -15,20 +15,20 @@ updated: 2026-10-08
   2026-09-16/17. ⛔ **Scheme H is a NULL** on every pool, the dense one included. ⭐ **The control
   `r4-ctl-stage2-last` leads the previous live model on dense strips** (suggestive, not proven), and
   the owner made it the **live model on 2026-09-28** — a judgement call like `r3a` before it, **not an
-  exam pass**. Numbers: [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+  exam pass**. Numbers: [METRICS-EXAM.md § Round 4's vocabulary A/B — how it is scored, and what the kit…](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
 - ⛔ **Step 7 (beam search) is dropped.** ⏭ **Step 8 is what is left**: the `handtest` queue (457 of
   515 rows unread), and `examv3` read **once** — on the model the owner names for the exam. ⛔ An H
   model cannot be read on the exam until `eval_omr.py` gains the old-id mode.
 - The signed bar the exam grades is Round 3's: **≥75% of exam pages needing ≤5 corrections**
-  ([../archive/rounds/round3-criteria.md](../archive/rounds/round3-criteria.md)), reported with its
+  ([rounds.md § Round-3 criteria — the pre-registration, and the tuplet A/B protocol](../archive/rounds.md#round-3-criteria--the-pre-registration-and-the-tuplet-ab-protocol)), reported with its
   interval (~±12 pp at the 63 pages Round 3 was graded on).
 
 ## Why this round exists
 
 Round 3 was built to fix **pixels** (three render flags) and the exam said the pixels were not the
 problem: every class the flags targeted came out flat or slightly worse, and ~15 of the +17 points
-was the retired `\tie` ([../METRICS-EXAMSET.md](../METRICS-EXAMSET.md)). Runs A and B were nulls on
-real-val ([../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md)).
+was the retired `\tie` ([METRICS-EXAM.md § Metrics — the exam as an INSTRUMENT](../METRICS-EXAM.md#metrics--the-exam-as-an-instrument)). Runs A and B were nulls on
+real-val ([METRICS-EXAM.md § Metrics — Round 3's two follow-up runs (A and B)](../METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b)).
 
 ⚠ **The owner's hand test disagrees with the instruments, and for the ship call it outranks them**
 (owner, 2026-09-03: *"exam ve evaluationlar o kadar fazla şey söylemiyor"*): Run A `best-real` reads
@@ -38,7 +38,7 @@ visibly better than both `r3-final-stage2-last` and Round 2 in the app. Both can
 shows. The instruments still earned their keep: they caught the `\tie` illusion and three wrong
 checkpoint picks. ✅ **The hand test is now repeatable**: the owner supplied **20 fixed pages** on
 2026-09-06, decoded into the review queue `handtest` — every model on the same pages, corrections
-counted per page ([../METRICS-HANDTEST.md](../METRICS-HANDTEST.md)). It is still unread.
+counted per page ([METRICS.md § Hand-test pages — the page-level instrument](../METRICS.md#hand-test-pages--the-page-level-instrument)). It is still unread.
 
 Round 4 therefore **draws nothing new**. It changes what the model is *allowed to learn from* (the
 dense half of every real page), what it is *graded against* (the signature answer key), *how its
@@ -50,11 +50,11 @@ checkpoint is chosen*, and it checks whether a two-website corpus generalises.
 |---|---|---|---|
 | 1 | **Training throws away the dense half.** A strip over the 59-id emitter gate is dropped. | b8 emit: 2,330 kept, **4,012 dropped**; 14.7% of real strips run over 59 ids; Round 3 improve:regress 4.5:1 on short strips, **1.25:1 (net worse) on ≥50-id strips**; note-missing is 37.5% of long-strip errors | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) · [../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md) · [../METRICS.md](../METRICS.md) |
 | 2 | **The signature is the largest error class and its gold is partly the model's own vote.** | signature 53 of 270 edits (17.5%); the vote overwrote 24/45 exam and 406/938 nota pieces; every human correction went koma→küçük, 10:0 | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) · [../BACKLOG.md](../BACKLOG.md) item 9 |
-| 3 | **The checkpoint selector picked wrong 3 of 3 times.** It blends a loss that is 92% synthetic, and loss does not predict corrections. | Run A: loss −6%, corrections 0 (15 better / 15 worse) | [../METRICS-ROUND3-RUNS.md](../METRICS-ROUND3-RUNS.md) · [../BACKLOG.md](../BACKLOG.md) item 3 |
+| 3 | **The checkpoint selector picked wrong 3 of 3 times.** It blends a loss that is 92% synthetic, and loss does not predict corrections. | Run A: loss −6%, corrections 0 (15 better / 15 worse) | [METRICS-EXAM.md § Metrics — Round 3's two follow-up runs (A and B)](../METRICS-EXAM.md#metrics--round-3s-two-follow-up-runs-a-and-b) · [../BACKLOG.md](../BACKLOG.md) item 3 |
 | 4 | **Two websites, exam included.** | 1,055 neyzen + 1,000 notaarsivleri, nothing else | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) · [../BACKLOG.md](../BACKLOG.md) item 10 |
-| 5 | **Realism renders do nothing; holes respond.** | three realism arms null; staccato hole 72.7% → 0.0% | [levers.md](../archive/rounds/levers.md) |
+| 5 | **Realism renders do nothing; holes respond.** | three realism arms null; staccato hole 72.7% → 0.0% | [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) |
 | 6 | **Labels are noisy and the pitch/duration axis was never audited.** | b8 auto-accepts 12.9% wrong when read; signature rows worse | [../METRICS-CORPUS.md](../METRICS-CORPUS.md) |
-| 7 | **The recipe has never used weight averaging (EMA) or label smoothing.** (Beam search sat on this row; ⛔ dropped by the owner 2026-10-04.) | — | [levers.md](../archive/rounds/levers.md) Levers 2 and 5 |
+| 7 | **The recipe has never used weight averaging (EMA) or label smoothing.** (Beam search sat on this row; ⛔ dropped by the owner 2026-10-04.) | — | [rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) Levers 2 and 5 |
 
 ## What the owner decided on 2026-09-03
 
@@ -106,7 +106,7 @@ model. **Examples per token** is.
 - ✅ **Trap verified with the real tokenizer, 2026-09-06** — it does not fire. All seven
   compositional pitches segment identically at every duration they appear with, and split evidence
   gets *better* than today's: 1.277% of notes take a minority id form now, 0.003% under H.
-- ⚠ Two files carry `ADDED_TOKENS` by hand — `src/vision/data.py` and `tools/render/lilypond.ts` —
+- ⚠ Two files carry `ADDED_TOKENS` by hand — `ml/omr/data.py` and `packages/core/src/labels/lilypond.ts` —
   and `check_token_drift` must pass. The id gate moves WITH the vocabulary:
   `MAX_IDS_BY_VOCAB = {"old": 59, "h": 80}` in `audit_coverage.py` and the emitter (step 5).
 
@@ -133,7 +133,7 @@ the no-render decision stood anyway — see step 1 for why.
 ## The order
 
 1. ✅ **DONE 2026-09-06 — length distributions + rare-pitch segmentation under H.**
-   `scripts/rung3/token_scheme_probe.py`, ~2 minutes, nothing re-decoded. Three results, all in
+   `ml/labels/token_scheme_probe.py`, ~2 minutes, nothing re-decoded. Three results, all in
    [tokenization.md](tokenization.md): **H is 16 new ids and vocabulary 116** (`''` and `'''` are
    used zero times and are NOT added — ids are append-only, so that was worth catching before the
    freeze); the rare-pitch trap **does not fire** and split evidence gets *better* (1.277% of notes
@@ -143,9 +143,9 @@ the no-render decision stood anyway — see step 1 for why.
    tail IS absent from synthetic under H (synthetic max 44 ids, real 59; 887 real strips — 11.9% —
    longer than anything synthetic). But re-packing synthetic to fill that band would make its crops
    ~2,580 px wide against the slicer's 1,450 px cap, which is the direction
-   [../METRICS-GEOMETRY.md](../METRICS-GEOMETRY.md) measured as costing edits. ⏭ Replaced by
+   [METRICS-INPUT.md § Crop geometry — what the encoder is actually GIVEN](../METRICS-INPUT.md#crop-geometry--what-the-encoder-is-actually-given) measured as costing edits. ⏭ Replaced by
    **watching the band**: long-strip errors get their own column when the H arm is read.
-2. ✅ **BUILT 2026-09-06 — the selector, EMA and label smoothing** (`src/vision/train.py`,
+2. ✅ **BUILT 2026-09-06 — the selector, EMA and label smoothing** (`ml/omr/train.py`,
    smoke-tested end to end including resume; nothing trained yet).
    - `--select-dir` names a **fixed** pool (`_realval_v2`) and, at every eval, decodes it
      **free-running** and counts corrections with `eval_omr.align` — the same function
@@ -164,8 +164,8 @@ the no-render decision stood anyway — see step 1 for why.
    — so what the selector buys is still unpriced ([../BACKLOG.md](../BACKLOG.md) item 3). EMA and
    label smoothing were NOT used; they stay off-by-default arms.
 3. ✅ **The signature vote — MEASURED 2026-09-06, and RULE D chosen and built the same day.**
-   `scripts/rung3/sig_vote_audit.py`, minutes, nothing re-decoded. Every number is in
-   [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md); three things change the plan:
+   `ml/labels/sig_vote_audit.py`, minutes, nothing re-decoded. Every number is in
+   [METRICS-CORPUS.md § Metrics — the model-voted key signature, audited](../METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited); three things change the plan:
    - **The vote overwrote the signature on 67% of `strips_b8`'s aligned pieces** (826 of 1,236) —
      higher than any pool counted before, and `strips_b8` is the real training pool.
    - **47% of overrides change nothing but the drawn ORDER.** The emitter compares vote to
@@ -182,11 +182,11 @@ the no-render decision stood anyway — see step 1 for why.
    table's **majority** spelling (224 pieces). Built in `emit_strip_labels.py` (reason
    `sig_table_conflict`) and **applied in the `strips_h1` emit** (step 5): 54 rows went to review and
    were read. ⚠ The exam was not re-emitted, so its `\sig` blocks still carry the old override.
-   [../METRICS-SIGVOTE.md](../METRICS-SIGVOTE.md).
+   [METRICS-CORPUS.md § Metrics — the model-voted key signature, audited](../METRICS-CORPUS.md#metrics--the-model-voted-key-signature-audited).
 4. ✅ **The third-source probe — COLLECTED and READ 2026-09-06: a null.** ⏭ Only more erdincbal
    pages can turn it into a verdict.
-   `scripts/rung3/collect_thirdsource.py`; the design, the sources and the traps are in
-   **[third-source.md](third-source.md)**. **36 pieces / 53 pages / 1,108 strips** from three sites,
+   `ml/labels/collect_thirdsource.py`; the design, the sources and the traps are in
+   **[round4.md § Third-source probe — does the model hold up on an engraving house…](#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen)**. **36 pieces / 53 pages / 1,108 strips** from three sites,
    all under `data/real/rung3/_thirdsource/` and deliberately outside `manifest.csv` and `matched/`.
    ⭐ **The slicer found staves on all 53 pages — zero failures.** 27 exam pieces were refused and
    every chosen piece is unseen by `strips_b8`. Free labels come from SymbTr metadata matching:
@@ -221,7 +221,7 @@ the no-render decision stood anyway — see step 1 for why.
 
    **What is built:**
    - **The vocabulary.** `SCHEME_H_TOKENS` (17 entries, **16 new ids**, 100 → 116) beside the
-     frozen 25 of `ADDED_TOKENS`, mirrored in `src/vision/data.py` and `tools/render/lilypond.ts`,
+     frozen 25 of `ADDED_TOKENS`, mirrored in `ml/omr/data.py` and `packages/core/src/labels/lilypond.ts`,
      with `data.vocabulary(scheme)` composing them and `train.py --vocab {old,h}` selecting one.
      ⛔ **H is a SEPARATE list on purpose** — folding it into `ADDED_TOKENS` was tried and reverted
      the same hour: every checkpoint was trained at vocabulary 100, so `load_model_and_processor`
@@ -288,7 +288,7 @@ the no-render decision stood anyway — see step 1 for why.
      denser than accepted strips (37 ids against 37). ⭐ The one subset that IS dense is the
      **1,678** the budget returned (median **49**), and none has been read; `build_ndhigh_queue.py`
      stages 40 at random as queue `ndhigh`.
-     [../METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
+     [METRICS-DIAGNOSTICS.md § Where an error comes from — the label, or the model?](../METRICS-DIAGNOSTICS.md#where-an-error-comes-from--the-label-or-the-model).
    - ⛔ **A better referee does not fix that** — pilot on 12 pieces / 597 strips with
      `r3a-stage2-best-real` (fair here: those strips were never trained on): it read **38.2%** of
      them differently and moved acceptance **33 → 32**. Saved a ~1,720-page inference pass.
@@ -305,7 +305,7 @@ the no-render decision stood anyway — see step 1 for why.
    twice as dirty, and it separates. Every error sat where label and decode disagree, and all of them
    are now corrected in the pool: **185** labels replaced (the rail's 25 via the new
    `promote_labels.py --audit-csv`), 4 rows removed, 0 rejects, **4,456** rows.
-   [../METRICS-ATTRIBUTION.md](../METRICS-ATTRIBUTION.md).
+   [METRICS-DIAGNOSTICS.md § Where an error comes from — the label, or the model?](../METRICS-DIAGNOSTICS.md#where-an-error-comes-from--the-label-or-the-model).
 
 6. **Two arms from base, one variable**: old vocabulary (control) vs scheme H, same pools, same
    steps, stage 2 at 4,000. ~3.5 h each on an L4. Everything else in this round changes together and
@@ -320,9 +320,9 @@ the no-render decision stood anyway — see step 1 for why.
    training pool and at 0.10 all 44 sit val-side, but at 0.05 **17 cross into training** and the
    selector reads pieces it trained on — the Run-B defect, now checked before the run.
 
-   ✅ **THE KIT IS BUILT (2026-09-16), NOT RUN**: `scripts/make_round4_colab_zip.sh` (one zip for both
-   arms) and `notebooks/round4_vocab_ab_colab.ipynb`. What it fixes, all measured in
-   [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md):
+   ✅ **THE KIT IS BUILT (2026-09-16), NOT RUN**: `ml/prep/make_round4_colab_zip.sh` (one zip for both
+   arms) and `ml/notebooks/round4_vocab_ab_colab.ipynb`. What it fixes, all measured in
+   [METRICS-EXAM.md § Round 4's vocabulary A/B — how it is scored, and what the kit…](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran):
    - **Stage 1**: the control **reuses Round 3's `r3-final-stage1/best`**; only the H arm trains
      one (owner). GPU ≈ 2.5 h + 2 × ~1.7 h.
    - **`strips_h1:4`** (30.8% real; `:5` would be 35.8%) and a selection decode cap of **100** for
@@ -342,7 +342,7 @@ the no-render decision stood anyway — see step 1 for why.
    6 better / 1 worse, p = 0.125 — suggestive, not proven).
    ⭐ **H's surviving case is the decoder ceiling**: 5.91% of all 15,711 candidate strips exceed 99
    old ids against 0.30% under H, and no gold pool contains that class.
-   [../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md).
+   [METRICS-EXAM.md § Round 4's vocabulary A/B — how it is scored, and what the kit…](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran).
    ✅ **(was) READY TO RUN (2026-09-16)**: the owner read `realval-repair`, `_realval_v2r` is built (260
    strips; the pick reads 259), and `data/colab/tnc_round4_colab.zip` is built (815 MB, 45,578
    files, integrity-tested; the notebook carries its byte count). ✅ Uploaded and run 2026-09-16/17.
@@ -356,7 +356,7 @@ the no-render decision stood anyway — see step 1 for why.
    column. ⛔ **AND THE DENSE POOL FIRST (owner, 2026-09-18)**: `_realval_v2r` carries 5.8%
    over-budget strips, so nothing read on it answers this round's own question.
    `_denseval_h1_dense` (117 held-out strips, 54.7% over the old gate) is what does
-   ([../METRICS-ROUND4-AB.md](../METRICS-ROUND4-AB.md)). A dense extension (the strips H rescues on exam pages) and the third-source set are
+   ([METRICS-EXAM.md § Round 4's vocabulary A/B — how it is scored, and what the kit…](../METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran)). A dense extension (the strips H rescues on exam pages) and the third-source set are
    **separate columns**, never merged into `examv3`. Decide before the read that the primary reads
    lower on denser material.
    ⛔ **`eval_omr.py` needs an old-id scoring mode before `examv3` is read on an H model** — it counts
@@ -387,3 +387,174 @@ the no-render decision stood anyway — see step 1 for why.
   repetition penalty — <https://arxiv.org/abs/2506.19065>.
 - Synthetic-to-real for real scans: 59 authentic training systems bought ~7–8 SER points; replay
   mixing while adapting — <https://arxiv.org/html/2606.09479v1>.
+
+**Merged into this file on 2026-11-20:**
+
+- [Third-source probe — does the model hold up on an engraving house it has never seen?](#third-source-probe--does-the-model-hold-up-on-an-engraving-house-it-has-never-seen) — was `docs/rung3/third-source.md`
+
+
+## Third-source probe — does the model hold up on an engraving house it has never seen?
+
+*Was `docs/rung3/third-source.md` (last updated 2026-09-06).*
+
+> Part of the real-page track — index: [README.md](README.md). Current state and the next action are
+> NOT here: [../STATUS.md](../STATUS.md). The plan this executes is [round4.md](round4.md) step 4;
+> the reason it exists is [../BACKLOG.md](../BACKLOG.md) item 10.
+
+### Why
+
+Every page this project owns comes from **two websites** — 1,055 neyzen.com + 1,000
+notaarsivleri.com — and so does the exam. So every accuracy number it has ever produced carries an
+unstated limit: *on these two engraving houses*. A collapse on a third would be the most valuable
+finding available; a pass retires the worry cheaply.
+
+⛔ **A probe is not a corpus.** Everything lands under `data/real/rung3/_thirdsource/` and is
+deliberately kept out of `data/real/manifest.csv` and `data/real/rung3/matched/`, both of which are
+read by flows that build training pools and the exam. Changing either mid-round would make the
+Round-3 read comparable to nothing.
+
+### The sources, and why these three
+
+Collected by [`collect_thirdsource.py`](../../ml/labels/collect_thirdsource.py) on 2026-09-06.
+None of the three serves a `robots.txt`; the collector holds a 1.5 s floor between requests anyway.
+Licence: [../THIRD-PARTY.md](../THIRD-PARTY.md) — read locally, never redistributed, exactly as the
+two existing sources are.
+
+| source | what it is | catalogue | why it earns a place |
+|---|---|---|---|
+| **sahaney.com** | born-digital **vector**, produced by **Mus2 2.1.2** | 2,213 PDFs behind a Ninja Tables endpoint carrying title / makam / form / usul / composer | Mus2 is a Turkish makam notation program **neither of our sources uses**, and the metadata means SymbTr matches on fields rather than on a filename |
+| **erdincbal.com** | **scans** of TRT Müzik Dairesi editions **and** the site owner's own engravings, on Google Drive | 685 pieces over the four instrumental archives | its archives are indexed **by form** — sirto, longa, peşrev, saz semaisi — the tuplet-dense repertoire [../DECISIONS.md](../DECISIONS.md) (2026-08-20) names as a measured structural hole |
+| **sarkilarnotalar.blogspot.com** | scans and photocopies of **old prints**, posted as JPGs | 2,574 posts | the owner asked for it by name (2026-09-06). The most degraded material in the probe — ⚠ **and the one with a provenance problem, below** |
+
+⛔ **nota.trt.net.tr was dropped**: its note library redirects to a login. No account was created.
+⛔ **divanmakam.com was dropped**: it is a forum, so its notes are user attachments of mixed and
+unrecorded provenance — the opposite of a controlled third engraver.
+
+**The engraving really is different, checked on the PDF producer** rather than assumed: sahaney is
+`Mus2 2.1.2` via Qt, erdincbal's files pass through `PDFsam`/Sejda (a splitter — the engraving is
+whatever it wrapped), while our own corpus is `Adobe Acrobat Image Conversion` (neyzen, i.e. scans)
+and `GPL Ghostscript` / `doPDF` (notaarsivleri).
+
+### What was collected
+
+Selection is auditable — `select` writes `sample_<source>.csv` before `download` will run, and
+`download` refuses to start without it.
+
+| source | pieces | pages | staves | strips | est. ids > 59 | median est. ids |
+|---|---|---|---|---|---|---|
+| sahaney | 14 | 18 | 140 | 379 | 66 (17%) | 40.1 |
+| erdincbal | 14 | 27 | 200 | 552 | 127 (23%) | 45.8 |
+| blogspot | 8 | 8 | 64 | 177 | 41 (23%) | 47.1 |
+| **total** | **36** | **53** | **404** | **1,108** | 234 | — |
+
+⭐ **The slicer found staves on all 53 pages — zero failures**, including the photocopies. Nothing is
+decoded yet.
+
+**Two filters ran on the selection.** **27 exam pieces were refused** (13 sahaney, 14 blogspot) — a
+probe sharing music with the graded set is not a neutral read. And every chosen piece is **unseen by
+`strips_b8`**: a piece the model has already read in another engraving is the one case where a good
+score could be the music rather than the printing.
+
+**Free labels**, from SymbTr metadata matching (`collect_nota.score_row`, so `accept` means what it
+means for notaarsivleri): sahaney **496 accepts** of 2,213 and erdincbal **75** of 685. ⛔ **The
+blogspot gets none** — its titles are lyric incipits with no makam column, so the makam hard-filter
+cannot run; searching every piece instead produced 2,012 `review` rows and **zero** accepts. Its
+pages need hand labels or a page-level correction count.
+
+### ⚠ Two provenance traps, both found by looking at the pages
+
+**1. The blogspot re-hosts other archives, including one of this probe's own sources.** Its page for
+*Gül açar bülbül öter yaz geçer* is watermarked **`www.erdincbal.com`** and is a TRT Müzik Dairesi
+edition — the same publisher as the erdincbal column. So the blogspot is **not an independent third
+source**; it is a mixed re-poster. Read of the 8 collected pages by eye:
+
+| page | what the header says | verdict |
+|---|---|---|
+| gül açar bülbül öter | **www.erdincbal.com** + TRT Müzik Dairesi | ⛔ re-hosted from another probe source |
+| hey onbeşli | TRT Müzik Dairesi, **THM** repertuar 1616 | ⛔ **folk (THM)** — a notation this project deliberately never touches (numbered bemol-2/3 signs, no tokens) |
+| beğendim biçimini | clean typeset, no watermark | ✅ unknown publisher |
+| bu yaz geçen günlerimiz | very dark photocopy, no watermark | ✅ unknown publisher |
+| her şeydi benim için | a 2001 **fax** from TRT Müzik Dairesi, handwritten title | ✅ unknown publisher |
+| nerelerde kaldın | calligraphic handwritten title | ✅ unknown publisher |
+| sevdamı dilim anlatamaz | old typeset print, carries triplets | ✅ unknown publisher |
+| yemeni bağlamış | typewriter title | ✅ unknown publisher |
+
+**2. Two different pieces can share a page stem, and the second silently overwrote the first.**
+erdincbal titles a piece by makam and form alone, so Rauf Yekta's and Gazi Giray's `MÂHUR PEŞREVİ`
+produced one stem — and the download lost a piece with nothing on screen to say so. Fixed in the
+producer (`_unique_stems` disambiguates on the composer and hard-fails if a collision survives),
+which is where every other pool on disk keys by stem. It had already happened once when it was found.
+
+⚠ **A third trap was caught by a guard rather than by eye**: the first blogspot run kept any image
+whose filename matched `nota`, and every post's banner is called `notalar.jpg` — so all ten
+"pages" were a 1020×250 banner. Selection is on **size** now, with a post-download minimum, so a
+wrong pick cannot pass silently.
+
+### The read (2026-09-06) — a NULL, and the probe is not powered to be more
+
+Decoded with `round2-stage2-best` producing the labels and **Run A `r3a-stage2-best-real`** graded
+on them, so the model that writes the answer key is not the model being scored
+([`score_thirdsource.py`](../../ml/labels/score_thirdsource.py)).
+
+#### 1. Yield — label-free, and it holds
+
+The emitter keeps a strip only when the model's decode aligns with the SymbTr-derived label. On a
+source the model cannot read, alignment fails and the accepted share craters. It did not.
+
+| pool | accepted / total | yield | rows that failed to align | pieces `ok` |
+|---|---|---|---|---|
+| `strips_b8` (our two sites) | 3,955 / 33,530 | 11.8% | 33.2% | 70.5% |
+| `strips_nota` (one of them) | 1,262 / 16,152 | 7.8% | 36.9% | 46.9% |
+| **the probe** (sahaney + erdincbal) | **74 / 931** | **7.9%** | **28.6%** | **82.1%** |
+
+⭐ **Row alignment fails LESS often on the new engravers than on our own two sites**, and more of
+their pieces come through whole. The pipeline does not jam on unfamiliar printing.
+
+#### 2. Edits per strip — the raw table says degradation, the length control says otherwise
+
+Same agreement-selected kind of row in every column, so the selection bias is matched. ⚠ `b8` is Run
+A's own training pool, so the **val-side** row is the only fair one — the train-side row is printed
+only to show what memorisation looks like.
+
+| pool | n | edits/strip | 95% CI | mean gold ids |
+|---|---|---|---|---|
+| `strips_b8` train-side (**memorised, not a comparison**) | 400 | 0.04 | — | 35.1 |
+| **`strips_b8` val-side** — our two sites, held out from Run A | 390 | **0.13** | [0.08, 0.19] | 33.5 |
+| **erdincbal** — TRT-edition scans | 46 | 0.37 | [0.11, 0.67] | 33.4 |
+| **sahaney** — Mus2 vector | 28 | 0.86 | [0.36, 1.46] | **40.6** |
+
+⛔ **Sahaney's 0.86 is mostly STRIP LENGTH, not the engraver.** Its strips carry 40.6 gold ids
+against 33.4–33.5 everywhere else, and long strips are already measured to read worse
+([../METRICS.md](../METRICS.md)). Restricted to strips under 40 gold ids:
+
+| pool | n | edits/strip | 95% CI |
+|---|---|---|---|
+| `strips_b8` val-side | 265 | 0.08 | [0.04, 0.13] |
+| erdincbal | 34 | 0.24 | [0.06, 0.47] |
+| sahaney | **10** | 0.20 | [0.00, 0.50] |
+
+⭐ **0.86 → 0.20 once length is controlled, and all three intervals overlap.** So the probe shows
+**no separable degradation on a third engraving house** — and at n = 34 and n = 10 it could not have
+shown one smaller than about 3×. **This is a null, not a pass.**
+
+⭐ **One side finding that is not a null and matters to Round 4**: a different engraving house packs
+**more music into a staff row** — sahaney's strips run 40.6 gold ids against our 33.5. That lands
+directly on the label-budget rail ([../METRICS-SLICER-WINDOWS.md](../METRICS-SLICER-WINDOWS.md)):
+the budget was chosen against our two engravers' density.
+
+### What is NOT claimed
+
+- ⛔ **The probe did not answer its question.** It is a **null**: no degradation was separable, and
+  it is not powered to separate one under ~3×. It cost a day and it bought a bound, not an answer.
+  Growing it is the only way to a verdict — the cheapest path is more erdincbal pages, which need
+  no hand labelling (75 SymbTr accepts exist, 14 were used).
+- **The edits/strip columns are a FLOOR, not an error rate.** Every row in them was accepted because
+  a model already agreed with the label. The comparison across columns is fair because the bias is
+  identical in each; the absolute levels are not the accuracy of anything.
+- **36 pieces is a probe, not a corpus.** It cannot support a per-class accuracy table; it can
+  answer "does this collapse".
+- **The blogspot column is not a clean third source** (trap 1), and two of its eight pages should be
+  dropped before any number is quoted from it.
+- **`match_symbtr` accepts were not read by hand.** They are the same tier notaarsivleri's pool was
+  built on, at the same thresholds — which is a known ~13% label-noise level, not gold
+  ([../METRICS-CORPUS.md](../METRICS-CORPUS.md)).

@@ -111,7 +111,7 @@ label.kv-btn.is-disabled {
  *
  * ⚠ THERE IS STILL A REAL `<input type="checkbox">` INSIDE — this is a restyle, not a replacement.
  * Three things ride on it. Screen readers get a genuine checkbox with a genuine label. The keyboard
- * gets Space and Tab for free. And `tools/browser/editor-smoke.ts` drives eight of these with
+ * gets Space and Tab for free. And `tools/checks/editor-smoke.ts` drives eight of these with
  * Playwright's `.check()` / `.uncheck()` / `.isChecked()`, which work on an `<input>` and on nothing
  * else — so the whole conversion cost the checks zero lines.
  *

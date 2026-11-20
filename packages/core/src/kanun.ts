@@ -3,7 +3,8 @@
  *
  * What/why: the violin half of this feature answers *where does the finger go*, and every note is
  * an independent question. **A kanun is not like that, and that difference is the whole design.**
- * A mandal is a small lever under one course; raising it shortens the strings by one koma, and it
+ * A mandal is a small lever under one course; raising it shortens the strings by one MANDAL STEP
+ * (16.67 cents — a sixth of a tempered semitone, NOT a koma), and it
  * **stays where it is put** until the player moves it again. So a picture of a kanun "right now" is
  * not a function of the note being played — it is a function of every mandal move made since the
  * piece began. That makes this a small state machine over the whole piece, not a lookup.
@@ -15,7 +16,8 @@
  *
  * How it's organized:
  *   * `KANUN_COURSES` — the 26 courses as DATA, derived from the perde names.
- *   * `MANDAL_LAYOUTS` — how many mandals a course carries and where its natural sits, as DATA.
+ *   * `MANDAL_LAYOUTS` — how many mandals EACH course carries (it differs by note name) and
+ *     which pitch each one gives, as DATA.
  *   * `planMandals` — the two-pass walk: the makam's opening setting, then the changes.
  *
  * ⚠ **THE COURSE IS THE WRITTEN NOTE, NOT THE SOUNDING PITCH, AND THAT IS NOT A SHORTCUT.** A
@@ -27,52 +29,167 @@
  *
  * This is pure data + maths, so it lives in core and ports to mobile unchanged — the same
  * reasoning that put `usul.ts` and `fingering.ts` here. Nothing about pixels or the DOM belongs in
- * this file; the drawing lives in `apps/web/src/ui/kanunGeometry.ts`.
+ * this file; the drawing lives in `apps/web/src/instruments/kanunGeometry.ts`.
  */
 
 import { naturalKoma } from "./notation";
 import { koma53ToFreq } from "./tuning";
 
 /**
- * How many mandals one course carries, and which of them is the natural.
+ * One mandal step, in Holdrian komas.
  *
- * ⚠ **DATA, because the real answer is "it depends on the maker".** The sources disagree, and they
- * disagree honestly: some makers fit 5, some 6, 7, 8 or 9, and a modern professional instrument
- * carries **9–12 per whole tone**, each worth one koma. 12 with the natural sixth from the bottom
- * is the owner's own instrument (2026-08-29) and is what ships; changing it is a row here and
- * touches no geometry and no drawing code, exactly like `VIOLIN_TUNINGS`.
- *
- * ⚠ The asymmetry is deliberate and it is not arbitrary: **the largest flat in makam music is 5
- * komas**, so five mandals below the natural is enough to reach every written bemol, while the
- * sharps need one more.
+ * ⚠ **A MANDAL IS NOT A KOMA** (2026-11-11 — until then this file said it was). Kanun makers fit
+ * the levers 16.67 cents apart, six to a tempered semitone, which makes the kanun a **72-tone
+ * equal** instrument sitting under a 53-comma notation. So one koma is one mandal (6.8 cents
+ * flat of true), but a 4-koma bakiye is the **5th** mandal and a 5-koma küçük mücenneb is the
+ * **6th** — the full semitone, 13.7 cents flat of true. Source: Günalçin, *Kanunda Ses Sistemi
+ * Sorunları Üzerine Bir Araştırma*, Rast Müzikoloji Dergisi I/2 (2013), Şekil 1 and Tablo 7.
  */
+export const MANDAL_STEPS_PER_OCTAVE = 72;
+export const MANDAL_STEP_KOMA = 53 / MANDAL_STEPS_PER_OCTAVE;
+
+/**
+ * How many mandals each course carries, and what each one gives.
+ *
+ * ⚠ **THE COUNT DIFFERS FROM COURSE TO COURSE, BY NOTE NAME** — every course was 12 here until
+ * 2026-11-11, which no real kanun is. Günalçin (2013, Tablo 1) counted nine Turkish makers'
+ * instruments. On all nine:
+ *
+ *   * **the six mandals nearest the nut are UP when the course sounds its natural**, so lowering
+ *     them one by one flattens it a step at a time, and all six down is the open string — a
+ *     tempered semitone flat. That half is the same on every course;
+ *   * **Do and Fa carry six more, with no gap** ("bitişik", 12 in all): every step up to a
+ *     semitone sharp;
+ *   * **every other course carries only two to four more, set apart behind a gap** ("ayrık"):
+ *     they are the TOP steps of the sharp semitone, so the small sharps simply do not exist there.
+ *
+ * ⚠ **THE ROW THAT SHIPS IS ONE REAL INSTRUMENT, COUNTED BY THE OWNER** (2026-11-12), not the
+ * paper's majority: Do 12, Re 9, Mi 8, Fa 12, **Sol 9, La 8**, Si 8 — the paper's majority has
+ * Sol 10 and La 9, and its makers do differ by a lever there. The owner's counts agree with a
+ * 108-megapixel photo of the same instrument on fourteen courses in a row. Numbers and sources:
+ * docs/features/kanun.md.
+ *
+ * ⚠ **THE TWO ENDS ARE NOT THE MIDDLE, SO THE COUNT IS PER COURSE WHERE IT HAS TO BE** (`courses`
+ * below). The mandal board narrows at the top and the lowest strings carry almost nothing: the
+ * owner counted 2, 4 and 6 levers on the top three courses and 3 on the lowest. ⚠ A TOTAL is what
+ * was counted; **how it splits into up-at-natural and down, and which step a lone lever gives, is
+ * a GUESS from the photo** on every override — marked in the table. Nothing in the planner or the
+ * drawing counts levers on its own, so correcting a guess is a one-line edit.
+ */
+/** What one course carries: levers up at its natural, and the sharp steps that have a lever. */
+export interface CourseMandals {
+  naturalRaised: number;
+  sharpSteps: readonly number[];
+}
+
+/** A course as the layout needs it — or a bare letter, which means "the middle octaves". */
+export type CourseRef = string | { letter: string; octave: number };
+
 export interface MandalLayout {
   id: string;
   label: string;
-  /** Total mandals on one course. */
-  count: number;
-  /** Which mandal (0-based, counting up from the flattest) sounds the natural. */
-  naturalIndex: number;
+  /**
+   * How many mandals stand UP when a course sounds its natural. It is also how many steps the open
+   * string (every mandal down) sits below the natural. ⚠ The regular value — a course listed in
+   * `courses` has its own; ask `naturalRaisedOf`, do not read this field for a given course.
+   */
+  naturalRaised: number;
+  /**
+   * Per WRITTEN letter: the steps above the natural that have a mandal, ascending. A missing step
+   * is a pitch that course cannot make.
+   */
+  sharpSteps: Readonly<Record<string, readonly number[]>>;
+  /**
+   * The courses that do NOT follow their letter, keyed by written letter + octave ("D3"). A course
+   * that is absent here is regular.
+   */
+  courses?: Readonly<Record<string, CourseMandals>>;
 }
 
 export const MANDAL_LAYOUTS: readonly MandalLayout[] = [
-  { id: "12", label: "12 mandal", count: 12, naturalIndex: 5 },
+  {
+    id: "owner-2026-11-12",
+    label: "12 / 9 / 8 mandal",
+    naturalRaised: 6,
+    sharpSteps: {
+      C: [1, 2, 3, 4, 5, 6],
+      D: [4, 5, 6],
+      E: [5, 6],
+      F: [1, 2, 3, 4, 5, 6],
+      G: [4, 5, 6],
+      A: [5, 6],
+      B: [5, 6],
+    },
+    courses: {
+      // TOTAL counted by the owner; the split and the step are GUESSES from the photo.
+      D3: { naturalRaised: 2, sharpSteps: [6] }, // 3
+      F6: { naturalRaised: 3, sharpSteps: [1, 2, 3] }, // 6
+      G6: { naturalRaised: 3, sharpSteps: [6] }, // 4
+      A6: { naturalRaised: 1, sharpSteps: [6] }, // 2
+      // NOT counted by the owner — the photo alone, low end of its range. Guesses throughout.
+      C6: { naturalRaised: 5, sharpSteps: [1, 2, 3, 4] }, // 9
+      D6: { naturalRaised: 4, sharpSteps: [5, 6] }, // 6
+      E6: { naturalRaised: 4, sharpSteps: [6] }, // 5
+      // ⚠ E3 and F3 are deliberately absent: the owner called the second course "odd, keep what
+      // the app draws", and gave no number for the third. They stay regular (8 and 12) — unknown.
+    },
+  },
 ];
 
 export const DEFAULT_MANDAL_LAYOUT = MANDAL_LAYOUTS[0]!;
 
-/** How far from the natural a mandal stands, in komas. Negative is flat. */
-export function mandalOffset(mandal: number, layout: MandalLayout = DEFAULT_MANDAL_LAYOUT): number {
-  return mandal - layout.naturalIndex;
+/** What one course carries under a layout — its own row if it has one, else its letter's. */
+export function courseMandals(ref: CourseRef, layout: MandalLayout = DEFAULT_MANDAL_LAYOUT): CourseMandals {
+  if (typeof ref !== "string") {
+    const own = layout.courses?.[`${ref.letter}${ref.octave}`];
+    if (own) return own;
+  }
+  const letter = typeof ref === "string" ? ref : ref.letter;
+  return { naturalRaised: layout.naturalRaised, sharpSteps: layout.sharpSteps[letter] ?? [] };
 }
 
-/** The mandal that stands `offset` komas from the natural, or `null` if the course cannot. */
-export function mandalForOffset(
-  offset: number,
+/** How many mandals are up when this course sounds its natural. */
+export function naturalRaisedOf(ref: CourseRef, layout: MandalLayout = DEFAULT_MANDAL_LAYOUT): number {
+  return courseMandals(ref, layout).naturalRaised;
+}
+
+/**
+ * The step each mandal of one course gives when it is the LAST one standing up, nut side first.
+ * Its length is how many mandals the course has.
+ *
+ * ⚠ Pass the COURSE wherever there is one. A bare letter answers for the regular octaves only and
+ * is blind to the per-course rows at the two ends of the instrument.
+ */
+export function mandalSteps(ref: CourseRef, layout: MandalLayout = DEFAULT_MANDAL_LAYOUT): number[] {
+  const m = courseMandals(ref, layout);
+  const flats = Array.from({ length: m.naturalRaised }, (_, i) => i + 1 - m.naturalRaised);
+  return [...flats, ...m.sharpSteps];
+}
+
+/**
+ * What a course sounds with its first `raised` mandals up, in steps from the natural.
+ *
+ * ⚠ `raised` runs from **0**, and 0 is a real setting: every mandal down is the open string, the
+ * flattest the course goes. A course of N mandals therefore has N + 1 settings, not N.
+ */
+export function stepForRaised(
+  raised: number,
+  ref: CourseRef,
   layout: MandalLayout = DEFAULT_MANDAL_LAYOUT,
 ): number | null {
-  const m = offset + layout.naturalIndex;
-  return m >= 0 && m < layout.count ? m : null;
+  if (raised === 0) return -naturalRaisedOf(ref, layout);
+  return mandalSteps(ref, layout)[raised - 1] ?? null;
+}
+
+/** How many mandals must be up for a course to sound `step`, or `null` if it has none there. */
+export function raisedForStep(
+  step: number,
+  ref: CourseRef,
+  layout: MandalLayout = DEFAULT_MANDAL_LAYOUT,
+): number | null {
+  if (step === -naturalRaisedOf(ref, layout)) return 0;
+  const i = mandalSteps(ref, layout).indexOf(step);
+  return i < 0 ? null : i + 1;
 }
 
 /** One course: three strings tuned in unison, sounding one perde. */
@@ -156,27 +273,32 @@ export interface KanunNoteInput {
   courseKoma: number | null;
   /**
    * What the note must actually sound, in commas. ⚠ **May be fractional**: a makam deviation is
-   * measured in real intervals, and `makam.ts` carries entries like −1.5 komas. A mandal is a whole
-   * koma, so a kanun physically cannot play those — see `residual` below.
+   * measured in real intervals, and `makam.ts` carries entries like −1.5 komas. A mandal is a fixed
+   * step, so a kanun cannot play most of them exactly — see `residual` below.
    */
   soundingKoma: number;
 }
 
-/** Where one note is played: which course, and where that course's mandal must stand. */
+/** Where one note is played: which course, and where that course's mandals must stand. */
 export interface MandalPos {
   courseIndex: number;
-  /** 0-based, counting up from the flattest mandal. */
-  mandal: number;
-  /** Komas from the natural. Negative is flat. */
+  /** How many of the course's mandals are up, counting from the nut. 0 = the open string. */
+  raised: number;
+  /** What that sounds, in mandal steps from the natural. Negative is flat. */
+  step: number;
+  /**
+   * How many mandals this is away from the natural setting — `raised` minus the layout's
+   * `naturalRaised`. It is what a player DOES ("two more up"), and it is not `step`: on a course
+   * with a gap, two more mandals up is five steps sharp.
+   */
   offset: number;
   /**
-   * How far the wanted pitch is from what this mandal actually gives, in komas — signed, and
-   * always within half a koma.
+   * How far the wanted pitch is from what this setting actually gives, in **komas** — signed.
    *
-   * ⚠ **It is not a rounding convenience, it is a fact about the instrument.** A makam deviation of
-   * −1.5 komas cannot be set on a mandal, so a kanun plays the nearest koma and the player bends
-   * nothing. Reporting it is the honest thing; hiding it would claim the instrument can do
-   * something it cannot. Zero for every ordinary note.
+   * ⚠ **It is not a rounding convenience, it is a fact about the instrument.** The notation counts
+   * in komas (22.6 cents) and the mandals in steps of 16.67, so almost nothing lands exactly: one
+   * koma is 0.30 of a koma off, a 5-koma flat 0.60. Reporting it is the honest thing; hiding it
+   * would claim the instrument can do something it cannot. Zero only for a natural.
    */
   residual: number;
   /**
@@ -188,7 +310,7 @@ export interface MandalPos {
   respelled: boolean;
 }
 
-/** One mandal move, at the note that forced it. */
+/** One mandal move, at the note that forced it. `from` / `to` are counts of mandals up. */
 export interface MandalChange {
   /** Index into the note array — the note this move was made for. */
   noteIndex: number;
@@ -201,8 +323,8 @@ export interface KanunPlan {
   /** Aligned 1:1 with the input. `null` = a rest, or a note this kanun cannot reach at all. */
   perNote: (MandalPos | null)[];
   /**
-   * The mandal each course must be set to BEFORE the first note — the makam's setting, one entry
-   * per course. This is what a player prepares, and it is worth showing on its own.
+   * How many mandals each course must have up BEFORE the first note — the makam's setting, one
+   * entry per course. This is what a player prepares, and it is worth showing on its own.
    */
   opening: number[];
   /** Every mandal move, in playing order. */
@@ -218,7 +340,7 @@ export interface KanunPlan {
  *    thrashing to guard against — the ambiguity the violin's string-choice rule had to solve does
  *    not exist here, because the notation already answered it. The only search is the fallback for
  *    a note the written course cannot reach.
- * 2. **Read the opening setting off pass 1, then walk.** Each course opens at the mandal it uses
+ * 2. **Read the opening setting off pass 1, then walk.** Each course opens at the setting it uses
  *    MOST across the piece; an unused course opens at its natural. That is the makam's setting, and
  *    taking the majority rather than the first note is what stops one passing accidental at bar 2
  *    from being mistaken for the piece's key.
@@ -248,18 +370,19 @@ export function planMandals(
   for (const p of perNote) {
     if (!p) continue;
     const tally = votes[p.courseIndex]!;
-    tally.set(p.mandal, (tally.get(p.mandal) ?? 0) + 1);
+    tally.set(p.raised, (tally.get(p.raised) ?? 0) + 1);
   }
-  const opening = courses.map((_, i) => {
-    let best = layout.naturalIndex;
+  const opening = courses.map((_c, i) => {
+    const natural = naturalRaisedOf(courses[i]!, layout);
+    let best = natural;
     let bestN = 0;
-    for (const [mandal, n] of votes[i]!) {
-      // ⚠ Ties go to the mandal NEAREST THE NATURAL, not to whichever the Map happened to yield
+    for (const [raised, n] of votes[i]!) {
+      // ⚠ Ties go to the setting NEAREST THE NATURAL, not to whichever the Map happened to yield
       // first. Map order is insertion order, which is playing order — so without this the opening
-      // setting would depend on which of two equally-used mandals the piece happened to touch
+      // setting would depend on which of two equally-used settings the piece happened to touch
       // first, and the same makam would open differently in two scores.
-      if (n > bestN || (n === bestN && Math.abs(mandal - layout.naturalIndex) < Math.abs(best - layout.naturalIndex))) {
-        best = mandal;
+      if (n > bestN || (n === bestN && Math.abs(raised - natural) < Math.abs(best - natural))) {
+        best = raised;
         bestN = n;
       }
     }
@@ -273,9 +396,9 @@ export function planMandals(
     const p = perNote[i];
     if (!p) continue;
     const from = state[p.courseIndex]!;
-    if (from !== p.mandal) {
-      changes.push({ noteIndex: i, courseIndex: p.courseIndex, from, to: p.mandal });
-      state[p.courseIndex] = p.mandal;
+    if (from !== p.raised) {
+      changes.push({ noteIndex: i, courseIndex: p.courseIndex, from, to: p.raised });
+      state[p.courseIndex] = p.raised;
     }
   }
 
@@ -283,33 +406,29 @@ export function planMandals(
 }
 
 /**
- * Round to the nearest whole mandal, and on an exact tie take the one NEARER THE NATURAL.
+ * How far a wanted pitch may sit from the nearest mandal and still be played on it, in steps.
  *
- * ⚠ The tie is not hypothetical, and `Math.round` gets it wrong for this job. `makam.ts` carries
- * deviations of ±1.5 komas — uşşak's segâh is one — which sit exactly halfway between two mandals.
- * `Math.round` breaks such a tie towards +∞, so the same interval would round *down* when it is
- * written as a flat and *up* when it is written as a sharp: an instrument that leans sharp in one
- * makam and flat in another for no reason but the sign of the number. Leaning towards the natural
- * instead is the conservative choice, is symmetric, and is the same rule the opening setting uses.
+ * ⚠ **One whole step, and the number is read off the instrument rather than chosen.** A 5-koma
+ * flat wants 6.79 steps and the course has only 6, so it is played 0.79 of a step flat of true —
+ * and that is what every kanun does: the paper measures exactly this 13.7 cents and calls the full
+ * semitone the instrument's küçük mücenneb. So half a step would wrongly refuse the commonest flat
+ * in the repertoire. Anything looser than one step would start hiding real gaps: a 1-koma sharp on
+ * Re wants 1.36 steps, Re has no mandal before step 4, and the honest answer there is that this
+ * course cannot play it — not that its natural is close enough.
  */
-function roundToMandal(offset: number): number {
-  const lo = Math.floor(offset);
-  const hi = Math.ceil(offset);
-  if (offset - lo < hi - offset) return lo;
-  if (hi - offset < offset - lo) return hi;
-  return Math.abs(lo) <= Math.abs(hi) ? lo : hi;
-}
+const REACH_STEPS = 1;
 
 /**
  * One note → one place on the instrument, or `null`.
  *
- * The written course is tried first and almost always answers. The fallback walks the neighbours
- * and takes the one whose mandal sits nearest its natural, which is the same thing a player does
- * when an accidental is too wide for the course it is written on.
+ * The written course is tried first and almost always answers. The fallback walks every course and
+ * takes the one that lands NEAREST the wanted pitch, which is the same thing a player does when an
+ * accidental is too wide for the course it is written on.
  *
- * ⚠ The rounding happens **per course**, on the offset from that course's natural — not once on
- * the sounding comma. It has to: the tie rule above is defined relative to the natural, so it
- * cannot be applied before the course is known.
+ * ⚠ **The nearest mandal is searched, not rounded to**, because a course's steps are no longer a
+ * plain run of integers — Re has a mandal at 0 and the next at +4. An exact tie between two
+ * mandals goes to the one NEARER THE NATURAL: `Math.round` would break it towards +∞, so the same
+ * interval would lean one way written as a flat and the other way written as a sharp.
  */
 function place(
   n: KanunNoteInput,
@@ -320,14 +439,25 @@ function place(
   if (n.courseKoma === null || !Number.isFinite(n.soundingKoma)) return null;
 
   const at = (c: KanunCourse, respelled: boolean): MandalPos | null => {
-    const offset = roundToMandal(n.soundingKoma - c.koma);
-    const mandal = mandalForOffset(offset, layout);
-    if (mandal === null) return null;
+    const want = (n.soundingKoma - c.koma) / MANDAL_STEP_KOMA;
+    const natural = naturalRaisedOf(c, layout);
+    const steps = [-natural, ...mandalSteps(c, layout)];
+    let raised = 0;
+    for (let r = 1; r < steps.length; r++) {
+      const d = Math.abs(steps[r]! - want);
+      const best = Math.abs(steps[raised]! - want);
+      if (d < best - 1e-9 || (Math.abs(d - best) <= 1e-9 && Math.abs(steps[r]!) < Math.abs(steps[raised]!))) {
+        raised = r;
+      }
+    }
+    const step = steps[raised]!;
+    if (Math.abs(step - want) > REACH_STEPS + 1e-9) return null;
     return {
       courseIndex: c.index,
-      mandal,
-      offset,
-      residual: n.soundingKoma - (c.koma + offset),
+      raised,
+      step,
+      offset: raised - natural,
+      residual: n.soundingKoma - (c.koma + step * MANDAL_STEP_KOMA),
       respelled,
     };
   };
@@ -341,7 +471,14 @@ function place(
   let best: MandalPos | null = null;
   for (const c of courses) {
     const p = at(c, true);
-    if (p && (best === null || Math.abs(p.offset) < Math.abs(best.offset))) best = p;
+    if (!p) continue;
+    if (
+      best === null ||
+      Math.abs(p.residual) < Math.abs(best.residual) - 1e-9 ||
+      (Math.abs(Math.abs(p.residual) - Math.abs(best.residual)) <= 1e-9 && Math.abs(p.step) < Math.abs(best.step))
+    ) {
+      best = p;
+    }
   }
   return best;
 }
@@ -351,18 +488,24 @@ function place(
  *
  * Returned in course order and NOT formatted: the caller owns the wording, because every
  * user-visible string in this project lives in `apps/web/src/ui/strings.ts`.
+ *
+ * ⚠ `offset` is in MANDALS from the natural setting — how many more to raise, or to lower — and
+ * `step` is what that sounds. They differ on a course with a gap.
  */
 export function openingMandals(
   plan: KanunPlan,
   courses: readonly KanunCourse[] = KANUN_COURSES,
   layout: MandalLayout = DEFAULT_MANDAL_LAYOUT,
-): { course: KanunCourse; mandal: number; offset: number }[] {
-  const out: { course: KanunCourse; mandal: number; offset: number }[] = [];
+): { course: KanunCourse; raised: number; offset: number; step: number }[] {
+  const out: { course: KanunCourse; raised: number; offset: number; step: number }[] = [];
   for (let i = 0; i < plan.opening.length; i++) {
-    const mandal = plan.opening[i]!;
-    if (mandal === layout.naturalIndex) continue;
+    const raised = plan.opening[i]!;
     const course = courses[i];
-    if (course) out.push({ course, mandal, offset: mandalOffset(mandal, layout) });
+    if (!course) continue;
+    const natural = naturalRaisedOf(course, layout);
+    if (raised === natural) continue;
+    const step = stepForRaised(raised, course, layout);
+    if (step !== null) out.push({ course, raised, offset: raised - natural, step });
   }
   return out;
 }

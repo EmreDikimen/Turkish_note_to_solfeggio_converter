@@ -4,7 +4,7 @@
  * real full-score render, and writes image+label pairs plus a manifest.
  *
  * Job derivation is fully deterministic from `data/pieces.json` (written by
- * scripts/select_pieces.py; scores exported by scripts/export_scores.py):
+ * ml/prep/select_pieces.py; scores exported by ml/prep/export_scores.py):
  *   - lyrics drawn ⟺ transpose 0 and the piece has lyrics (≈ a third of renders);
  *   - repeat signs injected on a seeded ~50% of renders (seed = hash("slug:t"));
  *   - navigation marks (segno/coda/D.C./Son) injected on an independent seeded ~50%
@@ -43,8 +43,8 @@
 
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { chromium, type Page } from "playwright";
-import { decodePretty } from "./decode";
-import { hashStr, mulberry32 } from "./rng";
+import { decodePretty } from "@turkish-omr/core/labels/decode";
+import { hashStr, mulberry32 } from "@turkish-omr/core/labels/rng";
 
 const URL = process.env.OMR_URL ?? "http://localhost:5173";
 const SCALE = 3; // deviceScaleFactor — crisp beams; the model resizes to ~583×409 downstream
@@ -80,10 +80,10 @@ interface Job {
   textseed: number;
   respellseed: number;
   slurseed: number;
-  /** Round-3 staccato distractors (SheetView's drawStaccatoDot).
+  /** Round-3 staccato distractors (drawStaccatoDot in score/drawMarks.ts).
    *  `null` unless `--staccato-noise` — see STACCATO_NOISE above. */
   staccatoseed: number | null;
-  /** Round-3 dotted (usul) barlines (SheetView's drawUsulBars). `null` unless `--usul-barline`.
+  /** Round-3 dotted (usul) barlines (drawUsulBars in score/drawMarks.ts). `null` unless `--usul-barline`.
    *  ⚠ Seeded per PIECE, never per copy or transpose: an edition either uses the convention or it
    *  does not, so every copy of one piece must make the same choice. */
   usulbarseed: number | null;
@@ -105,17 +105,17 @@ const FROM = Number(arg("from") ?? 0);
 const TO = arg("to") != null ? Number(arg("to")) : Infinity;
 // Round-2: draw the four AEU sharps at real-print bar weight instead of Bravura's heavier one,
 // which closes the white gaps between the THREE bars of a küçük/büyük mücennep so they decode as
-// their 2-bar cousins (see SheetView's drawThinSharps). Opt-in, so an A/B against the current
+// their 2-bar cousins (see drawThinSharps in score/drawMarks.ts). Opt-in, so an A/B against the current
 // corpus stays possible.
 const THIN_SHARPS = has("thin-sharps");
-// The tuplet A/B (docs/archive/rounds/round3-criteria.md): the CONTROL arm renders the mark as it was drawn
+// The tuplet A/B (docs/archive/rounds.md): the CONTROL arm renders the mark as it was drawn
 // until 2026-08-12 — one unbroken arc with the digit floating above it. Pixels only; the `\tup3`
 // token and every manifest field are identical either way, which is what makes the two arms'
 // manifests byte-comparable.
 const LEGACY_TUPLET = has("legacy-tuplet-mark");
 // The THIRD printed tuplet shape (2026-08-19): a CONTINUOUS arc with the "3" hanging inside its
 // concavity, drawn on a share of pieces as a per-piece coin. The owner found it on two real scanned
-// editions, refuting this project's own "16 of 16 marks break the arc" reading (docs/archive/rounds/tuplets.md).
+// editions, refuting this project's own "16 of 16 marks break the arc" reading (docs/archive/rounds.md).
 // OPT-IN, like --print-noise and --staccato-noise, and for the same reason: it changes a share of
 // EVERY piece, so a corpus rendered with it on is not comparable to one rendered with it off. Print
 // noise once rode along unconditionally and shipped an unvalidated change into ~40k strips.
@@ -135,7 +135,7 @@ const STACCATO_NOISE = has("staccato-noise");
 // inside a bar with a light dashed line. The renderer has never drawn one — 0 of 40,826 strips —
 // and ADDED_TOKENS has no name for one, so the nearest symbol the model knows is a vertical line
 // with dots beside it: a repeat sign. It emits `\repstart`, and the owner has been deleting those
-// by hand while labelling batch3 (docs/BACKLOG.md item 5, docs/METRICS-UNSEEN.md).
+// by hand while labelling batch3 (docs/BACKLOG.md item 5, docs/METRICS-INPUT.md).
 // ⭐ Same SHAPE as the staccato hole, which is the only Round-3 arm that moved its primary: a hole
 // in what the model has been shown responds to being filled; a domain gap does not.
 // ⚠ LABEL-FREE, on purpose. Naming it would make every real gold label on disk silently wrong (no
@@ -143,8 +143,8 @@ const STACCATO_NOISE = has("staccato-noise");
 // The `\dottedbar` token is a Round-4 question (docs/DECISIONS.md).
 // Opt-in for the same reason as the two flags above: it changes a share of every piece.
 const USUL_BARLINE = has("usul-barline");
-// Round-3 Lever 1 (docs/archive/rounds/levers.md): the crop-geometry pilot's only variable. The renderer packs
-// a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in tools/render/lilypond.ts) and has no pixel
+// Round-3 Lever 1 (docs/archive/rounds.md): the crop-geometry pilot's only variable. The renderer packs
+// a strip by MEASURES and LABEL TOKENS (`STRIP_BUDGET` in packages/core/src/labels/lilypond.ts) and has no pixel
 // width rail at all — which is why our strips run wider than the real pools' and reach the encoder
 // downscaled by half (docs/METRICS-DIAGNOSTICS.md, "The encoder's input box").
 //
@@ -164,7 +164,7 @@ if (MAX_MEASURES != null && (!Number.isInteger(MAX_MEASURES) || MAX_MEASURES < 1
 }
 
 // Conventional PRINTED key signatures per makam (data/makam_signatures.json, built by
-// scripts/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
+// ml/prep/build_makam_signatures.py from the adjudication-confirmed real-page labels). Carry-mode
 // renders wear the makam's real printed signature (not SymbTr's content-derived one): we sample a
 // variant per pass (seeded, weighted by real frequency) and hand its body string to the harness as
 // ?sig=, which feeds BOTH the drawn glyphs and the label (faithful scheme).
@@ -386,7 +386,7 @@ async function main() {
 
   // Provenance for the corpus on disk: which flags made it. Deliberately NOT a manifest field — the
   // tuplet A/B's two arms must have byte-identical manifests, since the mark is pixels only
-  // (docs/archive/rounds/round3-criteria.md).
+  // (docs/archive/rounds.md).
   writeFileSync(`${OUT}/render_config.json`, JSON.stringify({
     pieces: PIECES_PATH, carryPasses: CARRY_PASSES, thinSharps: THIN_SHARPS,
     legacyTupletMark: LEGACY_TUPLET, printNoise: PRINT_NOISE, staccatoNoise: STACCATO_NOISE,

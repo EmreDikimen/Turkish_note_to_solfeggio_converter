@@ -15,13 +15,13 @@
   <body>
     <h1>W0 — opencv.js primitive parity probe</h1>
     <p class="sub">
-      Proves opencv.js reproduces <code>src/vision/page_to_strips.py</code>'s four primitives before
+      Proves opencv.js reproduces <code>ml/omr/page_to_strips.py</code>'s four primitives before
       the slicer is ported (plan W0). Reference numbers come from
-      <code>scripts/cv_probe_ref.py</code>; regenerate them with
-      <code>.venv-ml/bin/python scripts/cv_probe_ref.py &lt;page.png&gt;</code>.
+      <code>ml/prep/cv_probe_ref.py</code>; regenerate them with
+      <code>.venv-ml/bin/python ml/prep/cv_probe_ref.py &lt;page.png&gt;</code>.
       Throwaway — deleted at W6.
     </p>
     <pre id="log">loading opencv.js (13 MB) …</pre>
-    <script type="module" src="/src/probe/cvProbe.ts"></script>
+    <script type="module" src="/src/dev/cvProbe.ts"></script>
   </body>
 </html>

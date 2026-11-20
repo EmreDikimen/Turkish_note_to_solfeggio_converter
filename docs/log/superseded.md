@@ -157,7 +157,7 @@ of a strip's time, the encoder the rest), and the literature's gain at that widt
 (Transcoda: OMR-NED 18.71% → 18.46%). It was never run, so no number of ours exists. The owner closed
 the emitter route too, so there is no offline-only version left to propose. Grammar-constrained
 decoding is a different thing — it works on the greedy path — and is still on the menu
-([../rung3/levers.md](../archive/rounds/levers.md)).
+([rounds.md § The levers Round 3 has not pulled — ranked, with what to measure first](../archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first)).
 
 ## Parked, not dead
 
@@ -166,6 +166,6 @@ These were deliberately set aside and may return; they are *not* cancelled:
   train; mine them per-class only if an error taxonomy gives a reason.
 - 126 nota-full pending disputes (pitch/accidental content) — post-Round-1 re-audit territory.
 - Decode-repair heuristics + adaptive window re-split on cap-hit — see
-  [../rung3/followups.md](../archive/rounds/followups.md).
+  [rounds.md § Follow-ups — the correction loop, parked ideas, watch-items, data…](../archive/rounds.md#follow-ups--the-correction-loop-parked-ideas-watch-items-data-layout).
 - Sub-measure fragments for dense contiguous tuplet runs.
 - In-browser stages 2–7 (the slicer/decode currently run in Python) and stage-9 header OCR.

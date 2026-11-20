@@ -1,6 +1,6 @@
 /**
  * The Istanbul painting behind the page (owner, 2026-10-01): Aivazovsky by day, Aivazovsky by
- * moonlight (`scripts/prepare_backdrop.py`). Three layers, all CSS (`.kv-backdrop` in app.css):
+ * moonlight (`ml/prep/prepare_backdrop.py`). Three layers, all CSS (`.kv-backdrop` in app.css):
  * the painting, a blurred copy masked to the content column, and a veil of the page's own paper
  * that is thickest behind the content — so the picture is soft where something is read over it
  * and comes through more clearly toward the window's edges.

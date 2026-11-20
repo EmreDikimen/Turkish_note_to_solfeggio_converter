@@ -13,7 +13,7 @@
  * BUCKET — every visit on one day from one kind of browser — so there is no device and no person in
  * it: "how many different people" is not answerable any more, by design (netlify/shared/visits.ts).
  * `reads` is the honest signal — a robot opens a page, it does not upload sheet music.
- * docs/features/visit-stats.md is the long version.
+ * docs/features/README.md is the long version.
  */
 import type { VisitBucket } from "../../../../netlify/shared/visits";
 

@@ -8,7 +8,7 @@
 import { useRef, type ComponentType, type Ref } from 'react';
 import { WebView, type WebViewMessageEvent, type WebViewProps } from 'react-native-webview';
 import type { NoteModelDocument } from '@turkish-omr/core';
-import type { ScoreStructure } from '../../../tools/render/stitch';
+import type { ScoreStructure } from '../../../packages/core/src/labels/stitch';
 import { SCORE_VIEW_HTML } from './generated/scoreViewHtml';
 
 // ⚠ A TYPES-ONLY cast (2026-10-29): react-native-webview 14.0.1's class typings resolve their props

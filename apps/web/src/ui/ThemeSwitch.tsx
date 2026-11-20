@@ -9,7 +9,7 @@
  * DOM contract: `#theme-switch[data-theme]` (checked = dark).
  */
 import { Moon, Sun } from "lucide-react";
-import type { Theme } from "../theme";
+import type { Theme } from "../lib/theme";
 import { TR } from "./strings";
 
 export function ThemeSwitch({

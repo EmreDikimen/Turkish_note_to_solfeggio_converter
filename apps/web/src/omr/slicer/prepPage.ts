@@ -5,7 +5,7 @@
  * inert on clean input. That is TRUE of the perspective crop and FALSE of the deskew, and the
  * difference was found by measuring the port against the corpus rather than by reading the code:
  * scanned pages in `data/real/strips_v2` carry a real 0.3-1° scanner skew, and skipping the
- * rotation cost whole systems (one page went 10 staves -> 0). See docs/archive/phases/slicer-port.md.
+ * rotation cost whole systems (one page went 10 staves -> 0). See docs/archive/phases.md.
  *
  * So the deskew IS ported and the perspective crop is not:
  *
@@ -15,10 +15,28 @@
  *     more staff-line rows" gate, so an axis-aligned screenshot still passes through untouched;
  *     it just is not the corpus we validate against.
  *
- * Transliterated line by line. Do not restructure — see docs/archive/phases/slicer-port.md.
+ * Transliterated line by line. Do not restructure — see docs/archive/phases.md.
  */
-import { pyRound } from "./constants";
-import { binarizeInk, openHorizontalRowSums, resizeScale, rotate, type Gray } from "./cvOps";
+import {
+  FRAME_BAND,
+  FRAME_GROW_PX,
+  FRAME_MIN_FULL_PX,
+  FRAME_MIN_RING,
+  FRAME_SIDE_MIN,
+  FRAME_SLACK_PX,
+  FRAME_STRAIGHT,
+  FRAME_WHITEN,
+  pyRound,
+} from "./constants";
+import {
+  binarizeInk,
+  dilateSquare,
+  openHorizontalRowSums,
+  otsuLevel,
+  resizeScale,
+  rotate,
+  type Gray,
+} from "./cvOps";
 import { clusterRows, pageBinarizer } from "./staves";
 
 // ---- deskew (L219-221) -------------------------------------------------------------------------
@@ -181,6 +199,141 @@ export function deskew(gray: Gray, est: SkewEstimate): { gray: Gray; angle: numb
   return { gray: rotate(gray, angle), angle };
 }
 
+// ---- the viewer frame of a screenshot — `whiten_frame` -----------------------------------------
+
+/**
+ * `_frame_side`: one side's edge runs -> how far to paint on each row; null = not a screenshot.
+ *
+ * A side with ink at the edge on under FRAME_SIDE_MIN of its rows has no frame (zeros — neither
+ * painted nor a veto); a side that has one must have a STRAIGHT one; and an edge-to-edge frame
+ * row is painted whole only inside a block of FRAME_MIN_FULL_PX such rows, because a single one
+ * can be a staff line. The reasons are beside the Python original.
+ */
+function frameSide(runs: Int32Array, full: number): Int32Array | null {
+  const n = runs.length;
+  const out = new Int32Array(n);
+  let nonZero = 0;
+  for (const r of runs) if (r > 0) nonZero++;
+  if (nonZero < FRAME_SIDE_MIN * n) return out;
+  const thick = new Uint8Array(n);
+  for (let i = 0; i < n; ) {
+    if (runs[i]! < full) {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < n && runs[j]! >= full) j++;
+    if (j - i >= FRAME_MIN_FULL_PX) thick.fill(1, i, j);
+    i = j;
+  }
+  const part: number[] = [];
+  for (const r of runs) if (r > 0 && r < full) part.push(r);
+  if (part.length === 0) {
+    for (let i = 0; i < n; i++) out[i] = thick[i] ? full : 0;
+    return out;
+  }
+  part.sort((a, b) => a - b);
+  const med = part[part.length >> 1]!;
+  let near = 0;
+  for (const r of part) if (Math.abs(r - med) <= FRAME_SLACK_PX) near++;
+  if (near < FRAME_STRAIGHT * part.length) return null;
+  for (let i = 0; i < n; i++) out[i] = thick[i] ? full : Math.min(runs[i]!, med + FRAME_SLACK_PX);
+  return out;
+}
+
+/**
+ * `whiten_frame`: paint a screenshot's flat dark viewer frame white. Returns `gray` ITSELF when
+ * there is no such frame — which is every scan and every photo, so those stay bit-identical.
+ *
+ * Why, and why each of the three tests is there, is written once beside the Python original and
+ * summarised at `FRAME_WHITEN` in `constants.ts`.
+ */
+export function whitenFrame(gray: Gray): Gray {
+  const { data, width: w, height: h } = gray;
+  if (!FRAME_WHITEN || h < 3 || w < 3) return gray;
+
+  const hist = new Int32Array(256);
+  for (let x = 0; x < w; x++) {
+    hist[data[x]!]!++;
+    hist[data[(h - 1) * w + x]!]!++;
+  }
+  for (let y = 1; y < h - 1; y++) {
+    hist[data[y * w]!]!++;
+    hist[data[y * w + w - 1]!]!++;
+  }
+  const ringSize = 2 * w + 2 * (h - 2);
+
+  // 1. the frame colour is the ring's commonest level ON THE INK SIDE of Otsu — a frame on one
+  //    side only covers under half the ring, so the outright mode would be the white paper
+  const top0 = Math.min(255, Math.floor(otsuLevel(gray)));
+  let mode = 0;
+  let darkSum = hist[0]!;
+  for (let v = 1; v <= top0; v++) {
+    darkSum += hist[v]!;
+    if (hist[v]! > hist[mode]!) mode = v; // first max, as np.argmax
+  }
+  if (darkSum === 0) return gray;
+
+  // 2. ... and a real share of the ring is that ONE level
+  const lo = Math.max(0, mode - FRAME_BAND);
+  const hi = Math.min(255, mode + FRAME_BAND);
+  let inBand = 0;
+  for (let v = lo; v <= hi; v++) inBand += hist[v]!;
+  if (inBand < FRAME_MIN_RING * ringSize) return gray;
+
+  // 3. ... and its inner edge is straight on every side (a photo's desk is not)
+  const isBand = (i: number) => data[i]! >= lo && data[i]! <= hi;
+  const leftR = new Int32Array(h);
+  const rightR = new Int32Array(h);
+  for (let y = 0; y < h; y++) {
+    let a = 0;
+    while (a < w && isBand(y * w + a)) a++;
+    leftR[y] = a;
+    let b = 0;
+    while (b < w && isBand(y * w + w - 1 - b)) b++;
+    rightR[y] = b;
+  }
+  const topR = new Int32Array(w);
+  const bottomR = new Int32Array(w);
+  for (let x = 0; x < w; x++) {
+    let a = 0;
+    while (a < h && isBand(a * w + x)) a++;
+    topR[x] = a;
+    let b = 0;
+    while (b < h && isBand((h - 1 - b) * w + x)) b++;
+    bottomR[x] = b;
+  }
+  const left = frameSide(leftR, w);
+  const right = frameSide(rightR, w);
+  const top = frameSide(topR, h);
+  const bottom = frameSide(bottomR, h);
+  if (!left || !right || !top || !bottom) return gray;
+
+  // only runs that START at an image edge, each capped at its side's median
+  const mask = new Uint8Array(w * h);
+  let any = false;
+  for (let y = 0; y < h; y++) {
+    const l = left[y]!;
+    const r = right[y]!;
+    for (let x = 0; x < l; x++) mask[y * w + x] = 255;
+    for (let x = w - r; x < w; x++) mask[y * w + x] = 255;
+    if (l > 0 || r > 0) any = true;
+  }
+  for (let x = 0; x < w; x++) {
+    const t = top[x]!;
+    const b = bottom[x]!;
+    for (let y = 0; y < t; y++) mask[y * w + x] = 255;
+    for (let y = h - b; y < h; y++) mask[y * w + x] = 255;
+    if (t > 0 || b > 0) any = true;
+  }
+  if (!any) return gray;
+
+  const grown = dilateSquare({ data: mask, width: w, height: h }, 2 * FRAME_GROW_PX + 1);
+  const out = new Uint8Array(data);
+  for (let i = 0; i < out.length; i++) if (grown.data[i]! > 0) out[i] = 255;
+  return { data: out, width: w, height: h };
+}
+
 export interface PrepResult {
   gray: Gray;
   cropped: boolean;
@@ -196,7 +349,8 @@ export interface PrepResult {
 export function prepPage(gray: Gray): PrepResult {
   const est = estimateSkew(gray);
   const { gray: page, angle } = deskew(gray, est);
-  return { gray: page, cropped: false, skewDeg: angle };
+  // last, as in Python: a rotated page is padded with white and so can never read as framed
+  return { gray: whitenFrame(page), cropped: false, skewDeg: angle };
 }
 
 /**
@@ -209,6 +363,6 @@ export function prepPage(gray: Gray): PrepResult {
  * product: `prepPage` above is what the app calls.
  */
 export function prepPageWithAngle(gray: Gray, angle: number): PrepResult {
-  if (angle === 0) return { gray, cropped: false, skewDeg: 0 };
-  return { gray: rotate(gray, angle), cropped: false, skewDeg: angle };
+  if (angle === 0) return { gray: whitenFrame(gray), cropped: false, skewDeg: 0 };
+  return { gray: whitenFrame(rotate(gray, angle)), cropped: false, skewDeg: angle };
 }

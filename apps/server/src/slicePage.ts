@@ -1,5 +1,5 @@
 /**
- * A page → the strips `decodePage` reads, on the server. The native app's path (docs/mobile/plan.md).
+ * A page → the strips `decodePage` reads, on the server. The native app's path (docs/mobile/README.md).
  *
  * The web app slices in the browser and POSTs finished strips to `/decode`; a phone running React
  * Native has no canvas and no opencv.js, so it POSTs the page to `/page` and this does the rest.

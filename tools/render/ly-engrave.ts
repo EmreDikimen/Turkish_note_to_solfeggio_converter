@@ -2,7 +2,7 @@
  * Round-3 Lever 4 (renderer diversity): OUR STRIP LABEL → REAL LILYPOND SOURCE.
  *
  * WHY THIS FILE EXISTS. Every one of the 40,826 synthetic strips was engraved by VexFlow + Bravura
- * at a staff spacing whose standard deviation is zero (docs/archive/rounds/levers.md, Lever 4). LilyPond is a
+ * at a staff spacing whose standard deviation is zero (docs/archive/rounds.md, Lever 4). LilyPond is a
  * second engraver — different spacing engine, different font (Emmentaler), different beaming and
  * bracket conventions — and it ships `makam.ly`, which defines the SAME eight AEU accidentals we
  * draw, with the same comma→glyph convention (checked 2026-08-18: koma = mirrored flat / 1-stem
@@ -11,7 +11,7 @@
  * domain costs no new labelling — only this translation.
  *
  * ⚠ THE HARD RULE IS PIXELS == LABELS (../../CLAUDE.md). This file does NOT re-decide what to draw:
- * it takes a label that `tools/render/lilypond.ts` already produced and renders exactly that. The
+ * it takes a label that `packages/core/src/labels/lilypond.ts` already produced and renders exactly that. The
  * label is the complete description of what must appear (that is what "faithful" means), so the
  * translation is mechanical:
  *
@@ -56,7 +56,7 @@ import {
   TUP_END_TOKEN,
   TIE_TOKEN,
   GRACE_TOKEN,
-} from "./lilypond";
+} from "@turkish-omr/core/labels/lilypond";
 
 /** Comma alteration → the `makam.ly` pitch-name suffix. `makam.ly` spells the alteration into the
  *  note name itself (c = C natural, cc = koma sharp, cb = bakiye sharp, ck = küçük, cbm = büyük,

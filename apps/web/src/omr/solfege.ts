@@ -3,7 +3,7 @@
  *
  * ONE definition, used by two views that show model output verbatim: the slice inspector
  * (`slices/slicesView.ts`) and the raw decode panel (`ui/DecodePanel.tsx`). It mirrors what
- * `scripts/rung3/review_ui.py` does for the labelling queues, so a strip reads the same way in the
+ * `ml/labels/review_ui.py` does for the labelling queues, so a strip reads the same way in the
  * app as it does in the review tool.
  *
  * ⚠ This is a DISPLAY rewrite and nothing else. The tokens themselves, the `Save`/download JSON,

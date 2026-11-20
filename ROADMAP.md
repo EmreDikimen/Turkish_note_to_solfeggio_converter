@@ -71,7 +71,7 @@ per-class mean over classes with enough gold to mean something.
 | Runtime / hosting | **Static site on Netlify + decode on a scale-to-zero Cloud Run CPU server** | The original "no server" premise (unaffordable) did not survive: free tiers cover it. Decode left the device to keep it cool (2026-08-05); slicing, audio and editing stay in the browser. |
 | App stack | **React (web) + React Native (mobile) over a shared TypeScript `core`** | App logic written ONCE in the TS core; notation/audio libs (VexFlow, Tone.js) are mature in JS; mobile becomes "UI + adapters over the same core". |
 | Python's role | **Training + data ONLY** (not in the shipped app) | ML training, synthetic-data generation, and SymbTr→JSON export. The app's runtime logic lives in the TS core, so it ports to mobile. |
-| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. **Confirmed: `omr_transformer`** — passed the Step-1 eval, the Rung-1 overfit-10 (GO, 2026-07-02) and the Rung-1.5 ONNX/browser gate (PASS, 2026-07-03) — see `src/vision/MODEL_EVAL.md`. |
+| OMR model (v1) | **Fine-tune a pretrained OMR model** (download a Western OMR model, retrain to add the AEU accidentals) | Reuses a model that already reads notes; we only teach the microtonal accidentals. **Confirmed: `omr_transformer`** — passed the Step-1 eval, the Rung-1 overfit-10 (GO, 2026-07-02) and the Rung-1.5 ONNX/browser gate (PASS, 2026-07-03) — see `ml/omr/MODEL_EVAL.md`. |
 | OMR model (fallbacks) | **CRNN+CTC (PrIMuS-based)**, then **YOLOv8 glyph detection** + heuristic decoder | **RETIRED (2026-07-07)** — Rung 1.5 retired the export/size concern; the Rung-2 PASS (99.9% headline accuracy — `docs/METRICS.md`) retired the accuracy concern. Kept here for the record only. |
 | Where OMR runs | **On the server** (`onnxruntime-node`), importing the browser's own `decode.ts` — one decode implementation | The browser path (`onnxruntime-web`) still exists for development and the gates; a deployed build does not fall back to it (2026-09-04). Offline use is not a current goal. |
 | ML framework | **PyTorch** → export **ONNX** | Standard OMR stack; ONNX runs in both JS runtimes. |
@@ -303,7 +303,7 @@ produce a real, demoable app with zero machine learning.
 - ⏭ **A React Native app, started 2026-10-11** (owner), Android and iOS together: it reuses
   `packages/core` verbatim with a native `AudioBackend`, and decodes on the **same server** — not
   on-device, which would bring back the ~211 MB download the server removed. Milestones M0–M5 in
-  [docs/mobile/plan.md](docs/mobile/plan.md).
+  [docs/mobile/README.md](docs/mobile/README.md#mobile-plan--what-is-reused-what-is-rewritten-and-what-must-be-decided-first).
 - **Ahenk (transposition) selector** — a user-facing control that picks a named ahenk (Bolahenk,
   Mansur, Kız, …) for playback/display, built on the core `transpose()` from Phase 2 via the
   `name → comma-offset` table (chromatic transpose under the hood, ahenk name on top).
@@ -382,7 +382,7 @@ new ML.
 > Sections 0–6 above are the evergreen plan: they describe intent and architecture, not progress.
 
 Run the harness: `npm install` then `npm run dev:web` (export a sample first:
-`python scripts/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
+`python ml/prep/symbtr_to_json.py <file.txt> -o apps/web/public/sample.json`).
 
 Note: Phase-0/training Python stays in `src/` for now; the `ml/` rename is cosmetic and deferred.
 

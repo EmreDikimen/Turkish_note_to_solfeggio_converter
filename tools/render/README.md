@@ -47,7 +47,7 @@ only what is **physically drawn**:
 
 **New tokens to add to the model's tokenizer** (`ADDED_TOKENS` in `lilypond.ts`): the 8 accidental
 tokens, **`\natural`**, **`\sig`** / **`\sigend`**, `|`, the digit **`3`** — the base vocab lacks
-`3`, so it cannot spell "32" for 32nd notes (see `src/vision/MODEL_EVAL.md`) — the 4 repeat-sign
+`3`, so it cannot spell "32" for 32nd notes (see `ml/omr/MODEL_EVAL.md`) — the 4 repeat-sign
 tokens `\repstart` `\repend` `\volta1` `\volta2` (faithful drawn symbols; the base vocab's structural
 `\repeat `/`volta ` can't label a crop showing only one end of a repeat), the 4 navigation-mark
 tokens `\segno` `\coda` `\dc` `\fine` (segno 𝄋 / coda ⊕ / "D.C." / "Son" — same faithful-drawn-symbol
@@ -76,7 +76,7 @@ d''8 \kucukFlat e''8 e''8 | f''8 f''16 f''16 f''8 f''16 f''16 f''8
 
 `docToStrips(doc)` packs notes into **short, self-contained strips** (default ≤ 4 measures and
 ≤ 56 estimated tokens — `STRIP_BUDGET` in `lilypond.ts`, the ONE place the cap lives: the browser
-exporter's `buildStrips` shares it, and `src/vision/audit_coverage.py --tokenizer` is the hard
+exporter's `buildStrips` shares it, and `ml/omr/audit_coverage.py --tokenizer` is the hard
 backstop, failing any label over 59 real ids under the decoder's 60-id cap), inserting `|` at
 measure boundaries. Note-level packing means even a single dense 16th-note measure can't overrun
 the cap (the browser exporter instead DROPS an over-budget single measure — crops must fall on
@@ -97,7 +97,7 @@ clef + makam key signature so it's decodable on its own.
 ## Generating the image+label pairs
 
 We **crop** strips out of the harness's real full-score render (reusing the verified engraving), so no
-note is re-drawn. The harness ([SheetView.tsx](../../apps/web/src/SheetView.tsx)) reports each measure's
+note is re-drawn. The harness ([SheetView.tsx](../../apps/web/src/score/SheetView.tsx)) reports each measure's
 geometry; the in-page **Strip panel** ([App.tsx](../../apps/web/src/App.tsx), Sheet view) lists strips,
 highlights a strip's crop rectangle, and shows its label + decoded notes for a manual check.
 `render.ts` then batches it:
@@ -107,8 +107,8 @@ npm run dev:web                       # start the harness (note the port, e.g. 5
 OMR_URL=http://localhost:5174 npx --yes tsx tools/render/render.ts \
     --pieces data/pieces.json --out data/synthetic/strips_v2_1 [--from 0 --to 25] [--clean] [--finalize]
 ```
-Jobs are derived deterministically from `data/pieces.json` (written by `scripts/select_pieces.py`;
-scores exported by `scripts/export_scores.py`): every transpose × both modes, lyrics only at t=0,
+Jobs are derived deterministically from `data/pieces.json` (written by `ml/prep/select_pieces.py`;
+scores exported by `ml/prep/export_scores.py`): every transpose × both modes, lyrics only at t=0,
 seeded repeat injection on ~half of renders, seeded nav-mark injection on ~70%, distractor text +
 the low-rate büyük respell always on (all seeds hashed from `slug:transpose`, so any strip is
 reproducible — `docs/MANUAL_CHECKS.md`). Output → the `--out` dir (gitignored; `strips_v3` is the
@@ -128,7 +128,6 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
 - `decode-cli.ts` — CLI for the decoder. Run:
   `npx --yes tsx tools/render/decode-cli.ts [score.json | "<label string>"]`. Shows the *written* AEU
   note (snapped), so compare against the harness Sheet view, not the raw exact koma.
-- `demo.ts` — prints strips from a sample score. Run: `npx --yes tsx tools/render/demo.ts [score.json]`.
 - `render.ts` — Playwright batch renderer (drives the harness by URL; crops the live sheet → PNG +
   label + per-piece manifest shards + contact sheet; chunked + resumable). Since `strips_v3`:
   carry (`measure`) mode is dominant, conventional signatures come from `data/makam_signatures.json`
@@ -145,7 +144,7 @@ exists in SheetView but is no longer rendered into the corpus. 3× device scale 
   either rule, re-run it, and check the report's mismatch deltas rather than only the pass count.
 - `labels-cli.ts` — the Rung-3 emitter's TS half: serves, for a real page's decoded measure ranges,
   the carry-mode label of each range (`mode: "measure"` bodies joined by `|`) so a name-matched
-  SymbTr score becomes ground truth for real strips (`scripts/rung3/emit_strip_labels.py`).
+  SymbTr score becomes ground truth for real strips (`ml/labels/emit_strip_labels.py`).
 - `repeats.ts` — `detectRepeats` (fold detection of flattened duplicate runs) + `injectRepeats`
   (seeded random spans for token coverage) + `repeatMarksAt` (per-measure drawn marks).
 - `navmarks.ts` — seeded navigation-mark injection (segno / coda / D.C. / Son; 4–6 marks on ~70%
@@ -182,7 +181,7 @@ domain costs no new labelling. It needs `brew install lilypond` and runs trainin
   this passes. Run: `npx --yes tsx tools/render/verify-labels-ly.ts --strips data/synthetic/<set>`
 
 Result of the pilot — 312/312 gate pass, and a **null** domain-gap read against a matched VexFlow
-control: [../../docs/METRICS-ENGRAVER.md](../../docs/METRICS-ENGRAVER.md).
+control: [../../docs/METRICS-INPUT.md](../../docs/METRICS-INPUT.md#metrics--the-second-engraver-round-3-lever-4).
 (Browser-side counterparts live in `apps/web/src/`: `stripExport.ts` builds crop rects + labels
 from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 
@@ -197,13 +196,13 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 - [x] **Rung-2 re-render DONE (2026-07-05):** `data/synthetic/strips_v2/` — 18,624 strips from the
       150 selected pieces (`data/pieces.json`), with repeat-sign tokens, multi-measure coverage,
       transposes, distractor text, and the büyük respell; coverage audit PASS
-      (`src/vision/audit_coverage.py`). Supersedes the 2026-07-02 `data/synthetic/strips/` set.
+      (`ml/omr/audit_coverage.py`). Supersedes the 2026-07-02 `data/synthetic/strips/` set.
 - [x] **strips_v2_1 re-render (2026-07-06):** 18,627 strips — adds the 4 navigation-mark tokens
       (`navmarks.ts`, all audit floors cleared) and the centered-rest engraving fix (`alignRests`
       off in SheetView); audit PASS. **Supersedes v2 for training** (v2 stays on disk). This is the
       set Rung 2 trained on (PASS 2026-07-07 — `docs/METRICS.md`).
 - [x] OpenCV augmentation — deliberately NOT baked into the rendered files; applied on-the-fly in
-      the Rung-2 training loader (`src/vision/augment.py`, screenshot-dominant two-profile mix).
+      the Rung-2 training loader (`ml/omr/augment.py`, screenshot-dominant two-profile mix).
 - [ ] Clef on mid-row every-note strips (only row-start crops currently include the clef).
 - [x] Repeat-sign tokens emitted (2026-07-02): `detectRepeats` (`repeats.ts`) finds the flattened
       duplicate runs (detection only — the doc/layout/playback are untouched); the harness Repeats
@@ -229,7 +228,7 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
 - [x] **Real-print sharp weight — `--thin-sharps` (2026-07-26), OFF by default.** Bravura draws the
       AEU sharp bars too thick and packs küçük's three bars too close, so after the encoder's shrink
       they fuse into a block that IS a 2-bar koma — that, not resolution and not teaching volume, was
-      the model's microtonal-sharp weakness. `drawThinSharps` (SheetView) redraws all four sharps as
+      the model's microtonal-sharp weakness. `drawThinSharps` (score/drawMarks.ts) redraws all four sharps as
       SVG at real-print bar weight — all four, so bar COUNT stays the only difference; flats
       untouched. Off by default so an A/B against `strips_v3` stays possible.
       Diagnosis: `docs/rung3/round2.md`; the measured widths: `docs/METRICS.md`.
@@ -237,19 +236,19 @@ from SheetView's layout; `textNoise.ts` draws the seeded distractor text.)
       no articulation token and the renderer drew no staccato, so 0 of 40,826 strips carried one and
       **every dot the model had ever seen meant *longer***: it reads a printed staccato as an
       augmentation dot. Measured with a paired control — **72.7%** of marked strips get a dot the gold
-      does not have, against **0.0%** unmarked. `drawStaccatoDot` (SheetView) draws it as raw SVG on
+      does not have, against **0.0%** unmarked. `drawStaccatoDot` (score/drawMarks.ts) draws it as raw SVG on
       the notehead side, and the draw deliberately seeks out **already-dotted notes**, because a
       notehead carrying both marks is the only example that isolates position. ⚠ `staccatoseed` is
       **not** a manifest field (like `legacyTuplet`), so the two arms' manifests stay byte-identical
       and diffable. ⚠ `STACCATO_RATE` is chosen, not measured. Floors and the account:
-      `docs/archive/rounds/levers.md` Lever 6.
+      `docs/archive/rounds.md` Lever 6.
 - [x] **A THIRD tuplet mark — `--concave-tuplet` (2026-08-19), OFF by default.** A **continuous** arc
       with the italic "3" set **inside its concavity**, between the curve and the noteheads, on a
       per-piece coin (`TUPLET_MARK_CONCAVE.share`). It exists because the owner produced two real
       scanned editions drawing it that way, refuting this project's own *"not one continuous arc
       with a floating digit exists in the real pools"* — a 16/16 probe over two pools that, it turns
       out, contain **no strip in this style at all**. Measured before drawing (n=5 marks, one page):
-      `docs/METRICS-TUPLETS.md`. The load-bearing property is that **digit and arc never touch**,
+      `docs/METRICS-DIAGNOSTICS.md`. The load-bearing property is that **digit and arc never touch**,
       unlike our own legacy mark, which welded them into one component and so read as a phrase slur.
       ⚠ **No trained arm may carry it** — it changes a share of every piece, and
       `make_round3_colab_zip.sh` refuses an arm whose `render_config.json` has it on. It belongs to

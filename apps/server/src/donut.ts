@@ -2,7 +2,7 @@
  * DonutImageProcessor's geometry, ported to plain TypeScript for the server's page path.
  *
  * ⚠ This IS a second resampler, which `apps/web/src/omr/pixels.ts` explains the server was built to
- * avoid. It exists because the native app (docs/mobile/plan.md) sends whole pages, and the server
+ * avoid. It exists because the native app (docs/mobile/README.md) sends whole pages, and the server
  * then owns the crop → 409×583 step that the browser's canvas does for `/decode`. It is held to a
  * stricter bar than the canvas ever was: the canvas draw is "not PIL BILINEAR" (a measured gap), and
  * this file is a transliteration of what training actually ran —
@@ -11,7 +11,7 @@
  *   thumbnail (BICUBIC — see step 3) → pad
  *   Pillow `Image.resize` (12.x) + `libImaging/Resample.c` + `libImaging/Reduce.c`
  *
- * — so its parity target is BIT-IDENTICAL to Python, checked by `tools/vision/parity/donut-parity.ts`.
+ * — so its parity target is BIT-IDENTICAL to Python, checked by `tools/checks/parity/donut-parity.ts`.
  * Do not "simplify" any rounding below; each one is a C cast or a Python `int()`.
  *
  * Grayscale in, grayscale out: training opened every strip with `.convert("RGB")`, so the three

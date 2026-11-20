@@ -1,5 +1,5 @@
 /**
- * Build the native app's score view into ONE self-contained HTML string (M2, docs/mobile/plan.md).
+ * Build the native app's score view into ONE self-contained HTML string (M2, docs/mobile/README.md).
  *
  *   npm run -w @turkish-omr/web build:score-view
  *

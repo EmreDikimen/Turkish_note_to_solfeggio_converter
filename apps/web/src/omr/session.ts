@@ -84,7 +84,7 @@ export function getMeta(): Promise<ModelMeta> {
  *
  * ⚠ Cache Storage is best-effort and treated as such: it is absent in a non-secure context, and iOS
  * evicts it for non-installed sites after roughly a week (the phone problem, parked with phones —
- * docs/app/deploy.md). A miss costs a re-download, never a failure.
+ * docs/app/server.md). A miss costs a re-download, never a failure.
  */
 async function graphBytes(url: string, onProgress?: (msg: string) => void): Promise<Uint8Array> {
   let cache: Cache | null = null;

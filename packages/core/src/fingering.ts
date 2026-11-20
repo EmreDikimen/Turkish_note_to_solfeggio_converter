@@ -7,7 +7,7 @@
  *
  * It accepts *any* frequency, so all 53 commas land exactly. That is the whole reason this
  * feature exists — a twelve-tone app cannot draw a koma position at all, because it only knows
- * twelve frets. See docs/features/fingerboard.md.
+ * twelve frets. See docs/features/instruments.md.
  *
  * How it's organized:
  *   * `VIOLIN_TUNINGS` — the open strings, as DATA. Swapping in a Turkish scordatura is a row
@@ -18,7 +18,7 @@
  *
  * This is pure data + maths, so it lives in core and ports to mobile unchanged — the same
  * reasoning that put `usul.ts` here. Nothing about pixels, artwork or the DOM belongs in this
- * file; the image calibration lives in `apps/web/src/ui/fingerboardGeometry.ts`.
+ * file; the image calibration lives in `apps/web/src/instruments/fingerboardGeometry.ts`.
  */
 
 import { koma53ToFreq } from "./tuning";
@@ -36,7 +36,7 @@ export interface OpenString {
    * Kept beside `openHz` so the derivation is checkable rather than a magic number.
    */
   concertKoma: number;
-  /** `koma53ToFreq(concertKoma)`, written out. Pinned by `tools/core/fingering-test.ts`. */
+  /** `koma53ToFreq(concertKoma)`, written out. Pinned by `tools/tests/fingering-test.ts`. */
   openHz: number;
 }
 
@@ -201,7 +201,7 @@ export function choiceOfString(s: OpenString): TuningChoice | null {
  *
  * ⚠ IT RETURNS THE SHIPPED `DEFAULT_VIOLIN_TUNING` OBJECT, id `"standard"`, WHENEVER THE FOUR
  * PITCHES ARE BACK WHERE THEY STARTED. `#fingerboard[data-tuning]` is read by
- * `tools/browser/editor-smoke.ts`, and a tuning that says `"custom"` while sounding standard would
+ * `tools/checks/editor-smoke.ts`, and a tuning that says `"custom"` while sounding standard would
  * be a lie in the DOM as well as a failed check. Any other set of pitches is `"custom"`.
  *
  * ⚠ The string's `label` moves with its pitch. A string still labelled "Sol" while sounding Fa is
@@ -259,7 +259,7 @@ export function positionOnString(openHz: number, noteHz: number): number | null 
 /**
  * How far up the string the fingerboard reaches, past which nothing can be stopped.
  *
- * Measured off the shipped photo (docs/features/fingerboard.md): the ebony ends 0.838 of the way from
+ * Measured off the shipped photo (docs/features/instruments.md): the ebony ends 0.838 of the way from
  * nut to bridge, which is about two and a half octaves above the open string. It is a property of
  * a violin rather than of the picture, so it lives here with the rest of the physics.
  */

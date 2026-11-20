@@ -25,7 +25,7 @@
  * yet. The app applies the deltas AFTER any user transpose, keyed by event index, so the user's
  * transpose control cannot desync the rules from the spelling they were read from.
  *
- * The numbers, their sources, and what was deliberately left out: docs/app/makam.md.
+ * The numbers, their sources, and what was deliberately left out: docs/app/README.md.
  */
 
 import type { NoteModelDocument } from "./types";
@@ -36,9 +36,9 @@ import { MAKAM_SIGNATURES } from "./makamSignatures";
 /**
  * Signed comma alteration → the label token that spells it in a signature.
  *
- * Deliberate small twin of `AEU_TOKEN` in `tools/render/lilypond.ts`: `packages/core` must not
+ * Deliberate small twin of `AEU_TOKEN` in `packages/core/src/labels/lilypond.ts`: `packages/core` must not
  * import from `tools/`, and the label path is load-bearing enough that it does not move here.
- * `tools/render/stitch-test.ts` round-trips every signature in `MAKAM_SIGNATURES` through both
+ * `tools/tests/stitch-test.ts` round-trips every signature in `MAKAM_SIGNATURES` through both
  * vocabularies, so a drift between the two copies fails a test instead of silently breaking
  * detection.
  */
@@ -148,7 +148,7 @@ export interface IntonationRule {
   /** Signed commas added to the SOUNDING koma. Fractional on purpose — audio is float. */
   deltaCommas: number;
   /** Why, in plain Turkish — this is shown in the makam prompt. The table is its own
-   *  documentation; the English rationale and the sources live in docs/app/makam.md. */
+   *  documentation; the English rationale and the sources live in docs/app/README.md. */
   why: string;
 }
 

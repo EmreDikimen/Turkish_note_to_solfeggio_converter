@@ -1,5 +1,5 @@
 /**
- * Greedy ONNX decode in the browser — the JS port of `src/vision/onnx_parity.py`.
+ * Greedy ONNX decode in the browser — the JS port of `ml/omr/onnx_parity.py`.
  *
  * encoder once → first-step decoder (which also builds the encoder cross-attention K/V cache) →
  * decoder-with-past loop, greedy argmax, stop on `</s>`. Comparisons against Python happen in
@@ -54,7 +54,7 @@ export function argmaxLast(logits: Tensor): { id: number; logprob: number } {
 
 /**
  * The encoder pass. `pixelValues` may carry a BATCH of strips ([n, 3, h, w]) — both graphs were
- * exported with a dynamic `batch_size` axis (verified 2026-08-05, docs/app/deploy.md), so batching
+ * exported with a dynamic `batch_size` axis (verified 2026-08-05, docs/app/server.md), so batching
  * needs no re-export. The browser passes n = 1; the server passes a whole page.
  */
 export async function runEncoder(
@@ -141,7 +141,7 @@ export function decodeTokens(ids: number[], id2token: Record<string, string>): s
  * so raw tokens are unreadable; our `\…` and `|` added tokens are standalone words with no
  * marker. The added token `3` is NOT standalone — it exists only to spell 32nd durations
  * (`e''32` = … `3` `2</w>`), so it continues the current word like any un-marked subword.
- * Mirrors the label strings the serializer emits (tools/render/lilypond.ts).
+ * Mirrors the label strings the serializer emits (packages/core/src/labels/lilypond.ts).
  */
 export function detokenize(ids: number[], id2token: Record<string, string>): string {
   let out = "";

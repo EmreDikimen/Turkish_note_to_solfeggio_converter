@@ -12,7 +12,7 @@
  * the browser's own filter. (And only the RESIZE step is bilinear: `thumbnail` is called without
  * `resample` and runs BICUBIC — found 2026-10-11 by `apps/server/src/donut.ts`'s byte-exact port.) That is why this path is not expected to agree with Python on 100% of
  * strips, and why the slicer parity harness (MVP W3) measures a *ceiling* from this arm before the
- * slicer is judged against it. See docs/archive/phases/mvp.md.
+ * slicer is judged against it. See docs/archive/phases.md.
  *
  * The final rescale lives in `./pixels` — DOM-free, because the decode server runs that step and
  * none of this one. That split is the W9 seam and the reasoning is written there.

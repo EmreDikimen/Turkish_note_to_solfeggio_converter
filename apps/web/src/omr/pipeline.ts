@@ -1,7 +1,7 @@
 /**
  * strips → decode → stitch → note model. The product path, minus the slicer.
  *
- * This is stages 7–8 of docs/PIPELINE.md running in the browser: each strip is preprocessed and
+ * This is stages 7–8 of docs/CODE_TOUR.md running in the browser: each strip is preprocessed and
  * decoded independently, then the per-strip token streams are stitched back into one editable
  * score. The slicer (stages 2–6) arrives at W6 and plugs in above `decodeStrips` without changing
  * anything here — which is the point of taking W2 before the port.
@@ -10,7 +10,7 @@
  * measure-scoped carry), and it is what `stitch-cli.ts` passes for real decodes. Using the
  * synthetic default here would silently mis-resolve every accidental on a real page.
  */
-import { stitchStrips, type DecodedStrip, type StitchResult } from "../../../../tools/render/stitch";
+import { stitchStrips, type DecodedStrip, type StitchResult } from "@turkish-omr/core/labels/stitch";
 import { decodeStrip } from "./decode";
 import { preprocessCanvas } from "./preprocess";
 import type { ModelMeta, Sessions, StripDecode } from "./types";

@@ -6,7 +6,7 @@
  * an unlayered rule beats any layered one whatever its specificity, so no Tailwind utility on a
  * component (an `overflow-hidden` on the card, say) can ever silently undo one of these. Only the
  * declarations that must never move live here; everything else about these elements is styled in
- * the layered sheets. `tools/browser/css-contract-test.ts` checks this file.
+ * the layered sheets. `tools/tests/css-contract-test.ts` checks this file.
  */
 
 /* ── The score card ─────────────────────────────────────────────────────── */

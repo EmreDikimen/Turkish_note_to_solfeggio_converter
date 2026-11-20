@@ -1,11 +1,11 @@
 /**
  * What a "visit" is, in one place — shared by the two Netlify Functions.
  *
- * The counter exists because docs/METRICS-USAGE.md had to answer "is anyone using it?" from Cloud
+ * The counter exists because docs/METRICS.md had to answer "is anyone using it?" from Cloud
  * Run's raw request log, and that log cannot do the job: it counts robots as people and every
  * sharpening of its numbers came from the owner supplying what the log could not. This replaces the
  * guessing with a counter built for the question — and it stays anonymous, because the owner ruled
- * on 2026-09-05 that names are not wanted (docs/features/visit-stats.md).
+ * on 2026-09-05 that names are not wanted (docs/features/README.md).
  *
  * ⭐ **SINCE 2026-10-14 THERE IS NO IDENTIFIER AND NO LOCATION AT ALL** (owner: *"konum ve cihaz
  * kimliğinin tutulmasına çok gerek yok"*). The store used to hold one row per DEVICE per day, keyed by
@@ -121,14 +121,14 @@ const BROWSERS: ReadonlyArray<readonly [string, RegExp]> = [
  * Read a user-agent string into the four coarse facts worth keeping.
  *
  * ⚠ **The browser VERSION is not decoration — it is the only evidence this data holds that two
- * visits came from two machines.** docs/METRICS-USAGE.md established "at least one real stranger"
+ * visits came from two machines.** docs/METRICS.md established "at least one real stranger"
  * exactly this way: the owner's phone was on Chrome/150 while an upload came from Chrome/151, and
  * browsers never downgrade. Android's UA is frozen to `Android 10; K`, so nothing else in the
  * string discriminates. Keep the number.
  *
  * ⚠ **An `X11; Linux x86_64` UA does NOT mean a Linux machine.** It is what Chrome for Android
  * sends under "Request desktop site", and mistaking it already cost one wrong entry in
- * METRICS-USAGE.md. So `device` reads DESKTOP for such a visit and it may well be a phone; the
+ * METRICS.md. So `device` reads DESKTOP for such a visit and it may well be a phone; the
  * dashboard labels the column "tarayıcının söylediği" rather than pretending otherwise.
  *
  * ⚠ **Bot detection is one-way.** Everything it catches really is automated; plenty of automation

@@ -2,10 +2,10 @@
 
 purpose: the see-it-yourself checks that need EARS or EYES, for the audio, instrument and app features
 audience: the owner, verifying a feature before it ships
-updated: 2026-09-05
+updated: 2026-11-12
 
 Split out of [../MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-16, when that file hit its
-400-line cap. The split is by genre, per [../MAINTAINING.md](MAINTAINING.md): everything here is
+400-line cap. The split is by genre, per [INDEX.md § Maintaining these docs](INDEX.md#maintaining-these-docs): everything here is
 a judgement a person makes, and nothing here can be automated — that is what these checks are for.
 The pipeline and model checks (9–14, 22) stayed where they were.
 
@@ -34,7 +34,7 @@ four are the ones to listen to first, because they are ours rather than quoted.
    recordings (VCSL); the bendir is deeper and woodier. ⚠ Also worth judging here: **is each kit's
    düm/tek/ka assignment right?** The darbuka's three were picked by *measurement*, not by ear —
    VCSL numbers its five articulations and never says which is which — so this is the first time a
-   person hears the result. Detail: [features/audio-sources.md](features/audio-sources.md).
+   person hears the result. Detail: [THIRD-PARTY.md](THIRD-PARTY.md#audio-sources--the-verified-files-and-what-each-one-still-needs).
 2b. **Drag `Vuruş sesi` while it is playing.** The strokes must get louder and quieter **smoothly,
    without the music restarting or clicking** — the slider rides a gain node rather than
    re-scheduling. ⚠ Audition on **the built-in speaker**, not only headphones: a MacBook speaker
@@ -84,7 +84,7 @@ instrument.
 
 ⚠ **Hear it BEFORE uploading.** `npm run serve:voices` + `npm run dev:voices:local` runs the app
 against `data/audio_voices/` on this machine — a plain static server will not do, because dev sends
-COEP `require-corp`. Upload (`hf upload`, see [features/audio-sources.md](features/audio-sources.md))
+COEP `require-corp`. Upload (`hf upload`, see [THIRD-PARTY.md](THIRD-PARTY.md#audio-sources--the-verified-files-and-what-each-one-still-needs))
 once it sounds right. Then:
 
 1. `VITE_VOICES_URL=<base> npm run dev:web` → open a score (`?score=/sample.json`). Set **Çalgı
@@ -103,7 +103,7 @@ once it sounds right. Then:
    are slurred by design** — they start mid-sustain, so no tonguing and no re-bowing. Two dials, both
    free to re-tune because the trim is a playback window and not a cut: `MAX_ATTACK_SHARE` in
    `webAudioBackend.ts` decides how long a note must be to keep its attack, and `TONE_DROP` in
-   `scripts/prepare_voices.py` decides where the breath is judged to end. **No re-upload either way.**
+   `ml/prep/prepare_voices.py` decides where the breath is judged to end. **No re-upload either way.**
 4. **Play a piece that goes low, and one that goes high.** The clarinet's layer spans **13 dB**
    between its quietest and loudest file, so its bottom register is the most likely thing to
    disappoint, and one global gain cannot fix a spread. Listen also for notes that sound *thin* or
@@ -131,7 +131,7 @@ once it sounds right. Then:
    sound like one string re-plucked, not two copies layered (that is `damp()`); the **last note of a
    piece** should ring out rather than being chopped when playback ends; and pressing **Stop** should
    still silence everything immediately. ⚠ If a dense passage sounds crowded or pumping, the limiter
-   is engaging and it should not be — the measured headroom is ~6 dB ([features/kanun.md](features/kanun.md)).
+   is engaging and it should not be — the measured headroom is ~6 dB ([features/kanun.md](features/kanun.md#the-kanun--one-take-thirty-six-notes)).
 8. ⚠ If it sounds like the beep, **the samples did not load** — look at the picker's state before
    reporting the sound as wrong.
 9. **Check a makam that bends its perdes** (uşşak, sabâ, hüzzam) against `yok (yazıldığı gibi)`.
@@ -158,7 +158,7 @@ the neck. **Is the dot in the right place** is still owed — the part no automa
 
 Goal: the first check here that needs your **eyes** rather than your ears, and the only thing
 standing between F3 and a claim nobody has verified. Everything automatable already passes —
-`tools/core/fingering-test.ts` pins the formula and the string-choice rule, `smoke:editor` proves the
+`tools/tests/fingering-test.ts` pins the formula and the string-choice rule, `smoke:editor` proves the
 marker lands on a string and moves, and the calibration was checked against a real instrument's
 dimensions. **None of that can tell you the dot is in the right place**, because every one of those
 checks reads the same geometry the drawing does.
@@ -217,13 +217,13 @@ it with no code — the calibration is data. A wrong dot in **first** position W
 **Why this one needs a person.** Everything measurable already passes: the course table is
 re-derived from its own perde names, the plan places **1,825 of 1,825 notes with 0 respellings**,
 and 20 browser checks hold the state machine's invariant across a whole playback
-([features/kanun-view.md](features/kanun-view.md)). None of that can say whether the picture reads
+([features/kanun.md](features/kanun.md#f3--the-kanun-view)). None of that can say whether the picture reads
 as a kanun, or whether the mandal plan is one a player would actually set. Only a musician can.
 
 **How.** `npm run dev:web`, open `?score=/beyati-delisin.json`, then the **Enstrüman üzerinde** tab, and pick **Kanun** from the dropdown. ⚠ That also switches the sound to the kanun; check that it does. ⚠ Since 2026-09-04 the tab arrives on **Keman** and has *already* started that voice, so what you are watching here is a second switch, from violin to kanun.
 
 1. **Before pressing anything, read the line above the instrument.** It says which mandals to set
-   before playing — the makam's setting. On `beyati-delisin` it says **Segâh −2**. Judge that as a
+   before playing, in **mandals from the natural**. On `beyati-delisin` it says **Segâh −3**. Judge that as a
    kanuncu: *is that the mandal you would set for this piece?* ⚠ Expect it to disagree with the
    staff by a koma on some notes, and that is **not a bug** — the engraver prints the nearest
    standard AEU sign while the file stores the exact comma, so a note drawn with a koma-bemol can be
@@ -239,7 +239,7 @@ as a kanun, or whether the mandal plan is one a player would actually set. Only 
    +3). Two things only an eye can judge: **did you catch it**, and **was 700 ms long enough**? If
    the flash is missable, say so — the rejected alternative (everything away from the opening
    setting stays red) is written down and can be brought back.
-4. **Tick "Mandallara yaklaş".** This is the close-up, and it is the answer to 312 levers being four
+4. **Tick "Mandallara yaklaş".** This is the close-up, and it is the answer to 212 levers being four
    pixels wide. The frame is fitted to the piece, so **no row should be cut through the middle** — if
    one is, that is a real finding.
 5. **On a phone.** ⚠ Stated so it is not reported as a discovery: **the full view is a texture on a
@@ -379,7 +379,7 @@ is whether the bar is **big enough to read while you are looking at the instrume
 ## Check 31 — does the app give you your page back? (2026-09-05)
 
 Goal: a decoded page and its edits are kept in your own browser and offered back after a refresh
-([features/recent-pages.md](features/recent-pages.md)). `smoke:app` proves the notes come back; it
+([features/README.md](features/README.md#f5--the-pages-this-browser-has-already-read)). `smoke:app` proves the notes come back; it
 cannot judge whether the list is **useful to a person**. Read two or three pages first.
 
 1. **It comes back.** Refresh (⌘R): the list must be under the upload box, unfolded, your page on top; click it and the same score returns, edits included.

@@ -35,10 +35,10 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ACCIDENTAL_VALUES, accidentalCp, accidentalLongLabel } from "./accidentals";
-import type { RefusalReason, SignTool } from "../../../../tools/render/structure-edit";
+import type { RefusalReason, SignTool } from "@turkish-omr/core/labels/structure-edit";
 import { TR } from "./strings";
 import { PlayIcon, StopIcon } from "./PlayIcons";
-import { useIsPhone } from "../usePhone";
+import { useIsPhone } from "../lib/usePhone";
 
 /** What a click on a note does while this tool is armed.
  *

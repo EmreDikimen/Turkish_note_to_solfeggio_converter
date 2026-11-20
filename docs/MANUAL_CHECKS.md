@@ -1,8 +1,8 @@
 # Manual checks — see each feature with your own eyes
 
-purpose: see-it-yourself checks: run each feature and look at the result
+purpose: see-it-yourself checks: the app, the editor, and the render/corpus side (the ear-and-eye feature checks are in MANUAL_CHECKS-FEATURES.md)
 audience: anyone verifying a feature by hand rather than by test
-updated: 2026-10-08
+updated: 2026-11-20
 
 How to verify each upgrade **with your own eyes**, step by step. Everything here runs locally.
 Prerequisite for the browser checks: the dev harness running —
@@ -31,7 +31,7 @@ drives it, and how you can reproduce any render exactly):
 ---
 
 > **Checks 1–8 (the synthetic corpus and the renderer)** moved to
-> **[MANUAL_CHECKS-CORPUS.md](MANUAL_CHECKS-CORPUS.md)** on 2026-08-07, at the 400-line cap. What
+> **[MANUAL_CHECKS.md](#manual-checks--the-synthetic-corpus-and-the-renderer)** on 2026-08-07, at the 400-line cap. What
 > follows is the **app** side: the in-browser gate, page upload, the slice inspector, and makam
 > playback.
 
@@ -48,9 +48,9 @@ One-time prep (skip what's already done — after the Rung-2 export these all ex
 .venv-ml/bin/optimum-cli export onnx --model data/checkpoints/rung2-best \
     --task image-to-text-with-past data/checkpoints/rung2-best-onnx
 # 2. quantize to int8 (830 MB fp32 → 221 MB)
-.venv-ml/bin/python src/vision/quantize_onnx.py --onnx-dir data/checkpoints/rung2-best-onnx
+.venv-ml/bin/python ml/omr/quantize_onnx.py --onnx-dir data/checkpoints/rung2-best-onnx
 # 3. stage the gate assets into apps/web/public/models/ (gitignored)
-.venv-ml/bin/python src/vision/make_browser_gate.py --checkpoint data/checkpoints/rung2-best \
+.venv-ml/bin/python ml/omr/make_browser_gate.py --checkpoint data/checkpoints/rung2-best \
     --onnx-dir data/checkpoints/rung2-best-onnx --strips-dir data/synthetic/strips_v2_1 --n 5
 ```
 
@@ -97,7 +97,7 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
 
 1. Decode a page (slicer + int8 ONNX; writes strips + `<page>_decode.json`):
    ```
-   .venv-ml/bin/python src/vision/decode_page.py data/real/images/hicaz/ben_bir_garip_kusum_p1.png \
+   .venv-ml/bin/python ml/omr/decode_page.py data/real/images/hicaz/ben_bir_garip_kusum_p1.png \
        --checkpoint data/checkpoints/rung22-stemfix-best \
        --onnx-dir data/checkpoints/rung22-stemfix-best-onnx --suffix _int8
    ```
@@ -114,10 +114,10 @@ Goal: see a REAL page travel the whole pipeline — slice → decode → stitch 
    engraved, playable, and **editable** (✎ Edit → click a measure). Compare against the source
    PNG side by side and fix a wrong note. ⚠ **`⬇ Save JSON` was removed on 2026-08-30**: to read the
    corrected document, open the console and type `__omrDoc`. The labelling loop's real path is
-   `scripts/rung3/review_ui.py` (`docs/PIPELINE.md` §3.2).
+   `ml/labels/review_ui.py` (`docs/CODE_TOUR.md` §3.2).
 4. Stitcher regression suite (structure unit tests + label round-trip on all bundled scores):
    ```
-   npx --yes tsx tools/render/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
+   npx --yes tsx tools/tests/stitch-test.ts     # expect: ALL PASS, 194/194 round-trip
    ```
 
 ## Check 13 — see how a page was sliced (the slice inspector, 2026-08-05)
@@ -213,7 +213,7 @@ right and whose music is missing from the score (a stitcher warning, step 5).
 ⚠ It shows the **last read only**, and loading a JSON score clears it — the tokens would otherwise
 describe a different piece than the one on the screen.
 
-> **Checks 15–21 (the editor)** moved to **[MANUAL_CHECKS-EDITOR.md](MANUAL_CHECKS-EDITOR.md)** on
+> **Checks 15–21 (the editor)** moved to **[MANUAL_CHECKS.md](#manual-checks--the-score-editor)** on
 > 2026-08-09, again at the 400-line cap: editing a note on the sheet, the armed palette, Çal from the
 > bar you just fixed, inserting notes, rests and the numbered koma signs, triplets, and bars that do
 > not add up.
@@ -258,7 +258,7 @@ The point of this one is to see the two halves agree: the page is short, the mus
 
 Goal: the only check in this file that needs your ears. A makam is not a label — picking one bends
 the sounding pitches to how the makam is actually performed, while the staff stays exactly as
-drawn. Table and sources: [app/makam.md](app/makam.md).
+drawn. Table and sources: [app/README.md](app/README.md#makam-selection--the-performed-intonation).
 
 1. `npm run dev:web`, then open `http://localhost:5173/?score=/gamzedeyim-deva.json` — the app
    ships no score, so a bundled file is loaded by URL ([THIRD-PARTY.md](THIRD-PARTY.md)). **Makam**
@@ -309,7 +309,7 @@ a playable score out. This is Check 10's journey with every stage running in the
    in ~19 s. Then switch to **Sheet**, press **▶ Play**, and edit a measure (✎ Edit → click one).
 5. The same thing, headless and asserted, including a strip-count check against Python:
    ```
-   .venv-ml/bin/python scripts/slicer_ref.py --pages 8 --out ref.json
+   .venv-ml/bin/python ml/prep/slicer_ref.py --pages 8 --out ref.json
    npm run smoke:page -- --ref ref.json
    ```
 
@@ -340,3 +340,461 @@ after the model's input shrink the three bars fuse into a block that IS a 2-bar 
 [MANUAL_CHECKS-FEATURES.md](MANUAL_CHECKS-FEATURES.md).** This file hit its 400-line cap, and the
 split is by genre rather than size: those three are judgements only a person can make, on the
 feature track, while everything left here checks the pipeline and the model.
+
+**Merged into this file on 2026-11-20:**
+
+- [Manual checks — the score editor](#manual-checks--the-score-editor) — was `docs/MANUAL_CHECKS-EDITOR.md`
+- [Manual checks — the synthetic corpus and the renderer](#manual-checks--the-synthetic-corpus-and-the-renderer) — was `docs/MANUAL_CHECKS-CORPUS.md`
+
+
+## Manual checks — the score editor
+
+*Was `docs/MANUAL_CHECKS-EDITOR.md` (last updated 2026-08-09).*
+
+> Split out of [MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-09 at the 400-line cap — the second
+> such split, after the corpus half went to [MANUAL_CHECKS.md](#manual-checks--the-synthetic-corpus-and-the-renderer) on
+> 2026-08-07. This half is **checks 15–21: the editor**. Everything else — the in-browser gate, page
+> upload, the slice inspector, the raw decode inspector, makam playback — stayed in
+> [MANUAL_CHECKS.md](MANUAL_CHECKS.md).
+>
+> Prerequisite for all of them: `npm run dev:web` → <http://localhost:5173>. ⚠ The app bundles no
+> score since 2026-08-08, so these open with `?score=…` against the dev server (docs/THIRD-PARTY.md).
+> Scripted equivalent of most of this file: `npm run smoke:editor`.
+
+### Check 15 — editing a note on the sheet (editor slice 1, 2026-08-07)
+
+Goal: see the direct editor do what the modal did, without the modal. Scripted version:
+`npm run smoke:editor` — this is the version you do with your eyes.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; stay on **Nota**.
+2. Press **✎ Düzenle**. **Geri al** / **Yinele** appear beside it, both greyed out.
+3. **Move the pointer across the sheet.** Notes outline in teal as you pass them; **bars do not
+   highlight at all** — editing is whole-score, so there is no measure hover.
+4. **Click a note.** An amber ring appears around it and an **✕** above its right shoulder.
+   ⚠ **Changed 2026-08-08:** clicking empty space used to open that bar's window. The modal is
+   deleted — with nothing armed an empty click now just clears the selection, and with a note value
+   armed it inserts a note (check 18).
+5. **Drag the note up or down.** The notehead follows your pointer, one line/space at a time, and
+   **the page itself must not scroll or select text**. Pick a note with an accidental: the
+   accidental moves *with* it — a Si♭ dragged up becomes a Do♭, not a plain Do. Let go anywhere;
+   the drag keeps working even though the note has slid out from under the pointer.
+6. **Press the ✕.** The note disappears; its bar is now one note short and **the bar lines do not
+   move**. That is the intended behaviour — an edit absorbs into its bar.
+7. **Geri al** (or Ctrl/⌘+Z) puts it back; pressing it again undoes the pitch change. **One whole
+   drag is one undo**, not one per staff step. **Yinele** replays them.
+8. ⚠ **Grace notes (çarpma) are not selectable** — they are drawn attached to the note after them
+   and have no click target of their own. Deleting their host takes them with it.
+
+### Check 16 — the armed palette (editor step 4, 2026-08-08)
+
+Goal: see Mus2's model working — arm a tool, click a note, the note changes. Scripted version:
+`npm run smoke:editor`.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
+2. A **palette appears to the left of the sheet**: a **SÜRE** row of six note glyphs and a
+   **DEĞİŞTİRME** row of the AEU signs. Every glyph is whole — no stem or flag cut off by its
+   button. The score itself must not move, resize or re-flow when it appears, and the page must not
+   gain a sideways scrollbar.
+   ⚠ **Do this on a window at least ~1250 px wide.** The sheet is engraved at a fixed 1020 px and
+   the palette costs 164 px, so on a narrower window the last measures of each system scroll off the
+   paper — expected, not a bug (see [app/editor.md](app/editor.md), trap 3).
+3. **Click the ♪ (1/8).** It takes the accent, the hint under the palette changes, and the pointer
+   over a note becomes a *copy* cursor rather than a grab hand.
+4. **Click a note that is longer than an eighth.** It re-engraves as an eighth **in place** — its
+   bar is now short and **the bar lines do not move**. Nothing else in the bar changes.
+   ⚠ With a tool armed a click must **not** drag the pitch: the notehead stays on its line.
+5. **Geri al** once puts the whole thing back — one click is one undo entry.
+6. **Press Esc.** The armed tool clears (`↖ Seçim` lights up instead) and dragging a note moves its
+   pitch again, exactly as in check 15.
+7. **Arm a koma bemol and click a note with no accidental.** The sign appears before the notehead,
+   the note stays on its line, and the pitch you hear on **Çal** drops by one koma. Clicking it a
+   second time with the same sign armed does nothing at all — including nothing to the undo stack.
+8. ⚠ Leaving edit mode disarms the palette; re-entering starts on **Seçim**.
+
+### Check 17 — Çal plays from the bar you just fixed (editor step 5, 2026-08-08)
+
+Goal: hear the correction loop. Scripted version: `npm run smoke:editor` (which measures the
+playhead, but cannot listen). This one is about the **ears**, so do it with sound on.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
+2. The palette's top group is **DİNLE**, with **▶ Çal** and a greyed **■ Dur**.
+3. **Press Çal before editing anything.** It plays from the **top** of the piece — the playhead
+   starts on the first system. **Dur** silences it.
+4. **Scroll to a bar halfway down**, arm a note value, and click a note there.
+5. **Press Çal.** It must start **at that bar**, not at the top — the playhead appears down the page
+   where you just worked, and what you hear is that bar. This is the whole feature.
+6. **Press Çal again while it is still playing.** It restarts from the same bar. (Pause and resume
+   are unchanged and still live in the transport bar above.)
+7. **Press Geri al.** The edit reverses, but Çal still starts from that same bar — deliberate: the
+   bar you were working in is still the bar you want to hear.
+8. ⚠ **An edit stops playback**, as it always has. That is expected in this step: stop, fix, press
+   Çal. Resume-in-place is written up as not built ([app/editor.md](app/editor.md)).
+
+### Check 18 — put a note where there wasn't one (editor step 6, 2026-08-08)
+
+Goal: see the ghost land on the pitch it promised, and see the bar absorb it. Scripted version:
+`npm run smoke:editor`, which checks the geometry but not how it *feels* to aim.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
+2. Arm a note value (say the quarter note). Move the pointer over blank staff between two notes: a
+   **teal oval** follows it, jumping a step at a time — it is snapped to staff positions, not to the
+   pixel, which is what makes aiming possible at all.
+3. Move up and down slowly. The oval sits **on lines and in spaces**, never between, and it keeps
+   going a few steps past the staff each way before it stops.
+4. **Click.** A real note appears exactly where the oval was, with the value you armed, and it is
+   **selected** (its ✕ is showing) so you can immediately delete it or give it an accidental.
+5. **The bar line to its right has not moved** — the bar simply holds one note more. That is the
+   absorb rule; the warning for a bar that no longer adds up is step 8.
+6. Under a key signature, insert on a letter the signature alters: the note is born with that
+   alteration and the engraver prints **no accidental** on it. It looks like where you clicked.
+7. Now arm an **accidental** instead and click blank staff: **nothing happens** (it has nothing to
+   attach to), and no window opens. Press **Esc** and click blank staff again: the selection clears
+   and **nothing else happens**. ⚠ Until 2026-08-08 that opened the per-measure window; it is
+   deleted, and with it the only way to add a **rest**.
+8. **Geri al** removes the inserted note in one press.
+
+### Check 21 — rests, and the numbered koma signs (2026-08-08)
+
+Goal: the two things the deleted measure modal used to own, now in the palette.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
+2. The palette now has an **ES** row under **SÜRE**: the same six values, drawn as rests. Arm the
+   quarter rest and move over blank staff — the ghost sits **in the middle of the staff and stays
+   there** as you move up and down. A rest has no pitch, and the preview must not pretend otherwise.
+3. **Click.** A rest appears. The bar absorbs it (a **+** badge appears at the bar's corner) and the
+   bar line does not move.
+4. **Geri al.** Now, with the rest tool still armed, click an existing **note**: it becomes a rest.
+   Its syllable disappears with it — nothing sings on a rest.
+5. Arm a **note value** and click that rest at some height on the staff: it becomes a note **at the
+   height you clicked**. That is the fix for a rest the model read where a note belongs.
+6. The **DEĞİŞTİRME** row now has thirteen signs, not seven: the four AEU flats and sharps, natural,
+   and the numbered **2-comma** and **3-comma** ones. Hover them — each tooltip names the comma
+   count.
+7. Apply **2 koma diyezi** to a plain note. ⚠ Look carefully: the printed sign is the nearest
+   standard AEU sign, because that is what a Turkish edition prints — but the **sound** moves by
+   exactly two commas. Press **Çal** and listen; then **Geri al** and listen again.
+
+### Check 19 — make a triplet, and take it apart (editor step 7, 2026-08-08)
+
+Goal: see the tool refuse what it cannot do, before you click. Scripted version:
+`npm run smoke:editor`.
+
+1. `npm run dev:web` → `http://localhost:5173`. Any sample; **Nota**, then **✎ Düzenle**.
+2. Arm **ÜÇLEME** (the italic 3). Immediately, before you click anything: **most notes go pale**.
+   The ones still crisp are the ones a triplet can *start* at — three equal, plain notes in a row.
+   Try clicking a pale one: nothing happens, and no window opens. That is the refusal, and it is
+   deliberately silent (dim, never an error box).
+3. Click a crisp note. It turns teal, and now **exactly one** other note in the whole score is
+   clickable: the one two positions along. Everything else, including the note between them, is
+   pale — a tuplet cannot skip notes.
+4. Click that end note. A **bracket with a 3** appears over the three, and the notes are drawn as
+   the next value up (three 1/16s become three 1/24s printed as 1/16s under the bracket).
+5. **The bar line has not moved**, and a small **−** badge appears at the bar's top-right: the bar
+   is now shorter than the usul asks for. That is check 20.
+6. Press the palette's **Çal**: playback starts at that bar and the triplet sounds faster than it
+   looked. This is the whole loop — fix, listen.
+7. With ÜÇLEME still armed, click **any one of the three notes**: nothing happens. Since 2026-08-30
+   a triplet is picked up by its **3**, not by its notes — see check 19b. One **Geri al** still
+   undoes the whole triplet in a single press.
+8. ⚠ Try a dotted note or a note already inside a triplet: they stay pale. Three dotted 8ths would
+   draw a bracket that never closes, which is the mark that means *the model misread something*.
+
+### Check 19b — hold a triplet: slide it, and take the bracket off (editor step 7b, 2026-08-30)
+
+Goal: see that the handle MOVES the triplet without ever making it four notes, and that the ✕ keeps
+the notes. Scripted version: `npm run smoke:editor`.
+
+1. Carry on from check 19, with a triplet made and **ÜÇLEME** still armed.
+2. Click the **3** the engraver drew over the group — the sign itself, not the notes. Hovering it
+   shows a dashed teal outline, so you can see it is a target. An orange **frame** appears round all
+   three notes, with a small orange **handle** at each end and a **✕** above the middle.
+   ⚠ Try clicking one of the three **notes** instead: nothing happens. That is deliberate.
+2b. Press **Esc** (or the **↖ Seçim** button) so no tool is armed, and click the **3** again: it is
+   still a target, and still gives you the frame, the handles and the ✕. Now click one of its
+   **notes**: the note gets selected and the tuplet lets go — only ever one thing is selected, so
+   there is never more than one ✕ on the page. ⚠ Arm a note length instead (say 1/4) and click the
+   **3**: nothing happens. A note length applies to a note, and a sign is not one.
+3. Look at the notes either side: the ones a handle can be dragged onto are outlined with a **dashed
+   teal border**. Everything else stays pale. A dashed note is a *landing*, not a button — clicking
+   it does nothing, because the handles do the moving.
+4. **Drag the right-hand handle to the right**, onto the next dashed note. The bracket moves with it:
+   the triplet's **first** note drops out and goes back to its printed value, and the note you
+   reached joins the group. It is still three notes, and the **bar length has not changed** — the −
+   badge from check 20 stays exactly as it was. Drag back to the left and it returns.
+5. ⚠ Keep dragging past the end of the bar, or over a note of a different length: **nothing happens.**
+   A tuplet cannot cross a bar line, and three notes of different lengths cannot make one.
+6. Click the **3** again: the group is let go (the frame and the handles disappear). Click it once
+   more to pick it up, then press **✕**. The bracket disappears, the three notes go back to their printed values, **and all
+   three notes are still there** — ✕ removes the *grouping*, never the music. The bar's badge flips,
+   because the bar is now longer again.
+7. ⚠ On roughly one piece in ten the mark is a square **bracket** instead of a curved arc (the style
+   is fixed per piece). It is clickable in exactly the same way — but no automated check covers that
+   style, because every bundled sample draws the arc, so it is worth a look if you meet one.
+8. ⚠ The handles cannot widen a REAL triplet to four or five notes, and that is on purpose: the printed
+   digit is always a "3" and the label the model reads is always `\tup3`. A wider group would draw
+   and label a rhythm nobody wrote. See [app/editor.md](app/editor.md#the-tuplet-rules).
+
+### Check 19c — the BROKEN marks: a "3" over one or two notes (2026-08-30)
+
+Goal: see the marks the model got wrong, and fix them. This one needs a **decoded page**, because a
+clean SymbTr sample has none. Scripted version: `npm run smoke:editor`.
+
+1. `npm run dev:web` → `http://localhost:5173/?score=/decoded.json`. **Nota**, **✎ Düzenle**, arm
+   **ÜÇLEME**.
+2. Look for the **red** outlines. There are **five** of them on this page, against two orange-on-hover
+   real triplets. A red mark is a "3" the arithmetic could not close — it sits over one or two notes
+   instead of three, which means the model misread something there. They are flagged the moment the
+   tool is armed, not on hover, because finding them is the point.
+3. Click a red one. It is held exactly like a real triplet, and the frame is **red and dashed** so you
+   can still see which kind you have.
+4. Look at the notes beside it. A **green** outline means *"drag a handle here and this becomes a real
+   triplet"*; a dashed teal one is an ordinary landing (it would shrink the mark). Drag the handle onto
+   the green note: the bracket now covers three notes and turns orange — it is a real triplet.
+5. Press **✕** on another red one instead. Its notes go back to their printed values and the mark
+   disappears. **No note is deleted** — count them if you like.
+6. ⚠ **Two of the five have no green note and no landing at all.** Their neighbours are not the right
+   kind of note to complete a triplet, so there is nothing honest to drag to. Use **✕** on those, or
+   fix the neighbour's length first with the note buttons. The page refuses rather than offering a
+   drag that would produce another wrong rhythm.
+
+### Check 20 — bars that do not add up (editor step 8, 2026-08-08)
+
+Goal: see the editor point at a bar that is the wrong length — and, on a decoded page, notice that
+it is also pointing at the model's mistakes.
+
+1. In **✎ Düzenle** on a clean sample: **no badges anywhere.** Leave edit mode: still none (the
+   marks are edit-mode only — a friend should not meet eight warnings on their first look).
+2. Delete a note from a middle bar (click it, press **✕**). A **−** appears at that bar's top-right.
+   Hover it: it tells you the bar's own total and the meter it is being compared against.
+3. Insert a note into the same bar instead: the badge becomes **+**.
+4. **Geri al** clears it.
+5. ⚠ The first and last bar are only marked when they are too LONG. A pickup bar and a closing bar
+   are legitimately short, so a triplet made in bar 1 shows nothing — that is correct, not broken.
+6. Now load a **decoded page** (upload a photo, or a saved decode). Several interior bars light up.
+   Those are candidates for where the model misread a duration — worth checking by ear before
+   believing. n = 1 page measured so far ([app/editor.md](app/editor.md)).
+
+
+## Manual checks — the synthetic corpus and the renderer
+
+*Was `docs/MANUAL_CHECKS-CORPUS.md` (last updated 2026-08-07).*
+
+> Split out of [MANUAL_CHECKS.md](MANUAL_CHECKS.md) on 2026-08-07 at the 400-line cap. This half is
+> **checks 1–8: the corpus we render**. The app checks (the in-browser gate, uploading a page, the
+> slice inspector, makam playback) stayed in [MANUAL_CHECKS.md](MANUAL_CHECKS.md).
+>
+> Prerequisite for the browser-driven ones is the same: `npm run dev:web` → <http://localhost:5173>,
+> and the render-automation URL parameters are documented in [MANUAL_CHECKS.md](MANUAL_CHECKS.md).
+>
+> ⚠ **The `?score=…` URLs below still work, but only against a dev server.** Since 2026-08-08 the
+> app bundles no score and the deployed build has none — the files are on disk and gitignored
+> ([THIRD-PARTY.md](THIRD-PARTY.md)). A fresh checkout regenerates them with
+> `ml/prep/export_scores.py`. There is no Sample dropdown any more, so `?score=` is the only way in.
+
+---
+
+### Check 1 — multi-measure strips (token cap 46 → 56)
+
+Open (a **sparse** piece — see the note below):
+
+> http://localhost:5173/?score=/safalar-getirdiniz.json&mode=every&lyrics=0
+
+Scroll to the **Strip panel** below the sheet.
+
+- **Look for:** strip ids like `m12-13`, `m30-31` (spanning 2+ measures), and `|` inside those
+  labels between the measures.
+- **Click a multi-measure strip:** the orange highlight rectangle on the sheet must cover all of
+  its measures, and the decoded line under the label must match the highlighted notes.
+- **Wrong looks like:** every single id being `mN-N`, or a highlight that covers a different
+  region than the label describes.
+
+⚠️ **Known and expected:** dense pieces (`/sample.json` = aldanma, `/gamzedeyim-deva.json`) still
+pack ONE measure per strip. Verified against the real tokenizer: a dense 9-note measure costs
+~38 of the decoder's 60-token budget, so two of them can never fit — this is a model constraint,
+not a bug. Multi-measure coverage therefore comes from selecting enough sparse pieces (the
+selection script targets this; see Check 5).
+
+### Check 2 — URL-driven transpose + keysig labels
+
+Open side by side:
+
+> http://localhost:5173/?score=/sample.json&mode=keysig&lyrics=0&transpose=0
+> http://localhost:5173/?score=/sample.json&mode=keysig&lyrics=0&transpose=-4
+
+- **Look for:** a *different key signature* drawn after the clef in the second tab (t=0 shows a
+  single koma-flat on b; t=−4 shows bakiye-flats on d, g, a), and the Strip panel labels'
+  `\sig … \sigend` prefix tracking exactly what is drawn.
+- **Wrong looks like:** the drawn signature and the `\sig` block disagreeing, or the sheet not
+  transposing at all.
+
+### Check 3 — seeded repeat-sign injection
+
+Open:
+
+> http://localhost:5173/?score=/sample.json&mode=every&lyrics=0&repseed=42
+
+- **Look for:** repeat barlines (`‖:` thick+dots begin, `:‖` end) and "1." / "2." volta brackets
+  drawn on the sheet.
+- **Faithful one-end-only rule:** click a strip that touches only the *left* edge of a repeated
+  passage — its label must contain `\repstart` but **not** `\repend` (and vice versa for the
+  right edge). A strip fully inside the repeat has neither.
+- **Determinism:** reload the page — the signs must be at the *identical* measures every time.
+- **Wrong looks like:** a label carrying a repeat token whose sign isn't visible inside that
+  strip's highlight rectangle, or signs moving between reloads.
+
+### Check 3b — seeded navigation-mark injection (segno / coda / D.C. / Son)
+
+Open:
+
+> http://localhost:5173/?score=/gamzedeyim-deva.json&mode=every&lyrics=0&navseed=42&repseed=99&respellseed=43
+
+- **Look for:** navigation marks drawn like the real neyzen.com sheets — this seed draws a
+  ⊕ **coda pair** (end of m31 → start of m40) and italic **"D.C."** at m12's and m52's right
+  barlines. Other seeds draw segno 𝄋 (e.g. `navseed=1`, m28) and "Son"; each render gets 4–6
+  marks, so no single seed shows every kind (text marks sit above OR below the staff — both
+  placements are injected on purpose).
+- **Faithful tokens:** click a strip showing a mark — its label must carry the matching token
+  (`\segno` `\coda` `\dc` `\fine`) at the drawn edge (start-edge marks before the measure's
+  notes, end-edge marks after). Strips without a visible mark must have no nav token.
+- **No stacking:** nav marks never appear on measures carrying repeat signs or volta brackets
+  (injection excludes them ±1 measure — they share the above-staff band).
+- **Determinism:** reload — identical marks at identical measures every time.
+- **Wrong looks like:** a clipped glyph at a crop edge, a token without its drawn mark (or vice
+  versa), or marks moving between reloads.
+
+### Check 3c — rhythm signs: triplets / ties / grace notes (strips_v2_2, NOT injected)
+
+Open (a piece carrying all three — 12 triplet events, 1 tie, 14 graces):
+
+> http://localhost:5173/?score=/beyati-delisin.json&mode=every&lyrics=0
+
+- **Triplets (m8, m16):** three 16ths beamed TOGETHER under one "3" mark — a curved slur-like
+  arc with an italic 3 (most pieces, incl. this one) or VexFlow's square bracket (~30% of
+  pieces, by name hash; the token is identical). The mark sits on the NOTEHEAD side — above
+  when stems point down, below when they point up. The strip's label wraps the group:
+  `\tup3 \komaFlat b'16 c''16 d''16 \tupend`, written durations plain (no `16. 32` snapping).
+- **Tie (m40):** a single SymbTr 5/8 event drawn as half + arc + 8th; the label reads
+  `a'2 \tie a'8` — accidentals (if any) only on the FIRST written note. Long RESTS split into
+  side-by-side rests with no arc and no token.
+- **Graces (m1, m39, …):** a small slashed 8th attached before its host note, label
+  `\grace e''8` (with its own accidental token when drawn, e.g. `\grace \komaFlat b'8`).
+- **Real data, no seeds:** these come from the durations themselves (`packages/core/src/labels/rhythm.ts`),
+  so they sit at the same measures in EVERY render/seed/transpose of the piece.
+- **Playback unchanged:** the tie plays as ONE held note (the note model still holds the single
+  5/8 event); graces are silent for now (zero duration).
+- **Editor:** ✎ a grace measure — graces are hidden from the row list and re-attached to their
+  following note on save (hint text appears); saving without touching anything must not change
+  the drawing.
+- **Wrong looks like:** a `16. 32`-style rhythm where a triplet should be, a bracket over notes
+  whose label has no `\tup3`, a triplet's three notes beamed apart, a grace drawn full-size, or
+  a tie's second note repeating the accidental.
+
+### Check 4 — distractor text (pixels only, never labels)
+
+Open:
+
+> http://localhost:5173/?score=/sample.json&mode=every&lyrics=0&textseed=7
+
+- **Look for:** fake title/composer/usul text near the TOP of the first staff row, and
+  publisher/year/page strings in the empty lyric zone at the bottom of rows (lyric-free renders
+  only). Fonts/sizes/positions vary with the seed.
+- **The critical check — labels unchanged:** open the same URL *without* `&textseed=7` in a second
+  tab and compare any strip's label in the Strip panel: they must be **character-identical**.
+  The text is drawn into the SVG only; the label pipeline never sees it.
+- **Wrong looks like:** any label difference between the two tabs, or noise text covering note
+  heads/accidentals so badly they'd be unreadable (occasional light overlap with beams is fine —
+  real photos have that too).
+
+### Check 5 — piece selection & coverage projection *(after step 5 exists)*
+
+```bash
+.venv-ml/bin/python ml/prep/select_pieces.py --n 150
+```
+
+- **Look for:** the printed per-class projection table — each of the 8 AEU accidental classes
+  comfortably non-zero (watch `\buyukSharp` / `\kucukSharp`, the rare ones), and the projected
+  multi-measure share. Skim `data/pieces.json` for familiar makams.
+- Spot-load 2–3 exported scores in the harness: `?score=/scores/<slug>.json`.
+
+### Check 6 — smoke render + contact sheet *(after step 6 exists)*
+
+```bash
+npx tsx tools/render/render.ts --pieces data/pieces.json --out data/synthetic/strips_v2_1 --from 0 --to 3
+open data/synthetic/strips_v2_1/index.html
+```
+
+- **The single most valuable check in the pipeline:** each card shows a strip PNG, its raw label,
+  and the human-readable decoded line. Read ~10 cards: does the decoded text match the drawn
+  notes, accidentals, barlines, repeat signs?
+- **Resumability:** interrupt the render mid-run (Ctrl-C), re-run the same command — finished
+  pieces must be skipped, the interrupted one re-rendered.
+- **Before the FULL render:** find the widest 4-measure strips on the contact sheet and confirm
+  the glyphs stay legible — the model squashes every strip to 583×409.
+
+### Check 7 — split + audit *(after step 7 exists)*
+
+```bash
+# split-by-piece is already committed at data/split.json — only re-run make_split.py if the
+# piece list itself changes
+.venv-ml/bin/python ml/omr/audit_coverage.py --strips data/synthetic/strips_v2_1 \
+    --split data/split.json --tokenizer data/checkpoints/overfit10
+```
+
+- **Look for:** exit code 0; per-class counts vs the Definition-of-done targets (each AEU class
+  ≥200 train / ≥25 val — büyük classes ≥15 val, since their respell-injection rate is deliberately
+  low); ≥40% of labels containing `|`; `\repstart`/`\repend` in ≥5% of strips;
+  **no label above 59 real tokenizer ids**; no piece in both splits.
+
+### Check 8 — augmentation preview grid (training kit)
+
+```bash
+.venv-ml/bin/python ml/omr/augment.py --n 6 --out data/synthetic/aug_preview.png
+open data/synthetic/aug_preview.png
+```
+
+Each row is one strip; the columns are **original | screenshot | photo | photo** (two
+independent photo draws, since that profile varies the most).
+
+- **Look for:** the *screenshot* column staying geometrically clean — flat white, straight
+  staff, only a little rescale softness / JPEG fuzz (some slices come through nearly
+  untouched — that's intended, native screenshots often are clean). The *photo* columns may
+  tilt/curve/shade, but **every beam, flag and accidental must stay legible to your eye** —
+  if you can't tell an 8th from a 16th, the model can't either (the Step-1 tests showed
+  exactly that failure), so the amplitudes are too hot.
+- **Wrong looks like:** screenshot cells with rotation/paper/shadows (profile leak), photo
+  cells where noteheads merge with staff lines or accidentals smear beyond recognition, or
+  two runs with the same `--seed` producing different grids.
+- This is the human gate on augmentation strength — **look at it before spending GPU time**,
+  and re-check after any parameter tweak in `augment.py`.
+
+---
+
+### Check 9 — staccato distractors (pixels only, and the POSITION is the point)
+
+Added 2026-08-15. The model reads a printed staccato as an augmentation dot and lengthens the note;
+this check is the human gate on the mark that teaches otherwise. Numbers:
+[METRICS-DIAGNOSTICS.md](METRICS-DIAGNOSTICS.md). Floors: [archive/rounds.md](archive/rounds.md#the-levers-round-3-has-not-pulled--ranked-with-what-to-measure-first) Lever 6.
+
+Open, with a score that has dotted notes:
+
+> http://localhost:5173/?score=/sample.json&mode=measure&lyrics=0&staccatoseed=9
+
+- **Look for:** small filled dots **above or below** noteheads, always on the side **opposite the
+  stem**, always centred in a staff SPACE and never sitting on a line. They should be the same size
+  as an augmentation dot — the two marks must differ only in *where* they are, or the model can
+  separate them by size and learns nothing.
+- **The case that matters most:** a note that carries **both** — augmentation dot to the RIGHT, on
+  the notehead's own line/space; staccato ABOVE or BELOW. Find one and satisfy yourself the two are
+  unmistakably different positions and clearly detached.
+- **The critical check — labels unchanged:** open the same URL *without* `&staccatoseed=9` and
+  compare any strip's label: **character-identical**. Or, for a whole corpus, render both arms and
+  `diff` the manifests — they are byte-identical by construction (`staccatoseed` is deliberately not
+  a manifest field).
+- **Wrong looks like:** a dot fused to a notehead or sitting on a staff line (both were real bugs in
+  the first two drafts — `getNoteHeadBounds()` returns the notehead's *anchor*, not its ink edges);
+  a dot on the stem side; a dot noticeably bigger or smaller than the augmentation dot; or any label
+  difference between the two tabs.
+- ⚠ **Density is a judgement call, not a measurement.** `STACCATO_RATE` in `SheetView.tsx` is
+  `{dotted: 0.30, run: 0.18}`, chosen because nobody has counted staccato frequency in real Turkish
+  editions. If it reads heavier or lighter than the printed music you know, that is the number to
+  change — and counting a few real editions is how to replace the guess.

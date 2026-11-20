@@ -4,7 +4,7 @@ purpose: Expo's own advice for agents working in apps/mobile, kept as the templa
 audience: an agent about to touch apps/mobile
 updated: 2026-10-11
 
-⚠ The project's rules still come first: [../../CLAUDE.md](../../CLAUDE.md) and [../../docs/mobile/plan.md](../../docs/mobile/plan.md).
+⚠ The project's rules still come first: [../../CLAUDE.md](../../CLAUDE.md) and [../../docs/mobile/README.md](../../docs/mobile/README.md).
 This app has no Expo Router yet (it is a single `App.tsx`); the routing advice below applies once one is added.
 
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.

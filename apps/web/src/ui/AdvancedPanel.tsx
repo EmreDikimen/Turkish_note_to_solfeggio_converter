@@ -13,13 +13,13 @@
  * It is a plain <details>, collapsed by default. Verbose props on purpose: App owns every piece
  * of state, and this panel holds none of it.
  *
- * ⚠ `#strips-input` is inside here, and a closed <details> hides its subtree — tools/browser/
+ * ⚠ `#strips-input` is inside here, and a closed <details> hides its subtree — tools/checks/
  * app-smoke.ts opens `#advanced` before setting files on it.
  */
 
 import type { NoteModelDocument } from "@turkish-omr/core";
-import type { AccidentalMode } from "../SheetView";
-import type { ExportStrip } from "../stripExport";
+import type { AccidentalMode } from "../score/vexNotes";
+import type { ExportStrip } from "../score/stripExport";
 import { DecodePanel, type RawDecode } from "./DecodePanel";
 import { PitchRangeNote } from "./PitchRangeNote";
 import { StripPanel } from "./StripPanel";
@@ -105,7 +105,7 @@ export function AdvancedPanel({
           )}
 
           {/* ⚠ The <input> stays real and is hidden with the CLIP pattern, never `display: none`
-              — tools/browser/app-smoke.ts calls setInputFiles on `#strips-input`, and `display:
+              — tools/checks/app-smoke.ts calls setInputFiles on `#strips-input`, and `display:
               none` would also drop it from the accessibility tree. The label around it carries the
               button's look, which is the only thing that changed: the browser's own file control
               renders "Choose File | No file chosen" in system chrome, in English, next to a page

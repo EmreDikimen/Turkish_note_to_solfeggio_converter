@@ -4,10 +4,10 @@
  * TWO MODES:
  *
  * 1. Per-piece export (default). For each note-model JSON (a SymbTr piece matched by name to a
- *    downloaded real page — see `scripts/rung3/match_symbtr.py`), writes `labels.json` next to
+ *    downloaded real page — see `ml/labels/match_symbtr.py`), writes `labels.json` next to
  *    it: the piece's per-measure LilyPond label tokens in all three faithful modes, the
  *    full-piece streams, and the detected repeat spans. The Rung-3 emitter aligns a real page's
- *    decoded strips against these (docs/rung3/exam.md §3).
+ *    decoded strips against these (docs/rung3/README.md §3).
  *
  *     - `every`   — every drawn alteration marked inline, no signature (mid-row-crop style).
  *     - `keysig`  — signature-covered accidentals suppressed (every deviating occurrence marked).
@@ -71,9 +71,9 @@ import {
   serializeMeasures,
   serializeSignature,
   type SignatureMap,
-} from "./lilypond";
-import { detectRepeats, type RepeatSpan } from "./repeats";
-import { decodeLabel } from "./decode";
+} from "@turkish-omr/core/labels/lilypond";
+import { detectRepeats, type RepeatSpan } from "@turkish-omr/core/labels/repeats";
+import { decodeLabel } from "@turkish-omr/core/labels/decode";
 
 // ---------------------------------------------------------------------------------------------
 // Shared piece loading

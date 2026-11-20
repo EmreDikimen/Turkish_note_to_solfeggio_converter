@@ -8,7 +8,7 @@
  * `public/fonts/Bravura.woff2` with fontTools, in font units, placed on a 100-unit tile.
  *
  * Read by `BrandMark.tsx` (the header, coloured by theme tokens so the night palette applies) and
- * by `tools/browser/make-icons.ts` (favicon + install icons, in the fixed `fill` below — an icon
+ * by `tools/dev/make-icons.ts` (favicon + install icons, in the fixed `fill` below — an icon
  * has no theme). Change a mark here, then re-run make-icons.
  */
 export type LogoRole = "eighth" | "flat" | "sharp";

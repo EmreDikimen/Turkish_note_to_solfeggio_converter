@@ -28,11 +28,16 @@ any change, `smoke:editor`, and `smoke:app` reaching its known failure point.
 - **`apps/web/src` is sorted** into `score/`, `instruments/`, `export/`, `browser/` (was `lib/` for a day — the root `.gitignore`'s `lib/` hid a new file in it), `dev/`, `ui/modals/`;
   `SheetView.tsx` 3,728 → ~2,200 lines (its helpers moved, unchanged, into `vexNotes`, `drawMarks`,
   `hitTest`, `layout`); `App.tsx`'s URL parameters into `browser/urlParams.ts`.
-- **Found, not fixed:** `smoke:app` fails on `main` before and after — after a stored page is
-  reopened the recent list is closed, and the check expects its row. That is app behaviour, so it
-  is the owner's call. The check's other bug (waiting on the hidden icon sprite) was fixed.
-- **Not done:** the two components themselves (`SheetView`, `App`) are still one function each;
-  splitting them into hooks changes structure, not location, and was left for the owner to decide.
+- **Then, on the owner's yes, the two components were split** — the statements still verbatim, the
+  wiring computed by the TypeScript checker (a value used before its declaration is a compile error,
+  so a hook cannot be called too early unnoticed). `App.tsx` 2,618 → 1,635: `useReadPage`,
+  `useEditing`, `usePlayback`, `useRecentPages`, and the audio backend into `audio/backend.ts`.
+  `SheetView.tsx` 2,215 → 1,655: its 560-line drawing effect is now `engraveScore` in
+  `score/engrave.ts`, with the same dependency list. The guard grew `smoke:page`; every step passed it.
+- **`smoke:app` and `smoke:page` were fixed, not loosened:** both waited on the first `<svg>`, which
+  is now the hidden icon sprite; `smoke:app` also expected the recent list open after a reopen (the
+  owner: closing is right — the check now asserts the fold, then opens it) and reloaded before a
+  rename reached IndexedDB (it now waits for the stored name; 3/3 passes after, 0/3 before).
 
 ## 2026-11-15 — the screenshot-frame fix is live
 

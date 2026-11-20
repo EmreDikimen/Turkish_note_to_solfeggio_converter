@@ -404,7 +404,7 @@ Three files:
 pages therefore reads ~3 KB and not ~3.6 MB — IndexedDB has no way to read half a record.
 
 **One save path.** There is deliberately **no explicit save call after a decode.** A decode opens a
-record (`saved` in `App.tsx`); an effect writes whatever document is on screen back to that record
+record (`saved` in `browser/useRecentPages.ts`); an effect writes whatever document is on screen back to that record
 two seconds after it last changed. The first write and the thousandth edit are the same line of
 code, so no future load path can install a page the store never hears about — and undo/redo are
 remembered for free, because `history.doc` is a new object per edit and the effect sees exactly

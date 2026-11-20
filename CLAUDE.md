@@ -296,7 +296,7 @@ short list of what can be broken from anywhere.
   the footer's `privacy` line has nothing to qualify only because of that choice. ⚠ **IndexedDB, not
   `localStorage`** — the edited state is written on every edit (debounced 2 s) and `localStorage` is
   SYNCHRONOUS, so a ~100 KB write blocks the main thread mid-drag. ⚠ **ONE save path and no explicit
-  save call** — a decode opens a record (`saved` in `App.tsx`), an effect writes the document back two
+  save call** — a decode opens a record (`saved` in `browser/useRecentPages.ts`), an effect writes the document back two
   seconds later; never add a second, and never write from a load path. ⚠ **ONLY A DECODE OPENS A
   RECORD**: `?score=`, a sample and a hand-loaded JSON all clear it, which keeps every check's own
   fixture out of a reader's list — and why **`smoke:app` is the only check that can see this feature at

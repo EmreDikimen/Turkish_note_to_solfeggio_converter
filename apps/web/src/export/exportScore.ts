@@ -121,16 +121,28 @@ function headerLines(svg: SVGSVGElement): string[] {
  * by `runExport` — never `doc.name` alone, which a rename leaves untouched on purpose. A header line
  * that already says the same thing is dropped, so a score whose title IS its name is not captioned
  * twice.
+ *
+ * ⚠ A transposed score says so on a line of its own straight under the name (owner, 2026-11-23):
+ * the paper shows the shifted notes, so it must not pass for the original. Null at 0.
  */
-function captionLines(svg: SVGSVGElement, pageName: string): string[] {
+function captionLines(svg: SVGSVGElement, pageName: string, transposed: Transposed | null): string[] {
   const lines = headerLines(svg);
   const title = pageName.trim();
-  if (!title) return lines;
   // Compared without case, in Turkish (İ/i, I/ı): a stored name is often the file name in lower
   // case while the engraved title is capitalised — "delisin deli" over "Delisin Deli", seen on
   // the first try.
   const key = (s: string) => s.toLocaleLowerCase("tr");
-  return [title, ...lines.filter((l) => key(l) !== key(title))];
+  const rest = title ? lines.filter((l) => key(l) !== key(title)) : lines;
+  const head = title ? [title] : rest.splice(0, 1);
+  return [...head, ...(transposed ? [transposed.line] : []), ...rest];
+}
+
+/** How far the saved staff is transposed: the caption line, and the short tag for the file name. */
+export type Transposed = { line: string; file: string };
+
+/** The file name: the page's name, then the transposition tag when there is one. */
+function fileName(pageName: string, transposed: Transposed | null, ext: string): string {
+  return `${safeName(transposed ? `${pageName} ${transposed.file}` : pageName)}.${ext}`;
 }
 
 /**
@@ -314,12 +326,16 @@ async function renderer(svg: SVGSVGElement, boxW: number): Promise<Renderer> {
 }
 
 /** Draw the paper-width engraving to a PNG and hand it to the browser to save. */
-export async function exportScorePng(stage: HTMLElement, pageName: string): Promise<void> {
+export async function exportScorePng(
+  stage: HTMLElement,
+  pageName: string,
+  transposed: Transposed | null = null
+): Promise<void> {
   const svg = stage.querySelector("svg");
   if (!svg) throw new Error("no score to save");
 
   const box = userBox(svg);
-  const lines = captionLines(svg, pageName);
+  const lines = captionLines(svg, pageName, transposed);
   const headH = headerHeight(lines);
   const pad = 24;
   const pageW = box.pxW + pad * 2;
@@ -339,7 +355,7 @@ export async function exportScorePng(stage: HTMLElement, pageName: string): Prom
 
   const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/png"));
   if (!blob) throw new Error("the image could not be saved");
-  download(blob, `${safeName(pageName)}.png`);
+  download(blob, fileName(pageName, transposed, "png"));
 }
 
 // ── PDF ─────────────────────────────────────────────────────────────────────────────────────────
@@ -376,12 +392,16 @@ function paginate(bands: { y: number; h: number }[], firstAvail: number, avail: 
  * stored as an 8-bit grey image compressed with the browser's own `CompressionStream`, or as JPEG
  * where that stream does not exist. `pdfFile` below writes the container.
  */
-export async function exportScorePdf(stage: HTMLElement, pageName: string): Promise<void> {
+export async function exportScorePdf(
+  stage: HTMLElement,
+  pageName: string,
+  transposed: Transposed | null = null
+): Promise<void> {
   const svg = stage.querySelector("svg");
   if (!svg) throw new Error("no score to save");
 
   const box = userBox(svg);
-  const lines = captionLines(svg, pageName);
+  const lines = captionLines(svg, pageName, transposed);
   const pagePx = { w: Math.round((A4_PT.w / 72) * DPI), h: Math.round((A4_PT.h / 72) * DPI) };
   const margin = Math.round((MARGIN_MM / 25.4) * DPI);
   const contentW = pagePx.w - 2 * margin;
@@ -410,7 +430,7 @@ export async function exportScorePdf(stage: HTMLElement, pageName: string): Prom
     await draw.paint(ctx, margin + Math.round((contentW - outW) / 2), Math.round(top), outW, outH, pg.y, pg.h);
     images.push(await pageImage(canvas));
   }
-  download(pdfFile(images, pageName), `${safeName(pageName)}.pdf`);
+  download(pdfFile(images, pageName), fileName(pageName, transposed, "pdf"));
 }
 
 interface PdfImage {

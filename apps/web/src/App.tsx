@@ -182,6 +182,16 @@ const TRANSPOSE_STEPS: ReadonlyArray<readonly [number, string]> = (() => {
 })();
 
 /**
+ * The name of a staff transposition, as the dropdown says it, or null when the score is not
+ * transposed. A value the list has no step for (a `?transpose=` from the URL) is named in commas.
+ */
+function transposeLabel(commas: number): string | null {
+  if (commas === 0) return null;
+  const step = TRANSPOSE_STEPS.find(([n]) => n === commas);
+  return step ? step[1] : `${commas > 0 ? "+" : "−"}${Math.abs(commas)} koma`;
+}
+
+/**
  * The whole web harness UI, as one React component.
  *
  * What/why: this is the "shell" — it owns the loaded score and wires the buttons to the
@@ -957,8 +967,12 @@ export function App() {
     try {
       const stage = await waitForStage();
       const name = saved?.name || doc?.title || doc?.name || "nota";
-      if (kind === "png") await exportScorePng(stage, name);
-      else await exportScorePdf(stage, name);
+      // ⚠ The STAFF's shift, not the sound's: the saved paper shows `drawnDoc`, which only
+      // `transpose` moves (owner, 2026-11-23).
+      const label = transposeLabel(transpose);
+      const transposed = label ? { line: TR.card.transposed(label), file: TR.card.transposedFile(transpose) } : null;
+      if (kind === "png") await exportScorePng(stage, name, transposed);
+      else await exportScorePdf(stage, name, transposed);
     } finally {
       setExporting(null);
     }
@@ -1320,6 +1334,8 @@ export function App() {
             // for anything that is not a stored page, which then reads the document as it always did.
             pageId={saved?.id ?? null}
             pageName={saved?.name ?? null}
+            transpose={transpose}
+            transposeLabel={transposeLabel(transpose)}
             onRename={renameRecent}
             totalMs={timeline?.totalMs ?? null}
             viewMode={viewMode}

@@ -228,6 +228,11 @@ export const TR = {
     savePdf: "PDF — A4 sayfalar olarak indir",
     saveBusy: "hazırlanıyor…",
     saveFailed: "Kaydedilemedi. Sayfa açıkken tekrar deneyin.",
+    // How far the STAFF is transposed (owner, 2026-11-23): a line of its own under the name in a
+    // saved PNG/PDF, the same words beside the name on the card, and a short tag in the file name.
+    // Absent at 0 — an untransposed score reads as it always did.
+    transposed: (label: string) => `Transpozisyon: ${label}`,
+    transposedFile: (commas: number) => `(${commas > 0 ? "+" : "-"}${Math.abs(commas)} koma)`,
     edit: "✎ Düzenle",
     editing: "✓ Düzenleniyor",
     undo: "↶ Geri al",

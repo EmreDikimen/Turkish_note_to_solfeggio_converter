@@ -125,13 +125,21 @@ function headerLines(svg: SVGSVGElement): string[] {
  * ⚠ A transposed score says so on a line of its own straight under the name (owner, 2026-11-23):
  * the paper shows the shifted notes, so it must not pass for the original. Null at 0.
  */
-function captionLines(svg: SVGSVGElement, pageName: string, transposed: Transposed | null): string[] {
-  const lines = headerLines(svg);
-  const title = pageName.trim();
+function captionLines(
+  svg: SVGSVGElement,
+  pageName: string,
+  transposed: Transposed | null,
+  fileTitle: string | null
+): string[] {
   // Compared without case, in Turkish (İ/i, I/ı): a stored name is often the file name in lower
   // case while the engraved title is capitalised — "delisin deli" over "Delisin Deli", seen on
-  // the first try.
-  const key = (s: string) => s.toLocaleLowerCase("tr");
+  // the first try. Underscores and runs of spaces too, which the engraved title rewrites.
+  const key = (s: string) => s.replace(/_/g, " ").replace(/\s+/g, " ").trim().toLocaleLowerCase("tr");
+  // ⚠ A READ page's engraved title is only the uploaded file's name — on a phone a bare number
+  // like "1000074495" (owner, 2026-11-23: dropped from the saved file). The reader's own name
+  // already heads the caption.
+  const lines = headerLines(svg).filter((l) => !fileTitle || key(l) !== key(fileTitle));
+  const title = pageName.trim();
   const rest = title ? lines.filter((l) => key(l) !== key(title)) : lines;
   const head = title ? [title] : rest.splice(0, 1);
   return [...head, ...(transposed ? [transposed.line] : []), ...rest];
@@ -329,13 +337,14 @@ async function renderer(svg: SVGSVGElement, boxW: number): Promise<Renderer> {
 export async function exportScorePng(
   stage: HTMLElement,
   pageName: string,
-  transposed: Transposed | null = null
+  transposed: Transposed | null = null,
+  fileTitle: string | null = null
 ): Promise<void> {
   const svg = stage.querySelector("svg");
   if (!svg) throw new Error("no score to save");
 
   const box = userBox(svg);
-  const lines = captionLines(svg, pageName, transposed);
+  const lines = captionLines(svg, pageName, transposed, fileTitle);
   const headH = headerHeight(lines);
   const pad = 24;
   const pageW = box.pxW + pad * 2;
@@ -395,13 +404,14 @@ function paginate(bands: { y: number; h: number }[], firstAvail: number, avail: 
 export async function exportScorePdf(
   stage: HTMLElement,
   pageName: string,
-  transposed: Transposed | null = null
+  transposed: Transposed | null = null,
+  fileTitle: string | null = null
 ): Promise<void> {
   const svg = stage.querySelector("svg");
   if (!svg) throw new Error("no score to save");
 
   const box = userBox(svg);
-  const lines = captionLines(svg, pageName, transposed);
+  const lines = captionLines(svg, pageName, transposed, fileTitle);
   const pagePx = { w: Math.round((A4_PT.w / 72) * DPI), h: Math.round((A4_PT.h / 72) * DPI) };
   const margin = Math.round((MARGIN_MM / 25.4) * DPI);
   const contentW = pagePx.w - 2 * margin;

@@ -971,8 +971,11 @@ export function App() {
       // `transpose` moves (owner, 2026-11-23).
       const label = transposeLabel(transpose);
       const transposed = label ? { line: TR.card.transposed(label), file: TR.card.transposedFile(transpose) } : null;
-      if (kind === "png") await exportScorePng(stage, name, transposed);
-      else await exportScorePdf(stage, name, transposed);
+      // Only a decode opens a stored record, and a decode titles the score with the upload's file
+      // name — so on a stored page the engraved title is that file name, and the caption drops it.
+      const fileTitle = saved && doc?.title ? doc.title : null;
+      if (kind === "png") await exportScorePng(stage, name, transposed, fileTitle);
+      else await exportScorePdf(stage, name, transposed, fileTitle);
     } finally {
       setExporting(null);
     }

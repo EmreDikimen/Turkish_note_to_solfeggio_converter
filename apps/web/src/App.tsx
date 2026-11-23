@@ -648,6 +648,19 @@ export function App() {
   // What the sheet DRAWS. Normally the written score itself; with the escape hatch on, the
   // performance written out long (see `writeOut`), which is what the app showed before it could
   // draw a repeat sign.
+  // The score's title, as the page header above the notes AND the saved PNG/PDF both say it: the
+  // reader's name for the page (else the score's own title), then the staff transposition.
+  // ⚠ NONE in a render job: the header sits above the SVG, so a different title block moves the
+  // staves and changes the training strips (measured 2026-11-23: 117 of 232 files) — the render pin.
+  const heading = useMemo(() => {
+    if (!doc || SIG_TOLERANT) return undefined;
+    const label = transposeLabel(transpose);
+    return {
+      name: saved?.name || doc.title || doc.name || "nota",
+      transposed: label ? TR.card.transposed(label) : null,
+    };
+  }, [doc, saved?.name, transpose]);
+
   const drawnDoc = useMemo(() => {
     const written = displayDoc ?? doc;
     if (!written || !structure || !writeOut) return written;
@@ -966,16 +979,13 @@ export function App() {
     setExporting(kind);
     try {
       const stage = await waitForStage();
-      const name = saved?.name || doc?.title || doc?.name || "nota";
+      const name = heading?.name || "nota";
       // ⚠ The STAFF's shift, not the sound's: the saved paper shows `drawnDoc`, which only
       // `transpose` moves (owner, 2026-11-23).
-      const label = transposeLabel(transpose);
-      const transposed = label ? { line: TR.card.transposed(label), file: TR.card.transposedFile(transpose) } : null;
-      // Only a decode opens a stored record, and a decode titles the score with the upload's file
-      // name — so on a stored page the engraved title is that file name, and the caption drops it.
-      const fileTitle = saved && doc?.title ? doc.title : null;
-      if (kind === "png") await exportScorePng(stage, name, transposed, fileTitle);
-      else await exportScorePdf(stage, name, transposed, fileTitle);
+      // The caption itself is read off the stage's header, which carries `heading` below.
+      const fileTag = transpose !== 0 ? TR.card.transposedFile(transpose) : null;
+      if (kind === "png") await exportScorePng(stage, name, fileTag);
+      else await exportScorePdf(stage, name, fileTag);
     } finally {
       setExporting(null);
     }
@@ -1337,8 +1347,6 @@ export function App() {
             // for anything that is not a stored page, which then reads the document as it always did.
             pageId={saved?.id ?? null}
             pageName={saved?.name ?? null}
-            transpose={transpose}
-            transposeLabel={transposeLabel(transpose)}
             onRename={renameRecent}
             totalMs={timeline?.totalMs ?? null}
             viewMode={viewMode}
@@ -1411,6 +1419,7 @@ export function App() {
             ) : (
               drawnDoc && (
               <SheetView
+                heading={heading}
                 doc={drawnDoc}
                 // ⚠ The ONLY way the drawing is resized, and it is a re-engrave, not a zoom: fewer
                 // bars per system at the same note size. `.kv-score` may never be scaled — that
@@ -1512,6 +1521,7 @@ export function App() {
       {exporting && drawnDoc && (
         <div id={EXPORT_STAGE_ID} aria-hidden="true">
           <SheetView
+            heading={heading}
             doc={drawnDoc}
             accidentalMode={accidentalMode}
             signatureOverride={SIG_OVERRIDE}

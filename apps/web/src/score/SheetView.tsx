@@ -138,6 +138,7 @@ export function SheetView({
   contentWidth,
   justify = false,
   chrome = true,
+  heading,
   surfaceId = "sheet-surface",
   svgMarker = "sheet-svg",
   onlyMeasure,
@@ -184,6 +185,14 @@ export function SheetView({
    * height to explain signs that bar may not even contain. The page keeps both.
    */
   chrome?: boolean;
+  /**
+   * What the header's title says, when the page knows better than the document (owner,
+   * 2026-11-23): the name the reader gave the page on top, then how far the staff is transposed.
+   * ⚠ This header is ALSO the caption of a saved PNG/PDF — `exportScore.ts` reads it back — so the
+   * screen and the saved file say the same thing. Without it the header is the document's own
+   * (`render.ts` passes none), and on a read page that title is only the upload's file name.
+   */
+  heading?: { name: string; transposed: string | null };
   /** `id` of the positioned surface, and the `data-omr` marker on the SVG. ⚠ Both are overridden by
    *  the card rather than shared: two elements answering to one id is exactly what the DOM-state
    *  contract in CLAUDE.md exists to keep out, and `sheet-svg` must keep meaning THE PAGE'S SCORE —
@@ -961,6 +970,21 @@ export function SheetView({
     g.removeAttribute("data-insert-pitch");
   }
 
+  // The title block, in both header forms. With a `heading`: the reader's name, the transposition,
+  // then the makam and form; without one, exactly as before.
+  const titleLines = heading ? (
+    <>
+      <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{heading.name}</div>
+      {heading.transposed && <div style={{ fontSize: 13, fontStyle: "italic" }}>{heading.transposed}</div>}
+      {header.makamForm && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.makamForm}</div>}
+    </>
+  ) : (
+    <>
+      <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{header.makamForm}</div>
+      {header.title && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.title}</div>}
+    </>
+  );
+
   return (
     // No frame of its own: this sits inside the score card (.kv-score), which supplies the paper,
     // the border and the horizontal scroll. A second border here would double-frame the sheet.
@@ -982,8 +1006,7 @@ export function SheetView({
             textAlign: "center", lineHeight: 1.3,
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{header.makamForm}</div>
-          {header.title && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.title}</div>}
+          {titleLines}
           <div style={{ fontSize: 12, fontStyle: "italic", marginTop: 2 }}>
             {header.usul} &nbsp;♩ = {headerBpm}
             {header.composer && <> · Beste: {header.composer}</>}
@@ -1012,8 +1035,7 @@ export function SheetView({
           {header.usul} &nbsp;♩ = {headerBpm}
         </div>
         <div style={{ flex: "2 1 0", minWidth: 0, textAlign: "center", lineHeight: 1.3 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, fontStyle: "italic" }}>{header.makamForm}</div>
-          {header.title && <div style={{ fontSize: 15, fontStyle: "italic" }}>{header.title}</div>}
+          {titleLines}
         </div>
         <div
           style={{

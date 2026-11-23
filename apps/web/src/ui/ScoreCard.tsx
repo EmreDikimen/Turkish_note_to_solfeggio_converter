@@ -28,8 +28,6 @@ export function ScoreCard({
   doc,
   pageId,
   pageName,
-  transpose,
-  transposeLabel,
   onRename,
   totalMs,
   viewMode,
@@ -61,10 +59,6 @@ export function ScoreCard({
    */
   pageId: string | null;
   pageName: string | null;
-  /** How far the STAFF is transposed, in commas, and its name; the label is null at 0, and then
-   *  nothing is drawn (owner, 2026-11-23). */
-  transpose: number;
-  transposeLabel: string | null;
   onRename: (id: string, name: string) => void;
   totalMs: number | null;
   viewMode: ViewMode;
@@ -241,11 +235,6 @@ export function ScoreCard({
                 </button>
               )}
             </>
-          )}
-          {transposeLabel && (
-            <span className="kv-card__transpose" data-omr="score-transpose" data-commas={transpose}>
-              {TR.card.transposed(transposeLabel)}
-            </span>
           )}
           {saving && <span className="kv-card__saving">{TR.card.saveBusy}</span>}
           {saveError && (

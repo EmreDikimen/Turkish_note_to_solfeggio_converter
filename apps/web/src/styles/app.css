@@ -753,7 +753,6 @@
   color: var(--ink-faint);
   white-space: normal;
 }
-.kv-card__transpose,
 .kv-card__saving {
   margin-left: var(--space-2);
   font-size: var(--text-xs);

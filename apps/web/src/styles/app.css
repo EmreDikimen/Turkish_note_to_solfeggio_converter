@@ -3156,7 +3156,13 @@
      undo pairs on a 667px screen is a duplicate costing a whole 44px row of the card's head, on the
      one screen with the least room. ⛔ Only on this tab, and only on a phone: the card's pair keeps
      its ids and `smoke:editor` drives them at 1280px. */
-  .kv-page[data-mtab="duzenle"] .kv-card__undo,
+  .kv-page[data-mtab="duzenle"] .kv-card__undo {
+    display: none;
+  }
+  /* ⛔ That list used to run straight on into the rule below (fixed 2026-11-25): a comment had been
+     dropped between two of its selectors, so the five Düzenle selectors above took the NOTA tab's
+     padding instead of `display: none` — the pinned row stayed on the edit tab (182px at 393×800)
+     and the title and meta line were squeezed to one word a line. Keep every list closed. */
   /* ⭐ ROOM FOR THE CORNER GROUP on the Nota tab (2026-10-01). The group is out of the flow, so the
      title and the meta line ran UNDER it — the save mark sat on "511 nota" — and the light / dark
      switch made it three controls wide. Reserve its width beside the TITLE block only (switch 52 +
@@ -3564,3 +3570,162 @@
  * sheet styled here; a tester's Samsung phone printed it as a BLANK page, so the app now writes the
  * PDF itself (`exportScore.ts`). The old `body > *:not(#print-sheet)` blanket also meant a reader
  * pressing Ctrl+P got an empty sheet — the browser's own print is now left alone. */
+
+/* ── The docked play bar and the settings sheet (phone, Nota tab — UI review item 1, 2026-11-25) ──
+ * The play bar sits fixed on top of the tab bar; ⚙ opens Ses / Ritim / Perde as a bottom sheet
+ * OVER the music. Before it the first stave started ~600px down an 800px screen: a 130px sticky
+ * row, a 44px fold handle and a 137px card head all stood above it. `TransportBar`'s `dock` prop is
+ * what puts `.kv-transport--dock` on the bar; `--dock-h` is its measured height.
+ * ⚠ The sheet is the SAME `#transport-settings` the fold was — one element, its ids unchanged. */
+@media (max-width: 700px) {
+  .kv-page[data-mtab="nota"] > #transport-pinned.kv-transport--dock {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: var(--mtabs-real-h, calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px)));
+    z-index: 44;
+    margin: 0;
+    padding: var(--space-2) max(var(--space-4), env(safe-area-inset-right, 0px)) var(--space-2)
+      max(var(--space-4), env(safe-area-inset-left, 0px));
+    background: var(--paper-raised);
+    border-top: 1px solid var(--rule-strong);
+    border-bottom: 0;
+    box-shadow: none;
+    clip-path: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .kv-transport--dock .kv-transport__row {
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    border: 0;
+  }
+  .kv-transport--dock .kv-transport__items {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 100%;
+    gap: var(--space-2);
+  }
+  .kv-transport--dock .kv-transport__group {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+  /* Icons only in the bar: ▶ and ■ are the marks every player uses. The words stay for a reader. */
+  .kv-transport--dock .kv-btn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .kv-transport--dock #play,
+  .kv-transport--dock #stop {
+    width: var(--control-h);
+    min-width: var(--control-h);
+    padding: 0;
+    justify-content: center;
+  }
+  .kv-transport--dock #pitch-toggle {
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: none;
+    color: var(--ink-soft);
+  }
+  .kv-transport--dock #pitch-toggle[aria-expanded="true"] {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* The page ends above BOTH bars, or its last stave is unreachable. */
+  .kv-page[data-mtab="nota"]:has(> .kv-transport--dock) {
+    padding-bottom: calc(var(--mtabs-real-h, calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px))) + var(--dock-h, 60px) + var(--space-4));
+  }
+  .kv-page[data-mtab="nota"]:has(> .kv-transport--dock) .kv-ios-hint {
+    bottom: calc(var(--mtabs-real-h, calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px))) + var(--dock-h, 60px) + var(--space-2));
+  }
+
+  /* The sheet. Anchored on top of the bar and slid down behind it when shut. */
+  .kv-page[data-mtab="nota"]:has(> .kv-transport--dock) > #transport-settings {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--mtabs-real-h, calc(var(--mtab-h) + env(safe-area-inset-bottom, 0px))) + var(--dock-h, 60px));
+    z-index: 43;
+    max-height: 70dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin: 0;
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.12);
+    transform: translateY(calc(100% + var(--dock-h, 60px) + var(--mtab-h) + 48px));
+    visibility: hidden;
+    transition:
+      transform 240ms ease,
+      visibility 0s linear 240ms;
+  }
+  .kv-page[data-mtab="nota"][data-pitch="open"]:has(> .kv-transport--dock) > #transport-settings {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 240ms ease,
+      visibility 0s;
+  }
+  .kv-page[data-mtab="nota"]:has(> .kv-transport--dock) > #transport-settings > .kv-transport__body {
+    display: block;
+    overflow: visible;
+    visibility: inherit;
+    transition: none;
+  }
+  /* The grab bar every bottom sheet carries — decoration; ⚙ and the backdrop close it. */
+  .kv-page[data-mtab="nota"]:has(> .kv-transport--dock) > #transport-settings::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 5px;
+    margin: 0 auto var(--space-2);
+    border-radius: 3px;
+    background: var(--rule-strong);
+  }
+  .kv-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 42;
+    border: 0;
+    padding: 0;
+    background: rgb(0 0 0 / 0.28);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* The card head on the Nota tab: the meta line is ONE line, cut with an ellipsis, not three. */
+  .kv-page[data-mtab="nota"] .kv-card__meta {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kv-page[data-mtab="nota"] .kv-card__title {
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kv-page[data-mtab="nota"]:has(> .kv-transport--dock) > #transport-settings {
+      transition: none;
+    }
+  }
+}

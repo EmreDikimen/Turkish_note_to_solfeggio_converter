@@ -244,7 +244,8 @@ export const TR = {
     // Above the sheet, so it is the first line a reader meets (owner, 2026-10-01). The touch
     // wording says "dokunun" — there is no click on a phone.
     hintSheet: "Çalmaya başlamak istediğiniz ölçüye tıklayın — eser oradan çalar.",
-    hintSheetTouch: "Çalmaya başlamak istediğiniz ölçüye dokunun — eser oradan çalar.",
+    // Short enough for ONE line at 393px (UI review item 1, 2026-11-25) — it was two.
+    hintSheetTouch: "Bir ölçüye dokunun — eser oradan çalar.",
     // ⚠ ONE sentence, then a closed list (2026-09-03). This used to be a single ten-line paragraph
     // under the score, which is the shape nobody reads: the one thing a first-time editor needs —
     // click a note — was buried in the middle of six other rules. The list below says exactly the

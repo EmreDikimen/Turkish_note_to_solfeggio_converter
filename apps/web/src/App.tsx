@@ -1339,6 +1339,9 @@ export function App() {
                 ? { on: followPlayhead, onChange: (v) => { setFollowPlayhead(v); writeFollow(v); } }
                 : undefined
             }
+            // ⭐ The phone's Nota tab docks the bar at the bottom (UI review item 1, 2026-11-25) —
+            // the same condition as the fold, so ⚙ and the sheet exist exactly where the fold did.
+            dock={isPhone && !fullScreen && mobileTab === "nota" && !editMode}
           />
 
           <ScoreCard

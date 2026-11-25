@@ -24,6 +24,7 @@
  * The contract a check may read: `#mobile-tabs[data-tab]` and, per button, `[data-tab-id]`.
  * The labels are copy and live in `strings.ts` (docs/APP-RULES.md).
  */
+import { useEffect, useRef } from "react";
 import { TR } from "./strings";
 
 /** ⚠ **THERE IS NO ÇAL TAB** (owner, 2026-09-26: *"Çal tabını direkt kapatalım ve oradaki her şeyi
@@ -82,8 +83,24 @@ export function MobileTabs({
   tab: MobileTab;
   onTab: (next: MobileTab) => void;
 }) {
+  // ⚠ The bar's REAL height, safe area included, as `--mtabs-real-h` (2026-11-25). `--mtab-h` is
+  // the button's minimum (56px) and the bar measured 62 — the docked play bar sat 6px under it.
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement.style;
+    const write = () => root.setProperty("--mtabs-real-h", `${Math.round(el.offsetHeight)}px`);
+    write();
+    const ro = new ResizeObserver(write);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.removeProperty("--mtabs-real-h");
+    };
+  }, []);
   return (
-    <nav id="mobile-tabs" className="kv-mtabs" data-tab={tab} aria-label={TR.mobile.navLabel}>
+    <nav ref={ref} id="mobile-tabs" className="kv-mtabs" data-tab={tab} aria-label={TR.mobile.navLabel}>
       {MOBILE_TABS.map((t) => (
         <button
           key={t}

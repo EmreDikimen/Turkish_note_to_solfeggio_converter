@@ -65,7 +65,13 @@ export const FOLLOW_SIDE_MIN = 48;
 // Returns 0 where there is no bar at all (the render harness mounts this view on its own).
 export function pinnedBottom(): number {
   const el = typeof document === "undefined" ? null : document.getElementById("transport-pinned");
-  return el ? Math.max(0, el.getBoundingClientRect().bottom) : 0;
+  if (!el) return 0;
+  const box = el.getBoundingClientRect();
+  // ⚠ Docked at the BOTTOM on a phone's Nota tab (2026-11-25): it covers none of the top, and its
+  // `bottom` would otherwise put the readable band's top edge near the floor. `fixedBottomTop()`
+  // counts it instead.
+  if (box.top > window.innerHeight / 2) return 0;
+  return Math.max(0, box.bottom);
 }
 
 /**
@@ -80,7 +86,7 @@ export function pinnedBottom(): number {
  * inset, and the height of a thing is the thing's business. Ids rather than a class so the phone
  * shell can replace the bar without the follow noticing; an id that is absent contributes nothing.
  */
-export const BOTTOM_BARS = ["mobile-tabs", "phone-bar"];
+export const BOTTOM_BARS = ["mobile-tabs", "phone-bar", "transport-pinned"];
 
 export function fixedBottomTop(): number {
   const floor = typeof window === "undefined" ? 0 : window.innerHeight;
@@ -92,7 +98,11 @@ export function fixedBottomTop(): number {
     const box = el.getBoundingClientRect();
     // Only a bar that is actually ON the floor counts. A hidden one reports a zero-height box, and
     // one scrolled out of the way is not an obstruction.
-    if (box.height > 0 && box.bottom >= floor - 1) top = Math.min(top, box.top);
+    // ⚠ A bar FIXED in the lower half counts too, though it does not touch the floor: the docked
+    // play bar sits on top of the tab bar (2026-11-25). The sticky top bar is never `fixed`.
+    const docked =
+      box.top > floor / 2 && box.top < floor && getComputedStyle(el).position === "fixed";
+    if (box.height > 0 && (box.bottom >= floor - 1 || docked)) top = Math.min(top, box.top);
   }
   return top;
 }

@@ -178,6 +178,7 @@ export function TransportBar({
   onPitch,
   onAccidentalMode,
   follow,
+  dock,
 }: {
   canPlay: boolean;
   playState: "stopped" | "playing" | "paused";
@@ -231,6 +232,16 @@ export function TransportBar({
    * draws it then, and exactly one of the two ever does, so `#follow-playhead` stays one element.
    */
   follow?: { on: boolean; onChange: (v: boolean) => void };
+  /**
+   * ⭐ PHONE, NOTA TAB: THE PLAY BAR IS DOCKED AT THE BOTTOM (owner, 2026-11-25, UI review item 1).
+   * The bar sits fixed just above the tab bar, ⚙ (`#pitch-toggle`) lives INSIDE it, and the
+   * settings open as a bottom sheet over the music instead of a fold that pushes it down. Before
+   * it, the first stave started ~600px down an 800px screen. İmleci takip et rides at the top of
+   * the sheet: the bar has room for play, stop, tempo and ⚙ only.
+   * ⚠ `--pinned-h` is published as 0 while docked: everything that reads it is asking "how much of
+   * the TOP of the screen is covered", and a docked bar covers none. Its height goes to `--dock-h`.
+   */
+  dock?: boolean;
 }) {
   // How many strokes the SELECTED usul has. 0 means its pattern has not been written yet
   // (packages/core/src/usul.ts) — the checkbox says so instead of silently playing nothing, and
@@ -281,16 +292,21 @@ export function TransportBar({
   useEffect(() => {
     const el = pinnedRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const write = () =>
-      document.documentElement.style.setProperty("--pinned-h", `${Math.round(el.offsetHeight)}px`);
+    const write = () => {
+      const h = `${Math.round(el.offsetHeight)}px`;
+      document.documentElement.style.setProperty("--pinned-h", dock ? "0px" : h);
+      if (dock) document.documentElement.style.setProperty("--dock-h", h);
+      else document.documentElement.style.removeProperty("--dock-h");
+    };
     write();
     const ro = new ResizeObserver(write);
     ro.observe(el);
     return () => {
       ro.disconnect();
       document.documentElement.style.removeProperty("--pinned-h");
+      document.documentElement.style.removeProperty("--dock-h");
     };
-  }, []);
+  }, [dock]);
 
   // `data-stuck` while the row is pinned to the window's top edge (owner, 2026-10-01): it is
   // transparent over the Istanbul backdrop at rest, and needs a ground only once the music scrolls
@@ -325,7 +341,29 @@ export function TransportBar({
       aria-expanded={!!pitchOpen}
       aria-controls="transport-settings"
       onClick={onPitch}
+      data-dock={dock ? "1" : undefined}
+      title={dock ? (pitchOpen ? TR.mobile.settingsLess : TR.mobile.settingsMore) : undefined}
+      aria-label={dock ? (pitchOpen ? TR.mobile.settingsLess : TR.mobile.settingsMore) : undefined}
     >
+      {dock ? (
+        // A gear, the mark every phone app uses for "settings". Drawn, for the chevron's reason.
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      ) : (
+      <>
       <span className="kv-transport__more-label">
         {pitchOpen ? TR.mobile.settingsLess : TR.mobile.settingsMore}
       </span>
@@ -349,13 +387,19 @@ export function TransportBar({
       >
         <path d="M6 9.5l6 6 6-6" />
       </svg>
+      </>
+      )}
     </button>
   );
 
   return (
     <>
     {/* ── Çalma — PINNED (see the note at the top of this file) ─────────────────────────────── */}
-    <div className="kv-transport kv-transport--pinned" id="transport-pinned" ref={pinnedRef}>
+    <div
+      className={`kv-transport kv-transport--pinned${dock ? " kv-transport--dock" : ""}`}
+      id="transport-pinned"
+      ref={pinnedRef}
+    >
       <div className="kv-transport__row">
         <span className="kv-transport__caption">{TR.transport.groupPlay}</span>
         <div className="kv-transport__items">
@@ -369,11 +413,13 @@ export function TransportBar({
               disabled={!canPlay}
             >
               {playState === "playing" ? <PauseIcon /> : <PlayIcon />}
-              {playState === "playing"
-                ? TR.transport.pause
-                : playState === "paused"
-                  ? TR.transport.resume
-                  : TR.transport.play}
+              <span className="kv-btn__label">
+                {playState === "playing"
+                  ? TR.transport.pause
+                  : playState === "paused"
+                    ? TR.transport.resume
+                    : TR.transport.play}
+              </span>
             </button>
             <button
               id="stop"
@@ -383,7 +429,7 @@ export function TransportBar({
               disabled={playState === "stopped"}
             >
               <StopIcon />
-              {TR.transport.stop}
+              <span className="kv-btn__label">{TR.transport.stop}</span>
             </button>
           </div>
 
@@ -484,13 +530,14 @@ export function TransportBar({
               hiding the one choice that always works. `data-voice-state` is how a headless check
               reads the load without matching Turkish copy — and how it can tell a working fallback
               from a broken feature. */}
+          {dock && onPitch && foldHandle}
         </div>
       </div>
       {/* ⭐ İMLECİ TAKİP ET RIDES IN THE PINNED ROW ON A PHONE (owner, 2026-09-28: *"ekranda kalmasını
           istiyorum aşağı kaysa bile"*). In the card head it scrolled away with the first system,
           which is exactly when you want it — mid-piece, the page chasing the cursor or not. It costs
           the pinned row one line, and the card head gets that line back. */}
-      {follow && (
+      {follow && !dock && (
         <div className="kv-transport__follow">
           <label className="kv-toggle" title={TR.card.followTitle}>
             <input
@@ -523,13 +570,41 @@ export function TransportBar({
         800px screen it leaves no music at all. Folded, the cost is this one row.
         ⚠ Rendered only where it is needed — `App` passes the handler on a phone's Nota tab and
         nowhere else, so every wide window shows the settings open exactly as before. */}
-    {onPitch && !pitchOpen && foldHandle}
+    {onPitch && !dock && !pitchOpen && foldHandle}
+    {/* Docked: a tap anywhere outside the open sheet closes it, as every bottom sheet does. */}
+    {onPitch && dock && pitchOpen && (
+      <button
+        type="button"
+        className="kv-sheet-backdrop"
+        aria-label={TR.mobile.settingsLess}
+        tabIndex={-1}
+        onClick={onPitch}
+      />
+    )}
 
     <div className="kv-transport" id="transport-settings">
       {/* ⚠ A wrapper that is `display: contents` everywhere but the phone's fold, so it changes no
           layout: the rows stay flex items of `.kv-transport`. The fold animates ONE grid row from
           0fr to 1fr, and two siblings cannot collapse together without something to hold them. */}
       <div className="kv-transport__body">
+      {/* Docked (phone, Nota tab): İmleci takip et is the sheet's first line — see `dock`. */}
+      {follow && dock && (
+        <div className="kv-transport__row" id="row-follow">
+        <div className="kv-transport__follow">
+            <label className="kv-toggle" title={TR.card.followTitle}>
+              <input
+                id="follow-playhead"
+                type="checkbox"
+                className="kv-toggle__input"
+                data-follow={follow.on ? "on" : "off"}
+                checked={follow.on}
+                onChange={(e) => follow.onChange(e.target.checked)}
+              />
+              <span>{TR.card.follow}</span>
+            </label>
+          </div>
+        </div>
+      )}
       {/* ⚠ **THE VOICE LIVES HERE, NOT IN THE PINNED ROW** (owner, 2026-09-26: *"Çalgı sesi kısmı
           ben aşağı kaydırdıkça gelmesin, o daha fazla ayar kısmında durabilir"*). It is set ONCE
           before playing, so it has no business in the row that stays on screen while you read —
@@ -778,7 +853,7 @@ export function TransportBar({
       </div>
     </div>
 
-    {onPitch && pitchOpen && foldHandle}
+    {onPitch && !dock && pitchOpen && foldHandle}
     </>
   );
 }

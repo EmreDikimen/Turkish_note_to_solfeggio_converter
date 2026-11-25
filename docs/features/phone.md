@@ -2,7 +2,7 @@
 
 purpose: how the phone screen works and every number behind it, and the look — palette, dark mode, CSS layers, the render pin
 audience: agents and the owner, before touching anything that renders below 700px
-updated: 2026-11-20
+updated: 2026-11-25
 
 > Current state and what is deployed are in [../STATUS.md](../STATUS.md). One line per decision,
 > with dates, in [../DECISIONS.md](../DECISIONS.md). What a check may READ is
@@ -47,6 +47,33 @@ stylesheet resolves to **0px** — which is how six of them sat dead for eight d
 
 Three tabs: **Nota · Düzenle · Sayfalar**. ⛔ There is no Çal tab; it was closed on 2026-09-26 and
 `data-mtab="cal"` no longer exists.
+
+⭐ **Since 2026-11-25 (UI review item 1, branch `ui-simplify`) the play bar is DOCKED AT THE
+BOTTOM** and the settings are a bottom sheet. Measured at 393×800 on `gamzedeyim-deva`: the first
+stave starts at **353px** (it was ~600), and music fills 353→677. The fold, its handle and the
+pinned-top row described further down are the WIDE-window and pre-2026-11-25 story.
+
+```
+┌─────────────────────────────────┐
+│  eser adı ✎            ☀ ⤓  ⤢   │  the card head
+│  makam · usul · besteci…        │  ONE line, cut with an ellipsis
+│  [   Nota   |  Enstrüman  ]     │
+├─────────────────────────────────┤
+│  ◆ Bir ölçüye dokunun — …       │  one line
+│   the score, fitted to width    │  first stave at 353px
+├─────────────────────────────────┤
+│  ▶  ■   ♩= − 80 +           ⚙   │  docked bar, 61px (`--dock-h`)
+├─────────────────────────────────┤
+│   Nota    Düzenle    Sayfalar   │  62px measured (`--mtabs-real-h`)
+└─────────────────────────────────┘
+```
+
+⚙ (`#pitch-toggle`) opens `#transport-settings` as a sheet over the music — İmleci takip et first,
+then Ses, Ritim, Perde — and a tap on the dimmed page (`.kv-sheet-backdrop`) or on ⚙ closes it.
+▶ and ■ are icons in the bar; their words stay for a screen reader. ⚠ `--pinned-h` is **0** while
+docked (nothing covers the top), and `fixedBottomTop()` counts the bar as floor furniture.
+
+**Before 2026-11-25:**
 
 ```
 ┌─────────────────────────────────┐

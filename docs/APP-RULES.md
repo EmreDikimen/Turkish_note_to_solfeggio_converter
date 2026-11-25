@@ -273,8 +273,9 @@ failure on 2026-09-05.
 
 `#follow-playhead[data-follow]` **and** `#sheet-surface[data-follow]` — the setting on the control
 AND on the thing that moves. ⚠ A checked box only proves it was clicked. ⚠ **Where it lives depends
-on the width** (2026-09-28): inside `#transport-pinned` on a phone, in the card head on a wide
-window — never both. Find it by id, never by its container.
+on the width** (2026-09-28): on a phone it is the first row of the settings sheet
+(`#row-follow` inside `#transport-settings`, since 2026-11-25 — open `#pitch-toggle` first), in the
+card head on a wide window — never both. Find it by id, never by its container.
 
 The playhead carries `[data-omr="playhead"]`, because an attribute naming a bar cannot prove
 playback actually began there.
@@ -413,6 +414,10 @@ other two rows are not**, which takes TWO measurements to assert:
 2. `#transport-pinned + .kv-transport` (Ritim + Perde) is gone off the top.
 
 A whole bar made sticky passes the first and fails the second.
+⚠ **On a phone's Nota tab the row is DOCKED AT THE BOTTOM instead** (2026-11-25):
+`#transport-pinned.kv-transport--dock`, `position: fixed` on top of `#mobile-tabs`, with `#pitch-toggle`
+(⚙) inside it. Its `top ≈ 0` test does not apply there; the readable band is measured off its box
+(`fixedBottomTop()` in `score/layout.ts`).
 
 ⚠ **There is ONE Çal button again.** It replaced a corner-parked second pair (`#sticky-transport` /
 `#play-sticky` / `#stop-sticky`), which is DELETED — so a check presses `#play` itself from wherever
@@ -536,7 +541,7 @@ none of it. **Why the screen is shaped this way, and every measurement behind it
 |---|---|
 | `#app` | `data-mtab` = `nota` \| `duzenle` \| `pages`, plus `data-fullscreen`, `data-pitch` and `data-view` (`sheet` \| `instrument`) |
 | `#mobile-tabs` | `data-tab`; each button `[data-tab-id]` |
-| `#pitch-toggle` | `aria-expanded` — the settings fold under `#transport-pinned` |
+| `#pitch-toggle` | `aria-expanded` — on the Nota tab the ⚙ inside the docked bar, opening `#transport-settings` as a bottom sheet (2026-11-25; `.kv-sheet-backdrop` closes it too) |
 | `#transport-settings` | the fold's content: `#row-sound`, `#row-rhythm`, `#row-pitch` |
 | `#voice-field` | the voice select, inside `#row-sound`; its `.kv-hint` status line sits on its own line UNDER the select |
 | `#bpm` | the tempo box |

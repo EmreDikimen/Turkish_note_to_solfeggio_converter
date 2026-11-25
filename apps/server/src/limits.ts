@@ -24,11 +24,17 @@ function num(name: string, fallback: number): number {
  * Defaults sized against a real page: ~16–21 strips, each a 409×583 PNG of a few tens of KB, so a
  * page arrives as roughly 1–2 MB of base64. 12 MB leaves an honest margin without letting anyone
  * post a film.
+ *
+ * `maxStrips` 40 → 60 (owner, 2026-11-25): dense pages were refused. One request carries the whole
+ * page and the client gives up after 180 s (`TIMEOUT_MS` in apps/web/src/omr/remote.ts). Measured
+ * warm that day: 22 strips in 45.1 s of server time, 2.05 s a strip — so 60 is ~123 s, inside the
+ * 180 s with ~50 s spare, and ~3.8 MB of body. A cold start is NOT in that budget: the client waits
+ * it out separately (`WARMUP_WAIT_MS`). ⚠ Raising this again needs the client timeout raised first.
  */
 export function limits(): Limits {
   return {
     maxBodyBytes: num("MAX_BODY_BYTES", 12 * 1024 * 1024),
-    maxStrips: num("MAX_STRIPS", 40),
+    maxStrips: num("MAX_STRIPS", 60),
     maxPixelBytes: num("MAX_PIXEL_BYTES", 4 * 1024 * 1024),
     rateRequests: num("RATE_REQUESTS", 20),
     rateWindowMs: num("RATE_WINDOW_S", 60) * 1000,

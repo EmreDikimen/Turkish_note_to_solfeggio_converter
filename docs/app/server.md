@@ -412,7 +412,8 @@ cases plus the rate limit, and it *prints* the two it cannot check rather than c
       entry. Checked before the readiness check, so hammering a cold instance is limited too.
       ⚠ In-process and spoofable: a speed bump against scripts, not an authorization system.
 - [x] Max upload size (12 MB, enforced on **bytes seen**, not `content-length`) and a cap on strips
-      per request (40, checked before any pixels are read)
+      per request (60 since 2026-11-25, was 40; checked before any pixels are read — the
+      timing budget behind 60 is in `apps/server/src/limits.ts`)
 - [x] Reject non-image payloads early — IHDR is parsed *before* decoding, and a PNG that is not
       409×583 8-bit is refused. That doubles as a correctness guard: a wrong-sized strip means the
       client did not preprocess it, and decoding it would silently produce a bad read instead of an

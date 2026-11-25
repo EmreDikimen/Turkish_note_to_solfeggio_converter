@@ -11,7 +11,7 @@ Round 3 read 51% against a 75% floor ([docs/rung3/round4.md](docs/rung3/round4.m
 
 ⚠ **THE APP IS PUBLIC** — the owner put the live link on LinkedIn on 2026-09-05, ahead of the exam
 gate every plan here assumed. Strangers are reading pages on a server with **no fallback**, with
-**Round 4 control `r4-ctl-stage2-last`** since 2026-09-28 (revision `omr-decode-00008-hx7`; ⛔ this
+**Round 4 control `r4-ctl-stage2-last`** since 2026-09-28 (revision `omr-decode-00012-qaw` since 2026-11-25, same model, strip cap 60; ⛔ this
 line said Run A `best-real` until 2026-10-04, two models stale — the browser has read nothing since
 2026-09-04, so the live model is the one baked into the Cloud Run image; verify by hash, never from
 this line). Not an exam pass. What that changes: [docs/STATUS.md](docs/STATUS.md).

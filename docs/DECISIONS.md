@@ -2,7 +2,7 @@
 
 purpose: one line per decision so nobody re-opens a settled question or re-runs a cancelled experiment
 audience: agents and the owner, before proposing any change of direction
-updated: 2026-11-16
+updated: 2026-11-25
 
 Rows are in date order within each section, and a row names another by date and title. Status values: **LOCKED** (stands), **OVERTURNED** (replaced by evidence), **DROPPED** (abandoned
 on purpose), **SUPERSEDED** (a later decision covers it). Reasoning for the abandoned ones is kept
@@ -349,3 +349,4 @@ in [log/superseded.md](log/superseded.md) — read it before re-proposing anythi
 | 2026-10-08 | **THE PLAIN-ENGLISH `OVERVIEW*.md` DOCS ARE DELETED** (owner: *"sade ingilizce md file konseptini kaldır"*). Five files restated numbers on purpose and were the stalest in the repo — the main one still called Round 2 the live model and Round 3 the next run. Deleted only after a check that every number and backticked term in them also lives in another doc. Plain English stays the rule for REPLIES ([../CLAUDE.md](../CLAUDE.md)). | LOCKED (owner decision) |
 | 2026-10-08 | **CLOSED TRACKS LEAVE THE LIVE FOLDERS** (owner). The MVP ladder W0–W10 is CLOSED (`docs/archive/phases.md`) and its live docs became `docs/app/`; Round 3's seven files went to `docs/archive/rounds/` with an ARCHIVED banner; the nine raw logs and labelling notes left the repo root for `docs/log/raw/`; closed BACKLOG and RISKS entries were archived verbatim (`archive/phases.md`, `archive/phases.md`), with one-line stubs keeping BACKLOG's numbers. [INDEX.md](INDEX.md#maintaining-these-docs) | LOCKED (owner decision) |
 | 2026-10-08 | **DECISIONS ROWS ARE KEPT IN DATE ORDER, AND A ROW NAMES ANOTHER BY DATE AND TITLE — NEVER "THE ROW ABOVE / BELOW"** (owner chose the sort). 60-odd rows referred to each other by position, and about 25 already pointed at the wrong row because later rows had been inserted between them; each was resolved by hand before sorting. | LOCKED (owner decision) |
+| 2026-11-25 | **A PAGE MAY CARRY 60 STRIPS, UP FROM 40** (owner). Dense pages were refused. 60 fits the client's 180 s budget at the measured 2.05 s a strip (~123 s); raising it further needs `TIMEOUT_MS` in `apps/web/src/omr/remote.ts` raised first. Live as `omr-decode-00012-qaw`. | LIVE |

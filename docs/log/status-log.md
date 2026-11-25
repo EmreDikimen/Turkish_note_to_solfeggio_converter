@@ -2,10 +2,23 @@
 
 purpose: append-only dated record of completed work; the raw material behind STATUS.md
 audience: agents reconstructing why the code looks the way it does
-updated: 2026-11-20
+updated: 2026-11-25
 
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
+
+## 2026-11-25 — the decode server takes 60 strips a page, up from 40
+
+Owner: dense pages were refused at 40. `MAX_STRIPS` default 40 → 60 (`apps/server/src/limits.ts`,
+commit `c888a5c`). Why 60 is safe: one request carries the whole page and the client gives up at
+180 s; measured warm the same day, 22 strips took 45.1 s of server time (2.05 s a strip, n=1), so 60
+is ~123 s. A cold start is outside that budget (the client waits it out first). Live revision
+**`omr-decode-00012-qaw`** (image `decode:strips60b`), 100% of traffic after the owner's yes; same
+model graphs, hash-checked against `r4-ctl-stage2-last`. Checked on the tagged URL: `check:limits`
+6/6 (">60 refused"), and a 22-strip page read in 47 s. Revert target: `omr-decode-00008-hx7`.
+⚠ `omr-decode-00011-qog` (image `decode:strips60`) is a BAD build — the context was uploaded while
+the working tree had been switched to a branch without the change, so it still says 40. Never route
+to it. Lesson: do not touch the working tree until `gcloud builds submit` has finished uploading.
 
 ## 2026-11-20 — the code is reorganized; nothing it does changed
 

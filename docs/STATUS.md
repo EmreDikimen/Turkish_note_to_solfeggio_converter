@@ -2,7 +2,7 @@
 
 purpose: the ONLY file that states current state or next action; rewritten each session, never appended to
 audience: anyone starting work — read this before doing anything
-updated: 2026-11-16
+updated: 2026-11-25
 
 ## Now
 
@@ -11,7 +11,8 @@ updated: 2026-11-16
 from it and are live today:
 
 1. ⚠ **Visitors read with ROUND 4 CONTROL `r4-ctl-stage2-last`** (owner, 2026-09-28) — Cloud Run
-   revision **`omr-decode-00008-hx7`**, `maxScale` **10** (both read off the service on 2026-10-08),
+   revision **`omr-decode-00012-qaw`** since 2026-11-25 (same graphs; a page may carry **60** strips, up from 40),
+   `maxScale` **10**; revert target `omr-decode-00008-hx7`,
    and the same int8 graphs on the Hub, hash-checked after upload. **It is NOT an exam pass**: Round
    4's exam is unread, and `r4-ctl` beat the previous model only as a *lead* on dense strips
    ([METRICS-EXAM.md](METRICS-EXAM.md#round-4s-vocabulary-ab--how-it-is-scored-and-what-the-kit-measured-before-any-gpu-ran)). ✅ **The browser gate pins 26/28 since

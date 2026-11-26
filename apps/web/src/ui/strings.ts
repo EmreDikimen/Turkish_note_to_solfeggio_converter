@@ -239,8 +239,9 @@ export const TR = {
     undoTitle: "Son değişikliği geri al (Ctrl/⌘+Z)",
     redo: "↷ Yinele",
     redoTitle: "Geri alınan değişikliği yinele (Ctrl/⌘+Shift+Z)",
-    meta: (makam: string, usul: string, composer: string | undefined, notes: number, dur: string) =>
-      `makam ${makam} · usul ${usul}${composer ? ` · ${composer}` : ""} · ${notes} nota · ${dur}`,
+    // Only what is KNOWN, by its real name (UI review item 7, 2026-11-25): "Uşşak · Sofyan · Tatyos
+    // Efendi · 3:00". It said "makam · usul · 229 nota" when neither was found.
+    meta: (parts: readonly string[]) => parts.filter(Boolean).join(" · "),
     // Above the sheet, so it is the first line a reader meets (owner, 2026-10-01). The touch
     // wording says "dokunun" — there is no click on a phone.
     hintSheet: "Çalmaya başlamak istediğiniz ölçüye tıklayın — eser oradan çalar.",

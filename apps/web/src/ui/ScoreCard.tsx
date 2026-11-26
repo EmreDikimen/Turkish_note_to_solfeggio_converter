@@ -11,13 +11,16 @@
 
 import { useState, type ReactNode } from "react";
 import { Menu } from "@base-ui/react/menu";
-import type { NoteModelDocument } from "@turkish-omr/core";
+import { findUsul, makamDisplay, type NoteModelDocument } from "@turkish-omr/core";
 import { RenameField } from "./RenameField";
 import { Segmented } from "./Segmented";
 import { TR } from "./strings";
 import { useViewport } from "../browser/usePhone";
 
 export type ViewMode = "sheet" | "instrument";
+
+/** "tatyos efendi" → "Tatyos Efendi" — the corpus stores names lowercase. */
+const titleCase = (s: string): string => s.replace(/(^|\s)(\p{Ll})/gu, (_, a: string, b: string) => a + b.toLocaleUpperCase("tr"));
 
 function duration(totalMs: number): string {
   const s = Math.round(totalMs / 1000);
@@ -26,6 +29,7 @@ function duration(totalMs: number): string {
 
 export function ScoreCard({
   doc,
+  makamSlug,
   pageId,
   pageName,
   onRename,
@@ -47,6 +51,9 @@ export function ScoreCard({
   children,
 }: {
   doc: NoteModelDocument;
+  /** The makam IN USE (the prompt's or ⚙'s choice), "" for none — what the info line names, so it
+   *  always matches what plays. `doc.makam` is what the file said, which a decoded page leaves empty. */
+  makamSlug: string;
   /**
    * The stored record this score IS, when it is one, and the name the reader gave it.
    *
@@ -85,7 +92,6 @@ export function ScoreCard({
   canRedo: boolean;
   children: ReactNode;
 }) {
-  const notes = doc.events.filter((e) => e.kind === "note").length;
   // Renaming the page ON SCREEN. The same box the list uses (`RenameField`), because there is one
   // rename and it should behave the same in both places.
   /** The save menu: one button, two ways out. Closed by choosing, by Esc, or by tapping elsewhere. */
@@ -243,13 +249,12 @@ export function ScoreCard({
             </span>
           )}
           <span className="kv-card__meta">
-            {TR.card.meta(
-              doc.makam,
-              doc.usul,
-              doc.composer,
-              notes,
-              totalMs == null ? "—" : duration(totalMs)
-            )}
+            {TR.card.meta([
+              makamSlug ? makamDisplay(makamSlug) : "",
+              doc.usul ? (findUsul(doc.usul)?.label ?? titleCase(doc.usul)) : "",
+              doc.composer ? titleCase(doc.composer) : "",
+              totalMs == null ? "" : duration(totalMs),
+            ])}
           </span>
         </h2>
 

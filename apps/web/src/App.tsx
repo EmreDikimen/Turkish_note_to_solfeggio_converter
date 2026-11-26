@@ -1381,6 +1381,7 @@ export function App() {
 
           <ScoreCard
             doc={doc}
+            makamSlug={makamSlug}
             // The heading shows the name the reader gave this page, and offers to change it. Null
             // for anything that is not a stored page, which then reads the document as it always did.
             pageId={saved?.id ?? null}

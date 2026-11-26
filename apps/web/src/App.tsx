@@ -419,11 +419,9 @@ export function App() {
     clearRecent,
     openRecent,
     recent,
-    recentOpen,
     removeRecent,
     renameRecent,
     saved,
-    setRecentOpen,
     setSaved,
   } = useRecentPages({
     bpm,
@@ -518,8 +516,6 @@ export function App() {
     setSelectedTuplet(null); // and so does a selected one
     setLastEditMeasure(null); // nothing edited yet → the palette's Çal starts at the top
     setWriteOut(false);
-    // The list is a way back, not the destination: once there is a score on screen it folds away.
-    setRecentOpen(false);
     // ⚠ PHONE ONLY, and a wide window sees none of it: a new score arrives on the READING tab.
     // The editing tab's armed tool and selection point at a document that has just been replaced,
     // and on a phone the tab bar is the only thing that says which section you are looking at.
@@ -1299,8 +1295,6 @@ export function App() {
         // A read in flight owns the document; opening a stored page under it would race the decode
         // that is about to call `loadDoc`.
         busy={omrBusy}
-        open={recentOpen}
-        onToggle={() => setRecentOpen((v) => !v)}
         onOpen={openRecent}
         onRemove={removeRecent}
         onRename={renameRecent}

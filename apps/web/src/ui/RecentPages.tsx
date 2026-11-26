@@ -43,8 +43,6 @@ export function RecentPages({
   items,
   currentId,
   busy,
-  open,
-  onToggle,
   onOpen,
   onRemove,
   onRename,
@@ -55,14 +53,6 @@ export function RecentPages({
   currentId: string | null;
   /** A read is running: opening a stored page mid-read would race the decode that is finishing. */
   busy: boolean;
-  /**
-   * ⚠ Unfolded is the DEFAULT and it is owned by App, not by this component. The empty state is
-   * where the list earns its place — the app opens with no score, and "what did I read last time"
-   * is then the whole question — but installing a score has to fold it away, and a component that
-   * held its own `open` could not be told that. See `recentOpen` in App.tsx.
-   */
-  open: boolean;
-  onToggle: () => void;
   onOpen: (id: string) => void;
   onRemove: (id: string) => void;
   onRename: (id: string, name: string) => void;
@@ -81,25 +71,16 @@ export function RecentPages({
       className="kv-recent"
       data-omr="recent"
       data-count={items.length}
-      data-open={open ? "1" : "0"}
       data-current={currentId ?? undefined}
     >
       <div className="kv-recent__head">
         <h2 className="kv-recent__title">{TR.recent.title}</h2>
         <span className="kv-recent__count">{TR.recent.count(items.length)}</span>
-        <button
-          id="recent-toggle"
-          type="button"
-          className="kv-btn kv-btn--ghost"
-          aria-expanded={open}
-          aria-controls="recent-list"
-          onClick={onToggle}
-        >
-          {open ? TR.recent.hide : TR.recent.show}
-        </button>
       </div>
 
-      {open && (
+      {/* ⭐ ALWAYS OPEN (owner, 2026-11-25, UI review item 11): Sayfalar IS this list's tab, so a
+          fold there cost a tap and saved nothing. It used to fold away once a score was loaded. */}
+      {(
         <>
           <ul className="kv-recent__list" id="recent-list">
             {items.map((it) => (

@@ -346,11 +346,14 @@ style being a per-piece coin.
 
 ### The stored-page list
 
-`#recent[data-omr="recent"][data-count][data-open][data-current]`, one
+`#recent[data-omr="recent"][data-count][data-current]`, one
 `[data-omr="recent-item"][data-page-id]` per row (`[data-omr="recent-open"]` /
-`[data-omr="recent-remove"]` inside), plus `#recent-toggle`, `#recent-clear`, the row's
+`[data-omr="recent-remove"]` inside), plus `#recent-clear`, the row's
 `[data-omr="recent-rename"]`, the heading's `#score-rename` + `[data-omr="score-name"]`, and the
 shared box `[data-omr="rename-input"][data-page-id]`.
+
+⛔ **No fold since 2026-11-25** (UI review item 11): `#recent-toggle` and `data-open` are gone, the
+list is always open, and loading a score no longer folds it.
 
 ⚠ **`data-count` is the load-bearing one** — it is the only proof a page was stored. `#recent`
 renders NOTHING when the store is empty, so its **absence is an assertion too**.

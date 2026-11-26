@@ -111,8 +111,6 @@ export const TR = {
   recent: {
     title: "Daha önce okuduklarınız",
     count: (n: number) => `${n} sayfa`,
-    show: "Göster",
-    hide: "Gizle",
     // The one line under a row: what came out of the read, and when it was last touched.
     summary: (notes: number, measures: number) => `${notes} nota · ${measures} ölçü`,
     openTitle: (name: string) => `${name} sayfasını aç`,

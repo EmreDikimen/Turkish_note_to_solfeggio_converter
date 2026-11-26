@@ -57,10 +57,6 @@ export function useRecentPages({
   // load their fixtures through `?score=` without filling a reader's list.
   // `createdAt` rides along because an edit REWRITES the record and must not move its birthday.
   const [saved, setSaved] = useState<{ id: string; name: string; createdAt: number } | null>(null);
-  // Whether the list is unfolded. Open on arrival — the app opens with no score and the list is
-  // then the only thing on the page worth reading — and folded away by `loadDoc`, because once a
-  // score is installed the list is a way back, not the destination.
-  const [recentOpen, setRecentOpen] = useState(true);
 
   /* ── Remembering the page (owner, 2026-09-05) ───────────────────────────────────────────────
    *
@@ -164,5 +160,5 @@ export function useRecentPages({
     void clearPages().then(setRecent);
   }
 
-  return { clearRecent, openRecent, recent, recentOpen, removeRecent, renameRecent, saved, setRecentOpen, setSaved };
+  return { clearRecent, openRecent, recent, removeRecent, renameRecent, saved, setSaved };
 }

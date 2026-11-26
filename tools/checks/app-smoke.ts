@@ -240,7 +240,6 @@ async function main() {
   // name on the row, because a row that opened the WRONG record would still show a name.
   let reopenedNotes = 0;
   let markedCurrent = false;
-  let foldedOnOpen = false;
   let renamed = "";
   let modalUp = false;
   if (listed > 0) {
@@ -255,10 +254,7 @@ async function main() {
     // `#recent[data-current]` is the store id of the page on screen: the only proof the app knows
     // the score it is showing IS the stored one, and therefore that further edits go back to it.
     const current = await restored.getAttribute("data-current");
-    // The list is a way back, not the destination: once a score is on screen it FOLDS (App's
-    // `setRecentOpen(false)` in loadDoc). Assert that, then open it again to read the row.
-    foldedOnOpen = (await restored.getAttribute("data-open")) === "0";
-    await page.locator("#recent-toggle").click();
+    // The list is ALWAYS open since 2026-11-25 (UI review item 11) — no fold to open first.
     const rowId = await page
       .locator('[data-omr="recent-item"]')
       .first()
@@ -329,7 +325,6 @@ async function main() {
       `${reopenedNotes} notes back, ${notes} read`,
     ],
     ["…marked as the page on screen", markedCurrent, String(markedCurrent)],
-    ["…and the list folds once it is open", foldedOnOpen, String(foldedOnOpen)],
     ["…without asking the makam again", !modalUp, modalUp ? "MODAL UP" : "no modal"],
     ["…and can be renamed, for good", renamed === "yeniden adlandırıldı", renamed || "(not renamed)"],
     ["no uncaught page errors", pageErrors.length === 0, pageErrors.join("; ") || "none"],

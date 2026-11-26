@@ -7,6 +7,22 @@ updated: 2026-11-25
 **Newest first.** This file is history: it records what was true on a date, not what to do now.
 Current state → [../STATUS.md](../STATUS.md). Abandoned plans → [superseded.md](superseded.md).
 
+## 2026-11-25 — UI review on branch `ui-simplify` (not merged, not deployed)
+
+Owner asked for a review of every screen and chose item by item. Built (one commit each):
+1 play bar docked at the bottom on the phone's Nota tab, settings as a ⚙ bottom sheet — first stave
+at 353px of 800 (was ~600); 2 toolbox Çal/Dur in the fixed foot, no edit switch on Düzenle;
+4 makam prompt as tap-a-makam with the signature and karar as perdes; 5 one plain sentence after a
+read, details folded, a one-time note on Nota; 7 info line names only what is known, and the makam
+in use; 8 light/dark switch into the ⚙ sheet; 10 drum rows only while Usul vuruşu is on (sheet
+840 vs 944px); 11 stored-page list always open; 12 iPhone install hint never over the music;
+13 read time "1 dakika" up front, then an estimate from the strip count (2.05 s/strip, n=2).
+Skipped by the owner: 3 (follow switch names), 9, 14, 15, 16. Dropped: 6 — the developer panel is
+already hidden on the deployed site (`devMode.ts`); it showed only on the dev server.
+Checks on the branch: typecheck, `npm test`, `smoke:editor` all pass; `smoke:phone` no sideways
+scroll at 4 sizes. NOT run: `smoke:app`, `smoke:page`, `gate:browser` (in-browser decode — heats
+the Mac) and the strip render pin (`render.ts`), though no rule under `.kv-score` changed.
+
 ## 2026-11-25 — the decode server takes 60 strips a page, up from 40
 
 Owner: dense pages were refused at 40. `MAX_STRIPS` default 40 → 60 (`apps/server/src/limits.ts`,

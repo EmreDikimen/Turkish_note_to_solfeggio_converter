@@ -13,7 +13,8 @@
  *   - it is not an in-app browser (LinkedIn, Instagram, Facebook): those have no Ana Ekrana Ekle,
  *     and the owner's link went out on LinkedIn, so that is a real case;
  *   - the reader has not closed it before (`localStorage`, wrapped — a private window THROWS).
- * ⚠ The Düzenle tab hides it in CSS: the docked toolbox owns the bottom of the screen there.
+ * ⚠ Never over the music (UI review item 12, 2026-11-25): CSS hides it whenever a score is on
+ *   screen, except on the phone's Sayfalar tab — so it shows on the upload screen and Sayfalar only.
  *
  * DOM contract: `#ios-install-hint[data-omr="ios-install"]`; the close button is
  * `#ios-install-hint-close`.

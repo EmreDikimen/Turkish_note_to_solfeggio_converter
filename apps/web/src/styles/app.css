@@ -3859,3 +3859,10 @@
 .kv-page[data-mtab]:not([data-mtab="nota"]) > .kv-readnote {
   display: none;
 }
+
+/* ── The iPhone install hint never covers the music (UI review item 12, 2026-11-25) ───────────
+ * Upload screen and Sayfalar only: once a score is on screen, every other view (the phone's Nota
+ * and Düzenle tabs, an iPad's wide layout, full screen) hides it. Closing it is still remembered. */
+.kv-page[data-ready="1"]:not([data-mtab="pages"]) .kv-ios-hint {
+  display: none;
+}

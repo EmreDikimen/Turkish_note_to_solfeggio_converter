@@ -51,9 +51,10 @@ export const TR = {
     leadTouch: "Notanın fotoğrafını yükleyin",
     pickTouch: "Fotoğraf yükle",
     // ⚠ Keep this in step with `status.expectServer` below — they are the same promise, said twice
-    // (before the upload and during it). 35–55 sn is the measured range for a page, docs/METRICS.md;
-    // the "20 saniye" this replaced on 2026-08-08 was never measured and undersold it by half.
-    hint: "JPG veya PNG · tek sayfa · yaklaşık 35–55 saniye",
+    // (before the upload and during it). "1 dakika" since 2026-11-25: 47–56 s warm on 22–24 strips,
+    // ~90 s cold, and pages may now carry 60 strips; during the read the estimate is per page
+    // (`expectServerN`). The "20 saniye" replaced on 2026-08-08 was never measured.
+    hint: "JPG veya PNG · tek sayfa · yaklaşık 1 dakika",
     hintPaste: "Sürükleyin, yapıştırın (⌘/Ctrl+V) ya da seçin",
   },
 
@@ -562,11 +563,14 @@ export const TR = {
     onDevice: " · kendi cihazınızda okundu",
     warnings: (n: number) => ` — ${n} birleştirme uyarısı`,
     elapsed: (s: number) => `${s} sn`,
-    expectServer: "genelde 35–55 sn sürer",
+    expectServer: "genelde 1 dakika kadar sürer",
+    // From the strip count (ReadProgress.expectedSeconds), 2026-11-25 — it said "35–55 sn" for every page.
+    expectServerN: (s: number) => `yaklaşık ${s} sn sürer`,
     expectLocal: "bu okuma sizin cihazınızda yapılıyor, biraz uzun sürebilir",
     // True as of the 2026-08-08 retry fix: a sleeping server is now WAITED for (~10 s, docs/METRICS.md)
     // instead of the page silently being read on the user's own machine.
-    coldStart: "Sunucu uykudaysa ilk okuma 10–15 sn daha uzun sürebilir.",
+    // Measured 2026-11-25: a cold read of a 22-strip page took ~90 s against 47–49 s warm.
+    coldStart: "Sunucu uykudaysa ilk okuma yarım dakika kadar daha uzun sürebilir.",
   },
 
   /** The slicer's own phase names (apps/web/src/omr/page.ts reports these keys). */

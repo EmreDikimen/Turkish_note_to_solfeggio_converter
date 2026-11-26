@@ -16,6 +16,18 @@ import type { OmrStatus } from "./status";
 import { TR } from "./strings";
 
 /** A trailing "12/41" in the phase text is a real count, and the only place one comes from. */
+/**
+ * How long a server read of `strips` strips usually takes, rounded UP to 5 s (UI review item 13,
+ * 2026-11-25). Measured that day on the live service, warm: 22 strips in 45.1 s of server time
+ * (2.05 s a strip) and 47–49 s upload-to-notes, so ~4 s on top. n=2 — a lead, re-measure if the
+ * model or the container shape changes. A cold start is NOT in it: the waking line says that.
+ */
+const SECONDS_PER_STRIP = 2.05;
+const OVERHEAD_S = 4;
+export function expectedSeconds(strips: number): number {
+  return Math.ceil((strips * SECONDS_PER_STRIP + OVERHEAD_S) / 5) * 5;
+}
+
 function fraction(text: string): number | null {
   const m = /(\d+)\s*\/\s*(\d+)/.exec(text);
   if (!m) return null;
@@ -46,7 +58,9 @@ export function ReadProgress({ status, startedAt }: { status: OmrStatus; started
       </div>
       <p className="kv-progress__elapsed">
         {TR.status.elapsed(elapsed)}
-        {onServer ? ` · ${TR.status.expectServer}` : ""}
+        {onServer
+          ? ` · ${status.counts?.strips ? TR.status.expectServerN(expectedSeconds(status.counts.strips)) : TR.status.expectServer}`
+          : ""}
         {status.phase === "decode" && !onServer ? ` · ${TR.status.expectLocal}` : ""}
       </p>
       {onServer && elapsed >= 15 && <p className="kv-progress__elapsed">{TR.status.coldStart}</p>}

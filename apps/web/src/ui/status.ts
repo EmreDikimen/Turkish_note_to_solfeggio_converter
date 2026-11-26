@@ -84,7 +84,8 @@ export function readingStatus(
   // before any progress reads as a hang. ⚠ Static text, no ticking clock: `page-smoke` counts
   // DISTINCT status texts to prove progress moved, so a countdown here would forge that signal.
   if (current === "waking") return busy(kind, "decode", TR.status.wakingServer);
-  if (current === "server") return busy(kind, "decode", TR.status.readingOnServer(total));
+  if (current === "server")
+    return { ...busy(kind, "decode", TR.status.readingOnServer(total)), counts: { strips: total } };
   return done < total
     ? busy(kind, "decode", TR.status.readingStrip(done + 1, total))
     : busy(kind, "stitch", TR.status.stitching);

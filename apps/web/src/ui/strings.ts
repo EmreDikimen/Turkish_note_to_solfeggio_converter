@@ -545,15 +545,22 @@ export const TR = {
       sliceS: string,
       readS: string
     ) =>
-      `Sayfa okundu: ${staves} porte → ${strips} şerit → ${notes} nota, ${measures} ölçü · ` +
+      `${staves} porte → ${strips} şerit → ${notes} nota, ${measures} ölçü · ` +
       `dilimleme ${sliceS} sn · okuma ${readS} sn`,
+    // The plain sentence after a page read (UI review item 5, 2026-11-25); `pageDone` moved under
+    // the "Teknik ayrıntı" fold, where its porte → şerit → seconds belong.
+    pageShort: (notes: number, measures: number) => `Sayfa okundu — ${notes} nota, ${measures} ölçü.`,
+    // The one-time note on the Nota tab right after a read.
+    readNoteTitle: (notes: number) => `Sayfa okundu — ${notes} nota.`,
+    readNoteBody: "Yanlış okunan notaları Düzenle'den düzeltebilirsiniz.",
+    readNoteClose: "Kapat",
     deskewed: (deg: string) => ` (${deg}° düzeltildi)`,
     makam: (name: string) => ` · makam: ${name}`,
     makamUnknown: " · makam: tanınmadı",
     onServer: " · sunucuda okundu",
     onDeviceFallback: " · kendi cihazınızda okundu (sunucu yanıt vermedi)",
     onDevice: " · kendi cihazınızda okundu",
-    warnings: (n: number) => ` — ${n} uyarı`,
+    warnings: (n: number) => ` — ${n} birleştirme uyarısı`,
     elapsed: (s: number) => `${s} sn`,
     expectServer: "genelde 35–55 sn sürer",
     expectLocal: "bu okuma sizin cihazınızda yapılıyor, biraz uzun sürebilir",

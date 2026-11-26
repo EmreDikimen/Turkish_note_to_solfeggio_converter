@@ -3812,3 +3812,49 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* ── After a read (UI review item 5, 2026-11-25) ──────────────────────────────────────────────
+ * The status line is ONE plain sentence; the porte → şerit → seconds line folds under it. */
+.kv-status__detail {
+  margin-top: var(--space-1);
+  color: var(--ink-faint);
+}
+.kv-status__detail > summary {
+  cursor: pointer;
+  width: fit-content;
+}
+/* The one-time note on the Nota tab: what happened, and what to do about a wrong note. */
+.kv-readnote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.kv-readnote > div {
+  flex: 1 1 auto;
+}
+.kv-readnote strong {
+  color: var(--ok);
+  font-weight: 600;
+}
+.kv-readnote__close {
+  flex: 0 0 auto;
+  width: var(--control-h);
+  height: var(--control-h);
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0 0;
+  border: 0;
+  background: none;
+  color: var(--ink-faint);
+  font: inherit;
+  cursor: pointer;
+}
+.kv-page[data-mtab]:not([data-mtab="nota"]) > .kv-readnote {
+  display: none;
+}

@@ -249,6 +249,12 @@ folded it would be left with a shut toolbox and no way to open it. The wide wind
 ⭐ **A grab bar says so** (owner, 2026-09-28): the 40×5px rounded bar in the title bar's top edge, the
 mark every phone bottom sheet carries. Phone only, decoration only — the bar under it is the target.
 
+⭐ **After a read, the Nota tab says so** (UI review item 5, 2026-11-25): a one-time note,
+`[data-omr="read-note"]`, "Sayfa okundu — N nota" plus where to fix a wrong note, closed by ✕ or by
+entering edit mode, tied to the record the read opened. The status line on Sayfalar is one plain
+sentence; the porte → şerit → seconds line folds under "Teknik ayrıntı" (`#omr-status` is a `<div>`
+now, its `data-*` unchanged).
+
 ⭐ **Çal / Dur are in the fixed foot too** (UI review item 2, 2026-11-25), on ONE row with Geri al /
 Yinele — as icons on a phone. The "DİNLE" group that opened the scrolling body is gone, so the
 first tools start ~95px higher, and on the Düzenle tab `#edit-toggle` (✓ Düzenleniyor) is hidden:

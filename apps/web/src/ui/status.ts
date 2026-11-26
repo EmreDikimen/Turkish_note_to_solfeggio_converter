@@ -51,6 +51,10 @@ export type OmrCounts = {
 export type OmrStatus = {
   /** The sentence shown to the user. Free to reword or translate — nothing asserts on it. */
   text: string;
+  /** The technical line under a "Teknik ayrıntı" fold — porte, şerit, seconds, where, warnings.
+   *  Set on a finished page read only (UI review item 5, 2026-11-25): `text` is then the short,
+   *  plain sentence a beginner reads. */
+  detail?: string;
   state: "busy" | "done";
   kind: OmrKind;
   phase?: OmrPhase;
@@ -162,7 +166,8 @@ export function pageSummary(args: {
   const { staves, strips, notes, measures, sliceMs, skewDeg, decodeMs, detected, where, warnings } =
     args;
   return {
-    text:
+    text: TR.status.pageShort(notes, measures),
+    detail:
       TR.status.pageDone(
         staves,
         strips,

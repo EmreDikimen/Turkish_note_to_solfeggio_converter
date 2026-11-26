@@ -11,6 +11,7 @@
  */
 
 import type { OmrStatus } from "./status";
+import { TR } from "./strings";
 
 export function StatusLine({
   status,
@@ -23,7 +24,8 @@ export function StatusLine({
   if (!status) return null;
   const c = status.counts;
   return (
-    <p
+    // ⚠ A <div>, not a <p>, since it can hold a <details> (2026-11-25). Checks find it by id.
+    <div
       id="omr-status"
       className={visuallyHidden ? "kv-visually-hidden" : "kv-status"}
       data-state={status.state}
@@ -38,6 +40,12 @@ export function StatusLine({
     >
       {status.state === "done" ? "✓ " : ""}
       {status.text}
-    </p>
+      {status.detail && (
+        <details className="kv-status__detail">
+          <summary>{TR.errors.detail}</summary>
+          {status.detail}
+        </details>
+      )}
+    </div>
   );
 }

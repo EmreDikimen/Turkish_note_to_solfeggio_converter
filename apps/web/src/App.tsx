@@ -438,6 +438,24 @@ export function App() {
     setSampleFile,
     structure,
   });
+
+  /**
+   * ⭐ THE ONE-TIME NOTE ON THE NOTA TAB AFTER A READ (owner, 2026-11-25, UI review item 5). The
+   * status line lives on the Sayfalar tab, but a phone lands on Nota after a read — so the reader
+   * never saw that it worked, nor that wrong notes can be fixed. Tied to the RECORD the read opened
+   * (`saved.id`): opening another page hides it, a new read replaces it, ✕ or entering edit mode
+   * (the advice taken) closes it.
+   */
+  const [readNote, setReadNote] = useState<{ id: string; notes: number } | null>(null);
+  useEffect(() => {
+    if (omrStatus?.state === "done" && omrStatus.kind === "page" && saved)
+      setReadNote({ id: saved.id, notes: omrStatus.counts?.notes ?? 0 });
+    // Only a NEW finished status opens it; `saved` changing on its own (a rename) must not.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [omrStatus]);
+  useEffect(() => {
+    if (editMode) setReadNote(null);
+  }, [editMode]);
   // Currently-applied chromatic transposition, in commas (0 = original). A test control for the
   // core `transpose`; later this becomes the ahenk selector (each ahenk is a fixed comma offset).
   const [transpose, setTranspose] = useState(0);
@@ -1343,6 +1361,23 @@ export function App() {
             // the same condition as the fold, so ⚙ and the sheet exist exactly where the fold did.
             dock={isPhone && !fullScreen && mobileTab === "nota" && !editMode}
           />
+
+          {isPhone && readNote && saved?.id === readNote.id && !editMode && !fullScreen && (
+            <div className="kv-readnote" role="status" data-omr="read-note">
+              <div>
+                <strong>{TR.status.readNoteTitle(readNote.notes)}</strong> {TR.status.readNoteBody}
+              </div>
+              <button
+                type="button"
+                className="kv-readnote__close"
+                aria-label={TR.status.readNoteClose}
+                title={TR.status.readNoteClose}
+                onClick={() => setReadNote(null)}
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <ScoreCard
             doc={doc}

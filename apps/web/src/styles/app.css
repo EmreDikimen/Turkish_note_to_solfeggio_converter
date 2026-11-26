@@ -3156,7 +3156,13 @@
      undo pairs on a 667px screen is a duplicate costing a whole 44px row of the card's head, on the
      one screen with the least room. ⛔ Only on this tab, and only on a phone: the card's pair keeps
      its ids and `smoke:editor` drives them at 1280px. */
-  .kv-page[data-mtab="duzenle"] .kv-card__undo,
+  .kv-page[data-mtab="duzenle"] .kv-card__undo {
+    display: none;
+  }
+  /* ⛔ That list used to run straight on into the rule below (fixed 2026-11-25): a comment had been
+     dropped between two of its selectors, so the five Düzenle selectors above took the NOTA tab's
+     padding instead of `display: none` — the pinned row stayed on the edit tab (182px at 393×800)
+     and the title and meta line were squeezed to one word a line. Keep every list closed. */
   /* ⭐ ROOM FOR THE CORNER GROUP on the Nota tab (2026-10-01). The group is out of the flow, so the
      title and the meta line ran UNDER it — the save mark sat on "511 nota" — and the light / dark
      switch made it three controls wide. Reserve its width beside the TITLE block only (switch 52 +

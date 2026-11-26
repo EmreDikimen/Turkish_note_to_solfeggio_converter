@@ -35,7 +35,7 @@
  * one it means.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { findUsul, USULS, type MakamOption, type MakamRuleUse } from "@turkish-omr/core";
 import { KITS, type KitId } from "../audio/strokeKits";
 import { VOICES, type VoiceId } from "../audio/instruments";
@@ -179,6 +179,7 @@ export function TransportBar({
   onAccidentalMode,
   follow,
   dock,
+  sheetExtra,
 }: {
   canPlay: boolean;
   playState: "stopped" | "playing" | "paused";
@@ -242,6 +243,8 @@ export function TransportBar({
    * the TOP of the screen is covered", and a docked bar covers none. Its height goes to `--dock-h`.
    */
   dock?: boolean;
+  /** Docked only: the sheet's last row — the light / dark switch (UI review item 8, 2026-11-25). */
+  sheetExtra?: ReactNode;
 }) {
   // How many strokes the SELECTED usul has. 0 means its pattern has not been written yet
   // (packages/core/src/usul.ts) — the checkbox says so instead of silently playing nothing, and
@@ -850,6 +853,12 @@ export function TransportBar({
           </label>
         </div>
       </div>
+      {dock && sheetExtra && (
+        <div className="kv-transport__row" id="row-look">
+          <span className="kv-transport__caption">{TR.theme.group}</span>
+          <div className="kv-transport__items">{sheetExtra}</div>
+        </div>
+      )}
       </div>
     </div>
 

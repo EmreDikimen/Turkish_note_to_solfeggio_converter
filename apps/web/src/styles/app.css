@@ -3168,7 +3168,8 @@
      switch made it three controls wide. Reserve its width beside the TITLE block only (switch 52 +
      two marks + gaps) — the view switch below keeps the full row. */
   .kv-page[data-mtab="nota"] .kv-card__title {
-    padding-right: calc(52px + 2 * var(--control-h) + var(--space-4));
+    /* Two marks only since 2026-11-25 — the light / dark switch moved to the ⚙ sheet (item 8). */
+    padding-right: calc(2 * var(--control-h) + var(--space-3));
   }
 
   /* ⭐ THE CORNER GROUP — Notayı kaydet and Tam ekran — AND IT IS A COVERING BUG, NOT A TIDY-UP

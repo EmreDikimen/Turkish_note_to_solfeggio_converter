@@ -1360,6 +1360,9 @@ export function App() {
             // ⭐ The phone's Nota tab docks the bar at the bottom (UI review item 1, 2026-11-25) —
             // the same condition as the fold, so ⚙ and the sheet exist exactly where the fold did.
             dock={isPhone && !fullScreen && mobileTab === "nota" && !editMode}
+            // ⭐ On a phone the light / dark switch lives at the bottom of the ⚙ sheet (UI review
+            // item 8, 2026-11-25) — it was also in the card's corner, crowding the title.
+            sheetExtra={<ThemeSwitch theme={theme} onTheme={setTheme} withLabel />}
           />
 
           {isPhone && readNote && saved?.id === readNote.id && !editMode && !fullScreen && (
@@ -1411,7 +1414,7 @@ export function App() {
             onFullScreen={(isPhone || (phoneShaped && coarse)) && !fullScreen ? () => applyFullScreen(true) : undefined}
             // The light / dark switch on the Nota tab too — on a phone the page header (where the
             // switch lives on a wide window) is only on the Sayfalar tab.
-            cornerExtra={isPhone ? <ThemeSwitch theme={theme} onTheme={setTheme} /> : undefined}
+            cornerExtra={undefined}
             onExport={runExport}
             onUndo={onUndo}
             onRedo={onRedo}

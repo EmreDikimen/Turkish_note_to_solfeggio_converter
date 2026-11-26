@@ -350,8 +350,9 @@ Every text pair's contrast is computed in the header of `apps/web/src/styles/tok
   contain a `prefers-color-scheme` query (css-contract-test.ts). The choice is stored as `kv.theme`
   and applied by an inline script in `index.html` BEFORE the first paint, so a dark visit never
   flashes light; `src/theme.ts` holds the same rule for React. ⚠ A render job (`?mode=`) is always
-  light, whatever is stored. On a phone the switch is also in the score card's corner, so it is on
-  the Nota tab and not only on Sayfalar.
+  light, whatever is stored. On a phone the switch is also the last row of the ⚙ sheet ("Görünüm",
+  `#row-look`, since 2026-11-25 — it was in the score card's corner, crowding the title), so it is
+  on the Nota tab and not only on Sayfalar.
 - The page goes to **navy-black with ivory ink, and GOLD becomes the working colour** (owner,
   2026-10-01: "the Bosphorus at night"; it was a neutral slate with a pale-lapis accent):
   `--paper #0c1426`, `--accent #d9b56a`. **At night the SHEET is dark too**

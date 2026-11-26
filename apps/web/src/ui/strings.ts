@@ -99,6 +99,7 @@ export const TR = {
   // The light / dark switch (2026-10-01).
   theme: {
     label: "Gece modu",
+    group: "Görünüm",
     toDark: "Koyu temaya geç",
     toLight: "Açık temaya geç",
   },

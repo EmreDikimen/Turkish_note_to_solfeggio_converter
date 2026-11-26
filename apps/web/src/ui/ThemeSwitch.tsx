@@ -16,11 +16,14 @@ export function ThemeSwitch({
   theme,
   onTheme,
   className = "",
+  withLabel = false,
 }: {
   /** Owned by App (`useTheme`), so the theme keeps tracking the system while no switch is drawn. */
   theme: Theme;
   onTheme: (t: Theme) => void;
   className?: string;
+  /** Show "Gece modu" beside the track — in the ⚙ sheet, where it is a row among labelled rows. */
+  withLabel?: boolean;
 }) {
   const setTheme = onTheme;
   const dark = theme === "dark";
@@ -55,7 +58,7 @@ export function ThemeSwitch({
       </span>
       {/* The track says it all (owner, 2026-10-01: "işaret belirtiyor zaten") — the words stay for a
           screen reader only. */}
-      <span className="kv-visually-hidden">{TR.theme.label}</span>
+      <span className={withLabel ? "" : "kv-visually-hidden"}>{TR.theme.label}</span>
     </label>
   );
 }

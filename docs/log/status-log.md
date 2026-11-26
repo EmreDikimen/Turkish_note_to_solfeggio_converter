@@ -20,6 +20,12 @@ model graphs, hash-checked against `r4-ctl-stage2-last`. Checked on the tagged U
 the working tree had been switched to a branch without the change, so it still says 40. Never route
 to it. Lesson: do not touch the working tree until `gcloud builds submit` has finished uploading.
 
+Same day, website hotfix `cb5ea74` (`deploy:app`, "Deploy is live!", `smoke:live` 7/7): the phone's
+Düzenle tab hid NOTHING it meant to — a comment dropped mid-selector-list in `app.css` gave the
+pinned row, title and meta the Nota tab's padding instead of `display: none`, so the edit tab showed
+the 182px play row and a title squeezed to one word a line. Found during the UI review
+(branch `ui-simplify`).
+
 ## 2026-11-20 — the code is reorganized; nothing it does changed
 
 The owner asked for the code to be cleaned up: fewer folders, dead parts removed, more readable.

@@ -717,6 +717,11 @@ export function TransportBar({
             <span>{TR.transport.percussion}</span>
           </label>
 
+          {/* ⭐ SHOWN ONLY WHILE USUL VURUŞU IS ON (owner, 2026-11-25, UI review item 10) — this
+              overturns "set a level, THEN turn it on" (below): two controls for a drum that is not
+              playing made the ⚙ sheet ~150px longer for nothing. */}
+          {percussion && strokeCount > 0 && (
+          <>
           {/* ⚠ NOT disabled when percussion is off, for the same reason the transpose controls are not disabled at
               transpose 0: people set a level and THEN turn the thing on. Dragging it does NOT
               re-schedule playback — it rides a gain node, so it is smooth mid-piece. */}
@@ -760,6 +765,8 @@ export function TransportBar({
               ))}
             </select>
           </label>
+          </>
+          )}
         </div>
       </div>
 

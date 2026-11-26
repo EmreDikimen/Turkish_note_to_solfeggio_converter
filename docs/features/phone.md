@@ -70,7 +70,9 @@ pinned-top row described further down are the WIDE-window and pre-2026-11-25 sto
 
 ⚙ (`#pitch-toggle`) opens `#transport-settings` as a sheet over the music — İmleci takip et first,
 then Ses, Ritim, Perde — and a tap on the dimmed page (`.kv-sheet-backdrop`) or on ⚙ closes it.
-▶ and ■ are icons in the bar; their words stay for a screen reader. ⚠ `--pinned-h` is **0** while
+▶ and ■ are icons in the bar; their words stay for a screen reader. Vuruş sesi and Vurmalı çalgı
+appear only while Usul vuruşu is on (item 10; at every width): the sheet measured 840px of content
+with the drum off, 944 with it on. ⚠ `--pinned-h` is **0** while
 docked (nothing covers the top), and `fixedBottomTop()` counts the bar as floor furniture.
 
 **Before 2026-11-25:**

@@ -10,134 +10,159 @@
  * Shows its own reasoning on purpose (the signature it matched, the karar it used), because
  * "Hüzzam" with no evidence behind it is not something a user can sanity-check.
  *
+ * ⭐ TAP A MAKAM (owner, 2026-11-25, UI review item 4). The makams that fit the page are big
+ * buttons, the guess first and highlighted; one tap chooses and closes. Below them, "another makam"
+ * as a list, and one way out: "Bilmiyorum — yazıldığı gibi çal". The evidence stays on screen above
+ * the buttons, readable: the signature as perde names with their real accidental signs (it used to
+ * be the raw label code, `\bakiyeFlat b \bakiyeSharp c`), and the karar as a perde name.
+ * ⛔ No "Bunu kullan" any more: with "yok" chosen it did exactly what the other button did.
+ *
  * ⚠ The window is modal (ui/kit/Modal.tsx), so Playwright cannot click past it. `tools/checks/
  * app-smoke.ts` and `page-smoke.ts` dismiss it via `#makam-confirm` before touching the
- * transport — keep those ids if this file is restyled.
+ * transport — keep those ids if this file is restyled. `#makam-confirm` is the GUESS button, or
+ * "Bilmiyorum" when there is no guess: either way it accepts what the app itself concluded.
  */
 
-import { useMemo, useState } from "react";
 import {
+  accidentalLabel,
   makamDisplay,
   makamOptions,
-  makamRuleUsage,
+  solfegeLetter,
+  SIG_TOKEN_BY_ALTER,
   type MakamDetection,
-  type NoteModelDocument,
 } from "@turkish-omr/core";
-import { MakamIntonation } from "../MakamIntonation";
+import { accidentalChar } from "../accidentals";
 import { TR } from "../strings";
 import { Modal } from "../kit/Modal";
 
+/** `"\\bakiyeFlat b \\bakiyeSharp c"` → [{ letter: "B", alter: -4 }, …]. Unknown tokens are skipped. */
+const ALTER_BY_TOKEN = Object.fromEntries(
+  Object.entries(SIG_TOKEN_BY_ALTER).map(([alter, tok]) => [tok, Number(alter)]),
+);
+function parseSignature(sig: string): { letter: string; alter: number }[] {
+  const parts = sig.trim().split(/\s+/).filter(Boolean);
+  const out: { letter: string; alter: number }[] = [];
+  for (let i = 0; i + 1 < parts.length; i += 2) {
+    const alter = ALTER_BY_TOKEN[parts[i]!];
+    if (alter !== undefined) out.push({ letter: parts[i + 1]!.toUpperCase(), alter });
+  }
+  return out;
+}
+
+/** "Si" plus the accidental the page prints, as its own glyph — the way MakamIntonation names a perde. */
+function Perde({ letter, alter }: { letter: string; alter: number }) {
+  return (
+    <span className="kv-makam__perde" title={alter ? accidentalLabel(alter) : undefined}>
+      {solfegeLetter(letter)}
+      {alter !== 0 && (
+        <span className="kv-glyph" aria-hidden="true">
+          {accidentalChar(alter)}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function MakamModal({
   detection,
-  doc,
   onConfirm,
   onDismiss,
 }: {
   detection: MakamDetection;
-  /** The page just read, so the prompt can say how many of ITS notes each rule reaches. The makam
-   *  is chosen here, so this cannot be precomputed outside — it changes with the dropdown. */
-  doc: NoteModelDocument | null;
-  /** Apply this makam (empty string = none, play as written). */
   onConfirm: (slug: string) => void;
-  /** Close without changing the current selection. */
   onDismiss: () => void;
 }) {
-  const [slug, setSlug] = useState(detection.slug ?? "");
-  const usage = useMemo(() => makamRuleUsage(doc, slug), [doc, slug]);
   const options = makamOptions();
+  const guess = detection.slug;
+  const candidates = [...(guess ? [guess] : []), ...detection.alternatives.filter((s) => s !== guess)];
+  const sig = parseSignature(detection.signature);
 
   return (
     <Modal
       id="makam-modal"
       onDismiss={onDismiss}
-      title={detection.slug ? TR.makamModal.titleGuess(makamDisplay(detection.slug)) : TR.makamModal.titleUnknown}
-      lead={detection.slug ? TR.makamModal.leadGuess : TR.makamModal.leadUnknown}
+      title={guess ? TR.makamModal.titleGuess(makamDisplay(guess)) : TR.makamModal.titleUnknown}
+      lead={
+        guess
+          ? TR.makamModal.leadGuess
+          : candidates.length
+            ? TR.makamModal.leadChoose
+            : TR.makamModal.leadUnknown
+      }
       actions={
-        <>
-          <button type="button" className="kv-btn" onClick={() => onConfirm("")}>
-            {TR.makamModal.playAsWritten}
-          </button>
-          <button
-            id="makam-confirm"
-            type="button"
-            className="kv-btn kv-btn--primary"
-            onClick={() => onConfirm(slug)}
-          >
-            {TR.makamModal.useThis}
-          </button>
-        </>
+        <button
+          id={guess ? undefined : "makam-confirm"}
+          type="button"
+          className="kv-btn"
+          onClick={() => onConfirm("")}
+        >
+          {TR.makamModal.playAsWritten}
+        </button>
       }
     >
-        {/* The evidence. Without it "Hüzzam" is just an assertion. */}
-        <div className="kv-evidence">
-          <div>
-            <span className="kv-evidence__label">{TR.makamModal.signature}</span>
-            {detection.signature ? (
-              <code>{detection.signature}</code>
-            ) : (
-              <em>{TR.makamModal.signatureNone}</em>
-            )}
-          </div>
-          <div>
-            <span className="kv-evidence__label">{TR.makamModal.karar}</span>
-            {detection.karar ? (
-              <code>
-                {detection.karar.letter}
-                {detection.karar.alterCommas === 0
-                  ? ""
-                  : `${detection.karar.alterCommas > 0 ? "+" : "−"}${Math.abs(detection.karar.alterCommas)} koma`}
-              </code>
-            ) : (
-              <em>{TR.makamModal.kararNone}</em>
-            )}
-            {detection.karar && !detection.kararMatched && detection.slug ? (
-              <span style={{ color: "var(--warn)", marginLeft: 8 }}>
-                {TR.makamModal.kararNoHelp}
-              </span>
-            ) : null}
-          </div>
-          {detection.alternatives.length > 0 ? (
-            <div>
-              <span className="kv-evidence__label">{TR.makamModal.alternatives}</span>
-              {detection.alternatives.map((s) => makamDisplay(s)).join(", ")}
-            </div>
-          ) : null}
-        </div>
-
-        <label className="kv-field" style={{ display: "flex", marginTop: "var(--space-4)" }}>
-          <span style={{ fontWeight: 600 }}>{TR.makamModal.makam}</span>
-          <select
-            id="makam-modal-select"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            style={{ flex: 1 }}
-          >
-            <option value="">{TR.makamModal.none}</option>
-            {options.map((m) => (
-              <option key={m.slug} value={m.slug}>
-                {m.label}
-                {m.hasIntonation ? " ♪" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {/* ⚠ The SAME component the transport bar shows beside the picker, so the prompt and the
-            control can never describe one makam two ways — only the reasoning is unfolded here,
-            where there is room for it. `minHeight` keeps the buttons still as the answer changes
-            length. */}
-        <div style={{ minHeight: 54, marginTop: "var(--space-3)" }}>
-          {slug ? (
-            <MakamIntonation slug={slug} usage={usage} open />
-          ) : (
-            <span
-              style={{ fontSize: "var(--text-sm)", color: "var(--ink-faint)" }}
-            >
-              {TR.makamModal.asWritten}
+      {/* The evidence — why the app thinks what it thinks — in perde names, not label code. */}
+      <div className="kv-evidence">
+        <div>
+          <span className="kv-evidence__label">{TR.makamModal.signature}</span>
+          {sig.length ? (
+            <span className="kv-evidence__perdes">
+              {sig.map((e, i) => (
+                <Perde key={i} letter={e.letter} alter={e.alter} />
+              ))}
             </span>
+          ) : (
+            <em>{TR.makamModal.signatureNone}</em>
           )}
         </div>
+        <div>
+          <span className="kv-evidence__label">{TR.makamModal.karar}</span>
+          {detection.karar ? (
+            <Perde letter={detection.karar.letter} alter={detection.karar.alterCommas} />
+          ) : (
+            <em>{TR.makamModal.kararNone}</em>
+          )}
+        </div>
+      </div>
 
+      {candidates.length > 0 && (
+        <>
+          <p className="kv-makam-pick__lead">{TR.makamModal.fits}</p>
+          <div className="kv-makam-pick" data-omr="makam-candidates">
+            {candidates.map((m) => (
+              <button
+                key={m}
+                id={m === guess ? "makam-confirm" : undefined}
+                type="button"
+                data-makam={m}
+                className={`kv-btn${m === guess ? " kv-btn--primary" : ""}`}
+                onClick={() => onConfirm(m)}
+              >
+                {makamDisplay(m)}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      <label className="kv-field kv-makam-pick__other">
+        <span>{TR.makamModal.other}</span>
+        {/* Choosing here IS the answer — one tap, like the buttons above. */}
+        <select
+          id="makam-modal-select"
+          value=""
+          onChange={(e) => {
+            if (e.target.value) onConfirm(e.target.value);
+          }}
+        >
+          <option value="">{TR.makamModal.otherPlaceholder}</option>
+          {options.map((m) => (
+            <option key={m.slug} value={m.slug}>
+              {m.label}
+              {m.hasIntonation ? " ♪" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
     </Modal>
   );
 }

@@ -1617,7 +1617,6 @@ export function App() {
       {makamPrompt && (
         <MakamModal
           detection={makamPrompt}
-          doc={doc}
           onConfirm={(slug) => {
             applyMakam(slug);
             setMakamPrompt(null);

@@ -622,26 +622,23 @@ export const TR = {
     confirm: "İndir",
   },
 
+  // The makam prompt, as "tap a makam" (UI review item 4, 2026-11-25).
   makamModal: {
     titleGuess: (name: string) => `Bu eser ${name} gibi görünüyor`,
     titleUnknown: "Hangi makam?",
-    leadGuess:
-      "Makam, eserin nasıl ÇALINDIĞINI belirler — bazı perdeler yazıldığı yerden farklı seslenir. " +
-      "Portedeki notalar değişmez.",
-    leadUnknown:
-      "Bu donanımı basan bir makam bulunamadı; eser yazıldığı gibi çalınacak. Biliyorsanız siz seçin.",
-    signature: "okunan donanım",
+    leadGuess: "Makam, bazı perdelerin nasıl seslendiğini değiştirir. Doğruysa dokunun, değilse başkasını seçin.",
+    leadChoose: "Okunan donanım birden çok makama uyuyor. Biliyorsanız dokunun.",
+    leadUnknown: "Bu donanıma uyan bir makam bulunamadı. Biliyorsanız listeden seçin.",
+    signature: "Donanım",
     signatureNone: "yok (değiştirme işareti yok)",
-    karar: "karar perdesi",
+    karar: "Karar perdesi",
     kararNone: "okunamadı",
-    kararNoHelp: "— tahmini daraltmadı",
-    alternatives: "aynı donanım",
-    makam: "Makam:",
-    none: "yok — tam yazıldığı gibi çal",
-    asWritten: "Notalar sayfada yazıldığı gibi seslendirilecek.",
-    playAsWritten: "Yazıldığı gibi çal",
-    useThis: "Bunu kullan",
+    fits: "Bu donanıma uyan makamlar:",
+    other: "Başka makam",
+    otherPlaceholder: "Listeden seçin…",
+    playAsWritten: "Bilmiyorum — yazıldığı gibi çal",
   },
+
 
 } as const;
 

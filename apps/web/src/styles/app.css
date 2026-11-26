@@ -3777,3 +3777,38 @@
     display: none;
   }
 }
+
+/* ── The makam prompt as "tap a makam" (UI review item 4, 2026-11-25) ──────────────────────── */
+.kv-evidence__label {
+  margin-right: var(--space-2); /* "karar perdesiE" ran together on a phone, where the column is auto */
+}
+.kv-evidence__perdes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.kv-makam-pick__lead {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.kv-makam-pick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.kv-makam-pick > .kv-btn {
+  min-height: var(--control-h);
+  justify-content: center;
+  white-space: normal;
+}
+.kv-makam-pick__other {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.kv-makam-pick__other > select {
+  flex: 1 1 auto;
+  min-width: 0;
+}

@@ -472,7 +472,10 @@ value.** Tuning a string away and back reaches the shipped object again, so a ch
 
 ⚠ **The modal is portalled to `document.body`**, so it is NOT inside `#fingerboard` — find it by id.
 Its backdrop covers the page: close it with `#tuning-done` before touching anything underneath, the
-way `#makam-confirm` dismisses the makam prompt.
+way `#makam-confirm` dismisses the makam prompt. ⚠ Since 2026-11-25 (UI review item 4) the makam
+prompt is "tap a makam": `[data-omr="makam-candidates"] button[data-makam]`, one tap chooses and
+closes. `#makam-confirm` is the GUESS button, or "Bilmiyorum — yazıldığı gibi çal" when there is no
+guess; `#makam-modal-select` ("Başka makam") starts empty and choosing in it closes the prompt.
 
 ⚠ Same for `#fingerboard-zoom`: the **viewBox** is the zoom, so read that — `data-zoom` alone would
 pass on a control wired to nothing.

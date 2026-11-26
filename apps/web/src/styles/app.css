@@ -3729,3 +3729,51 @@
     }
   }
 }
+
+/* ── The toolbox's foot row (UI review item 2, 2026-11-25) ─────────────────────────────────────
+ * Çal / Dur moved out of the scrolling body into the fixed foot. On a wide window the row wrapper
+ * is `display: contents`, so the 136px box stacks the two pairs as it always did; on a phone they
+ * share ONE row, Çal / Dur as icons (their words stay for a screen reader). */
+.kv-toolbox__footrow {
+  display: contents;
+}
+.kv-toolbox__footrow > .kv-toolbox__transport {
+  margin-bottom: var(--space-2);
+}
+@media (max-width: 700px) {
+  .kv-toolbox__footrow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .kv-toolbox__footrow > .kv-toolbox__transport,
+  .kv-toolbox__footrow > .kv-toolbox__undo {
+    margin-bottom: 0;
+  }
+  .kv-toolbox__footrow > .kv-toolbox__transport {
+    flex: 0 0 auto;
+  }
+  .kv-toolbox__footrow > .kv-toolbox__transport > .kv-btn {
+    flex: 0 0 var(--control-h);
+    width: var(--control-h);
+    padding: 0;
+    justify-content: center;
+  }
+  .kv-toolbox__footrow .kv-btn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .kv-toolbox__footrow > .kv-toolbox__undo {
+    flex: 1 1 auto;
+  }
+  /* The Düzenle tab already says edit mode is on; the card's switch was the same fact twice. Still
+     in the DOM: a wide window and `smoke:editor` drive it. */
+  .kv-page[data-mtab="duzenle"] #edit-toggle {
+    display: none;
+  }
+}

@@ -462,38 +462,6 @@ export function EditPalette({
       {!shut && (
       <>
       <div className="kv-toolbox__body">
-      {/* Çal starts at the last edited bar (the top of the piece before any edit), and pressing it
-          again while playing replays that same bar. Pause/resume is not duplicated here — the
-          transport above is still on screen in edit mode (owner, 2026-08-08). */}
-      <div className="kv-toolbox__group">
-        <span className="kv-toolbox__label">{TR.palette.playback}</span>
-        <div className="kv-toolbox__transport">
-          <button
-            id="palette-play"
-            type="button"
-            data-play-state={playState}
-            className="kv-btn kv-btn--primary"
-            onClick={onPlay}
-            disabled={!canPlay}
-            title={fromMeasure == null ? TR.palette.playFromTopTitle : TR.palette.playFromTitle(fromMeasure)}
-          >
-            <PlayIcon />
-            {TR.palette.play}
-          </button>
-          <button
-            id="palette-stop"
-            type="button"
-            className="kv-btn"
-            onClick={onStop}
-            disabled={playState === "stopped"}
-            title={TR.palette.stopTitle}
-          >
-            <StopIcon />
-            {TR.palette.stop}
-          </button>
-        </div>
-      </div>
-
       <div className="kv-toolbox__group">
         <span className="kv-toolbox__label">{TR.palette.durations}</span>
         <div className="kv-toolbox__row">
@@ -594,6 +562,38 @@ export function EditPalette({
           the way out does not. An undo below the fold is an undo that is not there.
           ⚠ `#palette-undo` / `#palette-redo`, not `#undo` / `#redo`: the card's pair keeps those ids
           and both are on screen on a wide window, exactly as `#palette-play` sits beside `#play`. */}
+      {/* ⭐ ÇAL / DUR LIVE IN THE FIXED FOOT (UI review item 2, 2026-11-25). They were the first group
+          of the SCROLLING body — on a phone a whole 95px "DİNLE" row above the tools. In the foot
+          they never scroll away, and on a phone they share ONE row with Geri al / Yinele, as icons.
+          Çal starts at the last edited bar (the top of the piece before any edit), and pressing it
+          again while playing replays that same bar. `.kv-toolbox__footrow` is `display: contents`
+          on a wide window, so the 136px box stacks them exactly as before. */}
+      <div className="kv-toolbox__footrow">
+      <div className="kv-toolbox__transport">
+        <button
+          id="palette-play"
+          type="button"
+          data-play-state={playState}
+          className="kv-btn kv-btn--primary"
+          onClick={onPlay}
+          disabled={!canPlay}
+          title={fromMeasure == null ? TR.palette.playFromTopTitle : TR.palette.playFromTitle(fromMeasure)}
+        >
+          <PlayIcon />
+          <span className="kv-btn__label">{TR.palette.play}</span>
+        </button>
+        <button
+          id="palette-stop"
+          type="button"
+          className="kv-btn"
+          onClick={onStop}
+          disabled={playState === "stopped"}
+          title={TR.palette.stopTitle}
+        >
+          <StopIcon />
+          <span className="kv-btn__label">{TR.palette.stop}</span>
+        </button>
+      </div>
       <div className="kv-toolbox__undo">
         <button
           id="palette-undo"
@@ -615,6 +615,7 @@ export function EditPalette({
         >
           {TR.card.redo}
         </button>
+      </div>
       </div>
 
       <button
